@@ -144,7 +144,9 @@ function DownedService.ReviveTick(reviverModel, targetModel, dt)
 	if not a or not b or (a.Position - b.Position).Magnitude > REVIVE_RANGE then
 		return false
 	end
-	info.Progress += dt / REVIVE_TIME
+	local reviver = Players:GetPlayerFromCharacter(reviverModel)
+	local speed = reviver and BuyConfig.Has(reviver, "Medic") and BuyConfig.MedicFactor or 1
+	info.Progress += dt * speed / REVIVE_TIME
 	info.Ticked = true
 	targetModel:SetAttribute("ReviveProgress", math.min(info.Progress, 1))
 	if info.Progress >= 1 then

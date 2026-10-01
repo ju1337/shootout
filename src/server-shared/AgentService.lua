@@ -12,6 +12,7 @@ local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
+local BuyConfig = require(Shared.BuyConfig)
 
 local AgentService = {}
 
@@ -66,8 +67,9 @@ end
 local function applyAgent(player, character)
 	local agent = getAgent(player)
 	local humanoid = character:WaitForChild("Humanoid")
-	humanoid.MaxHealth = agent.Health
-	humanoid.Health = agent.Health
+	local health = agent.Health + (BuyConfig.Has(player, "Tough") and BuyConfig.ToughHealth or 0)
+	humanoid.MaxHealth = health
+	humanoid.Health = health
 	character:SetAttribute("Agent", agent.Id)
 	character:SetAttribute("SpeedMultiplier", 1)
 	player:SetAttribute("AbilityReadyAt", 0)

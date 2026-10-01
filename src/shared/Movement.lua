@@ -12,6 +12,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
+local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
 
@@ -72,6 +73,9 @@ local function apply()
 		end
 		if aiming then
 			speed *= AIM_FACTOR
+		end
+		if BuyConfig.Has(player, "Runner") then
+			speed *= BuyConfig.RunnerFactor
 		end
 		humanoid.WalkSpeed = speed
 
@@ -274,6 +278,7 @@ function Movement.Init()
 		aiming = false
 		character:GetAttributeChangedSignal("SpeedMultiplier"):Connect(apply)
 		character:GetAttributeChangedSignal("Agent"):Connect(apply)
+		player:GetAttributeChangedSignal("Buy_Runner"):Connect(apply)
 		apply()
 	end
 	player.CharacterAdded:Connect(onCharacter)

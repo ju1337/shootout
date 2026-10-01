@@ -268,19 +268,23 @@ local function buildBottom()
 	agentArea = { tabs, grid }
 	shopArea = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 670),
 		Size = UDim2.new(0, barWidth, 0, 130), BackgroundTransparency = 1, Visible = false }, canvas)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 15),
+	-- Zwei Reihen: oben Ausrüstung, unten Perks. Beschreibung erscheint beim Drüberfahren.
+	make("UIGridLayout", { CellSize = UDim2.new(0, 200, 0, 60), CellPadding = UDim2.new(0, 15, 0, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder }, shopArea)
 	for i, item in BuyConfig.Items do
-		local card = make("TextButton", { Size = UDim2.new(0, 200, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 22, 32),
+		local card = make("TextButton", { BackgroundColor3 = Color3.fromRGB(18, 22, 32),
 			BorderSizePixel = 0, Text = "", AutoButtonColor = true, LayoutOrder = i }, shopArea)
 		make("UICorner", { CornerRadius = UDim.new(0, 8) }, card)
-		make("UIStroke", { Color = Color3.fromRGB(60, 65, 80), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
-		text({ Position = UDim2.new(0, 12, 0, 10), Size = UDim2.new(1, -24, 0, 22), Text = item.Name, TextSize = 17 }, card)
-		text({ Position = UDim2.new(0, 12, 0, 34), Size = UDim2.new(1, -24, 0, 44), Text = item.Description,
-			TextSize = 13, Font = Enum.Font.Gotham, TextColor3 = GRAY, TextWrapped = true,
-			TextYAlignment = Enum.TextYAlignment.Top }, card)
-		local state = text({ Position = UDim2.new(0, 12, 1, -36), Size = UDim2.new(1, -24, 0, 26), Text = "",
-			TextSize = 17, Font = Enum.Font.GothamBlack }, card)
+		make("UIStroke", { Color = item.Perk and Color3.fromRGB(170, 90, 230) or Color3.fromRGB(60, 65, 80), Thickness = 1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
+		text({ Position = UDim2.new(0, 12, 0, 6), Size = UDim2.new(1, -24, 0, 22),
+			Text = (item.Perk and "✦ " or "") .. item.Name, TextSize = 16 }, card)
+		local state = text({ Position = UDim2.new(0, 12, 0, 32), Size = UDim2.new(1, -24, 0, 22), Text = "",
+			TextSize = 15, Font = Enum.Font.GothamBlack }, card)
+		card.MouseEnter:Connect(function()
+			buyStatus.Text = item.Description
+			buyStatus.TextColor3 = GRAY
+		end)
 		card.Activated:Connect(function()
 			Remotes.Buy:FireServer(item.Id)
 		end)

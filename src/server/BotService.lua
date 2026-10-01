@@ -210,7 +210,7 @@ local function shoot(bot, head, target, weaponName)
 			local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1)
 				* GameSettings.Get("DamageMultiplier") * GameSettings.Get("BotDamage")
 			local _, killed = Damage.Apply(hitModel, humanoid, damage,
-				{ BotName = bot.Name, Weapon = weaponName, Headshot = headshot })
+				{ BotName = bot.Name, Model = bot.Model, Weapon = weaponName, Headshot = headshot })
 			if killed then
 				local victim = Players:GetPlayerFromCharacter(hitModel)
 				KillService.ReportBotKill(bot.Mode, bot.Name, victim and victim.Name or hitModel.Name, weaponName, headshot)

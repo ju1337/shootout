@@ -1,7 +1,8 @@
 -- BuyConfig (ModuleScript)
--- Geld und Kaufphase im Drop-Modus (wie bei Rogue Company). Das Geld gilt nur für ein Match
+-- Geld und Kaufphase in den Team-Modi (wie bei Rogue Company). Das Geld gilt nur für ein Match
 -- und ist getrennt von den Shop-Münzen. Gekauft wird während Agentenwahl und Countdown.
 -- PerRound = gilt nur für die nächste Runde (Rüstung, Extra-Gadget), sonst bis Match-Ende.
+-- Perk = passiver Vorteil (wie die Perks bei Rogue Company), gilt bis Match-Ende.
 
 local BuyConfig = {}
 
@@ -19,6 +20,12 @@ BuyConfig.MagFactor = 1.3        -- Magazin x1.3
 BuyConfig.ReloadFactor = 0.7     -- Nachladezeit x0.7
 BuyConfig.StabilityFactor = 0.65 -- Streuung und Rückstoß x0.65
 BuyConfig.ArmorAmount = 25       -- Schild, das zuerst Schaden schluckt
+BuyConfig.ToughHealth = 15       -- Perk "Zäh": mehr Max-Leben
+BuyConfig.RegenDelay = 5         -- Perk "Regeneration": Sekunden ohne Schaden bis zum Heilen
+BuyConfig.RegenPerSecond = 4
+BuyConfig.MedicFactor = 1.67     -- Perk "Sanitäter": Wiederbeleben 40 % schneller
+BuyConfig.RunnerFactor = 1.08    -- Perk "Leichtfuß": Tempo
+BuyConfig.VengeanceTime = 5      -- Perk "Racheblick": Sekunden, die der Killer markiert ist
 
 BuyConfig.Items = {
 	{ Id = "Mag", Name = "Großes Magazin", Description = "+30 % Magazin für alle Waffen", Price = 600 },
@@ -26,6 +33,11 @@ BuyConfig.Items = {
 	{ Id = "Stability", Name = "Stabilisator", Description = "35 % weniger Streuung und Rückstoß", Price = 700 },
 	{ Id = "Armor", Name = "Rüstung", Description = "+25 Schild für diese Runde", Price = 400, PerRound = true },
 	{ Id = "ExtraGadget", Name = "Extra-Gadget", Description = "+1 Gadget-Ladung für diese Runde", Price = 300, PerRound = true },
+	{ Id = "Tough", Name = "Zäh", Description = "Perk: +15 Max-Leben", Price = 500, Perk = true },
+	{ Id = "Regen", Name = "Regeneration", Description = "Perk: Nach 5 s ohne Schaden heilst du langsam", Price = 600, Perk = true },
+	{ Id = "Medic", Name = "Sanitäter", Description = "Perk: Wiederbeleben 40 % schneller", Price = 400, Perk = true },
+	{ Id = "Runner", Name = "Leichtfuß", Description = "Perk: +8 % Lauftempo", Price = 400, Perk = true },
+	{ Id = "Vengeance", Name = "Racheblick", Description = "Perk: Wer dich ausschaltet, wird 5 s für dein Team markiert", Price = 300, Perk = true },
 }
 
 function BuyConfig.Get(id)
