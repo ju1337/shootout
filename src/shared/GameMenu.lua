@@ -355,7 +355,9 @@ function GameMenu.Init()
 	local scale = make("UIScale", {}, overlay)
 	local function updateScale()
 		local viewport = workspace.CurrentCamera.ViewportSize
-		scale.Scale = math.clamp(math.min(viewport.X / 1250, viewport.Y / 800), 0.45, 1.2)
+		-- Breite richtet sich nach der Anzahl der Karten
+		local width = math.max(1250, #Modes.List * (CARD_WIDTH + CARD_GAP) + 140)
+		scale.Scale = math.clamp(math.min(viewport.X / width, viewport.Y / 800), 0.4, 1.2)
 	end
 	updateScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)

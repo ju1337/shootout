@@ -31,8 +31,13 @@ local function isAdmin(player)
 end
 
 function AdminService.Init(manager)
-	local drop = manager.GetModule("Drop")
 	local ffa = manager.GetModule("FreeForAll")
+
+	-- Team-Modus (Drop/Strikeout) aus dem Panel holen
+	local function teamMode(modeId)
+		local module = typeof(modeId) == "string" and manager.GetModule(modeId)
+		return module and module.AdminStart and module or nil
+	end
 
 	local function target(userId)
 		return Players:GetPlayerByUserId(tonumber(userId) or 0)
@@ -51,14 +56,17 @@ function AdminService.Init(manager)
 			GameSettings.Set(key, value)
 			return GameSettings.Def(key).Label .. " = " .. GameSettings.Get(key)
 		end,
-		DropStart = function()
-			return drop.AdminStart()
+		ModeStart = function(modeId)
+			local module = teamMode(modeId)
+			return module and module.AdminStart() or "Unbekannter Modus."
 		end,
-		DropEndRound = function()
-			return drop.AdminEndRound()
+		ModeEndRound = function(modeId)
+			local module = teamMode(modeId)
+			return module and module.AdminEndRound() or "Unbekannter Modus."
 		end,
-		DropResetMatch = function()
-			return drop.AdminResetMatch()
+		ModeResetMatch = function(modeId)
+			local module = teamMode(modeId)
+			return module and module.AdminResetMatch() or "Unbekannter Modus."
 		end,
 		FFAEndRound = function()
 			return ffa.AdminEndRound()
@@ -73,7 +81,11 @@ function AdminService.Init(manager)
 		end,
 		SwitchTeam = function(userId)
 			local player = target(userId)
-			return player and drop.AdminSwitchTeam(player) or "Spieler nicht gefunden."
+			local module = player and teamMode(player:GetAttribute("Mode"))
+			if not module then
+				return "Spieler ist in keinem Team-Modus."
+			end
+			return module.AdminSwitchTeam(player)
 		end,
 		Kill = function(userId)
 			local humanoid = humanoidOf(target(userId))

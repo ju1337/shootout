@@ -85,17 +85,19 @@ end
 
 local function buildControls()
 	section("SPIEL STEUERN")
-	local dropRow = row(list)
-	label("Drop:", 15, dropRow, { Size = UDim2.new(0, 60, 1, 0) })
-	button("JETZT STARTEN", 130, dropRow, Color3.fromRGB(60, 150, 80), function()
-		send("DropStart")
-	end)
-	button("Runde beenden", 120, dropRow, nil, function()
-		send("DropEndRound")
-	end)
-	button("Reset", 70, dropRow, DANGER, function()
-		send("DropResetMatch")
-	end)
+	for _, modeId in { "Drop", "Strikeout" } do
+		local modeRow = row(list)
+		label(modeId .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
+		button("JETZT STARTEN", 130, modeRow, Color3.fromRGB(60, 150, 80), function()
+			send("ModeStart", modeId)
+		end)
+		button("Runde beenden", 120, modeRow, nil, function()
+			send("ModeEndRound", modeId)
+		end)
+		button("Reset", 70, modeRow, DANGER, function()
+			send("ModeResetMatch", modeId)
+		end)
+	end
 	local ffaRow = row(list)
 	label("FFA:", 15, ffaRow, { Size = UDim2.new(0, 60, 1, 0) })
 	button("Runde beenden", 120, ffaRow, nil, function()
@@ -115,19 +117,25 @@ local function buildBots()
 			send("SpawnBot", "FreeForAll")
 		end
 	end)
-	local dropRow = row(list)
-	label("Drop:", 15, dropRow, { Size = UDim2.new(0, 60, 1, 0) })
-	button("+1 Rot", 75, dropRow, Color3.fromRGB(150, 50, 50), function()
-		send("SpawnBot", "Drop", "Rot")
-	end)
-	button("+1 Blau", 75, dropRow, Color3.fromRGB(50, 80, 160), function()
-		send("SpawnBot", "Drop", "Blau")
-	end)
-	button("Auf 5v5 auffüllen", 140, dropRow, nil, function()
-		for _ = 1, 10 do
-			send("SpawnBot", "Drop")
-		end
-	end)
+	-- { Modus, Team A, Farbe A, Team B, Farbe B, Plätze }
+	for _, entry in {
+		{ "Drop", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
+		{ "Strikeout", "Gold", Color3.fromRGB(170, 100, 30), "Lila", Color3.fromRGB(110, 50, 150), 8 },
+	} do
+		local modeRow = row(list)
+		label(entry[1] .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
+		button("+1 " .. entry[2], 75, modeRow, entry[3], function()
+			send("SpawnBot", entry[1], entry[2])
+		end)
+		button("+1 " .. entry[4], 75, modeRow, entry[5], function()
+			send("SpawnBot", entry[1], entry[4])
+		end)
+		button("Auffüllen", 100, modeRow, nil, function()
+			for _ = 1, entry[6] do
+				send("SpawnBot", entry[1])
+			end
+		end)
+	end
 	local removeRow = row(list)
 	button("Alle Bots entfernen", 170, removeRow, DANGER, function()
 		send("RemoveBots")
@@ -142,7 +150,8 @@ local function refreshBots()
 		local mode = info:GetAttribute("Mode")
 		counts[mode] = (counts[mode] or 0) + 1
 	end
-	botCountLabel.Text = "FFA: " .. (counts.FreeForAll or 0) .. "   Drop: " .. (counts.Drop or 0)
+	botCountLabel.Text = "FFA: " .. (counts.FreeForAll or 0) .. "  Drop: " .. (counts.Drop or 0)
+		.. "  Strikeout: " .. (counts.Strikeout or 0)
 end
 
 local function buildSettings()
@@ -200,8 +209,8 @@ local function refreshPlayers()
 		label(p.Name .. "  ·  " .. tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "")
 			.. "  ·  " .. (agent and agent.Name or "?"), 15, box)
 		local moves = row(box)
-		for _, modeId in { "Hub", "FreeForAll", "Drop" } do
-			button(modeId, 90, moves, nil, function()
+		for _, modeId in { "Hub", "FreeForAll", "Drop", "Strikeout" } do
+			button(modeId == "FreeForAll" and "FFA" or modeId, 80, moves, nil, function()
 				send("MovePlayer", p.UserId, modeId)
 			end)
 		end

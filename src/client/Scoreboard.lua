@@ -1,6 +1,6 @@
 -- Scoreboard (ModuleScript, nur Client)
 -- Tab gedrückt halten: alle Spieler und Bots im eigenen Modus mit Agent, Kills, Toden und Schaden.
--- In Drop nach Teams getrennt, in Free-for-All nach Kills sortiert.
+-- In Team-Modi nach Teams getrennt, in Free-for-All nach Kills sortiert.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,7 +17,7 @@ local Scoreboard = {}
 local ACCENT = Color3.fromRGB(255, 140, 40)
 local ROW = Color3.fromRGB(22, 26, 36)
 local GRAY = Color3.fromRGB(170, 175, 190)
-local TEAM_COLORS = { Rot = Color3.fromRGB(220, 70, 70), Blau = Color3.fromRGB(70, 130, 230) }
+local Teams = game:GetService("Teams")
 
 -- Spalten: { Überschrift, Breite, Ausrichtung }
 local COLUMNS = {
@@ -109,12 +109,21 @@ local function render()
 		COLUMNS[1][1], COLUMNS[2][1], COLUMNS[3][1], COLUMNS[4][1], COLUMNS[5][1] }, GRAY, Enum.Font.GothamBlack)
 
 	local all = entries()
-	if player:GetAttribute("Mode") == "Drop" then
-		-- Eigenes Team zuerst
-		local mine = player.Team and player.Team.Name or "Rot"
-		for _, teamName in { mine, mine == "Rot" and "Blau" or "Rot" } do
+	if Modes.IsTeamMode(player:GetAttribute("Mode")) then
+		-- Eigenes Team zuerst, dann das andere Team dieses Modus
+		local teamNames = {}
+		if player.Team then
+			table.insert(teamNames, player.Team.Name)
+		end
+		for _, entry in all do
+			if entry.Team and not table.find(teamNames, entry.Team) then
+				table.insert(teamNames, entry.Team)
+			end
+		end
+		for _, teamName in teamNames do
 			order += 1
-			local header = rowFrame(order, TEAM_COLORS[teamName])
+			local team = Teams:FindFirstChild(teamName)
+			local header = rowFrame(order, team and team.TeamColor.Color or ROW)
 			cells(header, { "TEAM " .. string.upper(teamName), "", "", "", "" }, Color3.new(1, 1, 1), Enum.Font.GothamBlack)
 			for _, entry in all do
 				if entry.Team == teamName then

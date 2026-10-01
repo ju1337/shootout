@@ -315,7 +315,10 @@ local function runAI(bot, model)
 					humanoid:MoveTo(mate.HumanoidRootPart.Position)
 				end
 			elseif now >= nextMove then
-				if nearest then
+				if bot.Objective then
+					-- Strikeout: zum Punkt laufen
+					humanoid:MoveTo(bot.Objective + Vector3.new(random:NextNumber(-6, 6), 0, random:NextNumber(-6, 6)))
+				elseif nearest then
 					humanoid:MoveTo(nearest.HumanoidRootPart.Position)
 				else
 					local offset = Vector3.new(random:NextNumber(-1, 1), 0, random:NextNumber(-1, 1)) * WANDER_RADIUS

@@ -17,16 +17,18 @@ local player = Players.LocalPlayer
 
 local Spectator = {}
 
-local DROP_CENTER = Modes.Get("Drop").Center
-local OVERVIEW_RADIUS = 230
-local OVERVIEW_HEIGHT = 150
+-- Kameraflug über die Map des aktuellen Team-Modus (Werte aus Modes.Overview)
 local OVERVIEW_SPEED = 0.05  -- Drehgeschwindigkeit (Bogenmaß pro Sekunde), langsamer Kameraflug
 
 -- Kamera kreist langsam um die Drop-Map (Hintergrund der Agentenwahl)
 local function overview()
+	local info = Modes.Get(player:GetAttribute("Mode")) or Modes.Get("Drop")
+	local center = info.Center
+	local overviewInfo = info.Overview or { Radius = 200, Height = 120 }
 	local angle = os.clock() * OVERVIEW_SPEED
-	local position = DROP_CENTER + Vector3.new(math.cos(angle) * OVERVIEW_RADIUS, OVERVIEW_HEIGHT, math.sin(angle) * OVERVIEW_RADIUS)
-	return CFrame.lookAt(position, DROP_CENTER)
+	local position = center + Vector3.new(math.cos(angle) * overviewInfo.Radius, overviewInfo.Height,
+		math.sin(angle) * overviewInfo.Radius)
+	return CFrame.lookAt(position, center)
 end
 
 local spectating = false
@@ -80,8 +82,8 @@ local function stopSpectating()
 end
 
 local function update()
-	local inDrop = player:GetAttribute("Mode") == "Drop"
-	if not inDrop or livingHumanoid(player) then
+	-- Zuschauen nur in Team-Modi (Drop, Strikeout)
+	if not Modes.IsTeamMode(player:GetAttribute("Mode")) or livingHumanoid(player) then
 		stopSpectating()
 		return
 	end
@@ -102,7 +104,7 @@ local function update()
 	else
 		camera.CameraType = Enum.CameraType.Scriptable
 		inOverview = true
-		HUD.SetStatus("Warte auf die nächste Runde...")
+		HUD.SetStatus("Warte auf Respawn bzw. die nächste Runde...")
 	end
 end
 

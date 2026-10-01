@@ -1,5 +1,5 @@
 -- BuyService (ModuleScript, nur Server)
--- Geld pro Match und Kaufphase im Drop-Modus. Gekaufte Gegenstände stehen als Spieler-Attribute
+-- Geld pro Match und Kaufphase in den Team-Modi (Drop, Strikeout). Gekaufte Gegenstände stehen als Spieler-Attribute
 -- "Buy_<Id>" bereit, das Geld als "Money". Rüstung wird beim Spawn als Charakter-Attribut
 -- "Armor" gesetzt (Damage zieht sie zuerst ab).
 
@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
+local Modes = require(Shared.Modes)
 
 local BuyService = {}
 
@@ -55,7 +56,7 @@ local function buy(player, itemId)
 	if not item then
 		return "Unbekannter Gegenstand.", false
 	end
-	if player:GetAttribute("Mode") ~= "Drop" or not BUY_PHASES[player:GetAttribute("DropPhase")] then
+	if not Modes.IsTeamMode(player:GetAttribute("Mode")) or not BUY_PHASES[player:GetAttribute("RoundPhase")] then
 		return "Kaufen geht nur vor der Runde.", false
 	end
 	if BuyConfig.Has(player, itemId) then

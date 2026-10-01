@@ -17,6 +17,7 @@ OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", 
 HUB_ORIGIN = (0, 0, 0)
 FFA_ORIGIN = (0, 0, 1500)
 DROP_ORIGIN = (1500, 0, 0)
+STRIKEOUT_ORIGIN = (0, 0, -1500)
 
 
 # ---------- Helfer ----------
@@ -151,14 +152,14 @@ class Builder:
         self.box("Nature", "Rock", (s, s * 0.7, s * 1.2), (x, s * 0.25, z), (115, 115, 110), "Slate",
                  angles=(rng.uniform(-10, 10), rng.uniform(0, 360), rng.uniform(-10, 10)))
 
-    def spawn(self, x, z, yaw=0, real=False):
+    def spawn(self, x, z, yaw=0, real=False, group="Spawns"):
         """real=True: echte SpawnLocation (nur im Hub). Sonst unsichtbarer Spawnpunkt für die Modus-Logik."""
         if real:
-            self.add("Spawns", "Spawn", (6, 1, 6), (x, 0.5, z), (255, 140, 40), "Neon", angles=(0, yaw, 0),
+            self.add(group, "Spawn", (6, 1, 6), (x, 0.5, z), (255, 140, 40), "Neon", angles=(0, yaw, 0),
                      cls="SpawnLocation", props={"Transparency": 0.6, "Neutral": True, "Duration": 0,
                                                  "AllowTeamChangeOnTouch": False, "CanCollide": False})
         else:
-            self.add("Spawns", "SpawnPoint", (4, 1, 4), (x, 0.5, z), (90, 160, 255), "SmoothPlastic",
+            self.add(group, "SpawnPoint", (4, 1, 4), (x, 0.5, z), (90, 160, 255), "SmoothPlastic",
                      angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False,
                                                 "CanTouch": False})
 
@@ -307,14 +308,61 @@ def build_drop():
     b.save("Drop.model.json")
 
 
+# ---------- Strikeout: "Fabrik" (220 x 150), Team Gold bei -x, Team Lila bei +x ----------
+
+def build_strikeout():
+    b = Builder(STRIKEOUT_ORIGIN)
+    sx, sz = 220, 150
+    b.ground(sx + 10, sz + 10, (105, 100, 95), "Concrete")
+    b.border(sx, sz, 14, (90, 85, 80), "Brick", barrier=120)
+
+    # Team-Spawns gegenüber, Blick zur Mitte (Ordner SpawnsA = Gold, SpawnsB = Lila)
+    for side, group, color in ((-1, "SpawnsA", (200, 120, 40)), (1, "SpawnsB", (130, 70, 180))):
+        b.box("Ground", "SpawnPad", (24, 0.3, 50), (side * 96, 0.15, 0), color, "SmoothPlastic")
+        for z in (-15, -5, 5, 15):
+            b.spawn(side * 98, z, yaw=90 * side, group=group)  # Blick zur Mitte
+        # Container als Deckung vor dem Spawn
+        b.box("Cover", "Container", (8, 8, 20), (side * 78, 4, -28), color, "Metal")
+        b.box("Cover", "Container", (8, 8, 20), (side * 78, 4, 28), color, "Metal")
+
+    # Eroberungspunkt in der Mitte (Farbe setzt der Server je nach Team)
+    b.add("Objective", "CapturePoint", (0.3, 24, 24), (0, 0.2, 0), (230, 230, 235), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35, "CanCollide": False})
+    for x, z in ((-12, -12), (12, -12), (-12, 12), (12, 12)):
+        b.box("Objective", "PointPost", (1, 5, 1), (x, 2.5, z), (60, 60, 65), "Metal")
+
+    # Deckung um den Punkt: L-förmige Mauern
+    for x, z in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+        b.cover_wall(x * 20, z * 16, 10, along_x=True, height=4.5)
+        b.cover_wall(x * 25, z * 11, 10, along_x=False, height=4.5)
+    b.crate(0, -24)
+    b.crate(0, 24)
+
+    # Gebäude an den Längsseiten (Flanken)
+    b.house("NorthHall", 0, 56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("S", "E", "W"))
+    b.house("SouthHall", 0, -56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("N", "E", "W"))
+
+    # Seitengassen mit Kisten und Mauern
+    for side in (-1, 1):
+        b.cover_wall(side * 50, 0, 16, along_x=False, height=6)
+        b.crate(side * 50, -24)
+        b.crate(side * 50, 24)
+        b.crate(side * 45, 45, s=6)
+        b.crate(side * 45, -45, s=6)
+        b.cover_wall(side * 62, 52, 14, height=6)
+        b.cover_wall(side * 62, -52, 14, height=6)
+
+    b.save("Strikeout.model.json")
+
+
 # ---------- Hub (Lobby) ----------
 
 # Gleiche Ids/Farben wie in src/shared/Modes.lua
 HUB_MODES = (
     ("FreeForAll", "FREE-FOR-ALL", (255, 120, 60), True),
     ("Drop", "DROP 5v5", (80, 160, 255), True),
+    ("Strikeout", "STRIKEOUT 4v4", (255, 170, 50), True),
     ("Arena", "1v1 ARENA", (170, 100, 255), False),
-    ("Ranked", "RANKED", (255, 200, 60), False),
 )
 
 
@@ -391,4 +439,5 @@ def build_lobby():
 if __name__ == "__main__":
     build_ffa()
     build_drop()
+    build_strikeout()
     build_lobby()

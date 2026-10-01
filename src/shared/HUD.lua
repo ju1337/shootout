@@ -256,6 +256,39 @@ function HUD.Init(weaponClient)
 	updateMode()
 	player:GetAttributeChangedSignal("ModeText"):Connect(updateMode)
 
+	-- Eroberungspunkt (Strikeout): Fortschritt beider Teams unter der Modus-Info
+	local objective = make("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 84),
+		Size = UDim2.new(0, 420, 0, 52),
+		BackgroundTransparency = 1,
+		Visible = false,
+	}, gui)
+	local function objectiveBar(y, color, title)
+		label({ Position = UDim2.new(0, 0, 0, y), Size = UDim2.new(0, 70, 0, 14), Text = title, TextSize = 13,
+			TextXAlignment = Enum.TextXAlignment.Left }, objective)
+		local back = make("Frame", { Position = UDim2.new(0, 75, 0, y + 2), Size = UDim2.new(1, -75, 0, 10),
+			BackgroundColor3 = Color3.fromRGB(30, 30, 35), BackgroundTransparency = 0.2, BorderSizePixel = 0 }, objective)
+		return make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0 }, back)
+	end
+	local mineBar = objectiveBar(0, Color3.fromRGB(80, 200, 255), "WIR")
+	local enemyBar = objectiveBar(16, Color3.fromRGB(255, 80, 80), "GEGNER")
+	local objectiveInfo = label({ Position = UDim2.new(0, 0, 0, 32), Size = UDim2.new(1, 0, 0, 20), Text = "",
+		TextSize = 15 }, objective)
+	local function updateObjective()
+		local mine = player:GetAttribute("ObjMine")
+		objective.Visible = mine ~= nil
+		if mine then
+			mineBar.Size = UDim2.new(mine, 0, 1, 0)
+			enemyBar.Size = UDim2.new(player:GetAttribute("ObjEnemy") or 0, 0, 1, 0)
+			objectiveInfo.Text = player:GetAttribute("ObjInfo") or ""
+		end
+	end
+	updateObjective()
+	player:GetAttributeChangedSignal("ObjMine"):Connect(updateObjective)
+	player:GetAttributeChangedSignal("ObjEnemy"):Connect(updateObjective)
+	player:GetAttributeChangedSignal("ObjInfo"):Connect(updateObjective)
+
 	-- HUD nur in Kampfmodi zeigen, nicht im Hub
 	local function updateVisible()
 		gui.Enabled = Modes.IsFighting(player)

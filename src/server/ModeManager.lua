@@ -19,6 +19,7 @@ local modules = {
 	Hub = require(script.Parent.Modes.Hub),
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
 	Drop = require(script.Parent.Modes.Drop),
+	Strikeout = require(script.Parent.Modes.Strikeout),
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig

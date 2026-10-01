@@ -1,5 +1,5 @@
 -- AgentSelect (ModuleScript, nur Client)
--- Agentenwahl im Drop-Modus vor jeder Runde, aufgebaut wie bei Rogue Company:
+-- Agentenwahl in den Team-Modi (Drop, Strikeout) vor jeder Runde, aufgebaut wie bei Rogue Company:
 --   oben:   Modus, Timer in der Raute, Zeitbalken, Rundenstand als Rauten
 --   links:  eigenes Team (Raute + Leiste, "WÄHLT..." bis bestätigt)
 --   Mitte:  großer 3D-Agent, der sich langsam dreht
@@ -16,7 +16,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
-local GameSettings = require(Shared.GameSettings)
+local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentFigure = require(Shared.AgentFigure)
 local BuyConfig = require(Shared.BuyConfig)
@@ -366,13 +366,13 @@ local function teamEntries()
 		return list
 	end
 	for _, p in Players:GetPlayers() do
-		if p.Team == player.Team and p:GetAttribute("Mode") == "Drop" then
+		if p.Team == player.Team and p:GetAttribute("Mode") == player:GetAttribute("Mode") then
 			table.insert(list, { Name = p.Name, Agent = AgentConfig.Get(p:GetAttribute("Agent")),
 				Locked = p:GetAttribute("AgentLocked") == true, IsMe = p == player })
 		end
 	end
 	for _, info in ReplicatedStorage:WaitForChild("BotInfo"):GetChildren() do
-		if info:GetAttribute("Mode") == "Drop" and info:GetAttribute("TeamName") == player.Team.Name then
+		if info:GetAttribute("Mode") == player:GetAttribute("Mode") and info:GetAttribute("TeamName") == player.Team.Name then
 			table.insert(list, { Name = info.Name, Agent = AgentConfig.Get(info:GetAttribute("Agent")),
 				Locked = true, IsBot = true })
 		end
@@ -430,13 +430,10 @@ end
 -- ---------- Rundenstand oben rechts ----------
 
 local function updateScore()
-	local total = GameSettings.Get("RoundsToWin")
-	local ours, theirs = 0, 0
-	if player.Team then
-		local enemyName = player.Team.Name == "Rot" and "Blau" or "Rot"
-		ours = ReplicatedStorage:GetAttribute("DropScore" .. player.Team.Name) or 0
-		theirs = ReplicatedStorage:GetAttribute("DropScore" .. enemyName) or 0
-	end
+	-- Stand kommt vom Server aus Sicht des eigenen Teams
+	local total = player:GetAttribute("RoundsToWin") or 5
+	local ours = player:GetAttribute("TeamScore") or 0
+	local theirs = player:GetAttribute("EnemyScore") or 0
 	local signature = total .. ":" .. ours .. ":" .. theirs
 	if signature == scoreSignature then
 		return
@@ -475,9 +472,10 @@ local function setMouseFree(free)
 end
 
 local function update()
-	local phase = player:GetAttribute("DropPhase")
-	local inDrop = player:GetAttribute("Mode") == "Drop"
-	local show = inDrop and (phase == "Waiting" or phase == "Select" or not confirmed)
+	local phase = player:GetAttribute("RoundPhase")
+	local modeInfo = Modes.Get(player:GetAttribute("Mode"))
+	local inTeamMode = modeInfo ~= nil and modeInfo.TeamMode == true
+	local show = inTeamMode and (phase == "Waiting" or phase == "Select" or not confirmed)
 	gui.Enabled = show
 	if show ~= shown then
 		shown = show
@@ -489,19 +487,19 @@ local function update()
 
 	-- Timer und Zeitbalken
 	if phase == "Select" then
-		local duration = ReplicatedStorage:GetAttribute("DropSelectDuration") or 1
-		local left = math.max(0, (ReplicatedStorage:GetAttribute("DropSelectUntil") or 0) - workspace:GetServerTimeNow())
+		local duration = player:GetAttribute("SelectDuration") or 1
+		local left = math.max(0, (player:GetAttribute("SelectUntil") or 0) - workspace:GetServerTimeNow())
 		timerLabel.Text = tostring(math.ceil(left))
 		timeBar.Size = UDim2.new(math.clamp(left / duration, 0, 1), 0, 1, 0)
 	else
 		timerLabel.Text = "–"
 		timeBar.Size = UDim2.new(1, 0, 1, 0)
 	end
-	modeLabel.Text = "DROP  ·  5v5"
+	modeLabel.Text = modeInfo.Name .. "  ·  " .. string.upper(modeInfo.Tag)
 	if phase == "Waiting" then
 		roundLabel.Text = player:GetAttribute("ModeText") or "Warte auf Spieler..."
 	elseif phase == "Select" then
-		roundLabel.Text = "RUNDE " .. (ReplicatedStorage:GetAttribute("DropRound") or 1) .. "  ·  AGENTENWAHL"
+		roundLabel.Text = "RUNDE " .. (player:GetAttribute("RoundNumber") or 1) .. "  ·  AGENTENWAHL"
 	else
 		roundLabel.Text = "Runde läuft – du steigst in der nächsten Runde ein"
 	end
@@ -554,8 +552,8 @@ function AgentSelect.Init()
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
 		confirmed = false
 	end)
-	player:GetAttributeChangedSignal("DropPhase"):Connect(function()
-		local phase = player:GetAttribute("DropPhase")
+	player:GetAttributeChangedSignal("RoundPhase"):Connect(function()
+		local phase = player:GetAttribute("RoundPhase")
 		if phase == "Countdown" then
 			confirmed = true -- Match startet: Bildschirm schließt
 		elseif phase == "Waiting" or phase == "Select" then

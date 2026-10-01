@@ -2,6 +2,8 @@
 -- Alle Spielmodi für Menü und Portale. Alle Modi laufen im selben Place,
 -- jeder in seinem eigenen Bereich der Welt (Center = Mitte der Map).
 -- Center muss zu den Verschiebungen in tools/build_maps.py passen.
+-- TeamMode = Team-Runden mit Agentenwahl und Kaufphase (Drop, Strikeout)
+-- Overview = Kameraflug über die Map während der Agentenwahl (Radius, Höhe)
 
 local Modes = {}
 
@@ -24,6 +26,20 @@ Modes.List = {
 		Players = "10 Spieler",
 		Color = Color3.fromRGB(80, 160, 255),
 		Center = Vector3.new(1500, 0, 0),
+		TeamMode = true,
+		Overview = { Radius = 230, Height = 150 },
+		Available = true,
+	},
+	{
+		Id = "Strikeout",
+		Name = "STRIKEOUT",
+		Tag = "4v4 Team",
+		Description = "10 Respawn-Tickets pro Team.\nPunkt einnehmen oder alle Tickets abnehmen. 4 Rundensiege gewinnen.",
+		Players = "8 Spieler",
+		Color = Color3.fromRGB(255, 170, 50),
+		Center = Vector3.new(0, 0, -1500),
+		TeamMode = true,
+		Overview = { Radius = 140, Height = 90 },
 		Available = true,
 	},
 	{
@@ -66,6 +82,12 @@ function Modes.Get(id)
 		end
 	end
 	return nil
+end
+
+-- Läuft der Modus in Team-Runden (Agentenwahl, Kaufphase, Niederschlagen)?
+function Modes.IsTeamMode(id)
+	local mode = Modes.Get(id)
+	return mode ~= nil and mode.TeamMode == true
 end
 
 -- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub)?

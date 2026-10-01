@@ -20,7 +20,7 @@ local BuyConfig = require(Shared.BuyConfig)
 
 local DownedService = {}
 
-local DOWNED_MODES = { Drop = true } -- in diesen Modi wird niedergeschlagen statt getötet
+local DOWNED_MODES = { Drop = true, Strikeout = true } -- hier wird niedergeschlagen statt getötet
 local DOWNED_HEALTH = 40             -- Leben am Boden (so viel muss ein Gegner noch zum Finishen machen)
 local BLEEDOUT_TIME = 20             -- Sekunden bis zum Verbluten
 local REVIVE_TIME = 4                -- Sekunden E halten
