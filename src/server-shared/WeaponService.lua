@@ -291,6 +291,59 @@ local function setupPlayer(player)
 	end
 end
 
+-- Messer: kurzer Stich nach vorne. Gegner am Boden werden sofort erledigt (Finish).
+local lastMelee = {}
+local function onMelee(player, origin, direction)
+	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" or not (direction.Magnitude > 0.01) then
+		return
+	end
+	if not player:GetAttribute("CanFight") then
+		return
+	end
+	local humanoid, character = getLivingHumanoid(player)
+	local head = character and character:FindFirstChild("Head")
+	if not humanoid or not head or character:GetAttribute("Downed") then
+		return
+	end
+	if not ((origin - head.Position).Magnitude <= MAX_ORIGIN_DISTANCE) then
+		return
+	end
+	local melee = WeaponConfig.Melee
+	local now = os.clock()
+	if lastMelee[player] and now - lastMelee[player] < melee.Cooldown * 0.9 then
+		return
+	end
+	lastMelee[player] = now
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	local result = workspace:Spherecast(head.Position, melee.Radius, direction.Unit * melee.Range, params)
+	local model = result and result.Instance:FindFirstAncestorOfClass("Model")
+	local target = model and model:FindFirstChildOfClass("Humanoid")
+	if not target or target.Health <= 0 then
+		return
+	end
+	local victim = Players:GetPlayerFromCharacter(model)
+	local isBot = model:GetAttribute("IsBot") == true
+	local mode = player:GetAttribute("Mode")
+	local victimMode = victim and victim:GetAttribute("Mode") or model:GetAttribute("Mode")
+	local victimTeam = victim and victim.Team and victim.Team.Name or model:GetAttribute("TeamName")
+	if (not victim and not isBot) or victimMode ~= mode or (player.Team and victimTeam == player.Team.Name) then
+		return
+	end
+
+	-- Am Boden: Finish mit vollem Restleben
+	local amount = model:GetAttribute("Downed") and target.Health + 1 or melee.Damage * GameSettings.Get("DamageMultiplier")
+	local dealt, killed, downed = Damage.Apply(model, target, amount, { Player = player, Weapon = melee.DisplayName })
+	local victimName = victim and victim.Name or model.Name
+	player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(dealt + 0.5))
+	Remotes.Hitmarker:FireClient(player, false, killed, dealt, result.Position, victimName, downed)
+	if killed then
+		killedEvent:Fire(player, victim, melee.DisplayName, false, victimName)
+	end
+end
+
 -- Kill von außerhalb melden (z.B. Granate), läuft wie ein Waffen-Kill
 function WeaponService.ReportKill(killer, victim, weaponName, headshot, victimName)
 	killedEvent:Fire(killer, victim, weaponName, headshot, victimName)
@@ -300,6 +353,7 @@ function WeaponService.Init()
 	Remotes.Fire.OnServerEvent:Connect(onFire)
 	Remotes.Reload.OnServerEvent:Connect(onReload)
 	Remotes.Equip.OnServerEvent:Connect(onEquip)
+	Remotes.Melee.OnServerEvent:Connect(onMelee)
 
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
@@ -307,6 +361,7 @@ function WeaponService.Init()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
+		lastMelee[player] = nil
 	end)
 end
 

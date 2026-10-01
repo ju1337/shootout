@@ -1,6 +1,7 @@
 -- Movement (ModuleScript, nur Client)
 -- First-Person-Ansicht, Sprinten (Shift), Ducken (STRG oder C, gedrückt halten),
--- Sliden (im Sprint ducken) und Zielen (setzt WeaponClient über SetAiming).
+-- Sliden (im Sprint ducken), Klettern über Kanten (Springen vor einer Kante) und Zielen
+-- (setzt WeaponClient über SetAiming).
 -- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
 
 local Players = game:GetService("Players")
@@ -28,6 +29,10 @@ local SLIDE_SPEED = 42
 local SLIDE_END_SPEED = 18
 local SLIDE_TIME = 0.7
 local SLIDE_COOLDOWN = 1.2
+local MANTLE_MIN = 2.5         -- niedrigere Hindernisse einfach überspringen
+local MANTLE_MAX = 6.5         -- höchste Kante, an der man sich hochzieht
+local MANTLE_REACH = 3.5       -- so nah muss die Wand vor einem sein
+local MANTLE_TIME = 0.3
 
 local normalFov = 70
 local sensitivity = 1
@@ -38,6 +43,7 @@ local aimFov = 50
 local sliding = false
 local lastSlide = 0
 local normalHipHeight = nil
+local mantling = false
 
 local function getHumanoid()
 	local character = player.Character
@@ -118,6 +124,68 @@ local function startSlide()
 	end)
 end
 
+-- Klettern: Wand vor einem, oben eine Kante mit Platz darüber -> hochziehen
+local function tryMantle()
+	local humanoid, character = getHumanoid()
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if mantling or sliding or not humanoid or not root or humanoid.Health <= 0 or isDropping(humanoid) then
+		return
+	end
+	if character:GetAttribute("Downed") then
+		return
+	end
+	local look = root.CFrame.LookVector
+	look = Vector3.new(look.X, 0, look.Z)
+	if look.Magnitude < 0.01 then
+		return
+	end
+	look = look.Unit
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+
+	local wall = workspace:Raycast(root.Position, look * MANTLE_REACH, params)
+	if not wall then
+		return
+	end
+	local feetY = root.Position.Y - root.Size.Y / 2 - humanoid.HipHeight
+	local probe = Vector3.new(root.Position.X, feetY + MANTLE_MAX + 0.5, root.Position.Z) + look * (wall.Distance + 1.2)
+	local ledge = workspace:Raycast(probe, Vector3.new(0, -(MANTLE_MAX + 1), 0), params)
+	if not ledge then
+		return
+	end
+	local height = ledge.Position.Y - feetY
+	if height < MANTLE_MIN or height > MANTLE_MAX then
+		return
+	end
+	-- Oben muss Platz für den Körper sein
+	if workspace:Raycast(ledge.Position + Vector3.new(0, 0.2, 0), Vector3.new(0, 5, 0), params) then
+		return
+	end
+
+	mantling = true
+	local startPos = root.Position
+	local target = ledge.Position + Vector3.new(0, humanoid.HipHeight + root.Size.Y / 2 + 0.1, 0)
+	local rotation = CFrame.lookAt(Vector3.zero, look)
+	local started = os.clock()
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local t = math.min(1, (os.clock() - started) / MANTLE_TIME)
+		-- Erst hoch, dann nach vorne
+		local up = math.min(1, t * 1.6)
+		local position = Vector3.new(
+			startPos.X + (target.X - startPos.X) * t,
+			startPos.Y + (target.Y - startPos.Y) * up,
+			startPos.Z + (target.Z - startPos.Z) * t)
+		root.CFrame = CFrame.new(position) * rotation
+		root.AssemblyLinearVelocity = Vector3.zero
+		if t >= 1 or not root.Parent then
+			connection:Disconnect()
+			mantling = false
+		end
+	end)
+end
+
 -- An = First Person, Aus = Kamera hinter dem Ziel (z.B. beim Zuschauen)
 function Movement.SetFirstPerson(on: boolean)
 	if on then
@@ -186,6 +254,9 @@ function Movement.Init()
 			apply()
 		end
 	end)
+	-- Springen vor einer Kante = hochziehen
+	UserInputService.JumpRequest:Connect(tryMantle)
+
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftShift then
 			sprintHeld = false

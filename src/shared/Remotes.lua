@@ -30,6 +30,7 @@ local NAMES = {
 	"UseGadget",  -- Client -> Server: Gadget werfen (Blickrichtung)
 	"Flash",      -- Server -> Client: geblendet (Dauer)
 	"ObjectiveAction", -- Client -> Server: E für Ziel (Bombe legen/entschärfen) gedrückt/losgelassen
+	"Melee",      -- Client -> Server: Messer-Angriff (Ursprung, Richtung)
 }
 
 local folder

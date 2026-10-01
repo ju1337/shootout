@@ -95,6 +95,15 @@ WeaponConfig.Weapons = {
 	},
 }
 
+-- Nahkampf-Messer (Taste V): bei Gegnern am Boden sofortiger Finish
+WeaponConfig.Melee = {
+	DisplayName = "Messer",
+	Damage = 55,
+	Range = 6,       -- Reichweite in Studs
+	Radius = 1.5,    -- Breite des Stichs
+	Cooldown = 0.8,
+}
+
 -- Waffe per Name holen (nil, wenn es sie nicht gibt)
 function WeaponConfig.Get(name)
 	return WeaponConfig.Weapons[name]

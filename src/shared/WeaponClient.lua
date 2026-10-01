@@ -57,6 +57,8 @@ local recoilYaw = 0
 local appliedPitch = 0        -- schon auf die Kamera gelegter Teil
 local appliedYaw = 0
 local kick = 0                -- Waffe ruckt kurz nach hinten
+local knife = nil             -- Messer-Modell während des Stichs
+local lastMelee = 0
 
 local function setAiming(on)
 	if on == aiming then
@@ -160,6 +162,54 @@ local function equip(slot)
 	Remotes.Equip:FireServer(name)
 end
 
+-- Messer (V): kurzer Stich nach vorne, Waffe wird kurz weggezogen
+local function melee()
+	local cfg = WeaponConfig.Melee
+	if os.clock() - lastMelee < cfg.Cooldown or not Modes.IsFighting(player) or isDowned() then
+		return
+	end
+	lastMelee = os.clock()
+	local camera = workspace.CurrentCamera
+	Remotes.Melee:FireServer(camera.CFrame.Position, camera.CFrame.LookVector)
+
+	-- Messer aus zwei Teilen: Griff + Klinge
+	if knife then
+		knife:Destroy()
+	end
+	knife = Instance.new("Model")
+	for _, def in { { Vector3.new(0.15, 0.15, 0.5), Vector3.new(0, 0, 0.3), Color3.fromRGB(30, 30, 30) },
+		{ Vector3.new(0.06, 0.18, 0.9), Vector3.new(0, 0, -0.4), Color3.fromRGB(200, 205, 215) } } do
+		local part = Instance.new("Part")
+		part.Size = def[1]
+		part.CFrame = CFrame.new(def[2])
+		part.Color = def[3]
+		part.Material = Enum.Material.Metal
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CastShadow = false
+		part.Parent = knife
+	end
+	knife.Parent = camera
+	local started = os.clock()
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		local t = (os.clock() - started) / 0.25
+		if t >= 1 or not knife then
+			connection:Disconnect()
+			if knife then
+				knife:Destroy()
+				knife = nil
+			end
+			return
+		end
+		-- Bogen von rechts unten nach vorne-mitte
+		local swing = math.sin(t * math.pi)
+		knife:PivotTo(workspace.CurrentCamera.CFrame * CFrame.new(0.9 - swing * 0.8, -0.8 + swing * 0.3, -1.2 - swing * 0.8)
+			* CFrame.Angles(0, math.rad(-30 + swing * 40), math.rad(-60)))
+	end)
+end
+
 -- Nach Spawn/Respawn: auf den Stand vom Server warten (Equip ohne Namen fragt ihn an)
 local function resetWeapon()
 	current = nil
@@ -199,6 +249,8 @@ function WeaponClient.Init()
 			setAiming(current ~= nil)
 		elseif input.KeyCode == Enum.KeyCode.R then
 			requestReload()
+		elseif input.KeyCode == Enum.KeyCode.V then
+			melee()
 		elseif input.KeyCode == Enum.KeyCode.One then
 			equip(1)
 		elseif input.KeyCode == Enum.KeyCode.Two then
@@ -263,11 +315,14 @@ function WeaponClient.Init()
 		if viewModel then
 			viewModel.Parent = isAlive and workspace.CurrentCamera or nil
 			if isAlive then
+				-- Während des Messerstichs Waffe nach unten wegziehen
+				local meleeDrop = knife and CFrame.new(0, -1.2, 0.4) or CFrame.new()
 				aimBlend += ((aiming and 1 or 0) - aimBlend) * math.min(1, AIM_SPEED * dt)
 				local short = SHORT_WEAPONS[current]
 				local hip = short and SHORT_OFFSET or LONG_OFFSET
 				local aim = short and SHORT_AIM_OFFSET or LONG_AIM_OFFSET
 				local offset = hip:Lerp(aim, aimBlend) * CFrame.new(0, 0, kick * 0.12) * CFrame.Angles(math.rad(kick * 2), 0, 0)
+					* meleeDrop
 				viewModel:PivotTo(workspace.CurrentCamera.CFrame * offset)
 			end
 		end
