@@ -22,6 +22,7 @@ DEMOLITION_ORIGIN = (-1500, 0, 0)
 WINGMAN_ORIGIN = (1500, 0, -1500)
 TRAINING_ORIGIN = (-1500, 0, 1500)
 RANKED_ORIGIN = (1500, 0, 1500)
+ARENA_ORIGIN = (0, 0, 3000)
 
 
 # ---------- Helfer ----------
@@ -437,6 +438,25 @@ def build_training():
     b.save("Training.model.json")
 
 
+# ---------- 1v1 Arena (90 x 70), punktsymmetrisch ----------
+
+def build_arena():
+    b = Builder(ARENA_ORIGIN)
+    b.ground(100, 80, (55, 50, 70), "SmoothPlastic")
+    b.border(90, 70, 12, (90, 60, 140), "SmoothPlastic", barrier=60)
+    b.add("Ground", "CenterRing", (0.2, 16, 16), (0, 0.1, 0), (170, 100, 255), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+    for side, group in ((-1, "SpawnsA"), (1, "SpawnsB")):
+        b.spawn(side * 38, 0, yaw=90 * side, group=group)
+        # Deckung gespiegelt
+        b.cover_wall(side * 22, side * 12, 10, along_x=False, height=5, color=(120, 90, 170))
+        b.cover_wall(side * 10, side * -18, 12, height=5, color=(120, 90, 170))
+        b.crate(side * 30, side * -20)
+        b.crate(side * 30, side * 20, s=4)
+        b.box("Cover", "Pillar", (4, 10, 4), (side * 8, 5, side * 8), (150, 120, 200), "Marble")
+    b.save("Arena.model.json")
+
+
 # ---------- Hub (Lobby) ----------
 
 # Gleiche Ids/Farben wie in src/shared/Modes.lua
@@ -527,4 +547,5 @@ if __name__ == "__main__":
     build_demolition()
     build_demolition(RANKED_ORIGIN, "Ranked.model.json")  # gleiche Map für Ranked
     build_training()
+    build_arena()
     build_lobby()

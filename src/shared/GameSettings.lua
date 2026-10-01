@@ -26,6 +26,7 @@ GameSettings.List = {
 	{ Key = "DemolitionRoundTime", Group = "Demolition", Label = "Rundenzeit (Sek.)", Default = 150, Min = 60, Max = 600, Step = 15 },
 	{ Key = "BombTime", Group = "Demolition", Label = "Bomben-Timer (Sek.)", Default = 40, Min = 10, Max = 120, Step = 5 },
 	{ Key = "RankedRoundsToWin", Group = "Ranked", Label = "Rundensiege zum Match", Default = 4, Min = 1, Max = 15, Step = 1 },
+	{ Key = "ArenaRoundsToWin", Group = "1v1 Arena", Label = "Rundensiege zum Match", Default = 5, Min = 1, Max = 15, Step = 1 },
 	{ Key = "DamageMultiplier", Group = "Allgemein", Label = "Schaden ×", Default = 1, Min = 0.1, Max = 5, Step = 0.1 },
 	{ Key = "XPMultiplier", Group = "Allgemein", Label = "XP ×", Default = 1, Min = 0, Max = 10, Step = 0.5 },
 	{ Key = "BotDamage", Group = "Bots", Label = "Bot-Schaden ×", Default = 0.6, Min = 0, Max = 3, Step = 0.1 },

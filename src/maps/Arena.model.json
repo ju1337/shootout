@@ -1,0 +1,1062 @@
+{
+ "ClassName": "Model",
+ "Children": [
+  {
+   "Name": "Ground",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Ground",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100,
+       4,
+       80
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         -2,
+         3000
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2157,
+       0.1961,
+       0.2745
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CenterRing",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.2,
+       16,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         0.1,
+         3000
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.3922,
+       1.0
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Border",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "WallNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       96,
+       12,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         6.0,
+         3036.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.2353,
+       0.549
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       96,
+       60,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         30.0,
+         3036.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       96,
+       12,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         6.0,
+         2963.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.2353,
+       0.549
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       96,
+       60,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         30.0,
+         2963.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       12,
+       70
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         46.5,
+         6.0,
+         3000
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.2353,
+       0.549
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       60,
+       70
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         46.5,
+         30.0,
+         3000
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       12,
+       70
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -46.5,
+         6.0,
+         3000
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.2353,
+       0.549
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       60,
+       70
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -46.5,
+         30.0,
+         3000
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsA",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -38,
+         0.5,
+         3000
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Cover",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -22,
+         2.5,
+         2988
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.3529,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       5,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -10,
+         2.5,
+         3018
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.3529,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -30,
+         2.5,
+         3020
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       4,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -30,
+         2.0,
+         2980
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Pillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       10,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         5,
+         2992
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.7843
+      ],
+      "Material": "Marble",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         22,
+         2.5,
+         3012
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.3529,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       5,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         10,
+         2.5,
+         2982
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.3529,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         30,
+         2.5,
+         2980
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       4,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         30,
+         2.0,
+         3020
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Pillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       10,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         5,
+         3008
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.7843
+      ],
+      "Material": "Marble",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsB",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38,
+         0.5,
+         3000
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  }
+ ]
+}
