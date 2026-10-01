@@ -1,6 +1,6 @@
 -- SideMenu (ModuleScript, nur Client)
--- Knopfleiste links im Hub (wie in Hypershot & Co.): SHOP, RUCKSACK, AGENTEN, TÄGLICH, CODES,
--- EINSTELLUNGEN, darüber der Münzstand. Jeder Knopf öffnet ein Fenster in der Mitte.
+-- Knopfleiste links im Hub (wie in Hypershot & Co.): SHOP, RUCKSACK, AGENTEN, AUFTRÄGE, TÄGLICH,
+-- CODES, EINSTELLUNGEN, darüber der Münzstand. Jeder Knopf öffnet ein Fenster in der Mitte.
 -- Kaufen/Ausrüsten prüft der Server (ShopService).
 
 local Players = game:GetService("Players")
@@ -15,6 +15,7 @@ local GunModels = require(Shared.GunModels)
 local AgentFigure = require(Shared.AgentFigure)
 local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
+local QuestConfig = require(Shared.QuestConfig)
 
 local player = Players.LocalPlayer
 
@@ -29,7 +30,7 @@ local GREEN = Color3.fromRGB(70, 170, 90)
 
 local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "Pistol", "Revolver" }
 
-local gui, column, coinLabel, dailyDot
+local gui, column, coinLabel, dailyDot, questDot
 local panels = {}      -- [Name] = { Frame, Status, Refresh }
 local openPanel = nil
 
@@ -352,6 +353,70 @@ local function buildInventory()
 	panels.Inventory.Refresh = fillOptions
 end
 
+-- ---------- AUFTRÄGE ----------
+
+-- Gibt es einen fertigen, noch nicht abgeholten Auftrag?
+local function questReady()
+	local data = QuestConfig.Read(player)
+	if not data or not data.Ids then
+		return false
+	end
+	for _, id in data.Ids do
+		local quest = QuestConfig.Get(id)
+		if quest and not (data.Claimed or {})[id] and ((data.Progress or {})[id] or 0) >= quest.Goal then
+			return true
+		end
+	end
+	return false
+end
+
+local function buildQuests()
+	local frame = makePanel("Quests", "📋  TÄGLICHE AUFTRÄGE", 640, 420)
+	text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 22),
+		Text = "Jeden Tag neue Aufträge – Belohnung in Münzen.", TextSize = 16, TextColor3 = GRAY }, frame)
+	local list = make("Frame", { Position = UDim2.new(0, 24, 0, 96), Size = UDim2.new(1, -48, 1, -140),
+		BackgroundTransparency = 1 }, frame)
+	make("UIListLayout", { Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+
+	panels.Quests.Refresh = function()
+		for _, child in list:GetChildren() do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		local data = QuestConfig.Read(player)
+		if not data or not data.Ids then
+			return
+		end
+		for i, id in data.Ids do
+			local quest = QuestConfig.Get(id)
+			if quest then
+				local progress = (data.Progress or {})[id] or 0
+				local claimed = (data.Claimed or {})[id] == true
+				local done = progress >= quest.Goal
+				local row = make("Frame", { Size = UDim2.new(1, 0, 0, 80), BackgroundColor3 = CARD, LayoutOrder = i }, list)
+				make("UICorner", { CornerRadius = UDim.new(0, 10) }, row)
+				text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -200, 0, 24), Text = quest.Text,
+					TextSize = 19 }, row)
+				text({ Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -200, 0, 18),
+					Text = progress .. " / " .. quest.Goal .. "   ·   💰 " .. quest.Reward, TextSize = 14,
+					TextColor3 = GRAY }, row)
+				local barBack = make("Frame", { Position = UDim2.new(0, 16, 0, 60), Size = UDim2.new(1, -200, 0, 8),
+					BackgroundColor3 = BORDER, BorderSizePixel = 0 }, row)
+				make("Frame", { Size = UDim2.new(progress / quest.Goal, 0, 1, 0), BorderSizePixel = 0,
+					BackgroundColor3 = done and GREEN or ACCENT }, barBack)
+				button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0), Size = UDim2.new(0, 150, 0, 44),
+					TextSize = 16, Text = claimed and "ABGEHOLT ✓" or (done and "ABHOLEN" or "OFFEN"),
+					BackgroundColor3 = (done and not claimed) and GREEN or Color3.fromRGB(55, 60, 75) }, row, function()
+					if done and not claimed then
+						Remotes.ShopAction:FireServer("ClaimQuest", id)
+					end
+				end)
+			end
+		end
+	end
+end
+
 -- ---------- TÄGLICH ----------
 
 local function dailyLeft()
@@ -461,6 +526,7 @@ local function buildColumn()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
+		{ "📋", "AUFTRÄGE", function() togglePanel("Quests") end },
 		{ "🎁", "TÄGLICH", function() togglePanel("Daily") end },
 		{ "🎟", "CODES", function() togglePanel("Codes") end },
 		{ "⚙", "OPTIONEN", function() togglePanel("Settings") end },
@@ -469,13 +535,19 @@ local function buildColumn()
 	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 24),
 		Size = UDim2.new(0, 96, 0, height), BackgroundTransparency = 1 }, gui)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, column)
-	local daily
+	local daily, quests
 	for i, entry in entries do
 		local b = sideButton(entry[1], entry[2], i, entry[3])
 		if entry[2] == "TÄGLICH" then
 			daily = b
+		elseif entry[2] == "AUFTRÄGE" then
+			quests = b
 		end
 	end
+	-- Roter Punkt, wenn ein Auftrag abgeholt werden kann
+	questDot = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 0, 8),
+		Size = UDim2.new(0, 16, 0, 16), BackgroundColor3 = Color3.fromRGB(230, 50, 50), BorderSizePixel = 0 }, quests)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, questDot)
 	-- Roter Punkt, wenn die tägliche Belohnung bereit ist
 	dailyDot = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 0, 8),
 		Size = UDim2.new(0, 16, 0, 16), BackgroundColor3 = Color3.fromRGB(230, 50, 50), BorderSizePixel = 0 }, daily)
@@ -505,6 +577,7 @@ function SideMenu.Init()
 	buildColumn()
 	buildShop()
 	buildInventory()
+	buildQuests()
 	buildDaily()
 	buildCodes()
 	buildSettings()
@@ -518,7 +591,7 @@ function SideMenu.Init()
 	end)
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" then
+		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" then
 			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()
@@ -536,6 +609,7 @@ function SideMenu.Init()
 				setPanel(nil)
 			end
 			dailyDot.Visible = dailyLeft() <= 0
+			questDot.Visible = questReady()
 			if openPanel == "Daily" then
 				panels.Daily.Refresh()
 			end

@@ -85,7 +85,11 @@ function KillService.Init()
 			local rewards = AgentConfig.XPRewards
 			ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer),
 				rewards.Kill + (headshot and rewards.Headshot or 0), headshot and "Kopfschuss-Kill" or "Kill")
-			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur im laufenden Drop-Match
+			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur in laufenden Team-Matches
+			ProgressService.QuestEvent(killer, "Kill", 1)
+			if headshot then
+				ProgressService.QuestEvent(killer, "Headshot", 1)
+			end
 		end
 		-- Killfeed nur an Spieler im selben Modus
 		local mode = killer:GetAttribute("Mode")

@@ -109,6 +109,7 @@ local function finishRound(winner)
 	if winner then
 		announce(winner.Name .. " gewinnt die Runde!")
 		ProgressService.AddXP(winner, ProgressService.ActiveAgent(winner), AgentConfig.XPRewards.FFAWin, "Rundensieg")
+		ProgressService.QuestEvent(winner, "RoundWin", 1)
 	else
 		announce("Runde beendet")
 	end

@@ -21,6 +21,7 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
 local KillService = require(ServerShared.KillService)
+local ProgressService = require(ServerShared.ProgressService)
 
 local GadgetService = {}
 
@@ -333,6 +334,7 @@ local function onUseGadget(player, direction)
 	lastThrow[player] = now
 	player:SetAttribute("Gadgets", charges - 1)
 	throw({ Player = player }, head.Position, direction.Unit, agent.Gadget)
+	ProgressService.QuestEvent(player, "Gadget", 1)
 end
 
 -- Bot wirft (von BotService)

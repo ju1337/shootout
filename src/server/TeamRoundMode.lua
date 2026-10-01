@@ -641,6 +641,13 @@ function TeamRoundMode.new(config)
 		else
 			announce(practiceRound and "Übungsrunde vorbei" or "Unentschieden!")
 		end
+		-- Aufträge: gespielte und gewonnene Runden
+		for player in members do
+			ProgressService.QuestEvent(player, "RoundPlayed", 1)
+			if roundWinner and player.Team == roundWinner then
+				ProgressService.QuestEvent(player, "RoundWin", 1)
+			end
+		end
 		-- Geld für die nächste Kaufphase: Sieger mehr, Verlierer etwas weniger
 		for player in members do
 			if roundWinner and player.Team == roundWinner then

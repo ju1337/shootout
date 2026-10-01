@@ -1,8 +1,9 @@
 -- ProgressService (ModuleScript, nur Server)
 -- Alle gespeicherten Spielerdaten: XP pro Agent, Münzen, gekaufte und ausgerüstete Skins,
--- tägliche Belohnung und eingelöste Codes. Gespeichert im DataStore (funktioniert erst, wenn
+-- tägliche Belohnung, eingelöste Codes und tägliche Aufträge. Gespeichert im DataStore (funktioniert erst, wenn
 -- das Spiel veröffentlicht ist und in Studio "API Services" erlaubt sind - sonst nur für die Sitzung).
--- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON), Equipped (JSON), LastDaily
+-- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON), Equipped (JSON), LastDaily,
+-- Quests (JSON)
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
@@ -14,6 +15,7 @@ local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
 local Cosmetics = require(Shared.Cosmetics)
+local QuestConfig = require(Shared.QuestConfig)
 
 local ProgressService = {}
 
@@ -24,7 +26,7 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {} }
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {} }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -45,6 +47,22 @@ local function toProfile(data)
 	return profile
 end
 
+-- Aufträge für heute anlegen, falls ein neuer Tag begonnen hat (pro Spieler und Tag gleich)
+local function ensureQuests(player, profile)
+	local today = QuestConfig.Today()
+	if profile.Quests.Day == today then
+		return
+	end
+	local random = Random.new(player.UserId + tonumber((string.gsub(today, "-", ""))))
+	local pool = table.clone(QuestConfig.Pool)
+	local ids = {}
+	for _ = 1, math.min(QuestConfig.PerDay, #pool) do
+		local quest = table.remove(pool, random:NextInteger(1, #pool))
+		table.insert(ids, quest.Id)
+	end
+	profile.Quests = { Day = today, Ids = ids, Progress = {}, Claimed = {} }
+end
+
 -- Profil als Attribute an den Spieler hängen (damit Client und andere Skripte es lesen können)
 function ProgressService.Sync(player)
 	local profile = profiles[player]
@@ -58,6 +76,49 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
+	ensureQuests(player, profile)
+	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
+end
+
+-- Spielereignis für Aufträge zählen (event wie in QuestConfig, z.B. "Kill")
+function ProgressService.QuestEvent(player, event, amount)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	ensureQuests(player, profile)
+	local changed = false
+	for _, id in profile.Quests.Ids do
+		local quest = QuestConfig.Get(id)
+		if quest and quest.Event == event and not profile.Quests.Claimed[id] then
+			local before = profile.Quests.Progress[id] or 0
+			if before < quest.Goal then
+				profile.Quests.Progress[id] = math.min(quest.Goal, before + (amount or 1))
+				changed = true
+			end
+		end
+	end
+	if changed then
+		ProgressService.Sync(player)
+	end
+end
+
+-- Belohnung eines fertigen Auftrags abholen. Gibt Text und Erfolg zurück.
+function ProgressService.ClaimQuest(player, id)
+	local profile = profiles[player]
+	local quest = typeof(id) == "string" and QuestConfig.Get(id)
+	if not profile or not quest or not table.find(profile.Quests.Ids or {}, id) then
+		return "Unbekannter Auftrag.", false
+	end
+	if profile.Quests.Claimed[id] then
+		return "Schon abgeholt.", false
+	end
+	if (profile.Quests.Progress[id] or 0) < quest.Goal then
+		return "Auftrag noch nicht geschafft.", false
+	end
+	profile.Quests.Claimed[id] = true
+	ProgressService.AddCoins(player, quest.Reward) -- synct auch die Aufträge
+	return "+" .. quest.Reward .. " Münzen für \"" .. quest.Text .. "\"!", true
 end
 
 function ProgressService.Get(player)
