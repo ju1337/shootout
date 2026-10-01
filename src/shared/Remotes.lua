@@ -25,6 +25,10 @@ local NAMES = {
 	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)
 	"ShopStatus", -- Server -> Client: Rückmeldung (Text, Erfolg)
 	"Revive",     -- Client -> Server: E zum Wiederbeleben gedrückt (true) / losgelassen (false)
+	"Buy",        -- Client -> Server: Kaufphase, Gegenstand kaufen (Id)
+	"MoneyGain",  -- Server -> Client: Geld bekommen (Menge, Grund)
+	"UseGadget",  -- Client -> Server: Gadget werfen (Blickrichtung)
+	"Flash",      -- Server -> Client: geblendet (Dauer)
 }
 
 local folder

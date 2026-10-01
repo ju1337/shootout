@@ -17,6 +17,7 @@ local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local Movement = require(Shared.Movement)
+local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
 
@@ -43,6 +44,7 @@ local RECOIL_RECOVERY = 10    -- wie schnell sich der Rückstoß zurückstellt (
 
 local current = nil -- aktuelle Waffe (kommt vom Server)
 local mag, reserve = 0, 0
+local magSize = 0 -- Magazingröße vom Server (mit gekauftem "Großes Magazin")
 local reloading = false
 local synced = false -- erst schießen, wenn der Server die Munition gemeldet hat
 local mouseDown = false
@@ -102,8 +104,7 @@ local function requestReload()
 	if not synced or reloading or not current then
 		return
 	end
-	local cfg = WeaponConfig.Get(current)
-	if mag >= cfg.MagazineSize or reserve <= 0 then
+	if mag >= magSize or reserve <= 0 then
 		return
 	end
 	reloading = true
@@ -138,6 +139,7 @@ local function tryFire()
 
 	-- Leichter Rückstoß: nach oben, minimal zur Seite, beim Zielen etwas weniger
 	local recoil = (cfg.Recoil or 0) * (aiming and 0.7 or 1)
+		* (BuyConfig.Has(player, "Stability") and BuyConfig.StabilityFactor or 1)
 	recoilPitch = math.min(recoilPitch + recoil, 4)
 	recoilYaw += recoil * (math.random() - 0.5) * 0.6
 	kick = 1
@@ -272,12 +274,13 @@ function WeaponClient.Init()
 	end)
 
 	-- Server ist die Wahrheit für Munition und aktuelle Waffe
-	Remotes.AmmoUpdate.OnClientEvent:Connect(function(name, newMag, newReserve, isReloading)
+	Remotes.AmmoUpdate.OnClientEvent:Connect(function(name, newMag, newReserve, isReloading, newSize)
 		if name ~= current or not viewModel then
 			current = name
 			updateViewModel()
 		end
 		mag, reserve, reloading = newMag, newReserve, isReloading
+		magSize = newSize or WeaponConfig.Get(name).MagazineSize
 		synced = true
 		notifyAmmo()
 	end)

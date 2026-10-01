@@ -15,6 +15,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
+local BuyService = require(ServerStorage:WaitForChild("ServerShared").BuyService)
+local BuyConfig = require(Shared.BuyConfig)
 
 local DownedService = {}
 
@@ -123,6 +125,7 @@ local function revive(model, reviverModel)
 	local reviver = reviverModel and Players:GetPlayerFromCharacter(reviverModel)
 	if reviver then
 		ProgressService.AddXP(reviver, ProgressService.ActiveAgent(reviver), AgentConfig.XPRewards.Revive, "Wiederbelebung")
+		BuyService.AddMoney(reviver, BuyConfig.Rewards.Revive, "Wiederbelebung")
 	end
 end
 

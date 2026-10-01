@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
+local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
 
@@ -76,6 +77,32 @@ function HUD.Init(weaponClient)
 		BorderSizePixel = 0,
 	}, healthBack)
 	local healthText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "100", TextSize = 18 }, healthBack)
+
+	-- Rüstung (gekauft in Drop) als blauer Balken direkt über dem Leben
+	local armorBack = make("Frame", {
+		Position = UDim2.new(0, 20, 1, -58),
+		Size = UDim2.new(0, 250, 0, 6),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+		BackgroundTransparency = 0.3,
+		BorderSizePixel = 0,
+		Visible = false,
+	}, gui)
+	local armorFill = make("Frame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(80, 160, 255),
+		BorderSizePixel = 0,
+	}, armorBack)
+
+	-- Geld in Drop (über der Munition) und kurze Meldung "+200 $"
+	local moneyText = label({
+		Position = UDim2.new(1, -220, 1, -130),
+		Size = UDim2.new(0, 200, 0, 30),
+		Text = "",
+		TextSize = 22,
+		TextColor3 = Color3.fromRGB(120, 230, 140),
+		TextXAlignment = Enum.TextXAlignment.Right,
+		Visible = false,
+	}, gui)
 
 	-- Munition unten rechts
 	local ammoText = label({
@@ -198,6 +225,14 @@ function HUD.Init(weaponClient)
 		end
 		update()
 		humanoid.HealthChanged:Connect(update)
+
+		local function updateArmor()
+			local armor = character:GetAttribute("Armor") or 0
+			armorBack.Visible = armor > 0
+			armorFill.Size = UDim2.new(math.clamp(armor / BuyConfig.ArmorAmount, 0, 1), 0, 1, 0)
+		end
+		updateArmor()
+		character:GetAttributeChangedSignal("Armor"):Connect(updateArmor)
 	end
 	player.CharacterAdded:Connect(trackCharacter)
 	if player.Character then
@@ -374,6 +409,26 @@ function HUD.Init(weaponClient)
 			end
 			HUD.ShowAnnouncement(message)
 		end
+	end)
+
+	-- Geld (nur während eines Drop-Matches)
+	local function updateMoney()
+		local money = player:GetAttribute("Money")
+		moneyText.Visible = money ~= nil
+		moneyText.Text = money and ("💵 " .. money .. " $") or ""
+	end
+	updateMoney()
+	player:GetAttributeChangedSignal("Money"):Connect(updateMoney)
+	local moneyId = 0
+	Remotes.MoneyGain.OnClientEvent:Connect(function(amount, reason)
+		moneyId += 1
+		local myId = moneyId
+		moneyText.Text = "+" .. amount .. " $  ·  " .. tostring(reason)
+		task.delay(1.5, function()
+			if moneyId == myId then
+				updateMoney()
+			end
+		end)
 	end)
 
 	-- Große Meldungen

@@ -2,10 +2,13 @@
 -- Alle Agenten mit Werten, Waffen (Loadout) und Fähigkeit, dazu das Level-System.
 -- Fähigkeits-Typen: "Boost" (schneller), "Wall" (Deckungswand), "Heal" (Selbstheilung),
 -- "Reveal" (zeigt Gegner durch Wände)
+-- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
+-- "Sensor" (Mine, die vorbeilaufende Gegner markiert)
 
 local AgentConfig = {}
 
 AgentConfig.AbilityKey = Enum.KeyCode.Q
+AgentConfig.GadgetKey = Enum.KeyCode.G
 
 -- ---------- Level-System ----------
 AgentConfig.XPPerLevel = 500   -- XP pro Level
@@ -35,6 +38,7 @@ AgentConfig.Agents = {
 		Health = 90,
 		WalkSpeed = 18,
 		Loadout = { "SMG", "Pistol" },
+		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
 		Ability = {
 			Type = "Boost",
 			Name = "Adrenalin",
@@ -53,6 +57,7 @@ AgentConfig.Agents = {
 		Health = 125,
 		WalkSpeed = 15,
 		Loadout = { "Shotgun", "Revolver" },
+		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
 		Ability = {
 			Type = "Wall",
 			Name = "Schutzwand",
@@ -71,6 +76,7 @@ AgentConfig.Agents = {
 		Health = 100,
 		WalkSpeed = 16,
 		Loadout = { "Rifle", "Pistol" },
+		Gadget = { Type = "Smoke", Name = "Rauchgranate", Charges = 1, Radius = 14, Duration = 12, Fuse = 1.5 },
 		Ability = {
 			Type = "Heal",
 			Name = "Nano-Heilung",
@@ -89,6 +95,7 @@ AgentConfig.Agents = {
 		Health = 95,
 		WalkSpeed = 16,
 		Loadout = { "DMR", "Pistol" },
+		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
 		Ability = {
 			Type = "Reveal",
 			Name = "Radar-Puls",

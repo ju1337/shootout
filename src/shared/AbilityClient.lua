@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -63,10 +64,12 @@ function AbilityClient.Init()
 	keyLabel.TextSize = 20
 	keyLabel.TextColor3 = Color3.new(1, 1, 1)
 	keyLabel.Text = AgentConfig.AbilityKey.Name
+	keyLabel.Name = "Key"
 	keyLabel.Parent = box
 	Instance.new("UICorner").Parent = keyLabel
 
 	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Name = "Title"
 	nameLabel.Position = UDim2.new(0, 56, 0, 8)
 	nameLabel.Size = UDim2.new(1, -66, 0, 24)
 	nameLabel.BackgroundTransparency = 1
@@ -77,6 +80,7 @@ function AbilityClient.Init()
 	nameLabel.Parent = box
 
 	local stateLabel = Instance.new("TextLabel")
+	stateLabel.Name = "State"
 	stateLabel.Position = UDim2.new(0, 56, 0, 32)
 	stateLabel.Size = UDim2.new(1, -66, 0, 20)
 	stateLabel.BackgroundTransparency = 1
@@ -100,9 +104,38 @@ function AbilityClient.Init()
 		end
 	end)
 
+	-- Gadget-Box links neben der Fähigkeit
+	local gadgetBox = box:Clone()
+	gadgetBox.Position = UDim2.new(0.5, -250, 1, -24)
+	gadgetBox.Size = UDim2.new(0, 220, 0, 62)
+	gadgetBox.Parent = gui
+	gadgetBox.Key.Text = AgentConfig.GadgetKey.Name
+	gadgetBox:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(255, 140, 40)
+	local gadgetName, gadgetCount = gadgetBox.Title, gadgetBox.State
+
+	-- Weißer Blitz beim Geblendet-werden
+	local flash = Instance.new("Frame")
+	flash.Size = UDim2.new(1, 0, 1, 0)
+	flash.BackgroundColor3 = Color3.new(1, 1, 1)
+	flash.BackgroundTransparency = 1
+	flash.ZIndex = 10
+	flash.Parent = gui
+	Remotes.Flash.OnClientEvent:Connect(function(duration)
+		flash.BackgroundTransparency = 0
+		-- Erst voll weiß halten, dann langsam ausblenden
+		task.delay(duration * 0.4, function()
+			TweenService:Create(flash, TweenInfo.new(duration * 0.6), { BackgroundTransparency = 1 }):Play()
+		end)
+	end)
+
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == AgentConfig.AbilityKey and Modes.IsFighting(player) then
+		if processed or not Modes.IsFighting(player) then
+			return
+		end
+		if input.KeyCode == AgentConfig.AbilityKey then
 			Remotes.UseAbility:FireServer()
+		elseif input.KeyCode == AgentConfig.GadgetKey then
+			Remotes.UseGadget:FireServer(workspace.CurrentCamera.CFrame.LookVector)
 		end
 	end)
 
@@ -117,6 +150,10 @@ function AbilityClient.Init()
 		agentLabel.TextColor3 = agent.Color
 		nameLabel.Text = agent.Ability.Name
 		stroke.Color = agent.Color
+		local charges = player:GetAttribute("Gadgets") or 0
+		gadgetName.Text = agent.Gadget.Name
+		gadgetCount.Text = charges > 0 and ("× " .. charges) or "aufgebraucht"
+		gadgetCount.TextColor3 = charges > 0 and Color3.fromRGB(110, 220, 120) or Color3.fromRGB(170, 175, 190)
 
 		local now = workspace:GetServerTimeNow()
 		local activeLeft = (player:GetAttribute("AbilityActiveUntil") or 0) - now

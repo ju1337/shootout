@@ -19,6 +19,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local GameSettings = require(Shared.GameSettings)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentFigure = require(Shared.AgentFigure)
+local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
 
@@ -38,6 +39,9 @@ local timerLabel, timeBar, modeLabel, roundLabel, scoreFrame, teamFrame, confirm
 local viewport, viewportCamera, figure, accent
 local infoName, infoRole, infoLevel, infoBar, infoStats, infoWeapons, infoAbility, infoAbilityText
 local tiles = {}           -- [agent] = { Button, Stroke }
+local buyCards = {}        -- [item] = { Button, State }
+local bottomButtons = {}   -- ["Agents"/"Shop"] = Button
+local agentArea, shopArea, moneyLabel, buyStatus
 local tabButtons = {}      -- [role] = Button
 local currentRole = "ALLE"
 local previewAgent = nil   -- Agent in der 3D-Ansicht (Maus über Kachel oder gewählter)
@@ -260,6 +264,55 @@ local function buildBottom()
 		tiles[agent] = { Button = tile, Stroke = stroke, Level = level }
 	end
 
+	-- Bereich AGENTEN (Tabs + Kacheln) und Bereich AUSRÜSTUNG (Kaufphase), umschaltbar
+	agentArea = { tabs, grid }
+	shopArea = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 670),
+		Size = UDim2.new(0, barWidth, 0, 130), BackgroundTransparency = 1, Visible = false }, canvas)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 15),
+		SortOrder = Enum.SortOrder.LayoutOrder }, shopArea)
+	for i, item in BuyConfig.Items do
+		local card = make("TextButton", { Size = UDim2.new(0, 200, 1, 0), BackgroundColor3 = Color3.fromRGB(18, 22, 32),
+			BorderSizePixel = 0, Text = "", AutoButtonColor = true, LayoutOrder = i }, shopArea)
+		make("UICorner", { CornerRadius = UDim.new(0, 8) }, card)
+		make("UIStroke", { Color = Color3.fromRGB(60, 65, 80), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
+		text({ Position = UDim2.new(0, 12, 0, 10), Size = UDim2.new(1, -24, 0, 22), Text = item.Name, TextSize = 17 }, card)
+		text({ Position = UDim2.new(0, 12, 0, 34), Size = UDim2.new(1, -24, 0, 44), Text = item.Description,
+			TextSize = 13, Font = Enum.Font.Gotham, TextColor3 = GRAY, TextWrapped = true,
+			TextYAlignment = Enum.TextYAlignment.Top }, card)
+		local state = text({ Position = UDim2.new(0, 12, 1, -36), Size = UDim2.new(1, -24, 0, 26), Text = "",
+			TextSize = 17, Font = Enum.Font.GothamBlack }, card)
+		card.Activated:Connect(function()
+			Remotes.Buy:FireServer(item.Id)
+		end)
+		buyCards[item] = { Button = card, State = state }
+	end
+
+	local function showBottom(name)
+		for _, part in agentArea do
+			part.Visible = name == "Agents"
+		end
+		shopArea.Visible = name == "Shop"
+		for buttonName, b in bottomButtons do
+			b.BackgroundColor3 = buttonName == name and CYAN or Color3.fromRGB(18, 22, 32)
+			b.TextColor3 = buttonName == name and Color3.fromRGB(10, 20, 30) or Color3.new(1, 1, 1)
+		end
+	end
+	for i, entry in { { "Agents", "AGENTEN" }, { "Shop", "AUSRÜSTUNG" } } do
+		local b = make("TextButton", { Position = UDim2.new(0.5, -530 + (i - 1) * 180, 0, 626), Size = UDim2.new(0, 170, 0, 34),
+			BorderSizePixel = 0, Font = Enum.Font.GothamBlack, TextSize = 15, Text = entry[2], ZIndex = 3 }, canvas)
+		make("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
+		b.Activated:Connect(function()
+			showBottom(entry[1])
+		end)
+		bottomButtons[entry[1]] = b
+	end
+	buyStatus = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 90, 0, 632), Size = UDim2.new(0, 400, 0, 22),
+		Text = "", TextSize = 15, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, canvas)
+	moneyLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(0.5, 530, 0, 626), Size = UDim2.new(0, 220, 0, 34),
+		Text = "", TextSize = 24, Font = Enum.Font.GothamBlack, TextColor3 = Color3.fromRGB(120, 230, 140),
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, canvas)
+	showBottom("Agents")
+
 	confirmButton = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 822),
 		Size = UDim2.new(0, 320, 0, 50), BackgroundColor3 = RED, BorderSizePixel = 0, Font = Enum.Font.GothamBlack,
 		TextSize = 22, TextColor3 = Color3.new(1, 1, 1), Text = "AGENT BESTÄTIGEN" }, canvas)
@@ -465,6 +518,23 @@ local function update()
 		confirmButton.BackgroundColor3 = RED
 	end
 
+	-- Kaufphase: Geld und Kartenzustand
+	local money = player:GetAttribute("Money")
+	moneyLabel.Text = money and ("💵 " .. money .. " $") or ""
+	local canBuy = phase == "Select" or phase == "Countdown"
+	for item, entry in buyCards do
+		if BuyConfig.Has(player, item.Id) then
+			entry.State.Text = "GEKAUFT ✓"
+			entry.State.TextColor3 = Color3.fromRGB(120, 230, 140)
+		elseif not canBuy or money == nil then
+			entry.State.Text = item.Price .. " $  ·  vor der Runde"
+			entry.State.TextColor3 = GRAY
+		else
+			entry.State.Text = item.Price .. " $"
+			entry.State.TextColor3 = money >= item.Price and Color3.new(1, 1, 1) or Color3.fromRGB(255, 110, 110)
+		end
+	end
+
 	showPreview(hoverAgent or myAgent())
 	refreshTiles()
 	updateTeam()
@@ -473,6 +543,12 @@ end
 
 function AgentSelect.Init()
 	build()
+
+	-- Rückmeldung beim Kaufen
+	Remotes.ShopStatus.OnClientEvent:Connect(function(message, success)
+		buyStatus.Text = message
+		buyStatus.TextColor3 = success and Color3.fromRGB(120, 230, 140) or Color3.fromRGB(255, 120, 120)
+	end)
 
 	-- Neu im Drop: erst wählen
 	player:GetAttributeChangedSignal("Mode"):Connect(function()

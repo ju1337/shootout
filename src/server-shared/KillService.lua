@@ -12,6 +12,8 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local WeaponService = require(ServerShared.WeaponService)
 local ProgressService = require(ServerShared.ProgressService)
 local DownedService = require(ServerShared.DownedService)
+local BuyService = require(ServerShared.BuyService)
+local BuyConfig = require(ReplicatedStorage:WaitForChild("Shared").BuyConfig)
 
 local KillService = {}
 
@@ -83,6 +85,7 @@ function KillService.Init()
 			local rewards = AgentConfig.XPRewards
 			ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer),
 				rewards.Kill + (headshot and rewards.Headshot or 0), headshot and "Kopfschuss-Kill" or "Kill")
+			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur im laufenden Drop-Match
 		end
 		-- Killfeed nur an Spieler im selben Modus
 		local mode = killer:GetAttribute("Mode")

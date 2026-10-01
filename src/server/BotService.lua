@@ -19,6 +19,7 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
 local DownedService = require(ServerShared.DownedService)
+local GadgetService = require(ServerShared.GadgetService)
 
 local BotService = {}
 
@@ -29,6 +30,7 @@ local KEEP_DISTANCE = 30     -- ab hier bleibt der Bot stehen und weicht seitlic
 local VIEW_RANGE = 250       -- so weit sieht ein Bot
 local WANDER_RADIUS = 60     -- ohne Gegner: zufällig um die Mapmitte laufen
 local HELP_RADIUS = 80       -- so weit laufen Bots zu niedergeschlagenen Teamkollegen
+local GADGET_CHANCE = 0.04   -- Chance pro KI-Schritt, ein Gadget auf einen sichtbaren Gegner zu werfen
 
 -- Standard-Animationen von Roblox (R15)
 local ANIMATIONS = {
@@ -173,7 +175,7 @@ local function canSee(bot, fromPos, model)
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { bot.Model }
 	local result = workspace:Raycast(fromPos, head.Position - fromPos, params)
-	return result ~= nil and result.Instance:IsDescendantOf(model)
+	return result ~= nil and result.Instance:IsDescendantOf(model) and not GadgetService.BlocksSight(fromPos, head.Position)
 end
 
 -- ---------- Schießen ----------
@@ -278,7 +280,14 @@ local function runAI(bot, model)
 			-- Schießen (Reaktionszeit, Feuerrate, Magazin)
 			local ready = now - seenSince >= REACTION_TIME and now >= reloadUntil
 				and now - lastShot >= cfg.FireDelay and targetDistance <= cfg.Range
-			if bot.CanFight and ready then
+			local blinded = (model:GetAttribute("BlindedUntil") or 0) > now
+			-- Ab und zu ein Gadget werfen (mittlere Entfernung)
+			if bot.CanFight and not blinded and targetDistance > 15 and targetDistance < 60
+				and random:NextNumber() < GADGET_CHANCE then
+				local aim = (targetPosition - head.Position).Unit + Vector3.new(0, 0.15, 0)
+				GadgetService.BotThrow(bot, aim)
+			end
+			if bot.CanFight and ready and not blinded then
 				lastShot = now
 				shoot(bot, head, target, weaponName)
 				shotsInMagazine += 1
@@ -404,6 +413,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 
 	bot.Model = model
 	bot.Alive = true
+	bot.GadgetCharges = (agent.Gadget and agent.Gadget.Charges) or 0
 	humanoid.Died:Connect(function()
 		if bot.Model == model then
 			bot.Alive = false

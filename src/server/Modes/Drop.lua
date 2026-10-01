@@ -23,6 +23,8 @@ local ProgressService = require(ServerShared.ProgressService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
 local DownedService = require(ServerShared.DownedService)
+local BuyService = require(ServerShared.BuyService)
+local BuyConfig = require(Shared.BuyConfig)
 
 local Drop = {}
 
@@ -235,10 +237,14 @@ local function spawnTeamBots(team)
 			i += 1
 			local position = MAP_CENTER + Vector3.new(sideOf(team) * (SIDE_DISTANCE + 10), 4, (i - 3) * ROW_SPACING)
 			local lookAt = MAP_CENTER + Vector3.new(0, 4, position.Z - MAP_CENTER.Z)
-			BotService.SpawnModel(bot, CFrame.lookAt(position, lookAt), function()
+			local model = BotService.SpawnModel(bot, CFrame.lookAt(position, lookAt), function()
 				updateInfo()
 				checkRoundEnd()
 			end)
+			-- Bots "kaufen" zufällig Rüstung
+			if model and math.random() < 0.5 then
+				model:SetAttribute("Armor", BuyConfig.ArmorAmount)
+			end
 		end
 	end
 end
@@ -326,6 +332,9 @@ local function playRound()
 	setCanFight(false)
 	setPhase("RoundEnd")
 	setLocked(false) -- nächste Agentenwahl ist wieder frei
+	for player in members do
+		BuyService.EndRound(player) -- Rüstung und Extra-Gadget verfallen
+	end
 
 	if resetRequested then
 		resetRequested = false
@@ -341,6 +350,14 @@ local function playRound()
 		giveTeamXP(roundWinner, "RoundWin", "Rundensieg")
 	else
 		announce(practiceRound and "Übungsrunde vorbei" or "Unentschieden!")
+	end
+	-- Geld für die nächste Kaufphase: Sieger mehr, Verlierer etwas weniger
+	for player in members do
+		if roundWinner and player.Team == roundWinner then
+			BuyService.AddMoney(player, BuyConfig.Rewards.RoundWin, "Rundensieg")
+		else
+			BuyService.AddMoney(player, BuyConfig.Rewards.RoundLoss, "Runde verloren")
+		end
 	end
 	updateInfo()
 	publishScore()
@@ -369,6 +386,9 @@ local function matchLoop()
 			end
 			matchStarted = true
 			roundNumber = 0
+			for player in members do
+				BuyService.StartMatch(player) -- Startgeld, Käufe zurücksetzen
+			end
 		end
 
 		if count() == 0 then
@@ -462,6 +482,9 @@ function Drop.AddPlayer(player)
 	player.Team = teamSize(red) <= teamSize(blue) and red or blue
 	player:SetAttribute("DropPhase", phase)
 	player:SetAttribute("AgentLocked", false)
+	if matchStarted then
+		BuyService.StartMatch(player) -- später dazugekommen: Startgeld
+	end
 	-- Ohne Charakter: Agentenwahl-Bildschirm bzw. Zuschauen bis zur nächsten Runde
 	if player.Character then
 		player.Character:Destroy()
@@ -506,6 +529,7 @@ function Drop.RemovePlayer(player)
 	player.Team = nil
 	player:SetAttribute("DropPhase", nil)
 	player:SetAttribute("AgentLocked", nil)
+	BuyService.Clear(player)
 	if roundActive then
 		updateInfo()
 		checkRoundEnd()

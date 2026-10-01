@@ -15,6 +15,7 @@ local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
+local BuyConfig = require(Shared.BuyConfig)
 local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
 
 local WeaponService = {}
@@ -46,7 +47,9 @@ local function newState(player)
 	}
 	for _, name in loadout do
 		local cfg = WeaponConfig.Get(name)
-		state.Ammo[name] = { Mag = cfg.MagazineSize, Reserve = cfg.ReserveAmmo }
+		-- Gekauftes "Großes Magazin" (Drop) vergrößert jedes Magazin
+		local size = math.floor(cfg.MagazineSize * (BuyConfig.Has(player, "Mag") and BuyConfig.MagFactor or 1))
+		state.Ammo[name] = { Mag = size, Reserve = cfg.ReserveAmmo, Size = size }
 	end
 	return state
 end
@@ -58,7 +61,7 @@ local function sendAmmo(player)
 		return
 	end
 	local ammo = state.Ammo[state.Current]
-	Remotes.AmmoUpdate:FireClient(player, state.Current, ammo.Mag, ammo.Reserve, state.Reloading)
+	Remotes.AmmoUpdate:FireClient(player, state.Current, ammo.Mag, ammo.Reserve, state.Reloading, ammo.Size)
 end
 
 -- Waffe in der Hand des Charakters anzeigen (für andere Spieler sichtbar)
@@ -194,6 +197,7 @@ local function onFire(player, origin, direction, aiming)
 	ammo.Mag -= 1
 
 	local spreadAngle = (cfg.Spread or 0) * (aiming == true and WeaponConfig.AimSpreadFactor or 1)
+		* (BuyConfig.Has(player, "Stability") and BuyConfig.StabilityFactor or 1)
 	-- Treffer pro Ziel zusammenfassen (Schrotflinte: eine Schadenszahl statt acht)
 	local hits = {}
 	for _ = 1, cfg.Pellets or 1 do
@@ -229,7 +233,7 @@ local function onReload(player)
 	local weaponName = state.Current
 	local cfg = WeaponConfig.Get(weaponName)
 	local ammo = state.Ammo[weaponName]
-	if ammo.Mag >= cfg.MagazineSize or ammo.Reserve <= 0 then
+	if ammo.Mag >= ammo.Size or ammo.Reserve <= 0 then
 		return
 	end
 
@@ -238,12 +242,13 @@ local function onReload(player)
 	local myId = state.ReloadId
 	sendAmmo(player)
 
-	task.delay(cfg.ReloadTime, function()
+	local reloadTime = cfg.ReloadTime * (BuyConfig.Has(player, "Reload") and BuyConfig.ReloadFactor or 1)
+	task.delay(reloadTime, function()
 		-- Abbruch bei Waffenwechsel, Tod oder neuem Zustand
 		if states[player] ~= state or state.ReloadId ~= myId then
 			return
 		end
-		local take = math.min(cfg.MagazineSize - ammo.Mag, ammo.Reserve)
+		local take = math.min(ammo.Size - ammo.Mag, ammo.Reserve)
 		ammo.Mag += take
 		ammo.Reserve -= take
 		state.Reloading = false
@@ -284,6 +289,11 @@ local function setupPlayer(player)
 	if player.Character then
 		task.spawn(onCharacter, player.Character)
 	end
+end
+
+-- Kill von außerhalb melden (z.B. Granate), läuft wie ein Waffen-Kill
+function WeaponService.ReportKill(killer, victim, weaponName, headshot, victimName)
+	killedEvent:Fire(killer, victim, weaponName, headshot, victimName)
 end
 
 function WeaponService.Init()
