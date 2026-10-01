@@ -1,0 +1,27 @@
+-- ClientMain (LocalScript)
+-- Startet alle Client-Module. Sie reagieren selbst auf den aktuellen Modus (Hub, Free-for-All, Drop).
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Movement = require(Shared.Movement)
+local WeaponClient = require(Shared.WeaponClient)
+local HUD = require(Shared.HUD)
+local GameMenu = require(Shared.GameMenu)
+local AbilityClient = require(Shared.AbilityClient)
+local Glide = require(script.Parent:WaitForChild("Glide"))
+local Spectator = require(script.Parent:WaitForChild("Spectator"))
+local AgentSelect = require(script.Parent:WaitForChild("AgentSelect"))
+local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
+local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
+
+Movement.Init()
+WeaponClient.Init()
+HUD.Init(WeaponClient)
+GameMenu.Init()
+AbilityClient.Init()
+Glide.Init()
+Spectator.Init()
+AgentSelect.Init()
+SideMenu.Init()
+task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

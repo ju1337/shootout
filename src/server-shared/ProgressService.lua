@@ -1,0 +1,209 @@
+-- ProgressService (ModuleScript, nur Server)
+-- Alle gespeicherten Spielerdaten: XP pro Agent, Münzen, gekaufte und ausgerüstete Skins,
+-- tägliche Belohnung und eingelöste Codes. Gespeichert im DataStore (funktioniert erst, wenn
+-- das Spiel veröffentlicht ist und in Studio "API Services" erlaubt sind - sonst nur für die Sitzung).
+-- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON), Equipped (JSON), LastDaily
+
+local Players = game:GetService("Players")
+local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Remotes = require(Shared.Remotes)
+local AgentConfig = require(Shared.AgentConfig)
+local GameSettings = require(Shared.GameSettings)
+local Cosmetics = require(Shared.Cosmetics)
+
+local ProgressService = {}
+
+local AUTOSAVE_INTERVAL = 120 -- Sekunden
+
+local store = nil
+local profiles = {} -- [Player] = Profil
+local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
+
+local function defaultProfile()
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {} }
+end
+
+-- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
+local function toProfile(data)
+	local profile = defaultProfile()
+	if type(data) ~= "table" then
+		return profile
+	end
+	if data.XP == nil then
+		for _, agent in AgentConfig.Agents do
+			profile.XP[agent.Id] = tonumber(data[agent.Id]) or 0
+		end
+		return profile
+	end
+	for key, value in data do
+		profile[key] = value
+	end
+	return profile
+end
+
+-- Profil als Attribute an den Spieler hängen (damit Client und andere Skripte es lesen können)
+function ProgressService.Sync(player)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	for _, agent in AgentConfig.Agents do
+		player:SetAttribute("XP_" .. agent.Id, profile.XP[agent.Id] or 0)
+	end
+	player:SetAttribute("Coins", profile.Coins)
+	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
+	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
+	player:SetAttribute("LastDaily", profile.LastDaily)
+end
+
+function ProgressService.Get(player)
+	return profiles[player]
+end
+
+local function key(player)
+	return "u" .. player.UserId
+end
+
+local function load(player)
+	profiles[player] = defaultProfile()
+	ProgressService.Sync(player)
+	if not store then
+		return
+	end
+	local ok, result = pcall(store.GetAsync, store, key(player))
+	if ok then
+		profiles[player] = toProfile(result)
+		loaded[player] = true
+		ProgressService.Sync(player)
+	else
+		warn("Spielerdaten konnten nicht geladen werden: " .. tostring(result))
+	end
+end
+
+local function save(player)
+	local profile = profiles[player]
+	if not store or not loaded[player] or not profile then
+		return
+	end
+	local ok, err = pcall(store.SetAsync, store, key(player), profile)
+	if not ok then
+		warn("Spielerdaten konnten nicht gespeichert werden: " .. tostring(err))
+	end
+end
+
+-- Agent, mit dem der Spieler gerade spielt (sonst der gewählte)
+function ProgressService.ActiveAgent(player)
+	local character = player.Character
+	return (character and character:GetAttribute("Agent")) or player:GetAttribute("Agent") or AgentConfig.Agents[1].Id
+end
+
+-- ---------- Münzen ----------
+
+function ProgressService.AddCoins(player, amount)
+	local profile = profiles[player]
+	if not profile or amount <= 0 then
+		return
+	end
+	profile.Coins += math.floor(amount)
+	ProgressService.Sync(player)
+end
+
+-- Gibt true zurück, wenn genug Münzen da waren
+function ProgressService.SpendCoins(player, amount)
+	local profile = profiles[player]
+	if not profile or profile.Coins < amount then
+		return false
+	end
+	profile.Coins -= amount
+	ProgressService.Sync(player)
+	return true
+end
+
+-- ---------- Skins ----------
+
+function ProgressService.Owns(player, itemId)
+	local profile = profiles[player]
+	return profile ~= nil and profile.Owned[itemId] == true
+end
+
+function ProgressService.GiveItem(player, itemId)
+	local profile = profiles[player]
+	if profile then
+		profile.Owned[itemId] = true
+		ProgressService.Sync(player)
+	end
+end
+
+-- slot = "W:<Waffe>" oder "A:<Agent>", itemId = nil zum Ablegen
+function ProgressService.SetEquipped(player, slot, itemId)
+	local profile = profiles[player]
+	if profile then
+		profile.Equipped[slot] = itemId
+		ProgressService.Sync(player)
+	end
+end
+
+-- ---------- XP ----------
+
+-- XP für einen Agenten vergeben (+ Münzen, außer bei Admin-XP). reason wird angezeigt.
+function ProgressService.AddXP(player, agentId, amount, reason)
+	local profile = profiles[player]
+	if not profile or not AgentConfig.Get(agentId) then
+		return
+	end
+	amount = math.floor(amount * GameSettings.Get("XPMultiplier"))
+	if amount <= 0 then
+		return
+	end
+	local before = profile.XP[agentId] or 0
+	local maxXP = AgentConfig.XPPerLevel * (AgentConfig.MaxLevel - 1)
+	local after = math.min(before + amount, maxXP)
+	profile.XP[agentId] = after
+
+	local coins = reason ~= "Admin" and math.floor(amount * Cosmetics.CoinsPerXP) or 0
+	profile.Coins += coins
+	ProgressService.Sync(player)
+
+	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
+	Remotes.XPGain:FireClient(player, after - before, reason, agentId, levelUp, coins)
+end
+
+function ProgressService.Init()
+	local ok, result = pcall(function()
+		return DataStoreService:GetDataStore("PlayerData_v1")
+	end)
+	if ok then
+		store = result
+	else
+		warn("DataStore nicht verfügbar, Fortschritt wird nicht gespeichert: " .. tostring(result))
+	end
+
+	Players.PlayerAdded:Connect(load)
+	for _, player in Players:GetPlayers() do
+		task.spawn(load, player)
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		save(player)
+		profiles[player] = nil
+		loaded[player] = nil
+	end)
+	game:BindToClose(function()
+		for _, player in Players:GetPlayers() do
+			save(player)
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(AUTOSAVE_INTERVAL)
+			for _, player in Players:GetPlayers() do
+				task.spawn(save, player)
+			end
+		end
+	end)
+end
+
+return ProgressService

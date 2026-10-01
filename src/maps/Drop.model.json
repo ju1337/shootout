@@ -1,0 +1,10465 @@
+{
+ "ClassName": "Model",
+ "Children": [
+  {
+   "Name": "Ground",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Ground",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       430,
+       4,
+       330
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         -2,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3333,
+       0.5098,
+       0.2353
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Road",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       220,
+       0.2,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         0.1,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2549
+      ],
+      "Material": "Asphalt",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Road",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       0.2,
+       220
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         0.1,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2549
+      ],
+      "Material": "Asphalt",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BasePad",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       60,
+       0.4,
+       110
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1335,
+         0.2,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5098
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BasePad",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       60,
+       0.4,
+       110
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1665,
+         0.2,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5098
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Border",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "WallNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       426,
+       5,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         2.5,
+         161.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.451,
+       0.4118
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       426,
+       400,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         200.0,
+         161.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       426,
+       5,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         2.5,
+         -161.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.451,
+       0.4118
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       426,
+       400,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         200.0,
+         -161.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       5,
+       320
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1711.5,
+         2.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.451,
+       0.4118
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       400,
+       320
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1711.5,
+         200.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       5,
+       320
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1288.5,
+         2.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.451,
+       0.4118
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       400,
+       320
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1288.5,
+         200.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Buildings",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Bunker-1_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1308.5,
+         5.0,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1321.5,
+         5.0,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1315,
+         9.5,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1308.5,
+         5.0,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1321.5,
+         5.0,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1315,
+         9.5,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       11.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1324.5,
+         5.0,
+         -8.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       11.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1324.5,
+         5.0,
+         8.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1324.5,
+         9.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1305.5,
+         5.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.2745,
+       0.2745
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       21,
+       1,
+       31
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1315,
+         10.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker-1_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       0.2,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1315,
+         0.1,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1678.5,
+         5.0,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1691.5,
+         5.0,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1685,
+         9.5,
+         14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1678.5,
+         5.0,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1691.5,
+         5.0,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1685,
+         9.5,
+         -14.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1694.5,
+         5.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       11.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1675.5,
+         5.0,
+         -8.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       11.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1675.5,
+         5.0,
+         8.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1675.5,
+         9.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.3922,
+       0.6667
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       21,
+       1,
+       31
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1685,
+         10.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Bunker1_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       0.2,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1685,
+         0.1,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1437.5,
+         6.0,
+         -45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1452.5,
+         6.0,
+         -45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       3,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         10.5,
+         -45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         6.0,
+         -64.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1456.5,
+         6.0,
+         -61.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1456.5,
+         6.0,
+         -49.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       3,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1456.5,
+         10.5,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1433.5,
+         6.0,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       25,
+       1,
+       21
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         12.5,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House0_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       0.2,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         0.1,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         6.0,
+         64.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1547.5,
+         6.0,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1562.5,
+         6.0,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       3,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         10.5,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1566.5,
+         6.0,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1543.5,
+         6.0,
+         49.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1543.5,
+         6.0,
+         61.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       3,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1543.5,
+         10.5,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       25,
+       1,
+       21
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         12.5,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House1_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       0.2,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         0.1,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         6.0,
+         65.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1438.0,
+         6.0,
+         44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1452.0,
+         6.0,
+         44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       3,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         10.5,
+         44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       7.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1455.5,
+         6.0,
+         48.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       7.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1455.5,
+         6.0,
+         61.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       3,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1455.5,
+         10.5,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1434.5,
+         6.0,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       23,
+       1,
+       23
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         12.5,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House2_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       20,
+       0.2,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1445,
+         0.1,
+         55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1548.0,
+         6.0,
+         -44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.0,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1562.0,
+         6.0,
+         -44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       3,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         10.5,
+         -44.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       12,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         6.0,
+         -65.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1565.5,
+         6.0,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       7.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1544.5,
+         6.0,
+         -61.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       12,
+       7.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1544.5,
+         6.0,
+         -48.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       3,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1544.5,
+         10.5,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       23,
+       1,
+       23
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         12.5,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House3_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       20,
+       0.2,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1555,
+         0.1,
+         -55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1491.0,
+         7.0,
+         -86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1509.0,
+         7.0,
+         -86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       5,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         11.5,
+         -86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         7.0,
+         -103.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       14,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1514.5,
+         7.0,
+         -95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       14,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1485.5,
+         7.0,
+         -95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.6275,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       31,
+       1,
+       19
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         14.5,
+         -95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House4_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       28,
+       0.2,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         0.1,
+         -95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         7.0,
+         103.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1491.0,
+         7.0,
+         86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       14,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1509.0,
+         7.0,
+         86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       5,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         11.5,
+         86.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       14,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1514.5,
+         7.0,
+         95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       14,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1485.5,
+         7.0,
+         95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.3922,
+       0.3137
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       31,
+       1,
+       19
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         14.5,
+         95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House5_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       28,
+       0.2,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         0.1,
+         95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       11,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1400,
+         5.5,
+         -13.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       11,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1400,
+         5.5,
+         -36.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1408.5,
+         5.5,
+         -32.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1408.5,
+         5.5,
+         -18.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       2,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1408.5,
+         10.0,
+         -25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1391.5,
+         5.5,
+         -32.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1391.5,
+         5.5,
+         -18.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       2,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1391.5,
+         10.0,
+         -25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.7451,
+       0.6667
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       1,
+       25
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1400,
+         11.5,
+         -25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House6_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       16,
+       0.2,
+       22
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1400,
+         0.1,
+         -25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       11,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1600,
+         5.5,
+         36.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       11,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1600,
+         5.5,
+         13.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1608.5,
+         5.5,
+         18.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1608.5,
+         5.5,
+         32.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       2,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1608.5,
+         10.0,
+         25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1591.5,
+         5.5,
+         18.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       11,
+       8.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1591.5,
+         5.5,
+         32.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       2,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1591.5,
+         10.0,
+         25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.5098,
+       0.4706
+      ],
+      "Material": "Brick",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       1,
+       25
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1600,
+         11.5,
+         25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.2353,
+       0.2157
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "House7_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       16,
+       0.2,
+       22
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1600,
+         0.1,
+         25
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower0",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       16,
+       28,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1475,
+         14.0,
+         -30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.6275
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower0_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17,
+       1,
+       17
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1475,
+         28.5,
+         -30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3529,
+       0.3725
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower1",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       16,
+       24,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1525,
+         12.0,
+         30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.6275
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower1_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17,
+       1,
+       17
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1525,
+         24.5,
+         30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3529,
+       0.3725
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower2",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       18,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1470,
+         9.0,
+         28
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.6275
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower2_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       15,
+       1,
+       15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1470,
+         18.5,
+         28
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3529,
+       0.3725
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower3",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       20,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1530,
+         10.0,
+         -28
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.6275
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Tower3_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       15,
+       1,
+       15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1530,
+         20.5,
+         -28
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3529,
+       0.3725
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Cover",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1360,
+         1.75,
+         -40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1360,
+         1.75,
+         -15
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1360,
+         1.75,
+         15
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1360,
+         1.75,
+         40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1345,
+         2.5,
+         -30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1345,
+         2.5,
+         -24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1345,
+         2.5,
+         30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1345,
+         2.5,
+         35.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1640,
+         1.75,
+         -40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1640,
+         1.75,
+         -15
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1640,
+         1.75,
+         15
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       3.5,
+       10
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1640,
+         1.75,
+         40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.549,
+       0.4314
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1655,
+         2.5,
+         -30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1655,
+         2.5,
+         -24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1655,
+         2.5,
+         30
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1655,
+         2.5,
+         35.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1488,
+         2.5,
+         20
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1512,
+         2.5,
+         -20
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1420,
+         2.5,
+         10
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1580,
+         2.5,
+         -10
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1520,
+         2.5,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1480,
+         2.5,
+         -75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1570,
+         2.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1430,
+         2.5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       6,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         3.0,
+         40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       6,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1500,
+         3.0,
+         -40
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       6,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1540,
+         3.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       6,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1460,
+         3.0,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       6,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1415,
+         3.0,
+         60
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       6,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1585,
+         3.0,
+         -60
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Nature",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.679,
+       4.676,
+       8.015
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1560.374,
+         1.67,
+         -128.269
+        ],
+        "orientation": [
+         [
+          0.934328,
+          -0.002425,
+          0.356406
+         ],
+         [
+          -0.014111,
+          0.998941,
+          0.043789
+         ],
+         [
+          -0.356134,
+          -0.045942,
+          0.933305
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.547,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1327.942,
+         6.274,
+         -122.786
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.307,
+       12.307,
+       12.307
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1327.942,
+         16.65,
+         -122.786
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       13.463,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1550.973,
+         6.731,
+         134.313
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.587,
+       10.587,
+       10.587
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1550.973,
+         16.992,
+         134.313
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.195,
+       5.036,
+       8.633
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1372.291,
+         1.799,
+         24.48
+        ],
+        "orientation": [
+         [
+          -0.944236,
+          -0.145234,
+          -0.295508
+         ],
+         [
+          -0.138868,
+          0.989397,
+          -0.042538
+         ],
+         [
+          0.298553,
+          0.00087,
+          -0.954393
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.465,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1617.752,
+         5.732,
+         59.698
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.298,
+       11.298,
+       11.298
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1617.752,
+         15.23,
+         59.698
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.845,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1635.987,
+         6.422,
+         133.404
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.657,
+       11.657,
+       11.657
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1635.987,
+         16.73,
+         133.404
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.11,
+       5.677,
+       9.732
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1558.852,
+         2.027,
+         147.929
+        ],
+        "orientation": [
+         [
+          -0.752085,
+          0.044327,
+          0.657574
+         ],
+         [
+          0.00936,
+          0.998353,
+          -0.056594
+         ],
+         [
+          -0.658999,
+          -0.036409,
+          -0.751262
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       14.916,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1519.776,
+         7.458,
+         115.015
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.456,
+       12.456,
+       12.456
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1519.776,
+         19.068,
+         115.015
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.746,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1443.508,
+         7.873,
+         115.258
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.604,
+       9.604,
+       9.604
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1443.508,
+         18.948,
+         115.258
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.167,
+       3.617,
+       6.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1370.487,
+         1.292,
+         -80.413
+        ],
+        "orientation": [
+         [
+          -0.844362,
+          -0.070088,
+          -0.531169
+         ],
+         [
+          -0.079943,
+          0.99679,
+          -0.004447
+         ],
+         [
+          0.529775,
+          0.038708,
+          -0.847254
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.397,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1570.48,
+         7.699,
+         -133.802
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.12,
+       12.12,
+       12.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1570.48,
+         19.437,
+         -133.802
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.253,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1324.899,
+         5.626,
+         -129.796
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.649,
+       9.649,
+       9.649
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1324.899,
+         14.469,
+         -129.796
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.001,
+       2.801,
+       4.801
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1436.021,
+         1.0,
+         -134.227
+        ],
+        "orientation": [
+         [
+          0.802664,
+          0.038243,
+          0.595204
+         ],
+         [
+          -0.119433,
+          0.988035,
+          0.097579
+         ],
+         [
+          -0.584351,
+          -0.14941,
+          0.797628
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.796,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1639.575,
+         6.398,
+         147.931
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.935,
+       10.935,
+       10.935
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1639.575,
+         16.441,
+         147.931
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.056,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1334.354,
+         6.028,
+         -119.344
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.059,
+       10.059,
+       10.059
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1334.354,
+         15.409,
+         -119.344
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.641,
+       4.648,
+       7.969
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1517.269,
+         1.66,
+         -141.887
+        ],
+        "orientation": [
+         [
+          0.651849,
+          -0.044712,
+          -0.757029
+         ],
+         [
+          -0.058084,
+          0.992384,
+          -0.108626
+         ],
+         [
+          0.756121,
+          0.114779,
+          0.644288
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.116,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1624.604,
+         7.558,
+         145.478
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.224,
+       12.224,
+       12.224
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1624.604,
+         19.191,
+         145.478
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.36,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1627.333,
+         5.68,
+         71.962
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.071,
+       11.071,
+       11.071
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1627.333,
+         15.051,
+         71.962
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.14,
+       2.898,
+       4.968
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1442.225,
+         1.035,
+         -141.306
+        ],
+        "orientation": [
+         [
+          -0.057482,
+          0.003869,
+          0.998339
+         ],
+         [
+          -0.009667,
+          0.999943,
+          -0.004432
+         ],
+         [
+          -0.9983,
+          -0.009906,
+          -0.057442
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.73,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1674.808,
+         7.865,
+         146.411
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.459,
+       10.459,
+       10.459
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1674.808,
+         19.216,
+         146.411
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       13.744,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1378.682,
+         6.872,
+         -88.688
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.601,
+       12.601,
+       12.601
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1378.682,
+         17.945,
+         -88.688
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.663,
+       3.964,
+       6.795
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1371.409,
+         1.416,
+         86.741
+        ],
+        "orientation": [
+         [
+          0.983535,
+          0.035776,
+          -0.177143
+         ],
+         [
+          -0.054706,
+          0.99316,
+          -0.103157
+         ],
+         [
+          0.17224,
+          0.111149,
+          0.978764
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       14.349,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1460.555,
+         7.174,
+         134.039
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.68,
+       9.68,
+       9.68
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1460.555,
+         17.575,
+         134.039
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.825,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1352.394,
+         7.913,
+         -145.727
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.599,
+       11.599,
+       11.599
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1352.394,
+         19.692,
+         -145.727
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.169,
+       4.318,
+       7.403
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1510.632,
+         1.542,
+         130.087
+        ],
+        "orientation": [
+         [
+          0.458106,
+          0.046364,
+          -0.887688
+         ],
+         [
+          -0.21413,
+          0.974986,
+          -0.059581
+         ],
+         [
+          0.862721,
+          0.217375,
+          0.456575
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.123,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1352.429,
+         6.061,
+         123.005
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.833,
+       10.833,
+       10.833
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1352.429,
+         15.734,
+         123.005
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.524,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1533.34,
+         6.262,
+         121.289
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.671,
+       12.671,
+       12.671
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1533.34,
+         16.747,
+         121.289
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.201,
+       4.34,
+       7.441
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1509.403,
+         1.55,
+         -144.389
+        ],
+        "orientation": [
+         [
+          0.994249,
+          -0.104209,
+          0.024706
+         ],
+         [
+          0.100891,
+          0.988758,
+          0.110357
+         ],
+         [
+          -0.035928,
+          -0.10723,
+          0.993585
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       14.195,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1491.215,
+         7.098,
+         132.45
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.506,
+       12.506,
+       12.506
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1491.215,
+         18.364,
+         132.45
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.04,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1523.806,
+         7.52,
+         132.98
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.549,
+       9.549,
+       9.549
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1523.806,
+         18.223,
+         132.98
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.772,
+       3.341,
+       5.727
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1613.574,
+         1.193,
+         119.108
+        ],
+        "orientation": [
+         [
+          -0.53032,
+          -0.066435,
+          -0.84519
+         ],
+         [
+          -0.187155,
+          0.981504,
+          0.040282
+         ],
+         [
+          0.826882,
+          0.179544,
+          -0.532945
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.318,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1653.133,
+         5.659,
+         140.263
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.81,
+       12.81,
+       12.81
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1653.133,
+         15.588,
+         140.263
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       14.333,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1378.298,
+         7.166,
+         -54.442
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.078,
+       9.078,
+       9.078
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1378.298,
+         17.359,
+         -54.442
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.942,
+       5.559,
+       9.53
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1325.716,
+         1.985,
+         145.525
+        ],
+        "orientation": [
+         [
+          0.788356,
+          0.064658,
+          0.611812
+         ],
+         [
+          0.01931,
+          0.991371,
+          -0.129653
+         ],
+         [
+          -0.614916,
+          0.114027,
+          0.780305
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       14.914,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1468.902,
+         7.457,
+         123.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.034,
+       10.034,
+       10.034
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1468.902,
+         18.259,
+         123.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       13.424,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1359.747,
+         6.712,
+         125.751
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.802,
+       11.802,
+       11.802
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1359.747,
+         17.357,
+         125.751
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.441,
+       5.209,
+       8.929
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1335.785,
+         1.86,
+         -132.742
+        ],
+        "orientation": [
+         [
+          0.88777,
+          -0.13691,
+          0.439454
+         ],
+         [
+          0.141044,
+          0.989726,
+          0.023414
+         ],
+         [
+          -0.438145,
+          0.041196,
+          0.89796
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.607,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1521.226,
+         5.804,
+         128.001
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.517,
+       9.517,
+       9.517
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1521.226,
+         14.779,
+         128.001
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.503,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1438.8,
+         5.751,
+         -144.551
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.061,
+       9.061,
+       9.061
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1438.8,
+         14.523,
+         -144.551
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.673,
+       6.071,
+       10.408
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1375.783,
+         2.168,
+         -7.572
+        ],
+        "orientation": [
+         [
+          0.419513,
+          0.009934,
+          -0.907695
+         ],
+         [
+          0.100872,
+          0.993237,
+          0.05749
+         ],
+         [
+          0.902127,
+          -0.115679,
+          0.415674
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       12.056,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1575.097,
+         6.028,
+         144.732
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.329,
+       12.329,
+       12.329
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1575.097,
+         16.166,
+         144.732
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       15.836,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1405.297,
+         7.918,
+         138.536
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11.188,
+       11.188,
+       11.188
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1405.297,
+         19.565,
+         138.536
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Rock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.548,
+       3.883,
+       6.657
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1397.779,
+         1.387,
+         139.7
+        ],
+        "orientation": [
+         [
+          0.999124,
+          0.041307,
+          0.006716
+         ],
+         [
+          -0.041592,
+          0.997881,
+          0.05004
+         ],
+         [
+          -0.004635,
+          -0.050275,
+          0.998725
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.451,
+       0.451,
+       0.4314
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       10.03,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1380.392,
+         5.015,
+         1.421
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.057,
+       10.057,
+       10.057
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1380.392,
+         13.382,
+         1.421
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Trunk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       11.825,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1316.667,
+         5.913,
+         -143.252
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3922,
+       0.2745,
+       0.1765
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Leaves",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.931,
+       9.931,
+       9.931
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1316.667,
+         15.136,
+         -143.252
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.4706,
+       0.1961
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    }
+   ]
+  }
+ ]
+}

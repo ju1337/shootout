@@ -1,0 +1,8 @@
+rojo
+*.pkg
+.DS_Store
+*.rbxl
+*.rbxlx
+*.lock
+__pycache__/
+build/

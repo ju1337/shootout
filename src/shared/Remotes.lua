@@ -1,0 +1,53 @@
+-- Remotes (ModuleScript)
+-- Legt alle RemoteEvents an (Server) bzw. wartet darauf (Client).
+-- Benutzung: local Remotes = require(Shared.Remotes); Remotes.Fire:FireServer(...)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local NAMES = {
+	"Fire",       -- Client -> Server: Schuss (Ursprung, Richtung)
+	"Reload",     -- Client -> Server: Nachladen
+	"Equip",      -- Client -> Server: Waffe wechseln
+	"AmmoUpdate", -- Server -> Client: Munition (Waffe, Magazin, Reserve, ladeNach)
+	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze, Start, Ende)
+	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet)
+	"Killfeed",   -- Server -> alle: Kill-Meldung (Killer, Opfer, Waffe, Kopfschuss)
+	"Announce",   -- Server -> Client(s): große Meldung in der Bildschirmmitte
+	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)
+	"MenuStatus", -- Server -> Client: Statuszeile im Menü (Teleport läuft, Fehler)
+	"SelectAgent", -- Client -> Server: Agent wählen (Agent-Id)
+	"UseAbility", -- Client -> Server: Fähigkeit auslösen
+	"Reveal",     -- Server -> Team: Gegner markieren (Charaktere, Dauer)
+	"XPGain",     -- Server -> Client: XP bekommen (Menge, Grund, Agent, LevelUp)
+	"AdminAction", -- Client -> Server: Admin-Befehl (Aktion, Wert1, Wert2)
+	"AdminStatus", -- Server -> Admin: Rückmeldung im Admin-Panel
+	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)
+	"ShopStatus", -- Server -> Client: Rückmeldung (Text, Erfolg)
+}
+
+local folder
+if RunService:IsServer() then
+	folder = ReplicatedStorage:FindFirstChild("Remotes")
+	if not folder then
+		folder = Instance.new("Folder")
+		folder.Name = "Remotes"
+		folder.Parent = ReplicatedStorage
+	end
+	for _, name in NAMES do
+		if not folder:FindFirstChild(name) then
+			local remote = Instance.new("RemoteEvent")
+			remote.Name = name
+			remote.Parent = folder
+		end
+	end
+else
+	folder = ReplicatedStorage:WaitForChild("Remotes")
+end
+
+local Remotes = {}
+for _, name in NAMES do
+	Remotes[name] = folder:WaitForChild(name)
+end
+
+return Remotes
