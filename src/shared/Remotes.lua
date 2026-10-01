@@ -31,6 +31,8 @@ local NAMES = {
 	"Flash",      -- Server -> Client: geblendet (Dauer)
 	"ObjectiveAction", -- Client -> Server: E für Ziel (Bombe legen/entschärfen) gedrückt/losgelassen
 	"Melee",      -- Client -> Server: Messer-Angriff (Ursprung, Richtung)
+	"Ping",       -- Client -> Server: Ort/Gegner markieren (Position, Modell oder nil)
+	"PingShow",   -- Server -> Team: Markierung anzeigen (Position, Modell, Name des Pingenden)
 }
 
 local folder

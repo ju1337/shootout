@@ -382,7 +382,7 @@ function GameMenu.Init()
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -60, 0, 16),
 		Size = UDim2.new(0, 980, 0, 24),
-		Text = "M Menü · Q Fähigkeit · G Gadget · V Messer · Rechtsklick Zielen · STRG Ducken/Slide · E Aktion · Tab Punkte",
+		Text = "M Menü · Q Fähigkeit · G Gadget · V Messer · Z Ping · Rechtsklick Zielen · STRG Ducken/Slide · E Aktion · Tab Punkte",
 		TextSize = 15,
 		TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Right,
