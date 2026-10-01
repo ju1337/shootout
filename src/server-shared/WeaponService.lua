@@ -329,7 +329,8 @@ local function onMelee(player, origin, direction)
 	local mode = player:GetAttribute("Mode")
 	local victimMode = victim and victim:GetAttribute("Mode") or model:GetAttribute("Mode")
 	local victimTeam = victim and victim.Team and victim.Team.Name or model:GetAttribute("TeamName")
-	if (not victim and not isBot) or victimMode ~= mode or (player.Team and victimTeam == player.Team.Name) then
+	local isDummy = model:GetAttribute("IsDummy") == true
+	if not isDummy and ((not victim and not isBot) or victimMode ~= mode or (player.Team and victimTeam == player.Team.Name)) then
 		return
 	end
 

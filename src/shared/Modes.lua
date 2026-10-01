@@ -67,6 +67,16 @@ Modes.List = {
 		Available = true,
 	},
 	{
+		Id = "Training",
+		Name = "TRAINING",
+		Tag = "Schießstand",
+		Description = "Waffen, Agenten und Skins ausprobieren. Übungspuppen stehen wieder auf.",
+		Players = "beliebig",
+		Color = Color3.fromRGB(150, 160, 180),
+		Center = Vector3.new(-1500, 0, 1500),
+		Available = true,
+	},
+	{
 		Id = "Arena",
 		Name = "1v1 ARENA",
 		Tag = "Duell",

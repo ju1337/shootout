@@ -20,6 +20,7 @@ DROP_ORIGIN = (1500, 0, 0)
 STRIKEOUT_ORIGIN = (0, 0, -1500)
 DEMOLITION_ORIGIN = (-1500, 0, 0)
 WINGMAN_ORIGIN = (1500, 0, -1500)
+TRAINING_ORIGIN = (-1500, 0, 1500)
 
 
 # ---------- Helfer ----------
@@ -165,7 +166,7 @@ class Builder:
                      angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False,
                                                 "CanTouch": False})
 
-    def sign(self, name, size, pos, text, bg, fg):
+    def sign(self, name, size, pos, text, bg, fg, angles=(0, 0, 0)):
         label = {
             "Name": "Text", "ClassName": "TextLabel",
             "Properties": {
@@ -178,7 +179,7 @@ class Builder:
             },
         }
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front"}, "Children": [label]}
-        self.box("Decor", name, size, pos, bg, "SmoothPlastic", children=[gui])
+        self.box("Decor", name, size, pos, bg, "SmoothPlastic", angles=angles, children=[gui])
 
     def save(self, filename):
         model = {
@@ -406,6 +407,35 @@ def build_demolition():
     b.save("Demolition.model.json")
 
 
+# ---------- Training: Schießstand (140 x 90), Spieler bei -x, Puppen bei +x ----------
+
+def build_training():
+    b = Builder(TRAINING_ORIGIN)
+    b.ground(150, 100, (70, 75, 85), "Concrete")
+    b.border(140, 90, 10, (60, 62, 72), "SmoothPlastic", barrier=80)
+    b.box("Ground", "ShootingLine", (2, 0.3, 80), (-40, 0.15, 0), (255, 200, 60), "Neon")
+    for z in (-20, -6, 6, 20):
+        b.spawn(-55, z, yaw=-90, group="Spawns")
+    # Bahnen mit Entfernungsschildern (Studs ab der Schusslinie)
+    for distance in (15, 35, 60, 90):
+        x = -40 + distance
+        if x < 65:
+            b.sign("Distance" + str(distance), (6, 2.5, 0.4), (x, 9, -38), str(distance), (25, 25, 30), (255, 200, 60))
+    for z in (-26, 0, 26):
+        b.box("Decor", "LaneDivider", (100, 1.2, 0.6), (15, 0.6, z - 13 if z > 0 else z + 13), (90, 95, 110), "SmoothPlastic")
+    # Puppen-Positionen (Server spawnt hier Übungspuppen)
+    for name, x, z in (("Near", -20, -18), ("Mid", 0, 0), ("Far", 25, 18), ("Wall", 45, -10), ("Run1", 10, -28), ("Run2", 30, 28)):
+        b.add("Dummies", "Dummy_" + name, (2, 0.2, 2), (x, 0.1, z), (200, 60, 60), "Neon",
+              props={"Transparency": 0.5, "CanCollide": False})
+    # Etwas Deckung zum Üben von Peeks
+    b.cover_wall(10, 10, 8, along_x=False, height=4)
+    b.cover_wall(35, -18, 10, height=5)
+    b.crate(-10, 22)
+    b.box("Decor", "BackWall", (2, 16, 90), (68, 8, 0), (50, 52, 60), "Concrete")
+    b.sign("TrainingSign", (40, 8, 1), (68 - 1.2, 20, 0), "TRAINING", (25, 25, 30), (255, 140, 40), angles=(0, 90, 0))
+    b.save("Training.model.json")
+
+
 # ---------- Hub (Lobby) ----------
 
 # Gleiche Ids/Farben wie in src/shared/Modes.lua
@@ -494,4 +524,5 @@ if __name__ == "__main__":
     build_strikeout()
     build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")  # gleiche Map für Wingman (2v2)
     build_demolition()
+    build_training()
     build_lobby()

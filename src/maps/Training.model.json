@@ -1,0 +1,1735 @@
+{
+ "ClassName": "Model",
+ "Children": [
+  {
+   "Name": "Ground",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Ground",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       150,
+       4,
+       100
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         -2,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.2941,
+       0.3333
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "ShootingLine",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.3,
+       80
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1540,
+         0.15,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.7843,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Border",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "WallNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       146,
+       10,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         5.0,
+         1546.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2431,
+       0.2824
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       146,
+       80,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         40.0,
+         1546.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       146,
+       10,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         5.0,
+         1453.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2431,
+       0.2824
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       146,
+       80,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         40.0,
+         1453.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       10,
+       90
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1428.5,
+         5.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2431,
+       0.2824
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       80,
+       90
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1428.5,
+         40.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       10,
+       90
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1571.5,
+         5.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2431,
+       0.2824
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       80,
+       90
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1571.5,
+         40.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Spawns",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1555,
+         0.5,
+         1480
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1555,
+         0.5,
+         1494
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1555,
+         0.5,
+         1506
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1555,
+         0.5,
+         1520
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Decor",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Distance15",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       2.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1525,
+         9,
+         1462
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "15",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.7843,
+           0.2353
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "Distance35",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       2.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1505,
+         9,
+         1462
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "35",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.7843,
+           0.2353
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "Distance60",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       2.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1480,
+         9,
+         1462
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "60",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.7843,
+           0.2353
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "Distance90",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       2.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1450,
+         9,
+         1462
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "90",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.7843,
+           0.2353
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "LaneDivider",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100,
+       1.2,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1485,
+         0.6,
+         1487
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.4314
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LaneDivider",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100,
+       1.2,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1485,
+         0.6,
+         1513
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.4314
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LaneDivider",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100,
+       1.2,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1485,
+         0.6,
+         1513
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.4314
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BackWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       16,
+       90
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1432,
+         8,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1961,
+       0.2039,
+       0.2353
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "TrainingSign",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       40,
+       8,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1433.2,
+         20,
+         1500
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "TRAINING",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.549,
+           0.1569
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "Name": "Dummies",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Dummy_Near",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1520,
+         0.1,
+         1482
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Dummy_Mid",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1500,
+         0.1,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Dummy_Far",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1475,
+         0.1,
+         1518
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Dummy_Wall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1455,
+         0.1,
+         1490
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Dummy_Run1",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1490,
+         0.1,
+         1472
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Dummy_Run2",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1470,
+         0.1,
+         1528
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.2353,
+       0.2353
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.5,
+      "CanCollide": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Cover",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       4,
+       8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1490,
+         2.0,
+         1510
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10,
+       5,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1465,
+         2.5,
+         1482
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.5882,
+       0.5882
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1510,
+         2.5,
+         1522
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6275,
+       0.4706,
+       0.2745
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  }
+ ]
+}
