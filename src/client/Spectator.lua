@@ -4,6 +4,7 @@
 -- Außerdem bekommen Teammitglieder einen Umriss in Teamfarbe.
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
@@ -17,9 +18,19 @@ local player = Players.LocalPlayer
 local Spectator = {}
 
 local DROP_CENTER = Modes.Get("Drop").Center
-local OVERVIEW = CFrame.lookAt(DROP_CENTER + Vector3.new(0, 160, -220), DROP_CENTER)
+local OVERVIEW_RADIUS = 230
+local OVERVIEW_HEIGHT = 150
+local OVERVIEW_SPEED = 0.05  -- Drehgeschwindigkeit (Bogenmaß pro Sekunde), langsamer Kameraflug
+
+-- Kamera kreist langsam um die Drop-Map (Hintergrund der Agentenwahl)
+local function overview()
+	local angle = os.clock() * OVERVIEW_SPEED
+	local position = DROP_CENTER + Vector3.new(math.cos(angle) * OVERVIEW_RADIUS, OVERVIEW_HEIGHT, math.sin(angle) * OVERVIEW_RADIUS)
+	return CFrame.lookAt(position, DROP_CENTER)
+end
 
 local spectating = false
+local inOverview = false
 local target = nil
 
 local function livingHumanoid(p)
@@ -56,6 +67,7 @@ local function stopSpectating()
 		return
 	end
 	spectating = false
+	inOverview = false
 	target = nil
 	local camera = workspace.CurrentCamera
 	camera.CameraType = Enum.CameraType.Custom
@@ -82,13 +94,14 @@ local function update()
 	if not target or not livingHumanoid(target) or target.Team ~= player.Team then
 		target = nextTarget()
 	end
+	inOverview = false
 	if target then
 		camera.CameraType = Enum.CameraType.Custom
 		camera.CameraSubject = livingHumanoid(target)
 		HUD.SetStatus("Du schaust " .. target.Name .. " zu  ·  E = wechseln")
 	else
 		camera.CameraType = Enum.CameraType.Scriptable
-		camera.CFrame = OVERVIEW
+		inOverview = true
 		HUD.SetStatus("Warte auf die nächste Runde...")
 	end
 end
@@ -144,6 +157,13 @@ function Spectator.Init()
 	-- Neuer eigener Charakter: sofort zurück zur normalen Kamera
 	player.CharacterAdded:Connect(function()
 		task.defer(update)
+	end)
+
+	-- Kameraflug jedes Bild weiterbewegen
+	RunService.RenderStepped:Connect(function()
+		if inOverview then
+			workspace.CurrentCamera.CFrame = overview()
+		end
 	end)
 
 	task.spawn(function()

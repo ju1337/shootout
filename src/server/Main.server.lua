@@ -10,6 +10,7 @@ local KillService = require(ServerShared.KillService)
 local AgentService = require(ServerShared.AgentService)
 local ProgressService = require(ServerShared.ProgressService)
 local ShopService = require(ServerShared.ShopService)
+local DownedService = require(ServerShared.DownedService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 
@@ -18,6 +19,7 @@ Players.CharacterAutoLoads = false
 
 ProgressService.Init()
 ShopService.Init()
+DownedService.Init()
 WeaponService.Init()
 KillService.Init()
 AgentService.Init()

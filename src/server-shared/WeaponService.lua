@@ -5,6 +5,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local WeaponConfig = require(Shared.WeaponConfig)
@@ -14,6 +15,7 @@ local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
+local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
 
 local WeaponService = {}
 
@@ -143,17 +145,14 @@ local function fireRay(player, character, origin, direction, cfg, weaponName)
 
 	local headshot = result.Instance.Name == "Head"
 	local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1) * GameSettings.Get("DamageMultiplier")
-	local healthBefore = targetHumanoid.Health
-	targetHumanoid:TakeDamage(damage)
-	local dealt = healthBefore - targetHumanoid.Health -- 0 bei Schutzschild
-
-	local killed = targetHumanoid.Health <= 0
+	local dealt, killed, downed = Damage.Apply(model, targetHumanoid, damage,
+		{ Player = player, Weapon = weaponName, Headshot = headshot })
 	local victimName = victim and victim.Name or model.Name
 	-- Spieler und Bots zählen als Kill (Test-Dummies nicht)
 	if killed and (victim or isBot) then
 		killedEvent:Fire(player, victim, weaponName, headshot, victimName)
 	end
-	return { Humanoid = targetHumanoid, Damage = dealt, Headshot = headshot, Killed = killed,
+	return { Humanoid = targetHumanoid, Damage = dealt, Headshot = headshot, Killed = killed, Downed = downed,
 		Position = result.Position, Name = victimName }
 end
 
@@ -173,7 +172,7 @@ local function onFire(player, origin, direction, aiming)
 
 	local humanoid, character = getLivingHumanoid(player)
 	local head = character and character:FindFirstChild("Head")
-	if not humanoid or not head then
+	if not humanoid or not head or character:GetAttribute("Downed") then
 		return
 	end
 	-- Ursprung muss nah am eigenen Kopf sein (sonst Schuss durch Wände möglich)
@@ -205,6 +204,7 @@ local function onFire(player, origin, direction, aiming)
 				total.Damage += hit.Damage
 				total.Headshot = total.Headshot or hit.Headshot
 				total.Killed = total.Killed or hit.Killed
+				total.Downed = total.Downed or hit.Downed
 			else
 				hits[hit.Humanoid] = hit
 			end
@@ -212,7 +212,7 @@ local function onFire(player, origin, direction, aiming)
 	end
 	for _, hit in hits do
 		player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(hit.Damage + 0.5))
-		Remotes.Hitmarker:FireClient(player, hit.Headshot, hit.Killed, hit.Damage, hit.Position, hit.Name)
+		Remotes.Hitmarker:FireClient(player, hit.Headshot, hit.Killed, hit.Damage, hit.Position, hit.Name, hit.Downed)
 	end
 	sendAmmo(player)
 end

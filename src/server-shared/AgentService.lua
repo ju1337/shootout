@@ -170,7 +170,7 @@ local function useAbility(player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not humanoid or humanoid.Health <= 0 or not root then
+	if not humanoid or humanoid.Health <= 0 or not root or character:GetAttribute("Downed") then
 		return
 	end
 

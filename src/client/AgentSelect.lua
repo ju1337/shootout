@@ -274,9 +274,16 @@ end
 local function build()
 	gui = make("ScreenGui", { Name = "AgentSelect", ResetOnSpawn = false, IgnoreGuiInset = true,
 		DisplayOrder = 5, Enabled = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
-	local background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = DARK, Active = true }, gui)
-	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(40, 55, 75), Color3.fromRGB(8, 10, 16)) },
-		background)
+	-- Halbtransparent: dahinter fliegt die Kamera langsam über die Map.
+	-- Oben und unten etwas dunkler, damit die Texte lesbar bleiben.
+	local background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(10, 20, 35),
+		BackgroundTransparency = 0.35, Active = true }, gui)
+	make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(0.25, 0.75),
+		NumberSequenceKeypoint.new(0.7, 0.75),
+		NumberSequenceKeypoint.new(1, 0.05),
+	}) }, background)
 
 	canvas = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, WIDTH, 0, HEIGHT), BackgroundTransparency = 1 }, background)

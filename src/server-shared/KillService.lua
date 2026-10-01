@@ -11,6 +11,7 @@ local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local WeaponService = require(ServerShared.WeaponService)
 local ProgressService = require(ServerShared.ProgressService)
+local DownedService = require(ServerShared.DownedService)
 
 local KillService = {}
 
@@ -71,7 +72,7 @@ function KillService.Init()
 		setupPlayer(player)
 	end
 
-	WeaponService.Killed:Connect(function(killer, victim, weaponName, headshot, victimName)
+	local function onKill(killer, victim, weaponName, headshot, victimName)
 		-- Selbstmord zählt nicht
 		if killer ~= victim then
 			local kills = killer:FindFirstChild("leaderstats") and killer.leaderstats:FindFirstChild("Kills")
@@ -91,6 +92,19 @@ function KillService.Init()
 			end
 		end
 		countedEvent:Fire(killer, victim, KillService.GetKills(killer))
+	end
+	WeaponService.Killed:Connect(onKill)
+
+	-- Verblutet: Kill für den, der niedergeschlagen hat (Spieler oder Bot)
+	DownedService.BledOut:Connect(function(model, attacker)
+		local victim = Players:GetPlayerFromCharacter(model)
+		local victimName = victim and victim.Name or model.Name
+		if attacker and attacker.Player and attacker.Player.Parent then
+			onKill(attacker.Player, victim, attacker.Weapon, false, victimName)
+		elseif attacker and attacker.BotName then
+			KillService.ReportBotKill(victim and victim:GetAttribute("Mode") or model:GetAttribute("Mode"),
+				attacker.BotName, victimName, attacker.Weapon, false)
+		end
 	end)
 end
 

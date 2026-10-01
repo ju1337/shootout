@@ -16,6 +16,7 @@ AgentConfig.XPRewards = {
 	RoundWin = 150,  -- Drop: Runde gewonnen (ganzes Team)
 	MatchWin = 400,  -- Drop: Match gewonnen (ganzes Team)
 	FFAWin = 400,    -- Free-for-All: Runde gewonnen
+	Revive = 50,     -- Teamkollegen wiederbelebt
 }
 -- Waffen-Skins als Belohnung (höchstes erreichtes Level zuerst)
 AgentConfig.Skins = {

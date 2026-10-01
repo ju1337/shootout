@@ -22,6 +22,7 @@ local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
+local DownedService = require(ServerShared.DownedService)
 
 local Drop = {}
 
@@ -93,15 +94,16 @@ local function teamsReady()
 	return teamSize(red) > 0 and teamSize(blue) > 0
 end
 
+-- Lebend und nicht am Boden (ein Team, das komplett am Boden liegt, hat verloren)
 local function aliveCount(team)
 	local n = 0
 	for player in alive do
-		if player.Team == team then
+		if player.Team == team and not DownedService.IsDowned(player.Character) then
 			n += 1
 		end
 	end
 	for bot in bots do
-		if bot.Alive and bot.Team == team then
+		if bot.Alive and bot.Team == team and not DownedService.IsDowned(bot.Model) then
 			n += 1
 		end
 	end
@@ -438,6 +440,13 @@ end
 -- ---------- Modus-Schnittstelle ----------
 
 function Drop.Init()
+	-- Niedergeschlagen/wiederbelebt: Anzeige und Rundenende neu prüfen
+	DownedService.Changed:Connect(function()
+		if roundActive then
+			updateInfo()
+			checkRoundEnd()
+		end
+	end)
 	task.spawn(matchLoop)
 end
 

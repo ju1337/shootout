@@ -24,6 +24,7 @@ local NAMES = {
 	"AdminStatus", -- Server -> Admin: Rückmeldung im Admin-Panel
 	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)
 	"ShopStatus", -- Server -> Client: Rückmeldung (Text, Erfolg)
+	"Revive",     -- Client -> Server: E zum Wiederbeleben gedrückt (true) / losgelassen (false)
 }
 
 local folder

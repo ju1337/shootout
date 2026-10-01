@@ -15,7 +15,10 @@ local GameSettings = require(Shared.GameSettings)
 local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
-local KillService = require(ServerStorage:WaitForChild("ServerShared").KillService)
+local ServerShared = ServerStorage:WaitForChild("ServerShared")
+local KillService = require(ServerShared.KillService)
+local Damage = require(ServerShared.Damage)
+local DownedService = require(ServerShared.DownedService)
 
 local BotService = {}
 
@@ -25,6 +28,7 @@ local AIM_SPREAD = 4         -- zusätzliche Streuung in Grad (Bots treffen nich
 local KEEP_DISTANCE = 30     -- ab hier bleibt der Bot stehen und weicht seitlich aus
 local VIEW_RANGE = 250       -- so weit sieht ein Bot
 local WANDER_RADIUS = 60     -- ohne Gegner: zufällig um die Mapmitte laufen
+local HELP_RADIUS = 80       -- so weit laufen Bots zu niedergeschlagenen Teamkollegen
 
 -- Standard-Animationen von Roblox (R15)
 local ANIMATIONS = {
@@ -146,12 +150,14 @@ end
 local function enemies(bot)
 	local list = {}
 	for _, player in Players:GetPlayers() do
-		if livingHumanoid(player.Character) and isEnemy(bot, player.Character) then
-			table.insert(list, player.Character)
+		local character = player.Character
+		if livingHumanoid(character) and isEnemy(bot, character) and not DownedService.IsDowned(character) then
+			table.insert(list, character)
 		end
 	end
 	for other in bots do
-		if other ~= bot and livingHumanoid(other.Model) and isEnemy(bot, other.Model) then
+		if other ~= bot and livingHumanoid(other.Model) and isEnemy(bot, other.Model)
+			and not DownedService.IsDowned(other.Model) then
 			table.insert(list, other.Model)
 		end
 	end
@@ -201,8 +207,9 @@ local function shoot(bot, head, target, weaponName)
 			local headshot = result.Instance.Name == "Head"
 			local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1)
 				* GameSettings.Get("DamageMultiplier") * GameSettings.Get("BotDamage")
-			humanoid:TakeDamage(damage)
-			if humanoid.Health <= 0 then
+			local _, killed = Damage.Apply(hitModel, humanoid, damage,
+				{ BotName = bot.Name, Weapon = weaponName, Headshot = headshot })
+			if killed then
 				local victim = Players:GetPlayerFromCharacter(hitModel)
 				KillService.ReportBotKill(bot.Mode, bot.Name, victim and victim.Name or hitModel.Name, weaponName, headshot)
 				bot.Info:SetAttribute("Kills", (bot.Info:GetAttribute("Kills") or 0) + 1)
@@ -230,6 +237,13 @@ local function runAI(bot, model)
 
 	while bot.Model == model and humanoid.Health > 0 do
 		local now = os.clock()
+
+		-- Selbst am Boden: liegen bleiben und warten
+		if DownedService.IsDowned(model) then
+			humanoid:MoveTo(root.Position)
+			task.wait(TICK)
+			continue
+		end
 
 		-- Nächsten sichtbaren Gegner suchen (und den nächsten überhaupt, um hinzulaufen)
 		local nearest, nearestDistance = nil, math.huge
@@ -276,7 +290,22 @@ local function runAI(bot, model)
 		else
 			seenSince = nil
 			humanoid.AutoRotate = true
-			if now >= nextMove then
+			-- Kein Gegner in Sicht: niedergeschlagenen Teamkollegen wiederbeleben
+			local mate, mateDistance = nil, HELP_RADIUS
+			for _, downedModel in DownedService.All() do
+				local mateRoot = downedModel:FindFirstChild("HumanoidRootPart")
+				if mateRoot and not isEnemy(bot, downedModel) and downedModel ~= model then
+					local distance = (mateRoot.Position - root.Position).Magnitude
+					if distance < mateDistance then
+						mate, mateDistance = downedModel, distance
+					end
+				end
+			end
+			if mate then
+				if not DownedService.ReviveTick(model, mate, TICK) then
+					humanoid:MoveTo(mate.HumanoidRootPart.Position)
+				end
+			elseif now >= nextMove then
 				if nearest then
 					humanoid:MoveTo(nearest.HumanoidRootPart.Position)
 				else

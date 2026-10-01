@@ -248,7 +248,7 @@ function HUD.Init(weaponClient)
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Visible = false,
 	}, gui)
-	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName)
+	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName, downed)
 		hitId += 1
 		local myId = hitId
 		hitmarker.TextColor3 = headshot and Color3.fromRGB(255, 70, 70) or Color3.new(1, 1, 1)
@@ -285,11 +285,12 @@ function HUD.Init(weaponClient)
 			Debris:AddItem(anchor, 0.85)
 		end
 
-		-- Kill-Meldung unter dem Fadenkreuz
-		if killed and victimName then
+		-- Kill- bzw. Niederschlag-Meldung unter dem Fadenkreuz
+		if (killed or downed) and victimName then
 			killId += 1
 			local myKill = killId
-			killNotice.Text = "✕  ELIMINIERT  " .. string.upper(victimName)
+			killNotice.Text = (killed and "✕  ELIMINIERT  " or "⬇  NIEDERGESCHLAGEN  ") .. string.upper(victimName)
+			killNotice.TextColor3 = killed and Color3.fromRGB(255, 90, 90) or Color3.fromRGB(255, 190, 80)
 			killNotice.Visible = true
 			task.delay(1.6, function()
 				if killId == myKill then

@@ -111,8 +111,13 @@ local function requestReload()
 	Remotes.Reload:FireServer()
 end
 
+-- Am Boden (niedergeschlagen) kann man nicht schießen
+local function isDowned()
+	return player.Character ~= nil and player.Character:GetAttribute("Downed") == true
+end
+
 local function tryFire()
-	if not synced or reloading or not current or not Modes.IsFighting(player) then
+	if not synced or reloading or not current or not Modes.IsFighting(player) or isDowned() then
 		return
 	end
 	if mag <= 0 then
@@ -233,7 +238,7 @@ function WeaponClient.Init()
 	RunService.RenderStepped:Connect(function(dt)
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		local isAlive = humanoid ~= nil and humanoid.Health > 0 and Modes.IsFighting(player)
+		local isAlive = humanoid ~= nil and humanoid.Health > 0 and Modes.IsFighting(player) and not isDowned()
 
 		-- Eigenes Tool in der Hand ausblenden (das sehen nur die anderen)
 		if character then
@@ -286,8 +291,8 @@ function WeaponClient.Init()
 		showTracer(startPos, endPos)
 	end)
 
-	Remotes.Hitmarker.OnClientEvent:Connect(function(headshot, killed, damage, position, victimName)
-		hit:Fire(headshot, killed, damage, position, victimName)
+	Remotes.Hitmarker.OnClientEvent:Connect(function(headshot, killed, damage, position, victimName, downed)
+		hit:Fire(headshot, killed, damage, position, victimName, downed)
 	end)
 
 	player.CharacterAdded:Connect(resetWeapon)
