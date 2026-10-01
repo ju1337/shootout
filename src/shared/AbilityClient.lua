@@ -89,6 +89,35 @@ function AbilityClient.Init()
 	stateLabel.TextXAlignment = Enum.TextXAlignment.Left
 	stateLabel.Parent = box
 
+	-- Sprint-Stoß: kurzer Schub in Laufrichtung (bzw. Blickrichtung, wenn man steht)
+	Remotes.AbilityEffect.OnClientEvent:Connect(function(effect, speed, duration)
+		if effect ~= "Dash" then
+			return
+		end
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not humanoid or not root then
+			return
+		end
+		local direction = humanoid.MoveDirection
+		if direction.Magnitude < 0.1 then
+			local look = workspace.CurrentCamera.CFrame.LookVector
+			direction = Vector3.new(look.X, 0, look.Z)
+		end
+		direction = direction.Unit
+		local started = os.clock()
+		local connection
+		connection = RunService.Heartbeat:Connect(function()
+			if os.clock() - started > duration or not root.Parent then
+				connection:Disconnect()
+				return
+			end
+			root.AssemblyLinearVelocity = Vector3.new(direction.X * speed, math.max(root.AssemblyLinearVelocity.Y, 2),
+				direction.Z * speed)
+		end)
+	end)
+
 	-- Radar-Puls: markierte Gegner rot durch Wände anzeigen (nur für uns sichtbar)
 	Remotes.Reveal.OnClientEvent:Connect(function(characters, duration)
 		for _, character in characters do

@@ -45,6 +45,14 @@ local PARTS = {
 		{ "Magazine", Vector3.new(0.22, 0.45, 0.3), Vector3.new(0, -0.1, -0.6), BLACK, METAL },
 		{ "Stock", Vector3.new(0.3, 0.5, 1.0), Vector3.new(0, 0.25, 1.0), DARK, METAL, true },
 	},
+	LMG = {
+		{ "Handle", Vector3.new(0.25, 0.5, 0.3), Vector3.new(0, -0.1, 0), BLACK, PLASTIC },
+		{ "Body", Vector3.new(0.42, 0.5, 2.0), Vector3.new(0, 0.3, -0.4), OLIVE, METAL, true },
+		{ "Barrel", Vector3.new(0.18, 0.18, 1.3), Vector3.new(0, 0.38, -2.0), BLACK, METAL },
+		{ "Box", Vector3.new(0.5, 0.5, 0.5), Vector3.new(0.05, -0.15, -0.6), OLIVE, METAL, true },
+		{ "Stock", Vector3.new(0.3, 0.5, 0.9), Vector3.new(0, 0.25, 1.0), BLACK, METAL },
+		{ "Bipod", Vector3.new(0.1, 0.5, 0.1), Vector3.new(0, 0.05, -2.1), BLACK, METAL },
+	},
 	Pistol = {
 		{ "Handle", Vector3.new(0.22, 0.55, 0.3), Vector3.new(0, -0.1, 0), BLACK, PLASTIC },
 		{ "Slide", Vector3.new(0.25, 0.28, 0.95), Vector3.new(0, 0.28, -0.25), GOLD, METAL, true },

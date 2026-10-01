@@ -153,7 +153,8 @@ local function enemies(bot)
 	local list = {}
 	for _, player in Players:GetPlayers() do
 		local character = player.Character
-		if livingHumanoid(character) and isEnemy(bot, character) and not DownedService.IsDowned(character) then
+		if livingHumanoid(character) and isEnemy(bot, character) and not DownedService.IsDowned(character)
+			and not character:GetAttribute("Cloaked") then
 			table.insert(list, character)
 		end
 	end

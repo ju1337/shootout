@@ -29,7 +29,7 @@ local BORDER = Color3.fromRGB(50, 55, 70)
 local GRAY = Color3.fromRGB(170, 175, 190)
 local GREEN = Color3.fromRGB(70, 170, 90)
 
-local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "Pistol", "Revolver" }
+local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
 
 local gui, column, coinLabel, dailyDot, questDot
 local panels = {}      -- [Name] = { Frame, Status, Refresh }

@@ -164,6 +164,74 @@ local function doReveal(player, root, agent)
 	sparkle(root, agent.Color, 1)
 end
 
+-- Tarnung: Körper fast unsichtbar (für alle), endet nach Ablauf oder beim Schießen
+-- (WeaponService setzt dann "Cloaked" auf false)
+local function doCloak(character, agent)
+	local ability = agent.Ability
+	local saved = {}
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			saved[part] = part.Transparency
+			part.Transparency = math.max(part.Transparency, 0.92)
+		elseif part:IsA("Decal") then
+			saved[part] = part.Transparency
+			part.Transparency = 1
+		end
+	end
+	character:SetAttribute("Cloaked", true)
+	local function reveal()
+		if not character:GetAttribute("Cloaked") then
+			return
+		end
+		character:SetAttribute("Cloaked", false)
+		for obj, transparency in saved do
+			if obj.Parent then
+				obj.Transparency = transparency
+			end
+		end
+	end
+	character:GetAttributeChangedSignal("Cloaked"):Connect(function()
+		if character:GetAttribute("Cloaked") == false then
+			for obj, transparency in saved do
+				if obj.Parent then
+					obj.Transparency = transparency
+				end
+			end
+		end
+	end)
+	task.delay(ability.Duration, reveal)
+end
+
+-- Feldlazarett: sich selbst und Teamkollegen im Umkreis heilen
+local function doTeamHeal(player, root, agent)
+	local ability = agent.Ability
+	local mode = player:GetAttribute("Mode")
+	for _, mate in Players:GetPlayers() do
+		local sameTeam = mate == player or (player.Team ~= nil and mate.Team == player.Team and mate:GetAttribute("Mode") == mode)
+		local character = mate.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local mateRoot = character and character:FindFirstChild("HumanoidRootPart")
+		if sameTeam and humanoid and humanoid.Health > 0 and mateRoot and not character:GetAttribute("Downed")
+			and (mateRoot.Position - root.Position).Magnitude <= ability.Radius then
+			humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + ability.Amount)
+			sparkle(mateRoot, Color3.fromRGB(120, 255, 140), 1.5)
+		end
+	end
+	-- Heilender Ring am Boden
+	local ring = Instance.new("Part")
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Size = Vector3.new(0.2, ability.Radius * 2, ability.Radius * 2)
+	ring.CFrame = CFrame.new(root.Position - Vector3.new(0, 2.8, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.Material = Enum.Material.Neon
+	ring.Color = agent.Color
+	ring.Transparency = 0.6
+	ring.Parent = workspace
+	Debris:AddItem(ring, 1)
+end
+
 local function useAbility(player)
 	-- Nur wenn der Modus Kampf erlaubt (nicht im Hub, nicht zwischen Runden)
 	if not player:GetAttribute("CanFight") then
@@ -193,6 +261,14 @@ local function useAbility(player)
 		doHeal(humanoid, root, agent)
 	elseif abilityType == "Reveal" then
 		doReveal(player, root, agent)
+	elseif abilityType == "Cloak" then
+		doCloak(character, agent)
+	elseif abilityType == "Dash" then
+		-- Der eigene Client bewegt den Charakter (er steuert dessen Physik)
+		Remotes.AbilityEffect:FireClient(player, "Dash", agent.Ability.Speed, agent.Ability.Duration)
+		sparkle(root, agent.Color, 0.5)
+	elseif abilityType == "TeamHeal" then
+		doTeamHeal(player, root, agent)
 	end
 end
 

@@ -195,6 +195,9 @@ local function onFire(player, origin, direction, aiming)
 	end
 	state.LastShot = now
 	ammo.Mag -= 1
+	if character:GetAttribute("Cloaked") then
+		character:SetAttribute("Cloaked", false) -- Schießen verrät dich
+	end
 
 	local spreadAngle = (cfg.Spread or 0) * (aiming == true and WeaponConfig.AimSpreadFactor or 1)
 		* (BuyConfig.Has(player, "Stability") and BuyConfig.StabilityFactor or 1)

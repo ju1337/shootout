@@ -1,7 +1,8 @@
 -- AgentConfig (ModuleScript)
 -- Alle Agenten mit Werten, Waffen (Loadout) und Fähigkeit, dazu das Level-System.
 -- Fähigkeits-Typen: "Boost" (schneller), "Wall" (Deckungswand), "Heal" (Selbstheilung),
--- "Reveal" (zeigt Gegner durch Wände)
+-- "Reveal" (zeigt Gegner durch Wände), "Cloak" (fast unsichtbar), "Dash" (Sprung nach vorne),
+-- "TeamHeal" (heilt Teamkollegen in der Nähe)
 -- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
 -- "Sensor" (Mine, die vorbeilaufende Gegner markiert)
 
@@ -103,6 +104,63 @@ AgentConfig.Agents = {
 			Cooldown = 22,
 			Duration = 4,
 			Radius = 120,
+		},
+	},
+	{
+		Id = "Ghost",
+		Name = "GHOST",
+		Role = "Infiltrator",
+		Description = "Schleicht sich unbemerkt hinter die Linien.",
+		Color = Color3.fromRGB(150, 150, 170),
+		Health = 90,
+		WalkSpeed = 17,
+		Loadout = { "SMG", "Revolver" },
+		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
+		Ability = {
+			Type = "Cloak",
+			Name = "Tarnung",
+			Description = "5 Sekunden fast unsichtbar. Endet, sobald du schießt.",
+			Cooldown = 20,
+			Duration = 5,
+		},
+	},
+	{
+		Id = "Blaze",
+		Name = "BLAZE",
+		Role = "Stürmer",
+		Description = "Geht als Erster rein – schnell und auf kurze Distanz tödlich.",
+		Color = Color3.fromRGB(255, 120, 40),
+		Health = 100,
+		WalkSpeed = 17,
+		Loadout = { "Shotgun", "Pistol" },
+		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
+		Ability = {
+			Type = "Dash",
+			Name = "Sprint-Stoß",
+			Description = "Blitzschneller Sprung in Laufrichtung.",
+			Cooldown = 8,
+			Duration = 0.25,
+			Speed = 90,
+		},
+	},
+	{
+		Id = "Aegis",
+		Name = "AEGIS",
+		Role = "Unterstützung",
+		Description = "Hält das Team im Kampf – viel Feuerkraft und Heilung.",
+		Color = Color3.fromRGB(120, 200, 255),
+		Health = 110,
+		WalkSpeed = 15,
+		Loadout = { "LMG", "Revolver" },
+		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
+		Ability = {
+			Type = "TeamHeal",
+			Name = "Feldlazarett",
+			Description = "Heilt dich und alle Teamkollegen im Umkreis von 25 Studs um 40.",
+			Cooldown = 25,
+			Duration = 1,
+			Amount = 40,
+			Radius = 25,
 		},
 	},
 }

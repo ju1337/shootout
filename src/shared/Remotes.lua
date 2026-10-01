@@ -34,6 +34,7 @@ local NAMES = {
 	"Ping",       -- Client -> Server: Ort/Gegner markieren (Position, Modell oder nil)
 	"PingShow",   -- Server -> Team: Markierung anzeigen (Position, Modell, Name des Pingenden)
 	"DeathRecap", -- Server -> Opfer: wer hat dich ausgeschaltet (Name, Waffe, Leben, Agent)
+	"AbilityEffect", -- Server -> Client: Fähigkeit auf dem eigenen Charakter ausführen (z.B. Dash)
 }
 
 local folder
