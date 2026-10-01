@@ -10,6 +10,10 @@
 --   DropIn  = true:  Absprung über der Map (Drop), sonst Spawn an den Team-Spawns der Map
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
+--   RoundTime = Einstellungs-Key für die Rundenzeit in Sekunden (nil = ohne Zeitlimit)
+--   Objective = function(api) -> Ziel-Objekt mit eigenen Regeln (z.B. Bombe in Demolition).
+--     Mögliche Funktionen: RoundStart(roundNumber), Tick(dt, elapsed), RoundEnd(), SpawnFolder(team),
+--     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo()
 -- Spieler-Attribute: RoundPhase, AgentLocked, SelectUntil, SelectDuration, RoundNumber,
 --   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt)
 
@@ -63,6 +67,8 @@ function TeamRoundMode.new(config)
 	local resetRequested = false -- Admin: Match zurücksetzen
 	local roundWinner = nil
 	local roundNumber = 0
+	local timeLeft = nil         -- Restzeit der Runde (nur mit RoundTime)
+	local objective = nil        -- eigenes Ziel des Modus (config.Objective), wird unten erzeugt
 
 	local function makeTeam(teamConfig)
 		local team = Instance.new("Team")
@@ -173,13 +179,15 @@ function TeamRoundMode.new(config)
 
 	local function updateInfo()
 		local a, b = teamA.Name, teamB.Name
+		local clock = timeLeft and string.format("   ·   %d:%02d", timeLeft // 60, math.floor(timeLeft) % 60) or ""
 		if config.Tickets then
-			setText(string.format("%s: %d Tickets · %d leben   |   %d : %d   |   %s: %d Tickets · %d leben",
+			setText(string.format("%s: %d Tickets · %d leben   |   %d : %d   |   %s: %d Tickets · %d leben%s",
 				a, tickets[teamA] or 0, aliveCount(teamA), scores[teamA], scores[teamB],
-				b, tickets[teamB] or 0, aliveCount(teamB)))
+				b, tickets[teamB] or 0, aliveCount(teamB), clock))
 		else
-			setText(string.format("%s: %d leben   |   %d : %d   |   %s: %d leben",
-				a, aliveCount(teamA), scores[teamA], scores[teamB], b, aliveCount(teamB)))
+			local extra = objective and objective.RoundInfo and objective.RoundInfo() or ""
+			setText(string.format("%s: %d leben   |   %d : %d   |   %s: %d leben%s%s",
+				a, aliveCount(teamA), scores[teamA], scores[teamB], b, aliveCount(teamB), extra, clock))
 		end
 	end
 
@@ -224,6 +232,8 @@ function TeamRoundMode.new(config)
 			end
 		elseif aAlive > 0 and bAlive > 0 then
 			return
+		elseif objective and objective.KeepsRoundAlive and objective.KeepsRoundAlive(aAlive, bAlive) then
+			return -- z.B. Bombe gelegt: Verteidiger müssen noch entschärfen
 		end
 		roundActive = false
 		if practiceRound then
@@ -258,7 +268,9 @@ function TeamRoundMode.new(config)
 			local position = MAP_CENTER + Vector3.new(sideOf(team) * SIDE_DISTANCE, DROP_HEIGHT, offset)
 			return CFrame.lookAt(position, MAP_CENTER + Vector3.new(0, DROP_HEIGHT, offset))
 		end
-		return SpawnUtil.Pick(map:WaitForChild(team == teamA and "SpawnsA" or "SpawnsB"))
+		local folder = objective and objective.SpawnFolder and objective.SpawnFolder(team)
+			or (team == teamA and "SpawnsA" or "SpawnsB")
+		return SpawnUtil.Pick(map:WaitForChild(folder))
 	end
 
 	-- Bots starten immer am Boden ihrer Seite
@@ -394,6 +406,11 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Punkt wie bei Rogue Company: 3 s allein draufstehen = einnehmen. Solange ein Team den Punkt
+	-- hält, verliert der Gegner alle TicketDrain Sekunden ein Ticket. Umkämpft = kein Fortschritt.
+	local owner = nil
+	local drainTimer = 0
+
 	local function objectiveTick(dt, elapsed)
 		local unlockIn = config.Capture.UnlockAfter - elapsed
 		if unlockIn > 0 then
@@ -415,23 +432,53 @@ function TeamRoundMode.new(config)
 			info = "Punkt umkämpft!"
 		elseif a > 0 or b > 0 then
 			local team = a > 0 and teamA or teamB
-			progress[team] = math.min(1, progress[team] + dt / captureTime)
-			point.Color = team.TeamColor.Color
-			info = "Team " .. team.Name .. " nimmt den Punkt ein"
-			if progress[team] >= 1 and roundActive then
-				roundWinner = team
-				roundActive = false
-				announce("Team " .. team.Name .. " hat den Punkt eingenommen!")
+			if team ~= owner then
+				progress[team] = math.min(1, progress[team] + dt / captureTime)
+				info = "Team " .. team.Name .. " nimmt den Punkt ein"
+				if progress[team] >= 1 then
+					owner = team
+					drainTimer = 0
+					progress[otherTeam(team)] = 0
+					announce("Team " .. team.Name .. " hat den Punkt eingenommen!")
+				end
 			end
 		else
+			-- Niemand drauf: angefangenes Einnehmen läuft langsam zurück
+			for _, team in { teamA, teamB } do
+				if team ~= owner then
+					progress[team] = math.max(0, progress[team] - dt / (captureTime * 2))
+				end
+			end
+		end
+
+		-- Halter zieht dem Gegner regelmäßig Tickets ab
+		if owner then
+			progress[owner] = 1
+			point.Color = owner.TeamColor.Color
+			local enemy = otherTeam(owner)
+			local interval = GameSettings.Get("TicketDrain")
+			drainTimer += dt
+			if drainTimer >= interval then
+				drainTimer = 0
+				if (tickets[enemy] or 0) > 0 then
+					tickets[enemy] -= 1
+					updateInfo()
+					checkRoundEnd()
+				end
+			end
+			info = info or ("Punkt gehört Team " .. owner.Name .. " · Team " .. enemy.Name
+				.. " verliert ein Ticket in " .. math.ceil(interval - drainTimer) .. " s")
+		elseif not info then
 			point.Color = NEUTRAL
-			info = "Punkt offen"
+			info = "Punkt offen – 3 s draufstehen zum Einnehmen"
 		end
 		publishObjective(info)
 	end
 
 	local function clearObjective()
 		progress[teamA], progress[teamB] = 0, 0
+		owner = nil
+		drainTimer = 0
 		if point then
 			point.Color = NEUTRAL
 		end
@@ -513,21 +560,64 @@ function TeamRoundMode.new(config)
 		roundActive = true
 		spawning = true
 		setPhase("Round")
+		if objective and objective.RoundStart then
+			objective.RoundStart(roundNumber) -- vor dem Spawnen (legt z.B. Angreifer fest)
+		end
 		spawnTeam(teamA)
 		spawnTeam(teamB)
 		spawning = false
 		setCanFight(true)
+		if objective and objective.AfterSpawn then
+			objective.AfterSpawn()
+		end
 		updateInfo()
 		checkRoundEnd() -- falls schon beim Spawnen jemand gestorben/gegangen ist
 
 		local roundStart = os.clock()
+		local roundTime = config.RoundTime and GameSettings.Get(config.RoundTime)
+		local lastSecond = -1
 		while roundActive do
 			task.wait(0.25)
+			local elapsed = os.clock() - roundStart
 			if config.Capture and roundActive then
-				objectiveTick(0.25, os.clock() - roundStart)
+				objectiveTick(0.25, elapsed)
+			end
+			if objective and objective.Tick and roundActive then
+				objective.Tick(0.25, elapsed)
+			end
+			-- Rundenzeit steht still, solange das Ziel es will (z.B. Bombe gelegt)
+			if objective and objective.TimeFrozen and objective.TimeFrozen() then
+				roundStart += 0.25
+			end
+			if roundTime and roundActive then
+				timeLeft = math.max(0, roundTime - elapsed)
+				if math.floor(timeLeft) ~= lastSecond then
+					lastSecond = math.floor(timeLeft)
+					updateInfo()
+				end
+				-- Zeit abgelaufen: mehr Tickets gewinnt, dann mehr Überlebende
+				if timeLeft <= 0 then
+					local ta, tb = tickets[teamA] or 0, tickets[teamB] or 0
+					local aa, ab = aliveCount(teamA), aliveCount(teamB)
+					if objective and objective.TimeOutWinner then
+						roundWinner = objective.TimeOutWinner()
+					elseif ta ~= tb then
+						roundWinner = ta > tb and teamA or teamB
+					elseif aa ~= ab then
+						roundWinner = aa > ab and teamA or teamB
+					else
+						roundWinner = nil
+					end
+					roundActive = false
+					announce("Zeit abgelaufen!")
+				end
 			end
 		end
+		timeLeft = nil
 		pending = {}
+		if objective and objective.RoundEnd then
+			objective.RoundEnd()
+		end
 		setCanFight(false)
 		setPhase("RoundEnd")
 		setLocked(false) -- nächste Agentenwahl ist wieder frei
@@ -657,6 +747,61 @@ function TeamRoundMode.new(config)
 		player.Team = otherTeam(player.Team)
 		return player.Name .. " ist jetzt in Team " .. player.Team.Name .. "."
 	end
+
+	-- ---------- Schnittstelle für eigene Ziele (config.Objective) ----------
+
+	-- Alle Teilnehmer eines Teams: { Player = ..., Bot = ..., Model = ... }
+	local function participants(team)
+		local list = {}
+		for player in members do
+			if player.Team == team then
+				table.insert(list, { Player = player, Model = player.Character })
+			end
+		end
+		for bot in bots do
+			if bot.Team == team then
+				table.insert(list, { Bot = bot, Model = bot.Model })
+			end
+		end
+		return list
+	end
+
+	local api = {
+		TeamA = teamA,
+		TeamB = teamB,
+		Map = map,
+		OtherTeam = otherTeam,
+		Announce = announce,
+		UpdateInfo = updateInfo,
+		Participants = participants,
+		RoundsToWin = roundsToWin,
+		IsRoundActive = function()
+			return roundActive
+		end,
+		-- Lebt und liegt nicht am Boden?
+		IsActive = function(model)
+			local humanoid = model and model.Parent and model:FindFirstChildOfClass("Humanoid")
+			return humanoid ~= nil and humanoid.Health > 0 and not DownedService.IsDowned(model)
+		end,
+		-- Runde sofort beenden (team = Sieger oder nil)
+		EndRound = function(team, message)
+			if not roundActive then
+				return
+			end
+			roundWinner = team
+			roundActive = false
+			if message then
+				announce(message)
+			end
+		end,
+		-- Statuszeile unter der Modus-Info (wie beim Punkt in Strikeout)
+		SetInfo = function(text)
+			for player in members do
+				player:SetAttribute("ObjInfo", text)
+			end
+		end,
+	}
+	objective = config.Objective and config.Objective(api)
 
 	-- ---------- Modus-Schnittstelle ----------
 

@@ -16,6 +16,7 @@ local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
 local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 local Downed = require(script.Parent:WaitForChild("Downed"))
+local ObjectivePrompt = require(script.Parent:WaitForChild("ObjectivePrompt"))
 
 Movement.Init()
 WeaponClient.Init()
@@ -28,4 +29,5 @@ AgentSelect.Init()
 SideMenu.Init()
 Scoreboard.Init()
 Downed.Init()
+ObjectivePrompt.Init()
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

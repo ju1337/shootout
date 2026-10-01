@@ -232,6 +232,11 @@ function Downed.Init()
 	end)
 end
 
+-- Für andere Module: wird gerade "E halten: wiederbeleben" angeboten? (hat Vorrang vor Zielen)
+function Downed.HasPrompt()
+	return promptTarget ~= nil
+end
+
 -- Für andere Module: liegt der eigene Charakter am Boden?
 function Downed.IsDowned()
 	return isDowned

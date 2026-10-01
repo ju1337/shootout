@@ -151,7 +151,7 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       150,
+       190,
        0.3,
        26
       ],
@@ -776,7 +776,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -74,
+         -80,
          9,
          75
         ],
@@ -822,7 +822,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -58,
+         -64,
          9,
          75
         ],
@@ -868,7 +868,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -66,
+         -72,
          19,
          75
         ],
@@ -914,7 +914,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -66,
+         -72,
          9,
          75
         ],
@@ -962,7 +962,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -66,
+         -72,
          23.5,
          75
         ],
@@ -1046,7 +1046,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -30,
+         -44,
          9,
          75
         ],
@@ -1092,7 +1092,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -14,
+         -28,
          9,
          75
         ],
@@ -1138,7 +1138,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -22,
+         -36,
          19,
          75
         ],
@@ -1184,7 +1184,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -22,
+         -36,
          9,
          75
         ],
@@ -1232,7 +1232,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -22,
+         -36,
          23.5,
          75
         ],
@@ -1316,7 +1316,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         14,
+         -8,
          9,
          75
         ],
@@ -1362,7 +1362,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         30,
+         8,
          9,
          75
         ],
@@ -1408,7 +1408,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         22,
+         0,
          19,
          75
         ],
@@ -1454,7 +1454,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         22,
+         0,
          9,
          75
         ],
@@ -1502,7 +1502,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         22,
+         0,
          23.5,
          75
         ],
@@ -1586,7 +1586,277 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         58,
+         28,
+         9,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2745,
+       0.3529
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PortalPillarR",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.5,
+       18,
+       2.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44,
+         9,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2745,
+       0.3529
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PortalTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18.5,
+       2.5,
+       2.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         36,
+         19,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2745,
+       0.3529
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PortalField",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       13.5,
+       16,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         36,
+         9,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2745,
+       0.3529
+      ],
+      "Material": "ForceField",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "Sign_Demolition",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17,
+       4,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         36,
+         23.5,
+         75
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0784,
+       0.0863,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "DEMOLITION",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.902,
+           0.2745,
+           0.3529
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PortalPillarL",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.5,
+       18,
+       2.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         64,
          9,
          75
         ],
@@ -1632,7 +1902,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         74,
+         80,
          9,
          75
         ],
@@ -1678,7 +1948,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         66,
+         72,
          19,
          75
         ],
@@ -1724,7 +1994,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         66,
+         72,
          9,
          75
         ],
@@ -1772,7 +2042,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         66,
+         72,
          23.5,
          75
         ],
@@ -3127,7 +3397,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -66,
+         -72,
          0.5,
          69
         ],
@@ -3175,7 +3445,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -22,
+         -36,
          0.5,
          69
         ],
@@ -3223,7 +3493,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         22,
+         0,
          0.5,
          69
         ],
@@ -3259,6 +3529,54 @@
      }
     },
     {
+     "Name": "Portal_Demolition",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       0.4,
+       8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         36,
+         0.5,
+         69
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2745,
+       0.3529
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "CanCollide": false,
+      "Transparency": 0.35
+     }
+    },
+    {
      "Name": "Portal_Arena",
      "ClassName": "Part",
      "Properties": {
@@ -3271,7 +3589,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         66,
+         72,
          0.5,
          69
         ],

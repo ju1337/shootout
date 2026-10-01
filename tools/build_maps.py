@@ -18,6 +18,7 @@ HUB_ORIGIN = (0, 0, 0)
 FFA_ORIGIN = (0, 0, 1500)
 DROP_ORIGIN = (1500, 0, 0)
 STRIKEOUT_ORIGIN = (0, 0, -1500)
+DEMOLITION_ORIGIN = (-1500, 0, 0)
 
 
 # ---------- Helfer ----------
@@ -355,6 +356,55 @@ def build_strikeout():
     b.save("Strikeout.model.json")
 
 
+# ---------- Demolition: "Hafen" (260 x 180), Angreifer bei -x, Ziele A/B bei +x ----------
+
+def build_demolition():
+    b = Builder(DEMOLITION_ORIGIN)
+    sx, sz = 260, 180
+    b.ground(sx + 10, sz + 10, (80, 82, 88), "Asphalt")
+    b.border(sx, sz, 12, (110, 100, 90), "Brick", barrier=120)
+    # Wasserkante an der Nordseite (nur Optik)
+    b.box("Ground", "Water", (sx, 0.4, 14), (0, 0.05, sz / 2 - 7), (40, 90, 140), "Glass",
+          props={"Transparency": 0.3})
+
+    # Spawns: Angreifer ganz links, Verteidiger zwischen den Zielen (Blick zur Mitte)
+    b.box("Ground", "AttackPad", (20, 0.3, 50), (-118, 0.15, 0), (200, 80, 80), "SmoothPlastic")
+    for z in (-15, -5, 5, 15):
+        b.spawn(-118, z, yaw=-90, group="SpawnsAtk")
+    for x, z in ((100, -10), (100, 10), (108, -20), (108, 20)):
+        b.spawn(x, z, yaw=90, group="SpawnsDef")
+
+    # Zielbereiche A (Süden) und B (Norden) mit Schild
+    for name, z in (("A", -50), ("B", 50)):
+        b.add("Objective", "Site" + name, (0.3, 20, 20), (60, 0.2, z), (255, 80, 80), "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.6, "CanCollide": False})
+        b.box("Decor", "SitePost" + name, (1, 10, 1), (60, 5, z), (60, 60, 65), "Metal")
+        b.sign("SiteSign" + name, (6, 6, 0.5), (60, 13, z), name, (25, 25, 30), (255, 90, 90))
+        # Deckung direkt am Ziel
+        b.box("Cover", "Container", (8, 8, 18), (72, 4, z + (12 if z < 0 else -12)), (60, 110, 160), "Metal")
+        b.box("Cover", "Container", (18, 8, 8), (48, 4, z + (-14 if z < 0 else 14)), (180, 90, 50), "Metal")
+        b.crate(66, z - 8)
+        b.crate(54, z + 8)
+
+    # Lagerhalle in der Mitte (begehbar, Durchgänge in alle Richtungen)
+    b.house("Warehouse", -10, 0, 40, 30, 14, (150, 130, 110), (70, 65, 60), doors=("N", "S", "E", "W"))
+
+    # Container-Gassen zwischen Angreifer-Spawn und Mitte
+    for x, z, w, d in ((-70, -40, 20, 8), (-70, 40, 20, 8), (-50, -70, 8, 20), (-50, 70, 8, 20),
+                       (-85, 0, 8, 16), (25, -20, 8, 14), (25, 20, 8, 14)):
+        b.box("Cover", "Container", (w, 8, d), (x, 4, z), (90, 120, 80), "Metal")
+    for x, z in ((-95, -30), (-95, 30), (-30, -55), (-30, 55), (10, -75), (10, 75), (90, 0)):
+        b.crate(x, z)
+    for x, z, length, ax in ((-40, 0, 14, False), (85, -35, 12, True), (85, 35, 12, True), (110, 0, 20, False)):
+        b.cover_wall(x, z, length, along_x=ax)
+    # Kräne als Orientierung
+    for x, z in ((-20, 70), (40, -78)):
+        b.box("Decor", "CraneLeg", (2, 30, 2), (x, 15, z), (220, 170, 40), "Metal")
+        b.box("Decor", "CraneArm", (2, 2, 30), (x, 31, z), (220, 170, 40), "Metal")
+
+    b.save("Demolition.model.json")
+
+
 # ---------- Hub (Lobby) ----------
 
 # Gleiche Ids/Farben wie in src/shared/Modes.lua
@@ -362,6 +412,7 @@ HUB_MODES = (
     ("FreeForAll", "FREE-FOR-ALL", (255, 120, 60), True),
     ("Drop", "DROP 5v5", (80, 160, 255), True),
     ("Strikeout", "STRIKEOUT 4v4", (255, 170, 50), True),
+    ("Demolition", "DEMOLITION", (230, 70, 90), True),
     ("Arena", "1v1 ARENA", (170, 100, 255), False),
 )
 
@@ -387,11 +438,11 @@ def build_lobby():
     b.spawn(0, -22, yaw=180, real=True)
 
     # Weg vom Platz zu den Portalen
-    b.box("Ground", "Path", (150, 0.3, 26), (0, 0.15, 62), (50, 53, 66), "Marble")
+    b.box("Ground", "Path", (190, 0.3, 26), (0, 0.15, 62), (50, 53, 66), "Marble")
 
     # Portale nebeneinander am Nordende, Vorderseite zeigt zum Platz
     for i, (mode_id, title, color, available) in enumerate(HUB_MODES):
-        x = -66 + i * 44
+        x = -72 + i * 36
         z = 75
         c = color if available else (90, 92, 105)
         b.box("Decor", "PortalPillarL", (2.5, 18, 2.5), (x - 8, 9, z), c, "Neon" if available else "Metal")
@@ -440,4 +491,5 @@ if __name__ == "__main__":
     build_ffa()
     build_drop()
     build_strikeout()
+    build_demolition()
     build_lobby()

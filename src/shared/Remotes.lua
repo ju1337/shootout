@@ -29,6 +29,7 @@ local NAMES = {
 	"MoneyGain",  -- Server -> Client: Geld bekommen (Menge, Grund)
 	"UseGadget",  -- Client -> Server: Gadget werfen (Blickrichtung)
 	"Flash",      -- Server -> Client: geblendet (Dauer)
+	"ObjectiveAction", -- Client -> Server: E für Ziel (Bombe legen/entschärfen) gedrückt/losgelassen
 }
 
 local folder

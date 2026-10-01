@@ -20,6 +20,7 @@ local modules = {
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
 	Drop = require(script.Parent.Modes.Drop),
 	Strikeout = require(script.Parent.Modes.Strikeout),
+	Demolition = require(script.Parent.Modes.Demolition),
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig

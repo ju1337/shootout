@@ -277,12 +277,17 @@ function HUD.Init(weaponClient)
 		TextSize = 15 }, objective)
 	local function updateObjective()
 		local mine = player:GetAttribute("ObjMine")
-		objective.Visible = mine ~= nil
-		if mine then
-			mineBar.Size = UDim2.new(mine, 0, 1, 0)
-			enemyBar.Size = UDim2.new(player:GetAttribute("ObjEnemy") or 0, 0, 1, 0)
-			objectiveInfo.Text = player:GetAttribute("ObjInfo") or ""
+		local info = player:GetAttribute("ObjInfo")
+		objective.Visible = mine ~= nil or info ~= nil
+		-- Balken nur mit Punkt-Fortschritt (Strikeout), sonst nur die Statuszeile (Demolition)
+		for _, child in objective:GetChildren() do
+			if child ~= objectiveInfo then
+				child.Visible = mine ~= nil
+			end
 		end
+		mineBar.Size = UDim2.new(mine or 0, 0, 1, 0)
+		enemyBar.Size = UDim2.new(player:GetAttribute("ObjEnemy") or 0, 0, 1, 0)
+		objectiveInfo.Text = info or ""
 	end
 	updateObjective()
 	player:GetAttributeChangedSignal("ObjMine"):Connect(updateObjective)
