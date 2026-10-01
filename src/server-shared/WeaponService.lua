@@ -105,7 +105,8 @@ local function spread(direction, degrees)
 	return (CFrame.lookAt(Vector3.zero, direction) * CFrame.Angles(0, 0, spin) * CFrame.Angles(angle, 0, 0)).LookVector
 end
 
--- Ein einzelner Schuss/Kugel: Raycast, Effekt, Schaden
+-- Ein einzelner Schuss/Kugel: Raycast, Effekt, Schaden.
+-- Gibt bei einem Treffer { Humanoid, Damage, Headshot, Killed, Position, Name } zurück.
 local function fireRay(player, character, origin, direction, cfg, weaponName)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
@@ -142,18 +143,22 @@ local function fireRay(player, character, origin, direction, cfg, weaponName)
 
 	local headshot = result.Instance.Name == "Head"
 	local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1) * GameSettings.Get("DamageMultiplier")
+	local healthBefore = targetHumanoid.Health
 	targetHumanoid:TakeDamage(damage)
+	local dealt = healthBefore - targetHumanoid.Health -- 0 bei Schutzschild
 
 	local killed = targetHumanoid.Health <= 0
-	Remotes.Hitmarker:FireClient(player, headshot, killed)
+	local victimName = victim and victim.Name or model.Name
 	-- Spieler und Bots zählen als Kill (Test-Dummies nicht)
 	if killed and (victim or isBot) then
-		killedEvent:Fire(player, victim, weaponName, headshot, victim and victim.Name or model.Name)
+		killedEvent:Fire(player, victim, weaponName, headshot, victimName)
 	end
+	return { Humanoid = targetHumanoid, Damage = dealt, Headshot = headshot, Killed = killed,
+		Position = result.Position, Name = victimName }
 end
 
--- Schuss auswerten
-local function onFire(player, origin, direction)
+-- Schuss auswerten. aiming = Spieler zielt (Rechtsklick): weniger Streuung
+local function onFire(player, origin, direction, aiming)
 	local state = states[player]
 	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Hub)
 	if not state or not player:GetAttribute("CanFight") then
@@ -189,8 +194,25 @@ local function onFire(player, origin, direction)
 	state.LastShot = now
 	ammo.Mag -= 1
 
+	local spreadAngle = (cfg.Spread or 0) * (aiming == true and WeaponConfig.AimSpreadFactor or 1)
+	-- Treffer pro Ziel zusammenfassen (Schrotflinte: eine Schadenszahl statt acht)
+	local hits = {}
 	for _ = 1, cfg.Pellets or 1 do
-		fireRay(player, character, origin, spread(direction, cfg.Spread), cfg, state.Current)
+		local hit = fireRay(player, character, origin, spread(direction, spreadAngle), cfg, state.Current)
+		if hit then
+			local total = hits[hit.Humanoid]
+			if total then
+				total.Damage += hit.Damage
+				total.Headshot = total.Headshot or hit.Headshot
+				total.Killed = total.Killed or hit.Killed
+			else
+				hits[hit.Humanoid] = hit
+			end
+		end
+	end
+	for _, hit in hits do
+		player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(hit.Damage + 0.5))
+		Remotes.Hitmarker:FireClient(player, hit.Headshot, hit.Killed, hit.Damage, hit.Position, hit.Name)
 	end
 	sendAmmo(player)
 end

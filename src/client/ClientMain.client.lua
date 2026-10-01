@@ -14,6 +14,7 @@ local Spectator = require(script.Parent:WaitForChild("Spectator"))
 local AgentSelect = require(script.Parent:WaitForChild("AgentSelect"))
 local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
+local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 
 Movement.Init()
 WeaponClient.Init()
@@ -24,4 +25,5 @@ Glide.Init()
 Spectator.Init()
 AgentSelect.Init()
 SideMenu.Init()
+Scoreboard.Init()
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

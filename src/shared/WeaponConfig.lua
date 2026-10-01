@@ -1,12 +1,17 @@
 -- WeaponConfig (ModuleScript)
 -- Alle Waffenwerte an einer Stelle. Hier kannst du alles anpassen.
 -- Welche Waffen ein Agent trägt, steht in AgentConfig (Loadout).
--- Pellets = Kugeln pro Schuss (Schrotflinte), Spread = Streuung in Grad
+-- Pellets = Kugeln pro Schuss (Schrotflinte), Spread = Streuung in Grad (aus der Hüfte)
+-- Recoil = Kamera-Rückstoß pro Schuss in Grad (bewusst klein, stellt sich von selbst zurück)
+-- AimFov = Sichtfeld beim Zielen (Rechtsklick)
 
 local WeaponConfig = {}
 
 -- Faktor für Kopfschüsse (2 = doppelter Schaden)
 WeaponConfig.HeadshotMultiplier = 2
+
+-- Streuung beim Zielen = Spread * dieser Faktor
+WeaponConfig.AimSpreadFactor = 0.25
 
 WeaponConfig.Weapons = {
 	Rifle = {
@@ -18,6 +23,9 @@ WeaponConfig.Weapons = {
 		ReserveAmmo = 90,
 		ReloadTime = 2.0,
 		Range = 500,
+		Spread = 1.2,
+		Recoil = 0.35,
+		AimFov = 50,
 	},
 	SMG = {
 		DisplayName = "MP",
@@ -29,6 +37,8 @@ WeaponConfig.Weapons = {
 		ReloadTime = 1.8,
 		Range = 250,
 		Spread = 1.5,
+		Recoil = 0.25,
+		AimFov = 55,
 	},
 	Shotgun = {
 		DisplayName = "Schrotflinte",
@@ -41,6 +51,8 @@ WeaponConfig.Weapons = {
 		ReserveAmmo = 24,
 		ReloadTime = 2.5,
 		Range = 90,
+		Recoil = 1.5,
+		AimFov = 60,
 	},
 	DMR = {
 		DisplayName = "Präzisionsgewehr",
@@ -51,6 +63,9 @@ WeaponConfig.Weapons = {
 		ReserveAmmo = 30,
 		ReloadTime = 2.3,
 		Range = 900,
+		Spread = 2.5,
+		Recoil = 0.9,
+		AimFov = 30,
 	},
 	Pistol = {
 		DisplayName = "Pistole",
@@ -61,6 +76,9 @@ WeaponConfig.Weapons = {
 		ReserveAmmo = 48,
 		ReloadTime = 1.3,
 		Range = 300,
+		Spread = 0.8,
+		Recoil = 0.5,
+		AimFov = 55,
 	},
 	Revolver = {
 		DisplayName = "Revolver",
@@ -71,6 +89,9 @@ WeaponConfig.Weapons = {
 		ReserveAmmo = 30,
 		ReloadTime = 2.0,
 		Range = 400,
+		Spread = 1.0,
+		Recoil = 1.2,
+		AimFov = 50,
 	},
 }
 

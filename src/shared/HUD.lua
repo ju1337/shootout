@@ -1,9 +1,13 @@
 -- HUD (ModuleScript, nur Client)
--- Leben, Munition, Kills, Fadenkreuz, Hitmarker, Killfeed, Modus-Info und Meldungen.
+-- Leben, Munition, Kills, Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Sounds,
+-- Schadens-Effekt, Killfeed, Modus-Info und Meldungen.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -17,6 +21,8 @@ local HUD = {}
 local KILLFEED_MAX = 5        -- maximale Einträge im Killfeed
 local KILLFEED_TIME = 5       -- Sekunden, die ein Eintrag sichtbar bleibt
 local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
+-- Treffer-Sound (in Roblox eingebaut, keine Asset-ID nötig)
+local HIT_SOUND = "rbxasset://sounds/electronicpingshort.wav"
 
 local gui
 local statusLabel
@@ -105,8 +111,25 @@ function HUD.Init(weaponClient)
 		TextSize = 22,
 	}, gui)
 
+	-- Roter Bildschirm-Effekt bei Schaden (ganz unten, damit er nichts verdeckt)
+	local damageFlash = make("Frame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(200, 0, 0),
+		BackgroundTransparency = 1,
+		ZIndex = 0,
+	}, gui)
+	make("UIGradient", {
+		-- Mitte durchsichtig, Ränder rot
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.3, 0.85),
+			NumberSequenceKeypoint.new(0.7, 0.85),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+	}, damageFlash)
+
 	-- Fadenkreuz und Hitmarker
-	make("Frame", {
+	local crosshair = make("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, 4, 0, 4),
@@ -157,10 +180,21 @@ function HUD.Init(weaponClient)
 	-- Leben: bei jedem Spawn neu verbinden
 	local function trackCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
+		local lastHealth = humanoid.Health
 		local function update()
 			local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
 			healthFill.Size = UDim2.new(ratio, 0, 1, 0)
 			healthText.Text = tostring(math.max(0, math.ceil(humanoid.Health)))
+			healthFill.BackgroundColor3 = ratio < 0.3 and Color3.fromRGB(230, 70, 60) or Color3.fromRGB(80, 200, 100)
+			-- Getroffen: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar
+			local resting = ratio < 0.3 and humanoid.Health > 0 and 0.75 or 1
+			if humanoid.Health < lastHealth then
+				damageFlash.BackgroundTransparency = 0.45
+				TweenService:Create(damageFlash, TweenInfo.new(0.5), { BackgroundTransparency = resting }):Play()
+			else
+				damageFlash.BackgroundTransparency = resting
+			end
+			lastHealth = humanoid.Health
 		end
 		update()
 		humanoid.HealthChanged:Connect(update)
@@ -203,7 +237,18 @@ function HUD.Init(weaponClient)
 
 	-- Hitmarker: weiß = Körper, rot = Kopf, groß = Kill
 	local hitId = 0
-	weaponClient.Hit:Connect(function(headshot, killed)
+	local killId = 0
+	local killNotice = label({
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0.5, 30),
+		Size = UDim2.new(0, 500, 0, 28),
+		Text = "",
+		TextSize = 20,
+		TextColor3 = Color3.fromRGB(255, 90, 90),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Visible = false,
+	}, gui)
+	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName)
 		hitId += 1
 		local myId = hitId
 		hitmarker.TextColor3 = headshot and Color3.fromRGB(255, 70, 70) or Color3.new(1, 1, 1)
@@ -214,6 +259,49 @@ function HUD.Init(weaponClient)
 				hitmarker.Visible = false
 			end
 		end)
+
+		-- Treffer-Sound (höher bei Kopfschuss, tiefer bei Kill)
+		local sound = Instance.new("Sound")
+		sound.SoundId = HIT_SOUND
+		sound.Volume = killed and 0.8 or 0.5
+		sound.PlaybackSpeed = killed and 0.7 or (headshot and 1.5 or 1.15)
+		sound.Parent = SoundService
+		sound:Play()
+		Debris:AddItem(sound, 2)
+
+		-- Schadenszahl an der Trefferstelle, steigt auf und verblasst
+		if damage and damage > 0 and typeof(position) == "Vector3" then
+			local anchor = Instance.new("Attachment")
+			anchor.WorldPosition = position
+			anchor.Parent = workspace.Terrain
+			local billboard = make("BillboardGui", { Adornee = anchor, Size = UDim2.new(0, 80, 0, 30),
+				AlwaysOnTop = true, StudsOffset = Vector3.new(math.random(-10, 10) / 10, 1, 0) }, gui)
+			local number = label({ Size = UDim2.new(1, 0, 1, 0), Text = tostring(math.floor(damage + 0.5)),
+				TextSize = headshot and 26 or 20, TextColor3 = headshot and Color3.fromRGB(255, 210, 60)
+					or Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center }, billboard)
+			TweenService:Create(billboard, TweenInfo.new(0.8), { StudsOffset = billboard.StudsOffset + Vector3.new(0, 2, 0) }):Play()
+			TweenService:Create(number, TweenInfo.new(0.8), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+			Debris:AddItem(billboard, 0.85)
+			Debris:AddItem(anchor, 0.85)
+		end
+
+		-- Kill-Meldung unter dem Fadenkreuz
+		if killed and victimName then
+			killId += 1
+			local myKill = killId
+			killNotice.Text = "✕  ELIMINIERT  " .. string.upper(victimName)
+			killNotice.Visible = true
+			task.delay(1.6, function()
+				if killId == myKill then
+					killNotice.Visible = false
+				end
+			end)
+		end
+	end)
+
+	-- Fadenkreuz beim Zielen ausblenden (man schaut über das Visier)
+	weaponClient.AimChanged:Connect(function(aiming)
+		crosshair.Visible = not aiming
 	end)
 
 	-- Killfeed-Einträge

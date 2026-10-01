@@ -205,6 +205,7 @@ local function shoot(bot, head, target, weaponName)
 			if humanoid.Health <= 0 then
 				local victim = Players:GetPlayerFromCharacter(hitModel)
 				KillService.ReportBotKill(bot.Mode, bot.Name, victim and victim.Name or hitModel.Name, weaponName, headshot)
+				bot.Info:SetAttribute("Kills", (bot.Info:GetAttribute("Kills") or 0) + 1)
 			end
 		end
 	end
@@ -377,6 +378,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	humanoid.Died:Connect(function()
 		if bot.Model == model then
 			bot.Alive = false
+			bot.Info:SetAttribute("Deaths", (bot.Info:GetAttribute("Deaths") or 0) + 1)
 			if onDied then
 				onDied()
 			end

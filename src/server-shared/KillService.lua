@@ -7,6 +7,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local WeaponService = require(ServerShared.WeaponService)
 local ProgressService = require(ServerShared.ProgressService)
@@ -28,6 +29,15 @@ local function setupPlayer(player)
 	kills.Parent = stats
 
 	stats.Parent = player
+
+	-- Tode zählen (fürs Scoreboard), nur in Kampfmodi
+	player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid").Died:Connect(function()
+			if Modes.IsFighting(player) then
+				player:SetAttribute("Deaths", (player:GetAttribute("Deaths") or 0) + 1)
+			end
+		end)
+	end)
 end
 
 -- Kills eines Spielers auf 0 setzen (Moduswechsel, neue Runde)
@@ -36,6 +46,8 @@ function KillService.ResetPlayer(player)
 	if kills then
 		kills.Value = 0
 	end
+	player:SetAttribute("Deaths", 0)
+	player:SetAttribute("Damage", 0)
 end
 
 -- Kill durch einen Bot: nur Killfeed (Bots sammeln keine Kills)

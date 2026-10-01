@@ -5,7 +5,6 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -429,9 +428,9 @@ local function buildSettings()
 		Movement.SetFov(math.clamp(Movement.GetFov() + direction * 5, 60, 100))
 	end)
 	settingRow(150, "Maus-Empfindlichkeit", function()
-		return string.format("%.1f", UserInputService.MouseDeltaSensitivity)
+		return string.format("%.1f", Movement.GetSensitivity())
 	end, function(direction)
-		UserInputService.MouseDeltaSensitivity = math.clamp(UserInputService.MouseDeltaSensitivity + direction * 0.1, 0.1, 3)
+		Movement.SetSensitivity(math.clamp(Movement.GetSensitivity() + direction * 0.1, 0.1, 3))
 	end)
 end
 
