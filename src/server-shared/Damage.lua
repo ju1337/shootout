@@ -9,11 +9,15 @@ local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedS
 
 local Damage = {}
 
--- Letzter Angreifer pro Charakter (Modell), z.B. für den Perk "Racheblick"
-local lastAttacker = setmetatable({}, { __mode = "k" })
+-- Letzter Treffer pro Charakter: { Model, Name, Weapon } – für "Racheblick" und die Todesanzeige
+local lastHit = setmetatable({}, { __mode = "k" })
 
 function Damage.LastAttacker(model)
-	return lastAttacker[model]
+	return lastHit[model] and lastHit[model].Model
+end
+
+function Damage.LastHit(model)
+	return lastHit[model]
 end
 
 -- Schaden anwenden. attacker = { Player = ..., BotName = ..., Weapon = ..., Headshot = ... }
@@ -25,7 +29,11 @@ function Damage.Apply(model, humanoid, amount, attacker)
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)
 	local attackerModel = attacker and (attacker.Model or (attacker.Player and attacker.Player.Character))
 	if attackerModel then
-		lastAttacker[model] = attackerModel
+		lastHit[model] = {
+			Model = attackerModel,
+			Name = attacker.Player and attacker.Player.Name or attacker.BotName or attackerModel.Name,
+			Weapon = attacker.Weapon,
+		}
 	end
 	model:SetAttribute("LastDamaged", os.clock())
 

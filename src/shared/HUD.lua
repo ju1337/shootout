@@ -469,6 +469,37 @@ function HUD.Init(weaponClient)
 		end)
 	end)
 
+	-- Todesanzeige: wer hat dich ausgeschaltet
+	local recap = make("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0.7, 0),
+		Size = UDim2.new(0, 440, 0, 74),
+		BackgroundColor3 = Color3.fromRGB(20, 10, 12),
+		BackgroundTransparency = 0.25,
+		Visible = false,
+	}, gui)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, recap)
+	make("UIStroke", { Color = Color3.fromRGB(220, 60, 60), Thickness = 1.5 }, recap)
+	local recapTitle = label({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 28), Text = "",
+		TextSize = 20, TextColor3 = Color3.fromRGB(255, 90, 90), TextXAlignment = Enum.TextXAlignment.Left }, recap)
+	local recapInfo = label({ Position = UDim2.new(0, 16, 0, 40), Size = UDim2.new(1, -32, 0, 22), Text = "",
+		TextSize = 15, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left }, recap)
+	local recapId = 0
+	Remotes.DeathRecap.OnClientEvent:Connect(function(killerName, weaponName, killerHealth, agentId)
+		recapId += 1
+		local myId = recapId
+		local agent = agentId and AgentConfig.Get(agentId)
+		recapTitle.Text = "AUSGESCHALTET VON " .. string.upper(tostring(killerName))
+		recapInfo.Text = (agent and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
+			.. "  ·  hatte noch " .. tostring(killerHealth) .. " Leben"
+		recap.Visible = true
+		task.delay(4, function()
+			if recapId == myId then
+				recap.Visible = false
+			end
+		end)
+	end)
+
 	-- Große Meldungen
 	local announceId = 0
 	function HUD.ShowAnnouncement(text)

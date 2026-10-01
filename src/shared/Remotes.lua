@@ -33,6 +33,7 @@ local NAMES = {
 	"Melee",      -- Client -> Server: Messer-Angriff (Ursprung, Richtung)
 	"Ping",       -- Client -> Server: Ort/Gegner markieren (Position, Modell oder nil)
 	"PingShow",   -- Server -> Team: Markierung anzeigen (Position, Modell, Name des Pingenden)
+	"DeathRecap", -- Server -> Opfer: wer hat dich ausgeschaltet (Name, Waffe, Leben, Agent)
 }
 
 local folder
