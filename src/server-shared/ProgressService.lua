@@ -16,6 +16,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
 local Cosmetics = require(Shared.Cosmetics)
 local QuestConfig = require(Shared.QuestConfig)
+local PassConfig = require(Shared.PassConfig)
 
 local ProgressService = {}
 
@@ -26,7 +27,7 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0 }
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0 }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -77,8 +78,34 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
 	player:SetAttribute("RankPoints", profile.RankPoints or 0)
+	player:SetAttribute("PassXP", profile.PassXP or 0)
 	ensureQuests(player, profile)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
+end
+
+-- Battle-Pass-XP: neue Stufen schalten ihre Belohnung sofort frei
+function ProgressService.AddPassXP(player, amount)
+	local profile = profiles[player]
+	if not profile or amount <= 0 then
+		return
+	end
+	local before = PassConfig.TierFromXP(profile.PassXP or 0)
+	profile.PassXP = (profile.PassXP or 0) + amount
+	local after = PassConfig.TierFromXP(profile.PassXP)
+	for tier = before + 1, after do
+		local reward = PassConfig.Tiers[tier]
+		local text
+		if reward.Coins then
+			profile.Coins += reward.Coins
+			text = "+" .. reward.Coins .. " Münzen"
+		elseif reward.Item then
+			profile.Owned[reward.Item] = true
+			local item = Cosmetics.Get(reward.Item)
+			text = "Skin \"" .. (item and item.Name or reward.Item) .. "\" freigeschaltet!"
+		end
+		Remotes.Announce:FireClient(player, "Battle Pass Stufe " .. tier .. ": " .. text)
+	end
+	ProgressService.Sync(player)
 end
 
 -- Rangpunkte ändern (Ranked), nie unter 0
@@ -129,6 +156,7 @@ function ProgressService.ClaimQuest(player, id)
 	end
 	profile.Quests.Claimed[id] = true
 	ProgressService.AddCoins(player, quest.Reward) -- synct auch die Aufträge
+	ProgressService.AddPassXP(player, PassConfig.QuestXP)
 	return "+" .. quest.Reward .. " Münzen für \"" .. quest.Text .. "\"!", true
 end
 
@@ -242,6 +270,10 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 
 	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
 	Remotes.XPGain:FireClient(player, after - before, reason, agentId, levelUp, coins)
+	-- Alle XP zählen auch für den Battle Pass (auch wenn der Agent schon Max-Level ist)
+	if reason ~= "Admin" then
+		ProgressService.AddPassXP(player, amount)
+	end
 end
 
 function ProgressService.Init()

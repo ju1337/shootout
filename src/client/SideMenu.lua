@@ -16,6 +16,7 @@ local AgentFigure = require(Shared.AgentFigure)
 local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
 local QuestConfig = require(Shared.QuestConfig)
+local PassConfig = require(Shared.PassConfig)
 
 local player = Players.LocalPlayer
 
@@ -203,7 +204,13 @@ local function buildShop()
 			end
 		end
 		buyButtons = {}
-		for i, item in Cosmetics.List(currentType) do
+		local shopItems = {}
+		for _, item in Cosmetics.List(currentType) do
+			if not item.Pass then
+				table.insert(shopItems, item)
+			end
+		end
+		for i, item in shopItems do
 			local rarity = Cosmetics.Rarities[item.Rarity]
 			local card = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
 			make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
@@ -417,6 +424,74 @@ local function buildQuests()
 	end
 end
 
+-- ---------- BATTLE PASS ----------
+
+local function buildPass()
+	local frame = makePanel("Pass", "🎫  BATTLE PASS", 980, 470)
+	local season = text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 24),
+		Text = PassConfig.SeasonName, TextSize = 18, TextColor3 = GRAY }, frame)
+	local tierLabel = text({ Position = UDim2.new(0, 24, 0, 90), Size = UDim2.new(0, 400, 0, 34), Text = "",
+		TextSize = 28, Font = Enum.Font.GothamBlack }, frame)
+	local barBack = make("Frame", { Position = UDim2.new(0, 24, 0, 130), Size = UDim2.new(1, -48, 0, 12),
+		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, barBack)
+	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, bar)
+	local xpLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 98), Size = UDim2.new(0, 300, 0, 24),
+		Text = "", TextSize = 16, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, frame)
+
+	-- Stufen nebeneinander (waagerecht scrollbar)
+	local strip = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 160), Size = UDim2.new(1, -48, 0, 250),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, ScrollingDirection = Enum.ScrollingDirection.X,
+		CanvasSize = UDim2.new(0, #PassConfig.Tiers * 134, 0, 0) }, frame)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder }, strip)
+	local cards = {}
+	for tier, reward in PassConfig.Tiers do
+		local item = reward.Item and Cosmetics.Get(reward.Item)
+		local rarity = item and Cosmetics.Rarities[item.Rarity]
+		local card = make("Frame", { Size = UDim2.new(0, 124, 0, 230), BackgroundColor3 = CARD, LayoutOrder = tier }, strip)
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+		local stroke = make("UIStroke", { Color = rarity and rarity.Color or BORDER, Thickness = item and 2 or 1 }, card)
+		text({ Size = UDim2.new(1, 0, 0, 30), Text = "STUFE " .. tier, TextSize = 14, TextColor3 = GRAY,
+			TextXAlignment = Enum.TextXAlignment.Center }, card)
+		if item then
+			local preview = viewportFrame({ Position = UDim2.new(0, 0, 0, 30), Size = UDim2.new(1, 0, 0, 120) }, card)
+			if item.Type == "Weapon" then
+				showWeapon(preview, "Rifle", item)
+			else
+				showAgent(preview, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+			end
+			text({ Position = UDim2.new(0, 6, 0, 152), Size = UDim2.new(1, -12, 0, 40), Text = item.Name, TextSize = 15,
+				TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		else
+			text({ Position = UDim2.new(0, 0, 0, 60), Size = UDim2.new(1, 0, 0, 60), Text = "💰", TextSize = 40,
+				TextXAlignment = Enum.TextXAlignment.Center }, card)
+			text({ Position = UDim2.new(0, 0, 0, 130), Size = UDim2.new(1, 0, 0, 30), Text = reward.Coins .. " Münzen",
+				TextSize = 16, TextColor3 = Color3.fromRGB(255, 210, 80), TextXAlignment = Enum.TextXAlignment.Center }, card)
+		end
+		local state = text({ Position = UDim2.new(0, 0, 1, -34), Size = UDim2.new(1, 0, 0, 26), Text = "",
+			TextSize = 14, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		cards[tier] = { Stroke = stroke, State = state, Card = card }
+	end
+
+	panels.Pass.Refresh = function()
+		local xp = player:GetAttribute("PassXP") or 0
+		local tier, progress = PassConfig.TierFromXP(xp)
+		tierLabel.Text = "STUFE " .. tier .. " / " .. #PassConfig.Tiers
+		bar.Size = UDim2.new(progress, 0, 1, 0)
+		xpLabel.Text = tier >= #PassConfig.Tiers and "Pass abgeschlossen!"
+			or (math.floor(progress * PassConfig.XPPerTier) .. " / " .. PassConfig.XPPerTier .. " XP bis Stufe " .. tier + 1)
+		for t, entry in cards do
+			local reached = t <= tier
+			entry.State.Text = reached and "FREIGESCHALTET ✓" or "GESPERRT"
+			entry.State.TextColor3 = reached and GREEN or GRAY
+			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(28, 40, 34) or CARD
+		end
+	end
+	season.Text = PassConfig.SeasonName .. "   ·   Pass-XP gibt es für alle XP und für Aufträge"
+end
+
 -- ---------- TÄGLICH ----------
 
 local function dailyLeft()
@@ -502,13 +577,13 @@ end
 -- ---------- Knopfleiste ----------
 
 local function sideButton(icon, label, order, onClick)
-	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 78), BackgroundColor3 = Color3.fromRGB(20, 24, 34),
+	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 70), BackgroundColor3 = Color3.fromRGB(20, 24, 34),
 		BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = true, LayoutOrder = order }, column)
 	make("UICorner", { CornerRadius = UDim.new(0, 12) }, b)
 	make("UIStroke", { Color = ACCENT, Thickness = 1.5, Transparency = 0.3 }, b)
-	text({ Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 40), Text = icon, TextSize = 30,
+	text({ Position = UDim2.new(0, 0, 0, 4), Size = UDim2.new(1, 0, 0, 38), Text = icon, TextSize = 28,
 		TextXAlignment = Enum.TextXAlignment.Center }, b)
-	text({ Position = UDim2.new(0, 0, 0, 48), Size = UDim2.new(1, 0, 0, 22), Text = label, TextSize = 12,
+	text({ Position = UDim2.new(0, 0, 0, 42), Size = UDim2.new(1, 0, 0, 22), Text = label, TextSize = 12,
 		TextXAlignment = Enum.TextXAlignment.Center }, b)
 	b.Activated:Connect(onClick)
 	return b
@@ -526,12 +601,13 @@ local function buildColumn()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
+		{ "🎫", "PASS", function() togglePanel("Pass") end },
 		{ "📋", "AUFTRÄGE", function() togglePanel("Quests") end },
 		{ "🎁", "TÄGLICH", function() togglePanel("Daily") end },
 		{ "🎟", "CODES", function() togglePanel("Codes") end },
 		{ "⚙", "OPTIONEN", function() togglePanel("Settings") end },
 	}
-	local height = #entries * 78 + (#entries - 1) * 8
+	local height = #entries * 70 + (#entries - 1) * 8
 	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 24),
 		Size = UDim2.new(0, 96, 0, height), BackgroundTransparency = 1 }, gui)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, column)
@@ -577,6 +653,7 @@ function SideMenu.Init()
 	buildColumn()
 	buildShop()
 	buildInventory()
+	buildPass()
 	buildQuests()
 	buildDaily()
 	buildCodes()
@@ -591,7 +668,8 @@ function SideMenu.Init()
 	end)
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" then
+		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
+			or name == "PassXP" then
 			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()

@@ -27,6 +27,9 @@ function actions.Buy(player, itemId)
 	if not item then
 		return "Unbekannter Skin.", false
 	end
+	if item.Pass then
+		return "Diesen Skin gibt es nur im Battle Pass.", false
+	end
 	if ProgressService.Owns(player, itemId) then
 		return "Du besitzt " .. item.Name .. " schon.", false
 	end

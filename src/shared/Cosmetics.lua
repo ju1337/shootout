@@ -1,6 +1,7 @@
 -- Cosmetics (ModuleScript)
 -- Alle Skins im Shop: Waffen-Skins (für jede Waffe einzeln ausrüstbar) und Agenten-Skins.
 -- Neue Skins einfach hier eintragen. Preise in Münzen.
+-- Pass = true: exklusiv aus dem Battle Pass, nicht im Shop kaufbar.
 -- Besitz und Ausrüstung kommen vom Server als Spieler-Attribute (JSON): "Owned", "Equipped".
 -- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin, "A:<Agent>" = Agenten-Skin
 
@@ -39,6 +40,12 @@ Cosmetics.Items = {
 	{ Id = "W_Galaxie", Type = "Weapon", Name = "Galaxie", Rarity = "Legendary", Price = 1500,
 		Color = Color3.fromRGB(140, 60, 255), Material = Enum.Material.Neon },
 
+	-- Exklusive Battle-Pass-Skins
+	{ Id = "W_Saison", Type = "Weapon", Name = "Saison-Neon", Rarity = "Epic", Pass = true,
+		Color = Color3.fromRGB(40, 255, 200), Material = Enum.Material.Neon },
+	{ Id = "W_Goldrausch", Type = "Weapon", Name = "Goldrausch", Rarity = "Legendary", Pass = true,
+		Color = Color3.fromRGB(255, 200, 40), Material = Enum.Material.Foil },
+
 	-- Agenten-Skins (Primary = Uniform, Accent = Visier/Weste)
 	{ Id = "A_Viper_Nacht", Type = "Agent", Agent = "Viper", Name = "Nachtschlange", Rarity = "Rare", Price = 600,
 		Primary = Color3.fromRGB(30, 35, 45), Accent = Color3.fromRGB(80, 255, 160) },
@@ -54,6 +61,8 @@ Cosmetics.Items = {
 		Primary = Color3.fromRGB(30, 20, 40), Accent = Color3.fromRGB(255, 60, 200) },
 	{ Id = "A_Hawk_Wueste", Type = "Agent", Agent = "Hawk", Name = "Wüstenfalke", Rarity = "Rare", Price = 600,
 		Primary = Color3.fromRGB(170, 140, 90), Accent = Color3.fromRGB(255, 120, 40) },
+	{ Id = "A_Viper_Saison", Type = "Agent", Agent = "Viper", Name = "Saison-Agentin", Rarity = "Legendary", Pass = true,
+		Primary = Color3.fromRGB(20, 40, 50), Accent = Color3.fromRGB(40, 255, 200) },
 	{ Id = "A_Hawk_Phantom", Type = "Agent", Agent = "Hawk", Name = "Phantom", Rarity = "Legendary", Price = 1500,
 		Primary = Color3.fromRGB(20, 20, 25), Accent = Color3.fromRGB(120, 200, 255) },
 }

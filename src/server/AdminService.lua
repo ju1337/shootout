@@ -139,6 +139,15 @@ function AdminService.Init(manager)
 			ProgressService.AddCoins(player, amount)
 			return player.Name .. " +" .. amount .. " Münzen"
 		end,
+		GivePassXP = function(userId, amount)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			amount = math.clamp(tonumber(amount) or 5000, 1, 1000000)
+			ProgressService.AddPassXP(player, amount)
+			return player.Name .. " +" .. amount .. " Pass-XP"
+		end,
 		GiveXP = function(userId, amount)
 			local player = target(userId)
 			if not player then
