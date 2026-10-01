@@ -541,8 +541,41 @@ end
 
 -- ---------- EINSTELLUNGEN ----------
 
+-- Einstellungen im Profil speichern (kurz verzögert, damit nicht jeder Klick gesendet wird)
+local saveToken = 0
+local function saveSettings()
+	saveToken += 1
+	local myToken = saveToken
+	task.delay(1, function()
+		if myToken == saveToken then
+			Remotes.ShopAction:FireServer("SaveSettings", {
+				Fov = Movement.GetFov(),
+				Sensitivity = Movement.GetSensitivity(),
+				ThirdPerson = Movement.GetThirdPersonSetting(),
+			})
+		end
+	end)
+end
+
+-- Gespeicherte Einstellungen einmal beim Laden übernehmen
+local function loadSettings()
+	local raw = player:GetAttribute("ClientSettings")
+	if type(raw) ~= "string" then
+		return false
+	end
+	local ok, data = pcall(game:GetService("HttpService").JSONDecode, game:GetService("HttpService"), raw)
+	if not ok or type(data) ~= "table" or next(data) == nil then
+		return false
+	end
+	Movement.SetFov(data.Fov or 70)
+	Movement.SetSensitivity(data.Sensitivity or 1)
+	Movement.SetThirdPerson(data.ThirdPerson == true)
+	return true
+end
+
 local function buildSettings()
 	local frame = makePanel("Settings", "⚙  EINSTELLUNGEN", 560, 380)
+	local refreshers = {}
 	local function settingRow(y, label, getValue, change)
 		text({ Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(0, 260, 0, 44), Text = label, TextSize = 18 }, frame)
 		local value = text({ Position = UDim2.new(0, 360, 0, y), Size = UDim2.new(0, 80, 0, 44), Text = "",
@@ -550,15 +583,18 @@ local function buildSettings()
 		local function refresh()
 			value.Text = tostring(getValue())
 		end
+		table.insert(refreshers, refresh)
 		button({ Position = UDim2.new(0, 304, 0, y), Size = UDim2.new(0, 48, 0, 44), Text = "−", TextSize = 22,
 			BackgroundColor3 = CARD }, frame, function()
 			change(-1)
 			refresh()
+			saveSettings()
 		end)
 		button({ Position = UDim2.new(0, 448, 0, y), Size = UDim2.new(0, 48, 0, 44), Text = "+", TextSize = 22,
 			BackgroundColor3 = CARD }, frame, function()
 			change(1)
 			refresh()
+			saveSettings()
 		end)
 		refresh()
 	end
@@ -577,6 +613,11 @@ local function buildSettings()
 	end, function()
 		Movement.SetThirdPerson(not Movement.GetThirdPersonSetting())
 	end)
+	panels.Settings.Refresh = function()
+		for _, refresh in refreshers do
+			refresh()
+		end
+	end
 end
 
 -- ---------- Knopfleiste ----------
@@ -663,6 +704,16 @@ function SideMenu.Init()
 	buildDaily()
 	buildCodes()
 	buildSettings()
+
+	-- Gespeicherte Einstellungen übernehmen, sobald das Profil geladen ist
+	if not loadSettings() then
+		local connection
+		connection = player:GetAttributeChangedSignal("ClientSettings"):Connect(function()
+			if loadSettings() then
+				connection:Disconnect()
+			end
+		end)
+	end
 
 	-- Rückmeldung vom Server in das offene Fenster
 	Remotes.ShopStatus.OnClientEvent:Connect(function(message, success)

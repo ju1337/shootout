@@ -127,6 +127,21 @@ function actions.UnlockAgent(player, agentId)
 	return agent.Name .. " freigeschaltet!", true
 end
 
+-- Persönliche Einstellungen speichern (Sichtfeld, Empfindlichkeit, Kamera)
+function actions.SaveSettings(player, settings)
+	local profile = ProgressService.Get(player)
+	if not profile or typeof(settings) ~= "table" then
+		return nil
+	end
+	profile.Settings = {
+		Fov = math.clamp(tonumber(settings.Fov) or 70, 60, 100),
+		Sensitivity = math.clamp(tonumber(settings.Sensitivity) or 1, 0.1, 3),
+		ThirdPerson = settings.ThirdPerson == true,
+	}
+	ProgressService.Sync(player)
+	return nil -- keine Meldung nötig
+end
+
 function actions.ClaimQuest(player, id)
 	return ProgressService.ClaimQuest(player, id)
 end
@@ -142,7 +157,9 @@ function ShopService.Init()
 			warn("Shop-Fehler: " .. tostring(message))
 			message, success = "Fehler, bitte nochmal versuchen.", false
 		end
-		Remotes.ShopStatus:FireClient(player, message, success)
+		if message then
+			Remotes.ShopStatus:FireClient(player, message, success)
+		end
 	end)
 end
 
