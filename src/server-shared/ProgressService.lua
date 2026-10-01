@@ -26,7 +26,7 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {} }
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0 }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -76,8 +76,19 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
+	player:SetAttribute("RankPoints", profile.RankPoints or 0)
 	ensureQuests(player, profile)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
+end
+
+-- Rangpunkte ändern (Ranked), nie unter 0
+function ProgressService.AddRankPoints(player, amount)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	profile.RankPoints = math.max(0, (profile.RankPoints or 0) + amount)
+	ProgressService.Sync(player)
 end
 
 -- Spielereignis für Aufträge zählen (event wie in QuestConfig, z.B. "Kill")

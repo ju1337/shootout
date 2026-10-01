@@ -13,6 +13,7 @@ local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
+local RankConfig = require(Shared.RankConfig)
 
 local player = Players.LocalPlayer
 
@@ -387,6 +388,25 @@ function GameMenu.Init()
 		TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Right,
 	}, overlay)
+
+	-- Rang (Ranked) oben rechts
+	local rankLabel = text({
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -60, 0, 44),
+		Size = UDim2.new(0, 400, 0, 30),
+		Text = "",
+		TextSize = 22,
+		Font = Enum.Font.GothamBlack,
+		TextXAlignment = Enum.TextXAlignment.Right,
+	}, overlay)
+	local function updateRank()
+		local points = player:GetAttribute("RankPoints") or 0
+		local rank = RankConfig.Get(points)
+		rankLabel.Text = "🏆 " .. string.upper(rank.Name) .. "  ·  " .. points .. " RP"
+		rankLabel.TextColor3 = rank.Color
+	end
+	updateRank()
+	player:GetAttributeChangedSignal("RankPoints"):Connect(updateRank)
 
 	-- Untere Leiste
 	statusLabel = text({

@@ -11,6 +11,7 @@
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
 --   RoundTime = Einstellungs-Key für die Rundenzeit in Sekunden (nil = ohne Zeitlimit)
+--   Ranked = true: am Match-Ende Rangpunkte (nur wenn in beiden Teams echte Spieler sind)
 --   Objective = function(api) -> Ziel-Objekt mit eigenen Regeln (z.B. Bombe in Demolition).
 --     Mögliche Funktionen: RoundStart(roundNumber), Tick(dt, elapsed), RoundEnd(), SpawnFolder(team),
 --     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo()
@@ -27,6 +28,7 @@ local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
 local BuyConfig = require(Shared.BuyConfig)
+local RankConfig = require(Shared.RankConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
@@ -664,6 +666,16 @@ function TeamRoundMode.new(config)
 		if roundWinner and scores[roundWinner] >= roundsToWin() then
 			announce("Team " .. roundWinner.Name .. " gewinnt das Match!")
 			giveTeamXP(roundWinner, "MatchWin", "Matchsieg")
+			-- Ranked: Rangpunkte, wenn beide Teams echte Spieler hatten
+			if config.Ranked and #teamA:GetPlayers() > 0 and #teamB:GetPlayers() > 0 then
+				for player in members do
+					local won = player.Team == roundWinner
+					ProgressService.AddRankPoints(player, won and RankConfig.WinPoints or -RankConfig.LossPoints)
+					local rank = RankConfig.Get(player:GetAttribute("RankPoints"))
+					Remotes.Announce:FireClient(player, (won and "+" .. RankConfig.WinPoints or "−" .. RankConfig.LossPoints)
+						.. " RP  ·  Rang " .. rank.Name)
+				end
+			end
 			task.wait(INTERMISSION)
 			resetMatch()
 		elseif practiceRound then

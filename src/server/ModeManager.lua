@@ -23,6 +23,7 @@ local modules = {
 	Demolition = require(script.Parent.Modes.Demolition),
 	Wingman = require(script.Parent.Modes.Wingman),
 	Training = require(script.Parent.Modes.Training),
+	Ranked = require(script.Parent.Modes.Ranked),
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig

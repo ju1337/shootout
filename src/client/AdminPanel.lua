@@ -85,7 +85,7 @@ end
 
 local function buildControls()
 	section("SPIEL STEUERN")
-	for _, modeId in { "Drop", "Strikeout", "Demolition", "Wingman" } do
+	for _, modeId in { "Drop", "Strikeout", "Demolition", "Wingman", "Ranked" } do
 		local modeRow = row(list)
 		label(modeId .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
 		button("JETZT STARTEN", 130, modeRow, Color3.fromRGB(60, 150, 80), function()
@@ -123,6 +123,7 @@ local function buildBots()
 		{ "Strikeout", "Gold", Color3.fromRGB(170, 100, 30), "Lila", Color3.fromRGB(110, 50, 150), 8 },
 		{ "Demolition", "Nord", Color3.fromRGB(30, 140, 160), "Süd", Color3.fromRGB(160, 40, 140), 8 },
 		{ "Wingman", "Alpha", Color3.fromRGB(60, 150, 100), "Bravo", Color3.fromRGB(150, 130, 40), 4 },
+		{ "Ranked", "Elite", Color3.fromRGB(170, 140, 40), "Vanguard", Color3.fromRGB(70, 90, 160), 8 },
 	} do
 		local modeRow = row(list)
 		label(entry[1] .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })

@@ -88,11 +88,14 @@ Modes.List = {
 	{
 		Id = "Ranked",
 		Name = "RANKED",
-		Tag = "Gewertet",
-		Description = "Drop mit Rang und Punkten.",
-		Players = "10 Spieler",
+		Tag = "Demolition gewertet",
+		Description = "Demolition um Rangpunkte: Sieg +25 RP, Niederlage −15 RP.\nVon Bronze bis Meister.",
+		Players = "8 Spieler",
 		Color = Color3.fromRGB(255, 200, 60),
-		Available = false,
+		Center = Vector3.new(1500, 0, 1500),
+		TeamMode = true,
+		Overview = { Radius = 170, Height = 110 },
+		Available = true,
 	},
 }
 

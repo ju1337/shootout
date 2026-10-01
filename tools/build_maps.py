@@ -21,6 +21,7 @@ STRIKEOUT_ORIGIN = (0, 0, -1500)
 DEMOLITION_ORIGIN = (-1500, 0, 0)
 WINGMAN_ORIGIN = (1500, 0, -1500)
 TRAINING_ORIGIN = (-1500, 0, 1500)
+RANKED_ORIGIN = (1500, 0, 1500)
 
 
 # ---------- Helfer ----------
@@ -360,8 +361,8 @@ def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
 
 # ---------- Demolition: "Hafen" (260 x 180), Angreifer bei -x, Ziele A/B bei +x ----------
 
-def build_demolition():
-    b = Builder(DEMOLITION_ORIGIN)
+def build_demolition(origin=DEMOLITION_ORIGIN, filename="Demolition.model.json"):
+    b = Builder(origin)
     sx, sz = 260, 180
     b.ground(sx + 10, sz + 10, (80, 82, 88), "Asphalt")
     b.border(sx, sz, 12, (110, 100, 90), "Brick", barrier=120)
@@ -404,7 +405,7 @@ def build_demolition():
         b.box("Decor", "CraneLeg", (2, 30, 2), (x, 15, z), (220, 170, 40), "Metal")
         b.box("Decor", "CraneArm", (2, 2, 30), (x, 31, z), (220, 170, 40), "Metal")
 
-    b.save("Demolition.model.json")
+    b.save(filename)
 
 
 # ---------- Training: Schießstand (140 x 90), Spieler bei -x, Puppen bei +x ----------
@@ -524,5 +525,6 @@ if __name__ == "__main__":
     build_strikeout()
     build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")  # gleiche Map für Wingman (2v2)
     build_demolition()
+    build_demolition(RANKED_ORIGIN, "Ranked.model.json")  # gleiche Map für Ranked
     build_training()
     build_lobby()
