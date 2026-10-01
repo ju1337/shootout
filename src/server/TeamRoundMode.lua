@@ -504,6 +504,31 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Match-Ende: Ergebnis, MVP (meiste Kills, dann Schaden) und eigene Werte an alle Spieler
+	local function sendSummary(winner, rankTexts)
+		local mvp, best = nil, -1
+		for player in members do
+			local score = KillService.GetKills(player) * 1000 + (player:GetAttribute("Damage") or 0)
+			if score > best then
+				mvp, best = player, score
+			end
+		end
+		for player in members do
+			Remotes.MatchSummary:FireClient(player, {
+				Won = winner ~= nil and player.Team == winner,
+				Winner = winner and winner.Name or nil,
+				Mode = Modes.Get(MODE_ID).Name,
+				Score = (scores[player.Team] or 0) .. " : " .. (scores[otherTeam(player.Team)] or 0),
+				Mvp = mvp and mvp.Name or nil,
+				MvpKills = mvp and KillService.GetKills(mvp) or 0,
+				Kills = KillService.GetKills(player),
+				Deaths = player:GetAttribute("Deaths") or 0,
+				Damage = player:GetAttribute("Damage") or 0,
+				Rank = rankTexts and rankTexts[player] or nil,
+			})
+		end
+	end
+
 	local function resetMatch()
 		scores[teamA], scores[teamB] = 0, 0
 		roundNumber = 0
@@ -667,15 +692,17 @@ function TeamRoundMode.new(config)
 			announce("Team " .. roundWinner.Name .. " gewinnt das Match!")
 			giveTeamXP(roundWinner, "MatchWin", "Matchsieg")
 			-- Ranked: Rangpunkte, wenn beide Teams echte Spieler hatten
+			local rankTexts = {}
 			if config.Ranked and #teamA:GetPlayers() > 0 and #teamB:GetPlayers() > 0 then
 				for player in members do
 					local won = player.Team == roundWinner
 					ProgressService.AddRankPoints(player, won and RankConfig.WinPoints or -RankConfig.LossPoints)
 					local rank = RankConfig.Get(player:GetAttribute("RankPoints"))
-					Remotes.Announce:FireClient(player, (won and "+" .. RankConfig.WinPoints or "−" .. RankConfig.LossPoints)
-						.. " RP  ·  Rang " .. rank.Name)
+					rankTexts[player] = (won and "+" .. RankConfig.WinPoints or "−" .. RankConfig.LossPoints)
+						.. " RP  ·  Rang " .. rank.Name
 				end
 			end
+			sendSummary(roundWinner, rankTexts)
 			task.wait(INTERMISSION)
 			resetMatch()
 		elseif practiceRound then
