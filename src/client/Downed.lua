@@ -99,7 +99,7 @@ local function onDownedChanged(character)
 		flat = flat.Magnitude > 0.01 and flat.Unit or Vector3.new(0, 0, -1)
 		local position = root.Position + Vector3.new(0, 2, 0)
 		root.CFrame = CFrame.lookAt(position, position + flat)
-		Movement.SetFirstPerson(Modes.IsFighting(player))
+		Movement.ApplyCamera()
 	end
 	downedPanel.Visible = isDowned
 end

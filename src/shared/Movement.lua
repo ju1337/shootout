@@ -3,6 +3,7 @@
 -- Sliden (im Sprint ducken), Klettern über Kanten (Springen vor einer Kante) und Zielen
 -- (setzt WeaponClient über SetAiming).
 -- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
+-- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -45,6 +46,10 @@ local sliding = false
 local lastSlide = 0
 local normalHipHeight = nil
 local mantling = false
+local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
+local SHOULDER_OFFSET = Vector3.new(2.2, 0.8, 0)
+local SHOULDER_DISTANCE = 9
+local SHOULDER_AIM_DISTANCE = 5
 
 local function getHumanoid()
 	local character = player.Character
@@ -82,7 +87,14 @@ local function apply()
 		-- Ducken: Kamera tiefer, Körper sinkt ab
 		normalHipHeight = normalHipHeight or humanoid.HipHeight
 		local crouched = isCrouched() and not isDropping(humanoid)
-		humanoid.CameraOffset = crouched and CROUCH_CAMERA or Vector3.zero
+		local offset = crouched and CROUCH_CAMERA or Vector3.zero
+		if thirdPerson and Modes.IsFighting(player) then
+			offset += SHOULDER_OFFSET -- über die rechte Schulter
+			local distance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
+			player.CameraMinZoomDistance = distance
+			player.CameraMaxZoomDistance = distance
+		end
+		humanoid.CameraOffset = offset
 		humanoid.HipHeight = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
 	end
 
@@ -192,6 +204,13 @@ end
 
 -- An = First Person, Aus = Kamera hinter dem Ziel (z.B. beim Zuschauen)
 function Movement.SetFirstPerson(on: boolean)
+	player.CameraMaxZoomDistance = 128
+	if on and thirdPerson then
+		-- Schulterkamera: Abstand fest, Maus gesperrt (siehe RenderStep unten)
+		player.CameraMode = Enum.CameraMode.Classic
+		apply()
+		return
+	end
 	if on then
 		player.CameraMinZoomDistance = 0.5
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
@@ -205,6 +224,31 @@ function Movement.SetFirstPerson(on: boolean)
 			end
 		end)
 	end
+end
+
+-- Kamera passend zum Modus setzen (Hub: frei, Kampf: Ego oder Schulter)
+function Movement.ApplyCamera()
+	Movement.SetFirstPerson(Modes.IsFighting(player))
+end
+
+-- Einstellung Schulterkamera an/aus
+function Movement.SetThirdPerson(on)
+	thirdPerson = on
+	local humanoid = getHumanoid()
+	if humanoid and not on then
+		humanoid.AutoRotate = true
+	end
+	Movement.ApplyCamera()
+	apply()
+end
+
+-- Gespeicherte Einstellung (unabhängig davon, ob man gerade kämpft)
+function Movement.GetThirdPersonSetting()
+	return thirdPerson
+end
+
+function Movement.IsThirdPerson()
+	return thirdPerson and Modes.IsFighting(player)
 end
 
 -- Zielen an/aus (von WeaponClient), fov = Sichtfeld der Waffe beim Zielen
@@ -236,7 +280,11 @@ end
 function Movement.Init()
 	-- First Person nur in Kampfmodi, im Hub normale Kamera
 	local function updateCamera()
-		Movement.SetFirstPerson(Modes.IsFighting(player))
+		Movement.ApplyCamera()
+		local humanoid = getHumanoid()
+		if humanoid and not Movement.IsThirdPerson() then
+			humanoid.AutoRotate = true
+		end
 	end
 	updateCamera()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateCamera)
@@ -258,6 +306,25 @@ function Movement.Init()
 			apply()
 		end
 	end)
+	-- Schulterkamera: Maus mittig sperren, Körper dreht mit der Kamera (wie Shift-Lock)
+	RunService:BindToRenderStep("ShoulderCamera", Enum.RenderPriority.Camera.Value + 1, function()
+		if not Movement.IsThirdPerson() or player.CameraMode ~= Enum.CameraMode.Classic then
+			return
+		end
+		local humanoid, character = getHumanoid()
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not humanoid or not root or humanoid.Health <= 0 or humanoid.PlatformStand or mantling then
+			return
+		end
+		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+		humanoid.AutoRotate = false
+		local look = workspace.CurrentCamera.CFrame.LookVector
+		local flat = Vector3.new(look.X, 0, look.Z)
+		if flat.Magnitude > 0.01 then
+			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+		end
+	end)
+
 	-- Springen vor einer Kante = hochziehen
 	UserInputService.JumpRequest:Connect(tryMantle)
 

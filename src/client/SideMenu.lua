@@ -542,7 +542,7 @@ end
 -- ---------- EINSTELLUNGEN ----------
 
 local function buildSettings()
-	local frame = makePanel("Settings", "⚙  EINSTELLUNGEN", 560, 320)
+	local frame = makePanel("Settings", "⚙  EINSTELLUNGEN", 560, 380)
 	local function settingRow(y, label, getValue, change)
 		text({ Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(0, 260, 0, 44), Text = label, TextSize = 18 }, frame)
 		local value = text({ Position = UDim2.new(0, 360, 0, y), Size = UDim2.new(0, 80, 0, 44), Text = "",
@@ -571,6 +571,11 @@ local function buildSettings()
 		return string.format("%.1f", Movement.GetSensitivity())
 	end, function(direction)
 		Movement.SetSensitivity(math.clamp(Movement.GetSensitivity() + direction * 0.1, 0.1, 3))
+	end)
+	settingRow(210, "Kamera (Kampf)", function()
+		return Movement.GetThirdPersonSetting() and "Schulter" or "Ego"
+	end, function()
+		Movement.SetThirdPerson(not Movement.GetThirdPersonSetting())
 	end)
 end
 

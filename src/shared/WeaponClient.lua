@@ -294,13 +294,14 @@ function WeaponClient.Init()
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local isAlive = humanoid ~= nil and humanoid.Health > 0 and Modes.IsFighting(player) and not isDowned()
 
-		-- Eigenes Tool in der Hand ausblenden (das sehen nur die anderen)
+		-- Eigenes Tool in der Hand ausblenden (das sehen nur die anderen) – außer in der Schulterkamera
+		local thirdPerson = Movement.IsThirdPerson()
 		if character then
 			for _, obj in character:GetChildren() do
 				if obj:IsA("Tool") then
 					for _, part in obj:GetChildren() do
 						if part:IsA("BasePart") then
-							part.LocalTransparencyModifier = 1
+							part.LocalTransparencyModifier = thirdPerson and 0 or 1
 						end
 					end
 				end
@@ -313,8 +314,8 @@ function WeaponClient.Init()
 
 		-- Kamera-Waffe nur sichtbar, solange man selbst lebt (nicht beim Zuschauen)
 		if viewModel then
-			viewModel.Parent = isAlive and workspace.CurrentCamera or nil
-			if isAlive then
+			viewModel.Parent = (isAlive and not thirdPerson) and workspace.CurrentCamera or nil
+			if isAlive and not thirdPerson then
 				-- Während des Messerstichs Waffe nach unten wegziehen
 				local meleeDrop = knife and CFrame.new(0, -1.2, 0.4) or CFrame.new()
 				aimBlend += ((aiming and 1 or 0) - aimBlend) * math.min(1, AIM_SPEED * dt)

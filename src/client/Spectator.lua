@@ -77,7 +77,7 @@ local function stopSpectating()
 	if myHumanoid then
 		camera.CameraSubject = myHumanoid
 	end
-	Movement.SetFirstPerson(Modes.IsFighting(player))
+	Movement.ApplyCamera()
 	HUD.SetStatus("")
 end
 
