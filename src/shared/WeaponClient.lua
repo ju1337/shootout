@@ -221,6 +221,32 @@ local function resetWeapon()
 	Remotes.Equip:FireServer(nil)
 end
 
+-- Schuss-Sound an einer Position (eigene Schüsse etwas lauter)
+local lastSoundKey, lastSoundTime = nil, 0
+local function playShotSound(weaponName, position, own)
+	local id = WeaponConfig.Sounds[weaponName]
+	if not id then
+		return
+	end
+	-- Schrotflinte feuert mehrere Kugeln auf einmal: nur ein Sound pro Schuss
+	local key = tostring(position) .. weaponName
+	if key == lastSoundKey and os.clock() - lastSoundTime < 0.05 then
+		return
+	end
+	lastSoundKey, lastSoundTime = key, os.clock()
+	local anchor = Instance.new("Attachment")
+	anchor.WorldPosition = position
+	anchor.Parent = workspace.Terrain
+	local sound = Instance.new("Sound")
+	sound.SoundId = id
+	sound.Volume = own and 0.6 or 0.8
+	sound.RollOffMaxDistance = 300
+	sound.PlaybackSpeed = 0.95 + math.random() * 0.1
+	sound.Parent = anchor
+	sound:Play()
+	Debris:AddItem(anchor, 3)
+end
+
 -- Kurze gelbe Leuchtspur für jeden Schuss (von allen Spielern)
 local function showTracer(startPos, endPos)
 	local distance = (endPos - startPos).Magnitude
@@ -341,7 +367,8 @@ function WeaponClient.Init()
 		notifyAmmo()
 	end)
 
-	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos, endPos)
+	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos, endPos, weaponName)
+		playShotSound(weaponName or current, startPos, shooter == player)
 		-- Eigene Schüsse starten optisch an der Laufmündung
 		local barrel = shooter == player and viewModel and viewModel.Parent and viewModel:FindFirstChild("Barrel")
 		if barrel then

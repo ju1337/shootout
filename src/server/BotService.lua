@@ -202,7 +202,7 @@ local function shoot(bot, head, target, weaponName)
 		local direction = spread(aimPart.Position - origin, (cfg.Spread or 0) + AIM_SPREAD)
 		local result = workspace:Raycast(origin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (origin + direction * cfg.Range)
-		Remotes.Shot:FireAllClients(nil, origin, endPos)
+		Remotes.Shot:FireAllClients(nil, origin, endPos, weaponName)
 
 		local hitModel = result and result.Instance:FindFirstAncestorOfClass("Model")
 		local humanoid = livingHumanoid(hitModel)

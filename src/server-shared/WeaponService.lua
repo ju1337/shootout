@@ -118,7 +118,7 @@ local function fireRay(player, character, origin, direction, cfg, weaponName)
 	params.FilterDescendantsInstances = { character }
 	local result = workspace:Raycast(origin, direction * cfg.Range, params)
 	local endPos = result and result.Position or (origin + direction * cfg.Range)
-	Remotes.Shot:FireAllClients(player, origin, endPos)
+	Remotes.Shot:FireAllClients(player, origin, endPos, weaponName)
 	if not result then
 		return
 	end

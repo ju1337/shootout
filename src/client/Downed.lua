@@ -10,7 +10,6 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
-local Modes = require(Shared.Modes)
 local Movement = require(Shared.Movement)
 
 local player = Players.LocalPlayer

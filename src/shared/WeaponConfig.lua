@@ -13,6 +13,18 @@ WeaponConfig.HeadshotMultiplier = 2
 -- Streuung beim Zielen = Spread * dieser Faktor
 WeaponConfig.AimSpreadFactor = 0.25
 
+-- Schuss-Sounds (Roblox-Audio-IDs). Bleibt ein Sound stumm, ist die ID nicht (mehr) öffentlich:
+-- in Studio unter Toolbox → Audio einen freien Schuss-Sound suchen und dessen ID hier eintragen.
+WeaponConfig.Sounds = {
+	Rifle = "rbxassetid://92011177452282",
+	SMG = "rbxassetid://92011177452282",
+	LMG = "rbxassetid://92011177452282",
+	DMR = "rbxassetid://3102797479",
+	Shotgun = "rbxassetid://3102797479",
+	Pistol = "rbxassetid://6240772711",
+	Revolver = "rbxassetid://3102797479",
+}
+
 WeaponConfig.Weapons = {
 	Rifle = {
 		DisplayName = "Sturmgewehr",
