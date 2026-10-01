@@ -85,7 +85,7 @@ end
 
 local function buildControls()
 	section("SPIEL STEUERN")
-	for _, modeId in { "Drop", "Strikeout", "Demolition" } do
+	for _, modeId in { "Drop", "Strikeout", "Demolition", "Wingman" } do
 		local modeRow = row(list)
 		label(modeId .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
 		button("JETZT STARTEN", 130, modeRow, Color3.fromRGB(60, 150, 80), function()
@@ -122,6 +122,7 @@ local function buildBots()
 		{ "Drop", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
 		{ "Strikeout", "Gold", Color3.fromRGB(170, 100, 30), "Lila", Color3.fromRGB(110, 50, 150), 8 },
 		{ "Demolition", "Nord", Color3.fromRGB(30, 140, 160), "Süd", Color3.fromRGB(160, 40, 140), 8 },
+		{ "Wingman", "Alpha", Color3.fromRGB(60, 150, 100), "Bravo", Color3.fromRGB(150, 130, 40), 4 },
 	} do
 		local modeRow = row(list)
 		label(entry[1] .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
@@ -153,6 +154,7 @@ local function refreshBots()
 	end
 	botCountLabel.Text = "FFA " .. (counts.FreeForAll or 0) .. " · Drop " .. (counts.Drop or 0)
 		.. " · Strike " .. (counts.Strikeout or 0) .. " · Demo " .. (counts.Demolition or 0)
+		.. " · Wing " .. (counts.Wingman or 0)
 end
 
 local function buildSettings()
@@ -210,9 +212,10 @@ local function refreshPlayers()
 		label(p.Name .. "  ·  " .. tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "")
 			.. "  ·  " .. (agent and agent.Name or "?"), 15, box)
 		local moves = row(box)
-		local short = { Hub = "Hub", FreeForAll = "FFA", Drop = "Drop", Strikeout = "Strike", Demolition = "Demo" }
-		for _, modeId in { "Hub", "FreeForAll", "Drop", "Strikeout", "Demolition" } do
-			button(short[modeId], 64, moves, nil, function()
+		local short = { Hub = "Hub", FreeForAll = "FFA", Drop = "Drop", Strikeout = "Strike", Demolition = "Demo",
+			Wingman = "Wing" }
+		for _, modeId in { "Hub", "FreeForAll", "Drop", "Strikeout", "Demolition", "Wingman" } do
+			button(short[modeId], 52, moves, nil, function()
 				send("MovePlayer", p.UserId, modeId)
 			end)
 		end

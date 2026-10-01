@@ -21,6 +21,7 @@ local modules = {
 	Drop = require(script.Parent.Modes.Drop),
 	Strikeout = require(script.Parent.Modes.Strikeout),
 	Demolition = require(script.Parent.Modes.Demolition),
+	Wingman = require(script.Parent.Modes.Wingman),
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig

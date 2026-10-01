@@ -19,6 +19,7 @@ FFA_ORIGIN = (0, 0, 1500)
 DROP_ORIGIN = (1500, 0, 0)
 STRIKEOUT_ORIGIN = (0, 0, -1500)
 DEMOLITION_ORIGIN = (-1500, 0, 0)
+WINGMAN_ORIGIN = (1500, 0, -1500)
 
 
 # ---------- Helfer ----------
@@ -311,8 +312,8 @@ def build_drop():
 
 # ---------- Strikeout: "Fabrik" (220 x 150), Team Gold bei -x, Team Lila bei +x ----------
 
-def build_strikeout():
-    b = Builder(STRIKEOUT_ORIGIN)
+def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
+    b = Builder(origin)
     sx, sz = 220, 150
     b.ground(sx + 10, sz + 10, (105, 100, 95), "Concrete")
     b.border(sx, sz, 14, (90, 85, 80), "Brick", barrier=120)
@@ -353,7 +354,7 @@ def build_strikeout():
         b.cover_wall(side * 62, 52, 14, height=6)
         b.cover_wall(side * 62, -52, 14, height=6)
 
-    b.save("Strikeout.model.json")
+    b.save(filename)
 
 
 # ---------- Demolition: "Hafen" (260 x 180), Angreifer bei -x, Ziele A/B bei +x ----------
@@ -413,7 +414,7 @@ HUB_MODES = (
     ("Drop", "DROP 5v5", (80, 160, 255), True),
     ("Strikeout", "STRIKEOUT 4v4", (255, 170, 50), True),
     ("Demolition", "DEMOLITION", (230, 70, 90), True),
-    ("Arena", "1v1 ARENA", (170, 100, 255), False),
+    ("Wingman", "WINGMAN 2v2", (120, 220, 160), True),
 )
 
 
@@ -491,5 +492,6 @@ if __name__ == "__main__":
     build_ffa()
     build_drop()
     build_strikeout()
+    build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")  # gleiche Map für Wingman (2v2)
     build_demolition()
     build_lobby()

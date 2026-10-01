@@ -55,6 +55,18 @@ Modes.List = {
 		Available = true,
 	},
 	{
+		Id = "Wingman",
+		Name = "WINGMAN",
+		Tag = "2v2 Team",
+		Description = "Wie Strikeout, aber zu zweit und mit nur 4 Respawn-Tickets pro Team.\n3 Rundensiege gewinnen.",
+		Players = "4 Spieler",
+		Color = Color3.fromRGB(120, 220, 160),
+		Center = Vector3.new(1500, 0, -1500),
+		TeamMode = true,
+		Overview = { Radius = 140, Height = 90 },
+		Available = true,
+	},
+	{
 		Id = "Arena",
 		Name = "1v1 ARENA",
 		Tag = "Duell",
