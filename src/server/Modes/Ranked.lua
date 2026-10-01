@@ -14,6 +14,7 @@ return TeamRoundMode.new({
 		{ Name = "Vanguard", Color = BrickColor.new("Royal blue") },
 	},
 	DropIn = false,
+	WingsuitStart = 120, -- Fallschirmsprung zu Rundenbeginn
 	RoundsSetting = "RankedRoundsToWin",
 	RoundTime = "DemolitionRoundTime",
 	Objective = Bomb,

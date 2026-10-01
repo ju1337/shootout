@@ -8,6 +8,8 @@
 --   RoundEnd  -> Ergebnis, Geld, dann nächste Runde. RoundsToWin Rundensiege gewinnen das Match.
 -- Was ein Modus anders macht, steht in seiner config:
 --   DropIn  = true:  Absprung über der Map (Drop), sonst Spawn an den Team-Spawns der Map
+--   WingsuitStart = Höhe: zu Rundenbeginn Fallschirmsprung über dem eigenen Team-Spawn
+--     (wie bei Rogue Company); Respawns während der Runde landen direkt am Boden
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
 --   RoundTime = Einstellungs-Key für die Rundenzeit in Sekunden (nil = ohne Zeitlimit)
@@ -306,12 +308,13 @@ function TeamRoundMode.new(config)
 		end)
 	end
 
-	function spawnPlayer(player, cframe)
-		local character = SpawnUtil.Spawn(player, cframe, config.DropIn and 0 or SPAWN_PROTECTION)
+	function spawnPlayer(player, cframe, dropping)
+		dropping = dropping or config.DropIn
+		local character = SpawnUtil.Spawn(player, cframe, dropping and 0 or SPAWN_PROTECTION)
 		if not character or not members[player] then
 			return
 		end
-		if config.DropIn then
+		if dropping then
 			character:SetAttribute("Dropping", true) -- Client startet den Fallschirmsprung
 		end
 		alive[player] = true
@@ -351,7 +354,12 @@ function TeamRoundMode.new(config)
 	local function spawnTeam(team)
 		local players = team:GetPlayers()
 		for i, player in players do
-			spawnPlayer(player, spawnCFrame(team, i, #players))
+			local cframe = spawnCFrame(team, i, #players)
+			if config.WingsuitStart then
+				-- Rundenbeginn: über dem Team-Spawn abspringen
+				cframe += Vector3.new(0, config.WingsuitStart, 0)
+			end
+			spawnPlayer(player, cframe, config.WingsuitStart ~= nil)
 		end
 		local i = 0
 		for bot in bots do

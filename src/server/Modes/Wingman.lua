@@ -13,6 +13,7 @@ return TeamRoundMode.new({
 		{ Name = "Bravo", Color = BrickColor.new("Bright yellow") },
 	},
 	DropIn = false,
+	WingsuitStart = 120, -- Fallschirmsprung zu Rundenbeginn
 	RoundsSetting = "WingmanRoundsToWin",
 	Tickets = "WingmanTickets",
 	Capture = { UnlockAfter = 15, Radius = 12 },

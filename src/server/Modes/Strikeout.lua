@@ -16,6 +16,7 @@ return TeamRoundMode.new({
 		{ Name = "Lila", Color = BrickColor.new("Bright violet") },
 	},
 	DropIn = false,
+	WingsuitStart = 120, -- Fallschirmsprung zu Rundenbeginn
 	RoundsSetting = "StrikeoutRoundsToWin",
 	Tickets = "StrikeoutTickets",
 	Capture = { UnlockAfter = 20, Radius = 12 },

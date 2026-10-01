@@ -15,6 +15,7 @@ return TeamRoundMode.new({
 		{ Name = "Süd", Color = BrickColor.new("Magenta") },
 	},
 	DropIn = false,
+	WingsuitStart = 120, -- Fallschirmsprung zu Rundenbeginn
 	RoundsSetting = "DemolitionRoundsToWin",
 	RoundTime = "DemolitionRoundTime",
 	Objective = Bomb,
