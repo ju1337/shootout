@@ -3,8 +3,11 @@
 -- Fähigkeits-Typen: "Boost" (schneller), "Wall" (Deckungswand), "Heal" (Selbstheilung),
 -- "Reveal" (zeigt Gegner durch Wände), "Cloak" (fast unsichtbar), "Dash" (Sprung nach vorne),
 -- "TeamHeal" (heilt Teamkollegen in der Nähe)
+-- Price = Münzen zum Freischalten (ohne Price: von Anfang an verfügbar)
 -- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
 -- "Sensor" (Mine, die vorbeilaufende Gegner markiert)
+
+local HttpService = game:GetService("HttpService")
 
 local AgentConfig = {}
 
@@ -109,6 +112,7 @@ AgentConfig.Agents = {
 	{
 		Id = "Ghost",
 		Name = "GHOST",
+		Price = 1500,
 		Role = "Infiltrator",
 		Description = "Schleicht sich unbemerkt hinter die Linien.",
 		Color = Color3.fromRGB(150, 150, 170),
@@ -127,6 +131,7 @@ AgentConfig.Agents = {
 	{
 		Id = "Blaze",
 		Name = "BLAZE",
+		Price = 1500,
 		Role = "Stürmer",
 		Description = "Geht als Erster rein – schnell und auf kurze Distanz tödlich.",
 		Color = Color3.fromRGB(255, 120, 40),
@@ -146,6 +151,7 @@ AgentConfig.Agents = {
 	{
 		Id = "Aegis",
 		Name = "AEGIS",
+		Price = 2000,
 		Role = "Unterstützung",
 		Description = "Hält das Team im Kampf – viel Feuerkraft und Heilung.",
 		Color = Color3.fromRGB(120, 200, 255),
@@ -196,6 +202,23 @@ function AgentConfig.SkinForLevel(level)
 		end
 	end
 	return nil
+end
+
+-- Hat der Spieler den Agenten freigeschaltet? (Spieler-Attribut "UnlockedAgents", JSON)
+function AgentConfig.IsUnlocked(player, agentId)
+	local agent = AgentConfig.Get(agentId)
+	if not agent then
+		return false
+	end
+	if not agent.Price then
+		return true
+	end
+	local raw = player:GetAttribute("UnlockedAgents")
+	if type(raw) ~= "string" then
+		return false
+	end
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, raw)
+	return ok and type(data) == "table" and data[agentId] == true
 end
 
 -- XP eines Spielers für einen Agenten (Spieler-Attribut "XP_<Id>")

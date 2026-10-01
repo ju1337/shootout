@@ -295,7 +295,7 @@ function AgentService.Init()
 		if player:GetAttribute("AgentLocked") then
 			return
 		end
-		if typeof(id) == "string" and AgentConfig.Get(id) then
+		if typeof(id) == "string" and AgentConfig.Get(id) and AgentConfig.IsUnlocked(player, id) then
 			player:SetAttribute("Agent", id)
 			if lock == true then
 				player:SetAttribute("AgentLocked", true)

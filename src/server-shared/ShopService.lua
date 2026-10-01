@@ -108,6 +108,25 @@ function actions.RedeemCode(player, code)
 	return "Code eingelöst: +" .. reward .. " Münzen!", true
 end
 
+-- Agenten mit Münzen freischalten
+function actions.UnlockAgent(player, agentId)
+	local agent = typeof(agentId) == "string" and AgentConfig.Get(agentId)
+	local profile = ProgressService.Get(player)
+	if not agent or not profile then
+		return "Unbekannter Agent.", false
+	end
+	if AgentConfig.IsUnlocked(player, agentId) then
+		return agent.Name .. " ist schon freigeschaltet.", false
+	end
+	if not ProgressService.SpendCoins(player, agent.Price) then
+		return "Nicht genug Münzen (" .. agent.Price .. " nötig).", false
+	end
+	profile.Agents = profile.Agents or {}
+	profile.Agents[agentId] = true
+	ProgressService.Sync(player)
+	return agent.Name .. " freigeschaltet!", true
+end
+
 function actions.ClaimQuest(player, id)
 	return ProgressService.ClaimQuest(player, id)
 end

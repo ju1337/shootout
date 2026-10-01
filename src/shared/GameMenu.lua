@@ -244,6 +244,11 @@ local function buildAgentPage()
 		local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = agent.Color, BorderSizePixel = 0 }, barBack)
 		local tag = badge(card, "WÄHLEN", false)
 		card.Activated:Connect(function()
+			-- Gesperrt: mit Münzen freischalten, sonst wählen
+			if not AgentConfig.IsUnlocked(player, agent.Id) then
+				Remotes.ShopAction:FireServer("UnlockAgent", agent.Id)
+				return
+			end
 			Remotes.SelectAgent:FireServer(agent.Id)
 			setStatus(agent.Name .. " gewählt. Aktiv ab dem nächsten Spawn.")
 		end)
@@ -258,9 +263,11 @@ local function buildAgentPage()
 			local stroke = entry.Card:FindFirstChildOfClass("UIStroke")
 			stroke.Color = isChosen and ACCENT or CARD_BORDER
 			stroke.Thickness = isChosen and 3 or 1
-			entry.Badge.Text = isChosen and "GEWÄHLT" or "WÄHLEN"
-			entry.Badge.BackgroundColor3 = isChosen and Color3.fromRGB(110, 220, 120) or Color3.fromRGB(55, 58, 70)
-			entry.Badge.TextColor3 = isChosen and Color3.fromRGB(20, 20, 20) or GRAY
+			local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
+			entry.Badge.Text = not unlocked and ("🔒 " .. agent.Price .. " 💰") or (isChosen and "GEWÄHLT" or "WÄHLEN")
+			entry.Badge.BackgroundColor3 = isChosen and Color3.fromRGB(110, 220, 120)
+				or (unlocked and Color3.fromRGB(55, 58, 70) or Color3.fromRGB(120, 90, 30))
+			entry.Badge.TextColor3 = (isChosen or not unlocked) and Color3.fromRGB(20, 20, 20) or GRAY
 			local xp = AgentConfig.GetXP(player, agent.Id)
 			entry.Level.Text = "Lv " .. AgentConfig.LevelFromXP(xp)
 			entry.Bar.Size = UDim2.new(AgentConfig.LevelProgress(xp), 0, 1, 0)
@@ -489,6 +496,13 @@ function GameMenu.Init()
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == Enum.KeyCode.M then
 			GameMenu.SetOpen(not isOpen)
+		end
+	end)
+
+	-- Rückmeldung beim Freischalten von Agenten
+	Remotes.ShopStatus.OnClientEvent:Connect(function(message)
+		if isOpen then
+			setStatus(message)
 		end
 	end)
 

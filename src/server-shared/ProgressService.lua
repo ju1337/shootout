@@ -27,7 +27,7 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0 }
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {} }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -79,6 +79,7 @@ function ProgressService.Sync(player)
 	player:SetAttribute("LastDaily", profile.LastDaily)
 	player:SetAttribute("RankPoints", profile.RankPoints or 0)
 	player:SetAttribute("PassXP", profile.PassXP or 0)
+	player:SetAttribute("UnlockedAgents", HttpService:JSONEncode(profile.Agents or {}))
 	ensureQuests(player, profile)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
 end

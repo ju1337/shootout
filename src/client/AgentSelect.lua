@@ -197,7 +197,10 @@ local function refreshTiles()
 		entry.Button.Visible = currentRole == "ALLE" or string.upper(agent.Role) == currentRole
 		entry.Stroke.Color = agent == chosen and RED or Color3.fromRGB(60, 65, 80)
 		entry.Stroke.Thickness = agent == chosen and 3 or 1
+		local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
 		entry.Level.Text = tostring(AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agent.Id)))
+		entry.Lock.Visible = not unlocked
+		entry.Button.BackgroundTransparency = unlocked and 0 or 0.5
 	end
 	for role, button in tabButtons do
 		button.BackgroundColor3 = role == currentRole and RED or Color3.fromRGB(18, 20, 28)
@@ -256,12 +259,19 @@ local function buildBottom()
 				hoverAgent = nil
 			end
 		end)
+		-- Schloss mit Preis für noch nicht freigeschaltete Agenten
+		local lock = text({ Size = UDim2.new(1, 0, 1, 0), Text = "🔒\n" .. tostring(agent.Price) .. " 💰", TextSize = 14,
+			TextXAlignment = Enum.TextXAlignment.Center, BackgroundTransparency = 0.35, Visible = false }, tile)
+		lock.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+		lock.BackgroundTransparency = 0.35 -- text() setzt sonst durchsichtig
 		tile.Activated:Connect(function()
-			if not isLocked() then
+			if not AgentConfig.IsUnlocked(player, agent.Id) then
+				Remotes.ShopAction:FireServer("UnlockAgent", agent.Id)
+			elseif not isLocked() then
 				Remotes.SelectAgent:FireServer(agent.Id, false)
 			end
 		end)
-		tiles[agent] = { Button = tile, Stroke = stroke, Level = level }
+		tiles[agent] = { Button = tile, Stroke = stroke, Level = level, Lock = lock }
 	end
 
 	-- Bereich AGENTEN (Tabs + Kacheln) und Bereich AUSRÜSTUNG (Kaufphase), umschaltbar
