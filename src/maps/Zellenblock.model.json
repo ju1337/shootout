@@ -5880,6 +5880,98 @@
      }
     },
     {
+     "Name": "CellRoofRampS",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24.824,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -3002.0,
+         5.45,
+         -58
+        ],
+        "orientation": [
+         [
+          0.886225,
+          -0.463254,
+          0.0
+         ],
+         [
+          0.463254,
+          0.886225,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CellRoofRampN",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24.824,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -3002.0,
+         5.45,
+         58
+        ],
+        "orientation": [
+         [
+          0.886225,
+          -0.463254,
+          0.0
+         ],
+         [
+          0.463254,
+          0.886225,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
      "Name": "Admin_N",
      "ClassName": "Part",
      "Properties": {

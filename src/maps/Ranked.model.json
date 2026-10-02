@@ -3355,6 +3355,282 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
+    },
+    {
+     "Name": "Catwalk",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       44,
+       1,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1448,
+         9,
+         1478
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3137,
+       0.3333,
+       0.3529
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CatwalkRail",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       1.2,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1426,
+         10.1,
+         1478
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.6667,
+       0.1569
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CatwalkRail",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       1.2,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1470,
+         10.1,
+         1478
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.6667,
+       0.1569
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CatwalkRampW",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.142,
+       1,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1416.0,
+         4.45,
+         1478
+        ],
+        "orientation": [
+         [
+          0.903278,
+          -0.429057,
+          0.0
+         ],
+         [
+          0.429057,
+          0.903278,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CatwalkRampE",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.142,
+       1,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1480.0,
+         4.45,
+         1478
+        ],
+        "orientation": [
+         [
+          0.903278,
+          0.429057,
+          0.0
+         ],
+         [
+          -0.429057,
+          0.903278,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "WarehouseRoofRamp",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       29.77,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         1456.0,
+         6.95,
+         1508
+        ],
+        "orientation": [
+         [
+          0.873364,
+          -0.487068,
+          0.0
+         ],
+         [
+          0.487068,
+          0.873364,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
     }
    ]
   }

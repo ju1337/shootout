@@ -3834,6 +3834,98 @@
      }
     },
     {
+     "Name": "LabRampA",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.589,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3081.0,
+         4.95,
+         -60
+        ],
+        "orientation": [
+         [
+          0.885398,
+          0.464834,
+          0.0
+         ],
+         [
+          -0.464834,
+          0.885398,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabRampB",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.589,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3081.0,
+         4.95,
+         60
+        ],
+        "orientation": [
+         [
+          0.885398,
+          0.464834,
+          0.0
+         ],
+         [
+          -0.464834,
+          0.885398,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
      "Name": "RadarBase",
      "ClassName": "Part",
      "Properties": {

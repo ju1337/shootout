@@ -3591,6 +3591,98 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
+    },
+    {
+     "Name": "RoofRampN",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       27.06,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         31.0,
+         5.95,
+         -1440
+        ],
+        "orientation": [
+         [
+          0.886914,
+          0.461934,
+          0.0
+         ],
+         [
+          -0.461934,
+          0.886914,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "RoofRampS",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       27.06,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -31.0,
+         5.95,
+         -1560
+        ],
+        "orientation": [
+         [
+          0.886914,
+          -0.461934,
+          0.0
+         ],
+         [
+          0.461934,
+          0.886914,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5098,
+       0.5098,
+       0.5294
+      ],
+      "Material": "DiamondPlate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
     }
    ]
   }

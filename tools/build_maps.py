@@ -355,6 +355,9 @@ def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
     # Gebäude an den Längsseiten (Flanken)
     b.house("NorthHall", 0, 56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("S", "E", "W"))
     b.house("SouthHall", 0, -56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("N", "E", "W"))
+    # Rampen auf die Hallendächer (erhöhte Positionen wie in RC-Maps)
+    b.ramp("RoofRampN", 19, 60, 6, 24, 12.5, "E")
+    b.ramp("RoofRampS", -19, -60, 6, 24, 12.5, "W")
 
     # Seitengassen mit Kisten und Mauern
     for side in (-1, 1):
@@ -410,6 +413,14 @@ def build_demolition(origin=DEMOLITION_ORIGIN, filename="Demolition.model.json")
         b.crate(x, z)
     for x, z, length, ax in ((-40, 0, 14, False), (85, -35, 12, True), (85, 35, 12, True), (110, 0, 20, False)):
         b.cover_wall(x, z, length, along_x=ax)
+    # Laufsteg über der Container-Gasse mit Rampen an beiden Enden
+    b.box("Buildings", "Catwalk", (44, 1, 5), (-52, 9, -22), (80, 85, 90), "DiamondPlate")
+    for x in (-74, -30):
+        b.box("Buildings", "CatwalkRail", (0.4, 1.2, 5), (x, 10.1, -22), (200, 170, 40), "Metal")
+    b.ramp("CatwalkRampW", -74, -22, 5, 20, 9.5, "W")
+    b.ramp("CatwalkRampE", -30, -22, 5, 20, 9.5, "E")
+    # Rampe auf das Lagerhallendach
+    b.ramp("WarehouseRoofRamp", -31, 8, 6, 26, 14.5, "W")
     # Kräne als Orientierung
     for x, z in ((-20, 70), (40, -78)):
         b.box("Decor", "CraneLeg", (2, 30, 2), (x, 15, z), (220, 170, 40), "Metal")
@@ -509,6 +520,9 @@ def build_glacier(origin=GLACIER_ORIGIN, filename="Gletscher.model.json"):
                                     ("Mess", -40, -50, 24, 18, ("N", "E")), ("Garage", -40, 50, 26, 18, ("S", "E"))):
         b.house(name, x, z, w, d, 10, module, (90, 95, 100), doors=doors, material="Metal")
         b.box("Buildings", name + "_Stripe", (w + 0.2, 1, d + 0.2), (x, 8.5, z), accent, "SmoothPlastic")
+    # Rampen auf die Labordächer (erhöhte Positionen an den Zielen)
+    b.ramp("LabRampA", 71, -60, 6, 20, 10.5, "E")
+    b.ramp("LabRampB", 71, 60, 6, 20, 10.5, "E")
     # Radarkuppel und Antennenmast in der Mitte
     b.add("Buildings", "RadarBase", (4, 18, 18), (0, 2, 32), module, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
     b.add("Buildings", "RadarDome", (14, 14, 14), (0, 7, 32), (240, 240, 245), "SmoothPlastic", props={"Shape": "Ball"})
@@ -553,6 +567,9 @@ def build_cellblock():
             b.box("Buildings", "CellWall", (0.6, 11, 7), (x, 5.5, z + side * -4), wall, "Concrete")
             for bar in range(5):
                 b.box("Buildings", "Bar", (0.25, 8, 0.25), (x - 3 + bar * 1.4, 4, z - side * 0.5), bars, "Metal")
+    # Rampen auf die Dächer der Zellentrakte
+    b.ramp("CellRoofRampS", 9, -58, 6, 22, 11.5, "W")
+    b.ramp("CellRoofRampN", 9, 58, 6, 22, 11.5, "W")
     # Verwaltung und Wäscherei (Ziele)
     b.house("Admin", 70, 0, 22, 26, 12, (165, 160, 150), (70, 70, 75), doors=("W", "N", "S"), material="Brick")
     b.house("Laundry", -45, -25, 22, 16, 10, (160, 165, 170), (70, 70, 75), doors=("E", "N"), material="Concrete")
