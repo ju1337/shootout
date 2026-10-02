@@ -12,7 +12,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local LevelConfig = require(Shared.LevelConfig)
+local RankConfig = require(Shared.RankConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
+local LeaderboardService = require(ServerStorage:WaitForChild("ServerShared").LeaderboardService)
 local BotService = require(script.Parent.BotService)
 
 local AdminService = {}
@@ -139,6 +141,25 @@ function AdminService.Init(manager)
 			amount = math.clamp(tonumber(amount) or 1000, 1, 1000000)
 			ProgressService.AddCoins(player, amount)
 			return player.Name .. " +" .. amount .. " Münzen"
+		end,
+		-- ELO ändern: value = Zahl (+/- relativ), "max" = höchster Rang, "reset" = Start-ELO
+		SetElo = function(userId, value)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local current = ProgressService.GetElo(player)
+			local new
+			if value == "max" then
+				new = RankConfig.Tiers[#RankConfig.Tiers].Elo + 300
+			elseif value == "reset" then
+				new = RankConfig.StartElo
+			else
+				new = current + (tonumber(value) or 0)
+			end
+			local elo = ProgressService.SetElo(player, new)
+			LeaderboardService.Submit(player)
+			return player.Name .. ": " .. tostring(elo) .. " ELO (" .. RankConfig.Get(elo or 0).Display .. ")"
 		end,
 		-- Prestige setzen: value = Stufe (0..10), "max" = höchste Stufe auf Level 100, "level100" = Level 100
 		SetPrestige = function(userId, value)

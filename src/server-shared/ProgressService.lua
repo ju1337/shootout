@@ -444,6 +444,20 @@ function ProgressService.Prestige(player)
 	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 
+-- Admin: ELO direkt setzen (Peak steigt mit, Spiele/Siege bleiben)
+function ProgressService.SetElo(player, elo)
+	local profile = profiles[player]
+	if not profile then
+		return nil
+	end
+	local ranked = profile.Ranked or { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 }
+	ranked.Elo = math.clamp(math.floor(tonumber(elo) or RankConfig.StartElo), 0, 5000)
+	ranked.Peak = math.max(ranked.Peak or 0, ranked.Elo)
+	profile.Ranked = ranked
+	ProgressService.Sync(player)
+	return ranked.Elo
+end
+
 -- Admin: Prestige und Level direkt setzen (prestige 0..MaxPrestige, level 1..MaxLevel)
 function ProgressService.SetPrestige(player, prestige, level)
 	local profile = profiles[player]

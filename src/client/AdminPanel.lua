@@ -202,7 +202,7 @@ local function refreshPlayers()
 		end
 	end
 	for i, p in Players:GetPlayers() do
-		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 134), BackgroundColor3 = ROW, BorderSizePixel = 0,
+		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 168), BackgroundColor3 = ROW, BorderSizePixel = 0,
 			LayoutOrder = i }, playerSection)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 6) }, box)
@@ -252,6 +252,25 @@ local function refreshPlayers()
 		end)
 		button("Prestige 0", 84, prestige, DANGER, function()
 			send("SetPrestige", p.UserId, 0)
+		end)
+		local elo = row(box)
+		button("Max ELO", 74, elo, Color3.fromRGB(170, 120, 30), function()
+			send("SetElo", p.UserId, "max")
+		end)
+		button("+100", 52, elo, nil, function()
+			send("SetElo", p.UserId, 100)
+		end)
+		button("+1", 40, elo, nil, function()
+			send("SetElo", p.UserId, 1)
+		end)
+		button("−1", 40, elo, nil, function()
+			send("SetElo", p.UserId, -1)
+		end)
+		button("−100", 52, elo, nil, function()
+			send("SetElo", p.UserId, -100)
+		end)
+		button("ELO zurück", 84, elo, DANGER, function()
+			send("SetElo", p.UserId, "reset")
 		end)
 	end
 end
