@@ -1391,7 +1391,7 @@ def build_lobby():
             b.box("Decor", name, size, pos, graphite, "SmoothPlastic", angles=angles)
     # Mittelhell: zwischen der ganz dunklen und der hellen Version, Akzent kühles Hellblau
     # gedämpft: dunkler Boden und Wände, damit nichts blendet
-    floor, wall, steel, graphite = (34, 37, 43), (46, 50, 57), (62, 66, 74), (22, 25, 30)
+    floor, wall, steel, graphite = (40, 44, 51), (54, 58, 66), (70, 74, 82), (22, 25, 30)
     walkway, accent = (30, 33, 40), (120, 185, 235)
     x0, x1, z0, z1, H = -55, 55, -38, 46, 26
     zc = (z0 + z1) / 2
@@ -1419,7 +1419,7 @@ def build_lobby():
         for x in (-36, -12, 12, 36):
             b.box("Decor", "CeilingLamp", (5, 0.2, 0.6), (x, H - 1.75, z), (150, 158, 170), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 26, "Brightness": 0.5, "Color": rgb(210, 220, 235)}}])
+                             "Properties": {"Range": 28, "Brightness": 0.7, "Color": rgb(215, 224, 238)}}])
     for x in (x0 + 0.45, x1 - 0.45):
         b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.6})
     for x, z in ((-31, 24), (31, 24)):

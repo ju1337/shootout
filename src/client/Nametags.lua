@@ -40,10 +40,29 @@ local function newLabel(parent, props)
 	return label
 end
 
-local parts = {} -- [Schild] = { Title, Subtitle, Emblem, Divider } (wird beim Entfernen gelöscht)
+local parts = {} -- [Schild] = { Title, Subtitle, Emblem, RankPill } (wird beim Entfernen gelöscht)
 
--- Schild: kleine Karte (dunkel, halbdurchsichtig, abgerundet), die sich der Textbreite anpasst:
--- [Prestige-Abzeichen] | [Name / Rang]
+-- Schild: links das Prestige-Abzeichen (frei, ohne Kasten), rechts eine runde dunkle Pille mit dem Namen
+-- und darunter eine kleine Pille in Rangfarbe. Passt sich der Textbreite an und bleibt mittig über dem Kopf.
+local function pill(parent, name, height, order)
+	local frame = Instance.new("Frame")
+	frame.Name = name
+	frame.Size = UDim2.new(0, 0, 0, height)
+	frame.AutomaticSize = Enum.AutomaticSize.X
+	frame.LayoutOrder = order
+	frame.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = frame
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, height * 0.45)
+	padding.PaddingRight = UDim.new(0, height * 0.45)
+	padding.Parent = frame
+	local label = newLabel(frame, { Name = "Label", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false, TextStrokeTransparency = 1 })
+	return frame, label
+end
+
 local function buildTag(model, head)
 	local tag = Instance.new("BillboardGui")
 	tag.Name = TAG_NAME
@@ -53,67 +72,55 @@ local function buildTag(model, head)
 	tag.AlwaysOnTop = false
 	tag.LightInfluence = 0
 
-	local card = Instance.new("Frame")
-	card.Name = "Card"
-	card.AnchorPoint = Vector2.new(0.5, 0.5)
-	card.Position = UDim2.fromScale(0.5, 0.5)
-	card.Size = UDim2.new(0, 0, 1, 0)
-	card.AutomaticSize = Enum.AutomaticSize.X
-	card.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
-	card.BackgroundTransparency = 0.35
-	card.Parent = tag
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = card
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.new(1, 1, 1)
-	stroke.Transparency = 0.85
-	stroke.Parent = card
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 4)
-	padding.PaddingRight = UDim.new(0, 12)
-	padding.Parent = card
+	local row = Instance.new("Frame")
+	row.Name = "Row"
+	row.AnchorPoint = Vector2.new(0.5, 0.5)
+	row.Position = UDim2.fromScale(0.5, 0.5)
+	row.Size = UDim2.new(0, 0, 1, 0)
+	row.AutomaticSize = Enum.AutomaticSize.X
+	row.BackgroundTransparency = 1
+	row.Parent = tag
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, 8)
+	layout.Padding = UDim.new(0, 4)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = card
+	layout.Parent = row
 
 	local holder = Instance.new("Frame")
 	holder.Name = "Emblem"
-	holder.Size = UDim2.new(0, 50, 0, 50)
+	holder.Size = UDim2.new(0, 48, 0, 48)
 	holder.BackgroundTransparency = 1
 	holder.LayoutOrder = 1
-	holder.Parent = card
-	emblems[tag] = PrestigeEmblem.new(holder, 50)
-
-	local divider = Instance.new("Frame")
-	divider.Name = "Divider"
-	divider.Size = UDim2.new(0, 2, 0, 34)
-	divider.BorderSizePixel = 0
-	divider.LayoutOrder = 2
-	divider.Parent = card
+	holder.Parent = row
+	emblems[tag] = PrestigeEmblem.new(holder, 48)
 
 	local column = Instance.new("Frame")
 	column.Name = "Text"
 	column.Size = UDim2.new(0, 0, 1, 0)
 	column.AutomaticSize = Enum.AutomaticSize.X
 	column.BackgroundTransparency = 1
-	column.LayoutOrder = 3
-	column.Parent = card
+	column.LayoutOrder = 2
+	column.Parent = row
 	local columnLayout = Instance.new("UIListLayout")
 	columnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	columnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	columnLayout.Padding = UDim.new(0, 3)
 	columnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	columnLayout.Parent = column
-	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 24), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 22, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeTransparency = 0.7, LayoutOrder = 1 })
-	local subtitle = newLabel(column, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 14, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeTransparency = 0.8, LayoutOrder = 2 })
 
-	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, Divider = divider }
+	local namePill, title = pill(column, "NamePill", 26, 1)
+	namePill.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
+	namePill.BackgroundTransparency = 0.25
+	title.Font = Enum.Font.Oswald
+	title.TextSize = 20
+	local rankPill, subtitle = pill(column, "RankPill", 17, 2)
+	rankPill.BackgroundTransparency = 0.1
+	subtitle.Font = Enum.Font.GothamBold
+	subtitle.TextSize = 11
+	subtitle.TextColor3 = Color3.fromRGB(14, 16, 19)
+
+	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, RankPill = rankPill }
 	tag.Destroying:Connect(function()
 		emblems[tag] = nil
 		parts[tag] = nil
@@ -139,22 +146,21 @@ local function setTag(model, info)
 	local p = parts[tag]
 	p.Title.Text = info.Name
 	p.Title.TextColor3 = info.Color
+	-- Rang-Pille in Rangfarbe (dunkle Schrift), nur wenn es eine Unterzeile gibt
 	p.Subtitle.Text = info.Subtitle or ""
-	p.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
-	p.Subtitle.Visible = info.Subtitle ~= nil
+	p.RankPill.Visible = info.Subtitle ~= nil
+	p.RankPill.BackgroundColor3 = info.SubColor or Color3.fromRGB(150, 160, 175)
 	-- Ohne Abzeichen (Bots) nur der Name
 	p.Emblem.Visible = info.Player ~= nil
-	p.Divider.Visible = info.Player ~= nil
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
 		local emblem = emblems[tag]
 		if not emblem then
 			p.Emblem:ClearAllChildren()
-			emblem = PrestigeEmblem.new(p.Emblem, 50)
+			emblem = PrestigeEmblem.new(p.Emblem, 48)
 			emblems[tag] = emblem
 		end
 		emblem:Set(level.Level, level.Prestige)
-		p.Divider.BackgroundColor3 = level.Prestige > 0 and level.Color or Color3.fromRGB(120, 185, 235)
 	end
 end
 
