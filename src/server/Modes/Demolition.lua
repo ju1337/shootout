@@ -8,7 +8,7 @@ local Bomb = require(script.Parent.Parent.Objectives.Bomb)
 
 return TeamRoundMode.new({
 	Id = "Demolition",
-	Maps = { "Demolition", "Gletscher", "Kanaele2" }, -- Map-Rotation: Hafen, Gletscher, Kanäle
+	Maps = { "Demolition", "Gletscher", "Kanaele2", "Windmuehlen2" }, -- Map-Rotation: Hafen, Gletscher, Kanäle, Windmühlen
 	TeamSize = 4,
 	Teams = {
 		{ Name = "Nord", Color = BrickColor.new("Cyan") },

@@ -655,6 +655,81 @@ def build_canals(origin, filename):
     b.save(filename, "Kanäle")
 
 
+# ---------- "Windmühlen": Küstendorf mit Windmühlen und Hügeln (Stil: RC "Windward") ----------
+
+def build_windmills(origin, filename):
+    b = Builder(origin)
+    rng = random.Random(31)
+    grass, path, stone, plaster = (95, 140, 70), (165, 150, 120), (160, 155, 145), (235, 228, 210)
+    W, D = 240, 180
+    b.ground(W + 10, D + 10, grass, "Grass")
+    b.border(W, D, 8, (130, 125, 115), "Slate", barrier=120)
+    # Feldweg quer durchs Dorf
+    b.box("Ground", "Path", (W, 0.1, 10), (0, 0.06, 0), path, "Ground")
+    b.box("Ground", "PathNS", (10, 0.1, D), (0, 0.06, 0), path, "Ground")
+
+    # Windmühlen: Turm, Kappe und gekreuzte Flügel (zwei lange Balken)
+    def windmill(name, x, z, face):
+        b.box("Buildings", name + "_Tower", (10, 26, 10), (x, 13, z), plaster, "Plaster")
+        b.box("Buildings", name + "_Base", (12, 4, 12), (x, 2, z), stone, "Slate")
+        b.box("Buildings", name + "_Cap", (11, 3, 11), (x, 27.5, z), (120, 70, 50), "WoodPlanks")
+        b.box("Buildings", name + "_Top", (7, 3, 7), (x, 30.5, z), (120, 70, 50), "WoodPlanks", angles=(0, 45, 0))
+        hx = x + face * 6
+        b.box("Buildings", name + "_Hub", (2, 2.4, 2.4), (hx, 23, z), (70, 60, 50), "Wood")
+        for angle in (20, 110):
+            b.box("Decor", name + "_Blade", (0.6, 38, 3), (hx + face * 1.2, 23, z), (240, 235, 225), "Fabric",
+                  angles=(angle, 0, 0))
+
+    windmill("MillWest", -55, 0, 1)
+    windmill("MillEast", 76, 0, -1)
+
+    # Hügel/Terrassen im Norden und Süden (erhöhte Positionen) mit Rampen
+    for side in (-1, 1):
+        zc = side * 58
+        b.box("Buildings", "Terrace", (40, 6, 34), (0, 3, zc), (120, 115, 100), "Slate")
+        b.box("Buildings", "TerraceTop", (40, 0.3, 34), (0, 6.15, zc), grass, "Grass")
+        edge = side * 41  # zur Mitte zeigende Kante
+        b.ramp("TerraceRamp", -10, edge, 8, 14, 6, "S" if side > 0 else "N")
+        b.ramp("TerraceRamp", 10, edge, 8, 14, 6, "S" if side > 0 else "N")
+        # Seitliche Rampen nach Westen und Osten
+        b.ramp("TerraceRampW", -20, zc, 8, 14, 6, "W")
+        b.ramp("TerraceRampE", 20, zc, 8, 14, 6, "E")
+        # Brüstung oben als Deckung
+        b.box("Cover", "TerraceWall", (12, 3, 1.2), (0, 7.5, zc - side * 10), stone, "Slate")
+
+    # Cottages (begehbar)
+    houses = (
+        (-85, -62, 24, 18, ("N", "E")), (-85, 62, 24, 18, ("S", "E")),
+        (-45, -68, 20, 14, ("N", "E")), (-45, 68, 20, 14, ("S", "E")),
+        (96, -74, 22, 14, ("N", "W")), (96, 74, 22, 14, ("S", "W")),
+        (36, 0, 16, 24, ("E", "W")),
+    )
+    for i, (x, z, w, d, doors) in enumerate(houses):
+        b.house("Cottage" + str(i), x, z, w, d, 10, plaster, (90, 60, 45), doors=doors, material="Plaster")
+        b.box("Buildings", "Chimney", (2, 4, 2), (x + w / 4, 12, z), stone, "Slate")
+
+    # Trockenmauern, Heuballen, Zäune
+    for x, z, length, ax in ((-75, -25, 14, True), (-75, 25, 14, True), (-25, -22, 12, False), (-25, 22, 12, False),
+                             (20, -30, 10, True), (20, 30, 10, True), (90, -40, 10, False), (90, 40, 10, False)):
+        b.cover_wall(x, z, length, along_x=ax, height=3.5, color=stone)
+    for x, z in ((-95, 0), (-35, -40), (-35, 40), (45, -25), (45, 25), (8, -18), (-8, 18)):
+        b.add("Cover", "HayBale", (5, 5, 5), (x, 2.5, z), (215, 185, 95), "Fabric", angles=(0, 0, 90),
+              props={"Shape": "Cylinder"})
+    for x, z in ((-60, -45), (-60, 45), (75, -18), (75, 18)):
+        b.crate(x, z, color=(140, 105, 70))
+    for z in (-86, 86):
+        for k in range(-5, 6):
+            b.box("Decor", "FencePost", (0.6, 3, 0.6), (k * 18, 1.5, z), (110, 80, 55), "Wood")
+    # Bäume am Rand
+    for _ in range(14):
+        x, z = rng.uniform(-110, 110), rng.choice((-1, 1)) * rng.uniform(78, 86)
+        if abs(x) > 15:
+            b.tree(x, z, rng)
+
+    team_objectives(b, -110, 98, (60, -45), (60, 45))
+    b.save(filename, "Windmühlen")
+
+
 # ---------- Hub (Lobby): Hangar/Safehouse im Stil der Rogue-Company-Lobby ----------
 
 # Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): links 4, rechts 4
@@ -808,4 +883,7 @@ if __name__ == "__main__":
     build_cellblock()
     build_canals((-3000, 0, 1500), "Kanaele.model.json")       # Strikeout-Rotation
     build_canals((-3000, 0, -1500), "Kanaele2.model.json")     # Demolition-Rotation
+    build_windmills((4500, 0, 0), "Windmuehlen.model.json")       # Strikeout-Rotation
+    build_windmills((4500, 0, 1500), "Windmuehlen2.model.json")   # Demolition-Rotation
+    build_windmills((4500, 0, -1500), "Windmuehlen3.model.json")  # Extraction-Rotation
     build_lobby()

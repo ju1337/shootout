@@ -16,9 +16,9 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 | Hub | Hangar wie die RC-Lobby: Einsatz-Tore, Lineup-Bühne, Seitenleiste | Hangar (0, 0, 0) |
 | Free-for-All | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Drop | 5v5, Absprung über der Map, ein Leben | Tal (1500, 0, 0) |
-| Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab, Overtime auf dem Punkt | Rotation: Fabrik / Zellenblock / Kanäle |
-| Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Rotation: Hafen / Gletscher / Kanäle |
-| Extraction | 4v4, Ziel hacken, Seitenwechsel | Gletscher-Kopie (3000, 0, 1500) |
+| Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab, Overtime auf dem Punkt | Rotation: Fabrik / Zellenblock / Kanäle / Windmühlen |
+| Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Rotation: Hafen / Gletscher / Kanäle / Windmühlen |
+| Extraction | 4v4, Ziel hacken, Seitenwechsel | Rotation: Gletscher / Windmühlen |
 | Team Deathmatch | 4v4, 40 Leben pro Team | Fabrik-Kopie (3000, 0, -1500) |
 | Wingman | 2v2, Strikeout-Regeln | Fabrik-Kopie (1500, 0, -1500) |
 | Ranked | Demolition mit ELO, ab Spielerlevel 10 | Hafen-Kopie (1500, 0, 1500) |

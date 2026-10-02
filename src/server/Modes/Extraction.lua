@@ -7,7 +7,7 @@ local Hack = require(script.Parent.Parent.Objectives.Hack)
 
 return TeamRoundMode.new({
 	Id = "Extraction",
-	MapName = "Extraktion",
+	Maps = { "Extraktion", "Windmuehlen3" }, -- Map-Rotation: Gletscher, Windmühlen
 	TeamSize = 4,
 	Teams = {
 		{ Name = "Falke", Color = BrickColor.new("Teal") },
