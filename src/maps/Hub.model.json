@@ -1176,27 +1176,27 @@
      }
     },
     {
-     "Name": "CarpetGateEdge",
+     "Name": "CarpetNorthEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       8.7,
+       10.7,
        0.03,
-       50.462
+       18.7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -23.305,
+         0.0,
          0.215,
-         25.952
+         19.0
         ],
         "orientation": [
          [
-          0.741471,
+          1.0,
           0.0,
-          -0.670984
+          0.0
          ],
          [
           0.0,
@@ -1204,9 +1204,9 @@
           0.0
          ],
          [
-          0.670984,
           0.0,
-          0.741471
+          0.0,
+          1.0
          ]
         ]
        }
@@ -1223,27 +1223,27 @@
      }
     },
     {
-     "Name": "CarpetGate",
+     "Name": "CarpetNorth",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       8,
+       10,
        0.05,
-       49.762
+       18.0
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -23.305,
+         0.0,
          0.245,
-         25.952
+         19.0
         ],
         "orientation": [
          [
-          0.741471,
+          1.0,
           0.0,
-          -0.670984
+          0.0
          ],
          [
           0.0,
@@ -1251,9 +1251,102 @@
           0.0
          ],
          [
-          0.670984,
           0.0,
-          0.741471
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CarpetPlazaEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100.7,
+       0.03,
+       18.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         0.215,
+         35.7
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetPlaza",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       100,
+       0.05,
+       17.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         0.245,
+         35.7
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
          ]
         ]
        }
@@ -1274,22 +1367,22 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
+       13,
        0.1,
-       2.6
+       3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -29.141,
+         -40,
          0.3,
-         32.4
+         33.9
         ],
         "orientation": [
          [
-          -0.741471,
+          -1.0,
           0.0,
-          0.670984
+          0.0
          ],
          [
           0.0,
@@ -1297,9 +1390,9 @@
           0.0
          ],
          [
-          -0.670984,
+          -0.0,
           0.0,
-          -0.741471
+          -1.0
          ]
         ]
        }
@@ -1361,120 +1454,27 @@
      ]
     },
     {
-     "Name": "CarpetGateEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8.7,
-       0.03,
-       39.397
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -12.016,
-         0.215,
-         26.776
-        ],
-        "orientation": [
-         [
-          0.910887,
-          0.0,
-          -0.412656
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.412656,
-          0.0,
-          0.910887
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
-     }
-    },
-    {
-     "Name": "CarpetGate",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.05,
-       38.697
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -12.016,
-         0.245,
-         26.776
-        ],
-        "orientation": [
-         [
-          0.910887,
-          0.0,
-          -0.412656
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.412656,
-          0.0,
-          0.910887
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "FloorLabel_Domination",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
+       13,
        0.1,
-       2.6
+       3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -14.564,
+         -20,
          0.3,
-         32.4
+         33.9
         ],
         "orientation": [
          [
-          -0.910887,
+          -1.0,
           0.0,
-          0.412656
+          0.0
          ],
          [
           0.0,
@@ -1482,9 +1482,9 @@
           0.0
          ],
          [
-          -0.412656,
+          -0.0,
           0.0,
-          -0.910887
+          -1.0
          ]
         ]
        }
@@ -1546,114 +1546,21 @@
      ]
     },
     {
-     "Name": "CarpetGateEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8.7,
-       0.03,
-       35.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0.0,
-         0.215,
-         27.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
-     }
-    },
-    {
-     "Name": "CarpetGate",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.05,
-       34.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0.0,
-         0.245,
-         27.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "FloorLabel_Training",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
+       13,
        0.1,
-       2.6
+       3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         0.0,
+         0,
          0.3,
-         32.4
+         33.9
         ],
         "orientation": [
          [
@@ -1731,120 +1638,27 @@
      ]
     },
     {
-     "Name": "CarpetGateEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8.7,
-       0.03,
-       39.397
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         12.016,
-         0.215,
-         26.776
-        ],
-        "orientation": [
-         [
-          0.910887,
-          0.0,
-          0.412656
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.412656,
-          0.0,
-          0.910887
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
-     }
-    },
-    {
-     "Name": "CarpetGate",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.05,
-       38.697
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         12.016,
-         0.245,
-         26.776
-        ],
-        "orientation": [
-         [
-          0.910887,
-          0.0,
-          0.412656
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.412656,
-          0.0,
-          0.910887
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "FloorLabel_Wingman",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
+       13,
        0.1,
-       2.6
+       3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         14.564,
+         20,
          0.3,
-         32.4
+         33.9
         ],
         "orientation": [
          [
-          -0.910887,
+          -1.0,
           0.0,
-          -0.412656
+          0.0
          ],
          [
           0.0,
@@ -1852,9 +1666,9 @@
           0.0
          ],
          [
-          0.412656,
+          -0.0,
           0.0,
-          -0.910887
+          -1.0
          ]
         ]
        }
@@ -1916,120 +1730,27 @@
      ]
     },
     {
-     "Name": "CarpetGateEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8.7,
-       0.03,
-       50.462
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         23.305,
-         0.215,
-         25.952
-        ],
-        "orientation": [
-         [
-          0.741471,
-          0.0,
-          0.670984
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.670984,
-          0.0,
-          0.741471
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
-     }
-    },
-    {
-     "Name": "CarpetGate",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.05,
-       49.762
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         23.305,
-         0.245,
-         25.952
-        ],
-        "orientation": [
-         [
-          0.741471,
-          0.0,
-          0.670984
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.670984,
-          0.0,
-          0.741471
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "FloorLabel_Arena",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
+       13,
        0.1,
-       2.6
+       3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         29.141,
+         40,
          0.3,
-         32.4
+         33.9
         ],
         "orientation": [
          [
-          -0.741471,
+          -1.0,
           0.0,
-          -0.670984
+          0.0
          ],
          [
           0.0,
@@ -2037,9 +1758,9 @@
           0.0
          ],
          [
-          0.670984,
+          -0.0,
           0.0,
-          -0.741471
+          -1.0
          ]
         ]
        }
@@ -2099,6 +1820,194 @@
        ]
       }
      ]
+    },
+    {
+     "Name": "CarpetBoardsEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.7,
+       0.03,
+       22.7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         21.0,
+         0.215,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetBoards",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       22.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         21.0,
+         0.245,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CarpetHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.03,
+       20.7,
+       20.7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         40,
+         0.215,
+         0
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetHolo",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.05,
+       20,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         40,
+         0.245,
+         0
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder"
+     }
     }
    ]
   },
@@ -3206,6 +3115,52 @@
           0.0,
           0.0,
           1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3059,
+       0.3255,
+       0.3608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       18,
+       30
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         48.656,
+         9,
+         -28.438
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
          ]
         ]
        }
@@ -9594,73 +9549,27 @@
      ]
     },
     {
-     "Name": "LeaderboardFrame",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       11,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.7,
-         7.5,
-         14
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "Leaderboard_Elo",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
        10,
-       0.5
+       8.5,
+       0.15
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         54.3,
-         7.5,
-         14
+         42.011,
+         8.6,
+         -16.127
         ],
         "orientation": [
          [
+          -0.358368,
           0.0,
-          0.0,
-          1.0
+          0.93358
          ],
          [
           0.0,
@@ -9668,773 +9577,55 @@
           0.0
          ],
          [
-          -1.0,
+          -0.93358,
           0.0,
-          0.0
+          -0.358368
          ]
         ]
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3529,
+       0.6863,
+       0.8824
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardTopStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       0.4,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         13.1,
-         14
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardFrame",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       11,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.7,
-         7.5,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Leaderboard_Kills",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14,
-       10,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         7.5,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0863,
-       0.098,
-       0.1176
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardTopStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       0.4,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         13.1,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.8078,
-       0.2745,
-       0.2275
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardFrame",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       11,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.7,
-         19,
-         14
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Leaderboard_Level",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14,
-       10,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         19,
-         14
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0863,
-       0.098,
-       0.1176
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardTopStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       0.4,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         24.6,
-         14
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3765,
-       0.6431,
-       0.8392
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardFrame",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       11,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.7,
-         19,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Leaderboard_Wins",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14,
-       10,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         19,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0863,
-       0.098,
-       0.1176
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LeaderboardTopStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       15,
-       0.4,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         54.3,
-         24.6,
-         31
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4392,
-       0.698,
-       0.4392
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumBase",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7.4,
-       4.2,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         2.1,
-         -20
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumTop",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7.6,
-       0.4,
-       7.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         4.4,
-         -20
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.2,
-         3.8,
-         -20
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumNumber",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2,
-       1.6,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.15,
-         2.1,
-         -20
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front"
-       },
-       "Children": [
-        {
-         "Name": "Text",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             1,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "1",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.7843,
-           0.651,
-           0.3608
-          ]
-         }
+      "BottomSurface": "Smooth",
+      "Transparency": 0.82,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
         }
-       ]
+       }
       }
-     ]
-    },
-    {
-     "Name": "PodiumBase",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7.4,
-       3,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         1.5,
-         -28
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "PodiumTop",
+     "Name": "HoloFrameTop",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.6,
-       0.4,
-       7.6
+       10.2,
+       0.12,
+       0.12
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         46,
-         3.2,
-         -28
+         42.011,
+         12.9,
+         -16.127
         ],
         "orientation": [
          [
-          1.0,
+          -0.358368,
           0.0,
-          0.0
+          0.93358
          ],
          [
           0.0,
@@ -10442,407 +9633,9 @@
           0.0
          ],
          [
+          -0.93358,
           0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7451,
-       0.7608,
-       0.7843
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.2,
-         2.6,
-         -28
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7451,
-       0.7608,
-       0.7843
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumNumber",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2,
-       1.6,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.15,
-         1.5,
-         -28
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front"
-       },
-       "Children": [
-        {
-         "Name": "Text",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             1,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "2",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.7451,
-           0.7608,
-           0.7843
-          ]
-         }
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "Name": "PodiumBase",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7.4,
-       2,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         1.0,
-         -12
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumTop",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7.6,
-       0.4,
-       7.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         2.2,
-         -12
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7059,
-       0.4706,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.2,
-         1.6,
-         -12
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7059,
-       0.4706,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "PodiumNumber",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2,
-       1.6,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42.15,
-         1.0,
-         -12
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1255,
-       0.1373,
-       0.1608
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front"
-       },
-       "Children": [
-        {
-         "Name": "Text",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             1,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "3",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.7059,
-           0.4706,
-           0.2745
-          ]
-         }
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "Name": "PodiumGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.2,
-       24,
-       24
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         46,
-         0.3,
-         -20
-        ],
-        "orientation": [
-         [
-          0.0,
-          -1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
+          -0.358368
          ]
         ]
        }
@@ -10855,33 +9648,1077 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.85,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 16,
-        "Brightness": 1,
-        "Color": [
-         0.902,
-         0.7843,
-         0.549
-        ]
-       }
-      }
-     ]
+      "Transparency": 0.2
+     }
     },
     {
-     "Name": "PodiumTitle",
+     "Name": "HoloFrameBottom",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       22,
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         4.3,
+         -16.127
+        ],
+        "orientation": [
+         [
+          -0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          -0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "HoloProjector",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.8,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         0.65,
+         -16.127
+        ],
+        "orientation": [
+         [
+          -0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          -0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1333,
+       0.1451,
+       0.1686
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloLens",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       0.1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         1.1,
+         -16.127
+        ],
+        "orientation": [
+         [
+          -0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          -0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloBeam",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.6,
+       3.2,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         2.7,
+         -16.127
+        ],
+        "orientation": [
+         [
+          -0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          -0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.88,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Leaderboard_Kills",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10,
+       8.5,
+       0.15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         8.6,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.82,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
+     }
+    },
+    {
+     "Name": "HoloFrameTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         12.9,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8078,
+       0.2745,
+       0.2275
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "HoloFrameBottom",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         4.3,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "HoloProjector",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.8,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         0.65,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1333,
+       0.1451,
+       0.1686
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloLens",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       0.1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         1.1,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloBeam",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.6,
+       3.2,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         2.7,
+         -5.484
+        ],
+        "orientation": [
+         [
+          -0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          -0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.88,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Leaderboard_Level",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10,
+       8.5,
+       0.15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         8.6,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.82,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
+     }
+    },
+    {
+     "Name": "HoloFrameTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         12.9,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.6431,
+       0.8392
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "HoloFrameBottom",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         4.3,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "HoloProjector",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.8,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         0.65,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1333,
+       0.1451,
+       0.1686
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloLens",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       0.1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         1.1,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloBeam",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.6,
+       3.2,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         44.665,
+         2.7,
+         5.484
+        ],
+        "orientation": [
+         [
+          0.121869,
+          0.0,
+          0.992546
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.992546,
+          0.0,
+          0.121869
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.88,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Leaderboard_Wins",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10,
+       8.5,
+       0.15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         8.6,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.82,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
+     }
+    },
+    {
+     "Name": "HoloFrameTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         12.9,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4392,
+       0.698,
+       0.4392
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "HoloFrameBottom",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.2,
+       0.12,
+       0.12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         4.3,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "HoloProjector",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.8,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         0.65,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1333,
+       0.1451,
+       0.1686
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloLens",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       0.1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         1.1,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "HoloBeam",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.6,
+       3.2,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.011,
+         2.7,
+         16.127
+        ],
+        "orientation": [
+         [
+          0.358368,
+          0.0,
+          0.93358
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.93358,
+          0.0,
+          0.358368
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6863,
+       0.8824
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.88,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "BoardsTitle",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
        4,
        0.4
       ],
@@ -10889,8 +10726,8 @@
        "CFrame": {
         "position": [
          54.4,
-         16,
-         -20
+         19,
+         0
         ],
         "orientation": [
          [
@@ -10907,6 +10744,292 @@
           -1.0,
           0.0,
           0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.6,
+        "SizingMode": "PixelsPerStud",
+        "PixelsPerStud": 40
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "BESTENLISTEN",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.3529,
+           0.6863,
+           0.8824
+          ],
+          "TextStrokeTransparency": 0.55
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "GLOBALE TOP 10",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.9255,
+           0.9373,
+           0.9529
+          ],
+          "TextStrokeTransparency": 0.55
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.3529,
+           0.6863,
+           0.8824
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.3529,
+         0.6863,
+         0.8824
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PodiumWallStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.2,
+       0.3,
+       30
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         48.24,
+         3,
+         -28.16
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "PodiumWallStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.2,
+       0.3,
+       30
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         48.24,
+         16.5,
+         -28.16
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "PodiumTitle",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       4.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         48.157,
+         12.5,
+         -28.105
+        ],
+        "orientation": [
+         [
+          -0.5547,
+          0.0,
+          0.83205
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.83205,
+          0.0,
+          -0.5547
          ]
         ]
        }
@@ -11062,6 +11185,828 @@
          0.7843,
          0.651,
          0.3608
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PodiumPlinth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9,
+       0.6,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42,
+         0.3,
+         -24
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumPlinthEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.3,
+       28
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38.256,
+         0.55,
+         -21.504
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.2,
+       4.2,
+       7.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.0,
+         2.7,
+         -24.0
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.4,
+       0.4,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42.0,
+         5.0,
+         -24.0
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.3,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38.921,
+         4.4,
+         -21.948
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       1.6,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38.88,
+         2.7,
+         -21.92
+        ],
+        "orientation": [
+         [
+          -0.5547,
+          0.0,
+          0.83205
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "1",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.7843,
+           0.651,
+           0.3608
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.2,
+       3,
+       7.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         37.008,
+         2.1,
+         -31.488
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.4,
+       0.4,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         37.008,
+         3.8,
+         -31.488
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7608,
+       0.7843
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.3,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         33.929,
+         3.2,
+         -29.436
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7608,
+       0.7843
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       1.6,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         33.888,
+         2.1,
+         -29.408
+        ],
+        "orientation": [
+         [
+          -0.5547,
+          0.0,
+          0.83205
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "2",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.7451,
+           0.7608,
+           0.7843
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.2,
+       2,
+       7.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         46.992,
+         1.6,
+         -16.512
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.4,
+       0.4,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         46.992,
+         2.8,
+         -16.512
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.4706,
+       0.2745
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.3,
+       7.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         43.914,
+         2.2,
+         -14.459
+        ],
+        "orientation": [
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.5547,
+          0.0,
+          -0.83205
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7059,
+       0.4706,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       1.6,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         43.872,
+         1.6,
+         -14.431
+        ],
+        "orientation": [
+         [
+          -0.5547,
+          0.0,
+          0.83205
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.83205,
+          0.0,
+          -0.5547
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "3",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.7059,
+           0.4706,
+           0.2745
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.2,
+       30,
+       30
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         42,
+         0.3,
+         -24
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.651,
+       0.3608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.88,
+      "CanCollide": false
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "PointLight",
+       "Properties": {
+        "Range": 18,
+        "Brightness": 1.1,
+        "Color": [
+         0.902,
+         0.7843,
+         0.549
         ]
        }
       }
@@ -12793,466 +13738,6 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
-    },
-    {
-     "Name": "Locker",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4.4,
-       7.5,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         27,
-         3.75,
-         -36.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1882,
-       0.2275,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LockerVent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.6,
-       0.3,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         27,
-         6,
-         -35.65
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.102,
-       0.1098,
-       0.1255
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Locker",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4.4,
-       7.5,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         32,
-         3.75,
-         -36.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1882,
-       0.2275,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LockerVent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.6,
-       0.3,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         32,
-         6,
-         -35.65
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.102,
-       0.1098,
-       0.1255
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Locker",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4.4,
-       7.5,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         37,
-         3.75,
-         -36.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1882,
-       0.2275,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LockerVent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.6,
-       0.3,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         37,
-         6,
-         -35.65
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.102,
-       0.1098,
-       0.1255
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Locker",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4.4,
-       7.5,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42,
-         3.75,
-         -36.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1882,
-       0.2275,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LockerVent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.6,
-       0.3,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         42,
-         6,
-         -35.65
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.102,
-       0.1098,
-       0.1255
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Locker",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4.4,
-       7.5,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         47,
-         3.75,
-         -36.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1882,
-       0.2275,
-       0.2745
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "LockerVent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.6,
-       0.3,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         47,
-         6,
-         -35.65
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.102,
-       0.1098,
-       0.1255
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
     }
    ]
   },
@@ -13576,15 +14061,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         46,
-         4.7,
-         -20
+         42.0,
+         5.3,
+         -24.0
         ],
         "orientation": [
          [
+          -0.5547,
           0.0,
-          0.0,
-          1.0
+          0.83205
          ],
          [
           0.0,
@@ -13592,9 +14077,9 @@
           0.0
          ],
          [
-          -1.0,
+          -0.83205,
           0.0,
-          0.0
+          -0.5547
          ]
         ]
        }
@@ -13625,15 +14110,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         46,
-         3.5,
-         -28
+         37.008,
+         4.1,
+         -31.488
         ],
         "orientation": [
          [
+          -0.5547,
           0.0,
-          0.0,
-          1.0
+          0.83205
          ],
          [
           0.0,
@@ -13641,9 +14126,9 @@
           0.0
          ],
          [
-          -1.0,
+          -0.83205,
           0.0,
-          0.0
+          -0.5547
          ]
         ]
        }
@@ -13674,15 +14159,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         46,
-         2.5,
-         -12
+         46.992,
+         3.1,
+         -16.512
         ],
         "orientation": [
          [
+          -0.5547,
           0.0,
-          0.0,
-          1.0
+          0.83205
          ],
          [
           0.0,
@@ -13690,9 +14175,9 @@
           0.0
          ],
          [
-          -1.0,
+          -0.83205,
           0.0,
-          0.0
+          -0.5547
          ]
         ]
        }
@@ -13778,52 +14263,6 @@
          -46,
          1.5,
          41
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.3137,
-       0.2431
-      ],
-      "Material": "WoodPlanks",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Crate",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       4,
-       4,
-       4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         50,
-         2.0,
-         -33
         ],
         "orientation": [
          [

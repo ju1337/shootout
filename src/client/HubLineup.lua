@@ -159,9 +159,12 @@ local function buildLeaderboards()
 	for board, info in BOARD_INFO do
 		local part = decor:WaitForChild("Leaderboard_" .. board, 10)
 		if part then
+			-- Holo-Tafel (Attribut "Holo"): durchsichtig, leuchtende Schrift, kaum Hintergrund
+			local holo = part:GetAttribute("Holo") == true
 			local surface = Instance.new("SurfaceGui")
 			surface.Face = Enum.NormalId.Front
 			surface.LightInfluence = 0
+			surface.Brightness = holo and 2.2 or 1
 			surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 			surface.PixelsPerStud = 40
 			surface.Adornee = part
@@ -169,11 +172,12 @@ local function buildLeaderboards()
 			local title = Instance.new("TextLabel")
 			title.Size = UDim2.new(1, 0, 0.13, 0)
 			title.BackgroundColor3 = info.Color
-			title.BackgroundTransparency = 0.15
+			title.BackgroundTransparency = holo and 0.7 or 0.15
 			title.BorderSizePixel = 0
 			title.Font = Enum.Font.Oswald
 			title.TextScaled = true
-			title.TextColor3 = Color3.fromRGB(14, 16, 19)
+			title.TextColor3 = holo and Color3.new(1, 1, 1) or Color3.fromRGB(14, 16, 19)
+			title.TextStrokeTransparency = holo and 0.6 or 1
 			title.Text = info.Title
 			title.Parent = surface
 			local rows = {}
@@ -181,8 +185,8 @@ local function buildLeaderboards()
 				local row = Instance.new("Frame")
 				row.Position = UDim2.new(0.03, 0, 0.15 + (i - 1) * 0.084, 0)
 				row.Size = UDim2.new(0.94, 0, 0.076, 0)
-				row.BackgroundColor3 = Color3.fromRGB(27, 31, 36)
-				row.BackgroundTransparency = i % 2 == 0 and 0.4 or 0.75
+				row.BackgroundColor3 = holo and Color3.fromRGB(60, 130, 170) or Color3.fromRGB(27, 31, 36)
+				row.BackgroundTransparency = holo and (i % 2 == 0 and 0.82 or 0.94) or (i % 2 == 0 and 0.4 or 0.75)
 				row.BorderSizePixel = 0
 				row.Parent = surface
 				local function cell(x, w, align, font)
@@ -192,7 +196,8 @@ local function buildLeaderboards()
 					label.BackgroundTransparency = 1
 					label.Font = font
 					label.TextScaled = true
-					label.TextColor3 = Color3.fromRGB(228, 231, 235)
+					label.TextColor3 = holo and Color3.fromRGB(200, 235, 255) or Color3.fromRGB(228, 231, 235)
+					label.TextStrokeTransparency = holo and 0.7 or 1
 					label.TextXAlignment = align
 					label.Text = ""
 					label.Parent = row
@@ -215,8 +220,10 @@ local function buildLeaderboards()
 					row.Place.TextColor3 = PLACE_COLORS[i] or Color3.fromRGB(134, 142, 152)
 					row.Name.Text = entry and tostring(entry.Name) or (i == 1 and "Noch keine Einträge" or "")
 					local isMe = entry and entry.UserId == player.UserId
-					row.Name.TextColor3 = isMe and Color3.fromRGB(212, 170, 80) or Color3.fromRGB(228, 231, 235)
-					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(46, 42, 30) or Color3.fromRGB(27, 31, 36)
+					row.Name.TextColor3 = isMe and Color3.fromRGB(212, 170, 80)
+						or (holo and Color3.fromRGB(200, 235, 255) or Color3.fromRGB(228, 231, 235))
+					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(46, 42, 30)
+						or (holo and Color3.fromRGB(60, 130, 170) or Color3.fromRGB(27, 31, 36))
 					if entry then
 						local text, color = formatValue(board, entry.Value)
 						row.Value.Text = text

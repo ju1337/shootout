@@ -1388,6 +1388,10 @@ def build_lobby():
           angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.3})
     b.add("Ground", "CarpetRing", (0.05, ring_r * 2, ring_r * 2), (0, 0.245, tz), walkway, "SmoothPlastic",
           angles=(0, 0, 90), props={"Shape": "Cylinder"})
+    # gerade weiter nach Norden und eine breite Fläche vor der ganzen Torreihe (man läuft gerade in jedes Tor)
+    plaza_z = 27
+    carpet("CarpetNorth", (0, tz + ring_r - 3), (0, plaza_z + 1), 10)
+    carpet("CarpetPlaza", (0, plaza_z), (0, gate_z - 1), 100)
 
     # ---------- Kartentisch mit Hologramm ----------
     b.add("Decor", "MapTable", (3, 16, 16), (0, 1.5, tz), steel, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
@@ -1420,16 +1424,8 @@ def build_lobby():
         b.sign2("Sign_" + mode_id, (17.5, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
                 (236, 239, 243), angles=(-12, 0, 0), glow=color)
         b.box("Decor", "GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15), graphite, "SmoothPlastic")
-        # Teppichbahn vom Ring bis ins Portal (beginnt im Ring, damit sie nahtlos anschließt)
-        angle = math.atan2(x, gate_z - tz)
-        sx, sz = math.sin(angle) * (ring_r - 3), tz + math.cos(angle) * (ring_r - 3)
-        ex, ez = x, gate_z - 1
-        carpet("CarpetGate", (sx, sz), (ex, ez), 8)
-        # Modus-Name auf der Bahn, kurz vor dem Portal, in Laufrichtung lesbar
-        t = (ez - 12 - sz) / (ez - sz)
-        lx, lz = sx + (ex - sx) * t, sz + (ez - sz) * t
-        b.floor_text("FloorLabel_" + mode_id, (7.4, 0.1, 2.6), (lx, 0.3, lz), title, color,
-                     yaw=180 + math.degrees(math.atan2(ex - sx, ez - sz)))
+        # Modus-Name gerade vor dem Portal auf der Fläche (lesbar vom Spawn aus)
+        b.floor_text("FloorLabel_" + mode_id, (13, 0.1, 3.6), (x, 0.3, gate_z - 11.5), title, color)
         b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (x, 0.4, gate_z - 4), color, "Neon",
               props={"CanCollide": False, "Transparency": 0.45})
     b.sign2("DuelsBanner", (36, 2.4, 0.4), (30, H - 1.4, z1 - 0.5), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
@@ -1449,27 +1445,69 @@ def build_lobby():
     b.sign2("Banner", (30, 8, 0.5), (x0 + 0.6, 14, 0), "SHOOTOUT", "DEIN AGENT  ·  LOADOUT IM MENÜ",
             graphite, accent, (236, 239, 243), angles=(0, -90, 0), glow=accent)
 
-    # ---------- Osten: Bestenlisten und Siegertreppchen ----------
-    for board, color, z, y in (("Elo", (200, 166, 92), 14, 7.5), ("Kills", (206, 70, 58), 31, 7.5),
-                               ("Level", (96, 164, 214), 14, 19), ("Wins", (112, 178, 112), 31, 19)):
-        b.box("Decor", "LeaderboardFrame", (15, 11, 0.4), (x1 - 0.3, y, z), steel, "Metal", angles=(0, 90, 0))
-        b.box("Decor", "Leaderboard_" + board, (14, 10, 0.5), (x1 - 0.7, y, z), graphite, "SmoothPlastic", angles=(0, 90, 0))
-        b.box("Decor", "LeaderboardTopStrip", (15, 0.4, 0.6), (x1 - 0.7, y + 5.6, z), color, "Neon", angles=(0, 90, 0))
+    # ---------- Osten (Mitte): Holo-Station mit den Bestenlisten, Teppich vom Ring dorthin ----------
+    holo = (90, 175, 225)
+    carpet("CarpetBoards", (ring_r - 3, tz), (32, tz), 8)
+    b.add("Ground", "CarpetHoloEdge", (0.03, 20.7, 20.7), (40, 0.215, tz), accent, "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.3})
+    b.add("Ground", "CarpetHolo", (0.05, 20, 20), (40, 0.245, tz), walkway, "SmoothPlastic", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    # vier schwebende Holo-Tafeln im Bogen, alle zur Hallenmitte gedreht (Client zeichnet die Listen darauf)
+    for board, color, a in (("Elo", (200, 166, 92), -21), ("Kills", (206, 70, 58), -7),
+                            ("Level", (96, 164, 214), 7), ("Wins", (112, 178, 112), 21)):
+        px, pz = 45 * math.cos(math.radians(a)), tz + 45 * math.sin(math.radians(a))
+        dx, dz = -px, tz - pz
+        yaw = math.degrees(math.atan2(-dx, -dz))
+        b.add("Decor", "Leaderboard_" + board, (10, 8.5, 0.15), (px, 8.6, pz), holo, "Glass", angles=(0, yaw, 0),
+              props={"Transparency": 0.82, "CanCollide": False, "CanQuery": False,
+                     "Attributes": {"Attributes": {"Holo": {"Bool": True}}}})
+        b.box("Decor", "HoloFrameTop", (10.2, 0.12, 0.12), (px, 12.9, pz), color, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.2})
+        b.box("Decor", "HoloFrameBottom", (10.2, 0.12, 0.12), (px, 4.3, pz), holo, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.3})
+        # Projektor am Boden mit Lichtkegel
+        b.box("Decor", "HoloProjector", (3, 0.8, 1.6), (px, 0.65, pz), (34, 37, 43), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "HoloLens", (2.4, 0.1, 1), (px, 1.1, pz), holo, "Neon", angles=(0, yaw, 0))
+        b.box("Decor", "HoloBeam", (9.6, 3.2, 0.1), (px, 2.7, pz), holo, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.88, "CanCollide": False, "CanQuery": False})
+    b.sign2("BoardsTitle", (30, 4, 0.4), (x1 - 0.6, 19, tz), "BESTENLISTEN", "GLOBALE TOP 10",
+            graphite, holo, (236, 239, 243), angles=(0, 90, 0), glow=holo)
+
+    # ---------- Ecke hinten rechts: längliches Siegertreppchen, schräg zur Hallenmitte ----------
     gold = (200, 166, 92)
-    pz, px = -20, x1 - 9
-    for place, z, h, color in ((1, pz, 4.2, gold), (2, pz - 8, 3, (190, 194, 200)), (3, pz + 8, 2, (180, 120, 70))):
-        b.box("Decor", "PodiumBase", (7.4, h, 7.4), (px, h / 2, z), (32, 35, 41), "Metal")
-        b.box("Decor", "PodiumTop", (7.6, 0.4, 7.6), (px, h + 0.2, z), color, "Metal")
-        b.box("Decor", "PodiumEdge", (0.3, 0.3, 7.6), (px - 3.8, h - 0.4, z), color, "Neon")
-        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (px, h + 0.5, z), color, "SmoothPlastic", angles=(0, 90, 0),
+    cx, cz = 42, -24
+    fx, fz = -cx, tz + 4 - cz
+    flen = math.hypot(fx, fz)
+    fx, fz = fx / flen, fz / flen          # Blickrichtung der Statuen (zur Hallenmitte)
+    rx, rz = -fz, fx                       # entlang des Podests
+    long_yaw = math.degrees(math.atan2(rx, rz))
+    face_yaw = math.degrees(math.atan2(-fx, -fz))
+    # Rückwand schräg in der Ecke mit Leuchtleisten und Titel
+    wx, wz = cx - fx * 8, cz - fz * 8
+    b.box("Walls", "PodiumWall", (0.8, 18, 30), (wx, 9, wz), steel, "Metal", angles=(0, long_yaw, 0))
+    for h in (3, 16.5):
+        b.box("Decor", "PodiumWallStrip", (0.2, 0.3, 30), (wx + fx * 0.5, h, wz + fz * 0.5), gold, "Neon",
+              angles=(0, long_yaw, 0), props={"Transparency": 0.2})
+    b.sign2("PodiumTitle", (24, 4.5, 0.4), (wx + fx * 0.6, 12.5, wz + fz * 0.6), "TOP 3 · ELO",
+            "DIE BESTEN SPIELER DER SAISON", graphite, gold, (236, 239, 243), angles=(0, face_yaw, 0), glow=gold)
+    # langer Sockel, darauf die drei Podeste
+    b.box("Decor", "PodiumPlinth", (9, 0.6, 28), (cx, 0.3, cz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
+    b.box("Decor", "PodiumPlinthEdge", (0.3, 0.3, 28), (cx + fx * 4.5, 0.55, cz + fz * 4.5), gold, "Neon",
+          angles=(0, long_yaw, 0))
+    for place, off, h, color in ((1, 0, 4.2, gold), (2, 9, 3, (190, 194, 200)), (3, -9, 2, (180, 120, 70))):
+        px, pz = cx + rx * off, cz + rz * off
+        b.box("Decor", "PodiumBase", (7.2, h, 7.2), (px, 0.6 + h / 2, pz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
+        b.box("Decor", "PodiumTop", (7.4, 0.4, 7.4), (px, 0.8 + h, pz), color, "Metal", angles=(0, long_yaw, 0))
+        b.box("Decor", "PodiumEdge", (0.3, 0.3, 7.4), (px + fx * 3.7, 0.2 + h, pz + fz * 3.7), color, "Neon",
+              angles=(0, long_yaw, 0))
+        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (px, 1.1 + h, pz), color, "SmoothPlastic", angles=(0, face_yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.sign("PodiumNumber", (2, 1.6, 0.3), (px - 3.85, h / 2, z), str(place), (32, 35, 41), color, angles=(0, 90, 0))
-    b.add("Decor", "PodiumGlow", (0.2, 24, 24), (px, 0.3, pz), gold, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.85, "CanCollide": False},
+        b.sign("PodiumNumber", (2, 1.6, 0.3), (px + fx * 3.75, 0.6 + h / 2, pz + fz * 3.75), str(place), (32, 35, 41), color,
+               angles=(0, face_yaw, 0))
+    b.add("Decor", "PodiumGlow", (0.2, 30, 30), (cx, 0.3, cz), gold, "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.88, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
-              "Range": 16, "Brightness": 1, "Color": rgb(230, 200, 140)}}])
-    b.sign2("PodiumTitle", (22, 4, 0.4), (x1 - 0.6, 16, pz), "TOP 3 · ELO", "DIE BESTEN SPIELER DER SAISON",
-            graphite, gold, (236, 239, 243), angles=(0, 90, 0), glow=gold)
+              "Range": 18, "Brightness": 1.1, "Color": rgb(230, 200, 140)}}])
 
     # ---------- Süden (Rückwand): Einsatz-Bildschirm, Logo, Plakate ----------
     b.box("Decor", "MissionBoardFrame", (25, 12, 0.4), (0, 14, z0 + 0.2), steel, "Metal")
@@ -1485,10 +1523,10 @@ def build_lobby():
         b.box("Walls", "WallRib", (1.2, H - 9, 0.8), (x, (H - 9) / 2 + 8, z0 + 0.4), steel, "Metal")
     b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.4})
     for x in range(-48, 49, 5):
-        if abs(x) > 12:
+        if abs(x) > 12 and x < 26:  # rechte Ecke bleibt frei fürs Siegertreppchen
             b.box("Decor", "Locker", (4.4, 7.5, 2.2), (x, 3.75, z0 + 1.2), (48, 58, 70), "Metal")
             b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 6, z0 + 2.35), (26, 28, 32), "Metal")
-    for x, z, size in ((-50, 41, 4), (-46, 41, 3), (50, -33, 4), (-50, -33, 4), (-46, -33, 3)):
+    for x, z, size in ((-50, 41, 4), (-46, 41, 3), (-50, -33, 4), (-46, -33, 3)):
         b.crate(x, z, s=size, color=(90, 80, 62))
 
     b.save("Hub.model.json")
