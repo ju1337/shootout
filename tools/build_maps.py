@@ -1094,9 +1094,10 @@ def build_lobby():
     b = Builder(HUB_ORIGIN)
     rng = random.Random(3)
     cyl = {"Shape": "Cylinder"}
-    floor = (150, 154, 160)
-    steel = (70, 76, 84)
-    wall = (96, 102, 112)
+    # Dunkle Halle (helle Flächen blenden), Farbe kommt von Toren, Schildern und Lichtleisten
+    floor = (26, 28, 34)
+    steel = (40, 43, 50)
+    wall = (30, 33, 40)
     navy = (14, 22, 36)
 
     # Außen: Vorfeld und Rollfeld
@@ -1106,7 +1107,7 @@ def build_lobby():
     # ---------- Halle (innen x -75..75, z -60..75, 36 hoch) ----------
     W, D0, D1, H = 75, -60, 75, 36
     zc = (D0 + D1) / 2
-    b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Concrete")
+    b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Slate")
     # Teppich-Laufsteg vom Spawn zur Bühne, Ränder in Cyan
     b.box("Ground", "Runner", (12, 0.06, 64), (0, 0.23, -26), navy, "Fabric")
     for x in (-6.2, 6.2):
@@ -1123,21 +1124,21 @@ def build_lobby():
     b.box("Walls", "WallEast", (2, H, D1 - D0), (W + 1, H / 2, zc), wall, "Metal")
     # Dunkler Sockel unten an den Wänden
     for x in (-W + 0.1, W - 0.1):
-        b.box("Walls", "WallBase", (0.2, 3, D1 - D0), (x, 1.5, zc), (40, 44, 52), "Metal")
+        b.box("Walls", "WallBase", (0.2, 3, D1 - D0), (x, 1.5, zc), (16, 18, 22), "Metal")
     door = 36
     for side in (-1, 1):
         seg = W - door
         b.box("Walls", "WallNorth", (seg + 2, H, 2), (side * (door + seg / 2 + 1), H / 2, D1 + 1), wall, "Metal")
-        b.box("Walls", "DoorPanel", (14, 28, 1.2), (side * (door + 8), 14, D1 + 3), (130, 135, 140), "CorrodedMetal")
+        b.box("Walls", "DoorPanel", (14, 28, 1.2), (side * (door + 8), 14, D1 + 3), (50, 54, 60), "CorrodedMetal")
     b.box("Walls", "DoorLintel", (2 * door, H - 28, 2), (0, 28 + (H - 28) / 2, D1 + 1), wall, "Metal")
     # Dach, Stahlträger, viele helle Deckenlampen
-    b.box("Walls", "Roof", (2 * W + 4, 1, D1 - D0 + 4), (0, H + 0.5, zc), (60, 64, 70), "Metal")
+    b.box("Walls", "Roof", (2 * W + 4, 1, D1 - D0 + 4), (0, H + 0.5, zc), (18, 20, 24), "Metal")
     for z in range(D0 + 8, D1, 13):
         b.box("Walls", "Truss", (2 * W, 1.6, 1.2), (0, H - 1.5, z), steel, "Metal")
         for x in (-50, -25, 0, 25, 50):
-            b.box("Decor", "CeilingLamp", (9, 0.4, 2.4), (x, H - 2.6, z), (255, 248, 235), "Neon",
+            b.box("Decor", "CeilingLamp", (6, 0.3, 0.8), (x, H - 2.6, z), (150, 185, 205), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 40, "Brightness": 1.8, "Color": rgb(255, 244, 228)}}])
+                             "Properties": {"Range": 34, "Brightness": 0.9, "Color": rgb(190, 215, 235)}}])
     for x in (-55, -25, 25, 55):
         b.box("Walls", "Beam", (1.2, 1.6, D1 - D0), (x, H - 3.4, zc), steel, "Metal")
     # Großes Banner unter dem Dach (zum Spawn gerichtet)
@@ -1163,17 +1164,17 @@ def build_lobby():
     gold = (250, 205, 70)
     R0, RW, RH = D0 - 46, 36, 22  # Raum: z R0..D0, x -RW..RW, Höhe RH
     rz = (R0 + D0) / 2
-    b.box("Ground", "FameFloor", (2 * RW, 0.2, D0 - R0), (0, 0.1, rz), (40, 44, 54), "Marble")
+    b.box("Ground", "FameFloor", (2 * RW, 0.2, D0 - R0), (0, 0.1, rz), (20, 22, 28), "Marble")
     b.box("Ground", "FameCarpet", (14, 0.06, D0 - R0 - 6), (0, 0.23, rz + 3), (90, 20, 30), "Fabric")
     b.box("Walls", "FameWallW", (2, RH, D0 - R0), (-RW - 1, RH / 2, rz), wall, "Metal")
     b.box("Walls", "FameWallE", (2, RH, D0 - R0), (RW + 1, RH / 2, rz), wall, "Metal")
     b.box("Walls", "FameWallS", (2 * RW + 4, RH, 2), (0, RH / 2, R0 - 1), wall, "Metal")
-    b.box("Walls", "FameRoof", (2 * RW + 4, 1, D0 - R0 + 2), (0, RH + 0.5, rz), (60, 64, 70), "Metal")
+    b.box("Walls", "FameRoof", (2 * RW + 4, 1, D0 - R0 + 2), (0, RH + 0.5, rz), (18, 20, 24), "Metal")
     for x in (-20, 0, 20):
         for z in (R0 + 12, R0 + 32):
-            b.box("Decor", "FameLamp", (6, 0.4, 2), (x, RH - 0.6, z), (255, 240, 210), "Neon",
+            b.box("Decor", "FameLamp", (5, 0.3, 0.8), (x, RH - 0.6, z), (220, 190, 120), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 30, "Brightness": 1.5, "Color": rgb(255, 236, 200)}}])
+                             "Properties": {"Range": 28, "Brightness": 1, "Color": rgb(255, 225, 170)}}])
     # Siegertreppchen (Top 3 Ranked), Statuen setzt der Server, Blick zum Eingang (Norden)
     pz = R0 + 14
     for place, x, h, color in ((1, 0, 4.5, gold), (2, -8, 3.2, (200, 205, 215)), (3, 8, 2.2, (205, 130, 70))):
