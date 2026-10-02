@@ -24,7 +24,7 @@ local MULTI_WINDOW = 4
 local MULTI_NAMES = { [2] = "DOPPEL-KILL", [3] = "TRIPLE-KILL", [4] = "QUADRA-KILL", [5] = "PENTA-KILL" }
 local streaks = {} -- [Player] = { Count, Last }
 
--- Wird nach dem Zählen gefeuert: (killer: Player, victim: Player, killerKills: number)
+-- Wird nach dem Zählen gefeuert: (killer: Player, victim: Player, killerKills: number, weaponName: string)
 local countedEvent = Instance.new("BindableEvent")
 KillService.KillCounted = countedEvent.Event
 
@@ -158,7 +158,7 @@ function KillService.Init()
 				Remotes.Killfeed:FireClient(player, killer.Name, victimName, weaponName, headshot)
 			end
 		end
-		countedEvent:Fire(killer, victim, KillService.GetKills(killer))
+		countedEvent:Fire(killer, victim, KillService.GetKills(killer), weaponName)
 	end
 	WeaponService.Killed:Connect(onKill)
 

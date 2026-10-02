@@ -13,6 +13,8 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local RewardConfig = require(Shared.RewardConfig)
+local MasteryConfig = require(Shared.MasteryConfig)
+local WeaponConfig = require(Shared.WeaponConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 local Cosmetics = require(Shared.Cosmetics)
@@ -36,7 +38,7 @@ local function publish(player, profile)
 	player:SetAttribute("RewardsClaimed", HttpService:JSONEncode(claimedOf(profile)))
 end
 
--- Belohnung geben und als Popup melden. reward = { Coins, Item }
+-- Belohnung geben und als Popup melden. reward = { Coins, Item, ItemLabel (Name in der Match-Übersicht) }
 local function grant(player, title, reward)
 	local lines = {}
 	if reward.Coins and reward.Coins > 0 then
@@ -46,8 +48,8 @@ local function grant(player, title, reward)
 	local item = reward.Item and Cosmetics.Get(reward.Item)
 	if item and not ProgressService.Owns(player, item.Id) then
 		ProgressService.GiveItem(player, item.Id)
-		ProgressService.LedgerItem(player, item.Name, item.Rarity)
-		table.insert(lines, "Neuer Skin: " .. item.Name)
+		ProgressService.LedgerItem(player, reward.ItemLabel or item.Name, item.Rarity)
+		table.insert(lines, "Neuer Skin: " .. (reward.ItemLabel or item.Name))
 	end
 	if #lines > 0 then
 		Remotes.Reward:FireClient(player, { Title = title, Lines = lines, Rarity = item and item.Rarity or nil })
@@ -147,9 +149,24 @@ function RewardService.Init()
 		lastKiller[player] = nil
 	end)
 	-- Killserien: Münzen bei 5, 10, 15, 20 Kills ohne zu sterben
-	KillService.KillCounted:Connect(function(killer, victim)
+	KillService.KillCounted:Connect(function(killer, victim, _, weaponName)
 		if typeof(killer) ~= "Instance" or not killer:IsA("Player") then
 			return
+		end
+		-- Waffen-Meisterschaft: Kills pro Waffe zählen, Tarnungen freischalten
+		if typeof(weaponName) == "string" and MasteryConfig.HasMastery(weaponName) then
+			local key = MasteryConfig.StatKey(weaponName)
+			ProgressService.AddStat(killer, key, 1)
+			local profile = ProgressService.Get(killer)
+			local kills = profile and profile.Stats and profile.Stats[key] or 0
+			for _, tier in MasteryConfig.Tiers do
+				local id = MasteryConfig.ItemId(weaponName, tier.Id)
+				if kills >= tier.Kills and not ProgressService.Owns(killer, id) then
+					local weapon = WeaponConfig.Get(weaponName).DisplayName
+					grant(killer, "MEISTERSCHAFT · " .. string.upper(weapon), { Coins = tier.Coins, Item = id,
+						ItemLabel = tier.Name .. "-Tarnung (" .. weapon .. ")" })
+				end
+			end
 		end
 		if typeof(victim) == "Instance" and victim:IsA("Player") and victim ~= killer then
 			-- Rache: der Gegner hatte uns zuletzt erledigt

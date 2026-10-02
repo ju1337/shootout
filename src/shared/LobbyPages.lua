@@ -23,6 +23,7 @@ local AgentFigure = require(Shared.AgentFigure)
 local PassConfig = require(Shared.PassConfig)
 local UITheme = require(Shared.UITheme)
 local AttachmentConfig = require(Shared.AttachmentConfig)
+local MasteryConfig = require(Shared.MasteryConfig)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -165,7 +166,7 @@ function LobbyPages.Shop(page)
 		cards = {}
 		local order = 0
 		for _, item in Cosmetics.List(currentType) do
-			if not item.Pass and not item.Reward then
+			if Cosmetics.ForSale(item) then
 				order += 1
 				local rarity = Cosmetics.Rarities[item.Rarity]
 				local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
@@ -417,9 +418,25 @@ function LobbyPages.Loadout(page, goToShop)
 		local entries = { { Id = nil, Name = "Standard", Sub = "STANDARD", Color = C.Muted } }
 		local items = mode == "Weapon" and Cosmetics.List("Weapon") or Cosmetics.List("Agent", selected)
 		for _, item in items do
-			if owned[item.Id] then
+			if owned[item.Id] and not item.Mastery then
 				local rarity = Cosmetics.Rarities[item.Rarity]
 				table.insert(entries, { Id = item.Id, Name = item.Name, Sub = upper(rarity.Name), Color = rarity.Color })
+			end
+		end
+		local ownedCount = #entries - 1
+		-- Meisterschaft: alle Tarnungen dieser Waffe, gesperrte mit Kill-Fortschritt
+		if mode == "Weapon" and MasteryConfig.HasMastery(selected) then
+			local kills = MasteryConfig.Kills(player, selected)
+			for _, tier in MasteryConfig.Tiers do
+				local id = MasteryConfig.ItemId(selected, tier.Id)
+				local rarity = Cosmetics.Rarities[tier.Rarity]
+				if owned[id] then
+					table.insert(entries, { Id = id, Name = tier.Name, Sub = "MEISTERSCHAFT", Color = rarity.Color })
+				else
+					table.insert(entries, { Id = id, Name = tier.Name, Color = rarity.Color, Locked = true,
+						Sub = "GESPERRT · " .. math.min(kills, tier.Kills) .. "/" .. tier.Kills .. " KILLS",
+						Progress = math.clamp(kills / tier.Kills, 0, 1) })
+				end
 			end
 		end
 		local currentName = "Standard"
@@ -430,7 +447,7 @@ function LobbyPages.Loadout(page, goToShop)
 			end
 			local option = UITheme.Chunky({ LayoutOrder = i, Size = UDim2.fromOffset(200, 60), Color = isOn and C.Secondary or C.Panel,
 				StrokeColor = isOn and C.Primary or entry.Color, Text = "" }, options, function()
-				if entry.Id then
+				if entry.Id then -- gesperrte Tarnung: der Server sagt, wie viele Kills fehlen
 					Remotes.ShopAction:FireServer("Equip", entry.Id, selected)
 				else
 					Remotes.ShopAction:FireServer("Unequip", slot)
@@ -438,12 +455,24 @@ function LobbyPages.Loadout(page, goToShop)
 			end)
 			option.Stroke.Transparency = isOn and 0 or 0.5
 			label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 24), Text = upper(entry.Name), TextSize = 21,
-				Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, option.Face)
+				Font = F.Display, TextColor3 = isOn and C.Primary or (entry.Locked and C.Muted or C.Text),
+				TextTruncate = Enum.TextTruncate.AtEnd }, option.Face)
 			label({ Position = UDim2.fromOffset(14, 34), Size = UDim2.new(1, -28, 0, 14), Text = isOn and "AUSGERÜSTET" or entry.Sub,
 				TextSize = 10, Font = F.Bold, TextColor3 = isOn and C.Primary or entry.Color }, option.Face)
+			if entry.Locked then
+				-- Fortschritt bis zur Tarnung als dünner Balken unten
+				option.Stroke.Transparency = 0.75
+				local track = make("Frame", { Position = UDim2.new(0, 14, 1, -9), Size = UDim2.new(1, -28, 0, 3),
+					BackgroundColor3 = C.Background, BorderSizePixel = 0 }, option.Face)
+				make("Frame", { Size = UDim2.fromScale(entry.Progress, 1), BackgroundColor3 = entry.Color, BorderSizePixel = 0 }, track)
+			end
 		end
-		hint.Text = #entries == 1 and "Noch keine Skins dafür – im SHOP gibt es Waffen- und Agenten-Skins."
-			or "Weitere Skins gibt es im SHOP."
+		if mode == "Weapon" and MasteryConfig.HasMastery(selected) then
+			hint.Text = "Weitere Skins gibt es im SHOP. Meisterschafts-Tarnungen schaltest du mit Kills mit dieser Waffe frei."
+		else
+			hint.Text = ownedCount == 0 and "Noch keine Skins dafür – im SHOP gibt es Waffen- und Agenten-Skins."
+				or "Weitere Skins gibt es im SHOP."
+		end
 
 		-- große Vorschau mit dem ausgerüsteten Skin
 		if mode == "Weapon" then
@@ -496,7 +525,7 @@ function LobbyPages.Loadout(page, goToShop)
 		fillList()
 		fillOptions()
 	end)("WAFFEN")
-	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true, Attachments = true, Coins = true } }
+	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true, Attachments = true, Coins = true, Stats = true } }
 end
 
 -- =====================================================================

@@ -8,6 +8,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
 local WeaponConfig = require(Shared.WeaponConfig)
+local MasteryConfig = require(Shared.MasteryConfig)
 local AgentConfig = require(Shared.AgentConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
@@ -30,6 +31,9 @@ function actions.Buy(player, itemId)
 	if item.Pass then
 		return "Diesen Skin gibt es nur im Battle Pass.", false
 	end
+	if item.Mastery then
+		return "Diese Tarnung schaltest du mit " .. item.Mastery .. " Kills frei.", false
+	end
 	if item.Reward or not item.Price then
 		return "Diesen Skin gibt es nur als Belohnung.", false
 	end
@@ -50,12 +54,20 @@ end
 -- Skin ausrüsten. Waffen-Skins brauchen die Zielwaffe.
 function actions.Equip(player, itemId, weaponName)
 	local item = Cosmetics.Get(itemId)
+	if item and item.Mastery and item.Weapon and not ProgressService.Owns(player, itemId) then
+		local kills = MasteryConfig.Kills(player, item.Weapon)
+		return "Noch gesperrt: " .. math.max(0, item.Mastery - kills) .. " Kills mit "
+			.. WeaponConfig.Get(item.Weapon).DisplayName .. " bis " .. item.Name .. ".", false
+	end
 	if not item or not ProgressService.Owns(player, itemId) then
 		return "Diesen Skin besitzt du nicht.", false
 	end
 	if item.Type == "Weapon" then
 		if typeof(weaponName) ~= "string" or not WeaponConfig.Get(weaponName) then
 			return "Unbekannte Waffe.", false
+		end
+		if not Cosmetics.FitsWeapon(item, weaponName) then
+			return "Diese Tarnung gibt es nur für " .. WeaponConfig.Get(item.Weapon).DisplayName .. ".", false
 		end
 		ProgressService.SetEquipped(player, "W:" .. weaponName, itemId)
 		return item.Name .. " auf " .. WeaponConfig.Get(weaponName).DisplayName .. " ausgerüstet.", true

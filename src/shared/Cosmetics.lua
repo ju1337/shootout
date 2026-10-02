@@ -4,11 +4,13 @@
 -- Pass = true: exklusiv aus dem Battle Pass, nicht im Shop kaufbar.
 -- Besitz und Ausrüstung kommen vom Server als Spieler-Attribute (JSON): "Owned", "Equipped".
 -- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin, "A:<Agent>" = Agenten-Skin
+-- Mastery = Kills: Meisterschafts-Tarnung (MasteryConfig), nur für die Waffe in Weapon, nicht kaufbar.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local MasteryConfig = require(ReplicatedStorage:WaitForChild("Shared").MasteryConfig)
 
 local Cosmetics = {}
 
@@ -118,13 +120,32 @@ Cosmetics.Items = {
 		Primary = Color3.fromRGB(20, 20, 25), Accent = Color3.fromRGB(120, 200, 255) },
 }
 
-function Cosmetics.Get(id)
-	for _, item in Cosmetics.Items do
-		if item.Id == id then
-			return item
-		end
+-- Meisterschafts-Tarnungen: pro Waffe eine je Stufe
+for _, weaponName in MasteryConfig.Weapons do
+	for _, tier in MasteryConfig.Tiers do
+		table.insert(Cosmetics.Items, { Id = MasteryConfig.ItemId(weaponName, tier.Id), Type = "Weapon",
+			Weapon = weaponName, Mastery = tier.Kills, Name = tier.Name, Rarity = tier.Rarity, Color = tier.Color,
+			Material = tier.Material })
 	end
-	return nil
+end
+
+local byId = {}
+for _, item in Cosmetics.Items do
+	byId[item.Id] = item
+end
+
+function Cosmetics.Get(id)
+	return byId[id]
+end
+
+-- Kann der Skin auf diese Waffe? (Meisterschafts-Tarnungen nur auf ihre eigene)
+function Cosmetics.FitsWeapon(item, weaponName)
+	return item.Type == "Weapon" and (item.Weapon == nil or item.Weapon == weaponName)
+end
+
+-- Im Shop kaufbar?
+function Cosmetics.ForSale(item)
+	return item.Price ~= nil and not item.Pass and not item.Reward and not item.Mastery
 end
 
 -- Alle Skins eines Typs ("Weapon"/"Agent"), optional nur für einen Agenten
@@ -159,7 +180,7 @@ end
 function Cosmetics.WeaponSkin(player, agentId, weaponName)
 	local id = Cosmetics.GetEquipped(player)["W:" .. weaponName]
 	local item = id and Cosmetics.Get(id)
-	if item and Cosmetics.GetOwned(player)[id] then
+	if item and Cosmetics.GetOwned(player)[id] and Cosmetics.FitsWeapon(item, weaponName) then
 		return item
 	end
 	if agentId then

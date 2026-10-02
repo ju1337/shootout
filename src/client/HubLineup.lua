@@ -251,12 +251,12 @@ local function dailyOffers()
 	local random = Random.new(day * 7919 + 17)
 	local weapons, agents = {}, {}
 	for _, item in Cosmetics.List("Weapon") do
-		if not item.Pass and not item.Reward then
+		if Cosmetics.ForSale(item) then
 			table.insert(weapons, item)
 		end
 	end
 	for _, item in Cosmetics.List("Agent") do
-		if not item.Pass and not item.Reward then
+		if Cosmetics.ForSale(item) then
 			table.insert(agents, item)
 		end
 	end
