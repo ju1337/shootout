@@ -468,7 +468,7 @@ local function checkSeason(player, profile, test)
 	end
 	if played then
 		table.insert(lines, "Saison " .. season .. " beginnt – ELO zur Hälfte zurückgesetzt")
-		-- kurz warten, damit der Client das Popup schon anzeigen kann (beim Beitreten)
+		-- kurz warten, damit der Client die Belohnungs-Karte schon anzeigen kann (beim Beitreten)
 		task.delay(test and 0 or 8, function()
 			if player.Parent then
 				Remotes.Reward:FireClient(player, { Title = test and "SAISON-ENDE (TEST)" or ("SAISON " .. oldSeason .. " BEENDET"),
@@ -665,7 +665,7 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 	ProgressService.Sync(player)
 
 	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
-	Remotes.XPGain:FireClient(player, after - before, reason, agentId, levelUp, coins, quiet == true)
+	Remotes.XPGain:FireClient(player, amount, reason, agentId, levelUp, coins, quiet == true) -- auch bei Agent auf Max-Level
 	-- Alle XP zählen auch für den Battle Pass (auch wenn der Agent schon Max-Level ist)
 	if reason ~= "Admin" then
 		ProgressService.AddPassXP(player, amount)
@@ -693,7 +693,8 @@ function ProgressService.Prestige(player)
 	profile.Coins += coins
 	ProgressService.Sync(player)
 	Remotes.Notify:FireClient(player, "Progress", { Caption = "Prestige erreicht", Title = "Prestige " .. profile.Prestige,
-		Sub = "+" .. coins .. " Münzen", Badge = tostring(profile.Prestige), Style = "Prestige" })
+		Sub = "+" .. coins .. " Münzen", Badge = tostring(profile.Prestige), Style = "Prestige",
+		Key = "Prestige" .. profile.Prestige, Primary = true })
 	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 

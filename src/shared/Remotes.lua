@@ -21,7 +21,7 @@ local NAMES = {
 	"UseAbility", -- Client -> Server: Fähigkeit auslösen
 	"UseUltimate", -- Client -> Server: Ultimate auslösen (UltCharge muss 100 sein)
 	"Reveal",     -- Server -> Team: Gegner markieren (Charaktere, Dauer)
-	"XPGain",     -- Server -> Client: XP bekommen (Menge, Grund, Agent, LevelUp, Münzen, leise)
+	"XPGain",     -- Server -> Client: XP bekommen (Menge fürs Spielerlevel, Grund, Agent, LevelUp, Münzen, leise)
 	"AdminAction", -- Client -> Server: Admin-Befehl (Aktion, Wert1, Wert2)
 	"AdminStatus", -- Server -> Admin: Rückmeldung im Admin-Panel
 	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)
@@ -42,7 +42,7 @@ local NAMES = {
 	"PartyInvite", -- Server -> Client: Einladung (Name, UserId des Anführers)
 	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers, Schaden)
 	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
-	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity }) – Popup
+	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity, Key }) – Karte (Notifications)
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 }
 

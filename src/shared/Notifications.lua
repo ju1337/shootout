@@ -9,13 +9,17 @@
 --     Info, Neutral oder Alert (Farben aus Sicht des Spielers, der Server schickt jedem seine Sicht).
 --   * Ziel-Meldungen ("Objective"): schmale Leiste unter dem Punktestand (FLAGGE A EINGENOMMEN) mit Raute
 --     in Team-, Gegner- oder Warnfarbe. Daten: { Text, Side = Ally/Enemy/Alert/Neutral, Icon = Buchstabe }
---   * Fortschritt ("Progress"): Karte links, fährt herein (LEVEL 12, BATTLE PASS STUFE 5, PRESTIGE).
---     Daten: { Caption, Title, Sub, Badge, Style oder Color }. Level-Aufstiege (Spieler und Agent)
---     erkennt das Modul selbst.
+--   * Fortschritt ("Progress"): Karte links, fährt herein (LEVEL 12, BATTLE PASS STUFE 5, PRESTIGE) – auch alle
+--     Belohnungen vom RewardService (Remotes.Reward: Meilensteine, Meisterschaft, Titel, Wochen-Bonus, Saison).
+--     Daten: { Caption, Title, Sub, Badge, Style oder Color, Key, Primary }. Karten mit gleichem Key werden zu
+--     einer zusammengeführt (LEVEL 20 + Belohnung "LEVEL 20 ERREICHT" -> eine Karte mit den Münzen), Primary
+--     behält dabei Überschrift und Titel. Level-Aufstiege (Spieler und Agent) erkennt das Modul selbst.
+--     Die Karten liegen auf einer eigenen Ebene über Menüs und Match-Zusammenfassung.
 -- Remotes.Announce (einfacher Text) erscheint als neutrales Banner.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
@@ -26,6 +30,8 @@ local UITheme = require(Shared.UITheme)
 local Medals = require(Shared.Medals)
 local AgentConfig = require(Shared.AgentConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local Cosmetics = require(Shared.Cosmetics)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -50,7 +56,8 @@ local STYLES = { Win = C.Ally, Loss = C.Enemy, Info = C.Primary, Neutral = C.Mut
 	Level = C.Primary, Pass = C.Gold, Prestige = ORANGE }
 local SIDES = { Ally = C.Ally, Enemy = C.Enemy, Alert = ORANGE, Neutral = C.Text }
 
-local MEDAL_TOP = 104       -- Oberkante der Medaille unter der Bildschirmmitte (unter der Kill-Meldung)
+local MEDAL_TOP = 200       -- Oberkante der Medaille unter der Bildschirmmitte: mit Abstand unter Fadenkreuz und Kill-Meldung
+local MEDAL_TOP_TOUCH = 90  -- Touch: unten in der Mitte liegen Munition, Geld und Fähigkeiten, darum höher
 local MEDAL_PAD = 70        -- Rand in der CanvasGroup, damit das große Abzeichen beim Einfliegen nicht abgeschnitten wird
 local BANNER_Y = 0.3        -- Mitte des Banners (Anteil der Bildschirmhöhe): zwischen Ziel-Meldungen und Countdown
 local OBJECTIVE_Y = 150     -- Ziel-Meldungen unter Punktestand und Zustandsschild
@@ -259,9 +266,22 @@ end
 -- Wartet schon der nächste Eintrag, wird nach minTime gewechselt (oder sofort, wenn skip(aktuell, nächster) true ist).
 local function makeQueue(show, hide, minTime, maxQueue, skip)
 	local queue = {}
+	local current = nil -- gerade gezeigter Eintrag
 	local running = false
 	local generation = 0
 	local api = {}
+	-- Gezeigten oder wartenden Eintrag suchen: gibt (Eintrag, wird gerade gezeigt) zurück
+	function api.Find(predicate)
+		if current and predicate(current) then
+			return current, true
+		end
+		for _, item in queue do
+			if predicate(item) then
+				return item, false
+			end
+		end
+		return nil, false
+	end
 	function api.Push(item)
 		table.insert(queue, item)
 		if #queue > maxQueue then
@@ -275,6 +295,7 @@ local function makeQueue(show, hide, minTime, maxQueue, skip)
 		task.spawn(function()
 			while #queue > 0 and generation == myGeneration do
 				local item = table.remove(queue, 1)
+				current = item
 				local hold = show(item)
 				local shown = 0
 				while shown < hold and generation == myGeneration do
@@ -286,6 +307,7 @@ local function makeQueue(show, hide, minTime, maxQueue, skip)
 				end
 			end
 			if generation == myGeneration then
+				current = nil
 				hide()
 				running = false
 			end
@@ -295,6 +317,7 @@ local function makeQueue(show, hide, minTime, maxQueue, skip)
 	function api.Clear()
 		generation += 1
 		table.clear(queue)
+		current = nil
 		running = false
 		hide(true)
 	end
@@ -303,9 +326,13 @@ end
 
 -- ---------- Medaillen ----------
 
+local function medalTop()
+	return InputActions.IsTouch() and MEDAL_TOP_TOUCH or MEDAL_TOP
+end
+
 local function buildMedal(root)
 	local group = make("CanvasGroup", { Name = "Medal", AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, MEDAL_TOP - MEDAL_PAD), Size = UDim2.fromOffset(820, MEDAL_PAD + 210),
+		Position = UDim2.new(0.5, 0, 0.5, medalTop() - MEDAL_PAD), Size = UDim2.fromOffset(820, MEDAL_PAD + 210),
 		BackgroundTransparency = 1, GroupTransparency = 1, Visible = false }, root)
 	local centerY = MEDAL_PAD + 42
 
@@ -463,7 +490,7 @@ local function buildMedal(root)
 
 		-- Auftritt: Abzeichen schlägt ein, Blitz-Ring, Titel zieht zusammen, Linien laufen aus, Glanz
 		group.Visible = true
-		group.Position = UDim2.new(0.5, 0, 0.5, MEDAL_TOP - MEDAL_PAD)
+		group.Position = UDim2.new(0.5, 0, 0.5, medalTop() - MEDAL_PAD)
 		tween(group, 0.12, { GroupTransparency = 0 })
 		emblemScale.Scale = 2.3
 		tween(emblemScale, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
@@ -493,7 +520,7 @@ local function buildMedal(root)
 	end
 
 	local function hide(instant)
-		fade.Hide(instant, 0.35, { GroupTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, MEDAL_TOP - MEDAL_PAD - 14) })
+		fade.Hide(instant, 0.35, { GroupTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, medalTop() - MEDAL_PAD - 14) })
 	end
 
 	-- Mehrfach-Kills: nächste Stufe ersetzt die aktuelle sofort
@@ -695,10 +722,13 @@ end
 
 -- ---------- Fortschritt ----------
 
+local PROGRESS_W = 370
+local PROGRESS_SUB_W = PROGRESS_W - 112
+
 local function buildProgress(root)
 	local group = make("CanvasGroup", { Name = "Progress", AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, -400, 0.5, -40), Size = UDim2.fromOffset(370, 94), BackgroundTransparency = 1, GroupTransparency = 1,
-		Visible = false }, root)
+		Position = UDim2.new(0, -400, 0.5, -40), Size = UDim2.fromOffset(PROGRESS_W, 94), BackgroundTransparency = 1,
+		GroupTransparency = 1, Visible = false }, root)
 	local back = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.08,
 		BorderSizePixel = 0 }, group)
 	make("UIGradient", { Transparency = NumberSequence.new(0, 0.45) }, back)
@@ -709,24 +739,41 @@ local function buildProgress(root)
 	local caption = label({ Position = UDim2.fromOffset(98, 13), Size = UDim2.new(1, -112, 0, 14), Text = "", TextSize = 12,
 		TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Left }, group)
 	local title = label({ Position = UDim2.fromOffset(98, 27), Size = UDim2.new(1, -112, 0, 38), Text = "", TextSize = 32,
-		Font = F.Display, TextColor3 = WHITE, TextXAlignment = Enum.TextXAlignment.Left }, group)
+		Font = F.Display, TextColor3 = WHITE, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd },
+		group)
 	local titleGradient = make("UIGradient", {}, title)
 	local sub = label({ Position = UDim2.fromOffset(98, 66), Size = UDim2.new(1, -112, 0, 16), Text = "", TextSize = 13,
-		TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd }, group)
+		TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+		TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd }, group)
 
 	local fade = fader(group)
+	local function colorOf(data)
+		return typeof(data.Color) == "Color3" and data.Color or STYLES[data.Style] or C.Primary
+	end
 
-	local function show(data)
-		local color = typeof(data.Color) == "Color3" and data.Color or STYLES[data.Style] or C.Primary
-		fade.Cancel()
+	-- Inhalt setzen (auch für eine schon sichtbare Karte, wenn eine Belohnung dazukommt); Zeile darunter
+	-- darf zweizeilig werden, dann wird die Karte höher
+	local function apply(data)
+		local color = colorOf(data)
 		accent.BackgroundColor3 = color
 		badgeStroke.Color = color
 		badge.BackgroundColor3 = C.Background
 		badgeText.TextColor3 = color
-		badgeText.Text = upper(tostring(data.Badge or ""))
+		local mark = data.Badge ~= nil and tostring(data.Badge) or ""
+		badgeText.Font = mark == "" and F.Bold or F.Display -- ohne Zahl ein Stern (kennt nur Gotham)
+		badgeText.Text = mark == "" and "★" or upper(mark)
 		caption.Text = upper(tostring(data.Caption or ""))
 		title.Text = upper(tostring(data.Title or ""))
 		sub.Text = upper(tostring(data.Sub or ""))
+		local lines = TextService:GetTextSize(sub.Text, 13, F.Bold, Vector2.new(PROGRESS_SUB_W, 1000)).Y > 20 and 2 or 1
+		sub.Size = UDim2.new(1, -112, 0, lines * 16)
+		group.Size = UDim2.fromOffset(PROGRESS_W, lines == 2 and 110 or 94)
+		return color
+	end
+
+	local function show(data)
+		fade.Cancel()
+		local color = apply(data)
 		group.Visible = true
 		group.Position = UDim2.new(0, -400, 0.5, -40)
 		tween(group, 0.2, { GroupTransparency = 0 })
@@ -742,13 +789,67 @@ local function buildProgress(root)
 		fade.Hide(instant, 0.3, { Position = UDim2.new(0, -400, 0.5, -40), GroupTransparency = 1 }, Enum.EasingStyle.Quad,
 			Enum.EasingDirection.In)
 	end
-	return makeQueue(show, hide, PROGRESS_MIN, 4)
+	local queue = makeQueue(show, hide, PROGRESS_MIN, 4)
+	-- Sichtbare Karte nach dem Zusammenführen neu beschriften (ohne neuen Auftritt), kurzer Glanz als Hinweis
+	function queue.Refresh(data)
+		local color = apply(data)
+		shine(titleGradient, color:Lerp(WHITE, 0.15), 0.6, 0)
+		tone(PING, 1.5, 0.35)
+	end
+	return queue
+end
+
+-- Zwei Karten mit gleichem Key zu einer: die Primary-Karte (z.B. LEVEL 20) behält Überschrift, Titel und Farbe,
+-- die Zeilen darunter werden aneinandergehängt (z.B. "+440 MÜNZEN")
+local function mergeProgress(existing, incoming)
+	local primary, secondary = existing, incoming
+	if incoming.Primary and not existing.Primary then
+		primary, secondary = incoming, existing
+	end
+	local subs = {}
+	for _, text in { primary.Sub, secondary.Sub } do
+		if text ~= nil and tostring(text) ~= "" then
+			table.insert(subs, tostring(text))
+		end
+	end
+	existing.Caption, existing.Title, existing.Badge = primary.Caption, primary.Title, primary.Badge
+	existing.Color, existing.Style, existing.Primary = primary.Color, primary.Style, primary.Primary
+	existing.Sub = table.concat(subs, "  ·  ")
 end
 
 function Notifications.Progress(data)
-	if type(data) == "table" and layers.Progress then
-		layers.Progress.Push(data)
+	if type(data) ~= "table" or not layers.Progress then
+		return
 	end
+	if data.Key ~= nil then
+		local existing, showing = layers.Progress.Find(function(item)
+			return item.Key == data.Key
+		end)
+		if existing then
+			mergeProgress(existing, data)
+			if showing then
+				layers.Progress.Refresh(existing)
+			end
+			return
+		end
+	end
+	layers.Progress.Push(data)
+end
+
+-- Belohnung vom RewardService ({ Title, Lines, Rarity, Key }) als Karte im selben Stil wie Level und Battle Pass:
+-- Zahl aus dem Titel ins Abzeichen (LEVEL 20, PRESTIGE 3), Farbe nach Seltenheit des Skins, sonst Gold
+function Notifications.Reward(data)
+	if type(data) ~= "table" then
+		return
+	end
+	local lines = {}
+	for _, line in (type(data.Lines) == "table" and data.Lines or {}) do
+		table.insert(lines, tostring(line))
+	end
+	local rarity = data.Rarity and Cosmetics.Rarities[data.Rarity]
+	local title = tostring(data.Title or "")
+	Notifications.Progress({ Caption = "Belohnung", Title = title, Sub = table.concat(lines, "  ·  "),
+		Badge = string.match(title, "%d+"), Color = rarity and rarity.Color or C.Gold, Key = data.Key })
 end
 
 -- ---------- Start ----------
@@ -760,7 +861,10 @@ function Notifications.Init()
 	layers.Medal = buildMedal(root)
 	layers.Banner = buildBanner(root)
 	layers.Objective = buildObjective(root)
-	layers.Progress = buildProgress(root)
+	-- Karten (Level, Battle Pass, Belohnungen) über Menüs und Match-Zusammenfassung
+	local cards = make("ScreenGui", { Name = "NotificationCards", ResetOnSpawn = false, IgnoreGuiInset = true,
+		DisplayOrder = 25 }, player:WaitForChild("PlayerGui"))
+	layers.Progress = buildProgress(UITheme.ScaledRoot(cards))
 
 	Remotes.Notify.OnClientEvent:Connect(function(kind, data)
 		if kind == "Medal" then
@@ -776,6 +880,7 @@ function Notifications.Init()
 	Remotes.Announce.OnClientEvent:Connect(function(text)
 		Notifications.Banner({ Title = tostring(text), Style = "Neutral" })
 	end)
+	Remotes.Reward.OnClientEvent:Connect(Notifications.Reward)
 
 	-- Moduswechsel (z.B. Match verlassen): Match-Meldungen sofort weg, Fortschritt darf bleiben
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
@@ -803,8 +908,10 @@ function Notifications.Init()
 	player:GetAttributeChangedSignal("AccountXP"):Connect(function()
 		local now = LevelConfig.Get(player)
 		if now.Level > lastLevel and now.Prestige == lastPrestige then
+			-- Key passt zur Belohnung "LEVEL n ERREICHT" vom RewardService: deren Münzen landen in dieser Karte
 			Notifications.Progress({ Caption = "Level aufgestiegen", Title = "Level " .. now.Level, Badge = tostring(now.Level),
-				Sub = now.CanPrestige and "Prestige jetzt möglich" or "Spielerlevel", Style = "Level" })
+				Sub = now.CanPrestige and "Prestige jetzt möglich" or nil, Style = "Level", Key = "Level" .. now.Level,
+				Primary = true })
 		end
 		lastLevel, lastPrestige = now.Level, now.Prestige
 	end)

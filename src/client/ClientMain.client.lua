@@ -26,7 +26,6 @@ local HubLineup = require(script.Parent:WaitForChild("HubLineup"))
 local Nametags = require(script.Parent:WaitForChild("Nametags"))
 local MapVote = require(script.Parent:WaitForChild("MapVote"))
 local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
-local RewardPopup = require(script.Parent:WaitForChild("RewardPopup"))
 local LevelBadge = require(script.Parent:WaitForChild("LevelBadge"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
@@ -34,7 +33,7 @@ Movement.Init()
 WeaponClient.Init()
 CharacterPose.Init() -- Third-Person: Waffe mit beiden Händen bei allen Charakteren
 HUD.Init(WeaponClient)
-Notifications.Init() -- Medaillen, Runden-Banner, Ziel- und Level-Meldungen im CoD-Stil
+Notifications.Init() -- Medaillen, Runden-Banner, Ziel-, Level- und Belohnungs-Meldungen im CoD-Stil
 GameMenu.Init()
 AbilityClient.Init()
 Glide.Init()
@@ -50,6 +49,5 @@ HubLineup.Init()
 Nametags.Init()
 MapVote.Init()
 TouchControls.Init()
-RewardPopup.Init()
 LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

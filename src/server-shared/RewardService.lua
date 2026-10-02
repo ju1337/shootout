@@ -4,7 +4,8 @@
 --   Die Kill-Boni (Killserien, Rache, Serie beendet) vergibt KillService zusammen mit den Medaillen.
 -- Prüft automatisch, sobald sich Level (AccountXP), Prestige oder ELO eines Spielers ändern.
 -- Abgeholte Meilensteine stehen im Profil (profile.Rewards.Claimed) und als JSON im Spieler-Attribut
--- "RewardsClaimed" (für das Belohnungs-Fenster). Jede Belohnung zeigt der Client als Popup (Remotes.Reward).
+-- "RewardsClaimed" (für das Belohnungs-Fenster). Jede Belohnung zeigt der Client als Karte links (Remotes.Reward,
+-- Notifications).
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -36,8 +37,9 @@ local function publish(player, profile)
 	player:SetAttribute("RewardsClaimed", HttpService:JSONEncode(claimedOf(profile)))
 end
 
--- Belohnung geben und als Popup melden. reward = { Coins, Item, ItemLabel (Name in der Match-Übersicht) }
-local function grant(player, title, reward)
+-- Belohnung geben und als Karte melden. reward = { Coins, Item, ItemLabel (Name in der Match-Übersicht) }.
+-- key verbindet die Karte mit einer gleichzeitigen Meldung (z.B. "Level20" mit dem Level-Aufstieg)
+local function grant(player, title, reward, key)
 	local lines = {}
 	if reward.Coins and reward.Coins > 0 then
 		ProgressService.AddCoins(player, reward.Coins, title)
@@ -50,7 +52,7 @@ local function grant(player, title, reward)
 		table.insert(lines, "Neuer Skin: " .. (reward.ItemLabel or item.Name))
 	end
 	if #lines > 0 then
-		Remotes.Reward:FireClient(player, { Title = title, Lines = lines, Rarity = item and item.Rarity or nil })
+		Remotes.Reward:FireClient(player, { Title = title, Lines = lines, Rarity = item and item.Rarity or nil, Key = key })
 	end
 end
 
@@ -90,7 +92,7 @@ function RewardService.Check(player)
 		if info.Level >= milestone.Level and not claimed[key] then
 			claimed[key] = true
 			changed = true
-			grant(player, "LEVEL " .. milestone.Level .. " ERREICHT", milestone)
+			grant(player, "LEVEL " .. milestone.Level .. " ERREICHT", milestone, "Level" .. milestone.Level)
 		end
 	end
 	-- Prestige
@@ -99,7 +101,7 @@ function RewardService.Check(player)
 		if info.Prestige >= milestone.Prestige and not claimed[key] then
 			claimed[key] = true
 			changed = true
-			grant(player, "PRESTIGE " .. milestone.Prestige, milestone)
+			grant(player, "PRESTIGE " .. milestone.Prestige, milestone, "Prestige" .. milestone.Prestige)
 		end
 	end
 	-- Rang (erster Aufstieg pro Saison)
