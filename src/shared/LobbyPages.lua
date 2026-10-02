@@ -429,7 +429,7 @@ function LobbyPages.Loadout(page, goToShop)
 		if isOn then
 			return "AUSGERÜSTET", C.Primary, "AUSGERÜSTET  ·  KLICKEN ZUM ABLEGEN"
 		elseif owned then
-			return item.Free and "GRATIS" or "GEKAUFT", C.Good, (item.Free and "GRATIS" or "GEKAUFT") .. "  ·  KLICKEN ZUM AUSRÜSTEN"
+			return "GEKAUFT", C.Good, "GEKAUFT  ·  KLICKEN ZUM AUSRÜSTEN"
 		end
 		local price = UITheme.FormatNumber(item.Price) .. " MÜNZEN"
 		return price, coins() >= item.Price and C.Text or C.Bad, price .. "  ·  KLICKEN ZUM KAUFEN"
@@ -532,10 +532,7 @@ function LobbyPages.Loadout(page, goToShop)
 			table.insert(rows, { Remove = true })
 		end
 		local items = AttachmentConfig.ForSlot(slot.Id)
-		table.sort(items, function(x, y) -- Gratis zuerst, dann nach Preis
-			if (x.Free == true) ~= (y.Free == true) then
-				return x.Free == true
-			end
+		table.sort(items, function(x, y) -- günstigste zuerst
 			return x.Price < y.Price
 		end)
 		for _, item in items do
