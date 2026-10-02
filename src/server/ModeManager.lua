@@ -18,15 +18,12 @@ local ModeManager = {}
 local modules = {
 	Hub = require(script.Parent.Modes.Hub),
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
-	Drop = require(script.Parent.Modes.Drop),
-	Strikeout = require(script.Parent.Modes.Strikeout),
-	Demolition = require(script.Parent.Modes.Demolition),
+	Domination = require(script.Parent.Modes.Domination),
 	Wingman = require(script.Parent.Modes.Wingman),
 	Training = require(script.Parent.Modes.Training),
-	Ranked = require(script.Parent.Modes.Ranked),
 	Arena = require(script.Parent.Modes.Arena),
-	Extraction = require(script.Parent.Modes.Extraction),
-	TeamDeathmatch = require(script.Parent.Modes.TeamDeathmatch),
+	-- Ausgebaut (siehe Modes.Disabled): Drop, Strikeout, Demolition, Ranked, Extraction, TeamDeathmatch.
+	-- Ihre Module bitte erst wieder laden, wenn ihre Maps wieder erzeugt werden (sonst warten sie ewig).
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig
@@ -45,9 +42,9 @@ function ModeManager.Status(player, text)
 end
 
 -- Schnelles Spiel: Kampfmodus mit den meisten Spielern, der noch Platz hat (sonst Strikeout)
-local QUICK_MODES = { "Strikeout", "Demolition", "TeamDeathmatch", "Extraction", "Drop", "FreeForAll", "Wingman" }
+local QUICK_MODES = { "Domination", "FreeForAll", "Wingman", "Arena" }
 local function quickMode(player)
-	local best, bestCount = "Strikeout", -1
+	local best, bestCount = "Domination", -1
 	for _, modeId in QUICK_MODES do
 		local module = modules[modeId]
 		if module and module.CanJoin(player) then

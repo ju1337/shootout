@@ -580,10 +580,10 @@ local function buildStats()
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	local tiles = {}
 	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate", "Accuracy",
-		"AvgDamage", "Revives", "Plants", "Defuses", "RoundsWon", "Favorite" }
+		"AvgDamage", "Revives", "Captures", "AvgKills", "RoundsWon", "Favorite" }
 	local titles = { KD = "K/D", Kills = "KILLS", Deaths = "TODE", Assists = "ASSISTS", WinRate = "SIEGQUOTE",
 		Matches = "MATCHES", Wins = "SIEGE", Clutches = "CLUTCHES", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
-		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Plants = "BOMBEN GELEGT", Defuses = "ENTSCHÄRFT",
+		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Captures = "FLAGGEN EINGENOMMEN", AvgKills = "Ø KILLS/MATCH",
 		RoundsWon = "RUNDEN GEWONNEN", Favorite = "LIEBLINGS-AGENT" }
 	for i, key in order do
 		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
@@ -600,7 +600,7 @@ local function buildStats()
 	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 4) }, rankedBox)
-	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "RANKED · SAISON " .. RankConfig.Season,
+	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "ELO · SAISON " .. RankConfig.Season .. "  ·  IN JEDEM MODUS",
 		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
 	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -32, 0, 50), Text = "", TextSize = 42,
 		Font = UITheme.Fonts.Title }, rankedBox)
@@ -682,8 +682,8 @@ local function buildStats()
 		tiles.Accuracy.Text = percent(get("ShotsHit"), get("ShotsFired"))
 		tiles.AvgDamage.Text = tostring(math.floor(ratio(get("Damage"), math.max(1, get("Matches")))))
 		tiles.Revives.Text = tostring(get("Revives"))
-		tiles.Plants.Text = tostring(get("Plants"))
-		tiles.Defuses.Text = tostring(get("Defuses"))
+		tiles.Captures.Text = tostring(get("Captures"))
+		tiles.AvgKills.Text = string.format("%.1f", ratio(get("Kills"), math.max(1, get("Matches"))))
 		tiles.RoundsWon.Text = tostring(get("RoundsWon"))
 		local favorite, most = nil, 0
 		for _, agent in AgentConfig.Agents do
@@ -710,7 +710,7 @@ local function buildStats()
 		eloText.Text = elo .. " ELO"
 		bar.Size = UDim2.new(rank.Progress, 0, 1, 0)
 		bar.BackgroundColor3 = rank.Color
-		rankedInfo.Text ..= "\nRanked: " .. (ranked.Wins or 0) .. " Siege · " .. (ranked.Losses or 0) .. " Niederlagen ("
+		rankedInfo.Text ..= "\nGewertet: " .. (ranked.Wins or 0) .. " Siege · " .. (ranked.Losses or 0) .. " Niederlagen ("
 			.. percent(ranked.Wins or 0, matches) .. ")"
 
 		local lines = {}

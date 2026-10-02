@@ -11,6 +11,8 @@ local GameSettings = require(Shared.GameSettings)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
+local LeaderboardService = require(ServerShared.LeaderboardService)
+local RankConfig = require(Shared.RankConfig)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
 
@@ -106,6 +108,45 @@ local function finishRound(winner)
 	for bot in bots do
 		bot.CanFight = false
 	end
+	-- ELO nach Platzierung (Kills): Erster gewinnt am meisten, Letzter verliert am meisten.
+	-- Bots zählen als Gegner mit Start-ELO; ohne andere echte Spieler gibt es die halbe Änderung.
+	local ranking = {}
+	for player in members do
+		table.insert(ranking, { Player = player, Kills = KillService.GetKills(player) })
+	end
+	for bot in bots do
+		table.insert(ranking, { Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0 })
+	end
+	table.sort(ranking, function(a, b)
+		return a.Kills > b.Kills
+	end)
+	local eloChanges = {}
+	if #ranking >= 2 then
+		local realPlayers = 0
+		for _ in members do
+			realPlayers += 1
+		end
+		for place, entry in ranking do
+			local player = entry.Player
+			if player then
+				local score = 1 - (place - 1) / (#ranking - 1) -- 1 = Erster, 0 = Letzter
+				local k = ProgressService.GetRankedMatches(player) < RankConfig.PlacementMatches and RankConfig.PlacementK
+					or RankConfig.K
+				local change = k * (score - 0.5)
+				change = score >= 0.5 and math.max(change, RankConfig.MinChange) or math.min(change, -RankConfig.MinChange)
+				if realPlayers < 2 then
+					change /= 2
+				end
+				change = math.floor(change + 0.5)
+				local after = ProgressService.ApplyRanked(player, change, place == 1)
+				LeaderboardService.Submit(player)
+				eloChanges[player] = change
+				Remotes.Announce:FireClient(player, "Platz " .. place .. "  ·  " .. (change >= 0 and "+" or "−")
+					.. math.abs(change) .. " ELO  (" .. after .. ")")
+			end
+		end
+	end
+
 	-- Statistik: jede FFA-Runde zählt als Match
 	for player in members do
 		ProgressService.AddStat(player, "Matches", 1)
@@ -117,6 +158,7 @@ local function finishRound(winner)
 			Score = winner and ("Sieger: " .. winner.Name) or "–",
 			Kills = KillService.GetKills(player),
 			Deaths = player:GetAttribute("Deaths") or 0,
+			Elo = eloChanges[player],
 		})
 	end
 	if winner then

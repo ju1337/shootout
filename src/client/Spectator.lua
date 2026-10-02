@@ -22,7 +22,7 @@ local OVERVIEW_SPEED = 0.05  -- Drehgeschwindigkeit (Bogenmaß pro Sekunde), lan
 
 -- Kamera kreist langsam um die Drop-Map (Hintergrund der Agentenwahl)
 local function overview()
-	local info = Modes.Get(player:GetAttribute("Mode")) or Modes.Get("Drop")
+	local info = Modes.Get(player:GetAttribute("Mode")) or Modes.Get("Domination")
 	local center = player:GetAttribute("MapCenter") or info.Center -- Map-Rotation
 	local overviewInfo = info.Overview or { Radius = 200, Height = 120 }
 	local angle = os.clock() * OVERVIEW_SPEED

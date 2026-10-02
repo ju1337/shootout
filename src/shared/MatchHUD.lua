@@ -727,6 +727,17 @@ function MatchHUD.Init(root, weaponClient)
 					elseif theirs > 0 and theirs < 1 then
 						fill, progress = ENEMY, theirs
 					end
+				elseif string.sub(part.Name, 1, 4) == "Flag" then
+					-- Herrschaft-Flagge: Besitzer füllt die Raute (eigenes Team Cyan, Gegner rot),
+					-- Einnehmen wächst in der Farbe des einnehmenden Teams
+					local myTeam = player.Team and player.Team.Name
+					local owner, capturer = part:GetAttribute("FlagOwner"), part:GetAttribute("Capturer")
+					if owner then
+						back, backTransparency = owner == myTeam and ALLY or ENEMY, 0.25
+					end
+					if capturer then
+						fill, progress = capturer == myTeam and ALLY or ENEMY, part:GetAttribute("Progress") or 0
+					end
 				else
 					-- Hack-Ziel: Fortschritt in der Farbe der Angreifer
 					progress = part:GetAttribute("Progress") or 0

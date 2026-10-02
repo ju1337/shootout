@@ -37,7 +37,7 @@ local COLUMNS = 5 -- 10 Modi = 2 Reihen
 
 -- Symbol pro Modus
 local ICONS = {
-	FreeForAll = "🎯", Drop = "🪂", Strikeout = "⚡", Demolition = "💣", Wingman = "🤝",
+	FreeForAll = "🎯", Domination = "🚩", Drop = "🪂", Strikeout = "⚡", Demolition = "💣", Wingman = "🤝",
 	Training = "🛠", Arena = "⚔", Ranked = "🏆", Extraction = "💻", TeamDeathmatch = "☠",
 }
 
@@ -132,6 +132,14 @@ local function buildModePage()
 			TextSize = 13, TextColor3 = C.Muted }, card)
 		local live = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 1, -32), Size = UDim2.new(0.4, 0, 0, 20),
 			Text = "", TextSize = 13, TextColor3 = C.Good, TextXAlignment = Enum.TextXAlignment.Right }, card)
+		-- Kategorie-Abzeichen (z.B. DUELS) oben rechts
+		if mode.Category then
+			local badge = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 18),
+				Size = UDim2.new(0, 96, 0, 26), Text = "⚔ " .. mode.Category, TextSize = 14, Font = F.Title,
+				BackgroundTransparency = 0, BackgroundColor3 = mode.Color, TextColor3 = Color3.fromRGB(14, 22, 36),
+				TextXAlignment = Enum.TextXAlignment.Center }, card)
+			UITheme.Corner(badge, 4)
+		end
 		if faded then
 			local soon = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 18), Size = UDim2.new(0, 80, 0, 26),
 				Text = "BALD", TextSize = 13, BackgroundTransparency = 0, BackgroundColor3 = C.Border,

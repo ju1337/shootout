@@ -85,7 +85,7 @@ end
 
 local function buildControls()
 	section("SPIEL STEUERN")
-	for _, modeId in { "Drop", "Strikeout", "Demolition", "Extraction", "TeamDeathmatch", "Wingman", "Ranked", "Arena" } do
+	for _, modeId in { "Domination", "Wingman", "Arena" } do
 		local modeRow = row(list)
 		label(modeId .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
 		button("JETZT STARTEN", 130, modeRow, Color3.fromRGB(60, 150, 80), function()
@@ -119,13 +119,8 @@ local function buildBots()
 	end)
 	-- { Modus, Team A, Farbe A, Team B, Farbe B, Plätze }
 	for _, entry in {
-		{ "Drop", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
-		{ "Strikeout", "Gold", Color3.fromRGB(170, 100, 30), "Lila", Color3.fromRGB(110, 50, 150), 8 },
-		{ "Demolition", "Nord", Color3.fromRGB(30, 140, 160), "Süd", Color3.fromRGB(160, 40, 140), 8 },
+		{ "Domination", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
 		{ "Wingman", "Alpha", Color3.fromRGB(60, 150, 100), "Bravo", Color3.fromRGB(150, 130, 40), 4 },
-		{ "Ranked", "Elite", Color3.fromRGB(170, 140, 40), "Vanguard", Color3.fromRGB(70, 90, 160), 8 },
-		{ "Extraction", "Falke", Color3.fromRGB(30, 130, 130), "Wolf", Color3.fromRGB(120, 30, 50), 8 },
-		{ "TeamDeathmatch", "Kobra", Color3.fromRGB(60, 150, 50), "Adler", Color3.fromRGB(170, 90, 30), 8 },
 		{ "Arena", "Links", Color3.fromRGB(120, 70, 170), "Rechts", Color3.fromRGB(70, 120, 170), 2 },
 	} do
 		local modeRow = row(list)
@@ -216,9 +211,9 @@ local function refreshPlayers()
 		label(p.Name .. "  ·  " .. tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "")
 			.. "  ·  " .. (agent and agent.Name or "?"), 15, box)
 		local moves = row(box)
-		local short = { Hub = "Hub", FreeForAll = "FFA", Drop = "Drop", Strikeout = "Strike", Demolition = "Demo",
-			Wingman = "Wing" }
-		for _, modeId in { "Hub", "FreeForAll", "Drop", "Strikeout", "Demolition", "Wingman" } do
+		local short = { Hub = "Hub", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing", Arena = "1v1",
+			Training = "Train" }
+		for _, modeId in { "Hub", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
 			button(short[modeId], 52, moves, nil, function()
 				send("MovePlayer", p.UserId, modeId)
 			end)

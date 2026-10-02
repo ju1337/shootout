@@ -11,19 +11,17 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 ## Modi
 
-| Modus | Kurz | Map (Mitte) |
+| Modus | Kurz | Map |
 |---|---|---|
-| Hub | Große Hangar-Halle: 10 farbige Einsatz-Tore mit Live-Spielerzahl, Lineup-Bühne; Ruhmeshalle (Bestenlisten, Top-3-Statuen) hinter dem Spawn | Hangar (0, 0, 0) |
-| Free-for-All | jeder gegen jeden, Respawn | Raffinerie 250x250 (0, 0, 1500) |
-| Drop | 5v5, Absprung über der Map, ein Leben | Tal (1500, 0, 0) |
-| Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab, Overtime auf dem Punkt | Rotation: Fabrik / Zellenblock / Kanäle / Windmühlen |
-| Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Rotation: Hafen / Gletscher / Kanäle / Windmühlen |
-| Extraction | 4v4, Ziel hacken, Seitenwechsel | Rotation: Gletscher / Windmühlen |
-| Team Deathmatch | 4v4, 40 Leben pro Team | Rotation: Fabrik / Hochhaus |
-| Wingman | 2v2, Strikeout-Regeln | Rotation: Fabrik / Hochhaus |
-| Ranked | Demolition mit ELO, ab Spielerlevel 10 | Rotation: Hafen / Windmühlen / Hochhaus |
-| 1v1 Arena | Duell | Arena (0, 0, 3000) |
+| Hub | Hangar mit Einsatz-Toren, Lineup-Bühne, Ruhmeshalle (Bestenlisten, Top-3-Statuen) | Hangar (0, 0, 0) |
+| Free-for-All | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
+| Herrschaft | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
+| Wingman (DUELS) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
+| 1v1 Arena (DUELS) | Duell | Arena (0, 0, 3000) |
 | Training | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
+
+ELO gibt es in jedem Modus (kein eigenes Ranked-Matchmaking). Ausgebaute Modi (Drop, Strikeout, Demolition,
+Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src/server/Modes/`.
 
 Team-Modi teilen sich die Logik in `src/server/TeamRoundMode.lua` (Agentenwahl, Kaufphase,
 Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfiguration in
@@ -32,7 +30,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 ## Systeme
 
 - **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ..., Verlauf der letzten 10 Matches (STATS-Fenster)
-- **Ranked mit ELO**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
+- **ELO in jedem Modus**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
 - **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Kaufphase**: Geld pro Match, Upgrades, Rüstung, Perks

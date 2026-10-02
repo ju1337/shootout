@@ -439,6 +439,17 @@ def build_drop():
         for z in (-30, 30):
             b.crate(side * 155, z)
             b.crate(side * 155, z + 5.5)
+        # Team-Spawns (Herrschaft: Respawn an der eigenen Basis)
+        for z in (-12, -4, 4, 12):
+            b.spawn(side * 160, z, yaw=90 * side, group="SpawnsA" if side < 0 else "SpawnsB")
+
+    # Herrschaft: Flaggen A (Westen), B (Kreuzung in der Mitte), C (Osten)
+    for name, x, color in (("A", -110, (255, 120, 120)), ("B", 0, (240, 240, 240)), ("C", 110, (120, 160, 255))):
+        b.add("Objective", "Flag" + name, (0.3, 18, 18), (x, 0.25, 0), (230, 230, 235), "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+        b.box("Decor", "FlagPole" + name, (0.6, 14, 0.6), (x + 7, 7, 7), (60, 60, 65), "Metal")
+        b.box("Decor", "FlagCloth" + name, (4, 2.6, 0.2), (x + 9, 12.5, 7), color, "Fabric")
+        b.sign("FlagSign" + name, (4, 4, 0.4), (x + 7, 16.5, 7), name, (25, 25, 30), (255, 255, 255))
 
     # Stadt in der Mitte: begehbare Häuser
     houses = (
@@ -472,6 +483,8 @@ def build_drop():
 
     # Natur zwischen Stadt und Basen und am Rand
     def free(x, z):
+        if abs(z) < 16 and abs(x) < 130:
+            return False  # Flaggen A/C freihalten
         return (abs(x) > 115 and abs(x) < 130) or (abs(z) > 115 and abs(x) < 190)
 
     placed = 0
@@ -1073,19 +1086,15 @@ def build_hightower(origin, filename):
 
 # Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): je Seite 5, jedes in eigener Farbe
 # (Id, Titel, Unterzeile, Farbe)
+# Westen: normale Modi, Osten: Kategorie DUELS (mit eigenem Banner)
 HUB_GATES_WEST = (
-    ("Strikeout", "STRIKEOUT", "4v4 · PUNKT HALTEN", (255, 160, 40)),
-    ("Demolition", "DEMOLITION", "4v4 · BOMBE LEGEN", (230, 60, 70)),
-    ("Ranked", "RANKED", "ELO · AB LEVEL 10", (250, 205, 70)),
-    ("TeamDeathmatch", "TEAM DEATHMATCH", "4v4 · 40 LEBEN", (90, 220, 110)),
-    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (255, 110, 70)),
+    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (255, 110, 70), -30),
+    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (80, 160, 255), 6),
+    ("Training", "TRAINING", "SCHIESSSTAND", (200, 210, 220), 42),
 )
 HUB_GATES_EAST = (
-    ("Extraction", "EXTRACTION", "4v4 · ZIEL HACKEN", (40, 210, 230)),
-    ("Drop", "DROP", "5v5 · ABSPRUNG", (80, 160, 255)),
-    ("Wingman", "WINGMAN", "2v2 · PUNKT HALTEN", (170, 110, 255)),
-    ("Arena", "1v1 ARENA", "DUELL", (255, 100, 180)),
-    ("Training", "TRAINING", "SCHIESSSTAND", (200, 210, 220)),
+    ("Wingman", "WINGMAN", "DUELS · 2v2", (170, 110, 255), -12),
+    ("Arena", "1v1 ARENA", "DUELS · 1v1", (255, 100, 180), 24),
 )
 CYAN = (40, 210, 230)
 
@@ -1188,7 +1197,7 @@ def build_lobby():
           props={"Shape": "Cylinder", "Transparency": 0.75, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
               "Range": 20, "Brightness": 1.5, "Color": rgb(255, 220, 140)}}])
-    b.sign2("PodiumTitle", (24, 5, 0.4), (0, 15, R0 + 3), "TOP 3 · RANKED", "DIE BESTEN SPIELER DER SAISON",
+    b.sign2("PodiumTitle", (24, 5, 0.4), (0, 15, R0 + 3), "TOP 3 · ELO", "DIE BESTEN SPIELER DER SAISON",
             navy, gold, (235, 242, 248), angles=(0, 180, 0), glow=gold)
     # Bestenlisten an den Seitenwänden (je zwei, zur Raummitte gerichtet)
     for x, yaw, inward, boards in ((-RW + 0.4, -90, 1, (("Elo", gold, R0 + 32), ("Kills", (230, 60, 70), R0 + 12))),
@@ -1228,10 +1237,13 @@ def build_lobby():
               props={"Transparency": 0.35})
         b.add("Portals", "Portal_" + mode_id, (8, 0.3, gw - 2), (x + inward * 5, 0.4, z), color, "Neon",
               props={"CanCollide": False, "Transparency": 0.45})
-    for k, (mode_id, title, sub, color) in enumerate(HUB_GATES_WEST):
-        gate(-W + 0.6, -42 + k * 24, -90, 1, mode_id, title, sub, color)
-    for k, (mode_id, title, sub, color) in enumerate(HUB_GATES_EAST):
-        gate(W - 0.6, -42 + k * 24, 90, -1, mode_id, title, sub, color)
+    for mode_id, title, sub, color, z in HUB_GATES_WEST:
+        gate(-W + 0.6, z, -90, 1, mode_id, title, sub, color)
+    for mode_id, title, sub, color, z in HUB_GATES_EAST:
+        gate(W - 0.6, z, 90, -1, mode_id, title, sub, color)
+    # Kategorie-Banner über den Duell-Toren
+    b.sign2("DuelsBanner", (44, 5, 0.5), (W - 1.4, 33.3, 6), "⚔ DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
+            navy, (255, 100, 180), (235, 242, 248), angles=(0, 90, 0), glow=(255, 100, 180))
 
     # ---------- Ausstattung: Spinde, Waffenregale, Werkbänke, Kisten ----------
     for x in range(-44, 45, 5):
@@ -1282,23 +1294,15 @@ def build_lobby():
 if __name__ == "__main__":
     build_ffa()
     build_drop()
-    build_strikeout()
-    build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")  # gleiche Map für Wingman (2v2)
-    build_demolition()
-    build_demolition(RANKED_ORIGIN, "Ranked.model.json")  # gleiche Map für Ranked
+    # Herrschaft spielt auf "Tal" (Drop.model.json). Wingman-Rotation: Fabrik, Hochhaus, Gletscher,
+    # Zellenblock, Kanäle, Windmühlen. Ausgebaute Modi (Strikeout, Demolition, Ranked, Extraction, TDM)
+    # brauchen ihre Kopien nicht mehr: build_demolition(), build_strikeout() usw. bleiben zum Wiedereinbauen.
+    build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")
     build_training()
     build_arena()
     build_glacier()
-    build_glacier((3000, 0, 1500), "Extraktion.model.json")   # Extraction spielt auf dem Gletscher
-    build_strikeout((3000, 0, -1500), "TDM.model.json")         # Team Deathmatch auf der Fabrik
     build_cellblock()
-    build_canals((-3000, 0, 1500), "Kanaele.model.json")       # Strikeout-Rotation
-    build_canals((-3000, 0, -1500), "Kanaele2.model.json")     # Demolition-Rotation
-    build_windmills((4500, 0, 0), "Windmuehlen.model.json")       # Strikeout-Rotation
-    build_windmills((4500, 0, 1500), "Windmuehlen2.model.json")   # Demolition-Rotation
-    build_windmills((4500, 0, -1500), "Windmuehlen3.model.json")  # Extraction-Rotation
-    build_hightower((-4500, 0, 0), "Hochhaus.model.json")         # Wingman-Rotation
-    build_hightower((-4500, 0, 1500), "Hochhaus2.model.json")     # TDM-Rotation
-    build_windmills((4500, 0, 3000), "Windmuehlen4.model.json")   # Ranked-Rotation
-    build_hightower((-4500, 0, 3000), "Hochhaus3.model.json")     # Ranked-Rotation
+    build_canals((-3000, 0, 1500), "Kanaele.model.json")
+    build_windmills((4500, 0, 0), "Windmuehlen.model.json")
+    build_hightower((-4500, 0, 0), "Hochhaus.model.json")
     build_lobby()

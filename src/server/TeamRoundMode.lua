@@ -11,15 +11,17 @@
 --   WingsuitStart = Höhe: zu Rundenbeginn Fallschirmsprung über dem eigenen Team-Spawn
 --     (wie bei Rogue Company); Respawns während der Runde landen direkt am Boden
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
+--   Respawn = true: unbegrenzter Respawn ohne Tickets (z.B. Herrschaft)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
 --   Maps    = Liste von Map-Namen (Workspace.Maps.<Name>); pro Match wird zufällig eine gewählt
 --             (Map-Rotation wie bei RC). Ohne Maps gilt MapName.
 --   RoundTime = Einstellungs-Key für die Rundenzeit in Sekunden (nil = ohne Zeitlimit)
---   Ranked = true: am Match-Ende Rangpunkte (nur wenn in beiden Teams echte Spieler sind)
+--   ELO gibt es am Match-Ende in jedem Team-Modus (gegen reine Bot-Teams halb so viel)
 --   Objective = function(api) -> Ziel-Objekt mit eigenen Regeln (z.B. Bombe in Demolition).
 --     Mögliche Funktionen: RoundStart(roundNumber), Tick(dt, elapsed), RoundEnd(), SpawnFolder(team),
 --     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo(),
---     Attackers() (angreifendes Team), Clock() (eigene Uhr statt der Rundenzeit, z.B. Bomben-Timer)
+--     Attackers() (angreifendes Team), Clock() (eigene Uhr statt der Rundenzeit, z.B. Bomben-Timer),
+--     Score(team) (eigener Punktestand statt Rundensiegen, z.B. Herrschaft)
 -- Spieler-Attribute: RoundPhase, AgentLocked, SelectUntil, SelectDuration, RoundNumber,
 --   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt),
 --   fürs HUD: RoundClock (Sekunden), ClockAlert (Uhr des Ziels läuft), Overtime, TeamTickets/EnemyTickets,
@@ -199,13 +201,21 @@ function TeamRoundMode.new(config)
 	end
 
 	-- Rundenstand pro Spieler (aus Sicht seines Teams)
+	-- Angezeigter Stand: Punkte des Ziels (Herrschaft) oder Rundensiege
+	local function teamScore(team)
+		if objective and objective.Score then
+			return objective.Score(team)
+		end
+		return scores[team] or 0
+	end
+
 	local function publishScore()
 		for player in members do
 			local team = player.Team
 			player:SetAttribute("RoundNumber", roundNumber + 1)
 			player:SetAttribute("RoundsToWin", roundsToWin())
-			player:SetAttribute("TeamScore", team and scores[team] or 0)
-			player:SetAttribute("EnemyScore", team and scores[otherTeam(team)] or 0)
+			player:SetAttribute("TeamScore", team and teamScore(team) or 0)
+			player:SetAttribute("EnemyScore", team and teamScore(otherTeam(team)) or 0)
 		end
 	end
 
@@ -231,8 +241,9 @@ function TeamRoundMode.new(config)
 			player:SetAttribute("RoundClock", clock and math.ceil(clock) or nil)
 			player:SetAttribute("ClockAlert", alert or nil)
 			player:SetAttribute("Overtime", overtime or nil)
-			player:SetAttribute("TeamTickets", config.Tickets and team and (tickets[team] or 0) or nil)
-			player:SetAttribute("EnemyTickets", config.Tickets and team and (tickets[otherTeam(team)] or 0) or nil)
+			player:SetAttribute("TeamTickets", config.Tickets and not config.Respawn and team and (tickets[team] or 0) or nil)
+			player:SetAttribute("EnemyTickets", config.Tickets and not config.Respawn and team
+				and (tickets[otherTeam(team)] or 0) or nil)
 			player:SetAttribute("Attacking", attacking)
 		end
 	end
@@ -243,7 +254,7 @@ function TeamRoundMode.new(config)
 		local seconds = timeLeft and math.ceil(timeLeft)
 		local clock = overtime and "   ·   OVERTIME"
 			or seconds and string.format("   ·   %d:%02d", seconds // 60, seconds % 60) or ""
-		if config.Tickets then
+		if config.Tickets and not config.Respawn then
 			setText(string.format("%s: %d Tickets · %d leben   |   %d : %d   |   %s: %d Tickets · %d leben%s",
 				a, tickets[teamA] or 0, aliveCount(teamA), scores[teamA], scores[teamB],
 				b, tickets[teamB] or 0, aliveCount(teamB), clock))
@@ -293,7 +304,7 @@ function TeamRoundMode.new(config)
 
 	-- Clutch: ein echter Spieler steht allein gegen mindestens 2 Gegner (einmal pro Runde und Team)
 	local function detectClutch(aAlive, bAlive)
-		if config.Tickets or practiceRound then
+		if config.Tickets or config.Respawn or practiceRound then
 			return
 		end
 		for _, pair in { { teamA, aAlive, bAlive }, { teamB, bAlive, aAlive } } do
@@ -376,7 +387,7 @@ function TeamRoundMode.new(config)
 
 	-- Tod: mit Ticket nach RESPAWN_TIME zurück, sonst bis zur nächsten Runde raus
 	local function useTicket(who, respawn)
-		if not (roundActive and config.Tickets and who.Team and (tickets[who.Team] or 0) > 0) then
+		if not (roundActive and (config.Tickets or config.Respawn) and who.Team and (tickets[who.Team] or 0) > 0) then
 			return
 		end
 		tickets[who.Team] -= 1
@@ -727,7 +738,7 @@ function TeamRoundMode.new(config)
 				Won = winner ~= nil and player.Team == winner,
 				Winner = winner and winner.Name or nil,
 				Mode = Modes.Get(MODE_ID).Name,
-				Score = (scores[player.Team] or 0) .. " : " .. (scores[otherTeam(player.Team)] or 0),
+				Score = teamScore(player.Team) .. " : " .. teamScore(otherTeam(player.Team)),
 				Mvp = mvp and mvp.Name or nil,
 				MvpKills = mvp and KillService.GetKills(mvp) or 0,
 				Kills = KillService.GetKills(player),
@@ -744,7 +755,7 @@ function TeamRoundMode.new(config)
 				Mode = Modes.Get(MODE_ID).Name,
 				Map = player:GetAttribute("MapName"),
 				Won = won,
-				Score = (scores[player.Team] or 0) .. " : " .. (scores[otherTeam(player.Team)] or 0),
+				Score = teamScore(player.Team) .. " : " .. teamScore(otherTeam(player.Team)),
 				Kills = KillService.GetKills(player),
 				Deaths = player:GetAttribute("Deaths") or 0,
 				Elo = eloChanges and eloChanges[player] or nil,
@@ -808,7 +819,7 @@ function TeamRoundMode.new(config)
 		roundKills = {}
 		clutches = {}
 		roundWinner = nil
-		local ticketCount = config.Tickets and GameSettings.Get(config.Tickets) or 0
+		local ticketCount = config.Respawn and math.huge or (config.Tickets and GameSettings.Get(config.Tickets) or 0)
 		tickets[teamA], tickets[teamB] = ticketCount, ticketCount
 		clearObjective()
 
@@ -912,7 +923,7 @@ function TeamRoundMode.new(config)
 		end
 
 		-- ACE: ein Spieler hat das komplette Gegnerteam (mind. 3) allein ausgeschaltet
-		if not config.Tickets then
+		if not config.Tickets and not config.Respawn then
 			for player, kills in roundKills do
 				local enemies = player.Team and teamSize(otherTeam(player.Team)) or 0
 				if members[player] and enemies >= 3 and kills >= enemies then
@@ -964,16 +975,33 @@ function TeamRoundMode.new(config)
 				ProgressService.AddStat(player, "Matches", 1)
 				ProgressService.AddStat(player, player.Team == roundWinner and "Wins" or "Losses", 1)
 			end
-			-- Ranked: ELO nach Team-Durchschnitt, nur wenn beide Teams echte Spieler hatten
+			-- ELO in jedem Team-Modus (kein eigenes Ranked-Matchmaking): Team-Durchschnitt gegen
+			-- Team-Durchschnitt, Bots zählen mit Start-ELO. Nur gegen Bots gibt es die halbe Änderung.
 			local rankTexts, eloChanges = {}, {}
-			if config.Ranked and #teamA:GetPlayers() > 0 and #teamB:GetPlayers() > 0 then
+			if next(members) ~= nil then
 				local function averageElo(team)
 					local sum, n = 0, 0
-					for _, player in team:GetPlayers() do
-						sum += ProgressService.GetElo(player)
-						n += 1
+					for player in members do
+						if player.Team == team then
+							sum += ProgressService.GetElo(player)
+							n += 1
+						end
+					end
+					for bot in bots do
+						if bot.Team == team then
+							sum += RankConfig.StartElo
+							n += 1
+						end
 					end
 					return n > 0 and sum / n or RankConfig.StartElo
+				end
+				local function hasRealPlayers(team)
+					for player in members do
+						if player.Team == team then
+							return true
+						end
+					end
+					return false
 				end
 				local averages = { [teamA] = averageElo(teamA), [teamB] = averageElo(teamB) }
 				-- MVP bekommt einen kleinen Bonus
@@ -989,6 +1017,9 @@ function TeamRoundMode.new(config)
 					local before = ProgressService.GetElo(player)
 					local change = RankConfig.Change(won, averages[player.Team], averages[otherTeam(player.Team)],
 						ProgressService.GetRankedMatches(player), player == mvp)
+					if not hasRealPlayers(otherTeam(player.Team)) then
+						change = math.floor(change / 2 + 0.5)
+					end
 					local after = ProgressService.ApplyRanked(player, change, won)
 					LeaderboardService.Submit(player, after)
 					local oldRank, newRank = RankConfig.Get(before), RankConfig.Get(after)
@@ -1183,6 +1214,7 @@ function TeamRoundMode.new(config)
 		end,
 		OtherTeam = otherTeam,
 		Announce = announce,
+		PublishScore = publishScore, -- Punktestand (objective.Score) neu an die Spieler schicken
 		UpdateInfo = updateInfo,
 		Participants = participants,
 		RoundsToWin = roundsToWin,

@@ -125,7 +125,7 @@ end
 
 -- Bestenlisten-Tafeln im Hub (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
 local BOARD_INFO = {
-	Elo = { Title = "🏆  RANKED · ELO", Color = Color3.fromRGB(250, 205, 70) },
+	Elo = { Title = "🏆  HÖCHSTE ELO", Color = Color3.fromRGB(250, 205, 70) },
 	Kills = { Title = "☠  MEISTE KILLS", Color = Color3.fromRGB(230, 60, 70) },
 	Level = { Title = "★  HÖCHSTES LEVEL", Color = Color3.fromRGB(40, 210, 230) },
 	Wins = { Title = "✓  MEISTE SIEGE", Color = Color3.fromRGB(90, 220, 110) },

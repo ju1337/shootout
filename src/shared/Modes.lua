@@ -2,7 +2,8 @@
 -- Alle Spielmodi für Menü und Portale. Alle Modi laufen im selben Place,
 -- jeder in seinem eigenen Bereich der Welt (Center = Mitte der Map).
 -- Center muss zu den Verschiebungen in tools/build_maps.py passen.
--- TeamMode = Team-Runden mit Agentenwahl und Kaufphase (Drop, Strikeout)
+-- TeamMode = Team-Runden mit Agentenwahl und Kaufphase (Herrschaft, Wingman, Arena)
+-- Category = Gruppe im Menü und im Hub (z.B. "DUELS" für Wingman und 1v1 Arena)
 -- Overview = Kameraflug über die Map während der Agentenwahl (Radius, Höhe)
 -- Goal = kurzes Ziel oben im HUD (Text, oder { Attack, Defend } bei Angriff/Verteidigung,
 --        AttackAlert/DefendAlert solange die Uhr des Ziels läuft, z.B. Bombe gelegt)
@@ -22,6 +23,64 @@ Modes.List = {
 		Goal = "JEDER GEGEN JEDEN",
 		Available = true,
 	},
+	{
+		Id = "Domination",
+		Name = "HERRSCHAFT",
+		Tag = "5v5 Flaggen",
+		Description = "Drei Flaggen A, B und C einnehmen und halten. Jede gehaltene Flagge gibt Punkte.\nUnbegrenzter Respawn, 200 Punkte gewinnen.",
+		Players = "10 Spieler",
+		Color = Color3.fromRGB(80, 160, 255),
+		Center = Vector3.new(1500, 0, 0),
+		TeamMode = true,
+		Overview = { Radius = 230, Height = 150 },
+		Goal = "HALTE DIE FLAGGEN",
+		Objectives = { { Part = "FlagA", Label = "A" }, { Part = "FlagB", Label = "B" }, { Part = "FlagC", Label = "C" } },
+		Available = true,
+	},
+	{
+		Id = "Wingman",
+		Name = "WINGMAN",
+		Tag = "Duels · 2v2",
+		Category = "DUELS",
+		Description = "Zwei gegen zwei um den Punkt in der Mitte: Wer ihn hält, zieht dem Gegner Tickets ab.\n4 Respawn-Tickets pro Team, 3 Rundensiege gewinnen.",
+		Players = "4 Spieler",
+		Color = Color3.fromRGB(120, 220, 160),
+		Center = Vector3.new(1500, 0, -1500),
+		TeamMode = true,
+		Overview = { Radius = 190, Height = 120 },
+		Goal = "NIMM DEN PUNKT EIN",
+		Objectives = { { Part = "CapturePoint", Label = "A" } },
+		Available = true,
+	},
+	{
+		Id = "Arena",
+		Name = "1v1 ARENA",
+		Tag = "Duels · 1v1",
+		Category = "DUELS",
+		Description = "Eins gegen eins auf kleiner Map. Ein Leben pro Runde.\n5 Rundensiege gewinnen.",
+		Players = "2 Spieler",
+		Color = Color3.fromRGB(170, 100, 255),
+		Center = Vector3.new(0, 0, 3000),
+		TeamMode = true,
+		Overview = { Radius = 70, Height = 50 },
+		Goal = "GEWINNE DAS DUELL",
+		Available = true,
+	},
+	{
+		Id = "Training",
+		Name = "TRAINING",
+		Tag = "Schießstand",
+		Description = "Waffen, Agenten und Skins ausprobieren. Übungspuppen stehen wieder auf.",
+		Players = "beliebig",
+		Color = Color3.fromRGB(150, 160, 180),
+		Center = Vector3.new(-1500, 0, 1500),
+		Available = true,
+	},
+}
+
+-- Ausgebaute Modi (Code und Configs bleiben, damit man sie wieder einbauen kann:
+-- Eintrag zurück nach Modes.List, Modul in ModeManager laden, Maps in tools/build_maps.py wieder erzeugen)
+Modes.Disabled = {
 	{
 		Id = "Drop",
 		Name = "DROP",
@@ -89,43 +148,6 @@ Modes.List = {
 		TeamMode = true,
 		Overview = { Radius = 190, Height = 120 },
 		Goal = "BRAUCHE DIE GEGNERISCHEN LEBEN AUF",
-		Available = true,
-	},
-	{
-		Id = "Wingman",
-		Name = "WINGMAN",
-		Tag = "2v2 Team",
-		Description = "Wie Strikeout, aber zu zweit und mit nur 4 Respawn-Tickets pro Team.\n3 Rundensiege gewinnen.",
-		Players = "4 Spieler",
-		Color = Color3.fromRGB(120, 220, 160),
-		Center = Vector3.new(1500, 0, -1500),
-		TeamMode = true,
-		Overview = { Radius = 190, Height = 120 },
-		Goal = "NIMM DEN PUNKT EIN",
-		Objectives = { { Part = "CapturePoint", Label = "A" } },
-		Available = true,
-	},
-	{
-		Id = "Training",
-		Name = "TRAINING",
-		Tag = "Schießstand",
-		Description = "Waffen, Agenten und Skins ausprobieren. Übungspuppen stehen wieder auf.",
-		Players = "beliebig",
-		Color = Color3.fromRGB(150, 160, 180),
-		Center = Vector3.new(-1500, 0, 1500),
-		Available = true,
-	},
-	{
-		Id = "Arena",
-		Name = "1v1 ARENA",
-		Tag = "Duell",
-		Description = "Eins gegen eins auf kleiner Map. Ein Leben pro Runde.\n5 Rundensiege gewinnen.",
-		Players = "2 Spieler",
-		Color = Color3.fromRGB(170, 100, 255),
-		Center = Vector3.new(0, 0, 3000),
-		TeamMode = true,
-		Overview = { Radius = 70, Height = 50 },
-		Goal = "GEWINNE DAS DUELL",
 		Available = true,
 	},
 	{

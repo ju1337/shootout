@@ -453,195 +453,7 @@
         "position": [
          -43.9,
          0.24,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -43.9,
-         0.24,
-         -18
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -43.9,
-         0.24,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -43.9,
-         0.24,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -43.9,
-         0.24,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -686,56 +498,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         43.9,
+         -43.9,
          0.24,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         43.9,
-         0.24,
-         -18
+         6
         ],
         "orientation": [
          [
@@ -780,9 +545,56 @@
       "CFrame": {
        "CFrame": {
         "position": [
+         -43.9,
+         0.24,
+         42
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8235,
+       0.8627
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.35
+     }
+    },
+    {
+     "Name": "Lane",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       49,
+       0.05,
+       1.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
          43.9,
          0.24,
-         6
+         -12
         ],
         "orientation": [
          [
@@ -829,7 +641,7 @@
         "position": [
          43.9,
          0.24,
-         30
+         24
         ],
         "orientation": [
          [
@@ -854,53 +666,6 @@
        1.0,
        0.3922,
        0.7059
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       49,
-       0.05,
-       1.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         43.9,
-         0.24,
-         54
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.8235,
-       0.8627
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8392,7 +8157,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "TOP 3 \u00b7 RANKED",
+          "Text": "TOP 3 \u00b7 ELO",
           "TextScaled": true,
           "Font": "GothamBlack",
           "TextColor3": [
@@ -9251,7 +9016,7 @@
         "position": [
          -73.8,
          11.0,
-         -52.0
+         -40.0
         ],
         "orientation": [
          [
@@ -9297,2299 +9062,7 @@
         "position": [
          -72.5,
          11.0,
-         -52.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         -32.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         -32.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         22,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.55,
-         21.4,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -74.1,
-         10.0,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         1.0,
-         0.6275,
-         0.1569
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Strikeout",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         27.2,
-         -42
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "STRIKEOUT",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           1.0,
-           0.6275,
-           0.1569
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "4v4 \u00b7 PUNKT HALTEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           1.0,
-           0.6275,
-           0.1569
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         1.0,
-         0.6275,
-         0.1569
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Strikeout",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         22.4,
-         -42
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         -28.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         -28.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         -8.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         -8.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         22,
-         -18
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.55,
-         21.4,
-         -18
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -74.1,
-         10.0,
-         -18
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         0.902,
-         0.2353,
-         0.2745
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Demolition",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         27.2,
-         -18
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "DEMOLITION",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           0.902,
-           0.2353,
-           0.2745
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "4v4 \u00b7 BOMBE LEGEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.902,
-           0.2353,
-           0.2745
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.902,
-         0.2353,
-         0.2745
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Demolition",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         22.4,
-         -18
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         -4.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         -4.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         16.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         16.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         22,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.55,
-         21.4,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -74.1,
-         10.0,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         0.9804,
-         0.8039,
-         0.2745
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Ranked",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         27.2,
-         6
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "RANKED",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           0.9804,
-           0.8039,
-           0.2745
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "ELO \u00b7 AB LEVEL 10",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.9804,
-           0.8039,
-           0.2745
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.9804,
-         0.8039,
-         0.2745
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Ranked",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         22.4,
-         6
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         20.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         20.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         40.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         40.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         22,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.55,
-         21.4,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -74.1,
-         10.0,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         0.3529,
-         0.8627,
-         0.4314
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         27.2,
-         30
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "TEAM DEATHMATCH",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           0.3529,
-           0.8627,
-           0.4314
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "4v4 \u00b7 40 LEBEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.3529,
-           0.8627,
-           0.4314
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.3529,
-         0.8627,
-         0.4314
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.2,
-         22.4,
-         30
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          -1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -73.8,
-         11.0,
-         44.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -72.5,
-         11.0,
-         44.0
+         -40.0
         ],
         "orientation": [
          [
@@ -11635,7 +9108,7 @@
         "position": [
          -73.8,
          11.0,
-         64.0
+         -20.0
         ],
         "orientation": [
          [
@@ -11681,7 +9154,7 @@
         "position": [
          -72.5,
          11.0,
-         64.0
+         -20.0
         ],
         "orientation": [
          [
@@ -11727,7 +9200,7 @@
         "position": [
          -73.8,
          22,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -11773,7 +9246,7 @@
         "position": [
          -72.55,
          21.4,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -11819,7 +9292,7 @@
         "position": [
          -74.1,
          10.0,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -11882,7 +9355,7 @@
         "position": [
          -73.2,
          27.2,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -12070,7 +9543,7 @@
         "position": [
          -73.2,
          22.4,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -12114,9 +9587,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          11.0,
-         -52.0
+         -4.0
         ],
         "orientation": [
          [
@@ -12160,582 +9633,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.5,
+         -72.5,
          11.0,
-         -52.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         -32.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         -32.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         22,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.55,
-         21.4,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         74.1,
-         10.0,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         0.1569,
-         0.8235,
-         0.902
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Extraction",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
-         27.2,
-         -42
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "EXTRACTION",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           0.1569,
-           0.8235,
-           0.902
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "4v4 \u00b7 ZIEL HACKEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.1569,
-           0.8235,
-           0.902
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.1569,
-         0.8235,
-         0.902
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Extraction",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
-         22.4,
-         -42
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         -28.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         -28.0
+         -4.0
         ],
         "orientation": [
          [
@@ -12779,9 +9679,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          11.0,
-         -8.0
+         16.0
         ],
         "orientation": [
          [
@@ -12825,9 +9725,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.5,
+         -72.5,
          11.0,
-         -8.0
+         16.0
         ],
         "orientation": [
          [
@@ -12871,9 +9771,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          22,
-         -18
+         6
         ],
         "orientation": [
          [
@@ -12917,9 +9817,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.55,
+         -72.55,
          21.4,
-         -18
+         6
         ],
         "orientation": [
          [
@@ -12963,9 +9863,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         74.1,
+         -74.1,
          10.0,
-         -18
+         6
         ],
         "orientation": [
          [
@@ -13014,7 +9914,7 @@
      ]
     },
     {
-     "Name": "Sign_Drop",
+     "Name": "Sign_Domination",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
@@ -13026,15 +9926,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.2,
+         -73.2,
          27.2,
-         -18
+         6
         ],
         "orientation": [
          [
           0.0,
           0.0,
-          1.0
+          -1.0
          ],
          [
           0.0,
@@ -13042,7 +9942,7 @@
           0.0
          ],
          [
-          -1.0,
+          1.0,
           0.0,
           0.0
          ]
@@ -13097,7 +9997,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "DROP",
+          "Text": "HERRSCHAFT",
           "TextScaled": true,
           "Font": "GothamBlack",
           "TextColor3": [
@@ -13136,7 +10036,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "5v5 \u00b7 ABSPRUNG",
+          "Text": "5v5 \u00b7 FLAGGEN HALTEN",
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
@@ -13202,7 +10102,7 @@
      ]
     },
     {
-     "Name": "GateCount_Drop",
+     "Name": "GateCount_Domination",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
@@ -13214,580 +10114,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.2,
-         22.4,
-         -18
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         -4.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         -4.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6667,
-       0.4314,
-       1.0
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         16.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         16.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6667,
-       0.4314,
-       1.0
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         22,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.55,
-         21.4,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6667,
-       0.4314,
-       1.0
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         74.1,
-         10.0,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6667,
-       0.4314,
-       1.0
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         0.6667,
-         0.4314,
-         1.0
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Wingman",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
-         27.2,
-         6
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "WINGMAN",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           0.6667,
-           0.4314,
-           1.0
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "2v2 \u00b7 PUNKT HALTEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.6667,
-           0.4314,
-           1.0
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.6667,
-         0.4314,
-         1.0
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Wingman",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
+         -73.2,
          22.4,
          6
         ],
@@ -13795,7 +10122,7 @@
          [
           0.0,
           0.0,
-          1.0
+          -1.0
          ],
          [
           0.0,
@@ -13803,7 +10130,7 @@
           0.0
          ],
          [
-          -1.0,
+          1.0,
           0.0,
           0.0
          ]
@@ -13833,9 +10160,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          11.0,
-         20.0
+         32.0
         ],
         "orientation": [
          [
@@ -13879,582 +10206,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.5,
+         -72.5,
          11.0,
-         20.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.3922,
-       0.7059
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         40.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         40.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.3922,
-       0.7059
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       2,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         22,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeaderStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.5,
-       22.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.55,
-         21.4,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.3922,
-       0.7059
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       20,
-       18
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         74.1,
-         10.0,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.3922,
-       0.7059
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 22,
-        "Brightness": 2.2,
-        "Color": [
-         1.0,
-         0.3922,
-         0.7059
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_Arena",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       24,
-       7,
-       0.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
-         27.2,
-         30
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.5
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "1v1 ARENA",
-          "TextScaled": true,
-          "Font": "GothamBlack",
-          "TextColor3": [
-           1.0,
-           0.3922,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "DUELL",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           1.0,
-           0.3922,
-           0.7059
-          ],
-          "BorderSizePixel": 0
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         1.0,
-         0.3922,
-         0.7059
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "GateCount_Arena",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       2.2,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.2,
-         22.4,
-         30
-        ],
-        "orientation": [
-         [
-          0.0,
-          0.0,
-          1.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -1.0,
-          0.0,
-          0.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0549,
-       0.0863,
-       0.1412
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       22,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         73.8,
-         11.0,
-         44.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0941,
-       0.1098,
-       0.1412
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       20,
-       0.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         72.5,
-         11.0,
-         44.0
+         32.0
         ],
         "orientation": [
          [
@@ -14498,9 +10252,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          11.0,
-         64.0
+         52.0
         ],
         "orientation": [
          [
@@ -14544,9 +10298,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.5,
+         -72.5,
          11.0,
-         64.0
+         52.0
         ],
         "orientation": [
          [
@@ -14590,9 +10344,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.8,
+         -73.8,
          22,
-         54
+         42
         ],
         "orientation": [
          [
@@ -14636,9 +10390,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         72.55,
+         -72.55,
          21.4,
-         54
+         42
         ],
         "orientation": [
          [
@@ -14682,9 +10436,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         74.1,
+         -74.1,
          10.0,
-         54
+         42
         ],
         "orientation": [
          [
@@ -14745,15 +10499,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         73.2,
+         -73.2,
          27.2,
-         54
+         42
         ],
         "orientation": [
          [
           0.0,
           0.0,
-          1.0
+          -1.0
          ],
          [
           0.0,
@@ -14761,7 +10515,7 @@
           0.0
          ],
          [
-          -1.0,
+          1.0,
           0.0,
           0.0
          ]
@@ -14933,9 +10687,582 @@
       "CFrame": {
        "CFrame": {
         "position": [
+         -73.2,
+         22.4,
+         42
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GatePillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       22,
+       2.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         11.0,
+         -22.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       20,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.5,
+         11.0,
+         -22.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.4314,
+       1.0
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GatePillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       22,
+       2.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         11.0,
+         -2.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       20,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.5,
+         11.0,
+         -2.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.4314,
+       1.0
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateHeader",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       2,
+       22.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         22,
+         -12
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateHeaderStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.5,
+       22.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.55,
+         21.4,
+         -12
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.4314,
+       1.0
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       20,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         74.1,
+         10.0,
+         -12
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.4314,
+       1.0
+      ],
+      "Material": "ForceField",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2,
+      "CanCollide": false
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "PointLight",
+       "Properties": {
+        "Range": 22,
+        "Brightness": 2.2,
+        "Color": [
+         0.6667,
+         0.4314,
+         1.0
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "Sign_Wingman",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       7,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.2,
+         27.2,
+         -12
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "WINGMAN",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.6667,
+           0.4314,
+           1.0
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "DUELS \u00b7 2v2",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.9216,
+           0.949,
+           0.9725
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.6667,
+           0.4314,
+           1.0
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.6667,
+         0.4314,
+         1.0
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "GateCount_Wingman",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       2.2,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
          73.2,
          22.4,
-         54
+         -12
         ],
         "orientation": [
          [
@@ -14965,6 +11292,767 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
+    },
+    {
+     "Name": "GatePillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       22,
+       2.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         11.0,
+         14.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       20,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.5,
+         11.0,
+         14.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3922,
+       0.7059
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GatePillar",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       22,
+       2.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         11.0,
+         34.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       20,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.5,
+         11.0,
+         34.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3922,
+       0.7059
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateHeader",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.4,
+       2,
+       22.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.8,
+         22,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1098,
+       0.1412
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateHeaderStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       0.5,
+       22.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         72.55,
+         21.4,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3922,
+       0.7059
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       20,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         74.1,
+         10.0,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3922,
+       0.7059
+      ],
+      "Material": "ForceField",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2,
+      "CanCollide": false
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "PointLight",
+       "Properties": {
+        "Range": 22,
+        "Brightness": 2.2,
+        "Color": [
+         1.0,
+         0.3922,
+         0.7059
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "Sign_Arena",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       7,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.2,
+         27.2,
+         24
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "1v1 ARENA",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.3922,
+           0.7059
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "DUELS \u00b7 1v1",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.9216,
+           0.949,
+           0.9725
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           1.0,
+           0.3922,
+           0.7059
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         1.0,
+         0.3922,
+         0.7059
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "GateCount_Arena",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       2.2,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.2,
+         22.4,
+         24
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "DuelsBanner",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       44,
+       5,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         73.6,
+         33.3,
+         6
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "\u2694 DUELS",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.3922,
+           0.7059
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "WINGMAN 2v2  \u00b7  1v1 ARENA",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.9216,
+           0.949,
+           0.9725
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           1.0,
+           0.3922,
+           0.7059
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         1.0,
+         0.3922,
+         0.7059
+        ]
+       }
+      }
+     ]
     },
     {
      "Name": "Locker",
@@ -20199,198 +17287,6 @@
    "ClassName": "Folder",
    "Children": [
     {
-     "Name": "Portal_Strikeout",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -69.4,
-         0.4,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       1.0,
-       0.6275,
-       0.1569
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
-     "Name": "Portal_Demolition",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -69.4,
-         0.4,
-         -18
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.902,
-       0.2353,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
-     "Name": "Portal_Ranked",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -69.4,
-         0.4,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.9804,
-       0.8039,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
-     "Name": "Portal_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -69.4,
-         0.4,
-         30
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.8627,
-       0.4314
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
      "Name": "Portal_FreeForAll",
      "ClassName": "Part",
      "Properties": {
@@ -20405,7 +17301,7 @@
         "position": [
          -69.4,
          0.4,
-         54
+         -30
         ],
         "orientation": [
          [
@@ -20439,7 +17335,7 @@
      }
     },
     {
-     "Name": "Portal_Extraction",
+     "Name": "Portal_Domination",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
@@ -20451,57 +17347,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         69.4,
+         -69.4,
          0.4,
-         -42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.8235,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
-     "Name": "Portal_Drop",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         69.4,
-         0.4,
-         -18
+         6
         ],
         "orientation": [
          [
@@ -20535,6 +17383,54 @@
      }
     },
     {
+     "Name": "Portal_Training",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.3,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -69.4,
+         0.4,
+         42
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8235,
+       0.8627
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "CanCollide": false,
+      "Transparency": 0.45
+     }
+    },
+    {
      "Name": "Portal_Wingman",
      "ClassName": "Part",
      "Properties": {
@@ -20549,7 +17445,7 @@
         "position": [
          69.4,
          0.4,
-         6
+         -12
         ],
         "orientation": [
          [
@@ -20597,7 +17493,7 @@
         "position": [
          69.4,
          0.4,
-         30
+         24
         ],
         "orientation": [
          [
@@ -20622,54 +17518,6 @@
        1.0,
        0.3922,
        0.7059
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
-     "Name": "Portal_Training",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       8,
-       0.3,
-       16
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         69.4,
-         0.4,
-         54
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.8235,
-       0.8627
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
