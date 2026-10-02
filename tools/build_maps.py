@@ -720,14 +720,15 @@ def build_arena():
 # Jede Rotations-Map bekommt alles, was Demolition UND Strikeout brauchen:
 # SpawnsAtk/SpawnsDef + SiteA/SiteB (Demolition), SpawnsA/SpawnsB + CapturePoint (Strikeout).
 
-def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(255, 80, 80), capture=True):
+def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(255, 80, 80), capture=True,
+                    sites=True):
     for z in (-15, -5, 5, 15):
         b.spawn(atk_x, z, yaw=-90, group="SpawnsAtk")
         b.spawn(-spawn_x, z, yaw=-90, group="SpawnsA")
         b.spawn(spawn_x, z, yaw=90, group="SpawnsB")
     for x, z in ((def_x, -10), (def_x, 10), (def_x + 8, -20), (def_x + 8, 20)):
         b.spawn(x, z, yaw=90, group="SpawnsDef")
-    for name, (x, z) in (("A", site_a), ("B", site_b)):
+    for name, (x, z) in ((("A", site_a), ("B", site_b)) if sites else ()):
         b.add("Objective", "Site" + name, (0.3, 20, 20), (x, 0.2, z), site_color, "Neon",
               angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.6, "CanCollide": False})
         b.box("Decor", "SitePost" + name, (1, 10, 1), (x, 5, z), (60, 60, 65), "Metal")
@@ -800,42 +801,55 @@ CELLBLOCK_ORIGIN = (-3000, 0, 0)
 
 
 def build_cellblock():
+    """Zellenblock (300 x 210, symmetrisch für Strikeout): Hof mit Punkt, zweistöckige Zellentrakte im
+    Norden/Süden (Galerie mit Fenstern zum Hof), Verwaltung und Krankenstation an den Seiten,
+    Küche und Wäscherei, Zäune und Wachtürme."""
     b = Builder(CELLBLOCK_ORIGIN)
     concrete, wall, bars, yard = (150, 148, 140), (120, 118, 112), (60, 62, 66), (110, 112, 108)
-    b.ground(240, 180, yard, "Concrete")
-    b.border(230, 170, 18, wall, "Concrete", barrier=120)
-    # Basketballfeld im Hof (nur Markierung)
+    W, D = 300, 210
+    b.ground(W + 10, D + 10, yard, "Concrete")
+    b.border(W, D, 18, wall, "Concrete", barrier=120)
     b.box("Ground", "Court", (40, 0.1, 24), (0, 0.06, 0), (170, 90, 50), "SmoothPlastic")
     b.box("Ground", "CourtLine", (0.4, 0.12, 24), (0, 0.08, 0), (240, 240, 240), "SmoothPlastic")
-    # Wachtürme in den Ecken
-    for x, z in ((-100, -70), (100, -70), (-100, 70), (100, 70)):
+    for x, z in ((-140, -95), (140, -95), (-140, 95), (140, 95)):
         b.box("Buildings", "TowerLeg", (6, 20, 6), (x, 10, z), wall, "Concrete")
         b.box("Buildings", "TowerHut", (10, 6, 10), (x, 23, z), concrete, "Concrete")
         b.box("Buildings", "TowerLight", (2, 1, 2), (x, 26.5, z), (255, 240, 200), "Neon")
-    # Zellentrakte: lange Gebäude mit Zellen (Gitter = schmale Stäbe)
+
     for side in (-1, 1):
-        z = side * 55
-        b.house("CellBlock" + str(side), 40, z, 60, 18, 11, concrete, (80, 80, 85), doors=("W", "E"), material="Concrete")
-        for k in range(-3, 4):
-            x = 40 + k * 8
-            b.box("Buildings", "CellWall", (0.6, 11, 7), (x, 5.5, z + side * -4), wall, "Concrete")
+        inward = "S" if side > 0 else "N"
+        # Zellentrakt: unten Türen und Gitterfenster, oben eine Fensterreihe zum Hof
+        b.building2("CellBlock", 0, side * 70, 84, 24, concrete, (80, 80, 85),
+                    doors={inward: [-28, 0, 28], "W": [side * 4], "E": [-side * 4]},
+                    windows1={inward: [-38, -14, 14, 38]},
+                    windows2={inward: [-36, -27, -18, -9, 0, 9, 18, 27, 36], "W": [0], "E": [0]},
+                    stairs_at=("N" if side > 0 else "S",), h1=10, h2=9)
+        # Zellen nur auf der Seite ohne Treppe
+        for k in (range(-3, 2) if side > 0 else range(-1, 4)):
+            x = k * 11
+            b.box("Buildings", "CellWall", (0.6, 9.5, 7), (x, 4.75, side * 78), wall, "Concrete")
             for bar in range(5):
-                b.box("Buildings", "Bar", (0.25, 8, 0.25), (x - 3 + bar * 1.4, 4, z - side * 0.5), bars, "Metal")
-    # Rampen auf die Dächer der Zellentrakte
-    b.ramp("CellRoofRampS", 9, -58, 6, 22, 11.5, "W")
-    b.ramp("CellRoofRampN", 9, 58, 6, 22, 11.5, "W")
-    # Verwaltung und Wäscherei (Ziele)
-    b.house("Admin", 70, 0, 22, 26, 12, (165, 160, 150), (70, 70, 75), doors=("W", "N", "S"), material="Brick")
-    b.house("Laundry", -45, -25, 22, 16, 10, (160, 165, 170), (70, 70, 75), doors=("E", "N"), material="Concrete")
-    b.house("Kitchen", -45, 30, 22, 16, 10, (160, 165, 170), (70, 70, 75), doors=("E", "S"), material="Concrete")
-    # Zäune und Deckung im Hof
-    for x in (-20, 20):
-        b.box("Cover", "Fence", (0.3, 6, 30), (x, 3, 0), (130, 135, 140), "Metal", props={"Transparency": 0.4})
-    for x, z in ((-70, 0), (0, -30), (0, 30), (25, -15), (25, 15), (-25, 45), (-25, -45), (95, 0)):
-        b.crate(x, z, color=(120, 100, 75))
-    for x, z, length, ax in ((-80, -35, 12, True), (-80, 35, 12, True), (5, 0, 8, False)):
-        b.cover_wall(x, z, length, along_x=ax, height=5, color=concrete)
-    team_objectives(b, -108, 96, (70, -45), (70, 45))
+                b.box("Buildings", "Bar", (0.25, 8, 0.25), (x - 4 + bar * 2, 4, side * 74.4), bars, "Metal")
+        # Küche / Wäscherei (einstöckig)
+        for sx in (-1, 1):
+            b.house("Annex", sx * 66, side * 40, 20, 14, 10, (160, 165, 170), (70, 70, 75),
+                    doors=(inward, "E" if sx < 0 else "W"), material="Concrete")
+        # Verwaltung (Osten) und Krankenstation (Westen): zweistöckig, Türen auf allen Seiten
+        b.building2("Admin" if side > 0 else "Infirmary", side * 100, 0, 24, 32, (170, 165, 155), (70, 70, 75),
+                    doors={"W": [-8], "E": [8], "N": [0], "S": [0]},
+                    windows2={"W" if side > 0 else "E": [-10, 0, 10], "N": [0], "S": [0]},
+                    stairs_at=("E" if side > 0 else "W",), material="Brick")
+        # Zaun im Hof (durchsichtig) und Deckung
+        b.box("Cover", "Fence", (0.3, 6, 26), (side * 30, 3, 0), (130, 135, 140), "Metal", props={"Transparency": 0.4})
+        b.half_wall(side * 18, 18, 10, along_x=True, color=concrete)
+        b.half_wall(-side * 18, -18, 10, along_x=True, color=concrete)
+        b.crate(side * 44, 0)
+        b.crate(side * 44, 0, s=4, y=5)
+        for z in (-28, 28):
+            b.crate(side * 80, z, color=(120, 100, 75))
+        b.cover_wall(side * 122, -24, 12, along_x=False, height=7, color=concrete)
+        b.cover_wall(side * 122, 24, 12, along_x=False, height=7, color=concrete)
+    team_objectives(b, -140, 124, (80, -55), (80, 55), spawn_x=140, sites=False)
     b.save("Zellenblock.model.json", "Zellenblock")
 
 
