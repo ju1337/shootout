@@ -958,4 +958,6 @@ if __name__ == "__main__":
     build_windmills((4500, 0, -1500), "Windmuehlen3.model.json")  # Extraction-Rotation
     build_hightower((-4500, 0, 0), "Hochhaus.model.json")         # Wingman-Rotation
     build_hightower((-4500, 0, 1500), "Hochhaus2.model.json")     # TDM-Rotation
+    build_windmills((4500, 0, 3000), "Windmuehlen4.model.json")   # Ranked-Rotation
+    build_hightower((-4500, 0, 3000), "Hochhaus3.model.json")     # Ranked-Rotation
     build_lobby()

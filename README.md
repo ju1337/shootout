@@ -21,7 +21,7 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 | Extraction | 4v4, Ziel hacken, Seitenwechsel | Rotation: Gletscher / Windmühlen |
 | Team Deathmatch | 4v4, 40 Leben pro Team | Rotation: Fabrik / Hochhaus |
 | Wingman | 2v2, Strikeout-Regeln | Rotation: Fabrik / Hochhaus |
-| Ranked | Demolition mit ELO, ab Spielerlevel 10 | Hafen-Kopie (1500, 0, 1500) |
+| Ranked | Demolition mit ELO, ab Spielerlevel 10 | Rotation: Hafen / Windmühlen / Hochhaus |
 | 1v1 Arena | Duell | Arena (0, 0, 3000) |
 | Training | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
 
