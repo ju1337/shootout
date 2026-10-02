@@ -70,9 +70,10 @@ local function placeStatue(place, entry)
 	if humanoid then
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	end
-	-- Auf das Podest stellen, Blick nach Norden (zum Eingang der Ruhmeshalle)
+	-- Auf das Podest stellen, Blick wie die Podest-Markierung (LookVector)
 	local top = pad.Position - Vector3.new(0, pad.Size.Y / 2 + 0.1, 0)
-	model:PivotTo(CFrame.lookAt(top, top + Vector3.new(0, 0, 1)))
+	local facing = Vector3.new(pad.CFrame.LookVector.X, 0, pad.CFrame.LookVector.Z)
+	model:PivotTo(CFrame.lookAt(top, top + (facing.Magnitude > 0.1 and facing.Unit or Vector3.new(0, 0, 1))))
 	local box, size = model:GetBoundingBox()
 	model:PivotTo(model:GetPivot() + Vector3.new(0, top.Y - (box.Position.Y - size.Y / 2), 0))
 	-- Namensschild mit ELO und Rang

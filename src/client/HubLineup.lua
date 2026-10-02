@@ -18,7 +18,17 @@ local player = Players.LocalPlayer
 
 local HubLineup = {}
 
-local STAGE_POSITION = Vector3.new(0, 1.2, 18) -- Mitte der Bühne im Hangar (Hub-Map)
+-- Bühne: Part "LineupSpot" in Maps.Hub.Decor (Position = Füße, LookVector = Blickrichtung der Figur);
+-- ohne den Part die alte Bühne im Hangar
+local STAGE_POSITION = Vector3.new(0, 1.2, 18)
+local STAGE_FACING = Vector3.new(0, 0, -1)
+task.spawn(function()
+	local spot = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("LineupSpot", 10)
+	if spot then
+		STAGE_POSITION = spot.Position
+		STAGE_FACING = spot.CFrame.LookVector
+	end
+end)
 local SCALE = 1.7
 
 local figure = nil
@@ -258,12 +268,13 @@ function HubLineup.Init()
 			rebuild()
 		end
 	end)
-	-- Langsam hin und her drehen, Blick Richtung Spawn (Süden)
+	-- Langsam hin und her drehen, Blick in Richtung der Bühnen-Markierung
 	RunService.RenderStepped:Connect(function()
 		if figure then
 			local angle = math.sin(os.clock() * 0.5) * 0.5
 			local height = 3 * SCALE -- Figur steht mit den Füßen auf der Bühne
-			figure:PivotTo(CFrame.new(STAGE_POSITION + Vector3.new(0, height, 0)) * CFrame.Angles(0, angle, 0))
+			local base = STAGE_POSITION + Vector3.new(0, height, 0)
+			figure:PivotTo(CFrame.lookAt(base, base + STAGE_FACING) * CFrame.Angles(0, angle, 0))
 		end
 	end)
 end

@@ -13,7 +13,7 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 | Modus | Kurz | Map |
 |---|---|---|
-| Hub | Hangar mit Einsatz-Toren, Lineup-Bühne, Ruhmeshalle (Bestenlisten, Top-3-Statuen) | Hangar (0, 0, 0) |
+| Hub | Kompakte Einsatzzentrale: Tore nebeneinander an der Nordwand (DUELS rechts), Kartentisch mit Einsatz-Tafel, Bühne mit eigenem Agenten, Wand der Bestenlisten + Top-3-Statuen. Alter Hangar: `HUB_STYLE = "classic"` in `tools/build_maps.py` (fertig auch in `tools/saved/Hub_classic.model.json`) | Hub (0, 0, 0) |
 | Free-for-All | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
 | Wingman (DUELS) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
