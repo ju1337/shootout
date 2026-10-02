@@ -338,16 +338,17 @@ class Builder:
 # ---------- Free-for-All: "Lagerhof" (180 x 180) ----------
 
 def build_ffa():
-    """Raffinerie: Tanklager mit Brücken (zweite Ebene), Rohrbrücken, Kontrollhäuser."""
+    """Raffinerie (250 x 250): Tanklager in der Mitte (Brücken als zweite Ebene), Rohrbrücken,
+    zweistöckige Kontrollhäuser im Norden/Süden und Werkstätten im Osten/Westen mit Fenstern,
+    Containerecken mit Trennwänden zum Spähen."""
     b = Builder(FFA_ORIGIN)
-    size = 180
+    size = 250
     steel, pipe, tank, concrete = (90, 96, 104), (160, 120, 60), (205, 205, 200), (120, 122, 126)
     cyl = {"Shape": "Cylinder"}
     b.ground(size + 10, size + 10, concrete, "Concrete")
     b.border(size, size, 14, (110, 105, 100), "Brick", barrier=120)
-    # Bodenmarkierungen
-    for x in (-45, 45):
-        b.box("Ground", "Lane", (0.6, 0.05, 160), (x, 0.03, 0), (230, 190, 40), "SmoothPlastic")
+    for x in (-50, 50):
+        b.box("Ground", "Lane", (0.6, 0.05, 220), (x, 0.03, 0), (230, 190, 40), "SmoothPlastic")
 
     # Tanklager: vier Tanks, oben über Brücken verbunden (Ebene auf 16)
     top = 16
@@ -364,36 +365,50 @@ def build_ffa():
     for x in (-24, 24):
         b.box("Buildings", "Bridge", (4, 0.8, 30), (x, top + 0.2, 0), steel, "DiamondPlate")
     b.box("Buildings", "CrossBridge", (4, 0.8, 48), (0, top + 0.2, 0), steel, "DiamondPlate")
-    for x, z, length, ax in ((0, -24, 30, True), (0, 24, 30, True)):
-        # Geländer an der Innenseite, damit die Rampen außen frei ankommen
-        b.box("Buildings", "Railing", (length, 1.2, 0.3), (x, top + 1.2, z - 2 if z > 0 else z + 2), (220, 180, 40), "Metal")
-    # Rampen hoch aufs Tanklager (Norden und Süden)
-    # Oberes Ende direkt an der Brücke (z = ±26), unteres Ende vor den Kontrollhäusern
+    for z in (-24, 24):
+        b.box("Buildings", "Railing", (30, 1.2, 0.3), (0, top + 1.2, z - 2 if z > 0 else z + 2), (220, 180, 40), "Metal")
     b.ramp("TankRampN", 0, 26, 6, 30, top + 0.6, "N")
     b.ramp("TankRampS", 0, -26, 6, 30, top + 0.6, "S")
+    # Deckung unter den Brücken
+    for x, z in ((-8, -8), (8, 8)):
+        b.half_wall(x, z, 8, along_x=x < 0)
 
-    # Rohrbrücken an Ost- und Westseite (Deckung darunter)
+    # Rohrbrücken (Deckung darunter)
     for x in (-62, 62):
-        for z in range(-60, 61, 20):
+        for z in range(-70, 71, 20):
             b.box("Buildings", "PipeSupport", (1.2, 7, 1.2), (x, 3.5, z), steel, "Metal")
         for dx in (-1.6, 0, 1.6):
-            b.add("Buildings", "Pipe", (124, 1.4, 1.4), (x + dx, 7.6, 0), pipe, "Metal", angles=(0, 90, 0), props=cyl)
+            b.add("Buildings", "Pipe", (144, 1.4, 1.4), (x + dx, 7.6, 0), pipe, "Metal", angles=(0, 90, 0), props=cyl)
 
-    # Kontrollhäuser
-    b.house("ControlN", 0, 72, 30, 16, 11, (150, 155, 160), (60, 65, 70), doors=("S", "E", "W"), material="Concrete")
-    b.house("ControlS", 0, -72, 30, 16, 11, (150, 155, 160), (60, 65, 70), doors=("N", "E", "W"), material="Concrete")
+    # Zweistöckige Kontrollhäuser (Nord/Süd) mit Fensterfront zum Tanklager
+    b.building2("ControlN", 0, 98, 46, 22, (150, 155, 160), (60, 65, 70),
+                doors={"S": [-14, 14], "E": [0], "W": [0]}, windows1={"S": [0]},
+                windows2={"S": [-18, -9, 0, 9, 18], "E": [-4, 4], "W": [-4, 4]}, stairs_at=("N",))
+    b.building2("ControlS", 0, -98, 46, 22, (150, 155, 160), (60, 65, 70),
+                doors={"N": [-14, 14], "E": [0], "W": [0]}, windows1={"N": [0]},
+                windows2={"N": [-18, -9, 0, 9, 18], "E": [-4, 4], "W": [-4, 4]}, stairs_at=("S",))
+    # Werkstätten (Ost/West)
+    b.building2("WorkshopW", -100, 0, 24, 44, (140, 110, 90), (70, 60, 55),
+                doors={"E": [-12, 12], "N": [0], "S": [0]}, windows1={"E": [0]},
+                windows2={"E": [-16, -6, 6, 16], "N": [0], "S": [0]}, stairs_at=("W",), material="Brick")
+    b.building2("WorkshopE", 100, 0, 24, 44, (140, 110, 90), (70, 60, 55),
+                doors={"W": [-12, 12], "N": [0], "S": [0]}, windows1={"W": [0]},
+                windows2={"W": [-16, -6, 6, 16], "N": [0], "S": [0]}, stairs_at=("E",), material="Brick")
 
-    # Container und Kisten
-    for x, z, w, d, color in ((-35, 55, 16, 8, (70, 110, 150)), (35, -55, 16, 8, (150, 70, 60)),
-                              (-80, -30, 8, 16, (90, 130, 80)), (80, 30, 8, 16, (160, 120, 50))):
-        b.box("Cover", "Container", (w, 8, d), (x, 4, z), color, "Metal")
-    for x, z in ((-45, 20), (45, -20), (-45, -45), (45, 45), (-12, 45), (12, -45), (-75, 65), (75, -65)):
-        b.crate(x, z, color=(150, 120, 80))
-    for x, z, length, ax in ((-30, 0, 12, False), (30, 0, 12, False), (-20, 50, 10, True), (20, -50, 10, True)):
-        b.cover_wall(x, z, length, along_x=ax, height=5)
+    # Ecken: Container, Kisten, Trennwände mit Fenstern
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            b.container(sx * 88, sz * 70, along_x=True, color=(70, 110, 150) if sx < 0 else (150, 70, 60))
+            b.container(sx * 40, sz * 72, along_x=False, color=(90, 130, 80), length=16)
+            b.crate(sx * 70, sz * 50)
+            b.crate(sx * 106, sz * 100, s=6)
+            b.wall_line("CornerWall", min(sx * 30, sx * 54), max(sx * 30, sx * 54), sz * 45, True, 7, concrete, "Concrete",
+                        openings=[(sx * 42, 4, 3, 5.4)], group="Cover")
+            b.half_wall(sx * 38, sz * 30, 8, along_x=False)
 
-    # Spawns an den Rändern (Blick zur Mitte)
-    for x, z in ((-82, 0), (82, 0), (0, -84), (0, 84), (-82, -40), (82, 40), (40, -84), (-40, 84)):
+    # Spawns verteilt an den Rändern (Blick zur Mitte)
+    for x, z in ((-115, 40), (115, -40), (40, 115), (-40, -115), (-115, -60), (115, 60), (-80, 115), (80, -115),
+                 (-115, 100), (115, -100)):
         yaw = math.degrees(math.atan2(x, z))
         b.spawn(x, z, yaw=yaw)
 
