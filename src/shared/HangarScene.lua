@@ -61,44 +61,22 @@ local function buildHangar(model)
 	table.insert(accents, disc(model, 9.8, 0.25, Vector3.new(0, -0.45, 0), Color3.new(1, 1, 1), true))
 	table.insert(accents, disc(model, 7.4, 0.03, Vector3.new(0, 0.02, 0), Color3.new(1, 1, 1), true))
 
-	-- Rückwand mit großem Fenster (x -22..22, y 2..14) ins All
-	local wallZ = 30
-	part(model, Vector3.new(140, 30, 1), CFrame.new(0, 29, wallZ + 0.5), METAL_DARK)         -- über dem Fenster
-	part(model, Vector3.new(140, 3, 1), CFrame.new(0, 0.5, wallZ + 0.5), METAL_DARK)         -- unter dem Fenster
-	part(model, Vector3.new(48, 12, 1), CFrame.new(-46, 8, wallZ + 0.5), METAL_DARK)         -- links
-	part(model, Vector3.new(48, 12, 1), CFrame.new(46, 8, wallZ + 0.5), METAL_DARK)          -- rechts
-	-- Weltraum hinter dem Fenster: Sterne und ein Planet mit leuchtender Atmosphäre
-	local spaceZ = wallZ + 12
-	part(model, Vector3.new(80, 40, 1), CFrame.new(0, 8, spaceZ), SPACE)
+	-- Weltraum füllt das ganze Bild hinter dem Agenten (kein Fensterrahmen, keine Wände = kein "Kasten")
+	local spaceZ = 60
+	part(model, Vector3.new(420, 200, 1), CFrame.new(0, 20, spaceZ), SPACE)
 	local random = Random.new(7)
-	for _ = 1, 90 do
-		local size = random:NextNumber(0.08, 0.22)
-		part(model, Vector3.new(size, size, 0.05), CFrame.new(random:NextNumber(-34, 34), random:NextNumber(-4, 22), spaceZ - 0.6),
+	for _ = 1, 260 do
+		local size = random:NextNumber(0.12, 0.4)
+		part(model, Vector3.new(size, size, 0.05), CFrame.new(random:NextNumber(-150, 150), random:NextNumber(-10, 70), spaceZ - 0.6),
 			Color3.fromRGB(220, 230, 255), true)
 	end
-	-- Planet im Bild links neben dem Agenten (zwischen Team-Spalte und Agent), Mond rechts über dem Kopf
-	disc(model, 10.6, 0.1, Vector3.new(10, 9, spaceZ - 0.8), Color3.fromRGB(70, 140, 255), true, true)  -- Atmosphäre
-	disc(model, 10, 0.1, Vector3.new(10, 9, spaceZ - 0.9), Color3.fromRGB(40, 70, 120), false, true)     -- Planet
-	disc(model, 7, 0.1, Vector3.new(11.3, 10.2, spaceZ - 1), Color3.fromRGB(55, 95, 150), false, true)   -- helle Seite
-	disc(model, 2.2, 0.1, Vector3.new(-6, 13, spaceZ - 0.8), Color3.fromRGB(150, 150, 165), false, true) -- Mond
-	-- Fensterrahmen und Streben
-	part(model, Vector3.new(46, 0.8, 1.2), CFrame.new(0, 14.4, wallZ), METAL_LIGHT)
-	part(model, Vector3.new(46, 0.8, 1.2), CFrame.new(0, 1.6, wallZ), METAL_LIGHT)
-	for x = -22.5, 22.5, 9 do
-		part(model, Vector3.new(0.6, 13, 1.2), CFrame.new(x, 8, wallZ), METAL_LIGHT)
-	end
-	table.insert(accents, part(model, Vector3.new(46, 0.15, 0.2), CFrame.new(0, 1.15, wallZ - 0.7), Color3.new(1, 1, 1), true))
-
-	-- Seitenwände mit Rippen und Lichtleisten
-	for _, side in { -1, 1 } do
-		local x = side * 32
-		part(model, Vector3.new(1, 40, 60), CFrame.new(x + side * 1.5, 18, 5), METAL_DARK)
-		for z = -22, 28, 6 do
-			part(model, Vector3.new(1.6, 40, 1.2), CFrame.new(x, 18, z), METAL)
-		end
-		table.insert(accents, part(model, Vector3.new(0.2, 0.2, 60), CFrame.new(x - side * 0.9, 1.2, 5), Color3.new(1, 1, 1), true))
-		part(model, Vector3.new(0.2, 0.2, 60), CFrame.new(x - side * 0.9, 9, 5), Color3.fromRGB(60, 90, 120), true)
-	end
+	-- Planet links neben dem Agenten, Mond rechts über dem Kopf (größer, weil weiter weg)
+	disc(model, 21, 0.1, Vector3.new(20, 16, spaceZ - 0.8), Color3.fromRGB(70, 140, 255), true, true)  -- Atmosphäre
+	disc(model, 20, 0.1, Vector3.new(20, 16, spaceZ - 0.9), Color3.fromRGB(40, 70, 120), false, true)  -- Planet
+	disc(model, 14, 0.1, Vector3.new(22.6, 18.4, spaceZ - 1), Color3.fromRGB(55, 95, 150), false, true) -- helle Seite
+	disc(model, 4.4, 0.1, Vector3.new(-12, 24, spaceZ - 0.8), Color3.fromRGB(150, 150, 165), false, true) -- Mond
+	-- Boden-Kante als dünne Leuchtlinie (statt Wand)
+	table.insert(accents, part(model, Vector3.new(140, 0.15, 0.2), CFrame.new(0, -0.5, 59), Color3.new(1, 1, 1), true))
 
 	-- Landungsschiff hinten, im Bild rechts (schräg geparkt, Nase zur Mitte)
 	local ship = CFrame.new(-16, 0, 18) * CFrame.Angles(0, math.rad(35), 0)
