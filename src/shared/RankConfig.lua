@@ -6,7 +6,33 @@
 
 local RankConfig = {}
 
-RankConfig.Season = 1          -- bei neuer Saison hochzählen: ELO wird zur Hälfte zurückgesetzt
+-- Saisons laufen automatisch: Saison 1 beginnt am Montag, 28.09.2026 (0 Uhr UTC), jede dauert SeasonLength.
+-- Bei neuer Saison wird die ELO zur Hälfte Richtung Start zurückgesetzt, dafür gibt es eine Belohnung
+-- nach dem höchsten Rang der alten Saison (RewardConfig.SeasonEnd, ProgressService).
+RankConfig.SeasonStart = 1790553600
+RankConfig.SeasonLength = 6 * 7 * 24 * 3600 -- 6 Wochen
+
+-- Aktuelle Saison (Serverzeit) und Sekunden bis zu ihrem Ende
+function RankConfig.CurrentSeason(now)
+	now = now or workspace:GetServerTimeNow()
+	return math.max(1, math.floor((now - RankConfig.SeasonStart) / RankConfig.SeasonLength) + 1)
+end
+
+function RankConfig.SeasonLeft(now)
+	now = now or workspace:GetServerTimeNow()
+	local season = RankConfig.CurrentSeason(now)
+	return math.max(0, RankConfig.SeasonStart + season * RankConfig.SeasonLength - now)
+end
+
+-- "37 T 4 H" bzw. "5 H 12 MIN"
+function RankConfig.FormatLeft(seconds)
+	if seconds >= 86400 then
+		return math.floor(seconds / 86400) .. " T " .. math.floor(seconds % 86400 / 3600) .. " H"
+	end
+	return math.floor(seconds / 3600) .. " H " .. math.floor(seconds % 3600 / 60) .. " MIN"
+end
+
+RankConfig.Season = RankConfig.CurrentSeason() -- Stand beim Laden; für Live-Werte CurrentSeason() benutzen
 RankConfig.StartElo = 1000
 RankConfig.PlacementMatches = 5
 RankConfig.PlacementK = 48     -- Gewichtung in Platzierungsspielen

@@ -429,7 +429,7 @@ local function buildStats()
 	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, rankedBox)
-	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "ELO · SAISON " .. RankConfig.Season .. "  ·  IN JEDEM MODUS",
+	local seasonText = text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
 		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
 	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -100, 0, 50), Text = "", TextSize = 42,
 		Font = UITheme.Fonts.Title }, rankedBox)
@@ -531,6 +531,7 @@ local function buildStats()
 		local rank = RankConfig.Get(elo)
 		local matches = ranked.Matches or 0
 		statsRank:SetRank(rank)
+		seasonText.Text = "ELO · SAISON " .. RankConfig.CurrentSeason() .. "  ·  ENDET IN " .. RankConfig.FormatLeft(RankConfig.SeasonLeft())
 		statsRankHolder.Visible = matches >= RankConfig.PlacementMatches
 		if matches < RankConfig.PlacementMatches then
 			rankName.Text = "PLATZIERUNG"
@@ -624,7 +625,7 @@ local function buildRewards()
 		return list
 	end
 	local levelList = column(24, "LEVEL-MEILENSTEINE  ·  DIESER PRESTIGE-DURCHGANG")
-	local specialList = column(390, "PRESTIGE  ·  RANG DIESER SAISON")
+	local specialList = column(390, "PRESTIGE  ·  RANG DIESER SAISON  ·  SAISON-ENDE")
 	local actionList = column(756, "PRO AKTION  ·  KILLSERIEN")
 
 	-- Zeile: links Titel, rechts Belohnung, Farbe nach Zustand ("done", "next", "open")
@@ -686,7 +687,7 @@ local function buildRewards()
 		end
 		for _, milestone in RewardConfig.Rank do
 			order += 1
-			local done = claimed["S" .. RankConfig.Season .. "_" .. milestone.Tier] == true
+			local done = claimed["S" .. RankConfig.CurrentSeason() .. "_" .. milestone.Tier] == true
 			local tierColor
 			for _, tier in RankConfig.Tiers do
 				if tier.Name == milestone.Tier then
@@ -694,6 +695,19 @@ local function buildRewards()
 				end
 			end
 			row(specialList, order, string.upper(milestone.Tier), rewardText(milestone), done and "done" or "open", tierColor)
+		end
+		-- Saison-Ende: was es für den höchsten Rang der laufenden Saison gibt (aktueller Peak hervorgehoben)
+		local peakTier = RankConfig.Get(decodeAttribute(player, "RankedData").Peak or RankConfig.StartElo).Name
+		for _, entry in RewardConfig.SeasonEnd do
+			order += 1
+			local tierColor
+			for _, tier in RankConfig.Tiers do
+				if tier.Name == entry.Tier then
+					tierColor = tier.Color
+				end
+			end
+			row(specialList, order, "ENDE · " .. string.upper(entry.Tier), rewardText(entry),
+				entry.Tier == peakTier and "next" or "open", tierColor)
 		end
 		clear(actionList)
 		for i, entry in RewardConfig.PerAction do

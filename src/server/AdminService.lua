@@ -142,11 +142,16 @@ function AdminService.Init(manager)
 			ProgressService.AddCoins(player, amount)
 			return player.Name .. " +" .. amount .. " Münzen"
 		end,
-		-- ELO ändern: value = Zahl (+/- relativ), "max" = höchster Rang, "reset" = Start-ELO
+		-- ELO ändern: value = Zahl (+/- relativ), "max" = höchster Rang, "reset" = Start-ELO,
+		-- "season" = Saison-Ende testen (Belohnung nach Peak, ELO-Rücksetzung)
 		SetElo = function(userId, value)
 			local player = target(userId)
 			if not player then
 				return "Spieler nicht gefunden."
+			end
+			if value == "season" then
+				ProgressService.TestSeasonEnd(player)
+				return player.Name .. ": Saison-Ende getestet (ELO halbiert Richtung Start)"
 			end
 			local current = ProgressService.GetElo(player)
 			local new

@@ -513,6 +513,31 @@ local function buildLeaderboards()
 			title.TextStrokeTransparency = holo and 0.6 or 1
 			title.Text = info.Title
 			title.Parent = surface
+			-- ELO-Tafel: Saison und Countdown bis zum Saison-Ende rechts im Titel
+			if board == "Elo" then
+				title.TextXAlignment = Enum.TextXAlignment.Left
+				local pad = Instance.new("UIPadding")
+				pad.PaddingLeft = UDim.new(0.03, 0)
+				pad.Parent = title
+				local season = Instance.new("TextLabel")
+				season.AnchorPoint = Vector2.new(1, 0)
+				season.Position = UDim2.new(0.97, 0, 0.025, 0)
+				season.Size = UDim2.new(0.5, 0, 0.08, 0)
+				season.BackgroundTransparency = 1
+				season.Font = Enum.Font.Oswald
+				season.TextScaled = true
+				season.TextXAlignment = Enum.TextXAlignment.Right
+				season.TextColor3 = holo and Color3.fromRGB(255, 225, 150) or Color3.fromRGB(14, 16, 19)
+				season.TextStrokeTransparency = holo and 0.6 or 1
+				season.Parent = surface
+				task.spawn(function()
+					while season.Parent do
+						season.Text = "SAISON " .. RankConfig.CurrentSeason() .. " · ENDET IN "
+							.. RankConfig.FormatLeft(RankConfig.SeasonLeft())
+						task.wait(30)
+					end
+				end)
+			end
 			local rows = {}
 			for i = 1, 10 do
 				local row = Instance.new("Frame")

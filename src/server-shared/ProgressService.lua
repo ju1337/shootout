@@ -19,6 +19,7 @@ local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local RewardConfig = require(Shared.RewardConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 
@@ -32,7 +33,8 @@ local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speic
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
-		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
+		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
+		Season = RankConfig.CurrentSeason() } }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -395,6 +397,69 @@ local function key(player)
 	return "u" .. player.UserId
 end
 
+-- Neue Saison: Belohnung nach dem höchsten Rang der alten Saison (mit abgeschlossenen Platzierungsspielen),
+-- dann ELO zur Hälfte Richtung Start, Platzierungsspiele neu. Gibt true zurück, wenn sich etwas geändert hat.
+local function checkSeason(player, profile, test)
+	local ranked = profile.Ranked
+	local season = RankConfig.CurrentSeason()
+	if not ranked or ((ranked.Season or 1) == season and not test) then
+		return false
+	end
+	local oldSeason = ranked.Season or 1
+	local played = (ranked.Matches or 0) > 0
+	local reward, peakRank = nil, nil
+	if (ranked.Matches or 0) >= RankConfig.PlacementMatches then
+		peakRank = RankConfig.Get(ranked.Peak or ranked.Elo)
+		for _, entry in RewardConfig.SeasonEnd do
+			if entry.Tier == peakRank.Name then
+				reward = entry
+			end
+		end
+	end
+	ranked.LastSeason = oldSeason
+	ranked.LastSeasonPeak = ranked.Peak
+	ranked.Elo = math.floor(((ranked.Elo or RankConfig.StartElo) + RankConfig.StartElo) / 2)
+	ranked.Peak = ranked.Elo
+	ranked.Matches, ranked.Wins, ranked.Losses = 0, 0, 0
+	ranked.Season = season
+
+	local lines, rarity = {}, nil
+	if reward then
+		table.insert(lines, "Höchster Rang: " .. peakRank.Display)
+		profile.Coins += reward.Coins
+		table.insert(lines, "+" .. reward.Coins .. " Münzen")
+		local item = reward.Item and Cosmetics.Get(reward.Item)
+		if item and not profile.Owned[item.Id] then
+			profile.Owned[item.Id] = true
+			table.insert(lines, "Neuer Skin: " .. item.Name)
+			rarity = item.Rarity
+		end
+	end
+	if played then
+		table.insert(lines, "Saison " .. season .. " beginnt – ELO zur Hälfte zurückgesetzt")
+		-- kurz warten, damit der Client das Popup schon anzeigen kann (beim Beitreten)
+		task.delay(test and 0 or 8, function()
+			if player.Parent then
+				Remotes.Reward:FireClient(player, { Title = test and "SAISON-ENDE (TEST)" or ("SAISON " .. oldSeason .. " BEENDET"),
+					Lines = lines, Rarity = rarity })
+			end
+		end)
+	end
+	return true
+end
+
+-- Admin: Saison-Ende mit der aktuellen ELO testen (Belohnung + Zurücksetzen, Saison bleibt gleich)
+function ProgressService.TestSeasonEnd(player)
+	local profile = profiles[player]
+	if not profile or not profile.Ranked then
+		return false
+	end
+	profile.Ranked.Matches = math.max(profile.Ranked.Matches or 0, RankConfig.PlacementMatches)
+	checkSeason(player, profile, true)
+	ProgressService.Sync(player)
+	return true
+end
+
 local function load(player)
 	-- Neuer Modus = neue Match-Abrechnung
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
@@ -408,17 +473,7 @@ local function load(player)
 	local ok, result = pcall(store.GetAsync, store, key(player))
 	if ok then
 		profiles[player] = toProfile(result)
-		-- Neue Ranked-Saison: ELO zur Hälfte Richtung Start, Platzierungsspiele neu
-		local ranked = profiles[player].Ranked
-		if ranked and (ranked.Season or 1) ~= RankConfig.Season then
-			ranked.LastSeasonPeak = ranked.Peak
-			ranked.Elo = math.floor(((ranked.Elo or RankConfig.StartElo) + RankConfig.StartElo) / 2)
-			ranked.Peak = ranked.Elo
-			ranked.Matches, ranked.Wins, ranked.Losses = 0, 0, 0
-		end
-		if ranked then
-			ranked.Season = RankConfig.Season
-		end
+		checkSeason(player, profiles[player]) -- neue Ranked-Saison seit dem letzten Besuch?
 		loaded[player] = true
 		ProgressService.Sync(player)
 	else
@@ -661,6 +716,17 @@ function ProgressService.Init()
 	game:BindToClose(function()
 		for _, player in Players:GetPlayers() do
 			save(player)
+		end
+	end)
+	-- Saisonwechsel, während Spieler online sind
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			for player, profile in profiles do
+				if loaded[player] and checkSeason(player, profile) then
+					ProgressService.Sync(player)
+				end
+			end
 		end
 	end)
 	-- Statistik gebündelt alle 2 Sekunden an die Clients

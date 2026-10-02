@@ -87,7 +87,7 @@ function RewardService.Check(player)
 	-- Rang (erster Aufstieg pro Saison)
 	local elo = ProgressService.GetElo(player)
 	for _, milestone in RewardConfig.Rank do
-		local key = "S" .. RankConfig.Season .. "_" .. milestone.Tier
+		local key = "S" .. RankConfig.CurrentSeason() .. "_" .. milestone.Tier
 		local tierElo
 		for _, tier in RankConfig.Tiers do
 			if tier.Name == milestone.Tier then

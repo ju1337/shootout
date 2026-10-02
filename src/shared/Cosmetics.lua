@@ -59,6 +59,15 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(150, 40, 44), Material = Enum.Material.Foil },
 	{ Id = "W_Grossmeister", Type = "Weapon", Name = "Großmeister", Rarity = "Legendary", Reward = true,
 		Color = Color3.fromRGB(225, 228, 236), Material = Enum.Material.Foil },
+	-- Saison-Ende (RewardConfig.SeasonEnd): nach dem höchsten Rang der Saison
+	{ Id = "W_SE_Gold", Type = "Weapon", Name = "Saison-Gold", Rarity = "Epic", Reward = true,
+		Color = Color3.fromRGB(240, 195, 60), Material = Enum.Material.DiamondPlate },
+	{ Id = "W_SE_Platin", Type = "Weapon", Name = "Saison-Platin", Rarity = "Epic", Reward = true,
+		Color = Color3.fromRGB(90, 220, 200), Material = Enum.Material.Foil },
+	{ Id = "W_SE_Diamant", Type = "Weapon", Name = "Saison-Diamant", Rarity = "Legendary", Reward = true,
+		Color = Color3.fromRGB(110, 170, 255), Material = Enum.Material.Glass },
+	{ Id = "W_SE_Champion", Type = "Weapon", Name = "Champion", Rarity = "Legendary", Reward = true,
+		Color = Color3.fromRGB(220, 90, 255), Material = Enum.Material.Neon },
 	-- Wochen-Bonus (QuestConfig.WeeklyBonus): wechselt jede Woche
 	{ Id = "W_Woche_Kobalt", Type = "Weapon", Name = "Kobalt", Rarity = "Epic", Reward = true,
 		Color = Color3.fromRGB(40, 80, 200), Material = Enum.Material.Foil },

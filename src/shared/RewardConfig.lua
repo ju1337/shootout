@@ -61,4 +61,15 @@ RewardConfig.Rank = {
 	{ Tier = "Meister", Coins = 2500, Item = "W_SaisonMeister" },
 }
 
+-- Saison-Ende: Belohnung nach dem höchsten Rang der abgelaufenen Saison (nur mit abgeschlossenen
+-- Platzierungsspielen). Skins gibt es ab Gold; schon im Besitz = nur Münzen.
+RewardConfig.SeasonEnd = {
+	{ Tier = "Bronze", Coins = 250 },
+	{ Tier = "Silber", Coins = 500 },
+	{ Tier = "Gold", Coins = 1000, Item = "W_SE_Gold" },
+	{ Tier = "Platin", Coins = 1500, Item = "W_SE_Platin" },
+	{ Tier = "Diamant", Coins = 2500, Item = "W_SE_Diamant" },
+	{ Tier = "Meister", Coins = 4000, Item = "W_SE_Champion" },
+}
+
 return RewardConfig

@@ -272,6 +272,10 @@ local function refreshPlayers()
 		button("ELO zurück", 84, elo, DANGER, function()
 			send("SetElo", p.UserId, "reset")
 		end)
+		local season = row(box)
+		button("Saisonende testen", 140, season, Color3.fromRGB(110, 80, 170), function()
+			send("SetElo", p.UserId, "season")
+		end)
 	end
 end
 
