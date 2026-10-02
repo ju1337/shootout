@@ -1102,9 +1102,9 @@ def build_lobby():
     zc = (D0 + D1) / 2
     b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Concrete")
     # Teppich-Laufsteg vom Spawn zur Bühne, Ränder in Cyan
-    b.box("Ground", "Runner", (12, 0.06, 56), (0, 0.23, -22), navy, "Fabric")
+    b.box("Ground", "Runner", (12, 0.06, 40), (0, 0.23, -30), navy, "Fabric")
     for x in (-6.2, 6.2):
-        b.box("Ground", "RunnerEdge", (0.5, 0.08, 56), (x, 0.24, -22), CYAN, "Neon", props={"Transparency": 0.2})
+        b.box("Ground", "RunnerEdge", (0.5, 0.08, 40), (x, 0.24, -30), CYAN, "Neon", props={"Transparency": 0.2})
     # Team-Raute in der Mitte
     b.box("Ground", "EmblemOuter", (18, 0.06, 18), (0, 0.25, 0), CYAN, "Neon", angles=(0, 45, 0), props={"Transparency": 0.3})
     b.box("Ground", "EmblemInner", (14, 0.08, 14), (0, 0.27, 0), navy, "SmoothPlastic", angles=(0, 45, 0))
@@ -1148,6 +1148,33 @@ def build_lobby():
         b.add("Decor", "Spotlight", (H - 4, 4, 4), (x, (H - 4) / 2 + 1, 18), (255, 250, 235), "Neon", angles=(0, 0, 90),
               props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
     b.sign("BriefingScreen", (34, 10, 0.6), (0, 14, 26), "TACTICAL OPERATIONS", navy, CYAN)
+    # ---------- Bestenlisten neben der Bühne (Client füllt die Tafeln) ----------
+    for x, board, color in ((-31, "Elo", (250, 205, 70)), (-53, "Kills", (230, 60, 70)),
+                            (31, "Level", CYAN), (53, "Wins", (90, 220, 110))):
+        b.box("Decor", "Leaderboard_" + board, (18, 14, 0.6), (x, 10, 24), navy, "SmoothPlastic")
+        b.box("Decor", "LeaderboardFrame", (19, 15, 0.4), (x, 10, 24.5), (30, 34, 42), "Metal")
+        b.box("Decor", "LeaderboardTopStrip", (19, 0.5, 0.8), (x, 17.6, 24), color, "Neon")
+        for dx in (-7, 7):
+            b.box("Decor", "LeaderboardPost", (0.8, 3, 0.8), (x + dx, 1.5, 24.5), (30, 34, 42), "Metal")
+        b.box("Decor", "LeaderboardLight", (6, 0.4, 1.4), (x, 18.4, 22.6), (255, 248, 235), "Neon",
+              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+                  "Face": "Bottom", "Range": 18, "Brightness": 2, "Angle": 70, "Color": rgb(255, 244, 228)}}])
+
+    # ---------- Siegertreppchen (Top 3 Ranked) in der Hallenmitte, Statuen setzt der Server ----------
+    for place, x, h, color in ((1, 0, 4.5, (250, 205, 70)), (2, -8, 3.2, (200, 205, 215)), (3, 8, 2.2, (205, 130, 70))):
+        b.box("Decor", "PodiumBase", (7.6, h, 7.6), (x, h / 2, -2), (30, 34, 42), "Metal")
+        b.box("Decor", "PodiumTop", (7.8, 0.4, 7.8), (x, h + 0.2, -2), color, "Metal")
+        b.box("Decor", "PodiumEdge", (7.8, 0.3, 0.3), (x, h - 0.4, -5.9), color, "Neon")
+        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (x, h + 0.5, -2), color, "SmoothPlastic",
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+        b.sign("PodiumNumber", (3, 2, 0.3), (x, h / 2, -5.95), str(place), (30, 34, 42), color)
+    b.add("Decor", "PodiumGlow", (0.2, 26, 26), (0, 0.3, -2), (250, 205, 70), "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.75, "CanCollide": False},
+          children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
+              "Range": 20, "Brightness": 1.5, "Color": rgb(255, 220, 140)}}])
+    b.sign2("PodiumTitle", (22, 4, 0.4), (0, 16, -2), "TOP 3 · RANKED", "DIE BESTEN SPIELER DER SAISON",
+            navy, (250, 205, 70), (235, 242, 248), glow=(250, 205, 70))
+
     # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
     b.box("Decor", "MissionBoard", (26, 14, 0.6), (0, 14, D0 + 0.4), navy, "SmoothPlastic", angles=(0, 180, 0))
 

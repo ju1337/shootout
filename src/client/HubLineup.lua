@@ -11,6 +11,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local AgentFigure = require(Shared.AgentFigure)
 local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
+local RankConfig = require(Shared.RankConfig)
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -122,8 +123,108 @@ local function buildMissionBoard()
 	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(update)
 end
 
+-- Bestenlisten-Tafeln im Hub (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
+local BOARD_INFO = {
+	Elo = { Title = "🏆  RANKED · ELO", Color = Color3.fromRGB(250, 205, 70) },
+	Kills = { Title = "☠  MEISTE KILLS", Color = Color3.fromRGB(230, 60, 70) },
+	Level = { Title = "★  HÖCHSTES LEVEL", Color = Color3.fromRGB(40, 210, 230) },
+	Wins = { Title = "✓  MEISTE SIEGE", Color = Color3.fromRGB(90, 220, 110) },
+}
+local PLACE_COLORS = { Color3.fromRGB(250, 205, 70), Color3.fromRGB(200, 205, 215), Color3.fromRGB(205, 130, 70) }
+
+local function formatValue(board, value)
+	value = tonumber(value) or 0
+	if board == "Elo" then
+		return value .. "  " .. RankConfig.Get(value).Display, RankConfig.Get(value).Color
+	elseif board == "Level" then
+		local prestige, level = value // 1000, value % 1000
+		return (prestige > 0 and ("P" .. prestige .. " · ") or "") .. "LV " .. level, nil
+	end
+	local text = tostring(math.floor(value))
+	return text:reverse():gsub("(%d%d%d)", "%1."):reverse():gsub("^%.", ""), nil
+end
+
+local function buildLeaderboards()
+	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	for board, info in BOARD_INFO do
+		local part = decor:WaitForChild("Leaderboard_" .. board, 10)
+		if part then
+			local surface = Instance.new("SurfaceGui")
+			surface.Face = Enum.NormalId.Front
+			surface.LightInfluence = 0
+			surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			surface.PixelsPerStud = 40
+			surface.Adornee = part
+			surface.Parent = player:WaitForChild("PlayerGui")
+			local title = Instance.new("TextLabel")
+			title.Size = UDim2.new(1, 0, 0.13, 0)
+			title.BackgroundColor3 = info.Color
+			title.BackgroundTransparency = 0.15
+			title.BorderSizePixel = 0
+			title.Font = Enum.Font.GothamBlack
+			title.TextScaled = true
+			title.TextColor3 = Color3.fromRGB(14, 22, 36)
+			title.Text = info.Title
+			title.Parent = surface
+			local rows = {}
+			for i = 1, 10 do
+				local row = Instance.new("Frame")
+				row.Position = UDim2.new(0.03, 0, 0.15 + (i - 1) * 0.084, 0)
+				row.Size = UDim2.new(0.94, 0, 0.076, 0)
+				row.BackgroundColor3 = Color3.fromRGB(24, 40, 62)
+				row.BackgroundTransparency = i % 2 == 0 and 0.4 or 0.75
+				row.BorderSizePixel = 0
+				row.Parent = surface
+				local function cell(x, w, align, font)
+					local label = Instance.new("TextLabel")
+					label.Position = UDim2.new(x, 0, 0.08, 0)
+					label.Size = UDim2.new(w, 0, 0.84, 0)
+					label.BackgroundTransparency = 1
+					label.Font = font
+					label.TextScaled = true
+					label.TextColor3 = Color3.fromRGB(235, 242, 248)
+					label.TextXAlignment = align
+					label.Text = ""
+					label.Parent = row
+					return label
+				end
+				rows[i] = {
+					Frame = row,
+					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.GothamBlack),
+					Name = cell(0.13, 0.5, Enum.TextXAlignment.Left, Enum.Font.GothamBold),
+					Value = cell(0.6, 0.38, Enum.TextXAlignment.Right, Enum.Font.Oswald),
+				}
+			end
+			local function update()
+				local ok, list = pcall(HttpService.JSONDecode, HttpService,
+					ReplicatedStorage:GetAttribute("Leaderboard_" .. board) or "[]")
+				list = ok and type(list) == "table" and list or {}
+				for i, row in rows do
+					local entry = list[i]
+					row.Place.Text = entry and ("#" .. i) or ""
+					row.Place.TextColor3 = PLACE_COLORS[i] or Color3.fromRGB(130, 155, 175)
+					row.Name.Text = entry and tostring(entry.Name) or (i == 1 and "Noch keine Einträge" or "")
+					local isMe = entry and entry.UserId == player.UserId
+					row.Name.TextColor3 = isMe and Color3.fromRGB(40, 210, 230) or Color3.fromRGB(235, 242, 248)
+					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(28, 62, 78) or Color3.fromRGB(24, 40, 62)
+					if entry then
+						local text, color = formatValue(board, entry.Value)
+						row.Value.Text = text
+						row.Value.TextColor3 = color or info.Color
+					else
+						row.Value.Text = ""
+					end
+				end
+			end
+			update()
+			ReplicatedStorage:GetAttributeChangedSignal("Leaderboard_" .. board):Connect(update)
+		end
+	end
+end
+
 function HubLineup.Init()
 	task.spawn(buildMissionBoard)
+	task.spawn(buildLeaderboards)
 	rebuild()
 	player.AttributeChanged:Connect(function(name)
 		if name == "Mode" or name == "Agent" or name == "Equipped" or name == "Owned" or name == "Loadouts"

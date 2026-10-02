@@ -121,14 +121,14 @@
       "Size": [
        12,
        0.06,
-       56
+       40
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
          0.23,
-         -22
+         -30
         ],
         "orientation": [
          [
@@ -167,14 +167,14 @@
       "Size": [
        0.5,
        0.08,
-       56
+       40
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          -6.2,
          0.24,
-         -22
+         -30
         ],
         "orientation": [
          [
@@ -214,14 +214,14 @@
       "Size": [
        0.5,
        0.08,
-       56
+       40
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          6.2,
          0.24,
-         -22
+         -30
         ],
         "orientation": [
          [
@@ -6795,6 +6795,2096 @@
          }
         }
        ]
+      }
+     ]
+    },
+    {
+     "Name": "Leaderboard_Elo",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       14,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -31,
+         10,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       15,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -31,
+         10,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardTopStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       0.5,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -31,
+         17.6,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9804,
+       0.8039,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -38,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -24,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       0.4,
+       1.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -31,
+         18.4,
+         22.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 18,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9569,
+         0.8941
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "Leaderboard_Kills",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       14,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -53,
+         10,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       15,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -53,
+         10,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardTopStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       0.5,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -53,
+         17.6,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.2353,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -60,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -46,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       0.4,
+       1.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -53,
+         18.4,
+         22.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 18,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9569,
+         0.8941
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "Leaderboard_Level",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       14,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         31,
+         10,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       15,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         31,
+         10,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardTopStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       0.5,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         31,
+         17.6,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         24,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       0.4,
+       1.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         31,
+         18.4,
+         22.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 18,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9569,
+         0.8941
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "Leaderboard_Wins",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18,
+       14,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         53,
+         10,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       15,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         53,
+         10,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardTopStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       19,
+       0.5,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         53,
+         17.6,
+         24
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.8627,
+       0.4314
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         46,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardPost",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.8,
+       3,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         60,
+         1.5,
+         24.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LeaderboardLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       0.4,
+       1.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         53,
+         18.4,
+         22.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 18,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9569,
+         0.8941
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.6,
+       4.5,
+       7.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         2.25,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.4,
+       7.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         4.7,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9804,
+       0.8039,
+       0.2745
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.3,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         4.1,
+         -5.9
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9804,
+       0.8039,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       2,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         2.25,
+         -5.95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "1",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.9804,
+           0.8039,
+           0.2745
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.6,
+       3.2,
+       7.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         1.6,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.4,
+       7.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         3.4,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8431
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.3,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         2.8,
+         -5.9
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8431
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       2,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         1.6,
+         -5.95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "2",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.7843,
+           0.8039,
+           0.8431
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.6,
+       2.2,
+       7.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         1.1,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.4,
+       7.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         2.4,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8039,
+       0.5098,
+       0.2745
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.8,
+       0.3,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         1.8,
+         -5.9
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8039,
+       0.5098,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PodiumNumber",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       2,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         1.1,
+         -5.95
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "3",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.8039,
+           0.5098,
+           0.2745
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "PodiumGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.2,
+       26,
+       26
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         0.3,
+         -2
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9804,
+       0.8039,
+       0.2745
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.75,
+      "CanCollide": false
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "PointLight",
+       "Properties": {
+        "Range": 20,
+        "Brightness": 1.5,
+        "Color": [
+         1.0,
+         0.8627,
+         0.549
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PodiumTitle",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       4,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         16,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0549,
+       0.0863,
+       0.1412
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "TOP 3 \u00b7 RANKED",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.9804,
+           0.8039,
+           0.2745
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "DIE BESTEN SPIELER DER SAISON",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.9216,
+           0.949,
+           0.9725
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.9804,
+           0.8039,
+           0.2745
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.9804,
+         0.8039,
+         0.2745
+        ]
+       }
       }
      ]
     },
@@ -17645,6 +19735,159 @@
       "Duration": 0,
       "AllowTeamChangeOnTouch": false,
       "CanCollide": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Podium",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Podium1",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         5.0,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9804,
+       0.8039,
+       0.2745
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Podium2",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -8,
+         3.7,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8431
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Podium3",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       0.2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         8,
+         2.7,
+         -2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8039,
+       0.5098,
+       0.2745
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
      }
     }
    ]
