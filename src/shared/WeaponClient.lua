@@ -118,7 +118,8 @@ local function updateViewModel()
 	end
 	if current and GunModels.Info[current] then
 		local sleeve = Cosmetics.AgentColors(player, agentId())
-		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve)
+		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
+			AttachmentConfig.EquippedList(player, current))
 		viewModel:Draw()
 	end
 end

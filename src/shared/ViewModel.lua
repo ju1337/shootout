@@ -76,11 +76,11 @@ local function armPart(name, color, material, parent)
 end
 
 -- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten)
-function ViewModel.new(weaponName, skin, sleeveColor)
+function ViewModel.new(weaponName, skin, sleeveColor, attachments)
 	local self = setmetatable({}, ViewModel)
 	self.Weapon = weaponName
 	self.Info = GunModels.Info[weaponName]
-	self.Model = GunModels.Build(weaponName, skin)
+	self.Model = GunModels.Build(weaponName, skin, attachments)
 	self.Model:ScaleTo(SCALE)
 	self.Model.Name = "ViewModel"
 	self.Parts = {}
@@ -88,7 +88,7 @@ function ViewModel.new(weaponName, skin, sleeveColor)
 		if part:IsA("BasePart") then
 			table.insert(self.Parts, {
 				Part = part,
-				Rest = scaled(GunModels.Rest(weaponName, part.Name)),
+				Rest = scaled(part:GetAttribute("Rest") or GunModels.Rest(weaponName, part.Name)),
 				Group = part:GetAttribute("Group"),
 				Hidden = part:GetAttribute("Hidden") == true,
 				Transparency = part.Transparency,

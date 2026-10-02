@@ -58,9 +58,9 @@ end
 
 -- Waffe mit Skin von der Seite zeigen; die Kamera rückt so weit weg, dass die ganze Waffe ins Bild passt
 -- (aspect = Breite / Höhe der Vorschau, fill = Anteil der Bildbreite)
-local function showWeapon(view, weaponName, skin, aspect, fill)
+local function showWeapon(view, weaponName, skin, aspect, fill, attachments)
 	view:ClearAllChildren()
-	local model = GunModels.Build(weaponName, skin)
+	local model = GunModels.Build(weaponName, skin, attachments)
 	model.Parent = view
 	local box, size = model:GetBoundingBox()
 	local halfV = math.rad(15)
@@ -356,7 +356,8 @@ function LobbyPages.Loadout(page, goToShop)
 		-- große Vorschau mit dem ausgerüsteten Skin
 		if mode == "Weapon" then
 			title.Text = upper(WeaponConfig.Get(selected).DisplayName)
-			showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75)
+			showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75,
+				AttachmentConfig.EquippedList(player, selected))
 		else
 			local agent = AgentConfig.Get(selected)
 			title.Text = agent.Name
@@ -398,13 +399,11 @@ function LobbyPages.Loadout(page, goToShop)
 	tabs(page, { "WAFFEN", "AGENTEN" }, 0, 0, 300, function(name)
 		mode = name == "WAFFEN" and "Weapon" or "Agent"
 		selected = mode == "Weapon" and WEAPON_ORDER[1] or AgentConfig.Agents[1].Id
-		if mode == "Agent" and rightMode ~= "SKINS" then
-			selectRight("SKINS") -- Agenten haben keine Aufsätze
-		end
+		-- Waffen öffnen mit den Aufsätzen, Agenten haben nur Skins
+		selectRight(mode == "Weapon" and "AUFSÄTZE" or "SKINS")
 		fillList()
 		fillOptions()
 	end)("WAFFEN")
-	selectRight("SKINS")
 	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true, Attachments = true, Coins = true } }
 end
 

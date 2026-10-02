@@ -81,6 +81,17 @@ function AttachmentConfig.Equipped(player, weaponName)
 	return AttachmentConfig.Data(player).Equipped[weaponName] or {}
 end
 
+-- Ausgerüstete und gekaufte Aufsätze einer Waffe als Liste von Ids (für die 3D-Modelle)
+function AttachmentConfig.EquippedList(player, weaponName)
+	local list = {}
+	for _, id in AttachmentConfig.Equipped(player, weaponName) do
+		if byId[id] and AttachmentConfig.Owns(player, weaponName, id) then
+			table.insert(list, id)
+		end
+	end
+	return list
+end
+
 local NEUTRAL = { Recoil = 1, Spread = 1, HipSpread = 1, MoveSpread = 1, Range = 1, Mag = 1, Reload = 1 }
 
 -- Zusammengerechnete Wirkung der ausgerüsteten Aufsätze einer Waffe (alle Faktoren, 1 = keine Änderung)

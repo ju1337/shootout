@@ -119,7 +119,8 @@ local function giveTools(player, state)
 	state.Tools = {}
 	for _, name in state.Loadout do
 		local skin = Cosmetics.WeaponSkin(player, agent.Id, name)
-		local tool = GunModels.BuildTool(name, WeaponConfig.Get(name).DisplayName, skin)
+		local tool = GunModels.BuildTool(name, WeaponConfig.Get(name).DisplayName, skin,
+			AttachmentConfig.EquippedList(player, name))
 		tool.Parent = backpack
 		state.Tools[name] = tool
 	end

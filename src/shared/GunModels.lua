@@ -296,9 +296,83 @@ function GunModels.GroupParts(container, group)
 	return list
 end
 
+-- Waffen-Aufsätze als Teile an das Modell bauen (Modell-Einheiten, Lauf zeigt nach -Z).
+-- attachments = Liste der Aufsatz-Ids (AttachmentConfig), z.B. { "Compensator", "Laser" }
+local ATTACH_DARK = Color3.fromRGB(32, 33, 36)
+local function attachPart(model, name, size, cframe, color, material, group, neon)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.CFrame = cframe
+	part.Color = color or ATTACH_DARK
+	part.Material = neon and Enum.Material.Neon or (material or Enum.Material.Metal)
+	if group then
+		part:SetAttribute("Group", group)
+	end
+	part.Parent = model
+	return part
+end
+
+local function addAttachments(model, weaponName, attachments)
+	local info = GunModels.Info[weaponName]
+	if not info or not attachments then
+		return
+	end
+	local has = {}
+	for _, id in attachments do
+		has[id] = true
+	end
+	local muzzle = info.Muzzle
+	local long = info.Long
+	if has.Compensator then
+		attachPart(model, "AttCompensator", V(0.26, 0.26, 0.34), CFrame.new(muzzle + V(0, 0, -0.17)))
+		attachPart(model, "AttCompensatorPort", V(0.28, 0.06, 0.12), CFrame.new(muzzle + V(0, 0.1, -0.2)),
+			Color3.fromRGB(70, 72, 76))
+	elseif has.MuzzleBrake then
+		attachPart(model, "AttBrake", V(0.32, 0.22, 0.3), CFrame.new(muzzle + V(0, 0, -0.15)))
+		for k = 0, 1 do
+			attachPart(model, "AttBrakeRib", V(0.36, 0.06, 0.05), CFrame.new(muzzle + V(0, 0, -0.08 - k * 0.12)),
+				Color3.fromRGB(70, 72, 76))
+		end
+	end
+	if long and has.LongBarrel then
+		attachPart(model, "AttLongBarrel", V(0.13, 0.13, 0.55), CFrame.new(muzzle + V(0, 0, -0.27)))
+	elseif long and has.ShortBarrel then
+		attachPart(model, "AttShroud", V(0.24, 0.24, 0.3), CFrame.new(muzzle + V(0, 0, 0.25)), Color3.fromRGB(55, 58, 62))
+	end
+	if long and info.LeftHand then
+		local hand = info.LeftHand
+		if has.VerticalGrip then
+			attachPart(model, "AttGrip", V(0.15, 0.48, 0.17), CFrame.new(hand + V(0.03, -0.32, 0.12)))
+		elseif has.Laser then
+			attachPart(model, "AttLaser", V(0.12, 0.12, 0.34), CFrame.new(hand + V(0.17, 0.08, -0.15)))
+			attachPart(model, "AttLaserDot", V(0.06, 0.06, 0.02), CFrame.new(hand + V(0.17, 0.08, -0.33)),
+				Color3.fromRGB(255, 50, 40), nil, nil, true)
+		end
+	end
+	local mag = model:FindFirstChild("Magazine") or model:FindFirstChild("Box")
+	if mag then
+		if has.ExtendedMag then
+			-- länger nach unten
+			local extra = mag.Size.Y * 0.35
+			mag.Size += V(0, extra, 0)
+			mag.CFrame *= CFrame.new(0, -extra / 2, 0)
+		elseif has.FastMag then
+			-- zweites Magazin daneben geklebt (schneller Wechsel)
+			local twin = attachPart(model, "AttTwinMag", mag.Size, mag.CFrame * CFrame.new(mag.Size.X + 0.02, 0, 0),
+				mag.Color, mag.Material, "Magazine")
+			attachPart(model, "AttTape", V(mag.Size.X * 2 + 0.06, 0.08, mag.Size.Z + 0.02),
+				mag.CFrame * CFrame.new(mag.Size.X / 2, -mag.Size.Y * 0.15, 0), Color3.fromRGB(140, 120, 70),
+				Enum.Material.Fabric, "Magazine")
+			twin.Name = "AttTwinMag"
+		end
+	end
+end
+
 -- Liefert ein Model mit PrimaryPart "Handle" (Griffpunkt). Alle Parts sind verankert und ohne Kollision.
 -- Teile haben das Attribut "Group" (Animationsgruppe) bzw. "Hidden" (nur in Animationen sichtbar).
-function GunModels.Build(weaponName, skin)
+-- attachments (optional) = ausgerüstete Aufsätze, werden als Teile angebaut.
+function GunModels.Build(weaponName, skin, attachments)
 	local model = Instance.new("Model")
 	model.Name = weaponName
 	for _, def in PARTS[weaponName] do
@@ -343,13 +417,25 @@ function GunModels.Build(weaponName, skin)
 			model.PrimaryPart = part
 		end
 	end
+	addAttachments(model, weaponName, attachments)
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") then
+			part:SetAttribute("Rest", part.CFrame) -- Ruhelage im Modell (auch für angebaute Aufsätze)
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part.Massless = true
+			part.CastShadow = false
+		end
+	end
 	return model
 end
 
 -- Liefert ein Tool (für die Hand des Charakters), verkleinert auf ToolScale. Die Teile hängen über
 -- Welds (Name "GunWeld") am Griff, damit Clients Magazin & Co. beim Nachladen bewegen können.
-function GunModels.BuildTool(weaponName, displayName, skin)
-	local model = GunModels.Build(weaponName, skin)
+function GunModels.BuildTool(weaponName, displayName, skin, attachments)
+	local model = GunModels.Build(weaponName, skin, attachments)
 	model:ScaleTo(GunModels.ToolScale)
 	local tool = Instance.new("Tool")
 	tool.Name = displayName
