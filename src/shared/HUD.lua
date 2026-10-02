@@ -264,7 +264,7 @@ function HUD.Init(weaponClient)
 	-- Eroberungspunkt (Strikeout): Fortschritt beider Teams unter der Modus-Info
 	local objective = make("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 92),
+		Position = UDim2.new(0.5, 0, 0, 128),
 		Size = UDim2.new(0, 420, 0, 52),
 		BackgroundTransparency = 1,
 		Visible = false,
@@ -367,6 +367,43 @@ function HUD.Init(weaponClient)
 				renderSide(enemySide, enemies, UITheme.Colors.Bad)
 			end
 			task.wait(0.3)
+		end
+	end)
+
+	-- ---------- Kompass oben (Blickrichtung) ----------
+	local COMPASS_WIDTH, PX_PER_DEGREE = 440, 2.4
+	local compass = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92),
+		Size = UDim2.new(0, COMPASS_WIDTH, 0, 22), BackgroundColor3 = Color3.fromRGB(10, 13, 22), BackgroundTransparency = 0.45,
+		ClipsDescendants = true, BorderSizePixel = 0 }, gui)
+	UITheme.Corner(compass, 3)
+	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.15, 0.2), NumberSequenceKeypoint.new(0.85, 0.2), NumberSequenceKeypoint.new(1, 1) }) }, compass)
+	local marks = {}
+	local names = { [0] = "N", [45] = "NO", [90] = "O", [135] = "SO", [180] = "S", [225] = "SW", [270] = "W", [315] = "NW" }
+	for degree = 0, 345, 15 do
+		local isMain = names[degree] ~= nil
+		local mark = label({ AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 40, 1, 0),
+			Text = isMain and names[degree] or "|", TextSize = isMain and 15 or 9,
+			TextColor3 = degree % 90 == 0 and UITheme.Colors.Accent or Color3.fromRGB(200, 210, 225),
+			TextXAlignment = Enum.TextXAlignment.Center }, compass)
+		table.insert(marks, { Label = mark, Degree = degree })
+	end
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(0, 2, 0, 6),
+		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, compass)
+	local headingText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 116), Size = UDim2.new(0, 60, 0, 12),
+		Text = "", TextSize = 11, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Center }, gui)
+	game:GetService("RunService").RenderStepped:Connect(function()
+		if not gui.Enabled then
+			return
+		end
+		local look = workspace.CurrentCamera.CFrame.LookVector
+		-- Norden = -Z (wie üblich in Roblox), Grad im Uhrzeigersinn
+		local heading = (math.deg(math.atan2(look.X, -look.Z)) + 360) % 360
+		headingText.Text = tostring(math.floor(heading + 0.5)) .. "°"
+		for _, mark in marks do
+			local delta = ((mark.Degree - heading + 180) % 360) - 180
+			mark.Label.Position = UDim2.new(0.5, delta * PX_PER_DEGREE, 0.5, 0)
+			mark.Label.Visible = math.abs(delta * PX_PER_DEGREE) < COMPASS_WIDTH / 2 + 20
 		end
 	end)
 
