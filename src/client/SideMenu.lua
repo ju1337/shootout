@@ -19,6 +19,8 @@ local UITheme = require(Shared.UITheme)
 local TweenService = game:GetService("TweenService")
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
+local RankConfig = require(Shared.RankConfig)
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
@@ -432,6 +434,133 @@ local function buildQuests()
 	end
 end
 
+-- ---------- STATS + RANKED ----------
+
+local function decodeAttribute(target, name)
+	local raw = target:GetAttribute(name)
+	if type(raw) ~= "string" then
+		return {}
+	end
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, raw)
+	return ok and type(data) == "table" and data or {}
+end
+
+local function ratio(a, b)
+	return b > 0 and a / b or a
+end
+
+local function percent(a, b)
+	return b > 0 and string.format("%d %%", math.floor(a / b * 100 + 0.5)) or "–"
+end
+
+local function buildStats()
+	local frame = makePanel("Stats", "📊  STATISTIK", 1040, 600)
+	-- Linke Seite: Kacheln
+	local grid = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(0, 620, 1, -110),
+		BackgroundTransparency = 1 }, frame)
+	make("UIGridLayout", { CellSize = UDim2.new(0, 145, 0, 84), CellPadding = UDim2.new(0, 10, 0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+	local tiles = {}
+	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Losses", "HSRate", "Accuracy",
+		"AvgDamage", "Revives", "Plants", "Defuses", "RoundsWon", "Favorite" }
+	local titles = { KD = "K/D", Kills = "KILLS", Deaths = "TODE", Assists = "ASSISTS", WinRate = "SIEGQUOTE",
+		Matches = "MATCHES", Wins = "SIEGE", Losses = "NIEDERLAGEN", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
+		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Plants = "BOMBEN GELEGT", Defuses = "ENTSCHÄRFT",
+		RoundsWon = "RUNDEN GEWONNEN", Favorite = "LIEBLINGS-AGENT" }
+	for i, key in order do
+		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
+		make("UICorner", { CornerRadius = UDim.new(0, 4) }, tile)
+		make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = (key == "KD" or key == "WinRate") and ACCENT or BORDER,
+			BorderSizePixel = 0 }, tile)
+		text({ Position = UDim2.new(0, 14, 0, 10), Size = UDim2.new(1, -20, 0, 16), Text = titles[key], TextSize = 11,
+			TextColor3 = GRAY }, tile)
+		tiles[key] = text({ Position = UDim2.new(0, 14, 0, 30), Size = UDim2.new(1, -20, 0, 40), Text = "–", TextSize = 30,
+			Font = UITheme.Fonts.Title, TextScaled = false }, tile)
+	end
+
+	-- Rechte Seite: Ranked
+	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
+		BackgroundColor3 = CARD }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, rankedBox)
+	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "RANKED", TextSize = 13,
+		TextColor3 = ACCENT }, rankedBox)
+	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -32, 0, 50), Text = "", TextSize = 42,
+		Font = UITheme.Fonts.Title }, rankedBox)
+	local eloText = text({ Position = UDim2.new(0, 16, 0, 84), Size = UDim2.new(1, -32, 0, 24), Text = "", TextSize = 18 }, rankedBox)
+	local barBack = make("Frame", { Position = UDim2.new(0, 16, 0, 116), Size = UDim2.new(1, -32, 0, 8),
+		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, rankedBox)
+	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BorderSizePixel = 0 }, barBack)
+	local rankedInfo = text({ Position = UDim2.new(0, 16, 0, 136), Size = UDim2.new(1, -32, 0, 84), Text = "", TextSize = 15,
+		Font = UITheme.Fonts.Body, TextColor3 = GRAY, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, rankedBox)
+
+	-- Bestenliste
+	local board = make("Frame", { Position = UDim2.new(0, 668, 0, 312), Size = UDim2.new(1, -692, 1, -352),
+		BackgroundColor3 = CARD }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, board)
+	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "TOP 10 · ELO", TextSize = 13,
+		TextColor3 = ACCENT }, board)
+	local boardText = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 1, -44), Text = "", TextSize = 15,
+		Font = UITheme.Fonts.Body, TextYAlignment = Enum.TextYAlignment.Top, RichText = true }, board)
+
+	panels.Stats.Refresh = function()
+		local stats = decodeAttribute(player, "Stats")
+		local function get(key)
+			return stats[key] or 0
+		end
+		tiles.KD.Text = string.format("%.2f", ratio(get("Kills"), get("Deaths")))
+		tiles.Kills.Text = tostring(get("Kills"))
+		tiles.Deaths.Text = tostring(get("Deaths"))
+		tiles.Assists.Text = tostring(get("Assists"))
+		tiles.WinRate.Text = percent(get("Wins"), get("Matches"))
+		tiles.Matches.Text = tostring(get("Matches"))
+		tiles.Wins.Text = tostring(get("Wins"))
+		tiles.Losses.Text = tostring(get("Losses"))
+		tiles.HSRate.Text = percent(get("Headshots"), get("Kills"))
+		tiles.Accuracy.Text = percent(get("ShotsHit"), get("ShotsFired"))
+		tiles.AvgDamage.Text = tostring(math.floor(ratio(get("Damage"), math.max(1, get("Matches")))))
+		tiles.Revives.Text = tostring(get("Revives"))
+		tiles.Plants.Text = tostring(get("Plants"))
+		tiles.Defuses.Text = tostring(get("Defuses"))
+		tiles.RoundsWon.Text = tostring(get("RoundsWon"))
+		local favorite, most = nil, 0
+		for _, agent in AgentConfig.Agents do
+			if get("Kills_" .. agent.Id) > most then
+				favorite, most = agent, get("Kills_" .. agent.Id)
+			end
+		end
+		tiles.Favorite.Text = favorite and favorite.Name or "–"
+		tiles.Favorite.TextColor3 = favorite and favorite.Color or Color3.new(1, 1, 1)
+
+		local ranked = decodeAttribute(player, "RankedData")
+		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
+		local rank = RankConfig.Get(elo)
+		local matches = ranked.Matches or 0
+		if matches < RankConfig.PlacementMatches then
+			rankName.Text = "PLATZIERUNG"
+			rankName.TextColor3 = GRAY
+			rankedInfo.Text = "Noch " .. (RankConfig.PlacementMatches - matches) .. " Platzierungsspiele bis zu deinem Rang."
+		else
+			rankName.Text = rank.Display
+			rankName.TextColor3 = rank.Color
+			rankedInfo.Text = "Peak: " .. (ranked.Peak or elo) .. " ELO  ·  " .. RankConfig.Get(ranked.Peak or elo).Display
+		end
+		eloText.Text = elo .. " ELO"
+		bar.Size = UDim2.new(rank.Progress, 0, 1, 0)
+		bar.BackgroundColor3 = rank.Color
+		rankedInfo.Text ..= "\nRanked: " .. (ranked.Wins or 0) .. " Siege · " .. (ranked.Losses or 0) .. " Niederlagen ("
+			.. percent(ranked.Wins or 0, matches) .. ")"
+
+		local lines = {}
+		for i, entry in decodeAttribute(game:GetService("ReplicatedStorage"), "RankedLeaderboard") do
+			local tier = RankConfig.Get(entry.Elo)
+			local color = string.format("#%02X%02X%02X", tier.Color.R * 255, tier.Color.G * 255, tier.Color.B * 255)
+			table.insert(lines, i .. ".  " .. tostring(entry.Name) .. '   <font color="' .. color .. '">' .. entry.Elo .. "</font>")
+		end
+		boardText.Text = #lines > 0 and table.concat(lines, "\n")
+			or "Noch keine Einträge.\n(Die Bestenliste funktioniert im veröffentlichten Spiel.)"
+	end
+end
+
 -- ---------- BATTLE PASS ----------
 
 local function buildPass()
@@ -631,7 +760,7 @@ end
 -- ---------- Knopfleiste ----------
 
 local function sideButton(icon, label, order, onClick)
-	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 70), BackgroundColor3 = Color3.fromRGB(22, 26, 40),
+	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 62), BackgroundColor3 = Color3.fromRGB(22, 26, 40),
 		BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
 	make("UICorner", { CornerRadius = UDim.new(0, 14) }, b)
 	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1.5 }, b)
@@ -645,9 +774,9 @@ local function sideButton(icon, label, order, onClick)
 		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
 		stroke.Color = BORDER
 	end)
-	text({ Position = UDim2.new(0, 0, 0, 4), Size = UDim2.new(1, 0, 0, 38), Text = icon, TextSize = 28,
+	text({ Position = UDim2.new(0, 0, 0, 3), Size = UDim2.new(1, 0, 0, 34), Text = icon, TextSize = 26,
 		TextXAlignment = Enum.TextXAlignment.Center }, b)
-	text({ Position = UDim2.new(0, 0, 0, 42), Size = UDim2.new(1, 0, 0, 22), Text = label, TextSize = 12,
+	text({ Position = UDim2.new(0, 0, 0, 37), Size = UDim2.new(1, 0, 0, 20), Text = label, TextSize = 12,
 		TextXAlignment = Enum.TextXAlignment.Center }, b)
 	b.Activated:Connect(onClick)
 	return b
@@ -665,16 +794,24 @@ local function buildColumn()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
+		{ "📊", "STATS", function() togglePanel("Stats") end },
 		{ "🎫", "PASS", function() togglePanel("Pass") end },
 		{ "📋", "AUFTRÄGE", function() togglePanel("Quests") end },
 		{ "🎁", "TÄGLICH", function() togglePanel("Daily") end },
 		{ "🎟", "CODES", function() togglePanel("Codes") end },
 		{ "⚙", "OPTIONEN", function() togglePanel("Settings") end },
 	}
-	local height = #entries * 70 + (#entries - 1) * 8
+	local height = #entries * 62 + (#entries - 1) * 6
 	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 24),
 		Size = UDim2.new(0, 96, 0, height), BackgroundTransparency = 1 }, gui)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, column)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, column)
+	-- Auf kleinen Bildschirmen die ganze Leiste verkleinern
+	local columnScale = make("UIScale", {}, column)
+	local function updateColumnScale()
+		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.Y - 140) / height, 0.55, 1)
+	end
+	updateColumnScale()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
 	local daily, quests
 	for i, entry in entries do
 		local b = sideButton(entry[1], entry[2], i, entry[3])
@@ -717,6 +854,7 @@ function SideMenu.Init()
 	buildColumn()
 	buildShop()
 	buildInventory()
+	buildStats()
 	buildPass()
 	buildQuests()
 	buildDaily()
@@ -743,7 +881,7 @@ function SideMenu.Init()
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
-			or name == "PassXP" then
+			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" then
 			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()

@@ -11,6 +11,7 @@ BuyConfig.MaxMoney = 9000
 BuyConfig.Rewards = {
 	Kill = 200,
 	Revive = 100,
+	Assist = 50,
 	RoundWin = 1000,
 	RoundLoss = 600,
 }

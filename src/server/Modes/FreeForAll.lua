@@ -106,6 +106,11 @@ local function finishRound(winner)
 	for bot in bots do
 		bot.CanFight = false
 	end
+	-- Statistik: jede FFA-Runde zählt als Match
+	for player in members do
+		ProgressService.AddStat(player, "Matches", 1)
+		ProgressService.AddStat(player, player == winner and "Wins" or "Losses", 1)
+	end
 	if winner then
 		announce(winner.Name .. " gewinnt die Runde!")
 		ProgressService.AddXP(winner, ProgressService.ActiveAgent(winner), AgentConfig.XPRewards.FFAWin, "Rundensieg")

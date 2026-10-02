@@ -17,6 +17,7 @@ local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local BuyConfig = require(Shared.BuyConfig)
 local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
+local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local WeaponService = {}
 
@@ -217,7 +218,12 @@ local function onFire(player, origin, direction, aiming)
 			end
 		end
 	end
+	ProgressService.AddStat(player, "ShotsFired", 1)
+	if next(hits) then
+		ProgressService.AddStat(player, "ShotsHit", 1)
+	end
 	for _, hit in hits do
+		ProgressService.AddStat(player, "Damage", math.floor(hit.Damage + 0.5))
 		player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(hit.Damage + 0.5))
 		Remotes.Hitmarker:FireClient(player, hit.Headshot, hit.Killed, hit.Damage, hit.Position, hit.Name, hit.Downed)
 	end

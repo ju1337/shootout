@@ -20,6 +20,13 @@ function Damage.LastHit(model)
 	return lastHit[model]
 end
 
+-- Schaden pro Spieler am Charakter (für Assists): [model] = { [Player] = Schaden }
+local contributors = setmetatable({}, { __mode = "k" })
+
+function Damage.Contributors(model)
+	return contributors[model] or {}
+end
+
 -- Schaden anwenden. attacker = { Player = ..., BotName = ..., Weapon = ..., Headshot = ... }
 -- Gibt zurück: tatsächlicher Schaden, getötet?, niedergeschlagen?
 function Damage.Apply(model, humanoid, amount, attacker)
@@ -55,7 +62,12 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		return absorbed + before, false, true
 	end
 	humanoid.Health = math.max(0, before - amount)
-	return absorbed + before - humanoid.Health, humanoid.Health <= 0, false
+	local dealt = absorbed + before - humanoid.Health
+	if attacker and attacker.Player then
+		contributors[model] = contributors[model] or {}
+		contributors[model][attacker.Player] = (contributors[model][attacker.Player] or 0) + dealt
+	end
+	return dealt, humanoid.Health <= 0, false
 end
 
 return Damage

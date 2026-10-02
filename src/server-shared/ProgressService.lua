@@ -17,6 +17,7 @@ local GameSettings = require(Shared.GameSettings)
 local Cosmetics = require(Shared.Cosmetics)
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
+local RankConfig = require(Shared.RankConfig)
 
 local ProgressService = {}
 
@@ -27,7 +28,8 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {} }
+	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
+		Stats = {}, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -77,10 +79,13 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
-	player:SetAttribute("RankPoints", profile.RankPoints or 0)
 	player:SetAttribute("PassXP", profile.PassXP or 0)
 	player:SetAttribute("UnlockedAgents", HttpService:JSONEncode(profile.Agents or {}))
 	player:SetAttribute("ClientSettings", HttpService:JSONEncode(profile.Settings or {}))
+	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
+	local ranked = profile.Ranked or {}
+	player:SetAttribute("Elo", ranked.Elo or RankConfig.StartElo)
+	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))
 	ensureQuests(player, profile)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
 end
@@ -110,14 +115,51 @@ function ProgressService.AddPassXP(player, amount)
 	ProgressService.Sync(player)
 end
 
--- Rangpunkte ändern (Ranked), nie unter 0
-function ProgressService.AddRankPoints(player, amount)
+-- ---------- Statistik ----------
+-- Dauerhafte Werte (Kills, Deaths, Assists, Headshots, Damage, ShotsFired, ShotsHit, Revives,
+-- Plants, Defuses, Matches, Wins, Losses, RoundsWon, Kills_<AgentId>). Wird gebündelt gesynct.
+local dirty = {}
+
+function ProgressService.AddStat(player, key, amount)
 	local profile = profiles[player]
 	if not profile then
 		return
 	end
-	profile.RankPoints = math.max(0, (profile.RankPoints or 0) + amount)
+	profile.Stats = profile.Stats or {}
+	profile.Stats[key] = (profile.Stats[key] or 0) + (amount or 1)
+	dirty[player] = true
+end
+
+-- ---------- Ranked (ELO) ----------
+
+function ProgressService.GetElo(player)
+	local profile = profiles[player]
+	return profile and profile.Ranked and profile.Ranked.Elo or RankConfig.StartElo
+end
+
+function ProgressService.GetRankedMatches(player)
+	local profile = profiles[player]
+	return profile and profile.Ranked and profile.Ranked.Matches or 0
+end
+
+-- Ergebnis eines Ranked-Matches eintragen. Gibt die neue ELO zurück.
+function ProgressService.ApplyRanked(player, change, won)
+	local profile = profiles[player]
+	if not profile then
+		return RankConfig.StartElo
+	end
+	local ranked = profile.Ranked or { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 }
+	ranked.Elo = math.max(0, (ranked.Elo or RankConfig.StartElo) + change)
+	ranked.Peak = math.max(ranked.Peak or 0, ranked.Elo)
+	ranked.Matches = (ranked.Matches or 0) + 1
+	if won then
+		ranked.Wins = (ranked.Wins or 0) + 1
+	else
+		ranked.Losses = (ranked.Losses or 0) + 1
+	end
+	profile.Ranked = ranked
 	ProgressService.Sync(player)
+	return ranked.Elo
 end
 
 -- Spielereignis für Aufträge zählen (event wie in QuestConfig, z.B. "Kill")
@@ -300,6 +342,18 @@ function ProgressService.Init()
 	game:BindToClose(function()
 		for _, player in Players:GetPlayers() do
 			save(player)
+		end
+	end)
+	-- Statistik gebündelt alle 2 Sekunden an die Clients
+	task.spawn(function()
+		while true do
+			task.wait(2)
+			for player in dirty do
+				dirty[player] = nil
+				if player.Parent then
+					player:SetAttribute("Stats", HttpService:JSONEncode(profiles[player] and profiles[player].Stats or {}))
+				end
+			end
 		end
 	end)
 	task.spawn(function()

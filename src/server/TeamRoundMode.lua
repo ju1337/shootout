@@ -38,6 +38,7 @@ local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
 local DownedService = require(ServerShared.DownedService)
 local BuyService = require(ServerShared.BuyService)
+local LeaderboardService = require(ServerShared.LeaderboardService)
 local SpawnUtil = require(script.Parent.SpawnUtil)
 local BotService = require(script.Parent.BotService)
 
@@ -705,6 +706,7 @@ function TeamRoundMode.new(config)
 			ProgressService.QuestEvent(player, "RoundPlayed", 1)
 			if roundWinner and player.Team == roundWinner then
 				ProgressService.QuestEvent(player, "RoundWin", 1)
+				ProgressService.AddStat(player, "RoundsWon", 1)
 			end
 		end
 		-- Geld für die nächste Kaufphase: Sieger mehr, Verlierer etwas weniger
@@ -723,15 +725,48 @@ function TeamRoundMode.new(config)
 		if roundWinner and scores[roundWinner] >= roundsToWin() then
 			announce("Team " .. roundWinner.Name .. " gewinnt das Match!")
 			giveTeamXP(roundWinner, "MatchWin", "Matchsieg")
-			-- Ranked: Rangpunkte, wenn beide Teams echte Spieler hatten
+			-- Statistik: Match gespielt, gewonnen/verloren
+			for player in members do
+				ProgressService.AddStat(player, "Matches", 1)
+				ProgressService.AddStat(player, player.Team == roundWinner and "Wins" or "Losses", 1)
+			end
+			-- Ranked: ELO nach Team-Durchschnitt, nur wenn beide Teams echte Spieler hatten
 			local rankTexts = {}
 			if config.Ranked and #teamA:GetPlayers() > 0 and #teamB:GetPlayers() > 0 then
+				local function averageElo(team)
+					local sum, n = 0, 0
+					for _, player in team:GetPlayers() do
+						sum += ProgressService.GetElo(player)
+						n += 1
+					end
+					return n > 0 and sum / n or RankConfig.StartElo
+				end
+				local averages = { [teamA] = averageElo(teamA), [teamB] = averageElo(teamB) }
+				-- MVP bekommt einen kleinen Bonus
+				local mvp, best = nil, -1
+				for player in members do
+					local score = KillService.GetKills(player) * 1000 + (player:GetAttribute("Damage") or 0)
+					if score > best then
+						mvp, best = player, score
+					end
+				end
 				for player in members do
 					local won = player.Team == roundWinner
-					ProgressService.AddRankPoints(player, won and RankConfig.WinPoints or -RankConfig.LossPoints)
-					local rank = RankConfig.Get(player:GetAttribute("RankPoints"))
-					rankTexts[player] = (won and "+" .. RankConfig.WinPoints or "−" .. RankConfig.LossPoints)
-						.. " RP  ·  Rang " .. rank.Name
+					local before = ProgressService.GetElo(player)
+					local change = RankConfig.Change(won, averages[player.Team], averages[otherTeam(player.Team)],
+						ProgressService.GetRankedMatches(player), player == mvp)
+					local after = ProgressService.ApplyRanked(player, change, won)
+					LeaderboardService.Submit(player, after)
+					local oldRank, newRank = RankConfig.Get(before), RankConfig.Get(after)
+					local text = (change >= 0 and "+" or "−") .. math.abs(change) .. " ELO  ·  " .. newRank.Display
+						.. "  (" .. after .. ")"
+					if newRank.Display ~= oldRank.Display then
+						text ..= change > 0 and "  ·  AUFSTIEG!" or "  ·  Abstieg"
+					end
+					if ProgressService.GetRankedMatches(player) <= RankConfig.PlacementMatches then
+						text ..= "  ·  Platzierung " .. ProgressService.GetRankedMatches(player) .. "/" .. RankConfig.PlacementMatches
+					end
+					rankTexts[player] = text
 				end
 			end
 			sendSummary(roundWinner, rankTexts)

@@ -42,6 +42,7 @@ local function setupPlayer(player)
 				return
 			end
 			player:SetAttribute("Deaths", (player:GetAttribute("Deaths") or 0) + 1)
+			ProgressService.AddStat(player, "Deaths", 1)
 			-- Todesanzeige: wer, womit, wie viel Leben hatte er noch
 			local hit = Damage.LastHit(character)
 			if hit and hit.Model ~= character then
@@ -98,6 +99,22 @@ function KillService.Init()
 				rewards.Kill + (headshot and rewards.Headshot or 0), headshot and "Kopfschuss-Kill" or "Kill")
 			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur in laufenden Team-Matches
 			ProgressService.QuestEvent(killer, "Kill", 1)
+			ProgressService.AddStat(killer, "Kills", 1)
+			ProgressService.AddStat(killer, "Kills_" .. ProgressService.ActiveAgent(killer), 1)
+			if headshot then
+				ProgressService.AddStat(killer, "Headshots", 1)
+			end
+			-- Assists: alle anderen Spieler mit mindestens 25 Schaden am Opfer
+			local victimModel = victim and victim.Character
+			if victimModel then
+				for helper, dealt in Damage.Contributors(victimModel) do
+					if helper ~= killer and helper.Parent and dealt >= 25 then
+						ProgressService.AddStat(helper, "Assists", 1)
+						ProgressService.AddXP(helper, ProgressService.ActiveAgent(helper), AgentConfig.XPRewards.Assist, "Assist")
+						BuyService.AddMoney(helper, BuyConfig.Rewards.Assist, "Assist")
+					end
+				end
+			end
 			if headshot then
 				ProgressService.QuestEvent(killer, "Headshot", 1)
 			end

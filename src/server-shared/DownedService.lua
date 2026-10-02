@@ -127,6 +127,7 @@ local function revive(model, reviverModel)
 		ProgressService.AddXP(reviver, ProgressService.ActiveAgent(reviver), AgentConfig.XPRewards.Revive, "Wiederbelebung")
 		BuyService.AddMoney(reviver, BuyConfig.Rewards.Revive, "Wiederbelebung")
 		ProgressService.QuestEvent(reviver, "Revive", 1)
+		ProgressService.AddStat(reviver, "Revives", 1)
 	end
 end
 

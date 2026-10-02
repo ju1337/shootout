@@ -266,14 +266,14 @@ local function buildTopBar()
 		Text = "", TextSize = 17, Font = F.Title, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
 	local function update()
 		coins.Text = "💰 " .. (player:GetAttribute("Coins") or 0)
-		local points = player:GetAttribute("RankPoints") or 0
-		local tier = RankConfig.Get(points)
-		rank.Text = "🏆 " .. string.upper(tier.Name) .. "  ·  " .. points .. " RP"
+		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
+		local tier = RankConfig.Get(elo)
+		rank.Text = "🏆 " .. tier.Display .. "  ·  " .. elo .. " ELO"
 		rank.TextColor3 = tier.Color
 	end
 	update()
 	player:GetAttributeChangedSignal("Coins"):Connect(update)
-	player:GetAttributeChangedSignal("RankPoints"):Connect(update)
+	player:GetAttributeChangedSignal("Elo"):Connect(update)
 end
 
 local function buildBottomBar()

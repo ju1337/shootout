@@ -17,6 +17,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local BuyService = require(ServerStorage:WaitForChild("ServerShared").BuyService)
+local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local PLANT_TIME = 4         -- Sekunden E halten zum Legen
 local DEFUSE_TIME = 6        -- Sekunden E halten zum Entschärfen
@@ -152,6 +153,7 @@ return function(api)
 		api.Announce("Bombe bei " .. site .. " gelegt!")
 		if entry and entry.Player then
 			BuyService.AddMoney(entry.Player, REWARD, "Bombe gelegt")
+			ProgressService.AddStat(entry.Player, "Plants", 1)
 		end
 	end
 
@@ -267,6 +269,7 @@ return function(api)
 						if defuseProgress >= 1 then
 							if entry.Player then
 								BuyService.AddMoney(entry.Player, REWARD, "Bombe entschärft")
+								ProgressService.AddStat(entry.Player, "Defuses", 1)
 							end
 							api.EndRound(defenders, "Bombe entschärft!")
 							return
