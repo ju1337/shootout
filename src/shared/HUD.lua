@@ -706,16 +706,31 @@ function HUD.Init(weaponClient)
 	end)
 
 	-- Große Meldungen
-	local announceId = 0
+	-- Meldungen nacheinander zeigen: kommt eine neue, bleibt die aktuelle noch mindestens
+	-- ANNOUNCE_MIN Sekunden stehen (z.B. "ACE!" und direkt danach "Team gewinnt die Runde")
+	local ANNOUNCE_MIN = 1.6
+	local queue = {}
+	local running = false
 	function HUD.ShowAnnouncement(text)
-		announceId += 1
-		local myId = announceId
-		announce.Text = text
-		announce.Visible = true
-		task.delay(ANNOUNCE_TIME, function()
-			if announceId == myId then
-				announce.Visible = false
+		table.insert(queue, text)
+		if #queue > 4 then
+			table.remove(queue, 1) -- nicht endlos stauen
+		end
+		if running then
+			return
+		end
+		running = true
+		task.spawn(function()
+			while #queue > 0 do
+				announce.Text = table.remove(queue, 1)
+				announce.Visible = true
+				local shown = 0
+				while shown < ANNOUNCE_TIME and not (shown >= ANNOUNCE_MIN and #queue > 0) do
+					shown += task.wait(0.1)
+				end
 			end
+			announce.Visible = false
+			running = false
 		end)
 	end
 	Remotes.Announce.OnClientEvent:Connect(HUD.ShowAnnouncement)

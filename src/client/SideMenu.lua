@@ -577,10 +577,10 @@ local function buildStats()
 	make("UIGridLayout", { CellSize = UDim2.new(0, 145, 0, 84), CellPadding = UDim2.new(0, 10, 0, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	local tiles = {}
-	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Losses", "HSRate", "Accuracy",
+	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate", "Accuracy",
 		"AvgDamage", "Revives", "Plants", "Defuses", "RoundsWon", "Favorite" }
 	local titles = { KD = "K/D", Kills = "KILLS", Deaths = "TODE", Assists = "ASSISTS", WinRate = "SIEGQUOTE",
-		Matches = "MATCHES", Wins = "SIEGE", Losses = "NIEDERLAGEN", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
+		Matches = "MATCHES", Wins = "SIEGE", Clutches = "CLUTCHES", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
 		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Plants = "BOMBEN GELEGT", Defuses = "ENTSCHÄRFT",
 		RoundsWon = "RUNDEN GEWONNEN", Favorite = "LIEBLINGS-AGENT" }
 	for i, key in order do
@@ -675,7 +675,7 @@ local function buildStats()
 		tiles.WinRate.Text = percent(get("Wins"), get("Matches"))
 		tiles.Matches.Text = tostring(get("Matches"))
 		tiles.Wins.Text = tostring(get("Wins"))
-		tiles.Losses.Text = tostring(get("Losses"))
+		tiles.Clutches.Text = tostring(get("Clutches"))
 		tiles.HSRate.Text = percent(get("Headshots"), get("Kills"))
 		tiles.Accuracy.Text = percent(get("ShotsHit"), get("ShotsFired"))
 		tiles.AvgDamage.Text = tostring(math.floor(ratio(get("Damage"), math.max(1, get("Matches")))))

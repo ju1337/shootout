@@ -83,6 +83,7 @@ function TeamRoundMode.new(config)
 	local timeLeft = nil         -- Restzeit der Runde (nur mit RoundTime)
 	local overtime = false       -- Strikeout: Zeit um, aber das zurückliegende Team steht auf dem Punkt
 	local roundKills = {}        -- [Player] = Kills in dieser Runde (für ACE)
+	local clutches = {}          -- [Team] = { Player, Enemies }: letzter Überlebender gegen mehrere
 	local objective = nil        -- eigenes Ziel des Modus (config.Objective), wird unten erzeugt
 
 	local function makeTeam(teamConfig)
@@ -255,11 +256,30 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Clutch: ein echter Spieler steht allein gegen mindestens 2 Gegner (einmal pro Runde und Team)
+	local function detectClutch(aAlive, bAlive)
+		if config.Tickets or practiceRound then
+			return
+		end
+		for _, pair in { { teamA, aAlive, bAlive }, { teamB, bAlive, aAlive } } do
+			local team, mine, theirs = pair[1], pair[2], pair[3]
+			if mine == 1 and theirs >= 2 and not clutches[team] then
+				for player in alive do
+					if player.Team == team and not DownedService.IsDowned(player.Character) then
+						clutches[team] = { Player = player, Enemies = theirs }
+						Remotes.Announce:FireClient(player, "CLUTCH: 1 gegen " .. theirs .. "!")
+					end
+				end
+			end
+		end
+	end
+
 	local function checkRoundEnd()
 		if not roundActive or spawning then
 			return
 		end
 		local aAlive, bAlive = aliveCount(teamA), aliveCount(teamB)
+		detectClutch(aAlive, bAlive)
 		if practiceRound then
 			-- Übungsrunde: endet erst, wenn niemand mehr im Spiel ist
 			if aAlive + bAlive > 0 then
@@ -655,6 +675,7 @@ function TeamRoundMode.new(config)
 		alive = {}
 		pending = {}
 		roundKills = {}
+		clutches = {}
 		roundWinner = nil
 		local ticketCount = config.Tickets and GameSettings.Get(config.Tickets) or 0
 		tickets[teamA], tickets[teamB] = ticketCount, ticketCount
@@ -765,6 +786,13 @@ function TeamRoundMode.new(config)
 					ProgressService.AddXP(player, ProgressService.ActiveAgent(player), 300, "ACE")
 				end
 			end
+		end
+		-- Clutch gewonnen?
+		local clutch = roundWinner and clutches[roundWinner]
+		if clutch and members[clutch.Player] then
+			announce("★ CLUTCH! " .. clutch.Player.Name .. " gewinnt 1 gegen " .. clutch.Enemies .. "!")
+			ProgressService.AddXP(clutch.Player, ProgressService.ActiveAgent(clutch.Player), 100 * clutch.Enemies, "Clutch")
+			ProgressService.AddStat(clutch.Player, "Clutches", 1)
 		end
 		if roundWinner then
 			scores[roundWinner] += 1
