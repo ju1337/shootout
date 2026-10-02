@@ -49,6 +49,7 @@ local DROP_HEIGHT = 300      -- Absprunghöhe über der Map (DropIn)
 local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
+local OVERTIME_MAX = 30      -- Strikeout: Overtime dauert höchstens so lange (Sekunden)
 local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
 local SPAWN_PROTECTION = 2   -- Schutzschild nach Boden-Spawns
 local RESPAWN_TIME = 5       -- Sekunden bis zum Respawn (mit Ticket)
@@ -80,6 +81,7 @@ function TeamRoundMode.new(config)
 	local roundWinner = nil
 	local roundNumber = 0
 	local timeLeft = nil         -- Restzeit der Runde (nur mit RoundTime)
+	local overtime = false       -- Strikeout: Zeit um, aber das zurückliegende Team steht auf dem Punkt
 	local roundKills = {}        -- [Player] = Kills in dieser Runde (für ACE)
 	local objective = nil        -- eigenes Ziel des Modus (config.Objective), wird unten erzeugt
 
@@ -203,7 +205,8 @@ function TeamRoundMode.new(config)
 
 	local function updateInfo()
 		local a, b = teamA.Name, teamB.Name
-		local clock = timeLeft and string.format("   ·   %d:%02d", timeLeft // 60, math.floor(timeLeft) % 60) or ""
+		local clock = overtime and "   ·   OVERTIME"
+			or timeLeft and string.format("   ·   %d:%02d", timeLeft // 60, math.floor(timeLeft) % 60) or ""
 		if config.Tickets then
 			setText(string.format("%s: %d Tickets · %d leben   |   %d : %d   |   %s: %d Tickets · %d leben%s",
 				a, tickets[teamA] or 0, aliveCount(teamA), scores[teamA], scores[teamB],
@@ -698,21 +701,40 @@ function TeamRoundMode.new(config)
 				if timeLeft <= 0 then
 					local ta, tb = tickets[teamA] or 0, tickets[teamB] or 0
 					local aa, ab = aliveCount(teamA), aliveCount(teamB)
+					local winner
 					if objective and objective.TimeOutWinner then
-						roundWinner = objective.TimeOutWinner()
+						winner = objective.TimeOutWinner()
 					elseif ta ~= tb then
-						roundWinner = ta > tb and teamA or teamB
+						winner = ta > tb and teamA or teamB
 					elseif aa ~= ab then
-						roundWinner = aa > ab and teamA or teamB
-					else
-						roundWinner = nil
+						winner = aa > ab and teamA or teamB
 					end
-					roundActive = false
-					announce("Zeit abgelaufen!")
+					-- Overtime (wie bei RC): solange das zurückliegende Team auf dem Punkt steht, geht es
+					-- weiter (höchstens OVERTIME_MAX Sekunden). Bei Gleichstand reicht irgendwer auf dem Punkt.
+					local contesting = false
+					if config.Capture and elapsed - roundTime < OVERTIME_MAX then
+						if winner then
+							contesting = presence(otherTeam(winner)) > 0
+						else
+							contesting = presence(teamA) + presence(teamB) > 0
+						end
+					end
+					if contesting then
+						if not overtime then
+							overtime = true
+							announce("OVERTIME!")
+							updateInfo()
+						end
+					else
+						roundWinner = winner
+						roundActive = false
+						announce(overtime and "Overtime vorbei!" or "Zeit abgelaufen!")
+					end
 				end
 			end
 		end
 		timeLeft = nil
+		overtime = false
 		pending = {}
 		if objective and objective.RoundEnd then
 			objective.RoundEnd()
