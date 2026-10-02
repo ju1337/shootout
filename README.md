@@ -44,10 +44,13 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz
   und steigt sofort ein
 - **Unendliche Reserve-Munition in allen Modi** (nachladen muss man trotzdem; `WeaponConfig.InfiniteAmmoEverywhere`)
-- **Level immer sichtbar** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links
+- **Level im Match** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links; im Hub steht das Level
+  groß auf der Spielerkarte
 - **Battle Pass, tägliche Aufträge, Shop, Codes**
 - **Map-Rotation** pro Match, Multikills und ACE, Todeskamera, Schnelles Spiel
-- **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel
+- **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel. Bot-Körper werden
+  einmal pro Farbe gebaut und dann geklont; ein abgebrochener oder überholter Spawn baut kein zweites Modell,
+  und Modelle ohne gültigen Bot räumt der BotService nach spätestens 2 s weg (keine „Bot-Massen“ mehr)
 - **Match-HUD wie bei Rogue Company**:
   - oben: Ziel des eigenen Teams („NIMM DEN PUNKT EIN“, „LEGE DIE BOMBE BEI A ODER B“ …), Teamleiste mit
     Agenten-Porträts und Lebensbalken (eigenes Team Cyan links, Gegner rot rechts, ✕ = ausgeschaltet),

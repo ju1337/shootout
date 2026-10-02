@@ -404,9 +404,13 @@ function TeamRoundMode.new(config)
 		if not (roundActive and (config.Tickets or config.Respawn) and who.Team and (tickets[who.Team] or 0) > 0) then
 			return
 		end
+		local isPlayer = typeof(who) == "Instance" and who:IsA("Player")
+		-- Wartet schon auf den Respawn (oder lebt noch)? Dann kein zweites Ticket, sonst käme er doppelt zurück
+		if pending[who] or (not isPlayer and who.Alive) then
+			return
+		end
 		tickets[who.Team] -= 1
 		pending[who] = true
-		local isPlayer = typeof(who) == "Instance" and who:IsA("Player")
 		local done = false
 		local function finish()
 			if done then
@@ -467,7 +471,7 @@ function TeamRoundMode.new(config)
 		local model
 		model = BotService.SpawnModel(bot, cframe, function()
 			useTicket(bot, function()
-				if bots[bot] and bot.Team then
+				if bots[bot] and bot.Team and not bot.Alive then
 					spawnBot(bot, botCFrame(bot.Team))
 					bot.CanFight = true
 				end

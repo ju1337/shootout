@@ -50,6 +50,7 @@ infoFolder.Name = "BotInfo"
 infoFolder.Parent = ReplicatedStorage
 
 local bots = {} -- [bot] = true
+local owners = setmetatable({}, { __mode = "k" }) -- [Modell] = bot (zum Aufräumen verwaister Modelle)
 local nextId = 0
 local random = Random.new()
 
@@ -100,8 +101,10 @@ function BotService.All(modeId)
 	return list
 end
 
--- Modell entfernen (Bot bleibt angemeldet, z.B. zwischen Drop-Runden)
+-- Modell entfernen (Bot bleibt angemeldet, z.B. zwischen Drop-Runden).
+-- Bricht auch einen gerade laufenden SpawnModel ab (der baut dann kein Modell mehr).
 function BotService.Despawn(bot)
+	bot.SpawnSerial = (bot.SpawnSerial or 0) + 1
 	if bot.Model then
 		bot.Model:Destroy()
 	end
@@ -460,13 +463,23 @@ local function playAnimations(humanoid)
 	end)
 end
 
--- Modell an cframe erzeugen und KI starten. onDied wird beim Tod aufgerufen.
-function BotService.SpawnModel(bot, cframe, onDied)
-	BotService.Despawn(bot)
-	local agent = AgentConfig.Get(bot.Agent)
+-- Körper-Vorlagen pro Farbe. Players:CreateHumanoidModelFromDescription wartet (lädt Assets) und kann
+-- dauern – während dieser Zeit konnte ein Bot schon entfernt, neu gespawnt oder die Runde vorbei sein,
+-- und dann blieb ein zweites ("verwaistes") Modell in der Welt stehen. Deshalb wird jede Farbe nur
+-- einmal gebaut und danach geklont: Klonen wartet nicht.
+local SPAWN_RETRY = 3 -- Sekunden bis zum nächsten Versuch, wenn ein Körper nicht gebaut werden konnte
+local templates = {}  -- [Farbschlüssel] = Modell (außerhalb des Workspace)
+local building = {}   -- [Farbschlüssel] = true, solange die Vorlage gebaut wird
 
-	-- Körper in Team- bzw. Agentenfarbe
-	local color = bot.Team and bot.Team.TeamColor.Color or agent.Color
+local function rigTemplate(color)
+	local key = string.format("%d_%d_%d", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255))
+	while building[key] do
+		task.wait(0.1)
+	end
+	if templates[key] then
+		return templates[key]
+	end
+	building[key] = true
 	local description = Instance.new("HumanoidDescription")
 	description.HeadColor = Color3.fromRGB(205, 160, 130)
 	description.TorsoColor = color
@@ -475,10 +488,38 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	description.LeftLegColor = Color3.fromRGB(40, 40, 45)
 	description.RightLegColor = Color3.fromRGB(40, 40, 45)
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
+	building[key] = nil
 	if not ok or not model then
-		warn("Bot konnte nicht erstellt werden: " .. tostring(model))
+		warn("Bot-Körper konnte nicht erstellt werden: " .. tostring(model))
 		return nil
 	end
+	model.Archivable = true
+	templates[key] = model
+	return model
+end
+
+-- Modell an cframe erzeugen und KI starten. onDied wird beim Tod aufgerufen.
+-- Gibt das Modell zurück, oder nil, wenn der Spawn abgebrochen wurde (Bot inzwischen despawnt/gelöscht
+-- bzw. neu gespawnt) oder der Körper noch nicht gebaut werden konnte (dann neuer Versuch nach SPAWN_RETRY).
+function BotService.SpawnModel(bot, cframe, onDied)
+	BotService.Despawn(bot)
+	local serial = bot.SpawnSerial
+	local agent = AgentConfig.Get(bot.Agent)
+
+	-- Körper in Team- bzw. Agentenfarbe (wartet nur beim ersten Mal pro Farbe)
+	local template = rigTemplate(bot.Team and bot.Team.TeamColor.Color or agent.Color)
+	if bot.SpawnSerial ~= serial or not bots[bot] then
+		return nil -- inzwischen despawnt, gelöscht oder schon neu gespawnt: kein zweites Modell
+	end
+	if not template then
+		task.delay(SPAWN_RETRY, function()
+			if bot.SpawnSerial == serial and bots[bot] then
+				BotService.SpawnModel(bot, cframe, onDied)
+			end
+		end)
+		return nil
+	end
+	local model = template:Clone()
 
 	model.Name = bot.Name
 	model:SetAttribute("IsBot", true)
@@ -492,6 +533,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	humanoid.MaxHealth = agent.Health
 	humanoid.Health = agent.Health
 	humanoid.WalkSpeed = agent.WalkSpeed
+	owners[model] = bot
 	model.Parent = modelFolder
 	model:PivotTo(cframe)
 	pcall(function()
@@ -508,7 +550,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	bot.Model = model
 	bot.Alive = true
 	bot.GadgetCharges = (agent.Gadget and agent.Gadget.Charges) or 0
-	humanoid.Died:Connect(function()
+	humanoid.Died:Once(function()
 		if bot.Model == model then
 			bot.Alive = false
 			bot.Info:SetAttribute("Deaths", (bot.Info:GetAttribute("Deaths") or 0) + 1)
@@ -520,5 +562,19 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	task.spawn(runAI, bot, model)
 	return model
 end
+
+-- Sicherheitsnetz: Modelle, die keinem angemeldeten Bot (mehr) gehören, regelmäßig entfernen.
+-- Die Leiche eines Bots bleibt, bis er neu spawnt (sie ist dann noch sein bot.Model).
+task.spawn(function()
+	while true do
+		task.wait(2)
+		for _, model in modelFolder:GetChildren() do
+			local bot = owners[model]
+			if not bot or not bots[bot] or bot.Model ~= model then
+				model:Destroy()
+			end
+		end
+	end
+end)
 
 return BotService

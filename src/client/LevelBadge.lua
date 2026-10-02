@@ -1,9 +1,8 @@
 -- LevelBadge (ModuleScript, nur Client)
--- Spielerlevel immer sichtbar (außer in Menüs): Prestige-Abzeichen mit Level, "LEVEL 23" und XP-Balken.
---   Kampf:   unten links über der Lebensanzeige (Touch: oben links unter Minimap und Leben)
---   Hub:     unten links (Touch: oben links unter der Roblox-Leiste)
--- Ausgeblendet, solange ein Menü offen ist (Spiel- und Seitenmenü, Agentenwahl, Map-Abstimmung,
--- Match-Zusammenfassung, Punktestand).
+-- Spielerlevel im Match: Prestige-Abzeichen mit Level, "LEVEL 23" und XP-Balken unten links über der
+-- Lebensanzeige (Touch: oben links unter Minimap und Leben). Im Hub nicht – dort steht das Level groß
+-- in der Lobby. Ausgeblendet, solange ein Menü offen ist (Spiel- und Seitenmenü, Agentenwahl,
+-- Map-Abstimmung, Match-Zusammenfassung, Punktestand).
 
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
@@ -74,19 +73,17 @@ function LevelBadge.Init()
 		return false
 	end
 
-	-- Platz: über der Lebensanzeige bzw. (Touch) oben links unter Minimap und Leben
+	-- Platz: über der Lebensanzeige bzw. (Touch) oben links unter Minimap (160) und Leben (84)
 	local function place()
-		local fighting = Modes.IsFighting(player)
 		if InputActions.IsTouch() then
 			local inset = GuiService:GetGuiInset()
 			local scale = rootScale and rootScale.Scale or 1
 			local top = math.max(58, math.ceil((inset.Y + 8) / scale))
 			badge.AnchorPoint = Vector2.new(0, 0)
-			-- im Kampf liegen Minimap (160) und Leben (84) darüber
-			badge.Position = UDim2.new(0, 16, 0, fighting and (top + 172 + 92) or top)
+			badge.Position = UDim2.new(0, 16, 0, top + 172 + 92)
 		else
 			badge.AnchorPoint = Vector2.new(0, 1)
-			badge.Position = UDim2.new(0, 24, 1, fighting and -118 or -24)
+			badge.Position = UDim2.new(0, 24, 1, -118)
 		end
 	end
 
@@ -97,7 +94,7 @@ function LevelBadge.Init()
 			return
 		end
 		nextCheck = now + 0.2
-		screen.Enabled = not menuOpen()
+		screen.Enabled = Modes.IsFighting(player) and not menuOpen() -- im Hub zeigt die Lobby das Level
 		if screen.Enabled then
 			place()
 		end
