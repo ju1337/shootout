@@ -61,7 +61,7 @@ local function button(textValue, width, parent, color, onClick)
 		Text = textValue,
 		AutoButtonColor = true,
 	}, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 3) }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, b)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -204,7 +204,7 @@ local function refreshPlayers()
 	for i, p in Players:GetPlayers() do
 		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 134), BackgroundColor3 = ROW, BorderSizePixel = 0,
 			LayoutOrder = i }, playerSection)
-		make("UICorner", { CornerRadius = UDim.new(0, 3) }, box)
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 6) }, box)
 		make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, box)
 		local agent = AgentConfig.Get(p:GetAttribute("Agent"))
@@ -285,7 +285,7 @@ local function build()
 	panel = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -20, 0.5, 0),
 		Size = UDim2.new(0, 460, 0.85, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.05,
 		BorderSizePixel = 0, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, panel)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
 	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.5 }, panel)
 	make("Frame", { Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, panel)
 

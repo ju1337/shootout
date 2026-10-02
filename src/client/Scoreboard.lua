@@ -39,7 +39,7 @@ local holding = false
 local function rowFrame(order, color, height)
 	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, height or 34), BackgroundColor3 = color or C.Card,
 		BackgroundTransparency = 0.1, BorderSizePixel = 0, LayoutOrder = order }, list)
-	UITheme.Corner(frame, 3)
+	UITheme.Corner(frame, UITheme.Radius.Small)
 	local inner = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 }, frame)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
 		SortOrder = Enum.SortOrder.LayoutOrder }, inner)

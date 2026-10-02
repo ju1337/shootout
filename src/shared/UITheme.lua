@@ -1,7 +1,7 @@
 -- UITheme (ModuleScript, nur Client)
 -- Einheitliches Design für alle Menüs im nüchternen Taktik-Look: Graphit als Grund, gedecktes
 -- Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene Team, Rot für
--- Gegner. Flache Knöpfe und Flächen mit kaum gerundeten Ecken und 1 px Rand, keine Schatten oder
+-- Gegner. Flache Knöpfe und Flächen mit weich gerundeten Ecken und 1 px Rand, keine Schatten oder
 -- Comic-Konturen. Überschriften, Zahlen und Knöpfe in der schmalen Oswald, kleine Beschriftungen in Gotham.
 -- Achtung: Oswald kennt in Roblox nur lateinische Zeichen – Symbole wie ✕ ✓ ★ ◆ → ∞ erscheinen dort als
 -- Kästchen. Solche Zeichen nur in Gotham-Texten verwenden oder zeichnen (Cross, Diamond, Coin).
@@ -46,8 +46,9 @@ UITheme.Fonts = {
 	Body = Enum.Font.Gotham,
 }
 
--- Kaum gerundete Ecken (Namen bleiben, damit alle Fenster dieselben Stufen nutzen)
-UITheme.Radius = { Small = 2, Medium = 3, Large = 3, XL = 4, XXL = 6 }
+-- Weich gerundete Ecken (weniger kantig). Alle Fenster nutzen dieselben Stufen.
+UITheme.Radius = { Small = 8, Medium = 10, Large = 12, XL = 14, XXL = 18 }
+UITheme.MinRadius = 6 -- auch fest eingetragene kleine Rundungen werden mindestens so weich
 
 local C = UITheme.Colors
 
@@ -62,7 +63,7 @@ end
 local make = UITheme.Make
 
 function UITheme.Corner(parent, radius)
-	return make("UICorner", { CornerRadius = UDim.new(0, radius or 10) }, parent)
+	return make("UICorner", { CornerRadius = UDim.new(0, math.max(radius or 10, UITheme.MinRadius)) }, parent)
 end
 
 function UITheme.Stroke(parent, color, thickness, transparency)
@@ -266,7 +267,7 @@ function UITheme.Panel(props, parent)
 	return frame
 end
 
--- Fläche für Fenster und Kästen: leicht durchsichtig, 1 px Rand, kaum gerundet, ohne Schatten.
+-- Fläche für Fenster und Kästen: leicht durchsichtig, 1 px Rand, weich gerundet, ohne Schatten.
 -- props.Radius (optional) überschreibt die Rundung.
 function UITheme.Card(props, parent)
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Panel

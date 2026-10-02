@@ -159,7 +159,7 @@ local function buildQuests()
 				local claimed = (data.Claimed or {})[id] == true
 				local done = progress >= quest.Goal
 				local row = make("Frame", { Size = UDim2.new(1, 0, 0, 80), BackgroundColor3 = CARD, LayoutOrder = i }, list)
-				make("UICorner", { CornerRadius = UDim.new(0, 4) }, row)
+				make("UICorner", { CornerRadius = UDim.new(0, 10) }, row)
 				text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -200, 0, 24), Text = quest.Text,
 					TextSize = 19 }, row)
 				text({ Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -200, 0, 18),
@@ -214,7 +214,7 @@ local function buildSquad()
 
 	local function row(parent, order, name, buttonText, buttonColor, onClick)
 		local entry = make("Frame", { Size = UDim2.new(1, -6, 0, 48), BackgroundColor3 = CARD, LayoutOrder = order }, parent)
-		make("UICorner", { CornerRadius = UDim.new(0, 4) }, entry)
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, entry)
 		text({ Position = UDim2.new(0, 14, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = name, TextSize = 16 }, entry)
 		if buttonText then
 			button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0, 120, 0, 34),
@@ -276,7 +276,7 @@ local function buildSquad()
 	local inviteGui = make("ScreenGui", { Name = "PartyInvite", ResetOnSpawn = false, DisplayOrder = 30 }, player.PlayerGui)
 	local popup = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -140), Size = UDim2.new(0, 360, 0, 120),
 		BackgroundColor3 = PANEL, Visible = false }, inviteGui)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, popup)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, popup)
 	make("UIStroke", { Color = ACCENT, Thickness = 1 }, popup)
 	local inviteText = text({ Position = UDim2.new(0, 16, 0, 12), Size = UDim2.new(1, -32, 0, 44), Text = "", TextSize = 16,
 		TextWrapped = true }, popup)
@@ -333,7 +333,7 @@ local function buildStats()
 		RoundsWon = "RUNDEN GEWONNEN", Favorite = "LIEBLINGS-AGENT" }
 	for i, key in order do
 		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
-		make("UICorner", { CornerRadius = UDim.new(0, 4) }, tile)
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, tile)
 		make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = (key == "KD" or key == "WinRate") and ACCENT or BORDER,
 			BorderSizePixel = 0 }, tile)
 		text({ Position = UDim2.new(0, 14, 0, 10), Size = UDim2.new(1, -20, 0, 16), Text = titles[key], TextSize = 11,
@@ -345,7 +345,7 @@ local function buildStats()
 	-- Rechte Seite: Ranked
 	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
 		BackgroundColor3 = CARD }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, rankedBox)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, rankedBox)
 	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "ELO · SAISON " .. RankConfig.Season .. "  ·  IN JEDEM MODUS",
 		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
 	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -32, 0, 50), Text = "", TextSize = 42,
@@ -360,7 +360,7 @@ local function buildStats()
 	-- Bestenliste
 	local board = make("Frame", { Position = UDim2.new(0, 668, 0, 312), Size = UDim2.new(1, -692, 1, -352),
 		BackgroundColor3 = CARD }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, board)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, board)
 	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "TOP 10 · ELO", TextSize = 13,
 		TextColor3 = ACCENT }, board)
 	local boardText = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 1, -44), Text = "", TextSize = 15,
@@ -369,7 +369,7 @@ local function buildStats()
 	-- Match-Verlauf (letzte 10 Matches)
 	local history = make("Frame", { Position = UDim2.new(0, 24, 0, 456), Size = UDim2.new(0, 620, 0, 256),
 		BackgroundColor3 = CARD }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, history)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, history)
 	text({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 18), Text = "LETZTE MATCHES", TextSize = 13,
 		TextColor3 = ACCENT }, history)
 	local COLUMNS = { { "Result", 0, 110 }, { "Mode", 110, 140 }, { "Map", 250, 120 }, { "Score", 370, 70 },
@@ -512,7 +512,7 @@ local function buildCodes()
 		BackgroundColor3 = CARD, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 22,
 		TextColor3 = Color3.new(1, 1, 1), PlaceholderText = "CODE", PlaceholderColor3 = GRAY, Text = "",
 		ClearTextOnFocus = false }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, box)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)
 	button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 172), Size = UDim2.new(0, 260, 0, 52),
 		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = ACCENT, TextColor3 = ON_ACCENT }, frame, function()
 		Remotes.ShopAction:FireServer("RedeemCode", box.Text)

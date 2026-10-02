@@ -75,7 +75,7 @@ local function build()
 		-- Modal: gibt die Maus frei, solange die Abstimmung offen ist
 		local card = make("TextButton", { Size = UDim2.new(0, CARD_W, 0, CARD_H), BackgroundColor3 = C.Card, Text = "",
 			AutoButtonColor = false, BorderSizePixel = 0, LayoutOrder = i, Modal = i == 1 }, row)
-		UITheme.Corner(card, 4)
+		UITheme.Corner(card, UITheme.Radius.Large)
 		local gradient = UITheme.Gradient(card, C.Card, C.Panel, 120)
 		local stroke = UITheme.Stroke(card, C.Border, 1.5)
 		local key = UITheme.Label({ Position = UDim2.new(0, 14, 0, 12), Size = UDim2.new(0, 30, 0, 30), Text = tostring(i),
