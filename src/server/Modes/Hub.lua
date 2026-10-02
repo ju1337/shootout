@@ -81,8 +81,8 @@ local function placeStatue(place, entry)
 	if head then
 		local rank = RankConfig.Get(entry.Value)
 		local billboard = Instance.new("BillboardGui")
-		billboard.Size = UDim2.new(0, 220, 0, 52)
-		billboard.StudsOffset = Vector3.new(0, 2.6, 0)
+		billboard.Size = UDim2.new(5.5, 0, 1.3, 0) -- in Studs, damit es den Titel dahinter nicht überdeckt
+		billboard.StudsOffset = Vector3.new(0, 1.8, 0)
 		billboard.AlwaysOnTop = false
 		billboard.MaxDistance = 120
 		billboard.Parent = head

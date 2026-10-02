@@ -54,6 +54,21 @@ local function rebuild()
 		end
 	end
 	figure.Parent = workspace
+	-- Schild über der Bühne: Name des Agenten in seiner Farbe, darunter Level und wo man ihn wechselt
+	local banner = workspace:FindFirstChild("Maps") and workspace.Maps:FindFirstChild("Hub")
+		and workspace.Maps.Hub:FindFirstChild("Decor") and workspace.Maps.Hub.Decor:FindFirstChild("StageBanner")
+	local signGui = banner and banner:FindFirstChild("SignGui")
+	if signGui then
+		local title, subtitle = signGui:FindFirstChild("Title"), signGui:FindFirstChild("Subtitle")
+		if title then
+			title.Text = string.upper(agent.Name)
+			title.TextColor3 = agent.Color:Lerp(Color3.new(1, 1, 1), 0.25)
+		end
+		if subtitle then
+			subtitle.Text = "DEIN AGENT  ·  LEVEL " .. AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agent.Id))
+				.. "  ·  WECHSELN UNTER AGENTEN"
+		end
+	end
 end
 
 -- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") mit Elite-Skin

@@ -1822,6 +1822,99 @@
      ]
     },
     {
+     "Name": "CarpetStageEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.7,
+       0.03,
+       30.7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -25.0,
+         0.215,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetStage",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       30.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -25.0,
+         0.245,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
      "Name": "CarpetBoardsEdge",
      "ClassName": "Part",
      "Properties": {
@@ -3134,15 +3227,15 @@
       "Anchored": true,
       "Size": [
        0.8,
-       18,
-       30
+       12,
+       24
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -46.4,
-         9,
-         -30.8
+         -45.2,
+         6,
+         -29.9
         ],
         "orientation": [
          [
@@ -8943,13 +9036,13 @@
      }
     },
     {
-     "Name": "Banner",
+     "Name": "StageBanner",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       30,
-       8,
+       26,
+       6.5,
        0.5
       ],
       "CFrame": {
@@ -9028,7 +9121,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "SHOOTOUT",
+          "Text": "DEIN AGENT",
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
@@ -9068,7 +9161,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "DEIN AGENT  \u00b7  LOADOUT IM MEN\u00dc",
+          "Text": "WECHSELN IM MEN\u00dc UNTER AGENTEN",
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
@@ -10498,61 +10591,14 @@
       "Size": [
        0.2,
        0.3,
-       30
+       24
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -46.0,
-         3,
-         -30.5
-        ],
-        "orientation": [
-         [
-          0.8,
-          0.0,
-          -0.6
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.6,
-          0.0,
-          0.8
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.2
-     }
-    },
-    {
-     "Name": "PodiumWallStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.2,
-       0.3,
-       30
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -46.0,
-         16.5,
-         -30.5
+         -44.8,
+         11.5,
+         -29.6
         ],
         "orientation": [
          [
@@ -10590,16 +10636,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       24,
-       4.5,
+       18,
+       3.6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -45.92,
-         12.5,
-         -30.44
+         -44.72,
+         14.2,
+         -29.54
         ],
         "orientation": [
          [
@@ -10782,15 +10828,15 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       9,
-       0.6,
-       28
+       7,
+       0.5,
+       21
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          -40,
-         0.3,
+         0.25,
          -26
         ],
         "orientation": [
@@ -10823,66 +10869,20 @@
      }
     },
     {
-     "Name": "PodiumPlinthEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       28
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -36.4,
-         0.55,
-         -23.3
-        ],
-        "orientation": [
-         [
-          0.8,
-          0.0,
-          -0.6
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.6,
-          0.0,
-          0.8
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "PodiumBase",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.2,
-       4.2,
-       7.2
+       5.6,
+       3.2,
+       5.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          -40.0,
-         2.7,
+         2.1,
          -26.0
         ],
         "orientation": [
@@ -10920,15 +10920,15 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
-       0.4,
-       7.4
+       5.8,
+       0.35,
+       5.8
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          -40.0,
-         5.0,
+         3.88,
          -26.0
         ],
         "orientation": [
@@ -10961,67 +10961,21 @@
      }
     },
     {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -37.04,
-         4.4,
-         -23.78
-        ],
-        "orientation": [
-         [
-          0.8,
-          0.0,
-          -0.6
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.6,
-          0.0,
-          0.8
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "PodiumNumber",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       2,
        1.6,
+       1.3,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -37.0,
-         2.7,
-         -23.75
+         -37.64,
+         2.1,
+         -24.23
         ],
         "orientation": [
          [
@@ -11096,16 +11050,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.2,
-       3,
-       7.2
+       5.6,
+       2.3,
+       5.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -45.4,
-         2.1,
-         -18.8
+         -44.08,
+         1.65,
+         -20.56
         ],
         "orientation": [
          [
@@ -11142,16 +11096,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
-       0.4,
-       7.4
+       5.8,
+       0.35,
+       5.8
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -45.4,
-         3.8,
-         -18.8
+         -44.08,
+         2.98,
+         -20.56
         ],
         "orientation": [
          [
@@ -11183,67 +11137,21 @@
      }
     },
     {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -42.44,
-         3.2,
-         -16.58
-        ],
-        "orientation": [
-         [
-          0.8,
-          0.0,
-          -0.6
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.6,
-          0.0,
-          0.8
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7451,
-       0.7608,
-       0.7843
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "PodiumNumber",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       2,
        1.6,
+       1.3,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.4,
-         2.1,
-         -16.55
+         -41.72,
+         1.65,
+         -18.79
         ],
         "orientation": [
          [
@@ -11318,16 +11226,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.2,
-       2,
-       7.2
+       5.6,
+       1.5,
+       5.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -34.6,
-         1.6,
-         -33.2
+         -35.92,
+         1.25,
+         -31.44
         ],
         "orientation": [
          [
@@ -11364,16 +11272,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       7.4,
-       0.4,
-       7.4
+       5.8,
+       0.35,
+       5.8
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -34.6,
-         2.8,
-         -33.2
+         -35.92,
+         2.18,
+         -31.44
         ],
         "orientation": [
          [
@@ -11405,67 +11313,21 @@
      }
     },
     {
-     "Name": "PodiumEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.3,
-       0.3,
-       7.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -31.64,
-         2.2,
-         -30.98
-        ],
-        "orientation": [
-         [
-          0.8,
-          0.0,
-          -0.6
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.6,
-          0.0,
-          0.8
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7059,
-       0.4706,
-       0.2745
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
      "Name": "PodiumNumber",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       2,
        1.6,
+       1.3,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -31.6,
-         1.6,
-         -30.95
+         -33.56,
+         1.25,
+         -29.67
         ],
         "orientation": [
          [
@@ -11531,70 +11393,6 @@
          }
         }
        ]
-      }
-     ]
-    },
-    {
-     "Name": "PodiumGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.2,
-       30,
-       30
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -40,
-         0.3,
-         -26
-        ],
-        "orientation": [
-         [
-          0.0,
-          -1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.7843,
-       0.651,
-       0.3608
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.88,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 18,
-        "Brightness": 1.1,
-        "Color": [
-         0.902,
-         0.7843,
-         0.549
-        ]
-       }
       }
      ]
     },
@@ -13648,7 +13446,7 @@
        "CFrame": {
         "position": [
          -40.0,
-         5.3,
+         4.15,
          -26.0
         ],
         "orientation": [
@@ -13696,9 +13494,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -45.4,
-         4.1,
-         -18.8
+         -44.08,
+         3.25,
+         -20.56
         ],
         "orientation": [
          [
@@ -13745,9 +13543,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -34.6,
-         3.1,
-         -33.2
+         -35.92,
+         2.45,
+         -31.44
         ],
         "orientation": [
          [

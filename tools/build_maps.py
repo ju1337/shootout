@@ -1447,8 +1447,10 @@ def build_lobby():
     for z in (-6, 6):
         b.add("Decor", "Spotlight", (H - 4, 3, 3), (sx + 1, (H - 4) / 2 + 1, z), (255, 245, 225), "Neon",
               angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.92, "CanCollide": False, "CanQuery": False})
-    b.sign2("Banner", (30, 8, 0.5), (x0 + 0.6, 14, 0), "SHOOTOUT", "DEIN AGENT  ·  LOADOUT IM MENÜ",
+    # Schild über der Bühne: Name des eigenen Agenten (setzt der Client), darunter Level und wo man wechselt
+    b.sign2("StageBanner", (26, 6.5, 0.5), (x0 + 0.6, 14, 0), "DEIN AGENT", "WECHSELN IM MENÜ UNTER AGENTEN",
             graphite, accent, (236, 239, 243), angles=(0, -90, 0), glow=accent)
+    carpet("CarpetStage", (-(ring_r - 3), tz), (sx + 6, tz), 8)
 
     # ---------- Osten (Mitte): Holo-Station mit den Bestenlisten, Teppich vom Ring dorthin ----------
     holo = (90, 175, 225)
@@ -1483,32 +1485,23 @@ def build_lobby():
     rx, rz = -fz, fx                       # entlang des Podests
     long_yaw = math.degrees(math.atan2(rx, rz))
     face_yaw = math.degrees(math.atan2(-fx, -fz))
-    # Rückwand schräg in der Ecke mit Leuchtleisten und Titel
-    wx, wz = cx - fx * 8, cz - fz * 8
-    b.box("Walls", "PodiumWall", (0.8, 18, 30), (wx, 9, wz), steel, "Metal", angles=(0, long_yaw, 0))
-    for h in (3, 16.5):
-        b.box("Decor", "PodiumWallStrip", (0.2, 0.3, 30), (wx + fx * 0.5, h, wz + fz * 0.5), gold, "Neon",
-              angles=(0, long_yaw, 0), props={"Transparency": 0.2})
-    b.sign2("PodiumTitle", (24, 4.5, 0.4), (wx + fx * 0.6, 12.5, wz + fz * 0.6), "TOP 3 · ELO",
+    # Rückwand schräg in der Ecke, oben eine goldene Leiste, Titel darüber
+    wx, wz = cx - fx * 6.5, cz - fz * 6.5
+    b.box("Walls", "PodiumWall", (0.8, 12, 24), (wx, 6, wz), steel, "Metal", angles=(0, long_yaw, 0))
+    b.box("Decor", "PodiumWallStrip", (0.2, 0.3, 24), (wx + fx * 0.5, 11.5, wz + fz * 0.5), gold, "Neon",
+          angles=(0, long_yaw, 0), props={"Transparency": 0.2})
+    b.sign2("PodiumTitle", (18, 3.6, 0.4), (wx + fx * 0.6, 14.2, wz + fz * 0.6), "TOP 3 · ELO",
             "DIE BESTEN SPIELER DER SAISON", graphite, gold, (236, 239, 243), angles=(0, face_yaw, 0), glow=gold)
-    # langer Sockel, darauf die drei Podeste
-    b.box("Decor", "PodiumPlinth", (9, 0.6, 28), (cx, 0.3, cz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
-    b.box("Decor", "PodiumPlinthEdge", (0.3, 0.3, 28), (cx + fx * 4.5, 0.55, cz + fz * 4.5), gold, "Neon",
-          angles=(0, long_yaw, 0))
-    for place, off, h, color in ((1, 0, 4.2, gold), (2, 9, 3, (190, 194, 200)), (3, -9, 2, (180, 120, 70))):
+    # schmaler Sockel, darauf die drei Podeste (kleiner als vorher)
+    b.box("Decor", "PodiumPlinth", (7, 0.5, 21), (cx, 0.25, cz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
+    for place, off, h, color in ((1, 0, 3.2, gold), (2, 6.8, 2.3, (190, 194, 200)), (3, -6.8, 1.5, (180, 120, 70))):
         px, pz = cx + rx * off, cz + rz * off
-        b.box("Decor", "PodiumBase", (7.2, h, 7.2), (px, 0.6 + h / 2, pz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
-        b.box("Decor", "PodiumTop", (7.4, 0.4, 7.4), (px, 0.8 + h, pz), color, "Metal", angles=(0, long_yaw, 0))
-        b.box("Decor", "PodiumEdge", (0.3, 0.3, 7.4), (px + fx * 3.7, 0.2 + h, pz + fz * 3.7), color, "Neon",
-              angles=(0, long_yaw, 0))
-        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (px, 1.1 + h, pz), color, "SmoothPlastic", angles=(0, face_yaw, 0),
+        b.box("Decor", "PodiumBase", (5.6, h, 5.6), (px, 0.5 + h / 2, pz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
+        b.box("Decor", "PodiumTop", (5.8, 0.35, 5.8), (px, 0.68 + h, pz), color, "Metal", angles=(0, long_yaw, 0))
+        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (px, 0.95 + h, pz), color, "SmoothPlastic", angles=(0, face_yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.sign("PodiumNumber", (2, 1.6, 0.3), (px + fx * 3.75, 0.6 + h / 2, pz + fz * 3.75), str(place), (32, 35, 41), color,
+        b.sign("PodiumNumber", (1.6, 1.3, 0.3), (px + fx * 2.95, 0.5 + h / 2, pz + fz * 2.95), str(place), (32, 35, 41), color,
                angles=(0, face_yaw, 0))
-    b.add("Decor", "PodiumGlow", (0.2, 30, 30), (cx, 0.3, cz), gold, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.88, "CanCollide": False},
-          children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
-              "Range": 18, "Brightness": 1.1, "Color": rgb(230, 200, 140)}}])
 
     # ---------- Süden (Rückwand): Einsatz-Bildschirm, Logo, Plakate ----------
     b.box("Decor", "MissionBoardFrame", (25, 12, 0.4), (0, 14, z0 + 0.2), steel, "Metal")
