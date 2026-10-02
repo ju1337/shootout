@@ -15,6 +15,8 @@ local GunModels = require(Shared.GunModels)
 local AgentFigure = require(Shared.AgentFigure)
 local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
+local UITheme = require(Shared.UITheme)
+local TweenService = game:GetService("TweenService")
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 
@@ -22,12 +24,13 @@ local player = Players.LocalPlayer
 
 local SideMenu = {}
 
-local ACCENT = Color3.fromRGB(255, 140, 40)
-local PANEL = Color3.fromRGB(14, 17, 25)
-local CARD = Color3.fromRGB(24, 28, 38)
-local BORDER = Color3.fromRGB(50, 55, 70)
-local GRAY = Color3.fromRGB(170, 175, 190)
-local GREEN = Color3.fromRGB(70, 170, 90)
+-- Farben aus dem gemeinsamen Design (UITheme)
+local ACCENT = UITheme.Colors.Accent
+local PANEL = UITheme.Colors.Panel
+local CARD = UITheme.Colors.Card
+local BORDER = UITheme.Colors.Border
+local GRAY = UITheme.Colors.Muted
+local GREEN = UITheme.Colors.Good
 
 local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
 
@@ -136,20 +139,25 @@ local function setPanel(name)
 		panel.Frame.Visible = panelName == name
 	end
 	openPanel = name
+	UITheme.SetBlur("SideMenu", name ~= nil)
 	if name and panels[name].Refresh then
 		panels[name].Refresh()
 	end
 end
 
 local function makePanel(name, title, width, height)
-	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 40, 0.5, 0),
+	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, width, 0, height), BackgroundColor3 = PANEL, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 12) }, frame)
-	make("UIStroke", { Color = ACCENT, Thickness = 2 }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 16) }, frame)
+	make("UIStroke", { Color = BORDER, Thickness = 1.5 }, frame)
+	UITheme.Gradient(frame, Color3.fromRGB(28, 33, 50), PANEL)
+	-- Farbige Kopfleiste
+	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 16) }, header)
 	local scale = make("UIScale", {}, frame)
 	local function updateScale()
 		local viewport = workspace.CurrentCamera.ViewportSize
-		scale.Scale = math.clamp(math.min((viewport.X - 160) / (width + 40), (viewport.Y - 40) / (height + 40)), 0.4, 1.2)
+		scale.Scale = math.clamp(math.min((viewport.X - 280) / (width + 40), (viewport.Y - 60) / (height + 40)), 0.4, 1.15)
 	end
 	updateScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
@@ -623,10 +631,20 @@ end
 -- ---------- Knopfleiste ----------
 
 local function sideButton(icon, label, order, onClick)
-	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 70), BackgroundColor3 = Color3.fromRGB(20, 24, 34),
-		BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = true, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, 12) }, b)
-	make("UIStroke", { Color = ACCENT, Thickness = 1.5, Transparency = 0.3 }, b)
+	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 70), BackgroundColor3 = Color3.fromRGB(22, 26, 40),
+		BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
+	make("UICorner", { CornerRadius = UDim.new(0, 14) }, b)
+	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1.5 }, b)
+	UITheme.Gradient(b, Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 175, 195))
+	local scale = make("UIScale", {}, b)
+	b.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.07 }):Play()
+		stroke.Color = ACCENT
+	end)
+	b.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
+		stroke.Color = BORDER
+	end)
 	text({ Position = UDim2.new(0, 0, 0, 4), Size = UDim2.new(1, 0, 0, 38), Text = icon, TextSize = 28,
 		TextXAlignment = Enum.TextXAlignment.Center }, b)
 	text({ Position = UDim2.new(0, 0, 0, 42), Size = UDim2.new(1, 0, 0, 22), Text = label, TextSize = 12,

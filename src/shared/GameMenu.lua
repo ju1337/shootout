@@ -1,12 +1,14 @@
 -- GameMenu (ModuleScript, nur Client)
--- Hauptmenü mit zwei Tabs: SPIELMODI (Teleport) und AGENTEN (Auswahl). Öffnen/Schließen mit M.
--- Im Hub öffnet es sich beim Betreten, in den Modi gibt es zusätzlich "Zurück zum Hub".
--- Ob man im Hub ist, kommt live vom Server (Spieler-Attribut "Mode").
+-- Hauptmenü im Stil von Rogue Company: oben Logo, Tabs (SPIELEN / AGENTEN), Münzen und Rang;
+-- in der Mitte Karten für Modi bzw. Agenten; unten der große SPIELEN-Knopf.
+-- Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Hub. Es öffnet sich NICHT von selbst.
+-- Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas) und skaliert sauber mit.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -14,180 +16,126 @@ local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local RankConfig = require(Shared.RankConfig)
+local Cosmetics = require(Shared.Cosmetics)
+local AgentFigure = require(Shared.AgentFigure)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
+local C = UITheme.Colors
+local F = UITheme.Fonts
+local make, label = UITheme.Make, UITheme.Label
 
 local GameMenu = {}
 
-local ACCENT = Color3.fromRGB(255, 140, 40)
-local BACKGROUND = Color3.fromRGB(10, 12, 18)
-local CARD = Color3.fromRGB(24, 27, 36)
-local CARD_BORDER = Color3.fromRGB(50, 55, 70)
-local GRAY = Color3.fromRGB(170, 175, 190)
-local BUTTON = Color3.fromRGB(40, 44, 58)
+local WIDTH, HEIGHT = 1600, 900
+local CARD_W, CARD_H, GAP = 340, 236, 22
+local COLUMNS = 4
 
-local CARD_WIDTH = 250
-local CARD_HEIGHT = 340
-local CARD_GAP = 20
+-- Symbol pro Modus
+local ICONS = {
+	FreeForAll = "🎯", Drop = "🪂", Strikeout = "⚡", Demolition = "💣", Wingman = "🤝",
+	Training = "🛠", Arena = "⚔", Ranked = "🏆",
+}
 
-local overlay, subtitle, statusLabel, playButton, openButton, hubButton, closeButton
-local currentTab = "Modes"
+local gui, background, canvas, statusLabel, playButton, openButton, hubButton, closeButton
 local modePage, agentPage
 local tabButtons = {}
-local modeCards = {} -- [mode] = Karte
-local agentCards = {} -- [agent] = Karte
+local modeCards = {}  -- [mode] = { Card, Stroke, Scale }
+local agentCards = {} -- [agent] = { Card, Stroke, Badge, Level, Bar }
 local selectedMode
+local currentTab = "Modes"
 local isOpen = false
 local inHub = false
 
-local function make(className, props, parent)
-	local obj = Instance.new(className)
-	for key, value in props do
-		obj[key] = value
-	end
-	obj.Parent = parent
-	return obj
-end
-
-local function text(props, parent)
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.GothamBold
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return make("TextLabel", props, parent)
-end
-
-local function button(props, parent)
-	props.Font = Enum.Font.GothamBlack
-	props.AutoButtonColor = true
-	props.BorderSizePixel = 0
-	local b = make("TextButton", props, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 8) }, b)
-	return b
-end
-
 local function setStatus(message)
-	statusLabel.Text = message
+	statusLabel.Text = message or ""
 end
 
--- Zeile mit Karten (für beide Tabs)
-local function makeRow(count)
-	local row = make("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.53, 0),
-		Size = UDim2.new(0, count * CARD_WIDTH + (count - 1) * CARD_GAP, 0, CARD_HEIGHT),
-		BackgroundTransparency = 1,
-	}, overlay)
-	make("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal,
-		Padding = UDim.new(0, CARD_GAP),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-	}, row)
-	return row
+-- Raster mit COLUMNS Spalten, mittig auf der Leinwand
+local function makeGrid(count)
+	local rows = math.ceil(count / COLUMNS)
+	local columns = math.min(COLUMNS, count)
+	local grid = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 150),
+		Size = UDim2.new(0, columns * CARD_W + (columns - 1) * GAP, 0, rows * CARD_H + (rows - 1) * GAP),
+		BackgroundTransparency = 1 }, canvas)
+	make("UIGridLayout", { CellSize = UDim2.new(0, CARD_W, 0, CARD_H), CellPadding = UDim2.new(0, GAP, 0, GAP),
+		HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+	return grid
 end
 
--- Leere Karte mit Farbstreifen, Rahmen und Titel
-local function makeCard(parent, order, color, title, tag, faded)
-	local card = make("TextButton", {
-		Size = UDim2.new(0, CARD_WIDTH, 0, CARD_HEIGHT),
-		BackgroundColor3 = CARD,
-		BorderSizePixel = 0,
-		AutoButtonColor = false,
-		Text = "",
-		LayoutOrder = order,
-	}, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
-	make("UIStroke", { Color = CARD_BORDER, Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, card)
-	local stripe = make("Frame", {
-		Size = UDim2.new(1, 0, 0, 10),
-		BackgroundColor3 = color,
-		BackgroundTransparency = faded and 0.6 or 0,
-		BorderSizePixel = 0,
-	}, card)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, stripe)
-
-	local transparency = faded and 0.45 or 0
-	text({
-		Position = UDim2.new(0, 18, 0, 30),
-		Size = UDim2.new(1, -36, 0, 40),
-		Text = title,
-		Font = Enum.Font.GothamBlack,
-		TextSize = 28,
-		TextTransparency = transparency,
-	}, card)
-	text({
-		Position = UDim2.new(0, 18, 0, 72),
-		Size = UDim2.new(1, -36, 0, 22),
-		Text = string.upper(tag),
-		TextSize = 15,
-		TextColor3 = color,
-		TextTransparency = transparency,
-	}, card)
-	return card, transparency
+-- Karte mit Farbverlauf in der Modus-/Agentenfarbe und Hover-Effekt
+local function makeCard(parent, order, color)
+	local card = make("TextButton", { BackgroundColor3 = C.Card, BorderSizePixel = 0, AutoButtonColor = false,
+		Text = "", LayoutOrder = order, ClipsDescendants = true }, parent)
+	UITheme.Corner(card, 14)
+	make("UIGradient", { Rotation = 115, Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, color:Lerp(C.Card, 0.55)),
+		ColorSequenceKeypoint.new(0.55, C.Card),
+		ColorSequenceKeypoint.new(1, C.Card),
+	}) }, card)
+	local stroke = UITheme.Stroke(card, C.Border, 1)
+	local scale = make("UIScale", {}, card)
+	-- Farbige Leiste links
+	make("Frame", { Size = UDim2.new(0, 5, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0 }, card)
+	card.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1.03 }):Play()
+	end)
+	card.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
+	end)
+	return card, stroke, scale
 end
 
-local function bodyText(card, y, height, message, transparency, color)
-	return text({
-		Position = UDim2.new(0, 18, 0, y),
-		Size = UDim2.new(1, -36, 0, height),
-		Text = message,
-		Font = Enum.Font.Gotham,
-		TextSize = 16,
-		TextColor3 = color or GRAY,
-		TextWrapped = true,
-		TextYAlignment = Enum.TextYAlignment.Top,
-		TextTransparency = transparency or 0,
-	}, card)
-end
-
-local function badge(card, label, good)
-	local b = text({
-		Position = UDim2.new(0, 18, 1, -46),
-		Size = UDim2.new(0, 130, 0, 28),
-		Text = label,
-		TextSize = 14,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextColor3 = good and Color3.fromRGB(20, 20, 20) or GRAY,
-	}, card)
-	b.BackgroundTransparency = 0
-	b.BackgroundColor3 = good and Color3.fromRGB(110, 220, 120) or Color3.fromRGB(55, 58, 70)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
-	return b
-end
-
-local function highlight(cards, chosen)
-	for item, card in cards do
-		local stroke = card:FindFirstChildOfClass("UIStroke")
-		stroke.Color = item == chosen and ACCENT or CARD_BORDER
-		stroke.Thickness = item == chosen and 3 or 1
+local function highlightCards(cards, chosen)
+	for item, entry in cards do
+		local on = item == chosen
+		entry.Stroke.Color = on and C.Accent or C.Border
+		entry.Stroke.Thickness = on and 3 or 1
 	end
 end
 
--- ---------- Tab SPIELMODI ----------
+-- ---------- Tab SPIELEN ----------
 
 local function selectMode(mode)
 	selectedMode = mode
-	highlight(modeCards, mode)
+	highlightCards(modeCards, mode)
 	if mode.Available then
-		playButton.Text = "SPIELEN  ·  " .. mode.Name
-		playButton.BackgroundColor3 = ACCENT
+		playButton.Text = "▶  SPIELEN  ·  " .. mode.Name
+		playButton.BackgroundColor3 = C.Accent
+		playButton.TextColor3 = Color3.fromRGB(20, 16, 10)
 	else
 		playButton.Text = "BALD VERFÜGBAR"
-		playButton.BackgroundColor3 = Color3.fromRGB(60, 62, 72)
+		playButton.BackgroundColor3 = C.Card
+		playButton.TextColor3 = C.Muted
 	end
 end
 
 local function buildModePage()
-	modePage = makeRow(#Modes.List)
+	modePage = makeGrid(#Modes.List)
 	for i, mode in Modes.List do
-		local card, transparency = makeCard(modePage, i, mode.Color, mode.Name, mode.Tag, not mode.Available)
-		bodyText(card, 110, 120, mode.Description, transparency)
-		bodyText(card, CARD_HEIGHT - 78, 22, mode.Players, transparency)
-		badge(card, mode.Available and "VERFÜGBAR" or "BALD", mode.Available)
+		local card, stroke = makeCard(modePage, i, mode.Color)
+		local faded = not mode.Available
+		label({ Position = UDim2.new(0, 22, 0, 14), Size = UDim2.new(0, 60, 0, 60), Text = ICONS[mode.Id] or "◆",
+			TextSize = 44, TextTransparency = faded and 0.5 or 0 }, card)
+		label({ Position = UDim2.new(0, 22, 0, 78), Size = UDim2.new(1, -44, 0, 34), Text = mode.Name, TextSize = 28,
+			Font = F.Title, TextTransparency = faded and 0.5 or 0 }, card)
+		label({ Position = UDim2.new(0, 22, 0, 110), Size = UDim2.new(1, -44, 0, 20), Text = string.upper(mode.Tag),
+			TextSize = 14, TextColor3 = mode.Color }, card)
+		label({ Position = UDim2.new(0, 22, 0, 136), Size = UDim2.new(1, -44, 0, 60), Text = mode.Description,
+			TextSize = 14, Font = F.Body, TextColor3 = C.Muted, TextWrapped = true,
+			TextYAlignment = Enum.TextYAlignment.Top }, card)
+		label({ Position = UDim2.new(0, 22, 1, -32), Size = UDim2.new(0.6, 0, 0, 20), Text = "👥  " .. mode.Players,
+			TextSize = 13, TextColor3 = C.Muted }, card)
+		if faded then
+			local soon = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 18), Size = UDim2.new(0, 80, 0, 26),
+				Text = "BALD", TextSize = 13, BackgroundTransparency = 0, BackgroundColor3 = C.Border,
+				TextXAlignment = Enum.TextXAlignment.Center }, card)
+			UITheme.Corner(soon, 6)
+		end
 		card.Activated:Connect(function()
 			selectMode(mode)
 		end)
-		modeCards[mode] = card
+		modeCards[mode] = { Card = card, Stroke = stroke }
 	end
 end
 
@@ -198,51 +146,49 @@ local function currentAgent()
 end
 
 local function buildAgentPage()
-	agentPage = makeRow(#AgentConfig.Agents)
+	agentPage = makeGrid(#AgentConfig.Agents)
 	agentPage.Visible = false
 	for i, agent in AgentConfig.Agents do
-		local ability = agent.Ability
-		local card = makeCard(agentPage, i, agent.Color, agent.Name, agent.Role, false)
-		bodyText(card, 100, 22, "♥ " .. agent.Health .. "   ·   Tempo " .. agent.WalkSpeed, 0, Color3.new(1, 1, 1))
-		bodyText(card, 128, 44, agent.Description)
-		make("Frame", {
-			Position = UDim2.new(0, 18, 0, 182),
-			Size = UDim2.new(1, -36, 0, 1),
-			BackgroundColor3 = CARD_BORDER,
-			BorderSizePixel = 0,
-		}, card)
-		text({
-			Position = UDim2.new(0, 18, 0, 192),
-			Size = UDim2.new(1, -36, 0, 24),
-			Text = AgentConfig.AbilityKey.Name .. "  ·  " .. string.upper(ability.Name),
-			TextSize = 17,
-			TextColor3 = agent.Color,
-		}, card)
-		bodyText(card, 220, 44, ability.Description .. "  (" .. ability.Cooldown .. " s)")
+		local card, stroke = makeCard(agentPage, i, agent.Color)
+		-- 3D-Figur links
+		local viewport = make("ViewportFrame", { Position = UDim2.new(0, 6, 0, 0), Size = UDim2.new(0, 130, 1, 0),
+			BackgroundTransparency = 1, Ambient = Color3.fromRGB(130, 135, 150), LightColor = Color3.fromRGB(255, 245, 235),
+			LightDirection = Vector3.new(-0.5, -1, 0.6) }, card)
+		local camera = make("Camera", { FieldOfView = 34 }, viewport)
+		camera.CFrame = AgentFigure.CameraCFrame
+		viewport.CurrentCamera = camera
+		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
+		local figure = AgentFigure.Build(agent, primary, accent, nil)
+		figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.35, 0))
+		figure.Parent = viewport
+
+		local x = 140
+		label({ Position = UDim2.new(0, x, 0, 16), Size = UDim2.new(1, -x - 14, 0, 32), Text = agent.Name, TextSize = 26,
+			Font = F.Title }, card)
+		label({ Position = UDim2.new(0, x, 0, 46), Size = UDim2.new(1, -x - 14, 0, 18), Text = string.upper(agent.Role),
+			TextSize = 13, TextColor3 = agent.Color }, card)
+		local level = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 20), Size = UDim2.new(0, 60, 0, 20),
+			Text = "", TextSize = 14, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right }, card)
+		local barBack = make("Frame", { Position = UDim2.new(0, x, 0, 70), Size = UDim2.new(1, -x - 14, 0, 4),
+			BackgroundColor3 = C.Border, BorderSizePixel = 0 }, card)
+		local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = agent.Color, BorderSizePixel = 0 }, barBack)
 		local weapons = {}
 		for _, weapon in agent.Loadout do
 			table.insert(weapons, WeaponConfig.Get(weapon).DisplayName)
 		end
-		bodyText(card, 266, 20, table.concat(weapons, " + "), 0, Color3.new(1, 1, 1))
+		label({ Position = UDim2.new(0, x, 0, 82), Size = UDim2.new(1, -x - 14, 0, 18),
+			Text = "♥ " .. agent.Health .. "   ⚡ " .. agent.WalkSpeed, TextSize = 13 }, card)
+		label({ Position = UDim2.new(0, x, 0, 102), Size = UDim2.new(1, -x - 14, 0, 18), Text = table.concat(weapons, " + "),
+			TextSize = 13, Font = F.Body, TextColor3 = C.Muted }, card)
+		label({ Position = UDim2.new(0, x, 0, 126), Size = UDim2.new(1, -x - 14, 0, 18),
+			Text = "Q  " .. string.upper(agent.Ability.Name), TextSize = 13, TextColor3 = agent.Color }, card)
+		label({ Position = UDim2.new(0, x, 0, 146), Size = UDim2.new(1, -x - 14, 0, 18),
+			Text = "G  " .. string.upper(agent.Gadget.Name), TextSize = 13, TextColor3 = C.Muted }, card)
+		local badge = label({ Position = UDim2.new(0, x, 1, -42), Size = UDim2.new(1, -x - 14, 0, 30), Text = "",
+			TextSize = 14, BackgroundTransparency = 0, BackgroundColor3 = C.Border,
+			TextXAlignment = Enum.TextXAlignment.Center }, card)
+		UITheme.Corner(badge, 8)
 
-		-- Level und XP-Balken
-		local levelLabel = text({
-			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, -18, 0, 30),
-			Size = UDim2.new(0, 80, 0, 40),
-			Text = "",
-			TextSize = 18,
-			TextColor3 = ACCENT,
-			TextXAlignment = Enum.TextXAlignment.Right,
-		}, card)
-		local barBack = make("Frame", {
-			Position = UDim2.new(0, 18, 1, -58),
-			Size = UDim2.new(1, -36, 0, 5),
-			BackgroundColor3 = CARD_BORDER,
-			BorderSizePixel = 0,
-		}, card)
-		local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = agent.Color, BorderSizePixel = 0 }, barBack)
-		local tag = badge(card, "WÄHLEN", false)
 		card.Activated:Connect(function()
 			-- Gesperrt: mit Münzen freischalten, sonst wählen
 			if not AgentConfig.IsUnlocked(player, agent.Id) then
@@ -250,31 +196,28 @@ local function buildAgentPage()
 				return
 			end
 			Remotes.SelectAgent:FireServer(agent.Id)
-			setStatus(agent.Name .. " gewählt. Aktiv ab dem nächsten Spawn.")
+			setStatus(agent.Name .. " gewählt – aktiv ab dem nächsten Spawn.")
 		end)
-		agentCards[agent] = { Card = card, Badge = tag, Level = levelLabel, Bar = bar }
+		agentCards[agent] = { Card = card, Stroke = stroke, Badge = badge, Level = level, Bar = bar }
 	end
 
-	-- Auswahl hervorheben, sobald der Server sie bestätigt
 	local function refresh()
 		local chosen = currentAgent()
 		for agent, entry in agentCards do
 			local isChosen = agent == chosen
-			local stroke = entry.Card:FindFirstChildOfClass("UIStroke")
-			stroke.Color = isChosen and ACCENT or CARD_BORDER
-			stroke.Thickness = isChosen and 3 or 1
 			local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
-			entry.Badge.Text = not unlocked and ("🔒 " .. agent.Price .. " 💰") or (isChosen and "GEWÄHLT" or "WÄHLEN")
-			entry.Badge.BackgroundColor3 = isChosen and Color3.fromRGB(110, 220, 120)
-				or (unlocked and Color3.fromRGB(55, 58, 70) or Color3.fromRGB(120, 90, 30))
-			entry.Badge.TextColor3 = (isChosen or not unlocked) and Color3.fromRGB(20, 20, 20) or GRAY
+			entry.Stroke.Color = isChosen and C.Accent or C.Border
+			entry.Stroke.Thickness = isChosen and 3 or 1
+			entry.Badge.Text = not unlocked and ("🔒  " .. agent.Price .. " MÜNZEN") or (isChosen and "✓  GEWÄHLT" or "WÄHLEN")
+			entry.Badge.BackgroundColor3 = isChosen and C.Good or (unlocked and C.Border or C.AccentDark)
+			entry.Badge.TextColor3 = (isChosen or not unlocked) and Color3.fromRGB(15, 15, 20) or C.Text
 			local xp = AgentConfig.GetXP(player, agent.Id)
-			entry.Level.Text = "Lv " .. AgentConfig.LevelFromXP(xp)
+			entry.Level.Text = "LV " .. AgentConfig.LevelFromXP(xp)
 			entry.Bar.Size = UDim2.new(AgentConfig.LevelProgress(xp), 0, 1, 0)
 		end
 	end
 	refresh()
-	player.AttributeChanged:Connect(refresh) -- Agent oder XP geändert
+	player.AttributeChanged:Connect(refresh)
 end
 
 -- ---------- Tabs ----------
@@ -284,44 +227,95 @@ local function showTab(name)
 	modePage.Visible = name == "Modes"
 	agentPage.Visible = name == "Agents"
 	playButton.Visible = name == "Modes"
-	subtitle.Text = (inHub and "HUB" or "MENÜ") .. "  ·  " .. (name == "Modes" and "SPIELMODUS WÄHLEN" or "AGENT WÄHLEN")
-	for tabName, b in tabButtons do
+	for tabName, entry in tabButtons do
 		local active = tabName == name
-		b.TextColor3 = active and ACCENT or GRAY
-		b:FindFirstChild("Underline").Visible = active
+		entry.Button.TextColor3 = active and C.Text or C.Muted
+		entry.Underline.Visible = active
 	end
 	setStatus("")
 end
 
-local function makeTab(name, label, x)
-	local b = make("TextButton", {
-		Position = UDim2.new(0, x, 0, 160),
-		Size = UDim2.new(0, 170, 0, 40),
-		BackgroundTransparency = 1,
-		Font = Enum.Font.GothamBlack,
-		TextSize = 22,
-		Text = label,
-		TextXAlignment = Enum.TextXAlignment.Left,
-	}, overlay)
-	make("Frame", {
-		Name = "Underline",
-		Position = UDim2.new(0, 0, 1, -3),
-		Size = UDim2.new(0, 120, 0, 3),
-		BackgroundColor3 = ACCENT,
-		BorderSizePixel = 0,
-	}, b)
-	b.Activated:Connect(function()
-		showTab(name)
-	end)
-	tabButtons[name] = b
+local function buildTopBar()
+	label({ Position = UDim2.new(0, 60, 0, 34), Size = UDim2.new(0, 400, 0, 54), Text = "SHOOTOUT", TextSize = 50,
+		Font = F.Title, TextColor3 = C.Accent }, canvas)
+	make("Frame", { Position = UDim2.new(0, 62, 0, 90), Size = UDim2.new(0, 80, 0, 4), BackgroundColor3 = C.Accent,
+		BorderSizePixel = 0 }, canvas)
+
+	-- Tabs in der Mitte
+	local tabs = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 44),
+		Size = UDim2.new(0, 420, 0, 46), BackgroundTransparency = 1 }, canvas)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 20),
+		HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
+	for i, entry in { { "Modes", "SPIELEN" }, { "Agents", "AGENTEN" } } do
+		local button = make("TextButton", { Size = UDim2.new(0, 190, 1, 0), BackgroundTransparency = 1, Text = entry[2],
+			Font = F.Title, TextSize = 24, TextColor3 = C.Muted, LayoutOrder = i }, tabs)
+		local underline = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
+			Size = UDim2.new(0, 120, 0, 4), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, button)
+		UITheme.Corner(underline, 2)
+		button.Activated:Connect(function()
+			showTab(entry[1])
+		end)
+		tabButtons[entry[1]] = { Button = button, Underline = underline }
+	end
+
+	-- Rechts: Münzen und Rang
+	local coins = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 36), Size = UDim2.new(0, 300, 0, 28),
+		Text = "", TextSize = 22, Font = F.Title, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
+	local rank = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 66), Size = UDim2.new(0, 300, 0, 24),
+		Text = "", TextSize = 17, Font = F.Title, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
+	local function update()
+		coins.Text = "💰 " .. (player:GetAttribute("Coins") or 0)
+		local points = player:GetAttribute("RankPoints") or 0
+		local tier = RankConfig.Get(points)
+		rank.Text = "🏆 " .. string.upper(tier.Name) .. "  ·  " .. points .. " RP"
+		rank.TextColor3 = tier.Color
+	end
+	update()
+	player:GetAttributeChangedSignal("Coins"):Connect(update)
+	player:GetAttributeChangedSignal("RankPoints"):Connect(update)
 end
 
--- Menü öffnen/schließen. Solange offen, ist die Maus frei (auch in First Person).
+local function buildBottomBar()
+	statusLabel = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 704), Size = UDim2.new(0, 900, 0, 26),
+		Text = "", TextSize = 17, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
+
+	playButton = UITheme.Button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 760),
+		Size = UDim2.new(0, 420, 0, 84), TextSize = 28, Text = "" }, canvas, function()
+		if selectedMode.Available then
+			setStatus("Suche Server für " .. selectedMode.Name .. "...")
+			Remotes.JoinMode:FireServer(selectedMode.Id)
+		else
+			setStatus(selectedMode.Name .. " kommt bald.")
+		end
+	end)
+
+	hubButton = UITheme.Button({ Position = UDim2.new(0, 60, 0, 772), Size = UDim2.new(0, 250, 0, 60), TextSize = 18,
+		Text = "⌂  ZURÜCK ZUM HUB", BackgroundColor3 = C.Card }, canvas, function()
+		setStatus("Zurück zum Hub...")
+		Remotes.JoinMode:FireServer(Modes.Hub.Id)
+	end)
+	closeButton = UITheme.Button({ Position = UDim2.new(0, 330, 0, 772), Size = UDim2.new(0, 220, 0, 60), TextSize = 18,
+		Text = "", BackgroundColor3 = C.Card }, canvas, function()
+		GameMenu.SetOpen(false)
+	end)
+
+	label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 862), Size = UDim2.new(0, 1200, 0, 20),
+		Text = "M Menü  ·  Q Fähigkeit  ·  G Gadget  ·  V Messer  ·  Z Ping  ·  Rechtsklick Zielen  ·  STRG Ducken/Slide  ·  E Aktion  ·  Tab Punkte",
+		TextSize = 13, Font = F.Body, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
+end
+
+-- Menü öffnen/schließen. Solange offen: Maus frei, Hintergrund unscharf.
 function GameMenu.SetOpen(open: boolean)
+	if open == isOpen and gui.Enabled == open then
+		return
+	end
 	isOpen = open
-	overlay.Visible = open
+	gui.Enabled = open
 	openButton.Visible = inHub and not open
+	UITheme.SetBlur("GameMenu", open)
 	if open then
+		background.BackgroundTransparency = 1
+		TweenService:Create(background, TweenInfo.new(0.2), { BackgroundTransparency = 0.25 }):Play()
 		RunService:BindToRenderStep("GameMenuMouse", Enum.RenderPriority.Camera.Value + 1, function()
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 			UserInputService.MouseIconEnabled = true
@@ -331,7 +325,6 @@ function GameMenu.SetOpen(open: boolean)
 	end
 end
 
--- Menü öffnen und direkt einen Tab zeigen ("Modes" oder "Agents")
 function GameMenu.Open(tab)
 	GameMenu.SetOpen(true)
 	showTab(tab or "Modes")
@@ -342,154 +335,26 @@ function GameMenu.IsOpen()
 end
 
 function GameMenu.Init()
+	gui = make("ScreenGui", { Name = "GameMenu", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 10,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
+	background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = C.Background,
+		BackgroundTransparency = 0.25, Active = true }, gui) -- Active: Klicks gehen nicht ins Spiel
+	UITheme.Gradient(background, Color3.fromRGB(40, 50, 75), Color3.fromRGB(5, 6, 10))
+	canvas = UITheme.Canvas(background, WIDTH, HEIGHT)
 
-	local gui = make("ScreenGui", {
-		Name = "GameMenu",
-		ResetOnSpawn = false,
-		IgnoreGuiInset = true,
-		DisplayOrder = 10,
-		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-	}, player:WaitForChild("PlayerGui"))
-
-	overlay = make("Frame", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundColor3 = BACKGROUND,
-		BackgroundTransparency = 0.08,
-		Active = true, -- schluckt Klicks, damit im Menü nicht geschossen wird
-		Visible = false,
-	}, gui)
-
-	-- Alles mitskalieren, damit es auch auf kleinen Bildschirmen passt
-	local scale = make("UIScale", {}, overlay)
-	local function updateScale()
-		local viewport = workspace.CurrentCamera.ViewportSize
-		-- Breite richtet sich nach der Anzahl der Karten
-		local width = math.max(1250, #Modes.List * (CARD_WIDTH + CARD_GAP) + 140)
-		scale.Scale = math.clamp(math.min(viewport.X / width, viewport.Y / 800), 0.4, 1.2)
-	end
-	updateScale()
-	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
-
-	-- Kopfzeile
-	text({
-		Position = UDim2.new(0, 60, 0, 40),
-		Size = UDim2.new(0, 600, 0, 64),
-		Text = "SHOOTOUT",
-		Font = Enum.Font.GothamBlack,
-		TextSize = 60,
-		TextColor3 = ACCENT,
-	}, overlay)
-	subtitle = text({
-		Position = UDim2.new(0, 62, 0, 104),
-		Size = UDim2.new(0, 600, 0, 28),
-		Text = "",
-		TextSize = 20,
-		TextColor3 = GRAY,
-	}, overlay)
-	text({
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -60, 0, 16),
-		Size = UDim2.new(0, 980, 0, 24),
-		Text = "M Menü · Q Fähigkeit · G Gadget · V Messer · Z Ping · Rechtsklick Zielen · STRG Ducken/Slide · E Aktion · Tab Punkte",
-		TextSize = 15,
-		TextColor3 = GRAY,
-		TextXAlignment = Enum.TextXAlignment.Right,
-	}, overlay)
-
-	-- Rang (Ranked) oben rechts
-	local rankLabel = text({
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -60, 0, 44),
-		Size = UDim2.new(0, 400, 0, 30),
-		Text = "",
-		TextSize = 22,
-		Font = Enum.Font.GothamBlack,
-		TextXAlignment = Enum.TextXAlignment.Right,
-	}, overlay)
-	local function updateRank()
-		local points = player:GetAttribute("RankPoints") or 0
-		local rank = RankConfig.Get(points)
-		rankLabel.Text = "🏆 " .. string.upper(rank.Name) .. "  ·  " .. points .. " RP"
-		rankLabel.TextColor3 = rank.Color
-	end
-	updateRank()
-	player:GetAttributeChangedSignal("RankPoints"):Connect(updateRank)
-
-	-- Untere Leiste
-	statusLabel = text({
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -60, 1, -135),
-		Size = UDim2.new(0, 700, 0, 26),
-		Text = "",
-		TextSize = 18,
-		TextColor3 = GRAY,
-		TextXAlignment = Enum.TextXAlignment.Right,
-	}, overlay)
-
-	playButton = button({
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -60, 1, -50),
-		Size = UDim2.new(0, 380, 0, 72),
-		TextSize = 26,
-		TextColor3 = Color3.fromRGB(20, 20, 20),
-		Text = "",
-	}, overlay)
-	playButton.Activated:Connect(function()
-		if selectedMode.Available then
-			setStatus("Suche Server für " .. selectedMode.Name .. "...")
-			Remotes.JoinMode:FireServer(selectedMode.Id)
-		else
-			setStatus(selectedMode.Name .. " kommt bald.")
-		end
-	end)
-
-	hubButton = button({
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 60, 1, -58),
-		Size = UDim2.new(0, 260, 0, 56),
-		TextSize = 20,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = BUTTON,
-		Text = "ZURÜCK ZUM HUB",
-	}, overlay)
-	hubButton.Activated:Connect(function()
-		setStatus("Zurück zum Hub...")
-		Remotes.JoinMode:FireServer(Modes.Hub.Id)
-	end)
-
-	closeButton = button({
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 340, 1, -58),
-		Size = UDim2.new(0, 220, 0, 56),
-		TextSize = 20,
-		TextColor3 = Color3.new(1, 1, 1),
-		BackgroundColor3 = BUTTON,
-		Text = "",
-	}, overlay)
-	closeButton.Activated:Connect(function()
-		GameMenu.SetOpen(false)
-	end)
-
-	-- Seiten und Tabs
+	buildTopBar()
+	buildBottomBar()
 	buildModePage()
 	buildAgentPage()
-	makeTab("Modes", "SPIELMODI", 60)
-	makeTab("Agents", "AGENTEN", 240)
 	selectMode(Modes.List[1])
 	showTab("Modes")
 
-	-- Im Hub: Knopf unten mittig, um das Menü wieder zu öffnen
-	openButton = button({
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -30),
-		Size = UDim2.new(0, 260, 0, 56),
-		TextSize = 22,
-		TextColor3 = Color3.fromRGB(20, 20, 20),
-		BackgroundColor3 = ACCENT,
-		Text = "SPIELEN  (M)",
-		Visible = false,
-	}, gui)
-	openButton.Activated:Connect(function()
+	-- Im Hub: großer Knopf unten mittig öffnet das Menü
+	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9 },
+		player.PlayerGui)
+	openButton = UITheme.Button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -34),
+		Size = UDim2.new(0, 300, 0, 64), TextSize = 24, Text = "▶  SPIELEN   (M)", BackgroundColor3 = C.Accent,
+		TextColor3 = Color3.fromRGB(20, 16, 10), Visible = false }, openGui, function()
 		GameMenu.SetOpen(true)
 	end)
 
@@ -505,28 +370,25 @@ function GameMenu.Init()
 			setStatus(message)
 		end
 	end)
-
-	-- Meldungen vom Server (Teleport läuft, Fehler, Portal betreten) -> Menü zeigen
+	-- Meldungen vom Server (Modus voll, kommt bald, ...) öffnen das Menü mit der Meldung
 	Remotes.MenuStatus.OnClientEvent:Connect(function(message)
-		if not isOpen then
-			GameMenu.SetOpen(true)
-		end
+		GameMenu.SetOpen(true)
 		showTab("Modes")
 		setStatus(message)
 	end)
 
-	-- Moduswechsel: im Hub Menü öffnen, beim Betreten eines Modus schließen
+	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Hub den SPIELEN-Knopf zeigen
 	local function onModeChanged()
 		local mode = player:GetAttribute("Mode")
 		if mode == nil then
-			return -- Server hat uns noch keinen Modus gegeben
+			return
 		end
 		inHub = mode == Modes.Hub.Id
 		hubButton.Visible = not inHub
-		closeButton.Position = UDim2.new(0, inHub and 60 or 340, 1, -58)
-		closeButton.Text = inHub and "IM HUB BLEIBEN" or "WEITERSPIELEN"
-		showTab(currentTab)
-		GameMenu.SetOpen(inHub)
+		closeButton.Position = UDim2.new(0, inHub and 60 or 330, 0, 772)
+		closeButton.Text = inHub and "✕  SCHLIESSEN" or "▶  WEITERSPIELEN"
+		GameMenu.SetOpen(false)
+		openButton.Visible = inHub
 	end
 	player:GetAttributeChangedSignal("Mode"):Connect(onModeChanged)
 	onModeChanged()
