@@ -1,6 +1,7 @@
 -- Scoreboard (ModuleScript, nur Client)
--- Tab gedrückt halten: alle Spieler und Bots im eigenen Modus mit Agent, Kills, Toden und Schaden.
--- In Team-Modi nach Teams getrennt, in Free-for-All nach Kills sortiert.
+-- Tab gedrückt halten: alle Spieler und Bots im eigenen Modus mit Rang, Agent, Kills, Toden, K/D und
+-- Schaden. Im Stil von Rogue Company: Kopfzeile mit Modus, Map und Spielstand, darunter die Teams
+-- (eigenes Team in Cyan zuerst, Gegner in Rot). In Free-for-All nach Kills sortiert.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,89 +11,82 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
 local RankConfig = require(Shared.RankConfig)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
+local C = UITheme.Colors
+local make = UITheme.Make
 
 local Scoreboard = {}
 
-local ACCENT = Color3.fromRGB(255, 140, 40)
-local ROW = Color3.fromRGB(22, 26, 36)
-local GRAY = Color3.fromRGB(170, 175, 190)
-local Teams = game:GetService("Teams")
+local WIDTH = 900
+local ME = Color3.fromRGB(28, 62, 78)
 
--- Spalten: { Überschrift, Breite, Ausrichtung }
+-- Spalten: { Schlüssel, Überschrift, Breite, Ausrichtung }
 local COLUMNS = {
-	{ "SPIELER", 240, Enum.TextXAlignment.Left },
-	{ "RANG", 140, Enum.TextXAlignment.Left },
-	{ "AGENT", 140, Enum.TextXAlignment.Left },
-	{ "K", 70, Enum.TextXAlignment.Center },
-	{ "T", 70, Enum.TextXAlignment.Center },
-	{ "SCHADEN", 120, Enum.TextXAlignment.Center },
+	{ "Name", "SPIELER", 250, Enum.TextXAlignment.Left },
+	{ "Rank", "RANG", 140, Enum.TextXAlignment.Left },
+	{ "Agent", "AGENT", 130, Enum.TextXAlignment.Left },
+	{ "Kills", "K", 70, Enum.TextXAlignment.Center },
+	{ "Deaths", "T", 70, Enum.TextXAlignment.Center },
+	{ "KD", "K/D", 80, Enum.TextXAlignment.Center },
+	{ "Damage", "SCHADEN", 110, Enum.TextXAlignment.Center },
 }
 
-local gui, panel, list
+local gui, panel, list, titleLabel, subLabel, scoreLabel
 local holding = false
 
-local function make(className, props, parent)
-	local obj = Instance.new(className)
-	for key, value in props do
-		obj[key] = value
-	end
-	obj.Parent = parent
-	return obj
-end
-
-local function rowFrame(order, color)
-	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = color or ROW,
-		BackgroundTransparency = 0.15, BorderSizePixel = 0, LayoutOrder = order }, list)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, frame)
+local function rowFrame(order, color, height)
+	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, height or 34), BackgroundColor3 = color or C.Card,
+		BackgroundTransparency = 0.1, BorderSizePixel = 0, LayoutOrder = order }, list)
+	UITheme.Corner(frame, 3)
+	local inner = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 }, frame)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
-		SortOrder = Enum.SortOrder.LayoutOrder }, frame)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 12) }, frame)
-	return frame
+		SortOrder = Enum.SortOrder.LayoutOrder }, inner)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 16) }, inner)
+	return frame, inner
 end
 
-local function cells(frame, values, color, font)
+-- colors: optionale Farben pro Spaltenschlüssel
+local function cells(inner, values, color, font, colors)
 	for i, column in COLUMNS do
-		make("TextLabel", { Size = UDim2.new(0, column[2], 1, 0), BackgroundTransparency = 1, Text = tostring(values[i]),
-			Font = font or Enum.Font.GothamBold, TextSize = 16, TextColor3 = color or Color3.new(1, 1, 1),
-			TextXAlignment = column[3], LayoutOrder = i }, frame)
+		UITheme.Label({ Size = UDim2.new(0, column[3], 1, 0), Text = tostring(values[column[1]] or ""),
+			Font = font or UITheme.Fonts.Bold, TextSize = 16, TextColor3 = colors and colors[column[1]] or color or C.Text,
+			TextXAlignment = column[4], TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = i }, inner)
 	end
 end
 
--- Alle Einträge im eigenen Modus: { Name, Agent, Kills, Deaths, Damage, Team, IsMe }
+-- Alle Einträge im eigenen Modus
 local function entries()
 	local mode = player:GetAttribute("Mode")
-	local list = {}
+	local result = {}
 	for _, p in Players:GetPlayers() do
 		if p:GetAttribute("Mode") == mode then
 			local stats = p:FindFirstChild("leaderstats")
 			local kills = stats and stats:FindFirstChild("Kills")
 			local agentId = (p.Character and p.Character:GetAttribute("Agent")) or p:GetAttribute("Agent")
-			local agent = AgentConfig.Get(agentId)
-			local elo = p:GetAttribute("Elo") or RankConfig.StartElo
-			table.insert(list, { Name = p.Name, Rank = RankConfig.Get(elo).Display, Agent = agent and agent.Name or "–",
-				Kills = kills and kills.Value or 0,
+			local rank = RankConfig.Get(p:GetAttribute("Elo") or RankConfig.StartElo)
+			table.insert(result, { Name = p.Name, Rank = rank.Display, RankColor = rank.Color,
+				Agent = AgentConfig.Get(agentId), Kills = kills and kills.Value or 0,
 				Deaths = p:GetAttribute("Deaths") or 0, Damage = p:GetAttribute("Damage") or 0,
 				Team = p.Team and p.Team.Name or nil, IsMe = p == player })
 		end
 	end
 	for _, info in ReplicatedStorage:WaitForChild("BotInfo"):GetChildren() do
 		if info:GetAttribute("Mode") == mode then
-			local agent = AgentConfig.Get(info:GetAttribute("Agent"))
 			local team = info:GetAttribute("TeamName")
-			table.insert(list, { Name = info.Name, Rank = "BOT", Agent = agent and agent.Name or "–",
-				Kills = info:GetAttribute("Kills") or 0,
+			table.insert(result, { Name = info.Name, Rank = "BOT", RankColor = C.Muted,
+				Agent = AgentConfig.Get(info:GetAttribute("Agent")), Kills = info:GetAttribute("Kills") or 0,
 				Deaths = info:GetAttribute("Deaths") or 0, Damage = "–", Team = team ~= "" and team or nil })
 		end
 	end
-	table.sort(list, function(a, b)
+	table.sort(result, function(a, b)
 		if a.Kills ~= b.Kills then
 			return a.Kills > b.Kills
 		end
 		return a.Name < b.Name
 	end)
-	return list
+	return result
 end
 
 local function render()
@@ -101,21 +95,45 @@ local function render()
 			child:Destroy()
 		end
 	end
+
+	-- Kopfzeile: Modus, Map, Spielstand
+	local mode = Modes.Get(player:GetAttribute("Mode"))
+	titleLabel.Text = string.upper(mode and mode.Name or "")
+	subLabel.Text = string.upper(player:GetAttribute("MapName") or "")
+	local isTeam = Modes.IsTeamMode(player:GetAttribute("Mode"))
+	local mine, enemy = player:GetAttribute("TeamScore"), player:GetAttribute("EnemyScore")
+	scoreLabel.Visible = isTeam and mine ~= nil
+	scoreLabel.Text = '<font color="#28D2E6">' .. tostring(mine or 0) .. '</font>  :  <font color="#E13741">'
+		.. tostring(enemy or 0) .. "</font>"
+
 	local order = 0
-	local function add(entry)
+	local function add(entry, accent)
 		order += 1
-		local frame = rowFrame(order, entry.IsMe and Color3.fromRGB(70, 55, 25) or nil)
-		cells(frame, { entry.Name, entry.Rank, entry.Agent, entry.Kills, entry.Deaths, entry.Damage },
-			entry.IsMe and ACCENT or nil)
+		local frame, inner = rowFrame(order, entry.IsMe and ME or nil)
+		-- Farbstreifen links (Team/Ich)
+		make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = entry.IsMe and C.Accent or accent or C.Border,
+			BorderSizePixel = 0 }, frame)
+		local kd = entry.Deaths > 0 and entry.Kills / entry.Deaths or entry.Kills
+		cells(inner, {
+			Name = entry.Name, Rank = entry.Rank, Agent = entry.Agent and string.upper(entry.Agent.Name) or "–",
+			Kills = entry.Kills, Deaths = entry.Deaths, KD = string.format("%.2f", kd), Damage = entry.Damage,
+		}, nil, nil, {
+			Name = entry.IsMe and C.Accent or C.Text, Rank = entry.RankColor,
+			Agent = entry.Agent and entry.Agent.Color or C.Muted, KD = kd >= 1 and C.Good or C.Muted,
+		})
 	end
 
 	order += 1
-	cells(rowFrame(order, Color3.fromRGB(10, 12, 18)), {
-		COLUMNS[1][1], COLUMNS[2][1], COLUMNS[3][1], COLUMNS[4][1], COLUMNS[5][1], COLUMNS[6][1] }, GRAY, Enum.Font.Oswald)
+	local headerValues = {}
+	for _, column in COLUMNS do
+		headerValues[column[1]] = column[2]
+	end
+	local _, headerInner = rowFrame(order, C.Background, 28)
+	cells(headerInner, headerValues, C.Muted, UITheme.Fonts.Title)
 
 	local all = entries()
-	if Modes.IsTeamMode(player:GetAttribute("Mode")) then
-		-- Eigenes Team zuerst, dann das andere Team dieses Modus
+	if isTeam then
+		-- Eigenes Team zuerst (Cyan), dann das gegnerische Team (Rot)
 		local teamNames = {}
 		if player.Team then
 			table.insert(teamNames, player.Team.Name)
@@ -126,13 +144,17 @@ local function render()
 			end
 		end
 		for _, teamName in teamNames do
+			local own = player.Team and teamName == player.Team.Name
+			local color = own and C.Accent or C.Bad
 			order += 1
-			local team = Teams:FindFirstChild(teamName)
-			local header = rowFrame(order, team and team.TeamColor.Color or ROW)
-			cells(header, { "TEAM " .. string.upper(teamName), "", "", "", "", "" }, Color3.new(1, 1, 1), Enum.Font.Oswald)
+			local header = make("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = order }, list)
+			UITheme.Diamond(header, 12, UDim2.new(0, 12, 0.5, 0), color)
+			UITheme.Label({ Position = UDim2.new(0, 30, 0, 0), Size = UDim2.new(1, -30, 1, 0),
+				Text = "TEAM " .. string.upper(teamName) .. (own and "  ·  DEIN TEAM" or ""), Font = UITheme.Fonts.Title,
+				TextSize = 20, TextColor3 = color }, header)
 			for _, entry in all do
 				if entry.Team == teamName then
-					add(entry)
+					add(entry, color)
 				end
 			end
 		end
@@ -146,14 +168,33 @@ end
 function Scoreboard.Init()
 	gui = make("ScreenGui", { Name = "Scoreboard", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 8,
 		Enabled = false }, player:WaitForChild("PlayerGui"))
-	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90),
-		Size = UDim2.new(0, 820, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(12, 14, 20),
-		BackgroundTransparency = 0.1, BorderSizePixel = 0 }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, panel)
-	make("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12),
-		PaddingRight = UDim.new(0, 12) }, panel)
+	panel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90),
+		Size = UDim2.new(0, WIDTH, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 0.08 }, gui)
+	UITheme.Gradient(panel, Color3.fromRGB(22, 34, 52), C.Panel)
+	make("UIPadding", { PaddingTop = UDim.new(0, 14), PaddingBottom = UDim.new(0, 14), PaddingLeft = UDim.new(0, 14),
+		PaddingRight = UDim.new(0, 14) }, panel)
+	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
+	-- Auf kleinen Bildschirmen verkleinern
+	local scale = make("UIScale", {}, panel)
+	local function updateScale()
+		scale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.X - 40) / WIDTH, 0.5, 1)
+	end
+	updateScale()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+
+	-- Kopf: Modus links, Spielstand in der Mitte
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 54), BackgroundTransparency = 1, LayoutOrder = 1 }, panel)
+	make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, head)
+	titleLabel = UITheme.Label({ Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(0.5, 0, 0, 32), Text = "",
+		Font = UITheme.Fonts.Title, TextSize = 30 }, head)
+	subLabel = UITheme.Label({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(0.5, 0, 0, 20), Text = "",
+		Font = UITheme.Fonts.Title, TextSize = 16, TextColor3 = C.Muted }, head)
+	scoreLabel = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 0),
+		Size = UDim2.new(0, 260, 1, 0), Text = "", Font = UITheme.Fonts.Title, TextSize = 44, RichText = true,
+		TextXAlignment = Enum.TextXAlignment.Right }, head)
+
 	list = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1 }, panel)
+		BackgroundTransparency = 1, LayoutOrder = 2 }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 
 	UserInputService.InputBegan:Connect(function(input, processed)
