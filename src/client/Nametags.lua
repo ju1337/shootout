@@ -47,20 +47,35 @@ local parts = {} -- [Schild] = { Title, Subtitle, Emblem, RankPill } (wird beim 
 local function buildTag(model, head)
 	local tag = Instance.new("BillboardGui")
 	tag.Name = TAG_NAME
-	tag.Size = UDim2.new(0, 340, 0, 64)
+	tag.Size = UDim2.new(0, 360, 0, 70)
 	tag.StudsOffset = Vector3.new(0, 2.9, 0)
 	tag.MaxDistance = 120
 	tag.AlwaysOnTop = false
 	tag.LightInfluence = 0
 
+	-- dezente, durchsichtige Karte mit feinem Rand um Abzeichen und Text
 	local row = Instance.new("Frame")
 	row.Name = "Row"
 	row.AnchorPoint = Vector2.new(0.5, 0.5)
 	row.Position = UDim2.fromScale(0.5, 0.5)
-	row.Size = UDim2.new(0, 0, 1, 0)
-	row.AutomaticSize = Enum.AutomaticSize.X
-	row.BackgroundTransparency = 1
+	row.Size = UDim2.new(0, 0, 0, 0)
+	row.AutomaticSize = Enum.AutomaticSize.XY
+	row.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
+	row.BackgroundTransparency = 0.6
 	row.Parent = tag
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = row
+	local edge = Instance.new("UIStroke")
+	edge.Color = Color3.new(1, 1, 1)
+	edge.Transparency = 0.8
+	edge.Parent = row
+	local inset = Instance.new("UIPadding")
+	inset.PaddingLeft = UDim.new(0, 4)
+	inset.PaddingRight = UDim.new(0, 12)
+	inset.PaddingTop = UDim.new(0, 2)
+	inset.PaddingBottom = UDim.new(0, 2)
+	inset.Parent = row
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
