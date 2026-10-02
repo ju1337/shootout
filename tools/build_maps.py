@@ -62,10 +62,34 @@ def lighten(color, amount=0.35):
     return tuple(int(c + (255 - c) * amount) for c in color)
 
 
+def scale_xz(pos, m, size, f):
+    """Teil in der Fläche um f strecken (Höhe bleibt): Mitte, Ausrichtung und Größe. Für gedrehte/geneigte Teile wird
+    die längste Achse exakt abgebildet und der Rest orthogonal ergänzt (bei Rampen ändert sich nur die Neigung)."""
+    cols = [[m[i][k] for i in range(3)] for k in range(3)]  # lokale Achsen in Weltkoordinaten
+    vecs = [[c[0] * f, c[1], c[2] * f] for c in cols]
+    lens = [math.sqrt(sum(v * v for v in vec)) for vec in vecs]
+    new_size = [size[k] * lens[k] for k in range(3)]
+    order = sorted(range(3), key=lambda k: -new_size[k])
+    u = [None, None, None]
+    p = order[0]
+    u[p] = [v / lens[p] for v in vecs[p]]
+    q = order[1]
+    d = sum(vecs[q][i] * u[p][i] for i in range(3))
+    w = [vecs[q][i] - d * u[p][i] for i in range(3)]
+    n = math.sqrt(sum(v * v for v in w)) or 1
+    u[q] = [v / n for v in w]
+    r = order[2]
+    a, b = u[(r + 1) % 3], u[(r + 2) % 3]
+    u[r] = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+    new_m = [[round(u[k][i], 6) for k in range(3)] for i in range(3)]
+    return (pos[0] * f, pos[1], pos[2] * f), new_m, new_size
+
+
 class Builder:
-    def __init__(self, origin=(0, 0, 0)):
+    def __init__(self, origin=(0, 0, 0), scale=1.0):
         self.groups = {}
         self.origin = origin
+        self.scale = scale  # > 1: ganze Map in der Fläche strecken (Abstände, Wände, Plätze), Höhen bleiben
         self.holo = False  # True: Schilder als Hologramme (durchsichtiges Glas, leuchtende Schrift, Leuchtkanten)
 
     def holo_edges(self, name, size, pos, angles, color):
@@ -88,11 +112,17 @@ class Builder:
 
     def add(self, group, name, size, pos, color, material="SmoothPlastic", angles=(0, 0, 0),
             cls="Part", props=None, children=None):
+        orientation = rot(*angles)
+        if self.scale != 1:
+            keep = size  # Flaggen-Zonen behalten ihre Größe (Radius steht im Spielcode)
+            pos, orientation, size = scale_xz(pos, orientation, size, self.scale)
+            if group == "Objective":
+                size = keep
         p = {
             "Anchored": True,
             "Size": [round(v, 3) for v in size],
             "CFrame": {"CFrame": {"position": [round(v + o, 3) for v, o in zip(pos, self.origin)],
-                                  "orientation": rot(*angles)}},
+                                  "orientation": orientation}},
             "Color": rgb(*color),
             "Material": material,
             "TopSurface": "Smooth",
@@ -2253,6 +2283,44 @@ def team_base(b, sx, team_col, folder, tag, wall_col, roof_col, roof_mat="Metal"
         b.crate(sx * 144, z, s=4, color=(110, 100, 80))
 
 
+DOM_SCALE = 1.2  # Herrschaft-Maps 20 % größer (Fläche), Höhen bleiben
+
+
+def sniper_tower(b, x, z, sx, color, accent, h=10):
+    """Sniper-Turm am Basis-Ende einer Lane: überdachte Plattform auf h, Brüstung zur Mitte und zur Lane,
+    Treppe von der Basis-Seite (Norden). Starke Sicht die Lane hinunter, aber von unten und von drüben angreifbar."""
+    for dx in (-4, 4):
+        for dz in (-4, 4):
+            b.box("Buildings", "SniperLeg", (1, h + 6, 1), (x + dx, (h + 6) / 2, z + dz), color, "Metal")
+    b.catwalk("SniperDeck", x - 4.5, x + 4.5, z - 4.5, z + 4.5, h, rails=(), color=color)
+    b.box("Cover", "SniperParapet", (0.6, 1.6, 9), (x - sx * 4.2, h + 0.8, z), color, "Metal")
+    b.box("Cover", "SniperParapet", (9, 1.6, 0.6), (x, h + 0.8, z - 4.2), color, "Metal")
+    b.box("Cover", "SniperParapet", (3.5, 1.6, 0.6), (x - sx * 2.75, h + 0.8, z + 4.2), color, "Metal")
+    b.box("Decor", "SniperStripe", (0.3, 0.3, 9.2), (x - sx * 4.5, h + 1.7, z), accent, "Neon")
+    b.box("Buildings", "SniperRoof", (10, 0.6, 10), (x, h + 6.3, z), color, "Metal")
+    b.stairs("SniperStairs", x + sx * 2.5, z + 17.6, 4, h, "S", color=color)
+
+
+def flank_tunnel(b, sx, x_inner, x_outer, z_n, z_s, wall_col, roof_col, light_col, exits_n=(), exits_s=(), slits=(),
+                 h=7, material="Concrete"):
+    """Überdachter Flankengang (Rusher-Weg) von der Flagge zur Mitte: geschützt vor Snipern, Ausgänge zu den
+    Seiten, schmale Schlitze zur Lane (Camper können rausschauen, man sieht aber auch rein)."""
+    x0, x1 = sorted((sx * x_inner, sx * x_outer))
+    for z, exits, side_slits in ((z_n, exits_n, ()), (z_s, exits_s, slits)):
+        ops = [(sx * e, 6, 0, 6.5) for e in exits] + [(sx * e, 3, 3.4, 5) for e in side_slits]
+        b.wall_line("FlankTunnel", x0, x1, z, True, h, wall_col, material, ops)
+    b.box("Buildings", "FlankTunnelRoof", (x1 - x0, 1, abs(z_n - z_s) + 1.2), ((x0 + x1) / 2, h + 0.5, (z_n + z_s) / 2),
+          roof_col, material)
+    b.box("Decor", "FlankTunnelLight", (x1 - x0 - 2, 0.2, 0.8), ((x0 + x1) / 2, h - 0.1, (z_n + z_s) / 2), light_col, "Neon")
+
+
+def window_climb(b, x, z, color=(110, 100, 80)):
+    """Kisten an einer Hallenwand bis unter ein Fenster (Rusher springen über die Kisten in die Halle)."""
+    b.crate(x, z, s=4, color=color)
+    b.crate(x, z, s=4, y=4, color=color)
+    b.crate(x + 4.2, z, s=4, color=color)
+
+
 def flag_marker(b, name, x, color, pole_side=1):
     """Flaggen-Zone (Scheibe, Radius 9) und Mast mit Tuch und Buchstabe neben der Zone."""
     b.add("Objective", "Flag" + name, (0.3, 18, 18), (x, 0.25, 0), (230, 230, 235), "Neon",
@@ -2272,7 +2340,7 @@ def build_lagune():
     rechts der Flagge, Liegen, Schirme, Cabana), dazwischen zweistöckige Villen. Norden: Strand mit
     Rettungstürmen (erhöhte Plattform), Booten, Beachvolleyball, Felsen. Süden: Garten mit Hecken,
     Tennisplatz und Pavillons. Basen überdacht (Stroh), spiegelgleich."""
-    b = Builder(LAGUNE_ORIGIN)
+    b = Builder(LAGUNE_ORIGIN, scale=DOM_SCALE)
     rng = random.Random(77)
     SX, SZ = 340, 230
     paving, sand, grass = (232, 224, 208), (238, 218, 168), (110, 175, 85)
@@ -2383,10 +2451,12 @@ def build_lagune():
     # ---------- Mitte: Hotel mit offenem Innenhof (Flagge B) ----------
     ox, oz, ix, iz, H1, H2 = 34, 26, 20, 13, 9.5, 17.5
     for z, side in ((oz, 1), (-oz, -1)):
+        # obere Tür (Rusher-Weg über die Außentreppe) im Norden östlich, im Süden westlich (punktsymmetrisch)
         b.wall_line("Hotel", -ox, ox, z, True, H2, stucco, "Concrete",
                     openings=[(-10, 6, 0, 7.5), (10, 6, 0, 7.5), (-25, 4, 3, 6.2), (25, 4, 3, 6.2),
-                              (-26, 4, 11.5, 14.5), (-13, 4, 11.5, 14.5), (0, 4, 11.5, 14.5), (13, 4, 11.5, 14.5),
-                              (26, 4, 11.5, 14.5)])
+                              (-13, 4, 11.5, 14.5), (0, 4, 11.5, 14.5), (13, 4, 11.5, 14.5),
+                              (side * 30.5, 4, H1, H1 + 6.5), (-side * 26, 4, 11.5, 14.5)])
+        b.stairs("HotelOuterStairs", side * 16, z + side * 2.6, 4, H1, "E" if side > 0 else "W", color=(200, 170, 130))
     for x in (ox, -ox):
         b.wall_line("Hotel", -oz + 1.2, oz - 1.2, x, False, H2, stucco, "Concrete",
                     openings=[(0, 8, 0, 8), (-14, 4, 3, 6.2), (14, 4, 3, 6.2), (-12, 4, 11.5, 14.5), (12, 4, 11.5, 14.5)])
@@ -2423,6 +2493,12 @@ def build_lagune():
     b.sign("FlagSignB", (5, 5, 0.4), (0, 15.5, 0), "B", (25, 25, 30), (255, 255, 255))
     b.sign("FlagSignB2", (5, 5, 0.4), (0, 15.5, 0.45), "B", (25, 25, 30), (255, 255, 255), angles=(0, 180, 0))
 
+    # ---------- Spielweisen: Sniper-Türme (Garten-Lane), Pergola-Gang (Rusher) ----------
+    for sx in (-1, 1):
+        sniper_tower(b, sx * 136, -64, sx, (240, 236, 226), pink if sx < 0 else teal)
+        flank_tunnel(b, sx, 36, 112, -28, -36, (90, 150, 80), wood, (255, 220, 160), exits_n=(56, 96), exits_s=(76,),
+                     slits=(62, 90, 104), material="Grass")
+
     # Strand Mitte: Beachvolleyball, Tennisplatz im Garten
     b.box("Decor", "VolleyNet", (0.2, 2, 18), (0, 4.6, 70), (250, 250, 250), "Fabric", props={"Transparency": 0.4})
     for z in (61, 79):
@@ -2445,7 +2521,7 @@ def build_mondbasis():
     Erzwagen, Gesteinshaufen). C: Radarstation mit großer Schüssel und Technikschränken. Zwischen den Flaggen
     und der Halle je ein Wohnmodul (zweistöckig). Norden: Kraterfeld mit Rovern und Felsen. Süden: Solarfarm
     (Reihen schräger Paneele) mit Wartungshütte. Basen: Landeplätze mit Rakete, überdacht. Spiegelgleich."""
-    b = Builder(MONDBASIS_ORIGIN)
+    b = Builder(MONDBASIS_ORIGIN, scale=DOM_SCALE)
     rng = random.Random(91)
     SX, SZ = 340, 230
     regolith, rock, hull = (118, 118, 124), (92, 92, 98), (222, 226, 234)
@@ -2474,6 +2550,8 @@ def build_mondbasis():
         for d in (-1, 1):
             b.box("Decor", "RocketFin", (0.8, 10, 6), (sx * 158 + d * 4.5, 15, 96), team_col, "Metal")
         b.cylinder("Buildings", "LaunchPad", 16, 11.5, (sx * 158, 5.75, 96), (70, 74, 84), "Metal")
+        # Sniper: Treppe auf die Startrampe (Ring um die Rakete, Blick über das Kraterfeld)
+        b.stairs("LaunchStairs", sx * 158, 72.4, 4, 11.5, "N", color=(80, 84, 94))
         for z in (-18, 0, 18):
             b.box("Cover", "Barricade", (2, 3.2, 7), (sx * 126, 1.6, z), (90, 94, 104), "Metal")
             b.box("Decor", "BarricadeGlow", (2.1, 0.3, 7.1), (sx * 126, 3.2, z), team_col, "Neon")
@@ -2559,8 +2637,9 @@ def build_mondbasis():
     hx, hz, hh = 32, 22, 16
     for z, name in ((hz, "DomeN"), (-hz, "DomeS")):
         b.wall_line(name, -hx, hx, z, True, hh, hull, "Metal",
-                    openings=[(-12, 7, 0, 8), (12, 7, 0, 8), (-24, 5, 9.5, 12.5), (0, 6, 9.5, 12.5), (24, 5, 9.5, 12.5),
+                    openings=[(-12, 7, 0, 8), (12, 7, 0, 8), (-24, 5, 9.5, 12.5), (0, 6, 9.5, 15), (24, 5, 9.5, 12.5),
                               (-4, 3, 3, 6), (4, 3, 3, 6)])
+        window_climb(b, -2.1, z + (2.6 if z > 0 else -2.6), color=(80, 84, 96))
     for x, name in ((-hx, "DomeW"), (hx, "DomeE")):
         b.wall_line(name, -hz + 1.2, hz - 1.2, x, False, hh, hull, "Metal",
                     openings=[(-11, 7, 0, 8), (11, 7, 0, 8), (0, 4, 3, 6.5)])
@@ -2591,6 +2670,12 @@ def build_mondbasis():
     b.sign("FlagSignB2", (5, 5, 0.4), (0, 12.5, 0.45), "B", dark, (255, 255, 255), angles=(0, 180, 0))
     b.sign("DomeSign", (24, 4, 0.4), (0, 19, hz + 0.9), "MONDBASIS", dark, cyan, angles=(0, 180, 0))
     b.sign("DomeSignS", (24, 4, 0.4), (0, 19, -hz - 0.9), "MONDBASIS", dark, magenta)
+    # ---------- Spielweisen: Sniper-Türme (Solar-Lane), Verbindungsröhren (Rusher) ----------
+    for sx in (-1, 1):
+        sniper_tower(b, sx * 136, -64, sx, (90, 96, 110), cyan)
+        flank_tunnel(b, sx, 36, 118, -28, -36, hull, (70, 76, 90), cyan, exits_n=(56, 96), exits_s=(76,),
+                     slits=(62, 90, 108), material="Metal")
+
     # Mitte Nord/Süd: Röhren-Verbindungen als Deckung über der Freifläche
     for z in (44, -44):
         b.add("Cover", "Tube", (40, 6, 6), (0, 3, z), hull, "Metal", props={"Shape": "Cylinder"})
@@ -2613,7 +2698,7 @@ def build_kraftwerk(origin, filename, flags=True):
                 (Laufstege an den Längswänden, Fenster nach außen: enge Kämpfe auf zwei Ebenen)
       Süden   – Straße und Containerhof mit begehbaren Containern und Portalkran (zwei Ebenen)
     Basen überdacht mit drei Ausgängen nach vorn und je einem Tor zu Nord- und Südstraße."""
-    b = Builder(origin)
+    b = Builder(origin, scale=DOM_SCALE)
     rng = random.Random(41)
     SX, SZ = 340, 230
     concrete, asphalt, steel, dark = (118, 120, 124), (56, 58, 62), (84, 88, 96), (44, 47, 53)
@@ -2705,7 +2790,7 @@ def build_kraftwerk(origin, filename, flags=True):
             b.add("Decor", "PipeBridge", (34, 1.4, 1.4), (sx * 44, 10.6 + dz * 0.8, 44 + dz), (150, 120, 60), "Metal",
                   angles=(0, 90, 0), props={"Shape": "Cylinder"})
         # ---------- Südstraße: Leitwände, Tankwagen ----------
-        for x, z, ax in ((26, -36, True), (26, -52, True), (62, -44, False), (102, -34, True), (102, -54, True)):
+        for x, z, ax in ((26, -40, True), (26, -54, True), (62, -46, False), (102, -44, True), (102, -56, True)):
             b.barrier(sx * x, z, along_x=ax, length=7)
         b.add("Cover", "TankTruck", (14, 6, 6), (sx * 84, 3.6, -52), (210, 210, 205), "Metal",
               props={"Shape": "Cylinder"})
@@ -2755,8 +2840,10 @@ def build_kraftwerk(origin, filename, flags=True):
     hx, hz, hh = 32, 22, 16
     for z, name in ((hz, "HallN"), (-hz, "HallS")):
         b.wall_line(name, -hx, hx, z, True, hh, hall_col, "Concrete",
-                    openings=[(-12, 7, 0, 8), (12, 7, 0, 8), (-24, 5, 9.5, 12.5), (0, 6, 9.5, 12.5), (24, 5, 9.5, 12.5),
+                    openings=[(-12, 7, 0, 8), (12, 7, 0, 8), (-24, 5, 9.5, 12.5), (0, 6, 9.5, 15), (24, 5, 9.5, 12.5),
                               (-4, 3, 3, 6), (4, 3, 3, 6)])
+        # Rusher: über Kisten durchs Mittelfenster direkt auf den Laufsteg
+        window_climb(b, -2.1, z + (2.6 if z > 0 else -2.6))
     for x, name in ((-hx, "HallW"), (hx, "HallE")):
         b.wall_line(name, -hz + 1.2, hz - 1.2, x, False, hh, hall_col, "Concrete",
                     openings=[(-11, 7, 0, 8), (11, 7, 0, 8), (0, 4, 3, 6.5)])
@@ -2793,6 +2880,15 @@ def build_kraftwerk(origin, filename, flags=True):
                   angles=(0, 90, 0), props={"Shape": "Cylinder"})
     b.barrier(0, 36, along_x=True, length=8)
     b.barrier(0, -52, along_x=True, length=8)
+
+    # ---------- Spielweisen: Sniper-Türme (Süd-Lane), Flankentunnel (Rusher), Camper-Nester ----------
+    for sx in (-1, 1):
+        sniper_tower(b, sx * 136, -64, sx, steel, warn)
+        flank_tunnel(b, sx, 36, 118, -28, -36, (126, 128, 132), roof_col, warn, exits_n=(56, 96), exits_s=(76,),
+                     slits=(62, 90, 108))
+        # Camper-Nest: Sandsack-Ring auf dem Förderband-Ende und an der Hallenecke
+        for dz in (-1, 1):
+            b.box("Cover", "Sandbags", (5, 2, 1.6), (sx * 40, 1, dz * 27.5), (170, 150, 110), "Fabric")
 
     # ---------- Norden Mitte: Leitstand zwischen den Kühltürmen ----------
     b.building2("ControlRoom", 0, 92, 26, 16, (150, 156, 162), roof_col,

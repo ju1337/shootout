@@ -32,7 +32,7 @@ Modes.List = {
 		Color = Color3.fromRGB(90, 140, 190),
 		Center = Vector3.new(1500, 0, 0),
 		TeamMode = true,
-		Overview = { Radius = 230, Height = 150 },
+		Overview = { Radius = 280, Height = 170 },
 		Goal = "HALTE DIE FLAGGEN",
 		Objectives = { { Part = "FlagA", Label = "A" }, { Part = "FlagB", Label = "B" }, { Part = "FlagC", Label = "C" } },
 		Available = true,
