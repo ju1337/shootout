@@ -127,6 +127,19 @@ function actions.UnlockAgent(player, agentId)
 	return agent.Name .. " freigeschaltet!", true
 end
 
+-- Primärwaffe eines Agenten wählen (gilt ab dem nächsten Spawn)
+function actions.SelectPrimary(player, agentId, weaponName)
+	local agent = typeof(agentId) == "string" and AgentConfig.Get(agentId)
+	local profile = ProgressService.Get(player)
+	if not agent or not profile or typeof(weaponName) ~= "string" or not table.find(agent.Primaries or {}, weaponName) then
+		return "Diese Waffe gibt es für den Agenten nicht.", false
+	end
+	profile.Loadouts = profile.Loadouts or {}
+	profile.Loadouts[agentId] = weaponName
+	ProgressService.Sync(player)
+	return WeaponConfig.Get(weaponName).DisplayName .. " für " .. agent.Name .. " gewählt.", true
+end
+
 -- Persönliche Einstellungen speichern (Sichtfeld, Empfindlichkeit, Kamera)
 function actions.SaveSettings(player, settings)
 	local profile = ProgressService.Get(player)

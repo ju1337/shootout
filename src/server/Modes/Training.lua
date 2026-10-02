@@ -90,11 +90,13 @@ function Training.Init()
 	end
 	-- Agent gewechselt: sofort neu spawnen, damit Waffen und Fähigkeit passen
 	local function onPlayer(player)
-		player:GetAttributeChangedSignal("Agent"):Connect(function()
+		local function respawn()
 			if members[player] then
 				task.spawn(spawnPlayer, player)
 			end
-		end)
+		end
+		player:GetAttributeChangedSignal("Agent"):Connect(respawn)
+		player:GetAttributeChangedSignal("Loadouts"):Connect(respawn) -- Primärwaffe gewechselt
 	end
 	Players.PlayerAdded:Connect(onPlayer)
 	for _, player in Players:GetPlayers() do

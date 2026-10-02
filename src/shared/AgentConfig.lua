@@ -3,6 +3,7 @@
 -- Fähigkeits-Typen: "Boost" (schneller), "Wall" (Deckungswand), "Heal" (Selbstheilung),
 -- "Reveal" (zeigt Gegner durch Wände), "Cloak" (fast unsichtbar), "Dash" (Sprung nach vorne),
 -- "TeamHeal" (heilt Teamkollegen in der Nähe)
+-- Primaries = wählbare Primärwaffen (wie bei RC zwei zur Auswahl), Loadout[2] = Sekundärwaffe
 -- Price = Münzen zum Freischalten (ohne Price: von Anfang an verfügbar)
 -- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
 -- "Sensor" (Mine, die vorbeilaufende Gegner markiert)
@@ -43,6 +44,7 @@ AgentConfig.Agents = {
 		Health = 90,
 		WalkSpeed = 18,
 		Loadout = { "SMG", "Pistol" },
+		Primaries = { "SMG", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
 		Ability = {
 			Type = "Boost",
@@ -62,6 +64,7 @@ AgentConfig.Agents = {
 		Health = 125,
 		WalkSpeed = 15,
 		Loadout = { "Shotgun", "Revolver" },
+		Primaries = { "Shotgun", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
 		Ability = {
 			Type = "Wall",
@@ -81,6 +84,7 @@ AgentConfig.Agents = {
 		Health = 100,
 		WalkSpeed = 16,
 		Loadout = { "Rifle", "Pistol" },
+		Primaries = { "Rifle", "DMR" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Smoke", Name = "Rauchgranate", Charges = 1, Radius = 14, Duration = 12, Fuse = 1.5 },
 		Ability = {
 			Type = "Heal",
@@ -100,6 +104,7 @@ AgentConfig.Agents = {
 		Health = 95,
 		WalkSpeed = 16,
 		Loadout = { "DMR", "Pistol" },
+		Primaries = { "DMR", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
 		Ability = {
 			Type = "Reveal",
@@ -120,6 +125,7 @@ AgentConfig.Agents = {
 		Health = 90,
 		WalkSpeed = 17,
 		Loadout = { "SMG", "Revolver" },
+		Primaries = { "SMG", "Shotgun" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
 		Ability = {
 			Type = "Cloak",
@@ -139,6 +145,7 @@ AgentConfig.Agents = {
 		Health = 100,
 		WalkSpeed = 17,
 		Loadout = { "Shotgun", "Pistol" },
+		Primaries = { "Shotgun", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
 		Ability = {
 			Type = "Dash",
@@ -159,6 +166,7 @@ AgentConfig.Agents = {
 		Health = 110,
 		WalkSpeed = 15,
 		Loadout = { "LMG", "Revolver" },
+		Primaries = { "LMG", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
 		Ability = {
 			Type = "TeamHeal",
@@ -220,6 +228,22 @@ function AgentConfig.IsUnlocked(player, agentId)
 	end
 	local ok, data = pcall(HttpService.JSONDecode, HttpService, raw)
 	return ok and type(data) == "table" and data[agentId] == true
+end
+
+-- Waffen des Spielers für einen Agenten: gewählte Primärwaffe (Spieler-Attribut "Loadouts", JSON
+-- { [AgentId] = Waffe }) + Sekundärwaffe
+function AgentConfig.LoadoutFor(player, agentId)
+	local agent = AgentConfig.Get(agentId) or AgentConfig.Agents[1]
+	local primary = agent.Loadout[1]
+	local raw = player and player:GetAttribute("Loadouts")
+	if type(raw) == "string" then
+		local ok, data = pcall(HttpService.JSONDecode, HttpService, raw)
+		local chosen = ok and type(data) == "table" and data[agent.Id]
+		if chosen and table.find(agent.Primaries or {}, chosen) then
+			primary = chosen
+		end
+	end
+	return { primary, agent.Loadout[2] }
 end
 
 -- XP eines Spielers für einen Agenten (Spieler-Attribut "XP_<Id>")

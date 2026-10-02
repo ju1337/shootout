@@ -29,7 +29,7 @@ local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speic
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
-		Stats = {}, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
+		Stats = {}, Loadouts = {}, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -83,6 +83,7 @@ function ProgressService.Sync(player)
 	player:SetAttribute("UnlockedAgents", HttpService:JSONEncode(profile.Agents or {}))
 	player:SetAttribute("ClientSettings", HttpService:JSONEncode(profile.Settings or {}))
 	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
+	player:SetAttribute("Loadouts", HttpService:JSONEncode(profile.Loadouts or {}))
 	local ranked = profile.Ranked or {}
 	player:SetAttribute("Elo", ranked.Elo or RankConfig.StartElo)
 	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))

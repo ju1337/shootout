@@ -37,7 +37,7 @@ local function selectedAgent(player)
 end
 
 local function newState(player)
-	local loadout = selectedAgent(player).Loadout
+	local loadout = AgentConfig.LoadoutFor(player, selectedAgent(player).Id)
 	local state = {
 		Loadout = loadout,
 		Current = loadout[1],

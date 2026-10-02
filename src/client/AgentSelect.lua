@@ -42,6 +42,7 @@ local tiles = {}           -- [agent] = { Button, Stroke }
 local buyCards = {}        -- [item] = { Button, State }
 local bottomButtons = {}   -- ["Agents"/"Shop"] = Button
 local agentArea, shopArea, moneyLabel, buyStatus
+local primaryButtons = {}  -- zwei Knöpfe für die Primärwaffe des gewählten Agenten
 local tabButtons = {}      -- [role] = Button
 local currentRole = "ALLE"
 local previewAgent = nil   -- Agent in der 3D-Ansicht (Maus über Kachel oder gewählter)
@@ -186,9 +187,29 @@ local function buildInfo()
 		BackgroundColor3 = Color3.fromRGB(60, 65, 80), BorderSizePixel = 0 }, canvas)
 	infoAbility = text({ Position = UDim2.new(0, x, 0, 424), Size = UDim2.new(0, 380, 0, 26), Text = "",
 		TextSize = 20 }, canvas)
-	infoAbilityText = text({ Position = UDim2.new(0, x, 0, 454), Size = UDim2.new(0, 340, 0, 90), Text = "",
+	infoAbilityText = text({ Position = UDim2.new(0, x, 0, 454), Size = UDim2.new(0, 340, 0, 70), Text = "",
 		TextSize = 16, Font = Enum.Font.Gotham, TextColor3 = GRAY, TextWrapped = true,
 		TextYAlignment = Enum.TextYAlignment.Top }, canvas)
+
+	-- Primärwaffe wählen (wie bei RC: zwei zur Auswahl, gilt für den gewählten Agenten)
+	text({ Position = UDim2.new(0, x, 0, 532), Size = UDim2.new(0, 340, 0, 18), Text = "PRIMÄRWAFFE", TextSize = 13,
+		TextColor3 = CYAN }, canvas)
+	for i = 1, 2 do
+		local b = make("TextButton", { Position = UDim2.new(0, x + (i - 1) * 172, 0, 556), Size = UDim2.new(0, 164, 0, 40),
+			BackgroundColor3 = Color3.fromRGB(18, 22, 32), BorderSizePixel = 0, Font = Enum.Font.Oswald, TextSize = 18,
+			TextColor3 = Color3.new(1, 1, 1), Text = "", AutoButtonColor = true }, canvas)
+		make("UICorner", { CornerRadius = UDim.new(0, 4) }, b)
+		local stroke = make("UIStroke", { Color = Color3.fromRGB(60, 65, 80), Thickness = 1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+		b.Activated:Connect(function()
+			local agent = myAgent()
+			local weapon = agent.Primaries and agent.Primaries[i]
+			if weapon then
+				Remotes.ShopAction:FireServer("SelectPrimary", agent.Id, weapon)
+			end
+		end)
+		primaryButtons[i] = { Button = b, Stroke = stroke }
+	end
 end
 
 local function refreshTiles()
@@ -545,6 +566,19 @@ local function update()
 		else
 			entry.State.Text = item.Price .. " $"
 			entry.State.TextColor3 = money >= item.Price and Color3.new(1, 1, 1) or Color3.fromRGB(255, 110, 110)
+		end
+	end
+
+	-- Primärwaffen-Knöpfe für den gewählten Agenten
+	local agent = myAgent()
+	local chosenPrimary = AgentConfig.LoadoutFor(player, agent.Id)[1]
+	for i, entry in primaryButtons do
+		local weapon = agent.Primaries and agent.Primaries[i]
+		entry.Button.Visible = weapon ~= nil
+		if weapon then
+			entry.Button.Text = WeaponConfig.Get(weapon).DisplayName
+			entry.Stroke.Color = weapon == chosenPrimary and CYAN or Color3.fromRGB(60, 65, 80)
+			entry.Stroke.Thickness = weapon == chosenPrimary and 2 or 1
 		end
 	end
 
