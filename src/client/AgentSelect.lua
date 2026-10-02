@@ -97,7 +97,8 @@ end
 
 local function buildFigure(agent)
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	return AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]))
+	local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
+	return AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
 end
 
 local function showPreview(agent)
@@ -611,7 +612,7 @@ function AgentSelect.Init()
 	end)
 	-- Level/XP geändert: 3D-Figur und Info neu aufbauen
 	player.AttributeChanged:Connect(function(name)
-		if string.sub(name, 1, 3) == "XP_" or name == "Equipped" or name == "Owned" then
+		if string.sub(name, 1, 3) == "XP_" or name == "Equipped" or name == "Owned" or name == "Loadouts" then
 			previewAgent = nil
 		end
 	end)

@@ -19,6 +19,7 @@ local Downed = require(script.Parent:WaitForChild("Downed"))
 local ObjectivePrompt = require(script.Parent:WaitForChild("ObjectivePrompt"))
 local Pings = require(script.Parent:WaitForChild("Pings"))
 local MatchSummary = require(script.Parent:WaitForChild("MatchSummary"))
+local HubLineup = require(script.Parent:WaitForChild("HubLineup"))
 
 Movement.Init()
 WeaponClient.Init()
@@ -34,4 +35,5 @@ Downed.Init()
 ObjectivePrompt.Init()
 Pings.Init()
 MatchSummary.Init()
+HubLineup.Init()
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

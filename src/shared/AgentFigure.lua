@@ -11,8 +11,9 @@ local AgentFigure = {}
 -- Kamera-Position, die die ganze Figur zeigt (Figur steht um den Ursprung, Blick nach -Z)
 AgentFigure.CameraCFrame = CFrame.lookAt(Vector3.new(0, 3.1, -9.5), Vector3.new(0, 2.8, 0))
 
--- primary = Uniform, accent = Visier/Weste, weaponSkin = Skin der Waffe (oder nil)
-function AgentFigure.Build(agent, primary, accent, weaponSkin)
+-- primary = Uniform, accent = Visier/Weste, weaponSkin = Skin der Waffe (oder nil),
+-- weaponName = gezeigte Waffe (Standard: erste Waffe des Agenten)
+function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName)
 	local model = Instance.new("Model")
 	local function part(name, size, cframe, color, material)
 		local p = Instance.new("Part")
@@ -41,7 +42,7 @@ function AgentFigure.Build(agent, primary, accent, weaponSkin)
 	part("LeftLeg", Vector3.new(0.95, 2, 0.95), CFrame.new(-0.5, 1, 0), pants)
 	part("RightLeg", Vector3.new(0.95, 2, 0.95), CFrame.new(0.5, 1, 0), pants)
 
-	local gun = GunModels.Build(agent.Loadout[1], weaponSkin)
+	local gun = GunModels.Build(weaponName or agent.Loadout[1], weaponSkin)
 	gun:PivotTo(CFrame.new(1.45, 2.95, -1.55))
 	gun.Parent = model
 
