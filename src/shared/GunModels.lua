@@ -5,6 +5,7 @@
 --
 -- Jede Waffe hat eine echte Kimme (hinten) und ein Korn (vorne, mit Leuchtpunkt). Ihre Oberkante liegt
 -- genau auf der Visierlinie (Info.SightHeight): Beim Zielen schaut die Kamera über Kimme und Korn.
+-- Ausnahme Sturmgewehr: Rotpunktvisier (Info.Reflex) – beim Zielen liegt der rote Punkt in der Bildmitte.
 -- Teile mit Group bewegen sich in Animationen gemeinsam (Magazin, Schlitten, Pumpe, Trommel, ...).
 
 local GunModels = {}
@@ -21,6 +22,9 @@ local GRAY = Color3.fromRGB(70, 73, 80)
 local BRASS = Color3.fromRGB(205, 165, 75)
 local SHELL = Color3.fromRGB(170, 40, 35)
 local DOT = Color3.fromRGB(255, 120, 40)    -- Leuchtpunkt auf dem Korn
+local OPTIC = Color3.fromRGB(30, 31, 35)    -- mattschwarzes Gehäuse des Rotpunktvisiers
+local LENS = Color3.fromRGB(120, 200, 215)  -- leicht blau getöntes Glas
+local RETICLE = Color3.fromRGB(255, 35, 35) -- roter Punkt
 local WHITE = Color3.fromRGB(235, 240, 240) -- Punkte an der Kimme (Pistole)
 local METAL = Enum.Material.Metal
 local PLASTIC = Enum.Material.Plastic
@@ -33,7 +37,8 @@ end
 
 -- { Name, Größe, Position (Griffpunkt = 0,0,0), Farbe, Material, Optionen }
 -- Optionen: Skin = vom Skin umgefärbt, Group = Animationsgruppe, Hidden = nur in Animationen sichtbar,
--- Rot = Drehung, Shape = Enum.PartType, Neon = leuchtet, Invisible = unsichtbar (nur Griffpunkt)
+-- Rot = Drehung, Shape = Enum.PartType, Neon = leuchtet, Invisible = unsichtbar (nur Griffpunkt),
+-- Glass = Durchsichtigkeit (Glas des Rotpunktvisiers)
 local HANDLE = { "Handle", V(0.2, 0.2, 0.2), V(0, 0, 0), BLACK, PLASTIC, { Invisible = true } }
 
 local PARTS = {
@@ -48,18 +53,24 @@ local PARTS = {
 		{ "Magazine", V(0.24, 0.62, 0.34), V(0, -0.08, -0.65), BLACK, METAL, { Group = "Magazine", Rot = rot(10) } },
 		{ "Rail", V(0.16, 0.05, 1.25), V(0, 0.65, -0.45), GRAY, METAL },
 		{ "Bolt", V(0.22, 0.06, 0.1), V(0, 0.6, 0.6), BLACK, METAL, { Group = "Bolt" } },
-		-- Kimme: Lochkimme (Ring um die Visierlinie y = 0.9)
-		{ "RearBase", V(0.15, 0.12, 0.1), V(0, 0.735, 0.12), BLACK, METAL },
-		{ "RearL", V(0.065, 0.2, 0.05), V(-0.0675, 0.9, 0.12), BLACK, METAL },
-		{ "RearR", V(0.065, 0.2, 0.05), V(0.0675, 0.9, 0.12), BLACK, METAL },
-		{ "RearT", V(0.07, 0.065, 0.05), V(0, 0.9675, 0.12), BLACK, METAL },
-		{ "RearB", V(0.07, 0.065, 0.05), V(0, 0.8325, 0.12), BLACK, METAL },
-		-- Korn mit Schutzflügeln
-		{ "FrontBase", V(0.13, 0.27, 0.1), V(0, 0.675, -2.08), BLACK, METAL },
-		{ "FrontPost", V(0.03, 0.07, 0.03), V(0, 0.845, -2.08), BLACK, METAL },
-		{ "FrontDot", V(0.034, 0.02, 0.034), V(0, 0.89, -2.08), DOT, METAL, { Neon = true } },
-		{ "FrontEarL", V(0.025, 0.15, 0.05), V(-0.07, 0.885, -2.08), BLACK, METAL },
-		{ "FrontEarR", V(0.025, 0.15, 0.05), V(0.07, 0.885, -2.08), BLACK, METAL },
+		-- Rotpunktvisier (Reflexvisier) auf der Schiene: hinten das flache Gehäuse mit Helligkeitsrad und
+		-- Klemmschrauben, vorne der Rahmen mit getöntem Glas. Der rote Punkt sitzt genau auf der
+		-- Visierlinie (y = 0.92) mitten im Fenster; das Gehäuse bleibt unter dem Fenster.
+		{ "DotMount", V(0.2, 0.06, 0.46), V(0, 0.705, -0.17), OPTIC, PLASTIC },
+		{ "DotScrewA", V(0.04, 0.06, 0.06), V(-0.12, 0.705, -0.06), BLACK, METAL, { Shape = Enum.PartType.Cylinder } },
+		{ "DotScrewB", V(0.04, 0.06, 0.06), V(-0.12, 0.705, -0.3), BLACK, METAL, { Shape = Enum.PartType.Cylinder } },
+		{ "DotBody", V(0.2, 0.075, 0.34), V(0, 0.7725, -0.13), OPTIC, PLASTIC },
+		{ "DotDial", V(0.05, 0.1, 0.1), V(-0.125, 0.77, -0.14), BLACK, METAL, { Shape = Enum.PartType.Cylinder } },
+		{ "DotDialMark", V(0.052, 0.016, 0.03), V(-0.126, 0.8, -0.14), RETICLE, PLASTIC },
+		{ "DotHoodBase", V(0.33, 0.05, 0.12), V(0, 0.79, -0.36), OPTIC, PLASTIC },
+		{ "DotHoodL", V(0.035, 0.25, 0.06), V(-0.1475, 0.92, -0.36), OPTIC, PLASTIC },
+		{ "DotHoodR", V(0.035, 0.25, 0.06), V(0.1475, 0.92, -0.36), OPTIC, PLASTIC },
+		{ "DotHoodTop", V(0.33, 0.035, 0.06), V(0, 1.0425, -0.36), OPTIC, PLASTIC },
+		{ "DotHoodCornerL", V(0.035, 0.07, 0.06), V(-0.122, 1.006, -0.36), OPTIC, PLASTIC, { Rot = rot(0, 0, -45) } },
+		{ "DotHoodCornerR", V(0.035, 0.07, 0.06), V(0.122, 1.006, -0.36), OPTIC, PLASTIC, { Rot = rot(0, 0, 45) } },
+		{ "DotGlass", V(0.26, 0.21, 0.008), V(0, 0.92, -0.36), LENS, Enum.Material.Glass, { Glass = 0.82 } },
+		{ "DotReticle", V(0.01, 0.01, 0.01), V(0, 0.92, -0.352), RETICLE, PLASTIC,
+			{ Neon = true, Shape = Enum.PartType.Ball } },
 	},
 	SMG = {
 		HANDLE,
@@ -188,14 +199,16 @@ local PARTS = {
 }
 
 -- Infos je Waffe (Modell-Einheiten, Griffpunkt = Ursprung):
--- SightHeight = Höhe der Visierlinie (Oberkante Korn), SightZ = Position der Kimme, EyeRelief = Abstand
--- Auge - Kimme beim Zielen, Muzzle = Mündung, Eject = Hülsenauswurf, RightHand/LeftHand = Hände,
+-- SightHeight = Höhe der Visierlinie (Oberkante Korn bzw. roter Punkt), SightZ = Position der Kimme (beim
+-- Rotpunkt: des Glases), EyeRelief = Abstand Auge - Kimme beim Zielen, Reflex = Rotpunktvisier,
+-- Muzzle = Mündung, Eject = Hülsenauswurf, RightHand/LeftHand = Hände,
 -- Stock = Ende der Schulterstütze (lange Waffen), Long = lange Waffe (Schulteranschlag),
 -- LeftHandTP = linke Hand in der Third-Person (näher am Griff, damit die kürzeren Avatar-Arme hinkommen)
 GunModels.Info = {
-	Rifle = { SightHeight = 0.9, SightZ = 0.12, EyeRelief = 0.6, Muzzle = V(0, 0.48, -2.73), Eject = V(0.18, 0.47, -0.3),
-		RightHand = V(0, -0.05, 0.05), LeftHand = V(-0.03, 0.27, -1.6), Stock = V(0, 0.35, 1.4), Long = true,
-		LeftHandTP = V(-0.03, 0.2, -1.15) },
+	-- Rotpunkt: SightZ = Glas, das Auge bleibt wie vorher 0.72 hinter dem Griff
+	Rifle = { SightHeight = 0.92, SightZ = -0.36, EyeRelief = 1.08, Reflex = true, Muzzle = V(0, 0.48, -2.73),
+		Eject = V(0.18, 0.47, -0.3), RightHand = V(0, -0.05, 0.05), LeftHand = V(-0.03, 0.27, -1.6), Stock = V(0, 0.35, 1.4),
+		Long = true, LeftHandTP = V(-0.03, 0.2, -1.15) },
 	SMG = { SightHeight = 0.76, SightZ = 0.3, EyeRelief = 0.55, Muzzle = V(0, 0.43, -1.355), Eject = V(0.16, 0.45, -0.25),
 		RightHand = V(0, -0.05, 0.04), LeftHand = V(-0.03, 0.15, -0.68), Stock = V(0, 0.3, 1.02), Long = true,
 		LeftHandTP = V(-0.03, 0.15, -0.68) },
@@ -305,6 +318,10 @@ function GunModels.Build(weaponName, skin)
 		end
 		if options.Invisible then
 			part.Transparency = 1
+		end
+		if options.Glass then
+			part.Transparency = options.Glass
+			part.Material = Enum.Material.Glass
 		end
 		if options.Hidden then
 			part.Transparency = 1
