@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local PathfindingService = game:GetService("PathfindingService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local WeaponConfig = require(Shared.WeaponConfig)
@@ -222,6 +223,57 @@ end
 
 -- ---------- KI ----------
 
+-- Wegfindung: Bots laufen um Wände herum statt dagegen. Pfad wird neu berechnet, wenn sich das Ziel
+-- deutlich bewegt hat, der Pfad zu alt ist oder der Bot festhängt.
+local REPATH_TIME = 2.5
+local function makeNavigator(humanoid, root)
+	local nav = { Goal = nil, Waypoints = nil, Index = 0, ComputedAt = 0 }
+	local path = PathfindingService:CreatePath({ AgentRadius = 2.5, AgentHeight = 5.5, AgentCanJump = true,
+		WaypointSpacing = 6 })
+
+	function nav.MoveTo(goal, stuck)
+		local now = os.clock()
+		local needPath = nav.Waypoints == nil or nav.Goal == nil or (goal - nav.Goal).Magnitude > 10
+			or now - nav.ComputedAt > REPATH_TIME or nav.Index > #nav.Waypoints or stuck
+		if needPath then
+			nav.Goal, nav.ComputedAt = goal, now
+			local ok = pcall(path.ComputeAsync, path, root.Position, goal)
+			if ok and path.Status == Enum.PathStatus.Success then
+				nav.Waypoints = path:GetWaypoints()
+				nav.Index = 2
+			else
+				nav.Waypoints = nil
+				humanoid:MoveTo(goal) -- kein Weg gefunden: direkt versuchen
+				return
+			end
+		end
+		local waypoint = nav.Waypoints and nav.Waypoints[nav.Index]
+		if not waypoint then
+			humanoid:MoveTo(goal)
+			return
+		end
+		local offset = waypoint.Position - root.Position
+		if Vector3.new(offset.X, 0, offset.Z).Magnitude < 3.5 then
+			nav.Index += 1
+			waypoint = nav.Waypoints[nav.Index]
+			if not waypoint then
+				humanoid:MoveTo(goal)
+				return
+			end
+		end
+		if waypoint.Action == Enum.PathWaypointAction.Jump then
+			humanoid.Jump = true
+		end
+		humanoid:MoveTo(waypoint.Position)
+	end
+
+	function nav.Clear()
+		nav.Waypoints = nil
+		nav.Goal = nil
+	end
+	return nav
+end
+
 local function runAI(bot, model)
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	local root = model:WaitForChild("HumanoidRootPart")
@@ -236,6 +288,9 @@ local function runAI(bot, model)
 	local reloadUntil = 0
 	local nextMove = 0
 	local lastPosition = root.Position
+	local nav = makeNavigator(humanoid, root)
+	local wanderGoal = nil -- Ziel ohne Gegner in Sicht (Punkt, nächster Gegner, Umherlaufen)
+	local stuckTicks = 0
 
 	while bot.Model == model and humanoid.Health > 0 do
 		local now = os.clock()
@@ -273,9 +328,11 @@ local function runAI(bot, model)
 			-- Zum Ziel drehen
 			humanoid.AutoRotate = false
 			root.CFrame = CFrame.lookAt(root.Position, Vector3.new(targetPosition.X, root.Position.Y, targetPosition.Z))
+			nav.Clear()
+			wanderGoal = nil
 			if now >= nextMove then
 				if targetDistance > KEEP_DISTANCE then
-					humanoid:MoveTo(targetPosition)
+					humanoid:MoveTo(targetPosition) -- in Sicht: direkter Weg ist frei
 				else
 					humanoid:MoveTo(root.Position + root.CFrame.RightVector * random:NextInteger(-12, 12))
 				end
@@ -314,27 +371,37 @@ local function runAI(bot, model)
 					end
 				end
 			end
+			local stuck = stuckTicks > 6
+			if stuck then
+				stuckTicks = 0
+			end
 			if mate then
 				if not DownedService.ReviveTick(model, mate, TICK) then
-					humanoid:MoveTo(mate.HumanoidRootPart.Position)
+					nav.MoveTo(mate.HumanoidRootPart.Position, stuck)
 				end
-			elseif now >= nextMove then
-				if bot.Objective then
-					-- Strikeout: zum Punkt laufen
-					humanoid:MoveTo(bot.Objective + Vector3.new(random:NextNumber(-6, 6), 0, random:NextNumber(-6, 6)))
-				elseif nearest then
-					humanoid:MoveTo(nearest.HumanoidRootPart.Position)
-				else
-					local offset = Vector3.new(random:NextNumber(-1, 1), 0, random:NextNumber(-1, 1)) * WANDER_RADIUS
-					humanoid:MoveTo(center + offset)
+			else
+				if now >= nextMove or not wanderGoal then
+					if bot.Objective then
+						-- Ziel des Modus (Punkt, Bombe, Hack)
+						wanderGoal = bot.Objective + Vector3.new(random:NextNumber(-6, 6), 0, random:NextNumber(-6, 6))
+					elseif nearest then
+						wanderGoal = nearest.HumanoidRootPart.Position
+					else
+						local offset = Vector3.new(random:NextNumber(-1, 1), 0, random:NextNumber(-1, 1)) * WANDER_RADIUS
+						wanderGoal = center + offset
+					end
+					nextMove = now + 2
 				end
-				nextMove = now + 2
+				nav.MoveTo(wanderGoal, stuck)
 			end
 		end
 
-		-- Festgelaufen? Springen.
+		-- Festgelaufen? Springen und Weg neu berechnen.
 		if (root.Position - lastPosition).Magnitude < 0.3 and humanoid.MoveDirection.Magnitude > 0 then
 			humanoid.Jump = true
+			stuckTicks += 1
+		else
+			stuckTicks = 0
 		end
 		lastPosition = root.Position
 		task.wait(TICK)

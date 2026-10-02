@@ -39,7 +39,7 @@ Modes.List = {
 		Color = Color3.fromRGB(255, 170, 50),
 		Center = Vector3.new(0, 0, -1500),
 		TeamMode = true,
-		Overview = { Radius = 140, Height = 90 },
+		Overview = { Radius = 190, Height = 120 },
 		Available = true,
 	},
 	{
@@ -51,7 +51,7 @@ Modes.List = {
 		Color = Color3.fromRGB(230, 70, 90),
 		Center = Vector3.new(-1500, 0, 0),
 		TeamMode = true,
-		Overview = { Radius = 170, Height = 110 },
+		Overview = { Radius = 210, Height = 130 },
 		Available = true,
 	},
 	{
@@ -75,7 +75,7 @@ Modes.List = {
 		Color = Color3.fromRGB(120, 210, 80),
 		Center = Vector3.new(3000, 0, -1500),
 		TeamMode = true,
-		Overview = { Radius = 140, Height = 90 },
+		Overview = { Radius = 190, Height = 120 },
 		Available = true,
 	},
 	{
@@ -87,7 +87,7 @@ Modes.List = {
 		Color = Color3.fromRGB(120, 220, 160),
 		Center = Vector3.new(1500, 0, -1500),
 		TeamMode = true,
-		Overview = { Radius = 140, Height = 90 },
+		Overview = { Radius = 190, Height = 120 },
 		Available = true,
 	},
 	{
@@ -121,7 +121,7 @@ Modes.List = {
 		Color = Color3.fromRGB(255, 200, 60),
 		Center = Vector3.new(1500, 0, 1500),
 		TeamMode = true,
-		Overview = { Radius = 170, Height = 110 },
+		Overview = { Radius = 210, Height = 130 },
 		Available = true,
 	},
 }

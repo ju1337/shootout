@@ -187,6 +187,118 @@ class Builder:
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front"}, "Children": [label]}
         self.box("Decor", name, size, pos, bg, "SmoothPlastic", angles=angles, children=[gui])
 
+    # ---------- Bausteine für größere, verwinkelte Maps ----------
+
+    def wall_line(self, name, a, b, fixed, along_x, h, color, material="Concrete", openings=(), y0=0, t=1.2,
+                  group="Buildings"):
+        """Gerade Wand von a bis b (entlang x, wenn along_x, sonst entlang z) bei fixed (z bzw. x).
+        openings: (Mitte, Breite, Unterkante, Oberkante) relativ zu y0 – Unterkante 0 = Tür, sonst Fenster."""
+        cuts = sorted(openings)
+        pos = a
+
+        def seg(p0, p1, lo, hi):
+            if p1 - p0 < 0.05 or hi - lo < 0.05:
+                return
+            mid, length, cy = (p0 + p1) / 2, p1 - p0, y0 + (lo + hi) / 2
+            size = (length, hi - lo, t) if along_x else (t, hi - lo, length)
+            center = (mid, cy, fixed) if along_x else (fixed, cy, mid)
+            self.box(group, name, size, center, color, material)
+
+        for center, width, lo, hi in cuts:
+            o0, o1 = center - width / 2, center + width / 2
+            seg(pos, o0, 0, h)
+            seg(o0, o1, 0, lo)
+            seg(o0, o1, min(hi, h), h)
+            pos = o1
+        seg(pos, b, 0, h)
+
+    def stairs(self, name, x, z, width, rise, direction, color=(110, 112, 118), step_rise=1.0, step_run=1.3, y0=0):
+        """Massive Treppe: beginnt bei (x, z) auf Höhe y0 und steigt in Richtung direction (N/S/E/W) um rise."""
+        n = int(math.ceil(rise / step_rise))
+        dx, dz = {"N": (0, 1), "S": (0, -1), "E": (1, 0), "W": (-1, 0)}[direction]
+        for k in range(n):
+            top = min(rise, (k + 1) * step_rise)
+            off = (k + 0.5) * step_run
+            cx, cz = x + dx * off, z + dz * off
+            size = (width, top, step_run) if dx == 0 else (step_run, top, width)
+            self.box("Buildings", name, size, (cx, y0 + top / 2, cz), color, "Concrete")
+        return n * step_run  # Länge der Treppe
+
+    def slab(self, name, x0, x1, z0, z1, y, color, holes=(), material="Concrete", t=1):
+        """Decke/Boden von x0..x1, z0..z1 auf Höhe y (Oberkante), mit rechteckigen Löchern (hx0, hx1, hz0, hz1)."""
+        rects = [(x0, x1, z0, z1)]
+        for hx0, hx1, hz0, hz1 in holes:
+            new = []
+            for rx0, rx1, rz0, rz1 in rects:
+                if hx1 <= rx0 or hx0 >= rx1 or hz1 <= rz0 or hz0 >= rz1:
+                    new.append((rx0, rx1, rz0, rz1))
+                    continue
+                if rz0 < hz0:
+                    new.append((rx0, rx1, rz0, hz0))
+                if hz1 < rz1:
+                    new.append((rx0, rx1, hz1, rz1))
+                mz0, mz1 = max(rz0, hz0), min(rz1, hz1)
+                if rx0 < hx0:
+                    new.append((rx0, hx0, mz0, mz1))
+                if hx1 < rx1:
+                    new.append((hx1, rx1, mz0, mz1))
+            rects = new
+        for rx0, rx1, rz0, rz1 in rects:
+            if rx1 - rx0 > 0.05 and rz1 - rz0 > 0.05:
+                self.box("Buildings", name, (rx1 - rx0, t, rz1 - rz0), ((rx0 + rx1) / 2, y - t / 2, (rz0 + rz1) / 2),
+                         color, material)
+
+    def building2(self, name, x, z, w, d, color, roof_color, doors=None, windows1=None, windows2=None,
+                  stairs_at=("W",), h1=10, h2=9, material="Concrete"):
+        """Zweistöckiges Gebäude. doors/windows: {Seite: [Versatz, ...]} (Versatz entlang der Wand, 0 = Mitte).
+        Unten Türen (6 breit) und Fenster, oben viele Fenster zum Spähen. Treppe innen an den Seiten stairs_at."""
+        doors = doors or {}
+        windows1 = windows1 or {}
+        windows2 = windows2 or {}
+        x0, x1, z0, z1 = x - w / 2, x + w / 2, z - d / 2, z + d / 2
+        t = 1.2
+        walls = {"N": (x0, x1, z1 - t / 2, True), "S": (x0, x1, z0 + t / 2, True),
+                 "E": (z0 + t, z1 - t, x1 - t / 2, False), "W": (z0 + t, z1 - t, x0 + t / 2, False)}
+        for side, (a, b, fixed, along_x) in walls.items():
+            base = (x if along_x else z)
+            ops = [(base + o, 6, 0, 8) for o in doors.get(side, [])]
+            ops += [(base + o, 4, 3.2, 6.6) for o in windows1.get(side, [])]
+            self.wall_line(name, a, b, fixed, along_x, h1, color, material, ops)
+            ops2 = [(base + o, 4.5, 2.8, 6.4) for o in windows2.get(side, [])]
+            self.wall_line(name, a, b, fixed, along_x, h2, color, material, ops2, y0=h1)
+        # Treppen innen an der Wand, Loch in der Decke darüber
+        holes = []
+        for side in stairs_at:
+            sw = 4.5
+            if side == "W":
+                sx, run_dir = x0 + t + sw / 2, "N"
+                length = self.stairs(name + "_Stairs", sx, z0 + t + 2, sw, h1, run_dir)
+                holes.append((sx - sw / 2, sx + sw / 2, z0 + t + 2, z0 + t + 2 + length + 1))
+            elif side == "E":
+                sx, run_dir = x1 - t - sw / 2, "S"
+                length = self.stairs(name + "_Stairs", sx, z1 - t - 2, sw, h1, run_dir)
+                holes.append((sx - sw / 2, sx + sw / 2, z1 - t - 2 - length - 1, z1 - t - 2))
+            elif side == "S":
+                sz, run_dir = z0 + t + sw / 2, "E"
+                length = self.stairs(name + "_Stairs", x0 + t + 2, sz, sw, h1, run_dir)
+                holes.append((x0 + t + 2, x0 + t + 2 + length + 1, sz - sw / 2, sz + sw / 2))
+            else:
+                sz, run_dir = z1 - t - sw / 2, "W"
+                length = self.stairs(name + "_Stairs", x1 - t - 2, sz, sw, h1, run_dir)
+                holes.append((x1 - t - 2 - length - 1, x1 - t - 2, sz - sw / 2, sz + sw / 2))
+        self.slab(name + "_Floor2", x0 + t, x1 - t, z0 + t, z1 - t, h1 + 0.5, (110, 90, 70), holes, "WoodPlanks")
+        self.box("Buildings", name + "_Roof", (w + 1, 1, d + 1), (x, h1 + h2 + 0.5, z), roof_color, "Slate")
+        self.box("Buildings", name + "_Floor", (w - 2 * t, 0.2, d - 2 * t), (x, 0.1, z), (120, 110, 100), "Concrete")
+
+    def container(self, x, z, along_x=True, level=0, color=(90, 120, 80), length=20):
+        """Schiffscontainer (8 hoch), level 1 = auf einen anderen gestapelt (begehbare Oberseite)."""
+        size = (length, 8, 8) if along_x else (8, 8, length)
+        self.box("Cover", "Container", size, (x, 4 + level * 8, z), color, "Metal")
+
+    def half_wall(self, x, z, length, along_x=True, color=(150, 150, 150)):
+        """Brusthohe Deckung (man kann darüber schießen)."""
+        self.cover_wall(x, z, length, along_x=along_x, height=3.4, color=color)
+
     def sign2(self, name, size, pos, title, subtitle, bg, fg, sub_fg, angles=(0, 0, 0), glow=None):
         """Schild mit großer Überschrift und kleiner Unterzeile (z.B. Modus-Tore im Hub)."""
         def text(label_name, y, h, value, color, font):
@@ -357,49 +469,99 @@ def build_drop():
 # ---------- Strikeout: "Fabrik" (220 x 150), Team Gold bei -x, Team Lila bei +x ----------
 
 def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
+    """Fabrik (300 x 200): drei Wege. Norden: zweistöckige Fabrikhalle (begehbar, Fenster zur Mitte).
+    Mitte: Hof mit Eroberungspunkt und viel brusthoher Deckung. Süden: Containerhof mit Laufsteg oben.
+    Trennwände mit Fenstern und Durchgängen zwischen den Wegen, Spawnhäuser mit erhöhter Position."""
     b = Builder(origin)
-    sx, sz = 220, 150
-    b.ground(sx + 10, sz + 10, (105, 100, 95), "Concrete")
-    b.border(sx, sz, 14, (90, 85, 80), "Brick", barrier=120)
+    W, D = 300, 200
+    concrete, brick, metal = (112, 108, 102), (150, 95, 75), (85, 90, 98)
+    b.ground(W + 10, D + 10, (105, 100, 95), "Concrete")
+    b.border(W, D, 16, (90, 85, 80), "Brick", barrier=120)
+    # Bodenmarkierungen der Wege
+    for z in (-45, 45):
+        b.box("Ground", "LaneLine", (W - 20, 0.05, 0.5), (0, 0.03, z), (230, 190, 40), "SmoothPlastic")
 
-    # Team-Spawns gegenüber, Blick zur Mitte (Ordner SpawnsA = Gold, SpawnsB = Lila)
+    # ---------- Spawns ----------
     for side, group, color in ((-1, "SpawnsA", (200, 120, 40)), (1, "SpawnsB", (130, 70, 180))):
-        b.box("Ground", "SpawnPad", (24, 0.3, 50), (side * 96, 0.15, 0), color, "SmoothPlastic")
+        b.box("Ground", "SpawnPad", (20, 0.3, 46), (side * 138, 0.15, 0), color, "SmoothPlastic")
         for z in (-15, -5, 5, 15):
-            b.spawn(side * 98, z, yaw=90 * side, group=group)  # Blick zur Mitte
-        # Container als Deckung vor dem Spawn
-        b.box("Cover", "Container", (8, 8, 20), (side * 78, 4, -28), color, "Metal")
-        b.box("Cover", "Container", (8, 8, 20), (side * 78, 4, 28), color, "Metal")
+            b.spawn(side * 138, z, yaw=90 * side, group=group)
+        # Deckung vor dem Spawn, drei Ausgänge
+        b.cover_wall(side * 122, -22, 14, along_x=False, height=7, color=concrete)
+        b.cover_wall(side * 122, 22, 14, along_x=False, height=7, color=concrete)
+        b.half_wall(side * 112, 0, 10, along_x=False, color=concrete)
+        # Spawnhaus im Norden (zweistöckig, Fenster zur Halle und zum Hof)
+        b.building2("SpawnHouse", side * 122, 62, 26, 22, brick, (70, 60, 55),
+                    doors={"S": [0], "E" if side < 0 else "W": [4]},
+                    windows1={"S": [-8, 8]}, windows2={"S": [-8, 0, 8], "E" if side < 0 else "W": [-5, 5]},
+                    stairs_at=("W" if side < 0 else "E",), material="Brick")
+        # Kisten und Container im Süden beim Spawn
+        b.container(side * 128, -62, along_x=False, color=color)
+        b.crate(side * 112, -40)
+        b.crate(side * 112, -35, s=4, y=0)
+        b.crate(side * 104, -78, s=6)
 
-    # Eroberungspunkt in der Mitte (Farbe setzt der Server je nach Team)
+    # ---------- Norden: Fabrikhalle (zweistöckig, Weg führt hindurch) ----------
+    b.building2("Hall", 0, 70, 112, 34, brick, (60, 55, 50),
+                doors={"W": [8], "E": [-8], "S": [-36, 0, 36], "N": [-20, 20]},  # neben den Treppen
+                windows1={"S": [-48, -20, 20, 48], "N": [-44, 0, 44]},
+                windows2={"S": [-50, -38, -26, -14, -2, 10, 22, 34, 46], "N": [-40, -20, 0, 20, 40],
+                          "W": [-8, 8], "E": [-8, 8]},
+                stairs_at=("W", "E"), h1=11, h2=10, material="Brick")
+    # Maschinen in der Halle (Deckung innen)
+    for x in (-34, -12, 12, 34):
+        b.box("Cover", "Machine", (8, 4.5, 10), (x, 2.25, 72), metal, "Metal")
+        b.box("Cover", "MachineTop", (4, 2, 6), (x, 5.5, 72), (200, 160, 40), "Metal")
+    # Hintergasse nördlich der Halle mit Fässern
+    for x in (-40, -10, 25, 50):
+        b.add("Cover", "Barrel", (4, 3, 3), (x, 2, 93), (60, 90, 140), "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
+
+    # ---------- Süden: Containerhof mit Laufsteg ----------
+    for x in (-70, -46, 46, 70):
+        b.container(x, -58, along_x=True, color=(70, 110, 150) if x < 0 else (150, 70, 60))
+    # Kisten oben auf den Containern als Deckung
+    for x in (-58, 58):
+        b.crate(x, -58, s=4, y=8)
+    # Laufsteg quer über die Mitte, auf Containerhöhe, mit halbhoher Brüstung zur Mitte
+    b.box("Buildings", "Catwalk", (72, 1, 6), (0, 7.6, -58), metal, "DiamondPlate")
+    b.box("Cover", "CatwalkRail", (72, 2.6, 0.5), (0, 9.4, -55.2), (200, 170, 40), "Metal")
+    for x in (-30, 0, 30):
+        b.box("Buildings", "CatwalkPost", (1, 7.2, 1), (x, 3.6, -58), metal, "Metal")
+    # Rampen auf die Container (von außen)
+    b.ramp("YardRampW", -80, -58, 6, 22, 8.1, "W")
+    b.ramp("YardRampE", 80, -58, 6, 22, 8.1, "E")
+    # Südgasse: Container quer und Kisten
+    for x in (-24, 24):
+        b.container(x, -84, along_x=False, color=(90, 120, 80), length=14)
+    for x, z in ((-90, -84), (90, -84), (0, -80), (-50, -88), (50, -88)):
+        b.crate(x, z)
+
+    # ---------- Trennwände zwischen den Wegen (Fenster zum Spähen, Durchgänge) ----------
+    for side in (-1, 1):
+        for zl in (-45, 45):
+            # von x = ±58 bis ±104, Tür in der Mitte, zwei Fenster
+            a0, a1 = sorted((side * 58, side * 104))
+            mid = side * 81
+            b.wall_line("LaneWall", a0, a1, zl, True, 7, concrete, "Concrete",
+                        openings=[(mid, 6, 0, 7), (mid - 14, 4, 3, 5.4), (mid + 14, 4, 3, 5.4)], group="Cover")
+
+    # ---------- Mitte: Hof mit Eroberungspunkt ----------
     b.add("Objective", "CapturePoint", (0.3, 24, 24), (0, 0.2, 0), (230, 230, 235), "Neon",
           angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35, "CanCollide": False})
     for x, z in ((-12, -12), (12, -12), (-12, 12), (12, 12)):
         b.box("Objective", "PointPost", (1, 5, 1), (x, 2.5, z), (60, 60, 65), "Metal")
-
-    # Deckung um den Punkt: L-förmige Mauern
-    for x, z in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        b.cover_wall(x * 20, z * 16, 10, along_x=True, height=4.5)
-        b.cover_wall(x * 25, z * 11, 10, along_x=False, height=4.5)
-    b.crate(0, -24)
-    b.crate(0, 24)
-
-    # Gebäude an den Längsseiten (Flanken)
-    b.house("NorthHall", 0, 56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("S", "E", "W"))
-    b.house("SouthHall", 0, -56, 36, 20, 12, (150, 140, 125), (70, 60, 55), doors=("N", "E", "W"))
-    # Rampen auf die Hallendächer (erhöhte Positionen wie in RC-Maps)
-    b.ramp("RoofRampN", 19, 60, 6, 24, 12.5, "E")
-    b.ramp("RoofRampS", -19, -60, 6, 24, 12.5, "W")
-
-    # Seitengassen mit Kisten und Mauern
-    for side in (-1, 1):
-        b.cover_wall(side * 50, 0, 16, along_x=False, height=6)
-        b.crate(side * 50, -24)
-        b.crate(side * 50, 24)
-        b.crate(side * 45, 45, s=6)
-        b.crate(side * 45, -45, s=6)
-        b.cover_wall(side * 62, 52, 14, height=6)
-        b.cover_wall(side * 62, -52, 14, height=6)
+    # Ring aus brusthohen Mauern mit Lücken, dazu hohe Deckung zum Herumspähen
+    for x, z, length, ax in ((-20, -18, 10, True), (20, 18, 10, True), (-20, 18, 8, True), (20, -18, 8, True),
+                             (-28, 0, 10, False), (28, 0, 10, False)):
+        b.half_wall(x, z, length, along_x=ax, color=concrete)
+    for x, z in ((0, -30), (0, 30)):
+        b.box("Cover", "Kiosk", (10, 8, 6), (x, 4, z), (60, 80, 100), "Metal")
+    for x, z in ((-42, -24), (42, 24), (-42, 24), (42, -24), (-60, 0), (60, 0)):
+        b.crate(x, z, s=5)
+    b.crate(-60, 0, s=4, y=5)
+    b.crate(60, 0, s=4, y=5)
+    # Schornstein als Orientierung
+    b.add("Decor", "Chimney", (40, 7, 7), (0, 20, 95), (130, 90, 75), "Brick", angles=(0, 0, 90), props={"Shape": "Cylinder"})
 
     b.save(filename)
 
@@ -407,58 +569,88 @@ def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
 # ---------- Demolition: "Hafen" (260 x 180), Angreifer bei -x, Ziele A/B bei +x ----------
 
 def build_demolition(origin=DEMOLITION_ORIGIN, filename="Demolition.model.json"):
+    """Hafen (330 x 220): Angreifer im Westen, Ziele A (Süden) und B (Norden) im Osten.
+    Mitte: zweistöckiges Lagerhaus. Norden: Kai mit Containern und Schiff an B. Süden: Bürogebäude
+    mit Fenstern auf den A-Weg. Vor den Zielen eine Mauer mit Durchgang und Fenstern (Mitte-Tür)."""
     b = Builder(origin)
-    sx, sz = 260, 180
-    b.ground(sx + 10, sz + 10, (80, 82, 88), "Asphalt")
-    b.border(sx, sz, 12, (110, 100, 90), "Brick", barrier=120)
-    # Wasserkante an der Nordseite (nur Optik)
-    b.box("Ground", "Water", (sx, 0.4, 14), (0, 0.05, sz / 2 - 7), (40, 90, 140), "Glass",
-          props={"Transparency": 0.3})
+    W, D = 330, 220
+    asphalt, concrete, brick, metal = (80, 82, 88), (125, 125, 128), (140, 100, 80), (85, 90, 98)
+    b.ground(W + 10, D + 10, asphalt, "Asphalt")
+    b.border(W, D, 14, (110, 100, 90), "Brick", barrier=120)
+    # Wasser an der Nordkante (Optik) mit Kaimauer
+    b.box("Ground", "Water", (W, 0.4, 12), (0, 0.05, D / 2 - 6), (40, 90, 140), "Glass", props={"Transparency": 0.3,
+          "CanCollide": False})
+    b.box("Cover", "QuayEdge", (W, 1.2, 1), (0, 0.6, D / 2 - 12.5), (180, 170, 40), "Concrete")
 
-    # Spawns: Angreifer ganz links, Verteidiger zwischen den Zielen (Blick zur Mitte)
-    b.box("Ground", "AttackPad", (20, 0.3, 50), (-118, 0.15, 0), (200, 80, 80), "SmoothPlastic")
-    for z in (-15, -5, 5, 15):
-        b.spawn(-118, z, yaw=-90, group="SpawnsAtk")
-    for x, z in ((100, -10), (100, 10), (108, -20), (108, 20)):
-        b.spawn(x, z, yaw=90, group="SpawnsDef")
+    # ---------- Angreifer-Seite (Westen) ----------
+    b.box("Ground", "AttackPad", (20, 0.3, 50), (-150, 0.15, 0), (200, 80, 80), "SmoothPlastic")
+    b.cover_wall(-132, -24, 14, along_x=False, height=7, color=concrete)
+    b.cover_wall(-132, 24, 14, along_x=False, height=7, color=concrete)
+    for x, z, ax in ((-118, -60, True), (-118, 60, True), (-105, 0, False)):
+        b.container(x, z, along_x=ax, color=(90, 120, 80))
+    b.crate(-120, -30)
+    b.crate(-120, 30)
+    # Trennwände zwischen den Wegen auf Angreifer-Seite (Tür + Fenster)
+    for zl in (-42, 42):
+        b.wall_line("LaneWall", -95, -55, zl, True, 8, concrete, "Concrete",
+                    openings=[(-75, 6, 0, 7.5), (-88, 4, 3, 5.6), (-62, 4, 3, 5.6)], group="Cover")
 
-    # Zielbereiche A (Süden) und B (Norden) mit Schild
-    for name, z in (("A", -50), ("B", 50)):
-        b.add("Objective", "Site" + name, (0.3, 20, 20), (60, 0.2, z), (255, 80, 80), "Neon",
-              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.6, "CanCollide": False})
-        b.box("Decor", "SitePost" + name, (1, 10, 1), (60, 5, z), (60, 60, 65), "Metal")
-        b.sign("SiteSign" + name, (6, 6, 0.5), (60, 13, z), name, (25, 25, 30), (255, 90, 90))
-        # Deckung direkt am Ziel
-        b.box("Cover", "Container", (8, 8, 18), (72, 4, z + (12 if z < 0 else -12)), (60, 110, 160), "Metal")
-        b.box("Cover", "Container", (18, 8, 8), (48, 4, z + (-14 if z < 0 else 14)), (180, 90, 50), "Metal")
-        b.crate(66, z - 8)
-        b.crate(54, z + 8)
+    # ---------- Mitte: Lagerhaus (zweistöckig) ----------
+    b.building2("Warehouse", -15, 0, 56, 40, brick, (70, 65, 60),
+                doors={"W": [0], "E": [0], "N": [-14], "S": [14]},
+                windows1={"W": [-12, 12], "E": [-12, 12]},
+                windows2={"W": [-12, 0, 12], "E": [-14, -4, 6, 14], "N": [-18, -6, 6, 18], "S": [-18, -6, 6, 18]},
+                stairs_at=("N", "S"), h1=11, h2=9, material="Brick")
+    for x, z in ((-28, -6), (-2, 6)):
+        b.box("Cover", "PalletStack", (6, 4, 6), (x, 2, z), (150, 120, 80), "WoodPlanks")
 
-    # Lagerhalle in der Mitte (begehbar, Durchgänge in alle Richtungen)
-    b.house("Warehouse", -10, 0, 40, 30, 14, (150, 130, 110), (70, 65, 60), doors=("N", "S", "E", "W"))
+    # ---------- Mauer vor den Zielen (Mitte-Tür) ----------
+    b.wall_line("MidWall", -40, 40, 50, False, 9, concrete, "Concrete",
+                openings=[(0, 7, 0, 8), (-22, 4, 3.2, 5.8), (22, 4, 3.2, 5.8)], group="Cover")
+    b.half_wall(62, 0, 8, along_x=False, color=concrete)
 
-    # Container-Gassen zwischen Angreifer-Spawn und Mitte
-    for x, z, w, d in ((-70, -40, 20, 8), (-70, 40, 20, 8), (-50, -70, 8, 20), (-50, 70, 8, 20),
-                       (-85, 0, 8, 16), (25, -20, 8, 14), (25, 20, 8, 14)):
-        b.box("Cover", "Container", (w, 8, d), (x, 4, z), (90, 120, 80), "Metal")
-    for x, z in ((-95, -30), (-95, 30), (-30, -55), (-30, 55), (10, -75), (10, 75), (90, 0)):
+    # ---------- Norden: Kai mit Containern, Kran, Schiff an B ----------
+    for x, z, ax, lvl, color in ((-60, 70, True, 0, (70, 110, 150)), (-64, 70, True, 1, (160, 120, 50)),
+                                 (-20, 86, True, 0, (150, 70, 60)), (10, 64, False, 0, (90, 120, 80)),
+                                 (40, 82, True, 0, (70, 110, 150))):
+        b.container(x, z, along_x=ax, level=lvl, color=color, length=20 if lvl == 0 else 10)
+    b.ramp("StackRamp", -54, 66, 5, 18, 8.1, "S")  # auf den unteren Container (oberer dient als Deckung)
+    for x, z in ((-90, 88), (-35, 62), (25, 92)):
         b.crate(x, z)
-    for x, z, length, ax in ((-40, 0, 14, False), (85, -35, 12, True), (85, 35, 12, True), (110, 0, 20, False)):
-        b.cover_wall(x, z, length, along_x=ax)
-    # Laufsteg über der Container-Gasse mit Rampen an beiden Enden
-    b.box("Buildings", "Catwalk", (44, 1, 5), (-52, 9, -22), (80, 85, 90), "DiamondPlate")
-    for x in (-74, -30):
-        b.box("Buildings", "CatwalkRail", (0.4, 1.2, 5), (x, 10.1, -22), (200, 170, 40), "Metal")
-    b.ramp("CatwalkRampW", -74, -22, 5, 20, 9.5, "W")
-    b.ramp("CatwalkRampE", -30, -22, 5, 20, 9.5, "E")
-    # Rampe auf das Lagerhallendach
-    b.ramp("WarehouseRoofRamp", -31, 8, 6, 26, 14.5, "W")
-    # Kräne als Orientierung
-    for x, z in ((-20, 70), (40, -78)):
-        b.box("Decor", "CraneLeg", (2, 30, 2), (x, 15, z), (220, 170, 40), "Metal")
-        b.box("Decor", "CraneArm", (2, 2, 30), (x, 31, z), (220, 170, 40), "Metal")
+    b.box("Decor", "CraneLeg", (2, 32, 2), (-40, 16, 96), (220, 170, 40), "Metal")
+    b.box("Decor", "CraneArm", (40, 2, 2), (-30, 33, 96), (220, 170, 40), "Metal")
+    # Schiff am Kai bei B (Rumpf als hohe Deckung, Aufbau begehbar über Rampe)
+    b.box("Cover", "ShipHull", (44, 7, 12), (110, 3.5, 92), (60, 70, 85), "Metal")
+    b.box("Buildings", "ShipCabin", (12, 8, 10), (124, 11, 92), (220, 220, 225), "Metal")
+    b.ramp("ShipRamp", 92, 86, 5, 14, 7.1, "S")
 
-    b.save(filename)
+    # ---------- Süden: Bürogebäude (zweistöckig) mit Blick auf den A-Weg ----------
+    b.building2("Office", -55, -78, 36, 26, (175, 170, 160), (70, 72, 78),
+                doors={"N": [-8], "E": [4], "W": [0]},
+                windows1={"N": [6], "E": [-6]},
+                windows2={"N": [-12, -2, 8], "E": [-6, 6], "S": [-8, 8]},
+                stairs_at=("S",), h1=10, h2=9)
+    for x, z in ((-10, -70), (10, -92), (30, -66)):
+        b.crate(x, z)
+    b.container(-5, -96, along_x=True, color=(150, 70, 60))
+    b.half_wall(20, -80, 10, along_x=False, color=concrete)
+
+    # ---------- Ziele A und B: Deckung ----------
+    for name, z in (("A", -62), ("B", 62)):
+        sgn = 1 if z > 0 else -1
+        b.container(112, z - sgn * 14, along_x=True, color=(60, 110, 160), length=16)
+        b.crate(84, z + sgn * 9)
+        b.crate(84, z + sgn * 9, s=4, y=5)
+        b.crate(104, z + sgn * 2, s=4)
+        b.half_wall(78, z - sgn * 4, 8, along_x=False, color=concrete)
+    # Verbindung der Verteidiger zwischen A und B (hinter den Zielen)
+    for z in (-24, 24):
+        b.cover_wall(140, z, 12, along_x=False, height=7, color=concrete)
+    b.crate(150, 0)
+    b.box("Decor", "Tower", (8, 26, 8), (150, 13, -95), (200, 200, 205), "Concrete")
+
+    team_objectives(b, -150, 125, (95, -62), (95, 62), spawn_x=150, capture=False)
+    b.save(filename, "Hafen")
 
 
 # ---------- Training: Schießstand (140 x 90), Spieler bei -x, Puppen bei +x ----------
@@ -513,7 +705,7 @@ def build_arena():
 # Jede Rotations-Map bekommt alles, was Demolition UND Strikeout brauchen:
 # SpawnsAtk/SpawnsDef + SiteA/SiteB (Demolition), SpawnsA/SpawnsB + CapturePoint (Strikeout).
 
-def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(255, 80, 80)):
+def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(255, 80, 80), capture=True):
     for z in (-15, -5, 5, 15):
         b.spawn(atk_x, z, yaw=-90, group="SpawnsAtk")
         b.spawn(-spawn_x, z, yaw=-90, group="SpawnsA")
@@ -525,8 +717,9 @@ def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(25
               angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.6, "CanCollide": False})
         b.box("Decor", "SitePost" + name, (1, 10, 1), (x, 5, z), (60, 60, 65), "Metal")
         b.sign("SiteSign" + name, (6, 6, 0.5), (x, 13, z), name, (25, 25, 30), site_color, angles=(0, 90, 0))
-    b.add("Objective", "CapturePoint", (0.3, 24, 24), (0, 0.2, 0), (230, 230, 235), "Neon",
-          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35, "CanCollide": False})
+    if capture:
+        b.add("Objective", "CapturePoint", (0.3, 24, 24), (0, 0.2, 0), (230, 230, 235), "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35, "CanCollide": False})
 
 
 # ---------- "Gletscher": Forschungsstation im Eis (Stil: RC "Glacier") ----------
