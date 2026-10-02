@@ -84,6 +84,7 @@ function ProgressService.Sync(player)
 	player:SetAttribute("ClientSettings", HttpService:JSONEncode(profile.Settings or {}))
 	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
 	player:SetAttribute("Loadouts", HttpService:JSONEncode(profile.Loadouts or {}))
+	player:SetAttribute("MatchHistory", HttpService:JSONEncode(profile.History or {}))
 	local ranked = profile.Ranked or {}
 	player:SetAttribute("Elo", ranked.Elo or RankConfig.StartElo)
 	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))
@@ -136,6 +137,23 @@ end
 function ProgressService.GetElo(player)
 	local profile = profiles[player]
 	return profile and profile.Ranked and profile.Ranked.Elo or RankConfig.StartElo
+end
+
+-- Match-Verlauf: die letzten Matches (neuestes zuerst)
+-- entry = { Mode, Map, Won (true/false/nil), Score, Kills, Deaths, Elo (Änderung oder nil) }
+local HISTORY_SIZE = 10
+function ProgressService.AddHistory(player, entry)
+	local profile = profiles[player]
+	if not profile then
+		return
+	end
+	entry.Time = os.time()
+	profile.History = profile.History or {}
+	table.insert(profile.History, 1, entry)
+	while #profile.History > HISTORY_SIZE do
+		table.remove(profile.History)
+	end
+	player:SetAttribute("MatchHistory", HttpService:JSONEncode(profile.History))
 end
 
 function ProgressService.GetRankedMatches(player)

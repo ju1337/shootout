@@ -110,6 +110,14 @@ local function finishRound(winner)
 	for player in members do
 		ProgressService.AddStat(player, "Matches", 1)
 		ProgressService.AddStat(player, player == winner and "Wins" or "Losses", 1)
+		ProgressService.AddHistory(player, {
+			Mode = "Free-for-All",
+			Map = "Raffinerie",
+			Won = player == winner,
+			Score = winner and ("Sieger: " .. winner.Name) or "–",
+			Kills = KillService.GetKills(player),
+			Deaths = player:GetAttribute("Deaths") or 0,
+		})
 	end
 	if winner then
 		announce(winner.Name .. " gewinnt die Runde!")

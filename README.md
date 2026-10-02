@@ -31,7 +31,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 ## Systeme
 
-- **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ... (STATS-Fenster)
+- **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ..., Verlauf der letzten 10 Matches (STATS-Fenster)
 - **Ranked mit ELO**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
 - **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins

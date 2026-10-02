@@ -570,9 +570,9 @@ local function percent(a, b)
 end
 
 local function buildStats()
-	local frame = makePanel("Stats", "📊  STATISTIK", 1040, 600)
+	local frame = makePanel("Stats", "📊  STATISTIK", 1040, 760)
 	-- Linke Seite: Kacheln
-	local grid = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(0, 620, 1, -110),
+	local grid = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(0, 620, 0, 376),
 		BackgroundTransparency = 1 }, frame)
 	make("UIGridLayout", { CellSize = UDim2.new(0, 145, 0, 84), CellPadding = UDim2.new(0, 10, 0, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
@@ -618,7 +618,52 @@ local function buildStats()
 	local boardText = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 1, -44), Text = "", TextSize = 15,
 		Font = UITheme.Fonts.Body, TextYAlignment = Enum.TextYAlignment.Top, RichText = true }, board)
 
+	-- Match-Verlauf (letzte 10 Matches)
+	local history = make("Frame", { Position = UDim2.new(0, 24, 0, 456), Size = UDim2.new(0, 620, 0, 256),
+		BackgroundColor3 = CARD }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, history)
+	text({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 18), Text = "LETZTE MATCHES", TextSize = 13,
+		TextColor3 = ACCENT }, history)
+	local COLUMNS = { { "Result", 0, 110 }, { "Mode", 110, 140 }, { "Map", 250, 120 }, { "Score", 370, 70 },
+		{ "KD", 440, 70 }, { "Elo", 510, 60 } }
+	local rows = {}
+	for i = 1, 10 do
+		local row = make("Frame", { Position = UDim2.new(0, 16, 0, 30 + (i - 1) * 22), Size = UDim2.new(1, -32, 0, 22),
+			BackgroundColor3 = BORDER, BackgroundTransparency = i % 2 == 0 and 0.75 or 1, BorderSizePixel = 0 }, history)
+		local cells = {}
+		for _, column in COLUMNS do
+			cells[column[1]] = text({ Position = UDim2.new(0, column[2] + 6, 0, 0), Size = UDim2.new(0, column[3] - 6, 1, 0),
+				Text = "", TextSize = 14, Font = UITheme.Fonts.Body, TextTruncate = Enum.TextTruncate.AtEnd }, row)
+		end
+		cells.Result.Font = UITheme.Fonts.Title
+		rows[i] = cells
+	end
+	local historyEmpty = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 0, 20),
+		Text = "Noch keine Matches gespielt.", TextSize = 15, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, history)
+
 	panels.Stats.Refresh = function()
+		local list = decodeAttribute(player, "MatchHistory")
+		historyEmpty.Visible = #list == 0
+		for i, cells in rows do
+			local entry = list[i]
+			for _, label in cells do
+				label.Text = ""
+			end
+			if entry then
+				cells.Result.Text = entry.Won == true and "SIEG" or entry.Won == false and "NIEDERLAGE" or "UNENTSCHIEDEN"
+				cells.Result.TextColor3 = entry.Won == true and GREEN or entry.Won == false and UITheme.Colors.Bad or GRAY
+				cells.Mode.Text = tostring(entry.Mode or "")
+				cells.Map.Text = tostring(entry.Map or "")
+				cells.Map.TextColor3 = GRAY
+				cells.Score.Text = tostring(entry.Score or "")
+				cells.KD.Text = (entry.Kills or 0) .. " / " .. (entry.Deaths or 0)
+				if entry.Elo then
+					cells.Elo.Text = (entry.Elo >= 0 and "+" or "−") .. math.abs(entry.Elo)
+					cells.Elo.TextColor3 = entry.Elo >= 0 and GREEN or UITheme.Colors.Bad
+				end
+			end
+		end
+
 		local stats = decodeAttribute(player, "Stats")
 		local function get(key)
 			return stats[key] or 0
@@ -999,7 +1044,8 @@ function SideMenu.Init()
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
-			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party" then
+			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
+			or name == "MatchHistory" then
 			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()

@@ -560,7 +560,7 @@ function TeamRoundMode.new(config)
 	end
 
 	-- Match-Ende: Ergebnis, MVP (meiste Kills, dann Schaden) und eigene Werte an alle Spieler
-	local function sendSummary(winner, rankTexts)
+	local function sendSummary(winner, rankTexts, eloChanges)
 		local mvp, best = nil, -1
 		for player in members do
 			local score = KillService.GetKills(player) * 1000 + (player:GetAttribute("Damage") or 0)
@@ -580,6 +580,19 @@ function TeamRoundMode.new(config)
 				Deaths = player:GetAttribute("Deaths") or 0,
 				Damage = player:GetAttribute("Damage") or 0,
 				Rank = rankTexts and rankTexts[player] or nil,
+			})
+			local won = nil -- nil = Unentschieden
+			if winner then
+				won = player.Team == winner
+			end
+			ProgressService.AddHistory(player, {
+				Mode = Modes.Get(MODE_ID).Name,
+				Map = player:GetAttribute("MapName"),
+				Won = won,
+				Score = (scores[player.Team] or 0) .. " : " .. (scores[otherTeam(player.Team)] or 0),
+				Kills = KillService.GetKills(player),
+				Deaths = player:GetAttribute("Deaths") or 0,
+				Elo = eloChanges and eloChanges[player] or nil,
 			})
 		end
 	end
@@ -767,7 +780,7 @@ function TeamRoundMode.new(config)
 				ProgressService.AddStat(player, player.Team == roundWinner and "Wins" or "Losses", 1)
 			end
 			-- Ranked: ELO nach Team-Durchschnitt, nur wenn beide Teams echte Spieler hatten
-			local rankTexts = {}
+			local rankTexts, eloChanges = {}, {}
 			if config.Ranked and #teamA:GetPlayers() > 0 and #teamB:GetPlayers() > 0 then
 				local function averageElo(team)
 					local sum, n = 0, 0
@@ -803,9 +816,10 @@ function TeamRoundMode.new(config)
 						text ..= "  ·  Platzierung " .. ProgressService.GetRankedMatches(player) .. "/" .. RankConfig.PlacementMatches
 					end
 					rankTexts[player] = text
+					eloChanges[player] = change
 				end
 			end
-			sendSummary(roundWinner, rankTexts)
+			sendSummary(roundWinner, rankTexts, eloChanges)
 			task.wait(INTERMISSION)
 			resetMatch()
 		elseif practiceRound then
