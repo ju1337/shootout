@@ -8,9 +8,11 @@
 --     direkt vor das rechte Auge, Kopf neigt sich an den Schaft, Oberkörper etwas vor und gerader zum Ziel,
 --     rechter Ellbogen hoch; Pistolen mit gestreckten Armen auf Augenhöhe
 --   * Nachladen (Magazin raus/rein mit der linken Hand), Pumpen/Schlitten und Rückstoß
--- Jeder Client rechnet das selbst für alle Charaktere in der Nähe: Motor6D.Transform wird nach den
--- Animationen in RunService.PreSimulation überschrieben. Blick und Zielen der anderen kommen über die
--- Charakter-Attribute AimPitch/Aiming (vom Server), Nachladen über ReloadStart/ReloadTime/ReloadShells.
+-- Jeder Client rechnet das selbst für alle Charaktere in der Nähe: Transform der Gelenke wird nach den
+-- Animationen in RunService.PreSimulation überschrieben. Gelenke sind Motor6Ds oder – mit dem Avatar Joint
+-- Upgrade, Standard bei Spieler-Avataren – AnimationConstraints; beides wird erkannt (findJoint).
+-- Blick und Zielen der anderen kommen über die Charakter-Attribute AimPitch/Aiming (vom Server), Nachladen
+-- über ReloadStart/ReloadTime/ReloadShells.
 -- R15 bekommt die volle Haltung, R6 eine einfache (Arme zeigen zur Waffe).
 -- Bewegung obendrauf (prozedural, ohne Animations-Assets): Waffe wippt beim Laufen im Schrittrhythmus,
 -- Atmen im Stand, Oberkörper neigt sich beim Seitwärtslaufen, Waffe kommt beim Wechseln von unten hoch,
@@ -95,11 +97,56 @@ end
 
 -- ---------- Rig ----------
 
+-- Gelenke: klassisch Motor6D, mit dem "Avatar Joint Upgrade" (Standard in Roblox, StarterPlayer.
+-- AvatarJointUpgrade) AnimationConstraints mit denselben Namen. Beide haben C0/C1 (bei der AnimationConstraint
+-- nur lesbar: Attachment0/1.CFrame) und Transform, das die Animationen schreiben und hier überschrieben wird.
+local function isJoint(obj)
+	return obj:IsA("AnimationConstraint") or obj:IsA("Motor6D")
+end
+
+-- Teil, das ein Gelenk bewegt (Part1 bzw. das Teil von Attachment1)
+local function drivenPart(joint)
+	if joint:IsA("Motor6D") then
+		return joint.Part1
+	end
+	local attachment = joint.Attachment1
+	return attachment and attachment.Parent
+end
+
+-- Gelenk jointName in holderName (R15: im bewegten Teil, R6: im Torso): zuerst AnimationConstraint, dann
+-- Motor6D; sonst (anders benannt oder woanders abgelegt) das Gelenk, das partName bewegt
+local function findJoint(model, holderName, jointName, partName)
+	local holder = model:FindFirstChild(holderName)
+	if holder then
+		local motor6D
+		for _, child in holder:GetChildren() do
+			if child.Name == jointName then
+				if child:IsA("AnimationConstraint") then
+					return child
+				elseif child:IsA("Motor6D") then
+					motor6D = child
+				end
+			end
+		end
+		if motor6D then
+			return motor6D
+		end
+	end
+	local part = model:FindFirstChild(partName or holderName)
+	if not part then
+		return nil
+	end
+	for _, obj in model:GetDescendants() do
+		if isJoint(obj) and drivenPart(obj) == part then
+			return obj
+		end
+	end
+	return nil
+end
+
 local function rigOf(model, humanoid, root)
-	local function motor(partName, motorName)
-		local part = model:FindFirstChild(partName)
-		local found = part and part:FindFirstChild(motorName)
-		return found and found:IsA("Motor6D") and found or nil
+	local function motor(holderName, jointName, partName)
+		return findJoint(model, holderName, jointName, partName)
 	end
 	if humanoid.RigType == Enum.HumanoidRigType.R15 then
 		local rig = {
@@ -131,10 +178,10 @@ local function rigOf(model, humanoid, root)
 	local rig = {
 		Type = "R6",
 		Root = root,
-		RootJoint = motor("HumanoidRootPart", "RootJoint"),
-		Neck = motor("Torso", "Neck"),
-		RShoulder = motor("Torso", "Right Shoulder"),
-		LShoulder = motor("Torso", "Left Shoulder"),
+		RootJoint = motor("HumanoidRootPart", "RootJoint", "Torso"),
+		Neck = motor("Torso", "Neck", "Head"),
+		RShoulder = motor("Torso", "Right Shoulder", "Right Arm"),
+		LShoulder = motor("Torso", "Left Shoulder", "Left Arm"),
 		GripPart = model:FindFirstChild("Right Arm"),
 	}
 	if not torso or not rig.RootJoint or not rig.Neck or not rig.RShoulder or not rig.LShoulder or not rig.GripPart then
@@ -142,6 +189,46 @@ local function rigOf(model, humanoid, root)
 	end
 	rig.Joints = { rig.Neck, rig.RShoulder, rig.LShoulder }
 	return rig
+end
+
+-- Gelenke ersetzt (z.B. beim Nachladen des Aussehens)? Dann das Rig neu suchen.
+local function rigValid(rig, root)
+	if rig.Root ~= root or not rig.GripPart.Parent or not rig.RootJoint.Parent then
+		return false
+	end
+	for _, joint in rig.Joints do
+		if not joint.Parent then
+			return false
+		end
+	end
+	return true
+end
+
+-- Griff der Waffe an der rechten Hand: hand * c0 = Handle * c1. Normalerweise der Weld "RightGrip" (den legt
+-- Roblox beim Ausrüsten an), sonst eine Constraint mit Attachments; fehlt beides, so wie Roblox das Tool
+-- anbringt (RightGripAttachment der Hand und Tool.Grip).
+local function gripFrames(rig, tool)
+	local hand = rig.GripPart
+	local grip = hand:FindFirstChild("RightGrip")
+	if grip and grip:IsA("JointInstance") then
+		if grip.Part0 == hand then
+			return grip.C0, grip.C1
+		elseif grip.Part1 == hand then
+			return grip.C1, grip.C0
+		end
+	elseif grip and grip:IsA("Constraint") then
+		local a0, a1 = grip.Attachment0, grip.Attachment1
+		if a0 and a1 and a0.Parent == hand then
+			return a0.CFrame, a1.CFrame
+		elseif a0 and a1 and a1.Parent == hand then
+			return a1.CFrame, a0.CFrame
+		end
+	end
+	local attachment = hand:FindFirstChild("RightGripAttachment")
+	if tool and attachment and attachment:IsA("Attachment") then
+		return attachment.CFrame, tool.Grip
+	end
+	return nil, nil
 end
 
 local function armJoints(shoulder, elbow, wrist)
@@ -380,12 +467,12 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 		gun = gun * scaled(pose.Gun)
 	end
 
-	-- Hände: rechts so, dass die Waffe (am RightGrip) genau in "gun" liegt, links an die Waffe
-	local grip = rig.GripPart:FindFirstChild("RightGrip")
-	if not grip or not grip:IsA("JointInstance") then
+	-- Hände: rechts so, dass die Waffe (am Griff) genau in "gun" liegt, links an die Waffe
+	local gripC0, gripC1 = gripFrames(rig, entry.Tool)
+	if not gripC0 then
 		return false
 	end
-	local handCF = gun * grip.C1 * grip.C0:Inverse()
+	local handCF = gun * gripC1 * gripC0:Inverse()
 	local leftJoints = armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)
 	local palm = slideIntoReach(gun * (leftHandLocal(info, pose, poseT) * SCALE), gun,
 		(upperTorso * rig.LShoulder.C0).Position, leftJoints)
@@ -417,10 +504,10 @@ local function poseR6(entry, rig, info, pitch, pose, poseT)
 	local armRot = PoseMath.AlignBone(Vector3.new(0, -1, 0), Vector3.xAxis, aimRot.LookVector, aimRot.RightVector)
 	local tRS = PoseMath.MotorTransform(torso.Rotation, rig.RShoulder.C0, rig.RShoulder.C1, armRot)
 	local tLS = CFrame.new()
-	local grip = rig.GripPart:FindFirstChild("RightGrip")
-	if grip and grip:IsA("JointInstance") then
+	local gripC0, gripC1 = gripFrames(rig, entry.Tool)
+	if gripC0 then
 		local rightArm = PoseMath.Chain(torso, rig.RShoulder.C0, tRS, rig.RShoulder.C1)
-		local handle = rightArm * grip.C0 * grip.C1:Inverse()
+		local handle = rightArm * gripC0 * gripC1:Inverse()
 		local target = handle * (leftHandLocal(info, pose, poseT) * SCALE)
 		local shoulder = (torso * rig.LShoulder.C0).Position
 		if (target - shoulder).Magnitude > 0.05 then
@@ -458,11 +545,17 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 		bindTool(entry, tool)
 		entry.EquipT = os.clock() -- Waffe kommt von unten hoch
 	end
-	if not entry.Rig or entry.Rig.Root ~= root or not entry.Rig.GripPart.Parent then
-		entry.Rig = rigOf(model, humanoid, root)
-		if not entry.Rig then
+	if not entry.Rig or not rigValid(entry.Rig, root) then
+		local now = os.clock()
+		if entry.RigRetry and now < entry.RigRetry then
 			return
 		end
+		entry.Rig = rigOf(model, humanoid, root)
+		if not entry.Rig then
+			entry.RigRetry = now + 0.5 -- (noch) keine passenden Gelenke: nicht jedes Bild neu suchen
+			return
+		end
+		entry.RigRetry = nil
 	end
 
 	-- Eingaben: eigener Charakter direkt, andere aus den Attributen

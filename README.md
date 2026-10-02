@@ -144,7 +144,10 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     Schulterhöhe (rechter Ellbogen locker unten, damit die Waffe aus der Schulterkamera zu sehen ist) und zielen
     mit; beim Zielen legen sie die Waffe an wie bei Rogue Company (Visier vor dem rechten Auge, Kopf am Schaft,
     Oberkörper eingedreht und leicht vorgelehnt), Pistolen beidhändig auf Augenhöhe. Die Waffe in der Hand ist
-    größer als früher (90 % der Modellgröße statt 70 %)
+    größer als früher (90 % der Modellgröße statt 70 %). Die Haltung funktioniert mit klassischen
+    Motor6D-Gelenken und mit dem „Avatar Joint Upgrade“ von Roblox (AnimationConstraints statt Motor6D, Standard
+    bei Spieler-Avataren) – vorher wurden solche Rigs nicht erkannt und die Charaktere hielten die Waffe nur mit
+    der Standard-Animation (ein Arm nach vorne)
   - Schlanker Körperbau für alle Charaktere: Spieler-Avatare (R15), Bots, Übungspuppen und die Figuren in den
     Menüs haben schmalere Schultern und einen flacheren Oberkörper (`AgentConfig.BodyScale`, Breite 75 %,
     Tiefe 80 %) – damit sind auch die Trefferflächen etwas schmaler. R6-Avatare lassen sich nicht skalieren und
