@@ -5514,21 +5514,21 @@
      }
     },
     {
-     "Name": "AgentOfWeekStand",
+     "Name": "AgentOfWeekHolo",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       0.6,
-       2.2,
-       0.6
+       1,
+       1,
+       1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         1.1,
-         -9.2
+         17,
+         0
         ],
         "orientation": [
          [
@@ -5550,59 +5550,16 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "AgentOfWeekSign",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       11,
-       4,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0,
-         2.6,
-         -9.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.819152,
-          -0.573576
-         ],
-         [
-          0.0,
-          0.573576,
-          0.819152
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
      }
     },
     {

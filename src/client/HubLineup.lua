@@ -56,51 +56,78 @@ local function rebuild()
 	figure.Parent = workspace
 end
 
--- Agent der Woche: große Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") und Schild
--- davor ("AgentOfWeekSign"). Jede Woche (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der
--- Serverzeit berechnet, damit alle Spieler denselben sehen.
+-- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") mit Elite-Skin
+-- (Gold, glänzend, Leuchtkontur, Funken) und Holo-Schrift darüber ("AgentOfWeekHolo"). Jede Woche
+-- (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der Serverzeit berechnet, für alle gleich.
 local WEEK = 7 * 24 * 3600
 local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag
-local STATUE_SCALE = 2.4
+local STATUE_SCALE = 1.8
+local GOLD = Color3.fromRGB(230, 182, 74)
+local HOLO = Color3.fromRGB(140, 210, 245)
 
 function HubLineup.AgentOfWeek()
 	local week = math.floor((workspace:GetServerTimeNow() + MONDAY_OFFSET) / WEEK)
 	return AgentConfig.Agents[week % #AgentConfig.Agents + 1]
 end
 
+-- Elite-Skin: Uniform aus dem besten Shop-Skin des Agenten (sonst dunkel in Agentenfarbe), Weste/Visier Gold
+local function eliteColors(agent)
+	local best, bestRank = nil, 0
+	local ranks = { Rare = 1, Epic = 2, Legendary = 3 }
+	for _, item in Cosmetics.List("Agent", agent.Id) do
+		local rank = ranks[item.Rarity] or 0
+		if rank > bestRank then
+			best, bestRank = item, rank
+		end
+	end
+	local primary = best and bestRank >= 2 and best.Primary or agent.Color:Lerp(Color3.new(0, 0, 0), 0.7)
+	return primary, GOLD
+end
+
 local function buildAgentOfWeek()
 	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
 	local spot = decor:WaitForChild("AgentOfWeekSpot", 10)
-	local sign = decor:WaitForChild("AgentOfWeekSign", 10)
+	local holoPoint = decor:WaitForChild("AgentOfWeekHolo", 10)
 	if not spot then
 		return
 	end
-	-- Schild: Überschrift, Name in Agentenfarbe, Rolle und Fähigkeit
-	local nameLabel, infoLabel
-	if sign then
-		local surface = Instance.new("SurfaceGui")
-		surface.Face = Enum.NormalId.Front
-		surface.LightInfluence = 0
-		surface.Brightness = 1.6
-		surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-		surface.PixelsPerStud = 50
-		surface.Adornee = sign
-		surface.Parent = player:WaitForChild("PlayerGui")
+	-- Holo-Schrift: schwebt über dem Agenten, schaut immer zur Kamera, leicht flackernd
+	local nameLabel, infoLabel, holoLabels = nil, nil, {}
+	if holoPoint then
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "AgentOfWeekHolo"
+		billboard.Adornee = holoPoint
+		billboard.Size = UDim2.new(11, 0, 3.4, 0) -- in Studs: wirkt wie ein Hologramm im Raum
+		billboard.LightInfluence = 0
+		billboard.MaxDistance = 160
+		billboard.Parent = player:WaitForChild("PlayerGui")
 		local function text(y, h, font, color)
 			local label = Instance.new("TextLabel")
-			label.Position = UDim2.new(0.04, 0, y, 0)
-			label.Size = UDim2.new(0.92, 0, h, 0)
+			label.Position = UDim2.new(0, 0, y, 0)
+			label.Size = UDim2.new(1, 0, h, 0)
 			label.BackgroundTransparency = 1
 			label.Font = font
 			label.TextScaled = true
 			label.TextColor3 = color
-			label.TextStrokeTransparency = 0.6
-			label.Parent = surface
+			label.TextTransparency = 0.1
+			label.TextStrokeColor3 = Color3.fromRGB(40, 120, 180)
+			label.TextStrokeTransparency = 0.5
+			label.Parent = billboard
+			table.insert(holoLabels, label)
 			return label
 		end
-		text(0.06, 0.2, Enum.Font.GothamBold, Color3.fromRGB(150, 200, 235)).Text = "AGENT DER WOCHE"
-		nameLabel = text(0.28, 0.42, Enum.Font.Oswald, Color3.new(1, 1, 1))
-		infoLabel = text(0.74, 0.18, Enum.Font.GothamBold, Color3.fromRGB(220, 226, 234))
+		text(0, 0.22, Enum.Font.GothamBold, HOLO).Text = "AGENT DER WOCHE"
+		nameLabel = text(0.22, 0.52, Enum.Font.Oswald, Color3.new(1, 1, 1))
+		infoLabel = text(0.76, 0.22, Enum.Font.GothamBold, HOLO)
+		-- dünne Holo-Linie unter der Überschrift
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(0.5, 0)
+		line.Position = UDim2.new(0.5, 0, 0.22, 0)
+		line.Size = UDim2.new(0.55, 0, 0, 2)
+		line.BackgroundColor3 = HOLO
+		line.BackgroundTransparency = 0.3
+		line.BorderSizePixel = 0
+		line.Parent = billboard
 	end
 
 	local statue, shownId = nil, nil
@@ -113,8 +140,8 @@ local function buildAgentOfWeek()
 		if statue then
 			statue:Destroy()
 		end
-		local primary, accent = Cosmetics.AgentColors(nil, agent.Id)
-		statue = AgentFigure.Build(agent, primary, accent, nil, agent.Loadout[1])
+		local primary, accent = eliteColors(agent)
+		statue = AgentFigure.Build(agent, primary, accent, Cosmetics.Get("W_Goldrausch"), agent.Loadout[1])
 		statue.Name = "AgentOfWeek"
 		statue:ScaleTo(STATUE_SCALE)
 		for _, part in statue:GetDescendants() do
@@ -122,26 +149,57 @@ local function buildAgentOfWeek()
 				part.Anchored = true
 				part.CanCollide = false
 				part.CanQuery = false
+				-- Gold glänzt (Foil), Visier leuchtet in der Agentenfarbe
+				if part.Color == GOLD then
+					part.Material = Enum.Material.Foil
+				end
+				if part.Name == "Visor" then
+					part.Color = agent.Color
+				end
 			end
+		end
+		-- Leuchtkontur und Gold-Funken
+		local highlight = Instance.new("Highlight")
+		highlight.FillTransparency = 1
+		highlight.OutlineColor = GOLD
+		highlight.OutlineTransparency = 0.25
+		highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+		highlight.Parent = statue
+		local torso = statue.PrimaryPart
+		if torso then
+			local sparkles = Instance.new("ParticleEmitter")
+			sparkles.Color = ColorSequence.new(GOLD)
+			sparkles.LightEmission = 1
+			sparkles.Rate = 6
+			sparkles.Lifetime = NumberRange.new(1.2, 2)
+			sparkles.Speed = NumberRange.new(0.5, 1.5)
+			sparkles.SpreadAngle = Vector2.new(180, 180)
+			sparkles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 0) })
+			sparkles.Parent = torso
 		end
 		statue.Parent = workspace
 		if nameLabel then
 			nameLabel.Text = string.upper(agent.Name)
-			nameLabel.TextColor3 = agent.Color
+			nameLabel.TextColor3 = agent.Color:Lerp(Color3.new(1, 1, 1), 0.35)
 			infoLabel.Text = string.upper(agent.Role) .. "  ·  " .. string.upper(agent.Ability.Name)
 		end
 	end
 	refresh()
-	-- Langsam drehen; einmal pro Minute prüfen, ob eine neue Woche begonnen hat
+	-- Langsam drehen, Holo-Schrift leicht flackern/schweben; einmal pro Minute auf neue Woche prüfen
 	local lastCheck = os.clock()
 	RunService.RenderStepped:Connect(function()
-		if os.clock() - lastCheck > 60 then
-			lastCheck = os.clock()
+		local t = os.clock()
+		if t - lastCheck > 60 then
+			lastCheck = t
 			refresh()
 		end
 		if statue and statue.Parent then
 			local base = spot.Position + Vector3.new(0, 3 * STATUE_SCALE, 0)
-			statue:PivotTo(CFrame.lookAt(base, base + spot.CFrame.LookVector) * CFrame.Angles(0, os.clock() * 0.35, 0))
+			statue:PivotTo(CFrame.lookAt(base, base + spot.CFrame.LookVector) * CFrame.Angles(0, t * 0.35, 0))
+		end
+		local flicker = (math.random() < 0.02) and 0.45 or 0.1
+		for _, label in holoLabels do
+			label.TextTransparency = flicker
 		end
 	end)
 end

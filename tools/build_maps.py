@@ -1407,9 +1407,9 @@ def build_lobby():
     # Standpunkt der Statue (Füße, Blick zum Spawn nach Süden)
     b.add("Decor", "AgentOfWeekSpot", (1, 0.2, 1), (0, 3.6, tz), accent, "SmoothPlastic", angles=(0, 180, 0),
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    # Schräges Schild vorne (zum Spawn), Text setzt der Client
-    b.box("Decor", "AgentOfWeekStand", (0.6, 2.2, 0.6), (0, 1.1, tz - 9.2), steel, "Metal")
-    b.box("Decor", "AgentOfWeekSign", (11, 4, 0.4), (0, 2.6, tz - 9.4), graphite, "SmoothPlastic", angles=(35, 0, 0))
+    # Holo-Schrift schwebt über der Statue (setzt der Client an diesen Punkt)
+    b.add("Decor", "AgentOfWeekHolo", (1, 1, 1), (0, 17, tz), accent, "SmoothPlastic",
+          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
     # Lichtkegel von oben
     for x in (-3, 3):
         b.add("Decor", "Spotlight", (H - 6, 2.6, 2.6), (x, (H - 6) / 2 + 3.5, tz), (255, 248, 230), "Neon",
