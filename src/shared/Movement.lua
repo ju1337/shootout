@@ -4,8 +4,10 @@
 -- (setzt WeaponClient über SetAiming).
 -- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
 -- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung,
--- jederzeit mit T umschalten). Beim Zielen rückt die Schulterkamera näher heran; Sichtfeld, Abstand und
--- Kamera-Versatz gleiten weich (RenderStep "CameraSmooth"). Schießen unterbricht den Sprint kurz.
+-- jederzeit mit T umschalten). Der Charakter steht links im Bild, die Bildmitte (Fadenkreuz) bleibt frei –
+-- auch beim Zielen, wenn die Kamera näher heranrückt. Steht rechts eine Wand, rückt die Kamera seitlich
+-- an den Kopf heran, statt durch die Wand zu schauen. Sichtfeld, Abstand und Kamera-Versatz gleiten weich
+-- (RenderStep "CameraSmooth"). Schießen unterbricht den Sprint kurz.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,11 +53,15 @@ local lastSlide = 0
 local normalHipHeight = nil
 local mantling = false
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
-local SHOULDER_OFFSET = Vector3.new(2.2, 0.8, 0)
-local SHOULDER_AIM_OFFSET = Vector3.new(1.7, 0.6, 0) -- beim Zielen näher an die Schulter
+-- Schulterkamera: seitlicher Versatz so groß, dass der Charakter (Arme bis 2 Studs neben der Mitte) die
+-- Bildmitte mit ca. 8° Abstand freilässt; beim Zielen näher heran, aber weiter seitlich als der Arm
+local SHOULDER_OFFSET = Vector3.new(3.4, 1.0, 0)
+local SHOULDER_AIM_OFFSET = Vector3.new(2.7, 0.8, 0)
 local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste X)
 local SHOULDER_DISTANCE = 9
-local SHOULDER_AIM_DISTANCE = 4.5
+local SHOULDER_AIM_DISTANCE = 5.5
+local SHOULDER_WALL_MARGIN = 0.8 -- so weit bleibt die Kamera seitlich von Wänden weg
+local HEAD_HEIGHT = 1.5          -- Höhe des Kamera-Ziels über dem HumanoidRootPart (Roblox-Kamera, R15)
 local CAMERA_SMOOTH = 12         -- wie schnell Sichtfeld, Abstand und Versatz nachziehen
 local sprintBlockedUntil = 0     -- Schießen unterbricht den Sprint kurz
 local fovOverride = nil          -- z.B. Fallschirmsprung
@@ -124,6 +130,30 @@ local function apply()
 		targetFov = sprinting and normalFov + SPRINT_FOV_BONUS or normalFov
 	end
 	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * AIM_SENSITIVITY or sensitivity
+end
+
+-- Seitlichen Schulter-Versatz kürzen, wenn neben dem Kopf eine Wand der Map ist (sonst schaut die
+-- Kamera durch die Wand). Gibt den erlaubten Versatz und ob gekürzt wurde zurück.
+local shoulderParams = RaycastParams.new()
+shoulderParams.FilterType = Enum.RaycastFilterType.Include
+local function clampShoulder(character, offset)
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local maps = workspace:FindFirstChild("Maps")
+	if not root or not maps or math.abs(offset.X) < 0.05 then
+		return offset, false
+	end
+	shoulderParams.FilterDescendantsInstances = { maps }
+	local origin = (root :: BasePart).CFrame * Vector3.new(0, HEAD_HEIGHT + offset.Y, 0)
+	local side = (root :: BasePart).CFrame.RightVector * offset.X
+	local result = workspace:Raycast(origin, side + side.Unit * SHOULDER_WALL_MARGIN, shoulderParams)
+	if not result then
+		return offset, false
+	end
+	local free = math.max(0, (result.Position - origin).Magnitude - SHOULDER_WALL_MARGIN)
+	if free >= math.abs(offset.X) then
+		return offset, false
+	end
+	return Vector3.new(math.sign(offset.X) * free, offset.Y, offset.Z), true
 end
 
 -- Slide: kurzer Schub in Laufrichtung, der langsam ausläuft
@@ -381,9 +411,21 @@ function Movement.Init()
 		if math.abs(camera.FieldOfView - fov) > 0.01 then
 			camera.FieldOfView += (fov - camera.FieldOfView) * alpha
 		end
-		local humanoid = getHumanoid()
-		if humanoid and (humanoid.CameraOffset - targetOffset).Magnitude > 0.001 then
-			humanoid.CameraOffset = humanoid.CameraOffset:Lerp(targetOffset, alpha)
+		local humanoid, character = getHumanoid()
+		if humanoid then
+			local goal, blocked = targetOffset, false
+			if Movement.IsThirdPerson() then
+				goal, blocked = clampShoulder(character, targetOffset)
+			end
+			local current = humanoid.CameraOffset
+			local nextOffset = current:Lerp(goal, alpha)
+			-- An eine Wand heran sofort (nicht hindurchschauen), wieder weg davon weich
+			if blocked and math.abs(nextOffset.X) > math.abs(goal.X) then
+				nextOffset = Vector3.new(goal.X, nextOffset.Y, nextOffset.Z)
+			end
+			if (current - nextOffset).Magnitude > 0.001 then
+				humanoid.CameraOffset = nextOffset
+			end
 		end
 		local active = Movement.IsThirdPerson() and player.CameraMode == Enum.CameraMode.Classic and humanoid ~= nil
 			and humanoid.Health > 0 and not humanoid.PlatformStand and not camera:GetAttribute("KillCam")

@@ -91,7 +91,7 @@ function AbilityClient.Init()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 
 	-- Rauten unten rechts links neben der Munition: Fähigkeit · Gadget
-	local bar = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -360, 1, -16),
+	local bar = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -396, 1, -16),
 		Size = UDim2.new(0, 200, 0, 110), BackgroundTransparency = 1 }, root)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		VerticalAlignment = Enum.VerticalAlignment.Bottom, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
@@ -105,7 +105,7 @@ function AbilityClient.Init()
 			bar.Position = UDim2.new(0.5, -12, 1, -10)
 		else
 			bar.AnchorPoint = Vector2.new(1, 1)
-			bar.Position = UDim2.new(1, -360, 1, -16)
+			bar.Position = UDim2.new(1, -396, 1, -16) -- links neben der Munition (320 breit, 110 %)
 		end
 	end
 	layout()
