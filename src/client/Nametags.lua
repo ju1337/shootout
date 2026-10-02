@@ -109,7 +109,7 @@ local function update()
 			local level = LevelConfig.Get(player)
 			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
 			setTag(myCharacter, { Name = player.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-				Subtitle = "◆ " .. rank.Display, SubColor = rank.Color, Player = player })
+				Subtitle = rank.Display, SubColor = rank.Color, Player = player })
 		else
 			removeTag(myCharacter)
 		end
@@ -124,7 +124,7 @@ local function update()
 				-- Hub: Name in Prestige-Farbe (ab Prestige 1), Rang darunter
 				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
 				setTag(character, { Name = other.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-					Subtitle = "◆ " .. rank.Display, SubColor = rank.Color, Player = other })
+					Subtitle = rank.Display, SubColor = rank.Color, Player = other })
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
 				setTag(character, { Name = other.Name, Color = UITheme.Colors.Ally, Player = other })

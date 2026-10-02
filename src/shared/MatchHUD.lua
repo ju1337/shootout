@@ -614,7 +614,7 @@ function MatchHUD.Init(root, weaponClient)
 		else
 			local color = mag == 0 and ENEMY or (low and ENEMY or WHITE)
 			ammoText.Text = string.format('<font color="#%s">%d</font><font size="24" color="#%s">  / %s</font>', hex(color), mag,
-				hex(MUTED), infinite and "∞" or tostring(reserve))
+				hex(MUTED), infinite and '<font face="Roboto">∞</font>' or tostring(reserve))
 		end
 		weaponName.Text = upper(config.DisplayName)
 		weaponName.TextColor3 = MUTED

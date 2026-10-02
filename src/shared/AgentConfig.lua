@@ -256,6 +256,40 @@ AgentConfig.Agents = {
 }
 
 -- Agent per Id holen, nil wenn unbekannt
+-- Werte-Balken für Menüs (1 bis 10): schwächster Agent ~3, stärkster 10.
+-- "Health" = Leben, "Speed" = Lauftempo, "Utility" = Fähigkeit (kurze Abklingzeit = stark)
+local STAT_GETTERS = {
+	Health = function(agent) return agent.Health end,
+	Speed = function(agent) return agent.WalkSpeed end,
+	Utility = function(agent) return -agent.Ability.Cooldown end,
+}
+function AgentConfig.StatValue(key, agent)
+	local get = STAT_GETTERS[key]
+	local low, high = math.huge, -math.huge
+	for _, other in AgentConfig.Agents do
+		local value = get(other)
+		low, high = math.min(low, value), math.max(high, value)
+	end
+	if high <= low then
+		return 7
+	end
+	return math.clamp(math.floor(3 + 7 * (get(agent) - low) / (high - low) + 0.5), 1, 10)
+end
+
+-- Kurzbeschreibung eines Gadgets aus seinen Werten (Menüs)
+function AgentConfig.GadgetDescription(gadget)
+	if gadget.Type == "Frag" then
+		return string.format("Granate: %d Schaden im Umkreis von %d Studs.", gadget.Damage or 0, gadget.Radius or 0)
+	elseif gadget.Type == "Flash" then
+		return string.format("Blendet Gegner im Umkreis von %d Studs für %s s.", gadget.Radius or 0, tostring(gadget.Duration or 0))
+	elseif gadget.Type == "Smoke" then
+		return "Rauchwolke, die die Sicht versperrt."
+	elseif gadget.Type == "Sensor" then
+		return "Mine, die vorbeilaufende Gegner für dein Team markiert."
+	end
+	return "Gadget – mit " .. AgentConfig.GadgetKey.Name .. " einsetzen."
+end
+
 function AgentConfig.Get(id)
 	for _, agent in AgentConfig.Agents do
 		if agent.Id == id then

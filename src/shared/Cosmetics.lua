@@ -18,9 +18,9 @@ Cosmetics.CoinsPerXP = 0.1             -- 100 XP = 10 Münzen
 
 Cosmetics.Rarities = {
 	Common = { Name = "Gewöhnlich", Color = Color3.fromRGB(150, 155, 165) },
-	Rare = { Name = "Selten", Color = Color3.fromRGB(70, 140, 255) },
-	Epic = { Name = "Episch", Color = Color3.fromRGB(170, 80, 255) },
-	Legendary = { Name = "Legendär", Color = Color3.fromRGB(255, 180, 40) },
+	Rare = { Name = "Selten", Color = Color3.fromRGB(86, 136, 204) },
+	Epic = { Name = "Episch", Color = Color3.fromRGB(148, 104, 204) },
+	Legendary = { Name = "Legendär", Color = Color3.fromRGB(214, 160, 62) },
 }
 
 Cosmetics.Items = {

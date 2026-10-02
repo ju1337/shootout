@@ -967,7 +967,7 @@ function TeamRoundMode.new(config)
 			for player, kills in roundKills do
 				local enemies = player.Team and teamSize(otherTeam(player.Team)) or 0
 				if members[player] and enemies >= 3 and kills >= enemies then
-					announce("★ ACE! " .. player.Name .. " hat das ganze Team ausgeschaltet!")
+					announce("ACE! " .. player.Name .. " hat das ganze Team ausgeschaltet!")
 					ProgressService.AddXP(player, ProgressService.ActiveAgent(player), 300, "ACE")
 				end
 			end
@@ -975,7 +975,7 @@ function TeamRoundMode.new(config)
 		-- Clutch gewonnen?
 		local clutch = roundWinner and clutches[roundWinner]
 		if clutch and members[clutch.Player] then
-			announce("★ CLUTCH! " .. clutch.Player.Name .. " gewinnt 1 gegen " .. clutch.Enemies .. "!")
+			announce("CLUTCH! " .. clutch.Player.Name .. " gewinnt 1 gegen " .. clutch.Enemies .. "!")
 			ProgressService.AddXP(clutch.Player, ProgressService.ActiveAgent(clutch.Player), 100 * clutch.Enemies, "Clutch")
 			ProgressService.AddStat(clutch.Player, "Clutches", 1)
 		end

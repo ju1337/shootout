@@ -1,8 +1,9 @@
 -- SideMenu (ModuleScript, nur Client)
 -- Menüliste links im Hub: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, STATISTIK,
--- CODES, OPTIONEN (schlichte Textzeilen), darüber die Spielerkarte (Level, Prestige, Rang, Münzen). Jeder
--- Eintrag öffnet ein Fenster in der Mitte – dieselben Fenster öffnet auch die Lobby (GameMenu: Navigation,
--- Squad, Battle Pass, Auftrag, Knöpfe oben rechts). Design wie die Lobby (UITheme, nüchterner Taktik-Look):
+-- CODES, OPTIONEN (schlichte Textzeilen), darüber die Spielerkarte (Level, Prestige, Rang, Münzen).
+-- SHOP, LOADOUT, AGENTEN und BATTLE PASS öffnen die Lobby (GameMenu) auf der passenden Seite; Aufträge,
+-- Täglich, Squad, Statistik, Codes und Optionen sind Fenster in der Mitte – dieselben Fenster öffnet auch die
+-- Lobby (Squad, Auftrag, Knöpfe oben rechts). Design wie die Lobby (UITheme, nüchterner Taktik-Look):
 -- dunkle Flächen mit 1 px Rand, flache Knöpfe, Bernstein für aktiv. Kaufen/Ausrüsten prüft der Server (ShopService).
 
 local Players = game:GetService("Players")
@@ -12,14 +13,10 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentConfig = require(Shared.AgentConfig)
-local WeaponConfig = require(Shared.WeaponConfig)
-local GunModels = require(Shared.GunModels)
-local AgentFigure = require(Shared.AgentFigure)
 local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
 local UITheme = require(Shared.UITheme)
 local QuestConfig = require(Shared.QuestConfig)
-local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
@@ -39,7 +36,6 @@ local GRAY = UITheme.Colors.Muted
 local GREEN = UITheme.Colors.Good
 local DISPLAY = UITheme.Fonts.Display
 
-local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
 
 local gui, column, coinLabel, dailyDot, questDot
 local panels = {}      -- [Name] = { Frame, Status, Refresh }
@@ -73,67 +69,6 @@ local formatNumber = UITheme.FormatNumber
 
 local function coins()
 	return player:GetAttribute("Coins") or 0
-end
-
--- Vorschau einer Waffe mit Skin in einem ViewportFrame
-local function showWeapon(viewport, weaponName, skin)
-	viewport:ClearAllChildren()
-	local model = GunModels.Build(weaponName, skin)
-	model.Parent = viewport
-	local camera = make("Camera", { FieldOfView = 30 }, viewport)
-	camera.CFrame = CFrame.lookAt(Vector3.new(5.5, 1.2, -0.5), Vector3.new(0, 0.2, -0.5))
-	viewport.CurrentCamera = camera
-end
-
--- Vorschau eines Agenten mit Farben in einem ViewportFrame
-local function showAgent(viewport, agent, primary, accent)
-	viewport:ClearAllChildren()
-	local figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]))
-	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.4, 0))
-	figure.Parent = viewport
-	local camera = make("Camera", { FieldOfView = 38 }, viewport)
-	camera.CFrame = AgentFigure.CameraCFrame
-	viewport.CurrentCamera = camera
-end
-
-local function viewportFrame(props, parent)
-	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Ambient = Color3.fromRGB(130, 135, 150)
-	props.LightColor = Color3.fromRGB(255, 245, 235)
-	props.LightDirection = Vector3.new(-0.5, -1, 0.6)
-	return make("ViewportFrame", props, parent)
-end
-
--- Reiter-Leiste: names = { "A", "B" }, onSelect(name). Aktiv: weiße Schrift mit Bernstein-Strich.
-local function tabBar(parent, names, y, onSelect)
-	local bar = make("Frame", { Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(1, -48, 0, 34),
-		BackgroundTransparency = 1 }, parent)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
-		SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-	-- dünne Linie unter allen Reitern
-	make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 0, y + 36), Size = UDim2.new(1, -48, 0, 1),
-		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, parent)
-	local buttons = {}
-	local function select(name)
-		for n, b in buttons do
-			b.TextColor3 = n == name and UITheme.Colors.Text or GRAY
-			b.Underline.Visible = n == name
-		end
-		onSelect(name)
-	end
-	for i, name in names do
-		local b = make("TextButton", { Size = UDim2.new(0, 0, 1, 2), AutomaticSize = Enum.AutomaticSize.X, Text = name,
-			TextSize = 19, Font = DISPLAY, TextColor3 = GRAY, BackgroundTransparency = 1, AutoButtonColor = false,
-			LayoutOrder = i }, bar)
-		make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, b)
-		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -12, 1, 0),
-			Size = UDim2.new(1, 24, 0, 2), BackgroundColor3 = ACCENT, BorderSizePixel = 0, Visible = false }, b)
-		b.Activated:Connect(function()
-			select(name)
-		end)
-		buttons[name] = b
-	end
-	return select
 end
 
 -- ---------- Fenster ----------
@@ -171,209 +106,15 @@ local function makePanel(name, title, width, height)
 		TextSize = 32, Font = DISPLAY, TextColor3 = UITheme.Colors.Text }, frame)
 	make("Frame", { Position = UDim2.new(0, 24, 0, 52), Size = UDim2.new(0, 28, 0, 2), BackgroundColor3 = ACCENT,
 		BorderSizePixel = 0 }, frame)
-	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 40, 0, 40),
-		Text = "✕", TextSize = 18, BackgroundColor3 = CARD }, frame, function()
+	local close = button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 40, 0, 40),
+		Text = "", TextSize = 18, BackgroundColor3 = CARD }, frame, function()
 		setPanel(nil)
 	end)
+	UITheme.Cross(close, 14, UITheme.Colors.Text, 2)
 	local status = text({ Position = UDim2.new(0, 24, 1, -36), Size = UDim2.new(1, -48, 0, 24), Text = "",
 		TextSize = 16, TextColor3 = GRAY }, frame)
 	panels[name] = { Frame = frame, Status = status }
 	return frame
-end
-
--- ---------- SHOP ----------
-
-local function buildShop()
-	local frame = makePanel("Shop", "SHOP", 980, 620)
-	local balance = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -70, 0, 20),
-		Size = UDim2.new(0, 260, 0, 30), Text = "", TextSize = 22, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
-		TextXAlignment = Enum.TextXAlignment.Right }, frame)
-	local grid = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 110), Size = UDim2.new(1, -48, 1, -156),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
-	make("UIGridLayout", { CellSize = UDim2.new(0, 214, 0, 262), CellPadding = UDim2.new(0, 14, 0, 14),
-		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
-
-	local currentType = "Weapon"
-	local buyButtons = {} -- [itemId] = Button
-
-	local function updateButtons()
-		balance.Text = formatNumber(coins()) .. " MÜNZEN"
-		local owned = Cosmetics.GetOwned(player)
-		for itemId, b in buyButtons do
-			local item = Cosmetics.Get(itemId)
-			if owned[itemId] then
-				b.Text = "IM BESITZ"
-				b.BackgroundColor3 = UITheme.Colors.MutedBack
-				b.TextColor3 = GRAY
-			else
-				local affordable = coins() >= item.Price
-				b.Text = "KAUFEN  ·  " .. formatNumber(item.Price)
-				b.BackgroundColor3 = affordable and ACCENT or UITheme.Colors.MutedBack
-				b.TextColor3 = affordable and ON_ACCENT or UITheme.Colors.Bad
-			end
-		end
-	end
-
-	local function fill()
-		for _, child in grid:GetChildren() do
-			if child:IsA("Frame") then
-				child:Destroy()
-			end
-		end
-		buyButtons = {}
-		local shopItems = {}
-		for _, item in Cosmetics.List(currentType) do
-			if not item.Pass then
-				table.insert(shopItems, item)
-			end
-		end
-		for i, item in shopItems do
-			local rarity = Cosmetics.Rarities[item.Rarity]
-			local card = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
-			make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
-			make("UIStroke", { Color = rarity.Color, Thickness = 1, Transparency = 0.45 }, card)
-			make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
-			local preview = viewportFrame({ Position = UDim2.new(0, 0, 0, 8), Size = UDim2.new(1, 0, 0, 130) }, card)
-			if item.Type == "Weapon" then
-				showWeapon(preview, "Rifle", item)
-			else
-				showAgent(preview, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
-			end
-			text({ Position = UDim2.new(0, 12, 0, 142), Size = UDim2.new(1, -24, 0, 24), Text = item.Name,
-				TextSize = 19 }, card)
-			local sub = UITheme.Upper(rarity.Name)
-			if item.Type == "Agent" then
-				sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
-			end
-			text({ Position = UDim2.new(0, 12, 0, 166), Size = UDim2.new(1, -24, 0, 18), Text = sub, TextSize = 13,
-				TextColor3 = rarity.Color }, card)
-			buyButtons[item.Id] = button({ Position = UDim2.new(0, 12, 1, -50), Size = UDim2.new(1, -24, 0, 38),
-				TextSize = 15, Text = "" }, card, function()
-				if not Cosmetics.GetOwned(player)[item.Id] then
-					Remotes.ShopAction:FireServer("Buy", item.Id)
-				end
-			end)
-		end
-		updateButtons()
-	end
-
-	tabBar(frame, { "WAFFEN-SKINS", "AGENTEN-SKINS" }, 64, function(name)
-		currentType = name == "WAFFEN-SKINS" and "Weapon" or "Agent"
-		fill()
-	end)("WAFFEN-SKINS")
-	panels.Shop.Refresh = updateButtons
-end
-
--- ---------- RUCKSACK ----------
-
-local function buildInventory()
-	local frame = makePanel("Inventory", "LOADOUT", 980, 620)
-	local list = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 110), Size = UDim2.new(0, 220, 1, -156),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-	local previewBack = make("Frame", { Position = UDim2.new(0, 264, 0, 110), Size = UDim2.new(1, -288, 0, 230),
-		BackgroundColor3 = CARD }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, previewBack)
-	local preview = viewportFrame({ Size = UDim2.new(1, 0, 1, 0) }, previewBack)
-	local previewTitle = text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 28), Text = "",
-		TextSize = 22 }, previewBack)
-	local options = make("ScrollingFrame", { Position = UDim2.new(0, 264, 0, 354), Size = UDim2.new(1, -288, 1, -400),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
-	make("UIGridLayout", { CellSize = UDim2.new(0, 160, 0, 56), CellPadding = UDim2.new(0, 10, 0, 10),
-		SortOrder = Enum.SortOrder.LayoutOrder }, options)
-
-	local mode = "Weapon"       -- "Weapon" oder "Agent"
-	local selected = WEAPON_ORDER[1]
-
-	local function fillOptions()
-		for _, child in options:GetChildren() do
-			if child:IsA("GuiButton") then
-				child:Destroy()
-			end
-		end
-		local owned = Cosmetics.GetOwned(player)
-		local equipped = Cosmetics.GetEquipped(player)
-		local slot = (mode == "Weapon" and "W:" or "A:") .. selected
-		local current = equipped[slot]
-		if current and not owned[current] then
-			current = nil
-		end
-
-		-- Standard + alle gekauften passenden Skins
-		local entries = { { Id = nil, Name = "Standard", Color = GRAY } }
-		local items = mode == "Weapon" and Cosmetics.List("Weapon") or Cosmetics.List("Agent", selected)
-		for _, item in items do
-			if owned[item.Id] then
-				table.insert(entries, { Id = item.Id, Name = item.Name, Color = Cosmetics.Rarities[item.Rarity].Color })
-			end
-		end
-		for i, entry in entries do
-			local isOn = entry.Id == current
-			local b = button({ LayoutOrder = i, Text = entry.Name, TextSize = 15, BackgroundColor3 = CARD,
-				Font = Enum.Font.GothamBold }, options, function()
-				if entry.Id then
-					Remotes.ShopAction:FireServer("Equip", entry.Id, selected)
-				else
-					Remotes.ShopAction:FireServer("Unequip", slot)
-				end
-			end)
-			make("UIStroke", { Color = isOn and ACCENT or entry.Color, Thickness = isOn and 2 or 1, Transparency = isOn and 0 or 0.45,
-				ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-		end
-		if #entries == 1 then
-			panels.Inventory.Status.Text = "Noch keine Skins dafür – schau im SHOP vorbei."
-		end
-
-		-- Vorschau mit aktuellem Skin
-		if mode == "Weapon" then
-			previewTitle.Text = WeaponConfig.Get(selected).DisplayName
-			showWeapon(preview, selected, Cosmetics.WeaponSkin(player, nil, selected))
-		else
-			local agent = AgentConfig.Get(selected)
-			previewTitle.Text = agent.Name
-			local primary, accent = Cosmetics.AgentColors(player, selected)
-			showAgent(preview, agent, primary, accent)
-		end
-		preview.ZIndex = 1
-		previewTitle.ZIndex = 2
-	end
-
-	local function fillList()
-		for _, child in list:GetChildren() do
-			if child:IsA("GuiButton") then
-				child:Destroy()
-			end
-		end
-		local names = {}
-		if mode == "Weapon" then
-			names = WEAPON_ORDER
-		else
-			for _, agent in AgentConfig.Agents do
-				table.insert(names, agent.Id)
-			end
-		end
-		for i, name in names do
-			local label = mode == "Weapon" and WeaponConfig.Get(name).DisplayName or AgentConfig.Get(name).Name
-			button({ LayoutOrder = i, Size = UDim2.new(1, -6, 0, 44), Text = label, TextSize = 16,
-				BackgroundColor3 = name == selected and UITheme.Colors.Secondary or CARD,
-				TextColor3 = name == selected and ACCENT or UITheme.Colors.Text }, list, function()
-				selected = name
-				fillList()
-				fillOptions()
-			end)
-		end
-	end
-
-	tabBar(frame, { "WAFFEN", "AGENTEN" }, 64, function(name)
-		mode = name == "WAFFEN" and "Weapon" or "Agent"
-		selected = mode == "Weapon" and WEAPON_ORDER[1] or AgentConfig.Agents[1].Id
-		fillList()
-		fillOptions()
-	end)("WAFFEN")
-	panels.Inventory.Refresh = fillOptions
 end
 
 -- ---------- AUFTRÄGE ----------
@@ -729,71 +470,6 @@ local function buildStats()
 	end
 end
 
--- ---------- BATTLE PASS ----------
-
-local function buildPass()
-	local frame = makePanel("Pass", "BATTLE PASS", 980, 470)
-	local season = text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 24),
-		Text = PassConfig.SeasonName, TextSize = 18, TextColor3 = GRAY }, frame)
-	local tierLabel = text({ Position = UDim2.new(0, 24, 0, 90), Size = UDim2.new(0, 400, 0, 34), Text = "",
-		TextSize = 28, Font = Enum.Font.Oswald }, frame)
-	local barBack = make("Frame", { Position = UDim2.new(0, 24, 0, 133), Size = UDim2.new(1, -48, 0, 6),
-		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, frame)
-	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
-	local xpLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 98), Size = UDim2.new(0, 300, 0, 24),
-		Text = "", TextSize = 16, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, frame)
-
-	-- Stufen nebeneinander (waagerecht scrollbar)
-	local strip = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 160), Size = UDim2.new(1, -48, 0, 250),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, ScrollingDirection = Enum.ScrollingDirection.X,
-		CanvasSize = UDim2.new(0, #PassConfig.Tiers * 134, 0, 0) }, frame)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10),
-		SortOrder = Enum.SortOrder.LayoutOrder }, strip)
-	local cards = {}
-	for tier, reward in PassConfig.Tiers do
-		local item = reward.Item and Cosmetics.Get(reward.Item)
-		local rarity = item and Cosmetics.Rarities[item.Rarity]
-		local card = make("Frame", { Size = UDim2.new(0, 124, 0, 230), BackgroundColor3 = CARD, LayoutOrder = tier }, strip)
-		make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
-		local stroke = make("UIStroke", { Color = rarity and rarity.Color or BORDER, Thickness = 1, Transparency = item and 0.3 or 0 }, card)
-		text({ Size = UDim2.new(1, 0, 0, 30), Text = "STUFE " .. tier, TextSize = 14, TextColor3 = GRAY,
-			TextXAlignment = Enum.TextXAlignment.Center }, card)
-		if item then
-			local preview = viewportFrame({ Position = UDim2.new(0, 0, 0, 30), Size = UDim2.new(1, 0, 0, 120) }, card)
-			if item.Type == "Weapon" then
-				showWeapon(preview, "Rifle", item)
-			else
-				showAgent(preview, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
-			end
-			text({ Position = UDim2.new(0, 6, 0, 152), Size = UDim2.new(1, -12, 0, 40), Text = item.Name, TextSize = 15,
-				TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center }, card)
-		else
-			UITheme.Coin(card, 44, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 68) })
-			text({ Position = UDim2.new(0, 0, 0, 130), Size = UDim2.new(1, 0, 0, 30), Text = reward.Coins .. " MÜNZEN",
-				TextSize = 20, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Center }, card)
-		end
-		local state = text({ Position = UDim2.new(0, 0, 1, -34), Size = UDim2.new(1, 0, 0, 26), Text = "",
-			TextSize = 14, TextXAlignment = Enum.TextXAlignment.Center }, card)
-		cards[tier] = { Stroke = stroke, State = state, Card = card }
-	end
-
-	panels.Pass.Refresh = function()
-		local xp = player:GetAttribute("PassXP") or 0
-		local tier, progress = PassConfig.TierFromXP(xp)
-		tierLabel.Text = "STUFE " .. tier .. " / " .. #PassConfig.Tiers
-		bar.Size = UDim2.new(progress, 0, 1, 0)
-		xpLabel.Text = tier >= #PassConfig.Tiers and "Pass abgeschlossen!"
-			or (math.floor(progress * PassConfig.XPPerTier) .. " / " .. PassConfig.XPPerTier .. " XP bis Stufe " .. tier + 1)
-		for t, entry in cards do
-			local reached = t <= tier
-			entry.State.Text = reached and "FREIGESCHALTET" or "GESPERRT"
-			entry.State.TextColor3 = reached and GREEN or GRAY
-			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(30, 36, 32) or CARD
-		end
-	end
-	season.Text = PassConfig.SeasonName .. "   ·   Pass-XP gibt es für alle XP und für Aufträge"
-end
-
 -- ---------- TÄGLICH ----------
 
 local function dailyLeft()
@@ -962,6 +638,12 @@ local function togglePanel(name)
 	setPanel(openPanel ~= name and name or nil)
 end
 
+-- Lobby auf einer Seite öffnen (SHOP, LOADOUT, AGENTEN, BATTLE PASS sind Seiten der Lobby, keine Fenster)
+local function openLobby(page)
+	setPanel(nil)
+	GameMenu.Open(page)
+end
+
 local playerCard -- Spielerkarte oben links (Level, Prestige, Rang, Münzen)
 
 local function buildPlayerCard()
@@ -994,7 +676,7 @@ local function buildPlayerCard()
 
 	-- Prestige-Knopf (nur auf Max-Level), zweimal klicken zum Bestätigen
 	local prestigeButton = UITheme.Button({ AnchorPoint = Vector2.new(0, 0), Position = UDim2.new(0, 0, 1, 12),
-		Size = UDim2.new(1, 0, 0, 44), Text = "★  PRESTIGE", TextSize = 18, BackgroundColor3 = UITheme.Colors.Play,
+		Size = UDim2.new(1, 0, 0, 44), Text = "PRESTIGE", TextSize = 18, BackgroundColor3 = UITheme.Colors.Play,
 		TextColor3 = ON_ACCENT, Visible = false }, playerCard)
 	local confirmUntil = 0
 	prestigeButton.Activated:Connect(function()
@@ -1003,10 +685,10 @@ local function buildPlayerCard()
 			Remotes.ShopAction:FireServer("Prestige")
 		else
 			confirmUntil = os.clock() + 4
-			prestigeButton.Text = "SICHER? LEVEL → 1  ·  NOCHMAL KLICKEN"
+			prestigeButton.Text = "SICHER? LEVEL WIRD 1  ·  NOCHMAL KLICKEN"
 			task.delay(4, function()
 				if os.clock() >= confirmUntil then
-					prestigeButton.Text = "★  PRESTIGE"
+					prestigeButton.Text = "PRESTIGE"
 				end
 			end)
 		end
@@ -1022,7 +704,7 @@ local function buildPlayerCard()
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
 		local rank = RankConfig.Get(elo)
 		local color = string.format("#%02X%02X%02X", rank.Color.R * 255, rank.Color.G * 255, rank.Color.B * 255)
-		rankLabel.Text = '<font color="' .. color .. '">◆ ' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
+		rankLabel.Text = '<font color="' .. color .. '">' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
 		bar.Size = UDim2.new(info.Progress, 0, 1, 0)
 		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
 			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")
@@ -1041,13 +723,10 @@ end
 local function buildColumn()
 	-- Sortiert: Einkaufen, Fortschritt, Belohnungen, Soziales/Statistik, Einstellungen
 	local entries = {
-		{ "SHOP", function() togglePanel("Shop") end },
-		{ "LOADOUT", function() togglePanel("Inventory") end },
-		{ "AGENTEN", function()
-			setPanel(nil)
-			GameMenu.Open("Agents")
-		end },
-		{ "BATTLE PASS", function() togglePanel("Pass") end },
+		{ "SHOP", function() openLobby("Shop") end },
+		{ "LOADOUT", function() openLobby("Inventory") end },
+		{ "AGENTEN", function() openLobby("Agents") end },
+		{ "BATTLE PASS", function() openLobby("Pass") end },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end },
 		{ "TÄGLICH", function() togglePanel("Daily") end },
 		{ "SQUAD", function() togglePanel("Squad") end },
@@ -1103,11 +782,8 @@ function SideMenu.Init()
 		setPanel(name)
 	end)
 	buildColumn()
-	buildShop()
-	buildInventory()
 	buildSquad()
 	buildStats()
-	buildPass()
 	buildQuests()
 	buildDaily()
 	buildCodes()

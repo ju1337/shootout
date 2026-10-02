@@ -21,25 +21,25 @@ local TouchControls = {}
 
 -- { Aktion, Beschriftung, Größe, X von rechts, Y von unten, Art } – Art: "hold" (gedrückt halten),
 -- "tap" (antippen) oder "toggle" (an/aus). Positionen in Design-Einheiten (1600 x 900).
--- Beschriftung: schlichte Zeichen (Pfeile, Kreis) oder kurze Wörter statt bunter Emojis.
+-- Beschriftung: kurze Wörter statt Symbole (Symbole fehlen teils in den Schriften, Emojis wirken verspielt).
 local RIGHT = {
 	{ "Fire", "FEUER", 130, 130, 170, "hold" },
-	{ "Jump", "⤒", 80, 90, 55, "tap" },
-	{ "Aim", "◎", 84, 290, 130, "toggle" },
-	{ "Crouch", "⇩", 70, 235, 48, "tap" },
-	{ "Reload", "↻", 70, 70, 290, "tap" },
-	{ "Ability", "★", 84, 200, 305, "tap" },
+	{ "Jump", "SPRUNG", 80, 90, 55, "tap" },
+	{ "Aim", "ZIELEN", 84, 290, 130, "toggle" },
+	{ "Crouch", "DUCKEN", 70, 235, 48, "tap" },
+	{ "Reload", "LADEN", 70, 70, 290, "tap" },
+	{ "Ability", "FÄHIGK.", 84, 200, 305, "tap" },
 	{ "Gadget", "GADGET", 72, 305, 245, "tap" },
 	{ "Melee", "MESSER", 60, 60, 375, "tap" },
-	{ "SwapWeapon", "⇄", 64, 380, 60, "tap" },
+	{ "SwapWeapon", "WAFFE", 64, 380, 60, "tap" },
 	{ "Interact", "AKTION", 84, 420, 200, "hold" },
 }
 -- Kleine Knöpfe oben rechts
 local TOP = {
 	{ "Ping", "PING", 56, 60, 250, "tap" },
-	{ "Scoreboard", "☰", 56, 60, 316, "tap" },
+	{ "Scoreboard", "PUNKTE", 56, 60, 316, "tap" },
 	{ "Camera", "KAMERA", 56, 60, 382, "tap" },
-	{ "Ultimate", "✦", 56, 60, 448, "tap" },
+	{ "Ultimate", "ULT", 56, 60, 448, "tap" },
 }
 -- Links über dem Steuerknüppel
 local LEFT = {

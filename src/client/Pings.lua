@@ -59,7 +59,7 @@ local function showPing(position, enemy, pingerName)
 	icon.BackgroundTransparency = 1
 	icon.Font = Enum.Font.GothamBold
 	icon.TextSize = 26
-	icon.Text = enemy and "⚠" or "◆"
+	icon.Text = enemy and "!" or "▼"
 	icon.TextColor3 = enemy and Color3.fromRGB(226, 72, 60) or Color3.fromRGB(212, 170, 80)
 	icon.TextStrokeTransparency = 0.3
 	icon.Parent = billboard

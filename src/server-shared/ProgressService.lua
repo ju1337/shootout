@@ -382,7 +382,7 @@ function ProgressService.Prestige(player)
 	local coins = LevelConfig.PrestigeCoins * profile.Prestige
 	profile.Coins += coins
 	ProgressService.Sync(player)
-	Remotes.Announce:FireClient(player, "★ PRESTIGE " .. profile.Prestige .. "!  +" .. coins .. " Münzen")
+	Remotes.Announce:FireClient(player, "PRESTIGE " .. profile.Prestige .. "!  +" .. coins .. " Münzen")
 	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 

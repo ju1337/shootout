@@ -62,46 +62,8 @@ local teamSignature = ""
 local phaseSince = os.clock()          -- seit wann gilt die aktuelle RoundPhase (Client-Zeit)
 local respawnSince = 0                 -- seit wann (Client-Zeit) läuft die Auswahl nach dem Tod
 
--- Wertebereiche aller Agenten (für die Balken: schwächster ~30 %, stärkster 100 %)
-local ranges = {}
-do
-	local function range(key, get)
-		local low, high = math.huge, -math.huge
-		for _, agent in AgentConfig.Agents do
-			local value = get(agent)
-			low, high = math.min(low, value), math.max(high, value)
-		end
-		ranges[key] = { Low = low, High = high, Get = get }
-	end
-	range("Health", function(agent) return agent.Health end)
-	range("Speed", function(agent) return agent.WalkSpeed end)
-	-- Fähigkeit: kurze Abklingzeit = stark
-	range("Utility", function(agent) return -agent.Ability.Cooldown end)
-end
-local function statValue(key, agent)
-	local r = ranges[key]
-	if r.High <= r.Low then
-		return 7
-	end
-	return math.clamp(math.floor(3 + 7 * (r.Get(agent) - r.Low) / (r.High - r.Low) + 0.5), 1, 10)
-end
-
 local function myAgent()
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
-end
-
--- Kurzbeschreibung eines Gadgets aus seinen Werten
-local function gadgetText(gadget)
-	if gadget.Type == "Frag" then
-		return string.format("Granate: %d Schaden im Umkreis von %d Studs.", gadget.Damage or 0, gadget.Radius or 0)
-	elseif gadget.Type == "Flash" then
-		return string.format("Blendet Gegner im Umkreis von %d Studs für %s s.", gadget.Radius or 0, tostring(gadget.Duration or 0))
-	elseif gadget.Type == "Smoke" then
-		return "Rauchwolke, die die Sicht versperrt."
-	elseif gadget.Type == "Sensor" then
-		return "Mine, die vorbeilaufende Gegner für dein Team markiert."
-	end
-	return "Gadget – mit " .. AgentConfig.GadgetKey.Name .. " einsetzen."
 end
 
 local function isLocked()
@@ -153,7 +115,7 @@ local function showPreview(agent, weapon)
 	infoName.Text = agent.Name
 	infoText.Text = agent.Description or ""
 	for stat, bar in statBars do
-		local value = statValue(stat, agent)
+		local value = AgentConfig.StatValue(stat, agent)
 		for i, segment in bar.Segments do
 			segment.BackgroundColor3 = i <= value and C.Primary or C.Background
 		end
@@ -162,12 +124,14 @@ local function showPreview(agent, weapon)
 	end
 	local rows = {
 		{ AgentConfig.AbilityKey.Name, agent.Ability.Name, agent.Ability.Cooldown .. " s", agent.Ability.Description },
-		{ AgentConfig.GadgetKey.Name, agent.Gadget.Name, (agent.Gadget.Charges or 1) .. "×", gadgetText(agent.Gadget) },
-		{ "◆", agent.Passive and agent.Passive.Name or "–", "PASSIV", agent.Passive and agent.Passive.Description or "" },
+		{ AgentConfig.GadgetKey.Name, agent.Gadget.Name, (agent.Gadget.Charges or 1) .. "×",
+			AgentConfig.GadgetDescription(agent.Gadget) },
+		{ "", agent.Passive and agent.Passive.Name or "–", "PASSIV", agent.Passive and agent.Passive.Description or "" },
 	}
 	for i, row in rows do
 		local entry = abilityRows[i]
 		entry.Key.Text = row[1]
+		entry.Diamond.Visible = row[1] == "" -- Passiv: kleine Raute statt Taste
 		entry.Name.Text = string.format('%s  <font color="#%s">· %s</font>', upper(row[2]), C.Muted:ToHex(), row[3])
 		entry.Text.Text = row[4]
 	end
@@ -345,11 +309,14 @@ local function buildRight()
 			TextXAlignment = Enum.TextXAlignment.Center }, row)
 		UITheme.Corner(key, UITheme.Radius.Small)
 		UITheme.Stroke(key, C.Primary, 1)
+		-- gezeichnete Raute für das Passiv (Oswald hat kein "◆")
+		local diamond = UITheme.Diamond(key, 10, UDim2.fromScale(0.5, 0.5), C.Primary)
+		diamond.Visible = false
 		local name = label({ Position = UDim2.fromOffset(62, 8), Size = UDim2.new(1, -72, 0, 18), Text = "", TextSize = 13,
 			RichText = true, TextTruncate = Enum.TextTruncate.AtEnd }, row)
 		local text = label({ Position = UDim2.fromOffset(62, 26), Size = UDim2.new(1, -72, 0, 30), Text = "", TextSize = 11,
 			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, row)
-		abilityRows[i] = { Key = key, Name = name, Text = text }
+		abilityRows[i] = { Key = key, Name = name, Text = text, Diamond = diamond }
 	end
 
 	-- Agenten-Level
@@ -545,7 +512,7 @@ local function updateWeapons(agent)
 			local selected = weapon == chosen
 			card.Stroke.Color = selected and C.Primary or (hoverWeapon == weapon and C.Muted or C.Border)
 			card.Stroke.Thickness = selected and 2 or 1
-			card.Tag.Text = selected and "✓ GEWÄHLT" or "WÄHLEN"
+			card.Tag.Text = selected and "GEWÄHLT" or "WÄHLEN"
 			card.Tag.TextColor3 = selected and C.Primary or C.Muted
 		end
 	end
@@ -560,7 +527,7 @@ local function updateEquipment(phase, respawning)
 	local canBuy = phase == "Select" or phase == "Countdown" or respawning
 	for item, entry in buyCards do
 		if BuyConfig.Has(player, item.Id) then
-			entry.State.Text = "✓ GEKAUFT"
+			entry.State.Text = "GEKAUFT"
 			entry.State.TextColor3 = C.Good
 			entry.Stroke.Color = C.Good
 		elseif not canBuy or money == nil then
@@ -682,7 +649,7 @@ local function update()
 	-- Bestätigen-Knopf
 	if respawning then
 		if isLocked() then
-			confirm.SetText("BEREIT ✓")
+			confirm.SetText("BEREIT")
 			confirmSub.Text = "GLEICH GEHT'S LOS"
 			confirm.SetColor(C.Good, C.PrimaryText)
 		else
@@ -691,7 +658,7 @@ local function update()
 			confirm.SetColor(C.Primary, C.PrimaryText)
 		end
 	elseif isLocked() then
-		confirm.SetText("BESTÄTIGT ✓")
+		confirm.SetText("BESTÄTIGT")
 		confirmSub.Text = "WARTE AUF DIE ANDEREN"
 		confirm.SetColor(C.Good, C.PrimaryText)
 	elseif phase == "Select" or phase == "Waiting" then

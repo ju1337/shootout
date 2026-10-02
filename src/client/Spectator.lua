@@ -123,7 +123,7 @@ local function update()
 		local agent = target:IsA("Player") and target.Character and target.Character:GetAttribute("Agent")
 			or not target:IsA("Player") and target:GetAttribute("Agent")
 		HUD.SetStatus("ZUSCHAUER  ·  " .. string.upper(target.Name) .. (agent and ("  ·  " .. string.upper(agent)) or "")
-			.. (InputActions.IsTouch() and "" or ("   [" .. InputActions.Hint("SpectatePrev") .. "] ◀   ▶ ["
+			.. (InputActions.IsTouch() and "" or ("   [" .. InputActions.Hint("SpectatePrev") .. "] ZURÜCK   WEITER ["
 				.. InputActions.Hint("SpectateNext") .. "]")))
 	else
 		camera.CameraType = Enum.CameraType.Scriptable

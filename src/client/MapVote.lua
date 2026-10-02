@@ -89,7 +89,7 @@ local function build()
 		local bar = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0),
 			Size = UDim2.new(0, 0, 0, 4), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, card)
 		local check = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 12),
-			Size = UDim2.new(0, 160, 0, 30), Text = "✓ DEINE WAHL", Font = UITheme.Fonts.Title, TextSize = 18,
+			Size = UDim2.new(0, 160, 0, 30), Text = "DEINE WAHL", Font = UITheme.Fonts.Title, TextSize = 18,
 			TextColor3 = C.Accent, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, card)
 		card.Activated:Connect(function()
 			vote(i)

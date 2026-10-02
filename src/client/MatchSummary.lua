@@ -55,7 +55,7 @@ function MatchSummary.Init()
 	local mvpCard = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 432),
 		Size = UDim2.new(0, 520, 0, 74), BackgroundColor3 = C.Card }, canvas)
 	make("Frame", { Size = UDim2.new(0, 5, 1, 0), BackgroundColor3 = C.Gold, BorderSizePixel = 0 }, mvpCard)
-	UITheme.Label({ Position = UDim2.new(0, 24, 0, 8), Size = UDim2.new(1, -48, 0, 20), Text = "★  MVP DES MATCHES",
+	UITheme.Label({ Position = UDim2.new(0, 24, 0, 8), Size = UDim2.new(1, -48, 0, 20), Text = "MVP DES MATCHES",
 		Font = UITheme.Fonts.Title, TextSize = 16, TextColor3 = C.Gold }, mvpCard)
 	local mvpName = UITheme.Label({ Position = UDim2.new(0, 24, 0, 28), Size = UDim2.new(1, -150, 0, 40),
 		Font = UITheme.Fonts.Title, TextSize = 32 }, mvpCard)

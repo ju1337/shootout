@@ -1,0 +1,486 @@
+-- LobbyPages (ModuleScript, nur Client)
+-- Seiten LOADOUT, SHOP und BATTLE PASS der Lobby (GameMenu). Sie liegen direkt in der Lobby unter der
+-- Kopfzeile – kein eigenes Fenster – und nutzen das gemeinsame Design (UITheme):
+--   LOADOUT:     links Waffen bzw. Agenten (Reiter WAFFEN · AGENTEN), Mitte große 3D-Vorschau mit dem
+--                ausgerüsteten Skin, rechts die eigenen Skins zum Ausrüsten (Standard + gekaufte)
+--   SHOP:        Reiter WAFFEN-SKINS · AGENTEN-SKINS, Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis
+--   BATTLE PASS: Saison, Stufe und Fortschritt, alle Stufen als waagerechte Leiste (die nächste hervorgehoben),
+--                darunter die nächste Belohnung und wie man Pass-XP sammelt
+-- Jede Funktion baut in einen leeren Rahmen (PAGE_W x PAGE_H) und gibt { Refresh, Watch } zurück: Refresh
+-- aktualisiert die Seite, Watch nennt die Spieler-Attribute, bei deren Änderung GameMenu Refresh aufruft.
+-- Kaufen und Ausrüsten prüft der Server (ShopService); seine Rückmeldung zeigt die Lobby in der Statuszeile.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Remotes = require(Shared.Remotes)
+local Cosmetics = require(Shared.Cosmetics)
+local AgentConfig = require(Shared.AgentConfig)
+local WeaponConfig = require(Shared.WeaponConfig)
+local GunModels = require(Shared.GunModels)
+local AgentFigure = require(Shared.AgentFigure)
+local PassConfig = require(Shared.PassConfig)
+local UITheme = require(Shared.UITheme)
+
+local player = Players.LocalPlayer
+local C = UITheme.Colors
+local F = UITheme.Fonts
+local make, label, upper = UITheme.Make, UITheme.Label, UITheme.Upper
+
+local LobbyPages = {}
+
+LobbyPages.PAGE_W, LobbyPages.PAGE_H = 1520, 730
+local PAGE_W, PAGE_H = LobbyPages.PAGE_W, LobbyPages.PAGE_H
+local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
+
+local function coins()
+	return player:GetAttribute("Coins") or 0
+end
+
+local function clear(container)
+	for _, child in container:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+end
+
+-- 3D-Vorschau mit Licht wie in der Lobby
+local function viewport(props, parent)
+	props.BackgroundTransparency = props.BackgroundTransparency or 1
+	props.Ambient = Color3.fromRGB(130, 135, 150)
+	props.LightColor = Color3.fromRGB(255, 245, 235)
+	props.LightDirection = Vector3.new(-0.5, -1, 0.6)
+	return make("ViewportFrame", props, parent)
+end
+
+-- Waffe mit Skin von der Seite zeigen; die Kamera rückt so weit weg, dass die ganze Waffe ins Bild passt
+-- (aspect = Breite / Höhe der Vorschau, fill = Anteil der Bildbreite)
+local function showWeapon(view, weaponName, skin, aspect, fill)
+	view:ClearAllChildren()
+	local model = GunModels.Build(weaponName, skin)
+	model.Parent = view
+	local box, size = model:GetBoundingBox()
+	local halfV = math.rad(15)
+	local halfH = math.atan(math.tan(halfV) * (aspect or 1.4))
+	local distance = math.max(size.Z / 2 / math.tan(halfH), size.Y / 2 / math.tan(halfV)) / (fill or 0.8) + size.X / 2
+	local camera = make("Camera", { FieldOfView = 30 }, view)
+	camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(distance, distance * 0.15, 0), box.Position)
+	view.CurrentCamera = camera
+end
+
+-- Agent mit Farben (und Waffen-Skin) zeigen
+local function showAgent(view, agent, primary, accent, weaponSkin)
+	view:ClearAllChildren()
+	local figure = AgentFigure.Build(agent, primary, accent, weaponSkin)
+	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.4, 0))
+	figure.Parent = view
+	local camera = make("Camera", { FieldOfView = 36 }, view)
+	camera.CFrame = AgentFigure.CameraCFrame
+	view.CurrentCamera = camera
+end
+
+-- Reiter wie die Navigation der Lobby (aktiv: weiß mit Bernstein-Strich). Gibt select(name) zurück.
+local function tabs(parent, names, x, y, width, onSelect)
+	local bar = make("Frame", { Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width, 36), BackgroundTransparency = 1 },
+		parent)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4),
+		SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+	make("Frame", { Position = UDim2.fromOffset(x, y + 36), Size = UDim2.fromOffset(width, 1), BackgroundColor3 = C.Border,
+		BorderSizePixel = 0 }, parent)
+	local buttons = {}
+	local function select(name)
+		for n, b in buttons do
+			b.TextColor3 = n == name and C.Text or C.Muted
+			b.Underline.Visible = n == name
+		end
+		onSelect(name)
+	end
+	for i, name in names do
+		local b = make("TextButton", { Size = UDim2.fromOffset(0, 36), AutomaticSize = Enum.AutomaticSize.X, Text = name,
+			TextSize = 19, Font = F.Display, TextColor3 = C.Muted, BackgroundTransparency = 1, AutoButtonColor = false,
+			LayoutOrder = i }, bar)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, b)
+		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -12, 1, 0),
+			Size = UDim2.new(1, 24, 0, 2), BackgroundColor3 = C.Primary, BorderSizePixel = 0, Visible = false }, b)
+		b.MouseEnter:Connect(function()
+			b.TextColor3 = C.Text
+		end)
+		b.MouseLeave:Connect(function()
+			if not b.Underline.Visible then
+				b.TextColor3 = C.Muted
+			end
+		end)
+		b.Activated:Connect(function()
+			select(name)
+		end)
+		buttons[name] = b
+	end
+	return select
+end
+
+-- Kleine graue Überschrift über einem Bereich
+local function caption(parent, text, x, y, width)
+	return label({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width or 300, 16), Text = upper(text), TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted }, parent)
+end
+
+-- =====================================================================
+-- SHOP
+-- =====================================================================
+
+function LobbyPages.Shop(page)
+	local currentType = "Weapon"
+	local cards = {} -- [itemId] = { Buy = Chunky }
+
+	label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 12), Size = UDim2.fromOffset(600, 16),
+		Text = "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
+		TextXAlignment = Enum.TextXAlignment.Right }, page)
+	local grid = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, page)
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(234, 318), CellPadding = UDim2.fromOffset(20, 20),
+		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+
+	-- Kaufen-Knöpfe: Bernstein = leistbar, rote Schrift = zu teuer, grau = schon im Besitz
+	local function updateButtons()
+		local owned = Cosmetics.GetOwned(player)
+		for itemId, card in cards do
+			local item = Cosmetics.Get(itemId)
+			if owned[itemId] then
+				card.Buy.SetText("IM BESITZ")
+				card.Buy.SetColor(C.MutedBack, C.Muted)
+			elseif item then
+				local affordable = coins() >= item.Price
+				card.Buy.SetText("KAUFEN  ·  " .. UITheme.FormatNumber(item.Price))
+				card.Buy.SetColor(affordable and C.Primary or C.MutedBack, affordable and C.PrimaryText or C.Bad)
+			end
+		end
+	end
+
+	local function fill()
+		clear(grid)
+		cards = {}
+		local order = 0
+		for _, item in Cosmetics.List(currentType) do
+			if not item.Pass then
+				order += 1
+				local rarity = Cosmetics.Rarities[item.Rarity]
+				local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
+					LayoutOrder = order }, grid)
+				UITheme.Corner(card, UITheme.Radius.XL)
+				UITheme.Stroke(card, rarity.Color, 1, 0.5)
+				make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+				local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 170) }, card)
+				if item.Type == "Weapon" then
+					showWeapon(view, "Rifle", item, 234 / 170)
+				else
+					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+				end
+				label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
+					Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+				local sub = upper(rarity.Name)
+				if item.Type == "Agent" then
+					sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
+				end
+				label({ Position = UDim2.fromOffset(16, 216), Size = UDim2.new(1, -32, 0, 16), Text = sub, TextSize = 11, Font = F.Bold,
+					TextColor3 = rarity.Color }, card)
+				local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
+					Size = UDim2.new(1, -28, 0, 40), Color = C.MutedBack, Text = "", TextSize = 17 }, card, function()
+					if not Cosmetics.GetOwned(player)[item.Id] then
+						Remotes.ShopAction:FireServer("Buy", item.Id)
+					end
+				end)
+				cards[item.Id] = { Buy = buy }
+			end
+		end
+		updateButtons()
+	end
+
+	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS" }, 0, 0, PAGE_W, function(name)
+		currentType = name == "WAFFEN-SKINS" and "Weapon" or "Agent"
+		fill()
+	end)("WAFFEN-SKINS")
+	return { Refresh = updateButtons, Watch = { Coins = true, Owned = true } }
+end
+
+-- =====================================================================
+-- LOADOUT
+-- =====================================================================
+
+-- goToShop(): Lobby auf die SHOP-Seite wechseln
+function LobbyPages.Loadout(page, goToShop)
+	local mode = "Weapon" -- "Weapon" oder "Agent"
+	local selected = WEAPON_ORDER[1]
+	local STAGE_X, STAGE_W = 340, 720
+	local RIGHT_X = STAGE_X + STAGE_W + 30
+	local RIGHT_W = PAGE_W - RIGHT_X
+
+	-- links: Waffen bzw. Agenten
+	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(300, PAGE_H - 54),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, page)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+
+	-- Mitte: Name, ausgerüsteter Skin und große Vorschau
+	local title = label({ Position = UDim2.fromOffset(STAGE_X, -2), Size = UDim2.fromOffset(STAGE_W, 40), Text = "", TextSize = 40,
+		Font = F.Display }, page)
+	local equippedText = label({ Position = UDim2.fromOffset(STAGE_X, 40), Size = UDim2.fromOffset(STAGE_W, 16), Text = "",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted }, page)
+	local stage = UITheme.Card({ Position = UDim2.fromOffset(STAGE_X, 70), Size = UDim2.fromOffset(STAGE_W, PAGE_H - 70),
+		BackgroundTransparency = 0.35 }, page)
+	local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 3 }, stage)
+
+	-- rechts: eigene Skins (Standard + gekaufte), darunter der Weg in den Shop
+	caption(page, "Skins im Besitz", RIGHT_X, 12, RIGHT_W)
+	local options = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 54), Size = UDim2.fromOffset(RIGHT_W, PAGE_H - 200),
+		BackgroundTransparency = 1 }, page)
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(math.floor((RIGHT_W - 16) / 2), 60), CellPadding = UDim2.fromOffset(16, 12),
+		SortOrder = Enum.SortOrder.LayoutOrder }, options)
+	local hint = label({ Position = UDim2.fromOffset(RIGHT_X, PAGE_H - 120), Size = UDim2.fromOffset(RIGHT_W, 40), Text = "",
+		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, page)
+	UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, PAGE_H - 60), Size = UDim2.fromOffset(220, 46), Color = C.Card,
+		StrokeColor = C.Border, Text = "ZUM SHOP", TextSize = 20 }, page, goToShop)
+
+	local fillList -- vorab, weil sich Liste und Skins gegenseitig neu aufbauen
+
+	local function fillOptions()
+		clear(options)
+		local owned = Cosmetics.GetOwned(player)
+		local equipped = Cosmetics.GetEquipped(player)
+		local slot = (mode == "Weapon" and "W:" or "A:") .. selected
+		local current = equipped[slot]
+		if current and not owned[current] then
+			current = nil
+		end
+		local entries = { { Id = nil, Name = "Standard", Sub = "STANDARD", Color = C.Muted } }
+		local items = mode == "Weapon" and Cosmetics.List("Weapon") or Cosmetics.List("Agent", selected)
+		for _, item in items do
+			if owned[item.Id] then
+				local rarity = Cosmetics.Rarities[item.Rarity]
+				table.insert(entries, { Id = item.Id, Name = item.Name, Sub = upper(rarity.Name), Color = rarity.Color })
+			end
+		end
+		local currentName = "Standard"
+		for i, entry in entries do
+			local isOn = entry.Id == current
+			if isOn then
+				currentName = entry.Name
+			end
+			local option = UITheme.Chunky({ LayoutOrder = i, Size = UDim2.fromOffset(200, 60), Color = isOn and C.Secondary or C.Panel,
+				StrokeColor = isOn and C.Primary or entry.Color, Text = "" }, options, function()
+				if entry.Id then
+					Remotes.ShopAction:FireServer("Equip", entry.Id, selected)
+				else
+					Remotes.ShopAction:FireServer("Unequip", slot)
+				end
+			end)
+			option.Stroke.Transparency = isOn and 0 or 0.5
+			label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 24), Text = upper(entry.Name), TextSize = 21,
+				Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, option.Face)
+			label({ Position = UDim2.fromOffset(14, 34), Size = UDim2.new(1, -28, 0, 14), Text = isOn and "AUSGERÜSTET" or entry.Sub,
+				TextSize = 10, Font = F.Bold, TextColor3 = isOn and C.Primary or entry.Color }, option.Face)
+		end
+		hint.Text = #entries == 1 and "Noch keine Skins dafür – im SHOP gibt es Waffen- und Agenten-Skins."
+			or "Weitere Skins gibt es im SHOP."
+
+		-- große Vorschau mit dem ausgerüsteten Skin
+		if mode == "Weapon" then
+			title.Text = upper(WeaponConfig.Get(selected).DisplayName)
+			showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75)
+		else
+			local agent = AgentConfig.Get(selected)
+			title.Text = agent.Name
+			local primary, accent = Cosmetics.AgentColors(player, selected)
+			showAgent(view, agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]))
+		end
+		equippedText.Text = "AUSGERÜSTET: " .. upper(currentName)
+	end
+
+	fillList = function()
+		clear(list)
+		local names = {}
+		if mode == "Weapon" then
+			names = WEAPON_ORDER
+		else
+			for _, agent in AgentConfig.Agents do
+				table.insert(names, agent.Id)
+			end
+		end
+		for i, name in names do
+			local text = mode == "Weapon" and WeaponConfig.Get(name).DisplayName or AgentConfig.Get(name).Name
+			local on = name == selected
+			local row = UITheme.Chunky({ Size = UDim2.new(1, -8, 0, 46), LayoutOrder = i, Color = on and C.Secondary or C.Panel,
+				StrokeColor = on and C.Primary or C.Border, Text = upper(text), TextSize = 20, TextColor = on and C.Primary or C.Text,
+				TextXAlignment = Enum.TextXAlignment.Left }, list, function()
+				selected = name
+				fillList()
+				fillOptions()
+			end)
+			row.Stroke.Transparency = on and 0.3 or 0.6
+			make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0, Visible = on }, row.Face)
+		end
+	end
+
+	tabs(page, { "WAFFEN", "AGENTEN" }, 0, 0, 300, function(name)
+		mode = name == "WAFFEN" and "Weapon" or "Agent"
+		selected = mode == "Weapon" and WEAPON_ORDER[1] or AgentConfig.Agents[1].Id
+		fillList()
+		fillOptions()
+	end)("WAFFEN")
+	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true } }
+end
+
+-- =====================================================================
+-- BATTLE PASS
+-- =====================================================================
+
+function LobbyPages.Pass(page)
+	local CARD_W, CARD_H, GAP = 176, 356, 12
+	local max = #PassConfig.Tiers
+
+	label({ Position = UDim2.fromOffset(0, -4), Size = UDim2.fromOffset(900, 46), Text = upper(PassConfig.SeasonName), TextSize = 42,
+		Font = F.Display }, page)
+	label({ Position = UDim2.fromOffset(0, 44), Size = UDim2.fromOffset(900, 16),
+		Text = "KOSTENLOS · JEDE STUFE SCHALTET IHRE BELOHNUNG AUTOMATISCH FREI", TextSize = 11, Font = F.Bold,
+		TextColor3 = C.Muted }, page)
+	local tierLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, -4), Size = UDim2.fromOffset(400, 46),
+		Text = "", TextSize = 42, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right }, page)
+	local xpLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 44), Size = UDim2.fromOffset(500, 16),
+		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, page)
+	local barBack = make("Frame", { Position = UDim2.fromOffset(0, 74), Size = UDim2.fromOffset(PAGE_W, 4), BackgroundColor3 = C.Background,
+		BorderSizePixel = 0 }, page)
+	local bar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, barBack)
+
+	-- alle Stufen nebeneinander (waagerecht scrollbar)
+	local strip = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 98), Size = UDim2.fromOffset(PAGE_W, CARD_H + 14),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
+		ScrollingDirection = Enum.ScrollingDirection.X, CanvasSize = UDim2.fromOffset(max * (CARD_W + GAP) - GAP, 0) }, page)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, GAP),
+		SortOrder = Enum.SortOrder.LayoutOrder }, strip)
+	local cards = {}
+	for tier, reward in PassConfig.Tiers do
+		local item = reward.Item and Cosmetics.Get(reward.Item)
+		local rarity = item and Cosmetics.Rarities[item.Rarity]
+		local card = make("Frame", { Size = UDim2.fromOffset(CARD_W, CARD_H), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1,
+			BorderSizePixel = 0, LayoutOrder = tier }, strip)
+		UITheme.Corner(card, UITheme.Radius.XL)
+		local baseColor, baseTransparency = rarity and rarity.Color or C.Border, rarity and 0.35 or 0
+		local stroke = UITheme.Stroke(card, baseColor, 1, baseTransparency)
+		if rarity then
+			make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+		end
+		label({ Position = UDim2.fromOffset(14, 12), Size = UDim2.new(1, -28, 0, 16), Text = "STUFE " .. tier, TextSize = 11, Font = F.Bold,
+			TextColor3 = C.Muted }, card)
+		if item then
+			local view = viewport({ Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 0, 170) }, card)
+			if item.Type == "Weapon" then
+				showWeapon(view, "Rifle", item, CARD_W / 170)
+			else
+				showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+			end
+			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 52), Text = upper(item.Name), TextSize = 22,
+				Font = F.Display, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, card)
+			label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = upper(rarity.Name) .. "  ·  EXKLUSIV",
+				TextSize = 10, Font = F.Bold, TextColor3 = rarity.Color }, card)
+		else
+			UITheme.Coin(card, 64, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 86) })
+			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 28), Text = tostring(reward.Coins), TextSize = 30,
+				Font = F.Display, TextColor3 = C.Gold }, card)
+			label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = "MÜNZEN", TextSize = 10,
+				Font = F.Bold, TextColor3 = C.Muted }, card)
+		end
+		local state = label({ Position = UDim2.fromOffset(14, CARD_H - 34), Size = UDim2.new(1, -28, 0, 18), Text = "", TextSize = 11,
+			Font = F.Bold }, card)
+		cards[tier] = { Card = card, Stroke = stroke, State = state, BaseColor = baseColor, BaseTransparency = baseTransparency }
+	end
+
+	-- unten links: nächste Belohnung mit Vorschau; rechts: wie man Pass-XP sammelt (drei Kacheln)
+	local INFO_Y = 98 + CARD_H + 30
+	local INFO_H = PAGE_H - INFO_Y
+	local nextCard = UITheme.Card({ Position = UDim2.fromOffset(0, INFO_Y), Size = UDim2.fromOffset(740, INFO_H) }, page)
+	label({ Position = UDim2.fromOffset(24, 20), Size = UDim2.fromOffset(400, 16), Text = "NÄCHSTE BELOHNUNG", TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 3 }, nextCard)
+	local nextName = label({ Position = UDim2.fromOffset(24, 42), Size = UDim2.fromOffset(470, 44), Text = "", TextSize = 42,
+		Font = F.Display, ZIndex = 3, TextTruncate = Enum.TextTruncate.AtEnd }, nextCard)
+	local nextInfo = label({ Position = UDim2.fromOffset(24, 92), Size = UDim2.fromOffset(470, 18), Text = "", TextSize = 13,
+		Font = F.Medium, TextColor3 = C.Muted, ZIndex = 3 }, nextCard)
+	local nextBack = make("Frame", { Position = UDim2.fromOffset(24, INFO_H - 44), Size = UDim2.fromOffset(470, 4),
+		BackgroundColor3 = C.Background, BorderSizePixel = 0, ZIndex = 3 }, nextCard)
+	local nextBar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0, ZIndex = 3 }, nextBack)
+	local preview = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -20, 0.5, 0),
+		Size = UDim2.fromOffset(200, INFO_H - 40), BackgroundColor3 = C.Background, BackgroundTransparency = 0.4, BorderSizePixel = 0,
+		ZIndex = 3 }, nextCard)
+	UITheme.Corner(preview, UITheme.Radius.Small)
+	local shownPreview = nil
+
+	local howCard = UITheme.Card({ Position = UDim2.fromOffset(760, INFO_Y), Size = UDim2.fromOffset(PAGE_W - 760, INFO_H) }, page)
+	label({ Position = UDim2.fromOffset(24, 20), Size = UDim2.fromOffset(400, 16), Text = "SO SAMMELST DU PASS-XP", TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 3 }, howCard)
+	local tileW = math.floor((PAGE_W - 760 - 48 - 2 * 16) / 3)
+	for i, entry in { { "1 : 1", "Jedes XP im Spiel zählt auch für den Pass" },
+		{ "+" .. PassConfig.QuestXP, "Pass-XP pro abgeholtem täglichen Auftrag" },
+		{ UITheme.FormatNumber(PassConfig.XPPerTier), "Pass-XP pro Stufe – die Belohnung gibt es sofort" } } do
+		local x = 24 + (i - 1) * (tileW + 16)
+		make("Frame", { Position = UDim2.fromOffset(x, 54), Size = UDim2.fromOffset(2, 40), BackgroundColor3 = C.Primary,
+			BorderSizePixel = 0, ZIndex = 3 }, howCard)
+		label({ Position = UDim2.fromOffset(x + 16, 48), Size = UDim2.fromOffset(tileW - 16, 44), Text = entry[1], TextSize = 44,
+			Font = F.Display, ZIndex = 3 }, howCard)
+		label({ Position = UDim2.fromOffset(x + 16, 98), Size = UDim2.fromOffset(tileW - 20, 60), Text = entry[2], TextSize = 13,
+			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 3 }, howCard)
+	end
+
+	local function refresh()
+		local xp = player:GetAttribute("PassXP") or 0
+		local tier, progress = PassConfig.TierFromXP(xp)
+		tierLabel.Text = "STUFE " .. tier .. " / " .. max
+		bar.Size = UDim2.fromScale(math.clamp(tier >= max and 1 or (tier + progress) / max, 0, 1), 1)
+		xpLabel.Text = tier >= max and "PASS ABGESCHLOSSEN"
+			or (UITheme.FormatNumber(progress * PassConfig.XPPerTier) .. " / " .. UITheme.FormatNumber(PassConfig.XPPerTier)
+				.. " XP BIS STUFE " .. (tier + 1))
+		for t, entry in cards do
+			local reached = t <= tier
+			local isNext = t == tier + 1
+			entry.State.Text = reached and "FREIGESCHALTET" or (isNext and "NÄCHSTE STUFE" or "GESPERRT")
+			entry.State.TextColor3 = reached and C.Good or (isNext and C.Primary or C.Muted)
+			entry.Stroke.Color = isNext and C.Primary or entry.BaseColor
+			entry.Stroke.Thickness = isNext and 2 or 1
+			entry.Stroke.Transparency = isNext and 0 or entry.BaseTransparency
+			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(26, 32, 28) or C.Panel
+		end
+		-- nächste Belohnung mit Vorschau (Skin in 3D, Münzen als Münze)
+		local reward = PassConfig.Tiers[tier + 1]
+		local item = reward and reward.Item and Cosmetics.Get(reward.Item)
+		if reward then
+			nextName.Text = item and upper(item.Name) or (reward.Coins .. " MÜNZEN")
+			nextInfo.Text = "Stufe " .. (tier + 1) .. "  ·  noch " .. UITheme.FormatNumber((1 - progress) * PassConfig.XPPerTier) .. " Pass-XP"
+			nextBar.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
+		else
+			nextName.Text = "ALLES FREIGESCHALTET"
+			nextInfo.Text = "Du hast den Pass dieser Saison abgeschlossen."
+			nextBar.Size = UDim2.fromScale(1, 1)
+		end
+		local previewKey = item and item.Id or (reward and "coins" or "none")
+		if previewKey ~= shownPreview then
+			shownPreview = previewKey
+			clear(preview)
+			if item then
+				local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 4 }, preview)
+				if item.Type == "Weapon" then
+					showWeapon(view, "Rifle", item, 200 / (INFO_H - 40))
+				else
+					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+				end
+			elseif reward then
+				UITheme.Coin(preview, 72, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = 4 })
+			end
+		end
+		-- die nächste Stufe ins Bild holen
+		strip.CanvasPosition = Vector2.new(math.max(0, (math.min(tier + 1, max) - 3) * (CARD_W + GAP)), 0)
+	end
+	refresh()
+	return { Refresh = refresh, Watch = { PassXP = true } }
+end
+
+return LobbyPages

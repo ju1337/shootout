@@ -164,7 +164,7 @@ local function updateIcons(mates)
 		if not model:FindFirstChild("DownedIcon") then
 			local billboard = make("BillboardGui", { Name = "DownedIcon", Size = UDim2.new(0, 90, 0, 40),
 				StudsOffset = Vector3.new(0, 3, 0), AlwaysOnTop = true }, model)
-			label({ Size = UDim2.new(1, 0, 1, 0), Text = "✚ HILFE", TextSize = 18, TextColor3 = RED }, billboard)
+			label({ Size = UDim2.new(1, 0, 1, 0), Text = "+ HILFE", TextSize = 18, TextColor3 = RED }, billboard)
 		end
 	end
 	-- Symbole von nicht mehr Niedergeschlagenen entfernen

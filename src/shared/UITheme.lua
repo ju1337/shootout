@@ -3,6 +3,8 @@
 -- Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene Team, Rot für
 -- Gegner. Flache Knöpfe und Flächen mit kaum gerundeten Ecken und 1 px Rand, keine Schatten oder
 -- Comic-Konturen. Überschriften, Zahlen und Knöpfe in der schmalen Oswald, kleine Beschriftungen in Gotham.
+-- Achtung: Oswald kennt in Roblox nur lateinische Zeichen – Symbole wie ✕ ✓ ★ ◆ → ∞ erscheinen dort als
+-- Kästchen. Solche Zeichen nur in Gotham-Texten verwenden oder zeichnen (Cross, Diamond, Coin).
 -- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Kontur,
 -- Schild (Tag), Raute, Münze. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
 -- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
@@ -292,6 +294,18 @@ function UITheme.HudPanel(props, parent, fadeTo)
 		make("UIGradient", { Transparency = NumberSequence.new(fade[1], fade[2]) }, frame)
 	end
 	return frame
+end
+
+-- Schließen-Kreuz aus zwei Strichen (unabhängig von der Schrift: Oswald hat kein "✕")
+function UITheme.Cross(parent, size, color, thickness)
+	local holder = make("Frame", { Name = "Cross", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(size, size), BackgroundTransparency = 1 }, parent)
+	for _, rotation in { 45, -45 } do
+		make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.new(1.3, 0, 0, thickness or 2), Rotation = rotation, BackgroundColor3 = color or C.Text,
+			BorderSizePixel = 0 }, holder)
+	end
+	return holder
 end
 
 -- Münze als kleines Symbol (statt Emoji): Bernstein-Scheibe mit dunklem Innenring
