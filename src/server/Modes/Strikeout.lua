@@ -9,7 +9,7 @@ local TeamRoundMode = require(script.Parent.Parent.TeamRoundMode)
 
 return TeamRoundMode.new({
 	Id = "Strikeout",
-	Maps = { "Strikeout", "Zellenblock" }, -- Map-Rotation: Fabrik oder Zellenblock
+	Maps = { "Strikeout", "Zellenblock", "Kanaele" }, -- Map-Rotation: Fabrik, Zellenblock, Kanäle
 	TeamSize = 4,
 	Teams = {
 		{ Name = "Gold", Color = BrickColor.new("Deep orange") },
