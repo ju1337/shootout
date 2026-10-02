@@ -619,8 +619,11 @@ function TeamRoundMode.new(config)
 	end
 
 	local function playRound()
-		-- Countdown
+		-- Countdown (Clients zeigen ihn groß in der Bildschirmmitte)
 		setPhase("Countdown")
+		for player in members do
+			player:SetAttribute("CountdownEnd", workspace:GetServerTimeNow() + GameSettings.Get("Countdown"))
+		end
 		for seconds = GameSettings.Get("Countdown"), 1, -1 do
 			setText(Modes.Get(MODE_ID).Name .. " · Runde " .. roundNumber + 1 .. " · Start in " .. seconds .. " s")
 			task.wait(1)
@@ -1076,7 +1079,7 @@ function TeamRoundMode.new(config)
 		pending[player] = nil
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
-			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter" } do
+			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter", "CountdownEnd" } do
 			player:SetAttribute(attribute, nil)
 		end
 		BuyService.Clear(player)

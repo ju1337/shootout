@@ -407,6 +407,37 @@ function HUD.Init(weaponClient)
 		end
 	end)
 
+	-- ---------- Großer Countdown vor Rundenbeginn (3, 2, 1, LOS!) ----------
+	local countdown = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.42, 0),
+		Size = UDim2.new(0, 300, 0, 160), Text = "", TextSize = 150, Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Accent, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
+	local countdownScale = make("UIScale", {}, countdown)
+	local lastShown = nil
+	game:GetService("RunService").Heartbeat:Connect(function()
+		local finish = player:GetAttribute("CountdownEnd")
+		local phase = player:GetAttribute("RoundPhase")
+		if not finish or not Modes.IsTeamMode(player:GetAttribute("Mode")) then
+			countdown.Visible = false
+			return
+		end
+		local left = finish - workspace:GetServerTimeNow()
+		local text
+		if phase == "Countdown" and left > 0 then
+			text = tostring(math.ceil(left))
+		elseif phase == "Round" and left > -1 then
+			text = "LOS!"
+		end
+		countdown.Visible = text ~= nil
+		if text and text ~= lastShown then
+			lastShown = text
+			countdown.Text = text
+			countdown.TextColor3 = text == "LOS!" and UITheme.Colors.Play or UITheme.Colors.Accent
+			-- kurzer "Puls" bei jeder neuen Zahl
+			countdownScale.Scale = 1.4
+			TweenService:Create(countdownScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+		end
+	end)
+
 	-- HUD nur in Kampfmodi zeigen, nicht im Hub
 	local function updateVisible()
 		gui.Enabled = Modes.IsFighting(player)
