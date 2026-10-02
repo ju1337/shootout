@@ -12,7 +12,7 @@ import os
 import random
 
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
-MAP_NAMES = {"TDM": "Fabrik", "FreeForAll": "Lagerhof", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
+MAP_NAMES = {"TDM": "Fabrik", "FreeForAll": "Raffinerie", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
              "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar"}
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
@@ -206,54 +206,65 @@ class Builder:
 # ---------- Free-for-All: "Lagerhof" (180 x 180) ----------
 
 def build_ffa():
+    """Raffinerie: Tanklager mit Brücken (zweite Ebene), Rohrbrücken, Kontrollhäuser."""
     b = Builder(FFA_ORIGIN)
     size = 180
-    b.ground(size + 10, size + 10, (95, 95, 100), "Concrete")
-    b.border(size, size, 18, (140, 120, 100), "Brick", barrier=120)
+    steel, pipe, tank, concrete = (90, 96, 104), (160, 120, 60), (205, 205, 200), (120, 122, 126)
+    cyl = {"Shape": "Cylinder"}
+    b.ground(size + 10, size + 10, concrete, "Concrete")
+    b.border(size, size, 14, (110, 105, 100), "Brick", barrier=120)
+    # Bodenmarkierungen
+    for x in (-45, 45):
+        b.box("Ground", "Lane", (0.6, 0.05, 160), (x, 0.03, 0), (230, 190, 40), "SmoothPlastic")
 
-    # Mittelplattform auf Säulen mit zwei Rampen
-    top = 12
-    b.box("Buildings", "Platform", (28, 1.5, 28), (0, top - 0.75, 0), (120, 120, 125), "DiamondPlate")
-    for sx in (-12, 12):
-        for sz in (-12, 12):
-            b.box("Buildings", "Pillar", (2.5, top - 1.5, 2.5), (sx, (top - 1.5) / 2, sz), (90, 90, 95), "Concrete")
-    for sx in (-13.5, 13.5):
-        b.box("Buildings", "Parapet", (1, 3, 28), (sx, top + 1.5, 0), (150, 150, 150), "Concrete")
-    b.ramp("RampNorth", 0, 14, 8, 30, top, "N")
-    b.ramp("RampSouth", 0, -14, 8, 30, top, "S")
-
-    # Deckung unter der Plattform
-    b.crate(-5, 0)
-    b.crate(5, 3)
-    b.cover_wall(0, -6, 10, height=4)
-
-    # Häuser in den Ecken (Türen zur Mitte und zur Seite)
+    # Tanklager: vier Tanks, oben über Brücken verbunden (Ebene auf 16)
+    top = 16
     for sx in (-1, 1):
         for sz in (-1, 1):
-            doors = ("S" if sz > 0 else "N", "W" if sx > 0 else "E")
-            b.house(f"House{sx}{sz}", sx * 62, sz * 62, 26, 20, 13, (170, 110, 80), (70, 60, 60), doors=doors)
+            b.add("Buildings", "Tank", (top, 18, 18), (sx * 24, top / 2, sz * 24), tank, "Metal",
+                  angles=(0, 0, 90), props=cyl)
+            b.add("Buildings", "TankRoof", (0.6, 18.4, 18.4), (sx * 24, top + 0.3, sz * 24), steel, "DiamondPlate",
+                  angles=(0, 0, 90), props=cyl)
+            b.box("Buildings", "TankStripe", (18.2, 1.2, 0.4), (sx * 24, top - 3, sz * 24 - sz * 9.05), (200, 70, 50),
+                  "SmoothPlastic")
+    for z in (-24, 24):
+        b.box("Buildings", "Bridge", (30, 0.8, 4), (0, top + 0.2, z), steel, "DiamondPlate")
+    for x in (-24, 24):
+        b.box("Buildings", "Bridge", (4, 0.8, 30), (x, top + 0.2, 0), steel, "DiamondPlate")
+    b.box("Buildings", "CrossBridge", (4, 0.8, 48), (0, top + 0.2, 0), steel, "DiamondPlate")
+    for x, z, length, ax in ((0, -24, 30, True), (0, 24, 30, True)):
+        b.box("Buildings", "Railing", (length, 1.2, 0.3), (x, top + 1.2, z - 2), (220, 180, 40), "Metal")
+    # Rampen hoch aufs Tanklager (Norden und Süden)
+    # Oberes Ende direkt an der Brücke (z = ±26), unteres Ende vor den Kontrollhäusern
+    b.ramp("TankRampN", 0, 26, 6, 30, top + 0.6, "N")
+    b.ramp("TankRampS", 0, -26, 6, 30, top + 0.6, "S")
 
-    # Kisten-Stapel und Deckungsmauern verteilt (symmetrisch)
-    for sx, sz in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
-        b.crate(sx * 30, sz * 40)
-        b.crate(sx * 30, sz * 45)
-        b.crate(sx * 30, sz * 42.5, y=5, s=4)
-        b.crate(sx * 70, sz * 25, s=6)
-        b.cover_wall(sx * 45, sz * 15, 16, along_x=False)
-        b.cover_wall(sx * 15, sz * 70, 18)
-    for sx in (-1, 1):
-        b.cover_wall(sx * 60, 0, 12, along_x=False, height=7)
-        b.crate(sx * 75, 6)
-        b.crate(sx * 75, -6)
-        b.crate(sx * 10, 45)
-        b.crate(sx * 10, -45)
+    # Rohrbrücken an Ost- und Westseite (Deckung darunter)
+    for x in (-62, 62):
+        for z in range(-60, 61, 20):
+            b.box("Buildings", "PipeSupport", (1.2, 7, 1.2), (x, 3.5, z), steel, "Metal")
+        for dx in (-1.6, 0, 1.6):
+            b.add("Buildings", "Pipe", (124, 1.4, 1.4), (x + dx, 7.6, 0), pipe, "Metal", angles=(0, 90, 0), props=cyl)
 
-    # Spawns an den Rändern
-    for x, z in ((-82, 0), (82, 0), (0, -82), (0, 82), (-82, -35), (82, 35), (35, -82), (-35, 82)):
-        yaw = math.degrees(math.atan2(x, z))  # Blick zur Mitte
+    # Kontrollhäuser
+    b.house("ControlN", 0, 72, 30, 16, 11, (150, 155, 160), (60, 65, 70), doors=("S", "E", "W"), material="Concrete")
+    b.house("ControlS", 0, -72, 30, 16, 11, (150, 155, 160), (60, 65, 70), doors=("N", "E", "W"), material="Concrete")
+
+    # Container und Kisten
+    for x, z, w, d, color in ((-35, 55, 16, 8, (70, 110, 150)), (35, -55, 16, 8, (150, 70, 60)),
+                              (-80, -30, 8, 16, (90, 130, 80)), (80, 30, 8, 16, (160, 120, 50))):
+        b.box("Cover", "Container", (w, 8, d), (x, 4, z), color, "Metal")
+    for x, z in ((-45, 20), (45, -20), (-45, -45), (45, 45), (-12, 45), (12, -45), (-75, 65), (75, -65)):
+        b.crate(x, z, color=(150, 120, 80))
+    for x, z, length, ax in ((-30, 0, 12, False), (30, 0, 12, False), (-20, 50, 10, True), (20, -50, 10, True)):
+        b.cover_wall(x, z, length, along_x=ax, height=5)
+
+    # Spawns an den Rändern (Blick zur Mitte)
+    for x, z in ((-82, 0), (82, 0), (0, -84), (0, 84), (-82, -40), (82, 40), (40, -84), (-40, 84)):
+        yaw = math.degrees(math.atan2(x, z))
         b.spawn(x, z, yaw=yaw)
 
-    b.save("FreeForAll.model.json")
+    b.save("FreeForAll.model.json", "Raffinerie")
 
 
 # ---------- Drop: "Tal" (420 x 320), Teams springen bei x = -150 / +150 ab ----------
