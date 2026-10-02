@@ -1,6 +1,6 @@
 -- Spectator (ModuleScript, nur Client)
 -- Nur im Drop-Modus: Wer tot ist (oder mitten in der Runde beitritt), schaut einem
--- lebenden Teammitglied zu. Mit E wechseln. Ohne Teammitglied: Blick von oben auf die Map.
+-- lebenden Teammitglied zu (auch Bot-Teamkollegen). Mit E/Q wechseln. Ohne Teammitglied: Blick von oben auf die Map.
 -- Außerdem bekommen Teammitglieder einen Umriss in Teamfarbe.
 
 local Players = game:GetService("Players")
@@ -35,8 +35,9 @@ local spectating = false
 local inOverview = false
 local target = nil
 
+-- p: Spieler oder Bot-Modell
 local function livingHumanoid(p)
-	local character = p.Character
+	local character = p:IsA("Player") and p.Character or p
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid and humanoid.Health > 0 then
 		return humanoid
@@ -51,17 +52,32 @@ local function livingTeammates()
 			table.insert(list, p)
 		end
 	end
+	local botFolder = workspace:FindFirstChild("Bots")
+	if botFolder and player.Team then
+		for _, model in botFolder:GetChildren() do
+			if model:IsA("Model") and model:GetAttribute("TeamName") == player.Team.Name and livingHumanoid(model) then
+				table.insert(list, model)
+			end
+		end
+	end
 	return list
 end
 
--- Nächstes Teammitglied wählen (nach dem aktuellen in der Liste)
-local function nextTarget()
+local function isMate(p)
+	if p:IsA("Player") then
+		return p.Team ~= nil and p.Team == player.Team
+	end
+	return player.Team ~= nil and p.Parent ~= nil and p:GetAttribute("TeamName") == player.Team.Name
+end
+
+-- Nächstes (step = 1) bzw. vorheriges (step = -1) Teammitglied wählen
+local function nextTarget(step)
 	local list = livingTeammates()
 	if #list == 0 then
 		return nil
 	end
 	local index = table.find(list, target) or 0
-	return list[index % #list + 1]
+	return list[(index - 1 + (step or 1)) % #list + 1]
 end
 
 local function stopSpectating()
@@ -96,14 +112,17 @@ local function update()
 		spectating = true
 		Movement.SetFirstPerson(false)
 	end
-	if not target or not livingHumanoid(target) or target.Team ~= player.Team then
+	if not target or not livingHumanoid(target) or not isMate(target) then
 		target = nextTarget()
 	end
 	inOverview = false
 	if target then
 		camera.CameraType = Enum.CameraType.Custom
 		camera.CameraSubject = livingHumanoid(target)
-		HUD.SetStatus("Du schaust " .. target.Name .. " zu  ·  E = wechseln")
+		local agent = target:IsA("Player") and target.Character and target.Character:GetAttribute("Agent")
+			or not target:IsA("Player") and target:GetAttribute("Agent")
+		HUD.SetStatus("ZUSCHAUER  ·  " .. string.upper(target.Name) .. (agent and ("  ·  " .. string.upper(agent)) or "")
+			.. "   [Q] ◀   ▶ [E]")
 	else
 		camera.CameraType = Enum.CameraType.Scriptable
 		inOverview = true
@@ -153,8 +172,8 @@ end
 
 function Spectator.Init()
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and spectating and input.KeyCode == Enum.KeyCode.E then
-			target = nextTarget()
+		if not processed and spectating and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Q) then
+			target = nextTarget(input.KeyCode == Enum.KeyCode.E and 1 or -1)
 			update()
 		end
 	end)
