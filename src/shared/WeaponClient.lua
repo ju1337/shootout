@@ -247,6 +247,29 @@ local function playShotSound(weaponName, position, own)
 	Debris:AddItem(anchor, 3)
 end
 
+-- Mündungsfeuer: kurzer heller Blitz mit Licht an der Laufmündung
+local function muzzleFlash(position)
+	local flash = Instance.new("Part")
+	flash.Shape = Enum.PartType.Ball
+	flash.Size = Vector3.new(0.6, 0.6, 0.6)
+	flash.Position = position
+	flash.Anchored = true
+	flash.CanCollide = false
+	flash.CanQuery = false
+	flash.CanTouch = false
+	flash.CastShadow = false
+	flash.Material = Enum.Material.Neon
+	flash.Color = Color3.fromRGB(255, 200, 90)
+	flash.Transparency = 0.15
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 190, 110)
+	light.Range = 10
+	light.Brightness = 3
+	light.Parent = flash
+	flash.Parent = workspace
+	Debris:AddItem(flash, 0.05)
+end
+
 -- Kurze gelbe Leuchtspur für jeden Schuss (von allen Spielern)
 local function showTracer(startPos, endPos)
 	local distance = (endPos - startPos).Magnitude
@@ -373,7 +396,15 @@ function WeaponClient.Init()
 		local barrel = shooter == player and viewModel and viewModel.Parent and viewModel:FindFirstChild("Barrel")
 		if barrel then
 			startPos = (barrel.CFrame * CFrame.new(0, 0, -barrel.Size.Z / 2)).Position
+		elseif typeof(shooter) == "Instance" and shooter.Character then
+			-- Andere Spieler: Blitz an ihrer Waffe in der Hand (falls sichtbar)
+			local tool = shooter.Character:FindFirstChildOfClass("Tool")
+			local otherBarrel = tool and tool:FindFirstChild("Barrel")
+			if otherBarrel then
+				startPos = (otherBarrel.CFrame * CFrame.new(0, 0, -otherBarrel.Size.Z / 2)).Position
+			end
 		end
+		muzzleFlash(startPos)
 		showTracer(startPos, endPos)
 	end)
 
