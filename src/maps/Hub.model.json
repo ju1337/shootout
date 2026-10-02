@@ -14130,21 +14130,67 @@
      }
     },
     {
-     "Name": "Poster",
+     "Name": "PhotoBoardFrame",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
-       9,
+       17,
+       17,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -27,
-         15,
-         -37.55
+         -29,
+         16,
+         -37.8
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2745,
+       0.2902,
+       0.3216
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoard",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       16,
+       16,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -29,
+         16,
+         -37.4
         ],
         "orientation": [
          [
@@ -14166,279 +14212,262 @@
        }
       },
       "Color": [
-       0.3922,
-       0.7059,
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoardGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17,
+       0.3,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -29,
+         7.4,
+         -37.3
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoardGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17,
+       0.3,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -29,
+         24.6,
+         -37.3
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoardGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       17.5,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -37.6,
+         16,
+         -37.3
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoardGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       17.5,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -20.4,
+         16,
+         -37.3
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "PhotoBoardLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       0.3,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -29,
+         25.5,
+         -35
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
        0.902
       ],
-      "Material": "Glass",
+      "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.86,
-      "CanCollide": false,
-      "CanQuery": false,
-      "Attributes": {
-       "Attributes": {
-        "Holo": {
-         "Bool": true
-        }
-       }
-      }
+      "Transparency": 0.4
      },
      "Children": [
       {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
+       "Name": "Light",
+       "ClassName": "SpotLight",
        "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.4,
-        "SizingMode": "PixelsPerStud",
-        "PixelsPerStud": 40
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "WERDE AGENT",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.7098,
-           0.6275,
-           0.8745
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "9 AGENTEN \u00b7 EIGENE F\u00c4HIGKEITEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9451,
-           0.9529,
-           0.9647
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.5882,
-           0.4706,
-           0.8235
-          ],
-          "BorderSizePixel": 0,
-          "BackgroundTransparency": 0.3
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
+        "Face": "Bottom",
+        "Range": 22,
         "Brightness": 1.2,
-        "Angle": 80,
+        "Angle": 60,
         "Color": [
-         0.5882,
-         0.4706,
-         0.8235
+         1.0,
+         0.9608,
+         0.902
         ]
        }
       }
      ]
-    },
-    {
-     "Name": "PosterHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -27.0,
-         10.5,
-         -37.55
-        ],
-        "orientation": [
-         [
-          -1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.0,
-          0.0,
-          -1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6706,
-       0.5765,
-       0.8588
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.4,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "PosterHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -27.0,
-         19.5,
-         -37.55
-        ],
-        "orientation": [
-         [
-          -1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.0,
-          0.0,
-          -1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6706,
-       0.5765,
-       0.8588
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.15,
-      "CanCollide": false,
-      "CanQuery": false
-     }
     },
     {
      "Name": "Poster",

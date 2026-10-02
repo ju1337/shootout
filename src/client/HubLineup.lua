@@ -631,8 +631,46 @@ local function updateExposure()
 	lighting.ExposureCompensation = player:GetAttribute("Mode") == "Hub" and HUB_EXPOSURE or normalExposure
 end
 
+-- Große Bildtafel an der Rückwand (Part "PhotoBoard"). Bild hochladen: Roblox Studio → Ansicht → Asset-Manager →
+-- Bilder → Massenimport, Rechtsklick aufs Bild → Asset-ID kopieren und hier eintragen (z.B. "rbxassetid://123456").
+local PHOTO_IMAGE = ""
+
+local function buildPhotoBoard()
+	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("PhotoBoard", 10)
+	if not board then
+		return
+	end
+	local surface = Instance.new("SurfaceGui")
+	surface.Name = "PhotoBoardGui"
+	surface.Face = Enum.NormalId.Front
+	surface.LightInfluence = 0
+	surface.Brightness = 1.1
+	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	surface.PixelsPerStud = 40
+	surface.Adornee = board
+	surface.Parent = player:WaitForChild("PlayerGui")
+	if PHOTO_IMAGE ~= "" then
+		local image = Instance.new("ImageLabel")
+		image.Size = UDim2.fromScale(1, 1)
+		image.BackgroundTransparency = 1
+		image.ScaleType = Enum.ScaleType.Crop
+		image.Image = PHOTO_IMAGE
+		image.Parent = surface
+	else
+		local hint = Instance.new("TextLabel")
+		hint.Size = UDim2.fromScale(1, 1)
+		hint.BackgroundTransparency = 1
+		hint.Font = Enum.Font.Oswald
+		hint.TextScaled = true
+		hint.TextColor3 = Color3.fromRGB(120, 185, 235)
+		hint.Text = "BILD FOLGT"
+		hint.Parent = surface
+	end
+end
+
 function HubLineup.Init()
 	updateExposure()
+	task.spawn(buildPhotoBoard)
 	player:GetAttributeChangedSignal("Mode"):Connect(updateExposure)
 	task.spawn(buildMissionBoard)
 	task.spawn(addParticles)

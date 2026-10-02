@@ -1709,8 +1709,18 @@ def build_lobby():
         b.holo_edges("MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.8), (0, 180, 0), accent)
     b.sign2("BackLogo", (30, 4.5, 0.4), (0, 22.5, z0 + 0.5), "SHOOTOUT", "TACTICAL OPERATIONS",
             graphite, accent, (236, 239, 243), angles=(0, 180, 0), glow=accent)
-    for x, title, sub, color in ((-27, "WERDE AGENT", "9 AGENTEN · EIGENE FÄHIGKEITEN", (150, 120, 210)),
-                                 (27, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112))):
+    # Große Bildtafel links (das Bild setzt der Client: HubLineup, PHOTO_IMAGE)
+    b.box("Decor", "PhotoBoardFrame", (17, 17, 0.4), (-29, 16, z0 + 0.2), steel, "Metal")
+    b.box("Decor", "PhotoBoard", (16, 16, 0.4), (-29, 16, z0 + 0.6), graphite, "SmoothPlastic", angles=(0, 180, 0))
+    for dy in (-8.6, 8.6):
+        b.box("Decor", "PhotoBoardGlow", (17, 0.3, 0.3), (-29, 16 + dy, z0 + 0.7), accent, "Neon")
+    for dx in (-8.6, 8.6):
+        b.box("Decor", "PhotoBoardGlow", (0.3, 17.5, 0.3), (-29 + dx, 16, z0 + 0.7), accent, "Neon")
+    b.add("Decor", "PhotoBoardLight", (1, 0.3, 1), (-29, 25.5, z0 + 3), (255, 248, 230), "Neon",
+          props={"Transparency": 0.4},
+          children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+              "Face": "Bottom", "Range": 22, "Brightness": 1.2, "Angle": 60, "Color": rgb(255, 245, 230)}}])
+    for x, title, sub, color in ((27, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112)),):
         if not b.holo:
             b.box("Decor", "PosterFrame", (15, 10, 0.3), (x, 15, z0 + 0.2), steel, "Metal")
         b.sign2("Poster", (14, 9, 0.4), (x, 15, z0 + 0.45), title, sub, graphite, color, (236, 239, 243),
