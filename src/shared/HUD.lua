@@ -13,6 +13,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
+local WeaponConfig = require(Shared.WeaponConfig)
+local UITheme = require(Shared.UITheme)
 local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
@@ -63,80 +65,71 @@ function HUD.Init(weaponClient)
 
 	gui = make("ScreenGui", { Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true }, player:WaitForChild("PlayerGui"))
 
-	-- Lebensbalken unten links
-	local healthBack = make("Frame", {
-		Position = UDim2.new(0, 20, 1, -50),
-		Size = UDim2.new(0, 250, 0, 24),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-		BackgroundTransparency = 0.3,
-		BorderSizePixel = 0,
-	}, gui)
-	local healthFill = make("Frame", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundColor3 = Color3.fromRGB(80, 200, 100),
-		BorderSizePixel = 0,
-	}, healthBack)
-	local healthText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "100", TextSize = 18 }, healthBack)
+	-- Halbtransparente dunkle Fläche mit Verlauf (Grundbaustein des HUD)
+	local function hudPanel(props)
+		props.BackgroundColor3 = Color3.fromRGB(10, 13, 22)
+		props.BackgroundTransparency = 0.25
+		props.BorderSizePixel = 0
+		local frame = make("Frame", props, gui)
+		UITheme.Corner(frame, 12)
+		UITheme.Stroke(frame, Color3.fromRGB(70, 80, 110), 1, 0.4)
+		UITheme.Gradient(frame, Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 155, 175))
+		return frame
+	end
 
-	-- Rüstung (gekauft in Drop) als blauer Balken direkt über dem Leben
-	local armorBack = make("Frame", {
-		Position = UDim2.new(0, 20, 1, -58),
-		Size = UDim2.new(0, 250, 0, 6),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-		BackgroundTransparency = 0.3,
-		BorderSizePixel = 0,
-		Visible = false,
-	}, gui)
-	local armorFill = make("Frame", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundColor3 = Color3.fromRGB(80, 160, 255),
-		BorderSizePixel = 0,
-	}, armorBack)
+	-- ---------- Leben unten links (große Zahl + Balken, Rüstung darüber) ----------
+	local healthPanel = hudPanel({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -24),
+		Size = UDim2.new(0, 330, 0, 74) })
+	local healthText = label({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(0, 90, 0, 44), Text = "100",
+		TextSize = 40, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
+	label({ Position = UDim2.new(0, 18, 0, 50), Size = UDim2.new(0, 90, 0, 16), Text = "LEBEN", TextSize = 12,
+		TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
+	local healthBack = make("Frame", { Position = UDim2.new(0, 112, 0, 40), Size = UDim2.new(1, -128, 0, 14),
+		BackgroundColor3 = Color3.fromRGB(35, 38, 50), BorderSizePixel = 0 }, healthPanel)
+	UITheme.Corner(healthBack, 4)
+	local healthFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(80, 220, 120),
+		BorderSizePixel = 0 }, healthBack)
+	UITheme.Corner(healthFill, 4)
+	UITheme.Gradient(healthFill, Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 170, 170))
+	-- Segmente wie bei RC (alle 25 Leben ein Strich)
+	for k = 1, 3 do
+		make("Frame", { Position = UDim2.new(k / 4, -1, 0, 0), Size = UDim2.new(0, 2, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(10, 13, 22), BorderSizePixel = 0, ZIndex = 2 }, healthBack)
+	end
+	-- Rüstung (gekauft in der Kaufphase) als blauer Balken über dem Leben
+	local armorBack = make("Frame", { Position = UDim2.new(0, 112, 0, 26), Size = UDim2.new(1, -128, 0, 8),
+		BackgroundColor3 = Color3.fromRGB(35, 38, 50), BorderSizePixel = 0, Visible = false }, healthPanel)
+	UITheme.Corner(armorBack, 3)
+	local armorFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(80, 170, 255),
+		BorderSizePixel = 0 }, armorBack)
+	UITheme.Corner(armorFill, 3)
 
-	-- Geld in Drop (über der Munition) und kurze Meldung "+200 $"
-	local moneyText = label({
-		Position = UDim2.new(1, -220, 1, -130),
-		Size = UDim2.new(0, 200, 0, 30),
-		Text = "",
-		TextSize = 22,
-		TextColor3 = Color3.fromRGB(120, 230, 140),
-		TextXAlignment = Enum.TextXAlignment.Right,
-		Visible = false,
-	}, gui)
+	-- ---------- Munition unten rechts (große Magazinzahl, Reserve klein) ----------
+	local ammoPanel = hudPanel({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -24),
+		Size = UDim2.new(0, 300, 0, 74) })
+	local weaponText = label({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
+		TextSize = 14, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
+	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -86, 0, 14), Size = UDim2.new(0, 120, 0, 52),
+		Text = "", TextSize = 46, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Right }, ammoPanel)
+	local reserveText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 34), Size = UDim2.new(0, 66, 0, 26),
+		Text = "", TextSize = 20, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
 
-	-- Munition unten rechts
-	local ammoText = label({
-		Position = UDim2.new(1, -220, 1, -95),
-		Size = UDim2.new(0, 200, 0, 45),
-		Text = "",
-		TextSize = 38,
-		TextXAlignment = Enum.TextXAlignment.Right,
-	}, gui)
-	local weaponText = label({
-		Position = UDim2.new(1, -220, 1, -50),
-		Size = UDim2.new(0, 200, 0, 24),
-		Text = "",
-		TextSize = 18,
-		TextXAlignment = Enum.TextXAlignment.Right,
-	}, gui)
+	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
+	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -28, 1, -106),
+		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.GothamBlack,
+		TextColor3 = Color3.fromRGB(120, 230, 140), TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
-	-- Eigene Kills oben links
-	local killsText = label({
-		Position = UDim2.new(0, 20, 0, 50),
-		Size = UDim2.new(0, 200, 0, 30),
-		Text = "Kills: 0",
-		TextSize = 22,
-		TextXAlignment = Enum.TextXAlignment.Left,
-	}, gui)
+	-- Eigene Kills oben links (neben den Roblox-Knöpfen)
+	local killsPanel = hudPanel({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(0, 110, 0, 36) })
+	local killsText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "☠ 0", TextSize = 20, Font = Enum.Font.GothamBlack,
+		TextXAlignment = Enum.TextXAlignment.Center }, killsPanel)
 
-	-- Modus-Info oben mittig (Text kommt vom Server als Spieler-Attribut "ModeText")
-	local modeText = label({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 50),
-		Size = UDim2.new(0, 700, 0, 30),
-		Text = "",
-		TextSize = 22,
-	}, gui)
+	-- Modus-Info oben mittig als Banner (Text kommt vom Server als Spieler-Attribut "ModeText")
+	local modeBanner = hudPanel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 12),
+		Size = UDim2.new(0, 0, 0, 38), AutomaticSize = Enum.AutomaticSize.X })
+	make("UIPadding", { PaddingLeft = UDim.new(0, 22), PaddingRight = UDim.new(0, 22) }, modeBanner)
+	local modeText = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
+		Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center }, modeBanner)
 
 	-- Roter Bildschirm-Effekt bei Schaden (ganz unten, damit er nichts verdeckt)
 	local damageFlash = make("Frame", {
@@ -156,13 +149,15 @@ function HUD.Init(weaponClient)
 	}, damageFlash)
 
 	-- Fadenkreuz und Hitmarker
-	local crosshair = make("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 4, 0, 4),
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BorderSizePixel = 0,
-	}, gui)
+	local crosshair = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1 }, gui)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 3, 0, 3),
+		BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, crosshair)
+	for _, line in { { 0.5, 0, 2, 9, 0.5, 1 }, { 0.5, 1, 2, 9, 0.5, 0 }, { 0, 0.5, 9, 2, 1, 0.5 }, { 1, 0.5, 9, 2, 0, 0.5 } } do
+		local bar = make("Frame", { AnchorPoint = Vector2.new(line[5], line[6]), Position = UDim2.new(line[1], 0, line[2], 0),
+			Size = UDim2.new(0, line[3], 0, line[4]), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, crosshair)
+		UITheme.Stroke(bar, Color3.new(0, 0, 0), 1, 0.5)
+	end
 	local hitmarker = label({
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -184,13 +179,22 @@ function HUD.Init(weaponClient)
 	-- Große Meldung (Rundenstart, Sieger)
 	local announce = label({
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.3, 0),
-		Size = UDim2.new(0, 800, 0, 60),
+		Position = UDim2.new(0.5, 0, 0.26, 0),
+		Size = UDim2.new(0, 0, 0, 64),
+		AutomaticSize = Enum.AutomaticSize.X,
 		Text = "",
-		TextSize = 44,
+		TextSize = 40,
+		Font = Enum.Font.GothamBlack,
 		TextColor3 = Color3.fromRGB(255, 220, 90),
+		BackgroundTransparency = 0.3,
+		BackgroundColor3 = Color3.fromRGB(10, 13, 22),
+		TextXAlignment = Enum.TextXAlignment.Center,
 		Visible = false,
 	}, gui)
+	UITheme.Corner(announce, 12)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 36), PaddingRight = UDim.new(0, 36) }, announce)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, 72, 0, 3),
+		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, announce)
 
 	-- Killfeed oben rechts
 	local killfeed = make("Frame", {
@@ -243,7 +247,7 @@ function HUD.Init(weaponClient)
 	task.spawn(function()
 		local kills = player:WaitForChild("leaderstats"):WaitForChild("Kills")
 		local function update()
-			killsText.Text = "Kills: " .. kills.Value
+			killsText.Text = "☠ " .. kills.Value
 		end
 		update()
 		kills.Changed:Connect(update)
@@ -303,9 +307,11 @@ function HUD.Init(weaponClient)
 
 	-- Munition
 	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading)
-		ammoText.Text = mag .. " / " .. reserve
-		local displayName = require(Shared.WeaponConfig).Get(name).DisplayName
-		weaponText.Text = reloading and (displayName .. " · lädt nach...") or displayName
+		ammoText.Text = tostring(mag)
+		ammoText.TextColor3 = mag == 0 and UITheme.Colors.Bad or Color3.new(1, 1, 1)
+		reserveText.Text = "/ " .. reserve
+		local displayName = WeaponConfig.Get(name).DisplayName
+		weaponText.Text = string.upper(reloading and (displayName .. " · lädt nach...") or displayName)
 	end)
 
 	-- Hitmarker: weiß = Körper, rot = Kopf, groß = Kill
@@ -382,22 +388,27 @@ function HUD.Init(weaponClient)
 	local entryCount = 0
 	Remotes.Killfeed.OnClientEvent:Connect(function(killerName, victimName, weaponName, headshot)
 		entryCount += 1
-		local text = killerName .. " hat " .. victimName .. " erledigt"
-		if headshot then
-			text ..= " (Kopfschuss)"
+		local weapon = WeaponConfig.Get(weaponName)
+		local weaponLabel = weapon and weapon.DisplayName or tostring(weaponName or "")
+		local function colored(name)
+			local color = name == player.Name and "#FFC850" or "#FFFFFF"
+			return '<font color="' .. color .. '">' .. name .. "</font>"
 		end
+		local text = colored(killerName) .. '  <font color="#9AA3BA">[' .. weaponLabel
+			.. (headshot and " · ⊕" or "") .. "]</font>  " .. colored(victimName)
 		local involvesMe = killerName == player.Name or victimName == player.Name
 		local entry = label({
-			Size = UDim2.new(0, 400, 0, 28),
+			Size = UDim2.new(0, 0, 0, 30),
 			AutomaticSize = Enum.AutomaticSize.X,
-			Text = "  " .. text .. "  ",
-			TextSize = 18,
-			TextColor3 = involvesMe and Color3.fromRGB(255, 220, 90) or Color3.new(1, 1, 1),
-			BackgroundColor3 = Color3.new(0, 0, 0),
-			BackgroundTransparency = 0.5,
+			Text = "   " .. text .. "   ",
+			RichText = true,
+			TextSize = 16,
+			BackgroundColor3 = involvesMe and Color3.fromRGB(70, 50, 20) or Color3.fromRGB(10, 13, 22),
+			BackgroundTransparency = 0.3,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			LayoutOrder = entryCount,
 		}, killfeed)
+		UITheme.Corner(entry, 8)
 		-- Älteste Einträge entfernen
 		local entries = {}
 		for _, child in killfeed:GetChildren() do

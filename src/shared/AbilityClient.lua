@@ -33,7 +33,7 @@ function AbilityClient.Init()
 
 	-- Agentenname über dem Lebensbalken
 	local agentLabel = Instance.new("TextLabel")
-	agentLabel.Position = UDim2.new(0, 20, 1, -82)
+	agentLabel.Position = UDim2.new(0, 28, 1, -128) -- über dem Lebens-Panel
 	agentLabel.Size = UDim2.new(0, 300, 0, 26)
 	agentLabel.BackgroundTransparency = 1
 	agentLabel.Font = Enum.Font.GothamBlack
