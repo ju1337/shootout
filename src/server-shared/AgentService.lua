@@ -451,11 +451,16 @@ local function setupPlayer(player)
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		AgentConfig.SlimBody(humanoid) -- schlanker Körperbau wie alle Charaktere
 		applyAgent(player, character)
 		applyUniform(player, character, getAgent(player))
 	end)
-	-- Kleidung wird manchmal erst nach dem Spawn geladen: dann nochmal
+	-- Kleidung (und Skalierung) wird manchmal erst nach dem Spawn geladen: dann nochmal
 	player.CharacterAppearanceLoaded:Connect(function(character)
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			AgentConfig.SlimBody(humanoid)
+		end
 		applyUniform(player, character, getAgent(player))
 	end)
 	if player.Character then

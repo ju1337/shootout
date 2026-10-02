@@ -487,6 +487,7 @@ local function rigTemplate(color)
 	description.RightArmColor = color
 	description.LeftLegColor = Color3.fromRGB(40, 40, 45)
 	description.RightLegColor = Color3.fromRGB(40, 40, 45)
+	AgentConfig.DescribeBody(description) -- schlanker Körperbau wie die Spieler
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
 	building[key] = nil
 	if not ok or not model then

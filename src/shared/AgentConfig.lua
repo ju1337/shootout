@@ -53,6 +53,32 @@ function AgentConfig.VisorColor(accent)
 	return Color3.fromRGB(16, 18, 22):Lerp(accent, 0.35)
 end
 
+-- ---------- Körperbau ----------
+-- Alle Charaktere (Spieler, Bots, Übungspuppen, Menü-Figuren) schlanker als der Roblox-Standard: schmalere
+-- Schultern und ein flacherer Oberkörper, damit Arme und Waffe in der Third-Person zu sehen sind.
+-- Wirkt auf R15-Körper (R6 kennt keine Skalierung). Achtung: schmalere Körper sind auch schmalere Trefferflächen.
+AgentConfig.BodyScale = { Width = 0.75, Depth = 0.8 }
+
+-- Neu gebaute Körper (HumanoidDescription für Bots und Übungspuppen)
+function AgentConfig.DescribeBody(description)
+	description.WidthScale = AgentConfig.BodyScale.Width
+	description.DepthScale = AgentConfig.BodyScale.Depth
+end
+
+-- Schon gespawnte Charaktere (Spieler-Avatare): Roblox passt Teile und Gelenke an, sobald sich die
+-- Skalierungswerte des Humanoids ändern (AutomaticScalingEnabled)
+function AgentConfig.SlimBody(humanoid)
+	if humanoid.RigType ~= Enum.HumanoidRigType.R15 then
+		return
+	end
+	for name, value in { BodyWidthScale = AgentConfig.BodyScale.Width, BodyDepthScale = AgentConfig.BodyScale.Depth } do
+		local scale = humanoid:FindFirstChild(name)
+		if scale and scale:IsA("NumberValue") and math.abs(scale.Value - value) > 0.001 then
+			scale.Value = value
+		end
+	end
+end
+
 -- ---------- Agenten ----------
 -- Color = Erkennungsfarbe (gedeckt): Uniform (abgedunkelt), Weste, Visier-Schimmer, Menüs
 AgentConfig.Agents = {

@@ -11,7 +11,7 @@
 local GunModels = {}
 
 -- Größe der Waffe in der Hand der Charaktere (Third-Person), passend zu den Armen der Avatare
-GunModels.ToolScale = 0.7
+GunModels.ToolScale = 0.9 -- Waffe in der Hand (Third-Person): groß genug, um neben dem schlanken Körper gut sichtbar zu sein
 
 local DARK = Color3.fromRGB(45, 45, 50)
 local BLACK = Color3.fromRGB(20, 20, 22)

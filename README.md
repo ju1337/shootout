@@ -140,9 +140,15 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen, gesenkt beim Sprinten
   - Nachlade-Animation je Waffe (Magazin fällt heraus, Schlitten, Spannhebel, LMG-Deckel, Revolver-Trommel,
     Schrotflinte Patrone für Patrone – Schießen bricht dort das Nachladen ab), auch in der Third-Person bei allen
-    Spielern und Bots sichtbar: Charaktere halten die Waffe mit beiden Händen und zielen mit; beim Zielen
-    legen sie die Waffe an wie bei Rogue Company (Visier vor dem rechten Auge, Kopf am Schaft, Oberkörper
-    eingedreht und leicht vorgelehnt, Ellbogen hoch), Pistolen beidhändig auf Augenhöhe
+    Spielern und Bots sichtbar: Charaktere halten die Waffe mit beiden Händen im Schulteranschlag auf
+    Schulterhöhe (rechter Ellbogen locker unten, damit die Waffe aus der Schulterkamera zu sehen ist) und zielen
+    mit; beim Zielen legen sie die Waffe an wie bei Rogue Company (Visier vor dem rechten Auge, Kopf am Schaft,
+    Oberkörper eingedreht und leicht vorgelehnt), Pistolen beidhändig auf Augenhöhe. Die Waffe in der Hand ist
+    größer als früher (90 % der Modellgröße statt 70 %)
+  - Schlanker Körperbau für alle Charaktere: Spieler-Avatare (R15), Bots, Übungspuppen und die Figuren in den
+    Menüs haben schmalere Schultern und einen flacheren Oberkörper (`AgentConfig.BodyScale`, Breite 75 %,
+    Tiefe 80 %) – damit sind auch die Trefferflächen etwas schmaler. R6-Avatare lassen sich nicht skalieren und
+    bekommen nur eine vereinfachte Haltung: dafür in den Spieleinstellungen (Avatar) R15 einstellen
   - Rückstoß mit Rückkehr, Bloom bei Dauerfeuer, Mündungsfeuer, fliegende Leuchtspuren, Funken/Staub und
     Einschusslöcher, Hülsen; eigene Schüsse erscheinen sofort (ohne Ping-Verzögerung)
   - Hitmarker je Treffer-Art (Körper weiß, Kopf gelb, Rüstung blau, niedergeschlagen orange, ausgeschaltet rot)
@@ -166,7 +172,9 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
 | Medaillen (Name, Stufe, Bonus-XP) | `src/shared/Medals.lua`; Auslöser (Mehrfach-Kill-Fenster, Weitschuss, Comeback, Serie beendet) oben in `src/server-shared/KillService.lua`, Münzen der Kill-Boni in `src/shared/RewardConfig.lua` |
 | Meldungen (Medaillen, Banner, Ziel-Meldungen, Level-Karte: Position, Standzeit, Farben, Klang) | `src/shared/Notifications.lua` |
-| Third-Person-Haltung und Anlegen beim Zielen | `ADS_*` in `src/shared/CharacterPose.lua` |
+| Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
+| Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
+| Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
 | Lobby (Navigation, Seiten SPIELEN und AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
 | Lobby-Seiten LOADOUT, SHOP, BATTLE PASS | `src/shared/LobbyPages.lua` |

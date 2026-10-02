@@ -1,6 +1,7 @@
 -- CharacterPose (ModuleScript, nur Client)
 -- Third-Person-Haltung aller Charaktere mit Waffe (Spieler und Bots), wie bei Rogue Company:
---   * lange Waffen im Schulteranschlag, Oberkörper eingedreht, beide Hände an der Waffe
+--   * lange Waffen im Schulteranschlag auf Schulterhöhe, Oberkörper eingedreht, beide Hände an der Waffe,
+--     rechter Ellbogen locker unten (so bleibt die Waffe aus der Schulterkamera sichtbar)
 --   * Pistole und Revolver beidhändig vor der Brust
 --   * Waffe und Kopf folgen dem Blick nach oben/unten, beim Sprinten gesenkt
 --   * Zielen (rechte Maustaste, bei Bots sobald sie ein Ziel haben): Waffe wird angelegt – Kimme/Visier
@@ -37,10 +38,10 @@ local EVENT_DISTANCE = 70         -- Nachlade-Geräusche und fallende Magazine n
 local LONG_TWIST = math.rad(50)   -- Oberkörper bei langen Waffen eingedreht (linke Schulter nach vorne)
 local SHORT_TWIST = math.rad(12)
 local LEAN = 0.4                  -- so viel vom Blickwinkel übernimmt der Oberkörper
-local MAX_SLIDE = 0.7             -- so weit darf die linke Hand am Handschutz nach hinten rutschen
+local MAX_SLIDE = GunModels.ToolScale -- so weit darf die linke Hand am Handschutz nach hinten rutschen (wächst mit der Waffe)
 local SPRINT_SPEED = 21           -- ab hier gilt ein anderer Charakter als sprintend
 local SCALE = GunModels.ToolScale
-local RIGHT_POLE = Vector3.new(0.8, -1, 0.35) -- Ellbogen zeigen nach unten/außen (im Blick-Raum)
+local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach unten (verdeckt die Waffe nicht)
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
@@ -51,9 +52,14 @@ local ADS_LEAN = 0.2              -- Oberkörper folgt dem Blick stärker
 local ADS_FORWARD = math.rad(5)   -- leicht nach vorne gelehnt
 local ADS_NECK = CFrame.Angles(math.rad(-6), math.rad(-4), math.rad(-14)) -- Kopf runter und an den Schaft geneigt
 local ADS_EYE_RELIEF = 0.8        -- Abstand Auge - Visier: Anteil von GunModels.Info.EyeRelief
-local ADS_PISTOL_REACH = 0.45     -- Pistolen: Abstand Auge - Visier in Oberkörperbreiten (Arme fast gestreckt)
-local RIGHT_POLE_ADS = Vector3.new(1, -0.35, 0.2) -- rechter Ellbogen beim Anlegen seitlich hoch
+local ADS_PISTOL_REACH = 0.56     -- Pistolen: Abstand Auge - Visier in Oberkörperhöhen (Arme fast gestreckt)
+local PISTOL_HIP_REACH = 0.85     -- Pistolen aus der Hüfte: so weit vor der Brust (Oberkörperhöhen; die Arme
+                                  -- werden mit schmalerem Körper nicht kürzer, darum nicht nach der Breite)
+local RIGHT_POLE_ADS = Vector3.new(0.6, -0.8, 0.1) -- rechter Ellbogen beim Anlegen etwas nach außen
 local HEAD_SIZE = Vector3.new(1.2, 1.2, 1.2) -- falls der Kopf fehlt
+-- Schulteranschlag aus der Hüfte (Anteile der Oberkörpergröße): Schaft an der rechten Schulter, Waffe auf
+-- Schulterhöhe, damit sie aus der Schulterkamera über Arm und Schulter hinweg zu sehen ist
+local HIP_POCKET = Vector3.new(0.3, 0.34, -0.5)
 
 -- Rechtes Auge im Kopf (etwas rechts und über der Mitte, an der Vorderseite)
 local function eyeOf(head, headSize)
@@ -329,18 +335,18 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local size = rig.UpperTorso.Size
 	local gun
 	if info.Long and info.Stock then
-		local pocket = upperTorso * Vector3.new(size.X * 0.2, size.Y * 0.14, -size.Z * 0.5)
+		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
 	else
 		local chest = upperTorso * Vector3.new(0, size.Y * 0.22, 0)
-		gun = CFrame.new(chest) * aimRot * CFrame.new(size.X * 0.06, -0.05, -size.X * 0.72)
+		gun = CFrame.new(chest) * aimRot * CFrame.new(size.X * 0.06, -0.05, -size.Y * PISTOL_HIP_REACH)
 	end
 	-- Anlegen: Kimme bzw. Visier direkt vor dem rechten Auge (lange Waffen mit der Wange am Schaft,
 	-- Pistolen mit gestreckten Armen), Waffe zeigt weiter genau in Blickrichtung
 	if aim > 0.001 then
 		local head = PoseMath.Chain(upperTorso, rig.Neck.C0, neckT, rig.Neck.C1)
 		local eye = eyeOf(head, rig.Head and rig.Head.Size or HEAD_SIZE)
-		local distance = info.Long and (info.EyeRelief or 0.8) * SCALE * ADS_EYE_RELIEF or size.X * ADS_PISTOL_REACH
+		local distance = info.Long and (info.EyeRelief or 0.8) * SCALE * ADS_EYE_RELIEF or size.Y * ADS_PISTOL_REACH
 		local sight = Vector3.new(0, info.SightHeight or 0, info.SightZ or 0) * SCALE
 		local ads = CFrame.new(eye + aimRot.LookVector * distance) * aimRot * CFrame.new(-sight)
 		gun = gun:Lerp(ads, aim)
