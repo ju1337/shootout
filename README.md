@@ -40,7 +40,22 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Map-Rotation** pro Match, Multikills und ACE, Todeskamera, Schnelles Spiel
 - **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel
 - **HUD im RC-Stil**: Team-Rauten, Kompass, Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team
-- **Kamera**: Ego oder Schulter (T), Schulter wechseln (X)
+- **Kamera**: Ego oder Schulter (T), Schulter wechseln (X); beim Zielen rückt die Schulterkamera näher heran
+- **Schießen wie bei Rogue Company**:
+  - Schulterkamera: dynamisches Fadenkreuz (Abstand = echte Streuung durch Laufen, Springen, Dauerfeuer),
+    zieht sich beim Zielen zu einem kleinen Kreuz zusammen, wird über Gegnern rot; Schrotflinte mit Kreis.
+    Der Server sucht den Punkt unter dem Fadenkreuz und schießt vom Charakter aus dorthin – ist etwas im Weg,
+    zeigt ein rotes ⊘ die Stelle
+  - Ego-Perspektive: jede Waffe hat Kimme und Korn (mit Leuchtpunkt), beim Zielen liegt die Visierlinie genau
+    in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen, gesenkt beim Sprinten
+  - Nachlade-Animation je Waffe (Magazin fällt heraus, Schlitten, Spannhebel, LMG-Deckel, Revolver-Trommel,
+    Schrotflinte Patrone für Patrone – Schießen bricht dort das Nachladen ab), auch in der Third-Person bei allen
+    Spielern und Bots sichtbar: Charaktere halten die Waffe mit beiden Händen und zielen mit
+  - Rückstoß mit Rückkehr, Bloom bei Dauerfeuer, Mündungsfeuer, fliegende Leuchtspuren, Funken/Staub und
+    Einschusslöcher, Hülsen; eigene Schüsse erscheinen sofort (ohne Ping-Verzögerung)
+  - Hitmarker je Treffer-Art (Körper weiß, Kopf gelb, Rüstung blau, niedergeschlagen orange, ausgeschaltet rot)
+    mit eigenem Ton, hochzählende Schadenszahlen pro Ziel, rote Treffer-Richtungsbögen, Kill-Meldung
+  - Schießstand: unendliche Reserve-Munition (Anzeige „∞“)
 
 ## Steuerung
 
@@ -52,7 +67,10 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 
 | Was | Datei |
 |---|---|
-| Waffen (Schaden, Feuerrate, Rückstoß, Sounds) | `src/shared/WeaponConfig.lua` |
+| Waffen (Schaden, Feuerrate, Streuung/Bloom, Rückstoß, Sounds, unendliche Munition je Modus) | `src/shared/WeaponConfig.lua` |
+| Waffenmodelle, Kimme/Korn, Handpositionen | `src/shared/GunModels.lua` |
+| Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
+| Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |
 | Kaufphase, Geld, Perks | `src/shared/BuyConfig.lua` |
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
@@ -72,7 +90,8 @@ vorher gilt alles nur für die Sitzung.
 
 ## Ordner
 
-- `src/shared` – Client + Server: Konfigurationen, Waffen-Client, HUD, Menü, Bewegung
+- `src/shared` – Client + Server: Konfigurationen, Waffen-Client (ViewModel = Ego-Waffe, CharacterPose =
+  Third-Person-Haltung, WeaponEffects = Schuss-Effekte), HUD, Menü, Bewegung
 - `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings
 - `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi, Bots, Admin
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, ...

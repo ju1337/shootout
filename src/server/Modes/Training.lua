@@ -1,6 +1,7 @@
 -- Training (ModuleScript, nur Server)
 -- Schießstand zum Ausprobieren: Übungspuppen stehen nach dem Umfallen wieder auf, zwei laufen
 -- hin und her. Man kann nicht sterben, Agentenwechsel gilt sofort (Neu-Spawn).
+-- Reserve-Munition ist hier unendlich (WeaponConfig.InfiniteAmmoModes), nachladen muss man trotzdem.
 
 local Players = game:GetService("Players")
 
@@ -27,7 +28,7 @@ local function spawnPlayer(player)
 		return
 	end
 	player:SetAttribute("CanFight", true)
-	player:SetAttribute("ModeText", "Training · Puppen stehen wieder auf · Agent wechseln mit M")
+	player:SetAttribute("ModeText", "Training · Unendlich Munition · Puppen stehen wieder auf · Agent wechseln mit M")
 	-- Im Training kann man nicht sterben
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.HealthChanged:Connect(function(health)

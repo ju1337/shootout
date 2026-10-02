@@ -13,7 +13,6 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local WeaponConfig = require(Shared.WeaponConfig)
 local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
-local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
@@ -21,6 +20,7 @@ local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
 local DownedService = require(ServerShared.DownedService)
 local GadgetService = require(ServerShared.GadgetService)
+local WeaponService = require(ServerShared.WeaponService)
 
 local BotService = {}
 
@@ -198,14 +198,22 @@ local function shoot(bot, head, target, weaponName)
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { bot.Model }
 
+	-- Blickwinkel für die Arm-Pose auf den Clients (nur bei spürbarer Änderung neu setzen)
+	local pitch = math.round(math.deg(math.asin(math.clamp((aimPart.Position - origin).Unit.Y, -1, 1))))
+	if math.abs(pitch - (bot.Model:GetAttribute("AimPitch") or 0)) >= 2 then
+		bot.Model:SetAttribute("AimPitch", pitch)
+	end
+
 	for _ = 1, cfg.Pellets or 1 do
 		local direction = spread(aimPart.Position - origin, (cfg.Spread or 0) + GameSettings.Get("BotSpread"))
 		local result = workspace:Raycast(origin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (origin + direction * cfg.Range)
-		Remotes.Shot:FireAllClients(nil, origin, endPos, weaponName)
 
 		local hitModel = result and result.Instance:FindFirstAncestorOfClass("Model")
 		local humanoid = livingHumanoid(hitModel)
+		local hitKind = result and (hitModel and hitModel:FindFirstChildOfClass("Humanoid") and "Character"
+			or (result.Instance.Anchored and "World" or "Prop"))
+		WeaponService.BroadcastShot(bot.Mode, bot.Model, origin, endPos, weaponName, result and result.Normal, hitKind)
 		if humanoid and isEnemy(bot, hitModel) then
 			local headshot = result.Instance.Name == "Head"
 			local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1)
@@ -322,6 +330,12 @@ local function runAI(bot, model)
 			end
 		end
 
+		-- Waffe im Anschlag, solange ein Gegner in Sicht ist (Arm-Pose auf den Clients)
+		model:SetAttribute("Aiming", target ~= nil)
+		if not target and model:GetAttribute("AimPitch") ~= 0 then
+			model:SetAttribute("AimPitch", 0)
+		end
+
 		if target then
 			local targetPosition = target.HumanoidRootPart.Position
 			seenSince = seenSince or now
@@ -355,6 +369,10 @@ local function runAI(bot, model)
 				if shotsInMagazine >= cfg.MagazineSize then
 					shotsInMagazine = 0
 					reloadUntil = now + cfg.ReloadTime
+					-- Nachlade-Animation auf den Clients
+					model:SetAttribute("ReloadStart", workspace:GetServerTimeNow())
+					model:SetAttribute("ReloadTime", cfg.ReloadTime)
+					model:SetAttribute("ReloadShells", cfg.ShellReload and cfg.MagazineSize or nil)
 				end
 			end
 		else

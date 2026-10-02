@@ -4,7 +4,8 @@
 -- (setzt WeaponClient über SetAiming).
 -- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
 -- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung,
--- jederzeit mit T umschalten).
+-- jederzeit mit T umschalten). Beim Zielen rückt die Schulterkamera näher heran; Sichtfeld, Abstand und
+-- Kamera-Versatz gleiten weich (RenderStep "CameraSmooth"). Schießen unterbricht den Sprint kurz.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,9 +52,17 @@ local normalHipHeight = nil
 local mantling = false
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
 local SHOULDER_OFFSET = Vector3.new(2.2, 0.8, 0)
+local SHOULDER_AIM_OFFSET = Vector3.new(1.7, 0.6, 0) -- beim Zielen näher an die Schulter
 local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste X)
 local SHOULDER_DISTANCE = 9
-local SHOULDER_AIM_DISTANCE = 5
+local SHOULDER_AIM_DISTANCE = 4.5
+local CAMERA_SMOOTH = 12         -- wie schnell Sichtfeld, Abstand und Versatz nachziehen
+local sprintBlockedUntil = 0     -- Schießen unterbricht den Sprint kurz
+local fovOverride = nil          -- z.B. Fallschirmsprung
+local targetFov = 70
+local targetOffset = Vector3.zero
+local targetDistance = SHOULDER_DISTANCE
+local currentDistance = nil      -- aktueller Abstand der Schulterkamera (nil = nicht aktiv)
 
 local function getHumanoid()
 	local character = player.Character
@@ -69,9 +78,13 @@ local function isCrouched()
 	return (crouchHeld or sliding) and Modes.IsFighting(player)
 end
 
+local function isSprinting()
+	return sprintHeld and not aiming and not isCrouched() and os.clock() >= sprintBlockedUntil
+end
+
 local function apply()
 	local humanoid, character = getHumanoid()
-	local sprinting = sprintHeld and not aiming and not isCrouched()
+	local sprinting = isSprinting()
 	if humanoid then
 		local agent = AgentConfig.Get(character:GetAttribute("Agent"))
 		local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * (character:GetAttribute("SpeedMultiplier") or 1)
@@ -92,25 +105,23 @@ local function apply()
 		end
 		humanoid.WalkSpeed = speed
 
-		-- Ducken: Kamera tiefer, Körper sinkt ab
+		-- Ducken: Kamera tiefer, Körper sinkt ab (Kamera-Versatz gleitet im RenderStep "CameraSmooth")
 		normalHipHeight = normalHipHeight or humanoid.HipHeight
 		local crouched = isCrouched() and not isDropping(humanoid)
 		local offset = crouched and CROUCH_CAMERA or Vector3.zero
 		if thirdPerson and Modes.IsFighting(player) then
-			offset += Vector3.new(SHOULDER_OFFSET.X * shoulderSide, SHOULDER_OFFSET.Y, 0) -- über die Schulter
-			local distance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
-			player.CameraMinZoomDistance = distance
-			player.CameraMaxZoomDistance = distance
+			local shoulder = aiming and SHOULDER_AIM_OFFSET or SHOULDER_OFFSET
+			offset += Vector3.new(shoulder.X * shoulderSide, shoulder.Y, 0) -- über die Schulter
+			targetDistance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
 		end
-		humanoid.CameraOffset = offset
+		targetOffset = offset
 		humanoid.HipHeight = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
 	end
 
-	local camera = workspace.CurrentCamera
 	if aiming then
-		camera.FieldOfView = aimFov
+		targetFov = aimFov
 	else
-		camera.FieldOfView = sprinting and normalFov + SPRINT_FOV_BONUS or normalFov
+		targetFov = sprinting and normalFov + SPRINT_FOV_BONUS or normalFov
 	end
 	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * AIM_SENSITIVITY or sensitivity
 end
@@ -266,6 +277,26 @@ function Movement.SetAiming(on, fov)
 	apply()
 end
 
+-- Sprintet der Spieler gerade (gedrückt, in Bewegung, nicht durch Schießen unterbrochen)?
+function Movement.IsSprinting()
+	local humanoid = getHumanoid()
+	return isSprinting() and Modes.IsFighting(player) and humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.1
+end
+
+-- Schießen unterbricht den Sprint für seconds Sekunden (danach geht er von selbst weiter)
+function Movement.SuppressSprint(seconds)
+	local was = isSprinting()
+	sprintBlockedUntil = math.max(sprintBlockedUntil, os.clock() + seconds)
+	if was then
+		apply()
+	end
+end
+
+-- Sichtfeld fest vorgeben (z.B. Fallschirmsprung), nil = wieder normal
+function Movement.SetFovOverride(fov)
+	fovOverride = fov
+end
+
 -- Sichtfeld und Empfindlichkeit aus den Einstellungen
 function Movement.SetFov(fov)
 	normalFov = fov
@@ -325,6 +356,7 @@ function Movement.Init()
 			setCrouch(began)
 		end
 	end)
+	local wasBlocked = false
 	RunService.Heartbeat:Connect(function()
 		if sprintHeld and InputActions.Device() ~= "Keyboard" then
 			local humanoid = getHumanoid()
@@ -332,6 +364,35 @@ function Movement.Init()
 				sprintHeld = false
 				apply()
 			end
+		end
+		-- Sprint-Unterbrechung durch Schießen vorbei: Tempo wieder anpassen
+		local blocked = os.clock() < sprintBlockedUntil
+		if blocked ~= wasBlocked then
+			wasBlocked = blocked
+			apply()
+		end
+	end)
+	-- Sichtfeld, Kamera-Versatz (Ducken, Schulter) und Abstand der Schulterkamera gleiten weich.
+	-- Läuft vor der Kamera von Roblox, damit sie die neuen Werte noch im selben Bild benutzt.
+	RunService:BindToRenderStep("CameraSmooth", Enum.RenderPriority.Camera.Value - 1, function(dt)
+		local camera = workspace.CurrentCamera
+		local alpha = math.min(1, dt * CAMERA_SMOOTH)
+		local fov = fovOverride or targetFov
+		if math.abs(camera.FieldOfView - fov) > 0.01 then
+			camera.FieldOfView += (fov - camera.FieldOfView) * alpha
+		end
+		local humanoid = getHumanoid()
+		if humanoid and (humanoid.CameraOffset - targetOffset).Magnitude > 0.001 then
+			humanoid.CameraOffset = humanoid.CameraOffset:Lerp(targetOffset, alpha)
+		end
+		local active = Movement.IsThirdPerson() and player.CameraMode == Enum.CameraMode.Classic and humanoid ~= nil
+			and humanoid.Health > 0 and not humanoid.PlatformStand and not camera:GetAttribute("KillCam")
+		if active then
+			currentDistance = currentDistance and currentDistance + (targetDistance - currentDistance) * alpha or targetDistance
+			player.CameraMinZoomDistance = currentDistance
+			player.CameraMaxZoomDistance = currentDistance
+		else
+			currentDistance = nil
 		end
 	end)
 	-- Schulterkamera: Maus mittig sperren, Körper dreht mit der Kamera (wie Shift-Lock)
