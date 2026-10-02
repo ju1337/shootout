@@ -56,7 +56,8 @@ local STYLES = { Win = C.Ally, Loss = C.Enemy, Info = C.Primary, Neutral = C.Mut
 	Level = C.Primary, Pass = C.Gold, Prestige = ORANGE }
 local SIDES = { Ally = C.Ally, Enemy = C.Enemy, Alert = ORANGE, Neutral = C.Text }
 
-local MEDAL_TOP = 200       -- Oberkante der Medaille unter der Bildschirmmitte: mit Abstand unter Fadenkreuz und Kill-Meldung
+local MEDAL_TOP = 170       -- Oberkante der Medaille unter der Bildschirmmitte: mit Abstand unter Fadenkreuz und Kill-Meldung,
+                            -- über den Fähigkeiten-Karten unten in der Mitte (AbilityClient)
 local MEDAL_TOP_TOUCH = 90  -- Touch: unten in der Mitte liegen Munition, Geld und Fähigkeiten, darum höher
 local MEDAL_PAD = 70        -- Rand in der CanvasGroup, damit das große Abzeichen beim Einfliegen nicht abgeschnitten wird
 local BANNER_Y = 0.3        -- Mitte des Banners (Anteil der Bildschirmhöhe): zwischen Ziel-Meldungen und Countdown

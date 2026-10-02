@@ -28,7 +28,7 @@ local player = Players.LocalPlayer
 
 local HUD = {}
 
-local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige (AbilityClient rechnet damit)
+local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige
 local LEAVE_CONFIRM = 3       -- so lange wartet VERLASSEN auf den zweiten Klick
 
 local screen -- ScreenGui (an/aus)

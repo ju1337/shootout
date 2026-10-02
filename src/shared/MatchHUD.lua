@@ -11,7 +11,7 @@
 --   unten rechts:  Waffen-Silhouette, Waffenplätze 1/2, Waffenname und Munition "30 / ∞"
 --   in der Welt:   Zielmarker (Raute mit A/B, Entfernung in Metern, Zustand)
 -- Daten: Spieler-Attribute vom Server (TeamRoundMode), Remotes.Killfeed, WeaponClient.AmmoChanged.
--- Fähigkeit/Gadget/Ultimate (Zeilen links neben der Munition): AbilityClient. Minimap: Minimap.
+-- Fähigkeit/Gadget/Ultimate (Karten unten in der Mitte): AbilityClient. Minimap: Minimap.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -530,7 +530,7 @@ function MatchHUD.Init(root, weaponClient)
 	-- Spiegelbild der Lebensanzeige (330 x 88, verläuft zur Bildmitte): oben Waffenname mit Plätzen 1/2 und
 	-- links die andere Waffe ("[2] PISTOLE"), in der Mitte das Magazin als dünner Balken (kleine Magazine wie die
 	-- Rüstung in Segmenten, eins pro Schuss), unten die Munition groß und links die Waffen-Silhouette.
-	-- AbilityClient (Zeilen links daneben) und HUD (Geld darüber) richten sich nach dieser Größe.
+	-- HUD (Geld darüber) richtet sich nach dieser Größe.
 	local AMMO_W, AMMO_H = 330, 88
 	local MAG_W = 200 -- Breite des Magazin-Balkens (rechtsbündig)
 	local MAX_SEGMENTS = 12 -- bis zu so vielen Schuss einzelne Segmente, sonst ein durchgehender Balken

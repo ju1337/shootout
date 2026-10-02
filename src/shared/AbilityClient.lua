@@ -25,10 +25,11 @@ local player = Players.LocalPlayer
 
 local AbilityClient = {}
 
-local ROW_W, ROW_H, ROW_GAP = 206, 28, 2 -- 3 Zeilen = 88 px, so hoch wie Waffen- und Lebensanzeige
--- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 330 px breit, 24 px vom Rand) mit 10 px Abstand
-local AMMO_LEFT = 24 + 330 + 10
-local BOTTOM = 24
+-- Drei Karten (Fähigkeit · Gadget · Ultimate) unten in der Mitte nebeneinander, zwischen Lebens- und Waffenanzeige;
+-- darunter nur noch die dezente Tastenzeile, darüber die Medaillen (Notifications).
+-- Touch: als Spalte unten mittig links neben der Munition (rechts liegen die Touch-Knöpfe).
+local CARD_W, CARD_H, CARD_GAP = 236, 54, 8
+local BOTTOM = 28
 
 -- Aktiver Agent dieses Lebens, sonst der gewählte
 local function currentAgent()
@@ -38,26 +39,31 @@ local function currentAgent()
 		or AgentConfig.Agents[1]
 end
 
--- Eine Zeile: Taste im Kästchen, Name, Zustand rechts, dünner Balken unten, Fläche zum Aufblitzen
-local function makeRow(parent, order)
-	local row = make("Frame", { Size = UDim2.fromOffset(ROW_W, ROW_H), BackgroundColor3 = C.Background, BackgroundTransparency = 0.35,
-		BorderSizePixel = 0, LayoutOrder = order }, parent)
+-- Eine Karte: Taste im Kästchen, Name groß, darunter die Art klein, Zustand rechts, dünner Balken unten,
+-- Fläche zum Aufblitzen
+local function makeRow(parent, order, kind)
+	local row = make("Frame", { Size = UDim2.fromOffset(CARD_W, CARD_H), BackgroundColor3 = C.Background, BackgroundTransparency = 0.3,
+		BorderSizePixel = 0, LayoutOrder = order, ClipsDescendants = true }, parent)
 	UITheme.Corner(row, UITheme.Radius.Small)
-	local key = UITheme.Label({ Position = UDim2.fromOffset(7, (ROW_H - 22) / 2), Size = UDim2.fromOffset(22, 22), Text = "", TextSize = 12,
+	local key = UITheme.Label({ Position = UDim2.fromOffset(9, (CARD_H - 26) / 2), Size = UDim2.fromOffset(26, 26), Text = "", TextSize = 13,
 		Font = UITheme.Fonts.Bold, TextXAlignment = Enum.TextXAlignment.Center }, row)
 	UITheme.Corner(key, UITheme.Radius.Small)
 	local keyStroke = UITheme.Stroke(key, C.Muted, 1, 0.4)
-	local name = UITheme.Label({ Position = UDim2.fromOffset(38, 0), Size = UDim2.new(1, -100, 1, -2), Text = "", TextSize = 18,
-		Font = UITheme.Fonts.Display, TextTruncate = Enum.TextTruncate.AtEnd }, row)
-	local status = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -9, 0, 0), Size = UDim2.new(0, 56, 1, -2),
-		Text = "", TextSize = 18, Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Right }, row)
-	local track = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
+	-- lange Namen (SPLITTERGRANATE) werden etwas kleiner statt abgeschnitten
+	local name = UITheme.Label({ Position = UDim2.fromOffset(45, 7), Size = UDim2.new(1, -118, 0, 22), Text = "", TextSize = 20,
+		TextScaled = true, Font = UITheme.Fonts.Display }, row)
+	make("UITextSizeConstraint", { MaxTextSize = 20, MinTextSize = 14 }, name)
+	local kindLabel = UITheme.Label({ Position = UDim2.fromOffset(45, 30), Size = UDim2.new(1, -118, 0, 14), Text = kind,
+		TextSize = 11, Font = UITheme.Fonts.Bold, TextColor3 = C.Muted }, row)
+	local status = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 0), Size = UDim2.new(0, 64, 1, -3),
+		Text = "", TextSize = 22, Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Right }, row)
+	local track = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 3),
 		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.88, BorderSizePixel = 0 }, row)
 	local fill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, track)
 	local flash = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Primary, BackgroundTransparency = 1,
 		BorderSizePixel = 0 }, row)
 	UITheme.Corner(flash, UITheme.Radius.Small)
-	return { Row = row, Key = key, KeyStroke = keyStroke, Name = name, Status = status, Fill = fill, Flash = flash }
+	return { Row = row, Key = key, KeyStroke = keyStroke, Name = name, Kind = kindLabel, Status = status, Fill = fill, Flash = flash }
 end
 
 -- Taste setzen (Controller-Kombis wie "L1+R1" brauchen ein breiteres Kästchen); Touch: ohne Taste
@@ -65,8 +71,10 @@ local function setKey(row, text, touch)
 	row.Key.Visible = not touch and text ~= ""
 	row.Key.Text = text
 	local wide = #text > 2
-	row.Key.Size = UDim2.fromOffset(wide and 40 or 22, 22)
-	row.Name.Position = UDim2.fromOffset(row.Key.Visible and (wide and 56 or 38) or 10, 0)
+	row.Key.Size = UDim2.fromOffset(wide and 44 or 26, 26)
+	local x = row.Key.Visible and (wide and 63 or 45) or 12
+	row.Name.Position = UDim2.fromOffset(x, 7)
+	row.Kind.Position = UDim2.fromOffset(x, 30)
 end
 
 -- Balken unten: Anteil und Farbe
@@ -92,20 +100,26 @@ function AbilityClient.Init()
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 
-	-- Zeilen unten rechts links neben der Waffenanzeige: Fähigkeit · Gadget · Ultimate
-	local bar = make("Frame", { Name = "Abilities", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -AMMO_LEFT, 1, -BOTTOM),
-		Size = UDim2.fromOffset(ROW_W, ROW_H * 3 + ROW_GAP * 2), BackgroundTransparency = 1 }, root)
-	make("UIListLayout", { Padding = UDim.new(0, ROW_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-	local abilityRow = makeRow(bar, 1)
-	local gadgetRow = makeRow(bar, 2)
-	local ultimateRow = makeRow(bar, 3)
+	-- Karten unten in der Mitte: Fähigkeit · Gadget · Ultimate
+	local bar = make("Frame", { Name = "Abilities", BackgroundTransparency = 1 }, root)
+	local list = make("UIListLayout", { Padding = UDim.new(0, CARD_GAP), SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center }, bar)
+	local abilityRow = makeRow(bar, 1, "FÄHIGKEIT")
+	local gadgetRow = makeRow(bar, 2, "GADGET")
+	local ultimateRow = makeRow(bar, 3, "ULTIMATE")
 
-	-- Touch: unten mittig links neben der Munition (rechts liegen die Touch-Knöpfe)
+	-- PC/Controller: Reihe unten mittig; Touch: Spalte links neben der Munition (rechts liegen die Touch-Knöpfe)
 	local function layout()
 		if InputActions.IsTouch() then
+			list.FillDirection = Enum.FillDirection.Vertical
+			bar.AnchorPoint = Vector2.new(1, 1)
 			bar.Position = UDim2.new(0.5, -12, 1, -14)
+			bar.Size = UDim2.fromOffset(CARD_W, CARD_H * 3 + CARD_GAP * 2)
 		else
-			bar.Position = UDim2.new(1, -AMMO_LEFT, 1, -BOTTOM)
+			list.FillDirection = Enum.FillDirection.Horizontal
+			bar.AnchorPoint = Vector2.new(0.5, 1)
+			bar.Position = UDim2.new(0.5, 0, 1, -BOTTOM)
+			bar.Size = UDim2.fromOffset(CARD_W * 3 + CARD_GAP * 2, CARD_H)
 		end
 	end
 	layout()
