@@ -3,7 +3,8 @@
 --   Server: ShopService.SaveSettings prüft mit Sanitize und speichert im Profil (Spieler-Attribut "ClientSettings").
 --   Client: Get/Set, Changed-Signal (key, value), speichert gebündelt kurz nach der letzten Änderung.
 -- Module lesen Get(key) bzw. hören auf Changed (Movement: Kamera/Maus, CombatHUD: Fadenkreuz/Schadenszahlen,
--- HUD: Tastenhinweise, WeaponClient: Zielen umschalten). Die Seite OPTIONEN (SideMenu) baut sich aus List.
+-- HUD: Tastenhinweise, WeaponClient: Zielen umschalten, GraphicsQuality: Grafik). Die Seite OPTIONEN (SideMenu)
+-- baut sich aus List.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -37,6 +38,9 @@ PlayerSettings.List = {
 		Options = { { "White", "WEISS" }, { "Green", "GRÜN" }, { "Yellow", "GELB" }, { "Cyan", "CYAN" }, { "Pink", "PINK" } } },
 	{ Key = "DamageNumbers", Category = "Display", Label = "Schadenszahlen", Type = "Toggle", Default = true },
 	{ Key = "KeyHints", Category = "Display", Label = "Tastenhinweise unten", Type = "Toggle", Default = true },
+	{ Key = "Graphics", Category = "Display", Label = "Grafik", Type = "Choice", Default = "High",
+		Options = { { "High", "HOCH" }, { "Medium", "MITTEL" }, { "Low", "NIEDRIG" } },
+		Hint = "Niedrig: ohne Schatten, Partikel und Leuchteffekte (mehr FPS)" },
 	{ Key = "Volume", Category = "Audio", Label = "Lautstärke (Effekte)", Type = "Slider", Default = 100, Min = 0, Max = 100,
 		Step = 5, Format = "%d %%" },
 }
