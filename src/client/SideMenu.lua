@@ -601,36 +601,32 @@ local function buildSettings()
 	end
 end
 
--- ---------- Hub-Leiste unten (Kacheln links und rechts vom SPIELEN-Knopf, wie eine Navigationsleiste) ----------
+-- ---------- Symbol-Knöpfe oben links (rund, unter der Spielerkarte, wie in vielen Roblox-Spielen) ----------
 
-local TILE_W, TILE_H, TILE_GAP = 94, 60, 7
-local PLAY_GAP = 340 -- Platz in der Mitte für den SPIELEN-Knopf (300 breit) der Lobby
+local ICON_SIZE, ICON_GAP, ICON_COLUMNS = 52, 10, 5
+local CELL_HEIGHT = ICON_SIZE + 16 -- Platz für die Beschriftung darunter
 
-local function sideButton(label, order, onClick, parent, color)
-	-- Kachel: dunkle Fläche mit Farbstreifen oben, beim Überfahren hebt sie sich leicht an
-	local b = make("TextButton", { Size = UDim2.new(0, TILE_W, 0, TILE_H), BackgroundColor3 = PANEL,
-		BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Medium) }, b)
-	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1, Transparency = 0.3,
+local function sideButton(label, order, onClick, parent, color, icon)
+	local cell = make("Frame", { Size = UDim2.new(0, ICON_SIZE, 0, CELL_HEIGHT), BackgroundTransparency = 1,
+		LayoutOrder = order }, parent)
+	local b = make("TextButton", { Size = UDim2.new(0, ICON_SIZE, 0, ICON_SIZE), BackgroundColor3 = PANEL,
+		BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = false }, cell)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, b)
+	local stroke = make("UIStroke", { Color = color or BORDER, Thickness = 1.5, Transparency = 0.45,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-	local strip = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6),
-		Size = UDim2.new(0, 28, 0, 3), BackgroundColor3 = color or ACCENT, BorderSizePixel = 0 }, b)
-	make("UICorner", { CornerRadius = UDim.new(1, 0) }, strip)
-	local caption = make("TextLabel", { Position = UDim2.new(0, 4, 0, 12), Size = UDim2.new(1, -8, 1, -16),
-		BackgroundTransparency = 1, Text = label, TextSize = 17, Font = DISPLAY, TextColor3 = UITheme.Colors.Text,
-		TextWrapped = true }, b)
+	make("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = icon or "", TextSize = 24,
+		Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text }, b)
+	local caption = make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, ICON_SIZE + 2),
+		Size = UDim2.new(0, ICON_SIZE + ICON_GAP, 0, 13), BackgroundTransparency = 1, Text = label, TextSize = 10,
+		Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextStrokeTransparency = 0.4 }, cell)
 	local scale = make("UIScale", {}, b)
 	b.MouseEnter:Connect(function()
-		b.BackgroundColor3 = CARD
 		stroke.Transparency = 0
-		strip.Size = UDim2.new(0, 52, 0, 3)
 		caption.TextColor3 = color or ACCENT
-		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.06 }):Play()
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.1 }):Play()
 	end)
 	b.MouseLeave:Connect(function()
-		b.BackgroundColor3 = PANEL
-		stroke.Transparency = 0.3
-		strip.Size = UDim2.new(0, 28, 0, 3)
+		stroke.Transparency = 0.45
 		caption.TextColor3 = UITheme.Colors.Text
 		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
 	end)
@@ -713,6 +709,10 @@ local function buildPlayerCard()
 		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
 			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")
 		prestigeButton.Visible = info.CanPrestige
+		-- Symbol-Knöpfe rutschen unter den Prestige-Knopf, solange er da ist
+		if column then
+			column.Position = UDim2.new(0, 16, 0, info.CanPrestige and 236 or 180)
+		end
 		coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
 		nameLabel.Text = player.Name
 	end
@@ -725,58 +725,49 @@ local function buildPlayerCard()
 end
 
 local function buildColumn()
-	-- Links vom SPIELEN-Knopf: Ausrüstung und Fortschritt, rechts: Belohnungen, Statistik, Einstellungen
-	local left = {
-		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80) },
-		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214) },
-		{ "AGENTEN", function() openLobby("Agents") end, Color3.fromRGB(150, 120, 210) },
-		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80) },
-		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112) },
+	-- Reihe 1: Ausrüstung und Fortschritt, Reihe 2: Belohnungen, Statistik, Einstellungen
+	local entries = {
+		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80), "🛒" },
+		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214), "🎒" },
+		{ "AGENTEN", function() openLobby("Agents") end, Color3.fromRGB(150, 120, 210), "🦸" },
+		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80), "🎫" },
+		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
+		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
+		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "🎁" },
+		{ "STATS", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
+		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
+		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
 	}
-	local right = {
-		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80) },
-		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150) },
-		{ "STATISTIK", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214) },
-		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160) },
-		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152) },
-	}
-	local groupWidth = 5 * TILE_W + 4 * TILE_GAP
-	local width = groupWidth * 2 + PLAY_GAP
-	column = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
-		Size = UDim2.new(0, width, 0, TILE_H), BackgroundTransparency = 1 }, gui)
-	-- Auf schmalen Bildschirmen die ganze Leiste verkleinern
+	local rows = math.ceil(#entries / ICON_COLUMNS)
+	local width = ICON_COLUMNS * ICON_SIZE + (ICON_COLUMNS - 1) * ICON_GAP
+	local height = rows * CELL_HEIGHT + (rows - 1) * 6
+	-- direkt unter der Spielerkarte (oben links bei y 64, 104 hoch)
+	column = make("Frame", { Position = UDim2.new(0, 16, 0, 180), Size = UDim2.new(0, width, 0, height),
+		BackgroundTransparency = 1 }, gui)
+	make("UIGridLayout", { CellSize = UDim2.new(0, ICON_SIZE, 0, CELL_HEIGHT), CellPadding = UDim2.new(0, ICON_GAP, 0, 6),
+		FillDirectionMaxCells = ICON_COLUMNS, SortOrder = Enum.SortOrder.LayoutOrder }, column)
+	-- Auf kleinen Bildschirmen etwas verkleinern
 	local columnScale = make("UIScale", {}, column)
 	local function updateColumnScale()
-		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.X - 40) / width, 0.45, 1)
+		columnScale.Scale = math.clamp(workspace.CurrentCamera.ViewportSize.Y / 800, 0.6, 1)
 	end
 	updateColumnScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
-	local function group(anchorX, alignment)
-		local frame = make("Frame", { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(anchorX, 0, 0, 0),
-			Size = UDim2.new(0, groupWidth, 1, 0), BackgroundTransparency = 1 }, column)
-		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = alignment,
-			Padding = UDim.new(0, TILE_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
-		return frame
-	end
-	local leftGroup, rightGroup = group(0, Enum.HorizontalAlignment.Right), group(1, Enum.HorizontalAlignment.Left)
 	local daily, quests
-	for i, entry in left do
-		sideButton(entry[1], i, entry[2], leftGroup, entry[3])
-	end
-	for i, entry in right do
-		local b = sideButton(entry[1], i, entry[2], rightGroup, entry[3])
+	for i, entry in entries do
+		local b = sideButton(entry[1], i, entry[2], column, entry[3], entry[4])
 		if entry[1] == "TÄGLICH" then
 			daily = b
 		elseif entry[1] == "AUFTRÄGE" then
 			quests = b
 		end
 	end
-	-- Kleines Bernstein-Schild "NEU" an der Kachel, wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
+	-- Kleiner Punkt "!" am Knopf, wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
 	local function notifyDot(parent)
-		local dot = make("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, -8),
-			Size = UDim2.new(0, 34, 0, 16), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
-			Text = "NEU", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = ON_ACCENT, ZIndex = 3 }, parent)
-		make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, dot)
+		local dot = make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -6, 0, 6),
+			Size = UDim2.new(0, 18, 0, 18), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
+			Text = "!", TextSize = 13, Font = UITheme.Fonts.Bold, TextColor3 = ON_ACCENT, ZIndex = 3 }, parent)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
 		return dot
 	end
 	questDot = notifyDot(quests)
