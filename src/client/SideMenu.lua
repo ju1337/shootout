@@ -328,11 +328,11 @@ local function buildStats()
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	local tiles = {}
 	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate", "Accuracy",
-		"AvgDamage", "Revives", "Captures", "AvgKills", "RoundsWon", "Favorite" }
+		"AvgDamage", "Revives", "Captures", "AvgKills", "BestStreak", "Favorite" }
 	local titles = { KD = "K/D", Kills = "KILLS", Deaths = "TODE", Assists = "ASSISTS", WinRate = "SIEGQUOTE",
 		Matches = "MATCHES", Wins = "SIEGE", Clutches = "CLUTCHES", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
 		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Captures = "FLAGGEN EINGENOMMEN", AvgKills = "Ø KILLS/MATCH",
-		RoundsWon = "RUNDEN GEWONNEN", Favorite = "LIEBLINGS-AGENT" }
+		BestStreak = "BESTE KILLSERIE", Favorite = "LIEBLINGS-AGENT" }
 	for i, key in order do
 		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, tile)
@@ -432,7 +432,7 @@ local function buildStats()
 		tiles.Revives.Text = tostring(get("Revives"))
 		tiles.Captures.Text = tostring(get("Captures"))
 		tiles.AvgKills.Text = string.format("%.1f", ratio(get("Kills"), math.max(1, get("Matches"))))
-		tiles.RoundsWon.Text = tostring(get("RoundsWon"))
+		tiles.BestStreak.Text = tostring(get("BestStreak"))
 		local favorite, most = nil, 0
 		for _, agent in AgentConfig.Agents do
 			if get("Kills_" .. agent.Id) > most then
