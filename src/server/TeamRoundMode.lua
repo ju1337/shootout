@@ -18,9 +18,12 @@
 --   Ranked = true: am Match-Ende Rangpunkte (nur wenn in beiden Teams echte Spieler sind)
 --   Objective = function(api) -> Ziel-Objekt mit eigenen Regeln (z.B. Bombe in Demolition).
 --     Mögliche Funktionen: RoundStart(roundNumber), Tick(dt, elapsed), RoundEnd(), SpawnFolder(team),
---     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo()
+--     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo(),
+--     Attackers() (angreifendes Team), Clock() (eigene Uhr statt der Rundenzeit, z.B. Bomben-Timer)
 -- Spieler-Attribute: RoundPhase, AgentLocked, SelectUntil, SelectDuration, RoundNumber,
---   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt)
+--   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt),
+--   fürs HUD: RoundClock (Sekunden), ClockAlert (Uhr des Ziels läuft), Overtime, TeamTickets/EnemyTickets,
+--   Attacking (true/false bei Angriff/Verteidigung), MapId (Ordnername der Map)
 
 local Teams = game:GetService("Teams")
 local HttpService = game:GetService("HttpService")
@@ -206,10 +209,40 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Uhr oben im HUD: Rundenzeit oder die eigene Uhr des Ziels (z.B. gelegte Bombe)
+	local function currentClock()
+		local own = objective and objective.Clock and objective.Clock()
+		if own then
+			return own, true
+		end
+		return timeLeft, false
+	end
+
+	-- Zahlen fürs HUD pro Spieler (aus Sicht seines Teams)
+	local function publishMatchData()
+		local clock, alert = currentClock()
+		local attackers = objective and objective.Attackers and objective.Attackers()
+		for player in members do
+			local team = player.Team
+			local attacking = nil
+			if attackers and team then
+				attacking = team == attackers
+			end
+			player:SetAttribute("RoundClock", clock and math.ceil(clock) or nil)
+			player:SetAttribute("ClockAlert", alert or nil)
+			player:SetAttribute("Overtime", overtime or nil)
+			player:SetAttribute("TeamTickets", config.Tickets and team and (tickets[team] or 0) or nil)
+			player:SetAttribute("EnemyTickets", config.Tickets and team and (tickets[otherTeam(team)] or 0) or nil)
+			player:SetAttribute("Attacking", attacking)
+		end
+	end
+
 	local function updateInfo()
+		publishMatchData()
 		local a, b = teamA.Name, teamB.Name
+		local seconds = timeLeft and math.ceil(timeLeft)
 		local clock = overtime and "   ·   OVERTIME"
-			or timeLeft and string.format("   ·   %d:%02d", timeLeft // 60, math.floor(timeLeft) % 60) or ""
+			or seconds and string.format("   ·   %d:%02d", seconds // 60, seconds % 60) or ""
 		if config.Tickets then
 			setText(string.format("%s: %d Tickets · %d leben   |   %d : %d   |   %s: %d Tickets · %d leben%s",
 				a, tickets[teamA] or 0, aliveCount(teamA), scores[teamA], scores[teamB],
@@ -433,6 +466,7 @@ function TeamRoundMode.new(config)
 	end
 
 	-- ---------- Eroberungspunkt (Strikeout) ----------
+	-- Part-Attribute fürs HUD: Locked (Punkt noch zu), Contested (beide Teams drauf)
 
 	local point = config.Capture and map:WaitForChild("Objective"):WaitForChild("CapturePoint")
 
@@ -452,6 +486,7 @@ function TeamRoundMode.new(config)
 	local function publishMap(player)
 		if map then
 			player:SetAttribute("MapName", map:GetAttribute("DisplayName") or map.Name)
+			player:SetAttribute("MapId", map.Name)
 			player:SetAttribute("MapCenter", map:GetAttribute("Center"))
 		end
 	end
@@ -585,6 +620,7 @@ function TeamRoundMode.new(config)
 
 	local function objectiveTick(dt, elapsed)
 		local unlockIn = config.Capture.UnlockAfter - elapsed
+		point:SetAttribute("Locked", unlockIn > 0 or nil)
 		if unlockIn > 0 then
 			point.Color = Color3.fromRGB(90, 90, 100)
 			publishObjective("Punkt öffnet in " .. math.ceil(unlockIn) .. " s")
@@ -597,6 +633,7 @@ function TeamRoundMode.new(config)
 			bot.Objective = point.Position -- Bots laufen zum Punkt
 		end
 		local a, b = presence(teamA), presence(teamB)
+		point:SetAttribute("Contested", (a > 0 and b > 0) or nil)
 		local captureTime = GameSettings.Get("CaptureTime")
 		local info
 		if a > 0 and b > 0 then
@@ -653,6 +690,8 @@ function TeamRoundMode.new(config)
 		drainTimer = 0
 		if point then
 			point.Color = NEUTRAL
+			point:SetAttribute("Locked", nil)
+			point:SetAttribute("Contested", nil)
 		end
 		for player in members do
 			player:SetAttribute("ObjMine", nil)
@@ -807,10 +846,6 @@ function TeamRoundMode.new(config)
 			end
 			if roundTime and roundActive then
 				timeLeft = math.max(0, roundTime - elapsed)
-				if math.floor(timeLeft) ~= lastSecond then
-					lastSecond = math.floor(timeLeft)
-					updateInfo()
-				end
 				-- Zeit abgelaufen: mehr Tickets gewinnt, dann mehr Überlebende
 				if timeLeft <= 0 then
 					local ta, tb = tickets[teamA] or 0, tickets[teamB] or 0
@@ -845,6 +880,13 @@ function TeamRoundMode.new(config)
 						announce(overtime and "Overtime vorbei!" or "Zeit abgelaufen!")
 					end
 				end
+			end
+			-- Uhr im HUD einmal pro Sekunde (Rundenzeit oder z.B. Bomben-Timer)
+			local clock = currentClock()
+			local second = clock and math.ceil(clock) or -1
+			if second ~= lastSecond and roundActive then
+				lastSecond = second
+				updateInfo()
 			end
 		end
 		timeLeft = nil
@@ -1252,7 +1294,9 @@ function TeamRoundMode.new(config)
 		pending[player] = nil
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
-			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter", "CountdownEnd", "MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine" } do
+			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapId", "MapCenter", "CountdownEnd",
+			"MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine", "RoundClock", "ClockAlert", "Overtime",
+			"TeamTickets", "EnemyTickets", "Attacking" } do
 			player:SetAttribute(attribute, nil)
 		end
 		BuyService.Clear(player)

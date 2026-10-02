@@ -2,6 +2,7 @@
 -- Angreifer hacken Ziel A oder B, indem sie im Zielbereich stehen. Der Fortschritt steigt nur,
 -- solange kein Verteidiger im selben Bereich ist (dann pausiert er). Ein fertiger Hack gewinnt
 -- die Runde. Läuft die Zeit ab, gewinnen die Verteidiger. Seitenwechsel zur Halbzeit.
+-- Part-Attribute fürs HUD: Progress (0 bis 1) und Contested (true) an SiteA/SiteB
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -57,6 +58,8 @@ return function(api)
 		for name, site in sites do
 			site.Color = Color3.fromRGB(255, 80, 80)
 			site.Transparency = 0.6
+			site:SetAttribute("Progress", 0)
+			site:SetAttribute("Contested", nil)
 		end
 	end
 
@@ -80,6 +83,8 @@ return function(api)
 				site.Color = Color3.fromRGB(255, 80, 80)
 			end
 			site.Transparency = 0.6 - progress[name] * 0.4
+			site:SetAttribute("Progress", progress[name])
+			site:SetAttribute("Contested", (#hackers > 0 and #guards > 0) or nil)
 			table.insert(status, name .. ": " .. math.floor(progress[name] * 100) .. " %")
 			if progress[name] >= 1 then
 				for _, entry in hackers do
@@ -113,11 +118,19 @@ return function(api)
 		return defenders
 	end
 
+	function objective.Attackers()
+		return attackers
+	end
+
 	function objective.RoundInfo()
 		return "   ·   Angriff: " .. attackers.Name
 	end
 
 	function objective.RoundEnd()
+		for _, site in sites do
+			site:SetAttribute("Progress", nil)
+			site:SetAttribute("Contested", nil)
+		end
 		for _, team in { attackers, defenders } do
 			for _, entry in api.Participants(team) do
 				if entry.Bot then

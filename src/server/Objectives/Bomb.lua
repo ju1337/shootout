@@ -8,6 +8,7 @@
 -- Stirbt der Träger, fällt die Bombe zu Boden; ein Angreifer hebt sie durch Drüberlaufen auf.
 -- Nach der ersten Hälfte (RoundsToWin - 1 Runden) wechseln die Seiten.
 -- Spieler-Attribute: ObjHint (Hinweis "[E] halten: ..."), ActionProgress (0 bis 1)
+-- Part-Attribut fürs HUD: Planted (true) am Zielbereich mit der gelegten Bombe
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -148,6 +149,7 @@ return function(api)
 		carrier = nil
 		planted = bombPart(position - Vector3.new(0, 2.4, 0), api.GetMap())
 		plantedSite = site
+		sites[site]:SetAttribute("Planted", true)
 		bombTimer = GameSettings.Get("BombTime")
 		defuseProgress = 0
 		api.Announce("Bombe bei " .. site .. " gelegt!")
@@ -171,6 +173,9 @@ return function(api)
 			end
 		end
 		carrier, dropped, planted, plantedSite = nil, nil, nil, nil
+		for _, part in sites do
+			part:SetAttribute("Planted", nil)
+		end
 		plantProgress, defuseProgress = 0, 0
 		for _, team in { attackers, defenders } do
 			for _, entry in api.Participants(team) do
@@ -349,6 +354,15 @@ return function(api)
 
 	function objective.TimeOutWinner()
 		return defenders
+	end
+
+	function objective.Attackers()
+		return attackers
+	end
+
+	-- Gelegte Bombe: die Uhr oben im HUD zeigt den Bomben-Timer
+	function objective.Clock()
+		return planted and math.max(0, bombTimer) or nil
 	end
 
 	function objective.RoundInfo()

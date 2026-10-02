@@ -1,9 +1,12 @@
 -- HUD (ModuleScript, nur Client)
--- Leben, Munition, Kills, Schadens-Effekt, Killfeed, Modus-Info und Meldungen.
--- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung: CombatHUD.
+-- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, große Meldungen, Countdown, XP, Geld,
+-- Todesanzeige mit Todeskamera. Die Match-Anzeige im RC-Stil (Teamleiste, Killfeed, Leben,
+-- Munition, Zielmarker) baut MatchHUD, die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen,
+-- Treffer-Richtung und Kill-Meldung kommen aus CombatHUD.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 
@@ -14,17 +17,16 @@ local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
-local BuyConfig = require(Shared.BuyConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local InputActions = require(Shared.InputActions)
 local CombatHUD = require(Shared.CombatHUD)
+local MatchHUD = require(Shared.MatchHUD)
+local Minimap = require(Shared.Minimap)
 
 local player = Players.LocalPlayer
 
 local HUD = {}
 
-local KILLFEED_MAX = 5        -- maximale Einträge im Killfeed
-local KILLFEED_TIME = 5       -- Sekunden, die ein Eintrag sichtbar bleibt
 local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
 
 local screen -- ScreenGui (an/aus)
@@ -67,97 +69,6 @@ function HUD.Init(weaponClient)
 	screen = make("ScreenGui", { Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true }, player:WaitForChild("PlayerGui"))
 	gui = UITheme.ScaledRoot(screen) -- auf Handys kleiner
 
-	-- Halbtransparente dunkle Fläche mit Verlauf (Grundbaustein des HUD)
-	local function hudPanel(props)
-		props.BackgroundColor3 = UITheme.Colors.Panel
-		props.BackgroundTransparency = props.BackgroundTransparency or 0.15
-		props.BorderSizePixel = 0
-		local frame = make("Frame", props, gui)
-		UITheme.Corner(frame, 4)
-		UITheme.Stroke(frame, UITheme.Colors.Border, 1, 0.2)
-		UITheme.Gradient(frame, Color3.fromRGB(30, 46, 70), UITheme.Colors.Panel)
-		return frame
-	end
-
-	-- ---------- Agent + Leben unten links (Porträt, Name, große Zahl, Segment-Balken, Rüstung) ----------
-	local healthPanel = hudPanel({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -24),
-		Size = UDim2.new(0, 390, 0, 84) })
-	local portrait = make("Frame", { Position = UDim2.new(0, 10, 0, 10), Size = UDim2.new(0, 64, 0, 64),
-		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, healthPanel)
-	UITheme.Corner(portrait, 4)
-	UITheme.Gradient(portrait, Color3.new(1, 1, 1), Color3.fromRGB(110, 110, 120))
-	local portraitLetter = label({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 42, Font = Enum.Font.Oswald,
-		TextXAlignment = Enum.TextXAlignment.Center }, portrait)
-	local agentName = label({ Position = UDim2.new(0, 86, 0, 6), Size = UDim2.new(1, -96, 0, 18), Text = "",
-		TextSize = 15, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
-	local healthText = label({ Position = UDim2.new(0, 86, 0, 24), Size = UDim2.new(0, 76, 0, 50), Text = "100",
-		TextSize = 44, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
-	local healthBack = make("Frame", { Position = UDim2.new(0, 168, 0, 52), Size = UDim2.new(1, -182, 0, 14),
-		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, healthPanel)
-	local healthFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Text,
-		BorderSizePixel = 0 }, healthBack)
-	-- Segmente wie bei RC (alle 25 Leben ein Strich)
-	for k = 1, 3 do
-		make("Frame", { Position = UDim2.new(k / 4, -1, 0, 0), Size = UDim2.new(0, 3, 1, 0),
-			BackgroundColor3 = UITheme.Colors.Panel, BorderSizePixel = 0, ZIndex = 2 }, healthBack)
-	end
-	-- Rüstung (gekauft in der Kaufphase) als blauer Balken über dem Leben
-	local armorBack = make("Frame", { Position = UDim2.new(0, 168, 0, 38), Size = UDim2.new(1, -182, 0, 8),
-		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Visible = false }, healthPanel)
-	local armorFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(80, 170, 255),
-		BorderSizePixel = 0 }, armorBack)
-
-	-- Agent des aktuellen Lebens anzeigen
-	task.spawn(function()
-		while true do
-			local character = player.Character
-			local agent = AgentConfig.Get(character and character:GetAttribute("Agent")) or AgentConfig.Get(player:GetAttribute("Agent"))
-			if agent then
-				portrait.BackgroundColor3 = agent.Color
-				portraitLetter.Text = string.sub(agent.Name, 1, 1)
-				agentName.Text = string.upper(agent.Name) .. "  ·  " .. string.upper(agent.Role)
-				agentName.TextColor3 = agent.Color
-			end
-			task.wait(0.5)
-		end
-	end)
-
-	-- ---------- Munition unten rechts (große Magazinzahl, Reserve klein) ----------
-	local ammoPanel = hudPanel({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -24),
-		Size = UDim2.new(0, 300, 0, 74) })
-	local weaponText = label({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
-		TextSize = 14, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
-	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -86, 0, 14), Size = UDim2.new(0, 120, 0, 52),
-		Text = "", TextSize = 46, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Right }, ammoPanel)
-	local reserveText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 34), Size = UDim2.new(0, 66, 0, 26),
-		Text = "", TextSize = 20, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
-	-- Magazin als dünner Balken unten im Panel
-	local magBack = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -10),
-		Size = UDim2.new(0, 120, 0, 4), BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, ammoPanel)
-	local magFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Accent,
-		BorderSizePixel = 0 }, magBack)
-	-- Hinweis bei fast leerem Magazin
-	local reloadHint = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 90),
-		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 18, Font = Enum.Font.Oswald,
-		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
-
-	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
-	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -28, 1, -106),
-		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
-		TextColor3 = Color3.fromRGB(120, 230, 140), TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
-
-	-- Eigene Kills oben links (neben den Roblox-Knöpfen)
-	local killsPanel = hudPanel({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(0, 110, 0, 36) })
-	local killsText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "☠ 0", TextSize = 20, Font = Enum.Font.Oswald,
-		TextXAlignment = Enum.TextXAlignment.Center }, killsPanel)
-
-	-- Modus-Info oben mittig als Banner (Text kommt vom Server als Spieler-Attribut "ModeText")
-	local modeBanner = hudPanel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 12),
-		Size = UDim2.new(0, 0, 0, 38), AutomaticSize = Enum.AutomaticSize.X })
-	make("UIPadding", { PaddingLeft = UDim.new(0, 22), PaddingRight = UDim.new(0, 22) }, modeBanner)
-	local modeText = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
-		Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Center }, modeBanner)
-
 	-- Roter Bildschirm-Effekt bei Schaden (ganz unten, damit er nichts verdeckt)
 	local damageFlash = make("Frame", {
 		Size = UDim2.new(1, 0, 1, 0),
@@ -175,6 +86,11 @@ function HUD.Init(weaponClient)
 		}),
 	}, damageFlash)
 
+	-- Match-Anzeige im RC-Stil (Teamleiste, Killfeed, Leben, Munition, Zielmarker) und Minimap
+	local match = MatchHUD.Init(gui, weaponClient)
+	local minimap = Minimap.Init(gui)
+	local minimapScale = make("UIScale", {}, minimap)
+
 	-- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung, Kill-Meldung, Nachlade-Balken
 	CombatHUD.Init(gui, weaponClient)
 
@@ -186,6 +102,16 @@ function HUD.Init(weaponClient)
 		TextSize = 22,
 		Visible = false,
 	}, gui)
+
+	-- Hinweis bei fast leerem Magazin (unter dem Fadenkreuz)
+	local reloadHint = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 90),
+		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 18, Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
+
+	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
+	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -122),
+		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
+		TextColor3 = Color3.fromRGB(120, 230, 140), TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
 	-- Große Meldung (Rundenstart, Sieger)
 	local announce = label({
@@ -207,28 +133,12 @@ function HUD.Init(weaponClient)
 	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, 72, 0, 3),
 		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, announce)
 
-	-- Killfeed oben rechts
-	local killfeed = make("Frame", {
-		Position = UDim2.new(1, -420, 0, 20),
-		Size = UDim2.new(0, 400, 0, 200),
-		BackgroundTransparency = 1,
-	}, gui)
-	make("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Right,
-		Padding = UDim.new(0, 4),
-	}, killfeed)
-
-	-- Leben: bei jedem Spawn neu verbinden
+	-- Schaden: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar (bei jedem Spawn neu verbinden)
 	local function trackCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		local lastHealth = humanoid.Health
 		local function update()
 			local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
-			healthFill.Size = UDim2.new(ratio, 0, 1, 0)
-			healthText.Text = tostring(math.max(0, math.ceil(humanoid.Health)))
-			healthFill.BackgroundColor3 = ratio < 0.3 and UITheme.Colors.Bad or UITheme.Colors.Text
-			-- Getroffen: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar
 			local resting = ratio < 0.3 and humanoid.Health > 0 and 0.75 or 1
 			if humanoid.Health < lastHealth then
 				damageFlash.BackgroundTransparency = 0.45
@@ -240,182 +150,11 @@ function HUD.Init(weaponClient)
 		end
 		update()
 		humanoid.HealthChanged:Connect(update)
-
-		local function updateArmor()
-			local armor = character:GetAttribute("Armor") or 0
-			armorBack.Visible = armor > 0
-			armorFill.Size = UDim2.new(math.clamp(armor / BuyConfig.ArmorAmount, 0, 1), 0, 1, 0)
-		end
-		updateArmor()
-		character:GetAttributeChangedSignal("Armor"):Connect(updateArmor)
 	end
 	player.CharacterAdded:Connect(trackCharacter)
 	if player.Character then
 		task.spawn(trackCharacter, player.Character)
 	end
-
-	-- Kills aus leaderstats
-	task.spawn(function()
-		local kills = player:WaitForChild("leaderstats"):WaitForChild("Kills")
-		local function update()
-			killsText.Text = "☠ " .. kills.Value
-		end
-		update()
-		kills.Changed:Connect(update)
-	end)
-
-	-- Modus-Text
-	local function updateMode()
-		modeText.Text = player:GetAttribute("ModeText") or ""
-	end
-	updateMode()
-	player:GetAttributeChangedSignal("ModeText"):Connect(updateMode)
-
-	-- Eroberungspunkt (Strikeout): Fortschritt beider Teams unter der Modus-Info
-	local objective = make("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 128),
-		Size = UDim2.new(0, 420, 0, 52),
-		BackgroundTransparency = 1,
-		Visible = false,
-	}, gui)
-	local function objectiveBar(y, color, title)
-		label({ Position = UDim2.new(0, 0, 0, y), Size = UDim2.new(0, 70, 0, 14), Text = title, TextSize = 13,
-			TextXAlignment = Enum.TextXAlignment.Left }, objective)
-		local back = make("Frame", { Position = UDim2.new(0, 75, 0, y + 2), Size = UDim2.new(1, -75, 0, 10),
-			BackgroundColor3 = Color3.fromRGB(30, 30, 35), BackgroundTransparency = 0.2, BorderSizePixel = 0 }, objective)
-		return make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0 }, back)
-	end
-	local mineBar = objectiveBar(0, Color3.fromRGB(80, 200, 255), "WIR")
-	local enemyBar = objectiveBar(16, Color3.fromRGB(255, 80, 80), "GEGNER")
-	local objectiveInfo = label({ Position = UDim2.new(0, 0, 0, 32), Size = UDim2.new(1, 0, 0, 20), Text = "",
-		TextSize = 15 }, objective)
-	local function updateObjective()
-		local mine = player:GetAttribute("ObjMine")
-		local info = player:GetAttribute("ObjInfo")
-		objective.Visible = mine ~= nil or info ~= nil
-		-- Balken nur mit Punkt-Fortschritt (Strikeout), sonst nur die Statuszeile (Demolition)
-		for _, child in objective:GetChildren() do
-			if child ~= objectiveInfo then
-				child.Visible = mine ~= nil
-			end
-		end
-		mineBar.Size = UDim2.new(mine or 0, 0, 1, 0)
-		enemyBar.Size = UDim2.new(player:GetAttribute("ObjEnemy") or 0, 0, 1, 0)
-		objectiveInfo.Text = info or ""
-	end
-	updateObjective()
-	player:GetAttributeChangedSignal("ObjMine"):Connect(updateObjective)
-	player:GetAttributeChangedSignal("ObjEnemy"):Connect(updateObjective)
-	player:GetAttributeChangedSignal("ObjInfo"):Connect(updateObjective)
-
-	-- ---------- Team-Rauten oben (wie bei RC): eigenes Team links, Gegner rechts ----------
-	local teamBar = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 56),
-		Size = UDim2.new(0, 700, 0, 30), BackgroundTransparency = 1, Visible = false }, gui)
-	local function side(anchorX, alignment)
-		local frame = make("Frame", { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(anchorX, 0, 0, 0),
-			Size = UDim2.new(0.5, -10, 1, 0), BackgroundTransparency = 1 }, teamBar)
-		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = alignment,
-			VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
-		return frame
-	end
-	local mineSide = side(0, Enum.HorizontalAlignment.Right)
-	local enemySide = side(1, Enum.HorizontalAlignment.Left)
-
-	-- Zustand eines Modells: "alive", "downed" oder "dead"
-	local function stateOf(model)
-		local humanoid = model and model.Parent and model:FindFirstChildOfClass("Humanoid")
-		if not humanoid or humanoid.Health <= 0 then
-			return "dead"
-		end
-		return model:GetAttribute("Downed") and "downed" or "alive"
-	end
-
-	local function renderSide(frame, entries, color)
-		for _, child in frame:GetChildren() do
-			if child:IsA("Frame") then
-				child:Destroy()
-			end
-		end
-		for i, state in entries do
-			local holder = make("Frame", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, LayoutOrder = i }, frame)
-			local fill = state == "alive" and color or (state == "downed" and Color3.fromRGB(255, 170, 40) or Color3.fromRGB(30, 34, 44))
-			UITheme.Diamond(holder, 15, UDim2.new(0.5, 0, 0.5, 0), fill, color)
-			if state == "dead" then
-				label({ Size = UDim2.new(1, 0, 1, 0), Text = "✕", TextSize = 13, TextColor3 = color,
-					TextXAlignment = Enum.TextXAlignment.Center }, holder)
-			end
-		end
-	end
-
-	task.spawn(function()
-		while true do
-			local mode = player:GetAttribute("Mode")
-			local inTeamMode = Modes.IsTeamMode(mode) and player.Team ~= nil and player:GetAttribute("RoundPhase") == "Round"
-			teamBar.Visible = inTeamMode
-			if inTeamMode then
-				local mine, enemies = {}, {}
-				for _, p in Players:GetPlayers() do
-					if p:GetAttribute("Mode") == mode and p.Team then
-						table.insert(p.Team == player.Team and mine or enemies, stateOf(p.Character))
-					end
-				end
-				local bots = workspace:FindFirstChild("Bots")
-				if bots then
-					for _, model in bots:GetChildren() do
-						if model:GetAttribute("Mode") == mode then
-							local isMate = model:GetAttribute("TeamName") == player.Team.Name
-							table.insert(isMate and mine or enemies, stateOf(model))
-						end
-					end
-				end
-				-- Lebende zuerst, dann am Boden, dann ausgeschaltet
-				local rank = { alive = 1, downed = 2, dead = 3 }
-				table.sort(mine, function(a, b) return rank[a] < rank[b] end)
-				table.sort(enemies, function(a, b) return rank[a] < rank[b] end)
-				renderSide(mineSide, mine, UITheme.Colors.Accent)
-				renderSide(enemySide, enemies, UITheme.Colors.Bad)
-			end
-			task.wait(0.3)
-		end
-	end)
-
-	-- ---------- Kompass oben (Blickrichtung) ----------
-	local COMPASS_WIDTH, PX_PER_DEGREE = 440, 2.4
-	local compass = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92),
-		Size = UDim2.new(0, COMPASS_WIDTH, 0, 22), BackgroundColor3 = Color3.fromRGB(10, 13, 22), BackgroundTransparency = 0.45,
-		ClipsDescendants = true, BorderSizePixel = 0 }, gui)
-	UITheme.Corner(compass, 3)
-	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.15, 0.2), NumberSequenceKeypoint.new(0.85, 0.2), NumberSequenceKeypoint.new(1, 1) }) }, compass)
-	local marks = {}
-	local names = { [0] = "N", [45] = "NO", [90] = "O", [135] = "SO", [180] = "S", [225] = "SW", [270] = "W", [315] = "NW" }
-	for degree = 0, 345, 15 do
-		local isMain = names[degree] ~= nil
-		local mark = label({ AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 40, 1, 0),
-			Text = isMain and names[degree] or "|", TextSize = isMain and 15 or 9,
-			TextColor3 = degree % 90 == 0 and UITheme.Colors.Accent or Color3.fromRGB(200, 210, 225),
-			TextXAlignment = Enum.TextXAlignment.Center }, compass)
-		table.insert(marks, { Label = mark, Degree = degree })
-	end
-	make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(0, 2, 0, 6),
-		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, compass)
-	local headingText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 116), Size = UDim2.new(0, 60, 0, 12),
-		Text = "", TextSize = 11, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Center }, gui)
-	game:GetService("RunService").RenderStepped:Connect(function()
-		if not screen.Enabled then
-			return
-		end
-		local look = workspace.CurrentCamera.CFrame.LookVector
-		-- Norden = -Z (wie üblich in Roblox), Grad im Uhrzeigersinn
-		local heading = (math.deg(math.atan2(look.X, -look.Z)) + 360) % 360
-		headingText.Text = tostring(math.floor(heading + 0.5)) .. "°"
-		for _, mark in marks do
-			local delta = ((mark.Degree - heading + 180) % 360) - 180
-			mark.Label.Position = UDim2.new(0.5, delta * PX_PER_DEGREE, 0.5, 0)
-			mark.Label.Visible = math.abs(delta * PX_PER_DEGREE) < COMPASS_WIDTH / 2 + 20
-		end
-	end)
 
 	-- ---------- Großer Countdown vor Rundenbeginn (3, 2, 1, LOS!) ----------
 	local countdown = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.42, 0),
@@ -423,7 +162,7 @@ function HUD.Init(weaponClient)
 		TextColor3 = UITheme.Colors.Accent, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 	local countdownScale = make("UIScale", {}, countdown)
 	local lastShown = nil
-	game:GetService("RunService").Heartbeat:Connect(function()
+	RunService.Heartbeat:Connect(function()
 		local finish = player:GetAttribute("CountdownEnd")
 		local phase = player:GetAttribute("RoundPhase")
 		if not finish or not Modes.IsTeamMode(player:GetAttribute("Mode")) then
@@ -448,21 +187,29 @@ function HUD.Init(weaponClient)
 		end
 	end)
 
-	-- Touch-Geräte: links unten liegt der Steuerknüppel, rechts unten die Knöpfe. Darum Leben nach
-	-- oben links und Munition über die Fähigkeiten-Leiste in die Mitte.
+	-- Touch-Geräte: links unten liegt der Steuerknüppel, rechts die Knöpfe. Darum Minimap kleiner,
+	-- Leben darunter nach oben links und Munition unten in die Mitte (Fähigkeiten links daneben).
 	local function layoutForDevice()
 		if InputActions.IsTouch() then
-			healthPanel.AnchorPoint = Vector2.new(0, 0)
-			healthPanel.Position = UDim2.new(0, 24, 0, 104)
-			ammoPanel.AnchorPoint = Vector2.new(0.5, 1)
-			ammoPanel.Position = UDim2.new(0.5, 0, 1, -170)
-			moneyText.Position = UDim2.new(0.5, 130, 1, -250)
+			minimap.Position = UDim2.new(0, 16, 0, 58)
+			minimapScale.Scale = 0.8
+			match.Vitals.AnchorPoint = Vector2.new(0, 0)
+			match.Vitals.Position = UDim2.new(0, 16, 0, 230)
+			match.Ammo.AnchorPoint = Vector2.new(0, 1)
+			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14)
+			moneyText.AnchorPoint = Vector2.new(0, 1)
+			moneyText.Position = UDim2.new(0.5, 12, 1, -112)
+			moneyText.TextXAlignment = Enum.TextXAlignment.Left
 		else
-			healthPanel.AnchorPoint = Vector2.new(0, 1)
-			healthPanel.Position = UDim2.new(0, 24, 1, -24)
-			ammoPanel.AnchorPoint = Vector2.new(1, 1)
-			ammoPanel.Position = UDim2.new(1, -24, 1, -24)
-			moneyText.Position = UDim2.new(1, -28, 1, -106)
+			minimap.Position = UDim2.new(0, 24, 0, 66)
+			minimapScale.Scale = 1
+			match.Vitals.AnchorPoint = Vector2.new(0, 1)
+			match.Vitals.Position = UDim2.new(0, 24, 1, -24)
+			match.Ammo.AnchorPoint = Vector2.new(1, 1)
+			match.Ammo.Position = UDim2.new(1, -24, 1, -22)
+			moneyText.AnchorPoint = Vector2.new(1, 1)
+			moneyText.Position = UDim2.new(1, -24, 1, -122)
+			moneyText.TextXAlignment = Enum.TextXAlignment.Right
 		end
 	end
 	layoutForDevice()
@@ -475,66 +222,15 @@ function HUD.Init(weaponClient)
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 
-	-- Munition (im Schießstand unendliche Reserve: "∞")
+	-- Nachladen-Hinweis bei fast leerem Magazin (mit Taste des aktuellen Geräts)
 	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading, magSize, infinite)
-		ammoText.Text = tostring(mag)
-		ammoText.TextColor3 = mag == 0 and UITheme.Colors.Bad or Color3.new(1, 1, 1)
 		local config = WeaponConfig.Get(name)
 		local size = magSize or (config and config.MagazineSize) or math.max(mag, 1)
 		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
-		magFill.Size = UDim2.new(ratio, 0, 1, 0)
-		magFill.BackgroundColor3 = ratio <= 0.25 and UITheme.Colors.Bad or UITheme.Colors.Accent
-		-- Nachladen-Hinweis mit Taste des aktuellen Geräts
 		local key = InputActions.Hint("Reload")
+		local prefix = key ~= "" and ("[" .. key .. "] ") or ""
 		reloadHint.Visible = not reloading and ratio <= 0.25 and (reserve > 0 or infinite == true)
-		reloadHint.Text = mag == 0 and ((key ~= "" and ("[" .. key .. "] ") or "") .. "NACHLADEN")
-			or ((key ~= "" and ("[" .. key .. "] ") or "") .. "WENIG MUNITION")
-		reserveText.Text = infinite and "/ ∞" or ("/ " .. reserve)
-		local displayName = WeaponConfig.Get(name).DisplayName
-		weaponText.Text = string.upper(reloading and (displayName .. " · lädt nach...") or displayName)
-	end)
-
-	-- Killfeed-Einträge
-	local entryCount = 0
-	Remotes.Killfeed.OnClientEvent:Connect(function(killerName, victimName, weaponName, headshot)
-		entryCount += 1
-		local weapon = WeaponConfig.Get(weaponName)
-		local weaponLabel = weapon and weapon.DisplayName or tostring(weaponName or "")
-		local function colored(name)
-			local color = name == player.Name and "#28D2E6" or "#FFFFFF"
-			return '<font color="' .. color .. '">' .. name .. "</font>"
-		end
-		local text = colored(killerName) .. '  <font color="#9AA3BA">[' .. weaponLabel
-			.. (headshot and " · ⊕" or "") .. "]</font>  " .. colored(victimName)
-		local involvesMe = killerName == player.Name or victimName == player.Name
-		local entry = label({
-			Size = UDim2.new(0, 0, 0, 30),
-			AutomaticSize = Enum.AutomaticSize.X,
-			Text = "   " .. text .. "   ",
-			RichText = true,
-			TextSize = 16,
-			BackgroundColor3 = involvesMe and Color3.fromRGB(28, 62, 78) or UITheme.Colors.Panel,
-			BackgroundTransparency = 0.2,
-			TextXAlignment = Enum.TextXAlignment.Right,
-			LayoutOrder = entryCount,
-		}, killfeed)
-		UITheme.Corner(entry, 3)
-		-- Älteste Einträge entfernen
-		local entries = {}
-		for _, child in killfeed:GetChildren() do
-			if child:IsA("TextLabel") then
-				table.insert(entries, child)
-			end
-		end
-		table.sort(entries, function(a, b)
-			return a.LayoutOrder < b.LayoutOrder
-		end)
-		for i = 1, #entries - KILLFEED_MAX do
-			entries[i]:Destroy()
-		end
-		task.delay(KILLFEED_TIME, function()
-			entry:Destroy()
-		end)
+		reloadHint.Text = prefix .. (mag == 0 and "NACHLADEN" or "WENIG MUNITION")
 	end)
 
 	-- XP-Meldung über der Fähigkeits-Box ("+100 XP · Kill"), Level-Up groß
