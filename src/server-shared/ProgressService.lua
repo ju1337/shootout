@@ -77,6 +77,22 @@ local function ensureQuests(player, profile)
 	profile.Quests = { Day = today, Ids = ids, Progress = {}, Claimed = {} }
 end
 
+-- Wochen-Aufträge anlegen, falls eine neue Woche begonnen hat (pro Spieler und Woche gleich)
+local function ensureWeekly(player, profile)
+	local week = QuestConfig.Week()
+	if type(profile.Weekly) == "table" and profile.Weekly.Week == week then
+		return
+	end
+	local random = Random.new(player.UserId * 7 + week)
+	local pool = table.clone(QuestConfig.WeeklyPool)
+	local ids = {}
+	for _ = 1, math.min(QuestConfig.PerWeek, #pool) do
+		local quest = table.remove(pool, random:NextInteger(1, #pool))
+		table.insert(ids, quest.Id)
+	end
+	profile.Weekly = { Week = week, Ids = ids, Progress = {}, Claimed = {}, Bonus = false }
+end
+
 -- Profil als Attribute an den Spieler hängen (damit Client und andere Skripte es lesen können)
 function ProgressService.Sync(player)
 	local profile = profiles[player]
@@ -104,6 +120,8 @@ function ProgressService.Sync(player)
 	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))
 	ensureQuests(player, profile)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
+	ensureWeekly(player, profile)
+	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
 end
 
 -- Battle-Pass-XP: neue Stufen schalten ihre Belohnung sofort frei
@@ -296,14 +314,17 @@ function ProgressService.QuestEvent(player, event, amount)
 		return
 	end
 	ensureQuests(player, profile)
+	ensureWeekly(player, profile)
 	local changed = false
-	for _, id in profile.Quests.Ids do
-		local quest = QuestConfig.Get(id)
-		if quest and quest.Event == event and not profile.Quests.Claimed[id] then
-			local before = profile.Quests.Progress[id] or 0
-			if before < quest.Goal then
-				profile.Quests.Progress[id] = math.min(quest.Goal, before + (amount or 1))
-				changed = true
+	for _, set in { profile.Quests, profile.Weekly } do
+		for _, id in set.Ids do
+			local quest = QuestConfig.Get(id)
+			if quest and quest.Event == event and not set.Claimed[id] then
+				local before = set.Progress[id] or 0
+				if before < quest.Goal then
+					set.Progress[id] = math.min(quest.Goal, before + (amount or 1))
+					changed = true
+				end
 			end
 		end
 	end
@@ -316,19 +337,54 @@ end
 function ProgressService.ClaimQuest(player, id)
 	local profile = profiles[player]
 	local quest = typeof(id) == "string" and QuestConfig.Get(id)
-	if not profile or not quest or not table.find(profile.Quests.Ids or {}, id) then
+	if not profile or not quest then
 		return "Unbekannter Auftrag.", false
 	end
-	if profile.Quests.Claimed[id] then
+	ensureWeekly(player, profile)
+	local set = quest.Weekly and profile.Weekly or profile.Quests
+	if not table.find(set.Ids or {}, id) then
+		return "Unbekannter Auftrag.", false
+	end
+	if set.Claimed[id] then
 		return "Schon abgeholt.", false
 	end
-	if (profile.Quests.Progress[id] or 0) < quest.Goal then
+	if (set.Progress[id] or 0) < quest.Goal then
 		return "Auftrag noch nicht geschafft.", false
 	end
-	profile.Quests.Claimed[id] = true
-	ProgressService.AddCoins(player, quest.Reward, "Auftrag") -- synct auch die Aufträge
-	ProgressService.AddPassXP(player, PassConfig.QuestXP)
+	set.Claimed[id] = true
+	ProgressService.AddCoins(player, quest.Reward, quest.Weekly and "Wochen-Auftrag" or "Auftrag") -- synct auch die Aufträge
+	ProgressService.AddPassXP(player, quest.Weekly and PassConfig.QuestXP * 3 or PassConfig.QuestXP)
 	return "+" .. quest.Reward .. " Münzen für \"" .. quest.Text .. "\"!", true
+end
+
+-- Wochen-Bonus abholen: alle Wochen-Aufträge abgeholt → Münzen + Skin der Woche
+function ProgressService.ClaimWeeklyBonus(player)
+	local profile = profiles[player]
+	if not profile then
+		return "Profil nicht geladen.", false
+	end
+	ensureWeekly(player, profile)
+	local weekly = profile.Weekly
+	if weekly.Bonus then
+		return "Wochen-Bonus schon abgeholt.", false
+	end
+	for _, id in weekly.Ids do
+		if not weekly.Claimed[id] then
+			return "Erst alle Wochen-Aufträge abschließen und abholen.", false
+		end
+	end
+	weekly.Bonus = true
+	local lines = { "+" .. QuestConfig.WeeklyBonus.Coins .. " Münzen" }
+	local skinId = QuestConfig.BonusSkin(weekly.Week)
+	local skin = Cosmetics.Get(skinId)
+	if skin and not profile.Owned[skinId] then
+		profile.Owned[skinId] = true
+		ProgressService.LedgerItem(player, skin.Name, skin.Rarity)
+		table.insert(lines, "Neuer Skin: " .. skin.Name)
+	end
+	ProgressService.AddCoins(player, QuestConfig.WeeklyBonus.Coins, "Wochen-Bonus") -- synct alles
+	Remotes.Reward:FireClient(player, { Title = "WOCHEN-BONUS", Lines = lines, Rarity = skin and skin.Rarity or nil })
+	return "Wochen-Bonus abgeholt!", true
 end
 
 function ProgressService.Get(player)

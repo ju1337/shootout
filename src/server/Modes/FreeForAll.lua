@@ -152,6 +152,10 @@ local function finishRound(winner)
 	for player in members do
 		ProgressService.AddStat(player, "Matches", 1)
 		ProgressService.AddStat(player, player == winner and "Wins" or "Losses", 1)
+		ProgressService.QuestEvent(player, "MatchPlayed", 1)
+		if player == winner then
+			ProgressService.QuestEvent(player, "MatchWin", 1)
+		end
 		ProgressService.AddHistory(player, {
 			Mode = "Free-for-All",
 			Map = "Raffinerie",

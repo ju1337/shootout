@@ -185,6 +185,9 @@ function RewardService.Init()
 			end
 		end
 		streaks[killer] = (streaks[killer] or 0) + 1
+		if streaks[killer] == 5 then
+			ProgressService.QuestEvent(killer, "Streak5", 1) -- Wochen-Auftrag "5er-Killserie"
+		end
 		for _, streak in RewardConfig.Streaks do
 			if streaks[killer] == streak.Kills then
 				Remotes.Announce:FireClient(killer, streak.Name .. "!")

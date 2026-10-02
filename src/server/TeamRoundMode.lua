@@ -1018,6 +1018,10 @@ function TeamRoundMode.new(config)
 			for player in members do
 				ProgressService.AddStat(player, "Matches", 1)
 				ProgressService.AddStat(player, player.Team == roundWinner and "Wins" or "Losses", 1)
+				ProgressService.QuestEvent(player, "MatchPlayed", 1)
+				if player.Team == roundWinner then
+					ProgressService.QuestEvent(player, "MatchWin", 1)
+				end
 			end
 			-- ELO in jedem Team-Modus (kein eigenes Ranked-Matchmaking): Team-Durchschnitt gegen
 			-- Team-Durchschnitt, Bots zählen mit Start-ELO. Nur gegen Bots gibt es die halbe Änderung.

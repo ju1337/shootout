@@ -194,6 +194,10 @@ function actions.ClaimQuest(player, id)
 	return ProgressService.ClaimQuest(player, id)
 end
 
+function actions.ClaimWeeklyBonus(player)
+	return ProgressService.ClaimWeeklyBonus(player)
+end
+
 function ShopService.Init()
 	Remotes.ShopAction.OnServerEvent:Connect(function(player, action, a, b)
 		local handler = typeof(action) == "string" and actions[action]
