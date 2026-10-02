@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -171,6 +172,9 @@ local function buildAgentPage()
 			TextSize = 13, TextColor3 = agent.Color }, card)
 		local level = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 20), Size = UDim2.new(0, 60, 0, 20),
 			Text = "", TextSize = 14, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right }, card)
+		-- Kills mit diesem Agenten (aus der Statistik)
+		local kills = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 46), Size = UDim2.new(0, 100, 0, 18),
+			Text = "", TextSize = 12, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, card)
 		local barBack = make("Frame", { Position = UDim2.new(0, x, 0, 70), Size = UDim2.new(1, -x - 14, 0, 4),
 			BackgroundColor3 = C.Border, BorderSizePixel = 0 }, card)
 		local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = agent.Color, BorderSizePixel = 0 }, barBack)
@@ -202,11 +206,13 @@ local function buildAgentPage()
 			Remotes.SelectAgent:FireServer(agent.Id)
 			setStatus(agent.Name .. " gewählt – aktiv ab dem nächsten Spawn.")
 		end)
-		agentCards[agent] = { Card = card, Stroke = stroke, Badge = badge, Level = level, Bar = bar }
+		agentCards[agent] = { Card = card, Stroke = stroke, Badge = badge, Level = level, Bar = bar, Kills = kills }
 	end
 
 	local function refresh()
 		local chosen = currentAgent()
+		local ok, stats = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Stats") or "{}")
+		stats = ok and type(stats) == "table" and stats or {}
 		for agent, entry in agentCards do
 			local isChosen = agent == chosen
 			local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
@@ -218,6 +224,7 @@ local function buildAgentPage()
 			local xp = AgentConfig.GetXP(player, agent.Id)
 			entry.Level.Text = "LV " .. AgentConfig.LevelFromXP(xp)
 			entry.Bar.Size = UDim2.new(AgentConfig.LevelProgress(xp), 0, 1, 0)
+			entry.Kills.Text = (stats["Kills_" .. agent.Id] or 0) .. " KILLS"
 		end
 	end
 	refresh()
