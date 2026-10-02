@@ -76,6 +76,29 @@ local function buildMissionBoard()
 	list.TextYAlignment = Enum.TextYAlignment.Top
 	list.RichText = true
 	list.Parent = surface
+	-- Spielerzahl-Felder an den Toren (Parts "GateCount_<ModusId>")
+	local gateLabels = {}
+	for _, part in board.Parent:GetChildren() do
+		local id = string.match(part.Name, "^GateCount_(.+)$")
+		if id and part:IsA("BasePart") then
+			local gateGui = Instance.new("SurfaceGui")
+			gateGui.Face = Enum.NormalId.Front
+			gateGui.LightInfluence = 0
+			gateGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gateGui.PixelsPerStud = 40
+			gateGui.Adornee = part
+			gateGui.Parent = player:WaitForChild("PlayerGui")
+			local countLabel = Instance.new("TextLabel")
+			countLabel.Size = UDim2.new(1, 0, 1, 0)
+			countLabel.BackgroundTransparency = 1
+			countLabel.Font = Enum.Font.GothamBlack
+			countLabel.TextScaled = true
+			countLabel.Text = ""
+			countLabel.Parent = gateGui
+			gateLabels[id] = countLabel
+		end
+	end
+
 	local function update()
 		local ok, counts = pcall(HttpService.JSONDecode, HttpService, ReplicatedStorage:GetAttribute("ModeCounts") or "{}")
 		counts = ok and counts or {}
@@ -88,6 +111,12 @@ local function buildMissionBoard()
 			end
 		end
 		list.Text = table.concat(lines, "\n")
+		-- Spielerzahl unter jedem Tor-Schild
+		for id, countLabel in gateLabels do
+			local n = counts[id] or 0
+			countLabel.Text = n > 0 and ("● " .. n .. " SPIELER") or "○ FREI"
+			countLabel.TextColor3 = n > 0 and Color3.fromRGB(80, 210, 130) or Color3.fromRGB(150, 165, 185)
+		end
 	end
 	update()
 	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(update)
