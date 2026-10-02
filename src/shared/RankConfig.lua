@@ -6,6 +6,7 @@
 
 local RankConfig = {}
 
+RankConfig.Season = 1          -- bei neuer Saison hochzählen: ELO wird zur Hälfte zurückgesetzt
 RankConfig.StartElo = 1000
 RankConfig.PlacementMatches = 5
 RankConfig.PlacementK = 48     -- Gewichtung in Platzierungsspielen

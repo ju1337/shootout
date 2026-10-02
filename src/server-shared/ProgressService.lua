@@ -222,6 +222,17 @@ local function load(player)
 	local ok, result = pcall(store.GetAsync, store, key(player))
 	if ok then
 		profiles[player] = toProfile(result)
+		-- Neue Ranked-Saison: ELO zur Hälfte Richtung Start, Platzierungsspiele neu
+		local ranked = profiles[player].Ranked
+		if ranked and (ranked.Season or 1) ~= RankConfig.Season then
+			ranked.LastSeasonPeak = ranked.Peak
+			ranked.Elo = math.floor(((ranked.Elo or RankConfig.StartElo) + RankConfig.StartElo) / 2)
+			ranked.Peak = ranked.Elo
+			ranked.Matches, ranked.Wins, ranked.Losses = 0, 0, 0
+		end
+		if ranked then
+			ranked.Season = RankConfig.Season
+		end
 		loaded[player] = true
 		ProgressService.Sync(player)
 	else

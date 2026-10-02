@@ -598,8 +598,8 @@ local function buildStats()
 	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 4) }, rankedBox)
-	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "RANKED", TextSize = 13,
-		TextColor3 = ACCENT }, rankedBox)
+	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "RANKED · SAISON " .. RankConfig.Season,
+		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
 	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -32, 0, 50), Text = "", TextSize = 42,
 		Font = UITheme.Fonts.Title }, rankedBox)
 	local eloText = text({ Position = UDim2.new(0, 16, 0, 84), Size = UDim2.new(1, -32, 0, 24), Text = "", TextSize = 18 }, rankedBox)
