@@ -8,6 +8,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -600,35 +601,38 @@ local function buildSettings()
 	end
 end
 
--- ---------- Menüliste links (schlichte Textzeilen) ----------
+-- ---------- Hub-Leiste unten (Kacheln links und rechts vom SPIELEN-Knopf, wie eine Navigationsleiste) ----------
 
-local ROW_WIDTH = 220
-local ROW_HEIGHT = 38
-local ROW_GAP = 4
+local TILE_W, TILE_H, TILE_GAP = 94, 60, 7
+local PLAY_GAP = 340 -- Platz in der Mitte für den SPIELEN-Knopf (300 breit) der Lobby
 
-local function sideButton(label, order, onClick)
-	-- Zeile: dunkle Fläche mit 1 px Rand, beim Überfahren hellere Fläche und Bernstein-Balken links
-	local b = make("TextButton", { Size = UDim2.new(0, ROW_WIDTH, 0, ROW_HEIGHT), BackgroundColor3 = PANEL,
-		BackgroundTransparency = 0.15, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, b)
+local function sideButton(label, order, onClick, parent, color)
+	-- Kachel: dunkle Fläche mit Farbstreifen oben, beim Überfahren hebt sie sich leicht an
+	local b = make("TextButton", { Size = UDim2.new(0, TILE_W, 0, TILE_H), BackgroundColor3 = PANEL,
+		BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, parent)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Medium) }, b)
 	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1, Transparency = 0.3,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-	local marker = make("Frame", { Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
-		Visible = false }, b)
-	local caption = make("TextLabel", { Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(1, -40, 1, 0),
-		BackgroundTransparency = 1, Text = label, TextSize = 19, Font = DISPLAY, TextColor3 = UITheme.Colors.Text,
-		TextXAlignment = Enum.TextXAlignment.Left }, b)
+	local strip = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6),
+		Size = UDim2.new(0, 28, 0, 3), BackgroundColor3 = color or ACCENT, BorderSizePixel = 0 }, b)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, strip)
+	local caption = make("TextLabel", { Position = UDim2.new(0, 4, 0, 12), Size = UDim2.new(1, -8, 1, -16),
+		BackgroundTransparency = 1, Text = label, TextSize = 17, Font = DISPLAY, TextColor3 = UITheme.Colors.Text,
+		TextWrapped = true }, b)
+	local scale = make("UIScale", {}, b)
 	b.MouseEnter:Connect(function()
 		b.BackgroundColor3 = CARD
 		stroke.Transparency = 0
-		marker.Visible = true
-		caption.TextColor3 = ACCENT
+		strip.Size = UDim2.new(0, 52, 0, 3)
+		caption.TextColor3 = color or ACCENT
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.06 }):Play()
 	end)
 	b.MouseLeave:Connect(function()
 		b.BackgroundColor3 = PANEL
 		stroke.Transparency = 0.3
-		marker.Visible = false
+		strip.Size = UDim2.new(0, 28, 0, 3)
 		caption.TextColor3 = UITheme.Colors.Text
+		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
 	end)
 	b.Activated:Connect(onClick)
 	return b
@@ -721,43 +725,55 @@ local function buildPlayerCard()
 end
 
 local function buildColumn()
-	-- Sortiert: Einkaufen, Fortschritt, Belohnungen, Soziales/Statistik, Einstellungen
-	local entries = {
-		{ "SHOP", function() openLobby("Shop") end },
-		{ "LOADOUT", function() openLobby("Inventory") end },
-		{ "AGENTEN", function() openLobby("Agents") end },
-		{ "BATTLE PASS", function() openLobby("Pass") end },
-		{ "AUFTRÄGE", function() togglePanel("Quests") end },
-		{ "TÄGLICH", function() togglePanel("Daily") end },
-		{ "SQUAD", function() togglePanel("Squad") end },
-		{ "STATISTIK", function() togglePanel("Stats") end },
-		{ "CODES", function() togglePanel("Codes") end },
-		{ "OPTIONEN", function() togglePanel("Settings") end },
+	-- Links vom SPIELEN-Knopf: Ausrüstung und Fortschritt, rechts: Belohnungen, Statistik, Einstellungen
+	local left = {
+		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80) },
+		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214) },
+		{ "AGENTEN", function() openLobby("Agents") end, Color3.fromRGB(150, 120, 210) },
+		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80) },
+		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112) },
 	}
-	local width = ROW_WIDTH
-	local height = #entries * ROW_HEIGHT + (#entries - 1) * ROW_GAP
-	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 60),
-		Size = UDim2.new(0, width, 0, height), BackgroundTransparency = 1 }, gui)
-	make("UIListLayout", { Padding = UDim.new(0, ROW_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, column)
-	-- Auf kleinen Bildschirmen die Liste verkleinern (unter der Spielerkarte bleiben)
+	local right = {
+		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80) },
+		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150) },
+		{ "STATISTIK", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214) },
+		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160) },
+		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152) },
+	}
+	local groupWidth = 5 * TILE_W + 4 * TILE_GAP
+	local width = groupWidth * 2 + PLAY_GAP
+	column = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
+		Size = UDim2.new(0, width, 0, TILE_H), BackgroundTransparency = 1 }, gui)
+	-- Auf schmalen Bildschirmen die ganze Leiste verkleinern
 	local columnScale = make("UIScale", {}, column)
 	local function updateColumnScale()
-		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.Y - 320) / height, 0.5, 1)
+		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.X - 40) / width, 0.45, 1)
 	end
 	updateColumnScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
+	local function group(anchorX, alignment)
+		local frame = make("Frame", { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(anchorX, 0, 0, 0),
+			Size = UDim2.new(0, groupWidth, 1, 0), BackgroundTransparency = 1 }, column)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = alignment,
+			Padding = UDim.new(0, TILE_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+		return frame
+	end
+	local leftGroup, rightGroup = group(0, Enum.HorizontalAlignment.Right), group(1, Enum.HorizontalAlignment.Left)
 	local daily, quests
-	for i, entry in entries do
-		local b = sideButton(entry[1], i, entry[2])
+	for i, entry in left do
+		sideButton(entry[1], i, entry[2], leftGroup, entry[3])
+	end
+	for i, entry in right do
+		local b = sideButton(entry[1], i, entry[2], rightGroup, entry[3])
 		if entry[1] == "TÄGLICH" then
 			daily = b
 		elseif entry[1] == "AUFTRÄGE" then
 			quests = b
 		end
 	end
-	-- Kleines Bernstein-Schild "NEU", wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
+	-- Kleines Bernstein-Schild "NEU" an der Kachel, wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
 	local function notifyDot(parent)
-		local dot = make("TextLabel", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+		local dot = make("TextLabel", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, -8),
 			Size = UDim2.new(0, 34, 0, 16), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
 			Text = "NEU", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = ON_ACCENT, ZIndex = 3 }, parent)
 		make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, dot)
