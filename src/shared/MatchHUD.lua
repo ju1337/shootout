@@ -21,6 +21,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local BuyConfig = require(Shared.BuyConfig)
 local UITheme = require(Shared.UITheme)
+local GameSettings = require(Shared.GameSettings)
 local InputActions = require(Shared.InputActions)
 local TeamCheck = require(Shared.TeamCheck)
 local HUDIcons = require(Shared.HUDIcons)
@@ -119,8 +120,8 @@ function MatchHUD.Init(root, weaponClient)
 	UITheme.Gradient(clockBox, Color3.fromRGB(34, 48, 70), PANEL)
 	local clockText = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 30 }, clockBox)
 
-	local function scoreBox(anchorX, x, color, slant)
-		local box = slantedBox(bar, { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(0.5, x, 0, 26),
+	local function scoreBox(anchorX, x, color, slant, parent)
+		local box = slantedBox(parent or bar, { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(0.5, x, 0, 26),
 			Size = UDim2.fromOffset(64, 40), BackgroundColor3 = color }, slant)
 		local text = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(anchorX == 1 and 0.55 or 0.45, 0, 0.5, 0),
 			Size = UDim2.fromScale(0.7, 1), Text = "0", TextSize = 32, TextStrokeTransparency = 0.35 }, box)
@@ -158,10 +159,78 @@ function MatchHUD.Init(root, weaponClient)
 	local statusText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 92), Size = UDim2.fromOffset(600, 18),
 		Text = "", TextSize = 15, TextColor3 = Color3.fromRGB(215, 225, 238), Font = UITheme.Fonts.Bold }, bar)
 
-	-- Kills in Modi ohne Teams (Free-for-All)
-	local killsBadge = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26), Size = UDim2.fromOffset(120, 30),
-		Text = "", TextSize = 22, BackgroundTransparency = 0.3, BackgroundColor3 = PANEL, Visible = false }, top)
-	UITheme.Corner(killsBadge, 3)
+	-- Free-for-All: Übersicht oben – eigene Kills (Cyan), Ziel in der Mitte, Führender (Gold) mit Namen,
+	-- darunter die ersten drei und der eigene Platz
+	local ffaBar = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, top)
+	local ffaTarget = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26),
+		Size = UDim2.fromOffset(96, 40), BackgroundColor3 = WHITE, BackgroundTransparency = 0.2, BorderSizePixel = 0 }, ffaBar)
+	UITheme.Gradient(ffaTarget, Color3.fromRGB(34, 48, 70), PANEL)
+	local ffaTargetText = label({ Size = UDim2.new(1, 0, 0, 30), Text = "", TextSize = 28 }, ffaTarget)
+	label({ Position = UDim2.fromOffset(0, 27), Size = UDim2.new(1, 0, 0, 12), Text = "ZIEL", TextSize = 11,
+		TextColor3 = MUTED }, ffaTarget)
+	local _, ffaMine = scoreBox(1, -46, ALLY, 18, ffaBar)
+	local _, ffaLeader = scoreBox(0, 46, C.Gold, -18, ffaBar)
+	label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, -79, 0, 68), Size = UDim2.fromOffset(120, 18),
+		Text = "DU", TextSize = 16, TextColor3 = ALLY }, ffaBar)
+	local ffaLeaderName = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 79, 0, 68),
+		Size = UDim2.fromOffset(200, 18), Text = "", TextSize = 16, TextColor3 = C.Gold }, ffaBar)
+	local ffaRanking = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90), Size = UDim2.fromOffset(700, 18),
+		Text = "", RichText = true, TextSize = 15, Font = UITheme.Fonts.Bold, TextColor3 = Color3.fromRGB(215, 225, 238) }, ffaBar)
+
+	-- Rangliste im Free-for-All: Spieler (leaderstats) und Bots (BotInfo) im eigenen Modus, meiste Kills zuerst
+	local function ffaStandings(mode)
+		local list = {}
+		for _, other in Players:GetPlayers() do
+			if other:GetAttribute("Mode") == mode then
+				local stats = other:FindFirstChild("leaderstats")
+				local kills = stats and stats:FindFirstChild("Kills")
+				table.insert(list, { Name = other.Name, Kills = kills and kills:IsA("IntValue") and kills.Value or 0,
+					Me = other == player })
+			end
+		end
+		local botInfo = ReplicatedStorage:FindFirstChild("BotInfo")
+		if botInfo then
+			for _, info in botInfo:GetChildren() do
+				if info:GetAttribute("Mode") == mode then
+					table.insert(list, { Name = info.Name, Kills = info:GetAttribute("Kills") or 0, Me = false })
+				end
+			end
+		end
+		table.sort(list, function(a, b)
+			if a.Kills ~= b.Kills then
+				return a.Kills > b.Kills
+			end
+			return a.Name < b.Name
+		end)
+		return list
+	end
+
+	local function updateFFA(mode)
+		local target = GameSettings.Get("KillsToWin")
+		ffaTargetText.Text = tostring(target)
+		local list = ffaStandings(mode)
+		local myRank, myKills = nil, 0
+		for i, entry in list do
+			if entry.Me then
+				myRank, myKills = i, entry.Kills
+			end
+		end
+		ffaMine.Text = tostring(myKills)
+		local leader = list[1]
+		ffaLeader.Text = tostring(leader and leader.Kills or 0)
+		ffaLeaderName.Text = leader and (leader.Me and "DU FÜHRST" or string.upper(leader.Name)) or ""
+		local parts = {}
+		for i = 1, math.min(3, #list) do
+			local entry = list[i]
+			local color = entry.Me and hex(ALLY) or (i == 1 and hex(C.Gold) or "#D7E1EE")
+			table.insert(parts, string.format('<font color="%s">%d. %s  %d</font>', color, i, entry.Name, entry.Kills))
+		end
+		local line = table.concat(parts, "     ")
+		if myRank and myRank > 3 then
+			line ..= string.format('     <font color="%s">DU: %d. PLATZ</font>', hex(ALLY), myRank)
+		end
+		ffaRanking.Text = line
+	end
 
 	-- Ein Porträt-Feld: Bild, Lebensbalken, Kreuz wenn ausgeschaltet
 	local function makeSlot(parent, mate)
@@ -235,18 +304,20 @@ function MatchHUD.Init(root, weaponClient)
 			goalText.Text = goal or ""
 			goalText.TextSize = 18
 			goalText.Font = UITheme.Fonts.Title
+		elseif mode == "FreeForAll" then
+			goalText.Text = "JEDER GEGEN JEDEN  ·  " .. GameSettings.Get("KillsToWin") .. " KILLS GEWINNEN"
+			goalText.TextSize = 18
+			goalText.Font = UITheme.Fonts.Title
 		else
 			goalText.Text = player:GetAttribute("ModeText") or ""
 			goalText.TextSize = 16
 			goalText.Font = UITheme.Fonts.Bold
 		end
 
-		-- Free-for-All: eigene Kills groß unter der Info
-		local stats = player:FindFirstChild("leaderstats")
-		local kills = stats and stats:FindFirstChild("Kills")
-		killsBadge.Visible = not Modes.IsTeamMode(mode) and mode ~= "Training" and kills ~= nil
-		if kills and kills:IsA("IntValue") then
-			killsBadge.Text = "☠  " .. kills.Value
+		-- Free-for-All: wer führt (oben in der Mitte)
+		ffaBar.Visible = mode == "FreeForAll"
+		if ffaBar.Visible then
+			updateFFA(mode)
 		end
 		if not teamMode then
 			return

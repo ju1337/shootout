@@ -14,7 +14,8 @@ local AgentConfig = require(Shared.AgentConfig)
 
 local BuyService = {}
 
--- Gekauft werden darf während der Agentenwahl und im Countdown
+-- Gekauft werden darf während der Agentenwahl und im Countdown – und in der Auswahl nach dem Tod
+-- (Respawn-Modi, Spieler-Attribut "RespawnAt" gesetzt)
 local BUY_PHASES = { Select = true, Countdown = true }
 
 local function clearItems(player, perRoundOnly)
@@ -37,7 +38,7 @@ function BuyService.Clear(player)
 	clearItems(player, false)
 end
 
--- Runde vorbei: Rüstung und Extra-Gadget verfallen
+-- Runde vorbei bzw. gestorben (Respawn-Modi): Rüstung und Extra-Gadget verfallen
 function BuyService.EndRound(player)
 	clearItems(player, true)
 end
@@ -57,8 +58,10 @@ local function buy(player, itemId)
 	if not item then
 		return "Unbekannter Gegenstand.", false
 	end
-	if not Modes.IsTeamMode(player:GetAttribute("Mode")) or not BUY_PHASES[player:GetAttribute("RoundPhase")] then
-		return "Kaufen geht nur vor der Runde.", false
+	local respawning = player:GetAttribute("RespawnAt") ~= nil
+	if not Modes.IsTeamMode(player:GetAttribute("Mode"))
+		or not (BUY_PHASES[player:GetAttribute("RoundPhase")] or respawning) then
+		return "Kaufen geht nur vor der Runde oder nach dem Tod.", false
 	end
 	if BuyConfig.Has(player, itemId) then
 		return item.Name .. " hast du schon.", false

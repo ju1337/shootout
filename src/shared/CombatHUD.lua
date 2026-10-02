@@ -14,6 +14,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -81,6 +82,12 @@ local isEnemy = TeamCheck.IsEnemy
 
 -- gui = skalierte Vollbild-Ebene des HUD, weaponClient = WeaponClient-Modul
 function CombatHUD.Init(gui, weaponClient)
+	-- Kein Mauszeiger über dem Fadenkreuz: ausgeblendet, solange die Maus zum Zielen in der Bildmitte gesperrt
+	-- ist (Ego- und Schulterkamera). Menüs geben die Maus vorher frei (Default) – dann ist er wieder da.
+	RunService:BindToRenderStep("HideCursor", Enum.RenderPriority.Camera.Value + 10, function()
+		UserInputService.MouseIconEnabled = UserInputService.MouseBehavior ~= Enum.MouseBehavior.LockCenter
+	end)
+
 	local uiScale = gui:FindFirstChildOfClass("UIScale")
 	local function scale()
 		return uiScale and uiScale.Scale or 1

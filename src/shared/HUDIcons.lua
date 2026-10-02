@@ -2,6 +2,7 @@
 -- Kleine 3D-Bilder fürs HUD im Stil von Rogue Company:
 --   Weapon   = flache weiße Waffen-Silhouette von der Seite, Lauf nach rechts (Killfeed, Munition).
 --              Einfärben über ImageColor3 des ViewportFrames.
+--   WeaponModel = dieselbe Ansicht in Farbe und mit Licht (Vorschau in der Agentenwahl), optional mit Skin
 --   Portrait = Kopf und Schultern eines Agenten (Teamleiste, Lebensanzeige)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,30 +24,38 @@ function HUDIcons.HasWeapon(weaponName)
 	return type(weaponName) == "string" and GunModels.Info[weaponName] ~= nil
 end
 
--- Silhouette einer Waffe in einen (neuen) ViewportFrame der Größe width x height setzen.
--- Gibt den ViewportFrame zurück, nil bei unbekannter Waffe.
-function HUDIcons.Weapon(parent, weaponName, width, height)
+-- Waffe von der Seite (Lauf nach rechts) in einen neuen ViewportFrame width x height.
+-- colored = false: flache weiße Silhouette; true: Originalfarben (bzw. Skin) mit Licht.
+local function weaponView(parent, weaponName, width, height, colored, skin)
 	if not HUDIcons.HasWeapon(weaponName) then
 		return nil
 	end
 	local viewport = Instance.new("ViewportFrame")
-	viewport.Name = "WeaponIcon"
+	viewport.Name = colored and "WeaponModel" or "WeaponIcon"
 	viewport.BackgroundTransparency = 1
 	viewport.Size = UDim2.fromOffset(width, height)
-	viewport.Ambient = WHITE
-	viewport.LightColor = Color3.new(0, 0, 0)
+	if colored then
+		viewport.Ambient = Color3.fromRGB(150, 155, 170)
+		viewport.LightColor = Color3.fromRGB(255, 248, 235)
+		viewport.LightDirection = Vector3.new(-0.6, -1, -0.35)
+	else
+		viewport.Ambient = WHITE
+		viewport.LightColor = Color3.new(0, 0, 0)
+	end
 	viewport.ImageColor3 = WHITE
 
-	-- Nur sichtbare Teile, alle flach weiß
-	local model = GunModels.Build(weaponName)
+	-- Nur sichtbare Teile; Silhouette flach weiß
+	local model = GunModels.Build(weaponName, colored and skin or nil)
 	local low, high = Vector3.one * math.huge, -Vector3.one * math.huge
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") then
 			if part.Transparency >= 1 then
 				part:Destroy()
 			else
-				part.Color = WHITE
-				part.Material = Enum.Material.SmoothPlastic
+				if not colored then
+					part.Color = WHITE
+					part.Material = Enum.Material.SmoothPlastic
+				end
 				-- Achsenparallele Hülle des (evtl. gedrehten) Teils
 				local cf, half = part.CFrame, part.Size / 2
 				local extent = Vector3.new(
@@ -71,6 +80,16 @@ function HUDIcons.Weapon(parent, weaponName, width, height)
 	viewport.CurrentCamera = camera
 	viewport.Parent = parent
 	return viewport
+end
+
+-- Weiße Silhouette (Killfeed, Munition). Gibt den ViewportFrame zurück, nil bei unbekannter Waffe.
+function HUDIcons.Weapon(parent, weaponName, width, height)
+	return weaponView(parent, weaponName, width, height, false, nil)
+end
+
+-- Farbige Vorschau mit Licht (Agentenwahl), skin = Waffen-Skin oder nil
+function HUDIcons.WeaponModel(parent, weaponName, width, height, skin)
+	return weaponView(parent, weaponName, width, height, true, skin)
 end
 
 -- Porträt-Feld (ViewportFrame size x size). Gibt { Frame, Set(agentId, player) } zurück;

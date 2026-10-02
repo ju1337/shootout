@@ -55,11 +55,14 @@ local DROP_HEIGHT = 300      -- Absprunghöhe über der Map (DropIn)
 local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
+local SUMMARY_TIME = 8       -- Match-Zusammenfassung (wie SHOW_TIME in MatchSummary), danach erst Map-Abstimmung
 local OVERTIME_MAX = 30      -- Strikeout: Overtime dauert höchstens so lange (Sekunden)
 local VOTE_TIME = 10         -- Map-Abstimmung vor dem Match (Sekunden)
 local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
 local SPAWN_PROTECTION = 2   -- Schutzschild nach Boden-Spawns
-local RESPAWN_TIME = 5       -- Sekunden bis zum Respawn (mit Ticket)
+local RESPAWN_TIME = 5       -- Sekunden bis zum Respawn (Bots, mit Ticket)
+local RESPAWN_SELECT_TIME = 9 -- Spieler: Tod -> Auswahl (Agent, Waffe, Ausrüstung) -> spätestens dann zurück
+local RESPAWN_MIN_TIME = 3   -- frühestens so schnell zurück (BEREIT in der Auswahl)
 
 function TeamRoundMode.new(config)
 	local mode = {}
@@ -76,6 +79,7 @@ function TeamRoundMode.new(config)
 	local bots = {}              -- [bot] = true
 	local alive = {}             -- [Player] = true, solange der aktuelle Charakter lebt
 	local pending = {}           -- [Player oder bot] = true, wartet auf Respawn (Ticket schon bezahlt)
+	local respawners = {}        -- [Player] = { Finish, ReadyAt }: wartet in der Auswahl nach dem Tod
 	local tickets = {}           -- [Team] = übrige Respawns in dieser Runde
 	local progress = {}          -- [Team] = Punkt-Fortschritt 0 bis 1
 	local phase = "Waiting"
@@ -385,24 +389,53 @@ function TeamRoundMode.new(config)
 
 	local spawnPlayer, spawnBot
 
-	-- Tod: mit Ticket nach RESPAWN_TIME zurück, sonst bis zur nächsten Runde raus
+	-- Auswahl nach dem Tod beenden (Rundenende, Spieler weg): Attribute zurücksetzen
+	local function clearRespawnSelect(player)
+		respawners[player] = nil
+		player:SetAttribute("RespawnAt", nil)
+		player:SetAttribute("RespawnReadyAt", nil)
+	end
+
+	-- Tod: mit Ticket zurück, sonst bis zur nächsten Runde raus. Bots nach RESPAWN_TIME, Spieler kommen
+	-- wie bei RC erst in die Auswahl (Agent, Primärwaffe, Ausrüstung kaufen) und sind nach
+	-- RESPAWN_SELECT_TIME wieder drin – oder früher mit BEREIT (frühestens nach RESPAWN_MIN_TIME).
+	-- Spieler-Attribute: RespawnAt (Serverzeit), RespawnReadyAt (ab wann BEREIT geht)
 	local function useTicket(who, respawn)
 		if not (roundActive and (config.Tickets or config.Respawn) and who.Team and (tickets[who.Team] or 0) > 0) then
 			return
 		end
 		tickets[who.Team] -= 1
 		pending[who] = true
-		task.delay(RESPAWN_TIME, function()
+		local isPlayer = typeof(who) == "Instance" and who:IsA("Player")
+		local done = false
+		local function finish()
+			if done then
+				return
+			end
+			done = true
 			if not pending[who] then
-				return -- Runde inzwischen vorbei
+				return -- Runde inzwischen vorbei (dort wird aufgeräumt)
 			end
 			pending[who] = nil
+			if isPlayer then
+				clearRespawnSelect(who)
+				who:SetAttribute("AgentLocked", true)
+			end
 			if roundActive then
 				respawn()
 			end
 			updateInfo()
 			checkRoundEnd()
-		end)
+		end
+		if isPlayer then
+			local now = workspace:GetServerTimeNow()
+			who:SetAttribute("AgentLocked", false) -- Agent darf neu gewählt werden
+			who:SetAttribute("RespawnAt", now + RESPAWN_SELECT_TIME)
+			who:SetAttribute("RespawnReadyAt", now + RESPAWN_MIN_TIME)
+			BuyService.EndRound(who) -- Rüstung und Extra-Gadget galten für das letzte Leben
+			respawners[who] = { Finish = finish, ReadyAt = os.clock() + RESPAWN_MIN_TIME }
+		end
+		task.delay(isPlayer and RESPAWN_SELECT_TIME or RESPAWN_TIME, finish)
 	end
 
 	function spawnPlayer(player, cframe, dropping)
@@ -903,6 +936,9 @@ function TeamRoundMode.new(config)
 		timeLeft = nil
 		overtime = false
 		pending = {}
+		for player in members do
+			clearRespawnSelect(player)
+		end
 		if objective and objective.RoundEnd then
 			objective.RoundEnd()
 		end
@@ -1036,7 +1072,7 @@ function TeamRoundMode.new(config)
 				end
 			end
 			sendSummary(roundWinner, rankTexts, eloChanges)
-			task.wait(INTERMISSION)
+			task.wait(SUMMARY_TIME) -- erst die Zusammenfassung, dann Map-Abstimmung, dann Agentenwahl
 			resetMatch()
 		elseif practiceRound then
 			resetMatch() -- nach einer Übungsrunde wieder warten
@@ -1249,6 +1285,19 @@ function TeamRoundMode.new(config)
 	-- ---------- Modus-Schnittstelle ----------
 
 	function mode.Init()
+		-- Auswahl nach dem Tod: BEREIT (Agent bestätigt) bringt den Spieler zurück, frühestens nach RESPAWN_MIN_TIME
+		Remotes.SelectAgent.OnServerEvent:Connect(function(player, _, lock)
+			local entry = respawners[player]
+			if not entry or lock ~= true then
+				return
+			end
+			-- nach AgentService (setzt den Agent), damit der neue Charakter schon den gewählten Agenten hat
+			task.delay(math.max(0, entry.ReadyAt - os.clock()), function()
+				if respawners[player] == entry then
+					entry.Finish()
+				end
+			end)
+		end)
 		-- Map-Abstimmung
 		Remotes.MapVote.OnServerEvent:Connect(function(player, index)
 			if voteOptions and members[player] and type(index) == "number" and voteOptions[index] then
@@ -1314,6 +1363,14 @@ function TeamRoundMode.new(config)
 		if player.Character then
 			player.Character:Destroy()
 		end
+		-- Modi mit unbegrenztem Respawn (Herrschaft): kurz Agent und Ausrüstung wählen, dann sofort einsteigen
+		if roundActive and config.Respawn and player.Team then
+			useTicket(player, function()
+				if members[player] and player.Team then
+					spawnPlayer(player, spawnCFrame(player.Team))
+				end
+			end)
+		end
 		if roundActive then
 			updateInfo()
 		end
@@ -1324,6 +1381,7 @@ function TeamRoundMode.new(config)
 		members[player] = nil
 		alive[player] = nil
 		pending[player] = nil
+		clearRespawnSelect(player)
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
 			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapId", "MapCenter", "CountdownEnd",

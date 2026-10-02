@@ -147,6 +147,11 @@ end
 -- Hintergrund-Unschärfe, solange mindestens ein Menü offen ist
 local blur = nil
 local blurUsers = {}
+
+-- Ist gerade ein Menü mit Unschärfe offen (Spielmenü, Seitenmenü)?
+function UITheme.IsMenuOpen()
+	return next(blurUsers) ~= nil
+end
 function UITheme.SetBlur(user, on)
 	blurUsers[user] = on or nil
 	if not blur then

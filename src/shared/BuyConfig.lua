@@ -1,7 +1,8 @@
 -- BuyConfig (ModuleScript)
 -- Geld und Kaufphase in den Team-Modi (wie bei Rogue Company). Das Geld gilt nur für ein Match
 -- und ist getrennt von den Shop-Münzen. Gekauft wird während Agentenwahl und Countdown.
--- PerRound = gilt nur für die nächste Runde (Rüstung, Extra-Gadget), sonst bis Match-Ende.
+-- PerRound = gilt nur für die nächste Runde bzw. bis zum nächsten Tod (Rüstung, Extra-Gadget), sonst bis Match-Ende.
+-- In Modi mit Respawn kauft man in der Auswahl nach dem Tod nach.
 -- Perk = passiver Vorteil (wie die Perks bei Rogue Company), gilt bis Match-Ende.
 
 local BuyConfig = {}
@@ -32,8 +33,8 @@ BuyConfig.Items = {
 	{ Id = "Mag", Name = "Großes Magazin", Description = "+30 % Magazin für alle Waffen", Price = 600 },
 	{ Id = "Reload", Name = "Schnellladen", Description = "Nachladen 30 % schneller", Price = 500 },
 	{ Id = "Stability", Name = "Stabilisator", Description = "35 % weniger Streuung und Rückstoß", Price = 700 },
-	{ Id = "Armor", Name = "Rüstung", Description = "+25 Schild für diese Runde", Price = 400, PerRound = true },
-	{ Id = "ExtraGadget", Name = "Extra-Gadget", Description = "+1 Gadget-Ladung für diese Runde", Price = 300, PerRound = true },
+	{ Id = "Armor", Name = "Rüstung", Description = "+25 Schild bis zum nächsten Tod (bzw. Rundenende)", Price = 400, PerRound = true },
+	{ Id = "ExtraGadget", Name = "Extra-Gadget", Description = "+1 Gadget-Ladung bis zum nächsten Tod (bzw. Rundenende)", Price = 300, PerRound = true },
 	{ Id = "Tough", Name = "Zäh", Description = "Perk: +15 Max-Leben", Price = 500, Perk = true },
 	{ Id = "Regen", Name = "Regeneration", Description = "Perk: Nach 5 s ohne Schaden heilst du langsam", Price = 600, Perk = true },
 	{ Id = "Medic", Name = "Sanitäter", Description = "Perk: Wiederbeleben 40 % schneller", Price = 400, Perk = true },

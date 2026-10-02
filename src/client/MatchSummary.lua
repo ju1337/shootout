@@ -17,7 +17,7 @@ local make = UITheme.Make
 
 local MatchSummary = {}
 
-local SHOW_TIME = 8
+local SHOW_TIME = 8 -- passt zu SUMMARY_TIME in TeamRoundMode (danach kommt die Map-Abstimmung)
 
 function MatchSummary.Init()
 	local gui = make("ScreenGui", { Name = "MatchSummary", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 12,
@@ -90,6 +90,14 @@ function MatchSummary.Init()
 		TextXAlignment = Enum.TextXAlignment.Center }, canvas)
 
 	local showId = 0
+	-- Nie über der Map-Abstimmung oder Agentenwahl liegen: sobald die beginnt, ausblenden
+	player:GetAttributeChangedSignal("RoundPhase"):Connect(function()
+		local phase = player:GetAttribute("RoundPhase")
+		if phase == "MapVote" or phase == "Select" or phase == "Countdown" then
+			showId += 1
+			gui.Enabled = false
+		end
+	end)
 	Remotes.MatchSummary.OnClientEvent:Connect(function(data)
 		showId += 1
 		local myId = showId

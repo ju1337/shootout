@@ -1,7 +1,7 @@
 -- Training (ModuleScript, nur Server)
 -- Schießstand zum Ausprobieren: Übungspuppen stehen nach dem Umfallen wieder auf, zwei laufen
 -- hin und her. Man kann nicht sterben, Agentenwechsel gilt sofort (Neu-Spawn).
--- Reserve-Munition ist hier unendlich (WeaponConfig.InfiniteAmmoModes), nachladen muss man trotzdem.
+-- Reserve-Munition ist unendlich (wie überall, WeaponConfig.InfiniteAmmoEverywhere), nachladen muss man trotzdem.
 
 local Players = game:GetService("Players")
 

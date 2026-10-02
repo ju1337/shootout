@@ -29,7 +29,9 @@ WeaponConfig.AirSpread = 2.5
 WeaponConfig.BloomDelay = 1.6
 WeaponConfig.BloomRecovery = 6
 
--- Modi mit unendlicher Reserve-Munition (Schießstand). Nachladen muss man trotzdem.
+-- Unendliche Reserve-Munition: überall (nachladen muss man trotzdem). Auf false stellen, dann gilt sie nur
+-- in den Modi aus InfiniteAmmoModes (Schießstand).
+WeaponConfig.InfiniteAmmoEverywhere = true
 WeaponConfig.InfiniteAmmoModes = { Training = true }
 
 -- Schuss-Sounds (Roblox-Audio-IDs). Bleibt ein Sound stumm, ist die ID nicht (mehr) öffentlich:
@@ -255,7 +257,7 @@ end
 
 -- Unendliche Reserve-Munition im aktuellen Modus? (Schießstand)
 function WeaponConfig.HasInfiniteAmmo(player)
-	return WeaponConfig.InfiniteAmmoModes[player:GetAttribute("Mode")] == true
+	return WeaponConfig.InfiniteAmmoEverywhere or WeaponConfig.InfiniteAmmoModes[player:GetAttribute("Mode")] == true
 end
 
 return WeaponConfig

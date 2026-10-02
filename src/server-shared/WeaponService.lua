@@ -5,7 +5,7 @@
 -- schießt dann vom Kopf des Charakters dorthin. Was nur die Kamera, aber nicht der Charakter sieht
 -- (z.B. hinter einer Ecke), trifft man so nicht.
 -- Welche Waffen ein Spieler hat, kommt vom gewählten Agenten (AgentConfig.Loadout).
--- Im Schießstand (WeaponConfig.InfiniteAmmoModes) ist die Reserve-Munition unendlich.
+-- Reserve-Munition ist unendlich (WeaponConfig.InfiniteAmmoEverywhere bzw. InfiniteAmmoModes), nachladen muss man trotzdem.
 -- Charakter-Attribute für die Third-Person-Animationen aller Clients:
 --   ReloadStart (Serverzeit), ReloadTime (Nachladezeit mit Upgrades), ReloadShells (Patronen, Schrotflinte –
 --   die Zeitleiste ergibt sich dann aus WeaponConfig.ShellTiming),

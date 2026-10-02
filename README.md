@@ -34,6 +34,17 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Kaufphase**: Geld pro Match, Upgrades, Rüstung, Perks
+- **Agentenwahl im Hangar eines Raumschiffs** (3D-Hintergrund): links Team und Agent, Mitte der Agent mit der
+  gewählten Waffe (Waffenkarte überfahren = Vorschau in der Hand), rechts WAFFEN mit 3D-Vorschau und direkt
+  darunter die AUSRÜSTUNG (Rüstung, Upgrades, Perks) mit Geld
+- **Ablauf**: nach dem Match erst die Zusammenfassung, dann die Map-Abstimmung, danach die Agentenwahl –
+  nie übereinander
+- **Respawn-Modi** (Herrschaft, Wingman mit Tickets): nach dem Tod kurz die Todeskamera, dann zurück in die
+  Auswahl (Agent, Primärwaffe, Ausrüstung kaufen); BEREIT bringt einen zurück (frühestens nach 3 s, spätestens
+  nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz
+  und steigt sofort ein
+- **Unendliche Reserve-Munition in allen Modi** (nachladen muss man trotzdem; `WeaponConfig.InfiniteAmmoEverywhere`)
+- **Level immer sichtbar** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links
 - **Battle Pass, tägliche Aufträge, Shop, Codes**
 - **Map-Rotation** pro Match, Multikills und ACE, Todeskamera, Schnelles Spiel
 - **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel
@@ -49,7 +60,9 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   - unten rechts: Fähigkeit und Gadget als Rauten (Taste, Abklingzeit, Aufladungen), Munition „20 /200“,
     Waffen-Silhouette, Taste + Name der anderen Waffe
   - in der Welt: Zielmarker (Raute mit Buchstabe, Entfernung in Metern, Einnahme-Fortschritt, UMKÄMPFT/BOMBE)
-  - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout
+  - Free-for-All: oben in der Mitte die eigenen Kills, das Ziel und wer führt, darunter die ersten drei
+  - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout;
+    im Kampf kein Mauszeiger über dem Fadenkreuz
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
   das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
   rückt die Kamera seitlich an den Kopf statt durch die Wand zu schauen (Werte oben in `src/shared/Movement.lua`)
@@ -67,7 +80,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     Einschusslöcher, Hülsen; eigene Schüsse erscheinen sofort (ohne Ping-Verzögerung)
   - Hitmarker je Treffer-Art (Körper weiß, Kopf gelb, Rüstung blau, niedergeschlagen orange, ausgeschaltet rot)
     mit eigenem Ton, hochzählende Schadenszahlen pro Ziel, rote Treffer-Richtungsbögen, Kill-Meldung
-  - Schießstand: unendliche Reserve-Munition (Anzeige „∞“)
+  - unendliche Reserve-Munition in allen Modi (Anzeige „∞“)
 
 ## Steuerung
 
@@ -89,6 +102,8 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 | Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |
 | Kaufphase, Geld, Perks | `src/shared/BuyConfig.lua` |
+| Agentenwahl (Aufbau) und Hangar-Hintergrund | `src/client/AgentSelect.lua`, `src/shared/HangarScene.lua` |
+| Respawn-Auswahl (Dauer, frühestes BEREIT), Pause nach dem Match | `RESPAWN_SELECT_TIME`, `RESPAWN_MIN_TIME`, `SUMMARY_TIME` in `src/server/TeamRoundMode.lua` |
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
 | Battle Pass | `src/shared/PassConfig.lua` |
 | Tägliche Aufträge | `src/shared/QuestConfig.lua` |
