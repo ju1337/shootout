@@ -50,10 +50,36 @@ def rgb(r, g, b):
     return [round(r / 255, 4), round(g / 255, 4), round(b / 255, 4)]
 
 
+HOLO_TINT = (100, 180, 230)  # Glas-Tönung der Holo-Schilder
+
+
+def lighten(color, amount=0.35):
+    return tuple(int(c + (255 - c) * amount) for c in color)
+
+
 class Builder:
     def __init__(self, origin=(0, 0, 0)):
         self.groups = {}
         self.origin = origin
+        self.holo = False  # True: Schilder als Hologramme (durchsichtiges Glas, leuchtende Schrift, Leuchtkanten)
+
+    def holo_edges(self, name, size, pos, angles, color):
+        """Dünne Leuchtkanten oben und unten an einem (gedrehten) Holo-Schild."""
+        m = rot(*angles)
+        for sy in (-1, 1):
+            local = (0, sy * size[1] / 2, 0)
+            off = [sum(m[i][k] * local[k] for k in range(3)) for i in range(3)]
+            self.box("Decor", name + "HoloEdge", (size[0] + 0.2, 0.1, 0.1), (pos[0] + off[0], pos[1] + off[1], pos[2] + off[2]),
+                     color, "Neon", angles=angles, props={"Transparency": 0.15 if sy > 0 else 0.4, "CanCollide": False,
+                                                            "CanQuery": False})
+
+    def holo_panel(self, group, name, size, pos, angles=(0, 0, 0), children=None, props=None):
+        """Durchsichtige, leicht getönte Glasfläche (Träger für Holo-Schrift)."""
+        p = {"Transparency": 0.86, "CanCollide": False, "CanQuery": False,
+             "Attributes": {"Attributes": {"Holo": {"Bool": True}}}}
+        if props:
+            p.update(props)
+        self.add(group, name, size, pos, HOLO_TINT, "Glass", angles=angles, props=p, children=children)
 
     def add(self, group, name, size, pos, color, material="SmoothPlastic", angles=(0, 0, 0),
             cls="Part", props=None, children=None):
@@ -184,6 +210,14 @@ class Builder:
                 "TextColor3": rgb(*fg),
             },
         }
+        if self.holo:
+            label["Properties"]["TextColor3"] = rgb(*lighten(fg))
+            label["Properties"]["TextStrokeColor3"] = rgb(40, 120, 180)
+            label["Properties"]["TextStrokeTransparency"] = 0.5
+            gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front", "LightInfluence": 0,
+                   "Brightness": 2.4}, "Children": [label]}
+            self.holo_panel("Decor", name, size, pos, angles, children=[gui])
+            return
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front"}, "Children": [label]}
         self.box("Decor", name, size, pos, bg, "SmoothPlastic", angles=angles, children=[gui])
 
@@ -318,6 +352,20 @@ class Builder:
         if glow:
             children.append({"Name": "Glow", "ClassName": "SurfaceLight", "Properties": {
                 "Face": "Front", "Range": 16, "Brightness": 1.2, "Angle": 80, "Color": rgb(*glow)}})
+        if self.holo:
+            # Hologramm: Glas statt Tafel, Schrift heller mit blauem Schimmer, Leuchtkanten oben/unten
+            gui["Properties"]["Brightness"] = 2.4
+            for child in gui["Children"]:
+                props = child["Properties"]
+                if child["ClassName"] == "TextLabel":
+                    props["TextColor3"] = rgb(*lighten(fg if child["Name"] == "Title" else sub_fg, 0.3))
+                    props["TextStrokeColor3"] = rgb(40, 120, 180)
+                    props["TextStrokeTransparency"] = 0.45
+                else:
+                    props["BackgroundTransparency"] = 0.3
+            self.holo_panel("Decor", name, size, pos, angles, children=children)
+            self.holo_edges(name, size, pos, angles, lighten(fg, 0.2))
+            return
         self.box("Decor", name, size, pos, bg, "SmoothPlastic", angles=angles, children=children)
 
     def floor_text(self, name, size, pos, text, color, bg=None, yaw=180):
@@ -1316,6 +1364,7 @@ def build_lobby_classic():
 # Siegertreppchen. Rückwand: Einsatz-Bildschirm, Logo, Plakate.
 
 HUB_STYLE = "compact"  # "classic" = alter großer Hangar (build_lobby_classic)
+HOLO_SIGNS = True      # alle Schilder im Hub als Hologramme (False = dunkle Tafeln)
 
 HUB_GATES_NORTH = (
     ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (210, 120, 80), -40),
@@ -1331,7 +1380,15 @@ def build_lobby():
         build_lobby_classic()
         return
     b = Builder(HUB_ORIGIN)
+    b.holo = HOLO_SIGNS
     rng = random.Random(5)
+
+    def client_board(name, size, pos, angles=(0, 0, 0)):
+        """Tafel, die der Client beschreibt: als Hologramm (Glas) oder dunkle Fläche."""
+        if b.holo:
+            b.holo_panel("Decor", name, size, pos, angles)
+        else:
+            b.box("Decor", name, size, pos, graphite, "SmoothPlastic", angles=angles)
     # Mittelhell: zwischen der ganz dunklen und der hellen Version, Akzent kühles Hellblau
     floor, wall, steel, graphite = (46, 50, 58), (60, 65, 74), (78, 83, 92), (22, 25, 30)
     walkway, accent = (30, 33, 40), (120, 185, 235)
@@ -1428,7 +1485,7 @@ def build_lobby():
                          "Properties": {"Range": 18, "Brightness": 1.4, "Color": rgb(*color)}}])
         b.sign2("Sign_" + mode_id, (17.5, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
                 (236, 239, 243), angles=(-12, 0, 0), glow=color)
-        b.box("Decor", "GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15), graphite, "SmoothPlastic")
+        client_board("GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15))
         # Modus-Name gerade vor dem Portal auf der Fläche (lesbar vom Spawn aus)
         b.floor_text("FloorLabel_" + mode_id, (13, 0.1, 3.6), (x, 0.3, gate_z - 11.5), title, color)
         b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (x, 0.4, gate_z - 4), color, "Neon",
@@ -1451,8 +1508,7 @@ def build_lobby():
                   "Face": "Bottom", "Range": 10, "Brightness": 2, "Angle": 70, "Color": rgb(255, 245, 230)}}])
         b.add("Decor", "ShopDisplay" + str(k), (1, 1, 1), (vx, 4.6, vz), accent, "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.box("Decor", "ShopPlaque" + str(k), (4.4, 1.6, 0.2), (vx + 2.6, 1.3, vz), graphite, "SmoothPlastic",
-              angles=(0, -90, 0))
+        client_board("ShopPlaque" + str(k), (4.4, 1.6, 0.2), (vx + 2.7, 1.3, vz), angles=(0, -90, 0))
     # Theke mit E-Aufforderung (Client legt den Prompt an)
     cxs = x0 + 15
     b.box("Decor", "ShopCounter", (2.6, 3.4, 12), (cxs, 1.7, 0), (36, 39, 46), "Metal")
@@ -1515,13 +1571,17 @@ def build_lobby():
                angles=(0, face_yaw, 0))
 
     # ---------- Süden (Rückwand): Einsatz-Bildschirm, Logo, Plakate ----------
-    b.box("Decor", "MissionBoardFrame", (25, 12, 0.4), (0, 14, z0 + 0.2), steel, "Metal")
-    b.box("Decor", "MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.5), graphite, "SmoothPlastic", angles=(0, 180, 0))
+    if not b.holo:
+        b.box("Decor", "MissionBoardFrame", (25, 12, 0.4), (0, 14, z0 + 0.2), steel, "Metal")
+    client_board("MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.8), angles=(0, 180, 0))
+    if b.holo:
+        b.holo_edges("MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.8), (0, 180, 0), accent)
     b.sign2("BackLogo", (30, 4.5, 0.4), (0, 22.5, z0 + 0.5), "SHOOTOUT", "TACTICAL OPERATIONS",
             graphite, accent, (236, 239, 243), angles=(0, 180, 0), glow=accent)
     for x, title, sub, color in ((-27, "WERDE AGENT", "9 AGENTEN · EIGENE FÄHIGKEITEN", (150, 120, 210)),
                                  (27, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112))):
-        b.box("Decor", "PosterFrame", (15, 10, 0.3), (x, 15, z0 + 0.2), steel, "Metal")
+        if not b.holo:
+            b.box("Decor", "PosterFrame", (15, 10, 0.3), (x, 15, z0 + 0.2), steel, "Metal")
         b.sign2("Poster", (14, 9, 0.4), (x, 15, z0 + 0.45), title, sub, graphite, color, (236, 239, 243),
                 angles=(0, 180, 0), glow=color)
     for x in (-45, -38, 38, 45):

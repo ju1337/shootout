@@ -6085,13 +6085,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -6100,7 +6110,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -6138,11 +6148,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8235,
-           0.4706,
-           0.3137
+           0.8745,
+           0.6275,
+           0.5176
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -6178,11 +6193,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -6218,7 +6238,8 @@
            0.4706,
            0.3137
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -6239,6 +6260,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "Sign_FreeForAllHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -40.0,
+         17.266,
+         44.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8588,
+       0.5765,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Sign_FreeForAllHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -40.0,
+         23.134,
+         43.176
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8588,
+       0.5765,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "GateCount_FreeForAll",
@@ -6277,13 +6396,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -6616,13 +6745,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -6631,7 +6770,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -6669,11 +6808,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.3922,
-           0.5882,
-           0.8039
+           0.5725,
+           0.7098,
+           0.8627
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -6709,11 +6853,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -6749,7 +6898,8 @@
            0.5882,
            0.8039
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -6770,6 +6920,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "Sign_DominationHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -20.0,
+         17.266,
+         44.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5137,
+       0.6706,
+       0.8431
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Sign_DominationHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -20.0,
+         23.134,
+         43.176
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5137,
+       0.6706,
+       0.8431
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "GateCount_Domination",
@@ -6808,13 +7056,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -7147,13 +7405,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -7162,7 +7430,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -7200,11 +7468,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.7451,
-           0.7608,
-           0.7843
+           0.8196,
+           0.8314,
+           0.8471
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -7240,11 +7513,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -7280,7 +7558,8 @@
            0.7608,
            0.7843
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -7301,6 +7580,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "Sign_TrainingHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         17.266,
+         44.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7961,
+       0.8078,
+       0.8275
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Sign_TrainingHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         23.134,
+         43.176
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7961,
+       0.8078,
+       0.8275
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "GateCount_Training",
@@ -7339,13 +7716,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -7678,13 +8065,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -7693,7 +8090,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -7731,11 +8128,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.5098,
-           0.6667,
-           0.451
+           0.6549,
+           0.7647,
+           0.6157
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -7771,11 +8173,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -7811,7 +8218,8 @@
            0.6667,
            0.451
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -7832,6 +8240,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "Sign_WingmanHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         20.0,
+         17.266,
+         44.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6078,
+       0.7333,
+       0.5608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Sign_WingmanHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         20.0,
+         23.134,
+         43.176
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6078,
+       0.7333,
+       0.5608
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "GateCount_Wingman",
@@ -7870,13 +8376,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -8209,13 +8725,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -8224,7 +8750,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -8262,11 +8788,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8039,
-           0.3529,
-           0.3137
+           0.8627,
+           0.5451,
+           0.5176
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8302,11 +8833,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8342,7 +8878,8 @@
            0.3529,
            0.3137
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -8363,6 +8900,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "Sign_ArenaHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         40.0,
+         17.266,
+         44.424
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8431,
+       0.4824,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Sign_ArenaHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       17.7,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         40.0,
+         23.134,
+         43.176
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.978148,
+          0.207912
+         ],
+         [
+          0.0,
+          -0.207912,
+          0.978148
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8431,
+       0.4824,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "GateCount_Arena",
@@ -8401,13 +9036,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -8447,13 +9092,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -8462,7 +9117,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -8500,11 +9155,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8039,
-           0.3529,
-           0.3137
+           0.8627,
+           0.5451,
+           0.5176
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8540,11 +9200,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8580,7 +9245,8 @@
            0.3529,
            0.3137
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -8601,6 +9267,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "DuelsBannerHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       36.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         30.0,
+         23.4,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8431,
+       0.4824,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "DuelsBannerHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       36.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         30.0,
+         25.8,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8431,
+       0.4824,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "ModesBanner",
@@ -8639,13 +9403,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -8654,7 +9428,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -8692,11 +9466,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.4706,
-           0.7255,
-           0.9216
+           0.6275,
+           0.8078,
+           0.9451
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8732,11 +9511,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -8772,7 +9556,8 @@
            0.7255,
            0.9216
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -8793,6 +9578,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "ModesBannerHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       56.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -20.0,
+         23.4,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5765,
+       0.7804,
+       0.9373
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "ModesBannerHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       56.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -20.0,
+         25.8,
+         45.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5765,
+       0.7804,
+       0.9373
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "VitrineBase",
@@ -9106,7 +9989,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -46.4,
+         -46.3,
          1.3,
          -11
         ],
@@ -9130,13 +10013,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -9451,7 +10344,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -46.4,
+         -46.3,
          1.3,
          0
         ],
@@ -9475,13 +10368,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -9796,7 +10699,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -46.4,
+         -46.3,
          1.3,
          11
         ],
@@ -9820,13 +10723,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      }
     },
     {
@@ -10051,13 +10964,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -10066,7 +10989,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -10104,11 +11027,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8314,
-           0.6667,
-           0.3137
+           0.8784,
+           0.7647,
+           0.5176
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -10144,11 +11072,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -10184,7 +11117,8 @@
            0.6667,
            0.3137
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -10205,6 +11139,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "ShopSignHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -54.4,
+         10.25,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8627,
+       0.7333,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "ShopSignHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -54.4,
+         15.75,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8627,
+       0.7333,
+       0.451
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "Leaderboard_Elo",
@@ -11407,13 +12439,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -11422,7 +12464,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -11460,11 +12502,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.3529,
-           0.6863,
-           0.8824
+           0.5451,
+           0.7804,
+           0.9176
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -11500,11 +12547,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -11540,7 +12592,8 @@
            0.6863,
            0.8824
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -11561,6 +12614,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "BoardsTitleHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         54.4,
+         17.0,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4824,
+       0.749,
+       0.9059
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "BoardsTitleHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         54.4,
+         21.0,
+         0.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4824,
+       0.749,
+       0.9059
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "PodiumWallStrip",
@@ -11646,13 +12797,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -11661,7 +12822,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -11699,11 +12860,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.7843,
-           0.651,
-           0.3608
+           0.8471,
+           0.7529,
+           0.549
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -11739,11 +12905,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -11779,7 +12950,8 @@
            0.651,
            0.3608
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -11800,6 +12972,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "PodiumTitleHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -44.72,
+         12.4,
+         -29.54
+        ],
+        "orientation": [
+         [
+          -0.6,
+          0.0,
+          -0.8
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.8,
+          0.0,
+          -0.6
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8275,
+       0.7176,
+       0.4863
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "PodiumTitleHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       18.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -44.72,
+         16.0,
+         -29.54
+        ],
+        "orientation": [
+         [
+          -0.6,
+          0.0,
+          -0.8
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.8,
+          0.0,
+          -0.6
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8275,
+       0.7176,
+       0.4863
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "PodiumPlinth",
@@ -11976,20 +13246,32 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
        "Name": "SignGui",
        "ClassName": "SurfaceGui",
        "Properties": {
-        "Face": "Front"
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 2.4
        },
        "Children": [
         {
@@ -12013,10 +13295,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.7843,
-           0.651,
-           0.3608
-          ]
+           0.8588,
+           0.7725,
+           0.5843
+          ],
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ],
+          "TextStrokeTransparency": 0.5
          }
         }
        ]
@@ -12152,20 +13440,32 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
        "Name": "SignGui",
        "ClassName": "SurfaceGui",
        "Properties": {
-        "Face": "Front"
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 2.4
        },
        "Children": [
         {
@@ -12189,10 +13489,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.7451,
-           0.7608,
-           0.7843
-          ]
+           0.8314,
+           0.8431,
+           0.8588
+          ],
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ],
+          "TextStrokeTransparency": 0.5
          }
         }
        ]
@@ -12328,20 +13634,32 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
        "Name": "SignGui",
        "ClassName": "SurfaceGui",
        "Properties": {
-        "Face": "Front"
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 2.4
        },
        "Children": [
         {
@@ -12365,61 +13683,21 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.7059,
+           0.8078,
+           0.6549,
+           0.5255
+          ],
+          "TextStrokeColor3": [
+           0.1569,
            0.4706,
-           0.2745
-          ]
+           0.7059
+          ],
+          "TextStrokeTransparency": 0.5
          }
         }
        ]
       }
      ]
-    },
-    {
-     "Name": "MissionBoardFrame",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       25,
-       12,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0,
-         14,
-         -37.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
     },
     {
      "Name": "MissionBoard",
@@ -12436,7 +13714,7 @@
         "position": [
          0,
          14,
-         -37.5
+         -37.2
         ],
         "orientation": [
          [
@@ -12458,13 +13736,121 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
+     }
+    },
+    {
+     "Name": "MissionBoardHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         8.5,
+         -37.2
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "MissionBoardHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         19.5,
+         -37.2
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
      }
     },
     {
@@ -12504,13 +13890,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -12519,7 +13915,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -12557,11 +13953,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.4706,
-           0.7255,
-           0.9216
+           0.6275,
+           0.8078,
+           0.9451
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -12597,11 +13998,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -12637,7 +14043,8 @@
            0.7255,
            0.9216
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -12660,25 +14067,25 @@
      ]
     },
     {
-     "Name": "PosterFrame",
+     "Name": "BackLogoHoloEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       15,
-       10,
-       0.3
+       30.2,
+       0.1,
+       0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -27,
-         15,
-         -37.8
+         0.0,
+         20.25,
+         -37.5
         ],
         "orientation": [
          [
-          1.0,
+          -1.0,
           0.0,
           0.0
          ],
@@ -12688,21 +14095,73 @@
           0.0
          ],
          [
+          -0.0,
           0.0,
-          0.0,
-          1.0
+          -1.0
          ]
         ]
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.5765,
+       0.7804,
+       0.9373
       ],
-      "Material": "Metal",
+      "Material": "Neon",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "BackLogoHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         24.75,
+         -37.5
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5765,
+       0.7804,
+       0.9373
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
      }
     },
     {
@@ -12742,13 +14201,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -12757,7 +14226,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -12795,11 +14264,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.5882,
-           0.4706,
-           0.8235
+           0.7098,
+           0.6275,
+           0.8745
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -12835,11 +14309,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -12875,7 +14354,8 @@
            0.4706,
            0.8235
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -12898,25 +14378,25 @@
      ]
     },
     {
-     "Name": "PosterFrame",
+     "Name": "PosterHoloEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       15,
-       10,
-       0.3
+       14.2,
+       0.1,
+       0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         27,
-         15,
-         -37.8
+         -27.0,
+         10.5,
+         -37.55
         ],
         "orientation": [
          [
-          1.0,
+          -1.0,
           0.0,
           0.0
          ],
@@ -12926,21 +14406,73 @@
           0.0
          ],
          [
+          -0.0,
           0.0,
-          0.0,
-          1.0
+          -1.0
          ]
         ]
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.6706,
+       0.5765,
+       0.8588
       ],
-      "Material": "Metal",
+      "Material": "Neon",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "PosterHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -27.0,
+         19.5,
+         -37.55
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6706,
+       0.5765,
+       0.8588
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
      }
     },
     {
@@ -12980,13 +14512,23 @@
        }
       },
       "Color": [
-       0.0863,
-       0.098,
-       0.1176
+       0.3922,
+       0.7059,
+       0.902
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Glass",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.86,
+      "CanCollide": false,
+      "CanQuery": false,
+      "Attributes": {
+       "Attributes": {
+        "Holo": {
+         "Bool": true
+        }
+       }
+      }
      },
      "Children": [
       {
@@ -12995,7 +14537,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 1.6,
+        "Brightness": 2.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -13033,11 +14575,16 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.4392,
-           0.698,
-           0.4392
+           0.6039,
+           0.7882,
+           0.6039
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -13073,11 +14620,16 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9255,
-           0.9373,
-           0.9529
+           0.9451,
+           0.9529,
+           0.9647
           ],
-          "TextStrokeTransparency": 0.55
+          "TextStrokeTransparency": 0.45,
+          "TextStrokeColor3": [
+           0.1569,
+           0.4706,
+           0.7059
+          ]
          }
         },
         {
@@ -13113,7 +14665,8 @@
            0.698,
            0.4392
           ],
-          "BorderSizePixel": 0
+          "BorderSizePixel": 0,
+          "BackgroundTransparency": 0.3
          }
         }
        ]
@@ -13134,6 +14687,104 @@
        }
       }
      ]
+    },
+    {
+     "Name": "PosterHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         27.0,
+         10.5,
+         -37.55
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.7569,
+       0.549
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "PosterHoloEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14.2,
+       0.1,
+       0.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         27.0,
+         19.5,
+         -37.55
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.549,
+       0.7569,
+       0.549
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.15,
+      "CanCollide": false,
+      "CanQuery": false
+     }
     },
     {
      "Name": "WallBand",

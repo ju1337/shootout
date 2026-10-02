@@ -19,6 +19,21 @@ local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
+-- Holo-Tafel (Attribut "Holo" am Part): Schrift leuchtet unabhängig vom Licht, mit blauem Schimmer
+local function holoSurface(surface, part)
+	if part:GetAttribute("Holo") then
+		surface.LightInfluence = 0
+		surface.Brightness = 2.2
+		for _, label in surface:GetDescendants() do
+			if label:IsA("TextLabel") then
+				label.TextStrokeColor3 = Color3.fromRGB(40, 120, 180)
+				label.TextStrokeTransparency = 0.5
+			end
+		end
+	end
+end
+
+
 local HubLineup = {}
 
 -- Bühne mit dem eigenen Agenten: nur wenn die Hub-Map einen Part "LineupSpot" hat (alter Hangar);
@@ -306,6 +321,7 @@ local function buildShopVitrine()
 				label.Parent = surface
 			end
 		end
+		holoSurface(surface, part)
 		local rarity = Cosmetics.Rarities[item.Rarity]
 		surface.ItemName.Text = string.upper(item.Name)
 		surface.ItemInfo.Text = string.upper(rarity and rarity.Name or "") .. "  ·  " .. UITheme.FormatNumber(item.Price or 0)
@@ -423,6 +439,11 @@ local function buildMissionBoard()
 			countLabel.Parent = gateGui
 			gateLabels[id] = countLabel
 		end
+	end
+
+	holoSurface(surface, board)
+	for _, countLabel in gateLabels do
+		holoSurface(countLabel.Parent, countLabel.Parent.Adornee)
 	end
 
 	local function update()
