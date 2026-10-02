@@ -988,21 +988,68 @@
      }
     },
     {
-     "Name": "Walkway",
+     "Name": "CarpetSpawnEdge",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.7,
+       0.03,
+       26.7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         0.215,
+         -23.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetSpawn",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
        10,
        0.05,
-       22
+       26.0
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         0,
-         0.23,
-         -24.0
+         0.0,
+         0.245,
+         -23.0
         ],
         "orientation": [
          [
@@ -1028,112 +1075,18 @@
        0.1294,
        0.1569
       ],
-      "Material": "Fabric",
+      "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "WalkEdge",
+     "Name": "CarpetRingEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       0.35,
-       0.06,
-       22
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -5.2,
-         0.24,
-         -24.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "WalkEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.35,
-       0.06,
-       22
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         5.2,
-         0.24,
-         -24.0
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "WalkRingEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.04,
+       0.03,
        26.7,
        26.7
       ],
@@ -1141,7 +1094,7 @@
        "CFrame": {
         "position": [
          0,
-         0.22,
+         0.215,
          0
         ],
         "orientation": [
@@ -1172,11 +1125,11 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder",
-      "Transparency": 0.35
+      "Transparency": 0.3
      }
     },
     {
-     "Name": "WalkRing",
+     "Name": "CarpetRing",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
@@ -1189,7 +1142,7 @@
        "CFrame": {
         "position": [
          0,
-         0.235,
+         0.245,
          0
         ],
         "orientation": [
@@ -1216,34 +1169,34 @@
        0.1294,
        0.1569
       ],
-      "Material": "Fabric",
+      "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder"
      }
     },
     {
-     "Name": "Walkway",
+     "Name": "CarpetGateEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       10,
-       0.05,
-       20.4
+       8.7,
+       0.03,
+       50.462
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         0,
-         0.23,
-         23.2
+         -23.305,
+         0.215,
+         25.952
         ],
         "orientation": [
          [
-          1.0,
+          0.741471,
           0.0,
-          0.0
+          -0.670984
          ],
          [
           0.0,
@@ -1251,9 +1204,56 @@
           0.0
          ],
          [
+          0.670984,
           0.0,
+          0.741471
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetGate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       49.762
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -23.305,
+         0.245,
+         25.952
+        ],
+        "orientation": [
+         [
+          0.741471,
           0.0,
-          1.0
+          -0.670984
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.670984,
+          0.0,
+          0.741471
          ]
         ]
        }
@@ -1263,243 +1263,9 @@
        0.1294,
        0.1569
       ],
-      "Material": "Fabric",
+      "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "WalkEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.35,
-       0.06,
-       20.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -5.2,
-         0.24,
-         23.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "WalkEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.35,
-       0.06,
-       20.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         5.2,
-         0.24,
-         23.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Walkway",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       104,
-       0.05,
-       6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0,
-         0.23,
-         36.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "Fabric",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "WalkEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       104,
-       0.06,
-       0.35
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0,
-         0.24,
-         33.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
-     }
-    },
-    {
-     "Name": "Lane",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.4,
-       0.05,
-       45.526
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -24.462,
-         0.26,
-         26.765
-        ],
-        "orientation": [
-         [
-          0.730805,
-          0.0,
-          -0.682586
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.682586,
-          0.0,
-          0.730805
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.8235,
-       0.4706,
-       0.3137
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.35
      }
     },
     {
@@ -1508,22 +1274,22 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       7.4,
        0.1,
-       4.2
+       2.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -40,
+         -29.141,
          0.3,
-         35.8
+         32.4
         ],
         "orientation": [
          [
-          -1.0,
+          -0.741471,
           0.0,
-          0.0
+          0.670984
          ],
          [
           0.0,
@@ -1531,9 +1297,9 @@
           0.0
          ],
          [
-          -0.0,
+          -0.670984,
           0.0,
-          -1.0
+          -0.741471
          ]
         ]
        }
@@ -1595,27 +1361,27 @@
      ]
     },
     {
-     "Name": "Lane",
+     "Name": "CarpetGateEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       1.4,
-       0.05,
-       34.289
+       8.7,
+       0.03,
+       39.397
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -12.721,
-         0.26,
-         27.877
+         -12.016,
+         0.215,
+         26.776
         ],
         "orientation": [
          [
-          0.905404,
+          0.910887,
           0.0,
-          -0.424551
+          -0.412656
          ],
          [
           0.0,
@@ -1623,22 +1389,68 @@
           0.0
          ],
          [
-          0.424551,
+          0.412656,
           0.0,
-          0.905404
+          0.910887
          ]
         ]
        }
       },
       "Color": [
-       0.3922,
-       0.5882,
-       0.8039
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.35
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetGate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       38.697
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -12.016,
+         0.245,
+         26.776
+        ],
+        "orientation": [
+         [
+          0.910887,
+          0.0,
+          -0.412656
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.412656,
+          0.0,
+          0.910887
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
      }
     },
     {
@@ -1647,22 +1459,22 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       7.4,
        0.1,
-       4.2
+       2.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -20,
+         -14.564,
          0.3,
-         35.8
+         32.4
         ],
         "orientation": [
          [
-          -1.0,
+          -0.910887,
           0.0,
-          0.0
+          0.412656
          ],
          [
           0.0,
@@ -1670,9 +1482,9 @@
           0.0
          ],
          [
-          -0.0,
+          -0.412656,
           0.0,
-          -1.0
+          -0.910887
          ]
         ]
        }
@@ -1734,21 +1546,21 @@
      ]
     },
     {
-     "Name": "Lane",
+     "Name": "CarpetGateEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       1.4,
-       0.05,
-       29.9
+       8.7,
+       0.03,
+       35.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0.0,
-         0.26,
-         28.45
+         0.215,
+         27.2
         ],
         "orientation": [
          [
@@ -1770,14 +1582,60 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7608,
-       0.7843
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.35
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetGate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       34.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0.0,
+         0.245,
+         27.2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
      }
     },
     {
@@ -1786,16 +1644,16 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       7.4,
        0.1,
-       4.2
+       2.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         0,
+         0.0,
          0.3,
-         35.8
+         32.4
         ],
         "orientation": [
          [
@@ -1873,27 +1731,27 @@
      ]
     },
     {
-     "Name": "Lane",
+     "Name": "CarpetGateEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       1.4,
-       0.05,
-       34.289
+       8.7,
+       0.03,
+       39.397
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         12.721,
-         0.26,
-         27.877
+         12.016,
+         0.215,
+         26.776
         ],
         "orientation": [
          [
-          0.905404,
+          0.910887,
           0.0,
-          0.424551
+          0.412656
          ],
          [
           0.0,
@@ -1901,22 +1759,68 @@
           0.0
          ],
          [
-          -0.424551,
+          -0.412656,
           0.0,
-          0.905404
+          0.910887
          ]
         ]
        }
       },
       "Color": [
-       0.5098,
-       0.6667,
-       0.451
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.35
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetGate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       38.697
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         12.016,
+         0.245,
+         26.776
+        ],
+        "orientation": [
+         [
+          0.910887,
+          0.0,
+          0.412656
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.412656,
+          0.0,
+          0.910887
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
      }
     },
     {
@@ -1925,22 +1829,22 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       7.4,
        0.1,
-       4.2
+       2.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         20,
+         14.564,
          0.3,
-         35.8
+         32.4
         ],
         "orientation": [
          [
-          -1.0,
+          -0.910887,
           0.0,
-          0.0
+          -0.412656
          ],
          [
           0.0,
@@ -1948,9 +1852,9 @@
           0.0
          ],
          [
-          -0.0,
+          0.412656,
           0.0,
-          -1.0
+          -0.910887
          ]
         ]
        }
@@ -2012,27 +1916,27 @@
      ]
     },
     {
-     "Name": "Lane",
+     "Name": "CarpetGateEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       1.4,
-       0.05,
-       45.526
+       8.7,
+       0.03,
+       50.462
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         24.462,
-         0.26,
-         26.765
+         23.305,
+         0.215,
+         25.952
         ],
         "orientation": [
          [
-          0.730805,
+          0.741471,
           0.0,
-          0.682586
+          0.670984
          ],
          [
           0.0,
@@ -2040,22 +1944,68 @@
           0.0
          ],
          [
-          -0.682586,
+          -0.670984,
           0.0,
-          0.730805
+          0.741471
          ]
         ]
        }
       },
       "Color": [
-       0.8039,
-       0.3529,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.35
+      "Transparency": 0.3
+     }
+    },
+    {
+     "Name": "CarpetGate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.05,
+       49.762
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         23.305,
+         0.245,
+         25.952
+        ],
+        "orientation": [
+         [
+          0.741471,
+          0.0,
+          0.670984
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.670984,
+          0.0,
+          0.741471
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1294,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
      }
     },
     {
@@ -2064,22 +2014,22 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       7.4,
        0.1,
-       4.2
+       2.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         40,
+         29.141,
          0.3,
-         35.8
+         32.4
         ],
         "orientation": [
          [
-          -1.0,
+          -0.741471,
           0.0,
-          0.0
+          -0.670984
          ],
          [
           0.0,
@@ -2087,9 +2037,9 @@
           0.0
          ],
          [
-          -0.0,
+          0.670984,
           0.0,
-          -1.0
+          -0.741471
          ]
         ]
        }
@@ -3148,98 +3098,6 @@
          0,
          25,
          42
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Pillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       26,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -28,
-         13.0,
-         -16
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3059,
-       0.3255,
-       0.3608
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "Pillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.4,
-       26,
-       2.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         28,
-         13.0,
-         -16
         ],
         "orientation": [
          [
@@ -5352,100 +5210,6 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Transparency": 0.4
-     }
-    },
-    {
-     "Name": "PillarStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.5,
-       0.3,
-       2.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -28,
-         3.2,
-         -16
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
-     }
-    },
-    {
-     "Name": "PillarStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.5,
-       0.3,
-       2.5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         28,
-         3.2,
-         -16
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.3
      }
     },
     {
@@ -13540,7 +13304,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.6,
+      "Transparency": 1,
       "Neutral": true,
       "Duration": 0,
       "AllowTeamChangeOnTouch": false,

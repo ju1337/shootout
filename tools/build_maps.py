@@ -161,11 +161,11 @@ class Builder:
         self.box("Nature", "Rock", (s, s * 0.7, s * 1.2), (x, s * 0.25, z), (115, 115, 110), "Slate",
                  angles=(rng.uniform(-10, 10), rng.uniform(0, 360), rng.uniform(-10, 10)))
 
-    def spawn(self, x, z, yaw=0, real=False, group="Spawns"):
+    def spawn(self, x, z, yaw=0, real=False, group="Spawns", hidden=False):
         """real=True: echte SpawnLocation (nur im Hub). Sonst unsichtbarer Spawnpunkt für die Modus-Logik."""
         if real:
             self.add(group, "Spawn", (6, 1, 6), (x, 0.5, z), (255, 140, 40), "Neon", angles=(0, yaw, 0),
-                     cls="SpawnLocation", props={"Transparency": 0.6, "Neutral": True, "Duration": 0,
+                     cls="SpawnLocation", props={"Transparency": 1 if hidden else 0.6, "Neutral": True, "Duration": 0,
                                                  "AllowTeamChangeOnTouch": False, "CanCollide": False})
         else:
             self.add(group, "SpawnPoint", (4, 1, 4), (x, 0.5, z), (90, 160, 255), "SmoothPlastic",
@@ -1339,7 +1339,6 @@ def build_lobby():
     zc = (z0 + z1) / 2
     tz = 0          # Kartentisch
     gate_z = z1 - 0.6
-    row_z = gate_z - 9  # Quersteg vor den Toren
 
     b.ground(160, 160, (40, 42, 46), "Asphalt")
     b.border(150, 150, 2, (60, 60, 65), "Metal", barrier=80)
@@ -1365,34 +1364,30 @@ def build_lobby():
                              "Properties": {"Range": 30, "Brightness": 1.05, "Color": rgb(225, 232, 245)}}])
     for x in (x0 + 0.45, x1 - 0.45):
         b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.4})
-    for x, z in ((-28, -16), (28, -16), (-31, 24), (31, 24)):
+    for x, z in ((-31, 24), (31, 24)):
         b.box("Walls", "Pillar", (2.4, H, 2.4), (x, H / 2, z), steel, "Metal")
         b.box("Decor", "PillarStrip", (2.5, 0.3, 2.5), (x, 3.2, z), accent, "Neon", props={"Transparency": 0.3})
 
-    b.spawn(0, -31, yaw=180, real=True)
+    b.spawn(0, -31, yaw=180, real=True, hidden=True)
 
-    # ---------- Weg: Spawn -> Tisch -> Ring -> bis vor die Tore -> Quersteg zu allen Portalen ----------
-    def runner(name, size, pos):
-        b.box("Ground", name, size, pos, walkway, "Fabric")
-    def edge(size, pos):
-        b.box("Ground", "WalkEdge", size, pos, accent, "Neon", props={"Transparency": 0.35})
+    # ---------- Teppich: Spawn -> Ring um den Tisch -> je eine Bahn bis in jedes Portal ----------
+    # Alle Teppichteile liegen auf derselben Höhe, ihre Leuchtränder etwas tiefer und breiter darunter:
+    # wo sich Bahnen überlappen, deckt der Teppich die Ränder ab – sichtbar bleibt nur der Außenrand.
     ring_r = 13
-    south_len = (tz - ring_r) - (z0 + 3)
-    runner("Walkway", (10, 0.05, south_len), (0, 0.23, z0 + 3 + south_len / 2))
-    for x in (-5.2, 5.2):
-        edge((0.35, 0.06, south_len), (x, 0.24, z0 + 3 + south_len / 2))
-    # Ring um den Tisch (dunkle Scheibe mit Leuchtkante)
-    b.add("Ground", "WalkRingEdge", (0.04, ring_r * 2 + 0.7, ring_r * 2 + 0.7), (0, 0.22, tz), accent, "Neon",
-          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35})
-    b.add("Ground", "WalkRing", (0.05, ring_r * 2, ring_r * 2), (0, 0.235, tz), walkway, "Fabric", angles=(0, 0, 90),
-          props={"Shape": "Cylinder"})
-    north_start = tz + ring_r
-    north_len = (row_z - 3) - north_start
-    runner("Walkway", (10, 0.05, north_len), (0, 0.23, north_start + north_len / 2))
-    for x in (-5.2, 5.2):
-        edge((0.35, 0.06, north_len), (x, 0.24, north_start + north_len / 2))
-    runner("Walkway", (104, 0.05, 6), (0, 0.23, row_z))
-    edge((104, 0.06, 0.35), (0, 0.24, row_z - 3.2))
+    def carpet(name, start, finish, width):
+        (ax, az), (bx, bz) = start, finish
+        length = math.hypot(bx - ax, bz - az)
+        yaw = math.degrees(math.atan2(bx - ax, bz - az))
+        center = ((ax + bx) / 2, (az + bz) / 2)
+        b.box("Ground", name + "Edge", (width + 0.7, 0.03, length + 0.7), (center[0], 0.215, center[1]), accent, "Neon",
+              angles=(0, yaw, 0), props={"Transparency": 0.3})
+        b.box("Ground", name, (width, 0.05, length), (center[0], 0.245, center[1]), walkway, "SmoothPlastic",
+              angles=(0, yaw, 0))
+    carpet("CarpetSpawn", (0, z0 + 2), (0, tz - ring_r + 3), 10)
+    b.add("Ground", "CarpetRingEdge", (0.03, ring_r * 2 + 0.7, ring_r * 2 + 0.7), (0, 0.215, tz), accent, "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.3})
+    b.add("Ground", "CarpetRing", (0.05, ring_r * 2, ring_r * 2), (0, 0.245, tz), walkway, "SmoothPlastic",
+          angles=(0, 0, 90), props={"Shape": "Cylinder"})
 
     # ---------- Kartentisch mit Hologramm ----------
     b.add("Decor", "MapTable", (3, 16, 16), (0, 1.5, tz), steel, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
@@ -1425,17 +1420,18 @@ def build_lobby():
         b.sign2("Sign_" + mode_id, (17.5, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
                 (236, 239, 243), angles=(-12, 0, 0), glow=color)
         b.box("Decor", "GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15), graphite, "SmoothPlastic")
-        # Farbige Spur vom Ring um den Tisch bis ins Portal
-        angle = math.atan2(x, 1) if x == 0 else math.atan2(x, gate_z - tz)
-        sx, sz = math.sin(angle) * (ring_r + 0.5), tz + math.cos(angle) * (ring_r + 0.5)
-        ex, ez = x, gate_z - 2
-        length = math.hypot(ex - sx, ez - sz)
-        b.box("Ground", "Lane", (1.4, 0.05, length), ((sx + ex) / 2, 0.26, (sz + ez) / 2), color, "Neon",
-              angles=(0, math.degrees(math.atan2(ex - sx, ez - sz)), 0), props={"Transparency": 0.35})
+        # Teppichbahn vom Ring bis ins Portal (beginnt im Ring, damit sie nahtlos anschließt)
+        angle = math.atan2(x, gate_z - tz)
+        sx, sz = math.sin(angle) * (ring_r - 3), tz + math.cos(angle) * (ring_r - 3)
+        ex, ez = x, gate_z - 1
+        carpet("CarpetGate", (sx, sz), (ex, ez), 8)
+        # Modus-Name auf der Bahn, kurz vor dem Portal, in Laufrichtung lesbar
+        t = (ez - 12 - sz) / (ez - sz)
+        lx, lz = sx + (ex - sx) * t, sz + (ez - sz) * t
+        b.floor_text("FloorLabel_" + mode_id, (7.4, 0.1, 2.6), (lx, 0.3, lz), title, color,
+                     yaw=180 + math.degrees(math.atan2(ex - sx, ez - sz)))
         b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (x, 0.4, gate_z - 4), color, "Neon",
               props={"CanCollide": False, "Transparency": 0.45})
-        # Modus-Name groß am Boden vor dem Portal (lesbar vom Spawn aus)
-        b.floor_text("FloorLabel_" + mode_id, (14, 0.1, 4.2), (x, 0.3, row_z - 0.6), title, color)
     b.sign2("DuelsBanner", (36, 2.4, 0.4), (30, H - 1.4, z1 - 0.5), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
             graphite, (205, 90, 80), (236, 239, 243), glow=(205, 90, 80))
     b.sign2("ModesBanner", (56, 2.4, 0.4), (-20, H - 1.4, z1 - 0.5), "EINSÄTZE", "LAUF DURCH EIN TOR",
