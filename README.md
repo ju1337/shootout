@@ -13,19 +13,31 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 | Modus | Kurz | Map (Mitte) |
 |---|---|---|
-| Hub | Treffpunkt, Portale, Seitenleiste (Shop, Rucksack, Pass, Aufträge, ...) | (0, 0, 0) |
+| Hub | Hangar wie die RC-Lobby: Einsatz-Tore, Lineup-Bühne, Seitenleiste | Hangar (0, 0, 0) |
 | Free-for-All | jeder gegen jeden, Respawn | Lagerhof (0, 0, 1500) |
 | Drop | 5v5, Absprung über der Map, ein Leben | Tal (1500, 0, 0) |
-| Strikeout | 4v4, Respawn-Tickets, Punkt ziehen Tickets ab | Fabrik (0, 0, -1500) |
-| Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Hafen (-1500, 0, 0) |
+| Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab | Rotation: Fabrik / Zellenblock |
+| Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Rotation: Hafen / Gletscher |
+| Extraction | 4v4, Ziel hacken, Seitenwechsel | Gletscher-Kopie (3000, 0, 1500) |
+| Team Deathmatch | 4v4, 40 Leben pro Team | Fabrik-Kopie (3000, 0, -1500) |
 | Wingman | 2v2, Strikeout-Regeln | Fabrik-Kopie (1500, 0, -1500) |
-| Ranked | Demolition mit Rangpunkten | Hafen-Kopie (1500, 0, 1500) |
+| Ranked | Demolition mit ELO, ab Spielerlevel 10 | Hafen-Kopie (1500, 0, 1500) |
 | 1v1 Arena | Duell | Arena (0, 0, 3000) |
 | Training | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
 
 Team-Modi teilen sich die Logik in `src/server/TeamRoundMode.lua` (Agentenwahl, Kaufphase,
 Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfiguration in
 `src/server/Modes/`, eigene Ziele (z.B. die Bombe) liegen in `src/server/Objectives/`.
+
+## Systeme
+
+- **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ... (STATS-Fenster)
+- **Ranked mit ELO**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
+- **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
+- **Agenten**: 9 Stück, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
+- **Kaufphase**: Geld pro Match, Upgrades, Rüstung, Perks
+- **Battle Pass, tägliche Aufträge, Shop, Codes**
+- **Map-Rotation** pro Match, Multikills und ACE, Todeskamera, Schnelles Spiel
 
 ## Steuerung
 
