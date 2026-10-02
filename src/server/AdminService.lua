@@ -11,6 +11,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
+local LevelConfig = require(Shared.LevelConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local BotService = require(script.Parent.BotService)
 
@@ -138,6 +139,26 @@ function AdminService.Init(manager)
 			amount = math.clamp(tonumber(amount) or 1000, 1, 1000000)
 			ProgressService.AddCoins(player, amount)
 			return player.Name .. " +" .. amount .. " Münzen"
+		end,
+		-- Prestige setzen: value = Stufe (0..10), "max" = höchste Stufe auf Level 100, "level100" = Level 100
+		SetPrestige = function(userId, value)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local info = LevelConfig.Get(player)
+			local prestige, level = info.Prestige, info.Level
+			if value == "max" then
+				prestige, level = LevelConfig.MaxPrestige, LevelConfig.MaxLevel
+			elseif value == "level100" then
+				level = LevelConfig.MaxLevel
+			elseif value == "next" then
+				prestige = math.min(prestige + 1, LevelConfig.MaxPrestige)
+			else
+				prestige, level = math.clamp(tonumber(value) or 0, 0, LevelConfig.MaxPrestige), 1
+			end
+			ProgressService.SetPrestige(player, prestige, level)
+			return player.Name .. ": Prestige " .. prestige .. ", Level " .. level
 		end,
 		GivePassXP = function(userId, amount)
 			local player = target(userId)

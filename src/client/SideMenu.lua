@@ -21,6 +21,7 @@ local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -971,13 +972,12 @@ local function buildPlayerCard()
 	UITheme.Gradient(playerCard, Color3.fromRGB(28, 44, 66), UITheme.Colors.Panel, 0)
 	local accentStrip = make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, playerCard)
 
-	-- Level-Raute links
-	local emblem = UITheme.Diamond(playerCard, 50, UDim2.new(0, 46, 0, 46), UITheme.Colors.Background, ACCENT)
-	local levelNumber = text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 46, 0, 44),
-		Size = UDim2.new(0, 60, 0, 34), Text = "1", TextSize = 30, Font = UITheme.Fonts.Title,
-		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
-	local levelCaption = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, 46, 0, 80),
-		Size = UDim2.new(0, 80, 0, 16), Text = "LEVEL", TextSize = 12, Font = UITheme.Fonts.Title, TextColor3 = GRAY,
+	-- Prestige-Abzeichen links (gleiches Symbol wie über dem Kopf)
+	local emblemHolder = make("Frame", { Position = UDim2.new(0, 6, 0, 2), Size = UDim2.new(0, 84, 0, 84),
+		BackgroundTransparency = 1 }, playerCard)
+	local emblem = PrestigeEmblem.new(emblemHolder, 84)
+	local levelCaption = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, 48, 0, 84),
+		Size = UDim2.new(0, 90, 0, 16), Text = "LEVEL", TextSize = 12, Font = UITheme.Fonts.Title, TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
 
 	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name,
@@ -1017,9 +1017,7 @@ local function buildPlayerCard()
 
 	local function refresh()
 		local info = LevelConfig.Get(player)
-		levelNumber.Text = tostring(info.Level)
-		levelNumber.TextSize = info.Level >= 100 and 24 or 30
-		emblem:FindFirstChildOfClass("UIStroke").Color = info.Color
+		emblem:Set(info.Level, info.Prestige)
 		accentStrip.BackgroundColor3 = info.Color
 		bar.BackgroundColor3 = info.Color
 		levelCaption.Text = info.Prestige > 0 and ("PRESTIGE " .. info.Prestige) or "LEVEL"

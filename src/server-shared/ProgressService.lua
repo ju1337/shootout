@@ -386,6 +386,22 @@ function ProgressService.Prestige(player)
 	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 
+-- Admin: Prestige und Level direkt setzen (prestige 0..MaxPrestige, level 1..MaxLevel)
+function ProgressService.SetPrestige(player, prestige, level)
+	local profile = profiles[player]
+	if not profile then
+		return false
+	end
+	profile.Prestige = math.clamp(math.floor(tonumber(prestige) or 0), 0, LevelConfig.MaxPrestige)
+	local xp = 0
+	for l = 1, math.clamp(math.floor(tonumber(level) or 1), 1, LevelConfig.MaxLevel) - 1 do
+		xp += LevelConfig.XPForLevel(l)
+	end
+	profile.AccountXP = xp
+	ProgressService.Sync(player)
+	return true
+end
+
 function ProgressService.Init()
 	local ok, result = pcall(function()
 		return DataStoreService:GetDataStore("PlayerData_v1")

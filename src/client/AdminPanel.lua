@@ -207,7 +207,7 @@ local function refreshPlayers()
 		end
 	end
 	for i, p in Players:GetPlayers() do
-		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 100), BackgroundColor3 = ROW, BorderSizePixel = 0,
+		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 134), BackgroundColor3 = ROW, BorderSizePixel = 0,
 			LayoutOrder = i }, playerSection)
 		make("UICorner", { CornerRadius = UDim.new(0, 3) }, box)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 6) }, box)
@@ -244,6 +244,19 @@ local function refreshPlayers()
 		end)
 		button("+5 Stufen", 80, actions, Color3.fromRGB(40, 140, 120), function()
 			send("GivePassXP", p.UserId, 5000)
+		end)
+		local prestige = row(box)
+		button("Max Prestige", 100, prestige, Color3.fromRGB(170, 120, 30), function()
+			send("SetPrestige", p.UserId, "max")
+		end)
+		button("Prestige +1", 90, prestige, Color3.fromRGB(110, 80, 170), function()
+			send("SetPrestige", p.UserId, "next")
+		end)
+		button("Level 100", 80, prestige, nil, function()
+			send("SetPrestige", p.UserId, "level100")
+		end)
+		button("Prestige 0", 84, prestige, DANGER, function()
+			send("SetPrestige", p.UserId, 0)
 		end)
 	end
 end

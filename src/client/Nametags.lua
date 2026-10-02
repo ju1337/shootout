@@ -1,6 +1,6 @@
 -- Nametags (ModuleScript, nur Client)
 -- Eigene Namensschilder statt der Roblox-Namen (die Gegner durch Wände verraten würden):
---   Hub:      alle Spieler mit Prestige-Abzeichen (Raute mit Level, Farbe je Prestige, ★-Stufe), Name und Rang
+--   Hub:      alle Spieler mit Prestige-Abzeichen (PrestigeEmblem: Symbol je Stufe), Name und Rang
 --             (auch das eigene Schild, sobald man sich von außen sieht)
 --   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Teamfarbe, Gegner ohne Namen
 
@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
+local PrestigeEmblem = require(Shared.PrestigeEmblem)
 
 local player = Players.LocalPlayer
 
@@ -24,13 +25,7 @@ local function removeTag(model)
 	end
 end
 
-local ROMAN = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" }
-local LEGEND = ColorSequence.new({ -- Prestige 10: Regenbogen-Abzeichen
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)), ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 60)),
-	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 220, 130)), ColorSequenceKeypoint.new(0.75, Color3.fromRGB(80, 160, 255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 90, 255)),
-})
-local legendGradients = {} -- drehende Verläufe der Legenden-Abzeichen
+local emblems = setmetatable({}, { __mode = "k" }) -- [Schild] = PrestigeEmblem
 
 local function newLabel(parent, props)
 	local label = Instance.new("TextLabel")
@@ -48,47 +43,18 @@ end
 local function buildTag(model, head)
 	local tag = Instance.new("BillboardGui")
 	tag.Name = TAG_NAME
-	tag.Size = UDim2.new(0, 250, 0, 58)
+	tag.Size = UDim2.new(0, 250, 0, 64)
 	tag.StudsOffset = Vector3.new(0, 2.8, 0)
 	tag.MaxDistance = 120
 	tag.AlwaysOnTop = false
 	tag.LightInfluence = 0
 
-	local emblem = Instance.new("Frame")
-	emblem.Name = "Emblem"
-	emblem.Size = UDim2.new(0, 58, 0, 58)
-	emblem.BackgroundTransparency = 1
-	emblem.Parent = tag
-	-- Äußere Raute in Prestige-Farbe (mit Verlauf), innere dunkle Raute, Level-Zahl darüber
-	local outer = Instance.new("Frame")
-	outer.Name = "Outer"
-	outer.AnchorPoint = Vector2.new(0.5, 0.5)
-	outer.Position = UDim2.new(0.5, 0, 0.42, 0)
-	outer.Size = UDim2.new(0, 34, 0, 34)
-	outer.Rotation = 45
-	outer.BorderSizePixel = 0
-	outer.Parent = emblem
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.new(1, 1, 1)
-	stroke.Thickness = 1.5
-	stroke.Transparency = 0.3
-	stroke.Parent = outer
-	local gradient = Instance.new("UIGradient")
-	gradient.Name = "Gradient"
-	gradient.Rotation = 90
-	gradient.Parent = outer
-	local inner = Instance.new("Frame")
-	inner.AnchorPoint = Vector2.new(0.5, 0.5)
-	inner.Position = UDim2.new(0.5, 0, 0.5, 0)
-	inner.Size = UDim2.new(0.66, 0, 0.66, 0)
-	inner.BackgroundColor3 = Color3.fromRGB(14, 22, 36)
-	inner.BorderSizePixel = 0
-	inner.Parent = outer
-	newLabel(emblem, { Name = "Level", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.42, 0),
-		Size = UDim2.new(0, 26, 0, 16), Font = Enum.Font.GothamBlack, TextColor3 = Color3.new(1, 1, 1) })
-	-- Prestige-Band unter der Raute ("★ III")
-	newLabel(emblem, { Name = "Prestige", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, 14), Font = Enum.Font.GothamBlack })
+	local holder = Instance.new("Frame")
+	holder.Name = "Emblem"
+	holder.Size = UDim2.new(0, 60, 0, 60)
+	holder.BackgroundTransparency = 1
+	holder.Parent = tag
+	emblems[tag] = PrestigeEmblem.new(holder, 60)
 
 	newLabel(tag, { Name = "Title", Position = UDim2.new(0, 64, 0, 4), Size = UDim2.new(1, -64, 0.55, 0),
 		Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left })
@@ -118,21 +84,7 @@ local function setTag(model, info)
 	tag.Subtitle.Position = UDim2.new(0, info.Player and 64 or 0, 0.58, 0)
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
-		local gradient = emblem.Outer.Gradient
-		emblem.Level.Text = tostring(level.Level)
-		if level.Prestige >= LevelConfig.MaxPrestige then
-			emblem.Outer.BackgroundColor3 = Color3.new(1, 1, 1)
-			gradient.Color = LEGEND
-			legendGradients[gradient] = true
-		else
-			emblem.Outer.BackgroundColor3 = level.Color
-			gradient.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 160))
-			legendGradients[gradient] = nil
-		end
-		emblem.Prestige.Visible = level.Prestige > 0
-		emblem.Prestige.Text = "★ " .. (ROMAN[level.Prestige] or tostring(level.Prestige))
-		emblem.Prestige.TextColor3 = level.Color
-		emblem.Outer.Size = UDim2.new(0, level.Prestige > 0 and 36 or 32, 0, level.Prestige > 0 and 36 or 32)
+		emblems[tag]:Set(level.Level, level.Prestige)
 	end
 end
 
@@ -186,16 +138,6 @@ local function update()
 end
 
 function Nametags.Init()
-	-- Legenden-Abzeichen (Prestige 10) drehen ihren Regenbogen-Verlauf
-	game:GetService("RunService").RenderStepped:Connect(function(dt)
-		for gradient in legendGradients do
-			if gradient.Parent then
-				gradient.Rotation = (gradient.Rotation + dt * 90) % 360
-			else
-				legendGradients[gradient] = nil
-			end
-		end
-	end)
 	-- Eigenes Schild in der Ego-Ansicht ausblenden (sonst schwebt es vor der Kamera)
 	game:GetService("RunService").RenderStepped:Connect(function()
 		local character = player.Character
