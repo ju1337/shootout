@@ -40,30 +40,84 @@ local function newLabel(parent, props)
 	return label
 end
 
--- Schild aufbauen: links das Prestige-Abzeichen (Raute mit Level), rechts Name und Unterzeile
+local parts = {} -- [Schild] = { Title, Subtitle, Emblem, Divider } (wird beim Entfernen gelöscht)
+
+-- Schild: kleine Karte (dunkel, halbdurchsichtig, abgerundet), die sich der Textbreite anpasst:
+-- [Prestige-Abzeichen] | [Name / Rang]
 local function buildTag(model, head)
 	local tag = Instance.new("BillboardGui")
 	tag.Name = TAG_NAME
-	tag.Size = UDim2.new(0, 250, 0, 64)
-	tag.StudsOffset = Vector3.new(0, 2.8, 0)
+	tag.Size = UDim2.new(0, 320, 0, 56)
+	tag.StudsOffset = Vector3.new(0, 2.9, 0)
 	tag.MaxDistance = 120
 	tag.AlwaysOnTop = false
 	tag.LightInfluence = 0
 
+	local card = Instance.new("Frame")
+	card.Name = "Card"
+	card.AnchorPoint = Vector2.new(0.5, 0.5)
+	card.Position = UDim2.fromScale(0.5, 0.5)
+	card.Size = UDim2.new(0, 0, 1, 0)
+	card.AutomaticSize = Enum.AutomaticSize.X
+	card.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
+	card.BackgroundTransparency = 0.35
+	card.Parent = tag
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = card
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.new(1, 1, 1)
+	stroke.Transparency = 0.85
+	stroke.Parent = card
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 4)
+	padding.PaddingRight = UDim.new(0, 12)
+	padding.Parent = card
+	local layout = Instance.new("UIListLayout")
+	layout.FillDirection = Enum.FillDirection.Horizontal
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	layout.Padding = UDim.new(0, 8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = card
+
 	local holder = Instance.new("Frame")
 	holder.Name = "Emblem"
-	holder.Size = UDim2.new(0, 60, 0, 60)
+	holder.Size = UDim2.new(0, 50, 0, 50)
 	holder.BackgroundTransparency = 1
-	holder.Parent = tag
-	emblems[tag] = PrestigeEmblem.new(holder, 60)
+	holder.LayoutOrder = 1
+	holder.Parent = card
+	emblems[tag] = PrestigeEmblem.new(holder, 50)
+
+	local divider = Instance.new("Frame")
+	divider.Name = "Divider"
+	divider.Size = UDim2.new(0, 2, 0, 34)
+	divider.BorderSizePixel = 0
+	divider.LayoutOrder = 2
+	divider.Parent = card
+
+	local column = Instance.new("Frame")
+	column.Name = "Text"
+	column.Size = UDim2.new(0, 0, 1, 0)
+	column.AutomaticSize = Enum.AutomaticSize.X
+	column.BackgroundTransparency = 1
+	column.LayoutOrder = 3
+	column.Parent = card
+	local columnLayout = Instance.new("UIListLayout")
+	columnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	columnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	columnLayout.Parent = column
+	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 24), AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false, TextSize = 22, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left,
+		TextStrokeTransparency = 0.7, LayoutOrder = 1 })
+	local subtitle = newLabel(column, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false, TextSize = 14, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
+		TextStrokeTransparency = 0.8, LayoutOrder = 2 })
+
+	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, Divider = divider }
 	tag.Destroying:Connect(function()
 		emblems[tag] = nil
+		parts[tag] = nil
 	end)
-
-	newLabel(tag, { Name = "Title", Position = UDim2.new(0, 64, 0, 4), Size = UDim2.new(1, -64, 0.55, 0),
-		Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left })
-	newLabel(tag, { Name = "Subtitle", Position = UDim2.new(0, 64, 0.58, 0), Size = UDim2.new(1, -64, 0.36, 0),
-		Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 0.5 })
 	tag.Adornee = head
 	tag.Parent = model
 	return tag
@@ -75,27 +129,32 @@ local function setTag(model, info)
 	if not head then
 		return
 	end
-	local tag = model:FindFirstChild(TAG_NAME) or buildTag(model, head)
-	tag.Title.Text = info.Name
-	tag.Title.TextColor3 = info.Color
-	tag.Subtitle.Text = info.Subtitle or ""
-	tag.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
-	tag.Subtitle.Visible = info.Subtitle ~= nil
-	local emblem = tag.Emblem
-	emblem.Visible = info.Player ~= nil
-	-- Ohne Abzeichen (Bots) Text nach links rücken
-	tag.Title.Position = UDim2.new(0, info.Player and 64 or 0, 0, 4)
-	tag.Subtitle.Position = UDim2.new(0, info.Player and 64 or 0, 0.58, 0)
+	local tag = model:FindFirstChild(TAG_NAME)
+	if not tag or not parts[tag] then
+		if tag then
+			tag:Destroy()
+		end
+		tag = buildTag(model, head)
+	end
+	local p = parts[tag]
+	p.Title.Text = info.Name
+	p.Title.TextColor3 = info.Color
+	p.Subtitle.Text = info.Subtitle or ""
+	p.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
+	p.Subtitle.Visible = info.Subtitle ~= nil
+	-- Ohne Abzeichen (Bots) nur der Name
+	p.Emblem.Visible = info.Player ~= nil
+	p.Divider.Visible = info.Player ~= nil
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
 		local emblem = emblems[tag]
 		if not emblem then
-			-- Abzeichen fehlt (sollte nicht passieren): neu aufbauen
-			tag.Emblem:ClearAllChildren()
-			emblem = PrestigeEmblem.new(tag.Emblem, 60)
+			p.Emblem:ClearAllChildren()
+			emblem = PrestigeEmblem.new(p.Emblem, 50)
 			emblems[tag] = emblem
 		end
 		emblem:Set(level.Level, level.Prestige)
+		p.Divider.BackgroundColor3 = level.Prestige > 0 and level.Color or Color3.fromRGB(120, 185, 235)
 	end
 end
 
