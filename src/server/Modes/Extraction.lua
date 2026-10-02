@@ -1,0 +1,21 @@
+-- Extraction (ModuleScript, nur Server)
+-- 4v4, ein Leben pro Runde: Angreifer hacken Ziel A oder B, Verteidiger stören. Seitenwechsel
+-- zur Halbzeit. Hack-Regeln in Objectives/Hack, der Rest in TeamRoundMode.
+
+local TeamRoundMode = require(script.Parent.Parent.TeamRoundMode)
+local Hack = require(script.Parent.Parent.Objectives.Hack)
+
+return TeamRoundMode.new({
+	Id = "Extraction",
+	MapName = "Extraktion",
+	TeamSize = 4,
+	Teams = {
+		{ Name = "Falke", Color = BrickColor.new("Teal") },
+		{ Name = "Wolf", Color = BrickColor.new("Burgundy") },
+	},
+	DropIn = false,
+	WingsuitStart = 120,
+	RoundsSetting = "ExtractionRoundsToWin",
+	RoundTime = "ExtractionRoundTime",
+	Objective = Hack,
+})

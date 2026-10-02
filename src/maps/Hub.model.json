@@ -3825,7 +3825,7 @@
         "position": [
          -59.4,
          8,
-         -29.4
+         -33.4
         ],
         "orientation": [
          [
@@ -3871,7 +3871,7 @@
         "position": [
          -59.4,
          8,
-         -14.6
+         -18.6
         ],
         "orientation": [
          [
@@ -3917,7 +3917,7 @@
         "position": [
          -59.4,
          16.6,
-         -22
+         -26.0
         ],
         "orientation": [
          [
@@ -3963,7 +3963,7 @@
         "position": [
          -59.4,
          7.6,
-         -22
+         -26.0
         ],
         "orientation": [
          [
@@ -4011,7 +4011,7 @@
         "position": [
          -58.6,
          8,
-         -28.8
+         -32.8
         ],
         "orientation": [
          [
@@ -4057,7 +4057,7 @@
         "position": [
          -58.6,
          8,
-         -15.2
+         -19.2
         ],
         "orientation": [
          [
@@ -4103,7 +4103,7 @@
         "position": [
          -58.5,
          19.4,
-         -22
+         -26.0
         ],
         "orientation": [
          [
@@ -4187,7 +4187,7 @@
         "position": [
          -59.4,
          8,
-         -11.4
+         -17.9
         ],
         "orientation": [
          [
@@ -4233,7 +4233,7 @@
         "position": [
          -59.4,
          8,
-         3.4
+         -3.1
         ],
         "orientation": [
          [
@@ -4279,7 +4279,7 @@
         "position": [
          -59.4,
          16.6,
-         -4
+         -10.5
         ],
         "orientation": [
          [
@@ -4325,7 +4325,7 @@
         "position": [
          -59.4,
          7.6,
-         -4
+         -10.5
         ],
         "orientation": [
          [
@@ -4373,7 +4373,7 @@
         "position": [
          -58.6,
          8,
-         -10.8
+         -17.3
         ],
         "orientation": [
          [
@@ -4419,7 +4419,369 @@
         "position": [
          -58.6,
          8,
-         2.8
+         -3.7
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Sign_TeamDeathmatch",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       2.8,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -58.5,
+         19.4,
+         -10.5
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0471,
+       0.0784,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "TEAM DEATHMATCH",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.1569,
+           0.8235,
+           0.902
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "GateFrameL",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       16,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -59.4,
+         8,
+         -2.4
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateFrameR",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       16,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -59.4,
+         8,
+         12.4
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       1.6,
+       16.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -59.4,
+         16.6,
+         5.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       15,
+       13.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -59.4,
+         7.6,
+         5.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "ForceField",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "GateStripL",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       16,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -58.6,
+         8,
+         -1.8
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStripR",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       16,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -58.6,
+         8,
+         11.8
         ],
         "orientation": [
          [
@@ -4465,7 +4827,7 @@
         "position": [
          -58.5,
          19.4,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -4549,7 +4911,7 @@
         "position": [
          -59.4,
          8,
-         6.6
+         13.1
         ],
         "orientation": [
          [
@@ -4595,7 +4957,7 @@
         "position": [
          -59.4,
          8,
-         21.4
+         27.9
         ],
         "orientation": [
          [
@@ -4641,7 +5003,7 @@
         "position": [
          -59.4,
          16.6,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -4687,7 +5049,7 @@
         "position": [
          -59.4,
          7.6,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -4735,7 +5097,7 @@
         "position": [
          -58.6,
          8,
-         7.2
+         13.7
         ],
         "orientation": [
          [
@@ -4781,7 +5143,7 @@
         "position": [
          -58.6,
          8,
-         20.8
+         27.3
         ],
         "orientation": [
          [
@@ -4827,7 +5189,7 @@
         "position": [
          -58.5,
          19.4,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -4911,7 +5273,7 @@
         "position": [
          -59.4,
          8,
-         24.6
+         28.6
         ],
         "orientation": [
          [
@@ -4957,7 +5319,7 @@
         "position": [
          -59.4,
          8,
-         39.4
+         43.4
         ],
         "orientation": [
          [
@@ -5003,7 +5365,7 @@
         "position": [
          -59.4,
          16.6,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -5049,7 +5411,7 @@
         "position": [
          -59.4,
          7.6,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -5097,7 +5459,7 @@
         "position": [
          -58.6,
          8,
-         25.2
+         29.2
         ],
         "orientation": [
          [
@@ -5143,7 +5505,7 @@
         "position": [
          -58.6,
          8,
-         38.8
+         42.8
         ],
         "orientation": [
          [
@@ -5189,7 +5551,7 @@
         "position": [
          -58.5,
          19.4,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -5273,7 +5635,7 @@
         "position": [
          59.4,
          8,
-         -29.4
+         -33.4
         ],
         "orientation": [
          [
@@ -5319,7 +5681,7 @@
         "position": [
          59.4,
          8,
-         -14.6
+         -18.6
         ],
         "orientation": [
          [
@@ -5365,7 +5727,7 @@
         "position": [
          59.4,
          16.6,
-         -22
+         -26.0
         ],
         "orientation": [
          [
@@ -5411,7 +5773,7 @@
         "position": [
          59.4,
          7.6,
-         -22
+         -26.0
         ],
         "orientation": [
          [
@@ -5459,7 +5821,7 @@
         "position": [
          58.6,
          8,
-         -28.8
+         -32.8
         ],
         "orientation": [
          [
@@ -5505,7 +5867,369 @@
         "position": [
          58.6,
          8,
-         -15.2
+         -19.2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Sign_Extraction",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       2.8,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         58.5,
+         19.4,
+         -26.0
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0471,
+       0.0784,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "EXTRACTION",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           0.1569,
+           0.8235,
+           0.902
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "GateFrameL",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       16,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         59.4,
+         8,
+         -17.9
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateFrameR",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       16,
+       1.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         59.4,
+         8,
+         -3.1
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       1.6,
+       16.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         59.4,
+         16.6,
+         -10.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1333,
+       0.1647
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateGlow",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       15,
+       13.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         59.4,
+         7.6,
+         -10.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "ForceField",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "GateStripL",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       16,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         58.6,
+         8,
+         -17.3
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "GateStripR",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.4,
+       16,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         58.6,
+         8,
+         -3.7
         ],
         "orientation": [
          [
@@ -5551,7 +6275,7 @@
         "position": [
          58.5,
          19.4,
-         -22
+         -10.5
         ],
         "orientation": [
          [
@@ -5635,7 +6359,7 @@
         "position": [
          59.4,
          8,
-         -11.4
+         -2.4
         ],
         "orientation": [
          [
@@ -5681,7 +6405,7 @@
         "position": [
          59.4,
          8,
-         3.4
+         12.4
         ],
         "orientation": [
          [
@@ -5727,7 +6451,7 @@
         "position": [
          59.4,
          16.6,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -5773,7 +6497,7 @@
         "position": [
          59.4,
          7.6,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -5821,7 +6545,7 @@
         "position": [
          58.6,
          8,
-         -10.8
+         -1.8
         ],
         "orientation": [
          [
@@ -5867,7 +6591,7 @@
         "position": [
          58.6,
          8,
-         2.8
+         11.8
         ],
         "orientation": [
          [
@@ -5913,7 +6637,7 @@
         "position": [
          58.5,
          19.4,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -5997,7 +6721,7 @@
         "position": [
          59.4,
          8,
-         6.6
+         13.1
         ],
         "orientation": [
          [
@@ -6043,7 +6767,7 @@
         "position": [
          59.4,
          8,
-         21.4
+         27.9
         ],
         "orientation": [
          [
@@ -6089,7 +6813,7 @@
         "position": [
          59.4,
          16.6,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -6135,7 +6859,7 @@
         "position": [
          59.4,
          7.6,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -6183,7 +6907,7 @@
         "position": [
          58.6,
          8,
-         7.2
+         13.7
         ],
         "orientation": [
          [
@@ -6229,7 +6953,7 @@
         "position": [
          58.6,
          8,
-         20.8
+         27.3
         ],
         "orientation": [
          [
@@ -6275,7 +6999,7 @@
         "position": [
          58.5,
          19.4,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -6359,7 +7083,7 @@
         "position": [
          59.4,
          8,
-         24.6
+         28.6
         ],
         "orientation": [
          [
@@ -6405,7 +7129,7 @@
         "position": [
          59.4,
          8,
-         39.4
+         43.4
         ],
         "orientation": [
          [
@@ -6451,7 +7175,7 @@
         "position": [
          59.4,
          16.6,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -6497,7 +7221,7 @@
         "position": [
          59.4,
          7.6,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -6545,7 +7269,7 @@
         "position": [
          58.6,
          8,
-         25.2
+         29.2
         ],
         "orientation": [
          [
@@ -6591,7 +7315,7 @@
         "position": [
          58.6,
          8,
-         38.8
+         42.8
         ],
         "orientation": [
          [
@@ -6637,7 +7361,7 @@
         "position": [
          58.5,
          19.4,
-         32
+         36.0
         ],
         "orientation": [
          [
@@ -11892,7 +12616,55 @@
         "position": [
          -54.9,
          0.4,
-         -22
+         -26.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "CanCollide": false,
+      "Transparency": 0.55
+     }
+    },
+    {
+     "Name": "Portal_TeamDeathmatch",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7,
+       0.3,
+       13
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -54.9,
+         0.4,
+         -10.5
         ],
         "orientation": [
          [
@@ -11940,7 +12712,7 @@
         "position": [
          -54.9,
          0.4,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -11988,7 +12760,7 @@
         "position": [
          -54.9,
          0.4,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -12036,7 +12808,55 @@
         "position": [
          -54.9,
          0.4,
-         32
+         36.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1569,
+       0.8235,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "CanCollide": false,
+      "Transparency": 0.55
+     }
+    },
+    {
+     "Name": "Portal_Extraction",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7,
+       0.3,
+       13
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         54.9,
+         0.4,
+         -26.0
         ],
         "orientation": [
          [
@@ -12084,7 +12904,7 @@
         "position": [
          54.9,
          0.4,
-         -22
+         -10.5
         ],
         "orientation": [
          [
@@ -12132,7 +12952,7 @@
         "position": [
          54.9,
          0.4,
-         -4
+         5.0
         ],
         "orientation": [
          [
@@ -12180,7 +13000,7 @@
         "position": [
          54.9,
          0.4,
-         14
+         20.5
         ],
         "orientation": [
          [
@@ -12228,7 +13048,7 @@
         "position": [
          54.9,
          0.4,
-         32
+         36.0
         ],
         "orientation": [
          [

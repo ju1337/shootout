@@ -28,13 +28,13 @@ local make, label = UITheme.Make, UITheme.Label
 local GameMenu = {}
 
 local WIDTH, HEIGHT = 1600, 900
-local CARD_W, CARD_H, GAP = 340, 236, 22
-local COLUMNS = 4
+local CARD_W, CARD_H, GAP = 284, 236, 20
+local COLUMNS = 5 -- 10 Modi = 2 Reihen
 
 -- Symbol pro Modus
 local ICONS = {
 	FreeForAll = "🎯", Drop = "🪂", Strikeout = "⚡", Demolition = "💣", Wingman = "🤝",
-	Training = "🛠", Arena = "⚔", Ranked = "🏆",
+	Training = "🛠", Arena = "⚔", Ranked = "🏆", Extraction = "💻", TeamDeathmatch = "☠",
 }
 
 local gui, background, canvas, statusLabel, playButton, openButton, hubButton, closeButton

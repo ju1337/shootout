@@ -25,6 +25,8 @@ local modules = {
 	Training = require(script.Parent.Modes.Training),
 	Ranked = require(script.Parent.Modes.Ranked),
 	Arena = require(script.Parent.Modes.Arena),
+	Extraction = require(script.Parent.Modes.Extraction),
+	TeamDeathmatch = require(script.Parent.Modes.TeamDeathmatch),
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig
@@ -43,7 +45,7 @@ function ModeManager.Status(player, text)
 end
 
 -- Schnelles Spiel: Kampfmodus mit den meisten Spielern, der noch Platz hat (sonst Strikeout)
-local QUICK_MODES = { "Strikeout", "Demolition", "Drop", "FreeForAll", "Wingman" }
+local QUICK_MODES = { "Strikeout", "Demolition", "TeamDeathmatch", "Extraction", "Drop", "FreeForAll", "Wingman" }
 local function quickMode(player)
 	local best, bestCount = "Strikeout", -1
 	for _, modeId in QUICK_MODES do

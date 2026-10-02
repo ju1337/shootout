@@ -1,0 +1,5268 @@
+{
+ "ClassName": "Model",
+ "Properties": {
+  "Attributes": {
+   "Attributes": {
+    "DisplayName": {
+     "String": "Gletscher"
+    },
+    "Center": {
+     "Vector3": [
+      3000.0,
+      0.0,
+      1500.0
+     ]
+    }
+   }
+  }
+ },
+ "Children": [
+  {
+   "Name": "Ground",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "Ground",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       250,
+       4,
+       190
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         -2,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9216,
+       0.9412,
+       0.9608
+      ],
+      "Material": "Snow",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Border",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "WallNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       246,
+       10,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         5.0,
+         1591.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8235,
+       0.8824,
+       0.9216
+      ],
+      "Material": "Ice",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierNorth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       246,
+       120,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         60.0,
+         1591.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       246,
+       10,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         5.0,
+         1408.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8235,
+       0.8824,
+       0.9216
+      ],
+      "Material": "Ice",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierSouth",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       246,
+       120,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         60.0,
+         1408.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       10,
+       180
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3121.5,
+         5.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8235,
+       0.8824,
+       0.9216
+      ],
+      "Material": "Ice",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierEast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       120,
+       180
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3121.5,
+         60.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    },
+    {
+     "Name": "WallWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       10,
+       180
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2878.5,
+         5.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8235,
+       0.8824,
+       0.9216
+      ],
+      "Material": "Ice",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BarrierWest",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       120,
+       180
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2878.5,
+         60.0,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       1.0,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Cover",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.539,
+       3.554,
+       6.937
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3093.326,
+         1.777,
+         1494.504
+        ],
+        "orientation": [
+         [
+          0.6935,
+          -0.01887,
+          0.720209
+         ],
+         [
+          0.027199,
+          0.99963,
+          0.0
+         ],
+         [
+          -0.719943,
+          0.019589,
+          0.693757
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.517,
+       5.429,
+       4.453
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3064.455,
+         2.714,
+         1435.06
+        ],
+        "orientation": [
+         [
+          0.461019,
+          0.04437,
+          0.88628
+         ],
+         [
+          -0.095801,
+          0.9954,
+          0.0
+         ],
+         [
+          -0.882204,
+          -0.084907,
+          0.46315
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.787,
+       4.585,
+       4.075
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3033.863,
+         2.293,
+         1518.49
+        ],
+        "orientation": [
+         [
+          0.993533,
+          0.064554,
+          0.093406
+         ],
+         [
+          -0.064837,
+          0.997896,
+          0.0
+         ],
+         [
+          -0.09321,
+          -0.006056,
+          0.995628
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.32,
+       5.527,
+       6.203
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2943.227,
+         2.764,
+         1424.813
+        ],
+        "orientation": [
+         [
+          0.685253,
+          -0.02014,
+          0.728026
+         ],
+         [
+          0.029378,
+          0.999568,
+          0.0
+         ],
+         [
+          -0.727712,
+          0.021388,
+          0.685549
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.287,
+       5.993,
+       5.391
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2999.95,
+         2.996,
+         1525.992
+        ],
+        "orientation": [
+         [
+          0.00675,
+          -0.000482,
+          0.999977
+         ],
+         [
+          0.071194,
+          0.997462,
+          0.0
+         ],
+         [
+          -0.99744,
+          0.071193,
+          0.006768
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.148,
+       3.211,
+       5.445
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3045.718,
+         1.605,
+         1470.444
+        ],
+        "orientation": [
+         [
+          0.358845,
+          0.007487,
+          0.933367
+         ],
+         [
+          -0.020859,
+          0.999782,
+          0.0
+         ],
+         [
+          -0.933164,
+          -0.019469,
+          0.358923
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.79,
+       3.002,
+       8.237
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3076.248,
+         1.501,
+         1481.842
+        ],
+        "orientation": [
+         [
+          0.942738,
+          -0.081207,
+          0.323497
+         ],
+         [
+          0.085821,
+          0.996311,
+          0.0
+         ],
+         [
+          -0.322304,
+          0.027763,
+          0.946229
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.987,
+       4.888,
+       4.365
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2993.397,
+         2.444,
+         1576.857
+        ],
+        "orientation": [
+         [
+          0.340542,
+          0.016433,
+          0.940086
+         ],
+         [
+          -0.048199,
+          0.998838,
+          0.0
+         ],
+         [
+          -0.938993,
+          -0.045312,
+          0.340938
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.82,
+       3.354,
+       7.79
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2909.172,
+         1.677,
+         1473.214
+        ],
+        "orientation": [
+         [
+          0.922805,
+          0.077286,
+          0.377435
+         ],
+         [
+          -0.083459,
+          0.996511,
+          0.0
+         ],
+         [
+          -0.376119,
+          -0.031501,
+          0.926036
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7.237,
+       5.196,
+       4.953
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2929.089,
+         2.598,
+         1509.487
+        ],
+        "orientation": [
+         [
+          0.97847,
+          -0.02946,
+          0.204275
+         ],
+         [
+          0.030095,
+          0.999547,
+          0.0
+         ],
+         [
+          -0.204182,
+          0.006148,
+          0.978914
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.064,
+       5.913,
+       5.349
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2915.632,
+         2.956,
+         1487.321
+        ],
+        "orientation": [
+         [
+          0.30366,
+          0.012463,
+          0.952699
+         ],
+         [
+          -0.041008,
+          0.999159,
+          0.0
+         ],
+         [
+          -0.951897,
+          -0.039069,
+          0.303916
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6.971,
+       4.926,
+       8.272
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3084.67,
+         2.463,
+         1453.714
+        ],
+        "orientation": [
+         [
+          0.982425,
+          -0.101032,
+          0.156951
+         ],
+         [
+          0.1023,
+          0.994754,
+          0.0
+         ],
+         [
+          -0.156127,
+          0.016056,
+          0.987606
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.863,
+       3.889,
+       5.645
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2936.914,
+         1.944,
+         1461.324
+        ],
+        "orientation": [
+         [
+          0.989703,
+          0.085171,
+          0.115039
+         ],
+         [
+          -0.08574,
+          0.996318,
+          0.0
+         ],
+         [
+          -0.114615,
+          -0.009863,
+          0.993361
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       8.006,
+       4.36,
+       5.859
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3018.202,
+         2.18,
+         1458.882
+        ],
+        "orientation": [
+         [
+          0.064147,
+          0.000219,
+          0.99794
+         ],
+         [
+          -0.003409,
+          0.999994,
+          0.0
+         ],
+         [
+          -0.997935,
+          -0.003402,
+          0.064147
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "IceBlock",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.914,
+       5.725,
+       4.771
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3016.406,
+         2.863,
+         1558.644
+        ],
+        "orientation": [
+         [
+          0.281917,
+          0.014804,
+          0.959325
+         ],
+         [
+          -0.052441,
+          0.998624,
+          0.0
+         ],
+         [
+          -0.958005,
+          -0.050308,
+          0.282305
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.6667,
+       0.8431,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.25
+     }
+    },
+    {
+     "Name": "FuelTank",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       7,
+       7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3080,
+         3.5,
+         1470
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8627,
+       0.7843,
+       0.2353
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder"
+     }
+    },
+    {
+     "Name": "FuelTank",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       7,
+       7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3080,
+         3.5,
+         1530
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8627,
+       0.7843,
+       0.2353
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder"
+     }
+    },
+    {
+     "Name": "FuelTank",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       7,
+       7
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2920,
+         3.5,
+         1500
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8627,
+       0.7843,
+       0.2353
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040,
+         2.5,
+         1470
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040,
+         2.5,
+         1530
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3020,
+         2.5,
+         1440
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3020,
+         2.5,
+         1560
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2980,
+         2.5,
+         1480
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2980,
+         2.5,
+         1520
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Crate",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3070,
+         2.5,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5882,
+       0.4706,
+       0.3137
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       5,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2940,
+         2.5,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7843,
+       0.8235
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       5,
+       12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3015,
+         2.5,
+         1500
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7843,
+       0.8235
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       5,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3090,
+         2.5,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7843,
+       0.8235
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CoverWall",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12,
+       5,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3090,
+         2.5,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7451,
+       0.7843,
+       0.8235
+      ],
+      "Material": "Concrete",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Buildings",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "LabA_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3046.0,
+         5.0,
+         1454.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3064.0,
+         5.0,
+         1454.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         9.5,
+         1454.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         5.0,
+         1435.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3069.5,
+         5.0,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         5.0,
+         1439.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         5.0,
+         1451.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         9.5,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       31,
+       1,
+       21
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         10.5,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.3922
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       28,
+       0.2,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         0.1,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabA_Stripe",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30.2,
+       1,
+       20.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         8.5,
+         1445
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.4314,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         5.0,
+         1564.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3046.0,
+         5.0,
+         1545.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       12.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3064.0,
+         5.0,
+         1545.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         9.5,
+         1545.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3069.5,
+         5.0,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         5.0,
+         1549.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       6.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         5.0,
+         1561.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_WTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3040.5,
+         9.5,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       31,
+       1,
+       21
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         10.5,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.3922
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       28,
+       0.2,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         0.1,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "LabB_Stripe",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30.2,
+       1,
+       20.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         8.5,
+         1555
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.4314,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2952.5,
+         5.0,
+         1458.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       9.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2967.5,
+         5.0,
+         1458.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_NTop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         9.5,
+         1458.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         5.0,
+         1441.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       5.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2971.5,
+         5.0,
+         1444.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       5.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2971.5,
+         5.0,
+         1455.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2971.5,
+         9.5,
+         1450
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2948.5,
+         5.0,
+         1450
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       25,
+       1,
+       19
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         10.5,
+         1450
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.3922
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       0.2,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         0.1,
+         1450
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Mess_Stripe",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24.2,
+       1,
+       18.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         8.5,
+         1450
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.4314,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_N",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       26,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         5.0,
+         1558.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2952.0,
+         5.0,
+         1541.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_S",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       10.0,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2968.0,
+         5.0,
+         1541.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_STop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         9.5,
+         1541.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       5.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2972.5,
+         5.0,
+         1544.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_E",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       5.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2972.5,
+         5.0,
+         1555.5
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_ETop",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2972.5,
+         9.5,
+         1550
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_W",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2947.5,
+         5.0,
+         1550
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_Roof",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       27,
+       1,
+       19
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         10.5,
+         1550
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.3922
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_Floor",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       0.2,
+       16
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         0.1,
+         1550
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4314,
+       0.3333,
+       0.2353
+      ],
+      "Material": "WoodPlanks",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Garage_Stripe",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       26.2,
+       1,
+       18.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2960,
+         8.5,
+         1550
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.4314,
+       0.1569
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "RadarBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       18,
+       18
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         2,
+         1532
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8039,
+       0.8235
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder"
+     }
+    },
+    {
+     "Name": "RadarDome",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       14,
+       14
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         7,
+         1532
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.9412,
+       0.9412,
+       0.9608
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Ball"
+     }
+    },
+    {
+     "Name": "Mast",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.5,
+       34,
+       1.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         17,
+         1468
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.3725,
+       0.3922
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "MastLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2,
+       2,
+       2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         34.5,
+         1468
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.2353,
+       0.1961
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsAtk",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2890,
+         0.5,
+         1485
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2890,
+         0.5,
+         1495
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2890,
+         0.5,
+         1505
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2890,
+         0.5,
+         1515
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsA",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2895,
+         0.5,
+         1485
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2895,
+         0.5,
+         1495
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2895,
+         0.5,
+         1505
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         2895,
+         0.5,
+         1515
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsB",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3105,
+         0.5,
+         1485
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3105,
+         0.5,
+         1495
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3105,
+         0.5,
+         1505
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3105,
+         0.5,
+         1515
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "SpawnsDef",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3098,
+         0.5,
+         1490
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3098,
+         0.5,
+         1510
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3106,
+         0.5,
+         1480
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    },
+    {
+     "Name": "SpawnPoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4,
+       1,
+       4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3106,
+         0.5,
+         1520
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3529,
+       0.6275,
+       1.0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false,
+      "CanTouch": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Objective",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SiteA",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       20,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         0.2,
+         1460
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3137,
+       0.3137
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.6,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "SiteB",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       20,
+       20
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         0.2,
+         1540
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.3137,
+       0.3137
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.6,
+      "CanCollide": false
+     }
+    },
+    {
+     "Name": "CapturePoint",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       24,
+       24
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3000,
+         0.2,
+         1500
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.902,
+       0.902,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.35,
+      "CanCollide": false
+     }
+    }
+   ]
+  },
+  {
+   "Name": "Decor",
+   "ClassName": "Folder",
+   "Children": [
+    {
+     "Name": "SitePostA",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         5,
+         1460
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2549
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "SiteSignA",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       6,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         13,
+         1460
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "A",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.3137,
+           0.3137
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "Name": "SitePostB",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         5,
+         1540
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.2353,
+       0.2353,
+       0.2549
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "SiteSignB",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       6,
+       6,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3055,
+         13,
+         1540
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.098,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front"
+       },
+       "Children": [
+        {
+         "Name": "Text",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "B",
+          "TextScaled": true,
+          "Font": "GothamBlack",
+          "TextColor3": [
+           1.0,
+           0.3137,
+           0.3137
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

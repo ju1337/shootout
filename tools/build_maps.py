@@ -12,7 +12,7 @@ import os
 import random
 
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
-MAP_NAMES = {"FreeForAll": "Lagerhof", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
+MAP_NAMES = {"TDM": "Fabrik", "FreeForAll": "Lagerhof", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
              "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar"}
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
@@ -491,8 +491,8 @@ def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(25
 GLACIER_ORIGIN = (3000, 0, 0)
 
 
-def build_glacier():
-    b = Builder(GLACIER_ORIGIN)
+def build_glacier(origin=GLACIER_ORIGIN, filename="Gletscher.model.json"):
+    b = Builder(origin)
     rng = random.Random(11)
     snow, ice, module, accent = (235, 240, 245), (170, 215, 240), (200, 205, 210), (230, 110, 40)
     b.ground(250, 190, snow, "Snow")
@@ -523,7 +523,7 @@ def build_glacier():
     for x, z, length, ax in ((-60, 0, 16, False), (15, 0, 12, False), (90, -55, 12, True), (90, 55, 12, True)):
         b.cover_wall(x, z, length, along_x=ax, height=5, color=(190, 200, 210))
     team_objectives(b, -110, 98, (55, -40), (55, 40))
-    b.save("Gletscher.model.json", "Gletscher")
+    b.save(filename, "Gletscher")
 
 
 # ---------- "Zellenblock": Gefängnis mit Wachtürmen (Stil: RC "Lockdown") ----------
@@ -572,10 +572,12 @@ def build_cellblock():
 
 # Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): links 4, rechts 4
 HUB_GATES_WEST = (
-    ("FreeForAll", "FREE-FOR-ALL"), ("Drop", "DROP 5v5"), ("Strikeout", "STRIKEOUT 4v4"), ("Demolition", "DEMOLITION"),
+    ("FreeForAll", "FREE-FOR-ALL"), ("TeamDeathmatch", "TEAM DEATHMATCH"), ("Drop", "DROP 5v5"),
+    ("Strikeout", "STRIKEOUT 4v4"), ("Demolition", "DEMOLITION"),
 )
 HUB_GATES_EAST = (
-    ("Wingman", "WINGMAN 2v2"), ("Ranked", "RANKED"), ("Arena", "1v1 ARENA"), ("Training", "TRAINING"),
+    ("Extraction", "EXTRACTION"), ("Wingman", "WINGMAN 2v2"), ("Ranked", "RANKED"), ("Arena", "1v1 ARENA"),
+    ("Training", "TRAINING"),
 )
 CYAN = (40, 210, 230)
 
@@ -651,9 +653,9 @@ def build_lobby():
         b.add("Portals", "Portal_" + mode_id, (7, 0.3, 13), (x + inward * 4.5, 0.4, z), CYAN, "Neon",
               props={"CanCollide": False, "Transparency": 0.55})
     for k, (mode_id, title) in enumerate(HUB_GATES_WEST):
-        gate(-W + 0.6, -22 + k * 18, -90, 1, mode_id, title)
+        gate(-W + 0.6, -26 + k * 15.5, -90, 1, mode_id, title)
     for k, (mode_id, title) in enumerate(HUB_GATES_EAST):
-        gate(W - 0.6, -22 + k * 18, 90, -1, mode_id, title)
+        gate(W - 0.6, -26 + k * 15.5, 90, -1, mode_id, title)
 
     # ---------- Ausstattung: Spinde, Waffenregale, Werkbänke, Kisten ----------
     for x in range(-44, 45, 5):
@@ -712,5 +714,7 @@ if __name__ == "__main__":
     build_training()
     build_arena()
     build_glacier()
+    build_glacier((3000, 0, 1500), "Extraktion.model.json")   # Extraction spielt auf dem Gletscher
+    build_strikeout((3000, 0, -1500), "TDM.model.json")         # Team Deathmatch auf der Fabrik
     build_cellblock()
     build_lobby()
