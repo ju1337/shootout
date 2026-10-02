@@ -29,7 +29,7 @@ InputActions.Bindings = {
 	-- Select/Touchpad lässt Roblox auf Konsolen die Menü-Knöpfe auswählen, darum Steuerkreuz unten
 	Menu = { Keys = { Enum.KeyCode.M }, Pad = { Enum.KeyCode.DPadDown } },
 	Camera = { Keys = { Enum.KeyCode.T }, Pad = { Enum.KeyCode.DPadLeft } },
-	Shoulder = { Keys = { Enum.KeyCode.X }, Pad = { Enum.KeyCode.DPadRight } },
+	Shoulder = { Keys = { Enum.KeyCode.H }, Pad = { Enum.KeyCode.DPadRight } },
 	SpectatePrev = { Keys = { Enum.KeyCode.Q }, Pad = { Enum.KeyCode.ButtonL1 } },
 	SpectateNext = { Keys = { Enum.KeyCode.E }, Pad = { Enum.KeyCode.ButtonR1 } },
 	Jump = { Keys = {}, Pad = {} }, -- nur der Touch-Knopf (Tastatur/Controller springen über Roblox)

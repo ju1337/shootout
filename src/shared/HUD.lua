@@ -112,7 +112,7 @@ function HUD.Init(weaponClient)
 		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
-	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -150),
+	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -124),
 		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 24, Font = UITheme.Fonts.Display,
 		TextColor3 = UITheme.Colors.Good, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
@@ -253,7 +253,7 @@ function HUD.Init(weaponClient)
 			match.Ammo.AnchorPoint = Vector2.new(0, 1)
 			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14)
 			moneyText.AnchorPoint = Vector2.new(0, 1)
-			moneyText.Position = UDim2.new(0.5, 12, 1, -136)
+			moneyText.Position = UDim2.new(0.5, 12, 1, -116)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Left
 		else
 			local minimapTop = belowTopbar(66, 10)
@@ -265,7 +265,7 @@ function HUD.Init(weaponClient)
 			match.Ammo.AnchorPoint = Vector2.new(1, 1)
 			match.Ammo.Position = UDim2.new(1, -24, 1, -22)
 			moneyText.AnchorPoint = Vector2.new(1, 1)
-			moneyText.Position = UDim2.new(1, -24, 1, -150)
+			moneyText.Position = UDim2.new(1, -24, 1, -124)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Right
 		end
 	end

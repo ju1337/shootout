@@ -21,7 +21,7 @@ local TIPS = {
 	"Jeder Agent hat zwei Primärwaffen zur Auswahl.",
 	"Mit V erledigst du niedergeschlagene Gegner sofort mit dem Messer.",
 	"Lade Freunde über SQUAD ein – ihr landet im selben Team.",
-	"Mit T wechselst du zwischen Ego- und Schulterkamera.",
+	"Mit T wechselst du zwischen Ego- und Schulterkamera, mit H die Schulter.",
 }
 
 local gui = Instance.new("ScreenGui")

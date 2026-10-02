@@ -527,32 +527,36 @@ function MatchHUD.Init(root, weaponClient)
 	-- =====================================================================
 	-- Unten rechts: Munition, Waffen-Silhouette, Waffenplätze
 	-- =====================================================================
+	-- Kompakt (250 x 80, im HUD 1,1-fach): links Silhouette und "[2] PISTOLE", rechts oben Name + Plätze,
+	-- darunter die Munition groß. AbilityClient und HUD (Geld) richten sich nach dieser Größe.
 	local ammo = make("Frame", { Name = "Ammo", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -22),
-		Size = UDim2.fromOffset(330, 104), BackgroundTransparency = 1, Visible = false }, root)
+		Size = UDim2.fromOffset(250, 80), BackgroundTransparency = 1, Visible = false }, root)
 	local ammoCard = UITheme.HudPanel({ Name = "AmmoCard", Size = UDim2.fromScale(1, 1), ZIndex = 2 }, ammo, "Left")
-	local iconHolder = make("Frame", { Position = UDim2.fromOffset(12, 18), Size = UDim2.fromOffset(150, 50), BackgroundTransparency = 1,
+	local iconHolder = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(105, 35), BackgroundTransparency = 1,
 		ZIndex = 3 }, ammoCard)
 	-- Andere Waffe unter der Silhouette: "[2] PISTOLE"
-	local swapText = label({ Position = UDim2.fromOffset(14, 74), Size = UDim2.fromOffset(150, 16), Text = "", TextSize = 11,
-		Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3 }, ammoCard)
+	local swapText = label({ Position = UDim2.fromOffset(12, 54), Size = UDim2.fromOffset(110, 14), Text = "", TextSize = 10,
+		Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3,
+		TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
 	-- Waffenplätze 1 / 2 (aktiv: Bernstein-Rahmen)
-	local slotRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 10), Size = UDim2.fromOffset(60, 18),
+	local slotRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 8), Size = UDim2.fromOffset(44, 16),
 		BackgroundTransparency = 1, ZIndex = 3 }, ammoCard)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, slotRow)
 	local slotPills = {}
 	for i = 1, 2 do
-		local pill = label({ Size = UDim2.fromOffset(22, 18), Text = tostring(i), TextSize = 11, BackgroundTransparency = 1,
+		local pill = label({ Size = UDim2.fromOffset(20, 16), Text = tostring(i), TextSize = 10, BackgroundTransparency = 1,
 			TextColor3 = MUTED, TextStrokeTransparency = 1, LayoutOrder = i, ZIndex = 3 }, slotRow)
 		UITheme.Corner(pill, UITheme.Radius.Small)
 		UITheme.Stroke(pill, C.Primary, 1)
 		slotPills[i] = pill
 	end
-	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 31), Size = UDim2.fromOffset(160, 18),
-		Text = "", TextSize = 17, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Right,
-		TextStrokeTransparency = 1, ZIndex = 3 }, ammoCard)
-	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 46), Size = UDim2.fromOffset(170, 52),
-		Text = "", RichText = true, TextSize = 52, TextXAlignment = Enum.TextXAlignment.Right, TextStrokeTransparency = 1, ZIndex = 3 },
+	-- Name links neben den Plätzen in derselben Zeile
+	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 8), Size = UDim2.fromOffset(80, 16),
+		Text = "", TextSize = 14, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Right,
+		TextStrokeTransparency = 1, ZIndex = 3, TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
+	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 26), Size = UDim2.fromOffset(130, 46),
+		Text = "", RichText = true, TextSize = 44, TextXAlignment = Enum.TextXAlignment.Right, TextStrokeTransparency = 1, ZIndex = 3 },
 		ammoCard)
 
 	local shownWeapon, weaponIcon = nil, nil
@@ -564,7 +568,7 @@ function MatchHUD.Init(root, weaponClient)
 		if weaponIcon then
 			weaponIcon:Destroy()
 		end
-		weaponIcon = HUDIcons.Weapon(iconHolder, name, 150, 50)
+		weaponIcon = HUDIcons.Weapon(iconHolder, name, 105, 35)
 		if weaponIcon then
 			weaponIcon.ZIndex = 3
 		end
@@ -610,10 +614,10 @@ function MatchHUD.Init(root, weaponClient)
 		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
 		local low = ratio <= 0.25
 		if reloading then
-			ammoText.Text = string.format('<font size="26" color="#%s">LÄDT NACH</font>', hex(C.Primary))
+			ammoText.Text = string.format('<font size="22" color="#%s">LÄDT NACH</font>', hex(C.Primary))
 		else
 			local color = mag == 0 and ENEMY or (low and ENEMY or WHITE)
-			ammoText.Text = string.format('<font color="#%s">%d</font><font size="24" color="#%s">  / %s</font>', hex(color), mag,
+			ammoText.Text = string.format('<font color="#%s">%d</font><font size="20" color="#%s"> / %s</font>', hex(color), mag,
 				hex(MUTED), infinite and '<font face="Roboto">∞</font>' or tostring(reserve))
 		end
 		weaponName.Text = upper(config.DisplayName)

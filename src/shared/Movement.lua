@@ -57,7 +57,7 @@ local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspe
 -- Bildmitte mit ca. 8° Abstand freilässt; beim Zielen näher heran, aber weiter seitlich als der Arm
 local SHOULDER_OFFSET = Vector3.new(3.4, 1.0, 0)
 local SHOULDER_AIM_OFFSET = Vector3.new(2.7, 0.8, 0)
-local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste X)
+local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste H)
 local SHOULDER_DISTANCE = 9
 local SHOULDER_AIM_DISTANCE = 5.5
 local SHOULDER_WALL_MARGIN = 0.8 -- so weit bleibt die Kamera seitlich von Wänden weg

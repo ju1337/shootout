@@ -26,9 +26,9 @@ local player = Players.LocalPlayer
 local AbilityClient = {}
 
 local ROW_W, ROW_H, ROW_GAP = 206, 34, 6 -- 3 Zeilen = 114 px, so hoch wie die Waffenanzeige
--- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 330 px breit, 24 px vom Rand,
+-- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 250 px breit, 24 px vom Rand,
 -- im HUD 1,1-fach vergrößert) mit 10 px Abstand
-local AMMO_LEFT = 24 + 330 * 1.1 + 10
+local AMMO_LEFT = 24 + 250 * 1.1 + 10
 local BOTTOM = 22
 
 -- Aktiver Agent dieses Lebens, sonst der gewählte
