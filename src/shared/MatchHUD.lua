@@ -527,37 +527,50 @@ function MatchHUD.Init(root, weaponClient)
 	-- =====================================================================
 	-- Unten rechts: Munition, Waffen-Silhouette, Waffenplätze
 	-- =====================================================================
-	-- Kompakt (250 x 80, im HUD 1,1-fach): links Silhouette und "[2] PISTOLE", rechts oben Name + Plätze,
-	-- darunter die Munition groß. AbilityClient und HUD (Geld) richten sich nach dieser Größe.
-	local ammo = make("Frame", { Name = "Ammo", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -22),
-		Size = UDim2.fromOffset(250, 80), BackgroundTransparency = 1, Visible = false }, root)
+	-- Spiegelbild der Lebensanzeige (330 x 88, verläuft zur Bildmitte): oben Waffenname mit Plätzen 1/2 und
+	-- links die andere Waffe ("[2] PISTOLE"), in der Mitte das Magazin als dünner Balken (kleine Magazine wie die
+	-- Rüstung in Segmenten, eins pro Schuss), unten die Munition groß und links die Waffen-Silhouette.
+	-- AbilityClient (Zeilen links daneben) und HUD (Geld darüber) richten sich nach dieser Größe.
+	local AMMO_W, AMMO_H = 330, 88
+	local MAG_W = 200 -- Breite des Magazin-Balkens (rechtsbündig)
+	local MAX_SEGMENTS = 12 -- bis zu so vielen Schuss einzelne Segmente, sonst ein durchgehender Balken
+	local ammo = make("Frame", { Name = "Ammo", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -24),
+		Size = UDim2.fromOffset(AMMO_W, AMMO_H), BackgroundTransparency = 1, Visible = false }, root)
 	local ammoCard = UITheme.HudPanel({ Name = "AmmoCard", Size = UDim2.fromScale(1, 1), ZIndex = 2 }, ammo, "Left")
-	local iconHolder = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(105, 35), BackgroundTransparency = 1,
-		ZIndex = 3 }, ammoCard)
-	-- Andere Waffe unter der Silhouette: "[2] PISTOLE"
-	local swapText = label({ Position = UDim2.fromOffset(12, 54), Size = UDim2.fromOffset(110, 14), Text = "", TextSize = 10,
-		Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3,
-		TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
-	-- Waffenplätze 1 / 2 (aktiv: Bernstein-Rahmen)
-	local slotRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 8), Size = UDim2.fromOffset(44, 16),
+	-- Waffenplätze 1 / 2 (aktiv: Bernstein-Rahmen) ganz rechts oben, Name links daneben
+	local slotRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 10), Size = UDim2.fromOffset(46, 18),
 		BackgroundTransparency = 1, ZIndex = 3 }, ammoCard)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, slotRow)
 	local slotPills = {}
 	for i = 1, 2 do
-		local pill = label({ Size = UDim2.fromOffset(20, 16), Text = tostring(i), TextSize = 10, BackgroundTransparency = 1,
+		local pill = label({ Size = UDim2.fromOffset(20, 18), Text = tostring(i), TextSize = 11, BackgroundTransparency = 1,
 			TextColor3 = MUTED, TextStrokeTransparency = 1, LayoutOrder = i, ZIndex = 3 }, slotRow)
 		UITheme.Corner(pill, UITheme.Radius.Small)
 		UITheme.Stroke(pill, C.Primary, 1)
 		slotPills[i] = pill
 	end
-	-- Name links neben den Plätzen in derselben Zeile
-	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 8), Size = UDim2.fromOffset(80, 16),
-		Text = "", TextSize = 14, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Right,
-		TextStrokeTransparency = 1, ZIndex = 3, TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
-	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 26), Size = UDim2.fromOffset(130, 46),
-		Text = "", RichText = true, TextSize = 44, TextXAlignment = Enum.TextXAlignment.Right, TextStrokeTransparency = 1, ZIndex = 3 },
-		ammoCard)
+	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -64, 0, 8), Size = UDim2.fromOffset(150, 22),
+		Text = "", TextSize = 21, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3,
+		TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
+	-- Andere Waffe links oben (verblasst zur Mitte hin wie die Fläche)
+	local swapText = label({ Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(100, 16), Text = "", TextSize = 11,
+		Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3,
+		TextTruncate = Enum.TextTruncate.AtEnd }, ammoCard)
+	-- Magazin: Spur + Füllung (Balken) bzw. Segmente
+	local magTrack = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 38),
+		Size = UDim2.fromOffset(MAG_W, 4), BackgroundTransparency = 1, ZIndex = 3 }, ammoCard)
+	local magBack = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = WHITE, BackgroundTransparency = 0.85,
+		BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3 }, magTrack)
+	local magFill = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = WHITE, BorderSizePixel = 0, ZIndex = 4 }, magBack)
+	local magSegments = {}
+	-- Waffen-Silhouette links unten
+	local iconHolder = make("Frame", { Position = UDim2.fromOffset(10, 40), Size = UDim2.fromOffset(108, 40), BackgroundTransparency = 1,
+		ZIndex = 3 }, ammoCard)
+	-- Munition: Magazin groß, Vorrat klein daneben
+	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 46), Size = UDim2.fromOffset(190, 36),
+		Text = "", RichText = true, TextSize = 36, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, ammoCard)
 
 	local shownWeapon, weaponIcon = nil, nil
 	local function setWeaponIcon(name)
@@ -568,10 +581,64 @@ function MatchHUD.Init(root, weaponClient)
 		if weaponIcon then
 			weaponIcon:Destroy()
 		end
-		weaponIcon = HUDIcons.Weapon(iconHolder, name, 105, 35)
+		weaponIcon = HUDIcons.Weapon(iconHolder, name, 108, 40)
 		if weaponIcon then
 			weaponIcon.ZIndex = 3
 		end
+	end
+
+	-- Segmente für kleine Magazine (eins pro Schuss, von rechts nach links leer)
+	local segmentCount = 0
+	local function setSegments(count)
+		if count == segmentCount then
+			return
+		end
+		segmentCount = count
+		for _, segment in magSegments do
+			segment:Destroy()
+		end
+		magSegments = {}
+		magBack.Visible = count == 0
+		if count == 0 then
+			return
+		end
+		local gap = 4
+		local width = (MAG_W - gap * (count - 1)) / count
+		for i = 1, count do
+			table.insert(magSegments, make("Frame", { Position = UDim2.fromOffset((i - 1) * (width + gap), 0),
+				Size = UDim2.fromOffset(width, 4), BackgroundColor3 = WHITE, BorderSizePixel = 0, ZIndex = 3 }, magTrack))
+		end
+	end
+
+	-- Magazin anzeigen: fraction 0..1, color; bei Segmenten zählen die vollen Schuss
+	local reloadTween = nil
+	local function showMagazine(mag, size, color)
+		if reloadTween then
+			reloadTween:Cancel()
+			reloadTween = nil
+		end
+		setSegments(size <= MAX_SEGMENTS and size or 0)
+		if segmentCount > 0 then
+			for i, segment in magSegments do
+				local full = i > segmentCount - mag -- leer werden sie von links
+				segment.BackgroundColor3 = full and color or WHITE
+				segment.BackgroundTransparency = full and 0 or 0.85
+			end
+		else
+			magFill.BackgroundColor3 = color
+			magFill.Size = UDim2.fromScale(math.clamp(mag / math.max(size, 1), 0, 1), 1)
+		end
+	end
+
+	-- Nachladen: Magazin füllt sich in Bernstein über die Nachladezeit
+	local function showReload(weapon, size)
+		setSegments(0)
+		magFill.BackgroundColor3 = C.Primary
+		magFill.Size = UDim2.fromScale(0, 1)
+		local ok, duration = pcall(WeaponConfig.ReloadDuration, player, player.Character, weapon)
+		reloadTween = TweenService:Create(magFill, TweenInfo.new(ok and duration or 1.5, Enum.EasingStyle.Linear),
+			{ Size = UDim2.fromScale(1, 1) })
+		reloadTween:Play()
 	end
 
 	-- Waffenplätze und andere Waffe des Loadouts mit Taste fürs aktuelle Gerät
@@ -603,6 +670,7 @@ function MatchHUD.Init(root, weaponClient)
 		end
 	end
 
+	local wasReloading = false
 	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading, magSize, infinite)
 		local config = WeaponConfig.Get(name)
 		ammo.Visible = config ~= nil
@@ -613,18 +681,22 @@ function MatchHUD.Init(root, weaponClient)
 		local size = magSize or config.MagazineSize or math.max(mag, 1)
 		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
 		local low = ratio <= 0.25
+		local color = (mag == 0 or low) and ENEMY or WHITE
 		if reloading then
 			ammoText.Text = string.format('<font size="22" color="#%s">LÄDT NACH</font>', hex(C.Primary))
+			if not wasReloading then
+				showReload(name, size)
+			end
 		else
-			local color = mag == 0 and ENEMY or (low and ENEMY or WHITE)
-			ammoText.Text = string.format('<font color="#%s">%d</font><font size="20" color="#%s"> / %s</font>', hex(color), mag,
+			ammoText.Text = string.format('<font color="#%s">%d</font><font size="18" color="#%s">  / %s</font>', hex(color), mag,
 				hex(MUTED), infinite and '<font face="Roboto">∞</font>' or tostring(reserve))
+			showMagazine(mag, size, color)
 		end
+		wasReloading = reloading
 		weaponName.Text = upper(config.DisplayName)
-		weaponName.TextColor3 = MUTED
 		if weaponIcon then
 			weaponIcon.ImageColor3 = mag == 0 and ENEMY or WHITE
-			weaponIcon.ImageTransparency = reloading and 0.45 or 0
+			weaponIcon.ImageTransparency = reloading and 0.45 or 0.1
 		end
 		updateSlots(name)
 	end)

@@ -28,7 +28,7 @@ local player = Players.LocalPlayer
 
 local HUD = {}
 
-local AMMO_SCALE = 1.1        -- Waffen-/Munitionsanzeige unten rechts etwas größer (AbilityClient rechnet damit)
+local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige (AbilityClient rechnet damit)
 local LEAVE_CONFIRM = 3       -- so lange wartet VERLASSEN auf den zweiten Klick
 
 local screen -- ScreenGui (an/aus)
@@ -263,7 +263,7 @@ function HUD.Init(weaponClient)
 			match.Vitals.AnchorPoint = Vector2.new(0, 1)
 			match.Vitals.Position = UDim2.new(0, 24, 1, -24)
 			match.Ammo.AnchorPoint = Vector2.new(1, 1)
-			match.Ammo.Position = UDim2.new(1, -24, 1, -22)
+			match.Ammo.Position = UDim2.new(1, -24, 1, -24)
 			moneyText.AnchorPoint = Vector2.new(1, 1)
 			moneyText.Position = UDim2.new(1, -24, 1, -124)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Right

@@ -25,11 +25,10 @@ local player = Players.LocalPlayer
 
 local AbilityClient = {}
 
-local ROW_W, ROW_H, ROW_GAP = 206, 34, 6 -- 3 Zeilen = 114 px, so hoch wie die Waffenanzeige
--- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 250 px breit, 24 px vom Rand,
--- im HUD 1,1-fach vergrößert) mit 10 px Abstand
-local AMMO_LEFT = 24 + 250 * 1.1 + 10
-local BOTTOM = 22
+local ROW_W, ROW_H, ROW_GAP = 206, 28, 2 -- 3 Zeilen = 88 px, so hoch wie Waffen- und Lebensanzeige
+-- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 330 px breit, 24 px vom Rand) mit 10 px Abstand
+local AMMO_LEFT = 24 + 330 + 10
+local BOTTOM = 24
 
 -- Aktiver Agent dieses Lebens, sonst der gewählte
 local function currentAgent()
@@ -44,7 +43,7 @@ local function makeRow(parent, order)
 	local row = make("Frame", { Size = UDim2.fromOffset(ROW_W, ROW_H), BackgroundColor3 = C.Background, BackgroundTransparency = 0.35,
 		BorderSizePixel = 0, LayoutOrder = order }, parent)
 	UITheme.Corner(row, UITheme.Radius.Small)
-	local key = UITheme.Label({ Position = UDim2.fromOffset(7, 6), Size = UDim2.fromOffset(22, 22), Text = "", TextSize = 12,
+	local key = UITheme.Label({ Position = UDim2.fromOffset(7, (ROW_H - 22) / 2), Size = UDim2.fromOffset(22, 22), Text = "", TextSize = 12,
 		Font = UITheme.Fonts.Bold, TextXAlignment = Enum.TextXAlignment.Center }, row)
 	UITheme.Corner(key, UITheme.Radius.Small)
 	local keyStroke = UITheme.Stroke(key, C.Muted, 1, 0.4)
