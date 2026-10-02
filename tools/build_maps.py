@@ -448,8 +448,14 @@ def build_drop():
         (-100, -25, 18, 24, 11, ("E", "W")), (100, 25, 18, 24, 11, ("E", "W")),
     )
     colors = ((180, 160, 120), (160, 100, 80), (200, 190, 170), (140, 130, 120))
+    # Zweistöckig mit Fenstern auf allen Seiten oben; Treppe an einer Wand ohne Tür
     for i, (x, z, w, d, h, doors) in enumerate(houses):
-        b.house(f"House{i}", x, z, w, d, h, colors[i % len(colors)], (80, 60, 55), doors=doors)
+        stair = next(side for side in ("W", "E", "N", "S") if side not in doors)
+        b.building2(f"House{i}", x, z, w, d, colors[i % len(colors)], (80, 60, 55),
+                    doors={side: [0] for side in doors},
+                    windows1={side: [-6, 6] for side in doors},
+                    windows2={side: [-5, 5] for side in ("N", "S", "E", "W")},
+                    stairs_at=(stair,), material="Brick")
 
     # Hohe Gebäude (Landeplätze auf dem Dach)
     for i, (x, z, w, h, d) in enumerate(((-25, -30, 16, 28, 16), (25, 30, 16, 24, 16), (-30, 28, 14, 18, 14),
@@ -481,7 +487,7 @@ def build_drop():
     b.save("Drop.model.json")
 
 
-# ---------- Strikeout: "Fabrik" (220 x 150), Team Gold bei -x, Team Lila bei +x ----------
+# ---------- Strikeout: "Fabrik" (300 x 200), Team Gold bei -x, Team Lila bei +x ----------
 
 def build_strikeout(origin=STRIKEOUT_ORIGIN, filename="Strikeout.model.json"):
     """Fabrik (300 x 200): drei Wege. Norden: zweistöckige Fabrikhalle (begehbar, Fenster zur Mitte).
