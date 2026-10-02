@@ -215,7 +215,7 @@ class Builder:
             label["Properties"]["TextStrokeColor3"] = rgb(40, 120, 180)
             label["Properties"]["TextStrokeTransparency"] = 0.5
             gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front", "LightInfluence": 0,
-                   "Brightness": 2.4}, "Children": [label]}
+                   "Brightness": 1.4}, "Children": [label]}
             self.holo_panel("Decor", name, size, pos, angles, children=[gui])
             return
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front"}, "Children": [label]}
@@ -354,7 +354,7 @@ class Builder:
                 "Face": "Front", "Range": 16, "Brightness": 1.2, "Angle": 80, "Color": rgb(*glow)}})
         if self.holo:
             # Hologramm: Glas statt Tafel, Schrift heller mit blauem Schimmer, Leuchtkanten oben/unten
-            gui["Properties"]["Brightness"] = 2.4
+            gui["Properties"]["Brightness"] = 1.4
             for child in gui["Children"]:
                 props = child["Properties"]
                 if child["ClassName"] == "TextLabel":
@@ -1390,7 +1390,8 @@ def build_lobby():
         else:
             b.box("Decor", name, size, pos, graphite, "SmoothPlastic", angles=angles)
     # Mittelhell: zwischen der ganz dunklen und der hellen Version, Akzent kühles Hellblau
-    floor, wall, steel, graphite = (46, 50, 58), (60, 65, 74), (78, 83, 92), (22, 25, 30)
+    # gedämpft: dunkler Boden und Wände, damit nichts blendet
+    floor, wall, steel, graphite = (34, 37, 43), (46, 50, 57), (62, 66, 74), (22, 25, 30)
     walkway, accent = (30, 33, 40), (120, 185, 235)
     x0, x1, z0, z1, H = -55, 55, -38, 46, 26
     zc = (z0 + z1) / 2
@@ -1403,27 +1404,27 @@ def build_lobby():
     # ---------- Boden, Wände, Dach ----------
     b.box("Ground", "HubFloor", (x1 - x0, 0.2, z1 - z0), (0, 0.1, zc), floor, "Concrete")
     for x in range(-50, 51, 10):
-        b.box("Ground", "GridLine", (0.12, 0.04, z1 - z0), (x, 0.21, zc), (62, 67, 76), "SmoothPlastic")
+        b.box("Ground", "GridLine", (0.12, 0.04, z1 - z0), (x, 0.21, zc), (48, 52, 60), "SmoothPlastic")
     for z in range(-30, 46, 10):
-        b.box("Ground", "GridLine", (x1 - x0, 0.04, 0.12), (0, 0.21, z), (62, 67, 76), "SmoothPlastic")
+        b.box("Ground", "GridLine", (x1 - x0, 0.04, 0.12), (0, 0.21, z), (48, 52, 60), "SmoothPlastic")
     b.box("Walls", "WallSouth", (x1 - x0 + 4, H, 2), (0, H / 2, z0 - 1), wall, "Metal")
     b.box("Walls", "WallNorth", (x1 - x0 + 4, H, 2), (0, H / 2, z1 + 1), wall, "Metal")
     b.box("Walls", "WallWest", (2, H, z1 - z0), (x0 - 1, H / 2, zc), wall, "Metal")
     b.box("Walls", "WallEast", (2, H, z1 - z0), (x1 + 1, H / 2, zc), wall, "Metal")
     for x in (x0 + 0.1, x1 - 0.1):
         b.box("Walls", "WallBase", (0.2, 2.4, z1 - z0), (x, 1.2, zc), (34, 37, 43), "Metal")
-    b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (36, 39, 44), "Metal")
+    b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (26, 28, 32), "Metal")
     for z in range(-30, 46, 12):
         b.box("Walls", "Truss", (x1 - x0, 1.2, 1), (0, H - 1, z), steel, "Metal")
         for x in (-36, -12, 12, 36):
-            b.box("Decor", "CeilingLamp", (6, 0.25, 0.8), (x, H - 1.75, z), (220, 228, 240), "Neon",
+            b.box("Decor", "CeilingLamp", (5, 0.2, 0.6), (x, H - 1.75, z), (150, 158, 170), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 30, "Brightness": 1.05, "Color": rgb(225, 232, 245)}}])
+                             "Properties": {"Range": 26, "Brightness": 0.5, "Color": rgb(210, 220, 235)}}])
     for x in (x0 + 0.45, x1 - 0.45):
-        b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.4})
+        b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.6})
     for x, z in ((-31, 24), (31, 24)):
         b.box("Walls", "Pillar", (2.4, H, 2.4), (x, H / 2, z), steel, "Metal")
-        b.box("Decor", "PillarStrip", (2.5, 0.3, 2.5), (x, 3.2, z), accent, "Neon", props={"Transparency": 0.3})
+        b.box("Decor", "PillarStrip", (2.5, 0.3, 2.5), (x, 3.2, z), accent, "Neon", props={"Transparency": 0.5})
 
     b.spawn(0, -31, yaw=180, real=True, hidden=True)
 
@@ -1437,7 +1438,7 @@ def build_lobby():
         yaw = math.degrees(math.atan2(bx - ax, bz - az))
         center = ((ax + bx) / 2, (az + bz) / 2)
         b.box("Ground", name + "Edge", (width + 0.7, 0.03, length + 0.7), (center[0], 0.215, center[1]), accent, "Neon",
-              angles=(0, yaw, 0), props={"Transparency": 0.3})
+              angles=(0, yaw, 0), props={"Transparency": 0.5})
         b.box("Ground", name, (width, 0.05, length), (center[0], 0.245, center[1]), walkway, "SmoothPlastic",
               angles=(0, yaw, 0))
     carpet("CarpetSpawn", (0, z0 + 2), (0, tz - ring_r + 3), 10)
@@ -1460,7 +1461,7 @@ def build_lobby():
     b.add("Decor", "AgentPedestalGlow", (0.2, 15.4, 15.4), (0, 1.15, tz), accent, "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.55},
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
-              "Range": 16, "Brightness": 1.2, "Color": rgb(170, 210, 240)}}])
+              "Range": 14, "Brightness": 0.7, "Color": rgb(170, 210, 240)}}])
     # Standpunkt der Statue (Füße, Blick zum Spawn nach Süden)
     b.add("Decor", "AgentOfWeekSpot", (1, 0.2, 1), (0, 3.6, tz), accent, "SmoothPlastic", angles=(0, 180, 0),
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
@@ -1482,7 +1483,7 @@ def build_lobby():
         b.box("Decor", "GateGlow", (gw, gh, 0.3), (x, gh / 2, gate_z + 0.2), color, "ForceField",
               props={"Transparency": 0.25, "CanCollide": False},
               children=[{"Name": "Light", "ClassName": "PointLight",
-                         "Properties": {"Range": 18, "Brightness": 1.4, "Color": rgb(*color)}}])
+                         "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(*color)}}])
         b.sign2("Sign_" + mode_id, (17.5, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
                 (236, 239, 243), angles=(-12, 0, 0), glow=color)
         client_board("GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15))
@@ -1505,7 +1506,7 @@ def build_lobby():
         b.box("Decor", "VitrineCap", (5, 0.4, 5), (vx, 7.7, vz), (32, 35, 41), "Metal")
         b.box("Decor", "VitrineLight", (3, 0.1, 3), (vx, 7.45, vz), (255, 248, 235), "Neon",
               children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
-                  "Face": "Bottom", "Range": 10, "Brightness": 2, "Angle": 70, "Color": rgb(255, 245, 230)}}])
+                  "Face": "Bottom", "Range": 10, "Brightness": 1.1, "Angle": 70, "Color": rgb(255, 245, 230)}}])
         b.add("Decor", "ShopDisplay" + str(k), (1, 1, 1), (vx, 4.6, vz), accent, "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
         client_board("ShopPlaque" + str(k), (4.4, 1.6, 0.2), (vx + 2.7, 1.3, vz), angles=(0, -90, 0))
@@ -1586,7 +1587,7 @@ def build_lobby():
                 angles=(0, 180, 0), glow=color)
     for x in (-45, -38, 38, 45):
         b.box("Walls", "WallRib", (1.2, H - 9, 0.8), (x, (H - 9) / 2 + 8, z0 + 0.4), steel, "Metal")
-    b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.4})
+    b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.6})
     for x in range(-48, 49, 5):
         if abs(x) > 12 and x > -26:  # linke Ecke bleibt frei fürs Siegertreppchen
             b.box("Decor", "Locker", (4.4, 7.5, 2.2), (x, 3.75, z0 + 1.2), (48, 58, 70), "Metal")

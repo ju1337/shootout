@@ -104,9 +104,9 @@
        }
       },
       "Color": [
-       0.1804,
-       0.1961,
-       0.2275
+       0.1333,
+       0.1451,
+       0.1686
       ],
       "Material": "Concrete",
       "TopSurface": "Smooth",
@@ -150,9 +150,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -196,9 +196,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -242,9 +242,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -288,9 +288,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -334,9 +334,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -380,9 +380,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -426,9 +426,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -472,9 +472,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -518,9 +518,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -564,9 +564,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -610,9 +610,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -656,9 +656,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -702,9 +702,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -748,9 +748,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -794,9 +794,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -840,9 +840,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -886,9 +886,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -932,9 +932,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -978,9 +978,9 @@
        }
       },
       "Color": [
-       0.2431,
-       0.2627,
-       0.298
+       0.1882,
+       0.2039,
+       0.2353
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -1031,7 +1031,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -1219,7 +1219,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -1312,7 +1312,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -1865,7 +1865,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -1958,7 +1958,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -2051,7 +2051,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -2521,9 +2521,9 @@
        }
       },
       "Color": [
-       0.2353,
-       0.2549,
-       0.2902
+       0.1804,
+       0.1961,
+       0.2235
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2567,9 +2567,9 @@
        }
       },
       "Color": [
-       0.2353,
-       0.2549,
-       0.2902
+       0.1804,
+       0.1961,
+       0.2235
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2613,9 +2613,9 @@
        }
       },
       "Color": [
-       0.2353,
-       0.2549,
-       0.2902
+       0.1804,
+       0.1961,
+       0.2235
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2659,9 +2659,9 @@
        }
       },
       "Color": [
-       0.2353,
-       0.2549,
-       0.2902
+       0.1804,
+       0.1961,
+       0.2235
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2797,9 +2797,9 @@
        }
       },
       "Color": [
-       0.1412,
-       0.1529,
-       0.1725
+       0.102,
+       0.1098,
+       0.1255
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2843,9 +2843,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2889,9 +2889,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2935,9 +2935,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2981,9 +2981,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3027,9 +3027,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3073,9 +3073,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3119,9 +3119,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3165,9 +3165,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3211,9 +3211,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3257,9 +3257,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3303,9 +3303,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3349,9 +3349,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3395,9 +3395,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3441,9 +3441,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -3462,9 +3462,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3493,9 +3493,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3506,12 +3506,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3523,9 +3523,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3554,9 +3554,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3567,12 +3567,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3584,9 +3584,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3615,9 +3615,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3628,12 +3628,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3645,9 +3645,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3676,9 +3676,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3689,12 +3689,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3706,9 +3706,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3737,9 +3737,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3750,12 +3750,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3767,9 +3767,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3798,9 +3798,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3811,12 +3811,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3828,9 +3828,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3859,9 +3859,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3872,12 +3872,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3889,9 +3889,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3920,9 +3920,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3933,12 +3933,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -3950,9 +3950,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -3981,9 +3981,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3994,12 +3994,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4011,9 +4011,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4042,9 +4042,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4055,12 +4055,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4072,9 +4072,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4103,9 +4103,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4116,12 +4116,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4133,9 +4133,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4164,9 +4164,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4177,12 +4177,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4194,9 +4194,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4225,9 +4225,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4238,12 +4238,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4255,9 +4255,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4286,9 +4286,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4299,12 +4299,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4316,9 +4316,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4347,9 +4347,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4360,12 +4360,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4377,9 +4377,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4408,9 +4408,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4421,12 +4421,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4438,9 +4438,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4469,9 +4469,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4482,12 +4482,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4499,9 +4499,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4530,9 +4530,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4543,12 +4543,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4560,9 +4560,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4591,9 +4591,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4604,12 +4604,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4621,9 +4621,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4652,9 +4652,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4665,12 +4665,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4682,9 +4682,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4713,9 +4713,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4726,12 +4726,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4743,9 +4743,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4774,9 +4774,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4787,12 +4787,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4804,9 +4804,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4835,9 +4835,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4848,12 +4848,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4865,9 +4865,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4896,9 +4896,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4909,12 +4909,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4926,9 +4926,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -4957,9 +4957,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4970,12 +4970,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -4987,9 +4987,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -5018,9 +5018,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -5031,12 +5031,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -5048,9 +5048,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -5079,9 +5079,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -5092,12 +5092,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -5109,9 +5109,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
-       0.25,
-       0.8
+       5,
+       0.2,
+       0.6
       ],
       "CFrame": {
        "CFrame": {
@@ -5140,9 +5140,9 @@
        }
       },
       "Color": [
-       0.8627,
-       0.8941,
-       0.9412
+       0.5882,
+       0.6196,
+       0.6667
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -5153,12 +5153,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 30,
-        "Brightness": 1.05,
+        "Range": 26,
+        "Brightness": 0.5,
         "Color": [
-         0.8824,
-         0.9098,
-         0.9608
+         0.8235,
+         0.8627,
+         0.9216
         ]
        }
       }
@@ -5208,7 +5208,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.4
+      "Transparency": 0.6
      }
     },
     {
@@ -5255,7 +5255,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.4
+      "Transparency": 0.6
      }
     },
     {
@@ -5302,7 +5302,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -5349,7 +5349,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.3
+      "Transparency": 0.5
      }
     },
     {
@@ -5389,9 +5389,9 @@
        }
       },
       "Color": [
-       0.3059,
-       0.3255,
-       0.3608
+       0.2431,
+       0.2588,
+       0.2902
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -5546,8 +5546,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 16,
-        "Brightness": 1.2,
+        "Range": 14,
+        "Brightness": 0.7,
         "Color": [
          0.6667,
          0.8235,
@@ -6037,8 +6037,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 18,
-        "Brightness": 1.4,
+        "Range": 16,
+        "Brightness": 0.8,
         "Color": [
          0.8235,
          0.4706,
@@ -6110,7 +6110,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -6697,8 +6697,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 18,
-        "Brightness": 1.4,
+        "Range": 16,
+        "Brightness": 0.8,
         "Color": [
          0.3922,
          0.5882,
@@ -6770,7 +6770,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -7357,8 +7357,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 18,
-        "Brightness": 1.4,
+        "Range": 16,
+        "Brightness": 0.8,
         "Color": [
          0.7451,
          0.7608,
@@ -7430,7 +7430,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -8017,8 +8017,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 18,
-        "Brightness": 1.4,
+        "Range": 16,
+        "Brightness": 0.8,
         "Color": [
          0.5098,
          0.6667,
@@ -8090,7 +8090,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -8677,8 +8677,8 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 18,
-        "Brightness": 1.4,
+        "Range": 16,
+        "Brightness": 0.8,
         "Color": [
          0.8039,
          0.3529,
@@ -8750,7 +8750,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -9117,7 +9117,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -9428,7 +9428,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -9916,7 +9916,7 @@
        "Properties": {
         "Face": "Bottom",
         "Range": 10,
-        "Brightness": 2,
+        "Brightness": 1.1,
         "Angle": 70,
         "Color": [
          1.0,
@@ -10271,7 +10271,7 @@
        "Properties": {
         "Face": "Bottom",
         "Range": 10,
-        "Brightness": 2,
+        "Brightness": 1.1,
         "Angle": 70,
         "Color": [
          1.0,
@@ -10626,7 +10626,7 @@
        "Properties": {
         "Face": "Bottom",
         "Range": 10,
-        "Brightness": 2,
+        "Brightness": 1.1,
         "Angle": 70,
         "Color": [
          1.0,
@@ -10989,7 +10989,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -12464,7 +12464,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -12822,7 +12822,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -13271,7 +13271,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4
+        "Brightness": 1.4
        },
        "Children": [
         {
@@ -13465,7 +13465,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4
+        "Brightness": 1.4
        },
        "Children": [
         {
@@ -13659,7 +13659,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4
+        "Brightness": 1.4
        },
        "Children": [
         {
@@ -13915,7 +13915,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -14226,7 +14226,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -14537,7 +14537,7 @@
        "Properties": {
         "Face": "Front",
         "LightInfluence": 0,
-        "Brightness": 2.4,
+        "Brightness": 1.4,
         "SizingMode": "PixelsPerStud",
         "PixelsPerStud": 40
        },
@@ -14830,7 +14830,7 @@
       "Material": "Neon",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
-      "Transparency": 0.4
+      "Transparency": 0.6
      }
     },
     {

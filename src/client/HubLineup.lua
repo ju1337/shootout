@@ -23,7 +23,7 @@ local player = Players.LocalPlayer
 local function holoSurface(surface, part)
 	if part:GetAttribute("Holo") then
 		surface.LightInfluence = 0
-		surface.Brightness = 2.2
+		surface.Brightness = 1.3
 		for _, label in surface:GetDescendants() do
 			if label:IsA("TextLabel") then
 				label.TextStrokeColor3 = Color3.fromRGB(40, 120, 180)
@@ -500,7 +500,7 @@ local function buildLeaderboards()
 			local surface = Instance.new("SurfaceGui")
 			surface.Face = Enum.NormalId.Front
 			surface.LightInfluence = 0
-			surface.Brightness = holo and 2.2 or 1
+			surface.Brightness = holo and 1.3 or 1
 			surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 			surface.PixelsPerStud = 40
 			surface.Adornee = part
@@ -600,7 +600,18 @@ local function addParticles()
 	end
 end
 
+-- Im Hub die Belichtung absenken (Halle mit vielen Lichtern), in den Modi wieder normal
+local HUB_EXPOSURE = -0.45
+local normalExposure = nil
+local function updateExposure()
+	local lighting = game:GetService("Lighting")
+	normalExposure = normalExposure or lighting.ExposureCompensation
+	lighting.ExposureCompensation = player:GetAttribute("Mode") == "Hub" and HUB_EXPOSURE or normalExposure
+end
+
 function HubLineup.Init()
+	updateExposure()
+	player:GetAttributeChangedSignal("Mode"):Connect(updateExposure)
 	task.spawn(buildMissionBoard)
 	task.spawn(addParticles)
 	task.spawn(buildLeaderboards)
