@@ -1447,17 +1447,13 @@ def build_lobby():
 
     # ---------- Osten (Mitte): Holo-Station mit den Bestenlisten, Teppich vom Ring dorthin ----------
     holo = (90, 175, 225)
+    # gerade Bahn vom Ring und eine rechteckige Fläche vor der Reihe der Tafeln
     carpet("CarpetBoards", (ring_r - 3, tz), (32, tz), 8)
-    b.add("Ground", "CarpetHoloEdge", (0.03, 20.7, 20.7), (40, 0.215, tz), accent, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.3})
-    b.add("Ground", "CarpetHolo", (0.05, 20, 20), (40, 0.245, tz), walkway, "SmoothPlastic", angles=(0, 0, 90),
-          props={"Shape": "Cylinder"})
-    # vier schwebende Holo-Tafeln im Bogen, alle zur Hallenmitte gedreht (Client zeichnet die Listen darauf)
-    for board, color, a in (("Elo", (200, 166, 92), -21), ("Kills", (206, 70, 58), -7),
-                            ("Level", (96, 164, 214), 7), ("Wins", (112, 178, 112), 21)):
-        px, pz = 45 * math.cos(math.radians(a)), tz + 45 * math.sin(math.radians(a))
-        dx, dz = -px, tz - pz
-        yaw = math.degrees(math.atan2(-dx, -dz))
+    carpet("CarpetHolo", (36, tz - 22), (36, tz + 22), 10)
+    # vier schwebende Holo-Tafeln in einer Reihe, zur Hallenmitte (Westen) gerichtet
+    for board, color, pz in (("Elo", (200, 166, 92), tz - 16.5), ("Kills", (206, 70, 58), tz - 5.5),
+                             ("Level", (96, 164, 214), tz + 5.5), ("Wins", (112, 178, 112), tz + 16.5)):
+        px, yaw = 44, 90
         b.add("Decor", "Leaderboard_" + board, (10, 8.5, 0.15), (px, 8.6, pz), holo, "Glass", angles=(0, yaw, 0),
               props={"Transparency": 0.82, "CanCollide": False, "CanQuery": False,
                      "Attributes": {"Attributes": {"Holo": {"Bool": True}}}})
@@ -1473,9 +1469,9 @@ def build_lobby():
     b.sign2("BoardsTitle", (30, 4, 0.4), (x1 - 0.6, 19, tz), "BESTENLISTEN", "GLOBALE TOP 10",
             graphite, holo, (236, 239, 243), angles=(0, 90, 0), glow=holo)
 
-    # ---------- Ecke hinten rechts: längliches Siegertreppchen, schräg zur Hallenmitte ----------
+    # ---------- Ecke hinten links: längliches Siegertreppchen, schräg zur Hallenmitte ----------
     gold = (200, 166, 92)
-    cx, cz = 42, -24
+    cx, cz = -40, -26
     fx, fz = -cx, tz + 4 - cz
     flen = math.hypot(fx, fz)
     fx, fz = fx / flen, fz / flen          # Blickrichtung der Statuen (zur Hallenmitte)
@@ -1523,10 +1519,10 @@ def build_lobby():
         b.box("Walls", "WallRib", (1.2, H - 9, 0.8), (x, (H - 9) / 2 + 8, z0 + 0.4), steel, "Metal")
     b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.4})
     for x in range(-48, 49, 5):
-        if abs(x) > 12 and x < 26:  # rechte Ecke bleibt frei fürs Siegertreppchen
+        if abs(x) > 12 and x > -26:  # linke Ecke bleibt frei fürs Siegertreppchen
             b.box("Decor", "Locker", (4.4, 7.5, 2.2), (x, 3.75, z0 + 1.2), (48, 58, 70), "Metal")
             b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 6, z0 + 2.35), (26, 28, 32), "Metal")
-    for x, z, size in ((-50, 41, 4), (-46, 41, 3), (-50, -33, 4), (-46, -33, 3)):
+    for x, z, size in ((-50, 41, 4), (-46, 41, 3), (50, -33, 4), (46, -33, 3)):
         b.crate(x, z, s=size, color=(90, 80, 62))
 
     b.save("Hub.model.json")
