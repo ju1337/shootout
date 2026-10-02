@@ -4,6 +4,9 @@
 -- Center muss zu den Verschiebungen in tools/build_maps.py passen.
 -- TeamMode = Team-Runden mit Agentenwahl und Kaufphase (Drop, Strikeout)
 -- Overview = Kameraflug über die Map während der Agentenwahl (Radius, Höhe)
+-- Goal = kurzes Ziel oben im HUD (Text, oder { Attack, Defend } bei Angriff/Verteidigung,
+--        AttackAlert/DefendAlert solange die Uhr des Ziels läuft, z.B. Bombe gelegt)
+-- Objectives = Ziel-Parts der Map (Maps.<Map>.Objective.<Part>) mit Buchstaben für Marker und Minimap
 
 local Modes = {}
 
@@ -16,6 +19,7 @@ Modes.List = {
 		Players = "bis 12 Spieler",
 		Color = Color3.fromRGB(255, 120, 60),
 		Center = Vector3.new(0, 0, 1500),
+		Goal = "JEDER GEGEN JEDEN",
 		Available = true,
 	},
 	{
@@ -28,6 +32,7 @@ Modes.List = {
 		Center = Vector3.new(1500, 0, 0),
 		TeamMode = true,
 		Overview = { Radius = 230, Height = 150 },
+		Goal = "SCHALTE DAS GEGNERTEAM AUS",
 		Available = true,
 	},
 	{
@@ -40,6 +45,8 @@ Modes.List = {
 		Center = Vector3.new(0, 0, -1500),
 		TeamMode = true,
 		Overview = { Radius = 190, Height = 120 },
+		Goal = "NIMM DEN PUNKT EIN",
+		Objectives = { { Part = "CapturePoint", Label = "A" } },
 		Available = true,
 	},
 	{
@@ -52,6 +59,9 @@ Modes.List = {
 		Center = Vector3.new(-1500, 0, 0),
 		TeamMode = true,
 		Overview = { Radius = 210, Height = 130 },
+		Goal = { Attack = "LEGE DIE BOMBE BEI A ODER B", Defend = "VERTEIDIGE A UND B",
+			AttackAlert = "BESCHÜTZE DIE BOMBE", DefendAlert = "ENTSCHÄRFE DIE BOMBE" },
+		Objectives = { { Part = "SiteA", Label = "A" }, { Part = "SiteB", Label = "B" } },
 		Available = true,
 	},
 	{
@@ -64,6 +74,8 @@ Modes.List = {
 		Center = Vector3.new(3000, 0, 1500),
 		TeamMode = true,
 		Overview = { Radius = 170, Height = 110 },
+		Goal = { Attack = "HACKE ZIEL A ODER B", Defend = "VERHINDERE DEN HACK" },
+		Objectives = { { Part = "SiteA", Label = "A" }, { Part = "SiteB", Label = "B" } },
 		Available = true,
 	},
 	{
@@ -76,6 +88,7 @@ Modes.List = {
 		Center = Vector3.new(3000, 0, -1500),
 		TeamMode = true,
 		Overview = { Radius = 190, Height = 120 },
+		Goal = "BRAUCHE DIE GEGNERISCHEN LEBEN AUF",
 		Available = true,
 	},
 	{
@@ -88,6 +101,8 @@ Modes.List = {
 		Center = Vector3.new(1500, 0, -1500),
 		TeamMode = true,
 		Overview = { Radius = 190, Height = 120 },
+		Goal = "NIMM DEN PUNKT EIN",
+		Objectives = { { Part = "CapturePoint", Label = "A" } },
 		Available = true,
 	},
 	{
@@ -110,6 +125,7 @@ Modes.List = {
 		Center = Vector3.new(0, 0, 3000),
 		TeamMode = true,
 		Overview = { Radius = 70, Height = 50 },
+		Goal = "GEWINNE DAS DUELL",
 		Available = true,
 	},
 	{
@@ -122,6 +138,9 @@ Modes.List = {
 		Center = Vector3.new(1500, 0, 1500),
 		TeamMode = true,
 		Overview = { Radius = 210, Height = 130 },
+		Goal = { Attack = "LEGE DIE BOMBE BEI A ODER B", Defend = "VERTEIDIGE A UND B",
+			AttackAlert = "BESCHÜTZE DIE BOMBE", DefendAlert = "ENTSCHÄRFE DIE BOMBE" },
+		Objectives = { { Part = "SiteA", Label = "A" }, { Part = "SiteB", Label = "B" } },
 		Available = true,
 	},
 }
@@ -152,6 +171,23 @@ end
 function Modes.IsTeamMode(id)
 	local mode = Modes.Get(id)
 	return mode ~= nil and mode.TeamMode == true
+end
+
+-- Kurzes Ziel für das HUD. attacking = true/false in Modi mit Angriff/Verteidigung, sonst nil;
+-- alert = die Uhr des Ziels läuft (z.B. Bombe gelegt)
+function Modes.GoalText(id, attacking, alert)
+	local mode = Modes.Get(id)
+	local goal = mode and mode.Goal
+	if type(goal) == "table" then
+		if attacking == nil then
+			return nil
+		end
+		if alert then
+			return (attacking and goal.AttackAlert or goal.DefendAlert) or (attacking and goal.Attack or goal.Defend)
+		end
+		return attacking and goal.Attack or goal.Defend
+	end
+	return goal
 end
 
 -- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub)?

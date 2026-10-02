@@ -106,6 +106,18 @@ function DownedService.Down(model, humanoid, attacker)
 		end
 	end)
 	changedEvent:Fire(model)
+
+	-- Killfeed wie bei RC: "Angreifer [Waffe] ▼ Opfer" an alle im selben Modus
+	local victim = Players:GetPlayerFromCharacter(model)
+	local victimName = victim and victim.Name or model.Name
+	local attackerName = attacker and (attacker.Player and attacker.Player.Name or attacker.BotName) or nil
+	local mode = modeOf(model)
+	for _, player in Players:GetPlayers() do
+		if player:GetAttribute("Mode") == mode then
+			Remotes.Killfeed:FireClient(player, attackerName, victimName, attacker and attacker.Weapon,
+				attacker ~= nil and attacker.Headshot == true, "Down")
+		end
+	end
 end
 
 local function revive(model, reviverModel)

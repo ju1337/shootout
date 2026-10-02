@@ -24,6 +24,7 @@ local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local WeaponConfig = require(Shared.WeaponConfig)
 local Movement = require(Shared.Movement)
+local TeamCheck = require(Shared.TeamCheck)
 
 local player = Players.LocalPlayer
 
@@ -76,25 +77,7 @@ local function playTone(speed, volume, delay)
 end
 
 -- Ist das Modell ein Gegner des Spielers (für das rote Fadenkreuz)?
-local function isEnemy(model)
-	local humanoid = model and model:FindFirstChildOfClass("Humanoid")
-	if not humanoid or humanoid.Health <= 0 then
-		return false
-	end
-	local other = Players:GetPlayerFromCharacter(model)
-	if other then
-		return other ~= player and other:GetAttribute("Mode") == player:GetAttribute("Mode")
-			and not (player.Team ~= nil and other.Team == player.Team)
-	end
-	if model:GetAttribute("IsDummy") then
-		return true
-	end
-	if model:GetAttribute("IsBot") then
-		return model:GetAttribute("Mode") == player:GetAttribute("Mode")
-			and not (player.Team ~= nil and model:GetAttribute("TeamName") == player.Team.Name)
-	end
-	return false
-end
+local isEnemy = TeamCheck.IsEnemy
 
 -- gui = skalierte Vollbild-Ebene des HUD, weaponClient = WeaponClient-Modul
 function CombatHUD.Init(gui, weaponClient)

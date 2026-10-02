@@ -12,7 +12,7 @@ local NAMES = {
 	"AmmoUpdate", -- Server -> Client: Munition (Waffe, Magazin, Reserve, ladeNach, Größe, letzte Schuss-Nummer, unendlich?)
 	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze/Bot, Start, Ende, Waffe, Normale, Trefferart)
 	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet, Schaden, Ort, Name, niedergeschlagen, Rüstung, Modell)
-	"Killfeed",   -- Server -> alle: Kill-Meldung (Killer, Opfer, Waffe, Kopfschuss)
+	"Killfeed",   -- Server -> alle im Modus: Meldung (Killer oder nil, Opfer, Waffe, Kopfschuss, Art: nil = Kill, "Down" = niedergeschlagen)
 	"Announce",   -- Server -> Client(s): große Meldung in der Bildschirmmitte
 	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)
 	"MenuStatus", -- Server -> Client: Statuszeile im Menü (Teleport läuft, Fehler)

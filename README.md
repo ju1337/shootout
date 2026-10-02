@@ -39,7 +39,18 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Battle Pass, tägliche Aufträge, Shop, Codes**
 - **Map-Rotation** pro Match, Multikills und ACE, Todeskamera, Schnelles Spiel
 - **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel
-- **HUD im RC-Stil**: Team-Rauten, Kompass, Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team
+- **Match-HUD wie bei Rogue Company**:
+  - oben: Ziel des eigenen Teams („NIMM DEN PUNKT EIN“, „LEGE DIE BOMBE BEI A ODER B“ …), Teamleiste mit
+    Agenten-Porträts und Lebensbalken (eigenes Team Cyan links, Gegner rot rechts, ✕ = ausgeschaltet),
+    Rundenstand in schrägen Kästen, Rundenuhr (Bomben-Timer rot, OVERTIME), Tickets, Status des Ziels
+  - oben links: runde Minimap, dreht sich mit der Blickrichtung; Grundriss der Map, Teamkollegen, Pings,
+    Gegner nur kurz, wenn sie schießen oder per Radar markiert sind; Ziele A/B kleben am Rand
+  - rechts: Killfeed „Name [Waffen-Silhouette] ▼ Name“ (▼ niedergeschlagen, ☠ ausgeschaltet, ◎ Kopfschuss)
+  - unten links: Porträt, Leben „100/100“ mit Segment-Balken (25er-Schritte, Verlust blitzt rot nach), Rüstung
+  - unten rechts: Fähigkeit und Gadget als Rauten (Taste, Abklingzeit, Aufladungen), Munition „20 /200“,
+    Waffen-Silhouette, Taste + Name der anderen Waffe
+  - in der Welt: Zielmarker (Raute mit Buchstabe, Entfernung in Metern, Einnahme-Fortschritt, UMKÄMPFT/BOMBE)
+  - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X); beim Zielen rückt die Schulterkamera näher heran
 - **Schießen wie bei Rogue Company**:
   - Schulterkamera: dynamisches Fadenkreuz (Abstand = echte Streuung durch Laufen, Springen, Dauerfeuer),
@@ -71,6 +82,9 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 | Waffenmodelle, Kimme/Korn, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
 | Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
+| Match-HUD (Teamleiste, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua` |
+| Minimap (Farben, Zoom) | `src/shared/Minimap.lua` |
+| Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |
 | Kaufphase, Geld, Perks | `src/shared/BuyConfig.lua` |
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
@@ -91,7 +105,8 @@ vorher gilt alles nur für die Sitzung.
 ## Ordner
 
 - `src/shared` – Client + Server: Konfigurationen, Waffen-Client (ViewModel = Ego-Waffe, CharacterPose =
-  Third-Person-Haltung, WeaponEffects = Schuss-Effekte), HUD, Menü, Bewegung
+  Third-Person-Haltung, WeaponEffects = Schuss-Effekte), HUD (MatchHUD, Minimap, CombatHUD, HUDIcons =
+  Porträts/Waffen-Silhouetten, TeamCheck = wer ist Freund/Feind), Menü, Bewegung
 - `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings
 - `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi, Bots, Admin
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, ...
