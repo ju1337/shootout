@@ -280,7 +280,7 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 		end
 	end
 	local muzzleCF, flashScale = muzzle()
-	WeaponEffects.GunSound(current, muzzleCF.Position, true)
+	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced and 0.45 or 1)
 	WeaponEffects.MuzzleFlash(muzzleCF, flashScale)
 	local claims = {}
 	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
@@ -668,7 +668,7 @@ function WeaponClient.Init()
 
 	-- Schüsse der anderen (Spieler, Bots, Geschütztürme). Eigene zeigt der Client schon selbst.
 	local lastShotEffect = setmetatable({}, { __mode = "k" })
-	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos, endPos, weaponName, normal, hitKind)
+	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos, endPos, weaponName, normal, hitKind, silenced)
 		if shooter == player or typeof(startPos) ~= "Vector3" or typeof(endPos) ~= "Vector3" then
 			return
 		end
@@ -698,12 +698,14 @@ function WeaponClient.Init()
 			end
 		end
 		if firstPellet then
-			WeaponEffects.GunSound(weaponName, start, false)
-			if (endPos - start).Magnitude > 0.01 then
+			WeaponEffects.GunSound(weaponName, start, false, silenced and 0.3 or 1)
+			if not silenced and (endPos - start).Magnitude > 0.01 then
 				WeaponEffects.MuzzleFlash(CFrame.lookAt(start, endPos), 1)
 			end
 		end
-		WeaponEffects.Tracer(start, endPos, false)
+		if not silenced then
+			WeaponEffects.Tracer(start, endPos, false)
+		end
 		if hitKind then
 			WeaponEffects.Impact(endPos, normal, hitKind)
 		end

@@ -328,6 +328,11 @@ local function addAttachments(model, weaponName, attachments)
 		attachPart(model, "AttCompensator", V(0.26, 0.26, 0.34), CFrame.new(muzzle + V(0, 0, -0.17)))
 		attachPart(model, "AttCompensatorPort", V(0.28, 0.06, 0.12), CFrame.new(muzzle + V(0, 0.1, -0.2)),
 			Color3.fromRGB(70, 72, 76))
+	elseif has.Suppressor then
+		local can = attachPart(model, "AttSuppressor", V(0.62, 0.24, 0.24), CFrame.new(muzzle + V(0, 0, -0.31))
+			* CFrame.Angles(0, math.rad(90), 0))
+		can.Shape = Enum.PartType.Cylinder
+		attachPart(model, "AttSuppressorBand", V(0.26, 0.26, 0.06), CFrame.new(muzzle + V(0, 0, -0.08)), Color3.fromRGB(70, 72, 76))
 	elseif has.MuzzleBrake then
 		attachPart(model, "AttBrake", V(0.32, 0.22, 0.3), CFrame.new(muzzle + V(0, 0, -0.15)))
 		for k = 0, 1 do
@@ -337,6 +342,12 @@ local function addAttachments(model, weaponName, attachments)
 	end
 	if long and has.LongBarrel then
 		attachPart(model, "AttLongBarrel", V(0.13, 0.13, 0.55), CFrame.new(muzzle + V(0, 0, -0.27)))
+	elseif long and has.HeavyBarrel then
+		attachPart(model, "AttHeavyBarrel", V(0.24, 0.24, 0.9), CFrame.new(muzzle + V(0, 0, 0.4)), Color3.fromRGB(48, 50, 54))
+		for k = 0, 2 do
+			attachPart(model, "AttHeavyFin", V(0.28, 0.04, 0.06), CFrame.new(muzzle + V(0, 0.12, 0.15 + k * 0.25)),
+				Color3.fromRGB(70, 72, 76))
+		end
 	elseif long and has.ShortBarrel then
 		attachPart(model, "AttShroud", V(0.24, 0.24, 0.3), CFrame.new(muzzle + V(0, 0, 0.25)), Color3.fromRGB(55, 58, 62))
 	end
@@ -344,6 +355,9 @@ local function addAttachments(model, weaponName, attachments)
 		local hand = info.LeftHand
 		if has.VerticalGrip then
 			attachPart(model, "AttGrip", V(0.15, 0.48, 0.17), CFrame.new(hand + V(0.03, -0.32, 0.12)))
+		elseif has.AngledGrip then
+			attachPart(model, "AttAngledGrip", V(0.14, 0.34, 0.42), CFrame.new(hand + V(0.03, -0.22, 0.05))
+				* CFrame.Angles(math.rad(-35), 0, 0))
 		elseif has.Laser then
 			attachPart(model, "AttLaser", V(0.12, 0.12, 0.34), CFrame.new(hand + V(0.17, 0.08, -0.15)))
 			attachPart(model, "AttLaserDot", V(0.06, 0.06, 0.02), CFrame.new(hand + V(0.17, 0.08, -0.33)),
@@ -357,6 +371,13 @@ local function addAttachments(model, weaponName, attachments)
 			local extra = mag.Size.Y * 0.35
 			mag.Size += V(0, extra, 0)
 			mag.CFrame *= CFrame.new(0, -extra / 2, 0)
+		elseif has.DrumMag then
+			-- Trommel unter dem Magazinschacht
+			local drum = attachPart(model, "AttDrum", V(mag.Size.X * 1.6, mag.Size.Y * 1.1, mag.Size.Y * 1.1),
+				mag.CFrame * CFrame.new(0, -mag.Size.Y * 0.35, 0) * CFrame.Angles(0, 0, math.rad(90)), mag.Color, mag.Material,
+				"Magazine")
+			drum.Shape = Enum.PartType.Cylinder
+			drum.Size = V(mag.Size.X * 1.6, mag.Size.Y * 1.1, mag.Size.Y * 1.1)
 		elseif has.FastMag then
 			-- zweites Magazin daneben geklebt (schneller Wechsel)
 			local twin = attachPart(model, "AttTwinMag", mag.Size, mag.CFrame * CFrame.new(mag.Size.X + 0.02, 0, 0),

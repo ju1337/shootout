@@ -268,10 +268,11 @@ end
 
 -- Schuss-Effekt an alle Spieler im selben Modus (Tracer, Sound, Einschlag).
 -- shooter = Player, Bot-Modell oder nil (z.B. Geschützturm)
-function WeaponService.BroadcastShot(modeId, shooter, startPos, endPos, weaponName, normal, hitKind)
+-- silenced = Schalldämpfer: andere sehen kein Mündungsfeuer und keine Leuchtspur, der Schuss ist leiser
+function WeaponService.BroadcastShot(modeId, shooter, startPos, endPos, weaponName, normal, hitKind, silenced)
 	for _, other in Players:GetPlayers() do
 		if other:GetAttribute("Mode") == modeId then
-			Remotes.Shot:FireClient(other, shooter, startPos, endPos, weaponName, normal, hitKind)
+			Remotes.Shot:FireClient(other, shooter, startPos, endPos, weaponName, normal, hitKind, silenced)
 		end
 	end
 end
@@ -288,7 +289,8 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 	end
 	local endPos = hitPosition or (origin + direction * cfg.Range)
 	WeaponService.BroadcastShot(player:GetAttribute("Mode"), player, origin, endPos, weaponName,
-		(not claimedPart) and result and result.Normal or nil, claimedPart and "Character" or hitKindOf(result))
+		(not claimedPart) and result and result.Normal or nil, claimedPart and "Character" or hitKindOf(result),
+		AttachmentConfig.Effects(player, weaponName).Silenced)
 	if not hitPart then
 		return
 	end

@@ -72,7 +72,8 @@ end
 -- Schuss-Sound. own = eigener Schuss (ohne Raumklang, sofort). Mehrere Kugeln eines Schrotschusses
 -- kommen als einzelne Meldungen: dann nur ein Sound.
 local lastKey, lastTime = nil, 0
-function WeaponEffects.GunSound(weaponName, position, own)
+-- volume = Faktor (z.B. 0.3 mit Schalldämpfer), hört man auch weniger weit
+function WeaponEffects.GunSound(weaponName, position, own, volume)
 	local id = WeaponConfig.Sounds[weaponName]
 	if not id then
 		return
@@ -83,10 +84,11 @@ function WeaponEffects.GunSound(weaponName, position, own)
 	end
 	lastKey, lastTime = key, os.clock()
 	local speed = 0.95 + math.random() * 0.1
+	volume = volume or 1
 	if own then
-		play2D(id, 0.55, speed)
+		play2D(id, 0.55 * volume, speed)
 	else
-		playAt(id, position, 0.8, speed, 300)
+		playAt(id, position, 0.8 * volume, speed, volume < 1 and 90 or 300)
 	end
 end
 

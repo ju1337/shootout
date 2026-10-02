@@ -249,57 +249,149 @@ function LobbyPages.Loadout(page, goToShop)
 	local attachPanel = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 54), Size = UDim2.fromOffset(RIGHT_W, PAGE_H - 54),
 		BackgroundTransparency = 1, Visible = false }, page)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, attachPanel)
-	-- Werte der Waffe mit Aufsätzen unten auf der Bühne
-	local statsText = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -12), Size = UDim2.new(1, -32, 0, 18),
-		Text = "", TextSize = 13, Font = F.Bold, TextColor3 = C.Text, ZIndex = 5 }, stage)
+	-- Werte der Waffe mit Aufsätzen unten auf der Bühne: fünf Balken (Mitte = Grundwert der Waffe),
+	-- beim Überfahren eines Aufsatzes zeigt ein farbiger Teil, wie sich der Wert ändern würde
+	local statsPanel = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12),
+		Size = UDim2.new(1, -32, 0, 70), BackgroundColor3 = C.Background, BackgroundTransparency = 0.25, ZIndex = 5 }, stage)
+	UITheme.Corner(statsPanel, UITheme.Radius.Medium)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14), PaddingTop = UDim.new(0, 8) }, statsPanel)
+	make("UIGridLayout", { CellSize = UDim2.new(0.2, -8, 0, 54), CellPadding = UDim2.fromOffset(8, 0),
+		SortOrder = Enum.SortOrder.LayoutOrder }, statsPanel)
+	-- Wertung: höher = besser (Rückstoß/Streuung/Nachladen umgedreht)
+	local STATS = {
+		{ "RÜCKSTOSS", function(e) return 1 / e.Recoil end },
+		{ "STREUUNG", function(e) return 1 / (e.Spread * e.HipSpread * (0.5 + e.MoveSpread * 0.5)) end },
+		{ "REICHWEITE", function(e) return e.Range * (0.6 + e.Falloff * 0.4) end },
+		{ "MAGAZIN", function(e) return e.Mag end },
+		{ "NACHLADEN", function(e) return 1 / e.Reload end },
+	}
+	local statBars = {}
+	for i, stat in STATS do
+		local cell = make("Frame", { BackgroundTransparency = 1, LayoutOrder = i, ZIndex = 5 }, statsPanel)
+		label({ Size = UDim2.new(1, 0, 0, 14), Text = stat[1], TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, cell)
+		local value = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0.5, 0, 0, 14),
+			Text = "", TextSize = 11, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, cell)
+		local back = make("Frame", { Position = UDim2.fromOffset(0, 22), Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = C.Border,
+			BorderSizePixel = 0, ZIndex = 5 }, cell)
+		UITheme.Corner(back, 3)
+		local delta = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Good, BorderSizePixel = 0, ZIndex = 6 }, back)
+		local fill = make("Frame", { Size = UDim2.fromScale(0.5, 1), BackgroundColor3 = C.Text, BorderSizePixel = 0, ZIndex = 7 }, back)
+		UITheme.Corner(fill, 3)
+		statBars[i] = { Fill = fill, Delta = delta, Value = value, Rate = stat[2] }
+	end
 
-	local function percent(factor, invert)
+	local function percent(factor)
 		local value = math.floor((factor - 1) * 100 + 0.5)
-		if invert then
-			value = -value
-		end
 		return (value > 0 and "+" or "") .. value .. " %"
+	end
+
+	-- Wirkung mit einem anderen Aufsatz in einem Platz (für die Vorschau beim Überfahren)
+	local function effectsWith(weaponName, slotId, itemId)
+		local result = { Recoil = 1, Spread = 1, HipSpread = 1, MoveSpread = 1, Range = 1, Falloff = 1, Mag = 1, Reload = 1 }
+		local equipped = table.clone(AttachmentConfig.Equipped(player, weaponName))
+		equipped[slotId] = itemId
+		for _, id in equipped do
+			local item = AttachmentConfig.Get(id)
+			if item and (id == itemId or AttachmentConfig.Owns(player, weaponName, id)) then
+				for key, factor in item.Effects do
+					if type(factor) == "number" then
+						result[key] *= factor
+					end
+				end
+			end
+		end
+		return result
+	end
+
+	local function showStats(current, preview)
+		for _, bar in statBars do
+			local now = bar.Rate(current)
+			local fillScale = math.clamp(0.5 * now, 0.05, 1)
+			bar.Fill.Size = UDim2.fromScale(fillScale, 1)
+			bar.Value.Text = percent(now)
+			bar.Value.TextColor3 = now > 1.001 and C.Good or (now < 0.999 and C.Bad or C.Muted)
+			if preview then
+				local after = bar.Rate(preview)
+				local afterScale = math.clamp(0.5 * after, 0.05, 1)
+				local better = after > now + 0.001
+				bar.Delta.Size = UDim2.fromScale(math.max(fillScale, afterScale), 1)
+				bar.Delta.BackgroundColor3 = better and C.Good or C.Bad
+				bar.Delta.Visible = math.abs(after - now) > 0.001
+				bar.Fill.Size = UDim2.fromScale(math.min(fillScale, afterScale), 1)
+				bar.Value.Text = percent(after)
+				bar.Value.TextColor3 = better and C.Good or (after < now - 0.001 and C.Bad or C.Muted)
+			else
+				bar.Delta.Visible = false
+			end
+		end
 	end
 
 	local function fillAttachments()
 		clear(attachPanel)
 		local weaponName = selected
-		local cfg = WeaponConfig.Get(weaponName)
 		local equipped = AttachmentConfig.Equipped(player, weaponName)
+		local currentEffects = AttachmentConfig.Effects(player, weaponName)
 		for order, slot in AttachmentConfig.Slots do
 			local items = AttachmentConfig.ForSlot(slot.Id)
-			local current = equipped[slot.Id] and AttachmentConfig.Get(equipped[slot.Id])
-			local block = make("Frame", { Size = UDim2.fromOffset(RIGHT_W, 112), BackgroundTransparency = 1, LayoutOrder = order },
+			local current = equipped[slot.Id] and AttachmentConfig.Owns(player, weaponName, equipped[slot.Id])
+				and AttachmentConfig.Get(equipped[slot.Id])
+			local block = make("Frame", { Size = UDim2.fromOffset(RIGHT_W, 136), BackgroundTransparency = 1, LayoutOrder = order },
 				attachPanel)
-			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = upper(slot.Name) .. "  ·  "
-				.. (current and upper(current.Name) or "LEER"), TextSize = 12, Font = F.Bold,
-				TextColor3 = current and C.Primary or C.Muted }, block)
-			local width = math.floor((RIGHT_W - 10) / #items)
+			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = upper(slot.Name), TextSize = 13, Font = F.Bold,
+				TextColor3 = C.Text }, block)
+			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(RIGHT_W, 18),
+				Text = current and upper(current.Name) or "LEER", TextSize = 12, Font = F.Bold,
+				TextColor3 = current and C.Primary or C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, block)
+			local gap = 8
+			local width = math.floor((RIGHT_W - gap * (#items - 1)) / #items)
 			for i, item in items do
 				local owned = AttachmentConfig.Owns(player, weaponName, item.Id)
-				local isOn = equipped[slot.Id] == item.Id and owned
-				local stateText = isOn and "AUSGERÜSTET" or (owned and "GEKAUFT · AUSRÜSTEN"
-					or (UITheme.FormatNumber(item.Price) .. " MÜNZEN"))
-				local option = UITheme.Chunky({ Position = UDim2.fromOffset((i - 1) * (width + 10), 22), Size = UDim2.fromOffset(width, 84),
-					Color = isOn and C.Secondary or C.Panel, StrokeColor = isOn and C.Primary or C.Border, Text = "" }, block,
-					function()
-						Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
-					end)
-				option.Stroke.Transparency = isOn and 0 or 0.4
-				label({ Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 24), Text = upper(item.Name), TextSize = 20,
-					Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, option.Face)
-				label({ Position = UDim2.fromOffset(12, 32), Size = UDim2.new(1, -24, 0, 28), Text = item.Description, TextSize = 11,
-					Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, option.Face)
-				label({ Position = UDim2.fromOffset(12, 62), Size = UDim2.new(1, -24, 0, 14), Text = stateText, TextSize = 10,
-					Font = F.Bold, TextColor3 = isOn and C.Primary or (owned and C.Good or (coins() >= item.Price and C.Text
-						or C.Bad)) }, option.Face)
+				local isOn = owned and equipped[slot.Id] == item.Id
+				local affordable = coins() >= item.Price
+				local tile = make("TextButton", { Position = UDim2.fromOffset((i - 1) * (width + gap), 22),
+					Size = UDim2.fromOffset(width, 110), BackgroundColor3 = isOn and C.Secondary or C.Panel,
+					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false }, block)
+				UITheme.Corner(tile, UITheme.Radius.Medium)
+				local stroke = UITheme.Stroke(tile, isOn and C.Primary or C.Border, isOn and 2 or 1, isOn and 0 or 0.35)
+				make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8) }, tile)
+				label({ Size = UDim2.new(1, 0, 0, 20), Text = upper(item.Name), TextSize = 17, Font = F.Display,
+					TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, tile)
+				-- Vorteile grün, Nachteile rot
+				local lines = {}
+				for _, pro in item.Pros or {} do
+					table.insert(lines, '<font color="#70B270">+ ' .. pro .. "</font>")
+				end
+				for _, con in item.Cons or {} do
+					table.insert(lines, '<font color="#CE463A">− ' .. con .. "</font>")
+				end
+				label({ Position = UDim2.fromOffset(0, 24), Size = UDim2.new(1, 0, 0, 52), Text = table.concat(lines, "\n"),
+					TextSize = 11, Font = F.Medium, RichText = true, TextWrapped = true,
+					TextYAlignment = Enum.TextYAlignment.Top }, tile)
+				-- Zustand unten: ausgerüstet / gekauft / Preis
+				local footer = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -10, 1, 0),
+					Size = UDim2.new(1, 18, 0, 24), BackgroundColor3 = isOn and C.Primary or (owned and C.Card or C.Background),
+					BackgroundTransparency = isOn and 0 or 0.2, BorderSizePixel = 0 }, tile)
+				UITheme.Corner(footer, UITheme.Radius.Medium)
+				label({ Size = UDim2.fromScale(1, 1), Text = isOn and "AUSGERÜSTET" or (owned and "AUSRÜSTEN"
+					or (UITheme.FormatNumber(item.Price) .. " MÜNZEN")), TextSize = 11, Font = F.Bold,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					TextColor3 = isOn and C.PrimaryText or (owned and C.Good or (affordable and C.Text or C.Bad)) }, footer)
+				tile.MouseEnter:Connect(function()
+					stroke.Transparency = 0
+					stroke.Color = isOn and C.Primary or C.Text
+					showStats(currentEffects, effectsWith(weaponName, slot.Id, isOn and nil or item.Id))
+				end)
+				tile.MouseLeave:Connect(function()
+					stroke.Transparency = isOn and 0 or 0.35
+					stroke.Color = isOn and C.Primary or C.Border
+					showStats(currentEffects)
+				end)
+				tile.Activated:Connect(function()
+					Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
+				end)
 			end
 		end
-		-- Werte mit Aufsätzen
-		local effects = AttachmentConfig.Effects(player, weaponName)
-		statsText.Text = "RÜCKSTOSS " .. percent(effects.Recoil) .. "   ·   STREUUNG " .. percent(effects.Spread * effects.HipSpread)
-			.. "   ·   REICHWEITE " .. percent(effects.Range) .. "   ·   MAGAZIN " .. math.floor(cfg.MagazineSize * effects.Mag)
-			.. "   ·   NACHLADEN " .. percent(effects.Reload)
+		showStats(currentEffects)
 	end
 
 	local fillList -- vorab, weil sich Liste und Skins gegenseitig neu aufbauen
@@ -310,7 +402,7 @@ function LobbyPages.Loadout(page, goToShop)
 		options.Visible = not showAttachments
 		hint.Visible = not showAttachments
 		shopButton.Visible = not showAttachments
-		statsText.Visible = showAttachments
+		statsPanel.Visible = showAttachments
 		if showAttachments then
 			fillAttachments()
 		end

@@ -281,10 +281,11 @@ end
 
 -- Waffenwerte mit der Reichweite der Aufsätze (für Raycasts); alles andere bleibt wie in cfg
 function WeaponConfig.WithAttachments(cfg, effects)
-	if not effects or effects.Range == 1 then
+	if not effects or (effects.Range == 1 and effects.Falloff == 1) then
 		return cfg
 	end
-	return setmetatable({ Range = cfg.Range * effects.Range }, { __index = cfg })
+	return setmetatable({ Range = cfg.Range * effects.Range,
+		FalloffStart = (cfg.FalloffStart or cfg.Range * 0.45) * (effects.Falloff or 1) * effects.Range }, { __index = cfg })
 end
 
 -- Bloom nach einer Feuerpause von sinceLast Sekunden (bloom = Wert direkt nach dem letzten Schuss)
