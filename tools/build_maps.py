@@ -743,40 +743,54 @@ GLACIER_ORIGIN = (3000, 0, 0)
 
 
 def build_glacier(origin=GLACIER_ORIGIN, filename="Gletscher.model.json"):
+    """Gletscher (300 x 210): Forschungsstation. Zweistöckige Labore an den Zielen mit Fenstern,
+    Kantine und Garage auf Angreiferseite, Radarkuppel und Eisschollen als Deckung, Trennwände."""
     b = Builder(origin)
     rng = random.Random(11)
     snow, ice, module, accent = (235, 240, 245), (170, 215, 240), (200, 205, 210), (230, 110, 40)
-    b.ground(250, 190, snow, "Snow")
-    b.border(240, 180, 10, (210, 225, 235), "Ice", barrier=120)
-    # Eisschollen und Schneewehen als Deckung
-    for _ in range(18):
-        x, z = rng.uniform(-110, 110), rng.uniform(-80, 80)
-        if abs(x) < 95 and not (abs(x) < 20 and abs(z) < 20):
+    W, D = 300, 210
+    b.ground(W + 10, D + 10, snow, "Snow")
+    b.border(W, D, 10, (210, 225, 235), "Ice", barrier=120)
+    # Eisschollen und Schneewehen als Deckung (nicht in Spawns und Zielen)
+    for _ in range(22):
+        x, z = rng.uniform(-125, 125), rng.uniform(-90, 90)
+        if abs(x) < 110 and not (abs(x) < 20 and abs(z) < 20) and not (60 < x < 100 and 40 < abs(z) < 70):
             sx, sz, sy = rng.uniform(5, 10), rng.uniform(4, 9), rng.uniform(3, 6)
             b.box("Cover", "IceBlock", (sx, sy, sz), (x, sy / 2, z), ice, "Glass",
                   angles=(0, rng.uniform(0, 90), rng.uniform(-6, 6)), props={"Transparency": 0.25})
-    # Forschungsmodule (begehbar) mit orangen Streifen
-    for name, x, z, w, d, doors in (("LabA", 55, -55, 30, 20, ("N", "W")), ("LabB", 55, 55, 30, 20, ("S", "W")),
-                                    ("Mess", -40, -50, 24, 18, ("N", "E")), ("Garage", -40, 50, 26, 18, ("S", "E"))):
-        b.house(name, x, z, w, d, 10, module, (90, 95, 100), doors=doors, material="Metal")
-        b.box("Buildings", name + "_Stripe", (w + 0.2, 1, d + 0.2), (x, 8.5, z), accent, "SmoothPlastic")
-    # Rampen auf die Labordächer (erhöhte Positionen an den Zielen)
-    b.ramp("LabRampA", 71, -60, 6, 20, 10.5, "E")
-    b.ramp("LabRampB", 71, 60, 6, 20, 10.5, "E")
-    # Radarkuppel und Antennenmast in der Mitte
-    b.add("Buildings", "RadarBase", (4, 18, 18), (0, 2, 32), module, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
-    b.add("Buildings", "RadarDome", (14, 14, 14), (0, 7, 32), (240, 240, 245), "SmoothPlastic", props={"Shape": "Ball"})
-    b.box("Buildings", "Mast", (1.5, 34, 1.5), (0, 17, -32), (90, 95, 100), "Metal")
-    b.box("Buildings", "MastLight", (2, 2, 2), (0, 34.5, -32), (255, 60, 50), "Neon")
-    # Treibstofftanks und Kisten an den Zielen
-    for x, z in ((80, -30), (80, 30), (-80, 0)):
-        b.add("Cover", "FuelTank", (12, 7, 7), (x, 3.5, z), (220, 200, 60), "Metal", angles=(0, 90, 0),
+    # Zweistöckige Labore hinter den Zielen (Fenster zum Ziel), Kantine und Garage vorne
+    for side in (-1, 1):
+        inward = "S" if side > 0 else "N"
+        b.building2("Lab", 92, side * 84, 36, 22, module, (90, 95, 100),
+                    doors={inward: [-10, 10], "W": [0]}, windows1={inward: [0]},
+                    windows2={inward: [-12, -4, 4, 12], "W": [-5, 5]}, stairs_at=("E",), material="Metal")
+        b.box("Buildings", "LabStripe", (36.2, 1, 22.2), (92, 9.5, side * 84), accent, "SmoothPlastic")
+        b.building2("Mess", -60, side * 66, 26, 20, module, (90, 95, 100),
+                    doors={inward: [0], "E": [0]}, windows1={inward: [-8, 8]},
+                    windows2={inward: [-8, 0, 8], "E": [-4, 4]}, stairs_at=("W",), material="Metal")
+        b.box("Buildings", "MessStripe", (26.2, 1, 20.2), (-60, 9.5, side * 66), accent, "SmoothPlastic")
+        # Trennwände mit Fenstern (Angreifer-Seite)
+        b.wall_line("SnowWall", -110, -76, side * 36, True, 7, (215, 225, 235), "Ice",
+                    openings=[(-93, 6, 0, 7), (-104, 4, 3, 5.4), (-82, 4, 3, 5.4)], group="Cover")
+        # Treibstofftanks an den Zielen
+        b.add("Cover", "FuelTank", (12, 7, 7), (104, 3.5, side * 40), (220, 200, 60), "Metal", angles=(0, 90, 0),
               props={"Shape": "Cylinder"})
-    for x, z in ((40, -30), (40, 30), (20, -60), (20, 60), (-20, -20), (-20, 20), (70, 0)):
+        b.crate(70, side * 62, color=(150, 120, 80))
+        b.crate(70, side * 62, s=4, y=5, color=(150, 120, 80))
+        b.half_wall(58, side * 46, 10, along_x=False, color=(190, 200, 210))
+    # Radarkuppel und Antennenmast in der Mitte
+    b.add("Buildings", "RadarBase", (4, 18, 18), (0, 2, 40), module, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
+    b.add("Buildings", "RadarDome", (14, 14, 14), (0, 7, 40), (240, 240, 245), "SmoothPlastic", props={"Shape": "Ball"})
+    b.box("Buildings", "Mast", (1.5, 34, 1.5), (0, 17, -40), (90, 95, 100), "Metal")
+    b.box("Buildings", "MastLight", (2, 2, 2), (0, 34.5, -40), (255, 60, 50), "Neon")
+    # Mitte: Container-Station und Deckung
+    b.container(26, 0, along_x=False, color=(200, 90, 40), length=16)
+    b.container(-26, 0, along_x=False, color=(200, 90, 40), length=16)
+    for x, z in ((40, -24), (40, 24), (-40, -24), (-40, 24), (0, -16), (0, 16)):
         b.crate(x, z, color=(150, 120, 80))
-    for x, z, length, ax in ((-60, 0, 16, False), (15, 0, 12, False), (90, -55, 12, True), (90, 55, 12, True)):
-        b.cover_wall(x, z, length, along_x=ax, height=5, color=(190, 200, 210))
-    team_objectives(b, -110, 98, (55, -40), (55, 40))
+    for x, z, length, ax in ((118, -18, 10, False), (118, 18, 10, False), (-128, -26, 12, False), (-128, 26, 12, False)):
+        b.cover_wall(x, z, length, along_x=ax, height=6, color=(190, 200, 210))
+    team_objectives(b, -140, 124, (80, -55), (80, 55), spawn_x=140)
     b.save(filename, "Gletscher")
 
 
