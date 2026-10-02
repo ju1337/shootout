@@ -19,4 +19,5 @@ return TeamRoundMode.new({
 	RoundTime = "DemolitionRoundTime",
 	Objective = Bomb,
 	Ranked = true,
+	RequiredLevel = 10, -- Summe aller Agenten-Level (Start: 7)
 })

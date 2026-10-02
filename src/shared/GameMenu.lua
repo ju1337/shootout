@@ -265,7 +265,7 @@ local function buildTopBar()
 	local rank = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 66), Size = UDim2.new(0, 300, 0, 24),
 		Text = "", TextSize = 17, Font = F.Title, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
 	local function update()
-		coins.Text = "💰 " .. (player:GetAttribute("Coins") or 0)
+		coins.Text = "LV " .. AgentConfig.PlayerLevel(player) .. "     💰 " .. (player:GetAttribute("Coins") or 0)
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
 		local tier = RankConfig.Get(elo)
 		rank.Text = "🏆 " .. tier.Display .. "  ·  " .. elo .. " ELO"
@@ -273,6 +273,11 @@ local function buildTopBar()
 	end
 	update()
 	player:GetAttributeChangedSignal("Coins"):Connect(update)
+	player.AttributeChanged:Connect(function(name)
+		if string.sub(name, 1, 3) == "XP_" then
+			update()
+		end
+	end)
 	player:GetAttributeChangedSignal("Elo"):Connect(update)
 end
 

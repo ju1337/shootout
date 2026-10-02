@@ -944,7 +944,12 @@ function TeamRoundMode.new(config)
 		task.spawn(matchLoop)
 	end
 
-	function mode.CanJoin()
+	function mode.CanJoin(player)
+		-- Ranked erst ab Spielerlevel config.RequiredLevel (Summe der Agenten-Level)
+		if config.RequiredLevel and player and AgentConfig.PlayerLevel(player) < config.RequiredLevel then
+			return false, "Ranked ab Spielerlevel " .. config.RequiredLevel .. " (du: " .. AgentConfig.PlayerLevel(player)
+				.. "). Spiele erst andere Modi."
+		end
 		if count() + botCount() >= TEAM_SIZE * 2 then
 			return false, Modes.Get(MODE_ID).Name .. " ist voll (" .. TEAM_SIZE * 2 .. "/" .. TEAM_SIZE * 2 .. ")."
 		end

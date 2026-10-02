@@ -264,7 +264,7 @@ function HUD.Init(weaponClient)
 	-- Eroberungspunkt (Strikeout): Fortschritt beider Teams unter der Modus-Info
 	local objective = make("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 84),
+		Position = UDim2.new(0.5, 0, 0, 92),
 		Size = UDim2.new(0, 420, 0, 52),
 		BackgroundTransparency = 1,
 		Visible = false,
@@ -298,6 +298,77 @@ function HUD.Init(weaponClient)
 	player:GetAttributeChangedSignal("ObjMine"):Connect(updateObjective)
 	player:GetAttributeChangedSignal("ObjEnemy"):Connect(updateObjective)
 	player:GetAttributeChangedSignal("ObjInfo"):Connect(updateObjective)
+
+	-- ---------- Team-Rauten oben (wie bei RC): eigenes Team links, Gegner rechts ----------
+	local teamBar = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 56),
+		Size = UDim2.new(0, 700, 0, 30), BackgroundTransparency = 1, Visible = false }, gui)
+	local function side(anchorX, alignment)
+		local frame = make("Frame", { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(anchorX, 0, 0, 0),
+			Size = UDim2.new(0.5, -10, 1, 0), BackgroundTransparency = 1 }, teamBar)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = alignment,
+			VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+		return frame
+	end
+	local mineSide = side(0, Enum.HorizontalAlignment.Right)
+	local enemySide = side(1, Enum.HorizontalAlignment.Left)
+
+	-- Zustand eines Modells: "alive", "downed" oder "dead"
+	local function stateOf(model)
+		local humanoid = model and model.Parent and model:FindFirstChildOfClass("Humanoid")
+		if not humanoid or humanoid.Health <= 0 then
+			return "dead"
+		end
+		return model:GetAttribute("Downed") and "downed" or "alive"
+	end
+
+	local function renderSide(frame, entries, color)
+		for _, child in frame:GetChildren() do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		for i, state in entries do
+			local holder = make("Frame", { Size = UDim2.new(0, 22, 0, 22), BackgroundTransparency = 1, LayoutOrder = i }, frame)
+			local fill = state == "alive" and color or (state == "downed" and Color3.fromRGB(255, 170, 40) or Color3.fromRGB(30, 34, 44))
+			UITheme.Diamond(holder, 15, UDim2.new(0.5, 0, 0.5, 0), fill, color)
+			if state == "dead" then
+				label({ Size = UDim2.new(1, 0, 1, 0), Text = "✕", TextSize = 13, TextColor3 = color,
+					TextXAlignment = Enum.TextXAlignment.Center }, holder)
+			end
+		end
+	end
+
+	task.spawn(function()
+		while true do
+			local mode = player:GetAttribute("Mode")
+			local inTeamMode = Modes.IsTeamMode(mode) and player.Team ~= nil and player:GetAttribute("RoundPhase") == "Round"
+			teamBar.Visible = inTeamMode
+			if inTeamMode then
+				local mine, enemies = {}, {}
+				for _, p in Players:GetPlayers() do
+					if p:GetAttribute("Mode") == mode and p.Team then
+						table.insert(p.Team == player.Team and mine or enemies, stateOf(p.Character))
+					end
+				end
+				local bots = workspace:FindFirstChild("Bots")
+				if bots then
+					for _, model in bots:GetChildren() do
+						if model:GetAttribute("Mode") == mode then
+							local isMate = model:GetAttribute("TeamName") == player.Team.Name
+							table.insert(isMate and mine or enemies, stateOf(model))
+						end
+					end
+				end
+				-- Lebende zuerst, dann am Boden, dann ausgeschaltet
+				local rank = { alive = 1, downed = 2, dead = 3 }
+				table.sort(mine, function(a, b) return rank[a] < rank[b] end)
+				table.sort(enemies, function(a, b) return rank[a] < rank[b] end)
+				renderSide(mineSide, mine, UITheme.Colors.Accent)
+				renderSide(enemySide, enemies, UITheme.Colors.Bad)
+			end
+			task.wait(0.3)
+		end
+	end)
 
 	-- HUD nur in Kampfmodi zeigen, nicht im Hub
 	local function updateVisible()

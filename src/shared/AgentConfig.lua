@@ -246,6 +246,15 @@ function AgentConfig.LoadoutFor(player, agentId)
 	return { primary, agent.Loadout[2] }
 end
 
+-- Spielerlevel = Summe aller Agenten-Level (für Freischaltungen wie Ranked)
+function AgentConfig.PlayerLevel(player)
+	local total = 0
+	for _, agent in AgentConfig.Agents do
+		total += AgentConfig.LevelFromXP(player:GetAttribute("XP_" .. agent.Id) or 0)
+	end
+	return total
+end
+
 -- XP eines Spielers für einen Agenten (Spieler-Attribut "XP_<Id>")
 function AgentConfig.GetXP(player, agentId)
 	return player:GetAttribute("XP_" .. agentId) or 0
