@@ -11,6 +11,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Movement = require(Shared.Movement)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -18,10 +19,10 @@ local Downed = {}
 
 local CRAWL_SPEED = 4
 local REVIVE_RANGE = 7 -- wie DownedService (Server prüft selbst)
-local RED = Color3.fromRGB(230, 60, 60)
-local GREEN = Color3.fromRGB(90, 220, 120)
+local RED = UITheme.Colors.Bad
+local GREEN = UITheme.Colors.Good
 
-local gui, downedPanel, bleedLabel, reviveBar, promptPanel, promptLabel, promptBar
+local gui, vignette, downedPanel, bleedLabel, reviveBar, promptPanel, promptLabel, promptBar
 local isDowned = false
 local holdingE = false
 local promptTarget = nil
@@ -45,10 +46,8 @@ end
 
 local function progressBar(parent, y, color)
 	local back = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, y),
-		Size = UDim2.new(0, 300, 0, 10), BackgroundColor3 = Color3.fromRGB(30, 30, 35), BorderSizePixel = 0 }, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 5) }, back)
+		Size = UDim2.new(1, -40, 0, 6), BackgroundColor3 = UITheme.Colors.Border, BorderSizePixel = 0 }, parent)
 	local fill = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0 }, back)
-	make("UICorner", { CornerRadius = UDim.new(0, 5) }, fill)
 	return fill
 end
 
@@ -56,19 +55,28 @@ local function build()
 	gui = make("ScreenGui", { Name = "Downed", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 6 },
 		player:WaitForChild("PlayerGui"))
 
-	-- Eigener Zustand am Boden
-	downedPanel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.62, 0),
-		Size = UDim2.new(0, 420, 0, 110), BackgroundTransparency = 1, Visible = false }, gui)
-	label({ Size = UDim2.new(1, 0, 0, 40), Text = "NIEDERGESCHLAGEN", TextSize = 34, TextColor3 = RED }, downedPanel)
-	bleedLabel = label({ Position = UDim2.new(0, 0, 0, 42), Size = UDim2.new(1, 0, 0, 24), Text = "", TextSize = 18,
-		Font = Enum.Font.GothamBold }, downedPanel)
-	reviveBar = progressBar(downedPanel, 76, GREEN)
+	-- Roter Rand, solange man am Boden liegt
+	vignette = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = RED, BackgroundTransparency = 0.55,
+		BorderSizePixel = 0, Visible = false }, gui)
+	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.18, 1), NumberSequenceKeypoint.new(0.82, 1), NumberSequenceKeypoint.new(1, 0) }) }, vignette)
+
+	-- Eigener Zustand am Boden (Karte mit rotem Streifen)
+	downedPanel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.62, 0),
+		Size = UDim2.new(0, 420, 0, 112), BackgroundTransparency = 0.1, Visible = false }, gui)
+	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = RED, BorderSizePixel = 0 }, downedPanel)
+	label({ Position = UDim2.new(0, 0, 0, 10), Size = UDim2.new(1, 0, 0, 40), Text = "NIEDERGESCHLAGEN", TextSize = 36,
+		TextColor3 = RED }, downedPanel)
+	bleedLabel = label({ Position = UDim2.new(0, 0, 0, 52), Size = UDim2.new(1, 0, 0, 24), Text = "", TextSize = 18,
+		TextColor3 = UITheme.Colors.Muted }, downedPanel)
+	reviveBar = progressBar(downedPanel, 88, GREEN)
 
 	-- Hinweis beim Teamkollegen
-	promptPanel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.6, 0),
-		Size = UDim2.new(0, 420, 0, 60), BackgroundTransparency = 1, Visible = false }, gui)
-	promptLabel = label({ Size = UDim2.new(1, 0, 0, 28), Text = "", TextSize = 20 }, promptPanel)
-	promptBar = progressBar(promptPanel, 36, GREEN)
+	promptPanel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.6, 0),
+		Size = UDim2.new(0, 380, 0, 64), BackgroundTransparency = 0.1, Visible = false }, gui)
+	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = GREEN, BorderSizePixel = 0 }, promptPanel)
+	promptLabel = label({ Position = UDim2.new(0, 0, 0, 8), Size = UDim2.new(1, 0, 0, 28), Text = "", TextSize = 22 }, promptPanel)
+	promptBar = progressBar(promptPanel, 44, GREEN)
 end
 
 local function setReviving(holding)
@@ -101,6 +109,7 @@ local function onDownedChanged(character)
 		Movement.ApplyCamera()
 	end
 	downedPanel.Visible = isDowned
+	vignette.Visible = isDowned
 end
 
 local function crawl(character)
@@ -177,9 +186,17 @@ function Downed.Init()
 	player.CharacterAdded:Connect(function(character)
 		isDowned = false
 		downedPanel.Visible = false
+		vignette.Visible = false
 		character:GetAttributeChangedSignal("Downed"):Connect(function()
 			onDownedChanged(character)
 		end)
+		local humanoid = character:WaitForChild("Humanoid", 10)
+		if humanoid then
+			humanoid.Died:Connect(function()
+				downedPanel.Visible = false
+				vignette.Visible = false
+			end)
+		end
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, processed)
