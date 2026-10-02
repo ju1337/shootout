@@ -233,7 +233,8 @@ def build_ffa():
         b.box("Buildings", "Bridge", (4, 0.8, 30), (x, top + 0.2, 0), steel, "DiamondPlate")
     b.box("Buildings", "CrossBridge", (4, 0.8, 48), (0, top + 0.2, 0), steel, "DiamondPlate")
     for x, z, length, ax in ((0, -24, 30, True), (0, 24, 30, True)):
-        b.box("Buildings", "Railing", (length, 1.2, 0.3), (x, top + 1.2, z - 2), (220, 180, 40), "Metal")
+        # Geländer an der Innenseite, damit die Rampen außen frei ankommen
+        b.box("Buildings", "Railing", (length, 1.2, 0.3), (x, top + 1.2, z - 2 if z > 0 else z + 2), (220, 180, 40), "Metal")
     # Rampen hoch aufs Tanklager (Norden und Süden)
     # Oberes Ende direkt an der Brücke (z = ±26), unteres Ende vor den Kontrollhäusern
     b.ramp("TankRampN", 0, 26, 6, 30, top + 0.6, "N")
