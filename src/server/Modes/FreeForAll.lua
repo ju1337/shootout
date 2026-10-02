@@ -132,7 +132,45 @@ local function finishRound(winner)
 	updateInfo()
 end
 
-function FreeForAll.Init() end
+-- Auffüll-Bots: Mit echten Spielern, aber wenig Gegnern füllen Bots auf FILL_TO Teilnehmer auf
+local FILL_TO = 6
+
+function FreeForAll.Init()
+	task.spawn(function()
+		while true do
+			task.wait(5)
+			local players = 0
+			for _ in members do
+				players += 1
+			end
+			local auto = {}
+			for bot in bots do
+				if bot.AutoFill then
+					table.insert(auto, bot)
+				end
+			end
+			if players == 0 or GameSettings.Get("AutoFillBots") < 1 then
+				-- niemand da (oder ausgeschaltet): Auffüll-Bots weg
+				for _, bot in auto do
+					FreeForAll.RemoveBot(bot)
+					BotService.Destroy(bot)
+				end
+			elseif count() < FILL_TO then
+				for _ = 1, FILL_TO - count() do
+					local bot = BotService.Create("FreeForAll")
+					bot.AutoFill = true
+					FreeForAll.AddBot(bot)
+				end
+			elseif count() > FILL_TO and #auto > 0 then
+				-- echte Spieler dazugekommen: Bots machen Platz
+				for i = 1, math.min(#auto, count() - FILL_TO) do
+					FreeForAll.RemoveBot(auto[i])
+					BotService.Destroy(auto[i])
+				end
+			end
+		end
+	end)
+end
 
 function FreeForAll.CanJoin()
 	if count() >= MAX_PLAYERS then

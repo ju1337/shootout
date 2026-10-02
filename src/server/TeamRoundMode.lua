@@ -49,6 +49,7 @@ local DROP_HEIGHT = 300      -- Absprunghöhe über der Map (DropIn)
 local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
+local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
 local SPAWN_PROTECTION = 2   -- Schutzschild nach Boden-Spawns
 local RESPAWN_TIME = 5       -- Sekunden bis zum Respawn (mit Ticket)
 
@@ -130,6 +131,17 @@ function TeamRoundMode.new(config)
 	-- Spieler + Bots in einem Team
 	local function teamSize(team)
 		return #team:GetPlayers() + botCount(team)
+	end
+
+	-- Auffüll-Bots (Einstellung AutoFillBots): zählen für Plätze nicht als "echte" Belegung
+	local function autoBotCount(team)
+		local n = 0
+		for bot in bots do
+			if bot.AutoFill and (not team or bot.Team == team) then
+				n += 1
+			end
+		end
+		return n
 	end
 
 	local function teamsReady()
@@ -798,9 +810,61 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Freie Plätze beider Teams mit Bots auffüllen (nur wenn echte Spieler da sind)
+	local function fillWithBots()
+		if GameSettings.Get("AutoFillBots") < 1 or count() == 0 then
+			return
+		end
+		for _, team in { teamA, teamB } do
+			while teamSize(team) < TEAM_SIZE do
+				local bot = BotService.Create(MODE_ID)
+				bot.AutoFill = true
+				if not mode.AddBot(bot, team.Name) then
+					BotService.Destroy(bot)
+					break
+				end
+			end
+		end
+	end
+
+	-- Auffüll-Bots entfernen (z.B. wenn keine Spieler mehr da sind)
+	local function removeAutoBots(team, limit)
+		local removed = 0
+		for bot in bots do
+			if bot.AutoFill and (not team or bot.Team == team) and (not limit or removed < limit) then
+				mode.RemoveBot(bot)
+				BotService.Destroy(bot)
+				removed += 1
+			end
+		end
+		return removed
+	end
+
 	-- Match-Schleife, läuft dauerhaft im Hintergrund
 	local function matchLoop()
+		local waitingSince = nil
 		while true do
+			if count() == 0 and autoBotCount() > 0 then
+				removeAutoBots() -- niemand mehr da: Auffüll-Bots weg
+			end
+			-- Zwischen den Runden: zu viele Auffüll-Bots (weil Spieler dazukamen) entfernen
+			if not roundActive then
+				for _, team in { teamA, teamB } do
+					local over = teamSize(team) - TEAM_SIZE
+					if over > 0 then
+						removeAutoBots(team, over)
+					end
+				end
+			end
+			-- Nach kurzer Wartezeit mit Bots auffüllen, damit man auch allein spielen kann
+			if count() > 0 and not roundActive then
+				waitingSince = waitingSince or os.clock()
+				if os.clock() - waitingSince >= BOT_FILL_DELAY then
+					fillWithBots()
+				end
+			else
+				waitingSince = nil
+			end
 			balance()
 			if not matchStarted then
 				setPhase("Waiting")
@@ -963,18 +1027,24 @@ function TeamRoundMode.new(config)
 	end
 
 	function mode.CanJoin(player)
+		-- Auffüll-Bots machen Platz und zählen hier nicht
 		-- Ranked erst ab Spielerlevel config.RequiredLevel (Summe der Agenten-Level)
 		if config.RequiredLevel and player and AgentConfig.PlayerLevel(player) < config.RequiredLevel then
 			return false, "Ranked ab Spielerlevel " .. config.RequiredLevel .. " (du: " .. AgentConfig.PlayerLevel(player)
 				.. "). Spiele erst andere Modi."
 		end
-		if count() + botCount() >= TEAM_SIZE * 2 then
+		if count() + botCount() - autoBotCount() >= TEAM_SIZE * 2 then
 			return false, Modes.Get(MODE_ID).Name .. " ist voll (" .. TEAM_SIZE * 2 .. "/" .. TEAM_SIZE * 2 .. ")."
 		end
 		return true
 	end
 
 	function mode.AddPlayer(player)
+		-- Voll mit Auffüll-Bots? Einen Bot Platz machen lassen (während einer Runde erst danach)
+		if not roundActive and count() + botCount() >= TEAM_SIZE * 2 and autoBotCount() > 0 then
+			local team = autoBotCount(teamA) >= autoBotCount(teamB) and teamA or teamB
+			removeAutoBots(team, 1)
+		end
 		members[player] = true
 		player.Team = teamSize(teamA) <= teamSize(teamB) and teamA or teamB
 		-- Squad: ins Team des Anführers bzw. eines Squad-Mitglieds, wenn dort Platz ist
