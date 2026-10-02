@@ -886,17 +886,17 @@ def build_canals(origin, filename):
 # ---------- "Windmühlen": Küstendorf mit Windmühlen und Hügeln (Stil: RC "Windward") ----------
 
 def build_windmills(origin, filename):
+    """Windmühlen (300 x 210): Küstendorf. Zwei Windmühlen, Terrassen im Norden/Süden, zweistöckige
+    Cottages und eine Scheune mit Fenstern auf Punkt und Ziele, Trockenmauern mit Fenstern trennen die Wege."""
     b = Builder(origin)
     rng = random.Random(31)
     grass, path, stone, plaster = (95, 140, 70), (165, 150, 120), (160, 155, 145), (235, 228, 210)
-    W, D = 240, 180
+    W, D = 300, 210
     b.ground(W + 10, D + 10, grass, "Grass")
     b.border(W, D, 8, (130, 125, 115), "Slate", barrier=120)
-    # Feldweg quer durchs Dorf
     b.box("Ground", "Path", (W, 0.1, 10), (0, 0.06, 0), path, "Ground")
     b.box("Ground", "PathNS", (10, 0.1, D), (0, 0.06, 0), path, "Ground")
 
-    # Windmühlen: Turm, Kappe und gekreuzte Flügel (zwei lange Balken)
     def windmill(name, x, z, face):
         b.box("Buildings", name + "_Tower", (10, 26, 10), (x, 13, z), plaster, "Plaster")
         b.box("Buildings", name + "_Base", (12, 4, 12), (x, 2, z), stone, "Slate")
@@ -908,53 +908,61 @@ def build_windmills(origin, filename):
             b.box("Decor", name + "_Blade", (0.6, 38, 3), (hx + face * 1.2, 23, z), (240, 235, 225), "Fabric",
                   angles=(angle, 0, 0))
 
-    windmill("MillWest", -55, 0, 1)
-    windmill("MillEast", 76, 0, -1)
+    windmill("MillWest", -72, 0, 1)
+    windmill("MillEast", 100, 0, -1)
 
-    # Hügel/Terrassen im Norden und Süden (erhöhte Positionen) mit Rampen
+    # Terrassen (erhöhte Positionen) mit Rampen zur Mitte und zu den Seiten
     for side in (-1, 1):
-        zc = side * 58
+        zc = side * 70
         b.box("Buildings", "Terrace", (40, 6, 34), (0, 3, zc), (120, 115, 100), "Slate")
         b.box("Buildings", "TerraceTop", (40, 0.3, 34), (0, 6.15, zc), grass, "Grass")
-        edge = side * 41  # zur Mitte zeigende Kante
+        edge = side * 53
         b.ramp("TerraceRamp", -10, edge, 8, 14, 6, "S" if side > 0 else "N")
         b.ramp("TerraceRamp", 10, edge, 8, 14, 6, "S" if side > 0 else "N")
-        # Seitliche Rampen nach Westen und Osten
         b.ramp("TerraceRampW", -20, zc, 8, 14, 6, "W")
         b.ramp("TerraceRampE", 20, zc, 8, 14, 6, "E")
-        # Brüstung oben als Deckung
         b.box("Cover", "TerraceWall", (12, 3, 1.2), (0, 7.5, zc - side * 10), stone, "Slate")
 
-    # Cottages (begehbar)
-    houses = (
-        (-85, -62, 24, 18, ("N", "E")), (-85, 62, 24, 18, ("S", "E")),
-        (-45, -68, 20, 14, ("N", "E")), (-45, 68, 20, 14, ("S", "E")),
-        (96, -74, 22, 14, ("N", "W")), (96, 74, 22, 14, ("S", "W")),
-        (36, 0, 16, 24, ("E", "W")),
-    )
-    for i, (x, z, w, d, doors) in enumerate(houses):
-        b.house("Cottage" + str(i), x, z, w, d, 10, plaster, (90, 60, 45), doors=doors, material="Plaster")
-        b.box("Buildings", "Chimney", (2, 4, 2), (x + w / 4, 12, z), stone, "Slate")
+    # Zweistöckige Cottages
+    for side in (-1, 1):
+        inward = "S" if side > 0 else "N"
+        b.building2("CottageW", -108, side * 72, 26, 20, plaster, (90, 60, 45),
+                    doors={inward: [0], "E": [0]}, windows1={inward: [-8, 8]},
+                    windows2={inward: [-8, 0, 8], "E": [-4, 4]}, stairs_at=("W",), material="Plaster")
+        b.building2("CottageMid", -52, side * 80, 22, 18, plaster, (90, 60, 45),
+                    doors={inward: [-5], "W": [0]}, windows1={inward: [5]},
+                    windows2={inward: [-6, 6], "E": [0]}, stairs_at=("E",), material="Plaster")
+        b.building2("CottageEast", 122, side * 86, 24, 16, plaster, (90, 60, 45),
+                    doors={inward: [-6], "W": [0]}, windows2={inward: [-6, 6], "W": [0]}, stairs_at=("E",),
+                    material="Plaster")
+    # Scheune östlich der Mitte: Fenster auf den Punkt (Westen) und die Ziele (Norden/Süden)
+    b.building2("Barn", 46, 0, 18, 28, (150, 70, 50), (80, 50, 40),
+                doors={"E": [0], "W": [-8]}, windows1={"W": [6]},
+                windows2={"W": [-8, 0, 8], "N": [0], "S": [0], "E": [-6, 6]}, stairs_at=("N",), material="WoodPlanks")
 
-    # Trockenmauern, Heuballen, Zäune
-    for x, z, length, ax in ((-75, -25, 14, True), (-75, 25, 14, True), (-25, -22, 12, False), (-25, 22, 12, False),
-                             (20, -30, 10, True), (20, 30, 10, True), (90, -40, 10, False), (90, 40, 10, False)):
-        b.cover_wall(x, z, length, along_x=ax, height=3.5, color=stone)
-    for x, z in ((-95, 0), (-35, -40), (-35, 40), (45, -25), (45, 25), (8, -18), (-8, 18)):
+    # Trockenmauern mit Fenstern und Durchgängen
+    for zl in (-36, 36):
+        b.wall_line("StoneWall", -100, -62, zl, True, 6, stone, "Slate",
+                    openings=[(-81, 6, 0, 6), (-93, 4, 2.6, 4.6), (-69, 4, 2.6, 4.6)], group="Cover")
+        b.wall_line("StoneWall", 60, 100, zl * 0.6, True, 5, stone, "Slate",
+                    openings=[(72, 5, 0, 5), (88, 4, 2.4, 4.2)], group="Cover")
+    for x, z, length, ax in ((-30, -24, 12, False), (-30, 24, 12, False), (20, -30, 10, True), (20, 30, 10, True),
+                             (112, -40, 10, False), (112, 40, 10, False)):
+        b.half_wall(x, z, length, along_x=ax, color=stone)
+    for x, z in ((-120, 0), (-44, -46), (-44, 46), (62, -30), (62, 30), (8, -20), (-8, 20)):
         b.add("Cover", "HayBale", (5, 5, 5), (x, 2.5, z), (215, 185, 95), "Fabric", angles=(0, 0, 90),
               props={"Shape": "Cylinder"})
-    for x, z in ((-60, -45), (-60, 45), (75, -18), (75, 18)):
+    for x, z in ((-80, -55), (-80, 55), (92, -22), (92, 22), (70, -70), (70, 70)):
         b.crate(x, z, color=(140, 105, 70))
-    for z in (-86, 86):
-        for k in range(-5, 6):
-            b.box("Decor", "FencePost", (0.6, 3, 0.6), (k * 18, 1.5, z), (110, 80, 55), "Wood")
-    # Bäume am Rand
-    for _ in range(14):
-        x, z = rng.uniform(-110, 110), rng.choice((-1, 1)) * rng.uniform(78, 86)
+    for z in (-100, 100):
+        for k in range(-7, 8):
+            b.box("Decor", "FencePost", (0.6, 3, 0.6), (k * 19, 1.5, z), (110, 80, 55), "Wood")
+    for _ in range(16):
+        x, z = rng.uniform(-140, 140), rng.choice((-1, 1)) * rng.uniform(95, 101)
         if abs(x) > 15:
             b.tree(x, z, rng)
 
-    team_objectives(b, -110, 98, (60, -45), (60, 45))
+    team_objectives(b, -140, 122, (80, -55), (80, 55), spawn_x=140)
     b.save(filename, "Windmühlen")
 
 
