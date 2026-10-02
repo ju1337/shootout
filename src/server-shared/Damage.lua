@@ -4,6 +4,10 @@
 -- nieder statt zu töten.
 
 local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
 
@@ -43,6 +47,12 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		}
 	end
 	model:SetAttribute("LastDamaged", os.clock())
+	-- Getroffener Spieler sieht, aus welcher Richtung (Treffer-Anzeige im HUD)
+	local victim = Players:GetPlayerFromCharacter(model)
+	local attackerRoot = attackerModel and attackerModel:FindFirstChild("HumanoidRootPart")
+	if victim and attackerRoot and attackerModel ~= model then
+		Remotes.DamageFrom:FireClient(victim, attackerRoot.Position)
+	end
 
 	-- Rüstung schluckt zuerst
 	local absorbed = 0

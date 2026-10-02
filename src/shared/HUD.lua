@@ -552,6 +552,40 @@ function HUD.Init(weaponClient)
 		end)
 	end)
 
+	-- Treffer-Richtung: roter Bogen um das Fadenkreuz, zeigt zum Angreifer (dreht mit der Kamera)
+	local indicators = {} -- { Frame, Position, Until }
+	Remotes.DamageFrom.OnClientEvent:Connect(function(position)
+		if typeof(position) ~= "Vector3" then
+			return
+		end
+		local holder = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(0, 260, 0, 260), BackgroundTransparency = 1 }, gui)
+		local arc = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
+			Size = UDim2.new(0, 90, 0, 10), BackgroundColor3 = UITheme.Colors.Bad, BorderSizePixel = 0 }, holder)
+		UITheme.Corner(arc, 5)
+		make("UIGradient", { Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.05), NumberSequenceKeypoint.new(1, 1) }) }, arc)
+		table.insert(indicators, { Frame = holder, Arc = arc, Position = position, Until = os.clock() + 1.2 })
+	end)
+	game:GetService("RunService").RenderStepped:Connect(function()
+		local camera = workspace.CurrentCamera
+		local now = os.clock()
+		for i = #indicators, 1, -1 do
+			local entry = indicators[i]
+			if now > entry.Until then
+				entry.Frame:Destroy()
+				table.remove(indicators, i)
+			else
+				-- Winkel zwischen Blickrichtung und Richtung zum Angreifer (von oben gesehen)
+				local look = camera.CFrame.LookVector
+				local toAttacker = entry.Position - camera.CFrame.Position
+				local angle = math.atan2(toAttacker.X, toAttacker.Z) - math.atan2(look.X, look.Z)
+				entry.Frame.Rotation = -math.deg(angle)
+				entry.Arc.BackgroundTransparency = math.clamp(1 - (entry.Until - now) / 1.2, 0, 1)
+			end
+		end
+	end)
+
 	-- Todesanzeige: wer hat dich ausgeschaltet
 	local recap = make("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0),

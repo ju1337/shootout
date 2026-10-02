@@ -38,6 +38,7 @@ local NAMES = {
 	"MatchSummary", -- Server -> Client: Match-Ende (Ergebnis, MVP, eigene Statistik)
 	"PartyAction", -- Client -> Server: Squad (Invite/Accept/Decline/Leave/Kick, UserId)
 	"PartyInvite", -- Server -> Client: Einladung (Name, UserId des Anführers)
+	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers)
 }
 
 local folder
