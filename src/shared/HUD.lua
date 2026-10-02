@@ -17,6 +17,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
 local BuyConfig = require(Shared.BuyConfig)
+local LevelConfig = require(Shared.LevelConfig)
 
 local player = Players.LocalPlayer
 
@@ -734,6 +735,16 @@ function HUD.Init(weaponClient)
 		end)
 	end
 	Remotes.Announce.OnClientEvent:Connect(HUD.ShowAnnouncement)
+
+	-- Spielerlevel gestiegen: große Meldung (Prestige setzt das Level zurück, das zählt nicht)
+	local lastLevel, lastPrestige = LevelConfig.Get(player).Level, player:GetAttribute("Prestige") or 0
+	player:GetAttributeChangedSignal("AccountXP"):Connect(function()
+		local info = LevelConfig.Get(player)
+		if info.Level > lastLevel and info.Prestige == lastPrestige then
+			HUD.ShowAnnouncement("▲ LEVEL UP!  LV " .. info.Level)
+		end
+		lastLevel, lastPrestige = info.Level, info.Prestige
+	end)
 end
 
 return HUD

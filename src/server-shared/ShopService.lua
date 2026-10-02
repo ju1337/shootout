@@ -155,6 +155,10 @@ function actions.SaveSettings(player, settings)
 	return nil -- keine Meldung nötig
 end
 
+function actions.Prestige(player)
+	return ProgressService.Prestige(player)
+end
+
 function actions.ClaimQuest(player, id)
 	return ProgressService.ClaimQuest(player, id)
 end

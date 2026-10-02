@@ -20,6 +20,7 @@ local TweenService = game:GetService("TweenService")
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -918,27 +919,40 @@ local function buildSettings()
 	end
 end
 
--- ---------- Knopfleiste ----------
+-- ---------- Knopf-Raster links (wie in vielen Roblox-Spielen: bunte Kacheln mit Symbol) ----------
 
-local function sideButton(icon, label, order, onClick)
-	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 62), BackgroundColor3 = Color3.fromRGB(22, 26, 40),
-		BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, b)
-	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1.5 }, b)
-	UITheme.Gradient(b, Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 175, 195))
+local BUTTON_SIZE = 84
+local BUTTON_GAP = 8
+
+local function sideButton(icon, label, color, order, onClick)
+	local b = make("TextButton", { Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE), BackgroundColor3 = color,
+		BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
+	make("UICorner", { CornerRadius = UDim.new(0, 14) }, b)
+	make("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 2.5, Transparency = 0.15,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+	UITheme.Gradient(b, Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 160))
+	-- Glanz oben
+	local shine = make("Frame", { Size = UDim2.new(1, 0, 0.45, 0), BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0.82, BorderSizePixel = 0 }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, 14) }, shine)
 	local scale = make("UIScale", {}, b)
 	b.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1.07 }):Play()
-		stroke.Color = ACCENT
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.1 }):Play()
 	end)
 	b.MouseLeave:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
-		stroke.Color = BORDER
+		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
-	text({ Position = UDim2.new(0, 0, 0, 3), Size = UDim2.new(1, 0, 0, 34), Text = icon, TextSize = 26,
-		TextXAlignment = Enum.TextXAlignment.Center }, b)
-	text({ Position = UDim2.new(0, 0, 0, 37), Size = UDim2.new(1, 0, 0, 20), Text = label, TextSize = 12,
-		TextXAlignment = Enum.TextXAlignment.Center }, b)
+	b.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 0.94 }):Play()
+	end)
+	b.MouseButton1Up:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1.1 }):Play()
+	end)
+	make("TextLabel", { Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1,
+		Text = icon, TextSize = 38, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1) }, b)
+	make("TextLabel", { Position = UDim2.new(0, 2, 1, -28), Size = UDim2.new(1, -4, 0, 22), BackgroundTransparency = 1,
+		Text = label, TextScaled = true, Font = Enum.Font.GothamBlack, TextColor3 = Color3.new(1, 1, 1),
+		TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(20, 20, 30) }, b)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -947,64 +961,143 @@ local function togglePanel(name)
 	setPanel(openPanel ~= name and name or nil)
 end
 
+local playerCard -- Spielerkarte oben links (Level, Prestige, Rang, Münzen)
+
+local function buildPlayerCard()
+	playerCard = make("Frame", { Position = UDim2.new(0, 16, 0, 64), Size = UDim2.new(0, 340, 0, 104),
+		BackgroundColor3 = UITheme.Colors.Panel, BackgroundTransparency = 0.05, BorderSizePixel = 0 }, gui)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, playerCard)
+	make("UIStroke", { Color = BORDER, Thickness = 1.5 }, playerCard)
+	UITheme.Gradient(playerCard, Color3.fromRGB(28, 44, 66), UITheme.Colors.Panel, 0)
+	local accentStrip = make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, playerCard)
+
+	-- Level-Raute links
+	local emblem = UITheme.Diamond(playerCard, 50, UDim2.new(0, 46, 0, 46), UITheme.Colors.Background, ACCENT)
+	local levelNumber = text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 46, 0, 44),
+		Size = UDim2.new(0, 60, 0, 34), Text = "1", TextSize = 30, Font = UITheme.Fonts.Title,
+		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
+	local levelCaption = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, 46, 0, 80),
+		Size = UDim2.new(0, 80, 0, 16), Text = "LEVEL", TextSize = 12, Font = UITheme.Fonts.Title, TextColor3 = GRAY,
+		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
+
+	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name,
+		TextSize = 24, Font = UITheme.Fonts.Title, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
+	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.new(0, 110, 0, 22),
+		Text = "", TextSize = 18, Font = UITheme.Fonts.Title, TextColor3 = UITheme.Colors.Gold,
+		TextXAlignment = Enum.TextXAlignment.Right }, playerCard)
+	local rankLabel = text({ Position = UDim2.new(0, 92, 0, 38), Size = UDim2.new(1, -104, 0, 20), Text = "",
+		TextSize = 16, Font = UITheme.Fonts.Title, RichText = true }, playerCard)
+	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 66), Size = UDim2.new(1, -104, 0, 8),
+		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, playerCard)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, barBack)
+	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, bar)
+	local xpLabel = text({ Position = UDim2.new(0, 92, 0, 78), Size = UDim2.new(1, -104, 0, 18), Text = "", TextSize = 13,
+		Font = UITheme.Fonts.Body, TextColor3 = GRAY }, playerCard)
+
+	-- Prestige-Knopf (nur auf Max-Level), zweimal klicken zum Bestätigen
+	local prestigeButton = UITheme.Button({ AnchorPoint = Vector2.new(0, 0), Position = UDim2.new(0, 0, 1, 8),
+		Size = UDim2.new(1, 0, 0, 40), Text = "★  PRESTIGE", TextSize = 20, BackgroundColor3 = UITheme.Colors.Play,
+		TextColor3 = Color3.fromRGB(20, 16, 10), Visible = false }, playerCard)
+	local confirmUntil = 0
+	prestigeButton.Activated:Connect(function()
+		if os.clock() < confirmUntil then
+			confirmUntil = 0
+			Remotes.ShopAction:FireServer("Prestige")
+		else
+			confirmUntil = os.clock() + 4
+			prestigeButton.Text = "SICHER? LEVEL → 1  ·  NOCHMAL KLICKEN"
+			task.delay(4, function()
+				if os.clock() >= confirmUntil then
+					prestigeButton.Text = "★  PRESTIGE"
+				end
+			end)
+		end
+	end)
+
+	local function refresh()
+		local info = LevelConfig.Get(player)
+		levelNumber.Text = tostring(info.Level)
+		levelNumber.TextSize = info.Level >= 100 and 24 or 30
+		emblem:FindFirstChildOfClass("UIStroke").Color = info.Color
+		accentStrip.BackgroundColor3 = info.Color
+		bar.BackgroundColor3 = info.Color
+		levelCaption.Text = info.Prestige > 0 and ("PRESTIGE " .. info.Prestige) or "LEVEL"
+		levelCaption.TextColor3 = info.Prestige > 0 and info.Color or GRAY
+		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
+		local rank = RankConfig.Get(elo)
+		local color = string.format("#%02X%02X%02X", rank.Color.R * 255, rank.Color.G * 255, rank.Color.B * 255)
+		rankLabel.Text = '<font color="' .. color .. '">◆ ' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
+		bar.Size = UDim2.new(info.Progress, 0, 1, 0)
+		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
+			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")
+		prestigeButton.Visible = info.CanPrestige
+		coinLabel.Text = "💰 " .. formatNumber(coins())
+		nameLabel.Text = player.Name
+	end
+	refresh()
+	player.AttributeChanged:Connect(function(name)
+		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" then
+			refresh()
+		end
+	end)
+end
+
 local function buildColumn()
+	-- Sortiert: Einkaufen, Fortschritt, Belohnungen, Soziales/Statistik, Einstellungen
 	local entries = {
-		{ "🛒", "SHOP", function() togglePanel("Shop") end },
-		{ "🎒", "RUCKSACK", function() togglePanel("Inventory") end },
-		{ "🦸", "AGENTEN", function()
+		{ "🛒", "SHOP", Color3.fromRGB(60, 190, 90), function() togglePanel("Shop") end },
+		{ "🎒", "RUCKSACK", Color3.fromRGB(235, 140, 40), function() togglePanel("Inventory") end },
+		{ "🦸", "AGENTEN", Color3.fromRGB(140, 80, 220), function()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
-		{ "👥", "SQUAD", function() togglePanel("Squad") end },
-		{ "📊", "STATS", function() togglePanel("Stats") end },
-		{ "🎫", "PASS", function() togglePanel("Pass") end },
-		{ "📋", "AUFTRÄGE", function() togglePanel("Quests") end },
-		{ "🎁", "TÄGLICH", function() togglePanel("Daily") end },
-		{ "🎟", "CODES", function() togglePanel("Codes") end },
-		{ "⚙", "OPTIONEN", function() togglePanel("Settings") end },
+		{ "🎫", "PASS", Color3.fromRGB(240, 190, 40), function() togglePanel("Pass") end },
+		{ "📋", "AUFTRÄGE", Color3.fromRGB(230, 70, 90), function() togglePanel("Quests") end },
+		{ "🎁", "TÄGLICH", Color3.fromRGB(235, 90, 170), function() togglePanel("Daily") end },
+		{ "👥", "SQUAD", Color3.fromRGB(50, 130, 235), function() togglePanel("Squad") end },
+		{ "📊", "STATS", Color3.fromRGB(30, 180, 200), function() togglePanel("Stats") end },
+		{ "🎟", "CODES", Color3.fromRGB(40, 170, 140), function() togglePanel("Codes") end },
+		{ "⚙", "OPTIONEN", Color3.fromRGB(110, 120, 140), function() togglePanel("Settings") end },
 	}
-	local height = #entries * 62 + (#entries - 1) * 6
-	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 24),
-		Size = UDim2.new(0, 96, 0, height), BackgroundTransparency = 1 }, gui)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, column)
-	-- Auf kleinen Bildschirmen die ganze Leiste verkleinern
+	local rows = math.ceil(#entries / 2)
+	local width = BUTTON_SIZE * 2 + BUTTON_GAP
+	local height = rows * BUTTON_SIZE + (rows - 1) * BUTTON_GAP
+	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 60),
+		Size = UDim2.new(0, width, 0, height), BackgroundTransparency = 1 }, gui)
+	make("UIGridLayout", { CellSize = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE),
+		CellPadding = UDim2.new(0, BUTTON_GAP, 0, BUTTON_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, column)
+	-- Auf kleinen Bildschirmen das Raster verkleinern (unter der Spielerkarte bleiben)
 	local columnScale = make("UIScale", {}, column)
 	local function updateColumnScale()
-		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.Y - 140) / height, 0.55, 1)
+		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.Y - 320) / height, 0.5, 1)
 	end
 	updateColumnScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
 	local daily, quests
 	for i, entry in entries do
-		local b = sideButton(entry[1], entry[2], i, entry[3])
+		local b = sideButton(entry[1], entry[2], entry[3], i, entry[4])
 		if entry[2] == "TÄGLICH" then
 			daily = b
 		elseif entry[2] == "AUFTRÄGE" then
 			quests = b
 		end
 	end
-	-- Roter Punkt, wenn ein Auftrag abgeholt werden kann
-	questDot = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 0, 8),
-		Size = UDim2.new(0, 16, 0, 16), BackgroundColor3 = Color3.fromRGB(230, 50, 50), BorderSizePixel = 0 }, quests)
-	make("UICorner", { CornerRadius = UDim.new(1, 0) }, questDot)
-	-- Roter Punkt, wenn die tägliche Belohnung bereit ist
-	dailyDot = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -8, 0, 8),
-		Size = UDim2.new(0, 16, 0, 16), BackgroundColor3 = Color3.fromRGB(230, 50, 50), BorderSizePixel = 0 }, daily)
-	make("UICorner", { CornerRadius = UDim.new(1, 0) }, dailyDot)
+	-- Roter Punkt mit "!", wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
+	local function notifyDot(parent)
+		local dot = make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -6, 0, 6),
+			Size = UDim2.new(0, 24, 0, 24), BackgroundColor3 = Color3.fromRGB(230, 40, 50), BorderSizePixel = 0,
+			Text = "!", TextSize = 18, Font = Enum.Font.GothamBlack, TextColor3 = Color3.new(1, 1, 1), ZIndex = 3 }, parent)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
+		make("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 2 }, dot)
+		return dot
+	end
+	questDot = notifyDot(quests)
+	dailyDot = notifyDot(daily)
 
-	-- Münzstand über der Leiste
-	local pill = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 0, -10),
-		Size = UDim2.new(0, 150, 0, 40), BackgroundColor3 = Color3.fromRGB(20, 24, 34) }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, 20) }, pill)
-	make("UIStroke", { Color = Color3.fromRGB(255, 210, 80), Thickness = 1.5 }, pill)
-	coinLabel = text({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 20, TextColor3 = Color3.fromRGB(255, 210, 80),
-		TextXAlignment = Enum.TextXAlignment.Center }, pill)
-	-- UIListLayout würde die Münzanzeige einreihen: darum außerhalb der Liste platzieren
-	pill.Parent = gui
-	pill.AnchorPoint = Vector2.new(0, 1)
-	pill.Position = UDim2.new(0, 16, 0.5, 24 - height / 2 - 10)
+	buildPlayerCard()
 	column:GetPropertyChangedSignal("Visible"):Connect(function()
-		pill.Visible = column.Visible
+		playerCard.Visible = column.Visible
 	end)
 end
 
@@ -1046,7 +1139,6 @@ function SideMenu.Init()
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
 			or name == "MatchHistory" then
-			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()
 			end

@@ -18,6 +18,7 @@ local Cosmetics = require(Shared.Cosmetics)
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
+local LevelConfig = require(Shared.LevelConfig)
 
 local ProgressService = {}
 
@@ -29,7 +30,7 @@ local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speic
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
-		Stats = {}, Loadouts = {}, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
+		Stats = {}, Loadouts = {}, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -46,6 +47,14 @@ local function toProfile(data)
 	end
 	for key, value in data do
 		profile[key] = value
+	end
+	-- Spielerlevel gab es früher nicht: aus den bisherigen Agenten-XP übernehmen
+	if data.AccountXP == nil then
+		local sum = 0
+		for _, xp in profile.XP do
+			sum += tonumber(xp) or 0
+		end
+		profile.AccountXP = math.min(sum, LevelConfig.MaxXP)
 	end
 	return profile
 end
@@ -85,6 +94,8 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
 	player:SetAttribute("Loadouts", HttpService:JSONEncode(profile.Loadouts or {}))
 	player:SetAttribute("MatchHistory", HttpService:JSONEncode(profile.History or {}))
+	player:SetAttribute("AccountXP", profile.AccountXP or 0)
+	player:SetAttribute("Prestige", profile.Prestige or 0)
 	local ranked = profile.Ranked or {}
 	player:SetAttribute("Elo", ranked.Elo or RankConfig.StartElo)
 	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))
@@ -337,6 +348,8 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 	local maxXP = AgentConfig.XPPerLevel * (AgentConfig.MaxLevel - 1)
 	local after = math.min(before + amount, maxXP)
 	profile.XP[agentId] = after
+	-- Spielerlevel: alle XP zählen (auch wenn der Agent schon Max-Level ist)
+	profile.AccountXP = math.min((profile.AccountXP or 0) + amount, LevelConfig.MaxXP)
 
 	local coins = reason ~= "Admin" and math.floor(amount * Cosmetics.CoinsPerXP) or 0
 	profile.Coins += coins
@@ -348,6 +361,29 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 	if reason ~= "Admin" then
 		ProgressService.AddPassXP(player, amount)
 	end
+end
+
+-- Prestige: nur auf Max-Level. Level zurück auf 1, Prestige +1, Münzen als Belohnung.
+function ProgressService.Prestige(player)
+	local profile = profiles[player]
+	if not profile then
+		return "Profil nicht geladen.", false
+	end
+	local level = LevelConfig.FromXP(profile.AccountXP or 0)
+	local prestige = profile.Prestige or 0
+	if level < LevelConfig.MaxLevel then
+		return "Prestige erst ab Level " .. LevelConfig.MaxLevel .. ".", false
+	end
+	if prestige >= LevelConfig.MaxPrestige then
+		return "Du hast schon das höchste Prestige.", false
+	end
+	profile.Prestige = prestige + 1
+	profile.AccountXP = 0
+	local coins = LevelConfig.PrestigeCoins * profile.Prestige
+	profile.Coins += coins
+	ProgressService.Sync(player)
+	Remotes.Announce:FireClient(player, "★ PRESTIGE " .. profile.Prestige .. "!  +" .. coins .. " Münzen")
+	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 
 function ProgressService.Init()

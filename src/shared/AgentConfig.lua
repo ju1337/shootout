@@ -309,13 +309,9 @@ function AgentConfig.PassiveOf(model, passiveType)
 	return passive ~= nil and passive.Type == passiveType
 end
 
--- Spielerlevel = Summe aller Agenten-Level (für Freischaltungen wie Ranked)
+-- Spielerlevel inkl. Prestige (Prestige * 100 + Level, siehe LevelConfig), z.B. für Ranked
 function AgentConfig.PlayerLevel(player)
-	local total = 0
-	for _, agent in AgentConfig.Agents do
-		total += AgentConfig.LevelFromXP(player:GetAttribute("XP_" .. agent.Id) or 0)
-	end
-	return total
+	return require(script.Parent.LevelConfig).Get(player).Total
 end
 
 -- XP eines Spielers für einen Agenten (Spieler-Attribut "XP_<Id>")

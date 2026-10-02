@@ -15,6 +15,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local RankConfig = require(Shared.RankConfig)
 local Cosmetics = require(Shared.Cosmetics)
@@ -276,7 +277,7 @@ local function buildTopBar()
 	local rank = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 66), Size = UDim2.new(0, 300, 0, 24),
 		Text = "", TextSize = 17, Font = F.Title, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
 	local function update()
-		coins.Text = "LV " .. AgentConfig.PlayerLevel(player) .. "     💰 " .. (player:GetAttribute("Coins") or 0)
+		coins.Text = LevelConfig.Display(player) .. "     💰 " .. (player:GetAttribute("Coins") or 0)
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
 		local tier = RankConfig.Get(elo)
 		rank.Text = "🏆 " .. tier.Display .. "  ·  " .. elo .. " ELO"

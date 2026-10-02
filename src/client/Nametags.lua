@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 
 local player = Players.LocalPlayer
@@ -74,7 +75,7 @@ local function update()
 			local mate = player.Team ~= nil and other.Team == player.Team
 			if inHub and sameMode then
 				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
-				setTag(character, "◆ " .. other.Name, "LV " .. AgentConfig.PlayerLevel(other) .. "  ·  " .. rank.Display, rank.Color)
+				setTag(character, "◆ " .. other.Name, LevelConfig.Display(other) .. "  ·  " .. rank.Display, rank.Color)
 			elseif sameMode and mate then
 				setTag(character, other.Name, nil, other.TeamColor.Color)
 			else
