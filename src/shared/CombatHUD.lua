@@ -1,6 +1,7 @@
 -- CombatHUD (ModuleScript, nur Client)
 -- Kampf-Anzeigen rund um die Bildschirmmitte im Stil von Rogue Company:
---   * Fadenkreuz: vier Striche und ein Punkt, der Abstand zeigt die echte Streuung der Waffe (Bewegung,
+--   * Fadenkreuz: vier Striche und ein runder gelber Punkt (Design "BLOCKOPS"), der Abstand zeigt die echte
+--     Streuung der Waffe (Bewegung,
 --     Sprung, Dauerfeuer). Beim Zielen in der Schulterkamera zieht es sich zu einem kleinen Kreuz zusammen,
 --     in der Ego-Perspektive blendet es aus (man zielt über Kimme und Korn). Schrotflinte: Kreis.
 --     Über Gegnern wird es rot.
@@ -97,8 +98,9 @@ function CombatHUD.Init(gui, weaponClient)
 	local cross = make("Frame", { Name = "Crosshair", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, ZIndex = 5 }, gui)
 	local dot, dotStroke = bar(cross)
-	dot.Size = UDim2.new(0, 3, 0, 3)
+	dot.Size = UDim2.new(0, 4, 0, 4)
 	dot.Position = UDim2.new(0.5, 0, 0.5, 0)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) -- runder Punkt in Signalgelb (Design)
 	local bars = {}
 	for _, dir in { Vector2.new(0, -1), Vector2.new(0, 1), Vector2.new(-1, 0), Vector2.new(1, 0) } do
 		local frame, stroke = bar(cross)
@@ -127,10 +129,10 @@ function CombatHUD.Init(gui, weaponClient)
 	local reloadBack = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 30),
 		Size = UDim2.new(0, 70, 0, 4), BackgroundColor3 = Color3.fromRGB(10, 14, 22), BackgroundTransparency = 0.3,
 		BorderSizePixel = 0, Visible = false }, gui)
-	local reloadFill = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Accent,
+	local reloadFill = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Primary,
 		BorderSizePixel = 0 }, reloadBack)
 	local reloadText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 3), Size = UDim2.new(0, 120, 0, 14),
-		Text = "NACHLADEN", TextSize = 11, Font = Enum.Font.Oswald, TextColor3 = UITheme.Colors.Accent }, reloadBack)
+		Text = "NACHLADEN", TextSize = 10, Font = UITheme.Fonts.Display, TextColor3 = UITheme.Colors.Primary }, reloadBack)
 	reloadText.TextXAlignment = Enum.TextXAlignment.Center
 
 	local kick = 0       -- kurzes Aufspringen des Fadenkreuzes beim Schuss
@@ -224,7 +226,7 @@ function CombatHUD.Init(gui, weaponClient)
 			frame.BackgroundTransparency = transparency
 			entry.Stroke.Transparency = 0.45 + transparency * 0.55
 		end
-		dot.BackgroundColor3 = color
+		dot.BackgroundColor3 = hoverEnemy and ENEMY_RED or UITheme.Colors.Primary
 		dot.BackgroundTransparency = transparency
 		dotStroke.Transparency = 0.45 + transparency * 0.55
 

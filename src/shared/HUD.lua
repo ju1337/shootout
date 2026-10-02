@@ -1,8 +1,8 @@
 -- HUD (ModuleScript, nur Client)
 -- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, große Meldungen, Countdown, XP, Geld,
--- Todesanzeige mit Todeskamera. Die Match-Anzeige im RC-Stil (Teamleiste, Killfeed, Leben,
--- Munition, Zielmarker) baut MatchHUD, die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen,
--- Treffer-Richtung und Kill-Meldung kommen aus CombatHUD.
+-- Todesanzeige mit Todeskamera, Tastenzeile unten und MENÜ-Knopf unter der Minimap. Die Match-Anzeige im
+-- Design der Lobby (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD, die Minimap Minimap;
+-- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung kommen aus CombatHUD.
 
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
@@ -23,6 +23,7 @@ local InputActions = require(Shared.InputActions)
 local CombatHUD = require(Shared.CombatHUD)
 local MatchHUD = require(Shared.MatchHUD)
 local Minimap = require(Shared.Minimap)
+local GameMenu = require(Shared.GameMenu)
 
 local player = Players.LocalPlayer
 
@@ -112,9 +113,40 @@ function HUD.Init(weaponClient)
 		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
-	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -122),
-		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
-		TextColor3 = Color3.fromRGB(120, 230, 140), TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
+	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -150),
+		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 20, Font = UITheme.Fonts.Display,
+		TextColor3 = UITheme.Colors.Good, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
+
+	-- Tastenzeile ganz unten mittig (Design: "Click fire · R reload · ..."), nur mit Tastatur
+	local keyHints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8), Size = UDim2.new(0, 900, 0, 14),
+		Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextTransparency = 0.3,
+		TextXAlignment = Enum.TextXAlignment.Center }, gui)
+	local function updateKeyHints()
+		keyHints.Visible = not InputActions.IsTouch()
+		local parts = {}
+		for _, entry in { { "Fire", "SCHIESSEN" }, { "Reload", "NACHLADEN" }, { "Ability", "FÄHIGKEIT" }, { "Gadget", "GADGET" },
+			{ "Weapon1", "WAFFE 1" }, { "Weapon2", "WAFFE 2" }, { "Scoreboard", "PUNKTE" }, { "Menu", "MENÜ" } } do
+			local key = InputActions.Hint(entry[1])
+			if key ~= "" then
+				table.insert(parts, key .. " " .. entry[2])
+			end
+		end
+		keyHints.Text = table.concat(parts, "  ·  ")
+	end
+	updateKeyHints()
+	InputActions.DeviceChanged:Connect(updateKeyHints)
+
+	-- MENÜ-Knopf unter der Minimap (Design: "Leave"): öffnet das Menü mit "Zurück zum Hub"
+	local menuButton = UITheme.Chunky({ Name = "MenuButton", Size = UDim2.new(0, 120, 0, 30), Color = UITheme.Colors.Panel,
+		StrokeColor = UITheme.Colors.Border, Text = "", TextSize = 12 }, gui, function()
+		GameMenu.SetOpen(true)
+	end)
+	local function updateMenuButton()
+		local key = InputActions.Hint("Menu")
+		menuButton.SetText(key ~= "" and ("≡  MENÜ  [" .. key .. "]") or "≡  MENÜ")
+	end
+	updateMenuButton()
+	InputActions.DeviceChanged:Connect(updateMenuButton)
 
 	-- Große Meldung (Rundenstart, Sieger)
 	local announce = label({
@@ -207,22 +239,26 @@ function HUD.Init(weaponClient)
 			local top = belowTopbar(58, 8)
 			minimap.Position = UDim2.new(0, 16, 0, top)
 			minimapScale.Scale = 0.8
+			menuButton.Button.Visible = false -- Touch: eigener Menü-Knopf in den Touch-Steuerelementen
 			match.Vitals.AnchorPoint = Vector2.new(0, 0)
 			match.Vitals.Position = UDim2.new(0, 16, 0, top + 172)
 			match.Ammo.AnchorPoint = Vector2.new(0, 1)
 			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14)
 			moneyText.AnchorPoint = Vector2.new(0, 1)
-			moneyText.Position = UDim2.new(0.5, 12, 1, -124)
+			moneyText.Position = UDim2.new(0.5, 12, 1, -136)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Left
 		else
-			minimap.Position = UDim2.new(0, 24, 0, belowTopbar(66, 10))
+			local minimapTop = belowTopbar(66, 10)
+			minimap.Position = UDim2.new(0, 24, 0, minimapTop)
 			minimapScale.Scale = 1
+			menuButton.Button.Visible = true
+			menuButton.Button.Position = UDim2.new(0, 24 + 40, 0, minimapTop + 208)
 			match.Vitals.AnchorPoint = Vector2.new(0, 1)
 			match.Vitals.Position = UDim2.new(0, 24, 1, -24)
 			match.Ammo.AnchorPoint = Vector2.new(1, 1)
 			match.Ammo.Position = UDim2.new(1, -24, 1, -22)
 			moneyText.AnchorPoint = Vector2.new(1, 1)
-			moneyText.Position = UDim2.new(1, -24, 1, -134)
+			moneyText.Position = UDim2.new(1, -24, 1, -150)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Right
 		end
 	end

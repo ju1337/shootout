@@ -3,6 +3,8 @@
 -- Wechselt der Anführer in einen Modus, kommt der ganze Squad mit. In Team-Modi landet der Squad
 -- im selben Team (TeamRoundMode fragt PartyService.Leader).
 -- Spieler-Attribut "Party" (JSON): { Leader = UserId, Members = { { UserId, Name }, ... } }
+-- Spieler-Attribut "PartyReady" (true/nil): BEREIT-Schalter in der Lobby; zurückgesetzt, sobald der
+-- Squad in einen Kampfmodus wechselt oder man den Squad verlässt.
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -37,6 +39,7 @@ local function leave(player)
 	end
 	partyOf[player] = nil
 	player:SetAttribute("Party", nil)
+	player:SetAttribute("PartyReady", nil)
 	local index = table.find(party.Members, player)
 	if index then
 		table.remove(party.Members, index)
@@ -46,6 +49,7 @@ local function leave(player)
 		for _, member in party.Members do
 			partyOf[member] = nil
 			member:SetAttribute("Party", nil)
+			member:SetAttribute("PartyReady", nil)
 		end
 		return
 	end
@@ -130,6 +134,11 @@ function actions.Leave(player)
 	leave(player)
 end
 
+-- BEREIT umschalten (Lobby: eigener Platz im Squad)
+function actions.Ready(player)
+	player:SetAttribute("PartyReady", not player:GetAttribute("PartyReady") or nil)
+end
+
 function actions.Kick(player, userId)
 	local party = partyOf[player]
 	local target = Players:GetPlayerByUserId(tonumber(userId) or 0)
@@ -147,8 +156,11 @@ function PartyService.Init(modeManager)
 			handler(player, userId)
 		end
 	end)
-	-- Anführer wechselt den Modus: Squad kommt mit
+	-- Anführer wechselt den Modus: Squad kommt mit (im Kampf gilt BEREIT nicht mehr)
 	modeManager.Joined:Connect(function(player, modeId)
+		if modeId ~= "Hub" then
+			player:SetAttribute("PartyReady", nil)
+		end
 		local party = partyOf[player]
 		if not party or party.Leader ~= player then
 			return

@@ -32,11 +32,28 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ..., Verlauf der letzten 10 Matches (STATS-Fenster)
 - **ELO in jedem Modus**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
 - **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
+- **Menü-Design „BLOCKOPS“** (`src/shared/UITheme.lua`): Stahl-Navy, Signalgelb für aktiv/Hauptknöpfe, Cyan fürs
+  eigene Team, Rot für Gegner; klobige Knöpfe mit Schatten, die beim Drücken nach unten rutschen
+  (`UITheme.Chunky`), Flächen mit runden Ecken, 2 px Rand und Schatten (`UITheme.Card`), große Namen in
+  schwerer Schrift mit Kontur (`UITheme.Outline`)
+- **Lobby** (M bzw. SPIELEN im Hub): oben Logo, Navigation SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS,
+  Münzen, Level, Statistik, Codes, Einstellungen; links Spielmodi (aktiv gelb mit Haken, live Spielerzahl) und der
+  Squad (Anführer mit Krone, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze laden ein); Mitte der
+  gewählte Agent groß in 3D mit Rolle und Namen; rechts Battle Pass (Stufe, Fortschritt, nächste Belohnung),
+  täglicher Auftrag (bzw. tägliche Belohnung) und der große SPIELEN-Knopf mit Modus, Spielerzahl und Ping.
+  AGENTEN zeigt alle Agenten als Karten; LOADOUT, SHOP, BATTLE PASS und die Symbole öffnen die Fenster darüber
+- **Hub**: große Spielerkarte (Level, Prestige, Rang, Münzen), Kachel-Leiste (Shop, Loadout, Agenten, Pass,
+  Aufträge, Täglich, Squad, Stats, Codes, Optionen) und SPIELEN-Knopf
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
+- **Ultimate „Überladung“** (F, Controller L1+R1, Touch ✦): lädt über Schaden (400 = voll), Kills/Niederschläge
+  und langsam im Kampf; voll ausgelöst: volles Leben, +25 Rüstung, Fähigkeit sofort bereit, +1 Gadget
+  (`AgentConfig.Ultimate`)
 - **Kaufphase**: Geld pro Match, Upgrades, Rüstung, Perks
-- **Agentenwahl im Hangar eines Raumschiffs** (3D-Hintergrund): links Team und Agent, Mitte der Agent mit der
-  gewählten Waffe (Waffenkarte überfahren = Vorschau in der Hand), rechts WAFFEN mit 3D-Vorschau und direkt
-  darunter die AUSRÜSTUNG (Rüstung, Upgrades, Perks) mit Geld
+- **Agentenwahl im Hangar eines Raumschiffs** (3D-Hintergrund, Design der Lobby): oben Modus/Map, große
+  Überschrift und Timer (letzte 10 s rot); links DEIN TEAM (Porträt, Agent, BESTÄTIGT/WÄHLT), darunter WAFFE
+  (Primärwaffen mit 3D-Vorschau, überfahren = Vorschau in der Hand) und direkt darunter AUSRÜSTUNG mit Geld;
+  Mitte der Agent; rechts Rolle, Name, Beschreibung, Werte-Balken (Leben, Tempo, Fähigkeit) und Fähigkeit,
+  Gadget, Passiv mit Tasten-Schild; unten Agenten-Kacheln mit Porträt und BESTÄTIGEN bzw. BEREIT
 - **Ablauf**: nach dem Match erst die Zusammenfassung, dann die Map-Abstimmung, danach die Agentenwahl –
   nie übereinander
 - **Respawn-Modi** (Herrschaft, Wingman mit Tickets): nach dem Tod kurz die Todeskamera, dann zurück in die
@@ -51,17 +68,22 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel. Bot-Körper werden
   einmal pro Farbe gebaut und dann geklont; ein abgebrochener oder überholter Spawn baut kein zweites Modell,
   und Modelle ohne gültigen Bot räumt der BotService nach spätestens 2 s weg (keine „Bot-Massen“ mehr)
-- **Match-HUD wie bei Rogue Company**:
-  - oben: Ziel des eigenen Teams („NIMM DEN PUNKT EIN“, „LEGE DIE BOMBE BEI A ODER B“ …), Teamleiste mit
-    Agenten-Porträts und Lebensbalken (eigenes Team Cyan links, Gegner rot rechts, ✕ = ausgeschaltet),
-    Rundenstand in schrägen Kästen, Rundenuhr (Bomben-Timer rot, OVERTIME), Tickets, Status des Ziels
+- **Match-HUD im Design der Lobby**:
+  - oben: Ziel des eigenen Teams („HALTE DIE FLAGGEN“ …), Punktestand-Fläche (eigenes Team Cyan links, Gegner
+    rot rechts, Mitte Runde und Uhr, Tickets klein in den Kästen), darunter ein Kästchen pro Spieler (lebt / am
+    Boden / ☠) und ein Schild mit dem Zustand des Ziels
   - oben links (unter der Roblox-Leiste): runde Minimap, dreht sich mit der Blickrichtung; Grundriss der Map
     (Böden, Wände, Deckung), Teamkollegen, Pings, Gegner nur kurz, wenn sie schießen oder per Radar markiert
     sind; Ziele/Flaggen in der Farbe des Besitzers, außerhalb kleben sie am Rand
-  - rechts: Killfeed „Name [Waffen-Silhouette] ▼ Name“ (▼ niedergeschlagen, ☠ ausgeschaltet, ◎ Kopfschuss)
-  - unten links: Porträt, Leben „100/100“ mit Segment-Balken (25er-Schritte, Verlust blitzt rot nach), Rüstung
-  - unten rechts: Fähigkeit und Gadget als Rauten (Taste, Abklingzeit, Aufladungen), Munition „20 /200“,
-    Waffen-Silhouette, Taste + Name der anderen Waffe
+  - darunter links ein MENÜ-Knopf (öffnet das Menü mit „Zurück zum Hub“), ganz unten die Tastenzeile
+  - rechts: Killfeed-Zeilen mit farbigem Rand, Waffe als Schild, eigene Kills gelb (▼ niedergeschlagen,
+    ☠ ausgeschaltet, ◎ Kopfschuss)
+  - unten links: Fläche mit Porträt, Agentenname, Rüstung in 5 Segmenten und Leben als Zahl + Balken
+    (Verlust blitzt rot nach)
+  - unten mittig: Fähigkeit (Q) und Gadget (G) als klobige Knöpfe (Abklingzeit als Abdeckung + Sekunden,
+    Aufladungen), daneben der runde ULT-Knopf (Ladung in Prozent)
+  - unten rechts: Fläche mit Waffen-Silhouette, Waffenplätzen 1/2, Waffenname, Munition „30 / ∞“ und der
+    anderen Waffe
   - in der Welt: Zielmarker (Raute mit Buchstabe, Entfernung in Metern, Einnahme-Fortschritt, UMKÄMPFT/BOMBE)
   - Free-for-All: oben in der Mitte die eigenen Kills, das Ziel und wer führt, darunter die ersten drei
   - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout;
@@ -100,7 +122,10 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 | Waffenmodelle, Kimme/Korn, Rotpunkt, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
 | Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
-| Match-HUD (Teamleiste, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
+| Menü-Design (Farben, Schriften, Knöpfe, Flächen) | `src/shared/UITheme.lua` |
+| Lobby (Navigation, Modi, Squad, Battle Pass, SPIELEN) | `src/shared/GameMenu.lua`, Fenster und Hub-Leiste in `src/client/SideMenu.lua` |
+| Match-HUD (Punktestand, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
+| Fähigkeits- und ULT-Knöpfe | `src/shared/AbilityClient.lua`, Ultimate-Werte in `AgentConfig.Ultimate` |
 | Schulterkamera (Versatz, Abstand, beim Zielen) | `SHOULDER_*` in `src/shared/Movement.lua` |
 | Minimap (Farben, Zoom) | `src/shared/Minimap.lua`, Zuschnitt auf den Kreis in `src/shared/MinimapShapes.lua` |
 | Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |

@@ -16,6 +16,18 @@ local AgentConfig = {}
 
 AgentConfig.AbilityKey = Enum.KeyCode.Q
 AgentConfig.GadgetKey = Enum.KeyCode.G
+AgentConfig.UltimateKey = Enum.KeyCode.F
+
+-- Ultimate (Taste F, Touch-Knopf, Controller L1+R1): lädt über Schaden, Kills und langsam über die Zeit
+-- (Spieler-Attribut "UltCharge" 0-100). Voll ausgelöst: ÜBERLADUNG für jeden Agenten gleich.
+AgentConfig.Ultimate = {
+	Name = "Überladung",
+	Description = "Volles Leben, +25 Rüstung, Fähigkeit sofort bereit und +1 Gadget-Ladung.",
+	ChargePerDamage = 0.25, -- Prozent pro Schadenspunkt (400 Schaden = voll)
+	ChargePerKill = 15,     -- Prozent pro Kill bzw. Niederschlag
+	ChargePerSecond = 0.3,  -- Prozent pro Sekunde, solange man im Kampf lebt
+	Armor = 25,
+}
 
 -- ---------- Level-System ----------
 AgentConfig.XPPerLevel = 500   -- XP pro Level

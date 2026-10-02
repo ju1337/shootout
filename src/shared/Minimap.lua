@@ -35,7 +35,7 @@ local PING_TIME = 5
 local SKIP_FOLDERS = { Nature = true, Objective = true } -- Bäume, Ziel-Parts (Ziele kommen als Rauten)
 
 local COLORS = {
-	Back = Color3.fromRGB(8, 14, 24),
+	Back = UITheme.Colors.Background,
 	Ground = Color3.fromRGB(30, 44, 62),
 	Water = Color3.fromRGB(14, 30, 52),
 	Floor = Color3.fromRGB(56, 74, 96),
@@ -165,13 +165,13 @@ function Minimap.Init(root)
 	-- Rand, Blickrichtung (Pfeil in der Mitte), Norden am Rand
 	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, ring)
-	UITheme.Stroke(ring, Color3.fromRGB(200, 225, 240), 2, 0.35)
+	UITheme.Stroke(ring, UITheme.Colors.Border, 3, 0) -- Rand wie die Flächen im Design
 	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, holder)
 	UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20),
 		Text = "▲", TextSize = 15, TextColor3 = Color3.new(1, 1, 1), TextStrokeTransparency = 0.3,
 		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, overlay)
 	local north = UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(18, 18), Text = "N",
-		TextSize = 13, Font = UITheme.Fonts.Title, TextColor3 = UITheme.Colors.Accent, TextStrokeTransparency = 0.2,
+		TextSize = 12, Font = UITheme.Fonts.Display, TextColor3 = UITheme.Colors.Primary, TextStrokeTransparency = 0.2,
 		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, overlay)
 
 	-- ---------- Grundriss ----------

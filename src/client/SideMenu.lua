@@ -1,7 +1,9 @@
 -- SideMenu (ModuleScript, nur Client)
--- Knopfleiste links im Hub (wie in Hypershot & Co.): SHOP, RUCKSACK, AGENTEN, AUFTRÄGE, TÄGLICH,
--- CODES, EINSTELLUNGEN, darüber der Münzstand. Jeder Knopf öffnet ein Fenster in der Mitte.
--- Kaufen/Ausrüsten prüft der Server (ShopService).
+-- Knopfleiste links im Hub: SHOP, LOADOUT (Rucksack), AGENTEN, PASS, AUFTRÄGE, TÄGLICH, SQUAD, STATS,
+-- CODES, OPTIONEN, darüber die große Spielerkarte (Level, Prestige, Rang, Münzen). Jeder Knopf öffnet ein
+-- Fenster in der Mitte – dieselben Fenster öffnet auch die Lobby (GameMenu: Navigation, Squad, Battle
+-- Pass, Auftrag, Symbole oben rechts). Design wie die Lobby ("BLOCKOPS"): Flächen mit runden Ecken,
+-- 2 px Rand und Schatten, klobige Knöpfe, Gelb für aktiv. Kaufen/Ausrüsten prüft der Server (ShopService).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,13 +30,15 @@ local player = Players.LocalPlayer
 
 local SideMenu = {}
 
--- Farben aus dem gemeinsamen Design (UITheme)
-local ACCENT = UITheme.Colors.Accent
+-- Farben aus dem gemeinsamen Design (UITheme): Gelb = aktiv/hervorgehoben, Cyan = Team
+local ACCENT = UITheme.Colors.Primary
+local ON_ACCENT = UITheme.Colors.PrimaryText
 local PANEL = UITheme.Colors.Panel
 local CARD = UITheme.Colors.Card
 local BORDER = UITheme.Colors.Border
 local GRAY = UITheme.Colors.Muted
 local GREEN = UITheme.Colors.Good
+local DISPLAY = UITheme.Fonts.Display
 
 local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
 
@@ -62,23 +66,11 @@ local function text(props, parent)
 end
 
 local function button(props, parent, onClick)
-	props.BorderSizePixel = 0
-	props.Font = props.Font or Enum.Font.Oswald
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.AutoButtonColor = true
-	local b = make("TextButton", props, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, b)
-	if onClick then
-		b.Activated:Connect(onClick)
-	end
-	return b
+	props.Font = props.Font or UITheme.Fonts.Bold
+	return UITheme.Button(props, parent, onClick)
 end
 
-local function formatNumber(n)
-	local s = tostring(math.floor(n))
-	local formatted = string.reverse(string.gsub(string.reverse(s), "(%d%d%d)", "%1."))
-	return (string.gsub(formatted, "^%.", ""))
-end
+local formatNumber = UITheme.FormatNumber
 
 local function coins()
 	return player:GetAttribute("Coins") or 0
@@ -123,13 +115,13 @@ local function tabBar(parent, names, y, onSelect)
 	local function select(name)
 		for n, b in buttons do
 			b.BackgroundColor3 = n == name and ACCENT or CARD
-			b.TextColor3 = n == name and Color3.fromRGB(20, 20, 20) or Color3.new(1, 1, 1)
+			b.TextColor3 = n == name and ON_ACCENT or GRAY
 		end
 		onSelect(name)
 	end
 	for i, name in names do
-		buttons[name] = button({ Size = UDim2.new(0, 200, 1, 0), Text = name, TextSize = 15, LayoutOrder = i,
-			BackgroundColor3 = CARD }, bar, function()
+		buttons[name] = button({ Size = UDim2.new(0, 200, 1, 6), Text = name, TextSize = 15, LayoutOrder = i,
+			BackgroundColor3 = CARD, Font = DISPLAY }, bar, function()
 			select(name)
 		end)
 	end
@@ -139,11 +131,15 @@ end
 -- ---------- Fenster ----------
 
 local function setPanel(name)
+	if name and not panels[name] then
+		name = nil
+	end
 	for panelName, panel in panels do
 		panel.Frame.Visible = panelName == name
 	end
 	openPanel = name
 	UITheme.SetBlur("SideMenu", name ~= nil)
+	GameMenu.PanelChanged(name) -- Lobby: passenden Reiter hervorheben
 	if name and panels[name].Refresh then
 		panels[name].Refresh()
 	end
@@ -152,23 +148,32 @@ end
 local function makePanel(name, title, width, height)
 	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, width, 0, height), BackgroundColor3 = PANEL, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, frame)
-	make("UIStroke", { Color = BORDER, Thickness = 1.5 }, frame)
-	UITheme.Gradient(frame, Color3.fromRGB(28, 33, 50), PANEL)
-	-- Farbige Kopfleiste
-	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, header)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, frame)
+	make("UIStroke", { Color = BORDER, Thickness = 2 }, frame)
+	UITheme.Gradient(frame, Color3.fromRGB(30, 44, 66), PANEL)
+	-- Schatten unter dem Fenster (6 px, wie die Flächen der Lobby)
+	local shadow = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 6),
+		Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.6,
+		BorderSizePixel = 0, Visible = false, ZIndex = 0 }, gui)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, shadow)
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		shadow.Visible = frame.Visible
+	end)
 	local scale = make("UIScale", {}, frame)
 	local function updateScale()
 		local viewport = workspace.CurrentCamera.ViewportSize
 		scale.Scale = math.clamp(math.min((viewport.X - 280) / (width + 40), (viewport.Y - 60) / (height + 40)), 0.4, 1.15)
+		-- Schatten skaliert mit (liegt als Geschwister neben dem Fenster)
+		shadow.Size = UDim2.new(0, width * scale.Scale, 0, height * scale.Scale)
+		shadow.Position = UDim2.new(0.5, 0, 0.5, 6 * scale.Scale)
 	end
 	updateScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
-	text({ Position = UDim2.new(0, 24, 0, 14), Size = UDim2.new(1, -100, 0, 40), Text = title, TextSize = 30,
-		Font = Enum.Font.Oswald, TextColor3 = ACCENT }, frame)
-	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 40, 0, 40),
+	local titleLabel = text({ Position = UDim2.new(0, 24, 0, 14), Size = UDim2.new(1, -100, 0, 40), Text = UITheme.Upper(title),
+		TextSize = 28, Font = DISPLAY, TextColor3 = Color3.new(1, 1, 1) }, frame)
+	UITheme.Outline(titleLabel, 2)
+	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 44, 0, 44),
 		Text = "✕", TextSize = 20, BackgroundColor3 = CARD }, frame, function()
 		setPanel(nil)
 	end)
@@ -238,7 +243,7 @@ local function buildShop()
 			end
 			text({ Position = UDim2.new(0, 12, 0, 142), Size = UDim2.new(1, -24, 0, 24), Text = item.Name,
 				TextSize = 19 }, card)
-			local sub = string.upper(rarity.Name)
+			local sub = UITheme.Upper(rarity.Name)
 			if item.Type == "Agent" then
 				sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
 			end
@@ -264,7 +269,7 @@ end
 -- ---------- RUCKSACK ----------
 
 local function buildInventory()
-	local frame = makePanel("Inventory", "🎒  RUCKSACK", 980, 620)
+	local frame = makePanel("Inventory", "🎒  LOADOUT", 980, 620)
 	local list = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 110), Size = UDim2.new(0, 220, 1, -156),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
@@ -784,7 +789,7 @@ local function buildPass()
 			or (math.floor(progress * PassConfig.XPPerTier) .. " / " .. PassConfig.XPPerTier .. " XP bis Stufe " .. tier + 1)
 		for t, entry in cards do
 			local reached = t <= tier
-			entry.State.Text = reached and "FREIGESCHALTET ✓" or "GESPERRT"
+			entry.State.Text = reached and "✓ FREI" or "GESPERRT"
 			entry.State.TextColor3 = reached and GREEN or GRAY
 			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(28, 40, 34) or CARD
 		end
@@ -926,34 +931,37 @@ local BUTTON_SIZE = 84
 local BUTTON_GAP = 8
 
 local function sideButton(icon, label, color, order, onClick)
-	local b = make("TextButton", { Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE), BackgroundColor3 = color,
-		BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, 14) }, b)
-	make("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 2.5, Transparency = 0.15,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-	UITheme.Gradient(b, Color3.new(1, 1, 1), Color3.fromRGB(150, 150, 160))
-	-- Glanz oben
-	local shine = make("Frame", { Size = UDim2.new(1, 0, 0.45, 0), BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.82, BorderSizePixel = 0 }, b)
-	make("UICorner", { CornerRadius = UDim.new(0, 14) }, shine)
+	-- Kachel im Design der Lobby: Fläche mit Rand und 3D-Lippe, Symbol auf farbigem Kreis
+	local b = make("TextButton", { Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE), BackgroundColor3 = PANEL,
+		BackgroundTransparency = 0.06, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, b)
+	local stroke = make("UIStroke", { Color = BORDER, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+	local lip = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 5),
+		BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.65, BorderSizePixel = 0 }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, lip)
+	local disc = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(0, 46, 0, 46),
+		BackgroundColor3 = color, BackgroundTransparency = 0.7, BorderSizePixel = 0 }, b)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, disc)
 	local scale = make("UIScale", {}, b)
 	b.MouseEnter:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.1 }):Play()
+		stroke.Color = ACCENT
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
 	end)
 	b.MouseLeave:Connect(function()
+		stroke.Color = BORDER
+		lip.Size = UDim2.new(1, 0, 0, 5)
 		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
 	end)
 	b.MouseButton1Down:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 0.94 }):Play()
+		lip.Size = UDim2.new(1, 0, 0, 1)
 	end)
 	b.MouseButton1Up:Connect(function()
-		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back), { Scale = 1.1 }):Play()
+		lip.Size = UDim2.new(1, 0, 0, 5)
 	end)
-	make("TextLabel", { Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1,
-		Text = icon, TextSize = 38, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1) }, b)
-	make("TextLabel", { Position = UDim2.new(0, 2, 1, -28), Size = UDim2.new(1, -4, 0, 22), BackgroundTransparency = 1,
-		Text = label, TextScaled = true, Font = Enum.Font.GothamBlack, TextColor3 = Color3.new(1, 1, 1),
-		TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(20, 20, 30) }, b)
+	make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(0, 46, 0, 46),
+		BackgroundTransparency = 1, Text = icon, TextSize = 28, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1) }, b)
+	make("TextLabel", { Position = UDim2.new(0, 4, 1, -27), Size = UDim2.new(1, -8, 0, 16), BackgroundTransparency = 1,
+		Text = label, TextScaled = true, Font = DISPLAY, TextColor3 = Color3.new(1, 1, 1) }, b)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -965,40 +973,40 @@ end
 local playerCard -- Spielerkarte oben links (Level, Prestige, Rang, Münzen)
 
 local function buildPlayerCard()
-	playerCard = make("Frame", { Position = UDim2.new(0, 16, 0, 64), Size = UDim2.new(0, 340, 0, 104),
-		BackgroundColor3 = UITheme.Colors.Panel, BackgroundTransparency = 0.05, BorderSizePixel = 0 }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, playerCard)
-	make("UIStroke", { Color = BORDER, Thickness = 1.5 }, playerCard)
-	UITheme.Gradient(playerCard, Color3.fromRGB(28, 44, 66), UITheme.Colors.Panel, 0)
-	local accentStrip = make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, playerCard)
+	-- Fläche wie in der Lobby (runde Ecken, 2 px Rand, Schatten)
+	playerCard = UITheme.Card({ Name = "PlayerCard", Position = UDim2.new(0, 16, 0, 64), Size = UDim2.new(0, 340, 0, 104),
+		BackgroundTransparency = 0.06 }, gui)
+	local accentStrip = make("Frame", { Size = UDim2.new(0, 0, 0, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
+		Visible = false }, playerCard)
 
 	-- Prestige-Abzeichen links (gleiches Symbol wie über dem Kopf)
 	local emblemHolder = make("Frame", { Position = UDim2.new(0, 6, 0, 2), Size = UDim2.new(0, 84, 0, 84),
 		BackgroundTransparency = 1 }, playerCard)
 	local emblem = PrestigeEmblem.new(emblemHolder, 84)
 	local levelCaption = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0, 48, 0, 84),
-		Size = UDim2.new(0, 90, 0, 16), Text = "LEVEL", TextSize = 12, Font = UITheme.Fonts.Title, TextColor3 = GRAY,
+		Size = UDim2.new(0, 90, 0, 16), Text = "LEVEL", TextSize = 11, Font = DISPLAY, TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
 
 	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name,
-		TextSize = 24, Font = UITheme.Fonts.Title, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
+		TextSize = 20, Font = DISPLAY, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
 	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.new(0, 110, 0, 22),
-		Text = "", TextSize = 18, Font = UITheme.Fonts.Title, TextColor3 = UITheme.Colors.Gold,
+		Text = "", TextSize = 16, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right }, playerCard)
 	local rankLabel = text({ Position = UDim2.new(0, 92, 0, 38), Size = UDim2.new(1, -104, 0, 20), Text = "",
 		TextSize = 16, Font = UITheme.Fonts.Title, RichText = true }, playerCard)
-	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 66), Size = UDim2.new(1, -104, 0, 8),
+	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 64), Size = UDim2.new(1, -104, 0, 12),
 		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, playerCard)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, barBack)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, barBack)
+	make("UIStroke", { Color = BORDER, Thickness = 2 }, barBack)
 	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
-	make("UICorner", { CornerRadius = UDim.new(0, 4) }, bar)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, bar)
 	local xpLabel = text({ Position = UDim2.new(0, 92, 0, 78), Size = UDim2.new(1, -104, 0, 18), Text = "", TextSize = 13,
 		Font = UITheme.Fonts.Body, TextColor3 = GRAY }, playerCard)
 
 	-- Prestige-Knopf (nur auf Max-Level), zweimal klicken zum Bestätigen
-	local prestigeButton = UITheme.Button({ AnchorPoint = Vector2.new(0, 0), Position = UDim2.new(0, 0, 1, 8),
-		Size = UDim2.new(1, 0, 0, 40), Text = "★  PRESTIGE", TextSize = 20, BackgroundColor3 = UITheme.Colors.Play,
-		TextColor3 = Color3.fromRGB(20, 16, 10), Visible = false }, playerCard)
+	local prestigeButton = UITheme.Button({ AnchorPoint = Vector2.new(0, 0), Position = UDim2.new(0, 0, 1, 12),
+		Size = UDim2.new(1, 0, 0, 44), Text = "★  PRESTIGE", TextSize = 18, BackgroundColor3 = UITheme.Colors.Play,
+		TextColor3 = ON_ACCENT, Visible = false }, playerCard)
 	local confirmUntil = 0
 	prestigeButton.Activated:Connect(function()
 		if os.clock() < confirmUntil then
@@ -1045,7 +1053,7 @@ local function buildColumn()
 	-- Sortiert: Einkaufen, Fortschritt, Belohnungen, Soziales/Statistik, Einstellungen
 	local entries = {
 		{ "🛒", "SHOP", Color3.fromRGB(60, 190, 90), function() togglePanel("Shop") end },
-		{ "🎒", "RUCKSACK", Color3.fromRGB(235, 140, 40), function() togglePanel("Inventory") end },
+		{ "🎒", "LOADOUT", Color3.fromRGB(235, 140, 40), function() togglePanel("Inventory") end },
 		{ "🦸", "AGENTEN", Color3.fromRGB(140, 80, 220), function()
 			setPanel(nil)
 			GameMenu.Open("Agents")
@@ -1104,6 +1112,10 @@ end
 function SideMenu.Init()
 	gui = make("ScreenGui", { Name = "SideMenu", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 15,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
+	-- Die Lobby öffnet dieselben Fenster (Navigation, Squad, Battle Pass, Auftrag, Symbole)
+	GameMenu.SetPanelHandler(function(name)
+		setPanel(name)
+	end)
 	buildColumn()
 	buildShop()
 	buildInventory()
@@ -1144,12 +1156,13 @@ function SideMenu.Init()
 	end)
 	coinLabel.Text = "💰 " .. formatNumber(coins())
 
-	-- Nur im Hub sichtbar und nur, wenn das Hauptmenü zu ist
+	-- Knopfleiste nur im Hub bei geschlossener Lobby; Fenster im Hub oder aus der Lobby heraus
 	task.spawn(function()
 		while true do
-			local visible = player:GetAttribute("Mode") == "Hub" and not GameMenu.IsOpen()
-			column.Visible = visible
-			if not visible and openPanel then
+			local inHub = player:GetAttribute("Mode") == "Hub"
+			local lobby = GameMenu.IsOpen()
+			column.Visible = inHub and not lobby
+			if openPanel and not (inHub or lobby) then
 				setPanel(nil)
 			end
 			dailyDot.Visible = dailyLeft() <= 0

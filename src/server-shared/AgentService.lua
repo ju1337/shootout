@@ -1,6 +1,7 @@
 -- AgentService (ModuleScript, nur Server)
 -- Agentenwahl, Leben pro Agent und Fähigkeiten. Alles wird auf dem Server geprüft.
--- Spieler-Attribute: Agent (Id), AbilityReadyAt (Serverzeit), AbilityActiveUntil (Serverzeit)
+-- Dazu die Ultimate "Überladung" (AgentConfig.Ultimate): lädt über Schaden/Kills (Damage) und langsam im Kampf.
+-- Spieler-Attribute: Agent (Id), AbilityReadyAt (Serverzeit), AbilityActiveUntil (Serverzeit), UltCharge (0-100)
 -- Charakter-Attribute: Agent (aktiver Agent dieses Lebens), SpeedMultiplier (Tempo-Faktor)
 
 local Players = game:GetService("Players")
@@ -412,8 +413,36 @@ local function useAbility(player)
 	end
 end
 
+-- Ultimate "Überladung": volles Leben, Rüstung, Fähigkeit sofort bereit, +1 Gadget-Ladung.
+-- Geht nur mit voller Ladung (UltCharge = 100), im Kampf, lebend und nicht am Boden.
+local function useUltimate(player)
+	if not player:GetAttribute("CanFight") or (player:GetAttribute("UltCharge") or 0) < 100 then
+		return
+	end
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or humanoid.Health <= 0 or not root or character:GetAttribute("Downed") then
+		return
+	end
+	local ult = AgentConfig.Ultimate
+	player:SetAttribute("UltCharge", 0)
+	humanoid.Health = humanoid.MaxHealth
+	character:SetAttribute("Armor", math.max(character:GetAttribute("Armor") or 0, ult.Armor))
+	player:SetAttribute("AbilityReadyAt", serverNow())
+	player:SetAttribute("Gadgets", (player:GetAttribute("Gadgets") or 0) + 1)
+	local agent = AgentConfig.Get(character:GetAttribute("Agent")) or getAgent(player)
+	sparkle(root, agent.Color, 2.5)
+	Remotes.Announce:FireClient(player, "✦ " .. string.upper(ult.Name) .. "!")
+end
+
 local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
+	player:SetAttribute("UltCharge", 0)
+	-- Neuer Modus (oder zurück im Hub): Ultimate beginnt wieder bei 0
+	player:GetAttributeChangedSignal("Mode"):Connect(function()
+		player:SetAttribute("UltCharge", 0)
+	end)
 
 	player.CharacterAdded:Connect(function(character)
 		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
@@ -447,11 +476,27 @@ function AgentService.Init()
 		end
 	end)
 	Remotes.UseAbility.OnServerEvent:Connect(useAbility)
+	Remotes.UseUltimate.OnServerEvent:Connect(useUltimate)
 
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
 		setupPlayer(player)
 	end
+
+	-- Ultimate lädt langsam von selbst, solange man im Kampf lebt
+	task.spawn(function()
+		local perSecond = AgentConfig.Ultimate.ChargePerSecond
+		while true do
+			task.wait(1)
+			for _, player in Players:GetPlayers() do
+				local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+				local charge = player:GetAttribute("UltCharge") or 0
+				if player:GetAttribute("CanFight") and humanoid and humanoid.Health > 0 and charge < 100 then
+					player:SetAttribute("UltCharge", math.min(100, charge + perSecond))
+				end
+			end
+		end
+	end)
 end
 
 return AgentService

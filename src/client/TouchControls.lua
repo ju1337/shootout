@@ -38,6 +38,7 @@ local TOP = {
 	{ "Ping", "📍", 56, 60, 250, "tap" },
 	{ "Scoreboard", "☰", 56, 60, 316, "tap" },
 	{ "Camera", "🎥", 56, 60, 382, "tap" },
+	{ "Ultimate", "✦", 56, 60, 448, "tap" },
 }
 -- Links über dem Steuerknüppel
 local LEFT = {
@@ -166,6 +167,10 @@ function TouchControls.Init()
 		local ready = (player:GetAttribute("AbilityReadyAt") or 0) <= workspace:GetServerTimeNow()
 		buttons.Ability.Button.TextTransparency = ready and 0 or 0.6
 		buttons.Ability.Stroke.Color = ready and C.Accent or C.Border
+		-- Ultimate erst bei voller Ladung hervorheben
+		local ultReady = (player:GetAttribute("UltCharge") or 0) >= 100
+		buttons.Ultimate.Button.TextTransparency = ultReady and 0 or 0.6
+		buttons.Ultimate.Stroke.Color = ultReady and C.Primary or C.Border
 	end)
 end
 

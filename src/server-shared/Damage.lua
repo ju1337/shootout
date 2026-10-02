@@ -1,13 +1,14 @@
 -- Damage (ModuleScript, nur Server)
 -- Zentrale Stelle für Schaden an Spielern und Bots (Waffen der Spieler und der Bots).
 -- Achtet auf Schutzschilde und Rüstung (Attribut "Armor") und schlägt im Drop-Modus
--- nieder statt zu töten.
+-- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge").
 
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
+local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
 
@@ -29,6 +30,17 @@ local contributors = setmetatable({}, { __mode = "k" })
 
 function Damage.Contributors(model)
 	return contributors[model] or {}
+end
+
+-- Ultimate des angreifenden Spielers aufladen (Schaden, Kill/Niederschlag)
+local function chargeUltimate(attacker, model, dealt, finished)
+	local player = attacker and attacker.Player
+	if not player or dealt <= 0 or player.Character == model then
+		return -- kein Aufladen an sich selbst (z.B. eigene Granate)
+	end
+	local ult = AgentConfig.Ultimate
+	local gain = dealt * ult.ChargePerDamage + (finished and ult.ChargePerKill or 0)
+	player:SetAttribute("UltCharge", math.min(100, (player:GetAttribute("UltCharge") or 0) + gain))
 end
 
 -- Schaden anwenden. attacker = { Player = ..., BotName = ..., Weapon = ..., Headshot = ... }
@@ -62,6 +74,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		model:SetAttribute("Armor", armor - absorbed)
 		amount -= absorbed
 		if amount <= 0 then
+			chargeUltimate(attacker, model, absorbed, false)
 			return absorbed, false, false, absorbed
 		end
 	end
@@ -69,6 +82,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 	local before = humanoid.Health
 	if before - amount <= 0 and DownedService.CanBeDowned(model) then
 		DownedService.Down(model, humanoid, attacker)
+		chargeUltimate(attacker, model, absorbed + before, true)
 		return absorbed + before, false, true, absorbed
 	end
 	humanoid.Health = math.max(0, before - amount)
@@ -77,6 +91,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		contributors[model] = contributors[model] or {}
 		contributors[model][attacker.Player] = (contributors[model][attacker.Player] or 0) + dealt
 	end
+	chargeUltimate(attacker, model, dealt, humanoid.Health <= 0)
 	return dealt, humanoid.Health <= 0, false, absorbed
 end
 

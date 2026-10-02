@@ -20,6 +20,7 @@ InputActions.Bindings = {
 	SwapWeapon = { Keys = {}, Pad = { Enum.KeyCode.ButtonY } },
 	Ability = { Keys = { Enum.KeyCode.Q }, Pad = { Enum.KeyCode.ButtonL1 } },
 	Gadget = { Keys = { Enum.KeyCode.G }, Pad = { Enum.KeyCode.ButtonR1 } },
+	Ultimate = { Keys = { Enum.KeyCode.F }, Pad = {} }, -- Controller: L1 + R1 zusammen (siehe InputBegan)
 	Sprint = { Keys = { Enum.KeyCode.LeftShift }, Pad = { Enum.KeyCode.ButtonL3 } },
 	Crouch = { Keys = { Enum.KeyCode.LeftControl, Enum.KeyCode.C }, Pad = { Enum.KeyCode.ButtonB } },
 	Ping = { Keys = { Enum.KeyCode.Z }, Pad = { Enum.KeyCode.DPadUp } },
@@ -99,6 +100,9 @@ function InputActions.Hint(action)
 		return ""
 	end
 	if device == "Gamepad" then
+		if action == "Ultimate" then
+			return "L1+R1"
+		end
 		local code = binding.Pad[1]
 		return code and (PAD_NAMES[code] or code.Name) or ""
 	end
@@ -171,6 +175,10 @@ function InputActions.Init()
 			return
 		end
 		local list = actionsFor(input)
+		-- Controller: L1 + R1 zusammen = Ultimate (die zweite Taste löst dann nicht ihre eigene Aktion aus)
+		if (input.KeyCode == Enum.KeyCode.ButtonL1 and held.Gadget) or (input.KeyCode == Enum.KeyCode.ButtonR1 and held.Ability) then
+			list = { "Ultimate" }
+		end
 		if #list > 0 then
 			active[input] = list
 			for _, action in list do

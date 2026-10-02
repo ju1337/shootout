@@ -18,6 +18,7 @@ local NAMES = {
 	"MenuStatus", -- Server -> Client: Statuszeile im Menü (Teleport läuft, Fehler)
 	"SelectAgent", -- Client -> Server: Agent wählen (Agent-Id)
 	"UseAbility", -- Client -> Server: Fähigkeit auslösen
+	"UseUltimate", -- Client -> Server: Ultimate auslösen (UltCharge muss 100 sein)
 	"Reveal",     -- Server -> Team: Gegner markieren (Charaktere, Dauer)
 	"XPGain",     -- Server -> Client: XP bekommen (Menge, Grund, Agent, LevelUp)
 	"AdminAction", -- Client -> Server: Admin-Befehl (Aktion, Wert1, Wert2)

@@ -31,19 +31,22 @@ function LevelBadge.Init()
 	local root = UITheme.ScaledRoot(screen)
 	local rootScale = root:FindFirstChildOfClass("UIScale")
 
-	local badge = make("Frame", { Name = "Badge", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -118),
-		Size = UDim2.fromOffset(250, 46), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.35, BorderSizePixel = 0 }, root)
-	UITheme.Corner(badge, 4)
-	make("UIGradient", { Transparency = NumberSequence.new(0, 0.7) }, badge)
+	-- Fläche im Design der Lobby (runde Ecken, Rand), etwas durchsichtig
+	local badge = make("Frame", { Name = "Badge", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -122),
+		Size = UDim2.fromOffset(250, 48), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.2, BorderSizePixel = 0 }, root)
+	UITheme.Corner(badge, UITheme.Radius.Large)
+	UITheme.Stroke(badge, C.Border, 2)
 	local emblemHolder = make("Frame", { Position = UDim2.fromOffset(2, 1), Size = UDim2.fromOffset(44, 44),
 		BackgroundTransparency = 1 }, badge)
 	local emblem = PrestigeEmblem.new(emblemHolder, 44)
-	local levelText = UITheme.Label({ Position = UDim2.fromOffset(54, 3), Size = UDim2.fromOffset(190, 22), Text = "",
-		TextSize = 20, Font = UITheme.Fonts.Title, TextStrokeTransparency = 0.5 }, badge)
-	local barBack = make("Frame", { Position = UDim2.fromOffset(54, 29), Size = UDim2.fromOffset(180, 5),
-		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2, BorderSizePixel = 0 }, badge)
-	local barFill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, barBack)
-	local xpText = UITheme.Label({ Position = UDim2.fromOffset(54, 34), Size = UDim2.fromOffset(190, 12), Text = "",
+	local levelText = UITheme.Label({ Position = UDim2.fromOffset(54, 5), Size = UDim2.fromOffset(190, 20), Text = "",
+		TextSize = 15, Font = UITheme.Fonts.Display }, badge)
+	local barBack = make("Frame", { Position = UDim2.fromOffset(54, 28), Size = UDim2.fromOffset(180, 6),
+		BackgroundColor3 = C.Background, BorderSizePixel = 0 }, badge)
+	UITheme.Corner(barBack, 3)
+	local barFill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, barBack)
+	UITheme.Corner(barFill, 3)
+	local xpText = UITheme.Label({ Position = UDim2.fromOffset(54, 35), Size = UDim2.fromOffset(190, 12), Text = "",
 		TextSize = 10, TextColor3 = C.Muted }, badge)
 
 	local function refresh()
@@ -83,7 +86,7 @@ function LevelBadge.Init()
 			badge.Position = UDim2.new(0, 16, 0, top + 172 + 92)
 		else
 			badge.AnchorPoint = Vector2.new(0, 1)
-			badge.Position = UDim2.new(0, 24, 1, -118)
+			badge.Position = UDim2.new(0, 24, 1, -122) -- über der Lebens-Fläche (88 hoch + Schatten)
 		end
 	end
 
