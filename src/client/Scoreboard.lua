@@ -5,13 +5,13 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
 local RankConfig = require(Shared.RankConfig)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -197,17 +197,18 @@ function Scoreboard.Init()
 		BackgroundTransparency = 1, LayoutOrder = 2 }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == Enum.KeyCode.Tab and Modes.IsFighting(player) then
-			holding = true
-			gui.Enabled = true
-			render()
+	-- Tastatur/Controller: halten. Touch: Knopf schaltet um.
+	InputActions.Bind("Scoreboard", function(began)
+		if InputActions.IsTouch() then
+			if began then
+				holding = not holding and Modes.IsFighting(player)
+			end
+		else
+			holding = began and Modes.IsFighting(player)
 		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.Tab then
-			holding = false
-			gui.Enabled = false
+		gui.Enabled = holding
+		if holding then
+			render()
 		end
 	end)
 	-- Während Tab gehalten wird, laufend aktualisieren

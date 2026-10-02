@@ -8,10 +8,12 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -143,6 +145,14 @@ function MapVote.Init()
 		local index = table.find(KEYS, input.KeyCode)
 		if index then
 			vote(index)
+		end
+	end)
+	-- Controller: erste Karte auswählen, damit man mit dem Steuerkreuz wählen kann
+	gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+		if gui.Enabled and InputActions.Device() == "Gamepad" then
+			GuiService.SelectedObject = cards[1].Card
+		elseif not gui.Enabled and GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(gui) then
+			GuiService.SelectedObject = nil
 		end
 	end)
 	RunService.Heartbeat:Connect(function()

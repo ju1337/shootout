@@ -11,6 +11,7 @@ local Debris = game:GetService("Debris")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -84,11 +85,14 @@ local function showPing(position, enemy, pingerName)
 end
 
 function Pings.Init()
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed or not Modes.IsFighting(player) then
-			return
+	InputActions.Bind("Ping", function(began)
+		if began and Modes.IsFighting(player) then
+			ping()
 		end
-		if input.KeyCode == Enum.KeyCode.Z or input.UserInputType == Enum.UserInputType.MouseButton3 then
+	end)
+	-- Mittlere Maustaste pingt zusätzlich
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if not processed and input.UserInputType == Enum.UserInputType.MouseButton3 and Modes.IsFighting(player) then
 			ping()
 		end
 	end)

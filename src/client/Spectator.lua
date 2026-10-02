@@ -6,12 +6,12 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Movement = require(Shared.Movement)
 local HUD = require(Shared.HUD)
 local Modes = require(Shared.Modes)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -122,7 +122,8 @@ local function update()
 		local agent = target:IsA("Player") and target.Character and target.Character:GetAttribute("Agent")
 			or not target:IsA("Player") and target:GetAttribute("Agent")
 		HUD.SetStatus("ZUSCHAUER  ·  " .. string.upper(target.Name) .. (agent and ("  ·  " .. string.upper(agent)) or "")
-			.. "   [Q] ◀   ▶ [E]")
+			.. (InputActions.IsTouch() and "" or ("   [" .. InputActions.Hint("SpectatePrev") .. "] ◀   ▶ ["
+				.. InputActions.Hint("SpectateNext") .. "]")))
 	else
 		camera.CameraType = Enum.CameraType.Scriptable
 		inOverview = true
@@ -171,9 +172,15 @@ local function updateHighlights()
 end
 
 function Spectator.Init()
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and spectating and (input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Q) then
-			target = nextTarget(input.KeyCode == Enum.KeyCode.E and 1 or -1)
+	InputActions.Bind("SpectateNext", function(began)
+		if began and spectating then
+			target = nextTarget(1)
+			update()
+		end
+	end)
+	InputActions.Bind("SpectatePrev", function(began)
+		if began and spectating then
+			target = nextTarget(-1)
 			update()
 		end
 	end)

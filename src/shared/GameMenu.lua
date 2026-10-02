@@ -21,6 +21,7 @@ local RankConfig = require(Shared.RankConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentFigure = require(Shared.AgentFigure)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -396,8 +397,9 @@ function GameMenu.Init()
 		GameMenu.SetOpen(true)
 	end)
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == Enum.KeyCode.M then
+	-- Menü-Taste (M bzw. Touchpad/Select): nur im Hub bzw. wenn das Menü offen ist
+	InputActions.Bind("Menu", function(began)
+		if began and (isOpen or not Modes.IsFighting(player)) then
 			GameMenu.SetOpen(not isOpen)
 		end
 	end)

@@ -6,12 +6,12 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Movement = require(Shared.Movement)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -199,13 +199,10 @@ function Downed.Init()
 		end
 	end)
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == Enum.KeyCode.E and promptTarget and not isDowned then
+	InputActions.Bind("Interact", function(began)
+		if began and promptTarget and not isDowned then
 			setReviving(true)
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.E then
+		elseif not began then
 			setReviving(false)
 		end
 	end)
@@ -238,9 +235,11 @@ function Downed.Init()
 			end
 		end
 		promptPanel.Visible = promptTarget ~= nil
+		InputActions.SetInteractAvailable("Revive", promptTarget ~= nil)
 		if promptTarget then
 			local progress = promptTarget:GetAttribute("ReviveProgress") or 0
-			promptLabel.Text = (holdingE and "Belebe " or "[E] halten: ") .. promptTarget.Name .. (holdingE and " wieder..." or " wiederbeleben")
+			local key = InputActions.Hint("Interact")
+			promptLabel.Text = (holdingE and "Belebe " or (key ~= "" and ("[" .. key .. "] halten: ") or "HALTEN: ")) .. promptTarget.Name .. (holdingE and " wieder..." or " wiederbeleben")
 			promptBar.Size = UDim2.new(progress, 0, 1, 0)
 		elseif holdingE then
 			setReviving(false)

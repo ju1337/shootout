@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local InputActions = require(Shared.InputActions)
 local Movement = require(Shared.Movement)
 local WeaponClient = require(Shared.WeaponClient)
 local HUD = require(Shared.HUD)
@@ -22,7 +23,9 @@ local MatchSummary = require(script.Parent:WaitForChild("MatchSummary"))
 local HubLineup = require(script.Parent:WaitForChild("HubLineup"))
 local Nametags = require(script.Parent:WaitForChild("Nametags"))
 local MapVote = require(script.Parent:WaitForChild("MapVote"))
+local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
 
+InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 Movement.Init()
 WeaponClient.Init()
 HUD.Init(WeaponClient)
@@ -40,4 +43,5 @@ MatchSummary.Init()
 HubLineup.Init()
 Nametags.Init()
 MapVote.Init()
+TouchControls.Init()
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

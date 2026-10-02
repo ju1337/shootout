@@ -16,6 +16,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
 local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -296,21 +297,41 @@ function Movement.Init()
 	updateCamera()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateCamera)
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then
-			return
+	-- Sprinten und Ducken über InputActions. Tastatur: gedrückt halten.
+	-- Controller (L3) und Touch: Sprinten schaltet um und endet, wenn man stehen bleibt.
+	local function setCrouch(on)
+		local humanoid = getHumanoid()
+		local wasSprinting = sprintHeld and not aiming and humanoid and humanoid.MoveDirection.Magnitude > 0.5
+		crouchHeld = on
+		if on and wasSprinting and Modes.IsFighting(player) then
+			startSlide()
 		end
-		if input.KeyCode == Enum.KeyCode.LeftShift then
-			sprintHeld = true
-			apply()
-		elseif input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.C then
-			local humanoid = getHumanoid()
-			local wasSprinting = sprintHeld and not aiming and humanoid and humanoid.MoveDirection.Magnitude > 0.5
-			crouchHeld = true
-			if wasSprinting and Modes.IsFighting(player) then
-				startSlide()
+		apply()
+	end
+	InputActions.Bind("Sprint", function(began)
+		if InputActions.Device() == "Keyboard" then
+			sprintHeld = began
+		elseif began then
+			sprintHeld = not sprintHeld
+		end
+		apply()
+	end)
+	InputActions.Bind("Crouch", function(began)
+		if InputActions.Device() == "Touch" then
+			if began then
+				setCrouch(not crouchHeld)
 			end
-			apply()
+		else
+			setCrouch(began)
+		end
+	end)
+	RunService.Heartbeat:Connect(function()
+		if sprintHeld and InputActions.Device() ~= "Keyboard" then
+			local humanoid = getHumanoid()
+			if not humanoid or humanoid.MoveDirection.Magnitude < 0.1 then
+				sprintHeld = false
+				apply()
+			end
 		end
 	end)
 	-- Schulterkamera: Maus mittig sperren, Körper dreht mit der Kamera (wie Shift-Lock)
@@ -332,20 +353,24 @@ function Movement.Init()
 		end
 	end)
 
-	-- Springen vor einer Kante = hochziehen
+	-- Springen vor einer Kante = hochziehen (auch über den eigenen Touch-Springen-Knopf)
 	UserInputService.JumpRequest:Connect(tryMantle)
-
-	-- T: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert), X: Schulter wechseln
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then
-			return
+	InputActions.Bind("Jump", function(began)
+		if began then
+			tryMantle()
 		end
-		if input.KeyCode == Enum.KeyCode.X and Movement.IsThirdPerson() then
+	end)
+
+	-- Kamera-Taste: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert),
+	-- Schulter-Taste: Schulter wechseln
+	InputActions.Bind("Shoulder", function(began)
+		if began and Movement.IsThirdPerson() then
 			shoulderSide = -shoulderSide
 			apply()
-			return
 		end
-		if input.KeyCode ~= Enum.KeyCode.T then
+	end)
+	InputActions.Bind("Camera", function(began)
+		if not began then
 			return
 		end
 		Movement.SetThirdPerson(not thirdPerson)
@@ -354,16 +379,6 @@ function Movement.Init()
 			Sensitivity = sensitivity,
 			ThirdPerson = thirdPerson,
 		})
-	end)
-
-	UserInputService.InputEnded:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.LeftShift then
-			sprintHeld = false
-			apply()
-		elseif input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.C then
-			crouchHeld = false
-			apply()
-		end
 	end)
 
 	local function onCharacter(character)

@@ -115,6 +115,24 @@ function UITheme.Canvas(parent, width, height)
 	return canvas
 end
 
+-- Vollbild-Ebene, die mit der Bildschirmgröße skaliert (HUD auf Handy kleiner, auf PC 1:1).
+-- Kinder positioniert man wie gewohnt an den Rändern. Gibt den Frame zurück.
+function UITheme.ScaledRoot(screenGui, designWidth, designHeight, minScale)
+	designWidth, designHeight = designWidth or 1600, designHeight or 900
+	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0) }, screenGui)
+	local scale = make("UIScale", {}, root)
+	local function update()
+		local viewport = workspace.CurrentCamera.ViewportSize
+		local s = math.clamp(math.min(viewport.X / designWidth, viewport.Y / designHeight), minScale or 0.45, 1)
+		scale.Scale = s
+		-- Größe ausgleichen, damit die Ebene nach dem Skalieren wieder den ganzen Bildschirm füllt
+		root.Size = UDim2.new(1 / s, 0, 1 / s, 0)
+	end
+	update()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+	return root
+end
+
 -- Raute (gedrehtes Quadrat) als RC-typisches Schmuckelement. Kinder würden mitgedreht,
 -- darum Texte als Geschwister darüberlegen.
 function UITheme.Diamond(parent, size, position, color, strokeColor)

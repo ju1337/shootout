@@ -6,7 +6,6 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 
@@ -18,6 +17,7 @@ local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local Movement = require(Shared.Movement)
 local BuyConfig = require(Shared.BuyConfig)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -287,31 +287,43 @@ local function showTracer(startPos, endPos)
 end
 
 function WeaponClient.Init()
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed or not Modes.IsFighting(player) then
-			return
-		end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			mouseDown = true
+	-- Eingaben über InputActions (Tastatur, Controller und Touch-Knöpfe)
+	local function fighting()
+		return Modes.IsFighting(player)
+	end
+	InputActions.Bind("Fire", function(began)
+		mouseDown = began and fighting()
+		if mouseDown then
 			tryFire()
-		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			setAiming(current ~= nil)
-		elseif input.KeyCode == Enum.KeyCode.R then
+		end
+	end)
+	InputActions.Bind("Aim", function(began)
+		setAiming(began and fighting() and current ~= nil)
+	end)
+	InputActions.Bind("Reload", function(began)
+		if began and fighting() then
 			requestReload()
-		elseif input.KeyCode == Enum.KeyCode.V then
+		end
+	end)
+	InputActions.Bind("Melee", function(began)
+		if began and fighting() then
 			melee()
-		elseif input.KeyCode == Enum.KeyCode.One then
+		end
+	end)
+	InputActions.Bind("Weapon1", function(began)
+		if began and fighting() then
 			equip(1)
-		elseif input.KeyCode == Enum.KeyCode.Two then
+		end
+	end)
+	InputActions.Bind("Weapon2", function(began)
+		if began and fighting() then
 			equip(2)
 		end
 	end)
-
-	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			mouseDown = false
-		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			setAiming(false)
+	-- Controller/Touch: zwischen den beiden Waffen wechseln
+	InputActions.Bind("SwapWeapon", function(began)
+		if began and fighting() then
+			equip(loadout()[1] == current and 2 or 1)
 		end
 	end)
 

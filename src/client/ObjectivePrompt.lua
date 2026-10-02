@@ -5,10 +5,10 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
+local InputActions = require(ReplicatedStorage:WaitForChild("Shared").InputActions)
 local Downed = require(script.Parent:WaitForChild("Downed"))
 
 local player = Players.LocalPlayer
@@ -64,25 +64,24 @@ function ObjectivePrompt.Init()
 	fill.Parent = back
 	Instance.new("UICorner").Parent = fill
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == Enum.KeyCode.E and player:GetAttribute("ObjHint")
-			and not Downed.HasPrompt() then
+	InputActions.Bind("Interact", function(began)
+		if began and player:GetAttribute("ObjHint") and not Downed.HasPrompt() then
 			setHolding(true)
-		end
-	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.E then
+		elseif not began then
 			setHolding(false)
 		end
 	end)
 
 	RunService.Heartbeat:Connect(function()
 		local hint = player:GetAttribute("ObjHint")
+		InputActions.SetInteractAvailable("Objective", hint ~= nil)
 		local progress = player:GetAttribute("ActionProgress")
 		-- Nicht über dem Wiederbeleben-Hinweis anzeigen
 		panel.Visible = hint ~= nil and not Downed.HasPrompt()
 		if hint then
-			label.Text = hint
+			-- "[E]" durch die Taste des aktuellen Geräts ersetzen (Touch: eigener Knopf)
+			local key = InputActions.Hint("Interact")
+			label.Text = string.gsub(hint, "%[E%]", key ~= "" and ("[" .. key .. "]") or "")
 			back.Visible = progress ~= nil
 			fill.Size = UDim2.new(math.clamp(progress or 0, 0, 1), 0, 1, 0)
 		elseif holding then
