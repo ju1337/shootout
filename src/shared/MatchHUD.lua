@@ -673,23 +673,26 @@ function MatchHUD.Init(root, weaponClient)
 		for _, objective in mode.Objectives do
 			local part = folder:FindFirstChild(objective.Part)
 			if part and part:IsA("BasePart") then
+				-- Klein und hoch über dem Ziel, damit der Marker keine Gegner verdeckt; die Gruppe wird
+				-- ausgeblendet, wenn der Marker nahe am Fadenkreuz ist oder man zielt (siehe unten)
 				local gui = make("BillboardGui", { Name = "ObjectiveMarker", Adornee = part, AlwaysOnTop = true, LightInfluence = 0,
-					Size = UDim2.fromOffset(90, 84), StudsOffset = Vector3.new(0, 6, 0), ResetOnSpawn = false, Enabled = false,
+					Size = UDim2.fromOffset(64, 58), StudsOffset = Vector3.new(0, 16, 0), ResetOnSpawn = false, Enabled = false,
 					ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, playerGui)
-				local state = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(90, 14),
-					Text = "", TextSize = 13 }, gui)
-				local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 38),
-					Size = UDim2.fromOffset(30, 30), Rotation = 45, BackgroundColor3 = PANEL, BackgroundTransparency = 0.3,
-					BorderSizePixel = 0 }, gui)
+				local group = make("CanvasGroup", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, gui)
+				local state = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(64, 12),
+					Text = "", TextSize = 11 }, group)
+				local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 28),
+					Size = UDim2.fromOffset(20, 20), Rotation = 45, BackgroundColor3 = PANEL, BackgroundTransparency = 0.3,
+					BorderSizePixel = 0 }, group)
 				local stroke = UITheme.Stroke(diamond, WHITE, 1.5)
 				local inner = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 					Size = UDim2.fromScale(0, 0), BackgroundColor3 = ALLY, BorderSizePixel = 0 }, diamond)
-				local letter = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 38), Size = UDim2.fromOffset(30, 30),
-					Text = objective.Label, TextSize = 22, TextStrokeTransparency = 0.3 }, gui)
-				local distance = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 62), Size = UDim2.fromOffset(90, 16),
-					Text = "", TextSize = 15 }, gui)
-				table.insert(markers, { Gui = gui, Part = part, Diamond = diamond, Inner = inner, Stroke = stroke, Letter = letter,
-					Distance = distance, State = state })
+				local letter = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 28), Size = UDim2.fromOffset(20, 20),
+					Text = objective.Label, TextSize = 15, TextStrokeTransparency = 0.3 }, group)
+				local distance = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 43), Size = UDim2.fromOffset(64, 13),
+					Text = "", TextSize = 12 }, group)
+				table.insert(markers, { Gui = gui, Group = group, Part = part, Diamond = diamond, Inner = inner, Stroke = stroke,
+					Letter = letter, Distance = distance, State = state })
 			end
 		end
 	end
@@ -771,6 +774,16 @@ function MatchHUD.Init(root, weaponClient)
 				marker.State.Text = stateText
 				marker.State.TextColor3 = stroke
 				marker.Distance.Visible = not near
+				-- Nahe am Fadenkreuz oder beim Zielen fast unsichtbar, damit man Gegner dahinter sieht
+				local screenPos, onScreen = camera:WorldToViewportPoint(part.Position + Vector3.new(0, 16, 0))
+				local fade = 0
+				if onScreen then
+					local viewport = camera.ViewportSize
+					local fromCenter = (Vector2.new(screenPos.X, screenPos.Y) - viewport / 2).Magnitude / viewport.Y
+					fade = math.clamp(1 - (fromCenter - 0.08) / 0.12, 0, 1) -- innerhalb ~8 % voll ausgeblendet
+				end
+				local aimBlend = weaponClient and weaponClient.GetAimBlend and weaponClient.GetAimBlend() or 0
+				marker.Group.GroupTransparency = math.max(fade * 0.85, aimBlend * 0.8)
 			end
 		end
 	end)
