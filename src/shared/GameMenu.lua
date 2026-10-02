@@ -317,7 +317,7 @@ local function buildBottomBar()
 	end)
 
 	label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 862), Size = UDim2.new(0, 1200, 0, 20),
-		Text = "M Menü  ·  Q Fähigkeit  ·  G Gadget  ·  V Messer  ·  Z Ping  ·  T Kamera  ·  Rechtsklick Zielen  ·  STRG Ducken/Slide  ·  E Aktion  ·  Tab Punkte",
+		Text = "M Menü  ·  Q Fähigkeit  ·  G Gadget  ·  V Messer  ·  Z Ping  ·  T Kamera  ·  X Schulter  ·  Rechtsklick Zielen  ·  STRG Ducken/Slide  ·  E Aktion  ·  Tab Punkte",
 		TextSize = 13, Font = F.Body, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
 end
 

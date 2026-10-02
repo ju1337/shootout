@@ -50,6 +50,7 @@ local normalHipHeight = nil
 local mantling = false
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
 local SHOULDER_OFFSET = Vector3.new(2.2, 0.8, 0)
+local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste X)
 local SHOULDER_DISTANCE = 9
 local SHOULDER_AIM_DISTANCE = 5
 
@@ -95,7 +96,7 @@ local function apply()
 		local crouched = isCrouched() and not isDropping(humanoid)
 		local offset = crouched and CROUCH_CAMERA or Vector3.zero
 		if thirdPerson and Modes.IsFighting(player) then
-			offset += SHOULDER_OFFSET -- über die rechte Schulter
+			offset += Vector3.new(SHOULDER_OFFSET.X * shoulderSide, SHOULDER_OFFSET.Y, 0) -- über die Schulter
 			local distance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
 			player.CameraMinZoomDistance = distance
 			player.CameraMaxZoomDistance = distance
@@ -334,9 +335,17 @@ function Movement.Init()
 	-- Springen vor einer Kante = hochziehen
 	UserInputService.JumpRequest:Connect(tryMantle)
 
-	-- T: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert)
+	-- T: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert), X: Schulter wechseln
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed or input.KeyCode ~= Enum.KeyCode.T then
+		if processed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.X and Movement.IsThirdPerson() then
+			shoulderSide = -shoulderSide
+			apply()
+			return
+		end
+		if input.KeyCode ~= Enum.KeyCode.T then
 			return
 		end
 		Movement.SetThirdPerson(not thirdPerson)

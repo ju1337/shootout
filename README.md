@@ -43,7 +43,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Slide) · Springen vor Kanten: Klettern ·
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
-G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · Tab Punkte · M Menü · P Admin-Panel
+G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte · M Menü · P Admin-Panel
 
 ## Wo stelle ich was ein?
 
