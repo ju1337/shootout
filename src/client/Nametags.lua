@@ -25,7 +25,7 @@ local function removeTag(model)
 	end
 end
 
-local emblems = setmetatable({}, { __mode = "k" }) -- [Schild] = PrestigeEmblem
+local emblems = {} -- [Schild] = PrestigeEmblem (wird beim Entfernen des Schilds gelöscht)
 
 local function newLabel(parent, props)
 	local label = Instance.new("TextLabel")
@@ -55,6 +55,9 @@ local function buildTag(model, head)
 	holder.BackgroundTransparency = 1
 	holder.Parent = tag
 	emblems[tag] = PrestigeEmblem.new(holder, 60)
+	tag.Destroying:Connect(function()
+		emblems[tag] = nil
+	end)
 
 	newLabel(tag, { Name = "Title", Position = UDim2.new(0, 64, 0, 4), Size = UDim2.new(1, -64, 0.55, 0),
 		Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left })
@@ -84,7 +87,14 @@ local function setTag(model, info)
 	tag.Subtitle.Position = UDim2.new(0, info.Player and 64 or 0, 0.58, 0)
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
-		emblems[tag]:Set(level.Level, level.Prestige)
+		local emblem = emblems[tag]
+		if not emblem then
+			-- Abzeichen fehlt (sollte nicht passieren): neu aufbauen
+			tag.Emblem:ClearAllChildren()
+			emblem = PrestigeEmblem.new(tag.Emblem, 60)
+			emblems[tag] = emblem
+		end
+		emblem:Set(level.Level, level.Prestige)
 	end
 end
 
@@ -149,7 +159,11 @@ function Nametags.Init()
 	end)
 	task.spawn(function()
 		while true do
-			update()
+			-- Ein Fehler darf die Schleife nicht beenden (sonst aktualisieren sich die Schilder nie wieder)
+			local ok, err = pcall(update)
+			if not ok then
+				warn("Nametags: " .. tostring(err))
+			end
 			task.wait(0.5)
 		end
 	end)
