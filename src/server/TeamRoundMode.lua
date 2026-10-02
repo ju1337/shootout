@@ -583,6 +583,7 @@ function TeamRoundMode.new(config)
 				Deaths = player:GetAttribute("Deaths") or 0,
 				Damage = player:GetAttribute("Damage") or 0,
 				Rank = rankTexts and rankTexts[player] or nil,
+				Map = player:GetAttribute("MapName"),
 			})
 			local won = nil -- nil = Unentschieden
 			if winner then
