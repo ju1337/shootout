@@ -415,6 +415,10 @@ local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
 
 	player.CharacterAdded:Connect(function(character)
+		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
+		local humanoid = character:WaitForChild("Humanoid")
+		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 		applyAgent(player, character)
 		applyUniform(player, character, getAgent(player))
 	end)

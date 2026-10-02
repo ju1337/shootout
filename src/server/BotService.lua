@@ -402,6 +402,8 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	model:SetAttribute("TeamName", bot.Team and bot.Team.Name or "")
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	humanoid.DisplayName = bot.Name .. " · " .. agent.Name
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None -- Namen zeigt der Client nur fürs eigene Team
+	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 	humanoid.MaxHealth = agent.Health
 	humanoid.Health = agent.Health
 	humanoid.WalkSpeed = agent.WalkSpeed
