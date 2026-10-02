@@ -290,6 +290,13 @@ local function buildBottomBar()
 		end
 	end)
 
+	-- Schnelles Spiel (RC "Quick Play"): Server wählt den vollsten Modus mit freiem Platz
+	UITheme.Button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -500, 0, 772), Size = UDim2.new(0, 230, 0, 60),
+		TextSize = 20, Text = "⚡ SCHNELLES SPIEL", BackgroundColor3 = C.AccentDark }, canvas, function()
+		setStatus("Suche schnelles Spiel...")
+		Remotes.JoinMode:FireServer("Quick")
+	end)
+
 	hubButton = UITheme.Button({ Position = UDim2.new(0, 60, 0, 772), Size = UDim2.new(0, 250, 0, 60), TextSize = 18,
 		Text = "⌂  ZURÜCK ZUM HUB", BackgroundColor3 = C.Card }, canvas, function()
 		setStatus("Zurück zum Hub...")

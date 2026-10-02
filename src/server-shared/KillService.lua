@@ -49,7 +49,7 @@ local function setupPlayer(player)
 				local humanoid = hit.Model.Parent and hit.Model:FindFirstChildOfClass("Humanoid")
 				local weapon = hit.Weapon and WeaponConfig.Get(hit.Weapon)
 				Remotes.DeathRecap:FireClient(player, hit.Name, weapon and weapon.DisplayName or hit.Weapon,
-					humanoid and math.ceil(humanoid.Health) or 0, hit.Model:GetAttribute("Agent"))
+					humanoid and math.ceil(humanoid.Health) or 0, hit.Model:GetAttribute("Agent"), hit.Model)
 			end
 		end)
 	end)

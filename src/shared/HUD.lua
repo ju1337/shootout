@@ -15,6 +15,7 @@ local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
+local Movement = require(Shared.Movement)
 local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
@@ -496,7 +497,27 @@ function HUD.Init(weaponClient)
 	local recapInfo = label({ Position = UDim2.new(0, 16, 0, 40), Size = UDim2.new(1, -32, 0, 22), Text = "",
 		TextSize = 15, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left }, recap)
 	local recapId = 0
-	Remotes.DeathRecap.OnClientEvent:Connect(function(killerName, weaponName, killerHealth, agentId)
+	Remotes.DeathRecap.OnClientEvent:Connect(function(killerName, weaponName, killerHealth, agentId, killerModel)
+		-- Todeskamera: 3 Sekunden auf den Killer schauen (Zuschauen übernimmt danach)
+		local killerHumanoid = typeof(killerModel) == "Instance" and killerModel:FindFirstChildOfClass("Humanoid")
+		if killerHumanoid then
+			local camera = workspace.CurrentCamera
+			camera:SetAttribute("KillCam", true)
+			player.CameraMode = Enum.CameraMode.Classic
+			player.CameraMinZoomDistance = 14
+			camera.CameraType = Enum.CameraType.Custom
+			camera.CameraSubject = killerHumanoid
+			task.delay(3, function()
+				camera:SetAttribute("KillCam", nil)
+				player.CameraMinZoomDistance = 0.5
+				-- Schon wieder gespawnt: zurück zur eigenen Kamera
+				local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+				if humanoid and humanoid.Health > 0 then
+					camera.CameraSubject = humanoid
+					Movement.ApplyCamera()
+				end
+			end)
+		end
 		recapId += 1
 		local myId = recapId
 		local agent = agentId and AgentConfig.Get(agentId)

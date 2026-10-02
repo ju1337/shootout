@@ -42,8 +42,32 @@ function ModeManager.Status(player, text)
 	Remotes.MenuStatus:FireClient(player, text)
 end
 
+-- Schnelles Spiel: Kampfmodus mit den meisten Spielern, der noch Platz hat (sonst Strikeout)
+local QUICK_MODES = { "Strikeout", "Demolition", "Drop", "FreeForAll", "Wingman" }
+local function quickMode(player)
+	local best, bestCount = "Strikeout", -1
+	for _, modeId in QUICK_MODES do
+		local module = modules[modeId]
+		if module and module.CanJoin(player) then
+			local count = 0
+			for _, other in Players:GetPlayers() do
+				if other:GetAttribute("Mode") == modeId then
+					count += 1
+				end
+			end
+			if count > bestCount then
+				best, bestCount = modeId, count
+			end
+		end
+	end
+	return best
+end
+
 -- Spieler in einen Modus schicken (ersetzt den Teleport)
 function ModeManager.Join(player, modeId)
+	if modeId == "Quick" then
+		modeId = quickMode(player)
+	end
 	local info = Modes.Get(modeId)
 	local module = modules[modeId]
 	if not info or switching[player] then

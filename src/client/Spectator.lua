@@ -82,6 +82,9 @@ local function stopSpectating()
 end
 
 local function update()
+	if workspace.CurrentCamera:GetAttribute("KillCam") then
+		return -- Todeskamera zeigt gerade den Killer
+	end
 	-- Zuschauen nur in Team-Modi (Drop, Strikeout)
 	if not Modes.IsTeamMode(player:GetAttribute("Mode")) or livingHumanoid(player) then
 		stopSpectating()

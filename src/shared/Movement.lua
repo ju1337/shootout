@@ -346,6 +346,10 @@ function Movement.Init()
 		character:GetAttributeChangedSignal("SpeedMultiplier"):Connect(apply)
 		character:GetAttributeChangedSignal("Agent"):Connect(apply)
 		player:GetAttributeChangedSignal("Buy_Runner"):Connect(apply)
+		-- Neuer Charakter (z.B. nach Todeskamera): Kamera wieder auf Ego/Schulter
+		if not workspace.CurrentCamera:GetAttribute("KillCam") then
+			Movement.ApplyCamera()
+		end
 		apply()
 	end
 	player.CharacterAdded:Connect(onCharacter)
