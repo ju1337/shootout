@@ -5260,20 +5260,20 @@
      }
     },
     {
-     "Name": "MapTable",
+     "Name": "AgentPedestalBase",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       3,
-       16,
-       16
+       1.2,
+       15,
+       15
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         1.5,
+         0.6,
          0
         ],
         "orientation": [
@@ -5307,20 +5307,20 @@
      }
     },
     {
-     "Name": "MapTableTop",
+     "Name": "AgentPedestal",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       0.2,
-       15,
-       15
+       2.4,
+       10.5,
+       10.5
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         3.1,
+         2.4,
          0
         ],
         "orientation": [
@@ -5343,31 +5343,31 @@
        }
       },
       "Color": [
-       0.0706,
-       0.1176,
-       0.1647
+       0.1333,
+       0.1451,
+       0.1686
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Metal",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder"
      }
     },
     {
-     "Name": "MapTableRing",
+     "Name": "AgentPedestalRing",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       0.25,
-       16.4,
-       16.4
+       0.2,
+       10.9,
+       10.9
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         3.05,
+         3.5,
          0
         ],
         "orientation": [
@@ -5398,648 +5398,24 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder",
-      "Transparency": 0.4
+      "Transparency": 0.2
      }
     },
     {
-     "Name": "Hologram",
+     "Name": "AgentPedestalGlow",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       1.742,
-       2.19,
-       1.54
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         1.229,
-         4.495,
-         2.418
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.701,
-       1.898,
-       0.913
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -0.344,
-         4.349,
-         4.434
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.374,
-       1.688,
-       0.813
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -0.309,
-         4.244,
-         -2.534
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.566,
-       2.433,
-       0.96
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -2.833,
-         4.616,
-         -2.205
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.927,
-       1.835,
-       0.802
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         2.971,
-         4.317,
-         -3.612
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.782,
-       1.031,
-       1.672
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         3.714,
-         3.915,
-         -2.905
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.741,
-       1.01,
-       1.491
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0.392,
-         3.905,
-         1.778
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.946,
-       0.932,
-       0.865
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -2.012,
-         3.866,
-         -1.388
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.478,
-       0.607,
-       1.138
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1.986,
-         3.703,
-         1.031
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.116,
-       1.561,
-       1.281
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1.9,
-         4.181,
-         3.185
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.823,
-       2.55,
-       1.55
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         2.047,
-         4.675,
-         -4.43
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "Hologram",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.809,
-       1.757,
-       0.847
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         2.877,
-         4.279,
-         -1.338
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3529,
-       0.6667,
-       0.8627
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.7,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "HoloDiamond",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3,
-       3,
-       3
+       0.2,
+       15.4,
+       15.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         9.5,
-         0
-        ],
-        "orientation": [
-         [
-          0.707107,
-          -0.707107,
-          0.0
-         ],
-         [
-          0.5,
-          0.5,
-          -0.707107
-         ],
-         [
-          0.5,
-          0.5,
-          0.707107
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7255,
-       0.9216
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.6,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "HoloRing",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.15,
-       8,
-       8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         0,
-         9.5,
+         1.15,
          0
         ],
         "orientation": [
@@ -6070,8 +5446,263 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder",
-      "Transparency": 0.75,
-      "CanCollide": false
+      "Transparency": 0.55
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "PointLight",
+       "Properties": {
+        "Range": 16,
+        "Brightness": 1.2,
+        "Color": [
+         0.6667,
+         0.8235,
+         0.9412
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "AgentOfWeekSpot",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       0.2,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         3.6,
+         0
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "AgentOfWeekStand",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.6,
+       2.2,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         1.1,
+         -9.2
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3059,
+       0.3255,
+       0.3608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "AgentOfWeekSign",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       11,
+       4,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         2.6,
+         -9.4
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.819152,
+          -0.573576
+         ],
+         [
+          0.0,
+          0.573576,
+          0.819152
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Spotlight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       20,
+       2.6,
+       2.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -3,
+         13.5,
+         0
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.93,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "Spotlight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       20,
+       2.6,
+       2.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         3,
+         13.5,
+         0
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.902
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.93,
+      "CanCollide": false,
+      "CanQuery": false
      }
     },
     {

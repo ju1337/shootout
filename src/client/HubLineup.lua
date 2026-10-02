@@ -56,6 +56,96 @@ local function rebuild()
 	figure.Parent = workspace
 end
 
+-- Agent der Woche: große Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") und Schild
+-- davor ("AgentOfWeekSign"). Jede Woche (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der
+-- Serverzeit berechnet, damit alle Spieler denselben sehen.
+local WEEK = 7 * 24 * 3600
+local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag
+local STATUE_SCALE = 2.4
+
+function HubLineup.AgentOfWeek()
+	local week = math.floor((workspace:GetServerTimeNow() + MONDAY_OFFSET) / WEEK)
+	return AgentConfig.Agents[week % #AgentConfig.Agents + 1]
+end
+
+local function buildAgentOfWeek()
+	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local spot = decor:WaitForChild("AgentOfWeekSpot", 10)
+	local sign = decor:WaitForChild("AgentOfWeekSign", 10)
+	if not spot then
+		return
+	end
+	-- Schild: Überschrift, Name in Agentenfarbe, Rolle und Fähigkeit
+	local nameLabel, infoLabel
+	if sign then
+		local surface = Instance.new("SurfaceGui")
+		surface.Face = Enum.NormalId.Front
+		surface.LightInfluence = 0
+		surface.Brightness = 1.6
+		surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		surface.PixelsPerStud = 50
+		surface.Adornee = sign
+		surface.Parent = player:WaitForChild("PlayerGui")
+		local function text(y, h, font, color)
+			local label = Instance.new("TextLabel")
+			label.Position = UDim2.new(0.04, 0, y, 0)
+			label.Size = UDim2.new(0.92, 0, h, 0)
+			label.BackgroundTransparency = 1
+			label.Font = font
+			label.TextScaled = true
+			label.TextColor3 = color
+			label.TextStrokeTransparency = 0.6
+			label.Parent = surface
+			return label
+		end
+		text(0.06, 0.2, Enum.Font.GothamBold, Color3.fromRGB(150, 200, 235)).Text = "AGENT DER WOCHE"
+		nameLabel = text(0.28, 0.42, Enum.Font.Oswald, Color3.new(1, 1, 1))
+		infoLabel = text(0.74, 0.18, Enum.Font.GothamBold, Color3.fromRGB(220, 226, 234))
+	end
+
+	local statue, shownId = nil, nil
+	local function refresh()
+		local agent = HubLineup.AgentOfWeek()
+		if agent.Id == shownId then
+			return
+		end
+		shownId = agent.Id
+		if statue then
+			statue:Destroy()
+		end
+		local primary, accent = Cosmetics.AgentColors(nil, agent.Id)
+		statue = AgentFigure.Build(agent, primary, accent, nil, agent.Loadout[1])
+		statue.Name = "AgentOfWeek"
+		statue:ScaleTo(STATUE_SCALE)
+		for _, part in statue:GetDescendants() do
+			if part:IsA("BasePart") then
+				part.Anchored = true
+				part.CanCollide = false
+				part.CanQuery = false
+			end
+		end
+		statue.Parent = workspace
+		if nameLabel then
+			nameLabel.Text = string.upper(agent.Name)
+			nameLabel.TextColor3 = agent.Color
+			infoLabel.Text = string.upper(agent.Role) .. "  ·  " .. string.upper(agent.Ability.Name)
+		end
+	end
+	refresh()
+	-- Langsam drehen; einmal pro Minute prüfen, ob eine neue Woche begonnen hat
+	local lastCheck = os.clock()
+	RunService.RenderStepped:Connect(function()
+		if os.clock() - lastCheck > 60 then
+			lastCheck = os.clock()
+			refresh()
+		end
+		if statue and statue.Parent then
+			local base = spot.Position + Vector3.new(0, 3 * STATUE_SCALE, 0)
+			statue:PivotTo(CFrame.lookAt(base, base + spot.CFrame.LookVector) * CFrame.Angles(0, os.clock() * 0.35, 0))
+		end
+	end)
+end
+
 -- Einsatz-Tafel im Hangar: live, wie viele Spieler in welchem Modus sind
 local function buildMissionBoard()
 	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("MissionBoard", 10)
@@ -268,6 +358,7 @@ function HubLineup.Init()
 	task.spawn(buildMissionBoard)
 	task.spawn(addParticles)
 	task.spawn(buildLeaderboards)
+	task.spawn(buildAgentOfWeek)
 	rebuild()
 	player.AttributeChanged:Connect(function(name)
 		if name == "Mode" or name == "Agent" or name == "Equipped" or name == "Owned" or name == "Loadouts"

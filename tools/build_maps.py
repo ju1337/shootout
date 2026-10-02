@@ -1393,22 +1393,27 @@ def build_lobby():
     carpet("CarpetNorth", (0, tz + ring_r - 3), (0, plaza_z + 1), 10)
     carpet("CarpetPlaza", (0, plaza_z), (0, gate_z - 1), 100)
 
-    # ---------- Kartentisch mit Hologramm ----------
-    b.add("Decor", "MapTable", (3, 16, 16), (0, 1.5, tz), steel, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
-    b.add("Decor", "MapTableTop", (0.2, 15, 15), (0, 3.1, tz), (18, 30, 42), "SmoothPlastic", angles=(0, 0, 90),
+    # ---------- Mitte: Agent der Woche (Statue setzt der Client, wechselt jede Woche) ----------
+    b.add("Decor", "AgentPedestalBase", (1.2, 15, 15), (0, 0.6, tz), steel, "Metal", angles=(0, 0, 90),
           props={"Shape": "Cylinder"})
-    b.add("Decor", "MapTableRing", (0.25, 16.4, 16.4), (0, 3.05, tz), accent, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.4})
-    for _ in range(16):
-        hx, hz = rng.uniform(-5, 5), rng.uniform(-5, 5)
-        if hx * hx + hz * hz < 25:
-            hh = rng.uniform(0.6, 2.6)
-            b.box("Decor", "Hologram", (rng.uniform(0.8, 1.8), hh, rng.uniform(0.8, 1.8)), (hx, 3.4 + hh / 2, tz + hz),
-                  (90, 170, 220), "Neon", props={"Transparency": 0.7, "CanCollide": False})
-    b.box("Decor", "HoloDiamond", (3, 3, 3), (0, 9.5, tz), accent, "Neon", angles=(45, 0, 45),
-          props={"Transparency": 0.6, "CanCollide": False})
-    b.add("Decor", "HoloRing", (0.15, 8, 8), (0, 9.5, tz), accent, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.75, "CanCollide": False})
+    b.add("Decor", "AgentPedestal", (2.4, 10.5, 10.5), (0, 2.4, tz), (34, 37, 43), "Metal", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    b.add("Decor", "AgentPedestalRing", (0.2, 10.9, 10.9), (0, 3.5, tz), accent, "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.2})
+    b.add("Decor", "AgentPedestalGlow", (0.2, 15.4, 15.4), (0, 1.15, tz), accent, "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.55},
+          children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
+              "Range": 16, "Brightness": 1.2, "Color": rgb(170, 210, 240)}}])
+    # Standpunkt der Statue (Füße, Blick zum Spawn nach Süden)
+    b.add("Decor", "AgentOfWeekSpot", (1, 0.2, 1), (0, 3.6, tz), accent, "SmoothPlastic", angles=(0, 180, 0),
+          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+    # Schräges Schild vorne (zum Spawn), Text setzt der Client
+    b.box("Decor", "AgentOfWeekStand", (0.6, 2.2, 0.6), (0, 1.1, tz - 9.2), steel, "Metal")
+    b.box("Decor", "AgentOfWeekSign", (11, 4, 0.4), (0, 2.6, tz - 9.4), graphite, "SmoothPlastic", angles=(35, 0, 0))
+    # Lichtkegel von oben
+    for x in (-3, 3):
+        b.add("Decor", "Spotlight", (H - 6, 2.6, 2.6), (x, (H - 6) / 2 + 3.5, tz), (255, 248, 230), "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.93, "CanCollide": False, "CanQuery": False})
 
     # ---------- Nordwand: große Tore, Schilder leicht zum Spawn geneigt ----------
     gw, gh = 14, 15
