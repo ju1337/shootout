@@ -89,7 +89,7 @@ function actions.ClaimDaily(player)
 		return string.format("Wieder verfügbar in %d h %d min.", left // 3600, (left % 3600) // 60), false
 	end
 	profile.LastDaily = now
-	ProgressService.AddCoins(player, Cosmetics.DailyReward)
+	ProgressService.AddCoins(player, Cosmetics.DailyReward, "Tägliche Belohnung")
 	return "+" .. Cosmetics.DailyReward .. " Münzen abgeholt!", true
 end
 
@@ -107,7 +107,7 @@ function actions.RedeemCode(player, code)
 		return "Code schon eingelöst.", false
 	end
 	profile.Codes[code] = true
-	ProgressService.AddCoins(player, reward)
+	ProgressService.AddCoins(player, reward, "Code")
 	return "Code eingelöst: +" .. reward .. " Münzen!", true
 end
 

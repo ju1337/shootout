@@ -11,6 +11,7 @@ local GameSettings = require(Shared.GameSettings)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
+local RewardService = require(ServerShared.RewardService)
 local LeaderboardService = require(ServerShared.LeaderboardService)
 local RankConfig = require(Shared.RankConfig)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
@@ -18,7 +19,7 @@ local BotService = require(script.Parent.Parent.BotService)
 
 local FreeForAll = {}
 
-local INTERMISSION = 6       -- Pause zwischen Runden in Sekunden
+local INTERMISSION = 9       -- Pause zwischen Runden in Sekunden (solange läuft die Zusammenfassung)
 local SPAWN_PROTECTION = 2   -- Sekunden Schutzschild nach dem Spawn
 local MAX_PLAYERS = 12
 
@@ -112,10 +113,10 @@ local function finishRound(winner)
 	-- Bots zählen als Gegner mit Start-ELO; ohne andere echte Spieler gibt es die halbe Änderung.
 	local ranking = {}
 	for player in members do
-		table.insert(ranking, { Player = player, Kills = KillService.GetKills(player) })
+		table.insert(ranking, { Player = player, Name = player.Name, Kills = KillService.GetKills(player) })
 	end
 	for bot in bots do
-		table.insert(ranking, { Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0 })
+		table.insert(ranking, { Name = bot.Name, Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0 })
 	end
 	table.sort(ranking, function(a, b)
 		return a.Kills > b.Kills
@@ -167,6 +168,29 @@ local function finishRound(winner)
 		ProgressService.QuestEvent(winner, "RoundWin", 1)
 	else
 		announce("Runde beendet")
+	end
+	-- Zusammenfassung mit Platz, MVP und Belohnungs-Übersicht (XP, Münzen, Level, ELO)
+	local top = ranking[1]
+	for place, entry in ranking do
+		local player = entry.Player
+		if player then
+			RewardService.Check(player) -- Meilensteine sofort, damit sie in der Übersicht stehen
+			Remotes.MatchSummary:FireClient(player, {
+				Won = place == 1,
+				Winner = top and top.Name or nil,
+				Mode = "Free-for-All",
+				Place = place,
+				Players = #ranking,
+				Mvp = top and top.Name or nil,
+				MvpKills = top and top.Kills or 0,
+				Kills = KillService.GetKills(player),
+				Deaths = player:GetAttribute("Deaths") or 0,
+				Damage = player:GetAttribute("Damage") or 0,
+				Map = player:GetAttribute("MapName"),
+				Progress = ProgressService.TakeLedger(player),
+				ShowTime = INTERMISSION,
+			})
+		end
 	end
 	task.wait(INTERMISSION)
 

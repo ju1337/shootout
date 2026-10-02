@@ -40,12 +40,13 @@ end
 local function grant(player, title, reward)
 	local lines = {}
 	if reward.Coins and reward.Coins > 0 then
-		ProgressService.AddCoins(player, reward.Coins)
+		ProgressService.AddCoins(player, reward.Coins, title)
 		table.insert(lines, "+" .. reward.Coins .. " Münzen")
 	end
 	local item = reward.Item and Cosmetics.Get(reward.Item)
 	if item and not ProgressService.Owns(player, item.Id) then
 		ProgressService.GiveItem(player, item.Id)
+		ProgressService.LedgerItem(player, item.Name, item.Rarity)
 		table.insert(lines, "Neuer Skin: " .. item.Name)
 	end
 	if #lines > 0 then

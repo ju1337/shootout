@@ -146,6 +146,99 @@ function ProgressService.AddStat(player, key, amount)
 	dirty[player] = true
 end
 
+-- ---------- Match-Abrechnung ----------
+-- Sammelt XP und Münzen nach Grund (Kill, Matchsieg, Killserie, ...) seit Matchbeginn bzw. seit der letzten
+-- Zusammenfassung, dazu Level, Prestige und ELO vom Anfang. Daraus baut TakeLedger die Belohnungs-Übersicht
+-- am Matchende. Beim Moduswechsel fängt sie neu an (entsteht beim ersten Gewinn, also vor der Änderung).
+local ledgers = {} -- [Player] = { Lines, Order, XP, Coins, Items, AccountXP, Prestige, Elo, AgentOfWeek }
+
+local function ledgerOf(player)
+	local profile = profiles[player]
+	if not profile then
+		return nil
+	end
+	local ledger = ledgers[player]
+	if not ledger then
+		ledger = { Lines = {}, Order = {}, XP = 0, Coins = 0, Items = {}, AccountXP = profile.AccountXP or 0,
+			Prestige = profile.Prestige or 0, Elo = ProgressService.GetElo(player) }
+		ledgers[player] = ledger
+	end
+	return ledger
+end
+
+local function record(player, reason, xp, coins)
+	local ledger = ledgerOf(player)
+	if not ledger or (xp <= 0 and coins <= 0) then
+		return
+	end
+	reason = tostring(reason or "Bonus")
+	-- "Kill · Agent der Woche" zählt als "Kill", der Bonus steht einmal unten in der Übersicht
+	local suffix = string.find(reason, " · Agent der Woche", 1, true)
+	if suffix then
+		ledger.AgentOfWeek = true
+		reason = string.sub(reason, 1, suffix - 1)
+	end
+	local line = ledger.Lines[reason]
+	if not line then
+		line = { Name = reason, Count = 0, XP = 0, Coins = 0 }
+		ledger.Lines[reason] = line
+		table.insert(ledger.Order, line)
+	end
+	line.Count += 1
+	line.XP += xp
+	line.Coins += coins
+	ledger.XP += xp
+	ledger.Coins += coins
+end
+
+-- Neuer Gegenstand (z.B. Belohnungs-Skin) für die Übersicht
+function ProgressService.LedgerItem(player, name, rarity)
+	local ledger = ledgerOf(player)
+	if ledger then
+		table.insert(ledger.Items, { Name = name, Rarity = rarity })
+	end
+end
+
+-- Übersicht für die Match-Zusammenfassung holen und neu anfangen:
+-- { Lines = { { Name, Count, XP, Coins } }, XP, Coins, Items, AgentOfWeek,
+--   Level = { Before, BeforeProgress, After, AfterProgress, PrestigeBefore, Prestige },
+--   Elo = { Before, After, Matches } }
+function ProgressService.TakeLedger(player)
+	local ledger = ledgerOf(player)
+	local profile = profiles[player]
+	if not ledger or not profile then
+		return nil
+	end
+	ledgers[player] = nil
+	local lines = table.clone(ledger.Order)
+	table.sort(lines, function(a, b)
+		return a.XP + a.Coins * 4 > b.XP + b.Coins * 4
+	end)
+	local beforeLevel, beforeXP, beforeNeeded = LevelConfig.FromXP(ledger.AccountXP)
+	local afterLevel, afterXP, afterNeeded = LevelConfig.FromXP(profile.AccountXP or 0)
+	return {
+		Lines = lines,
+		XP = ledger.XP,
+		Coins = ledger.Coins,
+		Items = ledger.Items,
+		AgentOfWeek = ledger.AgentOfWeek == true,
+		Level = {
+			Before = beforeLevel,
+			BeforeProgress = beforeNeeded > 0 and beforeXP / beforeNeeded or 1,
+			After = afterLevel,
+			AfterProgress = afterNeeded > 0 and afterXP / afterNeeded or 1,
+			XPLeft = afterNeeded > 0 and afterNeeded - afterXP or 0,
+			PrestigeBefore = ledger.Prestige,
+			Prestige = profile.Prestige or 0,
+		},
+		Elo = {
+			Before = ledger.Elo,
+			After = ProgressService.GetElo(player),
+			Matches = ProgressService.GetRankedMatches(player),
+		},
+	}
+end
+
 -- ---------- Ranked (ELO) ----------
 
 function ProgressService.GetElo(player)
@@ -181,6 +274,7 @@ function ProgressService.ApplyRanked(player, change, won)
 	if not profile then
 		return RankConfig.StartElo
 	end
+	ledgerOf(player) -- ELO vor dem Match merken
 	local ranked = profile.Ranked or { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 }
 	ranked.Elo = math.max(0, (ranked.Elo or RankConfig.StartElo) + change)
 	ranked.Peak = math.max(ranked.Peak or 0, ranked.Elo)
@@ -232,7 +326,7 @@ function ProgressService.ClaimQuest(player, id)
 		return "Auftrag noch nicht geschafft.", false
 	end
 	profile.Quests.Claimed[id] = true
-	ProgressService.AddCoins(player, quest.Reward) -- synct auch die Aufträge
+	ProgressService.AddCoins(player, quest.Reward, "Auftrag") -- synct auch die Aufträge
 	ProgressService.AddPassXP(player, PassConfig.QuestXP)
 	return "+" .. quest.Reward .. " Münzen für \"" .. quest.Text .. "\"!", true
 end
@@ -246,6 +340,10 @@ local function key(player)
 end
 
 local function load(player)
+	-- Neuer Modus = neue Match-Abrechnung
+	player:GetAttributeChangedSignal("Mode"):Connect(function()
+		ledgers[player] = nil
+	end)
 	profiles[player] = defaultProfile()
 	ProgressService.Sync(player)
 	if not store then
@@ -291,12 +389,15 @@ end
 
 -- ---------- Münzen ----------
 
-function ProgressService.AddCoins(player, amount)
+-- reason: wofür (erscheint in der Belohnungs-Übersicht am Matchende)
+function ProgressService.AddCoins(player, amount, reason)
 	local profile = profiles[player]
 	if not profile or amount <= 0 then
 		return
 	end
+	ledgerOf(player)
 	profile.Coins += math.floor(amount)
+	record(player, reason, 0, math.floor(amount))
 	ProgressService.Sync(player)
 end
 
@@ -407,6 +508,7 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 	if amount <= 0 then
 		return
 	end
+	ledgerOf(player) -- Stand vor diesen XP merken (Level-Fortschritt in der Übersicht)
 	local before = profile.XP[agentId] or 0
 	local maxXP = AgentConfig.XPPerLevel * (AgentConfig.MaxLevel - 1)
 	local after = math.min(before + amount, maxXP)
@@ -416,6 +518,7 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 
 	local coins = reason ~= "Admin" and math.floor(amount * Cosmetics.CoinsPerXP) or 0
 	profile.Coins += coins
+	record(player, reason, amount, coins)
 	ProgressService.Sync(player)
 
 	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
@@ -497,6 +600,7 @@ function ProgressService.Init()
 		save(player)
 		profiles[player] = nil
 		loaded[player] = nil
+		ledgers[player] = nil
 	end)
 	game:BindToClose(function()
 		for _, player in Players:GetPlayers() do

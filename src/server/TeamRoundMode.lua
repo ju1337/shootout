@@ -45,6 +45,7 @@ local ProgressService = require(ServerShared.ProgressService)
 local DownedService = require(ServerShared.DownedService)
 local BuyService = require(ServerShared.BuyService)
 local LeaderboardService = require(ServerShared.LeaderboardService)
+local RewardService = require(ServerShared.RewardService)
 local SpawnUtil = require(script.Parent.SpawnUtil)
 local PartyService = require(script.Parent.PartyService)
 local BotService = require(script.Parent.BotService)
@@ -55,7 +56,7 @@ local DROP_HEIGHT = 300      -- Absprunghöhe über der Map (DropIn)
 local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
-local SUMMARY_TIME = 8       -- Match-Zusammenfassung (wie SHOW_TIME in MatchSummary), danach erst Map-Abstimmung
+local SUMMARY_TIME = 10      -- Match-Zusammenfassung (wie SHOW_TIME in MatchSummary), danach erst Map-Abstimmung
 local OVERTIME_MAX = 30      -- Strikeout: Overtime dauert höchstens so lange (Sekunden)
 local VOTE_TIME = 10         -- Map-Abstimmung vor dem Match (Sekunden)
 local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
@@ -771,6 +772,7 @@ function TeamRoundMode.new(config)
 			end
 		end
 		for player in members do
+			RewardService.Check(player) -- Level-/Rang-Meilensteine sofort, damit sie in der Übersicht stehen
 			Remotes.MatchSummary:FireClient(player, {
 				Won = winner ~= nil and player.Team == winner,
 				Winner = winner and winner.Name or nil,
@@ -783,6 +785,8 @@ function TeamRoundMode.new(config)
 				Damage = player:GetAttribute("Damage") or 0,
 				Rank = rankTexts and rankTexts[player] or nil,
 				Map = player:GetAttribute("MapName"),
+				Progress = ProgressService.TakeLedger(player), -- Belohnungs-Übersicht (XP, Münzen, Level, ELO)
+				ShowTime = SUMMARY_TIME,
 			})
 			local won = nil -- nil = Unentschieden
 			if winner then
