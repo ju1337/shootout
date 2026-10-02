@@ -19,8 +19,8 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 | Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab, Overtime auf dem Punkt | Rotation: Fabrik / Zellenblock / Kanäle / Windmühlen |
 | Demolition | 4v4, Bombe legen/entschärfen, Seitenwechsel | Rotation: Hafen / Gletscher / Kanäle / Windmühlen |
 | Extraction | 4v4, Ziel hacken, Seitenwechsel | Rotation: Gletscher / Windmühlen |
-| Team Deathmatch | 4v4, 40 Leben pro Team | Fabrik-Kopie (3000, 0, -1500) |
-| Wingman | 2v2, Strikeout-Regeln | Fabrik-Kopie (1500, 0, -1500) |
+| Team Deathmatch | 4v4, 40 Leben pro Team | Rotation: Fabrik / Hochhaus |
+| Wingman | 2v2, Strikeout-Regeln | Rotation: Fabrik / Hochhaus |
 | Ranked | Demolition mit ELO, ab Spielerlevel 10 | Hafen-Kopie (1500, 0, 1500) |
 | 1v1 Arena | Duell | Arena (0, 0, 3000) |
 | Training | Schießstand mit Übungspuppen | (-1500, 0, 1500) |

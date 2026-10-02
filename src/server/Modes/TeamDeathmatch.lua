@@ -7,7 +7,7 @@ local TeamRoundMode = require(script.Parent.Parent.TeamRoundMode)
 
 return TeamRoundMode.new({
 	Id = "TeamDeathmatch",
-	MapName = "TDM",
+	Maps = { "TDM", "Hochhaus2" }, -- Map-Rotation: Fabrik, Hochhaus
 	TeamSize = 4,
 	Teams = {
 		{ Name = "Kobra", Color = BrickColor.new("Lime green") },

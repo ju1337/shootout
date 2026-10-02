@@ -730,6 +730,76 @@ def build_windmills(origin, filename):
     b.save(filename, "Windmühlen")
 
 
+# ---------- "Hochhaus": Dach eines Wolkenkratzers (Stil: RC "Hightower") ----------
+
+def build_hightower(origin, filename):
+    b = Builder(origin)
+    rng = random.Random(41)
+    roof, dark, metal, glass = (120, 122, 128), (70, 72, 78), (150, 155, 160), (120, 160, 190)
+    W, D = 220, 160
+    b.ground(W + 10, D + 10, roof, "Concrete")
+    b.border(W, D, 4, dark, "Concrete", barrier=120)
+    # Skyline rund um das Dach (nur Kulisse, weit außerhalb)
+    for _ in range(26):
+        angle = rng.uniform(0, math.tau)
+        dist = rng.uniform(190, 280)
+        x, z = math.cos(angle) * dist * 1.2, math.sin(angle) * dist
+        w, h = rng.uniform(25, 45), rng.uniform(40, 140)
+        b.box("Decor", "Skyscraper", (w, h, w), (x, h / 2 - 60, z),
+              rng.choice(((95, 110, 130), (80, 90, 105), (120, 130, 145))), "Glass")
+    # Dach steht hoch über der Stadt: Fassade nach unten
+    b.box("Decor", "Facade", (W + 6, 60, D + 6), (0, -32, 0), (85, 95, 110), "Glass")
+
+    # Hubschrauber-Landeplatz in der Mitte (Markierung unter dem Eroberungspunkt)
+    b.add("Ground", "Helipad", (0.1, 30, 30), (0, 0.05, 0), (55, 57, 62), "SmoothPlastic", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    for size, pos in (((1.6, 0.12, 10), (-3, 0.07, 0)), ((1.6, 0.12, 10), (3, 0.07, 0)), ((6, 0.12, 1.6), (0, 0.07, 0))):
+        b.box("Ground", "HelipadH", size, pos, (240, 200, 50), "SmoothPlastic")
+
+    for side in (-1, 1):
+        # Spawn-Bereich
+        b.box("Ground", "SpawnPad", (22, 0.2, 46), (side * 98, 0.1, 0), dark, "DiamondPlate")
+        # Klimageräte als Deckung vor dem Spawn
+        for z in (-26, 26):
+            b.box("Cover", "ACUnit", (7, 5, 9), (side * 76, 2.5, z), metal, "Metal")
+            b.box("Decor", "ACFan", (5, 0.3, 5), (side * 76, 5.15, z), dark, "Metal")
+        # Lüftungskanal (niedrig, zum Drüberspringen)
+        b.box("Cover", "Duct", (3, 3.2, 30), (side * 45, 1.6, 0), metal, "Metal")
+        # Treppenhaus-Turm
+        b.box("Buildings", "StairTower", (9, 13, 9), (side * 62, 6.5, 0), (100, 102, 108), "Concrete")
+        b.box("Buildings", "StairDoor", (0.3, 8, 5), (side * 62 - side * 4.6, 4, 0), dark, "Metal")
+        # Solarfelder (flach, schräg)
+        for z in (-36, 36):
+            for k in range(3):
+                b.box("Cover", "Solar", (8, 0.4, 4), (side * 28, 1.6, z + (k - 1) * 5), (40, 55, 90), "Glass",
+                      angles=(0, 0, side * 20))
+                b.box("Cover", "SolarFrame", (6, 1.4, 0.5), (side * 28, 0.7, z + (k - 1) * 5), dark, "Metal")
+        # Oberlichter
+        for z in (-14, 14):
+            b.box("Cover", "Skylight", (8, 2, 6), (side * 20, 1, z), glass, "Glass", props={"Transparency": 0.3})
+        # Wassertanks
+        b.add("Cover", "WaterTank", (10, 9, 9), (side * 88, 5, side * 58), (130, 100, 75), "WoodPlanks",
+              props={"Shape": "Cylinder"})
+
+    # Penthäuser an den Längsseiten mit Rampen aufs Dach (erhöhte Positionen)
+    b.house("PenthouseN", 0, 56, 40, 22, 12, (200, 200, 205), (60, 62, 68), doors=("S", "E", "W"), material="Concrete")
+    b.house("PenthouseS", 0, -56, 40, 22, 12, (200, 200, 205), (60, 62, 68), doors=("N", "E", "W"), material="Concrete")
+    for z in (56, -56):
+        b.box("Buildings", "GlassBand", (40.2, 3, 22.2), (0, 7, z), glass, "Glass", props={"Transparency": 0.2})
+    b.ramp("PenthouseRampN", 21, 62, 6, 24, 12.5, "E")
+    b.ramp("PenthouseRampS", -21, -62, 6, 24, 12.5, "W")
+    # Werbetafel über dem Penthaus
+    b.box("Decor", "BillboardPost", (1, 10, 1), (-12, 18, 62), dark, "Metal")
+    b.box("Decor", "BillboardPost", (1, 10, 1), (12, 18, 62), dark, "Metal")
+    b.sign("Billboard", (30, 9, 0.6), (0, 26, 62), "SHOOTOUT", (15, 22, 36), (40, 210, 230), angles=(0, 180, 0))
+    # Antennenmast mit Warnlicht
+    b.box("Decor", "Antenna", (1.2, 30, 1.2), (8, 27, -60), metal, "Metal")
+    b.box("Decor", "AntennaLight", (1.8, 1.8, 1.8), (8, 42.5, -60), (255, 50, 40), "Neon")
+
+    team_objectives(b, -110, 98, (60, -42), (60, 42), site_color=(255, 80, 80))
+    b.save(filename, "Hochhaus")
+
+
 # ---------- Hub (Lobby): Hangar/Safehouse im Stil der Rogue-Company-Lobby ----------
 
 # Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): links 4, rechts 4
@@ -886,4 +956,6 @@ if __name__ == "__main__":
     build_windmills((4500, 0, 0), "Windmuehlen.model.json")       # Strikeout-Rotation
     build_windmills((4500, 0, 1500), "Windmuehlen2.model.json")   # Demolition-Rotation
     build_windmills((4500, 0, -1500), "Windmuehlen3.model.json")  # Extraction-Rotation
+    build_hightower((-4500, 0, 0), "Hochhaus.model.json")         # Wingman-Rotation
+    build_hightower((-4500, 0, 1500), "Hochhaus2.model.json")     # TDM-Rotation
     build_lobby()
