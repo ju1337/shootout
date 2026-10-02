@@ -266,9 +266,10 @@ local function abilityDamage(player, model, amount, weaponName)
 		return
 	end
 	local victim = Players:GetPlayerFromCharacter(model)
-	local dealt, killed, downed = Damage.Apply(model, humanoid, amount, { Player = player, Weapon = weaponName })
+	local dealt, killed, downed, armor = Damage.Apply(model, humanoid, amount, { Player = player, Weapon = weaponName })
 	if dealt > 0 then
-		Remotes.Hitmarker:FireClient(player, false, killed, dealt, model:GetPivot().Position, victim and victim.Name or model.Name, downed)
+		Remotes.Hitmarker:FireClient(player, false, killed, dealt, model:GetPivot().Position, victim and victim.Name or model.Name,
+			downed, armor, model)
 	end
 	if killed then
 		WeaponService.ReportKill(player, victim, weaponName, false, victim and victim.Name or model.Name)
@@ -358,7 +359,7 @@ local function doTurret(player, character, root, agent)
 			if target then
 				local aim = target:FindFirstChild("UpperTorso") or target:FindFirstChild("HumanoidRootPart")
 				head.CFrame = CFrame.lookAt(origin, aim.Position)
-				Remotes.Shot:FireAllClients(nil, origin, aim.Position, "SMG")
+				WeaponService.BroadcastShot(player:GetAttribute("Mode"), nil, origin, aim.Position, "SMG", nil, "Character")
 				abilityDamage(player, target, ability.Damage, "Geschützturm")
 			end
 			task.wait(ability.FireDelay)

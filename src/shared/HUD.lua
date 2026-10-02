@@ -1,13 +1,11 @@
 -- HUD (ModuleScript, nur Client)
--- Leben, Munition, Kills, Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Sounds,
--- Schadens-Effekt, Killfeed, Modus-Info und Meldungen.
+-- Leben, Munition, Kills, Schadens-Effekt, Killfeed, Modus-Info und Meldungen.
+-- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung: CombatHUD.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
-local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -19,6 +17,7 @@ local Movement = require(Shared.Movement)
 local BuyConfig = require(Shared.BuyConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local InputActions = require(Shared.InputActions)
+local CombatHUD = require(Shared.CombatHUD)
 
 local player = Players.LocalPlayer
 
@@ -27,8 +26,6 @@ local HUD = {}
 local KILLFEED_MAX = 5        -- maximale Einträge im Killfeed
 local KILLFEED_TIME = 5       -- Sekunden, die ein Eintrag sichtbar bleibt
 local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
--- Treffer-Sound (in Roblox eingebaut, keine Asset-ID nötig)
-local HIT_SOUND = "rbxasset://sounds/electronicpingshort.wav"
 
 local screen -- ScreenGui (an/aus)
 local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
@@ -178,24 +175,8 @@ function HUD.Init(weaponClient)
 		}),
 	}, damageFlash)
 
-	-- Fadenkreuz und Hitmarker
-	local crosshair = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1 }, gui)
-	make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 3, 0, 3),
-		BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, crosshair)
-	for _, line in { { 0.5, 0, 2, 9, 0.5, 1 }, { 0.5, 1, 2, 9, 0.5, 0 }, { 0, 0.5, 9, 2, 1, 0.5 }, { 1, 0.5, 9, 2, 0, 0.5 } } do
-		local bar = make("Frame", { AnchorPoint = Vector2.new(line[5], line[6]), Position = UDim2.new(line[1], 0, line[2], 0),
-			Size = UDim2.new(0, line[3], 0, line[4]), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 }, crosshair)
-		UITheme.Stroke(bar, Color3.new(0, 0, 0), 1, 0.5)
-	end
-	local hitmarker = label({
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 40, 0, 40),
-		Text = "✕",
-		TextSize = 26,
-		Visible = false,
-	}, gui)
+	-- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung, Kill-Meldung, Nachlade-Balken
+	CombatHUD.Init(gui, weaponClient)
 
 	statusLabel = label({
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -494,93 +475,23 @@ function HUD.Init(weaponClient)
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 
-	-- Munition
-	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading)
+	-- Munition (im Schießstand unendliche Reserve: "∞")
+	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading, magSize, infinite)
 		ammoText.Text = tostring(mag)
 		ammoText.TextColor3 = mag == 0 and UITheme.Colors.Bad or Color3.new(1, 1, 1)
 		local config = WeaponConfig.Get(name)
-		local size = config and config.MagazineSize or math.max(mag, 1)
+		local size = magSize or (config and config.MagazineSize) or math.max(mag, 1)
 		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
 		magFill.Size = UDim2.new(ratio, 0, 1, 0)
 		magFill.BackgroundColor3 = ratio <= 0.25 and UITheme.Colors.Bad or UITheme.Colors.Accent
 		-- Nachladen-Hinweis mit Taste des aktuellen Geräts
 		local key = InputActions.Hint("Reload")
-		reloadHint.Visible = not reloading and ratio <= 0.25 and reserve > 0
+		reloadHint.Visible = not reloading and ratio <= 0.25 and (reserve > 0 or infinite == true)
 		reloadHint.Text = mag == 0 and ((key ~= "" and ("[" .. key .. "] ") or "") .. "NACHLADEN")
 			or ((key ~= "" and ("[" .. key .. "] ") or "") .. "WENIG MUNITION")
-		reserveText.Text = "/ " .. reserve
+		reserveText.Text = infinite and "/ ∞" or ("/ " .. reserve)
 		local displayName = WeaponConfig.Get(name).DisplayName
 		weaponText.Text = string.upper(reloading and (displayName .. " · lädt nach...") or displayName)
-	end)
-
-	-- Hitmarker: weiß = Körper, rot = Kopf, groß = Kill
-	local hitId = 0
-	local killId = 0
-	local killNotice = label({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, 30),
-		Size = UDim2.new(0, 500, 0, 28),
-		Text = "",
-		TextSize = 20,
-		TextColor3 = Color3.fromRGB(255, 90, 90),
-		TextXAlignment = Enum.TextXAlignment.Center,
-		Visible = false,
-	}, gui)
-	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName, downed)
-		hitId += 1
-		local myId = hitId
-		hitmarker.TextColor3 = headshot and Color3.fromRGB(255, 70, 70) or Color3.new(1, 1, 1)
-		hitmarker.TextSize = killed and 40 or 26
-		hitmarker.Visible = true
-		task.delay(0.15, function()
-			if hitId == myId then
-				hitmarker.Visible = false
-			end
-		end)
-
-		-- Treffer-Sound (höher bei Kopfschuss, tiefer bei Kill)
-		local sound = Instance.new("Sound")
-		sound.SoundId = HIT_SOUND
-		sound.Volume = killed and 0.8 or 0.5
-		sound.PlaybackSpeed = killed and 0.7 or (headshot and 1.5 or 1.15)
-		sound.Parent = SoundService
-		sound:Play()
-		Debris:AddItem(sound, 2)
-
-		-- Schadenszahl an der Trefferstelle, steigt auf und verblasst
-		if damage and damage > 0 and typeof(position) == "Vector3" then
-			local anchor = Instance.new("Attachment")
-			anchor.WorldPosition = position
-			anchor.Parent = workspace.Terrain
-			local billboard = make("BillboardGui", { Adornee = anchor, Size = UDim2.new(0, 80, 0, 30),
-				AlwaysOnTop = true, StudsOffset = Vector3.new(math.random(-10, 10) / 10, 1, 0) }, player.PlayerGui)
-			local number = label({ Size = UDim2.new(1, 0, 1, 0), Text = tostring(math.floor(damage + 0.5)),
-				TextSize = headshot and 26 or 20, TextColor3 = headshot and Color3.fromRGB(255, 210, 60)
-					or Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center }, billboard)
-			TweenService:Create(billboard, TweenInfo.new(0.8), { StudsOffset = billboard.StudsOffset + Vector3.new(0, 2, 0) }):Play()
-			TweenService:Create(number, TweenInfo.new(0.8), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
-			Debris:AddItem(billboard, 0.85)
-			Debris:AddItem(anchor, 0.85)
-		end
-
-		-- Kill- bzw. Niederschlag-Meldung unter dem Fadenkreuz
-		if (killed or downed) and victimName then
-			killId += 1
-			local myKill = killId
-			killNotice.Text = (killed and "✕  ELIMINIERT  " or "⬇  NIEDERGESCHLAGEN  ") .. string.upper(victimName)
-			killNotice.TextColor3 = killed and Color3.fromRGB(255, 90, 90) or Color3.fromRGB(255, 190, 80)
-			killNotice.Visible = true
-			task.delay(1.6, function()
-				if killId == myKill then
-					killNotice.Visible = false
-				end
-			end)
-		end
-	end)
-
-	-- Fadenkreuz beim Zielen ausblenden (man schaut über das Visier)
-	weaponClient.AimChanged:Connect(function(aiming)
-		crosshair.Visible = not aiming
 	end)
 
 	-- Killfeed-Einträge
@@ -677,40 +588,6 @@ function HUD.Init(weaponClient)
 				updateMoney()
 			end
 		end)
-	end)
-
-	-- Treffer-Richtung: roter Bogen um das Fadenkreuz, zeigt zum Angreifer (dreht mit der Kamera)
-	local indicators = {} -- { Frame, Position, Until }
-	Remotes.DamageFrom.OnClientEvent:Connect(function(position)
-		if typeof(position) ~= "Vector3" then
-			return
-		end
-		local holder = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
-			Size = UDim2.new(0, 260, 0, 260), BackgroundTransparency = 1 }, gui)
-		local arc = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
-			Size = UDim2.new(0, 90, 0, 10), BackgroundColor3 = UITheme.Colors.Bad, BorderSizePixel = 0 }, holder)
-		UITheme.Corner(arc, 5)
-		make("UIGradient", { Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.05), NumberSequenceKeypoint.new(1, 1) }) }, arc)
-		table.insert(indicators, { Frame = holder, Arc = arc, Position = position, Until = os.clock() + 1.2 })
-	end)
-	game:GetService("RunService").RenderStepped:Connect(function()
-		local camera = workspace.CurrentCamera
-		local now = os.clock()
-		for i = #indicators, 1, -1 do
-			local entry = indicators[i]
-			if now > entry.Until then
-				entry.Frame:Destroy()
-				table.remove(indicators, i)
-			else
-				-- Winkel zwischen Blickrichtung und Richtung zum Angreifer (von oben gesehen)
-				local look = camera.CFrame.LookVector
-				local toAttacker = entry.Position - camera.CFrame.Position
-				local angle = math.atan2(toAttacker.X, toAttacker.Z) - math.atan2(look.X, look.Z)
-				entry.Frame.Rotation = -math.deg(angle)
-				entry.Arc.BackgroundTransparency = math.clamp(1 - (entry.Until - now) / 1.2, 0, 1)
-			end
-		end
 	end)
 
 	-- Todesanzeige: wer hat dich ausgeschaltet

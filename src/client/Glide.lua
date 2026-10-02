@@ -31,7 +31,7 @@ local function stop(humanoid)
 	if humanoid and humanoid.Parent then
 		humanoid.PlatformStand = false
 	end
-	workspace.CurrentCamera.FieldOfView = Movement.GetFov()
+	Movement.SetFovOverride(nil)
 end
 
 local function start(character)
@@ -66,8 +66,9 @@ local function start(character)
 			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat) * CFrame.Angles(BODY_PITCH, 0, 0)
 			root.AssemblyLinearVelocity = Vector3.new(move.X, -FALL_SPEED, move.Z)
 			root.AssemblyAngularVelocity = Vector3.zero
-			workspace.CurrentCamera.FieldOfView = DIVE_FOV
+			Movement.SetFovOverride(DIVE_FOV)
 		elseif humanoid.FloorMaterial == Enum.Material.Air then
+			Movement.SetFovOverride(nil)
 			-- Abbremsen: aufrichten und langsam landen
 			humanoid.PlatformStand = false
 			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)

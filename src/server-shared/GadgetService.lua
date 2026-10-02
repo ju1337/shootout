@@ -149,12 +149,12 @@ local function explodeFrag(owner, position, gadget)
 			local amount = gadget.Damage * (1 - distance / gadget.Radius * 0.6)
 			local victim = Players:GetPlayerFromCharacter(model)
 			local victimName = victim and victim.Name or model.Name
-			local dealt, killed, downed = Damage.Apply(model, humanoid, amount,
+			local dealt, killed, downed, armor = Damage.Apply(model, humanoid, amount,
 				{ Player = owner.Player, BotName = owner.Bot and owner.Bot.Name, Model = owner.Bot and owner.Bot.Model,
 					Weapon = "Granate" })
 			if owner.Player then
 				owner.Player:SetAttribute("Damage", (owner.Player:GetAttribute("Damage") or 0) + math.floor(dealt + 0.5))
-				Remotes.Hitmarker:FireClient(owner.Player, false, killed, dealt, root.Position, victimName, downed)
+				Remotes.Hitmarker:FireClient(owner.Player, false, killed, dealt, root.Position, victimName, downed, armor, model)
 				if killed then
 					WeaponService.ReportKill(owner.Player, victim, "Granate", false, victimName)
 				end

@@ -32,10 +32,10 @@ function Damage.Contributors(model)
 end
 
 -- Schaden anwenden. attacker = { Player = ..., BotName = ..., Weapon = ..., Headshot = ... }
--- Gibt zurück: tatsächlicher Schaden, getötet?, niedergeschlagen?
+-- Gibt zurück: tatsächlicher Schaden, getötet?, niedergeschlagen?, davon von der Rüstung geschluckt
 function Damage.Apply(model, humanoid, amount, attacker)
 	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") then
-		return 0, false, false
+		return 0, false, false, 0
 	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)
 	local attackerModel = attacker and (attacker.Model or (attacker.Player and attacker.Player.Character))
@@ -51,7 +51,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 	local victim = Players:GetPlayerFromCharacter(model)
 	local attackerRoot = attackerModel and attackerModel:FindFirstChild("HumanoidRootPart")
 	if victim and attackerRoot and attackerModel ~= model then
-		Remotes.DamageFrom:FireClient(victim, attackerRoot.Position)
+		Remotes.DamageFrom:FireClient(victim, attackerRoot.Position, amount)
 	end
 
 	-- Rüstung schluckt zuerst
@@ -62,14 +62,14 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		model:SetAttribute("Armor", armor - absorbed)
 		amount -= absorbed
 		if amount <= 0 then
-			return absorbed, false, false
+			return absorbed, false, false, absorbed
 		end
 	end
 
 	local before = humanoid.Health
 	if before - amount <= 0 and DownedService.CanBeDowned(model) then
 		DownedService.Down(model, humanoid, attacker)
-		return absorbed + before, false, true
+		return absorbed + before, false, true, absorbed
 	end
 	humanoid.Health = math.max(0, before - amount)
 	local dealt = absorbed + before - humanoid.Health
@@ -77,7 +77,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		contributors[model] = contributors[model] or {}
 		contributors[model][attacker.Player] = (contributors[model][attacker.Player] or 0) + dealt
 	end
-	return dealt, humanoid.Health <= 0, false
+	return dealt, humanoid.Health <= 0, false, absorbed
 end
 
 return Damage

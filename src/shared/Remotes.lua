@@ -6,12 +6,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local NAMES = {
-	"Fire",       -- Client -> Server: Schuss (Ursprung, Richtung)
+	"Fire",       -- Client -> Server: Schuss (Kamera-Ursprung, Richtung, zielt?, Schuss-Nummer)
 	"Reload",     -- Client -> Server: Nachladen
 	"Equip",      -- Client -> Server: Waffe wechseln
-	"AmmoUpdate", -- Server -> Client: Munition (Waffe, Magazin, Reserve, ladeNach)
-	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze, Start, Ende)
-	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet)
+	"AmmoUpdate", -- Server -> Client: Munition (Waffe, Magazin, Reserve, ladeNach, Größe, letzte Schuss-Nummer, unendlich?)
+	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze/Bot, Start, Ende, Waffe, Normale, Trefferart)
+	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet, Schaden, Ort, Name, niedergeschlagen, Rüstung, Modell)
 	"Killfeed",   -- Server -> alle: Kill-Meldung (Killer, Opfer, Waffe, Kopfschuss)
 	"Announce",   -- Server -> Client(s): große Meldung in der Bildschirmmitte
 	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)
@@ -38,8 +38,9 @@ local NAMES = {
 	"MatchSummary", -- Server -> Client: Match-Ende (Ergebnis, MVP, eigene Statistik)
 	"PartyAction", -- Client -> Server: Squad (Invite/Accept/Decline/Leave/Kick, UserId)
 	"PartyInvite", -- Server -> Client: Einladung (Name, UserId des Anführers)
-	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers)
+	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers, Schaden)
 	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
+	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 }
 
 local folder
