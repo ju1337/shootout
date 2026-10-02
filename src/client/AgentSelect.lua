@@ -143,31 +143,16 @@ end
 
 -- ---------- Aufbau ----------
 
-local function buildShade()
-	-- Ränder abdunkeln (wie bg/70 im Design), die Mitte mit dem Agenten bleibt frei
-	local left = make("Frame", { Size = UDim2.new(0.42, 0, 1, 0), BackgroundColor3 = C.Background, BackgroundTransparency = 0,
-		BorderSizePixel = 0 }, canvas)
-	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.18), NumberSequenceKeypoint.new(0.55, 0.45),
-		NumberSequenceKeypoint.new(1, 1) }) }, left)
-	local right = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0.42, 0, 1, 0),
-		BackgroundColor3 = C.Background, BackgroundTransparency = 0, BorderSizePixel = 0 }, canvas)
-	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.45, 0.45),
-		NumberSequenceKeypoint.new(1, 0.18) }) }, right)
-	local top = make("Frame", { Size = UDim2.new(1, 0, 0, 150), BackgroundColor3 = C.Background, BorderSizePixel = 0 }, canvas)
-	make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(0.3, 1) }, top)
-	local bottom = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 170),
-		BackgroundColor3 = C.Background, BorderSizePixel = 0 }, canvas)
-	make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(1, 0.25) }, bottom)
-end
-
 local function buildHeader()
 	headerInfo = label({ Position = UDim2.fromOffset(LEFT_X, 26), Size = UDim2.fromOffset(900, 18), Text = "", TextSize = 13,
 		Font = F.Bold, TextColor3 = C.Muted }, canvas)
 	headerTitle = label({ Position = UDim2.fromOffset(LEFT_X, 44), Size = UDim2.fromOffset(1000, 48), Text = "", TextSize = 44,
 		Font = F.Display }, canvas)
 	UITheme.Outline(headerTitle, 1)
+	UITheme.Outline(headerInfo, 1)
 	headerSub = label({ Position = UDim2.fromOffset(LEFT_X, 92), Size = UDim2.fromOffset(1000, 20), Text = "", TextSize = 14,
 		Font = F.Bold, TextColor3 = C.Text }, canvas)
+	UITheme.Outline(headerSub, 1)
 
 	-- Timer rechts oben (Fläche mit Uhr, die letzten Sekunden rot)
 	timerPanel = UITheme.Card({ Name = "Timer", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 26),
@@ -411,7 +396,8 @@ local function build()
 	updateScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
-	buildShade()
+	-- Keine Abdunklung mehr (sie lag nur auf der 1600x900-Fläche und wirkte als Kasten): alles transparent,
+	-- Texte direkt auf der Szene bekommen stattdessen eine leichte Kontur (siehe buildHeader)
 	buildHeader()
 	buildLeft()
 	buildRight()
