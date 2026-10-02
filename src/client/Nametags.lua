@@ -1,6 +1,7 @@
 -- Nametags (ModuleScript, nur Client)
 -- Eigene Namensschilder statt der Roblox-Namen (die Gegner durch Wände verraten würden):
 --   Hub:      alle Spieler mit Prestige-Abzeichen (Raute mit Level, Farbe je Prestige, ★-Stufe), Name und Rang
+--             (auch das eigene Schild, sobald man sich von außen sieht)
 --   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Teamfarbe, Gegner ohne Namen
 
 local Players = game:GetService("Players")
@@ -138,6 +139,18 @@ end
 local function update()
 	local myMode = player:GetAttribute("Mode")
 	local inHub = myMode == "Hub"
+	-- Eigenes Schild: nur im Hub (sichtbar, wenn man sich von außen sieht)
+	local myCharacter = player.Character
+	if myCharacter then
+		if inHub then
+			local level = LevelConfig.Get(player)
+			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
+			setTag(myCharacter, { Name = player.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
+				Subtitle = "◆ " .. rank.Display, SubColor = rank.Color, Player = player })
+		else
+			removeTag(myCharacter)
+		end
+	end
 	for _, other in Players:GetPlayers() do
 		local character = other.Character
 		if character and other ~= player then
@@ -181,6 +194,15 @@ function Nametags.Init()
 			else
 				legendGradients[gradient] = nil
 			end
+		end
+	end)
+	-- Eigenes Schild in der Ego-Ansicht ausblenden (sonst schwebt es vor der Kamera)
+	game:GetService("RunService").RenderStepped:Connect(function()
+		local character = player.Character
+		local tag = character and character:FindFirstChild(TAG_NAME)
+		local head = character and character:FindFirstChild("Head")
+		if tag and head then
+			tag.Enabled = (workspace.CurrentCamera.CFrame.Position - head.Position).Magnitude > 4
 		end
 	end)
 	task.spawn(function()
