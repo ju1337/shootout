@@ -1438,19 +1438,30 @@ def build_lobby():
     b.sign2("ModesBanner", (56, 2.4, 0.4), (-20, H - 1.4, z1 - 0.5), "EINSÄTZE", "LAUF DURCH EIN TOR",
             graphite, accent, (236, 239, 243), glow=accent)
 
-    # ---------- Westen: Bühne mit dem eigenen Agenten ----------
-    sx = x0 + 9
-    b.box("Decor", "Stage", (12, 1.2, 22), (sx, 0.6, 0), (32, 35, 41), "DiamondPlate")
-    b.box("Decor", "StageEdge", (0.4, 0.2, 22), (sx + 6, 1.25, 0), accent, "Neon")
-    b.add("Decor", "LineupSpot", (1, 0.2, 1), (sx, 1.2, 0), accent, "SmoothPlastic", angles=(0, -90, 0),
-          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    for z in (-6, 6):
-        b.add("Decor", "Spotlight", (H - 4, 3, 3), (sx + 1, (H - 4) / 2 + 1, z), (255, 245, 225), "Neon",
-              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.92, "CanCollide": False, "CanQuery": False})
-    # Schild über der Bühne: Name des eigenen Agenten (setzt der Client), darunter Level und wo man wechselt
-    b.sign2("StageBanner", (26, 6.5, 0.5), (x0 + 0.6, 14, 0), "DEIN AGENT", "WECHSELN IM MENÜ UNTER AGENTEN",
-            graphite, accent, (236, 239, 243), angles=(0, -90, 0), glow=accent)
-    carpet("CarpetStage", (-(ring_r - 3), tz), (sx + 6, tz), 8)
+    # ---------- Westen: Shop-Vitrine (Angebote des Tages setzt der Client, E an der Theke öffnet den Shop) ----------
+    vx = x0 + 6
+    for k, vz in enumerate((-11, 0, 11), start=1):
+        b.box("Decor", "VitrineBase", (5, 2.5, 5), (vx, 1.25, vz), (32, 35, 41), "Metal")
+        b.box("Decor", "VitrineBaseStrip", (5.1, 0.25, 5.1), (vx, 2.4, vz), accent, "Neon", props={"Transparency": 0.2})
+        b.box("Decor", "VitrineGlass", (4.6, 5, 4.6), (vx, 5, vz), (200, 225, 240), "Glass",
+              props={"Transparency": 0.8, "CanCollide": True})
+        b.box("Decor", "VitrineCap", (5, 0.4, 5), (vx, 7.7, vz), (32, 35, 41), "Metal")
+        b.box("Decor", "VitrineLight", (3, 0.1, 3), (vx, 7.45, vz), (255, 248, 235), "Neon",
+              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+                  "Face": "Bottom", "Range": 10, "Brightness": 2, "Angle": 70, "Color": rgb(255, 245, 230)}}])
+        b.add("Decor", "ShopDisplay" + str(k), (1, 1, 1), (vx, 4.6, vz), accent, "SmoothPlastic",
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+        b.box("Decor", "ShopPlaque" + str(k), (4.4, 1.6, 0.2), (vx + 2.6, 1.3, vz), graphite, "SmoothPlastic",
+              angles=(0, -90, 0))
+    # Theke mit E-Aufforderung (Client legt den Prompt an)
+    cxs = x0 + 15
+    b.box("Decor", "ShopCounter", (2.6, 3.4, 12), (cxs, 1.7, 0), (36, 39, 46), "Metal")
+    b.box("Decor", "ShopCounterTop", (3, 0.25, 12.4), (cxs, 3.5, 0), (24, 27, 32), "SmoothPlastic")
+    b.box("Decor", "ShopCounterStrip", (0.15, 0.25, 12.2), (cxs + 1.35, 2.8, 0), accent, "Neon", props={"Transparency": 0.2})
+    b.box("Decor", "ShopTerminal", (0.3, 1.6, 2.4), (cxs, 4.4, 0), graphite, "SmoothPlastic", angles=(0, -90, 15))
+    b.sign2("ShopSign", (22, 5.5, 0.5), (x0 + 0.6, 13, 0), "SHOP", "ANGEBOTE DES TAGES  ·  AN DER THEKE E DRÜCKEN",
+            graphite, (212, 170, 80), (236, 239, 243), angles=(0, -90, 0), glow=(212, 170, 80))
+    carpet("CarpetShop", (-(ring_r - 3), tz), (cxs + 1.3, tz), 8)
 
     # ---------- Osten (Mitte): Holo-Station mit den Bestenlisten, Teppich vom Ring dorthin ----------
     holo = (90, 175, 225)

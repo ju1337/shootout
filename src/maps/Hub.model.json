@@ -1822,19 +1822,19 @@
      ]
     },
     {
-     "Name": "CarpetStageEdge",
+     "Name": "CarpetShopEdge",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
        8.7,
        0.03,
-       30.7
+       29.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.0,
+         -24.35,
          0.215,
          0.0
         ],
@@ -1869,19 +1869,19 @@
      }
     },
     {
-     "Name": "CarpetStage",
+     "Name": "CarpetShop",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
        8,
        0.05,
-       30.0
+       28.7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.0,
+         -24.35,
          0.245,
          0.0
         ],
@@ -8795,20 +8795,365 @@
      ]
     },
     {
-     "Name": "Stage",
+     "Name": "VitrineBase",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
-       1.2,
-       22
+       5,
+       2.5,
+       5
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -46,
-         0.6,
+         -49,
+         1.25,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineBaseStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.1,
+       0.25,
+       5.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         2.4,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "VitrineGlass",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.6,
+       5,
+       4.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         5,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8824,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.8,
+      "CanCollide": true
+     }
+    },
+    {
+     "Name": "VitrineCap",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       0.4,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.7,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.1,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.45,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 10,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9608,
+         0.902
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "ShopDisplay1",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         4.6,
+         -11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "ShopPlaque1",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.4,
+       1.6,
+       0.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -46.4,
+         1.3,
+         -11
+        ],
+        "orientation": [
+         [
+          0.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       2.5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         1.25,
          0
         ],
         "orientation": [
@@ -8835,26 +9180,26 @@
        0.1373,
        0.1608
       ],
-      "Material": "DiamondPlate",
+      "Material": "Metal",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "StageEdge",
+     "Name": "VitrineBaseStrip",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       0.4,
-       0.2,
-       22
+       5.1,
+       0.25,
+       5.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -40,
-         1.25,
+         -49,
+         2.4,
          0
         ],
         "orientation": [
@@ -8883,24 +9228,231 @@
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "VitrineGlass",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.6,
+       5,
+       4.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         5,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8824,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.8,
+      "CanCollide": true
+     }
+    },
+    {
+     "Name": "VitrineCap",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       0.4,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.7,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "LineupSpot",
+     "Name": "VitrineLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.1,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.45,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 10,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9608,
+         0.902
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "ShopDisplay2",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
        1,
-       0.2,
+       1,
        1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -46,
-         1.2,
+         -49,
+         4.6,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CanCollide": false,
+      "CanQuery": false
+     }
+    },
+    {
+     "Name": "ShopPlaque2",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.4,
+       1.6,
+       0.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -46.4,
+         1.3,
          0
         ],
         "orientation": [
@@ -8923,6 +9475,302 @@
        }
       },
       "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineBase",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       2.5,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         1.25,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineBaseStrip",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5.1,
+       0.25,
+       5.1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         2.4,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "VitrineGlass",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       4.6,
+       5,
+       4.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         5,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.7843,
+       0.8824,
+       0.9412
+      ],
+      "Material": "Glass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.8,
+      "CanCollide": true
+     }
+    },
+    {
+     "Name": "VitrineCap",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       5,
+       0.4,
+       5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.7,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1255,
+       0.1373,
+       0.1608
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "VitrineLight",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       3,
+       0.1,
+       3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         7.45,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       1.0,
+       0.9725,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 10,
+        "Brightness": 2,
+        "Angle": 70,
+        "Color": [
+         1.0,
+         0.9608,
+         0.902
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "ShopDisplay3",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       1,
+       1
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -49,
+         4.6,
+         11
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
        0.4706,
        0.7255,
        0.9216
@@ -8936,31 +9784,77 @@
      }
     },
     {
-     "Name": "Spotlight",
+     "Name": "ShopPlaque3",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       22,
-       3,
-       3
+       4.4,
+       1.6,
+       0.2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -45,
-         12.0,
-         -6
+         -46.4,
+         1.3,
+         11
         ],
         "orientation": [
          [
           0.0,
-          -1.0,
+          0.0,
+          -1.0
+         ],
+         [
+          0.0,
+          1.0,
           0.0
          ],
          [
           1.0,
           0.0,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "ShopCounter",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.6,
+       3.4,
+       12
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -40,
+         1.7,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
           0.0
          ],
          [
@@ -8972,45 +9866,41 @@
        }
       },
       "Color": [
-       1.0,
-       0.9608,
-       0.8824
+       0.1412,
+       0.1529,
+       0.1804
       ],
-      "Material": "Neon",
+      "Material": "Metal",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.92,
-      "CanCollide": false,
-      "CanQuery": false
+      "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "Spotlight",
+     "Name": "ShopCounterTop",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       22,
        3,
-       3
+       0.25,
+       12.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -45,
-         12.0,
-         6
+         -40,
+         3.5,
+         0
         ],
         "orientation": [
          [
+          1.0,
           0.0,
-          -1.0,
           0.0
          ],
          [
-          1.0,
           0.0,
+          1.0,
           0.0
          ],
          [
@@ -9022,34 +9912,123 @@
        }
       },
       "Color": [
-       1.0,
-       0.9608,
-       0.8824
+       0.0941,
+       0.1059,
+       0.1255
       ],
-      "Material": "Neon",
+      "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.92,
-      "CanCollide": false,
-      "CanQuery": false
+      "BottomSurface": "Smooth"
      }
     },
     {
-     "Name": "StageBanner",
+     "Name": "ShopCounterStrip",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       26,
-       6.5,
+       0.15,
+       0.25,
+       12.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -38.65,
+         2.8,
+         0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.2
+     }
+    },
+    {
+     "Name": "ShopTerminal",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.3,
+       1.6,
+       2.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -40,
+         4.4,
+         0
+        ],
+        "orientation": [
+         [
+          0.0,
+          -0.0,
+          -1.0
+         ],
+         [
+          0.258819,
+          0.965926,
+          0.0
+         ],
+         [
+          0.965926,
+          -0.258819,
+          0.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0863,
+       0.098,
+       0.1176
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "ShopSign",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       22,
+       5.5,
        0.5
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          -54.4,
-         14,
+         13,
          0
         ],
         "orientation": [
@@ -9121,13 +10100,13 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "DEIN AGENT",
+          "Text": "SHOP",
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.4706,
-           0.7255,
-           0.9216
+           0.8314,
+           0.6667,
+           0.3137
           ],
           "TextStrokeTransparency": 0.55
          }
@@ -9161,7 +10140,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "WECHSELN IM MEN\u00dc UNTER AGENTEN",
+          "Text": "ANGEBOTE DES TAGES  \u00b7  AN DER THEKE E DR\u00dcCKEN",
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
@@ -9201,9 +10180,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.4706,
-           0.7255,
-           0.9216
+           0.8314,
+           0.6667,
+           0.3137
           ],
           "BorderSizePixel": 0
          }
@@ -9219,9 +10198,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.4706,
-         0.7255,
-         0.9216
+         0.8314,
+         0.6667,
+         0.3137
         ]
        }
       }

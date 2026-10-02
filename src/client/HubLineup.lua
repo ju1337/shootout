@@ -13,20 +13,29 @@ local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
 local RankConfig = require(Shared.RankConfig)
 local HttpService = game:GetService("HttpService")
+local GunModels = require(Shared.GunModels)
+local GameMenu = require(Shared.GameMenu)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
 local HubLineup = {}
 
--- Bühne: Part "LineupSpot" in Maps.Hub.Decor (Position = Füße, LookVector = Blickrichtung der Figur);
--- ohne den Part die alte Bühne im Hangar
+-- Bühne mit dem eigenen Agenten: nur wenn die Hub-Map einen Part "LineupSpot" hat (alter Hangar);
+-- Position = Füße, LookVector = Blickrichtung der Figur. Der kompakte Hub hat stattdessen den Shop.
 local STAGE_POSITION = Vector3.new(0, 1.2, 18)
 local STAGE_FACING = Vector3.new(0, 0, -1)
+local lineupEnabled = false
+local rebuildLineup -- vorab (rebuild steht weiter unten)
 task.spawn(function()
 	local spot = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("LineupSpot", 10)
 	if spot then
 		STAGE_POSITION = spot.Position
 		STAGE_FACING = spot.CFrame.LookVector
+		lineupEnabled = true
+		if rebuildLineup then
+			rebuildLineup()
+		end
 	end
 end)
 local SCALE = 1.7
@@ -34,11 +43,12 @@ local SCALE = 1.7
 local figure = nil
 
 local function rebuild()
+	rebuildLineup = rebuild
 	if figure then
 		figure:Destroy()
 		figure = nil
 	end
-	if player:GetAttribute("Mode") ~= "Hub" then
+	if player:GetAttribute("Mode") ~= "Hub" or not lineupEnabled then
 		return
 	end
 	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
@@ -215,6 +225,148 @@ local function buildAgentOfWeek()
 		local flicker = (math.random() < 0.02) and 0.45 or 0.1
 		for _, label in holoLabels do
 			label.TextTransparency = flicker
+		end
+	end)
+end
+
+-- Shop-Vitrine im kompakten Hub: drei Angebote des Tages (zwei Waffen-Skins, ein Agenten-Skin) drehen sich in
+-- den Vitrinen ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
+-- An der Theke ("ShopCounter") öffnet E den Shop. Angebote wechseln täglich (Serverzeit, für alle gleich).
+local DAY = 24 * 3600
+
+local function dailyOffers()
+	local day = math.floor(workspace:GetServerTimeNow() / DAY)
+	local random = Random.new(day * 7919 + 17)
+	local weapons, agents = {}, {}
+	for _, item in Cosmetics.List("Weapon") do
+		if not item.Pass then
+			table.insert(weapons, item)
+		end
+	end
+	for _, item in Cosmetics.List("Agent") do
+		if not item.Pass then
+			table.insert(agents, item)
+		end
+	end
+	local offers = {}
+	local first = table.remove(weapons, random:NextInteger(1, #weapons))
+	local agentItem = agents[random:NextInteger(1, #agents)]
+	local second = table.remove(weapons, random:NextInteger(1, #weapons))
+	table.insert(offers, first)
+	table.insert(offers, agentItem) -- Agent in der Mitte
+	table.insert(offers, second)
+	return offers, day
+end
+
+local function buildShopVitrine()
+	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local counter = decor:WaitForChild("ShopCounter", 10)
+	if not counter then
+		return -- alter Hangar ohne Shop
+	end
+	-- E an der Theke öffnet den Shop (Prompt nur lokal)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = "Shop öffnen"
+	prompt.ObjectText = "SHOP"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 12
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = counter
+	prompt.Triggered:Connect(function()
+		GameMenu.Open("Shop")
+	end)
+
+	local models, shownDay = {}, nil
+	local function plaque(index, item)
+		local part = decor:FindFirstChild("ShopPlaque" .. index)
+		if not part then
+			return
+		end
+		local surface = part:FindFirstChild("PlaqueGui")
+		if not surface then
+			surface = Instance.new("SurfaceGui")
+			surface.Name = "PlaqueGui"
+			surface.Face = Enum.NormalId.Front
+			surface.LightInfluence = 0
+			surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			surface.PixelsPerStud = 60
+			surface.Adornee = part
+			surface.Parent = player:WaitForChild("PlayerGui")
+			for _, spec in { { "ItemName", 0.04, 0.46, Enum.Font.Oswald }, { "ItemInfo", 0.54, 0.4, Enum.Font.GothamBold } } do
+				local label = Instance.new("TextLabel")
+				label.Name = spec[1]
+				label.Position = UDim2.new(0.05, 0, spec[2], 0)
+				label.Size = UDim2.new(0.9, 0, spec[3], 0)
+				label.BackgroundTransparency = 1
+				label.Font = spec[4]
+				label.TextScaled = true
+				label.TextColor3 = Color3.new(1, 1, 1)
+				label.Parent = surface
+			end
+		end
+		local rarity = Cosmetics.Rarities[item.Rarity]
+		surface.ItemName.Text = string.upper(item.Name)
+		surface.ItemInfo.Text = string.upper(rarity and rarity.Name or "") .. "  ·  " .. UITheme.FormatNumber(item.Price or 0)
+			.. " MÜNZEN"
+		surface.ItemInfo.TextColor3 = rarity and rarity.Color or Color3.new(1, 1, 1)
+	end
+
+	local function refresh()
+		local offers, day = dailyOffers()
+		if day == shownDay then
+			return
+		end
+		shownDay = day
+		for _, model in models do
+			model.Model:Destroy()
+		end
+		models = {}
+		for index, item in offers do
+			local spot = decor:FindFirstChild("ShopDisplay" .. index)
+			if spot then
+				local model
+				if item.Type == "Weapon" then
+					model = GunModels.Build("Rifle", item)
+					model:ScaleTo(0.7) -- passt drehend in die Vitrine
+				else
+					local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
+					model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, agent.Loadout[1])
+					model:ScaleTo(0.6)
+				end
+				for _, part in model:GetDescendants() do
+					if part:IsA("BasePart") then
+						part.Anchored = true
+						part.CanCollide = false
+						part.CanQuery = false
+					end
+				end
+				model.Parent = workspace
+				-- Waffe um die Mitte ihres Umrisses drehen (nicht um den Griff)
+				local box = model:GetBoundingBox()
+				table.insert(models, { Model = model, Spot = spot, Agent = item.Type == "Agent",
+					Offset = model:GetPivot():ToObjectSpace(box) })
+				plaque(index, item)
+			end
+		end
+	end
+	refresh()
+	local lastCheck = os.clock()
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		if t - lastCheck > 60 then
+			lastCheck = t
+			refresh()
+		end
+		for i, entry in models do
+			local spin = CFrame.Angles(0, t * 0.6 + i, 0)
+			if entry.Agent then
+				-- Figur steht auf dem Boden der Vitrine
+				entry.Model:PivotTo(CFrame.new(entry.Spot.Position + Vector3.new(0, -2.1 + 3 * 0.6, 0)) * spin)
+			else
+				entry.Model:PivotTo(CFrame.new(entry.Spot.Position) * spin * entry.Offset:Inverse())
+			end
 		end
 	end)
 end
@@ -432,6 +584,7 @@ function HubLineup.Init()
 	task.spawn(addParticles)
 	task.spawn(buildLeaderboards)
 	task.spawn(buildAgentOfWeek)
+	task.spawn(buildShopVitrine)
 	rebuild()
 	player.AttributeChanged:Connect(function(name)
 		if name == "Mode" or name == "Agent" or name == "Equipped" or name == "Owned" or name == "Loadouts"
