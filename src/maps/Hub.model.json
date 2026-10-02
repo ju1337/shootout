@@ -1367,14 +1367,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       13,
        0.1,
        3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          0.3,
          33.9
         ],
@@ -1459,14 +1459,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       13,
        0.1,
        3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          0.3,
          33.9
         ],
@@ -1546,111 +1546,19 @@
      ]
     },
     {
-     "Name": "FloorLabel_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       14,
-       0.1,
-       3.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         0.3,
-         33.9
-        ],
-        "orientation": [
-         [
-          -1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.0,
-          0.0,
-          -1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1294,
-       0.1569
-      ],
-      "Material": "SmoothPlastic",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 1,
-      "CanCollide": false,
-      "CanQuery": false
-     },
-     "Children": [
-      {
-       "Name": "FloorGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Top",
-        "LightInfluence": 0,
-        "Brightness": 1.3,
-        "SizingMode": "PixelsPerStud",
-        "PixelsPerStud": 30
-       },
-       "Children": [
-        {
-         "Name": "Text",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             1,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "TEAM DEATHMATCH",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.4706,
-           0.7843,
-           0.3529
-          ],
-          "TextTransparency": 0.1
-         }
-        }
-       ]
-      }
-     ]
-    },
-    {
      "Name": "FloorLabel_Training",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       13,
        0.1,
        3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          0.3,
          33.9
         ],
@@ -1735,14 +1643,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       13,
        0.1,
        3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          0.3,
          33.9
         ],
@@ -1827,14 +1735,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       14,
+       13,
        0.1,
        3.6
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          0.3,
          33.9
         ],
@@ -5825,7 +5733,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -49.5,
+         -48.0,
          8.5,
          45.4
         ],
@@ -5871,7 +5779,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -49.5,
+         -48.0,
          8.5,
          44.2
         ],
@@ -5917,7 +5825,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -35.5,
+         -32.0,
          8.5,
          45.4
         ],
@@ -5963,7 +5871,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -35.5,
+         -32.0,
          8.5,
          44.2
         ],
@@ -6002,14 +5910,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       18,
        2,
        2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          17,
          45.4
         ],
@@ -6048,14 +5956,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
+       14,
        15,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          7.5,
          45.6
         ],
@@ -6111,14 +6019,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       17.5,
        6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          20.2,
          43.8
         ],
@@ -6324,14 +6232,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40.0,
          17.266,
          44.424
         ],
@@ -6373,14 +6281,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40.0,
          23.134,
          43.176
         ],
@@ -6429,7 +6337,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          16.4,
          44.25
         ],
@@ -6485,7 +6393,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -32.5,
+         -28.0,
          8.5,
          45.4
         ],
@@ -6531,7 +6439,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -32.5,
+         -28.0,
          8.5,
          44.2
         ],
@@ -6577,7 +6485,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -18.5,
+         -12.0,
          8.5,
          45.4
         ],
@@ -6623,7 +6531,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -18.5,
+         -12.0,
          8.5,
          44.2
         ],
@@ -6662,14 +6570,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       18,
        2,
        2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          17,
          45.4
         ],
@@ -6708,14 +6616,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
+       14,
        15,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          7.5,
          45.6
         ],
@@ -6771,14 +6679,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       17.5,
        6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          20.2,
          43.8
         ],
@@ -6984,14 +6892,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20.0,
          17.266,
          44.424
         ],
@@ -7033,14 +6941,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20.0,
          23.134,
          43.176
         ],
@@ -7089,7 +6997,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          16.4,
          44.25
         ],
@@ -7145,7 +7053,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -15.5,
+         -8.0,
          8.5,
          45.4
         ],
@@ -7191,667 +7099,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -15.5,
-         8.5,
-         44.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7843,
-       0.3529
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2,
-       17,
-       2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1.5,
-         8.5,
-         45.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1098,
-       0.1216,
-       0.1451
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.5,
-       15,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1.5,
-         8.5,
-         44.2
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7843,
-       0.3529
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateHeader",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       16,
-       2,
-       2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         17,
-         45.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1098,
-       0.1216,
-       0.1451
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateGlow",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       12,
-       15,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         7.5,
-         45.6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7843,
-       0.3529
-      ],
-      "Material": "ForceField",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.25,
-      "CanCollide": false
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 16,
-        "Brightness": 0.8,
-        "Color": [
-         0.4706,
-         0.7843,
-         0.3529
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       16,
-       6,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         20.2,
-         43.8
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.978148,
-          0.207912
-         ],
-         [
-          0.0,
-          -0.207912,
-          0.978148
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3922,
-       0.7059,
-       0.902
-      ],
-      "Material": "Glass",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.86,
-      "CanCollide": false,
-      "CanQuery": false,
-      "Attributes": {
-       "Attributes": {
-        "Holo": {
-         "Bool": true
-        }
-       }
-      }
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.4,
-        "SizingMode": "PixelsPerStud",
-        "PixelsPerStud": 40
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "TEAM DEATHMATCH",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.6275,
-           0.8471,
-           0.5451
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "5v5 \u00b7 RESPAWN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9451,
-           0.9529,
-           0.9647
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.4706,
-           0.7843,
-           0.3529
-          ],
-          "BorderSizePixel": 0,
-          "BackgroundTransparency": 0.3
-         }
-        }
-       ]
-      },
-      {
-       "Name": "Glow",
-       "ClassName": "SurfaceLight",
-       "Properties": {
-        "Face": "Front",
-        "Range": 16,
-        "Brightness": 1.2,
-        "Angle": 80,
-        "Color": [
-         0.4706,
-         0.7843,
-         0.3529
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "Sign_TeamDeathmatchHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       16.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         17.266,
-         44.424
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.978148,
-          0.207912
-         ],
-         [
-          0.0,
-          -0.207912,
-          0.978148
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.5765,
-       0.8275,
-       0.4824
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.4,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "Sign_TeamDeathmatchHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       16.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         23.134,
-         43.176
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.978148,
-          0.207912
-         ],
-         [
-          0.0,
-          -0.207912,
-          0.978148
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.5765,
-       0.8275,
-       0.4824
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.15,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "GateCount_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       10,
-       1.8,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         16.4,
-         44.25
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3922,
-       0.7059,
-       0.902
-      ],
-      "Material": "Glass",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.86,
-      "CanCollide": false,
-      "CanQuery": false,
-      "Attributes": {
-       "Attributes": {
-        "Holo": {
-         "Bool": true
-        }
-       }
-      }
-     }
-    },
-    {
-     "Name": "GatePillar",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2,
-       17,
-       2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         1.5,
-         8.5,
-         45.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1098,
-       0.1216,
-       0.1451
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "GateStrip",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.5,
-       15,
-       0.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         1.5,
+         -8.0,
          8.5,
          44.2
         ],
@@ -7897,7 +7145,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         15.5,
+         8.0,
          8.5,
          45.4
         ],
@@ -7943,7 +7191,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         15.5,
+         8.0,
          8.5,
          44.2
         ],
@@ -7982,14 +7230,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       18,
        2,
        2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          17,
          45.4
         ],
@@ -8028,14 +7276,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
+       14,
        15,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          7.5,
          45.6
         ],
@@ -8091,14 +7339,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       17.5,
        6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          20.2,
          43.8
         ],
@@ -8304,14 +7552,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0.0,
          17.266,
          44.424
         ],
@@ -8353,14 +7601,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0.0,
          23.134,
          43.176
         ],
@@ -8409,7 +7657,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          16.4,
          44.25
         ],
@@ -8465,7 +7713,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         18.5,
+         12.0,
          8.5,
          45.4
         ],
@@ -8511,7 +7759,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         18.5,
+         12.0,
          8.5,
          44.2
         ],
@@ -8557,7 +7805,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         32.5,
+         28.0,
          8.5,
          45.4
         ],
@@ -8603,7 +7851,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         32.5,
+         28.0,
          8.5,
          44.2
         ],
@@ -8642,14 +7890,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       18,
        2,
        2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          17,
          45.4
         ],
@@ -8688,14 +7936,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
+       14,
        15,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          7.5,
          45.6
         ],
@@ -8751,14 +7999,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       17.5,
        6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          20.2,
          43.8
         ],
@@ -8964,14 +8212,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20.0,
          17.266,
          44.424
         ],
@@ -9013,14 +8261,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20.0,
          23.134,
          43.176
         ],
@@ -9069,7 +8317,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          16.4,
          44.25
         ],
@@ -9125,7 +8373,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         35.5,
+         32.0,
          8.5,
          45.4
         ],
@@ -9171,7 +8419,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         35.5,
+         32.0,
          8.5,
          44.2
         ],
@@ -9217,7 +8465,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         49.5,
+         48.0,
          8.5,
          45.4
         ],
@@ -9263,7 +8511,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         49.5,
+         48.0,
          8.5,
          44.2
         ],
@@ -9302,14 +8550,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       18,
        2,
        2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          17,
          45.4
         ],
@@ -9348,14 +8596,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       12,
+       14,
        15,
        0.3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          7.5,
          45.6
         ],
@@ -9411,14 +8659,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16,
+       17.5,
        6,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          20.2,
          43.8
         ],
@@ -9624,14 +8872,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40.0,
          17.266,
          44.424
         ],
@@ -9673,14 +8921,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       16.2,
+       17.7,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40.0,
          23.134,
          43.176
         ],
@@ -9729,7 +8977,7 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          16.4,
          44.25
         ],
@@ -9778,14 +9026,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       32,
+       36,
        2.4,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         34,
+         30,
          24.6,
          45.5
         ],
@@ -9991,14 +9239,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       32.2,
+       36.2,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         34.0,
+         30.0,
          23.4,
          45.5
         ],
@@ -10040,14 +9288,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       32.2,
+       36.2,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         34.0,
+         30.0,
          25.8,
          45.5
         ],
@@ -10089,14 +9337,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       64,
+       56,
        2.4,
        0.4
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -17,
+         -20,
          24.6,
          45.5
         ],
@@ -10302,14 +9550,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       64.2,
+       56.2,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -17.0,
+         -20.0,
          23.4,
          45.5
         ],
@@ -10351,14 +9599,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       64.2,
+       56.2,
        0.1,
        0.1
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -17.0,
+         -20.0,
          25.8,
          45.5
         ],
@@ -16539,14 +15787,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       11,
+       13,
        0.3,
        7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -42.5,
+         -40,
          0.4,
          41.4
         ],
@@ -16587,14 +15835,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       11,
+       13,
        0.3,
        7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -25.5,
+         -20,
          0.4,
          41.4
         ],
@@ -16630,67 +15878,19 @@
      }
     },
     {
-     "Name": "Portal_TeamDeathmatch",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       11,
-       0.3,
-       7
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -8.5,
-         0.4,
-         41.4
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.4706,
-       0.7843,
-       0.3529
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "CanCollide": false,
-      "Transparency": 0.45
-     }
-    },
-    {
      "Name": "Portal_Training",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       11,
+       13,
        0.3,
        7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         8.5,
+         0,
          0.4,
          41.4
         ],
@@ -16731,14 +15931,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       11,
+       13,
        0.3,
        7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         25.5,
+         20,
          0.4,
          41.4
         ],
@@ -16779,14 +15979,14 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       11,
+       13,
        0.3,
        7
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         42.5,
+         40,
          0.4,
          41.4
         ],

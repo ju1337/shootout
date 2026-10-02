@@ -7,7 +7,7 @@ local TeamRoundMode = require(script.Parent.Parent.TeamRoundMode)
 
 return TeamRoundMode.new({
 	Id = "TeamDeathmatch",
-	Maps = { "TDM" }, -- Map "Kraftwerk"
+	Maps = { "TDM" }, -- Map "Kraftwerk" (zum Wiedereinbauen: build_kraftwerk(TDM_ORIGIN, "TDM.model.json", flags=False))
 	TeamSize = 5,
 	Teams = {
 		{ Name = "Kobra", Color = BrickColor.new("Grime") },

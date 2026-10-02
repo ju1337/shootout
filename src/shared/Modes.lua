@@ -38,19 +38,6 @@ Modes.List = {
 		Available = true,
 	},
 	{
-		Id = "TeamDeathmatch",
-		Name = "TEAM DEATHMATCH",
-		Tag = "5v5 Respawn",
-		Description = "60 Leben pro Team, unbegrenzt Respawn bis die Leben weg sind.\nWer dem Gegner alle Leben abnimmt, gewinnt.",
-		Players = "10 Spieler",
-		Color = Color3.fromRGB(120, 210, 80),
-		Center = Vector3.new(3000, 0, -1500),
-		TeamMode = true,
-		Overview = { Radius = 200, Height = 130 },
-		Goal = "BRAUCHE DIE GEGNERISCHEN LEBEN AUF",
-		Available = true,
-	},
-	{
 		Id = "Wingman",
 		Name = "WINGMAN",
 		Tag = "Duels · 2v2",
@@ -94,6 +81,19 @@ Modes.List = {
 -- Ausgebaute Modi (Code und Configs bleiben, damit man sie wieder einbauen kann:
 -- Eintrag zurück nach Modes.List, Modul in ModeManager laden, Maps in tools/build_maps.py wieder erzeugen)
 Modes.Disabled = {
+	{
+		Id = "TeamDeathmatch",
+		Name = "TEAM DEATHMATCH",
+		Tag = "5v5 Respawn",
+		Description = "60 Leben pro Team, unbegrenzt Respawn bis die Leben weg sind.\nWer dem Gegner alle Leben abnimmt, gewinnt.",
+		Players = "10 Spieler",
+		Color = Color3.fromRGB(120, 210, 80),
+		Center = Vector3.new(3000, 0, -1500),
+		TeamMode = true,
+		Overview = { Radius = 200, Height = 130 },
+		Goal = "BRAUCHE DIE GEGNERISCHEN LEBEN AUF",
+		Available = true,
+	},
 	{
 		Id = "Drop",
 		Name = "DROP",

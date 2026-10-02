@@ -1415,12 +1415,11 @@ HUB_STYLE = "compact"  # "classic" = alter großer Hangar (build_lobby_classic)
 HOLO_SIGNS = True      # alle Schilder im Hub als Hologramme (False = dunkle Tafeln)
 
 HUB_GATES_NORTH = (
-    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (210, 120, 80), -42.5),
-    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (100, 150, 205), -25.5),
-    ("TeamDeathmatch", "TEAM DEATHMATCH", "5v5 · RESPAWN", (120, 200, 90), -8.5),
-    ("Training", "TRAINING", "SCHIESSSTAND", (190, 194, 200), 8.5),
-    ("Wingman", "WINGMAN", "DUELS · 2v2", (130, 170, 115), 25.5),
-    ("Arena", "1v1 ARENA", "DUELS · 1v1", (205, 90, 80), 42.5),
+    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (210, 120, 80), -40),
+    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (100, 150, 205), -20),
+    ("Training", "TRAINING", "SCHIESSSTAND", (190, 194, 200), 0),
+    ("Wingman", "WINGMAN", "DUELS · 2v2", (130, 170, 115), 20),
+    ("Arena", "1v1 ARENA", "DUELS · 1v1", (205, 90, 80), 40),
 )
 
 
@@ -1523,8 +1522,8 @@ def build_lobby():
           children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
               "Face": "Bottom", "Range": 26, "Brightness": 1.6, "Angle": 35, "Color": rgb(255, 245, 230)}}])
 
-    # ---------- Nordwand: große Tore, Schilder leicht zum Spawn geneigt (6 Tore im Abstand 17) ----------
-    gw, gh = 12, 15
+    # ---------- Nordwand: große Tore, Schilder leicht zum Spawn geneigt ----------
+    gw, gh = 14, 15
     for mode_id, title, subtitle, color, x in HUB_GATES_NORTH:
         for dx in (-gw / 2 - 1, gw / 2 + 1):
             b.box("Decor", "GatePillar", (2, gh + 2, 2), (x + dx, (gh + 2) / 2, gate_z), (28, 31, 37), "Metal")
@@ -1534,16 +1533,16 @@ def build_lobby():
               props={"Transparency": 0.25, "CanCollide": False},
               children=[{"Name": "Light", "ClassName": "PointLight",
                          "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(*color)}}])
-        b.sign2("Sign_" + mode_id, (16, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
+        b.sign2("Sign_" + mode_id, (17.5, 6, 0.4), (x, gh + 5.2, gate_z - 1.6), title, subtitle, graphite, color,
                 (236, 239, 243), angles=(-12, 0, 0), glow=color)
         client_board("GateCount_" + mode_id, (10, 1.8, 0.3), (x, gh + 1.4, gate_z - 1.15))
         # Modus-Name gerade vor dem Portal auf der Fläche (lesbar vom Spawn aus)
-        b.floor_text("FloorLabel_" + mode_id, (14, 0.1, 3.6), (x, 0.3, gate_z - 11.5), title, color)
+        b.floor_text("FloorLabel_" + mode_id, (13, 0.1, 3.6), (x, 0.3, gate_z - 11.5), title, color)
         b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (x, 0.4, gate_z - 4), color, "Neon",
               props={"CanCollide": False, "Transparency": 0.45})
-    b.sign2("DuelsBanner", (32, 2.4, 0.4), (34, H - 1.4, z1 - 0.5), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
+    b.sign2("DuelsBanner", (36, 2.4, 0.4), (30, H - 1.4, z1 - 0.5), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
             graphite, (205, 90, 80), (236, 239, 243), glow=(205, 90, 80))
-    b.sign2("ModesBanner", (64, 2.4, 0.4), (-17, H - 1.4, z1 - 0.5), "EINSÄTZE", "LAUF DURCH EIN TOR",
+    b.sign2("ModesBanner", (56, 2.4, 0.4), (-20, H - 1.4, z1 - 0.5), "EINSÄTZE", "LAUF DURCH EIN TOR",
             graphite, accent, (236, 239, 243), glow=accent)
 
     # ---------- Westen: Shop-Vitrine (Angebote des Tages setzt der Client, E an der Theke öffnet den Shop) ----------
@@ -2043,12 +2042,11 @@ def build_kraftwerk(origin, filename, flags=True):
 
 if __name__ == "__main__":
     build_altstadt()  # Free-for-All (früher "Raffinerie": build_ffa)
-    # Herrschaft und Team Deathmatch spielen auf "Kraftwerk" (je eine eigene Kopie, TDM ohne Flaggen).
-    # Früher Herrschaft auf "Tal" (build_drop). Wingman-Rotation: Fabrik, Hochhaus, Gletscher,
+    # Herrschaft spielt auf "Kraftwerk" (früher "Tal": build_drop). Team Deathmatch ist ausgebaut; zum
+    # Wiedereinbauen eine Kopie ohne Flaggen erzeugen: build_kraftwerk(TDM_ORIGIN, "TDM.model.json", flags=False). Wingman-Rotation: Fabrik, Hochhaus, Gletscher,
     # Zellenblock, Kanäle, Windmühlen. Ausgebaute Modi (Strikeout, Demolition, Ranked, Extraction)
     # brauchen ihre Kopien nicht mehr: build_demolition(), build_strikeout() usw. bleiben zum Wiedereinbauen.
     build_kraftwerk(DROP_ORIGIN, "Domination.model.json")
-    build_kraftwerk(TDM_ORIGIN, "TDM.model.json", flags=False)
     build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")
     build_training()
     build_arena()
