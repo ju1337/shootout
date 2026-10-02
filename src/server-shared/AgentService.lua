@@ -383,7 +383,8 @@ local function useAbility(player)
 		return -- noch Abklingzeit
 	end
 	local agent = AgentConfig.Get(character:GetAttribute("Agent")) or getAgent(player)
-	player:SetAttribute("AbilityReadyAt", now + agent.Ability.Cooldown)
+	local cooldown = agent.Ability.Cooldown * (agent.Passive and agent.Passive.Type == "Cooldown" and 0.8 or 1) -- Passiv VOLT
+	player:SetAttribute("AbilityReadyAt", now + cooldown)
 	player:SetAttribute("AbilityActiveUntil", now + agent.Ability.Duration)
 
 	local abilityType = agent.Ability.Type

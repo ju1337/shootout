@@ -244,6 +244,7 @@ local function activateSensor(owner, part, gadget)
 				local root = model:FindFirstChild("HumanoidRootPart")
 				local now = os.clock()
 				if root and (root.Position - part.Position).Magnitude <= gadget.Radius
+					and not AgentConfig.PassiveOf(model, "SensorImmune") -- Passiv GHOST
 					and (not seen[model] or now - seen[model] > SENSOR_REPEAT) then
 					seen[model] = now
 					-- Markierung an Besitzer und Team (wie Radar-Puls)
@@ -356,7 +357,8 @@ function GadgetService.Init()
 		player.CharacterAdded:Connect(function()
 			if Modes.IsFighting(player) then
 				local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
-				player:SetAttribute("Gadgets", agent.Gadget.Charges + (BuyConfig.Has(player, "ExtraGadget") and 1 or 0))
+				local passiveBonus = agent.Passive and agent.Passive.Type == "ExtraGadget" and 1 or 0 -- Passiv TRAPPER
+				player:SetAttribute("Gadgets", agent.Gadget.Charges + (BuyConfig.Has(player, "ExtraGadget") and 1 or 0) + passiveBonus)
 			else
 				player:SetAttribute("Gadgets", 0)
 			end

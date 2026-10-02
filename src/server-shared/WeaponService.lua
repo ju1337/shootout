@@ -151,6 +151,14 @@ local function fireRay(player, character, origin, direction, cfg, weaponName)
 	local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1) * GameSettings.Get("DamageMultiplier")
 	local dealt, killed, downed = Damage.Apply(model, targetHumanoid, damage,
 		{ Player = player, Weapon = weaponName, Headshot = headshot })
+	-- Passiv HAWK: getroffene Gegner kurz für das Team markieren
+	if dealt > 0 and not killed and AgentConfig.PassiveOf(character, "MarkOnHit") then
+		for _, mate in Players:GetPlayers() do
+			if mate == player or (player.Team and mate.Team == player.Team and mate:GetAttribute("Mode") == player:GetAttribute("Mode")) then
+				Remotes.Reveal:FireClient(mate, { model }, 2)
+			end
+		end
+	end
 	local victimName = victim and victim.Name or model.Name
 	-- Spieler und Bots zählen als Kill (Test-Dummies nicht)
 	if killed and (victim or isBot) then
@@ -252,6 +260,7 @@ local function onReload(player)
 	sendAmmo(player)
 
 	local reloadTime = cfg.ReloadTime * (BuyConfig.Has(player, "Reload") and BuyConfig.ReloadFactor or 1)
+		* (AgentConfig.PassiveOf(player.Character, "Reload") and 0.85 or 1) -- Passiv VIPER
 	task.delay(reloadTime, function()
 		-- Abbruch bei Waffenwechsel, Tod oder neuem Zustand
 		if states[player] ~= state or state.ReloadId ~= myId then

@@ -149,6 +149,9 @@ function DownedService.ReviveTick(reviverModel, targetModel, dt)
 	end
 	local reviver = Players:GetPlayerFromCharacter(reviverModel)
 	local speed = reviver and BuyConfig.Has(reviver, "Medic") and BuyConfig.MedicFactor or 1
+	if AgentConfig.PassiveOf(reviverModel, "Revive") then
+		speed *= 1.3 -- Passiv MENDER
+	end
 	info.Progress += dt * speed / REVIVE_TIME
 	info.Ticked = true
 	targetModel:SetAttribute("ReviveProgress", math.min(info.Progress, 1))

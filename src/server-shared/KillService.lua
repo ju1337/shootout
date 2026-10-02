@@ -107,6 +107,16 @@ function KillService.Init()
 				rewards.Kill + (headshot and rewards.Headshot or 0), headshot and "Kopfschuss-Kill" or "Kill")
 			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur in laufenden Team-Matches
 			ProgressService.QuestEvent(killer, "Kill", 1)
+			-- Passiv BLAZE: nach einem Kill kurz schneller
+			local killerCharacter = killer.Character
+			if killerCharacter and AgentConfig.PassiveOf(killerCharacter, "KillSpeed") then
+				killerCharacter:SetAttribute("SpeedMultiplier", 1.2)
+				task.delay(2, function()
+					if killerCharacter.Parent and killerCharacter:GetAttribute("SpeedMultiplier") == 1.2 then
+						killerCharacter:SetAttribute("SpeedMultiplier", 1)
+					end
+				end)
+			end
 			-- Multikill-Meldung mit Bonus-XP
 			local now = os.clock()
 			local streak = streaks[killer]

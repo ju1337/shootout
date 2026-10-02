@@ -184,6 +184,8 @@ local function buildAgentPage()
 			Text = "Q  " .. string.upper(agent.Ability.Name), TextSize = 13, TextColor3 = agent.Color }, card)
 		label({ Position = UDim2.new(0, x, 0, 146), Size = UDim2.new(1, -x - 14, 0, 18),
 			Text = "G  " .. string.upper(agent.Gadget.Name), TextSize = 13, TextColor3 = C.Muted }, card)
+		label({ Position = UDim2.new(0, x, 0, 166), Size = UDim2.new(1, -x - 14, 0, 18),
+			Text = "◆  " .. string.upper(agent.Passive and agent.Passive.Name or ""), TextSize = 13, TextColor3 = C.Muted }, card)
 		local badge = label({ Position = UDim2.new(0, x, 1, -42), Size = UDim2.new(1, -x - 14, 0, 30), Text = "",
 			TextSize = 14, BackgroundTransparency = 0, BackgroundColor3 = C.Border,
 			TextXAlignment = Enum.TextXAlignment.Center }, card)

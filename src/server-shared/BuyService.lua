@@ -10,6 +10,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
 local Modes = require(Shared.Modes)
+local AgentConfig = require(Shared.AgentConfig)
 
 local BuyService = {}
 
@@ -80,8 +81,14 @@ function BuyService.Init()
 	-- Gekaufte Rüstung beim Spawn anlegen
 	local function onPlayer(player)
 		player.CharacterAdded:Connect(function(character)
-			if BuyConfig.Has(player, "Armor") then
-				character:SetAttribute("Armor", BuyConfig.ArmorAmount)
+			local armor = BuyConfig.Has(player, "Armor") and BuyConfig.ArmorAmount or 0
+			-- Passiv BASTION: Grundrüstung (nur in Kampfmodi)
+			local agent = AgentConfig.Get(player:GetAttribute("Agent"))
+			if agent and agent.Passive and agent.Passive.Type == "Armor" and Modes.IsFighting(player) then
+				armor += 15
+			end
+			if armor > 0 then
+				character:SetAttribute("Armor", armor)
 			end
 		end)
 	end

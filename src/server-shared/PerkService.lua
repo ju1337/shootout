@@ -11,6 +11,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
+local AgentConfig = require(Shared.AgentConfig)
 local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
 
 local PerkService = {}
@@ -57,10 +58,13 @@ function PerkService.Init()
 			for _, player in Players:GetPlayers() do
 				local character = player.Character
 				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-				if humanoid and humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth
-					and BuyConfig.Has(player, "Regen") and not character:GetAttribute("Downed")
-					and now - (character:GetAttribute("LastDamaged") or 0) >= BuyConfig.RegenDelay then
-					humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + BuyConfig.RegenPerSecond * TICK)
+				local perk = BuyConfig.Has(player, "Regen")
+				local passive = character and AgentConfig.PassiveOf(character, "Regen") -- Passiv AEGIS
+				local delay = perk and BuyConfig.RegenDelay or 6
+				if humanoid and humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth and (perk or passive)
+					and not character:GetAttribute("Downed") and now - (character:GetAttribute("LastDamaged") or 0) >= delay then
+					local rate = (perk and BuyConfig.RegenPerSecond or 0) + (passive and 2 or 0)
+					humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + rate * TICK)
 				end
 			end
 		end

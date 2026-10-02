@@ -129,7 +129,8 @@ local function showPreview(agent)
 	infoWeapons.Text = table.concat(weapons, "  ·  ")
 	infoAbility.Text = AgentConfig.AbilityKey.Name .. "   " .. string.upper(agent.Ability.Name)
 	infoAbility.TextColor3 = agent.Color
-	infoAbilityText.Text = agent.Ability.Description .. "\nAbklingzeit " .. agent.Ability.Cooldown .. " s"
+	infoAbilityText.Text = agent.Ability.Description .. "  (" .. agent.Ability.Cooldown .. " s)"
+		.. (agent.Passive and ("\nPASSIV · " .. string.upper(agent.Passive.Name) .. ": " .. agent.Passive.Description) or "")
 end
 
 -- ---------- Aufbau ----------

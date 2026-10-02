@@ -5,6 +5,7 @@
 -- "TeamHeal" (heilt Teamkollegen in der Nähe), "Trap" (Stacheldraht: verlangsamt + Schaden),
 -- "Turret" (Geschützturm schießt selbstständig)
 -- Primaries = wählbare Primärwaffen (wie bei RC zwei zur Auswahl), Loadout[2] = Sekundärwaffe
+-- Passive = passive Eigenschaft (wie bei RC), Wirkung in den jeweiligen Diensten
 -- Price = Münzen zum Freischalten (ohne Price: von Anfang an verfügbar)
 -- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
 -- "Sensor" (Mine, die vorbeilaufende Gegner markiert)
@@ -47,6 +48,7 @@ AgentConfig.Agents = {
 		Loadout = { "SMG", "Pistol" },
 		Primaries = { "SMG", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
+		Passive = { Type = "Reload", Name = "Schnelle Hände", Description = "Lädt 15 % schneller nach." },
 		Ability = {
 			Type = "Boost",
 			Name = "Adrenalin",
@@ -67,6 +69,7 @@ AgentConfig.Agents = {
 		Loadout = { "Shotgun", "Revolver" },
 		Primaries = { "Shotgun", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
+		Passive = { Type = "Armor", Name = "Panzerung", Description = "Startet jedes Leben mit 15 Rüstung." },
 		Ability = {
 			Type = "Wall",
 			Name = "Schutzwand",
@@ -87,6 +90,7 @@ AgentConfig.Agents = {
 		Loadout = { "Rifle", "Pistol" },
 		Primaries = { "Rifle", "DMR" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Smoke", Name = "Rauchgranate", Charges = 1, Radius = 14, Duration = 12, Fuse = 1.5 },
+		Passive = { Type = "Revive", Name = "Feldarzt", Description = "Belebt Teamkollegen 30 % schneller wieder." },
 		Ability = {
 			Type = "Heal",
 			Name = "Nano-Heilung",
@@ -107,6 +111,7 @@ AgentConfig.Agents = {
 		Loadout = { "DMR", "Pistol" },
 		Primaries = { "DMR", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
+		Passive = { Type = "MarkOnHit", Name = "Adlerauge", Description = "Getroffene Gegner werden 2 s für das Team markiert." },
 		Ability = {
 			Type = "Reveal",
 			Name = "Radar-Puls",
@@ -128,6 +133,7 @@ AgentConfig.Agents = {
 		Loadout = { "SMG", "Revolver" },
 		Primaries = { "SMG", "Shotgun" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Flash", Name = "Blendgranate", Charges = 1, Radius = 40, Duration = 3, Fuse = 1.5 },
+		Passive = { Type = "SensorImmune", Name = "Leise", Description = "Sensor-Minen erkennen Ghost nicht." },
 		Ability = {
 			Type = "Cloak",
 			Name = "Tarnung",
@@ -148,6 +154,7 @@ AgentConfig.Agents = {
 		Loadout = { "Shotgun", "Pistol" },
 		Primaries = { "Shotgun", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Frag", Name = "Splittergranate", Charges = 1, Damage = 90, Radius = 14, Fuse = 2 },
+		Passive = { Type = "KillSpeed", Name = "Blutrausch", Description = "Nach einem Kill 2 s lang 20 % schneller." },
 		Ability = {
 			Type = "Dash",
 			Name = "Sprint-Stoß",
@@ -169,6 +176,7 @@ AgentConfig.Agents = {
 		Loadout = { "LMG", "Revolver" },
 		Primaries = { "LMG", "Rifle" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
+		Passive = { Type = "Regen", Name = "Selbstheilung", Description = "Heilt langsam nach 6 s ohne Schaden." },
 		Ability = {
 			Type = "TeamHeal",
 			Name = "Feldlazarett",
@@ -191,6 +199,7 @@ AgentConfig.Agents = {
 		Loadout = { "Rifle", "Pistol" },
 		Primaries = { "Rifle", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Smoke", Name = "Rauchgranate", Charges = 1, Radius = 14, Duration = 12, Fuse = 1.5 },
+		Passive = { Type = "ExtraGadget", Name = "Fallensteller", Description = "+1 Gadget-Ladung pro Leben." },
 		Ability = {
 			Type = "Trap",
 			Name = "Stacheldraht",
@@ -213,6 +222,7 @@ AgentConfig.Agents = {
 		Loadout = { "SMG", "Pistol" },
 		Primaries = { "SMG", "Shotgun" }, -- wählbare Primärwaffen (erste = Standard)
 		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
+		Passive = { Type = "Cooldown", Name = "Ingenieur", Description = "Fähigkeit lädt 20 % schneller." },
 		Ability = {
 			Type = "Turret",
 			Name = "Geschützturm",
@@ -290,6 +300,13 @@ function AgentConfig.LoadoutFor(player, agentId)
 		end
 	end
 	return { primary, agent.Loadout[2] }
+end
+
+-- Passive Eigenschaft des aktiven Agenten eines Charakters (oder nil)
+function AgentConfig.PassiveOf(model, passiveType)
+	local agent = model and AgentConfig.Get(model:GetAttribute("Agent"))
+	local passive = agent and agent.Passive
+	return passive ~= nil and passive.Type == passiveType
 end
 
 -- Spielerlevel = Summe aller Agenten-Level (für Freischaltungen wie Ranked)
