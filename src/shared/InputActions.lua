@@ -5,6 +5,7 @@
 -- Hint(action) liefert die passende Tastenbeschriftung für das zuletzt benutzte Gerät ("Q", "L1", ...).
 
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local InputActions = {}
 
@@ -91,6 +92,51 @@ end
 
 function InputActions.IsTouch()
 	return device == "Touch"
+end
+
+-- Ist ein Knopf wirklich zu sehen (er selbst und alle Eltern bis zum ScreenGui sichtbar)?
+local function shown(object)
+	local current = object
+	while current and not current:IsA("LayerCollector") do
+		if current:IsA("GuiObject") and not current.Visible then
+			return false
+		end
+		current = current.Parent
+	end
+	return current ~= nil and current.Enabled and object.AbsoluteSize.X > 0
+end
+
+-- Controller: Auswahl auf einen Knopf setzen, damit Menüs ohne Maus bedienbar sind.
+-- preferred = gewünschter Knopf; sonst der oberste linke sichtbare Knopf in container.
+-- Knöpfe mit Attribut NoFocus (z.B. Schließen-Kreuz) werden dabei übersprungen. Ohne Controller passiert nichts.
+function InputActions.Focus(container, preferred)
+	if device ~= "Gamepad" or not container then
+		return
+	end
+	task.defer(function() -- erst nach dem Aufbau/Layout der Seite
+		local target = preferred and preferred:IsA("GuiObject") and shown(preferred) and preferred or nil
+		if not target then
+			for _, object in container:GetDescendants() do
+				if object:IsA("GuiButton") and object.Selectable and not object:GetAttribute("NoFocus") and shown(object) then
+					local pos, best = object.AbsolutePosition, target and target.AbsolutePosition
+					if not best or pos.Y < best.Y - 4 or (math.abs(pos.Y - best.Y) <= 4 and pos.X < best.X) then
+						target = object
+					end
+				end
+			end
+		end
+		if target then
+			GuiService.SelectedObject = target
+		end
+	end)
+end
+
+-- Auswahl aufheben, falls sie in container liegt (z.B. wenn ein Fenster schließt)
+function InputActions.Unfocus(container)
+	local selected = GuiService.SelectedObject
+	if selected and container and selected:IsDescendantOf(container) then
+		GuiService.SelectedObject = nil
+	end
 end
 
 -- Tastenbeschriftung für das aktuelle Gerät ("" bei Touch: dort gibt es eigene Knöpfe)

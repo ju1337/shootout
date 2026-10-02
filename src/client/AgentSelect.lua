@@ -29,6 +29,7 @@ local BuyConfig = require(Shared.BuyConfig)
 local HUDIcons = require(Shared.HUDIcons)
 local HangarScene = require(Shared.HangarScene)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -599,6 +600,12 @@ local function update()
 	if show ~= shown then
 		shown = show
 		setMouseFree(show)
+		-- Controller: Auswahl auf BESTÄTIGEN, beim Schließen aufheben
+		if show then
+			InputActions.Focus(gui, confirm and confirm.Button)
+		else
+			InputActions.Unfocus(gui)
+		end
 	end
 	if not show then
 		return

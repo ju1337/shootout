@@ -21,6 +21,7 @@ local QuestConfig = require(Shared.QuestConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
+local InputActions = require(Shared.InputActions)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
 
@@ -80,6 +81,9 @@ local function setPanel(name)
 		name = nil
 	end
 	for panelName, panel in panels do
+		if panelName ~= name then
+			InputActions.Unfocus(panel.Frame) -- Controller-Auswahl nicht in einem unsichtbaren Fenster lassen
+		end
 		panel.Frame.Visible = panelName == name
 	end
 	openPanel = name
@@ -87,6 +91,9 @@ local function setPanel(name)
 	GameMenu.PanelChanged(name) -- Lobby: passenden Reiter hervorheben
 	if name and panels[name].Refresh then
 		panels[name].Refresh()
+	end
+	if name then
+		InputActions.Focus(panels[name].Frame) -- Controller: Auswahl in das Fenster
 	end
 end
 
@@ -112,6 +119,7 @@ local function makePanel(name, title, width, height)
 		Text = "", TextSize = 18, BackgroundColor3 = CARD }, frame, function()
 		setPanel(nil)
 	end)
+	close:SetAttribute("NoFocus", true) -- Controller: schließen per ○, Auswahl startet beim Inhalt
 	UITheme.Cross(close, 14, UITheme.Colors.Text, 2)
 	local status = text({ Position = UDim2.new(0, 24, 1, -36), Size = UDim2.new(1, -48, 0, 24), Text = "",
 		TextSize = 16, TextColor3 = GRAY }, frame)

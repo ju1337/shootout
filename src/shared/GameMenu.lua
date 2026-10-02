@@ -149,6 +149,23 @@ local function showPage(name)
 	if entry.Refresh then
 		entry.Refresh()
 	end
+	-- Controller: Auswahl in die neue Seite setzen (Spielen-Seite: auf den SPIELEN-Knopf)
+	if isOpen and not openPanelName then
+		InputActions.Focus(entry.Frame, name == "Play" and play and play.Button or nil)
+	end
+end
+
+-- Controller: L1/R1 blättert durch die Seiten der Lobby
+local function cyclePage(step)
+	local index = 1
+	for i, entry in NAV do
+		if entry.Id == currentPage then
+			index = i
+		end
+	end
+	index = (index - 1 + step) % #NAV + 1
+	openPanel(nil)
+	showPage(NAV[index].Id)
 end
 
 local function buildHeader()
@@ -178,6 +195,20 @@ local function buildHeader()
 		end)
 		navButtons[entry.Id] = button
 	end
+	-- Controller: L1/R1-Hinweise links und rechts der Reiter (nur mit Controller sichtbar)
+	local padHints = {}
+	for _, hint in { { Text = "L1", Order = 0 }, { Text = "R1", Order = #NAV + 1 } } do
+		local tag = UITheme.Tag({ Text = hint.Text, TextSize = 13, LayoutOrder = hint.Order, BackgroundColor3 = C.Secondary,
+			TextColor3 = C.Text }, nav)
+		table.insert(padHints, tag)
+	end
+	local function updatePadHints()
+		for _, tag in padHints do
+			tag.Visible = InputActions.Device() == "Gamepad"
+		end
+	end
+	updatePadHints()
+	InputActions.DeviceChanged:Connect(updatePadHints)
 
 	-- Rechts: Münzen, Level, Statistik, Codes, Optionen, Schließen
 	local right = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 30),
@@ -1008,9 +1039,14 @@ end
 
 -- Vom SideMenu: welches Fenster gerade offen ist (für die Hervorhebung in der Navigation)
 function GameMenu.PanelChanged(name)
+	local wasOpen = openPanelName
 	openPanelName = name
 	if next(navButtons) ~= nil then
 		updateNav()
+	end
+	-- Controller: nach dem Schließen eines Fensters wieder in die Lobby-Seite
+	if wasOpen and not name and isOpen and pages[currentPage] then
+		InputActions.Focus(pages[currentPage].Frame, currentPage == "Play" and play and play.Button or nil)
 	end
 end
 
@@ -1058,10 +1094,16 @@ function GameMenu.Init()
 		GameMenu.SetOpen(true)
 	end)
 
-	-- Controller: ○ schließt das Menü
+	-- Controller: ○ schließt zuerst ein offenes Fenster (auch im Hub), dann das Menü; L1/R1 blättert die Seiten
 	UserInputService.InputBegan:Connect(function(input)
-		if isOpen and input.KeyCode == Enum.KeyCode.ButtonB then
-			GameMenu.SetOpen(false)
+		if input.KeyCode == Enum.KeyCode.ButtonB then
+			if openPanelName then
+				openPanel(nil)
+			elseif isOpen then
+				GameMenu.SetOpen(false)
+			end
+		elseif isOpen and not openPanelName and (input.KeyCode == Enum.KeyCode.ButtonL1 or input.KeyCode == Enum.KeyCode.ButtonR1) then
+			cyclePage(input.KeyCode == Enum.KeyCode.ButtonL1 and -1 or 1)
 		end
 	end)
 	-- Spielen-Knopf zeigt die Taste des aktuellen Geräts
