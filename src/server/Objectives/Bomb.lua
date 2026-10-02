@@ -59,10 +59,14 @@ end
 return function(api)
 	local objective = {}
 
-	local sites = {
-		A = api.Map:WaitForChild("Objective"):WaitForChild("SiteA"),
-		B = api.Map.Objective:WaitForChild("SiteB"),
-	}
+	local sites = {}
+	-- Zielbereiche der aktuellen Map (Map-Rotation: kann sich pro Match ändern)
+	local function loadSites()
+		local objectiveFolder = api.GetMap():WaitForChild("Objective")
+		sites.A = objectiveFolder:WaitForChild("SiteA")
+		sites.B = objectiveFolder:WaitForChild("SiteB")
+	end
+	loadSites()
 	local attackers, defenders = api.TeamA, api.TeamB
 	local carrier = nil          -- Modell, das die Bombe trägt
 	local dropped = nil          -- Bombe am Boden (Part)
@@ -128,7 +132,7 @@ return function(api)
 			end
 		end
 		carrier = nil
-		dropped = bombPart(position - Vector3.new(0, 2.4, 0), api.Map)
+		dropped = bombPart(position - Vector3.new(0, 2.4, 0), api.GetMap())
 		api.Announce("Die Bombe wurde fallen gelassen!")
 	end
 
@@ -141,7 +145,7 @@ return function(api)
 			end
 		end
 		carrier = nil
-		planted = bombPart(position - Vector3.new(0, 2.4, 0), api.Map)
+		planted = bombPart(position - Vector3.new(0, 2.4, 0), api.GetMap())
 		plantedSite = site
 		bombTimer = GameSettings.Get("BombTime")
 		defuseProgress = 0
@@ -182,6 +186,7 @@ return function(api)
 
 	function objective.RoundStart(roundNumber)
 		cleanup()
+		loadSites()
 		local half = math.max(1, api.RoundsToWin() - 1)
 		attackers = roundNumber <= half and api.TeamA or api.TeamB
 		defenders = api.OtherTeam(attackers)

@@ -1,5 +1,21 @@
 {
  "ClassName": "Model",
+ "Properties": {
+  "Attributes": {
+   "Attributes": {
+    "DisplayName": {
+     "String": "Fabrik"
+    },
+    "Center": {
+     "Vector3": [
+      1500.0,
+      0.0,
+      -1500.0
+     ]
+    }
+   }
+  }
+ },
  "Children": [
   {
    "Name": "Ground",

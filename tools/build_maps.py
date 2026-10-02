@@ -11,6 +11,10 @@ import math
 import os
 import random
 
+# Anzeigenamen der Maps (z.B. in der Agentenwahl)
+MAP_NAMES = {"FreeForAll": "Lagerhof", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
+             "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar"}
+
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
 
 # Mitte jeder Map in der Welt (wie Center in Modes.lua)
@@ -183,9 +187,14 @@ class Builder:
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui", "Properties": {"Face": "Front"}, "Children": [label]}
         self.box("Decor", name, size, pos, bg, "SmoothPlastic", angles=angles, children=[gui])
 
-    def save(self, filename):
+    def save(self, filename, display_name=None):
         model = {
             "ClassName": "Model",
+            "Properties": {"Attributes": {"Attributes": {
+                "DisplayName": {"String": display_name or MAP_NAMES.get(filename.replace(".model.json", ""),
+                                                                         filename.replace(".model.json", ""))},
+                "Center": {"Vector3": [float(v) for v in self.origin]},
+            }}},
             "Children": [{"Name": g, "ClassName": "Folder", "Children": c} for g, c in self.groups.items()],
         }
         os.makedirs(OUT_DIR, exist_ok=True)

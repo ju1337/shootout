@@ -1,5 +1,21 @@
 {
  "ClassName": "Model",
+ "Properties": {
+  "Attributes": {
+   "Attributes": {
+    "DisplayName": {
+     "String": "Arena"
+    },
+    "Center": {
+     "Vector3": [
+      0.0,
+      0.0,
+      3000.0
+     ]
+    }
+   }
+  }
+ },
  "Children": [
   {
    "Name": "Ground",

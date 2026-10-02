@@ -513,7 +513,8 @@ local function update()
 	if phase == "Waiting" then
 		roundLabel.Text = player:GetAttribute("ModeText") or "Warte auf Spieler..."
 	elseif phase == "Select" then
-		roundLabel.Text = "RUNDE " .. (player:GetAttribute("RoundNumber") or 1) .. "  ·  AGENTENWAHL"
+		roundLabel.Text = "RUNDE " .. (player:GetAttribute("RoundNumber") or 1) .. "  ·  MAP: "
+			.. string.upper(player:GetAttribute("MapName") or "?")
 	else
 		roundLabel.Text = "Runde läuft – du steigst in der nächsten Runde ein"
 	end

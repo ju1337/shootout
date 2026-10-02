@@ -12,6 +12,8 @@
 --     (wie bei Rogue Company); Respawns während der Runde landen direkt am Boden
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
+--   Maps    = Liste von Map-Namen (Workspace.Maps.<Name>); pro Match wird zufällig eine gewählt
+--             (Map-Rotation wie bei RC). Ohne Maps gilt MapName.
 --   RoundTime = Einstellungs-Key für die Rundenzeit in Sekunden (nil = ohne Zeitlimit)
 --   Ranked = true: am Match-Ende Rangpunkte (nur wenn in beiden Teams echte Spieler sind)
 --   Objective = function(api) -> Ziel-Objekt mit eigenen Regeln (z.B. Bombe in Demolition).
@@ -54,7 +56,10 @@ function TeamRoundMode.new(config)
 	local MODE_ID = config.Id
 	local TEAM_SIZE = config.TeamSize
 	local MAP_CENTER = Modes.Get(MODE_ID).Center
-	local map = config.MapName and workspace:WaitForChild("Maps"):WaitForChild(config.MapName)
+	-- Map-Rotation: mögliche Maps dieses Modus, aktuelle Map wechselt pro Match
+	local mapNames = config.Maps or (config.MapName and { config.MapName }) or {}
+	local mapsFolder = workspace:WaitForChild("Maps")
+	local map = mapNames[1] and mapsFolder:WaitForChild(mapNames[1])
 
 	local members = {}           -- [Player] = true
 	local bots = {}              -- [bot] = true
@@ -382,6 +387,25 @@ function TeamRoundMode.new(config)
 	-- ---------- Eroberungspunkt (Strikeout) ----------
 
 	local point = config.Capture and map:WaitForChild("Objective"):WaitForChild("CapturePoint")
+
+	-- Neue Map fürs nächste Match auslosen (nur zwischen Matches aufrufen)
+	local function chooseMap()
+		if #mapNames == 0 then
+			return
+		end
+		map = mapsFolder:WaitForChild(mapNames[math.random(#mapNames)])
+		if config.Capture then
+			point = map:WaitForChild("Objective"):WaitForChild("CapturePoint")
+		end
+	end
+
+	-- Name und Mitte der aktuellen Map an einen Spieler (Agentenwahl, Kameraflug)
+	local function publishMap(player)
+		if map then
+			player:SetAttribute("MapName", map:GetAttribute("DisplayName") or map.Name)
+			player:SetAttribute("MapCenter", map:GetAttribute("Center"))
+		end
+	end
 	local NEUTRAL = Color3.fromRGB(230, 230, 235)
 
 	local function onPoint(position)
@@ -731,6 +755,10 @@ function TeamRoundMode.new(config)
 					continue
 				end
 				matchStarted = true
+				chooseMap() -- Map-Rotation: neue Map fürs Match
+				for player in members do
+					publishMap(player)
+				end
 				roundNumber = 0
 				for player in members do
 					BuyService.StartMatch(player) -- Startgeld, Käufe zurücksetzen
@@ -823,7 +851,9 @@ function TeamRoundMode.new(config)
 	local api = {
 		TeamA = teamA,
 		TeamB = teamB,
-		Map = map,
+		GetMap = function()
+			return map
+		end,
 		OtherTeam = otherTeam,
 		Announce = announce,
 		UpdateInfo = updateInfo,
@@ -882,6 +912,7 @@ function TeamRoundMode.new(config)
 		player.Team = teamSize(teamA) <= teamSize(teamB) and teamA or teamB
 		player:SetAttribute("RoundPhase", phase)
 		player:SetAttribute("AgentLocked", false)
+		publishMap(player)
 		publishScore()
 		if matchStarted then
 			BuyService.StartMatch(player) -- später dazugekommen: Startgeld
@@ -901,7 +932,7 @@ function TeamRoundMode.new(config)
 		pending[player] = nil
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
-			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo" } do
+			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter" } do
 			player:SetAttribute(attribute, nil)
 		end
 		BuyService.Clear(player)
