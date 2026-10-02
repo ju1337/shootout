@@ -323,13 +323,23 @@ function AgentConfig.SkinForLevel(level)
 end
 
 -- Hat der Spieler den Agenten freigeschaltet? (Spieler-Attribut "UnlockedAgents", JSON)
+-- Agent der Woche: wechselt jeden Montag (0 Uhr UTC), für alle gleich (Serverzeit). Diese Woche gratis
+-- spielbar und +50 % XP (AgentOfWeekXP), wenn man mit ihm spielt. Steht als Statue in der Hub-Mitte.
+AgentConfig.AgentOfWeekXP = 1.5
+local WEEK = 7 * 24 * 3600
+local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag
+function AgentConfig.AgentOfWeek()
+	local week = math.floor((workspace:GetServerTimeNow() + MONDAY_OFFSET) / WEEK)
+	return AgentConfig.Agents[week % #AgentConfig.Agents + 1]
+end
+
 function AgentConfig.IsUnlocked(player, agentId)
 	local agent = AgentConfig.Get(agentId)
 	if not agent then
 		return false
 	end
-	if not agent.Price then
-		return true
+	if not agent.Price or agent.Id == AgentConfig.AgentOfWeek().Id then
+		return true -- kostenlos oder Agent der Woche
 	end
 	local raw = player:GetAttribute("UnlockedAgents")
 	if type(raw) ~= "string" then

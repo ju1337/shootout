@@ -399,6 +399,11 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 		return
 	end
 	amount = math.floor(amount * GameSettings.Get("XPMultiplier"))
+	-- Agent der Woche: +50 % XP
+	if reason ~= "Admin" and agentId == AgentConfig.AgentOfWeek().Id then
+		amount = math.floor(amount * AgentConfig.AgentOfWeekXP)
+		reason = tostring(reason) .. " · Agent der Woche"
+	end
 	if amount <= 0 then
 		return
 	end

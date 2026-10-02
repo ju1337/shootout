@@ -99,15 +99,12 @@ end
 -- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") mit Elite-Skin
 -- (Gold, glänzend, Leuchtkontur, Funken) und Holo-Schrift darüber ("AgentOfWeekHolo"). Jede Woche
 -- (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der Serverzeit berechnet, für alle gleich.
-local WEEK = 7 * 24 * 3600
-local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag
 local STATUE_SCALE = 1.8
 local GOLD = Color3.fromRGB(230, 182, 74)
 local HOLO = Color3.fromRGB(140, 210, 245)
 
 function HubLineup.AgentOfWeek()
-	local week = math.floor((workspace:GetServerTimeNow() + MONDAY_OFFSET) / WEEK)
-	return AgentConfig.Agents[week % #AgentConfig.Agents + 1]
+	return AgentConfig.AgentOfWeek()
 end
 
 -- Elite-Skin: Uniform aus dem besten Shop-Skin des Agenten (sonst dunkel in Agentenfarbe), Weste/Visier Gold
@@ -221,7 +218,7 @@ local function buildAgentOfWeek()
 		if nameLabel then
 			nameLabel.Text = string.upper(agent.Name)
 			nameLabel.TextColor3 = agent.Color:Lerp(Color3.new(1, 1, 1), 0.35)
-			infoLabel.Text = string.upper(agent.Role) .. "  ·  " .. string.upper(agent.Ability.Name)
+			infoLabel.Text = string.upper(agent.Role) .. "  ·  +50 % XP  ·  DIESE WOCHE GRATIS"
 		end
 	end
 	refresh()
