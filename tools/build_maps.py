@@ -466,6 +466,108 @@ def build_arena():
     b.save("Arena.model.json")
 
 
+# ---------- Gemeinsame Ziel-Ordner für Team-Maps ----------
+# Jede Rotations-Map bekommt alles, was Demolition UND Strikeout brauchen:
+# SpawnsAtk/SpawnsDef + SiteA/SiteB (Demolition), SpawnsA/SpawnsB + CapturePoint (Strikeout).
+
+def team_objectives(b, atk_x, def_x, site_a, site_b, spawn_x=105, site_color=(255, 80, 80)):
+    for z in (-15, -5, 5, 15):
+        b.spawn(atk_x, z, yaw=-90, group="SpawnsAtk")
+        b.spawn(-spawn_x, z, yaw=-90, group="SpawnsA")
+        b.spawn(spawn_x, z, yaw=90, group="SpawnsB")
+    for x, z in ((def_x, -10), (def_x, 10), (def_x + 8, -20), (def_x + 8, 20)):
+        b.spawn(x, z, yaw=90, group="SpawnsDef")
+    for name, (x, z) in (("A", site_a), ("B", site_b)):
+        b.add("Objective", "Site" + name, (0.3, 20, 20), (x, 0.2, z), site_color, "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.6, "CanCollide": False})
+        b.box("Decor", "SitePost" + name, (1, 10, 1), (x, 5, z), (60, 60, 65), "Metal")
+        b.sign("SiteSign" + name, (6, 6, 0.5), (x, 13, z), name, (25, 25, 30), site_color, angles=(0, 90, 0))
+    b.add("Objective", "CapturePoint", (0.3, 24, 24), (0, 0.2, 0), (230, 230, 235), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.35, "CanCollide": False})
+
+
+# ---------- "Gletscher": Forschungsstation im Eis (Stil: RC "Glacier") ----------
+
+GLACIER_ORIGIN = (3000, 0, 0)
+
+
+def build_glacier():
+    b = Builder(GLACIER_ORIGIN)
+    rng = random.Random(11)
+    snow, ice, module, accent = (235, 240, 245), (170, 215, 240), (200, 205, 210), (230, 110, 40)
+    b.ground(250, 190, snow, "Snow")
+    b.border(240, 180, 10, (210, 225, 235), "Ice", barrier=120)
+    # Eisschollen und Schneewehen als Deckung
+    for _ in range(18):
+        x, z = rng.uniform(-110, 110), rng.uniform(-80, 80)
+        if abs(x) < 95 and not (abs(x) < 20 and abs(z) < 20):
+            sx, sz, sy = rng.uniform(5, 10), rng.uniform(4, 9), rng.uniform(3, 6)
+            b.box("Cover", "IceBlock", (sx, sy, sz), (x, sy / 2, z), ice, "Glass",
+                  angles=(0, rng.uniform(0, 90), rng.uniform(-6, 6)), props={"Transparency": 0.25})
+    # Forschungsmodule (begehbar) mit orangen Streifen
+    for name, x, z, w, d, doors in (("LabA", 55, -55, 30, 20, ("N", "W")), ("LabB", 55, 55, 30, 20, ("S", "W")),
+                                    ("Mess", -40, -50, 24, 18, ("N", "E")), ("Garage", -40, 50, 26, 18, ("S", "E"))):
+        b.house(name, x, z, w, d, 10, module, (90, 95, 100), doors=doors, material="Metal")
+        b.box("Buildings", name + "_Stripe", (w + 0.2, 1, d + 0.2), (x, 8.5, z), accent, "SmoothPlastic")
+    # Radarkuppel und Antennenmast in der Mitte
+    b.add("Buildings", "RadarBase", (4, 18, 18), (0, 2, 32), module, "Metal", angles=(0, 0, 90), props={"Shape": "Cylinder"})
+    b.add("Buildings", "RadarDome", (14, 14, 14), (0, 7, 32), (240, 240, 245), "SmoothPlastic", props={"Shape": "Ball"})
+    b.box("Buildings", "Mast", (1.5, 34, 1.5), (0, 17, -32), (90, 95, 100), "Metal")
+    b.box("Buildings", "MastLight", (2, 2, 2), (0, 34.5, -32), (255, 60, 50), "Neon")
+    # Treibstofftanks und Kisten an den Zielen
+    for x, z in ((80, -30), (80, 30), (-80, 0)):
+        b.add("Cover", "FuelTank", (12, 7, 7), (x, 3.5, z), (220, 200, 60), "Metal", angles=(0, 90, 0),
+              props={"Shape": "Cylinder"})
+    for x, z in ((40, -30), (40, 30), (20, -60), (20, 60), (-20, -20), (-20, 20), (70, 0)):
+        b.crate(x, z, color=(150, 120, 80))
+    for x, z, length, ax in ((-60, 0, 16, False), (15, 0, 12, False), (90, -55, 12, True), (90, 55, 12, True)):
+        b.cover_wall(x, z, length, along_x=ax, height=5, color=(190, 200, 210))
+    team_objectives(b, -110, 98, (55, -40), (55, 40))
+    b.save("Gletscher.model.json", "Gletscher")
+
+
+# ---------- "Zellenblock": Gefängnis mit Wachtürmen (Stil: RC "Lockdown") ----------
+
+CELLBLOCK_ORIGIN = (-3000, 0, 0)
+
+
+def build_cellblock():
+    b = Builder(CELLBLOCK_ORIGIN)
+    concrete, wall, bars, yard = (150, 148, 140), (120, 118, 112), (60, 62, 66), (110, 112, 108)
+    b.ground(240, 180, yard, "Concrete")
+    b.border(230, 170, 18, wall, "Concrete", barrier=120)
+    # Basketballfeld im Hof (nur Markierung)
+    b.box("Ground", "Court", (40, 0.1, 24), (0, 0.06, 0), (170, 90, 50), "SmoothPlastic")
+    b.box("Ground", "CourtLine", (0.4, 0.12, 24), (0, 0.08, 0), (240, 240, 240), "SmoothPlastic")
+    # Wachtürme in den Ecken
+    for x, z in ((-100, -70), (100, -70), (-100, 70), (100, 70)):
+        b.box("Buildings", "TowerLeg", (6, 20, 6), (x, 10, z), wall, "Concrete")
+        b.box("Buildings", "TowerHut", (10, 6, 10), (x, 23, z), concrete, "Concrete")
+        b.box("Buildings", "TowerLight", (2, 1, 2), (x, 26.5, z), (255, 240, 200), "Neon")
+    # Zellentrakte: lange Gebäude mit Zellen (Gitter = schmale Stäbe)
+    for side in (-1, 1):
+        z = side * 55
+        b.house("CellBlock" + str(side), 40, z, 60, 18, 11, concrete, (80, 80, 85), doors=("W", "E"), material="Concrete")
+        for k in range(-3, 4):
+            x = 40 + k * 8
+            b.box("Buildings", "CellWall", (0.6, 11, 7), (x, 5.5, z + side * -4), wall, "Concrete")
+            for bar in range(5):
+                b.box("Buildings", "Bar", (0.25, 8, 0.25), (x - 3 + bar * 1.4, 4, z - side * 0.5), bars, "Metal")
+    # Verwaltung und Wäscherei (Ziele)
+    b.house("Admin", 70, 0, 22, 26, 12, (165, 160, 150), (70, 70, 75), doors=("W", "N", "S"), material="Brick")
+    b.house("Laundry", -45, -25, 22, 16, 10, (160, 165, 170), (70, 70, 75), doors=("E", "N"), material="Concrete")
+    b.house("Kitchen", -45, 30, 22, 16, 10, (160, 165, 170), (70, 70, 75), doors=("E", "S"), material="Concrete")
+    # Zäune und Deckung im Hof
+    for x in (-20, 20):
+        b.box("Cover", "Fence", (0.3, 6, 30), (x, 3, 0), (130, 135, 140), "Metal", props={"Transparency": 0.4})
+    for x, z in ((-70, 0), (0, -30), (0, 30), (25, -15), (25, 15), (-25, 45), (-25, -45), (95, 0)):
+        b.crate(x, z, color=(120, 100, 75))
+    for x, z, length, ax in ((-80, -35, 12, True), (-80, 35, 12, True), (5, 0, 8, False)):
+        b.cover_wall(x, z, length, along_x=ax, height=5, color=concrete)
+    team_objectives(b, -108, 96, (70, -45), (70, 45))
+    b.save("Zellenblock.model.json", "Zellenblock")
+
+
 # ---------- Hub (Lobby): Hangar/Safehouse im Stil der Rogue-Company-Lobby ----------
 
 # Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): links 4, rechts 4
@@ -609,4 +711,6 @@ if __name__ == "__main__":
     build_demolition(RANKED_ORIGIN, "Ranked.model.json")  # gleiche Map für Ranked
     build_training()
     build_arena()
+    build_glacier()
+    build_cellblock()
     build_lobby()
