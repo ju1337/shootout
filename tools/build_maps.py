@@ -856,13 +856,14 @@ def build_cellblock():
 # ---------- "Kanäle": Altstadt am Wasser (Stil: RC "Canals") ----------
 
 def build_canals(origin, filename):
+    """Kanäle (300 x 210): Altstadt mit zwei Kanälen (Gräben mit Stufen und Brücken), zweistöckige
+    Häuser mit Balkonfenstern, Glockenturm, Marktplatz in der Mitte."""
     b = Builder(origin)
     stone, quay = (190, 180, 160), (150, 140, 120)
     pastel = ((235, 180, 150), (240, 215, 150), (170, 200, 220), (215, 170, 190), (190, 215, 170), (240, 235, 220))
     rng = random.Random(21)
-    W, D = 240, 180
-    canal_x, canal_w = 35, 14
-    # Boden in Streifen, damit die Kanäle echte Gräben sind
+    W, D = 300, 210
+    canal_x, canal_w = 42, 14
     for x0, x1 in ((-W / 2, -canal_x - canal_w / 2), (-canal_x + canal_w / 2, canal_x - canal_w / 2),
                    (canal_x + canal_w / 2, W / 2)):
         b.box("Ground", "Ground", (x1 - x0, 4, D), ((x0 + x1) / 2, -2, 0), stone, "Cobblestone")
@@ -873,41 +874,48 @@ def build_canals(origin, filename):
               props={"Transparency": 0.35, "CanCollide": False})
         for edge in (-1, 1):
             b.box("Ground", "Quay", (0.8, 0.8, D), (x + edge * (canal_w / 2 + 0.4), 0.4, 0), quay, "Brick")
-        # Brücken mit Geländer
-        for z in (-55, 0, 55):
+        for z in (-66, 0, 66):
             b.box("Buildings", "Bridge", (canal_w + 4, 1, 8), (x, 0.5, z), quay, "Brick")
             for rail in (-1, 1):
                 b.box("Buildings", "BridgeRail", (canal_w + 4, 1.4, 0.6), (x, 1.7, z + rail * 3.7), stone, "Brick")
-        # Stufen aus dem Kanal heraus (4 Stufen à 1 Stud), an beiden Ufern
-        for zs, direction in ((78, -1), (-78, 1), (28, -1), (-28, 1)):
+        for zs, direction in ((92, -1), (-92, 1), (33, -1), (-33, 1)):
             for edge in (-1, 1):
                 sx = x + edge * (canal_w / 2 - 2.2)
                 for k in range(4):
                     b.box("Buildings", "Step", (4, 1, 2.2), (sx, -3.5 + k, zs + direction * k * 2.2), quay, "Brick")
     b.border(W, D, 14, (170, 160, 140), "Brick", barrier=120)
 
-    # Häuserzeilen (begehbar) in Pastellfarben
+    # Zweistöckige Häuser in Pastellfarben (oben Fenster zum Spähen)
     houses = (
-        (-85, -62, 26, 18, ("N", "E")), (-85, 62, 26, 18, ("S", "E")), (-65, 0, 18, 22, ("E", "W")),
-        (0, -66, 30, 16, ("N",)), (0, 66, 30, 16, ("S",)),
-        (88, -72, 22, 14, ("N", "W")), (88, 72, 22, 14, ("S", "W")),
+        (-108, -72, 26, 20, "N", "E"), (-108, 72, 26, 20, "S", "E"), (-80, 0, 20, 26, "E", "W"),
+        (0, -80, 36, 18, "N", None), (0, 80, 36, 18, "S", None),
+        (112, -82, 24, 16, "N", "W"), (112, 82, 24, 16, "S", "W"),
     )
-    for i, (x, z, w, d, doors) in enumerate(houses):
-        b.house("House" + str(i), x, z, w, d, 12, pastel[i % len(pastel)], (150, 80, 60), doors=doors, material="Plaster")
-        # Balkon mit Blumenkasten
-        b.box("Buildings", "Balcony", (6, 0.5, 2), (x, 7, z + (d / 2 + 1) * (1 if z < 0 else -1)), (120, 110, 100), "WoodPlanks")
-    # Glockenturm als Orientierungspunkt (Mitte Nord)
-    b.box("Buildings", "BellTower", (8, 34, 8), (-8, 17, 38), (200, 160, 120), "Brick")
-    b.box("Buildings", "BellTowerTop", (9, 2, 9), (-8, 35, 38), (150, 80, 60), "Slate")
-    # Marktstände, Fässer, Kisten
-    for x, z in ((-12, -24), (14, 22), (-14, 18), (12, -18)):
+    for i, (x, z, w, d, main, extra) in enumerate(houses):
+        doors = {main: [0] if main in ("E", "W") else [-6]}
+        if extra:
+            doors[extra] = [0]
+        stairs_side = "W" if main in ("N", "S") and x <= 0 else ("E" if main in ("N", "S") else "N")
+        b.building2("House" + str(i), x, z, w, d, pastel[i % len(pastel)], (150, 80, 60), doors=doors,
+                    windows1={main: [6] if main in ("N", "S") else [-6, 6]},
+                    windows2={main: [-8, 0, 8] if w > 22 or main in ("E", "W") else [-5, 5]},
+                    stairs_at=(stairs_side,), material="Plaster")
+    # Glockenturm als Orientierungspunkt
+    b.box("Buildings", "BellTower", (8, 34, 8), (-12, 17, 46), (200, 160, 120), "Brick")
+    b.box("Buildings", "BellTowerTop", (9, 2, 9), (-12, 35, 46), (150, 80, 60), "Slate")
+    # Marktstände, Kisten, Mauern
+    for x, z in ((-14, -24), (14, 22), (-14, 18), (14, -18)):
         b.box("Cover", "MarketStall", (6, 3.5, 4), (x, 1.75, z), (130, 100, 70), "WoodPlanks")
         b.box("Cover", "Awning", (7, 0.3, 5), (x, 4.2, z), pastel[rng.randint(0, 5)], "Fabric")
-    for x, z in ((-95, -30), (-95, 30), (95, 0), (60, -15), (60, 15), (-50, -40), (-50, 40)):
+    for x, z in ((-120, -30), (-120, 30), (120, 0), (70, -18), (70, 18), (-58, -44), (-58, 44), (24, -50), (-24, 50)):
         b.crate(x, z, color=(140, 105, 70))
-    for x, z, length, ax in ((-20, 0, 10, False), (20, 0, 10, False), (75, -40, 10, True), (75, 40, 10, True)):
-        b.cover_wall(x, z, length, along_x=ax, height=4.5, color=stone)
-    team_objectives(b, -110, 98, (62, -45), (62, 45))
+    for x, z, length, ax in ((-22, 0, 10, False), (22, 0, 10, False), (90, -38, 10, True), (90, 38, 10, True),
+                             (-125, -60, 10, False), (-125, 60, 10, False)):
+        b.half_wall(x, z, length, along_x=ax, color=stone)
+    for zl in (-40, 40):
+        b.wall_line("CanalWall", 54, 76, zl, True, 6, stone, "Brick",
+                    openings=[(65, 5, 0, 6)], group="Cover")
+    team_objectives(b, -140, 124, (84, -58), (84, 58), spawn_x=140)
     b.save(filename, "Kanäle")
 
 
