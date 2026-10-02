@@ -56,7 +56,7 @@ local DROP_HEIGHT = 300      -- Absprunghöhe über der Map (DropIn)
 local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
-local SUMMARY_TIME = 10      -- Match-Zusammenfassung (wie SHOW_TIME in MatchSummary), danach erst Map-Abstimmung
+local SUMMARY_TIME = 13      -- Top-3-Bühne + Match-Zusammenfassung (MatchSummary), danach erst Map-Abstimmung
 local OVERTIME_MAX = 30      -- Strikeout: Overtime dauert höchstens so lange (Sekunden)
 local VOTE_TIME = 10         -- Map-Abstimmung vor dem Match (Sekunden)
 local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
@@ -762,8 +762,32 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Die besten 3 des Matches (Spieler und Bots) für die Bühne am Matchende: meiste Kills, dann Schaden
+	local function topThree()
+		local list = {}
+		for player in members do
+			table.insert(list, { Name = player.Name, UserId = player.UserId, Agent = ProgressService.ActiveAgent(player),
+				Kills = KillService.GetKills(player), Damage = player:GetAttribute("Damage") or 0,
+				Team = player.Team and player.Team.Name or nil })
+		end
+		for bot in bots do
+			local info = bot.Info
+			table.insert(list, { Name = bot.Name, Agent = bot.Agent, Bot = true,
+				Kills = info and info:GetAttribute("Kills") or 0, Damage = info and info:GetAttribute("Damage") or 0,
+				Team = bot.Team and bot.Team.Name or nil })
+		end
+		table.sort(list, function(a, b)
+			if a.Kills ~= b.Kills then
+				return a.Kills > b.Kills
+			end
+			return a.Damage > b.Damage
+		end)
+		return { list[1], list[2], list[3] }
+	end
+
 	-- Match-Ende: Ergebnis, MVP (meiste Kills, dann Schaden) und eigene Werte an alle Spieler
 	local function sendSummary(winner, rankTexts, eloChanges)
+		local top = topThree()
 		local mvp, best = nil, -1
 		for player in members do
 			local score = KillService.GetKills(player) * 1000 + (player:GetAttribute("Damage") or 0)
@@ -786,6 +810,7 @@ function TeamRoundMode.new(config)
 				Rank = rankTexts and rankTexts[player] or nil,
 				Map = player:GetAttribute("MapName"),
 				Progress = ProgressService.TakeLedger(player), -- Belohnungs-Übersicht (XP, Münzen, Level, ELO)
+				Top = top, -- Top-3-Bühne
 				ShowTime = SUMMARY_TIME,
 			})
 			local won = nil -- nil = Unentschieden

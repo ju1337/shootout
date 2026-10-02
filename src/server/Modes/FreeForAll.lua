@@ -19,7 +19,7 @@ local BotService = require(script.Parent.Parent.BotService)
 
 local FreeForAll = {}
 
-local INTERMISSION = 9       -- Pause zwischen Runden in Sekunden (solange läuft die Zusammenfassung)
+local INTERMISSION = 11      -- Pause zwischen Runden in Sekunden (solange laufen Top-3-Bühne und Zusammenfassung)
 local SPAWN_PROTECTION = 2   -- Sekunden Schutzschild nach dem Spawn
 local MAX_PLAYERS = 12
 
@@ -113,10 +113,12 @@ local function finishRound(winner)
 	-- Bots zählen als Gegner mit Start-ELO; ohne andere echte Spieler gibt es die halbe Änderung.
 	local ranking = {}
 	for player in members do
-		table.insert(ranking, { Player = player, Name = player.Name, Kills = KillService.GetKills(player) })
+		table.insert(ranking, { Player = player, Name = player.Name, Kills = KillService.GetKills(player),
+			UserId = player.UserId, Agent = ProgressService.ActiveAgent(player) })
 	end
 	for bot in bots do
-		table.insert(ranking, { Name = bot.Name, Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0 })
+		table.insert(ranking, { Name = bot.Name, Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0,
+			Agent = bot.Agent, Bot = true })
 	end
 	table.sort(ranking, function(a, b)
 		return a.Kills > b.Kills
@@ -173,7 +175,12 @@ local function finishRound(winner)
 	else
 		announce("Runde beendet")
 	end
-	-- Zusammenfassung mit Platz, MVP und Belohnungs-Übersicht (XP, Münzen, Level, ELO)
+	-- Zusammenfassung mit Top-3-Bühne, Platz, MVP und Belohnungs-Übersicht (XP, Münzen, Level, ELO)
+	local podium = {}
+	for i = 1, math.min(3, #ranking) do
+		local entry = ranking[i]
+		podium[i] = { Name = entry.Name, UserId = entry.UserId, Agent = entry.Agent, Kills = entry.Kills, Bot = entry.Bot }
+	end
 	local top = ranking[1]
 	for place, entry in ranking do
 		local player = entry.Player
@@ -192,6 +199,7 @@ local function finishRound(winner)
 				Damage = player:GetAttribute("Damage") or 0,
 				Map = player:GetAttribute("MapName"),
 				Progress = ProgressService.TakeLedger(player),
+				Top = podium,
 				ShowTime = INTERMISSION,
 			})
 		end

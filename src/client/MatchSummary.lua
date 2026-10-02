@@ -4,6 +4,7 @@
 --   BELOHNUNGEN: XP und Münzen nach Grund (Kills, Matchsieg, Killserien, Rache, ...) und neue Skins
 --   SPIELERLEVEL: Prestige-Abzeichen, XP-Balken läuft hoch, LEVEL UP!
 --   RANG: Rang-Abzeichen, ELO zählt hoch/runter, Balken bis zur nächsten Stufe, AUFSTIEG!/NEUER RANG!/ABSTIEG
+-- Vorher steht die TOP 3 des Matches als 3D-Figuren auf einem Podest (data.Top, PODIUM_TIME Sekunden).
 -- Die Übersicht kommt vom Server (data.Progress, ProgressService.TakeLedger).
 -- Verschwindet nach data.ShowTime Sekunden von selbst bzw. sobald Map-Abstimmung/Agentenwahl beginnt.
 
@@ -20,6 +21,8 @@ local LevelConfig = require(Shared.LevelConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local RankEmblem = require(Shared.RankEmblem)
 local Cosmetics = require(Shared.Cosmetics)
+local AgentConfig = require(Shared.AgentConfig)
+local AgentFigure = require(Shared.AgentFigure)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -30,6 +33,7 @@ local label = UITheme.Label
 local MatchSummary = {}
 
 local SHOW_TIME = 10 -- falls der Server keine Zeit mitschickt (TeamRoundMode: SUMMARY_TIME)
+local PODIUM_TIME = 3.6 -- so lange steht die Top-3-Bühne, danach kommt die Übersicht
 local MAX_LINES = 7  -- so viele Zeilen passen in die Belohnungs-Karte
 local ROW_Y = 492    -- obere Kante der drei Karten unten
 local ROW_H = 300
@@ -110,6 +114,138 @@ local function nextStage(elo)
 		end
 	end
 	return nil
+end
+
+-- ---------- Top-3-Bühne ----------
+-- 3D-Szene (ViewportFrame, fest 1600x900 auf der Leinwand): drei Podeste, Platz 1 in der Mitte und am höchsten,
+-- Platz 2 links, Platz 3 rechts. Achtung: die Kamera schaut nach +Z, Welt-+X liegt also im Bild LINKS.
+local PLACES = {
+	{ X = 0, Height = 1.8, Yaw = 0, Color = Color3.fromRGB(240, 195, 60) },
+	{ X = 4.6, Height = 1.2, Yaw = 0.22, Color = Color3.fromRGB(200, 205, 215) },
+	{ X = -4.6, Height = 0.8, Yaw = -0.22, Color = Color3.fromRGB(190, 120, 70) },
+}
+local CAMERA_FROM = CFrame.lookAt(Vector3.new(0, 5.2, -22), Vector3.new(0, 3.4, 0))
+local CAMERA_TO = CFrame.lookAt(Vector3.new(0, 4.4, -17), Vector3.new(0, 3.4, 0))
+local PODIUM_FOV = 40
+
+local function buildPodium(parent)
+	local holder = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(8, 10, 14),
+		BorderSizePixel = 0, Visible = false, ZIndex = 5 }, parent)
+	local stage = UITheme.Canvas(holder, 1600, 900)
+	local viewport = make("ViewportFrame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(10, 12, 17),
+		BorderSizePixel = 0, Ambient = Color3.fromRGB(120, 125, 140), LightColor = Color3.fromRGB(255, 245, 225),
+		LightDirection = Vector3.new(-0.3, -1, 0.6) }, stage)
+	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(40, 46, 58), Color3.fromRGB(255, 255, 255)) },
+		viewport)
+	local camera = Instance.new("Camera")
+	camera.FieldOfView = PODIUM_FOV
+	camera.CFrame = CAMERA_TO
+	camera.Parent = viewport
+	viewport.CurrentCamera = camera
+
+	-- Boden und Podeste (bleiben stehen), Figuren kommen pro Match neu
+	local scenery = Instance.new("Model")
+	local function block(size, cframe, color, material)
+		local part = Instance.new("Part")
+		part.Anchored = true
+		part.Size = size
+		part.CFrame = cframe
+		part.Color = color
+		part.Material = material or Enum.Material.SmoothPlastic
+		part.Parent = scenery
+		return part
+	end
+	block(Vector3.new(60, 1, 40), CFrame.new(0, -0.5, 8), Color3.fromRGB(22, 25, 31))
+	for _, place in PLACES do
+		block(Vector3.new(3.8, place.Height, 3.4), CFrame.new(place.X, place.Height / 2, 0), Color3.fromRGB(34, 38, 46))
+		block(Vector3.new(3.9, 0.12, 3.5), CFrame.new(place.X, place.Height + 0.06, 0), place.Color, Enum.Material.Neon)
+	end
+	-- Lichtleiste hinten
+	block(Vector3.new(30, 0.25, 0.25), CFrame.new(0, 7.5, 6), Color3.fromRGB(212, 170, 80), Enum.Material.Neon)
+	scenery.Parent = viewport
+	local figures = Instance.new("Model")
+	figures.Parent = viewport
+
+	local heading = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromOffset(800, 56), Size = UDim2.fromOffset(900, 70),
+		Text = "TOP 3 DES MATCHES", Font = F.Title, TextSize = 64, TextXAlignment = Enum.TextXAlignment.Center }, stage)
+	local labels = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, stage)
+
+	-- Welt-Punkt -> Pixel auf der 1600x900-Bühne (mit der End-Kamera)
+	local function project(point)
+		local rel = CAMERA_TO:PointToObjectSpace(point)
+		local depth = -rel.Z
+		local halfH = depth * math.tan(math.rad(PODIUM_FOV / 2))
+		local halfW = halfH * 16 / 9
+		return UDim2.fromOffset((0.5 + rel.X / (2 * halfW)) * 1600, (0.5 - rel.Y / (2 * halfH)) * 900)
+	end
+
+	local podium = { Frame = holder }
+
+	-- top = { { Name, UserId, Agent, Kills, Team, Bot } } (bis zu 3); alive() = Anzeige noch aktuell?
+	function podium.Show(top, alive)
+		figures:ClearAllChildren()
+		labels:ClearAllChildren()
+		local texts = {}
+		for i, entry in top do
+			local place = PLACES[i]
+			local agent = AgentConfig.Get(entry.Agent) or AgentConfig.Agents[1]
+			local owner = entry.UserId and Players:GetPlayerByUserId(entry.UserId) or nil
+			local primary, accent = Cosmetics.AgentColors(owner, agent.Id)
+			local weapon = agent.Loadout[1]
+			local skin = owner and Cosmetics.WeaponSkin(owner, agent.Id, weapon) or nil
+			local ok, figure = pcall(AgentFigure.Build, agent, primary, accent, skin, weapon)
+			if ok and figure then
+				figure:PivotTo(CFrame.new(place.X, place.Height, 0) * CFrame.Angles(0, place.Yaw, 0) * figure:GetPivot())
+				figure.Parent = figures
+			end
+			-- Name und Kills über dem Kopf, Platz-Zahl vorne auf dem Podest
+			local mine = entry.UserId == player.UserId
+			local nameColor = mine and C.Accent or C.Text
+			if entry.Team and player.Team and not mine then
+				nameColor = entry.Team == player.Team.Name and C.Ally or C.Enemy
+			end
+			local nameLabel = label({ AnchorPoint = Vector2.new(0.5, 1), Position = project(Vector3.new(place.X, place.Height + 6.6, 0)),
+				Size = UDim2.fromOffset(320, 40), Text = UITheme.Upper(tostring(entry.Name)), Font = F.Title, TextSize = i == 1 and 36 or 30,
+				TextColor3 = nameColor, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5 }, labels)
+			local killLabel = label({ AnchorPoint = Vector2.new(0.5, 0), Position = project(Vector3.new(place.X, place.Height + 6.6, 0))
+				+ UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(320, 24), Text = (entry.Kills or 0) .. " KILLS"
+				.. (entry.Bot and "  ·  BOT" or ""), Font = F.Bold, TextSize = 18, TextColor3 = C.Muted,
+				TextXAlignment = Enum.TextXAlignment.Center }, labels)
+			local number = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = project(Vector3.new(place.X, place.Height * 0.5, -1.75)),
+				Size = UDim2.fromOffset(120, 80), Text = tostring(i), Font = F.Title, TextSize = i == 1 and 64 or 52,
+				TextColor3 = place.Color, TextXAlignment = Enum.TextXAlignment.Center }, labels)
+			texts[i] = { nameLabel, killLabel, number }
+			for _, text in texts[i] do
+				text.TextTransparency = 1
+				text.TextStrokeTransparency = 1
+			end
+		end
+
+		holder.Visible = true
+		heading.TextTransparency = 1
+		TweenService:Create(heading, TweenInfo.new(0.4), { TextTransparency = 0 }):Play()
+		-- Kamera fährt heran, dann Plätze 3, 2, 1 nacheinander einblenden
+		task.spawn(function()
+			animate(0.9, alive, function(alpha)
+				camera.CFrame = CAMERA_FROM:Lerp(CAMERA_TO, alpha)
+			end)
+			for i = #texts, 1, -1 do
+				if not alive() then
+					return
+				end
+				for _, text in texts[i] do
+					TweenService:Create(text, TweenInfo.new(0.3), { TextTransparency = 0, TextStrokeTransparency = 0.5 }):Play()
+				end
+				task.wait(0.35)
+			end
+		end)
+	end
+
+	function podium.Hide()
+		holder.Visible = false
+	end
+
+	return podium
 end
 
 function MatchSummary.Init()
@@ -255,6 +391,8 @@ function MatchSummary.Init()
 		emblem:Set(level, prestige)
 		levelText.Text = "LEVEL " .. level
 	end
+
+	local podium = buildPodium(gui)
 
 	local showId = 0
 	-- Nie über der Map-Abstimmung oder Agentenwahl liegen: sobald die beginnt, ausblenden
@@ -476,16 +614,33 @@ function MatchSummary.Init()
 
 		row.Visible = data.Progress ~= nil
 		gui.Enabled = true
-		-- Einblenden: Titel springt herein, Band klappt auf
-		band.Size = UDim2.new(1, 0, 0, 0)
-		TweenService:Create(band, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { Size = UDim2.new(1, 0, 0, 150) }):Play()
-		titleScale.Scale = 1.6
-		title.TextTransparency = 1
-		TweenService:Create(titleScale, TweenInfo.new(0.45, Enum.EasingStyle.Back), { Scale = 1 }):Play()
-		TweenService:Create(title, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
 
-		if data.Progress then
-			task.spawn(showProgress, data.Progress, isCurrent)
+		-- Übersicht einblenden: Titel springt herein, Band klappt auf, Belohnungen laufen
+		local function reveal()
+			podium.Hide()
+			background.Visible = true
+			band.Size = UDim2.new(1, 0, 0, 0)
+			TweenService:Create(band, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { Size = UDim2.new(1, 0, 0, 150) }):Play()
+			titleScale.Scale = 1.6
+			title.TextTransparency = 1
+			TweenService:Create(titleScale, TweenInfo.new(0.45, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+			TweenService:Create(title, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
+			if data.Progress then
+				task.spawn(showProgress, data.Progress, isCurrent)
+			end
+		end
+
+		-- Erst die Top-3-Bühne, dann die Übersicht
+		if type(data.Top) == "table" and #data.Top > 0 then
+			background.Visible = false
+			podium.Show(data.Top, isCurrent)
+			task.delay(PODIUM_TIME, function()
+				if isCurrent() then
+					reveal()
+				end
+			end)
+		else
+			reveal()
 		end
 
 		task.spawn(function()
