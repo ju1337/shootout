@@ -160,7 +160,7 @@ local function finishRound(winner)
 		end
 		ProgressService.AddHistory(player, {
 			Mode = "Free-for-All",
-			Map = "Raffinerie",
+			Map = map:GetAttribute("DisplayName") or "Altstadt",
 			Won = player == winner,
 			Score = winner and ("Sieger: " .. winner.Name) or "–",
 			Kills = KillService.GetKills(player),
@@ -196,7 +196,7 @@ local function finishRound(winner)
 				Kills = KillService.GetKills(player),
 				Deaths = player:GetAttribute("Deaths") or 0,
 				Damage = player:GetAttribute("Damage") or 0,
-				Map = player:GetAttribute("MapName"),
+				Map = map:GetAttribute("DisplayName"),
 				Progress = ProgressService.TakeLedger(player),
 				Top = podium,
 				ShowTime = INTERMISSION,

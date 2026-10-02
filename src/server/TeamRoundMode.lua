@@ -10,6 +10,8 @@
 --   DropIn  = true:  Absprung über der Map (Drop), sonst Spawn an den Team-Spawns der Map
 --   WingsuitStart = Höhe: zu Rundenbeginn Fallschirmsprung über dem eigenen Team-Spawn
 --     (wie bei Rogue Company); Respawns während der Runde landen direkt am Boden
+--   GroundStart = Sekunden: zu Rundenbeginn alle am Team-Spawn am Boden, eingefroren, mit Countdown
+--     (statt Countdown vor dem Spawnen); danach geht es los (Herrschaft, Team Deathmatch)
 --   Tickets = Einstellungs-Key für Respawn-Tickets pro Team (nil = kein Respawn)
 --   Respawn = true: unbegrenzter Respawn ohne Tickets (z.B. Herrschaft)
 --   Capture = { UnlockAfter, Radius } Eroberungspunkt in der Mitte (Strikeout)
@@ -948,15 +950,39 @@ function TeamRoundMode.new(config)
 			Style = won and "Win" or "Loss", Big = final }
 	end
 
-	local function playRound()
-		-- Countdown (Clients zeigen ihn groß in der Bildschirmmitte)
-		setPhase("Countdown")
+	-- Start am Boden (GroundStart): Spieler und Bots an ihrem Spawn festhalten bzw. wieder loslassen
+	local function freezeAll(on)
 		for player in members do
-			player:SetAttribute("CountdownEnd", workspace:GetServerTimeNow() + GameSettings.Get("Countdown"))
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root then
+				root.Anchored = on
+			end
 		end
-		for seconds = GameSettings.Get("Countdown"), 1, -1 do
-			setText(Modes.Get(MODE_ID).Name .. " · Runde " .. roundNumber + 1 .. " · Start in " .. seconds .. " s")
+		for bot in bots do
+			local root = bot.Model and bot.Model:FindFirstChild("HumanoidRootPart")
+			if root then
+				root.Anchored = on
+			end
+		end
+	end
+
+	-- Countdown mit großer Zahl in der Bildschirmmitte (Clients lesen CountdownEnd); round = angezeigte Runde
+	local function countdown(seconds, round)
+		setPhase("Countdown")
+		local ends = workspace:GetServerTimeNow() + seconds
+		for player in members do
+			player:SetAttribute("CountdownEnd", ends)
+		end
+		for left = seconds, 1, -1 do
+			setText(Modes.Get(MODE_ID).Name .. " · Runde " .. round .. " · Start in " .. left .. " s")
 			task.wait(1)
+		end
+	end
+
+	local function playRound()
+		-- Ohne Start am Boden: Countdown vor dem Spawnen
+		if not config.GroundStart then
+			countdown(GameSettings.Get("Countdown"), roundNumber + 1)
 		end
 		if count() == 0 then
 			return
@@ -977,13 +1003,24 @@ function TeamRoundMode.new(config)
 
 		roundActive = true
 		spawning = true
-		setPhase("Round")
+		setPhase(config.GroundStart and "Countdown" or "Round")
 		if objective and objective.RoundStart then
 			objective.RoundStart(roundNumber) -- vor dem Spawnen (legt z.B. Angreifer fest)
 		end
-		notify("Banner", roundStartBanner)
 		spawnTeam(teamA)
 		spawnTeam(teamB)
+		if config.GroundStart then
+			-- Alle stehen an ihrem Spawn: kurz festhalten, Countdown, dann los
+			task.wait(0.3) -- Charaktere sind gerade erst entstanden
+			freezeAll(true)
+			countdown(config.GroundStart, roundNumber)
+			freezeAll(false)
+			if not roundActive then
+				return -- inzwischen abgebrochen (Admin, alle weg)
+			end
+			setPhase("Round")
+		end
+		notify("Banner", roundStartBanner)
 		spawning = false
 		setCanFight(true)
 		if objective and objective.AfterSpawn then

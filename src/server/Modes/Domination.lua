@@ -8,14 +8,14 @@ local Domination = require(script.Parent.Parent.Objectives.Domination)
 
 return TeamRoundMode.new({
 	Id = "Domination",
-	MapName = "Drop", -- Map "Tal"
+	Maps = { "Domination" }, -- Map "Kraftwerk" (auch für Team Deathmatch, eigene Kopie)
 	TeamSize = 5,
 	Teams = {
 		{ Name = "Rot", Color = BrickColor.new("Burgundy") },
 		{ Name = "Blau", Color = BrickColor.new("Storm blue") },
 	},
 	DropIn = false,
-	WingsuitStart = 120, -- Fallschirmsprung zu Spielbeginn
+	GroundStart = 5, -- Start am Team-Spawn mit 5 Sekunden Countdown (kein Absprung)
 	Respawn = true,
 	RoundsSetting = "DominationRounds",
 	RoundTime = "DominationRoundTime",
