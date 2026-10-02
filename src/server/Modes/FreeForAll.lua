@@ -1,8 +1,12 @@
 -- FreeForAll (ModuleScript, nur Server)
 -- Jeder gegen jeden: kurzer Respawn, wer zuerst KillsToWin Kills hat, gewinnt die Runde.
+-- Map-Rotation: nach jeder Runde (Top 3 + Zusammenfassung) stimmen alle über die nächste Map ab (MAPS).
+-- Spieler-Attribute: MapId, MapName, MapCenter (aktuelle Map), während der Abstimmung RoundPhase = "MapVote"
+-- und MapVoteOptions/MapVoteEnd/MapVoteCounts/MapVoteMine (wie in den Team-Modi, Client: MapVote).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -20,14 +24,113 @@ local BotService = require(script.Parent.Parent.BotService)
 local FreeForAll = {}
 
 local MODE_ID = "FreeForAll"
-local INTERMISSION = 11      -- Pause zwischen Runden in Sekunden (solange laufen Top-3-Bühne und Zusammenfassung)
+local INTERMISSION = 10      -- Top-3-Bühne und Zusammenfassung nach der Runde (Sekunden), danach die Abstimmung
+local VOTE_TIME = 8          -- Map-Abstimmung (endet früher, wenn alle gewählt haben)
+local MAPS = { "FreeForAll", "Favela", "Orbit" } -- Altstadt, Favela, Orbit (Ordner in Workspace.Maps)
 local SPAWN_PROTECTION = 2   -- Sekunden Schutzschild nach dem Spawn
 local MAX_PLAYERS = 12
 
 local members = {}
 local bots = {} -- [bot] = true
 local roundOver = false
-local map = workspace:WaitForChild("Maps"):WaitForChild("FreeForAll")
+local mapsFolder = workspace:WaitForChild("Maps")
+local map = mapsFolder:WaitForChild(MAPS[1])
+
+-- Aktuelle Map an einen Spieler (Minimap, Lichtstimmung, Kamera)
+local function publishMap(player)
+	player:SetAttribute("MapName", map:GetAttribute("DisplayName") or map.Name)
+	player:SetAttribute("MapId", map.Name)
+	player:SetAttribute("MapCenter", map:GetAttribute("Center"))
+end
+
+-- ---------- Map-Abstimmung nach jeder Runde ----------
+local voteOptions = nil -- { { Id, Name } } während der Abstimmung
+local votes = {}        -- [Player] = Nummer der Option
+local voteEnd = 0
+
+local function voteCounts()
+	local counts = {}
+	for i in voteOptions do
+		counts[i] = 0
+	end
+	for player, index in votes do
+		if members[player] then
+			counts[index] += 1
+		end
+	end
+	return counts
+end
+
+local function publishVote(player)
+	if voteOptions then
+		player:SetAttribute("RoundPhase", "MapVote")
+		player:SetAttribute("MapVoteOptions", HttpService:JSONEncode(voteOptions))
+		player:SetAttribute("MapVoteEnd", voteEnd)
+		player:SetAttribute("MapVoteCounts", HttpService:JSONEncode(voteCounts()))
+		player:SetAttribute("MapVoteMine", votes[player])
+	else
+		for _, attribute in { "RoundPhase", "MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine" } do
+			player:SetAttribute(attribute, nil)
+		end
+	end
+end
+
+local function mapVote()
+	local options = {}
+	for _, name in MAPS do
+		local folder = mapsFolder:FindFirstChild(name)
+		if folder then
+			table.insert(options, { Id = name, Name = folder:GetAttribute("DisplayName") or name })
+		end
+	end
+	if #options < 2 or next(members) == nil then
+		return
+	end
+	voteOptions = options
+	votes = {}
+	voteEnd = workspace:GetServerTimeNow() + VOTE_TIME
+	for player in members do
+		publishVote(player)
+	end
+	while workspace:GetServerTimeNow() < voteEnd and next(members) ~= nil do
+		local voted, total = 0, 0
+		for player in members do
+			total += 1
+			if votes[player] then
+				voted += 1
+			end
+		end
+		-- alle haben gewählt: nicht unnötig warten
+		if voted >= total and voteEnd - workspace:GetServerTimeNow() > 1.5 then
+			voteEnd = workspace:GetServerTimeNow() + 1.5
+			for player in members do
+				publishVote(player)
+			end
+		end
+		task.wait(0.25)
+	end
+	-- meiste Stimmen gewinnt, bei Gleichstand zufällig
+	local best, winners = -1, {}
+	for i, n in voteCounts() do
+		if n > best then
+			best, winners = n, { i }
+		elseif n == best then
+			table.insert(winners, i)
+		end
+	end
+	local chosen = voteOptions[winners[math.random(#winners)]]
+	voteOptions = nil
+	votes = {}
+	map = mapsFolder:WaitForChild(chosen.Id)
+	for player in members do
+		publishVote(player)
+		publishMap(player)
+	end
+	for player in members do
+		Remotes.Notify:FireClient(player, "Banner", { Caption = "Map gewählt", Title = chosen.Name, Sub = "Free-for-All",
+			Style = "Info" })
+	end
+end
 
 -- Spieler + Bots
 local function count()
@@ -204,6 +307,7 @@ local function finishRound(winner)
 		end
 	end
 	task.wait(INTERMISSION)
+	mapVote() -- nächste Map wählen (danach spawnen alle dort)
 
 	roundOver = false
 	KillService.NewRound(MODE_ID) -- ERSTES BLUT wieder frei
@@ -223,6 +327,15 @@ end
 local FILL_TO = 6
 
 function FreeForAll.Init()
+	-- Stimmen für die Map-Abstimmung (nur FFA-Teilnehmer, die Team-Modi prüfen ihre eigenen)
+	Remotes.MapVote.OnServerEvent:Connect(function(player, index)
+		if voteOptions and members[player] and type(index) == "number" and voteOptions[index] then
+			votes[player] = index
+			for member in members do
+				publishVote(member)
+			end
+		end
+	end)
 	task.spawn(function()
 		while true do
 			task.wait(5)
@@ -268,12 +381,21 @@ end
 
 function FreeForAll.AddPlayer(player)
 	members[player] = true
+	publishMap(player)
+	if voteOptions then
+		publishVote(player) -- mitten in der Abstimmung dazugekommen: gleich mitwählen
+	end
 	spawnPlayer(player)
 	updateInfo()
 end
 
 function FreeForAll.RemovePlayer(player)
 	members[player] = nil
+	votes[player] = nil
+	for _, attribute in { "RoundPhase", "MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine", "MapId", "MapName",
+		"MapCenter" } do
+		player:SetAttribute(attribute, nil)
+	end
 	updateInfo()
 end
 

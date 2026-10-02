@@ -12,7 +12,8 @@ import os
 import random
 
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
-MAP_NAMES = {"TDM": "Kraftwerk", "Domination": "Kraftwerk", "FreeForAll": "Altstadt", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
+MAP_NAMES = {"TDM": "Kraftwerk", "Domination": "Kraftwerk", "FreeForAll": "Altstadt", "Favela": "Favela", "Orbit": "Orbit",
+             "Lagune": "Lagune", "Mondbasis": "Mondbasis", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
              "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar"}
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
@@ -55,6 +56,9 @@ HOLO_TINT = (100, 180, 230)  # Glas-Tönung der Holo-Schilder
 
 
 def lighten(color, amount=0.35):
+    """Heller (amount > 0) bzw. dunkler (amount < 0) machen."""
+    if amount < 0:
+        return tuple(int(c * (1 + amount)) for c in color)
     return tuple(int(c + (255 - c) * amount) for c in color)
 
 
@@ -377,6 +381,79 @@ class Builder:
         stripe = (length, 0.5, 1.7) if along_x else (1.7, 0.5, length)
         self.box("Cover", "BarrierStripe", stripe, (x, 2.6, z), (220, 170, 40), "SmoothPlastic")
 
+    def flat_house(self, name, x, z, w, d, h, color, doors=None, windows=None, y0=0, parapet=("N", "S", "E", "W"),
+                   roof_color=None, trim=None, gaps=None):
+        """Einfaches Haus mit flachem, begehbarem Dach (Oberkante y0 + h + 1) und Brüstung.
+        doors/windows: {Seite: [Versatz]} wie bei building2. gaps: {Seite: [Versatz]} Lücken in der Brüstung
+        (dort kommen Stege oder Treppen an). Gibt die Dachhöhe zurück."""
+        doors, windows, gaps = doors or {}, windows or {}, gaps or {}
+        x0, x1, z0, z1 = x - w / 2, x + w / 2, z - d / 2, z + d / 2
+        t = 1
+        walls = {"N": (x0, x1, z1 - t / 2, True), "S": (x0, x1, z0 + t / 2, True),
+                 "E": (z0 + t, z1 - t, x1 - t / 2, False), "W": (z0 + t, z1 - t, x0 + t / 2, False)}
+        for side, (a, b, fixed, along_x) in walls.items():
+            base = x if along_x else z
+            ops = [(base + o, 5, 0, 7) for o in doors.get(side, [])]
+            ops += [(base + o, 3.4, 3, 5.6) for o in windows.get(side, [])]
+            self.wall_line(name, a, b, fixed, along_x, h, color, "Concrete", ops, y0=y0, t=t)
+        top = y0 + h + 1
+        self.box("Buildings", name + "_Roof", (w, 1, d), (x, top - 0.5, z), roof_color or lighten(color, -0.25), "Concrete")
+        if trim:
+            # farbiges Band außen um die Fassade (vier schmale Leisten, innen bleibt frei)
+            ty = y0 + h - 0.6
+            self.box("Decor", name + "_Trim", (w + 0.4, 0.5, 0.2), (x, ty, z1 + 0.1), trim, "SmoothPlastic")
+            self.box("Decor", name + "_Trim", (w + 0.4, 0.5, 0.2), (x, ty, z0 - 0.1), trim, "SmoothPlastic")
+            self.box("Decor", name + "_Trim", (0.2, 0.5, d), (x1 + 0.1, ty, z), trim, "SmoothPlastic")
+            self.box("Decor", name + "_Trim", (0.2, 0.5, d), (x0 - 0.1, ty, z), trim, "SmoothPlastic")
+        for side in parapet:
+            a, b, fixed, along_x = {"N": (x0, x1, z1 - 0.3, True), "S": (x0, x1, z0 + 0.3, True),
+                                    "E": (z0, z1, x1 - 0.3, False), "W": (z0, z1, x0 + 0.3, False)}[side]
+            base = x if along_x else z
+            ops = [(base + o, 4, 0, 1.4) for o in gaps.get(side, [])]
+            self.wall_line(name + "_Parapet", a, b, fixed, along_x, 1.4, lighten(color, 0.15), "Concrete", ops, y0=top,
+                           t=0.6, group="Cover")
+        return top
+
+    def plank(self, name, a, b, width=3, color=(130, 96, 64)):
+        """Gerader Steg von Punkt a = (x, y, z) nach b (auch schräg, z.B. zwischen zwei Dächern)."""
+        dx, dy, dz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+        flat = math.hypot(dx, dz)
+        length = math.hypot(flat, dy)
+        yaw = math.degrees(math.atan2(-dz, dx))
+        pitch = math.degrees(math.atan2(dy, flat))
+        center = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.3, (a[2] + b[2]) / 2)
+        self.box("Buildings", name, (length, 0.6, width), center, color, "WoodPlanks", angles=(0, yaw, pitch))
+
+    def palm(self, x, z, h=14, lean=6, rng=None):
+        """Palme: geneigter Stamm und ein Kranz aus Blättern."""
+        rng = rng or random.Random(int(x * 7 + z * 13))
+        ang = rng.uniform(0, 360)
+        lx, lz = math.cos(math.radians(ang)) * lean, math.sin(math.radians(ang)) * lean
+        self.plank("PalmTrunk", (x, 0, z), (x + lx, h, z + lz), width=1.2, color=(120, 92, 60))
+        for k in range(6):
+            a = math.radians(k * 60 + ang)
+            self.box("Nature", "PalmLeaf", (7, 0.3, 2.2), (x + lx + math.cos(a) * 3.2, h - 0.6, z + lz + math.sin(a) * 3.2),
+                     (60, 150, 60), "Grass", angles=(0, -math.degrees(a), -14))
+
+    def crater(self, name, x, z, r, color=(96, 96, 102), height=2.2, segments=14):
+        """Krater: Ring aus Wällen (brusthoch) mit dunklerem Boden in der Mitte."""
+        self.add("Ground", name + "Floor", (0.2, r * 2, r * 2), (x, 0.08, z), lighten(color, -0.25), "Slate",
+                 angles=(0, 0, 90), props={"Shape": "Cylinder"})
+        seg = 2 * math.pi * r / segments + 1
+        for k in range(segments):
+            a = 2 * math.pi * k / segments
+            self.box("Cover", name + "Rim", (seg, height, 3), (x + math.cos(a) * r, height / 2, z + math.sin(a) * r),
+                     color, "Slate", angles=(0, -math.degrees(a) + 90, 0))
+
+    def solar_panel(self, x, z, along_x=True, length=12):
+        """Schräges Solarpaneel auf Stützen (Deckung zum Ducken, man kann drunter durchschauen)."""
+        size = (length, 0.3, 4) if along_x else (4, 0.3, length)
+        angles = (25, 0, 0) if along_x else (0, 0, 25)
+        self.box("Cover", "SolarPanel", size, (x, 3, z), (30, 40, 80), "Glass", angles=angles)
+        for d in (-1, 1):
+            px, pz = (x + d * (length / 2 - 1), z) if along_x else (x, z + d * (length / 2 - 1))
+            self.box("Decor", "SolarPost", (0.4, 3, 0.4), (px, 1.5, pz), (150, 150, 155), "Metal")
+
     def half_wall(self, x, z, length, along_x=True, color=(150, 150, 150)):
         """Brusthohe Deckung (man kann darüber schießen)."""
         self.cover_wall(x, z, length, along_x=along_x, height=3.4, color=color)
@@ -428,14 +505,18 @@ class Builder:
                  props={"Transparency": 1 if bg is None else 0, "CanCollide": False, "CanQuery": False},
                  children=[gui])
 
-    def save(self, filename, display_name=None):
+    def save(self, filename, display_name=None, atmosphere=None):
+        """atmosphere: Lichtstimmung auf dem Client (MapAtmosphere: "Space", "Tropical"), sonst normales Licht."""
+        attrs = {
+            "DisplayName": {"String": display_name or MAP_NAMES.get(filename.replace(".model.json", ""),
+                                                                    filename.replace(".model.json", ""))},
+            "Center": {"Vector3": [float(v) for v in self.origin]},
+        }
+        if atmosphere:
+            attrs["Atmosphere"] = {"String": atmosphere}
         model = {
             "ClassName": "Model",
-            "Properties": {"Attributes": {"Attributes": {
-                "DisplayName": {"String": display_name or MAP_NAMES.get(filename.replace(".model.json", ""),
-                                                                         filename.replace(".model.json", ""))},
-                "Center": {"Vector3": [float(v) for v in self.origin]},
-            }}},
+            "Properties": {"Attributes": {"Attributes": attrs}},
             "Children": [{"Name": g, "ClassName": "Folder", "Children": c} for g, c in self.groups.items()],
         }
         os.makedirs(OUT_DIR, exist_ok=True)
@@ -1806,6 +1887,707 @@ def build_altstadt():
     b.save("FreeForAll.model.json", "Altstadt")
 
 
+# ---------- Free-for-All: "Favela" (220 x 220), Rogue-Company-Stil ----------
+
+FAVELA_ORIGIN = (0, 0, -1500)
+ORBIT_ORIGIN = (-1500, 0, 0)
+LAGUNE_ORIGIN = (1500, 0, 1500)
+MONDBASIS_ORIGIN = (3000, 0, -1500)
+RC_COLORS = [(255, 120, 150), (80, 200, 190), (250, 205, 80), (255, 150, 70), (150, 210, 90), (120, 150, 235),
+             (235, 110, 95), (200, 125, 225)]
+
+
+def build_favela():
+    """Favela: Bolzplatz mit Tribünen in der Mitte, zwei Ringe aus bunten Flachdach-Häusern (innen 8 hoch,
+    außen 10 hoch) mit engen Gassen und Durchgängen. Über die Dächer ein zusammenhängendes Netz aus Stegen
+    (innerer Ring rundum, äußerer Ring in vier Bögen, Rampen dazwischen), Treppen von den Gassen hinauf,
+    Wassertanks auf den Dächern als Deckung. Plätze an den Hauptgassen mit Kiosk und Palmen (keine langen
+    Sichtlinien vom Rand zum Platz). 16 Spawns außen."""
+    b = Builder(FAVELA_ORIGIN)
+    rng = random.Random(23)
+    size = 220
+    b.ground(size + 10, size + 10, (196, 170, 132), "Concrete")
+    b.border(size, size, 22, (214, 126, 96), "Brick", barrier=140)
+    colors = iter(RC_COLORS * 8)
+    white, wood = (245, 245, 240), (130, 96, 64)
+
+    # ---------- Bolzplatz ----------
+    b.box("Ground", "Court", (44, 0.1, 30), (0, 0.05, 0), (60, 150, 100), "SmoothPlastic")
+    for size_l, pos in (((44, 0.06, 0.3), (0, 0.12, 15)), ((44, 0.06, 0.3), (0, 0.12, -15)),
+                        ((0.3, 0.06, 30), (22, 0.12, 0)), ((0.3, 0.06, 30), (-22, 0.12, 0)), ((0.3, 0.06, 30), (0, 0.12, 0))):
+        b.box("Ground", "CourtLine", size_l, pos, white, "SmoothPlastic")
+    b.add("Ground", "CourtCircle", (0.06, 9, 9), (0, 0.11, 0), white, "SmoothPlastic", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    b.add("Ground", "CourtCircleIn", (0.06, 8.4, 8.4), (0, 0.13, 0), (60, 150, 100), "SmoothPlastic", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    for sx in (-1, 1):
+        for dz in (-3.2, 3.2):
+            b.box("Decor", "GoalPost", (0.4, 3.4, 0.4), (sx * 22, 1.7, dz), white, "Metal")
+        b.box("Decor", "GoalBar", (0.4, 0.4, 6.8), (sx * 22, 3.4, 0), white, "Metal")
+        b.box("Decor", "GoalNet", (2, 3.2, 6.4), (sx * 23.2, 1.6, 0), (230, 230, 230), "Fabric",
+              props={"Transparency": 0.55, "CanCollide": False})
+        # brusthohe Bande mit Lücken (Mitte der Längsseiten, Ecken)
+        b.half_wall(sx * 13, 16.2, 14, along_x=True, color=(250, 205, 80))
+        b.half_wall(sx * 13, -16.2, 14, along_x=True, color=(250, 205, 80))
+        b.half_wall(sx * 24.5, 0, 14, along_x=False, color=(250, 205, 80))
+    # Tribünen (drei Stufen) nördlich und südlich
+    for sz in (-1, 1):
+        for k, (h, depth) in enumerate(((1.2, 6), (2.4, 4), (3.6, 2))):
+            b.box("Buildings", "Bleacher", (30, h, depth), (0, h / 2, sz * (18 + 3 - depth / 2 + 3)), (120, 150, 235)
+                  if k % 2 == 0 else (90, 120, 210), "Concrete")
+
+    # ---------- Innerer Ring (8 hoch, Dach 9): Reihen N/S, Spalten O/W ----------
+    inner = []
+    for sz in (-1, 1):
+        for x in (-36, -12, 12, 36):
+            inner.append(("Row", x, sz * 40, 16, 12, sz))
+    for sx in (-1, 1):
+        for z in (-16, 16):
+            inner.append(("Col", sx * 44, z, 12, 16, sx))
+    for kind, x, z, w, d, side in inner:
+        if kind == "Row":
+            inside = "S" if side > 0 else "N"
+            outside = "N" if side > 0 else "S"
+            gaps = {inside: [5 if x > 0 else -5]} if abs(x) == 36 else {}
+            b.flat_house(f"InnerRow{x}{z}", x, z, w, d, 8, next(colors), doors={inside: [0], outside: [0]},
+                         windows={inside: [-5, 5], outside: [-5, 5]}, parapet=(inside,), gaps=gaps, trim=white)
+        else:
+            inside = "W" if side > 0 else "E"
+            outside = "E" if side > 0 else "W"
+            b.flat_house(f"InnerCol{x}{z}", x, z, w, d, 8, next(colors), doors={inside: [0], outside: [0]},
+                         windows={inside: [-5, 5], outside: [-5]}, parapet=(inside,), trim=white)
+    # Stege auf dem inneren Ring (rundum verbunden)
+    for sz in (-1, 1):
+        for x0, x1 in ((-28, -20), (-4, 4), (20, 28)):
+            b.plank("RoofBridge", (x0, 9, sz * 40), (x1, 9, sz * 40))
+        for sx in (-1, 1):
+            b.plank("RoofBridge", (sx * 41, 9, sz * 24), (sx * 41, 9, sz * 34))
+    for sx in (-1, 1):
+        b.plank("RoofBridge", (sx * 44, 9, -8), (sx * 44, 9, 8))
+    # Treppen von außen hinauf (je zwei pro Seite)
+    for sz in (-1, 1):
+        for sx in (-1, 1):
+            b.stairs("RoofStairs", sx * 20, sz * 49, 4, 9, "W" if sx > 0 else "E", color=(160, 150, 140))
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            b.stairs("RoofStairs", sx * 53, sz * 24, 4, 9, "S" if sz > 0 else "N", color=(160, 150, 140))
+
+    # ---------- Äußerer Ring (10 hoch, Dach 11) ----------
+    for sz in (-1, 1):
+        for x in (-80, -54, -28, 28, 54, 80):
+            inside = "S" if sz > 0 else "N"
+            outside = "N" if sz > 0 else "S"
+            gaps = {inside: [4 if x > 0 else -4]} if abs(x) == 28 else {}
+            b.flat_house(f"OuterRow{x}{sz}", x, sz * 76, 18, 14, 10, next(colors), doors={inside: [-4], outside: [4]},
+                         windows={inside: [4], outside: [-4]}, parapet=(inside,), gaps=gaps, trim=white)
+    for sx in (-1, 1):
+        for z in (-48, -22, 22, 48):
+            inside = "W" if sx > 0 else "E"
+            outside = "E" if sx > 0 else "W"
+            gaps = {inside: [-4 if z > 0 else 4]} if abs(z) == 22 else {}
+            b.flat_house(f"OuterCol{sx}{z}", sx * 78, z, 14, 18, 10, next(colors), doors={inside: [4], outside: [-4]},
+                         windows={inside: [-4], outside: [4]}, parapet=(inside,), gaps=gaps, trim=white)
+    for sz in (-1, 1):
+        for sx in (-1, 1):
+            b.plank("RoofBridge", (sx * 37, 11, sz * 76), (sx * 45, 11, sz * 76))
+            b.plank("RoofBridge", (sx * 63, 11, sz * 76), (sx * 71, 11, sz * 76))
+            b.plank("RoofBridge", (sx * 78, 11, sz * 31), (sx * 78, 11, sz * 39))
+            b.plank("RoofBridge", (sx * 78, 11, sz * 57), (sx * 78, 11, sz * 69))
+            # Rampen vom inneren auf den äußeren Ring
+            b.plank("RoofRamp", (sx * 32, 9, sz * 46), (sx * 32, 11, sz * 69))
+            b.plank("RoofRamp", (sx * 50, 9, sz * 18), (sx * 71, 11, sz * 18))
+            # Treppen von außen auf den äußeren Ring
+            b.stairs("RoofStairs", sx * 46, sz * 86, 4, 11, "E" if sx > 0 else "W", color=(160, 150, 140))
+            b.stairs("RoofStairs", sx * 88, sz * 40, 4, 11, "N" if sz > 0 else "S", color=(160, 150, 140))
+    # Wassertanks und Schüsseln auf den Dächern (Deckung oben)
+    for x, z, top in ((-12, 43, 9), (12, -43, 9), (-46, 13, 9), (46, -13, 9), (54, 79, 11), (-54, -79, 11),
+                      (-81, 48, 11), (81, -48, 11), (80, 76, 11), (-80, -76, 11)):
+        b.cylinder("Cover", "WaterTank", 3.4, 4, (x, top + 2, z), (60, 120, 210), "SmoothPlastic")
+    for x, z, top in ((36, 43, 9), (-36, -43, 9), (-28, 79, 11), (28, -79, 11)):
+        b.add("Decor", "Dish", (0.3, 3, 3), (x, top + 1.8, z), (235, 235, 235), "Metal", angles=(0, 30, 70),
+              props={"Shape": "Cylinder"})
+
+    # ---------- Plätze an den Hauptgassen: Kiosk (bricht die Sichtlinie), Palmen, Stände ----------
+    for sx, sz, ax in ((0, 1, True), (0, -1, True), (1, 0, False), (-1, 0, False)):
+        kx, kz = sx * 60, sz * 60
+        w, d = (14, 9) if ax else (9, 14)
+        b.flat_house(f"Kiosk{sx}{sz}", kx, kz, w, d, 7, next(colors),
+                     doors={"E": [0], "W": [0]} if ax else {"N": [0], "S": [0]},
+                     windows={"N": [-3, 3], "S": [-3, 3]} if ax else {"E": [-3, 3], "W": [-3, 3]}, parapet=(), trim=white)
+        for dd in (-1, 1):
+            px, pz = (kx + dd * 13, kz + sz * 14) if ax else (kx + sx * 14, kz + dd * 13)
+            b.palm(px, pz, h=rng.uniform(12, 16), rng=rng)
+        stall_pos = (kx + 12, kz - sz * 10) if ax else (kx - sx * 10, kz + 12)
+        b.stall(stall_pos[0], stall_pos[1], along_x=ax, canopy=next(colors))
+    # Diagonale Plätze: Palme, Kisten, halbhohe Mauer, Moped
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            b.palm(sx * 60, sz * 58, h=rng.uniform(12, 15), rng=rng)
+            b.crate(sx * 54, sz * 62, s=3, color=(150, 110, 70))
+            b.half_wall(sx * 63, sz * 63, 7, along_x=sx * sz > 0, color=next(colors))
+            b.box("Cover", "Moped", (3.6, 2.4, 1.4), (sx * 56, 1.2, sz * 54), next(colors), "SmoothPlastic")
+            # Wäscheleinen über den Gassen (Deko)
+            b.box("Decor", "Laundry", (0.1, 0.1, 10), (sx * 24, 7, sz * 29), (60, 60, 60), "Fabric",
+                  props={"CanCollide": False})
+            for k in range(3):
+                b.box("Decor", "Cloth", (0.1, 1.6, 1.6), (sx * 24, 6.1, sz * 29 + (k - 1) * 3), next(colors), "Fabric",
+                      props={"CanCollide": False})
+
+    # ---------- Außenring: Spawns mit Deckung, Graffiti-Schild ----------
+    points = [(sx * 100, sz * 100) for sx in (-1, 1) for sz in (-1, 1)]
+    points += [(0, 100), (0, -100), (100, 0), (-100, 0)]
+    points += [(sx * 50, sz * 100) for sx in (-1, 1) for sz in (-1, 1)]
+    points += [(sx * 100, sz * 50) for sx in (-1, 1) for sz in (-1, 1)]
+    for x, z in points:
+        b.spawn(x, z, yaw=face(x, z))
+        cx, cz = x * 0.9, z * 0.9
+        b.crate(cx + (3 if x == 0 else 0), cz + (3 if z == 0 else 0), s=3.4, color=(150, 110, 70))
+    b.sign("FavelaSign", (30, 6, 0.4), (0, 16, 108.5), "FAVELA", (40, 40, 50), (255, 120, 150), angles=(0, 180, 0))
+    b.sign("FavelaSignS", (30, 6, 0.4), (0, 16, -108.5), "FAVELA", (40, 40, 50), (80, 200, 190))
+
+    b.save("Favela.model.json", "Favela", atmosphere="Tropical")
+
+
+# ---------- Free-for-All: "Orbit" (210 x 210), Raumstation ----------
+
+def build_orbit():
+    """Orbit: Raumstation unter Sternenhimmel. Mitte: Reaktorraum mit leuchtendem Kern, Kühltanks als Deckung und
+    Laufstegen an zwei Wänden. Vier geschlossene Korridore (Fensterschlitze, Seitentüren) führen zu den Modulen:
+    Kommandozentrale (zweistöckig, N), Hangar mit Shuttle (S), Labor (zweistöckig, O), Gewächshaus aus Glas (W).
+    Dazwischen offene Decks: Landeplattform, Antennenturm mit Aussichtsplattform, Frachtbereich (zwei Ebenen),
+    Solarfarm. 16 Spawns am Rand."""
+    b = Builder(ORBIT_ORIGIN)
+    size = 210
+    deck, wall, white = (44, 48, 58), (66, 72, 86), (214, 220, 232)
+    cyan, magenta, dark = (60, 220, 255), (230, 80, 255), (26, 28, 36)
+    b.ground(size + 10, size + 10, deck, "DiamondPlate")
+    b.border(size, size, 20, (34, 38, 48), "Metal", barrier=140)
+    for d in (-1, 1):
+        b.box("Decor", "BorderGlow", (size, 0.4, 0.4), (0, 19.6, d * (size / 2 + 0.3)), cyan, "Neon")
+        b.box("Decor", "BorderGlow", (0.4, 0.4, size), (d * (size / 2 + 0.3), 19.6, 0), cyan, "Neon")
+    # Leuchtlinien im Boden
+    for k in range(-90, 91, 30):
+        b.box("Ground", "FloorLine", (size, 0.06, 0.25), (0, 0.04, k), cyan, "Neon", props={"Transparency": 0.7})
+        b.box("Ground", "FloorLine", (0.25, 0.06, size), (k, 0.04, 0), cyan, "Neon", props={"Transparency": 0.7})
+    # Planet mit Ring am Himmel (nur Deko)
+    b.add("Decor", "Planet", (180, 180, 180), (-180, 230, 260), (210, 120, 90), "SmoothPlastic",
+          props={"Shape": "Ball", "CanCollide": False, "CanQuery": False, "CastShadow": False})
+    b.add("Decor", "PlanetRing", (1, 320, 320), (-180, 230, 260), (230, 200, 150), "SmoothPlastic", angles=(20, 0, 70),
+          props={"Shape": "Cylinder", "CanCollide": False, "CanQuery": False, "CastShadow": False, "Transparency": 0.5})
+
+    # ---------- Reaktorraum (52 x 52, Höhe 16) ----------
+    R, RH = 26, 16
+    for z, name in ((R, "ReactorN"), (-R, "ReactorS")):
+        b.wall_line(name, -R, R, z, True, RH, wall, "Metal", openings=[(0, 10, 0, 9), (-15, 4, 10, 13), (15, 4, 10, 13)])
+    for x, name in ((R, "ReactorE"), (-R, "ReactorW")):
+        b.wall_line(name, -R + 1.2, R - 1.2, x, False, RH, wall, "Metal",
+                    openings=[(0, 10, 0, 9), (-15, 4, 10, 13), (15, 4, 10, 13)])
+    for z in (R + 0.7, -R - 0.7):
+        b.box("Decor", "ReactorGlow", (R * 2, 0.4, 0.3), (0, RH - 0.5, z), magenta, "Neon")
+    for x in (R + 0.7, -R - 0.7):
+        b.box("Decor", "ReactorGlow", (0.3, 0.4, R * 2), (x, RH - 0.5, 0), magenta, "Neon")
+    b.cylinder("Buildings", "CoreBase", 16, 2, (0, 1, 0), (80, 86, 100), "Metal")
+    b.cylinder("Buildings", "Core", 7, 30, (0, 15, 0), cyan, "Neon")
+    for y in (6, 12, 18, 24):
+        b.cylinder("Decor", "CoreRing", 9.4, 0.6, (0, y, 0), magenta, "Neon")
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            b.cylinder("Cover", "CoolantTank", 4.4, 6, (sx * 13, 3, sz * 13), white, "Metal")
+            b.cylinder("Decor", "CoolantBand", 4.6, 0.4, (sx * 13, 4.5, sz * 13), cyan, "Neon")
+    for x, z in ((0, 13), (0, -13)):
+        b.half_wall(x, z, 6, along_x=True, color=(90, 96, 110))
+    # Laufstege an Nord- und Südwand (Höhe 8), Treppen an beiden Enden
+    for dz in (-1, 1):
+        z0, z1 = (20, 25.4) if dz > 0 else (-25.4, -20)
+        b.catwalk("ReactorWalk", -14.6, 14.6, z0, z1, 8, rails=("S" if dz > 0 else "N",), rail_color=cyan)
+        b.stairs("ReactorStairs", -25.2, dz * 22.7, 4, 8, "E", color=(80, 86, 100))
+        b.stairs("ReactorStairs", 25.2, dz * 22.7, 4, 8, "W", color=(80, 86, 100))
+
+    # ---------- Korridore zu den Modulen (Breite 14, Höhe 9, Dach mit Lichtband) ----------
+    for d in (-1, 1):
+        # Nord/Süd
+        za, zb = sorted((d * (R + 0.6), d * 53))
+        for x in (-7, 7):
+            b.wall_line("Corridor", za, zb, x, False, 9, wall, "Metal",
+                        openings=[(d * 39.5, 5, 0, 7.5), (d * 33, 4, 3, 6), (d * 46, 4, 3, 6)])
+        b.box("Buildings", "CorridorRoof", (15.2, 1, zb - za), (0, 9.5, (za + zb) / 2), (54, 58, 70), "Metal")
+        b.box("Decor", "CorridorLight", (2, 0.2, zb - za), (0, 8.9, (za + zb) / 2), white, "Neon")
+        # Ost/West
+        xa, xb = sorted((d * (R + 0.6), d * 56))
+        for z in (-7, 7):
+            b.wall_line("Corridor", xa, xb, z, True, 9, wall, "Metal",
+                        openings=[(d * 41, 5, 0, 7.5), (d * 34, 4, 3, 6), (d * 48, 4, 3, 6)])
+        b.box("Buildings", "CorridorRoof", (xb - xa, 1, 15.2), ((xa + xb) / 2, 9.5, 0), (54, 58, 70), "Metal")
+        b.box("Decor", "CorridorLight", (xb - xa, 0.2, 2), ((xa + xb) / 2, 8.9, 0), white, "Neon")
+
+    # ---------- Module ----------
+    b.building2("Command", 0, 64, 34, 22, white, (50, 54, 66), doors={"S": [0], "E": [0], "W": [0]},
+                windows1={"S": [-11, 11], "E": [-5], "W": [5]}, windows2={"S": [-12, -4, 4, 12], "N": [-8, 8], "E": [0], "W": [0]},
+                stairs_at=("N",), material="Metal")
+    b.box("Decor", "CommandGlow", (34.4, 0.4, 22.4), (0, 10.2, 64), cyan, "Neon", props={"Transparency": 0.5})
+    b.building2("Lab", 68, 0, 22, 34, white, (50, 54, 66), doors={"W": [0], "N": [0], "S": [0]},
+                windows1={"W": [-11, 11], "N": [5], "S": [-5]}, windows2={"W": [-12, -4, 4, 12], "E": [-8, 8], "N": [0], "S": [0]},
+                stairs_at=("E",), material="Metal")
+    b.box("Decor", "LabGlow", (22.4, 0.4, 34.4), (68, 10.2, 0), magenta, "Neon", props={"Transparency": 0.5})
+    # Hangar (offen nach Norden mit zwei großen Toren) mit Shuttle
+    hx0, hx1, hz0, hz1, hh = -22, 22, -84, -54, 18
+    b.wall_line("Hangar", hx0, hx1, hz1, True, hh, wall, "Metal", openings=[(0, 8, 0, 8), (-14, 10, 0, 11), (14, 10, 0, 11)])
+    b.wall_line("Hangar", hx0, hx1, hz0, True, hh, wall, "Metal")
+    for x in (hx0, hx1):
+        b.wall_line("Hangar", hz0 + 1.2, hz1 - 1.2, x, False, hh, wall, "Metal", openings=[(-69, 6, 0, 8)])
+    b.box("Buildings", "HangarRoof", (hx1 - hx0, 1, hz1 - hz0), (0, hh + 0.5, (hz0 + hz1) / 2), (50, 54, 66), "Metal")
+    b.box("Cover", "Shuttle", (8, 5, 16), (0, 3.4, -70), white, "Metal")
+    b.box("Cover", "ShuttleWing", (20, 0.8, 6), (0, 2.6, -72), (180, 186, 200), "Metal")
+    b.add("Decor", "ShuttleCockpit", (6, 4, 6), (0, 4, -61.5), (40, 60, 90), "Glass", props={"Shape": "Ball"})
+    for x in (-2.5, 2.5):
+        b.add("Decor", "ShuttleEngine", (2.4, 3, 3), (x, 3.4, -79), (60, 64, 76), "Metal", angles=(0, 90, 0),
+              props={"Shape": "Cylinder"})
+        b.add("Decor", "ShuttleFlame", (0.3, 2.4, 2.4), (x, 3.4, -80.4), cyan, "Neon", angles=(0, 90, 0),
+              props={"Shape": "Cylinder"})
+    for x, z in ((-16, -78), (16, -78), (-15, -62), (15, -62)):
+        b.crate(x, z, s=4, color=(70, 76, 92))
+    # Gewächshaus aus Glas mit Pflanzbeeten
+    gx0, gx1, gz0, gz1, gh = -79, -57, -17, 17, 10
+    for z in (gz0, gz1):
+        b.wall_line("Greenhouse", gx0, gx1, z, True, gh, (170, 220, 230), "Glass", openings=[(-68, 5, 0, 7.5)])
+    b.wall_line("Greenhouse", gz0 + 1.2, gz1 - 1.2, gx1, False, gh, (170, 220, 230), "Glass", openings=[(0, 6, 0, 8)])
+    b.wall_line("Greenhouse", gz0 + 1.2, gz1 - 1.2, gx0, False, gh, (170, 220, 230), "Glass", openings=[(-8, 5, 0, 7.5)])
+    b.box("Buildings", "GreenhouseRoof", (gx1 - gx0, 0.5, gz1 - gz0), ((gx0 + gx1) / 2, gh + 0.25, 0), (170, 220, 230),
+          "Glass", props={"Transparency": 0.5})
+    for z in (-10, 0, 10):
+        b.box("Cover", "Planter", (14, 2.4, 3), (-68, 1.2, z), (80, 64, 50), "Wood")
+        b.box("Decor", "Plants", (13, 1.2, 2.4), (-68, 3, z), (80, 200, 110), "Grass")
+
+    # ---------- Decks in den Ecken ----------
+    # NO: Landeplattform mit kleinem Schiff
+    b.cylinder("Ground", "LandingPad", 34, 0.4, (62, 0.2, 62), (60, 66, 80), "Metal")
+    b.cylinder("Ground", "LandingRing", 30, 0.45, (62, 0.22, 62), cyan, "Neon", props={"Transparency": 0.5})
+    b.cylinder("Ground", "LandingCenter", 28.6, 0.5, (62, 0.25, 62), (60, 66, 80), "Metal")
+    b.box("Cover", "Ship", (6, 4, 12), (62, 3, 62), (200, 205, 220), "Metal", angles=(0, 45, 0))
+    b.box("Cover", "ShipWing", (16, 0.8, 4), (62, 2.2, 62), (150, 156, 170), "Metal", angles=(0, 45, 0))
+    for a in range(0, 360, 60):
+        b.box("Decor", "PadLight", (0.8, 0.6, 0.8), (62 + math.cos(math.radians(a)) * 16, 0.6, 62 + math.sin(math.radians(a)) * 16),
+              magenta, "Neon")
+    # NW: Antennenturm mit Aussichtsplattform (Höhe 8)
+    tx, tz = -62, 62
+    for dx in (-5, 5):
+        for dz in (-5, 5):
+            b.pillar(tx + dx, tz + dz, 8, s=1, color=(90, 96, 110))
+    b.catwalk("TowerDeck", tx - 6, tx + 6, tz - 6, tz + 6, 8, rails=("N", "W"), rail_color=cyan)
+    b.box("Cover", "TowerParapet", (12, 1.6, 0.6), (tx, 8.8, tz - 5.7), (70, 76, 90), "Metal")
+    b.box("Cover", "TowerParapet", (0.6, 1.6, 12), (tx + 5.7, 8.8, tz), (70, 76, 90), "Metal")
+    b.stairs("TowerStairs", tx - 8.5, tz - 16.4, 4, 8, "N", color=(90, 96, 110))
+    b.box("Decor", "Antenna", (0.6, 18, 0.6), (tx - 4, 17, tz + 4), (200, 200, 210), "Metal")
+    b.box("Decor", "AntennaTip", (1, 1, 1), (tx - 4, 26.5, tz + 4), (255, 60, 60), "Neon")
+    # SO: Frachtbereich (Kisten, zwei Ebenen mit Rampe)
+    for x, z, lvl in ((56, -56, 0), (66, -56, 0), (56, -66, 0), (66, -66, 1), (76, -66, 0), (66, -76, 0), (56, -76, 0)):
+        b.box("Cover", "Cargo", (8, 8, 8), (x, 4 + lvl * 8, z), (70, 76, 92), "Metal")
+        b.box("Decor", "CargoStripe", (8.2, 0.5, 8.2), (x, 6 + lvl * 8, z), magenta if (x + z) % 20 else cyan, "Neon")
+    b.ramp("CargoRamp", 52, -61, 5, 10, 8, "W")
+    # SW: Solarfarm und Satellitenschüssel
+    for x in (-80, -64, -48):
+        for z in (-50, -64, -78):
+            b.solar_panel(x, z, along_x=True, length=12)
+    b.cylinder("Buildings", "DishBase", 4, 6, (-86, 3, -88), (90, 96, 110), "Metal")
+    b.add("Decor", "Dish", (1, 14, 14), (-86, 10, -88), white, "Metal", angles=(0, 45, 60),
+          props={"Shape": "Cylinder", "CanCollide": False})
+
+    # Kuppel-Pods am Außenring (brechen die langen Sichtlinien am Rand)
+    for x, z in ((40, 76), (-40, 76), (40, -76), (-40, -76), (76, 40), (-76, 40), (76, -40), (-76, -40)):
+        b.cylinder("Cover", "Pod", 7, 5, (x, 2.5, z), (90, 96, 112), "Metal")
+        b.add("Decor", "PodDome", (7, 5, 7), (x, 5, z), (120, 200, 230), "Glass", props={"Shape": "Ball", "Transparency": 0.35})
+        b.cylinder("Decor", "PodGlow", 7.2, 0.3, (x, 4.4, z), magenta, "Neon")
+    b.sign("OrbitSignS", (26, 5, 0.4), (0, 15, -104), "ORBIT STATION", dark, magenta)
+
+    # Energie-Barrieren als Deckung zwischen den Decks
+    for x, z, ax in ((36, 36, True), (-36, 36, False), (36, -36, False), (-36, -36, True), (86, 30, False), (-86, -30, False),
+                     (30, -90, True), (-30, 90, True)):
+        b.half_wall(x, z, 8, along_x=ax, color=(70, 76, 90))
+        size_g = (8, 0.3, 0.3) if ax else (0.3, 0.3, 8)
+        b.box("Decor", "BarrierGlow", size_g, (x, 3.5, z), cyan, "Neon")
+
+    # ---------- Spawns (16) ----------
+    points = [(sx * 95, sz * 95) for sx in (-1, 1) for sz in (-1, 1)]
+    points += [(0, 96), (0, -96), (96, 0), (-96, 0)]
+    points += [(sx * 40, sz * 96) for sx in (-1, 1) for sz in (-1, 1)]
+    points += [(sx * 96, sz * 40) for sx in (-1, 1) for sz in (-1, 1)]
+    for x, z in points:
+        b.spawn(x, z, yaw=face(x, z))
+    b.sign("OrbitSign", (26, 5, 0.4), (0, 15, 104), "ORBIT STATION", dark, cyan, angles=(0, 180, 0))
+
+    b.save("Orbit.model.json", "Orbit", atmosphere="Space")
+
+
+# ---------- Gemeinsame Teile der Herrschaft-Maps (340 x 230, Rot im Westen, Blau im Osten) ----------
+
+def team_base(b, sx, team_col, folder, tag, wall_col, roof_col, roof_mat="Metal", pad_col=(100, 102, 106)):
+    """Überdachte Basis an der Schmalseite (x = sx * 138..170): Front mit drei Ausgängen, an den Seiten je ein
+    Tor, 8 Spawns mit Blick zur Mitte, Deckung im Spawn."""
+    b.box("Ground", "BasePad", (32, 0.2, 70), (sx * 154, 0.1, 0), pad_col, "Concrete")
+    b.box("Buildings", "BaseRoof", (32, 1, 70), (sx * 154, 11.5, 0), roof_col, roof_mat)
+    b.box("Decor", "BaseRoofEdge", (0.4, 0.4, 70), (sx * 138.2, 11, 0), team_col, "Neon")
+    for z in (-34, -12, 12, 34):
+        b.pillar(sx * 139, z, 11, s=1.6, color=wall_col)
+    b.wall_line("BaseFront", -35, 35, sx * 138, False, 11, wall_col, "Concrete",
+                openings=[(-23, 9, 0, 8), (0, 12, 0, 8), (23, 9, 0, 8)])
+    for z in (-35.6, 35.6):
+        b.wall_line("BaseSide", min(sx * 138, sx * 170), max(sx * 138, sx * 170), z, True, 11, wall_col, "Concrete",
+                    openings=[(sx * 152, 10, 0, 8)])
+    b.box("Decor", "BaseStrip", (0.3, 0.4, 70), (sx * (138 - 0.8), 8.6, 0), team_col, "Neon")
+    b.sign("BaseSign" + tag, (14, 3, 0.4), (sx * 137.1, 13.6, 0), "TEAM " + tag.upper(), (28, 30, 34), team_col,
+           angles=(0, 90 * sx, 0))
+    for z in (-26, -9, 9, 26):
+        for x in (sx * 160, sx * 148):
+            b.spawn(x, z, yaw=face(x, z, 0, z), group=folder)
+    for z in (-17, 17):
+        b.crate(sx * 144, z, s=4, color=(110, 100, 80))
+
+
+def flag_marker(b, name, x, color, pole_side=1):
+    """Flaggen-Zone (Scheibe, Radius 9) und Mast mit Tuch und Buchstabe neben der Zone."""
+    b.add("Objective", "Flag" + name, (0.3, 18, 18), (x, 0.25, 0), (230, 230, 235), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+    px = x + pole_side * 10.5
+    b.box("Decor", "FlagPole" + name, (0.6, 14, 0.6), (px, 7, 0), (60, 60, 65), "Metal")
+    b.box("Decor", "FlagCloth" + name, (0.2, 2.6, 4), (px, 12.5, 2.2), color, "Fabric")
+    b.sign("FlagSign" + name, (4, 4, 0.4), (px, 16.5, 0), name, (25, 25, 30), (255, 255, 255),
+           angles=(0, -90 * pole_side, 0))
+
+
+# ---------- Herrschaft: "Lagune" (340 x 230), Rogue-Company-Stil ----------
+
+def build_lagune():
+    """Lagune: Hotel-Insel im Meer. Mitte: Hotel mit offenem Innenhof (Flagge B) und umlaufender Galerie im
+    ersten Stock (Treppen in zwei Ecken, Fenster nach außen). A und C auf Pool-Terrassen (zwei Becken links und
+    rechts der Flagge, Liegen, Schirme, Cabana), dazwischen zweistöckige Villen. Norden: Strand mit
+    Rettungstürmen (erhöhte Plattform), Booten, Beachvolleyball, Felsen. Süden: Garten mit Hecken,
+    Tennisplatz und Pavillons. Basen überdacht (Stroh), spiegelgleich."""
+    b = Builder(LAGUNE_ORIGIN)
+    rng = random.Random(77)
+    SX, SZ = 340, 230
+    paving, sand, grass = (232, 224, 208), (238, 218, 168), (110, 175, 85)
+    stucco, terracotta, wood = (246, 242, 234), (200, 110, 70), (150, 110, 70)
+    pool, teal, pink = (60, 190, 220), (60, 190, 180), (240, 120, 150)
+    b.ground(SX + 10, SZ + 10, paving, "Concrete")
+    b.border(SX, SZ, 3.5, (200, 190, 170), "Sandstone", barrier=140)
+    # Meer rund um die Insel (Deko) mit Sandstrand am Rand
+    for x, z, w, d in ((0, 425, 1200, 600), (0, -425, 1200, 600), (475, 0, 600, 250), (-475, 0, 600, 250)):
+        b.box("Decor", "Ocean", (w, 1, d), (x, -0.7, z), (40, 160, 200), "Glass",
+              props={"Transparency": 0.15, "CanCollide": False, "CanQuery": False, "CastShadow": False})
+    b.box("Ground", "Beach", (SX, 0.08, 80), (0, 0.04, 75), sand, "Sand")
+    b.box("Ground", "Garden", (SX - 80, 0.08, 80), (0, 0.04, -75), grass, "Grass")
+    b.box("Ground", "Shallows", (SX, 0.06, 10), (0, 0.06, 110), (90, 200, 220), "Glass", props={"Transparency": 0.2})
+
+    for sx, team_col, folder, tag in ((-1, (210, 80, 70), "SpawnsA", "Rot"), (1, (60, 120, 210), "SpawnsB", "Blau")):
+        team_base(b, sx, team_col, folder, tag, stucco, (170, 130, 70), "Wood", pad_col=(222, 212, 192))
+        # Leitwände vor der Basis als Blumenkübel
+        for z in (-18, 0, 18):
+            b.box("Cover", "Planter", (2, 2.8, 7), (sx * 126, 1.4, z), terracotta, "Brick")
+            b.box("Decor", "Flowers", (1.8, 1, 6.6), (sx * 126, 3.2, z), pink, "Grass")
+
+        # ---------- Pool-Terrasse mit Flagge A / C ----------
+        fx = sx * 95
+        b.box("Ground", "PoolDeck", (42, 0.15, 50), (fx, 0.08, 0), (214, 196, 160), "WoodPlanks")
+        for dz in (-1, 1):
+            pz = dz * 17
+            b.box("Ground", "PoolWater", (24, 0.1, 7), (fx, 0.2, pz), pool, "Glass", props={"Transparency": 0.1})
+            for wz in (pz - 3.9, pz + 3.9):
+                b.box("Cover", "PoolRim", (25.6, 1.3, 0.8), (fx, 0.65, wz), stucco, "Concrete")
+            for wx in (fx - 12.4, fx + 12.4):
+                b.box("Cover", "PoolRim", (0.8, 1.3, 7), (wx, 0.65, pz), stucco, "Concrete")
+            # Liegen und Schirme
+            for k in (-8, 0, 8):
+                b.box("Cover", "Lounger", (2.2, 0.9, 5), (fx + k, 0.45, dz * 25), (250, 250, 250), "SmoothPlastic")
+            for ux in (-14, 14):
+                b.box("Decor", "UmbrellaPole", (0.3, 6, 0.3), (fx + ux, 3, dz * 24), (240, 240, 240), "Metal")
+                b.add("Decor", "Umbrella", (0.4, 7, 7), (fx + ux, 6.2, dz * 24), teal if ux > 0 else pink, "Fabric",
+                      angles=(0, 0, 90), props={"Shape": "Cylinder"})
+        # Cabana an der Basis-Seite der Terrasse (Dach, Bar-Theke als Deckung)
+        cx = fx + sx * 16
+        for dz in (-5, 5):
+            for dx in (-4, 4):
+                b.box("Decor", "CabanaPost", (0.5, 7, 0.5), (cx + dx, 3.5, dz), wood, "Wood")
+        b.box("Decor", "CabanaRoof", (10, 0.6, 12), (cx, 7.2, 0), (190, 160, 100), "Grass")
+        b.box("Cover", "BarCounter", (2, 3.4, 9), (cx - sx * 2.5, 1.7, 0), wood, "WoodPlanks")
+        flag_marker(b, "A" if sx < 0 else "C", fx, (255, 120, 120) if sx < 0 else (120, 160, 255), pole_side=-sx)
+        b.palm(fx - sx * 20, 22, h=15, rng=rng)
+        b.palm(fx - sx * 20, -22, h=14, rng=rng)
+
+        # ---------- Villa zwischen Terrasse und Hotel ----------
+        vx = sx * 56
+        b.building2("Villa" + tag, vx, 0, 22, 28, stucco, terracotta,
+                    doors={"E": [-6, 6], "W": [-6, 6], "N": [0], "S": [0]}, windows1={"E": [0], "W": [0]},
+                    windows2={"E": [-8, 0, 8], "W": [-8, 0, 8], "N": [-5, 5], "S": [-5, 5]}, stairs_at=("N",),
+                    material="Concrete")
+        b.box("Decor", "VillaShutters", (22.3, 0.5, 28.3), (vx, 10.2, 0), teal if sx > 0 else pink, "SmoothPlastic")
+        for dz in (-1, 1):
+            b.box("Cover", "Hedge", (8, 3.2, 2), (sx * 38, 1.6, dz * 20), (70, 130, 60), "Grass")
+            b.crate(sx * 72, dz * 19, s=3.4, color=wood)
+
+        # ---------- Norden: Strand ----------
+        lx = sx * 62
+        for dx in (-3, 3):
+            for dz in (-3, 3):
+                b.box("Buildings", "LifeguardLeg", (0.6, 7, 0.6), (lx + dx, 3.5, 72 + dz), (240, 240, 240), "Wood")
+        b.catwalk("LifeguardDeck", lx - 3.6, lx + 3.6, 68.4, 75.6, 7, rails=("N", "E", "W"), color=(220, 80, 70),
+                  rail_color=(240, 240, 240))
+        b.box("Cover", "LifeguardWall", (7.2, 1.6, 0.5), (lx, 7.8, 68.6), (220, 80, 70), "Wood")
+        b.box("Decor", "LifeguardRoof", (8, 0.4, 8), (lx, 11.5, 72), (240, 240, 240), "Fabric")
+        for dx in (-3.4, 3.4):
+            b.box("Decor", "LifeguardRoofPost", (0.3, 4.5, 0.3), (lx + dx, 9.3, 75.4), (240, 240, 240), "Wood")
+        b.stairs("LifeguardStairs", lx, 60.9, 3, 7, "N", color=(240, 240, 240))
+        for x, z, ang in ((sx * 110, 88, 30), (sx * 30, 96, -20)):
+            b.box("Cover", "Boat", (12, 3, 4.4), (x, 1.5, z), (245, 245, 245), "SmoothPlastic", angles=(0, ang, 0))
+            b.box("Decor", "BoatStripe", (12.2, 0.6, 4.6), (x, 2.4, z), teal, "SmoothPlastic", angles=(0, ang, 0))
+        for x, z in ((sx * 88, 54), (sx * 130, 70), (sx * 40, 60), (sx * 100, 104)):
+            b.palm(x, z, h=rng.uniform(12, 16), rng=rng)
+        b.rock(sx * 80, 78, rng)
+        b.rock(sx * 140, 96, rng)
+        for x in (sx * 20, sx * 44):
+            b.box("Cover", "Cabana", (6, 3.2, 3), (x, 1.6, 44), (250, 250, 250), "Fabric")
+            b.add("Decor", "BeachUmbrella", (0.4, 6, 6), (x, 6, 47), pink if sx < 0 else teal, "Fabric", angles=(0, 0, 90),
+                  props={"Shape": "Cylinder"})
+            b.box("Decor", "BeachUmbrellaPole", (0.3, 6, 0.3), (x, 3, 47), (240, 240, 240), "Metal")
+
+        # ---------- Süden: Garten ----------
+        for x, z, ax, length in ((40, -44, True, 18), (78, -52, False, 14), (112, -46, True, 16), (64, -80, True, 20),
+                                 (102, -88, False, 16), (30, -100, True, 14), (130, -74, False, 18)):
+            size_h = (length, 4.4, 2.4) if ax else (2.4, 4.4, length)
+            b.box("Cover", "Hedge", size_h, (sx * x, 2.2, z), (60, 125, 55), "Grass")
+        gx, gz = sx * 60, -66
+        for k in range(6):
+            a = math.radians(k * 60)
+            b.box("Decor", "GazeboPost", (0.5, 7, 0.5), (gx + math.cos(a) * 5, 3.5, gz + math.sin(a) * 5), stucco, "Concrete")
+        b.add("Decor", "GazeboRoof", (0.6, 12, 12), (gx, 7.2, gz), terracotta, "Slate", angles=(0, 0, 90),
+              props={"Shape": "Cylinder"})
+        b.half_wall(gx, gz - 4.6, 6, along_x=True, color=stucco)
+        b.cylinder("Cover", "Fountain", 7, 2.2, (sx * 120, 1.1, -30), stucco, "Concrete")
+        b.cylinder("Decor", "FountainWater", 6, 0.3, (sx * 120, 2.1, -30), pool, "Glass", props={"Transparency": 0.2})
+        b.building2("GardenVilla" + tag, sx * 118, -96, 26, 18, (240, 220, 200), terracotta,
+                    doors={"N": [-6, 6], "E": [0], "W": [0]}, windows1={"N": [0]}, windows2={"N": [-8, 0, 8], "E": [0], "W": [0]},
+                    stairs_at=("S",))
+        b.building2("BeachVilla" + tag, sx * 118, 92, 26, 18, (230, 240, 245), (70, 140, 170),
+                    doors={"S": [-6, 6], "E": [0], "W": [0]}, windows1={"S": [0]}, windows2={"S": [-8, 0, 8], "E": [0], "W": [0]},
+                    stairs_at=("N",))
+
+    # ---------- Mitte: Hotel mit offenem Innenhof (Flagge B) ----------
+    ox, oz, ix, iz, H1, H2 = 34, 26, 20, 13, 9.5, 17.5
+    for z, side in ((oz, 1), (-oz, -1)):
+        b.wall_line("Hotel", -ox, ox, z, True, H2, stucco, "Concrete",
+                    openings=[(-10, 6, 0, 7.5), (10, 6, 0, 7.5), (-25, 4, 3, 6.2), (25, 4, 3, 6.2),
+                              (-26, 4, 11.5, 14.5), (-13, 4, 11.5, 14.5), (0, 4, 11.5, 14.5), (13, 4, 11.5, 14.5),
+                              (26, 4, 11.5, 14.5)])
+    for x in (ox, -ox):
+        b.wall_line("Hotel", -oz + 1.2, oz - 1.2, x, False, H2, stucco, "Concrete",
+                    openings=[(0, 8, 0, 8), (-14, 4, 3, 6.2), (14, 4, 3, 6.2), (-12, 4, 11.5, 14.5), (12, 4, 11.5, 14.5)])
+    holes = [(-ix, ix, -iz, iz), (-30, -16, 20.5, 24.5), (16, 30, -24.5, -20.5)]
+    b.slab("HotelFloor2", -ox + 0.6, ox - 0.6, -oz + 0.6, oz - 0.6, H1, (200, 170, 130), holes, "WoodPlanks")
+    b.slab("HotelRoof", -ox, ox, -oz, oz, H2 + 1, terracotta, [(-ix, ix, -iz, iz)], "Slate")
+    b.stairs("HotelStairs", -30, 22.5, 4, H1, "E", color=(200, 170, 130))
+    b.stairs("HotelStairs", 30, -22.5, 4, H1, "W", color=(200, 170, 130))
+    # Säulengang um den Hof und Geländer der Galerie
+    for x in (-ix, -10, 0, 10, ix):
+        for z in (-iz, iz):
+            b.pillar(x, z, H1 - 1, s=1.2, color=stucco, material="Concrete")
+    for z in (-6.5, 0, 6.5):
+        for x in (-ix, ix):
+            b.pillar(x, z, H1 - 1, s=1.2, color=stucco, material="Concrete")
+    for z in (iz, -iz):
+        b.box("Cover", "GalleryRail", (ix * 2, 1.4, 0.4), (0, H1 + 0.7, z), (250, 250, 250), "Concrete")
+    for x in (ix, -ix):
+        b.box("Cover", "GalleryRail", (0.4, 1.4, iz * 2), (x, H1 + 0.7, 0), (250, 250, 250), "Concrete")
+    # Hof: Brunnen-Becken außerhalb der Zone, Palmen in Kübeln, Liegen als Deckung
+    for x, z in ((-14, 8), (14, -8)):
+        b.cylinder("Cover", "Planter", 3, 2.4, (x, 1.2, z), terracotta, "Brick")
+        b.palm(x, z, h=11, lean=2, rng=rng)
+    for x, z in ((-11, -9), (11, 9)):
+        b.box("Cover", "Lounger", (5, 0.9, 2.2), (x, 0.45, z), (250, 250, 250), "SmoothPlastic")
+    # Galerie oben: Möbel als Deckung
+    for x, z, ax in ((-26, 0, False), (26, 0, False), (0, 19, True), (0, -19, True)):
+        b.box("Cover", "Sofa", (6, 2, 2.2) if ax else (2.2, 2, 6), (x, H1 + 1, z), teal, "Fabric")
+    b.sign("HotelSign", (26, 4, 0.4), (0, 21, oz + 0.9), "HOTEL LAGUNA", (250, 250, 250), (220, 90, 120), angles=(0, 180, 0))
+    b.sign("HotelSignS", (26, 4, 0.4), (0, 21, -oz - 0.9), "HOTEL LAGUNA", (250, 250, 250), (60, 170, 190))
+    b.add("Objective", "FlagB", (0.3, 18, 18), (0, 0.25, 0), (230, 230, 235), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+    b.box("Decor", "FlagSignBCable", (0.2, 3, 0.2), (0, 19.5, 0.2), (30, 30, 30), "Metal")
+    b.sign("FlagSignB", (5, 5, 0.4), (0, 15.5, 0), "B", (25, 25, 30), (255, 255, 255))
+    b.sign("FlagSignB2", (5, 5, 0.4), (0, 15.5, 0.45), "B", (25, 25, 30), (255, 255, 255), angles=(0, 180, 0))
+
+    # Strand Mitte: Beachvolleyball, Tennisplatz im Garten
+    b.box("Decor", "VolleyNet", (0.2, 2, 18), (0, 4.6, 70), (250, 250, 250), "Fabric", props={"Transparency": 0.4})
+    for z in (61, 79):
+        b.box("Decor", "VolleyPost", (0.4, 6, 0.4), (0, 3, z), (240, 240, 240), "Metal")
+    for x in (-12, 12):
+        b.box("Cover", "SandBags", (6, 2.4, 2), (x, 1.2, 64 if x < 0 else 76), (200, 180, 140), "Fabric")
+    b.box("Ground", "TennisCourt", (30, 0.1, 22), (0, 0.1, -76), (70, 120, 170), "SmoothPlastic")
+    b.box("Decor", "TennisNet", (0.2, 1.4, 22), (0, 0.8, -76), (250, 250, 250), "Fabric", props={"Transparency": 0.3})
+    for z in (-64, -88):
+        b.box("Cover", "CourtFence", (30, 2.6, 0.4), (0, 1.3, z), (60, 90, 70), "Metal")
+
+    b.save("Lagune.model.json", "Lagune", atmosphere="Tropical")
+
+
+# ---------- Herrschaft: "Mondbasis" (340 x 230), Weltraum ----------
+
+def build_mondbasis():
+    """Mondbasis unter Sternenhimmel, Erde am Horizont. Mitte: Kuppelhalle (Flagge B) mit Glasdach, Neon,
+    Laufstegen an den Längswänden und Generatoren als Deckung. A: Bohrturm über dem Abbaufeld (Plattform auf 7,
+    Erzwagen, Gesteinshaufen). C: Radarstation mit großer Schüssel und Technikschränken. Zwischen den Flaggen
+    und der Halle je ein Wohnmodul (zweistöckig). Norden: Kraterfeld mit Rovern und Felsen. Süden: Solarfarm
+    (Reihen schräger Paneele) mit Wartungshütte. Basen: Landeplätze mit Rakete, überdacht. Spiegelgleich."""
+    b = Builder(MONDBASIS_ORIGIN)
+    rng = random.Random(91)
+    SX, SZ = 340, 230
+    regolith, rock, hull = (118, 118, 124), (92, 92, 98), (222, 226, 234)
+    cyan, orange, magenta, dark = (70, 220, 255), (255, 150, 60), (230, 80, 255), (30, 32, 40)
+    b.ground(SX + 10, SZ + 10, regolith, "Slate")
+    b.border(SX, SZ, 6, rock, "Rock", barrier=140)
+    # Erde und Sterne am Himmel (Deko)
+    b.add("Decor", "Earth", (120, 120, 120), (260, 200, 320), (70, 120, 200), "SmoothPlastic",
+          props={"Shape": "Ball", "CanCollide": False, "CanQuery": False, "CastShadow": False})
+    b.add("Decor", "EarthClouds", (122, 122, 122), (260, 200, 320), (240, 245, 255), "SmoothPlastic",
+          props={"Shape": "Ball", "CanCollide": False, "CanQuery": False, "CastShadow": False, "Transparency": 0.7})
+    # Felsenkranz hinter der Grenze
+    for k in range(40):
+        a = 2 * math.pi * k / 40
+        r = 240 + rng.uniform(-15, 25)
+        b.box("Decor", "Ridge", (rng.uniform(30, 60), rng.uniform(15, 40), rng.uniform(20, 40)),
+              (math.cos(a) * r * 1.0, 6, math.sin(a) * r * 0.75), rock, "Rock",
+              angles=(0, rng.uniform(0, 360), rng.uniform(-8, 8)), props={"CanCollide": False, "CastShadow": False})
+
+    for sx, team_col, folder, tag in ((-1, (230, 80, 70), "SpawnsA", "Rot"), (1, (70, 130, 240), "SpawnsB", "Blau")):
+        team_base(b, sx, team_col, folder, tag, hull, (70, 76, 90), "Metal", pad_col=(80, 84, 92))
+        # Rakete hinter der Basis (Landmarke)
+        b.cylinder("Decor", "Rocket", 8, 40, (sx * 158, 31.5, 96), hull, "Metal")
+        b.add("Decor", "RocketNose", (8, 10, 8), (sx * 158, 52, 96), team_col, "Metal", props={"Shape": "Ball"})
+        b.cylinder("Decor", "RocketBand", 8.4, 1.4, (sx * 158, 24, 96), team_col, "Neon")
+        for d in (-1, 1):
+            b.box("Decor", "RocketFin", (0.8, 10, 6), (sx * 158 + d * 4.5, 15, 96), team_col, "Metal")
+        b.cylinder("Buildings", "LaunchPad", 16, 11.5, (sx * 158, 5.75, 96), (70, 74, 84), "Metal")
+        for z in (-18, 0, 18):
+            b.box("Cover", "Barricade", (2, 3.2, 7), (sx * 126, 1.6, z), (90, 94, 104), "Metal")
+            b.box("Decor", "BarricadeGlow", (2.1, 0.3, 7.1), (sx * 126, 3.2, z), team_col, "Neon")
+
+        # ---------- A: Bohrturm (Rot) / C: Radarstation (Blau) ----------
+        fx = sx * 95
+        b.box("Ground", "SitePad", (40, 0.15, 46), (fx, 0.08, 0), (96, 98, 106), "DiamondPlate")
+        if sx < 0:
+            # Bohrturm: vier Beine, Plattform auf 7 rund um die Zone (Mitte offen), Bohrer in der Mitte
+            for dx in (-11, 11):
+                for dz in (-11, 11):
+                    b.box("Buildings", "RigLeg", (1.4, 22, 1.4), (fx + dx, 11, dz), orange, "Metal")
+            for x0, x1, z0, z1, rails in ((fx - 12, fx + 12, 9, 13, ("N",)), (fx - 12, fx + 12, -13, -9, ("S",))):
+                b.catwalk("RigDeck", x0, x1, z0, z1, 7, rails=rails, rail_color=orange)
+            b.stairs("RigStairs", fx - 12 - 9.4, 11, 4, 7, "E", color=(80, 84, 94))
+            b.stairs("RigStairs", fx + 12 + 9.4, -11, 4, 7, "W", color=(80, 84, 94))
+            b.box("Buildings", "RigTop", (24, 1.4, 24), (fx, 22.7, 0), orange, "Metal")
+            b.cylinder("Decor", "Drill", 2.4, 14, (fx, 15, 0), (60, 60, 66), "Metal")
+            for x, z in ((fx + 16, 16), (fx - 16, -16)):
+                b.box("Cover", "OreCart", (5, 3, 3.4), (x, 1.9, z), (110, 90, 70), "Metal")
+                b.add("Cover", "Ore", (4, 2, 3), (x, 3.6, z), (200, 120, 60), "Slate", props={"Shape": "Ball"})
+            for x, z in ((fx + 17, -15), (fx - 17, 15)):
+                b.add("Cover", "RockPile", (8, 4, 8), (x, 1.4, z), rock, "Rock", props={"Shape": "Ball"})
+        else:
+            # Radarstation: Schüssel auf Sockel (Deckung), Technikschränke
+            b.cylinder("Cover", "RadarBase", 7, 6, (fx + 14, 3, 14), (80, 84, 96), "Metal")
+            b.add("Decor", "RadarDish", (1, 18, 18), (fx + 14, 12, 14), hull, "Metal", angles=(0, -40, 55),
+                  props={"Shape": "Cylinder", "CanCollide": False})
+            b.cylinder("Cover", "RadarBase", 7, 6, (fx - 14, 3, -14), (80, 84, 96), "Metal")
+            b.add("Decor", "RadarDish", (1, 18, 18), (fx - 14, 12, -14), hull, "Metal", angles=(0, 140, 55),
+                  props={"Shape": "Cylinder", "CanCollide": False})
+            for x, z in ((fx + 15, -14), (fx - 15, 14), (fx, 15), (fx, -15)):
+                b.box("Cover", "ServerRack", (5, 4.4, 2.4), (x, 2.2, z), dark, "Metal")
+                b.box("Decor", "RackGlow", (5.1, 0.3, 2.5), (x, 3.6, z), cyan, "Neon")
+            # Plattform auf 7 auf der Nordseite (wie der Bohrturm: gleiche Höhe, fair)
+            b.catwalk("RadarDeck", fx - 12, fx + 12, 9, 13, 7, rails=("N",), rail_color=cyan)
+            b.catwalk("RadarDeck", fx - 12, fx + 12, -13, -9, 7, rails=("S",), rail_color=cyan)
+            for dx in (-11, 11):
+                for dz in (-11, 11):
+                    b.box("Buildings", "DeckLeg", (1, 7, 1), (fx + dx, 3.5, dz), (90, 94, 104), "Metal")
+            b.stairs("RadarStairs", fx + 12 + 9.4, 11, 4, 7, "W", color=(80, 84, 94))
+            b.stairs("RadarStairs", fx - 12 - 9.4, -11, 4, 7, "E", color=(80, 84, 94))
+        b.add("Objective", "Flag" + ("A" if sx < 0 else "C"), (0.3, 18, 18), (fx, 0.25, 0), (230, 230, 235), "Neon",
+              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+        b.sign("FlagSign" + ("A" if sx < 0 else "C"), (5, 5, 0.4), (fx, 18, -0.2), "A" if sx < 0 else "C", dark, (255, 255, 255),
+               angles=(0, 180, 0))
+        b.sign("FlagSign2" + ("A" if sx < 0 else "C"), (5, 5, 0.4), (fx, 18, 0.25), "A" if sx < 0 else "C", dark, (255, 255, 255))
+
+        # ---------- Wohnmodul zwischen Flagge und Halle ----------
+        mx = sx * 56
+        b.building2("HabModule" + tag, mx, 0, 22, 30, hull, (70, 76, 90),
+                    doors={"E": [-7, 7], "W": [-7, 7], "N": [0], "S": [0]}, windows1={"E": [0], "W": [0]},
+                    windows2={"E": [-9, 0, 9], "W": [-9, 0, 9], "N": [-5, 5], "S": [-5, 5]}, stairs_at=("N",),
+                    material="Metal")
+        b.box("Decor", "HabGlow", (22.4, 0.4, 30.4), (mx, 10.2, 0), team_col, "Neon", props={"Transparency": 0.4})
+        for dz in (-1, 1):
+            b.box("Cover", "SupplyCrate", (4, 4, 4), (sx * 39, 2, dz * 21), (80, 84, 96), "Metal")
+            b.box("Cover", "SupplyCrate", (4, 4, 4), (sx * 72, 2, dz * 21), (80, 84, 96), "Metal")
+
+        # ---------- Norden: Kraterfeld mit Rovern ----------
+        for x, z, r in ((sx * 40, 62, 11), (sx * 96, 74, 14), (sx * 128, 50, 9), (sx * 60, 98, 8)):
+            b.crater(f"Crater{sx}{x}", x, z, r)
+        for x, z, ang in ((sx * 70, 46, 20), (sx * 20, 92, -30)):
+            b.box("Cover", "Rover", (9, 3.6, 5), (x, 2.4, z), hull, "Metal", angles=(0, ang, 0))
+            b.box("Decor", "RoverCab", (4, 2, 4.6), (x, 5, z), (60, 90, 130), "Glass", angles=(0, ang, 0))
+            for dx in (-3, 3):
+                for dz in (-2.8, 2.8):
+                    b.add("Decor", "RoverWheel", (1, 2, 2), (x + dx, 1, z + dz), dark, "Rubber", angles=(0, 90 + ang, 0),
+                          props={"Shape": "Cylinder"})
+        for _ in range(6):
+            b.rock(sx * rng.uniform(20, 140), rng.uniform(40, 108), rng)
+
+        # ---------- Süden: Solarfarm mit Wartungshütte ----------
+        for x in (24, 44, 64, 84, 104, 124):
+            for z in (-48, -66, -84, -102):
+                if (x, z) not in ((84, -84), (104, -84)):
+                    b.solar_panel(sx * x, z, along_x=False, length=12)
+        b.flat_house("Maintenance" + tag, sx * 94, -84, 18, 12, 8, (90, 96, 108),
+                     doors={"N": [0], "S": [0], "E": [0], "W": [0]}, windows={"N": [-5, 5], "S": [-5, 5]},
+                     parapet=("N", "S"), trim=cyan)
+
+    # ---------- Mitte: Kuppelhalle mit Flagge B ----------
+    hx, hz, hh = 32, 22, 16
+    for z, name in ((hz, "DomeN"), (-hz, "DomeS")):
+        b.wall_line(name, -hx, hx, z, True, hh, hull, "Metal",
+                    openings=[(-12, 7, 0, 8), (12, 7, 0, 8), (-24, 5, 9.5, 12.5), (0, 6, 9.5, 12.5), (24, 5, 9.5, 12.5),
+                              (-4, 3, 3, 6), (4, 3, 3, 6)])
+    for x, name in ((-hx, "DomeW"), (hx, "DomeE")):
+        b.wall_line(name, -hz + 1.2, hz - 1.2, x, False, hh, hull, "Metal",
+                    openings=[(-11, 7, 0, 8), (11, 7, 0, 8), (0, 4, 3, 6.5)])
+    b.box("Buildings", "DomeGlass", (hx * 2, 0.6, hz * 2), (0, hh + 0.3, 0), (140, 200, 240), "Glass",
+          props={"Transparency": 0.55})
+    for x in range(-24, 25, 12):
+        b.box("Decor", "DomeRib", (0.8, 0.8, hz * 2), (x, hh + 0.8, 0), (90, 96, 110), "Metal")
+    b.box("Ground", "DomeFloor", (hx * 2 - 2, 0.12, hz * 2 - 2), (0, 0.06, 0), (60, 64, 76), "DiamondPlate")
+    for z in (hz + 0.7, -hz - 0.7):
+        b.box("Decor", "DomeStripe", (hx * 2, 0.5, 0.3), (0, 14.5, z), cyan, "Neon")
+    for dz in (-1, 1):
+        z0, z1 = (15, 21) if dz > 0 else (-21, -15)
+        b.catwalk("DomeCatwalk", -21, 21, z0, z1, 7, rails=("S" if dz > 0 else "N",), rail_color=cyan)
+        b.stairs("DomeStairs", -30.4, dz * 18, 4, 7, "E", color=(80, 84, 94))
+        b.stairs("DomeStairs", 30.4, dz * 18, 4, 7, "W", color=(80, 84, 94))
+    for sx in (-1, 1):
+        b.box("Buildings", "GeneratorBase", (12, 1.2, 9), (sx * 21, 0.6, 0), dark, "Metal")
+        b.box("Cover", "Generator", (9, 7, 7), (sx * 21, 4.7, 0), (90, 96, 110), "Metal")
+        b.cylinder("Decor", "GeneratorCore", 3, 7.2, (sx * 21, 4.7, 0), magenta, "Neon")
+    for x, z in ((-7, 12), (7, -12)):
+        b.box("Cover", "SupplyCrate", (4, 4, 4), (x, 2, z), (80, 84, 96), "Metal")
+    for x, z in ((0, 12.5), (0, -12.5)):
+        b.half_wall(x, z, 6, along_x=True, color=(110, 116, 130))
+    b.add("Objective", "FlagB", (0.3, 18, 18), (0, 0.25, 0), (230, 230, 235), "Neon",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+    b.box("Decor", "FlagSignBCable", (0.2, 2.4, 0.2), (0, 15.8, 0.2), (30, 30, 30), "Metal")
+    b.sign("FlagSignB", (5, 5, 0.4), (0, 12.5, 0), "B", dark, (255, 255, 255))
+    b.sign("FlagSignB2", (5, 5, 0.4), (0, 12.5, 0.45), "B", dark, (255, 255, 255), angles=(0, 180, 0))
+    b.sign("DomeSign", (24, 4, 0.4), (0, 19, hz + 0.9), "MONDBASIS", dark, cyan, angles=(0, 180, 0))
+    b.sign("DomeSignS", (24, 4, 0.4), (0, 19, -hz - 0.9), "MONDBASIS", dark, magenta)
+    # Mitte Nord/Süd: Röhren-Verbindungen als Deckung über der Freifläche
+    for z in (44, -44):
+        b.add("Cover", "Tube", (40, 6, 6), (0, 3, z), hull, "Metal", props={"Shape": "Cylinder"})
+        b.box("Decor", "TubeGlow", (40.2, 0.3, 0.3), (0, 6, z), cyan, "Neon")
+    b.save("Mondbasis.model.json", "Mondbasis", atmosphere="Space")
+
+
 # ---------- Herrschaft / Team Deathmatch: "Kraftwerk" (340 x 230) ----------
 
 def face(x, z, tx=0.0, tz=0.0):
@@ -2047,6 +2829,11 @@ if __name__ == "__main__":
     # Zellenblock, Kanäle, Windmühlen. Ausgebaute Modi (Strikeout, Demolition, Ranked, Extraction)
     # brauchen ihre Kopien nicht mehr: build_demolition(), build_strikeout() usw. bleiben zum Wiedereinbauen.
     build_kraftwerk(DROP_ORIGIN, "Domination.model.json")
+    # Rotation mit Abstimmung: FFA Altstadt / Favela / Orbit, Herrschaft Kraftwerk / Lagune / Mondbasis
+    build_favela()
+    build_orbit()
+    build_lagune()
+    build_mondbasis()
     build_strikeout(WINGMAN_ORIGIN, "Wingman.model.json")
     build_training()
     build_arena()

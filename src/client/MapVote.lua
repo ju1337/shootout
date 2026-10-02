@@ -1,5 +1,5 @@
 -- MapVote (ModuleScript, nur Client)
--- Map-Abstimmung vor einem Team-Match: bis zu 3 Karten mit Map-Namen und Stimmenzahl.
+-- Map-Abstimmung vor einem Team-Match bzw. nach jeder FFA-Runde: bis zu 3 Karten mit Map-Namen und Stimmenzahl.
 -- Anklicken oder 1/2/3 drücken. Daten kommen als Spieler-Attribute vom Server
 -- (MapVoteOptions, MapVoteEnd, MapVoteCounts, MapVoteMine).
 
@@ -33,6 +33,12 @@ local MOODS = {
 	["Kanäle"] = { Color3.fromRGB(200, 150, 120), Color3.fromRGB(45, 60, 75) },
 	["Windmühlen"] = { Color3.fromRGB(110, 160, 80), Color3.fromRGB(30, 50, 35) },
 	Hochhaus = { Color3.fromRGB(90, 120, 170), Color3.fromRGB(20, 26, 44) },
+	Altstadt = { Color3.fromRGB(190, 150, 110), Color3.fromRGB(60, 44, 36) },
+	Kraftwerk = { Color3.fromRGB(150, 150, 140), Color3.fromRGB(40, 42, 46) },
+	Favela = { Color3.fromRGB(255, 120, 150), Color3.fromRGB(60, 140, 160) },
+	Lagune = { Color3.fromRGB(70, 210, 210), Color3.fromRGB(240, 170, 90) },
+	Orbit = { Color3.fromRGB(120, 80, 220), Color3.fromRGB(10, 12, 30) },
+	Mondbasis = { Color3.fromRGB(150, 160, 180), Color3.fromRGB(14, 16, 28) },
 }
 
 local gui, timerLabel
@@ -147,8 +153,17 @@ function MapVote.Init()
 			vote(index)
 		end
 	end)
-	-- Controller: erste Karte auswählen, damit man mit dem Steuerkreuz wählen kann
+	-- Controller: erste Karte auswählen, damit man mit dem Steuerkreuz wählen kann;
+	-- Maus frei, solange abgestimmt wird (in FFA steht man dabei noch in der Ego-Perspektive)
 	gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+		if gui.Enabled then
+			RunService:BindToRenderStep("MapVoteMouse", Enum.RenderPriority.Camera.Value + 2, function()
+				UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+				UserInputService.MouseIconEnabled = true
+			end)
+		else
+			RunService:UnbindFromRenderStep("MapVoteMouse")
+		end
 		if gui.Enabled and InputActions.Device() == "Gamepad" then
 			GuiService.SelectedObject = cards[1].Card
 		elseif not gui.Enabled and GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(gui) then

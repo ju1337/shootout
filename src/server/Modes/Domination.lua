@@ -8,7 +8,7 @@ local Domination = require(script.Parent.Parent.Objectives.Domination)
 
 return TeamRoundMode.new({
 	Id = "Domination",
-	Maps = { "Domination" }, -- Map "Kraftwerk" (auch für Team Deathmatch, eigene Kopie)
+	Maps = { "Domination", "Lagune", "Mondbasis" }, -- Kraftwerk, Lagune, Mondbasis (Abstimmung vor jedem Match)
 	TeamSize = 5,
 	Teams = {
 		{ Name = "Rot", Color = BrickColor.new("Burgundy") },
