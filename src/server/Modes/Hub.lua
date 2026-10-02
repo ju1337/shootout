@@ -70,12 +70,27 @@ local function placeStatue(place, entry)
 	if humanoid then
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	end
-	-- Auf das Podest stellen, Blick wie die Podest-Markierung (LookVector)
-	local top = pad.Position - Vector3.new(0, pad.Size.Y / 2 + 0.1, 0)
+	-- Auf das Podest stellen, Blick wie die Podest-Markierung (LookVector). Ausgerichtet wird an den Füßen:
+	-- nur die Körperteile direkt im Modell zählen, nicht Accessoires (die hängen teils weit weg und
+	-- würden die Figur sonst über dem Podest schweben lassen).
+	local top = pad.Position - Vector3.new(0, pad.Size.Y / 2, 0)
 	local facing = Vector3.new(pad.CFrame.LookVector.X, 0, pad.CFrame.LookVector.Z)
 	model:PivotTo(CFrame.lookAt(top, top + (facing.Magnitude > 0.1 and facing.Unit or Vector3.new(0, 0, 1))))
-	local box, size = model:GetBoundingBox()
-	model:PivotTo(model:GetPivot() + Vector3.new(0, top.Y - (box.Position.Y - size.Y / 2), 0))
+	local lowest = math.huge
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			-- tiefster Punkt des (aufrechten) Teils
+			local extent = math.abs(part.CFrame.UpVector.Y) * part.Size.Y / 2 + math.abs(part.CFrame.RightVector.Y) * part.Size.X / 2
+				+ math.abs(part.CFrame.LookVector.Y) * part.Size.Z / 2
+			lowest = math.min(lowest, part.Position.Y - extent)
+		end
+	end
+	if lowest == math.huge then
+		-- keine Körperteile gefunden: über Hüfthöhe
+		local root = model:FindFirstChild("HumanoidRootPart")
+		lowest = root and (root.Position.Y - root.Size.Y / 2 - (humanoid and humanoid.HipHeight or 2)) or top.Y
+	end
+	model:PivotTo(model:GetPivot() + Vector3.new(0, top.Y - lowest, 0))
 	-- Namensschild mit ELO und Rang
 	local head = model:FindFirstChild("Head")
 	if head then
