@@ -1,5 +1,7 @@
 -- UITheme (ModuleScript, nur Client)
--- Einheitliches Design für alle Menüs: Farben, Schriften und Bausteine (Fläche, Knopf, Text).
+-- Einheitliches Design für alle Menüs im Stil von Rogue Company: dunkles Navy, Cyan/Türkis als
+-- Akzent, Rot für Gegner, Gelb nur für den großen PLAY-Knopf, schmale kantige Schrift (Oswald).
+-- Bausteine: Fläche, Knopf, Text, Raute.
 -- Wichtig für saubere Zentrierung: Inhalte liegen auf einer "Leinwand" mit fester Größe in der
 -- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
 
@@ -9,22 +11,23 @@ local TweenService = game:GetService("TweenService")
 local UITheme = {}
 
 UITheme.Colors = {
-	Background = Color3.fromRGB(9, 11, 18),
-	Panel = Color3.fromRGB(16, 19, 29),
-	Card = Color3.fromRGB(24, 28, 41),
-	CardHover = Color3.fromRGB(32, 37, 54),
-	Border = Color3.fromRGB(52, 58, 80),
-	Accent = Color3.fromRGB(255, 140, 40),
-	AccentDark = Color3.fromRGB(210, 90, 20),
-	Text = Color3.fromRGB(240, 242, 248),
-	Muted = Color3.fromRGB(150, 158, 180),
-	Good = Color3.fromRGB(90, 210, 120),
-	Bad = Color3.fromRGB(240, 85, 85),
+	Background = Color3.fromRGB(8, 14, 24),
+	Panel = Color3.fromRGB(13, 22, 36),
+	Card = Color3.fromRGB(18, 30, 48),
+	CardHover = Color3.fromRGB(24, 40, 62),
+	Border = Color3.fromRGB(40, 70, 95),
+	Accent = Color3.fromRGB(40, 210, 230),      -- Cyan wie in RC
+	AccentDark = Color3.fromRGB(20, 120, 150),
+	Play = Color3.fromRGB(255, 196, 30),        -- gelber PLAY-Knopf
+	Text = Color3.fromRGB(235, 242, 248),
+	Muted = Color3.fromRGB(130, 155, 175),
+	Good = Color3.fromRGB(80, 210, 130),
+	Bad = Color3.fromRGB(225, 55, 65),
 	Gold = Color3.fromRGB(255, 205, 80),
 }
 
 UITheme.Fonts = {
-	Title = Enum.Font.GothamBlack,
+	Title = Enum.Font.Oswald,     -- schmal und kantig wie die RC-Überschriften
 	Bold = Enum.Font.GothamBold,
 	Body = Enum.Font.Gotham,
 }
@@ -73,7 +76,7 @@ function UITheme.Button(props, parent, onClick)
 	props.Font = props.Font or UITheme.Fonts.Title
 	props.TextColor3 = props.TextColor3 or C.Text
 	local button = make("TextButton", props, parent)
-	UITheme.Corner(button, 10)
+	UITheme.Corner(button, 3)
 	UITheme.Gradient(button, Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 200))
 	local scale = make("UIScale", {}, button)
 	button.MouseEnter:Connect(function()
@@ -93,7 +96,7 @@ function UITheme.Panel(props, parent)
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Panel
 	props.BorderSizePixel = 0
 	local frame = make("Frame", props, parent)
-	UITheme.Corner(frame, 14)
+	UITheme.Corner(frame, 4)
 	UITheme.Stroke(frame, C.Border, 1)
 	return frame
 end
@@ -110,6 +113,17 @@ function UITheme.Canvas(parent, width, height)
 	update()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
 	return canvas
+end
+
+-- Raute (gedrehtes Quadrat) als RC-typisches Schmuckelement. Kinder würden mitgedreht,
+-- darum Texte als Geschwister darüberlegen.
+function UITheme.Diamond(parent, size, position, color, strokeColor)
+	local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = position, Size = UDim2.new(0, size, 0, size),
+		Rotation = 45, BackgroundColor3 = color, BorderSizePixel = 0 }, parent)
+	if strokeColor then
+		UITheme.Stroke(diamond, strokeColor, 2)
+	end
+	return diamond
 end
 
 -- Hintergrund-Unschärfe, solange mindestens ein Menü offen ist

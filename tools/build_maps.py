@@ -457,84 +457,136 @@ def build_arena():
     b.save("Arena.model.json")
 
 
-# ---------- Hub (Lobby) ----------
+# ---------- Hub (Lobby): Hangar/Safehouse im Stil der Rogue-Company-Lobby ----------
 
-# Gleiche Ids/Farben wie in src/shared/Modes.lua
-HUB_MODES = (
-    ("FreeForAll", "FREE-FOR-ALL", (255, 120, 60), True),
-    ("Drop", "DROP 5v5", (80, 160, 255), True),
-    ("Strikeout", "STRIKEOUT 4v4", (255, 170, 50), True),
-    ("Demolition", "DEMOLITION", (230, 70, 90), True),
-    ("Wingman", "WINGMAN 2v2", (120, 220, 160), True),
+# Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): links 4, rechts 4
+HUB_GATES_WEST = (
+    ("FreeForAll", "FREE-FOR-ALL"), ("Drop", "DROP 5v5"), ("Strikeout", "STRIKEOUT 4v4"), ("Demolition", "DEMOLITION"),
 )
+HUB_GATES_EAST = (
+    ("Wingman", "WINGMAN 2v2"), ("Ranked", "RANKED"), ("Arena", "1v1 ARENA"), ("Training", "TRAINING"),
+)
+CYAN = (40, 210, 230)
 
 
 def build_lobby():
     b = Builder(HUB_ORIGIN)
     rng = random.Random(3)
-    accent = (255, 140, 40)
-    b.ground(200, 200, (32, 35, 45), "SmoothPlastic")
-    b.border(190, 190, 6, (55, 58, 72), "SmoothPlastic", barrier=80)
-
-    # Runder Platz mit Leuchtrand und Brunnen in der Mitte
     cyl = {"Shape": "Cylinder"}
-    b.add("Ground", "PlazaRing", (0.2, 74, 74), (0, 0.1, 0), accent, "Neon", angles=(0, 0, 90), props=cyl)
-    b.add("Ground", "Plaza", (0.4, 72, 72), (0, 0.2, 0), (60, 63, 78), "Marble", angles=(0, 0, 90), props=cyl)
-    b.add("Decor", "FountainBasin", (2, 18, 18), (0, 1.2, 8), (90, 92, 105), "Marble", angles=(0, 0, 90), props=cyl)
-    b.add("Decor", "FountainWater", (0.4, 15.5, 15.5), (0, 2.1, 8), (80, 170, 255), "Glass", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.3})
-    b.box("Decor", "FountainPillar", (2, 7, 2), (0, 4.5, 8), (90, 92, 105), "Marble")
-    b.add("Decor", "FountainTop", (3, 3, 3), (0, 8.5, 8), accent, "Neon", props={"Shape": "Ball"})
+    concrete = (118, 122, 128)
+    steel = (70, 76, 84)
+    wall = (92, 98, 106)
 
-    # Spawn vorne auf dem Platz, Blick Richtung Portale (+Z)
-    b.spawn(0, -22, yaw=180, real=True)
+    # Außen: Vorfeld und Rollfeld
+    b.ground(260, 300, (62, 64, 68), "Asphalt")
+    b.border(250, 290, 3, (90, 90, 95), "Metal", barrier=90)
 
-    # Weg vom Platz zu den Portalen
-    b.box("Ground", "Path", (190, 0.3, 26), (0, 0.15, 62), (50, 53, 66), "Marble")
+    # ---------- Halle (innen x -60..60, z -40..50, 30 hoch) ----------
+    W, D0, D1, H = 60, -40, 50, 30
+    b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, (D0 + D1) / 2), concrete, "Concrete")
+    # Gelbe Sicherheitslinien
+    for x in (-36, 36):
+        b.box("Ground", "SafetyLine", (0.6, 0.05, D1 - D0 - 6), (x, 0.23, (D0 + D1) / 2), (240, 190, 30), "SmoothPlastic")
+    b.box("Ground", "SafetyLine", (72, 0.05, 0.6), (0, 0.23, D0 + 6), (240, 190, 30), "SmoothPlastic")
+    # Team-Raute in der Mitte
+    b.box("Ground", "EmblemOuter", (16, 0.06, 16), (0, 0.24, -8), CYAN, "Neon", angles=(0, 45, 0),
+          props={"Transparency": 0.35})
+    b.box("Ground", "EmblemInner", (12, 0.08, 12), (0, 0.26, -8), (18, 30, 48), "SmoothPlastic", angles=(0, 45, 0))
+    # Wände: Süd geschlossen, Nord mit großem Hallentor
+    b.box("Walls", "WallSouth", (2 * W + 4, H, 2), (0, H / 2, D0 - 1), wall, "Metal")
+    b.box("Walls", "WallWest", (2, H, D1 - D0), (-W - 1, H / 2, (D0 + D1) / 2), wall, "Metal")
+    b.box("Walls", "WallEast", (2, H, D1 - D0), (W + 1, H / 2, (D0 + D1) / 2), wall, "Metal")
+    door = 36
+    for side in (-1, 1):
+        seg = W - door
+        b.box("Walls", "WallNorth", (seg + 2, H, 2), (side * (door + seg / 2 + 1), H / 2, D1 + 1), wall, "Metal")
+        # Aufgeschobenes Hallentor
+        b.box("Walls", "DoorPanel", (14, 24, 1.2), (side * (door + 8), 12, D1 + 3), (130, 135, 140), "CorrodedMetal")
+    b.box("Walls", "DoorLintel", (2 * door, H - 24, 2), (0, 24 + (H - 24) / 2, D1 + 1), wall, "Metal")
+    # Dach mit Stahlträgern und Deckenlampen
+    b.box("Walls", "Roof", (2 * W + 4, 1, D1 - D0 + 4), (0, H + 0.5, (D0 + D1) / 2), (60, 64, 70), "Metal")
+    for z in range(D0 + 8, D1, 14):
+        b.box("Walls", "Truss", (2 * W, 1.6, 1.2), (0, H - 1.5, z), steel, "Metal")
+        for x in (-30, 0, 30):
+            b.box("Decor", "CeilingLamp", (8, 0.4, 2), (x, H - 2.6, z), (255, 245, 225), "Neon",
+                  children=[{"Name": "Light", "ClassName": "PointLight",
+                             "Properties": {"Range": 36, "Brightness": 1.4, "Color": rgb(255, 240, 220)}}])
+    for x in (-45, -15, 15, 45):
+        b.box("Walls", "Beam", (1.2, 1.6, D1 - D0), (x, H - 3.4, (D0 + D1) / 2), steel, "Metal")
 
-    # Portale nebeneinander am Nordende, Vorderseite zeigt zum Platz
-    for i, (mode_id, title, color, available) in enumerate(HUB_MODES):
-        x = -72 + i * 36
-        z = 75
-        c = color if available else (90, 92, 105)
-        b.box("Decor", "PortalPillarL", (2.5, 18, 2.5), (x - 8, 9, z), c, "Neon" if available else "Metal")
-        b.box("Decor", "PortalPillarR", (2.5, 18, 2.5), (x + 8, 9, z), c, "Neon" if available else "Metal")
-        b.box("Decor", "PortalTop", (18.5, 2.5, 2.5), (x, 19, z), c, "Neon" if available else "Metal")
-        b.box("Decor", "PortalField", (13.5, 16, 0.3), (x, 9, z), color, "ForceField",
-              props={"Transparency": 0.2 if available else 0.75, "CanCollide": False})
-        # Betretbare Fläche vor dem Portal (löst den Teleport aus)
-        b.add("Portals", "Portal_" + mode_id, (14, 0.4, 8), (x, 0.5, z - 6), c, "Neon",
-              props={"CanCollide": False, "Transparency": 0.35})
-        b.sign("Sign_" + mode_id, (17, 4, 0.5), (x, 23.5, z), title if available else title + " · BALD",
-               (20, 22, 30), c)
+    # Spawn in der Hallenmitte-Süd, Blick zum Hallentor
+    b.spawn(0, -26, yaw=180, real=True)
 
-    # Großes Schild über allem
-    b.sign("TitleSign", (70, 14, 1), (0, 40, 92), "SHOOTOUT", (20, 22, 30), accent)
+    # ---------- Lineup-Bühne mit Spotlights und Bildschirm ----------
+    b.box("Decor", "Stage", (40, 1.2, 10), (0, 0.6, 18), (30, 34, 42), "DiamondPlate")
+    b.box("Decor", "StageEdge", (40, 0.2, 0.4), (0, 1.25, 13), CYAN, "Neon")
+    for x in (-15, -5, 5, 15):
+        b.add("Decor", "Spotlight", (H - 4, 4, 4), (x, (H - 4) / 2 + 1, 18), (255, 250, 235), "Neon", angles=(0, 0, 90),
+              props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
+    b.sign("BriefingScreen", (34, 10, 0.6), (0, 18, 26), "SHOOTOUT", (12, 20, 32), CYAN)
+    b.sign("BriefingSub", (34, 2.6, 0.6), (0, 11.6, 26), "TACTICAL OPERATIONS", (12, 20, 32), (235, 242, 248))
 
-    # Laternen rund um den Platz
-    for k in range(10):
-        a = math.radians(k * 36 + 18)
-        x, z = math.cos(a) * 42, math.sin(a) * 42
-        if z > 30:
-            continue  # Platz vor den Portalen frei lassen
-        b.box("Decor", "LampPost", (0.8, 11, 0.8), (x, 5.5, z), (40, 42, 50), "Metal")
-        b.add("Decor", "LampLight", (2.2, 2.2, 2.2), (x, 11.5, z), (255, 225, 160), "Neon",
-              props={"Shape": "Ball"},
-              children=[{"Name": "Light", "ClassName": "PointLight",
-                         "Properties": {"Range": 22, "Brightness": 1.5, "Color": rgb(255, 210, 150)}}])
+    # ---------- Einsatz-Tore an den Seitenwänden ----------
+    def gate(x, z, yaw, inward, mode_id, title):
+        # inward = Richtung in die Halle (+1 oder -1 auf der x-Achse)
+        b.box("Decor", "GateFrameL", (1.2, 16, 1.6), (x, 8, z - 7.4), (30, 34, 42), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "GateFrameR", (1.2, 16, 1.6), (x, 8, z + 7.4), (30, 34, 42), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "GateTop", (1.2, 1.6, 16.4), (x, 16.6, z), (30, 34, 42), "Metal", angles=(0, 0, 0))
+        b.box("Decor", "GateGlow", (0.3, 15, 13.4), (x, 7.6, z), CYAN, "ForceField", props={"Transparency": 0.25,
+              "CanCollide": False})
+        b.box("Decor", "GateStripL", (0.4, 16, 0.4), (x + inward * 0.8, 8, z - 6.8), CYAN, "Neon")
+        b.box("Decor", "GateStripR", (0.4, 16, 0.4), (x + inward * 0.8, 8, z + 6.8), CYAN, "Neon")
+        b.sign("Sign_" + mode_id, (14, 2.8, 0.4), (x + inward * 0.9, 19.4, z), title, (12, 20, 32), CYAN, angles=(0, yaw, 0))
+        b.add("Portals", "Portal_" + mode_id, (7, 0.3, 13), (x + inward * 4.5, 0.4, z), CYAN, "Neon",
+              props={"CanCollide": False, "Transparency": 0.55})
+    for k, (mode_id, title) in enumerate(HUB_GATES_WEST):
+        gate(-W + 0.6, -22 + k * 18, -90, 1, mode_id, title)
+    for k, (mode_id, title) in enumerate(HUB_GATES_EAST):
+        gate(W - 0.6, -22 + k * 18, 90, -1, mode_id, title)
 
-    # Bänke am Platz
-    for x, z, yaw in ((-26, -26, 45), (26, -26, -45), (-36, 0, 90), (36, 0, -90)):
-        b.box("Decor", "Bench", (8, 1, 2.5), (x, 1.8, z), (110, 80, 55), "WoodPlanks", angles=(0, yaw, 0))
-        b.box("Decor", "BenchLegs", (7, 1.3, 1.5), (x, 0.65, z), (40, 42, 50), "Metal", angles=(0, yaw, 0))
+    # ---------- Ausstattung: Spinde, Waffenregale, Werkbänke, Kisten ----------
+    for x in range(-44, 45, 5):
+        if abs(x) > 6:
+            b.box("Decor", "Locker", (4.4, 9, 2.4), (x, 4.5, D0 + 1.4), (55, 70, 85), "Metal")
+            b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 7.5, D0 + 2.65), (25, 30, 36), "Metal")
+    for x in (-24, 24):
+        b.box("Decor", "WeaponRack", (14, 7, 1.2), (x, 3.5, D0 + 6), (40, 44, 52), "Metal")
+        for k in range(4):
+            b.box("Decor", "RackGun", (0.4, 4.4, 0.6), (x - 5 + k * 3.3, 3.8, D0 + 6.8), (25, 25, 28), "Metal",
+                  angles=(0, 0, 8))
+    for x, z in ((-40, 38), (40, 38)):
+        b.box("Decor", "Workbench", (12, 3.2, 5), (x, 1.6, z), (80, 70, 60), "WoodPlanks")
+        b.sign("Monitor", (5, 3, 0.3), (x, 5.2, z + 2.2), "◆ BRIEFING", (12, 20, 32), CYAN, angles=(0, 180, 0))
+    for x, z, size in ((-48, 44, 5), (-48, 39, 5), (-43, 44, 4), (48, -34, 5), (43, -34, 4), (48, -29, 4)):
+        b.crate(x, z, s=size, color=(110, 95, 70))
 
-    # Bäume in den hinteren Ecken
+    # ---------- Draußen: Rollfeld mit Absetzflugzeug ----------
+    b.box("Ground", "Runway", (250, 0.12, 40), (0, 0.06, 112), (45, 47, 52), "Asphalt")
+    for x in range(-110, 111, 20):
+        b.box("Ground", "RunwayMark", (10, 0.13, 1.2), (x, 0.07, 112), (235, 235, 235), "SmoothPlastic")
+    b.box("Ground", "Apron", (80, 0.1, 40), (0, 0.05, 72), (55, 57, 62), "Concrete")
+    plane = (150, 158, 150)
+    b.add("Decor", "Fuselage", (64, 11, 11), (0, 8, 110), plane, "Metal", angles=(0, 90, 0), props=cyl)
+    b.add("Decor", "Nose", (11, 11, 11), (0, 8, 78), plane, "Metal", props={"Shape": "Ball"})
+    b.box("Decor", "Cockpit", (6, 2.5, 4), (0, 12, 80), (40, 70, 90), "Glass")
+    b.box("Decor", "Wings", (78, 1.4, 13), (0, 10, 106), plane, "Metal")
+    b.box("Decor", "TailFin", (1.4, 12, 9), (0, 18, 138), plane, "Metal")
+    b.box("Decor", "TailWing", (26, 1.2, 7), (0, 12, 138), plane, "Metal")
+    b.box("Decor", "Ramp", (9, 0.6, 12), (0, 3, 146), (90, 95, 92), "DiamondPlate", angles=(-25, 0, 0))
+    for x in (-26, -14, 14, 26):
+        b.add("Decor", "Engine", (8, 3.6, 3.6), (x, 8, 104), (60, 64, 70), "Metal", angles=(0, 90, 0), props=cyl)
+    for x in range(-115, 116, 23):
+        b.box("Decor", "RunwayLightPost", (0.6, 3, 0.6), (x, 1.5, 133), (50, 50, 55), "Metal")
+        b.add("Decor", "RunwayLight", (1, 1, 1), (x, 3.3, 133), (255, 60, 50), "Neon", props={"Shape": "Ball"})
+    # Zaun und Bäume am Rand
+    for x in range(-120, 121, 8):
+        b.box("Decor", "FencePost", (0.4, 5, 0.4), (x, 2.5, 140), (80, 80, 85), "Metal")
+    b.box("Decor", "FenceMesh", (240, 4.4, 0.15), (0, 2.6, 140), (120, 125, 130), "Metal", props={"Transparency": 0.6})
     placed = 0
     while placed < 14:
-        x, z = rng.uniform(-88, 88), rng.uniform(-88, 30)
-        if abs(x) > 55 or z < -55:
-            b.tree(x, z, rng)
-            placed += 1
+        x, z = rng.uniform(-115, 115), rng.uniform(-130, -55)
+        b.tree(x, z, rng)
+        placed += 1
 
     b.save("Hub.model.json")
 

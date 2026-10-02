@@ -67,7 +67,7 @@ end
 local function makeCard(parent, order, color)
 	local card = make("TextButton", { BackgroundColor3 = C.Card, BorderSizePixel = 0, AutoButtonColor = false,
 		Text = "", LayoutOrder = order, ClipsDescendants = true }, parent)
-	UITheme.Corner(card, 14)
+	UITheme.Corner(card, 4)
 	make("UIGradient", { Rotation = 115, Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, color:Lerp(C.Card, 0.55)),
 		ColorSequenceKeypoint.new(0.55, C.Card),
@@ -100,8 +100,8 @@ local function selectMode(mode)
 	selectedMode = mode
 	highlightCards(modeCards, mode)
 	if mode.Available then
-		playButton.Text = "▶  SPIELEN  ·  " .. mode.Name
-		playButton.BackgroundColor3 = C.Accent
+		playButton.Text = "SPIELEN  ·  " .. mode.Name
+		playButton.BackgroundColor3 = C.Play
 		playButton.TextColor3 = Color3.fromRGB(20, 16, 10)
 	else
 		playButton.Text = "BALD VERFÜGBAR"
@@ -236,10 +236,11 @@ local function showTab(name)
 end
 
 local function buildTopBar()
-	label({ Position = UDim2.new(0, 60, 0, 34), Size = UDim2.new(0, 400, 0, 54), Text = "SHOOTOUT", TextSize = 50,
-		Font = F.Title, TextColor3 = C.Accent }, canvas)
-	make("Frame", { Position = UDim2.new(0, 62, 0, 90), Size = UDim2.new(0, 80, 0, 4), BackgroundColor3 = C.Accent,
-		BorderSizePixel = 0 }, canvas)
+	UITheme.Diamond(canvas, 34, UDim2.new(0, 80, 0, 62), C.Accent)
+	label({ Position = UDim2.new(0, 110, 0, 34), Size = UDim2.new(0, 400, 0, 56), Text = "SHOOTOUT", TextSize = 54,
+		Font = F.Title, TextColor3 = C.Text }, canvas)
+	label({ Position = UDim2.new(0, 112, 0, 86), Size = UDim2.new(0, 400, 0, 18), Text = "TACTICAL OPERATIONS",
+		TextSize = 14, Font = F.Bold, TextColor3 = C.Accent }, canvas)
 
 	-- Tabs in der Mitte
 	local tabs = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 44),
@@ -248,7 +249,7 @@ local function buildTopBar()
 		HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
 	for i, entry in { { "Modes", "SPIELEN" }, { "Agents", "AGENTEN" } } do
 		local button = make("TextButton", { Size = UDim2.new(0, 190, 1, 0), BackgroundTransparency = 1, Text = entry[2],
-			Font = F.Title, TextSize = 24, TextColor3 = C.Muted, LayoutOrder = i }, tabs)
+			Font = F.Title, TextSize = 28, TextColor3 = C.Muted, LayoutOrder = i }, tabs)
 		local underline = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
 			Size = UDim2.new(0, 120, 0, 4), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, button)
 		UITheme.Corner(underline, 2)
@@ -280,7 +281,7 @@ local function buildBottomBar()
 		Text = "", TextSize = 17, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
 
 	playButton = UITheme.Button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 760),
-		Size = UDim2.new(0, 420, 0, 84), TextSize = 28, Text = "" }, canvas, function()
+		Size = UDim2.new(0, 420, 0, 84), TextSize = 34, Text = "" }, canvas, function()
 		if selectedMode.Available then
 			setStatus("Suche Server für " .. selectedMode.Name .. "...")
 			Remotes.JoinMode:FireServer(selectedMode.Id)
@@ -339,7 +340,7 @@ function GameMenu.Init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
 	background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = C.Background,
 		BackgroundTransparency = 0.25, Active = true }, gui) -- Active: Klicks gehen nicht ins Spiel
-	UITheme.Gradient(background, Color3.fromRGB(40, 50, 75), Color3.fromRGB(5, 6, 10))
+	UITheme.Gradient(background, Color3.fromRGB(20, 45, 65), Color3.fromRGB(4, 8, 14))
 	canvas = UITheme.Canvas(background, WIDTH, HEIGHT)
 
 	buildTopBar()
@@ -353,7 +354,7 @@ function GameMenu.Init()
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9 },
 		player.PlayerGui)
 	openButton = UITheme.Button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -34),
-		Size = UDim2.new(0, 300, 0, 64), TextSize = 24, Text = "▶  SPIELEN   (M)", BackgroundColor3 = C.Accent,
+		Size = UDim2.new(0, 300, 0, 64), TextSize = 30, Text = "SPIELEN   [M]", BackgroundColor3 = C.Play,
 		TextColor3 = Color3.fromRGB(20, 16, 10), Visible = false }, openGui, function()
 		GameMenu.SetOpen(true)
 	end)

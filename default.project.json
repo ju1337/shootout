@@ -5,12 +5,16 @@
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "$ignoreUnknownInstances": true,
-      "Shared": { "$path": "src/shared" }
+      "Shared": {
+        "$path": "src/shared"
+      }
     },
     "ServerStorage": {
       "$className": "ServerStorage",
       "$ignoreUnknownInstances": true,
-      "ServerShared": { "$path": "src/server-shared" }
+      "ServerShared": {
+        "$path": "src/server-shared"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
@@ -27,18 +31,86 @@
     },
     "Players": {
       "$className": "Players",
-      "$properties": { "CharacterAutoLoads": false }
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
     },
     "Workspace": {
       "$className": "Workspace",
       "$ignoreUnknownInstances": true,
-      "$properties": { "StreamingEnabled": false },
-      "Maps": { "$path": "src/maps" }
+      "$properties": {
+        "StreamingEnabled": false
+      },
+      "Maps": {
+        "$path": "src/maps"
+      }
     },
     "Lighting": {
       "$className": "Lighting",
       "$ignoreUnknownInstances": true,
-      "$properties": { "ClockTime": 14.5, "Brightness": 2 }
+      "$properties": {
+        "ClockTime": 17.4,
+        "Brightness": 2.6,
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1,
+        "OutdoorAmbient": [
+          0.45,
+          0.42,
+          0.5
+        ],
+        "Ambient": [
+          0.25,
+          0.24,
+          0.3
+        ],
+        "ExposureCompensation": 0.15
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.28,
+          "Offset": 0.15,
+          "Haze": 1.6,
+          "Glare": 0.6,
+          "Color": [
+            0.85,
+            0.7,
+            0.6
+          ],
+          "Decay": [
+            0.45,
+            0.38,
+            0.5
+          ]
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.6,
+          "Size": 28,
+          "Threshold": 1.1
+        }
+      },
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Saturation": 0.12,
+          "Contrast": 0.08,
+          "TintColor": [
+            1,
+            0.97,
+            0.94
+          ]
+        }
+      },
+      "SunRays": {
+        "$className": "SunRaysEffect",
+        "$properties": {
+          "Intensity": 0.06,
+          "Spread": 0.7
+        }
+      }
     }
   }
 }
