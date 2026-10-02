@@ -1108,15 +1108,17 @@ def build_lobby():
     zc = (D0 + D1) / 2
     b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Concrete")
     # Teppich-Laufsteg vom Spawn zur Bühne, Ränder in Cyan
-    b.box("Ground", "Runner", (12, 0.06, 40), (0, 0.23, -30), navy, "Fabric")
+    b.box("Ground", "Runner", (12, 0.06, 64), (0, 0.23, -26), navy, "Fabric")
     for x in (-6.2, 6.2):
-        b.box("Ground", "RunnerEdge", (0.5, 0.08, 40), (x, 0.24, -30), CYAN, "Neon", props={"Transparency": 0.2})
+        b.box("Ground", "RunnerEdge", (0.5, 0.08, 64), (x, 0.24, -26), CYAN, "Neon", props={"Transparency": 0.2})
     # Team-Raute in der Mitte
     b.box("Ground", "EmblemOuter", (18, 0.06, 18), (0, 0.25, 0), CYAN, "Neon", angles=(0, 45, 0), props={"Transparency": 0.3})
     b.box("Ground", "EmblemInner", (14, 0.08, 14), (0, 0.27, 0), navy, "SmoothPlastic", angles=(0, 45, 0))
 
     # Wände: Süd geschlossen, Nord mit großem Hallentor
-    b.box("Walls", "WallSouth", (2 * W + 4, H, 2), (0, H / 2, D0 - 1), wall, "Metal")
+    # Südwand mit Durchgang (14 breit, 13 hoch) zur Ruhmeshalle
+    b.wall_line("WallSouth", -W - 2, W + 2, D0 - 1, True, H, wall, "Metal", openings=[(0, 14, 0, 13)], t=2,
+                group="Walls")
     b.box("Walls", "WallWest", (2, H, D1 - D0), (-W - 1, H / 2, zc), wall, "Metal")
     b.box("Walls", "WallEast", (2, H, D1 - D0), (W + 1, H / 2, zc), wall, "Metal")
     # Dunkler Sockel unten an den Wänden
@@ -1154,35 +1156,51 @@ def build_lobby():
         b.add("Decor", "Spotlight", (H - 4, 4, 4), (x, (H - 4) / 2 + 1, 18), (255, 250, 235), "Neon", angles=(0, 0, 90),
               props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
     b.sign("BriefingScreen", (34, 10, 0.6), (0, 14, 26), "TACTICAL OPERATIONS", navy, CYAN)
-    # ---------- Bestenlisten neben der Bühne (Client füllt die Tafeln) ----------
-    for x, board, color in ((-31, "Elo", (250, 205, 70)), (-53, "Kills", (230, 60, 70)),
-                            (31, "Level", CYAN), (53, "Wins", (90, 220, 110))):
-        b.box("Decor", "Leaderboard_" + board, (18, 14, 0.6), (x, 10, 24), navy, "SmoothPlastic")
-        b.box("Decor", "LeaderboardFrame", (19, 15, 0.4), (x, 10, 24.5), (30, 34, 42), "Metal")
-        b.box("Decor", "LeaderboardTopStrip", (19, 0.5, 0.8), (x, 17.6, 24), color, "Neon")
-        for dx in (-7, 7):
-            b.box("Decor", "LeaderboardPost", (0.8, 3, 0.8), (x + dx, 1.5, 24.5), (30, 34, 42), "Metal")
-        b.box("Decor", "LeaderboardLight", (6, 0.4, 1.4), (x, 18.4, 22.6), (255, 248, 235), "Neon",
-              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
-                  "Face": "Bottom", "Range": 18, "Brightness": 2, "Angle": 70, "Color": rgb(255, 244, 228)}}])
+    # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
+    b.box("Decor", "MissionBoard", (26, 12, 0.6), (0, 24, D0 + 0.4), navy, "SmoothPlastic", angles=(0, 180, 0))
 
-    # ---------- Siegertreppchen (Top 3 Ranked) in der Hallenmitte, Statuen setzt der Server ----------
-    for place, x, h, color in ((1, 0, 4.5, (250, 205, 70)), (2, -8, 3.2, (200, 205, 215)), (3, 8, 2.2, (205, 130, 70))):
-        b.box("Decor", "PodiumBase", (7.6, h, 7.6), (x, h / 2, -2), (30, 34, 42), "Metal")
-        b.box("Decor", "PodiumTop", (7.8, 0.4, 7.8), (x, h + 0.2, -2), color, "Metal")
-        b.box("Decor", "PodiumEdge", (7.8, 0.3, 0.3), (x, h - 0.4, -5.9), color, "Neon")
-        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (x, h + 0.5, -2), color, "SmoothPlastic",
+    # ---------- Ruhmeshalle: eigener Raum hinter der Südwand (Bestenlisten + Siegertreppchen) ----------
+    gold = (250, 205, 70)
+    R0, RW, RH = D0 - 46, 36, 22  # Raum: z R0..D0, x -RW..RW, Höhe RH
+    rz = (R0 + D0) / 2
+    b.box("Ground", "FameFloor", (2 * RW, 0.2, D0 - R0), (0, 0.1, rz), (40, 44, 54), "Marble")
+    b.box("Ground", "FameCarpet", (14, 0.06, D0 - R0 - 6), (0, 0.23, rz + 3), (90, 20, 30), "Fabric")
+    b.box("Walls", "FameWallW", (2, RH, D0 - R0), (-RW - 1, RH / 2, rz), wall, "Metal")
+    b.box("Walls", "FameWallE", (2, RH, D0 - R0), (RW + 1, RH / 2, rz), wall, "Metal")
+    b.box("Walls", "FameWallS", (2 * RW + 4, RH, 2), (0, RH / 2, R0 - 1), wall, "Metal")
+    b.box("Walls", "FameRoof", (2 * RW + 4, 1, D0 - R0 + 2), (0, RH + 0.5, rz), (60, 64, 70), "Metal")
+    for x in (-20, 0, 20):
+        for z in (R0 + 12, R0 + 32):
+            b.box("Decor", "FameLamp", (6, 0.4, 2), (x, RH - 0.6, z), (255, 240, 210), "Neon",
+                  children=[{"Name": "Light", "ClassName": "PointLight",
+                             "Properties": {"Range": 30, "Brightness": 1.5, "Color": rgb(255, 236, 200)}}])
+    # Siegertreppchen (Top 3 Ranked), Statuen setzt der Server, Blick zum Eingang (Norden)
+    pz = R0 + 14
+    for place, x, h, color in ((1, 0, 4.5, gold), (2, -8, 3.2, (200, 205, 215)), (3, 8, 2.2, (205, 130, 70))):
+        b.box("Decor", "PodiumBase", (7.6, h, 7.6), (x, h / 2, pz), (30, 34, 42), "Metal")
+        b.box("Decor", "PodiumTop", (7.8, 0.4, 7.8), (x, h + 0.2, pz), color, "Metal")
+        b.box("Decor", "PodiumEdge", (7.8, 0.3, 0.3), (x, h - 0.4, pz + 3.9), color, "Neon")
+        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (x, h + 0.5, pz), color, "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.sign("PodiumNumber", (3, 2, 0.3), (x, h / 2, -5.95), str(place), (30, 34, 42), color)
-    b.add("Decor", "PodiumGlow", (0.2, 26, 26), (0, 0.3, -2), (250, 205, 70), "Neon", angles=(0, 0, 90),
+        b.sign("PodiumNumber", (3, 2, 0.3), (x, h / 2, pz + 3.95), str(place), (30, 34, 42), color, angles=(0, 180, 0))
+    b.add("Decor", "PodiumGlow", (0.2, 26, 26), (0, 0.3, pz), gold, "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.75, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
               "Range": 20, "Brightness": 1.5, "Color": rgb(255, 220, 140)}}])
-    b.sign2("PodiumTitle", (22, 4, 0.4), (0, 16, -2), "TOP 3 · RANKED", "DIE BESTEN SPIELER DER SAISON",
-            navy, (250, 205, 70), (235, 242, 248), glow=(250, 205, 70))
-
-    # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
-    b.box("Decor", "MissionBoard", (26, 14, 0.6), (0, 14, D0 + 0.4), navy, "SmoothPlastic", angles=(0, 180, 0))
+    b.sign2("PodiumTitle", (24, 5, 0.4), (0, 15, R0 + 3), "TOP 3 · RANKED", "DIE BESTEN SPIELER DER SAISON",
+            navy, gold, (235, 242, 248), angles=(0, 180, 0), glow=gold)
+    # Bestenlisten an den Seitenwänden (je zwei, zur Raummitte gerichtet)
+    for x, yaw, inward, boards in ((-RW + 0.4, -90, 1, (("Elo", gold, R0 + 32), ("Kills", (230, 60, 70), R0 + 12))),
+                                   (RW - 0.4, 90, -1, (("Level", CYAN, R0 + 32), ("Wins", (90, 220, 110), R0 + 12)))):
+        for board, color, z in boards:
+            b.box("Decor", "LeaderboardFrame", (19, 15, 0.4), (x, 10, z), (30, 34, 42), "Metal", angles=(0, yaw, 0))
+            b.box("Decor", "Leaderboard_" + board, (18, 14, 0.6), (x + inward * 0.5, 10, z), navy, "SmoothPlastic",
+                  angles=(0, yaw, 0))
+            b.box("Decor", "LeaderboardTopStrip", (19, 0.5, 0.8), (x + inward * 0.5, 17.6, z), color, "Neon",
+                  angles=(0, yaw, 0))
+    # Durchgang in der Südwand der Haupthalle mit Schild
+    b.sign2("FameSign", (22, 4, 0.4), (0, 16, D0 + 0.6), "RUHMESHALLE", "BESTENLISTEN · TOP 3",
+            navy, gold, (235, 242, 248), angles=(0, 180, 0), glow=gold)
 
     # ---------- Einsatz-Tore: groß, farbig, mit Schild und Spielerzahl ----------
     def gate(x, z, yaw, inward, mode_id, title, subtitle, color):
@@ -1250,8 +1268,12 @@ def build_lobby():
     for x in range(-140, 141, 8):
         b.box("Decor", "FencePost", (0.4, 5, 0.4), (x, 2.5, 175), (80, 80, 85), "Metal")
     b.box("Decor", "FenceMesh", (280, 4.4, 0.15), (0, 2.6, 175), (120, 125, 130), "Metal", props={"Transparency": 0.6})
-    for _ in range(16):
-        b.tree(rng.uniform(-135, 135), rng.uniform(-170, -75), rng)
+    placed = 0
+    while placed < 16:
+        x, z = rng.uniform(-135, 135), rng.uniform(-170, -75)
+        if abs(x) > 48 or z < -118:  # nicht auf der Ruhmeshalle
+            b.tree(x, z, rng)
+            placed += 1
 
     b.save("Hub.model.json")
 

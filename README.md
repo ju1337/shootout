@@ -13,7 +13,7 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 | Modus | Kurz | Map (Mitte) |
 |---|---|---|
-| Hub | Große Hangar-Halle: 10 farbige Einsatz-Tore mit großen Schildern und Live-Spielerzahl, Lineup-Bühne | Hangar (0, 0, 0) |
+| Hub | Große Hangar-Halle: 10 farbige Einsatz-Tore mit Live-Spielerzahl, Lineup-Bühne; Ruhmeshalle (Bestenlisten, Top-3-Statuen) hinter dem Spawn | Hangar (0, 0, 0) |
 | Free-for-All | jeder gegen jeden, Respawn | Raffinerie 250x250 (0, 0, 1500) |
 | Drop | 5v5, Absprung über der Map, ein Leben | Tal (1500, 0, 0) |
 | Strikeout | 4v4, Respawn-Tickets, Punkt zieht Tickets ab, Overtime auf dem Punkt | Rotation: Fabrik / Zellenblock / Kanäle / Windmühlen |
