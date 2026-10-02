@@ -149,7 +149,7 @@ function Scoreboard.Init()
 	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90),
 		Size = UDim2.new(0, 820, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(12, 14, 20),
 		BackgroundTransparency = 0.1, BorderSizePixel = 0 }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, panel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12),
 		PaddingRight = UDim.new(0, 12) }, panel)
 	list = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,

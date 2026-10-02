@@ -61,11 +61,11 @@ end
 
 local function button(props, parent, onClick)
 	props.BorderSizePixel = 0
-	props.Font = props.Font or Enum.Font.GothamBlack
+	props.Font = props.Font or Enum.Font.Oswald
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.AutoButtonColor = true
 	local b = make("TextButton", props, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 8) }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, b)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -150,12 +150,12 @@ end
 local function makePanel(name, title, width, height)
 	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, width, 0, height), BackgroundColor3 = PANEL, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 16) }, frame)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, frame)
 	make("UIStroke", { Color = BORDER, Thickness = 1.5 }, frame)
 	UITheme.Gradient(frame, Color3.fromRGB(28, 33, 50), PANEL)
 	-- Farbige Kopfleiste
 	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 16) }, header)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, header)
 	local scale = make("UIScale", {}, frame)
 	local function updateScale()
 		local viewport = workspace.CurrentCamera.ViewportSize
@@ -165,7 +165,7 @@ local function makePanel(name, title, width, height)
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
 	text({ Position = UDim2.new(0, 24, 0, 14), Size = UDim2.new(1, -100, 0, 40), Text = title, TextSize = 30,
-		Font = Enum.Font.GothamBlack, TextColor3 = ACCENT }, frame)
+		Font = Enum.Font.Oswald, TextColor3 = ACCENT }, frame)
 	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 40, 0, 40),
 		Text = "✕", TextSize = 20, BackgroundColor3 = CARD }, frame, function()
 		setPanel(nil)
@@ -223,11 +223,11 @@ local function buildShop()
 		for i, item in shopItems do
 			local rarity = Cosmetics.Rarities[item.Rarity]
 			local card = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
-			make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+			make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
 			make("UIStroke", { Color = rarity.Color, Thickness = 1.5 }, card)
 			local stripe = make("Frame", { Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = rarity.Color,
 				BorderSizePixel = 0 }, card)
-			make("UICorner", { CornerRadius = UDim.new(0, 10) }, stripe)
+			make("UICorner", { CornerRadius = UDim.new(0, 4) }, stripe)
 			local preview = viewportFrame({ Position = UDim2.new(0, 0, 0, 8), Size = UDim2.new(1, 0, 0, 130) }, card)
 			if item.Type == "Weapon" then
 				showWeapon(preview, "Rifle", item)
@@ -269,7 +269,7 @@ local function buildInventory()
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 	local previewBack = make("Frame", { Position = UDim2.new(0, 264, 0, 110), Size = UDim2.new(1, -288, 0, 230),
 		BackgroundColor3 = CARD }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, previewBack)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, previewBack)
 	local preview = viewportFrame({ Size = UDim2.new(1, 0, 1, 0) }, previewBack)
 	local previewTitle = text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 28), Text = "",
 		TextSize = 22 }, previewBack)
@@ -412,7 +412,7 @@ local function buildQuests()
 				local claimed = (data.Claimed or {})[id] == true
 				local done = progress >= quest.Goal
 				local row = make("Frame", { Size = UDim2.new(1, 0, 0, 80), BackgroundColor3 = CARD, LayoutOrder = i }, list)
-				make("UICorner", { CornerRadius = UDim.new(0, 10) }, row)
+				make("UICorner", { CornerRadius = UDim.new(0, 4) }, row)
 				text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -200, 0, 24), Text = quest.Text,
 					TextSize = 19 }, row)
 				text({ Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -200, 0, 18),
@@ -684,7 +684,7 @@ local function buildPass()
 	local season = text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 24),
 		Text = PassConfig.SeasonName, TextSize = 18, TextColor3 = GRAY }, frame)
 	local tierLabel = text({ Position = UDim2.new(0, 24, 0, 90), Size = UDim2.new(0, 400, 0, 34), Text = "",
-		TextSize = 28, Font = Enum.Font.GothamBlack }, frame)
+		TextSize = 28, Font = Enum.Font.Oswald }, frame)
 	local barBack = make("Frame", { Position = UDim2.new(0, 24, 0, 130), Size = UDim2.new(1, -48, 0, 12),
 		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, barBack)
@@ -704,7 +704,7 @@ local function buildPass()
 		local item = reward.Item and Cosmetics.Get(reward.Item)
 		local rarity = item and Cosmetics.Rarities[item.Rarity]
 		local card = make("Frame", { Size = UDim2.new(0, 124, 0, 230), BackgroundColor3 = CARD, LayoutOrder = tier }, strip)
-		make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+		make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
 		local stroke = make("UIStroke", { Color = rarity and rarity.Color or BORDER, Thickness = item and 2 or 1 }, card)
 		text({ Size = UDim2.new(1, 0, 0, 30), Text = "STUFE " .. tier, TextSize = 14, TextColor3 = GRAY,
 			TextXAlignment = Enum.TextXAlignment.Center }, card)
@@ -754,7 +754,7 @@ end
 local function buildDaily()
 	local frame = makePanel("Daily", "🎁  TÄGLICHE BELOHNUNG", 560, 330)
 	text({ Position = UDim2.new(0, 24, 0, 80), Size = UDim2.new(1, -48, 0, 60),
-		Text = "💰 " .. Cosmetics.DailyReward .. " Münzen", TextSize = 44, Font = Enum.Font.GothamBlack,
+		Text = "💰 " .. Cosmetics.DailyReward .. " Münzen", TextSize = 44, Font = Enum.Font.Oswald,
 		TextColor3 = Color3.fromRGB(255, 210, 80), TextXAlignment = Enum.TextXAlignment.Center }, frame)
 	text({ Position = UDim2.new(0, 24, 0, 144), Size = UDim2.new(1, -48, 0, 24),
 		Text = "Jeden Tag kostenlos abholen!", TextSize = 17, TextColor3 = GRAY,
@@ -785,7 +785,7 @@ local function buildCodes()
 		BackgroundColor3 = CARD, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 22,
 		TextColor3 = Color3.new(1, 1, 1), PlaceholderText = "CODE", PlaceholderColor3 = GRAY, Text = "",
 		ClearTextOnFocus = false }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 8) }, box)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, box)
 	button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 172), Size = UDim2.new(0, 260, 0, 52),
 		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = GREEN }, frame, function()
 		Remotes.ShopAction:FireServer("RedeemCode", box.Text)
@@ -878,7 +878,7 @@ end
 local function sideButton(icon, label, order, onClick)
 	local b = make("TextButton", { Size = UDim2.new(0, 96, 0, 62), BackgroundColor3 = Color3.fromRGB(22, 26, 40),
 		BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, 14) }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, b)
 	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1.5 }, b)
 	UITheme.Gradient(b, Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 175, 195))
 	local scale = make("UIScale", {}, b)

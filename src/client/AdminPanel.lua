@@ -80,7 +80,7 @@ local function send(action, a, b)
 end
 
 local function section(title)
-	label(title, 18, list, { TextColor3 = ACCENT, Font = Enum.Font.GothamBlack })
+	label(title, 18, list, { TextColor3 = ACCENT, Font = Enum.Font.Oswald })
 end
 
 local function buildControls()
@@ -277,11 +277,11 @@ local function build()
 	panel = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -20, 0.5, 0),
 		Size = UDim2.new(0, 460, 0.85, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.05,
 		BorderSizePixel = 0, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
+	make("UICorner", { CornerRadius = UDim.new(0, 4) }, panel)
 	make("UIStroke", { Color = ACCENT, Thickness = 2 }, panel)
 
 	label("ADMIN-PANEL", 24, panel, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 30),
-		Font = Enum.Font.GothamBlack, TextColor3 = ACCENT })
+		Font = Enum.Font.Oswald, TextColor3 = ACCENT })
 	statusLabel = label("", 14, panel, { Position = UDim2.new(0, 16, 0, 42), Size = UDim2.new(1, -32, 0, 20),
 		Font = Enum.Font.Gotham, TextColor3 = GRAY })
 
