@@ -16,12 +16,12 @@ local player = Players.LocalPlayer
 
 local AdminPanel = {}
 
-local ACCENT = Color3.fromRGB(255, 140, 40)
-local PANEL = Color3.fromRGB(16, 18, 26)
-local ROW = Color3.fromRGB(28, 31, 42)
-local BUTTON = Color3.fromRGB(48, 52, 68)
-local DANGER = Color3.fromRGB(170, 60, 60)
-local GRAY = Color3.fromRGB(170, 175, 190)
+local ACCENT = Color3.fromRGB(40, 210, 230)
+local PANEL = Color3.fromRGB(13, 22, 36)
+local ROW = Color3.fromRGB(18, 30, 48)
+local BUTTON = Color3.fromRGB(30, 50, 74)
+local DANGER = Color3.fromRGB(190, 50, 60)
+local GRAY = Color3.fromRGB(130, 155, 175)
 
 local gui, panel, list, statusLabel, playerSection, toggleButton
 local valueLabels = {} -- [Key] = Label
@@ -61,7 +61,7 @@ local function button(textValue, width, parent, color, onClick)
 		Text = textValue,
 		AutoButtonColor = true,
 	}, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
+	make("UICorner", { CornerRadius = UDim.new(0, 3) }, b)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -209,7 +209,7 @@ local function refreshPlayers()
 	for i, p in Players:GetPlayers() do
 		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 100), BackgroundColor3 = ROW, BorderSizePixel = 0,
 			LayoutOrder = i }, playerSection)
-		make("UICorner", { CornerRadius = UDim.new(0, 6) }, box)
+		make("UICorner", { CornerRadius = UDim.new(0, 3) }, box)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 6) }, box)
 		make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, box)
 		local agent = AgentConfig.Get(p:GetAttribute("Agent"))
@@ -278,7 +278,8 @@ local function build()
 		Size = UDim2.new(0, 460, 0.85, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.05,
 		BorderSizePixel = 0, Visible = false, Active = true }, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 4) }, panel)
-	make("UIStroke", { Color = ACCENT, Thickness = 2 }, panel)
+	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.5 }, panel)
+	make("Frame", { Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, panel)
 
 	label("ADMIN-PANEL", 24, panel, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 30),
 		Font = Enum.Font.Oswald, TextColor3 = ACCENT })
