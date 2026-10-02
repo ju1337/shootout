@@ -20,10 +20,11 @@ AttachmentConfig.Slots = {
 -- MoveSpread (zusätzliche Streuung in Bewegung), Range (Reichweite), Falloff (ab wann der Schaden sinkt),
 -- Mag (Magazingröße), Reload (Nachladezeit). Silenced = true: Gegner sehen kein Mündungsfeuer/keine Leuchtspur.
 -- Pros/Cons: kurze Plus-/Minus-Texte für die Lobby (grün/rot)
+-- Free = true: gratis für jede Waffe (einer pro Platz zum Start), die anderen kosten Münzen
 AttachmentConfig.List = {
 	-- Mündung
 	{ Id = "Compensator", Slot = "Muzzle", Name = "Kompensator", Description = "−20 % Rückstoß", Price = 800,
-		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {} },
+		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {}, Free = true },
 	{ Id = "MuzzleBrake", Slot = "Muzzle", Name = "Mündungsbremse", Description = "−15 % Streuung", Price = 900,
 		Effects = { Spread = 0.85 }, Pros = { "−15 % Streuung" }, Cons = {} },
 	{ Id = "Suppressor", Slot = "Muzzle", Name = "Schalldämpfer", Description = "Leise, für Gegner kein Mündungsfeuer",
@@ -35,13 +36,13 @@ AttachmentConfig.List = {
 		Cons = { "+15 % Streuung in Bewegung" } },
 	{ Id = "ShortBarrel", Slot = "Barrel", Name = "Kurzer Lauf", Description = "−25 % Streuung in Bewegung, −15 % Reichweite",
 		Price = 700, Effects = { MoveSpread = 0.75, Range = 0.85 }, Pros = { "−25 % Streuung in Bewegung" },
-		Cons = { "−15 % Reichweite" } },
+		Cons = { "−15 % Reichweite" }, Free = true },
 	{ Id = "HeavyBarrel", Slot = "Barrel", Name = "Schwerer Lauf", Description = "Schaden fällt erst viel später ab",
 		Price = 1000, Effects = { Falloff = 1.6, HipSpread = 1.1 }, Pros = { "Schaden fällt 60 % später ab" },
 		Cons = { "+10 % Streuung aus der Hüfte" } },
 	-- Griff
 	{ Id = "VerticalGrip", Slot = "Grip", Name = "Vertikalgriff", Description = "−20 % Rückstoß", Price = 700,
-		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {} },
+		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {}, Free = true },
 	{ Id = "Laser", Slot = "Grip", Name = "Laser", Description = "−25 % Streuung aus der Hüfte", Price = 800,
 		Effects = { HipSpread = 0.75 }, Pros = { "−25 % Streuung aus der Hüfte" }, Cons = {} },
 	{ Id = "AngledGrip", Slot = "Grip", Name = "Winkelgriff", Description = "Etwas weniger Rückstoß und Hüftstreuung",
@@ -51,7 +52,7 @@ AttachmentConfig.List = {
 	{ Id = "ExtendedMag", Slot = "Magazine", Name = "Erweitertes Magazin", Description = "+30 % Magazin", Price = 900,
 		Effects = { Mag = 1.3 }, Pros = { "+30 % Magazin" }, Cons = {} },
 	{ Id = "FastMag", Slot = "Magazine", Name = "Schnellmagazin", Description = "Nachladen 25 % schneller", Price = 800,
-		Effects = { Reload = 0.75 }, Pros = { "−25 % Nachladezeit" }, Cons = {} },
+		Effects = { Reload = 0.75 }, Pros = { "−25 % Nachladezeit" }, Cons = {}, Free = true },
 	{ Id = "DrumMag", Slot = "Magazine", Name = "Trommelmagazin", Description = "+60 % Magazin, langsameres Nachladen",
 		Price = 1200, Effects = { Mag = 1.6, Reload = 1.3 }, Pros = { "+60 % Magazin" }, Cons = { "+30 % Nachladezeit" } },
 }
@@ -91,6 +92,9 @@ function AttachmentConfig.Data(player)
 end
 
 function AttachmentConfig.Owns(player, weaponName, id)
+	if byId[id] and byId[id].Free then
+		return true
+	end
 	local owned = AttachmentConfig.Data(player).Owned[weaponName]
 	return owned ~= nil and owned[id] == true
 end

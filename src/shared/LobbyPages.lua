@@ -25,6 +25,7 @@ local UITheme = require(Shared.UITheme)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local MasteryConfig = require(Shared.MasteryConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -418,6 +419,22 @@ function LobbyPages.Loadout(page, goToShop)
 		end
 	end
 
+	-- Aufsätze in zwei Stufen: Übersicht mit einem Feld pro Platz (leer = "+", sonst Symbol des Aufsatzes);
+	-- ein Klick öffnet die Auswahl für diesen Platz (Ablegen + die Aufsätze mit Kaufen/Ausrüsten).
+	local attachSlot = nil -- nil = Übersicht, sonst Platz-Id
+
+	-- Zustand eines Aufsatzes: Text, Farbe und kurze Erklärung für die Info-Karte
+	local function itemState(weaponName, item, isOn)
+		local owned = AttachmentConfig.Owns(player, weaponName, item.Id)
+		if isOn then
+			return "AUSGERÜSTET", C.Primary, "AUSGERÜSTET  ·  KLICKEN ZUM ABLEGEN"
+		elseif owned then
+			return item.Free and "GRATIS" or "GEKAUFT", C.Good, (item.Free and "GRATIS" or "GEKAUFT") .. "  ·  KLICKEN ZUM AUSRÜSTEN"
+		end
+		local price = UITheme.FormatNumber(item.Price) .. " MÜNZEN"
+		return price, coins() >= item.Price and C.Text or C.Bad, price .. "  ·  KLICKEN ZUM KAUFEN"
+	end
+
 	local function fillAttachments()
 		tip.Visible = false
 		tipFor = nil
@@ -425,65 +442,159 @@ function LobbyPages.Loadout(page, goToShop)
 		local weaponName = selected
 		local equipped = AttachmentConfig.Equipped(player, weaponName)
 		local currentEffects = AttachmentConfig.Effects(player, weaponName)
-		for order, slot in AttachmentConfig.Slots do
-			local items = AttachmentConfig.ForSlot(slot.Id)
-			local current = equipped[slot.Id] and AttachmentConfig.Owns(player, weaponName, equipped[slot.Id])
-				and AttachmentConfig.Get(equipped[slot.Id])
-			local block = make("Frame", { Size = UDim2.fromOffset(RIGHT_W, 136), BackgroundTransparency = 1, LayoutOrder = order },
-				attachPanel)
-			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = upper(slot.Name), TextSize = 13, Font = F.Bold,
-				TextColor3 = C.Text }, block)
-			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(RIGHT_W, 18),
-				Text = current and upper(current.Name) or "LEER", TextSize = 12, Font = F.Bold,
-				TextColor3 = current and C.Primary or C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, block)
-			local gap = 8
-			local width = math.floor((RIGHT_W - gap * (#items - 1)) / #items)
-			for i, item in items do
+		local function equippedItem(slotId)
+			local id = equipped[slotId]
+			return id and AttachmentConfig.Owns(player, weaponName, id) and AttachmentConfig.Get(id) or nil
+		end
+
+		-- quadratisches Feld links in einer Zeile: Symbol oder "+"
+		local function iconBox(parent, size, item, color)
+			local box = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(size, size),
+				BackgroundColor3 = C.Background, BackgroundTransparency = 0.2 }, parent)
+			UITheme.Corner(box, UITheme.Radius.Medium)
+			if item then
+				local icon = AttachmentIcons.Build(box, item.Id, size - 16, color)
+				icon.AnchorPoint = Vector2.new(0.5, 0.5)
+				icon.Position = UDim2.fromScale(0.5, 0.5)
+			else
+				UITheme.Stroke(box, C.Border, 1, 0.2)
+				label({ Size = UDim2.fromScale(1, 1), Text = "+", TextSize = 44, Font = F.Display, TextColor3 = C.Muted,
+					TextXAlignment = Enum.TextXAlignment.Center }, box)
+			end
+			return box
+		end
+
+		if not attachSlot then
+			-- Übersicht: ein Feld pro Platz
+			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = "PLATZ ANKLICKEN, UM EINEN AUFSATZ AUSZUWÄHLEN", TextSize = 11,
+				Font = F.Bold, TextColor3 = C.Muted, LayoutOrder = 0 }, attachPanel)
+			for order, slot in AttachmentConfig.Slots do
+				local item = equippedItem(slot.Id)
+				local row = make("TextButton", { Size = UDim2.fromOffset(RIGHT_W, 104), BackgroundColor3 = C.Panel,
+					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false, LayoutOrder = order }, attachPanel)
+				UITheme.Corner(row, UITheme.Radius.Medium)
+				local stroke = UITheme.Stroke(row, item and C.Primary or C.Border, 1, item and 0.3 or 0.35)
+				iconBox(row, 84, item, C.Primary)
+				label({ Position = UDim2.fromOffset(110, 14), Size = UDim2.new(1, -150, 0, 16), Text = upper(slot.Name), TextSize = 12,
+					Font = F.Bold, TextColor3 = C.Muted }, row)
+				label({ Position = UDim2.fromOffset(110, 32), Size = UDim2.new(1, -150, 0, 28), Text = item and upper(item.Name) or "LEER",
+					TextSize = 26, Font = F.Display, TextColor3 = item and C.Text or C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, row)
+				local summary = {}
+				for _, pro in item and item.Pros or {} do
+					table.insert(summary, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
+				end
+				for _, con in item and item.Cons or {} do
+					table.insert(summary, '<font color="#' .. C.Bad:ToHex() .. '">− ' .. con .. "</font>")
+				end
+				label({ Position = UDim2.fromOffset(110, 64), Size = UDim2.new(1, -150, 0, 30),
+					Text = item and table.concat(summary, "   ") or "Noch kein Aufsatz auf diesem Platz", TextSize = 12, Font = F.Medium,
+					RichText = true, TextWrapped = true, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top }, row)
+				label({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0), Size = UDim2.fromOffset(24, 40),
+					Text = "›", TextSize = 34, Font = F.Display, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, row)
+				row.MouseEnter:Connect(function()
+					stroke.Transparency = 0
+					stroke.Color = C.Text
+				end)
+				row.MouseLeave:Connect(function()
+					stroke.Transparency = item and 0.3 or 0.35
+					stroke.Color = item and C.Primary or C.Border
+				end)
+				row.Activated:Connect(function()
+					attachSlot = slot.Id
+					fillAttachments()
+					InputActions.Focus(attachPanel)
+				end)
+			end
+			showStats(currentEffects)
+			return
+		end
+
+		-- Auswahl für einen Platz: Zurück, Ablegen, dann die Aufsätze
+		local slot
+		for _, entry in AttachmentConfig.Slots do
+			if entry.Id == attachSlot then
+				slot = entry
+			end
+		end
+		local current = equippedItem(slot.Id)
+		local header = make("Frame", { Size = UDim2.fromOffset(RIGHT_W, 44), BackgroundTransparency = 1, LayoutOrder = 0 }, attachPanel)
+		UITheme.Chunky({ Size = UDim2.fromOffset(120, 40), Color = C.Card, StrokeColor = C.Border, Text = "‹  ZURÜCK", TextSize = 16 },
+			header, function()
+				attachSlot = nil
+				fillAttachments()
+				InputActions.Focus(attachPanel)
+			end)
+		label({ Position = UDim2.fromOffset(136, 0), Size = UDim2.new(1, -136, 1, 0), Text = upper(slot.Name), TextSize = 30,
+			Font = F.Display }, header)
+
+		local rows = {}
+		if current then
+			table.insert(rows, { Remove = true })
+		end
+		local items = AttachmentConfig.ForSlot(slot.Id)
+		table.sort(items, function(x, y) -- Gratis zuerst, dann nach Preis
+			if (x.Free == true) ~= (y.Free == true) then
+				return x.Free == true
+			end
+			return x.Price < y.Price
+		end)
+		for _, item in items do
+			table.insert(rows, { Item = item })
+		end
+		for order, entry in rows do
+			local item = entry.Item
+			local isOn = item ~= nil and current ~= nil and current.Id == item.Id
+			local row = make("TextButton", { Size = UDim2.fromOffset(RIGHT_W, entry.Remove and 56 or 104),
+				BackgroundColor3 = isOn and C.Secondary or C.Panel, BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false,
+				LayoutOrder = order }, attachPanel)
+			UITheme.Corner(row, UITheme.Radius.Medium)
+			local stroke = UITheme.Stroke(row, isOn and C.Primary or C.Border, isOn and 2 or 1, isOn and 0 or 0.35)
+			if entry.Remove then
+				label({ Position = UDim2.fromOffset(16, 0), Size = UDim2.new(1, -32, 1, 0), Text = "–  KEIN AUFSATZ (ABLEGEN)",
+					TextSize = 18, Font = F.Display, TextColor3 = C.Muted }, row)
+				row.Activated:Connect(function()
+					Remotes.ShopAction:FireServer("ToggleAttachment", weaponName, current.Id)
+				end)
+			else
 				local owned = AttachmentConfig.Owns(player, weaponName, item.Id)
-				local isOn = owned and equipped[slot.Id] == item.Id
-				local affordable = coins() >= item.Price
-				local tile = make("TextButton", { Position = UDim2.fromOffset((i - 1) * (width + gap), 22),
-					Size = UDim2.fromOffset(width, 110), BackgroundColor3 = isOn and C.Secondary or C.Panel,
-					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false, ClipsDescendants = true }, block)
-				UITheme.Corner(tile, UITheme.Radius.Medium)
-				local stroke = UITheme.Stroke(tile, isOn and C.Primary or C.Border, isOn and 2 or 1, isOn and 0 or 0.35)
-				-- Symbol oben mittig, Name darunter, Zustand unten (Vorteile/Werte zeigt die Info-Karte beim Überfahren)
-				local icon = AttachmentIcons.Build(tile, item.Id, 46, isOn and C.Primary or (owned and C.Text or C.Muted))
-				icon.AnchorPoint = Vector2.new(0.5, 0)
-				icon.Position = UDim2.new(0.5, 0, 0, 6)
-				local name = label({ Position = UDim2.fromOffset(6, 55), Size = UDim2.new(1, -12, 0, 22), Text = upper(item.Name),
-					TextSize = 16, TextScaled = true, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center,
-					TextColor3 = isOn and C.Primary or C.Text }, tile)
-				make("UITextSizeConstraint", { MaxTextSize = 16, MinTextSize = 11 }, name)
-				-- Zustand unten: ausgerüstet / gekauft / Preis
-				local stateText = isOn and "AUSGERÜSTET" or (owned and "AUSRÜSTEN" or (UITheme.FormatNumber(item.Price) .. " MÜNZEN"))
-				local stateColor = isOn and C.PrimaryText or (owned and C.Good or (affordable and C.Text or C.Bad))
-				local footer = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0),
-					Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = isOn and C.Primary or (owned and C.Card or C.Background),
-					BackgroundTransparency = isOn and 0 or 0.2, BorderSizePixel = 0 }, tile)
+				iconBox(row, 84, item, isOn and C.Primary or (owned and C.Text or C.Muted))
+				label({ Position = UDim2.fromOffset(110, 12), Size = UDim2.new(1, -124, 0, 28), Text = upper(item.Name), TextSize = 24,
+					Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, row)
+				local lines = {}
+				for _, pro in item.Pros or {} do
+					table.insert(lines, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
+				end
+				for _, con in item.Cons or {} do
+					table.insert(lines, '<font color="#' .. C.Bad:ToHex() .. '">− ' .. con .. "</font>")
+				end
+				label({ Position = UDim2.fromOffset(110, 42), Size = UDim2.new(1, -124, 0, 32), Text = table.concat(lines, "\n"),
+					TextSize = 12, Font = F.Medium, RichText = true, TextWrapped = true,
+					TextYAlignment = Enum.TextYAlignment.Top }, row)
+				local stateText, stateColor, tipText = itemState(weaponName, item, isOn)
+				local state = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -10, 1, -10),
+					Size = UDim2.fromOffset(150, 24), BackgroundColor3 = isOn and C.Primary or C.Background,
+					BackgroundTransparency = isOn and 0 or 0.2 }, row)
+				UITheme.Corner(state, UITheme.Radius.Small)
 				label({ Size = UDim2.fromScale(1, 1), Text = stateText, TextSize = 11, Font = F.Bold,
-					TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = stateColor }, footer)
+					TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = isOn and C.PrimaryText or stateColor }, state)
 				local function enter()
 					stroke.Transparency = 0
 					stroke.Color = isOn and C.Primary or C.Text
 					local preview = effectsWith(weaponName, slot.Id, isOn and nil or item.Id)
 					showStats(currentEffects, preview)
-					showTip(tile, item, slot.Name, currentEffects, preview,
-						isOn and "AUSGERÜSTET  ·  KLICKEN ZUM ABLEGEN" or (owned and "GEKAUFT  ·  KLICKEN ZUM AUSRÜSTEN"
-							or (UITheme.FormatNumber(item.Price) .. " MÜNZEN  ·  KLICKEN ZUM KAUFEN")),
-						isOn and C.Primary or (owned and C.Good or (affordable and C.Text or C.Bad)))
+					showTip(row, item, slot.Name, currentEffects, preview, tipText, stateColor)
 				end
 				local function leave()
 					stroke.Transparency = isOn and 0 or 0.35
 					stroke.Color = isOn and C.Primary or C.Border
 					showStats(currentEffects)
-					hideTip(tile)
+					hideTip(row)
 				end
-				tile.MouseEnter:Connect(enter)
-				tile.MouseLeave:Connect(leave)
-				tile.SelectionGained:Connect(enter) -- Controller
-				tile.SelectionLost:Connect(leave)
-				tile.Activated:Connect(function()
+				row.MouseEnter:Connect(enter)
+				row.MouseLeave:Connect(leave)
+				row.SelectionGained:Connect(enter) -- Controller
+				row.SelectionLost:Connect(leave)
+				row.Activated:Connect(function()
 					Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
 				end)
 			end
@@ -604,6 +715,7 @@ function LobbyPages.Loadout(page, goToShop)
 				StrokeColor = on and C.Primary or C.Border, Text = upper(text), TextSize = 20, TextColor = on and C.Primary or C.Text,
 				TextXAlignment = Enum.TextXAlignment.Left }, list, function()
 				selected = name
+				attachSlot = nil -- andere Waffe: Aufsätze wieder in der Übersicht
 				fillList()
 				fillOptions()
 			end)

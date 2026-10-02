@@ -572,6 +572,9 @@ function ProgressService.BuyAttachment(player, weaponName, id)
 	end
 	local data = attachmentData(profile)
 	data.Owned[weaponName] = data.Owned[weaponName] or {}
+	if item.Free then
+		return ProgressService.ToggleAttachment(player, weaponName, id) -- gratis: nur ausrüsten
+	end
 	if data.Owned[weaponName][id] then
 		return "Schon gekauft.", false
 	end
@@ -594,7 +597,7 @@ function ProgressService.ToggleAttachment(player, weaponName, id)
 		return "Unbekannter Aufsatz.", false
 	end
 	local data = attachmentData(profile)
-	if not (data.Owned[weaponName] and data.Owned[weaponName][id]) then
+	if not item.Free and not (data.Owned[weaponName] and data.Owned[weaponName][id]) then
 		return "Noch nicht gekauft.", false
 	end
 	data.Equipped[weaponName] = data.Equipped[weaponName] or {}
