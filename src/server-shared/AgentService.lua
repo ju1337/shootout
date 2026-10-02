@@ -434,7 +434,8 @@ local function useUltimate(player)
 	player:SetAttribute("Gadgets", (player:GetAttribute("Gadgets") or 0) + 1)
 	local agent = AgentConfig.Get(character:GetAttribute("Agent")) or getAgent(player)
 	sparkle(root, agent.Color, 2.5)
-	Remotes.Announce:FireClient(player, string.upper(ult.Name) .. "!")
+	Remotes.Notify:FireClient(player, "Medal", { { Id = "Ultimate", Title = ult.Name,
+		Sub = "Volles Leben  ·  +" .. ult.Armor .. " Rüstung  ·  Fähigkeit bereit" } })
 end
 
 local function setupPlayer(player)

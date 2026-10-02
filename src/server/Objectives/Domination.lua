@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local GameSettings = require(ReplicatedStorage:WaitForChild("Shared").GameSettings)
+local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local BuyService = require(ServerShared.BuyService)
 local ProgressService = require(ServerShared.ProgressService)
@@ -98,13 +99,23 @@ return function(api)
 					-- Mehr Spieler nehmen schneller ein (höchstens doppelt so schnell)
 					flag.Progress = math.min(1, flag.Progress + dt / captureTime * math.min(2, 1 + (#here - 1) * 0.35))
 					if flag.Progress >= 1 then
+						local previous = flag.Owner
 						flag.Owner, flag.Capturer, flag.Progress = team, nil, 0
 						changed = true
-						api.Announce("Team " .. team.Name .. " hat Flagge " .. name .. " eingenommen!")
+						-- Aus Sicht des Spielers: eingenommen, verloren oder vom Gegner eingenommen
+						api.Notify("Objective", function(player)
+							if player.Team == team then
+								return { Text = "Flagge " .. name .. " eingenommen", Side = "Ally", Icon = name }
+							end
+							return { Text = previous == player.Team and ("Flagge " .. name .. " verloren")
+								or ("Gegner hat Flagge " .. name), Side = "Enemy", Icon = name }
+						end)
 						for _, entry in here do
 							if entry.Player then
 								BuyService.AddMoney(entry.Player, CAPTURE_REWARD, "Flagge " .. name)
 								ProgressService.AddStat(entry.Player, "Captures", 1)
+								Remotes.Notify:FireClient(entry.Player, "Medal", { { Id = "Captured",
+									Sub = "Flagge " .. name .. "  ·  +" .. CAPTURE_REWARD .. " $" } })
 							end
 						end
 					end
@@ -137,7 +148,7 @@ return function(api)
 		local limit = GameSettings.Get("DominationScore")
 		for _, team in { api.TeamA, api.TeamB } do
 			if (points[team] or 0) >= limit then
-				api.EndRound(team, "Team " .. team.Name .. " erreicht " .. limit .. " Punkte!")
+				api.EndRound(team, limit .. " Punkte erreicht")
 				return
 			end
 		end

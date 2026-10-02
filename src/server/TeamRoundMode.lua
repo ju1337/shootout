@@ -91,6 +91,7 @@ function TeamRoundMode.new(config)
 	local forceStart = false     -- Admin: sofort starten
 	local resetRequested = false -- Admin: Match zurücksetzen
 	local roundWinner = nil
+	local roundEndReason = nil   -- Grund fürs Rundenende: Text oder { Win, Loss } (aus Sicht des Spielers)
 	local roundNumber = 0
 	local timeLeft = nil         -- Restzeit der Runde (nur mit RoundTime)
 	local overtime = false       -- Strikeout: Zeit um, aber das zurückliegende Team steht auf dem Punkt
@@ -186,9 +187,21 @@ function TeamRoundMode.new(config)
 
 	-- ---------- Anzeige ----------
 
+	-- Einfache Textmeldung an alle Teilnehmer
 	local function announce(text)
 		for player in members do
 			Remotes.Announce:FireClient(player, text)
+		end
+	end
+
+	-- Meldung im CoD-Stil (Notifications) an alle Teilnehmer. data ist eine Tabelle oder eine Funktion
+	-- (player) -> Tabelle oder nil, für Meldungen aus Sicht des Spielers (RUNDE GEWONNEN / VERLOREN).
+	local function notify(kind, data)
+		for player in members do
+			local entry = if type(data) == "function" then data(player) else data
+			if entry then
+				Remotes.Notify:FireClient(player, kind, entry)
+			end
 		end
 	end
 
@@ -318,7 +331,8 @@ function TeamRoundMode.new(config)
 				for player in alive do
 					if player.Team == team and not DownedService.IsDowned(player.Character) then
 						clutches[team] = { Player = player, Enemies = theirs }
-						Remotes.Announce:FireClient(player, "CLUTCH: 1 gegen " .. theirs .. "!")
+						Remotes.Notify:FireClient(player, "Objective", { Text = "Letzter Überlebender  ·  1 gegen " .. theirs,
+							Side = "Alert", Icon = "!" })
 					end
 				end
 			end
@@ -342,6 +356,7 @@ function TeamRoundMode.new(config)
 			return -- z.B. Bombe gelegt: Verteidiger müssen noch entschärfen
 		end
 		roundActive = false
+		roundEndReason = { Win = "Gegnerteam ausgeschaltet", Loss = "Team ausgeschaltet" }
 		if practiceRound then
 			roundWinner = nil
 		elseif aAlive > 0 then
@@ -350,6 +365,7 @@ function TeamRoundMode.new(config)
 			roundWinner = teamB
 		else
 			roundWinner = nil -- beide gleichzeitig raus = unentschieden
+			roundEndReason = "Beide Teams ausgeschaltet"
 		end
 	end
 
@@ -626,7 +642,7 @@ function TeamRoundMode.new(config)
 			publishVote(player)
 		end
 		chooseMap(chosen.Id)
-		announce("Map: " .. chosen.Name)
+		notify("Banner", { Caption = "Map gewählt", Title = chosen.Name, Sub = Modes.Get(MODE_ID).Name, Style = "Info" })
 	end
 	local NEUTRAL = Color3.fromRGB(230, 230, 235)
 
@@ -697,7 +713,19 @@ function TeamRoundMode.new(config)
 					owner = team
 					drainTimer = 0
 					progress[otherTeam(team)] = 0
-					announce("Team " .. team.Name .. " hat den Punkt eingenommen!")
+					notify("Objective", function(player)
+						local mine = player.Team == team
+						return { Text = mine and "Punkt eingenommen" or "Gegner hat den Punkt",
+							Side = mine and "Ally" or "Enemy" }
+					end)
+					-- Medaille für alle eigenen Spieler auf dem Punkt
+					for player in alive do
+						local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+						local standing = root and onPoint(root.Position) and not DownedService.IsDowned(player.Character)
+						if player.Team == team and standing then
+							Remotes.Notify:FireClient(player, "Medal", { { Id = "Captured", Sub = "Punkt" } })
+						end
+					end
 				end
 			end
 		else
@@ -863,6 +891,63 @@ function TeamRoundMode.new(config)
 		setLocked(true)
 	end
 
+	-- Banner zum Rundenstart aus Sicht des Spielers: RUNDE 3, darunter Angriff/Verteidigung, Matchpunkt und Stand
+	local function roundStartBanner(player)
+		local modeName = Modes.Get(MODE_ID).Name
+		if practiceRound then
+			return { Caption = modeName, Title = "Übungsrunde", Sub = "Zählt nicht für das Match", Style = "Info" }
+		end
+		local parts = {}
+		local team = player.Team
+		local attackers = objective and objective.Attackers and objective.Attackers()
+		if attackers and team then
+			table.insert(parts, team == attackers and "Angriff" or "Verteidigung")
+		end
+		if roundsToWin() <= 1 then
+			-- Modi mit nur einer Wertungsrunde (z.B. Herrschaft): Modusname groß, Runde nur nach Unentschieden
+			return { Caption = roundNumber > 1 and ("Runde " .. roundNumber) or "Match beginnt", Title = modeName,
+				Sub = table.concat(parts, "  ·  "), Style = "Info" }
+		end
+		if team then
+			local mine, theirs = scores[team] or 0, scores[otherTeam(team)] or 0
+			local need = roundsToWin() - 1
+			if mine == need and theirs == need then
+				table.insert(parts, "Entscheidungsrunde")
+			elseif mine == need then
+				table.insert(parts, "Matchpunkt")
+			elseif theirs == need then
+				table.insert(parts, "Matchpunkt Gegner")
+			end
+			table.insert(parts, mine .. " : " .. theirs)
+		end
+		return { Caption = modeName, Title = "Runde " .. roundNumber, Sub = table.concat(parts, "  ·  "), Style = "Info" }
+	end
+
+	-- Banner zum Rundenende aus Sicht des Spielers: RUNDE GEWONNEN / VERLOREN, in der letzten Runde
+	-- SIEG / NIEDERLAGE, darunter Grund und Stand
+	local function roundEndBanner(player)
+		local reason = roundEndReason
+		if practiceRound then
+			return { Title = "Übungsrunde vorbei", Style = "Neutral" }
+		end
+		if not roundWinner then
+			return { Title = "Unentschieden", Sub = type(reason) == "string" and reason or nil, Style = "Neutral" }
+		end
+		local team = player.Team
+		local won = team == roundWinner
+		if type(reason) == "table" then
+			reason = won and reason.Win or reason.Loss
+		end
+		local parts = { reason }
+		if team and roundsToWin() > 1 then
+			table.insert(parts, (scores[team] or 0) .. " : " .. (scores[otherTeam(team)] or 0))
+		end
+		local final = scores[roundWinner] >= roundsToWin()
+		local title = if final then (won and "Sieg" or "Niederlage") else (won and "Runde gewonnen" or "Runde verloren")
+		return { Caption = final and "Match entschieden" or nil, Title = title, Sub = table.concat(parts, "  ·  "),
+			Style = won and "Win" or "Loss", Big = final }
+	end
+
 	local function playRound()
 		-- Countdown (Clients zeigen ihn groß in der Bildschirmmitte)
 		setPhase("Countdown")
@@ -879,12 +964,13 @@ function TeamRoundMode.new(config)
 
 		practiceRound = not teamsReady()
 		roundNumber += 1
-		announce(practiceRound and "Übungsrunde" or ("Runde " .. roundNumber))
+		KillService.NewRound(MODE_ID) -- ERSTES BLUT wieder frei
 		alive = {}
 		pending = {}
 		roundKills = {}
 		clutches = {}
 		roundWinner = nil
+		roundEndReason = nil
 		local ticketCount = config.Respawn and math.huge or (config.Tickets and GameSettings.Get(config.Tickets) or 0)
 		tickets[teamA], tickets[teamB] = ticketCount, ticketCount
 		clearObjective()
@@ -895,6 +981,7 @@ function TeamRoundMode.new(config)
 		if objective and objective.RoundStart then
 			objective.RoundStart(roundNumber) -- vor dem Spawnen (legt z.B. Angreifer fest)
 		end
+		notify("Banner", roundStartBanner)
 		spawnTeam(teamA)
 		spawnTeam(teamB)
 		spawning = false
@@ -948,13 +1035,14 @@ function TeamRoundMode.new(config)
 					if contesting then
 						if not overtime then
 							overtime = true
-							announce("OVERTIME!")
+							notify("Banner", { Title = "Overtime", Sub = "Punkt umkämpft  ·  die Runde läuft weiter",
+								Style = "Alert" })
 							updateInfo()
 						end
 					else
 						roundWinner = winner
 						roundActive = false
-						announce(overtime and "Overtime vorbei!" or "Zeit abgelaufen!")
+						roundEndReason = overtime and "Overtime vorbei" or "Zeit abgelaufen"
 					end
 				end
 			end
@@ -984,7 +1072,7 @@ function TeamRoundMode.new(config)
 
 		if resetRequested then
 			resetRequested = false
-			announce("Match wurde zurückgesetzt")
+			notify("Banner", { Title = "Match zurückgesetzt", Style = "Neutral" })
 			task.wait(3)
 			clearObjective()
 			resetMatch()
@@ -996,25 +1084,39 @@ function TeamRoundMode.new(config)
 			for player, kills in roundKills do
 				local enemies = player.Team and teamSize(otherTeam(player.Team)) or 0
 				if members[player] and enemies >= 3 and kills >= enemies then
-					announce("ACE! " .. player.Name .. " hat das ganze Team ausgeschaltet!")
-					ProgressService.AddXP(player, ProgressService.ActiveAgent(player), 300, "ACE")
+					local xp = ProgressService.AddXP(player, ProgressService.ActiveAgent(player), 300, "ACE", true)
+					Remotes.Notify:FireClient(player, "Medal", { { Id = "Ace", Xp = xp, Sub = "Ganzes Team ausgeschaltet" } })
+					local ace = player
+					notify("Objective", function(other)
+						if other == ace then
+							return nil
+						end
+						return { Text = ace.Name .. "  ·  Ace", Side = other.Team == ace.Team and "Ally" or "Enemy" }
+					end)
 				end
 			end
 		end
 		-- Clutch gewonnen?
 		local clutch = roundWinner and clutches[roundWinner]
 		if clutch and members[clutch.Player] then
-			announce("CLUTCH! " .. clutch.Player.Name .. " gewinnt 1 gegen " .. clutch.Enemies .. "!")
-			ProgressService.AddXP(clutch.Player, ProgressService.ActiveAgent(clutch.Player), 100 * clutch.Enemies, "Clutch")
-			ProgressService.AddStat(clutch.Player, "Clutches", 1)
+			local hero = clutch.Player
+			local xp = ProgressService.AddXP(hero, ProgressService.ActiveAgent(hero), 100 * clutch.Enemies, "Clutch", true)
+			ProgressService.AddStat(hero, "Clutches", 1)
+			Remotes.Notify:FireClient(hero, "Medal",
+				{ { Id = "Clutch", Xp = xp, Sub = "1 gegen " .. clutch.Enemies .. " gewonnen", Count = clutch.Enemies } })
+			notify("Objective", function(other)
+				if other == hero then
+					return nil
+				end
+				return { Text = hero.Name .. " gewinnt 1 gegen " .. clutch.Enemies,
+					Side = other.Team == hero.Team and "Ally" or "Enemy" }
+			end)
 		end
 		if roundWinner then
 			scores[roundWinner] += 1
-			announce("Team " .. roundWinner.Name .. " gewinnt die Runde!")
 			giveTeamXP(roundWinner, "RoundWin", "Rundensieg")
-		else
-			announce(practiceRound and "Übungsrunde vorbei" or "Unentschieden!")
 		end
+		notify("Banner", roundEndBanner)
 		-- Aufträge: gespielte und gewonnene Runden
 		for player in members do
 			ProgressService.QuestEvent(player, "RoundPlayed", 1)
@@ -1037,7 +1139,7 @@ function TeamRoundMode.new(config)
 		clearObjective()
 
 		if roundWinner and scores[roundWinner] >= roundsToWin() then
-			announce("Team " .. roundWinner.Name .. " gewinnt das Match!")
+			-- SIEG / NIEDERLAGE kam schon als Banner am Rundenende, jetzt folgt die Zusammenfassung
 			giveTeamXP(roundWinner, "MatchWin", "Matchsieg")
 			-- Statistik: Match gespielt, gewonnen/verloren
 			for player in members do
@@ -1286,7 +1388,8 @@ function TeamRoundMode.new(config)
 			return map
 		end,
 		OtherTeam = otherTeam,
-		Announce = announce,
+		Announce = announce, -- einfache Textmeldung an alle
+		Notify = notify,     -- Meldung im CoD-Stil an alle (Tabelle oder Funktion player -> Tabelle)
 		PublishScore = publishScore, -- Punktestand (objective.Score) neu an die Spieler schicken
 		UpdateInfo = updateInfo,
 		Participants = participants,
@@ -1299,16 +1402,14 @@ function TeamRoundMode.new(config)
 			local humanoid = model and model.Parent and model:FindFirstChildOfClass("Humanoid")
 			return humanoid ~= nil and humanoid.Health > 0 and not DownedService.IsDowned(model)
 		end,
-		-- Runde sofort beenden (team = Sieger oder nil)
+		-- Runde sofort beenden (team = Sieger oder nil). message erscheint als Grund im Banner zum Rundenende.
 		EndRound = function(team, message)
 			if not roundActive then
 				return
 			end
 			roundWinner = team
 			roundActive = false
-			if message then
-				announce(message)
-			end
+			roundEndReason = message
 		end,
 		-- Statuszeile unter der Modus-Info (wie beim Punkt in Strikeout)
 		SetInfo = function(text)

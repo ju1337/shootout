@@ -1,5 +1,9 @@
 -- KillService (ModuleScript, nur Server)
--- Zählt Kills (leaderstats) und schickt die Killfeed-Meldung an alle Spieler.
+-- Zählt Kills (leaderstats), schickt die Killfeed-Meldung an alle Spieler und vergibt Medaillen im Stil von
+-- Call of Duty (Mehrfach-Kills, Killserien, Erstes Blut, Rache, Weitschuss, Kopfschuss, Serie beendet,
+-- Comeback). Die Medaillen eines Kills gehen gesammelt als Remotes.Notify("Medal", Liste) an den Killer.
+-- Die Kill-Boni aus RewardConfig (Münzen für Rache, Serie beendet und Killserien, Statistik, Wochen-Auftrag
+-- "5er-Killserie", beste Killserie) vergibt KillService gleich mit – die Münzen stehen in der Medaille.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,13 +20,32 @@ local BuyService = require(ServerShared.BuyService)
 local Damage = require(ServerShared.Damage)
 local WeaponConfig = require(ReplicatedStorage:WaitForChild("Shared").WeaponConfig)
 local BuyConfig = require(ReplicatedStorage:WaitForChild("Shared").BuyConfig)
+local Medals = require(ReplicatedStorage:WaitForChild("Shared").Medals)
+local RewardConfig = require(ReplicatedStorage:WaitForChild("Shared").RewardConfig)
 
 local KillService = {}
 
--- Multikills: Kills innerhalb von MULTI_WINDOW Sekunden zählen zusammen
-local MULTI_WINDOW = 4
-local MULTI_NAMES = { [2] = "DOPPEL-KILL", [3] = "TRIPLE-KILL", [4] = "QUADRA-KILL", [5] = "PENTA-KILL" }
-local streaks = {} -- [Player] = { Count, Last }
+local MULTI_WINDOW = 4       -- Kills innerhalb so vieler Sekunden zählen als Mehrfach-Kill
+local COMEBACK_DEATHS = 3    -- so oft hintereinander gestorben: der nächste Kill ist ein COMEBACK
+local BUZZKILL_STREAK = 3    -- Killserie des Opfers, ab der es SERIE BEENDET gibt
+local LONGSHOT_SHARE = 0.3   -- Weitschuss ab diesem Anteil der Waffenreichweite ...
+local LONGSHOT_MIN, LONGSHOT_MAX = 35, 120 -- ... aber mindestens/höchstens so viele Studs
+
+local multis = {}          -- [Player] = { Count, Last }: Kills kurz hintereinander
+local lifeKills = {}       -- [Player] = Kills seit dem letzten Tod (Killserie)
+local streakAtDeath = {}   -- [Player] = { Count, At }: Serie beim letzten Tod (falls der Tod vor dem Kill ankommt)
+local deathsInRow = {}     -- [Player] = Tode seit dem letzten eigenen Kill
+local lastKiller = {}      -- [Player] = { Name, Player }: wer einen zuletzt ausgeschaltet hat (Spieler oder Bot)
+local firstBloodTaken = {} -- [ModeId] = true, sobald in der laufenden Runde jemand ausgeschaltet wurde
+
+-- Medaillen-Zustand eines Spielers zurücksetzen (neues Match, Moduswechsel)
+local function resetMedals(player)
+	multis[player] = nil
+	lifeKills[player] = nil
+	streakAtDeath[player] = nil
+	deathsInRow[player] = nil
+	lastKiller[player] = nil
+end
 
 -- Wird nach dem Zählen gefeuert: (killer: Player, victim: Player, killerKills: number, weaponName: string)
 local countedEvent = Instance.new("BindableEvent")
@@ -42,21 +65,31 @@ local function setupPlayer(player)
 
 	-- Tode zählen (fürs Scoreboard), nur in Kampfmodi
 	player.CharacterAdded:Connect(function(character)
+		lifeKills[player] = 0 -- Killserie gilt pro Leben
 		character:WaitForChild("Humanoid").Died:Connect(function()
 			if not Modes.IsFighting(player) then
 				return
 			end
 			player:SetAttribute("Deaths", (player:GetAttribute("Deaths") or 0) + 1)
 			ProgressService.AddStat(player, "Deaths", 1)
+			-- Killserie endet; die alte Serie kurz merken (für SERIE BEENDET beim Killer)
+			streakAtDeath[player] = { Count = lifeKills[player] or 0, At = os.clock() }
+			lifeKills[player] = 0
+			multis[player] = nil
+			deathsInRow[player] = (deathsInRow[player] or 0) + 1
 			-- Todesanzeige: wer, womit, wie viel Leben hatte er noch
 			local hit = Damage.LastHit(character)
 			if hit and hit.Model ~= character then
+				lastKiller[player] = { Name = hit.Name, Player = Players:GetPlayerFromCharacter(hit.Model) } -- für RACHE
 				local humanoid = hit.Model.Parent and hit.Model:FindFirstChildOfClass("Humanoid")
 				local weapon = hit.Weapon and WeaponConfig.Get(hit.Weapon)
 				Remotes.DeathRecap:FireClient(player, hit.Name, weapon and weapon.DisplayName or hit.Weapon,
 					humanoid and math.ceil(humanoid.Health) or 0, hit.Model:GetAttribute("Agent"), hit.Model)
 			end
 		end)
+	end)
+	player:GetAttributeChangedSignal("Mode"):Connect(function()
+		resetMedals(player)
 	end)
 end
 
@@ -68,10 +101,17 @@ function KillService.ResetPlayer(player)
 	end
 	player:SetAttribute("Deaths", 0)
 	player:SetAttribute("Damage", 0)
+	resetMedals(player)
 end
 
--- Kill durch einen Bot: nur Killfeed (Bots sammeln keine Kills)
+-- Neue Runde in einem Modus: ERSTES BLUT ist wieder zu haben
+function KillService.NewRound(modeId)
+	firstBloodTaken[modeId] = nil
+end
+
+-- Kill durch einen Bot: nur Killfeed (Bots sammeln keine Kills und keine Medaillen)
 function KillService.ReportBotKill(modeId, botName, victimName, weaponName, headshot)
+	firstBloodTaken[modeId] = true
 	for _, player in Players:GetPlayers() do
 		if player:GetAttribute("Mode") == modeId then
 			Remotes.Killfeed:FireClient(player, botName, victimName, weaponName, headshot)
@@ -85,16 +125,143 @@ function KillService.GetKills(player)
 	return kills and kills.Value or 0
 end
 
+-- Abstand Killer -> Opfer reicht für WEITSCHUSS? (nur Schusswaffen)
+local function isLongshot(killer, victimModel, weaponName)
+	local config = weaponName and WeaponConfig.Get(weaponName)
+	local from = killer.Character and killer.Character:FindFirstChild("HumanoidRootPart")
+	local to = typeof(victimModel) == "Instance" and victimModel:FindFirstChild("HumanoidRootPart")
+	if not config or not config.Range or not from or not to then
+		return false
+	end
+	local needed = math.clamp(config.Range * LONGSHOT_SHARE, LONGSHOT_MIN, LONGSHOT_MAX)
+	return (from.Position - to.Position).Magnitude >= needed
+end
+
+-- Münz-Belohnung für genau diese Killserie (RewardConfig.Streaks) oder nil
+local function streakReward(kills)
+	for _, reward in RewardConfig.Streaks do
+		if reward.Kills == kills then
+			return reward
+		end
+	end
+	return nil
+end
+
+-- Medaillen für einen Kill sammeln, Bonus-XP und Münzen vergeben und gesammelt an den Killer schicken
+local function awardMedals(killer, victim, weaponName, headshot, victimName, victimModel)
+	local list = {}
+	local agent = ProgressService.ActiveAgent(killer)
+	-- reward = { Coins, Name } aus RewardConfig (Name = Grund in der Match-Übersicht)
+	local function add(id, sub, reward)
+		local medal = Medals.Get(id)
+		if medal then
+			local xp = medal.XP > 0 and ProgressService.AddXP(killer, agent, medal.XP, medal.Title, true) or 0
+			local coins = reward and reward.Coins or 0
+			if coins > 0 then
+				ProgressService.AddCoins(killer, coins, reward.Name)
+			end
+			table.insert(list, { Id = id, Xp = xp, Coins = coins > 0 and coins or nil, Sub = sub })
+		end
+	end
+
+	-- Mehrfach-Kill (Kills innerhalb von MULTI_WINDOW Sekunden)
+	local now = os.clock()
+	local multi = multis[killer]
+	if multi and now - multi.Last <= MULTI_WINDOW then
+		multi.Count += 1
+	else
+		multi = { Count = 1 }
+		multis[killer] = multi
+	end
+	multi.Last = now
+	local multiId = Medals.ForMulti(multi.Count)
+	if multiId then
+		add(multiId, multi.Count >= 9 and (multi.Count .. " KILLS") or nil)
+	end
+
+	-- Killserie (ohne zu sterben), Münzen bei den Stufen aus RewardConfig.Streaks
+	local streak = (lifeKills[killer] or 0) + 1
+	lifeKills[killer] = streak
+	local streakId = Medals.ForStreak(streak)
+	local reward = streakReward(streak)
+	if streakId then
+		add(streakId, streak .. " KILLS IN FOLGE", reward)
+	elseif reward then
+		ProgressService.AddCoins(killer, reward.Coins, reward.Name) -- Stufe ohne eigene Medaille
+	end
+	if streak == 5 then
+		ProgressService.QuestEvent(killer, "Streak5", 1) -- Wochen-Auftrag "5er-Killserie"
+	end
+	local profile = ProgressService.Get(killer)
+	local best = profile and profile.Stats and profile.Stats.BestStreak or 0
+	if profile and streak > best then
+		ProgressService.AddStat(killer, "BestStreak", streak - best)
+	end
+
+	-- Erstes Blut der Runde
+	local mode = killer:GetAttribute("Mode")
+	if mode and not firstBloodTaken[mode] then
+		firstBloodTaken[mode] = true
+		add("FirstBlood")
+	end
+
+	-- Rache: den ausgeschaltet, der einen selbst zuletzt erwischt hat (Münzen und Statistik nur gegen Spieler)
+	local last = lastKiller[killer]
+	if last and (last.Name == victimName or (victim ~= nil and last.Player == victim)) then
+		lastKiller[killer] = nil
+		local real = victim ~= nil and last.Player == victim
+		add("Revenge", "AN " .. tostring(victimName), real and RewardConfig.Revenge or nil)
+		if real then
+			ProgressService.AddStat(killer, "Revenges", 1)
+		end
+	end
+
+	-- Serie des Opfers beendet (Spieler: lebende Serie oder die gerade beim Tod gemerkte)
+	if victim then
+		local victimStreak = lifeKills[victim] or 0
+		local atDeath = streakAtDeath[victim]
+		if atDeath and now - atDeath.At < 1 then
+			victimStreak = math.max(victimStreak, atDeath.Count)
+		end
+		streakAtDeath[victim] = nil -- nur einmal zählen
+		if victimStreak >= BUZZKILL_STREAK then
+			-- Münzen und Statistik erst ab RewardConfig.Shutdown.MinStreak
+			local shutdown = victimStreak >= RewardConfig.Shutdown.MinStreak
+			add("Buzzkill", tostring(victimName) .. "  ·  " .. victimStreak .. " KILLS", shutdown and RewardConfig.Shutdown or nil)
+			if shutdown then
+				ProgressService.AddStat(killer, "Shutdowns", 1)
+			end
+		end
+	end
+
+	-- Comeback nach mehreren Toden ohne Kill
+	if (deathsInRow[killer] or 0) >= COMEBACK_DEATHS then
+		add("Comeback")
+	end
+	deathsInRow[killer] = 0
+
+	if isLongshot(killer, victimModel, weaponName) then
+		add("Longshot")
+	end
+	if headshot then
+		add("Headshot")
+	end
+
+	if #list > 0 then
+		Remotes.Notify:FireClient(killer, "Medal", Medals.Sort(list))
+	end
+end
+
 function KillService.Init()
 	Players.PlayerRemoving:Connect(function(player)
-		streaks[player] = nil
+		resetMedals(player)
 	end)
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
 		setupPlayer(player)
 	end
 
-	local function onKill(killer, victim, weaponName, headshot, victimName)
+	local function onKill(killer, victim, weaponName, headshot, victimName, victimModel)
 		-- Selbstmord zählt nicht
 		if killer ~= victim then
 			local kills = killer:FindFirstChild("leaderstats") and killer.leaderstats:FindFirstChild("Kills")
@@ -117,29 +284,17 @@ function KillService.Init()
 					end
 				end)
 			end
-			-- Multikill-Meldung mit Bonus-XP
-			local now = os.clock()
-			local streak = streaks[killer]
-			if streak and now - streak.Last <= MULTI_WINDOW then
-				streak.Count += 1
-			else
-				streak = { Count = 1 }
-				streaks[killer] = streak
-			end
-			streak.Last = now
-			if streak.Count >= 2 then
-				Remotes.Announce:FireClient(killer, MULTI_NAMES[math.min(streak.Count, 5)] or (streak.Count .. "x KILL"))
-				ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), 25 * streak.Count, "Multikill")
-			end
+			-- Medaillen (Mehrfach-Kill, Killserie, Erstes Blut ...) mit Bonus-XP
+			awardMedals(killer, victim, weaponName, headshot, victimName, victimModel)
 			ProgressService.AddStat(killer, "Kills", 1)
 			ProgressService.AddStat(killer, "Kills_" .. ProgressService.ActiveAgent(killer), 1)
 			if headshot then
 				ProgressService.AddStat(killer, "Headshots", 1)
 			end
 			-- Assists: alle anderen Spieler mit mindestens 25 Schaden am Opfer
-			local victimModel = victim and victim.Character
-			if victimModel then
-				for helper, dealt in Damage.Contributors(victimModel) do
+			local victimCharacter = victim and victim.Character
+			if victimCharacter then
+				for helper, dealt in Damage.Contributors(victimCharacter) do
 					if helper ~= killer and helper.Parent and dealt >= 25 then
 						ProgressService.AddStat(helper, "Assists", 1)
 						ProgressService.AddXP(helper, ProgressService.ActiveAgent(helper), AgentConfig.XPRewards.Assist, "Assist")

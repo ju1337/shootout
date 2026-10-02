@@ -31,7 +31,7 @@ local ProgressService = require(ServerStorage:WaitForChild("ServerShared").Progr
 local WeaponService = {}
 
 -- Wird gefeuert, wenn ein Spieler einen anderen Spieler tötet:
--- (killer: Player, victim: Player oder nil bei Bots, weaponName, headshot, victimName)
+-- (killer: Player, victim: Player oder nil bei Bots, weaponName, headshot, victimName, victimModel oder nil)
 local killedEvent = Instance.new("BindableEvent")
 WeaponService.Killed = killedEvent.Event
 
@@ -336,7 +336,7 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 	local victimName = victim and victim.Name or model.Name
 	-- Spieler und Bots zählen als Kill (Test-Dummies nicht)
 	if killed and (victim or isBot) then
-		killedEvent:Fire(player, victim, weaponName, headshot, victimName)
+		killedEvent:Fire(player, victim, weaponName, headshot, victimName, model)
 	end
 	return { Humanoid = targetHumanoid, Damage = dealt, Headshot = headshot, Killed = killed, Downed = downed,
 		Armor = armor or 0, Position = hitPosition, Name = victimName, Model = model }
@@ -650,13 +650,13 @@ local function onMelee(player, origin, direction)
 	player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(dealt + 0.5))
 	Remotes.Hitmarker:FireClient(player, false, killed, dealt, result.Position, victimName, downed, armor, model)
 	if killed then
-		killedEvent:Fire(player, victim, melee.DisplayName, false, victimName)
+		killedEvent:Fire(player, victim, melee.DisplayName, false, victimName, model)
 	end
 end
 
 -- Kill von außerhalb melden (z.B. Granate), läuft wie ein Waffen-Kill
-function WeaponService.ReportKill(killer, victim, weaponName, headshot, victimName)
-	killedEvent:Fire(killer, victim, weaponName, headshot, victimName)
+function WeaponService.ReportKill(killer, victim, weaponName, headshot, victimName, victimModel)
+	killedEvent:Fire(killer, victim, weaponName, headshot, victimName, victimModel)
 end
 
 function WeaponService.Init()

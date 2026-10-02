@@ -171,9 +171,10 @@ function ProgressService.AddPassXP(player, amount)
 		elseif reward.Item then
 			profile.Owned[reward.Item] = true
 			local item = Cosmetics.Get(reward.Item)
-			text = "Skin \"" .. (item and item.Name or reward.Item) .. "\" freigeschaltet!"
+			text = "Skin " .. (item and item.Name or reward.Item) .. " freigeschaltet"
 		end
-		Remotes.Announce:FireClient(player, "Battle Pass Stufe " .. tier .. ": " .. text)
+		Remotes.Notify:FireClient(player, "Progress", { Caption = "Battle Pass", Title = "Stufe " .. tier, Sub = text,
+			Badge = tostring(tier), Style = "Pass" })
 	end
 	ProgressService.Sync(player)
 end
@@ -635,10 +636,11 @@ end
 -- ---------- XP ----------
 
 -- XP für einen Agenten vergeben (+ Münzen, außer bei Admin-XP). reason wird angezeigt.
-function ProgressService.AddXP(player, agentId, amount, reason)
+-- quiet = keine "+XP"-Zeile im HUD (z.B. Medaillen zeigen ihre XP selbst). Gibt die vergebenen XP zurück.
+function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 	local profile = profiles[player]
 	if not profile or not AgentConfig.Get(agentId) then
-		return
+		return 0
 	end
 	amount = math.floor(amount * GameSettings.Get("XPMultiplier"))
 	-- Agent der Woche: +50 % XP
@@ -647,7 +649,7 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 		reason = tostring(reason) .. " · Agent der Woche"
 	end
 	if amount <= 0 then
-		return
+		return 0
 	end
 	ledgerOf(player) -- Stand vor diesen XP merken (Level-Fortschritt in der Übersicht)
 	local before = profile.XP[agentId] or 0
@@ -663,11 +665,12 @@ function ProgressService.AddXP(player, agentId, amount, reason)
 	ProgressService.Sync(player)
 
 	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
-	Remotes.XPGain:FireClient(player, after - before, reason, agentId, levelUp, coins)
+	Remotes.XPGain:FireClient(player, after - before, reason, agentId, levelUp, coins, quiet == true)
 	-- Alle XP zählen auch für den Battle Pass (auch wenn der Agent schon Max-Level ist)
 	if reason ~= "Admin" then
 		ProgressService.AddPassXP(player, amount)
 	end
+	return amount
 end
 
 -- Prestige: nur auf Max-Level. Level zurück auf 1, Prestige +1, Münzen als Belohnung.
@@ -689,7 +692,8 @@ function ProgressService.Prestige(player)
 	local coins = LevelConfig.PrestigeCoins * profile.Prestige
 	profile.Coins += coins
 	ProgressService.Sync(player)
-	Remotes.Announce:FireClient(player, "PRESTIGE " .. profile.Prestige .. "!  +" .. coins .. " Münzen")
+	Remotes.Notify:FireClient(player, "Progress", { Caption = "Prestige erreicht", Title = "Prestige " .. profile.Prestige,
+		Sub = "+" .. coins .. " Münzen", Badge = tostring(profile.Prestige), Style = "Prestige" })
 	return "Prestige " .. profile.Prestige .. " erreicht!", true
 end
 

@@ -2,7 +2,10 @@
 -- Third-Person-Haltung aller Charaktere mit Waffe (Spieler und Bots), wie bei Rogue Company:
 --   * lange Waffen im Schulteranschlag, Oberkörper eingedreht, beide Hände an der Waffe
 --   * Pistole und Revolver beidhändig vor der Brust
---   * Waffe und Kopf folgen dem Blick nach oben/unten, beim Zielen höher, beim Sprinten gesenkt
+--   * Waffe und Kopf folgen dem Blick nach oben/unten, beim Sprinten gesenkt
+--   * Zielen (rechte Maustaste, bei Bots sobald sie ein Ziel haben): Waffe wird angelegt – Kimme/Visier
+--     direkt vor das rechte Auge, Kopf neigt sich an den Schaft, Oberkörper etwas vor und gerader zum Ziel,
+--     rechter Ellbogen hoch; Pistolen mit gestreckten Armen auf Augenhöhe
 --   * Nachladen (Magazin raus/rein mit der linken Hand), Pumpen/Schlitten und Rückstoß
 -- Jeder Client rechnet das selbst für alle Charaktere in der Nähe: Motor6D.Transform wird nach den
 -- Animationen in RunService.PreSimulation überschrieben. Blick und Zielen der anderen kommen über die
@@ -10,7 +13,7 @@
 -- R15 bekommt die volle Haltung, R6 eine einfache (Arme zeigen zur Waffe).
 -- Bewegung obendrauf (prozedural, ohne Animations-Assets): Waffe wippt beim Laufen im Schrittrhythmus,
 -- Atmen im Stand, Oberkörper neigt sich beim Seitwärtslaufen, Waffe kommt beim Wechseln von unten hoch,
--- sackt beim Landen kurz ab; beim Zielen lehnt sich der Oberkörper vor und der Kopf an die Waffe.
+-- sackt beim Landen kurz ab; beim Zielen ist alles ruhiger.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -42,6 +45,20 @@ local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
 local LAND_TIME = 0.3             -- so lange sackt die Waffe nach der Landung ab
+-- Zielen (angelegt)
+local ADS_TWIST = math.rad(36)    -- lange Waffen: Oberkörper etwas gerader zum Ziel als aus der Hüfte
+local ADS_LEAN = 0.2              -- Oberkörper folgt dem Blick stärker
+local ADS_FORWARD = math.rad(5)   -- leicht nach vorne gelehnt
+local ADS_NECK = CFrame.Angles(math.rad(-6), math.rad(-4), math.rad(-14)) -- Kopf runter und an den Schaft geneigt
+local ADS_EYE_RELIEF = 0.8        -- Abstand Auge - Visier: Anteil von GunModels.Info.EyeRelief
+local ADS_PISTOL_REACH = 0.45     -- Pistolen: Abstand Auge - Visier in Oberkörperbreiten (Arme fast gestreckt)
+local RIGHT_POLE_ADS = Vector3.new(1, -0.35, 0.2) -- rechter Ellbogen beim Anlegen seitlich hoch
+local HEAD_SIZE = Vector3.new(1.2, 1.2, 1.2) -- falls der Kopf fehlt
+
+-- Rechtes Auge im Kopf (etwas rechts und über der Mitte, an der Vorderseite)
+local function eyeOf(head, headSize)
+	return head * Vector3.new(headSize.X * 0.17, headSize.Y * 0.08, -headSize.Z * 0.42)
+end
 
 local BLOCKING_STATES = {
 	[Enum.HumanoidStateType.Dead] = true,
@@ -93,6 +110,7 @@ local function rigOf(model, humanoid, root)
 			LWrist = motor("LeftHand", "LeftWrist"),
 			GripPart = model:FindFirstChild("RightHand"),
 			UpperTorso = model:FindFirstChild("UpperTorso"),
+			Head = model:FindFirstChild("Head"), -- für die Augenhöhe beim Zielen (darf fehlen)
 		}
 		for _, key in { "RootJoint", "Waist", "Neck", "RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow", "LWrist",
 			"GripPart", "UpperTorso" } do
@@ -289,40 +307,48 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local root = rig.Root
 	local yaw = root.CFrame.Rotation
 	local sprint = smooth(entry.Sprint)
-	local twist = (info.Long and LONG_TWIST or SHORT_TWIST) * (1 - sprint)
-	local aimBlend = smooth(entry.Aim)
+	local aim = smooth(entry.Aim)
+	local twist = (info.Long and (LONG_TWIST + (ADS_TWIST - LONG_TWIST) * aim) or SHORT_TWIST) * (1 - sprint)
 	local now = os.clock()
 	local land = entry.LandT and math.max(0, 1 - (now - entry.LandT) / LAND_TIME) or 0
 	-- Vorlehnen beim Zielen und kurz nach der Landung, seitlich in die Laufrichtung
-	local lean = pitch * LEAN * (1 - sprint * 0.6) - math.rad(6) * aimBlend - math.rad(8) * land
+	local lean = pitch * (LEAN + ADS_LEAN * aim) * (1 - sprint * 0.6) - ADS_FORWARD * aim - math.rad(8) * land
 	local strafeRoll = -(entry.Strafe or 0) * math.rad(7) * (1 - sprint)
 
 	-- Unterkörper wie animiert, Oberkörper eingedreht und mit dem Blick geneigt, Kopf schaut in Blickrichtung
+	-- (beim Zielen runter an den Schaft)
 	local lowerTorso = PoseMath.Chain(root.CFrame, rig.RootJoint.C0, rig.RootJoint.Transform, rig.RootJoint.C1)
 	local torsoRot = yaw * CFrame.Angles(lean, 0, strafeRoll) * CFrame.Angles(0, -twist, 0)
 	local waistT = PoseMath.MotorTransform(lowerTorso.Rotation, rig.Waist.C0, rig.Waist.C1, torsoRot)
 	local upperTorso = PoseMath.Chain(lowerTorso, rig.Waist.C0, waistT, rig.Waist.C1)
-	-- Kopf in Blickrichtung, beim Zielen leicht zur Waffe geneigt (Wange an den Schaft)
-	local neckT = PoseMath.MotorTransform(upperTorso.Rotation, rig.Neck.C0, rig.Neck.C1,
-		yaw * CFrame.Angles(pitch * 0.8, 0, -math.rad(10) * aimBlend * (info.Long and 1 or 0.4)))
+	local headRot = (yaw * CFrame.Angles(pitch * 0.8, 0, 0)):Lerp(yaw * CFrame.Angles(pitch, 0, 0) * ADS_NECK, aim)
+	local neckT = PoseMath.MotorTransform(upperTorso.Rotation, rig.Neck.C0, rig.Neck.C1, headRot)
 
 	-- Waffe: lange im Schulteranschlag (Schaftende an der rechten Schulter), kurze vor der Brust
 	local aimRot = yaw * CFrame.Angles(pitch, 0, 0)
 	local size = rig.UpperTorso.Size
 	local gun
 	if info.Long and info.Stock then
-		local hip = Vector3.new(size.X * 0.2, size.Y * 0.18, -size.Z * 0.5)
-		local ads = Vector3.new(size.X * 0.1, size.Y * 0.36, -size.Z * 0.5) -- höher, an die Wange
-		local pocket = upperTorso * hip:Lerp(ads, smooth(entry.Aim))
+		local pocket = upperTorso * Vector3.new(size.X * 0.2, size.Y * 0.14, -size.Z * 0.5)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
 	else
 		local chest = upperTorso * Vector3.new(0, size.Y * 0.22, 0)
-		gun = CFrame.new(chest) * aimRot * CFrame.new(size.X * 0.06, -0.05 + entry.Aim * size.Y * 0.1, -size.X * 0.72)
+		gun = CFrame.new(chest) * aimRot * CFrame.new(size.X * 0.06, -0.05, -size.X * 0.72)
+	end
+	-- Anlegen: Kimme bzw. Visier direkt vor dem rechten Auge (lange Waffen mit der Wange am Schaft,
+	-- Pistolen mit gestreckten Armen), Waffe zeigt weiter genau in Blickrichtung
+	if aim > 0.001 then
+		local head = PoseMath.Chain(upperTorso, rig.Neck.C0, neckT, rig.Neck.C1)
+		local eye = eyeOf(head, rig.Head and rig.Head.Size or HEAD_SIZE)
+		local distance = info.Long and (info.EyeRelief or 0.8) * SCALE * ADS_EYE_RELIEF or size.X * ADS_PISTOL_REACH
+		local sight = Vector3.new(0, info.SightHeight or 0, info.SightZ or 0) * SCALE
+		local ads = CFrame.new(eye + aimRot.LookVector * distance) * aimRot * CFrame.new(-sight)
+		gun = gun:Lerp(ads, aim)
 	end
 	-- Laufen: Wippen im Schrittrhythmus und seitliches Schwanken; im Stand Atmen. Beim Zielen ruhiger.
-	local move = math.min(entry.Move or 0, 1.2) * (1 - aimBlend * 0.75) * (entry.InAir and 0.3 or 1)
+	local move = math.min(entry.Move or 0, 1.2) * (1 - aim * 0.75) * (entry.InAir and 0.3 or 1)
 	local phase = entry.Phase or 0
-	local breath = (1 - math.min(entry.Move or 0, 1)) * (1 - aimBlend * 0.6)
+	local breath = (1 - math.min(entry.Move or 0, 1)) * (1 - aim * 0.6)
 	local bobY = -math.abs(math.sin(phase)) * 0.09 * move + math.sin(now * 1.7) * 0.012 * breath
 	local swayX = math.sin(phase * 0.5) * 0.06 * move
 	gun = gun * CFrame.new(swayX, bobY, 0)
@@ -358,7 +384,7 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local palm = slideIntoReach(gun * (leftHandLocal(info, pose, poseT) * SCALE), gun,
 		(upperTorso * rig.LShoulder.C0).Position, leftJoints)
 	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), handCF, nil,
-		aimRot:VectorToWorldSpace(RIGHT_POLE))
+		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)))
 	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm, aimRot:VectorToWorldSpace(LEFT_POLE))
 
 	rig.Waist.Transform = waistT

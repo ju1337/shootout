@@ -13,14 +13,15 @@ local NAMES = {
 	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze/Bot, Start, Ende, Waffe, Normale, Trefferart)
 	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet, Schaden, Ort, Name, niedergeschlagen, Rüstung, Modell)
 	"Killfeed",   -- Server -> alle im Modus: Meldung (Killer oder nil, Opfer, Waffe, Kopfschuss, Art: nil = Kill, "Down" = niedergeschlagen)
-	"Announce",   -- Server -> Client(s): große Meldung in der Bildschirmmitte
+	"Announce",   -- Server -> Client(s): einfache Textmeldung (Banner ohne Teamfarbe)
+	"Notify",     -- Server -> Client: Meldung im CoD-Stil (Art, Daten): "Medal" (Liste), "Banner", "Objective", "Progress"
 	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)
 	"MenuStatus", -- Server -> Client: Statuszeile im Menü (Teleport läuft, Fehler)
 	"SelectAgent", -- Client -> Server: Agent wählen (Agent-Id)
 	"UseAbility", -- Client -> Server: Fähigkeit auslösen
 	"UseUltimate", -- Client -> Server: Ultimate auslösen (UltCharge muss 100 sein)
 	"Reveal",     -- Server -> Team: Gegner markieren (Charaktere, Dauer)
-	"XPGain",     -- Server -> Client: XP bekommen (Menge, Grund, Agent, LevelUp)
+	"XPGain",     -- Server -> Client: XP bekommen (Menge, Grund, Agent, LevelUp, Münzen, leise)
 	"AdminAction", -- Client -> Server: Admin-Befehl (Aktion, Wert1, Wert2)
 	"AdminStatus", -- Server -> Admin: Rückmeldung im Admin-Panel
 	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)

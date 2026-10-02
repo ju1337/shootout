@@ -1,9 +1,9 @@
 -- HUD (ModuleScript, nur Client)
--- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, große Meldungen, Countdown, XP, Geld,
+-- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, Countdown, XP neben dem Fadenkreuz, Geld,
 -- Todesanzeige mit Todeskamera, Tastenzeile unten und VERLASSEN-Knopf unter der Minimap (zweimal klicken:
 -- zurück in den Hub). Die Match-Anzeige (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD,
 -- die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung kommen aus
--- CombatHUD.
+-- CombatHUD. Medaillen, Runden-Banner, Ziel- und Level-Meldungen zeigt Notifications.
 
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
@@ -19,7 +19,6 @@ local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
-local LevelConfig = require(Shared.LevelConfig)
 local InputActions = require(Shared.InputActions)
 local CombatHUD = require(Shared.CombatHUD)
 local MatchHUD = require(Shared.MatchHUD)
@@ -29,7 +28,6 @@ local player = Players.LocalPlayer
 
 local HUD = {}
 
-local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
 local AMMO_SCALE = 1.1        -- Waffen-/Munitionsanzeige unten rechts etwas größer (AbilityClient rechnet damit)
 local LEAVE_CONFIRM = 3       -- so lange wartet VERLASSEN auf den zweiten Klick
 
@@ -177,26 +175,6 @@ function HUD.Init(weaponClient)
 	end)
 	player:GetAttributeChangedSignal("Mode"):Connect(resetLeave)
 
-	-- Große Meldung (Rundenstart, Sieger): dunkler Streifen mit Bernstein-Linie darunter
-	local announce = label({
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.26, 0),
-		Size = UDim2.new(0, 0, 0, 58),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Text = "",
-		TextSize = 40,
-		Font = Enum.Font.Oswald,
-		TextColor3 = UITheme.Colors.Text,
-		BackgroundTransparency = 0.35,
-		BackgroundColor3 = UITheme.Colors.Background,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		Visible = false,
-	}, gui)
-	UITheme.Corner(announce, UITheme.Radius.Small)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 36), PaddingRight = UDim.new(0, 36) }, announce)
-	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, 72, 0, 2),
-		BackgroundColor3 = UITheme.Colors.Primary, BorderSizePixel = 0 }, announce)
-
 	-- Schaden: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar (bei jedem Spawn neu verbinden)
 	local function trackCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
@@ -316,39 +294,37 @@ function HUD.Init(weaponClient)
 		reloadHint.Text = prefix .. (mag == 0 and "NACHLADEN" or "WENIG MUNITION")
 	end)
 
-	-- XP-Meldung über der Fähigkeits-Box ("+100 XP · Kill"), Level-Up groß
+	-- XP rechts neben dem Fadenkreuz wie die Punkte bei CoD ("+100 XP · KILL"). Medaillen-XP kommen leise
+	-- (quiet), die zeigt die Medaille selbst. Level-Aufstiege meldet Notifications.
 	local xpText = label({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, 124), -- unter dem Fadenkreuz, frei von Touch-Knöpfen
-		Size = UDim2.new(0, 400, 0, 30),
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0.5, 46, 0.5, 0),
+		Size = UDim2.new(0, 360, 0, 26),
 		Text = "",
-		TextSize = 22,
+		TextSize = 20,
 		Font = Enum.Font.Oswald,
 		TextColor3 = UITheme.Colors.Primary,
+		TextXAlignment = Enum.TextXAlignment.Left,
 		Visible = false,
 	}, gui)
+	local xpScale = make("UIScale", {}, xpText)
 	local xpId = 0
-	Remotes.XPGain.OnClientEvent:Connect(function(amount, reason, agentId, levelUp, coins)
+	Remotes.XPGain.OnClientEvent:Connect(function(amount, reason, _, _, coins, quiet)
+		if quiet then
+			return
+		end
 		xpId += 1
 		local myId = xpId
 		xpText.Text = "+" .. amount .. " XP" .. ((coins or 0) > 0 and ("  +" .. coins .. " MÜNZEN") or "") .. "  ·  "
 			.. UITheme.Upper(tostring(reason))
 		xpText.Visible = true
+		xpScale.Scale = 1.2
+		TweenService:Create(xpScale, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Scale = 1 }):Play()
 		task.delay(2, function()
 			if xpId == myId then
 				xpText.Visible = false
 			end
 		end)
-		local agent = AgentConfig.Get(agentId)
-		if levelUp and agent then
-			local level = AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agentId))
-			local skin = AgentConfig.SkinForLevel(level)
-			local message = agent.Name .. " ist jetzt Level " .. level .. "!"
-			if skin and skin.Level == level then
-				message ..= "  " .. skin.Name .. "-Skin freigeschaltet!"
-			end
-			HUD.ShowAnnouncement(message)
-		end
 	end)
 
 	-- Geld (nur während eines Drop-Matches)
@@ -424,45 +400,6 @@ function HUD.Init(weaponClient)
 		end)
 	end)
 
-	-- Große Meldungen
-	-- Meldungen nacheinander zeigen: kommt eine neue, bleibt die aktuelle noch mindestens
-	-- ANNOUNCE_MIN Sekunden stehen (z.B. "ACE!" und direkt danach "Team gewinnt die Runde")
-	local ANNOUNCE_MIN = 1.6
-	local queue = {}
-	local running = false
-	function HUD.ShowAnnouncement(text)
-		table.insert(queue, text)
-		if #queue > 4 then
-			table.remove(queue, 1) -- nicht endlos stauen
-		end
-		if running then
-			return
-		end
-		running = true
-		task.spawn(function()
-			while #queue > 0 do
-				announce.Text = table.remove(queue, 1)
-				announce.Visible = true
-				local shown = 0
-				while shown < ANNOUNCE_TIME and not (shown >= ANNOUNCE_MIN and #queue > 0) do
-					shown += task.wait(0.1)
-				end
-			end
-			announce.Visible = false
-			running = false
-		end)
-	end
-	Remotes.Announce.OnClientEvent:Connect(HUD.ShowAnnouncement)
-
-	-- Spielerlevel gestiegen: große Meldung (Prestige setzt das Level zurück, das zählt nicht)
-	local lastLevel, lastPrestige = LevelConfig.Get(player).Level, player:GetAttribute("Prestige") or 0
-	player:GetAttributeChangedSignal("AccountXP"):Connect(function()
-		local info = LevelConfig.Get(player)
-		if info.Level > lastLevel and info.Prestige == lastPrestige then
-			HUD.ShowAnnouncement("LEVEL " .. info.Level .. " ERREICHT")
-		end
-		lastLevel, lastPrestige = info.Level, info.Prestige
-	end)
 end
 
 return HUD

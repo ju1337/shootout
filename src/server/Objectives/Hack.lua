@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local GameSettings = require(ReplicatedStorage:WaitForChild("Shared").GameSettings)
+local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local BuyService = require(ServerShared.BuyService)
 local ProgressService = require(ServerShared.ProgressService)
@@ -52,7 +53,11 @@ return function(api)
 		attackers = roundNumber <= half and api.TeamA or api.TeamB
 		defenders = api.OtherTeam(attackers)
 		if roundNumber == half + 1 then
-			api.Announce("Seitenwechsel! Team " .. attackers.Name .. " greift jetzt an.")
+			api.Notify("Objective", function(player)
+				local attacking = player.Team == attackers
+				return { Text = "Seitenwechsel  ·  " .. (attacking and "ihr greift jetzt an" or "ihr verteidigt jetzt"),
+					Side = "Alert", Icon = "!" }
+			end)
 		end
 		botTargetSite = math.random() < 0.5 and "A" or "B"
 		for name, site in sites do
@@ -91,9 +96,11 @@ return function(api)
 					if entry.Player then
 						BuyService.AddMoney(entry.Player, REWARD, "Hack abgeschlossen")
 						ProgressService.AddStat(entry.Player, "Plants", 1)
+						Remotes.Notify:FireClient(entry.Player, "Medal",
+							{ { Id = "Hacked", Sub = "Ziel " .. name .. "  ·  +" .. REWARD .. " $" } })
 					end
 				end
-				api.EndRound(attackers, "Ziel " .. name .. " gehackt!")
+				api.EndRound(attackers, "Ziel " .. name .. " gehackt")
 				return
 			end
 		end

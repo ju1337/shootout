@@ -19,6 +19,7 @@ local BotService = require(script.Parent.Parent.BotService)
 
 local FreeForAll = {}
 
+local MODE_ID = "FreeForAll"
 local INTERMISSION = 11      -- Pause zwischen Runden in Sekunden (solange laufen Top-3-Bühne und Zusammenfassung)
 local SPAWN_PROTECTION = 2   -- Sekunden Schutzschild nach dem Spawn
 local MAX_PLAYERS = 12
@@ -40,9 +41,10 @@ local function count()
 	return n
 end
 
-local function announce(text)
+-- Meldung im CoD-Stil (Notifications) an alle Teilnehmer
+local function notify(kind, data)
 	for player in members do
-		Remotes.Announce:FireClient(player, text)
+		Remotes.Notify:FireClient(player, kind, data)
 	end
 end
 
@@ -141,11 +143,9 @@ local function finishRound(winner)
 					change /= 2
 				end
 				change = math.floor(change + 0.5)
-				local after = ProgressService.ApplyRanked(player, change, place == 1)
+				ProgressService.ApplyRanked(player, change, place == 1)
 				LeaderboardService.Submit(player)
 				eloChanges[player] = change
-				Remotes.Announce:FireClient(player, "Platz " .. place .. "  ·  " .. (change >= 0 and "+" or "−")
-					.. math.abs(change) .. " ELO  (" .. after .. ")")
 			end
 		end
 	end
@@ -168,12 +168,10 @@ local function finishRound(winner)
 			Elo = eloChanges[player],
 		})
 	end
+	-- Sieger, Platz und ELO zeigt die Zusammenfassung unten (Top-3-Bühne und Übersicht)
 	if winner then
-		announce(winner.Name .. " gewinnt die Runde!")
 		ProgressService.AddXP(winner, ProgressService.ActiveAgent(winner), AgentConfig.XPRewards.FFAWin, "Rundensieg")
 		ProgressService.QuestEvent(winner, "RoundWin", 1)
-	else
-		announce("Runde beendet")
 	end
 	-- Zusammenfassung mit Top-3-Bühne, Platz, MVP und Belohnungs-Übersicht (XP, Münzen, Level, ELO)
 	local podium = {}
@@ -208,6 +206,7 @@ local function finishRound(winner)
 	task.wait(INTERMISSION)
 
 	roundOver = false
+	KillService.NewRound(MODE_ID) -- ERSTES BLUT wieder frei
 	for player in members do
 		KillService.ResetPlayer(player)
 		task.spawn(spawnPlayer, player)
@@ -215,7 +214,8 @@ local function finishRound(winner)
 	for bot in bots do
 		task.spawn(spawnBot, bot)
 	end
-	announce("Neue Runde!")
+	notify("Banner", { Caption = "Free-for-All", Title = "Neue Runde", Sub = GameSettings.Get("KillsToWin") .. " Kills gewinnen",
+		Style = "Info" })
 	updateInfo()
 end
 

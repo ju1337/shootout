@@ -1,6 +1,7 @@
 -- RewardService (ModuleScript, nur Server)
 -- Vergibt die Belohnungen aus RewardConfig:
---   Killserien (Kills ohne zu sterben), Spielerlevel-Meilensteine, Prestige-Skins, Rang-Meilensteine pro Saison.
+--   Spielerlevel-Meilensteine, Prestige-Skins, Rang-Meilensteine pro Saison, Waffen-Meisterschaft, Titel.
+--   Die Kill-Boni (Killserien, Rache, Serie beendet) vergibt KillService zusammen mit den Medaillen.
 -- Prüft automatisch, sobald sich Level (AccountXP), Prestige oder ELO eines Spielers ändern.
 -- Abgeholte Meilensteine stehen im Profil (profile.Rewards.Claimed) und als JSON im Spieler-Attribut
 -- "RewardsClaimed" (für das Belohnungs-Fenster). Jede Belohnung zeigt der Client als Popup (Remotes.Reward).
@@ -24,10 +25,6 @@ local ProgressService = require(ServerShared.ProgressService)
 local KillService = require(ServerShared.KillService)
 
 local RewardService = {}
-
-local streaks = {} -- [Player] = Kills seit dem letzten Tod
-local streakAtDeath = {} -- [Player] = Killserie im Moment des letzten Todes (für "Serie beendet")
-local lastKiller = {} -- [Player] = wer ihn zuletzt erledigt hat (für "Rache")
 
 local function claimedOf(profile)
 	profile.Rewards = profile.Rewards or {}
@@ -147,17 +144,6 @@ local function watch(player)
 			RewardService.Check(player)
 		end)
 	end
-	-- Killserie endet mit dem Tod
-	player.CharacterAdded:Connect(function(character)
-		streaks[player] = 0
-		local humanoid = character:WaitForChild("Humanoid", 10)
-		if humanoid then
-			humanoid.Died:Connect(function()
-				streakAtDeath[player] = math.max(streakAtDeath[player] or 0, streaks[player] or 0)
-				streaks[player] = 0
-			end)
-		end
-	end)
 end
 
 function RewardService.Init()
@@ -165,13 +151,8 @@ function RewardService.Init()
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
-	Players.PlayerRemoving:Connect(function(player)
-		streaks[player] = nil
-		streakAtDeath[player] = nil
-		lastKiller[player] = nil
-	end)
-	-- Killserien: Münzen bei 5, 10, 15, 20 Kills ohne zu sterben
-	KillService.KillCounted:Connect(function(killer, victim, _, weaponName)
+	-- Waffen-Meisterschaft (Killserien, Rache und Serie beendet vergibt KillService mit den Medaillen)
+	KillService.KillCounted:Connect(function(killer, _, _, weaponName)
 		if typeof(killer) ~= "Instance" or not killer:IsA("Player") then
 			return
 		end
@@ -189,39 +170,6 @@ function RewardService.Init()
 						ItemLabel = tier.Name .. "-Tarnung (" .. weapon .. ")" })
 				end
 			end
-		end
-		if typeof(victim) == "Instance" and victim:IsA("Player") and victim ~= killer then
-			-- Rache: der Gegner hatte uns zuletzt erledigt
-			if lastKiller[killer] == victim then
-				lastKiller[killer] = nil
-				Remotes.Announce:FireClient(killer, RewardConfig.Revenge.Name .. "!")
-				grant(killer, RewardConfig.Revenge.Name, RewardConfig.Revenge)
-				ProgressService.AddStat(killer, "Revenges", 1)
-			end
-			lastKiller[victim] = killer
-			-- Serie beendet: der Gegner war auf einer Killserie
-			local victimStreak = math.max(streaks[victim] or 0, streakAtDeath[victim] or 0)
-			streakAtDeath[victim] = 0
-			if victimStreak >= RewardConfig.Shutdown.MinStreak then
-				Remotes.Announce:FireClient(killer, RewardConfig.Shutdown.Name .. " (" .. victimStreak .. ")!")
-				grant(killer, RewardConfig.Shutdown.Name, RewardConfig.Shutdown)
-				ProgressService.AddStat(killer, "Shutdowns", 1)
-			end
-		end
-		streaks[killer] = (streaks[killer] or 0) + 1
-		if streaks[killer] == 5 then
-			ProgressService.QuestEvent(killer, "Streak5", 1) -- Wochen-Auftrag "5er-Killserie"
-		end
-		for _, streak in RewardConfig.Streaks do
-			if streaks[killer] == streak.Kills then
-				Remotes.Announce:FireClient(killer, streak.Name .. "!")
-				grant(killer, streak.Name, streak)
-			end
-		end
-		-- beste Killserie merken
-		local profile = ProgressService.Get(killer)
-		if profile and profile.Stats and streaks[killer] > (profile.Stats.BestStreak or 0) then
-			ProgressService.AddStat(killer, "BestStreak", streaks[killer] - (profile.Stats.BestStreak or 0))
 		end
 	end)
 end

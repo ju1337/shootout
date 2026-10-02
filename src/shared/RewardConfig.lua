@@ -3,7 +3,8 @@
 --   Killserien (Kills ohne zu sterben), Spielerlevel-Meilensteine (Münzen in jedem Prestige-Durchgang neu,
 --   Skins einmalig), Prestige-Belohnungen (exklusive Skins), Rang-Meilensteine pro Saison (erster Aufstieg).
 -- Laufende Belohnungen: XP pro Aktion stehen in AgentConfig.XPRewards, Münzen = 25 pro 100 XP
--- (Cosmetics.CoinsPerXP), Aufträge in QuestConfig. Vergeben wird alles vom RewardService (Server).
+-- (Cosmetics.CoinsPerXP), Aufträge in QuestConfig. Vergeben wird alles vom RewardService (Server), die
+-- Kill-Boni (Rache, Serie beendet, Killserien) vom KillService zusammen mit den Medaillen (Medals).
 
 local RewardConfig = {}
 
@@ -25,7 +26,8 @@ RewardConfig.PerAction = {
 RewardConfig.Revenge = { Coins = 75, Name = "RACHE" }
 RewardConfig.Shutdown = { Coins = 100, Name = "SERIE BEENDET", MinStreak = 5 }
 
--- Killserien: Kills ohne zu sterben (in jedem Modus) -> Münzen
+-- Killserien: Kills ohne zu sterben (in jedem Modus) -> Münzen. Die Münzen stehen in der Killserien-Medaille
+-- (Kills sollten in Medals.StreakSteps vorkommen, sonst gibt es die Münzen ohne Medaille).
 RewardConfig.Streaks = {
 	{ Kills = 5, Coins = 150, Name = "KILLSERIE 5" },
 	{ Kills = 10, Coins = 400, Name = "KILLSERIE 10 · UNAUFHALTSAM" },

@@ -135,7 +135,11 @@ return function(api)
 		end
 		carrier = nil
 		dropped = bombPart(position - Vector3.new(0, 2.4, 0), api.GetMap())
-		api.Announce("Die Bombe wurde fallen gelassen!")
+		api.Notify("Objective", function(player)
+			local mine = player.Team == attackers
+			return { Text = mine and "Bombe verloren  ·  aufheben!" or "Bombe fallen gelassen",
+				Side = mine and "Alert" or "Ally", Icon = "!" }
+		end)
 	end
 
 	local function plant(site, position, entry)
@@ -152,10 +156,16 @@ return function(api)
 		sites[site]:SetAttribute("Planted", true)
 		bombTimer = GameSettings.Get("BombTime")
 		defuseProgress = 0
-		api.Announce("Bombe bei " .. site .. " gelegt!")
+		api.Notify("Objective", function(player)
+			local mine = player.Team == attackers
+			return { Text = "Bombe bei " .. site .. " gelegt  ·  " .. (mine and "verteidigen!" or "entschärfen!"),
+				Side = mine and "Ally" or "Enemy", Icon = site }
+		end)
 		if entry and entry.Player then
 			BuyService.AddMoney(entry.Player, REWARD, "Bombe gelegt")
 			ProgressService.AddStat(entry.Player, "Plants", 1)
+			Remotes.Notify:FireClient(entry.Player, "Medal",
+				{ { Id = "BombPlanted", Sub = "Ziel " .. site .. "  ·  +" .. REWARD .. " $" } })
 		end
 	end
 
@@ -198,7 +208,11 @@ return function(api)
 		attackers = roundNumber <= half and api.TeamA or api.TeamB
 		defenders = api.OtherTeam(attackers)
 		if roundNumber == half + 1 then
-			api.Announce("Seitenwechsel! Team " .. attackers.Name .. " greift jetzt an.")
+			api.Notify("Objective", function(player)
+				local attacking = player.Team == attackers
+				return { Text = "Seitenwechsel  ·  " .. (attacking and "ihr greift jetzt an" or "ihr verteidigt jetzt"),
+					Side = "Alert", Icon = "!" }
+			end)
 		end
 		botTargetSite = math.random() < 0.5 and "A" or "B"
 	end
@@ -275,8 +289,10 @@ return function(api)
 							if entry.Player then
 								BuyService.AddMoney(entry.Player, REWARD, "Bombe entschärft")
 								ProgressService.AddStat(entry.Player, "Defuses", 1)
+								Remotes.Notify:FireClient(entry.Player, "Medal",
+									{ { Id = "BombDefused", Sub = "+" .. REWARD .. " $" } })
 							end
-							api.EndRound(defenders, "Bombe entschärft!")
+							api.EndRound(defenders, "Bombe entschärft")
 							return
 						end
 					end
@@ -296,7 +312,7 @@ return function(api)
 				explosion.BlastPressure = 0
 				explosion.DestroyJointRadiusPercent = 0
 				explosion.Parent = workspace
-				api.EndRound(attackers, "Bombe explodiert!")
+				api.EndRound(attackers, "Bombe explodiert")
 				return
 			end
 		end
