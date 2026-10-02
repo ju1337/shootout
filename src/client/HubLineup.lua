@@ -222,8 +222,34 @@ local function buildLeaderboards()
 	end
 end
 
+-- Leuchtpartikel an den Toren (in Torfarbe) und Funkeln über dem Siegertreppchen
+local function addParticles()
+	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	task.wait(1)
+	for _, part in decor:GetChildren() do
+		if part:IsA("BasePart") and (part.Name == "GateGlow" or part.Name == "PodiumGlow") then
+			local emitter = Instance.new("ParticleEmitter")
+			local podium = part.Name == "PodiumGlow"
+			emitter.Color = ColorSequence.new(podium and Color3.fromRGB(255, 225, 140) or part.Color)
+			emitter.LightEmission = 1
+			emitter.Rate = podium and 10 or 8
+			emitter.Lifetime = NumberRange.new(2, 3.5)
+			emitter.Speed = NumberRange.new(2, 4)
+			emitter.SpreadAngle = Vector2.new(15, 15)
+			emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, podium and 0.35 or 0.5),
+				NumberSequenceKeypoint.new(1, 0) })
+			emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) })
+			-- Die Podest-Scheibe ist um 90° gekippt: ihre lokale X-Achse zeigt nach oben
+			emitter.EmissionDirection = podium and Enum.NormalId.Right or Enum.NormalId.Top
+			emitter.LockedToPart = false
+			emitter.Parent = part
+		end
+	end
+end
+
 function HubLineup.Init()
 	task.spawn(buildMissionBoard)
+	task.spawn(addParticles)
 	task.spawn(buildLeaderboards)
 	rebuild()
 	player.AttributeChanged:Connect(function(name)
