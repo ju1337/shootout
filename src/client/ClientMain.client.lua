@@ -21,6 +21,7 @@ local Pings = require(script.Parent:WaitForChild("Pings"))
 local MatchSummary = require(script.Parent:WaitForChild("MatchSummary"))
 local HubLineup = require(script.Parent:WaitForChild("HubLineup"))
 local Nametags = require(script.Parent:WaitForChild("Nametags"))
+local MapVote = require(script.Parent:WaitForChild("MapVote"))
 
 Movement.Init()
 WeaponClient.Init()
@@ -38,4 +39,5 @@ Pings.Init()
 MatchSummary.Init()
 HubLineup.Init()
 Nametags.Init()
+MapVote.Init()
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

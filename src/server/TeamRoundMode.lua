@@ -23,6 +23,7 @@
 --   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt)
 
 local Teams = game:GetService("Teams")
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -50,6 +51,7 @@ local SIDE_DISTANCE = 150    -- Abstand der Absprungseiten zur Mitte (DropIn)
 local ROW_SPACING = 10       -- Abstand zwischen Spielern beim Absprung
 local INTERMISSION = 5       -- Pause nach jeder Runde
 local OVERTIME_MAX = 30      -- Strikeout: Overtime dauert höchstens so lange (Sekunden)
+local VOTE_TIME = 10         -- Map-Abstimmung vor dem Match (Sekunden)
 local BOT_FILL_DELAY = 10    -- so lange wird auf echte Spieler gewartet, dann füllen Bots auf
 local SPAWN_PROTECTION = 2   -- Schutzschild nach Boden-Spawns
 local RESPAWN_TIME = 5       -- Sekunden bis zum Respawn (mit Ticket)
@@ -435,11 +437,12 @@ function TeamRoundMode.new(config)
 	local point = config.Capture and map:WaitForChild("Objective"):WaitForChild("CapturePoint")
 
 	-- Neue Map fürs nächste Match auslosen (nur zwischen Matches aufrufen)
-	local function chooseMap()
+	-- name = bestimmte Map (z.B. aus der Abstimmung), sonst zufällig aus der Rotation
+	local function chooseMap(name)
 		if #mapNames == 0 then
 			return
 		end
-		map = mapsFolder:WaitForChild(mapNames[math.random(#mapNames)])
+		map = mapsFolder:WaitForChild(name or mapNames[math.random(#mapNames)])
 		if config.Capture then
 			point = map:WaitForChild("Objective"):WaitForChild("CapturePoint")
 		end
@@ -451,6 +454,95 @@ function TeamRoundMode.new(config)
 			player:SetAttribute("MapName", map:GetAttribute("DisplayName") or map.Name)
 			player:SetAttribute("MapCenter", map:GetAttribute("Center"))
 		end
+	end
+
+	-- ---------- Map-Abstimmung vor dem Match ----------
+	-- Bis zu 3 Maps aus der Rotation, VOTE_TIME Sekunden. Spieler-Attribute: MapVoteOptions (JSON
+	-- { {Id, Name} }), MapVoteEnd (Serverzeit), MapVoteCounts (JSON { n1, n2, n3 }), MapVoteMine
+	local voteOptions = nil  -- { { Id, Name } } während der Abstimmung
+	local votes = {}         -- [Player] = Nummer der Option
+	local voteEnd = 0        -- Serverzeit, zu der die Abstimmung endet
+
+	local function voteCounts()
+		local counts = {}
+		for i in voteOptions do
+			counts[i] = 0
+		end
+		for player, index in votes do
+			if members[player] then
+				counts[index] += 1
+			end
+		end
+		return counts
+	end
+
+	local function publishVote(player)
+		if voteOptions then
+			player:SetAttribute("MapVoteOptions", HttpService:JSONEncode(voteOptions))
+			player:SetAttribute("MapVoteEnd", voteEnd)
+			player:SetAttribute("MapVoteCounts", HttpService:JSONEncode(voteCounts()))
+			player:SetAttribute("MapVoteMine", votes[player])
+		else
+			for _, attribute in { "MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine" } do
+				player:SetAttribute(attribute, nil)
+			end
+		end
+	end
+
+	local function mapVote()
+		if #mapNames < 2 then
+			chooseMap()
+			return
+		end
+		local pool = table.clone(mapNames)
+		voteOptions = {}
+		while #voteOptions < 3 and #pool > 0 do
+			local name = table.remove(pool, math.random(#pool))
+			local folder = mapsFolder:WaitForChild(name)
+			table.insert(voteOptions, { Id = name, Name = folder:GetAttribute("DisplayName") or name })
+		end
+		votes = {}
+		voteEnd = workspace:GetServerTimeNow() + VOTE_TIME
+		setPhase("MapVote")
+		for player in members do
+			publishVote(player)
+		end
+		while workspace:GetServerTimeNow() < voteEnd and count() > 0 do
+			setText(Modes.Get(MODE_ID).Name .. " · Map-Abstimmung · noch "
+				.. math.ceil(voteEnd - workspace:GetServerTimeNow()) .. " s")
+			-- Alle haben abgestimmt: nicht unnötig warten
+			local voted = 0
+			for player in members do
+				if votes[player] then
+					voted += 1
+				end
+			end
+			if voted >= count() and voteEnd - workspace:GetServerTimeNow() > 1.5 then
+				voteEnd = workspace:GetServerTimeNow() + 1.5
+				for player in members do
+					publishVote(player)
+				end
+			end
+			task.wait(0.25)
+		end
+		-- Meiste Stimmen gewinnt, bei Gleichstand zufällig
+		local counts = voteCounts()
+		local best, winners = -1, {}
+		for i, n in counts do
+			if n > best then
+				best, winners = n, { i }
+			elseif n == best then
+				table.insert(winners, i)
+			end
+		end
+		local chosen = voteOptions[winners[math.random(#winners)]]
+		voteOptions = nil
+		votes = {}
+		for player in members do
+			publishVote(player)
+		end
+		chooseMap(chosen.Id)
+		announce("Map: " .. chosen.Name)
 	end
 	local NEUTRAL = Color3.fromRGB(230, 230, 235)
 
@@ -943,7 +1035,12 @@ function TeamRoundMode.new(config)
 					continue
 				end
 				matchStarted = true
-				chooseMap() -- Map-Rotation: neue Map fürs Match
+				-- Map-Rotation: Abstimmung (Admin-Start nimmt eine zufällige Map)
+				if forceStart then
+					chooseMap()
+				else
+					mapVote()
+				end
 				for player in members do
 					publishMap(player)
 				end
@@ -1078,6 +1175,15 @@ function TeamRoundMode.new(config)
 	-- ---------- Modus-Schnittstelle ----------
 
 	function mode.Init()
+		-- Map-Abstimmung
+		Remotes.MapVote.OnServerEvent:Connect(function(player, index)
+			if voteOptions and members[player] and type(index) == "number" and voteOptions[index] then
+				votes[player] = index
+				for member in members do
+					publishVote(member)
+				end
+			end
+		end)
 		-- Kills pro Runde zählen (für ACE)
 		KillService.KillCounted:Connect(function(killer)
 			if roundActive and members[killer] then
@@ -1125,6 +1231,7 @@ function TeamRoundMode.new(config)
 		player:SetAttribute("RoundPhase", phase)
 		player:SetAttribute("AgentLocked", false)
 		publishMap(player)
+		publishVote(player)
 		publishScore()
 		if matchStarted then
 			BuyService.StartMatch(player) -- später dazugekommen: Startgeld
@@ -1139,12 +1246,13 @@ function TeamRoundMode.new(config)
 	end
 
 	function mode.RemovePlayer(player)
+		votes[player] = nil
 		members[player] = nil
 		alive[player] = nil
 		pending[player] = nil
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
-			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter", "CountdownEnd" } do
+			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapCenter", "CountdownEnd", "MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine" } do
 			player:SetAttribute(attribute, nil)
 		end
 		BuyService.Clear(player)

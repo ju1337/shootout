@@ -39,6 +39,7 @@ local NAMES = {
 	"PartyAction", -- Client -> Server: Squad (Invite/Accept/Decline/Leave/Kick, UserId)
 	"PartyInvite", -- Server -> Client: Einladung (Name, UserId des Anführers)
 	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers)
+	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
 }
 
 local folder

@@ -512,7 +512,7 @@ local function update()
 	local phase = player:GetAttribute("RoundPhase")
 	local modeInfo = Modes.Get(player:GetAttribute("Mode"))
 	local inTeamMode = modeInfo ~= nil and modeInfo.TeamMode == true
-	local show = inTeamMode and (phase == "Waiting" or phase == "Select" or not confirmed)
+	local show = inTeamMode and (phase == "Waiting" or phase == "MapVote" or phase == "Select" or not confirmed)
 	gui.Enabled = show
 	if show ~= shown then
 		shown = show
@@ -533,7 +533,7 @@ local function update()
 		timeBar.Size = UDim2.new(1, 0, 1, 0)
 	end
 	modeLabel.Text = modeInfo.Name .. "  ·  " .. string.upper(modeInfo.Tag)
-	if phase == "Waiting" then
+	if phase == "Waiting" or phase == "MapVote" then
 		roundLabel.Text = player:GetAttribute("ModeText") or "Warte auf Spieler..."
 	elseif phase == "Select" then
 		roundLabel.Text = "RUNDE " .. (player:GetAttribute("RoundNumber") or 1) .. "  ·  MAP: "
@@ -546,7 +546,7 @@ local function update()
 	if isLocked() then
 		confirmButton.Text = "BESTÄTIGT ✓"
 		confirmButton.BackgroundColor3 = Color3.fromRGB(60, 140, 80)
-	elseif phase == "Select" or phase == "Waiting" then
+	elseif phase == "Select" or phase == "Waiting" or phase == "MapVote" then
 		confirmButton.Text = "AGENT BESTÄTIGEN"
 		confirmButton.BackgroundColor3 = RED
 	else
@@ -607,7 +607,7 @@ function AgentSelect.Init()
 		local phase = player:GetAttribute("RoundPhase")
 		if phase == "Countdown" then
 			confirmed = true -- Match startet: Bildschirm schließt
-		elseif phase == "Waiting" or phase == "Select" then
+		elseif phase == "Waiting" or phase == "MapVote" or phase == "Select" then
 			confirmed = false
 		end
 	end)
