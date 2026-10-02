@@ -24,8 +24,7 @@ local GadgetService = require(ServerShared.GadgetService)
 local BotService = {}
 
 local TICK = 0.15            -- Sekunden zwischen zwei KI-Schritten
-local REACTION_TIME = 0.5    -- so lange muss ein Gegner sichtbar sein, bevor der Bot schießt
-local AIM_SPREAD = 4         -- zusätzliche Streuung in Grad (Bots treffen nicht perfekt)
+-- Reaktionszeit und Streuung der Bots: Einstellungen BotReaction / BotSpread (Admin-Panel)
 local KEEP_DISTANCE = 30     -- ab hier bleibt der Bot stehen und weicht seitlich aus
 local VIEW_RANGE = 250       -- so weit sieht ein Bot
 local WANDER_RADIUS = 60     -- ohne Gegner: zufällig um die Mapmitte laufen
@@ -199,7 +198,7 @@ local function shoot(bot, head, target, weaponName)
 	params.FilterDescendantsInstances = { bot.Model }
 
 	for _ = 1, cfg.Pellets or 1 do
-		local direction = spread(aimPart.Position - origin, (cfg.Spread or 0) + AIM_SPREAD)
+		local direction = spread(aimPart.Position - origin, (cfg.Spread or 0) + GameSettings.Get("BotSpread"))
 		local result = workspace:Raycast(origin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (origin + direction * cfg.Range)
 		Remotes.Shot:FireAllClients(nil, origin, endPos, weaponName)
@@ -283,7 +282,7 @@ local function runAI(bot, model)
 				nextMove = now + 0.8
 			end
 			-- Schießen (Reaktionszeit, Feuerrate, Magazin)
-			local ready = now - seenSince >= REACTION_TIME and now >= reloadUntil
+			local ready = now - seenSince >= GameSettings.Get("BotReaction") and now >= reloadUntil
 				and now - lastShot >= cfg.FireDelay and targetDistance <= cfg.Range
 			local blinded = (model:GetAttribute("BlindedUntil") or 0) > now
 			-- Ab und zu ein Gadget werfen (mittlere Entfernung)

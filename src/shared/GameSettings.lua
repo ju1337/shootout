@@ -36,6 +36,8 @@ GameSettings.List = {
 	{ Key = "DamageMultiplier", Group = "Allgemein", Label = "Schaden ×", Default = 1, Min = 0.1, Max = 5, Step = 0.1 },
 	{ Key = "XPMultiplier", Group = "Allgemein", Label = "XP ×", Default = 1, Min = 0, Max = 10, Step = 0.5 },
 	{ Key = "AutoFillBots", Group = "Bots", Label = "Auto-Bots (1 = an)", Default = 1, Min = 0, Max = 1, Step = 1 },
+	{ Key = "BotSpread", Group = "Bots", Label = "Bot-Streuung (Grad)", Default = 4, Min = 0, Max = 15, Step = 0.5 },
+	{ Key = "BotReaction", Group = "Bots", Label = "Bot-Reaktionszeit (Sek.)", Default = 0.5, Min = 0, Max = 2, Step = 0.1 },
 	{ Key = "BotDamage", Group = "Bots", Label = "Bot-Schaden ×", Default = 0.6, Min = 0, Max = 3, Step = 0.1 },
 }
 
