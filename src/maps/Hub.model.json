@@ -104,11 +104,11 @@
        }
       },
       "Color": [
-       0.0941,
-       0.102,
-       0.1216
+       0.2431,
+       0.2588,
+       0.2902
       ],
-      "Material": "Slate",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -150,9 +150,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -196,9 +196,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -242,9 +242,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -288,9 +288,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -334,9 +334,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -380,9 +380,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -426,9 +426,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -472,9 +472,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -518,9 +518,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -564,9 +564,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -610,9 +610,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -656,9 +656,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -702,9 +702,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -748,9 +748,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -794,9 +794,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -840,9 +840,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -886,9 +886,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -932,9 +932,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -978,9 +978,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -1024,9 +1024,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -1070,9 +1070,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1686,
-       0.1961
+       0.3059,
+       0.3255,
+       0.3608
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -1116,9 +1116,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "Fabric",
       "TopSurface": "Smooth",
@@ -1162,9 +1162,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -1209,9 +1209,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -1875,9 +1875,9 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3216,
+       0.3451,
+       0.3843
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -1921,9 +1921,9 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3216,
+       0.3451,
+       0.3843
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -1967,9 +1967,9 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3216,
+       0.3451,
+       0.3843
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2013,9 +2013,9 @@
        }
       },
       "Color": [
-       0.1255,
-       0.1373,
-       0.1608
+       0.3216,
+       0.3451,
+       0.3843
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2059,9 +2059,9 @@
        }
       },
       "Color": [
-       0.0549,
-       0.0588,
-       0.0706
+       0.1725,
+       0.1882,
+       0.2118
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2105,9 +2105,9 @@
        }
       },
       "Color": [
-       0.0549,
-       0.0588,
-       0.0706
+       0.1725,
+       0.1882,
+       0.2118
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2151,9 +2151,9 @@
        }
       },
       "Color": [
-       0.0627,
-       0.0667,
-       0.0784
+       0.2275,
+       0.2431,
+       0.2745
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2197,9 +2197,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2243,9 +2243,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2289,9 +2289,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2335,9 +2335,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2381,9 +2381,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2427,9 +2427,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2473,9 +2473,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2519,9 +2519,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2565,9 +2565,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2611,9 +2611,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2657,9 +2657,193 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "WallRib",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       17,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -45,
+         16.5,
+         -44.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "WallRib",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       17,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -38,
+         16.5,
+         -44.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "WallRib",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       17,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         38,
+         16.5,
+         -44.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "WallRib",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.2,
+       17,
+       0.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         45,
+         16.5,
+         -44.6
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -2678,9 +2862,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -2709,9 +2893,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -2722,12 +2906,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -2739,9 +2923,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -2770,9 +2954,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -2783,12 +2967,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -2800,9 +2984,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -2831,9 +3015,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -2844,12 +3028,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -2861,9 +3045,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -2892,9 +3076,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -2905,12 +3089,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -2922,9 +3106,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -2953,9 +3137,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -2966,12 +3150,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -2983,9 +3167,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3014,9 +3198,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3027,12 +3211,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3044,9 +3228,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3075,9 +3259,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3088,12 +3272,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3105,9 +3289,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3136,9 +3320,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3149,12 +3333,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3166,9 +3350,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3197,9 +3381,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3210,12 +3394,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3227,9 +3411,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3258,9 +3442,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3271,12 +3455,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3288,9 +3472,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3319,9 +3503,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3332,12 +3516,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3349,9 +3533,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3380,9 +3564,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3393,12 +3577,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3410,9 +3594,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3441,9 +3625,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3454,12 +3638,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3471,9 +3655,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3502,9 +3686,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3515,12 +3699,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3532,9 +3716,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3563,9 +3747,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3576,12 +3760,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3593,9 +3777,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3624,9 +3808,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3637,12 +3821,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3654,9 +3838,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3685,9 +3869,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3698,12 +3882,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3715,9 +3899,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3746,9 +3930,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3759,12 +3943,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3776,9 +3960,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3807,9 +3991,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3820,12 +4004,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3837,9 +4021,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3868,9 +4052,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3881,12 +4065,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3898,9 +4082,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3929,9 +4113,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -3942,12 +4126,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -3959,9 +4143,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -3990,9 +4174,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4003,12 +4187,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4020,9 +4204,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4051,9 +4235,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4064,12 +4248,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4081,9 +4265,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4112,9 +4296,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4125,12 +4309,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4142,9 +4326,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4173,9 +4357,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4186,12 +4370,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4203,9 +4387,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4234,9 +4418,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4247,12 +4431,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4264,9 +4448,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4295,9 +4479,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4308,12 +4492,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4325,9 +4509,9 @@
      "Properties": {
       "Anchored": true,
       "Size": [
-       6,
+       7,
        0.25,
-       0.6
+       1
       ],
       "CFrame": {
        "CFrame": {
@@ -4356,9 +4540,9 @@
        }
       },
       "Color": [
-       0.7451,
-       0.7843,
-       0.8431
+       0.9216,
+       0.9412,
+       0.9725
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4369,12 +4553,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 26,
-        "Brightness": 0.8,
+        "Range": 34,
+        "Brightness": 1.5,
         "Color": [
-         0.7843,
-         0.8431,
-         0.9216
+         0.9216,
+         0.9412,
+         0.9804
         ]
        }
       }
@@ -4417,9 +4601,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4464,9 +4648,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4511,9 +4695,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4558,9 +4742,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4605,9 +4789,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4652,9 +4836,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -4699,9 +4883,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -4794,9 +4978,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -5370,9 +5554,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -5382,123 +5566,79 @@
      }
     },
     {
-     "Name": "MissionBoard",
+     "Name": "HoloDiamond",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       22,
-       10,
-       0.6
+       3.2,
+       3.2,
+       3.2
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         15,
+         9.5,
          6
         ],
         "orientation": [
          [
-          1.0,
-          0.0,
+          0.707107,
+          -0.707107,
           0.0
          ],
          [
-          0.0,
-          1.0,
-          0.0
+          0.5,
+          0.5,
+          -0.707107
          ],
          [
-          0.0,
-          0.0,
-          1.0
+          0.5,
+          0.5,
+          0.707107
          ]
         ]
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.4706,
+       0.7255,
+       0.9216
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Neon",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Transparency": 0.55,
+      "CanCollide": false
      }
     },
     {
-     "Name": "MissionBoardFrame",
+     "Name": "HoloRing",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       23,
-       11,
-       0.4
+       0.15,
+       9,
+       9
       ],
       "CFrame": {
        "CFrame": {
         "position": [
          0,
-         15,
-         6.5
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1725,
-       0.1843,
-       0.2118
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "BoardCable",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.2,
-       6,
-       0.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -9,
-         23,
+         9.5,
          6
         ],
         "orientation": [
          [
-          1.0,
           0.0,
+          -1.0,
           0.0
          ],
          [
-          0.0,
           1.0,
+          0.0,
           0.0
          ],
          [
@@ -5510,59 +5650,16 @@
        }
       },
       "Color": [
-       0.1569,
-       0.1569,
-       0.1765
+       0.4706,
+       0.7255,
+       0.9216
       ],
-      "Material": "Metal",
+      "Material": "Neon",
       "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "BoardCable",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.2,
-       6,
-       0.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         9,
-         23,
-         6
-        ],
-        "orientation": [
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1569,
-       0.1569,
-       0.1765
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.7,
+      "CanCollide": false
      }
     },
     {
@@ -5895,9 +5992,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6083,9 +6180,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6422,9 +6519,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6610,9 +6707,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6949,9 +7046,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -7137,9 +7234,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -7476,9 +7573,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -7664,9 +7761,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8003,9 +8100,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8191,9 +8288,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8237,9 +8334,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8425,9 +8522,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8476,9 +8573,9 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8314,
-           0.6667,
-           0.3137
+           0.4706,
+           0.7255,
+           0.9216
           ]
          }
         },
@@ -8550,9 +8647,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.8314,
-           0.6667,
-           0.3137
+           0.4706,
+           0.7255,
+           0.9216
           ],
           "BorderSizePixel": 0
          }
@@ -8568,9 +8665,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.8314,
-         0.6667,
-         0.3137
+         0.4706,
+         0.7255,
+         0.9216
         ]
        }
       }
@@ -8659,9 +8756,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8705,9 +8802,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8854,9 +8951,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8905,9 +9002,9 @@
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
-           0.8314,
-           0.6667,
-           0.3137
+           0.4706,
+           0.7255,
+           0.9216
           ]
          }
         },
@@ -8979,9 +9076,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.8314,
-           0.6667,
-           0.3137
+           0.4706,
+           0.7255,
+           0.9216
           ],
           "BorderSizePixel": 0
          }
@@ -8997,9 +9094,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.8314,
-         0.6667,
-         0.3137
+         0.4706,
+         0.7255,
+         0.9216
         ]
        }
       }
@@ -9042,9 +9139,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -9088,9 +9185,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9134,9 +9231,9 @@
        }
       },
       "Color": [
-       0.8314,
-       0.6667,
-       0.3137
+       0.4706,
+       0.7255,
+       0.9216
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -9180,9 +9277,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -9226,9 +9323,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9318,9 +9415,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -9364,9 +9461,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9456,9 +9553,9 @@
        }
       },
       "Color": [
-       0.1725,
-       0.1843,
-       0.2118
+       0.3765,
+       0.3961,
+       0.4314
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -9502,9 +9599,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -10324,9 +10421,9 @@
        }
       },
       "Color": [
-       0.0784,
-       0.0863,
-       0.102
+       0.0941,
+       0.1059,
+       0.1255
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -10474,6 +10571,895 @@
        }
       }
      ]
+    },
+    {
+     "Name": "MissionBoardFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       25,
+       12,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         14,
+         -44.8
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "MissionBoard",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       24,
+       11,
+       0.5
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         14,
+         -44.5
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1059,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "BackLogo",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       4.5,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         22.5,
+         -44.5
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1059,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "SHOOTOUT",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.4706,
+           0.7255,
+           0.9216
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "TACTICAL OPERATIONS",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.8941,
+           0.9059,
+           0.9216
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.4706,
+           0.7255,
+           0.9216
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.4706,
+         0.7255,
+         0.9216
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PosterFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       15,
+       10,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -27,
+         15,
+         -44.8
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Poster",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       9,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -27,
+         15,
+         -44.55
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1059,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "WERDE AGENT",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.5882,
+           0.4706,
+           0.8235
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "9 AGENTEN \u00b7 EIGENE F\u00c4HIGKEITEN",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.8941,
+           0.9059,
+           0.9216
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.5882,
+           0.4706,
+           0.8235
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.5882,
+         0.4706,
+         0.8235
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "PosterFrame",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       15,
+       10,
+       0.3
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         27,
+         15,
+         -44.8
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.3961,
+       0.4314
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "Poster",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       9,
+       0.4
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         27,
+         15,
+         -44.55
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0941,
+       0.1059,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "Children": [
+      {
+       "Name": "SignGui",
+       "ClassName": "SurfaceGui",
+       "Properties": {
+        "Face": "Front",
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "Children": [
+        {
+         "Name": "Title",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.58,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "WAFFEN-AUFS\u00c4TZE",
+          "TextScaled": true,
+          "Font": "Oswald",
+          "TextColor3": [
+           0.4392,
+           0.698,
+           0.4392
+          ]
+         }
+        },
+        {
+         "Name": "Subtitle",
+         "ClassName": "TextLabel",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0.04,
+             0
+            ],
+            [
+             0.64,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             0.92,
+             0
+            ],
+            [
+             0.26,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "JETZT IM LOADOUT",
+          "TextScaled": true,
+          "Font": "GothamBold",
+          "TextColor3": [
+           0.8941,
+           0.9059,
+           0.9216
+          ]
+         }
+        },
+        {
+         "Name": "Bar",
+         "ClassName": "Frame",
+         "Properties": {
+          "Position": {
+           "UDim2": [
+            [
+             0,
+             0
+            ],
+            [
+             0.94,
+             0
+            ]
+           ]
+          },
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             0.06,
+             0
+            ]
+           ]
+          },
+          "BackgroundColor3": [
+           0.4392,
+           0.698,
+           0.4392
+          ],
+          "BorderSizePixel": 0
+         }
+        }
+       ]
+      },
+      {
+       "Name": "Glow",
+       "ClassName": "SurfaceLight",
+       "Properties": {
+        "Face": "Front",
+        "Range": 16,
+        "Brightness": 1.2,
+        "Angle": 80,
+        "Color": [
+         0.4392,
+         0.698,
+         0.4392
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "Name": "WallBand",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.15,
+       0.25,
+       96
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -54.55,
+         10.5,
+         5.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4
+     }
+    },
+    {
+     "Name": "WallBand",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       0.15,
+       0.25,
+       96
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         54.55,
+         10.5,
+         5.0
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4
+     }
+    },
+    {
+     "Name": "WallBand",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       106,
+       0.25,
+       0.15
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         7.8,
+         -44.55
+        ],
+        "orientation": [
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.4706,
+       0.7255,
+       0.9216
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.4
+     }
     },
     {
      "Name": "Locker",
