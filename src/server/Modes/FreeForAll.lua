@@ -114,7 +114,7 @@ local function finishRound(winner)
 	local ranking = {}
 	for player in members do
 		table.insert(ranking, { Player = player, Name = player.Name, Kills = KillService.GetKills(player),
-			UserId = player.UserId, Agent = ProgressService.ActiveAgent(player) })
+			UserId = player.UserId, Agent = ProgressService.ActiveAgent(player), Title = player:GetAttribute("Title") })
 	end
 	for bot in bots do
 		table.insert(ranking, { Name = bot.Name, Kills = bot.Info and bot.Info:GetAttribute("Kills") or 0,
@@ -179,7 +179,8 @@ local function finishRound(winner)
 	local podium = {}
 	for i = 1, math.min(3, #ranking) do
 		local entry = ranking[i]
-		podium[i] = { Name = entry.Name, UserId = entry.UserId, Agent = entry.Agent, Kills = entry.Kills, Bot = entry.Bot }
+		podium[i] = { Name = entry.Name, UserId = entry.UserId, Agent = entry.Agent, Kills = entry.Kills, Bot = entry.Bot,
+			Title = entry.Title }
 	end
 	local top = ranking[1]
 	for place, entry in ranking do

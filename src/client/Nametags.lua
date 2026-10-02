@@ -12,6 +12,7 @@ local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local RankEmblem = require(Shared.RankEmblem)
+local TitleConfig = require(Shared.TitleConfig)
 local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
@@ -188,6 +189,15 @@ local function setTag(model, info)
 	end
 end
 
+-- Unterzeile: Rang und (falls gewählt) Titel in seiner Farbe
+local function subtitleFor(target, rank)
+	local title = TitleConfig.Get(target:GetAttribute("Title") or "")
+	if not title or title.Id == TitleConfig.Default then
+		return rank.Display
+	end
+	return rank.Display .. '  ·  <font color="#' .. title.Color:ToHex() .. '">' .. UITheme.Upper(title.Name) .. "</font>"
+end
+
 local function update()
 	local myMode = player:GetAttribute("Mode")
 	local inHub = myMode == "Hub"
@@ -198,7 +208,7 @@ local function update()
 			local level = LevelConfig.Get(player)
 			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
 			setTag(myCharacter, { Name = player.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-				Subtitle = rank.Display, SubColor = rank.Color, Rank = rank, Player = player })
+				Subtitle = subtitleFor(player, rank), SubColor = rank.Color, Rank = rank, Player = player })
 		else
 			removeTag(myCharacter)
 		end
@@ -213,7 +223,7 @@ local function update()
 				-- Hub: Name in Prestige-Farbe (ab Prestige 1), Rang darunter
 				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
 				setTag(character, { Name = other.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-					Subtitle = rank.Display, SubColor = rank.Color, Rank = rank, Player = other })
+					Subtitle = subtitleFor(other, rank), SubColor = rank.Color, Rank = rank, Player = other })
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
 				setTag(character, { Name = other.Name, Color = UITheme.Colors.Ally, Player = other })

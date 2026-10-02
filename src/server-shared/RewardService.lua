@@ -14,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local RewardConfig = require(Shared.RewardConfig)
 local MasteryConfig = require(Shared.MasteryConfig)
+local TitleConfig = require(Shared.TitleConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
@@ -53,6 +54,26 @@ local function grant(player, title, reward)
 	end
 	if #lines > 0 then
 		Remotes.Reward:FireClient(player, { Title = title, Lines = lines, Rarity = item and item.Rarity or nil })
+	end
+end
+
+-- Neue Titel melden. Beim allerersten Mal (alter Spielstand) still merken, damit nicht alles auf einmal kommt.
+local function checkTitles(player, profile)
+	local data = ProgressService.TitleData(player)
+	if not data then
+		return
+	end
+	local first = profile.TitlesSeen == nil
+	profile.TitlesSeen = profile.TitlesSeen or {}
+	for _, title in TitleConfig.List do
+		if not profile.TitlesSeen[title.Id] and TitleConfig.Unlocked(title, data) then
+			profile.TitlesSeen[title.Id] = true
+			if not first and title.Id ~= TitleConfig.Default then
+				ProgressService.LedgerItem(player, "Titel: " .. title.Name, "Legendary")
+				Remotes.Reward:FireClient(player, { Title = "NEUER TITEL", Lines = { "„" .. title.Name .. "“",
+					"Im Fenster TITEL auswählen" }, Rarity = "Legendary" })
+			end
+		end
 	end
 end
 
@@ -103,6 +124,7 @@ function RewardService.Check(player)
 	if changed then
 		publish(player, profile)
 	end
+	checkTitles(player, profile)
 end
 
 local function watch(player)
@@ -120,7 +142,7 @@ local function watch(player)
 			RewardService.Check(player)
 		end
 	end)
-	for _, attribute in { "AccountXP", "Prestige", "Elo" } do
+	for _, attribute in { "AccountXP", "Prestige", "Elo", "Stats", "Owned" } do
 		player:GetAttributeChangedSignal(attribute):Connect(function()
 			RewardService.Check(player)
 		end)
@@ -174,6 +196,7 @@ function RewardService.Init()
 				lastKiller[killer] = nil
 				Remotes.Announce:FireClient(killer, RewardConfig.Revenge.Name .. "!")
 				grant(killer, RewardConfig.Revenge.Name, RewardConfig.Revenge)
+				ProgressService.AddStat(killer, "Revenges", 1)
 			end
 			lastKiller[victim] = killer
 			-- Serie beendet: der Gegner war auf einer Killserie
@@ -182,6 +205,7 @@ function RewardService.Init()
 			if victimStreak >= RewardConfig.Shutdown.MinStreak then
 				Remotes.Announce:FireClient(killer, RewardConfig.Shutdown.Name .. " (" .. victimStreak .. ")!")
 				grant(killer, RewardConfig.Shutdown.Name, RewardConfig.Shutdown)
+				ProgressService.AddStat(killer, "Shutdowns", 1)
 			end
 		end
 		streaks[killer] = (streaks[killer] or 0) + 1

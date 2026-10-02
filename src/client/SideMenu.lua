@@ -23,6 +23,7 @@ local RankEmblem = require(Shared.RankEmblem)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local InputActions = require(Shared.InputActions)
+local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
 
@@ -720,6 +721,67 @@ local function buildRewards()
 	end
 end
 
+-- ---------- TITEL ----------
+-- Alle Titel als Karten: freigeschaltete zuerst (anklicken = auswählen), gesperrte mit Fortschritt.
+
+local function buildTitles()
+	local frame = makePanel("Titles", "TITEL", 1000, 620)
+	local current = text({ Position = UDim2.new(0, 24, 0, 62), Size = UDim2.new(1, -48, 0, 22), Text = "", TextSize = 16,
+		TextColor3 = GRAY, RichText = true }, frame)
+	local grid = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 96), Size = UDim2.new(1, -48, 1, -140),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = BORDER,
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
+	make("UIGridLayout", { CellSize = UDim2.new(0, 306, 0, 84), CellPadding = UDim2.new(0, 10, 0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+
+	panels.Titles.Refresh = function()
+		for _, child in grid:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+		local data = TitleConfig.DataFromPlayer(player)
+		local selected = TitleConfig.Get(player:GetAttribute("Title") or "") or TitleConfig.Get(TitleConfig.Default)
+		current.Text = 'AUSGEWÄHLT: <font color="#' .. selected.Color:ToHex() .. '">' .. UITheme.Upper(selected.Name)
+			.. "</font>   ·   steht unter deinem Namen über dem Kopf"
+		for i, title in TitleConfig.List do
+			local value, goal = TitleConfig.Progress(title, data)
+			local unlocked = value >= goal
+			local isOn = title.Id == selected.Id
+			local card = make("TextButton", { Text = "", AutoButtonColor = false, BackgroundColor3 = CARD,
+				BackgroundTransparency = unlocked and 0.05 or 0.45, LayoutOrder = (unlocked and 0 or 100) + i }, grid)
+			make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+			make("UIStroke", { Color = isOn and UITheme.Colors.Primary or (unlocked and title.Color or BORDER),
+				Thickness = isOn and 2 or 1, Transparency = isOn and 0 or (unlocked and 0.4 or 0.6) }, card)
+			make("Frame", { Position = UDim2.new(0, 8, 0, 10), Size = UDim2.new(0, 3, 1, -20),
+				BackgroundColor3 = unlocked and title.Color or BORDER, BorderSizePixel = 0 }, card)
+			text({ Position = UDim2.new(0, 22, 0, 8), Size = UDim2.new(1, -120, 0, 28), Text = UITheme.Upper(title.Name),
+				TextSize = 22, Font = DISPLAY, TextColor3 = unlocked and title.Color or GRAY,
+				TextTruncate = Enum.TextTruncate.AtEnd }, card)
+			text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.new(0, 96, 0, 16),
+				Text = isOn and "AUSGEWÄHLT" or (unlocked and "AUSWÄHLEN" or "GESPERRT"), TextSize = 11,
+				TextColor3 = isOn and UITheme.Colors.Primary or (unlocked and UITheme.Colors.Text or GRAY),
+				TextXAlignment = Enum.TextXAlignment.Right }, card)
+			text({ Position = UDim2.new(0, 22, 0, 38), Size = UDim2.new(1, -34, 0, 16), Text = title.Text, TextSize = 13,
+				Font = UITheme.Fonts.Body, TextColor3 = GRAY }, card)
+			if not unlocked then
+				local barBack = make("Frame", { Position = UDim2.new(0, 22, 0, 64), Size = UDim2.new(1, -120, 0, 4),
+					BackgroundColor3 = BORDER, BorderSizePixel = 0 }, card)
+				make("Frame", { Size = UDim2.new(math.clamp(value / goal, 0, 1), 0, 1, 0), BackgroundColor3 = title.Color,
+					BorderSizePixel = 0 }, barBack)
+				text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 58), Size = UDim2.new(0, 90, 0, 16),
+					Text = formatNumber(math.min(value, goal)) .. " / " .. formatNumber(goal), TextSize = 12,
+					TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, card)
+			end
+			card.Activated:Connect(function()
+				if unlocked and not isOn then
+					Remotes.ShopAction:FireServer("SetTitle", title.Id)
+				end
+			end)
+		end
+	end
+end
+
 -- ---------- EINSTELLUNGEN ----------
 
 -- Einstellungen im Profil speichern (kurz verzögert, damit nicht jeder Klick gesendet wird)
@@ -861,7 +923,7 @@ local function buildPlayerCard()
 		Size = UDim2.new(0, 90, 0, 16), Text = "LEVEL", TextSize = 11, Font = DISPLAY, TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Center }, playerCard)
 
-	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name,
+	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name, RichText = true,
 		TextSize = 20, Font = DISPLAY, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
 	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 10), Size = UDim2.new(0, 110, 0, 24),
 		Text = "", TextSize = 18, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
@@ -918,11 +980,14 @@ local function buildPlayerCard()
 			column.Position = UDim2.new(0, 16, 0, info.CanPrestige and 236 or 180)
 		end
 		coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
-		nameLabel.Text = player.Name
+		-- Name mit ausgewähltem Titel (Rekrut wird nicht extra angezeigt)
+		local title = TitleConfig.Get(player:GetAttribute("Title") or "")
+		nameLabel.Text = player.Name .. ((title and title.Id ~= TitleConfig.Default)
+			and ('  <font size="13" color="#' .. title.Color:ToHex() .. '">' .. UITheme.Upper(title.Name) .. "</font>") or "")
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(name)
-		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" then
+		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" or name == "Title" then
 			refresh()
 		end
 	end)
@@ -940,6 +1005,7 @@ local function buildColumn()
 		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "🎁" },
 		{ "STATS", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
+		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230), "🏷" },
 		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
 		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
 	}
@@ -1001,6 +1067,7 @@ function SideMenu.Init()
 	buildCodes()
 	buildSettings()
 	buildRewards()
+	buildTitles()
 
 	-- Gespeicherte Einstellungen übernehmen, sobald das Profil geladen ist
 	if not loadSettings() then
@@ -1023,7 +1090,7 @@ function SideMenu.Init()
 	player.AttributeChanged:Connect(function(name)
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
-			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" then
+			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()
 			end

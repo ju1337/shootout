@@ -198,6 +198,10 @@ function actions.ClaimWeeklyBonus(player)
 	return ProgressService.ClaimWeeklyBonus(player)
 end
 
+function actions.SetTitle(player, id)
+	return ProgressService.SetTitle(player, id)
+end
+
 function ShopService.Init()
 	Remotes.ShopAction.OnServerEvent:Connect(function(player, action, a, b)
 		local handler = typeof(action) == "string" and actions[action]

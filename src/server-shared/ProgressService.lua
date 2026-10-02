@@ -20,6 +20,7 @@ local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
+local TitleConfig = require(Shared.TitleConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 
@@ -124,6 +125,32 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
 	ensureWeekly(player, profile)
 	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
+	player:SetAttribute("Title", profile.Title or TitleConfig.Default)
+end
+
+-- Daten für die Titel-Prüfung (TitleConfig.Progress)
+function ProgressService.TitleData(player)
+	local profile = profiles[player]
+	if not profile then
+		return nil
+	end
+	return { Stats = profile.Stats or {}, Prestige = profile.Prestige or 0,
+		Level = (LevelConfig.FromXP(profile.AccountXP or 0)), Owned = profile.Owned or {} }
+end
+
+-- Titel auswählen (nur freigeschaltete)
+function ProgressService.SetTitle(player, id)
+	local profile = profiles[player]
+	local title = typeof(id) == "string" and TitleConfig.Get(id)
+	if not profile or not title then
+		return "Unbekannter Titel.", false
+	end
+	if not TitleConfig.Unlocked(title, ProgressService.TitleData(player)) then
+		return "Titel noch gesperrt: " .. title.Text .. ".", false
+	end
+	profile.Title = id
+	player:SetAttribute("Title", id)
+	return "Titel \"" .. title.Name .. "\" ausgewählt.", true
 end
 
 -- Battle-Pass-XP: neue Stufen schalten ihre Belohnung sofort frei
@@ -298,6 +325,8 @@ function ProgressService.ApplyRanked(player, change, won)
 	local ranked = profile.Ranked or { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 }
 	ranked.Elo = math.max(0, (ranked.Elo or RankConfig.StartElo) + change)
 	ranked.Peak = math.max(ranked.Peak or 0, ranked.Elo)
+	profile.Stats = profile.Stats or {}
+	profile.Stats.BestElo = math.max(profile.Stats.BestElo or 0, ranked.Elo) -- höchste ELO je (Titel)
 	ranked.Matches = (ranked.Matches or 0) + 1
 	if won then
 		ranked.Wins = (ranked.Wins or 0) + 1
@@ -376,6 +405,7 @@ function ProgressService.ClaimWeeklyBonus(player)
 		end
 	end
 	weekly.Bonus = true
+	ProgressService.AddStat(player, "WeeklyBonus", 1)
 	local lines = { "+" .. QuestConfig.WeeklyBonus.Coins .. " Münzen" }
 	local skinId = QuestConfig.BonusSkin(weekly.Week)
 	local skin = Cosmetics.Get(skinId)
@@ -672,6 +702,8 @@ function ProgressService.SetElo(player, elo)
 	local ranked = profile.Ranked or { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 }
 	ranked.Elo = math.clamp(math.floor(tonumber(elo) or RankConfig.StartElo), 0, 5000)
 	ranked.Peak = math.max(ranked.Peak or 0, ranked.Elo)
+	profile.Stats = profile.Stats or {}
+	profile.Stats.BestElo = math.max(profile.Stats.BestElo or 0, ranked.Elo)
 	profile.Ranked = ranked
 	ProgressService.Sync(player)
 	return ranked.Elo

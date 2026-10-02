@@ -23,6 +23,7 @@ local RankEmblem = require(Shared.RankEmblem)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentConfig = require(Shared.AgentConfig)
 local AgentFigure = require(Shared.AgentFigure)
+local TitleConfig = require(Shared.TitleConfig)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -207,9 +208,12 @@ local function buildPodium(parent)
 			local nameLabel = label({ AnchorPoint = Vector2.new(0.5, 1), Position = project(Vector3.new(place.X, place.Height + 6.6, 0)),
 				Size = UDim2.fromOffset(320, 40), Text = UITheme.Upper(tostring(entry.Name)), Font = F.Title, TextSize = i == 1 and 36 or 30,
 				TextColor3 = nameColor, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5 }, labels)
+			local title = TitleConfig.Get(entry.Title or "")
+			local titleText = (title and title.Id ~= TitleConfig.Default)
+				and ('  ·  <font color="#' .. title.Color:ToHex() .. '">' .. UITheme.Upper(title.Name) .. "</font>") or ""
 			local killLabel = label({ AnchorPoint = Vector2.new(0.5, 0), Position = project(Vector3.new(place.X, place.Height + 6.6, 0))
-				+ UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(320, 24), Text = (entry.Kills or 0) .. " KILLS"
-				.. (entry.Bot and "  ·  BOT" or ""), Font = F.Bold, TextSize = 18, TextColor3 = C.Muted,
+				+ UDim2.fromOffset(0, 2), Size = UDim2.fromOffset(420, 24), Text = (entry.Kills or 0) .. " KILLS"
+				.. (entry.Bot and "  ·  BOT" or titleText), Font = F.Bold, TextSize = 18, TextColor3 = C.Muted, RichText = true,
 				TextXAlignment = Enum.TextXAlignment.Center }, labels)
 			local number = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = project(Vector3.new(place.X, place.Height * 0.5, -1.75)),
 				Size = UDim2.fromOffset(120, 80), Text = tostring(i), Font = F.Title, TextSize = i == 1 and 64 or 52,

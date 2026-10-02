@@ -768,7 +768,7 @@ function TeamRoundMode.new(config)
 		for player in members do
 			table.insert(list, { Name = player.Name, UserId = player.UserId, Agent = ProgressService.ActiveAgent(player),
 				Kills = KillService.GetKills(player), Damage = player:GetAttribute("Damage") or 0,
-				Team = player.Team and player.Team.Name or nil })
+				Team = player.Team and player.Team.Name or nil, Title = player:GetAttribute("Title") })
 		end
 		for bot in bots do
 			local info = bot.Info
