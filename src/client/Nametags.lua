@@ -42,21 +42,16 @@ end
 
 local parts = {} -- [Schild] = { Title, Subtitle, Emblem, RankPill } (wird beim Entfernen gelöscht)
 
--- Schild: schmales dunkles Namensschild (leicht abgerundet, dünner Rand in Prestige-Farbe) mit dem Namen und
--- darunter klein "LV 42 · MEISTER". Das kleine Prestige-Abzeichen ist links angedockt (überlappt den Rand).
-local function hex(color)
-	return string.format("#%02X%02X%02X", color.R * 255, color.G * 255, color.B * 255)
-end
-
+-- Schild (ohne Kasten): links das Prestige-Abzeichen mit Level, rechts der Name groß, darunter ein kurzer
+-- Strich in Prestige-Farbe und der Rang in Rangfarbe. Alles mittig über dem Kopf, Schrift mit dunkler Kontur.
 local function buildTag(model, head)
 	local tag = Instance.new("BillboardGui")
 	tag.Name = TAG_NAME
-	tag.Size = UDim2.new(0, 300, 0, 50)
-	tag.StudsOffset = Vector3.new(0, 2.7, 0)
+	tag.Size = UDim2.new(0, 340, 0, 64)
+	tag.StudsOffset = Vector3.new(0, 2.9, 0)
 	tag.MaxDistance = 120
 	tag.AlwaysOnTop = false
 	tag.LightInfluence = 0
-	tag.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	local row = Instance.new("Frame")
 	row.Name = "Row"
@@ -69,53 +64,43 @@ local function buildTag(model, head)
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, -10) -- Abzeichen überlappt den linken Rand des Schilds
+	layout.Padding = UDim.new(0, 6)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = row
 
 	local holder = Instance.new("Frame")
 	holder.Name = "Emblem"
-	holder.Size = UDim2.new(0, 36, 0, 36)
+	holder.Size = UDim2.new(0, 58, 0, 58)
 	holder.BackgroundTransparency = 1
 	holder.LayoutOrder = 1
-	holder.ZIndex = 3
 	holder.Parent = row
-	emblems[tag] = PrestigeEmblem.new(holder, 36)
+	emblems[tag] = PrestigeEmblem.new(holder, 58)
 
-	local plate = Instance.new("Frame")
-	plate.Name = "Plate"
-	plate.Size = UDim2.new(0, 0, 0, 0)
-	plate.AutomaticSize = Enum.AutomaticSize.XY
-	plate.BackgroundColor3 = Color3.fromRGB(12, 15, 20)
-	plate.BackgroundTransparency = 0.25
-	plate.LayoutOrder = 2
-	plate.ZIndex = 1
-	plate.Parent = row
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = plate
-	local stroke = Instance.new("UIStroke")
-	stroke.Name = "Edge"
-	stroke.Thickness = 1
-	stroke.Transparency = 0.45
-	stroke.Parent = plate
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 16)
-	padding.PaddingRight = UDim.new(0, 10)
-	padding.PaddingTop = UDim.new(0, 3)
-	padding.PaddingBottom = UDim.new(0, 4)
-	padding.Parent = plate
+	local column = Instance.new("Frame")
+	column.Name = "Text"
+	column.Size = UDim2.new(0, 0, 0, 0)
+	column.AutomaticSize = Enum.AutomaticSize.XY
+	column.BackgroundTransparency = 1
+	column.LayoutOrder = 2
+	column.Parent = row
 	local lines = Instance.new("UIListLayout")
 	lines.SortOrder = Enum.SortOrder.LayoutOrder
-	lines.Parent = plate
-	local title = newLabel(plate, { Name = "Title", Size = UDim2.new(0, 0, 0, 20), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 19, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeTransparency = 1, LayoutOrder = 1, ZIndex = 2 })
-	local subtitle = newLabel(plate, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 13), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 11, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeTransparency = 1, RichText = true, TextColor3 = Color3.fromRGB(150, 160, 172), LayoutOrder = 2, ZIndex = 2 })
+	lines.Padding = UDim.new(0, 2)
+	lines.Parent = column
+	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 26), AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false, TextSize = 26, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left,
+		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.35, LayoutOrder = 1 })
+	local bar = Instance.new("Frame")
+	bar.Name = "Bar"
+	bar.Size = UDim2.new(0, 34, 0, 2)
+	bar.BorderSizePixel = 0
+	bar.LayoutOrder = 2
+	bar.Parent = column
+	local subtitle = newLabel(column, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false, TextSize = 15, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
+		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.45, LayoutOrder = 3 })
 
-	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, Plate = plate, Edge = stroke }
+	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, Bar = bar }
 	tag.Destroying:Connect(function()
 		emblems[tag] = nil
 		parts[tag] = nil
@@ -141,33 +126,23 @@ local function setTag(model, info)
 	local p = parts[tag]
 	p.Title.Text = info.Name
 	p.Title.TextColor3 = info.Color
-	-- Ohne Abzeichen (Bots) nur der Name, Schild ohne Platz links
+	p.Subtitle.Text = info.Subtitle and ("◆ " .. info.Subtitle) or ""
+	p.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
+	p.Subtitle.Visible = info.Subtitle ~= nil
+	-- Ohne Abzeichen (Bots) nur der Name
 	p.Emblem.Visible = info.Player ~= nil
-	p.Plate:FindFirstChildOfClass("UIPadding").PaddingLeft = UDim.new(0, info.Player and 16 or 10)
-	local levelText = nil
+	p.Bar.Visible = info.Player ~= nil
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
 		local emblem = emblems[tag]
 		if not emblem then
 			p.Emblem:ClearAllChildren()
-			emblem = PrestigeEmblem.new(p.Emblem, 36)
+			emblem = PrestigeEmblem.new(p.Emblem, 58)
 			emblems[tag] = emblem
 		end
 		emblem:Set(level.Level, level.Prestige)
-		p.Edge.Color = level.Color
-		levelText = (level.Prestige > 0 and ("P" .. level.Prestige .. " · ") or "") .. "LV " .. level.Level
-	else
-		p.Edge.Color = Color3.fromRGB(120, 130, 145)
+		p.Bar.BackgroundColor3 = level.Color
 	end
-	-- Zweite Zeile: Level (grau) · Rang (in Rangfarbe); im Kampf ohne Rang nur das Level
-	local rank = info.Subtitle and ('<font color="' .. hex(info.SubColor or Color3.new(1, 1, 1)) .. '">'
-		.. info.Subtitle .. "</font>")
-	if levelText and rank then
-		p.Subtitle.Text = levelText .. "  ·  " .. rank
-	else
-		p.Subtitle.Text = rank or levelText or ""
-	end
-	p.Subtitle.Visible = p.Subtitle.Text ~= ""
 end
 
 local function update()
