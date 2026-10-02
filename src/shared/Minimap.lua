@@ -26,7 +26,7 @@ local RANGE = 75              -- Studs von der Mitte bis zum Rand
 local K = 1 / (2 * RANGE)     -- Studs -> Anteil der Kartenbreite
 local SHOT_TIME = 2.5         -- so lange bleibt ein schießender Gegner sichtbar
 local PING_TIME = 5
-local SKIP_FOLDERS = { Decor = true, Nature = true, Objective = true }
+local SKIP_FOLDERS = { Nature = true, Objective = true } -- Bäume, Ziel-Parts (Ziele kommen als Rauten)
 
 local COLORS = {
 	Back = Color3.fromRGB(8, 14, 24),
@@ -61,7 +61,16 @@ local function styleOf(part, folderName)
 		return nil
 	end
 	local size = part.Size
-	local thin = math.min(size.X, size.Z) <= 2.5
+	local thin = math.min(size.X, size.Z) <= 3.5 -- Wände sind in den Maps 1 bis 3 Studs dick
+	if folderName == "Decor" then
+		-- Deko nur, wenn sie wie eine Wand oder ein großer Block im Weg steht (keine Schilder, Linien, ...)
+		if size.Y >= 4 and math.max(size.X, size.Z) >= 6 and thin then
+			return COLORS.Wall, 4
+		elseif size.Y >= 3 and size.X * size.Z >= 16 then
+			return COLORS.Block, 3
+		end
+		return nil
+	end
 	if folderName == "Ground" then
 		if part.Material == Enum.Material.Water or string.find(part.Name, "Water") then
 			return COLORS.Water, 1
@@ -347,19 +356,35 @@ function Minimap.Init(root)
 			end
 		end
 
-		-- Ziele: innerhalb der Karte an ihrer Stelle, sonst am Rand
+		-- Ziele: innerhalb der Karte an ihrer Stelle, sonst am Rand. Farbe wie die Marker in der Welt:
+		-- gehört dem eigenen Team = Cyan, dem Gegner = rot, Bombe gelegt = rot, umkämpft = Rand blinkt
 		local radius = SIZE / 2 - 14
+		local myTeam = player.Team and player.Team.Name
+		local mine, theirs = player:GetAttribute("ObjMine") or 0, player:GetAttribute("ObjEnemy") or 0
+		local flash = math.floor(now * 4) % 2 == 0
 		for _, entry in objectiveIcons do
-			local offset = (entry.Part :: BasePart).Position - focus
+			local part = entry.Part :: BasePart
+			local offset = part.Position - focus
 			local x, y = rotate(offset.X / RANGE * (SIZE / 2), offset.Z / RANGE * (SIZE / 2), rotation)
 			local distance = math.sqrt(x * x + y * y)
 			if distance > radius then
 				x, y = x / distance * radius, y / distance * radius
 			end
 			entry.Icon.Holder.Position = UDim2.new(0.5, x, 0.5, y)
-			local planted = entry.Part:GetAttribute("Planted") == true
-			entry.Icon.Stroke.Color = planted and COLORS.Enemy or Color3.new(1, 1, 1)
-			entry.Icon.Diamond.BackgroundColor3 = planted and COLORS.Enemy or COLORS.Back
+			local fill, stroke = COLORS.Back, Color3.new(1, 1, 1)
+			local owner = part:GetAttribute("FlagOwner")
+			if part:GetAttribute("Planted") then
+				fill, stroke = COLORS.Enemy, COLORS.Enemy
+			elseif owner then
+				fill = owner == myTeam and COLORS.Mate or COLORS.Enemy
+			elseif part.Name == "CapturePoint" and (mine >= 1 or theirs >= 1) then
+				fill = mine >= 1 and COLORS.Mate or COLORS.Enemy
+			end
+			if part:GetAttribute("Contested") and flash then
+				stroke = COLORS.Downed
+			end
+			entry.Icon.Diamond.BackgroundColor3 = fill
+			entry.Icon.Stroke.Color = stroke
 		end
 	end)
 

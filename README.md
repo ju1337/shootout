@@ -41,15 +41,18 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   - oben: Ziel des eigenen Teams („NIMM DEN PUNKT EIN“, „LEGE DIE BOMBE BEI A ODER B“ …), Teamleiste mit
     Agenten-Porträts und Lebensbalken (eigenes Team Cyan links, Gegner rot rechts, ✕ = ausgeschaltet),
     Rundenstand in schrägen Kästen, Rundenuhr (Bomben-Timer rot, OVERTIME), Tickets, Status des Ziels
-  - oben links: runde Minimap, dreht sich mit der Blickrichtung; Grundriss der Map, Teamkollegen, Pings,
-    Gegner nur kurz, wenn sie schießen oder per Radar markiert sind; Ziele A/B kleben am Rand
+  - oben links (unter der Roblox-Leiste): runde Minimap, dreht sich mit der Blickrichtung; Grundriss der Map
+    (Böden, Wände, Deckung), Teamkollegen, Pings, Gegner nur kurz, wenn sie schießen oder per Radar markiert
+    sind; Ziele/Flaggen in der Farbe des Besitzers, außerhalb kleben sie am Rand
   - rechts: Killfeed „Name [Waffen-Silhouette] ▼ Name“ (▼ niedergeschlagen, ☠ ausgeschaltet, ◎ Kopfschuss)
   - unten links: Porträt, Leben „100/100“ mit Segment-Balken (25er-Schritte, Verlust blitzt rot nach), Rüstung
   - unten rechts: Fähigkeit und Gadget als Rauten (Taste, Abklingzeit, Aufladungen), Munition „20 /200“,
     Waffen-Silhouette, Taste + Name der anderen Waffe
   - in der Welt: Zielmarker (Raute mit Buchstabe, Entfernung in Metern, Einnahme-Fortschritt, UMKÄMPFT/BOMBE)
   - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout
-- **Kamera**: Ego oder Schulter (T), Schulter wechseln (X); beim Zielen rückt die Schulterkamera näher heran
+- **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
+  das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
+  rückt die Kamera seitlich an den Kopf statt durch die Wand zu schauen (Werte oben in `src/shared/Movement.lua`)
 - **Schießen wie bei Rogue Company**:
   - Schulterkamera: dynamisches Fadenkreuz (Abstand = echte Streuung durch Laufen, Springen, Dauerfeuer),
     zieht sich beim Zielen zu einem kleinen Kreuz zusammen, wird über Gegnern rot; Schrotflinte mit Kreis.
@@ -80,7 +83,8 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 | Waffenmodelle, Kimme/Korn, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
 | Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
-| Match-HUD (Teamleiste, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua` |
+| Match-HUD (Teamleiste, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
+| Schulterkamera (Versatz, Abstand, beim Zielen) | `SHOULDER_*` in `src/shared/Movement.lua` |
 | Minimap (Farben, Zoom) | `src/shared/Minimap.lua` |
 | Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |

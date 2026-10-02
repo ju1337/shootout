@@ -4,6 +4,7 @@
 -- Munition, Zielmarker) baut MatchHUD, die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen,
 -- Treffer-Richtung und Kill-Meldung kommen aus CombatHUD.
 
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -28,6 +29,7 @@ local player = Players.LocalPlayer
 local HUD = {}
 
 local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
+local AMMO_SCALE = 1.1        -- Waffen-/Munitionsanzeige unten rechts etwas größer
 
 local screen -- ScreenGui (an/aus)
 local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
@@ -88,6 +90,7 @@ function HUD.Init(weaponClient)
 
 	-- Match-Anzeige im RC-Stil (Teamleiste, Killfeed, Leben, Munition, Zielmarker) und Minimap
 	local match = MatchHUD.Init(gui, weaponClient)
+	make("UIScale", { Scale = AMMO_SCALE }, match.Ammo)
 	local minimap = Minimap.Init(gui)
 	local minimapScale = make("UIScale", {}, minimap)
 
@@ -187,33 +190,48 @@ function HUD.Init(weaponClient)
 		end
 	end)
 
+	-- Oberkante unter der Roblox-Leiste (Menü, Chat), in Design-Einheiten: Die Leiste ist immer gleich
+	-- hoch (Pixel), das HUD wird aber je nach Bildschirm verkleinert – darum hier umrechnen.
+	local rootScale = gui:FindFirstChildOfClass("UIScale")
+	local function belowTopbar(minimum, gap)
+		local inset = GuiService:GetGuiInset()
+		local scale = rootScale and rootScale.Scale or 1
+		return math.max(minimum, math.ceil((inset.Y + gap) / scale))
+	end
+
 	-- Touch-Geräte: links unten liegt der Steuerknüppel, rechts die Knöpfe. Darum Minimap kleiner,
 	-- Leben darunter nach oben links und Munition unten in die Mitte (Fähigkeiten links daneben).
 	local function layoutForDevice()
+		match.Killfeed.Position = UDim2.new(1, -24, 0, belowTopbar(96, 14))
 		if InputActions.IsTouch() then
-			minimap.Position = UDim2.new(0, 16, 0, 58)
+			local top = belowTopbar(58, 8)
+			minimap.Position = UDim2.new(0, 16, 0, top)
 			minimapScale.Scale = 0.8
 			match.Vitals.AnchorPoint = Vector2.new(0, 0)
-			match.Vitals.Position = UDim2.new(0, 16, 0, 230)
+			match.Vitals.Position = UDim2.new(0, 16, 0, top + 172)
 			match.Ammo.AnchorPoint = Vector2.new(0, 1)
 			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14)
 			moneyText.AnchorPoint = Vector2.new(0, 1)
-			moneyText.Position = UDim2.new(0.5, 12, 1, -112)
+			moneyText.Position = UDim2.new(0.5, 12, 1, -124)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Left
 		else
-			minimap.Position = UDim2.new(0, 24, 0, 66)
+			minimap.Position = UDim2.new(0, 24, 0, belowTopbar(66, 10))
 			minimapScale.Scale = 1
 			match.Vitals.AnchorPoint = Vector2.new(0, 1)
 			match.Vitals.Position = UDim2.new(0, 24, 1, -24)
 			match.Ammo.AnchorPoint = Vector2.new(1, 1)
 			match.Ammo.Position = UDim2.new(1, -24, 1, -22)
 			moneyText.AnchorPoint = Vector2.new(1, 1)
-			moneyText.Position = UDim2.new(1, -24, 1, -122)
+			moneyText.Position = UDim2.new(1, -24, 1, -134)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Right
 		end
 	end
 	layoutForDevice()
 	InputActions.DeviceChanged:Connect(layoutForDevice)
+	-- Fenstergröße geändert: neu ausrichten, nachdem die HUD-Skalierung angepasst wurde
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+		task.defer(layoutForDevice)
+	end)
 
 	-- HUD nur in Kampfmodi zeigen, nicht im Hub
 	local function updateVisible()
