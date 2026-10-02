@@ -19,6 +19,7 @@ local GameMenu = require(Shared.GameMenu)
 local UITheme = require(Shared.UITheme)
 local QuestConfig = require(Shared.QuestConfig)
 local RankConfig = require(Shared.RankConfig)
+local RankEmblem = require(Shared.RankEmblem)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local InputActions = require(Shared.InputActions)
@@ -358,8 +359,11 @@ local function buildStats()
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, rankedBox)
 	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "ELO · SAISON " .. RankConfig.Season .. "  ·  IN JEDEM MODUS",
 		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
-	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -32, 0, 50), Text = "", TextSize = 42,
+	local rankName = text({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(1, -100, 0, 50), Text = "", TextSize = 42,
 		Font = UITheme.Fonts.Title }, rankedBox)
+	local statsRankHolder = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 22),
+		Size = UDim2.new(0, 84, 0, 84), BackgroundTransparency = 1 }, rankedBox)
+	local statsRank = RankEmblem.new(statsRankHolder, 84)
 	local eloText = text({ Position = UDim2.new(0, 16, 0, 84), Size = UDim2.new(1, -32, 0, 24), Text = "", TextSize = 18 }, rankedBox)
 	local barBack = make("Frame", { Position = UDim2.new(0, 16, 0, 116), Size = UDim2.new(1, -32, 0, 8),
 		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, rankedBox)
@@ -454,6 +458,8 @@ local function buildStats()
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
 		local rank = RankConfig.Get(elo)
 		local matches = ranked.Matches or 0
+		statsRank:SetRank(rank)
+		statsRankHolder.Visible = matches >= RankConfig.PlacementMatches
 		if matches < RankConfig.PlacementMatches then
 			rankName.Text = "PLATZIERUNG"
 			rankName.TextColor3 = GRAY
@@ -774,7 +780,10 @@ local function buildPlayerCard()
 	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 10), Size = UDim2.new(0, 110, 0, 24),
 		Text = "", TextSize = 18, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right }, playerCard)
-	local rankLabel = text({ Position = UDim2.new(0, 92, 0, 38), Size = UDim2.new(1, -104, 0, 20), Text = "",
+	local rankHolder = make("Frame", { Position = UDim2.new(0, 90, 0, 36), Size = UDim2.new(0, 24, 0, 24),
+		BackgroundTransparency = 1 }, playerCard)
+	local cardRank = RankEmblem.new(rankHolder, 24)
+	local rankLabel = text({ Position = UDim2.new(0, 118, 0, 38), Size = UDim2.new(1, -130, 0, 20), Text = "",
 		TextSize = 16, Font = UITheme.Fonts.Title, RichText = true }, playerCard)
 	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 67), Size = UDim2.new(1, -104, 0, 5),
 		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, playerCard)
@@ -811,6 +820,7 @@ local function buildPlayerCard()
 		levelCaption.TextColor3 = info.Prestige > 0 and info.Color or GRAY
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
 		local rank = RankConfig.Get(elo)
+		cardRank:SetRank(rank)
 		local color = string.format("#%02X%02X%02X", rank.Color.R * 255, rank.Color.G * 255, rank.Color.B * 255)
 		rankLabel.Text = '<font color="' .. color .. '">' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
 		bar.Size = UDim2.new(info.Progress, 0, 1, 0)

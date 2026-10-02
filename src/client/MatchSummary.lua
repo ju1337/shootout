@@ -3,7 +3,7 @@
 -- Modus und Map, MVP-Karte, eigene Werte als Kacheln und darunter die Belohnungs-Übersicht:
 --   BELOHNUNGEN: XP und Münzen nach Grund (Kills, Matchsieg, Killserien, Rache, ...) und neue Skins
 --   SPIELERLEVEL: Prestige-Abzeichen, XP-Balken läuft hoch, LEVEL UP!
---   RANG: ELO zählt hoch/runter, Balken bis zur nächsten Stufe, AUFSTIEG!/NEUER RANG!/ABSTIEG
+--   RANG: Rang-Abzeichen, ELO zählt hoch/runter, Balken bis zur nächsten Stufe, AUFSTIEG!/NEUER RANG!/ABSTIEG
 -- Die Übersicht kommt vom Server (data.Progress, ProgressService.TakeLedger).
 -- Verschwindet nach data.ShowTime Sekunden von selbst bzw. sobald Map-Abstimmung/Agentenwahl beginnt.
 
@@ -18,6 +18,7 @@ local UITheme = require(Shared.UITheme)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
+local RankEmblem = require(Shared.RankEmblem)
 local Cosmetics = require(Shared.Cosmetics)
 
 local player = Players.LocalPlayer
@@ -66,7 +67,8 @@ end
 -- Großer Hinweis (LEVEL UP!, AUFSTIEG!), springt herein
 local function popLabel(parent)
 	local text = label({ Position = UDim2.fromOffset(20, 146), Size = UDim2.new(1, -40, 0, 44), Font = F.Display,
-		TextSize = 34, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, parent)
+		TextSize = 34, TextScaled = true, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, parent)
+	make("UITextSizeConstraint", { MaxTextSize = 34 }, text) -- lange Texte (NEUER RANG: DIAMANT!) werden kleiner
 	make("UIScale", {}, text)
 	return text
 end
@@ -209,10 +211,12 @@ function MatchSummary.Init()
 	-- RANG: Name in Rangfarbe, ELO, Änderung, Balken
 	local rankCard = card("RANG", 852, 340, row)
 	local rankStroke = rankCard:FindFirstChildOfClass("UIStroke")
-	local rankName = label({ Position = UDim2.fromOffset(20, 40), Size = UDim2.new(1, -40, 0, 48), Font = F.Display,
-		TextSize = 42 }, rankCard)
-	local eloText = label({ Position = UDim2.fromOffset(20, 90), Size = UDim2.new(0.6, -20, 0, 30), Font = F.Display,
-		TextSize = 24 }, rankCard)
+	local rankEmblem = RankEmblem.new(rankCard, 92)
+	rankEmblem.Root.Position = UDim2.fromOffset(12, 38)
+	local rankName = label({ Position = UDim2.fromOffset(112, 44), Size = UDim2.new(1, -130, 0, 46), Font = F.Display,
+		TextSize = 38 }, rankCard)
+	local eloText = label({ Position = UDim2.fromOffset(112, 92), Size = UDim2.new(1, -200, 0, 30), Font = F.Display,
+		TextSize = 22 }, rankCard)
 	local eloChange = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 90),
 		Size = UDim2.new(0.4, 0, 0, 30), Font = F.Display, TextSize = 26, TextXAlignment = Enum.TextXAlignment.Right }, rankCard)
 	local rankPop = popLabel(rankCard)
@@ -334,6 +338,7 @@ function MatchSummary.Init()
 		local rankBefore, rankAfter = RankConfig.Get(eloBefore), RankConfig.Get(eloAfter)
 		rankName.Text = rankBefore.Display
 		rankName.TextColor3 = rankBefore.Color
+		rankEmblem:SetRank(rankBefore)
 		rankFill.BackgroundColor3 = rankBefore.Color
 		rankFill.Size = UDim2.fromScale(rankBefore.Progress, 1)
 		eloText.Text = formatNumber(eloBefore) .. " ELO"
@@ -403,6 +408,9 @@ function MatchSummary.Init()
 			local value = eloBefore + change * alpha
 			local rank = RankConfig.Get(value)
 			eloText.Text = formatNumber(value) .. " ELO"
+			if rank.Display ~= rankName.Text then
+				rankEmblem:SetRank(rank)
+			end
 			rankName.Text = rank.Display
 			rankName.TextColor3 = rank.Color
 			rankFill.BackgroundColor3 = rank.Color

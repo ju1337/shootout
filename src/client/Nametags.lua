@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
+local RankEmblem = require(Shared.RankEmblem)
 local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
@@ -40,7 +41,7 @@ local function newLabel(parent, props)
 	return label
 end
 
-local parts = {} -- [Schild] = { Title, Subtitle, Emblem, RankPill } (wird beim Entfernen gelöscht)
+local parts = {} -- [Schild] = { Title, Subtitle, SubRow, RankHolder, RankEmblem, Emblem, Bar } (wird beim Entfernen gelöscht)
 
 -- Schild (ohne Kasten): links das Prestige-Abzeichen mit Level, rechts der Name groß, darunter ein kurzer
 -- Strich in Prestige-Farbe und der Rang in Rangfarbe. Alles mittig über dem Kopf, Schrift mit dunkler Kontur.
@@ -111,11 +112,33 @@ local function buildTag(model, head)
 	bar.BorderSizePixel = 0
 	bar.LayoutOrder = 2
 	bar.Parent = column
-	local subtitle = newLabel(column, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
+	-- Unterzeile: kleines Rang-Abzeichen + Rang (und Titel)
+	local subRow = Instance.new("Frame")
+	subRow.Name = "SubRow"
+	subRow.Size = UDim2.new(0, 0, 0, 0)
+	subRow.AutomaticSize = Enum.AutomaticSize.XY
+	subRow.BackgroundTransparency = 1
+	subRow.LayoutOrder = 3
+	subRow.Parent = column
+	local subLayout = Instance.new("UIListLayout")
+	subLayout.FillDirection = Enum.FillDirection.Horizontal
+	subLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	subLayout.Padding = UDim.new(0, 3)
+	subLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	subLayout.Parent = subRow
+	local rankHolder = Instance.new("Frame")
+	rankHolder.Name = "Rank"
+	rankHolder.Size = UDim2.new(0, 20, 0, 20)
+	rankHolder.BackgroundTransparency = 1
+	rankHolder.LayoutOrder = 1
+	rankHolder.Parent = subRow
+	local rankEmblem = RankEmblem.new(rankHolder, 20)
+	local subtitle = newLabel(subRow, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
 		TextScaled = false, TextSize = 15, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.45, LayoutOrder = 3 })
+		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.45, LayoutOrder = 2, RichText = true })
 
-	parts[tag] = { Title = title, Subtitle = subtitle, Emblem = holder, Bar = bar }
+	parts[tag] = { Title = title, Subtitle = subtitle, SubRow = subRow, RankHolder = rankHolder, RankEmblem = rankEmblem,
+		Emblem = holder, Bar = bar }
 	tag.Destroying:Connect(function()
 		emblems[tag] = nil
 		parts[tag] = nil
@@ -125,7 +148,8 @@ local function buildTag(model, head)
 	return tag
 end
 
--- Schild erzeugen bzw. aktualisieren. info: { Name, Color, Subtitle, SubColor, Player (für das Abzeichen) }
+-- Schild erzeugen bzw. aktualisieren. info: { Name, Color, Subtitle, SubColor, Rank (RankConfig.Get, für das
+-- Rang-Abzeichen), Player (für das Prestige-Abzeichen) }
 local function setTag(model, info)
 	local head = model:FindFirstChild("Head")
 	if not head then
@@ -141,9 +165,13 @@ local function setTag(model, info)
 	local p = parts[tag]
 	p.Title.Text = info.Name
 	p.Title.TextColor3 = info.Color
-	p.Subtitle.Text = info.Subtitle and ("◆ " .. info.Subtitle) or ""
+	p.Subtitle.Text = info.Subtitle or ""
 	p.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
-	p.Subtitle.Visible = info.Subtitle ~= nil
+	p.SubRow.Visible = info.Subtitle ~= nil
+	p.RankHolder.Visible = info.Rank ~= nil
+	if info.Rank then
+		p.RankEmblem:SetRank(info.Rank)
+	end
 	-- Ohne Abzeichen (Bots) nur der Name
 	p.Emblem.Visible = info.Player ~= nil
 	p.Bar.Visible = info.Player ~= nil
@@ -170,7 +198,7 @@ local function update()
 			local level = LevelConfig.Get(player)
 			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
 			setTag(myCharacter, { Name = player.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-				Subtitle = rank.Display, SubColor = rank.Color, Player = player })
+				Subtitle = rank.Display, SubColor = rank.Color, Rank = rank, Player = player })
 		else
 			removeTag(myCharacter)
 		end
@@ -185,7 +213,7 @@ local function update()
 				-- Hub: Name in Prestige-Farbe (ab Prestige 1), Rang darunter
 				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
 				setTag(character, { Name = other.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-					Subtitle = rank.Display, SubColor = rank.Color, Player = other })
+					Subtitle = rank.Display, SubColor = rank.Color, Rank = rank, Player = other })
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
 				setTag(character, { Name = other.Name, Color = UITheme.Colors.Ally, Player = other })
