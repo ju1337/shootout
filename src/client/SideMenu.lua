@@ -434,8 +434,6 @@ local function buildQuests()
 	end
 end
 
--- ---------- STATS + RANKED ----------
-
 local function decodeAttribute(target, name)
 	local raw = target:GetAttribute(name)
 	if type(raw) ~= "string" then
@@ -444,6 +442,124 @@ local function decodeAttribute(target, name)
 	local ok, data = pcall(HttpService.JSONDecode, HttpService, raw)
 	return ok and type(data) == "table" and data or {}
 end
+
+-- ---------- SQUAD ----------
+
+local function buildSquad()
+	local frame = makePanel("Squad", "👥  SQUAD", 760, 560)
+	text({ Position = UDim2.new(0, 24, 0, 64), Size = UDim2.new(0.5, -30, 0, 20), Text = "DEIN SQUAD (max. 4)", TextSize = 14,
+		TextColor3 = ACCENT }, frame)
+	text({ Position = UDim2.new(0.5, 6, 0, 64), Size = UDim2.new(0.5, -30, 0, 20), Text = "SPIELER IM SERVER", TextSize = 14,
+		TextColor3 = ACCENT }, frame)
+	local function column(x)
+		local list = make("ScrollingFrame", { Position = UDim2.new(x, x == 0 and 24 or 6, 0, 92), Size = UDim2.new(0.5, -30, 1, -180),
+			BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
+			AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
+		make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+		return list
+	end
+	local mine, others = column(0), column(0.5)
+	button({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -48), Size = UDim2.new(0, 220, 0, 44),
+		Text = "SQUAD VERLASSEN", TextSize = 16, BackgroundColor3 = Color3.fromRGB(140, 45, 50) }, frame, function()
+		Remotes.PartyAction:FireServer("Leave")
+	end)
+
+	local function row(parent, order, name, buttonText, buttonColor, onClick)
+		local entry = make("Frame", { Size = UDim2.new(1, -6, 0, 48), BackgroundColor3 = CARD, LayoutOrder = order }, parent)
+		make("UICorner", { CornerRadius = UDim.new(0, 4) }, entry)
+		text({ Position = UDim2.new(0, 14, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = name, TextSize = 16 }, entry)
+		if buttonText then
+			button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0, 120, 0, 34),
+				Text = buttonText, TextSize = 14, BackgroundColor3 = buttonColor }, entry, onClick)
+		end
+	end
+
+	panels.Squad.Refresh = function()
+		for _, list in { mine, others } do
+			for _, child in list:GetChildren() do
+				if child:IsA("Frame") then
+					child:Destroy()
+				end
+			end
+		end
+		local party = decodeAttribute(player, "Party")
+		local inParty = {}
+		local iAmLeader = party.Leader == nil or party.Leader == player.UserId
+		if party.Members then
+			for i, member in party.Members do
+				inParty[member.UserId] = true
+				local isLeader = member.UserId == party.Leader
+				local kick = iAmLeader and member.UserId ~= player.UserId
+				row(mine, i, (isLeader and "👑  " or "") .. member.Name, kick and "ENTFERNEN" or nil, Color3.fromRGB(140, 45, 50),
+					function()
+						Remotes.PartyAction:FireServer("Kick", member.UserId)
+					end)
+			end
+		else
+			row(mine, 1, "Du spielst allein – lade jemanden ein!")
+		end
+		local order = 0
+		for _, other in Players:GetPlayers() do
+			if other ~= player and not inParty[other.UserId] then
+				order += 1
+				row(others, order, other.Name, iAmLeader and "EINLADEN" or nil, GREEN, function()
+					Remotes.PartyAction:FireServer("Invite", other.UserId)
+				end)
+			end
+		end
+		if order == 0 then
+			row(others, 1, "Keine anderen Spieler im Server.")
+		end
+	end
+	Players.PlayerAdded:Connect(function()
+		if openPanel == "Squad" then
+			panels.Squad.Refresh()
+		end
+	end)
+	Players.PlayerRemoving:Connect(function()
+		task.defer(function()
+			if openPanel == "Squad" then
+				panels.Squad.Refresh()
+			end
+		end)
+	end)
+
+	-- Einladung (erscheint überall, auch außerhalb des Hubs)
+	local inviteGui = make("ScreenGui", { Name = "PartyInvite", ResetOnSpawn = false, DisplayOrder = 30 }, player.PlayerGui)
+	local popup = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -140), Size = UDim2.new(0, 360, 0, 120),
+		BackgroundColor3 = PANEL, Visible = false }, inviteGui)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, popup)
+	make("UIStroke", { Color = ACCENT, Thickness = 2 }, popup)
+	local inviteText = text({ Position = UDim2.new(0, 16, 0, 12), Size = UDim2.new(1, -32, 0, 44), Text = "", TextSize = 16,
+		TextWrapped = true }, popup)
+	local inviter = nil
+	local inviteId = 0
+	button({ Position = UDim2.new(0, 16, 1, -52), Size = UDim2.new(0.5, -22, 0, 40), Text = "ANNEHMEN", TextSize = 15,
+		BackgroundColor3 = GREEN }, popup, function()
+		Remotes.PartyAction:FireServer("Accept", inviter)
+		popup.Visible = false
+	end)
+	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 1, -52), Size = UDim2.new(0.5, -22, 0, 40), Text = "ABLEHNEN",
+		TextSize = 15, BackgroundColor3 = CARD }, popup, function()
+		Remotes.PartyAction:FireServer("Decline", inviter)
+		popup.Visible = false
+	end)
+	Remotes.PartyInvite.OnClientEvent:Connect(function(name, userId)
+		inviteId += 1
+		local myId = inviteId
+		inviter = userId
+		inviteText.Text = "👥  " .. name .. " lädt dich in seinen Squad ein."
+		popup.Visible = true
+		task.delay(20, function()
+			if inviteId == myId then
+				popup.Visible = false
+			end
+		end)
+	end)
+end
+
+-- ---------- STATS + RANKED ----------
+
 
 local function ratio(a, b)
 	return b > 0 and a / b or a
@@ -794,6 +910,7 @@ local function buildColumn()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
+		{ "👥", "SQUAD", function() togglePanel("Squad") end },
 		{ "📊", "STATS", function() togglePanel("Stats") end },
 		{ "🎫", "PASS", function() togglePanel("Pass") end },
 		{ "📋", "AUFTRÄGE", function() togglePanel("Quests") end },
@@ -854,6 +971,7 @@ function SideMenu.Init()
 	buildColumn()
 	buildShop()
 	buildInventory()
+	buildSquad()
 	buildStats()
 	buildPass()
 	buildQuests()
@@ -881,7 +999,7 @@ function SideMenu.Init()
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
-			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" then
+			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party" then
 			coinLabel.Text = "💰 " .. formatNumber(coins())
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()

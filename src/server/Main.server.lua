@@ -18,6 +18,7 @@ local PingService = require(ServerShared.PingService)
 local LeaderboardService = require(ServerShared.LeaderboardService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
+local PartyService = require(script.Parent.PartyService)
 
 -- Charaktere spawnen nur, wenn ein Modus es sagt
 Players.CharacterAutoLoads = false
@@ -34,4 +35,5 @@ WeaponService.Init()
 KillService.Init()
 AgentService.Init()
 AdminService.Init(ModeManager)
+PartyService.Init(ModeManager)
 ModeManager.Init()

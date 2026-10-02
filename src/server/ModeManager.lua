@@ -29,6 +29,10 @@ local modules = {
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig
 
+-- Wird nach jedem erfolgreichen Moduswechsel gefeuert: (player, modeId) – z.B. für Squads
+local joinedEvent = Instance.new("BindableEvent")
+ModeManager.Joined = joinedEvent.Event
+
 -- Logik-Modul eines Modus (für das Admin-Panel)
 function ModeManager.GetModule(modeId)
 	return modules[modeId]
@@ -71,6 +75,7 @@ function ModeManager.Join(player, modeId)
 	player:SetAttribute("Mode", modeId)
 	module.AddPlayer(player)
 	switching[player] = nil
+	joinedEvent:Fire(player, modeId)
 end
 
 function ModeManager.Init()

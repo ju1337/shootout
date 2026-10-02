@@ -40,6 +40,7 @@ local DownedService = require(ServerShared.DownedService)
 local BuyService = require(ServerShared.BuyService)
 local LeaderboardService = require(ServerShared.LeaderboardService)
 local SpawnUtil = require(script.Parent.SpawnUtil)
+local PartyService = require(script.Parent.PartyService)
 local BotService = require(script.Parent.BotService)
 
 local TeamRoundMode = {}
@@ -225,8 +226,16 @@ function TeamRoundMode.new(config)
 			if #bigger:GetPlayers() == 0 then
 				break -- nur Bots zu viel: so lassen
 			end
+			-- Bevorzugt Spieler ohne Squad verschieben, damit Squads zusammenbleiben
 			local list = bigger:GetPlayers()
-			list[math.random(#list)].Team = otherTeam(bigger)
+			local solo = {}
+			for _, p in list do
+				if not PartyService.Leader(p) then
+					table.insert(solo, p)
+				end
+			end
+			local pool = #solo > 0 and solo or list
+			pool[math.random(#pool)].Team = otherTeam(bigger)
 		end
 	end
 
@@ -945,6 +954,13 @@ function TeamRoundMode.new(config)
 	function mode.AddPlayer(player)
 		members[player] = true
 		player.Team = teamSize(teamA) <= teamSize(teamB) and teamA or teamB
+		-- Squad: ins Team des Anführers bzw. eines Squad-Mitglieds, wenn dort Platz ist
+		for _, mate in PartyService.Members(player) do
+			if mate ~= player and members[mate] and mate.Team and teamSize(mate.Team) < TEAM_SIZE then
+				player.Team = mate.Team
+				break
+			end
+		end
 		player:SetAttribute("RoundPhase", phase)
 		player:SetAttribute("AgentLocked", false)
 		publishMap(player)
