@@ -601,7 +601,7 @@ local function addParticles()
 end
 
 -- Im Hub die Belichtung absenken (Halle mit vielen Lichtern), in den Modi wieder normal
-local HUB_EXPOSURE = -0.15
+local HUB_EXPOSURE = 0.1
 local normalExposure = nil
 local function updateExposure()
 	local lighting = game:GetService("Lighting")

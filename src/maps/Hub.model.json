@@ -3506,12 +3506,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3567,12 +3567,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3628,12 +3628,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3689,12 +3689,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3750,12 +3750,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3811,12 +3811,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3872,12 +3872,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3933,12 +3933,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -3994,12 +3994,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4055,12 +4055,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4116,12 +4116,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4177,12 +4177,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4238,12 +4238,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4299,12 +4299,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4360,12 +4360,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4421,12 +4421,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4482,12 +4482,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4543,12 +4543,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4604,12 +4604,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4665,12 +4665,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4726,12 +4726,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4787,12 +4787,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4848,12 +4848,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4909,12 +4909,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -4970,12 +4970,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -5031,12 +5031,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -5092,12 +5092,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -5153,12 +5153,12 @@
        "Name": "Light",
        "ClassName": "PointLight",
        "Properties": {
-        "Range": 28,
-        "Brightness": 0.7,
+        "Range": 30,
+        "Brightness": 0.95,
         "Color": [
-         0.8431,
-         0.8784,
-         0.9333
+         0.8627,
+         0.8941,
+         0.9412
         ]
        }
       }
@@ -5656,20 +5656,20 @@
      }
     },
     {
-     "Name": "Spotlight",
+     "Name": "StatueLight",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,
       "Size": [
-       20,
-       2.6,
-       2.6
+       0.2,
+       3,
+       3
       ],
       "CFrame": {
        "CFrame": {
         "position": [
-         -3,
-         13.5,
+         0,
+         24.4,
          0
         ],
         "orientation": [
@@ -5700,60 +5700,25 @@
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder",
-      "Transparency": 0.93,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "Spotlight",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       20,
-       2.6,
-       2.6
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         3,
-         13.5,
-         0
-        ],
-        "orientation": [
-         [
-          0.0,
-          -1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
+      "Transparency": 0.3
+     },
+     "Children": [
+      {
+       "Name": "Light",
+       "ClassName": "SpotLight",
+       "Properties": {
+        "Face": "Bottom",
+        "Range": 26,
+        "Brightness": 1.6,
+        "Angle": 35,
+        "Color": [
+         1.0,
+         0.9608,
+         0.902
         ]
        }
-      },
-      "Color": [
-       1.0,
-       0.9725,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.93,
-      "CanCollide": false,
-      "CanQuery": false
-     }
+      }
+     ]
     },
     {
      "Name": "GatePillar",

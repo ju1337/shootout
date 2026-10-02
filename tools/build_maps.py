@@ -1419,7 +1419,7 @@ def build_lobby():
         for x in (-36, -12, 12, 36):
             b.box("Decor", "CeilingLamp", (5, 0.2, 0.6), (x, H - 1.75, z), (150, 158, 170), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 28, "Brightness": 0.7, "Color": rgb(215, 224, 238)}}])
+                             "Properties": {"Range": 30, "Brightness": 0.95, "Color": rgb(220, 228, 240)}}])
     for x in (x0 + 0.45, x1 - 0.45):
         b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.6})
     for x, z in ((-31, 24), (31, 24)):
@@ -1468,10 +1468,11 @@ def build_lobby():
     # Holo-Schrift schwebt über der Statue (setzt der Client an diesen Punkt)
     b.add("Decor", "AgentOfWeekHolo", (1, 1, 1), (0, 17, tz), accent, "SmoothPlastic",
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    # Lichtkegel von oben
-    for x in (-3, 3):
-        b.add("Decor", "Spotlight", (H - 6, 2.6, 2.6), (x, (H - 6) / 2 + 3.5, tz), (255, 248, 230), "Neon",
-              angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.93, "CanCollide": False, "CanQuery": False})
+    # Licht von oben auf die Statue (ohne sichtbare Lichtsäulen)
+    b.add("Decor", "StatueLight", (0.2, 3, 3), (0, H - 1.6, tz), (255, 248, 230), "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.3},
+          children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+              "Face": "Bottom", "Range": 26, "Brightness": 1.6, "Angle": 35, "Color": rgb(255, 245, 230)}}])
 
     # ---------- Nordwand: große Tore, Schilder leicht zum Spawn geneigt ----------
     gw, gh = 14, 15

@@ -87,13 +87,23 @@ local function buildTag(model, head)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = row
 
+	-- Abzeichen auf einer runden dunklen Plakette mit Ring in Prestige-Farbe (schwebt nicht frei)
 	local holder = Instance.new("Frame")
 	holder.Name = "Emblem"
-	holder.Size = UDim2.new(0, 48, 0, 48)
-	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.new(0, 50, 0, 50)
+	holder.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
+	holder.BackgroundTransparency = 0.2
 	holder.LayoutOrder = 1
 	holder.Parent = row
-	emblems[tag] = PrestigeEmblem.new(holder, 48)
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(1, 0)
+	round.Parent = holder
+	local ring = Instance.new("UIStroke")
+	ring.Name = "Ring"
+	ring.Thickness = 2
+	ring.Transparency = 0.1
+	ring.Parent = holder
+	emblems[tag] = PrestigeEmblem.new(holder, 50)
 
 	local column = Instance.new("Frame")
 	column.Name = "Text"
@@ -157,10 +167,11 @@ local function setTag(model, info)
 		local emblem = emblems[tag]
 		if not emblem then
 			p.Emblem:ClearAllChildren()
-			emblem = PrestigeEmblem.new(p.Emblem, 48)
+			emblem = PrestigeEmblem.new(p.Emblem, 50)
 			emblems[tag] = emblem
 		end
 		emblem:Set(level.Level, level.Prestige)
+		p.Emblem.Ring.Color = level.Color
 	end
 end
 
