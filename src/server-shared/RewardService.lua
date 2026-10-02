@@ -23,6 +23,8 @@ local KillService = require(ServerShared.KillService)
 local RewardService = {}
 
 local streaks = {} -- [Player] = Kills seit dem letzten Tod
+local streakAtDeath = {} -- [Player] = Killserie im Moment des letzten Todes (für "Serie beendet")
+local lastKiller = {} -- [Player] = wer ihn zuletzt erledigt hat (für "Rache")
 
 local function claimedOf(profile)
 	profile.Rewards = profile.Rewards or {}
@@ -126,6 +128,7 @@ local function watch(player)
 		local humanoid = character:WaitForChild("Humanoid", 10)
 		if humanoid then
 			humanoid.Died:Connect(function()
+				streakAtDeath[player] = math.max(streakAtDeath[player] or 0, streaks[player] or 0)
 				streaks[player] = 0
 			end)
 		end
@@ -139,11 +142,29 @@ function RewardService.Init()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		streaks[player] = nil
+		streakAtDeath[player] = nil
+		lastKiller[player] = nil
 	end)
 	-- Killserien: Münzen bei 5, 10, 15, 20 Kills ohne zu sterben
-	KillService.KillCounted:Connect(function(killer)
+	KillService.KillCounted:Connect(function(killer, victim)
 		if typeof(killer) ~= "Instance" or not killer:IsA("Player") then
 			return
+		end
+		if typeof(victim) == "Instance" and victim:IsA("Player") and victim ~= killer then
+			-- Rache: der Gegner hatte uns zuletzt erledigt
+			if lastKiller[killer] == victim then
+				lastKiller[killer] = nil
+				Remotes.Announce:FireClient(killer, RewardConfig.Revenge.Name .. "!")
+				grant(killer, RewardConfig.Revenge.Name, RewardConfig.Revenge)
+			end
+			lastKiller[victim] = killer
+			-- Serie beendet: der Gegner war auf einer Killserie
+			local victimStreak = math.max(streaks[victim] or 0, streakAtDeath[victim] or 0)
+			streakAtDeath[victim] = 0
+			if victimStreak >= RewardConfig.Shutdown.MinStreak then
+				Remotes.Announce:FireClient(killer, RewardConfig.Shutdown.Name .. " (" .. victimStreak .. ")!")
+				grant(killer, RewardConfig.Shutdown.Name, RewardConfig.Shutdown)
+			end
 		end
 		streaks[killer] = (streaks[killer] or 0) + 1
 		for _, streak in RewardConfig.Streaks do

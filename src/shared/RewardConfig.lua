@@ -17,7 +17,13 @@ RewardConfig.PerAction = {
 	{ "Clutch / ACE", "100 XP je Gegner / 300 XP" },
 	{ "Rundensieg", "150 XP" },
 	{ "Matchsieg", "400 XP · 100 Münzen" },
+	{ "Rache", "75 Münzen" },
+	{ "Serie beendet", "100 Münzen" },
 }
+
+-- Kill-Boni: Rache (den letzten eigenen Killer erledigen), Serie beendet (Gegner mit Killserie ab 5 stoppen)
+RewardConfig.Revenge = { Coins = 75, Name = "RACHE" }
+RewardConfig.Shutdown = { Coins = 100, Name = "SERIE BEENDET", MinStreak = 5 }
 
 -- Killserien: Kills ohne zu sterben (in jedem Modus) -> Münzen
 RewardConfig.Streaks = {
