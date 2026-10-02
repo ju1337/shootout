@@ -155,6 +155,21 @@ function actions.SaveSettings(player, settings)
 	return nil -- keine Meldung nötig
 end
 
+-- Waffen-Aufsätze (Lobby): kaufen bzw. aus-/abrüsten
+function actions.BuyAttachment(player, weaponName, id)
+	if typeof(weaponName) ~= "string" or typeof(id) ~= "string" then
+		return nil
+	end
+	return ProgressService.BuyAttachment(player, weaponName, id)
+end
+
+function actions.ToggleAttachment(player, weaponName, id)
+	if typeof(weaponName) ~= "string" or typeof(id) ~= "string" then
+		return nil
+	end
+	return ProgressService.ToggleAttachment(player, weaponName, id)
+end
+
 function actions.Prestige(player)
 	return ProgressService.Prestige(player)
 end

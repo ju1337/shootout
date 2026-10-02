@@ -22,6 +22,7 @@ local GunModels = require(Shared.GunModels)
 local AgentFigure = require(Shared.AgentFigure)
 local PassConfig = require(Shared.PassConfig)
 local UITheme = require(Shared.UITheme)
+local AttachmentConfig = require(Shared.AttachmentConfig)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -232,20 +233,87 @@ function LobbyPages.Loadout(page, goToShop)
 		BackgroundTransparency = 0.35 }, page)
 	local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 3 }, stage)
 
-	-- rechts: eigene Skins (Standard + gekaufte), darunter der Weg in den Shop
-	caption(page, "Skins im Besitz", RIGHT_X, 12, RIGHT_W)
+	-- rechts: Reiter SKINS · AUFSÄTZE (Aufsätze nur bei Waffen), darunter die eigenen Skins bzw. die Aufsätze
+	local rightMode = "SKINS"
+	local selectRight -- vorab (Reiter ruft fillOptions)
 	local options = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 54), Size = UDim2.fromOffset(RIGHT_W, PAGE_H - 200),
 		BackgroundTransparency = 1 }, page)
 	make("UIGridLayout", { CellSize = UDim2.fromOffset(math.floor((RIGHT_W - 16) / 2), 60), CellPadding = UDim2.fromOffset(16, 12),
 		SortOrder = Enum.SortOrder.LayoutOrder }, options)
 	local hint = label({ Position = UDim2.fromOffset(RIGHT_X, PAGE_H - 120), Size = UDim2.fromOffset(RIGHT_W, 40), Text = "",
 		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, page)
-	UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, PAGE_H - 60), Size = UDim2.fromOffset(220, 46), Color = C.Card,
-		StrokeColor = C.Border, Text = "ZUM SHOP", TextSize = 20 }, page, goToShop)
+	local shopButton = UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, PAGE_H - 60), Size = UDim2.fromOffset(220, 46),
+		Color = C.Card, StrokeColor = C.Border, Text = "ZUM SHOP", TextSize = 20 }, page, goToShop)
+
+	-- Aufsätze: pro Platz (Mündung, Lauf, Griff, Magazin) die Aufsätze als Knöpfe
+	local attachPanel = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 54), Size = UDim2.fromOffset(RIGHT_W, PAGE_H - 54),
+		BackgroundTransparency = 1, Visible = false }, page)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, attachPanel)
+	-- Werte der Waffe mit Aufsätzen unten auf der Bühne
+	local statsText = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -12), Size = UDim2.new(1, -32, 0, 18),
+		Text = "", TextSize = 13, Font = F.Bold, TextColor3 = C.Text, ZIndex = 5 }, stage)
+
+	local function percent(factor, invert)
+		local value = math.floor((factor - 1) * 100 + 0.5)
+		if invert then
+			value = -value
+		end
+		return (value > 0 and "+" or "") .. value .. " %"
+	end
+
+	local function fillAttachments()
+		clear(attachPanel)
+		local weaponName = selected
+		local cfg = WeaponConfig.Get(weaponName)
+		local equipped = AttachmentConfig.Equipped(player, weaponName)
+		for order, slot in AttachmentConfig.Slots do
+			local items = AttachmentConfig.ForSlot(slot.Id)
+			local current = equipped[slot.Id] and AttachmentConfig.Get(equipped[slot.Id])
+			local block = make("Frame", { Size = UDim2.fromOffset(RIGHT_W, 112), BackgroundTransparency = 1, LayoutOrder = order },
+				attachPanel)
+			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = upper(slot.Name) .. "  ·  "
+				.. (current and upper(current.Name) or "LEER"), TextSize = 12, Font = F.Bold,
+				TextColor3 = current and C.Primary or C.Muted }, block)
+			local width = math.floor((RIGHT_W - 10) / #items)
+			for i, item in items do
+				local owned = AttachmentConfig.Owns(player, weaponName, item.Id)
+				local isOn = equipped[slot.Id] == item.Id and owned
+				local stateText = isOn and "AUSGERÜSTET" or (owned and "GEKAUFT · AUSRÜSTEN"
+					or (UITheme.FormatNumber(item.Price) .. " MÜNZEN"))
+				local option = UITheme.Chunky({ Position = UDim2.fromOffset((i - 1) * (width + 10), 22), Size = UDim2.fromOffset(width, 84),
+					Color = isOn and C.Secondary or C.Panel, StrokeColor = isOn and C.Primary or C.Border, Text = "" }, block,
+					function()
+						Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
+					end)
+				option.Stroke.Transparency = isOn and 0 or 0.4
+				label({ Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 24), Text = upper(item.Name), TextSize = 20,
+					Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, option.Face)
+				label({ Position = UDim2.fromOffset(12, 32), Size = UDim2.new(1, -24, 0, 28), Text = item.Description, TextSize = 11,
+					Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, option.Face)
+				label({ Position = UDim2.fromOffset(12, 62), Size = UDim2.new(1, -24, 0, 14), Text = stateText, TextSize = 10,
+					Font = F.Bold, TextColor3 = isOn and C.Primary or (owned and C.Good or (coins() >= item.Price and C.Text
+						or C.Bad)) }, option.Face)
+			end
+		end
+		-- Werte mit Aufsätzen
+		local effects = AttachmentConfig.Effects(player, weaponName)
+		statsText.Text = "RÜCKSTOSS " .. percent(effects.Recoil) .. "   ·   STREUUNG " .. percent(effects.Spread * effects.HipSpread)
+			.. "   ·   REICHWEITE " .. percent(effects.Range) .. "   ·   MAGAZIN " .. math.floor(cfg.MagazineSize * effects.Mag)
+			.. "   ·   NACHLADEN " .. percent(effects.Reload)
+	end
 
 	local fillList -- vorab, weil sich Liste und Skins gegenseitig neu aufbauen
 
 	local function fillOptions()
+		local showAttachments = rightMode == "AUFSÄTZE" and mode == "Weapon"
+		attachPanel.Visible = showAttachments
+		options.Visible = not showAttachments
+		hint.Visible = not showAttachments
+		shopButton.Visible = not showAttachments
+		statsText.Visible = showAttachments
+		if showAttachments then
+			fillAttachments()
+		end
 		clear(options)
 		local owned = Cosmetics.GetOwned(player)
 		local equipped = Cosmetics.GetEquipped(player)
@@ -323,13 +391,21 @@ function LobbyPages.Loadout(page, goToShop)
 		end
 	end
 
+	selectRight = tabs(page, { "SKINS", "AUFSÄTZE" }, RIGHT_X, 0, RIGHT_W, function(name)
+		rightMode = name
+		fillOptions()
+	end)
 	tabs(page, { "WAFFEN", "AGENTEN" }, 0, 0, 300, function(name)
 		mode = name == "WAFFEN" and "Weapon" or "Agent"
 		selected = mode == "Weapon" and WEAPON_ORDER[1] or AgentConfig.Agents[1].Id
+		if mode == "Agent" and rightMode ~= "SKINS" then
+			selectRight("SKINS") -- Agenten haben keine Aufsätze
+		end
 		fillList()
 		fillOptions()
 	end)("WAFFEN")
-	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true } }
+	selectRight("SKINS")
+	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true, Attachments = true, Coins = true } }
 end
 
 -- =====================================================================

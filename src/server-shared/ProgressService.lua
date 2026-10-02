@@ -19,6 +19,8 @@ local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local AttachmentConfig = require(Shared.AttachmentConfig)
+local WeaponConfig = require(Shared.WeaponConfig)
 
 local ProgressService = {}
 
@@ -30,7 +32,7 @@ local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speic
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
-		Stats = {}, Loadouts = {}, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
+		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0 } }
 end
 
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
@@ -93,6 +95,7 @@ function ProgressService.Sync(player)
 	player:SetAttribute("ClientSettings", HttpService:JSONEncode(profile.Settings or {}))
 	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
 	player:SetAttribute("Loadouts", HttpService:JSONEncode(profile.Loadouts or {}))
+	player:SetAttribute("Attachments", HttpService:JSONEncode(profile.Attachments or { Owned = {}, Equipped = {} }))
 	player:SetAttribute("MatchHistory", HttpService:JSONEncode(profile.History or {}))
 	player:SetAttribute("AccountXP", profile.AccountXP or 0)
 	player:SetAttribute("Prestige", profile.Prestige or 0)
@@ -306,6 +309,61 @@ function ProgressService.SpendCoins(player, amount)
 	profile.Coins -= amount
 	ProgressService.Sync(player)
 	return true
+end
+
+-- ---------- Waffen-Aufsätze (Lobby) ----------
+
+local function attachmentData(profile)
+	profile.Attachments = profile.Attachments or {}
+	profile.Attachments.Owned = profile.Attachments.Owned or {}
+	profile.Attachments.Equipped = profile.Attachments.Equipped or {}
+	return profile.Attachments
+end
+
+-- Aufsatz für eine Waffe kaufen (gilt für alle Agenten mit dieser Waffe) und gleich ausrüsten
+function ProgressService.BuyAttachment(player, weaponName, id)
+	local profile = profiles[player]
+	local item = AttachmentConfig.Get(id)
+	if not profile or not item or not WeaponConfig.Get(weaponName) then
+		return "Unbekannter Aufsatz.", false
+	end
+	local data = attachmentData(profile)
+	data.Owned[weaponName] = data.Owned[weaponName] or {}
+	if data.Owned[weaponName][id] then
+		return "Schon gekauft.", false
+	end
+	if profile.Coins < item.Price then
+		return "Nicht genug Münzen (" .. item.Price .. " nötig).", false
+	end
+	profile.Coins -= item.Price
+	data.Owned[weaponName][id] = true
+	data.Equipped[weaponName] = data.Equipped[weaponName] or {}
+	data.Equipped[weaponName][item.Slot] = id
+	ProgressService.Sync(player)
+	return item.Name .. " gekauft und ausgerüstet.", true
+end
+
+-- Aufsatz ausrüsten bzw. (nochmal angeklickt) wieder abnehmen
+function ProgressService.ToggleAttachment(player, weaponName, id)
+	local profile = profiles[player]
+	local item = AttachmentConfig.Get(id)
+	if not profile or not item then
+		return "Unbekannter Aufsatz.", false
+	end
+	local data = attachmentData(profile)
+	if not (data.Owned[weaponName] and data.Owned[weaponName][id]) then
+		return "Noch nicht gekauft.", false
+	end
+	data.Equipped[weaponName] = data.Equipped[weaponName] or {}
+	local slots = data.Equipped[weaponName]
+	if slots[item.Slot] == id then
+		slots[item.Slot] = nil
+		ProgressService.Sync(player)
+		return item.Name .. " abgenommen.", true
+	end
+	slots[item.Slot] = id
+	ProgressService.Sync(player)
+	return item.Name .. " ausgerüstet.", true
 end
 
 -- ---------- Skins ----------

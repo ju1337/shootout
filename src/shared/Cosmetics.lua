@@ -14,7 +14,7 @@ local Cosmetics = {}
 
 Cosmetics.DailyReward = 100            -- Münzen pro täglicher Belohnung
 Cosmetics.DailyCooldown = 20 * 3600    -- Sekunden bis zur nächsten
-Cosmetics.CoinsPerXP = 0.1             -- 100 XP = 10 Münzen
+Cosmetics.CoinsPerXP = 0.25            -- 100 XP = 25 Münzen (Kill 25, Rundensieg ~37, Matchsieg 100)
 
 Cosmetics.Rarities = {
 	Common = { Name = "Gewöhnlich", Color = Color3.fromRGB(150, 155, 165) },

@@ -23,7 +23,7 @@ local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
-local BuyConfig = require(Shared.BuyConfig)
+local AttachmentConfig = require(Shared.AttachmentConfig)
 local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
@@ -62,8 +62,8 @@ local function newState(player)
 	}
 	for _, name in loadout do
 		local cfg = WeaponConfig.Get(name)
-		-- Gekauftes "Großes Magazin" (Drop) vergrößert jedes Magazin
-		local size = math.floor(cfg.MagazineSize * (BuyConfig.Has(player, "Mag") and BuyConfig.MagFactor or 1))
+		-- Aufsatz "Erweitertes Magazin" (Lobby) vergrößert das Magazin dieser Waffe
+		local size = math.floor(cfg.MagazineSize * AttachmentConfig.Effects(player, name).Mag)
 		state.Ammo[name] = { Mag = size, Reserve = cfg.ReserveAmmo, Size = size }
 	end
 	return state
@@ -259,7 +259,8 @@ local function fire(player, state, origin, direction, aiming)
 	end
 
 	local weaponName = state.Current
-	local cfg = WeaponConfig.Get(weaponName)
+	local effects = AttachmentConfig.Effects(player, weaponName)
+	local cfg = WeaponConfig.WithAttachments(WeaponConfig.Get(weaponName), effects)
 	local ammo = state.Ammo[weaponName]
 	if ammo.Mag <= 0 or (state.Reloading and not cfg.ShellReload) then
 		return false
@@ -287,8 +288,7 @@ local function fire(player, state, origin, direction, aiming)
 	local bloom
 	bloom, state.Bloom = WeaponConfig.StepBloom(cfg, state.Bloom, now - state.BloomTime)
 	state.BloomTime = now
-	local spreadAngle = WeaponConfig.SpreadFor(cfg, bloom, speed, isAirborne(character, root, humanoid), aiming,
-		BuyConfig.Has(player, "Stability"))
+	local spreadAngle = WeaponConfig.SpreadFor(cfg, bloom, speed, isAirborne(character, root, humanoid), aiming, effects)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
@@ -364,7 +364,8 @@ local function onReload(player)
 	end
 
 	local weaponName = state.Current
-	local cfg = WeaponConfig.Get(weaponName)
+	local effects = AttachmentConfig.Effects(player, weaponName)
+	local cfg = WeaponConfig.WithAttachments(WeaponConfig.Get(weaponName), effects)
 	local ammo = state.Ammo[weaponName]
 	local infinite = WeaponConfig.HasInfiniteAmmo(player)
 	if ammo.Mag >= ammo.Size or (ammo.Reserve <= 0 and not infinite) then

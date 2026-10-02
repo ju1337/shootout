@@ -17,7 +17,7 @@ local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local Movement = require(Shared.Movement)
-local BuyConfig = require(Shared.BuyConfig)
+local AttachmentConfig = require(Shared.AttachmentConfig)
 local InputActions = require(Shared.InputActions)
 local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
@@ -340,16 +340,17 @@ local function tryFire()
 	local shotBloom
 	shotBloom, bloom = WeaponConfig.StepBloom(cfg, bloom, now - bloomTime)
 	bloomTime = now
-	local spreadAngle = WeaponConfig.SpreadFor(cfg, shotBloom, speed, airborne, aiming, BuyConfig.Has(player, "Stability"))
+	local effects = AttachmentConfig.Effects(player, current)
+	local spreadAngle = WeaponConfig.SpreadFor(cfg, shotBloom, speed, airborne, aiming, effects)
 
 	local camera = workspace.CurrentCamera
 	local origin, look = camera.CFrame.Position, camera.CFrame.LookVector
 	Remotes.Fire:FireServer(origin, look, aiming, shotCounter)
-	showOwnShot(cfg, origin, look, spreadAngle)
+	showOwnShot(WeaponConfig.WithAttachments(cfg, effects), origin, look, spreadAngle)
 
-	-- Rückstoß: hoch und etwas zur Seite, beim Zielen weniger. Nach dem Feuern wandert der Blick zurück.
-	local stable = BuyConfig.Has(player, "Stability") and BuyConfig.StabilityFactor or 1
-	local strength = (aiming and 0.75 or 1) * stable
+	-- Rückstoß: hoch und etwas zur Seite, beim Zielen weniger (Aufsätze: Kompensator, Vertikalgriff).
+	-- Nach dem Feuern wandert der Blick zurück.
+	local strength = (aiming and 0.75 or 1) * effects.Recoil
 	recoilPitch = math.min(recoilPitch + (cfg.Recoil or 0) * strength, cfg.MaxRecoil or 5)
 	recoilYaw += (random:NextNumber() - 0.5) * 2 * (cfg.RecoilSide or 0) * strength
 	recoilYaw = math.clamp(recoilYaw, -(cfg.MaxRecoil or 5) * 0.4, (cfg.MaxRecoil or 5) * 0.4)
@@ -462,9 +463,9 @@ function WeaponClient.GetSpread()
 	end
 	local speed, airborne = movementState()
 	local currentBloom = WeaponConfig.DecayBloom(cfg, bloom, os.clock() - bloomTime)
-	local stable = BuyConfig.Has(player, "Stability")
-	local hip = WeaponConfig.SpreadFor(cfg, currentBloom, speed, airborne, false, stable)
-	local ads = WeaponConfig.SpreadFor(cfg, currentBloom, speed, airborne, true, stable)
+	local effects = AttachmentConfig.Effects(player, current)
+	local hip = WeaponConfig.SpreadFor(cfg, currentBloom, speed, airborne, false, effects)
+	local ads = WeaponConfig.SpreadFor(cfg, currentBloom, speed, airborne, true, effects)
 	return hip + (ads - hip) * aimBlend
 end
 

@@ -9,7 +9,7 @@
 -- AimFov = Sichtfeld beim Zielen (Rechtsklick)
 -- ShellReload = Patronen einzeln nachladen (Schrotflinte): Schießen bricht das Nachladen ab
 
-local BuyConfig = require(script.Parent.BuyConfig)
+local AttachmentConfig = require(script.Parent.AttachmentConfig)
 
 local WeaponConfig = {}
 
@@ -207,21 +207,32 @@ end
 
 -- Streuung in Grad für den nächsten Schuss. Client (Fadenkreuz) und Server (Schuss) nutzen dieselbe Formel.
 -- bloom = aufgebauter Bloom, speed = Laufgeschwindigkeit (Studs/s), airborne = in der Luft,
--- aiming = zielt (Rechtsklick), stable = Upgrade "Stabilisator" gekauft
-function WeaponConfig.SpreadFor(cfg, bloom, speed, airborne, aiming, stable)
+-- aiming = zielt (Rechtsklick), effects = Wirkung der Aufsätze (AttachmentConfig.Effects) oder nil
+function WeaponConfig.SpreadFor(cfg, bloom, speed, airborne, aiming, effects)
+	effects = type(effects) == "table" and effects or nil
 	local spread = (cfg.Spread or 0) + (bloom or 0)
 	local move = math.clamp((speed or 0) / WeaponConfig.MoveSpeedFull, 0, 1.5)
-	spread *= 1 + move * (cfg.MoveSpread or WeaponConfig.MoveSpread)
+	spread *= 1 + move * (cfg.MoveSpread or WeaponConfig.MoveSpread) * (effects and effects.MoveSpread or 1)
 	if airborne then
 		spread += cfg.AirSpread or WeaponConfig.AirSpread
 	end
 	if aiming then
 		spread *= WeaponConfig.AimSpreadFactor
+	elseif effects then
+		spread *= effects.HipSpread
 	end
-	if stable then
-		spread *= BuyConfig.StabilityFactor
+	if effects then
+		spread *= effects.Spread
 	end
 	return spread
+end
+
+-- Waffenwerte mit der Reichweite der Aufsätze (für Raycasts); alles andere bleibt wie in cfg
+function WeaponConfig.WithAttachments(cfg, effects)
+	if not effects or effects.Range == 1 then
+		return cfg
+	end
+	return setmetatable({ Range = cfg.Range * effects.Range }, { __index = cfg })
 end
 
 -- Bloom nach einer Feuerpause von sinceLast Sekunden (bloom = Wert direkt nach dem letzten Schuss)
@@ -239,11 +250,11 @@ function WeaponConfig.StepBloom(cfg, bloom, sinceLast)
 	return current, math.min(cfg.MaxBloom or 0, current + (cfg.Bloom or 0))
 end
 
--- Nachladezeit mit Upgrade "Schnellladen" und Passiv "Schnelle Hände" (VIPER)
+-- Nachladezeit mit Aufsatz (z.B. Schnellmagazin) und Passiv "Schnelle Hände" (VIPER)
 function WeaponConfig.ReloadDuration(player, character, weaponName)
 	local cfg = WeaponConfig.Get(weaponName)
 	local AgentConfig = require(script.Parent.AgentConfig)
-	return cfg.ReloadTime * (BuyConfig.Has(player, "Reload") and BuyConfig.ReloadFactor or 1)
+	return cfg.ReloadTime * AttachmentConfig.Effects(player, weaponName).Reload
 		* (AgentConfig.PassiveOf(character, "Reload") and 0.85 or 1)
 end
 

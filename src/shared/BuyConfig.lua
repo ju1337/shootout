@@ -17,10 +17,9 @@ BuyConfig.Rewards = {
 	RoundLoss = 600,
 }
 
--- Wirkung der Upgrades
-BuyConfig.MagFactor = 1.3        -- Magazin x1.3
-BuyConfig.ReloadFactor = 0.7     -- Nachladezeit x0.7
-BuyConfig.StabilityFactor = 0.65 -- Streuung und Rückstoß x0.65
+-- Waffen-Aufsätze (Magazin, Griff, Lauf, Mündung) kauft man nicht mehr im Match, sondern in der Lobby
+-- mit Münzen (siehe AttachmentConfig). Hier gibt es nur noch Rüstung, Extra-Gadget und Perks.
+-- Wirkung der Kauf-Gegenstände
 BuyConfig.ArmorAmount = 25       -- Schild, das zuerst Schaden schluckt
 BuyConfig.ToughHealth = 15       -- Perk "Zäh": mehr Max-Leben
 BuyConfig.RegenDelay = 5         -- Perk "Regeneration": Sekunden ohne Schaden bis zum Heilen
@@ -30,9 +29,6 @@ BuyConfig.RunnerFactor = 1.08    -- Perk "Leichtfuß": Tempo
 BuyConfig.VengeanceTime = 5      -- Perk "Racheblick": Sekunden, die der Killer markiert ist
 
 BuyConfig.Items = {
-	{ Id = "Mag", Name = "Großes Magazin", Description = "+30 % Magazin für alle Waffen", Price = 600 },
-	{ Id = "Reload", Name = "Schnellladen", Description = "Nachladen 30 % schneller", Price = 500 },
-	{ Id = "Stability", Name = "Stabilisator", Description = "35 % weniger Streuung und Rückstoß", Price = 700 },
 	{ Id = "Armor", Name = "Rüstung", Description = "+25 Schild bis zum nächsten Tod (bzw. Rundenende)", Price = 400, PerRound = true },
 	{ Id = "ExtraGadget", Name = "Extra-Gadget", Description = "+1 Gadget-Ladung bis zum nächsten Tod (bzw. Rundenende)", Price = 300, PerRound = true },
 	{ Id = "Tough", Name = "Zäh", Description = "Perk: +15 Max-Leben", Price = 500, Perk = true },
