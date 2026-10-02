@@ -79,6 +79,7 @@ function TeamRoundMode.new(config)
 	local roundWinner = nil
 	local roundNumber = 0
 	local timeLeft = nil         -- Restzeit der Runde (nur mit RoundTime)
+	local roundKills = {}        -- [Player] = Kills in dieser Runde (für ACE)
 	local objective = nil        -- eigenes Ziel des Modus (config.Objective), wird unten erzeugt
 
 	local function makeTeam(teamConfig)
@@ -621,6 +622,7 @@ function TeamRoundMode.new(config)
 		announce(practiceRound and "Übungsrunde" or ("Runde " .. roundNumber))
 		alive = {}
 		pending = {}
+		roundKills = {}
 		roundWinner = nil
 		local ticketCount = config.Tickets and GameSettings.Get(config.Tickets) or 0
 		tickets[teamA], tickets[teamB] = ticketCount, ticketCount
@@ -703,6 +705,16 @@ function TeamRoundMode.new(config)
 			return
 		end
 
+		-- ACE: ein Spieler hat das komplette Gegnerteam (mind. 3) allein ausgeschaltet
+		if not config.Tickets then
+			for player, kills in roundKills do
+				local enemies = player.Team and teamSize(otherTeam(player.Team)) or 0
+				if members[player] and enemies >= 3 and kills >= enemies then
+					announce("★ ACE! " .. player.Name .. " hat das ganze Team ausgeschaltet!")
+					ProgressService.AddXP(player, ProgressService.ActiveAgent(player), 300, "ACE")
+				end
+			end
+		end
 		if roundWinner then
 			scores[roundWinner] += 1
 			announce("Team " .. roundWinner.Name .. " gewinnt die Runde!")
@@ -934,6 +946,12 @@ function TeamRoundMode.new(config)
 	-- ---------- Modus-Schnittstelle ----------
 
 	function mode.Init()
+		-- Kills pro Runde zählen (für ACE)
+		KillService.KillCounted:Connect(function(killer)
+			if roundActive and members[killer] then
+				roundKills[killer] = (roundKills[killer] or 0) + 1
+			end
+		end)
 		-- Niedergeschlagen/wiederbelebt: Anzeige und Rundenende neu prüfen
 		DownedService.Changed:Connect(function()
 			if roundActive then

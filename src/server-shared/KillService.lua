@@ -19,6 +19,11 @@ local BuyConfig = require(ReplicatedStorage:WaitForChild("Shared").BuyConfig)
 
 local KillService = {}
 
+-- Multikills: Kills innerhalb von MULTI_WINDOW Sekunden zählen zusammen
+local MULTI_WINDOW = 4
+local MULTI_NAMES = { [2] = "DOPPEL-KILL", [3] = "TRIPLE-KILL", [4] = "QUADRA-KILL", [5] = "PENTA-KILL" }
+local streaks = {} -- [Player] = { Count, Last }
+
 -- Wird nach dem Zählen gefeuert: (killer: Player, victim: Player, killerKills: number)
 local countedEvent = Instance.new("BindableEvent")
 KillService.KillCounted = countedEvent.Event
@@ -81,6 +86,9 @@ function KillService.GetKills(player)
 end
 
 function KillService.Init()
+	Players.PlayerRemoving:Connect(function(player)
+		streaks[player] = nil
+	end)
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
 		setupPlayer(player)
@@ -99,6 +107,20 @@ function KillService.Init()
 				rewards.Kill + (headshot and rewards.Headshot or 0), headshot and "Kopfschuss-Kill" or "Kill")
 			BuyService.AddMoney(killer, BuyConfig.Rewards.Kill, "Kill") -- nur in laufenden Team-Matches
 			ProgressService.QuestEvent(killer, "Kill", 1)
+			-- Multikill-Meldung mit Bonus-XP
+			local now = os.clock()
+			local streak = streaks[killer]
+			if streak and now - streak.Last <= MULTI_WINDOW then
+				streak.Count += 1
+			else
+				streak = { Count = 1 }
+				streaks[killer] = streak
+			end
+			streak.Last = now
+			if streak.Count >= 2 then
+				Remotes.Announce:FireClient(killer, MULTI_NAMES[math.min(streak.Count, 5)] or (streak.Count .. "x KILL"))
+				ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), 25 * streak.Count, "Multikill")
+			end
 			ProgressService.AddStat(killer, "Kills", 1)
 			ProgressService.AddStat(killer, "Kills_" .. ProgressService.ActiveAgent(killer), 1)
 			if headshot then
