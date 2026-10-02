@@ -10,8 +10,8 @@ return TeamRoundMode.new({
 	Maps = { "TDM", "Hochhaus2" }, -- Map-Rotation: Fabrik, Hochhaus
 	TeamSize = 4,
 	Teams = {
-		{ Name = "Kobra", Color = BrickColor.new("Lime green") },
-		{ Name = "Adler", Color = BrickColor.new("Deep orange") },
+		{ Name = "Kobra", Color = BrickColor.new("Grime") },
+		{ Name = "Adler", Color = BrickColor.new("Brown") },
 	},
 	DropIn = false,
 	WingsuitStart = 120,

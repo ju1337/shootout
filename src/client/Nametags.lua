@@ -2,7 +2,7 @@
 -- Eigene Namensschilder statt der Roblox-Namen (die Gegner durch Wände verraten würden):
 --   Hub:      alle Spieler mit Prestige-Abzeichen (PrestigeEmblem: Symbol je Stufe), Name und Rang
 --             (auch das eigene Schild, sobald man sich von außen sieht)
---   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Teamfarbe, Gegner ohne Namen
+--   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Verbündeten-Blau (wie im HUD), Gegner ohne Namen
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -125,8 +126,8 @@ local function update()
 				setTag(character, { Name = other.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
 					Subtitle = "◆ " .. rank.Display, SubColor = rank.Color, Player = other })
 			elseif sameMode and mate then
-				-- Kampf: nur Teamkollegen, Name in Teamfarbe, Abzeichen bleibt
-				setTag(character, { Name = other.Name, Color = other.TeamColor.Color, Player = other })
+				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
+				setTag(character, { Name = other.Name, Color = UITheme.Colors.Ally, Player = other })
 			else
 				removeTag(character)
 			end
@@ -139,7 +140,7 @@ local function update()
 			local mate = player.Team ~= nil and model:GetAttribute("TeamName") == player.Team.Name
 				and model:GetAttribute("Mode") == myMode
 			if mate then
-				setTag(model, { Name = model.Name, Color = player.TeamColor.Color })
+				setTag(model, { Name = model.Name, Color = UITheme.Colors.Ally })
 			else
 				removeTag(model)
 			end

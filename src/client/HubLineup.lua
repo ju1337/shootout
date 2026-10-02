@@ -63,7 +63,7 @@ local function buildMissionBoard()
 	title.BackgroundTransparency = 1
 	title.Font = Enum.Font.Oswald
 	title.TextScaled = true
-	title.TextColor3 = Color3.fromRGB(40, 210, 230)
+	title.TextColor3 = Color3.fromRGB(212, 170, 80)
 	title.Text = "EINSATZ-ÜBERSICHT"
 	title.Parent = surface
 	local list = Instance.new("TextLabel")
@@ -72,7 +72,7 @@ local function buildMissionBoard()
 	list.BackgroundTransparency = 1
 	list.Font = Enum.Font.Oswald
 	list.TextSize = 30
-	list.TextColor3 = Color3.fromRGB(235, 242, 248)
+	list.TextColor3 = Color3.fromRGB(228, 231, 235)
 	list.TextXAlignment = Enum.TextXAlignment.Left
 	list.TextYAlignment = Enum.TextYAlignment.Top
 	list.RichText = true
@@ -92,7 +92,7 @@ local function buildMissionBoard()
 			local countLabel = Instance.new("TextLabel")
 			countLabel.Size = UDim2.new(1, 0, 1, 0)
 			countLabel.BackgroundTransparency = 1
-			countLabel.Font = Enum.Font.GothamBlack
+			countLabel.Font = Enum.Font.Oswald
 			countLabel.TextScaled = true
 			countLabel.Text = ""
 			countLabel.Parent = gateGui
@@ -107,7 +107,7 @@ local function buildMissionBoard()
 		for _, mode in Modes.List do
 			if mode.Available then
 				local n = counts[mode.Id] or 0
-				local color = n > 0 and "#50D282" or "#5A6B80"
+				local color = n > 0 and "#70B270" or "#5E656E"
 				table.insert(lines, mode.Name .. '   <font color="' .. color .. '">' .. n .. " Spieler</font>")
 			end
 		end
@@ -115,8 +115,8 @@ local function buildMissionBoard()
 		-- Spielerzahl unter jedem Tor-Schild
 		for id, countLabel in gateLabels do
 			local n = counts[id] or 0
-			countLabel.Text = n > 0 and ("● " .. n .. " SPIELER") or "○ FREI"
-			countLabel.TextColor3 = n > 0 and Color3.fromRGB(80, 210, 130) or Color3.fromRGB(150, 165, 185)
+			countLabel.Text = n > 0 and (n .. " SPIELER") or "FREI"
+			countLabel.TextColor3 = n > 0 and Color3.fromRGB(112, 178, 112) or Color3.fromRGB(134, 142, 152)
 		end
 	end
 	update()
@@ -125,12 +125,12 @@ end
 
 -- Bestenlisten-Tafeln im Hub (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
 local BOARD_INFO = {
-	Elo = { Title = "🏆  HÖCHSTE ELO", Color = Color3.fromRGB(250, 205, 70) },
-	Kills = { Title = "☠  MEISTE KILLS", Color = Color3.fromRGB(230, 60, 70) },
-	Level = { Title = "★  HÖCHSTES LEVEL", Color = Color3.fromRGB(40, 210, 230) },
-	Wins = { Title = "✓  MEISTE SIEGE", Color = Color3.fromRGB(90, 220, 110) },
+	Elo = { Title = "HÖCHSTE ELO", Color = Color3.fromRGB(212, 170, 80) },
+	Kills = { Title = "MEISTE KILLS", Color = Color3.fromRGB(206, 70, 58) },
+	Level = { Title = "HÖCHSTES LEVEL", Color = Color3.fromRGB(96, 164, 214) },
+	Wins = { Title = "MEISTE SIEGE", Color = Color3.fromRGB(112, 178, 112) },
 }
-local PLACE_COLORS = { Color3.fromRGB(250, 205, 70), Color3.fromRGB(200, 205, 215), Color3.fromRGB(205, 130, 70) }
+local PLACE_COLORS = { Color3.fromRGB(212, 176, 96), Color3.fromRGB(190, 194, 200), Color3.fromRGB(176, 120, 76) }
 
 local function formatValue(board, value)
 	value = tonumber(value) or 0
@@ -161,9 +161,9 @@ local function buildLeaderboards()
 			title.BackgroundColor3 = info.Color
 			title.BackgroundTransparency = 0.15
 			title.BorderSizePixel = 0
-			title.Font = Enum.Font.GothamBlack
+			title.Font = Enum.Font.Oswald
 			title.TextScaled = true
-			title.TextColor3 = Color3.fromRGB(14, 22, 36)
+			title.TextColor3 = Color3.fromRGB(14, 16, 19)
 			title.Text = info.Title
 			title.Parent = surface
 			local rows = {}
@@ -171,7 +171,7 @@ local function buildLeaderboards()
 				local row = Instance.new("Frame")
 				row.Position = UDim2.new(0.03, 0, 0.15 + (i - 1) * 0.084, 0)
 				row.Size = UDim2.new(0.94, 0, 0.076, 0)
-				row.BackgroundColor3 = Color3.fromRGB(24, 40, 62)
+				row.BackgroundColor3 = Color3.fromRGB(27, 31, 36)
 				row.BackgroundTransparency = i % 2 == 0 and 0.4 or 0.75
 				row.BorderSizePixel = 0
 				row.Parent = surface
@@ -182,7 +182,7 @@ local function buildLeaderboards()
 					label.BackgroundTransparency = 1
 					label.Font = font
 					label.TextScaled = true
-					label.TextColor3 = Color3.fromRGB(235, 242, 248)
+					label.TextColor3 = Color3.fromRGB(228, 231, 235)
 					label.TextXAlignment = align
 					label.Text = ""
 					label.Parent = row
@@ -190,7 +190,7 @@ local function buildLeaderboards()
 				end
 				rows[i] = {
 					Frame = row,
-					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.GothamBlack),
+					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.Oswald),
 					Name = cell(0.13, 0.5, Enum.TextXAlignment.Left, Enum.Font.GothamBold),
 					Value = cell(0.6, 0.38, Enum.TextXAlignment.Right, Enum.Font.Oswald),
 				}
@@ -202,11 +202,11 @@ local function buildLeaderboards()
 				for i, row in rows do
 					local entry = list[i]
 					row.Place.Text = entry and ("#" .. i) or ""
-					row.Place.TextColor3 = PLACE_COLORS[i] or Color3.fromRGB(130, 155, 175)
+					row.Place.TextColor3 = PLACE_COLORS[i] or Color3.fromRGB(134, 142, 152)
 					row.Name.Text = entry and tostring(entry.Name) or (i == 1 and "Noch keine Einträge" or "")
 					local isMe = entry and entry.UserId == player.UserId
-					row.Name.TextColor3 = isMe and Color3.fromRGB(40, 210, 230) or Color3.fromRGB(235, 242, 248)
-					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(28, 62, 78) or Color3.fromRGB(24, 40, 62)
+					row.Name.TextColor3 = isMe and Color3.fromRGB(212, 170, 80) or Color3.fromRGB(228, 231, 235)
+					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(46, 42, 30) or Color3.fromRGB(27, 31, 36)
 					if entry then
 						local text, color = formatValue(board, entry.Value)
 						row.Value.Text = text

@@ -19,30 +19,31 @@ local player = Players.LocalPlayer
 
 local TouchControls = {}
 
--- { Aktion, Symbol, Größe, X von rechts, Y von unten, Art } – Art: "hold" (gedrückt halten),
+-- { Aktion, Beschriftung, Größe, X von rechts, Y von unten, Art } – Art: "hold" (gedrückt halten),
 -- "tap" (antippen) oder "toggle" (an/aus). Positionen in Design-Einheiten (1600 x 900).
+-- Beschriftung: schlichte Zeichen (Pfeile, Kreis) oder kurze Wörter statt bunter Emojis.
 local RIGHT = {
-	{ "Fire", "🔫", 130, 130, 170, "hold" },
+	{ "Fire", "FEUER", 130, 130, 170, "hold" },
 	{ "Jump", "⤒", 80, 90, 55, "tap" },
 	{ "Aim", "◎", 84, 290, 130, "toggle" },
 	{ "Crouch", "⇩", 70, 235, 48, "tap" },
 	{ "Reload", "↻", 70, 70, 290, "tap" },
 	{ "Ability", "★", 84, 200, 305, "tap" },
-	{ "Gadget", "💣", 72, 305, 245, "tap" },
-	{ "Melee", "🔪", 60, 60, 375, "tap" },
+	{ "Gadget", "GADGET", 72, 305, 245, "tap" },
+	{ "Melee", "MESSER", 60, 60, 375, "tap" },
 	{ "SwapWeapon", "⇄", 64, 380, 60, "tap" },
-	{ "Interact", "✋", 84, 420, 200, "hold" },
+	{ "Interact", "AKTION", 84, 420, 200, "hold" },
 }
 -- Kleine Knöpfe oben rechts
 local TOP = {
-	{ "Ping", "📍", 56, 60, 250, "tap" },
+	{ "Ping", "PING", 56, 60, 250, "tap" },
 	{ "Scoreboard", "☰", 56, 60, 316, "tap" },
-	{ "Camera", "🎥", 56, 60, 382, "tap" },
+	{ "Camera", "KAMERA", 56, 60, 382, "tap" },
 	{ "Ultimate", "✦", 56, 60, 448, "tap" },
 }
 -- Links über dem Steuerknüppel
 local LEFT = {
-	{ "Sprint", "🏃", 66, 110, 330, "toggle" },
+	{ "Sprint", "SPRINT", 66, 110, 330, "toggle" },
 }
 
 local gui
@@ -58,12 +59,14 @@ local function makeButton(parent, entry, anchor)
 	else
 		position = UDim2.new(0, x, 1, -y)
 	end
+	-- Wörter kleiner als einzelne Zeichen
+	local word = (utf8.len(icon) or 1) > 2
 	local button = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0.5), Position = position,
 		Size = UDim2.new(0, size, 0, size), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.35, Text = icon,
-		TextSize = math.floor(size * 0.45), Font = UITheme.Fonts.Bold, TextColor3 = C.Text, AutoButtonColor = false,
-		BorderSizePixel = 0, Name = action }, parent)
+		TextSize = math.floor(size * (word and 0.2 or 0.45)), Font = UITheme.Fonts.Bold, TextColor3 = C.Text,
+		AutoButtonColor = false, BorderSizePixel = 0, Name = action }, parent)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, button)
-	local stroke = UITheme.Stroke(button, action == "Fire" and C.Bad or C.Accent, 2, 0.2)
+	local stroke = UITheme.Stroke(button, action == "Fire" and C.Bad or C.Border, 1.5, 0.1)
 	local on = false
 	local function setVisual(pressed)
 		button.BackgroundTransparency = pressed and 0.05 or 0.35

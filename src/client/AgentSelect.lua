@@ -42,7 +42,7 @@ local WIDTH, HEIGHT = 1600, 900
 local LEFT_X, LEFT_W = 32, 330        -- Team, Waffe, Ausrüstung
 local RIGHT_X, RIGHT_W = 1248, 320    -- Agent: Rolle, Name, Werte, Fähigkeiten
 local TILE = 66                       -- Agenten-Kacheln unten
-local PURPLE = Color3.fromRGB(170, 90, 230)
+local PURPLE = Color3.fromRGB(146, 128, 186) -- Perks (gedämpftes Violett)
 local RESPAWN_SHOW_DELAY = 1.5        -- nach dem Tod so lange die Todeskamera, dann die Auswahl
 local URGENT = 10                     -- ab so vielen Sekunden wird der Timer rot
 
@@ -129,8 +129,8 @@ local function respawnState()
 end
 
 local function heading(text, x, y, color, parent)
-	return label({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(240, 20), Text = upper(text), TextSize = 14,
-		Font = F.Display, TextColor3 = color or C.Muted }, parent or canvas)
+	return label({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(240, 20), Text = upper(text), TextSize = 12,
+		Font = F.Bold, TextColor3 = color or C.Muted }, parent or canvas)
 end
 
 -- ---------- 3D-Agent im Hangar und Infos rechts ----------
@@ -174,7 +174,7 @@ local function showPreview(agent, weapon)
 	local xp = AgentConfig.GetXP(player, agent.Id)
 	infoLevel.Text = "AGENT-LEVEL " .. AgentConfig.LevelFromXP(xp)
 	infoBar.Size = UDim2.fromScale(AgentConfig.LevelProgress(xp), 1)
-	infoBar.BackgroundColor3 = agent.Color
+	infoBar.BackgroundColor3 = C.Primary
 end
 
 -- ---------- Aufbau ----------
@@ -199,9 +199,9 @@ end
 local function buildHeader()
 	headerInfo = label({ Position = UDim2.fromOffset(LEFT_X, 26), Size = UDim2.fromOffset(900, 18), Text = "", TextSize = 13,
 		Font = F.Bold, TextColor3 = C.Muted }, canvas)
-	headerTitle = label({ Position = UDim2.fromOffset(LEFT_X, 44), Size = UDim2.fromOffset(1000, 48), Text = "", TextSize = 40,
+	headerTitle = label({ Position = UDim2.fromOffset(LEFT_X, 44), Size = UDim2.fromOffset(1000, 48), Text = "", TextSize = 44,
 		Font = F.Display }, canvas)
-	UITheme.Outline(headerTitle, 3)
+	UITheme.Outline(headerTitle, 1)
 	headerSub = label({ Position = UDim2.fromOffset(LEFT_X, 92), Size = UDim2.fromOffset(1000, 20), Text = "", TextSize = 14,
 		Font = F.Bold, TextColor3 = C.Text }, canvas)
 
@@ -209,10 +209,10 @@ local function buildHeader()
 	timerPanel = UITheme.Card({ Name = "Timer", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 26),
 		Size = UDim2.fromOffset(180, 66) }, canvas)
 	timerStroke = timerPanel:FindFirstChildOfClass("UIStroke")
-	timerIcon = label({ Position = UDim2.fromOffset(16, 0), Size = UDim2.fromOffset(34, 66), Text = "⏱", TextSize = 24,
-		TextColor3 = C.Primary, ZIndex = 3 }, timerPanel)
+	timerIcon = label({ Position = UDim2.fromOffset(16, 0), Size = UDim2.fromOffset(50, 66), Text = "ZEIT", TextSize = 11,
+		Font = F.Bold, TextColor3 = C.Primary, ZIndex = 3 }, timerPanel)
 	timerLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 0), Size = UDim2.fromOffset(120, 66),
-		Text = "", TextSize = 36, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, timerPanel)
+		Text = "", TextSize = 40, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, timerPanel)
 	scoreLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 100), Size = UDim2.fromOffset(400, 20),
 		Text = "", TextSize = 14, Font = F.Display, RichText = true, TextXAlignment = Enum.TextXAlignment.Right }, canvas)
 end
@@ -222,9 +222,9 @@ local function makeWeaponCard(x, y, w, h, preview, selectable, index)
 	local frame = make("TextButton", { Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h), BackgroundColor3 = C.Panel,
 		BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "", AutoButtonColor = false }, canvas)
 	UITheme.Corner(frame, UITheme.Radius.Large)
-	local stroke = UITheme.Stroke(frame, C.Border, 2)
+	local stroke = UITheme.Stroke(frame, C.Border, 1)
 	local holder = make("Frame", { Position = preview.Position, Size = preview.Size, BackgroundTransparency = 1 }, frame)
-	local name = label({ Position = preview.NamePosition, Size = UDim2.new(1, -20, 0, 18), Text = "", TextSize = 14,
+	local name = label({ Position = preview.NamePosition, Size = UDim2.new(1, -20, 0, 18), Text = "", TextSize = 18,
 		Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
 	local tag = label({ Position = preview.TagPosition, Size = UDim2.new(1, -20, 0, 14), Text = "", TextSize = 11, Font = F.Bold,
 		TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
@@ -287,9 +287,9 @@ local function buildLeft()
 		local card = make("TextButton", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "",
 			AutoButtonColor = false, LayoutOrder = i }, grid)
 		UITheme.Corner(card, UITheme.Radius.Medium)
-		local stroke = UITheme.Stroke(card, item.Perk and PURPLE or C.Border, 2)
+		local stroke = UITheme.Stroke(card, item.Perk and PURPLE or C.Border, 1)
 		local name = label({ Position = UDim2.fromOffset(10, 3), Size = UDim2.new(1, -16, 0, 18),
-			Text = (item.Perk and "✦ " or "") .. item.Name, TextSize = 12, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+			Text = item.Name, TextSize = 12, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		local state = label({ Position = UDim2.fromOffset(10, 20), Size = UDim2.new(1, -16, 0, 16), Text = "", TextSize = 12,
 			Font = F.Display }, card)
 		card.MouseEnter:Connect(function()
@@ -308,27 +308,25 @@ local function buildLeft()
 end
 
 local function buildRight()
-	roleTag = UITheme.Tag({ Position = UDim2.fromOffset(RIGHT_X, 124), Text = "", TextSize = 13 }, canvas)
-	infoName = label({ Position = UDim2.fromOffset(RIGHT_X, 150), Size = UDim2.fromOffset(RIGHT_W, 58), Text = "", TextSize = 52,
+	roleTag = UITheme.Tag({ Position = UDim2.fromOffset(RIGHT_X, 124), Text = "", TextSize = 12, BackgroundColor3 = C.Secondary,
+		TextColor3 = C.Primary }, canvas)
+	infoName = label({ Position = UDim2.fromOffset(RIGHT_X, 150), Size = UDim2.fromOffset(RIGHT_W, 58), Text = "", TextSize = 58,
 		Font = F.Display }, canvas)
-	UITheme.Outline(infoName, 4)
+	UITheme.Outline(infoName, 1)
 	infoText = label({ Position = UDim2.fromOffset(RIGHT_X, 210), Size = UDim2.fromOffset(RIGHT_W, 36), Text = "", TextSize = 13,
 		Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, canvas)
 
 	-- Werte: je 10 Segmente (wie im Design)
 	local stats = UITheme.Card({ Name = "Stats", Position = UDim2.fromOffset(RIGHT_X, 254), Size = UDim2.fromOffset(RIGHT_W, 104) }, canvas)
 	statBars = {}
-	for i, entry in { { "Health", "♥", "LEBEN" }, { "Speed", "➶", "TEMPO" }, { "Utility", "⚡", "FÄHIGK." } } do
+	for i, entry in { { "Health", "LEBEN" }, { "Speed", "TEMPO" }, { "Utility", "FÄHIGKEIT" } } do
 		local y = 14 + (i - 1) * 28
-		label({ Position = UDim2.fromOffset(14, y), Size = UDim2.fromOffset(18, 20), Text = entry[2], TextSize = 14,
+		label({ Position = UDim2.fromOffset(16, y), Size = UDim2.fromOffset(86, 20), Text = entry[2], TextSize = 11, Font = F.Bold,
 			TextColor3 = C.Muted, ZIndex = 3 }, stats)
-		label({ Position = UDim2.fromOffset(36, y), Size = UDim2.fromOffset(70, 20), Text = entry[3], TextSize = 11, Font = F.Display,
-			ZIndex = 3 }, stats)
 		local segments = {}
 		for s = 1, 10 do
-			local segment = make("Frame", { Position = UDim2.fromOffset(106 + (s - 1) * 16, y + 4), Size = UDim2.fromOffset(13, 12),
+			local segment = make("Frame", { Position = UDim2.fromOffset(106 + (s - 1) * 16, y + 7), Size = UDim2.fromOffset(14, 6),
 				BackgroundColor3 = C.Background, BorderSizePixel = 0, ZIndex = 3 }, stats)
-			UITheme.Corner(segment, 3)
 			table.insert(segments, segment)
 		end
 		local value = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, y), Size = UDim2.fromOffset(40, 20),
@@ -345,8 +343,8 @@ local function buildRight()
 		local key = label({ Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(38, 38), Text = "", TextSize = 16,
 			Font = F.Display, TextColor3 = C.Primary, BackgroundTransparency = 0, BackgroundColor3 = C.Background,
 			TextXAlignment = Enum.TextXAlignment.Center }, row)
-		UITheme.Corner(key, UITheme.Radius.Medium)
-		UITheme.Stroke(key, C.Primary, 2)
+		UITheme.Corner(key, UITheme.Radius.Small)
+		UITheme.Stroke(key, C.Primary, 1)
 		local name = label({ Position = UDim2.fromOffset(62, 8), Size = UDim2.new(1, -72, 0, 18), Text = "", TextSize = 13,
 			RichText = true, TextTruncate = Enum.TextTruncate.AtEnd }, row)
 		local text = label({ Position = UDim2.fromOffset(62, 26), Size = UDim2.new(1, -72, 0, 30), Text = "", TextSize = 11,
@@ -357,12 +355,9 @@ local function buildRight()
 	-- Agenten-Level
 	infoLevel = label({ Position = UDim2.fromOffset(RIGHT_X, 588), Size = UDim2.fromOffset(RIGHT_W, 18), Text = "", TextSize = 12,
 		Font = F.Display, TextColor3 = C.Gold }, canvas)
-	local barBack = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 610), Size = UDim2.fromOffset(RIGHT_W, 10),
+	local barBack = make("Frame", { Position = UDim2.fromOffset(RIGHT_X, 612), Size = UDim2.fromOffset(RIGHT_W, 4),
 		BackgroundColor3 = C.Background, BorderSizePixel = 0 }, canvas)
-	UITheme.Corner(barBack, 5)
-	UITheme.Stroke(barBack, C.Border, 2)
 	infoBar = make("Frame", { Size = UDim2.fromScale(0, 1), BorderSizePixel = 0 }, barBack)
-	UITheme.Corner(infoBar, 5)
 
 	-- Rückmeldungen (Kaufen, Beschreibung der Ausrüstung)
 	buyStatus = label({ Position = UDim2.fromOffset(RIGHT_X, 640), Size = UDim2.fromOffset(RIGHT_W, 60), Text = "", TextSize = 13,
@@ -381,7 +376,7 @@ local function buildBottom()
 		VerticalAlignment = Enum.VerticalAlignment.Bottom, SortOrder = Enum.SortOrder.LayoutOrder }, roster)
 	for i, agent in AgentConfig.Agents do
 		local chunky = UITheme.Chunky({ Size = UDim2.fromOffset(TILE, TILE), LayoutOrder = i, Color = C.Card, StrokeColor = C.Border,
-			StrokeThickness = 3, Text = "", Radius = UITheme.Radius.Large }, roster)
+			Text = "" }, roster)
 		local face = chunky.Face
 		face.ClipsDescendants = true
 		local portrait = HUDIcons.Portrait(face, TILE)
@@ -393,10 +388,10 @@ local function buildBottom()
 		local level = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.fromOffset(18, 14),
 			Text = "", TextSize = 10, Font = F.Display, TextColor3 = C.PrimaryText, BackgroundTransparency = 0,
 			BackgroundColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Center }, face)
-		UITheme.Corner(level, 4)
-		-- Schloss mit Preis für noch nicht freigeschaltete Agenten
-		local lock = label({ Size = UDim2.new(1, 0, 1, -15), Text = "🔒\n" .. UITheme.FormatNumber(agent.Price or 0), TextSize = 12,
-			Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center, BackgroundTransparency = 0.3,
+		UITheme.Corner(level, UITheme.Radius.Small)
+		-- "GESPERRT" mit Preis für noch nicht freigeschaltete Agenten
+		local lock = label({ Size = UDim2.new(1, 0, 1, -15), Text = "GESPERRT\n" .. UITheme.FormatNumber(agent.Price or 0), TextSize = 10,
+			Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, BackgroundTransparency = 0.3,
 			BackgroundColor3 = C.Background, Visible = false }, face)
 		chunky.Button.MouseEnter:Connect(function()
 			hoverAgent = agent
@@ -417,8 +412,7 @@ local function buildBottom()
 	end
 
 	confirm = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromOffset(confirmW, TILE),
-		Color = C.Primary, StrokeColor = C.Background, StrokeThickness = 4, Text = "BESTÄTIGEN", TextSize = 24,
-		TextColor = C.PrimaryText, Radius = UITheme.Radius.XXL }, row, function()
+		Color = C.Primary, Text = "BESTÄTIGEN", TextSize = 28, TextColor = C.PrimaryText }, row, function()
 		if not isLocked() then
 			Remotes.SelectAgent:FireServer(myAgent().Id, true)
 		end
@@ -434,7 +428,7 @@ end
 local function build()
 	gui = make("ScreenGui", { Name = "AgentSelect", ResetOnSpawn = false, IgnoreGuiInset = true,
 		DisplayOrder = 5, Enabled = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
-	local background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(3, 5, 12),
+	local background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(5, 6, 8),
 		BorderSizePixel = 0, Active = true }, gui)
 	-- Hangar des Raumschiffs (3D) als Hintergrund, der Agent steht darin
 	scene = HangarScene.new(background)
@@ -550,7 +544,7 @@ local function updateWeapons(agent)
 		if weapon then
 			local selected = weapon == chosen
 			card.Stroke.Color = selected and C.Primary or (hoverWeapon == weapon and C.Muted or C.Border)
-			card.Stroke.Thickness = selected and 3 or 2
+			card.Stroke.Thickness = selected and 2 or 1
 			card.Tag.Text = selected and "✓ GEWÄHLT" or "WÄHLEN"
 			card.Tag.TextColor3 = selected and C.Primary or C.Muted
 		end
@@ -586,7 +580,7 @@ local function refreshTiles()
 	for agent, entry in tiles do
 		local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
 		local active = agent == chosen
-		entry.Chunky.SetStroke(active and C.Primary or (hoverAgent == agent and C.Muted or C.Border), active and 4 or 3)
+		entry.Chunky.SetStroke(active and C.Primary or (hoverAgent == agent and C.Muted or C.Border), active and 2 or 1)
 		entry.Level.Text = tostring(AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agent.Id)))
 		entry.Lock.Visible = not unlocked
 		entry.Portrait.Frame.ImageTransparency = unlocked and 0 or 0.55

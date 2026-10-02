@@ -9,8 +9,8 @@ return TeamRoundMode.new({
 	MapName = "Arena",
 	TeamSize = 1,
 	Teams = {
-		{ Name = "Links", Color = BrickColor.new("Lavender") },
-		{ Name = "Rechts", Color = BrickColor.new("Pastel blue") },
+		{ Name = "Links", Color = BrickColor.new("Rust") },
+		{ Name = "Rechts", Color = BrickColor.new("Sand blue") },
 	},
 	DropIn = false,
 	RoundsSetting = "ArenaRoundsToWin",

@@ -150,9 +150,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "Fabric",
       "TopSurface": "Smooth",
@@ -196,9 +196,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.8235,
-       0.902
+       0.8314,
+       0.6667,
+       0.3137
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -243,9 +243,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.8235,
-       0.902
+       0.8314,
+       0.6667,
+       0.3137
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -290,9 +290,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.8235,
-       0.902
+       0.8314,
+       0.6667,
+       0.3137
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -337,9 +337,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -475,7 +475,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -522,9 +522,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -569,9 +569,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -616,9 +616,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -663,9 +663,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -6312,9 +6312,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6361,11 +6361,11 @@
           "BackgroundTransparency": 1,
           "Text": "SHOOTOUT",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.1569,
-           0.8235,
-           0.902
+           0.8314,
+           0.6667,
+           0.3137
           ]
          }
         },
@@ -6402,9 +6402,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -6437,9 +6437,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.1569,
-           0.8235,
-           0.902
+           0.8314,
+           0.6667,
+           0.3137
           ],
           "BorderSizePixel": 0
          }
@@ -6455,9 +6455,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.1569,
-         0.8235,
-         0.902
+         0.8314,
+         0.6667,
+         0.3137
         ]
        }
       }
@@ -6638,9 +6638,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.8235,
-       0.902
+       0.8314,
+       0.6667,
+       0.3137
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -6884,9 +6884,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -6919,11 +6919,11 @@
           "BackgroundTransparency": 1,
           "Text": "TACTICAL OPERATIONS",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.1569,
-           0.8235,
-           0.902
+           0.8314,
+           0.6667,
+           0.3137
           ]
          }
         }
@@ -6968,9 +6968,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -7426,9 +7426,9 @@
        }
       },
       "Color": [
-       0.9804,
-       0.8039,
-       0.2745
+       0.8314,
+       0.6902,
+       0.3765
       ],
       "Material": "Metal",
       "TopSurface": "Smooth",
@@ -7472,9 +7472,9 @@
        }
       },
       "Color": [
-       0.9804,
-       0.8039,
-       0.2745
+       0.8314,
+       0.6902,
+       0.3765
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -7553,11 +7553,11 @@
           "BackgroundTransparency": 1,
           "Text": "1",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.9804,
-           0.8039,
-           0.2745
+           0.8314,
+           0.6902,
+           0.3765
           ]
          }
         }
@@ -7775,7 +7775,7 @@
           "BackgroundTransparency": 1,
           "Text": "2",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
            0.7843,
            0.8039,
@@ -7997,7 +7997,7 @@
           "BackgroundTransparency": 1,
           "Text": "3",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
            0.8039,
            0.5098,
@@ -8046,9 +8046,9 @@
        }
       },
       "Color": [
-       0.9804,
-       0.8039,
-       0.2745
+       0.8314,
+       0.6902,
+       0.3765
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8110,9 +8110,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8159,11 +8159,11 @@
           "BackgroundTransparency": 1,
           "Text": "TOP 3 \u00b7 ELO",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.9804,
-           0.8039,
-           0.2745
+           0.8314,
+           0.6902,
+           0.3765
           ]
          }
         },
@@ -8200,9 +8200,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -8235,9 +8235,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.9804,
-           0.8039,
-           0.2745
+           0.8314,
+           0.6902,
+           0.3765
           ],
           "BorderSizePixel": 0
          }
@@ -8253,9 +8253,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.9804,
-         0.8039,
-         0.2745
+         0.8314,
+         0.6902,
+         0.3765
         ]
        }
       }
@@ -8344,9 +8344,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8390,9 +8390,9 @@
        }
       },
       "Color": [
-       0.9804,
-       0.8039,
-       0.2745
+       0.8314,
+       0.6902,
+       0.3765
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8482,9 +8482,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8528,9 +8528,9 @@
        }
       },
       "Color": [
-       0.902,
-       0.2353,
-       0.2745
+       0.8078,
+       0.2745,
+       0.2275
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8620,9 +8620,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8666,9 +8666,9 @@
        }
       },
       "Color": [
-       0.1569,
-       0.8235,
-       0.902
+       0.3765,
+       0.6431,
+       0.8392
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8758,9 +8758,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8804,9 +8804,9 @@
        }
       },
       "Color": [
-       0.3529,
-       0.8627,
-       0.4314
+       0.4392,
+       0.698,
+       0.4392
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -8850,9 +8850,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -8899,11 +8899,11 @@
           "BackgroundTransparency": 1,
           "Text": "RUHMESHALLE",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.9804,
-           0.8039,
-           0.2745
+           0.8314,
+           0.6902,
+           0.3765
           ]
          }
         },
@@ -8940,9 +8940,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -8975,9 +8975,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.9804,
-           0.8039,
-           0.2745
+           0.8314,
+           0.6902,
+           0.3765
           ],
           "BorderSizePixel": 0
          }
@@ -8993,9 +8993,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.9804,
-         0.8039,
-         0.2745
+         0.8314,
+         0.6902,
+         0.3765
         ]
        }
       }
@@ -9084,7 +9084,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -9176,7 +9176,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -9268,7 +9268,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -9314,7 +9314,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -9332,7 +9332,7 @@
         "Range": 22,
         "Brightness": 2.2,
         "Color": [
-         1.0,
+         0.7843,
          0.4314,
          0.2745
         ]
@@ -9377,9 +9377,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9426,9 +9426,9 @@
           "BackgroundTransparency": 1,
           "Text": "FREE-FOR-ALL",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           1.0,
+           0.7843,
            0.4314,
            0.2745
           ]
@@ -9467,9 +9467,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -9502,7 +9502,7 @@
            ]
           },
           "BackgroundColor3": [
-           1.0,
+           0.7843,
            0.4314,
            0.2745
           ],
@@ -9520,7 +9520,7 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         1.0,
+         0.7843,
          0.4314,
          0.2745
         ]
@@ -9565,9 +9565,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9657,9 +9657,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -9749,9 +9749,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -9841,9 +9841,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -9887,9 +9887,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "ForceField",
       "TopSurface": "Smooth",
@@ -9905,9 +9905,9 @@
         "Range": 22,
         "Brightness": 2.2,
         "Color": [
-         0.3137,
-         0.6275,
-         1.0
+         0.3529,
+         0.549,
+         0.7451
         ]
        }
       }
@@ -9950,9 +9950,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -9999,11 +9999,11 @@
           "BackgroundTransparency": 1,
           "Text": "HERRSCHAFT",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.3137,
-           0.6275,
-           1.0
+           0.3529,
+           0.549,
+           0.7451
           ]
          }
         },
@@ -10040,9 +10040,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -10075,9 +10075,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.3137,
-           0.6275,
-           1.0
+           0.3529,
+           0.549,
+           0.7451
           ],
           "BorderSizePixel": 0
          }
@@ -10093,9 +10093,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.3137,
-         0.6275,
-         1.0
+         0.3529,
+         0.549,
+         0.7451
         ]
        }
       }
@@ -10138,9 +10138,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -10230,9 +10230,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -10322,9 +10322,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -10414,9 +10414,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -10460,9 +10460,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "ForceField",
       "TopSurface": "Smooth",
@@ -10478,9 +10478,9 @@
         "Range": 22,
         "Brightness": 2.2,
         "Color": [
-         0.7843,
-         0.8235,
-         0.8627
+         0.7059,
+         0.7216,
+         0.7451
         ]
        }
       }
@@ -10523,9 +10523,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -10572,11 +10572,11 @@
           "BackgroundTransparency": 1,
           "Text": "TRAINING",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.7843,
-           0.8235,
-           0.8627
+           0.7059,
+           0.7216,
+           0.7451
           ]
          }
         },
@@ -10613,9 +10613,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -10648,9 +10648,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.7843,
-           0.8235,
-           0.8627
+           0.7059,
+           0.7216,
+           0.7451
           ],
           "BorderSizePixel": 0
          }
@@ -10666,9 +10666,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.7843,
-         0.8235,
-         0.8627
+         0.7059,
+         0.7216,
+         0.7451
         ]
        }
       }
@@ -10711,9 +10711,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -10803,9 +10803,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -10895,9 +10895,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -10987,9 +10987,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -11033,9 +11033,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "ForceField",
       "TopSurface": "Smooth",
@@ -11051,9 +11051,9 @@
         "Range": 22,
         "Brightness": 2.2,
         "Color": [
-         0.6667,
-         0.4314,
-         1.0
+         0.4706,
+         0.5882,
+         0.4314
         ]
        }
       }
@@ -11096,9 +11096,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -11145,11 +11145,11 @@
           "BackgroundTransparency": 1,
           "Text": "WINGMAN",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.6667,
-           0.4314,
-           1.0
+           0.4706,
+           0.5882,
+           0.4314
           ]
          }
         },
@@ -11186,9 +11186,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -11221,9 +11221,9 @@
            ]
           },
           "BackgroundColor3": [
-           0.6667,
-           0.4314,
-           1.0
+           0.4706,
+           0.5882,
+           0.4314
           ],
           "BorderSizePixel": 0
          }
@@ -11239,9 +11239,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         0.6667,
-         0.4314,
-         1.0
+         0.4706,
+         0.5882,
+         0.4314
         ]
        }
       }
@@ -11284,9 +11284,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -11376,9 +11376,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -11468,9 +11468,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -11560,9 +11560,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -11606,9 +11606,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "ForceField",
       "TopSurface": "Smooth",
@@ -11624,9 +11624,9 @@
         "Range": 22,
         "Brightness": 2.2,
         "Color": [
-         1.0,
-         0.3922,
-         0.7059
+         0.7059,
+         0.3137,
+         0.2745
         ]
        }
       }
@@ -11669,9 +11669,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -11718,11 +11718,11 @@
           "BackgroundTransparency": 1,
           "Text": "1v1 ARENA",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           1.0,
-           0.3922,
-           0.7059
+           0.7059,
+           0.3137,
+           0.2745
           ]
          }
         },
@@ -11759,9 +11759,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -11794,9 +11794,9 @@
            ]
           },
           "BackgroundColor3": [
-           1.0,
-           0.3922,
-           0.7059
+           0.7059,
+           0.3137,
+           0.2745
           ],
           "BorderSizePixel": 0
          }
@@ -11812,9 +11812,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         1.0,
-         0.3922,
-         0.7059
+         0.7059,
+         0.3137,
+         0.2745
         ]
        }
       }
@@ -11857,9 +11857,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -11903,9 +11903,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -11950,13 +11950,13 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "\u2694 DUELS",
+          "Text": "DUELS",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           1.0,
-           0.3922,
-           0.7059
+           0.8314,
+           0.6667,
+           0.3137
           ]
          }
         },
@@ -11993,9 +11993,9 @@
           "TextScaled": true,
           "Font": "GothamBold",
           "TextColor3": [
-           0.9216,
-           0.949,
-           0.9725
+           0.8941,
+           0.9059,
+           0.9216
           ]
          }
         },
@@ -12028,9 +12028,9 @@
            ]
           },
           "BackgroundColor3": [
-           1.0,
-           0.3922,
-           0.7059
+           0.8314,
+           0.6667,
+           0.3137
           ],
           "BorderSizePixel": 0
          }
@@ -12046,9 +12046,9 @@
         "Brightness": 1.2,
         "Angle": 80,
         "Color": [
-         1.0,
-         0.3922,
-         0.7059
+         0.8314,
+         0.6667,
+         0.3137
         ]
        }
       }
@@ -13701,9 +13701,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -13734,13 +13734,13 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "\u25c6 BRIEFING",
+          "Text": "BRIEFING",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.1569,
-           0.8235,
-           0.902
+           0.8314,
+           0.6667,
+           0.3137
           ]
          }
         }
@@ -13831,9 +13831,9 @@
        }
       },
       "Color": [
-       0.0549,
+       0.0784,
        0.0863,
-       0.1412
+       0.102
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -13864,13 +13864,13 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "\u25c6 BRIEFING",
+          "Text": "BRIEFING",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
-           0.1569,
-           0.8235,
-           0.902
+           0.8314,
+           0.6667,
+           0.3137
           ]
          }
         }
@@ -17170,9 +17170,9 @@
        }
       },
       "Color": [
-       0.9804,
-       0.8039,
-       0.2745
+       0.8314,
+       0.6902,
+       0.3765
       ],
       "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
@@ -17323,7 +17323,7 @@
        }
       },
       "Color": [
-       1.0,
+       0.7843,
        0.4314,
        0.2745
       ],
@@ -17371,9 +17371,9 @@
        }
       },
       "Color": [
-       0.3137,
-       0.6275,
-       1.0
+       0.3529,
+       0.549,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -17419,9 +17419,9 @@
        }
       },
       "Color": [
-       0.7843,
-       0.8235,
-       0.8627
+       0.7059,
+       0.7216,
+       0.7451
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -17467,9 +17467,9 @@
        }
       },
       "Color": [
-       0.6667,
-       0.4314,
-       1.0
+       0.4706,
+       0.5882,
+       0.4314
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",
@@ -17515,9 +17515,9 @@
        }
       },
       "Color": [
-       1.0,
-       0.3922,
-       0.7059
+       0.7059,
+       0.3137,
+       0.2745
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",

@@ -10,8 +10,8 @@ return TeamRoundMode.new({
 	Maps = { "Wingman", "Hochhaus", "Gletscher", "Zellenblock", "Kanaele", "Windmuehlen" },
 	TeamSize = 2,
 	Teams = {
-		{ Name = "Alpha", Color = BrickColor.new("Sea green") },
-		{ Name = "Bravo", Color = BrickColor.new("Bright yellow") },
+		{ Name = "Alpha", Color = BrickColor.new("Earth green") },
+		{ Name = "Bravo", Color = BrickColor.new("Fawn brown") },
 	},
 	DropIn = false,
 	WingsuitStart = 120, -- Fallschirmsprung zu Rundenbeginn

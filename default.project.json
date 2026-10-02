@@ -92,28 +92,28 @@
       "Bloom": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.6,
-          "Size": 28,
-          "Threshold": 1.1
+          "Intensity": 0.3,
+          "Size": 24,
+          "Threshold": 1.6
         }
       },
       "ColorCorrection": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Saturation": 0.12,
-          "Contrast": 0.08,
+          "Saturation": -0.08,
+          "Contrast": 0.12,
           "TintColor": [
             1,
-            0.97,
-            0.94
+            0.98,
+            0.95
           ]
         }
       },
       "SunRays": {
         "$className": "SunRaysEffect",
         "$properties": {
-          "Intensity": 0.06,
-          "Spread": 0.7
+          "Intensity": 0.05,
+          "Spread": 0.6
         }
       }
     }

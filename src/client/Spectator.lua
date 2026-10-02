@@ -1,7 +1,7 @@
 -- Spectator (ModuleScript, nur Client)
 -- Nur im Drop-Modus: Wer tot ist (oder mitten in der Runde beitritt), schaut einem
 -- lebenden Teammitglied zu (auch Bot-Teamkollegen). Mit E/Q wechseln. Ohne Teammitglied: Blick von oben auf die Map.
--- Außerdem bekommen Teammitglieder einen Umriss in Teamfarbe.
+-- Außerdem bekommen Teammitglieder einen Umriss in Verbündeten-Blau (wie im HUD).
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,6 +12,7 @@ local Movement = require(Shared.Movement)
 local HUD = require(Shared.HUD)
 local Modes = require(Shared.Modes)
 local InputActions = require(Shared.InputActions)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -144,13 +145,13 @@ local function setOutline(character, isMate, color)
 	end
 end
 
--- Umriss in Teamfarbe für Teammitglieder und Bot-Teammitglieder (sichtbar durch Wände)
+-- Umriss in Verbündeten-Blau für Teammitglieder und Bot-Teammitglieder (sichtbar durch Wände)
 local function updateHighlights()
 	local botFolder = workspace:FindFirstChild("Bots")
 	if botFolder then
 		for _, model in botFolder:GetChildren() do
 			local isMate = player.Team ~= nil and model:GetAttribute("TeamName") == player.Team.Name
-			setOutline(model, isMate, player.Team and player.TeamColor.Color or Color3.new(1, 1, 1))
+			setOutline(model, isMate, UITheme.Colors.Ally)
 		end
 	end
 	for _, p in Players:GetPlayers() do
@@ -162,7 +163,7 @@ local function updateHighlights()
 				highlight = Instance.new("Highlight")
 				highlight.Name = "TeamHighlight"
 				highlight.FillTransparency = 1
-				highlight.OutlineColor = p.TeamColor.Color
+				highlight.OutlineColor = UITheme.Colors.Ally
 				highlight.Parent = character
 			elseif not isMate and highlight then
 				highlight:Destroy()

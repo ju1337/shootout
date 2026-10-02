@@ -180,7 +180,7 @@ class Builder:
                 "BackgroundTransparency": 1,
                 "Text": text,
                 "TextScaled": True,
-                "Font": "GothamBlack",
+                "Font": "Oswald",
                 "TextColor3": rgb(*fg),
             },
         }
@@ -311,7 +311,7 @@ class Builder:
             "BackgroundColor3": rgb(*fg), "BorderSizePixel": 0}}
         gui = {"Name": "SignGui", "ClassName": "SurfaceGui",
                "Properties": {"Face": "Front", "LightInfluence": 0, "Brightness": 1.5},
-               "Children": [text("Title", 0.06, 0.58, title, fg, "GothamBlack"),
+               "Children": [text("Title", 0.06, 0.58, title, fg, "Oswald"),
                             text("Subtitle", 0.64, 0.26, subtitle, sub_fg, "GothamBold"), bar]}
         children = [gui]
         if glow:
@@ -720,18 +720,18 @@ def build_training():
 
 def build_arena():
     b = Builder(ARENA_ORIGIN)
-    b.ground(100, 80, (55, 50, 70), "SmoothPlastic")
-    b.border(90, 70, 12, (90, 60, 140), "SmoothPlastic", barrier=60)
-    b.add("Ground", "CenterRing", (0.2, 16, 16), (0, 0.1, 0), (170, 100, 255), "Neon",
-          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.5, "CanCollide": False})
+    b.ground(100, 80, (92, 90, 86), "Concrete")
+    b.border(90, 70, 12, (108, 106, 100), "Concrete", barrier=60)
+    b.add("Ground", "CenterRing", (0.2, 16, 16), (0, 0.1, 0), (196, 186, 160), "SmoothPlastic",
+          angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.55, "CanCollide": False})
     for side, group in ((-1, "SpawnsA"), (1, "SpawnsB")):
         b.spawn(side * 38, 0, yaw=90 * side, group=group)
         # Deckung gespiegelt
-        b.cover_wall(side * 22, side * 12, 10, along_x=False, height=5, color=(120, 90, 170))
-        b.cover_wall(side * 10, side * -18, 12, height=5, color=(120, 90, 170))
+        b.cover_wall(side * 22, side * 12, 10, along_x=False, height=5, color=(124, 122, 116))
+        b.cover_wall(side * 10, side * -18, 12, height=5, color=(124, 122, 116))
         b.crate(side * 30, side * -20)
         b.crate(side * 30, side * 20, s=4)
-        b.box("Cover", "Pillar", (4, 10, 4), (side * 8, 5, side * 8), (150, 120, 200), "Marble")
+        b.box("Cover", "Pillar", (4, 10, 4), (side * 8, 5, side * 8), (132, 130, 124), "Concrete")
     b.save("Arena.model.json")
 
 
@@ -1088,15 +1088,15 @@ def build_hightower(origin, filename):
 # (Id, Titel, Unterzeile, Farbe)
 # Westen: normale Modi, Osten: Kategorie DUELS (mit eigenem Banner)
 HUB_GATES_WEST = (
-    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (255, 110, 70), -30),
-    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (80, 160, 255), 6),
-    ("Training", "TRAINING", "SCHIESSSTAND", (200, 210, 220), 42),
+    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (200, 110, 70), -30),
+    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (90, 140, 190), 6),
+    ("Training", "TRAINING", "SCHIESSSTAND", (180, 184, 190), 42),
 )
 HUB_GATES_EAST = (
-    ("Wingman", "WINGMAN", "DUELS · 2v2", (170, 110, 255), -12),
-    ("Arena", "1v1 ARENA", "DUELS · 1v1", (255, 100, 180), 24),
+    ("Wingman", "WINGMAN", "DUELS · 2v2", (120, 150, 110), -12),
+    ("Arena", "1v1 ARENA", "DUELS · 1v1", (180, 80, 70), 24),
 )
-CYAN = (40, 210, 230)
+AMBER = (212, 170, 80)  # Signalfarbe des Hubs (wie im UI)
 
 
 def build_lobby():
@@ -1107,7 +1107,7 @@ def build_lobby():
     floor = (26, 28, 34)
     steel = (40, 43, 50)
     wall = (30, 33, 40)
-    navy = (14, 22, 36)
+    navy = (20, 22, 26)  # Graphit für Schilder und Teppich
 
     # Außen: Vorfeld und Rollfeld
     b.ground(300, 380, (62, 64, 68), "Asphalt")
@@ -1117,12 +1117,12 @@ def build_lobby():
     W, D0, D1, H = 75, -60, 75, 36
     zc = (D0 + D1) / 2
     b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Slate")
-    # Teppich-Laufsteg vom Spawn zur Bühne, Ränder in Cyan
+    # Teppich-Laufsteg vom Spawn zur Bühne, Lichtleisten am Rand
     b.box("Ground", "Runner", (12, 0.06, 64), (0, 0.23, -26), navy, "Fabric")
     for x in (-6.2, 6.2):
-        b.box("Ground", "RunnerEdge", (0.5, 0.08, 64), (x, 0.24, -26), CYAN, "Neon", props={"Transparency": 0.2})
+        b.box("Ground", "RunnerEdge", (0.5, 0.08, 64), (x, 0.24, -26), AMBER, "Neon", props={"Transparency": 0.2})
     # Team-Raute in der Mitte
-    b.box("Ground", "EmblemOuter", (18, 0.06, 18), (0, 0.25, 0), CYAN, "Neon", angles=(0, 45, 0), props={"Transparency": 0.3})
+    b.box("Ground", "EmblemOuter", (18, 0.06, 18), (0, 0.25, 0), AMBER, "Neon", angles=(0, 45, 0), props={"Transparency": 0.3})
     b.box("Ground", "EmblemInner", (14, 0.08, 14), (0, 0.27, 0), navy, "SmoothPlastic", angles=(0, 45, 0))
 
     # Wände: Süd geschlossen, Nord mit großem Hallentor
@@ -1152,7 +1152,7 @@ def build_lobby():
         b.box("Walls", "Beam", (1.2, 1.6, D1 - D0), (x, H - 3.4, zc), steel, "Metal")
     # Großes Banner unter dem Dach (zum Spawn gerichtet)
     b.sign2("Banner", (56, 11, 0.6), (0, 27, -6), "SHOOTOUT", "WÄHLE DEINEN EINSATZ  ·  LAUF DURCH EIN TOR",
-            navy, CYAN, (235, 242, 248), glow=CYAN)
+            navy, AMBER, (228, 231, 235), glow=AMBER)
     for x in (-24, 24):
         b.box("Decor", "BannerCable", (0.3, 4, 0.3), (x, 34.5, -6), (40, 40, 45), "Metal")
 
@@ -1161,16 +1161,16 @@ def build_lobby():
 
     # ---------- Lineup-Bühne mit Spotlights und Bildschirm ----------
     b.box("Decor", "Stage", (40, 1.2, 10), (0, 0.6, 18), (30, 34, 42), "DiamondPlate")
-    b.box("Decor", "StageEdge", (40, 0.2, 0.4), (0, 1.25, 13), CYAN, "Neon")
+    b.box("Decor", "StageEdge", (40, 0.2, 0.4), (0, 1.25, 13), AMBER, "Neon")
     for x in (-15, -5, 5, 15):
         b.add("Decor", "Spotlight", (H - 4, 4, 4), (x, (H - 4) / 2 + 1, 18), (255, 250, 235), "Neon", angles=(0, 0, 90),
               props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
-    b.sign("BriefingScreen", (34, 10, 0.6), (0, 14, 26), "TACTICAL OPERATIONS", navy, CYAN)
+    b.sign("BriefingScreen", (34, 10, 0.6), (0, 14, 26), "TACTICAL OPERATIONS", navy, AMBER)
     # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
     b.box("Decor", "MissionBoard", (26, 12, 0.6), (0, 24, D0 + 0.4), navy, "SmoothPlastic", angles=(0, 180, 0))
 
     # ---------- Ruhmeshalle: eigener Raum hinter der Südwand (Bestenlisten + Siegertreppchen) ----------
-    gold = (250, 205, 70)
+    gold = (212, 176, 96)
     R0, RW, RH = D0 - 46, 36, 22  # Raum: z R0..D0, x -RW..RW, Höhe RH
     rz = (R0 + D0) / 2
     b.box("Ground", "FameFloor", (2 * RW, 0.2, D0 - R0), (0, 0.1, rz), (20, 22, 28), "Marble")
@@ -1198,10 +1198,10 @@ def build_lobby():
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
               "Range": 20, "Brightness": 1.5, "Color": rgb(255, 220, 140)}}])
     b.sign2("PodiumTitle", (24, 5, 0.4), (0, 15, R0 + 3), "TOP 3 · ELO", "DIE BESTEN SPIELER DER SAISON",
-            navy, gold, (235, 242, 248), angles=(0, 180, 0), glow=gold)
+            navy, gold, (228, 231, 235), angles=(0, 180, 0), glow=gold)
     # Bestenlisten an den Seitenwänden (je zwei, zur Raummitte gerichtet)
-    for x, yaw, inward, boards in ((-RW + 0.4, -90, 1, (("Elo", gold, R0 + 32), ("Kills", (230, 60, 70), R0 + 12))),
-                                   (RW - 0.4, 90, -1, (("Level", CYAN, R0 + 32), ("Wins", (90, 220, 110), R0 + 12)))):
+    for x, yaw, inward, boards in ((-RW + 0.4, -90, 1, (("Elo", gold, R0 + 32), ("Kills", (206, 70, 58), R0 + 12))),
+                                   (RW - 0.4, 90, -1, (("Level", (96, 164, 214), R0 + 32), ("Wins", (112, 178, 112), R0 + 12)))):
         for board, color, z in boards:
             b.box("Decor", "LeaderboardFrame", (19, 15, 0.4), (x, 10, z), (30, 34, 42), "Metal", angles=(0, yaw, 0))
             b.box("Decor", "Leaderboard_" + board, (18, 14, 0.6), (x + inward * 0.5, 10, z), navy, "SmoothPlastic",
@@ -1210,7 +1210,7 @@ def build_lobby():
                   angles=(0, yaw, 0))
     # Durchgang in der Südwand der Haupthalle mit Schild
     b.sign2("FameSign", (22, 4, 0.4), (0, 16, D0 + 0.6), "RUHMESHALLE", "BESTENLISTEN · TOP 3",
-            navy, gold, (235, 242, 248), angles=(0, 180, 0), glow=gold)
+            navy, gold, (228, 231, 235), angles=(0, 180, 0), glow=gold)
 
     # ---------- Einsatz-Tore: groß, farbig, mit Schild und Spielerzahl ----------
     def gate(x, z, yaw, inward, mode_id, title, subtitle, color):
@@ -1227,7 +1227,7 @@ def build_lobby():
                          "Properties": {"Range": 22, "Brightness": 2.2, "Color": rgb(*color)}}])
         # Großes Schild über dem Tor
         b.sign2("Sign_" + mode_id, (24, 7, 0.5), (x + inward * 1.2, gh + 7.2, z), title, subtitle,
-                navy, color, (235, 242, 248), angles=(0, yaw, 0), glow=color)
+                navy, color, (228, 231, 235), angles=(0, yaw, 0), glow=color)
         # Spielerzahl (füllt der Client)
         b.box("Decor", "GateCount_" + mode_id, (12, 2.2, 0.4), (x + inward * 1.2, gh + 2.4, z), navy, "SmoothPlastic",
               angles=(0, yaw, 0))
@@ -1242,8 +1242,8 @@ def build_lobby():
     for mode_id, title, sub, color, z in HUB_GATES_EAST:
         gate(W - 0.6, z, 90, -1, mode_id, title, sub, color)
     # Kategorie-Banner über den Duell-Toren
-    b.sign2("DuelsBanner", (44, 5, 0.5), (W - 1.4, 33.3, 6), "⚔ DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
-            navy, (255, 100, 180), (235, 242, 248), angles=(0, 90, 0), glow=(255, 100, 180))
+    b.sign2("DuelsBanner", (44, 5, 0.5), (W - 1.4, 33.3, 6), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
+            navy, AMBER, (228, 231, 235), angles=(0, 90, 0), glow=AMBER)
 
     # ---------- Ausstattung: Spinde, Waffenregale, Werkbänke, Kisten ----------
     for x in range(-44, 45, 5):
@@ -1257,7 +1257,7 @@ def build_lobby():
                   angles=(0, 0, 8))
     for x, z in ((-52, 68), (52, 68)):
         b.box("Decor", "Workbench", (12, 3.2, 5), (x, 1.6, z), (80, 70, 60), "WoodPlanks")
-        b.sign("Monitor", (5, 3, 0.3), (x, 5.2, z - 2.2), "◆ BRIEFING", navy, CYAN)
+        b.sign("Monitor", (5, 3, 0.3), (x, 5.2, z - 2.2), "BRIEFING", navy, AMBER)
     for x, z, size in ((-64, 70, 5), (-64, 65, 4), (64, 70, 5), (64, 65, 4)):
         b.crate(x, z, s=size, color=(110, 95, 70))
 

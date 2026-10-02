@@ -1,11 +1,9 @@
 -- AbilityClient (ModuleScript, nur Client)
--- Fähigkeit (Q / L1) und Gadget (G / R1) auslösen und unten mittig als klobige Knöpfe anzeigen (Design
--- "BLOCKOPS"): Taste groß in der Mitte, Name darunter, gelber Rand = bereit. Abklingzeit: dunkle Abdeckung
--- von unten (schrumpft, bis die Fähigkeit wieder bereit ist) und die Sekunden statt der Taste. Läuft die
--- Fähigkeit, leuchtet der Knopf in der Agentenfarbe. Aufladungen des Gadgets als Zahl oben rechts.
--- Daneben der runde ULT-Knopf (Ultimate "Überladung", Taste F / L1+R1): Ladung in Prozent als Füllung
--- von unten, voll = gelb, pulsierend und mit Taste.
--- Auf Touch-Geräten unten mittig links neben der Munition (Symbole statt Tasten).
+-- Fähigkeit (Q / L1), Gadget (G / R1) und Ultimate (F / L1+R1) auslösen und anzeigen: drei schlanke Zeilen
+-- unten rechts direkt links neben der Waffenanzeige (gleiche Höhe). Jede Zeile: Taste im Kästchen, Name,
+-- rechts der Zustand (Sekunden der Abklingzeit, Aufladungen "×1", Ladung "64 %" bzw. BEREIT) und unten ein
+-- dünner Balken – Bernstein = bereit, grau = lädt, blau = Fähigkeit läuft gerade. Wird etwas bereit, blitzt
+-- die Zeile kurz auf. Auf Touch-Geräten ohne Tasten links neben der Munition unten mittig.
 -- Außerdem: Sprint-Stoß (Dash), Radar-Markierungen und Blend-Effekt.
 
 local Players = game:GetService("Players")
@@ -27,13 +25,11 @@ local player = Players.LocalPlayer
 
 local AbilityClient = {}
 
--- Symbole je Fähigkeits-, Gadget- und Passiv-Typ
-local ICONS = {
-	Boost = "⚡", Wall = "🛡", Heal = "✚", Reveal = "📡", Cloak = "👁", Dash = "💨", TeamHeal = "❤",
-	Trap = "🕸", Turret = "🔫", Frag = "💣", Flash = "✴", Smoke = "☁", Sensor = "📍",
-	Armor = "🛡", Cooldown = "⏱", ExtraGadget = "➕", KillSpeed = "🔥", MarkOnHit = "🎯", Regen = "♻",
-	Reload = "🔄", Revive = "✚", SensorImmune = "👻",
-}
+local ROW_W, ROW_H, ROW_GAP = 206, 34, 6 -- 3 Zeilen = 114 px, so hoch wie die Waffenanzeige
+-- Rechter Rand der Zeilen: links neben der Waffenanzeige (MatchHUD: 330 px breit, 24 px vom Rand,
+-- im HUD 1,1-fach vergrößert) mit 10 px Abstand
+local AMMO_LEFT = 24 + 330 * 1.1 + 10
+local BOTTOM = 22
 
 -- Aktiver Agent dieses Lebens, sonst der gewählte
 local function currentAgent()
@@ -43,66 +39,47 @@ local function currentAgent()
 		or AgentConfig.Agents[1]
 end
 
--- Ein klobiger Knopf: Taste (bzw. Sekunden/Symbol), Name, Abdeckung für die Abklingzeit, Aufladungen
-local function makeSlot(parent, size, order)
-	local chunky = UITheme.Chunky({ Size = UDim2.new(0, size, 0, size), LayoutOrder = order, Color = C.Panel, StrokeColor = C.Border,
-		StrokeThickness = 2, Text = "", Radius = UITheme.Radius.Large }, parent)
-	local face = chunky.Face
-	face.ClipsDescendants = true
-	-- Abdeckung von unten: Anteil der verbleibenden Abklingzeit
-	local cover = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 0),
-		BackgroundColor3 = C.Background, BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 2 }, face)
-	local key = UITheme.Label({ Position = UDim2.new(0, 0, 0, 4), Size = UDim2.new(1, 0, 0, size * 0.55), Text = "",
-		TextSize = math.floor(size * 0.36), Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, face)
-	local name = UITheme.Label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.new(1, -8, 0, 12),
-		Text = "", TextSize = 9, Font = UITheme.Fonts.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center,
-		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 3 }, face)
-	-- Aufladungen (Gadget) oben rechts
-	local count = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, 4), Size = UDim2.new(0, 16, 0, 14),
-		Text = "", TextSize = 10, Font = UITheme.Fonts.Display, BackgroundTransparency = 0, BackgroundColor3 = C.Primary,
-		TextColor3 = C.PrimaryText, TextXAlignment = Enum.TextXAlignment.Center, Visible = false, ZIndex = 4 }, face)
-	UITheme.Corner(count, 4)
-	local scale = make("UIScale", {}, chunky.Button)
-	return { Holder = chunky.Button, Chunky = chunky, Cover = cover, Key = key, Name = name, Count = count, Scale = scale }
+-- Eine Zeile: Taste im Kästchen, Name, Zustand rechts, dünner Balken unten, Fläche zum Aufblitzen
+local function makeRow(parent, order)
+	local row = make("Frame", { Size = UDim2.fromOffset(ROW_W, ROW_H), BackgroundColor3 = C.Background, BackgroundTransparency = 0.35,
+		BorderSizePixel = 0, LayoutOrder = order }, parent)
+	UITheme.Corner(row, UITheme.Radius.Small)
+	local key = UITheme.Label({ Position = UDim2.fromOffset(7, 6), Size = UDim2.fromOffset(22, 22), Text = "", TextSize = 12,
+		Font = UITheme.Fonts.Bold, TextXAlignment = Enum.TextXAlignment.Center }, row)
+	UITheme.Corner(key, UITheme.Radius.Small)
+	local keyStroke = UITheme.Stroke(key, C.Muted, 1, 0.4)
+	local name = UITheme.Label({ Position = UDim2.fromOffset(38, 0), Size = UDim2.new(1, -100, 1, -2), Text = "", TextSize = 18,
+		Font = UITheme.Fonts.Display, TextTruncate = Enum.TextTruncate.AtEnd }, row)
+	local status = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -9, 0, 0), Size = UDim2.new(0, 56, 1, -2),
+		Text = "", TextSize = 18, Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Right }, row)
+	local track = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
+		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.88, BorderSizePixel = 0 }, row)
+	local fill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, track)
+	local flash = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Primary, BackgroundTransparency = 1,
+		BorderSizePixel = 0 }, row)
+	UITheme.Corner(flash, UITheme.Radius.Small)
+	return { Row = row, Key = key, KeyStroke = keyStroke, Name = name, Status = status, Fill = fill, Flash = flash }
 end
 
--- Runder ULT-Knopf (Design: Ladung als Füllung von unten, voll = gelb mit Taste)
-local function makeUltimate(parent, size, order)
-	local holder = make("Frame", { Size = UDim2.new(0, size, 0, size + 5), BackgroundTransparency = 1, LayoutOrder = order }, parent)
-	local shadow = make("Frame", { Position = UDim2.new(0, 0, 0, 5), Size = UDim2.new(0, size, 0, size), BackgroundColor3 = C.Shadow,
-		BackgroundTransparency = 0.65, BorderSizePixel = 0 }, holder)
-	UITheme.Corner(shadow, size / 2)
-	local circle = make("Frame", { Size = UDim2.new(0, size, 0, size), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 },
-		holder)
-	UITheme.Corner(circle, size / 2)
-	local stroke = UITheme.Stroke(circle, C.Border, 3)
-	-- Füllung von unten: harte Kante im Verlauf (oben Kartenfarbe, unten Gelb)
-	local fill = make("UIGradient", { Rotation = 90 }, circle)
-	local value = UITheme.Label({ Position = UDim2.new(0, 0, 0, size * 0.18), Size = UDim2.new(1, 0, 0, size * 0.4), Text = "",
-		TextSize = math.floor(size * 0.27), Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Center }, circle)
-	UITheme.Outline(value, 2)
-	local caption = UITheme.Label({ Position = UDim2.new(0, 0, 0, size * 0.58), Size = UDim2.new(1, 0, 0, 12), Text = "ULT",
-		TextSize = 10, Font = UITheme.Fonts.Display, TextXAlignment = Enum.TextXAlignment.Center }, circle)
-	UITheme.Outline(caption, 2)
-	local scale = make("UIScale", {}, holder)
-	return { Holder = holder, Circle = circle, Stroke = stroke, Fill = fill, Value = value, Caption = caption, Scale = scale }
+-- Taste setzen (Controller-Kombis wie "L1+R1" brauchen ein breiteres Kästchen); Touch: ohne Taste
+local function setKey(row, text, touch)
+	row.Key.Visible = not touch and text ~= ""
+	row.Key.Text = text
+	local wide = #text > 2
+	row.Key.Size = UDim2.fromOffset(wide and 40 or 22, 22)
+	row.Name.Position = UDim2.fromOffset(row.Key.Visible and (wide and 56 or 38) or 10, 0)
 end
 
--- Füllung des ULT-Knopfs (0..1): oben dunkel, unten Signalgelb
-local function setUltimateFill(slot, charge)
-	local edge = math.clamp(1 - charge, 0.001, 0.998)
-	slot.Fill.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, C.Panel),
-		ColorSequenceKeypoint.new(edge, C.Panel),
-		ColorSequenceKeypoint.new(math.min(edge + 0.001, 0.999), C.Primary:Lerp(C.Panel, 0.35)),
-		ColorSequenceKeypoint.new(1, C.Primary:Lerp(C.Panel, 0.35)),
-	})
+-- Balken unten: Anteil und Farbe
+local function setFill(row, fraction, color)
+	row.Fill.Size = UDim2.fromScale(math.clamp(fraction, 0, 1), 1)
+	row.Fill.BackgroundColor3 = color
 end
 
--- Kurzer "Bereit"-Puls
-local function pulse(slot)
-	slot.Scale.Scale = 1.15
-	TweenService:Create(slot.Scale, TweenInfo.new(0.35, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+-- Kurzes Aufblitzen, wenn etwas bereit wird
+local function pulse(row)
+	row.Flash.BackgroundTransparency = 0.7
+	TweenService:Create(row.Flash, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play()
 end
 
 function AbilityClient.Init()
@@ -116,29 +93,26 @@ function AbilityClient.Init()
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 
-	-- Knöpfe unten mittig: Fähigkeit · Gadget
-	local bar = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -30),
-		Size = UDim2.new(0, 250, 0, 82), BackgroundTransparency = 1 }, root)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		VerticalAlignment = Enum.VerticalAlignment.Bottom, Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
-	local abilitySlot = makeSlot(bar, 66, 1)
-	local gadgetSlot = makeSlot(bar, 66, 2)
-	local ultimateSlot = makeUltimate(bar, 76, 3)
+	-- Zeilen unten rechts links neben der Waffenanzeige: Fähigkeit · Gadget · Ultimate
+	local bar = make("Frame", { Name = "Abilities", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -AMMO_LEFT, 1, -BOTTOM),
+		Size = UDim2.fromOffset(ROW_W, ROW_H * 3 + ROW_GAP * 2), BackgroundTransparency = 1 }, root)
+	make("UIListLayout", { Padding = UDim.new(0, ROW_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+	local abilityRow = makeRow(bar, 1)
+	local gadgetRow = makeRow(bar, 2)
+	local ultimateRow = makeRow(bar, 3)
 
 	-- Touch: unten mittig links neben der Munition (rechts liegen die Touch-Knöpfe)
 	local function layout()
 		if InputActions.IsTouch() then
-			bar.AnchorPoint = Vector2.new(1, 1)
-			bar.Position = UDim2.new(0.5, -12, 1, -10)
+			bar.Position = UDim2.new(0.5, -12, 1, -14)
 		else
-			bar.AnchorPoint = Vector2.new(0.5, 1)
-			bar.Position = UDim2.new(0.5, 0, 1, -30) -- über der Tastenzeile ganz unten
+			bar.Position = UDim2.new(1, -AMMO_LEFT, 1, -BOTTOM)
 		end
 	end
 	layout()
 	InputActions.DeviceChanged:Connect(layout)
 
-	-- Gesamtdauer der aktuellen Abklingzeit bzw. Wirkdauer (für Abdeckung und Balken)
+	-- Gesamtdauer der aktuellen Abklingzeit bzw. Wirkdauer (für den Balken)
 	local cooldownTotal = 1
 	player:GetAttributeChangedSignal("AbilityReadyAt"):Connect(function()
 		cooldownTotal = math.max(1, (player:GetAttribute("AbilityReadyAt") or 0) - workspace:GetServerTimeNow())
@@ -228,81 +202,76 @@ function AbilityClient.Init()
 		end
 		local agent = currentAgent()
 		local now = workspace:GetServerTimeNow()
-
-		-- Taste für das aktuelle Gerät (Touch: Symbol, dort gibt es eigene Knöpfe)
 		local touch = InputActions.IsTouch()
-		local abilityKey = touch and (ICONS[agent.Ability.Type] or "★") or InputActions.Hint("Ability")
-		local gadgetKey = touch and (ICONS[agent.Gadget.Type] or "◈") or InputActions.Hint("Gadget")
+		setKey(abilityRow, InputActions.Hint("Ability"), touch)
+		setKey(gadgetRow, InputActions.Hint("Gadget"), touch)
+		setKey(ultimateRow, InputActions.Hint("Ultimate"), touch)
 
-		-- Fähigkeit
-		abilitySlot.Name.Text = UITheme.Upper(agent.Ability.Name)
+		-- Fähigkeit: läuft (blau, Balken schrumpft), lädt (grau, Sekunden) oder bereit (Bernstein)
+		abilityRow.Name.Text = UITheme.Upper(agent.Ability.Name)
 		local activeLeft = (player:GetAttribute("AbilityActiveUntil") or 0) - now
 		local cooldownLeft = (player:GetAttribute("AbilityReadyAt") or 0) - now
 		local ready = activeLeft <= 0 and cooldownLeft <= 0
 		if activeLeft > 0 then
-			-- läuft: Knopf in Agentenfarbe, Abdeckung wächst mit der abgelaufenen Wirkdauer
-			abilitySlot.Chunky.SetColor(agent.Color:Lerp(C.Panel, 0.45), C.Text)
-			abilitySlot.Chunky.SetStroke(agent.Color, 3)
-			abilitySlot.Cover.Size = UDim2.new(1, 0, 1 - math.clamp(activeLeft / activeTotal, 0, 1), 0)
-			abilitySlot.Key.Text = ICONS[agent.Ability.Type] or abilityKey
-			abilitySlot.Name.TextColor3 = C.Text
+			setFill(abilityRow, activeLeft / activeTotal, C.Accent)
+			abilityRow.Status.Text = string.format("%.0f s", math.ceil(activeLeft))
+			abilityRow.Status.TextColor3 = C.Accent
+			abilityRow.Name.TextColor3 = C.Text
 		elseif cooldownLeft > 0 then
-			-- lädt: Sekunden statt Taste, Abdeckung schrumpft bis "bereit"
-			abilitySlot.Chunky.SetColor(C.Panel, C.Text)
-			abilitySlot.Chunky.SetStroke(C.Border, 2)
-			abilitySlot.Cover.Size = UDim2.new(1, 0, math.clamp(cooldownLeft / cooldownTotal, 0, 1), 0)
-			abilitySlot.Key.Text = tostring(math.ceil(cooldownLeft))
-			abilitySlot.Name.TextColor3 = C.Muted
+			setFill(abilityRow, 1 - cooldownLeft / cooldownTotal, C.Muted)
+			abilityRow.Status.Text = tostring(math.ceil(cooldownLeft))
+			abilityRow.Status.TextColor3 = C.Muted
+			abilityRow.Name.TextColor3 = C.Muted
 		else
-			abilitySlot.Chunky.SetColor(C.Panel, C.Text)
-			abilitySlot.Chunky.SetStroke(C.Primary, 2)
-			abilitySlot.Cover.Size = UDim2.new(1, 0, 0, 0)
-			abilitySlot.Key.Text = abilityKey
-			abilitySlot.Name.TextColor3 = C.Muted
+			setFill(abilityRow, 1, C.Primary)
+			abilityRow.Status.Text = ""
+			abilityRow.Name.TextColor3 = C.Text
 		end
-		abilitySlot.Key.TextColor3 = ready and C.Text or C.Muted
+		abilityRow.Key.TextColor3 = ready and C.Text or C.Muted
 		if ready and not wasReady then
-			pulse(abilitySlot)
+			pulse(abilityRow)
 		end
 		wasReady = ready
 
 		-- Gadget mit Aufladungen
 		local charges = player:GetAttribute("Gadgets") or 0
-		gadgetSlot.Name.Text = UITheme.Upper(agent.Gadget.Name)
-		gadgetSlot.Key.Text = gadgetKey
-		gadgetSlot.Key.TextColor3 = charges > 0 and C.Text or C.Muted
-		gadgetSlot.Count.Visible = true
-		gadgetSlot.Count.Text = tostring(charges)
-		gadgetSlot.Count.BackgroundColor3 = charges > 0 and C.Primary or C.Bad
-		gadgetSlot.Count.TextColor3 = charges > 0 and C.PrimaryText or C.Text
-		gadgetSlot.Cover.Size = charges > 0 and UDim2.new(1, 0, 0, 0) or UDim2.new(1, 0, 1, 0)
-		gadgetSlot.Chunky.SetStroke(charges > 0 and C.Primary or C.Border, 2)
+		gadgetRow.Name.Text = UITheme.Upper(agent.Gadget.Name)
+		gadgetRow.Name.TextColor3 = charges > 0 and C.Text or C.Muted
+		gadgetRow.Key.TextColor3 = charges > 0 and C.Text or C.Muted
+		gadgetRow.Status.Text = "×" .. charges
+		gadgetRow.Status.TextColor3 = charges > 0 and C.Text or C.Bad
+		setFill(gadgetRow, charges > 0 and 1 or 0, C.Primary)
 		if charges > 0 and not hadCharges then
-			pulse(gadgetSlot)
+			pulse(gadgetRow)
 		end
+		hadCharges = charges > 0
 
-		-- Ultimate: Ladung in Prozent, voll = gelb mit Taste und pulsierend
+		-- Ultimate: Ladung in Prozent, voll = BEREIT (Taste und Balken leuchten leicht)
 		local charge = math.clamp((player:GetAttribute("UltCharge") or 0) / 100, 0, 1)
 		local ultReady = charge >= 1
+		ultimateRow.Name.Text = UITheme.Upper(AgentConfig.Ultimate.Name)
 		if ultReady then
-			local glow = 0.5 + 0.5 * math.sin(os.clock() * 6)
-			ultimateSlot.Fill.Color = ColorSequence.new(C.Primary:Lerp(Color3.new(1, 1, 1), glow * 0.25))
-			ultimateSlot.Value.Text = touch and "✦" or InputActions.Hint("Ultimate")
-			ultimateSlot.Stroke.Color = C.Primary
-			ultimateSlot.Value.TextColor3 = C.PrimaryText
-			ultimateSlot.Caption.TextColor3 = C.PrimaryText
+			local glow = 0.5 + 0.5 * math.sin(os.clock() * 5)
+			setFill(ultimateRow, 1, C.Primary:Lerp(Color3.new(1, 1, 1), glow * 0.3))
+			ultimateRow.Status.Text = "BEREIT"
+			ultimateRow.Status.TextColor3 = C.Primary
+			ultimateRow.Name.TextColor3 = C.Text
+			ultimateRow.Key.TextColor3 = C.Primary
+			ultimateRow.KeyStroke.Color = C.Primary
+			ultimateRow.KeyStroke.Transparency = 0.2 + glow * 0.4
 		else
-			setUltimateFill(ultimateSlot, charge)
-			ultimateSlot.Value.Text = math.floor(charge * 100) .. "%"
-			ultimateSlot.Stroke.Color = C.Border
-			ultimateSlot.Value.TextColor3 = C.Text
-			ultimateSlot.Caption.TextColor3 = C.Muted
+			setFill(ultimateRow, charge, C.Muted)
+			ultimateRow.Status.Text = math.floor(charge * 100) .. " %"
+			ultimateRow.Status.TextColor3 = C.Muted
+			ultimateRow.Name.TextColor3 = C.Muted
+			ultimateRow.Key.TextColor3 = C.Muted
+			ultimateRow.KeyStroke.Color = C.Muted
+			ultimateRow.KeyStroke.Transparency = 0.4
 		end
 		if ultReady and not ultWasReady then
-			pulse(ultimateSlot)
+			pulse(ultimateRow)
 		end
 		ultWasReady = ultReady
-		hadCharges = charges > 0
 	end)
 end
 

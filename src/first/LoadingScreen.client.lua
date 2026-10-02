@@ -1,5 +1,5 @@
 -- LoadingScreen (LocalScript in ReplicatedFirst)
--- Eigener Ladebildschirm im Rogue-Company-Stil: Logo, Lade-Balken, wechselnde Tipps.
+-- Eigener Ladebildschirm im nüchternen Taktik-Look: Logo, dünner Lade-Balken, wechselnde Tipps.
 -- Verschwindet, sobald das Spiel geladen ist und der Spieler im Hub angekommen ist.
 
 local Players = game:GetService("Players")
@@ -9,8 +9,8 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
-local NAVY = Color3.fromRGB(8, 14, 24)
-local CYAN = Color3.fromRGB(40, 210, 230)
+local GRAPHITE = Color3.fromRGB(12, 14, 17)
+local AMBER = Color3.fromRGB(212, 170, 80)
 
 local TIPS = {
 	"Halte E bei niedergeschlagenen Teamkollegen, um sie wiederzubeleben.",
@@ -33,11 +33,11 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local background = Instance.new("Frame")
 background.Size = UDim2.new(1, 0, 1, 0)
-background.BackgroundColor3 = NAVY
+background.BackgroundColor3 = GRAPHITE
 background.Parent = gui
 local gradient = Instance.new("UIGradient")
 gradient.Rotation = 90
-gradient.Color = ColorSequence.new(Color3.fromRGB(25, 50, 70), Color3.fromRGB(4, 8, 14))
+gradient.Color = ColorSequence.new(Color3.fromRGB(30, 33, 38), Color3.fromRGB(6, 7, 9))
 gradient.Parent = background
 
 local function label(text, size, y, color, font)
@@ -54,42 +54,34 @@ local function label(text, size, y, color, font)
 	return obj
 end
 
--- Raute über dem Logo
-local diamond = Instance.new("Frame")
-diamond.AnchorPoint = Vector2.new(0.5, 0.5)
-diamond.Position = UDim2.new(0.5, 0, 0.3, 0)
-diamond.Size = UDim2.new(0, 46, 0, 46)
-diamond.Rotation = 45
-diamond.BackgroundColor3 = CYAN
-diamond.BorderSizePixel = 0
-diamond.Parent = background
-
-label("SHOOTOUT", 96, 0.42)
-label("TACTICAL OPERATIONS", 22, 0.5, CYAN, Enum.Font.GothamBold)
-local status = label("Lade Einsatzgebiet ...", 18, 0.72, Color3.fromRGB(150, 165, 185), Enum.Font.GothamBold)
-local tip = label(TIPS[math.random(#TIPS)], 18, 0.86, Color3.fromRGB(190, 200, 215), Enum.Font.Gotham)
+label("SHOOTOUT", 104, 0.42, Color3.fromRGB(228, 231, 235))
+-- schmale Bernstein-Linie unter dem Logo
+local line = Instance.new("Frame")
+line.AnchorPoint = Vector2.new(0.5, 0.5)
+line.Position = UDim2.new(0.5, 0, 0.495, 0)
+line.Size = UDim2.new(0, 56, 0, 2)
+line.BackgroundColor3 = AMBER
+line.BorderSizePixel = 0
+line.Parent = background
+label("TACTICAL OPERATIONS", 16, 0.53, AMBER, Enum.Font.GothamBold)
+local status = label("Lade Einsatzgebiet ...", 16, 0.72, Color3.fromRGB(134, 142, 152), Enum.Font.GothamBold)
+local tip = label(TIPS[math.random(#TIPS)], 17, 0.86, Color3.fromRGB(190, 194, 200), Enum.Font.Gotham)
 
 local barBack = Instance.new("Frame")
 barBack.AnchorPoint = Vector2.new(0.5, 0.5)
 barBack.Position = UDim2.new(0.5, 0, 0.77, 0)
-barBack.Size = UDim2.new(0, 420, 0, 4)
-barBack.BackgroundColor3 = Color3.fromRGB(30, 45, 60)
+barBack.Size = UDim2.new(0, 420, 0, 3)
+barBack.BackgroundColor3 = Color3.fromRGB(40, 44, 50)
 barBack.BorderSizePixel = 0
 barBack.Parent = background
 local bar = Instance.new("Frame")
 bar.Size = UDim2.new(0, 0, 1, 0)
-bar.BackgroundColor3 = CYAN
+bar.BackgroundColor3 = AMBER
 bar.BorderSizePixel = 0
 bar.Parent = barBack
 
--- Raute dreht sich, Tipps wechseln
+-- Tipps wechseln
 local running = true
-task.spawn(function()
-	while running do
-		diamond.Rotation += 3
-		task.wait(1 / 30)
-	end
-end)
 task.spawn(function()
 	while running do
 		task.wait(4)

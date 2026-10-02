@@ -17,7 +17,7 @@ local METAL = Color3.fromRGB(34, 40, 52)
 local METAL_DARK = Color3.fromRGB(20, 24, 32)
 local METAL_LIGHT = Color3.fromRGB(70, 78, 94)
 local SPACE = Color3.fromRGB(3, 5, 12)
-local GRID = Color3.fromRGB(26, 80, 110)
+local GRID = Color3.fromRGB(40, 46, 54) -- dezente Bodenlinien
 
 local function part(model, size, cframe, color, neon, shape)
 	local p = Instance.new("Part")
@@ -157,7 +157,7 @@ function HangarScene.new(parent)
 		local sway = Vector3.new(math.sin(time * 0.23) * 0.5, math.sin(time * 0.31) * 0.15, 0)
 		camera.CFrame = CFrame.lookAt(CAMERA_POSITION + sway, CAMERA_TARGET)
 	end
-	scene.SetAccent(Color3.fromRGB(40, 210, 230))
+	scene.SetAccent(Color3.fromRGB(180, 188, 198))
 	return scene
 end
 

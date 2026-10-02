@@ -20,7 +20,7 @@ local make = UITheme.Make
 local Scoreboard = {}
 
 local WIDTH = 900
-local ME = Color3.fromRGB(28, 62, 78)
+local ME = Color3.fromRGB(46, 42, 30) -- eigene Zeile (leicht bernsteinfarben)
 
 -- Spalten: { Schlüssel, Überschrift, Breite, Ausrichtung }
 local COLUMNS = {
@@ -170,7 +170,7 @@ function Scoreboard.Init()
 		Enabled = false }, player:WaitForChild("PlayerGui"))
 	panel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90),
 		Size = UDim2.new(0, WIDTH, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 0.08 }, gui)
-	UITheme.Gradient(panel, Color3.fromRGB(22, 34, 52), C.Panel)
+	UITheme.Gradient(panel, Color3.fromRGB(27, 31, 36), C.Panel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 14), PaddingBottom = UDim.new(0, 14), PaddingLeft = UDim.new(0, 14),
 		PaddingRight = UDim.new(0, 14) }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, panel)
@@ -184,7 +184,7 @@ function Scoreboard.Init()
 
 	-- Kopf: Modus links, Spielstand in der Mitte
 	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 54), BackgroundTransparency = 1, LayoutOrder = 1 }, panel)
-	make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = C.Accent, BorderSizePixel = 0 }, head)
+	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, head)
 	titleLabel = UITheme.Label({ Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(0.5, 0, 0, 32), Text = "",
 		Font = UITheme.Fonts.Title, TextSize = 30 }, head)
 	subLabel = UITheme.Label({ Position = UDim2.new(0, 16, 0, 32), Size = UDim2.new(0.5, 0, 0, 20), Text = "",

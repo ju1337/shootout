@@ -29,7 +29,7 @@ local function getAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 end
 
--- Uniform in Agentenfarben (bzw. Skin): Kleidung weg, Körperfarben, leuchtendes Visier
+-- Uniform in Agentenfarben (bzw. Skin): Kleidung weg, Körperfarben, getöntes Visier
 local function applyUniform(player, character, agent)
 	if not Modes.IsFighting(player) or not character.Parent then
 		return
@@ -53,8 +53,9 @@ local function applyUniform(player, character, agent)
 		local visor = Instance.new("Part")
 		visor.Name = "AgentVisor"
 		visor.Size = Vector3.new(head.Size.X * 0.85, head.Size.Y * 0.18, 0.12)
-		visor.Color = accent
-		visor.Material = Enum.Material.Neon
+		visor.Color = AgentConfig.VisorColor(accent)
+		visor.Material = AgentConfig.VisorMaterial
+		visor.Reflectance = 0.25
 		visor.CanCollide = false
 		visor.CanQuery = false
 		visor.CanTouch = false

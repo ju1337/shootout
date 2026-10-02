@@ -19456,7 +19456,7 @@
           "BackgroundTransparency": 1,
           "Text": "A",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
            1.0,
            0.3137,
@@ -19586,7 +19586,7 @@
           "BackgroundTransparency": 1,
           "Text": "B",
           "TextScaled": true,
-          "Font": "GothamBlack",
+          "Font": "Oswald",
           "TextColor3": [
            1.0,
            0.3137,

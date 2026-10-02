@@ -32,20 +32,26 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ..., Verlauf der letzten 10 Matches (STATS-Fenster)
 - **ELO in jedem Modus**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
 - **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
-- **Menü-Design „BLOCKOPS“** (`src/shared/UITheme.lua`): Stahl-Navy, Signalgelb für aktiv/Hauptknöpfe, Cyan fürs
-  eigene Team, Rot für Gegner; klobige Knöpfe mit Schatten, die beim Drücken nach unten rutschen
-  (`UITheme.Chunky`), Flächen mit runden Ecken, 2 px Rand und Schatten (`UITheme.Card`), große Namen in
-  schwerer Schrift mit Kontur (`UITheme.Outline`)
-- **Lobby** (M bzw. SPIELEN im Hub): oben Logo, Navigation SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS,
-  Münzen, Level, Statistik, Codes, Einstellungen; links Spielmodi (aktiv gelb mit Haken, live Spielerzahl) und der
-  Squad (Anführer mit Krone, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze laden ein); Mitte der
-  gewählte Agent groß in 3D mit Rolle und Namen; rechts Battle Pass (Stufe, Fortschritt, nächste Belohnung),
-  täglicher Auftrag (bzw. tägliche Belohnung) und der große SPIELEN-Knopf mit Modus, Spielerzahl und Ping.
-  AGENTEN zeigt alle Agenten als Karten; LOADOUT, SHOP, BATTLE PASS und die Symbole öffnen die Fenster darüber
-- **Hub**: große Spielerkarte (Level, Prestige, Rang, Münzen), Kachel-Leiste (Shop, Loadout, Agenten, Pass,
-  Aufträge, Täglich, Squad, Stats, Codes, Optionen) und SPIELEN-Knopf
+- **Realistischer Taktik-Look** (`src/shared/UITheme.lua`): Graphit als Grund, gedecktes Bernstein als einzige
+  Signalfarbe (aktiv, Hauptknöpfe), Stahlblau fürs eigene Team, Rot für Gegner; flache Knöpfe und Flächen mit
+  kaum gerundeten Ecken und 1 px Rand, keine Schatten-Lippen oder Comic-Konturen; Überschriften, Zahlen und
+  Knöpfe in der schmalen Oswald, kleine Beschriftungen automatisch in Gotham (`UITheme.FontFor`); keine bunten
+  Emojis mehr (Münzen als gezeichnete Münze bzw. „MÜNZEN“, Touch-Knöpfe mit Wörtern). Dazu passend: gedeckte
+  Agenten-, Modus- und Team-Uniformfarben (Burgund/Sturmblau, Erdgrün/Rehbraun, Rost/Sandblau – über alle Modi
+  eindeutig), getönte Glas-Visiere statt Neon, weniger Sättigung und Bloom in der Farbkorrektur
+  (`default.project.json`), die Arena aus Beton statt lila Plastik, im Hub Bernstein-Lichtleisten und
+  gedeckte Tore, Schilder in Oswald (`tools/build_maps.py`)
+- **Lobby** (M bzw. SPIELEN im Hub): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS (aktiv mit
+  Bernstein-Strich), Münzen, Level, STATISTIK, CODES, OPTIONEN; links Spielmodi (aktiv heller mit Bernstein-Balken,
+  live Spielerzahl) und der Squad (Anführer mit Stern, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze
+  laden ein); Mitte der gewählte Agent groß in 3D mit Rolle und Namen; rechts Battle Pass (Stufe, Fortschritt,
+  nächste Belohnung), täglicher Auftrag (bzw. tägliche Belohnung) und der große SPIELEN-Knopf mit Modus,
+  Spielerzahl und Ping. AGENTEN zeigt alle Agenten als Karten; LOADOUT, SHOP, BATTLE PASS und die Knöpfe oben
+  rechts öffnen die Fenster darüber
+- **Hub**: Spielerkarte (Level, Prestige, Rang, Münzen), schlichte Menüliste (Shop, Loadout, Agenten, Battle
+  Pass, Aufträge, Täglich, Squad, Statistik, Codes, Optionen) und SPIELEN-Knopf
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
-- **Ultimate „Überladung“** (F, Controller L1+R1, Touch ✦): lädt über Schaden (400 = voll), Kills/Niederschläge
+- **Ultimate „Überladung“** (F, Controller L1+R1, Touch-Knopf ✦): lädt über Schaden (400 = voll), Kills/Niederschläge
   und langsam im Kampf; voll ausgelöst: volles Leben, +25 Rüstung, Fähigkeit sofort bereit, +1 Gadget
   (`AgentConfig.Ultimate`)
 - **Kaufphase**: Geld pro Match, Upgrades, Rüstung, Perks
@@ -68,22 +74,24 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Auto-Bots** füllen leere Plätze (auch allein spielbar), Bot-Schwierigkeit im Admin-Panel. Bot-Körper werden
   einmal pro Farbe gebaut und dann geklont; ein abgebrochener oder überholter Spawn baut kein zweites Modell,
   und Modelle ohne gültigen Bot räumt der BotService nach spätestens 2 s weg (keine „Bot-Massen“ mehr)
-- **Match-HUD im Design der Lobby**:
-  - oben: Ziel des eigenen Teams („HALTE DIE FLAGGEN“ …), Punktestand-Fläche (eigenes Team Cyan links, Gegner
-    rot rechts, Mitte Runde und Uhr, Tickets klein in den Kästen), darunter ein Kästchen pro Spieler (lebt / am
-    Boden / ☠) und ein Schild mit dem Zustand des Ziels
+- **Match-HUD** (dunkle, halbtransparente Flächen ohne Rahmen, schmale Zahlen, dünne Balken):
+  - oben: Ziel des eigenen Teams („HALTE DIE FLAGGEN“ …), Punktestand (eigenes Team blau links, Gegner rot
+    rechts, Mitte Runde und Uhr, Tickets klein in den Kästen), darunter ein Kästchen pro Spieler (gefüllt = lebt,
+    orange = am Boden, leer = ausgeschaltet) und eine Zeile mit dem Zustand des Ziels
   - oben links (unter der Roblox-Leiste): runde Minimap, dreht sich mit der Blickrichtung; Grundriss der Map
     (Böden, Wände, Deckung), Teamkollegen, Pings, Gegner nur kurz, wenn sie schießen oder per Radar markiert
     sind; Ziele/Flaggen in der Farbe des Besitzers, außerhalb kleben sie am Rand
-  - darunter links ein MENÜ-Knopf (öffnet das Menü mit „Zurück zum Hub“), ganz unten die Tastenzeile
-  - rechts: Killfeed-Zeilen mit farbigem Rand, Waffe als Schild, eigene Kills gelb (▼ niedergeschlagen,
-    ☠ ausgeschaltet, ◎ Kopfschuss)
-  - unten links: Fläche mit Porträt, Agentenname, Rüstung in 5 Segmenten und Leben als Zahl + Balken
+  - darunter ein VERLASSEN-Knopf: erster Klick fragt rot nach („WIRKLICH VERLASSEN?“), ein zweiter Klick
+    innerhalb von 3 s bringt einen zurück in den Hub (auf Touch-Geräten rechts neben der Minimap); ganz unten
+    eine dezente Tastenzeile
+  - rechts: Killfeed – dunkle Zeilen mit farbiger Kante, Waffe als graue Schrift, eigene Kills mit
+    Bernstein-Kante (▼ niedergeschlagen, ◎ Kopfschuss)
+  - unten links: Porträt, Agentenname, Rüstung in 5 dünnen Segmenten und Leben als Zahl + Balken
     (Verlust blitzt rot nach)
-  - unten mittig: Fähigkeit (Q) und Gadget (G) als klobige Knöpfe (Abklingzeit als Abdeckung + Sekunden,
-    Aufladungen), daneben der runde ULT-Knopf (Ladung in Prozent)
-  - unten rechts: Fläche mit Waffen-Silhouette, Waffenplätzen 1/2, Waffenname, Munition „30 / ∞“ und der
-    anderen Waffe
+  - unten rechts: Waffen-Silhouette, Waffenplätze 1/2, Waffenname, Munition „30 / ∞“ und die andere Waffe;
+    direkt links daneben, genauso hoch, Fähigkeit (Q), Gadget (G) und Ultimate (F) als drei schlanke Zeilen:
+    Taste, Name, rechts Abklingzeit in Sekunden, Aufladungen „×1“ bzw. Ladung „64 %“/BEREIT, unten ein dünner
+    Balken (Bernstein = bereit, grau = lädt, blau = Fähigkeit läuft)
   - in der Welt: Zielmarker (Raute mit Buchstabe, Entfernung in Metern, Einnahme-Fortschritt, UMKÄMPFT/BOMBE)
   - Free-for-All: oben in der Mitte die eigenen Kills, das Ziel und wer führt, darunter die ersten drei
   - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout;
@@ -112,7 +120,8 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Slide) · Springen vor Kanten: Klettern ·
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
-G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte · M Menü · P Admin-Panel
+G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
+M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 
 ## Wo stelle ich was ein?
 
@@ -122,10 +131,13 @@ G Gadget · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schu
 | Waffenmodelle, Kimme/Korn, Rotpunkt, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
 | Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
-| Menü-Design (Farben, Schriften, Knöpfe, Flächen) | `src/shared/UITheme.lua` |
+| Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
 | Lobby (Navigation, Modi, Squad, Battle Pass, SPIELEN) | `src/shared/GameMenu.lua`, Fenster und Hub-Leiste in `src/client/SideMenu.lua` |
 | Match-HUD (Punktestand, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
-| Fähigkeits- und ULT-Knöpfe | `src/shared/AbilityClient.lua`, Ultimate-Werte in `AgentConfig.Ultimate` |
+| Fähigkeits-Zeilen (Fähigkeit, Gadget, Ultimate) | `src/shared/AbilityClient.lua`, Ultimate-Werte in `AgentConfig.Ultimate` |
+| VERLASSEN-Knopf im Match (Bestätigungszeit) | `LEAVE_CONFIRM` in `src/shared/HUD.lua` |
+| Licht und Farbkorrektur der Welt | `Lighting` in `default.project.json` |
+| Team-Uniformfarben (je Modus eindeutig) | `Teams` in `src/server/Modes/*.lua` |
 | Schulterkamera (Versatz, Abstand, beim Zielen) | `SHOULDER_*` in `src/shared/Movement.lua` |
 | Minimap (Farben, Zoom) | `src/shared/Minimap.lua`, Zuschnitt auf den Kreis in `src/shared/MinimapShapes.lua` |
 | Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |

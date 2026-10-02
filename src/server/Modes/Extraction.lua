@@ -10,8 +10,8 @@ return TeamRoundMode.new({
 	Maps = { "Extraktion", "Windmuehlen3" }, -- Map-Rotation: Gletscher, Windmühlen
 	TeamSize = 4,
 	Teams = {
-		{ Name = "Falke", Color = BrickColor.new("Teal") },
-		{ Name = "Wolf", Color = BrickColor.new("Burgundy") },
+		{ Name = "Falke", Color = BrickColor.new("Steel blue") },
+		{ Name = "Wolf", Color = BrickColor.new("Dusty Rose") },
 	},
 	DropIn = false,
 	WingsuitStart = 120,

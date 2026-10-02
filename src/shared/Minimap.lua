@@ -36,15 +36,15 @@ local SKIP_FOLDERS = { Nature = true, Objective = true } -- Bäume, Ziel-Parts (
 
 local COLORS = {
 	Back = UITheme.Colors.Background,
-	Ground = Color3.fromRGB(30, 44, 62),
-	Water = Color3.fromRGB(14, 30, 52),
-	Floor = Color3.fromRGB(56, 74, 96),
-	Block = Color3.fromRGB(112, 132, 156),
-	Wall = Color3.fromRGB(196, 214, 232),
+	Ground = Color3.fromRGB(34, 38, 42),
+	Water = Color3.fromRGB(22, 34, 44),
+	Floor = Color3.fromRGB(62, 68, 74),
+	Block = Color3.fromRGB(118, 124, 130),
+	Wall = Color3.fromRGB(200, 204, 208),
 	Mate = UITheme.Colors.Accent,
-	Downed = Color3.fromRGB(255, 170, 40),
+	Downed = Color3.fromRGB(214, 150, 60),
 	Enemy = UITheme.Colors.Bad,
-	Ping = Color3.fromRGB(255, 205, 60),
+	Ping = UITheme.Colors.Primary,
 }
 
 -- Draufsicht eines Parts: Mitte, Breite, Tiefe (Studs) und Drehung (Grad, im Uhrzeigersinn)
@@ -154,7 +154,7 @@ function Minimap.Init(root)
 	-- Ebenen (eindeutig, egal ob ZIndex global oder je Geschwister gilt): Hintergrund 0, Grundriss 1-4,
 	-- Punkte 5, Rand 6, Ziele 7-8, Pfeil und Norden 9
 	local back = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = COLORS.Back,
-		BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 0 }, holder)
+		BackgroundTransparency = 0.25, BorderSizePixel = 0, ZIndex = 0 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, back)
 	local rotator = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 1 }, holder)
@@ -165,7 +165,7 @@ function Minimap.Init(root)
 	-- Rand, Blickrichtung (Pfeil in der Mitte), Norden am Rand
 	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, ring)
-	UITheme.Stroke(ring, UITheme.Colors.Border, 3, 0) -- Rand wie die Flächen im Design
+	UITheme.Stroke(ring, Color3.fromRGB(150, 156, 164), 1.5, 0.45) -- dünner heller Rand
 	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, holder)
 	UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20),
 		Text = "▲", TextSize = 15, TextColor3 = Color3.new(1, 1, 1), TextStrokeTransparency = 0.3,

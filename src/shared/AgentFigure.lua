@@ -1,10 +1,11 @@
 -- AgentFigure (ModuleScript, nur Client)
 -- Stilisierte 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Shop, Rucksack):
--- Kapuze, Visier in Akzentfarbe, Weste, Waffe in der Hand.
+-- Kapuze, getöntes Visier, Weste, Waffe in der Hand.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GunModels = require(ReplicatedStorage:WaitForChild("Shared").GunModels)
+local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 
 local AgentFigure = {}
 
@@ -33,7 +34,9 @@ function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName)
 	part("Head", Vector3.new(1.1, 1.1, 1.1), CFrame.new(0, 4.6, 0), Color3.fromRGB(205, 160, 130))
 	part("Hood", Vector3.new(1.4, 1.45, 1.3), CFrame.new(0, 4.68, 0.2), primary, Enum.Material.Fabric)
 	part("Mask", Vector3.new(0.95, 0.4, 0.12), CFrame.new(0, 4.3, -0.56), Color3.fromRGB(45, 45, 50))
-	part("Visor", Vector3.new(1.0, 0.22, 0.12), CFrame.new(0, 4.72, -0.57), accent, Enum.Material.Neon)
+	local visor = part("Visor", Vector3.new(1.0, 0.22, 0.12), CFrame.new(0, 4.72, -0.57), AgentConfig.VisorColor(accent),
+		AgentConfig.VisorMaterial)
+	visor.Reflectance = 0.25
 	part("LeftPad", Vector3.new(1, 0.4, 1), CFrame.new(-1.45, 4.05, 0), accent, Enum.Material.Metal)
 	part("RightPad", Vector3.new(1, 0.4, 1), CFrame.new(1.45, 4.05, 0), accent, Enum.Material.Metal)
 	part("LeftArm", Vector3.new(0.85, 2, 0.85), CFrame.new(-1.45, 3, 0), primary)

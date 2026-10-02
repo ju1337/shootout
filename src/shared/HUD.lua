@@ -1,8 +1,9 @@
 -- HUD (ModuleScript, nur Client)
 -- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, große Meldungen, Countdown, XP, Geld,
--- Todesanzeige mit Todeskamera, Tastenzeile unten und MENÜ-Knopf unter der Minimap. Die Match-Anzeige im
--- Design der Lobby (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD, die Minimap Minimap;
--- Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung kommen aus CombatHUD.
+-- Todesanzeige mit Todeskamera, Tastenzeile unten und VERLASSEN-Knopf unter der Minimap (zweimal klicken:
+-- zurück in den Hub). Die Match-Anzeige (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD,
+-- die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung kommen aus
+-- CombatHUD.
 
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
@@ -23,14 +24,14 @@ local InputActions = require(Shared.InputActions)
 local CombatHUD = require(Shared.CombatHUD)
 local MatchHUD = require(Shared.MatchHUD)
 local Minimap = require(Shared.Minimap)
-local GameMenu = require(Shared.GameMenu)
 
 local player = Players.LocalPlayer
 
 local HUD = {}
 
 local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
-local AMMO_SCALE = 1.1        -- Waffen-/Munitionsanzeige unten rechts etwas größer
+local AMMO_SCALE = 1.1        -- Waffen-/Munitionsanzeige unten rechts etwas größer (AbilityClient rechnet damit)
+local LEAVE_CONFIRM = 3       -- so lange wartet VERLASSEN auf den zweiten Klick
 
 local screen -- ScreenGui (an/aus)
 local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
@@ -46,12 +47,12 @@ local function make(className, props, parent)
 	return obj
 end
 
--- Weißer Text mit Umrandung, ohne Hintergrund
+-- Weißer Text mit leichter dunkler Kante, ohne Hintergrund
 local function label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.Font = props.Font or Enum.Font.GothamBold
-	props.TextStrokeTransparency = 0.5
+	props.TextStrokeTransparency = 0.7
 	return make("TextLabel", props, parent)
 end
 
@@ -109,23 +110,23 @@ function HUD.Init(weaponClient)
 
 	-- Hinweis bei fast leerem Magazin (unter dem Fadenkreuz)
 	local reloadHint = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 90),
-		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 18, Font = Enum.Font.Oswald,
+		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 20, Font = Enum.Font.Oswald,
 		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
 	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -150),
-		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 20, Font = UITheme.Fonts.Display,
+		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 24, Font = UITheme.Fonts.Display,
 		TextColor3 = UITheme.Colors.Good, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
-	-- Tastenzeile ganz unten mittig (Design: "Click fire · R reload · ..."), nur mit Tastatur
+	-- Tastenzeile ganz unten mittig ("LMB SCHIESSEN · R NACHLADEN · ..."), dezent, nur mit Tastatur
 	local keyHints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8), Size = UDim2.new(0, 900, 0, 14),
-		Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextTransparency = 0.3,
+		Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextTransparency = 0.5,
 		TextXAlignment = Enum.TextXAlignment.Center }, gui)
 	local function updateKeyHints()
 		keyHints.Visible = not InputActions.IsTouch()
 		local parts = {}
 		for _, entry in { { "Fire", "SCHIESSEN" }, { "Reload", "NACHLADEN" }, { "Ability", "FÄHIGKEIT" }, { "Gadget", "GADGET" },
-			{ "Weapon1", "WAFFE 1" }, { "Weapon2", "WAFFE 2" }, { "Scoreboard", "PUNKTE" }, { "Menu", "MENÜ" } } do
+			{ "Ultimate", "ULTIMATE" }, { "Weapon1", "WAFFE 1" }, { "Weapon2", "WAFFE 2" }, { "Scoreboard", "PUNKTE" } } do
 			local key = InputActions.Hint(entry[1])
 			if key ~= "" then
 				table.insert(parts, key .. " " .. entry[2])
@@ -136,37 +137,65 @@ function HUD.Init(weaponClient)
 	updateKeyHints()
 	InputActions.DeviceChanged:Connect(updateKeyHints)
 
-	-- MENÜ-Knopf unter der Minimap (Design: "Leave"): öffnet das Menü mit "Zurück zum Hub"
-	local menuButton = UITheme.Chunky({ Name = "MenuButton", Size = UDim2.new(0, 120, 0, 30), Color = UITheme.Colors.Panel,
-		StrokeColor = UITheme.Colors.Border, Text = "", TextSize = 12 }, gui, function()
-		GameMenu.SetOpen(true)
-	end)
-	local function updateMenuButton()
-		local key = InputActions.Hint("Menu")
-		menuButton.SetText(key ~= "" and ("≡  MENÜ  [" .. key .. "]") or "≡  MENÜ")
+	-- VERLASSEN-Knopf unter der Minimap: erster Klick fragt nach (rot), zweiter Klick innerhalb von
+	-- LEAVE_CONFIRM Sekunden bringt einen zurück in den Hub
+	local leaveButton = UITheme.Chunky({ Name = "LeaveButton", Size = UDim2.new(0, 152, 0, 30), Color = UITheme.Colors.Background,
+		StrokeColor = UITheme.Colors.Border, Text = "VERLASSEN", TextSize = 17 }, gui)
+	leaveButton.Face.BackgroundTransparency = 0.3
+	local confirmLeaveUntil = 0
+	local leaveClicks = 0 -- zählt Klicks, damit verspätete Rücksetzer nur den eigenen Zustand zurücksetzen
+	local function resetLeave()
+		confirmLeaveUntil = 0
+		leaveButton.SetText("VERLASSEN")
+		leaveButton.SetColor(UITheme.Colors.Background, UITheme.Colors.Text)
+		leaveButton.SetStroke(UITheme.Colors.Border, 1)
 	end
-	updateMenuButton()
-	InputActions.DeviceChanged:Connect(updateMenuButton)
+	leaveButton.Button.Activated:Connect(function()
+		leaveClicks += 1
+		local click = leaveClicks
+		if os.clock() < confirmLeaveUntil then
+			confirmLeaveUntil = 0
+			leaveButton.SetText("VERLASSE ...")
+			Remotes.JoinMode:FireServer(Modes.Hub.Id)
+			-- Falls der Wechsel ausbleibt, nach kurzer Zeit wieder bedienbar machen
+			task.delay(5, function()
+				if leaveClicks == click then
+					resetLeave()
+				end
+			end)
+			return
+		end
+		confirmLeaveUntil = os.clock() + LEAVE_CONFIRM
+		leaveButton.SetText("WIRKLICH VERLASSEN?")
+		leaveButton.SetColor(UITheme.Colors.Bad, UITheme.Colors.Text)
+		leaveButton.SetStroke(UITheme.Colors.Bad, 1)
+		task.delay(LEAVE_CONFIRM, function()
+			if leaveClicks == click and confirmLeaveUntil ~= 0 then
+				resetLeave()
+			end
+		end)
+	end)
+	player:GetAttributeChangedSignal("Mode"):Connect(resetLeave)
 
-	-- Große Meldung (Rundenstart, Sieger)
+	-- Große Meldung (Rundenstart, Sieger): dunkler Streifen mit Bernstein-Linie darunter
 	local announce = label({
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.26, 0),
-		Size = UDim2.new(0, 0, 0, 64),
+		Size = UDim2.new(0, 0, 0, 58),
 		AutomaticSize = Enum.AutomaticSize.X,
 		Text = "",
 		TextSize = 40,
 		Font = Enum.Font.Oswald,
-		TextColor3 = Color3.fromRGB(255, 220, 90),
-		BackgroundTransparency = 0.3,
-		BackgroundColor3 = Color3.fromRGB(10, 13, 22),
+		TextColor3 = UITheme.Colors.Text,
+		BackgroundTransparency = 0.35,
+		BackgroundColor3 = UITheme.Colors.Background,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Visible = false,
 	}, gui)
-	UITheme.Corner(announce, 12)
+	UITheme.Corner(announce, UITheme.Radius.Small)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 36), PaddingRight = UDim.new(0, 36) }, announce)
-	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, 72, 0, 3),
-		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, announce)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0), Size = UDim2.new(1, 72, 0, 2),
+		BackgroundColor3 = UITheme.Colors.Primary, BorderSizePixel = 0 }, announce)
 
 	-- Schaden: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar (bei jedem Spawn neu verbinden)
 	local function trackCharacter(character)
@@ -193,8 +222,8 @@ function HUD.Init(weaponClient)
 
 	-- ---------- Großer Countdown vor Rundenbeginn (3, 2, 1, LOS!) ----------
 	local countdown = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.42, 0),
-		Size = UDim2.new(0, 300, 0, 160), Text = "", TextSize = 150, Font = Enum.Font.Oswald,
-		TextColor3 = UITheme.Colors.Accent, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
+		Size = UDim2.new(0, 300, 0, 160), Text = "", TextSize = 130, Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Text, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 	local countdownScale = make("UIScale", {}, countdown)
 	local lastShown = nil
 	RunService.Heartbeat:Connect(function()
@@ -215,10 +244,10 @@ function HUD.Init(weaponClient)
 		if text and text ~= lastShown then
 			lastShown = text
 			countdown.Text = text
-			countdown.TextColor3 = text == "LOS!" and UITheme.Colors.Play or UITheme.Colors.Accent
-			-- kurzer "Puls" bei jeder neuen Zahl
-			countdownScale.Scale = 1.4
-			TweenService:Create(countdownScale, TweenInfo.new(0.3, Enum.EasingStyle.Back), { Scale = 1 }):Play()
+			countdown.TextColor3 = text == "LOS!" and UITheme.Colors.Primary or UITheme.Colors.Text
+			-- leichter Puls bei jeder neuen Zahl
+			countdownScale.Scale = 1.12
+			TweenService:Create(countdownScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), { Scale = 1 }):Play()
 		end
 	end)
 
@@ -232,14 +261,15 @@ function HUD.Init(weaponClient)
 	end
 
 	-- Touch-Geräte: links unten liegt der Steuerknüppel, rechts die Knöpfe. Darum Minimap kleiner,
-	-- Leben darunter nach oben links und Munition unten in die Mitte (Fähigkeiten links daneben).
+	-- VERLASSEN rechts daneben, Leben darunter nach oben links und Munition unten in die Mitte (Fähigkeiten
+	-- links daneben).
 	local function layoutForDevice()
 		match.Killfeed.Position = UDim2.new(1, -24, 0, belowTopbar(96, 14))
 		if InputActions.IsTouch() then
 			local top = belowTopbar(58, 8)
 			minimap.Position = UDim2.new(0, 16, 0, top)
 			minimapScale.Scale = 0.8
-			menuButton.Button.Visible = false -- Touch: eigener Menü-Knopf in den Touch-Steuerelementen
+			leaveButton.Button.Position = UDim2.new(0, 16 + 160 + 12, 0, top)
 			match.Vitals.AnchorPoint = Vector2.new(0, 0)
 			match.Vitals.Position = UDim2.new(0, 16, 0, top + 172)
 			match.Ammo.AnchorPoint = Vector2.new(0, 1)
@@ -251,8 +281,7 @@ function HUD.Init(weaponClient)
 			local minimapTop = belowTopbar(66, 10)
 			minimap.Position = UDim2.new(0, 24, 0, minimapTop)
 			minimapScale.Scale = 1
-			menuButton.Button.Visible = true
-			menuButton.Button.Position = UDim2.new(0, 24 + 40, 0, minimapTop + 208)
+			leaveButton.Button.Position = UDim2.new(0, 24 + 24, 0, minimapTop + 210)
 			match.Vitals.AnchorPoint = Vector2.new(0, 1)
 			match.Vitals.Position = UDim2.new(0, 24, 1, -24)
 			match.Ammo.AnchorPoint = Vector2.new(1, 1)
@@ -290,18 +319,20 @@ function HUD.Init(weaponClient)
 	-- XP-Meldung über der Fähigkeits-Box ("+100 XP · Kill"), Level-Up groß
 	local xpText = label({
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, 124), -- unter dem Fadenkreuz, frei von Fähigkeiten-Leiste und Touch-Knöpfen
+		Position = UDim2.new(0.5, 0, 0.5, 124), -- unter dem Fadenkreuz, frei von Touch-Knöpfen
 		Size = UDim2.new(0, 400, 0, 30),
 		Text = "",
 		TextSize = 22,
-		TextColor3 = Color3.fromRGB(120, 230, 140),
+		Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Primary,
 		Visible = false,
 	}, gui)
 	local xpId = 0
 	Remotes.XPGain.OnClientEvent:Connect(function(amount, reason, agentId, levelUp, coins)
 		xpId += 1
 		local myId = xpId
-		xpText.Text = "+" .. amount .. " XP" .. ((coins or 0) > 0 and ("  +" .. coins .. " 💰") or "") .. "  ·  " .. tostring(reason)
+		xpText.Text = "+" .. amount .. " XP" .. ((coins or 0) > 0 and ("  +" .. coins .. " MÜNZEN") or "") .. "  ·  "
+			.. UITheme.Upper(tostring(reason))
 		xpText.Visible = true
 		task.delay(2, function()
 			if xpId == myId then
@@ -324,7 +355,7 @@ function HUD.Init(weaponClient)
 	local function updateMoney()
 		local money = player:GetAttribute("Money")
 		moneyText.Visible = money ~= nil
-		moneyText.Text = money and ("💵 " .. money .. " $") or ""
+		moneyText.Text = money and (UITheme.FormatNumber(money) .. " $") or ""
 	end
 	updateMoney()
 	player:GetAttributeChangedSignal("Money"):Connect(updateMoney)
@@ -345,16 +376,18 @@ function HUD.Init(weaponClient)
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0.7, 0),
 		Size = UDim2.new(0, 440, 0, 74),
-		BackgroundColor3 = Color3.fromRGB(20, 10, 12),
-		BackgroundTransparency = 0.25,
+		BackgroundColor3 = UITheme.Colors.Background,
+		BackgroundTransparency = 0.3,
+		BorderSizePixel = 0,
 		Visible = false,
 	}, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, recap)
-	make("UIStroke", { Color = Color3.fromRGB(220, 60, 60), Thickness = 1.5 }, recap)
-	local recapTitle = label({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 28), Text = "",
-		TextSize = 20, TextColor3 = Color3.fromRGB(255, 90, 90), TextXAlignment = Enum.TextXAlignment.Left }, recap)
-	local recapInfo = label({ Position = UDim2.new(0, 16, 0, 40), Size = UDim2.new(1, -32, 0, 22), Text = "",
-		TextSize = 15, Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left }, recap)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, recap)
+	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = UITheme.Colors.Bad, BorderSizePixel = 0 }, recap)
+	local recapTitle = label({ Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -34, 0, 30), Text = "",
+		TextSize = 26, Font = Enum.Font.Oswald, TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Left }, recap)
+	local recapInfo = label({ Position = UDim2.new(0, 18, 0, 42), Size = UDim2.new(1, -34, 0, 22), Text = "",
+		TextSize = 14, Font = Enum.Font.GothamMedium, TextColor3 = UITheme.Colors.Text,
+		TextXAlignment = Enum.TextXAlignment.Left }, recap)
 	local recapId = 0
 	Remotes.DeathRecap.OnClientEvent:Connect(function(killerName, weaponName, killerHealth, agentId, killerModel)
 		-- Todeskamera: 3 Sekunden auf den Killer schauen (Zuschauen übernimmt danach)
@@ -380,7 +413,7 @@ function HUD.Init(weaponClient)
 		recapId += 1
 		local myId = recapId
 		local agent = agentId and AgentConfig.Get(agentId)
-		recapTitle.Text = "AUSGESCHALTET VON " .. string.upper(tostring(killerName))
+		recapTitle.Text = "AUSGESCHALTET VON " .. UITheme.Upper(tostring(killerName))
 		recapInfo.Text = (agent and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
 			.. "  ·  hatte noch " .. tostring(killerHealth) .. " Leben"
 		recap.Visible = true
@@ -426,7 +459,7 @@ function HUD.Init(weaponClient)
 	player:GetAttributeChangedSignal("AccountXP"):Connect(function()
 		local info = LevelConfig.Get(player)
 		if info.Level > lastLevel and info.Prestige == lastPrestige then
-			HUD.ShowAnnouncement("▲ LEVEL UP!  LV " .. info.Level)
+			HUD.ShowAnnouncement("LEVEL " .. info.Level .. " ERREICHT")
 		end
 		lastLevel, lastPrestige = info.Level, info.Prestige
 	end)

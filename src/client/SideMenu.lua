@@ -1,9 +1,9 @@
 -- SideMenu (ModuleScript, nur Client)
--- Knopfleiste links im Hub: SHOP, LOADOUT (Rucksack), AGENTEN, PASS, AUFTRÄGE, TÄGLICH, SQUAD, STATS,
--- CODES, OPTIONEN, darüber die große Spielerkarte (Level, Prestige, Rang, Münzen). Jeder Knopf öffnet ein
--- Fenster in der Mitte – dieselben Fenster öffnet auch die Lobby (GameMenu: Navigation, Squad, Battle
--- Pass, Auftrag, Symbole oben rechts). Design wie die Lobby ("BLOCKOPS"): Flächen mit runden Ecken,
--- 2 px Rand und Schatten, klobige Knöpfe, Gelb für aktiv. Kaufen/Ausrüsten prüft der Server (ShopService).
+-- Menüliste links im Hub: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, STATISTIK,
+-- CODES, OPTIONEN (schlichte Textzeilen), darüber die Spielerkarte (Level, Prestige, Rang, Münzen). Jeder
+-- Eintrag öffnet ein Fenster in der Mitte – dieselben Fenster öffnet auch die Lobby (GameMenu: Navigation,
+-- Squad, Battle Pass, Auftrag, Knöpfe oben rechts). Design wie die Lobby (UITheme, nüchterner Taktik-Look):
+-- dunkle Flächen mit 1 px Rand, flache Knöpfe, Bernstein für aktiv. Kaufen/Ausrüsten prüft der Server (ShopService).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,7 +18,6 @@ local AgentFigure = require(Shared.AgentFigure)
 local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
 local UITheme = require(Shared.UITheme)
-local TweenService = game:GetService("TweenService")
 local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
@@ -30,7 +29,7 @@ local player = Players.LocalPlayer
 
 local SideMenu = {}
 
--- Farben aus dem gemeinsamen Design (UITheme): Gelb = aktiv/hervorgehoben, Cyan = Team
+-- Farben aus dem gemeinsamen Design (UITheme): Bernstein = aktiv/hervorgehoben, Blau = Team
 local ACCENT = UITheme.Colors.Primary
 local ON_ACCENT = UITheme.Colors.PrimaryText
 local PANEL = UITheme.Colors.Panel
@@ -59,7 +58,7 @@ end
 
 local function text(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = UITheme.FontFor(props.Font or Enum.Font.GothamBold, props.TextSize)
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return make("TextLabel", props, parent)
@@ -105,25 +104,34 @@ local function viewportFrame(props, parent)
 	return make("ViewportFrame", props, parent)
 end
 
--- Tab-Leiste: names = { "A", "B" }, onSelect(name)
+-- Reiter-Leiste: names = { "A", "B" }, onSelect(name). Aktiv: weiße Schrift mit Bernstein-Strich.
 local function tabBar(parent, names, y, onSelect)
 	local bar = make("Frame", { Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(1, -48, 0, 34),
 		BackgroundTransparency = 1 }, parent)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder }, bar)
+	-- dünne Linie unter allen Reitern
+	make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 0, y + 36), Size = UDim2.new(1, -48, 0, 1),
+		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, parent)
 	local buttons = {}
 	local function select(name)
 		for n, b in buttons do
-			b.BackgroundColor3 = n == name and ACCENT or CARD
-			b.TextColor3 = n == name and ON_ACCENT or GRAY
+			b.TextColor3 = n == name and UITheme.Colors.Text or GRAY
+			b.Underline.Visible = n == name
 		end
 		onSelect(name)
 	end
 	for i, name in names do
-		buttons[name] = button({ Size = UDim2.new(0, 200, 1, 6), Text = name, TextSize = 15, LayoutOrder = i,
-			BackgroundColor3 = CARD, Font = DISPLAY }, bar, function()
+		local b = make("TextButton", { Size = UDim2.new(0, 0, 1, 2), AutomaticSize = Enum.AutomaticSize.X, Text = name,
+			TextSize = 19, Font = DISPLAY, TextColor3 = GRAY, BackgroundTransparency = 1, AutoButtonColor = false,
+			LayoutOrder = i }, bar)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, b)
+		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -12, 1, 0),
+			Size = UDim2.new(1, 24, 0, 2), BackgroundColor3 = ACCENT, BorderSizePixel = 0, Visible = false }, b)
+		b.Activated:Connect(function()
 			select(name)
 		end)
+		buttons[name] = b
 	end
 	return select
 end
@@ -149,32 +157,22 @@ local function makePanel(name, title, width, height)
 	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, width, 0, height), BackgroundColor3 = PANEL, Visible = false, Active = true }, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, frame)
-	make("UIStroke", { Color = BORDER, Thickness = 2 }, frame)
-	UITheme.Gradient(frame, Color3.fromRGB(30, 44, 66), PANEL)
-	-- Schatten unter dem Fenster (6 px, wie die Flächen der Lobby)
-	local shadow = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 6),
-		Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.6,
-		BorderSizePixel = 0, Visible = false, ZIndex = 0 }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, shadow)
-	frame:GetPropertyChangedSignal("Visible"):Connect(function()
-		shadow.Visible = frame.Visible
-	end)
+	make("UIStroke", { Color = BORDER, Thickness = 1 }, frame)
+	UITheme.Gradient(frame, Color3.fromRGB(27, 31, 36), PANEL)
 	local scale = make("UIScale", {}, frame)
 	local function updateScale()
 		local viewport = workspace.CurrentCamera.ViewportSize
 		scale.Scale = math.clamp(math.min((viewport.X - 280) / (width + 40), (viewport.Y - 60) / (height + 40)), 0.4, 1.15)
-		-- Schatten skaliert mit (liegt als Geschwister neben dem Fenster)
-		shadow.Size = UDim2.new(0, width * scale.Scale, 0, height * scale.Scale)
-		shadow.Position = UDim2.new(0.5, 0, 0.5, 6 * scale.Scale)
 	end
 	updateScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
 
-	local titleLabel = text({ Position = UDim2.new(0, 24, 0, 14), Size = UDim2.new(1, -100, 0, 40), Text = UITheme.Upper(title),
-		TextSize = 28, Font = DISPLAY, TextColor3 = Color3.new(1, 1, 1) }, frame)
-	UITheme.Outline(titleLabel, 2)
-	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 44, 0, 44),
-		Text = "✕", TextSize = 20, BackgroundColor3 = CARD }, frame, function()
+	text({ Position = UDim2.new(0, 24, 0, 12), Size = UDim2.new(1, -100, 0, 40), Text = UITheme.Upper(title),
+		TextSize = 32, Font = DISPLAY, TextColor3 = UITheme.Colors.Text }, frame)
+	make("Frame", { Position = UDim2.new(0, 24, 0, 52), Size = UDim2.new(0, 28, 0, 2), BackgroundColor3 = ACCENT,
+		BorderSizePixel = 0 }, frame)
+	button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14), Size = UDim2.new(0, 40, 0, 40),
+		Text = "✕", TextSize = 18, BackgroundColor3 = CARD }, frame, function()
 		setPanel(nil)
 	end)
 	local status = text({ Position = UDim2.new(0, 24, 1, -36), Size = UDim2.new(1, -48, 0, 24), Text = "",
@@ -186,9 +184,9 @@ end
 -- ---------- SHOP ----------
 
 local function buildShop()
-	local frame = makePanel("Shop", "🛒  SHOP", 980, 620)
+	local frame = makePanel("Shop", "SHOP", 980, 620)
 	local balance = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -70, 0, 20),
-		Size = UDim2.new(0, 260, 0, 30), Text = "", TextSize = 22, TextColor3 = Color3.fromRGB(255, 210, 80),
+		Size = UDim2.new(0, 260, 0, 30), Text = "", TextSize = 22, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right }, frame)
 	local grid = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 110), Size = UDim2.new(1, -48, 1, -156),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, CanvasSize = UDim2.new(),
@@ -200,16 +198,19 @@ local function buildShop()
 	local buyButtons = {} -- [itemId] = Button
 
 	local function updateButtons()
-		balance.Text = "💰 " .. formatNumber(coins())
+		balance.Text = formatNumber(coins()) .. " MÜNZEN"
 		local owned = Cosmetics.GetOwned(player)
 		for itemId, b in buyButtons do
 			local item = Cosmetics.Get(itemId)
 			if owned[itemId] then
-				b.Text = "BESITZT ✓"
-				b.BackgroundColor3 = Color3.fromRGB(55, 60, 75)
+				b.Text = "IM BESITZ"
+				b.BackgroundColor3 = UITheme.Colors.MutedBack
+				b.TextColor3 = GRAY
 			else
-				b.Text = "💰 " .. formatNumber(item.Price) .. "  KAUFEN"
-				b.BackgroundColor3 = coins() >= item.Price and GREEN or Color3.fromRGB(90, 50, 50)
+				local affordable = coins() >= item.Price
+				b.Text = "KAUFEN  ·  " .. formatNumber(item.Price)
+				b.BackgroundColor3 = affordable and ACCENT or UITheme.Colors.MutedBack
+				b.TextColor3 = affordable and ON_ACCENT or UITheme.Colors.Bad
 			end
 		end
 	end
@@ -231,10 +232,8 @@ local function buildShop()
 			local rarity = Cosmetics.Rarities[item.Rarity]
 			local card = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
 			make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
-			make("UIStroke", { Color = rarity.Color, Thickness = 1.5 }, card)
-			local stripe = make("Frame", { Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = rarity.Color,
-				BorderSizePixel = 0 }, card)
-			make("UICorner", { CornerRadius = UDim.new(0, 4) }, stripe)
+			make("UIStroke", { Color = rarity.Color, Thickness = 1, Transparency = 0.45 }, card)
+			make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
 			local preview = viewportFrame({ Position = UDim2.new(0, 0, 0, 8), Size = UDim2.new(1, 0, 0, 130) }, card)
 			if item.Type == "Weapon" then
 				showWeapon(preview, "Rifle", item)
@@ -269,7 +268,7 @@ end
 -- ---------- RUCKSACK ----------
 
 local function buildInventory()
-	local frame = makePanel("Inventory", "🎒  LOADOUT", 980, 620)
+	local frame = makePanel("Inventory", "LOADOUT", 980, 620)
 	local list = make("ScrollingFrame", { Position = UDim2.new(0, 24, 0, 110), Size = UDim2.new(0, 220, 1, -156),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
@@ -321,7 +320,7 @@ local function buildInventory()
 					Remotes.ShopAction:FireServer("Unequip", slot)
 				end
 			end)
-			make("UIStroke", { Color = isOn and ACCENT or entry.Color, Thickness = isOn and 3 or 1,
+			make("UIStroke", { Color = isOn and ACCENT or entry.Color, Thickness = isOn and 2 or 1, Transparency = isOn and 0 or 0.45,
 				ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
 		end
 		if #entries == 1 then
@@ -359,8 +358,8 @@ local function buildInventory()
 		for i, name in names do
 			local label = mode == "Weapon" and WeaponConfig.Get(name).DisplayName or AgentConfig.Get(name).Name
 			button({ LayoutOrder = i, Size = UDim2.new(1, -6, 0, 44), Text = label, TextSize = 16,
-				BackgroundColor3 = name == selected and ACCENT or CARD,
-				TextColor3 = name == selected and Color3.fromRGB(20, 20, 20) or Color3.new(1, 1, 1) }, list, function()
+				BackgroundColor3 = name == selected and UITheme.Colors.Secondary or CARD,
+				TextColor3 = name == selected and ACCENT or UITheme.Colors.Text }, list, function()
 				selected = name
 				fillList()
 				fillOptions()
@@ -395,7 +394,7 @@ local function questReady()
 end
 
 local function buildQuests()
-	local frame = makePanel("Quests", "📋  TÄGLICHE AUFTRÄGE", 640, 420)
+	local frame = makePanel("Quests", "TÄGLICHE AUFTRÄGE", 640, 420)
 	text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 22),
 		Text = "Jeden Tag neue Aufträge – Belohnung in Münzen.", TextSize = 16, TextColor3 = GRAY }, frame)
 	local list = make("Frame", { Position = UDim2.new(0, 24, 0, 96), Size = UDim2.new(1, -48, 1, -140),
@@ -423,15 +422,16 @@ local function buildQuests()
 				text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -200, 0, 24), Text = quest.Text,
 					TextSize = 19 }, row)
 				text({ Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -200, 0, 18),
-					Text = progress .. " / " .. quest.Goal .. "   ·   💰 " .. quest.Reward, TextSize = 14,
+					Text = progress .. " / " .. quest.Goal .. "   ·   " .. quest.Reward .. " Münzen", TextSize = 14,
 					TextColor3 = GRAY }, row)
-				local barBack = make("Frame", { Position = UDim2.new(0, 16, 0, 60), Size = UDim2.new(1, -200, 0, 8),
+				local barBack = make("Frame", { Position = UDim2.new(0, 16, 0, 62), Size = UDim2.new(1, -200, 0, 4),
 					BackgroundColor3 = BORDER, BorderSizePixel = 0 }, row)
 				make("Frame", { Size = UDim2.new(progress / quest.Goal, 0, 1, 0), BorderSizePixel = 0,
 					BackgroundColor3 = done and GREEN or ACCENT }, barBack)
 				button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0), Size = UDim2.new(0, 150, 0, 44),
-					TextSize = 16, Text = claimed and "ABGEHOLT ✓" or (done and "ABHOLEN" or "OFFEN"),
-					BackgroundColor3 = (done and not claimed) and GREEN or Color3.fromRGB(55, 60, 75) }, row, function()
+					TextSize = 16, Text = claimed and "ABGEHOLT" or (done and "ABHOLEN" or "OFFEN"),
+					BackgroundColor3 = (done and not claimed) and ACCENT or UITheme.Colors.MutedBack,
+					TextColor3 = (done and not claimed) and ON_ACCENT or GRAY }, row, function()
 					if done and not claimed then
 						Remotes.ShopAction:FireServer("ClaimQuest", id)
 					end
@@ -453,7 +453,7 @@ end
 -- ---------- SQUAD ----------
 
 local function buildSquad()
-	local frame = makePanel("Squad", "👥  SQUAD", 760, 560)
+	local frame = makePanel("Squad", "SQUAD", 760, 560)
 	text({ Position = UDim2.new(0, 24, 0, 64), Size = UDim2.new(0.5, -30, 0, 20), Text = "DEIN SQUAD (max. 4)", TextSize = 14,
 		TextColor3 = ACCENT }, frame)
 	text({ Position = UDim2.new(0.5, 6, 0, 64), Size = UDim2.new(0.5, -30, 0, 20), Text = "SPIELER IM SERVER", TextSize = 14,
@@ -497,7 +497,7 @@ local function buildSquad()
 				inParty[member.UserId] = true
 				local isLeader = member.UserId == party.Leader
 				local kick = iAmLeader and member.UserId ~= player.UserId
-				row(mine, i, (isLeader and "👑  " or "") .. member.Name, kick and "ENTFERNEN" or nil, Color3.fromRGB(140, 45, 50),
+				row(mine, i, (isLeader and "★  " or "") .. member.Name, kick and "ENTFERNEN" or nil, Color3.fromRGB(140, 45, 50),
 					function()
 						Remotes.PartyAction:FireServer("Kick", member.UserId)
 					end)
@@ -536,7 +536,7 @@ local function buildSquad()
 	local popup = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -140), Size = UDim2.new(0, 360, 0, 120),
 		BackgroundColor3 = PANEL, Visible = false }, inviteGui)
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, popup)
-	make("UIStroke", { Color = ACCENT, Thickness = 2 }, popup)
+	make("UIStroke", { Color = ACCENT, Thickness = 1 }, popup)
 	local inviteText = text({ Position = UDim2.new(0, 16, 0, 12), Size = UDim2.new(1, -32, 0, 44), Text = "", TextSize = 16,
 		TextWrapped = true }, popup)
 	local inviter = nil
@@ -555,7 +555,7 @@ local function buildSquad()
 		inviteId += 1
 		local myId = inviteId
 		inviter = userId
-		inviteText.Text = "👥  " .. name .. " lädt dich in seinen Squad ein."
+		inviteText.Text = name .. " lädt dich in seinen Squad ein."
 		popup.Visible = true
 		task.delay(20, function()
 			if inviteId == myId then
@@ -577,7 +577,7 @@ local function percent(a, b)
 end
 
 local function buildStats()
-	local frame = makePanel("Stats", "📊  STATISTIK", 1040, 760)
+	local frame = makePanel("Stats", "STATISTIK", 1040, 760)
 	-- Linke Seite: Kacheln
 	local grid = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(0, 620, 0, 376),
 		BackgroundTransparency = 1 }, frame)
@@ -732,16 +732,14 @@ end
 -- ---------- BATTLE PASS ----------
 
 local function buildPass()
-	local frame = makePanel("Pass", "🎫  BATTLE PASS", 980, 470)
+	local frame = makePanel("Pass", "BATTLE PASS", 980, 470)
 	local season = text({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(1, -48, 0, 24),
 		Text = PassConfig.SeasonName, TextSize = 18, TextColor3 = GRAY }, frame)
 	local tierLabel = text({ Position = UDim2.new(0, 24, 0, 90), Size = UDim2.new(0, 400, 0, 34), Text = "",
 		TextSize = 28, Font = Enum.Font.Oswald }, frame)
-	local barBack = make("Frame", { Position = UDim2.new(0, 24, 0, 130), Size = UDim2.new(1, -48, 0, 12),
+	local barBack = make("Frame", { Position = UDim2.new(0, 24, 0, 133), Size = UDim2.new(1, -48, 0, 6),
 		BackgroundColor3 = BORDER, BorderSizePixel = 0 }, frame)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, barBack)
 	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, bar)
 	local xpLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 98), Size = UDim2.new(0, 300, 0, 24),
 		Text = "", TextSize = 16, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, frame)
 
@@ -757,7 +755,7 @@ local function buildPass()
 		local rarity = item and Cosmetics.Rarities[item.Rarity]
 		local card = make("Frame", { Size = UDim2.new(0, 124, 0, 230), BackgroundColor3 = CARD, LayoutOrder = tier }, strip)
 		make("UICorner", { CornerRadius = UDim.new(0, 4) }, card)
-		local stroke = make("UIStroke", { Color = rarity and rarity.Color or BORDER, Thickness = item and 2 or 1 }, card)
+		local stroke = make("UIStroke", { Color = rarity and rarity.Color or BORDER, Thickness = 1, Transparency = item and 0.3 or 0 }, card)
 		text({ Size = UDim2.new(1, 0, 0, 30), Text = "STUFE " .. tier, TextSize = 14, TextColor3 = GRAY,
 			TextXAlignment = Enum.TextXAlignment.Center }, card)
 		if item then
@@ -770,10 +768,9 @@ local function buildPass()
 			text({ Position = UDim2.new(0, 6, 0, 152), Size = UDim2.new(1, -12, 0, 40), Text = item.Name, TextSize = 15,
 				TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center }, card)
 		else
-			text({ Position = UDim2.new(0, 0, 0, 60), Size = UDim2.new(1, 0, 0, 60), Text = "💰", TextSize = 40,
-				TextXAlignment = Enum.TextXAlignment.Center }, card)
-			text({ Position = UDim2.new(0, 0, 0, 130), Size = UDim2.new(1, 0, 0, 30), Text = reward.Coins .. " Münzen",
-				TextSize = 16, TextColor3 = Color3.fromRGB(255, 210, 80), TextXAlignment = Enum.TextXAlignment.Center }, card)
+			UITheme.Coin(card, 44, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 68) })
+			text({ Position = UDim2.new(0, 0, 0, 130), Size = UDim2.new(1, 0, 0, 30), Text = reward.Coins .. " MÜNZEN",
+				TextSize = 20, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Center }, card)
 		end
 		local state = text({ Position = UDim2.new(0, 0, 1, -34), Size = UDim2.new(1, 0, 0, 26), Text = "",
 			TextSize = 14, TextXAlignment = Enum.TextXAlignment.Center }, card)
@@ -789,9 +786,9 @@ local function buildPass()
 			or (math.floor(progress * PassConfig.XPPerTier) .. " / " .. PassConfig.XPPerTier .. " XP bis Stufe " .. tier + 1)
 		for t, entry in cards do
 			local reached = t <= tier
-			entry.State.Text = reached and "✓ FREI" or "GESPERRT"
+			entry.State.Text = reached and "FREIGESCHALTET" or "GESPERRT"
 			entry.State.TextColor3 = reached and GREEN or GRAY
-			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(28, 40, 34) or CARD
+			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(30, 36, 32) or CARD
 		end
 	end
 	season.Text = PassConfig.SeasonName .. "   ·   Pass-XP gibt es für alle XP und für Aufträge"
@@ -804,10 +801,10 @@ local function dailyLeft()
 end
 
 local function buildDaily()
-	local frame = makePanel("Daily", "🎁  TÄGLICHE BELOHNUNG", 560, 330)
+	local frame = makePanel("Daily", "TÄGLICHE BELOHNUNG", 560, 330)
 	text({ Position = UDim2.new(0, 24, 0, 80), Size = UDim2.new(1, -48, 0, 60),
-		Text = "💰 " .. Cosmetics.DailyReward .. " Münzen", TextSize = 44, Font = Enum.Font.Oswald,
-		TextColor3 = Color3.fromRGB(255, 210, 80), TextXAlignment = Enum.TextXAlignment.Center }, frame)
+		Text = Cosmetics.DailyReward .. " MÜNZEN", TextSize = 48, Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Center }, frame)
 	text({ Position = UDim2.new(0, 24, 0, 144), Size = UDim2.new(1, -48, 0, 24),
 		Text = "Jeden Tag kostenlos abholen!", TextSize = 17, TextColor3 = GRAY,
 		TextXAlignment = Enum.TextXAlignment.Center }, frame)
@@ -819,10 +816,12 @@ local function buildDaily()
 		local left = dailyLeft()
 		if left <= 0 then
 			claim.Text = "ABHOLEN"
-			claim.BackgroundColor3 = GREEN
+			claim.BackgroundColor3 = ACCENT
+			claim.TextColor3 = ON_ACCENT
 		else
 			claim.Text = string.format("IN %d h %02d min", left // 3600, (left % 3600) // 60)
-			claim.BackgroundColor3 = Color3.fromRGB(55, 60, 75)
+			claim.BackgroundColor3 = UITheme.Colors.MutedBack
+			claim.TextColor3 = GRAY
 		end
 	end
 end
@@ -830,7 +829,7 @@ end
 -- ---------- CODES ----------
 
 local function buildCodes()
-	local frame = makePanel("Codes", "🎟  CODES", 560, 300)
+	local frame = makePanel("Codes", "CODES", 560, 300)
 	text({ Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(1, -48, 0, 24),
 		Text = "Code eingeben und Belohnung abholen:", TextSize = 17, TextColor3 = GRAY }, frame)
 	local box = make("TextBox", { Position = UDim2.new(0, 24, 0, 104), Size = UDim2.new(1, -48, 0, 50),
@@ -839,7 +838,7 @@ local function buildCodes()
 		ClearTextOnFocus = false }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 4) }, box)
 	button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 172), Size = UDim2.new(0, 260, 0, 52),
-		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = GREEN }, frame, function()
+		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = ACCENT, TextColor3 = ON_ACCENT }, frame, function()
 		Remotes.ShopAction:FireServer("RedeemCode", box.Text)
 	end)
 end
@@ -879,7 +878,7 @@ local function loadSettings()
 end
 
 local function buildSettings()
-	local frame = makePanel("Settings", "⚙  EINSTELLUNGEN", 560, 380)
+	local frame = makePanel("Settings", "EINSTELLUNGEN", 560, 380)
 	local refreshers = {}
 	local function settingRow(y, label, getValue, change)
 		text({ Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(0, 260, 0, 44), Text = label, TextSize = 18 }, frame)
@@ -925,43 +924,36 @@ local function buildSettings()
 	end
 end
 
--- ---------- Knopf-Raster links (wie in vielen Roblox-Spielen: bunte Kacheln mit Symbol) ----------
+-- ---------- Menüliste links (schlichte Textzeilen) ----------
 
-local BUTTON_SIZE = 84
-local BUTTON_GAP = 8
+local ROW_WIDTH = 220
+local ROW_HEIGHT = 38
+local ROW_GAP = 4
 
-local function sideButton(icon, label, color, order, onClick)
-	-- Kachel im Design der Lobby: Fläche mit Rand und 3D-Lippe, Symbol auf farbigem Kreis
-	local b = make("TextButton", { Size = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE), BackgroundColor3 = PANEL,
-		BackgroundTransparency = 0.06, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
-	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, b)
-	local stroke = make("UIStroke", { Color = BORDER, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-	local lip = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 5),
-		BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.65, BorderSizePixel = 0 }, b)
-	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.XL) }, lip)
-	local disc = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(0, 46, 0, 46),
-		BackgroundColor3 = color, BackgroundTransparency = 0.7, BorderSizePixel = 0 }, b)
-	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, disc)
-	local scale = make("UIScale", {}, b)
+local function sideButton(label, order, onClick)
+	-- Zeile: dunkle Fläche mit 1 px Rand, beim Überfahren hellere Fläche und Bernstein-Balken links
+	local b = make("TextButton", { Size = UDim2.new(0, ROW_WIDTH, 0, ROW_HEIGHT), BackgroundColor3 = PANEL,
+		BackgroundTransparency = 0.15, BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = order }, column)
+	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, b)
+	local stroke = make("UIStroke", { Color = BORDER, Thickness = 1, Transparency = 0.3,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+	local marker = make("Frame", { Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
+		Visible = false }, b)
+	local caption = make("TextLabel", { Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(1, -40, 1, 0),
+		BackgroundTransparency = 1, Text = label, TextSize = 19, Font = DISPLAY, TextColor3 = UITheme.Colors.Text,
+		TextXAlignment = Enum.TextXAlignment.Left }, b)
 	b.MouseEnter:Connect(function()
-		stroke.Color = ACCENT
-		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = 1.06 }):Play()
+		b.BackgroundColor3 = CARD
+		stroke.Transparency = 0
+		marker.Visible = true
+		caption.TextColor3 = ACCENT
 	end)
 	b.MouseLeave:Connect(function()
-		stroke.Color = BORDER
-		lip.Size = UDim2.new(1, 0, 0, 5)
-		TweenService:Create(scale, TweenInfo.new(0.15), { Scale = 1 }):Play()
+		b.BackgroundColor3 = PANEL
+		stroke.Transparency = 0.3
+		marker.Visible = false
+		caption.TextColor3 = UITheme.Colors.Text
 	end)
-	b.MouseButton1Down:Connect(function()
-		lip.Size = UDim2.new(1, 0, 0, 1)
-	end)
-	b.MouseButton1Up:Connect(function()
-		lip.Size = UDim2.new(1, 0, 0, 5)
-	end)
-	make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(0, 46, 0, 46),
-		BackgroundTransparency = 1, Text = icon, TextSize = 28, Font = Enum.Font.GothamBold, TextColor3 = Color3.new(1, 1, 1) }, b)
-	make("TextLabel", { Position = UDim2.new(0, 4, 1, -27), Size = UDim2.new(1, -8, 0, 16), BackgroundTransparency = 1,
-		Text = label, TextScaled = true, Font = DISPLAY, TextColor3 = Color3.new(1, 1, 1) }, b)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -989,17 +981,14 @@ local function buildPlayerCard()
 
 	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name,
 		TextSize = 20, Font = DISPLAY, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
-	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 12), Size = UDim2.new(0, 110, 0, 22),
-		Text = "", TextSize = 16, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
+	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 10), Size = UDim2.new(0, 110, 0, 24),
+		Text = "", TextSize = 18, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right }, playerCard)
 	local rankLabel = text({ Position = UDim2.new(0, 92, 0, 38), Size = UDim2.new(1, -104, 0, 20), Text = "",
 		TextSize = 16, Font = UITheme.Fonts.Title, RichText = true }, playerCard)
-	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 64), Size = UDim2.new(1, -104, 0, 12),
+	local barBack = make("Frame", { Position = UDim2.new(0, 92, 0, 67), Size = UDim2.new(1, -104, 0, 5),
 		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, playerCard)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, barBack)
-	make("UIStroke", { Color = BORDER, Thickness = 2 }, barBack)
 	local bar = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, barBack)
-	make("UICorner", { CornerRadius = UDim.new(0, 6) }, bar)
 	local xpLabel = text({ Position = UDim2.new(0, 92, 0, 78), Size = UDim2.new(1, -104, 0, 18), Text = "", TextSize = 13,
 		Font = UITheme.Fonts.Body, TextColor3 = GRAY }, playerCard)
 
@@ -1038,7 +1027,7 @@ local function buildPlayerCard()
 		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
 			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")
 		prestigeButton.Visible = info.CanPrestige
-		coinLabel.Text = "💰 " .. formatNumber(coins())
+		coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
 		nameLabel.Text = player.Name
 	end
 	refresh()
@@ -1052,28 +1041,26 @@ end
 local function buildColumn()
 	-- Sortiert: Einkaufen, Fortschritt, Belohnungen, Soziales/Statistik, Einstellungen
 	local entries = {
-		{ "🛒", "SHOP", Color3.fromRGB(60, 190, 90), function() togglePanel("Shop") end },
-		{ "🎒", "LOADOUT", Color3.fromRGB(235, 140, 40), function() togglePanel("Inventory") end },
-		{ "🦸", "AGENTEN", Color3.fromRGB(140, 80, 220), function()
+		{ "SHOP", function() togglePanel("Shop") end },
+		{ "LOADOUT", function() togglePanel("Inventory") end },
+		{ "AGENTEN", function()
 			setPanel(nil)
 			GameMenu.Open("Agents")
 		end },
-		{ "🎫", "PASS", Color3.fromRGB(240, 190, 40), function() togglePanel("Pass") end },
-		{ "📋", "AUFTRÄGE", Color3.fromRGB(230, 70, 90), function() togglePanel("Quests") end },
-		{ "🎁", "TÄGLICH", Color3.fromRGB(235, 90, 170), function() togglePanel("Daily") end },
-		{ "👥", "SQUAD", Color3.fromRGB(50, 130, 235), function() togglePanel("Squad") end },
-		{ "📊", "STATS", Color3.fromRGB(30, 180, 200), function() togglePanel("Stats") end },
-		{ "🎟", "CODES", Color3.fromRGB(40, 170, 140), function() togglePanel("Codes") end },
-		{ "⚙", "OPTIONEN", Color3.fromRGB(110, 120, 140), function() togglePanel("Settings") end },
+		{ "BATTLE PASS", function() togglePanel("Pass") end },
+		{ "AUFTRÄGE", function() togglePanel("Quests") end },
+		{ "TÄGLICH", function() togglePanel("Daily") end },
+		{ "SQUAD", function() togglePanel("Squad") end },
+		{ "STATISTIK", function() togglePanel("Stats") end },
+		{ "CODES", function() togglePanel("Codes") end },
+		{ "OPTIONEN", function() togglePanel("Settings") end },
 	}
-	local rows = math.ceil(#entries / 2)
-	local width = BUTTON_SIZE * 2 + BUTTON_GAP
-	local height = rows * BUTTON_SIZE + (rows - 1) * BUTTON_GAP
+	local width = ROW_WIDTH
+	local height = #entries * ROW_HEIGHT + (#entries - 1) * ROW_GAP
 	column = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 60),
 		Size = UDim2.new(0, width, 0, height), BackgroundTransparency = 1 }, gui)
-	make("UIGridLayout", { CellSize = UDim2.new(0, BUTTON_SIZE, 0, BUTTON_SIZE),
-		CellPadding = UDim2.new(0, BUTTON_GAP, 0, BUTTON_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, column)
-	-- Auf kleinen Bildschirmen das Raster verkleinern (unter der Spielerkarte bleiben)
+	make("UIListLayout", { Padding = UDim.new(0, ROW_GAP), SortOrder = Enum.SortOrder.LayoutOrder }, column)
+	-- Auf kleinen Bildschirmen die Liste verkleinern (unter der Spielerkarte bleiben)
 	local columnScale = make("UIScale", {}, column)
 	local function updateColumnScale()
 		columnScale.Scale = math.clamp((workspace.CurrentCamera.ViewportSize.Y - 320) / height, 0.5, 1)
@@ -1082,20 +1069,19 @@ local function buildColumn()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
 	local daily, quests
 	for i, entry in entries do
-		local b = sideButton(entry[1], entry[2], entry[3], i, entry[4])
-		if entry[2] == "TÄGLICH" then
+		local b = sideButton(entry[1], i, entry[2])
+		if entry[1] == "TÄGLICH" then
 			daily = b
-		elseif entry[2] == "AUFTRÄGE" then
+		elseif entry[1] == "AUFTRÄGE" then
 			quests = b
 		end
 	end
-	-- Roter Punkt mit "!", wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
+	-- Kleines Bernstein-Schild "NEU", wenn ein Auftrag bzw. die tägliche Belohnung bereit ist
 	local function notifyDot(parent)
-		local dot = make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -6, 0, 6),
-			Size = UDim2.new(0, 24, 0, 24), BackgroundColor3 = Color3.fromRGB(230, 40, 50), BorderSizePixel = 0,
-			Text = "!", TextSize = 18, Font = Enum.Font.GothamBlack, TextColor3 = Color3.new(1, 1, 1), ZIndex = 3 }, parent)
-		make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
-		make("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 2 }, dot)
+		local dot = make("TextLabel", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+			Size = UDim2.new(0, 34, 0, 16), BackgroundColor3 = ACCENT, BorderSizePixel = 0,
+			Text = "NEU", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = ON_ACCENT, ZIndex = 3 }, parent)
+		make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, dot)
 		return dot
 	end
 	questDot = notifyDot(quests)
@@ -1154,9 +1140,9 @@ function SideMenu.Init()
 			end
 		end
 	end)
-	coinLabel.Text = "💰 " .. formatNumber(coins())
+	coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
 
-	-- Knopfleiste nur im Hub bei geschlossener Lobby; Fenster im Hub oder aus der Lobby heraus
+	-- Menüliste nur im Hub bei geschlossener Lobby; Fenster im Hub oder aus der Lobby heraus
 	task.spawn(function()
 		while true do
 			local inHub = player:GetAttribute("Mode") == "Hub"

@@ -57,10 +57,10 @@ local function showPing(position, enemy, pingerName)
 	local icon = Instance.new("TextLabel")
 	icon.Size = UDim2.new(1, 0, 0.6, 0)
 	icon.BackgroundTransparency = 1
-	icon.Font = Enum.Font.GothamBlack
+	icon.Font = Enum.Font.GothamBold
 	icon.TextSize = 26
 	icon.Text = enemy and "⚠" or "◆"
-	icon.TextColor3 = enemy and Color3.fromRGB(255, 70, 70) or Color3.fromRGB(255, 200, 60)
+	icon.TextColor3 = enemy and Color3.fromRGB(226, 72, 60) or Color3.fromRGB(212, 170, 80)
 	icon.TextStrokeTransparency = 0.3
 	icon.Parent = billboard
 	local name = Instance.new("TextLabel")

@@ -1,10 +1,10 @@
 -- GameMenu (ModuleScript, nur Client)
--- Lobby im Design "BLOCKOPS":
---   oben:   Logo, Navigation SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS, rechts Münzen, Level,
---           Statistik, Codes, Einstellungen und Schließen
---   links:  Spielmodi (klobige Knöpfe, aktiver Modus gelb mit Haken) und der Squad (bis 4, Anführer mit
---           Krone, Level, BEREIT/NICHT BEREIT – den eigenen Status schaltet man per Klick, freie Plätze laden ein)
---   Mitte:  der gewählte Agent groß in 3D mit Rollen-Schild und Namen in Konturschrift
+-- Lobby im nüchternen Taktik-Look (UITheme):
+--   oben:   Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS (aktiv: weiß mit Bernstein-Strich),
+--           rechts Münzen, Level, STATISTIK, CODES, OPTIONEN und Schließen
+--   links:  Spielmodi (aktiver Modus heller mit Bernstein-Balken links) und der Squad (bis 4, Anführer mit
+--           Stern, Level, BEREIT/NICHT BEREIT – den eigenen Status schaltet man per Klick, freie Plätze laden ein)
+--   Mitte:  der gewählte Agent groß in 3D mit Rollen-Schild und Namen
 --   rechts: Battle Pass (Stufe, Fortschritt, nächste Belohnung), täglicher Auftrag, großer SPIELEN-Knopf
 --           mit Modus, Spielerzahl und Ping
 -- AGENTEN zeigt alle Agenten als Karten (wählen bzw. freischalten). LOADOUT, SHOP, BATTLE PASS, Statistik,
@@ -95,29 +95,26 @@ local function openPanel(name)
 	end
 end
 
--- Kleine Fläche mit Rand ohne Schatten (Pillen oben rechts)
+-- Kleine Fläche mit Rand (Münzen, Level oben rechts)
 local function pill(width, order, parent)
-	local frame = UITheme.Panel({ Size = UDim2.fromOffset(width, 44), LayoutOrder = order, BackgroundTransparency = 0.12 }, parent)
-	frame:FindFirstChildOfClass("UICorner").CornerRadius = UDim.new(0, UITheme.Radius.Large)
-	return frame
+	return UITheme.Panel({ Size = UDim2.fromOffset(width, 44), LayoutOrder = order, BackgroundTransparency = 0.12 }, parent)
 end
 
--- Quadratischer klobiger Symbol-Knopf (Statistik, Codes, Einstellungen, Schließen)
-local function iconButton(icon, order, parent, onClick)
-	local chunky = UITheme.Chunky({ Size = UDim2.fromOffset(44, 44), LayoutOrder = order, Color = C.Panel, StrokeColor = C.Border,
-		Text = icon, TextSize = 20, Font = F.Bold }, parent, onClick)
-	return chunky
+-- Flacher Text-Knopf oben rechts (Statistik, Codes, Optionen, Schließen)
+local function headerButton(text, width, order, parent, onClick)
+	return UITheme.Chunky({ Size = UDim2.fromOffset(width, 44), LayoutOrder = order, Color = C.Panel, StrokeColor = C.Border,
+		Text = text, TextSize = 16, Font = F.Display }, parent, onClick)
 end
 
 -- ---------- Navigation ----------
 
+-- Aktiver Reiter: weiße Schrift mit Bernstein-Strich darunter, sonst gedämpft
 local function updateNav()
 	local active = openPanelName or currentPage
 	for id, button in navButtons do
 		local on = id == active
-		button.BackgroundTransparency = on and 0 or 1
-		button.BackgroundColor3 = on and C.Text or C.Secondary
-		button.TextColor3 = on and C.Background or C.Muted
+		button.TextColor3 = on and C.Text or C.Muted
+		button.Underline.Visible = on
 	end
 end
 
@@ -130,9 +127,10 @@ local function showPage(name)
 end
 
 local function buildHeader()
-	local logo = label({ Position = UDim2.fromOffset(LEFT_X, 26), Size = UDim2.fromOffset(280, 56), Text = "SHOOTOUT",
-		TextSize = 44, Font = F.Display, TextColor3 = C.Primary }, canvas)
-	UITheme.Outline(logo, 4)
+	label({ Position = UDim2.fromOffset(LEFT_X, 26), Size = UDim2.fromOffset(280, 56), Text = "SHOOTOUT",
+		TextSize = 46, Font = F.Display, TextColor3 = C.Text }, canvas)
+	make("Frame", { Position = UDim2.fromOffset(LEFT_X, 82), Size = UDim2.fromOffset(36, 2), BackgroundColor3 = C.Primary,
+		BorderSizePixel = 0 }, canvas)
 
 	local nav = make("Frame", { Position = UDim2.fromOffset(330, 32), Size = UDim2.fromOffset(700, 44),
 		BackgroundTransparency = 1 }, canvas)
@@ -140,15 +138,13 @@ local function buildHeader()
 		VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, nav)
 	for i, entry in NAV do
 		local button = make("TextButton", { Size = UDim2.fromOffset(0, 40), AutomaticSize = Enum.AutomaticSize.X,
-			BackgroundColor3 = C.Secondary, BackgroundTransparency = 1, BorderSizePixel = 0, AutoButtonColor = false,
-			Font = F.Display, TextSize = 16, Text = entry.Text, TextColor3 = C.Muted, LayoutOrder = i }, nav)
-		UITheme.Corner(button, UITheme.Radius.Medium)
-		make("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16) }, button)
+			BackgroundTransparency = 1, BorderSizePixel = 0, AutoButtonColor = false,
+			Font = F.Display, TextSize = 19, Text = entry.Text, TextColor3 = C.Muted, LayoutOrder = i }, nav)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, button)
+		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
+			Size = UDim2.new(1, -28, 0, 2), BackgroundColor3 = C.Primary, BorderSizePixel = 0, Visible = false }, button)
 		button.MouseEnter:Connect(function()
-			if button.BackgroundTransparency == 1 then
-				button.BackgroundTransparency = 0.2
-				button.TextColor3 = C.Text
-			end
+			button.TextColor3 = C.Text
 		end)
 		button.MouseLeave:Connect(updateNav)
 		button.Activated:Connect(function()
@@ -162,32 +158,33 @@ local function buildHeader()
 		navButtons[entry.Id] = button
 	end
 
-	-- Rechts: Münzen, Level, Statistik, Codes, Einstellungen, Schließen
+	-- Rechts: Münzen, Level, Statistik, Codes, Optionen, Schließen
 	local right = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 30),
-		Size = UDim2.fromOffset(560, 50), BackgroundTransparency = 1 }, canvas)
+		Size = UDim2.fromOffset(660, 50), BackgroundTransparency = 1 }, canvas)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
 		HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, right)
 
-	local coins = pill(140, 1, right)
-	label({ Position = UDim2.fromOffset(12, 0), Size = UDim2.fromOffset(28, 40), Text = "💰", TextSize = 20 }, coins)
-	local coinText = label({ Position = UDim2.fromOffset(42, 0), Size = UDim2.new(1, -52, 0, 40), Text = "", TextSize = 18,
+	local coins = pill(132, 1, right)
+	UITheme.Coin(coins, 14, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0) })
+	local coinText = label({ Position = UDim2.fromOffset(36, 2), Size = UDim2.new(1, -48, 0, 40), Text = "", TextSize = 22,
 		Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, coins)
 
-	local level = pill(116, 2, right)
-	local levelTag = UITheme.Tag({ Position = UDim2.fromOffset(10, 9), Text = "LV", TextSize = 12, BackgroundColor3 = C.Accent }, level)
-	local levelText = label({ Position = UDim2.fromOffset(50, 0), Size = UDim2.new(1, -60, 0, 40), Text = "", TextSize = 18,
+	local level = pill(104, 2, right)
+	local levelTag = UITheme.Tag({ AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Text = "LV", TextSize = 11,
+		BackgroundColor3 = C.Secondary, TextColor3 = C.Muted }, level)
+	local levelText = label({ Position = UDim2.fromOffset(46, 2), Size = UDim2.new(1, -58, 0, 40), Text = "", TextSize = 22,
 		Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, level)
 
-	iconButton("📊", 3, right, function()
+	headerButton("STATISTIK", 92, 3, right, function()
 		openPanel("Stats")
 	end)
-	iconButton("🎟", 4, right, function()
+	headerButton("CODES", 72, 4, right, function()
 		openPanel("Codes")
 	end)
-	iconButton("⚙", 5, right, function()
+	headerButton("OPTIONEN", 90, 5, right, function()
 		openPanel("Settings")
 	end)
-	closeButton = iconButton("✕", 6, right, function()
+	closeButton = headerButton("✕", 44, 6, right, function()
 		GameMenu.SetOpen(false)
 	end)
 
@@ -196,7 +193,7 @@ local function buildHeader()
 		local info = LevelConfig.Get(player)
 		levelText.Text = (info.Prestige > 0 and ("★" .. info.Prestige .. " ") or "") .. tostring(info.Level)
 		levelText.TextColor3 = info.Prestige > 0 and info.Color or C.Text
-		levelTag.BackgroundColor3 = C.Accent
+		levelTag.TextColor3 = info.Prestige > 0 and info.Color or C.Muted
 	end
 	update()
 	player.AttributeChanged:Connect(function(name)
@@ -212,22 +209,23 @@ local function liveCounts()
 	return decode(ReplicatedStorage:GetAttribute("ModeCounts"))
 end
 
+-- Aktiver Modus: hellere Fläche, Bernstein-Balken links und Rand
 local function selectMode(mode)
 	selectedMode = mode
 	for entryMode, entry in modeButtons do
 		local on = entryMode == mode
-		entry.Chunky.SetColor(on and C.Primary or C.Panel, on and C.PrimaryText or C.Text)
-		entry.Detail.TextColor3 = on and C.PrimaryText or C.Muted
-		entry.Detail.TextTransparency = on and 0.25 or 0
+		entry.Chunky.SetColor(on and C.Secondary or C.Panel, C.Text)
+		entry.Chunky.SetStroke(on and C.Primary or C.Border, 1)
+		entry.Chunky.Stroke.Transparency = on and 0.35 or 0.6
+		entry.Detail.TextColor3 = on and C.Primary or C.Muted
 		entry.Check.Visible = on
-		entry.Live.Visible = not on
 	end
 	GameMenu.UpdatePlay()
 end
 
 local function buildModes()
-	label({ Position = UDim2.fromOffset(LEFT_X, 106), Size = UDim2.fromOffset(LEFT_W, 22), Text = "SPIELMODUS", TextSize = 15,
-		Font = F.Display, TextColor3 = C.Muted }, playPage.Parent)
+	label({ Position = UDim2.fromOffset(LEFT_X, 106), Size = UDim2.fromOffset(LEFT_W, 22), Text = "SPIELMODUS", TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted }, playPage.Parent)
 	local list = make("Frame", { Position = UDim2.fromOffset(LEFT_X, 134), Size = UDim2.fromOffset(LEFT_W, 450),
 		BackgroundTransparency = 1 }, playPage.Parent)
 	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
@@ -236,17 +234,18 @@ local function buildModes()
 		table.insert(entries, mode)
 	end
 	for i, mode in entries do
-		local chunky = UITheme.Chunky({ Size = UDim2.fromOffset(LEFT_W, 60), LayoutOrder = i, Color = C.Panel, Text = "",
-			Radius = UITheme.Radius.XL }, list, function()
+		local chunky = UITheme.Chunky({ Size = UDim2.fromOffset(LEFT_W, 58), LayoutOrder = i, Color = C.Panel, Text = "",
+			StrokeColor = C.Border }, list, function()
 			selectMode(mode)
 		end)
 		local face = chunky.Face
-		local name = label({ Position = UDim2.fromOffset(16, 9), Size = UDim2.new(1, -90, 0, 24),
-			Text = (mode == QUICK and "⚡ " or "") .. mode.Name, TextSize = 19, Font = F.Display }, face)
-		local detail = label({ Position = UDim2.fromOffset(16, 34), Size = UDim2.new(1, -90, 0, 16),
-			Text = upper(mode.Tag or ""), TextSize = 12, Font = F.Bold, TextColor3 = C.Muted }, face)
-		local check = label({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0), Size = UDim2.fromOffset(30, 30),
-			Text = "✓", TextSize = 24, Font = F.Display, TextColor3 = C.PrimaryText, TextXAlignment = Enum.TextXAlignment.Center,
+		face.BackgroundTransparency = 0.12
+		local name = label({ Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -100, 0, 26),
+			Text = mode.Name, TextSize = 22, Font = F.Display }, face)
+		local detail = label({ Position = UDim2.fromOffset(18, 34), Size = UDim2.new(1, -100, 0, 16),
+			Text = upper(mode.Tag or ""), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted }, face)
+		-- aktiv: Bernstein-Balken am linken Rand
+		local check = make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0,
 			Visible = false }, face)
 		local live = label({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0), Size = UDim2.fromOffset(80, 20),
 			Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Good, TextXAlignment = Enum.TextXAlignment.Right }, face)
@@ -254,10 +253,6 @@ local function buildModes()
 			name.TextTransparency = 0.5
 			detail.Text = "BALD VERFÜGBAR"
 		end
-		-- Name färbt sich mit (aktiv: dunkel auf Gelb)
-		chunky.Label:GetPropertyChangedSignal("TextColor3"):Connect(function()
-			name.TextColor3 = chunky.Label.TextColor3
-		end)
 		modeButtons[mode] = { Chunky = chunky, Detail = detail, Check = check, Live = live, Name = name }
 	end
 
@@ -287,10 +282,10 @@ end
 local function buildSquad()
 	local panel = UITheme.Card({ Name = "Squad", Position = UDim2.fromOffset(LEFT_X, 598), Size = UDim2.fromOffset(LEFT_W, 262) },
 		playPage.Parent)
-	local title = label({ Position = UDim2.fromOffset(18, 14), Size = UDim2.fromOffset(200, 24), Text = "", TextSize = 17,
+	local title = label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(200, 26), Text = "", TextSize = 21,
 		Font = F.Display, RichText = true, ZIndex = 3 }, panel)
 	local invite = make("TextButton", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 14),
-		Size = UDim2.fromOffset(120, 24), BackgroundTransparency = 1, Text = "+ EINLADEN", Font = F.Display, TextSize = 13,
+		Size = UDim2.fromOffset(120, 24), BackgroundTransparency = 1, Text = "+ EINLADEN", Font = F.Bold, TextSize = 12,
 		TextColor3 = C.Accent, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, panel)
 	invite.Activated:Connect(function()
 		openPanel("Squad")
@@ -331,17 +326,18 @@ local function buildSquad()
 			if entry then
 				local row = make("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundTransparency = 1, LayoutOrder = i, ZIndex = 3 }, rows)
 				local avatar = label({ Position = UDim2.fromOffset(0, 4), Size = UDim2.fromOffset(36, 36), Text = initials(entry.Name),
-					TextSize = 13, Font = F.Display, BackgroundTransparency = 0, BackgroundColor3 = entry.Me and C.Primary or C.Secondary,
-					TextColor3 = entry.Me and C.PrimaryText or C.Text, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, row)
-				UITheme.Corner(avatar, 18)
+					TextSize = 13, Font = F.Bold, BackgroundTransparency = 0, BackgroundColor3 = C.Secondary,
+					TextColor3 = entry.Me and C.Primary or C.Text, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, row)
+				UITheme.Corner(avatar, UITheme.Radius.Small)
+				UITheme.Stroke(avatar, entry.Me and C.Primary or C.Border, 1)
 				label({ Position = UDim2.fromOffset(46, 3), Size = UDim2.new(1, -170, 0, 20),
-					Text = (entry.Me and "Du" or entry.Name) .. (entry.Leader and "  👑" or ""), TextSize = 15,
+					Text = (entry.Me and "Du" or entry.Name) .. (entry.Leader and "  ★" or ""), TextSize = 15,
 					TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 3 }, row)
 				label({ Position = UDim2.fromOffset(46, 23), Size = UDim2.new(1, -170, 0, 16), Text = "Level " .. entry.Level,
 					TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, ZIndex = 3 }, row)
 				local badge = make("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
-					Size = UDim2.fromOffset(112, 26), BackgroundColor3 = entry.Ready and C.Accent or C.MutedBack, BorderSizePixel = 0,
-					AutoButtonColor = entry.Me, Font = F.Display, TextSize = 11,
+					Size = UDim2.fromOffset(112, 26), BackgroundColor3 = entry.Ready and C.Good or C.MutedBack, BorderSizePixel = 0,
+					AutoButtonColor = entry.Me, Font = F.Bold, TextSize = 11,
 					Text = entry.Ready and "BEREIT" or "NICHT BEREIT", ZIndex = 3,
 					TextColor3 = entry.Ready and C.PrimaryText or C.Muted }, row)
 				UITheme.Corner(badge, UITheme.Radius.Small)
@@ -352,9 +348,9 @@ local function buildSquad()
 				end
 			else
 				local slot = make("TextButton", { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Text = "+  FREIER PLATZ",
-					Font = F.Display, TextSize = 12, TextColor3 = C.Muted, AutoButtonColor = false, LayoutOrder = i, ZIndex = 3 }, rows)
-				UITheme.Corner(slot, UITheme.Radius.Large)
-				UITheme.Stroke(slot, C.Border, 2, 0.35)
+					Font = F.Bold, TextSize = 11, TextColor3 = C.Muted, AutoButtonColor = false, LayoutOrder = i, ZIndex = 3 }, rows)
+				UITheme.Corner(slot, UITheme.Radius.Small)
+				UITheme.Stroke(slot, C.Border, 1, 0.3)
 				slot.Activated:Connect(function()
 					openPanel("Squad")
 				end)
@@ -378,15 +374,15 @@ end
 local function buildAgentStage()
 	local stage = make("Frame", { Position = UDim2.fromOffset(410, 96), Size = UDim2.fromOffset(780, 790), BackgroundTransparency = 1 },
 		playPage)
-	-- weicher Lichtkegel in Agentenfarbe hinter der Figur (statt der runden Maske im Design)
-	local glows = {}
-	for i, size in { 620, 470, 330 } do
-		local glow = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 360),
-			Size = UDim2.fromOffset(size, size), BackgroundColor3 = C.Accent, BackgroundTransparency = 0.94 - i * 0.02,
-			BorderSizePixel = 0 }, stage)
-		UITheme.Corner(glow, size / 2)
-		table.insert(glows, glow)
+	-- dezentes Gegenlicht hinter der Figur (weich auslaufend) und ein Schatten am Boden – neutral, nicht in Agentenfarbe
+	for _, size in { 600, 450, 300 } do
+		local backlight = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 330),
+			Size = UDim2.fromOffset(size, size), BackgroundColor3 = C.Text, BackgroundTransparency = 0.982, BorderSizePixel = 0 }, stage)
+		UITheme.Corner(backlight, size / 2)
 	end
+	local floor = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 618),
+		Size = UDim2.fromOffset(300, 34), BackgroundColor3 = C.Shadow, BackgroundTransparency = 0.55, BorderSizePixel = 0 }, stage)
+	UITheme.Corner(floor, 17)
 	local viewport = make("ViewportFrame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20),
 		Size = UDim2.fromOffset(600, 640), BackgroundTransparency = 1, Ambient = Color3.fromRGB(140, 145, 165),
 		LightColor = Color3.fromRGB(255, 246, 232), LightDirection = Vector3.new(-0.45, -1, 0.65) }, stage)
@@ -394,12 +390,13 @@ local function buildAgentStage()
 	camera.CFrame = CFrame.lookAt(Vector3.new(0, 2.9, -12), Vector3.new(0, 2.75, 0))
 	viewport.CurrentCamera = camera
 
-	local role = UITheme.Tag({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 640), Text = "", TextSize = 14 }, stage)
-	local name = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 666), Size = UDim2.fromOffset(780, 84),
-		Text = "", TextSize = 80, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, stage)
-	UITheme.Outline(name, 5)
+	local role = UITheme.Tag({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 640), Text = "", TextSize = 12,
+		BackgroundColor3 = C.Secondary, TextColor3 = C.Primary }, stage)
+	local name = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 664), Size = UDim2.fromOffset(780, 84),
+		Text = "", TextSize = 84, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, stage)
+	UITheme.Outline(name, 1)
 	local change = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 752),
-		Size = UDim2.fromOffset(240, 24), BackgroundTransparency = 1, Text = "AGENT WECHSELN  →", Font = F.Display, TextSize = 13,
+		Size = UDim2.fromOffset(240, 24), BackgroundTransparency = 1, Text = "AGENT WECHSELN  →", Font = F.Bold, TextSize = 12,
 		TextColor3 = C.Muted }, stage)
 	change.Activated:Connect(function()
 		showPage("Agents")
@@ -422,9 +419,6 @@ local function buildAgentStage()
 		end
 		role.Text = upper(agent.Role)
 		name.Text = agent.Name
-		for _, glow in glows do
-			glow.BackgroundColor3 = agent.Color
-		end
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(attribute)
@@ -461,22 +455,21 @@ local function clickable(frame, onClick)
 end
 
 local function progressBar(parent, y, color)
-	local back = make("Frame", { Position = UDim2.fromOffset(18, y), Size = UDim2.new(1, -36, 0, 18), BackgroundColor3 = C.Background,
+	local back = make("Frame", { Position = UDim2.fromOffset(18, y + 5), Size = UDim2.new(1, -36, 0, 6), BackgroundColor3 = C.Background,
 		BorderSizePixel = 0, ZIndex = 3 }, parent)
-	UITheme.Corner(back, 9)
-	UITheme.Stroke(back, C.Border, 2)
+	UITheme.Corner(back, 1)
 	local fill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 3 }, back)
-	UITheme.Corner(fill, 9)
+	UITheme.Corner(fill, 1)
 	return fill
 end
 
 local function buildPass()
 	local panel = UITheme.Card({ Name = "Pass", Position = UDim2.fromOffset(RIGHT_X, 106), Size = UDim2.fromOffset(RIGHT_W, 156) },
 		playPage)
-	label({ Position = UDim2.fromOffset(18, 14), Size = UDim2.fromOffset(220, 24), Text = "BATTLE PASS · S1", TextSize = 17,
+	label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(220, 26), Text = "BATTLE PASS · S1", TextSize = 21,
 		Font = F.Display, ZIndex = 3 }, panel)
-	local tier = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 14), Size = UDim2.fromOffset(120, 24),
-		Text = "", TextSize = 17, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 },
+	local tier = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 12), Size = UDim2.fromOffset(120, 26),
+		Text = "", TextSize = 21, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 },
 		panel)
 	local fill = progressBar(panel, 52, C.Primary)
 	local xpText = label({ Position = UDim2.fromOffset(18, 80), Size = UDim2.new(1, -36, 0, 18), Text = "", TextSize = 13,
@@ -511,18 +504,18 @@ end
 local function buildDaily()
 	local panel = UITheme.Card({ Name = "Daily", Position = UDim2.fromOffset(RIGHT_X, 280), Size = UDim2.fromOffset(RIGHT_W, 170) },
 		playPage)
-	label({ Position = UDim2.fromOffset(18, 14), Size = UDim2.fromOffset(240, 24), Text = "TÄGLICHER AUFTRAG", TextSize = 17,
+	label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(240, 26), Text = "TÄGLICHER AUFTRAG", TextSize = 21,
 		Font = F.Display, ZIndex = 3 }, panel)
 	local count = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 16), Size = UDim2.fromOffset(90, 20),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, panel)
 	local questText = label({ Position = UDim2.fromOffset(18, 46), Size = UDim2.new(1, -110, 0, 44), Text = "", TextSize = 16,
 		TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 3 }, panel)
 	local progressText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 44), Size = UDim2.fromOffset(84, 30),
-		Text = "", TextSize = 24, Font = F.Display, TextColor3 = C.Accent, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, panel)
+		Text = "", TextSize = 26, Font = F.Display, TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, panel)
 	local fill = progressBar(panel, 96, C.Accent)
 	local rewardText = label({ Position = UDim2.fromOffset(18, 124), Size = UDim2.new(1, -36, 0, 18), Text = "", TextSize = 13,
 		Font = F.Medium, TextColor3 = C.Muted, ZIndex = 3 }, panel)
-	local dailyChip = UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 122), Text = "🎁 BELOHNUNG BEREIT",
+	local dailyChip = UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 122), Text = "BELOHNUNG BEREIT",
 		TextSize = 11, BackgroundColor3 = C.Good, Visible = false, ZIndex = 6 }, panel)
 	clickable(panel, function()
 		if dailyChip.Visible then
@@ -557,7 +550,7 @@ local function buildDaily()
 			progressText.Text = best.Progress .. "/" .. best.Quest.Goal
 			fill.Size = UDim2.fromScale(best.Progress / best.Quest.Goal, 1)
 			fill.BackgroundColor3 = best.Ready and C.Good or C.Accent
-			rewardText.Text = best.Ready and "Fertig – jetzt abholen!" or ("Belohnung: " .. best.Quest.Reward .. " 💰")
+			rewardText.Text = best.Ready and "Fertig – jetzt abholen!" or ("Belohnung: " .. best.Quest.Reward .. " Münzen")
 		else
 			questText.Text = #ids > 0 and "Alle Aufträge erledigt – morgen gibt es neue!" or "Aufträge werden geladen ..."
 			progressText.Text = ""
@@ -623,14 +616,13 @@ local function buildPlay()
 		Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Bottom }, playPage)
 
 	hubButton = UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, 544), Size = UDim2.fromOffset(RIGHT_W, 52), Color = C.Panel,
-		StrokeColor = C.Border, Text = "⌂  ZURÜCK ZUM HUB", TextSize = 16 }, playPage, function()
+		StrokeColor = C.Border, Text = "ZURÜCK ZUM HUB", TextSize = 18 }, playPage, function()
 		setStatus("Zurück zum Hub ...")
 		Remotes.JoinMode:FireServer(Modes.Hub.Id)
 	end)
 
 	play = UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, 614), Size = UDim2.fromOffset(RIGHT_W, 150), Color = C.Primary,
-		StrokeColor = C.Background, StrokeThickness = 4, Text = "SPIELEN", TextSize = 60, TextColor = C.PrimaryText,
-		Radius = UITheme.Radius.XXL }, playPage, function()
+		Text = "SPIELEN", TextSize = 64, TextColor = C.PrimaryText }, playPage, function()
 		if not selectedMode.Available then
 			setStatus(selectedMode.Name .. " kommt bald.")
 		elseif not inHub and selectedMode.Id == player:GetAttribute("Mode") then
@@ -642,8 +634,8 @@ local function buildPlay()
 	end)
 	play.Label.Size = UDim2.new(1, 0, 0, 100)
 	play.Label.Position = UDim2.fromOffset(0, 12)
-	playSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 104), Size = UDim2.new(1, -24, 0, 20),
-		Text = "", TextSize = 14, Font = F.Bold, TextColor3 = C.PrimaryText, TextXAlignment = Enum.TextXAlignment.Center }, play.Face)
+	playSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 108), Size = UDim2.new(1, -24, 0, 20),
+		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.PrimaryText, TextXAlignment = Enum.TextXAlignment.Center }, play.Face)
 
 	-- Steuerungs-Hinweise passend zum Gerät (Tastatur, Controller oder Touch)
 	local hints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10), Size = UDim2.fromOffset(1500, 18),
@@ -685,7 +677,7 @@ local function buildAgentPage()
 		local card = make("TextButton", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "",
 			AutoButtonColor = false, LayoutOrder = i }, grid)
 		UITheme.Corner(card, UITheme.Radius.XL)
-		local stroke = UITheme.Stroke(card, C.Border, 2)
+		local stroke = UITheme.Stroke(card, C.Border, 1)
 		-- 3D-Figur oben
 		local viewport = make("ViewportFrame", { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 168),
 			BackgroundTransparency = 1, Ambient = Color3.fromRGB(135, 140, 158), LightColor = Color3.fromRGB(255, 245, 235),
@@ -698,17 +690,15 @@ local function buildAgentPage()
 		figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.35, 0))
 		figure.Parent = viewport
 
-		local name = label({ Position = UDim2.fromOffset(14, 172), Size = UDim2.new(1, -74, 0, 30), Text = agent.Name, TextSize = 24,
+		label({ Position = UDim2.fromOffset(14, 170), Size = UDim2.new(1, -74, 0, 32), Text = agent.Name, TextSize = 28,
 			Font = F.Display }, card)
-		UITheme.Outline(name, 2)
 		local level = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 178), Size = UDim2.fromOffset(60, 20),
-			Text = "", TextSize = 14, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right }, card)
-		UITheme.Tag({ Position = UDim2.fromOffset(14, 204), Text = upper(agent.Role), TextSize = 11 }, card)
-		local barBack = make("Frame", { Position = UDim2.fromOffset(14, 232), Size = UDim2.new(1, -28, 0, 6), BackgroundColor3 = C.Background,
+			Text = "", TextSize = 13, Font = F.Bold, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right }, card)
+		UITheme.Tag({ Position = UDim2.fromOffset(14, 204), Text = upper(agent.Role), TextSize = 11, BackgroundColor3 = C.Secondary,
+			TextColor3 = C.Muted }, card)
+		local barBack = make("Frame", { Position = UDim2.fromOffset(14, 234), Size = UDim2.new(1, -28, 0, 3), BackgroundColor3 = C.Background,
 			BorderSizePixel = 0 }, card)
-		UITheme.Corner(barBack, 3)
-		local bar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = agent.Color, BorderSizePixel = 0 }, barBack)
-		UITheme.Corner(bar, 3)
+		local bar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, barBack)
 		local weapons = {}
 		for _, weapon in agent.Primaries or { agent.Loadout[1] } do
 			table.insert(weapons, WeaponConfig.Get(weapon).DisplayName)
@@ -717,14 +707,14 @@ local function buildAgentPage()
 			Text = table.concat(weapons, " / ") .. " + " .. WeaponConfig.Get(agent.Loadout[2]).DisplayName, TextSize = 11,
 			Font = F.Medium, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		label({ Position = UDim2.fromOffset(14, 262), Size = UDim2.new(1, -28, 0, 16), Text = "Q  " .. upper(agent.Ability.Name),
-			TextSize = 12, Font = F.Bold, TextColor3 = agent.Color, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		label({ Position = UDim2.fromOffset(14, 278), Size = UDim2.new(1, -28, 0, 16), Text = "G  " .. upper(agent.Gadget.Name),
 			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		local kills = label({ Position = UDim2.fromOffset(14, 294), Size = UDim2.new(1, -28, 0, 16), Text = "", TextSize = 11,
 			Font = F.Bold, TextColor3 = C.Muted }, card)
-		local badge = label({ Position = UDim2.fromOffset(14, 316), Size = UDim2.new(1, -28, 0, 34), Text = "", TextSize = 13,
+		local badge = label({ Position = UDim2.fromOffset(14, 316), Size = UDim2.new(1, -28, 0, 34), Text = "", TextSize = 16,
 			Font = F.Display, BackgroundTransparency = 0, BackgroundColor3 = C.Secondary, TextXAlignment = Enum.TextXAlignment.Center }, card)
-		UITheme.Corner(badge, UITheme.Radius.Medium)
+		UITheme.Corner(badge, UITheme.Radius.Small)
 
 		card.MouseEnter:Connect(function()
 			card.BackgroundColor3 = C.Card
@@ -751,9 +741,9 @@ local function buildAgentPage()
 			local isChosen = agent == chosen
 			local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
 			entry.Stroke.Color = isChosen and C.Primary or C.Border
-			entry.Stroke.Thickness = isChosen and 4 or 2
-			entry.Badge.Text = not unlocked and ("🔒 " .. UITheme.FormatNumber(agent.Price) .. " MÜNZEN")
-				or (isChosen and "✓  GEWÄHLT" or "WÄHLEN")
+			entry.Stroke.Thickness = isChosen and 2 or 1
+			entry.Badge.Text = not unlocked and ("FREISCHALTEN · " .. UITheme.FormatNumber(agent.Price))
+				or (isChosen and "GEWÄHLT" or "WÄHLEN")
 			entry.Badge.BackgroundColor3 = isChosen and C.Primary or (unlocked and C.Secondary or C.MutedBack)
 			entry.Badge.TextColor3 = isChosen and C.PrimaryText or (unlocked and C.Text or C.Muted)
 			local xp = AgentConfig.GetXP(player, agent.Id)
@@ -836,7 +826,7 @@ function GameMenu.Init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
 	background = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = C.Background,
 		BackgroundTransparency = 0.3, Active = true }, gui) -- Active: Klicks gehen nicht ins Spiel
-	UITheme.Gradient(background, Color3.fromRGB(26, 40, 64), Color3.fromRGB(6, 12, 22))
+	UITheme.Gradient(background, Color3.fromRGB(30, 33, 38), Color3.fromRGB(6, 7, 9))
 	canvas = UITheme.Canvas(background, WIDTH, HEIGHT)
 
 	playPage = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, canvas)
@@ -865,8 +855,8 @@ function GameMenu.Init()
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player.PlayerGui)
 	openButton = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
-		Size = UDim2.fromOffset(320, 66), Color = C.Primary, StrokeColor = C.Background, StrokeThickness = 3, Text = "SPIELEN",
-		TextSize = 30, TextColor = C.PrimaryText, Radius = UITheme.Radius.XL, Visible = false }, openGui, function()
+		Size = UDim2.fromOffset(300, 60), Color = C.Primary, Text = "SPIELEN", TextSize = 32, TextColor = C.PrimaryText,
+		Visible = false }, openGui, function()
 		GameMenu.SetOpen(true)
 	end)
 

@@ -1,54 +1,52 @@
 -- UITheme (ModuleScript, nur Client)
--- Einheitliches Design für alle Menüs (Design "BLOCKOPS"): Stahl-Navy als Grund, Signalgelb als
--- Hauptfarbe (aktiv, Hauptknöpfe), Cyan für das eigene Team, Rot für Gegner. Klobige Knöpfe mit
--- Schatten darunter, die beim Drücken nach unten rutschen, Flächen mit runden Ecken, 2 px Rand und
--- Schatten, große Überschriften in schwerer Schrift mit Kontur in der Grundfarbe.
--- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card), Kontur, Schild (Tag),
--- Raute. Inhalte liegen auf einer "Leinwand" mit fester Größe in der Bildschirmmitte, die als
--- Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
+-- Einheitliches Design für alle Menüs im nüchternen Taktik-Look: Graphit als Grund, gedecktes
+-- Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene Team, Rot für
+-- Gegner. Flache Knöpfe und Flächen mit kaum gerundeten Ecken und 1 px Rand, keine Schatten oder
+-- Comic-Konturen. Überschriften, Zahlen und Knöpfe in der schmalen Oswald, kleine Beschriftungen in Gotham.
+-- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Kontur,
+-- Schild (Tag), Raute, Münze. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
+-- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
 
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 
 local UITheme = {}
 
--- Farben aus dem Design (oklch-Werte in RGB umgerechnet)
+-- Farben: dunkles Graphit, gedeckte Signalfarben (nichts Knalliges)
 UITheme.Colors = {
-	Background = Color3.fromRGB(12, 22, 38),   -- Grund (Stahl-Navy)
-	Panel = Color3.fromRGB(24, 36, 55),        -- Flächen und Fenster ("card")
-	Card = Color3.fromRGB(31, 44, 66),         -- Karten und Knöpfe in Flächen
-	CardHover = Color3.fromRGB(37, 51, 74),    -- "secondary": Hover, Spuren
-	Secondary = Color3.fromRGB(37, 51, 74),
-	MutedBack = Color3.fromRGB(34, 46, 66),
-	Border = Color3.fromRGB(52, 67, 91),
-	Primary = Color3.fromRGB(255, 195, 26),    -- Signalgelb: aktiv, Hauptknöpfe, Schilder
-	PrimaryText = Color3.fromRGB(12, 22, 38),  -- dunkle Schrift auf Gelb/Cyan
-	Accent = Color3.fromRGB(44, 204, 235),     -- Cyan: eigenes Team, Verbündete
-	AccentDark = Color3.fromRGB(24, 104, 132),
-	Play = Color3.fromRGB(255, 195, 26),       -- großer SPIELEN-Knopf
-	Text = Color3.fromRGB(237, 242, 248),
-	Muted = Color3.fromRGB(152, 166, 184),     -- gedämpfte Schrift
-	Good = Color3.fromRGB(80, 210, 130),
-	Bad = Color3.fromRGB(249, 65, 68),         -- Gegner, Warnungen
-	Gold = Color3.fromRGB(255, 205, 80),
+	Background = Color3.fromRGB(12, 14, 17),   -- Grund (Graphit)
+	Panel = Color3.fromRGB(19, 22, 26),        -- Flächen und Fenster
+	Card = Color3.fromRGB(27, 31, 36),         -- Karten und Knöpfe in Flächen
+	CardHover = Color3.fromRGB(35, 40, 46),    -- Hover, Spuren
+	Secondary = Color3.fromRGB(35, 40, 46),
+	MutedBack = Color3.fromRGB(30, 34, 40),
+	Border = Color3.fromRGB(58, 64, 72),
+	Primary = Color3.fromRGB(212, 170, 80),    -- gedecktes Bernstein: aktiv, Hauptknöpfe, Schilder
+	PrimaryText = Color3.fromRGB(14, 16, 19),  -- dunkle Schrift auf Bernstein/Blau
+	Accent = Color3.fromRGB(96, 164, 214),     -- Stahlblau: eigenes Team, Verbündete
+	AccentDark = Color3.fromRGB(40, 78, 108),
+	Play = Color3.fromRGB(212, 170, 80),       -- großer SPIELEN-Knopf
+	Text = Color3.fromRGB(228, 231, 235),
+	Muted = Color3.fromRGB(134, 142, 152),     -- gedämpfte Schrift
+	Good = Color3.fromRGB(112, 178, 112),
+	Bad = Color3.fromRGB(206, 70, 58),         -- Gegner, Warnungen
+	Gold = Color3.fromRGB(200, 166, 92),
 	Shadow = Color3.new(0, 0, 0),
 }
 UITheme.Colors.Ally = UITheme.Colors.Accent
 UITheme.Colors.Enemy = UITheme.Colors.Bad
 
 UITheme.Fonts = {
-	Display = Enum.Font.GothamBlack, -- große, schwere Überschriften und Knöpfe
-	Title = Enum.Font.Oswald,        -- schmale Zahlen und Zeilen (ältere Fenster)
-	Bold = Enum.Font.GothamBold,
+	Display = Enum.Font.Oswald,      -- schmale Überschriften, Zahlen und Knöpfe (Großbuchstaben)
+	Title = Enum.Font.Oswald,
+	Bold = Enum.Font.GothamBold,     -- kleine Beschriftungen
 	Medium = Enum.Font.GothamMedium,
 	Body = Enum.Font.Gotham,
 }
 
--- Rundungen wie im Design (rem * 16)
-UITheme.Radius = { Small = 6, Medium = 10, Large = 12, XL = 16, XXL = 22 }
+-- Kaum gerundete Ecken (Namen bleiben, damit alle Fenster dieselben Stufen nutzen)
+UITheme.Radius = { Small = 2, Medium = 3, Large = 3, XL = 4, XXL = 6 }
 
-local SHADOW = 5          -- Schatten unter klobigen Knöpfen (px)
-local PANEL_SHADOW = 6    -- Schatten unter Flächen
 local C = UITheme.Colors
 
 function UITheme.Make(className, props, parent)
@@ -75,16 +73,24 @@ function UITheme.Gradient(parent, top, bottom, rotation)
 	return make("UIGradient", { Color = ColorSequence.new(top, bottom), Rotation = rotation or 90 }, parent)
 end
 
--- Kontur um Schrift in der Grundfarbe (Design: "text-outline"), für große Namen auf Bildern
+-- Dezente dunkle Kante um Schrift (lesbar auf hellen 3D-Bildern, aber keine dicke Comic-Kontur)
 function UITheme.Outline(textObject, thickness, color)
-	return make("UIStroke", { Color = color or C.Background, Thickness = thickness or 3,
+	return make("UIStroke", { Color = color or C.Shadow, Thickness = math.min(thickness or 1, 1.5), Transparency = 0.55,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual, LineJoinMode = Enum.LineJoinMode.Round }, textObject)
+end
+
+-- Schmale Display-Schrift nur für große Texte: klein ist Oswald schlecht lesbar, dort Gotham Bold
+function UITheme.FontFor(font, textSize)
+	if font == UITheme.Fonts.Display and (textSize or 14) < 16 then
+		return UITheme.Fonts.Bold
+	end
+	return font
 end
 
 -- Text ohne Hintergrund
 function UITheme.Label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Font = props.Font or UITheme.Fonts.Bold
+	props.Font = UITheme.FontFor(props.Font or UITheme.Fonts.Bold, props.TextSize)
 	props.TextColor3 = props.TextColor3 or C.Text
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return make("TextLabel", props, parent)
@@ -111,8 +117,8 @@ function UITheme.Tag(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 0
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Primary
 	props.TextColor3 = props.TextColor3 or C.PrimaryText
-	props.Font = props.Font or UITheme.Fonts.Display
 	props.TextSize = props.TextSize or 12
+	props.Font = UITheme.FontFor(props.Font or UITheme.Fonts.Display, props.TextSize)
 	props.Size = props.Size or UDim2.new(0, 0, 0, (props.TextSize or 12) + 10)
 	props.AutomaticSize = props.AutomaticSize or Enum.AutomaticSize.X
 	props.TextXAlignment = Enum.TextXAlignment.Center
@@ -122,45 +128,44 @@ function UITheme.Tag(props, parent)
 	return tag
 end
 
--- Farbe leicht aufhellen (Hover, Design: brightness 1.08)
+-- Farbe leicht aufhellen (Hover)
 local function brighten(color, amount)
-	return color:Lerp(Color3.new(1, 1, 1), amount or 0.08)
+	return color:Lerp(Color3.new(1, 1, 1), amount or 0.07)
 end
 UITheme.Brighten = brighten
 
--- Knopf (gibt den TextButton zurück): runde Ecken, dunkle Unterkante als 3D-Lippe, die beim Drücken
--- flach wird. Für Knöpfe, deren Text/Farbe der Aufrufer direkt setzt.
+-- Flacher Knopf (gibt den TextButton zurück): kaum gerundet, beim Überfahren eine helle Schicht,
+-- beim Drücken eine dunkle. Für Knöpfe, deren Text/Farbe der Aufrufer direkt setzt.
 function UITheme.Button(props, parent, onClick)
 	local color = props.BackgroundColor3 or C.Card
 	props.BackgroundColor3 = color
 	props.BorderSizePixel = 0
 	props.AutoButtonColor = false
-	props.Font = props.Font or UITheme.Fonts.Display
+	props.Font = UITheme.FontFor(props.Font or UITheme.Fonts.Display, props.TextSize)
 	props.TextColor3 = props.TextColor3 or C.Text
 	local button = make("TextButton", props, parent)
-	UITheme.Corner(button, UITheme.Radius.Large)
-	local lip = make("Frame", { Name = "Lip", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, SHADOW), BackgroundColor3 = C.Shadow, BackgroundTransparency = 0.65, BorderSizePixel = 0 }, button)
-	UITheme.Corner(lip, UITheme.Radius.Large)
-	-- Hover: leicht helle Schicht darüber (die Knopffarbe selbst bleibt beim Aufrufer)
+	UITheme.Corner(button, UITheme.Radius.Small)
+	-- Hover/Drücken: Schicht darüber (die Knopffarbe selbst bleibt beim Aufrufer)
 	local glow = make("Frame", { Name = "Hover", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 1, BorderSizePixel = 0 }, button)
-	UITheme.Corner(glow, UITheme.Radius.Large)
-	local function setPressed(pressed)
-		lip.Size = UDim2.new(1, 0, 0, pressed and 1 or SHADOW)
-	end
+	UITheme.Corner(glow, UITheme.Radius.Small)
+	local hovering = false
 	button.MouseEnter:Connect(function()
-		glow.BackgroundTransparency = 0.92
+		hovering = true
+		glow.BackgroundColor3 = Color3.new(1, 1, 1)
+		glow.BackgroundTransparency = 0.94
 	end)
 	button.MouseLeave:Connect(function()
+		hovering = false
 		glow.BackgroundTransparency = 1
-		setPressed(false)
 	end)
 	button.MouseButton1Down:Connect(function()
-		setPressed(true)
+		glow.BackgroundColor3 = Color3.new(0, 0, 0)
+		glow.BackgroundTransparency = 0.85
 	end)
 	button.MouseButton1Up:Connect(function()
-		setPressed(false)
+		glow.BackgroundColor3 = Color3.new(1, 1, 1)
+		glow.BackgroundTransparency = hovering and 0.94 or 1
 	end)
 	if onClick then
 		button.Activated:Connect(onClick)
@@ -168,8 +173,8 @@ function UITheme.Button(props, parent, onClick)
 	return button
 end
 
--- Klobiger Knopf wie im Design (.btn-chunky): Fläche mit Schatten (5 px) darunter, beim Drücken
--- rutscht die Fläche 4 px nach unten, beim Überfahren wird sie etwas heller.
+-- Flache Schaltfläche (früher "klobiger Knopf", Name und Schnittstelle bleiben): Fläche mit 1 px Rand,
+-- beim Überfahren etwas heller, beim Drücken etwas dunkler.
 -- props: Position, Size (Größe der Fläche), AnchorPoint, LayoutOrder, Visible, Name, ZIndex sowie
 --   Color (Fläche), TextColor, Text, TextSize, Font, Radius, StrokeColor/StrokeThickness (Rand),
 --   TextXAlignment.
@@ -177,21 +182,18 @@ end
 --   SetColor(color, textColor), SetText(text), SetStroke(color, thickness) }
 function UITheme.Chunky(props, parent, onClick)
 	local size = props.Size or UDim2.fromOffset(160, 48)
-	local radius = props.Radius or UITheme.Radius.Large
+	local radius = props.Radius or UITheme.Radius.Small
 	local button = make("TextButton", { Name = props.Name or "Chunky", AnchorPoint = props.AnchorPoint or Vector2.zero,
-		Position = props.Position or UDim2.new(), Size = size + UDim2.fromOffset(0, SHADOW), BackgroundTransparency = 1,
+		Position = props.Position or UDim2.new(), Size = size, BackgroundTransparency = 1,
 		Text = "", AutoButtonColor = false, LayoutOrder = props.LayoutOrder or 0, Visible = props.Visible ~= false,
 		ZIndex = props.ZIndex or 1, Selectable = true }, parent)
-	local shadow = make("Frame", { Name = "Shadow", Position = UDim2.fromOffset(0, SHADOW), Size = UDim2.new(1, 0, 1, -SHADOW),
-		BackgroundColor3 = C.Shadow, BackgroundTransparency = 0.65, BorderSizePixel = 0, ZIndex = button.ZIndex }, button)
-	UITheme.Corner(shadow, radius)
 	local color = props.Color or C.Card
-	local face = make("Frame", { Name = "Face", Size = UDim2.new(1, 0, 1, -SHADOW), BackgroundColor3 = color,
+	local face = make("Frame", { Name = "Face", Size = UDim2.fromScale(1, 1), BackgroundColor3 = color,
 		BorderSizePixel = 0, ZIndex = button.ZIndex }, button)
 	UITheme.Corner(face, radius)
 	local stroke = nil
 	if props.StrokeColor then
-		stroke = UITheme.Stroke(face, props.StrokeColor, props.StrokeThickness or 2)
+		stroke = UITheme.Stroke(face, props.StrokeColor, math.min(props.StrokeThickness or 1, 1))
 	end
 	local label = UITheme.Label({ Name = "Label", Size = UDim2.fromScale(1, 1), Text = props.Text or "",
 		TextSize = props.TextSize or 18, Font = props.Font or UITheme.Fonts.Display, TextColor3 = props.TextColor or C.Text,
@@ -201,12 +203,15 @@ function UITheme.Chunky(props, parent, onClick)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16) }, label)
 	end
 
-	local chunky = { Button = button, Face = face, Label = label, Stroke = stroke, Shadow = shadow }
+	local chunky = { Button = button, Face = face, Label = label, Stroke = stroke }
 	local baseColor = color
 	local hovering, pressing = false, false
 	local function refresh()
-		face.BackgroundColor3 = hovering and brighten(baseColor) or baseColor
-		face.Position = UDim2.fromOffset(0, pressing and SHADOW - 1 or 0)
+		if pressing then
+			face.BackgroundColor3 = baseColor:Lerp(Color3.new(0, 0, 0), 0.12)
+		else
+			face.BackgroundColor3 = hovering and brighten(baseColor) or baseColor
+		end
 	end
 	function chunky.SetColor(newColor, textColor)
 		baseColor = newColor
@@ -218,13 +223,14 @@ function UITheme.Chunky(props, parent, onClick)
 	function chunky.SetText(text)
 		label.Text = text
 	end
+	-- Rand: höchstens 2 px (Auswahl zeigt die Farbe, kein dicker Comic-Rahmen)
 	function chunky.SetStroke(strokeColor, thickness)
 		if not stroke then
-			stroke = UITheme.Stroke(face, strokeColor, thickness or 2)
+			stroke = UITheme.Stroke(face, strokeColor, 1)
 			chunky.Stroke = stroke
 		end
 		stroke.Color = strokeColor
-		stroke.Thickness = thickness or stroke.Thickness
+		stroke.Thickness = math.min(thickness or stroke.Thickness, 2)
 	end
 	button.MouseEnter:Connect(function()
 		hovering = true
@@ -248,46 +254,59 @@ function UITheme.Chunky(props, parent, onClick)
 	return chunky
 end
 
--- Fläche mit Rand (z.B. Karte oder Fenster). Liegt sie in einem Layout, ohne Schatten.
+-- Fläche mit 1 px Rand (z.B. Karte oder Fenster, auch in Layouts)
 function UITheme.Panel(props, parent)
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Panel
 	props.BorderSizePixel = 0
 	local frame = make("Frame", props, parent)
 	UITheme.Corner(frame, UITheme.Radius.XL)
-	UITheme.Stroke(frame, C.Border, 2)
+	UITheme.Stroke(frame, C.Border, 1)
 	return frame
 end
 
--- Fläche wie im Design (.panel): runde Ecken, 2 px Rand, leicht durchsichtig, Schatten darunter.
--- Der Schatten ist ein Geschwister-Frame und folgt Position, Größe und Sichtbarkeit der Fläche –
--- darum nicht in UIListLayout/UIGridLayout verwenden (dort UITheme.Panel).
+-- Fläche für Fenster und Kästen: leicht durchsichtig, 1 px Rand, kaum gerundet, ohne Schatten.
+-- props.Radius (optional) überschreibt die Rundung.
 function UITheme.Card(props, parent)
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Panel
 	props.BackgroundTransparency = props.BackgroundTransparency or 0.12
 	props.BorderSizePixel = 0
 	props.ZIndex = props.ZIndex or 2
-	local radius = props.Radius or UITheme.Radius.XL
+	local radius = math.min(props.Radius or UITheme.Radius.XL, UITheme.Radius.XL)
 	props.Radius = nil
-	local shadow = make("Frame", { Name = (props.Name or "Card") .. "Shadow", BackgroundColor3 = C.Shadow,
-		BackgroundTransparency = 0.7, BorderSizePixel = 0, ZIndex = props.ZIndex - 1 }, parent)
-	UITheme.Corner(shadow, radius)
 	local frame = make("Frame", props, parent)
 	UITheme.Corner(frame, radius)
-	UITheme.Stroke(frame, C.Border, 2)
-	local function sync()
-		shadow.AnchorPoint = frame.AnchorPoint
-		shadow.Position = frame.Position + UDim2.fromOffset(0, PANEL_SHADOW)
-		shadow.Size = frame.Size
-		shadow.Visible = frame.Visible
-	end
-	sync()
-	for _, property in { "Position", "Size", "AnchorPoint", "Visible" } do
-		frame:GetPropertyChangedSignal(property):Connect(sync)
-	end
-	frame.Destroying:Connect(function()
-		shadow:Destroy()
-	end)
+	UITheme.Stroke(frame, C.Border, 1, 0.25)
 	return frame
+end
+
+-- HUD-Fläche über der 3D-Welt: dunkel und durchsichtig, zur Bildmitte hin auslaufend
+-- (fadeTo = "Right" oder "Left": diese Seite wird durchsichtiger), ohne Rand.
+function UITheme.HudPanel(props, parent, fadeTo)
+	props.BackgroundColor3 = props.BackgroundColor3 or C.Background
+	props.BackgroundTransparency = props.BackgroundTransparency or 0.3
+	props.BorderSizePixel = 0
+	local frame = make("Frame", props, parent)
+	UITheme.Corner(frame, UITheme.Radius.Small)
+	if fadeTo then
+		local fade = fadeTo == "Right" and { 0, 0.55 } or { 0.55, 0 }
+		make("UIGradient", { Transparency = NumberSequence.new(fade[1], fade[2]) }, frame)
+	end
+	return frame
+end
+
+-- Münze als kleines Symbol (statt Emoji): Bernstein-Scheibe mit dunklem Innenring
+function UITheme.Coin(parent, size, props)
+	props = props or {}
+	props.Size = UDim2.fromOffset(size, size)
+	props.BackgroundColor3 = C.Gold
+	props.BorderSizePixel = 0
+	local coin = make("Frame", props, parent)
+	UITheme.Corner(coin, size)
+	local inner = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(0.56, 0.56), BackgroundTransparency = 1, ZIndex = coin.ZIndex }, coin)
+	UITheme.Corner(inner, size)
+	UITheme.Stroke(inner, C.Gold:Lerp(C.Shadow, 0.45), 1)
+	return coin
 end
 
 -- Zentrierte Leinwand mit fester Größe, die auf den Bildschirm skaliert wird
@@ -328,7 +347,7 @@ function UITheme.Diamond(parent, size, position, color, strokeColor)
 	local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = position, Size = UDim2.new(0, size, 0, size),
 		Rotation = 45, BackgroundColor3 = color, BorderSizePixel = 0 }, parent)
 	if strokeColor then
-		UITheme.Stroke(diamond, strokeColor, 2)
+		UITheme.Stroke(diamond, strokeColor, 1)
 	end
 	return diamond
 end
@@ -354,7 +373,7 @@ function UITheme.SetBlur(user, on)
 		blur = make("BlurEffect", { Name = "MenuBlur", Size = 0 }, Lighting)
 	end
 	local active = next(blurUsers) ~= nil
-	TweenService:Create(blur, TweenInfo.new(0.25), { Size = active and 16 or 0 }):Play()
+	TweenService:Create(blur, TweenInfo.new(0.25), { Size = active and 14 or 0 }):Play()
 end
 
 return UITheme

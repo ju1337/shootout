@@ -11,8 +11,8 @@ return TeamRoundMode.new({
 	MapName = "Drop", -- Map "Tal"
 	TeamSize = 5,
 	Teams = {
-		{ Name = "Rot", Color = BrickColor.new("Bright red") },
-		{ Name = "Blau", Color = BrickColor.new("Bright blue") },
+		{ Name = "Rot", Color = BrickColor.new("Burgundy") },
+		{ Name = "Blau", Color = BrickColor.new("Storm blue") },
 	},
 	DropIn = false,
 	WingsuitStart = 120, -- Fallschirmsprung zu Spielbeginn

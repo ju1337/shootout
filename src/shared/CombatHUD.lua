@@ -1,15 +1,14 @@
 -- CombatHUD (ModuleScript, nur Client)
 -- Kampf-Anzeigen rund um die Bildschirmmitte im Stil von Rogue Company:
---   * Fadenkreuz: vier Striche und ein runder gelber Punkt (Design "BLOCKOPS"), der Abstand zeigt die echte
---     Streuung der Waffe (Bewegung,
---     Sprung, Dauerfeuer). Beim Zielen in der Schulterkamera zieht es sich zu einem kleinen Kreuz zusammen,
+--   * Fadenkreuz: vier dünne Striche und ein kleiner Punkt, der Abstand zeigt die echte Streuung der Waffe
+--     (Bewegung, Sprung, Dauerfeuer). Beim Zielen in der Schulterkamera zieht es sich zu einem kleinen Kreuz zusammen,
 --     in der Ego-Perspektive blendet es aus (man zielt über Kimme und Korn). Schrotflinte: Kreis.
 --     Über Gegnern wird es rot.
 --   * Hitmarker: X um die Mitte – weiß (Körper), gelb (Kopf), blau (nur Rüstung), orange (niedergeschlagen),
 --     rot und groß (ausgeschaltet) – jeweils mit eigenem Treffer-Ton
---   * Schadenszahlen: zählen pro Ziel hoch und springen bei jedem Treffer kurz auf
+--   * Schadenszahlen: klein und schlicht, zählen pro Ziel hoch
 --   * Treffer-Richtung: rote Bögen um die Mitte zeigen zum Angreifer (stärker bei viel Schaden)
---   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN), Nachlade-Balken, Anzeige "Schuss blockiert"
+--   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN, ohne Symbol), Nachlade-Balken, Anzeige "Schuss blockiert"
 --     (Schulterkamera: zwischen Waffe und Ziel ist etwas im Weg)
 
 local Players = game:GetService("Players")
@@ -33,11 +32,11 @@ local player = Players.LocalPlayer
 local CombatHUD = {}
 
 local WHITE = Color3.new(1, 1, 1)
-local ENEMY_RED = Color3.fromRGB(255, 70, 70)
-local HEAD_GOLD = Color3.fromRGB(255, 205, 60)
-local ARMOR_BLUE = Color3.fromRGB(90, 185, 255)
-local DOWN_ORANGE = Color3.fromRGB(255, 160, 50)
-local KILL_RED = Color3.fromRGB(255, 45, 55)
+local ENEMY_RED = Color3.fromRGB(230, 70, 60)
+local HEAD_GOLD = Color3.fromRGB(232, 190, 90)
+local ARMOR_BLUE = Color3.fromRGB(110, 170, 220)
+local DOWN_ORANGE = Color3.fromRGB(226, 150, 64)
+local KILL_RED = Color3.fromRGB(226, 56, 50)
 local HIT_SOUND = "rbxasset://sounds/electronicpingshort.wav"
 
 local MIN_GAP = 2.5          -- kleinster Abstand der Striche zur Mitte (Design-Pixel)
@@ -98,9 +97,8 @@ function CombatHUD.Init(gui, weaponClient)
 	local cross = make("Frame", { Name = "Crosshair", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, ZIndex = 5 }, gui)
 	local dot, dotStroke = bar(cross)
-	dot.Size = UDim2.new(0, 4, 0, 4)
+	dot.Size = UDim2.new(0, 2, 0, 2) -- kleiner weißer Punkt
 	dot.Position = UDim2.new(0.5, 0, 0.5, 0)
-	make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot) -- runder Punkt in Signalgelb (Design)
 	local bars = {}
 	for _, dir in { Vector2.new(0, -1), Vector2.new(0, 1), Vector2.new(-1, 0), Vector2.new(1, 0) } do
 		local frame, stroke = bar(cross)
@@ -127,12 +125,12 @@ function CombatHUD.Init(gui, weaponClient)
 
 	-- Nachlade-Balken unter dem Fadenkreuz
 	local reloadBack = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 30),
-		Size = UDim2.new(0, 70, 0, 4), BackgroundColor3 = Color3.fromRGB(10, 14, 22), BackgroundTransparency = 0.3,
+		Size = UDim2.new(0, 70, 0, 3), BackgroundColor3 = UITheme.Colors.Background, BackgroundTransparency = 0.3,
 		BorderSizePixel = 0, Visible = false }, gui)
 	local reloadFill = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Primary,
 		BorderSizePixel = 0 }, reloadBack)
 	local reloadText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 3), Size = UDim2.new(0, 120, 0, 14),
-		Text = "NACHLADEN", TextSize = 10, Font = UITheme.Fonts.Display, TextColor3 = UITheme.Colors.Primary }, reloadBack)
+		Text = "NACHLADEN", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Primary }, reloadBack)
 	reloadText.TextXAlignment = Enum.TextXAlignment.Center
 
 	local kick = 0       -- kurzes Aufspringen des Fadenkreuzes beim Schuss
@@ -226,7 +224,7 @@ function CombatHUD.Init(gui, weaponClient)
 			frame.BackgroundTransparency = transparency
 			entry.Stroke.Transparency = 0.45 + transparency * 0.55
 		end
-		dot.BackgroundColor3 = hoverEnemy and ENEMY_RED or UITheme.Colors.Primary
+		dot.BackgroundColor3 = color
 		dot.BackgroundTransparency = transparency
 		dotStroke.Transparency = 0.45 + transparency * 0.55
 
@@ -333,8 +331,8 @@ function CombatHUD.Init(gui, weaponClient)
 			local billboard = make("BillboardGui", { Adornee = adornee, Size = UDim2.new(0, 140, 0, 44), AlwaysOnTop = true,
 				LightInfluence = 0, MaxDistance = 600, StudsOffsetWorldSpace = Vector3.new((math.random() - 0.5) * 1.2, 2.4, 0),
 				ResetOnSpawn = false }, player:WaitForChild("PlayerGui"))
-			local text = label({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 28, Font = Enum.Font.Oswald,
-				TextStrokeTransparency = 0.2 }, billboard)
+			local text = label({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
+				TextStrokeTransparency = 0.4 }, billboard)
 			text.TextXAlignment = Enum.TextXAlignment.Center
 			stack = { Gui = billboard, Label = text, Scale = make("UIScale", {}, text), Total = 0, Last = now, Anchor = anchor }
 			stacks[key] = stack
@@ -343,9 +341,9 @@ function CombatHUD.Init(gui, weaponClient)
 		stack.Last = now
 		stack.Label.Text = tostring(math.floor(stack.Total + 0.5))
 		stack.Label.TextColor3 = color
-		stack.Label.TextSize = killed and 34 or 28
-		stack.Scale.Scale = 1.45
-		TweenService:Create(stack.Scale, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		stack.Label.TextSize = killed and 26 or 22
+		stack.Scale.Scale = 1.15
+		TweenService:Create(stack.Scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		local myStack = stack
 		task.delay(killed and 0.9 or STACK_TIME, function()
 			if myStack.Gui.Parent and (killed or os.clock() - myStack.Last >= STACK_TIME - 0.02) then
@@ -356,16 +354,15 @@ function CombatHUD.Init(gui, weaponClient)
 
 	-- ---------- Kill-Meldung ----------
 	local killNotice = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 56),
-		Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(10, 13, 22),
-		BackgroundTransparency = 0.35, BorderSizePixel = 0, Visible = false }, gui)
-	UITheme.Corner(killNotice, 3)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 14) }, killNotice)
+		Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = UITheme.Colors.Background,
+		BackgroundTransparency = 0.4, BorderSizePixel = 0, Visible = false }, gui)
+	UITheme.Corner(killNotice, UITheme.Radius.Small)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, killNotice)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
 		Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, killNotice)
-	local killIcon = label({ Size = UDim2.new(0, 22, 1, 0), Text = "☠", TextSize = 20, LayoutOrder = 1 }, killNotice)
-	local killTitle = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
+	local killTitle = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
 		Font = Enum.Font.Oswald, LayoutOrder = 2 }, killNotice)
-	local killName = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
+	local killName = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
 		Font = Enum.Font.Oswald, LayoutOrder = 3 }, killNotice)
 	local killScale = make("UIScale", {}, killNotice)
 	local killId = 0
@@ -373,14 +370,12 @@ function CombatHUD.Init(gui, weaponClient)
 		killId += 1
 		local myId = killId
 		local color = killed and KILL_RED or DOWN_ORANGE
-		killIcon.Text = killed and "☠" or "⬇"
-		killIcon.TextColor3 = color
 		killTitle.Text = killed and "ELIMINIERT" or "NIEDERGESCHLAGEN"
 		killTitle.TextColor3 = color
-		killName.Text = string.upper(tostring(name))
+		killName.Text = UITheme.Upper(tostring(name))
 		killNotice.Visible = true
-		killScale.Scale = 1.25
-		TweenService:Create(killScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		killScale.Scale = 1.06
+		TweenService:Create(killScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		task.delay(1.8, function()
 			if killId == myId then
 				killNotice.Visible = false

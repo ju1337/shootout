@@ -58,11 +58,11 @@
        }
       },
       "Color": [
-       0.2157,
-       0.1961,
-       0.2745
+       0.3608,
+       0.3529,
+       0.3373
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -104,15 +104,15 @@
        }
       },
       "Color": [
-       0.6667,
-       0.3922,
-       1.0
+       0.7686,
+       0.7294,
+       0.6275
       ],
-      "Material": "Neon",
+      "Material": "SmoothPlastic",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth",
       "Shape": "Cylinder",
-      "Transparency": 0.5,
+      "Transparency": 0.55,
       "CanCollide": false
      }
     }
@@ -159,11 +159,11 @@
        }
       },
       "Color": [
-       0.3529,
-       0.2353,
-       0.549
+       0.4235,
+       0.4157,
+       0.3922
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -252,11 +252,11 @@
        }
       },
       "Color": [
-       0.3529,
-       0.2353,
-       0.549
+       0.4235,
+       0.4157,
+       0.3922
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -345,11 +345,11 @@
        }
       },
       "Color": [
-       0.3529,
-       0.2353,
-       0.549
+       0.4235,
+       0.4157,
+       0.3922
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -438,11 +438,11 @@
        }
       },
       "Color": [
-       0.3529,
-       0.2353,
-       0.549
+       0.4235,
+       0.4157,
+       0.3922
       ],
-      "Material": "SmoothPlastic",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -593,9 +593,9 @@
        }
       },
       "Color": [
-       0.4706,
-       0.3529,
-       0.6667
+       0.4863,
+       0.4784,
+       0.4549
       ],
       "Material": "Concrete",
       "TopSurface": "Smooth",
@@ -639,9 +639,9 @@
        }
       },
       "Color": [
-       0.4706,
-       0.3529,
-       0.6667
+       0.4863,
+       0.4784,
+       0.4549
       ],
       "Material": "Concrete",
       "TopSurface": "Smooth",
@@ -777,11 +777,11 @@
        }
       },
       "Color": [
-       0.5882,
-       0.4706,
-       0.7843
+       0.5176,
+       0.5098,
+       0.4863
       ],
-      "Material": "Marble",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }
@@ -823,9 +823,9 @@
        }
       },
       "Color": [
-       0.4706,
-       0.3529,
-       0.6667
+       0.4863,
+       0.4784,
+       0.4549
       ],
       "Material": "Concrete",
       "TopSurface": "Smooth",
@@ -869,9 +869,9 @@
        }
       },
       "Color": [
-       0.4706,
-       0.3529,
-       0.6667
+       0.4863,
+       0.4784,
+       0.4549
       ],
       "Material": "Concrete",
       "TopSurface": "Smooth",
@@ -1007,11 +1007,11 @@
        }
       },
       "Color": [
-       0.5882,
-       0.4706,
-       0.7843
+       0.5176,
+       0.5098,
+       0.4863
       ],
-      "Material": "Marble",
+      "Material": "Concrete",
       "TopSurface": "Smooth",
       "BottomSurface": "Smooth"
      }

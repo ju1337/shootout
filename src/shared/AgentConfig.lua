@@ -47,14 +47,21 @@ AgentConfig.Skins = {
 	{ Level = 5, Name = "Gold", Color = Color3.fromRGB(212, 175, 55), Material = Enum.Material.Metal },
 }
 
+-- Visier am Helm: dunkel getöntes Glas mit leichtem Schimmer in der Agentenfarbe (kein Leuchten)
+AgentConfig.VisorMaterial = Enum.Material.Glass
+function AgentConfig.VisorColor(accent)
+	return Color3.fromRGB(16, 18, 22):Lerp(accent, 0.35)
+end
+
 -- ---------- Agenten ----------
+-- Color = Erkennungsfarbe (gedeckt): Uniform (abgedunkelt), Weste, Visier-Schimmer, Menüs
 AgentConfig.Agents = {
 	{
 		Id = "Viper",
 		Name = "VIPER",
 		Role = "Scout",
 		Description = "Schnell und wendig, hält dafür weniger aus.",
-		Color = Color3.fromRGB(80, 220, 140),
+		Color = Color3.fromRGB(92, 166, 118),
 		Health = 90,
 		WalkSpeed = 18,
 		Loadout = { "SMG", "Pistol" },
@@ -75,7 +82,7 @@ AgentConfig.Agents = {
 		Name = "BASTION",
 		Role = "Verteidiger",
 		Description = "Viel Leben, dafür etwas langsamer. Stark auf kurze Distanz.",
-		Color = Color3.fromRGB(90, 140, 255),
+		Color = Color3.fromRGB(88, 124, 186),
 		Health = 125,
 		WalkSpeed = 15,
 		Loadout = { "Shotgun", "Revolver" },
@@ -96,7 +103,7 @@ AgentConfig.Agents = {
 		Name = "MENDER",
 		Role = "Sanitäter",
 		Description = "Ausgeglichen und kann sich selbst heilen.",
-		Color = Color3.fromRGB(255, 110, 110),
+		Color = Color3.fromRGB(196, 92, 86),
 		Health = 100,
 		WalkSpeed = 16,
 		Loadout = { "Rifle", "Pistol" },
@@ -117,7 +124,7 @@ AgentConfig.Agents = {
 		Name = "HAWK",
 		Role = "Aufklärer",
 		Description = "Präzise auf große Distanz, findet versteckte Gegner.",
-		Color = Color3.fromRGB(240, 200, 80),
+		Color = Color3.fromRGB(200, 168, 84),
 		Health = 95,
 		WalkSpeed = 16,
 		Loadout = { "DMR", "Pistol" },
@@ -139,7 +146,7 @@ AgentConfig.Agents = {
 		Price = 1500,
 		Role = "Infiltrator",
 		Description = "Schleicht sich unbemerkt hinter die Linien.",
-		Color = Color3.fromRGB(150, 150, 170),
+		Color = Color3.fromRGB(136, 140, 152),
 		Health = 90,
 		WalkSpeed = 17,
 		Loadout = { "SMG", "Revolver" },
@@ -160,7 +167,7 @@ AgentConfig.Agents = {
 		Price = 1500,
 		Role = "Stürmer",
 		Description = "Geht als Erster rein – schnell und auf kurze Distanz tödlich.",
-		Color = Color3.fromRGB(255, 120, 40),
+		Color = Color3.fromRGB(206, 112, 58),
 		Health = 100,
 		WalkSpeed = 17,
 		Loadout = { "Shotgun", "Pistol" },
@@ -182,7 +189,7 @@ AgentConfig.Agents = {
 		Price = 2000,
 		Role = "Unterstützung",
 		Description = "Hält das Team im Kampf – viel Feuerkraft und Heilung.",
-		Color = Color3.fromRGB(120, 200, 255),
+		Color = Color3.fromRGB(110, 160, 196),
 		Health = 110,
 		WalkSpeed = 15,
 		Loadout = { "LMG", "Revolver" },
@@ -204,7 +211,7 @@ AgentConfig.Agents = {
 		Name = "TRAPPER",
 		Role = "Kontrolle",
 		Description = "Sperrt Wege ab und hält Gegner auf.",
-		Color = Color3.fromRGB(170, 140, 90),
+		Color = Color3.fromRGB(156, 132, 92),
 		Price = 2000,
 		Health = 100,
 		WalkSpeed = 16,
@@ -227,7 +234,7 @@ AgentConfig.Agents = {
 		Name = "VOLT",
 		Role = "Techniker",
 		Description = "Baut einen Geschützturm, der Gegner selbstständig beschießt.",
-		Color = Color3.fromRGB(250, 230, 70),
+		Color = Color3.fromRGB(204, 190, 86),
 		Price = 2000,
 		Health = 95,
 		WalkSpeed = 16,

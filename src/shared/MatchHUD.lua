@@ -1,15 +1,17 @@
 -- MatchHUD (ModuleScript, nur Client)
--- Match-Anzeige im Design der Lobby ("BLOCKOPS"):
---   oben mittig:   Ziel ("HALTE DIE FLAGGEN"), Punktestand als Fläche – eigenes Team Cyan links, Gegner rot
---                  rechts, in der Mitte Runde und Uhr (Tickets klein in den Kästen) –, darunter ein Kästchen
---                  pro Spieler (lebt / am Boden / ausgeschaltet mit ☠) und ein Schild mit dem Zustand des Ziels.
---                  Free-for-All: eigene Kills (Cyan), Ziel in der Mitte, Führender (Gold) mit Namen, die ersten drei
---   rechts oben:   Killfeed: Zeilen mit farbigem Rand rechts, Waffe als Schild, eigene Kills gelb hinterlegt
---   unten links:   Fläche mit Porträt (gelber Rand), Agentenname, Rüstung in 5 Segmenten, Leben als Zahl + Balken
---   unten rechts:  Fläche mit Waffen-Silhouette, Waffenplätzen 1/2, Waffenname und Munition "30 / ∞"
+-- Match-Anzeige im nüchternen Taktik-Look (UITheme): dunkle, halbtransparente Flächen ohne Rahmen,
+-- schmale Zahlen (Oswald), dünne Balken.
+--   oben mittig:   Ziel ("HALTE DIE FLAGGEN"), Punktestand – eigenes Team blau links, Gegner rot rechts, in der
+--                  Mitte Runde und Uhr (Tickets klein in den Kästen) –, darunter ein Kästchen pro Spieler (lebt =
+--                  gefüllt, am Boden = orange, ausgeschaltet = leer) und eine Zeile mit dem Zustand des Ziels.
+--                  Free-for-All: eigene Kills (blau), Ziel in der Mitte, Führender (Gold) mit Namen, die ersten drei
+--   rechts oben:   Killfeed: dunkle Zeilen mit farbiger Kante rechts, Waffe als graue Schrift, eigene Kills mit
+--                  Bernstein-Kante
+--   unten links:   Porträt, Agentenname, Rüstung in 5 Segmenten, Leben als Zahl + Balken
+--   unten rechts:  Waffen-Silhouette, Waffenplätze 1/2, Waffenname und Munition "30 / ∞"
 --   in der Welt:   Zielmarker (Raute mit A/B, Entfernung in Metern, Zustand)
 -- Daten: Spieler-Attribute vom Server (TeamRoundMode), Remotes.Killfeed, WeaponClient.AmmoChanged.
--- Fähigkeit/Gadget (klobige Knöpfe unten mittig): AbilityClient. Minimap: Minimap.
+-- Fähigkeit/Gadget/Ultimate (Zeilen links neben der Munition): AbilityClient. Minimap: Minimap.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -38,7 +40,7 @@ local MatchHUD = {}
 
 local ALLY = C.Accent
 local ENEMY = C.Bad
-local DOWNED = Color3.fromRGB(255, 170, 40)
+local DOWNED = Color3.fromRGB(214, 150, 60)
 local ARMOR = C.Accent
 local PANEL = C.Background
 local MUTED = C.Muted
@@ -49,12 +51,12 @@ local METERS_PER_STUD = 0.28
 local ROUND_PHASES = { Countdown = true, Round = true, RoundEnd = true }
 local SCORE_W, BOX_W, SCORE_H = 300, 74, 56 -- Punktestand oben
 
--- Text in der schweren Schrift mit leichter Kontur
+-- Text in der schmalen Schrift (klein: Gotham Bold) mit leichter dunkler Kante
 local function label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or WHITE
-	props.Font = props.Font or F.Display
-	props.TextStrokeTransparency = props.TextStrokeTransparency or 0.6
+	props.Font = UITheme.FontFor(props.Font or F.Display, props.TextSize)
+	props.TextStrokeTransparency = props.TextStrokeTransparency or 0.75
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Center
 	return make("TextLabel", props, parent)
 end
@@ -74,21 +76,21 @@ local function myAgent()
 	return AgentConfig.Get(character and character:GetAttribute("Agent")) or AgentConfig.Get(player:GetAttribute("Agent"))
 end
 
--- Punktestand-Fläche: links und rechts farbige Kästen mit runden Außenecken, Mitte für Runde und Uhr.
+-- Punktestand-Fläche: links und rechts farbige Kästen, Mitte für Runde und Uhr.
 -- Gibt { Frame, Left, Right, LeftSub, RightSub, Top, Clock } zurück.
 local function scoreWidget(parent, leftColor, rightColor, leftText, rightText)
-	local card = UITheme.Card({ Name = "Score", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26),
-		Size = UDim2.fromOffset(SCORE_W, SCORE_H), BackgroundTransparency = 0.08, Radius = 14 }, parent)
+	local card = make("Frame", { Name = "Score", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26),
+		Size = UDim2.fromOffset(SCORE_W, SCORE_H), BackgroundColor3 = PANEL, BackgroundTransparency = 0.3, BorderSizePixel = 0,
+		ZIndex = 2 }, parent)
+	UITheme.Corner(card, UITheme.Radius.Small)
 	local function side(left, color, textColor)
 		local box = make("Frame", { Position = left and UDim2.fromOffset(0, 0) or UDim2.new(1, -BOX_W, 0, 0),
-			Size = UDim2.fromOffset(BOX_W, SCORE_H), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 3 }, card)
-		UITheme.Corner(box, 14)
-		-- Innenkante gerade: zweite Fläche ohne Rundung über die innere Hälfte
-		make("Frame", { Position = left and UDim2.fromOffset(BOX_W / 2, 0) or UDim2.fromOffset(0, 0),
-			Size = UDim2.fromOffset(BOX_W / 2, SCORE_H), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 3 }, box)
-		local value = label({ Position = UDim2.fromOffset(0, 2), Size = UDim2.new(1, 0, 0, 36), Text = "0", TextSize = 32,
+			Size = UDim2.fromOffset(BOX_W, SCORE_H), BackgroundColor3 = color, BackgroundTransparency = 0.08, BorderSizePixel = 0,
+			ZIndex = 3 }, card)
+		UITheme.Corner(box, UITheme.Radius.Small)
+		local value = label({ Position = UDim2.fromOffset(0, 1), Size = UDim2.new(1, 0, 0, 38), Text = "0", TextSize = 38,
 			TextColor3 = textColor, TextStrokeTransparency = 1, ZIndex = 4 }, box)
-		local sub = label({ Position = UDim2.fromOffset(0, 36), Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 10,
+		local sub = label({ Position = UDim2.fromOffset(0, 38), Size = UDim2.new(1, 0, 0, 14), Text = "", TextSize = 9,
 			Font = F.Bold, TextColor3 = textColor, TextStrokeTransparency = 1, ZIndex = 4 }, box)
 		return value, sub
 	end
@@ -96,8 +98,8 @@ local function scoreWidget(parent, leftColor, rightColor, leftText, rightText)
 	local rightValue, rightSub = side(false, rightColor, rightColor == ENEMY and WHITE or C.PrimaryText)
 	local topText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(140, 14),
 		Text = leftText or "", TextSize = 10, Font = F.Bold, TextColor3 = MUTED, TextStrokeTransparency = 1, ZIndex = 3 }, card)
-	local clock = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20), Size = UDim2.fromOffset(140, 30),
-		Text = rightText or "", TextSize = 26, TextStrokeTransparency = 1, ZIndex = 3 }, card)
+	local clock = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20), Size = UDim2.fromOffset(140, 32),
+		Text = rightText or "", TextSize = 30, TextStrokeTransparency = 1, ZIndex = 3 }, card)
 	return { Frame = card, Left = leftValue, Right = rightValue, LeftSub = leftSub, RightSub = rightSub, Top = topText, Clock = clock }
 end
 
@@ -112,15 +114,14 @@ function MatchHUD.Init(root, weaponClient)
 	local top = make("Frame", { Name = "TopBar", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6),
 		Size = UDim2.fromOffset(760, 150), BackgroundTransparency = 1 }, root)
 	local goalText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(700, 22),
-		Text = "", TextSize = 16, TextStrokeTransparency = 1 }, top)
-	UITheme.Outline(goalText, 2)
+		Text = "", TextSize = 18, TextStrokeTransparency = 0.6 }, top)
 	local bar = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, top)
 	local teamScore = scoreWidget(bar, ALLY, ENEMY)
 
 	-- Kästchen pro Spieler: eigenes Team links (Cyan), Gegner rechts (rot)
 	local function pipRow(anchorX, x, alignment)
 		local row = make("Frame", { AnchorPoint = Vector2.new(anchorX, 0), Position = UDim2.new(0.5, x, 0, 26 + SCORE_H + 12),
-			Size = UDim2.fromOffset(150, 18), BackgroundTransparency = 1 }, bar)
+			Size = UDim2.fromOffset(150, 14), BackgroundTransparency = 1 }, bar)
 		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = alignment,
 			Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, row)
 		return row
@@ -129,9 +130,9 @@ function MatchHUD.Init(root, weaponClient)
 	local enemyPips = pipRow(0, 8, Enum.HorizontalAlignment.Left)
 
 	-- Schild mit dem Zustand des Ziels ("A: ROT · B: FREI · C: BLAU")
-	local statusChip = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26 + SCORE_H + 38),
-		Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 11, TextColor3 = C.Primary,
-		BackgroundTransparency = 0.2, BackgroundColor3 = PANEL, TextStrokeTransparency = 1, Visible = false }, bar)
+	local statusChip = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26 + SCORE_H + 36),
+		Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 11, TextColor3 = C.Text,
+		BackgroundTransparency = 0.35, BackgroundColor3 = PANEL, TextStrokeTransparency = 1, Visible = false }, bar)
 	UITheme.Corner(statusChip, UITheme.Radius.Small)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, statusChip)
 
@@ -144,7 +145,7 @@ function MatchHUD.Init(root, weaponClient)
 		Size = UDim2.fromOffset(220, 16), Text = "", TextSize = 12, TextColor3 = C.Gold }, ffaBar)
 	local ffaRanking = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 26 + SCORE_H + 34),
 		Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, Text = "", RichText = true, TextSize = 11,
-		BackgroundTransparency = 0.2, BackgroundColor3 = PANEL, TextStrokeTransparency = 1, Visible = false }, ffaBar)
+		BackgroundTransparency = 0.35, BackgroundColor3 = PANEL, TextStrokeTransparency = 1, Visible = false }, ffaBar)
 	UITheme.Corner(ffaRanking, UITheme.Radius.Small)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, ffaRanking)
 
@@ -206,7 +207,7 @@ function MatchHUD.Init(root, weaponClient)
 		ffaRanking.Visible = #parts > 0
 	end
 
-	-- Kästchen für Spieler: lebt = gefüllt, am Boden = orange, ausgeschaltet = leer mit ☠
+	-- Kästchen für Spieler: lebt = gefüllt, am Boden = orange, ausgeschaltet = leer
 	local function syncPips(row, entries, color)
 		local pips = {}
 		for _, child in row:GetChildren() do
@@ -215,11 +216,9 @@ function MatchHUD.Init(root, weaponClient)
 			end
 		end
 		while #pips < #entries do
-			local pip = make("Frame", { Size = UDim2.fromOffset(16, 16), BorderSizePixel = 0, LayoutOrder = #pips + 1 }, row)
-			UITheme.Corner(pip, 4)
-			UITheme.Stroke(pip, color, 2)
-			label({ Name = "Skull", Size = UDim2.fromScale(1, 1), Text = "☠", TextSize = 10, TextColor3 = MUTED,
-				TextStrokeTransparency = 1, Visible = false }, pip)
+			local pip = make("Frame", { Size = UDim2.fromOffset(12, 12), BorderSizePixel = 0, LayoutOrder = #pips + 1 }, row)
+			UITheme.Corner(pip, 1)
+			UITheme.Stroke(pip, color, 1)
 			table.insert(pips, pip)
 		end
 		while #pips > #entries do
@@ -233,12 +232,12 @@ function MatchHUD.Init(root, weaponClient)
 			local stroke = pip:FindFirstChildOfClass("UIStroke")
 			local dead = entry.State == "dead"
 			local downed = entry.State == "downed"
-			pip.BackgroundColor3 = dead and PANEL or (downed and DOWNED or color)
-			pip.BackgroundTransparency = dead and 0.3 or 0
+			pip.BackgroundColor3 = downed and DOWNED or color
+			pip.BackgroundTransparency = dead and 1 or 0.1
 			if stroke then
-				stroke.Color = dead and C.Border or (entry.IsSelf and WHITE or (downed and DOWNED or color))
+				stroke.Color = dead and MUTED or (entry.IsSelf and WHITE or (downed and DOWNED or color))
+				stroke.Transparency = dead and 0.3 or 0
 			end
-			pip.Skull.Visible = dead
 		end
 	end
 
@@ -261,11 +260,11 @@ function MatchHUD.Init(root, weaponClient)
 				goal = "RUNDE " .. tostring(player:GetAttribute("RoundNumber") or 1)
 			end
 			goalText.Text = goal or ""
-			goalText.TextSize = 16
+			goalText.TextSize = 18
 			goalText.Font = F.Display
 		elseif mode == "FreeForAll" then
 			goalText.Text = "JEDER GEGEN JEDEN  ·  " .. GameSettings.Get("KillsToWin") .. " KILLS GEWINNEN"
-			goalText.TextSize = 16
+			goalText.TextSize = 18
 			goalText.Font = F.Display
 		else
 			goalText.Text = player:GetAttribute("ModeText") or ""
@@ -331,19 +330,19 @@ function MatchHUD.Init(root, weaponClient)
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 7)
 		if overtime then
 			clockText.Text = "OVERTIME"
-			clockText.TextSize = 18
-			clockText.TextColor3 = C.Primary:Lerp(WHITE, pulse * 0.6)
+			clockText.TextSize = 22
+			clockText.TextColor3 = C.Primary:Lerp(WHITE, pulse * 0.4)
 		elseif clockSeconds then
 			clockText.Text = formatClock(clockSeconds)
-			clockText.TextSize = 26
-			clockText.TextColor3 = (clockAlert or clockSeconds <= 15) and ENEMY:Lerp(WHITE, clockAlert and pulse * 0.5 or 0) or WHITE
+			clockText.TextSize = 30
+			clockText.TextColor3 = (clockAlert or clockSeconds <= 15) and ENEMY:Lerp(WHITE, clockAlert and pulse * 0.4 or 0) or WHITE
 		elseif countingDown and countdownEnd then
 			clockText.Text = formatClock(math.ceil(math.max(0, countdownEnd - workspace:GetServerTimeNow())))
-			clockText.TextSize = 26
+			clockText.TextSize = 30
 			clockText.TextColor3 = C.Primary
 		else
 			clockText.Text = "–:––"
-			clockText.TextSize = 26
+			clockText.TextSize = 30
 			clockText.TextColor3 = MUTED
 		end
 	end)
@@ -365,11 +364,10 @@ function MatchHUD.Init(root, weaponClient)
 
 	-- Eintrag ein-/ausblenden (alle Teile gemeinsam)
 	local function setEntryAlpha(parts, alpha)
-		parts.Row.BackgroundTransparency = 1 - alpha * (parts.Mine and 0.92 or 0.8)
+		parts.Row.BackgroundTransparency = 1 - alpha * (parts.Mine and 0.75 or 0.6)
 		for _, text in parts.Texts do
 			text.TextTransparency = 1 - alpha
 		end
-		parts.Chip.BackgroundTransparency = 1 - alpha * 0.5
 		parts.Accent.BackgroundTransparency = 1 - alpha
 	end
 
@@ -377,22 +375,22 @@ function MatchHUD.Init(root, weaponClient)
 		entryCount += 1
 		local mine = killerName == player.Name
 		local row = make("Frame", { Size = UDim2.fromOffset(0, 26), AutomaticSize = Enum.AutomaticSize.X,
-			BackgroundColor3 = mine and C.Primary or PANEL, BackgroundTransparency = 1, BorderSizePixel = 0,
-			LayoutOrder = entryCount }, killfeed)
+			BackgroundColor3 = PANEL, BackgroundTransparency = 1, BorderSizePixel = 0, LayoutOrder = entryCount }, killfeed)
 		UITheme.Corner(row, UITheme.Radius.Small)
 		local content = make("Frame", { Size = UDim2.fromOffset(0, 26), AutomaticSize = Enum.AutomaticSize.X,
 			BackgroundTransparency = 1 }, row)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 14) }, content)
 		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
 			Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder }, content)
-		-- farbiger Rand rechts: Team des Schützen
-		local accent = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 4, 1, 0),
-			BackgroundColor3 = nameColor(killerName or victimName), BackgroundTransparency = 1, BorderSizePixel = 0 }, row)
+		-- farbige Kante rechts: Team des Schützen (eigene Kills Bernstein)
+		local accent = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 2, 1, 0),
+			BackgroundColor3 = mine and C.Primary or nameColor(killerName or victimName), BackgroundTransparency = 1,
+			BorderSizePixel = 0 }, row)
 
 		local texts = {}
 		local function text(value, color, order, size)
 			local item = label({ Size = UDim2.fromOffset(0, 26), AutomaticSize = Enum.AutomaticSize.X, Text = value,
-				TextSize = size or 13, Font = F.Bold, TextColor3 = mine and C.PrimaryText or color, TextTransparency = 1,
+				TextSize = size or 13, Font = F.Bold, TextColor3 = color, TextTransparency = 1,
 				TextStrokeTransparency = 1, LayoutOrder = order }, content)
 			table.insert(texts, item)
 			return item
@@ -400,22 +398,18 @@ function MatchHUD.Init(root, weaponClient)
 		if killerName then
 			text(tostring(killerName), nameColor(killerName), 1)
 		end
-		-- Waffe als kleines Schild
+		-- Waffe als graue Schrift in der Mitte, Kopfschuss als Kreis, Niederschlag als Pfeil
 		local config = WeaponConfig.Get(weaponName)
-		local chip = label({ Size = UDim2.fromOffset(0, 16), AutomaticSize = Enum.AutomaticSize.X,
-			Text = upper(config and config.DisplayName or tostring(weaponName or "")), TextSize = 10, Font = F.Bold,
-			TextColor3 = mine and C.PrimaryText or MUTED, BackgroundColor3 = PANEL, BackgroundTransparency = 1, TextTransparency = 1,
-			TextStrokeTransparency = 1, LayoutOrder = 2 }, content)
-		UITheme.Corner(chip, 4)
-		make("UIPadding", { PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 5) }, chip)
-		table.insert(texts, chip)
+		text(upper(config and config.DisplayName or tostring(weaponName or "")), MUTED, 2, 10)
 		if headshot then
-			text("◎", mine and C.PrimaryText or C.Gold, 3, 13)
+			text("◎", C.Gold, 3, 13)
 		end
-		text(kind == "Down" and "▼" or "☠", kind == "Down" and DOWNED or WHITE, 4, 12)
+		if kind == "Down" then
+			text("▼", DOWNED, 4, 11)
+		end
 		text(tostring(victimName or "?"), nameColor(victimName), 5)
 
-		local parts = { Row = row, Texts = texts, Chip = chip, Accent = accent, Mine = mine }
+		local parts = { Row = row, Texts = texts, Accent = accent, Mine = mine }
 		local alpha = Instance.new("NumberValue")
 		alpha.Changed:Connect(function(value)
 			setEntryAlpha(parts, value)
@@ -454,36 +448,29 @@ function MatchHUD.Init(root, weaponClient)
 	-- =====================================================================
 	local vitals = make("Frame", { Name = "Vitals", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -24),
 		Size = UDim2.fromOffset(330, 88), BackgroundTransparency = 1 }, root)
-	local vitalsCard = UITheme.Card({ Name = "VitalsCard", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 0.1 }, vitals)
+	local vitalsCard = UITheme.HudPanel({ Name = "VitalsCard", Size = UDim2.fromScale(1, 1), ZIndex = 2 }, vitals, "Right")
 	local portraitCard = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(68, 68), BackgroundColor3 = PANEL,
 		BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3 }, vitalsCard)
-	UITheme.Corner(portraitCard, UITheme.Radius.Medium)
-	local portraitStroke = UITheme.Stroke(portraitCard, C.Primary, 2)
+	UITheme.Corner(portraitCard, UITheme.Radius.Small)
+	local portraitStroke = UITheme.Stroke(portraitCard, C.Border, 1)
 	local ownPortrait = HUDIcons.Portrait(portraitCard, 68)
-	local agentLine = label({ Position = UDim2.fromOffset(90, 9), Size = UDim2.fromOffset(230, 18), Text = "", TextSize = 15,
-		TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3 }, vitalsCard)
-	-- Rüstung: Schild-Symbol und 5 Segmente
-	label({ Position = UDim2.fromOffset(90, 31), Size = UDim2.fromOffset(16, 14), Text = "🛡", TextSize = 12, Font = F.Bold,
-		TextColor3 = ARMOR, TextStrokeTransparency = 1, ZIndex = 3 }, vitalsCard)
+	local agentLine = label({ Position = UDim2.fromOffset(90, 8), Size = UDim2.fromOffset(230, 22), Text = "", TextSize = 21,
+		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 }, vitalsCard)
+	-- Rüstung: 5 dünne Segmente
 	local armorSegments = {}
 	for i = 1, ARMOR_SEGMENTS do
-		local segment = make("Frame", { Position = UDim2.fromOffset(110 + (i - 1) * 42, 34), Size = UDim2.fromOffset(38, 8),
-			BackgroundColor3 = PANEL, BorderSizePixel = 0, ZIndex = 3 }, vitalsCard)
-		UITheme.Corner(segment, 3)
+		local segment = make("Frame", { Position = UDim2.fromOffset(90 + (i - 1) * 46, 38), Size = UDim2.fromOffset(42, 4),
+			BackgroundColor3 = WHITE, BackgroundTransparency = 0.85, BorderSizePixel = 0, ZIndex = 3 }, vitalsCard)
 		table.insert(armorSegments, segment)
 	end
 	-- Leben: Zahl und Balken (Geister-Balken zeigt kurz den Verlust)
-	local healthText = label({ Position = UDim2.fromOffset(90, 50), Size = UDim2.fromOffset(52, 26), Text = "", TextSize = 24,
-		TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3 }, vitalsCard)
-	local healthBack = make("Frame", { Position = UDim2.fromOffset(146, 55), Size = UDim2.fromOffset(170, 16), BackgroundColor3 = PANEL,
-		BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3 }, vitalsCard)
-	UITheme.Corner(healthBack, UITheme.Radius.Small)
-	UITheme.Stroke(healthBack, C.Border, 2)
-	local ghostFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(230, 70, 60), BorderSizePixel = 0,
+	local healthText = label({ Position = UDim2.fromOffset(90, 46), Size = UDim2.fromOffset(52, 34), Text = "", TextSize = 34,
+		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 }, vitalsCard)
+	local healthBack = make("Frame", { Position = UDim2.fromOffset(146, 60), Size = UDim2.fromOffset(174, 6), BackgroundColor3 = WHITE,
+		BackgroundTransparency = 0.85, BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3 }, vitalsCard)
+	local ghostFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(180, 64, 54), BorderSizePixel = 0,
 		ZIndex = 3 }, healthBack)
-	UITheme.Corner(ghostFill, 4)
 	local healthFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Text, BorderSizePixel = 0, ZIndex = 4 }, healthBack)
-	UITheme.Corner(healthFill, 4)
 
 	local shownHealth, ghostHealth, ghostHoldUntil = 0, 0, 0
 	RunService.RenderStepped:Connect(function(dt)
@@ -516,8 +503,8 @@ function MatchHUD.Init(root, weaponClient)
 		local filled = armor / BuyConfig.ArmorAmount * ARMOR_SEGMENTS
 		for i, segment in armorSegments do
 			local amount = math.clamp(filled - (i - 1), 0, 1)
-			segment.BackgroundColor3 = amount > 0 and ARMOR or PANEL
-			segment.BackgroundTransparency = amount > 0 and (1 - amount) * 0.6 or 0
+			segment.BackgroundColor3 = amount > 0 and ARMOR or WHITE
+			segment.BackgroundTransparency = amount > 0 and (1 - amount) * 0.6 or 0.85
 		end
 	end)
 
@@ -526,7 +513,7 @@ function MatchHUD.Init(root, weaponClient)
 		local agent = myAgent()
 		ownPortrait.Set(agent and agent.Id, player)
 		agentLine.Text = agent and agent.Name or ""
-		portraitStroke.Color = C.Primary
+		portraitStroke.Color = C.Border
 	end
 	task.spawn(function()
 		while true do
@@ -542,29 +529,30 @@ function MatchHUD.Init(root, weaponClient)
 	-- =====================================================================
 	local ammo = make("Frame", { Name = "Ammo", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -22),
 		Size = UDim2.fromOffset(330, 104), BackgroundTransparency = 1, Visible = false }, root)
-	local ammoCard = UITheme.Card({ Name = "AmmoCard", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 0.1 }, ammo)
+	local ammoCard = UITheme.HudPanel({ Name = "AmmoCard", Size = UDim2.fromScale(1, 1), ZIndex = 2 }, ammo, "Left")
 	local iconHolder = make("Frame", { Position = UDim2.fromOffset(12, 18), Size = UDim2.fromOffset(150, 50), BackgroundTransparency = 1,
 		ZIndex = 3 }, ammoCard)
 	-- Andere Waffe unter der Silhouette: "[2] PISTOLE"
 	local swapText = label({ Position = UDim2.fromOffset(14, 74), Size = UDim2.fromOffset(150, 16), Text = "", TextSize = 11,
 		Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Left, TextStrokeTransparency = 1, ZIndex = 3 }, ammoCard)
-	-- Waffenplätze 1 / 2 (aktiv gelb)
+	-- Waffenplätze 1 / 2 (aktiv: Bernstein-Rahmen)
 	local slotRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 10), Size = UDim2.fromOffset(60, 18),
 		BackgroundTransparency = 1, ZIndex = 3 }, ammoCard)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, slotRow)
 	local slotPills = {}
 	for i = 1, 2 do
-		local pill = label({ Size = UDim2.fromOffset(22, 18), Text = tostring(i), TextSize = 11, BackgroundTransparency = 0,
-			BackgroundColor3 = PANEL, TextColor3 = MUTED, TextStrokeTransparency = 1, LayoutOrder = i, ZIndex = 3 }, slotRow)
-		UITheme.Corner(pill, 4)
+		local pill = label({ Size = UDim2.fromOffset(22, 18), Text = tostring(i), TextSize = 11, BackgroundTransparency = 1,
+			TextColor3 = MUTED, TextStrokeTransparency = 1, LayoutOrder = i, ZIndex = 3 }, slotRow)
+		UITheme.Corner(pill, UITheme.Radius.Small)
+		UITheme.Stroke(pill, C.Primary, 1)
 		slotPills[i] = pill
 	end
-	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 32), Size = UDim2.fromOffset(160, 16),
-		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Right,
+	local weaponName = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 31), Size = UDim2.fromOffset(160, 18),
+		Text = "", TextSize = 17, TextColor3 = MUTED, TextXAlignment = Enum.TextXAlignment.Right,
 		TextStrokeTransparency = 1, ZIndex = 3 }, ammoCard)
-	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 46), Size = UDim2.fromOffset(170, 50),
-		Text = "", RichText = true, TextSize = 46, TextXAlignment = Enum.TextXAlignment.Right, TextStrokeTransparency = 1, ZIndex = 3 },
+	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 46), Size = UDim2.fromOffset(170, 52),
+		Text = "", RichText = true, TextSize = 52, TextXAlignment = Enum.TextXAlignment.Right, TextStrokeTransparency = 1, ZIndex = 3 },
 		ammoCard)
 
 	local shownWeapon, weaponIcon = nil, nil
@@ -590,8 +578,11 @@ function MatchHUD.Init(root, weaponClient)
 		local slot = table.find(loadout, current) or 1
 		for i, pill in slotPills do
 			local active = i == slot
-			pill.BackgroundColor3 = active and C.Primary or PANEL
-			pill.TextColor3 = active and C.PrimaryText or MUTED
+			pill.TextColor3 = active and C.Primary or MUTED
+			local stroke = pill:FindFirstChildOfClass("UIStroke")
+			if stroke then
+				stroke.Transparency = active and 0 or 1
+			end
 			pill.Visible = i <= math.max(#loadout, 1)
 		end
 		local otherSlot = slot == 1 and 2 or 1
@@ -619,10 +610,10 @@ function MatchHUD.Init(root, weaponClient)
 		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
 		local low = ratio <= 0.25
 		if reloading then
-			ammoText.Text = string.format('<font size="24" color="#%s">LÄDT NACH</font>', hex(C.Primary))
+			ammoText.Text = string.format('<font size="26" color="#%s">LÄDT NACH</font>', hex(C.Primary))
 		else
 			local color = mag == 0 and ENEMY or (low and ENEMY or WHITE)
-			ammoText.Text = string.format('<font color="#%s">%d</font><font size="20" color="#%s">  / %s</font>', hex(color), mag,
+			ammoText.Text = string.format('<font color="#%s">%d</font><font size="24" color="#%s">  / %s</font>', hex(color), mag,
 				hex(MUTED), infinite and "∞" or tostring(reserve))
 		end
 		weaponName.Text = upper(config.DisplayName)
@@ -690,7 +681,7 @@ function MatchHUD.Init(root, weaponClient)
 				local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 38),
 					Size = UDim2.fromOffset(30, 30), Rotation = 45, BackgroundColor3 = PANEL, BackgroundTransparency = 0.3,
 					BorderSizePixel = 0 }, gui)
-				local stroke = UITheme.Stroke(diamond, WHITE, 2)
+				local stroke = UITheme.Stroke(diamond, WHITE, 1.5)
 				local inner = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 					Size = UDim2.fromScale(0, 0), BackgroundColor3 = ALLY, BorderSizePixel = 0 }, diamond)
 				local letter = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 38), Size = UDim2.fromOffset(30, 30),
