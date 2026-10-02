@@ -18,6 +18,7 @@ local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
 local BuyConfig = require(Shared.BuyConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -29,7 +30,8 @@ local ANNOUNCE_TIME = 3       -- Sekunden für große Meldungen
 -- Treffer-Sound (in Roblox eingebaut, keine Asset-ID nötig)
 local HIT_SOUND = "rbxasset://sounds/electronicpingshort.wav"
 
-local gui
+local screen -- ScreenGui (an/aus)
+local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
 local statusLabel
 
 -- Kleiner Helfer: Instanz mit Eigenschaften erzeugen
@@ -65,46 +67,63 @@ function HUD.Init(weaponClient)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 
-	gui = make("ScreenGui", { Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true }, player:WaitForChild("PlayerGui"))
+	screen = make("ScreenGui", { Name = "HUD", ResetOnSpawn = false, IgnoreGuiInset = true }, player:WaitForChild("PlayerGui"))
+	gui = UITheme.ScaledRoot(screen) -- auf Handys kleiner
 
 	-- Halbtransparente dunkle Fläche mit Verlauf (Grundbaustein des HUD)
 	local function hudPanel(props)
-		props.BackgroundColor3 = Color3.fromRGB(10, 13, 22)
-		props.BackgroundTransparency = 0.25
+		props.BackgroundColor3 = UITheme.Colors.Panel
+		props.BackgroundTransparency = props.BackgroundTransparency or 0.15
 		props.BorderSizePixel = 0
 		local frame = make("Frame", props, gui)
-		UITheme.Corner(frame, 12)
-		UITheme.Stroke(frame, Color3.fromRGB(70, 80, 110), 1, 0.4)
-		UITheme.Gradient(frame, Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 155, 175))
+		UITheme.Corner(frame, 4)
+		UITheme.Stroke(frame, UITheme.Colors.Border, 1, 0.2)
+		UITheme.Gradient(frame, Color3.fromRGB(30, 46, 70), UITheme.Colors.Panel)
 		return frame
 	end
 
-	-- ---------- Leben unten links (große Zahl + Balken, Rüstung darüber) ----------
+	-- ---------- Agent + Leben unten links (Porträt, Name, große Zahl, Segment-Balken, Rüstung) ----------
 	local healthPanel = hudPanel({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -24),
-		Size = UDim2.new(0, 330, 0, 74) })
-	local healthText = label({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(0, 90, 0, 44), Text = "100",
-		TextSize = 40, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
-	label({ Position = UDim2.new(0, 18, 0, 50), Size = UDim2.new(0, 90, 0, 16), Text = "LEBEN", TextSize = 12,
-		TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
-	local healthBack = make("Frame", { Position = UDim2.new(0, 112, 0, 40), Size = UDim2.new(1, -128, 0, 14),
-		BackgroundColor3 = Color3.fromRGB(35, 38, 50), BorderSizePixel = 0 }, healthPanel)
-	UITheme.Corner(healthBack, 4)
-	local healthFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(80, 220, 120),
+		Size = UDim2.new(0, 390, 0, 84) })
+	local portrait = make("Frame", { Position = UDim2.new(0, 10, 0, 10), Size = UDim2.new(0, 64, 0, 64),
+		BackgroundColor3 = UITheme.Colors.Accent, BorderSizePixel = 0 }, healthPanel)
+	UITheme.Corner(portrait, 4)
+	UITheme.Gradient(portrait, Color3.new(1, 1, 1), Color3.fromRGB(110, 110, 120))
+	local portraitLetter = label({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 42, Font = Enum.Font.Oswald,
+		TextXAlignment = Enum.TextXAlignment.Center }, portrait)
+	local agentName = label({ Position = UDim2.new(0, 86, 0, 6), Size = UDim2.new(1, -96, 0, 18), Text = "",
+		TextSize = 15, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
+	local healthText = label({ Position = UDim2.new(0, 86, 0, 24), Size = UDim2.new(0, 76, 0, 50), Text = "100",
+		TextSize = 44, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
+	local healthBack = make("Frame", { Position = UDim2.new(0, 168, 0, 52), Size = UDim2.new(1, -182, 0, 14),
+		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, healthPanel)
+	local healthFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Text,
 		BorderSizePixel = 0 }, healthBack)
-	UITheme.Corner(healthFill, 4)
-	UITheme.Gradient(healthFill, Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 170, 170))
 	-- Segmente wie bei RC (alle 25 Leben ein Strich)
 	for k = 1, 3 do
-		make("Frame", { Position = UDim2.new(k / 4, -1, 0, 0), Size = UDim2.new(0, 2, 1, 0),
-			BackgroundColor3 = Color3.fromRGB(10, 13, 22), BorderSizePixel = 0, ZIndex = 2 }, healthBack)
+		make("Frame", { Position = UDim2.new(k / 4, -1, 0, 0), Size = UDim2.new(0, 3, 1, 0),
+			BackgroundColor3 = UITheme.Colors.Panel, BorderSizePixel = 0, ZIndex = 2 }, healthBack)
 	end
 	-- Rüstung (gekauft in der Kaufphase) als blauer Balken über dem Leben
-	local armorBack = make("Frame", { Position = UDim2.new(0, 112, 0, 26), Size = UDim2.new(1, -128, 0, 8),
-		BackgroundColor3 = Color3.fromRGB(35, 38, 50), BorderSizePixel = 0, Visible = false }, healthPanel)
-	UITheme.Corner(armorBack, 3)
+	local armorBack = make("Frame", { Position = UDim2.new(0, 168, 0, 38), Size = UDim2.new(1, -182, 0, 8),
+		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Visible = false }, healthPanel)
 	local armorFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(80, 170, 255),
 		BorderSizePixel = 0 }, armorBack)
-	UITheme.Corner(armorFill, 3)
+
+	-- Agent des aktuellen Lebens anzeigen
+	task.spawn(function()
+		while true do
+			local character = player.Character
+			local agent = AgentConfig.Get(character and character:GetAttribute("Agent")) or AgentConfig.Get(player:GetAttribute("Agent"))
+			if agent then
+				portrait.BackgroundColor3 = agent.Color
+				portraitLetter.Text = string.sub(agent.Name, 1, 1)
+				agentName.Text = string.upper(agent.Name) .. "  ·  " .. string.upper(agent.Role)
+				agentName.TextColor3 = agent.Color
+			end
+			task.wait(0.5)
+		end
+	end)
 
 	-- ---------- Munition unten rechts (große Magazinzahl, Reserve klein) ----------
 	local ammoPanel = hudPanel({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -24),
@@ -115,6 +134,15 @@ function HUD.Init(weaponClient)
 		Text = "", TextSize = 46, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Right }, ammoPanel)
 	local reserveText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 34), Size = UDim2.new(0, 66, 0, 26),
 		Text = "", TextSize = 20, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
+	-- Magazin als dünner Balken unten im Panel
+	local magBack = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -10),
+		Size = UDim2.new(0, 120, 0, 4), BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, ammoPanel)
+	local magFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = UITheme.Colors.Accent,
+		BorderSizePixel = 0 }, magBack)
+	-- Hinweis bei fast leerem Magazin
+	local reloadHint = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 90),
+		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 18, Font = Enum.Font.Oswald,
+		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
 	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -28, 1, -106),
@@ -218,7 +246,7 @@ function HUD.Init(weaponClient)
 			local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
 			healthFill.Size = UDim2.new(ratio, 0, 1, 0)
 			healthText.Text = tostring(math.max(0, math.ceil(humanoid.Health)))
-			healthFill.BackgroundColor3 = ratio < 0.3 and Color3.fromRGB(230, 70, 60) or Color3.fromRGB(80, 200, 100)
+			healthFill.BackgroundColor3 = ratio < 0.3 and UITheme.Colors.Bad or UITheme.Colors.Text
 			-- Getroffen: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar
 			local resting = ratio < 0.3 and humanoid.Health > 0 and 0.75 or 1
 			if humanoid.Health < lastHealth then
@@ -394,7 +422,7 @@ function HUD.Init(weaponClient)
 	local headingText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 116), Size = UDim2.new(0, 60, 0, 12),
 		Text = "", TextSize = 11, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Center }, gui)
 	game:GetService("RunService").RenderStepped:Connect(function()
-		if not gui.Enabled then
+		if not screen.Enabled then
 			return
 		end
 		local look = workspace.CurrentCamera.CFrame.LookVector
@@ -439,9 +467,29 @@ function HUD.Init(weaponClient)
 		end
 	end)
 
+	-- Touch-Geräte: links unten liegt der Steuerknüppel, rechts unten die Knöpfe. Darum Leben nach
+	-- oben links und Munition über die Fähigkeiten-Leiste in die Mitte.
+	local function layoutForDevice()
+		if InputActions.IsTouch() then
+			healthPanel.AnchorPoint = Vector2.new(0, 0)
+			healthPanel.Position = UDim2.new(0, 24, 0, 104)
+			ammoPanel.AnchorPoint = Vector2.new(0.5, 1)
+			ammoPanel.Position = UDim2.new(0.5, 0, 1, -170)
+			moneyText.Position = UDim2.new(0.5, 130, 1, -250)
+		else
+			healthPanel.AnchorPoint = Vector2.new(0, 1)
+			healthPanel.Position = UDim2.new(0, 24, 1, -24)
+			ammoPanel.AnchorPoint = Vector2.new(1, 1)
+			ammoPanel.Position = UDim2.new(1, -24, 1, -24)
+			moneyText.Position = UDim2.new(1, -28, 1, -106)
+		end
+	end
+	layoutForDevice()
+	InputActions.DeviceChanged:Connect(layoutForDevice)
+
 	-- HUD nur in Kampfmodi zeigen, nicht im Hub
 	local function updateVisible()
-		gui.Enabled = Modes.IsFighting(player)
+		screen.Enabled = Modes.IsFighting(player)
 	end
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
@@ -450,6 +498,16 @@ function HUD.Init(weaponClient)
 	weaponClient.AmmoChanged:Connect(function(name, mag, reserve, reloading)
 		ammoText.Text = tostring(mag)
 		ammoText.TextColor3 = mag == 0 and UITheme.Colors.Bad or Color3.new(1, 1, 1)
+		local config = WeaponConfig.Get(name)
+		local size = config and config.MagazineSize or math.max(mag, 1)
+		local ratio = math.clamp(mag / math.max(size, mag, 1), 0, 1)
+		magFill.Size = UDim2.new(ratio, 0, 1, 0)
+		magFill.BackgroundColor3 = ratio <= 0.25 and UITheme.Colors.Bad or UITheme.Colors.Accent
+		-- Nachladen-Hinweis mit Taste des aktuellen Geräts
+		local key = InputActions.Hint("Reload")
+		reloadHint.Visible = not reloading and ratio <= 0.25 and reserve > 0
+		reloadHint.Text = mag == 0 and ((key ~= "" and ("[" .. key .. "] ") or "") .. "NACHLADEN")
+			or ((key ~= "" and ("[" .. key .. "] ") or "") .. "WENIG MUNITION")
 		reserveText.Text = "/ " .. reserve
 		local displayName = WeaponConfig.Get(name).DisplayName
 		weaponText.Text = string.upper(reloading and (displayName .. " · lädt nach...") or displayName)
@@ -495,7 +553,7 @@ function HUD.Init(weaponClient)
 			anchor.WorldPosition = position
 			anchor.Parent = workspace.Terrain
 			local billboard = make("BillboardGui", { Adornee = anchor, Size = UDim2.new(0, 80, 0, 30),
-				AlwaysOnTop = true, StudsOffset = Vector3.new(math.random(-10, 10) / 10, 1, 0) }, gui)
+				AlwaysOnTop = true, StudsOffset = Vector3.new(math.random(-10, 10) / 10, 1, 0) }, player.PlayerGui)
 			local number = label({ Size = UDim2.new(1, 0, 1, 0), Text = tostring(math.floor(damage + 0.5)),
 				TextSize = headshot and 26 or 20, TextColor3 = headshot and Color3.fromRGB(255, 210, 60)
 					or Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center }, billboard)
@@ -532,7 +590,7 @@ function HUD.Init(weaponClient)
 		local weapon = WeaponConfig.Get(weaponName)
 		local weaponLabel = weapon and weapon.DisplayName or tostring(weaponName or "")
 		local function colored(name)
-			local color = name == player.Name and "#FFC850" or "#FFFFFF"
+			local color = name == player.Name and "#28D2E6" or "#FFFFFF"
 			return '<font color="' .. color .. '">' .. name .. "</font>"
 		end
 		local text = colored(killerName) .. '  <font color="#9AA3BA">[' .. weaponLabel
@@ -544,12 +602,12 @@ function HUD.Init(weaponClient)
 			Text = "   " .. text .. "   ",
 			RichText = true,
 			TextSize = 16,
-			BackgroundColor3 = involvesMe and Color3.fromRGB(70, 50, 20) or Color3.fromRGB(10, 13, 22),
-			BackgroundTransparency = 0.3,
+			BackgroundColor3 = involvesMe and Color3.fromRGB(28, 62, 78) or UITheme.Colors.Panel,
+			BackgroundTransparency = 0.2,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			LayoutOrder = entryCount,
 		}, killfeed)
-		UITheme.Corner(entry, 8)
+		UITheme.Corner(entry, 3)
 		-- Älteste Einträge entfernen
 		local entries = {}
 		for _, child in killfeed:GetChildren() do
@@ -570,8 +628,8 @@ function HUD.Init(weaponClient)
 
 	-- XP-Meldung über der Fähigkeits-Box ("+100 XP · Kill"), Level-Up groß
 	local xpText = label({
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -100),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0.5, 124), -- unter dem Fadenkreuz, frei von Fähigkeiten-Leiste und Touch-Knöpfen
 		Size = UDim2.new(0, 400, 0, 30),
 		Text = "",
 		TextSize = 22,
