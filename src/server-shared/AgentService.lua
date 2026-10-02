@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -13,6 +14,9 @@ local AgentConfig = require(Shared.AgentConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
 local BuyConfig = require(Shared.BuyConfig)
+local ServerShared = ServerStorage:WaitForChild("ServerShared")
+local Damage = require(ServerShared.Damage)
+local WeaponService = require(ServerShared.WeaponService)
 
 local AgentService = {}
 
@@ -232,6 +236,136 @@ local function doTeamHeal(player, root, agent)
 	Debris:AddItem(ring, 1)
 end
 
+-- Gegner eines Spielers im selben Modus (Spieler-Charaktere und Bot-Modelle), lebend
+local function enemyModels(player)
+	local mode, team = player:GetAttribute("Mode"), player.Team and player.Team.Name
+	local list = {}
+	for _, other in Players:GetPlayers() do
+		local character = other.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if other ~= player and humanoid and humanoid.Health > 0 and other:GetAttribute("Mode") == mode
+			and not (team and other.Team and other.Team.Name == team) then
+			table.insert(list, character)
+		end
+	end
+	local bots = workspace:FindFirstChild("Bots")
+	for _, model in bots and bots:GetChildren() or {} do
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health > 0 and model:GetAttribute("Mode") == mode
+			and not (team and model:GetAttribute("TeamName") == team) then
+			table.insert(list, model)
+		end
+	end
+	return list
+end
+
+-- Schaden durch eine Fähigkeit, inkl. Kill-Meldung
+local function abilityDamage(player, model, amount, weaponName)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return
+	end
+	local victim = Players:GetPlayerFromCharacter(model)
+	local dealt, killed, downed = Damage.Apply(model, humanoid, amount, { Player = player, Weapon = weaponName })
+	if dealt > 0 then
+		Remotes.Hitmarker:FireClient(player, false, killed, dealt, model:GetPivot().Position, victim and victim.Name or model.Name, downed)
+	end
+	if killed then
+		WeaponService.ReportKill(player, victim, weaponName, false, victim and victim.Name or model.Name)
+	end
+end
+
+-- Stacheldraht: Fläche vor dem Spieler, Gegner darin langsamer (Attribut "SlowedUntil") + Schaden
+local function doTrap(player, character, root, agent)
+	local ability = agent.Ability
+	local look = root.CFrame.LookVector
+	local flat = Vector3.new(look.X, 0, look.Z)
+	flat = flat.Magnitude > 0.01 and flat.Unit or Vector3.new(0, 0, -1)
+	local center = root.Position + flat * 8 - Vector3.new(0, 2.6, 0)
+	local wire = Instance.new("Part")
+	wire.Name = "BarbedWire"
+	wire.Size = ability.Size
+	wire.CFrame = CFrame.lookAt(center, center + flat)
+	wire.Anchored = true
+	wire.CanCollide = false
+	wire.CanQuery = false
+	wire.Material = Enum.Material.DiamondPlate
+	wire.Color = Color3.fromRGB(110, 100, 85)
+	wire.Transparency = 0.2
+	wire.Parent = workspace
+	Debris:AddItem(wire, ability.Duration)
+	task.spawn(function()
+		local tick = 0.25
+		while wire.Parent do
+			for _, model in enemyModels(player) do
+				local enemyRoot = model:FindFirstChild("HumanoidRootPart")
+				local localPos = enemyRoot and wire.CFrame:PointToObjectSpace(enemyRoot.Position)
+				if localPos and math.abs(localPos.X) <= ability.Size.X / 2 and math.abs(localPos.Z) <= ability.Size.Z / 2
+					and math.abs(localPos.Y) < 5 then
+					model:SetAttribute("SlowedUntil", workspace:GetServerTimeNow() + 0.5)
+					abilityDamage(player, model, ability.DamagePerSecond * tick, "Stacheldraht")
+				end
+			end
+			task.wait(tick)
+		end
+	end)
+end
+
+-- Geschützturm: schießt auf den nächsten sichtbaren Gegner in Reichweite
+local function doTurret(player, character, root, agent)
+	local ability = agent.Ability
+	local look = root.CFrame.LookVector
+	local flat = Vector3.new(look.X, 0, look.Z)
+	flat = flat.Magnitude > 0.01 and flat.Unit or Vector3.new(0, 0, -1)
+	local base = root.Position + flat * 4 - Vector3.new(0, 2.5, 0)
+	local turret = Instance.new("Model")
+	turret.Name = "Turret"
+	local stand = Instance.new("Part")
+	stand.Size = Vector3.new(1.4, 2.4, 1.4)
+	stand.Position = base + Vector3.new(0, 1.2, 0)
+	stand.Color = Color3.fromRGB(60, 62, 68)
+	stand.Material = Enum.Material.Metal
+	stand.Anchored = true
+	stand.Parent = turret
+	local head = Instance.new("Part")
+	head.Name = "Head"
+	head.Size = Vector3.new(1.6, 1, 2.2)
+	head.CFrame = CFrame.lookAt(base + Vector3.new(0, 2.9, 0), base + Vector3.new(0, 2.9, 0) + flat)
+	head.Color = agent.Color
+	head.Material = Enum.Material.Metal
+	head.Anchored = true
+	head.Parent = turret
+	turret.Parent = workspace
+	Debris:AddItem(turret, ability.Duration)
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { turret, character }
+	task.spawn(function()
+		while turret.Parent do
+			local origin = head.Position
+			local target, best = nil, ability.Range
+			for _, model in enemyModels(player) do
+				local aim = model:FindFirstChild("UpperTorso") or model:FindFirstChild("HumanoidRootPart")
+				local distance = aim and (aim.Position - origin).Magnitude or math.huge
+				if distance < best and not model:GetAttribute("Cloaked") then
+					local result = workspace:Raycast(origin, aim.Position - origin, params)
+					if result and result.Instance:IsDescendantOf(model) then
+						target, best = model, distance
+					end
+				end
+			end
+			if target then
+				local aim = target:FindFirstChild("UpperTorso") or target:FindFirstChild("HumanoidRootPart")
+				head.CFrame = CFrame.lookAt(origin, aim.Position)
+				Remotes.Shot:FireAllClients(nil, origin, aim.Position, "SMG")
+				abilityDamage(player, target, ability.Damage, "Geschützturm")
+			end
+			task.wait(ability.FireDelay)
+		end
+	end)
+end
+
 local function useAbility(player)
 	-- Nur wenn der Modus Kampf erlaubt (nicht im Hub, nicht zwischen Runden)
 	if not player:GetAttribute("CanFight") then
@@ -269,6 +403,10 @@ local function useAbility(player)
 		sparkle(root, agent.Color, 0.5)
 	elseif abilityType == "TeamHeal" then
 		doTeamHeal(player, root, agent)
+	elseif abilityType == "Trap" then
+		doTrap(player, character, root, agent)
+	elseif abilityType == "Turret" then
+		doTurret(player, character, root, agent)
 	end
 end
 

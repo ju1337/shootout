@@ -82,6 +82,10 @@ local function apply()
 		if BuyConfig.Has(player, "Runner") then
 			speed *= BuyConfig.RunnerFactor
 		end
+		-- Stacheldraht (TRAPPER): 50 % langsamer
+		if (character:GetAttribute("SlowedUntil") or 0) > workspace:GetServerTimeNow() then
+			speed *= 0.5
+		end
 		humanoid.WalkSpeed = speed
 
 		-- Ducken: Kamera tiefer, Körper sinkt ab
@@ -345,6 +349,10 @@ function Movement.Init()
 		aiming = false
 		character:GetAttributeChangedSignal("SpeedMultiplier"):Connect(apply)
 		character:GetAttributeChangedSignal("Agent"):Connect(apply)
+		character:GetAttributeChangedSignal("SlowedUntil"):Connect(function()
+			apply()
+			task.delay(0.6, apply) -- danach wieder normales Tempo
+		end)
 		player:GetAttributeChangedSignal("Buy_Runner"):Connect(apply)
 		-- Neuer Charakter (z.B. nach Todeskamera): Kamera wieder auf Ego/Schulter
 		if not workspace.CurrentCamera:GetAttribute("KillCam") then

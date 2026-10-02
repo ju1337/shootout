@@ -241,6 +241,10 @@ local function runAI(bot, model)
 	while bot.Model == model and humanoid.Health > 0 do
 		local now = os.clock()
 
+		-- Stacheldraht (TRAPPER) bremst auch Bots
+		local slowed = (model:GetAttribute("SlowedUntil") or 0) > workspace:GetServerTimeNow()
+		humanoid.WalkSpeed = AgentConfig.Get(bot.Agent).WalkSpeed * (slowed and 0.5 or 1)
+
 		-- Selbst am Boden: liegen bleiben und warten
 		if DownedService.IsDowned(model) then
 			humanoid:MoveTo(root.Position)

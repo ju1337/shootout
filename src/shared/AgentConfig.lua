@@ -2,7 +2,8 @@
 -- Alle Agenten mit Werten, Waffen (Loadout) und Fähigkeit, dazu das Level-System.
 -- Fähigkeits-Typen: "Boost" (schneller), "Wall" (Deckungswand), "Heal" (Selbstheilung),
 -- "Reveal" (zeigt Gegner durch Wände), "Cloak" (fast unsichtbar), "Dash" (Sprung nach vorne),
--- "TeamHeal" (heilt Teamkollegen in der Nähe)
+-- "TeamHeal" (heilt Teamkollegen in der Nähe), "Trap" (Stacheldraht: verlangsamt + Schaden),
+-- "Turret" (Geschützturm schießt selbstständig)
 -- Primaries = wählbare Primärwaffen (wie bei RC zwei zur Auswahl), Loadout[2] = Sekundärwaffe
 -- Price = Münzen zum Freischalten (ohne Price: von Anfang an verfügbar)
 -- Gadget-Typen (Taste G): "Frag" (Splittergranate), "Flash" (Blendgranate), "Smoke" (Rauch),
@@ -176,6 +177,51 @@ AgentConfig.Agents = {
 			Duration = 1,
 			Amount = 40,
 			Radius = 25,
+		},
+	},
+	{
+		Id = "Trapper",
+		Name = "TRAPPER",
+		Role = "Kontrolle",
+		Description = "Sperrt Wege ab und hält Gegner auf.",
+		Color = Color3.fromRGB(170, 140, 90),
+		Price = 2000,
+		Health = 100,
+		WalkSpeed = 16,
+		Loadout = { "Rifle", "Pistol" },
+		Primaries = { "Rifle", "SMG" }, -- wählbare Primärwaffen (erste = Standard)
+		Gadget = { Type = "Smoke", Name = "Rauchgranate", Charges = 1, Radius = 14, Duration = 12, Fuse = 1.5 },
+		Ability = {
+			Type = "Trap",
+			Name = "Stacheldraht",
+			Description = "12 Sekunden Stacheldraht vor dir: Gegner darin sind 50 % langsamer und nehmen Schaden.",
+			Cooldown = 22,
+			Duration = 12,
+			Size = Vector3.new(12, 1, 8),
+			DamagePerSecond = 6,
+		},
+	},
+	{
+		Id = "Volt",
+		Name = "VOLT",
+		Role = "Techniker",
+		Description = "Baut einen Geschützturm, der Gegner selbstständig beschießt.",
+		Color = Color3.fromRGB(250, 230, 70),
+		Price = 2000,
+		Health = 95,
+		WalkSpeed = 16,
+		Loadout = { "SMG", "Pistol" },
+		Primaries = { "SMG", "Shotgun" }, -- wählbare Primärwaffen (erste = Standard)
+		Gadget = { Type = "Sensor", Name = "Sensor-Mine", Charges = 1, Radius = 18, Duration = 30 },
+		Ability = {
+			Type = "Turret",
+			Name = "Geschützturm",
+			Description = "15 Sekunden ein Turm, der den nächsten sichtbaren Gegner beschießt (Reichweite 60).",
+			Cooldown = 28,
+			Duration = 15,
+			Range = 60,
+			Damage = 8,
+			FireDelay = 0.3,
 		},
 	},
 }
