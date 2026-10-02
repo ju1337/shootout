@@ -19,6 +19,7 @@ local Cosmetics = require(Shared.Cosmetics)
 local Movement = require(Shared.Movement)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local InputActions = require(Shared.InputActions)
+local PlayerSettings = require(Shared.PlayerSettings)
 local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
 local WeaponEffects = require(Shared.WeaponEffects)
@@ -499,7 +500,14 @@ function WeaponClient.Init()
 		end
 	end)
 	InputActions.Bind("Aim", function(began)
-		aimHeld = began and fighting()
+		if PlayerSettings.Get("ToggleAim") then
+			-- Einstellung "Zielen: Umschalten": jeder Druck schaltet um
+			if began and fighting() then
+				aimHeld = not aimHeld
+			end
+		else
+			aimHeld = began and fighting()
+		end
 	end)
 	InputActions.Bind("Reload", function(began)
 		if began and fighting() then

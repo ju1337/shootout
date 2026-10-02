@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local InputActions = require(Shared.InputActions)
+local PlayerSettings = require(Shared.PlayerSettings)
 local Movement = require(Shared.Movement)
 local WeaponClient = require(Shared.WeaponClient)
 local CharacterPose = require(Shared.CharacterPose)
@@ -29,6 +30,7 @@ local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
 local LevelBadge = require(script.Parent:WaitForChild("LevelBadge"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
+PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
 Movement.Init()
 WeaponClient.Init()
 CharacterPose.Init() -- Third-Person: Waffe mit beiden Händen bei allen Charakteren

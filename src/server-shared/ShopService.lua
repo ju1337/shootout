@@ -9,6 +9,7 @@ local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
 local WeaponConfig = require(Shared.WeaponConfig)
 local MasteryConfig = require(Shared.MasteryConfig)
+local PlayerSettings = require(Shared.PlayerSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
@@ -156,17 +157,14 @@ function actions.SelectPrimary(player, agentId, weaponName)
 	return WeaponConfig.Get(weaponName).DisplayName .. " für " .. agent.Name .. " gewählt.", true
 end
 
--- Persönliche Einstellungen speichern (Sichtfeld, Empfindlichkeit, Kamera)
+-- Persönliche Einstellungen speichern (PlayerSettings: Steuerung, Kamera, Anzeige, Ton); nur gültige Werte,
+-- nicht mitgeschickte bleiben wie bisher
 function actions.SaveSettings(player, settings)
 	local profile = ProgressService.Get(player)
 	if not profile or typeof(settings) ~= "table" then
 		return nil
 	end
-	profile.Settings = {
-		Fov = math.clamp(tonumber(settings.Fov) or 70, 60, 100),
-		Sensitivity = math.clamp(tonumber(settings.Sensitivity) or 1, 0.1, 3),
-		ThirdPerson = settings.ThirdPerson == true,
-	}
+	profile.Settings = PlayerSettings.Sanitize(settings, profile.Settings)
 	ProgressService.Sync(player)
 	return nil -- keine Meldung nötig
 end

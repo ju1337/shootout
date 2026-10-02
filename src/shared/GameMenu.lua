@@ -11,7 +11,8 @@
 --   AGENTEN:     links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Werte, Fähigkeit,
 --                Gadget, Passiv, Level, WÄHLEN/FREISCHALTEN), rechts alle Agenten als Karten
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
--- Statistik, Codes, Optionen, Aufträge, tägliche Belohnung und Squad öffnen weiter die Fenster des SideMenu
+--   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
+-- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
 -- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Hub; es öffnet
 -- sich NICHT von selbst. Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas) und skaliert mit.
 
@@ -68,6 +69,7 @@ local playSub
 local playPage, agentPage
 local pages = {}        -- [Id] = { Frame, Refresh, Watch, Build } (Build: baut die Seite beim ersten Anzeigen)
 local navButtons = {}   -- [Id] = TextButton
+local headerPages = {}  -- [Id] = Chunky (STATISTIK, CODES, OPTIONEN oben rechts: Seiten, keine Fenster)
 local modeButtons = {}  -- [mode] = { Chunky, Detail, Check, Live }
 local agentCards = {}   -- [agent] = { ... }
 local selectedMode
@@ -126,6 +128,11 @@ local function updateNav()
 		local on = id == active
 		button.TextColor3 = on and C.Text or C.Muted
 		button.Underline.Visible = on
+	end
+	for id, chunky in headerPages do
+		local on = id == active
+		chunky.Stroke.Color = on and C.Primary or C.Border
+		chunky.Stroke.Transparency = on and 0 or 0.4
 	end
 end
 
@@ -227,15 +234,13 @@ local function buildHeader()
 	local levelText = label({ Position = UDim2.fromOffset(46, 2), Size = UDim2.new(1, -58, 0, 40), Text = "", TextSize = 22,
 		Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, level)
 
-	headerButton("STATISTIK", 92, 3, right, function()
-		openPanel("Stats")
-	end)
-	headerButton("CODES", 72, 4, right, function()
-		openPanel("Codes")
-	end)
-	headerButton("OPTIONEN", 90, 5, right, function()
-		openPanel("Settings")
-	end)
+	-- Statistik, Codes, Optionen sind Seiten der Lobby (Inhalt baut das SideMenu über GameMenu.AddPage)
+	for i, entry in { { "Stats", "STATISTIK", 92 }, { "Codes", "CODES", 72 }, { "Settings", "OPTIONEN", 90 } } do
+		headerPages[entry[1]] = headerButton(entry[2], entry[3], 2 + i, right, function()
+			openPanel(nil)
+			showPage(entry[1])
+		end)
+	end
 	closeButton = headerButton("", 44, 6, right, function()
 		GameMenu.SetOpen(false)
 	end)
@@ -1013,7 +1018,7 @@ function GameMenu.SetOpen(open: boolean)
 end
 
 -- tab: Seite der Lobby ("Play"/"Modes", "Agents", "Inventory", "Shop", "Pass") oder ein Fenster des SideMenu
--- ("Stats", "Codes", "Settings", "Quests", "Daily", "Squad")
+-- ("Quests", "Daily", "Squad", "Rewards", "Titles"); "Stats", "Codes", "Settings" sind Seiten
 function GameMenu.Open(tab)
 	GameMenu.SetOpen(true)
 	if tab == nil or tab == "Modes" then
@@ -1030,6 +1035,15 @@ end
 
 function GameMenu.IsOpen()
 	return isOpen
+end
+
+-- Weitere Lobby-Seite von außen (SideMenu: Statistik, Codes, Optionen). Gibt den Eintrag { Frame } zurück;
+-- Refresh (beim Anzeigen) und Watch (Attribute, bei denen neu gezeichnet wird) setzt der Aufrufer.
+function GameMenu.AddPage(id)
+	local frame = make("Frame", { Name = id .. "Page", Position = UDim2.fromOffset(LEFT_X, 106),
+		Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H), BackgroundTransparency = 1, Visible = false }, canvas)
+	pages[id] = { Frame = frame }
+	return pages[id]
 end
 
 -- Vom SideMenu: handler(name) öffnet dessen Fenster (nil = schließen)

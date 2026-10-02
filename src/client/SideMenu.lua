@@ -9,12 +9,12 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentConfig = require(Shared.AgentConfig)
-local Movement = require(Shared.Movement)
 local GameMenu = require(Shared.GameMenu)
 local UITheme = require(Shared.UITheme)
 local QuestConfig = require(Shared.QuestConfig)
@@ -23,6 +23,7 @@ local RankEmblem = require(Shared.RankEmblem)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local InputActions = require(Shared.InputActions)
+local PlayerSettings = require(Shared.PlayerSettings)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
@@ -401,12 +402,23 @@ local function percent(a, b)
 	return b > 0 and string.format("%d %%", math.floor(a / b * 100 + 0.5)) or "–"
 end
 
+-- Seite der Lobby statt Fenster (wie BATTLE PASS): Titel groß oben links, Unterzeile, Inhalt auf PAGE_W x PAGE_H.
+-- Meldungen des Servers zeigt die Lobby in ihrer Statuszeile.
+local function makePage(name, title, subtitle)
+	local entry = GameMenu.AddPage(name)
+	local frame = entry.Frame
+	text({ Position = UDim2.new(0, 0, 0, -4), Size = UDim2.new(0, 900, 0, 46), Text = title, TextSize = 42, Font = DISPLAY }, frame)
+	text({ Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(0, 900, 0, 16), Text = subtitle or "", TextSize = 11,
+		TextColor3 = GRAY }, frame)
+	return frame, entry
+end
+
 local function buildStats()
-	local frame = makePanel("Stats", "STATISTIK", 1040, 760)
+	local frame, page = makePage("Stats", "STATISTIK", "DEINE WERTE ÜBER ALLE MODI  ·  RANG  ·  LETZTE MATCHES")
 	-- Linke Seite: Kacheln
-	local grid = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(0, 620, 0, 376),
+	local grid = make("Frame", { Position = UDim2.new(0, 0, 0, 72), Size = UDim2.new(0, 744, 0, 376),
 		BackgroundTransparency = 1 }, frame)
-	make("UIGridLayout", { CellSize = UDim2.new(0, 145, 0, 84), CellPadding = UDim2.new(0, 10, 0, 10),
+	make("UIGridLayout", { CellSize = UDim2.new(0, 178, 0, 86), CellPadding = UDim2.new(0, 10, 0, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	local tiles = {}
 	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate", "Accuracy",
@@ -427,7 +439,7 @@ local function buildStats()
 	end
 
 	-- Rechte Seite: Ranked
-	local rankedBox = make("Frame", { Position = UDim2.new(0, 668, 0, 70), Size = UDim2.new(1, -692, 0, 230),
+	local rankedBox = make("Frame", { Position = UDim2.new(0, 768, 0, 72), Size = UDim2.new(0, 752, 0, 230),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, rankedBox)
 	local seasonText = text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
@@ -445,7 +457,7 @@ local function buildStats()
 		Font = UITheme.Fonts.Body, TextColor3 = GRAY, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, rankedBox)
 
 	-- Bestenliste
-	local board = make("Frame", { Position = UDim2.new(0, 668, 0, 312), Size = UDim2.new(1, -692, 1, -352),
+	local board = make("Frame", { Position = UDim2.new(0, 768, 0, 314), Size = UDim2.new(0, 752, 0, 416),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, board)
 	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "TOP 10 · ELO", TextSize = 13,
@@ -454,13 +466,13 @@ local function buildStats()
 		Font = UITheme.Fonts.Body, TextYAlignment = Enum.TextYAlignment.Top, RichText = true }, board)
 
 	-- Match-Verlauf (letzte 10 Matches)
-	local history = make("Frame", { Position = UDim2.new(0, 24, 0, 456), Size = UDim2.new(0, 620, 0, 256),
+	local history = make("Frame", { Position = UDim2.new(0, 0, 0, 460), Size = UDim2.new(0, 744, 0, 270),
 		BackgroundColor3 = CARD }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, history)
 	text({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 18), Text = "LETZTE MATCHES", TextSize = 13,
 		TextColor3 = ACCENT }, history)
-	local COLUMNS = { { "Result", 0, 110 }, { "Mode", 110, 140 }, { "Map", 250, 120 }, { "Score", 370, 70 },
-		{ "KD", 440, 70 }, { "Elo", 510, 60 } }
+	local COLUMNS = { { "Result", 0, 130 }, { "Mode", 130, 170 }, { "Map", 300, 150 }, { "Score", 450, 90 },
+		{ "KD", 540, 90 }, { "Elo", 630, 80 } }
 	local rows = {}
 	for i = 1, 10 do
 		local row = make("Frame", { Position = UDim2.new(0, 16, 0, 30 + (i - 1) * 22), Size = UDim2.new(1, -32, 0, 22),
@@ -476,7 +488,8 @@ local function buildStats()
 	local historyEmpty = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 0, 20),
 		Text = "Noch keine Matches gespielt.", TextSize = 15, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, history)
 
-	panels.Stats.Refresh = function()
+	page.Watch = { Stats = true, Elo = true, RankedData = true, MatchHistory = true }
+	page.Refresh = function()
 		local list = decodeAttribute(player, "MatchHistory")
 		historyEmpty.Visible = #list == 0
 		for i, cells in rows do
@@ -595,18 +608,32 @@ end
 -- ---------- CODES ----------
 
 local function buildCodes()
-	local frame = makePanel("Codes", "CODES", 560, 300)
-	text({ Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(1, -48, 0, 24),
-		Text = "Code eingeben und Belohnung abholen:", TextSize = 17, TextColor3 = GRAY }, frame)
-	local box = make("TextBox", { Position = UDim2.new(0, 24, 0, 104), Size = UDim2.new(1, -48, 0, 50),
-		BackgroundColor3 = CARD, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 22,
+	local frame = makePage("Codes", "CODES", "CODE EINGEBEN UND BELOHNUNG ABHOLEN  ·  JEDER CODE EINMAL PRO SPIELER")
+	-- Karte mittig: Eingabe und Knopf
+	local card = UITheme.Card({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 150),
+		Size = UDim2.new(0, 620, 0, 260), BackgroundTransparency = 0.1 }, frame)
+	text({ Position = UDim2.new(0, 32, 0, 28), Size = UDim2.new(1, -64, 0, 30), Text = "CODE EINLÖSEN", TextSize = 28,
+		Font = DISPLAY }, card)
+	text({ Position = UDim2.new(0, 32, 0, 62), Size = UDim2.new(1, -64, 0, 20),
+		Text = "Neue Codes gibt es bei Updates und Events.", TextSize = 15, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, card)
+	local box = make("TextBox", { Position = UDim2.new(0, 32, 0, 100), Size = UDim2.new(1, -64, 0, 56),
+		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 24,
 		TextColor3 = Color3.new(1, 1, 1), PlaceholderText = "CODE", PlaceholderColor3 = GRAY, Text = "",
-		ClearTextOnFocus = false }, frame)
+		ClearTextOnFocus = false }, card)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)
-	button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 172), Size = UDim2.new(0, 260, 0, 52),
-		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = ACCENT, TextColor3 = ON_ACCENT }, frame, function()
-		Remotes.ShopAction:FireServer("RedeemCode", box.Text)
+	make("UIStroke", { Color = BORDER, Transparency = 0.2 }, box)
+	local function redeem()
+		if box.Text ~= "" then
+			Remotes.ShopAction:FireServer("RedeemCode", box.Text)
+		end
+	end
+	box.FocusLost:Connect(function(enter)
+		if enter then
+			redeem()
+		end
 	end)
+	button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 178), Size = UDim2.new(0, 280, 0, 54),
+		TextSize = 20, Text = "EINLÖSEN", BackgroundColor3 = ACCENT, TextColor3 = ON_ACCENT }, card, redeem)
 end
 
 -- ---------- BELOHNUNGEN ----------
@@ -782,85 +809,177 @@ local function buildTitles()
 	end
 end
 
--- ---------- EINSTELLUNGEN ----------
-
--- Einstellungen im Profil speichern (kurz verzögert, damit nicht jeder Klick gesendet wird)
-local saveToken = 0
-local function saveSettings()
-	saveToken += 1
-	local myToken = saveToken
-	task.delay(1, function()
-		if myToken == saveToken then
-			Remotes.ShopAction:FireServer("SaveSettings", {
-				Fov = Movement.GetFov(),
-				Sensitivity = Movement.GetSensitivity(),
-				ThirdPerson = Movement.GetThirdPersonSetting(),
-			})
-		end
-	end)
-end
-
--- Gespeicherte Einstellungen einmal beim Laden übernehmen
-local function loadSettings()
-	local raw = player:GetAttribute("ClientSettings")
-	if type(raw) ~= "string" then
-		return false
-	end
-	local ok, data = pcall(game:GetService("HttpService").JSONDecode, game:GetService("HttpService"), raw)
-	if not ok or type(data) ~= "table" or next(data) == nil then
-		return false
-	end
-	Movement.SetFov(data.Fov or 70)
-	Movement.SetSensitivity(data.Sensitivity or 1)
-	Movement.SetThirdPerson(data.ThirdPerson == true)
-	return true
-end
+-- ---------- OPTIONEN ----------
+-- Seite der Lobby aus PlayerSettings.List: vier Karten (Steuerung, Kamera, Anzeige, Ton), je Einstellung eine Zeile
+-- mit Schieberegler (ziehen oder − / +), Schalter oder Auswahl-Knöpfen. Speichert automatisch.
 
 local function buildSettings()
-	local frame = makePanel("Settings", "EINSTELLUNGEN", 560, 380)
-	local refreshers = {}
-	local function settingRow(y, label, getValue, change)
-		text({ Position = UDim2.new(0, 24, 0, y), Size = UDim2.new(0, 260, 0, 44), Text = label, TextSize = 18 }, frame)
-		local value = text({ Position = UDim2.new(0, 360, 0, y), Size = UDim2.new(0, 80, 0, 44), Text = "",
-			TextSize = 20, TextXAlignment = Enum.TextXAlignment.Center }, frame)
-		local function refresh()
-			value.Text = tostring(getValue())
+	local frame, page = makePage("Settings", "OPTIONEN", "WIRKT SOFORT  ·  WIRD AUTOMATISCH GESPEICHERT")
+	local updaters = {} -- [Key] = function() (Anzeige aus dem aktuellen Wert)
+	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(250, 44),
+		Color = CARD, StrokeColor = BORDER, Text = "STANDARD WIEDERHERSTELLEN", TextSize = 15 }, frame, function()
+		PlayerSettings.Reset()
+	end)
+
+	local CARD_W, ROW_H, CONTROL_W = 748, 62, 380
+	local function slider(row, setting)
+		local holder = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
+			Size = UDim2.fromOffset(CONTROL_W, 36), BackgroundTransparency = 1 }, row)
+		local function step(direction)
+			PlayerSettings.Set(setting.Key, PlayerSettings.Get(setting.Key) + direction * setting.Step)
 		end
-		table.insert(refreshers, refresh)
-		button({ Position = UDim2.new(0, 304, 0, y), Size = UDim2.new(0, 48, 0, 44), Text = "−", TextSize = 22,
-			BackgroundColor3 = CARD }, frame, function()
-			change(-1)
-			refresh()
-			saveSettings()
+		button({ Size = UDim2.fromOffset(36, 36), Text = "−", TextSize = 20, BackgroundColor3 = UITheme.Colors.Background },
+			holder, function()
+				step(-1)
+			end)
+		local track = make("TextButton", { Position = UDim2.fromOffset(48, 14), Size = UDim2.fromOffset(196, 8), Text = "",
+			AutoButtonColor = false, BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Selectable = false }, holder)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
+		local fill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, track)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+		local knob = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0, 0.5),
+			Size = UDim2.fromOffset(18, 18), BackgroundColor3 = UITheme.Colors.Text, BorderSizePixel = 0, ZIndex = 2 }, track)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+		button({ Position = UDim2.fromOffset(256, 0), Size = UDim2.fromOffset(36, 36), Text = "+", TextSize = 20,
+			BackgroundColor3 = UITheme.Colors.Background }, holder, function()
+			step(1)
 		end)
-		button({ Position = UDim2.new(0, 448, 0, y), Size = UDim2.new(0, 48, 0, 44), Text = "+", TextSize = 22,
-			BackgroundColor3 = CARD }, frame, function()
-			change(1)
-			refresh()
-			saveSettings()
+		local value = text({ Position = UDim2.fromOffset(300, 0), Size = UDim2.fromOffset(80, 36), Text = "", TextSize = 22,
+			Font = DISPLAY, TextXAlignment = Enum.TextXAlignment.Right }, holder)
+		-- Ziehen mit Maus/Finger
+		local dragging = false
+		local function setFromX(x)
+			local alpha = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
+			PlayerSettings.Set(setting.Key, setting.Min + alpha * (setting.Max - setting.Min))
+		end
+		track.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
+				setFromX(input.Position.X)
+			end
 		end)
-		refresh()
-	end
-	settingRow(90, "Sichtfeld (FOV)", function()
-		return Movement.GetFov()
-	end, function(direction)
-		Movement.SetFov(math.clamp(Movement.GetFov() + direction * 5, 60, 100))
-	end)
-	settingRow(150, "Maus-Empfindlichkeit", function()
-		return string.format("%.1f", Movement.GetSensitivity())
-	end, function(direction)
-		Movement.SetSensitivity(math.clamp(Movement.GetSensitivity() + direction * 0.1, 0.1, 3))
-	end)
-	settingRow(210, "Kamera (Kampf)", function()
-		return Movement.GetThirdPersonSetting() and "Schulter" or "Ego"
-	end, function()
-		Movement.SetThirdPerson(not Movement.GetThirdPersonSetting())
-	end)
-	panels.Settings.Refresh = function()
-		for _, refresh in refreshers do
-			refresh()
+		UserInputService.InputChanged:Connect(function(input)
+			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+				setFromX(input.Position.X)
+			end
+		end)
+		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = false
+			end
+		end)
+		updaters[setting.Key] = function()
+			local current = PlayerSettings.Get(setting.Key)
+			local alpha = (current - setting.Min) / (setting.Max - setting.Min)
+			fill.Size = UDim2.fromScale(alpha, 1)
+			knob.Position = UDim2.fromScale(alpha, 0.5)
+			value.Text = string.format(setting.Format or "%s", current)
 		end
 	end
+
+	local function toggle(row, setting)
+		local switch = make("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
+			Size = UDim2.fromOffset(76, 34), Text = "", AutoButtonColor = false, BorderSizePixel = 0 }, row)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, switch)
+		local knob = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Size = UDim2.fromOffset(26, 26),
+			BackgroundColor3 = UITheme.Colors.Text, BorderSizePixel = 0 }, switch)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, knob)
+		local state = text({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -104, 0.5, 0), Size = UDim2.fromOffset(60, 34),
+			Text = "", TextSize = 18, Font = DISPLAY, TextXAlignment = Enum.TextXAlignment.Right }, row)
+		switch.Activated:Connect(function()
+			PlayerSettings.Set(setting.Key, not PlayerSettings.Get(setting.Key))
+		end)
+		updaters[setting.Key] = function()
+			local on = PlayerSettings.Get(setting.Key) == true
+			switch.BackgroundColor3 = on and ACCENT or UITheme.Colors.Background
+			knob.Position = on and UDim2.new(1, -30, 0.5, 0) or UDim2.new(0, 4, 0.5, 0)
+			state.Text = on and "AN" or "AUS"
+			state.TextColor3 = on and UITheme.Colors.Text or GRAY
+		end
+	end
+
+	local function choice(row, setting)
+		local holder = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
+			Size = UDim2.fromOffset(CONTROL_W, 36), BackgroundTransparency = 1 }, row)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
+			Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, holder)
+		local width = math.floor((CONTROL_W - 6 * (#setting.Options - 1)) / #setting.Options)
+		width = math.min(width, 130)
+		local buttons = {}
+		for i, option in setting.Options do
+			local swatch = setting.Key == "CrosshairColor" and PlayerSettings.CrosshairColors[option[1]] or nil
+			local b = button({ Size = UDim2.fromOffset(width, 36), Text = option[2], TextSize = 14, LayoutOrder = i,
+				BackgroundColor3 = UITheme.Colors.Background, TextColor3 = swatch or UITheme.Colors.Text }, holder, function()
+				PlayerSettings.Set(setting.Key, option[1])
+			end)
+			local stroke = make("UIStroke", { Color = ACCENT, Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+			buttons[i] = { Button = b, Stroke = stroke, Value = option[1], Swatch = swatch }
+		end
+		updaters[setting.Key] = function()
+			local current = PlayerSettings.Get(setting.Key)
+			for _, entry in buttons do
+				local on = entry.Value == current
+				entry.Stroke.Transparency = on and 0 or 1
+				entry.Button.BackgroundColor3 = on and UITheme.Colors.Secondary or UITheme.Colors.Background
+				if not entry.Swatch then
+					entry.Button.TextColor3 = on and UITheme.Colors.Text or GRAY
+				end
+			end
+		end
+	end
+
+	-- Karten 2 x 2
+	for index, category in PlayerSettings.Categories do
+		local list = {}
+		for _, setting in PlayerSettings.List do
+			if setting.Category == category.Id then
+				table.insert(list, setting)
+			end
+		end
+		local x = (index - 1) % 2 == 0 and 0 or CARD_W + 24
+		local y = index <= 2 and 72 or 72 + 3 * ROW_H + 60 + 20
+		local card = UITheme.Card({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, 52 + #list * ROW_H + 8),
+			BackgroundTransparency = 0.1 }, frame)
+		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
+			BorderSizePixel = 0 }, card)
+		text({ Position = UDim2.fromOffset(32, 12), Size = UDim2.new(1, -52, 0, 30), Text = category.Name, TextSize = 24,
+			Font = DISPLAY }, card)
+		for i, setting in list do
+			local row = make("Frame", { Position = UDim2.fromOffset(0, 52 + (i - 1) * ROW_H), Size = UDim2.new(1, 0, 0, ROW_H),
+				BackgroundTransparency = 1 }, card)
+			if i > 1 then
+				make("Frame", { Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = BORDER,
+					BackgroundTransparency = 0.4, BorderSizePixel = 0 }, row)
+			end
+			text({ Position = UDim2.fromOffset(20, setting.Hint and 10 or 0), Size = UDim2.new(0, 300, 0, setting.Hint and 24 or ROW_H),
+				Text = setting.Label, TextSize = 18 }, row)
+			if setting.Hint then
+				text({ Position = UDim2.fromOffset(20, 34), Size = UDim2.new(0, 320, 0, 16), Text = setting.Hint, TextSize = 13,
+					Font = UITheme.Fonts.Body, TextColor3 = GRAY }, row)
+			end
+			if setting.Type == "Slider" then
+				slider(row, setting)
+			elseif setting.Type == "Toggle" then
+				toggle(row, setting)
+			else
+				choice(row, setting)
+			end
+		end
+	end
+
+	local function updateAll()
+		for _, update in updaters do
+			update()
+		end
+	end
+	updateAll()
+	-- Änderungen von außen (z.B. Kamera-Taste T, Laden des Profils) gleich anzeigen
+	PlayerSettings.Changed:Connect(function(key)
+		if updaters[key] then
+			updaters[key]()
+		end
+	end)
+	page.Refresh = updateAll
 end
 
 -- ---------- Symbol-Knöpfe oben links (rund, unter der Spielerkarte, wie in vielen Roblox-Spielen) ----------
@@ -1003,11 +1122,11 @@ local function buildColumn()
 		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
 		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "🎁" },
-		{ "STATS", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
+		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
 		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230), "🏷" },
-		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
-		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
+		{ "CODES", function() openLobby("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
+		{ "OPTIONEN", function() openLobby("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
 	}
 	local rows = math.ceil(#entries / ICON_COLUMNS)
 	local width = ICON_COLUMNS * ICON_SIZE + (ICON_COLUMNS - 1) * ICON_GAP
@@ -1068,16 +1187,6 @@ function SideMenu.Init()
 	buildSettings()
 	buildRewards()
 	buildTitles()
-
-	-- Gespeicherte Einstellungen übernehmen, sobald das Profil geladen ist
-	if not loadSettings() then
-		local connection
-		connection = player:GetAttributeChangedSignal("ClientSettings"):Connect(function()
-			if loadSettings() then
-				connection:Disconnect()
-			end
-		end)
-	end
 
 	-- Rückmeldung vom Server in das offene Fenster
 	Remotes.ShopStatus.OnClientEvent:Connect(function(message, success)

@@ -26,6 +26,7 @@ local UITheme = require(Shared.UITheme)
 local WeaponConfig = require(Shared.WeaponConfig)
 local Movement = require(Shared.Movement)
 local TeamCheck = require(Shared.TeamCheck)
+local PlayerSettings = require(Shared.PlayerSettings)
 
 local player = Players.LocalPlayer
 
@@ -203,7 +204,9 @@ function CombatHUD.Init(gui, weaponClient)
 				raycastParams())
 			hoverEnemy = result ~= nil and isEnemy(result.Instance:FindFirstAncestorOfClass("Model"))
 		end
-		local color = hoverEnemy and ENEMY_RED or WHITE
+		-- Farbe aus den Einstellungen; über einem Gegner immer rot
+		local color = hoverEnemy and ENEMY_RED
+			or (PlayerSettings.CrosshairColors[PlayerSettings.Get("CrosshairColor")] or WHITE)
 		local transparency = 1 - alpha
 
 		local useRing = cfg.Pellets ~= nil and cfg.Pellets > 1
@@ -405,7 +408,7 @@ function CombatHUD.Init(gui, weaponClient)
 		else
 			playTone(1.95, 0.35)
 		end
-		if damage > 0 then
+		if damage > 0 and PlayerSettings.Get("DamageNumbers") then
 			damageNumber(target, position, damage, color, killed)
 		end
 		if (killed or downed) and victimName then

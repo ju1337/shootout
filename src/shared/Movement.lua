@@ -17,9 +17,9 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
-local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
 local InputActions = require(Shared.InputActions)
+local PlayerSettings = require(Shared.PlayerSettings)
 
 local player = Players.LocalPlayer
 
@@ -29,7 +29,7 @@ local DEFAULT_SPEED = 16
 local SPRINT_FACTOR = 1.5
 local CROUCH_FACTOR = 0.5
 local AIM_FACTOR = 0.6         -- langsamer beim Zielen
-local AIM_SENSITIVITY = 0.6    -- Maus langsamer beim Zielen
+local aimSensitivity = 0.6     -- Maus langsamer beim Zielen (Einstellung "Empfindlichkeit beim Zielen")
 local SPRINT_FOV_BONUS = 8
 local CROUCH_CAMERA = Vector3.new(0, -1.3, 0)
 local CROUCH_HIP_FACTOR = 0.55 -- Körper sinkt ab (kleineres Ziel)
@@ -129,7 +129,7 @@ local function apply()
 	else
 		targetFov = sprinting and normalFov + SPRINT_FOV_BONUS or normalFov
 	end
-	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * AIM_SENSITIVITY or sensitivity
+	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * aimSensitivity or sensitivity
 end
 
 -- Seitlichen Schulter-Versatz kürzen, wenn neben dem Kopf eine Wand der Map ist (sonst schaut die
@@ -464,8 +464,29 @@ function Movement.Init()
 		end
 	end)
 
-	-- Kamera-Taste: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert),
-	-- Schulter-Taste: Schulter wechseln
+	-- Einstellungen (Seite OPTIONEN) übernehmen: jetzt und bei jeder Änderung
+	local function applySetting(key, value)
+		if key == "Fov" then
+			Movement.SetFov(value)
+		elseif key == "Sensitivity" then
+			Movement.SetSensitivity(value)
+		elseif key == "AimSensitivity" then
+			aimSensitivity = value
+			apply()
+		elseif key == "ThirdPerson" then
+			Movement.SetThirdPerson(value == true)
+		elseif key == "ShoulderLeft" then
+			shoulderSide = value and -1 or 1
+			apply()
+		end
+	end
+	for _, setting in PlayerSettings.List do
+		applySetting(setting.Key, PlayerSettings.Get(setting.Key))
+	end
+	PlayerSettings.Changed:Connect(applySetting)
+
+	-- Kamera-Taste: zwischen Ego- und Schulterkamera wechseln (wird als Einstellung gespeichert),
+	-- Schulter-Taste: Schulter wechseln (nur für dieses Spiel, Start-Schulter steht in den Einstellungen)
 	InputActions.Bind("Shoulder", function(began)
 		if began and Movement.IsThirdPerson() then
 			shoulderSide = -shoulderSide
@@ -476,12 +497,7 @@ function Movement.Init()
 		if not began then
 			return
 		end
-		Movement.SetThirdPerson(not thirdPerson)
-		Remotes.ShopAction:FireServer("SaveSettings", {
-			Fov = normalFov,
-			Sensitivity = sensitivity,
-			ThirdPerson = thirdPerson,
-		})
+		PlayerSettings.Set("ThirdPerson", not thirdPerson)
 	end)
 
 	local function onCharacter(character)

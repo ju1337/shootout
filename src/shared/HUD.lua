@@ -20,6 +20,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
 local InputActions = require(Shared.InputActions)
+local PlayerSettings = require(Shared.PlayerSettings)
 local CombatHUD = require(Shared.CombatHUD)
 local MatchHUD = require(Shared.MatchHUD)
 local Minimap = require(Shared.Minimap)
@@ -121,7 +122,7 @@ function HUD.Init(weaponClient)
 		Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextTransparency = 0.5,
 		TextXAlignment = Enum.TextXAlignment.Center }, gui)
 	local function updateKeyHints()
-		keyHints.Visible = not InputActions.IsTouch()
+		keyHints.Visible = not InputActions.IsTouch() and PlayerSettings.Get("KeyHints") == true
 		local parts = {}
 		for _, entry in { { "Fire", "SCHIESSEN" }, { "Reload", "NACHLADEN" }, { "Ability", "FÄHIGKEIT" }, { "Gadget", "GADGET" },
 			{ "Ultimate", "ULTIMATE" }, { "Weapon1", "WAFFE 1" }, { "Weapon2", "WAFFE 2" }, { "Scoreboard", "PUNKTE" } } do
@@ -134,6 +135,11 @@ function HUD.Init(weaponClient)
 	end
 	updateKeyHints()
 	InputActions.DeviceChanged:Connect(updateKeyHints)
+	PlayerSettings.Changed:Connect(function(key)
+		if key == "KeyHints" then
+			updateKeyHints()
+		end
+	end)
 
 	-- VERLASSEN-Knopf unter der Minimap: erster Klick fragt nach (rot), zweiter Klick innerhalb von
 	-- LEAVE_CONFIRM Sekunden bringt einen zurück in den Hub

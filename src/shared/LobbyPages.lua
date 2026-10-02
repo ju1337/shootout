@@ -24,6 +24,7 @@ local PassConfig = require(Shared.PassConfig)
 local UITheme = require(Shared.UITheme)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local MasteryConfig = require(Shared.MasteryConfig)
+local AttachmentIcons = require(Shared.AttachmentIcons)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -327,7 +328,99 @@ function LobbyPages.Loadout(page, goToShop)
 		end
 	end
 
+	-- Info-Karte neben dem überfahrenen (bzw. mit dem Controller gewählten) Aufsatz: Symbol, Name, Platz,
+	-- Vorteile/Nachteile und die fünf Werte der Waffe mit diesem Aufsatz (grün besser, rot schlechter)
+	local TIP_W, TIP_H = 310, 352
+	local tip = UITheme.Card({ Size = UDim2.fromOffset(TIP_W, TIP_H), ZIndex = 30, Visible = false, BackgroundTransparency = 0.02 },
+		page)
+	local tipIcon = make("Frame", { Position = UDim2.fromOffset(14, 14), Size = UDim2.fromOffset(48, 48),
+		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2 }, tip)
+	UITheme.Corner(tipIcon, UITheme.Radius.Small)
+	local tipName = label({ Position = UDim2.fromOffset(72, 14), Size = UDim2.fromOffset(TIP_W - 86, 26), Text = "", TextSize = 22,
+		Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, tip)
+	local tipSlot = label({ Position = UDim2.fromOffset(72, 42), Size = UDim2.fromOffset(TIP_W - 86, 16), Text = "", TextSize = 11,
+		Font = F.Bold, TextColor3 = C.Muted }, tip)
+	local tipLines = label({ Position = UDim2.fromOffset(14, 72), Size = UDim2.fromOffset(TIP_W - 28, 52), Text = "", TextSize = 13,
+		Font = F.Medium, RichText = true, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, tip)
+	make("Frame", { Position = UDim2.fromOffset(14, 130), Size = UDim2.fromOffset(TIP_W - 28, 1), BackgroundColor3 = C.Border,
+		BorderSizePixel = 0 }, tip)
+	label({ Position = UDim2.fromOffset(14, 138), Size = UDim2.fromOffset(TIP_W - 28, 14), Text = "WERTE DER WAFFE MIT DIESEM AUFSATZ",
+		TextSize = 10, Font = F.Bold, TextColor3 = C.Muted }, tip)
+	local tipBars = {}
+	for i, stat in STATS do
+		local y = 160 + (i - 1) * 30
+		label({ Position = UDim2.fromOffset(14, y), Size = UDim2.fromOffset(120, 14), Text = stat[1], TextSize = 11, Font = F.Bold,
+			TextColor3 = C.Text }, tip)
+		local value = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, y), Size = UDim2.fromOffset(120, 14),
+			Text = "", TextSize = 12, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Right }, tip)
+		local back = make("Frame", { Position = UDim2.fromOffset(14, y + 17), Size = UDim2.fromOffset(TIP_W - 28, 5),
+			BackgroundColor3 = C.Border, BorderSizePixel = 0 }, tip)
+		UITheme.Corner(back, 3)
+		local delta = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Good, BorderSizePixel = 0 }, back)
+		UITheme.Corner(delta, 3)
+		local fill = make("Frame", { Size = UDim2.fromScale(0.5, 1), BackgroundColor3 = C.Text, BorderSizePixel = 0 }, back)
+		UITheme.Corner(fill, 3)
+		tipBars[i] = { Fill = fill, Delta = delta, Value = value, Rate = stat[2] }
+	end
+	local tipFooter = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 30),
+		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2, BorderSizePixel = 0 }, tip)
+	UITheme.Corner(tipFooter, UITheme.Radius.XL)
+	local tipState = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 12, Font = F.Bold,
+		TextXAlignment = Enum.TextXAlignment.Center }, tipFooter)
+
+	local tipFor = nil -- Kachel, zu der die Karte gerade gehört
+	local function showTip(tile, item, slotName, current, preview, stateText, stateColor)
+		tipFor = tile
+		tipIcon:ClearAllChildren()
+		UITheme.Corner(tipIcon, UITheme.Radius.Small)
+		local icon = AttachmentIcons.Build(tipIcon, item.Id, 40, C.Text)
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		tipName.Text = upper(item.Name)
+		tipSlot.Text = "AUFSATZ  ·  " .. upper(slotName)
+		local lines = {}
+		for _, pro in item.Pros or {} do
+			table.insert(lines, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
+		end
+		for _, con in item.Cons or {} do
+			table.insert(lines, '<font color="#' .. C.Bad:ToHex() .. '">− ' .. con .. "</font>")
+		end
+		tipLines.Text = #lines > 0 and table.concat(lines, "\n") or "Keine Nachteile."
+		for _, bar in tipBars do
+			local now, after = bar.Rate(current), bar.Rate(preview)
+			local nowScale, afterScale = math.clamp(0.5 * now, 0.05, 1), math.clamp(0.5 * after, 0.05, 1)
+			local better = after > now + 0.001
+			local changed = math.abs(after - now) > 0.001
+			bar.Fill.Size = UDim2.fromScale(math.min(nowScale, afterScale), 1)
+			bar.Delta.Visible = changed
+			bar.Delta.Size = UDim2.fromScale(math.max(nowScale, afterScale), 1)
+			bar.Delta.BackgroundColor3 = better and C.Good or C.Bad
+			bar.Value.Text = changed and (percent(now) .. "  →  " .. percent(after)) or percent(after)
+			bar.Value.TextColor3 = not changed and C.Muted or (better and C.Good or C.Bad)
+		end
+		tipState.Text = stateText
+		tipState.TextColor3 = stateColor
+		-- rechts neben die Kachel, sonst links daneben; nicht über den Seitenrand hinaus
+		local scale = page.AbsoluteSize.X / PAGE_W
+		local rel = (tile.AbsolutePosition - page.AbsolutePosition) / scale
+		local tileSize = tile.AbsoluteSize / scale
+		local x = rel.X + tileSize.X + 10
+		if x + TIP_W > PAGE_W + 36 then
+			x = rel.X - TIP_W - 10
+		end
+		tip.Position = UDim2.fromOffset(x, math.clamp(rel.Y - 20, 0, PAGE_H - TIP_H))
+		tip.Visible = true
+	end
+	local function hideTip(tile)
+		if tipFor == tile then
+			tip.Visible = false
+			tipFor = nil
+		end
+	end
+
 	local function fillAttachments()
+		tip.Visible = false
+		tipFor = nil
 		clear(attachPanel)
 		local weaponName = selected
 		local equipped = AttachmentConfig.Equipped(player, weaponName)
@@ -351,42 +444,45 @@ function LobbyPages.Loadout(page, goToShop)
 				local affordable = coins() >= item.Price
 				local tile = make("TextButton", { Position = UDim2.fromOffset((i - 1) * (width + gap), 22),
 					Size = UDim2.fromOffset(width, 110), BackgroundColor3 = isOn and C.Secondary or C.Panel,
-					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false }, block)
+					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false, ClipsDescendants = true }, block)
 				UITheme.Corner(tile, UITheme.Radius.Medium)
 				local stroke = UITheme.Stroke(tile, isOn and C.Primary or C.Border, isOn and 2 or 1, isOn and 0 or 0.35)
-				make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 8) }, tile)
-				label({ Size = UDim2.new(1, 0, 0, 20), Text = upper(item.Name), TextSize = 17, Font = F.Display,
-					TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, tile)
-				-- Vorteile grün, Nachteile rot
-				local lines = {}
-				for _, pro in item.Pros or {} do
-					table.insert(lines, '<font color="#70B270">+ ' .. pro .. "</font>")
-				end
-				for _, con in item.Cons or {} do
-					table.insert(lines, '<font color="#CE463A">− ' .. con .. "</font>")
-				end
-				label({ Position = UDim2.fromOffset(0, 24), Size = UDim2.new(1, 0, 0, 52), Text = table.concat(lines, "\n"),
-					TextSize = 11, Font = F.Medium, RichText = true, TextWrapped = true,
-					TextYAlignment = Enum.TextYAlignment.Top }, tile)
+				-- Symbol oben mittig, Name darunter, Zustand unten (Vorteile/Werte zeigt die Info-Karte beim Überfahren)
+				local icon = AttachmentIcons.Build(tile, item.Id, 46, isOn and C.Primary or (owned and C.Text or C.Muted))
+				icon.AnchorPoint = Vector2.new(0.5, 0)
+				icon.Position = UDim2.new(0.5, 0, 0, 6)
+				local name = label({ Position = UDim2.fromOffset(6, 55), Size = UDim2.new(1, -12, 0, 22), Text = upper(item.Name),
+					TextSize = 16, TextScaled = true, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center,
+					TextColor3 = isOn and C.Primary or C.Text }, tile)
+				make("UITextSizeConstraint", { MaxTextSize = 16, MinTextSize = 11 }, name)
 				-- Zustand unten: ausgerüstet / gekauft / Preis
-				local footer = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -10, 1, 0),
-					Size = UDim2.new(1, 18, 0, 24), BackgroundColor3 = isOn and C.Primary or (owned and C.Card or C.Background),
+				local stateText = isOn and "AUSGERÜSTET" or (owned and "AUSRÜSTEN" or (UITheme.FormatNumber(item.Price) .. " MÜNZEN"))
+				local stateColor = isOn and C.PrimaryText or (owned and C.Good or (affordable and C.Text or C.Bad))
+				local footer = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0),
+					Size = UDim2.new(1, 0, 0, 26), BackgroundColor3 = isOn and C.Primary or (owned and C.Card or C.Background),
 					BackgroundTransparency = isOn and 0 or 0.2, BorderSizePixel = 0 }, tile)
-				UITheme.Corner(footer, UITheme.Radius.Medium)
-				label({ Size = UDim2.fromScale(1, 1), Text = isOn and "AUSGERÜSTET" or (owned and "AUSRÜSTEN"
-					or (UITheme.FormatNumber(item.Price) .. " MÜNZEN")), TextSize = 11, Font = F.Bold,
-					TextXAlignment = Enum.TextXAlignment.Center,
-					TextColor3 = isOn and C.PrimaryText or (owned and C.Good or (affordable and C.Text or C.Bad)) }, footer)
-				tile.MouseEnter:Connect(function()
+				label({ Size = UDim2.fromScale(1, 1), Text = stateText, TextSize = 11, Font = F.Bold,
+					TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = stateColor }, footer)
+				local function enter()
 					stroke.Transparency = 0
 					stroke.Color = isOn and C.Primary or C.Text
-					showStats(currentEffects, effectsWith(weaponName, slot.Id, isOn and nil or item.Id))
-				end)
-				tile.MouseLeave:Connect(function()
+					local preview = effectsWith(weaponName, slot.Id, isOn and nil or item.Id)
+					showStats(currentEffects, preview)
+					showTip(tile, item, slot.Name, currentEffects, preview,
+						isOn and "AUSGERÜSTET  ·  KLICKEN ZUM ABLEGEN" or (owned and "GEKAUFT  ·  KLICKEN ZUM AUSRÜSTEN"
+							or (UITheme.FormatNumber(item.Price) .. " MÜNZEN  ·  KLICKEN ZUM KAUFEN")),
+						isOn and C.Primary or (owned and C.Good or (affordable and C.Text or C.Bad)))
+				end
+				local function leave()
 					stroke.Transparency = isOn and 0 or 0.35
 					stroke.Color = isOn and C.Primary or C.Border
 					showStats(currentEffects)
-				end)
+					hideTip(tile)
+				end
+				tile.MouseEnter:Connect(enter)
+				tile.MouseLeave:Connect(leave)
+				tile.SelectionGained:Connect(enter) -- Controller
+				tile.SelectionLost:Connect(leave)
 				tile.Activated:Connect(function()
 					Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
 				end)
@@ -400,6 +496,9 @@ function LobbyPages.Loadout(page, goToShop)
 	local function fillOptions()
 		local showAttachments = rightMode == "AUFSÄTZE" and mode == "Weapon"
 		attachPanel.Visible = showAttachments
+		if not showAttachments then
+			tip.Visible = false
+		end
 		options.Visible = not showAttachments
 		hint.Visible = not showAttachments
 		shopButton.Visible = not showAttachments
