@@ -3,8 +3,10 @@
 -- und zeigt den Grundriss der aktuellen Map (Böden, Wände, Deckung aus den Parts der Map),
 -- Teamkollegen (Cyan, am Boden orange), Gegner nur kurz, wenn sie schießen oder markiert sind (rot),
 -- Pings (gelb) und die Ziele (A/B) – Ziele außerhalb der Karte kleben am Rand.
--- Technik: CanvasGroup mit runder Ecke schneidet kreisförmig ab; darin dreht sich ein Rahmen um die
--- Mitte, darin verschiebt sich die "Welt" (Positionen als Scale, damit nichts auf Pixel springt).
+-- Technik: Ein Rahmen dreht sich um die Mitte, darin verschiebt sich die "Welt" (Positionen als Scale,
+-- damit nichts auf Pixel springt). Den Kreis-Zuschnitt rechnet MinimapShapes selbst aus (Stücke am Rand
+-- werden gekürzt, alles draußen ausgeblendet) – CanvasGroup/ClipsDescendants schneiden gedrehte Inhalte
+-- nicht zuverlässig ab. Neu gerechnet wird nur, wenn man sich bewegt; Drehen kostet nichts.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,6 +17,7 @@ local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local TeamCheck = require(Shared.TeamCheck)
+local MinimapShapes = require(Shared.MinimapShapes)
 
 local player = Players.LocalPlayer
 local make = UITheme.Make
@@ -24,6 +27,9 @@ local Minimap = {}
 local SIZE = 200              -- Durchmesser in Design-Einheiten
 local RANGE = 75              -- Studs von der Mitte bis zum Rand
 local K = 1 / (2 * RANGE)     -- Studs -> Anteil der Kartenbreite
+local STRIP = 2               -- Flächen am Kreisrand werden in so breite Streifen (Studs) zerlegt
+local MOVE_UPDATE = 0.3       -- ab so viel Bewegung (Studs) wird der Zuschnitt neu gerechnet
+local DOT_MARGIN = 4          -- Punkte (Teamkollegen, Gegner, Pings) nur so weit innerhalb des Rands
 local SHOT_TIME = 2.5         -- so lange bleibt ein schießender Gegner sichtbar
 local PING_TIME = 5
 local SKIP_FOLDERS = { Nature = true, Objective = true } -- Bäume, Ziel-Parts (Ziele kommen als Rauten)
@@ -122,16 +128,22 @@ local function focusPosition(camera)
 	return camera.Focus.Position
 end
 
+-- Liegt ein Punkt (Teamkollege, Gegner, Ping) sicher innerhalb des Kreises um focus?
+local function withinRange(position, focus)
+	local dx, dz = position.X - focus.X, position.Z - focus.Z
+	return dx * dx + dz * dz <= (RANGE - DOT_MARGIN) * (RANGE - DOT_MARGIN)
+end
+
 -- Raute mit Buchstabe (Ziele); Kinder einer gedrehten Raute drehen mit, darum Text als Geschwister
 local function objectiveIcon(parent, letter, size)
 	local holder = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(size + 6, size + 6),
-		BackgroundTransparency = 1, ZIndex = 6 }, parent)
+		BackgroundTransparency = 1, ZIndex = 7 }, parent)
 	local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(size * 0.72, size * 0.72), Rotation = 45, BackgroundColor3 = COLORS.Back,
-		BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 6 }, holder)
+		BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 7 }, holder)
 	local stroke = UITheme.Stroke(diamond, Color3.new(1, 1, 1), 1.5)
 	local text = UITheme.Label({ Size = UDim2.fromScale(1, 1), Text = letter, TextSize = math.floor(size * 0.5),
-		Font = UITheme.Fonts.Title, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 7 }, holder)
+		Font = UITheme.Fonts.Title, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, holder)
 	return { Holder = holder, Diamond = diamond, Stroke = stroke, Text = text }
 end
 
@@ -139,35 +151,46 @@ end
 function Minimap.Init(root)
 	local holder = make("Frame", { Name = "Minimap", Position = UDim2.fromOffset(24, 66), Size = UDim2.fromOffset(SIZE, SIZE),
 		BackgroundTransparency = 1, Visible = false }, root)
-	local canvas = make("CanvasGroup", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = COLORS.Back,
-		BackgroundTransparency = 0.2, BorderSizePixel = 0 }, holder)
-	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, canvas)
+	-- Ebenen (eindeutig, egal ob ZIndex global oder je Geschwister gilt): Hintergrund 0, Grundriss 1-4,
+	-- Punkte 5, Rand 6, Ziele 7-8, Pfeil und Norden 9
+	local back = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = COLORS.Back,
+		BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 0 }, holder)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, back)
 	local rotator = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, canvas)
-	local world = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, rotator)
-	local layer = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, world) -- Grundriss
+		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 1 }, holder)
+	local world = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 1 }, rotator)
+	local layer = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 1 }, world) -- Grundriss
 	local dots = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 5 }, world)
 
 	-- Rand, Blickrichtung (Pfeil in der Mitte), Norden am Rand
-	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, holder)
+	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, ring)
 	UITheme.Stroke(ring, Color3.fromRGB(200, 225, 240), 2, 0.35)
-	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
+	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, holder)
 	UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20),
 		Text = "▲", TextSize = 15, TextColor3 = Color3.new(1, 1, 1), TextStrokeTransparency = 0.3,
-		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, overlay)
+		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, overlay)
 	local north = UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(18, 18), Text = "N",
 		TextSize = 13, Font = UITheme.Fonts.Title, TextColor3 = UITheme.Colors.Accent, TextStrokeTransparency = 0.2,
-		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, overlay)
+		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, overlay)
 
 	-- ---------- Grundriss ----------
+	-- Pro Part ein Rechteck (MinimapShapes) mit eigenen Frames: eins, wenn es ganz im Kreis liegt,
+	-- mehrere Streifen, wenn es über den Rand ragt, keins, wenn es draußen ist.
+	-- { Rect, Color, Z, Frames = { Frame }, Shown = { {X, Z, W, D} }, Count = sichtbare Frames, RoundFrame }
+	local shapes = {}
+	local pieces = {}        -- wiederverwendete Stücke aus MinimapShapes.Clip
 	local shownMap = nil
-	local function drawMap(map)
+	local clippedAt = nil    -- Mittelpunkt (Vector3) beim letzten Zuschnitt
+
+	local function loadMap(map)
 		if map == shownMap then
 			return
 		end
 		shownMap = map
+		clippedAt = nil
 		layer:ClearAllChildren()
+		shapes = {}
 		if not map then
 			return
 		end
@@ -181,13 +204,60 @@ function Minimap.Init(root)
 							if z == 4 then
 								width, depth = math.max(width, 1.2), math.max(depth, 1.2) -- Wände mindestens 1 Pixel
 							end
-							make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(center.X * K, center.Z * K),
-								Size = UDim2.fromScale(width * K, depth * K), Rotation = angle, BackgroundColor3 = color,
-								BorderSizePixel = 0, ZIndex = z }, layer)
+							table.insert(shapes, { Rect = MinimapShapes.Rect(center.X, center.Z, width, depth, angle),
+								Color = color, Z = z, Frames = {}, Shown = {}, Count = 0 })
 						end
 					end
 				end
 			end
+		end
+	end
+
+	-- Alle Rechtecke auf den Kreis um (px, pz) zuschneiden und die Frames anpassen (nur was sich ändert)
+	local function clipMap(px, pz)
+		for _, shape in shapes do
+			local count = MinimapShapes.Clip(shape.Rect, px, pz, RANGE, STRIP, pieces)
+			-- Fläche deckt den ganzen Kreis ab (z.B. Boden unter dem Spieler): ein runder Frame genügt
+			if count == 1 and pieces[1].Round then
+				local round = shape.RoundFrame
+				if not round then
+					round = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromScale(1, 1),
+						BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
+					make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, round)
+					shape.RoundFrame = round
+				end
+				round.Position = UDim2.fromScale(px * K, pz * K)
+				round.Visible = true
+				count = 0
+			elseif shape.RoundFrame then
+				shape.RoundFrame.Visible = false
+			end
+			for i = 1, count do
+				local piece = pieces[i]
+				local frame = shape.Frames[i]
+				if not frame then
+					frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Rotation = shape.Rect.Angle,
+						BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
+					shape.Frames[i] = frame
+					shape.Shown[i] = {}
+				end
+				local shown = shape.Shown[i]
+				if shown.X ~= piece.X or shown.Z ~= piece.Z then
+					shown.X, shown.Z = piece.X, piece.Z
+					frame.Position = UDim2.fromScale(piece.X * K, piece.Z * K)
+				end
+				if shown.W ~= piece.W or shown.D ~= piece.D then
+					shown.W, shown.D = piece.W, piece.D
+					frame.Size = UDim2.fromScale(piece.W * K, piece.D * K)
+				end
+				if i > shape.Count then
+					frame.Visible = true
+				end
+			end
+			for i = count + 1, shape.Count do
+				shape.Frames[i].Visible = false
+			end
+			shape.Count = count
 		end
 	end
 
@@ -281,8 +351,13 @@ function Minimap.Init(root)
 		if now >= refreshAt then
 			refreshAt = now + 1
 			local map = findMap()
-			drawMap(map)
+			loadMap(map)
 			buildObjectives(map, Modes.Get(player:GetAttribute("Mode")))
+		end
+		-- Zuschnitt auf den Kreis nur nach Bewegung neu rechnen
+		if not clippedAt or Vector2.new(focus.X - clippedAt.X, focus.Z - clippedAt.Z).Magnitude > MOVE_UPDATE then
+			clippedAt = focus
+			clipMap(focus.X, focus.Z)
 		end
 
 		rotator.Rotation = rotation
@@ -306,6 +381,7 @@ function Minimap.Init(root)
 					mateDots[fighter.Name] = frame
 					frame.BackgroundColor3 = state == "downed" and COLORS.Downed or COLORS.Mate
 					frame.Position = UDim2.fromScale(rootPart.Position.X * K, rootPart.Position.Z * K)
+					frame.Visible = withinRange(rootPart.Position, focus)
 				end
 			end
 		end
@@ -337,6 +413,7 @@ function Minimap.Init(root)
 			local frame = enemyDots[model] or dot(COLORS.Enemy, 9)
 			enemyDots[model] = frame
 			frame.Position = UDim2.fromScale(position.X * K, position.Z * K)
+			frame.Visible = withinRange(position, focus)
 		end
 		for model, frame in enemyDots do
 			if not shownEnemies[model] then
@@ -353,6 +430,7 @@ function Minimap.Init(root)
 				table.remove(pings, i)
 			else
 				entry.Frame.Position = UDim2.fromScale(entry.Position.X * K, entry.Position.Z * K)
+				entry.Frame.Visible = withinRange(entry.Position, focus)
 			end
 		end
 
