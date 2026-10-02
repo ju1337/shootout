@@ -36,7 +36,7 @@ function AbilityClient.Init()
 	agentLabel.Position = UDim2.new(0, 28, 1, -128) -- über dem Lebens-Panel
 	agentLabel.Size = UDim2.new(0, 300, 0, 26)
 	agentLabel.BackgroundTransparency = 1
-	agentLabel.Font = Enum.Font.GothamBlack
+	agentLabel.Font = Enum.Font.Oswald
 	agentLabel.TextSize = 20
 	agentLabel.TextXAlignment = Enum.TextXAlignment.Left
 	agentLabel.TextStrokeTransparency = 0.5
@@ -60,7 +60,7 @@ function AbilityClient.Init()
 	keyLabel.Position = UDim2.new(0, 10, 0.5, -18)
 	keyLabel.Size = UDim2.new(0, 36, 0, 36)
 	keyLabel.BackgroundColor3 = Color3.fromRGB(40, 44, 58)
-	keyLabel.Font = Enum.Font.GothamBlack
+	keyLabel.Font = Enum.Font.Oswald
 	keyLabel.TextSize = 20
 	keyLabel.TextColor3 = Color3.new(1, 1, 1)
 	keyLabel.Text = AgentConfig.AbilityKey.Name

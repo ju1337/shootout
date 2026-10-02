@@ -146,7 +146,7 @@ local function buildTop()
 	-- Timer in der Raute
 	diamond(canvas, 78, UDim2.new(0.5, 0, 0, 80), Color3.fromRGB(16, 50, 70), CYAN)
 	timerLabel = text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 80),
-		Size = UDim2.new(0, 110, 0, 60), Text = "", TextSize = 46, Font = Enum.Font.GothamBlack,
+		Size = UDim2.new(0, 110, 0, 60), Text = "", TextSize = 46, Font = Enum.Font.Oswald,
 		TextXAlignment = Enum.TextXAlignment.Center }, canvas)
 
 	-- Rundenstand oben rechts (wird in updateScore gefüllt)
@@ -170,7 +170,7 @@ end
 local function buildInfo()
 	local x = WIDTH - 420
 	infoName = text({ Position = UDim2.new(0, x, 0, 190), Size = UDim2.new(0, 380, 0, 70), Text = "",
-		TextSize = 64, Font = Enum.Font.GothamBlack }, canvas)
+		TextSize = 64, Font = Enum.Font.Oswald }, canvas)
 	infoRole = text({ Position = UDim2.new(0, x, 0, 258), Size = UDim2.new(0, 380, 0, 26), Text = "",
 		TextSize = 20, TextColor3 = GRAY }, canvas)
 	infoLevel = text({ Position = UDim2.new(0, x, 0, 296), Size = UDim2.new(0, 380, 0, 22), Text = "",
@@ -242,13 +242,13 @@ local function buildBottom()
 		make("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(90, 90, 90)) }, tile)
 		local stroke = make("UIStroke", { Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, tile)
 		text({ Size = UDim2.new(1, 0, 0.75, 0), Text = string.sub(agent.Name, 1, 1), TextSize = 44,
-			Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center }, tile)
+			Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Center }, tile)
 		text({ Position = UDim2.new(0, 0, 0.72, 0), Size = UDim2.new(1, 0, 0.26, 0), Text = agent.Name,
 			TextSize = 12, TextXAlignment = Enum.TextXAlignment.Center }, tile)
 		-- Level-Raute oben rechts
 		diamond(tile, 16, UDim2.new(1, -11, 0, 11), GOLD)
 		local level = text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -11, 0, 11),
-			Size = UDim2.new(0, 22, 0, 22), Text = "", TextSize = 11, Font = Enum.Font.GothamBlack,
+			Size = UDim2.new(0, 22, 0, 22), Text = "", TextSize = 11, Font = Enum.Font.Oswald,
 			TextColor3 = Color3.fromRGB(20, 20, 20), TextXAlignment = Enum.TextXAlignment.Center }, tile)
 
 		tile.MouseEnter:Connect(function()
@@ -290,7 +290,7 @@ local function buildBottom()
 		text({ Position = UDim2.new(0, 12, 0, 6), Size = UDim2.new(1, -24, 0, 22),
 			Text = (item.Perk and "✦ " or "") .. item.Name, TextSize = 16 }, card)
 		local state = text({ Position = UDim2.new(0, 12, 0, 32), Size = UDim2.new(1, -24, 0, 22), Text = "",
-			TextSize = 15, Font = Enum.Font.GothamBlack }, card)
+			TextSize = 15, Font = Enum.Font.Oswald }, card)
 		card.MouseEnter:Connect(function()
 			buyStatus.Text = item.Description
 			buyStatus.TextColor3 = GRAY
@@ -313,7 +313,7 @@ local function buildBottom()
 	end
 	for i, entry in { { "Agents", "AGENTEN" }, { "Shop", "AUSRÜSTUNG" } } do
 		local b = make("TextButton", { Position = UDim2.new(0.5, -530 + (i - 1) * 180, 0, 626), Size = UDim2.new(0, 170, 0, 34),
-			BorderSizePixel = 0, Font = Enum.Font.GothamBlack, TextSize = 15, Text = entry[2], ZIndex = 3 }, canvas)
+			BorderSizePixel = 0, Font = Enum.Font.Oswald, TextSize = 15, Text = entry[2], ZIndex = 3 }, canvas)
 		make("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
 		b.Activated:Connect(function()
 			showBottom(entry[1])
@@ -323,12 +323,12 @@ local function buildBottom()
 	buyStatus = text({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 90, 0, 632), Size = UDim2.new(0, 400, 0, 22),
 		Text = "", TextSize = 15, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, canvas)
 	moneyLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(0.5, 530, 0, 626), Size = UDim2.new(0, 220, 0, 34),
-		Text = "", TextSize = 24, Font = Enum.Font.GothamBlack, TextColor3 = Color3.fromRGB(120, 230, 140),
+		Text = "", TextSize = 24, Font = Enum.Font.Oswald, TextColor3 = Color3.fromRGB(120, 230, 140),
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, canvas)
 	showBottom("Agents")
 
 	confirmButton = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 822),
-		Size = UDim2.new(0, 320, 0, 50), BackgroundColor3 = RED, BorderSizePixel = 0, Font = Enum.Font.GothamBlack,
+		Size = UDim2.new(0, 320, 0, 50), BackgroundColor3 = RED, BorderSizePixel = 0, Font = Enum.Font.Oswald,
 		TextSize = 22, TextColor3 = Color3.new(1, 1, 1), Text = "AGENT BESTÄTIGEN" }, canvas)
 	confirmButton.Activated:Connect(function()
 		if not isLocked() then
@@ -424,7 +424,7 @@ local function updateTeam()
 		diamond(rowFrame, 56, UDim2.new(0, 55 + indent, 0.5, 0), color, e.IsMe and GOLD or CYAN)
 		text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 55 + indent, 0.5, 0),
 			Size = UDim2.new(0, 50, 0, 50), Text = (e.Locked and e.Agent) and string.sub(e.Agent.Name, 1, 1) or "",
-			TextSize = 30, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center }, rowFrame)
+			TextSize = 30, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Center }, rowFrame)
 		-- Texte
 		local textX = 110 + indent
 		if not e.Locked then
@@ -436,7 +436,7 @@ local function updateTeam()
 			TextColor3 = e.IsMe and GOLD or Color3.new(1, 1, 1) }, rowFrame)
 		if e.Locked and e.Agent then
 			text({ Position = UDim2.new(0, textX, 0.5, 6), Size = UDim2.new(0, 260, 0, 22), Text = "✕ " .. e.Agent.Name,
-				TextSize = 18, Font = Enum.Font.GothamBlack, TextColor3 = e.Agent.Color }, rowFrame)
+				TextSize = 18, Font = Enum.Font.Oswald, TextColor3 = e.Agent.Color }, rowFrame)
 		end
 	end
 end
@@ -465,7 +465,7 @@ local function updateScore()
 			diamond(scoreFrame, 20, UDim2.new(1, x, 0, y), won and data[2] or Color3.fromRGB(20, 24, 32), data[2])
 			if won then
 				text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, x, 0, y), Size = UDim2.new(0, 20, 0, 20),
-					Text = "✓", TextSize = 14, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center },
+					Text = "✓", TextSize = 14, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Center },
 					scoreFrame)
 			end
 		end

@@ -81,7 +81,7 @@ function HUD.Init(weaponClient)
 	local healthPanel = hudPanel({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -24),
 		Size = UDim2.new(0, 330, 0, 74) })
 	local healthText = label({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(0, 90, 0, 44), Text = "100",
-		TextSize = 40, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
+		TextSize = 40, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
 	label({ Position = UDim2.new(0, 18, 0, 50), Size = UDim2.new(0, 90, 0, 16), Text = "LEBEN", TextSize = 12,
 		TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, healthPanel)
 	local healthBack = make("Frame", { Position = UDim2.new(0, 112, 0, 40), Size = UDim2.new(1, -128, 0, 14),
@@ -110,18 +110,18 @@ function HUD.Init(weaponClient)
 	local weaponText = label({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
 		TextSize = 14, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
 	local ammoText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -86, 0, 14), Size = UDim2.new(0, 120, 0, 52),
-		Text = "", TextSize = 46, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Right }, ammoPanel)
+		Text = "", TextSize = 46, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Right }, ammoPanel)
 	local reserveText = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 34), Size = UDim2.new(0, 66, 0, 26),
 		Text = "", TextSize = 20, TextColor3 = UITheme.Colors.Muted, TextXAlignment = Enum.TextXAlignment.Left }, ammoPanel)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
 	local moneyText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -28, 1, -106),
-		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.GothamBlack,
+		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
 		TextColor3 = Color3.fromRGB(120, 230, 140), TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
 	-- Eigene Kills oben links (neben den Roblox-Knöpfen)
 	local killsPanel = hudPanel({ Position = UDim2.new(0, 24, 0, 60), Size = UDim2.new(0, 110, 0, 36) })
-	local killsText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "☠ 0", TextSize = 20, Font = Enum.Font.GothamBlack,
+	local killsText = label({ Size = UDim2.new(1, 0, 1, 0), Text = "☠ 0", TextSize = 20, Font = Enum.Font.Oswald,
 		TextXAlignment = Enum.TextXAlignment.Center }, killsPanel)
 
 	-- Modus-Info oben mittig als Banner (Text kommt vom Server als Spieler-Attribut "ModeText")
@@ -129,7 +129,7 @@ function HUD.Init(weaponClient)
 		Size = UDim2.new(0, 0, 0, 38), AutomaticSize = Enum.AutomaticSize.X })
 	make("UIPadding", { PaddingLeft = UDim.new(0, 22), PaddingRight = UDim.new(0, 22) }, modeBanner)
 	local modeText = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
-		Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center }, modeBanner)
+		Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Center }, modeBanner)
 
 	-- Roter Bildschirm-Effekt bei Schaden (ganz unten, damit er nichts verdeckt)
 	local damageFlash = make("Frame", {
@@ -184,7 +184,7 @@ function HUD.Init(weaponClient)
 		AutomaticSize = Enum.AutomaticSize.X,
 		Text = "",
 		TextSize = 40,
-		Font = Enum.Font.GothamBlack,
+		Font = Enum.Font.Oswald,
 		TextColor3 = Color3.fromRGB(255, 220, 90),
 		BackgroundTransparency = 0.3,
 		BackgroundColor3 = Color3.fromRGB(10, 13, 22),

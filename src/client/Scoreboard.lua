@@ -9,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
+local RankConfig = require(Shared.RankConfig)
 
 local player = Players.LocalPlayer
 
@@ -21,7 +22,8 @@ local Teams = game:GetService("Teams")
 
 -- Spalten: { Überschrift, Breite, Ausrichtung }
 local COLUMNS = {
-	{ "SPIELER", 300, Enum.TextXAlignment.Left },
+	{ "SPIELER", 240, Enum.TextXAlignment.Left },
+	{ "RANG", 140, Enum.TextXAlignment.Left },
 	{ "AGENT", 140, Enum.TextXAlignment.Left },
 	{ "K", 70, Enum.TextXAlignment.Center },
 	{ "T", 70, Enum.TextXAlignment.Center },
@@ -68,7 +70,9 @@ local function entries()
 			local kills = stats and stats:FindFirstChild("Kills")
 			local agentId = (p.Character and p.Character:GetAttribute("Agent")) or p:GetAttribute("Agent")
 			local agent = AgentConfig.Get(agentId)
-			table.insert(list, { Name = p.Name, Agent = agent and agent.Name or "–", Kills = kills and kills.Value or 0,
+			local elo = p:GetAttribute("Elo") or RankConfig.StartElo
+			table.insert(list, { Name = p.Name, Rank = RankConfig.Get(elo).Display, Agent = agent and agent.Name or "–",
+				Kills = kills and kills.Value or 0,
 				Deaths = p:GetAttribute("Deaths") or 0, Damage = p:GetAttribute("Damage") or 0,
 				Team = p.Team and p.Team.Name or nil, IsMe = p == player })
 		end
@@ -77,7 +81,8 @@ local function entries()
 		if info:GetAttribute("Mode") == mode then
 			local agent = AgentConfig.Get(info:GetAttribute("Agent"))
 			local team = info:GetAttribute("TeamName")
-			table.insert(list, { Name = info.Name, Agent = agent and agent.Name or "–", Kills = info:GetAttribute("Kills") or 0,
+			table.insert(list, { Name = info.Name, Rank = "BOT", Agent = agent and agent.Name or "–",
+				Kills = info:GetAttribute("Kills") or 0,
 				Deaths = info:GetAttribute("Deaths") or 0, Damage = "–", Team = team ~= "" and team or nil })
 		end
 	end
@@ -100,13 +105,13 @@ local function render()
 	local function add(entry)
 		order += 1
 		local frame = rowFrame(order, entry.IsMe and Color3.fromRGB(70, 55, 25) or nil)
-		cells(frame, { entry.Name, entry.Agent, entry.Kills, entry.Deaths, entry.Damage },
+		cells(frame, { entry.Name, entry.Rank, entry.Agent, entry.Kills, entry.Deaths, entry.Damage },
 			entry.IsMe and ACCENT or nil)
 	end
 
 	order += 1
 	cells(rowFrame(order, Color3.fromRGB(10, 12, 18)), {
-		COLUMNS[1][1], COLUMNS[2][1], COLUMNS[3][1], COLUMNS[4][1], COLUMNS[5][1] }, GRAY, Enum.Font.GothamBlack)
+		COLUMNS[1][1], COLUMNS[2][1], COLUMNS[3][1], COLUMNS[4][1], COLUMNS[5][1], COLUMNS[6][1] }, GRAY, Enum.Font.Oswald)
 
 	local all = entries()
 	if Modes.IsTeamMode(player:GetAttribute("Mode")) then
@@ -124,7 +129,7 @@ local function render()
 			order += 1
 			local team = Teams:FindFirstChild(teamName)
 			local header = rowFrame(order, team and team.TeamColor.Color or ROW)
-			cells(header, { "TEAM " .. string.upper(teamName), "", "", "", "" }, Color3.new(1, 1, 1), Enum.Font.GothamBlack)
+			cells(header, { "TEAM " .. string.upper(teamName), "", "", "", "", "" }, Color3.new(1, 1, 1), Enum.Font.Oswald)
 			for _, entry in all do
 				if entry.Team == teamName then
 					add(entry)
@@ -142,7 +147,7 @@ function Scoreboard.Init()
 	gui = make("ScreenGui", { Name = "Scoreboard", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 8,
 		Enabled = false }, player:WaitForChild("PlayerGui"))
 	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 90),
-		Size = UDim2.new(0, 740, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(12, 14, 20),
+		Size = UDim2.new(0, 820, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = Color3.fromRGB(12, 14, 20),
 		BackgroundTransparency = 0.1, BorderSizePixel = 0 }, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 12),

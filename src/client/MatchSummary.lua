@@ -17,7 +17,7 @@ local SHOW_TIME = 8
 local function label(props, parent)
 	local obj = Instance.new("TextLabel")
 	obj.BackgroundTransparency = 1
-	obj.Font = Enum.Font.GothamBlack
+	obj.Font = Enum.Font.Oswald
 	obj.TextColor3 = Color3.new(1, 1, 1)
 	obj.TextStrokeTransparency = 0.5
 	for key, value in props do
