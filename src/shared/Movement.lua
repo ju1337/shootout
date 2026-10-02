@@ -3,7 +3,8 @@
 -- Sliden (im Sprint ducken), Klettern über Kanten (Springen vor einer Kante) und Zielen
 -- (setzt WeaponClient über SetAiming).
 -- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
--- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung).
+-- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung,
+-- jederzeit mit T umschalten).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
+local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
 
 local player = Players.LocalPlayer
@@ -331,6 +333,19 @@ function Movement.Init()
 
 	-- Springen vor einer Kante = hochziehen
 	UserInputService.JumpRequest:Connect(tryMantle)
+
+	-- T: zwischen Ego- und Schulterkamera wechseln (wird im Profil gespeichert)
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed or input.KeyCode ~= Enum.KeyCode.T then
+			return
+		end
+		Movement.SetThirdPerson(not thirdPerson)
+		Remotes.ShopAction:FireServer("SaveSettings", {
+			Fov = normalFov,
+			Sensitivity = sensitivity,
+			ThirdPerson = thirdPerson,
+		})
+	end)
 
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.LeftShift then
