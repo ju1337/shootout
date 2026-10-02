@@ -20,6 +20,7 @@ local UITheme = require(Shared.UITheme)
 local QuestConfig = require(Shared.QuestConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local RewardConfig = require(Shared.RewardConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
 
@@ -520,6 +521,105 @@ local function buildCodes()
 	end)
 end
 
+-- ---------- BELOHNUNGEN ----------
+-- Übersicht: was man pro Aktion bekommt, Killserien, Level-Meilensteine (dieser Prestige-Durchgang),
+-- Prestige-Skins und Rang-Meilensteine der Saison. Erledigt = grün mit Haken, nächstes Ziel hervorgehoben.
+
+local function buildRewards()
+	local frame = makePanel("Rewards", "BELOHNUNGEN", 1120, 640)
+	local COLUMN_W = 340
+	local function column(x, title)
+		text({ Position = UDim2.new(0, x, 0, 72), Size = UDim2.new(0, COLUMN_W, 0, 18), Text = title, TextSize = 13,
+			Font = UITheme.Fonts.Bold, TextColor3 = GRAY }, frame)
+		local list = make("ScrollingFrame", { Position = UDim2.new(0, x, 0, 96), Size = UDim2.new(0, COLUMN_W, 1, -150),
+			BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = BORDER,
+			CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, frame)
+		make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+		return list
+	end
+	local levelList = column(24, "LEVEL-MEILENSTEINE  ·  DIESER PRESTIGE-DURCHGANG")
+	local specialList = column(390, "PRESTIGE  ·  RANG DIESER SAISON")
+	local actionList = column(756, "PRO AKTION  ·  KILLSERIEN")
+
+	-- Zeile: links Titel, rechts Belohnung, Farbe nach Zustand ("done", "next", "open")
+	local function row(list, order, title, reward, state, accent)
+		local r = make("Frame", { Size = UDim2.new(1, -8, 0, 44), BackgroundColor3 = CARD, LayoutOrder = order,
+			BackgroundTransparency = state == "open" and 0.35 or 0.05 }, list)
+		make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, r)
+		local color = state == "done" and GREEN or (state == "next" and ACCENT or BORDER)
+		make("UIStroke", { Color = color, Thickness = state == "next" and 1.5 or 1, Transparency = state == "open" and 0.6 or 0 }, r)
+		make("Frame", { Size = UDim2.new(0, 3, 1, -12), Position = UDim2.new(0, 6, 0, 6), BackgroundColor3 = accent or color,
+			BorderSizePixel = 0 }, r)
+		text({ Position = UDim2.new(0, 18, 0, 4), Size = UDim2.new(0.5, -18, 1, -8), Text = title, TextSize = 18, Font = DISPLAY,
+			TextColor3 = state == "open" and GRAY or UITheme.Colors.Text }, r)
+		text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 4), Size = UDim2.new(0.55, 0, 1, -8),
+			Text = (state == "done" and "✓  " or "") .. reward, TextSize = 13, Font = UITheme.Fonts.Bold, TextWrapped = true,
+			TextColor3 = state == "done" and GREEN or (state == "next" and ACCENT or GRAY),
+			TextXAlignment = Enum.TextXAlignment.Right }, r)
+	end
+	local function rewardText(entry)
+		local parts = {}
+		if entry.Coins then
+			table.insert(parts, UITheme.FormatNumber(entry.Coins) .. " Münzen")
+		end
+		local item = entry.Item and Cosmetics.Get(entry.Item)
+		if item then
+			table.insert(parts, "Skin " .. item.Name)
+		end
+		return table.concat(parts, " + ")
+	end
+	local function clear(list)
+		for _, child in list:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+	end
+
+	panels.Rewards.Refresh = function()
+		local claimed = decodeAttribute(player, "RewardsClaimed")
+		local info = LevelConfig.Get(player)
+		clear(levelList)
+		local nextShown = false
+		for i, milestone in RewardConfig.Level do
+			local done = claimed["P" .. info.Prestige .. "_L" .. milestone.Level] == true
+			local state = done and "done" or (not nextShown and "next" or "open")
+			if not done then
+				nextShown = true
+			end
+			row(levelList, i, "LEVEL " .. milestone.Level, rewardText(milestone), state,
+				milestone.Item and Cosmetics.Rarities[Cosmetics.Get(milestone.Item).Rarity].Color or nil)
+		end
+		clear(specialList)
+		local order = 0
+		for _, milestone in RewardConfig.Prestige do
+			order += 1
+			local done = claimed["Prestige" .. milestone.Prestige] == true
+			row(specialList, order, "PRESTIGE " .. milestone.Prestige, rewardText(milestone), done and "done" or "open",
+				LevelConfig.PrestigeColors[milestone.Prestige])
+		end
+		for _, milestone in RewardConfig.Rank do
+			order += 1
+			local done = claimed["S" .. RankConfig.Season .. "_" .. milestone.Tier] == true
+			local tierColor
+			for _, tier in RankConfig.Tiers do
+				if tier.Name == milestone.Tier then
+					tierColor = tier.Color
+				end
+			end
+			row(specialList, order, string.upper(milestone.Tier), rewardText(milestone), done and "done" or "open", tierColor)
+		end
+		clear(actionList)
+		for i, entry in RewardConfig.PerAction do
+			row(actionList, i, string.upper(entry[1]), entry[2], "open", ACCENT)
+		end
+		for i, streak in RewardConfig.Streaks do
+			row(actionList, 100 + i, streak.Kills .. " KILLS IN FOLGE", UITheme.FormatNumber(streak.Coins) .. " Münzen", "open",
+				Color3.fromRGB(206, 110, 80))
+		end
+	end
+end
+
 -- ---------- EINSTELLUNGEN ----------
 
 -- Einstellungen im Profil speichern (kurz verzögert, damit nicht jeder Klick gesendet wird)
@@ -735,6 +835,7 @@ local function buildColumn()
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
 		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "🎁" },
 		{ "STATS", function() togglePanel("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
+		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
 		{ "CODES", function() togglePanel("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
 		{ "OPTIONEN", function() togglePanel("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
 	}
@@ -795,6 +896,7 @@ function SideMenu.Init()
 	buildDaily()
 	buildCodes()
 	buildSettings()
+	buildRewards()
 
 	-- Gespeicherte Einstellungen übernehmen, sobald das Profil geladen ist
 	if not loadSettings() then
@@ -817,7 +919,7 @@ function SideMenu.Init()
 	player.AttributeChanged:Connect(function(name)
 		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
-			or name == "MatchHistory" then
+			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" then
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()
 			end

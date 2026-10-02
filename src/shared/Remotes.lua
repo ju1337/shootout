@@ -41,6 +41,7 @@ local NAMES = {
 	"PartyInvite", -- Server -> Client: Einladung (Name, UserId des Anführers)
 	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers, Schaden)
 	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
+	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity }) – Popup
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 }
 

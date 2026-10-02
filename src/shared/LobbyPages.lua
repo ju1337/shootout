@@ -165,7 +165,7 @@ function LobbyPages.Shop(page)
 		cards = {}
 		local order = 0
 		for _, item in Cosmetics.List(currentType) do
-			if not item.Pass then
+			if not item.Pass and not item.Reward then
 				order += 1
 				local rarity = Cosmetics.Rarities[item.Rarity]
 				local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,

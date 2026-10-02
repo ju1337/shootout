@@ -25,6 +25,7 @@ local HubLineup = require(script.Parent:WaitForChild("HubLineup"))
 local Nametags = require(script.Parent:WaitForChild("Nametags"))
 local MapVote = require(script.Parent:WaitForChild("MapVote"))
 local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
+local RewardPopup = require(script.Parent:WaitForChild("RewardPopup"))
 local LevelBadge = require(script.Parent:WaitForChild("LevelBadge"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
@@ -47,5 +48,6 @@ HubLineup.Init()
 Nametags.Init()
 MapVote.Init()
 TouchControls.Init()
+RewardPopup.Init()
 LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist
