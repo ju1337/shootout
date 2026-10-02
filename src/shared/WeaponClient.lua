@@ -248,15 +248,6 @@ local function advance(state, duration)
 	return t
 end
 
-local function spread(direction, degrees)
-	if not degrees or degrees <= 0 then
-		return direction.Unit
-	end
-	local angle = math.rad(degrees) * math.sqrt(random:NextNumber())
-	local spin = random:NextNumber() * math.pi * 2
-	return (CFrame.lookAt(Vector3.zero, direction) * CFrame.Angles(0, 0, spin) * CFrame.Angles(angle, 0, 0)).LookVector
-end
-
 local function hitKindOf(result)
 	if not result then
 		return nil
@@ -268,8 +259,10 @@ local function hitKindOf(result)
 	return result.Instance.Anchored and "World" or "Prop"
 end
 
--- Eigenen Schuss sofort zeigen: gleicher Weg wie auf dem Server (Schulterkamera: Zielpunkt, dann vom Kopf aus)
-local function showOwnShot(cfg, origin, look, spreadAngle)
+-- Eigenen Schuss sofort zeigen: gleicher Weg wie auf dem Server (Schulterkamera: Zielpunkt, dann vom Kopf aus),
+-- dieselben Kugelrichtungen (Seed aus Spieler + Schuss-Nummer). Gibt die getroffenen Charakter-Teile pro Kugel
+-- zurück ({ Part, Position } oder false) – der Server prüft sie und nimmt sie als Treffer (Ping-Ausgleich).
+local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head")
 	local params = RaycastParams.new()
@@ -289,8 +282,10 @@ local function showOwnShot(cfg, origin, look, spreadAngle)
 	local muzzleCF, flashScale = muzzle()
 	WeaponEffects.GunSound(current, muzzleCF.Position, true)
 	WeaponEffects.MuzzleFlash(muzzleCF, flashScale)
-	for _ = 1, cfg.Pellets or 1 do
-		local direction = spread(aimDirection, spreadAngle)
+	local claims = {}
+	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
+		WeaponConfig.ShotSeed(player.UserId, shotId))
+	for i, direction in directions do
 		local result = workspace:Raycast(shotOrigin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (shotOrigin + direction * cfg.Range)
 		WeaponEffects.Tracer(muzzleCF.Position, endPos, true)
@@ -298,7 +293,9 @@ local function showOwnShot(cfg, origin, look, spreadAngle)
 		if kind then
 			WeaponEffects.Impact(endPos, result.Normal, kind)
 		end
+		claims[i] = kind == "Character" and { Part = result.Instance, Position = result.Position } or false
 	end
+	return claims
 end
 
 -- ---------- Schießen ----------
@@ -346,8 +343,8 @@ local function tryFire()
 
 	local camera = workspace.CurrentCamera
 	local origin, look = camera.CFrame.Position, camera.CFrame.LookVector
-	Remotes.Fire:FireServer(origin, look, aiming, shotCounter)
-	showOwnShot(WeaponConfig.WithAttachments(cfg, effects), origin, look, spreadAngle)
+	local claims = showOwnShot(WeaponConfig.WithAttachments(cfg, effects), origin, look, spreadAngle, shotCounter)
+	Remotes.Fire:FireServer(origin, look, aiming, shotCounter, claims)
 
 	-- Rückstoß: hoch und etwas zur Seite, beim Zielen weniger (Aufsätze: Kompensator, Vertikalgriff).
 	-- Nach dem Feuern wandert der Blick zurück.

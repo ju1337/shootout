@@ -2,6 +2,7 @@
 -- Alle Waffenwerte an einer Stelle. Hier kannst du alles anpassen.
 -- Welche Waffen ein Agent trägt, steht in AgentConfig (Loadout).
 -- Pellets = Kugeln pro Schuss (Schrotflinte), Spread = Grund-Streuung in Grad (aus der Hüfte, im Stand)
+-- FalloffStart / MinDamageFactor (optional) = ab welcher Entfernung der Schaden sinkt und wie weit (siehe FalloffFactor)
 -- Bloom = zusätzliche Streuung pro Schuss bei Dauerfeuer (höchstens MaxBloom), baut sich in Feuerpausen ab
 -- Recoil = Kamera-Rückstoß nach oben pro Schuss in Grad, RecoilSide = zufällig zur Seite,
 --   MaxRecoil = Obergrenze. Nach dem Loslassen wandert der Blick von selbst zurück.
@@ -111,6 +112,8 @@ WeaponConfig.Weapons = {
 		ReloadTime = 2.5,     -- für ein leeres Magazin, Patronen einzeln (siehe ShellTiming)
 		ShellReload = true,
 		Range = 90,
+		FalloffStart = 22,     -- Schrotflinte: ab hier deutlich weniger Schaden
+		MinDamageFactor = 0.35,
 		Recoil = 2.5,
 		RecoilSide = 0.5,
 		MaxRecoil = 6,
@@ -225,6 +228,55 @@ function WeaponConfig.SpreadFor(cfg, bloom, speed, airborne, aiming, effects)
 		spread *= effects.Spread
 	end
 	return spread
+end
+
+-- ---------- Treffer: gleiche Streuung auf Client und Server, Schaden nach Entfernung und Körperteil ----------
+
+-- Seed eines Schusses: Spieler + laufende Schuss-Nummer. Client und Server würfeln damit dieselben Richtungen,
+-- so landet die Kugel auf dem Server dort, wo man die Leuchtspur sieht.
+function WeaponConfig.ShotSeed(userId, shotId)
+	return (math.abs(userId) % 1000003) * 7919 + (math.floor(shotId) % 1000000)
+end
+
+-- Richtungen aller Kugeln eines Schusses (Schrotflinte: mehrere) im Streukegel (Grad)
+function WeaponConfig.PelletDirections(direction, degrees, pellets, seed)
+	local random = Random.new(seed)
+	local list = {}
+	for i = 1, pellets or 1 do
+		if not degrees or degrees <= 0 then
+			list[i] = direction.Unit
+		else
+			local angle = math.rad(degrees) * math.sqrt(random:NextNumber())
+			local spin = random:NextNumber() * math.pi * 2
+			list[i] = (CFrame.lookAt(Vector3.zero, direction) * CFrame.Angles(0, 0, spin) * CFrame.Angles(angle, 0, 0)).LookVector
+		end
+	end
+	return list
+end
+
+-- Schaden fällt mit der Entfernung ab: volle Wirkung bis FalloffStart (Standard 45 % der Reichweite),
+-- dann linear bis MinDamageFactor (Standard 60 %) am Ende der Reichweite
+function WeaponConfig.FalloffFactor(cfg, distance)
+	local start = cfg.FalloffStart or cfg.Range * 0.45
+	local minFactor = cfg.MinDamageFactor or 0.6
+	if distance <= start then
+		return 1
+	end
+	local t = math.clamp((distance - start) / math.max(1, cfg.Range - start), 0, 1)
+	return 1 + (minFactor - 1) * t
+end
+
+-- Körperteil: Kopf mehr Schaden, Arme und Beine etwas weniger
+WeaponConfig.LimbMultiplier = 0.85
+function WeaponConfig.PartMultiplier(partName)
+	if partName == "Head" then
+		return WeaponConfig.HeadshotMultiplier
+	end
+	if string.find(partName, "Arm") or string.find(partName, "Hand") or string.find(partName, "Leg")
+		or string.find(partName, "Foot") then
+		return WeaponConfig.LimbMultiplier
+	end
+	return 1
 end
 
 -- Waffenwerte mit der Reichweite der Aufsätze (für Raycasts); alles andere bleibt wie in cfg

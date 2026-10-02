@@ -12,6 +12,7 @@
 --   AimPitch (Blick nach oben/unten in Grad), Aiming (zielt)
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -42,7 +43,6 @@ local THIRD_PERSON_DISTANCE = 3
 local states = {} -- [Player] = { Loadout, Current, Ammo, NextShot, Bloom, BloomTime, Reloading, ReloadId, Tools }
 local lastShotIds = {} -- [Player] = letzte Schuss-Nummer des Clients (über alle Leben)
 local lastAimState = {} -- [Player] = os.clock() der letzten AimState-Meldung
-local random = Random.new()
 
 local function selectedAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
@@ -136,14 +136,109 @@ local function getLivingHumanoid(player)
 	return nil, nil
 end
 
--- Richtung zufällig im Kegel streuen (Grad)
-local function spread(direction, degrees)
-	if not degrees or degrees <= 0 then
-		return direction.Unit
+
+-- ---------- Ping-Ausgleich ("was du triffst, triffst du") ----------
+-- Der Client meldet pro Kugel, was er getroffen hat. Der Server prüft das streng (Sichtlinie, Reichweite,
+-- Richtung, und ob das Ziel in der letzten halben Sekunde wirklich dort war) und nimmt dann den Treffer des
+-- Clients. Dafür merkt sich der Server kurz, wo jeder Charakter war.
+local HISTORY_TIME = 0.6     -- Sekunden Verlauf
+local HISTORY_STEP = 0.05
+local HIT_TOLERANCE = 6      -- Studs: Abstand gemeldeter Treffer – Körpermitte (Kopf bis Füße + Bewegung)
+local CLAIM_ANGLE = math.rad(4)
+local history = setmetatable({}, { __mode = "k" }) -- [Model] = { { Time, Position }, ... }
+
+local function trackedModels()
+	local list = {}
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(list, p.Character)
+		end
 	end
-	local angle = math.rad(degrees) * math.sqrt(random:NextNumber())
-	local spin = random:NextNumber() * math.pi * 2
-	return (CFrame.lookAt(Vector3.zero, direction) * CFrame.Angles(0, 0, spin) * CFrame.Angles(angle, 0, 0)).LookVector
+	local bots = workspace:FindFirstChild("Bots")
+	if bots then
+		for _, model in bots:GetChildren() do
+			if model:IsA("Model") then
+				table.insert(list, model)
+			end
+		end
+	end
+	return list
+end
+
+local lastSample = 0
+RunService.Heartbeat:Connect(function()
+	local now = os.clock()
+	if now - lastSample < HISTORY_STEP then
+		return
+	end
+	lastSample = now
+	for _, model in trackedModels() do
+		local root = model:FindFirstChild("HumanoidRootPart")
+		if root then
+			local list = history[model] or {}
+			history[model] = list
+			table.insert(list, { Time = now, Position = root.Position })
+			while list[1] and now - list[1].Time > HISTORY_TIME do
+				table.remove(list, 1)
+			end
+		end
+	end
+end)
+
+-- War das Modell kürzlich nah an dieser Stelle?
+local function wasNear(model, position)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if root and (root.Position - position).Magnitude <= HIT_TOLERANCE then
+		return true
+	end
+	for _, sample in history[model] or {} do
+		if (sample.Position - position).Magnitude <= HIT_TOLERANCE then
+			return true
+		end
+	end
+	return false
+end
+
+-- Gemeldeten Treffer prüfen. claim = { Part = BasePart, Position = Vector3 }. Gibt Part und Position zurück
+-- oder nil, wenn der Treffer nicht glaubwürdig ist (dann zählt der eigene Raycast des Servers).
+local function validClaim(character, shotOrigin, direction, cfg, claim)
+	if type(claim) ~= "table" or typeof(claim.Part) ~= "Instance" or typeof(claim.Position) ~= "Vector3" then
+		return nil
+	end
+	local part = claim.Part
+	if not part:IsA("BasePart") or not part:IsDescendantOf(workspace) or part:IsDescendantOf(character) then
+		return nil
+	end
+	local model = part:FindFirstAncestorOfClass("Model")
+	local humanoid = model and model:FindFirstChildOfClass("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then
+		return nil
+	end
+	local position = claim.Position
+	local offset = position - shotOrigin
+	local distance = offset.Magnitude
+	if distance > cfg.Range + 2 or distance < 0.1 then
+		return nil
+	end
+	-- Richtung: der Treffer muss auf (oder sehr nah an) der Flugbahn dieser Kugel liegen
+	local along = offset:Dot(direction)
+	local sideways = (offset - direction * along).Magnitude
+	if along <= 0 or sideways > math.max(2.5, distance * math.tan(CLAIM_ANGLE)) then
+		return nil
+	end
+	-- Das Ziel war wirklich dort (jetzt oder in der letzten halben Sekunde)
+	if not wasNear(model, position) then
+		return nil
+	end
+	-- Keine Wand dazwischen (Charaktere zählen nicht als Hindernis)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = trackedModels()
+	local blocked = workspace:Raycast(shotOrigin, offset.Unit * math.max(0, distance - 0.6), params)
+	if blocked and blocked.Instance.CanCollide and blocked.Instance.Transparency < 0.9 then
+		return nil
+	end
+	return part, position
 end
 
 -- Steht der Charakter in der Luft? (kurzer Strahl nach unten, R6 und R15)
@@ -183,17 +278,23 @@ end
 
 -- Ein einzelner Schuss/Kugel: Raycast, Effekt, Schaden.
 -- Gibt bei einem Treffer { Humanoid, Damage, Headshot, Killed, Downed, Armor, Position, Name, Model } zurück.
-local function fireRay(player, character, origin, direction, cfg, weaponName, params)
+local function fireRay(player, character, origin, direction, cfg, weaponName, params, claim)
 	local result = workspace:Raycast(origin, direction * cfg.Range, params)
-	local endPos = result and result.Position or (origin + direction * cfg.Range)
+	local hitPart, hitPosition = result and result.Instance, result and result.Position
+	-- Treffer des Clients übernehmen, wenn er glaubwürdig ist (Ping-Ausgleich)
+	local claimedPart, claimedPosition = validClaim(character, origin, direction, cfg, claim)
+	if claimedPart then
+		hitPart, hitPosition = claimedPart, claimedPosition
+	end
+	local endPos = hitPosition or (origin + direction * cfg.Range)
 	WeaponService.BroadcastShot(player:GetAttribute("Mode"), player, origin, endPos, weaponName,
-		result and result.Normal, hitKindOf(result))
-	if not result then
+		(not claimedPart) and result and result.Normal or nil, claimedPart and "Character" or hitKindOf(result))
+	if not hitPart then
 		return
 	end
 
 	-- Getroffenes Lebewesen suchen
-	local model = result.Instance:FindFirstAncestorOfClass("Model")
+	local model = hitPart:FindFirstAncestorOfClass("Model")
 	local targetHumanoid = model and model:FindFirstChildOfClass("Humanoid")
 	if not targetHumanoid or targetHumanoid.Health <= 0 then
 		return
@@ -215,8 +316,11 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		return
 	end
 
-	local headshot = result.Instance.Name == "Head"
-	local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1) * GameSettings.Get("DamageMultiplier")
+	-- Schaden: Körperteil (Kopf mehr, Arme/Beine weniger) und Entfernung (Fall-off)
+	local headshot = hitPart.Name == "Head"
+	local distance = (hitPosition - origin).Magnitude
+	local damage = cfg.Damage * WeaponConfig.PartMultiplier(hitPart.Name) * WeaponConfig.FalloffFactor(cfg, distance)
+		* GameSettings.Get("DamageMultiplier")
 	local dealt, killed, downed, armor = Damage.Apply(model, targetHumanoid, damage,
 		{ Player = player, Weapon = weaponName, Headshot = headshot })
 	-- Passiv HAWK: getroffene Gegner kurz für das Team markieren
@@ -233,11 +337,11 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		killedEvent:Fire(player, victim, weaponName, headshot, victimName)
 	end
 	return { Humanoid = targetHumanoid, Damage = dealt, Headshot = headshot, Killed = killed, Downed = downed,
-		Armor = armor or 0, Position = result.Position, Name = victimName, Model = model }
+		Armor = armor or 0, Position = hitPosition, Name = victimName, Model = model }
 end
 
 -- Schuss auswerten. aiming = Spieler zielt (Rechtsklick): weniger Streuung. Gibt true zurück, wenn geschossen.
-local function fire(player, state, origin, direction, aiming)
+local function fire(player, state, origin, direction, aiming, shotId, claims)
 	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Hub)
 	if not player:GetAttribute("CanFight") then
 		return false
@@ -311,9 +415,13 @@ local function fire(player, state, origin, direction, aiming)
 	end
 
 	-- Treffer pro Ziel zusammenfassen (Schrotflinte: eine Schadenszahl statt acht)
+	-- Dieselben Kugelrichtungen wie beim Client (gemeinsamer Seed aus Spieler und Schuss-Nummer)
+	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
+		WeaponConfig.ShotSeed(player.UserId, shotId or 0))
+	claims = type(claims) == "table" and claims or {}
 	local hits = {}
-	for _ = 1, cfg.Pellets or 1 do
-		local hit = fireRay(player, character, shotOrigin, spread(aimDirection, spreadAngle), cfg, weaponName, params)
+	for i, pelletDirection in directions do
+		local hit = fireRay(player, character, shotOrigin, pelletDirection, cfg, weaponName, params, claims[i])
 		if hit then
 			local total = hits[hit.Humanoid]
 			if total then
@@ -341,15 +449,17 @@ local function fire(player, state, origin, direction, aiming)
 end
 
 -- shotId = laufende Nummer des Clients: Er rechnet damit seine Munitionsanzeige ohne Flackern vor
-local function onFire(player, origin, direction, aiming, shotId)
+-- claims = vom Client gemeldete Treffer pro Kugel ({ Part, Position } oder false), werden geprüft
+local function onFire(player, origin, direction, aiming, shotId, claims)
 	local state = states[player]
 	if not state then
 		return
 	end
-	if typeof(shotId) == "number" and shotId == shotId and shotId > (lastShotIds[player] or 0) then
+	local validId = typeof(shotId) == "number" and shotId == shotId and math.abs(shotId) < 1e9
+	if validId and shotId > (lastShotIds[player] or 0) then
 		lastShotIds[player] = math.floor(shotId)
 	end
-	fire(player, state, origin, direction, aiming == true)
+	fire(player, state, origin, direction, aiming == true, validId and shotId or 0, claims)
 	sendAmmo(player)
 end
 
