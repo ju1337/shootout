@@ -91,19 +91,13 @@ function actions.Unequip(player, slot)
 	return "Standard ausgerüstet.", true
 end
 
+-- Login-Kalender (früher: tägliche Belohnung)
 function actions.ClaimDaily(player)
-	local profile = ProgressService.Get(player)
-	if not profile then
-		return "Daten werden noch geladen.", false
-	end
-	local now = os.time()
-	local left = profile.LastDaily + Cosmetics.DailyCooldown - now
-	if left > 0 then
-		return string.format("Wieder verfügbar in %d h %d min.", left // 3600, (left % 3600) // 60), false
-	end
-	profile.LastDaily = now
-	ProgressService.AddCoins(player, Cosmetics.DailyReward, "Tägliche Belohnung")
-	return "+" .. Cosmetics.DailyReward .. " Münzen abgeholt!", true
+	return ProgressService.ClaimLogin(player)
+end
+
+function actions.SpinWheel(player)
+	return ProgressService.SpinWheel(player)
 end
 
 function actions.RedeemCode(player, code)

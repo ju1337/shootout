@@ -23,6 +23,7 @@ local RankEmblem = require(Shared.RankEmblem)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local InputActions = require(Shared.InputActions)
+local LoginConfig = require(Shared.LoginConfig)
 local PlayerSettings = require(Shared.PlayerSettings)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
@@ -43,7 +44,7 @@ local GREEN = UITheme.Colors.Good
 local DISPLAY = UITheme.Fonts.Display
 
 
-local gui, column, coinLabel, dailyDot, questDot
+local gui, column, coinLabel, dailyDot, questDot, wheelDot
 local panels = {}      -- [Name] = { Frame, Status, Refresh }
 local openPanel = nil
 
@@ -575,34 +576,163 @@ end
 
 -- ---------- TÄGLICH ----------
 
-local function dailyLeft()
-	return (player:GetAttribute("LastDaily") or 0) + Cosmetics.DailyCooldown - os.time()
+-- Login-Kalender: kann heute abgeholt werden?
+local function loginClaimable()
+	return LoginConfig.CanClaim(decodeAttribute(player, "LoginData"), workspace:GetServerTimeNow())
+end
+
+-- Glücksrad: gratis Dreh heute noch frei oder Extra-Drehs da?
+local function wheelReady()
+	local data = decodeAttribute(player, "WheelData")
+	return data.Date ~= LoginConfig.Date(workspace:GetServerTimeNow()) or (data.Spins or 0) > 0
+end
+
+local function rewardLines(reward)
+	local lines = {}
+	if reward.Coins then
+		table.insert(lines, formatNumber(reward.Coins) .. " Münzen")
+	end
+	if reward.BoostMinutes then
+		table.insert(lines, reward.BoostMinutes .. " Min. 2× XP")
+	end
+	if reward.Spins then
+		table.insert(lines, "+" .. reward.Spins .. " Glücksrad")
+	end
+	if reward.Item then
+		local item = Cosmetics.Get(reward.Item)
+		table.insert(lines, item and ("Skin " .. item.Name) or "Skin")
+	end
+	return table.concat(lines, "\n")
 end
 
 local function buildDaily()
-	local frame = makePanel("Daily", "TÄGLICHE BELOHNUNG", 560, 330)
-	text({ Position = UDim2.new(0, 24, 0, 80), Size = UDim2.new(1, -48, 0, 60),
-		Text = Cosmetics.DailyReward .. " MÜNZEN", TextSize = 48, Font = Enum.Font.Oswald,
-		TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Center }, frame)
-	text({ Position = UDim2.new(0, 24, 0, 144), Size = UDim2.new(1, -48, 0, 24),
-		Text = "Jeden Tag kostenlos abholen!", TextSize = 17, TextColor3 = GRAY,
-		TextXAlignment = Enum.TextXAlignment.Center }, frame)
-	local claim = button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 196),
-		Size = UDim2.new(0, 300, 0, 56), TextSize = 22, Text = "" }, frame, function()
+	local frame = makePanel("Daily", "LOGIN-BONUS", 940, 380)
+	text({ Position = UDim2.new(0, 24, 0, 62), Size = UDim2.new(1, -48, 0, 20),
+		Text = "Jeden Tag abholen – wer dranbleibt, rückt weiter. Einen Tag verpasst = zurück auf Tag 1.", TextSize = 15,
+		Font = UITheme.Fonts.Body, TextColor3 = GRAY }, frame)
+	local row = make("Frame", { Position = UDim2.new(0, 24, 0, 96), Size = UDim2.new(1, -48, 0, 170),
+		BackgroundTransparency = 1 }, frame)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10),
+		SortOrder = Enum.SortOrder.LayoutOrder }, row)
+	local cards = {}
+	for day, reward in LoginConfig.Days do
+		local big = day == #LoginConfig.Days
+		local card = make("Frame", { Size = UDim2.new(0, big and 152 or 108, 1, 0), BackgroundColor3 = CARD, LayoutOrder = day }, row)
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
+		local stroke = make("UIStroke", { Color = BORDER, Thickness = 1.5 }, card)
+		text({ Position = UDim2.new(0, 0, 0, 10), Size = UDim2.new(1, 0, 0, 18), Text = "TAG " .. day, TextSize = 14,
+			Font = DISPLAY, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		local coin = UITheme.Coin(card, big and 34 or 26, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 38) })
+		local info = text({ Position = UDim2.new(0, 6, 0, big and 80 or 72), Size = UDim2.new(1, -12, 0, 54),
+			Text = rewardLines(reward), TextSize = 13, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Top }, card)
+		local state = text({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -8), Size = UDim2.new(1, 0, 0, 16),
+			Text = "", TextSize = 12, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		cards[day] = { Card = card, Stroke = stroke, State = state, Info = info, Coin = coin }
+	end
+	local claim = button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 284),
+		Size = UDim2.new(0, 320, 0, 52), TextSize = 20, Text = "" }, frame, function()
 		Remotes.ShopAction:FireServer("ClaimDaily")
 	end)
 	panels.Daily.Refresh = function()
-		local left = dailyLeft()
-		if left <= 0 then
-			claim.Text = "ABHOLEN"
+		local now = workspace:GetServerTimeNow()
+		local data = decodeAttribute(player, "LoginData")
+		local claimable = LoginConfig.CanClaim(data, now)
+		local today = claimable and LoginConfig.NextDay(data, now) or (data.Day or 1)
+		for day, entry in cards do
+			local done = day < today or (not claimable and day == today)
+			local current = day == today
+			entry.Card.BackgroundColor3 = current and UITheme.Colors.Secondary or CARD
+			entry.Stroke.Color = done and GREEN or (current and ACCENT or BORDER)
+			entry.State.Text = done and "✓ ABGEHOLT" or (current and "HEUTE" or "")
+			entry.State.TextColor3 = done and GREEN or ACCENT
+		end
+		if claimable then
+			claim.Text = "TAG " .. today .. " ABHOLEN"
 			claim.BackgroundColor3 = ACCENT
 			claim.TextColor3 = ON_ACCENT
 		else
-			claim.Text = string.format("IN %d h %02d min", left // 3600, (left % 3600) // 60)
+			local left = 86400 - math.floor(now) % 86400
+			claim.Text = string.format("MORGEN WIEDER (%d h %02d min)", left // 3600, (left % 3600) // 60)
 			claim.BackgroundColor3 = UITheme.Colors.MutedBack
 			claim.TextColor3 = GRAY
 		end
 	end
+end
+
+-- ---------- GLÜCKSRAD ----------
+-- Acht Felder im Kreis, ein Zeiger in der Mitte dreht sich und bleibt auf dem Feld stehen, das der Server
+-- ausgelost hat (Remotes.WheelResult). Einmal am Tag gratis, dazu Extra-Drehs.
+
+local function buildWheel()
+	local frame = makePanel("Wheel", "GLÜCKSRAD", 620, 600)
+	local R = 190
+	local center = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 70),
+		Size = UDim2.new(0, R * 2, 0, R * 2), BackgroundColor3 = UITheme.Colors.Background }, frame)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, center)
+	make("UIStroke", { Color = UITheme.Colors.Gold, Thickness = 3 }, center)
+	local fields = {}
+	local count = #LoginConfig.Wheel
+	for i, field in LoginConfig.Wheel do
+		local a = math.rad((i - 1) * 360 / count)
+		local bubble = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, math.sin(a) * (R - 52), 0.5, -math.cos(a) * (R - 52)),
+			Size = UDim2.new(0, 76, 0, 76), BackgroundColor3 = field.Color }, center)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, bubble)
+		local stroke = make("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 0, Transparency = 0 }, bubble)
+		text({ Size = UDim2.new(1, -8, 1, 0), Position = UDim2.new(0, 4, 0, 0), Text = field.Text, TextSize = 18, Font = DISPLAY,
+			TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5, TextScaled = true }, bubble)
+		fields[i] = { Bubble = bubble, Stroke = stroke }
+	end
+	-- Zeiger: Halter in der Mitte (dreht sich), Pfeil zeigt nach oben
+	local spinner = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, R * 2, 0, R * 2), BackgroundTransparency = 1 }, center)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 8, 0, R - 100),
+		BackgroundColor3 = UITheme.Colors.Gold, BorderSizePixel = 0 }, spinner)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, -(R - 100)),
+		Size = UDim2.new(0, 22, 0, 22), Rotation = 45, BackgroundColor3 = UITheme.Colors.Gold, BorderSizePixel = 0 }, spinner)
+	local hub = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, 36, 0, 36), BackgroundColor3 = UITheme.Colors.Gold }, center)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, hub)
+	local result = text({ Position = UDim2.new(0, 24, 0, R * 2 + 82), Size = UDim2.new(1, -48, 0, 26), Text = "", TextSize = 20,
+		Font = DISPLAY, TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Center }, frame)
+	local spinning = false
+	local spin = button({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, R * 2 + 114),
+		Size = UDim2.new(0, 280, 0, 50), TextSize = 20, Text = "" }, frame, function()
+		if not spinning and wheelReady() then
+			spinning = true
+			result.Text = "..."
+			Remotes.ShopAction:FireServer("SpinWheel")
+			task.delay(8, function() -- Sicherheitsnetz, falls keine Antwort kommt
+				spinning = false
+			end)
+		end
+	end)
+	panels.Wheel.Refresh = function()
+		local data = decodeAttribute(player, "WheelData")
+		local free = data.Date ~= LoginConfig.Date(workspace:GetServerTimeNow())
+		local extra = data.Spins or 0
+		local ready = free or extra > 0
+		spin.Text = spinning and "DREHT ..." or (free and "GRATIS DREHEN" or (extra > 0 and ("EXTRA-DREH (" .. extra .. ")")
+			or "MORGEN WIEDER"))
+		spin.BackgroundColor3 = ready and UITheme.Colors.Gold or UITheme.Colors.MutedBack
+		spin.TextColor3 = ready and ON_ACCENT or GRAY
+	end
+	Remotes.WheelResult.OnClientEvent:Connect(function(index, text_)
+		for _, entry in fields do
+			entry.Stroke.Thickness = 0
+		end
+		local target = (index - 1) * 360 / count + 360 * 5
+		spinner.Rotation = spinner.Rotation % 360
+		local tween = TweenService:Create(spinner, TweenInfo.new(4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{ Rotation = target })
+		tween:Play()
+		tween.Completed:Wait()
+		fields[index].Stroke.Thickness = 4
+		result.Text = "GEWONNEN: " .. string.upper(tostring(text_))
+		spinning = false
+		panels.Wheel.Refresh()
+	end)
 end
 
 -- ---------- CODES ----------
@@ -1093,6 +1223,11 @@ local function buildPlayerCard()
 		bar.Size = UDim2.new(info.Progress, 0, 1, 0)
 		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
 			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")
+		-- Doppel-XP aktiv (Login-Kalender, Glücksrad)
+		local boost = (player:GetAttribute("XPBoostUntil") or 0) - workspace:GetServerTimeNow()
+		if boost > 0 then
+			xpLabel.Text ..= string.format("   ·   2× XP NOCH %d MIN", math.ceil(boost / 60))
+		end
 		prestigeButton.Visible = info.CanPrestige
 		-- Symbol-Knöpfe rutschen unter den Prestige-Knopf, solange er da ist
 		if column then
@@ -1106,7 +1241,8 @@ local function buildPlayerCard()
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(name)
-		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" or name == "Title" then
+		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" or name == "Title"
+			or name == "XPBoostUntil" then
 			refresh()
 		end
 	end)
@@ -1121,7 +1257,8 @@ local function buildColumn()
 		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80), "🎫" },
 		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
-		{ "TÄGLICH", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "🎁" },
+		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "📅" },
+		{ "GLÜCKSRAD", function() togglePanel("Wheel") end, Color3.fromRGB(212, 170, 80), "🎡" },
 		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
 		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230), "🏷" },
@@ -1143,11 +1280,13 @@ local function buildColumn()
 	end
 	updateColumnScale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
-	local daily, quests
+	local daily, quests, wheel
 	for i, entry in entries do
 		local b = sideButton(entry[1], i, entry[2], column, entry[3], entry[4])
-		if entry[1] == "TÄGLICH" then
+		if entry[1] == "LOGIN" then
 			daily = b
+		elseif entry[1] == "GLÜCKSRAD" then
+			wheel = b
 		elseif entry[1] == "AUFTRÄGE" then
 			quests = b
 		end
@@ -1162,6 +1301,7 @@ local function buildColumn()
 	end
 	questDot = notifyDot(quests)
 	dailyDot = notifyDot(daily)
+	wheelDot = notifyDot(wheel)
 
 	buildPlayerCard()
 	column:GetPropertyChangedSignal("Visible"):Connect(function()
@@ -1183,6 +1323,7 @@ function SideMenu.Init()
 	buildStats()
 	buildQuests()
 	buildDaily()
+	buildWheel()
 	buildCodes()
 	buildSettings()
 	buildRewards()
@@ -1197,7 +1338,7 @@ function SideMenu.Init()
 	end)
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly"
+		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly" or name == "LoginData" or name == "WheelData"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
 			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then
@@ -1216,7 +1357,8 @@ function SideMenu.Init()
 			if openPanel and not (inHub or lobby) then
 				setPanel(nil)
 			end
-			dailyDot.Visible = dailyLeft() <= 0
+			dailyDot.Visible = loginClaimable()
+			wheelDot.Visible = wheelReady()
 			questDot.Visible = questReady()
 			if openPanel == "Daily" then
 				panels.Daily.Refresh()

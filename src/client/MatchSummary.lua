@@ -455,7 +455,14 @@ function MatchSummary.Init()
 			order += 1
 			table.insert(fades, addLine(order, "KEINE BELOHNUNGEN IN DIESEM MATCH", nil, nil, C.Muted))
 		end
-		rewardNote.Text = progress.AgentOfWeek and "INKL. +50 % XP · AGENT DER WOCHE" or ""
+		local notes = {}
+		if progress.AgentOfWeek then
+			table.insert(notes, "+50 % XP · AGENT DER WOCHE")
+		end
+		if progress.DoubleXP then
+			table.insert(notes, "DOPPEL-XP")
+		end
+		rewardNote.Text = #notes > 0 and ("INKL. " .. table.concat(notes, "  ·  ")) or ""
 
 		-- SPIELERLEVEL: Startzustand
 		local lv = progress.Level or {}

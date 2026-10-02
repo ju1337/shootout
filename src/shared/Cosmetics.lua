@@ -68,6 +68,11 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(110, 170, 255), Material = Enum.Material.Glass },
 	{ Id = "W_SE_Champion", Type = "Weapon", Name = "Champion", Rarity = "Legendary", Reward = true,
 		Color = Color3.fromRGB(220, 90, 255), Material = Enum.Material.Neon },
+	-- Login-Kalender Tag 7 und Glücksrad (LoginConfig)
+	{ Id = "W_Kalender", Type = "Weapon", Name = "Treue", Rarity = "Legendary", Reward = true,
+		Color = Color3.fromRGB(255, 120, 60), Material = Enum.Material.Foil },
+	{ Id = "W_Gluecksklee", Type = "Weapon", Name = "Glücksklee", Rarity = "Epic", Reward = true,
+		Color = Color3.fromRGB(60, 200, 110), Material = Enum.Material.Glass },
 	-- Wochen-Bonus (QuestConfig.WeeklyBonus): wechselt jede Woche
 	{ Id = "W_Woche_Kobalt", Type = "Weapon", Name = "Kobalt", Rarity = "Epic", Reward = true,
 		Color = Color3.fromRGB(40, 80, 200), Material = Enum.Material.Foil },

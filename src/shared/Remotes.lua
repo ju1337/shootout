@@ -43,6 +43,7 @@ local NAMES = {
 	"DamageFrom", -- Server -> Opfer: Treffer aus Richtung (Position des Angreifers, Schaden)
 	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
 	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity, Key }) – Karte (Notifications)
+	"WheelResult", -- Server -> Client: Glücksrad-Ergebnis (Feld-Nummer, Text) – Client dreht das Rad dorthin
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 }
 

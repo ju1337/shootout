@@ -21,6 +21,7 @@ local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local TitleConfig = require(Shared.TitleConfig)
+local LoginConfig = require(Shared.LoginConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 
@@ -126,6 +127,113 @@ function ProgressService.Sync(player)
 	ensureWeekly(player, profile)
 	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
 	player:SetAttribute("Title", profile.Title or TitleConfig.Default)
+	player:SetAttribute("LoginData", HttpService:JSONEncode(profile.Login or {}))
+	player:SetAttribute("WheelData", HttpService:JSONEncode(profile.Wheel or {}))
+	player:SetAttribute("XPBoostUntil", profile.XPBoostUntil or 0)
+end
+
+-- ---------- Doppel-XP, Login-Kalender, Glücksrad (LoginConfig) ----------
+
+-- Doppel-XP für minutes Minuten (verlängert einen laufenden Boost)
+function ProgressService.AddXPBoost(player, minutes)
+	local profile = profiles[player]
+	if profile then
+		profile.XPBoostUntil = math.max(profile.XPBoostUntil or 0, os.time()) + minutes * 60
+		ProgressService.Sync(player)
+	end
+end
+
+-- Extra-Drehs fürs Glücksrad (Kalender-Tag 7, später Robux-Shop)
+function ProgressService.AddSpins(player, amount)
+	local profile = profiles[player]
+	if profile then
+		profile.Wheel = profile.Wheel or {}
+		profile.Wheel.Spins = (profile.Wheel.Spins or 0) + amount
+		ProgressService.Sync(player)
+	end
+end
+
+-- Belohnung (Coins, BoostMinutes, Spins, Item) geben; gibt die Textzeilen fürs Popup zurück
+local function giveBundle(player, profile, reward, reason)
+	local lines = {}
+	local coins = reward.Coins or 0
+	local item = reward.Item and Cosmetics.Get(reward.Item)
+	if item and not profile.Owned[item.Id] then
+		profile.Owned[item.Id] = true
+		ProgressService.LedgerItem(player, item.Name, item.Rarity)
+		table.insert(lines, "Neuer Skin: " .. item.Name)
+		if reward.Item and reward.Coins and reward.Text == "SKIN" then
+			coins = 0 -- Glücksrad: Skin statt Münzen
+		end
+	end
+	if coins > 0 then
+		ProgressService.AddCoins(player, coins, reason)
+		table.insert(lines, 1, "+" .. coins .. " Münzen")
+	end
+	if reward.BoostMinutes then
+		ProgressService.AddXPBoost(player, reward.BoostMinutes)
+		table.insert(lines, reward.BoostMinutes .. " Min. Doppel-XP")
+	end
+	if reward.Spins then
+		ProgressService.AddSpins(player, reward.Spins)
+		table.insert(lines, "+" .. reward.Spins .. " Glücksrad-Dreh")
+	end
+	ProgressService.Sync(player)
+	return lines
+end
+
+-- Login-Kalender: heutigen Tag abholen
+function ProgressService.ClaimLogin(player)
+	local profile = profiles[player]
+	if not profile then
+		return "Daten werden noch geladen.", false
+	end
+	local now = workspace:GetServerTimeNow()
+	profile.Login = profile.Login or {}
+	if not LoginConfig.CanClaim(profile.Login, now) then
+		return "Heute schon abgeholt – morgen geht's weiter.", false
+	end
+	local day = LoginConfig.NextDay(profile.Login, now)
+	profile.Login = { Day = day, Date = LoginConfig.Date(now) }
+	local lines = giveBundle(player, profile, LoginConfig.Days[day], "Login-Bonus")
+	Remotes.Reward:FireClient(player, { Title = "LOGIN-BONUS · TAG " .. day, Lines = lines,
+		Rarity = day == #LoginConfig.Days and "Legendary" or nil })
+	return "Tag " .. day .. " abgeholt!", true
+end
+
+-- Glücksrad drehen (einmal am Tag gratis, sonst mit Extra-Dreh). Das Ergebnis geht als WheelResult an den
+-- Client, der das Rad dorthin dreht; die Meldung kommt erst danach (darum hier kein Text).
+function ProgressService.SpinWheel(player)
+	local profile = profiles[player]
+	if not profile then
+		return "Daten werden noch geladen.", false
+	end
+	local now = workspace:GetServerTimeNow()
+	profile.Wheel = profile.Wheel or {}
+	if profile.Wheel.Date == LoginConfig.Date(now) then
+		if (profile.Wheel.Spins or 0) <= 0 then
+			return "Heute schon gedreht. Extra-Drehs gibt es im Login-Kalender.", false
+		end
+		profile.Wheel.Spins -= 1
+	else
+		profile.Wheel.Date = LoginConfig.Date(now)
+	end
+	local total = 0
+	for _, field in LoginConfig.Wheel do
+		total += field.Weight
+	end
+	local roll, index = math.random() * total, #LoginConfig.Wheel
+	for i, field in LoginConfig.Wheel do
+		roll -= field.Weight
+		if roll <= 0 then
+			index = i
+			break
+		end
+	end
+	local field = LoginConfig.Wheel[index]
+	local lines = giveBundle(player, profile, field, "Glücksrad")
+	Remotes.WheelResult:FireClient(player, index, table.concat(lines, "  ·  "))
+	return nil
 end
 
 -- Daten für die Titel-Prüfung (TitleConfig.Progress)
@@ -220,10 +328,15 @@ local function record(player, reason, xp, coins)
 		return
 	end
 	reason = tostring(reason or "Bonus")
-	-- "Kill · Agent der Woche" zählt als "Kill", der Bonus steht einmal unten in der Übersicht
-	local suffix = string.find(reason, " · Agent der Woche", 1, true)
-	if suffix then
+	-- "Kill · Agent der Woche" / "Kill · Doppel-XP" zählt als "Kill", der Bonus steht einmal unten in der Übersicht
+	if string.find(reason, " · Agent der Woche", 1, true) then
 		ledger.AgentOfWeek = true
+	end
+	if string.find(reason, " · Doppel-XP", 1, true) then
+		ledger.DoubleXP = true
+	end
+	local suffix = string.find(reason, " · ", 1, true)
+	if suffix then
 		reason = string.sub(reason, 1, suffix - 1)
 	end
 	local line = ledger.Lines[reason]
@@ -270,6 +383,7 @@ function ProgressService.TakeLedger(player)
 		Coins = ledger.Coins,
 		Items = ledger.Items,
 		AgentOfWeek = ledger.AgentOfWeek == true,
+		DoubleXP = ledger.DoubleXP == true,
 		Level = {
 			Before = beforeLevel,
 			BeforeProgress = beforeNeeded > 0 and beforeXP / beforeNeeded or 1,
@@ -647,6 +761,11 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 	if reason ~= "Admin" and agentId == AgentConfig.AgentOfWeek().Id then
 		amount = math.floor(amount * AgentConfig.AgentOfWeekXP)
 		reason = tostring(reason) .. " · Agent der Woche"
+	end
+	-- Doppel-XP (Login-Kalender, Glücksrad)
+	if reason ~= "Admin" and (profile.XPBoostUntil or 0) > os.time() then
+		amount *= 2
+		reason = tostring(reason) .. " · Doppel-XP"
 	end
 	if amount <= 0 then
 		return 0
