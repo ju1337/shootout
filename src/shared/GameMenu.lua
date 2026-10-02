@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
@@ -325,9 +326,27 @@ local function buildBottomBar()
 		GameMenu.SetOpen(false)
 	end)
 
-	label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 862), Size = UDim2.new(0, 1200, 0, 20),
-		Text = "M Menü  ·  Q Fähigkeit  ·  G Gadget  ·  V Messer  ·  Z Ping  ·  T Kamera  ·  X Schulter  ·  Rechtsklick Zielen  ·  STRG Ducken/Slide  ·  E Aktion  ·  Tab Punkte",
-		TextSize = 13, Font = F.Body, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
+	-- Steuerungs-Hinweise passend zum Gerät (Tastatur, Controller oder Touch)
+	local hints = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 862), Size = UDim2.new(0, 1400, 0, 20),
+		Text = "", TextSize = 13, Font = F.Body, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, canvas)
+	local function updateHints()
+		if InputActions.IsTouch() then
+			hints.Text = "Alle Aktionen über die Knöpfe am Bildschirmrand  ·  links bewegen, rechts wischen zum Umsehen"
+			return
+		end
+		local parts = {}
+		for _, entry in { { "Fire", "Schießen" }, { "Aim", "Zielen" }, { "Ability", "Fähigkeit" }, { "Gadget", "Gadget" },
+			{ "Reload", "Nachladen" }, { "Melee", "Messer" }, { "Crouch", "Ducken/Slide" }, { "Sprint", "Sprinten" },
+			{ "Interact", "Aktion" }, { "Ping", "Ping" }, { "Camera", "Kamera" }, { "Scoreboard", "Punkte" }, { "Menu", "Menü" } } do
+			local key = InputActions.Hint(entry[1])
+			if key ~= "" then
+				table.insert(parts, key .. " " .. entry[2])
+			end
+		end
+		hints.Text = table.concat(parts, "  ·  ")
+	end
+	updateHints()
+	InputActions.DeviceChanged:Connect(updateHints)
 end
 
 -- Menü öffnen/schließen. Solange offen: Maus frei, Hintergrund unscharf.
@@ -339,6 +358,12 @@ function GameMenu.SetOpen(open: boolean)
 	gui.Enabled = open
 	openButton.Visible = inHub and not open
 	UITheme.SetBlur("GameMenu", open)
+	-- Controller: Auswahl auf den Spielen-Knopf setzen bzw. beim Schließen aufheben
+	if open and InputActions.Device() == "Gamepad" then
+		GuiService.SelectedObject = playButton
+	elseif not open and GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(gui) then
+		GuiService.SelectedObject = nil
+	end
 	if open then
 		background.BackgroundTransparency = 1
 		TweenService:Create(background, TweenInfo.new(0.2), { BackgroundTransparency = 0.25 }):Play()
@@ -392,12 +417,25 @@ function GameMenu.Init()
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9 },
 		player.PlayerGui)
 	openButton = UITheme.Button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -34),
-		Size = UDim2.new(0, 300, 0, 64), TextSize = 30, Text = "SPIELEN   [M]", BackgroundColor3 = C.Play,
+		Size = UDim2.new(0, 300, 0, 64), TextSize = 30, Text = "SPIELEN", BackgroundColor3 = C.Play,
 		TextColor3 = Color3.fromRGB(20, 16, 10), Visible = false }, openGui, function()
 		GameMenu.SetOpen(true)
 	end)
 
-	-- Menü-Taste (M bzw. Touchpad/Select): nur im Hub bzw. wenn das Menü offen ist
+	-- Controller: ○ schließt das Menü
+	UserInputService.InputBegan:Connect(function(input)
+		if isOpen and input.KeyCode == Enum.KeyCode.ButtonB then
+			GameMenu.SetOpen(false)
+		end
+	end)
+	-- Spielen-Knopf zeigt die Taste des aktuellen Geräts
+	local function updateOpenButton()
+		local key = InputActions.Hint("Menu")
+		openButton.Text = key ~= "" and ("SPIELEN   [" .. key .. "]") or "SPIELEN"
+	end
+	updateOpenButton()
+	InputActions.DeviceChanged:Connect(updateOpenButton)
+	-- Menü-Taste (M bzw. Steuerkreuz unten): nur im Hub bzw. wenn das Menü offen ist
 	InputActions.Bind("Menu", function(began)
 		if began and (isOpen or not Modes.IsFighting(player)) then
 			GameMenu.SetOpen(not isOpen)

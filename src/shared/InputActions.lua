@@ -24,7 +24,8 @@ InputActions.Bindings = {
 	Crouch = { Keys = { Enum.KeyCode.LeftControl, Enum.KeyCode.C }, Pad = { Enum.KeyCode.ButtonB } },
 	Ping = { Keys = { Enum.KeyCode.Z }, Pad = { Enum.KeyCode.DPadUp } },
 	Scoreboard = { Keys = { Enum.KeyCode.Tab }, Pad = { Enum.KeyCode.ButtonSelect } },
-	Menu = { Keys = { Enum.KeyCode.M }, Pad = { Enum.KeyCode.ButtonSelect } },
+	-- Select/Touchpad lässt Roblox auf Konsolen die Menü-Knöpfe auswählen, darum Steuerkreuz unten
+	Menu = { Keys = { Enum.KeyCode.M }, Pad = { Enum.KeyCode.DPadDown } },
 	Camera = { Keys = { Enum.KeyCode.T }, Pad = { Enum.KeyCode.DPadLeft } },
 	Shoulder = { Keys = { Enum.KeyCode.X }, Pad = { Enum.KeyCode.DPadRight } },
 	SpectatePrev = { Keys = { Enum.KeyCode.Q }, Pad = { Enum.KeyCode.ButtonL1 } },
