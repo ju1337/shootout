@@ -123,6 +123,22 @@ function ModeManager.Init()
 		end
 	end)
 
+	-- Spielerzahlen pro Modus (für Menü-Karten und Einsatz-Tafel im Hub)
+	task.spawn(function()
+		local HttpService = game:GetService("HttpService")
+		while true do
+			local counts = {}
+			for _, player in Players:GetPlayers() do
+				local mode = player:GetAttribute("Mode")
+				if mode then
+					counts[mode] = (counts[mode] or 0) + 1
+				end
+			end
+			game:GetService("ReplicatedStorage"):SetAttribute("ModeCounts", HttpService:JSONEncode(counts))
+			task.wait(2)
+		end
+	end)
+
 	-- Neue Spieler starten im Hub
 	local function onPlayerAdded(player)
 		ModeManager.Join(player, "Hub")

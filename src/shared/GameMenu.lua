@@ -126,6 +126,8 @@ local function buildModePage()
 			TextYAlignment = Enum.TextYAlignment.Top }, card)
 		label({ Position = UDim2.new(0, 22, 1, -32), Size = UDim2.new(0.6, 0, 0, 20), Text = "👥  " .. mode.Players,
 			TextSize = 13, TextColor3 = C.Muted }, card)
+		local live = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 1, -32), Size = UDim2.new(0.4, 0, 0, 20),
+			Text = "", TextSize = 13, TextColor3 = C.Good, TextXAlignment = Enum.TextXAlignment.Right }, card)
 		if faded then
 			local soon = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 18), Size = UDim2.new(0, 80, 0, 26),
 				Text = "BALD", TextSize = 13, BackgroundTransparency = 0, BackgroundColor3 = C.Border,
@@ -135,7 +137,7 @@ local function buildModePage()
 		card.Activated:Connect(function()
 			selectMode(mode)
 		end)
-		modeCards[mode] = { Card = card, Stroke = stroke }
+		modeCards[mode] = { Card = card, Stroke = stroke, Live = live }
 	end
 end
 
@@ -363,6 +365,19 @@ function GameMenu.Init()
 	buildAgentPage()
 	selectMode(Modes.List[1])
 	showTab("Modes")
+
+	-- Live-Spielerzahlen auf den Modus-Karten
+	local function updateCounts()
+		local raw = ReplicatedStorage:GetAttribute("ModeCounts")
+		local ok, counts = pcall(game:GetService("HttpService").JSONDecode, game:GetService("HttpService"), raw or "{}")
+		counts = ok and counts or {}
+		for mode, entry in modeCards do
+			local n = counts[mode.Id] or 0
+			entry.Live.Text = n > 0 and ("● " .. n .. " spielen") or ""
+		end
+	end
+	updateCounts()
+	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(updateCounts)
 
 	-- Im Hub: großer Knopf unten mittig öffnet das Menü
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9 },

@@ -655,6 +655,8 @@ def build_lobby():
               props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
     b.sign("BriefingScreen", (34, 10, 0.6), (0, 18, 26), "SHOOTOUT", (12, 20, 32), CYAN)
     b.sign("BriefingSub", (34, 2.6, 0.6), (0, 11.6, 26), "TACTICAL OPERATIONS", (12, 20, 32), (235, 242, 248))
+    # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
+    b.box("Decor", "MissionBoard", (26, 14, 0.6), (0, 14, D0 + 0.4), (12, 20, 32), "SmoothPlastic", angles=(0, 180, 0))
 
     # ---------- Einsatz-Tore an den Seitenwänden ----------
     def gate(x, z, yaw, inward, mode_id, title):

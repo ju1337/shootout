@@ -3811,6 +3811,52 @@
      ]
     },
     {
+     "Name": "MissionBoard",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       26,
+       14,
+       0.6
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         0,
+         14,
+         -39.6
+        ],
+        "orientation": [
+         [
+          -1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          1.0,
+          0.0
+         ],
+         [
+          -0.0,
+          0.0,
+          -1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.0471,
+       0.0784,
+       0.1255
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
      "Name": "GateFrameL",
      "ClassName": "Part",
      "Properties": {
