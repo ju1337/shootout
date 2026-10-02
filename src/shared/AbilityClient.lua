@@ -12,6 +12,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
+local UITheme = require(Shared.UITheme)
+local C = UITheme.Colors
 
 local player = Players.LocalPlayer
 
@@ -47,34 +49,44 @@ function AbilityClient.Init()
 	box.AnchorPoint = Vector2.new(0.5, 1)
 	box.Position = UDim2.new(0.5, 0, 1, -24)
 	box.Size = UDim2.new(0, 240, 0, 62)
-	box.BackgroundColor3 = Color3.fromRGB(15, 17, 24)
-	box.BackgroundTransparency = 0.25
+	box.BackgroundColor3 = C.Panel
+	box.BackgroundTransparency = 0.15
 	box.BorderSizePixel = 0
 	box.Parent = gui
-	Instance.new("UICorner").Parent = box
+	UITheme.Corner(box, 3)
+	UITheme.Gradient(box, Color3.fromRGB(26, 40, 60), C.Panel)
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2
+	stroke.Thickness = 1.5
 	stroke.Parent = box
+	-- Ladebalken unten in der Box
+	local cooldownBar = Instance.new("Frame")
+	cooldownBar.Name = "Bar"
+	cooldownBar.AnchorPoint = Vector2.new(0, 1)
+	cooldownBar.Position = UDim2.new(0, 0, 1, 0)
+	cooldownBar.Size = UDim2.new(1, 0, 0, 3)
+	cooldownBar.BorderSizePixel = 0
+	cooldownBar.Parent = box
 
 	local keyLabel = Instance.new("TextLabel")
 	keyLabel.Position = UDim2.new(0, 10, 0.5, -18)
 	keyLabel.Size = UDim2.new(0, 36, 0, 36)
-	keyLabel.BackgroundColor3 = Color3.fromRGB(40, 44, 58)
+	keyLabel.BackgroundColor3 = C.Card
 	keyLabel.Font = Enum.Font.Oswald
 	keyLabel.TextSize = 20
 	keyLabel.TextColor3 = Color3.new(1, 1, 1)
 	keyLabel.Text = AgentConfig.AbilityKey.Name
 	keyLabel.Name = "Key"
 	keyLabel.Parent = box
-	Instance.new("UICorner").Parent = keyLabel
+	UITheme.Corner(keyLabel, 3)
+	UITheme.Stroke(keyLabel, C.Border, 1)
 
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "Title"
 	nameLabel.Position = UDim2.new(0, 56, 0, 8)
 	nameLabel.Size = UDim2.new(1, -66, 0, 24)
 	nameLabel.BackgroundTransparency = 1
-	nameLabel.Font = Enum.Font.GothamBold
-	nameLabel.TextSize = 18
+	nameLabel.Font = UITheme.Fonts.Title
+	nameLabel.TextSize = 20
 	nameLabel.TextColor3 = Color3.new(1, 1, 1)
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.Parent = box
@@ -84,7 +96,7 @@ function AbilityClient.Init()
 	stateLabel.Position = UDim2.new(0, 56, 0, 32)
 	stateLabel.Size = UDim2.new(1, -66, 0, 20)
 	stateLabel.BackgroundTransparency = 1
-	stateLabel.Font = Enum.Font.Gotham
+	stateLabel.Font = UITheme.Fonts.Title
 	stateLabel.TextSize = 15
 	stateLabel.TextXAlignment = Enum.TextXAlignment.Left
 	stateLabel.Parent = box
@@ -139,8 +151,15 @@ function AbilityClient.Init()
 	gadgetBox.Size = UDim2.new(0, 220, 0, 62)
 	gadgetBox.Parent = gui
 	gadgetBox.Key.Text = AgentConfig.GadgetKey.Name
-	gadgetBox:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(255, 140, 40)
+	gadgetBox:FindFirstChildOfClass("UIStroke").Color = C.Border
 	local gadgetName, gadgetCount = gadgetBox.Title, gadgetBox.State
+	gadgetBox.Bar.BackgroundColor3 = C.Accent
+
+	-- Gesamtdauer der aktuellen Abklingzeit (für den Ladebalken)
+	local cooldownTotal = 1
+	player:GetAttributeChangedSignal("AbilityReadyAt"):Connect(function()
+		cooldownTotal = math.max(1, (player:GetAttribute("AbilityReadyAt") or 0) - workspace:GetServerTimeNow())
+	end)
 
 	-- Weißer Blitz beim Geblendet-werden
 	local flash = Instance.new("Frame")
@@ -181,8 +200,9 @@ function AbilityClient.Init()
 		stroke.Color = agent.Color
 		local charges = player:GetAttribute("Gadgets") or 0
 		gadgetName.Text = agent.Gadget.Name
-		gadgetCount.Text = charges > 0 and ("× " .. charges) or "aufgebraucht"
-		gadgetCount.TextColor3 = charges > 0 and Color3.fromRGB(110, 220, 120) or Color3.fromRGB(170, 175, 190)
+		gadgetCount.Text = charges > 0 and ("× " .. charges) or "AUFGEBRAUCHT"
+		gadgetCount.TextColor3 = charges > 0 and C.Good or C.Muted
+		gadgetBox.Bar.Size = UDim2.new(charges > 0 and 1 or 0, 0, 0, 3)
 
 		local now = workspace:GetServerTimeNow()
 		local activeLeft = (player:GetAttribute("AbilityActiveUntil") or 0) - now
@@ -190,12 +210,18 @@ function AbilityClient.Init()
 		if activeLeft > 0 then
 			stateLabel.Text = string.format("AKTIV  %.1fs", activeLeft)
 			stateLabel.TextColor3 = agent.Color
+			cooldownBar.Size = UDim2.new(1, 0, 0, 3)
+			cooldownBar.BackgroundColor3 = agent.Color
 		elseif cooldownLeft > 0 then
-			stateLabel.Text = string.format("Lädt  %ds", math.ceil(cooldownLeft))
-			stateLabel.TextColor3 = Color3.fromRGB(170, 175, 190)
+			stateLabel.Text = string.format("LÄDT  %ds", math.ceil(cooldownLeft))
+			stateLabel.TextColor3 = C.Muted
+			cooldownBar.Size = UDim2.new(math.clamp(1 - cooldownLeft / cooldownTotal, 0, 1), 0, 0, 3)
+			cooldownBar.BackgroundColor3 = C.Muted
 		else
 			stateLabel.Text = "BEREIT"
-			stateLabel.TextColor3 = Color3.fromRGB(110, 220, 120)
+			stateLabel.TextColor3 = C.Good
+			cooldownBar.Size = UDim2.new(1, 0, 0, 3)
+			cooldownBar.BackgroundColor3 = C.Good
 		end
 	end)
 end
