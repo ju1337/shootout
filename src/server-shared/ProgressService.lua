@@ -4,11 +4,15 @@
 -- das Spiel veröffentlicht ist und in Studio "API Services" erlaubt sind - sonst nur für die Sitzung).
 -- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON), Equipped (JSON), LastDaily,
 -- Quests (JSON)
+-- Sicherheit der Spielstände: Laden und Speichern über SessionStore (Sitzungssperre pro Server, Speichern nur mit
+-- eigener Sperre, Wiederholungen bei DataStore-Fehlern). Lässt sich ein Profil gar nicht laden, wird der Spieler im
+-- Live-Spiel mit Hinweis gekickt (sonst spielte er ohne Speichern weiter, Fortschritt und Käufe gingen verloren).
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -25,14 +29,17 @@ local LoginConfig = require(Shared.LoginConfig)
 local RobuxConfig = require(Shared.RobuxConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
+local SessionStore = require(script.Parent.SessionStore)
 
 local ProgressService = {}
 
-local AUTOSAVE_INTERVAL = 120 -- Sekunden
+local AUTOSAVE_INTERVAL = 120 -- Sekunden (erneuert auch die Sitzungssperre, siehe SessionStore.LockTimeout)
+local SHUTDOWN_WAIT = 25      -- beim Herunterfahren höchstens so lange auf das Speichern warten
+local LOAD_FAILED = "Dein Spielstand konnte gerade nicht geladen werden. Bitte tritt gleich noch einmal bei."
 
-local store = nil
+local store = nil   -- SessionStore (nil ohne DataStore, z.B. Studio ohne API-Zugriff)
 local profiles = {} -- [Player] = Profil
-local loaded = {}   -- [Player] = true, wenn erfolgreich geladen (nur dann speichern)
+local loaded = {}   -- [Player] = true, wenn erfolgreich geladen und gesperrt (nur dann speichern)
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
@@ -616,31 +623,50 @@ local function load(player)
 	if not store then
 		return
 	end
-	local ok, result = pcall(store.GetAsync, store, key(player))
-	if ok then
-		profiles[player] = toProfile(result)
-		checkSeason(player, profiles[player]) -- neue Ranked-Saison seit dem letzten Besuch?
-		loaded[player] = true
-		ProgressService.Sync(player)
-	else
-		warn("Spielerdaten konnten nicht geladen werden: " .. tostring(result))
-	end
-end
-
-local function save(player)
-	local profile = profiles[player]
-	if not store or not loaded[player] or not profile then
+	local status, result = store:Load(key(player), function()
+		return player.Parent ~= nil
+	end)
+	if status == "gone" then
 		return
 	end
-	local ok, err = pcall(store.SetAsync, store, key(player), profile)
-	if not ok then
-		warn("Spielerdaten konnten nicht gespeichert werden: " .. tostring(err))
+	if status ~= "ok" then
+		warn("Spielerdaten konnten nicht geladen werden: " .. tostring(result))
+		if not RunService:IsStudio() then
+			player:Kick(LOAD_FAILED) -- nicht ohne Speichern weiterspielen
+		end
+		return
 	end
+	local profile = toProfile(result)
+	profiles[player] = profile
+	checkSeason(player, profile) -- neue Ranked-Saison seit dem letzten Besuch?
+	loaded[player] = true
+	ProgressService.Sync(player)
 end
 
--- Sofort speichern (z.B. nach einem Robux-Kauf)
+-- Speichern (nur mit eigener Sperre). release = Sperre dabei freigeben (Spieler geht, Server fährt herunter).
+-- Gibt true zurück, wenn der Stand sicher gespeichert ist.
+local function save(player, release)
+	local profile = profiles[player]
+	if not store or not loaded[player] or not profile then
+		return false
+	end
+	local status, err = store:Save(key(player), profile, release)
+	if status == "lost" then
+		loaded[player] = nil -- ein anderer Server hat das Profil übernommen: hier nicht mehr speichern
+		warn("Spielerdaten von " .. player.Name .. " werden inzwischen auf einem anderen Server gespeichert")
+	elseif status ~= "ok" then
+		warn("Spielerdaten konnten nicht gespeichert werden: " .. tostring(err))
+	end
+	return status == "ok"
+end
+
+-- Sofort speichern (z.B. nach einem Robux-Kauf). Gibt true zurück, wenn der Stand sicher gespeichert ist – ohne
+-- DataStore (unveröffentlichter Ort in Studio) gibt es nichts zu speichern, der Stand gilt nur für die Sitzung.
 function ProgressService.SaveNow(player)
-	save(player)
+	if not store then
+		return profiles[player] ~= nil
+	end
+	return save(player)
 end
 
 -- Profil fertig geladen? (ohne DataStore, z.B. in Studio: sobald das Profil da ist)
@@ -872,7 +898,11 @@ function ProgressService.Init()
 		return DataStoreService:GetDataStore("PlayerData_v1")
 	end)
 	if ok then
-		store = result
+		store = SessionStore.new(result, {
+			-- Kennung dieses Servers für die Sperre (in Studio ist JobId leer)
+			SessionId = game.JobId ~= "" and game.JobId or ("studio-" .. HttpService:GenerateGUID(false)),
+			Retries = RunService:IsStudio() and 1 or nil, -- ohne API-Zugriff in Studio hilft Warten nicht
+		})
 	else
 		warn("DataStore nicht verfügbar, Fortschritt wird nicht gespeichert: " .. tostring(result))
 	end
@@ -882,14 +912,24 @@ function ProgressService.Init()
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
-		save(player)
+		save(player, true)
 		profiles[player] = nil
 		loaded[player] = nil
 		ledgers[player] = nil
 	end)
+	-- Herunterfahren: alle gleichzeitig speichern (nacheinander reicht die Zeit bei vielen Spielern nicht)
 	game:BindToClose(function()
+		local pending = 0
 		for _, player in Players:GetPlayers() do
-			save(player)
+			pending += 1
+			task.spawn(function()
+				save(player, true)
+				pending -= 1
+			end)
+		end
+		local deadline = os.clock() + SHUTDOWN_WAIT
+		while pending > 0 and os.clock() < deadline do
+			task.wait(0.1)
 		end
 	end)
 	-- Saisonwechsel, während Spieler online sind

@@ -221,6 +221,18 @@ XP, Münzen, Skins, Rangpunkte, Battle Pass und Aufträge liegen im DataStore. D
 wenn das Spiel veröffentlicht ist und in Studio "Enable Studio Access to API Services" an ist –
 vorher gilt alles nur für die Sitzung.
 
+Schutz der Spielstände (`src/server-shared/SessionStore.lua`, genutzt von `ProgressService`):
+- **Sitzungssperre:** Jeder Server sperrt die Profile seiner Spieler (Feld `Session` im gespeicherten Profil, beim
+  Autosave alle 2 Minuten erneuert) und speichert nur, solange er die Sperre hält (`UpdateAsync`). Nach einem
+  schnellen Serverwechsel kann der alte Server so keinen neueren Stand überschreiben; der neue Server wartet, bis
+  der alte beim Verlassen gespeichert und freigegeben hat. Hängt die Sperre an einem abgestürzten Server, wird sie
+  nach 20 s übernommen (eine 5 Minuten lang nicht erneuerte sofort).
+- **Wiederholungen:** DataStore-Fehler werden bis zu 4-mal mit wachsender Pause wiederholt. Lässt sich ein Profil
+  gar nicht laden, wird der Spieler im Live-Spiel mit Hinweis gekickt – sonst spielte er ohne Speichern weiter.
+- **Herunterfahren:** alle Spieler werden gleichzeitig gespeichert und freigegeben (höchstens 25 s).
+- **Robux-Käufe** (`RobuxService`): Ein Kauf wird Roblox erst bestätigt, wenn der Stand mit dem Kauf sicher
+  gespeichert ist; sonst fragt Roblox später erneut (jede Kauf-Nummer wird trotzdem nur einmal gutgeschrieben).
+
 ## Ordner
 
 - `src/shared` – Client + Server: Konfigurationen, Waffen-Client (ViewModel = Ego-Waffe, CharacterPose =

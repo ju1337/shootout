@@ -79,19 +79,23 @@ function RobuxService.Init()
 			return Enum.ProductPurchaseDecision.NotProcessedYet -- später nochmal (z.B. Profil lädt noch)
 		end
 		profile.Receipts = profile.Receipts or {}
-		if table.find(profile.Receipts, receipt.PurchaseId) then
-			return Enum.ProductPurchaseDecision.PurchaseGranted -- schon gutgeschrieben
+		if not table.find(profile.Receipts, receipt.PurchaseId) then
+			local ok, err = pcall(grant, player, profile, product)
+			if not ok then
+				warn("Robux-Kauf fehlgeschlagen: " .. tostring(err))
+				return Enum.ProductPurchaseDecision.NotProcessedYet
+			end
+			table.insert(profile.Receipts, receipt.PurchaseId)
+			while #profile.Receipts > RECEIPT_MEMORY do
+				table.remove(profile.Receipts, 1)
+			end
 		end
-		local ok, err = pcall(grant, player, profile, product)
-		if not ok then
-			warn("Robux-Kauf fehlgeschlagen: " .. tostring(err))
+		-- Erst bestätigen, wenn der Stand mit dem Kauf sicher gespeichert ist. Sonst fragt Roblox später erneut:
+		-- im selben Server ist der Kauf dann schon gutgeschrieben (nur speichern), nach einem Absturz oder
+		-- Serverwechsel fehlt er im geladenen Stand und wird dort gutgeschrieben.
+		if not ProgressService.SaveNow(player) then
 			return Enum.ProductPurchaseDecision.NotProcessedYet
 		end
-		table.insert(profile.Receipts, receipt.PurchaseId)
-		while #profile.Receipts > RECEIPT_MEMORY do
-			table.remove(profile.Receipts, 1)
-		end
-		ProgressService.SaveNow(player)
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 end
