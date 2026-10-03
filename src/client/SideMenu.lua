@@ -1458,7 +1458,9 @@ function SideMenu.Init()
 			local inHub = Modes.IsSocial(player:GetAttribute("Mode")) -- Hub oder Markt
 			marketCaption.Text = player:GetAttribute("Mode") == Modes.Market.Id and "ZUM HUB" or "MARKT"
 			local lobby = GameMenu.IsOpen()
-			column.Visible = inHub and not lobby
+			-- Markt- und Tausch-Fenster liegen in der Mitte: Menüliste solange weg (sie läge darüber)
+			local covered = UITheme.IsMenuOpenBy("Market") or UITheme.IsMenuOpenBy("Trade")
+			column.Visible = inHub and not lobby and not covered
 			if openPanel and not (inHub or lobby) then
 				setPanel(nil)
 			end

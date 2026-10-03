@@ -400,6 +400,11 @@ local blurUsers = {}
 function UITheme.IsMenuOpen()
 	return next(blurUsers) ~= nil
 end
+
+-- Hat user (z.B. "Market", "Trade") gerade ein Fenster mit Unschärfe offen?
+function UITheme.IsMenuOpenBy(user)
+	return blurUsers[user] == true
+end
 function UITheme.SetBlur(user, on)
 	blurUsers[user] = on or nil
 	if not blur then
