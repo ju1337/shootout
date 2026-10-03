@@ -70,6 +70,14 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
   Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
   Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
+- **Glücksrad im Hub** (`src/client/HubWheel.lua`, in der Ecke links vom Spawn am Ende eines eigenen Teppichs): großes Rad mit acht
+  Feldern (`LoginConfig.Wheel`), Rand mit Lichtern und Zeiger oben; Podest, Ständer, Schild und Pult kommen aus
+  der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E** (Controller □, Touch: Antippen): der Server
+  lost das Feld aus, das Rad dreht ein paar Runden, der Zeiger klackt an jedem Steg, die Lichter laufen mit, das
+  Rad hält genau auf dem Gewinn, das Feld blinkt und eine Belohnungs-Karte erscheint. Die Tafel am Pult zeigt
+  GRATIS-DREH BEREIT, Extra-Drehs oder die Zeit bis zum nächsten Gratis-Dreh. Einmal am Tag gratis, Extra-Drehs aus
+  dem Login-Kalender; gedreht wird nur im Hub in der Nähe des Rads (Server prüft). Den Knopf im Seitenmenü gibt
+  es nicht mehr
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
@@ -296,6 +304,7 @@ am Commit:
 | `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
+| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
 [Luau-Releases](https://github.com/luau-lang/luau/releases) werden gebraucht):

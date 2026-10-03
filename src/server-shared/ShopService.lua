@@ -97,7 +97,27 @@ function actions.ClaimDaily(player)
 	return ProgressService.ClaimLogin(player)
 end
 
+-- Das Glücksrad steht im Hub (Teil "WheelSpot" der Hub-Map): nur dort und in seiner Nähe drehen
+local WHEEL_RANGE = 30
+local function nearWheel(player)
+	if player:GetAttribute("Mode") ~= "Hub" then
+		return false
+	end
+	local maps = workspace:FindFirstChild("Maps")
+	local hub = maps and maps:FindFirstChild("Hub")
+	local decor = hub and hub:FindFirstChild("Decor")
+	local spot = decor and decor:FindFirstChild("WheelSpot")
+	if not spot then
+		return true -- Hub ohne Rad (alter Hangar): überall im Hub
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	return root ~= nil and (root.Position - spot.Position).Magnitude <= WHEEL_RANGE
+end
+
 function actions.SpinWheel(player)
+	if not nearWheel(player) then
+		return "Das Glücksrad steht im Hub – geh zum Pult davor.", false
+	end
 	return ProgressService.SpinWheel(player)
 end
 

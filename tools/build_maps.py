@@ -1750,7 +1750,7 @@ def build_lobby():
           props={"Transparency": 0.4},
           children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
               "Face": "Bottom", "Range": 22, "Brightness": 1.2, "Angle": 60, "Color": rgb(255, 245, 230)}}])
-    for x, title, sub, color in ((27, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112)),):
+    for x, title, sub, color in ((23, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112)),):
         if not b.holo:
             b.box("Decor", "PosterFrame", (15, 10, 0.3), (x, 15, z0 + 0.2), steel, "Metal")
         b.sign2("Poster", (14, 9, 0.4), (x, 15, z0 + 0.45), title, sub, graphite, color, (236, 239, 243),
@@ -1759,11 +1759,43 @@ def build_lobby():
         b.box("Walls", "WallRib", (1.2, H - 9, 0.8), (x, (H - 9) / 2 + 8, z0 + 0.4), steel, "Metal")
     b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.6})
     for x in range(-48, 49, 5):
-        if abs(x) > 12 and x > -26:  # linke Ecke bleibt frei fürs Siegertreppchen
+        if abs(x) > 12 and -26 < x < 26:  # Ecken bleiben frei: links Siegertreppchen, rechts Glücksrad
             b.box("Decor", "Locker", (4.4, 7.5, 2.2), (x, 3.75, z0 + 1.2), (48, 58, 70), "Metal")
             b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 6, z0 + 2.35), (26, 28, 32), "Metal")
-    for x, z, size in ((-50, 41, 4), (-46, 41, 3), (50, -33, 4), (46, -33, 3)):
+    for x, z, size in ((-50, 41, 4), (-46, 41, 3)):
         b.crate(x, z, s=size, color=(90, 80, 62))
+
+    # ---------- Ecke links vom Spawn (Südosten): Glücksrad ----------
+    # Das drehende Rad (Felder, Nabe, Rand mit Lichtern, Zeiger) baut der Client (HubWheel) an "WheelSpot":
+    # Mitte des Rads, LookVector = Vorderseite (zur Halle). Hier: Podest, Ständer mit Achse, Schild und das Pult
+    # mit der Tafel ("WheelBoard", beschreibt der Client) – am Pult öffnet E den Dreh.
+    wheel_gold = (212, 170, 80)
+    wx, wz, wy, wr = 40, -29.5, 9.4, 6
+    b.add("Decor", "WheelPlatform", (0.5, 15, 15), (wx, 0.25, wz), (34, 37, 43), "Metal", angles=(0, 0, 90),
+          props={"Shape": "Cylinder"})
+    b.add("Decor", "WheelPlatformGlow", (0.12, 15.4, 15.4), (wx, 0.3, wz), wheel_gold, "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.45})
+    # Ständer und Achse hinter dem Rad (Vorderseite = +z, zur Halle)
+    for dx in (-(wr + 1.7), wr + 1.7):
+        b.box("Decor", "WheelPillar", (1.6, 17, 1.6), (wx + dx, 8.5, wz - 1), (28, 31, 37), "Metal")
+        b.box("Decor", "WheelPillarStrip", (0.4, 15, 0.2), (wx + dx, 8.5, wz - 0.1), wheel_gold, "Neon",
+              props={"Transparency": 0.15})
+    b.box("Decor", "WheelAxle", (2 * wr + 3.4, 0.9, 0.9), (wx, wy, wz - 1.2), (28, 31, 37), "Metal")
+    b.box("Decor", "WheelHeader", (2 * wr + 5, 1.6, 1.6), (wx, 17.8, wz - 1), (28, 31, 37), "Metal")
+    b.sign2("WheelSign", (15, 3.6, 0.4), (wx, 20.4, wz - 0.1), "GLÜCKSRAD", "TÄGLICH GRATIS DREHEN",
+            graphite, wheel_gold, (236, 239, 243), angles=(0, 180, 0), glow=wheel_gold)
+    b.add("Decor", "WheelSpot", (1, 1, 1), (wx, wy, wz), wheel_gold, "SmoothPlastic", angles=(0, 180, 0),
+          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+    # Pult vorn am Podest, darauf die schräge Tafel (Vorderseite zum Spieler)
+    b.box("Decor", "WheelConsole", (5.6, 2.2, 1.6), (wx, 1.1, wz + 7.4), (36, 39, 46), "Metal")
+    b.box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), (wx, 2.1, wz + 7.4), wheel_gold, "Neon",
+          props={"Transparency": 0.2})
+    client_board("WheelBoard", (5.2, 1.9, 0.15), (wx, 2.75, wz + 7.55), angles=(-35, 180, 0))
+    b.add("Decor", "WheelLight", (0.2, 3, 3), (wx, H - 1.6, wz + 4), (255, 248, 230), "Neon", angles=(0, 0, 90),
+          props={"Shape": "Cylinder", "Transparency": 0.3},
+          children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+              "Face": "Bottom", "Range": 26, "Brightness": 1.3, "Angle": 45, "Color": rgb(255, 245, 230)}}])
+    carpet("CarpetWheel", (4, wz + 8.6), (wx - 3, wz + 8.6), 7)
 
     b.save("Hub.model.json")
 
