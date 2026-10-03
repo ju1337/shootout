@@ -73,6 +73,13 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   Gadget, Passiv mit Tasten-Schild; unten Agenten-Kacheln mit Porträt und BESTÄTIGEN bzw. BEREIT
 - **Ablauf**: nach dem Match erst die Zusammenfassung, dann die Map-Abstimmung, danach die Agentenwahl –
   nie übereinander
+- **Map-Abstimmung** (`src/client/MapVote.lua`): eigener Vollbild-Screen mit undurchsichtigem Hintergrund über
+  dem ganzen HUD (Minimap, VERLASSEN, Fähigkeiten, Killstreaks, Geld, Tastenzeile, Statuszeile sind solange
+  verdeckt). Oben Modus, Titel, Restzeit mit schrumpfendem Balken; drei große Karten mit **Vorschaubild**: die
+  echte Map-Geometrie schräg von oben in einem ViewportFrame (Licht je Map-Stimmung, ferne Deko wie Planeten
+  bleibt weg), darüber Name, Stimmen, Stimmenbalken und DEINE WAHL. Die Vorschau wird beim ersten Mal über
+  mehrere Bilder verteilt kopiert und für spätere Abstimmungen behalten (höchstens 6 Maps). Wählen per Klick,
+  1/2/3, Steuerkreuz + A oder Antippen
 - **Respawn-Modi** (Herrschaft, Wingman mit Tickets): nach dem Tod kurz die Todeskamera, dann zurück in die
   Auswahl (Agent, Primärwaffe, Ausrüstung kaufen); BEREIT bringt einen zurück (frühestens nach 3 s, spätestens
   nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz
@@ -197,6 +204,7 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |
 | Kaufphase, Geld, Perks | `src/shared/BuyConfig.lua` |
 | Agentenwahl (Aufbau) und Hangar-Hintergrund | `src/client/AgentSelect.lua`, `src/shared/HangarScene.lua` |
+| Map-Abstimmung: Kartengröße, Vorschau-Kamera (`PREVIEW_YAW/PITCH/FOV/ZOOM`), Farbstimmung je Map (`MOODS`) | `src/client/MapVote.lua` |
 | Respawn-Auswahl (Dauer, frühestes BEREIT), Pause nach dem Match | `RESPAWN_SELECT_TIME`, `RESPAWN_MIN_TIME`, `SUMMARY_TIME` in `src/server/TeamRoundMode.lua` |
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
 | Battle Pass | `src/shared/PassConfig.lua` |
