@@ -1356,14 +1356,14 @@ function GameMenu.Init()
 		setStatus(message)
 	end)
 
-	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Hub den SPIELEN-Knopf zeigen
+	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Hub und im Markt den SPIELEN-Knopf zeigen
 	local function onModeChanged()
 		local mode = player:GetAttribute("Mode")
 		if mode == nil then
 			return
 		end
-		inHub = mode == Modes.Hub.Id
-		hubButton.Button.Visible = not inHub
+		inHub = Modes.IsSocial(mode) -- Hub oder Markt: kein laufendes Spiel
+		hubButton.Button.Visible = mode ~= Modes.Hub.Id
 		GameMenu.SetOpen(false)
 		openButton.Button.Visible = inHub
 		GameMenu.UpdatePlay()

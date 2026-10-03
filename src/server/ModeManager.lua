@@ -17,6 +17,7 @@ local ModeManager = {}
 -- Logik pro Modus (Ids wie in Modes.lua)
 local modules = {
 	Hub = require(script.Parent.Modes.Hub),
+	Market = require(script.Parent.Modes.Market), -- Markthalle mit Ständen (kein Kampf)
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
 	Domination = require(script.Parent.Modes.Domination),
 	Wingman = require(script.Parent.Modes.Wingman),

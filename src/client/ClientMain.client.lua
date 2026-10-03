@@ -32,6 +32,7 @@ local KillstreakHUD = require(script.Parent:WaitForChild("KillstreakHUD"))
 local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
 local LevelBadge = require(script.Parent:WaitForChild("LevelBadge"))
 local HubWheel = require(script.Parent:WaitForChild("HubWheel"))
+local MarketClient = require(script.Parent:WaitForChild("MarketClient"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
@@ -60,4 +61,5 @@ KillstreakHUD.Init() -- Killstreaks in Herrschaft rechts am Rand (Tasten 4/5/6)
 TouchControls.Init()
 LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
 task.spawn(HubWheel.Init) -- Glücksrad in der Ecke des Hubs (wartet auf die Hub-Map)
+task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet auf die Markt-Map)
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

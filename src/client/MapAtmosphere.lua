@@ -8,6 +8,9 @@
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 
 local player = Players.LocalPlayer
 
@@ -89,12 +92,12 @@ local function apply(name)
 	end
 end
 
--- Stimmung der Map, auf der man gerade ist (nur in Kampfmodi)
+-- Stimmung der Map, auf der man gerade ist (nur in Kampfmodi, nicht im Hub oder Markt)
 local function update()
 	local mode = player:GetAttribute("Mode")
 	local id = player:GetAttribute("MapId")
 	local maps = workspace:FindFirstChild("Maps")
-	local map = mode and mode ~= "Hub" and id and maps and maps:FindFirstChild(id)
+	local map = mode and not Modes.IsSocial(mode) and id and maps and maps:FindFirstChild(id)
 	apply(map and map:GetAttribute("Atmosphere") or nil)
 end
 

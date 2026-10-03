@@ -622,13 +622,13 @@ local function addParticles()
 	end
 end
 
--- Im Hub die Belichtung absenken (Halle mit vielen Lichtern), in den Modi wieder normal
+-- Im Hub und im Markt die Belichtung absenken (Hallen mit vielen Lichtern), in den Modi wieder normal
 local HUB_EXPOSURE = 0.1
 local normalExposure = nil
 local function updateExposure()
 	local lighting = game:GetService("Lighting")
 	normalExposure = normalExposure or lighting.ExposureCompensation
-	lighting.ExposureCompensation = player:GetAttribute("Mode") == "Hub" and HUB_EXPOSURE or normalExposure
+	lighting.ExposureCompensation = Modes.IsSocial(player:GetAttribute("Mode")) and HUB_EXPOSURE or normalExposure
 end
 
 -- Große Bildtafel an der Rückwand (Part "PhotoBoard"). Bild hochladen: Roblox Studio → Ansicht → Asset-Manager →

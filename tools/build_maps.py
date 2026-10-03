@@ -14,7 +14,7 @@ import random
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
 MAP_NAMES = {"TDM": "Kraftwerk", "Domination": "Kraftwerk", "FreeForAll": "Altstadt", "Favela": "Favela", "Orbit": "Orbit",
              "Lagune": "Lagune", "Mondbasis": "Mondbasis", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
-             "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar"}
+             "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar", "Market": "Markt"}
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
 
@@ -29,6 +29,7 @@ TRAINING_ORIGIN = (-1500, 0, 1500)
 RANKED_ORIGIN = (1500, 0, 1500)
 ARENA_ORIGIN = (0, 0, 3000)
 TDM_ORIGIN = (3000, 0, -1500)
+MARKET_ORIGIN = (-1500, 0, -1500)
 
 
 # ---------- Helfer ----------
@@ -1651,6 +1652,24 @@ def build_lobby():
         b.floor_text("FloorLabel_" + mode_id, (13, 0.1, 3.6), (x, 0.3, gate_z - 11.5), title, color)
         b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (x, 0.4, gate_z - 4), color, "Neon",
               props={"CanCollide": False, "Transparency": 0.45})
+    # ---------- Ostwand (vorn): Tor zum MARKT (eigene Halle mit Ständen, kein Kampf) ----------
+    rap = (86, 214, 170)
+    mz, mgw, mgh, mgx = 31, 12, 13, x1 - 0.6
+    for dz in (-mgw / 2 - 1, mgw / 2 + 1):
+        b.box("Decor", "GatePillar", (2, mgh + 2, 2), (mgx, (mgh + 2) / 2, mz + dz), (28, 31, 37), "Metal")
+        b.box("Decor", "GateStrip", (0.4, mgh, 0.5), (mgx - 1.2, mgh / 2 + 1, mz + dz), rap, "Neon")
+    b.box("Decor", "GateHeader", (2, 2, mgw + 4), (mgx, mgh + 2, mz), (28, 31, 37), "Metal")
+    b.box("Decor", "GateGlow", (0.3, mgh, mgw), (mgx + 0.2, mgh / 2, mz), rap, "ForceField",
+          props={"Transparency": 0.25, "CanCollide": False},
+          children=[{"Name": "Light", "ClassName": "PointLight",
+                     "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(*rap)}}])
+    b.sign2("Sign_Market", (15, 5.2, 0.4), (mgx - 1.6, mgh + 4.4, mz), "MARKT", "STÄNDE · HANDEL · RAP",
+            graphite, rap, (236, 239, 243), angles=(0, 90, 0), glow=rap)
+    client_board("GateCount_Market", (9, 1.6, 0.3), (mgx - 1.15, mgh + 1.3, mz), angles=(0, 90, 0))
+    b.floor_text("FloorLabel_Market", (11, 0.1, 3.2), (mgx - 10, 0.3, mz), "MARKT", rap, yaw=270)
+    b.add("Portals", "Portal_Market", (7, 0.3, mgw - 1), (mgx - 4, 0.4, mz), rap, "Neon",
+          props={"CanCollide": False, "Transparency": 0.45})
+
     b.sign2("DuelsBanner", (36, 2.4, 0.4), (30, H - 1.4, z1 - 0.5), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
             graphite, (205, 90, 80), (236, 239, 243), glow=(205, 90, 80))
     b.sign2("ModesBanner", (56, 2.4, 0.4), (-20, H - 1.4, z1 - 0.5), "EINSÄTZE", "LAUF DURCH EIN TOR",
@@ -1798,6 +1817,118 @@ def build_lobby():
     carpet("CarpetWheel", (4, wz + 8.6), (wx - 3, wz + 8.6), 7)
 
     b.save("Hub.model.json")
+
+# ---------- Markt: Handelshalle mit 12 Ständen (MarketService / MarketClient) ----------
+MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64), (132, 84, 170), (206, 112, 54))
+
+
+def build_market():
+    """Markthalle (100 x 102): Eingang im Süden (Spawn, Tor zurück zum Hub), Mittelgang nach Norden, links und rechts
+    je sechs Stände, die zum Gang zeigen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild
+    ("Sign", beschreibt der Client), sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum
+    Gang), dem Prompt-Punkt vor der Theke ("Prompt") und dem Platz hinter der Theke ("OwnerSpot"). Besitzer und
+    Angebote setzt der Server als Attribute an den Ordner."""
+    b = Builder(MARKET_ORIGIN)
+    b.holo = True
+    floor, wall, steel, graphite = (52, 46, 42), (60, 56, 54), (78, 72, 68), (22, 25, 30)
+    wood, wood_dark, top = (128, 92, 62), (94, 68, 48), (62, 54, 48)
+    warm, rap = (255, 198, 128), (86, 214, 170)
+    x0, x1, z0, z1, H = -50, 50, -46, 56, 24
+    zc = (z0 + z1) / 2
+
+    b.ground(170, 170, (40, 40, 42), "Asphalt")
+    b.border(160, 160, 2, (60, 60, 65), "Metal", barrier=80)
+
+    # ---------- Halle ----------
+    b.box("Ground", "MarketFloor", (x1 - x0, 0.2, z1 - z0), (0, 0.1, zc), floor, "WoodPlanks")
+    b.box("Walls", "WallSouth", (x1 - x0 + 4, H, 2), (0, H / 2, z0 - 1), wall, "Brick")
+    b.box("Walls", "WallNorth", (x1 - x0 + 4, H, 2), (0, H / 2, z1 + 1), wall, "Brick")
+    b.box("Walls", "WallWest", (2, H, z1 - z0), (x0 - 1, H / 2, zc), wall, "Brick")
+    b.box("Walls", "WallEast", (2, H, z1 - z0), (x1 + 1, H / 2, zc), wall, "Brick")
+    b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (34, 32, 30), "Metal")
+    for x in (x0 + 0.45, x1 - 0.45):
+        b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 11, zc), warm, "Neon", props={"Transparency": 0.55})
+    for z in range(-38, 56, 12):
+        b.box("Walls", "Truss", (x1 - x0, 1.2, 1), (0, H - 1, z), steel, "Metal")
+        for x in (-30, 0, 30):
+            b.add("Decor", "CeilingLamp", (1.6, 1.6, 1.6), (x, H - 3.2, z), warm, "Neon", props={"Shape": "Ball"},
+                  children=[{"Name": "Light", "ClassName": "PointLight",
+                             "Properties": {"Range": 28, "Brightness": 0.9, "Color": rgb(*warm)}}])
+            b.box("Decor", "LampCord", (0.12, 2.4, 0.12), (x, H - 1.6, z), (20, 20, 22), "Metal")
+
+    # ---------- Süden: Spawn und Tor zurück zum Hub ----------
+    for x in (-6, -2, 2, 6):
+        b.spawn(x, z0 + 10, yaw=180)
+    gw, gh = 12, 12
+    for dx in (-gw / 2 - 1, gw / 2 + 1):
+        b.box("Decor", "GatePillar", (2, gh + 2, 2), (dx, (gh + 2) / 2, z0 + 0.6), (28, 31, 37), "Metal")
+        b.box("Decor", "GateStrip", (0.5, gh, 0.4), (dx, gh / 2 + 1, z0 + 1.8), (120, 185, 235), "Neon")
+    b.box("Decor", "GateHeader", (gw + 4, 2, 2), (0, gh + 2, z0 + 0.6), (28, 31, 37), "Metal")
+    b.box("Decor", "GateGlow", (gw, gh, 0.3), (0, gh / 2, z0 + 0.1), (120, 185, 235), "ForceField",
+          props={"Transparency": 0.25, "CanCollide": False},
+          children=[{"Name": "Light", "ClassName": "PointLight",
+                     "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(120, 185, 235)}}])
+    b.sign2("ExitSign", (15, 4.6, 0.4), (0, gh + 4.6, z0 + 1.6), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
+            (120, 185, 235), (236, 239, 243), angles=(0, 180, 0), glow=(120, 185, 235))
+    b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), (0, 0.4, z0 + 2.6), (120, 185, 235), "Neon",
+          props={"CanCollide": False, "Transparency": 0.45})
+
+    # ---------- Mittelgang ----------
+    b.box("Ground", "AisleEdge", (14.7, 0.03, z1 - z0 - 8.3), (0, 0.215, zc + 2), rap, "Neon", props={"Transparency": 0.6})
+    b.box("Ground", "Aisle", (14, 0.05, z1 - z0 - 9), (0, 0.245, zc + 2), (40, 36, 34), "Fabric")
+    for z in (-24, 4, 32):
+        b.box("Decor", "Planter", (3.4, 1.4, 3.4), (0, 0.7, z), wood_dark, "WoodPlanks")
+        b.add("Decor", "Bush", (3.6, 3.6, 3.6), (0, 2.6, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+
+    # ---------- Norden: großes Schild ----------
+    b.sign2("MarketBanner", (40, 6.4, 0.4), (0, 15, z1 - 0.6), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
+            graphite, rap, (236, 239, 243), angles=(0, 0, 0), glow=rap)
+    b.box("Decor", "BannerStrip", (42, 0.3, 0.3), (0, 11.4, z1 - 0.4), rap, "Neon", props={"Transparency": 0.2})
+
+    # ---------- Stände: Westreihe schaut nach +x (zum Gang), Ostreihe nach -x ----------
+    n = 0
+    for f, sx in ((1, -24), (-1, 24)):
+        yaw = -90 if f > 0 else 90  # Vorderseite (-Z) zum Gang
+        for sz in (-30, -16, -2, 12, 26, 40):
+            n += 1
+            g = "Stand_%d" % n
+            canopy = MARKET_CANOPIES[(n - 1) % len(MARKET_CANOPIES)]
+            light = lighten(canopy, 0.3)
+            b.box(g, "Base", (7.4, 0.4, 12.4), (sx, 0.2, sz), wood_dark, "WoodPlanks")
+            b.box(g, "BackWall", (0.8, 7.6, 12.4), (sx - f * 3.3, 4.2, sz), wood, "WoodPlanks")
+            b.box(g, "Shelf", (1.8, 0.35, 11.6), (sx - f * 2.5, 4.4, sz), wood_dark, "WoodPlanks")
+            b.box(g, "Counter", (1.8, 3.0, 11.2), (sx + f * 2.3, 1.9, sz), wood, "WoodPlanks")
+            b.box(g, "CounterTop", (2.3, 0.25, 11.6), (sx + f * 2.3, 3.52, sz), top, "Marble")
+            b.box(g, "CounterStrip", (0.15, 0.25, 11.3), (sx + f * 3.24, 2.9, sz), canopy, "Neon",
+                  props={"Transparency": 0.2})
+            for dz in (-5.9, 5.9):
+                b.box(g, "Post", (0.5, 8.8, 0.5), (sx + f * 3.3, 4.6, sz + dz), wood_dark, "Wood")
+            # Vordach: fällt zum Gang hin ab, vorn ein Volant in hellerer Farbe
+            b.box(g, "Canopy", (8.2, 0.3, 13), (sx, 9.4, sz), canopy, "Fabric", angles=(0, 0, -f * 10))
+            b.box(g, "Valance", (0.2, 1.0, 13), (sx + f * 4.05, 8.25, sz), light, "Fabric")
+            # Schild über dem Vordach (beschreibt der Client: Besitzer, FREI, Nummer)
+            b.holo_panel(g, "Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), angles=(0, yaw, 0))
+            b.holo_edges("Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), (0, yaw, 0), lighten(canopy, 0.2))
+            # Laterne an jedem Pfosten
+            for dz in (-5.9, 5.9):
+                b.add(g, "Lantern", (0.7, 0.7, 0.7), (sx + f * 3.3, 7.6, sz + dz), warm, "Neon", props={"Shape": "Ball"},
+                      children=[{"Name": "Light", "ClassName": "PointLight",
+                                 "Properties": {"Range": 10, "Brightness": 0.7, "Color": rgb(*warm)}}])
+            # Ausstellplätze: drei auf der Theke, drei im Regal dahinter (Mitte des Skins)
+            for k, (dx, y, dz) in enumerate(((2.3, 4.5, -3.7), (2.3, 4.5, 0), (2.3, 4.5, 3.7),
+                                             (-2.5, 5.6, -3.7), (-2.5, 5.6, 0), (-2.5, 5.6, 3.7)), start=1):
+                b.add(g, "Display%d" % k, (1, 1, 1), (sx + f * dx, y, sz + dz), canopy, "SmoothPlastic",
+                      angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+            b.add(g, "Prompt", (1, 1, 1), (sx + f * 3.8, 2.6, sz), canopy, "SmoothPlastic", angles=(0, yaw, 0),
+                  props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+            b.add(g, "OwnerSpot", (1, 1, 1), (sx - f * 0.6, 0.9, sz), canopy, "SmoothPlastic", angles=(0, yaw, 0),
+                  props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+            # Nummer am Boden vor dem Stand
+            b.floor_text("StandNumber", (5, 0.1, 1.8), (sx + f * 6.2, 0.3, sz), "STAND %d" % n, lighten(canopy, 0.25),
+                         yaw=yaw + 180)
+
+    b.save("Market.model.json")
+
 
 # ---------- Free-for-All: "Altstadt" (230 x 230) für bis zu 12 Spieler ----------
 
@@ -2981,3 +3112,4 @@ if __name__ == "__main__":
     build_windmills((4500, 0, 0), "Windmuehlen.model.json")
     build_hightower((-4500, 0, 0), "Hochhaus.model.json")
     build_lobby()
+    build_market()

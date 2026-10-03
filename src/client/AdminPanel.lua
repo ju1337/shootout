@@ -211,10 +211,10 @@ local function refreshPlayers()
 		label(p.Name .. "  ·  " .. tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "")
 			.. "  ·  " .. (agent and agent.Name or "?"), 15, box)
 		local moves = row(box)
-		local short = { Hub = "Hub", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing", Arena = "1v1",
-			Training = "Train" }
-		for _, modeId in { "Hub", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
-			button(short[modeId], 52, moves, nil, function()
+		local short = { Hub = "Hub", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
+			Arena = "1v1", Training = "Train" }
+		for _, modeId in { "Hub", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
+			button(short[modeId], 46, moves, nil, function()
 				send("MovePlayer", p.UserId, modeId)
 			end)
 		end

@@ -161,13 +161,13 @@ function PartyService.Init(modeManager)
 			handler(player, userId)
 		end
 	end)
-	-- Anführer wechselt den Modus: Squad kommt mit (im Kampf gilt BEREIT nicht mehr)
+	-- Anführer wechselt den Modus: Squad kommt mit (im Kampf gilt BEREIT nicht mehr). In den Markt geht jeder selbst.
 	modeManager.Joined:Connect(function(player, modeId)
-		if modeId ~= "Hub" then
+		if modeId ~= "Hub" and modeId ~= "Market" then
 			player:SetAttribute("PartyReady", nil)
 		end
 		local party = partyOf[player]
-		if not party or party.Leader ~= player then
+		if not party or party.Leader ~= player or modeId == "Market" then
 			return
 		end
 		for _, member in party.Members do

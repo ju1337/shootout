@@ -176,10 +176,23 @@ Modes.Hub = {
 	Available = true,
 }
 
--- Modus per Id holen (inkl. Hub), nil wenn unbekannt
+-- Der Markt: eigene Halle mit Ständen (MarketService), wie der Hub kein Kampfmodus. Erreichbar über das Tor MARKT
+-- im Hub und den Knopf MARKT im Seitenmenü, nicht über die Modus-Liste.
+Modes.Market = {
+	Id = "Market",
+	Name = "MARKT",
+	Color = Color3.fromRGB(86, 214, 170),
+	Center = Vector3.new(-1500, 0, -1500),
+	Available = true,
+}
+
+-- Modus per Id holen (inkl. Hub und Markt), nil wenn unbekannt
 function Modes.Get(id)
 	if id == Modes.Hub.Id then
 		return Modes.Hub
+	end
+	if id == Modes.Market.Id then
+		return Modes.Market
 	end
 	for _, mode in Modes.List do
 		if mode.Id == id then
@@ -212,12 +225,12 @@ function Modes.GoalText(id, attacking, alert)
 	return goal
 end
 
--- Treffpunkt ohne Kampf (Hub)?
+-- Treffpunkt ohne Kampf (Hub, Markt)?
 function Modes.IsSocial(id)
-	return id == Modes.Hub.Id
+	return id == Modes.Hub.Id or id == Modes.Market.Id
 end
 
--- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub)?
+-- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub oder Markt)?
 function Modes.IsFighting(player)
 	local id = player:GetAttribute("Mode")
 	return id ~= nil and not Modes.IsSocial(id)

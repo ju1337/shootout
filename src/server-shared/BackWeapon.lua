@@ -1,5 +1,5 @@
 -- BackWeapon (ModuleScript, nur Server)
--- Im Hub trägt jeder Spieler die Standardwaffe seines aktiven Agenten (AGENTEN-Seite: eine der zwei Primärwaffen)
+-- Im Hub (und im Markt) trägt jeder Spieler die Standardwaffe seines aktiven Agenten (AGENTEN-Seite: eine der zwei Primärwaffen)
 -- auf dem Rücken: flach am Rücken, Lauf schräg nach oben über die rechte Schulter, mit ausgerüstetem Skin und
 -- Aufsätzen. Wechselt der Spieler im Menü Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort.
 -- In den Kampfmodi hält man die Waffen in der Hand (WeaponService), dann gibt es keine Rückenwaffe.
@@ -62,7 +62,7 @@ end
 local function wanted(player, character)
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local torso = character and torsoOf(character)
-	if player:GetAttribute("Mode") ~= Modes.Hub.Id or not humanoid or humanoid.Health <= 0 or not torso then
+	if not Modes.IsSocial(player:GetAttribute("Mode")) or not humanoid or humanoid.Health <= 0 or not torso then
 		return nil
 	end
 	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]

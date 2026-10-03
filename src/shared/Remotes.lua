@@ -47,6 +47,10 @@ local NAMES = {
 	"SpawnChoice", -- Client -> Server: Spawn nach dem Tod (Herrschaft): "Base", "A", "B" oder "C"
 	"UseKillstreak", -- Client -> Server: bereite Killstreak auslösen (Id, Zielpunkt beim Luftschlag)
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
+	"MarketAction", -- Client -> Server: Markt-Stand (Claim, Release, List, Unlist, SetPrice, Buy; MarketService)
+	"MarketStatus", -- Server -> Client: Rückmeldung zum Markt (Text, Erfolg)
+	"TradeAction", -- Client -> Server: Tausch (Request, Respond, AddItem, RemoveItem, SetRap, Ready, Cancel; TradeService)
+	"TradeUpdate", -- Server -> Client: Tausch-Stand (Art, Daten): "Request", "State", "Closed", "Done"
 }
 
 local folder

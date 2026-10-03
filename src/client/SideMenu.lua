@@ -1,6 +1,7 @@
 -- SideMenu (ModuleScript, nur Client)
--- Menüliste links im Hub: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, STATISTIK,
--- CODES, OPTIONEN (schlichte Textzeilen), darüber die Spielerkarte (Level, Prestige, Rang, Münzen).
+-- Menüliste links im Hub und im Markt: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, MARKT
+-- (in die Markthalle bzw. von dort zurück: ZUM HUB), CLAN, STATISTIK, CODES, OPTIONEN, darüber die Spielerkarte
+-- (Level, Prestige, Rang, Münzen, RAP).
 -- SHOP, LOADOUT, AGENTEN und BATTLE PASS öffnen die Lobby (GameMenu) auf der passenden Seite; Aufträge,
 -- Täglich, Squad, Statistik, Codes und Optionen sind Fenster in der Mitte – dieselben Fenster öffnet auch die
 -- Lobby (Squad, Auftrag, Knöpfe oben rechts). Design wie die Lobby (UITheme, nüchterner Taktik-Look):
@@ -28,6 +29,7 @@ local PlayerSettings = require(Shared.PlayerSettings)
 local HitFeedback = require(Shared.HitFeedback)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
+local Modes = require(Shared.Modes)
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -1224,7 +1226,7 @@ local function sideButton(label, order, onClick, parent, color, icon)
 		TweenService:Create(scale, TweenInfo.new(0.12), { Scale = 1 }):Play()
 	end)
 	b.Activated:Connect(onClick)
-	return b
+	return b, caption
 end
 
 local function togglePanel(name)
@@ -1235,6 +1237,14 @@ end
 local function openLobby(page)
 	setPanel(nil)
 	GameMenu.Open(page)
+end
+
+-- MARKT: in die Markthalle (im Markt geht es mit demselben Knopf zurück in den Hub)
+local marketCaption
+local function goMarket()
+	setPanel(nil)
+	local inMarket = player:GetAttribute("Mode") == Modes.Market.Id
+	Remotes.JoinMode:FireServer(inMarket and Modes.Hub.Id or Modes.Market.Id)
 end
 
 local playerCard -- Spielerkarte oben links (Level, Prestige, Rang, Münzen)
@@ -1351,6 +1361,7 @@ local function buildColumn()
 		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
 		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "📅" },
+		{ "MARKT", function() goMarket() end, UITheme.Colors.Rap, "🏪" },
 		{ "CLAN", function() togglePanel("Clan") end, Color3.fromRGB(110, 160, 230), "🛡" },
 		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
@@ -1375,7 +1386,10 @@ local function buildColumn()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateColumnScale)
 	local daily, quests
 	for i, entry in entries do
-		local b = sideButton(entry[1], i, entry[2], column, entry[3], entry[4])
+		local b, caption = sideButton(entry[1], i, entry[2], column, entry[3], entry[4])
+		if entry[1] == "MARKT" then
+			marketCaption = caption
+		end
 		if entry[1] == "LOGIN" then
 			daily = b
 		elseif entry[1] == "AUFTRÄGE" then
@@ -1441,7 +1455,8 @@ function SideMenu.Init()
 	-- Menüliste nur im Hub bei geschlossener Lobby; Fenster im Hub oder aus der Lobby heraus
 	task.spawn(function()
 		while true do
-			local inHub = player:GetAttribute("Mode") == "Hub"
+			local inHub = Modes.IsSocial(player:GetAttribute("Mode")) -- Hub oder Markt
+			marketCaption.Text = player:GetAttribute("Mode") == Modes.Market.Id and "ZUM HUB" or "MARKT"
 			local lobby = GameMenu.IsOpen()
 			column.Visible = inHub and not lobby
 			if openPanel and not (inHub or lobby) then
