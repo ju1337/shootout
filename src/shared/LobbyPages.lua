@@ -3,7 +3,8 @@
 -- Kopfzeile – kein eigenes Fenster – und nutzen das gemeinsame Design (UITheme):
 --   LOADOUT:     links Waffen bzw. Agenten (Reiter WAFFEN · AGENTEN), Mitte große 3D-Vorschau mit dem
 --                ausgerüsteten Skin, rechts die eigenen Skins zum Ausrüsten (Standard + gekaufte)
---   SHOP:        Reiter WAFFEN-SKINS · AGENTEN-SKINS, Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis
+--   SHOP:        Reiter WAFFEN-SKINS · AGENTEN-SKINS, Karten mit 3D-Vorschau, Seltenheit, RAP-Wert und KAUFEN · Preis;
+--                Reiter VERKAUFEN: eigene handelbare Skins ans System zurückverkaufen (sofort RAP, RapConfig)
 --   BATTLE PASS: Saison, Stufe und Fortschritt, alle Stufen als waagerechte Leiste (die nächste hervorgehoben),
 --                darunter die nächste Belohnung und wie man Pass-XP sammelt
 -- Jede Funktion baut in einen leeren Rahmen (PAGE_W x PAGE_H) und gibt { Refresh, Watch } zurück: Refresh
@@ -27,7 +28,9 @@ local MasteryConfig = require(Shared.MasteryConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local InputActions = require(Shared.InputActions)
 local RobuxConfig = require(Shared.RobuxConfig)
+local RapConfig = require(Shared.RapConfig)
 local MarketplaceService = game:GetService("MarketplaceService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -42,6 +45,28 @@ local WEAPON_ORDER = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revol
 
 local function coins()
 	return player:GetAttribute("Coins") or 0
+end
+
+-- Gerade an einem Stand oder in einem Tausch zurückgelegte Skins ({ [Id] = Stück })
+local function reservedItems()
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Reserved") or "{}")
+	return ok and type(data) == "table" and data or {}
+end
+
+-- RAP-Wert als kleines Schild (Raute + Zahl) oben rechts auf eine Karte
+local function rapBadge(parent, value)
+	local badge = make("Frame", { Name = "RapBadge", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 12),
+		Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = C.Background,
+		BackgroundTransparency = 0.25, ZIndex = 3 }, parent)
+	UITheme.Corner(badge, UITheme.Radius.Small)
+	UITheme.Stroke(badge, C.Rap, 1, 0.55)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 8) }, badge)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, badge)
+	UITheme.RapIcon(badge, 13, { LayoutOrder = 1, ZIndex = 3 })
+	label({ Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, Text = UITheme.FormatNumber(value) .. " RAP",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, LayoutOrder = 2, ZIndex = 3 }, badge)
+	return badge
 end
 
 local function clear(container)
@@ -223,11 +248,106 @@ function LobbyPages.Shop(page)
 		end
 	end
 
+	-- Reiter VERKAUFEN: eigene handelbare Skins (mit Stückzahl) ans System; erster Klick fragt nach, zweiter verkauft
+	local sellInfo -- Zeile über dem Raster (Guthaben, Wert, Quote)
+	local function sellCard(order, item, count, held)
+		local rarity = Cosmetics.Rarities[item.Rarity]
+		local value, price = RapConfig.Value(item.Id), RapConfig.SellPrice(item.Id)
+		local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
+			LayoutOrder = order }, grid)
+		UITheme.Corner(card, UITheme.Radius.XL)
+		UITheme.Stroke(card, rarity.Color, 1, 0.5)
+		make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+		local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 160) }, card)
+		if item.Type == "Weapon" then
+			showWeapon(view, "Rifle", item, 234 / 160)
+		else
+			showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+		end
+		rapBadge(card, value)
+		if count > 1 then
+			UITheme.Tag({ Position = UDim2.fromOffset(10, 12), Text = "×" .. count, TextSize = 13, BackgroundColor3 = C.Secondary,
+				TextColor3 = C.Text, ZIndex = 3 }, card)
+		end
+		label({ Position = UDim2.fromOffset(16, 176), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
+			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+		local sub = upper(rarity.Name)
+		if item.Type == "Agent" then
+			sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
+		end
+		label({ Position = UDim2.fromOffset(16, 206), Size = UDim2.new(1, -32, 0, 16), Text = sub, TextSize = 11, Font = F.Bold,
+			TextColor3 = rarity.Color }, card)
+		local free = count - held
+		label({ Position = UDim2.fromOffset(16, 224), Size = UDim2.new(1, -32, 0, 16), TextSize = 11, Font = F.Bold,
+			TextColor3 = held > 0 and C.Primary or C.Muted,
+			Text = held > 0 and (held .. " AM STAND / IM TAUSCH  ·  " .. free .. " FREI") or ("SYSTEM ZAHLT " .. math.floor(RapConfig.SellRate * 100)
+				.. " % DES WERTS") }, card)
+		local confirmUntil = 0
+		local sell
+		sell = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
+			Size = UDim2.new(1, -28, 0, 40), Color = free > 0 and C.Rap or C.MutedBack,
+			Text = free > 0 and ("VERKAUFEN  ·  +" .. UITheme.FormatNumber(price) .. " RAP") or "ZURÜCKGELEGT", TextSize = 17,
+			TextColor = free > 0 and C.PrimaryText or C.Muted }, card, function()
+			if free <= 0 then
+				return
+			end
+			if os.clock() < confirmUntil then
+				confirmUntil = 0
+				Remotes.ShopAction:FireServer("SellSkin", item.Id, 1)
+				return
+			end
+			confirmUntil = os.clock() + 3
+			sell.SetText("SICHER?  NOCHMAL KLICKEN")
+			task.delay(3, function()
+				if os.clock() >= confirmUntil and sell.Button.Parent then
+					sell.SetText("VERKAUFEN  ·  +" .. UITheme.FormatNumber(price) .. " RAP")
+				end
+			end)
+		end)
+	end
+	local function fillSell()
+		local owned = Cosmetics.GetOwned(player)
+		local held = reservedItems()
+		local list = {}
+		for id in owned do
+			local item = Cosmetics.Get(id)
+			if item and RapConfig.Tradeable(id) and RapConfig.Count(owned, id) > 0 then
+				table.insert(list, item)
+			end
+		end
+		table.sort(list, function(a, b)
+			return RapConfig.Value(a.Id) > RapConfig.Value(b.Id)
+		end)
+		for order, item in list do
+			sellCard(order, item, RapConfig.Count(owned, item.Id), math.floor(tonumber(held[item.Id]) or 0))
+		end
+		if #list == 0 then
+			label({ Size = UDim2.fromOffset(PAGE_W, 60), Text = "Noch keine handelbaren Skins. Seltene Skins gibt es im Shop, am Glücksrad,"
+				.. " im Login-Kalender, im Battle Pass und im MARKT.", TextSize = 15, Font = F.Medium, TextColor3 = C.Muted,
+				TextWrapped = true, LayoutOrder = 1 }, grid)
+		end
+	end
+	local function updateSellInfo()
+		if sellInfo then
+			sellInfo.Text = "GUTHABEN " .. UITheme.FormatNumber(player:GetAttribute("Rap") or 0) .. " RAP   ·   WERT DEINER SKINS "
+				.. UITheme.FormatNumber(player:GetAttribute("RapValue") or 0) .. " RAP   ·   DAS SYSTEM ZAHLT SOFORT "
+				.. math.floor(RapConfig.SellRate * 100) .. " %, IM MARKT BEKOMMST DU OFT MEHR"
+		end
+	end
+
 	local function fill()
 		clear(grid)
 		cards = {}
 		robuxButtons = {}
 		local order = 0
+		if sellInfo then
+			sellInfo.Visible = currentType == "Sell"
+		end
+		if currentType == "Sell" then
+			updateSellInfo()
+			fillSell()
+			return
+		end
 		if currentType == "Robux" then
 			for _, pass in RobuxConfig.Passes do
 				order += 1
@@ -255,6 +375,9 @@ function LobbyPages.Shop(page)
 				else
 					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
 				end
+				if RapConfig.Value(item.Id) then
+					rapBadge(card, RapConfig.Value(item.Id))
+				end
 				label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
 					Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 				local sub = upper(rarity.Name)
@@ -275,14 +398,21 @@ function LobbyPages.Shop(page)
 		updateButtons()
 	end
 
-	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX" }, 0, 0, PAGE_W, function(name)
-		currentType = name == "WAFFEN-SKINS" and "Weapon" or (name == "AGENTEN-SKINS" and "Agent" or "Robux")
+	sellInfo = label({ Position = UDim2.fromOffset(0, 42), Size = UDim2.fromOffset(PAGE_W, 12), Text = "", TextSize = 11,
+		Font = F.Bold, TextColor3 = C.Rap, Visible = false }, page)
+	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
+		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
 		fill()
 	end)("WAFFEN-SKINS")
 	return { Refresh = function()
+		if currentType == "Sell" then
+			fill() -- Karten ändern sich mit dem Besitz (verkauft, Stückzahl)
+		end
 		updateButtons()
 		updateRobux()
-	end, Watch = { Coins = true, Owned = true, Pass_VIP = true, Pass_DoubleXP = true } }
+		updateSellInfo()
+	end, Watch = { Coins = true, Owned = true, Rap = true, RapValue = true, Reserved = true, Pass_VIP = true,
+		Pass_DoubleXP = true } }
 end
 
 -- =====================================================================

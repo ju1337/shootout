@@ -6,7 +6,7 @@
 -- Achtung: Oswald kennt in Roblox nur lateinische Zeichen – Symbole wie ✕ ✓ ★ ◆ → ∞ erscheinen dort als
 -- Kästchen. Solche Zeichen nur in Gotham-Texten verwenden oder zeichnen (Cross, Diamond, Coin).
 -- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Kontur,
--- Schild (Tag), Raute, Münze. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
+-- Schild (Tag), Raute, Münze, RAP-Symbol. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
 -- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
 
 local Lighting = game:GetService("Lighting")
@@ -33,6 +33,7 @@ UITheme.Colors = {
 	Good = Color3.fromRGB(112, 178, 112),
 	Bad = Color3.fromRGB(206, 70, 58),         -- Gegner, Warnungen
 	Gold = Color3.fromRGB(200, 166, 92),
+	Rap = Color3.fromRGB(86, 214, 170),        -- RAP (zweite Währung, RapConfig.Color)
 	Shadow = Color3.new(0, 0, 0),
 }
 UITheme.Colors.Ally = UITheme.Colors.Accent
@@ -322,6 +323,23 @@ function UITheme.Coin(parent, size, props)
 	UITheme.Corner(inner, size)
 	UITheme.Stroke(inner, C.Gold:Lerp(C.Shadow, 0.45), 1)
 	return coin
+end
+
+-- RAP als kleines Symbol (statt Text): mintgrüne Raute mit dunklem Kern. Beide Rauten sind Geschwister im Halter
+-- (Kinder gedrehter Rahmen würden mitgedreht).
+function UITheme.RapIcon(parent, size, props)
+	props = props or {}
+	props.Size = UDim2.fromOffset(size, size)
+	props.BackgroundTransparency = 1
+	local holder = make("Frame", props, parent)
+	local outer = make("Frame", { Name = "Outer", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(0.72, 0.72), Rotation = 45, BackgroundColor3 = C.Rap, BorderSizePixel = 0,
+		ZIndex = holder.ZIndex }, holder)
+	make("UICorner", { CornerRadius = UDim.new(0, math.max(1, math.floor(size / 8))) }, outer)
+	make("Frame", { Name = "Core", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(0.3, 0.3), Rotation = 45, BackgroundColor3 = C.Rap:Lerp(C.Shadow, 0.55), BorderSizePixel = 0,
+		ZIndex = holder.ZIndex }, holder)
+	return holder
 end
 
 -- Zentrierte Leinwand mit fester Größe, die auf den Bildschirm skaliert wird

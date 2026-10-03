@@ -1,5 +1,5 @@
 -- ShopService (ModuleScript, nur Server)
--- Kaufen und Ausrüsten von Skins, tägliche Belohnung, Codes. Alles wird hier geprüft.
+-- Kaufen, Ausrüsten und Zurückverkaufen (RAP) von Skins, tägliche Belohnung, Codes. Alles wird hier geprüft.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -13,6 +13,7 @@ local PlayerSettings = require(Shared.PlayerSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local ClanService = require(ServerStorage:WaitForChild("ServerShared").ClanService)
+local EconomyService = require(ServerStorage:WaitForChild("ServerShared").EconomyService)
 
 local ShopService = {}
 
@@ -90,6 +91,11 @@ function actions.Unequip(player, slot)
 	end
 	ProgressService.SetEquipped(player, slot, nil)
 	return "Standard ausgerüstet.", true
+end
+
+-- Handelbaren Skin ans System verkaufen (sofort RAP, RapConfig.SellRate)
+function actions.SellSkin(player, itemId, count)
+	return EconomyService.SellToSystem(player, itemId, count)
 end
 
 -- Login-Kalender (früher: tägliche Belohnung)

@@ -78,6 +78,21 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   GRATIS-DREH BEREIT, Extra-Drehs oder die Zeit bis zum nächsten Gratis-Dreh. Einmal am Tag gratis, Extra-Drehs aus
   dem Login-Kalender; gedreht wird nur im Hub in der Nähe des Rads (Server prüft). Den Knopf im Seitenmenü gibt
   es nicht mehr
+- **RAP – zweite Währung** (`src/shared/RapConfig.lua`, Server `src/server-shared/EconomyService.lua`): RAP bekommt
+  man nur über seltene Skins. Jeder seltene Skin (Waffe oder Agent) hat einen festen RAP-Wert; man kann ihn
+  - im **SHOP** unter **VERKAUFEN** ans System zurückverkaufen: sofort 70 % des Werts (`RapConfig.SellRate`),
+    erster Klick fragt nach, zweiter verkauft,
+  - im **MARKT** am eigenen Stand zum eigenen Preis anbieten (5 % Marktgebühr, `RapConfig.MarketFee`),
+  - mit anderen Spielern tauschen.
+  Mit dem RAP kauft man im Markt Skins von anderen Spielern. Handelbare Skins kann man mehrfach besitzen
+  (Duplikate aus Glücksrad, Login-Kalender, Wochen-Bonus, Robux-Paket oder Markt); gebunden – ohne RAP-Wert –
+  bleiben gewöhnliche Skins, Belohnungen für Level, Prestige, Rang und Saison und die Meisterschafts-Tarnungen.
+  Angezeigt wird RAP in der Lobby-Kopfzeile (neben den Münzen), auf der Spielerkarte im Hub, als Wert-Schild auf
+  den Shop-Karten und **über dem Kopf jedes Spielers** (nur im Hub und im Markt): Guthaben + Wert seiner
+  handelbaren Skins, die Farbe zeigt die Stufe (grau, mint ab 1.000, blau ab 5.000, lila ab 15.000, gold ab
+  50.000, rot ab 150.000). Skins, die gerade an einem Stand oder in einem Tausch liegen, bleiben im Inventar,
+  lassen sich aber nicht gleichzeitig verkaufen. Alte Spielstände (Besitz = true) zählen als 1 Stück.
+  Admin-Panel: **+10.000 RAP** und **Handelbarer Skin** zum Testen
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
@@ -304,6 +319,7 @@ am Commit:
 | `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
+| `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den

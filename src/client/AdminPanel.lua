@@ -276,6 +276,12 @@ local function refreshPlayers()
 		button("Saisonende testen", 140, season, Color3.fromRGB(110, 80, 170), function()
 			send("SetElo", p.UserId, "season")
 		end)
+		button("+10.000 RAP", 100, season, Color3.fromRGB(40, 150, 115), function()
+			send("GiveRap", p.UserId, 10000)
+		end)
+		button("Handelbarer Skin", 130, season, Color3.fromRGB(40, 150, 115), function()
+			send("GiveTradeSkin", p.UserId)
+		end)
 	end
 end
 

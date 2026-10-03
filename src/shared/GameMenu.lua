@@ -221,14 +221,19 @@ local function buildHeader()
 
 	-- Rechts: Münzen, Level, Statistik, Codes, Optionen, Schließen
 	local right = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -LEFT_X, 0, 30),
-		Size = UDim2.fromOffset(660, 50), BackgroundTransparency = 1 }, canvas)
+		Size = UDim2.fromOffset(720, 50), BackgroundTransparency = 1 }, canvas)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
 		HorizontalAlignment = Enum.HorizontalAlignment.Right, SortOrder = Enum.SortOrder.LayoutOrder }, right)
 
-	local coins = pill(132, 1, right)
+	local coins = pill(122, 1, right)
 	UITheme.Coin(coins, 14, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0) })
 	local coinText = label({ Position = UDim2.fromOffset(36, 2), Size = UDim2.new(1, -48, 0, 40), Text = "", TextSize = 22,
 		Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, coins)
+	-- RAP (zweite Währung): Guthaben, mintgrün
+	local rap = pill(122, 1, right)
+	UITheme.RapIcon(rap, 18, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 11, 0.5, 0) })
+	local rapText = label({ Position = UDim2.fromOffset(36, 2), Size = UDim2.new(1, -48, 0, 40), Text = "", TextSize = 22,
+		Font = F.Display, TextColor3 = C.Rap, TextXAlignment = Enum.TextXAlignment.Right }, rap)
 
 	local level = pill(104, 2, right)
 	local levelTag = UITheme.Tag({ AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Text = "LV", TextSize = 11,
@@ -250,6 +255,7 @@ local function buildHeader()
 
 	local function update()
 		coinText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
+		rapText.Text = UITheme.FormatNumber(player:GetAttribute("Rap") or 0)
 		local info = LevelConfig.Get(player)
 		levelText.Text = (info.Prestige > 0 and ("P" .. info.Prestige .. " · ") or "") .. tostring(info.Level)
 		levelText.TextColor3 = info.Prestige > 0 and info.Color or C.Text
@@ -257,7 +263,7 @@ local function buildHeader()
 	end
 	update()
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "AccountXP" or name == "Prestige" then
+		if name == "Coins" or name == "Rap" or name == "AccountXP" or name == "Prestige" then
 			update()
 		end
 	end)

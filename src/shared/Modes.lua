@@ -212,10 +212,15 @@ function Modes.GoalText(id, attacking, alert)
 	return goal
 end
 
+-- Treffpunkt ohne Kampf (Hub)?
+function Modes.IsSocial(id)
+	return id == Modes.Hub.Id
+end
+
 -- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub)?
 function Modes.IsFighting(player)
 	local id = player:GetAttribute("Mode")
-	return id ~= nil and id ~= Modes.Hub.Id
+	return id ~= nil and not Modes.IsSocial(id)
 end
 
 return Modes

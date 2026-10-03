@@ -8,7 +8,8 @@
 
 local LoginConfig = {}
 
--- Belohnung pro Kalendertag: Coins, BoostMinutes (Doppel-XP), Spins (Extra-Drehs), Item (Skin, schon im Besitz = Münzen)
+-- Belohnung pro Kalendertag: Coins, BoostMinutes (Doppel-XP), Spins (Extra-Drehs), Item (Skin; handelbare Skins
+-- mit RAP-Wert gibt es auch als weiteres Stück, gebundene nur einmal)
 LoginConfig.Days = {
 	{ Coins = 100 },
 	{ Coins = 150 },

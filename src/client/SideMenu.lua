@@ -1256,9 +1256,17 @@ local function buildPlayerCard()
 
 	local nameLabel = text({ Position = UDim2.new(0, 92, 0, 10), Size = UDim2.new(1, -200, 0, 26), Text = player.Name, RichText = true,
 		TextSize = 20, Font = DISPLAY, TextTruncate = Enum.TextTruncate.AtEnd }, playerCard)
-	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 10), Size = UDim2.new(0, 110, 0, 24),
-		Text = "", TextSize = 18, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
+	coinLabel = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 6), Size = UDim2.new(0, 110, 0, 20),
+		Text = "", TextSize = 17, Font = DISPLAY, TextColor3 = UITheme.Colors.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right }, playerCard)
+	-- RAP-Guthaben darunter (mintgrün, Rauten-Symbol davor; die Zeile wächst nach links)
+	local rapRow = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 25),
+		Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1 }, playerCard)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, rapRow)
+	UITheme.RapIcon(rapRow, 13, { LayoutOrder = 1 })
+	local rapLabel = text({ Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 14,
+		Font = DISPLAY, TextColor3 = UITheme.Colors.Rap, LayoutOrder = 2 }, rapRow)
 	local rankHolder = make("Frame", { Position = UDim2.new(0, 90, 0, 36), Size = UDim2.new(0, 24, 0, 24),
 		BackgroundTransparency = 1 }, playerCard)
 	local cardRank = RankEmblem.new(rankHolder, 24)
@@ -1316,6 +1324,7 @@ local function buildPlayerCard()
 			column.Position = UDim2.new(0, 16, 0, info.CanPrestige and 236 or 180)
 		end
 		coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
+		rapLabel.Text = formatNumber(player:GetAttribute("Rap") or 0) .. " RAP"
 		-- Name mit ausgewähltem Titel (Rekrut wird nicht extra angezeigt)
 		local title = TitleConfig.Get(player:GetAttribute("Title") or "")
 		local clanTag = player:GetAttribute("ClanTag")
@@ -1326,7 +1335,7 @@ local function buildPlayerCard()
 	refresh()
 	player.AttributeChanged:Connect(function(name)
 		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" or name == "Title"
-			or name == "XPBoostUntil" or name == "ClanTag" then
+			or name == "XPBoostUntil" or name == "ClanTag" or name == "Rap" then
 			refresh()
 		end
 	end)

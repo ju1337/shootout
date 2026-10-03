@@ -45,11 +45,12 @@ local function grant(player, profile, product)
 		ProgressService.AddXPBoost(player, product.BoostMinutes)
 		table.insert(lines, product.BoostMinutes .. " Min. Doppel-XP")
 	end
+	-- Skins: neu oder (handelbar) als weiteres Stück
 	for _, itemId in product.Items or {} do
 		local item = Cosmetics.Get(itemId)
-		if item and not profile.Owned[itemId] then
-			ProgressService.GiveItem(player, itemId)
-			table.insert(lines, "Neuer Skin: " .. item.Name)
+		local granted = item and ProgressService.GrantSkin(player, itemId)
+		if item and granted then
+			table.insert(lines, (granted == "copy" and "Skin-Duplikat: " or "Neuer Skin: ") .. item.Name)
 		end
 	end
 	Remotes.Reward:FireClient(player, { Title = "DANKE FÜR DEINEN KAUF!", Lines = lines, Rarity = "Legendary" })

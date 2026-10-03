@@ -2,8 +2,8 @@
 -- Alle gespeicherten Spielerdaten: XP pro Agent, Münzen, gekaufte und ausgerüstete Skins,
 -- tägliche Belohnung, eingelöste Codes und tägliche Aufträge. Gespeichert im DataStore (funktioniert erst, wenn
 -- das Spiel veröffentlicht ist und in Studio "API Services" erlaubt sind - sonst nur für die Sitzung).
--- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON), Equipped (JSON), LastDaily,
--- Quests (JSON)
+-- Spieler-Attribute für die Clients: XP_<AgentId>, Coins, Owned (JSON { [Id] = Stückzahl }), Equipped (JSON),
+-- LastDaily, Quests (JSON), Rap (RAP-Guthaben), RapValue (RAP-Wert aller handelbaren Skins, RapConfig)
 -- Sicherheit der Spielstände: Laden und Speichern über SessionStore (Sitzungssperre pro Server, Speichern nur mit
 -- eigener Sperre, Wiederholungen bei DataStore-Fehlern). Lässt sich ein Profil gar nicht laden, wird der Spieler im
 -- Live-Spiel mit Hinweis gekickt (sonst spielte er ohne Speichern weiter, Fortschritt und Käufe gingen verloren).
@@ -29,6 +29,7 @@ local LoginConfig = require(Shared.LoginConfig)
 local RobuxConfig = require(Shared.RobuxConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
+local RapConfig = require(Shared.RapConfig)
 local SessionStore = require(script.Parent.SessionStore)
 
 local ProgressService = {}
@@ -42,7 +43,7 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen und gesperrt (nur dann speichern)
 
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
+	return { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
 		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
 		Season = RankConfig.CurrentSeason() } }
 end
@@ -115,6 +116,8 @@ function ProgressService.Sync(player)
 		player:SetAttribute("XP_" .. agent.Id, profile.XP[agent.Id] or 0)
 	end
 	player:SetAttribute("Coins", profile.Coins)
+	player:SetAttribute("Rap", math.floor(tonumber(profile.Rap) or 0))
+	player:SetAttribute("RapValue", RapConfig.InventoryValue(profile.Owned))
 	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
@@ -161,15 +164,36 @@ function ProgressService.AddSpins(player, amount)
 	end
 end
 
+-- Skin als Belohnung geben: handelbare Skins (mit RAP-Wert) gibt es auch als weiteres Stück (Duplikat zum
+-- Verkaufen oder Tauschen), gebundene nur einmal. Gibt "new", "copy" oder nil (schon im Besitz) zurück.
+local function grantSkin(profile, itemId)
+	local count = RapConfig.Count(profile.Owned, itemId)
+	if count > 0 and not RapConfig.Tradeable(itemId) then
+		return nil
+	end
+	profile.Owned[itemId] = count + 1
+	return count > 0 and "copy" or "new"
+end
+
+-- Für andere Dienste (Robux-Paket): wie grantSkin, mit Sync
+function ProgressService.GrantSkin(player, itemId)
+	local profile = profiles[player]
+	local result = profile and Cosmetics.Get(itemId) and grantSkin(profile, itemId) or nil
+	if result then
+		ProgressService.Sync(player)
+	end
+	return result
+end
+
 -- Belohnung (Coins, BoostMinutes, Spins, Item) geben; gibt die Textzeilen fürs Popup zurück
 local function giveBundle(player, profile, reward, reason)
 	local lines = {}
 	local coins = reward.Coins or 0
 	local item = reward.Item and Cosmetics.Get(reward.Item)
-	if item and not profile.Owned[item.Id] then
-		profile.Owned[item.Id] = true
+	local granted = item and grantSkin(profile, item.Id)
+	if item and granted then
 		ProgressService.LedgerItem(player, item.Name, item.Rarity)
-		table.insert(lines, "Neuer Skin: " .. item.Name)
+		table.insert(lines, (granted == "copy" and "Skin-Duplikat: " or "Neuer Skin: ") .. item.Name)
 		if reward.Item and reward.Coins and reward.Text == "SKIN" then
 			coins = 0 -- Glücksrad: Skin statt Münzen
 		end
@@ -285,7 +309,7 @@ function ProgressService.AddPassXP(player, amount)
 			profile.Coins += reward.Coins
 			text = "+" .. reward.Coins .. " Münzen"
 		elseif reward.Item then
-			profile.Owned[reward.Item] = true
+			profile.Owned[reward.Item] = math.max(RapConfig.Count(profile.Owned, reward.Item), 1)
 			local item = Cosmetics.Get(reward.Item)
 			text = "Skin " .. (item and item.Name or reward.Item) .. " freigeschaltet"
 		end
@@ -532,10 +556,10 @@ function ProgressService.ClaimWeeklyBonus(player)
 	local lines = { "+" .. QuestConfig.WeeklyBonus.Coins .. " Münzen" }
 	local skinId = QuestConfig.BonusSkin(weekly.Week)
 	local skin = Cosmetics.Get(skinId)
-	if skin and not profile.Owned[skinId] then
-		profile.Owned[skinId] = true
+	local granted = skin and grantSkin(profile, skinId)
+	if skin and granted then
 		ProgressService.LedgerItem(player, skin.Name, skin.Rarity)
-		table.insert(lines, "Neuer Skin: " .. skin.Name)
+		table.insert(lines, (granted == "copy" and "Skin-Duplikat: " or "Neuer Skin: ") .. skin.Name)
 	end
 	ProgressService.AddCoins(player, QuestConfig.WeeklyBonus.Coins, "Wochen-Bonus") -- synct alles
 	Remotes.Reward:FireClient(player, { Title = "WOCHEN-BONUS", Lines = lines, Rarity = skin and skin.Rarity or nil })
@@ -766,17 +790,74 @@ end
 
 -- ---------- Skins ----------
 
-function ProgressService.Owns(player, itemId)
+-- Besitz: profile.Owned[Id] = Stückzahl (alte Spielstände: true = 1). Handelbare Skins (RapConfig) kann man
+-- mehrfach haben, alle anderen einmal.
+function ProgressService.ItemCount(player, itemId)
 	local profile = profiles[player]
-	return profile ~= nil and profile.Owned[itemId] == true
+	return profile and RapConfig.Count(profile.Owned, itemId) or 0
 end
 
-function ProgressService.GiveItem(player, itemId)
+function ProgressService.Owns(player, itemId)
+	return ProgressService.ItemCount(player, itemId) > 0
+end
+
+-- n Stück dazugeben (Standard 1)
+function ProgressService.GiveItem(player, itemId, n)
 	local profile = profiles[player]
 	if profile then
-		profile.Owned[itemId] = true
+		profile.Owned[itemId] = RapConfig.Count(profile.Owned, itemId) + (n or 1)
 		ProgressService.Sync(player)
 	end
+end
+
+-- n Stück wegnehmen (Standard 1); geht das letzte, wird der Skin überall abgelegt. Gibt true zurück, wenn genug da
+-- waren (sonst ändert sich nichts).
+function ProgressService.TakeItem(player, itemId, n)
+	local profile = profiles[player]
+	n = n or 1
+	local count = profile and RapConfig.Count(profile.Owned, itemId) or 0
+	if not profile or n < 1 or count < n then
+		return false
+	end
+	profile.Owned[itemId] = count - n > 0 and count - n or nil
+	if count - n <= 0 then
+		for slot, equipped in profile.Equipped do
+			if equipped == itemId then
+				profile.Equipped[slot] = nil
+			end
+		end
+	end
+	ProgressService.Sync(player)
+	return true
+end
+
+-- ---------- RAP (zweite Währung, RapConfig) ----------
+
+function ProgressService.GetRap(player)
+	local profile = profiles[player]
+	return profile and math.floor(tonumber(profile.Rap) or 0) or 0
+end
+
+function ProgressService.AddRap(player, amount)
+	local profile = profiles[player]
+	amount = math.floor(tonumber(amount) or 0)
+	if not profile or amount <= 0 then
+		return
+	end
+	profile.Rap = math.floor(tonumber(profile.Rap) or 0) + amount
+	ProgressService.Sync(player)
+end
+
+-- Gibt true zurück, wenn genug RAP da war
+function ProgressService.SpendRap(player, amount)
+	local profile = profiles[player]
+	amount = math.floor(tonumber(amount) or 0)
+	if not profile or amount < 0 or math.floor(tonumber(profile.Rap) or 0) < amount then
+		return false
+	end
+	profile.Rap = math.floor(tonumber(profile.Rap) or 0) - amount
+	ProgressService.Sync(player)
+	return true
 end
 
 -- slot = "W:<Waffe>" oder "A:<Agent>", itemId = nil zum Ablegen

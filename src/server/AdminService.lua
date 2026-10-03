@@ -13,6 +13,8 @@ local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
+local RapConfig = require(Shared.RapConfig)
+local Cosmetics = require(Shared.Cosmetics)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local LeaderboardService = require(ServerStorage:WaitForChild("ServerShared").LeaderboardService)
 local BotService = require(script.Parent.BotService)
@@ -141,6 +143,31 @@ function AdminService.Init(manager)
 			amount = math.clamp(tonumber(amount) or 1000, 1, 1000000)
 			ProgressService.AddCoins(player, amount)
 			return player.Name .. " +" .. amount .. " Münzen"
+		end,
+		-- RAP (zweite Währung) zum Testen von Markt und Tausch
+		GiveRap = function(userId, amount)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			amount = math.clamp(math.floor(tonumber(amount) or 10000), 1, 10000000)
+			ProgressService.AddRap(player, amount)
+			return player.Name .. " +" .. amount .. " RAP"
+		end,
+		-- Zufälliger handelbarer Skin (mit RAP-Wert), auch als weiteres Stück
+		GiveTradeSkin = function(userId)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local ids = {}
+			for id in RapConfig.Values do
+				table.insert(ids, id)
+			end
+			table.sort(ids)
+			local id = ids[math.random(#ids)]
+			ProgressService.GiveItem(player, id)
+			return player.Name .. ": " .. Cosmetics.Get(id).Name .. " (" .. RapConfig.Value(id) .. " RAP)"
 		end,
 		-- ELO ändern: value = Zahl (+/- relativ), "max" = höchster Rang, "reset" = Start-ELO,
 		-- "season" = Saison-Ende testen (Belohnung nach Peak, ELO-Rücksetzung)
