@@ -106,7 +106,7 @@ function actions.RedeemCode(player, code)
 	if not profile or typeof(code) ~= "string" then
 		return "Ungültiger Code.", false
 	end
-	code = string.upper(string.gsub(code, "%s", ""))
+	code = string.upper((string.gsub(code, "%s", ""))) -- Klammern: nur der Text, nicht die Anzahl
 	local reward = CODES[code]
 	if not reward then
 		return "Diesen Code gibt es nicht.", false

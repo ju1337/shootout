@@ -236,7 +236,7 @@ function KillstreakService.Init()
 		if not MODES[killer:GetAttribute("Mode")] then
 			return
 		end
-		local count = (killer:GetAttribute("Killstreak") or 0) + 1
+		local count = (tonumber(killer:GetAttribute("Killstreak")) or 0) + 1
 		killer:SetAttribute("Killstreak", count)
 		for _, streak in KillstreakConfig.List do
 			if count == streak.Kills then

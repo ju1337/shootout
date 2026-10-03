@@ -84,13 +84,16 @@ function actions.Invite(player, userId)
 	end
 	local party = partyOf[player]
 	if party and party.Leader ~= player then
-		return status(player, "Nur der Squad-Anführer kann einladen.")
+		status(player, "Nur der Squad-Anführer kann einladen.")
+		return
 	end
 	if party and #party.Members >= MAX_SIZE then
-		return status(player, "Squad ist voll (" .. MAX_SIZE .. ").")
+		status(player, "Squad ist voll (" .. MAX_SIZE .. ").")
+		return
 	end
 	if partyOf[target] then
-		return status(player, target.Name .. " ist schon in einem Squad.")
+		status(player, target.Name .. " ist schon in einem Squad.")
+		return
 	end
 	invites[target] = invites[target] or {}
 	invites[target][player] = os.clock() + INVITE_TIME
@@ -102,7 +105,8 @@ function actions.Accept(player, userId)
 	local leader = Players:GetPlayerByUserId(tonumber(userId) or 0)
 	local pending = invites[player] and leader and invites[player][leader]
 	if not pending or os.clock() > pending then
-		return status(player, "Einladung abgelaufen.")
+		status(player, "Einladung abgelaufen.")
+		return
 	end
 	invites[player][leader] = nil
 	leave(player)
@@ -112,7 +116,8 @@ function actions.Accept(player, userId)
 		partyOf[leader] = party
 	end
 	if #party.Members >= MAX_SIZE then
-		return status(player, "Squad ist voll.")
+		status(player, "Squad ist voll.")
+		return
 	end
 	table.insert(party.Members, player)
 	partyOf[player] = party

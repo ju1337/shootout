@@ -126,12 +126,6 @@ local function tabs(parent, names, x, y, width, onSelect)
 	return select
 end
 
--- Kleine graue Überschrift über einem Bereich
-local function caption(parent, text, x, y, width)
-	return label({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width or 300, 16), Text = upper(text), TextSize = 12,
-		Font = F.Bold, TextColor3 = C.Muted }, parent)
-end
-
 -- =====================================================================
 -- SHOP
 -- =====================================================================
@@ -659,7 +653,7 @@ function LobbyPages.Loadout(page, goToShop)
 				local function enter()
 					stroke.Transparency = 0
 					stroke.Color = isOn and C.Primary or C.Text
-					local preview = effectsWith(weaponName, slot.Id, isOn and nil or item.Id)
+					local preview = effectsWith(weaponName, slot.Id, if isOn then nil else item.Id) -- angelegt: Werte ohne ihn
 					showStats(currentEffects, preview)
 					showTip(row, item, slot.Name, currentEffects, preview, tipText, stateColor)
 				end

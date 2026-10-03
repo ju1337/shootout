@@ -1241,7 +1241,7 @@ function TeamRoundMode.new(config)
 						change = math.floor(change / 2 + 0.5)
 					end
 					local after = ProgressService.ApplyRanked(player, change, won)
-					LeaderboardService.Submit(player, after)
+					LeaderboardService.Submit(player)
 					local oldRank, newRank = RankConfig.Get(before), RankConfig.Get(after)
 					local text = (change >= 0 and "+" or "−") .. math.abs(change) .. " ELO  ·  " .. newRank.Display
 						.. "  (" .. after .. ")"
