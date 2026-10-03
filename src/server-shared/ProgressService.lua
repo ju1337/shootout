@@ -22,6 +22,7 @@ local LevelConfig = require(Shared.LevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local TitleConfig = require(Shared.TitleConfig)
 local LoginConfig = require(Shared.LoginConfig)
+local RobuxConfig = require(Shared.RobuxConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 
@@ -637,6 +638,16 @@ local function save(player)
 	end
 end
 
+-- Sofort speichern (z.B. nach einem Robux-Kauf)
+function ProgressService.SaveNow(player)
+	save(player)
+end
+
+-- Profil fertig geladen? (ohne DataStore, z.B. in Studio: sobald das Profil da ist)
+function ProgressService.IsLoaded(player)
+	return loaded[player] == true or (store == nil and profiles[player] ~= nil)
+end
+
 -- Agent, mit dem der Spieler gerade spielt (sonst der gewählte)
 function ProgressService.ActiveAgent(player)
 	local character = player.Character
@@ -652,6 +663,10 @@ function ProgressService.AddCoins(player, amount, reason)
 		return
 	end
 	ledgerOf(player)
+	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin)
+	if RobuxConfig.Has(player, "VIP") and reason and reason ~= "Robux" and reason ~= "Code" and reason ~= "Admin" then
+		amount *= 2
+	end
 	profile.Coins += math.floor(amount)
 	record(player, reason, 0, math.floor(amount))
 	ProgressService.Sync(player)
@@ -762,8 +777,8 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 		amount = math.floor(amount * AgentConfig.AgentOfWeekXP)
 		reason = tostring(reason) .. " · Agent der Woche"
 	end
-	-- Doppel-XP (Login-Kalender, Glücksrad)
-	if reason ~= "Admin" and (profile.XPBoostUntil or 0) > os.time() then
+	-- Doppel-XP (Login-Kalender, Glücksrad, Gamepass)
+	if reason ~= "Admin" and ((profile.XPBoostUntil or 0) > os.time() or RobuxConfig.Has(player, "DoubleXP")) then
 		amount *= 2
 		reason = tostring(reason) .. " · Doppel-XP"
 	end
@@ -779,6 +794,9 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 	profile.AccountXP = math.min((profile.AccountXP or 0) + amount, LevelConfig.MaxXP)
 
 	local coins = reason ~= "Admin" and math.floor(amount * Cosmetics.CoinsPerXP) or 0
+	if RobuxConfig.Has(player, "VIP") then
+		coins *= 2 -- Gamepass VIP: doppelte Münzen
+	end
 	profile.Coins += coins
 	record(player, reason, amount, coins)
 	ProgressService.Sync(player)

@@ -68,6 +68,11 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(110, 170, 255), Material = Enum.Material.Glass },
 	{ Id = "W_SE_Champion", Type = "Weapon", Name = "Champion", Rarity = "Legendary", Reward = true,
 		Color = Color3.fromRGB(220, 90, 255), Material = Enum.Material.Neon },
+	-- Exklusiv im Robux-Shop (RobuxConfig: Royal-Paket), nicht für Münzen kaufbar
+	{ Id = "W_Royal", Type = "Weapon", Name = "Royal", Rarity = "Legendary", Reward = true, Robux = true,
+		Color = Color3.fromRGB(120, 50, 200), Material = Enum.Material.Foil },
+	{ Id = "W_Hologramm", Type = "Weapon", Name = "Hologramm", Rarity = "Legendary", Reward = true, Robux = true,
+		Color = Color3.fromRGB(80, 230, 255), Material = Enum.Material.ForceField },
 	-- Login-Kalender Tag 7 und Glücksrad (LoginConfig)
 	{ Id = "W_Kalender", Type = "Weapon", Name = "Treue", Rarity = "Legendary", Reward = true,
 		Color = Color3.fromRGB(255, 120, 60), Material = Enum.Material.Foil },

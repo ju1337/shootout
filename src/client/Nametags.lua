@@ -105,7 +105,7 @@ local function buildTag(model, head)
 	lines.Padding = UDim.new(0, 2)
 	lines.Parent = column
 	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 26), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 26, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left,
+		TextScaled = false, TextSize = 26, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left, RichText = true,
 		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.35, LayoutOrder = 1 })
 	local bar = Instance.new("Frame")
 	bar.Name = "Bar"
@@ -189,6 +189,14 @@ local function setTag(model, info)
 	end
 end
 
+-- Name mit goldenem VIP davor (Gamepass VIP)
+local function displayName(target)
+	if target:GetAttribute("Pass_VIP") == true then
+		return '<font color="#FFD24A">VIP</font> ' .. target.Name
+	end
+	return target.Name
+end
+
 -- Unterzeile: Rang und (falls gewählt) Titel in seiner Farbe
 local function subtitleFor(target, rank)
 	local title = TitleConfig.Get(target:GetAttribute("Title") or "")
@@ -207,7 +215,7 @@ local function update()
 		if inHub then
 			local level = LevelConfig.Get(player)
 			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
-			setTag(myCharacter, { Name = player.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
+			setTag(myCharacter, { Name = displayName(player), Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
 				Subtitle = subtitleFor(player, rank), SubColor = rank.Color, Rank = rank, Player = player })
 		else
 			removeTag(myCharacter)
@@ -222,7 +230,7 @@ local function update()
 			if inHub and sameMode then
 				-- Hub: Name in Prestige-Farbe (ab Prestige 1), Rang darunter
 				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
-				setTag(character, { Name = other.Name, Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
+				setTag(character, { Name = displayName(other), Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
 					Subtitle = subtitleFor(other, rank), SubColor = rank.Color, Rank = rank, Player = other })
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt

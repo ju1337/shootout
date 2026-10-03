@@ -26,6 +26,8 @@ local AttachmentConfig = require(Shared.AttachmentConfig)
 local MasteryConfig = require(Shared.MasteryConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local InputActions = require(Shared.InputActions)
+local RobuxConfig = require(Shared.RobuxConfig)
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -163,10 +165,87 @@ function LobbyPages.Shop(page)
 		end
 	end
 
+	-- Reiter ROBUX: Gamepässe und Entwicklerprodukte (RobuxConfig). Ohne ID: "BALD", sonst Roblox-Kaufdialog.
+	local robuxButtons = {} -- { Buy, Pass } zum Aktualisieren (gekauft?)
+	local function updateRobux()
+		for _, entry in robuxButtons do
+			if entry.Pass and RobuxConfig.Has(player, entry.Pass.Id) then
+				entry.Buy.SetText("GEKAUFT")
+				entry.Buy.SetColor(C.MutedBack, C.Good)
+			end
+		end
+	end
+	local function robuxCard(order, entry, isPass)
+		local id = isPass and entry.PassId or entry.ProductId
+		local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
+			LayoutOrder = order }, grid)
+		UITheme.Corner(card, UITheme.Radius.XL)
+		UITheme.Stroke(card, entry.Color, 1, 0.4)
+		local top = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.new(1, -20, 0, 160), BackgroundColor3 = entry.Color,
+			BackgroundTransparency = 0.75 }, card)
+		UITheme.Corner(top, UITheme.Radius.Large)
+		make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(0.2, 0.8) }, top)
+		if entry.Items then
+			local view = viewport({ Size = UDim2.fromScale(1, 1) }, top)
+			showWeapon(view, "Rifle", Cosmetics.Get(entry.Items[1]), 214 / 160)
+		elseif entry.Coins then
+			UITheme.Coin(top, 70, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) })
+		else
+			label({ Size = UDim2.fromScale(1, 1), Text = entry.Spins and "×" .. entry.Spins or (isPass and entry.Name or "2× XP"),
+				TextSize = 46, Font = F.Display, TextColor3 = entry.Color, TextXAlignment = Enum.TextXAlignment.Center }, top)
+		end
+		if entry.Tag then
+			UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 8), Text = entry.Tag, TextSize = 12,
+				BackgroundColor3 = entry.Color, TextColor3 = C.PrimaryText }, top)
+		end
+		label({ Position = UDim2.fromOffset(16, 180), Size = UDim2.new(1, -32, 0, 28), Text = entry.Name, TextSize = 22,
+			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+		label({ Position = UDim2.fromOffset(16, 210), Size = UDim2.new(1, -32, 0, 44), Text = isPass and entry.Description
+			or RobuxConfig.Describe(entry), TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true,
+			TextYAlignment = Enum.TextYAlignment.Top }, card)
+		local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
+			Size = UDim2.new(1, -28, 0, 40), Color = id ~= 0 and C.Good or C.MutedBack,
+			Text = id ~= 0 and ("R$ " .. entry.Robux) or "BALD", TextSize = 18, TextColor = id ~= 0 and C.PrimaryText or C.Muted }, card,
+			function()
+				if id == 0 or (isPass and RobuxConfig.Has(player, entry.Id)) then
+					return
+				end
+				if isPass then
+					MarketplaceService:PromptGamePassPurchase(player, id)
+				else
+					MarketplaceService:PromptProductPurchase(player, id)
+				end
+			end)
+		table.insert(robuxButtons, { Buy = buy, Pass = isPass and entry or nil })
+		-- echten Preis von Roblox holen
+		if id ~= 0 then
+			task.spawn(function()
+				local ok, info = pcall(MarketplaceService.GetProductInfo, MarketplaceService, id,
+					isPass and Enum.InfoType.GamePass or Enum.InfoType.Product)
+				if ok and info and info.PriceInRobux and buy.Button.Parent and not (isPass and RobuxConfig.Has(player, entry.Id)) then
+					buy.SetText("R$ " .. info.PriceInRobux)
+				end
+			end)
+		end
+	end
+
 	local function fill()
 		clear(grid)
 		cards = {}
+		robuxButtons = {}
 		local order = 0
+		if currentType == "Robux" then
+			for _, pass in RobuxConfig.Passes do
+				order += 1
+				robuxCard(order, pass, true)
+			end
+			for _, product in RobuxConfig.Products do
+				order += 1
+				robuxCard(order, product, false)
+			end
+			updateRobux()
+			return
+		end
 		for _, item in Cosmetics.List(currentType) do
 			if Cosmetics.ForSale(item) then
 				order += 1
@@ -202,11 +281,14 @@ function LobbyPages.Shop(page)
 		updateButtons()
 	end
 
-	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS" }, 0, 0, PAGE_W, function(name)
-		currentType = name == "WAFFEN-SKINS" and "Weapon" or "Agent"
+	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX" }, 0, 0, PAGE_W, function(name)
+		currentType = name == "WAFFEN-SKINS" and "Weapon" or (name == "AGENTEN-SKINS" and "Agent" or "Robux")
 		fill()
 	end)("WAFFEN-SKINS")
-	return { Refresh = updateButtons, Watch = { Coins = true, Owned = true } }
+	return { Refresh = function()
+		updateButtons()
+		updateRobux()
+	end, Watch = { Coins = true, Owned = true, Pass_VIP = true, Pass_DoubleXP = true } }
 end
 
 -- =====================================================================
