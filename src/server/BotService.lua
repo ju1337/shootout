@@ -3,6 +3,8 @@
 -- dessen Leben, Tempo und Hauptwaffe. Er sucht den nächsten sichtbaren Gegner im selben
 -- Modus, läuft hin, hält Abstand und schießt mit etwas Streuung.
 -- Die Modi (FreeForAll, Drop) entscheiden, wann ein Bot spawnt; der BotService baut Modell und KI.
+-- Tote Bots fallen als Ragdoll um und werden nach 2 s ausgeblendet (corpse), damit kein toter Körper wie ein
+-- leeres Gegner-Modell herumsteht; die KI startet nach einem Fehler neu (superviseAI).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -495,8 +497,113 @@ local function rigTemplate(color)
 		return nil
 	end
 	model.Archivable = true
+	-- Beim Tod nicht von Roblox zerlegen lassen: das macht corpse() einheitlich (Ragdoll, dann ausblenden)
+	local templateHumanoid = model:FindFirstChildOfClass("Humanoid")
+	if templateHumanoid then
+		templateHumanoid.BreakJointsOnDeath = false
+	end
 	templates[key] = model
 	return model
+end
+
+-- ---------- Tod: Ragdoll, dann ausblenden ----------
+-- Wie ein toter Körper aussieht, hängt sonst von Roblox ab: klassisch zerfallen, Ragdoll oder – mit dem Avatar
+-- Joint Upgrade (AnimationConstraints statt Motor6D) – steif stehen bleiben. Ein stehender toter Bot sieht aus wie
+-- ein leeres Gegner-Modell. Darum hier einheitlich: Gelenke durch Kugelgelenke ersetzen (der Körper fällt um),
+-- nach CORPSE_FADE_START Sekunden ausblenden und danach unsichtbar ohne Kollision liegen lassen, bis der Bot
+-- neu spawnt (Despawn räumt das Modell dann weg).
+local CORPSE_FADE_START = 2
+local CORPSE_FADE_TIME = 0.6
+local CORPSE_FADE_STEPS = 6
+
+local function ragdoll(model)
+	for _, joint in model:GetDescendants() do
+		if (joint:IsA("Motor6D") or joint:IsA("AnimationConstraint")) and joint.Parent then
+			-- AnimationConstraint: Part0/Part1/C0/C1 sind lesbare Aliase der Attachments. Klappt das Kugelgelenk
+			-- nicht, zerfällt der Körper eben klassisch – Hauptsache, er bleibt nicht stehen.
+			pcall(function()
+				local part0, part1 = joint.Part0, joint.Part1
+				if part0 and part1 then
+					local a0 = Instance.new("Attachment")
+					a0.Name = "RagdollAttachment"
+					a0.CFrame = joint.C0
+					a0.Parent = part0
+					local a1 = Instance.new("Attachment")
+					a1.Name = "RagdollAttachment"
+					a1.CFrame = joint.C1
+					a1.Parent = part1
+					local socket = Instance.new("BallSocketConstraint")
+					socket.Attachment0 = a0
+					socket.Attachment1 = a1
+					socket.LimitsEnabled = true
+					socket.UpperAngle = 70
+					socket.TwistLimitsEnabled = true
+					socket.TwistLowerAngle = -45
+					socket.TwistUpperAngle = 45
+					socket.Parent = part1
+					-- Nachbarteile nicht gegeneinander stoßen lassen (sonst zittert der Körper)
+					local noCollide = Instance.new("NoCollisionConstraint")
+					noCollide.Part0 = part0
+					noCollide.Part1 = part1
+					noCollide.Parent = part1
+				end
+			end)
+			joint:Destroy()
+		end
+	end
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			part.CanCollide = true -- Gliedmaßen liegen auf dem Boden statt hindurchzufallen
+		end
+	end
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and not part.Anchored then
+			pcall(part.SetNetworkOwner, part, nil) -- der Server rechnet den fallenden Körper
+		end
+	end
+end
+
+local function corpse(model)
+	ragdoll(model)
+	task.wait(CORPSE_FADE_START)
+	local items = {}
+	for _, obj in model:GetDescendants() do
+		if obj:IsA("BasePart") or obj:IsA("Decal") then
+			table.insert(items, { Object = obj, From = obj.Transparency })
+		end
+	end
+	for step = 1, CORPSE_FADE_STEPS do
+		if not model.Parent then
+			return
+		end
+		for _, item in items do
+			item.Object.Transparency = item.From + (1 - item.From) * step / CORPSE_FADE_STEPS
+		end
+		task.wait(CORPSE_FADE_TIME / CORPSE_FADE_STEPS)
+	end
+	for _, item in items do
+		local part = item.Object
+		if part:IsA("BasePart") and part.Parent then
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+		end
+	end
+end
+
+-- KI mit Neustart: Ein Fehler in einem KI-Schritt darf keinen lebenden Bot als stehendes, leeres Modell
+-- zurücklassen
+local function superviseAI(bot, model)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	while bot.Model == model and model.Parent and humanoid and humanoid.Health > 0 do
+		local ok, err = pcall(runAI, bot, model)
+		if ok then
+			return
+		end
+		warn(string.format("Bot-KI von %s neu gestartet: %s", bot.Name, tostring(err)))
+		task.wait(1)
+	end
 end
 
 -- Modell an cframe erzeugen und KI starten. onDied wird beim Tod aufgerufen.
@@ -551,7 +658,13 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	bot.Model = model
 	bot.Alive = true
 	bot.GadgetCharges = (agent.Gadget and agent.Gadget.Charges) or 0
-	humanoid.Died:Once(function()
+	-- Tod: über Died und zur Sicherheit auch über das Leben (genau einmal)
+	local dead = false
+	local function onDeath()
+		if dead then
+			return
+		end
+		dead = true
 		if bot.Model == model then
 			bot.Alive = false
 			bot.Info:SetAttribute("Deaths", (bot.Info:GetAttribute("Deaths") or 0) + 1)
@@ -559,13 +672,21 @@ function BotService.SpawnModel(bot, cframe, onDied)
 				onDied()
 			end
 		end
+		task.spawn(corpse, model)
+	end
+	humanoid.Died:Once(onDeath)
+	humanoid.HealthChanged:Connect(function(health)
+		if health <= 0 then
+			onDeath()
+		end
 	end)
-	task.spawn(runAI, bot, model)
+	task.spawn(superviseAI, bot, model)
 	return model
 end
 
 -- Sicherheitsnetz: Modelle, die keinem angemeldeten Bot (mehr) gehören, regelmäßig entfernen.
--- Die Leiche eines Bots bleibt, bis er neu spawnt (sie ist dann noch sein bot.Model).
+-- Die Leiche eines Bots bleibt (umgefallen und ausgeblendet, siehe corpse), bis er neu spawnt – sie ist dann
+-- noch sein bot.Model.
 task.spawn(function()
 	while true do
 		task.wait(2)
