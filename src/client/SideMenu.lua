@@ -660,6 +660,135 @@ local function buildDaily()
 	end
 end
 
+-- ---------- CLAN ----------
+-- Ohne Clan: gründen (Name, Kürzel, kostet Münzen) oder per Kürzel beitreten. Im Clan: Name, Mitglieder (Leiter mit
+-- Krone, online-Punkt, Entfernen für den Leiter) und Verlassen (zweimal klicken). Daten: Spieler-Attribute ClanTag,
+-- ClanName, ClanData (ClanService).
+
+local CLAN_COST = 2500
+
+local function buildClan()
+	local frame = makePanel("Clan", "CLAN", 860, 560)
+	local function box(parent, y, placeholder, maxLength)
+		local textBox = make("TextBox", { Position = UDim2.new(0, 20, 0, y), Size = UDim2.new(1, -40, 0, 46),
+			BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 20,
+			TextColor3 = Color3.new(1, 1, 1), PlaceholderText = placeholder, PlaceholderColor3 = GRAY, Text = "",
+			ClearTextOnFocus = false }, parent)
+		make("UICorner", { CornerRadius = UDim.new(0, 8) }, textBox)
+		textBox:GetPropertyChangedSignal("Text"):Connect(function()
+			if #textBox.Text > maxLength then
+				textBox.Text = string.sub(textBox.Text, 1, maxLength)
+			end
+		end)
+		return textBox
+	end
+
+	-- Ohne Clan
+	local noClan = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(1, -48, 1, -120),
+		BackgroundTransparency = 1 }, frame)
+	local create = make("Frame", { Size = UDim2.new(0.5, -10, 1, 0), BackgroundColor3 = CARD }, noClan)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, create)
+	text({ Position = UDim2.new(0, 20, 0, 16), Size = UDim2.new(1, -40, 0, 28), Text = "CLAN GRÜNDEN", TextSize = 24,
+		Font = DISPLAY }, create)
+	text({ Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 18), Text = "Du wirst Leiter. Max. 20 Mitglieder.",
+		TextSize = 13, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, create)
+	local nameBox = box(create, 82, "CLAN-NAME (3–20 Zeichen)", 20)
+	local tagBox = box(create, 140, "KÜRZEL (2–4, z.B. ABC)", 4)
+	button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20), Size = UDim2.new(1, -40, 0, 50),
+		TextSize = 18, Text = "GRÜNDEN  ·  " .. formatNumber(CLAN_COST) .. " MÜNZEN", BackgroundColor3 = ACCENT,
+		TextColor3 = ON_ACCENT }, create, function()
+		Remotes.ShopAction:FireServer("CreateClan", nameBox.Text, tagBox.Text)
+	end)
+	local join = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0.5, -10, 1, 0),
+		BackgroundColor3 = CARD }, noClan)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, join)
+	text({ Position = UDim2.new(0, 20, 0, 16), Size = UDim2.new(1, -40, 0, 28), Text = "CLAN BEITRETEN", TextSize = 24,
+		Font = DISPLAY }, join)
+	text({ Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 18), Text = "Frag deine Freunde nach ihrem Kürzel.",
+		TextSize = 13, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, join)
+	local joinBox = box(join, 82, "KÜRZEL", 4)
+	button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20), Size = UDim2.new(1, -40, 0, 50),
+		TextSize = 18, Text = "BEITRETEN", BackgroundColor3 = UITheme.Colors.Accent, TextColor3 = ON_ACCENT }, join, function()
+		Remotes.ShopAction:FireServer("JoinClan", joinBox.Text)
+	end)
+
+	-- Im Clan
+	local inClan = make("Frame", { Position = UDim2.new(0, 24, 0, 66), Size = UDim2.new(1, -48, 1, -116),
+		BackgroundTransparency = 1, Visible = false }, frame)
+	local clanTitle = text({ Size = UDim2.new(1, -220, 0, 44), Text = "", TextSize = 36, Font = DISPLAY, RichText = true }, inClan)
+	local clanInfo = text({ Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(1, -220, 0, 18), Text = "", TextSize = 13,
+		TextColor3 = GRAY }, inClan)
+	local confirmLeave = 0
+	local leave
+	leave = button({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 6), Size = UDim2.new(0, 200, 0, 44),
+		TextSize = 15, Text = "CLAN VERLASSEN", BackgroundColor3 = UITheme.Colors.MutedBack, TextColor3 = UITheme.Colors.Bad },
+		inClan, function()
+			if os.clock() < confirmLeave then
+				confirmLeave = 0
+				Remotes.ShopAction:FireServer("LeaveClan")
+			else
+				confirmLeave = os.clock() + 4
+				leave.Text = "WIRKLICH? NOCHMAL"
+				task.delay(4, function()
+					leave.Text = "CLAN VERLASSEN"
+				end)
+			end
+		end)
+	local list = make("ScrollingFrame", { Position = UDim2.new(0, 0, 0, 76), Size = UDim2.new(1, 0, 1, -76),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = BORDER,
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, inClan)
+	make("UIGridLayout", { CellSize = UDim2.new(0.5, -6, 0, 46), CellPadding = UDim2.new(0, 12, 0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder }, list)
+
+	panels.Clan.Refresh = function()
+		local tag = player:GetAttribute("ClanTag")
+		noClan.Visible = tag == nil
+		inClan.Visible = tag ~= nil
+		if not tag then
+			return
+		end
+		local data = decodeAttribute(player, "ClanData")
+		local members = data.Members or {}
+		local total = 0
+		for _ in members do
+			total += 1
+		end
+		clanTitle.Text = '<font color="#8FC3FF">[' .. tag .. ']</font>  ' .. tostring(player:GetAttribute("ClanName") or "")
+		clanInfo.Text = total .. " / 20 MITGLIEDER  ·  KÜRZEL ZUM BEITRETEN: " .. tag
+		for _, child in list:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+		local isLeader = data.Owner == player.UserId
+		local order = 0
+		for id, name in members do
+			order += 1
+			local userId = tonumber(id)
+			local leader = userId == data.Owner
+			local online = Players:GetPlayerByUserId(userId or 0) ~= nil
+			local row = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = leader and 0 or order }, list)
+			make("UICorner", { CornerRadius = UDim.new(0, 8) }, row)
+			local dot = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0), Size = UDim2.new(0, 8, 0, 8),
+				BackgroundColor3 = online and GREEN or BORDER }, row)
+			make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
+			text({ Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = (leader and "👑  " or "") .. tostring(name),
+				TextSize = 16, TextColor3 = userId == player.UserId and ACCENT or UITheme.Colors.Text,
+				TextTruncate = Enum.TextTruncate.AtEnd }, row)
+			if isLeader and userId ~= player.UserId then
+				button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0, 100, 0, 32),
+					TextSize = 12, Text = "ENTFERNEN", BackgroundColor3 = UITheme.Colors.MutedBack, TextColor3 = UITheme.Colors.Bad },
+					row, function()
+						Remotes.ShopAction:FireServer("KickClanMember", userId)
+					end)
+			elseif leader then
+				text({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.new(0, 90, 0, 20),
+					Text = "LEITER", TextSize = 12, TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Right }, row)
+			end
+		end
+	end
+end
+
 -- ---------- GLÜCKSRAD ----------
 -- Acht Felder im Kreis, ein Zeiger in der Mitte dreht sich und bleibt auf dem Feld stehen, das der Server
 -- ausgelost hat (Remotes.WheelResult). Einmal am Tag gratis, dazu Extra-Drehs.
@@ -1236,13 +1365,15 @@ local function buildPlayerCard()
 		coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
 		-- Name mit ausgewähltem Titel (Rekrut wird nicht extra angezeigt)
 		local title = TitleConfig.Get(player:GetAttribute("Title") or "")
-		nameLabel.Text = player.Name .. ((title and title.Id ~= TitleConfig.Default)
+		local clanTag = player:GetAttribute("ClanTag")
+		nameLabel.Text = (clanTag and ('<font color="#8FC3FF">[' .. clanTag .. ']</font> ') or "") .. player.Name
+			.. ((title and title.Id ~= TitleConfig.Default)
 			and ('  <font size="13" color="#' .. title.Color:ToHex() .. '">' .. UITheme.Upper(title.Name) .. "</font>") or "")
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(name)
 		if name == "AccountXP" or name == "Prestige" or name == "Elo" or name == "Coins" or name == "Title"
-			or name == "XPBoostUntil" then
+			or name == "XPBoostUntil" or name == "ClanTag" then
 			refresh()
 		end
 	end)
@@ -1259,6 +1390,7 @@ local function buildColumn()
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
 		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "📅" },
 		{ "GLÜCKSRAD", function() togglePanel("Wheel") end, Color3.fromRGB(212, 170, 80), "🎡" },
+		{ "CLAN", function() togglePanel("Clan") end, Color3.fromRGB(110, 160, 230), "🛡" },
 		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
 		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230), "🏷" },
@@ -1324,6 +1456,7 @@ function SideMenu.Init()
 	buildQuests()
 	buildDaily()
 	buildWheel()
+	buildClan()
 	buildCodes()
 	buildSettings()
 	buildRewards()
@@ -1338,7 +1471,7 @@ function SideMenu.Init()
 	end)
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly" or name == "LoginData" or name == "WheelData"
+		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly" or name == "LoginData" or name == "WheelData" or name == "ClanTag" or name == "ClanData"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
 			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then

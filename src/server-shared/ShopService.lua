@@ -12,6 +12,7 @@ local MasteryConfig = require(Shared.MasteryConfig)
 local PlayerSettings = require(Shared.PlayerSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
+local ClanService = require(ServerStorage:WaitForChild("ServerShared").ClanService)
 
 local ShopService = {}
 
@@ -188,6 +189,23 @@ end
 
 function actions.ClaimWeeklyBonus(player)
 	return ProgressService.ClaimWeeklyBonus(player)
+end
+
+-- Clans (ClanService)
+function actions.CreateClan(player, name, tag)
+	return ClanService.Create(player, name, tag)
+end
+
+function actions.JoinClan(player, tag)
+	return ClanService.Join(player, tag)
+end
+
+function actions.LeaveClan(player)
+	return ClanService.Leave(player)
+end
+
+function actions.KickClanMember(player, userId)
+	return ClanService.Kick(player, userId)
 end
 
 function actions.SetTitle(player, id)

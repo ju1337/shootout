@@ -189,12 +189,17 @@ local function setTag(model, info)
 	end
 end
 
--- Name mit goldenem VIP davor (Gamepass VIP)
+-- Name mit Clan-Kürzel und goldenem VIP davor (Gamepass VIP)
 local function displayName(target)
-	if target:GetAttribute("Pass_VIP") == true then
-		return '<font color="#FFD24A">VIP</font> ' .. target.Name
+	local name = target.Name
+	local tag = target:GetAttribute("ClanTag")
+	if tag then
+		name = '<font color="#8FC3FF">[' .. tag .. ']</font> ' .. name
 	end
-	return target.Name
+	if target:GetAttribute("Pass_VIP") == true then
+		name = '<font color="#FFD24A">VIP</font> ' .. name
+	end
+	return name
 end
 
 -- Unterzeile: Rang und (falls gewählt) Titel in seiner Farbe
