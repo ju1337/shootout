@@ -6,3 +6,4 @@ rojo
 *.lock
 __pycache__/
 build/
+sourcemap.json

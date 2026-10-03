@@ -1,0 +1,54 @@
+# Automatische Prüfung bei jedem Push und Pull Request:
+#   1. Statische Analyse aller Skripte mit luau-lsp und den Roblox-Typen (Typ- und Syntaxfehler brechen ab,
+#      Stil-Warnungen stehen nur im Log)
+#   2. Tests (tests/*.test.luau) mit dem Luau-Interpreter, siehe tests/run.py
+name: Prüfung
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Analyse und Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LUAU_VERSION: "0.740"
+      LUAU_LSP_VERSION: "1.70.1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Werkzeuge laden (Luau, luau-lsp, Roblox-Typen)
+        id: tools
+        run: |
+          mkdir -p "$HOME/tools"
+          cd "$HOME/tools"
+          # feste Versionen; gibt es sie nicht (mehr), die neueste nehmen
+          curl -fsSL -o luau.zip "https://github.com/luau-lang/luau/releases/download/$LUAU_VERSION/luau-ubuntu.zip" \
+            || { echo "::warning::Luau $LUAU_VERSION nicht gefunden, nehme die neueste Version"; \
+                 curl -fsSL -o luau.zip "https://github.com/luau-lang/luau/releases/latest/download/luau-ubuntu.zip"; }
+          curl -fsSL -o luau-lsp.zip "https://github.com/JohnnyMorganz/luau-lsp/releases/download/$LUAU_LSP_VERSION/luau-lsp-linux-x86_64.zip" \
+            || { echo "::warning::luau-lsp $LUAU_LSP_VERSION nicht gefunden, nehme die neueste Version"; \
+                 curl -fsSL -o luau-lsp.zip "https://github.com/JohnnyMorganz/luau-lsp/releases/latest/download/luau-lsp-linux-x86_64.zip"; }
+          curl -fsSL -o globalTypes.d.luau "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/$LUAU_LSP_VERSION/scripts/globalTypes.d.luau" \
+            || curl -fsSL -o globalTypes.d.luau "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau"
+          unzip -o -q luau.zip
+          unzip -o -q luau-lsp.zip
+          chmod +x luau luau-lsp
+          echo "$HOME/tools" >> "$GITHUB_PATH"
+
+      - name: Statische Analyse (luau-lsp)
+        run: |
+          python3 tools/sourcemap.py . sourcemap.json
+          luau-lsp analyze --sourcemap=sourcemap.json --definitions=@roblox="$HOME/tools/globalTypes.d.luau" \
+            --no-strict-dm-types src
+
+      - name: Tests
+        # auch wenn die Analyse etwas gefunden hat
+        if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
+        run: python3 tests/run.py --luau luau

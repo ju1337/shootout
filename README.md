@@ -242,6 +242,41 @@ Schutz der Spielstände (`src/server-shared/SessionStore.lua`, genutzt von `Prog
 - **Robux-Käufe** (`RobuxService`): Ein Kauf wird Roblox erst bestätigt, wenn der Stand mit dem Kauf sicher
   gespeichert ist; sonst fragt Roblox später erneut (jede Kauf-Nummer wird trotzdem nur einmal gutgeschrieben).
 
+## Tests und automatische Prüfung
+
+Bei jedem Push (und bei Pull Requests) prüft GitHub Actions den Stand automatisch
+(`.github/workflows/checks.yml`). Das Ergebnis steht auf GitHub unter **Actions** und als Haken bzw. rotes Kreuz
+am Commit:
+1. **Statische Analyse** aller Skripte mit [luau-lsp](https://github.com/JohnnyMorganz/luau-lsp) und den
+   Roblox-Typen. Typ- und Syntaxfehler lassen die Prüfung scheitern, Stil-Warnungen (z. B. unbenutzte Variablen)
+   stehen nur im Log.
+2. **Tests** (`tests/*.test.luau`) im normalen Luau-Interpreter, ohne Roblox. `tests/lib/engine.luau` bildet die
+   nötigen Teile von Roblox nach (Zeit und `task`, Instanzen, Spieler, DataStores, Remotes, ...), `tests/run.py`
+   bündelt jeden Test mit allen Modulen des Projekts unter denselben Pfaden wie in Studio.
+
+| Test | prüft |
+|---|---|
+| `weapons` | Arm-IK (PoseMath), Visierlinien aller Waffen, Nachlade-Animationen, Waffenwerte |
+| `pose`, `pose_r6`, `rig` | Third-Person-Haltung: Waffe im Anschlag, Hände an der Waffe; Gelenk-Erkennung (Motor6D und Avatar Joint Upgrade), R6 |
+| `viewmodel` | Ego-Waffe: Kimme und Korn beim Zielen genau in der Bildmitte |
+| `minimap`, `modes` | Minimap-Zuschnitt auf den Kreis, Modus-Liste |
+| `session` | Sitzungssperre der Spielstände (Serverwechsel, Absturz, DataStore-Fehler) |
+| `progress` | Spielstand laden/speichern mit Sperre, Robux-Käufe erst nach dem Speichern bestätigt, Kick bei Ladefehler, Speichern beim Herunterfahren |
+| `medals` | Medaillen im KillService (Mehrfach-Kill, Serien, Rache, Weitschuss, ...), mit beiden Signal-Modi von Roblox |
+| `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
+
+Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
+[Luau-Releases](https://github.com/luau-lang/luau/releases) werden gebraucht):
+
+    python3 tests/run.py                  # alle Tests
+    python3 tests/run.py movement         # nur bestimmte Tests
+    python3 tests/run.py --keep build/tests   # gebündelte Dateien zum Nachsehen behalten
+
+Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`, die Nachbildung steht unter `SIM`
+(z. B. `SIM.AddPlayer`, `SIM.Run`/`SIM.Advance` für die Zeit, `SIM.Stub` für Attrappen anderer Module,
+`SIM.DataStore`, `SIM.RemoteLog`). Ein Test schlägt fehl, wenn er mit einem Fehler abbricht oder eine Zeile mit
+`FEHLER` ausgibt.
+
 ## Ordner
 
 - `src/shared` – Client + Server: Konfigurationen, Waffen-Client (ViewModel = Ego-Waffe, CharacterPose =
@@ -253,3 +288,5 @@ Schutz der Spielstände (`src/server-shared/SessionStore.lua`, genutzt von `Prog
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)
 - `tools/build_maps.py` – erzeugt alle Maps
+- `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
+- `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie), `.github/workflows` – automatische Prüfung
