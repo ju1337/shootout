@@ -2,6 +2,9 @@
 -- Charakter neu laden und an eine bestimmte Stelle setzen.
 
 local Debris = game:GetService("Debris")
+local ServerStorage = game:GetService("ServerStorage")
+
+local MovementGuard = require(ServerStorage:WaitForChild("ServerShared").MovementGuard)
 
 local SpawnUtil = {}
 
@@ -14,6 +17,7 @@ function SpawnUtil.Spawn(player, cframe, protection)
 		return nil
 	end
 	character:PivotTo(cframe)
+	MovementGuard.Teleported(character) -- neue Stelle ist gültig, kein Teleport-Verstoß
 
 	-- Standard-Schild der SpawnLocation entfernen, eigenes setzen
 	local default = character:FindFirstChildOfClass("ForceField")

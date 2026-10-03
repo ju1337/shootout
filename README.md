@@ -142,6 +142,13 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
   das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
   rückt die Kamera seitlich an den Kopf statt durch die Wand zu schauen (Werte oben in `src/shared/Movement.lua`)
+- **Bewegungs-Check** (`src/server-shared/MovementGuard.lua`): Der Server vergleicht 5-mal pro Sekunde die
+  zurückgelegte Strecke jedes Spielers mit dem erlaubten Tempo (waagerecht 62 Studs/s, nach oben 50, dazu ein
+  Vorrat von 100 bzw. 40 Studs für Sprint-Stoß und Lag-Spitzen; Fallen ist frei). Wer schneller ist (Speedhack)
+  oder springt (Teleport), wird an die letzte gültige Stelle zurückgesetzt, im Server-Log steht eine Warnung.
+  Legale Bewegungen (Sprint mit allen Boni, Rutschen, Sprint-Stoß, Fallschirmsprung, Treppen, Klettern, Lag bis
+  ca. 1,5 s) liegen darunter. Versetzt der Server einen Charakter selbst, ruft er danach
+  `MovementGuard.Teleported(character)` auf (macht `SpawnUtil.Spawn` schon)
 - **Schießen wie bei Rogue Company**:
   - Schulterkamera: dynamisches Fadenkreuz (Abstand = echte Streuung durch Laufen, Springen, Dauerfeuer),
     zieht sich beim Zielen zu einem kleinen Kreuz zusammen, wird über Gegnern rot; Schrotflinte mit Kreis.
@@ -196,7 +203,7 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Fenster (Statistik, Codes, Optionen, Aufträge, Täglich, Squad) und Hub-Menüliste | `src/client/SideMenu.lua` |
 | Match-HUD (Punktestand, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
 | Fähigkeits-Zeilen (Fähigkeit, Gadget, Ultimate) | `src/shared/AbilityClient.lua`, Ultimate-Werte in `AgentConfig.Ultimate` |
-| VERLASSEN-Knopf im Match (Bestätigungszeit) | `LEAVE_CONFIRM` in `src/shared/HUD.lua` |
+| VERLASSEN-Knopf (Bestätigungszeit) | `CONFIRM_TIME` in `src/shared/LeaveButton.lua` |
 | Licht und Farbkorrektur der Welt | `Lighting` in `default.project.json` |
 | Team-Uniformfarben (je Modus eindeutig) | `Teams` in `src/server/Modes/*.lua` |
 | Schulterkamera (Versatz, Abstand, beim Zielen) | `SHOULDER_*` in `src/shared/Movement.lua` |
@@ -213,6 +220,7 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Ränge (Ranked) | `src/shared/RankConfig.lua` |
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |
 | Modi im Menü | `src/shared/Modes.lua` |
+| Bewegungs-Check (erlaubtes Tempo, Vorrat) | `FLAT_*`, `UP_*` in `src/server-shared/MovementGuard.lua` |
 | Admins | `ADMIN_IDS` in `src/server/AdminService.lua` |
 | Codes | `CODES` in `src/server-shared/ShopService.lua` |
 
