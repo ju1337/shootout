@@ -140,6 +140,11 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     eine dezente Tastenzeile
   - rechts: Killfeed – dunkle Zeilen mit farbiger Kante, Waffe als graue Schrift, eigene Kills mit
     Bernstein-Kante (▼ niedergeschlagen, ◎ Kopfschuss)
+  - rechts in der Mitte (Herrschaft): Killstreaks (`src/client/KillstreakHUD.lua`) – oben die Killserie dieses
+    Lebens als große Zahl (springt bei jedem Kill auf) und die nächste Belohnung („LUFTSCHLAG IN 2 KILLS“),
+    darunter je Belohnung eine Karte mit gezeichnetem Symbol (Drohne, Jet, Schild), Name und einem Segment pro
+    nötigem Kill. Wird eine bereit, fährt ihre Karte herein, blitzt auf, ein Glanz läuft darüber und das Symbol
+    pulsiert, bis man sie auslöst: 4/5/6 (Controller: Steuerkreuz rechts, Touch/Maus: Karte antippen)
   - unten links: Porträt, Agentenname, Rüstung in 5 dünnen Segmenten und Leben als Zahl + Balken
     (Verlust blitzt rot nach)
   - unten rechts: Waffen-Silhouette, Waffenplätze 1/2, Waffenname, Munition „30 / ∞“ und die andere Waffe;
