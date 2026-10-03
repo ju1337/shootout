@@ -67,7 +67,9 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   - Statistik, Codes, Optionen, Aufträge, tägliche Belohnung und Squad öffnen weiterhin ein Fenster darüber
 - **Hub**: Spielerkarte (Level, Prestige, Rang, Münzen), schlichte Menüliste (Shop, Loadout, Agenten, Battle
   Pass öffnen die Lobby auf der passenden Seite; Aufträge, Täglich, Squad, Statistik, Codes, Optionen als
-  Fenster) und SPIELEN-Knopf
+  Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
+  Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
+  Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle

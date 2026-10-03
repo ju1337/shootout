@@ -638,8 +638,30 @@ local function buildDaily()
 	end)
 end
 
+-- Unterzeile des SPIELEN-Knopfs im Hub: gewählter Modus und wie viele ihn gerade spielen
+local function updateHubPlay()
+	if not openButton or not selectedMode then
+		return
+	end
+	if not selectedMode.Available then
+		openButton.SetSub(selectedMode.Name .. " KOMMT BALD")
+		return
+	end
+	local counts = liveCounts()
+	local n = 0
+	if selectedMode == QUICK then
+		for _, value in counts do
+			n += tonumber(value) or 0
+		end
+	else
+		n = tonumber(counts[selectedMode.Id]) or 0
+	end
+	openButton.SetSub(n > 0 and (selectedMode.Name .. "  ·  " .. n .. (n == 1 and " SPIELT" or " SPIELEN")) or selectedMode.Name)
+end
+
 -- SPIELEN-Knopf: Modus, Spielerzahl, Ping
 function GameMenu.UpdatePlay()
+	updateHubPlay()
 	if not play or not selectedMode then
 		return
 	end
@@ -1138,6 +1160,114 @@ function GameMenu.PanelChanged(name)
 	end
 end
 
+-- ---------- SPIELEN-Knopf im Hub ----------
+-- Großer Bernstein-Knopf unten mittig: rundes Play-Symbol, SPIELEN, darunter Modus und Spielerzahl, rechts die
+-- Taste (M bzw. Steuerkreuz unten). Ein Rand breitet sich immer wieder aus und verblasst, alle paar Sekunden läuft
+-- ein Glanz darüber; Überfahren/Auswählen vergrößert ihn leicht und schiebt das Play-Symbol an.
+-- Gibt { Button, SetKey(text), SetSub(text) } zurück.
+local HUB_PLAY_W, HUB_PLAY_H = 360, 78
+
+local function buildHubPlay(parentGui)
+	local white = Color3.new(1, 1, 1)
+	local root = UITheme.ScaledRoot(parentGui, nil, nil, 0.6)
+	local button = make("TextButton", { Name = "HubPlay", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -30),
+		Size = UDim2.fromOffset(HUB_PLAY_W, HUB_PLAY_H), BackgroundTransparency = 1, Text = "", AutoButtonColor = false,
+		Visible = false, Selectable = true }, root)
+	local scale = make("UIScale", {}, button)
+
+	-- Welle: Rand, der sich ausbreitet und verblasst
+	local wave = make("Frame", { Name = "Wave", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, button)
+	UITheme.Corner(wave, UITheme.Radius.Large)
+	local waveStroke = make("UIStroke", { Color = C.Primary, Thickness = 2, Transparency = 0.1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, wave)
+	local waveInfo = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, -1, false, 0.7)
+	TweenService:Create(wave, waveInfo, { Size = UDim2.new(1, 28, 1, 28) }):Play()
+	TweenService:Create(waveStroke, waveInfo, { Transparency = 1 }):Play()
+
+	-- Fläche: Bernstein mit Verlauf (oben heller), feine helle Kante oben
+	local face = make("Frame", { Name = "Face", Size = UDim2.fromScale(1, 1), BackgroundColor3 = white, BorderSizePixel = 0 }, button)
+	UITheme.Corner(face, UITheme.Radius.Large)
+	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(UITheme.Brighten(C.Primary, 0.2),
+		C.Primary:Lerp(Color3.new(0, 0, 0), 0.12)) }, face)
+	make("Frame", { Name = "Edge", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 1), Size = UDim2.new(1, -24, 0, 1),
+		BackgroundColor3 = white, BackgroundTransparency = 0.45, BorderSizePixel = 0 }, face)
+
+	-- Play-Symbol: dunkle Scheibe mit Dreieck aus 1-px-Zeilen (Schriften haben kein verlässliches ▶)
+	local disc = make("Frame", { Name = "Disc", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 16, 0.5, 0),
+		Size = UDim2.fromOffset(48, 48), BackgroundColor3 = C.PrimaryText, BorderSizePixel = 0 }, face)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, disc)
+	local arrow = make("Frame", { Name = "Arrow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 2, 0.5, 0),
+		Size = UDim2.fromOffset(16, 18), BackgroundTransparency = 1 }, disc)
+	for row = 0, 17 do
+		local width = 16 * (1 - math.abs(row + 0.5 - 9) / 9)
+		make("Frame", { Position = UDim2.fromOffset(0, row), Size = UDim2.fromOffset(width, 1), BackgroundColor3 = C.Primary,
+			BorderSizePixel = 0 }, arrow)
+	end
+
+	label({ Name = "Title", Position = UDim2.fromOffset(78, 8), Size = UDim2.new(1, -150, 0, 42), Text = "SPIELEN",
+		TextSize = 40, Font = F.Display, TextColor3 = C.PrimaryText }, face)
+	local sub = label({ Name = "Sub", Position = UDim2.fromOffset(79, 50), Size = UDim2.new(1, -150, 0, 16), Text = "",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.PrimaryText, TextTransparency = 0.25,
+		TextTruncate = Enum.TextTruncate.AtEnd }, face)
+	local key = label({ Name = "Key", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -18, 0.5, 0),
+		Size = UDim2.fromOffset(40, 36), Text = "", TextSize = 16, Font = F.Bold, TextColor3 = C.Primary,
+		BackgroundColor3 = C.PrimaryText, BackgroundTransparency = 0, TextXAlignment = Enum.TextXAlignment.Center,
+		Visible = false }, face)
+	UITheme.Corner(key, UITheme.Radius.Small)
+
+	-- Glanz: heller Streifen läuft alle paar Sekunden schräg darüber
+	local shine = make("Frame", { Name = "Shine", Size = UDim2.fromScale(1, 1), BackgroundColor3 = white, BorderSizePixel = 0,
+		ZIndex = 2 }, face)
+	UITheme.Corner(shine, UITheme.Radius.Large)
+	local shineGradient = make("UIGradient", { Rotation = 25, Offset = Vector2.new(-1, 0), Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.4, 1), NumberSequenceKeypoint.new(0.5, 0.5),
+		NumberSequenceKeypoint.new(0.6, 1), NumberSequenceKeypoint.new(1, 1) }) }, shine)
+	TweenService:Create(shineGradient, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, false, 2.6),
+		{ Offset = Vector2.new(1, 0) }):Play()
+
+	-- Überfahren/Auswählen: etwas größer, hellere Schicht, Play-Symbol rückt vor; Drücken: kurz kleiner
+	local hover = make("Frame", { Name = "Hover", Size = UDim2.fromScale(1, 1), BackgroundColor3 = white, BackgroundTransparency = 1,
+		BorderSizePixel = 0, ZIndex = 2 }, face)
+	UITheme.Corner(hover, UITheme.Radius.Large)
+	local hovering = false
+	local function setHover(on)
+		hovering = on
+		hover.BackgroundTransparency = on and 0.88 or 1
+		TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = on and 1.04 or 1 }):Play()
+		TweenService:Create(arrow, TweenInfo.new(0.18), { Position = UDim2.new(0.5, on and 5 or 2, 0.5, 0) }):Play()
+	end
+	button.MouseEnter:Connect(function()
+		setHover(true)
+	end)
+	button.MouseLeave:Connect(function()
+		setHover(false)
+	end)
+	button.SelectionGained:Connect(function()
+		setHover(true)
+	end)
+	button.SelectionLost:Connect(function()
+		setHover(false)
+	end)
+	button.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.08), { Scale = 0.97 }):Play()
+	end)
+	button.MouseButton1Up:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Scale = hovering and 1.04 or 1 }):Play()
+	end)
+
+	return {
+		Button = button,
+		SetKey = function(text)
+			key.Text = text
+			key.Visible = text ~= ""
+		end,
+		SetSub = function(text)
+			sub.Text = text
+		end,
+	}
+end
+
 function GameMenu.Init()
 	gui = make("ScreenGui", { Name = "GameMenu", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 10,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
@@ -1176,11 +1306,11 @@ function GameMenu.Init()
 	-- Im Hub: großer Knopf unten mittig öffnet das Menü
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player.PlayerGui)
-	openButton = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
-		Size = UDim2.fromOffset(300, 60), Color = C.Primary, Text = "SPIELEN", TextSize = 32, TextColor = C.PrimaryText,
-		Visible = false }, openGui, function()
+	openButton = buildHubPlay(openGui)
+	openButton.Button.Activated:Connect(function()
 		GameMenu.SetOpen(true)
 	end)
+	updateHubPlay()
 
 	-- Controller: ○ schließt zuerst ein offenes Fenster (auch im Hub), dann das Menü; L1/R1 blättert die Seiten
 	UserInputService.InputBegan:Connect(function(input)
@@ -1196,8 +1326,7 @@ function GameMenu.Init()
 	end)
 	-- Spielen-Knopf zeigt die Taste des aktuellen Geräts
 	local function updateOpenButton()
-		local key = InputActions.Hint("Menu")
-		openButton.SetText(key ~= "" and ("SPIELEN   [" .. key .. "]") or "SPIELEN")
+		openButton.SetKey(InputActions.Hint("Menu"))
 	end
 	updateOpenButton()
 	InputActions.DeviceChanged:Connect(updateOpenButton)
