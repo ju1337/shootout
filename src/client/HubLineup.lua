@@ -102,9 +102,17 @@ end
 local STATUE_SCALE = 1.8
 local GOLD = Color3.fromRGB(230, 182, 74)
 local HOLO = Color3.fromRGB(140, 210, 245)
+-- Die Holo-Schrift ist 11 Studs breit: kommt die Kamera nah heran (rausgezoomt neben der Statue, steil von oben),
+-- hinge sie riesig vor dem Bild. Darum blendet sie in Kameranähe aus: ab HOLO_FULL Studs voll da, unter HOLO_HIDE weg.
+local HOLO_HIDE, HOLO_FULL = 9, 16
 
 function HubLineup.AgentOfWeek()
 	return AgentConfig.AgentOfWeek()
+end
+
+-- Sichtbarkeit der Holo-Schrift (0 = weg, 1 = voll) nach dem Abstand der Kamera
+function HubLineup.HoloVisibility(distance)
+	return math.clamp((distance - HOLO_HIDE) / (HOLO_FULL - HOLO_HIDE), 0, 1)
 end
 
 -- Elite-Skin: Uniform aus dem besten Shop-Skin des Agenten (sonst dunkel in Agentenfarbe), Weste/Visier Gold
@@ -129,9 +137,9 @@ local function buildAgentOfWeek()
 		return
 	end
 	-- Holo-Schrift: schwebt über dem Agenten, schaut immer zur Kamera, leicht flackernd
-	local nameLabel, infoLabel, holoLabels = nil, nil, {}
+	local billboard, line, nameLabel, infoLabel, holoLabels = nil, nil, nil, nil, {}
 	if holoPoint then
-		local billboard = Instance.new("BillboardGui")
+		billboard = Instance.new("BillboardGui")
 		billboard.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 		billboard.Name = "AgentOfWeekHolo"
 		billboard.Adornee = holoPoint
@@ -158,7 +166,7 @@ local function buildAgentOfWeek()
 		nameLabel = text(0.22, 0.52, Enum.Font.Oswald, Color3.new(1, 1, 1))
 		infoLabel = text(0.76, 0.22, Enum.Font.GothamBold, HOLO)
 		-- dünne Holo-Linie unter der Überschrift
-		local line = Instance.new("Frame")
+		line = Instance.new("Frame")
 		line.AnchorPoint = Vector2.new(0.5, 0)
 		line.Position = UDim2.new(0.5, 0, 0.22, 0)
 		line.Size = UDim2.new(0.55, 0, 0, 2)
@@ -223,7 +231,7 @@ local function buildAgentOfWeek()
 		end
 	end
 	refresh()
-	-- Langsam drehen, Holo-Schrift leicht flackern/schweben; einmal pro Minute auf neue Woche prüfen
+	-- Langsam drehen, Holo-Schrift leicht flackern und in Kameranähe ausblenden; einmal pro Minute auf neue Woche prüfen
 	local lastCheck = os.clock()
 	RunService.RenderStepped:Connect(function()
 		local t = os.clock()
@@ -235,9 +243,18 @@ local function buildAgentOfWeek()
 			local base = spot.Position + Vector3.new(0, 3 * STATUE_SCALE, 0)
 			statue:PivotTo(CFrame.lookAt(base, base + spot.CFrame.LookVector) * CFrame.Angles(0, t * 0.35, 0))
 		end
-		local flicker = (math.random() < 0.02) and 0.45 or 0.1
-		for _, label in holoLabels do
-			label.TextTransparency = flicker
+		if billboard then
+			local camera = workspace.CurrentCamera
+			local visible = camera and HubLineup.HoloVisibility((camera.CFrame.Position - holoPoint.Position).Magnitude) or 1
+			billboard.Enabled = visible > 0
+			if visible > 0 then
+				local flicker = (math.random() < 0.02) and 0.45 or 0.1
+				for _, label in holoLabels do
+					label.TextTransparency = 1 - (1 - flicker) * visible
+					label.TextStrokeTransparency = 1 - 0.5 * visible
+				end
+				line.BackgroundTransparency = 1 - 0.7 * visible
+			end
 		end
 	end)
 end

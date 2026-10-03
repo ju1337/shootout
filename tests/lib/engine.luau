@@ -530,8 +530,17 @@ function Methods.FindFirstChild(self, name, recursive)
 	end
 	return nil
 end
-function Methods.WaitForChild(self, name)
+function Methods.WaitForChild(self, name, timeout)
 	local child = Methods.FindFirstChild(self, name)
+	-- mit Zeitlimit wie in Roblox: bis zu timeout Sekunden auf das Kind warten, sonst nil
+	if not child and type(timeout) == "number" and coroutine.isyieldable() then
+		local deadline = SIM.Now + timeout
+		while not child and SIM.Now < deadline do
+			task.wait(math.min(0.1, deadline - SIM.Now))
+			child = Methods.FindFirstChild(self, name)
+		end
+		return child
+	end
 	if not child then
 		error("WaitForChild: " .. tostring(name) .. " fehlt in " .. tostring(self), 2)
 	end
