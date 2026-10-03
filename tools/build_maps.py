@@ -49,6 +49,17 @@ def rot(rx=0.0, ry=0.0, rz=0.0):
     return [[round(v, 6) for v in row] for row in m]
 
 
+def yaw_tilt(yaw, tilt):
+    """Winkel für rot()/angles, die ein Teil erst um seine eigene x-Achse neigen (tilt) und dann um die
+    Hochachse drehen (yaw): R = Ry(yaw) * Rx(tilt). Zerlegt in R = Rx * Ry * Rz (wie CFrame.Angles)."""
+    ry, rx = rot(0, yaw, 0), rot(tilt, 0, 0)
+    m = [[sum(ry[i][k] * rx[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+    b = math.asin(max(-1.0, min(1.0, m[0][2])))
+    a = math.atan2(-m[1][2], m[2][2])
+    c = math.atan2(-m[0][1], m[0][0])
+    return (math.degrees(a), math.degrees(b), math.degrees(c))
+
+
 def rgb(r, g, b):
     return [round(r / 255, 4), round(g / 255, 4), round(b / 255, 4)]
 
@@ -1785,35 +1796,48 @@ def build_lobby():
 
     # ---------- Ecke links vom Spawn (Südosten): Glücksrad ----------
     # Das drehende Rad (Felder, Nabe, Rand mit Lichtern, Zeiger) baut der Client (HubWheel) an "WheelSpot":
-    # Mitte des Rads, LookVector = Vorderseite (zur Halle). Hier: Podest, Ständer mit Achse, Schild und das Pult
-    # mit der Tafel ("WheelBoard", beschreibt der Client) – am Pult öffnet E den Dreh.
+    # Mitte des Rads, LookVector = Vorderseite. Das Rad steht schräg in der Ecke und schaut zur Hallenmitte – so
+    # sieht man es vom Spawn, vom Teppich und aus der Halle von vorn. Hier: Podest, Ständer mit Achse, Schild und
+    # das Pult mit der Tafel ("WheelBoard", beschreibt der Client) – am Pult öffnet E den Dreh.
     wheel_gold = (212, 170, 80)
     wx, wz, wy, wr = 40, -29.5, 9.4, 6
+    face_x, face_z = 0 - wx, (tz + 0) - wz                   # Blick zur Hallenmitte
+    flen = math.hypot(face_x, face_z)
+    fx, fz = face_x / flen, face_z / flen                    # Vorderseite des Rads
+    wyaw = math.degrees(math.atan2(-fx, -fz))                # angles=(0, wyaw, 0): LookVector = (fx, 0, fz)
+    sx, sz = -fz, fx                                         # lokale x-Achse (in der Radebene, waagrecht)
+
+    def wpos(side, y, front):
+        """Punkt side Studs entlang der Radebene und front Studs vor dem Rad (negativ = dahinter)."""
+        return (wx + sx * side + fx * front, y, wz + sz * side + fz * front)
+
     b.add("Decor", "WheelPlatform", (0.5, 15, 15), (wx, 0.25, wz), (34, 37, 43), "Metal", angles=(0, 0, 90),
           props={"Shape": "Cylinder"})
     b.add("Decor", "WheelPlatformGlow", (0.12, 15.4, 15.4), (wx, 0.3, wz), wheel_gold, "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.45})
-    # Ständer und Achse hinter dem Rad (Vorderseite = +z, zur Halle)
-    for dx in (-(wr + 1.7), wr + 1.7):
-        b.box("Decor", "WheelPillar", (1.6, 17, 1.6), (wx + dx, 8.5, wz - 1), (28, 31, 37), "Metal")
-        b.box("Decor", "WheelPillarStrip", (0.4, 15, 0.2), (wx + dx, 8.5, wz - 0.1), wheel_gold, "Neon",
-              props={"Transparency": 0.15})
-    b.box("Decor", "WheelAxle", (2 * wr + 3.4, 0.9, 0.9), (wx, wy, wz - 1.2), (28, 31, 37), "Metal")
-    b.box("Decor", "WheelHeader", (2 * wr + 5, 1.6, 1.6), (wx, 17.8, wz - 1), (28, 31, 37), "Metal")
-    b.sign2("WheelSign", (15, 3.6, 0.4), (wx, 20.4, wz - 0.1), "GLÜCKSRAD", "TÄGLICH GRATIS DREHEN",
-            graphite, wheel_gold, (236, 239, 243), angles=(0, 180, 0), glow=wheel_gold)
-    b.add("Decor", "WheelSpot", (1, 1, 1), (wx, wy, wz), wheel_gold, "SmoothPlastic", angles=(0, 180, 0),
+    # Ständer und Achse hinter dem Rad
+    for side in (-(wr + 1.7), wr + 1.7):
+        b.box("Decor", "WheelPillar", (1.6, 17, 1.6), wpos(side, 8.5, -1), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
+        b.box("Decor", "WheelPillarStrip", (0.4, 15, 0.2), wpos(side, 8.5, -0.1), wheel_gold, "Neon",
+              angles=(0, wyaw, 0), props={"Transparency": 0.15})
+    b.box("Decor", "WheelAxle", (2 * wr + 3.4, 0.9, 0.9), wpos(0, wy, -1.2), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
+    b.box("Decor", "WheelHeader", (2 * wr + 5, 1.6, 1.6), wpos(0, 17.8, -1), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
+    b.sign2("WheelSign", (15, 3.6, 0.4), wpos(0, 20.4, -0.1), "GLÜCKSRAD", "TÄGLICH GRATIS DREHEN",
+            graphite, wheel_gold, (236, 239, 243), angles=(0, wyaw, 0), glow=wheel_gold)
+    b.add("Decor", "WheelSpot", (1, 1, 1), (wx, wy, wz), wheel_gold, "SmoothPlastic", angles=(0, wyaw, 0),
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
     # Pult vorn am Podest, darauf die schräge Tafel (Vorderseite zum Spieler)
-    b.box("Decor", "WheelConsole", (5.6, 2.2, 1.6), (wx, 1.1, wz + 7.4), (36, 39, 46), "Metal")
-    b.box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), (wx, 2.1, wz + 7.4), wheel_gold, "Neon",
+    b.box("Decor", "WheelConsole", (5.6, 2.2, 1.6), wpos(0, 1.1, 7.4), (36, 39, 46), "Metal", angles=(0, wyaw, 0))
+    b.box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), wpos(0, 2.1, 7.4), wheel_gold, "Neon", angles=(0, wyaw, 0),
           props={"Transparency": 0.2})
-    client_board("WheelBoard", (5.2, 1.9, 0.15), (wx, 2.75, wz + 7.55), angles=(-35, 180, 0))
-    b.add("Decor", "WheelLight", (0.2, 3, 3), (wx, H - 1.6, wz + 4), (255, 248, 230), "Neon", angles=(0, 0, 90),
+    client_board("WheelBoard", (5.2, 1.9, 0.15), wpos(0, 2.75, 7.55), angles=yaw_tilt(wyaw, 35))
+    b.add("Decor", "WheelLight", (0.2, 3, 3), wpos(0, H - 1.6, 4), (255, 248, 230), "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.3},
           children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
               "Face": "Bottom", "Range": 26, "Brightness": 1.3, "Angle": 45, "Color": rgb(255, 245, 230)}}])
-    carpet("CarpetWheel", (4, wz + 8.6), (wx - 3, wz + 8.6), 7)
+    # Teppich vom Spawn-Teppich bis direkt vor das Pult
+    front = wpos(0, 0, 10)
+    carpet("CarpetWheel", (4, front[2] + 2), (front[0], front[2]), 7)
 
     b.save("Hub.model.json")
 
