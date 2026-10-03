@@ -24,13 +24,13 @@ local PlayerSettings = require(Shared.PlayerSettings)
 local CombatHUD = require(Shared.CombatHUD)
 local MatchHUD = require(Shared.MatchHUD)
 local Minimap = require(Shared.Minimap)
+local LeaveButton = require(Shared.LeaveButton)
 
 local player = Players.LocalPlayer
 
 local HUD = {}
 
 local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige
-local LEAVE_CONFIRM = 3       -- so lange wartet VERLASSEN auf den zweiten Klick
 
 local screen -- ScreenGui (an/aus)
 local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
@@ -141,45 +141,8 @@ function HUD.Init(weaponClient)
 		end
 	end)
 
-	-- VERLASSEN-Knopf unter der Minimap: erster Klick fragt nach (rot), zweiter Klick innerhalb von
-	-- LEAVE_CONFIRM Sekunden bringt einen zurück in den Hub
-	local leaveButton = UITheme.Chunky({ Name = "LeaveButton", Size = UDim2.new(0, 152, 0, 30), Color = UITheme.Colors.Background,
-		StrokeColor = UITheme.Colors.Border, Text = "VERLASSEN", TextSize = 17 }, gui)
-	leaveButton.Face.BackgroundTransparency = 0.3
-	local confirmLeaveUntil = 0
-	local leaveClicks = 0 -- zählt Klicks, damit verspätete Rücksetzer nur den eigenen Zustand zurücksetzen
-	local function resetLeave()
-		confirmLeaveUntil = 0
-		leaveButton.SetText("VERLASSEN")
-		leaveButton.SetColor(UITheme.Colors.Background, UITheme.Colors.Text)
-		leaveButton.SetStroke(UITheme.Colors.Border, 1)
-	end
-	leaveButton.Button.Activated:Connect(function()
-		leaveClicks += 1
-		local click = leaveClicks
-		if os.clock() < confirmLeaveUntil then
-			confirmLeaveUntil = 0
-			leaveButton.SetText("VERLASSE ...")
-			Remotes.JoinMode:FireServer(Modes.Hub.Id)
-			-- Falls der Wechsel ausbleibt, nach kurzer Zeit wieder bedienbar machen
-			task.delay(5, function()
-				if leaveClicks == click then
-					resetLeave()
-				end
-			end)
-			return
-		end
-		confirmLeaveUntil = os.clock() + LEAVE_CONFIRM
-		leaveButton.SetText("WIRKLICH VERLASSEN?")
-		leaveButton.SetColor(UITheme.Colors.Bad, UITheme.Colors.Text)
-		leaveButton.SetStroke(UITheme.Colors.Bad, 1)
-		task.delay(LEAVE_CONFIRM, function()
-			if leaveClicks == click and confirmLeaveUntil ~= 0 then
-				resetLeave()
-			end
-		end)
-	end)
-	player:GetAttributeChangedSignal("Mode"):Connect(resetLeave)
+	-- VERLASSEN-Knopf unter der Minimap (zweimal klicken, siehe LeaveButton)
+	local leaveButton = LeaveButton.new(gui, { Name = "LeaveButton", Size = UDim2.new(0, 152, 0, 30) })
 
 	-- Schaden: roter Rand blitzt auf, bei wenig Leben bleibt er leicht sichtbar (bei jedem Spawn neu verbinden)
 	local function trackCharacter(character)

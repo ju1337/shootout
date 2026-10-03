@@ -79,7 +79,8 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   echte Map-Geometrie schräg von oben in einem ViewportFrame (Licht je Map-Stimmung, ferne Deko wie Planeten
   bleibt weg), darüber Name, Stimmen, Stimmenbalken und DEINE WAHL. Die Vorschau wird beim ersten Mal über
   mehrere Bilder verteilt kopiert und für spätere Abstimmungen behalten (höchstens 6 Maps). Wählen per Klick,
-  1/2/3, Steuerkreuz + A oder Antippen
+  1/2/3, Steuerkreuz + A oder Antippen. Unten links ein eigenes VERLASSEN (gleicher Knopf wie im HUD,
+  `src/shared/LeaveButton.lua`: zweimal klicken)
 - **Respawn-Modi** (Herrschaft, Wingman mit Tickets): nach dem Tod kurz die Todeskamera, dann zurück in die
   Auswahl (Agent, Primärwaffe, Ausrüstung kaufen); BEREIT bringt einen zurück (frühestens nach 3 s, spätestens
   nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz

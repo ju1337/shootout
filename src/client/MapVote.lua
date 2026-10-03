@@ -1,7 +1,7 @@
 -- MapVote (ModuleScript, nur Client)
 -- Map-Abstimmung vor einem Team-Match bzw. nach jeder FFA-Runde: eigener Vollbild-Screen über dem HUD (Minimap,
--- Fähigkeiten, Killstreaks, Tastenzeile usw. sind währenddessen verdeckt) mit bis zu 3 Karten: Vorschaubild,
--- Map-Name und Stimmen. Anklicken oder 1/2/3 drücken. Daten kommen als Spieler-Attribute vom Server
+-- Fähigkeiten, Killstreaks, Tastenzeile usw. sind währenddessen verdeckt, unten links ein eigenes VERLASSEN) mit
+-- bis zu 3 Karten: Vorschaubild, Map-Name und Stimmen. Anklicken oder 1/2/3 drücken. Daten kommen als Spieler-Attribute vom Server
 -- (MapVoteOptions, MapVoteEnd, MapVoteCounts, MapVoteMine).
 -- Vorschaubild: die echte Map-Geometrie (workspace.Maps[Id]) schräg von oben in einem ViewportFrame. Sie wird beim
 -- ersten Mal über mehrere Bilder verteilt kopiert (kein Ruckeln) und für spätere Abstimmungen behalten.
@@ -19,6 +19,7 @@ local Remotes = require(Shared.Remotes)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local Modes = require(Shared.Modes)
+local LeaveButton = require(Shared.LeaveButton)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -380,6 +381,9 @@ local function build()
 	hintLabel = UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 692), Size = UDim2.new(0, 800, 0, 24),
 		Text = "", Font = UITheme.Fonts.Body, TextSize = 17, TextColor3 = C.Muted,
 		TextXAlignment = Enum.TextXAlignment.Center }, canvas)
+	-- Das HUD (mit seinem VERLASSEN) ist verdeckt: eigener Knopf unten links
+	LeaveButton.new(canvas, { Name = "LeaveButton", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 40, 0, 860),
+		Size = UDim2.new(0, 190, 0, 34) })
 end
 
 function refresh()
