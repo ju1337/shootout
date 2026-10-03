@@ -21,6 +21,7 @@ local KillstreakService = require(ServerShared.KillstreakService)
 local RobuxService = require(ServerShared.RobuxService)
 local ClanService = require(ServerShared.ClanService)
 local MovementGuard = require(ServerShared.MovementGuard)
+local BackWeapon = require(ServerShared.BackWeapon)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
@@ -43,6 +44,7 @@ KillstreakService.Init() -- Killstreak-Belohnungen in Herrschaft (Radar, Luftsch
 RobuxService.Init() -- Robux-Shop: Gamepässe und Entwicklerprodukte
 ClanService.Init() -- Clans über alle Server
 MovementGuard.Init() -- Bewegungs-Check gegen Speedhacks und Teleports
+BackWeapon.Init() -- im Hub: Standardwaffe des Agenten auf dem Rücken
 AgentService.Init()
 AdminService.Init(ModeManager)
 PartyService.Init(ModeManager)

@@ -321,7 +321,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
-	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost" } do
+	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged" } do
 	SIGNAL_NAMES[name] = true
 end
 

@@ -49,9 +49,13 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   - SPIELEN: links Spielmodi (aktiv heller mit Bernstein-Balken, live Spielerzahl) und der Squad (Anführer mit
     Stern, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze laden ein); Mitte der gewählte Agent groß in
     3D; rechts Battle Pass, täglicher Auftrag und der große SPIELEN-Knopf mit Modus, Spielerzahl und Ping
-  - AGENTEN: links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Beschreibung, Werte, Fähigkeit,
-    Gadget, Passiv, Agenten-Level, Kills und WÄHLEN/FREISCHALTEN), rechts alle Agenten als Karten. Ein Klick
-    wählt einen freien Agenten; gesperrte schaltet man nur bewusst über den Knopf der Detailkarte frei
+  - AGENTEN: links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Beschreibung, Werte,
+    STANDARDWAFFE, Fähigkeit, Gadget, Passiv, Agenten-Level, Kills und WÄHLEN/FREISCHALTEN), rechts alle Agenten
+    als Karten. Ein Klick wählt einen freien Agenten; gesperrte schaltet man nur bewusst über den Knopf der
+    Detailkarte frei. STANDARDWAFFE: die zwei Primärwaffen des Agenten als Karten mit 3D-Vorschau (mit Skin) –
+    ein Klick rüstet eine aus (Bernstein-Rahmen, AUSGERÜSTET), daneben die feste Zweitwaffe. Die Wahl gilt pro
+    Agent für jeden Spawn, in der Agentenwahl vor dem Match lässt sie sich weiter ändern; auf den Agentenkarten
+    steht die ausgerüstete Waffe hell
   - LOADOUT: links Waffen bzw. Agenten, Mitte große 3D-Vorschau mit ausgerüstetem Skin, rechts die eigenen Skins
     zum Ausrüsten und ZUM SHOP
   - SHOP: Waffen- und Agenten-Skins als Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis
@@ -62,6 +66,10 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   Pass öffnen die Lobby auf der passenden Seite; Aufträge, Täglich, Squad, Statistik, Codes, Optionen als
   Fenster) und SPIELEN-Knopf
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
+- **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
+  Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
+  sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
+  (Waffe in der Hand) und nach dem Tod ist sie weg
 - **Ultimate „Überladung“** (F, Controller L1+R1, Touch-Knopf ULT): lädt über Schaden (400 = voll), Kills/Niederschläge
   und langsam im Kampf; voll ausgelöst: volles Leben, +25 Rüstung, Fähigkeit sofort bereit, +1 Gadget
   (`AgentConfig.Ultimate`)
@@ -220,6 +228,7 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Ränge (Ranked) | `src/shared/RankConfig.lua` |
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |
 | Modi im Menü | `src/shared/Modes.lua` |
+| Rückenwaffe im Hub (Größe `SCALE`, Neigung `TILT`, Abstand zum Rücken) | `src/server-shared/BackWeapon.lua` |
 | Bewegungs-Check (erlaubtes Tempo, Vorrat) | `FLAT_*`, `UP_*` in `src/server-shared/MovementGuard.lua` |
 | Admins | `ADMIN_IDS` in `src/server/AdminService.lua` |
 | Codes | `CODES` in `src/server-shared/ShopService.lua` |
@@ -263,6 +272,7 @@ am Commit:
 | `session` | Sitzungssperre der Spielstände (Serverwechsel, Absturz, DataStore-Fehler) |
 | `progress` | Spielstand laden/speichern mit Sperre, Robux-Käufe erst nach dem Speichern bestätigt, Kick bei Ladefehler, Speichern beim Herunterfahren |
 | `medals` | Medaillen im KillService (Mehrfach-Kill, Serien, Rache, Weitschuss, ...), mit beiden Signal-Modi von Roblox |
+| `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
