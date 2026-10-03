@@ -30,6 +30,11 @@ InputActions.Bindings = {
 	Menu = { Keys = { Enum.KeyCode.M }, Pad = { Enum.KeyCode.DPadDown } },
 	Camera = { Keys = { Enum.KeyCode.T }, Pad = { Enum.KeyCode.DPadLeft } },
 	Shoulder = { Keys = { Enum.KeyCode.H }, Pad = { Enum.KeyCode.DPadRight } },
+	-- Killstreaks (Herrschaft): Tasten 4/5/6, Controller: Steuerkreuz rechts löst die erste bereite aus
+	Killstreak1 = { Keys = { Enum.KeyCode.Four }, Pad = {} },
+	Killstreak2 = { Keys = { Enum.KeyCode.Five }, Pad = {} },
+	Killstreak3 = { Keys = { Enum.KeyCode.Six }, Pad = {} },
+	KillstreakPad = { Keys = {}, Pad = { Enum.KeyCode.DPadRight } },
 	SpectatePrev = { Keys = { Enum.KeyCode.Q }, Pad = { Enum.KeyCode.ButtonL1 } },
 	SpectateNext = { Keys = { Enum.KeyCode.E }, Pad = { Enum.KeyCode.ButtonR1 } },
 	Jump = { Keys = {}, Pad = {} }, -- nur der Touch-Knopf (Tastatur/Controller springen über Roblox)
@@ -46,7 +51,8 @@ local PAD_NAMES = {
 local KEY_NAMES = {
 	[Enum.UserInputType.MouseButton1] = "LMB", [Enum.UserInputType.MouseButton2] = "RMB",
 	[Enum.KeyCode.LeftShift] = "SHIFT", [Enum.KeyCode.LeftControl] = "STRG", [Enum.KeyCode.One] = "1",
-	[Enum.KeyCode.Two] = "2", [Enum.KeyCode.Tab] = "TAB",
+	[Enum.KeyCode.Two] = "2", [Enum.KeyCode.Tab] = "TAB", [Enum.KeyCode.Four] = "4", [Enum.KeyCode.Five] = "5",
+	[Enum.KeyCode.Six] = "6",
 }
 
 local handlers = {}  -- [Aktion] = { Callback, ... }

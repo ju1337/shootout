@@ -45,6 +45,7 @@ local NAMES = {
 	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity, Key }) – Karte (Notifications)
 	"WheelResult", -- Server -> Client: Glücksrad-Ergebnis (Feld-Nummer, Text) – Client dreht das Rad dorthin
 	"SpawnChoice", -- Client -> Server: Spawn nach dem Tod (Herrschaft): "Base", "A", "B" oder "C"
+	"UseKillstreak", -- Client -> Server: bereite Killstreak auslösen (Id, Zielpunkt beim Luftschlag)
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 }
 

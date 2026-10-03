@@ -108,29 +108,6 @@ function AbilityClient.Init()
 	local gadgetRow = makeRow(bar, 2, "GADGET")
 	local ultimateRow = makeRow(bar, 3, "ULTIMATE")
 
-	-- Killserie (Herrschaft): Fortschritt zur nächsten Belohnung über den Karten
-	local STREAKS = { { 4, "RADAR" }, { 7, "LUFTSCHLAG" }, { 10, "SCHUTZSCHILD" } }
-	local streakLabel = UITheme.Label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, -6),
-		Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 14, Font = UITheme.Fonts.Bold, RichText = true,
-		TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5 }, bar)
-	local function updateStreak()
-		local inDomination = player:GetAttribute("Mode") == "Domination"
-		local count = player:GetAttribute("Killstreak") or 0
-		local nextStreak = nil
-		for _, entry in STREAKS do
-			if count < entry[1] then
-				nextStreak = entry
-				break
-			end
-		end
-		streakLabel.Visible = inDomination and not InputActions.IsTouch()
-		streakLabel.Text = nextStreak and string.format('KILLSERIE %d  ·  <font color="#%s">%s</font> BEI %d', count,
-			C.Primary:ToHex(), nextStreak[2], nextStreak[1]) or ("KILLSERIE " .. count .. "  ·  ALLE BELOHNUNGEN")
-	end
-	updateStreak()
-	player:GetAttributeChangedSignal("Killstreak"):Connect(updateStreak)
-	player:GetAttributeChangedSignal("Mode"):Connect(updateStreak)
-
 	-- PC/Controller: Reihe unten mittig; Touch: Spalte links neben der Munition (rechts liegen die Touch-Knöpfe)
 	local function layout()
 		if InputActions.IsTouch() then

@@ -488,7 +488,10 @@ function Movement.Init()
 	-- Kamera-Taste: zwischen Ego- und Schulterkamera wechseln (wird als Einstellung gespeichert),
 	-- Schulter-Taste: Schulter wechseln (nur für dieses Spiel, Start-Schulter steht in den Einstellungen)
 	InputActions.Bind("Shoulder", function(began)
-		if began and Movement.IsThirdPerson() then
+		-- Controller: Steuerkreuz rechts löst sonst eine bereite Killstreak aus (KillstreakHUD)
+		local ready = player:GetAttribute("KillstreakReady")
+		local padBusy = InputActions.Device() == "Gamepad" and type(ready) == "string" and ready ~= "{}" and ready ~= "[]"
+		if began and Movement.IsThirdPerson() and not padBusy then
 			shoulderSide = -shoulderSide
 			apply()
 		end

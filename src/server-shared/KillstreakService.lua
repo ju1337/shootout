@@ -1,18 +1,21 @@
 -- KillstreakService (ModuleScript, nur Server)
--- Killstreak-Belohnungen in Herrschaft: Kills ohne zu sterben lösen automatisch aus.
---   4 Kills   RADAR         alle Gegner 10 s fürs eigene Team markiert (durch Wände)
---   7 Kills   LUFTSCHLAG    roter Kreis auf der größten Gegnergruppe, nach 3 s Einschlag (nur im Freien)
---  10 Kills   SCHUTZSCHILD  eigenes Team: volles Leben, volle Rüstung und 4 s unverwundbar
--- Spieler-Attribut "Killstreak" (Kills dieses Lebens) für die Anzeige im HUD (AbilityClient).
+-- Killstreak-Belohnungen in Herrschaft (KillstreakConfig): Kills ohne zu sterben schalten sie frei, dann liegen sie
+-- bereit, bis der Spieler sie auslöst (Remotes.UseKillstreak, Tasten 4/5/6 – KillstreakHUD rechts am Rand).
+--   5 Kills   DROHNE        alle Gegner 10 s fürs eigene Team markiert (durch Wände)
+--   8 Kills   LUFTSCHLAG    roter Kreis dort, wohin man zielt (sonst größte Gegnergruppe), nach 3 s Einschlag
+--  12 Kills   SCHUTZSCHILD  eigenes Team: volles Leben, volle Rüstung und 4 s unverwundbar
+-- Spieler-Attribute: Killstreak (Kills dieses Lebens), KillstreakReady (JSON { [Id] = true }).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Debris = game:GetService("Debris")
+local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local BuyConfig = require(Shared.BuyConfig)
+local KillstreakConfig = require(Shared.KillstreakConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
@@ -20,12 +23,8 @@ local WeaponService = require(ServerShared.WeaponService)
 
 local KillstreakService = {}
 
-KillstreakService.Streaks = {
-	{ Kills = 4, Id = "Radar", Name = "RADAR" },
-	{ Kills = 7, Id = "Airstrike", Name = "LUFTSCHLAG" },
-	{ Kills = 10, Id = "Shield", Name = "SCHUTZSCHILD" },
-}
-local MODES = { Domination = true }
+local MODES = KillstreakConfig.Modes
+local MAX_AIM_DISTANCE = 400 -- so weit darf der Zielpunkt des Luftschlags vom Spieler weg sein
 local RADAR_TIME = 10
 local STRIKE_DELAY = 3
 local STRIKE_RADIUS = 16
@@ -88,19 +87,20 @@ local function radar(owner)
 	for _, mate in teammates(owner) do
 		Remotes.Reveal:FireClient(mate, targets, RADAR_TIME)
 	end
-	announce(owner, "RADAR AKTIV")
+	announce(owner, "DROHNE AKTIV")
 end
 
-local function airstrike(owner)
+local function airstrike(owner, aim)
 	local targets = enemies(owner)
-	if #targets == 0 then
-		return
-	end
-	-- Ziel: Gegner mit den meisten anderen Gegnern in der Nähe
+	-- Ziel: gezielter Punkt (vom Client, geprüft), sonst Gegner mit den meisten anderen Gegnern in der Nähe
+	local root0 = owner.Character and owner.Character:FindFirstChild("HumanoidRootPart")
 	local best, bestCount = nil, -1
+	if typeof(aim) == "Vector3" and root0 and (aim - root0.Position).Magnitude <= MAX_AIM_DISTANCE then
+		best, bestCount = aim + Vector3.new(0, 2.8, 0), math.huge
+	end
 	for _, model in targets do
 		local root = model:FindFirstChild("HumanoidRootPart")
-		if root then
+		if root and bestCount ~= math.huge then
 			local n = 0
 			for _, other in targets do
 				local otherRoot = other:FindFirstChild("HumanoidRootPart")
@@ -193,26 +193,42 @@ end
 
 local ACTIONS = { Radar = radar, Airstrike = airstrike, Shield = shield }
 
+local ready = {} -- [Player] = { [Id] = true }
+
+local function publish(player)
+	player:SetAttribute("KillstreakReady", HttpService:JSONEncode(ready[player] or {}))
+end
+
+local function reset(player)
+	ready[player] = {}
+	player:SetAttribute("Killstreak", 0)
+	publish(player)
+end
+
 function KillstreakService.Init()
 	local function watch(player)
-		player:SetAttribute("Killstreak", 0)
+		reset(player)
 		player.CharacterAdded:Connect(function(character)
 			player:SetAttribute("Killstreak", 0)
 			local humanoid = character:WaitForChild("Humanoid", 10)
 			if humanoid then
 				humanoid.Died:Connect(function()
-					player:SetAttribute("Killstreak", 0)
+					player:SetAttribute("Killstreak", 0) -- Serie zählt neu, bereite Belohnungen bleiben
 				end)
 			end
 		end)
 		player:GetAttributeChangedSignal("Mode"):Connect(function()
-			player:SetAttribute("Killstreak", 0)
+			reset(player)
 		end)
 	end
 	Players.PlayerAdded:Connect(watch)
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
+	Players.PlayerRemoving:Connect(function(player)
+		ready[player] = nil
+	end)
+	-- Kills zählen, Belohnungen freischalten
 	KillService.KillCounted:Connect(function(killer, victim)
 		if typeof(killer) ~= "Instance" or not killer:IsA("Player") or victim == killer then
 			return
@@ -222,13 +238,28 @@ function KillstreakService.Init()
 		end
 		local count = (killer:GetAttribute("Killstreak") or 0) + 1
 		killer:SetAttribute("Killstreak", count)
-		for _, streak in KillstreakService.Streaks do
+		for _, streak in KillstreakConfig.List do
 			if count == streak.Kills then
-				Remotes.Notify:FireClient(killer, "Banner", { Caption = "Killserie " .. count, Title = streak.Name,
-					Sub = "Belohnung ausgelöst", Style = "Info" })
-				task.spawn(ACTIONS[streak.Id], killer)
+				ready[killer] = ready[killer] or {}
+				ready[killer][streak.Id] = true
+				publish(killer)
+				Remotes.Notify:FireClient(killer, "Banner", { Caption = "Killserie " .. count, Title = streak.Name .. " BEREIT",
+					Sub = "Rechts am Rand auslösen", Style = "Info" })
 			end
 		end
+	end)
+	-- Auslösen: nur bereit, im Modus und lebend
+	Remotes.UseKillstreak.OnServerEvent:Connect(function(player, id, aim)
+		local action = type(id) == "string" and ACTIONS[id]
+		if not action or not (ready[player] and ready[player][id]) or not MODES[player:GetAttribute("Mode")] then
+			return
+		end
+		if not living(player.Character) or player:GetAttribute("CanFight") == false then
+			return
+		end
+		ready[player][id] = nil
+		publish(player)
+		task.spawn(action, player, aim)
 	end)
 end
 
