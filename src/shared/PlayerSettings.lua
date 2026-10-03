@@ -1,10 +1,10 @@
 -- PlayerSettings (ModuleScript)
--- Persönliche Einstellungen (Steuerung, Kamera, Anzeige, Ton). Die Liste mit Grenzen gilt für beide Seiten:
+-- Persönliche Einstellungen (Steuerung, Kamera, Anzeige, Treffer, Ton). Die Liste mit Grenzen gilt für beide Seiten:
 --   Server: ShopService.SaveSettings prüft mit Sanitize und speichert im Profil (Spieler-Attribut "ClientSettings").
 --   Client: Get/Set, Changed-Signal (key, value), speichert gebündelt kurz nach der letzten Änderung.
--- Module lesen Get(key) bzw. hören auf Changed (Movement: Kamera/Maus, CombatHUD: Fadenkreuz/Schadenszahlen,
--- HUD: Tastenhinweise, WeaponClient: Zielen umschalten, GraphicsQuality: Grafik). Die Seite OPTIONEN (SideMenu)
--- baut sich aus List.
+-- Module lesen Get(key) bzw. hören auf Changed (Movement: Kamera/Maus, CombatHUD: Fadenkreuz, HitFeedback: Hitmarker
+-- und Schadenszahlen, HUD: Tastenhinweise, WeaponClient: Zielen umschalten, GraphicsQuality: Grafik). Die Seite
+-- OPTIONEN (SideMenu) baut sich aus List: Karten je Kategorie in zwei Spalten (Column), Preview = Vorschau darunter.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -14,10 +14,11 @@ local SoundService = game:GetService("SoundService")
 local PlayerSettings = {}
 
 PlayerSettings.Categories = {
-	{ Id = "Controls", Name = "STEUERUNG" },
-	{ Id = "Camera", Name = "KAMERA" },
-	{ Id = "Display", Name = "ANZEIGE" },
-	{ Id = "Audio", Name = "TON" },
+	{ Id = "Controls", Name = "STEUERUNG", Column = 1 },
+	{ Id = "Camera", Name = "KAMERA", Column = 2 },
+	{ Id = "Display", Name = "ANZEIGE", Column = 1 },
+	{ Id = "Hits", Name = "TREFFER", Column = 2, Preview = "HitFeedback" },
+	{ Id = "Audio", Name = "TON", Column = 1 },
 }
 
 -- Type: Slider (Min/Max/Step, Format), Toggle (true/false), Choice (Options = { { Wert, "TEXT" } })
@@ -36,11 +37,17 @@ PlayerSettings.List = {
 		Options = { { false, "RECHTS" }, { true, "LINKS" } }, Hint = "Im Spiel wechseln: Taste H" },
 	{ Key = "CrosshairColor", Category = "Display", Label = "Fadenkreuz-Farbe", Type = "Choice", Default = "White",
 		Options = { { "White", "WEISS" }, { "Green", "GRÜN" }, { "Yellow", "GELB" }, { "Cyan", "CYAN" }, { "Pink", "PINK" } } },
-	{ Key = "DamageNumbers", Category = "Display", Label = "Schadenszahlen", Type = "Toggle", Default = true },
 	{ Key = "KeyHints", Category = "Display", Label = "Tastenhinweise unten", Type = "Toggle", Default = true },
 	{ Key = "Graphics", Category = "Display", Label = "Grafik", Type = "Choice", Default = "High",
 		Options = { { "High", "HOCH" }, { "Medium", "MITTEL" }, { "Low", "NIEDRIG" } },
 		Hint = "Niedrig: ohne Schatten, Partikel und Leuchteffekte (mehr FPS)" },
+	-- Treffer-Rückmeldung (HitFeedback). Schadenszahlen war früher ein Schalter: false = AUS bleibt, true wird zum Standard
+	{ Key = "HitmarkerStyle", Category = "Hits", Label = "Hitmarker", Type = "Choice", Default = "Impulse",
+		Options = { { "Classic", "KLASSISCH" }, { "Impulse", "IMPULS" }, { "Precision", "PRÄZISION" } },
+		Hint = "Mit eigenen Treffer-Tönen" },
+	{ Key = "DamageNumbers", Category = "Hits", Label = "Schadenszahlen", Type = "Choice", Default = "Float",
+		Options = { { false, "AUS" }, { "Stack", "STAPELN" }, { "Float", "EINZELN" } },
+		Hint = "Stapeln: eine Zahl pro Ziel zählt hoch" },
 	{ Key = "Volume", Category = "Audio", Label = "Lautstärke (Effekte)", Type = "Slider", Default = 100, Min = 0, Max = 100,
 		Step = 5, Format = "%d %%" },
 }
@@ -73,7 +80,10 @@ local function clean(setting, value)
 		local steps = math.floor((value - setting.Min) / setting.Step + 0.5)
 		return math.clamp(setting.Min + steps * setting.Step, setting.Min, setting.Max)
 	elseif setting.Type == "Toggle" then
-		return type(value) == "boolean" and value or nil
+		if type(value) == "boolean" then
+			return value
+		end
+		return nil
 	else
 		for _, option in setting.Options do
 			if option[1] == value then
@@ -84,11 +94,15 @@ local function clean(setting, value)
 	end
 end
 
--- Server: nur bekannte, gültige Werte übernehmen; fehlende aus old (bisheriges Profil) behalten
+-- Server: nur bekannte, gültige Werte übernehmen; fehlende aus old (bisheriges Profil) behalten.
+-- false ist ein gültiger Wert (Schalter aus, Schadenszahlen AUS) und darf nicht wie „fehlt“ behandelt werden.
 function PlayerSettings.Sanitize(data, old)
 	local result = {}
 	for _, setting in PlayerSettings.List do
-		local value = type(data) == "table" and clean(setting, data[setting.Key]) or nil
+		local value = nil
+		if type(data) == "table" then
+			value = clean(setting, data[setting.Key])
+		end
 		if value == nil and type(old) == "table" then
 			value = clean(setting, old[setting.Key])
 		end

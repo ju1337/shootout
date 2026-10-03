@@ -61,6 +61,9 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   - SHOP: Waffen- und Agenten-Skins als Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis
   - BATTLE PASS: Saison, Stufe, Fortschritt, alle 30 Stufen als Leiste (nächste hervorgehoben), darunter die
     nächste Belohnung mit Vorschau und wie man Pass-XP sammelt
+  - OPTIONEN: Karten STEUERUNG, ANZEIGE und TON links, KAMERA und TREFFER rechts; unter TREFFER (Hitmarker,
+    Schadenszahlen) eine Live-Vorschau: Puppe mit Fadenkreuz, auf die eine Trefferfolge mit Kopftreffer und Kill
+    läuft – leise in Schleife, nach dem Umschalten oder per Klick mit Ton. Alles wirkt sofort und wird gespeichert
   - Statistik, Codes, Optionen, Aufträge, tägliche Belohnung und Squad öffnen weiterhin ein Fenster darüber
 - **Hub**: Spielerkarte (Level, Prestige, Rang, Münzen), schlichte Menüliste (Shop, Loadout, Agenten, Battle
   Pass öffnen die Lobby auf der passenden Seite; Aufträge, Täglich, Squad, Statistik, Codes, Optionen als
@@ -181,8 +184,17 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     bekommen nur eine vereinfachte Haltung: dafür in den Spieleinstellungen (Avatar) R15 einstellen
   - Rückstoß mit Rückkehr, Bloom bei Dauerfeuer, Mündungsfeuer, fliegende Leuchtspuren, Funken/Staub und
     Einschusslöcher, Hülsen; eigene Schüsse erscheinen sofort (ohne Ping-Verzögerung)
-  - Hitmarker je Treffer-Art (Körper weiß, Kopf gelb, Rüstung blau, niedergeschlagen orange, ausgeschaltet rot)
-    mit eigenem Ton, hochzählende Schadenszahlen pro Ziel, rote Treffer-Richtungsbögen, Kill-Meldung
+  - Treffer-Rückmeldung (`src/shared/HitFeedback.lua`) in Farben je Treffer-Art (Körper weiß, Kopf gold, nur
+    Rüstung blau, niedergeschlagen orange, ausgeschaltet rot), in OPTIONEN → TREFFER wählbar:
+    - Hitmarker KLASSISCH (X, das kurz aufspringt), IMPULS (Standard: vier Klingen schlagen von außen ein, dazu
+      eine Druckwelle; Kopftreffer blitzen mit goldener Raute, ein Kill zündet Blitz, doppelte Welle und vier
+      Splitter) oder PRÄZISION (Ring mit vier Strichen wie im Zielfernrohr; ein Kill sprengt den Ring in vier
+      Bögen). Jeder Stil hat eigene Treffer-Töne, beim Kill einen aufsteigenden Klang
+    - Kombo: schnelle Treffer hintereinander am selben Ziel lassen Hitmarker und Ton ansteigen
+    - Schadenszahlen EINZELN (Standard: jeder Treffer eine eigene Zahl, die im Bogen abwechselnd links/rechts
+      wegfliegt; Kopftreffer groß und gold mit Raute, Kill groß und rot mit Ruck), STAPELN (eine Zahl pro Ziel
+      zählt hoch, jeder Treffer fliegt als „+X“ daneben weg, ein Kill streicht sie rot an) oder AUS
+    - dazu rote Treffer-Richtungsbögen und die Kill-Meldung
   - unendliche Reserve-Munition in allen Modi (Anzeige „∞“)
 
 ## Steuerung
@@ -199,7 +211,9 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel
 | Waffen (Schaden, Feuerrate, Streuung/Bloom, Rückstoß, Sounds, unendliche Munition je Modus) | `src/shared/WeaponConfig.lua` |
 | Waffenmodelle, Kimme/Korn, Rotpunkt, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
-| Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung | `src/shared/CombatHUD.lua` |
+| Fadenkreuz, Treffer-Richtung, Kill-Meldung | `src/shared/CombatHUD.lua` |
+| Hitmarker- und Schadenszahl-Stile, Farben je Treffer-Art, Treffer-Töne (`HitFeedback.Sounds`), Kombo | `src/shared/HitFeedback.lua` |
+| Persönliche Einstellungen (OPTIONEN: Liste, Standardwerte, Karten) | `src/shared/PlayerSettings.lua` |
 | Medaillen (Name, Stufe, Bonus-XP) | `src/shared/Medals.lua`; Auslöser (Mehrfach-Kill-Fenster, Weitschuss, Comeback, Serie beendet) oben in `src/server-shared/KillService.lua`, Münzen der Kill-Boni in `src/shared/RewardConfig.lua` |
 | Meldungen (Medaillen, Banner, Ziel-Meldungen, Level-Karte: Position, Standzeit, Farben, Klang) | `src/shared/Notifications.lua` |
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
@@ -273,6 +287,7 @@ am Commit:
 | `progress` | Spielstand laden/speichern mit Sperre, Robux-Käufe erst nach dem Speichern bestätigt, Kick bei Ladefehler, Speichern beim Herunterfahren |
 | `medals` | Medaillen im KillService (Mehrfach-Kill, Serien, Rache, Weitschuss, ...), mit beiden Signal-Modi von Roblox |
 | `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
+| `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den

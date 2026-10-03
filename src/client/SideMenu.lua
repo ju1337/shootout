@@ -25,6 +25,7 @@ local RewardConfig = require(Shared.RewardConfig)
 local InputActions = require(Shared.InputActions)
 local LoginConfig = require(Shared.LoginConfig)
 local PlayerSettings = require(Shared.PlayerSettings)
+local HitFeedback = require(Shared.HitFeedback)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local HttpService = game:GetService("HttpService")
@@ -1069,8 +1070,10 @@ local function buildTitles()
 end
 
 -- ---------- OPTIONEN ----------
--- Seite der Lobby aus PlayerSettings.List: vier Karten (Steuerung, Kamera, Anzeige, Ton), je Einstellung eine Zeile
--- mit Schieberegler (ziehen oder − / +), Schalter oder Auswahl-Knöpfen. Speichert automatisch.
+-- Seite der Lobby aus PlayerSettings.List: Karten je Kategorie in zwei Spalten (Steuerung, Anzeige, Ton links;
+-- Kamera, Treffer rechts), je Einstellung eine Zeile mit Schieberegler (ziehen oder − / +), Schalter oder
+-- Auswahl-Knöpfen. Unter TREFFER eine Vorschau (HitFeedback.Preview): Puppe mit Fadenkreuz, auf die eine
+-- Trefferfolge mit dem gewählten Hitmarker und den gewählten Schadenszahlen läuft. Speichert automatisch.
 
 local function buildSettings()
 	local frame, page = makePage("Settings", "OPTIONEN", "WIRKT SOFORT  ·  WIRD AUTOMATISCH GESPEICHERT")
@@ -1187,17 +1190,22 @@ local function buildSettings()
 		end
 	end
 
-	-- Karten 2 x 2
-	for index, category in PlayerSettings.Categories do
+	-- Karten in zwei Spalten, untereinander
+	local PREVIEW_H = 214
+	local columnY = { 72, 72 }
+	for _, category in PlayerSettings.Categories do
 		local list = {}
 		for _, setting in PlayerSettings.List do
 			if setting.Category == category.Id then
 				table.insert(list, setting)
 			end
 		end
-		local x = (index - 1) % 2 == 0 and 0 or CARD_W + 24
-		local y = index <= 2 and 72 or 72 + 3 * ROW_H + 60 + 20
-		local card = UITheme.Card({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, 52 + #list * ROW_H + 8),
+		local column = category.Column == 2 and 2 or 1
+		local x = column == 1 and 0 or CARD_W + 24
+		local y = columnY[column]
+		local height = 52 + #list * ROW_H + 8 + (category.Preview and PREVIEW_H or 0)
+		columnY[column] = y + height + 20
+		local card = UITheme.Card({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, height),
 			BackgroundTransparency = 0.1 }, frame)
 		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
 			BorderSizePixel = 0 }, card)
@@ -1223,6 +1231,32 @@ local function buildSettings()
 			else
 				choice(row, setting)
 			end
+		end
+		if category.Preview == "HitFeedback" then
+			-- Vorschau: läuft leise in Schleife; nach dem Umschalten oder per Klick sofort mit Ton
+			local surface = make("TextButton", { Name = "HitPreview", Position = UDim2.fromOffset(20, 52 + #list * ROW_H + 2),
+				Size = UDim2.fromOffset(CARD_W - 40, PREVIEW_H - 12), BackgroundColor3 = Color3.new(1, 1, 1),
+				BorderSizePixel = 0, Text = "", AutoButtonColor = false }, card)
+			UITheme.Corner(surface, UITheme.Radius.Small)
+			make("UIStroke", { Color = BORDER, Thickness = 1, Transparency = 0.4, ApplyStrokeMode = Enum.ApplyStrokeMode.Border },
+				surface)
+			-- Verlauf von oben (etwas heller) nach unten, wie ein schwach beleuchteter Schießstand
+			make("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.fromRGB(34, 39, 46),
+				Color3.fromRGB(14, 16, 20)) }, surface)
+			text({ Position = UDim2.fromOffset(14, 10), Size = UDim2.fromOffset(200, 16), Text = "VORSCHAU", TextSize = 12,
+				TextColor3 = GRAY }, surface)
+			text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 10), Size = UDim2.fromOffset(240, 16),
+				Text = "KLICK = MIT TON ABSPIELEN", TextSize = 12, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right },
+				surface)
+			local preview = HitFeedback.Preview(surface)
+			surface.Activated:Connect(function()
+				preview.Play(true)
+			end)
+			PlayerSettings.Changed:Connect(function(key)
+				if key == "HitmarkerStyle" or key == "DamageNumbers" then
+					preview.Play(true)
+				end
+			end)
 		end
 	end
 

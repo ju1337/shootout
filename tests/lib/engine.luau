@@ -797,6 +797,43 @@ ClassInit.Decal = function(self)
 	rawget(self, "__props").Transparency = 0
 end
 
+-- Oberflächen: Standardwerte wie in Roblox
+ClassInit.GuiObject = function(self)
+	local props = rawget(self, "__props")
+	props.Visible = true
+	props.BackgroundTransparency = 0
+	props.BackgroundColor3 = Color3.new(1, 1, 1)
+	props.Rotation = 0
+	props.ZIndex = 1
+	props.Size = UDim2.new()
+	props.Position = UDim2.new()
+	props.AnchorPoint = Vector2.zero
+end
+local function textDefaults(self)
+	local props = rawget(self, "__props")
+	props.Text = ""
+	props.TextSize = 14
+	props.TextTransparency = 0
+	props.TextStrokeTransparency = 1
+	props.TextColor3 = Color3.new(0, 0, 0)
+end
+ClassInit.TextLabel = textDefaults
+ClassInit.TextButton = textDefaults
+ClassInit.TextBox = textDefaults
+ClassInit.LayerCollector = function(self)
+	rawget(self, "__props").Enabled = true
+end
+ClassInit.UIStroke = function(self)
+	local props = rawget(self, "__props")
+	props.Transparency = 0
+	props.Thickness = 1
+	props.Enabled = true
+	props.Color = Color3.new(0, 0, 0)
+end
+ClassInit.UIScale = function(self)
+	rawget(self, "__props").Scale = 1
+end
+
 -- Modelle: PivotTo verschiebt alle Teile (Drehpunkt = PrimaryPart, sonst gespeicherter Pivot)
 local function modelPivot(self)
 	local props = rawget(self, "__props")
@@ -1227,6 +1264,9 @@ service("Teams")
 local Workspace = service("Workspace")
 local camera = Instance.new("Camera", Workspace)
 camera.Name = "Camera"
+local terrain = Instance.new("Terrain", Workspace)
+terrain.Name = "Terrain"
+terrain.Anchored = true
 rawget(Workspace, "__props").CurrentCamera = camera
 rawget(Workspace, "__props").Gravity = 196.2
 SIM.RaycastHandler = nil -- function(origin, direction, params) -> Ergebnis oder nil

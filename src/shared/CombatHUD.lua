@@ -4,9 +4,8 @@
 --     (Bewegung, Sprung, Dauerfeuer). Beim Zielen in der Schulterkamera zieht es sich zu einem kleinen Kreuz zusammen,
 --     in der Ego-Perspektive blendet es aus (man zielt über Kimme und Korn). Schrotflinte: Kreis.
 --     Über Gegnern wird es rot.
---   * Hitmarker: X um die Mitte – weiß (Körper), gelb (Kopf), blau (nur Rüstung), orange (niedergeschlagen),
---     rot und groß (ausgeschaltet) – jeweils mit eigenem Treffer-Ton
---   * Schadenszahlen: klein und schlicht, zählen pro Ziel hoch
+--   * Hitmarker, Schadenszahlen und Treffer-Töne in mehreren Stilen: HitFeedback (Einstellungen „Hitmarker“ und
+--     „Schadenszahlen“)
 --   * Treffer-Richtung: rote Bögen um die Mitte zeigen zum Angreifer (stärker bei viel Schaden)
 --   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN, ohne Symbol), Nachlade-Balken, Anzeige "Schuss blockiert"
 --     (Schulterkamera: zwischen Waffe und Ziel ist etwas im Weg)
@@ -15,8 +14,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local SoundService = game:GetService("SoundService")
-local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -27,6 +24,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local Movement = require(Shared.Movement)
 local TeamCheck = require(Shared.TeamCheck)
 local PlayerSettings = require(Shared.PlayerSettings)
+local HitFeedback = require(Shared.HitFeedback)
 
 local player = Players.LocalPlayer
 
@@ -34,17 +32,13 @@ local CombatHUD = {}
 
 local WHITE = Color3.new(1, 1, 1)
 local ENEMY_RED = Color3.fromRGB(230, 70, 60)
-local HEAD_GOLD = Color3.fromRGB(232, 190, 90)
-local ARMOR_BLUE = Color3.fromRGB(110, 170, 220)
 local DOWN_ORANGE = Color3.fromRGB(226, 150, 64)
 local KILL_RED = Color3.fromRGB(226, 56, 50)
-local HIT_SOUND = "rbxasset://sounds/electronicpingshort.wav"
 
 local MIN_GAP = 2.5          -- kleinster Abstand der Striche zur Mitte (Design-Pixel)
 local HIP_LENGTH = 10        -- Strichlänge aus der Hüfte ...
 local AIM_LENGTH = 5         -- ... und beim Zielen (kleines Kreuz)
 local THICKNESS = 2
-local STACK_TIME = 1.1       -- so lange zählt eine Schadenszahl am selben Ziel weiter
 local INDICATOR_TIME = 1.6   -- Sichtbarkeit der Treffer-Richtung
 local INDICATOR_RADIUS = 150
 
@@ -64,18 +58,6 @@ local function bar(parent)
 	local stroke = make("UIStroke", { Color = Color3.new(0, 0, 0), Thickness = 1, Transparency = 0.45,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, frame)
 	return frame, stroke
-end
-
-local function playTone(speed, volume, delay)
-	task.delay(delay or 0, function()
-		local sound = Instance.new("Sound")
-		sound.SoundId = HIT_SOUND
-		sound.PlaybackSpeed = speed
-		sound.Volume = volume
-		sound.Parent = SoundService
-		sound:Play()
-		Debris:AddItem(sound, 2)
-	end)
 end
 
 -- Ist das Modell ein Gegner des Spielers (für das rote Fadenkreuz)?
@@ -259,102 +241,6 @@ function CombatHUD.Init(gui, weaponClient)
 		blocked.Visible = showBlocked
 	end)
 
-	-- ---------- Hitmarker ----------
-	local hitmarker = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, Visible = false, ZIndex = 6 }, gui)
-	local hitScale = make("UIScale", {}, hitmarker)
-	local hitLines = {}
-	for _, corner in { Vector2.new(-1, -1), Vector2.new(1, -1), Vector2.new(-1, 1), Vector2.new(1, 1) } do
-		local line, stroke = bar(hitmarker)
-		line.Size = UDim2.new(0, 2.5, 0, 11)
-		line.Position = UDim2.new(0.5, corner.X * 9, 0.5, corner.Y * 9)
-		line.Rotation = corner.X * corner.Y > 0 and -45 or 45
-		line.ZIndex = 6
-		table.insert(hitLines, { Line = line, Stroke = stroke, Corner = corner })
-	end
-	local hitId = 0
-	local function showHitmarker(color, big, duration)
-		hitId += 1
-		local myId = hitId
-		for _, entry in hitLines do
-			entry.Line.BackgroundColor3 = color
-			entry.Line.BackgroundTransparency = 0
-			entry.Stroke.Transparency = 0.45
-			local distance = big and 12 or 9
-			entry.Line.Position = UDim2.new(0.5, entry.Corner.X * distance, 0.5, entry.Corner.Y * distance)
-			entry.Line.Size = UDim2.new(0, big and 3 or 2.5, 0, big and 15 or 11)
-		end
-		hitmarker.Visible = true
-		hitScale.Scale = big and 1.6 or 1.35
-		TweenService:Create(hitScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-		task.delay(duration, function()
-			if hitId ~= myId then
-				return
-			end
-			for _, entry in hitLines do
-				TweenService:Create(entry.Line, TweenInfo.new(0.12), { BackgroundTransparency = 1 }):Play()
-				TweenService:Create(entry.Stroke, TweenInfo.new(0.12), { Transparency = 1 }):Play()
-			end
-			task.delay(0.13, function()
-				if hitId == myId then
-					hitmarker.Visible = false
-				end
-			end)
-		end)
-	end
-
-	-- ---------- Schadenszahlen (zählen pro Ziel hoch) ----------
-	local stacks = {} -- [Modell] = { Gui, Label, Scale, Total, Last }
-	local function fadeStack(target, stack)
-		if stacks[target] == stack then
-			stacks[target] = nil
-		end
-		TweenService:Create(stack.Gui, TweenInfo.new(0.5), { StudsOffsetWorldSpace = stack.Gui.StudsOffsetWorldSpace + Vector3.new(0, 1.2, 0) }):Play()
-		TweenService:Create(stack.Label, TweenInfo.new(0.5), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
-		Debris:AddItem(stack.Gui, 0.55)
-		if stack.Anchor then
-			Debris:AddItem(stack.Anchor, 0.55)
-		end
-	end
-	local function damageNumber(target, position, damage, color, killed)
-		local now = os.clock()
-		local key = target or position
-		local stack = stacks[key]
-		if not stack or now - stack.Last > STACK_TIME or not stack.Gui.Parent then
-			local adornee, anchor = nil, nil
-			local head = target and target:FindFirstChild("Head")
-			if head and head:IsA("BasePart") then
-				adornee = head
-			else
-				anchor = Instance.new("Attachment")
-				anchor.WorldPosition = typeof(position) == "Vector3" and position or Vector3.zero
-				anchor.Parent = workspace.Terrain
-				adornee = anchor
-			end
-			local billboard = make("BillboardGui", { Adornee = adornee, Size = UDim2.new(0, 140, 0, 44), AlwaysOnTop = true,
-				LightInfluence = 0, MaxDistance = 600, StudsOffsetWorldSpace = Vector3.new((math.random() - 0.5) * 1.2, 2.4, 0),
-				ResetOnSpawn = false }, player:WaitForChild("PlayerGui"))
-			local text = label({ Size = UDim2.new(1, 0, 1, 0), Text = "", TextSize = 22, Font = Enum.Font.Oswald,
-				TextStrokeTransparency = 0.4 }, billboard)
-			text.TextXAlignment = Enum.TextXAlignment.Center
-			stack = { Gui = billboard, Label = text, Scale = make("UIScale", {}, text), Total = 0, Last = now, Anchor = anchor }
-			stacks[key] = stack
-		end
-		stack.Total += damage
-		stack.Last = now
-		stack.Label.Text = tostring(math.floor(stack.Total + 0.5))
-		stack.Label.TextColor3 = color
-		stack.Label.TextSize = killed and 26 or 22
-		stack.Scale.Scale = 1.15
-		TweenService:Create(stack.Scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-		local myStack = stack
-		task.delay(killed and 0.9 or STACK_TIME, function()
-			if myStack.Gui.Parent and (killed or os.clock() - myStack.Last >= STACK_TIME - 0.02) then
-				fadeStack(key, myStack)
-			end
-		end)
-	end
-
 	-- ---------- Kill-Meldung ----------
 	local killNotice = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 56),
 		Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = UITheme.Colors.Background,
@@ -386,31 +272,10 @@ function CombatHUD.Init(gui, weaponClient)
 		end)
 	end
 
+	-- Treffer: Hitmarker, Schadenszahl und Ton (HitFeedback), dazu die Kill-Meldung
+	HitFeedback.Init(gui)
 	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName, downed, armor, victimModel)
-		damage = typeof(damage) == "number" and damage or 0
-		armor = typeof(armor) == "number" and armor or 0
-		local target = typeof(victimModel) == "Instance" and victimModel or nil
-		local onlyArmor = armor > 0 and damage <= armor + 0.5
-		local color = killed and KILL_RED or (downed and DOWN_ORANGE) or (headshot and HEAD_GOLD)
-			or (onlyArmor and ARMOR_BLUE) or WHITE
-		showHitmarker(color, killed or downed, (killed or downed) and 0.4 or 0.16)
-		-- Treffer-Töne: Körper kurz, Kopf heller, Rüstung dumpfer, Niederschlag/Kill doppelt
-		if killed then
-			playTone(1.1, 0.7)
-			playTone(1.6, 0.55, 0.07)
-		elseif downed then
-			playTone(1.3, 0.6)
-			playTone(1.0, 0.45, 0.07)
-		elseif headshot then
-			playTone(2.5, 0.55)
-		elseif onlyArmor then
-			playTone(1.5, 0.35)
-		else
-			playTone(1.95, 0.35)
-		end
-		if damage > 0 and PlayerSettings.Get("DamageNumbers") then
-			damageNumber(target, position, damage, color, killed)
-		end
+		HitFeedback.Hit(headshot, killed, damage, position, downed, armor, victimModel)
 		if (killed or downed) and victimName then
 			showKill(killed, victimName)
 		end
