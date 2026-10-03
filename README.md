@@ -373,10 +373,12 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `src/shared` – Client + Server: Konfigurationen, Waffen-Client (ViewModel = Ego-Waffe, CharacterPose =
   Third-Person-Haltung, WeaponEffects = Schuss-Effekte), HUD (MatchHUD, Minimap, CombatHUD, HUDIcons =
   Porträts/Waffen-Silhouetten, TeamCheck = wer ist Freund/Feind, Notifications + Medals = Meldungen im
-  CoD-Stil), Menü, Bewegung
-- `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings
-- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi, Bots, Admin
-- `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, ...
+  CoD-Stil), Menü, Bewegung, RapConfig (RAP-Werte), ItemPreview (3D-Vorschau eines Skins)
+- `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings,
+  EconomyService (RAP, Rückverkauf, Reservierungen), MarketService (Stände), TradeService (Tauschen)
+- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi (inkl. Hub und Markt), Bots, Admin
+- `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, HubWheel (Glücksrad),
+  MarketClient (Markt), TradeClient (Tauschen), KillstreakHUD, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)
 - `tools/build_maps.py` – erzeugt alle Maps
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
