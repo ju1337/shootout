@@ -21,7 +21,7 @@ jobs:
       LUAU_VERSION: "0.740"
       LUAU_LSP_VERSION: "1.70.1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Werkzeuge laden (Luau, luau-lsp, Roblox-Typen)
         id: tools
