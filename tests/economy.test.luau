@@ -143,6 +143,21 @@ step(3)
 check(EconomyService.ReservedCount(alice, "W_Gluecksklee") == 0, "Reservierungen beim Verlassen gelöscht")
 check(store.Data.u1.Owned.W_Gluecksklee == 2, "Skins bleiben im Spielstand")
 
+-- Studio ohne DataStore-Zugriff: Stand nur für die Sitzung, Verkaufen geht trotzdem (nichts wird gespeichert)
+SIM.IsStudio = true
+store.FailNext = math.huge
+local tester = SIM.Join("Tester")
+step(120) -- alle Wiederholungen schlagen fehl
+check(ProgressService.IsLoaded(tester), "Studio ohne DataStore: Profil gilt für die Sitzung")
+ProgressService.GrantSkin(tester, "W_Lava")
+message, ok = EconomyService.SellToSystem(tester, "W_Lava")
+check(ok == true and tester:GetAttribute("Rap") == RapConfig.SellPrice("W_Lava"), "Studio: Rückverkauf geht: " .. tostring(message))
+store.FailNext = 0
+SIM.Leave(tester)
+step(3)
+check(store.Data["u" .. tester.UserId] == nil, "nicht geladener Stand wird nicht gespeichert")
+SIM.IsStudio = false
+
 if failures == 0 then
 	print("RAP-Wirtschaft: alles in Ordnung")
 end

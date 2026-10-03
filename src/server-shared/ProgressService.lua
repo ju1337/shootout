@@ -41,6 +41,7 @@ local LOAD_FAILED = "Dein Spielstand konnte gerade nicht geladen werden. Bitte t
 local store = nil   -- SessionStore (nil ohne DataStore, z.B. Studio ohne API-Zugriff)
 local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen und gesperrt (nur dann speichern)
+local sessionOnly = {} -- [Player] = true: in Studio ließ sich nicht laden – Stand gilt nur für diese Sitzung
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
@@ -657,6 +658,8 @@ local function load(player)
 		warn("Spielerdaten konnten nicht geladen werden: " .. tostring(result))
 		if not RunService:IsStudio() then
 			player:Kick(LOAD_FAILED) -- nicht ohne Speichern weiterspielen
+		else
+			sessionOnly[player] = true -- Studio ohne DataStore-Zugriff: mit leerem Stand weitertesten (wird nicht gespeichert)
 		end
 		return
 	end
@@ -693,9 +696,10 @@ function ProgressService.SaveNow(player)
 	return save(player)
 end
 
--- Profil fertig geladen? (ohne DataStore, z.B. in Studio: sobald das Profil da ist)
+-- Profil fertig geladen? Ohne DataStore oder wenn er in Studio nicht erreichbar ist: sobald das Profil da ist
+-- (dann gilt der Stand nur für die Sitzung, gespeichert wird nur ein wirklich geladenes Profil)
 function ProgressService.IsLoaded(player)
-	return loaded[player] == true or (store == nil and profiles[player] ~= nil)
+	return loaded[player] == true or (profiles[player] ~= nil and (store == nil or sessionOnly[player] == true))
 end
 
 -- Agent, mit dem der Spieler gerade spielt (sonst der gewählte)
@@ -996,6 +1000,7 @@ function ProgressService.Init()
 		save(player, true)
 		profiles[player] = nil
 		loaded[player] = nil
+		sessionOnly[player] = nil
 		ledgers[player] = nil
 	end)
 	-- Herunterfahren: alle gleichzeitig speichern (nacheinander reicht die Zeit bei vielen Spielern nicht)
