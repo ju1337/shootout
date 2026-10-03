@@ -212,6 +212,7 @@ end
 local function buildBoard(board)
 	local surface = Instance.new("SurfaceGui")
 	surface.Name = "WheelBoardGui"
+	surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 	surface.Face = Enum.NormalId.Front
 	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	surface.PixelsPerStud = 80

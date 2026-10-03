@@ -1666,7 +1666,6 @@ def build_lobby():
     b.sign2("Sign_Market", (15, 5.2, 0.4), (mgx - 1.6, mgh + 4.4, mz), "MARKT", "STÄNDE · HANDEL · RAP",
             graphite, rap, (236, 239, 243), angles=(0, 90, 0), glow=rap)
     client_board("GateCount_Market", (9, 1.6, 0.3), (mgx - 1.15, mgh + 1.3, mz), angles=(0, 90, 0))
-    b.floor_text("FloorLabel_Market", (11, 0.1, 3.2), (mgx - 10, 0.3, mz), "MARKT", rap, yaw=270)
     b.add("Portals", "Portal_Market", (7, 0.3, mgw - 1), (mgx - 4, 0.4, mz), rap, "Neon",
           props={"CanCollide": False, "Transparency": 0.45})
 

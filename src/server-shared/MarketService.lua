@@ -121,7 +121,7 @@ function actions.Claim(player, id)
 	local spot = stand.Folder:FindFirstChild("OwnerSpot")
 	local character = player.Character
 	if spot and character then
-		character:PivotTo(spot.CFrame + Vector3.new(0, 2.2, 0))
+		character:PivotTo(spot.CFrame + Vector3.new(0, 2.7, 0)) -- Füße knapp über dem Podest
 		MovementGuard.Teleported(character)
 	end
 	return "Stand " .. stand.Id .. " gehört dir! Biete jetzt Skins an (MEIN STAND).", true

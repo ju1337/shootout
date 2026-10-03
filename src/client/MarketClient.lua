@@ -156,6 +156,7 @@ local function buildSign(stand)
 	end
 	local surface = Instance.new("SurfaceGui")
 	surface.Name = "StandSign" .. stand.Id
+	surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 	surface.Face = Enum.NormalId.Front
 	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	surface.PixelsPerStud = 50
@@ -220,6 +221,7 @@ local function buildDisplay(stand, listing)
 	local rarity = Cosmetics.Rarities[item.Rarity]
 	local tag = Instance.new("BillboardGui")
 	tag.Name = "PriceTag"
+	tag.ResetOnSpawn = false
 	tag.Size = UDim2.fromOffset(150, 44)
 	tag.StudsOffset = Vector3.new(0, item.Type == "Agent" and 1.9 or 1.15, 0)
 	tag.MaxDistance = 45
@@ -667,14 +669,19 @@ function MarketClient.Init()
 			closeWindow()
 		end
 	end)
-	-- Ausgestellte Skins drehen sich langsam
+	-- Ausgestellte Skins drehen sich langsam (nur die in der Nähe der Kamera, die anderen bleiben stehen)
 	RunService.RenderStepped:Connect(function()
 		if not inMarket() then
 			return
 		end
 		local t = os.clock()
+		local eye = workspace.CurrentCamera.CFrame.Position
 		for _, stand in stands do
 			for _, display in stand.Displays do
+				if (display.Spot.Position - eye).Magnitude > 90 and display.Placed then
+					continue
+				end
+				display.Placed = true
 				local spin = CFrame.Angles(0, t * 0.7 + display.Phase, 0)
 				if display.Agent then
 					-- Figur steht auf Theke bzw. Regal

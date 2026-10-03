@@ -132,6 +132,7 @@ local function buildAgentOfWeek()
 	local nameLabel, infoLabel, holoLabels = nil, nil, {}
 	if holoPoint then
 		local billboard = Instance.new("BillboardGui")
+		billboard.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 		billboard.Name = "AgentOfWeekHolo"
 		billboard.Adornee = holoPoint
 		billboard.Size = UDim2.new(11, 0, 3.4, 0) -- in Studs: wirkt wie ein Hologramm im Raum
@@ -299,6 +300,7 @@ local function buildShopVitrine()
 		local surface = part:FindFirstChild("PlaqueGui")
 		if not surface then
 			surface = Instance.new("SurfaceGui")
+			surface.ResetOnSpawn = false
 			surface.Name = "PlaqueGui"
 			surface.Face = Enum.NormalId.Front
 			surface.LightInfluence = 0
@@ -391,6 +393,7 @@ local function buildMissionBoard()
 		return
 	end
 	local surface = Instance.new("SurfaceGui")
+	surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 	surface.Face = Enum.NormalId.Front
 	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	surface.PixelsPerStud = 40
@@ -421,6 +424,7 @@ local function buildMissionBoard()
 		local id = string.match(part.Name, "^GateCount_(.+)$")
 		if id and part:IsA("BasePart") then
 			local gateGui = Instance.new("SurfaceGui")
+			gateGui.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 			gateGui.Face = Enum.NormalId.Front
 			gateGui.LightInfluence = 0
 			gateGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
@@ -495,6 +499,7 @@ local function buildLeaderboards()
 			-- Holo-Tafel (Attribut "Holo"): durchsichtig, leuchtende Schrift, kaum Hintergrund
 			local holo = part:GetAttribute("Holo") == true
 			local surface = Instance.new("SurfaceGui")
+			surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 			surface.Face = Enum.NormalId.Front
 			surface.LightInfluence = 0
 			surface.Brightness = holo and 1.3 or 1
@@ -641,6 +646,7 @@ local function buildPhotoBoard()
 		return
 	end
 	local surface = Instance.new("SurfaceGui")
+	surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 	surface.Name = "PhotoBoardGui"
 	surface.Face = Enum.NormalId.Front
 	surface.LightInfluence = 0
