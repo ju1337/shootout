@@ -57,6 +57,7 @@ local buyCards = {}        -- [item] = { Button, Name, State, Stroke }
 local weaponCards = {}     -- { Frame, Stroke, Name, Tag, Holder, Preview, Shown, Weapon, Width, Height }
 local moneyLabel, buyStatus
 local hoverAgent, hoverWeapon = nil, nil
+local spawnFrame, spawnButtons = nil, {} -- Spawn-Wahl nach dem Tod (Herrschaft): [Id] = Chunky
 local confirmed = false
 local shown = false
 local teamSignature = ""
@@ -371,6 +372,19 @@ local function buildBottom()
 		end
 		confirmed = true
 	end)
+	-- Spawn-Wahl (nur Herrschaft, nach dem Tod) über dem BEREIT-Knopf: Basis oder eigene, freie Flagge
+	spawnFrame = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, 0, 0, -10), Size = UDim2.fromOffset(330, 44),
+		BackgroundTransparency = 1, Visible = false }, row)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, spawnFrame)
+	label({ Size = UDim2.fromOffset(70, 44), Text = "SPAWN", TextSize = 16, Font = F.Display, TextColor3 = C.Muted, LayoutOrder = 0,
+		TextXAlignment = Enum.TextXAlignment.Right }, spawnFrame)
+	for i, id in { "Base", "A", "B", "C" } do
+		spawnButtons[id] = UITheme.Chunky({ Size = UDim2.fromOffset(id == "Base" and 80 or 50, 40), LayoutOrder = i, Color = C.Card,
+			StrokeColor = C.Border, Text = id == "Base" and "BASIS" or id, TextSize = 18 }, spawnFrame, function()
+			Remotes.SpawnChoice:FireServer(id)
+		end)
+	end
 	confirm.Label.Size = UDim2.new(1, 0, 0, 42)
 	confirm.Label.Position = UDim2.fromOffset(0, 4)
 	confirmSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 42), Size = UDim2.new(1, -16, 0, 14),
@@ -664,6 +678,32 @@ local function update()
 		confirm.SetColor(C.Primary, C.PrimaryText)
 	end
 	confirmSub.TextColor3 = C.PrimaryText
+
+	-- Spawn-Wahl: Flaggen nur, wenn sie dem eigenen Team gehören und gerade niemand angreift
+	local showSpawn = respawning and player:GetAttribute("Mode") == "Domination"
+	spawnFrame.Visible = showSpawn
+	if showSpawn then
+		local maps = workspace:FindFirstChild("Maps")
+		local map = maps and maps:FindFirstChild(player:GetAttribute("MapId") or "")
+		local folder = map and map:FindFirstChild("Objective")
+		local myTeam = player.Team and player.Team.Name
+		local chosen = player:GetAttribute("SpawnChoice") or "Base"
+		for id, button in spawnButtons do
+			local usable = id == "Base"
+			if id ~= "Base" then
+				local part = folder and folder:FindFirstChild("Flag" .. id)
+				local capturer = part and part:GetAttribute("Capturer")
+				usable = part ~= nil and part:GetAttribute("FlagOwner") == myTeam and not part:GetAttribute("Contested")
+					and (capturer == nil or capturer == myTeam)
+			end
+			local on = usable and id == chosen
+			button.SetColor(on and C.Primary or (usable and C.Card or C.Background), on and C.PrimaryText or (usable and C.Text or C.Muted))
+			button.Button.Active = usable
+		end
+		if chosen ~= "Base" and spawnButtons[chosen] and not spawnButtons[chosen].Button.Active then
+			confirmSub.Text = "FLAGGE " .. chosen .. " NICHT FREI · SPAWN AN DER BASIS"
+		end
+	end
 
 	local agent = myAgent()
 	local previewAgent = hoverAgent or agent

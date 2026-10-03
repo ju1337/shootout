@@ -83,6 +83,41 @@ return function(api)
 		return points[team] or 0
 	end
 
+	-- Spawn-Wahl: an einer eigenen, nicht umkämpften Flagge (Spieler-Attribut SpawnChoice), sonst nil = Basis.
+	-- Gesucht wird ein freier Platz 11–15 Studs neben der Zone, eher zur eigenen Basis hin, Blick zur Flagge.
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Include
+	function objective.SpawnFor(player, team)
+		local choice = player:GetAttribute("SpawnChoice")
+		local flag = type(choice) == "string" and flags[choice]
+		if not flag or flag.Owner ~= team or not api.IsRoundActive() then
+			return nil
+		end
+		local enemy = team == api.TeamA and api.TeamB or api.TeamA
+		if #onFlag(enemy, flag.Part) > 0 or (flag.Capturer and flag.Capturer ~= team) then
+			return nil -- umkämpft
+		end
+		local map = api.GetMap()
+		local spawns = map:FindFirstChild(team == api.TeamA and "SpawnsA" or "SpawnsB")
+		local center = flag.Part.Position
+		local home = center
+		if spawns and #spawns:GetChildren() > 0 then
+			home = spawns:GetChildren()[1].Position
+		end
+		local toward = Vector3.new(home.X - center.X, 0, home.Z - center.Z)
+		local baseAngle = toward.Magnitude > 1 and math.atan2(toward.Z, toward.X) or 0
+		overlap.FilterDescendantsInstances = { map }
+		for _ = 1, 12 do
+			local angle = baseAngle + math.rad(math.random(-70, 70))
+			local distance = math.random(11, 15)
+			local spot = center + Vector3.new(math.cos(angle) * distance, 3, math.sin(angle) * distance)
+			if #workspace:GetPartBoundsInBox(CFrame.new(spot), Vector3.new(3, 5, 3), overlap) == 0 then
+				return CFrame.lookAt(spot, Vector3.new(center.X, spot.Y, center.Z))
+			end
+		end
+		return nil
+	end
+
 	function objective.Tick(dt)
 		local captureTime = GameSettings.Get("DominationCapture")
 		local changed = false

@@ -23,7 +23,8 @@
 --     Mögliche Funktionen: RoundStart(roundNumber), Tick(dt, elapsed), RoundEnd(), SpawnFolder(team),
 --     KeepsRoundAlive(aAlive, bAlive), TimeFrozen(), TimeOutWinner(), RoundInfo(),
 --     Attackers() (angreifendes Team), Clock() (eigene Uhr statt der Rundenzeit, z.B. Bomben-Timer),
---     Score(team) (eigener Punktestand statt Rundensiegen, z.B. Herrschaft)
+--     Score(team) (eigener Punktestand statt Rundensiegen, z.B. Herrschaft),
+--     SpawnFor(player, team) (Respawn an einem gewählten Ort statt an der Basis, z.B. an einer eigenen Flagge)
 -- Spieler-Attribute: RoundPhase, AgentLocked, SelectUntil, SelectDuration, RoundNumber,
 --   TeamScore, EnemyScore, RoundsToWin, ModeText, CanFight, ObjMine/ObjEnemy (Punkt-Fortschritt),
 --   fürs HUD: RoundClock (Sekunden), ClockAlert (Uhr des Ziels läuft), Overtime, TeamTickets/EnemyTickets,
@@ -385,8 +386,15 @@ function TeamRoundMode.new(config)
 
 	-- ---------- Spawnen ----------
 
-	-- Spawn-Position: Absprung über der eigenen Seite oder Team-Spawn der Map
-	local function spawnCFrame(team, index, total)
+	-- Spawn-Position: Absprung über der eigenen Seite oder Team-Spawn der Map. Mit player (Respawn): vorher fragen,
+	-- ob das Ziel einen gewählten Spawn-Ort hat (Herrschaft: eigene Flagge, Spieler-Attribut SpawnChoice)
+	local function spawnCFrame(team, index, total, player)
+		if player and objective and objective.SpawnFor then
+			local chosen = objective.SpawnFor(player, team)
+			if chosen then
+				return chosen
+			end
+		end
 		if config.DropIn then
 			local offset = (index - (total + 1) / 2) * ROW_SPACING
 			local position = MAP_CENTER + Vector3.new(sideOf(team) * SIDE_DISTANCE, DROP_HEIGHT, offset)
@@ -477,7 +485,7 @@ function TeamRoundMode.new(config)
 				alive[player] = nil
 				useTicket(player, function()
 					if members[player] and player.Team then
-						spawnPlayer(player, spawnCFrame(player.Team))
+						spawnPlayer(player, spawnCFrame(player.Team, nil, nil, player))
 					end
 				end)
 				updateInfo()
@@ -1473,6 +1481,13 @@ function TeamRoundMode.new(config)
 				end
 			end)
 		end)
+		-- Spawn-Wahl nach dem Tod (nur Modi mit objective.SpawnFor, z.B. Herrschaft)
+		Remotes.SpawnChoice.OnServerEvent:Connect(function(player, choice)
+			if members[player] and objective and objective.SpawnFor
+				and (choice == "Base" or choice == "A" or choice == "B" or choice == "C") then
+				player:SetAttribute("SpawnChoice", choice)
+			end
+		end)
 		-- Map-Abstimmung
 		Remotes.MapVote.OnServerEvent:Connect(function(player, index)
 			if voteOptions and members[player] and type(index) == "number" and voteOptions[index] then
@@ -1542,7 +1557,7 @@ function TeamRoundMode.new(config)
 		if roundActive and config.Respawn and player.Team then
 			useTicket(player, function()
 				if members[player] and player.Team then
-					spawnPlayer(player, spawnCFrame(player.Team))
+					spawnPlayer(player, spawnCFrame(player.Team, nil, nil, player))
 				end
 			end)
 		end
@@ -1560,6 +1575,7 @@ function TeamRoundMode.new(config)
 		player.Team = nil
 		for _, attribute in { "RoundPhase", "AgentLocked", "SelectUntil", "SelectDuration", "RoundNumber", "TeamScore",
 			"EnemyScore", "RoundsToWin", "ObjMine", "ObjEnemy", "ObjInfo", "MapName", "MapId", "MapCenter", "CountdownEnd",
+			"SpawnChoice",
 			"MapVoteOptions", "MapVoteEnd", "MapVoteCounts", "MapVoteMine", "RoundClock", "ClockAlert", "Overtime",
 			"TeamTickets", "EnemyTickets", "Attacking" } do
 			player:SetAttribute(attribute, nil)
