@@ -711,6 +711,10 @@ local function loadAsset(weaponName, source)
 		end
 		if skin then
 			part:SetAttribute("Skin", true)
+			-- importierte Meshes sind ohne eigene Farbe weiß: dunkle Grundfarbe, bis ein Skin sie überschreibt
+			if part:IsA("MeshPart") and part.Color == Color3.new(1, 1, 1) and not part:FindFirstChildOfClass("SurfaceAppearance") then
+				part.Color = Color3.fromRGB(42, 42, 46)
+			end
 		end
 		if neon or reticle then
 			part.Material = Enum.Material.Neon

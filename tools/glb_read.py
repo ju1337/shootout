@@ -35,3 +35,9 @@ if False:
     for k,g in groups(j,b).items():
         v=g['verts']; mn=[min(p[i] for p in v) for i in range(3)]; mx=[max(p[i] for p in v) for i in range(3)]
         print('%-40s n=%6d min=%s max=%s'%(k,len(v),[round(x,2) for x in mn],[round(x,2) for x in mx]))
+
+def indices(j,b,acc):
+    a=j['accessors'][acc]; bv=j['bufferViews'][a['bufferView']]
+    o=bv.get('byteOffset',0)+a.get('byteOffset',0)
+    fmt={5121:'B',5123:'H',5125:'I'}[a['componentType']]
+    return list(struct.unpack_from('<%d%s'%(a['count'],fmt),b,o))
