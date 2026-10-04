@@ -5,3 +5,6 @@
   Daraus erzeugt `python3 tools/mp7_model.py` die SMG (`assets/Weapons/SMG.rbxmx`, aus Quadern nachgebaut;
   der Schalldämpfer des Modells bleibt weg, den baut das Spiel als Aufsatz). Für das echte Mesh in Studio:
   Import 3D mit dieser GLB, Teile benennen und Marker setzen wie in `docs/waffen-modelle.md`.
+- `SMG.glb`: die fertig vorbereitete Studio-Version (`python3 tools/mp7_glb.py`): Teile benannt, Marker gesetzt, ohne
+  Schalldämpfer, in Studs, Lauf nach -Z. In Studio: Import 3D > SMG.glb (Teile nicht zusammenführen), Modell nach
+  ReplicatedStorage > Assets > Weapons ziehen, "SMG" nennen. Dann ersetzt das echte Mesh den Nachbau aus Quadern.
