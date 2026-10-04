@@ -1,5 +1,7 @@
 -- GunModels (ModuleScript)
--- Baut einfache Waffenmodelle aus Parts. Lauf zeigt nach -Z, "Handle" ist der Griffpunkt (Ursprung).
+-- Waffenmodelle: fertige 3D-Modelle aus ReplicatedStorage.Assets.Weapons (Blender, siehe unten und
+-- docs/waffen-modelle.md) oder – solange es keins gibt – einfache Modelle aus Parts ("Quader-Waffen").
+-- Lauf zeigt nach -Z, "Handle" ist der Griffpunkt (Ursprung).
 -- Wird für die Waffe vor der eigenen Kamera (Client), in der Hand der Charaktere (Server, Tool) und für
 -- Vorschauen benutzt. skin (aus AgentConfig.Skins / Cosmetics) färbt die markierten Teile um.
 --
@@ -7,6 +9,9 @@
 -- genau auf der Visierlinie (Info.SightHeight): Beim Zielen schaut die Kamera über Kimme und Korn.
 -- Ausnahme Sturmgewehr: Rotpunktvisier (Info.Reflex) – beim Zielen liegt der rote Punkt in der Bildmitte.
 -- Teile mit Group bewegen sich in Animationen gemeinsam (Magazin, Schlitten, Pumpe, Trommel, ...).
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local GunModels = {}
 
@@ -229,21 +234,54 @@ GunModels.Info = {
 		LeftHandTP = V(-0.12, -0.1, 0.03) },
 }
 
--- Ruheposition jedes Teils und Drehpunkt jeder Gruppe (erstes Teil der Gruppe)
-local restOf = {}  -- [Waffe][Teilname] = CFrame
-local groupOf = {} -- [Waffe][Teilname] = Gruppe
-local pivots = {}  -- [Waffe][Gruppe] = CFrame des Hauptteils
-for weaponName, defs in PARTS do
-	restOf[weaponName], groupOf[weaponName], pivots[weaponName] = {}, {}, {}
-	for _, def in defs do
-		local options = def[6] or {}
-		local cframe = CFrame.new(def[3]) * (options.Rot or CFrame.new())
-		restOf[weaponName][def[1]] = cframe
-		if options.Group then
-			groupOf[weaponName][def[1]] = options.Group
-			pivots[weaponName][options.Group] = pivots[weaponName][options.Group] or cframe
+-- ---------- Ruhelage, Animationsgruppen, Drehpunkte ----------
+-- Für jede Waffe aus den Quadern bzw. aus dem 3D-Modell (siehe unten)
+local restOf = {}    -- [Waffe][Teilname] = CFrame
+local groupOf = {}   -- [Waffe][Teilname] = Gruppe
+local pivots = {}    -- [Waffe][Gruppe] = CFrame des Drehpunkts (Hauptteil der Gruppe oder Marker Pivot_<Gruppe>)
+local mainParts = {} -- [Waffe][Gruppe] = Name des Hauptteils (erstes Teil der Gruppe, z.B. das Magazin)
+
+-- entries = { { Name, CFrame (Ruhelage), Group } } in Reihenfolge (erstes Teil einer Gruppe = Hauptteil),
+-- pivotOverride = { [Gruppe] = CFrame } (optional, aus Markern)
+local function indexParts(weaponName, entries, pivotOverride)
+	restOf[weaponName], groupOf[weaponName], pivots[weaponName], mainParts[weaponName] = {}, {}, {}, {}
+	for _, entry in entries do
+		restOf[weaponName][entry.Name] = entry.CFrame
+		if entry.Group then
+			groupOf[weaponName][entry.Name] = entry.Group
+			if not mainParts[weaponName][entry.Group] then
+				mainParts[weaponName][entry.Group] = entry.Name
+				pivots[weaponName][entry.Group] = entry.CFrame
+			end
 		end
 	end
+	for group, pivot in pivotOverride or {} do
+		if pivots[weaponName][group] then
+			pivots[weaponName][group] = pivot
+		end
+	end
+end
+
+-- Quader-Waffen: Gruppen (die Animationen bewegen genau diese) und Länge (Maßstab für 3D-Modelle)
+local blockoutGroups = {} -- [Waffe] = { Gruppe, ... }
+local blockoutLength = {} -- [Waffe] = Länge in Studs (Schulterstütze bis Mündung)
+for weaponName, defs in PARTS do
+	local entries, seen, minZ, maxZ = {}, {}, math.huge, -math.huge
+	blockoutGroups[weaponName] = {}
+	for _, def in defs do
+		local options = def[6] or {}
+		table.insert(entries, { Name = def[1], CFrame = CFrame.new(def[3]) * (options.Rot or CFrame.new()), Group = options.Group })
+		if options.Group and not seen[options.Group] then
+			seen[options.Group] = true
+			table.insert(blockoutGroups[weaponName], options.Group)
+		end
+		if not options.Invisible then
+			minZ = math.min(minZ, def[3].Z - def[2].Z / 2)
+			maxZ = math.max(maxZ, def[3].Z + def[2].Z / 2)
+		end
+	end
+	blockoutLength[weaponName] = maxZ - minZ
+	indexParts(weaponName, entries)
 end
 
 -- Ruhe-CFrame eines Teils im Waffenraum (nil, wenn es das Teil nicht gibt)
@@ -259,6 +297,11 @@ end
 -- Hauptteil einer Gruppe in Ruhe (z.B. das Magazin), nil wenn die Waffe die Gruppe nicht hat
 function GunModels.GroupPivot(weaponName, group)
 	return pivots[weaponName] and pivots[weaponName][group]
+end
+
+-- Name des Hauptteils einer Gruppe (z.B. das Magazin, an dem die Magazin-Aufsätze sitzen)
+function GunModels.GroupMainPart(weaponName, group)
+	return mainParts[weaponName] and mainParts[weaponName][group]
 end
 
 -- Bewegung einer Gruppe im Waffenraum: offset (Achsen der Waffe) um den Mittelpunkt des Hauptteils.
@@ -364,8 +407,9 @@ local function addAttachments(model, weaponName, attachments)
 				Color3.fromRGB(255, 50, 40), nil, nil, true)
 		end
 	end
-	local mag = model:FindFirstChild("Magazine") or model:FindFirstChild("Box")
-	if mag then
+	local magName = GunModels.GroupMainPart(weaponName, "Magazine")
+	local mag = magName and model:FindFirstChild(magName)
+	if mag and mag:IsA("BasePart") then
 		if has.ExtendedMag then
 			-- länger nach unten
 			local extra = mag.Size.Y * 0.35
@@ -390,10 +434,8 @@ local function addAttachments(model, weaponName, attachments)
 	end
 end
 
--- Liefert ein Model mit PrimaryPart "Handle" (Griffpunkt). Alle Parts sind verankert und ohne Kollision.
--- Teile haben das Attribut "Group" (Animationsgruppe) bzw. "Hidden" (nur in Animationen sichtbar).
--- attachments (optional) = ausgerüstete Aufsätze, werden als Teile angebaut.
-function GunModels.Build(weaponName, skin, attachments)
+-- Quader-Waffe aus PARTS (ohne Aufsätze)
+local function buildBlockout(weaponName, skin)
 	local model = Instance.new("Model")
 	model.Name = weaponName
 	for _, def in PARTS[weaponName] do
@@ -425,12 +467,6 @@ function GunModels.Build(weaponName, skin, attachments)
 		if options.Group then
 			part:SetAttribute("Group", options.Group)
 		end
-		part.Anchored = true
-		part.CanCollide = false
-		part.CanQuery = false
-		part.CanTouch = false
-		part.Massless = true
-		part.CastShadow = false
 		part.TopSurface = Enum.SurfaceType.Smooth
 		part.BottomSurface = Enum.SurfaceType.Smooth
 		part.Parent = model
@@ -438,6 +474,421 @@ function GunModels.Build(weaponName, skin, attachments)
 			model.PrimaryPart = part
 		end
 	end
+	return model
+end
+
+-- ---------- Fertige 3D-Modelle (Blender) ----------
+-- Liegt in ReplicatedStorage.Assets.Weapons ein Modell mit dem Namen einer Waffe (z.B. "Rifle"), wird es statt der
+-- Quader benutzt – überall: Ego-Waffe, Hand, Rücken, Vorschauen, Symbole. Fehlt etwas Wichtiges, bleibt die
+-- Quader-Waffe, und Studio schreibt beim Spielstart ins Output, was fehlt. Aufbau: docs/waffen-modelle.md. Kurz:
+--   Marker (kleine Teile, kommen nicht ins Spiel): Point_Grip (rechte Hand, wird zum Ursprung), Point_SightRear
+--   und Point_SightFront (beide genau auf der Visierlinie: legen Richtung und Höhe fest), Point_Muzzle,
+--   Point_Eject, Point_LeftHand, Point_Stock (lange Waffen), optional Point_LeftHandTP und Pivot_<Gruppe>
+--   (Drehpunkt einer Animationsgruppe). Statt Marker-Teilen gehen auch Attachments mit diesen Namen.
+--   Die Ausrichtung kommt nur aus den Markern – wie das Modell beim Import gedreht oder verschoben ist, ist egal.
+--   Teilnamen bestehen aus Wörtern mit "_" dazwischen (Blender-Endungen wie ".001" sind egal): eine
+--   Animationsgruppe (Magazine, Bolt, Slide, Pump, Cylinder, Hammer, Cover, Shell, Loader) bewegt das Teil mit
+--   der Gruppe, "Skin" = Skin-Zone (bekommt die Skin-Farbe), "Neon" = leuchtet, "Glass" = Glas, "Reticle" =
+--   roter Punkt des Rotpunktvisiers (fehlt er, wird einer auf Point_SightRear gesetzt).
+--   Textur-Skins (episch/legendär): Ordner "Skins" im Modell, darin je Skin ein Ordner mit der Skin-Id (z.B.
+--   "W_Lava") mit SurfaceAppearances, benannt wie die Teile, die sie bekommen. Ohne Textur bleibt die Skin-Farbe.
+local ANIMATION_GROUPS = { Magazine = true, Bolt = true, Slide = true, Pump = true, Cylinder = true, Hammer = true,
+	Cover = true, Shell = true, Loader = true }
+local HIDDEN_GROUPS = { Shell = true, Loader = true } -- nur während der Animation sichtbar
+local POINTS = { Grip = true, SightRear = true, SightFront = true, Muzzle = true, Eject = true, LeftHand = true,
+	LeftHandTP = true, Stock = true }
+local REQUIRED_POINTS = { "Grip", "SightRear", "SightFront", "Muzzle", "Eject", "LeftHand" }
+local GLASS_TRANSPARENCY = 0.82
+local MAX_PARTS = 40 -- mehr Einzelteile kosten Leistung (vor allem auf Handys)
+
+local assetData = {}   -- [Waffe] = { Template = Model in Ruhelage (Griff = Ursprung), Skins = Ordner oder nil }
+local assetReport = {} -- [Waffe] = { Loaded = bool, Errors = { Text }, Warnings = { Text } }
+
+-- Blender hängt an Kopien ".001" an – das zählt nicht zum Namen
+local function cleanName(name)
+	return (string.gsub(name, "%.%d+$", ""))
+end
+
+local function wordsOf(name)
+	local list = {}
+	for word in string.gmatch(name, "[^_%.%s]+") do
+		table.insert(list, word)
+	end
+	return list
+end
+
+local function markerPosition(obj)
+	if obj:IsA("BasePart") then
+		return obj.Position
+	end
+	local parent = obj.Parent
+	if obj:IsA("Attachment") and parent and parent:IsA("BasePart") then
+		return (parent.CFrame * obj.CFrame).Position
+	end
+	return nil
+end
+
+-- Vorder- und Hinterkante eines Teils entlang des Laufs (Z im Waffenraum)
+local function extentZ(cframe, size)
+	local minZ, maxZ = math.huge, -math.huge
+	for _, x in { -0.5, 0.5 } do
+		for _, y in { -0.5, 0.5 } do
+			for _, z in { -0.5, 0.5 } do
+				local p = cframe * Vector3.new(size.X * x, size.Y * y, size.Z * z)
+				minZ, maxZ = math.min(minZ, p.Z), math.max(maxZ, p.Z)
+			end
+		end
+	end
+	return minZ, maxZ
+end
+
+-- Ein Modell aus Assets.Weapons prüfen und in die Ruhelage bringen. Gibt (Daten oder nil, Bericht) zurück.
+local function loadAsset(weaponName, source)
+	local report = { Loaded = false, Errors = {}, Warnings = {} }
+	local function problem(text)
+		table.insert(report.Errors, text)
+	end
+	local function hint(text)
+		table.insert(report.Warnings, text)
+	end
+	local info = GunModels.Info[weaponName]
+	local skins = source:FindFirstChild("Skins")
+
+	-- Marker und sichtbare Teile einsammeln
+	local points, pivotPoints, parts = {}, {}, {}
+	for _, obj in source:GetDescendants() do
+		if skins and (obj == skins or obj:IsDescendantOf(skins)) then
+			continue
+		end
+		local name = cleanName(obj.Name)
+		local point = string.match(name, "^Point_(.+)$")
+		local pivotGroup = string.match(name, "^Pivot_(.+)$")
+		local isMarker = (obj:IsA("BasePart") and (point or pivotGroup))
+			or (obj:IsA("Attachment") and (point or pivotGroup or POINTS[name]))
+		if isMarker then
+			local position = markerPosition(obj)
+			if pivotGroup then
+				if ANIMATION_GROUPS[pivotGroup] then
+					pivotPoints[pivotGroup] = position
+				else
+					hint("Unbekannter Drehpunkt " .. obj.Name)
+				end
+			elseif POINTS[point or name] then
+				points[point or name] = position
+			else
+				hint("Unbekannter Marker " .. obj.Name)
+			end
+		elseif obj:IsA("BasePart") then
+			table.insert(parts, obj)
+		end
+	end
+	for _, key in REQUIRED_POINTS do
+		if not points[key] then
+			problem("Marker Point_" .. key .. " fehlt")
+		end
+	end
+	if info.Long and not points.Stock then
+		problem("Marker Point_Stock fehlt (lange Waffe: hinteres Ende der Schulterstütze)")
+	end
+	if #parts == 0 then
+		problem("keine sichtbaren Teile im Modell")
+	end
+	if #report.Errors > 0 then
+		return nil, report
+	end
+
+	-- Ausrichtung aus den Markern: Ursprung = Griff, -Z = entlang der Visierlinie nach vorn, +Y = vom Griff
+	-- hoch zur Visierlinie
+	local grip, rear, front = points.Grip, points.SightRear, points.SightFront
+	if (front - rear).Magnitude < 0.05 then
+		problem("Point_SightRear und Point_SightFront liegen aufeinander – zusammen legen sie die Visierlinie fest")
+		return nil, report
+	end
+	local forward = (front - rear).Unit
+	local toRear = rear - grip
+	local upward = toRear - forward * toRear:Dot(forward)
+	if upward.Magnitude < 0.05 then
+		problem("Point_Grip liegt auf der Visierlinie – der Griff muss unter Kimme und Korn liegen")
+		return nil, report
+	end
+	local up, back = upward.Unit, -forward
+	local toWeapon = CFrame.fromMatrix(grip, up:Cross(back), up, back):Inverse()
+
+	local sightRear = toWeapon * rear
+	local geometry = {
+		SightHeight = sightRear.Y,
+		SightZ = sightRear.Z,
+		SightFrontZ = (toWeapon * front).Z,
+		Muzzle = toWeapon * points.Muzzle,
+		Eject = toWeapon * points.Eject,
+		RightHand = Vector3.zero,
+		LeftHand = toWeapon * points.LeftHand,
+	}
+	geometry.LeftHandTP = points.LeftHandTP and toWeapon * points.LeftHandTP or geometry.LeftHand
+	geometry.Stock = points.Stock and toWeapon * points.Stock or nil
+
+	-- Plausibel?
+	if geometry.Muzzle.Z >= geometry.SightZ then
+		problem("Mündung liegt hinter der Kimme – sind Point_SightRear und Point_SightFront vertauscht?")
+	end
+	if geometry.Stock and geometry.Stock.Z <= 0 then
+		problem("Point_Stock liegt vor dem Griff – er gehört ans hintere Ende der Schulterstütze")
+	end
+	if math.abs(geometry.Muzzle.X) > 0.3 then
+		hint("Point_Muzzle liegt seitlich neben der Visierlinie")
+	end
+	if info.Long and geometry.LeftHand.Z >= 0 then
+		hint("Point_LeftHand liegt hinter dem Griff – bei langen Waffen hält die linke Hand vorne den Handschutz")
+	end
+	local minZ, maxZ = math.huge, -math.huge
+	for _, part in parts do
+		local a, b = extentZ(toWeapon * part.CFrame, part.Size)
+		minZ, maxZ = math.min(minZ, a), math.max(maxZ, b)
+	end
+	local length, expected = maxZ - minZ, blockoutLength[weaponName]
+	local lengthText = string.format("%.2f Studs lang, vorgesehen sind etwa %.2f", length, expected)
+	if length > expected * 2.5 or length < expected * 0.4 then
+		problem("Waffe ist " .. lengthText .. " – stimmt die Einheit beim Import (1 Blender-Einheit = 1 Stud)?")
+	elseif length > expected * 1.35 or length < expected * 0.7 then
+		hint("Waffe ist " .. lengthText)
+	end
+	if #parts > MAX_PARTS then
+		hint(#parts .. " Einzelteile – Teile ohne eigene Bewegung oder Skin-Zone in Blender zusammenfügen (spart Leistung)")
+	end
+	if #report.Errors > 0 then
+		return nil, report
+	end
+
+	-- Vorlage in Ruhelage: flach (alle Teile direkt im Modell), Griff = Ursprung, Attribute wie bei den Quadern
+	local template = Instance.new("Model")
+	template.Name = weaponName
+	local handle = Instance.new("Part")
+	handle.Name = "Handle"
+	handle.Size = Vector3.new(0.2, 0.2, 0.2)
+	handle.CFrame = CFrame.new()
+	handle.Transparency = 1
+	handle.Parent = template
+	template.PrimaryPart = handle
+	local used, entries, groupsFound, hasReticle = { Handle = true }, {}, {}, false
+	for _, original in parts do
+		local part = original:Clone()
+		if not part then
+			hint(original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
+			continue
+		end
+		for _, child in part:GetDescendants() do
+			if child:IsA("BasePart") then
+				child:Destroy() -- verschachtelte Teile kommen einzeln dran
+			end
+		end
+		local name = cleanName(original.Name)
+		local unique, count = name, 1
+		while used[unique] do
+			count += 1
+			unique = name .. "_" .. count
+		end
+		used[unique] = true
+		part.Name = unique
+		local rest = toWeapon * original.CFrame
+		part.CFrame = rest
+		local group, skin, neon, glass, reticle = nil, false, false, false, false
+		for _, word in wordsOf(name) do
+			if not group and ANIMATION_GROUPS[word] then
+				group = word
+			end
+			skin = skin or word == "Skin"
+			neon = neon or word == "Neon"
+			glass = glass or word == "Glass"
+			reticle = reticle or word == "Reticle"
+		end
+		if group then
+			part:SetAttribute("Group", group)
+			groupsFound[group] = true
+			if HIDDEN_GROUPS[group] then
+				part.Transparency = 1
+				part:SetAttribute("Hidden", true)
+			end
+		end
+		if skin then
+			part:SetAttribute("Skin", true)
+		end
+		if neon or reticle then
+			part.Material = Enum.Material.Neon
+		end
+		if glass then
+			part.Material = Enum.Material.Glass
+			if part.Transparency == 0 then
+				part.Transparency = GLASS_TRANSPARENCY
+			end
+		end
+		hasReticle = hasReticle or reticle
+		part.Parent = template
+		table.insert(entries, { Name = unique, CFrame = rest, Group = group, Volume = part.Size.X * part.Size.Y * part.Size.Z })
+	end
+	if info.Reflex and not hasReticle then
+		local dot = Instance.new("Part")
+		dot.Name = "Neon_Reticle"
+		dot.Shape = Enum.PartType.Ball
+		dot.Size = Vector3.new(0.012, 0.012, 0.012)
+		dot.Color = RETICLE
+		dot.Material = Enum.Material.Neon
+		dot.CFrame = CFrame.new(0, geometry.SightHeight, geometry.SightZ)
+		dot.Parent = template
+		table.insert(entries, { Name = dot.Name, CFrame = dot.CFrame })
+	end
+	for _, part in template:GetChildren() do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part.Massless = true
+			part.CastShadow = false
+			part:SetAttribute("Rest", part.CFrame)
+		end
+	end
+	-- Hauptteil einer Gruppe: das Teil, das genau wie die Gruppe heißt, sonst das größte (z.B. der Kasten des MG,
+	-- nicht der Gurt daneben) – an ihm sitzen die Magazin-Aufsätze, ohne Pivot-Marker dreht die Gruppe um seine Mitte
+	table.sort(entries, function(a, b)
+		local aMain, bMain = a.Name == a.Group, b.Name == b.Group
+		if aMain ~= bMain then
+			return aMain
+		end
+		local aVolume, bVolume = a.Volume or 0, b.Volume or 0
+		if aVolume ~= bVolume then
+			return aVolume > bVolume
+		end
+		return a.Name < b.Name
+	end)
+	for _, group in blockoutGroups[weaponName] do
+		if not groupsFound[group] then
+			hint("Animationsgruppe " .. group .. " fehlt (ein Teil mit dem Wort " .. group .. " im Namen) – die Nachlade-Animation braucht sie")
+		end
+	end
+	local pivotOverride = {}
+	for group, position in pivotPoints do
+		pivotOverride[group] = CFrame.new(toWeapon * position)
+		if not groupsFound[group] then
+			hint("Pivot_" .. group .. ": kein Teil dieser Gruppe")
+		end
+	end
+	for _, folder in skins and skins:GetChildren() or {} do
+		for _, appearance in folder:GetChildren() do
+			if appearance:IsA("SurfaceAppearance") and not template:FindFirstChild(cleanName(appearance.Name)) then
+				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
+			end
+		end
+	end
+	report.Loaded = true
+	return { Template = template, Skins = skins, Geometry = geometry, Entries = entries, Pivots = pivotOverride }, report
+end
+
+-- Ordner mit den Modellen: Rojo legt ReplicatedStorage.Assets.Weapons an, die Modelle selbst liegen im Place
+local function weaponAssetFolder()
+	local assets = ReplicatedStorage:FindFirstChild("Assets")
+	if not assets and RunService:IsClient() then
+		assets = ReplicatedStorage:WaitForChild("Assets", 5)
+	end
+	local weapons = assets and assets:FindFirstChild("Weapons")
+	if assets and not weapons and RunService:IsClient() then
+		weapons = assets:WaitForChild("Weapons", 5)
+	end
+	return weapons
+end
+
+do
+	local folder = weaponAssetFolder()
+	for _, source in folder and folder:GetChildren() or {} do
+		local weaponName = source.Name
+		if not PARTS[weaponName] then
+			local names = {}
+			for name in PARTS do
+				table.insert(names, name)
+			end
+			table.sort(names)
+			assetReport[weaponName] = { Loaded = false, Warnings = {},
+				Errors = { "unbekannter Name – Modelle heißen wie die Waffe: " .. table.concat(names, ", ") } }
+			continue
+		end
+		local ok, asset, report = pcall(loadAsset, weaponName, source)
+		if not ok then
+			asset, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(asset) } }
+		end
+		assetReport[weaponName] = report
+		if asset then
+			assetData[weaponName] = { Template = asset.Template, Skins = asset.Skins }
+			local info = GunModels.Info[weaponName]
+			for key, value in asset.Geometry do
+				info[key] = value
+			end
+			if not asset.Geometry.Stock then
+				info.Stock = nil
+			end
+			indexParts(weaponName, asset.Entries, asset.Pivots)
+		end
+	end
+	-- In Studio steht im Output, was mit jedem Modell los ist
+	if RunService:IsStudio() and RunService:IsServer() then
+		for weaponName, report in assetReport do
+			if report.Loaded then
+				print("[Waffenmodelle] " .. weaponName .. ": 3D-Modell geladen")
+			else
+				warn("[Waffenmodelle] " .. weaponName .. ": 3D-Modell NICHT geladen, es bleibt die Quader-Waffe:\n  - "
+					.. table.concat(report.Errors, "\n  - "))
+			end
+			if #report.Warnings > 0 then
+				warn("[Waffenmodelle] " .. weaponName .. ": Hinweise:\n  - " .. table.concat(report.Warnings, "\n  - "))
+			end
+		end
+	end
+end
+
+-- Hat die Waffe ein fertiges 3D-Modell (statt der Quader)?
+function GunModels.HasAsset(weaponName)
+	return assetData[weaponName] ~= nil
+end
+
+-- Prüfbericht aller Modelle in Assets.Weapons: [Name] = { Loaded, Errors = { Text }, Warnings = { Text } }
+function GunModels.AssetReport()
+	return assetReport
+end
+
+-- 3D-Modell: Kopie der Vorlage. Skin: Farbe (und ohne Textur auch Material) auf die Skin-Zonen; gibt es im Modell
+-- Texturen für diesen Skin (Skins/<Id>), ersetzen sie die SurfaceAppearance der genannten Teile.
+local function buildFromAsset(asset, skin)
+	local model = asset.Template:Clone()
+	if not skin then
+		return model
+	end
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") and part:GetAttribute("Skin") then
+			part.Color = skin.Color
+			if not part:FindFirstChildOfClass("SurfaceAppearance") then
+				part.Material = skin.Material
+			end
+		end
+	end
+	local textures = asset.Skins and skin.Id and asset.Skins:FindFirstChild(skin.Id)
+	for _, appearance in textures and textures:GetChildren() or {} do
+		local part = appearance:IsA("SurfaceAppearance") and model:FindFirstChild(cleanName(appearance.Name))
+		if part and part:IsA("BasePart") then
+			for _, old in part:GetChildren() do
+				if old:IsA("SurfaceAppearance") then
+					old:Destroy()
+				end
+			end
+			appearance:Clone().Parent = part
+		end
+	end
+	return model
+end
+
+-- Liefert ein Model mit PrimaryPart "Handle" (Griffpunkt). Alle Parts sind verankert und ohne Kollision.
+-- Teile haben das Attribut "Group" (Animationsgruppe) bzw. "Hidden" (nur in Animationen sichtbar).
+-- attachments (optional) = ausgerüstete Aufsätze, werden als Teile angebaut.
+function GunModels.Build(weaponName, skin, attachments)
+	local asset = assetData[weaponName]
+	local model = asset and buildFromAsset(asset, skin) or buildBlockout(weaponName, skin)
 	addAttachments(model, weaponName, attachments)
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") then

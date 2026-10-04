@@ -440,6 +440,27 @@ local function setParent(self, value)
 		if rawget(value, "__props").ChildAdded then
 			value.ChildAdded:Fire(self)
 		end
+		-- DescendantAdded bei allen Vorfahren, für die Instanz selbst und alle ihre Nachfahren (wie in Roblox)
+		local added = nil
+		local ancestor = value
+		while ancestor do
+			local ancestorProps = rawget(ancestor, "__props")
+			if not ancestorProps then
+				break
+			end
+			if ancestorProps.DescendantAdded then
+				if not added then
+					added = { self }
+					for _, descendant in Methods.GetDescendants(self) do
+						table.insert(added, descendant)
+					end
+				end
+				for _, instance in added do
+					ancestor.DescendantAdded:Fire(instance)
+				end
+			end
+			ancestor = ancestorProps.Parent
+		end
 	end
 	if props.AncestryChanged then
 		self.AncestryChanged:Fire(self, value)
@@ -1078,22 +1099,41 @@ ClassMethods.Team = {
 		return list
 	end,
 }
+-- Körper aus einer HumanoidDescription (Player:LoadCharacterWithHumanoidDescription,
+-- Players:CreateHumanoidModelFromDescription): [Modell] = Beschreibung, für Tests
+SIM.DescriptionOf = setmetatable({}, { __mode = "k" })
+SIM.FailDescriptionLoad = false -- true: LoadCharacterWithHumanoidDescription schlägt fehl (z.B. Asset nicht ladbar)
+
+local function loadCharacter(self, description)
+	local old = self.Character
+	if old then
+		if rawget(self, "__props").CharacterRemoving then
+			self.CharacterRemoving:Fire(old)
+		end
+		Methods.Destroy(old)
+	end
+	local model = SIM.MakeRig(self.Name)
+	SIM.DescriptionOf[model] = description
+	model.Parent = services.Workspace
+	self.Character = model
+	self.CharacterAdded:Fire(model)
+	if SIM.LoadCharacterDelay > 0 then
+		task.wait(SIM.LoadCharacterDelay) -- wie in Roblox: LoadCharacter wartet, bis das Aussehen geladen ist
+	end
+end
+
 ClassMethods.Player = {
 	LoadCharacter = function(self)
-		local old = self.Character
-		if old then
-			if rawget(self, "__props").CharacterRemoving then
-				self.CharacterRemoving:Fire(old)
-			end
-			Methods.Destroy(old)
+		loadCharacter(self, nil)
+	end,
+	LoadCharacterWithHumanoidDescription = function(self, description)
+		if SIM.FailDescriptionLoad then
+			error("LoadCharacterWithHumanoidDescription: Beschreibung konnte nicht geladen werden")
 		end
-		local model = SIM.MakeRig(self.Name)
-		model.Parent = services.Workspace
-		self.Character = model
-		self.CharacterAdded:Fire(model)
-		if SIM.LoadCharacterDelay > 0 then
-			task.wait(SIM.LoadCharacterDelay) -- wie in Roblox: LoadCharacter wartet, bis das Aussehen geladen ist
+		if typeof(description) ~= "Instance" or not description:IsA("HumanoidDescription") then
+			error("LoadCharacterWithHumanoidDescription: HumanoidDescription erwartet")
 		end
+		loadCharacter(self, description)
 	end,
 	Kick = function(self, message)
 		SIM.Kicked[self] = message or ""
@@ -1183,9 +1223,11 @@ rawset(Players, "__methods", {
 		end
 		return nil
 	end,
-	CreateHumanoidModelFromDescription = function()
+	CreateHumanoidModelFromDescription = function(_, description)
 		task.wait(SIM.CreateDelay())
-		return SIM.MakeRig("Bot")
+		local model = SIM.MakeRig("Bot")
+		SIM.DescriptionOf[model] = description
+		return model
 	end,
 	CreateHumanoidModelFromUserId = function()
 		return SIM.MakeRig("Avatar")
@@ -1845,6 +1887,52 @@ SIM.Settings = function()
 			return nil
 		end })
 	end })
+end
+
+-- ---------- Modelle aus assets/*.rbxmx (tests/lib/rbxmx.py) ----------
+-- node = { Class, Name, CFrame = { 12 Zahlen }, Size = { 3 }, Color = { r, g, b }, Transparency, Material, Shape,
+-- Children = { ... } }
+function SIM.BuildInstance(node, parent)
+	local instance = Instance.new(node.Class)
+	instance.Name = node.Name or node.Class
+	if node.CFrame then
+		instance.CFrame = CFrame.new(table.unpack(node.CFrame))
+	end
+	if node.Size then
+		instance.Size = Vector3.new(table.unpack(node.Size))
+	end
+	if node.Color then
+		instance.Color = Color3.fromRGB(table.unpack(node.Color))
+	end
+	if node.Transparency then
+		instance.Transparency = node.Transparency
+	end
+	if node.Material then
+		instance.Material = Enum.Material[node.Material]
+	end
+	if node.Shape then
+		instance.Shape = Enum.PartType[node.Shape]
+	end
+	for _, child in node.Children or {} do
+		SIM.BuildInstance(child, instance)
+	end
+	instance.Parent = parent
+	return instance
+end
+
+-- ReplicatedStorage.Assets mit seinen Ordnern (wie default.project.json) und den Modellen aus dem Repo
+function SIM.LoadAssets(folders)
+	local assets = Instance.new("Folder")
+	assets.Name = "Assets"
+	for folderName, items in folders do
+		local folder = Instance.new("Folder")
+		folder.Name = folderName
+		for _, item in items do
+			SIM.BuildInstance(item, folder)
+		end
+		folder.Parent = assets
+	end
+	assets.Parent = services.ReplicatedStorage
 end
 
 return SIM

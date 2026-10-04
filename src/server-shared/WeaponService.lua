@@ -206,7 +206,8 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 		return nil
 	end
 	local part = claim.Part
-	if not part:IsA("BasePart") or not part:IsDescendantOf(workspace) or part:IsDescendantOf(character) then
+	-- nur Teile der Trefferzone: Accessoires und Ausrüstung (CanQuery = false) treffen auch Kugeln nicht
+	if not part:IsA("BasePart") or not part.CanQuery or not part:IsDescendantOf(workspace) or part:IsDescendantOf(character) then
 		return nil
 	end
 	local model = part:FindFirstAncestorOfClass("Model")

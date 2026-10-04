@@ -17,12 +17,14 @@ local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
+local Cosmetics = require(Shared.Cosmetics)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
 local DownedService = require(ServerShared.DownedService)
 local GadgetService = require(ServerShared.GadgetService)
 local WeaponService = require(ServerShared.WeaponService)
+local AgentBody = require(ServerShared.AgentBody)
 
 local BotService = {}
 
@@ -465,16 +467,18 @@ local function playAnimations(humanoid)
 	end)
 end
 
--- Körper-Vorlagen pro Farbe. Players:CreateHumanoidModelFromDescription wartet (lädt Assets) und kann
+-- Körper-Vorlagen pro Agent. Players:CreateHumanoidModelFromDescription wartet (lädt Assets) und kann
 -- dauern – während dieser Zeit konnte ein Bot schon entfernt, neu gespawnt oder die Runde vorbei sein,
--- und dann blieb ein zweites ("verwaistes") Modell in der Welt stehen. Deshalb wird jede Farbe nur
+-- und dann blieb ein zweites ("verwaistes") Modell in der Welt stehen. Deshalb wird jeder Agent nur
 -- einmal gebaut und danach geklont: Klonen wartet nicht.
+-- Bots sehen aus wie Spieler mit diesem Agenten (ohne Skin): derselbe Körper (AgentBody), dieselbe Ausrüstung,
+-- dieselben Trefferzonen. Das Team erkennt man wie bei Spielern am Namensschild (nur fürs eigene Team).
 local SPAWN_RETRY = 3 -- Sekunden bis zum nächsten Versuch, wenn ein Körper nicht gebaut werden konnte
-local templates = {}  -- [Farbschlüssel] = Modell (außerhalb des Workspace)
-local building = {}   -- [Farbschlüssel] = true, solange die Vorlage gebaut wird
+local templates = {}  -- [Agent-Id] = Modell (außerhalb des Workspace)
+local building = {}   -- [Agent-Id] = true, solange die Vorlage gebaut wird
 
-local function rigTemplate(color)
-	local key = string.format("%d_%d_%d", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255))
+local function rigTemplate(agent)
+	local key = agent.Id
 	while building[key] do
 		task.wait(0.1)
 	end
@@ -482,14 +486,8 @@ local function rigTemplate(color)
 		return templates[key]
 	end
 	building[key] = true
-	local description = Instance.new("HumanoidDescription")
-	description.HeadColor = Color3.fromRGB(205, 160, 130)
-	description.TorsoColor = color
-	description.LeftArmColor = color
-	description.RightArmColor = color
-	description.LeftLegColor = Color3.fromRGB(40, 40, 45)
-	description.RightLegColor = Color3.fromRGB(40, 40, 45)
-	AgentConfig.DescribeBody(description) -- schlanker Körperbau wie die Spieler
+	local primary, accent = Cosmetics.AgentColors(nil, agent.Id)
+	local description = AgentBody.Description(primary)
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
 	building[key] = nil
 	if not ok or not model then
@@ -497,6 +495,7 @@ local function rigTemplate(color)
 		return nil
 	end
 	model.Archivable = true
+	AgentBody.Dress(model, primary, accent)
 	-- Beim Tod nicht von Roblox zerlegen lassen: das macht corpse() einheitlich (Ragdoll, dann ausblenden)
 	local templateHumanoid = model:FindFirstChildOfClass("Humanoid")
 	if templateHumanoid then
@@ -614,8 +613,8 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	local serial = bot.SpawnSerial
 	local agent = AgentConfig.Get(bot.Agent)
 
-	-- Körper in Team- bzw. Agentenfarbe (wartet nur beim ersten Mal pro Farbe)
-	local template = rigTemplate(bot.Team and bot.Team.TeamColor.Color or agent.Color)
+	-- Körper des Agenten (wartet nur beim ersten Mal pro Agent)
+	local template = rigTemplate(agent)
 	if bot.SpawnSerial ~= serial or not bots[bot] then
 		return nil -- inzwischen despawnt, gelöscht oder schon neu gespawnt: kein zweites Modell
 	end
@@ -628,6 +627,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 		return nil
 	end
 	local model = template:Clone()
+	AgentBody.Protect(model) -- Accessoires (falls je welche dazukommen) sind nie Trefferzone
 
 	model.Name = bot.Name
 	model:SetAttribute("IsBot", true)

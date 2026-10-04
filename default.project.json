@@ -12,6 +12,14 @@
       "$ignoreUnknownInstances": true,
       "Shared": {
         "$path": "src/shared"
+      },
+      "Assets": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "Weapons": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
+        }
       }
     },
     "ServerStorage": {

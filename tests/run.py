@@ -7,10 +7,15 @@ Pfaden wie in Roblox (aus default.project.json, wie Rojo sie anlegt), require(sc
 require(Shared.X) funktionieren also wie im Spiel. Im Test lädt require("Name") ein Modul über seinen Namen.
 
 Ein Test ist bestanden, wenn der Interpreter ohne Fehler endet und keine Ausgabezeile mit "FEHLER" beginnt.
+Zeilen, die mit "HINWEIS" beginnen, erscheinen auch bei bestandenen Tests.
+
+Modelle: assets/<Ordner>/*.rbxmx (in Studio per "Save to File..." gespeichert, z.B. assets/Weapons/Rifle.rbxmx)
+liegen in jedem Test unter ReplicatedStorage.Assets.<Ordner> – wie im Spiel (tests/lib/rbxmx.py).
 
 Kopfzeilen im Test:
   --!expose Modul name1 name2   lokale Funktionen eines Moduls für den Test freigeben (Modul.__name1, ...)
   --!signals immediate deferred Test für jedes Signal-Verhalten von Roblox einmal ausführen (Standard: immediate)
+  --!assets ORDNER              Modelle aus diesem Ordner (relativ zum Projekt) statt aus assets/ laden
 
 Aufruf:
   python3 tests/run.py                  alle Tests
@@ -30,6 +35,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+sys.path.insert(0, os.path.join(HERE, "lib"))
+import rbxmx  # noqa: E402  (liegt in tests/lib)
 
 PRELUDE_TYPES = """local Vector3, Vector2, CFrame, Color3, Enum = __shim.Vector3, __shim.Vector2, __shim.CFrame, __shim.Color3, __shim.Enum
 local UDim, UDim2, NumberRange, NumberSequence = __shim.UDim, __shim.UDim2, __shim.NumberRange, __shim.NumberSequence
@@ -99,9 +106,12 @@ def lua_string(text):
 
 
 def directives(test_source):
-    """Kopfzeilen: {"expose": {Modul: [Namen]}, "signals": [Verhalten]}"""
-    exposes, signals = {}, []
+    """Kopfzeilen: {"expose": {Modul: [Namen]}, "signals": [Verhalten], "assets": Ordner oder None}"""
+    exposes, signals, assets = {}, [], None
     for line in test_source.split("\n"):
+        match = re.match(r"--!assets\s+(\S+)", line)
+        if match:
+            assets = match.group(1)
         match = re.match(r"--!expose\s+(\S+)\s+(.+)", line)
         if match:
             exposes.setdefault(match.group(1), []).extend(match.group(2).split())
@@ -111,11 +121,12 @@ def directives(test_source):
     for mode in signals:
         if mode not in ("immediate", "deferred"):
             raise SystemExit("--!signals: unbekanntes Verhalten " + mode)
-    return {"expose": exposes, "signals": signals or ["immediate"]}
+    return {"expose": exposes, "signals": signals or ["immediate"], "assets": assets}
 
 
-def build(test_path, modules, signals="immediate"):
-    """Bündel als Text und Zeilenzuordnung [(erste Zeile, letzte Zeile, Datei, Versatz)]."""
+def build(test_path, modules, signals="immediate", assets="{}"):
+    """Bündel als Text und Zeilenzuordnung [(erste Zeile, letzte Zeile, Datei, Versatz)].
+    assets = Luau-Ausdruck der Modelle unter ReplicatedStorage.Assets (rbxmx.assets_lua)."""
     test_source = read(test_path)
     exposes = {name: list(names) for name, names in directives(test_source)["expose"].items()}
     chunks = []  # (Text, Datei oder None, Zeilen vor dem Quelltext im Text)
@@ -125,6 +136,7 @@ def build(test_path, modules, signals="immediate"):
     chunks.append(("local SIM = (function()\n" + read(os.path.join(HERE, "lib", "engine.luau")) + "\nend)()",
                    "tests/lib/engine.luau", 1))
     chunks.append((PRELUDE_GLOBALS + "\nSIM.Deferred = %s" % ("true" if signals == "deferred" else "false"), None, 0))
+    chunks.append(("SIM.LoadAssets(%s)" % assets, None, 0))
     for path, file in modules:
         source = read(file)
         name = path.rsplit("/", 1)[-1]
@@ -172,16 +184,19 @@ def main():
         print("Keine Tests gefunden.")
         return 1
     modules = project_modules()
+    assets = rbxmx.assets_lua(os.path.join(ROOT, "assets"))
     out_dir = args.keep or tempfile.mkdtemp(prefix="shootout-tests-")
     os.makedirs(out_dir, exist_ok=True)
     runs = []
     for test in tests:
-        modes = directives(read(os.path.join(HERE, test)))["signals"]
+        info = directives(read(os.path.join(HERE, test)))
+        modes = info["signals"]
+        test_assets = rbxmx.assets_lua(os.path.join(ROOT, info["assets"])) if info["assets"] else assets
         for mode in modes:
-            runs.append((test, mode, test[: -len(".test.luau")] + (" [%s]" % mode if len(modes) > 1 else "")))
+            runs.append((test, mode, test[: -len(".test.luau")] + (" [%s]" % mode if len(modes) > 1 else ""), test_assets))
     failed = []
-    for test, mode, name in runs:
-        bundle, line_map = build(os.path.join(HERE, test), modules, mode)
+    for test, mode, name, test_assets in runs:
+        bundle, line_map = build(os.path.join(HERE, test), modules, mode, test_assets)
         bundle_name = re.sub(r"[^A-Za-z0-9_]+", "_", name).strip("_") + ".bundle.luau"
         bundle_path = os.path.join(out_dir, bundle_name)
         with open(bundle_path, "w", encoding="utf-8") as f:
@@ -201,6 +216,10 @@ def main():
         if not ok or args.verbose:
             for line in output.rstrip().split("\n"):
                 print("       " + line)
+        else:
+            for line in output.split("\n"):
+                if line.startswith("HINWEIS"):
+                    print("       " + line)  # auch bei bestandenen Tests sichtbar
         if not ok:
             failed.append(name)
     print()

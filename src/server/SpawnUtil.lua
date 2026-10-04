@@ -1,17 +1,34 @@
 -- SpawnUtil (ModuleScript, nur Server)
--- Charakter neu laden und an eine bestimmte Stelle setzen.
+-- Charakter neu laden und an eine bestimmte Stelle setzen. Jeder Spieler spawnt als Agent: einheitlicher Körper
+-- in den Farben seines Agenten bzw. Skins (AgentBody), nicht mit dem eigenen Roblox-Avatar.
 
 local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local MovementGuard = require(ServerStorage:WaitForChild("ServerShared").MovementGuard)
+local Cosmetics = require(ReplicatedStorage:WaitForChild("Shared").Cosmetics)
+local ServerShared = ServerStorage:WaitForChild("ServerShared")
+local MovementGuard = require(ServerShared.MovementGuard)
+local AgentBody = require(ServerShared.AgentBody)
 
 local SpawnUtil = {}
+
+-- Charakter mit dem Agenten-Körper laden. Klappt das nicht (z.B. Roblox-Dienst gestört), wird der normale
+-- Charakter geladen – AgentService zieht ihn dann trotzdem als Agent an.
+local function loadAgentCharacter(player)
+	local primary = Cosmetics.AgentColors(player, player:GetAttribute("Agent"))
+	local ok, err = pcall(player.LoadCharacterWithHumanoidDescription, player, AgentBody.Description(primary))
+	if ok then
+		return true
+	end
+	warn("Agenten-Körper für " .. player.Name .. " nicht geladen (" .. tostring(err) .. "), lade Standard-Charakter")
+	return (pcall(player.LoadCharacter, player))
+end
 
 -- Spawnt den Spieler an cframe. protection = Sekunden Schutzschild (0/nil = keins).
 -- Gibt den neuen Charakter zurück oder nil, wenn es nicht geklappt hat.
 function SpawnUtil.Spawn(player, cframe, protection)
-	local ok = pcall(player.LoadCharacter, player)
+	local ok = loadAgentCharacter(player)
 	local character = player.Character
 	if not ok or not character then
 		return nil

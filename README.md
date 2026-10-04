@@ -8,6 +8,9 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     ./rojo serve                           # dann in Studio: Rojo → Connect
     ./rojo build -o build/shootout.rbxlx   # fertige Place-Datei bauen
     python3 tools/build_maps.py            # Maps neu erzeugen (nach Änderungen am Map-Skript)
+    python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
+
+3D-Modelle für die Waffen kommen aus Blender: Anleitung und Spezifikation in [docs/waffen-modelle.md](docs/waffen-modelle.md).
 
 ## Modi
 
@@ -123,6 +126,23 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   Moment etwas austauschen); Abbruch per Knopf, Moduswechsel oder Verlassen – angebotene Skins sind dann sofort
   wieder frei
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
+- **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): Im Hub, im
+  Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper in den Farben
+  seines Agenten bzw. Agenten-Skins, mit Kapuze, Maske, getöntem Visier, Weste, Schulterpolstern und Gürtel wie die
+  Menü-Figur. Bots tragen genau denselben Körper in den Standardfarben ihres Agenten (keine Teamfarben mehr – das
+  Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben Trefferzonen. Im Hub und im
+  Markt sieht man einen Agenten- oder Skin-Wechsel sofort, im Match ab dem nächsten Spawn. Das ist der Übergang,
+  bis die eigenen Agenten-Modelle aus Blender da sind
+- **Gleiche Trefferzonen für alle**: Getroffen werden nur Körperteile. Accessoires (auch später angehängte) und die
+  Ausrüstung sind für Schüsse unsichtbar (`CanQuery = false`); der Server nimmt auch vom Client gemeldete Treffer
+  nur auf treffbaren Teilen an
+- **Waffenmodelle aus Blender** (`src/shared/GunModels.lua`, Anleitung [docs/waffen-modelle.md](docs/waffen-modelle.md)):
+  Liegt in Studio unter ReplicatedStorage › Assets › Weapons ein Modell mit dem Namen einer Waffe, ersetzt es die
+  Quader-Waffe überall (Ego-Waffe, Hand, Rücken, Vorschauen, Symbole). Marker im Modell legen Griff, Visierlinie,
+  Mündung, Hülsenauswurf, Hände und Schaft fest – wie das Modell beim Import gedreht ist, ist egal. Teilnamen
+  bestimmen Animationsgruppen, Skin-Zonen, Leuchtpunkte und Glas; epische/legendäre Skins können eigene Texturen
+  bekommen (Ordner `Skins`). Fehlt etwas, bleibt die Quader-Waffe und Studio sagt im Output, was fehlt. Vorlagen
+  für Blender (`.obj`) und Studio (`.rbxmx`) in `art/templates/Weapons`
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
@@ -237,10 +257,10 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     Motor6D-Gelenken und mit dem „Avatar Joint Upgrade“ von Roblox (AnimationConstraints statt Motor6D, Standard
     bei Spieler-Avataren) – vorher wurden solche Rigs nicht erkannt und die Charaktere hielten die Waffe nur mit
     der Standard-Animation (ein Arm nach vorne)
-  - Schlanker Körperbau für alle Charaktere: Spieler-Avatare (R15), Bots, Übungspuppen und die Figuren in den
-    Menüs haben schmalere Schultern und einen flacheren Oberkörper (`AgentConfig.BodyScale`, Breite 75 %,
-    Tiefe 80 %) – damit sind auch die Trefferflächen etwas schmaler. R6-Avatare lassen sich nicht skalieren und
-    bekommen nur eine vereinfachte Haltung: dafür in den Spieleinstellungen (Avatar) R15 einstellen
+  - Schlanker Körperbau für alle Charaktere: Spieler, Bots, Übungspuppen und die Figuren in den Menüs haben
+    schmalere Schultern und einen flacheren Oberkörper (`AgentConfig.BodyScale`, Breite 75 %, Tiefe 80 %) – damit
+    sind auch die Trefferflächen etwas schmaler. R6-Körper lassen sich nicht skalieren und bekommen nur eine
+    vereinfachte Haltung: dafür in den Spieleinstellungen (Avatar) R15 einstellen
   - Rückstoß mit Rückkehr, Bloom bei Dauerfeuer, Mündungsfeuer, fliegende Leuchtspuren, Funken/Staub und
     Einschusslöcher, Hülsen; eigene Schüsse erscheinen sofort (ohne Ping-Verzögerung)
   - Treffer-Rückmeldung (`src/shared/HitFeedback.lua`) in Farben je Treffer-Art (Körper weiß, Kopf gold, nur
@@ -281,6 +301,8 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
 | Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
+| Agenten-Körper: Ausrüstung (Kapuze, Visier, Weste …), Hautfarbe, Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
+| Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
 | Lobby (Navigation, Seiten SPIELEN und AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
 | Lobby-Seiten LOADOUT, SHOP, BATTLE PASS | `src/shared/LobbyPages.lua` |
@@ -359,6 +381,10 @@ am Commit:
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `trade` | Tauschen: Anfrage (Hub/Markt, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
+| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Ausrüstung in Agentenfarben, Skin-Wechsel im Hub sofort, Rückfall auf den normalen Charakter; Accessoires und Ausrüstung nie Trefferzone (auch nicht als gemeldeter Treffer) |
+| `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
+| `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
+| `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
@@ -386,5 +412,10 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
   MarketClient (Markt), TradeClient (Tauschen), KillstreakHUD, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)
 - `tools/build_maps.py` – erzeugt alle Maps
+- `tools/weapon_templates.py` – erzeugt die Blender-Vorlagen der Waffen (`art/templates/Weapons`)
+- `docs` – Anleitungen (Waffenmodelle aus Blender)
+- `assets/Weapons` – Kopien deiner Waffenmodelle (.rbxmx) für die automatische Prüfung (das Spiel lädt die Modelle
+  aus dem Place, siehe docs/waffen-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
-- `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie), `.github/workflows` – automatische Prüfung
+- `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie, `tests/lib/rbxmx.py` liest Studio-Modelle,
+  `tests/fixtures` Beispieldateien), `.github/workflows` – automatische Prüfung

@@ -4,9 +4,9 @@
 -- Reserve-Munition ist unendlich (wie überall, WeaponConfig.InfiniteAmmoEverywhere), nachladen muss man trotzdem.
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
-local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local AgentBody = require(ServerStorage:WaitForChild("ServerShared").AgentBody)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
 local Training = {}
@@ -42,14 +42,11 @@ end
 
 -- Übungspuppe an einer Markierung, steht nach dem Umfallen wieder auf
 local function spawnDummy(marker)
-	local description = Instance.new("HumanoidDescription")
+	-- derselbe Körper wie Spieler und Bots (gleiche Trefferzonen), nur in Puppenfarben
+	local description = AgentBody.Description(Color3.fromRGB(200, 60, 60))
 	description.HeadColor = Color3.fromRGB(230, 200, 160)
-	description.TorsoColor = Color3.fromRGB(200, 60, 60)
-	description.LeftArmColor = Color3.fromRGB(200, 60, 60)
-	description.RightArmColor = Color3.fromRGB(200, 60, 60)
 	description.LeftLegColor = Color3.fromRGB(60, 60, 70)
 	description.RightLegColor = Color3.fromRGB(60, 60, 70)
-	AgentConfig.DescribeBody(description) -- so schlank wie Spieler und Bots
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
 	if not ok or not model then
 		warn("Übungspuppe konnte nicht erstellt werden: " .. tostring(model))

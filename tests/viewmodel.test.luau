@@ -26,7 +26,13 @@ for weaponName, info in GunModels.Info do
 	end
 	-- Kornspitze (Oberkante des Leuchtpunkts; Schrotflinte: Mitte der Perle; Rotpunkt: Mitte des Punkts)
 	local tip, rearL, rearR
-	if info.Reflex then
+	if GunModels.HasAsset(weaponName) then
+		-- 3D-Modell: Kimme und Korn liegen dort, wo die Marker Point_SightRear/Point_SightFront saßen
+		local s = ViewModel.Scale()
+		tip = camera:PointToObjectSpace(vm.GunWorld * (Vector3.new(0, info.SightHeight, info.SightFrontZ) * s))
+		rearL = camera:PointToObjectSpace(vm.GunWorld * (Vector3.new(0, info.SightHeight, info.SightZ) * s))
+		rearR = rearL
+	elseif info.Reflex then
 		tip = camPoint("DotReticle", Vector3.zero)
 		rearL = camPoint("DotHoodL", Vector3.zero)
 		rearR = camPoint("DotHoodR", Vector3.zero)

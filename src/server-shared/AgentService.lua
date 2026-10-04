@@ -18,6 +18,7 @@ local BuyConfig = require(Shared.BuyConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
+local AgentBody = require(ServerShared.AgentBody)
 
 local AgentService = {}
 
@@ -29,44 +30,14 @@ local function getAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 end
 
--- Uniform in Agentenfarben (bzw. Skin): Kleidung weg, Körperfarben, getöntes Visier
+-- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper in Agentenfarben bzw. Skin mit Ausrüstung,
+-- ohne eigenen Avatar (AgentBody) – bis die eigenen Agenten-Modelle aus Blender da sind
 local function applyUniform(player, character, agent)
-	if not Modes.IsFighting(player) or not character.Parent then
+	if not character.Parent then
 		return
 	end
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	for _, obj in character:GetChildren() do
-		if obj:IsA("Shirt") or obj:IsA("Pants") or obj:IsA("ShirtGraphic") then
-			obj:Destroy()
-		end
-	end
-	local colors = character:FindFirstChildOfClass("BodyColors") or Instance.new("BodyColors")
-	colors.TorsoColor3 = primary
-	colors.LeftArmColor3 = primary
-	colors.RightArmColor3 = primary
-	colors.LeftLegColor3 = primary:Lerp(Color3.new(0, 0, 0), 0.5)
-	colors.RightLegColor3 = primary:Lerp(Color3.new(0, 0, 0), 0.5)
-	colors.Parent = character
-
-	local head = character:FindFirstChild("Head")
-	if head and not character:FindFirstChild("AgentVisor") then
-		local visor = Instance.new("Part")
-		visor.Name = "AgentVisor"
-		visor.Size = Vector3.new(head.Size.X * 0.85, head.Size.Y * 0.18, 0.12)
-		visor.Color = AgentConfig.VisorColor(accent)
-		visor.Material = AgentConfig.VisorMaterial
-		visor.Reflectance = 0.25
-		visor.CanCollide = false
-		visor.CanQuery = false
-		visor.CanTouch = false
-		visor.Massless = true
-		visor.CFrame = head.CFrame * CFrame.new(0, head.Size.Y * 0.08, -head.Size.Z / 2 - 0.03)
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = head
-		weld.Part1 = visor
-		weld.Parent = visor
-		visor.Parent = character
-	end
+	AgentBody.Dress(character, primary, accent)
 end
 
 -- Leben und Fähigkeit beim Spawn setzen
@@ -447,6 +418,7 @@ local function setupPlayer(player)
 	end)
 
 	player.CharacterAdded:Connect(function(character)
+		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
 		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
@@ -463,6 +435,15 @@ local function setupPlayer(player)
 		end
 		applyUniform(player, character, getAgent(player))
 	end)
+	-- Im Hub und im Markt sieht man einen Agenten- oder Skin-Wechsel sofort (im Match erst beim nächsten Spawn)
+	local function redress()
+		local character = player.Character
+		if character and Modes.IsSocial(player:GetAttribute("Mode")) then
+			applyUniform(player, character, getAgent(player))
+		end
+	end
+	player:GetAttributeChangedSignal("Agent"):Connect(redress)
+	player:GetAttributeChangedSignal("Equipped"):Connect(redress)
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
 	end

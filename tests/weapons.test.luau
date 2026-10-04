@@ -124,7 +124,7 @@ local function rayBox(origin, dir, part)
 	return math.max(tmin, 0)
 end
 
-for weaponName, info in GunModels.Info do
+local function quaderSights(weaponName, info)
 	local model = GunModels.Build(weaponName, nil)
 	local eye = Vector3.new(0, info.SightHeight, info.SightZ + info.EyeRelief)
 	local dir = Vector3.new(0, 0, -1)
@@ -178,6 +178,16 @@ for weaponName, info in GunModels.Info do
 	else
 		check(first == "FrontDot" or first == "FrontPost", weaponName .. ": unter der Linie trifft man zuerst " .. tostring(first))
 	end
+	return blockers, first
+end
+
+for weaponName, info in GunModels.Info do
+	-- Quader-Waffen: Kimme, Korn und Rotpunkt aus Teilen nachmessen. 3D-Modelle (Assets.Weapons): die Visierlinie
+	-- kommt aus den Markern, das Modell prüfen weaponmodels/weaponassets.
+	local blockers, first = {}, "Marker"
+	if not GunModels.HasAsset(weaponName) then
+		blockers, first = quaderSights(weaponName, info)
+	end
 	-- AimOffset legt die Kimme genau vor das Auge
 	local rear = Vector3.new(0, info.SightHeight, info.SightZ)
 	local camSpace = GunModels.AimOffset(weaponName) * rear
@@ -190,10 +200,15 @@ end
 -- Werkzeug-Skalierung: Teile werden kleiner, relative Lage bleibt
 do
 	local model = GunModels.Build("Rifle", nil)
-	local body = model.Body
+	local body = model:FindFirstChild("Body")
+	for _, part in model:GetChildren() do
+		if not body and part:IsA("BasePart") and part.Name ~= "Handle" then
+			body = part -- 3D-Modell: irgendein Teil außer dem Griffpunkt
+		end
+	end
 	local before = body.CFrame.Position
 	model:ScaleTo(0.7)
-	check((model.Body.CFrame.Position - before * 0.7).Magnitude < 1e-6, "Skalierung verschiebt Teile falsch")
+	check((body.CFrame.Position - before * 0.7).Magnitude < 1e-6, "Skalierung verschiebt Teile falsch")
 end
 
 -- ---------- WeaponAnimations: Spuren stetig, keine NaN, Ereignisse sortiert ----------
