@@ -33,7 +33,9 @@ end
 -- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper in Agentenfarben bzw. Skin mit Ausrüstung,
 -- ohne eigenen Avatar (AgentBody) – bis die eigenen Agenten-Modelle aus Blender da sind
 local function applyUniform(player, character, agent)
-	if not character.Parent then
+	-- nur den aktuellen Charakter (CharacterAdded kommt in Roblox schon, bevor er im Workspace ist – anziehen
+	-- geht trotzdem)
+	if player.Character ~= character then
 		return
 	end
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
@@ -419,6 +421,14 @@ local function setupPlayer(player)
 
 	player.CharacterAdded:Connect(function(character)
 		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
+		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus, die Ausrüstung neu anlegen
+		character.ChildAdded:Connect(function(child)
+			if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] then
+				task.defer(function()
+					applyUniform(player, character, getAgent(player))
+				end)
+			end
+		end)
 		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None

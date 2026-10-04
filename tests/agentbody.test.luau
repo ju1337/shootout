@@ -92,18 +92,43 @@ for _, name in AgentBody.GearNames do
 			name .. ": am Körperteil festgeschweißt")
 	end
 end
-check(avatar.AgentVest.Color == accent and avatar.AgentHood.Color == primary
-	and avatar.AgentVisor.Color == AgentConfig.VisorColor(accent), "Ausrüstung in Agentenfarben")
+check(avatar.AgentVest.Color == accent and avatar.AgentHoodTop.Color == primary
+	and avatar.AgentVisor.Color == AgentBody.VisorColor(accent), "Ausrüstung in Agentenfarben")
+check(avatar.AgentVisor.Material == Enum.Material.SmoothPlastic and avatar.AgentVisor.Reflectance > 0,
+	"Visier dunkel und glänzend (kein Glas, das im Hub hell wirkt)")
 local colors = avatar:FindFirstChildOfClass("BodyColors")
 check(colors ~= nil and colors.TorsoColor3 == primary and colors.HeadColor3 == AgentBody.SkinColor, "Körperfarben")
--- Lage: Visier und Maske vorne am Kopf, Kapuze um den Kopf, Weste am Oberkörper
+-- Lage: Visier über den Augen (etwas über der Kopfmitte), Maske über Mund und Kinn, beide vorne im Gesicht;
+-- Kapuze als offener Rahmen (oben, hinten, seitlich), vorne frei; Weste am Oberkörper
 local head = avatar.Head
-local visorLocal = head.CFrame:PointToObjectSpace(avatar.AgentVisor.Position)
-check(visorLocal.Z < -head.Size.Z * 0.45 and visorLocal.Y > 0, "Visier vorne auf Augenhöhe")
-check(head.CFrame:PointToObjectSpace(avatar.AgentMask.Position).Y < 0, "Maske unten im Gesicht")
-local hoodLocal = head.CFrame:PointToObjectSpace(avatar.AgentHood.Position)
-check(math.abs(hoodLocal.X) < 0.01 and avatar.AgentHood.Size.X > head.Size.X, "Kapuze um den Kopf")
+local function headLocal(part)
+	return head.CFrame:PointToObjectSpace(part.Position)
+end
+local visorLocal, maskLocal = headLocal(avatar.AgentVisor), headLocal(avatar.AgentMask)
+-- Augen des Standard-Kopfs liegen etwa 0,2 bis 0,25 Kopfhöhen über der Mitte: das Visier muss sie abdecken
+local visorTop = visorLocal.Y + avatar.AgentVisor.Size.Y / 2
+local visorBottom = visorLocal.Y - avatar.AgentVisor.Size.Y / 2
+check(visorLocal.Z < -head.Size.Z * 0.45 and visorTop >= head.Size.Y * 0.25 and visorBottom <= head.Size.Y * 0.15,
+	string.format("Visier vorne über den Augen (%.2f bis %.2f Kopfhöhen)", visorBottom / head.Size.Y, visorTop / head.Size.Y))
+check(maskLocal.Z < -head.Size.Z * 0.45 and maskLocal.Y < 0 and maskLocal.Y - avatar.AgentMask.Size.Y / 2 > -head.Size.Y / 2,
+	"Maske unten im Gesicht, nicht unter dem Kinn")
+check(visorLocal.Y - avatar.AgentVisor.Size.Y / 2 > maskLocal.Y + avatar.AgentMask.Size.Y / 2 - 0.05,
+	"Visier und Maske überdecken sich nicht")
+check(headLocal(avatar.AgentHoodTop).Y > head.Size.Y / 2 and headLocal(avatar.AgentHoodBack).Z > head.Size.Z / 2
+	and headLocal(avatar.AgentHoodLeft).X < -head.Size.X / 2 and headLocal(avatar.AgentHoodRight).X > head.Size.X / 2,
+	"Kapuze oben, hinten und seitlich um den Kopf")
+for _, name in { "AgentHoodTop", "AgentHoodBack", "AgentHoodLeft", "AgentHoodRight" } do
+	local part = avatar[name]
+	local front = headLocal(part).Z - part.Size.Z / 2
+	check(front > -head.Size.Z / 2 - 0.05, name .. ": Gesicht bleibt frei (nichts vor dem Gesicht)")
+end
 check((avatar.AgentVest.Position - avatar.UpperTorso.Position).Magnitude < 0.5, "Weste am Oberkörper")
+-- Gesicht: auch ein später angehängtes Decal (Roblox lädt das Aussehen teils nach) verschwindet
+local lateFace = Instance.new("Decal")
+lateFace.Name = "face"
+lateFace.Parent = head
+step(0.1)
+check(lateFace.Parent == nil and head:FindFirstChildOfClass("Decal") == nil, "nachträglich angehängtes Gesicht entfernt")
 -- nochmal anziehen (anderer Skin): nichts doppelt, nur umgefärbt
 local accent2 = Color3.fromRGB(200, 40, 40)
 AgentBody.Dress(avatar, primary, accent2)
@@ -113,7 +138,18 @@ for _, child in avatar:GetChildren() do
 		vests += 1
 	end
 end
-check(vests == 1 and avatar.AgentVest.Color == accent2, "erneutes Anziehen färbt nur um")
+check(vests == 1 and avatar.AgentVest.Color == accent2, "erneutes Anziehen: nichts doppelt, neue Farbe")
+-- Wird der Kopf größer (z.B. Skalierung nach dem Laden), passt sich die Ausrüstung beim nächsten Anziehen an
+head.Size = head.Size * 1.25
+AgentBody.Dress(avatar, primary, accent2)
+check(math.abs(avatar.AgentVisor.Size.X - head.Size.X * 0.94) < 1e-6, "Ausrüstung an neue Kopfgröße angepasst")
+local weldCount = 0
+for _, child in avatar.AgentVisor:GetChildren() do
+	if child:IsA("WeldConstraint") then
+		weldCount += 1
+	end
+end
+check(weldCount == 1, "genau eine Schweißnaht pro Ausrüstungsteil")
 
 -- ---------- Gemeldete Treffer: nur Körperteile ----------
 local WeaponService = require("WeaponService")
@@ -136,7 +172,7 @@ local function claim(part)
 end
 check(claim(target.Head) == target.Head, "Kopftreffer zählt")
 check(claim(lateHandle) == nil, "Treffer auf ein Accessoire zählt nicht")
-check(claim(target.AgentHood) == nil and claim(target.AgentVest) == nil, "Treffer auf die Ausrüstung zählt nicht")
+check(claim(target.AgentHoodTop) == nil and claim(target.AgentVest) == nil, "Treffer auf die Ausrüstung zählt nicht")
 shooter:Destroy()
 target:Destroy()
 avatar:Destroy()
@@ -164,7 +200,7 @@ local skin = Cosmetics.Get("A_Viper_Nacht")
 alice:SetAttribute("Owned", HttpService:JSONEncode({ A_Viper_Nacht = 1 }))
 alice:SetAttribute("Equipped", HttpService:JSONEncode({ ["A:Viper"] = "A_Viper_Nacht" }))
 step(0.1)
-check(character.AgentVest.Color == skin.Accent and character.AgentHood.Color == skin.Primary,
+check(character.AgentVest.Color == skin.Accent and character.AgentHoodTop.Color == skin.Primary,
 	"Skin im Hub sofort angezogen")
 -- Im Match erst beim nächsten Spawn
 alice:SetAttribute("Mode", "FreeForAll")
