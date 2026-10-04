@@ -37,6 +37,8 @@ Der Code dazu steht in `src/shared/GunModels.lua` (Abschnitt „Fertige 3D-Model
 Zum Ausprobieren ohne Blender: `art/templates/Weapons/<Waffe>.rbxmx` per Datei › „Insert from File…“ in Studio
 einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gültiges Modell.
 
+Die `SMG` ist bereits fertig (MP7 A1, siehe `art/sources/README.md`, erzeugt mit `python3 tools/mp7_model.py`).
+
 ## Die Waffen
 
 Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff.
