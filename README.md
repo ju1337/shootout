@@ -90,7 +90,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   man nur über seltene Skins. Jeder seltene Skin (Waffe oder Agent) hat einen festen RAP-Wert; man kann ihn
   - im **SHOP** unter **VERKAUFEN** ans System zurückverkaufen: sofort 70 % des Werts (`RapConfig.SellRate`),
     erster Klick fragt nach, zweiter verkauft,
-  - im **MARKT** am eigenen Stand zum eigenen Preis anbieten (5 % Marktgebühr, `RapConfig.MarketFee`),
+  - im **MARKT** am eigenen Stand zum eigenen Preis anbieten (Marktgebühr nach Preis, `RapConfig.FeeTiers`: 2 % bis 500 RAP, 5 % bis 2.000, 7 % bis 10.000, darüber 10 %),
   - mit anderen Spielern tauschen.
   Mit dem RAP kauft man im Markt Skins von anderen Spielern. Handelbare Skins kann man mehrfach besitzen
   (Duplikate aus Glücksrad, Login-Kalender, Wochen-Bonus, Robux-Paket oder Markt); gebunden – ohne RAP-Wert –
@@ -101,17 +101,30 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   50.000, rot ab 150.000). Skins, die gerade an einem Stand oder in einem Tausch liegen, bleiben im Inventar,
   lassen sich aber nicht gleichzeitig verkaufen. Alte Spielstände (Besitz = true) zählen als 1 Stück.
   Admin-Panel: **+10.000 RAP** und **Handelbarer Skin** zum Testen
-- **Markt** (Halle mit 12 Ständen; Server `src/server-shared/MarketService.lua` + `src/server/Modes/Market.lua`,
+- **Markt** (Halle mit 32 Ständen; Server `src/server-shared/MarketService.lua` + `src/server/Modes/Market.lua`,
   Client `src/client/MarketClient.lua`, Map `build_market()` in `tools/build_maps.py`): wie die Trading Plaza in
   Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT an der Ostwand des Hubs oder den Knopf MARKT im
   Seitenmenü (im Markt heißt er ZUM HUB), zurück durchs Tor im Süden der Halle.
+  - **Halle**: zwei Gänge (A und B) mit je zwei Standreihen (Stände 1-16 und 17-32), dazwischen der Marktplatz mit
+    Brunnen und Bänken. Gleich hinter dem Eingang stehen die **Übersichtstafel** (freie, belegte und dein Stand) und
+    die Tafel **beliebteste Händler** (dieser Server, nach Verkäufen) sowie das **Such-Terminal**.
+  - **SUCHE** (Knopf oben oder E am Such-Terminal, Logik in `src/shared/MarketSearch.lua`): alle Angebote aller Stände
+    durchsuchen (Skin, Seltenheit, Besitzer, Stand), filtern nach Seltenheit, Waffen/Agenten, nur Bezahlbares oder
+    Merkliste, sortieren nach Preis, **Schnäppchen** (am weitesten unter dem RAP-Wert) oder Seltenheit. **HIN** zeigt
+    einen Pfeil mit Entfernung über dem Stand.
+  - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v1`,
+    gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND.
+  - **Merkliste**: MERKEN an einem Skin – bietet jemand ihn an, kommt eine Meldung (im Profil gespeichert).
+  - **Gegenangebote**: an fremden Ständen ANGEBOT MACHEN (mindestens der halbe Preis, 45 s gültig, eins pro Stand).
+    Der Besitzer sieht sie unter **ANGEBOTE** in der Leiste und nimmt an (Verkauf zum Gebot) oder lehnt ab.
+  - **Stand-Name**: in MEIN STAND, erscheint auf dem Schild (läuft durch den Textfilter).
   - **Stand beanspruchen**: an einem freien Stand **E** – man steht dann hinter seiner Theke, das Schild über
     dem Stand zeigt den eigenen Namen. Einer pro Spieler.
   - **MEIN STAND** (E am eigenen Stand oder Knopf in der Markt-Leiste oben): links sechs Plätze (Preis ändern,
     ZURÜCK nimmt das Angebot zurück), rechts die eigenen handelbaren Skins mit Preisfeld (Vorschlag: RAP-Wert)
     und ANBIETEN. Angebotene Skins drehen sich auf Theke und Regal, darüber ein Preisschild.
   - **Kaufen**: E an einem fremden Stand öffnet seine Angebote (Preis, RAP-Wert, wie viel darüber/darunter);
-    KAUFEN zweimal klicken. Bezahlt wird mit RAP, 5 % Marktgebühr gehen beim Verkäufer ab; beide Spielstände
+    KAUFEN zweimal klicken. Bezahlt wird mit RAP, die Marktgebühr (nach Preis gestaffelt) geht beim Verkäufer ab; beide Spielstände
     werden sofort gespeichert, der Verkäufer bekommt eine Meldung. Der Server prüft Nähe zum Stand, ob der
     angezeigte Preis noch stimmt und ob genug RAP da ist.
   - **Stand weg**: Wer den Markt verlässt (in eine Runde, in den Hub, Spiel verlassen) oder ABGEBEN drückt, verliert
@@ -322,6 +335,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Respawn-Auswahl (Dauer, frühestes BEREIT), Pause nach dem Match | `RESPAWN_SELECT_TIME`, `RESPAWN_MIN_TIME`, `SUMMARY_TIME` in `src/server/TeamRoundMode.lua` |
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
 | RAP: Werte der handelbaren Skins, Rückkaufquote, Marktgebühr, Plätze pro Stand, Tausch (Countdown, Reichweite), Farbstufen über dem Kopf | `src/shared/RapConfig.lua` |
+| Markt: Gebührenstufen, Gegenangebote (Mindestgebot, Dauer), Stand-Name, Merkliste, Preisverlauf | `FeeTiers`, `MinOfferFraction`, `OfferSeconds`, `StandNameLength`, `WatchLimit`, `HistoryDays` in `src/shared/RapConfig.lua` |
 | Markt-Stände (Reichweite zum Beanspruchen/Kaufen) | `ClaimRange`, `BuyRange` in `src/server-shared/MarketService.lua`; Halle in `build_market()` in `tools/build_maps.py` |
 | Glücksrad: Felder, Gewichte, Farben | `LoginConfig.Wheel` in `src/shared/LoginConfig.lua`; Dreh-Dauer und Runden in `src/client/HubWheel.lua` |
 | Killstreaks (Kills, Namen, Farben) | `src/shared/KillstreakConfig.lua`; Anzeige in `src/client/KillstreakHUD.lua` |
@@ -378,6 +392,9 @@ am Commit:
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
+| `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Art, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
+| `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
+| `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `trade` | Tauschen: Anfrage (Hub/Markt, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |

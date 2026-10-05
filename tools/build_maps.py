@@ -1846,21 +1846,28 @@ MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64),
 
 
 def build_market():
-    """Markthalle (100 x 102): Eingang im Süden (Spawn, Tor zurück zum Hub), Mittelgang nach Norden, links und rechts
-    je sechs Stände, die zum Gang zeigen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild
-    ("Sign", beschreibt der Client), sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum
-    Gang), dem Prompt-Punkt vor der Theke ("Prompt") und dem Platz hinter der Theke ("OwnerSpot"). Besitzer und
-    Angebote setzt der Server als Attribute an den Ordner."""
+    """Markthalle (192 x 130): Eingang im Süden (Spawn, Tor zurück zum Hub). Zwei Gänge (A links, B rechts) mit je
+    zwei Standreihen, die zum Gang zeigen (4 x 8 = 32 Stände), dazwischen der Marktplatz mit Brunnen, Bänken,
+    Such-Terminal und zwei Tafeln (freie Stände, beliebteste Händler). Ein Stand ist ein Ordner "Stand_<n>" mit
+    Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client), sechs Ausstellplätzen ("Display1".."Display6":
+    Mitte des Skins, LookVector zum Gang), dem Prompt-Punkt vor der Theke ("Prompt") und dem Platz hinter der Theke
+    ("OwnerSpot"). Besitzer, Name und Angebote setzt der Server als Attribute an den Ordner. Der Client beschreibt
+    außerdem die Parts "OverviewBoard" und "TopBoard" und hängt an "SearchTerminal" ein E-Prompt."""
     b = Builder(MARKET_ORIGIN)
     b.holo = True
     floor, wall, steel, graphite = (52, 46, 42), (60, 56, 54), (78, 72, 68), (22, 25, 30)
     wood, wood_dark, top = (128, 92, 62), (94, 68, 48), (62, 54, 48)
     warm, rap = (255, 198, 128), (86, 214, 170)
-    x0, x1, z0, z1, H = -50, 50, -46, 56, 24
+    stone, water = (176, 170, 160), (70, 150, 210)
+    x0, x1, z0, z1, H = -96, 96, -46, 84, 26
     zc = (z0 + z1) / 2
+    aisles = (-64, 64)           # Mitte der beiden Gänge
+    columns = ((-88, 1), (-40, -1), (40, 1), (88, -1))  # (Mitte der Standreihe, 1 = Vorderseite nach +x)
+    rows_z = [-30 + 14 * k for k in range(8)]
+    plaza_z = 40
 
-    b.ground(170, 170, (40, 40, 42), "Asphalt")
-    b.border(160, 160, 2, (60, 60, 65), "Metal", barrier=80)
+    b.ground(260, 220, (40, 40, 42), "Asphalt")
+    b.border(250, 210, 2, (60, 60, 65), "Metal", barrier=80)
 
     # ---------- Halle ----------
     b.box("Ground", "MarketFloor", (x1 - x0, 0.2, z1 - z0), (0, 0.1, zc), floor, "WoodPlanks")
@@ -1871,13 +1878,20 @@ def build_market():
     b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (34, 32, 30), "Metal")
     for x in (x0 + 0.45, x1 - 0.45):
         b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 11, zc), warm, "Neon", props={"Transparency": 0.55})
-    for z in range(-38, 56, 12):
+    for i, z in enumerate(range(-38, 84, 12)):
         b.box("Walls", "Truss", (x1 - x0, 1.2, 1), (0, H - 1, z), steel, "Metal")
-        for x in (-30, 0, 30):
+        for x in (-64, 0, 64):
+            lamp_children = []
+            if i % 2 == 0:  # nur jede zweite Reihe leuchtet wirklich (Leistung)
+                lamp_children = [{"Name": "Light", "ClassName": "PointLight",
+                                  "Properties": {"Range": 34, "Brightness": 1.0, "Color": rgb(*warm)}}]
             b.add("Decor", "CeilingLamp", (1.6, 1.6, 1.6), (x, H - 3.2, z), warm, "Neon", props={"Shape": "Ball"},
-                  children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 28, "Brightness": 0.9, "Color": rgb(*warm)}}])
+                  children=lamp_children)
             b.box("Decor", "LampCord", (0.12, 2.4, 0.12), (x, H - 1.6, z), (20, 20, 22), "Metal")
+    for x in (-36, 36):  # Stützen zwischen Gängen und Marktplatz
+        for z in (-38, 6, 74):
+            b.box("Walls", "Pillar", (2, H, 2), (x, H / 2, z), steel, "Metal")
+            b.box("Decor", "PillarStrip", (2.1, 0.3, 2.1), (x, 3.2, z), rap, "Neon", props={"Transparency": 0.5})
 
     # ---------- Süden: Spawn und Tor zurück zum Hub ----------
     for x in (-6, -2, 2, 6):
@@ -1896,23 +1910,67 @@ def build_market():
     b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), (0, 0.4, z0 + 2.6), (120, 185, 235), "Neon",
           props={"CanCollide": False, "Transparency": 0.45})
 
-    # ---------- Mittelgang ----------
-    b.box("Ground", "AisleEdge", (14.7, 0.03, z1 - z0 - 8.3), (0, 0.215, zc + 2), rap, "Neon", props={"Transparency": 0.6})
-    b.box("Ground", "Aisle", (14, 0.05, z1 - z0 - 9), (0, 0.245, zc + 2), (40, 36, 34), "Fabric")
-    for z in (-24, 4, 32):
-        b.box("Decor", "Planter", (3.4, 1.4, 3.4), (0, 0.7, z), wood_dark, "WoodPlanks")
-        b.add("Decor", "Bush", (3.6, 3.6, 3.6), (0, 2.6, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+    # ---------- Gänge A (links) und B (rechts) ----------
+    for name, ax in zip("AB", aisles):
+        b.box("Ground", "AisleEdge" + name, (14.7, 0.03, 120.4), (ax, 0.215, 20), rap, "Neon", props={"Transparency": 0.6})
+        b.box("Ground", "Aisle" + name, (14, 0.05, 120), (ax, 0.245, 20), (40, 36, 34), "Fabric")
+        for z in (-24, 4, 32, 60):
+            b.box("Decor", "Planter", (3.4, 1.4, 3.4), (ax, 0.7, z), wood_dark, "WoodPlanks")
+            b.add("Decor", "Bush", (3.6, 3.6, 3.6), (ax, 2.6, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+        b.sign2("AisleSign" + name, (14, 4.6, 0.4), (ax, 17, -34), "GANG " + name, "STÄNDE " + ("1 - 16" if name == "A" else "17 - 32"),
+                graphite, rap, (236, 239, 243), angles=(0, 0, 0), glow=rap)
+        b.box("Decor", "AisleSignCordL", (0.15, 6, 0.15), (ax - 6, 21.5, -34), (20, 20, 22), "Metal")
+        b.box("Decor", "AisleSignCordR", (0.15, 6, 0.15), (ax + 6, 21.5, -34), (20, 20, 22), "Metal")
+        b.floor_text("AisleLabel" + name, (10, 0.1, 4), (ax, 0.3, -36), "GANG " + name, rap, yaw=180)
+
+    # ---------- Marktplatz ----------
+    b.cylinder("Ground", "PlazaRing", 34, 0.06, (0, 0.24, plaza_z), rap, "Neon", props={"Transparency": 0.65})
+    b.cylinder("Ground", "PlazaDisc", 32, 0.08, (0, 0.25, plaza_z), (46, 41, 38), "Cobblestone")
+    b.cylinder("Decor", "FountainBasin", 17, 1.6, (0, 0.9, plaza_z), stone, "Marble")
+    b.cylinder("Decor", "FountainWater", 15, 1.5, (0, 1.05, plaza_z), water, "Neon", props={"Transparency": 0.45})
+    b.cylinder("Decor", "FountainColumn", 2, 7, (0, 4.2, plaza_z), stone, "Marble")
+    b.add("Decor", "FountainTop", (3.2, 3.2, 3.2), (0, 8.2, plaza_z), rap, "Neon", props={"Shape": "Ball"},
+          children=[{"Name": "Light", "ClassName": "PointLight",
+                     "Properties": {"Range": 30, "Brightness": 1.1, "Color": rgb(*rap)}}])
+    for k in range(8):  # Bänke im Kreis, Sitzfläche zur Mitte
+        a = math.radians(k * 45 + 22.5)
+        px, pz = 14 * math.sin(a), plaza_z + 14 * math.cos(a)
+        yaw = math.degrees(a)
+        b.box("Decor", "BenchSeat", (6, 0.5, 1.8), (px, 1.1, pz), wood, "WoodPlanks", angles=(0, yaw, 0))
+        ox, oz = 0.8 * math.sin(a), 0.8 * math.cos(a)
+        b.box("Decor", "BenchBack", (6, 1.2, 0.3), (px + ox, 1.9, pz + oz), wood_dark, "WoodPlanks", angles=(0, yaw, 0))
+        for side in (-2.4, 2.4):
+            lx, lz = px + side * math.cos(a), pz - side * math.sin(a)
+            b.box("Decor", "BenchLeg", (0.4, 0.9, 1.6), (lx, 0.45, lz), steel, "Metal", angles=(0, yaw, 0))
+    for sx_, sz_ in ((-27, -30), (27, -30), (-27, 76), (27, 76)):
+        b.box("Decor", "PlazaPlanter", (4, 1.4, 4), (sx_, 0.7, sz_), wood_dark, "WoodPlanks")
+        b.add("Decor", "PlazaBush", (4.2, 4.2, 4.2), (sx_, 2.8, sz_), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+
+    # Infotafeln gleich hinter dem Eingang: freie Stände (links), beliebteste Händler (rechts), dazwischen die Suche
+    for name, bx, bw in (("OverviewBoard", -19, 28), ("TopBoard", 19, 22)):
+        b.box("Decor", name, (bw, 8, 0.5), (bx, 6.8, 8), graphite, "SmoothPlastic")
+        b.box("Decor", name + "Frame", (bw + 0.6, 0.3, 0.6), (bx, 10.95, 8), rap, "Neon", props={"Transparency": 0.2})
+        b.box("Decor", name + "Foot", (bw + 0.6, 0.3, 0.6), (bx, 2.65, 8), rap, "Neon", props={"Transparency": 0.4})
+        for dx in (-bw / 2 + 1, bw / 2 - 1):
+            b.box("Decor", name + "Post", (0.6, 6.8, 0.6), (bx + dx, 3.4, 8.8), (40, 38, 38), "Metal")
+    b.box("Decor", "KioskBase", (3, 3.4, 2.6), (0, 1.7, 9), (30, 32, 38), "Metal")
+    b.box("Decor", "KioskTrim", (3.2, 0.2, 2.8), (0, 3.5, 9), rap, "Neon", props={"Transparency": 0.3})
+    b.add("Decor", "SearchTerminal", (2.6, 1.6, 0.3), (0, 4.4, 7.5), rap, "Neon", props={"Transparency": 0.25},
+          children=[{"Name": "Light", "ClassName": "PointLight",
+                     "Properties": {"Range": 14, "Brightness": 0.9, "Color": rgb(*rap)}}])
+    b.sign2("SearchSign", (6, 1.6, 0.2), (0, 6.4, 7.6), "SUCHE", "SKINS FINDEN  ·  E", graphite, rap, (236, 239, 243),
+            angles=(0, 0, 0), glow=rap)
 
     # ---------- Norden: großes Schild ----------
-    b.sign2("MarketBanner", (40, 6.4, 0.4), (0, 15, z1 - 0.6), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
+    b.sign2("MarketBanner", (48, 6.4, 0.4), (0, 15, z1 - 0.6), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
             graphite, rap, (236, 239, 243), angles=(0, 0, 0), glow=rap)
-    b.box("Decor", "BannerStrip", (42, 0.3, 0.3), (0, 11.4, z1 - 0.4), rap, "Neon", props={"Transparency": 0.2})
+    b.box("Decor", "BannerStrip", (50, 0.3, 0.3), (0, 11.4, z1 - 0.4), rap, "Neon", props={"Transparency": 0.2})
 
-    # ---------- Stände: Westreihe schaut nach +x (zum Gang), Ostreihe nach -x ----------
+    # ---------- Stände: pro Standreihe acht, Vorderseite zum Gang ----------
     n = 0
-    for f, sx in ((1, -24), (-1, 24)):
+    for sx, f in columns:
         yaw = -90 if f > 0 else 90  # Vorderseite (-Z) zum Gang
-        for sz in (-30, -16, -2, 12, 26, 40):
+        for sz in rows_z:
             n += 1
             g = "Stand_%d" % n
             canopy = MARKET_CANOPIES[(n - 1) % len(MARKET_CANOPIES)]
@@ -1929,14 +1987,17 @@ def build_market():
             # Vordach: fällt zum Gang hin ab, vorn ein Volant in hellerer Farbe
             b.box(g, "Canopy", (8.2, 0.3, 13), (sx, 9.4, sz), canopy, "Fabric", angles=(0, 0, -f * 10))
             b.box(g, "Valance", (0.2, 1.0, 13), (sx + f * 4.05, 8.25, sz), light, "Fabric")
-            # Schild über dem Vordach (beschreibt der Client: Besitzer, FREI, Nummer)
+            # Schild über dem Vordach (beschreibt der Client: Name oder Besitzer, FREI, Nummer)
             b.holo_panel(g, "Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), angles=(0, yaw, 0))
             b.holo_edges("Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), (0, yaw, 0), lighten(canopy, 0.2))
-            # Laterne an jedem Pfosten
+            # Laterne an jedem Pfosten (nur die mit Licht an jedem zweiten Stand, spart Leistung)
             for dz in (-5.9, 5.9):
+                lantern = []
+                if n % 2 == 1:
+                    lantern = [{"Name": "Light", "ClassName": "PointLight",
+                                "Properties": {"Range": 10, "Brightness": 0.7, "Color": rgb(*warm)}}]
                 b.add(g, "Lantern", (0.7, 0.7, 0.7), (sx + f * 3.3, 7.6, sz + dz), warm, "Neon", props={"Shape": "Ball"},
-                      children=[{"Name": "Light", "ClassName": "PointLight",
-                                 "Properties": {"Range": 10, "Brightness": 0.7, "Color": rgb(*warm)}}])
+                      children=lantern)
             # Ausstellplätze: drei auf der Theke, drei im Regal dahinter (Mitte des Skins)
             for k, (dx, y, dz) in enumerate(((2.3, 4.5, -3.7), (2.3, 4.5, 0), (2.3, 4.5, 3.7),
                                              (-2.5, 5.6, -3.7), (-2.5, 5.6, 0), (-2.5, 5.6, 3.7)), start=1):
