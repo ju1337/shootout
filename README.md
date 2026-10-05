@@ -96,6 +96,21 @@ weiter.
   (75 %, Läufer 85 %, Brocken immer), weil es keine Beute mehr am Boden gibt.
 - **Taschen am Boden** (Todestasche, Lootdrop): **E** öffnet das Fenster (einzeln nehmen), **F** nimmt alles auf einmal; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
+- **Aktivitäten** (`ActivityService.lua`, Teile `Act_<Art>` in der Gruppe Activities, Werte
+  `ExtinctionConfig.Activities`), alle auf der Weltkarte und als Marker oben:
+  - **Zombienester** (15, in Ödstadt, den Dörfern, Wäldern und roten Zonen): leuchtender Kern aus Fleisch, man schießt
+    darauf (900 Leben). Solange es lebt und jemand in der Nähe ist, kriechen Zombies heraus. Zerstört: jeder, der
+    Schaden gemacht hat, bekommt 150 Münzen und Beute direkt ins Inventar; nach 10 Minuten wächst es nach.
+  - **Vorratslager** (21, an Polizei, Tankstellen, Höfen, Flugplatz, roten Zonen …): **E 10 Sekunden halten** zum
+    Aufbrechen – der Lärm lockt sofort Zombies an. Beute direkt ins Inventar (in roten Zonen die beste), danach leer
+    für 12 Minuten.
+  - **Funkgerät** am Funkturm: **E halten = Notruf**, ein Lootdrop kommt (alle 15 Minuten).
+  - **Horden**: ab 6 Minuten alle 10-15 Minuten zieht eine Horde (14 Zombies, auch Läufer) in einen Ort 150-800 Studs
+    von einem Spieler entfernt. Wer dabei ist und 60 % erledigt, bekommt 200 Münzen und Beute.
+- **Apokalypse**: Fluchtstaus mit umgekipptem Schulbus auf den Ausfallstraßen, verlassene Quarantäne-Sperren an den
+  Dorfeingängen („INFIZIERT · NICHT BETRETEN“), Massengrab beim Evakuierungslager, verlassene Überlebenden-Camps im
+  Wald (SOS am Boden), Leichen auf den Straßen, Notstands-Plakate („AUSGANGSSPERRE AB 20 UHR · SCHIESSBEFEHL“),
+  abgestürzte Hubschrauber; fahles, gelbgraues Licht.
 - **Keine Beute am Boden**: die Lagerkisten (`ContainerService.lua`) sind abgeschaltet
   (`ExtinctionConfig.Containers.Enabled = false`). Beute gibt es von Zombies, aus Lootdrops und an den Ständen.
 - **Rote Zonen** (`RedzoneService.lua`, Teile `Redzone_<Name>`): rot-weiße Bodenlinie und Kontrollpunkte an den Straßen.

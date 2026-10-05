@@ -32,11 +32,12 @@ local PRESETS = {
 		Bloom = { Intensity = 0.9, Threshold = 1.1 },
 	},
 	Wasteland = {
-		Lighting = { ClockTime = 16.6, Brightness = 2.1, Ambient = Color3.fromRGB(96, 96, 88),
-			OutdoorAmbient = Color3.fromRGB(128, 126, 114) },
-		Atmosphere = { Density = 0.36, Haze = 2.1, Glare = 0.2, Color = Color3.fromRGB(184, 176, 156),
-			Decay = Color3.fromRGB(118, 108, 92) },
-		ColorCorrection = { Saturation = -0.22, Contrast = 0.12, TintColor = Color3.fromRGB(255, 244, 228) },
+		-- Zombie-Apokalypse: fahles, entsättigtes Licht, gelbgrauer Dunst
+		Lighting = { ClockTime = 16.6, Brightness = 1.8, Ambient = Color3.fromRGB(86, 88, 78),
+			OutdoorAmbient = Color3.fromRGB(116, 116, 100) },
+		Atmosphere = { Density = 0.42, Haze = 2.6, Glare = 0.15, Color = Color3.fromRGB(168, 164, 136),
+			Decay = Color3.fromRGB(98, 94, 72) },
+		ColorCorrection = { Saturation = -0.35, Contrast = 0.15, TintColor = Color3.fromRGB(240, 236, 212) },
 		Bloom = { Intensity = 0.25, Threshold = 1.7 },
 	},
 	Tropical = {

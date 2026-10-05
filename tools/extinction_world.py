@@ -1104,6 +1104,135 @@ class World:
                    rng.choice(((115, 115, 110), (104, 102, 98), (126, 120, 108))), "Slate",
                    angles=(rng.uniform(-12, 12), rng.uniform(0, 360), rng.uniform(-12, 12)))
 
+
+    # ---------- Apokalypse: Staus, Quarantäne, Leichen, Camps, Plakate ----------
+    def corpse(self, x, z, yaw=None, y=None):
+        """Leiche am Boden (liegende Figur aus Blöcken) mit Blutfleck."""
+        b, rng = self.b, self.rng
+        yaw = rng.uniform(0, 360) if yaw is None else yaw
+        g = (self.H(x, z) + 0.4) if y is None else y
+        m = self.bm.rot(0, yaw, 0)
+        skin = rng.choice(((150, 160, 130), (120, 130, 104), (170, 150, 130)))
+        cloth = rng.choice(((60, 64, 80), (90, 60, 50), (70, 80, 60), (110, 104, 90)))
+
+        def at(lx, lz, ly=0.5):
+            return (x + m[0][0] * lx + m[0][2] * lz, g + ly, z + m[2][0] * lx + m[2][2] * lz)
+        self.stain(x, z, y=g + 0.02)
+        b.box("Decor", "CorpseTorso", (2, 1, 2.2), at(0, 0), cloth, "Fabric", angles=(0, yaw, rng.uniform(-8, 8)),
+              props={"CanCollide": False})
+        b.box("Decor", "CorpseHead", (1.1, 1, 1.1), at(0, -1.8), skin, "SmoothPlastic", angles=(0, yaw + rng.uniform(-30, 30), 0),
+              props={"CanCollide": False})
+        for side in (-1, 1):
+            b.box("Decor", "CorpseLimb", (0.9, 0.8, 2), at(side * 0.6, 2.1, 0.4), cloth, "Fabric",
+                  angles=(0, yaw + side * rng.uniform(0, 25), 0), props={"CanCollide": False})
+            b.box("Decor", "CorpseLimb", (0.8, 0.7, 1.9), at(side * 1.6, -0.2, 0.4), skin, "SmoothPlastic",
+                  angles=(0, yaw + side * rng.uniform(30, 80), 0), props={"CanCollide": False})
+
+    def traffic_jam(self, points, count):
+        """Stau der Flucht: Autowracks Stoßstange an Stoßstange auf einer Landstraße, ein umgekippter Bus."""
+        rng = self.rng
+        total = sum(math.hypot(bx - ax, bz - az) for (ax, az), (bx, bz) in zip(points, points[1:]))
+        placed = 0
+        t = rng.uniform(0, 10)
+        while placed < count and t < total:
+            acc = 0
+            for (ax, az), (bx, bz) in zip(points, points[1:]):
+                length = math.hypot(bx - ax, bz - az)
+                if acc + length >= t:
+                    u = (t - acc) / length
+                    dx, dz = (bx - ax) / length, (bz - az) / length
+                    lane = rng.choice((-1, 1)) * 5
+                    x, z = ax + (bx - ax) * u - dz * lane, az + (bz - az) * u + dx * lane
+                    yaw = math.degrees(math.atan2(-dz, dx)) + 90 + rng.uniform(-12, 12)
+                    if placed == count // 2:
+                        self.bus(x, z, yaw + 90)
+                    else:
+                        self.car(x, z, yaw, y=0.13)
+                    if rng.random() < 0.25:
+                        self.corpse(x + rng.uniform(-6, 6), z + rng.uniform(-6, 6), y=0.15)
+                    break
+                acc += length
+            placed += 1
+            t += rng.uniform(13, 20)
+
+    def bus(self, x, z, yaw):
+        g = max(self.H(x, z) + 0.4, 0.13)
+        self.b.box("Cover", "BusBody", (8, 8, 30), (x, g + 3.6, z), (190, 150, 40), "CorrodedMetal", angles=(0, yaw, 84))
+        self.b.box("Decor", "BusWindows", (8.2, 2, 28), (x, g + 3.6, z), (30, 34, 38), "Slate", angles=(0, yaw, 84))
+        self.smoke_column(x, g + 6, z)
+
+    def warning_sign(self, x, z, yaw, title, subtitle, color=(226, 56, 48)):
+        g = self.H(x, z) + 0.4
+        m = self.bm.rot(0, yaw, 0)
+        for side in (-1, 1):
+            px, pz = x + m[0][0] * side * 4.5, z + m[2][0] * side * 4.5
+            self.b.box("Decor", "SignPost", (0.4, 7, 0.4), (px, g + 3.5, pz), (60, 60, 64), "Metal")
+        self.b.sign2("Warn_" + title[:10], (10, 3, 0.25), (x, g + 6.4, z), title, subtitle, (230, 226, 210), color, (40, 40, 40),
+                     angles=(0, yaw, self.rng.uniform(-8, 8)))
+
+    def quarantine(self, x, z, yaw, width=30):
+        """Verlassene Quarantäne-Sperre quer über eine Straße: Zaun, Sandsäcke, Schilder, Militärfahrzeug, Leichen."""
+        rng = self.rng
+        self.barricade(x, z, yaw, width)
+        m = self.bm.rot(0, yaw, 0)
+        for side in (-1, 1):
+            px, pz = x + m[0][0] * side * (width / 2 + 10), z + m[2][0] * side * (width / 2 + 10)
+            self.warning_sign(px, pz, yaw + 180 * (side < 0), "QUARANTÄNE", "INFIZIERT · NICHT BETRETEN")
+        hx, hz = x + m[0][2] * 14, z + m[2][2] * 14
+        self.car(hx, hz, yaw + rng.uniform(-30, 30), burned=rng.random() < 0.5, color=(84, 92, 70))
+        for _ in range(3):
+            self.corpse(x + rng.uniform(-14, 14), z + rng.uniform(-14, 14))
+
+    def mass_grave(self, x, z):
+        b, rng = self.b, self.rng
+        g = self.H(x, z) + 0.4
+        b.box("Ground", "Grave", (40, 0.3, 14), (x, g - 0.05, z), (60, 48, 38), "Ground", angles=(0, 15, 0))
+        for k in range(14):
+            self.body_bag(x + rng.uniform(-17, 17), z + rng.uniform(-5, 5), 15 + rng.uniform(-20, 20))
+        for k in range(6):
+            cx, cz = x - 20 + k * 8, z + 12
+            b.box("Decor", "Cross", (0.4, 3.4, 0.4), (cx, self.H(cx, cz) + 2, cz), (110, 86, 60), "Wood")
+            b.box("Decor", "Cross", (1.8, 0.4, 0.4), (cx, self.H(cx, cz) + 2.8, cz), (110, 86, 60), "Wood")
+        b.box("Cover", "DirtPile", (16, 4, 8), (x + 26, g + 1, z - 8), (80, 64, 48), "Ground", angles=(0, 15, 8))
+        self.occupied.append((x, z, 30))
+
+    def survivor_camp(self, x, z, title):
+        """Verlassenes Lager von Überlebenden im Wald: Zelte, Feuer, Holzbarrikade, SOS auf dem Boden."""
+        b, rng = self.b, self.rng
+        for k in range(3):
+            a = k * 2.1 + rng.uniform(-0.3, 0.3)
+            self.tent(x + math.cos(a) * 12, z + math.sin(a) * 12, math.degrees(-a) + 90,
+                      rng.choice(((96, 108, 78), (60, 90, 130), (150, 60, 50))), collapsed=rng.random() < 0.3)
+        self.fire(x, z, smoke=False)
+        for k in range(10):
+            a = k / 10 * math.pi * 2
+            px, pz = x + math.cos(a) * 22, z + math.sin(a) * 22
+            if rng.random() < 0.7:
+                b.box("Cover", "PlankWall", (7, 4, 0.6), (px, self.H(px, pz) + 2.2, pz), (110, 86, 60), "WoodPlanks",
+                      angles=(rng.uniform(-8, 8), -math.degrees(a) + 90, rng.uniform(-6, 6)))
+        b.floor_text("SOS" + title[:4], (16, 0.1, 7), (x + 8, self.H(x + 8, z - 15) + 0.5, z - 15), "SOS", (230, 230, 230),
+                     bg=(60, 50, 40), yaw=rng.uniform(0, 360))
+        self.corpse(x + 5, z + 4)
+        self.occupied.append((x, z, 26))
+
+    def billboard(self, x, z, yaw, title, subtitle):
+        b = self.b
+        g = self.H(x, z) + 0.4
+        m = self.bm.rot(0, yaw, 0)
+        for side in (-1, 1):
+            px, pz = x + m[0][0] * side * 8, z + m[2][0] * side * 8
+            b.box("Decor", "BillboardPost", (0.8, 12, 0.8), (px, g + 6, pz), (70, 70, 74), "Metal")
+        b.sign2("Billboard_" + title[:8], (22, 8, 0.5), (x, g + 15, z), title, subtitle, (230, 230, 220), (180, 30, 30), (40, 40, 40),
+                angles=(0, yaw, self.rng.uniform(-6, 6)))
+
+    def heli_crash(self, x, z):
+        self.helicopter_wreck(x, z, self.rng.uniform(0, 360))
+        for _ in range(3):
+            self.rubble(x + self.rng.uniform(-12, 12), z + self.rng.uniform(-12, 12), 6, (70, 70, 64))
+        for _ in range(2):
+            self.corpse(x + self.rng.uniform(-10, 10), z + self.rng.uniform(-10, 10))
+        self.occupied.append((x, z, 18))
+
     # ---------- Safe Zone "Camp Phoenix" (Mitte von Ödstadt) ----------
     def camp(self):
         b, rng = self.b, self.rng
@@ -1508,6 +1637,40 @@ def build(bm):
         x, z = rng.uniform(-480, 480), rng.uniform(-480, 480)
         if 200 < math.hypot(x, z) < 500:
             w.smoke_column(x, 12, z)
+
+    # Apokalypse: Fluchtstaus auf den Ausfallstraßen, Quarantäne-Sperren an den Ortseingängen, Massengrab, Camps im Wald,
+    # Leichen in den Straßen, Notstands-Plakate, abgestürzte Hubschrauber
+    jam_roads = [[(0, 540), (-60, 800)], [(540, 0), (800, 240)], [(-540, 0), (-800, -110)], [(0, -540), (180, -800)]]
+    for pts in jam_roads:
+        w.traffic_jam(pts, 9)
+    for key, (ax, az) in (("Nordheim", (-250, 1000)), ("Sandbach", (1000, 460)), ("Altenfeld", (-1010, -200)), ("Muehldorf", (330, -1000))):
+        _, cx, cz, _ = PLACES[key]
+        w.quarantine(ax, az, math.degrees(math.atan2(-(cz - az), cx - ax)) + 90)
+    found = find_spot(w, 300, -200, 30)
+    if found:
+        w.mass_grave(*found)
+    for x, z, title in ((-420, 860, "NORD"), (700, 920, "TEICH"), (-900, -700, "SUEDWEST"), (950, -150, "OST"), (-1300, 500, "WEST")):
+        found = find_spot(w, x + 40, z + 40, 26)
+        if found:
+            w.survivor_camp(found[0], found[1], title)
+    for seg in rng.sample(city_segments, min(40, len(city_segments))):
+        t = rng.uniform(0.2, 0.8)
+        x, z = seg[0] + (seg[2] - seg[0]) * t, seg[1] + (seg[3] - seg[1]) * t
+        if math.hypot(x, z) > SAFE_R + 60:
+            w.corpse(x + rng.uniform(-4, 4), z + rng.uniform(-4, 4), y=0.15)
+    for seg in rng.sample(village_segments, min(16, len(village_segments))):
+        x, z = (seg[0] + seg[2]) / 2, (seg[1] + seg[3]) / 2
+        w.corpse(x + rng.uniform(-4, 4), z + rng.uniform(-4, 4), y=0.15)
+    texts = (("NOTSTAND", "BLEIBEN SIE IN IHREN HÄUSERN"), ("EVAKUIERUNG", "ALLE BÜRGER ZUM CAMP PHOENIX"),
+             ("ACHTUNG", "BISSE SOFORT MELDEN"), ("AUSGANGSSPERRE", "AB 20 UHR · SCHIESSBEFEHL"))
+    for k, (x, z) in enumerate(((60, 620), (620, -60), (-620, 60), (-60, -620), (300, 560), (-560, -300))):
+        found = find_spot(w, x, z, 10)
+        if found:
+            w.billboard(found[0], found[1], w.yaw_to(-found[0], -found[1]), *texts[k % len(texts)])
+    for x, z in ((-300, -420), (180, 640), (-700, 900)):
+        found = find_spot(w, x, z, 18)
+        if found:
+            w.heli_crash(*found)
 
     # Rote Zonen, Aktivitäten, Orte, Seen
     w.redzones()
