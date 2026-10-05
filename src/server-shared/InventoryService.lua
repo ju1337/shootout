@@ -41,6 +41,15 @@ local function status(player, text, ok)
 end
 InventoryService.Status = status
 
+-- Ganze Zahl vom Client (NaN und Unendlich abfangen), sonst fallback
+local function wholeNumber(value, fallback)
+	local n = tonumber(value)
+	if not n or n ~= n or n == math.huge or n == -math.huge then
+		return fallback
+	end
+	return math.floor(n)
+end
+
 local function inExtinction(player)
 	return Modes.IsSurvival(player:GetAttribute("Mode"))
 end
@@ -372,7 +381,7 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 	if not state then
 		return false
 	end
-	qty = math.clamp(math.floor(tonumber(qty) or 1), 1, 10)
+	qty = math.clamp(wholeNumber(qty, 1), 1, 10)
 	if (config.MaxStack or 1) <= 1 then
 		qty = 1
 	end
@@ -410,7 +419,7 @@ function InventoryService.Sell(player, slot, count)
 		status(player, "Pack das Fahrzeug erst ein (K).")
 		return false
 	end
-	count = math.clamp(math.floor(tonumber(count) or item.Count), 1, item.Count)
+	count = math.clamp(wholeNumber(count, item.Count), 1, item.Count)
 	if state.Equipped == item then
 		holster(player, state)
 	end

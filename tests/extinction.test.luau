@@ -156,6 +156,22 @@ moveTo(alice, Vector3.new(36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Items", "Bandage", 3) == true, "drei Verbände")
 check(slot(alice, 3) and slot(alice, 3).N == 3, "Verbände gestapelt auf Platz 3")
 check(InventoryService.Buy(bob, "Stand_Items", "Bandage") == false, "Bob ist nicht in der offenen Welt")
+-- manipulierte Zahlen vom Client (NaN, unendlich) dürfen Münzen und Stapel nicht kaputt machen
+local before = ProgressService.Get(alice).Coins
+Remotes.ExtAction.OnServerEvent:Fire(alice, "Buy", "Stand_Items", "Bandage", 0 / 0)
+Remotes.ExtAction.OnServerEvent:Fire(alice, "Buy", "Stand_Items", "Bandage", math.huge)
+check(ProgressService.Get(alice).Coins == before - 2 * 25, "NaN und unendlich zählen als 1 ("
+	.. tostring(ProgressService.Get(alice).Coins) .. ")")
+Remotes.ExtAction.OnServerEvent:Fire(alice, "Sell", 3, 0 / 0)
+local stack = slot(alice, 3)
+check(stack == nil or (stack.N == stack.N and stack.N >= 0), "Verkauf mit NaN macht den Stapel nicht kaputt")
+InventoryService.Buy(alice, "Stand_Items", "Bandage", 3)
+for s = 1, ExtinctionConfig.BagSlots do
+	local entry = slot(alice, s)
+	if entry and entry.Id == "Bandage" and s ~= 3 then
+		InventoryService.Move(alice, "Bag", s, "Bag", 3)
+	end
+end
 
 -- ---------- Hotbar: Waffe nur draußen ----------
 InventoryService.Use(alice, 1)

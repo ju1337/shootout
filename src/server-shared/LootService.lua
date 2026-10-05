@@ -226,17 +226,12 @@ function LootService.Take(player, id, slot)
 	end
 	local moved, full = false, false
 	for _, s in slots do
-		local item = bag.Container.Slots[s]
-		if item then
-			local before = item.Count
+		if bag.Container.Slots[s] then
 			if Inventory.Move(bag.Container, s, playerBag, nil) then
 				moved = true
 			end
-			local after = bag.Container.Slots[s]
-			if after and after.Count == before then
-				full = true
-			elseif after then
-				full = true -- nur ein Teil hat gepasst
+			if bag.Container.Slots[s] then
+				full = true -- passte nicht (ganz) in die Tasche
 			end
 		end
 	end
