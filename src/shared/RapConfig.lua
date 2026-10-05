@@ -16,7 +16,22 @@ local RapConfig = {}
 RapConfig.Color = Color3.fromRGB(86, 214, 170) -- Farbe der Währung (Zahlen, Symbol)
 
 RapConfig.SellRate = 0.7       -- Rückverkauf ans System: 70 % des RAP-Werts, sofort
-RapConfig.MarketFee = 0.05     -- Marktgebühr: 5 % des Preises gehen beim Verkauf am Stand verloren
+RapConfig.MarketFee = 0.05     -- Grundgebühr (mittlere Stufe, siehe FeeTiers)
+-- Marktgebühr nach Preis: kleine Verkäufe sind billiger, teure kosten mehr (Upto = bis einschließlich dieser Preis)
+RapConfig.FeeTiers = {
+	{ Upto = 500, Rate = 0.02 },
+	{ Upto = 2000, Rate = 0.05 },
+	{ Upto = 10000, Rate = 0.07 },
+	{ Upto = math.huge, Rate = 0.10 },
+}
+RapConfig.ListingSeconds = 600 -- so lange gilt ein Angebot, dann läuft es ab (Preis ändern oder VERLÄNGERN setzt neu)
+RapConfig.OfferSeconds = 45    -- so lange gilt ein Gegenangebot, bis der Besitzer antwortet
+RapConfig.MinOfferFraction = 0.5 -- Gegenangebote mindestens so hoch wie der halbe Preis
+RapConfig.MaxOffersPerStand = 6
+RapConfig.StandNameLength = 24 -- Stand-Name (läuft durch den Textfilter)
+RapConfig.WatchLimit = 30      -- Skins auf der Merkliste
+RapConfig.HistoryDays = 7      -- Preisverlauf: Verkäufe der letzten Tage
+RapConfig.HistoryKeep = 40     -- gespeicherte Verkäufe pro Skin
 RapConfig.MinPrice = 1
 RapConfig.MaxPrice = 10000000
 RapConfig.StandSlots = 6       -- Angebote pro Stand
@@ -71,9 +86,19 @@ function RapConfig.SellPrice(id)
 	return value and math.floor(value * RapConfig.SellRate) or 0
 end
 
+-- Gebührensatz (0..1) für einen Verkauf zu diesem Preis
+function RapConfig.FeeRate(price)
+	for _, tier in RapConfig.FeeTiers do
+		if price <= tier.Upto then
+			return tier.Rate
+		end
+	end
+	return RapConfig.FeeTiers[#RapConfig.FeeTiers].Rate
+end
+
 -- Was der Verkäufer am Stand von price behält (nach Marktgebühr)
 function RapConfig.AfterFee(price)
-	return price - math.ceil(price * RapConfig.MarketFee)
+	return price - math.ceil(price * RapConfig.FeeRate(price))
 end
 
 -- Stückzahl eines Skins im Besitz-Eintrag (alte Spielstände: true = 1 Stück)

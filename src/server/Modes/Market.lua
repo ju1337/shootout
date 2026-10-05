@@ -70,13 +70,14 @@ end
 function Market.AddPlayer(player)
 	members[player] = true
 	lastTouch[player] = os.clock() -- nicht gleich wieder durchs Tor
+	MarketService.PublishWatch(player)
 	spawnPlayer(player)
 end
 
 -- Markt verlassen: Stand weg, Skins wieder frei
 function Market.RemovePlayer(player)
 	members[player] = nil
-	MarketService.Release(player, "Du hast den Markt verlassen – dein Stand ist wieder frei, deine Skins sind zurück im Inventar.")
+	MarketService.Leave(player, "Du hast den Markt verlassen – dein Stand ist wieder frei, deine Skins sind zurück im Inventar.")
 end
 
 return Market
