@@ -172,6 +172,27 @@ check(bag ~= nil and lowTier, "nur einfache Beute")
 step(5)
 check(victim.Parent == nil, "Leiche verschwindet")
 
+-- Messer (V) gegen Zombies: Schaden, beim Tod nur die Zombie-Münzen, kein Spieler-Kill
+local Remotes = require("Remotes")
+local kills = 0
+WeaponService.Killed:Connect(function()
+	kills += 1
+end)
+local stabbed = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -3))
+SIM.SpherecastHandler = function()
+	return { Instance = stabbed.Torso, Position = stabbed.Torso.Position, Normal = Vector3.new(0, 0, 1) }
+end
+coins = ProgressService.Get(alice).Coins
+local head = alice.Character.Head
+for _ = 1, 4 do
+	Remotes.Melee.OnServerEvent:Fire(alice, head.Position, Vector3.new(0, 0, -1))
+	step(1.2)
+end
+SIM.SpherecastHandler = nil
+check(stabbed.Humanoid.Health <= 0, "Zombie mit dem Messer erledigt")
+check(kills == 0, "Zombie zählt nicht als Spieler-Kill (" .. kills .. ")")
+check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, "nur die Zombie-Münzen fürs Messer")
+
 -- Obergrenze für den ganzen Server
 Z.MaxTotal = ZombieService.Count() + 1
 place(bob, Vector3.new(400, 3, 200))

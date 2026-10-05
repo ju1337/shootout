@@ -716,7 +716,8 @@ local function onMelee(player, origin, direction)
 	local victimName = victim and victim.Name or model.Name
 	player:SetAttribute("Damage", (player:GetAttribute("Damage") or 0) + math.floor(dealt + 0.5))
 	Remotes.Hitmarker:FireClient(player, false, killed, dealt, result.Position, victimName, downed, armor, model)
-	if killed then
+	-- wie bei Schüssen: nur Spieler und Bots zählen als Kill (Übungspuppen und Zombies nicht)
+	if killed and (victim or isBot) then
 		killedEvent:Fire(player, victim, melee.DisplayName, false, victimName, model)
 	end
 end

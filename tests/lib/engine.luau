@@ -1382,6 +1382,7 @@ terrain.Anchored = true
 rawget(Workspace, "__props").CurrentCamera = camera
 rawget(Workspace, "__props").Gravity = 196.2
 SIM.RaycastHandler = nil -- function(origin, direction, params) -> Ergebnis oder nil
+SIM.SpherecastHandler = nil -- function(origin, radius, direction, params) -> Ergebnis oder nil (z.B. Messer)
 rawset(Workspace, "__methods", {
 	GetServerTimeNow = function()
 		return SIM.BaseTime + SIM.Now
@@ -1389,8 +1390,8 @@ rawset(Workspace, "__methods", {
 	Raycast = function(_, origin, direction, params)
 		return SIM.RaycastHandler and SIM.RaycastHandler(origin, direction, params) or nil
 	end,
-	Spherecast = function()
-		return nil
+	Spherecast = function(_, origin, radius, direction, params)
+		return SIM.SpherecastHandler and SIM.SpherecastHandler(origin, radius, direction, params) or nil
 	end,
 	Blockcast = function()
 		return nil
