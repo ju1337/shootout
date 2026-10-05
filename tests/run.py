@@ -222,6 +222,17 @@ def main():
                     print("       " + line)  # auch bei bestandenen Tests sichtbar
         if not ok:
             failed.append(name)
+    # Karten-Prüfung (ohne Luau): nur wenn nicht einzelne Tests ausgewählt wurden
+    if not args.names:
+        import maps_check
+        started = time.time()
+        problems = maps_check.check()
+        print("%s maps (%.1f s)" % ("ok    " if not problems else "FEHLER", time.time() - started))
+        for problem in problems:
+            print("       FEHLER: " + problem)
+        runs.append(("maps", "immediate", "maps", None))
+        if problems:
+            failed.append("maps")
     print()
     if failed:
         print("%d von %d Tests fehlgeschlagen: %s" % (len(failed), len(runs), ", ".join(failed)))
