@@ -237,11 +237,14 @@ function MarketService.Get(id)
 	return stands[id]
 end
 
--- Gegenangebote entfernen: slot = Platz (nil = alle), buyer = nur von diesem Käufer (nil = alle); message = Meldung an Käufer
+-- Gegenangebote entfernen: slot = Platz (nil = alle), buyer = nur von diesem Käufer (nil = alle); message = Meldung an Käufer.
+-- Gibt die Zahl der entfernten Angebote zurück.
 local function dropOffers(stand, slot, buyer, message)
 	local kept = {}
+	local dropped = 0
 	for _, offer in stand.Offers do
 		if (slot == nil or offer.Slot == slot) and (buyer == nil or offer.Buyer == buyer) then
+			dropped += 1
 			offer.Closed = true
 			if message then
 				status(offer.Buyer, message, false)
@@ -251,6 +254,7 @@ local function dropOffers(stand, slot, buyer, message)
 		end
 	end
 	stand.Offers = kept
+	return dropped
 end
 
 -- Stand abgeben: Angebote weg, Skins wieder frei. message = Meldung an den Spieler (nil = keine)
@@ -275,8 +279,9 @@ end
 -- Markt verlassen: Stand abgeben und eigene Gegenangebote an fremden Ständen zurückziehen
 function MarketService.Leave(player, message)
 	for _, stand in stands do
-		dropOffers(stand, nil, player, nil)
-		publish(stand)
+		if dropOffers(stand, nil, player, nil) > 0 then
+			publish(stand)
+		end
 	end
 	return MarketService.Release(player, message)
 end
@@ -662,7 +667,7 @@ function MarketService.Do(player, action, ...)
 	return handler(player, ...)
 end
 
--- map = Maps.Market (Ordner "Stand_<n>" mit Prompt, OwnerSpot, Display1..)
+-- map = Maps.Market (Ordner "Stand_<n>" mit Prompt, Display1.. und Sign)
 function MarketService.Init(map)
 	mapFolder = map
 	for _, folder in map:GetChildren() do

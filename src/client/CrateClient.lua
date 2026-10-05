@@ -276,6 +276,16 @@ function CrateClient.Request()
 	window.Open.SetText("ÖFFNET …")
 	window.Open.SetColor(C.MutedBack, C.Muted)
 	Remotes.CrateAction:FireServer("Open", crate.Id)
+	-- Antwortet der Server nicht, nach einer Weile wieder freigeben (statt ewig auf ÖFFNET zu hängen)
+	local win = window
+	task.delay(8, function()
+		if window == win and win.Waiting and not win.Spinning then
+			win.Waiting = false
+			win.Status.Text = "Keine Antwort vom Server – versuch es nochmal."
+			win.Status.TextColor3 = C.Bad
+			setOpenButton()
+		end
+	end)
 end
 
 local function build(crate)

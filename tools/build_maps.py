@@ -1934,7 +1934,7 @@ def build_market():
     # Spawns im Kreis um das Such-Terminal
     for k in range(8):
         x, z = polar(12, k * 45 + 22.5)
-        b.spawn(x, z, yaw=k * 45 + 22.5 + 90)
+        b.spawn(x, z, yaw=math.degrees(math.atan2(-math.cos(math.radians(k * 45 + 22.5)), -math.sin(math.radians(k * 45 + 22.5)))))  # Blick nach außen
     # Such-Terminal: niedrige Säule mit leuchtendem Bildschirm (E), keine Schilder
     b.cylinder("Decor", "KioskColumn", 3.4, 3.0, (0, 1.75, 0), (30, 32, 38), "Metal")
     b.cylinder("Decor", "KioskTrim", 3.8, 0.2, (0, 3.35, 0), rap, "Neon", props={"Transparency": 0.3})

@@ -60,8 +60,6 @@ function CrateService.Open(player, crateId)
 		if refund > 0 then
 			ProgressService.AddCoins(player, refund, "Kiste: Duplikat")
 		end
-	else
-		ProgressService.LedgerItem(player, item.Name, item.Rarity)
 	end
 
 	-- Rolle: Gewinn an festem Platz, der Rest nach denselben Chancen

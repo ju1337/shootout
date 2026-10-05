@@ -343,13 +343,37 @@ local function refreshStand(stand)
 		end
 	end
 	-- Ausgestellte Skins nur im Markt (sonst unnötige Teile)
-	local key = inMarket() and (stand.Folder:GetAttribute("Listings") or "") or ""
+	local key = (inMarket() and stand.Near == true) and (stand.Folder:GetAttribute("Listings") or "") or ""
 	if key ~= stand.Shown then
 		clearDisplays(stand)
 		stand.Shown = key
-		if inMarket() then
+		if inMarket() and stand.Near == true then
 			for _, listing in listings do
 				buildDisplay(stand, listing)
+			end
+		end
+	end
+end
+
+-- Ausgestellte Skins gibt es nur bei Ständen in der Nähe (48 Stände mit je sechs Modellen wären auf Handys zu viel):
+-- ab DISPLAY_NEAR Studs werden sie gebaut, ab DISPLAY_FAR wieder abgebaut (die Lücke verhindert Flackern)
+local DISPLAY_NEAR, DISPLAY_FAR = 80, 105
+local function updateNearness()
+	if not inMarket() then
+		return
+	end
+	local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then
+		return
+	end
+	for _, stand in stands do
+		local anchor = stand.Folder:FindFirstChild("Prompt")
+		if anchor then
+			local distance = (anchor.Position - rootPart.Position).Magnitude
+			local near = stand.Near == true and distance <= DISPLAY_FAR or distance <= DISPLAY_NEAR
+			if near ~= stand.Near then
+				stand.Near = near
+				refreshStand(stand)
 			end
 		end
 	end
@@ -1253,6 +1277,12 @@ function MarketClient.Init()
 	end
 	refreshAllStands()
 	refreshBar()
+	task.spawn(function()
+		while true do
+			task.wait(0.5)
+			updateNearness()
+		end
+	end)
 
 	Remotes.MarketStatus.OnClientEvent:Connect(function(message, success)
 		showToast(message, success)
@@ -1267,6 +1297,7 @@ function MarketClient.Init()
 			closeWindow()
 			clearWaypoint()
 		end
+		updateNearness()
 		refreshAllStands()
 		refreshBar()
 	end)

@@ -106,6 +106,19 @@ local function find(root, name)
 end
 check(find(playerGui, "MarketOverview") ~= nil and find(playerGui, "MarketTop") ~= nil, "Tafeln gebaut")
 
+-- Ausgestellte Skins nur bei Ständen in der Nähe (Leistung): weit weg abgebaut, wieder da, wenn man zurückkommt
+local displays = workspace:FindFirstChild("MarketDisplays")
+check(displays ~= nil and #displays:GetChildren() == 3, "drei Skins am nahen Stand 1 ausgestellt (" .. tostring(displays and #displays:GetChildren()) .. ")")
+bob.Character:PivotTo(CFrame.new(-1512 + 95, 3, -1516))
+step(1.5)
+check(#displays:GetChildren() == 3, "zwischen Aufbau- und Abbau-Grenze bleibt alles stehen (kein Flackern)")
+bob.Character:PivotTo(CFrame.new(-1512 + 400, 3, -1516))
+step(1.5)
+check(#displays:GetChildren() == 0, "weit weg: Modelle abgebaut")
+bob.Character:PivotTo(CFrame.new(-1512, 3, -1516))
+step(1.5)
+check(#displays:GetChildren() == 3, "wieder da: Modelle neu gebaut")
+
 -- Fenster SUCHE
 MarketClient.OpenSearch()
 step(0.5)
