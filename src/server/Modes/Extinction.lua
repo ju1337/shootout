@@ -23,6 +23,7 @@ local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
+local ContainerService = require(ServerShared.ContainerService)
 local VehicleService = require(ServerShared.VehicleService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
@@ -214,8 +215,9 @@ function Extinction.Init(modeManager)
 		end
 	end
 
-	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte)
+	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte) und Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	RedzoneService.Init(map)
+	ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
 	-- Zombies um die Spieler draußen
 	ZombieService.Init({
