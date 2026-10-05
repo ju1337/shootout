@@ -57,6 +57,12 @@ local NIGHT = {
 	ColorCorrection = { Saturation = -0.32, Contrast = 0.16, TintColor = Color3.fromRGB(196, 208, 255) },
 	Bloom = { Intensity = 0.5, Threshold = 1.2 },
 }
+-- Blutmond (rot) und Nebel (dicht, grau) werden über Tag/Nacht gelegt
+local BLOOD = {
+	Atmosphere = { Color = Color3.fromRGB(120, 40, 36), Decay = Color3.fromRGB(70, 20, 18), Density = 0.5 },
+	ColorCorrection = { TintColor = Color3.fromRGB(255, 160, 150), Saturation = -0.1 },
+	Lighting = { Ambient = Color3.fromRGB(70, 30, 30), OutdoorAmbient = Color3.fromRGB(110, 46, 44) },
+}
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
 local TWEEN = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
@@ -140,8 +146,11 @@ local function cycle()
 	if current ~= "Wasteland" then
 		return
 	end
-	local clock = DayCycle.Clock(workspace:GetServerTimeNow())
+	local serverTime = workspace:GetServerTimeNow()
+	local clock = DayCycle.Clock(serverTime)
 	local dark = DayCycle.Darkness(clock)
+	local blood = DayCycle.IsBloodMoon(serverTime) and dark or 0
+	local fog = DayCycle.Fog(serverTime)
 	Lighting.ClockTime = clock
 	local objects = targets()
 	for section, values in PRESETS.Wasteland do
@@ -150,10 +159,21 @@ local function cycle()
 		if object and night then
 			for key, day in values do
 				if key ~= "ClockTime" and night[key] ~= nil then
-					object[key] = mix(day, night[key], dark)
+					local value = mix(day, night[key], dark)
+					local red = BLOOD[section] and BLOOD[section][key]
+					if red ~= nil and blood > 0 then
+						value = mix(value, red, blood)
+					end
+					object[key] = value
 				end
 			end
 		end
+	end
+	local atmosphere = objects.Atmosphere
+	if atmosphere and fog > 0 then
+		atmosphere.Density = mix(atmosphere.Density, 0.72, fog)
+		atmosphere.Haze = mix(atmosphere.Haze, 6, fog)
+		atmosphere.Color = atmosphere.Color:Lerp(Color3.fromRGB(176, 178, 172), fog)
 	end
 end
 MapAtmosphere.Cycle = cycle

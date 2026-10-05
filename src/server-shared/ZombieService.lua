@@ -72,8 +72,9 @@ end
 -- Art würfeln: rote Zone (Redzone.KindWeights), sonst Tag/Nacht (Zombies.KindWeights / NightKindWeights)
 local function rollKind(inRedzone)
 	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
+	local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow())
 	local weights = inRedzone and ExtinctionConfig.Redzone.KindWeights
-		or (night and Z.NightKindWeights or Z.KindWeights) or { Walker = 1 }
+		or (blood and ExtinctionConfig.Day.BloodMoonKindWeights) or (night and Z.NightKindWeights or Z.KindWeights) or { Walker = 1 }
 	local total = 0
 	for _, weight in weights do
 		total += weight
@@ -469,8 +470,10 @@ local function maxTotal()
 			end
 		end
 	end
-	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
-	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) + 0.5) + bonus
+	local now = workspace:GetServerTimeNow()
+	local night = DayCycle.IsNight(DayCycle.Clock(now))
+	local blood = DayCycle.IsBloodMoon(now) and ExtinctionConfig.Day.BloodMoonZombies or 1
+	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) * blood + 0.5) + bonus
 end
 
 -- Andere Dienste (Aufträge): callback(killer, kind, position), wenn ein Spieler einen Zombie erledigt
@@ -619,6 +622,9 @@ local function spawnRound()
 			local wanted = zone and math.floor(Z.PerPlayer * ExtinctionConfig.Redzone.PerPlayerFactor + 0.5) or Z.PerPlayer
 			if DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow())) then
 				wanted = math.floor(wanted * ExtinctionConfig.Day.NightZombies + 0.5) -- nachts mehr
+				if DayCycle.IsBloodMoon(workspace:GetServerTimeNow()) then
+					wanted = math.floor(wanted * ExtinctionConfig.Day.BloodMoonZombies + 0.5) -- Blutmond: noch mehr
+				end
 			end
 			local around = 0
 			for _, info in zombies do

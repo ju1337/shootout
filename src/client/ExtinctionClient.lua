@@ -1253,8 +1253,12 @@ function ExtinctionClient.Init()
 		if not hud.Enabled then
 			return
 		end
-		local clock = DayCycle.Clock(workspace:GetServerTimeNow())
-		if DayCycle.IsNight(clock) then
+		local serverTime = workspace:GetServerTimeNow()
+		local clock = DayCycle.Clock(serverTime)
+		if DayCycle.IsBloodMoon(serverTime) then
+			clockText.Text = "BLUTMOND  " .. DayCycle.Label(clock) .. "  ·  VIELE ZOMBIES"
+			clockText.TextColor3 = Color3.fromRGB(255, 70, 60)
+		elseif DayCycle.IsNight(clock) then
 			clockText.Text = "NACHT  " .. DayCycle.Label(clock) .. "  ·  MEHR ZOMBIES"
 			clockText.TextColor3 = Color3.fromRGB(150, 170, 255)
 		else

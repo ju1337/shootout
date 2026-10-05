@@ -41,4 +41,40 @@ check(DayCycle.Clock(12345) == 23 and DayCycle.IsNight(DayCycle.Clock(0)), "fest
 D.Fixed = nil
 check(D.NightZombies > 1 and D.NightSight > 1, "nachts mehr Zombies, die weiter sehen")
 
+-- Blutmond: jede BloodMoonEvery-te Nacht, nie am Tag
+local bloodNights, nightsSeen, dayBlood = 0, 0, false
+local lastDay = nil
+for k = 0, D.Length * D.BloodMoonEvery * 3, 30 do
+	local clock = DayCycle.Clock(k)
+	if DayCycle.IsBloodMoon(k) and not DayCycle.IsNight(clock) then
+		dayBlood = true
+	end
+	if DayCycle.IsNight(clock) and math.abs(clock - 0) < 0.4 then -- um Mitternacht zählen
+		local day = DayCycle.DayIndex(k)
+		if day ~= lastDay then
+			lastDay = day
+			nightsSeen += 1
+			if DayCycle.IsBloodMoon(k) then
+				bloodNights += 1
+			end
+		end
+	end
+end
+check(not dayBlood, "kein Blutmond am Tag")
+check(nightsSeen >= D.BloodMoonEvery * 3 - 1 and bloodNights >= 2 and bloodNights <= 4, "jede " .. D.BloodMoonEvery .. ". Nacht Blutmond ("
+	.. bloodNights .. " von " .. nightsSeen .. ")")
+-- Nebel nur morgens, an manchen Tagen
+local foggyDays, fogOutside = 0, false
+for day = 0, 49 do
+	local morning = (day * 24 + 7 - D.StartHour) / 24 * D.Length
+	local evening = (day * 24 + 15 - D.StartHour) / 24 * D.Length
+	if DayCycle.Fog(morning) > 0.5 then
+		foggyDays += 1
+	end
+	if DayCycle.Fog(evening) > 0 then
+		fogOutside = true
+	end
+end
+check(foggyDays >= 5 and foggyDays <= 30, "Nebel an manchen Morgen (" .. foggyDays .. "/50)")
+check(not fogOutside, "nachmittags kein Nebel")
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

@@ -228,6 +228,14 @@ ExtinctionConfig.Day = {
 	Dusk = 1.5,              -- Stunden Dämmerung am Abend und am Morgen
 	NightZombies = 1.6,      -- so viel mehr Zombies pro Spieler (und auf dem Server) in der Nacht
 	NightSight = 1.35,       -- so viel weiter bemerken sie Spieler
+	-- Blutmond: jede BloodMoonEvery-te Nacht rotes Licht, noch mehr Zombies (zusätzlich ×BloodMoonZombies) und härtere Arten
+	BloodMoonEvery = 4,
+	BloodMoonZombies = 1.5,
+	BloodMoonKindWeights = { Walker = 40, Runner = 30, Screamer = 12, Brute = 18 },
+	-- Nebel: an FogChance der Tage liegt morgens (FogFrom bis FogTo) dichter Nebel
+	FogChance = 0.3,
+	FogFrom = 4.5,
+	FogTo = 10.5,
 }
 
 -- ---------- Aktivitäten auf der Karte (ActivityService, Teile "Act_<Art>" in Gruppe Activities) ----------

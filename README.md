@@ -65,7 +65,8 @@ Zonen, Lootdrops mit Countdown und der eigene Standort. Beim Betreten eines Orte
 **Tag und Nacht** (`src/shared/DayCycle.lua`, `ExtinctionConfig.Day`): ein Tag dauert 24 Minuten, davon etwa
 9 Minuten Nacht (blaues Mondlicht, dichter Dunst – Feuer und die wenigen Laternen sind dann die Lichter). Die Uhrzeit
 hängt an der Serverzeit, alle sehen dieselbe; Anzeige oben rechts. Nachts kommen mehr Zombies (×1,6) und sie sehen
-weiter.
+weiter. Jede **4. Nacht ist Blutmond**: rotes Licht, Ansage, noch einmal ×1,5 Zombies mit vielen Läufern, Schreiern und
+Brocken. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der

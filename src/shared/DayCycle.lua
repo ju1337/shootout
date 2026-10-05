@@ -41,6 +41,35 @@ function DayCycle.IsNight(clock)
 	return DayCycle.Darkness(clock) >= 0.5
 end
 
+-- Nummer des Tages (der Abend und die folgende Nacht gehören zum selben Tag)
+function DayCycle.DayIndex(serverTime)
+	local hours = D.StartHour + (serverTime or 0) / D.Length * 24 - D.NightTo
+	return math.floor(hours / 24)
+end
+
+-- Blutmond: jede BloodMoonEvery-te Nacht
+function DayCycle.IsBloodMoon(serverTime)
+	if D.FixedBloodMoon ~= nil then
+		return D.FixedBloodMoon -- Tests
+	end
+	local clock = DayCycle.Clock(serverTime)
+	return DayCycle.IsNight(clock) and DayCycle.DayIndex(serverTime) % D.BloodMoonEvery == D.BloodMoonEvery - 1
+end
+
+-- Nebel 0..1 (an manchen Tagen morgens)
+function DayCycle.Fog(serverTime)
+	local clock = DayCycle.Clock(serverTime)
+	if clock < D.FogFrom or clock > D.FogTo then
+		return 0
+	end
+	local day = math.floor((D.StartHour + (serverTime or 0) / D.Length * 24) / 24)
+	if ((day * 7919 + 13) % 100) / 100 >= D.FogChance then
+		return 0
+	end
+	local t = (clock - D.FogFrom) / (D.FogTo - D.FogFrom)
+	return math.sin(t * math.pi) ^ 0.6
+end
+
 function DayCycle.Label(clock)
 	local hours = math.floor(clock)
 	local minutes = math.floor((clock - hours) * 60 + 1e-6)

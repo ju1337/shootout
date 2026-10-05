@@ -16,6 +16,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local DayCycle = require(Shared.DayCycle)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local ProgressService = require(ServerShared.ProgressService)
@@ -314,6 +315,21 @@ function Extinction.Init(modeManager)
 		elapsed = 0
 		for player, info in members do
 			updateZone(player, info)
+		end
+		-- Blutmond beginnt/endet: Ansage an alle in der offenen Welt
+		local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow())
+		if blood ~= Extinction.BloodMoon then
+			local started = blood and Extinction.BloodMoon ~= nil
+			local ended = not blood and Extinction.BloodMoon == true
+			Extinction.BloodMoon = blood
+			for player in members do
+				if started then
+					notify(player, "Banner", { Caption = "Nacht", Title = "BLUTMOND", Sub = "Die Toten sind heute Nacht zahlreich und hungrig",
+						Style = "Warning" })
+				elseif ended then
+					notify(player, "Banner", { Caption = "Morgen", Title = "DER BLUTMOND IST VORBEI", Sub = "Du hast überlebt", Style = "Good" })
+				end
+			end
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
