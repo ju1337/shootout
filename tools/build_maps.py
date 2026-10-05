@@ -1846,170 +1846,229 @@ MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64),
 
 
 def build_market():
-    """Markthalle (192 x 130): Eingang im Süden (Spawn, Tor zurück zum Hub). Zwei Gänge (A links, B rechts) mit je
-    zwei Standreihen, die zum Gang zeigen (4 x 8 = 32 Stände), dazwischen der Marktplatz mit Brunnen, Bänken,
-    Such-Terminal und zwei Tafeln (freie Stände, beliebteste Händler). Ein Stand ist ein Ordner "Stand_<n>" mit
-    Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client), sechs Ausstellplätzen ("Display1".."Display6":
-    Mitte des Skins, LookVector zum Gang), dem Prompt-Punkt vor der Theke ("Prompt") und dem Platz hinter der Theke
-    ("OwnerSpot"). Besitzer, Name und Angebote setzt der Server als Attribute an den Ordner. Der Client beschreibt
-    außerdem die Parts "OverviewBoard" und "TopBoard" und hängt an "SearchTerminal" ein E-Prompt."""
+    """Markt als Theater-Rund (Radius 86, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal, zwei
+    Kisten-Automaten, Tafeln, Tor zurück zum Hub). Darum drei breite Ränge, die nach außen stufenweise höher werden
+    (2,4 / 5,4 / 8,4 m); auf jedem Rang stehen die Stände mit der Vorderseite zur Mitte (12 + 16 + 20 = 48). Vier
+    Rampen (Himmelsrichtungen) führen vom Platz über alle Ränge nach oben, die Stufen dazwischen kann man auch
+    springen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client),
+    sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum Gang) und dem Prompt-Punkt vor der
+    Theke ("Prompt"). Besitzer, Name und Angebote setzt der Server als Attribute an den Ordner. Der Client beschreibt
+    außerdem "OverviewBoard" und "TopBoard" und hängt an "SearchTerminal" sowie "CrateWeapon" / "CrateAgent" ein
+    E-Prompt. Winkel phi: 0 = +x, 90 = +z (Norden)."""
     b = Builder(MARKET_ORIGIN)
     b.holo = True
-    floor, wall, steel, graphite = (52, 46, 42), (60, 56, 54), (78, 72, 68), (22, 25, 30)
+    floor, steel, graphite = (96, 78, 60), (78, 72, 68), (22, 25, 30)
     wood, wood_dark, top = (128, 92, 62), (94, 68, 48), (62, 54, 48)
     warm, rap = (255, 198, 128), (86, 214, 170)
-    stone, water = (176, 170, 160), (70, 150, 210)
-    x0, x1, z0, z1, H = -96, 96, -46, 84, 26
-    zc = (z0 + z1) / 2
-    aisles = (-64, 64)           # Mitte der beiden Gänge
-    columns = ((-88, 1), (-40, -1), (40, 1), (88, -1))  # (Mitte der Standreihe, 1 = Vorderseite nach +x)
-    rows_z = [-30 + 14 * k for k in range(8)]
-    plaza_z = 40
+    stone, plaza = (150, 142, 132), (58, 54, 56)
+    R0, R_WALL = 24, 86
+    tiers = ((28, 46, 2.4, 3), (46, 64, 5.4, 4), (64, 82, 8.4, 5))  # (innen, außen, Höhe, Stände je Viertel)
+    ramp_w = 10
 
-    b.ground(260, 220, (40, 40, 42), "Asphalt")
-    b.border(250, 210, 2, (60, 60, 65), "Metal", barrier=80)
+    def polar(r, phi_deg):
+        a = math.radians(phi_deg)
+        return r * math.cos(a), r * math.sin(a)
 
-    # ---------- Halle ----------
-    b.box("Ground", "MarketFloor", (x1 - x0, 0.2, z1 - z0), (0, 0.1, zc), floor, "WoodPlanks")
-    b.box("Walls", "WallSouth", (x1 - x0 + 4, H, 2), (0, H / 2, z0 - 1), wall, "Brick")
-    b.box("Walls", "WallNorth", (x1 - x0 + 4, H, 2), (0, H / 2, z1 + 1), wall, "Brick")
-    b.box("Walls", "WallWest", (2, H, z1 - z0), (x0 - 1, H / 2, zc), wall, "Brick")
-    b.box("Walls", "WallEast", (2, H, z1 - z0), (x1 + 1, H / 2, zc), wall, "Brick")
-    b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (34, 32, 30), "Metal")
-    for x in (x0 + 0.45, x1 - 0.45):
-        b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 11, zc), warm, "Neon", props={"Transparency": 0.55})
-    for i, z in enumerate(range(-38, 84, 12)):
-        b.box("Walls", "Truss", (x1 - x0, 1.2, 1), (0, H - 1, z), steel, "Metal")
-        for x in (-64, 0, 64):
-            lamp_children = []
-            if i % 2 == 0:  # nur jede zweite Reihe leuchtet wirklich (Leistung)
-                lamp_children = [{"Name": "Light", "ClassName": "PointLight",
-                                  "Properties": {"Range": 34, "Brightness": 1.0, "Color": rgb(*warm)}}]
-            b.add("Decor", "CeilingLamp", (1.6, 1.6, 1.6), (x, H - 3.2, z), warm, "Neon", props={"Shape": "Ball"},
-                  children=lamp_children)
-            b.box("Decor", "LampCord", (0.12, 2.4, 0.12), (x, H - 1.6, z), (20, 20, 22), "Metal")
-    for x in (-36, 36):  # Stützen zwischen Gängen und Marktplatz
-        for z in (-38, 6, 74):
-            b.box("Walls", "Pillar", (2, H, 2), (x, H / 2, z), steel, "Metal")
-            b.box("Decor", "PillarStrip", (2.1, 0.3, 2.1), (x, 3.2, z), rap, "Neon", props={"Transparency": 0.5})
+    def frame(cx, cz, y0, yaw):
+        """Ortsrahmen: Punkt (lx, ly, lz) im Rahmen -> Welt. Drehung um die Hochachse wie CFrame.Angles(0, yaw, 0)."""
+        c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+        return lambda lx, ly, lz: (cx + lx * c + lz * sn, y0 + ly, cz - lx * sn + lz * c)
 
-    # ---------- Süden: Spawn und Tor zurück zum Hub ----------
-    for x in (-6, -2, 2, 6):
-        b.spawn(x, z0 + 10, yaw=180)
+    b.ground(230, 230, (44, 42, 40), "Asphalt")
+    b.border(220, 220, 2, (60, 60, 65), "Metal", barrier=80)
+
+    # ---------- Ringe (Platz, Ränge, Außenmauer) aus Segmenten ----------
+    def ring(group, name, r_in, r_out, y0, height, color, material, n=72, **kw):
+        step = 360.0 / n
+        rm = (r_in + r_out) / 2
+        length = 2 * r_out * math.tan(math.radians(step / 2)) + 0.4
+        for k in range(n):
+            phi = (k + 0.5) * step
+            x, z = polar(rm, phi)
+            b.box(group, name, (r_out - r_in, height, length), (x, y0 + height / 2, z), color, material, angles=(0, -phi, 0), **kw)
+
+    b.cylinder("Ground", "PlazaRim", 2 * R0 + 1.6, 0.18, (0, 0.09, 0), rap, "Neon", props={"Transparency": 0.5})
+    b.cylinder("Ground", "PlazaFloor", 2 * R0, 0.24, (0, 0.12, 0), plaza, "Slate")
+    b.cylinder("Ground", "PlazaInlay", 34, 0.06, (0, 0.27, 0), rap, "Neon", props={"Transparency": 0.78})
+    b.cylinder("Ground", "PlazaInlayCore", 31, 0.07, (0, 0.28, 0), (46, 42, 44), "Slate")
+    for i, (r_in, r_out, h, _) in enumerate(tiers):
+        ring("Ground", "Tier%d" % (i + 1), r_in, r_out, 0, h, floor, "WoodPlanks")
+        ring("Decor", "TierEdge%d" % (i + 1), r_in - 0.05, r_in + 0.35, h - 0.05, 0.12, rap, "Neon", n=48,
+             props={"Transparency": 0.35})
+    ring("Walls", "OuterWall", R_WALL - 3, R_WALL, 0, 16, (70, 60, 52), "Brick")
+    ring("Walls", "OuterWallCap", R_WALL - 3.4, R_WALL + 0.4, 16, 0.8, steel, "Metal", n=48)
+
+    # ---------- Wege: vier Rampen über alle Ränge ----------
+    def slope(name, phi, r0, y0, r1, y1, color=(150, 138, 118), material="Concrete"):
+        """Schräge Fläche in Richtung phi von (r0, y0) nach (r1, y1), Oberkante läuft genau durch beide Punkte."""
+        length = math.hypot(r1 - r0, y1 - y0)
+        tilt = math.degrees(math.atan2(y1 - y0, r1 - r0))
+        x, z = polar((r0 + r1) / 2, phi)
+        b.box("Ground", name, (length, 0.6, ramp_w), (x, (y0 + y1) / 2 - 0.3 * math.cos(math.radians(tilt)), z), color, material,
+              angles=(0, -phi, tilt))
+
+    def flat_path(name, phi, r0, r1, y):
+        x, z = polar((r0 + r1) / 2, phi)
+        b.box("Ground", name, (r1 - r0, 0.12, ramp_w), (x, y + 0.04, z), (150, 138, 118), "Concrete", angles=(0, -phi, 0))
+
+    for phi in (0, 90, 180, 270):
+        slope("RampPlaza", phi, R0 - 0.5, 0.24, 28, 2.4)
+        flat_path("PathTier1", phi, 28, 39, 2.4)
+        slope("RampTier1", phi, 39, 2.4, 46, 5.4)
+        flat_path("PathTier2", phi, 46, 57, 5.4)
+        slope("RampTier2", phi, 57, 5.4, 64, 8.4)
+        flat_path("PathTier3", phi, 64, 82, 8.4)
+        # leuchtende Randstreifen an den Rampen
+        for side in (-1, 1):
+            for r0, y0, r1, y1 in ((28, 2.4, 39, 2.4), (39, 2.4, 46, 5.4), (46, 5.4, 57, 5.4), (57, 5.4, 64, 8.4), (64, 8.4, 82, 8.4)):
+                length = math.hypot(r1 - r0, y1 - y0)
+                tilt = math.degrees(math.atan2(y1 - y0, r1 - r0))
+                a = math.radians(phi)
+                mx, mz = polar((r0 + r1) / 2, phi)
+                ox, oz = -math.sin(a) * side * (ramp_w / 2 - 0.2), math.cos(a) * side * (ramp_w / 2 - 0.2)
+                b.box("Decor", "PathStrip", (length, 0.1, 0.3), (mx + ox, (y0 + y1) / 2 + 0.12, mz + oz), rap, "Neon",
+                      angles=(0, -phi, tilt), props={"Transparency": 0.35})
+
+    # ---------- Platz in der Mitte ----------
+    # Spawns im Kreis um das Such-Terminal
+    for k in range(8):
+        x, z = polar(9.5, k * 45 + 22.5)
+        b.spawn(x, z, yaw=k * 45 + 22.5 + 90)
+    # Such-Terminal: Säule mit Bildschirm obenauf und vier Schildern rundherum
+    b.cylinder("Decor", "KioskColumn", 4.6, 3.6, (0, 1.9, 0), (30, 32, 38), "Metal")
+    b.cylinder("Decor", "KioskTrim", 5.0, 0.2, (0, 3.75, 0), rap, "Neon", props={"Transparency": 0.3})
+    b.add("Decor", "SearchTerminal", (1.4, 3.6, 3.6), (0, 4.6, 0), rap, "Neon", props={"Transparency": 0.2, "Shape": "Cylinder"},
+          angles=(0, 0, 90),
+          children=[{"Name": "Light", "ClassName": "PointLight",
+                     "Properties": {"Range": 22, "Brightness": 1.0, "Color": rgb(*rap)}}])
+    for yaw, (sx_, sz_) in ((180, (0, 3.2)), (0, (0, -3.2)), (-90, (3.2, 0)), (90, (-3.2, 0))):
+        b.sign2("SearchSign", (4.4, 1.5, 0.2), (sx_, 6.4, sz_), "SUCHE", "SKINS FINDEN  ·  E", graphite, rap, (236, 239, 243),
+                angles=(0, yaw, 0), glow=rap)
+
+    # Kisten-Automaten (Viertel 1: Waffen links, Agenten rechts, Vorderseite zur Mitte)
+    def crate_machine(key, title, sub, phi, color):
+        cx, cz = polar(16, phi)
+        at = frame(cx, cz, 0.24, 90 - phi)  # lokal: -Z = Vorderseite zur Mitte
+        yaw = 90 - phi
+        b.box("Decor", "CrateBase" + key, (6, 0.8, 5), at(0, 0.4, 0), (30, 32, 38), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "CrateBody" + key, (5, 3.6, 4), at(0, 2.6, 0), color, "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "CrateLid" + key, (5.4, 0.7, 4.4), at(0, 4.75, 0), lighten(color, 0.25), "Metal", angles=(0, yaw, 0))
+        for dx in (-2.2, 2.2):
+            b.box("Decor", "CrateBand" + key, (0.4, 3.8, 4.2), at(dx, 2.6, 0), (30, 32, 38), "Metal", angles=(0, yaw, 0))
+        b.add("Decor", "Crate" + key, (3.2, 2, 0.3), at(0, 2.8, -2.1), lighten(color, 0.4), "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.15},
+              children=[{"Name": "Light", "ClassName": "PointLight",
+                         "Properties": {"Range": 18, "Brightness": 1.1, "Color": rgb(*color)}}])
+        b.sign2("CrateSign" + key, (7, 2.2, 0.2), at(0, 8, -2.0), title, sub, graphite, color, (236, 239, 243), angles=(0, yaw, 0),
+                glow=color)
+        for dx in (-3.2, 3.2):
+            b.box("Decor", "CratePost" + key, (0.3, 3.2, 0.3), at(dx, 6.4, -2.0), (30, 32, 38), "Metal", angles=(0, yaw, 0))
+
+    crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN  ·  E", 62, (212, 170, 80))
+    crate_machine("Agent", "AGENTEN-KISTE", "800 MÜNZEN  ·  E", 28, (96, 164, 214))
+
+    # Tafeln: freie Stände (Viertel 2), beliebteste Händler (Viertel 3), Vorderseite zur Mitte
+    for name, phi, width in (("OverviewBoard", 135, 20), ("TopBoard", 225, 16)):
+        cx, cz = polar(21, phi)
+        yaw = 90 - phi
+        at = frame(cx, cz, 0.24, yaw)
+        b.box("Decor", name, (width, 10, 0.5), at(0, 6.5, 0), graphite, "SmoothPlastic", angles=(0, yaw, 0))
+        b.box("Decor", name + "Frame", (width + 0.6, 0.3, 0.6), at(0, 11.65, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.2})
+        b.box("Decor", name + "Foot", (width + 0.6, 0.3, 0.6), at(0, 1.35, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.4})
+        for dx in (-width / 2 + 1, width / 2 - 1):
+            b.box("Decor", name + "Post", (0.6, 6.5, 0.6), at(dx, 3.25, 0.8), (40, 38, 38), "Metal", angles=(0, yaw, 0))
+
+    # Tor zurück zum Hub (Viertel 4)
+    gx, gz = polar(20.5, 315)
+    gate = frame(gx, gz, 0.24, 90 - 315)
+    gyaw = 90 - 315
     gw, gh = 12, 12
     for dx in (-gw / 2 - 1, gw / 2 + 1):
-        b.box("Decor", "GatePillar", (2, gh + 2, 2), (dx, (gh + 2) / 2, z0 + 0.6), (28, 31, 37), "Metal")
-        b.box("Decor", "GateStrip", (0.5, gh, 0.4), (dx, gh / 2 + 1, z0 + 1.8), (120, 185, 235), "Neon")
-    b.box("Decor", "GateHeader", (gw + 4, 2, 2), (0, gh + 2, z0 + 0.6), (28, 31, 37), "Metal")
-    b.box("Decor", "GateGlow", (gw, gh, 0.3), (0, gh / 2, z0 + 0.1), (120, 185, 235), "ForceField",
+        b.box("Decor", "GatePillar", (2, gh + 2, 2), gate(dx, (gh + 2) / 2, 0), (28, 31, 37), "Metal", angles=(0, gyaw, 0))
+        b.box("Decor", "GateStrip", (0.5, gh, 0.4), gate(dx, gh / 2 + 1, -1.2), (120, 185, 235), "Neon", angles=(0, gyaw, 0))
+    b.box("Decor", "GateHeader", (gw + 4, 2, 2), gate(0, gh + 2, 0), (28, 31, 37), "Metal", angles=(0, gyaw, 0))
+    b.box("Decor", "GateGlow", (gw, gh, 0.3), gate(0, gh / 2, 0.4), (120, 185, 235), "ForceField", angles=(0, gyaw, 0),
           props={"Transparency": 0.25, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight",
                      "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(120, 185, 235)}}])
-    b.sign2("ExitSign", (15, 4.6, 0.4), (0, gh + 4.6, z0 + 1.6), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
-            (120, 185, 235), (236, 239, 243), angles=(0, 180, 0), glow=(120, 185, 235))
-    b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), (0, 0.4, z0 + 2.6), (120, 185, 235), "Neon",
+    b.sign2("ExitSign", (15, 4.6, 0.4), gate(0, gh + 4.6, -1.2), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
+            (120, 185, 235), (236, 239, 243), angles=(0, gyaw, 0), glow=(120, 185, 235))
+    b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), gate(0, 0.15, -2.6), (120, 185, 235), "Neon", angles=(0, gyaw, 0),
           props={"CanCollide": False, "Transparency": 0.45})
 
-    # ---------- Gänge A (links) und B (rechts) ----------
-    for name, ax in zip("AB", aisles):
-        b.box("Ground", "AisleEdge" + name, (14.7, 0.03, 120.4), (ax, 0.215, 20), rap, "Neon", props={"Transparency": 0.6})
-        b.box("Ground", "Aisle" + name, (14, 0.05, 120), (ax, 0.245, 20), (40, 36, 34), "Fabric")
-        for z in (-24, 4, 32, 60):
-            b.box("Decor", "Planter", (3.4, 1.4, 3.4), (ax, 0.7, z), wood_dark, "WoodPlanks")
-            b.add("Decor", "Bush", (3.6, 3.6, 3.6), (ax, 2.6, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
-        b.sign2("AisleSign" + name, (14, 4.6, 0.4), (ax, 17, -34), "GANG " + name, "STÄNDE " + ("1 - 16" if name == "A" else "17 - 32"),
-                graphite, rap, (236, 239, 243), angles=(0, 0, 0), glow=rap)
-        b.box("Decor", "AisleSignCordL", (0.15, 6, 0.15), (ax - 6, 21.5, -34), (20, 20, 22), "Metal")
-        b.box("Decor", "AisleSignCordR", (0.15, 6, 0.15), (ax + 6, 21.5, -34), (20, 20, 22), "Metal")
-        b.floor_text("AisleLabel" + name, (10, 0.1, 4), (ax, 0.3, -36), "GANG " + name, rap, yaw=180)
+    # Bäume im Platz (Zierde) und Laternen am Rand
+    for k in range(12):
+        phi = 15 + k * 30
+        if min(phi % 90, 90 - phi % 90) < 18 or abs(phi - 315) < 22 or abs(phi - 45) < 28 or abs(phi - 135) < 33 or abs(phi - 225) < 33:
+            continue
+        x, z = polar(22.5, phi)
+        b.box("Decor", "Planter", (3.2, 1.2, 3.2), (x, 0.84, z), wood_dark, "WoodPlanks")
+        b.add("Decor", "Bush", (3.4, 3.4, 3.4), (x, 2.7, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+    for i, (r_in, r_out, h, _) in enumerate(tiers):
+        for k in range(12):
+            phi = 15 + k * 30
+            x, z = polar(r_in + 1.2, phi)
+            b.box("Decor", "LampPost", (0.3, 6.5, 0.3), (x, h + 3.25, z), (20, 20, 22), "Metal")
+            lamp = []
+            if k % 2 == 0:
+                lamp = [{"Name": "Light", "ClassName": "PointLight",
+                         "Properties": {"Range": 30, "Brightness": 1.0, "Color": rgb(*warm)}}]
+            b.add("Decor", "Lamp", (1.0, 1.0, 1.0), (x, h + 6.9, z), warm, "Neon", props={"Shape": "Ball"}, children=lamp)
 
-    # ---------- Marktplatz ----------
-    b.cylinder("Ground", "PlazaRing", 34, 0.06, (0, 0.24, plaza_z), rap, "Neon", props={"Transparency": 0.65})
-    b.cylinder("Ground", "PlazaDisc", 32, 0.08, (0, 0.25, plaza_z), (46, 41, 38), "Cobblestone")
-    b.cylinder("Decor", "FountainBasin", 17, 1.6, (0, 0.9, plaza_z), stone, "Marble")
-    b.cylinder("Decor", "FountainWater", 15, 1.5, (0, 1.05, plaza_z), water, "Neon", props={"Transparency": 0.45})
-    b.cylinder("Decor", "FountainColumn", 2, 7, (0, 4.2, plaza_z), stone, "Marble")
-    b.add("Decor", "FountainTop", (3.2, 3.2, 3.2), (0, 8.2, plaza_z), rap, "Neon", props={"Shape": "Ball"},
-          children=[{"Name": "Light", "ClassName": "PointLight",
-                     "Properties": {"Range": 30, "Brightness": 1.1, "Color": rgb(*rap)}}])
-    for k in range(8):  # Bänke im Kreis, Sitzfläche zur Mitte
-        a = math.radians(k * 45 + 22.5)
-        px, pz = 14 * math.sin(a), plaza_z + 14 * math.cos(a)
-        yaw = math.degrees(a)
-        b.box("Decor", "BenchSeat", (6, 0.5, 1.8), (px, 1.1, pz), wood, "WoodPlanks", angles=(0, yaw, 0))
-        ox, oz = 0.8 * math.sin(a), 0.8 * math.cos(a)
-        b.box("Decor", "BenchBack", (6, 1.2, 0.3), (px + ox, 1.9, pz + oz), wood_dark, "WoodPlanks", angles=(0, yaw, 0))
-        for side in (-2.4, 2.4):
-            lx, lz = px + side * math.cos(a), pz - side * math.sin(a)
-            b.box("Decor", "BenchLeg", (0.4, 0.9, 1.6), (lx, 0.45, lz), steel, "Metal", angles=(0, yaw, 0))
-    for sx_, sz_ in ((-27, -30), (27, -30), (-27, 76), (27, 76)):
-        b.box("Decor", "PlazaPlanter", (4, 1.4, 4), (sx_, 0.7, sz_), wood_dark, "WoodPlanks")
-        b.add("Decor", "PlazaBush", (4.2, 4.2, 4.2), (sx_, 2.8, sz_), (64, 112, 60), "Grass", props={"Shape": "Ball"})
+    # Banner an der Außenmauer (über den vier Rampen)
+    for phi in (0, 90, 180, 270):
+        cx, cz = polar(R_WALL - 3.3, phi)
+        at = frame(cx, cz, 0, 90 - phi)
+        b.sign2("MarketBanner", (30, 6.4, 0.4), at(0, 12, 0), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
+                graphite, rap, (236, 239, 243), angles=(0, 90 - phi, 0), glow=rap)
 
-    # Infotafeln gleich hinter dem Eingang: freie Stände (links), beliebteste Händler (rechts), dazwischen die Suche
-    for name, bx, bw in (("OverviewBoard", -19, 28), ("TopBoard", 19, 22)):
-        b.box("Decor", name, (bw, 8, 0.5), (bx, 6.8, 8), graphite, "SmoothPlastic")
-        b.box("Decor", name + "Frame", (bw + 0.6, 0.3, 0.6), (bx, 10.95, 8), rap, "Neon", props={"Transparency": 0.2})
-        b.box("Decor", name + "Foot", (bw + 0.6, 0.3, 0.6), (bx, 2.65, 8), rap, "Neon", props={"Transparency": 0.4})
-        for dx in (-bw / 2 + 1, bw / 2 - 1):
-            b.box("Decor", name + "Post", (0.6, 6.8, 0.6), (bx + dx, 3.4, 8.8), (40, 38, 38), "Metal")
-    b.box("Decor", "KioskBase", (3, 3.4, 2.6), (0, 1.7, 9), (30, 32, 38), "Metal")
-    b.box("Decor", "KioskTrim", (3.2, 0.2, 2.8), (0, 3.5, 9), rap, "Neon", props={"Transparency": 0.3})
-    b.add("Decor", "SearchTerminal", (2.6, 1.6, 0.3), (0, 4.4, 7.5), rap, "Neon", props={"Transparency": 0.25},
-          children=[{"Name": "Light", "ClassName": "PointLight",
-                     "Properties": {"Range": 14, "Brightness": 0.9, "Color": rgb(*rap)}}])
-    b.sign2("SearchSign", (6, 1.6, 0.2), (0, 6.4, 7.6), "SUCHE", "SKINS FINDEN  ·  E", graphite, rap, (236, 239, 243),
-            angles=(0, 0, 0), glow=rap)
-
-    # ---------- Norden: großes Schild ----------
-    b.sign2("MarketBanner", (48, 6.4, 0.4), (0, 15, z1 - 0.6), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
-            graphite, rap, (236, 239, 243), angles=(0, 0, 0), glow=rap)
-    b.box("Decor", "BannerStrip", (50, 0.3, 0.3), (0, 11.4, z1 - 0.4), rap, "Neon", props={"Transparency": 0.2})
-
-    # ---------- Stände: pro Standreihe acht, Vorderseite zum Gang ----------
+    # ---------- Stände: pro Rang und Viertel mehrere, Vorderseite zur Mitte ----------
     n = 0
-    for sx, f in columns:
-        yaw = -90 if f > 0 else 90  # Vorderseite (-Z) zum Gang
-        for sz in rows_z:
-            n += 1
-            g = "Stand_%d" % n
-            canopy = MARKET_CANOPIES[(n - 1) % len(MARKET_CANOPIES)]
-            light = lighten(canopy, 0.3)
-            b.box(g, "Base", (7.4, 0.4, 12.4), (sx, 0.2, sz), wood_dark, "WoodPlanks")
-            b.box(g, "BackWall", (0.8, 7.6, 12.4), (sx - f * 3.3, 4.2, sz), wood, "WoodPlanks")
-            b.box(g, "Shelf", (1.8, 0.35, 11.6), (sx - f * 2.5, 4.4, sz), wood_dark, "WoodPlanks")
-            b.box(g, "Counter", (1.8, 3.0, 11.2), (sx + f * 2.3, 1.9, sz), wood, "WoodPlanks")
-            b.box(g, "CounterTop", (2.3, 0.25, 11.6), (sx + f * 2.3, 3.52, sz), top, "Marble")
-            b.box(g, "CounterStrip", (0.15, 0.25, 11.3), (sx + f * 3.24, 2.9, sz), canopy, "Neon",
-                  props={"Transparency": 0.2})
-            for dz in (-5.9, 5.9):
-                b.box(g, "Post", (0.5, 8.8, 0.5), (sx + f * 3.3, 4.6, sz + dz), wood_dark, "Wood")
-            # Vordach: fällt zum Gang hin ab, vorn ein Volant in hellerer Farbe
-            b.box(g, "Canopy", (8.2, 0.3, 13), (sx, 9.4, sz), canopy, "Fabric", angles=(0, 0, -f * 10))
-            b.box(g, "Valance", (0.2, 1.0, 13), (sx + f * 4.05, 8.25, sz), light, "Fabric")
-            # Schild über dem Vordach (beschreibt der Client: Name oder Besitzer, FREI, Nummer)
-            b.holo_panel(g, "Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), angles=(0, yaw, 0))
-            b.holo_edges("Sign", (11, 2.2, 0.2), (sx + f * 3.9, 11.4, sz), (0, yaw, 0), lighten(canopy, 0.2))
-            # Laterne an jedem Pfosten (nur die mit Licht an jedem zweiten Stand, spart Leistung)
-            for dz in (-5.9, 5.9):
-                lantern = []
-                if n % 2 == 1:
-                    lantern = [{"Name": "Light", "ClassName": "PointLight",
-                                "Properties": {"Range": 10, "Brightness": 0.7, "Color": rgb(*warm)}}]
-                b.add(g, "Lantern", (0.7, 0.7, 0.7), (sx + f * 3.3, 7.6, sz + dz), warm, "Neon", props={"Shape": "Ball"},
-                      children=lantern)
-            # Ausstellplätze: drei auf der Theke, drei im Regal dahinter (Mitte des Skins)
-            for k, (dx, y, dz) in enumerate(((2.3, 4.5, -3.7), (2.3, 4.5, 0), (2.3, 4.5, 3.7),
-                                             (-2.5, 5.6, -3.7), (-2.5, 5.6, 0), (-2.5, 5.6, 3.7)), start=1):
-                b.add(g, "Display%d" % k, (1, 1, 1), (sx + f * dx, y, sz + dz), canopy, "SmoothPlastic",
-                      angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-            b.add(g, "Prompt", (1, 1, 1), (sx + f * 3.8, 2.6, sz), canopy, "SmoothPlastic", angles=(0, yaw, 0),
-                  props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-            b.add(g, "OwnerSpot", (1, 1, 1), (sx - f * 0.6, 0.9, sz), canopy, "SmoothPlastic", angles=(0, yaw, 0),
-                  props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-            # Nummer am Boden vor dem Stand
-            b.floor_text("StandNumber", (5, 0.1, 1.8), (sx + f * 6.2, 0.3, sz), "STAND %d" % n, lighten(canopy, 0.25),
-                         yaw=yaw + 180)
+    for r_in, r_out, h, per_quadrant in tiers:
+        rc = r_in + 13
+        gap = math.degrees(math.asin(12.2 / rc))
+        usable = 90 - 2 * gap
+        for quadrant in range(4):
+            for k in range(per_quadrant):
+                phi = quadrant * 90 + gap + (k + 0.5) * usable / per_quadrant
+                n += 1
+                cx, cz = polar(rc, phi)
+                psi = 180 - phi  # Drehung des Stand-Rahmens: lokal +x (Vorderseite) zeigt zur Mitte
+                at = frame(cx, cz, h, psi)
+                g = "Stand_%d" % n
+                canopy = MARKET_CANOPIES[(n - 1) % len(MARKET_CANOPIES)]
+                light = lighten(canopy, 0.3)
+                yaw = psi - 90  # für Teile, deren LookVector (-Z) zur Mitte zeigen soll
+                b.box(g, "Base", (7.4, 0.4, 12.4), at(0, 0.2, 0), wood_dark, "WoodPlanks", angles=(0, psi, 0))
+                b.box(g, "BackWall", (0.8, 7.6, 12.4), at(-3.3, 4.2, 0), wood, "WoodPlanks", angles=(0, psi, 0))
+                b.box(g, "Shelf", (1.8, 0.35, 11.6), at(-2.5, 4.4, 0), wood_dark, "WoodPlanks", angles=(0, psi, 0))
+                b.box(g, "Counter", (1.8, 3.0, 11.2), at(2.3, 1.9, 0), wood, "WoodPlanks", angles=(0, psi, 0))
+                b.box(g, "CounterTop", (2.3, 0.25, 11.6), at(2.3, 3.52, 0), top, "Marble", angles=(0, psi, 0))
+                b.box(g, "CounterStrip", (0.15, 0.25, 11.3), at(3.24, 2.9, 0), canopy, "Neon", angles=(0, psi, 0),
+                      props={"Transparency": 0.2})
+                for dz in (-5.9, 5.9):
+                    b.box(g, "Post", (0.5, 8.8, 0.5), at(3.3, 4.6, dz), wood_dark, "Wood", angles=(0, psi, 0))
+                # Vordach: fällt zur Mitte hin ab, vorn ein Volant in hellerer Farbe
+                b.box(g, "Canopy", (8.2, 0.3, 13), at(0, 9.4, 0), canopy, "Fabric", angles=(0, psi, -10))
+                b.box(g, "Valance", (0.2, 1.0, 13), at(4.05, 8.25, 0), light, "Fabric", angles=(0, psi, 0))
+                # Schild über dem Vordach (beschreibt der Client: Name oder Besitzer, FREI, Nummer)
+                b.holo_panel(g, "Sign", (11, 2.2, 0.2), at(3.9, 11.4, 0), angles=(0, yaw, 0))
+                b.holo_edges("Sign", (11, 2.2, 0.2), at(3.9, 11.4, 0), (0, yaw, 0), lighten(canopy, 0.2))
+                for dz in (-5.9, 5.9):
+                    lantern = []
+                    if n % 2 == 1:
+                        lantern = [{"Name": "Light", "ClassName": "PointLight",
+                                    "Properties": {"Range": 10, "Brightness": 0.7, "Color": rgb(*warm)}}]
+                    b.add(g, "Lantern", (0.7, 0.7, 0.7), at(3.3, 7.6, dz), warm, "Neon", props={"Shape": "Ball"}, children=lantern)
+                # Ausstellplätze: drei auf der Theke, drei im Regal dahinter (Mitte des Skins)
+                for kk, (dx, y, dz) in enumerate(((2.3, 4.5, -3.7), (2.3, 4.5, 0), (2.3, 4.5, 3.7),
+                                                  (-2.5, 5.6, -3.7), (-2.5, 5.6, 0), (-2.5, 5.6, 3.7)), start=1):
+                    b.add(g, "Display%d" % kk, (1, 1, 1), at(dx, y, dz), canopy, "SmoothPlastic", angles=(0, yaw, 0),
+                          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+                b.add(g, "Prompt", (1, 1, 1), at(3.8, 2.6, 0), canopy, "SmoothPlastic", angles=(0, yaw, 0),
+                      props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
+                # Nummer am Boden vor dem Stand
+                b.floor_text("StandNumber", (5, 0.1, 1.8), at(6.2, 0.3, 0), "STAND %d" % n, lighten(canopy, 0.25), yaw=psi + 90)
 
     b.save("Market.model.json")
 

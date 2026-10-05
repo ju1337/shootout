@@ -1043,14 +1043,17 @@ local function buildBoards(map)
 		local summary = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(0.97, 0.1), Size = UDim2.fromScale(0.45, 0.18),
 			Text = "", TextScaled = true, Font = F.Bold, TextColor3 = C.Rap, TextXAlignment = Enum.TextXAlignment.Right }, back)
 		local grid = make("Frame", { Position = UDim2.fromScale(0.03, 0.34), Size = UDim2.fromScale(0.94, 0.5), BackgroundTransparency = 1 }, back)
-		make("UIGridLayout", { CellSize = UDim2.fromScale(0.0553, 0.46), CellPadding = UDim2.fromScale(0.0075, 0.06),
-			SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 		local cells = {}
 		local ids = {}
 		for id in stands do
 			table.insert(ids, id)
 		end
 		table.sort(ids)
+		-- drei Zeilen, so viele Spalten wie nötig (bei 48 Ständen 16)
+		local columns = math.max(1, math.ceil(#ids / 3))
+		local gapX = 0.0075
+		make("UIGridLayout", { CellSize = UDim2.fromScale((1 - (columns - 1) * gapX) / columns - 0.0005, 0.3), CellPadding = UDim2.fromScale(gapX, 0.05),
+			SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 		for _, id in ids do
 			cells[id] = label({ LayoutOrder = id, Text = tostring(id), TextScaled = true, Font = F.Bold,
 				TextXAlignment = Enum.TextXAlignment.Center, BackgroundTransparency = 0.1, BackgroundColor3 = C.Card }, grid)
