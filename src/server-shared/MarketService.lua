@@ -2,9 +2,9 @@
 -- Stände in der Markthalle (wie die Trading Plaza in Pet Simulator / Sniper Arena):
 --   * Claim: Ein freier Stand gehört dem Spieler, solange er im Markt bleibt (einer pro Spieler). Er steht danach
 --     hinter seiner Theke.
---   * List / Unlist / SetPrice / Renew: bis zu RapConfig.StandSlots handelbare Skins zum selbst gewählten RAP-Preis
---     anbieten. Die Skins bleiben im Inventar, sind aber zurückgelegt (EconomyService, Schlüssel "Stand"). Ein
---     Angebot gilt RapConfig.ListingSeconds und läuft dann ab (Preis ändern oder Renew setzt die Zeit neu).
+--   * List / Unlist / SetPrice: bis zu RapConfig.StandSlots handelbare Skins zum selbst gewählten RAP-Preis
+--     anbieten. Die Skins bleiben im Inventar, sind aber zurückgelegt (EconomyService, Schlüssel "Stand"). Angebote
+--     laufen nicht ab: sie gelten, bis sie verkauft oder zurückgenommen werden oder der Besitzer den Markt verlässt.
 --   * Buy: Andere Spieler kaufen am Stand (nur in der Nähe und nur zum angezeigten Preis): Der Skin wandert zum
 --     Käufer, das RAP zum Besitzer (minus Marktgebühr nach Preis, RapConfig.FeeRate), beide Spielstände werden
 --     gespeichert und beide bekommen eine Meldung.
@@ -17,7 +17,7 @@
 --   * Release: Stand abgeben – auch von selbst, sobald der Besitzer den Markt verlässt (Runde, Hub) oder das Spiel.
 --     Seine Skins sind dann wieder frei, jemand anderes kann den Stand nehmen.
 -- Zustand für alle Clients als Attribute am Stand-Ordner (Maps.Market.Stand_<n>): Owner (UserId, 0 = frei),
--- OwnerName, StandName, Listings (JSON [{ Slot, Item, Price, Expires }]), Offers (JSON [{ Id, Slot, Item, Buyer,
+-- OwnerName, StandName, Listings (JSON [{ Slot, Item, Price }]), Offers (JSON [{ Id, Slot, Item, Buyer,
 -- BuyerName, Price, Expires }]). An der Map: PriceStats (JSON { [Skin] = { Avg, N, Last } }), TopSellers (JSON).
 -- Remotes: MarketAction (Client -> Server), MarketStatus (Server -> Client: Text, Erfolg).
 
@@ -44,7 +44,7 @@ MarketService.BuyRange = 22     -- und zum Kaufen
 local MIN_INTERVAL = 0.15       -- Anfragen pro Spieler höchstens so oft
 local TOP_SELLERS = 5
 
-local stands = {}     -- [Nummer] = { Id, Folder, Owner, Name, Listings = { [Platz] = { Item, Price, Expires } }, Offers = { ... } }
+local stands = {}     -- [Nummer] = { Id, Folder, Owner, Name, Listings = { [Platz] = { Item, Price } }, Offers = { ... } }
 local standOf = {}    -- [Player] = Stand
 local lastAction = {} -- [Player] = os.clock()
 local mapFolder = nil -- Maps.Market (für PriceStats und TopSellers)
@@ -77,7 +77,7 @@ local function publish(stand)
 	for slot = 1, RapConfig.StandSlots do
 		local listing = stand.Listings[slot]
 		if listing then
-			table.insert(list, { Slot = slot, Item = listing.Item, Price = listing.Price, Expires = listing.Expires })
+			table.insert(list, { Slot = slot, Item = listing.Item, Price = listing.Price })
 		end
 	end
 	stand.Folder:SetAttribute("Owner", stand.Owner and stand.Owner.UserId or 0)
@@ -261,28 +261,6 @@ function MarketService.PublishWatch(player)
 	publishWatch(player)
 end
 
--- Angebot ablaufen lassen, sobald seine Zeit um ist (verlängert sich, wenn der Besitzer es zwischendurch erneuert)
-local function watchExpiry(stand, slot, listing)
-	local wait = math.max(1, listing.Expires - os.time() + 1)
-	task.delay(wait, function()
-		if stand.Listings[slot] ~= listing then
-			return
-		end
-		if listing.Expires > os.time() then
-			watchExpiry(stand, slot, listing)
-			return
-		end
-		local owner = stand.Owner
-		stand.Listings[slot] = nil
-		dropOffers(stand, slot, nil, "Das Angebot ist abgelaufen.")
-		if owner then
-			EconomyService.Unreserve(owner, listing.Item, 1, MarketService.Key)
-			status(owner, itemName(listing.Item) .. " ist abgelaufen und zurück im Inventar. Biete es neu an.", false)
-		end
-		publish(stand)
-	end)
-end
-
 local function cleanName(text)
 	if typeof(text) ~= "string" then
 		return nil
@@ -371,10 +349,8 @@ function actions.List(player, itemId, price)
 	if not ProgressService.IsLoaded(player) or not EconomyService.Reserve(player, itemId, 1, MarketService.Key) then
 		return "Kein freies Stück von " .. item.Name .. " (liegt schon am Stand oder in einem Tausch).", false
 	end
-	local listing = { Item = itemId, Price = price, Expires = os.time() + RapConfig.ListingSeconds }
-	stand.Listings[slot] = listing
+	stand.Listings[slot] = { Item = itemId, Price = price }
 	publish(stand)
-	watchExpiry(stand, slot, listing)
 	-- Merkliste: wer diesen Skin gemerkt hat und im Markt ist, bekommt eine Meldung
 	for _, other in Players:GetPlayers() do
 		if other ~= player and inMarket(other) then
@@ -413,7 +389,6 @@ function actions.SetPrice(player, slot, price)
 		return "Preis zwischen " .. RapConfig.MinPrice .. " und " .. format(RapConfig.MaxPrice) .. " RAP.", false
 	end
 	listing.Price = price
-	listing.Expires = os.time() + RapConfig.ListingSeconds
 	-- Gegenangebote, die jetzt nicht mehr unter dem Preis liegen, fallen weg
 	local kept = {}
 	for _, offer in stand.Offers do
@@ -427,26 +402,6 @@ function actions.SetPrice(player, slot, price)
 	stand.Offers = kept
 	publish(stand)
 	return "Neuer Preis: " .. format(price) .. " RAP.", true
-end
-
--- Angebot verlängern: slot = Platz, nil = alle
-function actions.Renew(player, slot)
-	local stand = standOf[player]
-	if not stand then
-		return "Du hast keinen Stand.", false
-	end
-	local renewed = 0
-	for s, listing in stand.Listings do
-		if slot == nil or s == tonumber(slot) then
-			listing.Expires = os.time() + RapConfig.ListingSeconds
-			renewed += 1
-		end
-	end
-	if renewed == 0 then
-		return "Dieses Angebot gibt es nicht.", false
-	end
-	publish(stand)
-	return renewed == 1 and "Angebot verlängert." or "Alle Angebote verlängert.", true
 end
 
 -- Stand-Name (leer = zurücksetzen). Läuft durch den Textfilter, weil ihn alle lesen.

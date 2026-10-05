@@ -1,4 +1,4 @@
--- Markt, Teil 2: Gebühr nach Preis, Zeitlimit der Angebote (verlängern), Gegenangebote (annehmen, ablehnen, Ablauf,
+-- Markt, Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, Ablauf,
 -- Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (Durchschnitt, DataStore), Händler-Rangliste
 local failures = 0
 local function check(cond, msg)
@@ -136,32 +136,15 @@ for i = 1, RapConfig.WatchLimit + 2 do
 end
 act(bob, "Unwatch", "W_Lava")
 
--- Zeitlimit
-local now = os.time()
-local listing = HttpService:JSONDecode(stand(1):GetAttribute("Listings"))[1]
-check(listing.Expires == now + RapConfig.ListingSeconds, "Angebot läuft in " .. RapConfig.ListingSeconds .. " s ab")
-step(RapConfig.ListingSeconds / 2)
-check(select(2, act(alice, "Renew", 1)) == true, "Angebot verlängert")
-listing = listings(1)[1]
-check(listing.Expires == os.time() + RapConfig.ListingSeconds, "Ablaufzeit neu gesetzt")
-step(RapConfig.ListingSeconds / 2 + 5) -- die alte Frist ist um, das Angebot lebt trotzdem
-check(#listings(1) == 1, "verlängertes Angebot lebt nach der alten Frist")
-check(EconomyService.ReservedCount(alice, "W_Lava", "Stand") == 1, "weiter zurückgelegt")
-step(RapConfig.ListingSeconds / 2 + 5)
-check(#listings(1) == 0, "nach der neuen Frist abgelaufen")
-check(EconomyService.ReservedCount(alice, "W_Lava", "Stand") == 0, "Skin wieder frei")
-local status = lastRemote(alice, "MarketStatus")
-check(status and string.find(status[1], "abgelaufen", 1, true) ~= nil and status[2] == false, "Besitzer bekommt die Meldung")
-check(select(2, act(alice, "Renew")) == false, "ohne Angebote nichts zu verlängern")
--- Preis ändern setzt die Zeit auch neu
+-- Angebote laufen nicht ab
 act(alice, "List", "W_Kirsche", 300)
-step(RapConfig.ListingSeconds - 10)
-act(alice, "SetPrice", 1, 310)
-step(30)
-check(#listings(1) == 1 and listings(1)[1].Price == 310, "Preisänderung verlängert")
-act(alice, "Unlist", 1)
+step(86400)
+check(#listings(1) == 2 and EconomyService.ReservedCount(alice, "W_Kirsche", "Stand") == 1, "Angebote bleiben auch nach einem Tag")
+check(listings(1)[1].Expires == nil, "kein Ablaufdatum am Angebot")
+act(alice, "Unlist", 2)
 
 -- Gegenangebote
+act(alice, "Unlist", 1)
 act(alice, "List", "W_Lava", 1000)
 local slot = listings(1)[1].Slot
 enter(bob, Vector3.new(-1470, 3, -1516))
@@ -203,7 +186,6 @@ status = lastRemote(bob, "MarketStatus")
 check(status and string.find(status[1], "abgelaufen", 1, true) ~= nil, "Käufer erfährt den Ablauf")
 check(#listings(1) == 1, "das eigentliche Angebot lebt")
 -- Preisänderung macht niedrige Gebote hinfällig, hohe nicht
-act(alice, "SetPrice", slot, 1000) -- Zeit neu, Preis gleich
 act(bob, "Offer", 1, slot, 900)
 act(carl, "Offer", 1, slot, 600)
 check(#HttpService:JSONDecode(stand(1):GetAttribute("Offers")) == 2, "zwei Angebote von zwei Käufern")

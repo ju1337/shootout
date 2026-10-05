@@ -24,7 +24,6 @@ RapConfig.FeeTiers = {
 	{ Upto = 10000, Rate = 0.07 },
 	{ Upto = math.huge, Rate = 0.10 },
 }
-RapConfig.ListingSeconds = 600 -- so lange gilt ein Angebot, dann läuft es ab (Preis ändern oder VERLÄNGERN setzt neu)
 RapConfig.OfferSeconds = 45    -- so lange gilt ein Gegenangebot, bis der Besitzer antwortet
 RapConfig.MinOfferFraction = 0.5 -- Gegenangebote mindestens so hoch wie der halbe Preis
 RapConfig.MaxOffersPerStand = 6
