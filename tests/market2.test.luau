@@ -91,10 +91,10 @@ local function remoteCount(player, remote)
 end
 
 -- Gebühr nach Preis
-check(RapConfig.FeeRate(100) == 0.02 and RapConfig.FeeRate(500) == 0.02, "kleine Verkäufe: 2 %")
-check(RapConfig.FeeRate(1000) == 0.05 and RapConfig.FeeRate(2000) == 0.05, "mittlere Verkäufe: 5 %")
-check(RapConfig.FeeRate(9999) == 0.07 and RapConfig.FeeRate(20000) == 0.10, "teure Verkäufe: 7 % und 10 %")
-check(RapConfig.AfterFee(100) == 98 and RapConfig.AfterFee(20000) == 18000, "AfterFee nach Stufe")
+check(RapConfig.FeeRate(5) == 0.02 and RapConfig.FeeRate(50) == 0.02, "kleine Verkäufe (bis 50 RAP): 2 %")
+check(RapConfig.FeeRate(51) == 0.05 and RapConfig.FeeRate(1000) == 0.05, "mittlere Verkäufe (bis 1.000 RAP): 5 %")
+check(RapConfig.FeeRate(1001) == 0.07 and RapConfig.FeeRate(20000) == 0.07 and RapConfig.FeeRate(20001) == 0.10, "teure Verkäufe: 7 % und 10 %")
+check(RapConfig.AfterFee(50) == 49 and RapConfig.AfterFee(20001) == 20001 - 2000 and RapConfig.AfterFee(2) == 2 and RapConfig.Fee(30) == 1, "Gebühr gerundet: winzige Preise zahlen nichts")
 
 enter(alice, Vector3.new(-1514, 3, -1516))
 enter(bob, Vector3.new(-1512, 3, -1516))
@@ -113,7 +113,7 @@ check(stand(1):GetAttribute("StandName") == "", "Name zurückgesetzt")
 act(alice, "Name", "Lava-Laden")
 
 -- Merkliste: Bob merkt Lava, Carl nicht
-check(select(2, act(bob, "Watch", "W_Wald")) == false, "gebundener Skin nicht merkbar")
+check(select(2, act(bob, "Watch", "W_Rekrut")) == false, "gebundener Skin nicht merkbar")
 check(select(2, act(bob, "Watch", "W_Lava")) == true, "Lava gemerkt")
 check(select(2, act(bob, "Watch", "W_Lava")) == false, "doppelt merken geht nicht")
 check(bob:GetAttribute("MarketWatch") == '["W_Lava"]', "Merkliste als Attribut: " .. tostring(bob:GetAttribute("MarketWatch")))
@@ -246,6 +246,18 @@ check(ok == true, "Kauf zu 1.100: " .. tostring(message))
 stats = HttpService:JSONDecode(map:GetAttribute("PriceStats"))
 check(stats.W_Lava.N == 2 and stats.W_Lava.Avg == 1000 and stats.W_Lava.Last == 1100, "Durchschnitt der beiden Verkäufe: 1.000")
 step(1)
+-- Lebender RAP: Lava startet bei 3.200 und rückt nach jedem Verkauf ein Zehntel Richtung Preis (900, dann 1.100)
+local expectedLive = RapConfig.Values.W_Lava
+for _, soldFor in { 900, 1100 } do
+	expectedLive += (soldFor - expectedLive) / 10
+end
+check(math.abs(RapConfig.Live.W_Lava - expectedLive) < 1e-6, "lebender RAP nach zwei Verkäufen: " .. tostring(RapConfig.Live.W_Lava) .. " statt " .. tostring(expectedLive))
+check(RapConfig.Value("W_Lava") == math.floor(expectedLive + 0.5), "RapConfig.Value liefert den lebenden Wert")
+local liveAttr = HttpService:JSONDecode(game:GetService("ReplicatedStorage"):GetAttribute("RapLive"))
+check(math.abs(liveAttr.W_Lava - expectedLive) < 1e-6, "an die Clients repliziert (Attribut RapLive)")
+check(RapConfig.SellPrice("W_Lava") == math.floor(RapConfig.Values.W_Lava * RapConfig.SellRate), "Rückkauf ans System bleibt am Basiswert")
+local savedLive = SIM.DataStore("MarketHistory_v1").Data.rap
+check(savedLive and math.abs(savedLive.W_Lava - expectedLive) < 1e-6, "lebender RAP im DataStore gespeichert")
 local sellersTop = HttpService:JSONDecode(map:GetAttribute("TopSellers"))
 check(#sellersTop == 1 and sellersTop[1].Name == "Alice" and sellersTop[1].Sales == 2 and sellersTop[1].Volume == 2000, "Händler-Rangliste: Alice 2 Verkäufe, 2.000 RAP")
 -- ein zweiter Händler überholt

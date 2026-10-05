@@ -87,18 +87,26 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   dem Login-Kalender; gedreht wird nur im Hub in der Nähe des Rads (Server prüft). Den Knopf im Seitenmenü gibt
   es nicht mehr
 - **RAP – zweite Währung** (`src/shared/RapConfig.lua`, Server `src/server-shared/EconomyService.lua`): RAP bekommt
-  man nur über seltene Skins. Jeder seltene Skin (Waffe oder Agent) hat einen festen RAP-Wert; man kann ihn
-  - im **SHOP** unter **VERKAUFEN** ans System zurückverkaufen: sofort 70 % des Werts (`RapConfig.SellRate`),
+  man nur über Skins. Jeder handelbare Skin (Waffe oder Agent) hat einen RAP-Wert, **steil gestaffelt wie bei Sniper
+  Duels**: gewöhnliche Skins 1-10 RAP (Waldtarn 2, Wüste 3), seltene zweistellig (30-55), epische dreistellig (260-520,
+  Battle-Pass-Skin Saison-Neon 2.500), legendäre vier- bis fünfstellig (Lava 3.200 bis Galaxie 8.500, Kalender-Skin
+  18.000), Battle-Pass-Goldrausch 35.000, Saison-Agentin 45.000 und die Robux-Skins Royal 90.000 / Hologramm 150.000.
+  RAP heißt *Recent Average Price*: Der Wert startet beim Basiswert (`RapConfig.Values`) und rückt nach **jedem Verkauf im
+  Markt** ein Zehntel Richtung Verkaufspreis (`RAP + (Preis - RAP) / 10`, begrenzt auf 0,25- bis 8-fach des Basiswerts;
+  `RapConfig.NextLive`). Der lebende Wert liegt im DataStore `MarketHistory_v1` (Schlüssel `rap`, gilt für alle Server)
+  und kommt als Attribut `RapLive` an ReplicatedStorage zu allen Clients; alle Anzeigen (Shop, Markt, Suche, Tausch, Schild
+  über dem Kopf) und die Schnäppchen-Sortierung benutzen ihn. Man kann einen Skin
+  - im **SHOP** unter **VERKAUFEN** ans System zurückverkaufen: sofort 70 % des **Basiswerts** (`RapConfig.SellRate`, mindestens 1 RAP; der Rückkauf folgt dem lebenden RAP nicht, damit er sich nicht manipulieren lässt),
     erster Klick fragt nach, zweiter verkauft,
-  - im **MARKT** am eigenen Stand zum eigenen Preis anbieten (Marktgebühr nach Preis, `RapConfig.FeeTiers`: 2 % bis 500 RAP, 5 % bis 2.000, 7 % bis 10.000, darüber 10 %),
+  - im **MARKT** am eigenen Stand zum eigenen Preis anbieten (Marktgebühr nach Preis, `RapConfig.FeeTiers`: 2 % bis 50 RAP, 5 % bis 1.000, 7 % bis 20.000, darüber 10 %; gerundet, winzige Preise zahlen nichts),
   - mit anderen Spielern tauschen.
   Mit dem RAP kauft man im Markt Skins von anderen Spielern. Handelbare Skins kann man mehrfach besitzen
   (Duplikate aus Glücksrad, Login-Kalender, Wochen-Bonus, Robux-Paket oder Markt); gebunden – ohne RAP-Wert –
   bleiben gewöhnliche Skins, Belohnungen für Level, Prestige, Rang und Saison und die Meisterschafts-Tarnungen.
   Angezeigt wird RAP in der Lobby-Kopfzeile (neben den Münzen), auf der Spielerkarte im Hub, als Wert-Schild auf
   den Shop-Karten und **über dem Kopf jedes Spielers** (nur im Hub und im Markt): Guthaben + Wert seiner
-  handelbaren Skins, die Farbe zeigt die Stufe (grau, mint ab 1.000, blau ab 5.000, lila ab 15.000, gold ab
-  50.000, rot ab 150.000). Skins, die gerade an einem Stand oder in einem Tausch liegen, bleiben im Inventar,
+  handelbaren Skins, die Farbe zeigt die Stufe (grau, mint ab 100, blau ab 1.000, lila ab 10.000, gold ab
+  50.000, rot ab 250.000). Skins, die gerade an einem Stand oder in einem Tausch liegen, bleiben im Inventar,
   lassen sich aber nicht gleichzeitig verkaufen. Alte Spielstände (Besitz = true) zählen als 1 Stück.
   Admin-Panel: **+10.000 RAP** und **Handelbarer Skin** zum Testen
 - **Markt** (Theater-Rund mit 48 Ständen; Server `src/server-shared/MarketService.lua` + `src/server/Modes/Market.lua`,
@@ -401,7 +409,7 @@ am Commit:
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
-| `crate`, `crateui` | Kisten: getrennte Pools (Waffen/Agenten), Chancen, Öffnen (Ort, Münzen, Wartezeit), Duplikate und Münzen zurück, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
+| `crate`, `crateui` | Kisten: getrennte Pools (Waffen/Agenten, alle handelbar), steile Chancen (Waffen 62/28/8/2 %, Agenten 75/20/5 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
 | `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Art, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
 | `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |

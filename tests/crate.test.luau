@@ -31,7 +31,11 @@ check(#weaponPool >= 8 and #agentPool >= 8, "genug Skins in beiden Pools")
 for _, item in weaponPool do
 	check(item.Type == "Weapon" and Cosmetics.ForSale(item), "Waffen-Pool: nur kaufbare Waffen-Skins (" .. item.Id .. ")")
 end
+for _, item in weaponPool do
+	check(RapConfig.Tradeable(item.Id), "Waffen-Pool: handelbar mit RAP-Wert (" .. item.Id .. ")")
+end
 for _, item in agentPool do
+	check(RapConfig.Tradeable(item.Id), "Agenten-Pool: handelbar mit RAP-Wert (" .. item.Id .. ")")
 	check(item.Type == "Agent" and Cosmetics.ForSale(item), "Agenten-Pool: nur kaufbare Agenten-Skins (" .. item.Id .. ")")
 	check(not item.Pass and not item.Reward and not item.Robux, "keine Pass-, Belohnungs- oder Robux-Skins in der Kiste")
 end
@@ -158,7 +162,8 @@ for i = 1, 80 do
 	end
 	step(CrateConfig.Cooldown + 0.1)
 end
-check(duplicates > 0, "bei 80 Kisten kommen Duplikate vor (" .. duplicates .. ")")
+check(copies > 0, "bei 80 Kisten kommt dasselbe handelbare Stück mehrfach vor (" .. copies .. ")")
+check(duplicates == 0, "alle Kisten-Skins sind handelbar: nie ein Duplikat mit Münzen zurück (" .. duplicates .. ")")
 check(ProgressService.Get(alice).Coins == coinsBefore - spent + refunds, "Gesamtbilanz der Münzen")
 local weaponsOwned, agentsOwned = 0, 0
 for id in ProgressService.Get(alice).Owned do

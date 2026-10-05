@@ -76,7 +76,7 @@ local function lastRemote(player, remote)
 end
 
 -- Spieler: Alice verkauft, Bob kauft, Carl schaut zu
-store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = { W_Lava = 2, W_Wald = true, W_Kirsche = 6 }, Equipped = {} }
+store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = { W_Lava = 2, W_Rekrut = true, W_Kirsche = 6 }, Equipped = {} }
 store.Data.u2 = { XP = {}, Coins = 0, Rap = 2000, Owned = {}, Equipped = {} }
 store.Data.u3 = { XP = {}, Coins = 0, Rap = 50, Owned = {}, Equipped = {} }
 local alice, bob, carl = SIM.Join("Alice"), SIM.Join("Bob"), SIM.Join("Carl")
@@ -103,7 +103,7 @@ check(select(2, act(bob, "Claim", 1)) == false, "fremder Stand nicht beanspruchb
 -- Anbieten
 check(select(2, act(alice, "List", "W_Lava", 0)) == false, "Preis 0 ungültig")
 check(select(2, act(alice, "List", "W_Lava", "viel")) == false, "Preis muss eine Zahl sein")
-check(select(2, act(alice, "List", "W_Wald", 100)) == false, "gebundener Skin nicht handelbar")
+check(select(2, act(alice, "List", "W_Rekrut", 100)) == false, "gebundener Skin nicht handelbar")
 check(select(2, act(alice, "List", "W_Galaxie", 100)) == false, "nicht besessener Skin")
 check(select(2, act(alice, "List", "W_Lava", 900)) == true, "Lava 1 angeboten")
 check(select(2, act(alice, "List", "W_Lava", 950)) == true, "Lava 2 angeboten")

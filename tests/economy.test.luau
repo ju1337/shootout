@@ -43,18 +43,32 @@ end
 
 -- Werte: jeder handelbare Skin existiert, gebundene haben keinen Wert
 local Cosmetics = require("Cosmetics")
+local range = { Common = { math.huge, 0 }, Rare = { math.huge, 0 }, Epic = { math.huge, 0 }, Legendary = { math.huge, 0 } }
 for id, value in RapConfig.Values do
 	check(Cosmetics.Get(id) ~= nil, "RAP-Wert für unbekannten Skin " .. id)
 	check(type(value) == "number" and value > 0, "RAP-Wert positiv: " .. id)
 	local item = Cosmetics.Get(id)
-	check(item == nil or item.Rarity ~= "Common", "gewöhnliche Skins sind nicht handelbar: " .. id)
+	if item then
+		range[item.Rarity][1] = math.min(range[item.Rarity][1], value)
+		range[item.Rarity][2] = math.max(range[item.Rarity][2], value)
+	end
 end
-for _, id in { "W_Wald", "W_Rekrut", "W_PrestigeLegende", "W_SE_Champion" } do
+for _, id in { "W_Rekrut", "W_PrestigeLegende", "W_SE_Champion" } do
 	check(not RapConfig.Tradeable(id), id .. " ist gebunden")
 end
+-- Steile Staffelung wie bei Sniper Duels: gewöhnlich 1-10, danach jede Seltenheit klar über der vorigen
+check(range.Common[1] >= 1 and range.Common[2] <= 10, "gewöhnliche Skins: 1 bis 10 RAP (" .. range.Common[1] .. "-" .. range.Common[2] .. ")")
+check(range.Common[2] < range.Rare[1] and range.Rare[2] < range.Epic[1] and range.Epic[2] < range.Legendary[1],
+	"jede Seltenheit liegt über der vorigen")
+check(range.Rare[1] >= 11 and range.Rare[2] <= 99, "selten: zweistellig")
+check(range.Epic[1] >= 100, "episch: mindestens dreistellig")
+check(range.Legendary[1] >= 3000, "legendär: mindestens vierstellig")
+check(RapConfig.Values.W_Hologramm >= 100000 and RapConfig.Values.W_Wald <= 10, "Spanne von gewöhnlich bis Robux-Skin über vier Größenordnungen")
+check(RapConfig.Tradeable("W_Wald") and RapConfig.Value("W_Wald") == RapConfig.Values.W_Wald, "gewöhnliche Skins sind handelbar")
 check(RapConfig.Count({ X = true }, "X") == 1 and RapConfig.Count({ X = 3 }, "X") == 3 and RapConfig.Count({}, "X") == 0,
 	"Stückzahl aus true/Zahl/nichts")
 check(RapConfig.AfterFee(1000) == 950, "5 % Marktgebühr")
+check(RapConfig.FeeRate(50) == 0.02 and RapConfig.FeeRate(51) == 0.05 and RapConfig.FeeRate(20001) == 0.10, "Gebührenstufen")
 check(RapConfig.CleanPrice("12") == 12 and RapConfig.CleanPrice(0) == nil and RapConfig.CleanPrice(1 / 0) == nil
 	and RapConfig.CleanPrice(0 / 0) == nil and RapConfig.CleanPrice(2.9) == 2, "Preise werden geprüft")
 
@@ -65,19 +79,25 @@ step(2)
 check(ProgressService.IsLoaded(alice), "Profil geladen")
 check(ProgressService.ItemCount(alice, "W_Lava") == 1 and ProgressService.Owns(alice, "W_Lava"), "true zählt als 1 Stück")
 check(alice:GetAttribute("Rap") == 0, "ohne RAP-Feld: Guthaben 0")
-check(alice:GetAttribute("RapValue") == RapConfig.Values.W_Lava, "Wert der Skins: " .. tostring(alice:GetAttribute("RapValue")))
+check(alice:GetAttribute("RapValue") == RapConfig.Values.W_Lava + RapConfig.Values.W_Wald, "Wert der Skins: " .. tostring(alice:GetAttribute("RapValue")))
 
--- Gebundene Skins kauft das System nicht
-local message, ok = action(alice, "SellSkin", "W_Wald")
-check(ok == false and ProgressService.Owns(alice, "W_Wald"), "gewöhnlicher Skin nicht verkaufbar")
+-- Gebundene Skins kauft das System nicht, nicht besessene auch nicht
+local message, ok = action(alice, "SellSkin", "W_Rekrut")
+check(ok == false, "gebundener Skin nicht verkaufbar")
 message, ok = action(alice, "SellSkin", "W_Galaxie")
 check(ok == false, "nicht besessener Skin nicht verkaufbar")
+-- gewöhnlicher Skin: das System zahlt mindestens 1 RAP
+check(RapConfig.SellPrice("W_Wald") == 1 and RapConfig.SellPrice("W_Wueste") == 2, "Rückkauf gewöhnlicher Skins: 1 bis 2 RAP")
+message, ok = action(alice, "SellSkin", "W_Wald")
+check(ok == true and alice:GetAttribute("Rap") == 1 and not ProgressService.Owns(alice, "W_Wald"), "Waldtarn für 1 RAP verkauft: " .. tostring(message))
+ProgressService.SpendRap(alice, 1)
+alice:SetAttribute("Rap", ProgressService.GetRap(alice))
 
 -- Rückverkauf: Skin weg, abgelegt, RAP drauf, gespeichert
 message, ok = action(alice, "SellSkin", "W_Lava")
 local price = RapConfig.SellPrice("W_Lava")
 check(ok == true, "Lava verkauft: " .. tostring(message))
-check(price == math.floor(RapConfig.Values.W_Lava * RapConfig.SellRate), "70 % des Werts")
+check(price == math.floor(RapConfig.Values.W_Lava * RapConfig.SellRate) and price == 2240, "70 % des Werts")
 check(alice:GetAttribute("Rap") == price, "RAP gutgeschrieben: " .. tostring(alice:GetAttribute("Rap")))
 check(not ProgressService.Owns(alice, "W_Lava"), "Skin weg")
 check(ProgressService.Get(alice).Equipped["W:Rifle"] == nil, "verkaufter Skin abgelegt")
@@ -160,4 +180,26 @@ SIM.IsStudio = false
 
 if failures == 0 then
 	print("RAP-Wirtschaft: alles in Ordnung")
+end
+
+-- Lebender RAP (Recent Average Price): rückt nach jedem Verkauf ein Zehntel Richtung Preis, begrenzt, Basis bleibt
+local lava = RapConfig.Values.W_Lava
+check(RapConfig.Value("W_Lava") == lava, "ohne Verkäufe gilt der Basiswert")
+local nextValue = RapConfig.NextLive("W_Lava", lava * 2)
+check(math.abs(nextValue - lava * 1.1) < 1e-6, "Formel: RAP + (Preis - RAP) / 10 = " .. tostring(nextValue))
+check(math.abs(RapConfig.NextLive("W_Lava", lava * 2, lava * 1.1) - (lava * 1.1 + (lava * 2 - lava * 1.1) / 10)) < 1e-6, "zweiter Verkauf baut auf dem neuen Wert auf")
+check(RapConfig.NextLive("W_Lava", 10 ^ 9) == lava * RapConfig.LiveMax, "nach oben begrenzt")
+check(RapConfig.NextLive("W_Lava", 1) >= lava * RapConfig.LiveMin and RapConfig.NextLive("W_Lava", 1, lava * RapConfig.LiveMin) == lava * RapConfig.LiveMin,
+	"nach unten begrenzt")
+check(RapConfig.NextLive("W_Rekrut", 100) == nil, "gebundene Skins haben keinen RAP")
+RapConfig.SetLive({ W_Lava = lava * 1.5, W_Rekrut = 5, W_Wald = "x", Unbekannt = 3 })
+check(RapConfig.Value("W_Lava") == lava * 1.5 and RapConfig.Base("W_Lava") == lava, "lebender Wert ersetzt den Basiswert, Basis bleibt")
+check(RapConfig.Value("W_Rekrut") == nil and RapConfig.Value("W_Wald") == RapConfig.Values.W_Wald, "nur Zahlen für handelbare Skins")
+check(RapConfig.SellPrice("W_Lava") == math.floor(lava * RapConfig.SellRate), "Rückkauf ans System bleibt am Basiswert")
+RapConfig.SetLive({ W_Wald = 0.3 })
+check(RapConfig.Value("W_Wald") == 1, "mindestens 1 RAP")
+RapConfig.SetLive({})
+check(RapConfig.Value("W_Lava") == lava, "ohne lebende Werte wieder Basis")
+if failures == 0 then
+	print("RAP Staffelung und lebender Wert: in Ordnung")
 end

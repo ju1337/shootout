@@ -14,6 +14,8 @@
 --     angeboten, bekommen alle im Markt eine Meldung.
 --   * Preisverlauf: jeder Verkauf wird im DataStore "MarketHistory_v1" gezählt; Durchschnitt der letzten Tage liegt
 --     als Attribut PriceStats an der Markt-Map. TopSellers: Händler dieses Servers mit den meisten Verkäufen.
+--   * Lebender RAP: jeder Verkauf verschiebt den RAP des Skins ein Zehntel Richtung Verkaufspreis (RapConfig.NextLive,
+--     DataStore-Schlüssel "rap", Attribut RapLive an ReplicatedStorage für alle Clients).
 --   * Release: Stand abgeben – auch von selbst, sobald der Besitzer den Markt verlässt (Runde, Hub) oder das Spiel.
 --     Seine Skins sind dann wieder frei, jemand anderes kann den Stand nehmen.
 -- Zustand für alle Clients als Attribute am Stand-Ordner (Maps.Market.Stand_<n>): Owner (UserId, 0 = frei),
@@ -125,6 +127,30 @@ local function publishStats()
 		out[index] = { Name = top[index].Name, Sales = top[index].Sales, Volume = top[index].Volume }
 	end
 	mapFolder:SetAttribute("TopSellers", HttpService:JSONEncode(out))
+end
+
+-- Lebenden RAP an alle Clients (ReplicatedStorage, Attribut RapLive)
+local function publishLive()
+	ReplicatedStorage:SetAttribute("RapLive", HttpService:JSONEncode(RapConfig.Live))
+end
+
+-- Lebenden RAP nach einem Verkauf zu price nachziehen (sofort hier, im DataStore für alle Server)
+local function updateLive(itemId, price)
+	local value = RapConfig.NextLive(itemId, price)
+	if not value then
+		return
+	end
+	RapConfig.Live[itemId] = value
+	publishLive()
+	if historyStore then
+		task.spawn(function()
+			pcall(historyStore.UpdateAsync, historyStore, "rap", function(old)
+				old = type(old) == "table" and old or {}
+				old[itemId] = RapConfig.NextLive(itemId, price, old[itemId] or RapConfig.Base(itemId))
+				return old
+			end)
+		end)
+	end
 end
 
 -- Verkauf im Preisverlauf zählen (Zwischenspeicher sofort, DataStore im Hintergrund)
@@ -438,6 +464,7 @@ local function sell(stand, slot, buyer, price)
 	dropOffers(stand, slot, nil, "Der Skin ist inzwischen verkauft.")
 	publish(stand)
 	recordSale(listing.Item, price)
+	updateLive(listing.Item, price)
 	local earned = RapConfig.AfterFee(price)
 	local entry = sellers[owner.UserId] or { Name = owner.Name, Sales = 0, Volume = 0 }
 	sellers[owner.UserId] = entry
@@ -646,9 +673,15 @@ function MarketService.Init(map)
 		end
 	end
 	publishStats()
-	-- Preisverlauf aus dem DataStore (alle Server) dazunehmen
+	publishLive()
+	-- Preisverlauf und lebenden RAP aus dem DataStore (alle Server) dazunehmen
 	if historyStore then
 		task.spawn(function()
+			local liveOk, live = pcall(historyStore.GetAsync, historyStore, "rap")
+			if liveOk and type(live) == "table" then
+				RapConfig.SetLive(live)
+				publishLive()
+			end
 			local ok, saved = pcall(historyStore.GetAsync, historyStore, "sales")
 			if ok and type(saved) == "table" then
 				for id, sales in saved do

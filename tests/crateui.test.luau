@@ -106,7 +106,7 @@ local window = find(gui, function(d) return d.Name == "CrateWindow" end)
 check(window ~= nil, "Fenster offen")
 check(labelWith(window, "WAFFEN-KISTE") ~= nil and labelStarting(window, "WAFFEN-SKINS") ~= nil, "Titel: Waffen-Kiste")
 check(labelWith(window, "CHANCEN") ~= nil and labelWith(window, "DAS STECKT DRIN") ~= nil, "Chancen und Inhalt")
-check(labelStarting(window, "55.") ~= nil or labelStarting(window, "5") ~= nil, "Chancen in Prozent")
+check(labelWith(window, "62.0 %") ~= nil and labelWith(window, "2.0 %") ~= nil, "Chancen in Prozent (62 % gewöhnlich, 2 % legendär)")
 local pool = CrateConfig.Pool(CrateConfig.Get("Weapon"))
 for _, item in pool do
 	check(labelWith(window, UITheme.Upper(item.Name)) ~= nil, "im Inhalt: " .. item.Name)

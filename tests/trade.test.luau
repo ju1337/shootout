@@ -47,7 +47,7 @@ local function last(player, kind)
 	return list[#list]
 end
 
-store.Data.u1 = { XP = {}, Coins = 0, Rap = 1000, Owned = { W_Lava = 2, W_Wald = true }, Equipped = { ["W:Rifle"] = "W_Lava" } }
+store.Data.u1 = { XP = {}, Coins = 0, Rap = 1000, Owned = { W_Lava = 2, W_Rekrut = true }, Equipped = { ["W:Rifle"] = "W_Lava" } }
 store.Data.u2 = { XP = {}, Coins = 0, Rap = 500, Owned = { W_Kalender = 1, A_Ghost_Nebel = 1 }, Equipped = {} }
 store.Data.u3 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
 store.Data.u4 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -88,7 +88,7 @@ check(state and state.Partner.Name == "Bob" and next(state.Mine.Items) == nil, "
 check(select(2, act(carl, "Request", alice.UserId)) == false, "wer tauscht, nimmt keine Anfrage an")
 
 -- Angebote
-check(select(2, act(alice, "AddItem", "W_Wald")) == false, "gebundener Skin nicht tauschbar")
+check(select(2, act(alice, "AddItem", "W_Rekrut")) == false, "gebundener Skin nicht tauschbar")
 check(select(2, act(alice, "AddItem", "W_Galaxie")) == false, "nicht besessener Skin")
 act(alice, "AddItem", "W_Lava")
 act(alice, "AddItem", "W_Lava")

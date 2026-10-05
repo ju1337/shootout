@@ -191,7 +191,7 @@ step(0.5)
 check(map.Stand_1:GetAttribute("StandName") == "Alices Shop", "Stand-Name am Stand")
 local sign = playerGui:FindFirstChild("StandSign1")
 check(sign ~= nil and sign.Main.Text == "ALICES SHOP", "Schild zeigt den Namen")
-check(labelStarting(window, "Marktgebühr: 2 % bis 500 RAP") ~= nil, "Gebührenstufen im Fenster")
+check(labelStarting(window, "Marktgebühr: 2 % bis 50 RAP") ~= nil, "Gebührenstufen im Fenster")
 -- Händler-Tafel
 local top = find(playerGui, function(d) return d.Name == "MarketTop" end)
 check(labelStarting(top, "1.  ALICE  ·  1 VERKAUF") ~= nil, "Händler-Tafel: Alice mit einem Verkauf")

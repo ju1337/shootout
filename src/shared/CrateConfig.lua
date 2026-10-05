@@ -3,8 +3,9 @@
 -- Münzen und gibt genau einen Skin aus dem Pool aller im Shop kaufbaren Skins ihrer Art (Cosmetics.ForSale). Erst wird
 -- die Seltenheit nach Gewicht gezogen (Weights; Seltenheiten ohne Skins fallen weg, der Rest wird neu gewichtet), dann
 -- ein Skin dieser Seltenheit gleichverteilt. Besitzt man einen gebundenen Skin schon, gibt es einen Teil seines
--- Shop-Preises als Münzen zurück (DuplicateRefund); handelbare Skins (mit RAP-Wert) landen als weiteres Stück im
--- Inventar und lassen sich im Markt verkaufen oder tauschen.
+-- Shop-Preises als Münzen zurück (DuplicateRefund); handelbare Skins (mit RAP-Wert, inzwischen alle Kisten-Skins)
+-- landen als weiteres Stück im Inventar und lassen sich im Markt verkaufen oder tauschen. Die Chancen fallen steil ab
+-- wie bei Sniper Duels: viel Gewöhnliches, selten Legendäres.
 -- Ablauf: Client schickt CrateAction("Open", Kisten-Id), der Server zieht, bucht und antwortet mit CrateResult:
 -- { Ok, Message, Crate, Item, Reel (Skin-Ids für die Rolle), Index (Platz des Gewinns in Reel), Status ("new" | "copy" |
 -- "duplicate"), Refund, Coins }. Die Rolle ist reine Show: der Gewinn steht beim Server schon fest.
@@ -16,9 +17,9 @@ local CrateConfig = {}
 
 CrateConfig.Crates = {
 	{ Id = "Weapon", Name = "WAFFEN-KISTE", Sub = "WAFFEN-SKINS", Type = "Weapon", Price = 450,
-		Color = Color3.fromRGB(212, 170, 80), Weights = { Common = 55, Rare = 30, Epic = 12, Legendary = 3 } },
+		Color = Color3.fromRGB(212, 170, 80), Weights = { Common = 62, Rare = 28, Epic = 8, Legendary = 2 } },
 	{ Id = "Agent", Name = "AGENTEN-KISTE", Sub = "AGENTEN-SKINS", Type = "Agent", Price = 800,
-		Color = Color3.fromRGB(96, 164, 214), Weights = { Rare = 70, Epic = 24, Legendary = 6 } },
+		Color = Color3.fromRGB(96, 164, 214), Weights = { Rare = 75, Epic = 20, Legendary = 5 } },
 }
 
 CrateConfig.RarityOrder = { "Common", "Rare", "Epic", "Legendary" }

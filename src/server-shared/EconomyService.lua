@@ -166,7 +166,7 @@ function EconomyService.Exchange(a, b, offerA, offerB, key, feeRate)
 	end
 	if rapB > 0 then
 		ProgressService.SpendRap(b, rapB)
-		ProgressService.AddRap(a, rapB - math.ceil(rapB * (feeRate or 0)))
+		ProgressService.AddRap(a, rapB - math.floor(rapB * (feeRate or 0) + 0.5)) -- wie RapConfig.Fee
 	end
 	task.spawn(ProgressService.SaveNow, a)
 	task.spawn(ProgressService.SaveNow, b)
