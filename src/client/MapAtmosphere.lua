@@ -3,7 +3,8 @@
 -- (aktuelle Map = Spieler-Attribut MapId, gesetzt von den Modi). Sonst gilt das normale Licht aus dem Projekt.
 --   "Space"    Nacht mit Sternen, kühles Umgebungslicht, kaum Dunst, stärkeres Leuchten (Neon)
 --   "Tropical" Mittagssonne, satte Farben, leichter heller Dunst (Rogue-Company-Stil)
---   "Wasteland" Ödland der offenen Welt (Extinction): später Nachmittag, staubiger Dunst, entsättigt
+--   "Wasteland" Ödland der offenen Welt (Extinction): staubiger Dunst, entsättigt, mit Tag und Nacht (DayCycle):
+--               die Uhrzeit läuft mit der Serverzeit, nachts blaues Mondlicht und dichterer Dunst (NIGHT)
 -- Wechsel werden kurz eingeblendet. ExposureCompensation bleibt dem Hub (HubLineup) überlassen.
 
 local Players = game:GetService("Players")
@@ -11,7 +12,10 @@ local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
+local RunService = game:GetService("RunService")
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Modes = require(Shared.Modes)
+local DayCycle = require(Shared.DayCycle)
 
 local player = Players.LocalPlayer
 
@@ -44,6 +48,15 @@ local PRESETS = {
 		Bloom = { Intensity = 0.35, Threshold = 1.5 },
 	},
 }
+
+-- Nachtwerte für "Wasteland" (zwischen Wasteland und NIGHT wird nach DayCycle.Darkness gemischt)
+local NIGHT = {
+	Lighting = { Brightness = 0.9, Ambient = Color3.fromRGB(40, 44, 60), OutdoorAmbient = Color3.fromRGB(64, 70, 98) },
+	Atmosphere = { Density = 0.44, Haze = 1.4, Glare = 0, Color = Color3.fromRGB(58, 64, 88), Decay = Color3.fromRGB(28, 30, 44) },
+	ColorCorrection = { Saturation = -0.32, Contrast = 0.16, TintColor = Color3.fromRGB(196, 208, 255) },
+	Bloom = { Intensity = 0.5, Threshold = 1.2 },
+}
+local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
 local TWEEN = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
 
@@ -82,6 +95,10 @@ local function apply(name)
 		return
 	end
 	current = name
+	if name == "Wasteland" and MapAtmosphere.Cycle then
+		MapAtmosphere.Cycle() -- Tag und Nacht setzen die Werte direkt
+		return
+	end
 	local preset = PRESETS[name] or defaults
 	local objects = targets()
 	for section, values in preset do
@@ -110,9 +127,47 @@ local function update()
 	apply(map and map:GetAttribute("Atmosphere") or nil)
 end
 
+local function mix(a, b, t)
+	if typeof(a) == "Color3" then
+		return a:Lerp(b, t)
+	end
+	return a + (b - a) * t
+end
+
+-- Tag und Nacht: Uhrzeit setzen und zwischen Tag- und Nachtwerten mischen (nur auf "Wasteland")
+local function cycle()
+	if current ~= "Wasteland" then
+		return
+	end
+	local clock = DayCycle.Clock(workspace:GetServerTimeNow())
+	local dark = DayCycle.Darkness(clock)
+	Lighting.ClockTime = clock
+	local objects = targets()
+	for section, values in PRESETS.Wasteland do
+		local object = objects[section]
+		local night = NIGHT[section]
+		if object and night then
+			for key, day in values do
+				if key ~= "ClockTime" and night[key] ~= nil then
+					object[key] = mix(day, night[key], dark)
+				end
+			end
+		end
+	end
+end
+MapAtmosphere.Cycle = cycle
+
 function MapAtmosphere.Init()
 	remember()
 	update()
+	local nextAt = 0
+	RunService.Heartbeat:Connect(function()
+		local now = os.clock()
+		if now >= nextAt then
+			nextAt = now + CYCLE_STEP
+			cycle()
+		end
+	end)
 	player:GetAttributeChangedSignal("MapId"):Connect(update)
 	player:GetAttributeChangedSignal("Mode"):Connect(update)
 end

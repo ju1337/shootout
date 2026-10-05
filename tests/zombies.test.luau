@@ -63,6 +63,7 @@ local ZombieService = require("ZombieService")
 InventoryService.Init()
 LootService.Init()
 require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
+require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
 Extinction.Init({ Join = function() end, Status = function() end })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -161,7 +162,7 @@ check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, 
 	.. ProgressService.Get(alice).Coins - coins)
 check(#workspace.ExtinctionLoot:GetChildren() == bags, "kein Beutel am Boden: die Beute steckt in der Leiche")
 local prompt = victim.HumanoidRootPart:FindFirstChild("CorpsePrompt")
-check(prompt ~= nil and prompt.ActionText == "Durchsuchen", "Leiche mit Beute hat E-Prompt Durchsuchen")
+check(prompt ~= nil and prompt.ActionText == "Aufheben" and prompt.HoldDuration == 0, "Leiche mit Beute: einmal E (Aufheben, ohne Halten)")
 check(victim:FindFirstChild("LootHighlight") ~= nil, "Leiche mit Beute leuchtet kurz auf")
 check(prompt and string.find(prompt.ObjectText, "Zombie", 1, true) ~= nil, "Prompt zeigt, was drinsteckt: " .. tostring(prompt and prompt.ObjectText))
 step(6)

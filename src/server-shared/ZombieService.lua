@@ -18,6 +18,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local DayCycle = require(Shared.DayCycle)
 local Damage = require(script.Parent.Damage)
 local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
@@ -360,11 +361,11 @@ local function attachCorpsePrompt(model, root, info, items)
 	info.Corpse = corpse
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "CorpsePrompt"
-	prompt.ActionText = "Durchsuchen"
+	prompt.ActionText = "Aufheben"
 	prompt.ObjectText = info.Name .. " · " .. LootService.Summary(items)
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
-	prompt.HoldDuration = 0.3
+	prompt.HoldDuration = 0 -- einmal E, kein Halten
 	prompt.MaxActivationDistance = CORPSE_RANGE
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = root
@@ -440,7 +441,8 @@ local function maxTotal()
 			end
 		end
 	end
-	return Z.MaxTotal + bonus
+	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
+	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) + 0.5) + bonus
 end
 
 -- kindName: "Walker" (Standard), "Runner" oder "Brute"
@@ -507,7 +509,8 @@ local function step(model, info, now)
 		end
 	end
 	if not target then
-		target = nearestTarget(root.Position, Z.SightRange)
+		local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
+		target = nearestTarget(root.Position, Z.SightRange * (night and ExtinctionConfig.Day.NightSight or 1))
 	end
 	info.Target = target
 	if target then
@@ -578,6 +581,9 @@ local function spawnRound()
 		if ok and root and count < maxTotal() then
 			local zone = options.RedzoneAt and options.RedzoneAt(root.Position)
 			local wanted = zone and math.floor(Z.PerPlayer * ExtinctionConfig.Redzone.PerPlayerFactor + 0.5) or Z.PerPlayer
+			if DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow())) then
+				wanted = math.floor(wanted * ExtinctionConfig.Day.NightZombies + 0.5) -- nachts mehr
+			end
 			local around = 0
 			for _, info in zombies do
 				if (info.Root.Position - root.Position).Magnitude <= Z.SpawnMax + 20 then

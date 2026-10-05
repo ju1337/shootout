@@ -68,11 +68,24 @@ end
 
 -- Oberfläche an einer Stelle: Material nach Höhe, Neigung und Wasser
 local CITY = Data.City or 0
+local PAVED = Data.Paved or {} -- { { x, z, Radius } } gepflasterte Ortskerne
 
 local function surfaceMaterial(x, z, h, slope)
 	if CITY > 0 and math.abs(x) <= CITY and math.abs(z) <= CITY then
 		return Enum.Material.Pavement -- Stadt: Pflaster unter Straßen und Gehwegen
-	elseif h < WATER - 0.6 then
+	end
+	for _, circle in PAVED do
+		local dx, dz = x - circle[1], z - circle[2]
+		if dx * dx + dz * dz <= circle[3] * circle[3] and h < Data.Flat + 0.3 then
+			-- Ortskern: Pflaster, am Rand mit Erde durchsetzt
+			local edge = math.sqrt(dx * dx + dz * dz) / circle[3]
+			if edge < 0.75 or math.noise(x / 18, z / 18, 1.7) > (edge - 0.75) * 3 - 0.2 then
+				return Enum.Material.Pavement
+			end
+			return Enum.Material.Ground
+		end
+	end
+	if h < WATER - 0.6 then
 		return Enum.Material.Mud
 	elseif h < WATER + 1.2 then
 		return Enum.Material.Sand

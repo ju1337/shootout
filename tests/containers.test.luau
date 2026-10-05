@@ -74,6 +74,10 @@ local RedzoneService = require("RedzoneService")
 InventoryService.Init()
 LootService.Init()
 RedzoneService.Init(map)
+-- Standard: abgeschaltet (keine Beute am Boden) – dann entsteht keine einzige Kiste
+ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
+check(#ContainerService.Spots() == 0, "Kisten sind standardmäßig aus")
+ExtinctionConfig.Containers.Enabled = true
 ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }

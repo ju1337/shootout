@@ -78,6 +78,7 @@ local manager = {
 	end,
 }
 require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
+require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
 Extinction.Init(manager)
 
 local function bagOf(player)

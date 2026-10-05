@@ -26,6 +26,7 @@ local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local GunModels = require(Shared.GunModels)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
+local DayCycle = require(Shared.DayCycle)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -1182,6 +1183,24 @@ function ExtinctionClient.Init()
 		TextXAlignment = Enum.TextXAlignment.Center }, mapButton)
 	mapButton.Activated:Connect(function()
 		ExtinctionMap.Toggle()
+	end)
+	-- Uhrzeit (Tag und Nacht, DayCycle) links neben dem Kartenknopf
+	local clockText = label({ Name = "Clock", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 30),
+		Size = UDim2.fromOffset(260, 30), Text = "", TextSize = 15, Font = F.Bold, TextColor3 = C.Text,
+		TextXAlignment = Enum.TextXAlignment.Right }, root)
+	UITheme.Outline(clockText)
+	RunService.Heartbeat:Connect(function()
+		if not hud.Enabled then
+			return
+		end
+		local clock = DayCycle.Clock(workspace:GetServerTimeNow())
+		if DayCycle.IsNight(clock) then
+			clockText.Text = "NACHT  " .. DayCycle.Label(clock) .. "  ·  MEHR ZOMBIES"
+			clockText.TextColor3 = Color3.fromRGB(150, 170, 255)
+		else
+			clockText.Text = "TAG  " .. DayCycle.Label(clock)
+			clockText.TextColor3 = C.Text
+		end
 	end)
 	-- Controller: △ (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
 	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = { Enum.KeyCode.ButtonY } }

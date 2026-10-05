@@ -1,5 +1,6 @@
 -- Minimap (ModuleScript, nur Client)
--- Runde Minimap oben links wie bei Rogue Company. Sie dreht sich mit der Kamera (Blickrichtung = oben)
+-- Runde Minimap oben links wie bei Rogue Company. Maps können weiter rauszoomen (Attribut MinimapRange) und nur
+-- bestimmte Gruppen zeichnen (MinimapFolders); die offene Welt zeigt die Safe Zone und rote Zonen als Punktkreise. Sie dreht sich mit der Kamera (Blickrichtung = oben)
 -- und zeigt den Grundriss der aktuellen Map (Böden, Wände, Deckung aus den Parts der Map),
 -- Teamkollegen (Cyan, am Boden orange), Gegner nur kurz, wenn sie schießen oder markiert sind (rot),
 -- Pings (gelb) und die Ziele (A/B) – Ziele außerhalb der Karte kleben am Rand.
@@ -25,14 +26,18 @@ local make = UITheme.Make
 local Minimap = {}
 
 local SIZE = 200              -- Durchmesser in Design-Einheiten
-local RANGE = 75              -- Studs von der Mitte bis zum Rand
+local DEFAULT_RANGE = 75      -- Studs von der Mitte bis zum Rand (Maps können mit dem Attribut MinimapRange weiter rauszoomen)
+local RANGE = DEFAULT_RANGE
 local K = 1 / (2 * RANGE)     -- Studs -> Anteil der Kartenbreite
 local STRIP = 2               -- Flächen am Kreisrand werden in so breite Streifen (Studs) zerlegt
+local CELL = 160              -- Rastergröße für die Suche nach Parts in der Nähe (große Maps)
+local ZONE_DOT = 9            -- Abstand der Punkte auf Zonengrenzen (Studs)
 local MOVE_UPDATE = 0.3       -- ab so viel Bewegung (Studs) wird der Zuschnitt neu gerechnet
 local DOT_MARGIN = 4          -- Punkte (Teamkollegen, Gegner, Pings) nur so weit innerhalb des Rands
 local SHOT_TIME = 2.5         -- so lange bleibt ein schießender Gegner sichtbar
 local PING_TIME = 5
-local SKIP_FOLDERS = { Nature = true, Objective = true } -- Bäume, Ziel-Parts (Ziele kommen als Rauten)
+local SKIP_FOLDERS = { Nature = true, Objective = true, Places = true, Redzones = true, Lakes = true, Loot = true, Zone = true }
+-- (Bäume, Ziel-Parts – Ziele kommen als Rauten –, unsichtbare Bereiche der offenen Welt; Zonen kommen als Punktkreise)
 
 local COLORS = {
 	Back = UITheme.Colors.Background,
@@ -165,7 +170,7 @@ function Minimap.Init(root)
 	-- Rand, Blickrichtung (Pfeil in der Mitte), Norden am Rand
 	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, ring)
-	UITheme.Stroke(ring, Color3.fromRGB(150, 156, 164), 1.5, 0.45) -- dünner heller Rand
+	local ringStroke = UITheme.Stroke(ring, Color3.fromRGB(150, 156, 164), 1.5, 0.45) -- dünner heller Rand (rot in roten Zonen)
 	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, holder)
 	UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20),
 		Text = "▲", TextSize = 15, TextColor3 = Color3.new(1, 1, 1), TextStrokeTransparency = 0.3,
@@ -183,6 +188,24 @@ function Minimap.Init(root)
 	local shownMap = nil
 	local clippedAt = nil    -- Mittelpunkt (Vector3) beim letzten Zuschnitt
 
+	-- Zonen der offenen Welt (Safe Zone grün, rote Zonen rot) als Punktkreise; { Frame, X, Z }
+	local zoneDots = {}
+	local redzones = {} -- { X, Z, R }
+	local buckets, bigShapes = {}, {} -- Raster [cx][cz] = { shape } und Formen, die größer als eine Zelle sind
+	local activeShapes = {}           -- [shape] = true: Formen, die gerade Frames zeigen
+
+	local function zoneCircle(x, z, radius, color)
+		local n = math.max(12, math.floor(2 * math.pi * radius / ZONE_DOT))
+		for k = 1, n do
+			local a = 2 * math.pi * k / n
+			local px, pz = x + math.cos(a) * radius, z + math.sin(a) * radius
+			local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(px * K, pz * K),
+				Size = UDim2.fromOffset(4, 4), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 4, Visible = false }, layer)
+			make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, frame)
+			table.insert(zoneDots, { Frame = frame, X = px, Z = pz })
+		end
+	end
+
 	local function loadMap(map)
 		if map == shownMap then
 			return
@@ -190,12 +213,24 @@ function Minimap.Init(root)
 		shownMap = map
 		clippedAt = nil
 		layer:ClearAllChildren()
-		shapes = {}
+		shapes, buckets, bigShapes, activeShapes, zoneDots, redzones = {}, {}, {}, {}, {}, {}
+		RANGE = map and tonumber(map:GetAttribute("MinimapRange")) or DEFAULT_RANGE
+		K = 1 / (2 * RANGE)
+		STRIP = 2 * RANGE / DEFAULT_RANGE
 		if not map then
 			return
 		end
+		-- MinimapFolders (z. B. "Roads,Ground,Buildings"): nur diese Gruppen zeichnen (große Maps mit viel Schutt)
+		local only = nil
+		local list = map:GetAttribute("MinimapFolders")
+		if type(list) == "string" then
+			only = {}
+			for name in string.gmatch(list, "[^,%s]+") do
+				only[name] = true
+			end
+		end
 		for _, folder in map:GetChildren() do
-			if not SKIP_FOLDERS[folder.Name] and string.sub(folder.Name, 1, 6) ~= "Spawns" then
+			if not SKIP_FOLDERS[folder.Name] and string.sub(folder.Name, 1, 6) ~= "Spawns" and (not only or only[folder.Name]) then
 				for _, part in folder:GetDescendants() do
 					if part:IsA("BasePart") then
 						local color, z = styleOf(part, folder.Name)
@@ -204,61 +239,139 @@ function Minimap.Init(root)
 							if z == 4 then
 								width, depth = math.max(width, 1.2), math.max(depth, 1.2) -- Wände mindestens 1 Pixel
 							end
-							table.insert(shapes, { Rect = MinimapShapes.Rect(center.X, center.Z, width, depth, angle),
-								Color = color, Z = z, Frames = {}, Shown = {}, Count = 0 })
+							local shape = { Rect = MinimapShapes.Rect(center.X, center.Z, width, depth, angle),
+								Color = color, Z = z, Frames = {}, Shown = {}, Count = 0 }
+							table.insert(shapes, shape)
+							if math.max(width, depth) > CELL then
+								table.insert(bigShapes, shape)
+							else
+								local cx, cz = math.floor(center.X / CELL), math.floor(center.Z / CELL)
+								buckets[cx] = buckets[cx] or {}
+								buckets[cx][cz] = buckets[cx][cz] or {}
+								table.insert(buckets[cx][cz], shape)
+							end
 						end
 					end
 				end
 			end
 		end
+		-- Zonen: Safe Zone (Teil Zone.SafeZone) und rote Zonen (Karten-Attribut Redzones, JSON [{ X, Z, R }])
+		local zone = map:FindFirstChild("Zone")
+		local safe = zone and zone:FindFirstChild("SafeZone")
+		if safe and safe:IsA("BasePart") then
+			zoneCircle(safe.Position.X, safe.Position.Z, safe.Size.X / 2, Color3.fromRGB(112, 200, 120))
+		end
+		local ok, zones = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(map:GetAttribute("Redzones") or "[]")
+		end)
+		for _, info in ok and type(zones) == "table" and zones or {} do
+			if type(info) == "table" and tonumber(info.X) and tonumber(info.Z) and tonumber(info.R) then
+				zoneCircle(info.X, info.Z, info.R, Color3.fromRGB(226, 56, 48))
+				table.insert(redzones, { X = info.X, Z = info.Z, R = info.R })
+			end
+		end
 	end
 
-	-- Alle Rechtecke auf den Kreis um (px, pz) zuschneiden und die Frames anpassen (nur was sich ändert)
-	local function clipMap(px, pz)
-		for _, shape in shapes do
-			local count = MinimapShapes.Clip(shape.Rect, px, pz, RANGE, STRIP, pieces)
-			-- Fläche deckt den ganzen Kreis ab (z.B. Boden unter dem Spieler): ein runder Frame genügt
-			if count == 1 and pieces[1].Round then
-				local round = shape.RoundFrame
-				if not round then
-					round = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromScale(1, 1),
-						BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
-					make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, round)
-					shape.RoundFrame = round
-				end
-				round.Position = UDim2.fromScale(px * K, pz * K)
-				round.Visible = true
-				count = 0
-			elseif shape.RoundFrame then
-				shape.RoundFrame.Visible = false
+	local function clipShape(shape, px, pz)
+		local count = MinimapShapes.Clip(shape.Rect, px, pz, RANGE, STRIP, pieces)
+		-- Fläche deckt den ganzen Kreis ab (z.B. Boden unter dem Spieler): ein runder Frame genügt
+		if count == 1 and pieces[1].Round then
+			local round = shape.RoundFrame
+			if not round then
+				round = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromScale(1, 1),
+					BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
+				make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, round)
+				shape.RoundFrame = round
 			end
-			for i = 1, count do
-				local piece = pieces[i]
-				local frame = shape.Frames[i]
-				if not frame then
-					frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Rotation = shape.Rect.Angle,
-						BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
-					shape.Frames[i] = frame
-					shape.Shown[i] = {}
-				end
-				local shown = shape.Shown[i]
-				if shown.X ~= piece.X or shown.Z ~= piece.Z then
-					shown.X, shown.Z = piece.X, piece.Z
-					frame.Position = UDim2.fromScale(piece.X * K, piece.Z * K)
-				end
-				if shown.W ~= piece.W or shown.D ~= piece.D then
-					shown.W, shown.D = piece.W, piece.D
-					frame.Size = UDim2.fromScale(piece.W * K, piece.D * K)
-				end
-				if i > shape.Count then
-					frame.Visible = true
-				end
-			end
-			for i = count + 1, shape.Count do
-				shape.Frames[i].Visible = false
-			end
-			shape.Count = count
+			round.Position = UDim2.fromScale(px * K, pz * K)
+			round.Size = UDim2.fromScale(1, 1)
+			round.Visible = true
+			count = 0
+			activeShapes[shape] = true
+		elseif shape.RoundFrame then
+			shape.RoundFrame.Visible = false
 		end
+		for i = 1, count do
+			local piece = pieces[i]
+			local frame = shape.Frames[i]
+			if not frame then
+				frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Rotation = shape.Rect.Angle,
+					BackgroundColor3 = shape.Color, BorderSizePixel = 0, ZIndex = shape.Z }, layer)
+				shape.Frames[i] = frame
+				shape.Shown[i] = {}
+			end
+			local shown = shape.Shown[i]
+			if shown.X ~= piece.X or shown.Z ~= piece.Z then
+				shown.X, shown.Z = piece.X, piece.Z
+				frame.Position = UDim2.fromScale(piece.X * K, piece.Z * K)
+			end
+			if shown.W ~= piece.W or shown.D ~= piece.D then
+				shown.W, shown.D = piece.W, piece.D
+				frame.Size = UDim2.fromScale(piece.W * K, piece.D * K)
+			end
+			if i > shape.Count then
+				frame.Visible = true
+			end
+		end
+		for i = count + 1, shape.Count do
+			shape.Frames[i].Visible = false
+		end
+		shape.Count = count
+		if count > 0 then
+			activeShapes[shape] = true
+		end
+	end
+
+	-- Alle Rechtecke in der Nähe auf den Kreis um (px, pz) zuschneiden; was vorher sichtbar war und jetzt weit weg ist,
+	-- wird ausgeblendet. Große Maps durchsuchen nur die Rasterzellen um den Spieler.
+	local function clipMap(px, pz)
+		local seen = {}
+		local reach = math.ceil((RANGE + CELL / 2) / CELL)
+		local cx0, cz0 = math.floor(px / CELL), math.floor(pz / CELL)
+		for cx = cx0 - reach, cx0 + reach do
+			local column = buckets[cx]
+			if column then
+				for cz = cz0 - reach, cz0 + reach do
+					for _, shape in column[cz] or {} do
+						seen[shape] = true
+						clipShape(shape, px, pz)
+					end
+				end
+			end
+		end
+		for _, shape in bigShapes do
+			seen[shape] = true
+			clipShape(shape, px, pz)
+		end
+		for shape in activeShapes do
+			if not seen[shape] then
+				for i = 1, shape.Count do
+					shape.Frames[i].Visible = false
+				end
+				shape.Count = 0
+				if shape.RoundFrame then
+					shape.RoundFrame.Visible = false
+				end
+				activeShapes[shape] = nil
+			elseif shape.Count == 0 and not (shape.RoundFrame and shape.RoundFrame.Visible) then
+				activeShapes[shape] = nil
+			end
+		end
+		local limit = (RANGE - 3) * (RANGE - 3)
+		for _, dotInfo in zoneDots do
+			local dx, dz = dotInfo.X - px, dotInfo.Z - pz
+			dotInfo.Frame.Visible = dx * dx + dz * dz <= limit
+		end
+		-- in einer roten Zone: Rand der Minimap rot
+		local inside = false
+		for _, zone in redzones do
+			if (px - zone.X) ^ 2 + (pz - zone.Z) ^ 2 <= zone.R * zone.R then
+				inside = true
+			end
+		end
+		ringStroke.Color = inside and Color3.fromRGB(226, 56, 48) or Color3.fromRGB(150, 156, 164)
+		ringStroke.Transparency = inside and 0 or 0.45
+		ringStroke.Thickness = inside and 2.5 or 1.5
 	end
 
 	-- ---------- Punkte: Teamkollegen, Gegner, Pings ----------

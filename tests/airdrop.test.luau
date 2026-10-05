@@ -65,6 +65,7 @@ local HttpService = game:GetService("HttpService")
 local Inventory = require("Inventory")
 InventoryService.Init()
 LootService.Init()
+require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
 Extinction.Init({ Join = function() end, Status = function() end })
 ExtinctionConfig.Zombies.PerPlayer = 0 -- keine Zombies von selbst: nur die Begleiter zählen
 

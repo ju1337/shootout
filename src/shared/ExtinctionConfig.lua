@@ -14,7 +14,7 @@
 local ExtinctionConfig = {}
 
 ExtinctionConfig.ModeId = "Extinction"
-ExtinctionConfig.WorldSize = 2000    -- Kantenlänge der Welt in Studs (EXTINCTION_SIZE in tools/build_maps.py)
+ExtinctionConfig.WorldSize = 3200    -- Kantenlänge der Welt in Studs (EXTINCTION_SIZE in tools/build_maps.py)
 
 -- ---------- Inventar ----------
 ExtinctionConfig.HotbarSlots = 9     -- Plätze 1-9 = Tasten 1-9
@@ -186,7 +186,7 @@ ExtinctionConfig.LootTables = {
 	},
 }
 
--- Zombies lassen Beute in der Leiche: E durchsucht sie, alles geht direkt ins Inventar (passt etwas nicht mehr hinein,
+-- Zombies lassen Beute in der Leiche: einmal E (ohne Halten) hebt sie auf, alles geht direkt ins Inventar (passt etwas nicht mehr hinein,
 -- bleibt es in der Leiche). Chance pro Zombie je Art (ZombieKinds), Anzahl und Tabelle ebenfalls dort.
 ExtinctionConfig.ZombieDropChance = 0.55 -- Standardwert (ältere Aufrufe); die Art bestimmt mit Drop
 ExtinctionConfig.ZombieLoot = ExtinctionConfig.LootTables.Zombie
@@ -194,6 +194,7 @@ ExtinctionConfig.ZombieLoot = ExtinctionConfig.LootTables.Zombie
 -- ---------- Lagerkisten in der Welt (Teile "Spot_<Art>" in Gruppe Loot) ----------
 -- Jede Art hat eine Beute-Tabelle (Table) und eine Zahl Items (Items); Spots in roten Zonen ziehen immer aus Tier3.
 ExtinctionConfig.Containers = {
+	Enabled = false,      -- keine Beute am Boden: Beute gibt es von Zombies, Lootdrops und Ständen (true = Kisten wieder an)
 	Respawn = 480,        -- Sekunden, bis eine geleerte Kiste neu gefüllt ist
 	Kinds = {
 		Wood = { Name = "KISTE", Table = "Tier1", Items = { 1, 3 }, Size = Vector3.new(3.4, 2.4, 2.4), Color = Color3.fromRGB(128, 96, 62) },
@@ -213,6 +214,20 @@ ExtinctionConfig.Redzone = {
 	KindWeights = { Walker = 55, Runner = 33, Brute = 12 },
 	ContainerTable = "Tier3",
 	PvPDelay = 0,
+}
+
+-- ---------- Tag und Nacht (DayCycle) ----------
+-- Ein ganzer Tag dauert Length Sekunden (24 Minuten): hell von NightTo bis NightFrom, dazwischen Nacht (ca. 9 Minuten).
+-- Nachts kommen mehr Zombies (NightZombies) und sie sehen weiter (NightSight); Feuer und Laternen sind dann die
+-- einzigen Lichter.
+ExtinctionConfig.Day = {
+	Length = 1440,
+	StartHour = 9,           -- Uhrzeit bei Serverzeit 0
+	NightFrom = 20.5,
+	NightTo = 5.5,
+	Dusk = 1.5,              -- Stunden Dämmerung am Abend und am Morgen
+	NightZombies = 1.6,      -- so viel mehr Zombies pro Spieler (und auf dem Server) in der Nacht
+	NightSight = 1.35,       -- so viel weiter bemerken sie Spieler
 }
 
 -- ---------- Lootdrops (Versorgungsabwürfe) ----------
@@ -259,9 +274,9 @@ ExtinctionConfig.Zombies = {
 -- Arten: Health, Walk/Run (Tempo), Damage, Coins, Scale (Größe), Drop (Chance auf Beute), Items (Anzahl), Table (Beute-Tabelle),
 -- Eyes (Augenfarbe). Walker fehlt hier bewusst bei Werten, die in ExtinctionConfig.Zombies stehen (siehe ZombieService.Kind).
 ExtinctionConfig.ZombieKinds = {
-	Walker = { Name = "Zombie", Scale = 1, Drop = 0.55, Items = { 1, 1 }, Table = "Zombie", Coins = 2,
+	Walker = { Name = "Zombie", Scale = 1, Drop = 0.75, Items = { 1, 1 }, Table = "Zombie", Coins = 2,
 		Eyes = Color3.fromRGB(255, 40, 30) },
-	Runner = { Name = "Läufer", Health = 70, Walk = 6, Run = 13, Damage = 8, Coins = 4, Scale = 0.95, Drop = 0.65, Items = { 1, 2 },
+	Runner = { Name = "Läufer", Health = 70, Walk = 6, Run = 13, Damage = 8, Coins = 4, Scale = 0.95, Drop = 0.85, Items = { 1, 2 },
 		Table = "Zombie2", Eyes = Color3.fromRGB(255, 170, 30) },
 	Brute = { Name = "Brocken", Health = 320, Walk = 4, Run = 7.5, Damage = 24, Coins = 12, Scale = 1.3, Drop = 1, Items = { 2, 3 },
 		Table = "Tier2", Eyes = Color3.fromRGB(190, 70, 255) },

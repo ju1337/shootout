@@ -13,7 +13,7 @@ import os
 import random
 
 CELL = 16            # Rasterweite in Studs
-HALF = 1280          # Raster reicht von -HALF bis +HALF (die Welt ist 1800 groß, dahinter steigt der Bergrand)
+HALF = 1920          # Raster reicht von -HALF bis +HALF (die Welt ist 3200 groß, dahinter steigt der Bergrand)
 N = 2 * HALF // CELL  # Zellen pro Achse
 FLAT = -0.4          # Geländehöhe auf ebenen Flächen
 WATER = -3.0         # Wasserspiegel (nur die Seen liegen tiefer, sonst nirgends)
@@ -70,6 +70,7 @@ class Terrain:
         self.rects = []
         self.edge = 860   # ab hier (max(|x|, |z|)) steigt der Bergrand
         self.city = 0     # halbe Breite der Stadt (Terrain-Material Pflaster), 0 = keine
+        self.paved = []   # (x, z, Radius) gepflasterter Kreise (Terrain-Material Pflaster)
         self.grid = None
 
     # ----- Beschreibung -----
@@ -216,5 +217,7 @@ def write_lua(terrain, path=OUT):
             "\tFlat = %.1f,\n"
             "\tWater = %.1f,\n"
             "\tCity = %d,\n"
+            "\tPaved = { %s },\n"
             "\tText = table.concat({\n%s\n\t}),\n"
-            "}\n" % (N + 1, N + 1, CELL, HALF, HALF, MIN_H, MAX_H, CELL, HALF, N + 1, MIN_H, MAX_H, FLAT, WATER, terrain.city, body))
+            "}\n" % (N + 1, N + 1, CELL, HALF, HALF, MIN_H, MAX_H, CELL, HALF, N + 1, MIN_H, MAX_H, FLAT, WATER, terrain.city,
+               ", ".join("{ %d, %d, %d }" % p for p in terrain.paved), body))

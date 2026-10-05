@@ -3,7 +3,7 @@
 -- Medical, Ammo, Military, siehe ExtinctionConfig.Containers). An jedem Spot steht eine Kiste (LootService, Art "Crate") mit
 -- Beute aus der Tabelle der Art; E durchsucht sie, F nimmt alles. Ist sie leer, füllt sie sich nach Containers.Respawn
 -- Sekunden (±20 %) neu. Spots in einer roten Zone ziehen aus ExtinctionConfig.Redzone.ContainerTable (Tier3), Medical und
--- Ammo behalten ihre Tabelle. Spots stehen auf dem Boden (die Karte rechnet die Geländehöhe ein), darum keine Boden-Suche.
+-- Ammo behalten ihre Tabelle. Abschaltbar mit ExtinctionConfig.Containers.Enabled = false (Standard: aus). Spots stehen auf dem Boden (die Karte rechnet die Geländehöhe ein), darum keine Boden-Suche.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -45,6 +45,9 @@ end
 function ContainerService.Init(map, opts)
 	options = opts or {}
 	spots = {}
+	if C.Enabled == false then
+		return -- abgeschaltet: keine Beute am Boden (ExtinctionConfig.Containers.Enabled)
+	end
 	local folder = map:FindFirstChild("Loot")
 	for _, part in folder and folder:GetChildren() or {} do
 		local kind = string.match(part.Name, "^Spot_([A-Za-z]+)")

@@ -26,15 +26,10 @@ local RED = Color3.fromRGB(226, 56, 48)
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
-	Sidewalk = Color3.fromRGB(70, 72, 76),
-	Park = Color3.fromRGB(58, 84, 52),
-	Parking = Color3.fromRGB(52, 54, 58),
-	FuelLot = Color3.fromRGB(60, 62, 66),
-	PlazaFloor = Color3.fromRGB(76, 90, 78),
-	HospitalGround = Color3.fromRGB(96, 70, 70),
-	MilitaryGround = Color3.fromRGB(90, 70, 62),
-	IndustryGround = Color3.fromRGB(90, 70, 62),
+	Sidewalk = Color3.fromRGB(84, 86, 88),
+	Field = Color3.fromRGB(96, 80, 56),
 }
+local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = true, TowerStub = true, PrisonWall = true }
 
 local gui, board, layer, markers, arrow
 local built = false
@@ -67,9 +62,10 @@ end
 
 local function rect(parent, map, part, color, z)
 	local u, v = toMap(map, part.Position.X, part.Position.Z)
+	local right = part.CFrame.RightVector -- Straßen liegen schräg: Drehung um die Hochachse übernehmen
 	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(u, v),
 		Size = UDim2.fromScale(part.Size.X / WORLD, part.Size.Z / WORLD), BackgroundColor3 = color, BorderSizePixel = 0,
-		ZIndex = z }, parent)
+		Rotation = math.deg(math.atan2(-right.Z, right.X)), ZIndex = z }, parent)
 	return frame
 end
 
@@ -93,10 +89,23 @@ local function build(map)
 			rect(layer, map, part, color, 2)
 		end
 	end
+	local lakes = map:FindFirstChild("Lakes")
+	for _, part in lakes and lakes:GetChildren() or {} do
+		if part:IsA("BasePart") then
+			local frame = circle(layer, map, part.Position.X, part.Position.Z, part.Size.X / 2, Color3.fromRGB(46, 84, 110), 0, 2)
+			frame.Name = "Lake"
+		end
+	end
+	local buildings = map:FindFirstChild("Buildings")
+	for _, part in buildings and buildings:GetChildren() or {} do
+		if part:IsA("BasePart") and BUILDING_PARTS[part.Name] then
+			rect(layer, map, part, Color3.fromRGB(92, 88, 82), 2)
+		end
+	end
 	local roads = map:FindFirstChild("Roads")
 	for _, part in roads and roads:GetChildren() or {} do
 		if part:IsA("BasePart") and part.Name == "Road" then
-			rect(layer, map, part, Color3.fromRGB(118, 120, 124), 3)
+			rect(layer, map, part, Color3.fromRGB(128, 130, 134), 3)
 		end
 	end
 	local zone = map:FindFirstChild("Zone")
@@ -116,7 +125,7 @@ local function build(map)
 	for _, part in places and places:GetChildren() or {} do
 		if part:IsA("BasePart") and string.match(part.Name, "^Place_") and part.Name ~= "Place_Camp" then
 			local u, v = toMap(map, part.Position.X, part.Position.Z)
-			local big = part.Size.X >= 300
+			local big = part.Size.X >= 400
 			local title = label({ Name = part.Name, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(u, v),
 				Size = UDim2.fromOffset(180, 16), Text = UITheme.Upper(part:GetAttribute("Title") or string.sub(part.Name, 7)),
 				TextSize = big and 13 or 11, Font = big and F.Display or F.Bold,
@@ -205,7 +214,7 @@ function ExtinctionMap.Init()
 		Size = UDim2.fromOffset(SIZE + 24, SIZE + 64), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.05, BorderSizePixel = 0 }, root)
 	UITheme.Corner(panel, UITheme.Radius.Small)
 	UITheme.Stroke(panel, C.Border, 1, 0.2)
-	label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 26), Text = "KARTE · ÖDSTADT", TextSize = 22,
+	label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 26), Text = "KARTE · ÖDLAND", TextSize = 22,
 		Font = F.Display, TextColor3 = C.Primary }, panel)
 	label({ Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -28, 0, 26), Text = "N SCHLIESSEN", TextSize = 12,
 		Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, panel)
