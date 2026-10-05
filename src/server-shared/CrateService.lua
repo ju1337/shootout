@@ -8,7 +8,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
-local Cosmetics = require(Shared.Cosmetics)
 local CrateConfig = require(Shared.CrateConfig)
 local RapConfig = require(Shared.RapConfig)
 local ProgressService = require(script.Parent.ProgressService)
