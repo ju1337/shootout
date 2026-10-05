@@ -25492,6 +25492,148 @@
      }
     },
     {
+     "Name": "CrateIconWeapon",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.8,
+       1.8,
+       1.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1486.752,
+         9.84,
+         -1478.799
+        ],
+        "orientation": [
+         [
+          0.224951,
+          0.0,
+          0.97437
+         ],
+         [
+          0.688984,
+          0.707107,
+          -0.159064
+         ],
+         [
+          -0.688984,
+          0.707107,
+          0.159064
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8784,
+       0.7647,
+       0.5176
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.1
+     }
+    },
+    {
+     "Name": "CrateIconBandWeapon",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.0,
+       0.35,
+       2.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1486.752,
+         9.84,
+         -1478.799
+        ],
+        "orientation": [
+         [
+          0.224951,
+          0.0,
+          0.97437
+         ],
+         [
+          0.688984,
+          0.707107,
+          -0.159064
+         ],
+         [
+          -0.688984,
+          0.707107,
+          0.159064
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1255,
+       0.149
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CrateBeamWeapon",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7,
+       2.2,
+       2.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1486.752,
+         6.64,
+         -1478.799
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.8314,
+       0.6667,
+       0.3137
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.8,
+      "CanCollide": false
+     }
+    },
+    {
      "Name": "CrateBaseAgent",
      "ClassName": "Part",
      "Properties": {
@@ -26077,6 +26219,148 @@
       "Transparency": 0.15,
       "CanCollide": false,
       "CanQuery": false
+     }
+    },
+    {
+     "Name": "CrateIconAgent",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       1.8,
+       1.8,
+       1.8
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1478.799,
+         9.84,
+         -1486.752
+        ],
+        "orientation": [
+         [
+          -0.224951,
+          0.0,
+          0.97437
+         ],
+         [
+          0.688984,
+          0.707107,
+          0.159064
+         ],
+         [
+          -0.688984,
+          0.707107,
+          -0.159064
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.5608,
+       0.749,
+       0.8863
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 0.1
+     }
+    },
+    {
+     "Name": "CrateIconBandAgent",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       2.0,
+       0.35,
+       2.0
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1478.799,
+         9.84,
+         -1486.752
+        ],
+        "orientation": [
+         [
+          -0.224951,
+          0.0,
+          0.97437
+         ],
+         [
+          0.688984,
+          0.707107,
+          0.159064
+         ],
+         [
+          -0.688984,
+          0.707107,
+          -0.159064
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.1176,
+       0.1255,
+       0.149
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "Name": "CrateBeamAgent",
+     "ClassName": "Part",
+     "Properties": {
+      "Anchored": true,
+      "Size": [
+       7,
+       2.2,
+       2.2
+      ],
+      "CFrame": {
+       "CFrame": {
+        "position": [
+         -1478.799,
+         6.64,
+         -1486.752
+        ],
+        "orientation": [
+         [
+          0.0,
+          -1.0,
+          0.0
+         ],
+         [
+          1.0,
+          0.0,
+          0.0
+         ],
+         [
+          0.0,
+          0.0,
+          1.0
+         ]
+        ]
+       }
+      },
+      "Color": [
+       0.3765,
+       0.6431,
+       0.8392
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Shape": "Cylinder",
+      "Transparency": 0.8,
+      "CanCollide": false
      }
     },
     {

@@ -1958,6 +1958,11 @@ def build_market():
               children=[{"Name": "Light", "ClassName": "PointLight",
                          "Properties": {"Range": 16, "Brightness": 1.0, "Color": rgb(*color)}}])
         b.sign2("CrateSign" + key, (5, 1.5, 0.2), at(0, 6.3, -2.0), title, sub, graphite, color, (236, 239, 243), angles=(0, yaw, 0))
+        # schwebende Kiste mit Lichtsäule: von weitem zu erkennen, welche Kiste das ist
+        b.box("Decor", "CrateIcon" + key, (1.8, 1.8, 1.8), at(0, 9.6, 0), lighten(color, 0.3), "Neon", angles=(45, yaw + 45, 0),
+              props={"Transparency": 0.1})
+        b.box("Decor", "CrateIconBand" + key, (2.0, 0.35, 2.0), at(0, 9.6, 0), (30, 32, 38), "Metal", angles=(45, yaw + 45, 0))
+        b.cylinder("Decor", "CrateBeam" + key, 2.2, 7, at(0, 6.4, 0), color, "Neon", props={"Transparency": 0.8, "CanCollide": False})
 
     crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN", 58, (212, 170, 80))
     crate_machine("Agent", "AGENTEN-KISTE", "800 MÜNZEN", 32, (96, 164, 214))
