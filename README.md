@@ -40,8 +40,17 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`: Straßenkreuz und Ringstraße, Kleinstadt im Osten, Tankstelle, Bauernhof, Militärbasis,
-Industrie, See, Wald und Felsen am Rand).
+`tools/build_maps.py`).
+
+**Die Welt** (1800 × 1800): echtes **Terrain** mit Hügeln, zwei Seen (Schwarzsee, Klarwasserteich) und einem Bergrand
+statt Mauer. Das Höhenfeld kommt aus `tools/extinction_terrain.py` (Raster 16 Studs, auch für Bäume, Felsen und Kisten
+benutzt) und steht in `src/server-shared/ExtinctionTerrainData.lua`; `ExtinctionTerrain.lua` baut daraus beim
+Serverstart Voxel-Terrain (Gras, Laub, Erde, Fels an Hängen, Sand am Ufer, Wasser) – bis dahin trägt der flache Boden
+der Karte, danach wird er abgesenkt (scheitert das Schreiben, bleibt er als Rückfall). Straßen und Orte sind eben.
+**Orte** (beim Betreten Banner mit dem Namen): Ödstadt (Häuserzeilen, Rathaus, Supermarkt, Brunnen), Tankstelle,
+Bauernhof, Polizeiwache, Wohnwagenpark „Sonnenblick“, Kirche mit Friedhof, Funkturm mit Bunker auf dem Hügel und die
+drei **roten Zonen** Militärbasis, Industriegebiet und Krankenhaus St. Marien. Dazwischen Wälder (Kiefern und
+Laubbäume), Felsen, Schilf an den Seen, Autowracks und Sperren an den Straßen.
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
@@ -62,12 +71,27 @@ Industrie, See, Wald und Felsen am Rand).
 - **Verlassen**: in der Safe Zone bleibt alles genau so angeordnet in der Tasche (gespeichert im Profil). Draußen
   kostet Verlassen die Tasche (im Menü erst nach einem zweiten Klick, beim Spiel-Verlassen sofort vor dem
   Speichern); fährt der Server herunter, verliert niemand etwas.
-- **Zombies** (`src/server-shared/ZombieService.lua`): spawnen nur um Spieler draußen, im weiteren Umkreis
-  (70-150 Studs, nicht auf Dächern, nicht nah an der Safe Zone), höchstens 7 pro Spieler und 70 auf dem Server.
-  Sie schlurfen herum, bemerken Spieler auf 90 Studs, rennen hin und schlagen zu; in die Safe Zone gehen sie
-  nicht. Pro Zombie nur 2 Münzen (Spieler bringen viel mehr), mit 35 % Chance ein Beutel mit einfacher Beute
-  (Verband, etwas Munition, selten Medikit, Pistole, Fahrrad oder Quad). Ohne Spieler draußen in der Nähe
-  verschwinden sie nach ein paar Sekunden.
+- **Zombies** (`src/server-shared/ZombieService.lua`): wenige und langsam – spawnen nur um Spieler draußen im
+  weiteren Umkreis (80-150 Studs, nicht auf Dächern, nicht im Wasser, nicht nah an der Safe Zone), höchstens 3 pro
+  Spieler und 30 auf dem Server. Sie schlurfen herum, bemerken Spieler erst auf 45 Studs und schlagen langsam zu; in
+  die Safe Zone gehen sie nicht. In roten Zonen gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
+  (schnell, wenig Leben) und **Brocken** (groß, viel Leben, harte Schläge, immer Beute).
+- **Zombie-Beute**: tote Zombies bleiben mit Beute 40 Sekunden liegen (leuchten). **E** durchsucht die Leiche und
+  legt die Beute **direkt ins Inventar** (passt nicht alles, bleibt der Rest liegen).
+- **Taschen und Kisten am Boden**: **E** öffnet das Fenster (einzeln nehmen), **F** nimmt alles auf einmal; das
+  Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
+- **Lagerkisten** (`ContainerService.lua`, Teile `Spot_<Art>` in der Gruppe Loot): über 90 Kisten in Häusern, Hallen
+  und im Gelände – Holzkiste, Werkzeugkiste, Sanitätskiste, Munitionskiste, Militärkiste mit eigener Beute.
+  Geleert füllt sich eine Kiste nach etwa 8 Minuten neu. In roten Zonen ziehen sie aus der besten Tabelle.
+- **Rote Zonen** (`RedzoneService.lua`, Teile `Redzone_<Name>`): roter Ring mit Warnschildern und Leuchtfeuer.
+  Drinnen gilt **PvP sofort**, Anzeige „ROTE ZONE · PVP AKTIV“ mit rotem Bildschirmrand, mehr und härtere Zombies,
+  bessere Beute.
+- **Lootdrops** (`AirdropService.lua`): 2,5 Minuten nach Serverstart, danach alle 7-11 Minuten eine Ansage
+  „VERSORGUNGSABWURF“ mit Fackel (Lichtsäule) an der Landestelle, 45 s Vorwarnung, dann sinkt die Kiste 25 s am
+  Fallschirm (40 % Chance in einer roten Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu
+  Begleiter-Zombies. Bleibt 5 Minuten.
+- **Marker** oben unter der Anzeige: Lootdrops (Countdown, Entfernung) und rote Zonen (Entfernung) mit Pfeil in
+  Blickrichtung.
 - **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
   Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
   einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es
@@ -81,7 +105,8 @@ Industrie, See, Wald und Felsen am Rand).
 - **Agenten**: nur passive Fähigkeiten (keine Q/G/F), Leben und Tempo wie sonst.
 
 Code: `src/server/Modes/Extinction.lua` (Safe Zone, PvP, Tod/Verlassen), `src/server-shared/InventoryService.lua`
-(Tasche, Hotbar, Lager, Stände, Benutzen), `src/server-shared/LootService.lua` (Taschen am Boden),
+(Tasche, Hotbar, Lager, Stände, Benutzen), `src/server-shared/LootService.lua` (Taschen, Kisten, Lootdrops am Boden),
+`ZombieService.lua`, `RedzoneService.lua`, `ContainerService.lua`, `AirdropService.lua`, `ExtinctionTerrain.lua`,
 `src/shared/Inventory.lua` (Regeln für Plätze und Stapel), `src/client/ExtinctionClient.lua` (HUD, Fenster),
 Werte in `src/shared/ExtinctionConfig.lua`.
 

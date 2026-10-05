@@ -309,7 +309,8 @@ end
 -- ---------- HUD ----------
 
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
-local markerHolder, vignette
+local markerHolder, vignette, placeLabel, placeSub
+local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
 local DROP = Color3.fromRGB(255, 190, 70)
@@ -357,6 +358,14 @@ local function buildHud()
 		make("UIGradient", { Rotation = side[3], Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.55),
 			NumberSequenceKeypoint.new(1, 1) }) }, strip)
 	end
+
+	-- Banner beim Betreten eines Ortes (blendet nach einigen Sekunden aus)
+	placeSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.2, 0), Size = UDim2.fromOffset(600, 18), Text = "",
+		TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, root)
+	placeLabel = label({ Name = "PlaceBanner", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.2, 18),
+		Size = UDim2.fromOffset(700, 44), Text = "", TextSize = 36, Font = F.Display, TextColor3 = C.Text,
+		TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, root)
+	UITheme.Outline(placeLabel)
 
 	-- Marker unter der Anzeige: rote Zonen und Lootdrops mit Pfeil und Entfernung
 	markerHolder = make("Frame", { Name = "Markers", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 66),
@@ -524,6 +533,57 @@ local function updateMarkers()
 			view.Text.TextColor3 = entry.Color
 			view.Text.Text = entry.Text
 		end
+	end
+end
+
+-- Orte: Teile Place_<Name> in der Gruppe Places der Karte (Breite = Durchmesser, Attribut Title)
+local function loadPlaces(map)
+	places = {}
+	local folder = map and map:FindFirstChild("Places")
+	for _, part in folder and folder:GetChildren() or {} do
+		if part:IsA("BasePart") and string.match(part.Name, "^Place_") then
+			table.insert(places, { Name = part.Name, Title = part:GetAttribute("Title") or string.sub(part.Name, 7),
+				X = part.Position.X, Z = part.Position.Z, R = part.Size.X / 2 })
+		end
+	end
+end
+
+local function updatePlace()
+	if not placeLabel then
+		return
+	end
+	local maps = workspace:FindFirstChild("Maps")
+	local map = maps and maps:FindFirstChild("Extinction")
+	if #places == 0 and map then
+		loadPlaces(map)
+	end
+	local character = player.Character
+	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+	local here = nil
+	if rootPart then
+		local best = math.huge
+		for _, place in places do
+			local distance = math.sqrt((rootPart.Position.X - place.X) ^ 2 + (rootPart.Position.Z - place.Z) ^ 2)
+			if distance <= place.R and distance - place.R < best then
+				best, here = distance - place.R, place
+			end
+		end
+	end
+	if here ~= currentPlace then
+		currentPlace = here
+		if here then
+			placeLabel.Text = upper(here.Title)
+			placeSub.Text = "ORT"
+			placeShownAt = os.clock()
+		end
+	end
+	local age = os.clock() - placeShownAt
+	local visible = age < 4.2
+	placeLabel.Visible, placeSub.Visible = visible, visible
+	if visible then
+		local alpha = age < 0.5 and (1 - age / 0.5) or (age > 3.2 and (age - 3.2) or 0)
+		alpha = math.clamp(alpha, 0, 1)
+		placeLabel.TextTransparency, placeSub.TextTransparency = alpha, alpha
 	end
 end
 
@@ -1202,6 +1262,7 @@ function ExtinctionClient.Init()
 		end
 		updateZone()
 		updateMarkers()
+		updatePlace()
 		standDistanceCheck()
 		-- im Fahrzeug: Name, Tempo und Zustand; sonst die Wartezeit nach dem Einpacken
 		local character = player.Character

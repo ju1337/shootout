@@ -26,6 +26,7 @@ local RedzoneService = require(ServerShared.RedzoneService)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
 local VehicleService = require(ServerShared.VehicleService)
+local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
 local Extinction = {}
@@ -216,6 +217,23 @@ function Extinction.Init(modeManager)
 		end
 	end
 
+	-- Gelände: Hügel, Seen und Bergrand als echtes Terrain (Höhenfeld ExtinctionTerrainData). Der flache Boden der Karte trägt
+	-- solange und bleibt als Rückfall, falls das Schreiben scheitert; nach dem Aufbau wird er unter das Terrain abgesenkt.
+	local center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z)
+	local function isWater(x, z)
+		return ExtinctionTerrain.IsWater(x - center.X, z - center.Z)
+	end
+	task.spawn(function()
+		local folder = map:FindFirstChild("Ground")
+		local ground = folder and folder:FindFirstChild("Ground")
+		local ok, written = pcall(ExtinctionTerrain.Generate, workspace.Terrain, center)
+		if not ok then
+			warn("[Extinction] Terrain nicht geschrieben: " .. tostring(written))
+		elseif written and ground and ground:IsA("BasePart") then
+			ground.Position -= Vector3.new(0, 14, 0)
+		end
+	end)
+
 	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte) und Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	RedzoneService.Init(map)
 	ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
@@ -224,7 +242,8 @@ function Extinction.Init(modeManager)
 	ZombieService.Init({
 		Map = map,
 		RedzoneAt = RedzoneService.At,
-		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
+		IsWater = isWater,
+		Center = center,
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
 		Players = function()
@@ -239,7 +258,7 @@ function Extinction.Init(modeManager)
 	-- Lootdrops (Versorgungsabwürfe): Ansage, Fackel, Fallschirm-Kiste mit bester Beute
 	AirdropService.Init({
 		Map = map,
-		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
+		Center = center,
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
 		RedzoneAt = RedzoneService.At,

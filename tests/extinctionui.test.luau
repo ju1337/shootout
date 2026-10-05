@@ -25,7 +25,7 @@ local maps = Instance.new("Folder", workspace)
 maps.Name = "Maps"
 local map = Instance.new("Model", maps)
 map.Name = "Extinction"
-for _, name in { "Zone", "Spawns", "Portals", "Stands" } do
+for _, name in { "Zone", "Spawns", "Portals", "Stands", "Places" } do
 	Instance.new("Folder", map).Name = name
 end
 local zone = Instance.new("Part", map.Zone)
@@ -39,6 +39,12 @@ for name, offset in { Stand_Weapons = Vector3.new(-36, 2.5, 34), Stand_Items = V
 	part.Name = name
 	part.CFrame = CFrame.new(CENTER + offset)
 end
+
+local town = Instance.new("Part", map.Places)
+town.Name = "Place_Oedstadt"
+town.Size = Vector3.new(200, 4, 200)
+town.CFrame = CFrame.new(CENTER + Vector3.new(0, 2, 500))
+town:SetAttribute("Title", "Ödstadt")
 
 local InventoryService = require("InventoryService")
 local LootService = require("LootService")
@@ -201,6 +207,16 @@ map:SetAttribute("Redzones", nil)
 map:SetAttribute("Airdrops", nil)
 step(0.3)
 check(not markers:FindFirstChild("Marker1").Visible, "ohne Daten keine Marker")
+
+-- Ort betreten: Banner mit dem Namen, blendet wieder aus
+local placeBanner = find(hud, "PlaceBanner")
+check(placeBanner ~= nil and not placeBanner.Visible, "kein Banner draußen im Nichts")
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 500)))
+step(0.4)
+check(placeBanner.Visible and placeBanner.Text == "ÖDSTADT", "Banner nennt den Ort (" .. placeBanner.Text .. ")")
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 150)))
+step(5)
+check(not placeBanner.Visible, "Banner blendet wieder aus")
 
 -- Tasche am Boden: durchsuchen, alles nehmen
 local id = LootService.Create(bob.Character.HumanoidRootPart.Position + Vector3.new(2, 0, 0),

@@ -104,6 +104,82 @@ def check_extinction():
     grounds = [part for group, part in parts if group == "Ground" and part["Name"] == "Ground"]
     if not grounds or min(grounds[0]["Properties"]["Size"][0], grounds[0]["Properties"]["Size"][2]) < 1500:
         problems.append("Extinction: Boden fehlt oder Welt zu klein")
+    problems += check_extinction_world(parts, local, radius)
+    return problems
+
+
+def _rotate_in(part, point):
+    """Punkt (Weltkoordinaten) in das Koordinatensystem des Teils."""
+    cf = part["Properties"]["CFrame"]["CFrame"]
+    o = cf["orientation"]
+    d = [point[i] - cf["position"][i] for i in range(3)]
+    return [sum(o[r][c] * d[r] for r in range(3)) for c in range(3)]
+
+
+def check_extinction_world(parts, local, safe_radius):
+    """Rote Zonen, Orte (Banner) und Lagerkisten der offenen Welt: Namen, Lage, nichts im Boden oder in Wänden."""
+    problems = []
+    redzones = [part for group, part in parts if group == "Redzones" and part["Name"].startswith("Redzone_")]
+    if len(redzones) < 2:
+        problems.append("Extinction: mindestens 2 rote Zonen (Redzone_<Name> in der Gruppe Redzones) erwartet")
+    for part in redzones:
+        x, _, z = local(part)
+        r = part["Properties"]["Size"][0] / 2
+        attrs = part["Properties"].get("Attributes", {}).get("Attributes", {})
+        if not attrs.get("Title", {}).get("String"):
+            problems.append("Extinction: %s ohne Title" % part["Name"])
+        if math.hypot(x, z) < safe_radius + r + 60:
+            problems.append("Extinction: %s zu nah an der Safe Zone" % part["Name"])
+        if abs(x) + r > 900 or abs(z) + r > 900:
+            problems.append("Extinction: %s ragt aus der Welt" % part["Name"])
+    places = [part for group, part in parts if group == "Places" and part["Name"].startswith("Place_")]
+    if len(places) < 8:
+        problems.append("Extinction: mindestens 8 Orte (Place_<Name> in der Gruppe Places) erwartet, gefunden %d" % len(places))
+    for part in places:
+        attrs = part["Properties"].get("Attributes", {}).get("Attributes", {})
+        if not attrs.get("Title", {}).get("String"):
+            problems.append("Extinction: %s ohne Title" % part["Name"])
+
+    spots = [part for group, part in parts if group == "Loot" and part["Name"].startswith("Spot_")]
+    kinds = {}
+    for part in spots:
+        kind = part["Name"][5:]
+        kinds[kind] = kinds.get(kind, 0) + 1
+        if kind not in ("Wood", "Toolbox", "Medical", "Ammo", "Military"):
+            problems.append("Extinction: unbekannte Kiste %s" % part["Name"])
+    if len(spots) < 50:
+        problems.append("Extinction: mindestens 50 Lagerkisten (Spot_<Art>) erwartet, gefunden %d" % len(spots))
+    for kind in ("Wood", "Toolbox", "Medical", "Ammo", "Military"):
+        if kinds.get(kind, 0) < 5:
+            problems.append("Extinction: zu wenige Kisten der Art %s (%d)" % (kind, kinds.get(kind, 0)))
+    solids = [part for group, part in parts
+              if group in ("Buildings", "Cover", "Walls", "Stands", "Nature", "Decor") and part["Properties"].get("CanCollide", True)
+              and part["Properties"].get("Transparency", 0) < 0.9 and part["Name"] not in ("Needles", "Leaves", "Reed", "Redzone")
+              and part["Properties"].get("Shape") != "Ball"]
+    for spot in spots:
+        x, y, z = local(spot)
+        if math.hypot(x, z) < safe_radius:
+            problems.append("Extinction: %s in der Safe Zone" % spot["Name"])
+        if abs(x) > 880 or abs(z) > 880:
+            problems.append("Extinction: %s am Rand der Welt (%.0f, %.0f)" % (spot["Name"], x, z))
+        # Kiste (Mitte 0,5 über dem Boden, 2 x 2 groß) darf nicht in einem festen Teil stecken
+        probe = [(x + dx, y - 0.4 + dy, z + dz) for dx in (-1, 0, 1) for dz in (-1, 0, 1) for dy in (0.0, 1.0)]
+        for part in solids:
+            px, py, pz = (part["Properties"]["CFrame"]["CFrame"]["position"][i] - (0, 0, -6000)[i] for i in range(3))
+            size = part["Properties"]["Size"]
+            if abs(px - x) > max(size) or abs(pz - z) > max(size):
+                continue
+            cf = part["Properties"]["CFrame"]["CFrame"]
+            o = cf["orientation"]
+            for point in probe:
+                d = [point[0] - px, point[1] - py, point[2] - pz]
+                lp = [sum(o[r][c] * d[r] for r in range(3)) for c in range(3)]
+                if all(abs(lp[i]) < size[i] / 2 - 0.15 for i in range(3)):
+                    problems.append("Extinction: %s steckt in %s (%.0f, %.0f, %.0f)" % (spot["Name"], part["Name"], x, y, z))
+                    break
+            else:
+                continue
+            break
     return problems
 
 
