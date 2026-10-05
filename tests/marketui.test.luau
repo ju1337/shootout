@@ -47,8 +47,10 @@ for id = 1, 4 do
 		display.Position = Vector3.new(-1520, 4, -1530 + id * 14)
 	end
 end
+local decor = Instance.new("Folder", map) -- wie in der echten Map: Tafeln und Terminal liegen im Ordner Decor
+decor.Name = "Decor"
 for _, name in { "OverviewBoard", "TopBoard", "SearchTerminal" } do
-	local part = Instance.new("Part", map)
+	local part = Instance.new("Part", decor)
 	part.Name = name
 	part.Position = Vector3.new(-1500, 5, -1500)
 end

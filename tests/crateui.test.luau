@@ -26,8 +26,10 @@ local maps = Instance.new("Folder", workspace)
 maps.Name = "Maps"
 local map = Instance.new("Model", maps)
 map.Name = "Market"
+local decor = Instance.new("Folder", map) -- wie in der echten Map: Automaten liegen im Ordner Decor, nicht direkt unter der Map
+decor.Name = "Decor"
 for _, name in { "CrateWeapon", "CrateAgent" } do
-	Instance.new("Part", map).Name = name
+	Instance.new("Part", decor).Name = name
 end
 
 store.Data.u1 = { XP = {}, Coins = 1000, Rap = 0, Owned = {}, Equipped = {} }
@@ -93,7 +95,7 @@ end
 
 -- Automaten haben ein E-Prompt
 for _, name in { "CrateWeapon", "CrateAgent" } do
-	check(map[name]:FindFirstChildOfClass("ProximityPrompt") ~= nil, name .. ": Prompt")
+	check(decor[name]:FindFirstChildOfClass("ProximityPrompt") ~= nil, name .. ": Prompt")
 end
 
 -- Waffen-Kiste öffnen

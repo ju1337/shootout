@@ -1035,7 +1035,7 @@ local function boardGui(part, name)
 end
 
 local function buildBoards(map)
-	local overview = map:FindFirstChild("OverviewBoard")
+	local overview = map:FindFirstChild("OverviewBoard", true)
 	if overview then
 		local back = boardGui(overview, "MarketOverview")
 		label({ Position = UDim2.fromScale(0.03, 0.08), Size = UDim2.fromScale(0.5, 0.22), Text = "STÄNDE", TextSize = 40, Font = F.Display,
@@ -1064,7 +1064,7 @@ local function buildBoards(map)
 			TextXAlignment = Enum.TextXAlignment.Left }, back)
 		boards.Overview = { Cells = cells, Summary = summary }
 	end
-	local top = map:FindFirstChild("TopBoard")
+	local top = map:FindFirstChild("TopBoard", true)
 	if top then
 		local back = boardGui(top, "MarketTop")
 		label({ Position = UDim2.fromScale(0.04, 0.06), Size = UDim2.fromScale(0.92, 0.16), Text = "BELIEBTESTE HÄNDLER", TextScaled = true,
@@ -1223,7 +1223,7 @@ function MarketClient.Init()
 		end
 	end
 	-- Such-Terminal auf dem Marktplatz (Part "SearchTerminal"): E öffnet die Suche
-	local terminal = map and map:FindFirstChild("SearchTerminal")
+	local terminal = map and map:FindFirstChild("SearchTerminal", true)
 	if terminal then
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.KeyboardKeyCode = Enum.KeyCode.E

@@ -388,7 +388,7 @@ function CrateClient.Init()
 	local map = workspace:WaitForChild("Maps"):WaitForChild("Market", 30)
 	if map then
 		for _, crate in CrateConfig.Crates do
-			local machine = map:FindFirstChild("Crate" .. crate.Id)
+			local machine = map:FindFirstChild("Crate" .. crate.Id, true) -- liegt in einem Unterordner der Map
 			if machine then
 				local prompt = Instance.new("ProximityPrompt")
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
