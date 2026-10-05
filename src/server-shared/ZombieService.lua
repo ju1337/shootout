@@ -236,6 +236,11 @@ local function playAnimations(humanoid, speed)
 	end)
 end
 
+-- Lauf- und Stand-Animation für andere R6-Figuren (z. B. Überlebende); braucht einen Animator am Humanoid
+function ZombieService.Animate(humanoid, speed)
+	playAnimations(humanoid, speed)
+end
+
 -- ---------- Ziele ----------
 
 local function livingRoot(player)

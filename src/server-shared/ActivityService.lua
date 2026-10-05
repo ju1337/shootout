@@ -523,6 +523,7 @@ local function buildSurvivor(spot)
 	humanoid.Health = cfg.Health
 	humanoid.WalkSpeed = cfg.Speed
 	humanoid.Parent = model
+	Instance.new("Animator").Parent = humanoid
 	model.PrimaryPart = root
 	model:SetAttribute("Survivor", true)
 	local _, sub = billboard(head, "ÜBERLEBENDER", Color3.fromRGB(120, 220, 140), 2.5)
@@ -538,6 +539,7 @@ local function buildSurvivor(spot)
 		root:SetNetworkOwner(nil)
 	end)
 	spot.Model, spot.Humanoid, spot.Root = model, humanoid, root
+	ZombieService.Animate(humanoid, cfg.Speed)
 	spot.State = "Ready"
 	spot.Escort = nil
 	humanoid.Died:Once(function()

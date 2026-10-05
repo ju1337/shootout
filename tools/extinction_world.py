@@ -1225,6 +1225,35 @@ class World:
         b.sign2("Billboard_" + title[:8], (22, 8, 0.5), (x, g + 15, z), title, subtitle, (230, 230, 220), (180, 30, 30), (40, 40, 40),
                 angles=(0, yaw, self.rng.uniform(-6, 6)))
 
+    def litter(self, x, z, y=0.15):
+        """Müll am Straßenrand: Säcke, Papier, Tonne."""
+        b, rng = self.b, self.rng
+        for _ in range(rng.randint(2, 4)):
+            kind = rng.random()
+            px, pz = x + rng.uniform(-3, 3), z + rng.uniform(-3, 3)
+            if kind < 0.45:
+                b.box("Decor", "TrashBag", (1.6, 1.3, 1.4), (px, y + 0.6, pz), (24, 24, 26), "Plastic",
+                      angles=(rng.uniform(-15, 15), rng.uniform(0, 180), 0), props={"CanCollide": False})
+            elif kind < 0.85:
+                b.box("Decor", "Paper", (1.2, 0.03, 0.9), (px, y + 0.03, pz), (214, 210, 196), "SmoothPlastic",
+                      angles=(0, rng.uniform(0, 180), 0), props={"CanCollide": False, "CanQuery": False})
+            else:
+                b.cylinder("Cover", "Barrel", 2.2, 3, (px, y + 1.5, pz), rng.choice(((60, 80, 110), (110, 40, 36), (70, 80, 50))),
+                           material="CorrodedMetal")
+
+    def crater(self, x, z):
+        """Einschlagkrater (Bombardierung): dunkler Boden, Schuttring, Rauch."""
+        rng = self.rng
+        r = rng.uniform(7, 12)
+        g = self.H(x, z)
+        self.b.add("Decor", "Crater", (0.2, 2 * r, 2 * r), (x, g + 0.5, z), (36, 32, 30), "Slate", angles=(0, 0, 90),
+                   props={"Shape": "Cylinder", "CanCollide": False})
+        for k in range(8):
+            a = k / 8 * math.pi * 2
+            self.rubble(x + math.cos(a) * r, z + math.sin(a) * r, 4, (90, 86, 80), n=2)
+        if rng.random() < 0.5:
+            self.smoke_column(x, g + 1, z)
+
     def heli_crash(self, x, z):
         self.helicopter_wreck(x, z, self.rng.uniform(0, 360))
         for _ in range(3):
@@ -1672,6 +1701,20 @@ def build(bm):
         found = find_spot(w, x, z, 10)
         if found:
             w.billboard(found[0], found[1], w.yaw_to(-found[0], -found[1]), *texts[k % len(texts)])
+    for seg in rng.sample(city_segments, min(70, len(city_segments))):
+        t = rng.uniform(0.1, 0.9)
+        length = math.hypot(seg[2] - seg[0], seg[3] - seg[1]) or 1
+        nx, nz = -(seg[3] - seg[1]) / length, (seg[2] - seg[0]) / length
+        side = rng.choice((-1, 1)) * (seg[4] / 2 + 2)
+        x, z = seg[0] + (seg[2] - seg[0]) * t + nx * side, seg[1] + (seg[3] - seg[1]) * t + nz * side
+        if math.hypot(x, z) > SAFE_R + 60:
+            w.litter(x, z)
+    for _ in range(8):
+        a, r = rng.uniform(0, 2 * math.pi), rng.uniform(220, 480)
+        found = find_spot(w, math.cos(a) * r, math.sin(a) * r, 12)
+        if found:
+            w.crater(*found)
+            w.occupied.append((found[0], found[1], 12))
     for x, z in ((-300, -420), (180, 640), (-700, 900)):
         found = find_spot(w, x, z, 18)
         if found:
