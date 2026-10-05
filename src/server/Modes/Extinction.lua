@@ -20,6 +20,7 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local ProgressService = require(ServerShared.ProgressService)
 local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
+local ZombieService = require(ServerShared.ZombieService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
 local Extinction = {}
@@ -190,6 +191,21 @@ function Extinction.Init(modeManager)
 			end)
 		end
 	end
+
+	-- Zombies um die Spieler draußen
+	ZombieService.Init({
+		Map = map,
+		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
+		InSafeZone = Extinction.InSafeZone,
+		SafeCenter = Extinction.SafeZoneCenter,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
 
 	-- Spiel verlassen: vor dem letzten Speichern die Strafe anwenden (draußen = Tasche weg)
 	ProgressService.OnLeaving(function(player)

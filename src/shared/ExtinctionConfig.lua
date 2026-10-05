@@ -14,6 +14,7 @@
 local ExtinctionConfig = {}
 
 ExtinctionConfig.ModeId = "Extinction"
+ExtinctionConfig.WorldSize = 1800    -- Kantenlänge der Welt in Studs (EXTINCTION_SIZE in tools/build_maps.py)
 
 -- ---------- Inventar ----------
 ExtinctionConfig.HotbarSlots = 9     -- Plätze 1-9 = Tasten 1-9

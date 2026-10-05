@@ -62,6 +62,12 @@ Industrie, See, Wald und Felsen am Rand).
 - **Verlassen**: in der Safe Zone bleibt alles genau so angeordnet in der Tasche (gespeichert im Profil). Draußen
   kostet Verlassen die Tasche (im Menü erst nach einem zweiten Klick, beim Spiel-Verlassen sofort vor dem
   Speichern); fährt der Server herunter, verliert niemand etwas.
+- **Zombies** (`src/server-shared/ZombieService.lua`): spawnen nur um Spieler draußen, im weiteren Umkreis
+  (70-150 Studs, nicht auf Dächern, nicht nah an der Safe Zone), höchstens 7 pro Spieler und 70 auf dem Server.
+  Sie schlurfen herum, bemerken Spieler auf 90 Studs, rennen hin und schlagen zu; in die Safe Zone gehen sie
+  nicht. Pro Zombie nur 2 Münzen (Spieler bringen viel mehr), mit 35 % Chance ein Beutel mit einfacher Beute
+  (Verband, etwas Munition, selten Medikit, Pistole, Fahrrad oder Quad). Ohne Spieler draußen in der Nähe
+  verschwinden sie nach ein paar Sekunden.
 - **Agenten**: nur passive Fähigkeiten (keine Q/G/F), Leben und Tempo wie sonst.
 
 Code: `src/server/Modes/Extinction.lua` (Safe Zone, PvP, Tod/Verlassen), `src/server-shared/InventoryService.lua`
