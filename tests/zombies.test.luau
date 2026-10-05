@@ -64,6 +64,7 @@ InventoryService.Init()
 LootService.Init()
 require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
 require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
+require("ExtinctionConfig").Zombies.KindWeights = { Walker = 1 } -- nur normale Zombies (Schreier rufen sonst Verstärkung)
 Extinction.Init({ Join = function() end, Status = function() end })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -289,4 +290,14 @@ step(10)
 check(ZombieService.Count() == 0, "ohne Spieler draußen in der Nähe verschwinden alle Zombies (" .. ZombieService.Count() .. ")")
 check(downRays > 0, "Boden wird per Raycast gesucht")
 
+-- Schreier: sieht er einen Spieler, jagen ihn alle Zombies im Umkreis und Verstärkung kommt
+place(alice, Vector3.new(0, 3, -300))
+step(0.5)
+local walkerNear = ZombieService.Spawn(CENTER + Vector3.new(60, 0, -300), "Walker")
+local before = ZombieService.Count()
+local screamer = ZombieService.Spawn(CENTER + Vector3.new(15, 0, -300), "Screamer")
+check(screamer ~= nil and screamer:GetAttribute("ZombieKind") == "Screamer", "Schreier gespawnt")
+step(1)
+check(ZombieService.Count() >= before + 1 + Z.ScreamCalls, "Schreier ruft Verstärkung (" .. ZombieService.Count() - before .. ")")
+check(screamer and screamer:FindFirstChild("Blood") ~= nil, "Zombies haben Blutflecken")
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

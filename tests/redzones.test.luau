@@ -62,6 +62,7 @@ InventoryService.Init()
 LootService.Init()
 require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
 require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
+require("ExtinctionConfig").Zombies.KindWeights = { Walker = 1 } -- nur normale Zombies (Schreier rufen sonst Verstärkung)
 Extinction.Init({ Join = function() end, Status = function() end })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -169,8 +170,11 @@ check(true, "Spawn ohne Art ist Walker")
 for _, model in ZombieService.All() do
 	model:Destroy()
 end
+local outsideWeights = Z.KindWeights
+Z.KindWeights = { Walker = 1 } -- draußen (Tag) gibt es sonst auch ein paar Läufer und Schreier
 place(alice, Vector3.new(0, 3, -170))
 step(Z.SpawnInterval * (Z.PerPlayer * 4))
+Z.KindWeights = outsideWeights
 local outsideOk = true
 for _, model in ZombieService.All() do
 	if model:GetAttribute("ZombieKind") ~= "Walker" then

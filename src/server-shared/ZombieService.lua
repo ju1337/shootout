@@ -65,15 +65,15 @@ function ZombieService.Kind(name)
 		Items = kind.Items or { 1, 1 },
 		Table = kind.Table or "Zombie",
 		Eyes = kind.Eyes or Color3.fromRGB(255, 40, 30),
+		Scream = kind.Scream == true,
 	}
 end
 
--- Art würfeln (in roten Zonen mit KindWeights, sonst immer Walker)
+-- Art würfeln: rote Zone (Redzone.KindWeights), sonst Tag/Nacht (Zombies.KindWeights / NightKindWeights)
 local function rollKind(inRedzone)
-	if not inRedzone then
-		return "Walker"
-	end
-	local weights = ExtinctionConfig.Redzone.KindWeights
+	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
+	local weights = inRedzone and ExtinctionConfig.Redzone.KindWeights
+		or (night and Z.NightKindWeights or Z.KindWeights) or { Walker = 1 }
 	local total = 0
 	for _, weight in weights do
 		total += weight
@@ -169,6 +169,23 @@ local function buildTemplate()
 		weld.Part0 = head
 		weld.Part1 = eye
 		weld.Parent = eye
+	end
+	-- Blut und Wunden (bleiben beim Umfärben dunkelrot)
+	for _, info in { { torso, Vector3.new(1.2, 0.9, 0.06), CFrame.new(0.3, -0.2, -0.52) },
+		{ torso, Vector3.new(0.7, 0.5, 0.06), CFrame.new(-0.5, 0.5, 0.52) },
+		{ head, Vector3.new(0.5, 0.35, 0.06), CFrame.new(-0.3, -0.25, -0.62) },
+		{ rightArm, Vector3.new(0.06, 0.8, 0.6), CFrame.new(0.52, -0.4, 0) } } do
+		local blood = part(model, "Blood", info[2], Color3.fromRGB(92, 14, 12))
+		blood.Material = Enum.Material.Glass
+		blood.CanCollide = false
+		blood.CanQuery = false
+		blood.CanTouch = false
+		blood.Massless = true
+		blood.CFrame = info[1].CFrame * info[3]
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = info[1]
+		weld.Part1 = blood
+		weld.Parent = blood
 	end
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R6
@@ -465,7 +482,7 @@ function ZombieService.Spawn(position, kindName, force)
 	local model = template:Clone()
 	local look = LOOKS[random:NextInteger(1, #LOOKS)]
 	for _, child in model:GetChildren() do
-		if child:IsA("BasePart") and child.Name ~= "Eye" and child.Name ~= "HumanoidRootPart" then
+		if child:IsA("BasePart") and child.Name ~= "Eye" and child.Name ~= "HumanoidRootPart" and child.Name ~= "Blood" then
 			child.Color = (child.Name == "Torso" and look[2]) or ((child.Name == "Left Leg" or child.Name == "Right Leg") and look[3])
 				or look[1]
 		end
@@ -521,6 +538,10 @@ local function step(model, info, now)
 	if not target then
 		local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
 		target = nearestTarget(root.Position, Z.SightRange * (night and ExtinctionConfig.Day.NightSight or 1))
+		if target and info.Stats and info.Stats.Scream and now >= (info.NextScream or 0) then
+			info.NextScream = now + Z.ScreamCooldown
+			ZombieService.Scream(model, target)
+		end
 	end
 	info.Target = target
 	if target then
@@ -664,6 +685,43 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 		end
 	end
 	return spawned
+end
+
+-- Schreier hat einen Spieler gesehen: alle Zombies im Umkreis jagen ihn, ein paar kommen dazu, roter Schrei-Ring
+function ZombieService.Scream(model, target)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
+	for other, info in zombies do
+		if other ~= model and (info.Root.Position - root.Position).Magnitude <= Z.ScreamRange then
+			info.Target = target
+		end
+	end
+	ZombieService.SpawnAround(root.Position, Z.ScreamCalls, 25, 60, nil, true)
+	local ring = Instance.new("Part")
+	ring.Name = "ScreamRing"
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Size = Vector3.new(0.3, 8, 8)
+	ring.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Color = Color3.fromRGB(255, 60, 50)
+	ring.Material = Enum.Material.Neon
+	ring.Transparency = 0.4
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.CanTouch = false
+	ring.Parent = folder
+	pcall(function()
+		game:GetService("TweenService"):Create(ring, TweenInfo.new(1.2), { Size = Vector3.new(0.3, 80, 80), Transparency = 1 }):Play()
+	end)
+	task.delay(1.3, function()
+		ring:Destroy()
+	end)
+	local ok, InventoryService = pcall(require, script.Parent.InventoryService)
+	if ok and InventoryService and InventoryService.Status then
+		InventoryService.Status(target, "Ein Schreier ruft die Zombies!")
+	end
 end
 
 -- Anzahl lebender Zombies (für Tests und das Admin-Panel)

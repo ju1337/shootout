@@ -211,7 +211,7 @@ ExtinctionConfig.Containers = {
 ExtinctionConfig.Redzone = {
 	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in einer roten Zone
 	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
-	KindWeights = { Walker = 55, Runner = 33, Brute = 12 },
+	KindWeights = { Walker = 50, Runner = 30, Brute = 12, Screamer = 8 },
 	ContainerTable = "Tier3",
 	PvPDelay = 0,
 }
@@ -302,6 +302,11 @@ ExtinctionConfig.Zombies = {
 	RunSpeed = 8.5,        -- jagen
 	SightRange = 45,       -- so weit bemerken sie Spieler
 	ForceExtra = 24,       -- so viele dürfen Horden und Nester zusätzlich über MaxTotal bringen
+	KindWeights = { Walker = 86, Runner = 7, Screamer = 7 },                 -- Arten draußen am Tag
+	NightKindWeights = { Walker = 64, Runner = 20, Screamer = 9, Brute = 7 }, -- nachts gefährlicher
+	ScreamRange = 110,
+	ScreamCalls = 3,
+	ScreamCooldown = 25,
 	LoseRange = 90,        -- so weit verfolgen sie ein Ziel, das sie schon haben
 	AttackRange = 4.5,
 	AttackDamage = 10,
@@ -317,6 +322,10 @@ ExtinctionConfig.ZombieKinds = {
 		Eyes = Color3.fromRGB(255, 40, 30) },
 	Runner = { Name = "Läufer", Health = 70, Walk = 6, Run = 13, Damage = 8, Coins = 4, Scale = 0.95, Drop = 0.85, Items = { 1, 2 },
 		Table = "Zombie2", Eyes = Color3.fromRGB(255, 170, 30) },
+	-- Schreier: schwach, aber wenn er einen Spieler sieht, schreit er – alle Zombies im Umkreis (ScreamRange) jagen den
+	-- Spieler, und ScreamCalls weitere kommen dazu (höchstens alle ScreamCooldown Sekunden)
+	Screamer = { Name = "Schreier", Health = 60, Walk = 5, Run = 11, Damage = 4, Coins = 6, Scale = 0.92, Drop = 0.9, Items = { 1, 2 },
+		Table = "Zombie2", Eyes = Color3.fromRGB(235, 240, 255), Scream = true },
 	Brute = { Name = "Brocken", Health = 320, Walk = 4, Run = 7.5, Damage = 24, Coins = 12, Scale = 1.3, Drop = 1, Items = { 2, 3 },
 		Table = "Tier2", Eyes = Color3.fromRGB(190, 70, 255) },
 }

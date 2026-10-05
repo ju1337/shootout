@@ -71,6 +71,7 @@ InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge -- nur der Notruf startet einen Lootdrop
 ExtinctionConfig.Day.Fixed = 12
+ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }
 A.Horde.FirstDelay = math.huge -- Horde startet der Test selbst
 Extinction.Init({ Join = function() end, Status = function() end })
 

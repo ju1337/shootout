@@ -91,6 +91,9 @@ weiter.
   Spieler und 30 auf dem Server. Sie schlurfen herum, bemerken Spieler erst auf 45 Studs und schlagen langsam zu; in
   die Safe Zone gehen sie nicht. In roten Zonen gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
   (schnell, wenig Leben) und **Brocken** (groß, viel Leben, harte Schläge, immer Beute).
+- **Zombie-Arten**: alle mit Blutflecken und Wunden. Draußen am Tag fast nur normale Zombies, ein paar **Läufer** und
+  **Schreier** (weiße Augen): sieht ein Schreier dich, schreit er (roter Ring) – alle Zombies im Umkreis jagen dich und
+  drei weitere kommen dazu. Nachts mehr Läufer, Schreier und auch **Brocken**; in roten Zonen die meisten.
 - **Zombie-Beute**: tote Zombies bleiben mit Beute 40 Sekunden liegen (leuchten). **Einmal E** (ohne Halten) hebt
   alles auf, **direkt ins Inventar** (passt nicht alles, bleibt der Rest liegen). Zombies lassen öfter etwas fallen
   (75 %, Läufer 85 %, Brocken immer), weil es keine Beute mehr am Boden gibt.

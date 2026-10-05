@@ -76,6 +76,7 @@ InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge
 ExtinctionConfig.Day.Fixed = 12
+ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }
 ExtinctionConfig.Activities.Horde.FirstDelay = math.huge
 Extinction.Init({ Join = function() end, Status = function() end })
 
