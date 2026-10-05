@@ -125,6 +125,7 @@ step(0.6)
 local target = hunter.Humanoid.MoveToTarget
 check(target ~= nil and flatDistance(target, alice.Character.HumanoidRootPart.Position) < 1, "Zombie läuft auf Alice zu")
 check(hunter.Humanoid.WalkSpeed > Z.WalkSpeed, "jagen ist schneller als schlurfen")
+check(Z.PerPlayer <= 4 and Z.MaxTotal <= 36, "wenige Zombies: höchstens " .. Z.PerPlayer .. " pro Spieler")
 
 -- Zuschlagen
 local health = alice.Character.Humanoid.Health
@@ -144,8 +145,10 @@ local goal = hunter.Humanoid.MoveToTarget
 check(goal == nil or flatDistance(goal, CENTER) >= 100, "Zombie geht nicht in die Safe Zone")
 check(alice.Character.Humanoid.Health == inside, "in der Safe Zone kein Schaden")
 
--- Tod: wenige Münzen für den Schützen, Beutel mit einfacher Beute
-ExtinctionConfig.ZombieDropChance = 1
+-- Tod: wenige Münzen für den Schützen, die Beute steckt in der Leiche (E: direkt ins Inventar, kein Beutel am Boden)
+local Inventory = require("Inventory")
+local InventoryService = require("InventoryService")
+ExtinctionConfig.ZombieKinds.Walker.Drop = 1
 place(alice, Vector3.new(0, 3, -400))
 step(0.5)
 local coins = ProgressService.Get(alice).Coins
@@ -155,22 +158,95 @@ Damage.Apply(victim, victim.Humanoid, 1000, { Player = alice, Weapon = "Rifle" }
 step(0.2)
 check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, "Münzen für den Zombie: "
 	.. ProgressService.Get(alice).Coins - coins)
-check(#workspace.ExtinctionLoot:GetChildren() == bags + 1, "Beutel gefallen")
-local newest = nil
-for _, model in workspace.ExtinctionLoot:GetChildren() do
-	newest = model
+check(#workspace.ExtinctionLoot:GetChildren() == bags, "kein Beutel am Boden: die Beute steckt in der Leiche")
+local prompt = victim.HumanoidRootPart:FindFirstChild("CorpsePrompt")
+check(prompt ~= nil and prompt.ActionText == "Durchsuchen", "Leiche mit Beute hat E-Prompt Durchsuchen")
+check(victim:FindFirstChild("LootHighlight") ~= nil, "Leiche mit Beute leuchtet kurz auf")
+check(prompt and string.find(prompt.ObjectText, "Zombie", 1, true) ~= nil, "Prompt zeigt, was drinsteckt: " .. tostring(prompt and prompt.ObjectText))
+step(6)
+check(victim.Parent ~= nil, "Leiche mit Beute bleibt länger liegen als eine ohne")
+
+local function countItems(player)
+	local total = 0
+	for _, entry in Inventory.Items(InventoryService.GetBag(player)) do
+		total += entry.Count
+	end
+	return total
 end
-local bag = newest and LootService.Get(newest.LootBag:GetAttribute("LootBag"))
 local lowTier = true
-for _, item in bag and bag.Container.Slots or {} do
-	local config = ExtinctionConfig.Get(item.Id)
-	if not config or (config.Tier or 0) > 2 then
+local before = countItems(alice)
+-- zu weit weg: nichts passiert
+place(alice, Vector3.new(60, 3, -400))
+prompt.Triggered:Fire(alice)
+check(countItems(alice) == before and prompt.Parent ~= nil, "zu weit weg: Leiche bleibt unberührt")
+place(alice, Vector3.new(0, 3, -400))
+victim:PivotTo(CFrame.new(alice.Character.HumanoidRootPart.Position + Vector3.new(0, 0, -2)))
+prompt.Triggered:Fire(alice)
+local after = countItems(alice)
+check(after > before, "E an der Leiche: Beute direkt im Inventar (" .. before .. " -> " .. after .. ")")
+local allowed = {}
+for _, entry in ExtinctionConfig.LootTables.Zombie do
+	allowed[entry.Id] = true
+end
+for _, entry in Inventory.Items(InventoryService.GetBag(alice)) do
+	if not allowed[entry.Id] then
 		lowTier = false
 	end
 end
-check(bag ~= nil and lowTier, "nur einfache Beute")
-step(5)
-check(victim.Parent == nil, "Leiche verschwindet")
+check(lowTier, "nur Beute aus der Zombie-Tabelle (einfach)")
+step(2)
+check(victim.Parent == nil, "durchsuchte Leiche verschwindet")
+
+-- Tasche voll: Beute bleibt in der Leiche, später nehmen
+ExtinctionConfig.ZombieKinds.Walker.Drop = 1
+local second = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -4))
+Damage.Apply(second, second.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
+step(0.2)
+local fullBag = InventoryService.GetBag(alice)
+local saved = Inventory.Clear(fullBag)
+for slot = 1, fullBag.Size do
+	fullBag.Slots[slot] = { Id = "Pistol", Count = 1, Mag = 0 }
+end
+local corpsePrompt = second.HumanoidRootPart:FindFirstChild("CorpsePrompt")
+corpsePrompt.Triggered:Fire(alice)
+check(corpsePrompt.Parent ~= nil and second.Parent ~= nil, "Tasche voll: Beute bleibt in der Leiche")
+local fullMessage = false
+for _, entry in SIM.RemoteLog do
+	if entry.Remote == "ExtUpdate" and entry.Player == alice and entry.Args[1] == "Status" and string.find(tostring(entry.Args[2]), "voll", 1, true) then
+		fullMessage = true
+	end
+end
+check(fullMessage, "Meldung: Tasche voll")
+Inventory.Clear(fullBag)
+corpsePrompt.Triggered:Fire(alice)
+step(2)
+check(second.Parent == nil, "nach Platz schaffen: Beute genommen, Leiche weg")
+for _, item in saved do
+	Inventory.Add(fullBag, item.Id, item.Count, { Mag = item.Mag })
+end
+
+-- Zombie ohne Beute: Leiche verschwindet schnell, kein Prompt
+ExtinctionConfig.ZombieKinds.Walker.Drop = 0
+local empty = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -4))
+Damage.Apply(empty, empty.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
+step(0.2)
+check(empty.HumanoidRootPart:FindFirstChild("CorpsePrompt") == nil, "ohne Beute kein Prompt")
+step(Z.CorpseTime + 1)
+check(empty.Parent == nil, "Leiche ohne Beute verschwindet nach CorpseTime")
+ExtinctionConfig.ZombieKinds.Walker.Drop = 0.55
+
+-- Arten: Läufer sind schneller, Brocken zäh und groß und schlagen hart; alle zusammen langsamer als Spieler
+local walker = ZombieService.Kind("Walker")
+local runner, brute = ZombieService.Kind("Runner"), ZombieService.Kind("Brute")
+check(walker.Run < 16 * 0.6 and walker.Walk < 6, "normale Zombies sind langsam (Spieler laufen 16)")
+check(runner.Run > walker.Run and brute.Health > walker.Health * 2.5 and brute.Damage > walker.Damage * 2 and brute.Scale > 1.2,
+	"Läufer schneller, Brocken zäh und stark")
+check(runner.Run < 16, "auch Läufer sind langsamer als ein rennender Spieler")
+check(ZombieService.Kind("Quatsch").Id == "Walker", "unbekannte Art = Walker")
+local bruteModel = ZombieService.Spawn(CENTER + Vector3.new(500, 0, 500), "Brute")
+check(bruteModel ~= nil and bruteModel:GetAttribute("ZombieKind") == "Brute" and bruteModel.Humanoid.MaxHealth >= brute.Health * 0.8,
+	"Brocken gespawnt mit seinen Werten")
+bruteModel:Destroy()
 
 -- Messer (V) gegen Zombies: Schaden, beim Tod nur die Zombie-Münzen, kein Spieler-Kill
 local Remotes = require("Remotes")
@@ -200,7 +276,7 @@ step(Z.SpawnInterval * 10)
 check(ZombieService.Count() <= Z.MaxTotal, "nicht mehr als MaxTotal Zombies")
 Z.MaxTotal = ZombieService.Count()
 check(ZombieService.Spawn(CENTER + Vector3.new(500, 0, 200)) == nil, "an der Obergrenze kein Spawn")
-Z.MaxTotal = 70
+Z.MaxTotal = 30
 
 -- Alle in der Safe Zone: nach kurzer Zeit verschwinden die Zombies (nicht sofort)
 place(alice, Vector3.new(0, 3, 30))

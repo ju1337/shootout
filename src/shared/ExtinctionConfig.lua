@@ -91,38 +91,211 @@ ExtinctionConfig.Stands = {
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports" } },
 }
 
--- Beute von Zombies: nur einfache Sachen. Chance pro Zombie, dass überhaupt etwas fällt, dann gewichtete Wahl.
-ExtinctionConfig.ZombieDropChance = 0.35
-ExtinctionConfig.ZombieLoot = {
-	{ Id = "Bandage", Count = { 1, 2 }, Weight = 40 },
-	{ Id = "Ammo_9mm", Count = { 8, 20 }, Weight = 24 },
-	{ Id = "Ammo_Shell", Count = { 3, 6 }, Weight = 10 },
-	{ Id = "Ammo_Rifle", Count = { 6, 15 }, Weight = 10 },
-	{ Id = "Medkit", Count = { 1, 1 }, Weight = 6 },
-	{ Id = "Pistol", Count = { 1, 1 }, Weight = 4 },
-	{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 4 },
-	{ Id = "V_Quad", Count = { 1, 1 }, Weight = 2 },
+-- ---------- Beute-Tabellen ----------
+-- Gewichtete Listen { Id, Count = { min, max }, Weight }. Gezogen wird mit ExtinctionConfig.RollLoot(Tabelle, Anzahl).
+-- Zombie / Zombie2 = Leichen (einfach), Tier1-3 = Kisten in der Welt (3 = Militär und rote Zonen), Medical = Sanikisten,
+-- Ammo = Munitionskisten, Airdrop = Versorgungsabwürfe (das Beste).
+ExtinctionConfig.LootTables = {
+	Zombie = {
+		{ Id = "Bandage", Count = { 1, 2 }, Weight = 36 },
+		{ Id = "Ammo_9mm", Count = { 8, 20 }, Weight = 24 },
+		{ Id = "Ammo_Shell", Count = { 3, 6 }, Weight = 8 },
+		{ Id = "Ammo_Rifle", Count = { 6, 15 }, Weight = 8 },
+		{ Id = "Medkit", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "Pistol", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 1 },
+	},
+	Zombie2 = { -- Läufer in roten Zonen: etwas besser
+		{ Id = "Bandage", Count = { 2, 3 }, Weight = 24 },
+		{ Id = "Ammo_9mm", Count = { 14, 30 }, Weight = 20 },
+		{ Id = "Ammo_Rifle", Count = { 10, 24 }, Weight = 14 },
+		{ Id = "Ammo_Shell", Count = { 5, 10 }, Weight = 10 },
+		{ Id = "Medkit", Count = { 1, 1 }, Weight = 12 },
+		{ Id = "Vest", Count = { 1, 1 }, Weight = 8 },
+		{ Id = "Pistol", Count = { 1, 1 }, Weight = 5 },
+		{ Id = "Revolver", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 3 },
+	},
+	Tier1 = { -- Häuser, Hinterhöfe
+		{ Id = "Bandage", Count = { 1, 2 }, Weight = 30 },
+		{ Id = "Ammo_9mm", Count = { 10, 24 }, Weight = 26 },
+		{ Id = "Ammo_Magnum", Count = { 6, 12 }, Weight = 6 },
+		{ Id = "Ammo_Shell", Count = { 4, 8 }, Weight = 8 },
+		{ Id = "Ammo_Rifle", Count = { 8, 16 }, Weight = 8 },
+		{ Id = "Pistol", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "Medkit", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "Vest", Count = { 1, 1 }, Weight = 3 },
+		{ Id = "Revolver", Count = { 1, 1 }, Weight = 2 },
+		{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 3 },
+	},
+	Tier2 = { -- Industrie, Tankstelle, Bauernhof
+		{ Id = "Bandage", Count = { 2, 4 }, Weight = 18 },
+		{ Id = "Medkit", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "Ammo_9mm", Count = { 20, 40 }, Weight = 14 },
+		{ Id = "Ammo_Rifle", Count = { 15, 30 }, Weight = 14 },
+		{ Id = "Ammo_Shell", Count = { 8, 14 }, Weight = 10 },
+		{ Id = "Ammo_Magnum", Count = { 10, 20 }, Weight = 8 },
+		{ Id = "Vest", Count = { 1, 1 }, Weight = 9 },
+		{ Id = "SMG", Count = { 1, 1 }, Weight = 7 },
+		{ Id = "Shotgun", Count = { 1, 1 }, Weight = 7 },
+		{ Id = "Revolver", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 2 },
+	},
+	Tier3 = { -- Militärbasis, rote Zonen
+		{ Id = "Rifle", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "DMR", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "SMG", Count = { 1, 1 }, Weight = 8 },
+		{ Id = "Shotgun", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "LMG", Count = { 1, 1 }, Weight = 2 },
+		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 9 },
+		{ Id = "Vest", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "Adrenaline", Count = { 1, 2 }, Weight = 8 },
+		{ Id = "Medkit", Count = { 1, 2 }, Weight = 12 },
+		{ Id = "Ammo_Rifle", Count = { 30, 60 }, Weight = 14 },
+		{ Id = "Ammo_9mm", Count = { 40, 60 }, Weight = 8 },
+		{ Id = "Ammo_Shell", Count = { 12, 20 }, Weight = 6 },
+		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 3 },
+		{ Id = "V_Pickup", Count = { 1, 1 }, Weight = 1 },
+	},
+	Medical = {
+		{ Id = "Bandage", Count = { 3, 6 }, Weight = 40 },
+		{ Id = "Medkit", Count = { 1, 2 }, Weight = 28 },
+		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "Vest", Count = { 1, 1 }, Weight = 12 },
+		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 4 },
+	},
+	Ammo = {
+		{ Id = "Ammo_9mm", Count = { 30, 60 }, Weight = 30 },
+		{ Id = "Ammo_Rifle", Count = { 30, 60 }, Weight = 28 },
+		{ Id = "Ammo_Shell", Count = { 12, 24 }, Weight = 20 },
+		{ Id = "Ammo_Magnum", Count = { 12, 24 }, Weight = 16 },
+	},
+	Airdrop = {
+		{ Id = "LMG", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "DMR", Count = { 1, 1 }, Weight = 14 },
+		{ Id = "Rifle", Count = { 1, 1 }, Weight = 18 },
+		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 16 },
+		{ Id = "Adrenaline", Count = { 2, 3 }, Weight = 14 },
+		{ Id = "Medkit", Count = { 2, 3 }, Weight = 14 },
+		{ Id = "Ammo_Rifle", Count = { 60, 120 }, Weight = 18 },
+		{ Id = "Ammo_Shell", Count = { 24, 48 }, Weight = 8 },
+		{ Id = "V_Pickup", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "V_Sports", Count = { 1, 1 }, Weight = 1 },
+	},
+}
+
+-- Zombies lassen Beute in der Leiche: E durchsucht sie, alles geht direkt ins Inventar (passt etwas nicht mehr hinein,
+-- bleibt es in der Leiche). Chance pro Zombie je Art (ZombieKinds), Anzahl und Tabelle ebenfalls dort.
+ExtinctionConfig.ZombieDropChance = 0.55 -- Standardwert (ältere Aufrufe); die Art bestimmt mit Drop
+ExtinctionConfig.ZombieLoot = ExtinctionConfig.LootTables.Zombie
+
+-- ---------- Lagerkisten in der Welt (Teile "Spot_<Art>" in Gruppe Loot) ----------
+-- Jede Art hat eine Beute-Tabelle (Table) und eine Zahl Items (Items); Spots in roten Zonen ziehen immer aus Tier3.
+ExtinctionConfig.Containers = {
+	Respawn = 480,        -- Sekunden, bis eine geleerte Kiste neu gefüllt ist
+	Kinds = {
+		Wood = { Name = "KISTE", Table = "Tier1", Items = { 1, 3 }, Size = Vector3.new(3.4, 2.4, 2.4), Color = Color3.fromRGB(128, 96, 62) },
+		Toolbox = { Name = "WERKZEUGKISTE", Table = "Tier2", Items = { 1, 3 }, Size = Vector3.new(3.4, 2.0, 2.0), Color = Color3.fromRGB(176, 60, 50) },
+		Medical = { Name = "SANI-KISTE", Table = "Medical", Items = { 1, 2 }, Size = Vector3.new(3.0, 2.0, 2.2), Color = Color3.fromRGB(226, 226, 220) },
+		Ammo = { Name = "MUNITIONSKISTE", Table = "Ammo", Items = { 1, 2 }, Size = Vector3.new(3.2, 1.8, 2.0), Color = Color3.fromRGB(86, 98, 62) },
+		Military = { Name = "MILITÄRKISTE", Table = "Tier3", Items = { 2, 4 }, Size = Vector3.new(4.0, 2.6, 2.6), Color = Color3.fromRGB(70, 82, 56) },
+	},
+}
+
+-- ---------- Rote Zonen (Teile "Redzone_<Name>" in Gruppe Redzones: Zylinder, Radius = halbe Breite) ----------
+-- Drinnen: PvP sofort, mehr und gefährlichere Zombies (Läufer, Brocken), Kisten ziehen aus Tier3, Lootdrops landen
+-- bevorzugt dort.
+ExtinctionConfig.Redzone = {
+	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in einer roten Zone
+	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
+	KindWeights = { Walker = 55, Runner = 33, Brute = 12 },
+	ContainerTable = "Tier3",
+	PvPDelay = 0,
+}
+
+-- ---------- Lootdrops (Versorgungsabwürfe) ----------
+ExtinctionConfig.Airdrop = {
+	FirstDelay = 150,        -- Sekunden nach dem Serverstart (mit Spielern draußen) bis zum ersten Abwurf
+	MinInterval = 420,       -- danach alle 7 bis 11 Minuten
+	MaxInterval = 660,
+	Warning = 45,            -- Vorwarnung: so lange vorher kommt die Ansage und die Markierung
+	FallTime = 25,           -- so lange sinkt die Kiste am Fallschirm
+	Height = 320,            -- Starthöhe über dem Boden
+	OpenTime = 8,            -- E halten, so lange dauert das Öffnen (Sekunden)
+	Lifetime = 300,          -- gelandet bleibt die Kiste so lange
+	Items = { 6, 9 },        -- so viele Einträge aus LootTables.Airdrop
+	Escort = 5,              -- so viele Zombies kommen um die Landestelle
+	RedzoneChance = 0.4,     -- Wahrscheinlichkeit, in einer roten Zone zu landen
+	EdgeMargin = 140,        -- Abstand zum Kartenrand
+	SafeMargin = 180,        -- Abstand zur Safe Zone
+	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
 }
 
 -- ---------- Zombies ----------
+-- Wenige und langsame Zombies: man kann ihnen davonlaufen (Spieler laufen 16, sprinten 24). Die Standardwerte gelten für
+-- den normalen Zombie (Walker), ZombieKinds überschreibt sie je Art. Läufer und Brocken gibt es nur in roten Zonen.
 ExtinctionConfig.Zombies = {
-	PerPlayer = 7,         -- so viele Zombies um jeden Spieler draußen
-	MaxTotal = 70,         -- höchstens so viele gleichzeitig auf dem Server
-	SpawnMin = 70,         -- Abstand zum Spieler beim Spawnen (Studs) ...
+	PerPlayer = 3,         -- so viele Zombies um jeden Spieler draußen
+	MaxTotal = 30,         -- höchstens so viele gleichzeitig auf dem Server
+	SpawnMin = 80,         -- Abstand zum Spieler beim Spawnen (Studs) ...
 	SpawnMax = 150,        -- ... im weiteren Umkreis
-	SpawnInterval = 1.5,   -- Sekunden zwischen zwei Spawn-Runden
+	SpawnInterval = 3,     -- Sekunden zwischen zwei Spawn-Runden
 	SafeMargin = 40,       -- nicht so nah an der Safe Zone spawnen
 	DespawnDistance = 260, -- weiter weg von allen Spielern: verschwinden
 	Health = 100,
-	WalkSpeed = 9,         -- schlurfen ohne Ziel
-	RunSpeed = 15,         -- jagen (Spieler laufen 16, sprinten 24)
-	SightRange = 90,       -- so weit bemerken sie Spieler
+	WalkSpeed = 4,         -- schlurfen ohne Ziel
+	RunSpeed = 8.5,        -- jagen
+	SightRange = 45,       -- so weit bemerken sie Spieler
+	LoseRange = 90,        -- so weit verfolgen sie ein Ziel, das sie schon haben
 	AttackRange = 4.5,
-	AttackDamage = 12,
-	AttackDelay = 1.1,
+	AttackDamage = 10,
+	AttackDelay = 1.4,
+	CorpseTime = 4,        -- Leiche ohne Beute bleibt so lange liegen
+	CorpseLootTime = 40,   -- Leiche mit Beute (E durchsucht sie) bleibt so lange
+}
+
+-- Arten: Health, Walk/Run (Tempo), Damage, Coins, Scale (Größe), Drop (Chance auf Beute), Items (Anzahl), Table (Beute-Tabelle),
+-- Eyes (Augenfarbe). Walker fehlt hier bewusst bei Werten, die in ExtinctionConfig.Zombies stehen (siehe ZombieService.Kind).
+ExtinctionConfig.ZombieKinds = {
+	Walker = { Name = "Zombie", Scale = 1, Drop = 0.55, Items = { 1, 1 }, Table = "Zombie", Coins = 2,
+		Eyes = Color3.fromRGB(255, 40, 30) },
+	Runner = { Name = "Läufer", Health = 70, Walk = 6, Run = 13, Damage = 8, Coins = 4, Scale = 0.95, Drop = 0.65, Items = { 1, 2 },
+		Table = "Zombie2", Eyes = Color3.fromRGB(255, 170, 30) },
+	Brute = { Name = "Brocken", Health = 320, Walk = 4, Run = 7.5, Damage = 24, Coins = 12, Scale = 1.3, Drop = 1, Items = { 2, 3 },
+		Table = "Tier2", Eyes = Color3.fromRGB(190, 70, 255) },
 }
 
 -- ---------- Abfragen ----------
+
+-- Beute ziehen: count Einträge aus der Tabelle (gewichtet, ohne denselben Eintrag zweimal). random = Random.
+-- Gibt { { Id, Count } } zurück.
+function ExtinctionConfig.RollLoot(tableName, count, random)
+	local entries = ExtinctionConfig.LootTables[tableName]
+	if not entries then
+		return {}
+	end
+	random = random or Random.new()
+	local pool = table.clone(entries)
+	local result = {}
+	for _ = 1, math.min(count, #pool) do
+		local total = 0
+		for _, entry in pool do
+			total += entry.Weight
+		end
+		local roll = random:NextNumber(0, total)
+		for index, entry in pool do
+			roll -= entry.Weight
+			if roll <= 0 or index == #pool then
+				table.insert(result, { Id = entry.Id, Count = random:NextInteger(entry.Count[1], entry.Count[2]) })
+				table.remove(pool, index)
+				break
+			end
+		end
+	end
+	return result
+end
 
 function ExtinctionConfig.Get(id)
 	return ExtinctionConfig.Items[id]

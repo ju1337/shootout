@@ -1,10 +1,16 @@
 -- LootService (ModuleScript, nur Server)
--- Taschen am Boden der offenen Welt (EXTINCTION): Wer außerhalb der Safe Zone stirbt (oder dort das Spiel bzw. den
--- Modus verlässt), lässt seine ganze Tasche fallen; Zombies lassen manchmal einen kleinen Beutel fallen; Spieler
--- können Stapel fallen lassen. Jeder, der nah genug ist, kann mit E durchsuchen und Items herausnehmen.
--- Modelle liegen in Workspace.ExtinctionLoot (Teil "LootBag" mit ProximityPrompt), Inhalt nur auf dem Server.
+-- Beute am Boden der offenen Welt (EXTINCTION). Arten ("Kind"):
+--   Death    Todestasche: Wer außerhalb der Safe Zone stirbt (oder dort das Spiel bzw. den Modus verlässt), lässt seine ganze
+--            Tasche fallen. Großer Rucksack mit rotem Licht und Lichtsäule, 5 Minuten (BagLifetime).
+--   Drop     "Fallen lassen" aus dem Inventar: kleiner Beutel, 90 Sekunden (DropLifetime).
+--   Crate    Lagerkiste in der Welt (ContainerService): bleibt, bis sie leer ist, dann füllt sie sich später neu.
+--   Airdrop  Versorgungsabwurf (AirdropService): großes Kiste, E halten zum Öffnen.
+-- Jeder, der nah genug ist, kann mit E durchsuchen (Fenster) oder mit F alles auf einmal nehmen und Items herausnehmen.
+-- Zombie-Leichen laufen nicht über Fenster: LootService.Grab legt die Beute direkt ins Inventar (E an der Leiche).
+-- Modelle liegen in Workspace.ExtinctionLoot (Teil "LootBag" mit ProximityPrompts), Inhalt nur auf dem Server.
 -- Client: Remotes.ExtUpdate("Loot", { Id, Title, Items }) öffnet/aktualisiert das Fenster, ("LootClosed", Id) schließt es.
 -- Herausnehmen: Remotes.ExtAction("Loot", Id, Platz) bzw. ("Loot", Id, "All").
+-- Andere Dienste: LootService.OnRemoved = { callback(bag) } wird aufgerufen, wenn eine Tasche/Kiste weg ist (leer, abgelaufen).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,17 +24,21 @@ local InventoryService = require(script.Parent.InventoryService)
 
 local LootService = {}
 
+LootService.OnRemoved = {}
+
 local folder = workspace:FindFirstChild("ExtinctionLoot") or Instance.new("Folder")
 folder.Name = "ExtinctionLoot"
 folder.Parent = workspace
 
-local bags = {} -- [Id] = { Id, Title, Kind, Container, Model, Part, Expires, Viewers = { [Player] = true } }
+local bags = {} -- [Id] = { Id, Title, Kind, Container, Model, Part, Expires, Viewers = { [Player] = true }, Meta }
 local nextId = 0
 
--- Aussehen: Todestasche groß und braun, Beutel (Zombie, fallen gelassen) klein und oliv mit Licht
+-- Farben und Licht je Art (Aussehen siehe buildModel)
 local LOOKS = {
-	Death = { Size = Vector3.new(2.4, 1.5, 1.8), Color = Color3.fromRGB(92, 66, 44), Light = Color3.fromRGB(255, 120, 80) },
-	Drop = { Size = Vector3.new(1.5, 1.1, 1.3), Color = Color3.fromRGB(96, 104, 64), Light = Color3.fromRGB(255, 220, 120) },
+	Death = { Size = Vector3.new(2.4, 1.7, 1.8), Color = Color3.fromRGB(78, 70, 62), Light = Color3.fromRGB(255, 96, 70), Range = 12 },
+	Drop = { Size = Vector3.new(1.5, 1.1, 1.3), Color = Color3.fromRGB(96, 104, 64), Light = Color3.fromRGB(255, 220, 120), Range = 7 },
+	Crate = { Size = Vector3.new(3.4, 2.4, 2.4), Color = Color3.fromRGB(128, 96, 62), Light = Color3.fromRGB(255, 214, 140), Range = 8 },
+	Airdrop = { Size = Vector3.new(5, 3.6, 5), Color = Color3.fromRGB(214, 120, 40), Light = Color3.fromRGB(255, 150, 60), Range = 22 },
 }
 
 local function contents(bag)
@@ -63,6 +73,18 @@ local function inRange(player, bag)
 		and Modes.IsSurvival(player:GetAttribute("Mode"))
 end
 
+-- Kurzer Text für Items: "Verband ×2, 9mm-Munition ×14"
+function LootService.Summary(items)
+	local parts = {}
+	for _, item in items do
+		local config = ExtinctionConfig.Get(item.Id)
+		if config and (item.Count or 0) > 0 then
+			table.insert(parts, config.Name .. ((item.Count or 1) > 1 and (" ×" .. item.Count) or ""))
+		end
+	end
+	return table.concat(parts, ", ")
+end
+
 function LootService.Remove(id)
 	local bag = bags[id]
 	if not bag then
@@ -75,11 +97,112 @@ function LootService.Remove(id)
 		end
 	end
 	bag.Model:Destroy()
+	for _, callback in LootService.OnRemoved do
+		local ok, err = pcall(callback, bag)
+		if not ok then
+			warn("LootService.OnRemoved: " .. tostring(err))
+		end
+	end
 end
 
--- Neue Tasche bei position (wird auf den Boden gelegt). items = { { Id, Count, Mag } }, kind = "Death" oder "Drop".
+-- ---------- Aussehen ----------
+
+local function addPart(model, name, size, cframe, color, material, shape)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.Color = color
+	part.Material = material or Enum.Material.Fabric
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	if shape then
+		part.Shape = shape
+	end
+	part.CFrame = cframe
+	part.Parent = model
+	return part
+end
+
+local function darker(color, amount)
+	return color:Lerp(Color3.new(0, 0, 0), amount)
+end
+
+-- Modell bauen: Hauptteil "LootBag" (Prompts, Label, Licht) plus Zierteile. origin = Mitte der Unterkante auf dem Boden.
+local function buildModel(kind, look, spec, id, ground, yaw)
+	local model = Instance.new("Model")
+	model.Name = "Loot_" .. id
+	local base = CFrame.new(ground) * CFrame.Angles(0, yaw, 0)
+	local size = look.Size
+	local main = addPart(model, "LootBag", size, base * CFrame.new(0, size.Y / 2, 0), look.Color,
+		kind == "Crate" and Enum.Material.WoodPlanks or (kind == "Airdrop" and Enum.Material.Metal or Enum.Material.Fabric))
+	if kind == "Death" then
+		-- Rucksack: Klappe, Taschen, Gurte, rote Markierung
+		addPart(model, "Flap", Vector3.new(size.X * 0.92, 0.35, size.Z * 0.6), main.CFrame * CFrame.new(0, size.Y * 0.5, size.Z * 0.15),
+			darker(look.Color, 0.25))
+		for _, side in { -1, 1 } do
+			addPart(model, "Pocket", Vector3.new(0.45, size.Y * 0.55, size.Z * 0.6), main.CFrame * CFrame.new(side * (size.X / 2 + 0.2), -size.Y * 0.12, 0),
+				darker(look.Color, 0.15))
+			addPart(model, "Strap", Vector3.new(0.3, size.Y + 0.1, 0.18), main.CFrame * CFrame.new(side * size.X * 0.28, 0, -size.Z / 2 - 0.06),
+				darker(look.Color, 0.5))
+		end
+		addPart(model, "Mark", Vector3.new(0.7, 0.14, 0.7), main.CFrame * CFrame.new(0, size.Y / 2 + 0.2, -size.Z * 0.1),
+			Color3.fromRGB(255, 70, 50), Enum.Material.Neon)
+		-- Lichtsäule: von weitem zu sehen
+		local beam = addPart(model, "Beam", Vector3.new(0.5, 16, 0.5), CFrame.new(ground + Vector3.new(0, 8, 0)), Color3.fromRGB(255, 80, 60),
+			Enum.Material.Neon)
+		beam.Transparency = 0.6
+	elseif kind == "Drop" then
+		addPart(model, "Knot", Vector3.new(0.5, 0.4, 0.5), main.CFrame * CFrame.new(0, size.Y / 2 + 0.15, 0), darker(look.Color, 0.4))
+	elseif kind == "Crate" then
+		-- Kiste mit Deckel, Kanten und je nach Art Beschriftung (SpotKind)
+		local trim = darker(look.Color, 0.35)
+		addPart(model, "Lid", Vector3.new(size.X + 0.2, 0.3, size.Z + 0.2), main.CFrame * CFrame.new(0, size.Y / 2 + 0.1, 0), trim,
+			Enum.Material.WoodPlanks)
+		for _, x in { -1, 1 } do
+			addPart(model, "Edge", Vector3.new(0.25, size.Y, size.Z + 0.1), main.CFrame * CFrame.new(x * size.X * 0.36, 0, 0), trim,
+				Enum.Material.Metal)
+		end
+		local spot = spec and spec.SpotKind
+		if spot == "Medical" then
+			addPart(model, "CrossH", Vector3.new(1.1, 0.12, 0.35), main.CFrame * CFrame.new(0, size.Y / 2 + 0.28, 0), Color3.fromRGB(220, 50, 50),
+				Enum.Material.SmoothPlastic)
+			addPart(model, "CrossV", Vector3.new(0.35, 0.12, 1.1), main.CFrame * CFrame.new(0, size.Y / 2 + 0.28, 0), Color3.fromRGB(220, 50, 50),
+				Enum.Material.SmoothPlastic)
+		elseif spot == "Ammo" then
+			addPart(model, "Label", Vector3.new(1.4, 0.12, 0.7), main.CFrame * CFrame.new(0, size.Y / 2 + 0.28, 0), Color3.fromRGB(230, 190, 60),
+				Enum.Material.SmoothPlastic)
+		elseif spot == "Military" then
+			addPart(model, "Stencil", Vector3.new(2.2, 0.12, 0.5), main.CFrame * CFrame.new(0, size.Y / 2 + 0.28, 0), Color3.fromRGB(210, 210, 190),
+				Enum.Material.SmoothPlastic)
+		elseif spot == "Toolbox" then
+			addPart(model, "Handle", Vector3.new(1.6, 0.18, 0.25), main.CFrame * CFrame.new(0, size.Y / 2 + 0.45, 0), Color3.fromRGB(40, 40, 44),
+				Enum.Material.Metal)
+		end
+	elseif kind == "Airdrop" then
+		local stripe = Color3.fromRGB(240, 240, 235)
+		for _, x in { -1, 1 } do
+			addPart(model, "Band", Vector3.new(0.5, size.Y + 0.2, size.Z + 0.2), main.CFrame * CFrame.new(x * size.X * 0.32, 0, 0), stripe,
+				Enum.Material.Metal)
+		end
+		addPart(model, "Lid", Vector3.new(size.X + 0.3, 0.4, size.Z + 0.3), main.CFrame * CFrame.new(0, size.Y / 2 + 0.15, 0), darker(look.Color, 0.3),
+			Enum.Material.Metal)
+		local beacon = addPart(model, "Beacon", Vector3.new(0.9, 0.9, 0.9), main.CFrame * CFrame.new(0, size.Y / 2 + 0.9, 0), Color3.fromRGB(255, 80, 40),
+			Enum.Material.Neon, Enum.PartType.Ball)
+		beacon.Transparency = 0.1
+		local beam = addPart(model, "Beam", Vector3.new(1.2, 60, 1.2), CFrame.new(ground + Vector3.new(0, 30, 0)), Color3.fromRGB(255, 110, 50),
+			Enum.Material.Neon)
+		beam.Transparency = 0.7
+	end
+	return model, main
+end
+
+-- Neue Tasche/Kiste bei position (wird auf den Boden gelegt). items = { { Id, Count, Mag } }, kind = "Death", "Drop", "Crate"
+-- oder "Airdrop". options = { Persist (kein Ablauf), HoldTime (Sekunden E halten), SpotKind, Meta, Lifetime, NoGround }.
 -- Gibt die Id zurück (nil, wenn nichts drin wäre).
-function LootService.Create(position, items, kind, title)
+function LootService.Create(position, items, kind, title, options)
+	options = options or {}
 	local list = {}
 	for _, item in items do
 		if ExtinctionConfig.Get(item.Id) and (item.Count or 0) > 0 then
@@ -96,84 +219,93 @@ function LootService.Create(position, items, kind, title)
 		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag }
 	end
 	local look = LOOKS[kind] or LOOKS.Drop
+	if options.Size or options.Color then
+		look = { Size = options.Size or look.Size, Color = options.Color or look.Color, Light = look.Light, Range = look.Range }
+	end
 
 	-- auf den Boden legen (Charaktere und andere Taschen ignorieren)
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local ignore = { folder }
-	for _, player in Players:GetPlayers() do
-		if player.Character then
-			table.insert(ignore, player.Character)
+	local ground = position
+	if not options.NoGround then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		local ignore = { folder }
+		for _, player in Players:GetPlayers() do
+			if player.Character then
+				table.insert(ignore, player.Character)
+			end
 		end
+		local zombies = workspace:FindFirstChild("Zombies")
+		if zombies then
+			table.insert(ignore, zombies)
+		end
+		params.FilterDescendantsInstances = ignore
+		local hit = workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -60, 0), params)
+		ground = hit and hit.Position or position
 	end
-	local zombies = workspace:FindFirstChild("Zombies")
-	if zombies then
-		table.insert(ignore, zombies)
-	end
-	params.FilterDescendantsInstances = ignore
-	local hit = workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -60, 0), params)
-	local ground = hit and hit.Position or position
 
-	local model = Instance.new("Model")
-	model.Name = "Loot_" .. id
-	local part = Instance.new("Part")
-	part.Name = "LootBag"
-	part.Size = look.Size
-	part.Color = look.Color
-	part.Material = Enum.Material.Fabric
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
-	part.CFrame = CFrame.new(ground + Vector3.new(0, look.Size.Y / 2, 0)) * CFrame.Angles(0, math.rad(math.random(0, 359)), 0)
+	local model, part = buildModel(kind, look, { SpotKind = options.SpotKind }, id, ground, options.Yaw or math.rad(math.random(0, 359)))
 	part:SetAttribute("LootBag", id)
 	part:SetAttribute("Kind", kind)
-	part.Parent = model
-	local strap = Instance.new("Part")
-	strap.Name = "Strap"
-	strap.Size = Vector3.new(look.Size.X + 0.08, 0.25, look.Size.Z * 0.35)
-	strap.Color = look.Color:Lerp(Color3.new(0, 0, 0), 0.4)
-	strap.Material = Enum.Material.Fabric
-	strap.Anchored = true
-	strap.CanCollide = false
-	strap.CanQuery = false
-	strap.CanTouch = false
-	strap.CFrame = part.CFrame * CFrame.new(0, look.Size.Y * 0.2, 0)
-	strap.Parent = model
 	local light = Instance.new("PointLight")
 	light.Color = look.Light
-	light.Range = kind == "Death" and 10 or 7
-	light.Brightness = 0.8
+	light.Range = look.Range
+	light.Brightness = kind == "Crate" and 0.5 or 0.9
 	light.Parent = part
 
 	local label = Instance.new("BillboardGui")
 	label.Name = "Label"
-	label.Size = UDim2.fromOffset(160, 22)
-	label.StudsOffset = Vector3.new(0, 2.2, 0)
-	label.MaxDistance = 70
+	label.Size = UDim2.fromOffset(190, 36)
+	label.StudsOffset = Vector3.new(0, look.Size.Y + 1.6, 0)
+	label.MaxDistance = kind == "Airdrop" and 400 or 70
 	label.AlwaysOnTop = true
 	label.Parent = part
 	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
+	text.Name = "Title"
+	text.Size = UDim2.new(1, 0, 0.55, 0)
 	text.BackgroundTransparency = 1
 	text.Font = Enum.Font.GothamBold
-	text.TextSize = 13
+	text.TextSize = 14
 	text.TextColor3 = look.Light
 	text.TextStrokeTransparency = 0.4
 	text.Text = title
 	text.Parent = label
+	local count = Instance.new("TextLabel")
+	count.Name = "Count"
+	count.Position = UDim2.fromScale(0, 0.55)
+	count.Size = UDim2.new(1, 0, 0.45, 0)
+	count.BackgroundTransparency = 1
+	count.Font = Enum.Font.GothamMedium
+	count.TextSize = 11
+	count.TextColor3 = Color3.fromRGB(220, 224, 230)
+	count.TextStrokeTransparency = 0.5
+	count.Text = #list .. (#list == 1 and " ITEM" or " ITEMS")
+	count.Parent = label
 
+	local hold = options.HoldTime or (kind == "Death" and 0.4 or 0)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "LootPrompt"
-	prompt.ActionText = "Durchsuchen"
+	prompt.ActionText = kind == "Airdrop" and "Lootdrop öffnen" or "Durchsuchen"
 	prompt.ObjectText = title
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
-	prompt.HoldDuration = kind == "Death" and 0.4 or 0
+	prompt.HoldDuration = hold
 	prompt.MaxActivationDistance = ExtinctionConfig.LootRange - 1
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = part
+	-- F: alles auf einmal nehmen (ohne Fenster)
+	local takeAll = Instance.new("ProximityPrompt")
+	takeAll.Name = "TakeAllPrompt"
+	takeAll.ActionText = "Alles nehmen"
+	takeAll.ObjectText = title
+	takeAll.KeyboardKeyCode = Enum.KeyCode.F
+	takeAll.GamepadKeyCode = Enum.KeyCode.ButtonX
+	takeAll.HoldDuration = hold
+	takeAll.UIOffset = Vector2.new(0, 70)
+	takeAll.MaxActivationDistance = ExtinctionConfig.LootRange - 1
+	takeAll.RequiresLineOfSight = false
+	takeAll.Parent = part
 	model.Parent = folder
 
+	local lifetime = options.Lifetime or (kind == "Death" and ExtinctionConfig.BagLifetime or ExtinctionConfig.DropLifetime)
 	local bag = {
 		Id = id,
 		Title = title,
@@ -181,12 +313,17 @@ function LootService.Create(position, items, kind, title)
 		Container = container,
 		Model = model,
 		Part = part,
-		Expires = os.clock() + (kind == "Death" and ExtinctionConfig.BagLifetime or ExtinctionConfig.DropLifetime),
+		Expires = options.Persist and math.huge or (os.clock() + lifetime),
 		Viewers = {},
+		Meta = options.Meta,
+		Label = count,
 	}
 	bags[id] = bag
 	prompt.Triggered:Connect(function(player)
 		LootService.Open(player, id)
+	end)
+	takeAll.Triggered:Connect(function(player)
+		LootService.Take(player, id, "All")
 	end)
 	return id
 end
@@ -200,6 +337,19 @@ function LootService.Open(player, id)
 	bag.Viewers[player] = true
 	send(player, bag)
 	return true
+end
+
+-- Anzahl der Items in der Tasche am Beschriftungsschild nachführen
+local function refreshLabel(bag)
+	local n = 0
+	for _, item in bag.Container.Slots do
+		if item then
+			n += 1
+		end
+	end
+	if bag.Label then
+		bag.Label.Text = n .. (n == 1 and " ITEM" or " ITEMS")
+	end
 end
 
 -- Item herausnehmen: slot = Platz in der Tasche oder "All"
@@ -225,24 +375,36 @@ function LootService.Take(player, id, slot)
 		slots = { slot }
 	end
 	local moved, full = false, false
+	local taken = {}
 	for _, s in slots do
-		if bag.Container.Slots[s] then
+		local item = bag.Container.Slots[s]
+		if item then
+			local before = item.Count
+			local id_ = item.Id
 			if Inventory.Move(bag.Container, s, playerBag, nil) then
 				moved = true
 			end
-			if bag.Container.Slots[s] then
+			local left = bag.Container.Slots[s]
+			local got = before - (left and left.Count or 0)
+			if got > 0 then
+				table.insert(taken, { Id = id_, Count = got })
+			end
+			if left then
 				full = true -- passte nicht (ganz) in die Tasche
 			end
 		end
 	end
 	if full then
 		InventoryService.Status(player, "Deine Tasche ist voll.")
+	elseif moved and slot == "All" then
+		InventoryService.Status(player, "+ " .. LootService.Summary(taken), true)
 	end
 	if moved then
 		InventoryService.Changed(player)
 		if Inventory.IsEmpty(bag.Container) then
 			LootService.Remove(id)
 		else
+			refreshLabel(bag)
 			for viewer in bag.Viewers do
 				if viewer.Parent then
 					send(viewer, bag)
@@ -251,6 +413,28 @@ function LootService.Take(player, id, slot)
 		end
 	end
 	return moved
+end
+
+-- Beute direkt ins Inventar (E an einer Zombie-Leiche): items = { { Id, Count, Mag } }. Gibt zurück: Rest (was nicht mehr
+-- hineinpasste) und den Text, was genommen wurde. Meldet dem Spieler, was er bekommen hat.
+function LootService.Grab(player, items)
+	local rest, got = {}, {}
+	for _, item in items do
+		local added = InventoryService.Give(player, item.Id, item.Count, { Mag = item.Mag })
+		if added > 0 then
+			table.insert(got, { Id = item.Id, Count = added })
+		end
+		if added < item.Count then
+			table.insert(rest, { Id = item.Id, Count = item.Count - added, Mag = item.Mag })
+		end
+	end
+	if #got > 0 then
+		InventoryService.Status(player, "+ " .. LootService.Summary(got), true)
+	end
+	if #rest > 0 then
+		InventoryService.Status(player, "Deine Tasche ist voll.")
+	end
+	return rest, LootService.Summary(got)
 end
 
 -- Fenster geschlossen (Client)
