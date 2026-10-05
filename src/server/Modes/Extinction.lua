@@ -37,6 +37,7 @@ local Extinction = {}
 local ZONE_STEP = 0.2 -- so oft wird geprüft, wer in der Safe Zone ist (Sekunden)
 
 local manager
+local bloodMoon = nil -- letzter Stand des Blutmonds (nil = noch nicht geprüft, dann keine Ansage)
 local members = {} -- [Player] = { Inside, PvPAt, LeaveAsked }
 local map = workspace:WaitForChild("Maps"):WaitForChild("Extinction")
 local zonePart = map:WaitForChild("Zone"):WaitForChild("SafeZone")
@@ -318,10 +319,10 @@ function Extinction.Init(modeManager)
 		end
 		-- Blutmond beginnt/endet: Ansage an alle in der offenen Welt
 		local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow())
-		if blood ~= Extinction.BloodMoon then
-			local started = blood and Extinction.BloodMoon ~= nil
-			local ended = not blood and Extinction.BloodMoon == true
-			Extinction.BloodMoon = blood
+		if blood ~= bloodMoon then
+			local started = blood and bloodMoon ~= nil
+			local ended = not blood and bloodMoon == true
+			bloodMoon = blood
 			for player in members do
 				if started then
 					notify(player, "Banner", { Caption = "Nacht", Title = "BLUTMOND", Sub = "Die Toten sind heute Nacht zahlreich und hungrig",
