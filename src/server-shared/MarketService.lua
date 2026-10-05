@@ -546,7 +546,7 @@ function actions.Offer(player, id, slot, price)
 	end
 	nextOfferId += 1
 	local offer = { Id = nextOfferId, Slot = tonumber(slot), Item = listing.Item, Buyer = player, Price = price,
-		Expires = os.time() + RapConfig.OfferSeconds }
+		Expires = os.time() + RapConfig.OfferSeconds, Closed = false }
 	table.insert(stand.Offers, offer)
 	publish(stand)
 	banner(stand.Owner, "Markt · Stand " .. stand.Id, "GEGENANGEBOT",
