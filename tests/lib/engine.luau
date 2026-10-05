@@ -1803,6 +1803,14 @@ rawset(BadgeService, "__methods", {
 	end,
 })
 
+-- Eingabe: im Simulator tippt niemand in ein Textfeld
+local UserInputService = service("UserInputService")
+rawset(UserInputService, "__methods", {
+	GetFocusedTextBox = function()
+		return nil
+	end,
+})
+
 local TextService = service("TextService")
 rawset(TextService, "__methods", {
 	GetTextSize = function(_, text, size)
