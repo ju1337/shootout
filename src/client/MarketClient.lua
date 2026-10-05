@@ -1261,7 +1261,7 @@ function MarketClient.Init()
 		prompt.ActionText = "Markt durchsuchen"
 		prompt.ObjectText = "Such-Terminal"
 		prompt.HoldDuration = 0
-		prompt.MaxActivationDistance = 12
+		prompt.MaxActivationDistance = 17 -- schon von den Spawnpunkten (12 Studs Abstand) aus erreichbar
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = terminal
 		prompt.Triggered:Connect(openSearch)
