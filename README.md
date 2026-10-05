@@ -68,6 +68,16 @@ Industrie, See, Wald und Felsen am Rand).
   nicht. Pro Zombie nur 2 Münzen (Spieler bringen viel mehr), mit 35 % Chance ein Beutel mit einfacher Beute
   (Verband, etwas Munition, selten Medikit, Pistole, Fahrrad oder Quad). Ohne Spieler draußen in der Nähe
   verschwinden sie nach ein paar Sekunden.
+- **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
+  Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
+  einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es
+  wieder ins Inventar (nur drin oder nah dran), danach **8 Sekunden** warten bis zum nächsten Spawn. Höchstens ein
+  Fahrzeug pro Spieler draußen (Hotbar zeigt DRAUSSEN), gleiche Taste in der Nähe = wieder einsteigen. Mitfahrer
+  steigen mit E ein, fahren darf nur der Besitzer; im Fahrzeug keine Waffe. W/S Gas und Bremse, A/D lenken
+  (Controller/Touch über Roblox), Leertaste aussteigen, Verfolgerkamera. Fahrzeuge haben Leben (Schüsse nur
+  draußen mit PvP), kaputt = ausgebrannt und weg; Zombies kann man umfahren. Stirbt der Besitzer, liegt das
+  Fahrzeug in seiner Tasche am Boden. Technik: unsichtbarer Rumpf auf vier reibungsfreien Kugeln, LinearVelocity
+  (nur waagerecht) und AlignOrientation, der Fahrer rechnet die Physik; der Server prüft das Tempo.
 - **Agenten**: nur passive Fähigkeiten (keine Q/G/F), Leben und Tempo wie sonst.
 
 Code: `src/server/Modes/Extinction.lua` (Safe Zone, PvP, Tod/Verlassen), `src/server-shared/InventoryService.lua`
@@ -358,7 +368,8 @@ Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Mess
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · 4/5/6 Killstreaks (Herrschaft)
 
-In EXTINCTION: 1-9 Hotbar benutzen · TAB Inventar · E Stand/Lager/Tasche · K Fahrzeug einpacken ·
+In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Inventar · E Stand/Lager/Tasche/Mitfahren ·
+K Fahrzeug einpacken · im Fahrzeug W/S/A/D, Leertaste aussteigen ·
 Controller: R1/L1 Waffe der Hotbar wechseln, Select Inventar, △ Fahrzeug einpacken
 
 Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,

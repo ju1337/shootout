@@ -208,6 +208,23 @@ function CFrame.Lerp(a, b, t)
 	end
 	return cf(a.px + (b.px - a.px) * t, a.py + (b.py - a.py) * t, a.pz + (b.pz - a.pz) * t, fromQuat(w, x, y, z))
 end
+-- Wie Roblox: Winkel (x, y, z) mit CFrame.fromOrientation(x, y, z) = Ry(y) * Rx(x) * Rz(z)
+function CFrame.ToOrientation(a)
+	local m = a.m
+	local x = math.asin(math.clamp(-m[6], -1, 1))
+	local y, z
+	if math.abs(m[6]) < 0.9999 then
+		y = math.atan2(m[3], m[9]); z = math.atan2(m[4], m[5])
+	else
+		y = math.atan2(-m[7], m[1]); z = 0
+	end
+	return x, y, z
+end
+CFrame.ToEulerAnglesYXZ = CFrame.ToOrientation
+function CFrame.fromOrientation(x, y, z)
+	return CFrame.Angles(0, y, 0) * CFrame.Angles(x, 0, 0) * CFrame.Angles(0, 0, z)
+end
+CFrame.fromEulerAnglesYXZ = CFrame.fromOrientation
 function CFrame.ToEulerAnglesXYZ(a)
 	local m = a.m
 	local y = math.asin(math.clamp(m[3], -1, 1))

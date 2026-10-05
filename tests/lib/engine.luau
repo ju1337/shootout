@@ -318,7 +318,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"PreSimulation", "PostSimulation", "PreRender", "PreAnimation", "OnServerEvent", "OnClientEvent", "Event",
 	"CharacterAdded", "CharacterRemoving", "CharacterAppearanceLoaded", "HealthChanged", "StateChanged", "Touched",
 	"TouchEnded", "MoveToFinished", "Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up",
-	"MouseButton2Click", "MouseButton2Down", "MouseButton2Up",
+	"MouseButton2Click", "MouseButton2Down", "MouseButton2Up", "Seated",
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
@@ -945,7 +945,67 @@ ClassInit.Humanoid = function(self)
 	props.PlatformStand = false
 	props.Sit = false
 end
+-- Sitze (Seat, VehicleSeat), vereinfacht ohne SeatWeld-Physik: Sit setzt Occupant am Sitz sowie Sit und SeatPart am
+-- Humanoid; Humanoid.Sit = false (oder Springen) steht wieder auf und gibt den Sitz frei
+local function seatSit(self, humanoid)
+	local old = self.Occupant
+	if old == humanoid then
+		return
+	end
+	if old then
+		rawget(old, "__props").Sit = false
+		old.SeatPart = nil
+	end
+	if humanoid then
+		local previous = humanoid.SeatPart
+		if previous and previous ~= self then
+			previous.Occupant = nil
+		end
+		rawget(humanoid, "__props").Sit = true
+		humanoid.SeatPart = self
+		humanoid.Seated:Fire(true, self)
+	end
+	self.Occupant = humanoid
+end
+ClassMethods.Seat = { Sit = seatSit }
+ClassMethods.VehicleSeat = { Sit = seatSit }
+ClassInit.VehicleSeat = function(self)
+	local props = rawget(self, "__props")
+	props.ThrottleFloat = 0
+	props.SteerFloat = 0
+	props.Throttle = 0
+	props.Steer = 0
+	props.Disabled = false
+end
+ClassInit.Seat = function(self)
+	rawget(self, "__props").Disabled = false
+end
+local function standUp(humanoid)
+	local seat = humanoid.SeatPart
+	rawget(humanoid, "__props").Sit = false
+	if seat then
+		humanoid.SeatPart = nil
+		if seat.Occupant == humanoid then
+			seat.Occupant = nil
+		end
+		humanoid.Seated:Fire(false, seat)
+	end
+end
+
 ClassSetters.Humanoid = {
+	Sit = function(h, v)
+		if v then
+			rawget(h, "__props").Sit = true
+		else
+			standUp(h)
+		end
+	end,
+	Jump = function(h, v)
+		rawget(h, "__props").Jump = v
+		if v and rawget(h, "__props").Sit then
+			standUp(h) -- Springen steht vom Sitz auf
+		end
+	end,
 	Health = function(h, v)
 		local props = rawget(h, "__props")
 		local wasAlive = props.Health > 0 and not rawget(h, "__dead")
@@ -1806,9 +1866,16 @@ rawset(BadgeService, "__methods", {
 
 -- Eingabe: im Simulator tippt niemand in ein Textfeld
 local UserInputService = service("UserInputService")
+SIM.KeysDown = {} -- [Enum.KeyCode.X] = true: gedrückte Tasten (UserInputService:IsKeyDown)
 rawset(UserInputService, "__methods", {
 	GetFocusedTextBox = function()
 		return nil
+	end,
+	IsKeyDown = function(_, key)
+		return SIM.KeysDown[key] == true
+	end,
+	GetMouseLocation = function()
+		return Vector2.new(0, 0)
 	end,
 })
 

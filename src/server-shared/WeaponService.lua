@@ -33,6 +33,9 @@ local ProgressService = require(ServerStorage:WaitForChild("ServerShared").Progr
 
 local WeaponService = {}
 
+-- Treffer auf ein Fahrzeug der offenen Welt: function(player, vehicleModel, damage) (setzt VehicleService)
+WeaponService.OnVehicleHit = nil
+
 -- Wird gefeuert, wenn ein Spieler einen anderen Spieler tötet:
 -- (killer: Player, victim: Player oder nil bei Bots, weaponName, headshot, victimName, victimModel oder nil)
 local killedEvent = Instance.new("BindableEvent")
@@ -325,8 +328,15 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		return
 	end
 
-	-- Getroffenes Lebewesen suchen
+	-- Fahrzeug der offenen Welt getroffen (VehicleService prüft Safe Zone und PvP)
 	local model = hitPart:FindFirstAncestorOfClass("Model")
+	if model and model:GetAttribute("VehicleId") and WeaponService.OnVehicleHit then
+		WeaponService.OnVehicleHit(player, model, cfg.Damage * WeaponConfig.FalloffFactor(cfg, (hitPosition - origin).Magnitude)
+			* GameSettings.Get("DamageMultiplier"))
+		return
+	end
+
+	-- Getroffenes Lebewesen suchen
 	local targetHumanoid = model and model:FindFirstChildOfClass("Humanoid")
 	if not targetHumanoid or targetHumanoid.Health <= 0 then
 		return

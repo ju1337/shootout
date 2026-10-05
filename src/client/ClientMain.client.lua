@@ -36,6 +36,7 @@ local MarketClient = require(script.Parent:WaitForChild("MarketClient"))
 local TradeClient = require(script.Parent:WaitForChild("TradeClient"))
 local CrateClient = require(script.Parent:WaitForChild("CrateClient"))
 local ExtinctionClient = require(script.Parent:WaitForChild("ExtinctionClient"))
+local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
@@ -68,4 +69,5 @@ task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet
 TradeClient.Init() -- Tauschen im Hub und im Markt (G an anderen Spielern)
 task.spawn(CrateClient.Init) -- Kisten öffnen: Automaten in der Marktmitte (Waffen-Kiste, Agenten-Kiste)
 ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
+VehicleClient.Init() -- offene Welt: Fahrzeuge steuern (der Fahrer rechnet die Physik), Verfolgerkamera
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

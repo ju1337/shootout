@@ -356,7 +356,7 @@ local function buildHud()
 		end)
 		hotbarViews[slot] = view
 	end
-	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -98), Size = UDim2.fromOffset(300, 18),
+	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -98), Size = UDim2.fromOffset(560, 18),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -46),
 		Size = UDim2.fromOffset(160, 22), Text = "", TextSize = 20, Font = F.Display, TextColor3 = C.Primary,
@@ -1083,9 +1083,24 @@ function ExtinctionClient.Init()
 		end
 		updateZone()
 		standDistanceCheck()
-		local readyAt = player:GetAttribute("ExtVehicleReadyAt") or 0
-		local left = readyAt - workspace:GetServerTimeNow()
-		vehicleCooldown.Text = left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or ""
+		-- im Fahrzeug: Name, Tempo und Zustand; sonst die Wartezeit nach dem Einpacken
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local seat = humanoid and humanoid.SeatPart
+		local vehicle = seat and seat:GetAttribute("Vehicle") and seat.Parent
+		if vehicle and vehicle:GetAttribute("VehicleId") and vehicle.PrimaryPart then
+			local velocity = vehicle.PrimaryPart.AssemblyLinearVelocity
+			local speed = math.floor(Vector3.new(velocity.X, 0, velocity.Z).Magnitude + 0.5)
+			local health = math.ceil(100 * (vehicle:GetAttribute("Health") or 0) / math.max(1, vehicle:GetAttribute("MaxHealth") or 1))
+			vehicleCooldown.Text = upper(vehicle.Name) .. "  ·  TEMPO " .. speed .. "  ·  ZUSTAND " .. health .. " %"
+				.. (vehicle:GetAttribute("Owner") == player.UserId and "  ·  K EINPACKEN" or "")
+			vehicleCooldown.TextColor3 = health <= 30 and C.Bad or C.Text
+		else
+			local readyAt = player:GetAttribute("ExtVehicleReadyAt") or 0
+			local left = readyAt - workspace:GetServerTimeNow()
+			vehicleCooldown.Text = left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or ""
+			vehicleCooldown.TextColor3 = C.Muted
+		end
 	end)
 
 	refreshAll()

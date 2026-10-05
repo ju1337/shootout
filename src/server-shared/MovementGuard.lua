@@ -3,7 +3,7 @@
 -- vergleicht alle CHECK_INTERVAL Sekunden die zurückgelegte Strecke mit dem erlaubten Tempo. Erlaubt ist ein
 -- Dauertempo plus ein Vorrat (Sprint-Stoß, Lag-Spitzen: der Server bekommt die Bewegung dann gebündelt), getrennt
 -- waagerecht und nach oben. Fallen ist frei. Wer mehr zurücklegt, wird an die letzte gültige Stelle zurückgesetzt.
--- Tote Charaktere werden nicht geprüft (Ragdoll).
+-- Tote Charaktere werden nicht geprüft (Ragdoll), Insassen von Fahrzeugen auch nicht (VehicleService prüft das Tempo).
 -- Versetzt der Server einen Charakter selbst (Spawn), muss er danach MovementGuard.Teleported(character) aufrufen,
 -- sonst gilt die neue Stelle als Teleport.
 
@@ -77,6 +77,9 @@ local function step(now)
 		local track = tracks[player]
 		if not humanoid or not root or humanoid.Health <= 0 or not root:IsDescendantOf(workspace) then
 			tracks[player] = nil
+		elseif humanoid.SeatPart and humanoid.SeatPart:GetAttribute("Vehicle") then
+			-- im Fahrzeug der offenen Welt: das prüft VehicleService; nach dem Aussteigen gilt die Stelle neu
+			tracks[player] = newTrack(character, root, now)
 		elseif not track or track.Character ~= character then
 			tracks[player] = newTrack(character, root, now)
 		else

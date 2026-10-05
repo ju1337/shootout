@@ -21,6 +21,7 @@ local ProgressService = require(ServerShared.ProgressService)
 local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
+local VehicleService = require(ServerShared.VehicleService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
 local Extinction = {}
@@ -206,6 +207,13 @@ function Extinction.Init(modeManager)
 			return list
 		end,
 	})
+
+	-- Fahrzeuge (Taste spawnt, K packt ein); Tod oder Verlassen: Fahrzeug weg
+	VehicleService.Init({ InSafeZone = Extinction.InSafeZone })
+	table.insert(Extinction.OnDeath, function(player)
+		VehicleService.Despawn(player)
+	end)
+	table.insert(Extinction.OnLeave, VehicleService.Despawn)
 
 	-- Spiel verlassen: vor dem letzten Speichern die Strafe anwenden (draußen = Tasche weg)
 	ProgressService.OnLeaving(function(player)

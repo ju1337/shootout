@@ -53,6 +53,7 @@ local lastSlide = 0
 local normalHipHeight = nil
 local mantling = false
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
+local inVehicle = false          -- sitzt in einem Fahrzeug der offenen Welt: Verfolgerkamera statt Ego/Schulter
 -- Schulterkamera: seitlicher Versatz so groß, dass der Charakter (Arme bis 2 Studs neben der Mitte) die
 -- Bildmitte mit ca. 8° Abstand freilässt; beim Zielen näher heran, aber weiter seitlich als der Arm
 local SHOULDER_OFFSET = Vector3.new(3.4, 1.0, 0)
@@ -115,7 +116,7 @@ local function apply()
 		normalHipHeight = normalHipHeight or humanoid.HipHeight
 		local crouched = isCrouched() and not isDropping(humanoid)
 		local offset = crouched and CROUCH_CAMERA or Vector3.zero
-		if thirdPerson and Modes.IsFighting(player) then
+		if thirdPerson and Modes.IsFighting(player) and not inVehicle then
 			local shoulder = aiming and SHOULDER_AIM_OFFSET or SHOULDER_OFFSET
 			offset += Vector3.new(shoulder.X * shoulderSide, shoulder.Y, 0) -- über die Schulter
 			targetDistance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
@@ -275,9 +276,38 @@ function Movement.SetFirstPerson(on: boolean)
 	end
 end
 
--- Kamera passend zum Modus setzen (Hub: frei, Kampf: Ego oder Schulter)
+-- Kamera passend zum Modus setzen (Hub: frei, Kampf: Ego oder Schulter; im Fahrzeug: Verfolgerkamera)
 function Movement.ApplyCamera()
+	if inVehicle then
+		return
+	end
 	Movement.SetFirstPerson(Modes.IsFighting(player))
+end
+
+-- Fahrzeug der offenen Welt: Kamera hinter dem Fahrzeug (Roblox folgt dem Fahrersitz), Maus frei.
+-- Beim Aussteigen wieder Ego- bzw. Schulterkamera.
+function Movement.SetVehicle(on)
+	if inVehicle == on then
+		return
+	end
+	inVehicle = on
+	if on then
+		player.CameraMode = Enum.CameraMode.Classic
+		player.CameraMaxZoomDistance = 45
+		player.CameraMinZoomDistance = 16 -- erst herauszoomen, dann frei
+		task.delay(0.2, function()
+			if inVehicle then
+				player.CameraMinZoomDistance = 8
+			end
+		end)
+	else
+		Movement.ApplyCamera()
+	end
+	apply()
+end
+
+function Movement.InVehicle()
+	return inVehicle
 end
 
 -- Einstellung Schulterkamera an/aus
@@ -297,7 +327,7 @@ function Movement.GetThirdPersonSetting()
 end
 
 function Movement.IsThirdPerson()
-	return thirdPerson and Modes.IsFighting(player)
+	return thirdPerson and Modes.IsFighting(player) and not inVehicle
 end
 
 -- Zielen an/aus (von WeaponClient), fov = Sichtfeld der Waffe beim Zielen
