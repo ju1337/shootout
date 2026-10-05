@@ -1,7 +1,7 @@
 -- MarketService (ModuleScript, nur Server)
--- Stände in der Markthalle (wie die Trading Plaza in Pet Simulator / Sniper Arena):
---   * Claim: Ein freier Stand gehört dem Spieler, solange er im Markt bleibt (einer pro Spieler). Er steht danach
---     hinter seiner Theke.
+-- Stände im Markt (wie die Trading Plaza in Pet Simulator / Sniper Arena):
+--   * Claim: Ein freier Stand gehört dem Spieler, solange er im Markt bleibt (einer pro Spieler). Der Spieler bleibt
+--     dabei, wo er steht (kein Teleport hinter die Theke).
 --   * List / Unlist / SetPrice: bis zu RapConfig.StandSlots handelbare Skins zum selbst gewählten RAP-Preis
 --     anbieten. Die Skins bleiben im Inventar, sind aber zurückgelegt (EconomyService, Schlüssel "Stand"). Angebote
 --     laufen nicht ab: sie gelten, bis sie verkauft oder zurückgenommen werden oder der Besitzer den Markt verlässt.
@@ -34,7 +34,6 @@ local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
 local EconomyService = require(script.Parent.EconomyService)
-local MovementGuard = require(script.Parent.MovementGuard)
 
 local MarketService = {}
 
@@ -306,13 +305,6 @@ function actions.Claim(player, id)
 	stand.Offers = {}
 	standOf[player] = stand
 	publish(stand)
-	-- hinter die eigene Theke stellen
-	local spot = stand.Folder:FindFirstChild("OwnerSpot")
-	local character = player.Character
-	if spot and character then
-		character:PivotTo(spot.CFrame + Vector3.new(0, 2.7, 0)) -- Füße knapp über dem Podest
-		MovementGuard.Teleported(character)
-	end
 	return "Stand " .. stand.Id .. " gehört dir! Biete jetzt Skins an (MEIN STAND).", true
 end
 

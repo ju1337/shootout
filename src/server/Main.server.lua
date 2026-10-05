@@ -24,6 +24,7 @@ local MovementGuard = require(ServerShared.MovementGuard)
 local BackWeapon = require(ServerShared.BackWeapon)
 local EconomyService = require(ServerShared.EconomyService)
 local TradeService = require(ServerShared.TradeService)
+local CrateService = require(ServerShared.CrateService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
@@ -49,6 +50,7 @@ MovementGuard.Init() -- Bewegungs-Check gegen Speedhacks und Teleports
 BackWeapon.Init() -- im Hub: Standardwaffe des Agenten auf dem Rücken
 EconomyService.Init() -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
 TradeService.Init() -- Tauschen zwischen Spielern im Hub und im Markt
+CrateService.Init() -- Kisten öffnen (Waffen-Kiste, Agenten-Kiste) im Markt
 AgentService.Init()
 AdminService.Init(ModeManager)
 PartyService.Init(ModeManager)

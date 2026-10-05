@@ -49,6 +49,8 @@ local NAMES = {
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
 	"MarketAction", -- Client -> Server: Markt-Stand (Claim, Release, List, Unlist, SetPrice, Buy; MarketService)
 	"MarketStatus", -- Server -> Client: Rückmeldung zum Markt (Text, Erfolg)
+	"CrateAction", -- Client -> Server: Kiste öffnen ("Open", Kisten-Id; CrateService)
+	"CrateResult", -- Server -> Client: Ergebnis der Kiste (Skin, Rolle, Status) oder Fehlermeldung
 	"TradeAction", -- Client -> Server: Tausch (Request, Respond, AddItem, RemoveItem, SetRap, Ready, Cancel; TradeService)
 	"TradeUpdate", -- Server -> Client: Tausch-Stand (Art, Daten): "Request", "State", "Closed", "Done"
 }
