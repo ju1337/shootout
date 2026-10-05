@@ -523,6 +523,16 @@ local function updateMarkers()
 					Text = "HORDE  " .. title .. "  ·  " .. tostring(act.Left or "?") .. " ÜBRIG  ·  " .. distance .. " M" })
 			elseif act.Kind == "Nest" and act.State == "Active" and distance < 350 then
 				table.insert(entries, { Order = distance, X = act.X, Z = act.Z, Color = NEST, Text = "ZOMBIENEST  ·  " .. distance .. " M" })
+			elseif act.Kind == "Survivor" and act.State == "Ready" and distance < 260 then
+				table.insert(entries, { Order = distance + 100, X = act.X, Z = act.Z, Color = Color3.fromRGB(120, 220, 140),
+					Text = "ÜBERLEBENDER  ·  " .. distance .. " M" })
+			elseif act.Kind == "Survivor" and act.State == "Following" then
+				local zone = map:FindFirstChild("Zone") and map.Zone:FindFirstChild("SafeZone")
+				if zone then
+					local sx, sz = zone.Position.X - here.X, zone.Position.Z - here.Z
+					table.insert(entries, { Order = -9000, X = zone.Position.X, Z = zone.Position.Z, Color = Color3.fromRGB(120, 220, 140),
+						Text = "ÜBERLEBENDEN ZUR SAFE ZONE BRINGEN  ·  " .. math.floor(math.sqrt(sx * sx + sz * sz)) .. " M" })
+				end
 			elseif act.Kind == "Cache" and act.State == "Ready" and distance < 220 then
 				table.insert(entries, { Order = distance + 200, X = act.X, Z = act.Z, Color = DROP, Text = "VORRATSLAGER  ·  " .. distance .. " M" })
 			end

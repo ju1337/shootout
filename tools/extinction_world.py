@@ -1547,6 +1547,11 @@ def activities(w):
     for x, z, title in caches:
         marker("Cache", x, z, title, 4)
     marker("Radio", -540, -770, "FUNKTURM", 4)
+    survivors = [(-200, 1180, "NORDHEIM"), (1180, 560, "SANDBACH"), (-1180, -220, "ALTENFELD"), (460, -1180, "MÜHLDORF"),
+                 (260, -230, "EVAKUIERUNGSLAGER"), (-420, 300, "ÖDSTADT"), (420, -300, "ÖDSTADT"), (-680, 540, "HOF LINDE"),
+                 (740, -410, "HOF KRÜGER"), (1080, 1230, "FLUGPLATZ")]
+    for x, z, title in survivors:
+        marker("Survivor", x, z, title, 3)
     hordes = [(0, 400, "ÖDSTADT NORD"), (400, 0, "ÖDSTADT OST"), (0, -400, "ÖDSTADT SÜD"), (-400, 0, "ÖDSTADT WEST"),
               (-250, 1150, "NORDHEIM"), (1150, 520, "SANDBACH"), (-1150, -250, "ALTENFELD"), (430, -1150, "MÜHLDORF"),
               (230, -260, "EVAKUIERUNGSLAGER"), (1050, 1200, "FLUGPLATZ"), (720, -430, "HOF KRÜGER"), (-650, 560, "HOF LINDE")]

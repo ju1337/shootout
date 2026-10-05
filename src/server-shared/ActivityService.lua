@@ -1,4 +1,5 @@
 -- ActivityService (ModuleScript, nur Server)
+-- (Survivor: Überlebender wartet, E halten = er folgt dir, lebend in die Safe Zone bringen = Belohnung)
 -- Dinge zum Tun in der offenen Welt (EXTINCTION). Die Karte legt unsichtbare Teile "Act_<Art>" in die Gruppe Activities
 -- (Attribut Title = Name des Ortes). Werte in ExtinctionConfig.Activities.
 --   Nest   Zombienest (Modell mit Humanoid, man schießt darauf). Solange es lebt und Spieler in der Nähe sind, kriechen
@@ -67,7 +68,8 @@ local function publish()
 	end
 	local list = {}
 	for _, spot in spots do
-		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = spot.Position.X, Z = spot.Position.Z,
+		local at = spot.Root and spot.Root.Parent and spot.Root.Position or spot.Position -- Überlebende bewegen sich
+		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = at.X, Z = at.Z,
 			State = spot.State })
 	end
 	if horde then
@@ -453,6 +455,203 @@ local function radioStep(spot, t)
 	radioLook(spot)
 end
 
+-- ---------- Überlebende ----------
+
+local SKINS = { Color3.fromRGB(234, 192, 160), Color3.fromRGB(198, 150, 110), Color3.fromRGB(140, 96, 66), Color3.fromRGB(96, 66, 46) }
+local CLOTHES = { Color3.fromRGB(70, 90, 130), Color3.fromRGB(130, 60, 50), Color3.fromRGB(90, 110, 70), Color3.fromRGB(180, 160, 120) }
+
+local function joint(name, part0, part1, c0, c1)
+	local motor = Instance.new("Motor6D")
+	motor.Name = name
+	motor.Part0 = part0
+	motor.Part1 = part1
+	motor.C0 = c0
+	motor.C1 = c1
+	motor.Parent = part0
+end
+
+-- Einfacher R6-Mensch (wie die Zombies gebaut, aber menschlich gefärbt, mit Rucksack)
+local function buildSurvivor(spot)
+	local cfg = A.Survivor
+	local model = Instance.new("Model")
+	model.Name = "Survivor"
+	local skin = SKINS[random:NextInteger(1, #SKINS)]
+	local shirt = CLOTHES[random:NextInteger(1, #CLOTHES)]
+	local pants = Color3.fromRGB(50, 52, 60)
+	local function body(name, size, color)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.Color = color
+		p.Material = Enum.Material.SmoothPlastic
+		p.Parent = model
+		return p
+	end
+	local root = body("HumanoidRootPart", Vector3.new(2, 2, 1), skin)
+	root.Transparency = 1
+	root.CanCollide = false
+	local torso = body("Torso", Vector3.new(2, 2, 1), shirt)
+	local head = body("Head", Vector3.new(2, 1, 1), skin)
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Head
+	mesh.Scale = Vector3.new(1.25, 1.25, 1.25)
+	mesh.Parent = head
+	local la, ra = body("Left Arm", Vector3.new(1, 2, 1), skin), body("Right Arm", Vector3.new(1, 2, 1), skin)
+	local ll, rl = body("Left Leg", Vector3.new(1, 2, 1), pants), body("Right Leg", Vector3.new(1, 2, 1), pants)
+	local base = CFrame.new(spot.Position + Vector3.new(0, 3, 0))
+	root.CFrame, torso.CFrame, head.CFrame = base, base, base * CFrame.new(0, 1.5, 0)
+	la.CFrame, ra.CFrame = base * CFrame.new(-1.5, 0, 0), base * CFrame.new(1.5, 0, 0)
+	ll.CFrame, rl.CFrame = base * CFrame.new(-0.5, -2, 0), base * CFrame.new(0.5, -2, 0)
+	local rootC = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0)
+	joint("RootJoint", root, torso, rootC, rootC)
+	joint("Neck", torso, head, CFrame.new(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0), CFrame.new(0, -0.5, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0))
+	joint("Right Shoulder", torso, ra, CFrame.new(1, 0.5, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0), CFrame.new(-0.5, 0.5, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0))
+	joint("Left Shoulder", torso, la, CFrame.new(-1, 0.5, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0), CFrame.new(0.5, 0.5, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0))
+	joint("Right Hip", torso, rl, CFrame.new(1, -1, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0), CFrame.new(0.5, 1, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0))
+	joint("Left Hip", torso, ll, CFrame.new(-1, -1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0), CFrame.new(-0.5, 1, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0))
+	local pack = body("Backpack", Vector3.new(1.6, 1.8, 0.8), Color3.fromRGB(80, 70, 50))
+	pack.CanCollide = false
+	pack.Massless = true
+	pack.CFrame = torso.CFrame * CFrame.new(0, 0, 0.9)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0, weld.Part1 = torso, pack
+	weld.Parent = pack
+	local humanoid = Instance.new("Humanoid")
+	humanoid.RigType = Enum.HumanoidRigType.R6
+	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	humanoid.MaxHealth = cfg.Health
+	humanoid.Health = cfg.Health
+	humanoid.WalkSpeed = cfg.Speed
+	humanoid.Parent = model
+	model.PrimaryPart = root
+	model:SetAttribute("Survivor", true)
+	local _, sub = billboard(head, "ÜBERLEBENDER", Color3.fromRGB(120, 220, 140), 2.5)
+	spot.SubText = sub
+	sub.Text = "E HALTEN · RETTEN"
+	local p = prompt(torso, "Retten", "Überlebender", cfg.HoldTime)
+	spot.Prompt = p
+	p.Triggered:Connect(function(player)
+		ActivityService.Rescue(player, spot)
+	end)
+	model.Parent = folder
+	pcall(function()
+		root:SetNetworkOwner(nil)
+	end)
+	spot.Model, spot.Humanoid, spot.Root = model, humanoid, root
+	spot.State = "Ready"
+	spot.Escort = nil
+	humanoid.Died:Once(function()
+		task.defer(ActivityService.SurvivorLost, spot, "ist gestorben")
+	end)
+end
+
+-- Rettung beginnt: er folgt dem Spieler
+function ActivityService.Rescue(player, spot)
+	if spot.State ~= "Ready" or not canUse(player, spot) then
+		return false
+	end
+	spot.State = "Following"
+	spot.Escort = player
+	spot.Deadline = now() + A.Survivor.Timeout
+	if spot.Prompt then
+		spot.Prompt.Enabled = false
+	end
+	if spot.SubText then
+		spot.SubText.Text = "FOLGT " .. string.upper(player.Name)
+	end
+	InventoryService.Status(player, "Bring den Überlebenden in die Safe Zone!", true)
+	publish()
+	return true
+end
+
+-- Rettung gescheitert (tot, zurückgelassen, zu lange): weg, kommt später an seinem Platz wieder
+function ActivityService.SurvivorLost(spot, why)
+	if spot.State == "Gone" then
+		return
+	end
+	local escort = spot.Escort
+	spot.State = "Gone"
+	spot.ReadyAt = now() + A.Survivor.Respawn
+	spot.Escort = nil
+	if escort and escort.Parent then
+		announce({ escort }, "RETTUNG GESCHEITERT", "Der Überlebende " .. why, "Warning")
+	end
+	local model = spot.Model
+	spot.Model, spot.Humanoid, spot.Root = nil, nil, nil
+	if model then
+		task.delay(2, function()
+			if model.Parent then
+				model:Destroy()
+			end
+		end)
+	end
+	publish()
+end
+
+local function survivorSaved(spot)
+	local cfg = A.Survivor
+	local player = spot.Escort
+	spot.State = "Gone"
+	spot.ReadyAt = now() + cfg.Respawn
+	spot.Escort = nil
+	if player and player.Parent then
+		ProgressService.AddCoins(player, cfg.Coins, "Rettung")
+		LootService.Grab(player, roll(spot, cfg))
+		announce({ player }, "ÜBERLEBENDER GERETTET", "+" .. cfg.Coins .. " Münzen und Beute · danke!", "Good")
+		event(player, "Survivor")
+	end
+	local model = spot.Model
+	spot.Model, spot.Humanoid, spot.Root = nil, nil, nil
+	if model then
+		model:Destroy()
+	end
+	publish()
+end
+
+-- folgen, Zombie-Angriffe, gerettet oder verloren
+local function survivorStep(spot, t)
+	local cfg = A.Survivor
+	if spot.State == "Gone" then
+		if t >= spot.ReadyAt then
+			buildSurvivor(spot)
+			publish()
+		end
+		return
+	end
+	local root, humanoid = spot.Root, spot.Humanoid
+	if not root or not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	-- Zombies in Reichweite schlagen zu
+	for _, zombie in ZombieService.All() do
+		local zroot = zombie:FindFirstChild("HumanoidRootPart")
+		if zroot and (zroot.Position - root.Position).Magnitude <= 4.5 then
+			humanoid:TakeDamage(ExtinctionConfig.Zombies.AttackDamage * 0.25) -- ca. 5 Schaden pro Sekunde und Zombie
+		end
+	end
+	if spot.State ~= "Following" then
+		return
+	end
+	local escort = spot.Escort
+	local escortRoot = escort and escort.Parent and livingRoot(escort)
+	if not escortRoot or not Modes.IsSurvival(escort:GetAttribute("Mode")) then
+		ActivityService.SurvivorLost(spot, "wurde allein gelassen")
+		return
+	end
+	if options.InSafeZone(root.Position) then
+		survivorSaved(spot)
+		return
+	end
+	local distance = (escortRoot.Position - root.Position).Magnitude
+	if distance > cfg.Lost or t >= spot.Deadline then
+		ActivityService.SurvivorLost(spot, distance > cfg.Lost and "hat dich verloren" or "hat aufgegeben")
+		return
+	end
+	if distance > cfg.Follow then
+		humanoid:MoveTo(escortRoot.Position - (escortRoot.Position - root.Position).Unit * (cfg.Follow - 2))
+	end
+end
+
 -- ---------- Horde ----------
 
 local function hordeSpots()
@@ -594,6 +793,8 @@ function ActivityService.Step()
 			cacheStep(spot, t)
 		elseif spot.Kind == "Radio" then
 			radioStep(spot, t)
+		elseif spot.Kind == "Survivor" then
+			survivorStep(spot, t)
 		end
 	end
 	hordeStep(t)
@@ -624,6 +825,8 @@ function ActivityService.Init(opts)
 				buildCache(spot)
 			elseif kind == "Radio" then
 				buildRadio(spot)
+			elseif kind == "Survivor" then
+				buildSurvivor(spot)
 			end
 		end
 	end
@@ -631,7 +834,7 @@ function ActivityService.Init(opts)
 	local last = 0
 	RunService.Heartbeat:Connect(function()
 		local t = now()
-		if t - last >= 1 then
+		if t - last >= 0.5 then -- halbe Sekunde: Überlebende folgen flüssig genug
 			last = t
 			ActivityService.Step()
 		end

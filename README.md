@@ -108,6 +108,9 @@ weiter.
     Aufbrechen – der Lärm lockt sofort Zombies an. Beute direkt ins Inventar (in roten Zonen die beste), danach leer
     für 12 Minuten.
   - **Funkgerät** am Funkturm: **E halten = Notruf**, ein Lootdrop kommt (alle 15 Minuten).
+  - **Überlebende** (10, in Dörfern, Höfen, Ödstadt, Flugplatz): **E halten** – er folgt dir. Bring ihn lebend in die
+    Safe Zone (Marker oben zeigt den Weg): 250 Münzen und Beute. Zombies greifen ihn an; stirbt er, bleibt er mehr als
+    90 Studs zurück oder dauert es zu lange, ist die Rettung gescheitert. Kommt nach 15 Minuten wieder.
   - **Horden**: ab 6 Minuten alle 10-15 Minuten zieht eine Horde (14 Zombies, auch Läufer) in einen Ort 150-800 Studs
     von einem Spieler entfernt. Wer dabei ist und 60 % erledigt, bekommt 200 Münzen und Beute.
 - **Aufträge** (`MissionService.lua`, `ExtinctionConfig.Missions`): immer drei gleichzeitig, links unter der Minimap mit

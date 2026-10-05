@@ -235,6 +235,8 @@ ExtinctionConfig.Day = {
 --       gemacht haben: Münzen und Beute direkt ins Inventar. Wächst nach Respawn Sekunden nach.
 -- Cache: verschlossenes Vorratslager, E halten zum Aufbrechen (Lärm lockt Zombies an), Beute direkt ins Inventar.
 -- Radio: Funkgerät am Funkturm, E halten = Notruf, ein Lootdrop kommt (Abklingzeit).
+-- Survivor: Überlebender wartet in einem Ort, E halten = er folgt dir; in der Safe Zone gibt es Münzen und Beute.
+--           Zombies greifen ihn an; stirbt er oder bleibt er zu weit zurück, ist die Rettung gescheitert.
 -- Horde: in regelmäßigen Abständen zieht eine Horde in einen Ort in der Nähe der Spieler; wer dabei ist und sie besiegt,
 --        bekommt Münzen und Beute.
 ExtinctionConfig.Activities = {
@@ -242,6 +244,9 @@ ExtinctionConfig.Activities = {
 		Coins = 150, Table = "Tier2", Items = { 3, 5 }, RedTable = "Tier3" },
 	Cache = { HoldTime = 10, Respawn = 720, Table = "Tier2", RedTable = "Tier3", Items = { 3, 5 }, Alarm = 5 },
 	Radio = { HoldTime = 8, Cooldown = 900 },
+	-- Überlebender: wartet in einem Ort, E halten = er folgt dir; bring ihn lebend in die Safe Zone
+	Survivor = { HoldTime = 2, Respawn = 900, Coins = 250, Table = "Tier2", Items = { 2, 3 }, Speed = 15, Follow = 7,
+		Lost = 90, Timeout = 480, Health = 100 },
 	Horde = { FirstDelay = 360, MinInterval = 600, MaxInterval = 900, Size = 14, Duration = 300, Coins = 200,
 		Table = "Tier2", Items = { 2, 4 }, Range = 220, MinDistance = 150, MaxDistance = 800, Win = 0.6 },
 }
@@ -263,6 +268,8 @@ ExtinctionConfig.Missions = {
 		{ Id = "Horde", Text = "Besiege eine Horde", Event = "Horde", Count = { 1, 1 }, Coins = 300, Table = "Tier3", Items = { 1, 2 } },
 		{ Id = "Airdrop", Text = "Öffne einen Lootdrop", Event = "Airdrop", Count = { 1, 1 }, Coins = 200, Table = "Tier2", Items = { 1, 2 } },
 		{ Id = "Explore", Text = "Erkunde: %s", Event = "Place", Count = { 1, 1 }, Coins = 100, Table = "Tier1", Items = { 1, 2 } },
+		{ Id = "Survivor", Text = "Rette einen Überlebenden", Event = "Survivor", Count = { 1, 1 }, Coins = 250, Table = "Tier2",
+			Items = { 1, 2 } },
 		{ Id = "Night", Text = "Überlebe %d Minuten nachts draußen", Event = "NightMinute", Count = { 2, 4 }, Coins = 220,
 			Table = "Tier2", Items = { 1, 2 } },
 	},

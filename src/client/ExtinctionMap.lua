@@ -39,6 +39,7 @@ local ACTIVITY_COLORS = {
 	Cache = Color3.fromRGB(255, 210, 90),
 	Radio = Color3.fromRGB(110, 190, 255),
 	Horde = Color3.fromRGB(230, 50, 40),
+	Survivor = Color3.fromRGB(120, 220, 140),
 }
 
 local function getMap()
@@ -206,7 +207,7 @@ local function update()
 		local u, v = toMap(map, act.X or 0, act.Z or 0)
 		view.Position = UDim2.fromScale(u, v)
 		local color = ACTIVITY_COLORS[act.Kind] or Color3.new(1, 1, 1)
-		local idle = act.State == "Cleared" or act.State == "Opened" or act.State == "Cooldown"
+		local idle = act.State == "Cleared" or act.State == "Opened" or act.State == "Cooldown" or act.State == "Gone"
 		view.BackgroundColor3 = idle and Color3.fromRGB(90, 90, 90) or color
 		local text = view:FindFirstChild("Text")
 		if text then
@@ -263,7 +264,7 @@ function ExtinctionMap.Init()
 	UITheme.Outline(arrow)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ● NEST  ·  ■ LAGER  ·  ● HORDE", TextSize = 11, Font = F.Bold,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ● NEST  ·  ■ LAGER  ·  ● HORDE  ·  ● ÜBERLEBENDER", TextSize = 11, Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)
 	RunService.Heartbeat:Connect(function()

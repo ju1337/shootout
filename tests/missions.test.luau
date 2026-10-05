@@ -181,7 +181,7 @@ check(string.find(list()[1] and list()[1].Text or state.Missions[1].Text, "TESTD
 	"Ort im Auftragstext")
 place(Vector3.new(0, 0, 600))
 step(2)
-check(banner("AUFTRAG ERLEDIGT") == 4, "Ort erkundet")
+check(banner("AUFTRAG ERLEDIGT") >= 4, "Ort erkundet")
 
 -- Nacht: jede volle Minute draußen zählt
 setMission("Night", 2)

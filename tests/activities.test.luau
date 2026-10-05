@@ -49,6 +49,8 @@ marker("Act_Nest", Vector3.new(0, 0, -400), "Testwald")
 marker("Act_Cache", Vector3.new(400, 0, 0), "Testlager")
 marker("Act_Radio", Vector3.new(-400, 0, 0), "Funkturm")
 marker("Act_Horde", Vector3.new(0, 0, 500), "Testdorf")
+marker("Act_Survivor", Vector3.new(0, 0, -170), "Testhaus")
+marker("Act_Survivor", Vector3.new(250, 0, -250), "Testhof")
 
 local ground = Instance.new("Part", workspace)
 ground.Name = "Ground"
@@ -120,7 +122,7 @@ end
 local folder = workspace:FindFirstChild("ExtinctionActivities")
 check(folder ~= nil and folder:FindFirstChild("ZombieNest") and folder:FindFirstChild("SupplyCache") and folder:FindFirstChild("RadioStation"),
 	"Nest, Vorratslager und Funkgerät stehen in der Welt")
-check(#published() == 4, "vier Aktivitäten im Karten-Attribut (" .. #published() .. ")")
+check(#published() == 6, "sechs Aktivitäten im Karten-Attribut (" .. #published() .. ")")
 
 -- Zombienest: Spieler in der Nähe -> Zombies kriechen heraus
 local nest = spotOf("Nest")
@@ -197,4 +199,39 @@ check(ActivityService.Horde() == nil, "Horde vorbei")
 check(banner("HORDE BESIEGT"), "Meldung HORDE BESIEGT")
 check(ProgressService.Get(alice).Coins >= coins + A.Horde.Coins, "Münzen für die Horde")
 
+-- Überlebender: E halten, er folgt, in der Safe Zone gerettet
+local survivors = {}
+for _, spot in ActivityService.Spots() do
+	if spot.Kind == "Survivor" then
+		table.insert(survivors, spot)
+	end
+end
+local survivor = survivors[1]
+check(survivor and survivor.Model and survivor.Model:FindFirstChildOfClass("Humanoid") and survivor.Prompt.HoldDuration == A.Survivor.HoldTime,
+	"Überlebender wartet mit E-Aufforderung")
+place(Vector3.new(0, 0, -160))
+step(1)
+check(ActivityService.Rescue(alice, survivor) == true and survivor.State == "Following", "Rettung beginnt, er folgt")
+coins = ProgressService.Get(alice).Coins
+for z = -140, -20, 15 do
+	place(Vector3.new(0, 0, z))
+	-- der Simulator bewegt Humanoide nicht (MoveTo): Laufen des Überlebenden nachstellen
+	if survivor.Model then
+		survivor.Model:PivotTo(CFrame.new(CENTER + Vector3.new(4, 3, z - 5)))
+	end
+	step(1.5)
+end
+step(3)
+check(survivor.State == "Gone" and banner("ÜBERLEBENDER GERETTET"), "in der Safe Zone gerettet")
+check(ProgressService.Get(alice).Coins >= coins + A.Survivor.Coins, "Münzen für die Rettung")
+-- zweiter Überlebender: zurückgelassen = gescheitert
+local other = survivors[2]
+place(Vector3.new(250, 0, -240))
+step(1)
+check(ActivityService.Rescue(alice, other) == true, "zweite Rettung beginnt")
+place(Vector3.new(-300, 0, 300))
+step(2)
+check(other.State == "Gone" and banner("RETTUNG GESCHEITERT"), "zurückgelassen = gescheitert")
+step(A.Survivor.Respawn + 2)
+check(other.State == "Ready" and other.Model ~= nil, "Überlebender kommt später wieder")
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
