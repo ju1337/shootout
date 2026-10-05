@@ -1,5 +1,7 @@
 -- TradeClient (ModuleScript, nur Client)
 -- Tauschen im Hub und im Markt (Server: TradeService):
+--   * Taste T (oder Knopf TAUSCH in der Markt-Leiste) öffnet die Spielerliste: alle Spieler im selben Bereich mit
+--     Entfernung und Inventarwert, TAUSCH ANFRAGEN schickt die Anfrage (nah genug heranlaufen, RapConfig.TradeRange).
 --   * An anderen Spielern erscheint G (Controller △, Touch: Antippen): Tausch-Anfrage schicken.
 --   * Anfragen erscheinen rechts als Karte mit ANNEHMEN / ABLEHNEN und einem ablaufenden Balken.
 --   * Tausch-Fenster: links das eigene Angebot (Skins, RAP) und darunter die eigenen freien Skins zum Hinzufügen,
@@ -402,6 +404,137 @@ local function updatePrompts()
 	end
 end
 
+-- ---------- Spielerliste: Tausch anfragen ohne G ----------
+
+local listWindow = nil -- { Frame, List, Alive }
+local hint = nil
+
+local function closeList()
+	if listWindow then
+		listWindow.Alive = false
+		listWindow.Frame:Destroy()
+		listWindow = nil
+		UITheme.SetBlur("TradeList", false)
+	end
+end
+
+local function distanceTo(other)
+	local mine = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local theirs = other.Character and other.Character:FindFirstChild("HumanoidRootPart")
+	if not mine or not theirs then
+		return nil
+	end
+	return (mine.Position - theirs.Position).Magnitude
+end
+
+local function fillList()
+	local win = listWindow
+	if not win then
+		return
+	end
+	for _, child in win.List:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+	local myMode = player:GetAttribute("Mode")
+	local others = {}
+	for _, other in Players:GetPlayers() do
+		if other ~= player and other:GetAttribute("Mode") == myMode then
+			table.insert(others, other)
+		end
+	end
+	table.sort(others, function(a, b)
+		local da, db = distanceTo(a) or math.huge, distanceTo(b) or math.huge
+		if da ~= db then
+			return da < db
+		end
+		return a.Name < b.Name
+	end)
+	for index, other in others do
+		local meters = distanceTo(other)
+		local near = meters ~= nil and meters <= RapConfig.TradeRange
+		local row = make("Frame", { Name = "Player" .. other.UserId, Size = UDim2.new(1, -12, 0, 66), BackgroundColor3 = C.Card, BackgroundTransparency = 0.05,
+			LayoutOrder = index, ZIndex = 5 }, win.List)
+		UITheme.Corner(row, UITheme.Radius.Large)
+		UITheme.Stroke(row, near and C.Rap or C.Border, 1, 0.55)
+		label({ Position = UDim2.fromOffset(18, 8), Size = UDim2.fromOffset(300, 28), Text = upper(other.Name), TextSize = 22, Font = F.Display,
+			TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
+		label({ Position = UDim2.fromOffset(18, 38), Size = UDim2.fromOffset(300, 18), Text = "INVENTAR  " .. format(tonumber(other:GetAttribute("RapValue")) or 0) .. " RAP",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, ZIndex = 5 }, row)
+		label({ Position = UDim2.fromOffset(340, 20), Size = UDim2.fromOffset(150, 26), TextSize = 16, Font = F.Bold, ZIndex = 5,
+			Text = meters and (math.floor(meters + 0.5) .. " M") or "–", TextColor3 = near and C.Good or C.Muted }, row)
+		local busy = current ~= nil
+		local text = busy and "DU TAUSCHST" or (near and "TAUSCH ANFRAGEN" or ("ZU WEIT  ·  GEH NÄHER"))
+		local button = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(250, 46),
+			Color = (near and not busy) and C.Rap or C.MutedBack, TextColor = (near and not busy) and C.PrimaryText or C.Muted, Text = text, TextSize = 16,
+			ZIndex = 5 }, row, function()
+			if busy or not near then
+				return
+			end
+			Remotes.TradeAction:FireServer("Request", other.UserId)
+		end)
+		button.Button.Name = "RequestButton"
+	end
+	if #others == 0 then
+		label({ Size = UDim2.new(1, -12, 0, 80), Text = "Gerade ist sonst niemand hier.", TextSize = 16, Font = F.Medium, TextColor3 = C.Muted,
+			TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 5 }, win.List)
+	end
+end
+
+function TradeClient.OpenPlayers()
+	local myMode = player:GetAttribute("Mode")
+	if not myMode or not Modes.IsSocial(myMode) then
+		showToast("Tauschen geht nur im Hub oder im Markt.", false)
+		return
+	end
+	closeList()
+	local frame = UITheme.Card({ Name = "TradeListWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
+		Size = UDim2.fromOffset(760, 560), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
+	make("Frame", { Name = "Accent", Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Rap, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -120, 0, 40), Text = "TAUSCHEN", TextSize = 34, Font = F.Display, ZIndex = 5 }, frame)
+	label({ Position = UDim2.fromOffset(28, 54), Size = UDim2.new(1, -120, 0, 18), Text = "SPIELER IN DEINEM BEREICH  ·  NAH GENUG HERANGEHEN, DANN ANFRAGEN",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, ZIndex = 5 }, frame)
+	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
+		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeList)
+	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 5
+	local list = make("ScrollingFrame", { Name = "List", Position = UDim2.fromOffset(28, 90), Size = UDim2.new(1, -56, 1, -150), BackgroundTransparency = 1,
+		BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ZIndex = 5 }, frame)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 28, 1, -16), Size = UDim2.new(1, -56, 0, 36), TextWrapped = true, TextSize = 12, Font = F.Medium,
+		TextColor3 = C.Muted, ZIndex = 5,
+		Text = "Der andere bekommt eine Anfrage und nimmt an oder lehnt ab. Im Tausch legt ihr beide Skins und RAP hinein; erst wenn beide BEREIT sind, wird getauscht. "
+			.. "Geht auch ohne Fenster: G an einem Spieler halten." }, frame)
+	listWindow = { Frame = frame, List = list, Alive = true }
+	UITheme.SetBlur("TradeList", true)
+	fillList()
+	local win = listWindow
+	task.spawn(function()
+		while listWindow == win and win.Alive do
+			task.wait(1)
+			if listWindow == win then
+				fillList()
+			end
+		end
+	end)
+end
+
+function TradeClient.TogglePlayers()
+	if listWindow then
+		closeList()
+	else
+		TradeClient.OpenPlayers()
+	end
+end
+
+local function updateHint()
+	if hint then
+		local mode = player:GetAttribute("Mode")
+		hint.Visible = mode ~= nil and Modes.IsSocial(mode) and window == nil and listWindow == nil
+	end
+end
+
 -- ---------- Start ----------
 
 function TradeClient.Init()
@@ -413,6 +546,28 @@ function TradeClient.Init()
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, requestList)
 	toast = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 108), Size = UDim2.fromOffset(820, 26), Text = "",
 		TextSize = 16, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5, Visible = false }, root)
+	hint = label({ Name = "TradeHint", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -22), Size = UDim2.fromOffset(360, 22),
+		Text = "T  ·  TAUSCHEN MIT SPIELERN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center,
+		TextStrokeTransparency = 0.6, Visible = false }, root)
+	player:GetAttributeChangedSignal("Mode"):Connect(function()
+		if listWindow and not Modes.IsSocial(player:GetAttribute("Mode") or "") then
+			closeList()
+		end
+		updateHint()
+	end)
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed then
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.T and window == nil then
+			TradeClient.TogglePlayers()
+			updateHint()
+		elseif listWindow and (input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonB) then
+			closeList()
+			updateHint()
+		end
+	end)
+	updateHint()
 
 	Remotes.TradeUpdate.OnClientEvent:Connect(function(kind, data)
 		data = type(data) == "table" and data or {}

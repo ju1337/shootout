@@ -11,6 +11,7 @@
 --   * Fenster SUCHE (Knopf oben oder E am Such-Terminal auf dem Marktplatz): alle Angebote aller Stände durchsuchen
 --     (MarketSearch), nach Seltenheit, Art, Preis und Merkliste filtern, sortieren; HIN zeigt den Weg zum Stand.
 --   * Fenster GEGENANGEBOTE (Knopf oben, nur mit eigenem Stand): Gebote annehmen oder ablehnen.
+--   * Knopf TAUSCH oben (oder Taste T): Spielerliste zum Tauschen (TradeClient).
 --   * Stand-Name im Fenster MEIN STAND; Tafeln in der Halle: Übersicht der freien Stände, beliebteste Händler.
 -- Verlässt man den Markt, verliert man den Stand (Server); die Skins sind dann sofort wieder frei.
 
@@ -33,6 +34,7 @@ local AgentFigure = require(Shared.AgentFigure)
 local AgentConfig = require(Shared.AgentConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local MarketSearch = require(Shared.MarketSearch)
+local TradeClient = require(script.Parent:WaitForChild("TradeClient"))
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -1124,7 +1126,7 @@ end
 
 local function buildBar()
 	local bar = UITheme.Card({ Name = "MarketBar", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
-		Size = UDim2.fromOffset(1000, 56), BackgroundTransparency = 0.1 }, root)
+		Size = UDim2.fromOffset(1120, 56), BackgroundTransparency = 0.1 }, root)
 	make("Frame", { Size = UDim2.new(0, 4, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = C.Rap, BorderSizePixel = 0,
 		ZIndex = 2 }, bar)
 	label({ Position = UDim2.fromOffset(18, 6), Size = UDim2.fromOffset(110, 44), Text = "MARKT", TextSize = 32, Font = F.Display,
@@ -1136,6 +1138,10 @@ local function buildBar()
 		TextColor3 = C.Muted, TextWrapped = true, ZIndex = 2 }, bar)
 	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -248, 0.5, 0), Size = UDim2.fromOffset(104, 38),
 		Color = C.Card, StrokeColor = C.Rap, Text = "SUCHE", TextSize = 16, TextColor = C.Rap, ZIndex = 2 }, bar, openSearch)
+	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -518, 0.5, 0), Size = UDim2.fromOffset(100, 38),
+		Color = C.Card, StrokeColor = C.Border, Text = "TAUSCH", TextSize = 16, TextColor = C.Text, ZIndex = 2 }, bar, function()
+		TradeClient.OpenPlayers()
+	end)
 	offersButton = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -360, 0.5, 0), Size = UDim2.fromOffset(150, 38),
 		Color = C.Card, StrokeColor = C.Primary, Text = "ANGEBOTE", TextSize = 15, TextColor = C.Primary, ZIndex = 2 }, bar, openOffers)
 	manageButton = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -118, 0.5, 0), Size = UDim2.fromOffset(122, 38),
@@ -1144,7 +1150,7 @@ local function buildBar()
 		Color = C.Card, StrokeColor = C.Bad, Text = "ABGEBEN", TextSize = 15, TextColor = C.Bad, ZIndex = 2 }, bar, function()
 		Remotes.MarketAction:FireServer("Release")
 	end)
-	toast = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 78), Size = UDim2.fromOffset(1000, 26), Text = "",
+	toast = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 78), Size = UDim2.fromOffset(1120, 26), Text = "",
 		TextSize = 16, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5, Visible = false }, root)
 end
 

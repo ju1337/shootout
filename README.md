@@ -147,7 +147,9 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
     den Stand – die angebotenen Skins waren nur zurückgelegt und sind sofort wieder frei im Inventar, jemand anderes
     kann den Stand nehmen. Squads werden nicht mit in den Markt gezogen
 - **Tauschen** (Server `src/server-shared/TradeService.lua`, Client `src/client/TradeClient.lua`): im Hub oder im
-  Markt an einem anderen Spieler **G** halten (Controller △, Touch: Antippen) schickt eine Anfrage; sie erscheint
+  Markt die Taste **T** drücken (im Markt auch der Knopf **TAUSCH** oben): Die Spielerliste zeigt alle Spieler im selben
+  Bereich mit Entfernung und Inventarwert, **TAUSCH ANFRAGEN** schickt die Anfrage (nah genug herangehen,
+  `RapConfig.TradeRange`). Alternativ an einem anderen Spieler **G** halten (Controller △, Touch: Antippen) schickt eine Anfrage; sie erscheint
   rechts als Karte mit ANNEHMEN / ABLEHNEN (20 s gültig, fragen sich beide gegenseitig, geht der Tausch sofort auf).
   Im Tausch-Fenster legt jeder handelbare Skins (**+** aus der eigenen Liste, **-** nimmt wieder raus) und RAP
   hinein, der RAP-Wert beider Seiten steht oben. Sind beide **BEREIT**, läuft ein Countdown von 4 s, dann wird
@@ -312,7 +314,7 @@ Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Mess
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · 4/5/6 Killstreaks (Herrschaft)
 
-Im Hub und im Markt: E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
+Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
 G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an der Shop-Theke öffnet den Shop
 
 ## Wo stelle ich was ein?
@@ -409,6 +411,7 @@ am Commit:
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
+| `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis nur im Hub/Markt, Esc schließt |
 | `crate`, `crateui` | Kisten: getrennte Pools (Waffen/Agenten, alle handelbar), steile Chancen (Waffen 62/28/8/2 %, Agenten 75/20/5 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
 | `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Art, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
 | `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
