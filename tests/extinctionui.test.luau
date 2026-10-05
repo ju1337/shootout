@@ -181,6 +181,27 @@ check(string.find(texts(hud), "PVP IN", 1, true) ~= nil, "Anzeige PVP IN ...")
 step(5)
 check(string.find(texts(hud), "PVP AKTIV", 1, true) ~= nil, "Anzeige PVP AKTIV")
 
+-- Rote Zone und Lootdrop: Anzeige, Rand, Marker mit Entfernung
+map:SetAttribute("Redzones", '[{"Name":"Werk","X":0,"Z":-5600,"R":60}]')
+map:SetAttribute("Airdrops", '[{"Id":1,"X":100,"Y":0,"Z":-5900,"State":"Warning","Eta":' .. (workspace:GetServerTimeNow() + 30) .. ',"Zone":false}]')
+step(0.3)
+local markers = find(hud, "Markers")
+check(markers ~= nil and markers:FindFirstChild("Marker1").Visible and markers:FindFirstChild("Marker2").Visible, "zwei Marker (Lootdrop, rote Zone)")
+check(string.find(texts(markers), "LOOTDROP", 1, true) ~= nil and string.find(texts(markers), "ROTE ZONE  WERK", 1, true) ~= nil,
+	"Marker nennen Lootdrop und rote Zone")
+check(not markers:FindFirstChild("Marker3").Visible, "nur zwei Marker sichtbar")
+bob:SetAttribute("Redzone", "Werk")
+step(0.3)
+check(find(hud, "RedzoneVignette").Visible and string.find(texts(hud), "ROTE ZONE  ·  PVP AKTIV", 1, true) ~= nil,
+	"in der roten Zone: roter Rand und Anzeige")
+bob:SetAttribute("Redzone", nil)
+step(0.3)
+check(not find(hud, "RedzoneVignette").Visible, "draußen kein roter Rand")
+map:SetAttribute("Redzones", nil)
+map:SetAttribute("Airdrops", nil)
+step(0.3)
+check(not markers:FindFirstChild("Marker1").Visible, "ohne Daten keine Marker")
+
 -- Tasche am Boden: durchsuchen, alles nehmen
 local id = LootService.Create(bob.Character.HumanoidRootPart.Position + Vector3.new(2, 0, 0),
 	{ { Id = "Bandage", Count = 2 }, { Id = "Ammo_9mm", Count = 15 } }, "Drop", "BEUTEL")

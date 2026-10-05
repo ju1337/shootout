@@ -9,7 +9,7 @@
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
--- Coins; Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
+-- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -309,6 +309,11 @@ end
 -- ---------- HUD ----------
 
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
+local markerHolder, vignette
+local markerRows = {}
+local RED = Color3.fromRGB(226, 56, 48)
+local DROP = Color3.fromRGB(255, 190, 70)
+local MAX_MARKERS = 4
 local hotbarViews = {}
 local vehicleCooldown
 
@@ -342,6 +347,30 @@ local function buildHud()
 	UITheme.Stroke(zonePill, SAFE, 1, 0.3)
 	zoneText = label({ Size = UDim2.fromScale(1, 1), Text = "SAFE ZONE", TextSize = 18, Font = F.Display,
 		TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = SAFE }, zonePill)
+
+	-- roter Rand, solange man in einer roten Zone steht (4 Verläufe vom Rand nach innen)
+	vignette = make("Frame", { Name = "RedzoneVignette", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
+		Active = false }, root)
+	for _, side in { { UDim2.new(1, 0, 0, 120), UDim2.fromScale(0, 0), 90 }, { UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 1, -120), 270 },
+		{ UDim2.new(0, 120, 1, 0), UDim2.fromScale(0, 0), 0 }, { UDim2.new(0, 120, 1, 0), UDim2.new(1, -120, 0, 0), 180 } } do
+		local strip = make("Frame", { Size = side[1], Position = side[2], BackgroundColor3 = RED, BorderSizePixel = 0 }, vignette)
+		make("UIGradient", { Rotation = side[3], Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.55),
+			NumberSequenceKeypoint.new(1, 1) }) }, strip)
+	end
+
+	-- Marker unter der Anzeige: rote Zonen und Lootdrops mit Pfeil und Entfernung
+	markerHolder = make("Frame", { Name = "Markers", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 66),
+		Size = UDim2.fromOffset(300, MAX_MARKERS * 24), BackgroundTransparency = 1 }, root)
+	for i = 1, MAX_MARKERS do
+		local row = make("Frame", { Name = "Marker" .. i, Position = UDim2.fromOffset(0, (i - 1) * 24), Size = UDim2.fromOffset(300, 22),
+			BackgroundColor3 = C.Panel, BackgroundTransparency = 0.35, BorderSizePixel = 0, Visible = false }, markerHolder)
+		UITheme.Corner(row, UITheme.Radius.Small)
+		local arrow = label({ Name = "Arrow", Position = UDim2.fromOffset(4, 0), Size = UDim2.fromOffset(22, 22), Text = "▲", TextSize = 16,
+			Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, row)
+		local text = label({ Name = "Text", Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -36, 1, 0), Text = "", TextSize = 13,
+			Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Left }, row)
+		markerRows[i] = { Row = row, Arrow = arrow, Text = text }
+	end
 
 	-- unten: Hotbar
 	local cell, gap = 64, 6
@@ -399,10 +428,23 @@ local function updateZone()
 		return
 	end
 	local stroke = zonePill:FindFirstChildOfClass("UIStroke")
+	if vignette then
+		local red = player:GetAttribute("Redzone") ~= nil and player:GetAttribute("Redzone") ~= false
+		vignette.Visible = red and not player:GetAttribute("InSafeZone")
+	end
 	if player:GetAttribute("InSafeZone") then
 		zoneText.Text = "SAFE ZONE  ·  KEIN PVP"
 		zoneText.TextColor3 = SAFE
 		stroke.Color = SAFE
+	elseif vignette and vignette.Visible then
+		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
+		zoneText.Text = "ROTE ZONE  ·  PVP AKTIV"
+		zoneText.TextColor3 = RED:Lerp(Color3.new(1, 1, 1), 0.25 * pulse)
+		stroke.Color = RED
+		vignette.Position = UDim2.fromOffset(0, 0)
+		for _, strip in vignette:GetChildren() do
+			strip.BackgroundTransparency = 0.35 * (1 - pulse)
+		end
 	elseif player:GetAttribute("PvP") then
 		zoneText.Text = "PVP AKTIV"
 		zoneText.TextColor3 = C.Bad
@@ -412,6 +454,76 @@ local function updateZone()
 		zoneText.Text = "PVP IN " .. math.ceil(left) .. " S"
 		zoneText.TextColor3 = DANGER
 		stroke.Color = DANGER
+	end
+end
+
+-- Marker: Liste aus den Karten-Attributen Redzones / Airdrops lesen, nach Entfernung sortieren, Pfeil zur Kamera drehen
+local function mapList(map, attribute)
+	local text = map and map:GetAttribute(attribute)
+	if type(text) ~= "string" then
+		return {}
+	end
+	local ok, list = pcall(HttpService.JSONDecode, HttpService, text)
+	return ok and type(list) == "table" and list or {}
+end
+
+local function updateMarkers()
+	if not markerHolder then
+		return
+	end
+	local maps = workspace:FindFirstChild("Maps")
+	local map = maps and maps:FindFirstChild("Extinction")
+	local character = player.Character
+	local root3 = character and character:FindFirstChild("HumanoidRootPart")
+	local entries = {}
+	if map and root3 then
+		local here = root3.Position
+		for _, zone in mapList(map, "Redzones") do
+			local dx, dz = (zone.X or 0) - here.X, (zone.Z or 0) - here.Z
+			local distance = math.sqrt(dx * dx + dz * dz)
+			if distance > (zone.R or 0) then
+				table.insert(entries, { Order = distance + 1000, X = zone.X, Z = zone.Z, Color = RED,
+					Text = "ROTE ZONE  " .. string.upper(tostring(zone.Name or "")) .. "  ·  " .. math.floor(distance - (zone.R or 0)) .. " M" })
+			end
+		end
+		local now = workspace:GetServerTimeNow()
+		for _, drop in mapList(map, "Airdrops") do
+			local dx, dz = (drop.X or 0) - here.X, (drop.Z or 0) - here.Z
+			local distance = math.floor(math.sqrt(dx * dx + dz * dz))
+			local text
+			if drop.State == "Landed" then
+				text = "LOOTDROP GELANDET  ·  " .. distance .. " M"
+			else
+				text = "LOOTDROP  ·  " .. math.max(0, math.ceil((drop.Eta or now) - now)) .. " S  ·  " .. distance .. " M"
+			end
+			if drop.Zone then
+				text ..= "  ·  ROT"
+			end
+			table.insert(entries, { Order = distance - 5000, X = drop.X, Z = drop.Z, Color = DROP, Text = text })
+		end
+	end
+	table.sort(entries, function(a, b)
+		return a.Order < b.Order
+	end)
+	local camera = workspace.CurrentCamera
+	local look = camera and camera.CFrame.LookVector or Vector3.new(0, 0, -1)
+	local forward = Vector3.new(look.X, 0, look.Z)
+	forward = forward.Magnitude > 0.01 and forward.Unit or Vector3.new(0, 0, -1)
+	for i, view in markerRows do
+		local entry = entries[i]
+		view.Row.Visible = entry ~= nil
+		if entry and root3 then
+			local to = Vector3.new(entry.X - root3.Position.X, 0, entry.Z - root3.Position.Z)
+			if to.Magnitude > 0.01 then
+				to = to.Unit
+				-- Winkel zwischen Blickrichtung und Ziel: 0 = geradeaus, positiv = rechts
+				local angle = math.atan2(forward.X * to.Z - forward.Z * to.X, forward.X * to.X + forward.Z * to.Z)
+				view.Arrow.Rotation = math.deg(angle)
+			end
+			view.Arrow.TextColor3 = entry.Color
+			view.Text.TextColor3 = entry.Color
+			view.Text.Text = entry.Text
+		end
 	end
 end
 
@@ -1089,6 +1201,7 @@ function ExtinctionClient.Init()
 			return
 		end
 		updateZone()
+		updateMarkers()
 		standDistanceCheck()
 		-- im Fahrzeug: Name, Tempo und Zustand; sonst die Wartezeit nach dem Einpacken
 		local character = player.Character
