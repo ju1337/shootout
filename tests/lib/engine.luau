@@ -318,6 +318,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"PreSimulation", "PostSimulation", "PreRender", "PreAnimation", "OnServerEvent", "OnClientEvent", "Event",
 	"CharacterAdded", "CharacterRemoving", "CharacterAppearanceLoaded", "HealthChanged", "StateChanged", "Touched",
 	"TouchEnded", "MoveToFinished", "Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up",
+	"MouseButton2Click", "MouseButton2Down", "MouseButton2Up",
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",

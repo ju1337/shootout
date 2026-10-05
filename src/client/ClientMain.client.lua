@@ -35,6 +35,7 @@ local HubWheel = require(script.Parent:WaitForChild("HubWheel"))
 local MarketClient = require(script.Parent:WaitForChild("MarketClient"))
 local TradeClient = require(script.Parent:WaitForChild("TradeClient"))
 local CrateClient = require(script.Parent:WaitForChild("CrateClient"))
+local ExtinctionClient = require(script.Parent:WaitForChild("ExtinctionClient"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
@@ -66,4 +67,5 @@ task.spawn(HubWheel.Init) -- Glücksrad in der Ecke des Hubs (wartet auf die Hub
 task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet auf die Markt-Map)
 TradeClient.Init() -- Tauschen im Hub und im Markt (G an anderen Spielern)
 task.spawn(CrateClient.Init) -- Kisten öffnen: Automaten in der Marktmitte (Waffen-Kiste, Agenten-Kiste)
+ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist

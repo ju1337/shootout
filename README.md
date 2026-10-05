@@ -16,13 +16,18 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 | Modus | Kurz | Map |
 |---|---|---|
-| Hub | Kompakte Einsatzzentrale: Tore nebeneinander an der Nordwand (DUELS rechts), Kartentisch mit Einsatz-Tafel, Bühne mit eigenem Agenten, Wand der Bestenlisten + Top-3-Statuen. Alter Hangar: `HUB_STYLE = "classic"` in `tools/build_maps.py` (fertig auch in `tools/saved/Hub_classic.model.json`) | Hub (0, 0, 0) |
+| Hub | Kompakte Einsatzzentrale: an der Nordwand nur noch das große Tor nach EXTINCTION (Tafeln SAFE ZONE / DRAUSSEN links und rechts, Banner ARCADE darüber), Kartentisch mit Einsatz-Tafel, Bühne mit eigenem Agenten, Wand der Bestenlisten + Top-3-Statuen. Alter Hangar: `HUB_STYLE = "classic"` in `tools/build_maps.py` (fertig auch in `tools/saved/Hub_classic.model.json`) | Hub (0, 0, 0) |
+| **EXTINCTION** (Hauptmodus) | Offene Welt mit Safe Zone, Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 1800 × 1800 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Hub, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
-| Free-for-All | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
-| Herrschaft | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
-| Wingman (DUELS) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
-| 1v1 Arena (DUELS) | Duell | Arena (0, 0, 3000) |
-| Training | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
+| Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
+| Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
+| Wingman (Arcade) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
+| 1v1 Arena (Arcade) | Duell | Arena (0, 0, 3000) |
+| Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
+
+Die Minispiele haben kein Tor mehr im Hub: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
+SPIEL = vollster Arcade-Modus mit freiem Platz). Oben im Menü steht groß EXTINCTION und ist vorgewählt
+(`Featured` / `Arcade` in `src/shared/Modes.lua`).
 
 ELO gibt es in jedem Modus (kein eigenes Ranked-Matchmaking). Ausgebaute Modi (Drop, Strikeout, Demolition,
 Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src/server/Modes/`.
@@ -30,6 +35,39 @@ Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src
 Team-Modi teilen sich die Logik in `src/server/TeamRoundMode.lua` (Agentenwahl, Kaufphase,
 Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfiguration in
 `src/server/Modes/`, eigene Ziele (z.B. die Bombe) liegen in `src/server/Objectives/`.
+
+## Extinction (offene Welt)
+
+Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
+**Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
+`tools/build_maps.py`: Straßenkreuz und Ringstraße, Kleinstadt im Osten, Tankstelle, Bauernhof, Militärbasis,
+Industrie, See, Wald und Felsen am Rand).
+
+- **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
+  beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
+  **Fahrzeugstand**, das **Lager** und das Tor zurück zum Hub (E an Stand/Lager).
+- **Draußen**: sofort schießen auf Zombies möglich, **PvP erst 5 Sekunden nach dem Verlassen** (Anzeige oben:
+  SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
+- **Keine Standardwaffen**: Alles kommt aus der Tasche. **TAB** öffnet das Inventar: 30 Plätze, davon 1-9 die
+  Hotbar (Tasten **1-9**). Items ziehen und ablegen oder anklicken und den Zielplatz anklicken, Rechtsklick legt
+  zwischen Hotbar und Tasche hin und her. Waffe: Taste zieht sie (nochmal = wegstecken), Heilung/Rüstung: Taste
+  benutzt sie (dauert ein paar Sekunden, dabei kein Schuss).
+- **Munition** kaufen oder finden: Nachladen nimmt Schuss aus der Tasche (9mm, Magnum, Schrot, Gewehr), das
+  Magazin bleibt am Item gespeichert. Ohne passende Munition kein Nachladen.
+- **Stände**: kaufen mit Münzen (Munition auch ×5), verkaufen an jedem Stand für 40 % des Preises.
+- **Lager**: 40 Plätze, immer sicher (auch beim Tod).
+- **Tod draußen**: die ganze Tasche fällt als **Tasche am Boden** (5 Minuten, jeder kann sie mit E durchsuchen und
+  Items oder ALLES nehmen), Respawn nach 5 s in der Safe Zone. Spieler-Kill: +120 Münzen Kopfgeld (dazu der
+  normale Kill-Lohn).
+- **Verlassen**: in der Safe Zone bleibt alles genau so angeordnet in der Tasche (gespeichert im Profil). Draußen
+  kostet Verlassen die Tasche (im Menü erst nach einem zweiten Klick, beim Spiel-Verlassen sofort vor dem
+  Speichern); fährt der Server herunter, verliert niemand etwas.
+- **Agenten**: nur passive Fähigkeiten (keine Q/G/F), Leben und Tempo wie sonst.
+
+Code: `src/server/Modes/Extinction.lua` (Safe Zone, PvP, Tod/Verlassen), `src/server-shared/InventoryService.lua`
+(Tasche, Hotbar, Lager, Stände, Benutzen), `src/server-shared/LootService.lua` (Taschen am Boden),
+`src/shared/Inventory.lua` (Regeln für Plätze und Stapel), `src/client/ExtinctionClient.lua` (HUD, Fenster),
+Werte in `src/shared/ExtinctionConfig.lua`.
 
 ## Systeme
 
@@ -305,7 +343,7 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
       wegfliegt; Kopftreffer groß und gold mit Raute, Kill groß und rot mit Ruck), STAPELN (eine Zahl pro Ziel
       zählt hoch, jeder Treffer fliegt als „+X“ daneben weg, ein Kill streicht sie rot an) oder AUS
     - dazu rote Treffer-Richtungsbögen und die Kill-Meldung
-  - unendliche Reserve-Munition in allen Modi (Anzeige „∞“)
+  - unendliche Reserve-Munition in allen Arcade-Modi (Anzeige „∞“), in EXTINCTION Munition aus dem Inventar
 
 ## Steuerung
 
@@ -313,6 +351,9 @@ WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Slide) · Springen v
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · 4/5/6 Killstreaks (Herrschaft)
+
+In EXTINCTION: 1-9 Hotbar benutzen · TAB Inventar · E Stand/Lager/Tasche · K Fahrzeug einpacken ·
+Controller: R1/L1 Waffe der Hotbar wechseln, Select Inventar, △ Fahrzeug einpacken
 
 Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
 G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an der Shop-Theke öffnet den Shop
@@ -322,6 +363,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Was | Datei |
 |---|---|
 | Waffen (Schaden, Feuerrate, Streuung/Bloom, Rückstoß, Sounds, unendliche Munition je Modus) | `src/shared/WeaponConfig.lua` |
+| EXTINCTION: Items, Preise, Stände, Plätze, PvP-Zeit, Taschen, Zombies, Fahrzeuge, Belohnungen | `src/shared/ExtinctionConfig.lua` |
 | Waffenmodelle, Kimme/Korn, Rotpunkt, Handpositionen | `src/shared/GunModels.lua` |
 | Nachlade- und Schuss-Animationen | `src/shared/WeaponAnimations.lua` |
 | Fadenkreuz, Treffer-Richtung, Kill-Meldung | `src/shared/CombatHUD.lua` |

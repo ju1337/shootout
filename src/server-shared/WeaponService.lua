@@ -6,6 +6,9 @@
 -- (z.B. hinter einer Ecke), trifft man so nicht.
 -- Welche Waffen ein Spieler hat, kommt vom gewählten Agenten (AgentConfig.Loadout).
 -- Reserve-Munition ist unendlich (WeaponConfig.InfiniteAmmoEverywhere bzw. InfiniteAmmoModes), nachladen muss man trotzdem.
+-- Offene Welt (Extinction, Modes.IsSurvival): keine Waffen vom Agenten. Die Waffe in der Hand setzt das Inventar
+-- (WeaponService.SetCarried, Taste 1-9), Munition kommt aus dem Inventar (source.Count/Take), das Magazin steht am
+-- Item (source.SetMag). PvP nur, wenn beide Spieler draußen sind und ihre PvP-Zeit läuft (Attribut "PvP").
 -- Charakter-Attribute für die Third-Person-Animationen aller Clients:
 --   ReloadStart (Serverzeit), ReloadTime (Nachladezeit mit Upgrades), ReloadShells (Patronen, Schrotflinte –
 --   die Zeitleiste ergibt sich dann aus WeaponConfig.ShellTiming),
@@ -50,6 +53,9 @@ end
 
 local function newState(player)
 	local loadout = AgentConfig.LoadoutFor(player, selectedAgent(player).Id)
+	if Modes.IsSurvival(player:GetAttribute("Mode")) then
+		loadout = {} -- offene Welt: nur was im Inventar liegt
+	end
 	local state = {
 		Loadout = loadout,
 		Current = loadout[1],
@@ -75,9 +81,30 @@ local function sendAmmo(player)
 	if not state then
 		return
 	end
-	local ammo = state.Ammo[state.Current]
-	Remotes.AmmoUpdate:FireClient(player, state.Current, ammo.Mag, ammo.Reserve, state.Reloading, ammo.Size,
-		lastShotIds[player] or 0, WeaponConfig.HasInfiniteAmmo(player))
+	local ammo = state.Current and state.Ammo[state.Current]
+	if not ammo then
+		-- keine Waffe in der Hand (offene Welt)
+		Remotes.AmmoUpdate:FireClient(player, nil, 0, 0, false, 0, lastShotIds[player] or 0, false)
+		return
+	end
+	local reserve = state.Source and state.Source.Count() or ammo.Reserve
+	Remotes.AmmoUpdate:FireClient(player, state.Current, ammo.Mag, reserve, state.Reloading, ammo.Size,
+		lastShotIds[player] or 0, WeaponConfig.HasInfiniteAmmo(player) and not state.Source)
+end
+
+-- Magazin an das Item im Inventar melden (offene Welt)
+local function reportMag(state, ammo)
+	if state.Source and state.Source.SetMag then
+		state.Source.SetMag(ammo.Mag)
+	end
+end
+
+-- PvP-Regel der offenen Welt: Spieler gegen Spieler nur, wenn beide ihre PvP-Zeit haben (draußen, 5 s nach der Safe Zone)
+local function pvpBlocked(attacker, victim)
+	if not victim or victim == attacker or not Modes.IsSurvival(attacker:GetAttribute("Mode")) then
+		return false
+	end
+	return attacker:GetAttribute("PvP") ~= true or victim:GetAttribute("PvP") ~= true
 end
 
 -- Nachladen für die Animationen der anderen Spieler sichtbar machen (nil = vorbei)
@@ -154,11 +181,13 @@ local function trackedModels()
 			table.insert(list, p.Character)
 		end
 	end
-	local bots = workspace:FindFirstChild("Bots")
-	if bots then
-		for _, model in bots:GetChildren() do
-			if model:IsA("Model") then
-				table.insert(list, model)
+	for _, folderName in { "Bots", "Zombies" } do
+		local folder = workspace:FindFirstChild(folderName)
+		if folder then
+			for _, model in folder:GetChildren() do
+				if model:IsA("Model") then
+					table.insert(list, model)
+				end
 			end
 		end
 	end
@@ -318,6 +347,9 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 	if isBot and player.Team and model:GetAttribute("TeamName") == player.Team.Name then
 		return
 	end
+	if pvpBlocked(player, victim) then
+		return -- Safe Zone oder PvP-Zeit noch nicht erreicht (offene Welt)
+	end
 
 	-- Schaden: Körperteil (Kopf mehr, Arme/Beine weniger) und Entfernung (Fall-off)
 	local headshot = hitPart.Name == "Head"
@@ -367,6 +399,9 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 	end
 
 	local weaponName = state.Current
+	if not weaponName or character:GetAttribute("UsingItem") then
+		return false -- keine Waffe in der Hand oder gerade beim Verbinden (offene Welt)
+	end
 	local effects = AttachmentConfig.Effects(player, weaponName)
 	local cfg = WeaponConfig.WithAttachments(WeaponConfig.Get(weaponName), effects)
 	local ammo = state.Ammo[weaponName]
@@ -385,6 +420,7 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 	end
 	state.NextShot = math.max(state.NextShot, now - slack) + cfg.FireDelay
 	ammo.Mag -= 1
+	reportMag(state, ammo)
 	if character:GetAttribute("Cloaked") then
 		character:SetAttribute("Cloaked", false) -- Schießen verrät dich
 	end
@@ -478,11 +514,31 @@ local function onReload(player)
 	end
 
 	local weaponName = state.Current
+	if not weaponName then
+		sendAmmo(player)
+		return
+	end
 	local effects = AttachmentConfig.Effects(player, weaponName)
 	local cfg = WeaponConfig.WithAttachments(WeaponConfig.Get(weaponName), effects)
 	local ammo = state.Ammo[weaponName]
-	local infinite = WeaponConfig.HasInfiniteAmmo(player)
-	if ammo.Mag >= ammo.Size or (ammo.Reserve <= 0 and not infinite) then
+	local source = state.Source
+	local infinite = WeaponConfig.HasInfiniteAmmo(player) and not source
+	-- Reserve: aus dem Inventar (offene Welt) oder vom Zustand
+	local function reserveLeft()
+		return source and source.Count() or ammo.Reserve
+	end
+	local function takeReserve(n)
+		if infinite then
+			return n
+		end
+		if source then
+			return source.Take(n)
+		end
+		local taken = math.min(n, ammo.Reserve)
+		ammo.Reserve -= taken
+		return taken
+	end
+	if ammo.Mag >= ammo.Size or (reserveLeft() <= 0 and not infinite) then
 		sendAmmo(player) -- Client hat schon "lädt nach" angezeigt: korrigieren
 		return
 	end
@@ -501,7 +557,7 @@ local function onReload(player)
 		local start, per, finish = WeaponConfig.ShellTiming(cfg, duration)
 		local shells = ammo.Size - ammo.Mag
 		if not infinite then
-			shells = math.min(shells, ammo.Reserve)
+			shells = math.min(shells, reserveLeft())
 		end
 		setReloadAttributes(player, duration, shells)
 		sendAmmo(player)
@@ -512,10 +568,11 @@ local function onReload(player)
 				if not stillValid() then
 					return
 				end
-				ammo.Mag += 1
-				if not infinite then
-					ammo.Reserve -= 1
+				if takeReserve(1) <= 0 then
+					break -- Munition inzwischen weg (z.B. verkauft)
 				end
+				ammo.Mag += 1
+				reportMag(state, ammo)
 				sendAmmo(player)
 			end
 			task.wait(finish)
@@ -535,12 +592,8 @@ local function onReload(player)
 		if not stillValid() then
 			return
 		end
-		local take = ammo.Size - ammo.Mag
-		if not infinite then
-			take = math.min(take, ammo.Reserve)
-			ammo.Reserve -= take
-		end
-		ammo.Mag += take
+		ammo.Mag += takeReserve(ammo.Size - ammo.Mag)
+		reportMag(state, ammo)
 		state.Reloading = false
 		setReloadAttributes(player, nil)
 		sendAmmo(player)
@@ -590,7 +643,7 @@ local function setupPlayer(player)
 		states[player] = state
 		character:WaitForChild("Humanoid")
 		character:SetAttribute("Loadout", table.concat(state.Loadout, ","))
-		if Modes.IsFighting(player) then
+		if Modes.IsFighting(player) and #state.Loadout > 0 then
 			giveTools(player, state)
 		end
 		sendAmmo(player)
@@ -639,8 +692,11 @@ local function onMelee(player, origin, direction)
 	local mode = player:GetAttribute("Mode")
 	local victimMode = victim and victim:GetAttribute("Mode") or model:GetAttribute("Mode")
 	local victimTeam = victim and victim.Team and victim.Team.Name or model:GetAttribute("TeamName")
-	local isDummy = model:GetAttribute("IsDummy") == true
+	local isDummy = model:GetAttribute("IsDummy") == true or model:GetAttribute("IsZombie") == true
 	if not isDummy and ((not victim and not isBot) or victimMode ~= mode or (player.Team and victimTeam == player.Team.Name)) then
+		return
+	end
+	if pvpBlocked(player, victim) then
 		return
 	end
 
@@ -653,6 +709,66 @@ local function onMelee(player, origin, direction)
 	if killed then
 		killedEvent:Fire(player, victim, melee.DisplayName, false, victimName, model)
 	end
+end
+
+-- ---------- Offene Welt (Extinction): Waffe aus dem Inventar ----------
+
+-- Waffe in die Hand geben (weaponName = WeaponConfig-Name) oder wegstecken (nil). mag = Magazin des Items,
+-- source = { Count = function() -> Reserve, Take = function(n) -> genommen, SetMag = function(mag) } (Inventar)
+function WeaponService.SetCarried(player, weaponName, mag, source)
+	local state = states[player]
+	if not state then
+		return false
+	end
+	if weaponName and not WeaponConfig.Get(weaponName) then
+		return false
+	end
+	cancelReload(player, state)
+	for _, tool in state.Tools or {} do
+		tool:Destroy()
+	end
+	state.Tools = {}
+	state.Source = source
+	state.Bloom = 0
+	if weaponName then
+		local cfg = WeaponConfig.Get(weaponName)
+		local size = math.floor(cfg.MagazineSize * AttachmentConfig.Effects(player, weaponName).Mag)
+		state.Loadout = { weaponName }
+		state.Current = weaponName
+		state.Ammo = { [weaponName] = { Mag = math.clamp(math.floor(tonumber(mag) or size), 0, size), Reserve = 0, Size = size } }
+		state.NextShot = math.max(state.NextShot, os.clock() + 0.3) -- Waffe ziehen
+	else
+		state.Loadout = {}
+		state.Current = nil
+		state.Ammo = {}
+	end
+	local character = player.Character
+	if character then
+		character:SetAttribute("Loadout", table.concat(state.Loadout, ","))
+	end
+	if weaponName and character then
+		giveTools(player, state)
+	end
+	sendAmmo(player)
+	return true
+end
+
+-- Magazin der Waffe in der Hand (nil = keine)
+function WeaponService.CarriedMag(player)
+	local state = states[player]
+	local ammo = state and state.Current and state.Ammo[state.Current]
+	return ammo and ammo.Mag or nil
+end
+
+-- Waffe in der Hand (WeaponConfig-Name) oder nil
+function WeaponService.CarriedWeapon(player)
+	local state = states[player]
+	return state and state.Current or nil
+end
+
+-- Munitionsanzeige neu schicken (z.B. nachdem sich die Munition im Inventar geändert hat)
+function WeaponService.RefreshAmmo(player)
+	sendAmmo(player)
 end
 
 -- Kill von außerhalb melden (z.B. Granate), läuft wie ein Waffen-Kill

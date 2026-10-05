@@ -197,14 +197,17 @@ function Scoreboard.Init()
 		BackgroundTransparency = 1, LayoutOrder = 2 }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 
-	-- Tastatur/Controller: halten. Touch: Knopf schaltet um.
+	-- Tastatur/Controller: halten. Touch: Knopf schaltet um. Offene Welt: TAB öffnet das Inventar (ExtinctionClient).
+	local function shown()
+		return Modes.IsFighting(player) and not Modes.IsSurvival(player:GetAttribute("Mode"))
+	end
 	InputActions.Bind("Scoreboard", function(began)
 		if InputActions.IsTouch() then
 			if began then
-				holding = not holding and Modes.IsFighting(player)
+				holding = not holding and shown()
 			end
 		else
-			holding = began and Modes.IsFighting(player)
+			holding = began and shown()
 		end
 		gui.Enabled = holding
 		if holding then

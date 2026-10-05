@@ -39,6 +39,9 @@ local SHUTDOWN_WAIT = 25      -- beim Herunterfahren höchstens so lange auf das
 local LOAD_FAILED = "Dein Spielstand konnte gerade nicht geladen werden. Bitte tritt gleich noch einmal bei."
 
 local store = nil   -- SessionStore (nil ohne DataStore, z.B. Studio ohne API-Zugriff)
+local beforeSave = {} -- Rückrufe vor jedem Speichern (z.B. Inventar der offenen Welt ins Profil schreiben)
+local leaving = {}    -- Rückrufe, wenn ein Spieler das Spiel verlässt, vor dem letzten Speichern
+local shuttingDown = false
 local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen und gesperrt (nur dann speichern)
 local sessionOnly = {} -- [Player] = true: in Studio ließ sich nicht laden – Stand gilt nur für diese Sitzung
@@ -673,6 +676,12 @@ end
 -- Speichern (nur mit eigener Sperre). release = Sperre dabei freigeben (Spieler geht, Server fährt herunter).
 -- Gibt true zurück, wenn der Stand sicher gespeichert ist.
 local function save(player, release)
+	for _, callback in beforeSave do
+		local ok, err = pcall(callback, player)
+		if not ok then
+			warn("Vor dem Speichern: " .. tostring(err))
+		end
+	end
 	local profile = profiles[player]
 	if not store or not loaded[player] or not profile then
 		return false
@@ -685,6 +694,22 @@ local function save(player, release)
 		warn("Spielerdaten konnten nicht gespeichert werden: " .. tostring(err))
 	end
 	return status == "ok"
+end
+
+-- callback(player) läuft vor jedem Speichern (auch beim Verlassen und Herunterfahren)
+function ProgressService.OnBeforeSave(callback)
+	table.insert(beforeSave, callback)
+end
+
+-- callback(player) läuft, wenn ein Spieler das Spiel verlässt, vor dem letzten Speichern – nicht beim
+-- Herunterfahren des Servers (dann darf niemand etwas verlieren, siehe IsShuttingDown)
+function ProgressService.OnLeaving(callback)
+	table.insert(leaving, callback)
+end
+
+-- Fährt der Server gerade herunter (BindToClose)?
+function ProgressService.IsShuttingDown()
+	return shuttingDown
 end
 
 -- Sofort speichern (z.B. nach einem Robux-Kauf). Gibt true zurück, wenn der Stand sicher gespeichert ist – ohne
@@ -717,8 +742,9 @@ function ProgressService.AddCoins(player, amount, reason)
 		return
 	end
 	ledgerOf(player)
-	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin)
-	if RobuxConfig.Has(player, "VIP") and reason and reason ~= "Robux" and reason ~= "Code" and reason ~= "Admin" then
+	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin und Verkäufen in der offenen Welt)
+	if RobuxConfig.Has(player, "VIP") and reason and reason ~= "Robux" and reason ~= "Code" and reason ~= "Admin"
+		and reason ~= "Verkauf" then
 		amount *= 2
 	end
 	profile.Coins += math.floor(amount)
@@ -997,6 +1023,14 @@ function ProgressService.Init()
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		if not shuttingDown then
+			for _, callback in leaving do
+				local ok, err = pcall(callback, player)
+				if not ok then
+					warn("Beim Verlassen: " .. tostring(err))
+				end
+			end
+		end
 		save(player, true)
 		profiles[player] = nil
 		loaded[player] = nil
@@ -1005,6 +1039,7 @@ function ProgressService.Init()
 	end)
 	-- Herunterfahren: alle gleichzeitig speichern (nacheinander reicht die Zeit bei vielen Spielern nicht)
 	game:BindToClose(function()
+		shuttingDown = true
 		local pending = 0
 		for _, player in Players:GetPlayers() do
 			pending += 1

@@ -323,8 +323,9 @@ local function onUseGadget(player, direction)
 	end
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head")
-	if not head or not livingHumanoid(character) or character:GetAttribute("Downed") or not player:GetAttribute("CanFight") then
-		return
+	if not head or not livingHumanoid(character) or character:GetAttribute("Downed") or not player:GetAttribute("CanFight")
+		or Modes.IsSurvival(player:GetAttribute("Mode")) then
+		return -- offene Welt: keine Gadgets
 	end
 	local charges = player:GetAttribute("Gadgets") or 0
 	local now = os.clock()

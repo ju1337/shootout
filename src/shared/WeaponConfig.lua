@@ -319,9 +319,15 @@ function WeaponConfig.ShellTiming(cfg, duration)
 	return start, (duration - start - finish) / cfg.MagazineSize, finish
 end
 
--- Unendliche Reserve-Munition im aktuellen Modus? (Schießstand)
+-- Unendliche Reserve-Munition im aktuellen Modus? (Schießstand). Nie in der offenen Welt (Extinction): dort kommt
+-- die Munition aus dem Inventar.
 function WeaponConfig.HasInfiniteAmmo(player)
-	return WeaponConfig.InfiniteAmmoEverywhere or WeaponConfig.InfiniteAmmoModes[player:GetAttribute("Mode")] == true
+	local mode = player:GetAttribute("Mode")
+	local Modes = require(script.Parent.Modes)
+	if Modes.IsSurvival(mode) then
+		return false
+	end
+	return WeaponConfig.InfiniteAmmoEverywhere or WeaponConfig.InfiniteAmmoModes[mode] == true
 end
 
 return WeaponConfig

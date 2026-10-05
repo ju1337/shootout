@@ -17,6 +17,7 @@ local ModeManager = {}
 -- Logik pro Modus (Ids wie in Modes.lua)
 local modules = {
 	Hub = require(script.Parent.Modes.Hub),
+	Extinction = require(script.Parent.Modes.Extinction), -- offene Welt (Hauptmodus, Tor im Hub)
 	Market = require(script.Parent.Modes.Market), -- Markthalle mit Ständen (kein Kampf)
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
 	Domination = require(script.Parent.Modes.Domination),
@@ -42,7 +43,7 @@ function ModeManager.Status(player, text)
 	Remotes.MenuStatus:FireClient(player, text)
 end
 
--- Schnelles Spiel: Kampfmodus mit den meisten Spielern, der noch Platz hat (sonst Strikeout)
+-- Schnelles Spiel: Arcade-Modus mit den meisten Spielern, der noch Platz hat (sonst Herrschaft)
 local QUICK_MODES = { "Domination", "FreeForAll", "Wingman", "Arena" }
 local function quickMode(player)
 	local best, bestCount = "Domination", -1
@@ -85,6 +86,11 @@ function ModeManager.Join(player, modeId)
 	local ok, reason = module.CanJoin(player)
 	if not ok then
 		ModeManager.Status(player, reason)
+		return
+	end
+	-- Der alte Modus darf nachfragen (offene Welt: außerhalb der Safe Zone kostet Verlassen die Tasche)
+	local currentModule = current and modules[current]
+	if currentModule and currentModule.ConfirmLeave and not currentModule.ConfirmLeave(player, modeId) then
 		return
 	end
 

@@ -25,6 +25,8 @@ local BackWeapon = require(ServerShared.BackWeapon)
 local EconomyService = require(ServerShared.EconomyService)
 local TradeService = require(ServerShared.TradeService)
 local CrateService = require(ServerShared.CrateService)
+local InventoryService = require(ServerShared.InventoryService)
+local LootService = require(ServerShared.LootService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
@@ -51,6 +53,8 @@ BackWeapon.Init() -- im Hub: Standardwaffe des Agenten auf dem Rücken
 EconomyService.Init() -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
 TradeService.Init() -- Tauschen zwischen Spielern im Hub und im Markt
 CrateService.Init() -- Kisten öffnen (Waffen-Kiste, Agenten-Kiste) im Markt
+InventoryService.Init() -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
+LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
 AgentService.Init()
 AdminService.Init(ModeManager)
 PartyService.Init(ModeManager)

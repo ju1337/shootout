@@ -343,8 +343,8 @@ local function doTurret(player, character, root, agent)
 end
 
 local function useAbility(player)
-	-- Nur wenn der Modus Kampf erlaubt (nicht im Hub, nicht zwischen Runden)
-	if not player:GetAttribute("CanFight") then
+	-- Nur wenn der Modus Kampf erlaubt (nicht im Hub, nicht zwischen Runden); offene Welt: nur passive Fähigkeiten
+	if not player:GetAttribute("CanFight") or Modes.IsSurvival(player:GetAttribute("Mode")) then
 		return
 	end
 	local character = player.Character
@@ -390,7 +390,8 @@ end
 -- Ultimate "Überladung": volles Leben, Rüstung, Fähigkeit sofort bereit, +1 Gadget-Ladung.
 -- Geht nur mit voller Ladung (UltCharge = 100), im Kampf, lebend und nicht am Boden.
 local function useUltimate(player)
-	if not player:GetAttribute("CanFight") or (player:GetAttribute("UltCharge") or 0) < 100 then
+	if not player:GetAttribute("CanFight") or (player:GetAttribute("UltCharge") or 0) < 100
+		or Modes.IsSurvival(player:GetAttribute("Mode")) then
 		return
 	end
 	local character = player.Character

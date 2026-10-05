@@ -1,4 +1,4 @@
-"""Prüft die erzeugte Markt-Karte (src/maps/Market.model.json) auf alles, was Server und Client darin suchen.
+"""Prüft die erzeugten Karten (Markt, Hub, Extinction in src/maps/) auf alles, was Server und Client darin suchen.
 
 Läuft als Teil von tests/run.py (Test "maps"). Gefangen werden Fehler, die die Luau-Tests nicht sehen, weil sie ihre
 eigene kleine Karte bauen: fehlende Teile (z.B. SearchTerminal), Stände ohne Prompt oder Ausstellplätze, Stände, die
@@ -29,8 +29,90 @@ def _pos(part):
     return (p[0] - ORIGIN[0], p[1] - ORIGIN[1], p[2] - ORIGIN[2])
 
 
+def _load(name):
+    with open(os.path.join(ROOT, "src", "maps", name + ".model.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def check_hub():
+    """Hub: nur noch das Tor nach EXTINCTION und zum Markt (die Minispiele laufen über das Menü, ARCADE)."""
+    problems = []
+    parts = _parts(_load("Hub"))
+    portals = sorted(part["Name"] for group, part in parts if group == "Portals")
+    if portals != ["Portal_Extinction", "Portal_Market"]:
+        problems.append("Hub: Tore %s, erwartet Portal_Extinction und Portal_Market" % portals)
+    for name in ("Sign_Extinction", "GateCount_Extinction", "FloorLabel_Extinction"):
+        if not any(part["Name"] == name for _, part in parts):
+            problems.append("Hub: %s fehlt" % name)
+    return problems
+
+
+def check_extinction():
+    """Offene Welt: Safe Zone (Server liest den Radius), Spawns und Tor zum Hub darin, Stände und Lager darin,
+    nicht zu nah beieinander; Welt groß genug; kein Baum oder Fels in der Safe Zone."""
+    problems = []
+    origin = (0, 0, -6000)  # EXTINCTION_ORIGIN in tools/build_maps.py, Center in Modes.lua
+    parts = _parts(_load("Extinction"))
+
+    def local(part):
+        p = part["Properties"]["CFrame"]["CFrame"]["position"]
+        return (p[0] - origin[0], p[1] - origin[1], p[2] - origin[2])
+
+    zones = [part for group, part in parts if group == "Zone" and part["Name"] == "SafeZone"]
+    if len(zones) != 1:
+        return ["Extinction: genau ein Teil SafeZone in der Gruppe Zone erwartet"]
+    zone = zones[0]
+    zx, _, zz = local(zone)
+    radius = zone["Properties"]["Size"][0] / 2
+    if math.hypot(zx, zz) > 1 or not (80 <= radius <= 160):
+        problems.append("Extinction: Safe Zone nicht in der Mitte oder Radius %.0f unpassend" % radius)
+    if zone["Properties"].get("CanQuery", True) or zone["Properties"].get("CanCollide", True):
+        problems.append("Extinction: Safe-Zone-Teil darf weder treffbar noch fest sein")
+
+    def inside(part, margin=0):
+        x, _, z = local(part)
+        return math.hypot(x, z) <= radius - margin
+
+    spawns = [part for group, part in parts if group == "Spawns"]
+    if len(spawns) < 6 or not all(inside(part, 20) for part in spawns):
+        problems.append("Extinction: mindestens 6 Spawns tief in der Safe Zone erwartet (%d)" % len(spawns))
+    portals = [part for group, part in parts if group == "Portals"]
+    if [p["Name"] for p in portals] != ["Portal_Hub"] or not inside(portals[0], 10):
+        problems.append("Extinction: genau ein Tor Portal_Hub in der Safe Zone erwartet")
+    points = {}
+    for group, part in parts:
+        if group == "Stands" and part["Name"] in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
+            points[part["Name"]] = part
+    for name in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
+        part = points.get(name)
+        if not part:
+            problems.append("Extinction: Punkt %s fehlt" % name)
+        elif not inside(part, 10):
+            problems.append("Extinction: %s liegt nicht in der Safe Zone" % name)
+        elif part["Properties"].get("CanCollide", True):
+            problems.append("Extinction: %s muss unsichtbar und nicht fest sein" % name)
+    names = sorted(points)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            (ax, _, az), (bx, _, bz) = local(points[a]), local(points[b])
+            if math.hypot(ax - bx, az - bz) < 30:
+                problems.append("Extinction: %s und %s zu dicht beieinander (E-Aufforderungen überlappen)" % (a, b))
+    for group, part in parts:
+        if group == "Nature" and part["Name"] in ("Trunk", "Rock") and inside(part, -30):
+            problems.append("Extinction: %s in der Safe Zone" % part["Name"])
+            break
+    grounds = [part for group, part in parts if group == "Ground" and part["Name"] == "Ground"]
+    if not grounds or min(grounds[0]["Properties"]["Size"][0], grounds[0]["Properties"]["Size"][2]) < 1500:
+        problems.append("Extinction: Boden fehlt oder Welt zu klein")
+    return problems
+
+
 def check():
     """Gibt eine Liste von Fehlermeldungen zurück (leer = alles in Ordnung)."""
+    return check_market() + check_hub() + check_extinction()
+
+
+def check_market():
     problems = []
     with open(os.path.join(ROOT, "src", "maps", "Market.model.json"), encoding="utf-8") as f:
         model = json.load(f)

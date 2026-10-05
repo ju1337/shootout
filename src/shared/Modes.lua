@@ -8,10 +8,28 @@
 -- Goal = kurzes Ziel oben im HUD (Text, oder { Attack, Defend } bei Angriff/Verteidigung,
 --        AttackAlert/DefendAlert solange die Uhr des Ziels läuft, z.B. Bombe gelegt)
 -- Objectives = Ziel-Parts der Map (Maps.<Map>.Objective.<Part>) mit Buchstaben für Marker und Minimap
+-- Featured = Hauptmodus (groß oben im Menü, eigenes Portal im Hub): EXTINCTION
+-- Arcade = Minispiel (im Menü unter ARCADE, kein Portal im Hub)
+-- Survival = offene Welt mit eigenem Inventar (Hotbar 1-9 statt Waffe 1/2, keine Standardwaffen),
+--            Safe Zone, PvP außerhalb, nur passive Agenten-Fähigkeiten (siehe ExtinctionConfig)
 
 local Modes = {}
 
 Modes.List = {
+	{
+		Id = "Extinction",
+		Name = "EXTINCTION",
+		Tag = "Offene Welt · Überleben",
+		Description = "Start in der Safe Zone: Waffen, Items und Fahrzeuge für Münzen kaufen, Wertvolles ins Lager legen.\n"
+			.. "Draußen kommen Zombies, nach 5 Sekunden ist PvP an. Wer stirbt, lässt seine Tasche fallen.",
+		Players = "bis 30 Spieler",
+		Color = Color3.fromRGB(215, 85, 45),
+		Center = Vector3.new(0, 0, -6000),
+		Goal = "ÜBERLEBE DRAUSSEN",
+		Featured = true,
+		Survival = true,
+		Available = true,
+	},
 	{
 		Id = "FreeForAll",
 		Name = "FREE-FOR-ALL",
@@ -21,6 +39,7 @@ Modes.List = {
 		Color = Color3.fromRGB(200, 110, 70),
 		Center = Vector3.new(0, 0, 1500),
 		Goal = "JEDER GEGEN JEDEN",
+		Arcade = true,
 		Available = true,
 	},
 	{
@@ -35,6 +54,7 @@ Modes.List = {
 		Overview = { Radius = 280, Height = 170 },
 		Goal = "HALTE DIE FLAGGEN",
 		Objectives = { { Part = "FlagA", Label = "A" }, { Part = "FlagB", Label = "B" }, { Part = "FlagC", Label = "C" } },
+		Arcade = true,
 		Available = true,
 	},
 	{
@@ -50,6 +70,7 @@ Modes.List = {
 		Overview = { Radius = 190, Height = 120 },
 		Goal = "NIMM DEN PUNKT EIN",
 		Objectives = { { Part = "CapturePoint", Label = "A" } },
+		Arcade = true,
 		Available = true,
 	},
 	{
@@ -64,6 +85,7 @@ Modes.List = {
 		TeamMode = true,
 		Overview = { Radius = 70, Height = 50 },
 		Goal = "GEWINNE DAS DUELL",
+		Arcade = true,
 		Available = true,
 	},
 	{
@@ -74,6 +96,7 @@ Modes.List = {
 		Players = "beliebig",
 		Color = Color3.fromRGB(150, 156, 164),
 		Center = Vector3.new(-1500, 0, 1500),
+		Arcade = true,
 		Available = true,
 	},
 }
@@ -223,6 +246,32 @@ function Modes.GoalText(id, attacking, alert)
 		return attacking and goal.Attack or goal.Defend
 	end
 	return goal
+end
+
+-- Offene Welt mit eigenem Inventar und Safe Zone (Extinction)?
+function Modes.IsSurvival(id)
+	local mode = Modes.Get(id)
+	return mode ~= nil and mode.Survival == true
+end
+
+-- Minispiele (im Menü unter ARCADE) und der Hauptmodus (groß oben)
+function Modes.Arcade()
+	local list = {}
+	for _, mode in Modes.List do
+		if mode.Arcade then
+			table.insert(list, mode)
+		end
+	end
+	return list
+end
+
+function Modes.Featured()
+	for _, mode in Modes.List do
+		if mode.Featured then
+			return mode
+		end
+	end
+	return nil
 end
 
 -- Treffpunkt ohne Kampf (Hub, Markt)?

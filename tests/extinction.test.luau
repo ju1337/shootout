@@ -1,0 +1,362 @@
+-- Offene Welt (EXTINCTION): Safe Zone und PvP-Zeit, Kaufen am Stand (Nähe, Münzen, Platz), Hotbar (Waffe nur
+-- draußen, Wegstecken in der Safe Zone), Munition aus dem Inventar (Nachladen, Magazin am Item), Heilen mit Dauer,
+-- Verkaufen, Lager (nur am Lager, bleibt beim Tod), Tod draußen = Tasche am Boden, Looten durch andere,
+-- Verlassen draußen nur mit zweitem Klick und dann ohne Tasche, Verlassen in der Safe Zone behält alles
+-- (Anordnung bleibt), Spiel verlassen draußen = Tasche weg (vor dem Speichern), Herunterfahren ohne Verlust,
+-- PvP nur wenn beide draußen und ihre PvP-Zeit erreicht haben
+local failures = 0
+local function check(cond, msg)
+	if not cond then
+		failures += 1
+		print("FEHLER: " .. msg)
+	end
+end
+local function step(seconds)
+	SIM.Advance(seconds or 1, 20) -- mit Heartbeat (Safe-Zone-Prüfung, Magazin-Abgleich)
+end
+
+game.JobId = "server-1"
+local store = SIM.DataStore("PlayerData_v1")
+local HttpService = game:GetService("HttpService")
+local Remotes = require("Remotes")
+local ExtinctionConfig = require("ExtinctionConfig")
+local ProgressService = require("ProgressService")
+local WeaponService = require("WeaponService")
+local Damage = require("Damage")
+ProgressService.Init()
+WeaponService.Init()
+
+-- Karte wie aus tools/build_maps.py: Safe Zone (Radius 100) um (0, 0, -6000), Spawns, Stände, Lager, Tor zum Hub
+local CENTER = Vector3.new(0, 0, -6000)
+local maps = Instance.new("Folder", workspace)
+maps.Name = "Maps"
+local map = Instance.new("Model", maps)
+map.Name = "Extinction"
+map:SetAttribute("DisplayName", "Ödland")
+map:SetAttribute("Center", CENTER)
+for _, name in { "Zone", "Spawns", "Portals", "Stands" } do
+	Instance.new("Folder", map).Name = name
+end
+local zone = Instance.new("Part", map.Zone)
+zone.Name = "SafeZone"
+zone.Size = Vector3.new(200, 80, 200)
+zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
+local spawnPoint = Instance.new("Part", map.Spawns)
+spawnPoint.CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
+local portal = Instance.new("Part", map.Portals)
+portal.Name = "Portal_Hub"
+portal.CFrame = CFrame.new(CENTER + Vector3.new(-62, 0.4, -32))
+local standPos = {
+	Stand_Weapons = CENTER + Vector3.new(-36, 2.5, 34),
+	Stand_Items = CENTER + Vector3.new(36, 2.5, 34),
+	Stand_Vehicles = CENTER + Vector3.new(-30, 2.5, -42),
+	Stash = CENTER + Vector3.new(52, 2.5, -30),
+}
+for name, position in standPos do
+	local part = Instance.new("Part", map.Stands)
+	part.Name = name
+	part.CFrame = CFrame.new(position)
+end
+
+local InventoryService = require("InventoryService")
+local LootService = require("LootService")
+local Extinction = require("Extinction")
+InventoryService.Init()
+LootService.Init()
+local statusText = nil
+local manager = {
+	Join = function(player, modeId)
+		if modeId ~= "Extinction" and player:GetAttribute("Mode") == "Extinction" then
+			if Extinction.ConfirmLeave(player) then
+				Extinction.RemovePlayer(player)
+				player:SetAttribute("Mode", modeId)
+			end
+		end
+	end,
+	Status = function(_, text)
+		statusText = text
+	end,
+}
+Extinction.Init(manager)
+
+local function bagOf(player)
+	return HttpService:JSONDecode(player:GetAttribute("ExtBag") or "[]")
+end
+local function slot(player, s)
+	for _, entry in bagOf(player) do
+		if entry.S == s then
+			return entry
+		end
+	end
+	return nil
+end
+local function lastExt(player, kind)
+	for i = #SIM.RemoteLog, 1, -1 do
+		local entry = SIM.RemoteLog[i]
+		if entry.Remote == "ExtUpdate" and entry.Player == player and entry.Args[1] == kind then
+			return entry.Args
+		end
+	end
+	return nil
+end
+local function lastAmmo(player)
+	for i = #SIM.RemoteLog, 1, -1 do
+		local entry = SIM.RemoteLog[i]
+		if entry.Remote == "AmmoUpdate" and entry.Player == player then
+			return entry.Args
+		end
+	end
+	return nil
+end
+local function moveTo(player, offset)
+	player.Character:PivotTo(CFrame.new(CENTER + offset))
+	step(0.3)
+end
+local function enter(player)
+	player:SetAttribute("Mode", "Extinction")
+	Extinction.AddPlayer(player)
+	step(0.3)
+end
+
+store.Data.u1 = { XP = {}, Coins = 5000, Rap = 0, Owned = {}, Equipped = {} }
+store.Data.u2 = { XP = {}, Coins = 300, Rap = 0, Owned = {}, Equipped = {} }
+local alice, bob = SIM.Join("Alice"), SIM.Join("Bob")
+for _, player in { alice, bob } do
+	Instance.new("Backpack", player).Name = "Backpack"
+end
+step(2)
+check(Extinction.CanJoin(alice) == true, "Spielstand geladen: Beitreten möglich")
+
+-- ---------- Ankunft in der Safe Zone ----------
+enter(alice)
+check(alice.Character ~= nil, "Alice gespawnt")
+check(alice:GetAttribute("InSafeZone") == true and alice:GetAttribute("CanFight") == false, "Spawn in der Safe Zone, kein Kampf")
+check(alice.Character:GetAttribute("SafeZone") == true, "Charakter in der Safe Zone geschützt")
+check(alice:GetAttribute("ExtBag") == "[]", "leere Tasche")
+check(WeaponService.CarriedWeapon(alice) == nil, "keine Standardwaffe")
+local ammo = lastAmmo(alice)
+check(ammo ~= nil and ammo[1] == nil, "Munitionsanzeige: keine Waffe")
+check(alice:GetAttribute("MapId") == "Extinction", "Map für Minimap und Licht gesetzt")
+
+-- ---------- Kaufen ----------
+moveTo(alice, Vector3.new(0, 3, 0))
+check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == false, "zu weit vom Stand weg")
+check(string.find(lastExt(alice, "Status")[2], "näher", 1, true) ~= nil, "Hinweis: näher ran")
+moveTo(alice, Vector3.new(-36, 3, 28))
+check(InventoryService.Buy(alice, "Stand_Weapons", "Bandage") == false, "Verband gibt es nicht am Waffenstand")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Sturmgewehr gekauft")
+check(ProgressService.Get(alice).Coins == 5000 - 1100, "Preis abgezogen")
+check(slot(alice, 1) and slot(alice, 1).Id == "Rifle", "Waffe landet auf Hotbar-Platz 1")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "zwei Packungen Gewehrmunition")
+local ammoSlot = slot(alice, ExtinctionConfig.HotbarSlots + 1)
+check(ammoSlot and ammoSlot.Id == "Ammo_Rifle" and ammoSlot.N == 60, "Munition hinten in der Tasche (60)")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
+check(slot(alice, 2) and slot(alice, 2).Id == "Pistol", "Pistole auf Platz 2")
+moveTo(alice, Vector3.new(36, 3, 28))
+check(InventoryService.Buy(alice, "Stand_Items", "Bandage", 3) == true, "drei Verbände")
+check(slot(alice, 3) and slot(alice, 3).N == 3, "Verbände gestapelt auf Platz 3")
+check(InventoryService.Buy(bob, "Stand_Items", "Bandage") == false, "Bob ist nicht in der offenen Welt")
+
+-- ---------- Hotbar: Waffe nur draußen ----------
+InventoryService.Use(alice, 1)
+check(WeaponService.CarriedWeapon(alice) == nil, "in der Safe Zone keine Waffe in der Hand")
+check(string.find(lastExt(alice, "Status")[2], "gesichert", 1, true) ~= nil, "Hinweis: Waffen gesichert")
+moveTo(alice, Vector3.new(0, 3, 160))
+check(alice:GetAttribute("InSafeZone") == false and alice:GetAttribute("CanFight") == true, "draußen: Kampf erlaubt")
+check(alice:GetAttribute("PvP") == false and alice.Character:GetAttribute("SafeZone") == nil, "PvP noch nicht an, Schutz weg")
+check(math.abs(alice:GetAttribute("PvPAt") - (workspace:GetServerTimeNow() + 5)) < 0.6, "PvP-Zeit in 5 Sekunden")
+step(5.2)
+check(alice:GetAttribute("PvP") == true, "nach 5 Sekunden PvP an")
+InventoryService.Use(alice, 1)
+check(WeaponService.CarriedWeapon(alice) == "Rifle", "Taste 1: Sturmgewehr in der Hand")
+check(alice:GetAttribute("ExtEquipped") == 1, "Hotbar zeigt Platz 1 als aktiv")
+ammo = lastAmmo(alice)
+check(ammo[1] == "Rifle" and ammo[2] == 30 and ammo[3] == 60 and ammo[7] == false, "voll, Reserve 60 aus dem Inventar, nicht unendlich")
+
+-- Schießen und Nachladen: Magazin am Item, Munition aus der Tasche (erst nach dem Ziehen, 0,3 s)
+local head = alice.Character.Head
+Remotes.Fire.OnServerEvent:Fire(alice, head.Position, Vector3.new(0, 0, 1), false, 1, {})
+check(WeaponService.CarriedMag(alice) == 30, "direkt nach dem Ziehen noch kein Schuss")
+step(0.4)
+for i = 2, 6 do
+	Remotes.Fire.OnServerEvent:Fire(alice, head.Position, Vector3.new(0, 0, 1), false, i, {})
+	step(0.15)
+end
+step(1)
+check(slot(alice, 1).Mag == 25, "Magazin steht am Item (25), war " .. tostring(slot(alice, 1).Mag))
+Remotes.Reload.OnServerEvent:Fire(alice)
+step(2.5)
+check(WeaponService.CarriedMag(alice) == 30, "nachgeladen")
+check(slot(alice, ExtinctionConfig.HotbarSlots + 1).N == 55, "5 Schuss aus der Tasche genommen")
+ammo = lastAmmo(alice)
+check(ammo[3] == 55, "Reserve-Anzeige 55")
+
+-- Wechsel auf die Pistole: ohne passende Munition kein Nachladen
+InventoryService.Use(alice, 2)
+check(WeaponService.CarriedWeapon(alice) == "Pistol" and alice:GetAttribute("ExtEquipped") == 2, "Pistole in der Hand")
+check(slot(alice, 1).Mag == 30, "Magazin des Gewehrs gesichert")
+step(0.4)
+Remotes.Fire.OnServerEvent:Fire(alice, head.Position, Vector3.new(0, 0, 1), false, 10, {})
+step(0.5)
+Remotes.Reload.OnServerEvent:Fire(alice)
+step(2)
+check(WeaponService.CarriedMag(alice) == 11, "ohne 9mm-Munition kein Nachladen")
+InventoryService.Use(alice, 2)
+check(WeaponService.CarriedWeapon(alice) == nil and alice:GetAttribute("ExtEquipped") == 0, "gleiche Taste: wegstecken")
+InventoryService.Use(alice, 1)
+check(WeaponService.CarriedWeapon(alice) == "Rifle" and WeaponService.CarriedMag(alice) == 30, "Gewehr wieder in der Hand")
+
+-- Heilen dauert
+alice.Character.Humanoid.Health = 50
+InventoryService.Use(alice, 3)
+check(alice.Character:GetAttribute("UsingItem") == "Verband", "Verband wird benutzt")
+Remotes.Fire.OnServerEvent:Fire(alice, head.Position, Vector3.new(0, 0, 1), false, 20, {})
+step(0.2)
+check(WeaponService.CarriedMag(alice) == 30, "beim Verbinden kein Schuss")
+step(1)
+check(alice.Character.Humanoid.Health == 50, "noch nicht geheilt")
+step(1.6)
+check(alice.Character.Humanoid.Health == 70 and slot(alice, 3).N == 2, "+20 Leben, ein Verband weniger")
+
+-- Zurück in die Safe Zone: Waffe weg, kein PvP
+moveTo(alice, Vector3.new(10, 3, 20))
+check(alice:GetAttribute("InSafeZone") == true and alice:GetAttribute("PvP") == false, "zurück in der Safe Zone")
+check(WeaponService.CarriedWeapon(alice) == nil, "Waffe beim Betreten weggesteckt")
+check(Damage.Apply(alice.Character, alice.Character.Humanoid, 30, nil) == 0, "in der Safe Zone kein Schaden")
+
+-- ---------- Anordnen, Lager, Verkaufen ----------
+check(InventoryService.Move(alice, "Bag", 3, "Bag", 9) == true, "Verbände auf Platz 9 gelegt")
+check(slot(alice, 9) and slot(alice, 9).Id == "Bandage" and slot(alice, 3) == nil, "Platz 9 belegt, 3 frei")
+check(InventoryService.Move(alice, "Bag", 2, "Stash", nil) == false, "Lager nur direkt am Lager")
+moveTo(alice, Vector3.new(52, 3, -24))
+check(InventoryService.Move(alice, "Bag", 2, "Stash", nil) == true, "Pistole ins Lager")
+local stash = HttpService:JSONDecode(alice:GetAttribute("ExtStash"))
+check(#stash == 1 and stash[1].Id == "Pistol" and stash[1].Mag == 11, "Pistole mit Magazin im Lager")
+moveTo(alice, Vector3.new(36, 3, 28))
+local coins = ProgressService.Get(alice).Coins
+check(InventoryService.Sell(alice, 9, 1) == true, "einen Verband verkauft")
+check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.SellPrice("Bandage", 1), "Verkaufspreis gutgeschrieben")
+check(slot(alice, 9).N == 1, "ein Verband übrig")
+
+-- ---------- Tod draußen: Tasche am Boden, Lager bleibt ----------
+moveTo(alice, Vector3.new(0, 3, 200))
+step(5.5)
+InventoryService.Use(alice, 1)
+step(0.4)
+Remotes.Fire.OnServerEvent:Fire(alice, alice.Character.Head.Position, Vector3.new(0, 0, 1), false, 30, {})
+step(0.5)
+local deathPos = alice.Character.HumanoidRootPart.Position
+alice.Character.Humanoid.Health = 0
+step(0.2)
+check(alice:GetAttribute("ExtBag") == "[]", "Tasche nach dem Tod leer")
+local loot = workspace.ExtinctionLoot:GetChildren()
+check(#loot == 1, "eine Tasche liegt am Boden")
+local bagPart = loot[1] and loot[1]:FindFirstChild("LootBag")
+local bagId = bagPart and bagPart:GetAttribute("LootBag")
+local bagData = bagId and LootService.Get(bagId)
+check(bagData ~= nil and #bagData.Container.Slots >= 3, "Gewehr, Munition und Verband in der Tasche")
+local rifleInBag = nil
+for _, item in bagData and bagData.Container.Slots or {} do
+	if item.Id == "Rifle" then
+		rifleInBag = item
+	end
+end
+check(rifleInBag ~= nil and rifleInBag.Mag == 29, "Gewehr mit Magazin (29) in der Tasche")
+check(bagPart and bagPart:FindFirstChildOfClass("ProximityPrompt") ~= nil, "Tasche mit E durchsuchbar")
+check(#HttpService:JSONDecode(alice:GetAttribute("ExtStash")) == 1, "Lager behält die Pistole")
+step(5.5)
+check(alice.Character and alice.Character.Humanoid.Health > 0 and alice:GetAttribute("InSafeZone") == true, "Respawn in der Safe Zone")
+
+-- ---------- Bob lootet die Tasche ----------
+enter(bob)
+check(LootService.Open(bob, bagId) == false, "zu weit weg zum Durchsuchen")
+bob.Character:PivotTo(CFrame.new(deathPos + Vector3.new(3, 0, 0)))
+step(0.3)
+check(LootService.Open(bob, bagId) == true, "Bob öffnet die Tasche")
+check(lastExt(bob, "Loot") ~= nil and #lastExt(bob, "Loot")[2].Items >= 3, "Inhalt an Bob geschickt")
+check(LootService.Take(bob, bagId, "All") == true, "alles genommen")
+local bobHasRifle = false
+for _, entry in bagOf(bob) do
+	if entry.Id == "Rifle" and entry.Mag == 29 then
+		bobHasRifle = true
+	end
+end
+check(bobHasRifle, "Bob hat das Gewehr mit Magazin")
+check(LootService.Get(bagId) == nil and #workspace.ExtinctionLoot:GetChildren() == 0, "leere Tasche verschwindet")
+check(lastExt(bob, "LootClosed") ~= nil, "Fenster bei Bob geschlossen")
+
+-- ---------- PvP: beide draußen und PvP-Zeit erreicht ----------
+moveTo(alice, Vector3.new(0, 3, 230))
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 250)))
+step(1)
+local function shoot(shooter, target, id)
+	local origin = shooter.Character.Head.Position
+	local direction = (target.Character.Head.Position - origin).Unit
+	Remotes.Fire.OnServerEvent:Fire(shooter, origin, direction, false, id,
+		{ { Part = target.Character.Head, Position = target.Character.Head.Position } })
+	step(0.3)
+end
+InventoryService.Use(bob, 1)
+check(WeaponService.CarriedWeapon(bob) == "Rifle", "Bob zieht das Gewehr")
+step(0.4)
+shoot(bob, alice, 100)
+check(alice.Character.Humanoid.Health == 100, "vor Ablauf der PvP-Zeit kein Schaden")
+step(5)
+shoot(bob, alice, 101)
+check(alice.Character.Humanoid.Health < 100, "nach 5 Sekunden draußen: PvP-Schaden")
+
+-- ---------- Verlassen draußen: zweiter Klick, Tasche fällt ----------
+statusText = nil
+manager.Join(bob, "Hub")
+check(bob:GetAttribute("Mode") == "Extinction" and statusText ~= nil, "erster Klick: Warnung statt Verlassen")
+manager.Join(bob, "Hub")
+check(bob:GetAttribute("Mode") == "Hub", "zweiter Klick: verlassen")
+check(#workspace.ExtinctionLoot:GetChildren() == 1, "Bobs Tasche liegt draußen")
+check(#(ProgressService.Get(bob).Extinction.Bag) == 0, "Bobs Tasche im Profil leer")
+
+-- ---------- Verlassen in der Safe Zone: alles bleibt, Anordnung auch ----------
+moveTo(alice, Vector3.new(36, 3, 28))
+InventoryService.Buy(alice, "Stand_Items", "Medkit")
+InventoryService.Buy(alice, "Stand_Items", "Vest")
+InventoryService.Move(alice, "Bag", 1, "Bag", 7)
+local before = HttpService:JSONEncode(ProgressService.Get(alice).Extinction.Bag)
+manager.Join(alice, "Hub")
+check(alice:GetAttribute("Mode") == "Hub", "in der Safe Zone sofort verlassen")
+check(HttpService:JSONEncode(ProgressService.Get(alice).Extinction.Bag) == before, "Tasche und Anordnung bleiben")
+check(alice:GetAttribute("ExtBag") == nil, "Anzeige-Attribute weg")
+enter(alice)
+check(slot(alice, 7) and slot(alice, 7).Id == "Medkit", "nach dem Wiederkommen liegt alles am selben Platz")
+
+-- ---------- Spiel verlassen draußen: Tasche weg, gespeichert ohne Inhalt ----------
+moveTo(alice, Vector3.new(-200, 3, 0))
+SIM.Leave(alice)
+step(2)
+local saved = store.Data.u1
+check(saved and saved.Extinction and #saved.Extinction.Bag == 0, "gespeichert: Tasche leer")
+check(saved and #saved.Extinction.Stash == 1, "gespeichert: Lager unverändert")
+check(#workspace.ExtinctionLoot:GetChildren() == 2, "Alices Tasche liegt am Boden")
+
+-- ---------- Herunterfahren: niemand verliert etwas ----------
+store.Data.u3 = { XP = {}, Coins = 2000, Rap = 0, Owned = {}, Equipped = {},
+	Extinction = { Bag = { { S = 1, Id = "SMG", N = 1, Mag = 20 } }, Stash = {} } }
+local carl = SIM.Join("Carl")
+Instance.new("Backpack", carl).Name = "Backpack"
+step(2)
+enter(carl)
+check(slot(carl, 1) and slot(carl, 1).Id == "SMG" and slot(carl, 1).Mag == 20, "gespeicherte Tasche geladen")
+moveTo(carl, Vector3.new(0, 3, -300))
+local bagsBefore = #workspace.ExtinctionLoot:GetChildren()
+task.spawn(function()
+	for _, close in SIM.Closers do
+		close()
+	end
+end)
+-- Server fährt herunter: Spieler werden getrennt. ModeManager meldet sie dabei beim Modus ab (Reihenfolge zum
+-- Speichern ist in Roblox nicht festgelegt, hier zuerst)
+Extinction.RemovePlayer(carl)
+SIM.Leave(carl)
+step(30)
+check(store.Data.u3.Extinction and #store.Data.u3.Extinction.Bag == 1, "beim Herunterfahren bleibt die Tasche")
+check(#workspace.ExtinctionLoot:GetChildren() == bagsBefore, "beim Herunterfahren fällt keine Tasche")
+
+print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

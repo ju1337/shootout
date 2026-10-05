@@ -93,9 +93,9 @@ function AbilityClient.Init()
 	local gui = make("ScreenGui", { Name = "Ability", ResetOnSpawn = false, IgnoreGuiInset = true }, player:WaitForChild("PlayerGui"))
 	local root = UITheme.ScaledRoot(gui)
 
-	-- Nur in Kampfmodi sichtbar
+	-- Nur in Kampfmodi sichtbar (offene Welt: nur passive Fähigkeiten, keine Karten)
 	local function updateVisible()
-		gui.Enabled = Modes.IsFighting(player)
+		gui.Enabled = Modes.IsFighting(player) and not Modes.IsSurvival(player:GetAttribute("Mode"))
 	end
 	updateVisible()
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
@@ -191,18 +191,21 @@ function AbilityClient.Init()
 	end)
 
 	-- Auslösen über InputActions (Tastatur, Controller, Touch-Knöpfe)
+	local function active()
+		return Modes.IsFighting(player) and not Modes.IsSurvival(player:GetAttribute("Mode"))
+	end
 	InputActions.Bind("Ability", function(began)
-		if began and Modes.IsFighting(player) then
+		if began and active() then
 			Remotes.UseAbility:FireServer()
 		end
 	end)
 	InputActions.Bind("Gadget", function(began)
-		if began and Modes.IsFighting(player) then
+		if began and active() then
 			Remotes.UseGadget:FireServer(workspace.CurrentCamera.CFrame.LookVector)
 		end
 	end)
 	InputActions.Bind("Ultimate", function(began)
-		if began and Modes.IsFighting(player) and (player:GetAttribute("UltCharge") or 0) >= 100 then
+		if began and active() and (player:GetAttribute("UltCharge") or 0) >= 100 then
 			Remotes.UseUltimate:FireServer()
 		end
 	end)

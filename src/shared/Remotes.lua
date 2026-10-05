@@ -53,6 +53,8 @@ local NAMES = {
 	"CrateResult", -- Server -> Client: Ergebnis der Kiste (Skin, Rolle, Status) oder Fehlermeldung
 	"TradeAction", -- Client -> Server: Tausch (Request, Respond, AddItem, RemoveItem, SetRap, Ready, Cancel; TradeService)
 	"TradeUpdate", -- Server -> Client: Tausch-Stand (Art, Daten): "Request", "State", "Closed", "Done"
+	"ExtAction",  -- Client -> Server: offene Welt (Use, Move, Buy, Sell, Drop, Loot, StoreVehicle, ...; InventoryService)
+	"ExtUpdate",  -- Server -> Client: offene Welt (Art, Daten): "Status", "Loot", "LootClosed", "UseStart", "UseEnd", ...
 }
 
 local folder

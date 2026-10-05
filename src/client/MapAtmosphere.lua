@@ -3,6 +3,7 @@
 -- (aktuelle Map = Spieler-Attribut MapId, gesetzt von den Modi). Sonst gilt das normale Licht aus dem Projekt.
 --   "Space"    Nacht mit Sternen, kühles Umgebungslicht, kaum Dunst, stärkeres Leuchten (Neon)
 --   "Tropical" Mittagssonne, satte Farben, leichter heller Dunst (Rogue-Company-Stil)
+--   "Wasteland" Ödland der offenen Welt (Extinction): später Nachmittag, staubiger Dunst, entsättigt
 -- Wechsel werden kurz eingeblendet. ExposureCompensation bleibt dem Hub (HubLineup) überlassen.
 
 local Players = game:GetService("Players")
@@ -25,6 +26,14 @@ local PRESETS = {
 			Decay = Color3.fromRGB(30, 30, 60) },
 		ColorCorrection = { Saturation = 0.1, Contrast = 0.15, TintColor = Color3.fromRGB(232, 238, 255) },
 		Bloom = { Intensity = 0.9, Threshold = 1.1 },
+	},
+	Wasteland = {
+		Lighting = { ClockTime = 16.6, Brightness = 2.1, Ambient = Color3.fromRGB(96, 96, 88),
+			OutdoorAmbient = Color3.fromRGB(128, 126, 114) },
+		Atmosphere = { Density = 0.36, Haze = 2.1, Glare = 0.2, Color = Color3.fromRGB(184, 176, 156),
+			Decay = Color3.fromRGB(118, 108, 92) },
+		ColorCorrection = { Saturation = -0.22, Contrast = 0.12, TintColor = Color3.fromRGB(255, 244, 228) },
+		Bloom = { Intensity = 0.25, Threshold = 1.7 },
 	},
 	Tropical = {
 		Lighting = { ClockTime = 13.5, Brightness = 3.2, Ambient = Color3.fromRGB(120, 116, 110),

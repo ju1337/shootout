@@ -125,11 +125,19 @@ local function updateViewModel()
 	end
 end
 
--- Waffen des aktuellen Charakters (Slot 1, Slot 2)
+-- Waffen des aktuellen Charakters (Slot 1, Slot 2); offene Welt: höchstens die Waffe in der Hand
 local function loadout()
 	local character = player.Character
 	local text = character and character:GetAttribute("Loadout")
-	return text and string.split(text, ",") or {}
+	local list = {}
+	if type(text) == "string" then
+		for _, name in string.split(text, ",") do
+			if name ~= "" then
+				table.insert(list, name)
+			end
+		end
+	end
+	return list
 end
 
 local function ownTool()
@@ -391,7 +399,8 @@ end
 -- Messer (V): kurzer Stich nach vorne, Waffe wird kurz weggezogen
 local function melee()
 	local cfg = WeaponConfig.Melee
-	if os.clock() - lastMelee < cfg.Cooldown or not Modes.IsFighting(player) or isDowned() then
+	if os.clock() - lastMelee < cfg.Cooldown or not Modes.IsFighting(player) or isDowned()
+		or player:GetAttribute("InSafeZone") then
 		return
 	end
 	lastMelee = os.clock()
@@ -519,19 +528,23 @@ function WeaponClient.Init()
 			melee()
 		end
 	end)
+	-- Waffe 1/2 wechseln – nicht in der offenen Welt: dort legen die Tasten 1-9 die Hotbar (ExtinctionClient)
+	local function swapping()
+		return fighting() and not Modes.IsSurvival(player:GetAttribute("Mode"))
+	end
 	InputActions.Bind("Weapon1", function(began)
-		if began and fighting() then
+		if began and swapping() then
 			equip(1)
 		end
 	end)
 	InputActions.Bind("Weapon2", function(began)
-		if began and fighting() then
+		if began and swapping() then
 			equip(2)
 		end
 	end)
 	-- Controller/Touch: zwischen den beiden Waffen wechseln
 	InputActions.Bind("SwapWeapon", function(began)
-		if began and fighting() then
+		if began and swapping() then
 			equip(loadout()[1] == current and 2 or 1)
 		end
 	end)
@@ -647,8 +660,31 @@ function WeaponClient.Init()
 		if current and name ~= current and not synced and os.clock() - equipTime < 1.5 then
 			return
 		end
+		if name == nil then
+			-- keine Waffe in der Hand (offene Welt: weggesteckt oder Hotbar leer)
+			if current then
+				current = nil
+				reloading = false
+				reload = nil
+				fireAnim = nil
+				fireHeld = false
+				setAiming(false)
+				updateViewModel()
+			end
+			serverMag, reserve, magSize, infinite = 0, 0, 0, false
+			synced = true
+			ammoChanged:Fire(nil, 0, 0, false, 0, false)
+			return
+		end
 		if name ~= current or not viewModel then
+			-- Der Server hat die Waffe gewechselt (offene Welt: Taste 1-9): Ziehen wie beim eigenen Wechsel
+			if current ~= nil or Modes.IsSurvival(player:GetAttribute("Mode")) then
+				drawUntil = os.clock() + DRAW_TIME
+				WeaponEffects.ActionSound("Draw")
+			end
 			current = name
+			reloading = false
+			reload = nil
 			updateViewModel()
 		end
 		serverMag, reserve = newMag, newReserve

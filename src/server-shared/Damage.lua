@@ -1,6 +1,6 @@
 -- Damage (ModuleScript, nur Server)
 -- Zentrale Stelle für Schaden an Spielern und Bots (Waffen der Spieler und der Bots).
--- Achtet auf Schutzschilde und Rüstung (Attribut "Armor") und schlägt im Drop-Modus
+-- Achtet auf Schutzschilde, die Safe Zone (Attribut "SafeZone") und Rüstung (Attribut "Armor") und schlägt im Drop-Modus
 -- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge").
 
 local ServerStorage = game:GetService("ServerStorage")
@@ -46,7 +46,8 @@ end
 -- Schaden anwenden. attacker = { Player = ..., BotName = ..., Weapon = ..., Headshot = ... }
 -- Gibt zurück: tatsächlicher Schaden, getötet?, niedergeschlagen?, davon von der Rüstung geschluckt
 function Damage.Apply(model, humanoid, amount, attacker)
-	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") then
+	-- Schutzschild oder Safe Zone der offenen Welt (Attribut "SafeZone" am Charakter): kein Schaden
+	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") or model:GetAttribute("SafeZone") then
 		return 0, false, false, 0
 	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)

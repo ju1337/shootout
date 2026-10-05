@@ -53,8 +53,8 @@ local LEFT_X, LEFT_W = 40, 340          -- Spalte Spielmodi + Squad
 local RIGHT_X, RIGHT_W = 1220, 340      -- Spalte Battle Pass, Auftrag, SPIELEN
 local SQUAD_SIZE = 4
 
--- Schnelles Spiel: der Server wählt den vollsten Kampfmodus mit freiem Platz
-local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Voller Modus mit freiem Platz", Available = true }
+-- Schnelles Spiel: der Server wählt den vollsten Arcade-Modus mit freiem Platz
+local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Arcade-Modus mit freiem Platz", Available = true }
 
 -- Navigation: Seite in der Lobby oder Fenster des SideMenu
 local NAV = {
@@ -289,27 +289,41 @@ local function selectMode(mode)
 	GameMenu.UpdatePlay()
 end
 
+-- Spieler in einem Eintrag der Liste: Schnelles Spiel zählt alle Arcade-Modi zusammen
+local function modeCount(counts, mode)
+	if mode == QUICK then
+		local n = 0
+		for _, arcade in Modes.Arcade() do
+			n += tonumber(counts[arcade.Id]) or 0
+		end
+		return n
+	end
+	return tonumber(counts[mode.Id]) or 0
+end
+
+-- Links: oben groß der Hauptmodus (EXTINCTION, offene Welt), darunter ARCADE mit den Minispielen
 local function buildModes()
 	label({ Position = UDim2.fromOffset(LEFT_X, 106), Size = UDim2.fromOffset(LEFT_W, 22), Text = "SPIELMODUS", TextSize = 12,
 		Font = F.Bold, TextColor3 = C.Muted }, playPage)
-	local list = make("Frame", { Position = UDim2.fromOffset(LEFT_X, 134), Size = UDim2.fromOffset(LEFT_W, 450),
-		BackgroundTransparency = 1 }, playPage)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-	local entries = { QUICK }
-	for _, mode in Modes.List do
-		table.insert(entries, mode)
-	end
-	for i, mode in entries do
-		local chunky = UITheme.Chunky({ Size = UDim2.fromOffset(LEFT_W, 58), LayoutOrder = i, Color = C.Panel, Text = "",
-			StrokeColor = C.Border }, list, function()
+
+	local function addEntry(mode, parent, size, order, big)
+		local chunky = UITheme.Chunky({ Size = size, LayoutOrder = order, Color = C.Panel, Text = "",
+			StrokeColor = C.Border }, parent, function()
 			selectMode(mode)
 		end)
 		local face = chunky.Face
 		face.BackgroundTransparency = 0.12
-		local name = label({ Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -100, 0, 26),
-			Text = mode.Name, TextSize = 22, Font = F.Display }, face)
-		local detail = label({ Position = UDim2.fromOffset(18, 34), Size = UDim2.new(1, -100, 0, 16),
-			Text = upper(mode.Tag or ""), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted }, face)
+		local name = label({ Position = UDim2.fromOffset(18, big and 14 or 5), Size = UDim2.new(1, -100, 0, big and 36 or 22),
+			Text = mode.Name, TextSize = big and 34 or 19, Font = F.Display }, face)
+		local detail = label({ Position = UDim2.fromOffset(18, big and 52 or 28), Size = UDim2.new(1, -100, 0, big and 16 or 14),
+			Text = upper(mode.Tag or ""), TextSize = big and 12 or 10, Font = F.Bold, TextColor3 = C.Muted }, face)
+		if big then
+			-- Hauptmodus: Streifen in der Modusfarbe und kurze Zeile, worum es geht
+			make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0, 6, 1, 0),
+				BackgroundColor3 = mode.Color or C.Primary, BorderSizePixel = 0 }, face)
+			label({ Position = UDim2.fromOffset(18, 70), Size = UDim2.new(1, -40, 0, 16), Text = "SAFE ZONE · ZOMBIES · PVP · FAHRZEUGE",
+				TextSize = 10, Font = F.Bold, TextColor3 = mode.Color or C.Primary }, face)
+		end
 		-- aktiv: Bernstein-Balken am linken Rand
 		local check = make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0,
 			Visible = false }, face)
@@ -322,14 +336,31 @@ local function buildModes()
 		modeButtons[mode] = { Chunky = chunky, Detail = detail, Check = check, Live = live, Name = name }
 	end
 
+	local featured = Modes.Featured()
+	local top = 134
+	if featured then
+		local holder = make("Frame", { Position = UDim2.fromOffset(LEFT_X, top), Size = UDim2.fromOffset(LEFT_W, 96),
+			BackgroundTransparency = 1 }, playPage)
+		addEntry(featured, holder, UDim2.fromOffset(LEFT_W, 96), 1, true)
+		top += 106
+	end
+	label({ Position = UDim2.fromOffset(LEFT_X, top), Size = UDim2.fromOffset(LEFT_W, 20), Text = "ARCADE", TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted }, playPage)
+	local list = make("Frame", { Position = UDim2.fromOffset(LEFT_X, top + 24), Size = UDim2.fromOffset(LEFT_W, 584 - top - 24),
+		BackgroundTransparency = 1 }, playPage)
+	make("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	local entries = { QUICK }
+	for _, mode in Modes.Arcade() do
+		table.insert(entries, mode)
+	end
+	for i, mode in entries do
+		addEntry(mode, list, UDim2.fromOffset(LEFT_W, 47), i, false)
+	end
+
 	local function updateCounts()
 		local counts = liveCounts()
-		local total = 0
-		for _, n in counts do
-			total += tonumber(n) or 0
-		end
 		for mode, entry in modeButtons do
-			local n = mode == QUICK and total or (counts[mode.Id] or 0)
+			local n = modeCount(counts, mode)
 			entry.Live.Text = n > 0 and ("● " .. n) or ""
 		end
 		GameMenu.UpdatePlay()
@@ -653,15 +684,7 @@ local function updateHubPlay()
 		openButton.SetSub(selectedMode.Name .. " KOMMT BALD")
 		return
 	end
-	local counts = liveCounts()
-	local n = 0
-	if selectedMode == QUICK then
-		for _, value in counts do
-			n += tonumber(value) or 0
-		end
-	else
-		n = tonumber(counts[selectedMode.Id]) or 0
-	end
+	local n = modeCount(liveCounts(), selectedMode)
 	openButton.SetSub(n > 0 and (selectedMode.Name .. "  ·  " .. n .. (n == 1 and " SPIELT" or " SPIELEN")) or selectedMode.Name)
 end
 
@@ -686,14 +709,7 @@ function GameMenu.UpdatePlay()
 		playSub.Text = selectedMode.Name .. " · ZURÜCK INS SPIEL"
 	else
 		play.SetText("SPIELEN")
-		local n = 0
-		if selectedMode == QUICK then
-			for _, value in counts do
-				n += tonumber(value) or 0
-			end
-		else
-			n = counts[selectedMode.Id] or 0
-		end
+		local n = modeCount(counts, selectedMode)
 		playSub.Text = selectedMode.Name .. " · " .. n .. " SPIELEN · " .. ping .. " MS"
 	end
 	playSub.TextColor3 = C.PrimaryText
@@ -1296,7 +1312,7 @@ function GameMenu.Init()
 	buildPlay()
 	buildAgentPage()
 	buildLobbyPages()
-	selectMode(QUICK)
+	selectMode(Modes.Featured() or QUICK)
 	showPage("Play")
 
 	-- Ping im SPIELEN-Knopf alle 2 s aktualisieren
