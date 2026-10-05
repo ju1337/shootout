@@ -77,6 +77,7 @@ local manager = {
 		statusText = text
 	end,
 }
+require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
 Extinction.Init(manager)
 
 local function bagOf(player)

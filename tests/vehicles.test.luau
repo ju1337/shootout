@@ -57,6 +57,7 @@ local ZombieService = require("ZombieService")
 local Damage = require("Damage")
 InventoryService.Init()
 LootService.Init()
+require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
 Extinction.Init({ Join = function() end, Status = function() end })
 ExtinctionConfig.Zombies.PerPlayer = 0 -- hier keine Zombies von selbst
 

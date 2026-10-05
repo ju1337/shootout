@@ -624,6 +624,32 @@ function ZombieService.Init(opts)
 	end)
 end
 
+-- Bodenpunkt bei (x, z) für Spawns und Abwürfe: nur Gelände/Straße, nicht im Wasser, nicht zu steil (nil = ungeeignet)
+function ZombieService.GroundAt(x, z)
+	return groundAt(x, z)
+end
+
+-- amount Zombies der Art kindName in einem Ring (minRadius bis maxRadius) um center spawnen (z.B. Begleiter eines Lootdrops).
+-- Gibt die gespawnten Modelle zurück (weniger, wenn kein Platz oder die Obergrenze erreicht ist).
+function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName)
+	local spawned = {}
+	for _ = 1, amount do
+		for _ = 1, 6 do
+			local angle = random:NextNumber(0, math.pi * 2)
+			local distance = random:NextNumber(minRadius, maxRadius)
+			local point = groundAt(center.X + math.cos(angle) * distance, center.Z + math.sin(angle) * distance)
+			if point then
+				local model = ZombieService.Spawn(point, kindName)
+				if model then
+					table.insert(spawned, model)
+				end
+				break
+			end
+		end
+	end
+	return spawned
+end
+
 -- Anzahl lebender Zombies (für Tests und das Admin-Panel)
 function ZombieService.Count()
 	return count

@@ -14,8 +14,6 @@ local RedzoneService = {}
 
 local zones = {} -- { { Name, Center (Vector3), Radius, Title } }
 
-local TITLES = {} -- optionale Anzeigenamen: Attribut "Title" am Teil
-
 -- map = Maps.Extinction (Gruppe Redzones mit Teilen Redzone_<Name>)
 function RedzoneService.Init(map)
 	zones = {}

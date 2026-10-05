@@ -24,6 +24,7 @@ local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
 local ContainerService = require(ServerShared.ContainerService)
+local AirdropService = require(ServerShared.AirdropService)
 local VehicleService = require(ServerShared.VehicleService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
@@ -226,6 +227,25 @@ function Extinction.Init(modeManager)
 		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+
+	-- Lootdrops (Versorgungsabwürfe): Ansage, Fackel, Fallschirm-Kiste mit bester Beute
+	AirdropService.Init({
+		Map = map,
+		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
+		InSafeZone = Extinction.InSafeZone,
+		SafeCenter = Extinction.SafeZoneCenter,
+		RedzoneAt = RedzoneService.At,
+		RedzoneRandom = function()
+			return RedzoneService.Random()
+		end,
 		Players = function()
 			local list = {}
 			for player in members do
