@@ -230,6 +230,22 @@ ExtinctionConfig.Day = {
 	NightSight = 1.35,       -- so viel weiter bemerken sie Spieler
 }
 
+-- ---------- Aktivitäten auf der Karte (ActivityService, Teile "Act_<Art>" in Gruppe Activities) ----------
+-- Nest: Zombienest zerstören (schießen); solange es lebt, kriechen Zombies heraus. Belohnung für alle, die Schaden
+--       gemacht haben: Münzen und Beute direkt ins Inventar. Wächst nach Respawn Sekunden nach.
+-- Cache: verschlossenes Vorratslager, E halten zum Aufbrechen (Lärm lockt Zombies an), Beute direkt ins Inventar.
+-- Radio: Funkgerät am Funkturm, E halten = Notruf, ein Lootdrop kommt (Abklingzeit).
+-- Horde: in regelmäßigen Abständen zieht eine Horde in einen Ort in der Nähe der Spieler; wer dabei ist und sie besiegt,
+--        bekommt Münzen und Beute.
+ExtinctionConfig.Activities = {
+	Nest = { Health = 900, Respawn = 600, SpawnEvery = 8, SpawnMin = 10, SpawnMax = 26, ActiveRange = 130, MaxAround = 6,
+		Coins = 150, Table = "Tier2", Items = { 3, 5 }, RedTable = "Tier3" },
+	Cache = { HoldTime = 10, Respawn = 720, Table = "Tier2", RedTable = "Tier3", Items = { 3, 5 }, Alarm = 5 },
+	Radio = { HoldTime = 8, Cooldown = 900 },
+	Horde = { FirstDelay = 360, MinInterval = 600, MaxInterval = 900, Size = 14, Duration = 300, Coins = 200,
+		Table = "Tier2", Items = { 2, 4 }, Range = 220, MinDistance = 150, MaxDistance = 800, Win = 0.6 },
+}
+
 -- ---------- Lootdrops (Versorgungsabwürfe) ----------
 ExtinctionConfig.Airdrop = {
 	FirstDelay = 150,        -- Sekunden nach dem Serverstart (mit Spielern draußen) bis zum ersten Abwurf
@@ -263,6 +279,7 @@ ExtinctionConfig.Zombies = {
 	WalkSpeed = 4,         -- schlurfen ohne Ziel
 	RunSpeed = 8.5,        -- jagen
 	SightRange = 45,       -- so weit bemerken sie Spieler
+	ForceExtra = 24,       -- so viele dürfen Horden und Nester zusätzlich über MaxTotal bringen
 	LoseRange = 90,        -- so weit verfolgen sie ein Ziel, das sie schon haben
 	AttackRange = 4.5,
 	AttackDamage = 10,

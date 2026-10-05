@@ -25,6 +25,7 @@ local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
+local ActivityService = require(ServerShared.ActivityService)
 local VehicleService = require(ServerShared.VehicleService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
@@ -265,6 +266,20 @@ function Extinction.Init(modeManager)
 		RedzoneRandom = function()
 			return RedzoneService.Random()
 		end,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+
+	-- Aktivitäten: Zombienester, Vorratslager, Funkgerät (Notruf), Horden (Teile Act_<Art> in der Gruppe Activities)
+	ActivityService.Init({
+		Map = map,
+		InSafeZone = Extinction.InSafeZone,
+		RedzoneAt = RedzoneService.At,
 		Players = function()
 			local list = {}
 			for player in members do

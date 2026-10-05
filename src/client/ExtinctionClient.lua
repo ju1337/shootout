@@ -316,6 +316,7 @@ local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Grup
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
 local DROP = Color3.fromRGB(255, 190, 70)
+local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
 local hotbarViews = {}
 local vehicleCooldown
@@ -511,6 +512,20 @@ local function updateMarkers()
 				text ..= "  ·  ROT"
 			end
 			table.insert(entries, { Order = distance - 5000, X = drop.X, Z = drop.Z, Color = DROP, Text = text })
+		end
+		-- Aktivitäten: Horde immer, Nester und volle Vorratslager in der Nähe
+		for _, act in mapList(map, "Activities") do
+			local dx, dz = (act.X or 0) - here.X, (act.Z or 0) - here.Z
+			local distance = math.floor(math.sqrt(dx * dx + dz * dz))
+			local title = string.upper(tostring(act.Title or ""))
+			if act.Kind == "Horde" then
+				table.insert(entries, { Order = distance - 8000, X = act.X, Z = act.Z, Color = RED,
+					Text = "HORDE  " .. title .. "  ·  " .. tostring(act.Left or "?") .. " ÜBRIG  ·  " .. distance .. " M" })
+			elseif act.Kind == "Nest" and act.State == "Active" and distance < 350 then
+				table.insert(entries, { Order = distance, X = act.X, Z = act.Z, Color = NEST, Text = "ZOMBIENEST  ·  " .. distance .. " M" })
+			elseif act.Kind == "Cache" and act.State == "Ready" and distance < 220 then
+				table.insert(entries, { Order = distance + 200, X = act.X, Z = act.Z, Color = DROP, Text = "VORRATSLAGER  ·  " .. distance .. " M" })
+			end
 		end
 	end
 	table.sort(entries, function(a, b)

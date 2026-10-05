@@ -33,7 +33,13 @@ local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = t
 
 local gui, board, layer, markers, arrow
 local built = false
-local dropViews = {}
+local dropViews = {}       -- Lootdrops und Aktivitäten (Id -> Frame)
+local ACTIVITY_COLORS = {
+	Nest = Color3.fromRGB(160, 230, 80),
+	Cache = Color3.fromRGB(255, 210, 90),
+	Radio = Color3.fromRGB(110, 190, 255),
+	Horde = Color3.fromRGB(230, 50, 40),
+}
 
 local function getMap()
 	local maps = workspace:FindFirstChild("Maps")
@@ -178,6 +184,36 @@ local function update()
 			text.Text = drop.State == "Landed" and "LOOTDROP" or ("LOOTDROP " .. math.max(0, math.ceil((drop.Eta or now) - now)) .. " S")
 		end
 	end
+	-- Aktivitäten: Nester (grün, zerstört grau), Vorratslager (gelb, leer grau), Funkgerät (blau), Horde (rot, groß)
+	for _, act in decode(map, "Activities") do
+		local id = "Act" .. tostring(act.Id)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "Activity_" .. tostring(act.Kind), AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.fromOffset(act.Kind == "Horde" and 18 or 10, act.Kind == "Horde" and 18 or 10), BorderSizePixel = 0,
+				ZIndex = 8 }, markers)
+			if act.Kind ~= "Cache" then
+				make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, view)
+			end
+			UITheme.Stroke(view, Color3.new(0, 0, 0), 1.2, 0.2)
+			if act.Kind == "Horde" or act.Kind == "Radio" then
+				label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 3), Size = UDim2.fromOffset(140, 14),
+					TextSize = 11, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, view)
+			end
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, act.X or 0, act.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
+		local color = ACTIVITY_COLORS[act.Kind] or Color3.new(1, 1, 1)
+		local idle = act.State == "Cleared" or act.State == "Opened" or act.State == "Cooldown"
+		view.BackgroundColor3 = idle and Color3.fromRGB(90, 90, 90) or color
+		local text = view:FindFirstChild("Text")
+		if text then
+			text.TextColor3 = color
+			text.Text = act.Kind == "Horde" and ("HORDE · " .. tostring(act.Left or "?")) or (idle and "FUNK LÄDT" or "FUNK")
+		end
+	end
 	for id, view in dropViews do
 		if not seen[id] then
 			view:Destroy()
@@ -227,7 +263,7 @@ function ExtinctionMap.Init()
 	UITheme.Outline(arrow)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU   ·   GRÜN SAFE ZONE   ·   ROT ROTE ZONE (PVP SOFORT)   ·   ◆ LOOTDROP", TextSize = 11, Font = F.Bold,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ● NEST  ·  ■ LAGER  ·  ● HORDE", TextSize = 11, Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)
 	RunService.Heartbeat:Connect(function()

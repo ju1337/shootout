@@ -1373,6 +1373,58 @@ class World:
                                                                                       "Color": self.bm.rgb(255, 60, 50)}}])
 
 
+def find_spot(w, x, z, r, tries=80):
+    """Freie, ebene Stelle nahe (x, z) suchen (Spirale nach außen)."""
+    for k in range(tries):
+        a = k * 2.4
+        d = 3.0 * k
+        px, pz = x + math.cos(a) * d, z + math.sin(a) * d
+        if w.free(px, pz, r, road_pad=3) and w.terrain.slope(px, pz) < 0.25:
+            return px, pz
+    return None
+
+
+def activities(w):
+    """Spots mit Sachen zu tun (ActivityService): Zombienester, Vorratslager, Funkgerät, Horden-Sammelpunkte."""
+    b = w.b
+
+    def marker(kind, x, z, title, r):
+        found = find_spot(w, x, z, r)
+        if not found:
+            return None
+        px, pz = found
+        g = w.H(px, pz) + 0.4
+        b.add("Activities", "Act_" + kind, (4, 2, 4), (px, g + 1, pz), (255, 255, 255), "SmoothPlastic",
+              angles=(0, w.rng.uniform(0, 360), 0),
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
+                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
+        if kind != "Horde":
+            w.occupied.append((px, pz, r))
+        return px, pz
+
+    nests = [(-260, 360, "ÖDSTADT NORD"), (380, -120, "ÖDSTADT OST"), (-120, -400, "ÖDSTADT SÜD"), (-420, -160, "ÖDSTADT WEST"),
+             (-180, 1270, "NORDHEIM"), (1240, 600, "SANDBACH"), (-1220, -170, "ALTENFELD"), (520, -1230, "MÜHLDORF"),
+             (-1080, -1130, "JVA SCHWARZWALD"), (-1120, 1060, "FORT EISEN"), (1200, -960, "INDUSTRIEHAFEN"),
+             (-420, 860, "NORDWALD"), (700, 900, "TEICHWALD"), (-900, -700, "SÜDWESTWALD"), (950, -150, "OSTHÜGEL")]
+    for x, z, title in nests:
+        if marker("Nest", x, z, title, 9):
+            pass
+    caches = [(-300, 100, "POLIZEIWACHE"), (330, 260, "ST. MARIEN"), (230, -300, "EVAKUIERUNGSLAGER"), (-1100, 1110, "FORT EISEN"),
+              (-1180, 1200, "FORT EISEN"), (1100, -980, "INDUSTRIEHAFEN"), (-1040, -1100, "JVA SCHWARZWALD"),
+              (1000, 1200, "FLUGPLATZ"), (1150, 1290, "FLUGPLATZ"), (-860, -20, "TANKSTELLE WEST"), (840, 140, "TANKSTELLE OST"),
+              (50, -760, "TANKSTELLE SÜD"), (760, -470, "HOF KRÜGER"), (-610, 600, "HOF LINDE"), (-230, 1110, "NORDHEIM"),
+              (1110, 480, "SANDBACH"), (-1110, -280, "ALTENFELD"), (400, -1110, "MÜHLDORF"), (-520, -740, "FUNKTURM"),
+              (60, 240, "INNENSTADT"), (-150, -200, "INNENSTADT")]
+    for x, z, title in caches:
+        marker("Cache", x, z, title, 4)
+    marker("Radio", -540, -770, "FUNKTURM", 4)
+    hordes = [(0, 400, "ÖDSTADT NORD"), (400, 0, "ÖDSTADT OST"), (0, -400, "ÖDSTADT SÜD"), (-400, 0, "ÖDSTADT WEST"),
+              (-250, 1150, "NORDHEIM"), (1150, 520, "SANDBACH"), (-1150, -250, "ALTENFELD"), (430, -1150, "MÜHLDORF"),
+              (230, -260, "EVAKUIERUNGSLAGER"), (1050, 1200, "FLUGPLATZ"), (720, -430, "HOF KRÜGER"), (-650, 560, "HOF LINDE")]
+    for x, z, title in hordes:
+        marker("Horde", x, z, title, 6)
+
+
 def build(bm):
     """Baut die Karte Extinction.model.json und das Höhenfeld (ExtinctionTerrainData.lua)."""
     w = World(bm)
@@ -1457,8 +1509,9 @@ def build(bm):
         if 200 < math.hypot(x, z) < 500:
             w.smoke_column(x, 12, z)
 
-    # Rote Zonen, Orte, Seen
+    # Rote Zonen, Aktivitäten, Orte, Seen
     w.redzones()
+    activities(w)
     for key, (title, x, z, r) in PLACES.items():
         b.add("Places", "Place_" + key, (2 * r, 4, 2 * r), (x, 2, z), (255, 255, 255), "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,

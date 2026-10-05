@@ -445,9 +445,10 @@ local function maxTotal()
 	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) + 0.5) + bonus
 end
 
--- kindName: "Walker" (Standard), "Runner" oder "Brute"
-function ZombieService.Spawn(position, kindName)
-	if count >= maxTotal() then
+-- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Horden, Nester), aber
+-- höchstens ForceExtra darüber
+function ZombieService.Spawn(position, kindName, force)
+	if count >= maxTotal() + (force and Z.ForceExtra or 0) then
 		return nil
 	end
 	local stats = ZombieService.Kind(kindName)
@@ -637,7 +638,7 @@ end
 
 -- amount Zombies der Art kindName in einem Ring (minRadius bis maxRadius) um center spawnen (z.B. Begleiter eines Lootdrops).
 -- Gibt die gespawnten Modelle zurück (weniger, wenn kein Platz oder die Obergrenze erreicht ist).
-function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName)
+function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName, force)
 	local spawned = {}
 	for _ = 1, amount do
 		for _ = 1, 6 do
@@ -645,7 +646,7 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 			local distance = random:NextNumber(minRadius, maxRadius)
 			local point = groundAt(center.X + math.cos(angle) * distance, center.Z + math.sin(angle) * distance)
 			if point then
-				local model = ZombieService.Spawn(point, kindName)
+				local model = ZombieService.Spawn(point, kindName, force)
 				if model then
 					table.insert(spawned, model)
 				end
