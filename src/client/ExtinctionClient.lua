@@ -9,7 +9,7 @@
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
--- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
+-- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil), Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -25,6 +25,7 @@ local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local GunModels = require(Shared.GunModels)
+local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -562,10 +563,10 @@ local function updatePlace()
 	local here = nil
 	if rootPart then
 		local best = math.huge
-		for _, place in places do
+		for _, place in places do -- liegt man in mehreren Orten (Viertel, Gebäude darin), gilt der kleinste
 			local distance = math.sqrt((rootPart.Position.X - place.X) ^ 2 + (rootPart.Position.Z - place.Z) ^ 2)
-			if distance <= place.R and distance - place.R < best then
-				best, here = distance - place.R, place
+			if distance <= place.R and place.R < best then
+				best, here = place.R, place
 			end
 		end
 	end
@@ -1113,6 +1114,7 @@ local function updateVisible()
 	end
 	if not on then
 		closeWindow()
+		ExtinctionMap.Set(false)
 	end
 end
 
@@ -1162,6 +1164,24 @@ function ExtinctionClient.Init()
 		else
 			openInventory()
 		end
+	end)
+	-- Weltkarte: N (Controller: Steuerkreuz oben), auf Touch der Knopf KARTE oben rechts
+	ExtinctionMap.Init()
+	InputActions.Bindings.WorldMap = { Keys = { Enum.KeyCode.N }, Pad = { Enum.KeyCode.DPadUp } }
+	InputActions.Bind("WorldMap", function(began)
+		if began and inExtinction() then
+			closeWindow()
+			ExtinctionMap.Toggle()
+		end
+	end)
+	local mapButton = make("TextButton", { Name = "MapButton", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 30),
+		Size = UDim2.fromOffset(110, 30), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+		Text = "", AutoButtonColor = true }, root)
+	UITheme.Corner(mapButton, UITheme.Radius.Small)
+	label({ Size = UDim2.fromScale(1, 1), Text = "KARTE  ·  N", TextSize = 14, Font = F.Bold, TextColor3 = C.Text,
+		TextXAlignment = Enum.TextXAlignment.Center }, mapButton)
+	mapButton.Activated:Connect(function()
+		ExtinctionMap.Toggle()
 	end)
 	-- Controller: △ (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
 	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = { Enum.KeyCode.ButtonY } }

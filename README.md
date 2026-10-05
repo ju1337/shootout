@@ -17,7 +17,7 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 | Modus | Kurz | Map |
 |---|---|---|
 | Hub | Kompakte Einsatzzentrale: an der Nordwand nur noch das große Tor nach EXTINCTION (Tafeln SAFE ZONE / DRAUSSEN links und rechts, Banner ARCADE darüber), Kartentisch mit Einsatz-Tafel, Bühne mit eigenem Agenten, Wand der Bestenlisten + Top-3-Statuen. Alter Hangar: `HUB_STYLE = "classic"` in `tools/build_maps.py` (fertig auch in `tools/saved/Hub_classic.model.json`) | Hub (0, 0, 0) |
-| **EXTINCTION** (Hauptmodus) | Offene Welt mit Safe Zone, Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 1800 × 1800 |
+| **EXTINCTION** (Hauptmodus) | Offene Welt mit Safe Zone, Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödstadt (0, 0, -6000), 2000 × 2000 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Hub, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
@@ -42,15 +42,19 @@ Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch da
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
 `tools/build_maps.py`).
 
-**Die Welt** (1800 × 1800): echtes **Terrain** mit Hügeln, zwei Seen (Schwarzsee, Klarwasserteich) und einem Bergrand
-statt Mauer. Das Höhenfeld kommt aus `tools/extinction_terrain.py` (Raster 16 Studs, auch für Bäume, Felsen und Kisten
-benutzt) und steht in `src/server-shared/ExtinctionTerrainData.lua`; `ExtinctionTerrain.lua` baut daraus beim
-Serverstart Voxel-Terrain (Gras, Laub, Erde, Fels an Hängen, Sand am Ufer, Wasser) – bis dahin trägt der flache Boden
-der Karte, danach wird er abgesenkt (scheitert das Schreiben, bleibt er als Rückfall). Straßen und Orte sind eben.
-**Orte** (beim Betreten Banner mit dem Namen): Ödstadt (Häuserzeilen, Rathaus, Supermarkt, Brunnen), Tankstelle,
-Bauernhof, Polizeiwache, Wohnwagenpark „Sonnenblick“, Kirche mit Friedhof, Funkturm mit Bunker auf dem Hügel und die
-drei **roten Zonen** Militärbasis, Industriegebiet und Krankenhaus St. Marien. Dazwischen Wälder (Kiefern und
-Laubbäume), Felsen, Schilf an den Seen, Autowracks und Sperren an den Straßen.
+**Die Welt** (2000 × 2000) ist vor allem eine **große Stadt „Ödstadt“** (1400 × 1400, Straßenraster alle 140 Studs,
+Laternen an jeder Kreuzung, Autowracks und Sperren): Hochhäuser in der Innenstadt rund um den Platz mit der Safe Zone,
+außen Geschäfte (Apotheke, Waffen-Handel, Baumarkt, Supermarkt, Bank …) und Wohnhäuser mit Gärten, dazu
+Polizeipräsidium, Rathaus, Einkaufszentrum, Gesamtschule, Kirche mit Friedhof, Tankstelle, zwei Parks und zwei
+Parkplätze. Die drei **roten Zonen** sind eigene Anlagen: Krankenhaus St. Marien, Industriegebiet und
+Militärsperrgebiet. Außerhalb der Stadt nur wenig: Hügel und Wald, der Schwarzsee, ein Bauernhof und der Funkturm
+auf dem Hügel, hinten ein Bergrand. Das Gelände ist echtes **Terrain** (Höhenfeld aus `tools/extinction_terrain.py`
+in `src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: in der Stadt
+Pflaster, außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall).
+**Zonen-Anzeige**: Safe Zone mit grünem Leuchtring am Boden und Sandsack-Wall, rote Zonen mit rot-weißer Linie am
+Boden und einem **Kontrollpunkt an jeder Straße** (Torbogen „ROTE ZONE“ / innen „AUSGANG“, Sperren, rotes Licht).
+**Weltkarte** mit **N** (oder Knopf KARTE oben rechts): Straßen, Viertel, Safe Zone, rote Zonen, Lootdrops mit
+Countdown und der eigene Standort. Beim Betreten eines Viertels oder Gebäudes erscheint sein Name.
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
@@ -80,8 +84,8 @@ Laubbäume), Felsen, Schilf an den Seen, Autowracks und Sperren an den Straßen.
   legt die Beute **direkt ins Inventar** (passt nicht alles, bleibt der Rest liegen).
 - **Taschen und Kisten am Boden**: **E** öffnet das Fenster (einzeln nehmen), **F** nimmt alles auf einmal; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
-- **Lagerkisten** (`ContainerService.lua`, Teile `Spot_<Art>` in der Gruppe Loot): über 90 Kisten in Häusern, Hallen
-  und im Gelände – Holzkiste, Werkzeugkiste, Sanitätskiste, Munitionskiste, Militärkiste mit eigener Beute.
+- **Lagerkisten** (`ContainerService.lua`, Teile `Spot_<Art>` in der Gruppe Loot): rund 170 Kisten in Häusern, Läden,
+  Hallen und im Gelände – Holzkiste, Werkzeugkiste, Sanitätskiste, Munitionskiste, Militärkiste mit eigener Beute.
   Geleert füllt sich eine Kiste nach etwa 8 Minuten neu. In roten Zonen ziehen sie aus der besten Tabelle.
 - **Rote Zonen** (`RedzoneService.lua`, Teile `Redzone_<Name>`): roter Ring mit Warnschildern und Leuchtfeuer.
   Drinnen gilt **PvP sofort**, Anzeige „ROTE ZONE · PVP AKTIV“ mit rotem Bildschirmrand, mehr und härtere Zombies,

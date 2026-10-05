@@ -16,25 +16,28 @@ local ExtinctionTerrain = require("ExtinctionTerrain")
 
 -- Werte aus dem Python-Höhenfeld (Catmull-Rom über das 16-Stud-Raster), Abweichung nur durch die Speicherung (< 0,03)
 local expected = {
-	{ -640, -170, -11.901 }, { -720, -560, 34.45 }, { 250, 700, -9.851 }, { 123.4, -456.7, -0.4 },
-	{ -800.2, 311.1, 4.13 }, { 660, 300, -0.4 }, { 310, 0, -0.4 }, { 0, 0, -0.4 }, { 500, -700, -0.834 }, { -850, 850, 7.774 },
+	{ -840, 300, -11.886 }, { 830, 830, 47.697 }, { -830, -640, -0.400 }, { 123.4, -456.7, -0.400 }, { -900.2, -311.1, -1.426 },
+	{ 560, 490, -0.400 }, { 690, -690, -0.400 }, { 0, 0, -0.400 }, { 880, -100, 0.235 }, { -950, 950, 18.179 },
 }
 for _, row in expected do
 	local h = ExtinctionTerrain.Height(row[1], row[2])
 	check(near(h, row[3], 0.06), string.format("Höhe bei (%g, %g): %.3f, erwartet %.3f", row[1], row[2], h, row[3]))
 end
 
-check(ExtinctionTerrain.IsWater(-640, -170) and ExtinctionTerrain.IsWater(250, 700), "Seen sind Wasser")
-check(not ExtinctionTerrain.IsWater(0, 0) and not ExtinctionTerrain.IsWater(310, 0) and not ExtinctionTerrain.IsWater(-720, -560),
-	"Camp, Ödstadt und Funkturm sind trocken")
+check(ExtinctionTerrain.IsWater(-840, 300), "der Schwarzsee ist Wasser")
+check(not ExtinctionTerrain.IsWater(0, 0) and not ExtinctionTerrain.IsWater(560, 490) and not ExtinctionTerrain.IsWater(830, 830),
+	"Camp, Stadt und Funkturm sind trocken")
+for _, p in { { 0, 0 }, { 650, 650 }, { -690, 300 }, { 400, -690 } } do
+	check(math.abs(ExtinctionTerrain.Height(p[1], p[2]) - ExtinctionTerrain.FlatLevel) < 0.05, "Stadt eben bei " .. p[1] .. ", " .. p[2])
+end
 check(near(ExtinctionTerrain.Height(0, 0), ExtinctionTerrain.FlatLevel, 0.05), "Camp liegt auf ebener Höhe")
-check(ExtinctionTerrain.Height(-720, -560) > 25, "Funkturm steht auf einem Hügel")
+check(ExtinctionTerrain.Height(830, 830) > 25, "Funkturm steht auf einem Hügel")
 
 -- Rand der Welt: Straßen führen als ebene Schneise hinaus, daneben steigt der Berg
-check(near(ExtinctionTerrain.Height(0, 880), ExtinctionTerrain.FlatLevel, 0.3), "Straße bleibt am Rand eben")
+check(near(ExtinctionTerrain.Height(0, 980), ExtinctionTerrain.FlatLevel, 0.3), "Landstraße bleibt am Rand eben")
 local mountain = 0
 for t = -800, 800, 100 do
-	mountain = math.max(mountain, ExtinctionTerrain.Height(t, 1100), ExtinctionTerrain.Height(1100, t))
+	mountain = math.max(mountain, ExtinctionTerrain.Height(t, 1200), ExtinctionTerrain.Height(1200, t))
 end
 check(mountain > 25, "hinter dem Spielfeld steigt Gelände an (" .. mountain .. ")")
 
@@ -47,10 +50,10 @@ local flatCell = math.floor((ExtinctionTerrain.FlatLevel - ground) / 4) + 1 -- V
 check(occupancy[1][flatCell - 1][1] == 1, "unter der Oberfläche voll")
 check(near(occupancy[1][flatCell][1], 0.9, 0.05), "oberster Voxel teilweise gefüllt (" .. occupancy[1][flatCell][1] .. ")")
 check(occupancy[1][flatCell + 1][1] == 0 and materials[1][flatCell + 1][1] == Enum.Material.Air, "darüber Luft")
-check(materials[1][flatCell][1] ~= Enum.Material.Water, "kein Wasser im Camp")
+check(materials[1][flatCell][1] == Enum.Material.Pavement, "Stadt: Pflaster statt Gras")
 
 -- See: Wasser über dem Becken, Sand/Schlamm darunter
-local lakeMaterials, lakeOccupancy = ExtinctionTerrain.BuildChunk(-644, -172, 4, 4)
+local lakeMaterials, lakeOccupancy = ExtinctionTerrain.BuildChunk(-844, 296, 4, 4)
 local waterCell = math.floor((ExtinctionTerrain.WaterLevel - 0.5 - ground) / 4) + 1
 check(lakeMaterials[2][waterCell][2] == Enum.Material.Water and lakeOccupancy[2][waterCell][2] > 0, "im See steht Wasser")
 check(lakeMaterials[2][1][2] ~= Enum.Material.Water and lakeOccupancy[2][1][2] == 1, "unten im See Boden")
@@ -70,8 +73,8 @@ local ok, count = ExtinctionTerrain.Generate(nil, Vector3.new(0, 0, -6000), {
 	end,
 })
 check(ok == true and count == blocks and blocks > 100, "Generate schreibt alle Blöcke (" .. tostring(blocks) .. ")")
-check(columns == 560 * 560, "jede Säule genau einmal (" .. columns .. ")")
-check(minX == -1120 and maxX == 1120 and minZ == -7120 and maxZ == -4880, "deckt die ganze Welt ab")
+check(columns == 640 * 640, "jede Säule genau einmal (" .. columns .. ")")
+check(minX == -1280 and maxX == 1280 and minZ == -7280 and maxZ == -4720, "deckt die ganze Welt ab")
 
 -- Ohne Terrain-Objekt (Test/Fehler): nichts geschrieben, kein Absturz
 check(ExtinctionTerrain.Generate(nil, Vector3.new(0, 0, 0)) == false, "ohne Terrain wird nichts geschrieben")

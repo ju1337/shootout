@@ -13,7 +13,7 @@ import os
 import random
 
 CELL = 16            # Rasterweite in Studs
-HALF = 1120          # Raster reicht von -HALF bis +HALF (die Welt ist 1800 groß, dahinter steigt der Bergrand)
+HALF = 1280          # Raster reicht von -HALF bis +HALF (die Welt ist 1800 groß, dahinter steigt der Bergrand)
 N = 2 * HALF // CELL  # Zellen pro Achse
 FLAT = -0.4          # Geländehöhe auf ebenen Flächen
 WATER = -3.0         # Wasserspiegel (nur die Seen liegen tiefer, sonst nirgends)
@@ -67,11 +67,18 @@ class Terrain:
         self.roads = []
         self.lakes = []
         self.hills = []
+        self.rects = []
+        self.edge = 860   # ab hier (max(|x|, |z|)) steigt der Bergrand
+        self.city = 0     # halbe Breite der Stadt (Terrain-Material Pflaster), 0 = keine
         self.grid = None
 
     # ----- Beschreibung -----
     def flat(self, x, z, r, blend=70):
         self.flats.append((x, z, r, blend))
+
+    def flat_rect(self, x0, z0, x1, z1, blend=80):
+        """Ebenes Rechteck (z. B. die ganze Stadt)."""
+        self.rects.append((min(x0, x1), min(z0, z1), max(x0, x1), max(z0, z1), blend))
 
     def road(self, x0, z0, x1, z1, width=24, blend=64):
         self.roads.append((x0, z0, x1, z1, width, blend))
@@ -96,6 +103,10 @@ class Terrain:
             t = max(0.0, min(1.0, ((x - x0) * dx + (z - z0) * dz) / length2)) if length2 > 0 else 0.0
             d = math.hypot(x - (x0 + dx * t), z - (z0 + dz * t))
             w = max(w, 1 - smooth((d - width / 2) / blend))
+        for x0, z0, x1, z1, blend in self.rects:
+            dx = max(x0 - x, 0.0, x - x1)
+            dz = max(z0 - z, 0.0, z - z1)
+            w = max(w, 1 - smooth(math.hypot(dx, dz) / blend))
         return w
 
     def _lake(self, x, z):
@@ -126,7 +137,7 @@ class Terrain:
         if mask > 0:
             h = h + (floor - h) * mask
         # Bergrand: hinter der Spielfläche steigt das Gelände steil an (statt Mauer)
-        edge = max(abs(x), abs(z)) - 860
+        edge = max(abs(x), abs(z)) - self.edge
         if edge > 0:
             # Straßen schneiden als ebene Schneise durch den Bergrand bis zum Ende der Welt
             h += smooth(edge / 260.0) * 46.0 * (0.7 + 0.6 * self.noise.fbm(x / 90.0, z / 90.0, 2)) * free
@@ -204,5 +215,6 @@ def write_lua(terrain, path=OUT):
             "\tMaxHeight = %.1f,\n"
             "\tFlat = %.1f,\n"
             "\tWater = %.1f,\n"
+            "\tCity = %d,\n"
             "\tText = table.concat({\n%s\n\t}),\n"
-            "}\n" % (N + 1, N + 1, CELL, HALF, HALF, MIN_H, MAX_H, CELL, HALF, N + 1, MIN_H, MAX_H, FLAT, WATER, body))
+            "}\n" % (N + 1, N + 1, CELL, HALF, HALF, MIN_H, MAX_H, CELL, HALF, N + 1, MIN_H, MAX_H, FLAT, WATER, terrain.city, body))

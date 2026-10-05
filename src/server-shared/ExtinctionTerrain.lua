@@ -67,8 +67,12 @@ function ExtinctionTerrain.IsWater(x, z)
 end
 
 -- Oberfläche an einer Stelle: Material nach Höhe, Neigung und Wasser
+local CITY = Data.City or 0
+
 local function surfaceMaterial(x, z, h, slope)
-	if h < WATER - 0.6 then
+	if CITY > 0 and math.abs(x) <= CITY and math.abs(z) <= CITY then
+		return Enum.Material.Pavement -- Stadt: Pflaster unter Straßen und Gehwegen
+	elseif h < WATER - 0.6 then
 		return Enum.Material.Mud
 	elseif h < WATER + 1.2 then
 		return Enum.Material.Sand

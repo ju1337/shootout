@@ -3247,59 +3247,77 @@ def build_kraftwerk(origin, filename, flags=True):
 
 
 
-# ---------- Extinction: offene Welt (1800 x 1800) mit Safe Zone in der Mitte ----------
+# ---------- Extinction: offene Welt (2000 x 2000), große Stadt mit Safe Zone in der Mitte ----------
 # Mitte der Welt bei EXTINCTION_ORIGIN (wie Center in Modes.lua). Die Safe Zone ist ein Kreis um die Mitte (Teil
-# "SafeZone" in der Gruppe "Zone": Radius = Size.X / 2, liest der Server). Darin: Spawns, Waffenstand, Itemstand,
-# Fahrzeugstand, Lager und das Tor zurück zum Hub. Die Stände sind unsichtbare Punkte in der Gruppe "Stands"
-# ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"), an die der Client die E-Aufforderung hängt; der
-# Server prüft beim Kaufen den Abstand dazu. Außen: Straßenkreuz und Ringstraße, eine Kleinstadt (Osten), Tankstelle
-# (Norden), Bauernhof (Südwesten), Militärbasis (Nordwesten), Industrie (Südosten), See (Westen), Wald und
-# Felsen am Rand. Zombies spawnen überall draußen (ZombieService), nicht auf Dächern und nicht nah an der Safe Zone.
+# "SafeZone" in der Gruppe "Zone": Radius = Size.X / 2, liest der Server) auf dem Platz "Camp Phoenix". Darin: Spawns,
+# Waffenstand, Itemstand, Fahrzeugstand, Lager und das Tor zurück zum Hub (unsichtbare Punkte in der Gruppe "Stands").
+# Drumherum die Stadt (1400 x 1400, Straßenraster alle 140 Studs): Hochhäuser in der Innenstadt, Geschäfte und
+# Wohnhäuser außen, Polizeipräsidium, Rathaus, Einkaufszentrum, Schule, Kirche, Parks und die drei roten Zonen
+# (Krankenhaus, Industriegebiet, Militärsperrgebiet) mit Kontrollpunkten an jeder Straße. Außerhalb nur wenig:
+# Hügel, Wald, ein See, ein Bauernhof und der Funkturm. Zombies spawnen draußen auf Boden und Straßen (ZombieService).
 
 EXTINCTION_ORIGIN = (0, 0, -6000)
-EXTINCTION_SIZE = 1800
+EXTINCTION_SIZE = 2000
 EXTINCTION_SAFE_RADIUS = 100
-EXT_RING = 450       # Ringstraße bei +-450
-EXT_ROAD_W = 24
-# Orte der Welt: Schlüssel -> (Titel, x, z, ebener Radius). Der Client zeigt den Titel beim Betreten (Gruppe Places).
+EXT_CITY = 700       # Stadt von -700 bis 700 (äußerste Straße)
+EXT_PITCH = 140      # Abstand der Straßen
+EXT_STREET = 20      # Straßenbreite
+EXT_ROAD_W = EXT_STREET
+EXT_SLAB = EXT_PITCH - EXT_STREET  # Gehweg-Block (120 x 120, 0,5 hoch)
+# Orte: Schlüssel -> (Titel, x, z, Radius). Der Client zeigt den Titel beim Betreten (kleinster Ort gewinnt) und auf der Karte.
 EXT_PLACES = {
-    "Camp": ("CAMP PHOENIX", 0, 0, 190),
-    "Oedstadt": ("ÖDSTADT", 310, 0, 130),
-    "Tankstelle": ("TANKSTELLE", 60, 320, 60),
-    "Bauernhof": ("BAUERNHOF", -300, -290, 130),
-    "Militaerbasis": ("MILITÄRBASIS", -640, 640, 105),
-    "Industrie": ("INDUSTRIEGEBIET", 330, -330, 130),
-    "Krankenhaus": ("ST. MARIEN KRANKENHAUS", 660, 300, 95),
-    "Polizei": ("POLIZEIWACHE", -250, 70, 60),
-    "Wohnwagenpark": ("WOHNWAGENPARK", 95, -660, 70),
-    "Kirche": ("KIRCHE", -75, 660, 65),
-    "Funkturm": ("FUNKTURM", -720, -560, 40),
+    "Camp": ("CAMP PHOENIX", 0, 0, 130),
+    "Innenstadt": ("INNENSTADT", 0, 0, 300),
+    "Nordstadt": ("NORDSTADT", -120, 540, 200),
+    "Suedstadt": ("SÜDSTADT", 120, -540, 200),
+    "Ostviertel": ("OSTVIERTEL", 540, 0, 200),
+    "Westviertel": ("WESTVIERTEL", -540, -60, 200),
+    "Militaer": ("MILITÄRSPERRGEBIET", -560, 560, 150),
+    "Industrie": ("INDUSTRIEGEBIET", 560, -560, 150),
+    "Krankenhaus": ("ST. MARIEN KRANKENHAUS", 560, 490, 110),
+    "Polizei": ("POLIZEIPRÄSIDIUM", -350, 70, 60),
+    "Rathaus": ("RATHAUS", 70, 210, 60),
+    "Einkaufszentrum": ("EINKAUFSZENTRUM", 210, -210, 60),
+    "Schule": ("GESAMTSCHULE", -490, -210, 60),
+    "Kirche": ("ST. PETRI KIRCHE", -70, -490, 60),
+    "Stadtpark": ("STADTPARK", -350, -350, 60),
+    "Tankstelle": ("TANKSTELLE", 630, 70, 60),
+    "Bauernhof": ("BAUERNHOF", -830, -640, 110),
+    "Schwarzsee": ("SCHWARZSEE", -840, 300, 130),
+    "Funkturm": ("FUNKTURM", 830, 830, 60),
 }
 # Rote Zonen: Schlüssel des Orts -> Radius der Zone
-EXT_REDZONES = {"Militaerbasis": 150, "Industrie": 160, "Krankenhaus": 130}
-EXT_LAKES = [("Schwarzsee", -640, -170, 140, 10), ("Klarwasserteich", 250, 700, 105, 8)]
+EXT_REDZONES = {"Militaer": 190, "Industrie": 190, "Krankenhaus": 150}
+EXT_LAKES = [("Schwarzsee", -840, 300, 110, 10)]
+# Blöcke mit eigenem Inhalt (Mitte des Blocks -> Art); alle anderen füllt build_extinction nach Ring
+EXT_SPECIAL_BLOCKS = {
+    (-70, -70): "Plaza", (70, -70): "Plaza", (-70, 70): "Plaza", (70, 70): "Plaza",
+    (-350, 70): "Polizei", (70, 210): "Rathaus", (210, -210): "Einkaufszentrum", (-490, -210): "Schule",
+    (-70, -490): "Kirche", (-350, -350): "Park", (350, 210): "Park", (630, 70): "Tankstelle",
+    (490, 490): "Krankenhaus", (630, 490): "Krankenhaus",
+    (-630, 490): "Militaer", (-490, 490): "Militaer", (-630, 630): "Militaer", (-490, 630): "Militaer",
+    (490, -490): "Industrie", (630, -490): "Industrie", (490, -630): "Industrie", (630, -630): "Industrie",
+    (-210, -630): "Parkplatz", (350, 630): "Parkplatz",
+}
 
 
 def extinction_terrain():
-    """Höhenfeld der offenen Welt (tools/extinction_terrain.py): ebene Orte und Straßen, Hügel, Seen, Bergrand."""
+    """Höhenfeld der offenen Welt (tools/extinction_terrain.py): Stadt eben, außen Hügel, ein See, Bergrand."""
     import extinction_terrain as et
     t = et.Terrain(7)
-    for key, (_, x, z, r) in EXT_PLACES.items():
-        if key != "Funkturm":
-            t.flat(x, z, r, 60)
-    t.flat(0, 0, 190, 60)
+    t.city = EXT_CITY + 14
+    t.edge = EXTINCTION_SIZE // 2 - 40
+    t.flat_rect(-EXT_CITY - 16, -EXT_CITY - 16, EXT_CITY + 16, EXT_CITY + 16, 90)
+    for key in ("Bauernhof",):
+        _, x, z, r = EXT_PLACES[key]
+        t.flat(x, z, r, 60)
     half = EXTINCTION_SIZE // 2
-    t.road(0, 0, 0, half)
-    t.road(0, 0, 0, -half)
-    t.road(0, 0, half, 0)
-    t.road(0, 0, -half, 0)
-    for s in (-1, 1):
-        t.road(-EXT_RING, s * EXT_RING, EXT_RING, s * EXT_RING)
-        t.road(s * EXT_RING, -EXT_RING, s * EXT_RING, EXT_RING)
-    t.road(EXT_RING, 300, 660, 300)  # Zufahrt Krankenhaus
+    for s in (-1, 1):  # Landstraßen aus der Stadt bis zum Rand
+        t.road(0, s * EXT_CITY, 0, s * half, EXT_STREET)
+        t.road(s * EXT_CITY, 0, s * half, 0, EXT_STREET)
     for _, x, z, r, depth in EXT_LAKES:
         t.lake(x, z, r, depth)
-    t.hill(-720, -560, 140, 24, 36)  # Funkturm-Hügel
+    t.hill(830, 830, 150, 26, 34)  # Funkturm-Hügel
     t.build()
     return t
 
@@ -3309,11 +3327,16 @@ def build_extinction():
     rng = random.Random(11)
     half = EXTINCTION_SIZE / 2
     R = EXTINCTION_SAFE_RADIUS
-    grass, dry, dirt, mud = (88, 100, 66), (126, 118, 82), (112, 92, 70), (70, 62, 52)
-    asphalt, line_yellow, concrete = (52, 54, 58), (200, 170, 70), (128, 126, 120)
-    sand, steel, dark = (176, 158, 118), (92, 96, 102), (34, 36, 40)
+    C, P, ST, SLAB = EXT_CITY, EXT_PITCH, EXT_STREET, EXT_SLAB
+    grass = (88, 100, 66)
+    asphalt, line_yellow, concrete = (50, 52, 56), (200, 170, 70), (128, 126, 120)
+    sand, dark = (176, 158, 118), (34, 36, 40)
+    sidewalk = (146, 144, 138)
     safe = (96, 210, 120)
     danger = (215, 85, 45)
+    red = (226, 56, 48)
+    glass_blue = (60, 90, 110)
+    BASE = 0.5  # Oberkante der Gehweg-Blöcke
 
     def frame(cx, cz, yaw):
         c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
@@ -3327,62 +3350,88 @@ def build_extinction():
         return math.hypot(x, z) < R + margin
 
     # ---------- Gelände ----------
-    # Das Terrain (Hügel, Seen, Bergrand) baut der Server beim Start aus dem Höhenfeld (ExtinctionTerrainData.lua, hier
-    # erzeugt). Der flache Boden darunter bleibt als Rückfall liegen, falls das Terrain nicht geschrieben werden kann;
-    # Extinction.lua senkt ihn danach ab. H(x, z) = Geländehöhe für Bäume, Felsen, Kisten usw.
+    # Das Terrain (Stadt eben mit Pflaster, außen Hügel, See, Bergrand) baut der Server beim Start aus dem Höhenfeld
+    # (ExtinctionTerrainData.lua, hier erzeugt). Der flache Boden darunter bleibt als Rückfall liegen; Extinction.lua
+    # senkt ihn ab, sobald das Terrain steht. H(x, z) = Geländehöhe für Bäume, Felsen, Kisten außerhalb der Stadt.
     import extinction_terrain as et
     terrain = extinction_terrain()
     et.write_lua(terrain)
     H = terrain.sample
     b.box("Ground", "Ground", (EXTINCTION_SIZE + 120, 4, EXTINCTION_SIZE + 120), (0, -2, 0), grass, "Grass")
-    # Rand: unsichtbare Barriere (der Bergrand des Terrains ist die sichtbare Grenze)
     b.border(EXTINCTION_SIZE, EXTINCTION_SIZE, 3, (96, 94, 88), "Slate", barrier=160)
 
-    # ---------- Straßen: Kreuz durch die Safe Zone, Ringstraße bei 450 ----------
-    road_w = EXT_ROAD_W
-    ring = EXT_RING
+    # ---------- Straßenraster ----------
+    lines = list(range(-C, C + 1, P))          # Straßen bei -700, -560, ..., 700
+    centers = [v + P / 2 for v in lines[:-1]]  # Blockmitten bei -630, ..., 630
+    road_w = ST
 
-    def road(x0, z0, x1, z1):
+    def block_kind(bx, bz):
+        return EXT_SPECIAL_BLOCKS.get((bx, bz))
+
+    def compound(bx, bz):
+        """Teil einer Anlage, die mehrere Blöcke überspannt (dort keine Straßen dazwischen)."""
+        return block_kind(bx, bz) in ("Militaer", "Industrie", "Krankenhaus", "Plaza")
+
+    def segment_free(vertical, line, t):
+        """Straßenstück auf Linie line von t bis t + P: nur, wenn es nicht zwischen zwei Blöcken derselben Anlage liegt."""
+        mid = t + P / 2
+        if vertical:
+            left, right = (line - P / 2, mid), (line + P / 2, mid)
+        else:
+            left, right = (mid, line - P / 2), (mid, line + P / 2)
+        ka, kb = block_kind(*left), block_kind(*right)
+        return not (ka is not None and ka == kb and compound(*left))
+
+    def street(x0, z0, x1, z1, lines_on=True):
         if abs(x1 - x0) > abs(z1 - z0):
             length, cx, cz = abs(x1 - x0), (x0 + x1) / 2, z0
             b.box("Roads", "Road", (length, 0.12, road_w), (cx, 0.06, cz), asphalt, "Asphalt")
-            b.box("Roads", "CenterLine", (length, 0.02, 0.5), (cx, 0.13, cz), line_yellow, "SmoothPlastic")
+            if lines_on and length > road_w + 4:
+                b.box("Roads", "CenterLine", (length - road_w, 0.02, 0.5), (cx, 0.13, cz), line_yellow, "SmoothPlastic")
         else:
             length, cx, cz = abs(z1 - z0), x0, (z0 + z1) / 2
-            b.box("Roads", "Road", (road_w, 0.12, length), (cx, 0.06, cz), asphalt, "Asphalt")
-            b.box("Roads", "CenterLine", (0.5, 0.02, length), (cx, 0.13, cz), line_yellow, "SmoothPlastic")
+            b.box("Roads", "Road", (road_w, 0.13, length), (cx, 0.065, cz), asphalt, "Asphalt")
+            if lines_on and length > road_w + 4:
+                b.box("Roads", "CenterLine", (0.5, 0.02, length - road_w), (cx, 0.14, cz), line_yellow, "SmoothPlastic")
 
-    road(0, R - 2, 0, half)
-    road(0, -half, 0, -(R - 2))
-    road(R - 2, 0, half, 0)
-    road(-half, 0, -(R - 2), 0)
+    for line in lines:
+        for t in lines[:-1]:
+            # senkrecht (entlang z) auf x = line, waagerecht (entlang x) auf z = line
+            if segment_free(True, line, t) and not (line == 0 and -P <= t < P):
+                street(line, t, line, t + P)
+            if segment_free(False, line, t) and not (line == 0 and -P <= t < P):
+                street(t, line, t + P, line)
+    # Zufahrten zur Safe Zone (Tore auf den Achsen) und Landstraßen aus der Stadt
     for s in (-1, 1):
-        road(-ring - road_w / 2, s * ring, ring + road_w / 2, s * ring)
-        road(s * ring, -ring + road_w / 2, s * ring, ring - road_w / 2)
-    road(ring + road_w / 2, 300, 700, 300)  # Zufahrt Krankenhaus
+        street(0, s * (R - 2), 0, s * P, lines_on=False)
+        street(s * (R - 2), 0, s * P, 0, lines_on=False)
+        street(0, s * C, 0, s * half)
+        street(s * C, 0, s * half, 0)
 
     def on_road(x, z, margin=8):
         w = road_w / 2 + margin
-        if abs(x) < w or abs(z) < w:
-            return True
-        if (abs(abs(x) - ring) < w and abs(z) < ring + w) or (abs(abs(z) - ring) < w and abs(x) < ring + w):
-            return True
-        if abs(z - 300) < w and ring - w < x < 670:  # Zufahrt Krankenhaus
-            return True
-        return False
+        if abs(x) <= C + w and abs(z) <= C + w:
+            return True  # die ganze Stadt
+        return abs(x) < w or abs(z) < w
+
+    # Straßenlaternen an jeder Kreuzung (Ecke Nordost)
+    for x in lines:
+        for z in lines:
+            lx, lz = x + ST / 2 + 2, z + ST / 2 + 2
+            if in_safe(lx, lz, 40):
+                continue
+            b.cylinder("Decor", "StreetLamp", 0.5, 12, (lx, 6.5, lz), dark)
+            b.box("Decor", "StreetLampArm", (3.4, 0.4, 0.4), (lx - 1.6, 12.4, lz - 1.6), dark, "Metal", angles=(0, 45, 0))
+            b.box("Decor", "StreetLampHead", (1.4, 0.4, 1.4), (lx - 3, 12.2, lz - 3), (255, 236, 200), "Neon",
+                  children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
+                      "Range": 30, "Brightness": 0.8, "Color": rgb(255, 226, 190)}}])
 
     # ---------- Safe Zone "Camp Phoenix" ----------
     b.add("Ground", "CampFloor", (0.2, 2 * R + 6, 2 * R + 6), (0, 0.08, 0), (118, 116, 110), "Concrete",
           angles=(0, 0, 90), props={"Shape": "Cylinder"})
     b.add("Zone", "SafeZone", (2 * R, 80, 2 * R), (0, 40, 0), safe, "SmoothPlastic",
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
-    # Grenze: leuchtender Ring (Kraftfeld) und Wall aus Sandkörben mit vier Toren für die Straßen
-    n = 64
-    for k in range(n):
-        a = 2 * math.pi * (k + 0.5) / n
-        b.box("Zone", "ZoneEdge", (2 * math.pi * R / n + 0.3, 30, 0.3), (math.cos(a) * R, 15, math.sin(a) * R), safe,
-              "ForceField", angles=(0, -math.degrees(a) + 90, 0),
-              props={"Transparency": 0.55, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+    # Grenze: Wall aus Sandkörben mit vier Toren für die Straßen (dazu der grüne Leuchtring am Boden, siehe unten)
     gate_half = math.degrees((road_w / 2 + 3) / (R + 3))
     k = 0
     phi = 0.0
@@ -3550,33 +3599,24 @@ def build_extinction():
             continue
         b.box("Decor", "SupplyCrate", (3, 3, 3), (x, 1.5, z), (110, 90, 62), "WoodPlanks", angles=(0, rng.uniform(0, 90), 0))
 
-    # ---------- Helfer für Gelände, Lagerkisten, Schilder ----------
+    # ---------- Helfer: Kisten, Schilder, Bäume ----------
     spot_count = {"Wood": 0, "Toolbox": 0, "Medical": 0, "Ammo": 0, "Military": 0}
 
-    def spot(kind, x, z, y=0.0, yaw=0.0):
+    def spot(kind, x, z, y=BASE, yaw=0.0):
         """Lagerkiste (ContainerService): unsichtbares Teil Spot_<Art> in der Gruppe Loot, y = Höhe des Bodens darunter."""
         spot_count[kind] += 1
         b.add("Loot", "Spot_" + kind, (3, 2, 3), (x, y + 1, z), (200, 160, 80), "SmoothPlastic", angles=(0, yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
 
     def ground_spot(kind, x, z, yaw=None):
-        """Kiste im Freien auf dem Gelände."""
+        """Kiste im Freien auf dem Gelände (außerhalb der Stadt)."""
         spot(kind, x, z, H(x, z), rng.uniform(0, 360) if yaw is None else yaw)
-
-    def board(title, subtitle, x, z, yaw, color, y=None, width=14, bg=(26, 26, 28)):
-        """Schild auf zwei Pfosten (Vorderseite -Z, yaw dreht), steht auf dem Gelände."""
-        g = H(x, z) if y is None else y
-        f = frame(x, z, yaw)
-        for side in (-1, 1):
-            b.box("Decor", "BoardPost", (0.5, 7.4, 0.5), f(side * (width / 2 - 0.6), g + 3.5, 0), (70, 62, 54), "Wood", angles=(0, yaw, 0))
-        b.sign2("Board_" + title[:14], (width, 3.6, 0.3), f(0, g + 7.6, 0), title, subtitle, bg, color, (230, 230, 230),
-                angles=(0, yaw, 0), glow=color)
 
     obstacles = []  # (x, z) von Bäumen und Felsen, damit verstreute Kisten nicht darin stehen
 
-    def tree_at(x, z):
+    def tree_at(x, z, y=None):
         obstacles.append((x, z))
-        g = H(x, z)
+        g = H(x, z) if y is None else y
         if rng.random() < 0.6:  # Kiefer: Stamm und vier schrumpfende, gedrehte Nadelblöcke
             h = rng.uniform(13, 21)
             b.box("Nature", "Trunk", (1.5, h, 1.5), (x, g + h / 2 - 0.6, z), (92, 66, 44), "Wood")
@@ -3599,317 +3639,686 @@ def build_extinction():
               rng.choice(((115, 115, 110), (104, 102, 98), (126, 120, 108))), "Slate",
               angles=(rng.uniform(-12, 12), rng.uniform(0, 360), rng.uniform(-12, 12)))
 
-    def pois_near(x, z, pad):
-        for key, (_, px, pz, pr) in EXT_PLACES.items():
-            if key != "Funkturm" and math.hypot(x - px, z - pz) < pr + pad:
-                return True
-        return False
+    def wall_sign(name, title, subtitle, x, z, face, w, d, y, color, width=14):
+        """Schild an der Fassade (face = Seite N/S/E/W eines Gebäudes mit Mitte x, z und Größe w x d)."""
+        if face == "N":
+            pos, yaw = (x, y, z + d / 2 + 0.35), 180
+        elif face == "S":
+            pos, yaw = (x, y, z - d / 2 - 0.35), 0
+        elif face == "E":
+            pos, yaw = (x + w / 2 + 0.35, y, z), -90
+        else:
+            pos, yaw = (x - w / 2 - 0.35, y, z), 90
+        b.sign2(name, (width, 3.2, 0.3), pos, title, subtitle, (26, 26, 28), color, (230, 230, 230), angles=(0, yaw, 0), glow=color)
 
-    # ---------- Kleinstadt (Osten, an der Straße) ----------
-    house_cols = ((176, 160, 140), (150, 132, 116), (190, 184, 170), (140, 146, 150), (168, 140, 120))
-    for k, x in enumerate(range(180, 440, 52)):
+    def face_to_street(ox, oz):
+        """Seite eines Grundstücks (Versatz ox, oz von der Blockmitte), die zur nächsten Straße zeigt."""
+        if abs(ox) >= abs(oz):
+            return "E" if ox > 0 else "W"
+        return "N" if oz > 0 else "S"
+
+    def into(face, x, z, depth):
+        """Punkt depth Studs von der Tür nach innen (Tür auf Seite face eines Gebäudes bei x, z)."""
+        dx, dz = {"N": (0, -1), "S": (0, 1), "E": (-1, 0), "W": (1, 0)}[face]
+        return x + dx * depth, z + dz * depth
+
+    def slab(bx, bz, color=sidewalk, material="Concrete", name="Sidewalk", size=SLAB):
+        b.box("Ground", name, (size, BASE, size), (bx, BASE / 2, bz), color, material)
+
+    car_cols = ((130, 60, 50), (70, 90, 120), (120, 120, 110), (90, 100, 70), (160, 150, 130), (60, 60, 64))
+
+    def car(x, z, yaw, color, group="Cover", wreck=True, y=0.0):
+        f = frame(x, z, yaw)
+        body = lighten(color, -0.35) if wreck else color
+        b.box(group, "CarBody", (5.6, 2.2, 11), f(0, y + 2.0, 0), body, "Metal" if not wreck else "CorrodedMetal",
+              angles=(0, yaw, 0 if not wreck else rng.uniform(-4, 4)))
+        b.box(group, "CarCabin", (5.0, 2.0, 5.4), f(0, y + 4.0, 0.6), lighten(body, -0.2), "Metal", angles=(0, yaw, 0))
+        b.box(group, "CarGlass", (5.1, 1.4, 4.0), f(0, y + 4.1, 0.4), (40, 52, 60), "Glass", angles=(0, yaw, 0),
+              props={"Transparency": 0.3 if not wreck else 0.6})
+        for sx in (-1, 1):
+            for sz in (-1, 1):
+                b.add(group, "CarWheel", (0.9, 2.4, 2.4), f(sx * 2.7, y + 1.2, sz * 3.6), (24, 24, 26), "Rubber",
+                      angles=(0, yaw, 0), props={"Shape": "Cylinder"})
+
+    # ---------- Gebäudetypen ----------
+    counter = [0]
+
+    def nm(prefix):
+        counter[0] += 1
+        return "%s%d" % (prefix, counter[0])
+
+    tower_cols = ((150, 156, 164), (176, 170, 160), (110, 118, 128), (196, 190, 178), (132, 126, 120), (90, 98, 110),
+                  (168, 150, 130))
+    glass_cols = ((46, 66, 84), (52, 74, 70), (40, 48, 60), (70, 84, 96))
+    shop_cols = ((196, 186, 168), (176, 160, 140), (150, 158, 166), (210, 204, 190), (168, 140, 120), (140, 150, 136))
+    house_cols = ((176, 160, 140), (150, 132, 116), (190, 184, 170), (140, 146, 150), (168, 140, 120), (186, 170, 150),
+                  (160, 170, 156))
+    signs = (("APOTHEKE", "MEDIKAMENTE · TAG UND NACHT", (90, 200, 120), ["Medical"]),
+             ("WAFFEN-HANDEL", "JAGD · SPORT · NOTWEHR", (215, 85, 45), ["Ammo"]),
+             ("BAUMARKT", "WERKZEUG · HOLZ · FARBEN", (226, 160, 52), ["Toolbox"]),
+             ("SUPERMARKT", "24 H GEÖFFNET", (200, 70, 60), ["Wood"]),
+             ("KIOSK", "ZEITUNG · TABAK · SNACKS", (220, 200, 90), ["Wood"]),
+             ("ELEKTRO", "HANDY · TV · BATTERIEN", (90, 150, 230), ["Toolbox"]),
+             ("BAR ZUM ZOMBIE", "GESCHLOSSEN", (200, 90, 200), ["Wood"]),
+             ("DINER", "BURGER · KAFFEE", (230, 120, 60), ["Wood"]),
+             ("ARZTPRAXIS", "DR. MED. KRÄMER", (120, 200, 220), ["Medical"]),
+             ("PFANDHAUS", "ANKAUF · VERKAUF", (210, 180, 90), ["Toolbox"]),
+             ("SPORTLADEN", "OUTDOOR · CAMPING", (90, 190, 160), ["Wood"]),
+             ("BANK", "SPARKASSE ÖDLAND", (200, 60, 60), ["Military"]))
+
+    def tower(x, z, w, d, h, color):
+        """Hochhaus (nicht begehbar): Körper, Fensterbänder rundherum, dunkle Lobby, Dachaufbau."""
+        tone = rng.choice(glass_cols)
+        b.box("Buildings", "Tower", (w, h, d), (x, h / 2, z), color, "Concrete")
+        b.box("Decor", "TowerLobby", (w + 0.4, 5.2, d + 0.4), (x, BASE + 2.6, z), (30, 36, 42), "Glass")
+        y = 9.5
+        while y < h - 4:
+            b.box("Decor", "TowerWindows", (w + 0.3, 2.6, d + 0.3), (x, y, z), tone, "Glass")
+            y += 5.5
+        b.box("Buildings", "TowerTop", (w - 8, 3.4, d - 8), (x, h + 1.7, z), lighten(color, -0.25), "Concrete")
+        if h > 70:
+            b.box("Decor", "TowerAntenna", (0.6, 16, 0.6), (x + w / 4, h + 8, z), (200, 200, 205), "Metal")
+            b.box("Decor", "TowerBeacon", (0.9, 0.9, 0.9), (x + w / 4, h + 16.4, z), (255, 40, 30), "Neon")
+
+    def windows_for(face, w, d, n_face=2):
+        along = w if face in "NS" else d
+        offs = [-along / 2 + 6, along / 2 - 6] if n_face == 2 else [0]
+        return {face: offs}
+
+    def opposite(face):
+        return {"N": "S", "S": "N", "E": "W", "W": "E"}[face]
+
+    def shop(x, z, w, d, face, color=None, sign=None, upstairs=0.2):
+        """Zweistöckiges Geschäft mit Schild über der Tür, Kisten unten (und manchmal oben)."""
+        color = color or rng.choice(shop_cols)
+        title, subtitle, sign_col, kinds = sign or rng.choice(signs)
+        name = nm("Shop")
+        sides = {"N": [-w / 4, w / 4], "S": [-w / 4, w / 4], "E": [-d / 4, d / 4], "W": [-d / 4, d / 4]}
+        b.building2(name, x, z, w, d, color, lighten(color, -0.35), doors={face: [0]},
+                    windows1={face: windows_for(face, w, d)[face], opposite(face): [0]},
+                    windows2=sides, stairs_at=("E",) if face == "W" else ("W",))
+        wall_sign(name + "Sign", title, subtitle, x, z, face, w, d, 9.6, sign_col, width=min(16, (w if face in "NS" else d) - 4))
+        spot(kinds[0], *into(face, x, z, (d if face in "NS" else w) / 2 - 7))
+        if rng.random() < upstairs:
+            spot(rng.choice(("Wood", "Wood", "Toolbox", "Medical")), x, z, 10.5)
+
+    def apartment(x, z, w, d, face):
+        color = rng.choice(house_cols)
+        name = nm("Apartment")
+        sides = {"N": [-w / 4, w / 4], "S": [-w / 4, w / 4], "E": [-d / 4, d / 4], "W": [-d / 4, d / 4]}
+        b.building2(name, x, z, w, d, color, lighten(color, -0.35), doors={face: [0]},
+                    windows1={face: windows_for(face, w, d)[face], opposite(face): [0]}, windows2=sides,
+                    stairs_at=("E",) if face == "W" else ("W",), material="Brick" if rng.random() < 0.4 else "Concrete")
+        if rng.random() < 0.3:
+            spot(rng.choice(("Wood", "Wood", "Medical", "Toolbox")), x, z, BASE if rng.random() < 0.5 else 10.5)
+
+    def house(x, z, w, d, face, h=9):
+        color = rng.choice(house_cols)
+        back = opposite(face)
+        b.flat_house(nm("House"), x, z, w, d, h, color, doors={face: [0]},
+                     windows={face: windows_for(face, w, d)[face], back: [0]}, parapet=(),
+                     roof_color=lighten(color, -0.35))
+        if rng.random() < 0.2:
+            spot(rng.choice(("Wood", "Wood", "Wood", "Toolbox", "Medical")), x, z)
+
+    def yard_tree(x, z):
+        b.box("Ground", "Yard", (9, 0.1, 9), (x, BASE + 0.05, z), (92, 110, 70), "Grass")
+        tree_at(x, z, BASE)
+
+    def dumpster(x, z, yaw=0):
+        b.box("Cover", "Dumpster", (6, 3.4, 3.4), (x, BASE + 1.7, z), (50, 90, 60), "Metal", angles=(0, yaw, 0))
+
+    LOTS = ((-28, -28), (28, -28), (-28, 28), (28, 28))
+
+    def fill_downtown(bx, bz):
+        slab(bx, bz)
+        shop_lot = rng.randrange(4)
+        for k, (ox, oz) in enumerate(LOTS):
+            x, z = bx + ox, bz + oz
+            face = face_to_street(ox, oz)
+            if k == shop_lot:
+                w, d = (44, 32) if face in "NS" else (32, 44)
+                shop(x, z, w, d, face, upstairs=0.4)
+            else:
+                tower(x, z, rng.uniform(30, 44), rng.uniform(30, 44), rng.uniform(40, 105), rng.choice(tower_cols))
+        dumpster(bx + rng.choice((-1, 1)) * 4, bz + rng.uniform(-30, 30), 90)
+
+    def fill_midtown(bx, bz):
+        slab(bx, bz)
+        for ox, oz in LOTS:
+            x, z = bx + ox, bz + oz
+            face = face_to_street(ox, oz)
+            w, d = (42, 32) if face in "NS" else (32, 42)
+            r = rng.random()
+            if r < 0.4:
+                shop(x, z, w, d, face)
+            elif r < 0.8:
+                apartment(x, z, w, d, face)
+            elif r < 0.9:
+                tower(x, z, rng.uniform(30, 40), rng.uniform(30, 40), rng.uniform(28, 50), rng.choice(tower_cols))
+            else:  # Hinterhof mit Autos und Müll
+                car(x - 8, z, 0, rng.choice(car_cols), y=BASE)
+                car(x + 8, z + 4, 10, rng.choice(car_cols), y=BASE)
+                dumpster(x, z - 14)
+                spot("Wood", x, z + 16)
+
+    def fill_residential(bx, bz, big=False):
+        slab(bx, bz)
+        if big:  # zwei große Häuser mit Garten
+            lots = ((-26, 0), (26, 0)) if rng.random() < 0.5 else ((0, -26), (0, 26))
+            for ox, oz in lots:
+                x, z = bx + ox, bz + oz
+                face = face_to_street(ox, oz)
+                w, d = (40, 28) if face in "NS" else (28, 40)
+                # Haus zur Straße gerückt, Garten dahinter
+                sx, sz = into(face, x, z, -4)
+                house(sx, sz, w, d, face, h=rng.choice((9, 10, 12)))
+                gx, gz = into(face, x, z, 24)
+                if abs(gx - bx) < 52 and abs(gz - bz) < 52:
+                    yard_tree(gx, gz)
+            return
+        for ox, oz in LOTS:
+            x, z = bx + ox, bz + oz
+            face = face_to_street(ox, oz)
+            if rng.random() < 0.12:
+                yard_tree(x - 6, z - 6)
+                yard_tree(x + 8, z + 7)
+                continue
+            w, d = (36, 26) if face in "NS" else (26, 36)
+            house(x, z, w, d, face, h=rng.choice((9, 9, 10, 12)))
+
+    def fill_park(bx, bz):
+        slab(bx, bz, (92, 112, 70), "Grass", "Park")
+        b.box("Ground", "ParkPath", (SLAB, 0.1, 6), (bx, BASE + 0.05, bz), (170, 160, 140), "Pavement")
+        b.box("Ground", "ParkPath", (6, 0.1, SLAB), (bx, BASE + 0.05, bz), (170, 160, 140), "Pavement")
+        b.cylinder("Decor", "FountainBase", 14, 1.6, (bx, BASE + 0.8, bz), (130, 128, 122), material="Concrete")
+        b.cylinder("Decor", "FountainWater", 11, 0.4, (bx, BASE + 1.5, bz), (60, 100, 120), material="Glass",
+                   props={"Transparency": 0.3})
+        b.cylinder("Decor", "FountainColumn", 1.6, 5, (bx, BASE + 3.4, bz), (150, 148, 142), material="Concrete")
+        for _ in range(14):
+            x, z = bx + rng.uniform(-50, 50), bz + rng.uniform(-50, 50)
+            if abs(x - bx) > 8 and abs(z - bz) > 8:
+                tree_at(x, z, BASE)
+        for k in range(4):
+            a = math.radians(45 + 90 * k)
+            b.box("Cover", "Bench", (5, 1.2, 1.6), (bx + math.cos(a) * 14, BASE + 0.6, bz + math.sin(a) * 14), (110, 80, 56),
+                  "WoodPlanks", angles=(0, -math.degrees(a) + 90, 0))
+        spot("Wood", bx + 20, bz - 20)
+
+    def fill_parking(bx, bz):
+        slab(bx, bz, (70, 72, 76), "Asphalt", "Parking")
+        for row in (-30, 0, 30):
+            for k in range(-4, 5):
+                b.box("Ground", "ParkingLine", (0.4, 0.05, 10), (bx + k * 11, BASE + 0.03, bz + row), (220, 220, 220), "SmoothPlastic")
+                if rng.random() < 0.45 and k < 4:
+                    car(bx + k * 11 + 5.5, bz + row, rng.uniform(-6, 6), rng.choice(car_cols), y=BASE)
+        b.box("Cover", "ParkingBooth", (5, 7, 5), (bx - 50, BASE + 3.5, bz - 50), (190, 180, 160), "Concrete")
+        spot("Toolbox", bx - 44, bz - 50)
+        spot("Wood", bx + 40, bz + 44)
+
+    # ---------- Besondere Gebäude ----------
+    def fence_line(x0, z0, x1, z1, gaps=(), color=(150, 156, 160)):
+        """Maschendrahtzaun mit Pfosten von (x0, z0) nach (x1, z1) (achsparallel); gaps = Mitten von 16 breiten Toren."""
+        along_x = z0 == z1
+        a, bnd = (x0, x1) if along_x else (z0, z1)
+        cuts = sorted(gaps)
+        pos = min(a, bnd)
+        end = max(a, bnd)
+        pieces = []
+        for g in cuts:
+            pieces.append((pos, g - 8))
+            pos = g + 8
+        pieces.append((pos, end))
+        for p0, p1 in pieces:
+            if p1 - p0 < 1:
+                continue
+            mid, length = (p0 + p1) / 2, p1 - p0
+            if along_x:
+                b.box("Walls", "ChainFence", (length, 9, 0.3), (mid, BASE + 4.5, z0), color, "DiamondPlate", props={"Transparency": 0.55})
+            else:
+                b.box("Walls", "ChainFence", (0.3, 9, length), (x0, BASE + 4.5, mid), color, "DiamondPlate", props={"Transparency": 0.55})
+            t = p0
+            while t <= p1 + 0.1:
+                px, pz = (t, z0) if along_x else (x0, t)
+                b.box("Walls", "FencePost", (0.8, 10, 0.8), (px, BASE + 5, pz), (80, 84, 88), "Metal")
+                t += 20
+
+    def watchtower(x, z, h=16):
+        for dx in (-2.5, 2.5):
+            for dz in (-2.5, 2.5):
+                b.box("Decor", "TowerLeg", (0.9, h, 0.9), (x + dx, BASE + h / 2, z + dz), (80, 84, 88), "Metal")
+        b.box("Buildings", "TowerDeck", (8, 0.6, 8), (x, BASE + h + 0.3, z), (90, 94, 98), "DiamondPlate")
+        b.box("Cover", "TowerWall", (8, 3, 0.4), (x, BASE + h + 2, z - 4), (90, 94, 98), "Metal")
+        b.box("Decor", "TowerRoof", (8.6, 0.4, 8.6), (x, BASE + h + 5.4, z), (70, 76, 62), "Metal")
+        b.box("Decor", "TowerLamp", (1.2, 1.2, 1.2), (x, BASE + h + 4.6, z), (255, 236, 200), "Neon",
+              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+                  "Face": "Bottom", "Range": 40, "Brightness": 1.4, "Angle": 70, "Color": rgb(255, 236, 210)}}])
+
+    def tent(x, z, yaw, color):
+        f = frame(x, z, yaw)
+        b.box("Decor", "TentFloor", (8, 0.2, 10), f(0, BASE + 0.1, 0), (70, 70, 64), "Fabric", angles=(0, yaw, 0))
+        b.add("Decor", "Tent", (8, 5, 5), f(0, BASE + 2.5, -2.5), color, "Fabric", angles=(0, yaw, 0), cls="WedgePart")
+        b.add("Decor", "Tent", (8, 5, 5), f(0, BASE + 2.5, 2.5), color, "Fabric", angles=(0, yaw + 180, 0), cls="WedgePart")
+
+    def build_police(bx, bz):
+        slab(bx, bz)
+        b.building2("PoliceHQ", bx, bz + 18, 72, 34, (150, 160, 176), (60, 70, 90), doors={"S": [-12, 12]},
+                    windows1={"S": [-28, 0, 28], "N": [-24, 0, 24], "E": [0], "W": [0]},
+                    windows2={"S": [-28, -12, 12, 28], "N": [-24, 0, 24], "E": [-8, 8], "W": [-8, 8]}, stairs_at=("W", "E"))
+        wall_sign("PoliceSign", "POLIZEI", "PRÄSIDIUM ÖDSTADT", bx, bz + 18, "S", 72, 34, 9.6, (90, 140, 230), width=16)
+        spot("Ammo", bx - 18, bz + 22)
+        spot("Ammo", bx + 18, bz + 22)
+        spot("Medical", bx, bz + 26)
+        spot("Military", bx - 14, bz + 22, 10.5)
+        spot("Toolbox", bx + 14, bz + 22, 10.5)
+        b.flat_house("PoliceGarage", bx + 38, bz - 34, 28, 20, 8, (130, 134, 142), doors={"W": [0]}, windows={"S": [0]},
+                     roof_color=(70, 76, 90))
+        spot("Toolbox", bx + 36, bz - 34)
+        for k, (cx_, cz_) in enumerate(((bx - 40, bz - 30), (bx - 24, bz - 34), (bx - 8, bz - 30))):
+            car(cx_, cz_, rng.uniform(-8, 8), (60, 90, 150), y=BASE)
+            b.box("Cover", "PoliceStripe", (5.7, 0.8, 11.2), (cx_, BASE + 2.2, cz_), (236, 236, 240), "SmoothPlastic")
+        for k in range(4):
+            b.barrier(bx - 45 + k * 12, bz - 52, along_x=True, length=8)
+
+    def build_townhall(bx, bz):
+        slab(bx, bz)
+        b.building2("Rathaus", bx, bz + 10, 64, 36, (196, 186, 166), (96, 70, 60), doors={"S": [0]},
+                    windows1={"S": [-22, -12, 12, 22], "N": [-16, 0, 16], "E": [0], "W": [0]},
+                    windows2={"S": [-22, -8, 8, 22], "N": [-16, 0, 16], "E": [-8, 8], "W": [-8, 8]}, stairs_at=("W", "E"))
+        for px in (-15, -5, 5, 15):
+            b.cylinder("Decor", "Column", 2.2, 18, (bx + px, BASE + 9, bz - 10), (220, 214, 200), material="Concrete")
+        b.box("Decor", "Portico", (36, 1.6, 6), (bx, BASE + 18.6, bz - 10), (210, 204, 190), "Concrete")
+        wall_sign("RathausSign", "RATHAUS", "STADT ÖDSTADT", bx, bz + 10, "S", 64, 36, 21.5, (226, 178, 52), width=16)
+        b.cylinder("Decor", "FlagPole", 0.5, 22, (bx - 26, BASE + 11, bz - 30), (200, 200, 205))
+        b.box("Decor", "Flag", (7, 4, 0.2), (bx - 22.2, BASE + 19.5, bz - 30), (226, 178, 52), "Fabric")
+        spot("Toolbox", bx - 18, bz + 16)
+        spot("Wood", bx + 18, bz + 16)
+        spot("Medical", bx, bz + 18, 10.5)
+
+    def build_mall(bx, bz):
+        slab(bx, bz)
+        mx, mz, w, d = bx, bz + 8, 100, 72
+        b.flat_house("Mall", mx, mz, w, d, 14, (206, 200, 188), doors={"N": [-30, 0, 30], "S": [0], "W": [0], "E": [0]},
+                     windows={"N": [-42, -16, 16, 42], "S": [-30, 30]}, roof_color=(150, 60, 50), trim=(200, 60, 50))
+        wall_sign("MallSign", "EINKAUFSZENTRUM", "ÖDLAND-GALERIE · 60 GESCHÄFTE", mx, mz, "N", w, d, 16.6, (200, 70, 60), width=26)
+        for row in (-18, -4, 10, 24):
+            for col in (-30, 0, 30):
+                b.box("Cover", "Shelf", (18, 5, 2.4), (mx + col, BASE + 2.5, mz + row), (120, 110, 100), "WoodPlanks")
+        spot("Wood", mx - 40, mz + 28)
+        spot("Wood", mx + 40, mz - 26)
+        spot("Medical", mx - 15, mz + 3)
+        spot("Toolbox", mx + 15, mz + 17)
+        spot("Ammo", mx + 42, mz + 28)
+        for k in range(5):
+            car(bx - 44 + k * 22, bz - 46, 90 + rng.uniform(-8, 8), rng.choice(car_cols), y=BASE)
+
+    def build_school(bx, bz):
+        slab(bx, bz)
+        b.building2("School", bx - 20, bz, 34, 88, (196, 160, 120), (120, 70, 50), doors={"E": [-20, 20]},
+                    windows1={"E": [-34, 0, 34], "W": [-30, -10, 10, 30]}, windows2={"E": [-34, -20, 0, 20, 34], "W": [-30, 0, 30]},
+                    stairs_at=("S",), material="Brick")
+        wall_sign("SchoolSign", "GESAMTSCHULE", "ÖDSTADT · SEIT 1962", bx - 20, bz, "E", 34, 88, 9.6, (230, 200, 90), width=16)
+        spot("Wood", bx - 26, bz - 28)
+        spot("Medical", bx - 26, bz + 30)
+        spot("Toolbox", bx - 16, bz, 10.5)
+        b.box("Ground", "Court", (30, 0.1, 50), (bx + 30, BASE + 0.05, bz), (160, 90, 60), "SmoothPlastic")
+        b.box("Ground", "CourtLine", (30, 0.12, 0.5), (bx + 30, BASE + 0.06, bz), (240, 240, 240), "SmoothPlastic")
+        for s in (-1, 1):
+            b.box("Decor", "HoopPole", (0.5, 10, 0.5), (bx + 30, BASE + 5, bz + s * 25), (80, 80, 84), "Metal")
+            b.box("Decor", "HoopBoard", (6, 3.6, 0.3), (bx + 30, BASE + 10.4, bz + s * 24.6), (230, 230, 230), "SmoothPlastic")
+
+    def build_church(bx, bz):
+        slab(bx, bz)
+        kx, kz = bx + 20, bz
+        b.house("Church", kx, kz, 20, 40, 15, (192, 186, 172), (96, 62, 52), doors=("E", "S"), material="Brick")
+        b.box("Buildings", "ChurchTower", (9, 30, 9), (kx, 15, kz + 24.5), (186, 180, 166), "Brick")
+        for w, yy in ((10, 31.5), (7, 34.5), (4.4, 37.5), (2, 41)):
+            b.box("Buildings", "Spire", (w, 3.4, w), (kx, yy, kz + 24.5), (70, 52, 46), "Slate", angles=(0, 45, 0))
+        b.box("Decor", "SpireCrossV", (0.5, 4, 0.5), (kx, 45, kz + 24.5), (220, 200, 120), "Metal")
+        b.box("Decor", "SpireCrossH", (2, 0.5, 0.5), (kx, 45.6, kz + 24.5), (220, 200, 120), "Metal")
+        for k in range(4):
+            b.box("Cover", "Pew", (12, 1.4, 1.2), (kx, BASE + 0.7, kz - 10 + k * 5), (96, 70, 50), "WoodPlanks")
+        spot("Wood", kx - 5, kz + 12)
+        spot("Medical", kx + 5, kz - 15)
+        b.box("Ground", "Graveyard", (52, 0.1, 100), (bx - 32, BASE + 0.05, bz), (88, 104, 68), "Grass")
+        for row in range(6):
+            for col in range(5):
+                b.box("Cover", "Gravestone", (1.5, 2.4, 0.5), (bx - 52 + col * 9, BASE + 1.2, bz - 40 + row * 15),
+                      (150, 150, 146), "Slate", angles=(0, rng.uniform(-8, 8), 0))
+        for k in range(3):
+            b.box("Nature", "DeadTrunk", (1.2, 9, 1.2), (bx - 50 + k * 18, BASE + 4.5, bz + 46), (60, 50, 44), "Wood",
+                  angles=(rng.uniform(-6, 6), 0, rng.uniform(-6, 6)))
+        spot("Wood", bx - 24, bz + 42)
+
+    def build_gas(bx, bz):
+        slab(bx, bz, (90, 90, 94), "Concrete", "FuelLot")
+        b.box("Buildings", "FuelRoof", (40, 1, 24), (bx + 10, 10, bz), (200, 60, 50), "Metal")
+        for dx in (-16, 16):
+            for dz in (-9, 9):
+                b.box("Buildings", "FuelPillar", (1.2, 9.5, 1.2), (bx + 10 + dx, BASE + 4.7, bz + dz), (220, 220, 220), "Metal")
+        for dx in (-6, 6):
+            b.box("Cover", "FuelPump", (2, 4.6, 3), (bx + 10 + dx, BASE + 2.3, bz), (220, 220, 220), "SmoothPlastic")
+        b.flat_house("FuelShop", bx - 34, bz, 22, 30, 9, (210, 206, 196), doors={"E": [0]}, windows={"E": [-9, 9], "N": [0]},
+                     roof_color=(200, 60, 50))
+        b.sign("FuelSign", (12, 4, 0.4), (bx + 10, 14, bz - 12.2), "TANKSTELLE", (200, 60, 50), (250, 250, 250))
+        spot("Toolbox", bx - 36, bz - 6)
+        spot("Ammo", bx - 36, bz + 8)
+        spot("Wood", bx + 30, bz + 30)
+        car(bx + 4, bz - 6, 0, (90, 110, 70), y=BASE)
+
+    def build_hospital():
+        x0, x1, z0, z1 = 430, 690, 430, 550
+        hx, hz = (x0 + x1) / 2, (z0 + z1) / 2
+        b.box("Ground", "HospitalGround", (x1 - x0, BASE, z1 - z0), (hx, BASE / 2, hz), (150, 150, 146), "Concrete")
+        white = (226, 228, 226)
+        mx, mz = hx, hz + 20
+        b.building2("Hospital", mx, mz, 110, 34, white, (150, 160, 170), doors={"S": [-30, 0, 30]},
+                    windows1={"S": [-46, -15, 15, 46], "N": [-40, -20, 0, 20, 40], "E": [0], "W": [0]},
+                    windows2={"S": [-46, -30, -15, 0, 15, 30, 46], "N": [-40, -20, 0, 20, 40], "E": [-8, 8], "W": [-8, 8]},
+                    stairs_at=("W", "E"))
+        b.box("Decor", "HospitalCrossV", (1.8, 7, 0.2), (mx, 15, mz - 17.6), (220, 40, 40), "Neon")
+        b.box("Decor", "HospitalCrossH", (7, 1.8, 0.2), (mx, 15, mz - 17.6), (220, 40, 40), "Neon")
+        wall_sign("HospitalSign", "ST. MARIEN", "KRANKENHAUS · NOTAUFNAHME 24 H", mx, mz, "S", 110, 34, 22.4, (220, 70, 70), width=24)
+        b.floor_text("RoofHelipad", (14, 0.1, 14), (mx + 30, 20.2, mz), "H", (236, 236, 236), bg=(70, 72, 76))
+        for k in range(5):
+            b.box("Cover", "HospitalBed", (2.6, 1.4, 6), (mx - 40 + k * 20, BASE + 0.7, mz + 10), (210, 214, 222), "SmoothPlastic")
+        for sx in (-34, -12, 12, 34):
+            spot("Medical", mx + sx, mz)
+        for sx in (-30, 0, 30):
+            spot("Medical", mx + sx, mz + 4, 10.5)
+        spot("Military", mx - 10, mz + 10, 10.5)
+        spot("Toolbox", mx + 48, mz - 8)
+        for k, (ax, az, yaw) in enumerate(((mx - 50, z0 + 16, 80), (mx - 26, z0 + 14, 100), (mx + 66, z0 + 18, 70))):
+            car(ax, az, yaw, (232, 232, 232), y=BASE)
+            b.box("Cover", "AmbulanceStripe", (5.7, 0.7, 11.2), (ax, BASE + 2.2, az), (200, 40, 40), "SmoothPlastic",
+                  angles=(0, yaw, 0))
+        spot("Medical", mx - 38, z0 + 22)
+        for k in range(4):
+            tent(mx + 4 + k * 12, z0 + 16, 0, (230, 230, 226))
+        spot("Medical", mx + 22, z0 + 26)
+        spot("Ammo", mx + 40, z0 + 32)
+        for x in (x0 + 12, x1 - 12):
+            b.barrier(x, z0 + 6, along_x=True, length=8)
+
+    def build_military():
+        x0, x1, z0, z1 = -690, -430, 430, 690
+        cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+        b.box("Ground", "MilitaryGround", (x1 - x0, BASE, z1 - z0), (cx, BASE / 2, cz), (110, 112, 100), "Concrete")
+        fence_line(x0 + 4, z0 + 4, x1 - 4, z0 + 4, gaps=(cx,))
+        fence_line(x0 + 4, z1 - 4, x1 - 4, z1 - 4)
+        fence_line(x0 + 4, z0 + 4, x0 + 4, z1 - 4)
+        fence_line(x1 - 4, z0 + 4, x1 - 4, z1 - 4, gaps=(cz,))
+        for gx, gz in ((cx, z0 + 4), (x1 - 4, cz)):
+            for s in (-1, 1):
+                if gz == z0 + 4:
+                    b.barrier(gx + s * 5, gz - 8, along_x=True, length=6)
+                else:
+                    b.barrier(gx + 8, gz + s * 5, along_x=False, length=6)
+        for wx_, wz_ in ((x0 + 12, z0 + 12), (x1 - 12, z1 - 12), (x0 + 12, z1 - 12), (x1 - 12, z0 + 12)):
+            watchtower(wx_, wz_)
+        for k, (bx_, bz_) in enumerate(((cx - 70, cz + 60), (cx - 70, cz + 20), (cx - 70, cz - 20))):
+            b.flat_house("Barracks%d" % k, bx_, bz_, 44, 16, 9, (98, 106, 86), doors={"E": [0]},
+                         windows={"E": [-14, 14], "W": [-12, 0, 12]}, roof_color=(70, 76, 62))
+            spot("Military", bx_ - 10, bz_)
+            spot("Medical" if k == 1 else "Ammo", bx_ + 12, bz_)
+        b.building2("MilitaryHQ", cx + 50, cz + 70, 56, 28, (110, 116, 98), (70, 76, 62), doors={"S": [0]},
+                    windows1={"S": [-18, 18], "N": [-14, 14]}, windows2={"S": [-18, 0, 18], "N": [-14, 14], "E": [0], "W": [0]},
+                    stairs_at=("W",))
+        wall_sign("MilitarySign", "KOMMANDO", "SPERRGEBIET · SCHUSSWAFFENGEBRAUCH", cx + 50, cz + 70, "S", 56, 28, 9.6, (215, 85, 45), width=18)
+        spot("Military", cx + 40, cz + 74)
+        spot("Military", cx + 58, cz + 74, 10.5)
+        spot("Toolbox", cx + 64, cz + 64)
+        for k in range(6):
+            b.container(cx + 20 + (k % 3) * 12, cz - 60 + (k // 3) * 26, along_x=False, color=rng.choice(((90, 110, 76), (70, 86, 64), (110, 96, 70))))
+        b.container(cx + 20, cz - 60, along_x=False, level=1, color=(80, 100, 70))
+        spot("Military", cx + 60, cz - 50)
+        spot("Ammo", cx + 6, cz - 66)
+        b.box("Cover", "TankHull", (10, 3.6, 16), (cx + 10, BASE + 1.8, cz + 10), (84, 92, 70), "CorrodedMetal", angles=(0, 20, 0))
+        b.box("Cover", "TankTurret", (6.4, 2.4, 7), (cx + 10, BASE + 4.6, cz + 10), (78, 86, 66), "CorrodedMetal", angles=(0, 35, 0))
+        look = (-math.sin(math.radians(35)), -math.cos(math.radians(35)))
+        b.add("Decor", "TankBarrel", (11, 0.9, 0.9), (cx + 10 + look[0] * 8, BASE + 4.8, cz + 10 + look[1] * 8),
+              (70, 76, 60), "Metal", angles=(0, 125, 0), props={"Shape": "Cylinder"})
+        b.add("Ground", "Helipad", (0.3, 26, 26), (cx + 60, BASE + 0.1, cz + 10), (70, 72, 76), "Concrete", angles=(0, 0, 90),
+              props={"Shape": "Cylinder"})
+        b.floor_text("MilHelipadH", (10, 0.1, 10), (cx + 60, BASE + 0.3, cz + 10), "H", (236, 236, 236))
+        for k in range(6):
+            b.box("Cover", "Sandbags", (8, 3, 2.4), (cx - 40 + k * 14, BASE + 1.5, z0 + 30), (150, 134, 98), "Fabric",
+                  angles=(0, rng.uniform(-8, 8), 0))
+        for k in range(3):
+            tent(cx - 10 + k * 14, cz + 40, 90, (96, 108, 78))
+        spot("Ammo", cx + 4, cz + 46)
+
+    def build_industry():
+        x0, x1, z0, z1 = 430, 690, -690, -430
+        cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+        b.box("Ground", "IndustryGround", (x1 - x0, BASE, z1 - z0), (cx, BASE / 2, cz), (96, 96, 98), "Concrete")
+        fence_line(x0 + 4, z1 - 4, x1 - 4, z1 - 4, gaps=(cx,))
+        fence_line(x0 + 4, z0 + 4, x1 - 4, z0 + 4)
+        fence_line(x0 + 4, z0 + 4, x0 + 4, z1 - 4, gaps=(cz,))
+        fence_line(x1 - 4, z0 + 4, x1 - 4, z1 - 4)
+        for k, (wx_, wz_) in enumerate(((cx - 60, cz + 60), (cx + 50, cz + 60), (cx - 60, cz - 30))):
+            b.flat_house("Warehouse%d" % k, wx_, wz_, 64, 40, 14, (120, 122, 126), doors={"S": [-16, 16], "N": [0]},
+                         windows={"E": [-10, 10], "W": [-10, 10]}, roof_color=(84, 86, 90))
+            spot("Toolbox", wx_ - 18, wz_ + 6)
+            spot(("Military", "Wood", "Ammo")[k], wx_ + 18, wz_ - 6)
+        b.building2("IndustryOffice", cx + 60, cz - 40, 36, 24, (150, 146, 136), (90, 88, 84), doors={"W": [0]},
+                    windows1={"W": [-10, 10], "E": [0]}, windows2={"W": [-10, 0, 10], "N": [0], "S": [0]}, stairs_at=("E",))
+        spot("Military", cx + 56, cz - 36)
+        spot("Ammo", cx + 60, cz - 44, 10.5)
+        for k in range(10):
+            b.container(cx - 90 + (k % 5) * 24, cz - 100 + (k // 5) * 12, along_x=True, level=0, length=20,
+                        color=rng.choice(((150, 60, 50), (60, 100, 150), (170, 130, 60), (80, 120, 80))))
+        b.container(cx - 90, cz - 100, along_x=True, level=1, color=(150, 60, 50))
+        b.container(cx - 18, cz - 88, along_x=True, level=1, color=(60, 100, 150))
+        spot("Toolbox", cx - 30, cz - 114)
+        spot("Wood", cx + 10, cz - 76)
+        for k in range(3):
+            b.cylinder("Buildings", "FuelTank", 16, 18, (cx + 100, BASE + 9, cz - 100 + k * 22), (200, 200, 196))
+        b.box("Buildings", "CraneTower", (3, 50, 3), (cx + 20, BASE + 25, cz + 10), (210, 170, 50), "Metal")
+        b.box("Buildings", "CraneArm", (56, 2.4, 2.4), (cx + 4, BASE + 50, cz + 10), (210, 170, 50), "Metal")
+        b.box("Decor", "Chimney", (7, 46, 7), (cx - 110, BASE + 23, cz + 110), (130, 110, 100), "Brick")
+
+    # ---------- Stadt füllen ----------
+    special_done = set()
+    for bx in centers:
+        for bz in centers:
+            kind = block_kind(bx, bz)
+            ring = max(abs(bx), abs(bz))
+            if kind is None:
+                if ring <= 210:
+                    fill_downtown(bx, bz)
+                elif ring <= 350:
+                    fill_midtown(bx, bz)
+                elif ring <= 490:
+                    fill_residential(bx, bz)
+                else:
+                    fill_residential(bx, bz, big=True)
+            elif kind in special_done or kind == "Plaza":
+                continue
+            elif kind == "Park":
+                fill_park(bx, bz)
+            elif kind == "Parkplatz":
+                fill_parking(bx, bz)
+            else:
+                if kind in ("Krankenhaus", "Militaer", "Industrie"):
+                    special_done.add(kind)
+                {"Polizei": build_police, "Rathaus": build_townhall, "Einkaufszentrum": build_mall, "Schule": build_school,
+                 "Kirche": build_church, "Tankstelle": build_gas}.get(kind, lambda *_: None)(bx, bz)
+    build_hospital()
+    build_military()
+    build_industry()
+    # Platz um die Safe Zone (vier Blöcke ohne Gehweg-Kante)
+    b.box("Ground", "PlazaFloor", (2 * P - ST, 0.1, 2 * P - ST), (0, 0.05, 0), (150, 146, 138), "Pavement")
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            for k in range(3):  # Pflanzkübel mit Bäumen in den Ecken des Platzes
+                b.cylinder("Decor", "Planter", 7, 1.2, (sx * (110 - k * 3), 0.6, sz * (110 - 12 * k)), (120, 116, 110), material="Concrete")
+                tree_at(sx * (110 - k * 3), sz * (110 - 12 * k), 1.2)
+            b.box("Cover", "Bench", (6, 1.2, 1.6), (sx * 92, 0.6, sz * 118), (110, 80, 56), "WoodPlanks")
+
+    def ground_y(x, z):
+        """Oberkante des Bodens an einer Stelle (Gehweg, Anlage, Straße, Platz, Gelände)."""
+        if abs(x) > C + ST or abs(z) > C + ST:
+            return H(x, z)
+        if abs(x) < P - ST / 2 and abs(z) < P - ST / 2:
+            return 0.1
+        for x0_, x1_, z0_, z1_ in ((430, 690, 430, 550), (-690, -430, 430, 690), (430, 690, -690, -430)):
+            if x0_ <= x <= x1_ and z0_ <= z <= z1_:
+                return BASE
+        bx = min(centers, key=lambda c: abs(c - x))
+        bz = min(centers, key=lambda c: abs(c - z))
+        if abs(x - bx) <= SLAB / 2 and abs(z - bz) <= SLAB / 2:
+            return BASE
+        return 0.13
+
+    # ---------- Wracks und Sperren auf den Straßen ----------
+    placed = 0
+    for _ in range(600):
+        if placed >= 80:
+            break
+        line = rng.choice(lines)
+        t = rng.uniform(-C + 14, C - 14)
+        if abs(t - round(t / P) * P) < ST:  # nicht auf Kreuzungen
+            continue
+        vertical = rng.random() < 0.5
+        x, z = (line + rng.choice((-5, 5)), t) if vertical else (t, line + rng.choice((-5, 5)))
+        if in_safe(x, z, 50) or ground_y(x, z) != 0.13:
+            continue
+        yaw = (0 if vertical else 90) + rng.uniform(-30, 30)
+        car(x, z, yaw, rng.choice(car_cols))
+        placed += 1
+    for x, z, along in ((0, 400, True), (-280, 300, False), (420, -150, True), (150, -420, False), (-560, -150, True),
+                        (280, 560, False), (-420, 230, True)):
+        for k in (-1, 1):
+            b.barrier(x + (k * 5 if along else 0), z + (0 if along else k * 5), along_x=along, length=8)
+
+    # ---------- Safe Zone: grüner Leuchtring am Boden ----------
+    n = 72
+    for k in range(n):
+        a = 2 * math.pi * (k + 0.5) / n
+        b.box("Zone", "SafeEdge", (2 * math.pi * (R - 1) / n + 0.2, 0.12, 1.4), (math.cos(a) * (R - 1), 0.24, math.sin(a) * (R - 1)),
+              safe, "Neon", angles=(0, -math.degrees(a) + 90, 0),
+              props={"Transparency": 0.25, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+
+    # ---------- Rote Zonen: rot-weiße Linie am Boden und Kontrollpunkte an jeder Straße ----------
+    def checkpoint(x, z, along_x, rx, rz, title):
+        """Kontrollpunkt an der Grenze einer roten Zone auf einer Straße: Sperren, Torbogen mit Schildern, rotes Licht."""
+        out_dir = (x - rx, z - rz)
+        if along_x:   # Straße läuft entlang x: Torbogen quer (entlang z)
+            yaw_out = -90 if out_dir[0] > 0 else 90
+        else:
+            yaw_out = 180 if out_dir[1] > 0 else 0
+        f = frame(x, z, yaw_out)
+        gy = 0.13
+        for s in (-1, 1):
+            b.box("Walls", "CheckpointPost", (1.2, 12, 1.2), f(s * (ST / 2 + 1), gy + 6, 0), (40, 40, 44), "Metal", angles=(0, yaw_out, 0))
+            b.barrier(*f(s * 6.5, 0, -4)[0::2], along_x=not along_x, length=6)
+        b.box("Walls", "CheckpointBeam", (ST + 4, 1.4, 1.2), f(0, gy + 12.4, 0), red, "Metal", angles=(0, yaw_out, 0))
+        b.sign2("RedzoneSignOut", (16, 3.4, 0.3), f(0, gy + 15, -0.5), "ROTE ZONE", title + " · PVP SOFORT · BESSERE BEUTE",
+                (40, 16, 14), red, (240, 230, 228), angles=(0, yaw_out, 0), glow=red)
+        b.sign2("RedzoneSignIn", (16, 3.4, 0.3), f(0, gy + 15, 0.5), "AUSGANG", "ROTE ZONE ENDE", (24, 28, 26), safe,
+                (230, 235, 230), angles=(0, yaw_out + 180, 0), glow=safe)
+        b.box("Decor", "CheckpointLight", (2, 0.8, 0.8), f(0, gy + 11.4, 0), (255, 50, 40), "Neon", angles=(0, yaw_out, 0),
+              children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 34, "Brightness": 1.6,
+                                                                                      "Color": rgb(255, 60, 50)}}])
+
+    road_segments = []  # (vertikal, Linie, von, bis) aller gebauten Stadtstraßen (für Kontrollpunkte)
+    for line in lines:
+        for t in lines[:-1]:
+            if not (line == 0 and -P <= t < P):
+                if segment_free(True, line, t):
+                    road_segments.append((True, line, t, t + P))
+                if segment_free(False, line, t):
+                    road_segments.append((False, line, t, t + P))
+    for s in (-1, 1):
+        road_segments.append((True, 0, min(s * C, s * half), max(s * C, s * half)))
+        road_segments.append((False, 0, min(s * C, s * half), max(s * C, s * half)))
+
+    for key, radius in EXT_REDZONES.items():
+        title, rx, rz, _ = EXT_PLACES[key]
+        b.add("Redzones", "Redzone_" + key, (2 * radius, 120, 2 * radius), (rx, 60, rz), red, "SmoothPlastic",
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
+                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
+        n = int(2 * math.pi * radius / 6)
+        for k in range(n):
+            a = 2 * math.pi * (k + 0.5) / n
+            px, pz = rx + math.cos(a) * radius, rz + math.sin(a) * radius
+            if abs(px) > half - 10 or abs(pz) > half - 10:
+                continue
+            b.box("Redzones", "RedLine", (2 * math.pi * radius / n + 0.1, 0.1, 1.6), (px, ground_y(px, pz) + 0.07, pz),
+                  red if k % 2 == 0 else (236, 236, 236), "SmoothPlastic", angles=(0, -math.degrees(a) + 90, 0),
+                  props={"CanCollide": False, "CanQuery": False, "CanTouch": False})
+        for vertical, line, t0, t1 in road_segments:
+            d = line - (rx if vertical else rz)
+            if abs(d) >= radius:
+                continue
+            off = math.sqrt(radius * radius - d * d)
+            for sgn in (-1, 1):
+                t = (rz if vertical else rx) + sgn * off
+                if t0 + ST < t < t1 - ST:
+                    x, z = (line, t) if vertical else (t, line)
+                    checkpoint(x, z, not vertical, rx, rz, title)
+
+    # ---------- Orte (Banner beim Betreten, Weltkarte) ----------
+    for key, (title, x, z, r) in EXT_PLACES.items():
+        b.add("Places", "Place_" + key, (2 * r, 4, 2 * r), (x, 2, z), (255, 255, 255), "SmoothPlastic",
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
+                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
+
+    # ---------- Außerhalb: Stadtgrenze, Bauernhof, See, Funkturm, Wald ----------
+    def board(title, subtitle, x, z, yaw, color, width=14, bg=(26, 26, 28)):
+        g = H(x, z)
+        f = frame(x, z, yaw)
         for side in (-1, 1):
-            col = house_cols[(k + (side > 0)) % len(house_cols)]
-            z = side * 40
-            door_side = "S" if side > 0 else "N"
-            back_side = "N" if side > 0 else "S"
-            b.flat_house("House%d%s" % (k, back_side), x, z, 30, 22, 10, col,
-                         doors={door_side: [0], "E" if k % 2 else "W": [3]},
-                         windows={door_side: [-9, 9], back_side: [-6, 6], "E": [-4], "W": [4]},
-                         roof_color=lighten(col, -0.35))
-            kind = "Medical" if (k == 3 and side > 0) else ("Toolbox" if (k + (side > 0)) % 3 == 0 else "Wood")
-            spot(kind, x - 9, z + (-4 if side > 0 else 4))
-        b.cylinder("Decor", "StreetLamp", 0.5, 11, (x + 26, 5.5, 16), dark)
-        b.cylinder("Decor", "StreetLamp", 0.5, 11, (x, 5.5, -16), dark)
-    car(260, 9, 85, (150, 150, 140), group="Cover", wreck=True)
-    car(352, -8, -100, (120, 60, 50), group="Cover", wreck=True)
-    car(410, 6, 70, (60, 80, 110), group="Cover", wreck=True)
-    for x in (300, 302):
-        b.barrier(x, 6 if x == 300 else -6, along_x=False, length=8)
+            b.box("Decor", "BoardPost", (0.5, 7.4, 0.5), f(side * (width / 2 - 0.6), g + 3.5, 0), (70, 62, 54), "Wood", angles=(0, yaw, 0))
+        b.sign2("Board_" + title[:14], (width, 3.6, 0.3), f(0, g + 7.6, 0), title, subtitle, bg, color, (230, 230, 230),
+                angles=(0, yaw, 0), glow=color)
 
-    # Ödstadt: Ortsschild, Rathaus, Supermarkt, Marktplatz mit Brunnen
-    board("ÖDSTADT", "EINWOHNER: KEINE MEHR", 150, -22, facing(150, -22, 0, -22), (226, 178, 52))
-    b.building2("Rathaus", 312, 118, 40, 26, (186, 176, 158), (96, 70, 60), doors={"S": [0]}, windows1={"S": [-12, 12], "N": [-10, 10]},
-                windows2={"S": [-12, -4, 4, 12], "N": [-10, 0, 10], "E": [0], "W": [0]}, stairs_at=("W",))
-    b.sign2("RathausSign", (14, 3.4, 0.3), (312, 14.5, 104.6), "RATHAUS", "ÖDSTADT", (26, 26, 28), (226, 178, 52), (230, 230, 230),
-            angles=(0, 0, 0), glow=(226, 178, 52))
-    spot("Toolbox", 300, 124)
-    spot("Wood", 324, 112)
-    spot("Wood", 304, 118, 10.5)
-    b.flat_house("Supermarkt", 250, -118, 46, 28, 10, (200, 196, 186), doors={"N": [-8, 8]}, windows={"S": [-14, 0, 14]},
-                 roof_color=(180, 60, 50), trim=(180, 60, 50))
-    b.sign2("SupermarktSign", (16, 3.4, 0.3), (250, 12.8, -103.6), "SUPERMARKT", "24 H · NIE WIEDER", (26, 26, 28), (180, 60, 50),
-            (230, 230, 230), angles=(0, 180, 0), glow=(180, 60, 50))
-    spot("Wood", 238, -118)
-    spot("Medical", 262, -122)
-    spot("Toolbox", 250, -112)
-    b.cylinder("Decor", "FountainBase", 12, 1.6, (330, 0.8, 70), (130, 128, 122), material="Concrete")
-    b.cylinder("Decor", "FountainBowl", 9, 0.6, (330, 1.7, 70), (60, 100, 120), material="Glass", props={"Transparency": 0.3})
-    b.cylinder("Decor", "FountainColumn", 1.6, 5, (330, 3.4, 70), (150, 148, 142), material="Concrete")
+    for s in (-1, 1):
+        for vertical in (True, False):
+            x, z = (14, s * (C + 40)) if vertical else (s * (C + 40), 14)
+            board("ÖDSTADT", "STADTGRENZE · BETRETEN AUF EIGENE GEFAHR", x, z, facing(x, z, x * 3, z * 3),
+                  (226, 178, 52))
 
-    # ---------- Tankstelle (Norden, an der Straße) ----------
-    gx, gz = 46, 320
-    b.box("Buildings", "FuelRoof", (34, 1, 22), (gx, 9.5, gz), (200, 60, 50), "Metal")
-    for dx in (-14, 14):
-        for dz in (-8, 8):
-            b.box("Buildings", "FuelPillar", (1.2, 9, 1.2), (gx + dx, 4.5, gz + dz), (220, 220, 220), "Metal")
-    for dx in (-6, 6):
-        b.box("Cover", "FuelPump", (2, 4.6, 3), (gx + dx, 2.3, gz), (220, 220, 220), "SmoothPlastic")
-    b.box("Ground", "FuelLot", (60, 0.1, 40), (gx + 6, 0.07, gz), (90, 90, 94), "Concrete")
-    b.flat_house("FuelShop", gx + 30, gz, 18, 16, 9, (210, 206, 196), doors={"W": [0]}, windows={"W": [-5, 5], "S": [0]},
-                 roof_color=(200, 60, 50))
-    b.sign("FuelSign", (10, 4, 0.4), (gx, 13, gz - 11), "TANKSTELLE", (200, 60, 50), (250, 250, 250))
-    car(gx - 6, gz - 6, 0, (90, 110, 70), group="Cover", wreck=True)
-
-    spot("Toolbox", gx + 24, gz + 2)
-    spot("Ammo", gx + 36, gz - 4)
-    ground_spot("Wood", gx - 14, gz + 14)
-    board("TANKSTELLE", "LETZTE CHANCE · 24 KM ZUM NÄCHSTEN", 22, 288, facing(22, 288, 22, 200), (200, 60, 50))
-
-    # ---------- Bauernhof (Südwesten) ----------
-    fx, fz = -300, -290
+    fx, fz = EXT_PLACES["Bauernhof"][1:3]
     b.house("Barn", fx, fz, 36, 26, 14, (150, 56, 46), (80, 72, 66), doors=("N", "E"), material="WoodPlanks")
     b.cylinder("Buildings", "Silo", 10, 26, (fx + 30, 13, fz + 4), (176, 176, 170))
     b.add("Buildings", "SiloTop", (10, 10, 10), (fx + 30, 26, fz + 4), (150, 150, 146), "Metal", props={"Shape": "Ball"})
-    for k in range(3):
-        px, pz = fx - 70 + k * 64, fz + 70
-        b.box("Ground", "Field", (56, 0.1, 50), (px, 0.06, pz), (96, 74, 52), "Ground")
-        for r in range(6):
-            b.box("Nature", "Crops", (52, 1.2, 1.4), (px, 0.7, pz - 20 + r * 8), (120, 140, 60), "Grass",
-                  props={"CanCollide": False})
-    for k in range(6):
-        b.cylinder("Cover", "HayBale", 3.6, 4, (fx - 24 + k * 5, 1.8, fz - 26), (200, 176, 96), material="Fabric")
-    for x0, z0, x1, z1 in ((fx - 110, fz - 50, fx + 110, fz - 50), (fx - 110, fz + 110, fx + 110, fz + 110)):
-        b.box("Decor", "FenceRail", (x1 - x0, 0.4, 0.3), ((x0 + x1) / 2, 2.6, z0), (120, 92, 64), "Wood")
-        b.box("Decor", "FenceRail", (x1 - x0, 0.4, 0.3), ((x0 + x1) / 2, 1.4, z0), (120, 92, 64), "Wood")
-        for x in range(int(x0), int(x1) + 1, 22):
-            b.box("Decor", "FencePost", (0.6, 3.4, 0.6), (x, 1.7, z0), (100, 76, 52), "Wood")
-
-    spot("Wood", fx - 8, fz - 5)
-    spot("Toolbox", fx - 8, fz + 5)
-    spot("Wood", fx + 6, fz - 6)
-    b.flat_house("Farmhouse", fx + 72, fz - 62, 24, 18, 8, (176, 150, 120), doors={"S": [0]}, windows={"N": [-6, 6], "E": [0]},
-                 roof_color=(130, 60, 50))
-    spot("Medical", fx + 66, fz - 62)
-    spot("Wood", fx + 78, fz - 58)
-    ground_spot("Toolbox", fx + 36, fz + 20)
-    board("BAUERNHOF", "FRISCHE MILCH · KEINE ZOMBIES", fx + 60, fz + 110, facing(fx + 60, fz + 110, fx + 60, fz + 200), (150, 56, 46))
-
-    # ---------- Militärbasis (Nordwesten, hinter der Ringstraße) ----------
-    mx, mz, ms = -640, 640, 160
-    for k, (x0, z0, x1, z1) in enumerate(((mx - ms / 2, mz - ms / 2, mx + ms / 2, mz - ms / 2),
-                                          (mx - ms / 2, mz + ms / 2, mx + ms / 2, mz + ms / 2),
-                                          (mx - ms / 2, mz - ms / 2, mx - ms / 2, mz + ms / 2),
-                                          (mx + ms / 2, mz - ms / 2, mx + ms / 2, mz + ms / 2))):
-        along_x = z0 == z1
-        length = (x1 - x0) if along_x else (z1 - z0)
-        # Tor (Lücke) in der Südseite und Ostseite
-        parts = [(-length / 2, -12), (12, length / 2)] if k in (0, 3) else [(-length / 2, length / 2)]
-        for a0, a1 in parts:
-            mid = (a0 + a1) / 2
-            seg = a1 - a0
-            cx, cz = ((x0 + x1) / 2 + mid, z0) if along_x else (x0, (z0 + z1) / 2 + mid)
-            size = (seg, 9, 0.3) if along_x else (0.3, 9, seg)
-            b.box("Walls", "ChainFence", size, (cx, 4.5, cz), (150, 156, 160), "DiamondPlate", props={"Transparency": 0.55})
-        for t in range(0, int(length) + 1, 20):
-            px, pz = (x0 + t, z0) if along_x else (x0, z0 + t)
-            b.box("Walls", "FencePost", (0.8, 10, 0.8), (px, 5, pz), (80, 84, 88), "Metal")
-    for k, (bx, bz) in enumerate(((mx - 40, mz + 30), (mx + 10, mz + 40), (mx - 40, mz - 20))):
-        b.flat_house("Barracks%d" % k, bx, bz, 34, 14, 9, (98, 106, 86), doors={"S": [-8, 8]}, windows={"S": [0], "N": [-8, 8]},
-                     roof_color=(70, 76, 62))
-    for k in range(6):
-        b.container(mx + 30 + (k % 2) * 10, mz - 40 + (k // 2) * 24, along_x=False, color=rng.choice(((90, 110, 76), (70, 86, 64), (110, 96, 70))))
-    for cx, cz in ((mx - ms / 2 + 6, mz - ms / 2 + 6), (mx + ms / 2 - 6, mz + ms / 2 - 6)):
-        for dx in (-2.5, 2.5):
-            for dz in (-2.5, 2.5):
-                b.box("Decor", "TowerLeg", (0.9, 18, 0.9), (cx + dx, 9, cz + dz), (80, 84, 88), "Metal")
-        b.box("Buildings", "TowerDeck", (8, 0.6, 8), (cx, 18.3, cz), (90, 94, 98), "DiamondPlate")
-        b.box("Cover", "TowerWall", (8, 3, 0.4), (cx, 20, cz - 4), (90, 94, 98), "Metal")
-        b.box("Decor", "TowerRoof", (8.6, 0.4, 8.6), (cx, 23.4, cz), (70, 76, 62), "Metal")
-    b.box("Cover", "TankHull", (10, 3.6, 16), (mx + 4, 2.6, mz + 6), (84, 92, 70), "CorrodedMetal", angles=(0, 20, 0))
-    b.box("Cover", "TankTurret", (6.4, 2.4, 7), (mx + 4, 5.4, mz + 6), (78, 86, 66), "CorrodedMetal", angles=(0, 35, 0))
-    turret_look = (-math.sin(math.radians(35)), -math.cos(math.radians(35)))
-    b.add("Decor", "TankBarrel", (11, 0.9, 0.9), (mx + 4 + turret_look[0] * 8, 5.6, mz + 6 + turret_look[1] * 8),
-          (70, 76, 60), "Metal", angles=(0, 125, 0), props={"Shape": "Cylinder"})
+    for k in range(2):
+        px, pz = fx - 40 + k * 64, fz + 60
+        b.box("Ground", "Field", (56, 0.1, 40), (px, 0.06, pz), (96, 74, 52), "Ground")
+        for r_ in range(5):
+            b.box("Nature", "Crops", (52, 1.2, 1.4), (px, 0.7, pz - 16 + r_ * 8), (120, 140, 60), "Grass", props={"CanCollide": False})
     for k in range(5):
-        b.box("Cover", "Sandbags", (8, 3, 2.4), (mx - 10 + k * 14, 1.5, mz - ms / 2 + 14), (150, 134, 98), "Fabric",
-              angles=(0, rng.uniform(-8, 8), 0))
-    b.add("Ground", "Helipad", (0.3, 24, 24), (mx + 30, 0.2, mz + 50), (70, 72, 76), "Concrete", angles=(0, 0, 90),
-          props={"Shape": "Cylinder"})
+        b.cylinder("Cover", "HayBale", 3.6, 4, (fx - 24 + k * 5, 1.8, fz - 26), (200, 176, 96), material="Fabric")
+    b.flat_house("Farmhouse", fx + 50, fz - 40, 24, 18, 8, (176, 150, 120), doors={"N": [0]}, windows={"S": [-6, 6], "E": [0]},
+                 roof_color=(130, 60, 50))
+    spot("Wood", fx - 8, fz - 5, 0)
+    spot("Toolbox", fx - 8, fz + 5, 0)
+    spot("Medical", fx + 46, fz - 40, 0)
 
-    for k, (bx, bz) in enumerate(((mx - 40, mz + 30), (mx + 10, mz + 40), (mx - 40, mz - 20))):
-        spot("Military", bx - 8, bz)
-        spot("Medical" if k == 1 else "Toolbox", bx + 8, bz)
-    spot("Ammo", mx - 20, mz + 14)
-    spot("Ammo", mx + 40, mz + 20)
-    spot("Military", mx + 56, mz + 30)
-    spot("Military", mx - 6, mz - ms / 2 + 24)
-    board("SPERRGEBIET", "UNBEFUGTEN ZUTRITT VERBOTEN", mx + 70, mz - 100, facing(mx + 70, mz - 100, mx + 70, mz - 200), (215, 85, 45))
+    lx, lz = EXT_PLACES["Schwarzsee"][1:3]
+    b.box("Decor", "BoatHull", (4.6, 1.6, 13), (lx + 8, H(lx + 8, lz) + 3.8, lz + 4), (96, 70, 52), "WoodPlanks",
+          angles=(rng.uniform(-6, 6), rng.uniform(0, 180), rng.uniform(-8, 8)))
+    reeds = 0
+    for _ in range(300):
+        ang = rng.uniform(0, 2 * math.pi)
+        for dist in range(30, 220, 4):
+            rx_, rz_ = lx + math.cos(ang) * dist, lz + math.sin(ang) * dist
+            if not terrain.is_water(rx_, rz_):
+                if abs(rx_) < half - 40 and abs(rz_) < half - 40 and not on_road(rx_, rz_, 6):
+                    for _k in range(4):
+                        sx_, sz_ = rx_ + rng.uniform(-2, 2), rz_ + rng.uniform(-2, 2)
+                        b.box("Nature", "Reed", (0.4, rng.uniform(3, 5), 0.4), (sx_, H(sx_, sz_) + 1.6, sz_), (100, 130, 70), "Grass",
+                              props={"CanCollide": False})
+                    reeds += 1
+                break
+        if reeds >= 30:
+            break
 
-    # ---------- Industrie (Südosten) ----------
-    ix, iz = 330, -330
-    for k, (wx, wz) in enumerate(((ix - 40, iz + 20), (ix + 40, iz - 30))):
-        b.flat_house("Warehouse%d" % k, wx, wz, 54, 32, 14, (120, 122, 126), doors={"N": [-12, 12], "S": [0]},
-                     windows={"E": [-8, 8], "W": [-8, 8]}, roof_color=(84, 86, 90))
-    for k in range(10):
-        b.container(ix - 70 + (k % 5) * 28, iz - 90 + (k // 5) * 12, along_x=True, level=0,
-                    color=rng.choice(((150, 60, 50), (60, 100, 150), (170, 130, 60), (80, 120, 80))))
-    b.container(ix - 70, iz - 90, along_x=True, level=1, color=(150, 60, 50))
-    b.container(ix + 14, iz - 78, along_x=True, level=1, color=(60, 100, 150))
-    b.box("Buildings", "CraneTower", (3, 44, 3), (ix + 70, 22, iz + 40), (210, 170, 50), "Metal")
-    b.box("Buildings", "CraneArm", (50, 2.4, 2.4), (ix + 52, 44, iz + 40), (210, 170, 50), "Metal")
-    b.box("Decor", "Chimney", (6, 40, 6), (ix - 80, 20, iz + 60), (130, 110, 100), "Brick")
-
-    # Industrie: Kisten in den Hallen und zwischen den Containern, Schild
-    spot("Toolbox", ix - 52, iz + 26)
-    spot("Toolbox", ix - 28, iz + 14)
-    spot("Military", ix + 30, iz - 34)
-    spot("Toolbox", ix + 52, iz - 24)
-    spot("Ammo", ix - 40, iz - 60)
-    spot("Ammo", ix + 30, iz - 66)
-    ground_spot("Military", ix + 56, iz + 40)
-    board("INDUSTRIEGEBIET", "LAGERHALLEN · ZUTRITT AUF EIGENE GEFAHR", ix - 150, iz + 40, facing(ix - 150, iz + 40, ix - 250, iz + 40),
-          (215, 85, 45))
-
-    # ---------- Krankenhaus "St. Marien" (Osten, Zufahrt von der Ringstraße) ----------
-    hx, hz = EXT_PLACES["Krankenhaus"][1:3]
-    white, glass_blue = (226, 228, 226), (60, 90, 110)
-    b.building2("Hospital", hx, hz + 36, 64, 26, white, (150, 160, 170), doors={"S": [-16, 16]},
-                windows1={"S": [0, -30, 30], "N": [-24, -8, 8, 24]}, windows2={"S": [-24, -8, 8, 24], "N": [-24, -8, 8, 24],
-                                                                              "E": [0], "W": [0]}, stairs_at=("W", "E"))
-    b.box("Decor", "HospitalCrossV", (1.8, 7, 0.2), (hx, 15, hz + 22.5), (220, 40, 40), "Neon")
-    b.box("Decor", "HospitalCrossH", (7, 1.8, 0.2), (hx, 15, hz + 22.5), (220, 40, 40), "Neon")
-    b.sign2("HospitalSign", (22, 3.6, 0.3), (hx, 22.6, hz + 22.4), "ST. MARIEN", "KRANKENHAUS · NOTAUFNAHME 24 H", (26, 28, 30),
-            (220, 70, 70), (230, 230, 230), angles=(0, 0, 0), glow=(220, 70, 70))
-    b.flat_house("HospitalWing", hx + 56, hz - 30, 30, 22, 8, (214, 216, 214), doors={"N": [-6], "W": [0]},
-                 windows={"S": [-8, 8], "E": [0]}, roof_color=(150, 160, 170))
-    b.flat_house("HospitalLab", hx - 50, hz - 30, 26, 20, 8, (206, 210, 208), doors={"N": [0]}, windows={"S": [-6, 6], "W": [0]},
-                 roof_color=(150, 160, 170))
-    # Interieur: Betten (Blöcke) als Deckung
-    for k in range(4):
-        b.box("Cover", "HospitalBed", (2.6, 1.4, 6), (hx - 24 + k * 16, 0.9, hz + 40), (210, 214, 222), "SmoothPlastic")
-    spot("Medical", hx - 12, hz + 30)
-    spot("Medical", hx + 12, hz + 30)
-    spot("Medical", hx - 12, hz + 43)
-    spot("Medical", hx + 12, hz + 43)
-    spot("Medical", hx - 20, hz + 38, 10.5)
-    spot("Medical", hx + 20, hz + 38, 10.5)
-    spot("Toolbox", hx, hz + 40, 10.5)
-    spot("Military", hx + 56, hz - 32)
-    spot("Medical", hx + 62, hz - 28)
-    spot("Medical", hx - 50, hz - 30)
-    spot("Ammo", hx - 56, hz - 26)
-    # Krankenwagen, Zelte des Feldlazaretts, Landeplatz
-    for ax, az, yaw in ((hx - 36, hz - 4, 80), (hx + 28, hz - 8, 100), (hx - 70, hz + 28, 10)):
-        car(ax, az, yaw, (232, 232, 232), group="Cover", wreck=True)
-        b.box("Cover", "AmbulanceStripe", (5.7, 0.7, 11.2), (ax, 2.2, az), (200, 40, 40), "SmoothPlastic", angles=(0, yaw, 0))
-    spot("Medical", hx - 38, hz - 12)
-    for k, (tx, tz) in enumerate(((hx + 40, hz + 62), (hx + 56, hz + 52), (hx + 70, hz + 40))):
-        yaw = facing(tx, tz, hx, hz + 36)
-        f = frame(tx, tz, yaw)
-        b.box("Decor", "TentFloor", (8, 0.2, 10), f(0, 0.2, 0), (70, 70, 64), "Fabric", angles=(0, yaw, 0))
-        b.add("Decor", "Tent", (8, 5, 5), f(0, 2.6, -2.5), (230, 230, 226), "Fabric", angles=(0, yaw, 0), cls="WedgePart")
-        b.add("Decor", "Tent", (8, 5, 5), f(0, 2.6, 2.5), (230, 230, 226), "Fabric", angles=(0, yaw + 180, 0), cls="WedgePart")
-        if k == 1:
-            spot("Medical", tx, tz + 1)
-    b.add("Decor", "Helipad", (0.3, 22, 22), (hx - 30, 0.2, hz + 80), (70, 72, 76), "Concrete", angles=(0, 0, 90),
-          props={"Shape": "Cylinder"})
-    b.floor_text("HelipadH2", (9, 0.1, 9), (hx - 30, 0.4, hz + 80), "H", (236, 236, 236))
-    board("ST. MARIEN", "KRANKENHAUS · RETTUNG ODER FALLE?", 520, 322, facing(520, 322, 480, 322), (220, 70, 70), width=14)
-
-    # ---------- Polizeiwache (Westen, an der Straße) ----------
-    px, pz = EXT_PLACES["Polizei"][1:3]
-    blue = (60, 96, 160)
-    b.building2("Police", px, pz + 10, 44, 24, (150, 160, 176), (60, 70, 90), doors={"S": [-10, 10]},
-                windows1={"S": [0], "N": [-12, 0, 12], "E": [0], "W": [0]}, windows2={"S": [-14, -4, 6, 16], "N": [-14, 0, 14]},
-                stairs_at=("E",))
-    b.sign2("PoliceSign", (14, 3.4, 0.3), (px, 14.6, pz - 2.4), "POLIZEI", "REVIER 7 · WACHE", (26, 28, 40), (90, 140, 230),
-            (230, 230, 230), angles=(0, 0, 0), glow=(90, 140, 230))
-    b.flat_house("PoliceGarage", px + 40, pz - 20, 24, 18, 8, (130, 134, 142), doors={"W": [0]}, windows={"N": [0]},
-                 roof_color=(70, 76, 90))
-    spot("Ammo", px - 12, pz + 6)
-    spot("Ammo", px + 12, pz + 6)
-    spot("Military", px - 14, pz + 14, 10.5)
-    spot("Toolbox", px + 14, pz + 14, 10.5)
-    spot("Medical", px, pz + 4)
-    spot("Toolbox", px + 36, pz - 20)
-    for cx_, cz_, yaw in ((px - 10, pz - 22, 90), (px + 8, pz - 30, 80), (px - 32, pz - 6, 100)):
-        car(cx_, cz_, yaw, (60, 90, 150), group="Cover", wreck=True)
-        b.box("Cover", "PoliceStripe", (5.7, 0.8, 11.2), (cx_, 2.2, cz_), (236, 236, 240), "SmoothPlastic", angles=(0, yaw, 0))
-    for k in range(4):
-        b.barrier(px - 30 + k * 14, pz - 44, along_x=True, length=8)
-    board("POLIZEI", "REVIER 7 · KEIN BEAMTER MEHR DA", px - 60, 22, facing(px - 60, 22, px - 60, -60), (90, 140, 230))
-
-    # ---------- Wohnwagenpark (Süden, an der Straße) ----------
-    wx, wz = EXT_PLACES["Wohnwagenpark"][1:3]
-    cream = ((226, 218, 196), (190, 206, 214), (214, 190, 170), (200, 210, 190))
-    for k in range(8):
-        tx = wx - 40 + (k % 4) * 28
-        tz = wz - 16 + (k // 4) * 36
-        yaw = 90 if k % 2 else 0
-        f = frame(tx, tz, yaw)
-        col = cream[k % 4]
-        b.box("Cover", "Trailer", (14, 4.4, 5.6), f(0, 3.4, 0), col, "Metal", angles=(0, yaw, 0))
-        b.box("Decor", "TrailerRoof", (14.4, 0.5, 6), f(0, 5.8, 0), lighten(col, -0.3), "Metal", angles=(0, yaw, 0))
-        b.box("Decor", "TrailerWindow", (3, 1.4, 5.8), f(-3, 3.8, 0), glass_blue, "Glass", angles=(0, yaw, 0))
-        b.box("Decor", "TrailerStripe", (14.2, 0.5, 5.8), f(0, 2.6, 0), (150, 70, 60), "SmoothPlastic", angles=(0, yaw, 0))
-        for side in (-1, 1):
-            b.add("Decor", "TrailerWheel", (0.6, 2, 2), f(side * 3, 1.0, -3.0), (24, 24, 26), "Rubber", angles=(0, yaw, 0),
-                  props={"Shape": "Cylinder"})
-        b.box("Decor", "TrailerHitch", (0.4, 0.4, 3), f(-8.4, 1.6, 0), dark, "Metal", angles=(0, yaw, 0))
-        if k in (0, 3, 5, 6):
-            spot("Wood", f(0, 0, 4.4)[0], f(0, 0, 4.4)[2])
-    spot("Medical", wx + 4, wz + 24)
-    # Lagerfeuer mit Steinen und Baumstämmen
-    b.cylinder("Decor", "FireGlow", 1.6, 1.4, (wx + 6, 0.9, wz + 4), (255, 150, 40), material="Neon",
-               props={"CanCollide": False})
-    b.box("Decor", "FireLight", (0.4, 0.4, 0.4), (wx + 6, 1.6, wz + 4), (255, 160, 60), "Neon", props={"CanCollide": False},
-          children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 26, "Brightness": 1.2,
-                                                                                  "Color": rgb(255, 170, 80)}}])
-    for k in range(10):
-        a = math.radians(k * 36)
-        b.box("Decor", "FireStone", (1.2, 0.8, 1.2), (wx + 6 + math.cos(a) * 2.2, 0.4, wz + 4 + math.sin(a) * 2.2), (110, 108, 104), "Slate")
-    for k in range(3):
-        a = math.radians(70 + k * 120)
-        b.box("Decor", "FireLog", (4.4, 0.8, 0.8), (wx + 6 + math.cos(a) * 5, 0.5, wz + 4 + math.sin(a) * 5), (96, 70, 48), "Wood",
-              angles=(0, math.degrees(a) + 90, 0))
-    b.sign2("TrailerSign", (12, 3.2, 0.3), (wx, 8.6, wz - 40), "SONNENBLICK", "WOHNWAGENPARK · PLATZ FREI", (40, 60, 40), (160, 210, 120),
-            (230, 230, 230), angles=(0, 0, 0), glow=(160, 210, 120))
-    b.box("Decor", "TrailerSignPostL", (0.5, 8, 0.5), (wx - 5.5, 4, wz - 40.2), (70, 62, 54), "Wood")
-    b.box("Decor", "TrailerSignPostR", (0.5, 8, 0.5), (wx + 5.5, 4, wz - 40.2), (70, 62, 54), "Wood")
-
-    # ---------- Kirche und Friedhof (Norden) ----------
-    kx, kz = EXT_PLACES["Kirche"][1:3]
-    b.house("Church", kx, kz, 18, 36, 15, (192, 186, 172), (96, 62, 52), doors=("E", "S"), material="Brick")
-    b.box("Buildings", "ChurchTower", (9, 30, 9), (kx, 15, kz + 22), (186, 180, 166), "Brick")
-    for w, yy in ((10, 31.5), (7, 34.5), (4.4, 37.5), (2, 41)):
-        b.box("Buildings", "Spire", (w, 3.4, w), (kx, yy, kz + 22), (70, 52, 46), "Slate", angles=(0, 45, 0))
-    b.box("Decor", "SpireCrossV", (0.5, 4, 0.5), (kx, 45, kz + 22), (220, 200, 120), "Metal")
-    b.box("Decor", "SpireCrossH", (2, 0.5, 0.5), (kx, 45.6, kz + 22), (220, 200, 120), "Metal")
-    for k in range(3):
-        b.box("Cover", "Pew", (12, 1.4, 1.2), (kx, 0.8, kz - 8 + k * 5), (96, 70, 50), "WoodPlanks")
-    spot("Wood", kx - 5, kz + 8)
-    spot("Wood", kx + 5, kz - 12)
-    spot("Medical", kx, kz + 12)
-    for row in range(4):
-        for col in range(8):
-            gx_, gz_ = kx - 56 + col * 6.5, kz - 24 - row * 8
-            b.box("Cover", "Gravestone", (1.5, 2.4, 0.5), (gx_, 1.2, gz_), (150, 150, 146), "Slate", angles=(0, rng.uniform(-8, 8), 0))
-    for dz_ in (-14, -58):  # niedriger Zaun um den Friedhof
-        b.box("Decor", "GraveFence", (60, 0.4, 0.3), (kx - 30, 2.2, kz + dz_), (70, 70, 74), "Metal")
-    for dx_ in (-60, 0):
-        b.box("Decor", "GraveFence", (0.3, 0.4, 44), (kx + dx_, 2.2, kz - 36), (70, 70, 74), "Metal")
-    ground_spot("Wood", kx - 40, kz - 38)
-    ground_spot("Wood", kx - 14, kz - 54)
-    for k in range(5):  # tote Bäume
-        dx_, dz_ = kx - 60 + rng.uniform(0, 60), kz - 60 + rng.uniform(0, 30)
-        b.box("Nature", "DeadTrunk", (1.2, 9, 1.2), (dx_, 4.5, dz_), (60, 50, 44), "Wood", angles=(rng.uniform(-6, 6), 0, rng.uniform(-6, 6)))
-    board("KIRCHE", "RUHE IN FRIEDEN", 24, 600, facing(24, 600, 100, 600), (200, 190, 150))
-
-    # ---------- Funkturm auf dem Hügel (Südwesten) ----------
     tx0, tz0 = EXT_PLACES["Funkturm"][1:3]
     g0 = H(tx0, tz0)
-    b.box("Buildings", "TowerBase", (30, 6, 26), (tx0 + 8, g0 - 2.4, tz0 + 6), (110, 108, 102), "Concrete")
+    b.box("Buildings", "TowerBase", (30, 6, 26), (tx0 - 8, g0 - 2.4, tz0 - 6), (110, 108, 102), "Concrete")
     base = g0 + 0.6
     for sx in (-1, 1):
         for sz in (-1, 1):
@@ -3918,123 +4327,61 @@ def build_extinction():
     for lv in range(1, 6):
         wd = 8.8 - lv * 0.95
         yy = base + lv * 8
-        b.box("Buildings", "TowerRing", (wd + 0.6, 0.5, 0.5), (tx0, yy, tz0 + wd / 2), (200, 200, 205), "Metal")
-        b.box("Buildings", "TowerRing", (wd + 0.6, 0.5, 0.5), (tx0, yy, tz0 - wd / 2), (200, 200, 205), "Metal")
-        b.box("Buildings", "TowerRing", (0.5, 0.5, wd + 0.6), (tx0 + wd / 2, yy, tz0), (200, 200, 205), "Metal")
-        b.box("Buildings", "TowerRing", (0.5, 0.5, wd + 0.6), (tx0 - wd / 2, yy, tz0), (200, 200, 205), "Metal")
+        for dx_, dz_, sx_, sz_ in ((0, wd / 2, wd + 0.6, 0.5), (0, -wd / 2, wd + 0.6, 0.5), (wd / 2, 0, 0.5, wd + 0.6), (-wd / 2, 0, 0.5, wd + 0.6)):
+            b.box("Buildings", "TowerRing", (sx_, 0.5, sz_), (tx0 + dx_, yy, tz0 + dz_), (200, 200, 205), "Metal")
     b.box("Buildings", "TowerMast", (0.5, 14, 0.5), (tx0, base + 55, tz0), (200, 200, 205), "Metal")
     b.box("Decor", "TowerBeacon", (1.2, 1.2, 1.2), (tx0, base + 62.6, tz0), (255, 40, 30), "Neon",
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 60, "Brightness": 1.5, "Color": rgb(255, 60, 40)}}])
-    b.box("Decor", "TowerDish", (6, 6, 0.6), (tx0 + 3, base + 36, tz0 - 3), (220, 220, 225), "Metal", angles=(0, 35, 0))
-    b.flat_house("RadioBunker", tx0 + 18, tz0 + 8, 16, 12, 6, (110, 112, 108), y0=g0 + 0.6, doors={"W": [0]}, windows={"S": [0]},
+    b.flat_house("RadioBunker", tx0 - 18, tz0 - 8, 16, 12, 6, (110, 112, 108), y0=g0 + 0.6, doors={"E": [0]}, windows={"N": [0]},
                  roof_color=(80, 82, 80))
-    spot("Military", tx0 + 16, tz0 + 8, g0 + 0.6)
-    spot("Military", tx0 + 22, tz0 + 6, g0 + 0.6)
-    spot("Ammo", tx0 + 20, tz0 + 12, g0 + 0.6)
-    ground_spot("Toolbox", tx0 - 12, tz0 + 10)
+    spot("Military", tx0 - 20, tz0 - 8, g0 + 0.6)
+    spot("Ammo", tx0 - 15, tz0 - 6, g0 + 0.6)
 
-    # ---------- Seen: Wrack, Schilf, Felsen am Ufer ----------
-    for name, lx, lz, lr, ldepth in EXT_LAKES:
-        b.box("Decor", "BoatHull", (4.6, 1.6, 13), (lx + 8, terrain.sample(lx + 8, lz) + 3.8, lz + 4), (96, 70, 52), "WoodPlanks",
-              angles=(rng.uniform(-6, 6), rng.uniform(0, 180), rng.uniform(-8, 8)))
-        placed = 0
-        for _ in range(400):
-            ang = rng.uniform(0, 2 * math.pi)
-            for dist in range(int(lr * 0.4), int(lr * 1.8), 4):
-                rx, rz = lx + math.cos(ang) * dist, lz + math.sin(ang) * dist
-                if not terrain.is_water(rx, rz):
-                    if dist > lr * 0.5 and abs(rx) < half - 40 and abs(rz) < half - 40 and not on_road(rx, rz, 6) and not pois_near(rx, rz, 10):
-                        gy = H(rx, rz)
-                        for _k in range(4):
-                            sx_, sz_ = rx + rng.uniform(-2, 2), rz + rng.uniform(-2, 2)
-                            b.box("Nature", "Reed", (0.4, rng.uniform(3, 5), 0.4), (sx_, H(sx_, sz_) + 1.6, sz_), (100, 130, 70), "Grass",
-                                  props={"CanCollide": False})
-                        if placed % 5 == 0:
-                            rock_at(rx, rz, rng.uniform(3, 6))
-                        placed += 1
-                    break
-            if placed >= 36:
-                break
-
-    # ---------- Rote Zonen: Grenze, Leuchtfeuer, Warnschilder ----------
-    red = (226, 56, 48)
-    for key, radius in EXT_REDZONES.items():
-        title, rx, rz, _ = EXT_PLACES[key]
-        b.add("Redzones", "Redzone_" + key, (2 * radius, 120, 2 * radius), (rx, 60, rz), red, "SmoothPlastic",
-              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
-                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
-        n = int(2 * math.pi * radius / 14)
-        for k in range(n):
-            a = 2 * math.pi * (k + 0.5) / n
-            wx_, wz_ = rx + math.cos(a) * radius, rz + math.sin(a) * radius
-            gy = H(wx_, wz_)
-            b.box("Redzones", "RedEdge", (2 * math.pi * radius / n + 0.3, 40, 0.3), (wx_, gy + 16, wz_), red, "ForceField",
-                  angles=(0, -math.degrees(a) + 90, 0),
-                  props={"Transparency": 0.72, "CanCollide": False, "CanQuery": False, "CanTouch": False})
-        for k in range(8):
-            a = math.radians(k * 45 + 22.5)
-            sx_, sz_ = rx + math.cos(a) * (radius + 6), rz + math.sin(a) * (radius + 6)
-            if abs(sx_) > half - 30 or abs(sz_) > half - 30 or terrain.is_water(sx_, sz_) or terrain.slope(sx_, sz_) > 0.5:
-                continue
-            board("ROTE ZONE", "PVP SOFORT · MEHR ZOMBIES · BESSERE BEUTE", sx_, sz_, facing(sx_, sz_, rx + (sx_ - rx) * 2, rz + (sz_ - rz) * 2),
-                  red, bg=(40, 16, 14))
-        # Leuchtfeuer in der Mitte
-        gc = H(rx, rz)
-        b.box("Decor", "RedBeaconPole", (0.9, 46, 0.9), (rx + 6, gc + 23, rz + 6), (60, 60, 64), "Metal")
-        b.box("Decor", "RedBeacon", (2.2, 2.2, 2.2), (rx + 6, gc + 47, rz + 6), red, "Neon",
-              children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 90, "Brightness": 2, "Color": rgb(255, 60, 50)}}])
-
-    # ---------- Orte (Banner beim Betreten) ----------
-    for key, (title, x, z, r) in EXT_PLACES.items():
-        b.add("Places", "Place_" + key, (2 * r, 4, 2 * r), (x, 2, z), (255, 255, 255), "SmoothPlastic",
-              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
-                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
-
-    # ---------- Wald, Felsen, Autowracks ----------
     def free(x, z, pad=12):
-        if in_safe(x, z, 40) or on_road(x, z, pad) or pois_near(x, z, 24):
+        if on_road(x, z, pad):
             return False
-        gy = H(x, z)
-        if gy < terrain_water + 2.5 or terrain.slope(x, z) > 0.62:
+        for key in ("Bauernhof", "Funkturm"):
+            _, px, pz, pr = EXT_PLACES[key]
+            if math.hypot(x - px, z - pz) < pr + 20:
+                return False
+        if H(x, z) < et.WATER + 2.5 or terrain.slope(x, z) > 0.62:
             return False
         return abs(x) < half - 24 and abs(z) < half - 24
 
-    terrain_water = et.WATER
     placed, tries = 0, 0
-    while placed < 560 and tries < 40000:
+    while placed < 300 and tries < 30000:
         tries += 1
         x, z = rng.uniform(-half + 30, half - 30), rng.uniform(-half + 30, half - 30)
-        density = terrain.noise.fbm(x / 160.0 + 40, z / 160.0 - 20, 3)
-        if rng.random() > (0.95 if density > 0.52 else 0.1 if density > 0.45 else 0.03):
+        density = terrain.noise.fbm(x / 120.0 + 40, z / 120.0 - 20, 3)
+        if rng.random() > (0.95 if density > 0.5 else 0.12):
             continue
         if free(x, z):
             tree_at(x, z)
             placed += 1
     placed = 0
-    for _ in range(4000):
-        if placed >= 90:
+    for _ in range(3000):
+        if placed >= 50:
             break
         x, z = rng.uniform(-half + 40, half - 40), rng.uniform(-half + 40, half - 40)
         if free(x, z, 14) and (terrain.slope(x, z) > 0.3 or rng.random() < 0.15):
             rock_at(x, z)
             placed += 1
-    for k in range(40):  # Kisten verstreut im Gelände (Waldlichtungen, Hänge)
+    placed = 0
+    for _ in range(400):
+        if placed >= 12:
+            break
         x, z = rng.uniform(-half + 60, half - 60), rng.uniform(-half + 60, half - 60)
         if free(x, z, 16) and all(math.hypot(x - ox_, z - oz_) > 12 for ox_, oz_ in obstacles):
-            ground_spot(rng.choice(("Wood", "Wood", "Wood", "Toolbox")), x, z)
-    wrecks = ((0, 180, 8), (6, 520, -6), (-6, -260, 5), (4, -640, -4), (180, 0, 0), (-220, 6, 0), (-610, -5, 0),
-              (ring, 120, 3), (-ring, -200, -3), (240, ring, 0), (-330, -ring, 0), (ring - 5, -560 + 120, 2))
-    for x, z, dx in wrecks:
-        along_road_x = abs(z) < road_w and abs(x) > 50 or (abs(abs(z) - ring) < road_w)
-        yaw = (90 if along_road_x else 0) + rng.uniform(-25, 25)
-        car(x + dx, z, yaw, rng.choice(((130, 60, 50), (70, 90, 120), (120, 120, 110), (90, 100, 70))), group="Cover",
-            wreck=True)
-    for x, z, along in ((0, 240, True), (0, -420, True), (250, 2, False), (-300, 0, False), (-ring, 300, True)):
-        for k in (-1, 1):
-            b.barrier(x + (k * 5 if along else 0), z + (0 if along else k * 5), along_x=along, length=8)
-    print("Extinction: Kisten", spot_count)
+            ground_spot(rng.choice(("Wood", "Wood", "Toolbox")), x, z)
+            placed += 1
+    for s in (-1, 1):  # Wracks auf den Landstraßen
+        for k in range(3):
+            d = C + 60 + k * 80
+            car(rng.choice((-5, 5)), s * d, rng.uniform(-25, 25), rng.choice(car_cols))
+            car(s * d, rng.choice((-5, 5)), 90 + rng.uniform(-25, 25), rng.choice(car_cols))
+    print("Extinction: Kisten", spot_count, "gesamt", sum(spot_count.values()))
 
-    b.save("Extinction.model.json", "Ödland", atmosphere="Wasteland")
+    b.save("Extinction.model.json", "Ödstadt", atmosphere="Wasteland")
 
 
 if __name__ == "__main__":

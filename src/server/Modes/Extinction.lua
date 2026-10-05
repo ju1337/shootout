@@ -328,7 +328,7 @@ end
 function Extinction.AddPlayer(player)
 	members[player] = { Inside = true }
 	player:SetAttribute("MapId", map.Name)
-	player:SetAttribute("MapName", map:GetAttribute("DisplayName") or "Ödland")
+	player:SetAttribute("MapName", map:GetAttribute("DisplayName") or "Ödstadt")
 	player:SetAttribute("MapCenter", map:GetAttribute("Center"))
 	player:SetAttribute("ModeText", "")
 	InventoryService.Enter(player)

@@ -196,6 +196,20 @@ check(markers ~= nil and markers:FindFirstChild("Marker1").Visible and markers:F
 check(string.find(texts(markers), "LOOTDROP", 1, true) ~= nil and string.find(texts(markers), "ROTE ZONE  WERK", 1, true) ~= nil,
 	"Marker nennen Lootdrop und rote Zone")
 check(not markers:FindFirstChild("Marker3").Visible, "nur zwei Marker sichtbar")
+-- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt
+InputActions.Trigger("WorldMap", true)
+InputActions.Trigger("WorldMap", false)
+step(0.2)
+local mapGui = playerGui:FindFirstChild("ExtinctionMap")
+check(mapGui ~= nil and mapGui.Enabled, "N öffnet die Weltkarte")
+check(mapGui and find(mapGui, "Redzone") ~= nil and find(mapGui, "Airdrop") ~= nil and find(mapGui, "Me").Visible,
+	"Karte zeigt rote Zone, Lootdrop und den eigenen Standort")
+check(mapGui and string.find(texts(mapGui), "LOOTDROP", 1, true) ~= nil, "Lootdrop mit Text auf der Karte")
+InputActions.Trigger("WorldMap", true)
+InputActions.Trigger("WorldMap", false)
+step(0.2)
+check(mapGui and not mapGui.Enabled, "N schließt die Weltkarte")
+
 bob:SetAttribute("Redzone", "Werk")
 step(0.3)
 check(find(hud, "RedzoneVignette").Visible and string.find(texts(hud), "ROTE ZONE  ·  PVP AKTIV", 1, true) ~= nil,

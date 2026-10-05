@@ -130,7 +130,7 @@ def check_extinction_world(parts, local, safe_radius):
             problems.append("Extinction: %s ohne Title" % part["Name"])
         if math.hypot(x, z) < safe_radius + r + 60:
             problems.append("Extinction: %s zu nah an der Safe Zone" % part["Name"])
-        if abs(x) + r > 900 or abs(z) + r > 900:
+        if abs(x) + r > 1000 or abs(z) + r > 1000:
             problems.append("Extinction: %s ragt aus der Welt" % part["Name"])
     places = [part for group, part in parts if group == "Places" and part["Name"].startswith("Place_")]
     if len(places) < 8:
@@ -160,7 +160,7 @@ def check_extinction_world(parts, local, safe_radius):
         x, y, z = local(spot)
         if math.hypot(x, z) < safe_radius:
             problems.append("Extinction: %s in der Safe Zone" % spot["Name"])
-        if abs(x) > 880 or abs(z) > 880:
+        if abs(x) > 980 or abs(z) > 980:
             problems.append("Extinction: %s am Rand der Welt (%.0f, %.0f)" % (spot["Name"], x, z))
         # Kiste (Mitte 0,5 über dem Boden, 2 x 2 groß) darf nicht in einem festen Teil stecken
         probe = [(x + dx, y - 0.4 + dy, z + dz) for dx in (-1, 0, 1) for dz in (-1, 0, 1) for dy in (0.0, 1.0)]
