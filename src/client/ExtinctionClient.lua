@@ -388,7 +388,7 @@ local function updateHints()
 	if device == "Gamepad" then
 		hints.Text = "R1 / L1  WAFFE  ·  SELECT  INVENTAR  ·  △  FAHRZEUG EINPACKEN"
 	elseif device == "Touch" then
-		hints.Text = "PLÄTZE ANTIPPEN ZUM BENUTZEN"
+		hints.Text = "PLÄTZE ANTIPPEN ZUM BENUTZEN  ·  TASCHE = INVENTAR  ·  PARKEN = FAHRZEUG EINPACKEN"
 	else
 		hints.Text = "1-9  BENUTZEN  ·  TAB  INVENTAR  ·  K  FAHRZEUG EINPACKEN  ·  E  INTERAGIEREN"
 	end
@@ -460,6 +460,7 @@ local function newWindow(kind, title, subtitle, accent)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
 	end)
+	InputActions.Focus(frame) -- Controller: Auswahl auf den ersten Platz (nach dem Aufbau)
 	return window
 end
 
@@ -1006,6 +1007,12 @@ function ExtinctionClient.Init()
 	InputActions.Bind("Ability", function(began)
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
 			cycle(-1)
+		end
+	end)
+	-- Touch: der Knopf WAFFE wechselt durch die Waffen der Hotbar
+	InputActions.Bind("SwapWeapon", function(began)
+		if began and inExtinction() and InputActions.IsTouch() then
+			cycle(1)
 		end
 	end)
 	InputActions.Bind("Menu", function(began)

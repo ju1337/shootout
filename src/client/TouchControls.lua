@@ -45,6 +45,13 @@ local TOP = {
 local LEFT = {
 	{ "Sprint", "SPRINT", 66, 110, 330, "toggle" },
 }
+-- Nur in der offenen Welt (EXTINCTION): Inventar und Fahrzeug einpacken, an den Plätzen von Fähigkeit und Gadget
+-- (dort gibt es nur passive Fähigkeiten). WAFFE wechselt dort durch die Waffen der Hotbar (ExtinctionClient).
+local SURVIVAL = {
+	{ "Inventory", "TASCHE", 84, 200, 305, "tap" },
+	{ "StoreVehicle", "PARKEN", 72, 305, 245, "tap" },
+}
+local SURVIVAL_HIDDEN = { Ability = true, Gadget = true, Ultimate = true, Scoreboard = true }
 
 local gui
 local buttons = {} -- [Aktion] = Knopf
@@ -133,6 +140,9 @@ function TouchControls.Init()
 	for _, entry in LEFT do
 		makeButton(root, entry, "left")
 	end
+	for _, entry in SURVIVAL do
+		makeButton(root, entry, "right")
+	end
 
 	-- Springen: Charakter springen lassen (Klettern an Kanten erledigt Movement über dieselbe Aktion)
 	InputActions.Bind("Jump", function(began)
@@ -163,6 +173,14 @@ function TouchControls.Init()
 		end
 		-- Interagieren nur zeigen, wenn es etwas gibt (Wiederbeleben, Bombe, Hacken)
 		buttons.Interact.Button.Visible = player:GetAttribute("ObjHint") ~= nil or InputActions.InteractAvailable()
+		-- offene Welt: TASCHE und PARKEN statt Fähigkeit, Gadget, Ultimate und Punkte
+		local survival = Modes.IsSurvival(player:GetAttribute("Mode"))
+		for action in SURVIVAL_HIDDEN do
+			buttons[action].Button.Visible = not survival
+		end
+		for _, entry in SURVIVAL do
+			buttons[entry[1]].Button.Visible = survival
+		end
 		-- Gadget leer: Knopf abdunkeln
 		local charges = player:GetAttribute("Gadgets") or 0
 		buttons.Gadget.Button.TextTransparency = charges > 0 and 0 or 0.6
