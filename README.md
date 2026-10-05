@@ -105,8 +105,9 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
   Client `src/client/MarketClient.lua`, Map `build_market()` in `tools/build_maps.py`): wie die Trading Plaza in
   Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT an der Ostwand des Hubs oder den Knopf MARKT im
   Seitenmenü (im Markt heißt er ZUM HUB), zurück durchs Tor im Süden der Halle.
-  - **Aufbau**: Man spawnt in der Mitte auf dem **Marktplatz** (Such-Terminal, zwei Kisten-Automaten, Übersichtstafel mit
-    freien/belegten Ständen, Tafel **beliebteste Händler** nach Verkäufen, Tor zurück zum Hub). Darum liegen wie in einem
+  - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand zwei
+    Kisten-Automaten, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
+    Das Tor zurück zum Hub steht am Ende der Südrampe (oberster Rang); schneller geht es über den Knopf ZUM HUB im Seitenmenü. Darum liegen wie in einem
     Theater drei Ränge, die nach außen stufenweise höher werden (Stände 1-12, 13-28, 29-48); alle Stände zeigen zur Mitte.
     Vier Rampen (Norden, Osten, Süden, Westen) führen über alle Ränge nach oben, die Stufen kann man auch springen.
   - **SUCHE** (Knopf oben oder E am Such-Terminal, Logik in `src/shared/MarketSearch.lua`): alle Angebote aller Stände

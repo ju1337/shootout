@@ -1846,9 +1846,10 @@ MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64),
 
 
 def build_market():
-    """Markt als Theater-Rund (Radius 86, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal, zwei
+    """Markt als Theater-Rund (Radius 94, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal, zwei
     Kisten-Automaten, Tafeln, Tor zurück zum Hub). Darum drei breite Ränge, die nach außen stufenweise höher werden
-    (2,4 / 5,4 / 8,4 m); auf jedem Rang stehen die Stände mit der Vorderseite zur Mitte (12 + 16 + 20 = 48). Vier
+    (2,4 / 5,4 / 8,4 m); auf jedem Rang stehen die Stände mit der Vorderseite zur Mitte (12 + 16 + 20 = 48). Das Tor
+    zurück zum Hub steht am Ende der Südrampe (oberster Rang), damit der Platz frei bleibt. Vier
     Rampen (Himmelsrichtungen) führen vom Platz über alle Ränge nach oben, die Stufen dazwischen kann man auch
     springen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client),
     sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum Gang) und dem Prompt-Punkt vor der
@@ -1861,8 +1862,8 @@ def build_market():
     wood, wood_dark, top = (128, 92, 62), (94, 68, 48), (62, 54, 48)
     warm, rap = (255, 198, 128), (86, 214, 170)
     stone, plaza = (150, 142, 132), (58, 54, 56)
-    R0, R_WALL = 24, 86
-    tiers = ((28, 46, 2.4, 3), (46, 64, 5.4, 4), (64, 82, 8.4, 5))  # (innen, außen, Höhe, Stände je Viertel)
+    R0, R_WALL = 32, 94
+    tiers = ((36, 54, 2.4, 3), (54, 72, 5.4, 4), (72, 90, 8.4, 5))  # (innen, außen, Höhe, Stände je Viertel)
     ramp_w = 10
 
     def polar(r, phi_deg):
@@ -1874,8 +1875,8 @@ def build_market():
         c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
         return lambda lx, ly, lz: (cx + lx * c + lz * sn, y0 + ly, cz - lx * sn + lz * c)
 
-    b.ground(230, 230, (44, 42, 40), "Asphalt")
-    b.border(220, 220, 2, (60, 60, 65), "Metal", barrier=80)
+    b.ground(250, 250, (44, 42, 40), "Asphalt")
+    b.border(240, 240, 2, (60, 60, 65), "Metal", barrier=80)
 
     # ---------- Ringe (Platz, Ränge, Außenmauer) aus Segmenten ----------
     def ring(group, name, r_in, r_out, y0, height, color, material, n=72, **kw):
@@ -1889,8 +1890,8 @@ def build_market():
 
     b.cylinder("Ground", "PlazaRim", 2 * R0 + 1.6, 0.18, (0, 0.09, 0), rap, "Neon", props={"Transparency": 0.5})
     b.cylinder("Ground", "PlazaFloor", 2 * R0, 0.24, (0, 0.12, 0), plaza, "Slate")
-    b.cylinder("Ground", "PlazaInlay", 34, 0.06, (0, 0.27, 0), rap, "Neon", props={"Transparency": 0.78})
-    b.cylinder("Ground", "PlazaInlayCore", 31, 0.07, (0, 0.28, 0), (46, 42, 44), "Slate")
+    b.cylinder("Ground", "PlazaInlay", 44, 0.06, (0, 0.27, 0), rap, "Neon", props={"Transparency": 0.78})
+    b.cylinder("Ground", "PlazaInlayCore", 41, 0.07, (0, 0.28, 0), (46, 42, 44), "Slate")
     for i, (r_in, r_out, h, _) in enumerate(tiers):
         ring("Ground", "Tier%d" % (i + 1), r_in, r_out, 0, h, floor, "WoodPlanks")
         ring("Decor", "TierEdge%d" % (i + 1), r_in - 0.05, r_in + 0.35, h - 0.05, 0.12, rap, "Neon", n=48,
@@ -1912,15 +1913,15 @@ def build_market():
         b.box("Ground", name, (r1 - r0, 0.12, ramp_w), (x, y + 0.04, z), (150, 138, 118), "Concrete", angles=(0, -phi, 0))
 
     for phi in (0, 90, 180, 270):
-        slope("RampPlaza", phi, R0 - 0.5, 0.24, 28, 2.4)
-        flat_path("PathTier1", phi, 28, 39, 2.4)
-        slope("RampTier1", phi, 39, 2.4, 46, 5.4)
-        flat_path("PathTier2", phi, 46, 57, 5.4)
-        slope("RampTier2", phi, 57, 5.4, 64, 8.4)
-        flat_path("PathTier3", phi, 64, 82, 8.4)
+        slope("RampPlaza", phi, R0 - 0.5, 0.24, 36, 2.4)
+        flat_path("PathTier1", phi, 36, 47, 2.4)
+        slope("RampTier1", phi, 47, 2.4, 54, 5.4)
+        flat_path("PathTier2", phi, 54, 65, 5.4)
+        slope("RampTier2", phi, 65, 5.4, 72, 8.4)
+        flat_path("PathTier3", phi, 72, 90, 8.4)
         # leuchtende Randstreifen an den Rampen
         for side in (-1, 1):
-            for r0, y0, r1, y1 in ((28, 2.4, 39, 2.4), (39, 2.4, 46, 5.4), (46, 5.4, 57, 5.4), (57, 5.4, 64, 8.4), (64, 8.4, 82, 8.4)):
+            for r0, y0, r1, y1 in ((36, 2.4, 47, 2.4), (47, 2.4, 54, 5.4), (54, 5.4, 65, 5.4), (65, 5.4, 72, 8.4), (72, 8.4, 90, 8.4)):
                 length = math.hypot(r1 - r0, y1 - y0)
                 tilt = math.degrees(math.atan2(y1 - y0, r1 - r0))
                 a = math.radians(phi)
@@ -1929,27 +1930,24 @@ def build_market():
                 b.box("Decor", "PathStrip", (length, 0.1, 0.3), (mx + ox, (y0 + y1) / 2 + 0.12, mz + oz), rap, "Neon",
                       angles=(0, -phi, tilt), props={"Transparency": 0.35})
 
-    # ---------- Platz in der Mitte ----------
+    # ---------- Platz in der Mitte (bewusst leer und ruhig) ----------
     # Spawns im Kreis um das Such-Terminal
     for k in range(8):
-        x, z = polar(9.5, k * 45 + 22.5)
+        x, z = polar(12, k * 45 + 22.5)
         b.spawn(x, z, yaw=k * 45 + 22.5 + 90)
-    # Such-Terminal: Säule mit Bildschirm obenauf und vier Schildern rundherum
-    b.cylinder("Decor", "KioskColumn", 4.6, 3.6, (0, 1.9, 0), (30, 32, 38), "Metal")
-    b.cylinder("Decor", "KioskTrim", 5.0, 0.2, (0, 3.75, 0), rap, "Neon", props={"Transparency": 0.3})
-    b.add("Decor", "SearchTerminal", (1.4, 3.6, 3.6), (0, 4.6, 0), rap, "Neon", props={"Transparency": 0.2, "Shape": "Cylinder"},
+    # Such-Terminal: niedrige Säule mit leuchtendem Bildschirm (E), keine Schilder
+    b.cylinder("Decor", "KioskColumn", 3.4, 3.0, (0, 1.75, 0), (30, 32, 38), "Metal")
+    b.cylinder("Decor", "KioskTrim", 3.8, 0.2, (0, 3.35, 0), rap, "Neon", props={"Transparency": 0.3})
+    b.add("Decor", "SearchTerminal", (1.2, 2.8, 2.8), (0, 4.2, 0), rap, "Neon", props={"Transparency": 0.2, "Shape": "Cylinder"},
           angles=(0, 0, 90),
           children=[{"Name": "Light", "ClassName": "PointLight",
-                     "Properties": {"Range": 22, "Brightness": 1.0, "Color": rgb(*rap)}}])
-    for yaw, (sx_, sz_) in ((180, (0, 3.2)), (0, (0, -3.2)), (-90, (3.2, 0)), (90, (-3.2, 0))):
-        b.sign2("SearchSign", (4.4, 1.5, 0.2), (sx_, 6.4, sz_), "SUCHE", "SKINS FINDEN  ·  E", graphite, rap, (236, 239, 243),
-                angles=(0, yaw, 0), glow=rap)
+                     "Properties": {"Range": 20, "Brightness": 0.9, "Color": rgb(*rap)}}])
 
-    # Kisten-Automaten (Viertel 1: Waffen links, Agenten rechts, Vorderseite zur Mitte)
+    # Kisten-Automaten am Platzrand (Viertel 1), Vorderseite zur Mitte
     def crate_machine(key, title, sub, phi, color):
-        cx, cz = polar(16, phi)
-        at = frame(cx, cz, 0.24, 90 - phi)  # lokal: -Z = Vorderseite zur Mitte
-        yaw = 90 - phi
+        cx, cz = polar(25, phi)
+        yaw = 90 - phi  # lokal: -Z = Vorderseite zur Mitte
+        at = frame(cx, cz, 0.24, yaw)
         b.box("Decor", "CrateBase" + key, (6, 0.8, 5), at(0, 0.4, 0), (30, 32, 38), "Metal", angles=(0, yaw, 0))
         b.box("Decor", "CrateBody" + key, (5, 3.6, 4), at(0, 2.6, 0), color, "Metal", angles=(0, yaw, 0))
         b.box("Decor", "CrateLid" + key, (5.4, 0.7, 4.4), at(0, 4.75, 0), lighten(color, 0.25), "Metal", angles=(0, yaw, 0))
@@ -1958,31 +1956,28 @@ def build_market():
         b.add("Decor", "Crate" + key, (3.2, 2, 0.3), at(0, 2.8, -2.1), lighten(color, 0.4), "Neon", angles=(0, yaw, 0),
               props={"Transparency": 0.15},
               children=[{"Name": "Light", "ClassName": "PointLight",
-                         "Properties": {"Range": 18, "Brightness": 1.1, "Color": rgb(*color)}}])
-        b.sign2("CrateSign" + key, (7, 2.2, 0.2), at(0, 8, -2.0), title, sub, graphite, color, (236, 239, 243), angles=(0, yaw, 0),
-                glow=color)
-        for dx in (-3.2, 3.2):
-            b.box("Decor", "CratePost" + key, (0.3, 3.2, 0.3), at(dx, 6.4, -2.0), (30, 32, 38), "Metal", angles=(0, yaw, 0))
+                         "Properties": {"Range": 16, "Brightness": 1.0, "Color": rgb(*color)}}])
+        b.sign2("CrateSign" + key, (5, 1.5, 0.2), at(0, 6.3, -2.0), title, sub, graphite, color, (236, 239, 243), angles=(0, yaw, 0))
 
-    crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN  ·  E", 62, (212, 170, 80))
-    crate_machine("Agent", "AGENTEN-KISTE", "800 MÜNZEN  ·  E", 28, (96, 164, 214))
+    crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN", 58, (212, 170, 80))
+    crate_machine("Agent", "AGENTEN-KISTE", "800 MÜNZEN", 32, (96, 164, 214))
 
-    # Tafeln: freie Stände (Viertel 2), beliebteste Händler (Viertel 3), Vorderseite zur Mitte
-    for name, phi, width in (("OverviewBoard", 135, 20), ("TopBoard", 225, 16)):
-        cx, cz = polar(21, phi)
+    # Tafeln am Platzrand: freie Stände (Viertel 2), beliebteste Händler (Viertel 3), Vorderseite zur Mitte
+    for name, phi, width in (("OverviewBoard", 135, 16), ("TopBoard", 225, 14)):
+        cx, cz = polar(29, phi)
         yaw = 90 - phi
         at = frame(cx, cz, 0.24, yaw)
-        b.box("Decor", name, (width, 10, 0.5), at(0, 6.5, 0), graphite, "SmoothPlastic", angles=(0, yaw, 0))
-        b.box("Decor", name + "Frame", (width + 0.6, 0.3, 0.6), at(0, 11.65, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.2})
-        b.box("Decor", name + "Foot", (width + 0.6, 0.3, 0.6), at(0, 1.35, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.4})
+        b.box("Decor", name, (width, 8, 0.5), at(0, 5.2, 0), graphite, "SmoothPlastic", angles=(0, yaw, 0))
+        b.box("Decor", name + "Frame", (width + 0.6, 0.3, 0.6), at(0, 9.35, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.2})
+        b.box("Decor", name + "Foot", (width + 0.6, 0.3, 0.6), at(0, 1.05, 0), rap, "Neon", angles=(0, yaw, 0), props={"Transparency": 0.4})
         for dx in (-width / 2 + 1, width / 2 - 1):
-            b.box("Decor", name + "Post", (0.6, 6.5, 0.6), at(dx, 3.25, 0.8), (40, 38, 38), "Metal", angles=(0, yaw, 0))
+            b.box("Decor", name + "Post", (0.6, 5.2, 0.6), at(dx, 2.6, 0.8), (40, 38, 38), "Metal", angles=(0, yaw, 0))
 
-    # Tor zurück zum Hub (Viertel 4)
-    gx, gz = polar(20.5, 315)
-    gate = frame(gx, gz, 0.24, 90 - 315)
-    gyaw = 90 - 315
-    gw, gh = 12, 12
+    # Tor zurück zum Hub: am Ende der Südrampe auf dem obersten Rang, damit der Spawn frei bleibt
+    gx, gz = polar(R_WALL - 4, 270)
+    gyaw = 90 - 270
+    gate = frame(gx, gz, 8.4, gyaw)
+    gw, gh = 10, 9
     for dx in (-gw / 2 - 1, gw / 2 + 1):
         b.box("Decor", "GatePillar", (2, gh + 2, 2), gate(dx, (gh + 2) / 2, 0), (28, 31, 37), "Metal", angles=(0, gyaw, 0))
         b.box("Decor", "GateStrip", (0.5, gh, 0.4), gate(dx, gh / 2 + 1, -1.2), (120, 185, 235), "Neon", angles=(0, gyaw, 0))
@@ -1991,7 +1986,7 @@ def build_market():
           props={"Transparency": 0.25, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight",
                      "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(120, 185, 235)}}])
-    b.sign2("ExitSign", (15, 4.6, 0.4), gate(0, gh + 4.6, -1.2), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
+    b.sign2("ExitSign", (11, 3.2, 0.4), gate(0, gh + 3.8, -1.2), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
             (120, 185, 235), (236, 239, 243), angles=(0, gyaw, 0), glow=(120, 185, 235))
     b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), gate(0, 0.15, -2.6), (120, 185, 235), "Neon", angles=(0, gyaw, 0),
           props={"CanCollide": False, "Transparency": 0.45})
@@ -1999,9 +1994,9 @@ def build_market():
     # Bäume im Platz (Zierde) und Laternen am Rand
     for k in range(12):
         phi = 15 + k * 30
-        if min(phi % 90, 90 - phi % 90) < 18 or abs(phi - 315) < 22 or abs(phi - 45) < 28 or abs(phi - 135) < 33 or abs(phi - 225) < 33:
+        if min(phi % 90, 90 - phi % 90) < 18 or abs(phi - 45) < 28 or abs(phi - 135) < 33 or abs(phi - 225) < 33:
             continue
-        x, z = polar(22.5, phi)
+        x, z = polar(29.5, phi)
         b.box("Decor", "Planter", (3.2, 1.2, 3.2), (x, 0.84, z), wood_dark, "WoodPlanks")
         b.add("Decor", "Bush", (3.4, 3.4, 3.4), (x, 2.7, z), (64, 112, 60), "Grass", props={"Shape": "Ball"})
     for i, (r_in, r_out, h, _) in enumerate(tiers):
@@ -2019,7 +2014,7 @@ def build_market():
     for phi in (0, 90, 180, 270):
         cx, cz = polar(R_WALL - 3.3, phi)
         at = frame(cx, cz, 0, 90 - phi)
-        b.sign2("MarketBanner", (30, 6.4, 0.4), at(0, 12, 0), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
+        b.sign2("MarketBanner", (22, 4.6, 0.4), at(0, 12, 0), "MARKT", "STAND BEANSPRUCHEN  ·  SKINS ANBIETEN  ·  MIT RAP KAUFEN",
                 graphite, rap, (236, 239, 243), angles=(0, 90 - phi, 0), glow=rap)
 
     # ---------- Stände: pro Rang und Viertel mehrere, Vorderseite zur Mitte ----------
