@@ -29,6 +29,17 @@ local AirdropService = require(script.Parent.AirdropService)
 local Damage = require(script.Parent.Damage)
 
 local ActivityService = {}
+-- Andere Dienste (Aufträge): callback(player, kind) mit kind = "Nest" (zerstört), "Cache" (aufgebrochen), "Horde" (besiegt)
+ActivityService.OnEvent = {}
+
+local function event(player, kind)
+	for _, callback in ActivityService.OnEvent do
+		local ok, err = pcall(callback, player, kind)
+		if not ok then
+			warn("ActivityService.OnEvent: " .. tostring(err))
+		end
+	end
+end
 
 local A = ExtinctionConfig.Activities
 local random = Random.new()
@@ -241,6 +252,7 @@ function ActivityService.DestroyNest(spot)
 			ProgressService.AddCoins(player, cfg.Coins, "Nest")
 			LootService.Grab(player, roll(spot, cfg))
 			table.insert(rewarded, player)
+			event(player, "Nest")
 		end
 	end
 	announce(rewarded, "ZOMBIENEST ZERSTÖRT", spot.Title .. " · +" .. cfg.Coins .. " Münzen und Beute", "Good")
@@ -352,6 +364,7 @@ function ActivityService.OpenCache(player, spot)
 	spot.State = "Opened"
 	spot.ReadyAt = now() + A.Cache.Respawn
 	LootService.Grab(player, roll(spot, A.Cache))
+	event(player, "Cache")
 	if now() - (spot.AlarmAt or -100) > 30 then
 		spot.AlarmAt = now()
 		ZombieService.SpawnAround(spot.Position, A.Cache.Alarm, 18, 40, nil, true)
@@ -525,6 +538,7 @@ local function endHorde(won)
 			if won then
 				ProgressService.AddCoins(player, cfg.Coins, "Horde")
 				LootService.Grab(player, roll(current.Spot, cfg))
+				event(player, "Horde")
 			end
 		end
 	end

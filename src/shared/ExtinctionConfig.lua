@@ -246,6 +246,28 @@ ExtinctionConfig.Activities = {
 		Table = "Tier2", Items = { 2, 4 }, Range = 220, MinDistance = 150, MaxDistance = 800, Win = 0.6 },
 }
 
+-- ---------- Aufträge (MissionService) ----------
+-- Jeder Spieler hat Active Aufträge gleichzeitig; erledigt gibt es Münzen und Beute direkt ins Inventar, dann kommt ein
+-- neuer. Text: %d = Anzahl, %s = Ort. Event = was zählt (Zombie, Runner, Brute, RedZombie, Nest, Cache, Horde, Airdrop,
+-- Place, NightMinute).
+ExtinctionConfig.Missions = {
+	Active = 3,
+	Pool = {
+		{ Id = "Zombies", Text = "Töte %d Zombies", Event = "Zombie", Count = { 15, 30 }, Coins = 120, Table = "Tier1", Items = { 1, 2 } },
+		{ Id = "Runners", Text = "Töte %d Läufer", Event = "Runner", Count = { 4, 8 }, Coins = 160, Table = "Tier2", Items = { 1, 2 } },
+		{ Id = "Brutes", Text = "Töte %d Brocken", Event = "Brute", Count = { 1, 3 }, Coins = 220, Table = "Tier2", Items = { 2, 3 } },
+		{ Id = "RedZombies", Text = "Töte %d Zombies in einer roten Zone", Event = "RedZombie", Count = { 8, 15 }, Coins = 260,
+			Table = "Tier3", Items = { 1, 2 } },
+		{ Id = "Nest", Text = "Zerstöre %d Zombienest(er)", Event = "Nest", Count = { 1, 2 }, Coins = 250, Table = "Tier2", Items = { 2, 3 } },
+		{ Id = "Cache", Text = "Brich %d Vorratslager auf", Event = "Cache", Count = { 2, 3 }, Coins = 180, Table = "Tier1", Items = { 1, 2 } },
+		{ Id = "Horde", Text = "Besiege eine Horde", Event = "Horde", Count = { 1, 1 }, Coins = 300, Table = "Tier3", Items = { 1, 2 } },
+		{ Id = "Airdrop", Text = "Öffne einen Lootdrop", Event = "Airdrop", Count = { 1, 1 }, Coins = 200, Table = "Tier2", Items = { 1, 2 } },
+		{ Id = "Explore", Text = "Erkunde: %s", Event = "Place", Count = { 1, 1 }, Coins = 100, Table = "Tier1", Items = { 1, 2 } },
+		{ Id = "Night", Text = "Überlebe %d Minuten nachts draußen", Event = "NightMinute", Count = { 2, 4 }, Coins = 220,
+			Table = "Tier2", Items = { 1, 2 } },
+	},
+}
+
 -- ---------- Lootdrops (Versorgungsabwürfe) ----------
 ExtinctionConfig.Airdrop = {
 	FirstDelay = 150,        -- Sekunden nach dem Serverstart (mit Spielern draußen) bis zum ersten Abwurf

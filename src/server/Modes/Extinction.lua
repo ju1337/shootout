@@ -26,6 +26,7 @@ local RedzoneService = require(ServerShared.RedzoneService)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
 local ActivityService = require(ServerShared.ActivityService)
+local MissionService = require(ServerShared.MissionService)
 local VehicleService = require(ServerShared.VehicleService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
@@ -289,6 +290,9 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
+	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Horden, Orte, Nacht ...)
+	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })
+
 	-- Fahrzeuge (Taste spawnt, K packt ein); Tod oder Verlassen: Fahrzeug weg
 	VehicleService.Init({ InSafeZone = Extinction.InSafeZone })
 	table.insert(Extinction.OnDeath, function(player)
@@ -347,6 +351,7 @@ function Extinction.AddPlayer(player)
 	player:SetAttribute("MapCenter", map:GetAttribute("Center"))
 	player:SetAttribute("ModeText", "")
 	InventoryService.Enter(player)
+	MissionService.Join(player)
 	spawnPlayer(player)
 end
 
@@ -356,6 +361,7 @@ function Extinction.RemovePlayer(player)
 		pcall(callback, player)
 	end
 	InventoryService.Leave(player)
+	MissionService.Leave(player)
 	members[player] = nil
 	local character = player.Character
 	if character then

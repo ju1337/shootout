@@ -416,6 +416,12 @@ local function onDeath(model, info)
 		ProgressService.AddCoins(killer, info.Coins, "Zombie")
 		ProgressService.AddStat(killer, "Zombies", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
+		for _, callback in ZombieService.OnKill do
+			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero)
+			if not ok then
+				warn("ZombieService.OnKill: " .. tostring(err))
+			end
+		end
 	end
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
 	local items = root and rollCorpseLoot(info.Stats) or {}
@@ -444,6 +450,9 @@ local function maxTotal()
 	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
 	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) + 0.5) + bonus
 end
+
+-- Andere Dienste (Aufträge): callback(killer, kind, position), wenn ein Spieler einen Zombie erledigt
+ZombieService.OnKill = {}
 
 -- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Horden, Nester), aber
 -- höchstens ForceExtra darüber

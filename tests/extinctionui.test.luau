@@ -122,6 +122,17 @@ check(windowGui ~= nil and not windowGui.Enabled, "kein Fenster offen")
 local hotbar = hud and find(hud, "Hotbar")
 check(hotbar ~= nil and #hotbar:GetChildren() == 9, "Hotbar mit 9 Plätzen")
 check(string.find(texts(hud), "SAFE ZONE", 1, true) ~= nil, "Anzeige SAFE ZONE")
+local missionPanel = find(hud, "Missions")
+check(missionPanel ~= nil and missionPanel.Visible and string.find(texts(missionPanel), "AUFTRÄGE", 1, true) ~= nil,
+	"Aufträge links im HUD")
+local missionRows = 0
+for _, child in missionPanel:GetChildren() do
+	if child.Name == "Mission" then
+		missionRows += 1
+	end
+end
+check(missionRows == 3, "drei Auftragszeilen (" .. missionRows .. ")")
+check(find(hud, "Clock") ~= nil and string.find(find(hud, "Clock").Text, "TAG", 1, true) ~= nil, "Uhrzeit oben rechts (Tag)")
 
 -- Kaufen am Stand (E-Aufforderung des Clients)
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(-36, 3, 28)))

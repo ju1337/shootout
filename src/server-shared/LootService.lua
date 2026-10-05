@@ -25,6 +25,17 @@ local InventoryService = require(script.Parent.InventoryService)
 local LootService = {}
 
 LootService.OnRemoved = {}
+-- callback(player, bag): jemand hat eine Tasche/Kiste geöffnet oder alles genommen (Aufträge zählen Lootdrops)
+LootService.OnOpened = {}
+
+local function opened(player, bag)
+	for _, callback in LootService.OnOpened do
+		local ok, err = pcall(callback, player, bag)
+		if not ok then
+			warn("LootService.OnOpened: " .. tostring(err))
+		end
+	end
+end
 
 local folder = workspace:FindFirstChild("ExtinctionLoot") or Instance.new("Folder")
 folder.Name = "ExtinctionLoot"
@@ -336,6 +347,7 @@ function LootService.Open(player, id)
 	end
 	bag.Viewers[player] = true
 	send(player, bag)
+	opened(player, bag)
 	return true
 end
 
@@ -361,6 +373,9 @@ function LootService.Take(player, id, slot)
 	if not inRange(player, bag) then
 		InventoryService.Status(player, "Du bist zu weit weg.")
 		return false
+	end
+	if slot == "All" then
+		opened(player, bag)
 	end
 	local playerBag = InventoryService.GetBag(player)
 	if not playerBag then

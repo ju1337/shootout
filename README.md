@@ -107,6 +107,10 @@ weiter.
   - **Funkgerät** am Funkturm: **E halten = Notruf**, ein Lootdrop kommt (alle 15 Minuten).
   - **Horden**: ab 6 Minuten alle 10-15 Minuten zieht eine Horde (14 Zombies, auch Läufer) in einen Ort 150-800 Studs
     von einem Spieler entfernt. Wer dabei ist und 60 % erledigt, bekommt 200 Münzen und Beute.
+- **Aufträge** (`MissionService.lua`, `ExtinctionConfig.Missions`): immer drei gleichzeitig, links unter der Minimap mit
+  Fortschrittsbalken – z. B. „Töte 20 Zombies“, „Töte 5 Läufer“, „Töte 10 Zombies in einer roten Zone“, „Zerstöre ein
+  Zombienest“, „Brich 2 Vorratslager auf“, „Besiege eine Horde“, „Öffne einen Lootdrop“, „Erkunde: NORDHEIM“, „Überlebe
+  3 Minuten nachts draußen“. Erledigt: Münzen und Beute direkt ins Inventar, dann kommt ein neuer Auftrag.
 - **Apokalypse**: Fluchtstaus mit umgekipptem Schulbus auf den Ausfallstraßen, verlassene Quarantäne-Sperren an den
   Dorfeingängen („INFIZIERT · NICHT BETRETEN“), Massengrab beim Evakuierungslager, verlassene Überlebenden-Camps im
   Wald (SOS am Boden), Leichen auf den Straßen, Notstands-Plakate („AUSGANGSSPERRE AB 20 UHR · SCHIESSBEFEHL“),

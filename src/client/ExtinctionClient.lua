@@ -1199,6 +1199,41 @@ function ExtinctionClient.Init()
 	mapButton.Activated:Connect(function()
 		ExtinctionMap.Toggle()
 	end)
+	-- Aufträge links unter der Minimap (Spieler-Attribut ExtMissions vom MissionService)
+	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 318), Size = UDim2.fromOffset(270, 26),
+		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
+	UITheme.Corner(missionPanel, UITheme.Radius.Small)
+	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, missionPanel)
+	make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10),
+		PaddingRight = UDim.new(0, 10) }, missionPanel)
+	label({ Name = "Head", LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 16), Text = "AUFTRÄGE", TextSize = 13, Font = F.Display,
+		TextColor3 = C.Primary }, missionPanel)
+	local function refreshMissions()
+		for _, child in missionPanel:GetChildren() do
+			if child.Name == "Mission" then
+				child:Destroy()
+			end
+		end
+		local ok, list = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ExtMissions") or "[]")
+		list = ok and type(list) == "table" and list or {}
+		missionPanel.Visible = #list > 0
+		for index, mission in list do
+			local row = make("Frame", { Name = "Mission", LayoutOrder = index, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 },
+				missionPanel)
+			label({ Name = "Text", Size = UDim2.new(1, -54, 0, 16), Text = upper(tostring(mission.Text or "")), TextSize = 12,
+				Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, row)
+			label({ Name = "Count", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(52, 16),
+				Text = tostring(mission.Have or 0) .. "/" .. tostring(mission.Need or 1), TextSize = 12, Font = F.Bold,
+				TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, row)
+			local bar = make("Frame", { Position = UDim2.fromOffset(0, 20), Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = C.Card,
+				BorderSizePixel = 0 }, row)
+			make("Frame", { Name = "Fill", Size = UDim2.fromScale(math.clamp((mission.Have or 0) / math.max(1, mission.Need or 1), 0, 1), 1),
+				BackgroundColor3 = C.Good, BorderSizePixel = 0 }, bar)
+		end
+	end
+	player:GetAttributeChangedSignal("ExtMissions"):Connect(refreshMissions)
+	refreshMissions()
+
 	-- Uhrzeit (Tag und Nacht, DayCycle) links neben dem Kartenknopf
 	local clockText = label({ Name = "Clock", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 30),
 		Size = UDim2.fromOffset(260, 30), Text = "", TextSize = 15, Font = F.Bold, TextColor3 = C.Text,
