@@ -5,7 +5,8 @@
 -- Wer draußen stirbt, lässt seine ganze Tasche fallen (LootService) und spawnt wieder in der Safe Zone. Wer den
 -- Modus oder das Spiel draußen verlässt, verliert die Tasche genauso (im Menü erst nach einem zweiten Klick).
 -- Inventar und Lager: InventoryService. Agenten: nur passive Fähigkeiten (siehe AgentService / GadgetService).
--- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt),
+-- Rote Zonen (RedzoneService): drinnen gilt PvP sofort, Attribut Redzone (Name) für die Anzeige.
+-- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt), Redzone,
 -- MapId / MapName / MapCenter (Minimap, Lichtstimmung). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
 
 local Players = game:GetService("Players")
@@ -21,6 +22,7 @@ local ProgressService = require(ServerShared.ProgressService)
 local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
+local RedzoneService = require(ServerShared.RedzoneService)
 local VehicleService = require(ServerShared.VehicleService)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
@@ -76,8 +78,10 @@ local function setInside(player, info, inside, character)
 	end
 	if inside then
 		info.PvPAt = nil
+		info.Redzone = nil
 		player:SetAttribute("PvP", false)
 		player:SetAttribute("PvPAt", nil)
+		player:SetAttribute("Redzone", nil)
 		InventoryService.Holster(player) -- Waffen bleiben in der Safe Zone gesichert
 	else
 		info.PvPAt = os.clock() + ExtinctionConfig.PvPDelay
@@ -92,6 +96,23 @@ local function updateZone(player, info)
 		return
 	end
 	local inside = Extinction.InSafeZone(root.Position)
+	-- Rote Zone: PvP sofort, Anzeige und Meldung beim Betreten/Verlassen
+	local zone = not inside and RedzoneService.At(root.Position) or nil
+	local zoneName = zone and zone.Name or nil
+	if zoneName ~= info.Redzone then
+		info.Redzone = zoneName
+		player:SetAttribute("Redzone", zoneName)
+		if zone then
+			notify(player, "Banner", { Caption = "Rote Zone", Title = string.upper(zone.Title), Sub = "PvP sofort · mehr Zombies · bessere Beute",
+				Style = "Info" })
+		elseif not inside then
+			notify(player, "Banner", { Caption = "Rote Zone verlassen", Title = "WEITER VORSICHT", Sub = "PvP bleibt aktiv", Style = "Info" })
+		end
+	end
+	if zone and not player:GetAttribute("PvP") then
+		info.PvPAt = nil
+		player:SetAttribute("PvP", true)
+	end
 	if inside ~= info.Inside then
 		setInside(player, info, inside, character)
 		if inside then
@@ -193,9 +214,13 @@ function Extinction.Init(modeManager)
 		end
 	end
 
+	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte)
+	RedzoneService.Init(map)
+
 	-- Zombies um die Spieler draußen
 	ZombieService.Init({
 		Map = map,
+		RedzoneAt = RedzoneService.At,
 		Center = map:GetAttribute("Center") or Vector3.new(zonePart.Position.X, 0, zonePart.Position.Z),
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
@@ -280,7 +305,7 @@ function Extinction.RemovePlayer(player)
 	if character then
 		character:SetAttribute("SafeZone", nil)
 	end
-	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "MapId", "MapName", "MapCenter" } do
+	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter" } do
 		player:SetAttribute(attribute, nil)
 	end
 end
