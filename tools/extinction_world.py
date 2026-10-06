@@ -54,6 +54,12 @@ OUTPOSTS = [("Wolfshoehe", "WOLFSHÖHE", -1380, 820), ("Adlerhorst", "ADLERHORST
 for _key, _title, _x, _z in OUTPOSTS:
     PLACES[_key] = (_title, _x, _z, 70)
 
+# Kleine Safe Zones draußen (Safehouses): (Schlüssel, Titel, x, z) – kein PvP, Spawnpunkt (wer eine betritt, spawnt dort)
+SAFEHOUSES = [("Nord", "SAFEHOUSE NORD", -640, 980), ("Ost", "SAFEHOUSE OST", 1240, 800),
+              ("Sued", "SAFEHOUSE SÜD", 780, -420), ("West", "SAFEHOUSE WEST", -1000, -620)]
+SAFEHOUSE_R = 44
+SAFEHOUSE_WALL = 30   # halbe Seitenlänge der HESCO-Wall (Ecken innerhalb SAFEHOUSE_R)
+
 # A7: Hochstraße quer über den Norden von Ödstadt (Rampen an beiden Enden), Oberkante, Breite, Rampenlänge
 AUTOBAHN = [(-940, 560), (1000, 560)]
 AUTOBAHN_H, AUTOBAHN_W, AUTOBAHN_RAMP = 24, 34, 180
@@ -125,6 +131,8 @@ def terrain_layout():
     t.road(ax - 40, az, bx + 40, bz, AUTOBAHN_W + 20, 60)
     for (ax, az), (bx, bz) in zip(RAIL, RAIL[1:]):
         t.road(ax, az, bx, bz, 18, 60)
+    for _, _, x, z in SAFEHOUSES:
+        t.flat(x, z, SAFEHOUSE_R + 8, 60)
     for x, z, hx, hz in GAS:
         t.flat(x, z, 40, 50)
         t.road(x, z, hx, hz, 18, 50)
@@ -1776,6 +1784,99 @@ class World:
               children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": rgb(50, 48, 46), "Opacity": 0.15,
                                                                                  "RiseVelocity": 4, "Size": 2}}])
 
+    def safehouse(self, key, title, x, z):
+        """Kleine Safe Zone draußen: Betonplatte, HESCO-Ring mit vier Durchgängen, Lagerfeuer, Zelt, Wachturm, Fahne,
+        Schild, grüner Ring. Teil SafeZone_<Schlüssel> (Gruppe Zone), Spawns in Spawns_<Schlüssel>. Zufahrt von der
+        nächsten Landstraße."""
+        b, rng = self.b, self.rng
+        R = SAFEHOUSE_R
+        safe, hesco, sand = (96, 210, 120), (176, 160, 120), (150, 134, 98)
+        warm = self.bm.rgb(255, 196, 120)
+        b.add("Zone", "SafeZone_" + key, (2 * R, 80, 2 * R), (x, 40, z), safe, "SmoothPlastic",
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
+                     "Attributes": {"Attributes": {"Title": {"String": title}}}})
+        W = SAFEHOUSE_WALL
+        b.box("Ground", "CampPad", (2 * W + 6, 3, 2 * W + 6), (x, -1.45, z), (140, 138, 132), "Concrete")
+        # Zufahrt: von welcher Seite kommt die Straße? Dort und gegenüber ein Durchgang
+        start = self.nearest_highway(x, z)
+        road_side = 0
+        if start:
+            ax_, az_ = start[0] - x, start[1] - z
+            road_side = (0 if az_ > 0 else 2) if abs(az_) >= abs(ax_) else (1 if ax_ > 0 else 3)
+        # HESCO-Wall im Quadrat (Seite 0 = +z, 1 = +x, 2 = -z, 3 = -x), Durchgang 12 breit in der Mitte zweier Seiten
+        for side in range(4):
+            yaw = side * 90
+            c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+            t = -W + 3
+            while t < W - 2:
+                gap = side in (road_side, (road_side + 2) % 4) and abs(t) < 7
+                if not gap:
+                    lx, lz = t, W
+                    b.box("Walls", "Hesco", (6, 6, 4.4), (x + lx * c + lz * sn, 3, z - lx * sn + lz * c), hesco, "Fabric",
+                          angles=(0, yaw, 0))
+                t += 6
+        # Lagerfeuer in der Mitte, Spawns drumherum
+        for k in range(10):
+            a = 2 * math.pi * k / 10
+            b.box("Decor", "FireStone", (1.4, 0.9, 1.4), (x + math.cos(a) * 2.8, 0.45, z + math.sin(a) * 2.8), (110, 106, 100), "Slate",
+                  angles=(0, rng.uniform(0, 90), 0))
+        b.box("Decor", "Bonfire", (2, 1, 2), (x, 0.6, z), (255, 130, 40), "Neon", props={"CanCollide": False},
+              children=[{"Name": "Fire", "ClassName": "Fire", "Properties": {"Size": 7, "Heat": 10,
+                                                                                "Color": self.bm.rgb(255, 140, 40),
+                                                                                "SecondaryColor": self.bm.rgb(150, 40, 20)}},
+                        {"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 36, "Brightness": 2.2, "Color": warm}}])
+        for k in range(4):
+            a = 2 * math.pi * (k + 0.5) / 4
+            b.box("Cover", "LogBench", (5, 1.1, 1.1), (x + math.cos(a) * 6.5, 0.6, z + math.sin(a) * 6.5), (96, 70, 48), "Wood",
+                  angles=(0, -math.degrees(a) + 90, 0))
+        for k in range(6):
+            a = 2 * math.pi * k / 6
+            sx, sz = x + math.cos(a) * 11, z + math.sin(a) * 11
+            b.spawn(sx, sz, yaw=math.degrees(math.atan2(sx - x, sz - z)) + 180, group="Spawns_" + key)
+        # Zelt, Kisten, Wachturm, Fahne, Schild, Laterne
+        tx, tz = x - 20, z + 14
+        b.box("Buildings", "Tent", (12, 3, 9), (tx, 1.5, tz), (78, 86, 62), "Fabric")
+        for sgn in (-1, 1):
+            b.box("Buildings", "TentRoof", (6.8, 0.4, 9.6), (tx + sgn * 3, 4.4, tz), (90, 100, 72), "Fabric", angles=(0, 0, -sgn * 27))
+        for k in range(4):
+            b.box("Cover", "SupplyCrate", (3, 2.6, 3), (x + 18 + (k % 2) * 3.4, 1.3 + (k // 2) * 2.6, z - 16), (110, 92, 62),
+                  "WoodPlanks", angles=(0, rng.uniform(-8, 8), 0))
+        wx, wz = x + 22, z + 20
+        for lx in (-2.5, 2.5):
+            for lz in (-2.5, 2.5):
+                b.box("Walls", "TowerLeg", (0.8, 12, 0.8), (wx + lx, 6, wz + lz), (96, 100, 104), "Metal")
+        b.box("Walls", "TowerDeck", (7, 0.6, 7), (wx, 12.2, wz), (84, 86, 80), "DiamondPlate")
+        b.box("Cover", "TowerSandbags", (7, 2.2, 1.2), (wx, 13.6, wz + 3), sand, "Fabric")
+        b.box("Decor", "TowerRoof", (8, 0.4, 8), (wx, 16.6, wz), (78, 86, 62), "CorrodedMetal")
+        b.add("Walls", "TowerLadder", (2, 12, 2), (wx, 6, wz - 4.3), (90, 90, 92), "Metal", cls="TrussPart")
+        b.box("Decor", "FlagPole", (0.5, 16, 0.5), (x - 8, 8, z - 18), (190, 190, 186), "Metal")
+        b.box("Decor", "Flag", (6, 3.6, 0.2), (x - 4.8, 13.8, z - 18), (90, 180, 100), "Fabric", angles=(0, 0, -3))
+        for yaw_, dz_ in ((0, -0.15), (180, 0.15)):  # Vorder- und Rückseite
+            b.sign2("SafehouseSign", (12, 3, 0.25), (x, 5, z - W + 8 + dz_), title, "KEIN PVP · HIER SPAWNST DU NACH DEM TOD",
+                    (34, 38, 32), (150, 230, 160), (226, 222, 210), angles=(0, yaw_, 0))
+        for sgn in (-1, 1):
+            b.box("Decor", "SignPost", (0.5, 6.4, 0.5), (x + sgn * 5.6, 3.2, z - W + 8.1), (60, 60, 64), "Metal")
+        for k in range(2):
+            lx_, lz_ = x + (14 if k else -14), z + (-6 if k else 4)
+            b.box("Decor", "StreetLamp", (0.5, 10, 0.5), (lx_, 5, lz_), (50, 52, 56), "Metal")
+            b.box("Decor", "StreetLampHead", (1.4, 0.5, 1.4), (lx_, 10.2, lz_), (255, 226, 180), "Neon",
+                  children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 30, "Brightness": 1.2, "Color": warm}}])
+        n = 48
+        for k in range(n):
+            a = 2 * math.pi * (k + 0.5) / n
+            b.box("Zone", "SafeEdge", (2 * math.pi * (R - 1) / n + 0.2, 0.12, 1.0), (x + math.cos(a) * (R - 1), 0.2, z + math.sin(a) * (R - 1)),
+                  safe, "Neon", angles=(0, -math.degrees(a) + 90, 0),
+                  props={"Transparency": 0.55, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+        self.occupied.append((x, z, R + 12))
+        PLACES["Safe_" + key] = (title, x, z, R)
+        # Zufahrt von der nächsten Landstraße bis zum Durchgang (gerade auf die Seite zu)
+        if start and math.hypot(start[0] - x, start[1] - z) > R:
+            gx, gz = ((0, 1), (1, 0), (0, -1), (-1, 0))[road_side]
+            door = (x + gx * (W + 3), z + gz * (W + 3))
+            bend = (door[0] + gx * 30, door[1] + gz * 30)
+            self.road(start[0], start[1], bend[0], bend[1], 14, lines=False)
+            self.road(bend[0], bend[1], door[0], door[1], 14, lines=False)
+
     # ---------- Autobahn auf Stelzen, Bahnstrecke mit Bahnhof ----------
     def slab(self, group, name, a, c, width, thick, color, mat, props=None):
         """Platte von a nach c (je (x, y_oben, z)), geneigt wie die Strecke."""
@@ -2174,6 +2275,10 @@ def build(bm):
         w.road(sx * (CAMP_HALF + 2), sz * (CAMP_HALF + 2), sx * 180, sz * 180, ROAD_W, lines=False, cracked=False)
     for gas in GAS:
         w.build_gas(*gas)
+
+    # Kleine Safe Zones draußen (Safehouses) mit Zufahrt
+    for key, title, x, z in SAFEHOUSES:
+        w.safehouse(key, title, x, z)
 
     # Feldwege von der nächsten Landstraße hinauf zu den Außenposten und zum Funkturm
     for _, _, x, z in OUTPOSTS + [("Funkturm", "", PLACES["Funkturm"][1], PLACES["Funkturm"][2])]:

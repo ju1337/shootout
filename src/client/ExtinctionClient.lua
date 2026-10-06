@@ -346,7 +346,7 @@ local function buildHud()
 	root = UITheme.ScaledRoot(hud)
 
 	-- oben: Safe Zone / PvP
-	zonePill = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 30), Size = UDim2.fromOffset(250, 30),
+	zonePill = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 30), Size = UDim2.fromOffset(400, 30),
 		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0 }, root)
 	UITheme.Corner(zonePill, UITheme.Radius.Small)
 	UITheme.Stroke(zonePill, SAFE, 1, 0.3)
@@ -446,7 +446,8 @@ local function updateZone()
 		vignette.Visible = red and not player:GetAttribute("InSafeZone")
 	end
 	if player:GetAttribute("InSafeZone") then
-		zoneText.Text = "SAFE ZONE  ·  KEIN PVP"
+		local title = player:GetAttribute("SafeZoneTitle")
+		zoneText.Text = "SAFE ZONE  ·  " .. (type(title) == "string" and (string.upper(title) .. "  ·  ") or "") .. "KEIN PVP"
 		zoneText.TextColor3 = SAFE
 		stroke.Color = SAFE
 	elseif vignette and vignette.Visible then

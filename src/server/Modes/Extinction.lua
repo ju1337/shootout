@@ -46,11 +46,35 @@ local zonePart = map:WaitForChild("Zone"):WaitForChild("SafeZone")
 Extinction.OnDeath = {}  -- callback(player, position, outside)
 Extinction.OnLeave = {}  -- callback(player)
 
--- Liegt die Stelle in der Safe Zone? (Kreis um die Mitte, Radius = halbe Breite des Teils "SafeZone")
+-- Alle Safe Zones: das große Camp (Teil "SafeZone", Schlüssel "") und die kleinen Safehouses draußen
+-- (Teile "SafeZone_<Schlüssel>" mit Title, Spawns im Ordner "Spawns_<Schlüssel>"). Kreis, Radius = halbe Breite.
+function Extinction.SafeZones()
+	local list = {}
+	for _, part in map.Zone:GetChildren() do
+		if part:IsA("BasePart") then
+			local key = part.Name == "SafeZone" and "" or string.match(part.Name, "^SafeZone_(.+)$")
+			if key then
+				table.insert(list, { Key = key, Title = part:GetAttribute("Title") or (key == "" and "CAMP PHOENIX" or key),
+					Center = part.Position, Radius = part.Size.X / 2, Part = part })
+			end
+		end
+	end
+	return list
+end
+
+-- Safe Zone an einer Stelle (Eintrag aus SafeZones) oder nil
+function Extinction.SafeZoneAt(position)
+	for _, zone in Extinction.SafeZones() do
+		if Vector3.new(position.X - zone.Center.X, 0, position.Z - zone.Center.Z).Magnitude <= zone.Radius then
+			return zone
+		end
+	end
+	return nil
+end
+
+-- Liegt die Stelle in einer Safe Zone (Camp oder Safehouse)?
 function Extinction.InSafeZone(position)
-	local center = zonePart.Position
-	local flat = Vector3.new(position.X - center.X, 0, position.Z - center.Z)
-	return flat.Magnitude <= zonePart.Size.X / 2
+	return Extinction.SafeZoneAt(position) ~= nil
 end
 
 function Extinction.SafeZoneCenter()
@@ -102,7 +126,19 @@ local function updateZone(player, info)
 	if not root then
 		return
 	end
-	local inside = Extinction.InSafeZone(root.Position)
+	local safe = Extinction.SafeZoneAt(root.Position)
+	local inside = safe ~= nil
+	-- Spawnpunkt: die zuletzt betretene Safe Zone (Camp oder Safehouse)
+	if safe and info.Home ~= safe.Key then
+		local first = info.Home == nil
+		info.Home = safe.Key
+		player:SetAttribute("ExtHome", safe.Title)
+		if not first then
+			notify(player, "Banner", { Caption = "Spawnpunkt gesetzt", Title = string.upper(safe.Title),
+				Sub = "Nach dem Tod spawnst du hier", Style = "Good" })
+		end
+	end
+	player:SetAttribute("SafeZoneTitle", safe and safe.Title or nil)
 	-- Rote Zone: PvP sofort, Anzeige und Meldung beim Betreten/Verlassen
 	local zone = not inside and RedzoneService.At(root.Position) or nil
 	local zoneName = zone and zone.Name or nil
@@ -123,7 +159,8 @@ local function updateZone(player, info)
 	if inside ~= info.Inside then
 		setInside(player, info, inside, character)
 		if inside then
-			notify(player, "Banner", { Caption = "Extinction", Title = "SAFE ZONE", Sub = "Kein PvP · Handel · Lager",
+			notify(player, "Banner", { Caption = "Safe Zone", Title = safe and string.upper(safe.Title) or "SAFE ZONE",
+				Sub = safe and safe.Key ~= "" and "Kein PvP · Spawnpunkt" or "Kein PvP · Handel · Lager",
 				Style = "Info" })
 		else
 			notify(player, "Banner", { Caption = "Safe Zone verlassen", Title = "VORSICHT",
@@ -154,7 +191,8 @@ local function spawnPlayer(player)
 	if not info then
 		return
 	end
-	local character = SpawnUtil.Spawn(player, SpawnUtil.Pick(map.Spawns))
+	local folder = info.Home and info.Home ~= "" and map:FindFirstChild("Spawns_" .. info.Home) or map.Spawns
+	local character = SpawnUtil.Spawn(player, SpawnUtil.Pick(folder))
 	if not character then
 		return
 	end
@@ -250,6 +288,7 @@ function Extinction.Init(modeManager)
 	RedzoneService.StartMoving({
 		Map = map,
 		SafeCenter = Extinction.SafeZoneCenter,
+		SafeZones = Extinction.SafeZones,
 		IsWater = isWater,
 		GroundY = function(x, z)
 			return center.Y + ExtinctionTerrain.Height(x - center.X, z - center.Z)
@@ -272,6 +311,7 @@ function Extinction.Init(modeManager)
 		Center = center,
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
+		SafeZones = Extinction.SafeZones,
 		Players = function()
 			local list = {}
 			for player in members do
@@ -287,6 +327,7 @@ function Extinction.Init(modeManager)
 		Center = center,
 		InSafeZone = Extinction.InSafeZone,
 		SafeCenter = Extinction.SafeZoneCenter,
+		SafeZones = Extinction.SafeZones,
 		RedzoneAt = RedzoneService.At,
 		RedzoneRandom = function()
 			return RedzoneService.Random()
@@ -406,7 +447,7 @@ function Extinction.RemovePlayer(player)
 	if character then
 		character:SetAttribute("SafeZone", nil)
 	end
-	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter" } do
+	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

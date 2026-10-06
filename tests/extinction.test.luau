@@ -41,6 +41,15 @@ local zone = Instance.new("Part", map.Zone)
 zone.Name = "SafeZone"
 zone.Size = Vector3.new(200, 80, 200)
 zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
+-- kleine Safe Zone draußen (Safehouse) mit eigenen Spawns
+local safehouse = Instance.new("Part", map.Zone)
+safehouse.Name = "SafeZone_Test"
+safehouse:SetAttribute("Title", "SAFEHOUSE TEST")
+safehouse.Size = Vector3.new(80, 80, 80)
+safehouse.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 600))
+local safehouseSpawns = Instance.new("Folder", map)
+safehouseSpawns.Name = "Spawns_Test"
+Instance.new("Part", safehouseSpawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 610))
 local spawnPoint = Instance.new("Part", map.Spawns)
 spawnPoint.CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 local portal = Instance.new("Part", map.Portals)
@@ -323,6 +332,34 @@ check(alice.Character.Humanoid.Health == 100, "vor Ablauf der PvP-Zeit kein Scha
 step(5)
 shoot(bob, alice, 101)
 check(alice.Character.Humanoid.Health < 100, "nach 5 Sekunden draußen: PvP-Schaden")
+
+-- ---------- Safehouse: kein PvP, wird zum Spawnpunkt ----------
+check(Extinction.InSafeZone(CENTER + Vector3.new(20, 0, 600)) and not Extinction.InSafeZone(CENTER + Vector3.new(0, 0, 660)),
+	"Safehouse zählt als Safe Zone")
+check(#Extinction.SafeZones() == 2, "Camp und Safehouse")
+moveTo(alice, Vector3.new(0, 3, 590))
+step(0.5)
+check(alice:GetAttribute("InSafeZone") == true and alice:GetAttribute("PvP") == false, "im Safehouse kein PvP")
+check(alice:GetAttribute("ExtHome") == "SAFEHOUSE TEST" and alice:GetAttribute("SafeZoneTitle") == "SAFEHOUSE TEST", "Spawnpunkt gesetzt")
+local homeBanner = false
+for _, entry in SIM.RemoteLog do
+	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2].Caption == "Spawnpunkt gesetzt" then
+		homeBanner = true
+	end
+end
+check(homeBanner, "Meldung: Spawnpunkt gesetzt")
+moveTo(alice, Vector3.new(0, 3, 700))
+step(0.5)
+check(alice:GetAttribute("SafeZoneTitle") == nil and alice:GetAttribute("ExtHome") == "SAFEHOUSE TEST", "draußen bleibt der Spawnpunkt")
+alice.Character.Humanoid.Health = 0
+step(ExtinctionConfig.RespawnTime + 0.5)
+local root = alice.Character and alice.Character:FindFirstChild("HumanoidRootPart")
+check(root ~= nil and (root.Position - (CENTER + Vector3.new(0, 0, 610))).Magnitude < 12, "Respawn im Safehouse")
+check(alice:GetAttribute("InSafeZone") == true, "nach dem Respawn in der Safe Zone")
+-- zurück ins Camp: Spawnpunkt wieder das Camp
+moveTo(alice, Vector3.new(0, 3, 20))
+step(0.5)
+check(alice:GetAttribute("ExtHome") == "CAMP PHOENIX", "Camp wieder Spawnpunkt")
 
 -- ---------- Verlassen draußen: zweiter Klick, Tasche fällt ----------
 statusText = nil

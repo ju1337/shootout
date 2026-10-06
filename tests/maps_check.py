@@ -101,6 +101,21 @@ def check_extinction():
         if group == "Nature" and part["Name"] in ("Trunk", "Rock") and inside(part, -30):
             problems.append("Extinction: %s in der Safe Zone" % part["Name"])
             break
+    # Safehouses: kleine Safe Zones draußen (SafeZone_<Name> mit Title), je mindestens 3 Spawns in Spawns_<Name> darin
+    houses = [part for group, part in parts if group == "Zone" and part["Name"].startswith("SafeZone_")]
+    if len(houses) < 3:
+        problems.append("Extinction: mindestens 3 Safehouses (SafeZone_<Name>) erwartet, gefunden %d" % len(houses))
+    for house in houses:
+        key = house["Name"][len("SafeZone_"):]
+        hx, _, hz = local(house)
+        hr = house["Properties"]["Size"][0] / 2
+        if not house["Properties"].get("Attributes", {}).get("Attributes", {}).get("Title"):
+            problems.append("Extinction: %s ohne Title" % house["Name"])
+        if math.hypot(hx, hz) < radius + 300:
+            problems.append("Extinction: %s zu nah am Camp" % house["Name"])
+        own = [part for group, part in parts if group == "Spawns_" + key]
+        if len(own) < 3 or not all(math.hypot(local(p)[0] - hx, local(p)[2] - hz) <= hr - 8 for p in own):
+            problems.append("Extinction: %s braucht mindestens 3 Spawns in Spawns_%s darin" % (house["Name"], key))
     grounds = [part for group, part in parts if group == "Ground" and part["Name"] == "Ground"]
     if not grounds or min(grounds[0]["Properties"]["Size"][0], grounds[0]["Properties"]["Size"][2]) < 1500:
         problems.append("Extinction: Boden fehlt oder Welt zu klein")

@@ -100,7 +100,13 @@ local function pickTarget()
 	for _ = 1, 40 do
 		local x = options.Center.X + random:NextNumber(-half, half)
 		local z = options.Center.Z + random:NextNumber(-half, half)
-		if Vector3.new(x - safeCenter.X, 0, z - safeCenter.Z).Magnitude > safeRadius + A.SafeMargin then
+		local clear = Vector3.new(x - safeCenter.X, 0, z - safeCenter.Z).Magnitude > safeRadius + A.SafeMargin
+		for _, zone in options.SafeZones and options.SafeZones() or {} do
+			if Vector3.new(x - zone.Center.X, 0, z - zone.Center.Z).Magnitude <= zone.Radius + A.SafeMargin then
+				clear = false
+			end
+		end
+		if clear then
 			local ground = ZombieService.GroundAt(x, z)
 			if ground then
 				return ground, options.RedzoneAt and options.RedzoneAt(ground) or nil

@@ -275,15 +275,36 @@ local function nearestTarget(position, range)
 end
 
 -- Punkt am Rand der Safe Zone (Zombies bleiben draußen stehen)
-local function clampOutside(position)
-	local center, radius = options.SafeCenter()
-	local flat = Vector3.new(position.X - center.X, 0, position.Z - center.Z)
-	local limit = radius + 6
-	if flat.Magnitude >= limit or flat.Magnitude < 0.01 then
-		return position
+-- Alle Safe Zones als { Center, Radius } (Camp und Safehouses; ohne SafeZones nur das Camp)
+local function safeZones()
+	if options.SafeZones then
+		return options.SafeZones()
 	end
-	local edge = center + flat.Unit * limit
-	return Vector3.new(edge.X, position.Y, edge.Z)
+	local center, radius = options.SafeCenter()
+	return { { Center = center, Radius = radius } }
+end
+
+local function clampOutside(position)
+	for _, zone in safeZones() do
+		local center = zone.Center
+		local flat = Vector3.new(position.X - center.X, 0, position.Z - center.Z)
+		local limit = zone.Radius + 6
+		if flat.Magnitude < limit and flat.Magnitude >= 0.01 then
+			local edge = center + flat.Unit * limit
+			return Vector3.new(edge.X, position.Y, edge.Z)
+		end
+	end
+	return position
+end
+
+-- weit genug von allen Safe Zones?
+local function farFromSafe(x, z, margin)
+	for _, zone in safeZones() do
+		if Vector3.new(x - zone.Center.X, 0, z - zone.Center.Z).Magnitude <= zone.Radius + margin then
+			return false
+		end
+	end
+	return true
 end
 
 -- ---------- Spawnen ----------
@@ -321,15 +342,13 @@ end
 
 -- Freie Stelle im weiteren Umkreis um position (nil, wenn keine passt)
 local function spawnPoint(position)
-	local center, radius = options.SafeCenter()
 	local half = ExtinctionConfig.WorldSize / 2 - 70
 	for _ = 1, 8 do
 		local angle = random:NextNumber(0, math.pi * 2)
 		local distance = random:NextNumber(Z.SpawnMin, Z.SpawnMax)
 		local x, z = position.X + math.cos(angle) * distance, position.Z + math.sin(angle) * distance
 		local fromCenter = Vector3.new(x - options.Center.X, 0, z - options.Center.Z)
-		local fromSafe = Vector3.new(x - center.X, 0, z - center.Z)
-		if math.abs(fromCenter.X) < half and math.abs(fromCenter.Z) < half and fromSafe.Magnitude > radius + Z.SafeMargin then
+		if math.abs(fromCenter.X) < half and math.abs(fromCenter.Z) < half and farFromSafe(x, z, Z.SafeMargin) then
 			-- nicht direkt vor einem anderen Spieler auftauchen
 			local tooClose = false
 			for _, player in options.Players() do

@@ -284,9 +284,10 @@ function Minimap.Init(root)
 		end
 		-- Zonen: Safe Zone (Teil Zone.SafeZone) und rote Zonen (Karten-Attribut Redzones, JSON [{ X, Z, R }])
 		local zone = map:FindFirstChild("Zone")
-		local safe = zone and zone:FindFirstChild("SafeZone")
-		if safe and safe:IsA("BasePart") then
-			zoneCircle(safe.Position.X, safe.Position.Z, safe.Size.X / 2, Color3.fromRGB(112, 200, 120))
+		for _, safe in zone and zone:GetChildren() or {} do -- Camp ("SafeZone") und Safehouses ("SafeZone_<Name>")
+			if safe:IsA("BasePart") and (safe.Name == "SafeZone" or string.sub(safe.Name, 1, 9) == "SafeZone_") then
+				zoneCircle(safe.Position.X, safe.Position.Z, safe.Size.X / 2, Color3.fromRGB(112, 200, 120))
+			end
 		end
 		local ok, zones = pcall(function()
 			return game:GetService("HttpService"):JSONDecode(map:GetAttribute("Redzones") or "[]")

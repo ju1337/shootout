@@ -119,9 +119,12 @@ local function build(map)
 		end
 	end
 	local zone = map:FindFirstChild("Zone")
-	local safe = zone and zone:FindFirstChild("SafeZone")
-	if safe and safe:IsA("BasePart") then
-		circle(layer, map, safe.Position.X, safe.Position.Z, safe.Size.X / 2, SAFE, 0.55, 4)
+	for _, safe in zone and zone:GetChildren() or {} do -- Camp und Safehouses (kleine Safe Zones draußen)
+		if safe:IsA("BasePart") and (safe.Name == "SafeZone" or string.sub(safe.Name, 1, 9) == "SafeZone_") then
+			-- kleine Kreise mindestens gut sichtbar
+			local frame = circle(layer, map, safe.Position.X, safe.Position.Z, math.max(safe.Size.X / 2, 45), SAFE, 0.45, 4)
+			frame.Name = safe.Name
+		end
 	end
 	for _, zoneInfo in decode(map, "Redzones") do
 		local frame = circle(layer, map, zoneInfo.X or 0, zoneInfo.Z or 0, zoneInfo.R or 0, RED, 0.6, 4)

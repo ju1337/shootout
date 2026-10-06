@@ -85,11 +85,16 @@ function RedzoneService.MovingCandidates()
 	end
 	for _, part in places and places:GetChildren() or {} do
 		local key = string.match(part.Name, "^Place_(.+)$")
-		if key and part:IsA("BasePart") and not exclude[key] and part.Size.X <= cfg.MaxPlaceSize then
+		if key and part:IsA("BasePart") and not exclude[key] and string.sub(key, 1, 5) ~= "Safe_" and part.Size.X <= cfg.MaxPlaceSize then
 			local center = part.Position
 			local ok = true
 			if safe and Vector3.new(center.X - safe.X, 0, center.Z - safe.Z).Magnitude < safeRadius + radius + 40 then
 				ok = false
+			end
+			for _, zone in options.SafeZones and options.SafeZones() or {} do -- Safehouses nicht in der Wanderzone
+				if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius + 20 then
+					ok = false
+				end
 			end
 			for _, zone in zones do
 				if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius * 0.5 then
