@@ -462,6 +462,19 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
+	-- Bei jedem Wechsel der roten Zone kommt ein Lootdrop in die neue Zone (kurz nach der Ansage des Wechsels)
+	if ExtinctionConfig.Redzone.Loot and ExtinctionConfig.Redzone.Loot.MoveDrop then
+		RedzoneService.OnMoved(function(zone)
+			if zone then
+				task.delay(4, function()
+					if RedzoneService.Current() == zone then
+						AirdropService.StartInZone(zone)
+					end
+				end)
+			end
+		end)
+	end
+
 	-- Aktivitäten: Zombienester, Vorratslager, Funkgerät (Notruf), Überlebende (Teile Act_<Art> in der Gruppe Activities)
 	ActivityService.Init({
 		Map = map,

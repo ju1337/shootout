@@ -118,7 +118,10 @@ der Basis-Platte aus (nur Luft ab 2,5 Studs unter der Oberkante, keine Erde – 
 zieht alle **20 Minuten** an einen anderen Ort der Karte (Dörfer, Krankenhaus, Militärbasis, Hafen, Gefängnis, Flugplatz,
 Höfe, Außenposten, Tankstellen, Bahnhof … – nicht Camp, Seen, die ganze Stadt, Safehouses oder Wasser), nie zweimal
 hintereinander an denselben und möglichst mindestens 400 Studs vom alten weg (`MinMove`). Drinnen gilt PvP sofort, mehr
-Zombies und bessere Beute. Ansage an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde rote Wand und
+Zombies und **deutlich bessere Beute** (`ExtinctionConfig.Redzone.Loot`): Zombies, die dort sterben, haben 25 % öfter
+Beute, aus der nächstbesseren Tabelle (normale wie Läufer, Läufer wie Industrie, Brocken wie Militär), ein Item mehr,
+1,5× so große Stapel und doppelte Münzen; Vorratslager und Nester dort geben mehr; Lootdrops landen öfter in der Zone
+und haben dort mehr Items, und bei jedem Wechsel kommt kurz nach der Ansage ein Lootdrop in die neue Zone. Ansage an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde rote Wand und
 eine Lichtsäule; eine rote Zeile unter der Uhr nennt Ort, Zeit bis zum Wechsel und Entfernung (Karten-Attribut
 `Redzones`, eine Liste – vorbereitet für später mehrere Zonen). Mit jedem Wechsel beginnt die **Rangliste** neu. Feste
 rote Zonen auf der Karte gibt es nicht mehr. Es gibt keine Richtungsanzeiger mit Entfernung oben am Bildschirm (Ziele
@@ -230,8 +233,9 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
   `RedzoneBoard`).
 - **Lootdrops** (`AirdropService.lua`): 2,5 Minuten nach Serverstart, danach alle 7-11 Minuten eine Ansage
   „VERSORGUNGSABWURF“ mit Fackel (Lichtsäule) an der Landestelle, 45 s Vorwarnung, dann sinkt die Kiste 25 s am
-  Fallschirm (40 % Chance in der roten Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu
-  Begleiter-Zombies. Bleibt 5 Minuten.
+  Fallschirm (60 % Chance in der roten Zone, dort 2 Items mehr; bei jedem Wechsel der roten Zone kommt außerdem ein
+  Abwurf in die neue Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu Begleiter-Zombies. Bleibt
+  5 Minuten.
 - **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
   Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
   einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es
@@ -675,6 +679,7 @@ am Commit:
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
+| `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
 | `extbots` | Bots der offenen Welt: Spawn beim Admin (draußen, vor dem Rand der Safe Zone, sonst rote Zone), Ziele (Spieler draußen ja, in der Safe Zone nein, andere Bots nein, nahe Zombies ja), Zombies jagen und schlagen Bots, Tasche mit Waffe, Munition und Beute (rote Zone Tier 3), Kopfgeld und Rangliste nur für Spieler-Kills, Leiche weg, Obergrenze, Admin-Befehle |
 | `redzoneboard`, `extinctionui` | Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
 

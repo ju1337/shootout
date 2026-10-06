@@ -153,7 +153,12 @@ for _, item in bag.Container.Slots do
 		allBest = false
 	end
 end
-check(n >= A.Items[1] and n <= A.Items[2] and allBest, "viele Items aus der Lootdrop-Tabelle (" .. n .. ")")
+-- in der roten Zone ein paar Items mehr (ExtinctionConfig.Redzone.Loot), höchstens so viele, wie die Tabelle hat
+local L = ExtinctionConfig.Redzone.Loot
+local extra = list[1].Zone and (L.ExtraItems + L.AirdropExtra) or 0
+local tableSize = #ExtinctionConfig.LootTables.Airdrop
+check(n >= math.min(A.Items[1] + extra, tableSize) and n <= math.min(A.Items[2] + extra, tableSize) and allBest,
+	"viele Items aus der Lootdrop-Tabelle (" .. n .. (list[1].Zone and ", rote Zone" or "") .. ")")
 check(crate.LootBag.LootPrompt.HoldDuration == A.OpenTime, "E halten zum Öffnen (" .. A.OpenTime .. " s)")
 check(crate.LootBag:FindFirstChild("TakeAllPrompt") ~= nil, "F = alles nehmen")
 check((crate.LootBag.Position - target).Magnitude < 4, "Kiste liegt an der Landestelle")

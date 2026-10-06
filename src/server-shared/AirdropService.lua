@@ -8,7 +8,8 @@
 --      Sekunden) öffnet, F nimmt alles; Escort Zombies kommen um die Landestelle. Nach Lifetime Sekunden oder wenn sie leer
 --      ist, verschwindet die Kiste; dann beginnt die Wartezeit bis zum nächsten Abwurf.
 -- Das Ziel liegt mit RedzoneChance in der roten Zone, sonst irgendwo auf dem Boden (nicht nah am Rand, nicht nah an der Safe
--- Zone, nicht im Wasser).
+-- Zone, nicht im Wasser). In der roten Zone ist die Beute besser (ExtinctionConfig.Redzone.Loot: mehr Items, größere Stapel),
+-- und bei jedem Wechsel der Zone kommt ein Abwurf in die neue Zone (StartInZone, wenn jemand draußen ist).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -80,21 +81,28 @@ end
 
 -- ---------- Ziel ----------
 
+-- Bodenpunkt in der inneren Hälfte einer Zone (nil, wenn keiner passt)
+local function pointInZone(zone)
+	for _ = 1, 12 do
+		local angle = random:NextNumber(0, math.pi * 2)
+		local distance = zone.Radius * math.sqrt(random:NextNumber(0, 0.5))
+		local ground = ZombieService.GroundAt(zone.Center.X + math.cos(angle) * distance, zone.Center.Z + math.sin(angle) * distance)
+		if ground then
+			return ground
+		end
+	end
+	return nil
+end
+
 -- Landestelle: in der roten Zone (mit RedzoneChance) oder irgendwo; nil, wenn nichts Passendes gefunden wurde
 local function pickTarget()
 	local half = ExtinctionConfig.WorldSize / 2 - A.EdgeMargin
 	local safeCenter, safeRadius = options.SafeCenter()
 	if options.RedzoneRandom and random:NextNumber() < A.RedzoneChance then
 		local zone = options.RedzoneRandom()
-		if zone then
-			for _ = 1, 12 do
-				local angle = random:NextNumber(0, math.pi * 2)
-				local distance = zone.Radius * math.sqrt(random:NextNumber(0, 0.5))
-				local ground = ZombieService.GroundAt(zone.Center.X + math.cos(angle) * distance, zone.Center.Z + math.sin(angle) * distance)
-				if ground then
-					return ground, zone
-				end
-			end
+		local ground = zone and pointInZone(zone)
+		if ground then
+			return ground, zone
 		end
 	end
 	for _ = 1, 40 do
@@ -190,7 +198,8 @@ local function land(drop)
 		drop.Falling = nil
 	end
 	local count = random:NextInteger(A.Items[1], A.Items[2])
-	local items = ExtinctionConfig.RollLoot("Airdrop", count, random)
+	local items = drop.Zone and ExtinctionConfig.RedzoneRoll("Airdrop", count + ExtinctionConfig.Redzone.Loot.AirdropExtra, random)
+		or ExtinctionConfig.RollLoot("Airdrop", count, random)
 	drop.LootId = LootService.Create(drop.Target, items, "Airdrop", "LOOTDROP", { HoldTime = A.OpenTime, Lifetime = A.Lifetime, Meta = { Drop = drop } })
 	if not drop.LootId then
 		finish(drop)
@@ -265,6 +274,15 @@ end
 
 function AirdropService.Active()
 	return active
+end
+
+-- Abwurf in eine Zone (die rote Zone hat gerade gewechselt): nur, wenn jemand draußen ist und gerade keiner läuft
+function AirdropService.StartInZone(zone)
+	if not options or #active > 0 or not zone or playersOutside() < A.MinPlayers then
+		return nil
+	end
+	local ground = pointInZone(zone)
+	return ground and AirdropService.Start(ground) or nil
 end
 
 -- opts = { Map, Center (Vector3), InSafeZone(position), SafeCenter() -> (Vector3, Radius), Players() -> { Player },

@@ -226,6 +226,20 @@ ExtinctionConfig.Redzone = {
 	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
 	KindWeights = { Walker = 50, Runner = 30, Brute = 12, Screamer = 8 },
 	ContainerTable = "Tier3",
+	-- Bessere Beute (ExtinctionConfig.RedzoneRoll): Zombies, die in der Zone sterben, haben DropBonus mehr Chance auf Beute,
+	-- ziehen aus der nächstbesseren Tabelle (BetterTable), haben ExtraItems mehr und StackFactor größere Stapel (Munition,
+	-- Verbände) und bringen CoinFactor mal so viele Münzen. Vorratslager und Nester dort: ExtraItems mehr, größere Stapel.
+	-- Lootdrops in der Zone: zusätzlich AirdropExtra Items. MoveDrop: bei jedem Wechsel kommt ein Lootdrop in die neue Zone
+	-- (wenn jemand draußen ist und gerade keiner läuft).
+	Loot = {
+		DropBonus = 0.25,
+		BetterTable = { Zombie = "Zombie2", Zombie2 = "Tier2", Tier2 = "Tier3", Tier3 = "Airdrop" },
+		ExtraItems = 1,
+		StackFactor = 1.5,
+		CoinFactor = 2,
+		AirdropExtra = 1,
+		MoveDrop = true,
+	},
 }
 
 -- ---------- Bots (Admin-Panel: Gegner zum Testen von PvP, Todestaschen und der Rangliste) ----------
@@ -323,7 +337,7 @@ ExtinctionConfig.Airdrop = {
 	Lifetime = 300,          -- gelandet bleibt die Kiste so lange
 	Items = { 6, 9 },        -- so viele Einträge aus LootTables.Airdrop
 	Escort = 5,              -- so viele Zombies kommen um die Landestelle
-	RedzoneChance = 0.4,     -- Wahrscheinlichkeit, in der roten Zone zu landen
+	RedzoneChance = 0.6,     -- Wahrscheinlichkeit, in der roten Zone zu landen
 	EdgeMargin = 140,        -- Abstand zum Kartenrand
 	SafeMargin = 180,        -- Abstand zur Safe Zone
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
@@ -429,6 +443,25 @@ function ExtinctionConfig.RollLoot(tableName, count, random)
 		end
 	end
 	return result
+end
+
+-- Stapel größer machen (factor), höchstens bis MaxStack; Waffen und Fahrzeuge bleiben einzeln. Ändert items selbst.
+function ExtinctionConfig.BigStacks(items, factor)
+	for _, item in items do
+		local config = ExtinctionConfig.Items[item.Id]
+		local max = config and config.MaxStack or 1
+		if max > 1 then
+			item.Count = math.min(max, math.ceil(item.Count * factor))
+		end
+	end
+	return items
+end
+
+-- Beute in der roten Zone (Redzone.Loot): Tabelle eine Stufe besser, ExtraItems mehr, größere Stapel
+function ExtinctionConfig.RedzoneRoll(tableName, count, random)
+	local L = ExtinctionConfig.Redzone.Loot
+	local items = ExtinctionConfig.RollLoot(L.BetterTable[tableName] or tableName, count + L.ExtraItems, random)
+	return ExtinctionConfig.BigStacks(items, L.StackFactor)
 end
 
 function ExtinctionConfig.Get(id)

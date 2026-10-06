@@ -93,9 +93,15 @@ local function playersNear(position, range)
 	return list
 end
 
+-- Beute eines Nests/Lagers; in der roten Zone aus RedTable, mit mehr Items und größeren Stapeln (Redzone.Loot)
 local function roll(spot, cfg)
 	local red = options.RedzoneAt and options.RedzoneAt(spot.Position)
-	return ExtinctionConfig.RollLoot(red and cfg.RedTable or cfg.Table, random:NextInteger(cfg.Items[1], cfg.Items[2]), random)
+	local count = random:NextInteger(cfg.Items[1], cfg.Items[2])
+	if red then
+		local L = ExtinctionConfig.Redzone.Loot
+		return ExtinctionConfig.BigStacks(ExtinctionConfig.RollLoot(cfg.RedTable or cfg.Table, count + L.ExtraItems, random), L.StackFactor)
+	end
+	return ExtinctionConfig.RollLoot(cfg.Table, count, random)
 end
 
 local function part(model, name, size, cframe, color, material, shape, collide)

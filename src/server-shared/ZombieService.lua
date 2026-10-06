@@ -10,6 +10,7 @@
 -- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
 -- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche: E durchsucht sie, alles geht direkt ins
 -- Inventar (LootService.Grab); was nicht passt, bleibt in der Leiche (ExtinctionConfig.Zombies.CorpseLootTime Sekunden).
+-- In der roten Zone gestorben: doppelte Münzen und bessere Beute (ExtinctionConfig.Redzone.Loot).
 -- Körper: einfacher R6-Körper (6 Teile, schnell), Arme nach vorn, rote Augen; Animation: Roblox-Standard (R6).
 -- Modelle in Workspace.Zombies, Attribut IsZombie (Messer und Schüsse treffen sie, der Ping-Ausgleich kennt sie).
 
@@ -399,15 +400,20 @@ local function redzoneSpawnPoint(zone)
 end
 
 -- Beute für eine Leiche würfeln: { { Id, Count } } (leer = nichts)
--- Beute einer Leiche; blood = im Blutmond gespawnt: bessere Tabelle, höhere Chance, mehr Items
-local function rollCorpseLoot(stats, blood)
+-- Beute einer Leiche; blood = im Blutmond gespawnt: bessere Tabelle, höhere Chance, mehr Items; red = in der roten Zone
+-- gestorben: noch eine Stufe besser, höhere Chance, ein Item mehr, größere Stapel (ExtinctionConfig.Redzone.Loot)
+local function rollCorpseLoot(stats, blood, red)
 	local B = ExtinctionConfig.BloodMoon
-	local chance = stats.Drop + (blood and B.DropBonus or 0)
+	local L = ExtinctionConfig.Redzone.Loot
+	local chance = stats.Drop + (blood and B.DropBonus or 0) + (red and L.DropBonus or 0)
 	if random:NextNumber() > chance then
 		return {}
 	end
 	local tableName = blood and not stats.Boss and B.BetterTable[stats.Table] or stats.Table
 	local amount = random:NextInteger(stats.Items[1], stats.Items[2]) + (blood and not stats.Boss and B.ExtraItems or 0)
+	if red and not stats.Boss then
+		return ExtinctionConfig.RedzoneRoll(tableName, amount, random)
+	end
 	return ExtinctionConfig.RollLoot(tableName, amount, random)
 end
 ZombieService.RollCorpseLoot = rollCorpseLoot
@@ -466,11 +472,13 @@ end
 local function onDeath(model, info)
 	local root = info.Root
 	remove(model)
+	-- in der roten Zone gestorben: mehr Münzen, bessere Beute
+	local red = root and options and options.RedzoneAt and options.RedzoneAt(root.Position) ~= nil
 	-- Münzen für den, der zuletzt getroffen hat (Spieler)
 	local hit = Damage.LastHit(model)
 	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
 	if killer then
-		ProgressService.AddCoins(killer, info.Coins, "Zombie")
+		ProgressService.AddCoins(killer, info.Coins * (red and ExtinctionConfig.Redzone.Loot.CoinFactor or 1), "Zombie")
 		ProgressService.AddStat(killer, "Zombies", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
 		for _, callback in ZombieService.OnKill do
@@ -481,7 +489,7 @@ local function onDeath(model, info)
 		end
 	end
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
-	local items = root and rollCorpseLoot(info.Stats, info.Blood) or {}
+	local items = root and rollCorpseLoot(info.Stats, info.Blood, red) or {}
 	if #items > 0 and root then
 		attachCorpsePrompt(model, root, info, items)
 	end
