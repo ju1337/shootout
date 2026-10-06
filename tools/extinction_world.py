@@ -672,7 +672,8 @@ class World:
 
     FACADES = ("panel", "brick", "glass", "balcony", "stripes", "fire_escape")
 
-    def walk_block(self, w, d, floors, color, mat="Concrete", fh=9.0, window=4.0, spacing=7.0, broken_top=False, style=None):
+    def walk_block(self, w, d, floors, color, mat="Concrete", fh=9.0, window=4.0, spacing=7.0, broken_top=False, style=None,
+                   door="S", street=True):
         """Begehbares Hochhaus / Wohnblock (Prefab, Tür vorne -Z): Stockwerke mit Decken, Rampen als Treppen bis aufs Dach
         (Brüstung), eingeschlagene Fenster (offen, teils Glassplitter oder vernagelt), Einschusslöcher, Ranken, die vom Dach
         herunterhängen, Ruß und Deckung (Kisten, Möbel, Schutt) in jedem Stockwerk.
@@ -705,7 +706,8 @@ class World:
             # nicht jede Achse hat Fenster: höchstens die Hälfte (mindestens eine), Rückseite und Schmalseiten meist zu
             share = 0.5 if side == "S" else 0.3
             used = [c for c in centers if rng.random() < share] or [rng.choice(centers)]
-            if side == "S":
+            door_c = None
+            if side == door:
                 door_c = min(centers, key=abs)
                 used = sorted(set(used) | {door_c})
             if side in ("E", "W") and rng.random() < 0.5:
@@ -716,10 +718,10 @@ class World:
                 for c in centers:
                     if c not in used:
                         continue
-                    if f == 0 and side == "S" and c == door_c:
+                    if f == 0 and c == door_c:
                         openings.append((c, 5.5, 0, 7.5))  # Eingang
                         continue
-                    if f > 0 and side == "S" and c == door_c and len(used) > 1 and rng.random() < 0.5:
+                    if f > 0 and c == door_c and len(used) > 1 and rng.random() < 0.5:
                         continue  # über der Tür nicht immer ein Fenster
                     if broken_top and f == floors - 1 and rng.random() < 0.5:
                         openings.append((c, step * 0.9, y0 + 1.2, top_y + 2))  # oben weggebrochen
@@ -790,7 +792,7 @@ class World:
                 pb.box("Buildings", "EscapeStairs", (2.4, 0.3, math.hypot(7, fh)), (sx * (w / 2 + 1.4), y - fh / 2, (1 if f % 2 else -1) * 0.5),
                        (60, 56, 52), "DiamondPlate", angles=((1 if f % 2 else -1) * ang_, 0, 0))
         # Erdgeschoss: manchmal Läden mit Vordach, Dach: Wassertank, Antenne, Klimakästen
-        if rng.random() < 0.4:
+        if street and rng.random() < 0.4:
             pb.box("Decor", "Awning", (min(14, w - 4), 0.3, 3.2), (rng.uniform(-w / 6, w / 6), head + 0.4, -d / 2 - 1.6), accent, "Fabric",
                    angles=(rng.uniform(8, 30), 0, rng.uniform(-8, 8)))
         for _ in range(rng.randint(0, 3)):
@@ -861,9 +863,119 @@ class World:
             for _ in range(3):
                 pb.box("Decor", "Rebar", (0.3, rng.uniform(2, 5), 0.3), (rng.uniform(-w / 3, w / 3), top_y + 2.4, rng.uniform(-d / 3, d / 3)),
                        (80, 60, 50), "CorrodedMetal", angles=(rng.uniform(-25, 25), 0, rng.uniform(-25, 25)))
-        if rng.random() < 0.5:
+        if street and rng.random() < 0.5:
             self.graffiti(pb, rng.choice(GRAFFITI), (rng.uniform(-w / 4, w / 4), 4.2, -d / 2 - 0.08), (min(10, w - 4), 2.4, 0.05))
-        self.local_rubble(pb, rng.uniform(-w / 3, w / 3), -d / 2 - 4, 6, color, n=2)
+        if street:
+            self.local_rubble(pb, rng.uniform(-w / 3, w / 3), -d / 2 - 4, 6, color, n=2)
+        pb.height = top_y
+        pb.style = style
+        return pb
+
+    TOWER_SIGNS = (("HOTEL KAISERHOF", "★★★★"), ("STADTWERKE", "ÖDSTADT"), ("ALLIANZA", "VERSICHERUNGEN"), ("GRAND HOTEL", "SEIT 1912"),
+                   ("RADIO ÖDSTADT", "98,4 MHZ"), ("NORDBANK", "IHR VERTRAUEN"), ("TELEKOM", "ZENTRALE"), ("ZEITUNGSHAUS", "DER BOTE"),
+                   ("KLINIKUM", "VERWALTUNG"), ("BUSINESS CENTER", "BÜROS ZU VERMIETEN"))
+
+    def skyscraper(self, w, d, color):
+        """Begehbares Hochhaus mit Form: Stufen (oben schmaler, Dachterrasse), Zwillingstürme auf einem Sockel, L-Form (Turm
+        und niedriger Flügel) oder Sockel mit schlankem Turm. Obere Teile stehen vorne bündig, die Treppe des Sockels kommt
+        hinten auf der Terrasse heraus, der Eingang des oberen Teils liegt hinten. Dazu Leben: Bettlaken mit SOS/HILFE aus den
+        Fenstern, Rauch aus einem Fenster, Feuer in einem Stockwerk, alte Leuchtschrift auf dem Dach, Treppenhaus,
+        Landeplatz, Satellitenschüsseln."""
+        rng = self.rng
+        pb = self.prefab()
+        lighten = self.bm.lighten
+        shape = rng.choice(("setback", "setback", "twin", "L", "podium"))
+        if shape == "twin" and w < 42:
+            shape = "setback"  # Zwillinge brauchen Platz (jeder Turm mindestens 20 breit, sonst zu steile Rampen)
+        style = rng.choice(("panel", "glass", "glass", "stripes", "balcony", "fire_escape", "brick"))
+        kw = dict(window=4.6, spacing=11.0)
+        tops = []  # (ox, oz, w, d, Oberkante) der Dächer
+
+        def upper_depth(dd):
+            return min(dd * rng.uniform(0.6, 0.72), d - 9)
+
+        if shape == "setback":
+            lower = self.walk_block(w, d, rng.randint(3, 4), color, style=style, **kw)
+            self.merge3(pb, lower, 0, 0, 0)
+            w2, d2 = min(w - 4, max(20.0, w * rng.uniform(0.6, 0.75))), max(14.0, upper_depth(d))
+            ox, oz = rng.uniform(-(w - w2) / 2 + 1, (w - w2) / 2 - 1) if w - w2 > 2 else 0, -(d - d2) / 2 + 1
+            upper = self.walk_block(w2, d2, rng.randint(3, 5), lighten(color, rng.uniform(-0.08, 0.08)), style=style, door="N",
+                                    street=False, broken_top=rng.random() < 0.5, **kw)
+            self.merge3(pb, upper, ox, lower.height, oz)
+            tops.append((ox, oz, w2, d2, lower.height + upper.height))
+        elif shape == "twin":
+            podium = self.walk_block(w, d, rng.randint(1, 2), lighten(color, -0.12), style=rng.choice(("glass", "panel")), **kw)
+            self.merge3(pb, podium, 0, 0, 0)
+            w2, d2 = max(20.0, w * 0.45), max(14.0, upper_depth(d))
+            n = rng.randint(4, 6)
+            for s, floors in ((-1, n), (1, max(2, n - rng.randint(1, 3)))):
+                ox, oz = s * (w / 2 - w2 / 2 - 1), -(d - d2) / 2 + 1
+                tower = self.walk_block(w2, d2, floors, color, style=style, door="N", street=False, broken_top=rng.random() < 0.4,
+                                        window=4.0, spacing=8.0)
+                self.merge3(pb, tower, ox, podium.height, oz)
+                tops.append((ox, oz, w2, d2, podium.height + tower.height))
+        elif shape == "L":
+            w1 = max(20.0, w * 0.6)
+            tower = self.walk_block(w1, d, rng.randint(5, 7), color, style=style, broken_top=rng.random() < 0.5, **kw)
+            self.merge3(pb, tower, -(w - w1) / 2, 0, 0)
+            w2, d2 = w - w1 + 0.5, d * 0.6
+            if w2 >= 20:
+                wing = self.walk_block(w2, d2, rng.randint(2, 3), lighten(color, 0.1), style=rng.choice(("panel", "brick", "stripes")),
+                                       window=4.0, spacing=9.0)
+            else:  # schmaler Anbau: ein Stockwerk mit Flachdach
+                wing = self.ruin_house(w2, d2, 9, lighten(color, 0.1), rng.choice(("Concrete", "Brick")), damage=0.2)
+            self.merge3(pb, wing, (w - w2) / 2, 0, -(d - d2) / 2)
+            tops.append((-(w - w1) / 2, 0, w1, d, tower.height))
+        else:  # Sockel mit schlankem Turm
+            podium = self.walk_block(w, d, 2, lighten(color, -0.1), style=rng.choice(("glass", "panel", "brick")), **kw)
+            self.merge3(pb, podium, 0, 0, 0)
+            w2, d2 = min(w - 4, max(20.0, w * rng.uniform(0.5, 0.6))), max(14.0, upper_depth(d))
+            ox, oz = 0, -(d - d2) / 2 + 1
+            tower = self.walk_block(w2, d2, rng.randint(4, 7), color, style=style, door="N", street=False, window=4.0, spacing=8.0)
+            self.merge3(pb, tower, ox, podium.height, oz)
+            tops.append((ox, oz, w2, d2, podium.height + tower.height))
+            pb.box("Decor", "Spire", (0.8, rng.uniform(10, 20), 0.8), (ox, podium.height + tower.height + 8, oz), (150, 150, 156), "Metal")
+
+        # Leben an der Fassade vorne (unterer Teil): Bettlaken mit Hilferufen, Rauch, Feuer
+        front_h = max(9.0, min(t_[4] for t_ in tops) - 4)
+        for _ in range(rng.randint(1, 2)):
+            sx, sy = rng.uniform(-w / 2 + 3, w / 2 - 3), rng.uniform(9, front_h)
+            pb.box("Decor", "Sheet", (4, 7, 0.12), (sx, sy, -d / 2 - 0.25), rng.choice(((226, 222, 210), (200, 196, 180), (180, 196, 210))),
+                   "Fabric", angles=(0, 0, rng.uniform(-4, 4)), props={"CanCollide": False})
+            self.graffiti(pb, rng.choice(("SOS", "HILFE", "WIR LEBEN NOCH", "ESSEN?", "3 KINDER", "NICHT SCHIESSEN")), (sx, sy, -d / 2 - 0.33),
+                          (3.6, 6, 0.05), color=rng.choice(((170, 30, 26), (30, 28, 26))))
+        if rng.random() < 0.5:
+            pb.box("Decor", "SmokeSource", (2, 1, 2), (rng.uniform(-w / 3, w / 3), rng.uniform(12, front_h), -d / 2 - 1),
+                   (40, 38, 36), "SmoothPlastic", props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False},
+                   children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": self.bm.rgb(34, 32, 30), "Opacity": 0.4,
+                                                                                     "RiseVelocity": 10, "Size": 12}}])
+        if rng.random() < 0.3:
+            fy = 9 * rng.randint(1, 2) + 1
+            pb.box("Decor", "Flames", (2, 1, 2), (rng.uniform(-w / 4, w / 4), fy, rng.uniform(-d / 4, 0)), (255, 120, 40), "Neon",
+                   props={"CanCollide": False, "Transparency": 0.3},
+                   children=[{"Name": "Fire", "ClassName": "Fire", "Properties": {"Size": 7, "Heat": 10, "Color": self.bm.rgb(255, 140, 40),
+                                                                                     "SecondaryColor": self.bm.rgb(140, 40, 20)}},
+                             {"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 24, "Brightness": 1.8,
+                                                                                         "Color": self.bm.rgb(255, 150, 60)}}])
+        # Dächer: Treppenhaus, Satellitenschüsseln, alte Leuchtschrift, Landeplatz
+        tx, tz, tw, td, ty = max(tops, key=lambda t_: t_[4])
+        pb.box("Buildings", "StairHouse", (6, 4, 6), (tx + tw / 2 - 4.5, ty + 2, tz - td / 2 + 4.5), lighten(color, -0.15), "Concrete")
+        for _ in range(rng.randint(1, 3)):
+            ox_, oz_ = tx + rng.uniform(-tw / 3, tw / 3), tz + rng.uniform(-td / 3, td / 6)
+            pb.add("Decor", "Dish", (0.4, 2.4, 2.4), (ox_, ty + 1.6, oz_), (210, 210, 206), "Metal",
+                   angles=(0, rng.uniform(0, 360), 90 - 35), props={"Shape": "Cylinder"})
+        if rng.random() < 0.6:
+            title, sub = rng.choice(self.TOWER_SIGNS)
+            sw = min(tw - 2, 22)
+            for s in (-1, 1):
+                pb.box("Decor", "SignFrame", (0.4, 7, 0.4), (tx + s * sw * 0.4, ty + 3.5, tz - td / 2 + 1), (70, 70, 74), "Metal")
+            pb.sign2(self.nm("TowerSign"), (sw, 4.4, 0.3), (tx, ty + 5.4, tz - td / 2 + 0.7), title, sub, (30, 30, 32),
+                     rng.choice(((220, 60, 50), (230, 200, 90), (90, 160, 220), (220, 220, 220))), (200, 200, 200),
+                     angles=(0, 0, rng.choice((0, 0, rng.uniform(-12, 12)))))
+        elif tw >= 18 and td >= 14:
+            pb.add("Decor", "Helipad", (0.3, min(tw, td) - 4, min(tw, td) - 4), (tx, ty + 0.15, tz), (70, 70, 66), "Concrete",
+                   angles=(0, 0, 90), props={"Shape": "Cylinder"})
+            pb.floor_text("RoofH", (5, 0.1, 5), (tx, ty + 0.35, tz), "H", (220, 200, 90), yaw=0)
         return pb
 
     def ruin_tower(self, w, d, h, color, collapsed=None):
@@ -925,6 +1037,16 @@ class World:
                            "Range": 30, "Brightness": 1.0, "Color": self.bm.rgb(255, 220, 170)}}])
 
     # ---------- Besondere Orte ----------
+    @staticmethod
+    def merge3(dst, src, ox, oy, oz):
+        """Prefab src um (ox, oy, oz) verschoben in Prefab dst übernehmen."""
+        for group, items in src.groups.items():
+            for inst in items:
+                inst = copy.deepcopy(inst)
+                pos = inst["Properties"]["CFrame"]["CFrame"]["position"]
+                inst["Properties"]["CFrame"]["CFrame"]["position"] = [pos[0] + ox, pos[1] + oy, pos[2] + oz]
+                dst.groups.setdefault(group, []).append(inst)
+
     @staticmethod
     def merge(dst, src, ox, oz):
         """Prefab src um (ox, oz) verschoben in Prefab dst übernehmen."""
@@ -1383,8 +1505,7 @@ class World:
         if kind == "tower":  # begehbar bis aufs Dach, manchmal ein eingestürzter Stumpf
             if rng.random() < 0.1:
                 return self.ruin_tower(w, d, rng.uniform(40, 100), color, collapsed=True)
-            return self.walk_block(w, d, rng.randint(5, 8), color, "Concrete", window=4.6, spacing=11.0, broken_top=rng.random() < 0.6,
-                                   style=rng.choice(("panel", "glass", "glass", "stripes", "balcony", "fire_escape")))
+            return self.skyscraper(w, d, color)
         if kind == "apartment":
             return self.walk_block(w, d, rng.randint(2, 3), color, rng.choice(("Concrete", "Brick")), spacing=10.0,
                                    broken_top=rng.random() < 0.3)
