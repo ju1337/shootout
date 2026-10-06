@@ -150,7 +150,7 @@ local function cycle()
 	local serverTime = workspace:GetServerTimeNow()
 	local clock = DayCycle.Clock(serverTime)
 	local dark = DayCycle.Darkness(clock)
-	local blood = DayCycle.IsBloodMoon(serverTime) and dark or 0
+	local blood = DayCycle.IsBloodMoon(serverTime) and math.max(dark, 0.7) or 0 -- auch in der Morgendämmerung noch rot
 	local fog = DayCycle.Fog(serverTime)
 	Lighting.ClockTime = clock
 	local objects = targets()

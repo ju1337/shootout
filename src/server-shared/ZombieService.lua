@@ -66,6 +66,7 @@ function ZombieService.Kind(name)
 		Table = kind.Table or "Zombie",
 		Eyes = kind.Eyes or Color3.fromRGB(255, 40, 30),
 		Scream = kind.Scream == true,
+		Boss = kind.Boss == true,
 	}
 end
 
@@ -390,12 +391,18 @@ local function redzoneSpawnPoint(zone)
 end
 
 -- Beute für eine Leiche würfeln: { { Id, Count } } (leer = nichts)
-local function rollCorpseLoot(stats)
-	if random:NextNumber() > stats.Drop then
+-- Beute einer Leiche; blood = im Blutmond gespawnt: bessere Tabelle, höhere Chance, mehr Items
+local function rollCorpseLoot(stats, blood)
+	local B = ExtinctionConfig.BloodMoon
+	local chance = stats.Drop + (blood and B.DropBonus or 0)
+	if random:NextNumber() > chance then
 		return {}
 	end
-	return ExtinctionConfig.RollLoot(stats.Table, random:NextInteger(stats.Items[1], stats.Items[2]), random)
+	local tableName = blood and not stats.Boss and B.BetterTable[stats.Table] or stats.Table
+	local amount = random:NextInteger(stats.Items[1], stats.Items[2]) + (blood and not stats.Boss and B.ExtraItems or 0)
+	return ExtinctionConfig.RollLoot(tableName, amount, random)
 end
+ZombieService.RollCorpseLoot = rollCorpseLoot
 
 -- E an der Leiche: Beute direkt ins Inventar. Was nicht passt, bleibt liegen.
 local function attachCorpsePrompt(model, root, info, items)
@@ -466,7 +473,7 @@ local function onDeath(model, info)
 		end
 	end
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
-	local items = root and rollCorpseLoot(info.Stats) or {}
+	local items = root and rollCorpseLoot(info.Stats, info.Blood) or {}
 	if #items > 0 and root then
 		attachCorpsePrompt(model, root, info, items)
 	end
@@ -520,15 +527,62 @@ function ZombieService.Spawn(position, kindName, force)
 		end
 	end
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	local health = math.floor(stats.Health * random:NextNumber(0.8, 1.2))
+	-- Blutmond: zäher, härter, schneller (Bosse haben ihre eigenen Werte)
+	local B = ExtinctionConfig.BloodMoon
+	local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow()) and not stats.Boss
+	local health = math.floor(stats.Health * random:NextNumber(0.8, 1.2) * (blood and B.Health or 1))
 	humanoid.MaxHealth = health
 	humanoid.Health = health
 	humanoid.WalkSpeed = stats.Walk
-	local speed = stats.Run * random:NextNumber(0.88, 1.12)
+	local speed = stats.Run * random:NextNumber(0.88, 1.12) * (blood and B.Speed or 1)
 	if stats.Scale ~= 1 then
 		model:ScaleTo(stats.Scale)
 	end
 	model:SetAttribute("ZombieKind", stats.Id)
+	if stats.Boss then
+		-- Boss: Name und Lebensbalken über dem Kopf, roter Umriss (durch Wände sichtbar)
+		model:SetAttribute("Boss", true)
+		local head = model:FindFirstChild("Head")
+		local board = Instance.new("BillboardGui")
+		board.Name = "BossTag"
+		board.Size = UDim2.fromOffset(220, 46)
+		board.StudsOffset = Vector3.new(0, 3, 0)
+		board.AlwaysOnTop = true
+		board.MaxDistance = 260
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.BackgroundTransparency = 1
+		title.Size = UDim2.new(1, 0, 0, 24)
+		title.Text = string.upper(stats.Name)
+		title.TextColor3 = Color3.fromRGB(255, 70, 60)
+		title.TextStrokeTransparency = 0.3
+		title.Font = Enum.Font.GothamBlack
+		title.TextScaled = true
+		title.Parent = board
+		local bar = Instance.new("Frame")
+		bar.Name = "Bar"
+		bar.Position = UDim2.new(0.1, 0, 0, 30)
+		bar.Size = UDim2.new(0.8, 0, 0, 8)
+		bar.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
+		bar.BorderSizePixel = 0
+		bar.Parent = board
+		local fill = Instance.new("Frame")
+		fill.Name = "Fill"
+		fill.Size = UDim2.fromScale(1, 1)
+		fill.BackgroundColor3 = Color3.fromRGB(220, 40, 30)
+		fill.BorderSizePixel = 0
+		fill.Parent = bar
+		board.Parent = head or model
+		humanoid.HealthChanged:Connect(function(value)
+			fill.Size = UDim2.fromScale(math.clamp(value / math.max(1, humanoid.MaxHealth), 0, 1), 1)
+		end)
+		local glow = Instance.new("Highlight")
+		glow.Name = "BossGlow"
+		glow.FillColor = Color3.fromRGB(160, 20, 20)
+		glow.FillTransparency = 0.75
+		glow.OutlineColor = Color3.fromRGB(255, 60, 50)
+		glow.Parent = model
+	end
 	model:PivotTo(CFrame.new(position + Vector3.new(0, 3 * stats.Scale, 0)) * CFrame.Angles(0, random:NextNumber(0, math.pi * 2), 0))
 	model.Parent = folder
 	local root = model:FindFirstChild("HumanoidRootPart")
@@ -536,8 +590,8 @@ function ZombieService.Spawn(position, kindName, force)
 		root:SetNetworkOwner(nil) -- der Server steuert die Zombies
 	end)
 	local info = { Humanoid = humanoid, Root = root, Target = nil, NextAttack = 0, NextWander = 0, LastPos = root.Position,
-		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage, Coins = stats.Coins, Kind = stats.Id,
-		Name = stats.Name, Stats = stats }
+		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage * (blood and B.Damage or 1), Coins = stats.Coins,
+		Kind = stats.Id, Name = stats.Name, Stats = stats, Blood = blood }
 	zombies[model] = info
 	count += 1
 	playAnimations(humanoid, speed)
@@ -578,7 +632,7 @@ local function step(model, info, now)
 		end
 		local distance = (targetRoot.Position - root.Position).Magnitude
 		humanoid.WalkSpeed = info.Speed
-		if distance <= Z.AttackRange then
+		if distance <= Z.AttackRange * math.max(1, info.Stats and info.Stats.Scale or 1) then -- große Zombies reichen weiter
 			humanoid:MoveTo(root.Position) -- stehen bleiben und zuschlagen
 			if now >= info.NextAttack then
 				info.NextAttack = now + Z.AttackDelay

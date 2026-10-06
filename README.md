@@ -44,7 +44,9 @@ Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch da
 Containern und Wellblech mit Stacheldraht, davor Holzspieße, tote Infizierte und ein brennender Leichenhaufen. Vier Tore
 zwischen hochkant gestellten Containern mit Sandsack-Nest, MG und Scheinwerfer, gesprühte Warnungen („SAFE ZONE ·
 KEINE INFIZIERTEN“, „DRAUSSEN STIRBT MAN“), Gerüsttürme in den Ecken. Drinnen Schlamm und Bretterwege, eine Feuerstelle mit
-Kochtopf, Reifen und Kisten als Sitze (Spawn), Feuertonnen, verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
+Kochtopf, Reifen und Kisten als Sitze (Spawn) mit Überlebenden, die am Feuer sitzen, daneben ein Wach- und Funkturm aus Gerüst (Sandsäcke, Scheinwerfer,
+Lautsprecher, Antenne mit Blinklicht, rote PHOENIX-Banner, Wache oben), Wachen auf Toren und Ecktürmen, Feuertonnen,
+verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
 MG-Stellungen an den Toren, grelles Flutlicht am Generator, Treibstoff, Regentonnen; Händler unter Planen hinter
 Paletten-Theken (WAFFEN, SANI, WERKSTATT), das LAGER im Container, die Haltestelle REISEN, eine Werkstatt und der
 Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
@@ -54,7 +56,8 @@ Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dort
 (`Extinction.Travel`, nur aus einer Safe Zone, `ExtinctionConfig.TravelCooldown` Sekunden Pause).
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 64,
-Hof 90 × 90 Studs): befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild
+Hof 90 × 90 Studs): befestigte Überlebenden-Höfe (Schlammboden mit Bretterwegen, Palisade mit Autowracks, Wellblech und Stacheldraht, Spieße
+und tote Infizierte davor, Wachtürme an den vorderen Ecken, MG-Stellung, Pickup, Zelte, Generator, Laternen) – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild
 zur Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
 Wasserturm. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und die Haltestelle REISEN, rechts SANI und ein
 LAGER-Container – dasselbe Lager wie im Camp), wie im Camp mindestens 30 Studs auseinander, damit sich die
@@ -129,8 +132,14 @@ bleibt. Beim Betreten eines Ortes erscheint sein Name.
 **Tag und Nacht** (`src/shared/DayCycle.lua`, `ExtinctionConfig.Day`): ein Tag dauert 24 Minuten, davon etwa
 9 Minuten Nacht (blaues Mondlicht, dichter Dunst – Feuer und die wenigen Laternen sind dann die Lichter). Die Uhrzeit
 hängt an der Serverzeit, alle sehen dieselbe; Anzeige oben rechts. Nachts kommen mehr Zombies (×1,6) und sie sehen
-weiter. Jede **4. Nacht ist Blutmond**: rotes Licht, Ansage, noch einmal ×1,5 Zombies mit vielen Läufern, Schreiern und
-Brocken. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
+weiter. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
+**Blutmond-Event** (`BloodMoonService`, `ExtinctionConfig.BloodMoon`): alle 60 Minuten (das erste nach 30) für
+**10 Minuten**, eine Minute vorher eine Warnung. Es wird Nacht mit rotem Licht, die Uhr oben zeigt die Restzeit. Zombies:
+×1,5 so viele, härtere Arten, ×1,5 Leben, ×1,35 Schaden, schneller – dafür **bessere Beute** (Tabelle eine Stufe höher,
+höhere Chance, ein Item mehr). **Bosse**: die *Blutbestie* (riesig, 2400 Leben, Name und Lebensbalken über dem Kopf, roter
+Umriss) erscheint alle 2,5 Minuten bei einem Spieler draußen (höchstens 2 gleichzeitig), Ansage beim Erscheinen und beim
+Tod, 250 Münzen und Beute wie aus einem Lootdrop. Admin-Panel: Knopf **BLUTMOND** startet/beendet sofort.
+**Dächer für Hubschrauber**: zwei Hochhäuser haben ein freies Dach mit Landefläche (gelber Rand, H, Randlichter, Windsack).
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der

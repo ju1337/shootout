@@ -1452,7 +1452,8 @@ function ExtinctionClient.Init()
 		local serverTime = workspace:GetServerTimeNow()
 		local clock = DayCycle.Clock(serverTime)
 		if DayCycle.IsBloodMoon(serverTime) then
-			clockText.Text = "BLUTMOND  " .. DayCycle.Label(clock) .. "  ·  VIELE ZOMBIES"
+			local left = math.floor(DayCycle.BloodMoonLeft(serverTime))
+			clockText.Text = string.format("BLUTMOND  %d:%02d  ·  BOSSE · BESSERE BEUTE", left // 60, left % 60)
 			clockText.TextColor3 = Color3.fromRGB(255, 70, 60)
 		elseif DayCycle.IsNight(clock) then
 			clockText.Text = "NACHT  " .. DayCycle.Label(clock) .. "  ·  MEHR ZOMBIES"

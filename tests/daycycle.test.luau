@@ -41,28 +41,18 @@ check(DayCycle.Clock(12345) == 23 and DayCycle.IsNight(DayCycle.Clock(0)), "fest
 D.Fixed = nil
 check(D.NightZombies > 1 and D.NightSight > 1, "nachts mehr Zombies, die weiter sehen")
 
--- Blutmond: jede BloodMoonEvery-te Nacht, nie am Tag
-local bloodNights, nightsSeen, dayBlood = 0, 0, false
-local lastDay = nil
-for k = 0, D.Length * D.BloodMoonEvery * 3, 30 do
-	local clock = DayCycle.Clock(k)
-	if DayCycle.IsBloodMoon(k) and not DayCycle.IsNight(clock) then
-		dayBlood = true
-	end
-	if DayCycle.IsNight(clock) and math.abs(clock - 0) < 0.4 then -- um Mitternacht zählen
-		local day = DayCycle.DayIndex(k)
-		if day ~= lastDay then
-			lastDay = day
-			nightsSeen += 1
-			if DayCycle.IsBloodMoon(k) then
-				bloodNights += 1
-			end
-		end
-	end
+-- Blutmond: Ereignis über die Attribute BloodMoonStart / BloodMoonEnd an ReplicatedStorage
+do
+	local RS = game:GetService("ReplicatedStorage")
+	check(not DayCycle.IsBloodMoon(1000) and DayCycle.BloodMoonLeft(1000) == 0, "ohne Ereignis kein Blutmond")
+	RS:SetAttribute("BloodMoonStart", 1000)
+	RS:SetAttribute("BloodMoonEnd", 1600)
+	check(DayCycle.IsBloodMoon(1000) and DayCycle.IsBloodMoon(1599) and not DayCycle.IsBloodMoon(999) and not DayCycle.IsBloodMoon(1600),
+		"Blutmond genau zwischen Start und Ende")
+	check(math.abs(DayCycle.BloodMoonLeft(1300) - 300) < 0.01, "Restzeit")
+	RS:SetAttribute("BloodMoonStart", nil)
+	RS:SetAttribute("BloodMoonEnd", nil)
 end
-check(not dayBlood, "kein Blutmond am Tag")
-check(nightsSeen >= D.BloodMoonEvery * 3 - 1 and bloodNights >= 2 and bloodNights <= 4, "jede " .. D.BloodMoonEvery .. ". Nacht Blutmond ("
-	.. bloodNights .. " von " .. nightsSeen .. ")")
 -- Nebel nur morgens, an manchen Tagen
 local foggyDays, fogOutside = 0, false
 for day = 0, 49 do

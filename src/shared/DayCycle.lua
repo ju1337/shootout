@@ -4,6 +4,7 @@
 --   Clock(serverTime)   Uhrzeit 0..24 (wie Lighting.ClockTime)
 --   Darkness(clock)     0 = heller Tag, 1 = tiefe Nacht, dazwischen Dämmerung
 --   IsNight(clock)      Darkness >= 0,5 (nachts mehr Zombies, siehe ZombieService)
+--   IsBloodMoon(t)      läuft gerade das Blutmond-Ereignis? (BloodMoonService, Attribute an ReplicatedStorage)
 --   Label(clock)        "14:20"
 --   SetClock(hour)      (nur Server, Admin) springt zur Uhrzeit: Attribut "DayOffset" (Sekunden) an ReplicatedStorage,
 --                       das alle Berechnungen zur Serverzeit addieren
@@ -63,13 +64,25 @@ function DayCycle.DayIndex(serverTime)
 	return math.floor(hours / 24)
 end
 
--- Blutmond: jede BloodMoonEvery-te Nacht
+-- Blutmond: ein Ereignis (BloodMoonService), das der Server mit den Attributen BloodMoonStart / BloodMoonEnd (Serverzeit)
+-- an ReplicatedStorage ankündigt – alle sehen dieselbe Zeit
 function DayCycle.IsBloodMoon(serverTime)
 	if D.FixedBloodMoon ~= nil then
 		return D.FixedBloodMoon -- Tests
 	end
-	local clock = DayCycle.Clock(serverTime)
-	return DayCycle.IsNight(clock) and DayCycle.DayIndex(serverTime) % D.BloodMoonEvery == D.BloodMoonEvery - 1
+	local start = tonumber(ReplicatedStorage:GetAttribute("BloodMoonStart"))
+	local finish = tonumber(ReplicatedStorage:GetAttribute("BloodMoonEnd"))
+	local t = serverTime or 0
+	return start ~= nil and finish ~= nil and t >= start and t < finish
+end
+
+-- Sekunden bis zum Ende des Blutmonds (0, wenn keiner ist)
+function DayCycle.BloodMoonLeft(serverTime)
+	local finish = tonumber(ReplicatedStorage:GetAttribute("BloodMoonEnd"))
+	if not finish or not DayCycle.IsBloodMoon(serverTime) then
+		return 0
+	end
+	return math.max(0, finish - (serverTime or 0))
 end
 
 -- Nebel 0..1 (an manchen Tagen morgens)

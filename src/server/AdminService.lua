@@ -252,6 +252,18 @@ function AdminService.Init(manager)
 			Remotes.AdminStatus:FireClient(player, target == 10 and "Jetzt Tag (10:00)" or "Jetzt Nacht (22:00)")
 			return
 		end
+		-- Blutmond sofort starten / beenden (offene Welt)
+		if action == "BloodMoon" and player:GetAttribute("IsAdmin") then
+			local BloodMoonService = require(ServerStorage:WaitForChild("ServerShared").BloodMoonService)
+			if BloodMoonService.Active() then
+				BloodMoonService.Stop()
+				Remotes.AdminStatus:FireClient(player, "Blutmond beendet")
+			else
+				BloodMoonService.Start()
+				Remotes.AdminStatus:FireClient(player, "Blutmond gestartet (10 Minuten)")
+			end
+			return
+		end
 		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then
 			return
 		end

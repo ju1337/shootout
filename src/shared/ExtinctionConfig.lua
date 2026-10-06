@@ -244,8 +244,7 @@ ExtinctionConfig.Day = {
 	Dusk = 1.5,              -- Stunden Dämmerung am Abend und am Morgen
 	NightZombies = 1.6,      -- so viel mehr Zombies pro Spieler (und auf dem Server) in der Nacht
 	NightSight = 1.35,       -- so viel weiter bemerken sie Spieler
-	-- Blutmond: jede BloodMoonEvery-te Nacht rotes Licht, noch mehr Zombies (zusätzlich ×BloodMoonZombies) und härtere Arten
-	BloodMoonEvery = 4,
+	-- Blutmond (Ereignis, siehe ExtinctionConfig.BloodMoon): rotes Licht, noch mehr Zombies (×BloodMoonZombies), härtere Arten
 	BloodMoonZombies = 1.5,
 	BloodMoonKindWeights = { Walker = 40, Runner = 30, Screamer = 12, Brute = 18 },
 	-- Nebel: an FogChance der Tage liegt morgens (FogFrom bis FogTo) dichter Nebel
@@ -354,6 +353,34 @@ ExtinctionConfig.ZombieKinds = {
 		Table = "Zombie2", Eyes = Color3.fromRGB(235, 240, 255), Scream = true },
 	Brute = { Name = "Brocken", Health = 320, Walk = 4, Run = 7.5, Damage = 24, Coins = 12, Scale = 1.3, Drop = 1, Items = { 2, 3 },
 		Table = "Tier2", Eyes = Color3.fromRGB(190, 70, 255) },
+	-- Boss (nur im Blutmond, BloodMoonService): riesig, sehr zäh, schlägt brutal, beste Beute
+	Boss = { Name = "Blutbestie", Health = 2400, Walk = 5, Run = 9.5, Damage = 42, Coins = 250, Scale = 2.3, Drop = 1, Items = { 5, 7 },
+		Table = "Airdrop", Eyes = Color3.fromRGB(255, 20, 20), Boss = true },
+}
+
+-- ---------- Blutmond (BloodMoonService): Ereignis von Duration Sekunden ----------
+-- Alle Interval Sekunden (das erste nach FirstDelay), Warnung Warning Sekunden vorher. Es wird Nacht (StartClock), das
+-- Licht rot. Zombies: mehr (Day.BloodMoonZombies), härtere Arten (Day.BloodMoonKindWeights), Leben/Schaden/Tempo mal
+-- Health/Damage/Speed. Beute: Tabelle eine Stufe besser (BetterTable), Drop-Chance + DropBonus, ExtraItems mehr.
+-- Bosse (ZombieKinds.Boss): alle BossInterval Sekunden einer bei einem Spieler draußen, höchstens MaxBosses gleichzeitig.
+ExtinctionConfig.BloodMoon = {
+	Enabled = true,
+	Duration = 600,
+	Interval = 60 * 60,
+	FirstDelay = 30 * 60,
+	Warning = 60,
+	StartClock = 20.4,
+	Health = 1.5,
+	Damage = 1.35,
+	Speed = 1.12,
+	DropBonus = 0.2,
+	ExtraItems = 1,
+	BetterTable = { Zombie = "Zombie2", Zombie2 = "Tier2", Tier2 = "Tier3", Tier3 = "Airdrop" },
+	BossInterval = 150,
+	FirstBoss = 45,
+	MaxBosses = 2,
+	BossMinDistance = 70,
+	BossMaxDistance = 120,
 }
 
 -- ---------- Abfragen ----------

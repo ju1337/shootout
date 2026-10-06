@@ -25,6 +25,7 @@ local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
+local BloodMoonService = require(ServerShared.BloodMoonService)
 local RedzoneBoard = require(ServerShared.RedzoneBoard)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
@@ -427,6 +428,18 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
+	-- Blutmond-Ereignis (10 Minuten, stärkere Zombies, bessere Beute, Bosse)
+	BloodMoonService.Init({
+		InSafeZone = Extinction.InSafeZone,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+
 	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Überlebende, Orte, Nacht ...)
 	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })
 
@@ -460,8 +473,7 @@ function Extinction.Init(modeManager)
 			bloodMoon = blood
 			for player in members do
 				if started then
-					notify(player, "Banner", { Caption = "Nacht", Title = "BLUTMOND", Sub = "Die Toten sind heute Nacht zahlreich und hungrig",
-						Style = "Warning" })
+					-- die Ansage beim Start kommt vom BloodMoonService
 				elseif ended then
 					notify(player, "Banner", { Caption = "Morgen", Title = "DER BLUTMOND IST VORBEI", Sub = "Du hast überlebt", Style = "Good" })
 				end

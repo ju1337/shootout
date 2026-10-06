@@ -111,6 +111,9 @@ local function buildControls()
 	button("TAG / NACHT", 130, noclipRow, Color3.fromRGB(150, 120, 50), function()
 		send("DayNight")
 	end)
+	button("BLUTMOND", 120, noclipRow, Color3.fromRGB(150, 40, 36), function()
+		send("BloodMoon")
+	end)
 end
 
 local function buildBots()
