@@ -71,6 +71,13 @@ darin der Platz mit der Safe Zone. Drumherum, über Landstraßen verbunden: die 
 Bauernhöfe, einzelne Häuser und Scheunen an allen Landstraßen, **zehn Außenposten auf Hügeln** (Wolfshöhe, Adlerhorst,
 Steinkuppe, Krähenberg, Bärenkopf, Fuchsbau, Hoher Stein, Schwarzer Buckel, Kahlenberg, Rabenstein: Lagerhaus mit Schild,
 Wachturm, Palisade, Sandsäcke, Feuer, Vorratslager, teils ein Zombienest), der **Funkturm** auf dem Hügel, der **Flugplatz** mit Flugzeugwrack, Schwarzsee, Stausee und Mühlteich.
+**Hochhäuser und Wohnblöcke sind von unten bis aufs Dach begehbar** (`walk_block`): Stockwerke mit Decken, Rampen als
+Treppen bis aufs Dach (Brüstung), eingeschlagene Fenster (offen, teils Glassplitter oder vernagelt), Kisten, Möbel und
+Schutt als Deckung in jedem Stockwerk, Ranken mit Blätterbüscheln, die vom Dach herunterhängen, Ruß über Fenstern,
+Wassertanks, Antennen und Klimakästen auf dem Dach. Jedes Gebäude hat eine eigene Fassade (Stil zufällig, dazu Farbe,
+Material, Fensterbreite und -abstand, Stockwerkshöhe): Plattenbau mit Fugen, Altbau aus Ziegeln mit Gesimsen, Glas-Büro
+mit Metallrahmen und getönten Glasresten, Balkon-Block, farbige Brüstungsbänder, Feuertreppe aus Metall; manche mit
+weggebrochenem obersten Stockwerk und Bewehrungseisen, selten nur ein eingestürzter Stumpf.
 Alle Häuser sind kaputt: Löcher in den Wänden, abgebrochene Mauerkronen, Dächer ganz, halb oder gar nicht
 (eingestürzte Platten), vernagelte Fenster, Schutt, Ruß, Ranken, Graffiti („SIE SIND DRINNEN“, „EVAKUIERUNG -> CAMP
 PHOENIX“ …); auf den Straßen ausgebrannte Autos, Blutflecken, Sperren aus Beton und Sandsäcken, brennende Tonnen

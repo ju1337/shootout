@@ -670,11 +670,196 @@ class World:
                        (110, 100, 90), "WoodPlanks", angles=(rng.choice((0, 0, 70)), rng.uniform(-20, 20), 0))
         return pb
 
-    def ruin_tower(self, w, d, h, color):
-        """Hochhaus-Ruine (nicht begehbar): ausgebrannte Fensterbänder, abgebrochene Spitze, Brandlöcher, Schutt."""
+    FACADES = ("panel", "brick", "glass", "balcony", "stripes", "fire_escape")
+
+    def walk_block(self, w, d, floors, color, mat="Concrete", fh=9.0, window=4.0, spacing=7.0, broken_top=False, style=None):
+        """Begehbares Hochhaus / Wohnblock (Prefab, Tür vorne -Z): Stockwerke mit Decken, Rampen als Treppen bis aufs Dach
+        (Brüstung), eingeschlagene Fenster (offen, teils Glassplitter oder vernagelt), Einschusslöcher, Ranken, die vom Dach
+        herunterhängen, Ruß und Deckung (Kisten, Möbel, Schutt) in jedem Stockwerk.
+        style (Fassade, sonst zufällig): panel (Plattenbau, Fugen), brick (Altbau, Gesimse, schmale hohe Fenster), glass (Büro,
+        breite Fenster, Metallrahmen, Glasreste), balcony (Balkone mit Geländer vorne), stripes (farbige Brüstungsbänder),
+        fire_escape (Feuertreppe aus Metall an der Seite)."""
+        pb, rng = self.prefab(), self.rng
+        lighten = self.bm.lighten
+        t = 1.0
+        style = style or rng.choice(self.FACADES)
+        accent = rng.choice(((150, 60, 48), (60, 90, 120), (200, 170, 90), (90, 110, 80), (120, 120, 126), (170, 110, 70)))
+        if style == "brick":
+            mat, color = "Brick", rng.choice(((150, 84, 64), (128, 72, 56), (170, 110, 86), (110, 70, 60)))
+            window, spacing, fh = window * 0.7, spacing * 0.85, fh + 0.6
+        elif style == "glass":
+            mat, color = rng.choice(("Concrete", "Metal")), rng.choice(((96, 104, 112), (120, 126, 130), (70, 76, 84)))
+            window, spacing = spacing * 0.78, spacing
+        elif style == "panel":
+            mat = "Concrete"
+            window *= rng.uniform(0.85, 1.15)
+        window = min(window, spacing - 1.4)
+        top_y = floors * fh
+        sill, head = (1.2, 7.6) if style == "glass" else (2.0, 7.8) if style == "brick" else (2.6, 7.0)
+        # Wände mit allen Fenstern aller Stockwerke (wall() fasst Stürze und Brüstungen übereinander zusammen)
+        for side in ("S", "N", "E", "W"):
+            length = w if side in ("N", "S") else d - 2 * t
+            n = max(1, int((length - 3) // (spacing if side in ("N", "S") else spacing * 1.6)))
+            step = length / n
+            centers = [-length / 2 + step * (k + 0.5) for k in range(n)]
+            openings = []
+            for f in range(floors):
+                y0 = f * fh
+                for c in centers:
+                    if f == 0 and side == "S" and abs(c) == min(abs(cc) for cc in centers):
+                        openings.append((c, 5.5, 0, 7.5))  # Eingang
+                        continue
+                    if broken_top and f == floors - 1 and rng.random() < 0.5:
+                        openings.append((c, step * 0.9, y0 + 1.2, top_y + 2))  # oben weggebrochen
+                        continue
+                    openings.append((c, window, y0 + sill, y0 + head))
+                if rng.random() < 0.0 and f > 0:  # (Sprenglöcher würden die Wand über alle Stockwerke zerschneiden)
+                    openings.append((rng.uniform(-length / 2 + 4, length / 2 - 4), rng.uniform(3, 6), y0 + 1, y0 + rng.uniform(5, 8)))
+            self.wall(pb, side, w, d, top_y + 1.4, color, mat, openings, [], base=-1.0, t=t)
+            # Fenster: Glassplitter oder Bretter in manchen Öffnungen
+            for c, width, lo, hi in openings:
+                if lo <= 0 or hi > top_y:
+                    continue
+                r = rng.random()
+                if r < 0.07:
+                    for _ in range(rng.randint(1, 2)):
+                        sx = rng.choice((-1, 1)) * (width / 2 - 0.6)
+                        sy = rng.choice((lo + 0.8, hi - 0.8))
+                        pos = {"S": (c + sx, sy, -d / 2 + t / 2), "N": (c + sx, sy, d / 2 - t / 2),
+                               "E": (w / 2 - t / 2, sy, c + sx), "W": (-w / 2 + t / 2, sy, c + sx)}[side]
+                        pb.box("Decor", "GlassShard", (rng.uniform(1, 2.2), rng.uniform(1.2, 2.6), 0.1), pos, (150, 176, 186), "Glass",
+                               angles=(0, 0 if side in ("N", "S") else 90, rng.uniform(20, 70)),
+                               props={"Transparency": 0.45, "CanCollide": False, "CanQuery": False})
+                elif r < 0.11:
+                    self.boards(pb, side, w, d, c, width, lo, hi)
+        # Fassade (Bänder nur außen um die Wände, innen bleibt alles frei)
+        def band(name, y, hgt, depth, col, material):
+            for size, pos in (((w + 2 * depth, hgt, depth), (0, y, -d / 2 - depth / 2)), ((w + 2 * depth, hgt, depth), (0, y, d / 2 + depth / 2)),
+                              ((depth, hgt, d), (w / 2 + depth / 2, y, 0)), ((depth, hgt, d), (-w / 2 - depth / 2, y, 0))):
+                pb.box("Decor", name, size, pos, col, material)
+        if style in ("panel", "stripes", "brick"):
+            for f in range(1, floors + 1):
+                y = f * fh
+                if style == "panel":
+                    band("PanelJoint", y + sill * 0.5, 0.25, 0.1, lighten(color, -0.2), "Concrete")
+                elif style == "stripes" and f < floors:
+                    band("Stripe", y + sill * 0.45, sill * 0.8, 0.12, accent, "SmoothPlastic")
+                else:
+                    band("Cornice", y + 0.1, 0.6, 0.5, lighten(color, 0.25), "Concrete")
+            if style == "brick":
+                band("Cornice", top_y + 1.6, 1.2, 0.8, lighten(color, 0.3), "Concrete")
+        elif style == "glass":
+            for f in range(floors):
+                y = f * fh
+                band("Mullion", y + (sill + head) / 2, 0.4, 0.1, (60, 64, 70), "Metal")
+                if rng.random() < 0.5:  # Reste der Glasfassade (getönt)
+                    side_z = rng.choice((-1, 1)) * (d / 2 + 0.05)
+                    pb.box("Decor", "GlassRest", (rng.uniform(3, 8), head - sill - 0.4, 0.1), (rng.uniform(-w / 3, w / 3), y + (sill + head) / 2,
+                           side_z), (60, 80, 92), "Glass", props={"Transparency": 0.35, "CanCollide": False, "CanQuery": False})
+        elif style == "balcony":
+            n = max(1, int((w - 3) // spacing))
+            step = w / n
+            for f in range(1, floors):
+                y = f * fh
+                for k in range(n):
+                    if rng.random() < 0.2:
+                        continue  # abgebrochen
+                    c = -w / 2 + step * (k + 0.5)
+                    pb.box("Buildings", "Balcony", (step - 1.2, 0.6, 3), (c, y - 0.3, -d / 2 - 1.5), lighten(color, -0.1), "Concrete",
+                           angles=(rng.choice((0, 0, 0, rng.uniform(4, 12))), 0, 0))
+                    pb.box("Decor", "BalconyRail", (step - 1.2, 1.4, 0.2), (c, y + 0.7, -d / 2 - 2.9), accent, "Metal")
+        elif style == "fire_escape":
+            sx = rng.choice((-1, 1))
+            for f in range(1, floors + 1):
+                y = f * fh
+                pb.box("Buildings", "EscapeLanding", (2.8, 0.3, 8), (sx * (w / 2 + 1.4), y - 0.2, 0), (60, 56, 52), "DiamondPlate")
+                pb.box("Decor", "EscapeRail", (0.2, 1.4, 8), (sx * (w / 2 + 2.7), y + 0.6, 0), (60, 56, 52), "Metal")
+                ang_ = math.degrees(math.atan2(fh, 7))
+                pb.box("Buildings", "EscapeStairs", (2.4, 0.3, math.hypot(7, fh)), (sx * (w / 2 + 1.4), y - fh / 2, (1 if f % 2 else -1) * 0.5),
+                       (60, 56, 52), "DiamondPlate", angles=((1 if f % 2 else -1) * ang_, 0, 0))
+        # Erdgeschoss: manchmal Läden mit Vordach, Dach: Wassertank, Antenne, Klimakästen
+        if rng.random() < 0.4:
+            pb.box("Decor", "Awning", (min(14, w - 4), 0.3, 3.2), (rng.uniform(-w / 6, w / 6), head + 0.4, -d / 2 - 1.6), accent, "Fabric",
+                   angles=(rng.uniform(8, 30), 0, rng.uniform(-8, 8)))
+        for _ in range(rng.randint(0, 3)):
+            pb.box("Decor", "ACUnit", (2.4, 1.6, 2), (rng.uniform(-w / 3, w / 3), top_y + 0.8, rng.uniform(-d / 3, 0)), (150, 150, 146), "Metal")
+        if rng.random() < 0.4 and not broken_top:
+            tx_, tz_ = rng.uniform(-w / 4, w / 4), rng.uniform(-d / 4, 0)
+            for lx in (-1.4, 1.4):
+                for lz in (-1.4, 1.4):
+                    pb.box("Decor", "TankLeg", (0.3, 3, 0.3), (tx_ + lx, top_y + 1.5, tz_ + lz), (70, 60, 50), "Metal")
+            pb.cylinder("Decor", "RoofTank", 4, 4, (tx_, top_y + 5, tz_), (110, 86, 66), material="WoodPlanks")
+        if rng.random() < 0.3:
+            pb.box("Decor", "Antenna", (0.3, rng.uniform(6, 14), 0.3), (rng.uniform(-w / 3, w / 3), top_y + 5, rng.uniform(-d / 3, d / 3)),
+                   (90, 90, 94), "Metal")
+
+        # Decken mit Treppenloch, Rampen hoch bis aufs Dach
+        L = min(w - 2 * t - 6, 18.0)
+        x0 = -w / 2 + t + 2
+        zr = d / 2 - t - 2.4
+        hw = 2.2  # halbe Rampenbreite
+        floor_col = lighten(color, -0.25)
+        for f in range(1, floors + 1):
+            y = f * fh
+            pb.box("Buildings", "Floor", (w - 2 * t, 0.8, (zr - hw) + d / 2 - t), (0, y - 0.4, (-d / 2 + t + zr - hw) / 2), floor_col, "Concrete")
+            pb.box("Buildings", "Floor", (x0 - (-w / 2 + t), 0.8, 2 * hw), ((-w / 2 + t + x0) / 2, y - 0.4, zr), floor_col, "Concrete")
+            pb.box("Buildings", "Floor", (w / 2 - t - (x0 + L), 0.8, 2 * hw), ((x0 + L + w / 2 - t) / 2, y - 0.4, zr), floor_col, "Concrete")
+            back = d / 2 - t - (zr + hw)
+            if back > 0.05:
+                pb.box("Buildings", "Floor", (w - 2 * t, 0.8, back), (0, y - 0.4, zr + hw + back / 2), floor_col, "Concrete")
+        ang = math.degrees(math.atan2(fh, L))
+        for f in range(floors):
+            y0 = f * fh
+            pb.box("Buildings", "Stairs", (math.hypot(L, fh) + 0.6, 0.8, 2 * hw), (x0 + L / 2, y0 + fh / 2 - 0.3, zr), (110, 106, 100),
+                   "Concrete", angles=(0, 0, ang))
+            # Deckung und Unordnung im Stockwerk
+            for _ in range(rng.randint(0, 2)):
+                kind = rng.random()
+                px, pz = rng.uniform(-w / 2 + 4, w / 2 - 4), rng.uniform(-d / 2 + 3, zr - hw - 2)
+                if kind < 0.4:
+                    pb.box("Cover", "Furniture", (rng.uniform(3, 6), rng.uniform(2, 3.4), rng.uniform(2, 3)), (px, y0 + 1.3, pz),
+                           (110, 86, 60), "WoodPlanks", angles=(0, rng.uniform(0, 180), rng.choice((0, 0, rng.uniform(-60, 60)))))
+                elif kind < 0.7:
+                    pb.box("Cover", "Crate", (3, 3, 3), (px, y0 + 1.5, pz), (110, 92, 62), "WoodPlanks", angles=(0, rng.uniform(0, 90), 0))
+                else:
+                    self.local_rubble(pb, px, pz, 5, color, n=2, y=y0)
+        # Ruß über manchen Fenstern, Ranken vom Dach, Graffiti unten
+        for _ in range(rng.randint(1, 3)):
+            sy = rng.randint(1, max(1, floors - 1)) * fh + head
+            pb.box("Decor", "Soot", (rng.uniform(3, 5), rng.uniform(4, 8), 0.1), (rng.uniform(-w / 3, w / 3), sy + 2, -d / 2 - 0.15),
+                   (24, 22, 20), "SmoothPlastic", props={"Transparency": 0.3, "CanCollide": False, "CanQuery": False})
+        for _ in range(rng.randint(1, 3)):
+            side = rng.choice(("S", "N", "E", "W"))
+            length = rng.uniform(0.3, 0.8) * top_y
+            along = rng.uniform(-0.4, 0.4) * (w if side in ("N", "S") else d)
+            yc = top_y + 1 - length / 2
+            off = 0.35
+            pos = {"S": (along, yc, -d / 2 - off), "N": (along, yc, d / 2 + off), "E": (w / 2 + off, yc, along),
+                   "W": (-w / 2 - off, yc, along)}[side]
+            size = (rng.uniform(1.8, 3.4), length, 0.4) if side in ("N", "S") else (0.4, length, rng.uniform(1.8, 3.4))
+            green = rng.choice(((58, 88, 44), (70, 96, 50), (52, 76, 40)))
+            pb.box("Decor", "Vines", size, pos, green, "LeafyGrass", props={"CanCollide": False, "CanQuery": False})
+            for k in range(1):  # Blätterbüschel
+                ly = top_y - rng.uniform(0.2, 0.9) * length
+                bp = list(pos)
+                bp[1] = ly
+                pb.add("Decor", "Leaves", (2.2, 1.8, 2.2), tuple(bp), lighten(green, 0.1), "LeafyGrass",
+                       props={"Shape": "Ball", "CanCollide": False, "CanQuery": False})
+        if broken_top:
+            for _ in range(3):
+                pb.box("Decor", "Rebar", (0.3, rng.uniform(2, 5), 0.3), (rng.uniform(-w / 3, w / 3), top_y + 2.4, rng.uniform(-d / 3, d / 3)),
+                       (80, 60, 50), "CorrodedMetal", angles=(rng.uniform(-25, 25), 0, rng.uniform(-25, 25)))
+        if rng.random() < 0.5:
+            self.graffiti(pb, rng.choice(GRAFFITI), (rng.uniform(-w / 4, w / 4), 4.2, -d / 2 - 0.08), (min(10, w - 4), 2.4, 0.05))
+        self.local_rubble(pb, rng.uniform(-w / 3, w / 3), -d / 2 - 4, 6, color, n=2)
+        return pb
+
+    def ruin_tower(self, w, d, h, color, collapsed=None):
+        """Hochhaus-Ruine (nicht begehbar): ausgebrannte Fensterbänder, abgebrochene Spitze, Brandlöcher, Schutt.
+        collapsed=True: nur der eingestürzte Stumpf mit Schuttberg."""
         pb, rng = self.prefab(), self.rng
         band = (26, 28, 32)
-        if rng.random() < 0.12:  # eingestürzt: Stumpf und Schuttberg
+        if collapsed or (collapsed is None and rng.random() < 0.12):  # eingestürzt: Stumpf und Schuttberg
             hs = h * rng.uniform(0.15, 0.3)
             pb.box("Buildings", "TowerStub", (w, hs, d), (0, hs / 2 - 1, 0), color, "Concrete")
             for _ in range(10):
@@ -1183,10 +1368,14 @@ class World:
         rng = self.rng
         color = rng.choice(self.COLORS)
         damage = rng.uniform(0.35, 0.9) if zone in ("downtown", "city", "suburb") else rng.uniform(0.2, 0.75)
-        if kind == "tower":
-            return self.ruin_tower(w, d, rng.uniform(40, 100), color)
+        if kind == "tower":  # begehbar bis aufs Dach, manchmal ein eingestürzter Stumpf
+            if rng.random() < 0.1:
+                return self.ruin_tower(w, d, rng.uniform(40, 100), color, collapsed=True)
+            return self.walk_block(w, d, rng.randint(5, 8), color, "Concrete", window=5.0, spacing=9.0, broken_top=rng.random() < 0.6,
+                                   style=rng.choice(("panel", "glass", "glass", "stripes", "balcony", "fire_escape")))
         if kind == "apartment":
-            return self.ruin_house(w, d, 9, color, rng.choice(("Concrete", "Brick")), damage=damage, floors_above=rng.randint(1, 3))
+            return self.walk_block(w, d, rng.randint(2, 3), color, rng.choice(("Concrete", "Brick")), spacing=8.5,
+                                   broken_top=rng.random() < 0.3)
         if kind == "shop":
             return self.ruin_house(w, d, 10, color, damage=damage, shop=rng.choice(self.SHOPS))
         if kind == "barn":
