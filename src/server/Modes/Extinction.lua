@@ -31,6 +31,7 @@ local MissionService = require(ServerShared.MissionService)
 local VehicleService = require(ServerShared.VehicleService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
+local MovementGuard = require(ServerShared.MovementGuard)
 
 local Extinction = {}
 
@@ -236,8 +237,74 @@ local function leavePenalty(player)
 	end
 end
 
+-- ---------- Reisen zwischen den Safe Zones (Haltestellen "Travel" / "Travel_<Name>" in der Gruppe Stands) ----------
+local travelAt = {} -- [Player] = os.clock() der letzten Reise
+
+local function nearTravelStop(position)
+	local stands = map:FindFirstChild("Stands")
+	for _, part in stands and stands:GetChildren() or {} do
+		if part:IsA("BasePart") and (part.Name == "Travel" or string.sub(part.Name, 1, 7) == "Travel_")
+			and (part.Position - position).Magnitude <= ExtinctionConfig.StandRange then
+			return part
+		end
+	end
+	return nil
+end
+
+-- Spieler an der Haltestelle reist zur Safe Zone key ("" = Camp): Teleport auf einen ihrer Spawns, wird Spawnpunkt
+function Extinction.Travel(player, key)
+	local info = members[player]
+	if not info or type(key) ~= "string" then
+		return false
+	end
+	local root, character = rootOf(player)
+	if not root then
+		return false
+	end
+	local function status(text)
+		Remotes.ExtUpdate:FireClient(player, "Status", text, false)
+	end
+	if not nearTravelStop(root.Position) or not Extinction.InSafeZone(root.Position) then
+		status("Reisen geht nur an einer Haltestelle in einer Safe Zone.")
+		return false
+	end
+	local target = nil
+	for _, zone in Extinction.SafeZones() do
+		if zone.Key == key then
+			target = zone
+		end
+	end
+	local here = Extinction.SafeZoneAt(root.Position)
+	if not target then
+		return false
+	elseif here and here.Key == key then
+		status("Du bist schon in " .. target.Title .. ".")
+		return false
+	end
+	local cooldown = ExtinctionConfig.TravelCooldown or 10
+	if travelAt[player] and os.clock() - travelAt[player] < cooldown then
+		status("Der Fahrer braucht noch einen Moment.")
+		return false
+	end
+	local folder = key == "" and map:FindFirstChild("Spawns") or map:FindFirstChild("Spawns_" .. key)
+	if not folder or #folder:GetChildren() == 0 then
+		return false
+	end
+	travelAt[player] = os.clock()
+	character:PivotTo(SpawnUtil.Pick(folder))
+	MovementGuard.Teleported(character)
+	info.Home = key
+	player:SetAttribute("ExtHome", target.Title)
+	notify(player, "Banner", { Caption = "Angekommen", Title = string.upper(target.Title),
+		Sub = "Spawnpunkt gesetzt · kein PvP", Style = "Good" })
+	return true
+end
+
 function Extinction.Init(modeManager)
 	manager = modeManager
+	InventoryService.Handlers.Travel = function(player, key)
+		Extinction.Travel(player, key)
+	end
 
 	-- Tor zurück zum Hub (in der Safe Zone, darum ohne Verlust)
 	local lastTouch = {}

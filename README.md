@@ -40,13 +40,16 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`, Radius 120): eine befestigte Militärbasis auf einer Betonplatte – HESCO-Wall im Quadrat mit
-Stacheldraht, Wachtürme mit Tarnnetz und Suchscheinwerfer in den Ecken (Leiter), vier Tore mit Wachhäuschen,
-hochgeklappten Schlagbäumen, Torbrücke mit Schild und Flutlicht und Betonsperren davor. In der Mitte der Appellplatz
-mit Fahnenmonument (Phoenix-Flagge), Laternen und Bänken (Spawn), gelbe Fahrspuren zu den Toren; Händler in offenen
-Containern an den Fahrspuren (WAFFEN, SANI, WERKSTATT), das LAGER mit Spinden, Sanitäts- und Kommandozelt (Funkmast),
-Unterkunftszelte, Fahrzeughof mit Militärlastern und Tankanhänger, Lichtmasten, Wassertanks, Kisten und der
-Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+`tools/build_maps.py`, Radius 120): eine ummauerte Überlebenden-Siedlung – Palisade aus Holz und Wellblech mit
+Fackeln, vier Torhäuser (zwei Holztürme, Brücke mit Schild, offene Flügel, Laternen), Wachtürme in den Ecken. Kieswege
+führen von den Toren zum Dorfplatz mit großem Lagerfeuer, Baumstamm-Bänken und Lichterketten (Spawn). An den Wegen acht
+Holzhäuser mit warm beleuchteten Fenstern, Veranden und rauchenden Schornsteinen, Marktstände mit gestreiften
+Vordächern (WAFFEN, SANI, WERKSTATT), das LAGER in einer Scheune, die Haltestelle REISEN, eine Werkstatt-Scheune mit Autos,
+Gärten, Wasserturm, Zelte und der Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+
+**Reisen**: An der Haltestelle im Camp und in jedem Safehouse (Fahrer, Teil `Travel` / `Travel_<Name>`) öffnet **E** das
+Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dorthin, die Zone wird zum Spawnpunkt
+(`Extinction.Travel`, nur aus einer Safe Zone, `ExtinctionConfig.TravelCooldown` Sekunden Pause).
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 44):
 befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild zur

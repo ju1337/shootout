@@ -1484,305 +1484,335 @@ class World:
         self.occupied.append((x, z, 18))
 
     # ---------- Safe Zone "Camp Phoenix" (Mitte von Ödstadt) ----------
+    def frame(self, x, z, yaw):
+        """Hilfen für ein gedrehtes Bauwerk: f(lx, ly, lz) -> Weltpunkt, box(...) mit Drehung yaw (+ extra)."""
+        c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+
+        def f(lx, ly, lz):
+            return (x + lx * c + lz * sn, ly, z - lx * sn + lz * c)
+
+        def box(group, name, size, lpos, color, mat, extra=(0, 0, 0), **kw):
+            self.b.box(group, name, size, f(*lpos), color, mat, angles=(extra[0], yaw + extra[1], extra[2]), **kw)
+        return f, box
+
+    def warm_light(self, r=18, br=1.1):
+        return [{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": r, "Brightness": br,
+                                                                             "Color": self.bm.rgb(255, 196, 120)}}]
+
+    def cabin(self, x, z, yaw, w=18, d=12, h=8, color=(168, 150, 120), porch=True, chimney=True, upper=False):
+        """Intaktes Holzhaus (Vorderseite lokal -Z): Satteldach, beleuchtete Fenster mit Läden, Tür, Veranda, Schornstein."""
+        rgb, lighten, rng = self.bm.rgb, self.bm.lighten, self.rng
+        f, box = self.frame(x, z, yaw)
+        dark, roof_c = (70, 54, 40), rng.choice(((74, 60, 52), (86, 58, 48), (64, 66, 70)))
+        box("Buildings", "HouseBody", (w, h, d), (0, h / 2, 0), color, "WoodPlanks")
+        box("Buildings", "HouseBase", (w + 0.6, 1, d + 0.6), (0, 0.5, 0), (110, 106, 100), "Slate")
+        top = h
+        if upper:
+            box("Buildings", "HouseUpper", (w, 6, d), (0, h + 3, 0), lighten(color, -0.06), "WoodPlanks")
+            box("Buildings", "HouseBelt", (w + 0.4, 0.5, d + 0.4), (0, h + 0.1, 0), dark, "Wood")
+            top = h + 6
+        rise = d * 0.36
+        slope = math.degrees(math.atan2(rise, d / 2))
+        for s in (-1, 1):
+            box("Buildings", "Roof", (math.hypot(d / 2, rise) + 1.4, 0.6, w + 2), (0, top + rise / 2, s * d / 4), roof_c, "Slate",
+                extra=(0, 90, s * slope))
+        for s in (-1, 1):
+            box("Buildings", "Gable", (0.5, rise, d * 0.8), (s * (w / 2 - 0.2), top + rise / 2 - 0.4, 0), lighten(color, -0.08),
+                "WoodPlanks")
+        if chimney:
+            box("Buildings", "Chimney", (2, 6, 2), (w / 2 - 4, top + 3.5, 2), (120, 80, 64), "Brick",
+                children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": rgb(70, 66, 62), "Opacity": 0.18,
+                                                                                 "RiseVelocity": 6, "Size": 4}}])
+        box("Decor", "Door", (3, 6, 0.3), (0, 3.4, -d / 2 - 0.1), dark, "WoodPlanks")
+        rows = [4.6] + ([h + 3] if upper else [])
+        for wy in rows:
+            for wx_ in (-w / 2 + 3.5, w / 2 - 3.5):
+                box("Decor", "Window", (3, 2.4, 0.2), (wx_, wy, -d / 2 - 0.1), (255, 200, 130), "Neon",
+                    children=self.warm_light(12, 0.7) if wy == 4.6 else None)
+                box("Decor", "Shutter", (1.3, 2.6, 0.2), (wx_ - 2.2, wy, -d / 2 - 0.2), lighten(color, -0.3), "WoodPlanks")
+        for wz_ in (-d / 4, d / 4):  # Seitenfenster
+            for s in (-1, 1):
+                box("Decor", "Window", (0.2, 2.2, 2.6), (s * (w / 2 + 0.1), 4.6, wz_), (255, 200, 130), "Neon")
+        if porch:
+            box("Buildings", "Porch", (w - 4, 0.6, 4), (0, 0.3, -d / 2 - 2), (104, 78, 54), "WoodPlanks")
+            box("Buildings", "PorchRoof", (w - 3, 0.4, 4.6), (0, 6.6, -d / 2 - 2.2), roof_c, "Slate")
+            for px_ in (-w / 2 + 2.5, w / 2 - 2.5):
+                box("Buildings", "PorchPost", (0.5, 6.2, 0.5), (px_, 3.4, -d / 2 - 4), dark, "Wood")
+            box("Decor", "PorchLamp", (0.7, 1, 0.7), (2.4, 5.6, -d / 2 - 0.5), (255, 206, 140), "Neon", children=self.warm_light(20, 1.2))
+            if rng.random() < 0.6:
+                box("Cover", "PorchBench", (4.6, 1.2, 1.4), (-w / 4, 1.2, -d / 2 - 1.2), (122, 92, 62), "WoodPlanks")
+
     def camp(self):
-        """Safe Zone "Camp Phoenix": befestigte Militärbasis (FOB) auf einer Betonplatte. HESCO-Wall im Quadrat mit vier Toren
-        (Wachhäuschen, Schranken, Torbrücke mit Schild und Flutlicht), Wachtürme in den Ecken, in der Mitte der Appellplatz mit
-        Fahnenmonument (Spawn), Händler in offenen Containern an den Fahrspuren, Sanitätszelt, Kommandozelt, Unterkünfte,
-        Fahrzeughof, Landeplatz mit Hubschrauber (Rückweg zum Hub), Lichtmasten."""
+        """Safe Zone "Camp Phoenix": ummauerte Überlebenden-Siedlung. Palisade mit vier Torhäusern und Ecktürmen, Kieswege vom
+        Tor zum Dorfplatz, dort ein großes Lagerfeuer unter Lichterketten (Spawn). An den Wegen Holzhäuser mit beleuchteten
+        Fenstern und Veranden, Marktstände (Waffen, Sani, Werkstatt), Lagerhaus, Busstation (Reisen zu den Safehouses),
+        Werkstatt-Scheune, Gärten, Wasserturm, Landeplatz mit Hubschrauber (Rückweg zum Hub)."""
         b, rng = self.b, self.rng
         R, H = SAFE_R, CAMP_HALF
-        lighten, rgb = self.bm.lighten, self.bm.rgb
-        hesco, hesco2 = (176, 160, 120), (164, 148, 110)
-        olive, olive2, steel = (78, 86, 62), (92, 100, 72), (96, 100, 104)
-        concrete, paint, sand = (140, 138, 132), (214, 186, 70), (150, 134, 98)
-        warm, cold = rgb(255, 214, 160), rgb(235, 240, 255)
+        rgb, lighten = self.bm.rgb, self.bm.lighten
+        wood, wood2, dark, rust = (122, 92, 62), (104, 78, 54), (70, 54, 40), (110, 76, 56)
+        warm = rgb(255, 196, 120)
+        lane_c = (112, 94, 70)
 
-        def frame(cx, cz, yaw):
-            c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
-            return lambda lx, ly, lz: (cx + lx * c + lz * sn, ly, cz - lx * sn + lz * c)
-
-        def light(range_, brightness, color, spot=False, face="Bottom", angle=70):
-            if spot:
-                return [{"Name": "Light", "ClassName": "SpotLight", "Properties": {"Face": face, "Range": range_, "Brightness": brightness,
-                                                                                  "Angle": angle, "Color": color}}]
-            return [{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": range_, "Brightness": brightness, "Color": color}}]
-
-        # ---------- Boden: Betonplatte, Fahrspuren, Appellplatz ----------
-        b.box("Ground", "CampPad", (2 * H + 14, 3, 2 * H + 14), (0, -1.45, 0), concrete, "Concrete")
-        for k in range(12):  # Fugen der Platten
-            off = -H + (k + 1) * (2 * H) / 13
-            b.box("Ground", "PadJoint", (2 * H + 10, 0.02, 0.3), (0, 0.06, off), (112, 110, 106), "SmoothPlastic")
-            b.box("Ground", "PadJoint", (0.3, 0.02, 2 * H + 10), (off, 0.06, 0), (112, 110, 106), "SmoothPlastic")
-        for k in range(14):  # Ölflecken
-            x, z = rng.uniform(-H + 8, H - 8), rng.uniform(-H + 8, H - 8)
-            if math.hypot(x, z) > 26:
-                b.add("Ground", "OilStain", (0.05, rng.uniform(3, 7), rng.uniform(3, 7)), (x, 0.07, z), (70, 68, 64), "SmoothPlastic",
-                      angles=(0, 0, 90), props={"Shape": "Cylinder", "CanCollide": False, "CanQuery": False})
-        for gx, gz in ((0, 1), (1, 0), (0, -1), (-1, 0)):  # gelbe Mittelstriche der Fahrspuren vom Tor zum Platz
-            yaw = self.yaw_to(gx, gz)
-            for k in range(6):
-                d = 30 + k * 9
-                b.box("Ground", "LaneMark", (0.5, 0.02, 5), (gx * d, 0.07, gz * d), paint, "SmoothPlastic", angles=(0, yaw, 0))
-        b.add("Ground", "PlazaRim", (0.6, 48, 48), (0, 0.1, 0), (104, 102, 98), "Concrete", angles=(0, 0, 90), props={"Shape": "Cylinder"})
-        b.add("Ground", "Plaza", (0.6, 44, 44), (0, 0.15, 0), (156, 152, 144), "Concrete", angles=(0, 0, 90), props={"Shape": "Cylinder"})
-        b.floor_text("PlazaText", (26, 0.1, 5), (0, 0.48, -15), "CAMP PHOENIX", (226, 200, 120), yaw=180)
         b.add("Zone", "SafeZone", (2 * R, 80, 2 * R), (0, 40, 0), (96, 210, 120), "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+        # Boden: Kies, Erdwege vom Tor zum Platz, heller Dorfplatz
+        b.box("Ground", "CampPad", (2 * H + 10, 3, 2 * H + 10), (0, -1.45, 0), (128, 120, 104), "Pebble")
+        for gx, gz in ((0, 1), (1, 0)):
+            b.box("Ground", "Lane", (12 if gx == 0 else 2 * H, 0.1, 2 * H if gx == 0 else 12), (0, 0.08, 0), lane_c, "Ground")
+        b.add("Ground", "Plaza", (0.3, 52, 52), (0, 0.12, 0), (140, 128, 106), "Ground", angles=(0, 0, 90), props={"Shape": "Cylinder"})
 
-        # Fahnenmonument in der Mitte: Sockel in Stufen, hoher Mast, Phoenix-Flagge, Lichter
-        for k, (d, h) in enumerate(((11, 0.8), (8, 1.6), (5, 2.6))):
-            b.add("Decor", "MonumentStep", (0.8, d, d), (0, h - 0.4 + 0.15, 0), lighten(concrete, -0.05 * k), "Concrete",
-                  angles=(0, 0, 90), props={"Shape": "Cylinder"})
-        b.box("Decor", "FlagPole", (0.7, 32, 0.7), (0, 18.4, 0), (190, 190, 186), "Metal")
-        b.box("Decor", "PoleTop", (1.2, 1.2, 1.2), (0, 34.6, 0), (210, 180, 90), "Metal")
-        b.box("Decor", "Flag", (12, 7, 0.2), (6.4, 30.5, 0), (214, 96, 34), "Fabric", angles=(0, 0, -2))
-        b.sign2("FlagEmblem", (8, 4.4, 0.05), (6.4, 30.5, -0.15), "PHOENIX", "LETZTE SICHERE ZONE", (214, 96, 34), (250, 230, 190),
-                (250, 220, 170))
-        b.sign2("FlagEmblemBack", (8, 4.4, 0.05), (6.4, 30.5, 0.15), "PHOENIX", "LETZTE SICHERE ZONE", (214, 96, 34), (250, 230, 190),
-                (250, 220, 170), angles=(0, 180, 0))
-        for k in range(4):
-            a = math.radians(45 + 90 * k)
-            x, z = math.cos(a) * 19, math.sin(a) * 19
-            b.box("Decor", "PlazaLamp", (0.5, 10, 0.5), (x, 5.2, z), (50, 52, 56), "Metal")
-            b.box("Decor", "PlazaLampHead", (1.6, 0.6, 1.6), (x, 10.4, z), (255, 226, 180), "Neon", children=light(36, 1.4, warm))
-            for side in (-1, 1):  # Bänke zwischen den Lampen
-                ba = a + side * math.radians(22)
-                b.box("Cover", "Bench", (5, 1.2, 1.6), (math.cos(ba) * 19.5, 1.0, math.sin(ba) * 19.5), (96, 76, 54), "WoodPlanks",
-                      angles=(0, -math.degrees(ba) + 90, 0))
-        for k in range(10):  # Spawns rund um das Monument, Blick nach außen
-            a = 2 * math.pi * (k + 0.5) / 10
-            x, z = math.cos(a) * 13, math.sin(a) * 13
-            b.spawn(x, z, yaw=math.degrees(math.atan2(x, z)) + 180)
-
-        # ---------- HESCO-Wall im Quadrat, vier Tore ----------
-        gate = 15
+        # ---------- Palisade, Ecktürme, Torhäuser ----------
+        gate = 8
         for side in range(4):
-            yaw = side * 90
-            f = frame(0, 0, yaw)
-            t = -H + 5
-            k = 0
-            while t < H - 4:
-                if abs(t) > gate:
-                    color = hesco if k % 2 else hesco2
-                    b.box("Walls", "Hesco", (10, 9, 5.4), f(t, 4.5, H), color, "Fabric", angles=(0, yaw, 0))
-                    b.box("Walls", "HescoTop", (10.2, 0.4, 5.6), f(t, 9.1, H), lighten(color, -0.15), "Fabric", angles=(0, yaw, 0))
-                    b.add("Walls", "RazorWire", (10, 1.1, 1.1), f(t, 10, H + 0.5), (80, 78, 74), "CorrodedMetal", angles=(0, yaw, 0),
-                          props={"Shape": "Cylinder"})
-                    k += 1
-                t += 10
-            # Tor: Wachhäuschen, Schranken (offen), Brücke mit Schild und Flutlichtern, Betonsperren davor
+            f, box = self.frame(0, 0, side * 90)
+            t, k = -H + 3, 0
+            while t < H - 2:
+                if abs(t) > gate + 3:
+                    sheet = k % 4 == 2
+                    box("Walls", "WallSheet" if sheet else "Palisade", (6.2, 9.6 if not sheet else 9, 0.7), (t, 4.8, H),
+                        rust if sheet else (wood if k % 2 else wood2), "CorrodedMetal" if sheet else "WoodPlanks",
+                        extra=(0, 0, rng.uniform(-1, 1)))
+                    box("Walls", "PalisadePost", (1, 11.4, 1), (t + 3, 5.7, H), dark, "Wood")
+                    if k % 3 == 0:  # Fackel innen
+                        box("Decor", "WallTorch", (0.6, 1, 0.6), (t, 8.6, H - 0.8), (255, 170, 80), "Neon",
+                            children=self.warm_light(16, 0.9) if k % 6 == 0 else None)
+                k += 1
+                t += 6
+            # Torhaus: zwei Holztürme, Brücke mit Schild, offene Flügel, Laternen
             for s in (-1, 1):
-                bx_, bz_ = s * (gate + 4), H - 7
-                b.box("Buildings", "GuardBooth", (6, 7, 6), f(bx_, 3.5, bz_), (196, 192, 180), "Concrete", angles=(0, yaw, 0))
-                b.box("Decor", "BoothWindow", (6.1, 2.2, 6.1), f(bx_, 4.6, bz_), (60, 80, 90), "Glass", angles=(0, yaw, 0),
-                      props={"Transparency": 0.35})
-                b.box("Decor", "BoothRoof", (7.4, 0.5, 7.4), f(bx_, 7.25, bz_), (70, 72, 70), "Metal", angles=(0, yaw, 0),
-                      children=light(16, 0.8, warm))
-                b.box("Decor", "BarrierPost", (1, 3.4, 1), f(s * (gate - 1), 1.7, H - 1), (60, 60, 64), "Metal", angles=(0, yaw, 0))
-                for j in range(5):  # rot-weißer Schlagbaum, hochgeklappt
-                    up = 1.2 + j * 2.4
-                    b.box("Decor", "BarrierArm", (0.5, 2.4, 0.5), f(s * (gate - 1.2), 3.4 + up - 1.2, H - 1), (210, 50, 44) if j % 2 == 0
-                          else (236, 236, 232), "SmoothPlastic", angles=(0, yaw, 0))
-                b.box("Walls", "GantryPost", (1.4, 16, 1.4), f(s * (gate + 0.5), 8, H + 1), steel, "Metal", angles=(0, yaw, 0))
-                b.box("Decor", "GateFlood", (1.8, 1.2, 1.4), f(s * (gate - 2), 15, H + 1.6), (240, 240, 230), "Neon", angles=(0, yaw, 0),
-                      children=light(70, 1.8, cold, True, "Front", 60))
-                for j in range(2):  # Betonsperren (Schikane) vor dem Tor
-                    b.box("Cover", "JerseyBarrier", (8, 3.2, 2), f(s * (6 + j * 3), 1.6, H + 14 + j * 10 + (4 if s > 0 else 0)),
-                          (176, 172, 164), "Concrete", angles=(0, yaw + s * 8, 0))
-            b.box("Walls", "GantryBeam", (2 * gate + 3, 1.4, 1.4), f(0, 16.4, H + 1), steel, "Metal", angles=(0, yaw, 0))
-            b.sign2("GateSignOut", (22, 4, 0.3), f(0, 13.2, H + 1.9), "CAMP PHOENIX", "SICHERE ZONE · KEINE WAFFEN · KEIN PVP",
-                    (40, 46, 36), (234, 200, 110), (220, 214, 196), angles=(0, yaw + 180, 0))
-            b.sign2("GateSignIn", (22, 4, 0.3), f(0, 13.2, H + 0.1), "AUSGANG", "ZOMBIES · PVP NACH 5 SEKUNDEN",
-                    (40, 46, 36), (226, 90, 60), (220, 214, 196), angles=(0, yaw, 0))
-
-        # Wachtürme in den Ecken
+                tx = s * (gate + 3.5)
+                for lx in (-2.6, 2.6):
+                    for lz in (-2.6, 2.6):
+                        box("Walls", "GateTowerLeg", (0.9, 16, 0.9), (tx + lx, 8, H + lz), dark, "Wood")
+                box("Walls", "GateTowerWall", (6.4, 7, 6.4), (tx, 3.5, H), wood2, "WoodPlanks")
+                box("Walls", "GateTowerDeck", (7, 0.5, 7), (tx, 16, H), wood, "WoodPlanks")
+                for lx, lz, sx_, sz_ in ((0, -3.3, 7, 0.4), (0, 3.3, 7, 0.4), (3.3, 0, 0.4, 7), (-3.3, 0, 0.4, 7)):
+                    box("Cover", "GateTowerRail", (sx_, 1.8, sz_), (tx + lx, 17.1, H + lz), wood2, "WoodPlanks")
+                box("Decor", "GateTowerRoof", (8, 0.4, 8), (tx, 21, H), (74, 60, 52), "Slate", extra=(0, 0, s * 8))
+                box("Decor", "GateLantern", (0.9, 1.3, 0.9), (s * (gate - 0.5), 8, H - 1.6), (255, 206, 140), "Neon",
+                    children=self.warm_light(26, 1.4))
+                box("Walls", "GateWing", (gate - 1, 9, 0.6), (s * (gate + 1.5), 4.6, H - gate / 2 - 1), wood2, "WoodPlanks",
+                    extra=(0, s * 72, 0))
+            box("Walls", "GateBridge", (2 * gate + 14, 1, 4), (0, 12.6, H), wood, "WoodPlanks")
+            box("Walls", "GateBridgeRail", (2 * gate + 6, 1.4, 0.4), (0, 13.8, H + 1.8), wood2, "WoodPlanks")
+            for yaw_off, dz_ in ((180, 2.1), (0, -2.1)):
+                b.sign2("GateSign", (14, 3, 0.25), f(0, 10.4, H + dz_), "CAMP PHOENIX" if yaw_off == 180 else "DRAUSSEN",
+                        "SICHERE ZONE · KEIN PVP" if yaw_off == 180 else "ZOMBIES · PVP NACH 5 SEKUNDEN",
+                        (96, 74, 52), (236, 226, 196), (220, 210, 180), angles=(0, side * 90 + yaw_off, rng.uniform(-1.5, 1.5)))
         for sx in (-1, 1):
             for sz in (-1, 1):
-                cx, cz = sx * (H - 6), sz * (H - 6)
-                for lx in (-4, 4):
-                    for lz in (-4, 4):
-                        b.box("Walls", "TowerLeg", (1, 15, 1), (cx + lx, 7.5, cz + lz), steel, "Metal")
-                b.box("Walls", "TowerDeck", (11, 0.8, 11), (cx, 15.2, cz), (84, 86, 80), "DiamondPlate")
-                for side, (ox_, oz_, w_, d_) in enumerate(((0, 5.2, 11, 1.4), (0, -5.2, 11, 1.4), (5.2, 0, 1.4, 11), (-5.2, 0, 1.4, 11))):
-                    inner = (ox_ * sx < 0) if ox_ else (oz_ * sz < 0)  # zur Mitte offen (Leiter)
-                    if not inner:
-                        b.box("Cover", "TowerSandbags", (w_, 2.6, d_), (cx + ox_, 16.9, cz + oz_), sand, "Fabric")
-                for lx in (-5, 5):
-                    for lz in (-5, 5):
-                        b.box("Decor", "TowerRoofPost", (0.4, 5, 0.4), (cx + lx, 18.1, cz + lz), steel, "Metal")
-                b.box("Decor", "TowerRoof", (12, 0.4, 12), (cx, 20.8, cz), olive, "CorrodedMetal")
-                b.box("Decor", "CamoNet", (13, 0.2, 13), (cx, 21.2, cz), (70, 84, 56), "Fabric", angles=(2, 0, -2))
-                b.add("Walls", "TowerLadder", (2, 15, 2), (cx - sx * 6.6, 7.5, cz - sz * 2), (90, 90, 92), "Metal", cls="TrussPart")
-                b.box("Decor", "TowerSearchlight", (1.6, 1.6, 2.2), (cx + sx * 3.5, 17.6, cz + sz * 3.5), (236, 236, 226), "Neon",
-                      angles=(0, self.yaw_to(sx, sz), 0), children=light(90, 2, cold, True, "Front", 30))
+                cx, cz = sx * (H - 5), sz * (H - 5)
+                for lx in (-3, 3):
+                    for lz in (-3, 3):
+                        b.box("Walls", "TowerLeg", (1, 18, 1), (cx + lx, 9, cz + lz), dark, "Wood")
+                b.box("Walls", "TowerDeck", (8, 0.5, 8), (cx, 18, cz), wood, "WoodPlanks")
+                for lx, lz, sx_, sz_ in ((0, -3.8, 8, 0.4), (0, 3.8, 8, 0.4), (3.8, 0, 0.4, 8), (-3.8, 0, 0.4, 8)):
+                    b.box("Cover", "TowerRail", (sx_, 1.8, sz_), (cx + lx, 19.1, cz + lz), wood2, "WoodPlanks")
+                b.box("Decor", "TowerRoof", (9, 0.4, 9), (cx, 23, cz), (74, 60, 52), "Slate", angles=(0, 0, 7 * sx))
+                b.add("Walls", "TowerLadder", (2, 18, 2), (cx - sx * 5, 9, cz), (90, 90, 92), "Metal", cls="TrussPart")
+                b.box("Decor", "Searchlight", (1.4, 1.4, 1.8), (cx + sx * 2.5, 20, cz + sz * 2.5), (236, 236, 226), "Neon",
+                      angles=(0, self.yaw_to(sx, sz), 0),
+                      children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {"Face": "Front", "Range": 80,
+                                                                                           "Brightness": 1.8, "Angle": 32,
+                                                                                           "Color": rgb(255, 240, 210)}}])
 
-        # ---------- Händler: offene Container an den Fahrspuren ----------
-        def shop(key, title, subtitle, cx, cz, fx, fz, color, goods):
+        # ---------- Dorfplatz: Lagerfeuer, Bänke, Lichterketten, Spawns ----------
+        for k in range(14):
+            a = 2 * math.pi * k / 14
+            b.box("Decor", "FireStone", (1.8, 1.1, 1.8), (math.cos(a) * 4, 0.55, math.sin(a) * 4), (110, 106, 100), "Slate",
+                  angles=(0, rng.uniform(0, 90), 0))
+        b.box("Decor", "Bonfire", (3, 1.4, 3), (0, 0.9, 0), (255, 130, 40), "Neon", props={"CanCollide": False},
+              children=[{"Name": "Fire", "ClassName": "Fire", "Properties": {"Size": 12, "Heat": 14, "Color": rgb(255, 140, 40),
+                                                                                "SecondaryColor": rgb(150, 40, 20)}},
+                        {"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 50, "Brightness": 2.6, "Color": warm}},
+                        {"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": rgb(60, 56, 52), "Opacity": 0.2,
+                                                                                 "RiseVelocity": 9, "Size": 10}}])
+        for k in range(3):  # aufgeschichtete Scheite
+            b.box("Decor", "FireLog", (4, 0.8, 0.8), (0, 1.2 + k * 0.5, 0), (90, 60, 40), "Wood", angles=(20, k * 60, 0))
+        for k in range(6):
+            a = 2 * math.pi * (k + 0.5) / 6
+            b.box("Cover", "LogBench", (6, 1.2, 1.2), (math.cos(a) * 9, 0.7, math.sin(a) * 9), (96, 70, 48), "Wood",
+                  angles=(0, -math.degrees(a) + 90, 0))
+        for k in range(10):
+            a = 2 * math.pi * (k + 0.25) / 10
+            x, z = math.cos(a) * 14, math.sin(a) * 14
+            b.spawn(x, z, yaw=math.degrees(math.atan2(x, z)) + 180)
+        posts = []
+        for k in range(8):
+            a = math.radians(22.5 + 45 * k)
+            posts.append((math.cos(a) * 24, math.sin(a) * 24))
+            b.box("Decor", "StringPost", (0.6, 11, 0.6), (posts[-1][0], 5.5, posts[-1][1]), dark, "Wood")
+            b.box("Decor", "PostLantern", (0.8, 1.1, 0.8), (posts[-1][0], 9.6, posts[-1][1]), (255, 206, 140), "Neon",
+                  children=self.warm_light(18, 1) if k % 2 == 0 else None)
+        spans = [(posts[k], posts[(k + 1) % 8]) for k in range(8)] + [(posts[k], posts[k + 4]) for k in range(4)]
+        for (ax_, az_), (bx_, bz_) in spans:
+            n = max(4, int(math.hypot(bx_ - ax_, bz_ - az_) / 3.4))
+            sag = 1.4 if n < 8 else 3.2
+            for j in range(1, n):
+                t = j / n
+                b.add("Decor", "Bulb", (0.55, 0.55, 0.55), (ax_ + (bx_ - ax_) * t, 10.4 - sag * math.sin(math.pi * t), az_ + (bz_ - az_) * t),
+                      rng.choice(((255, 206, 140), (255, 186, 110), (255, 226, 170))), "Neon",
+                      props={"Shape": "Ball", "CanCollide": False})
+        b.box("Decor", "FlagPole", (0.6, 22, 0.6), (0, 11, -27), (190, 190, 186), "Metal")
+        b.box("Decor", "Flag", (9, 5.4, 0.2), (4.8, 19.2, -27), (214, 96, 34), "Fabric", angles=(0, 0, -3))
+
+        # ---------- Häuser an den Wegen ----------
+        colors = ((168, 150, 120), (150, 120, 96), (126, 136, 120), (176, 160, 136), (140, 112, 92), (120, 128, 136))
+        k = 0
+        for gx, gz in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+            for s in (-1, 1):
+                nx, nz = -gz * s, gx * s  # Seite des Wegs
+                x, z = gx * 58 + nx * 22, gz * 58 + nz * 22
+                if (gx, gz, s) in ((1, 0, 1), (0, 1, -1)):  # Platz für Landeplatz und Gärten
+                    pass
+                self.cabin(x, z, self.yaw_to(-nx, -nz), w=16, d=12, h=8, color=colors[k % len(colors)], upper=k % 3 == 0)
+                k += 1
+
+        # ---------- Marktstände, Lager, Busstation ----------
+        def stall(key, title, subtitle, x, z, fx, fz, awning, goods):
             yaw = self.yaw_to(fx, fz)
-            f = frame(cx, cz, yaw)
-            ry = (0, yaw, 0)
-            b.box("Stands", "ShopFloor", (20, 0.5, 8), f(0, 0.25, 0), (70, 72, 74), "DiamondPlate", angles=ry)
-            b.box("Stands", "ShopBack", (20, 9, 0.5), f(0, 4.5, 3.8), color, "Metal", angles=ry)
-            b.box("Stands", "ShopRoof", (20.4, 0.5, 8.4), f(0, 9.1, 0), lighten(color, -0.1), "Metal", angles=ry)
+            f, box = self.frame(x, z, yaw)
+            box("Stands", "StallFloor", (14, 0.5, 8), (0, 0.25, 0), wood2, "WoodPlanks")
+            box("Stands", "StallBack", (14, 7, 0.5), (0, 3.5, 3.8), wood, "WoodPlanks")
             for s in (-1, 1):
-                b.box("Stands", "ShopEnd", (0.5, 9, 8), f(s * 9.8, 4.5, 0), color, "Metal", angles=ry)
-                b.box("Stands", "ShopDoor", (0.3, 8.6, 4), f(s * 11.6, 4.5, -5.4), color, "Metal", angles=(0, yaw + s * 25, 0))
-            for j in range(8):  # Rippen des Containers
-                b.box("Stands", "ShopRib", (0.3, 8.6, 0.2), f(-8.6 + j * 2.45, 4.5, 4.1), lighten(color, -0.18), "Metal", angles=ry)
-            b.box("Stands", "ShopCounter", (16, 3.4, 1.4), f(0, 1.95, -3.2), (90, 72, 52), "WoodPlanks", angles=ry)
-            b.box("Stands", "ShopCounterTop", (16.4, 0.3, 2), f(0, 3.8, -3.2), (60, 50, 40), "Wood", angles=ry)
-            b.box("Stands", "ShopAwning", (21, 0.3, 6), f(0, 8.6, -6.5), (236, 230, 214) if color != olive else (210, 200, 170), "Fabric",
-                  angles=ry)
+                box("Stands", "StallSide", (0.5, 7, 8), (s * 6.8, 3.5, 0), wood, "WoodPlanks")
+                box("Stands", "StallPost", (0.6, 9, 0.6), (s * 6.8, 4.5, -4.3), dark, "Wood")
+            box("Stands", "StallCounter", (12, 3.2, 1.2), (0, 1.85, -3.4), (90, 70, 50), "WoodPlanks")
+            box("Stands", "StallCounterTop", (12.6, 0.3, 1.8), (0, 3.6, -3.4), dark, "Wood")
+            for j in range(5):  # gestreiftes Vordach
+                box("Stands", "Awning", (14.6 / 5, 0.25, 7), (-5.84 + j * 2.92, 8.8, -1.6), awning if j % 2 == 0 else (236, 228, 210), "Fabric")
+            box("Stands", "AwningFront", (14.6, 1.2, 0.2), (0, 8.2, -5.1), awning, "Fabric")
+            b.sign2("StandSign_" + key, (9, 2.2, 0.25), f(0, 10.6, -1), title, subtitle, (96, 74, 52), (236, 226, 196), (220, 210, 180),
+                    angles=(0, yaw, rng.uniform(-2, 2)))
+            box("Stands", "SignPostL", (0.4, 2, 0.4), (-3.5, 9.6, -1), dark, "Wood")
+            box("Stands", "SignPostR", (0.4, 2, 0.4), (3.5, 9.6, -1), dark, "Wood")
             for s in (-1, 1):
-                b.box("Stands", "AwningPost", (0.4, 8.6, 0.4), f(s * 10, 4.3, -9.3), (60, 60, 64), "Metal", angles=ry)
-                b.box("Stands", "ShopLamp", (0.9, 0.6, 0.9), f(s * 5, 8.1, -5.6), (255, 220, 170), "Neon", angles=ry,
-                      children=light(20, 1.1, warm))
-            b.sign2("StandSign_" + key, (14, 2.8, 0.3), f(0, 10.8, -4.3), title, subtitle, (34, 38, 32), (240, 206, 110), (226, 222, 210),
-                    angles=ry)
-            b.box("Stands", "Vendor", (2, 2.2, 1.1), f(0, 4.9, -1.4), (66, 74, 56), "Fabric", angles=ry)
-            b.box("Stands", "VendorHead", (1.2, 1.2, 1.2), f(0, 6.7, -1.4), (196, 156, 126), "SmoothPlastic", angles=ry)
-            b.box("Stands", "VendorCap", (1.3, 0.45, 1.4), f(0, 7.45, -1.45), (60, 66, 50), "Fabric", angles=ry)
+                box("Stands", "StallLantern", (0.8, 1.1, 0.8), (s * 5.5, 7.6, -4.6), (255, 206, 140), "Neon",
+                    children=self.warm_light(18, 1.1))
+            box("Stands", "Vendor", (2, 2.2, 1.1), (0, 4.9, -1.4), (66, 74, 56), "Fabric")
+            box("Stands", "VendorHead", (1.2, 1.2, 1.2), (0, 6.7, -1.4), (196, 156, 126), "SmoothPlastic")
+            box("Stands", "VendorCap", (1.3, 0.45, 1.4), (0, 7.45, -1.45), (60, 66, 50), "Fabric")
             for lx, ly, sx_, sy_, sz_, col, mat in goods:
-                b.box("Stands", "Goods", (sx_, sy_, sz_), f(lx, ly, 3.3), col, mat, angles=ry)
-            b.add("Stands", key, (2, 2, 2), f(0, 2.5, -6.6), color, "SmoothPlastic", angles=ry,
+                box("Stands", "Goods", (sx_, sy_, sz_), (lx, ly, 3.2), col, mat)
+            b.add("Stands", key, (2, 2, 2), f(0, 2.5, -6.4), awning, "SmoothPlastic", angles=(0, yaw, 0),
                   props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
-            for j in range(3):
-                b.box("Cover", "Crate", (2.6, 2.6, 2.6), f(rng.choice((-1, 1)) * rng.uniform(12.5, 14), 1.3, rng.uniform(-2, 3)),
-                      (120, 98, 66), "WoodPlanks", angles=(0, yaw + rng.uniform(-15, 15), 0))
+            for j in range(2):
+                box("Cover", "Crate", (2.4, 2.4, 2.4), (rng.choice((-1, 1)) * 8.6, 1.2, rng.uniform(-2, 2)), (120, 98, 66), "WoodPlanks",
+                    extra=(0, rng.uniform(-15, 15), 0))
 
         gun = (40, 42, 46)
-        shop("Stand_Weapons", "WAFFEN", "MUNITION · TAUSCH", -34, 42, 1, 0, (92, 54, 44),
-             [(-5, 6.6, 4.6, 0.7, 0.4, gun, "Metal"), (0, 6.6, 4.0, 0.6, 0.4, gun, "Metal"), (5, 6.6, 2.6, 0.7, 0.4, gun, "Metal"),
-              (-5, 4.6, 3.6, 0.6, 0.4, gun, "Metal"), (0, 4.6, 5.0, 0.7, 0.4, gun, "Metal"), (5, 4.6, 3.0, 0.6, 0.4, gun, "Metal")])
-        med = (220, 218, 210)
-        shop("Stand_Items", "SANI", "VERBAND · WESTEN", 34, 42, -1, 0, (196, 194, 186),
-             [(-5, 4.6, 2.4, 1.6, 1.4, med, "SmoothPlastic"), (-2, 4.6, 2.4, 1.6, 1.4, (200, 60, 50), "SmoothPlastic"),
-              (2, 4.6, 2.4, 1.6, 1.4, med, "SmoothPlastic"), (5, 4.6, 2.4, 1.6, 1.4, med, "SmoothPlastic"),
-              (-3, 6.6, 3.0, 1.6, 1.4, olive, "Fabric"), (3, 6.6, 3.0, 1.6, 1.4, olive, "Fabric")])
-        shop("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", -34, -42, 1, 0, olive,
-             [(-4, 6.2, 5, 2.4, 0.2, (60, 60, 64), "Metal"), (3.5, 6.2, 5, 2.4, 0.2, (60, 60, 64), "Metal"),
-              (0, 4.2, 6, 1.2, 1.2, (150, 40, 34), "Metal")])
-
-        # Lager: Container mit offenen Türen, Spinde
-        lx, lz = 34, -42
-        yaw = self.yaw_to(-1, 0)
-        f = frame(lx, lz, yaw)
-        ry = (0, yaw, 0)
-        stash = (60, 86, 110)
-        b.box("Stands", "StashFloor", (20, 0.5, 8), f(0, 0.25, 0), (70, 72, 74), "DiamondPlate", angles=ry)
-        b.box("Stands", "StashBack", (20, 9, 0.5), f(0, 4.5, 3.8), stash, "Metal", angles=ry)
-        b.box("Stands", "StashRoof", (20.4, 0.5, 8.4), f(0, 9.1, 0), lighten(stash, -0.1), "Metal", angles=ry)
+        stall("Stand_Weapons", "WAFFEN", "MUNITION · TAUSCH", -15, 36, 1, 0, (160, 50, 40),
+              [(-4, 6.4, 4.6, 0.7, 0.4, gun, "Metal"), (1, 6.4, 4.0, 0.6, 0.4, gun, "Metal"), (-4, 4.4, 3.6, 0.6, 0.4, gun, "Metal"),
+               (1, 4.4, 5.0, 0.7, 0.4, gun, "Metal")])
+        stall("Stand_Items", "SANI", "VERBAND · WESTEN", 36, 15, 0, -1, (220, 220, 214),
+              [(-4, 4.4, 2.4, 1.6, 1.4, (226, 224, 216), "SmoothPlastic"), (-1, 4.4, 2.4, 1.6, 1.4, (200, 60, 50), "SmoothPlastic"),
+               (2, 4.4, 2.4, 1.6, 1.4, (226, 224, 216), "SmoothPlastic"), (-2, 6.4, 3.0, 1.6, 1.4, (86, 96, 66), "Fabric")])
+        stall("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", 15, -36, -1, 0, (70, 100, 140),
+              [(-3, 6, 5, 2.4, 0.2, (60, 60, 64), "Metal"), (2.5, 6, 5, 2.4, 0.2, (60, 60, 64), "Metal"),
+               (0, 4.2, 6, 1.2, 1.2, (150, 40, 34), "Metal")])
+        # Lagerhaus (Scheune) mit offenem Tor
+        yaw = self.yaw_to(0, 1)
+        f, box = self.frame(-36, -15, yaw)
+        box("Stands", "BarnBody", (16, 9, 12), (0, 4.5, 2), (130, 60, 48), "WoodPlanks")
+        box("Stands", "BarnDoorGap", (7, 7, 0.4), (0, 3.5, -4.1), (40, 30, 24), "WoodPlanks")
         for s in (-1, 1):
-            b.box("Stands", "StashEnd", (0.5, 9, 8), f(s * 9.8, 4.5, 0), stash, "Metal", angles=ry)
-        for j in range(6):
-            b.box("Stands", "Locker", (2.6, 7, 2), f(-7.5 + j * 3, 3.75, 2.4), (90, 104, 96) if j % 2 else (80, 94, 88), "Metal", angles=ry)
-        b.box("Stands", "StashLamp", (6, 0.3, 0.8), f(0, 8.7, 0), (230, 236, 255), "Neon", angles=ry, children=light(18, 1, cold))
-        b.sign2("StandSign_Stash", (12, 2.8, 0.3), f(0, 10.8, -4.3), "LAGER", "DEINS BLEIBT DEINS", (34, 38, 32), (240, 206, 110),
-                (226, 222, 210), angles=ry)
-        b.add("Stands", "Stash", (2, 2, 2), f(0, 2.5, -6.6), (226, 178, 52), "SmoothPlastic", angles=ry,
+            box("Stands", "BarnRoof", (math.hypot(6, 4) + 1, 0.5, 18), (0, 11, 2 + s * 3), (74, 60, 52), "Slate",
+                extra=(0, 90, s * math.degrees(math.atan2(4, 6))))
+            box("Stands", "BarnDoor", (3.6, 7, 0.3), (s * 5.4, 3.5, -5.2), (150, 70, 56), "WoodPlanks", extra=(0, s * 50, 0))
+        box("Stands", "BarnLamp", (0.8, 0.8, 0.8), (0, 8, -4.4), (255, 206, 140), "Neon", children=self.warm_light(20, 1.2))
+        b.sign2("StandSign_Stash", (9, 2.2, 0.25), f(0, 10.2, -4.4), "LAGER", "DEINS BLEIBT DEINS", (96, 74, 52), (236, 226, 196),
+                (220, 210, 180), angles=(0, yaw, 0))
+        b.add("Stands", "Stash", (2, 2, 2), f(0, 2.5, -7), (226, 178, 52), "SmoothPlastic", angles=(0, yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+        # Busstation: Reisen zu den Safehouses
+        self.travel_stop("Travel", "REISEN", -36, 20, 0, -1)
 
-        # ---------- Landeplatz mit Hubschrauber: Rückweg zum Hub ----------
-        hx, hz = 56, -64
-        b.add("Decor", "Helipad", (0.4, 24, 24), (hx, 0.2, hz), (64, 66, 64), "Concrete", angles=(0, 0, 90), props={"Shape": "Cylinder"})
-        b.add("Decor", "HelipadRing", (0.42, 21, 21), (hx, 0.21, hz), (220, 200, 90), "SmoothPlastic", angles=(0, 0, 90),
-              props={"Shape": "Cylinder"})
-        b.add("Decor", "HelipadInner", (0.44, 19.6, 19.6), (hx, 0.22, hz), (64, 66, 64), "Concrete", angles=(0, 0, 90),
-              props={"Shape": "Cylinder"})
-        b.floor_text("HelipadH", (9, 0.1, 9), (hx, 0.46, hz), "H", (236, 232, 220), yaw=0)
+        # ---------- Landeplatz (Rückweg zum Hub), Werkstatt-Scheune, Gärten, Wasserturm ----------
+        hx, hz = 54, 54
+        b.add("Decor", "Helipad", (0.4, 22, 22), (hx, 0.2, hz), (80, 78, 72), "Concrete", angles=(0, 0, 90), props={"Shape": "Cylinder"})
+        b.floor_text("HelipadH", (8, 0.1, 8), (hx, 0.45, hz), "H", (236, 232, 220), yaw=0)
         for k in range(8):
             a = 2 * math.pi * k / 8
-            b.box("Decor", "PadLight", (0.8, 0.5, 0.8), (hx + math.cos(a) * 12.6, 0.45, hz + math.sin(a) * 12.6), (120, 220, 120), "Neon",
-                  children=light(8, 0.8, rgb(140, 255, 140)) if k % 2 == 0 else None)
+            b.box("Decor", "PadLight", (0.7, 0.5, 0.7), (hx + math.cos(a) * 11.6, 0.45, hz + math.sin(a) * 11.6), (255, 206, 140), "Neon",
+                  children=self.warm_light(8, 0.8) if k % 2 == 0 else None)
         b.add("Portals", "Portal_Hub", (14, 0.4, 14), (hx, 0.5, hz), (120, 185, 235), "Neon",
               props={"CanCollide": False, "Transparency": 0.8})
-        b.sign2("HubGateSign", (12, 3, 0.25), (hx - 15, 4.5, hz), "EVAKUIERUNG", "LANDEFELD BETRETEN = ZURÜCK ZUM HUB",
-                (34, 38, 32), (240, 206, 110), (226, 222, 210), angles=(0, 90, 0))
+        b.sign2("HubGateSign", (11, 2.6, 0.25), (hx - 14, 4.4, hz), "EVAKUIERUNG", "LANDEPLATZ BETRETEN = ZURÜCK ZUM HUB",
+                (96, 74, 52), (236, 226, 196), (220, 210, 180), angles=(0, 90, 0))
         for s in (-1, 1):
-            b.box("Decor", "HubSignPost", (0.5, 6, 0.5), (hx - 15.1, 3, hz + s * 5.4), (60, 60, 64), "Metal")
-        hf = frame(hx + 6, hz + 26, 20)
+            b.box("Decor", "HubSignPost", (0.5, 6, 0.5), (hx - 14.1, 3, hz + s * 5), dark, "Wood")
+        hf, hbox = self.frame(hx + 4, hz + 22, 100)
         heli = (74, 82, 64)
-        b.box("Decor", "HeliBody", (7, 6, 16), hf(0, 3.6, 0), heli, "Metal", angles=(0, 20, 0))
-        b.box("Decor", "HeliNose", (6, 4.4, 4), hf(0, 3.4, -9.4), lighten(heli, -0.1), "Metal", angles=(0, 20, 0))
-        b.box("Decor", "HeliGlass", (6.2, 2.6, 3), hf(0, 4.6, -9.6), (40, 52, 60), "Glass", angles=(0, 20, 0), props={"Transparency": 0.35})
-        b.box("Decor", "HeliTail", (1.6, 1.6, 14), hf(0, 5, 14.5), heli, "Metal", angles=(0, 20, 0))
-        b.box("Decor", "HeliFin", (0.4, 4, 2.4), hf(0, 6.8, 21), heli, "Metal", angles=(0, 20, 0))
-        b.box("Decor", "HeliMast", (1, 1.6, 1), hf(0, 7.4, 0), (40, 40, 40), "Metal", angles=(0, 20, 0))
-        for a in (25, 115):
-            b.box("Decor", "HeliRotor", (30, 0.3, 1.2), hf(0, 8.3, 0), (36, 36, 36), "Metal", angles=(0, 20 + a, 0))
+        hbox("Decor", "HeliBody", (6, 5.6, 14), (0, 3.4, 0), heli, "Metal")
+        hbox("Decor", "HeliNose", (5.4, 4, 3.4), (0, 3.2, -8.4), lighten(heli, -0.1), "Metal")
+        hbox("Decor", "HeliGlass", (5.6, 2.4, 2.6), (0, 4.3, -8.6), (40, 52, 60), "Glass", props={"Transparency": 0.35})
+        hbox("Decor", "HeliTail", (1.4, 1.4, 12), (0, 4.6, 13), heli, "Metal")
+        hbox("Decor", "HeliFin", (0.4, 3.6, 2.2), (0, 6.3, 18.6), heli, "Metal")
+        for a in (20, 110):
+            hbox("Decor", "HeliRotor", (26, 0.3, 1.1), (0, 7.6, 0), (36, 36, 36), "Metal", extra=(0, a, 0))
         for s in (-1, 1):
-            b.box("Decor", "HeliSkid", (0.5, 0.5, 14), hf(s * 3.2, 0.25, -1), (40, 40, 40), "Metal", angles=(0, 20, 0))
-
-        # ---------- Zelte: Sanität, Kommando, Unterkünfte ----------
-        def big_tent(name, cx, cz, w, d, color, sign=None, cross=False):
-            yaw = self.yaw_to(-cx, 0) if abs(cx) > abs(cz) else self.yaw_to(0, -cz)
-            f = frame(cx, cz, yaw)
-            ry = (0, yaw, 0)
-            b.box("Buildings", name, (w, 3.2, d), f(0, 1.6, 0), color, "Fabric", angles=ry)  # Seitenwände
-            rise = 3.0
-            slope = math.degrees(math.atan2(rise, w / 2))
-            for s in (-1, 1):  # Satteldach
-                b.box("Buildings", name + "Roof", (math.hypot(w / 2, rise) + 0.6, 0.4, d + 0.6), f(s * w / 4, 3.2 + rise / 2, 0),
-                      lighten(color, 0.05), "Fabric", angles=(0, yaw, -s * slope))
-            b.box("Buildings", name + "Gable", (w * 0.9, rise, 0.3), f(0, 3.2 + rise * 0.4, -d / 2 + 0.1), lighten(color, -0.08), "Fabric",
-                  angles=ry)
-            b.box("Decor", name + "Door", (4, 4.6, 0.3), f(0, 2.4, -d / 2 - 0.1), lighten(color, -0.3), "Fabric", angles=ry)
-            if cross:
-                for sx_, sy_ in ((3.6, 1.1), (1.1, 3.6)):
-                    b.box("Decor", "RedCross", (sx_, sy_, 0.1), f(0, 5.6, -d / 2 - 0.2), (200, 40, 36), "SmoothPlastic", angles=ry)
-            if sign:
-                b.sign2(name + "Sign", (8, 1.8, 0.2), f(0, 7.6, -d / 2 - 0.3), sign[0], sign[1], (34, 38, 32), (240, 206, 110),
-                        (226, 222, 210), angles=ry)
-            b.box("Decor", name + "Light", (0.8, 0.5, 0.8), f(0, 5.4, -d / 2 - 0.6), (255, 226, 180), "Neon", angles=ry,
-                  children=light(16, 1, warm))
-
-        big_tent("MedTent", 60, 52, 14, 22, (210, 206, 194), ("SANITÄT", "VERWUNDETE HIER"), cross=True)
-        big_tent("CommandTent", -60, 52, 14, 22, olive2, ("KOMMANDO", "CAMP PHOENIX"))
-        for k, x in enumerate((-28, -16, 16, 28)):
-            big_tent("Tent", x, 70, 9, 8, olive if k % 2 else olive2)
-        for k in range(3):  # Funkmast am Kommandozelt
-            b.box("Decor", "RadioMast", (0.4, 24, 0.4), (-70 + k * 0.2, 12, 64 + k * 0.2), steel, "Metal")
-        b.box("Decor", "RadioBeacon", (0.8, 0.8, 0.8), (-70, 24.4, 64), (255, 40, 30), "Neon", children=light(20, 1, rgb(255, 60, 40)))
-
-        # ---------- Fahrzeughof: Militärlaster, Tankanhänger ----------
-        def truck(x, z, yaw, color):
-            f = frame(x, z, yaw)
-            ry = (0, yaw, 0)
-            b.box("Cover", "TruckCab", (7, 6, 6), f(0, 4, -8), color, "Metal", angles=ry)
-            b.box("Decor", "TruckGlass", (6.4, 2, 0.2), f(0, 5.6, -11.05), (40, 52, 60), "Glass", angles=ry, props={"Transparency": 0.3})
-            b.box("Cover", "TruckBed", (7, 1.2, 14), f(0, 2.4, 3), lighten(color, -0.1), "Metal", angles=ry)
-            b.box("Cover", "TruckCanvas", (7.2, 5, 13.6), f(0, 5.5, 3), lighten(color, 0.08), "Fabric", angles=ry)
-            for sz_ in (-8, 1, 7):
-                for sx_ in (-1, 1):
-                    b.add("Cover", "TruckWheel", (1.2, 3.2, 3.2), f(sx_ * 3.4, 1.6, sz_), (24, 24, 26), "Rubber", angles=ry,
-                          props={"Shape": "Cylinder"})
-        truck(-66, -26, 0, olive)
-        truck(-66, -50, 0, olive2)
-        b.add("Cover", "FuelTank", (12, 5, 5), (-40, 3.2, -70), (70, 80, 60), "Metal", props={"Shape": "Cylinder"})
-        for s in (-1, 1):
-            b.box("Cover", "FuelTankStand", (1, 1.6, 5), (-40 + s * 4.5, 0.8, -70), steel, "Metal")
-        for k in range(6):
-            b.cylinder("Cover", "Barrel", 2.2, 3, (-56 + (k % 3) * 2.4, 1.5, -72 + (k // 3) * 2.4), (60, 84, 60), material="Metal")
-
-        # ---------- Lichtmasten, Wassertanks, Kisten ----------
-        for sx in (-1, 1):
-            for sz in (-1, 1):
-                x, z = sx * 26, sz * 26
-                b.box("Decor", "LightTrailer", (3, 2, 5), (x, 1.2, z), (190, 160, 60), "Metal")
-                b.box("Decor", "LightMast", (0.5, 16, 0.5), (x, 10, z), steel, "Metal")
-                b.box("Decor", "LightBar", (4, 0.6, 0.6), (x, 18, z), (50, 50, 52), "Metal", angles=(0, math.degrees(math.atan2(sx, sz)) + 90, 0))
-                b.box("Decor", "LightPanel", (3.6, 0.9, 0.4), (x - sx * 0.3, 18.6, z - sz * 0.3), (250, 250, 240), "Neon",
-                      angles=(0, self.yaw_to(-sx, -sz), 0), children=light(70, 1.6, cold, True, "Front", 80))
+            hbox("Decor", "HeliSkid", (0.5, 0.5, 12), (s * 2.8, 0.25, -1), (40, 40, 40), "Metal")
+        # Werkstatt-Scheune mit Autos
+        f, box = self.frame(50, -50, self.yaw_to(-1, 0))
+        box("Buildings", "Workshop", (18, 0.4, 16), (0, 9, 0), rust, "CorrodedMetal")
+        for lx in (-8.6, 8.6):
+            for lz in (-7.6, 7.6):
+                box("Buildings", "WorkshopPost", (0.7, 9, 0.7), (lx, 4.5, lz), dark, "Wood")
+        box("Buildings", "WorkshopBack", (18, 9, 0.5), (0, 4.5, 7.8), wood2, "WoodPlanks")
+        box("Decor", "WorkshopLamp", (3, 0.3, 0.6), (0, 8.6, 0), (240, 236, 220), "Neon", children=self.warm_light(22, 1.1))
+        for j, lx in enumerate((-4.5, 4.5)):
+            body = ((140, 60, 44), (70, 96, 120))[j]
+            box("Cover", "CarBody", (5, 2.2, 10), (lx, 2.2, 1), body, "Metal")
+            box("Cover", "CarCabin", (4.6, 1.8, 4.6), (lx, 4.1, 1.6), lighten(body, -0.15), "Metal")
+            for sz_ in (-3, 3):
+                for s in (-1, 1):
+                    box("Cover", "CarWheel", (0.9, 2.2, 2.2), (lx + s * 2.5, 1.1, 1 + sz_), (24, 24, 26), "Rubber", props={"Shape": "Cylinder"})
+        box("Cover", "Workbench", (6, 3, 2), (0, 1.5, 6.4), dark, "Wood")
+        # Gärten und Wasserturm (Nordwesten), Zelte (Südwesten)
         for k in range(4):
-            b.box("Cover", "WaterTank", (4, 4, 4), (62 + (k % 2) * 4.4, 2, 22 + (k // 2) * 4.4), (210, 214, 216), "Plastic")
-            b.box("Decor", "WaterTankCage", (4.2, 0.3, 4.2), (62 + (k % 2) * 4.4, 4.1, 22 + (k // 2) * 4.4), (120, 124, 128), "Metal")
-        for x, z in ((-66, 22), (-62, 30), (20, -72), (66, 4)):
-            for k in range(rng.randint(2, 4)):
-                b.box("Cover", "SupplyCrate", (3, 2.6, 4), (x + rng.uniform(-2, 2), 1.3 + (k // 2) * 2.6, z + (k % 2) * 4.2),
-                      (90, 98, 70) if k % 2 else (110, 92, 62), "WoodPlanks", angles=(0, rng.choice((0, 90)) + rng.uniform(-6, 6), 0))
-        b.box("Cover", "Generator", (5, 3.6, 3), (42, 1.8, 72), (150, 130, 50), "Metal",
-              children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": rgb(50, 48, 46), "Opacity": 0.15,
-                                                                                 "RiseVelocity": 4, "Size": 2}}])
+            gx_, gz_ = -64 + k * 6, 46
+            b.box("Decor", "GardenBed", (4.4, 1, 14), (gx_, 0.5, gz_), (96, 72, 50), "WoodPlanks")
+            for j in range(5):
+                b.add("Decor", "Plant", (1.8, 1.4, 1.8), (gx_, 1.6, gz_ - 5.6 + j * 2.8), rng.choice(((70, 110, 52), (90, 128, 60))), "Grass",
+                      props={"Shape": "Ball", "CanCollide": False})
+        wx, wz = -60, 66
+        for lx in (-2.6, 2.6):
+            for lz in (-2.6, 2.6):
+                b.box("Decor", "WaterTowerLeg", (0.7, 13, 0.7), (wx + lx, 6.5, wz + lz), dark, "Wood")
+        b.box("Decor", "WaterTowerDeck", (7, 0.4, 7), (wx, 13.2, wz), wood, "WoodPlanks")
+        b.cylinder("Decor", "WaterTank", 6.4, 5.4, (wx, 16.1, wz), (78, 92, 96), material="CorrodedMetal")
+        for k, (tx, tz) in enumerate(((-64, -40), (-50, -40), (-64, -60), (-50, -60))):
+            f, box = self.frame(tx, tz, 0)
+            box("Decor", "TentFloor", (8, 0.2, 9), (0, 0.2, 0), (70, 70, 64), "Fabric")
+            for s in (-1, 1):
+                box("Decor", "TentRoof", (5.4, 0.3, 9), (s * 2.1, 2.6, 0), (90, 100, 72) if k % 2 else (120, 110, 84), "Fabric",
+                    extra=(0, 0, -s * 52))
+        for k in range(5):
+            b.box("Cover", "Firewood", (6, 0.9, 0.9), (-40, 0.45 + k * 0.9, -66 + (k % 2) * 0.4), (120, 86, 56), "Wood",
+                  props={"Shape": "Cylinder"})
+
+    def travel_stop(self, name, title, x, z, fx, fz):
+        """Haltestelle für Reisen zwischen den Safe Zones: Wartehäuschen, Schild, Fahrer (Punkt name in Stands) und ein Bus."""
+        b, rng = self.b, self.rng
+        yaw = self.yaw_to(fx, fz)
+        f, box = self.frame(x, z, yaw)
+        dark = (70, 54, 40)
+        box("Stands", "ShelterRoof", (10, 0.4, 5), (0, 7, 1.5), (74, 60, 52), "Slate", extra=(0, 0, 0))
+        box("Stands", "ShelterBack", (10, 6.6, 0.4), (0, 3.5, 3.8), (122, 92, 62), "WoodPlanks")
+        for s in (-1, 1):
+            box("Stands", "ShelterPost", (0.5, 7, 0.5), (s * 4.8, 3.5, -0.8), dark, "Wood")
+        box("Cover", "ShelterBench", (7, 1.2, 1.6), (0, 1.1, 2.6), (104, 78, 54), "WoodPlanks")
+        box("Stands", "ShelterLamp", (0.8, 0.8, 0.8), (0, 6.5, 0), (255, 206, 140), "Neon", children=self.warm_light(18, 1.1))
+        b.sign2("TravelSign", (8, 2.2, 0.25), f(0, 8.8, -0.6), title, "FAHRT ZU ANDEREN SAFE ZONES", (96, 74, 52), (236, 226, 196),
+                (220, 210, 180), angles=(0, yaw, rng.uniform(-2, 2)))
+        # Fahrer
+        box("Stands", "DriverBody", (2, 2.4, 1.1), (3.2, 2.2, -2), (70, 80, 100), "Fabric")
+        box("Stands", "DriverLegs", (1.8, 2, 1), (3.2, 0.5, -2), (50, 50, 56), "Fabric")
+        box("Stands", "DriverHead", (1.2, 1.2, 1.2), (3.2, 4.1, -2), (196, 156, 126), "SmoothPlastic")
+        box("Stands", "DriverCap", (1.4, 0.4, 1.5), (3.2, 4.85, -2.1), (40, 50, 80), "Fabric")
+        b.add("Stands", name, (2, 2, 2), f(3.2, 2.5, -4), (90, 180, 100), "SmoothPlastic", angles=(0, yaw, 0),
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
 
     def safehouse(self, key, title, x, z):
         """Kleine Safe Zone draußen: befestigter Überlebenden-Hof. Kiesplatz hinter einer Palisade aus Holz und Wellblech, Tor
@@ -1918,9 +1948,13 @@ class World:
         box("Decor", "WaterTowerDeck", (6, 0.4, 6), (wtx, 10.2, wtz), wood, "WoodPlanks")
         b.cylinder("Decor", "WaterTank", 5.4, 4.6, f(wtx, 12.7, wtz), (78, 92, 96), material="CorrodedMetal")
         for k in range(5):
-            box("Cover", "Firewood", (6, 0.9, 0.9), (22, 0.45 + k * 0.9, -2 + (k % 2) * 0.4), (120, 86, 56), "Wood",
+            box("Cover", "Firewood", (6, 0.9, 0.9), (22, 0.45 + k * 0.9, 6 + (k % 2) * 0.4), (120, 86, 56), "Wood",
                 props={"Shape": "Cylinder"})
-        box("Decor", "FirewoodRoof", (7, 0.3, 3), (22, 5, -2), rust, "CorrodedMetal", extra=(0, 0, 8))
+        box("Decor", "FirewoodRoof", (7, 0.3, 3), (22, 5, 6), rust, "CorrodedMetal", extra=(0, 0, 8))
+        # Haltestelle: Reisen zu den anderen Safe Zones
+        sx_, _, sz_ = f(20, 0, -9)
+        cx_, _, cz_ = f(0, 0, -9)
+        self.travel_stop("Travel_" + key, "REISEN", sx_, sz_, cx_ - sx_, cz_ - sz_)
         # Pickup
         px_, pz_ = -18, 8
         body = rng.choice(((140, 60, 44), (60, 90, 120), (90, 100, 70)))

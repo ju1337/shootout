@@ -39,6 +39,17 @@ for name, offset in { Stand_Weapons = Vector3.new(-36, 2.5, 34), Stand_Items = V
 	part.Name = name
 	part.CFrame = CFrame.new(CENTER + offset)
 end
+local travelStop = Instance.new("Part", map.Stands)
+travelStop.Name = "Travel"
+travelStop.CFrame = CFrame.new(CENTER + Vector3.new(-36, 2.5, 16))
+local house = Instance.new("Part", map.Zone)
+house.Name = "SafeZone_Nord"
+house:SetAttribute("Title", "SAFEHOUSE NORD")
+house.Size = Vector3.new(88, 80, 88)
+house.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 700))
+local houseSpawns = Instance.new("Folder", map)
+houseSpawns.Name = "Spawns_Nord"
+Instance.new("Part", houseSpawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 710))
 
 local town = Instance.new("Part", map.Places)
 town.Name = "Place_Oedstadt"
@@ -290,6 +301,22 @@ check(ProgressService.Get(bob).Extinction.Stash[1] and ProgressService.Get(bob).
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
 step(0.5)
 check(not windowGui.Enabled, "Weggehen schließt das Lager")
+
+-- Reisen: Haltestelle -> Fenster mit den Safe Zones -> Klick reist dorthin
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(-36, 3, 12)))
+step(0.5)
+local travelPrompt = map.Stands.Travel:FindFirstChildOfClass("ProximityPrompt")
+check(travelPrompt ~= nil, "Haltestelle hat eine E-Aufforderung")
+travelPrompt.Triggered:Fire(bob)
+step(0.3)
+check(windowGui.Enabled and string.find(texts(windowGui), "REISEN", 1, true) ~= nil, "Reise-Fenster offen")
+check(string.find(texts(windowGui), "CAMP PHOENIX  ·  DU BIST HIER", 1, true) ~= nil, "Camp als aktueller Ort")
+check(string.find(texts(windowGui), "SAFEHOUSE NORD", 1, true) ~= nil, "Safehouse in der Liste")
+find(windowGui, "Travel_Nord").Activated:Fire()
+step(0.5)
+local bobRoot = bob.Character:FindFirstChild("HumanoidRootPart")
+check(bobRoot and (bobRoot.Position - (CENTER + Vector3.new(0, 0, 710))).Magnitude < 12, "Klick reist ins Safehouse")
+check(not windowGui.Enabled, "Fenster danach zu")
 
 -- Modus verlassen: HUD weg
 bob:SetAttribute("Mode", "Hub")

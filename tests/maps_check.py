@@ -116,6 +116,16 @@ def check_extinction():
         own = [part for group, part in parts if group == "Spawns_" + key]
         if len(own) < 3 or not all(math.hypot(local(p)[0] - hx, local(p)[2] - hz) <= hr - 8 for p in own):
             problems.append("Extinction: %s braucht mindestens 3 Spawns in Spawns_%s darin" % (house["Name"], key))
+    # Haltestellen zum Reisen: eine im Camp ("Travel"), eine je Safehouse ("Travel_<Name>"), jeweils in ihrer Safe Zone
+    stops = {part["Name"]: part for group, part in parts if group == "Stands" and part["Name"].startswith("Travel")}
+    if "Travel" not in stops or not inside(stops["Travel"], 10):
+        problems.append("Extinction: Haltestelle Travel im Camp fehlt")
+    for house in houses:
+        key = house["Name"][len("SafeZone_"):]
+        stop = stops.get("Travel_" + key)
+        hx, _, hz = local(house)
+        if not stop or math.hypot(local(stop)[0] - hx, local(stop)[2] - hz) > house["Properties"]["Size"][0] / 2 - 4:
+            problems.append("Extinction: Haltestelle Travel_%s fehlt oder liegt nicht im Safehouse" % key)
     grounds = [part for group, part in parts if group == "Ground" and part["Name"] == "Ground"]
     if not grounds or min(grounds[0]["Properties"]["Size"][0], grounds[0]["Properties"]["Size"][2]) < 1500:
         problems.append("Extinction: Boden fehlt oder Welt zu klein")

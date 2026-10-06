@@ -50,6 +50,9 @@ safehouse.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 600))
 local safehouseSpawns = Instance.new("Folder", map)
 safehouseSpawns.Name = "Spawns_Test"
 Instance.new("Part", safehouseSpawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 610))
+local travelStop = Instance.new("Part", map.Stands)
+travelStop.Name = "Travel"
+travelStop.CFrame = CFrame.new(CENTER + Vector3.new(-36, 2.5, 16))
 local spawnPoint = Instance.new("Part", map.Spawns)
 spawnPoint.CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 local portal = Instance.new("Part", map.Portals)
@@ -360,6 +363,21 @@ check(alice:GetAttribute("InSafeZone") == true, "nach dem Respawn in der Safe Zo
 moveTo(alice, Vector3.new(0, 3, 20))
 step(0.5)
 check(alice:GetAttribute("ExtHome") == "CAMP PHOENIX", "Camp wieder Spawnpunkt")
+
+-- ---------- Reisen: an der Haltestelle zu einer anderen Safe Zone ----------
+check(Extinction.Travel(alice, "Test") == false, "weit weg von der Haltestelle: keine Reise")
+moveTo(alice, Vector3.new(-36, 3, 12))
+check(Extinction.Travel(alice, "") == false, "nicht dorthin, wo man schon ist")
+check(Extinction.Travel(alice, "Gibtsnicht") == false, "unbekanntes Ziel")
+check(Extinction.Travel(alice, "Test") == true, "Reise zum Safehouse")
+step(0.3)
+local travelRoot = alice.Character:FindFirstChild("HumanoidRootPart")
+check(travelRoot and (travelRoot.Position - (CENTER + Vector3.new(0, 0, 610))).Magnitude < 12, "angekommen im Safehouse")
+check(alice:GetAttribute("ExtHome") == "SAFEHOUSE TEST" and alice:GetAttribute("InSafeZone") == true, "dort Spawnpunkt, Safe Zone")
+moveTo(alice, Vector3.new(-36, 3, 12))
+check(Extinction.Travel(alice, "Test") == false, "kurz danach: Fahrer braucht einen Moment")
+step(ExtinctionConfig.TravelCooldown + 0.5)
+moveTo(alice, Vector3.new(0, 3, 20))
 
 -- ---------- Verlassen draußen: zweiter Klick, Tasche fällt ----------
 statusText = nil

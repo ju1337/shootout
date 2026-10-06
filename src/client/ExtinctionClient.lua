@@ -866,6 +866,50 @@ local function openStash()
 	win.Refresh()
 end
 
+-- REISEN: an einer Haltestelle (Teil "Travel" / "Travel_<Name>" in Stands) eine andere Safe Zone wählen
+local function openTravel(pointName)
+	local maps = workspace:FindFirstChild("Maps")
+	local map = maps and maps:FindFirstChild("Extinction")
+	local zoneFolder = map and map:FindFirstChild("Zone")
+	if not zoneFolder then
+		return
+	end
+	local win = newWindow("Travel", "REISEN", "WÄHLE EINE SAFE ZONE  ·  DORT SPAWNST DU AB JETZT NACH DEM TOD", SAFE)
+	win.Point = pointName
+	local character = player.Character
+	local root3 = character and character:FindFirstChild("HumanoidRootPart")
+	local list = {}
+	for _, part in zoneFolder:GetChildren() do
+		if part:IsA("BasePart") and (part.Name == "SafeZone" or string.sub(part.Name, 1, 9) == "SafeZone_") then
+			local key = part.Name == "SafeZone" and "" or string.sub(part.Name, 10)
+			local distance = root3 and Vector3.new(part.Position.X - root3.Position.X, 0, part.Position.Z - root3.Position.Z).Magnitude or 0
+			table.insert(list, { Key = key, Title = part:GetAttribute("Title") or (key == "" and "CAMP PHOENIX" or key),
+				Distance = distance, Here = distance <= part.Size.X / 2 })
+		end
+	end
+	table.sort(list, function(a, b)
+		if (a.Key == "") ~= (b.Key == "") then
+			return a.Key == ""
+		end
+		return a.Title < b.Title
+	end)
+	for index, entry in list do
+		local column, row = (index - 1) % 2, (index - 1) // 2
+		local text = string.upper(entry.Title) .. (entry.Here and "  ·  DU BIST HIER" or ("  ·  " .. math.floor(entry.Distance) .. " M"))
+		local chunky = UITheme.Chunky({ Name = "Travel_" .. (entry.Key == "" and "Camp" or entry.Key),
+			Position = UDim2.fromOffset(column * 552, 10 + row * 92), Size = UDim2.fromOffset(536, 78),
+			Color = entry.Here and C.Card or SAFE:Lerp(Color3.new(0, 0, 0), 0.55), StrokeColor = entry.Here and C.Border or SAFE,
+			Text = text, TextSize = 22, ZIndex = 5 }, win.Body, function()
+			if not entry.Here then
+				sendAction("Travel", entry.Key)
+				closeWindow()
+			end
+		end)
+		chunky.Button:SetAttribute("TravelKey", entry.Key)
+	end
+	function win.Refresh() end
+end
+
 -- STAND: links kaufen, rechts verkaufen (eigene Tasche anklicken)
 local function openStand(standKey)
 	local stand = ExtinctionConfig.Stands[standKey]
@@ -1080,6 +1124,22 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
+	-- Haltestellen (Reisen): im Camp "Travel", in den Safehouses "Travel_<Name>"
+	local function travelPrompt(part)
+		if not part:IsA("BasePart") or not (part.Name == "Travel" or string.sub(part.Name, 1, 7) == "Travel_") then
+			return
+		end
+		local prompt = make("ProximityPrompt", { Name = "TravelPrompt", ActionText = "Reisen", ObjectText = "FAHRER",
+			KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
+			RequiresLineOfSight = false, Enabled = inExtinction() }, part)
+		prompt.Triggered:Connect(function()
+			openTravel(part.Name)
+		end)
+		table.insert(prompts, prompt)
+	end
+	for _, part in stands:GetChildren() do
+		travelPrompt(part)
+	end
 	local stashPart = stands:WaitForChild("Stash", 10)
 	if stashPart then
 		local prompt = make("ProximityPrompt", { Name = "StashPrompt", ActionText = "Lager öffnen", ObjectText = "LAGER",
@@ -1095,14 +1155,14 @@ end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
 local function standDistanceCheck()
-	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash") then
+	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel") then
 		return
 	end
 	local character = player.Character
 	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 	local maps = workspace:FindFirstChild("Maps")
 	local stands = maps and maps:FindFirstChild("Extinction") and maps.Extinction:FindFirstChild("Stands")
-	local part = stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Stand)
+	local part = stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point or window.Stand)
 	if not rootPart or not part or (rootPart.Position - part.Position).Magnitude > ExtinctionConfig.StandRange + 4 then
 		closeWindow()
 	end
