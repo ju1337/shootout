@@ -53,7 +53,7 @@ function AdminService.Init(manager)
 		return player and player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	end
 
-	-- Jede Aktion gibt einen Text für das Panel zurück
+	-- Jede Aktion gibt einen Text für das Panel zurück (admin = der Spieler, der den Befehl geschickt hat)
 	local actions = {
 		SetSetting = function(key, value)
 			if typeof(key) ~= "string" or not GameSettings.Def(key) or typeof(value) ~= "number" then
@@ -109,14 +109,15 @@ function AdminService.Init(manager)
 			humanoid.Health = humanoid.MaxHealth
 			return "Geheilt."
 		end,
-		-- Bot in einen Modus schicken. teamName nur für Drop ("Rot", "Blau" oder nil = automatisch)
-		SpawnBot = function(modeId, teamName)
+		-- Bot in einen Modus schicken. teamName nur für Team-Modi ("Rot", "Blau" oder nil = automatisch);
+		-- Extinction spawnt den Bot in der Nähe des Admins (draußen), sonst in der roten Zone
+		SpawnBot = function(modeId, teamName, admin)
 			local module = typeof(modeId) == "string" and manager.GetModule(modeId)
 			if not module or not module.AddBot then
 				return "Dieser Modus hat keine Bots."
 			end
 			local bot = BotService.Create(modeId)
-			local ok, reason = module.AddBot(bot, typeof(teamName) == "string" and teamName or nil)
+			local ok, reason = module.AddBot(bot, typeof(teamName) == "string" and teamName or nil, admin)
 			if not ok then
 				BotService.Destroy(bot)
 				return reason
@@ -267,7 +268,7 @@ function AdminService.Init(manager)
 		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then
 			return
 		end
-		local ok, message = pcall(actions[action], a, b)
+		local ok, message = pcall(actions[action], a, b, player)
 		Remotes.AdminStatus:FireClient(player, ok and tostring(message) or ("Fehler: " .. tostring(message)))
 	end)
 

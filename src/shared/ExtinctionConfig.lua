@@ -228,6 +228,28 @@ ExtinctionConfig.Redzone = {
 	ContainerTable = "Tier3",
 }
 
+-- ---------- Bots (Admin-Panel: Gegner zum Testen von PvP, Todestaschen und der Rangliste) ----------
+-- Spawnen SpawnMin bis SpawnMax Studs um den Admin (steht er in einer Safe Zone: SafeMargin vor ihrem Rand), ohne Admin in
+-- der offenen Welt in der roten Zone. Sie jagen Spieler draußen (nie in einer Safe Zone, höchstens HuntRange weit), schießen
+-- auf Zombies in ZombieRange (Zombies jagen sie auch) und lassen beim Tod eine Tasche fallen: ihre Waffe (Weapons = Item-Ids),
+-- Munition dazu und LootItems Einträge aus LootTable (in der roten Zone RedLootTable). Wer sie erledigt, bekommt KillCoins,
+-- in der roten Zone zählt der Kill für die Rangliste. Kein Respawn: die Leiche verschwindet nach CorpseTime Sekunden.
+ExtinctionConfig.Bots = {
+	Max = 12,
+	SpawnMin = 25,
+	SpawnMax = 45,
+	SafeMargin = 30,
+	HuntRange = 160,
+	ZombieRange = 45,
+	Weapons = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR" },
+	Ammo = { 20, 45 },
+	LootTable = "Tier2",
+	RedLootTable = "Tier3",
+	LootItems = { 1, 2 },
+	KillCoins = 80,
+	CorpseTime = 8,
+}
+
 -- ---------- Tag und Nacht (DayCycle) ----------
 -- Ein ganzer Tag dauert Length Sekunden (24 Minuten): hell von NightTo bis NightFrom, dazwischen Nacht (ca. 9 Minuten).
 -- Nachts kommen mehr Zombies (NightZombies) und sie sehen weiter (NightSight); Feuer und Laternen sind dann die

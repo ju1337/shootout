@@ -3,6 +3,10 @@
 -- dessen Leben, Tempo und Hauptwaffe. Er sucht den nächsten sichtbaren Gegner im selben
 -- Modus, läuft hin, hält Abstand und schießt mit etwas Streuung.
 -- Die Modi (FreeForAll, Drop) entscheiden, wann ein Bot spawnt; der BotService baut Modell und KI.
+-- Optionale Felder am Bot (setzt der Modus, z.B. Extinction): Weapon (WeaponConfig-Name statt der Agenten-Waffe),
+-- Home (Mittelpunkt zum Umherlaufen statt der Mapmitte), HuntRange (nur so nah zum nächsten Gegner laufen),
+-- ZombieRange (Zombies so nah sind auch Ziele), AllowPoint(position) (Ziel beim Umherlaufen erlaubt?), NoGadgets (keine Gadgets).
+-- Wer in einer Safe Zone steht (Charakter-Attribut "SafeZone"), ist nie ein Ziel.
 -- Tote Bots fallen als Ragdoll um und werden nach 2 s ausgeblendet (corpse), damit kein toter Körper wie ein
 -- leeres Gegner-Modell herumsteht; die KI startet nach einem Fehler neu (superviseAI).
 
@@ -135,8 +139,11 @@ end
 
 -- Ist model (Spieler- oder Bot-Charakter) ein Gegner dieses Bots?
 local function isEnemy(bot, model)
-	if model == bot.Model then
+	if model == bot.Model or model:GetAttribute("SafeZone") then
 		return false
+	end
+	if model:GetAttribute("IsZombie") then
+		return bot.ZombieRange ~= nil -- nur Bots der offenen Welt wehren sich gegen Zombies
 	end
 	local player = Players:GetPlayerFromCharacter(model)
 	local mode, teamName
@@ -169,6 +176,15 @@ local function enemies(bot)
 		if other ~= bot and livingHumanoid(other.Model) and isEnemy(bot, other.Model)
 			and not DownedService.IsDowned(other.Model) then
 			table.insert(list, other.Model)
+		end
+	end
+	-- Zombies in der Nähe (offene Welt)
+	local root = bot.ZombieRange and bot.Model and bot.Model:FindFirstChild("HumanoidRootPart")
+	local zombies = root and workspace:FindFirstChild("Zombies")
+	for _, zombie in zombies and zombies:GetChildren() or {} do
+		local zombieRoot = zombie:IsA("Model") and zombie:GetAttribute("IsZombie") and zombie:FindFirstChild("HumanoidRootPart")
+		if zombieRoot and livingHumanoid(zombie) and (zombieRoot.Position - root.Position).Magnitude <= bot.ZombieRange then
+			table.insert(list, zombie)
 		end
 	end
 	return list
@@ -227,7 +243,7 @@ local function shoot(bot, head, target, weaponName)
 				* GameSettings.Get("DamageMultiplier") * GameSettings.Get("BotDamage")
 			local _, killed = Damage.Apply(hitModel, humanoid, damage,
 				{ BotName = bot.Name, Model = bot.Model, Weapon = weaponName, Headshot = headshot })
-			if killed then
+			if killed and not hitModel:GetAttribute("IsZombie") then -- Zombies zählen nicht (kein Killfeed)
 				local victim = Players:GetPlayerFromCharacter(hitModel)
 				KillService.ReportBotKill(bot.Mode, bot.Name, victim and victim.Name or hitModel.Name, weaponName, headshot)
 				bot.Info:SetAttribute("Kills", (bot.Info:GetAttribute("Kills") or 0) + 1)
@@ -293,9 +309,9 @@ local function runAI(bot, model)
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	local root = model:WaitForChild("HumanoidRootPart")
 	local head = model:WaitForChild("Head")
-	local weaponName = AgentConfig.Get(bot.Agent).Loadout[1]
+	local weaponName = bot.Weapon or AgentConfig.Get(bot.Agent).Loadout[1]
 	local cfg = WeaponConfig.Get(weaponName)
-	local center = Modes.Get(bot.Mode).Center
+	local center = bot.Home or Modes.Get(bot.Mode).Center
 
 	local seenSince = nil
 	local lastShot = 0
@@ -328,7 +344,8 @@ local function runAI(bot, model)
 			local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
 			if enemyRoot then
 				local distance = (enemyRoot.Position - root.Position).Magnitude
-				if distance < nearestDistance then
+				-- hinlaufen nur zu Spielern und Bots (Zombies nur abwehren), in der offenen Welt nicht quer über die Karte
+				if distance < nearestDistance and not enemy:GetAttribute("IsZombie") and distance <= (bot.HuntRange or math.huge) then
 					nearest, nearestDistance = enemy, distance
 				end
 				if distance < targetDistance and distance <= VIEW_RANGE and canSee(bot, head.Position, enemy) then
@@ -412,8 +429,15 @@ local function runAI(bot, model)
 					elseif nearest then
 						wanderGoal = nearest.HumanoidRootPart.Position
 					else
-						local offset = Vector3.new(random:NextNumber(-1, 1), 0, random:NextNumber(-1, 1)) * WANDER_RADIUS
-						wanderGoal = center + offset
+						-- zufällig um die Mitte; ein Punkt, den der Modus nicht erlaubt (Safe Zone), wird neu gewürfelt
+						for _ = 1, 4 do
+							local offset = Vector3.new(random:NextNumber(-1, 1), 0, random:NextNumber(-1, 1)) * WANDER_RADIUS
+							wanderGoal = center + offset
+							if not bot.AllowPoint or bot.AllowPoint(wanderGoal) then
+								break
+							end
+							wanderGoal = root.Position
+						end
 					end
 					nextMove = now + 2
 				end
@@ -648,8 +672,8 @@ function BotService.SpawnModel(bot, cframe, onDied)
 		model.HumanoidRootPart:SetNetworkOwner(nil) -- Server steuert den Bot
 	end)
 
-	-- Hauptwaffe in die Hand
-	local weaponName = agent.Loadout[1]
+	-- Hauptwaffe in die Hand (der Modus kann eine andere vorgeben)
+	local weaponName = bot.Weapon or agent.Loadout[1]
 	local tool = GunModels.BuildTool(weaponName, WeaponConfig.Get(weaponName).DisplayName)
 	tool.Parent = model
 	humanoid:EquipTool(tool)
@@ -657,7 +681,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 
 	bot.Model = model
 	bot.Alive = true
-	bot.GadgetCharges = (agent.Gadget and agent.Gadget.Charges) or 0
+	bot.GadgetCharges = (not bot.NoGadgets and agent.Gadget and agent.Gadget.Charges) or 0
 	-- Tod: über Died und zur Sicherheit auch über das Leben (genau einmal)
 	local dead = false
 	local function onDeath()

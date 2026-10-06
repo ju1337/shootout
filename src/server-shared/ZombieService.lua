@@ -4,7 +4,8 @@
 -- Spieler und MaxTotal auf dem Server) – nur auf dem Boden (nicht auf Dächern), nicht im Wasser und nicht nah an der
 -- Safe Zone. Sie schlurfen herum, bemerken Spieler in SightRange, rennen hin und schlagen zu (AttackDamage alle
 -- AttackDelay Sekunden). In die Safe Zone gehen sie nicht (sie bleiben am Rand stehen), dort gibt es auch keinen
--- Schaden. Wer eine Weile keinen Spieler draußen in der Nähe hat, verschwindet.
+-- Schaden. Wer eine Weile keinen Spieler draußen in der Nähe hat, verschwindet. Bots der offenen Welt (Admin-Panel,
+-- options.Bots) jagen sie genauso wie Spieler.
 -- Arten (ExtinctionConfig.ZombieKinds): Walker (normal, langsam), in der roten Zone auch Läufer (schneller) und Brocken
 -- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
 -- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche: E durchsucht sie, alles geht direkt ins
@@ -43,7 +44,7 @@ folder.Name = "Zombies"
 folder.Parent = workspace
 
 local options = nil  -- { Map, InSafeZone(position), SafeCenter(), Players() -> Liste der Spieler in der offenen Welt,
-                     --   RedzoneAt(position) -> Zone | nil, IsWater(x, z) -> bool }
+                     --   RedzoneAt(position) -> Zone | nil, IsWater(x, z) -> bool, Bots() -> Bot-Modelle (auch Ziele) }
 local zombies = {}   -- [Model] = { Humanoid, Root, Target, NextAttack, NextWander, LastPos, StuckTime, Speed, Walk, Damage, Coins, Kind }
 local count = 0
 local template = nil
@@ -245,8 +246,9 @@ end
 
 -- ---------- Ziele ----------
 
-local function livingRoot(player)
-	local character = player.Character
+-- Ziel ist ein Spieler oder ein Bot-Modell (Bots der offenen Welt, options.Bots)
+local function livingRoot(target)
+	local character = if target:IsA("Player") then target.Character else target
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if humanoid and root and humanoid.Health > 0 then
@@ -255,22 +257,28 @@ local function livingRoot(player)
 	return nil, nil, nil
 end
 
--- Spieler, die draußen sind (Zombies jagen nur sie)
-local function huntable(player)
-	local root = livingRoot(player)
-	return root ~= nil and not player:GetAttribute("InSafeZone") and not options.InSafeZone(root.Position), root
+-- Spieler (und Bots), die draußen sind (Zombies jagen nur sie)
+local function huntable(target)
+	local root = livingRoot(target)
+	return root ~= nil and not target:GetAttribute("InSafeZone") and not options.InSafeZone(root.Position), root
 end
 
 local function nearestTarget(position, range)
 	local best, bestDistance = nil, range
-	for _, player in options.Players() do
-		local ok, root = huntable(player)
+	local function consider(target)
+		local ok, root = huntable(target)
 		if ok and root then
 			local distance = (root.Position - position).Magnitude
 			if distance < bestDistance then
-				best, bestDistance = player, distance
+				best, bestDistance = target, distance
 			end
 		end
+	end
+	for _, player in options.Players() do
+		consider(player)
+	end
+	for _, bot in options.Bots and options.Bots() or {} do
+		consider(bot)
 	end
 	return best, bestDistance
 end
@@ -716,7 +724,8 @@ local function spawnRound()
 end
 
 -- opts = { Map, Center (Vector3), InSafeZone(position) -> bool, SafeCenter() -> (Vector3, Radius), Players() -> { Player },
---          RedzoneAt(position) -> Zone | nil (optional), IsWater(x, z) -> bool (optional) }
+--          RedzoneAt(position) -> Zone | nil (optional), IsWater(x, z) -> bool (optional),
+--          Bots() -> { Model } (optional: Bots der offenen Welt, Zombies jagen sie wie Spieler) }
 function ZombieService.Init(opts)
 	options = opts
 	local aiElapsed, spawnElapsed, despawnElapsed = 0, 0, 0
@@ -803,7 +812,7 @@ function ZombieService.Scream(model, target)
 		ring:Destroy()
 	end)
 	local ok, InventoryService = pcall(require, script.Parent.InventoryService)
-	if ok and InventoryService and InventoryService.Status then
+	if ok and InventoryService and InventoryService.Status and target:IsA("Player") then
 		InventoryService.Status(target, "Ein Schreier ruft die Zombies!")
 	end
 end

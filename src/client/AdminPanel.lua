@@ -148,11 +148,25 @@ local function buildBots()
 			end
 		end)
 	end
+	-- Offene Welt: Bots spawnen beim Admin (draußen; in der Safe Zone vor ihrem Rand), sonst in der roten Zone
+	local extRow = row(list)
+	label("Extinction:", 15, extRow, { Size = UDim2.new(0, 80, 1, 0) })
+	button("+1 Bot", 70, extRow, Color3.fromRGB(150, 70, 40), function()
+		send("SpawnBot", "Extinction")
+	end)
+	button("+5 Bots", 76, extRow, Color3.fromRGB(150, 70, 40), function()
+		for _ = 1, 5 do
+			send("SpawnBot", "Extinction")
+		end
+	end)
+	button("Entfernen", 90, extRow, DANGER, function()
+		send("RemoveBots", "Extinction")
+	end)
 	local removeRow = row(list)
 	button("Alle Bots entfernen", 170, removeRow, DANGER, function()
 		send("RemoveBots")
 	end)
-	botCountLabel = label("", 14, removeRow, { Size = UDim2.new(0, 200, 1, 0), Font = Enum.Font.Gotham,
+	botCountLabel = label("", 14, removeRow, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.Gotham,
 		TextColor3 = GRAY })
 end
 
@@ -164,7 +178,7 @@ local function refreshBots()
 	end
 	botCountLabel.Text = "FFA " .. (counts.FreeForAll or 0) .. " · Drop " .. (counts.Drop or 0)
 		.. " · Strike " .. (counts.Strikeout or 0) .. " · Demo " .. (counts.Demolition or 0)
-		.. " · Wing " .. (counts.Wingman or 0)
+		.. " · Wing " .. (counts.Wingman or 0) .. " · Ext " .. (counts.Extinction or 0)
 end
 
 local function buildSettings()

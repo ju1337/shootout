@@ -142,6 +142,15 @@ weiter. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 höhere Chance, ein Item mehr). **Bosse**: die *Blutbestie* (riesig, 2400 Leben, Name und Lebensbalken über dem Kopf, roter
 Umriss) erscheint alle 2,5 Minuten bei einem Spieler draußen (höchstens 2 gleichzeitig), Ansage beim Erscheinen und beim
 Tod, 250 Münzen und Beute wie aus einem Lootdrop. Admin-Panel: Knopf **BLUTMOND** startet/beendet sofort.
+**Bots in der offenen Welt** (Admin-Panel, Zeile *Extinction*: **+1 Bot**, **+5 Bots**, **Entfernen**;
+`ExtinctionConfig.Bots`): Gegner zum Testen von PvP, Todestaschen und Rangliste. Sie spawnen 25-45 Studs um den Admin
+(steht er in einer Safe Zone, gleich vor ihrem Rand in seiner Richtung; ist er nicht in der offenen Welt, in der roten
+Zone), nie in einer Safe Zone oder im Wasser, höchstens 12. Jeder trägt eine Waffe der offenen Welt (Pistole bis
+Präzisionsgewehr), jagt Spieler draußen bis 160 Studs weit (nie in einer Safe Zone), schießt auf Zombies in der Nähe –
+und Zombies jagen ihn. Bots sind ein Team (*Banditen*) und schießen nicht aufeinander, Gadgets haben sie wie Spieler
+dort keine. Beim Tod fällt eine **Tasche** mit seiner Waffe, Munition und Beute (Tier 2, in der roten Zone Tier 3);
+der Schütze bekommt 80 Münzen, in der roten Zone zählt der Kill für die Rangliste. Kein Respawn: die Leiche verschwindet
+nach 8 Sekunden.
 **Parkhaus** (`parking_garage`, am Südwestrand von Ödstadt an einer Straße, Ortsname PARKHAUS): Erdgeschoss und drei
 Parkdecks, Rampen hinten von Ebene zu Ebene bis aufs Dach (flach genug für Fahrzeuge), Säulen, Brüstungen,
 Parkmarkierungen, Ebenen-Nummern (P0 … DACH), Autowracks, Schranke und Kassenhäuschen, Treppenturm mit P-Schild, eine
@@ -664,6 +673,7 @@ am Commit:
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
+| `extbots` | Bots der offenen Welt: Spawn beim Admin (draußen, vor dem Rand der Safe Zone, sonst rote Zone), Ziele (Spieler draußen ja, in der Safe Zone nein, andere Bots nein, nahe Zombies ja), Zombies jagen und schlagen Bots, Tasche mit Waffe, Munition und Beute (rote Zone Tier 3), Kopfgeld und Rangliste nur für Spieler-Kills, Leiche weg, Obergrenze, Admin-Befehle |
 | `redzoneboard`, `extinctionui` | Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den

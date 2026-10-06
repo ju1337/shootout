@@ -10,6 +10,8 @@
 -- oben), die mit jedem Wechsel neu beginnt.
 -- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt), Redzone,
 -- MapId / MapName / MapCenter (Minimap, Lichtstimmung). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
+-- Bots (Admin-Panel, ExtinctionConfig.Bots): spawnen beim Admin draußen (oder in der roten Zone), jagen Spieler draußen,
+-- wehren sich gegen Zombies und lassen beim Tod eine Tasche mit Beute fallen; ihr Kill zählt wie ein Spieler-Kill.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -35,7 +37,9 @@ local MissionService = require(ServerShared.MissionService)
 local VehicleService = require(ServerShared.VehicleService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
+local BotService = require(script.Parent.Parent.BotService)
 local MovementGuard = require(ServerShared.MovementGuard)
+local Damage = require(ServerShared.Damage)
 
 local Extinction = {}
 
@@ -44,6 +48,10 @@ local ZONE_STEP = 0.2 -- so oft wird geprüft, wer in der Safe Zone ist (Sekunde
 local manager
 local bloodMoon = nil -- letzter Stand des Blutmonds (nil = noch nicht geprüft, dann keine Ansage)
 local members = {} -- [Player] = { Inside, PvPAt, LeaveAsked }
+local bots = {} -- [bot] = true (Bots aus dem Admin-Panel, siehe Extinction.AddBot)
+local BOT_TEAM = { Name = "Banditen" } -- alle Bots ein Team: sie schießen nicht aufeinander
+local isWaterAt = nil -- function(x, z) -> bool (Weltkoordinaten), ab Init
+local random = Random.new()
 local map = workspace:WaitForChild("Maps"):WaitForChild("Extinction")
 local zonePart = map:WaitForChild("Zone"):WaitForChild("SafeZone")
 
@@ -335,6 +343,7 @@ function Extinction.Init(modeManager)
 	local function isWater(x, z)
 		return ExtinctionTerrain.IsWater(x - center.X, z - center.Z)
 	end
+	isWaterAt = isWater
 	task.spawn(function()
 		local folder = map:FindFirstChild("Ground")
 		local ground = folder and folder:FindFirstChild("Ground")
@@ -374,7 +383,7 @@ function Extinction.Init(modeManager)
 	-- Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
-	-- Zombies um die Spieler draußen
+	-- Zombies um die Spieler draußen (sie jagen auch die Bots)
 	ZombieService.Init({
 		Map = map,
 		RedzoneAt = RedzoneService.At,
@@ -387,6 +396,15 @@ function Extinction.Init(modeManager)
 			local list = {}
 			for player in members do
 				table.insert(list, player)
+			end
+			return list
+		end,
+		Bots = function()
+			local list = {}
+			for bot in bots do
+				if bot.Alive and bot.Model then
+					table.insert(list, bot.Model)
+				end
 			end
 			return list
 		end,
@@ -546,13 +564,166 @@ local function redzoneOf(player)
 end
 
 -- Spieler-Kill: Kopfgeld in Münzen (Zombies bringen viel weniger, siehe ZombieService) und Rangliste der roten Zone
--- (zählt in der Zone des Opfers, sonst in der des Schützen)
+-- (zählt in der Zone des Opfers, sonst in der des Schützen). Bot-Kills belohnt botDied (Position der Leiche).
 function Extinction.OnKill(killer, victim)
 	if victim and victim ~= killer and members[killer] then
 		ProgressService.AddCoins(killer, ExtinctionConfig.PlayerKillCoins, "Spieler erledigt")
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
 		RedzoneBoard.Record(killer, redzoneOf(victim) or redzoneOf(killer))
 	end
+end
+
+-- ---------- Bots (Admin-Panel) ----------
+
+-- Boden bei (x, z) als Spawn-Lage (Charaktere, Bots, Zombies und Taschen zählen nicht als Boden), nil ohne Boden
+local function groundCFrame(x, z)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = {}
+	for _, name in { "Bots", "Zombies", "ExtinctionLoot" } do
+		local folder = workspace:FindFirstChild(name)
+		if folder then
+			table.insert(ignore, folder)
+		end
+	end
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	local hit = workspace:Raycast(Vector3.new(x, zonePart.Position.Y + 500, z), Vector3.new(0, -1000, 0), params)
+	if not hit then
+		return nil
+	end
+	return CFrame.new(hit.Position + Vector3.new(0, 3, 0)) * CFrame.Angles(0, random:NextNumber(0, math.pi * 2), 0)
+end
+
+-- Spawnpunkt für einen Bot: um near (Position des Admins) herum, steht er in einer Safe Zone, gleich vor ihrem Rand in
+-- seiner Richtung; ohne near in der roten Zone (sonst vor dem Camp). Nie in einer Safe Zone oder im Wasser. nil = keiner.
+function Extinction.BotSpawnPoint(near)
+	local cfg = ExtinctionConfig.Bots
+	local origin, minRadius, maxRadius
+	local zone = near and Extinction.SafeZoneAt(near)
+	if zone then
+		local flat = Vector3.new(near.X - zone.Center.X, 0, near.Z - zone.Center.Z)
+		local direction = flat.Magnitude > 1 and flat.Unit or Vector3.new(1, 0, 0)
+		origin = Vector3.new(zone.Center.X, near.Y, zone.Center.Z) + direction * (zone.Radius + cfg.SafeMargin)
+		minRadius, maxRadius = 0, 15
+	elseif near then
+		origin, minRadius, maxRadius = near, cfg.SpawnMin, cfg.SpawnMax
+	else
+		local red = RedzoneService.Current()
+		if red then
+			origin, minRadius, maxRadius = red.Center, 0, red.Radius * 0.6
+		else
+			local campCenter, campRadius = Extinction.SafeZoneCenter()
+			origin, minRadius, maxRadius = campCenter, campRadius + cfg.SafeMargin, campRadius + cfg.SafeMargin + 60
+		end
+	end
+	for _ = 1, 30 do
+		local angle = random:NextNumber(0, math.pi * 2)
+		local distance = random:NextNumber(minRadius, maxRadius)
+		local x, z = origin.X + math.cos(angle) * distance, origin.Z + math.sin(angle) * distance
+		if not Extinction.InSafeZone(Vector3.new(x, 0, z)) and not (isWaterAt and isWaterAt(x, z)) then
+			local cframe = groundCFrame(x, z)
+			if cframe then
+				return cframe
+			end
+		end
+	end
+	return nil
+end
+
+-- Inhalt der Tasche eines toten Bots: seine Waffe, Munition dazu und etwas Beute
+local function botLoot(bot, inRedzone)
+	local cfg = ExtinctionConfig.Bots
+	local items = {}
+	if bot.ItemId then
+		table.insert(items, { Id = bot.ItemId, Count = 1 })
+		local ammoId = ExtinctionConfig.AmmoFor(bot.ItemId)
+		if ammoId then
+			table.insert(items, { Id = ammoId, Count = random:NextInteger(cfg.Ammo[1], cfg.Ammo[2]) })
+		end
+	end
+	local extra = ExtinctionConfig.RollLoot(inRedzone and cfg.RedLootTable or cfg.LootTable,
+		random:NextInteger(cfg.LootItems[1], cfg.LootItems[2]), random)
+	for _, item in extra do
+		table.insert(items, item)
+	end
+	return items
+end
+
+-- Bot tot: Tasche am Boden, Kopfgeld und Rangliste für den Spieler, der zuletzt getroffen hat; Leiche später weg
+local function botDied(bot)
+	local model = bot.Model
+	local root = model and model:FindFirstChild("HumanoidRootPart")
+	if root then
+		local zone = RedzoneService.At(root.Position)
+		LootService.Create(root.Position, botLoot(bot, zone ~= nil), "Death", "TASCHE · " .. bot.Name)
+		local hit = Damage.LastHit(model)
+		local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
+		if killer and members[killer] then
+			local coins = ExtinctionConfig.Bots.KillCoins
+			ProgressService.AddCoins(killer, coins, "Bot erledigt")
+			InventoryService.Status(killer, "+" .. coins .. " Münzen für " .. bot.Name, true)
+			RedzoneBoard.Record(killer, zone or redzoneOf(killer))
+		end
+	end
+	task.delay(ExtinctionConfig.Bots.CorpseTime, function()
+		if bots[bot] then
+			bots[bot] = nil
+			BotService.Destroy(bot)
+		end
+	end)
+end
+
+-- Bot in die offene Welt (Admin-Panel). admin = Spieler, der ihn gerufen hat (Spawn in seiner Nähe, sonst rote Zone)
+function Extinction.AddBot(bot, _teamName, admin)
+	local cfg = ExtinctionConfig.Bots
+	local count = 0
+	for _ in bots do
+		count += 1
+	end
+	if count >= cfg.Max then
+		return false, "Schon " .. count .. " Bots in der offenen Welt (höchstens " .. cfg.Max .. ")."
+	end
+	local adminRoot = admin and members[admin] and rootOf(admin)
+	local cframe = Extinction.BotSpawnPoint(adminRoot and adminRoot.Position)
+	if not cframe then
+		return false, "Kein freier Platz für einen Bot gefunden."
+	end
+	local itemId = cfg.Weapons[random:NextInteger(1, #cfg.Weapons)]
+	bots[bot] = true
+	BotService.SetTeam(bot, BOT_TEAM)
+	bot.ItemId = itemId
+	bot.Weapon = ExtinctionConfig.Get(itemId).Weapon
+	bot.Home = cframe.Position
+	bot.HuntRange = cfg.HuntRange
+	bot.ZombieRange = cfg.ZombieRange
+	bot.AllowPoint = function(position)
+		return not Extinction.InSafeZone(position)
+	end
+	bot.NoGadgets = true -- wie Spieler: in der offenen Welt nur passive Fähigkeiten
+	bot.CanFight = true
+	-- Körper bauen kann beim ersten Bot eines Agenten dauern: nicht auf das Panel warten lassen
+	task.spawn(BotService.SpawnModel, bot, cframe, function()
+		botDied(bot)
+	end)
+	return true
+end
+
+function Extinction.RemoveBot(bot)
+	bots[bot] = nil
+end
+
+-- Bots in der offenen Welt (für Tests und das Admin-Panel)
+function Extinction.Bots()
+	local list = {}
+	for bot in bots do
+		table.insert(list, bot)
+	end
+	return list
 end
 
 return Extinction
