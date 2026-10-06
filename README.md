@@ -10,7 +10,9 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     python3 tools/build_maps.py            # Maps neu erzeugen (nach Änderungen am Map-Skript)
     python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
 
-3D-Modelle für die Waffen kommen aus Blender: Anleitung und Spezifikation in [docs/waffen-modelle.md](docs/waffen-modelle.md).
+3D-Modelle für die Waffen kommen aus Blender oder Meshy: Anleitung und Spezifikation in
+[docs/waffen-modelle.md](docs/waffen-modelle.md). Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb`
+(Sturmgewehr) und `art/sources/SMG.glb`.
 
 ## Modi
 
@@ -379,7 +381,11 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Mündung, Hülsenauswurf, Hände und Schaft fest – wie das Modell beim Import gedreht ist, ist egal. Teilnamen
   bestimmen Animationsgruppen, Skin-Zonen, Leuchtpunkte und Glas; epische/legendäre Skins können eigene Texturen
   bekommen (Ordner `Skins`). Fehlt etwas, bleibt die Quader-Waffe und Studio sagt im Output, was fehlt. Vorlagen
-  für Blender (`.obj`) und Studio (`.rbxmx`) in `art/templates/Weapons`
+  für Blender (`.obj`) und Studio (`.rbxmx`) in `art/templates/Weapons`. Fertige Modelle aus anderen Quellen
+  (z.B. Meshy-FBX) bereiten Skripte vor: `tools/rifle_glb.py` macht aus Gewehr und Magazin das Sturmgewehr
+  `art/sources/Rifle.glb` (Magazin eingepasst, Holo-Visier freigeschnitten, Korn umgelegt, Spannhebel als `Bolt`,
+  Marker gesetzt); dafür `tools/fbx_read.py` (FBX ohne Blender lesen) und `tools/mesh_ops.py` (schneiden, Löcher
+  schließen, GLB mit Texturen schreiben)
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi

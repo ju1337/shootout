@@ -39,13 +39,32 @@ einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gült
 
 Die `SMG` ist bereits fertig (MP7 A1, siehe `art/sources/README.md`, erzeugt mit `python3 tools/mp7_model.py`).
 
+**Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
+(Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr
+(`python3 tools/rifle_glb.py`, Ergebnis `art/sources/Rifle.glb`): Teile benennen, Marker setzen, Größe und Richtung,
+Magazin einpassen, Visier freischneiden. Werkzeuge dafür: `tools/fbx_read.py` (FBX lesen ohne Blender) und
+`tools/mesh_ops.py` (Schneiden, Löcher schließen, GLB mit Texturen schreiben).
+
+So kommt eine vorbereitete GLB ins Spiel:
+
+1. In Studio **Import 3D** › die `.glb` wählen. Im Import-Fenster **Merge Meshes aus** (Teile nicht zusammenführen)
+   und als Einheit **Stud**. Importieren.
+2. Das Modell im Explorer nach **ReplicatedStorage › Assets › Weapons** ziehen und so nennen wie die Waffe
+   (z.B. `Rifle`).
+3. **Texturen prüfen**: Die Teile sollten ihre Farben zeigen. Falls ein Teil weiß/grau bleibt: im Teil eine
+   **SurfaceAppearance** einfügen und ColorMap, MetalnessMap und RoughnessMap mit den Bildern aus dem
+   Texturen-Ordner (z.B. `art/sources/Rifle_Texturen/`) setzen.
+4. **Play**: Im Output muss `[Waffenmodelle] Rifle: 3D-Modell geladen` stehen.
+5. Place veröffentlichen, dann Rechtsklick auf das Modell › „Save to File…“ › `assets/Weapons/<Waffe>.rbxmx` ins
+   Repo (automatische Prüfung bei jedem Push).
+
 ## Die Waffen
 
 Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff.
 
 | Name im Modell | Waffe | Länge | Visier | Bewegliche Gruppen | Besonderes |
 |---|---|---|---|---|---|
-| `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`) |
+| `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (Holo-Visier, Visierlinie 1,08) |
 | `SMG` | Maschinenpistole | 2,38 | 0,81 | Magazine, Bolt | |
 | `Shotgun` | Schrotflinte | 3,95 | 0,76 | Pump, Shell | Shell = Patrone, nur beim Nachladen sichtbar |
 | `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | |
