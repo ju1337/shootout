@@ -18,6 +18,7 @@ N = 2 * HALF // CELL  # Zellen pro Achse
 FLAT = -0.4          # Geländehöhe auf ebenen Flächen
 WATER = -3.0         # Wasserspiegel (nur die Seen liegen tiefer, sonst nirgends)
 MIN_H, MAX_H = -16.0, 60.0  # Wertebereich der gespeicherten Höhen
+ROAD_SINK = 1.6      # so viel tiefer liegt das Gelände unter Landstraßen, Bahn und Autobahn (Straßenkörper reicht 3 tief)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "src", "server-shared", "ExtinctionTerrainData.lua")
@@ -108,6 +109,19 @@ class Terrain:
                 break
         return w
 
+    def _place_weight(self, x, z):
+        """0 = außerhalb, 1 = in einem ebenen Ort (Kreis oder Rechteck, ohne Straßen)."""
+        w = 0.0
+        for fx, fz, r, blend in self.flats:
+            w = max(w, 1 - smooth((math.hypot(x - fx, z - fz) - r) / blend))
+            if w >= 1:
+                return 1.0
+        for x0, z0, x1, z1, blend in self.rects:
+            dx = max(x0 - x, 0.0, x - x1)
+            dz = max(z0 - z, 0.0, z - z1)
+            w = max(w, 1 - smooth(math.hypot(dx, dz) / blend))
+        return w
+
     def _flat_weight(self, x, z):
         """0 = Gelände frei, 1 = ganz eben."""
         w = 0.0
@@ -147,6 +161,9 @@ class Terrain:
         for hx, hz, r, height, top in self.hills:
             d = math.hypot(x - hx, z - hz)
             h += height * (1 - smooth((d - top) / max(1.0, r - top))) * keep
+        # unter der Fahrbahn 1,6 tiefer (flacher Graben an den Rändern), damit das Voxel-Terrain nie über die Straße wächst
+        # (nicht in Orten: dort bleibt alles eben, die Straßen schneidet der Server aus)
+        h -= ROAD_SINK * self._road_weight(x, z, 0.06) * (1 - self._place_weight(x, z))
         mask, floor = self._lake(x, z)
         mask *= keep
         if mask > 0:

@@ -72,8 +72,9 @@ rostiges Blech oder Stoff, mit Marker gemalt, schief, ohne Leuchten) statt moder
 Das Gelände ist echtes **Terrain** (Höhenfeld aus `tools/extinction_terrain.py` in
 `src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: in den
 Ortskernen zertrampelte Erde, Matsch und verdorrtes Gras (kein Pflaster), außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall). Danach räumt
-`ExtinctionTerrain.ClearRoads` das Terrain über allen Straßen, Gehwegen, Feldwegen und dem Gleisbett weg (im Körper
-Erde ohne Grashalme, darüber Luft), damit keine Erde oder Grashalme über der Fahrbahn liegen.
+`ExtinctionTerrain.ClearRoads` das Terrain im Grundriss jeder Straße, jedes Gehwegs, Feldwegs, des Gleisbetts und
+der Basis-Platte aus (nur Luft ab 2,5 Studs unter der Oberkante, keine Erde – das Voxel-Terrain würde sonst auf ganze
+4-Stud-Blöcke runden und über die Fahrbahn wachsen), damit die Straßen sichtbar obenauf liegen.
 **Rote Zonen** (4): Krankenhaus St. Marien (in Ödstadt), Militärbasis Fort Eisen, Industriehafen am Stausee, JVA
 Schwarzwald – rot-weiße Linie am Boden und ein **Kontrollpunkt an jeder Straße** (Torbogen „ROTE ZONE“ / innen
 „AUSGANG“, Sperren, rotes Licht).

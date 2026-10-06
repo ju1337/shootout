@@ -82,7 +82,8 @@ check(minX == -1920 and maxX == 1920 and minZ == -7920 and maxZ == -4080, "deckt
 -- Ohne Terrain-Objekt (Test/Fehler): nichts geschrieben, kein Absturz
 check(ExtinctionTerrain.Generate(nil, Vector3.new(0, 0, 0)) == false, "ohne Terrain wird nichts geschrieben")
 
--- Straßen freiräumen: Körper mit Erde, darüber Luft; Hochstraße (weit über dem Boden) bleibt
+-- Straßen freiräumen: im Grundriss jedes Straßenteils am Boden nur Luft (ab 2,5 unter der Oberkante), keine Erde;
+-- Hochstraße (weit über dem Boden) und Markierungen bleiben
 do
 	local fills = {}
 	local fake = { FillBlock = function(_, cframe, size, material)
@@ -104,9 +105,13 @@ do
 	line.Size = Vector3.new(30, 0.02, 0.5)
 	line.CFrame = CFrame.new(10, 0.26, -6000)
 	local count = ExtinctionTerrain.ClearRoads(fake, map, Vector3.new(0, 0, -6000), { Yield = false })
-	check(count == 1 and #fills == 2, "nur das Straßenteil am Boden (" .. count .. ", " .. #fills .. ")")
-	check(fills[1].Material == Enum.Material.Ground and fills[2].Material == Enum.Material.Air, "erst Erde, dann Luft")
-	check(fills[2].CFrame.Position.Y - 6 > road.Position.Y + road.Size.Y / 2 - 0.01, "Luft beginnt an der Oberkante der Straße")
+	check(count == 1 and #fills == 1, "nur das Straßenteil am Boden (" .. count .. ", " .. #fills .. ")")
+	local fill = fills[1]
+	check(fill.Material == Enum.Material.Air, "nur Luft, keine Erde")
+	local bottom = fill.CFrame.Position.Y - fill.Size.Y / 2
+	check(math.abs(bottom - (0.25 - 2.5)) < 0.01, "Mulde 2,5 unter der Oberkante (" .. bottom .. ")")
+	check(bottom > road.Position.Y - road.Size.Y / 2, "nicht tiefer als der Körper der Straße")
+	check(fill.Size.X >= road.Size.X and fill.Size.Z >= road.Size.Z, "ganzer Grundriss")
 end
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
