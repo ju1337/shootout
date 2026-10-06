@@ -205,15 +205,12 @@ map:SetAttribute("Redzones", '[{"Name":"Werk","X":0,"Z":-5600,"R":60}]')
 map:SetAttribute("Airdrops", '[{"Id":1,"X":100,"Y":0,"Z":-5900,"State":"Warning","Eta":' .. (workspace:GetServerTimeNow() + 30) .. ',"Zone":false}]')
 step(0.3)
 local markers = find(hud, "Markers")
-check(markers ~= nil and markers:FindFirstChild("Marker1").Visible, "Marker für den Lootdrop")
-check(string.find(texts(markers), "LOOTDROP", 1, true) ~= nil and string.find(texts(markers), "ROTE ZONE", 1, true) == nil,
-	"Lootdrop mit Marker, rote Zonen ohne Richtungsanzeiger")
-check(not markers:FindFirstChild("Marker2").Visible, "nur ein Marker sichtbar")
+check(markers ~= nil and not markers.Visible, "keine Richtungsanzeiger mit Entfernung (Lootdrop, rote Zone)")
 -- Wanderzone: Zeile unter der Uhr statt Marker
 map:SetAttribute("MovingZone", '{"Name":"Nordheim","X":0,"Z":-5000,"R":170,"Ends":' .. (workspace:GetServerTimeNow() + 125) .. '}')
 step(0.3)
 check(string.find(texts(hud), "WANDERZONE  NORDHEIM  ·  WECHSEL IN 2:0", 1, true) ~= nil, "Wanderzone unter der Uhr")
-check(string.find(texts(markers), "WANDERZONE", 1, true) == nil, "Wanderzone ohne Richtungsanzeiger")
+check(not markers.Visible, "Wanderzone ohne Richtungsanzeiger")
 map:SetAttribute("MovingZone", nil)
 -- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt
 InputActions.Trigger("WorldMap", true)

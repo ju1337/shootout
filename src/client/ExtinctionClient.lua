@@ -481,8 +481,15 @@ local function mapList(map, attribute)
 	return ok and type(list) == "table" and list or {}
 end
 
+-- Richtungsanzeiger mit Entfernung oben am Bildschirm: abgeschaltet (Spieler finden Ziele über Minimap und Weltkarte)
+local SHOW_MARKERS = false
+
 local function updateMarkers()
 	if not markerHolder then
+		return
+	end
+	if not SHOW_MARKERS then
+		markerHolder.Visible = false
 		return
 	end
 	local maps = workspace:FindFirstChild("Maps")

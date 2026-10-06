@@ -90,7 +90,7 @@ die alle **20 Minuten** an einen anderen Ort springt (Dörfer, Höfe, Außenpost
 ganze Stadt oder feste rote Zonen). Drinnen gilt PvP sofort, mehr Zombies und bessere Beute wie in roten Zonen. Ansage
 an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde orange Wand und eine Lichtsäule; eine Zeile
 unter der Uhr nennt Ort, Zeit bis zum Wechsel und Entfernung, orange auf Minimap und Weltkarte (Karten-Attribut
-`MovingZone`). Rote Zonen und Wanderzone haben keine Richtungsanzeiger am Bildschirmrand (nur Lootdrops und Aktivitäten).
+`MovingZone`). Es gibt keine Richtungsanzeiger mit Entfernung oben am Bildschirm (Ziele zeigen Minimap und Weltkarte).
 Die Nacht ist hell genug zum Spielen (bläuliches Umgebungslicht, wenig Dunst). Admin-Panel: Knopf **TAG / NACHT**
 springt auf 10 bzw. 22 Uhr (Attribut `DayOffset` an ReplicatedStorage, `DayCycle.SetClock`).
 **Minimap** (oben links) zoomt in der offenen Welt weiter raus (240 Studs, Karten-Attribut `MinimapRange`), zeigt nur
