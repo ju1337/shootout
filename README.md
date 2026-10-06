@@ -40,12 +40,14 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`, Radius 120): eine ummauerte Überlebenden-Siedlung – Palisade aus Holz und Wellblech mit
-Fackeln, vier Torhäuser (zwei Holztürme, Brücke mit Schild, offene Flügel, Laternen), Wachtürme in den Ecken. Kieswege
-führen von den Toren zum Dorfplatz mit großem Lagerfeuer, Baumstamm-Bänken und Lichterketten (Spawn). An den Wegen acht
-Holzhäuser mit warm beleuchteten Fenstern, Veranden und rauchenden Schornsteinen, Marktstände mit gestreiften
-Vordächern (WAFFEN, SANI, WERKSTATT), das LAGER in einer Scheune, die Haltestelle REISEN, eine Werkstatt-Scheune mit Autos,
-Gärten, Wasserturm, Zelte und der Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+`tools/build_maps.py`, Radius 120): ein Überlebenden-Bollwerk aus Schrott – die Mauer aus gestapelten Autowracks,
+Containern und Wellblech mit Stacheldraht, davor Holzspieße, tote Infizierte und ein brennender Leichenhaufen. Vier Tore
+zwischen hochkant gestellten Containern mit Sandsack-Nest, MG und Scheinwerfer, gesprühte Warnungen („SAFE ZONE ·
+KEINE INFIZIERTEN“, „DRAUSSEN STIRBT MAN“), Gerüsttürme in den Ecken. Drinnen Schlamm und Bretterwege, eine Feuerstelle mit
+Kochtopf, Reifen und Kisten als Sitze (Spawn), Feuertonnen, verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
+MG-Stellungen an den Toren, grelles Flutlicht am Generator, Treibstoff, Regentonnen; Händler unter Planen hinter
+Paletten-Theken (WAFFEN, SANI, WERKSTATT), das LAGER im Container, die Haltestelle REISEN, eine Werkstatt und der
+Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
 
 **Reisen**: An der Haltestelle im Camp und in jedem Safehouse (Fahrer, Teil `Travel` / `Travel_<Name>`) öffnet **E** das
 Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dorthin, die Zone wird zum Spawnpunkt
@@ -53,8 +55,8 @@ Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dort
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 44):
 befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild zur
-Zufahrtsstraße, ein Holzhaus mit Veranda, warm beleuchteten Fenstern und rauchendem Schornstein, Feuerstelle mit Bänken
-unter einer Lichterkette, Gemüsebeete, Wasserturm, Brennholz, Pickup mit Kisten, Wachturm mit Suchscheinwerfer. Drinnen kein PvP,
+Zufahrtsstraße, ein Holzhaus mit Veranda, warm beleuchteten Fenstern und rauchendem Schornstein, Feuerstelle mit Bänken,
+Feuertonnen und Flutlicht, Gemüsebeete, Wasserturm, Brennholz, Pickup mit Kisten, Wachturm mit Suchscheinwerfer. Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.
 
