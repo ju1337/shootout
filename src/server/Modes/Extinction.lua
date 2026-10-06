@@ -413,7 +413,7 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
-	-- Aktivitäten: Zombienester, Vorratslager, Funkgerät (Notruf), Horden (Teile Act_<Art> in der Gruppe Activities)
+	-- Aktivitäten: Zombienester, Vorratslager, Funkgerät (Notruf), Überlebende (Teile Act_<Art> in der Gruppe Activities)
 	ActivityService.Init({
 		Map = map,
 		InSafeZone = Extinction.InSafeZone,
@@ -427,7 +427,7 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
-	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Horden, Orte, Nacht ...)
+	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Überlebende, Orte, Nacht ...)
 	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })
 
 	-- Fahrzeuge (Taste spawnt, K packt ein); Tod oder Verlassen: Fahrzeug weg

@@ -1,10 +1,10 @@
 -- RedzoneBoard (ModuleScript, nur Server)
--- Rangliste der roten Zonen (EXTINCTION): zählt Spieler-Kills (PvP) je Zone. Ein Kill zählt für die Zone, in der das
--- Opfer stirbt, sonst für die des Schützen (Modes/Extinction ermittelt sie mit RedzoneService.At). Die Wanderzone fängt
--- nach jedem Wechsel bei null an (RedzoneService.OnMoved), die Liste "Total" zählt alle roten Zonen zusammen und wird
--- nie zurückgesetzt. Wer die offene Welt verlässt, fällt aus allen Listen.
+-- Rangliste der roten Zonen (EXTINCTION): zählt Spieler-Kills (PvP) je Zone, jede Zone hat ihre eigene Liste. Ein Kill
+-- zählt für die Zone, in der das Opfer stirbt, sonst für die des Schützen (Modes/Extinction ermittelt sie mit
+-- RedzoneService.At). Die Wanderzone beginnt jede Runde neu: nach jedem Wechsel bei null (RedzoneService.OnMoved).
+-- Wer die offene Welt verlässt, fällt aus allen Listen. Die Clients zeigen die Liste nur in der Zone selbst.
 -- Für die Clients steht alles als JSON im Attribut "RedzoneBoard" an der Karte:
---   { Zones = { [Zonenname] = { Title, List } }, Total = List },  List = { { Id = UserId, Name, Kills }, ... }
+--   { Zones = { [Zonenname] = { Title, List } } },  List = { { Id = UserId, Name, Kills }, ... }
 -- Zonenname wie im Spieler-Attribut "Redzone" (feste Zonen: Schlüssel aus Redzone_<Name>, sonst "Wanderzone").
 -- Listen sind sortiert: meiste Kills zuerst, bei Gleichstand, wer die Zahl früher erreicht hat.
 
@@ -17,7 +17,6 @@ local MOVING = "Wanderzone"
 
 local map = nil
 local boards = {} -- [Zonenname] = { Title, Entries = { [UserId] = { Id, Name, Kills, Order } } }
-local total = {} -- [UserId] = { Id, Name, Kills, Order }
 local order = 0 -- steigt mit jedem Kill (Gleichstand: kleinere Zahl = früher erreicht)
 
 local function sorted(entries)
@@ -46,13 +45,13 @@ local function publish()
 	for name, board in boards do
 		zones[name] = { Title = board.Title, List = sorted(board.Entries) }
 	end
-	map:SetAttribute("RedzoneBoard", HttpService:JSONEncode({ Zones = zones, Total = sorted(total) }))
+	map:SetAttribute("RedzoneBoard", HttpService:JSONEncode({ Zones = zones }))
 end
 
 -- map = Maps.Extinction, zones = RedzoneService.List() (feste Zonen stehen gleich mit leerer Liste drin)
 function RedzoneBoard.Init(newMap, zones)
 	map = newMap
-	boards, total, order = {}, {}, 0
+	boards, order = {}, 0
 	for _, zone in zones or {} do
 		boards[zone.Name] = { Title = zone.Title, Entries = {} }
 	end
@@ -71,20 +70,18 @@ function RedzoneBoard.Record(killer, zone)
 		boards[zone.Name] = board
 	end
 	order += 1
-	for _, entries in { board.Entries, total } do
-		local entry = entries[killer.UserId]
-		if not entry then
-			entry = { Id = killer.UserId, Name = killer.Name, Kills = 0 }
-			entries[killer.UserId] = entry
-		end
-		entry.Kills += 1
-		entry.Order = order
+	local entry = board.Entries[killer.UserId]
+	if not entry then
+		entry = { Id = killer.UserId, Name = killer.Name, Kills = 0 }
+		board.Entries[killer.UserId] = entry
 	end
+	entry.Kills += 1
+	entry.Order = order
 	publish()
 	return true
 end
 
--- Wanderzone hat gewechselt (moving = neue Zone oder nil): neue, leere Liste am neuen Ort
+-- Wanderzone hat gewechselt (moving = neue Zone oder nil): neue Runde, leere Liste am neuen Ort
 function RedzoneBoard.Moved(moving)
 	boards[MOVING] = moving and { Title = moving.Title, Entries = {} } or nil
 	publish()
@@ -92,8 +89,7 @@ end
 
 -- Spieler verlässt die offene Welt: aus allen Listen nehmen
 function RedzoneBoard.RemovePlayer(player)
-	local changed = total[player.UserId] ~= nil
-	total[player.UserId] = nil
+	local changed = false
 	for _, board in boards do
 		if board.Entries[player.UserId] then
 			board.Entries[player.UserId] = nil
@@ -105,11 +101,8 @@ function RedzoneBoard.RemovePlayer(player)
 	end
 end
 
--- Sortierte Liste einer Zone (Zonenname) bzw. aller Zonen (nil) – für Tests und Auswertungen
+-- Sortierte Liste einer Zone (Zonenname) – für Tests und Auswertungen
 function RedzoneBoard.List(zoneName)
-	if zoneName == nil then
-		return sorted(total)
-	end
 	local board = boards[zoneName]
 	return board and sorted(board.Entries) or {}
 end

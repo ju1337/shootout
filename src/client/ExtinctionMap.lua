@@ -1,8 +1,10 @@
 -- ExtinctionMap (ModuleScript, nur Client)
 -- Weltkarte der offenen Welt (EXTINCTION), Taste N (oder Knopf KARTE): Straßen und Flächen aus den Gruppen Roads und
 -- Ground der Karte, die Safe Zone (grün), rote Zonen (rote Kreise mit Namen), Orte (Namen), Lootdrops (orange, mit
--- Countdown) und der eigene Standort als Pfeil in Blickrichtung. Norden (+Z) ist oben.
--- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops; Gruppen Roads, Ground, Places, Zone).
+-- Countdown), Vorratslager und Funkgerät und der eigene Standort als Pfeil in Blickrichtung. Norden (+Z) ist oben.
+-- Zombienester und Überlebende stehen nicht auf der Karte (man findet sie draußen), damit sie übersichtlich bleibt.
+-- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops, Activities; Gruppen Roads, Ground, Places,
+-- Zone).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -37,12 +39,9 @@ local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = t
 local gui, board, layer, markers, arrow
 local built = false
 local dropViews = {}       -- Lootdrops und Aktivitäten (Id -> Frame)
-local ACTIVITY_COLORS = {
-	Nest = Color3.fromRGB(160, 230, 80),
+local ACTIVITY_COLORS = { -- nur diese Aktivitäten stehen auf der Karte
 	Cache = Color3.fromRGB(255, 210, 90),
 	Radio = Color3.fromRGB(110, 190, 255),
-	Horde = Color3.fromRGB(230, 50, 40),
-	Survivor = Color3.fromRGB(120, 220, 140),
 }
 
 local function getMap()
@@ -219,20 +218,23 @@ local function update()
 			text.Text = drop.State == "Landed" and "LOOTDROP" or ("LOOTDROP " .. math.max(0, math.ceil((drop.Eta or now) - now)) .. " S")
 		end
 	end
-	-- Aktivitäten: Nester (grün, zerstört grau), Vorratslager (gelb, leer grau), Funkgerät (blau), Horde (rot, groß)
+	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do
+		local color = ACTIVITY_COLORS[act.Kind]
+		if not color then
+			continue
+		end
 		local id = "Act" .. tostring(act.Id)
 		seen[id] = true
 		local view = dropViews[id]
 		if not view then
 			view = make("Frame", { Name = "Activity_" .. tostring(act.Kind), AnchorPoint = Vector2.new(0.5, 0.5),
-				Size = UDim2.fromOffset(act.Kind == "Horde" and 18 or 10, act.Kind == "Horde" and 18 or 10), BorderSizePixel = 0,
-				ZIndex = 8 }, markers)
+				Size = UDim2.fromOffset(10, 10), BorderSizePixel = 0, ZIndex = 8 }, markers)
 			if act.Kind ~= "Cache" then
 				make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, view)
 			end
 			UITheme.Stroke(view, Color3.new(0, 0, 0), 1.2, 0.2)
-			if act.Kind == "Horde" or act.Kind == "Radio" then
+			if act.Kind == "Radio" then
 				label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 3), Size = UDim2.fromOffset(140, 14),
 					TextSize = 11, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, view)
 			end
@@ -240,13 +242,12 @@ local function update()
 		end
 		local u, v = toMap(map, act.X or 0, act.Z or 0)
 		view.Position = UDim2.fromScale(u, v)
-		local color = ACTIVITY_COLORS[act.Kind] or Color3.new(1, 1, 1)
-		local idle = act.State == "Cleared" or act.State == "Opened" or act.State == "Cooldown" or act.State == "Gone"
+		local idle = act.State == "Opened" or act.State == "Cooldown"
 		view.BackgroundColor3 = idle and Color3.fromRGB(90, 90, 90) or color
 		local text = view:FindFirstChild("Text")
 		if text then
 			text.TextColor3 = color
-			text.Text = act.Kind == "Horde" and ("HORDE · " .. tostring(act.Left or "?")) or (idle and "FUNK LÄDT" or "FUNK")
+			text.Text = idle and "FUNK LÄDT" or "FUNK"
 		end
 	end
 	for id, view in dropViews do
@@ -298,7 +299,8 @@ function ExtinctionMap.Init()
 	UITheme.Outline(arrow)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ● NEST  ·  ■ LAGER  ·  ● HORDE  ·  ● ÜBERLEBENDER", TextSize = 11, Font = F.Bold,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ORANGE WANDERZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK", TextSize = 11,
+		Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)
 	RunService.Heartbeat:Connect(function()

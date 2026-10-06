@@ -498,7 +498,7 @@ end
 -- Andere Dienste (Aufträge): callback(killer, kind, position), wenn ein Spieler einen Zombie erledigt
 ZombieService.OnKill = {}
 
--- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Horden, Nester), aber
+-- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Nester, Lager-Alarm), aber
 -- höchstens ForceExtra darüber
 function ZombieService.Spawn(position, kindName, force)
 	if count >= maxTotal() + (force and Z.ForceExtra or 0) then

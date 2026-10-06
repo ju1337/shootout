@@ -2,7 +2,7 @@
 -- Aufträge der offenen Welt (EXTINCTION): jeder Spieler hat ExtinctionConfig.Missions.Active Aufträge gleichzeitig
 -- (zufällig aus Pool, keine zwei gleichen). Fortschritt kommt aus den anderen Diensten:
 --   Zombie/Runner/Brute/RedZombie  ZombieService.OnKill (Walker zählt als Zombie, jede Art zählt auch für "Zombie")
---   Nest/Cache/Horde               ActivityService.OnEvent
+--   Nest/Cache/Survivor            ActivityService.OnEvent
 --   Airdrop                        LootService.OnOpened (Lootdrop-Kiste geöffnet, je Kiste einmal)
 --   Place                          Spieler steht im Ort des Auftrags (Gruppe Places der Karte)
 --   NightMinute                    jede volle Minute draußen in der Nacht (DayCycle)

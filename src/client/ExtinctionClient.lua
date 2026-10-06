@@ -321,7 +321,7 @@ local DROP = Color3.fromRGB(255, 190, 70)
 local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
 local MISSION_GAP = 24 -- Abstand der Aufträge unter dem VERLASSEN-Knopf (auf Touch unter der Lebensanzeige)
--- Rangliste der roten Zonen rechts oben unter der Uhr; der Killfeed des HUD steht in der offenen Welt darunter
+-- Rangliste der roten Zone rechts oben unter der Uhr (nur in einer roten Zone); der Killfeed des HUD rückt dann darunter
 -- (HUD.lua: SURVIVAL_KILLFEED_TOP = BOARD_TOP + BOARD_H + 12)
 local BOARD_TOP, BOARD_W, BOARD_H, BOARD_H_SHORT = 88, 250, 144, 116
 local hotbarViews = {}
@@ -538,15 +538,11 @@ local function updateMarkers()
 			end
 			table.insert(entries, { Order = distance - 5000, X = drop.X, Z = drop.Z, Color = DROP, Text = text })
 		end
-		-- Aktivitäten: Horde immer, Nester und volle Vorratslager in der Nähe
+		-- Aktivitäten: Nester und volle Vorratslager in der Nähe, Überlebende
 		for _, act in mapList(map, "Activities") do
 			local dx, dz = (act.X or 0) - here.X, (act.Z or 0) - here.Z
 			local distance = math.floor(math.sqrt(dx * dx + dz * dz))
-			local title = string.upper(tostring(act.Title or ""))
-			if act.Kind == "Horde" then
-				table.insert(entries, { Order = distance - 8000, X = act.X, Z = act.Z, Color = RED,
-					Text = "HORDE  " .. title .. "  ·  " .. tostring(act.Left or "?") .. " ÜBRIG  ·  " .. distance .. " M" })
-			elseif act.Kind == "Nest" and act.State == "Active" and distance < 350 then
+			if act.Kind == "Nest" and act.State == "Active" and distance < 350 then
 				table.insert(entries, { Order = distance, X = act.X, Z = act.Z, Color = NEST, Text = "ZOMBIENEST  ·  " .. distance .. " M" })
 			elseif act.Kind == "Survivor" and act.State == "Ready" and distance < 260 then
 				table.insert(entries, { Order = distance + 100, X = act.X, Z = act.Z, Color = Color3.fromRGB(120, 220, 140),
@@ -1374,11 +1370,11 @@ function ExtinctionClient.Init()
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	UITheme.Outline(movingText)
 
-	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): in einer roten Zone die Top 3 der
-	-- Spieler-Kills dort, sonst aller roten Zonen zusammen; der eigene Platz darunter, wenn man Kills hat, aber nicht
-	-- unter den ersten drei steht
+	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): nur in einer roten Zone, die Top 3 der
+	-- Spieler-Kills dieser Zone (Wanderzone: dieser Runde); der eigene Platz darunter, wenn man Kills hat, aber nicht unter
+	-- den ersten drei steht
 	local board = UITheme.HudPanel({ Name = "RedzoneBoard", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, BOARD_TOP),
-		Size = UDim2.fromOffset(BOARD_W, BOARD_H_SHORT) }, root, "Left")
+		Size = UDim2.fromOffset(BOARD_W, BOARD_H_SHORT), Visible = false }, root, "Left")
 	local boardAccent = make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
 		Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 2 }, board)
 	local boardCaption = label({ Name = "Caption", Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 14), Text = "",
@@ -1410,19 +1406,15 @@ function ExtinctionClient.Init()
 		local ok, data = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
 		data = ok and type(data) == "table" and data or {}
 		local zones = type(data.Zones) == "table" and data.Zones or {}
-		local list, color
-		if type(zoneKey) == "string" then
-			local moving = zoneKey == "Wanderzone"
-			local zone = type(zones[zoneKey]) == "table" and zones[zoneKey] or {}
-			boardCaption.Text = (moving and "WANDERZONE" or "ROTE ZONE") .. "  ·  TOP KILLS"
-			boardTitle.Text = upper(tostring(zone.Title or zoneKey))
-			list, color = zone.List, moving and MOVING or RED
-		else
-			boardCaption.Text = "ROTE ZONEN  ·  TOP KILLS"
-			boardTitle.Text = "ALLE ZONEN"
-			list, color = data.Total, C.Muted
+		board.Visible = type(zoneKey) == "string"
+		if not board.Visible then
+			return
 		end
-		list = type(list) == "table" and list or {}
+		local moving = zoneKey == "Wanderzone"
+		local zone = type(zones[zoneKey]) == "table" and zones[zoneKey] or {}
+		boardCaption.Text = (moving and "WANDERZONE" or "ROTE ZONE") .. "  ·  TOP KILLS"
+		boardTitle.Text = upper(tostring(zone.Title or zoneKey))
+		local list, color = type(zone.List) == "table" and zone.List or {}, moving and MOVING or RED
 		boardCaption.TextColor3 = color
 		boardAccent.BackgroundColor3 = color
 		local ownRank = nil

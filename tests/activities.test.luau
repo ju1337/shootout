@@ -1,6 +1,7 @@
 -- Aktivitäten der offenen Welt (ActivityService): Zombienest spawnt Zombies und belohnt beim Zerstören, Vorratslager
 -- aufbrechen (Lärm lockt Zombies, Beute ins Inventar, danach leer bis zum Respawn), Funkgerät fordert einen Lootdrop an
--- (Abklingzeit), Horde zieht in einen Ort und belohnt die, die dabei waren; alles steht im Karten-Attribut Activities
+-- (Abklingzeit), Überlebende retten; Horden gibt es nicht mehr (alte Punkte Act_Horde werden ignoriert); alles steht im
+-- Karten-Attribut Activities
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -48,7 +49,7 @@ end
 marker("Act_Nest", Vector3.new(0, 0, -400), "Testwald")
 marker("Act_Cache", Vector3.new(400, 0, 0), "Testlager")
 marker("Act_Radio", Vector3.new(-400, 0, 0), "Funkturm")
-marker("Act_Horde", Vector3.new(0, 0, 500), "Testdorf")
+marker("Act_Horde", Vector3.new(0, 0, 500), "Testdorf") -- alter Horden-Punkt einer Karte: wird ignoriert
 marker("Act_Survivor", Vector3.new(0, 0, -170), "Testhaus")
 marker("Act_Survivor", Vector3.new(250, 0, -250), "Testhof")
 
@@ -74,7 +75,6 @@ LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge -- nur der Notruf startet einen Lootdrop
 ExtinctionConfig.Day.Fixed = 12
 ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }
-A.Horde.FirstDelay = math.huge -- Horde startet der Test selbst
 Extinction.Init({ Join = function() end, Status = function() end })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -122,7 +122,7 @@ end
 local folder = workspace:FindFirstChild("ExtinctionActivities")
 check(folder ~= nil and folder:FindFirstChild("ZombieNest") and folder:FindFirstChild("SupplyCache") and folder:FindFirstChild("RadioStation"),
 	"Nest, Vorratslager und Funkgerät stehen in der Welt")
-check(#published() == 6, "sechs Aktivitäten im Karten-Attribut (" .. #published() .. ")")
+check(#published() == 5, "fünf Aktivitäten im Karten-Attribut, ohne Horde (" .. #published() .. ")")
 
 -- Zombienest: Spieler in der Nähe -> Zombies kriechen heraus
 local nest = spotOf("Nest")
@@ -173,31 +173,26 @@ check(ActivityService.UseRadio(alice, radio) == true and #AirdropService.Active(
 check(radio.State == "Cooldown" and banner("NOTRUF EMPFANGEN"), "Funkgerät lädt, Meldung an alle")
 check(ActivityService.UseRadio(alice, radio) == false, "kein zweiter Notruf während der Abklingzeit")
 
--- Horde: zieht in den Ort, wer dabei ist und sie besiegt, bekommt die Belohnung
+-- Keine Horden: der alte Punkt Act_Horde wird ignoriert, auch nach langer Zeit zieht keine Horde los
 place(Vector3.new(0, 0, 470))
-step(1)
-local current = ActivityService.StartHorde(spotOf("Horde"))
-check(current ~= nil and current.Total >= math.floor(A.Horde.Size * 0.8), "Horde gespawnt (" .. (current and current.Total or 0) .. ")")
-check(banner("HORDE IM ANMARSCH"), "Meldung HORDE IM ANMARSCH")
-local hordeEntry = nil
+step(30)
+local hordeSpots, hordeEntries = 0, 0
+for _, spot in ActivityService.Spots() do
+	if spot.Kind == "Horde" then
+		hordeSpots += 1
+	end
+end
 for _, entry in published() do
 	if entry.Kind == "Horde" then
-		hordeEntry = entry
+		hordeEntries += 1
 	end
 end
-check(hordeEntry ~= nil and hordeEntry.Left == current.Total, "Horde im Karten-Attribut mit verbleibender Zahl")
-step(2)
-coins = ProgressService.Get(alice).Coins
-for _, model in current.Models do
-	local zombieHumanoid = model:FindFirstChildOfClass("Humanoid")
-	if zombieHumanoid and zombieHumanoid.Health > 0 then
-		Damage.Apply(model, zombieHumanoid, 10000, { Player = alice, Weapon = "Test" })
-	end
+check(hordeSpots == 0 and hordeEntries == 0 and ActivityService.StartHorde == nil and not banner("HORDE IM ANMARSCH"),
+	"keine Horden mehr")
+check(A.Horde == nil, "keine Horden-Werte in der Konfiguration")
+for _, def in ExtinctionConfig.Missions.Pool do
+	check(def.Event ~= "Horde", "kein Horden-Auftrag")
 end
-step(2)
-check(ActivityService.Horde() == nil, "Horde vorbei")
-check(banner("HORDE BESIEGT"), "Meldung HORDE BESIEGT")
-check(ProgressService.Get(alice).Coins >= coins + A.Horde.Coins, "Münzen für die Horde")
 
 -- Überlebender: E halten, er folgt, in der Safe Zone gerettet
 local survivors = {}

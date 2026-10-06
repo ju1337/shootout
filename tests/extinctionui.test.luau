@@ -192,12 +192,9 @@ step(0.2)
 check(missionPanel.Position.Y.Offset == 230 + 88 + 24, "Touch: Aufträge unter der Lebensanzeige (" .. missionPanel.Position.Y.Offset .. ")")
 fakeHud:Destroy()
 
--- Rangliste rechts oben: ohne rote Zone alle Zonen zusammen (noch leer)
+-- Rangliste rechts oben: nur in einer roten Zone zu sehen
 local board = find(hud, "RedzoneBoard")
-check(board ~= nil and board.Visible and string.find(texts(board), "ROTE ZONEN  ·  TOP KILLS", 1, true) ~= nil
-	and string.find(texts(board), "ALLE ZONEN", 1, true) ~= nil, "Rangliste rechts oben (alle Zonen): " .. (board and texts(board) or ""))
-check(board and find(board, "Top1"):FindFirstChild("Player").Text == "—" and not find(board, "Own").Visible,
-	"leere Rangliste ohne eigenen Platz")
+check(board ~= nil and not board.Visible, "außerhalb roter Zonen keine Rangliste")
 local movingLine = find(hud, "MovingZone")
 check(board and board.Position.Y.Offset >= movingLine.Position.Y.Offset + movingLine.Size.Y.Offset
 	and board.AnchorPoint.X == 1 and board.Position.X.Scale == 1, "Rangliste rechts oben unter Uhr und Wanderzone")
@@ -312,18 +309,14 @@ InputActions.Trigger("WorldMap", false)
 step(0.2)
 check(mapGui and not mapGui.Enabled, "N schließt die Weltkarte")
 
--- Rangliste: draußen die Gesamtliste (eigener Name hervorgehoben), in der Zone deren Top 3 und der eigene Platz darunter
+-- Rangliste: nur in einer roten Zone, deren Top 3 und der eigene Platz darunter (eigener Name in den Top 3 hervorgehoben)
 local savedBoard = map:GetAttribute("RedzoneBoard")
 local me = tostring(bob.UserId)
 map:SetAttribute("RedzoneBoard", '{"Zones":{"Werk":{"Title":"Chemiewerk","List":[{"Id":11,"Name":"Ann","Kills":5},'
-	.. '{"Id":12,"Name":"Ben","Kills":3},{"Id":13,"Name":"Cem","Kills":2},{"Id":' .. me .. ',"Name":"Bob","Kills":1}]}},'
-	.. '"Total":[{"Id":' .. me .. ',"Name":"Bob","Kills":4},{"Id":11,"Name":"Ann","Kills":2}]}')
+	.. '{"Id":12,"Name":"Ben","Kills":3},{"Id":13,"Name":"Cem","Kills":2},{"Id":' .. me .. ',"Name":"Bob","Kills":1}]},'
+	.. '"Wanderzone":{"Title":"Nordheim","List":[{"Id":' .. me .. ',"Name":"Bob","Kills":4},{"Id":11,"Name":"Ann","Kills":2}]}}}')
 step(0.2)
-local top1 = find(board, "Top1")
-check(top1.Player.Text == "Bob" and top1.Kills.Text == "4" and top1.Player.TextColor3 == UITheme.Colors.Primary,
-	"Gesamtliste: Bob vorn und hervorgehoben (" .. top1.Player.Text .. " " .. top1.Kills.Text .. ")")
-check(find(board, "Top2").Player.Text == "Ann" and find(board, "Top3").Player.Text == "—" and not find(board, "Own").Visible,
-	"Gesamtliste: Platz 2 und leerer Platz 3")
+check(not board.Visible, "draußen bleibt die Rangliste aus, auch mit Kills")
 bob:SetAttribute("Redzone", "Werk")
 step(0.3)
 check(find(hud, "RedzoneVignette").Visible and string.find(texts(hud), "ROTE ZONE  ·  PVP AKTIV", 1, true) ~= nil,
@@ -337,13 +330,20 @@ check(own.Visible and own.Player.Text == "DU  ·  PLATZ 4" and own.Kills.Text ==
 	"eigener Platz unter den Top 3 (" .. own.Player.Text .. ")")
 bob:SetAttribute("Redzone", "Wanderzone")
 step(0.2)
-check(string.find(texts(board), "WANDERZONE  ·  TOP KILLS", 1, true) ~= nil and find(board, "Top1").Player.Text == "—"
-	and not own.Visible, "Wanderzone ohne Kills: leere Liste")
+local top1 = find(board, "Top1")
+check(board.Visible and string.find(texts(board), "WANDERZONE  ·  TOP KILLS", 1, true) ~= nil
+	and string.find(texts(board), "NORDHEIM", 1, true) ~= nil, "Rangliste der Wanderzone: " .. texts(board))
+check(top1.Player.Text == "Bob" and top1.Kills.Text == "4" and top1.Player.TextColor3 == UITheme.Colors.Primary
+	and find(board, "Top2").Player.Text == "Ann" and find(board, "Top3").Player.Text == "—" and not own.Visible,
+	"eigener Name vorn und hervorgehoben, leerer Platz 3 (" .. top1.Player.Text .. " " .. top1.Kills.Text .. ")")
+map:SetAttribute("RedzoneBoard", '{"Zones":{"Wanderzone":{"Title":"Altenfeld","List":[]}}}') -- nächste Runde: leer
+step(0.2)
+check(string.find(texts(board), "ALTENFELD", 1, true) ~= nil and find(board, "Top1").Player.Text == "—", "neue Runde: leere Liste")
 map:SetAttribute("RedzoneBoard", savedBoard)
 bob:SetAttribute("Redzone", nil)
 step(0.3)
 check(not find(hud, "RedzoneVignette").Visible, "draußen kein roter Rand")
-check(string.find(texts(board), "ALLE ZONEN", 1, true) ~= nil and find(board, "Top1").Player.Text == "—", "draußen wieder alle Zonen")
+check(not board.Visible, "Zone verlassen: Rangliste weg")
 map:SetAttribute("Redzones", nil)
 map:SetAttribute("Airdrops", nil)
 step(0.3)

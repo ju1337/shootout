@@ -1,6 +1,6 @@
 -- Match-HUD (HUD, MatchHUD) auf dem Client: Das eigene Porträt liegt über seiner Kachel (das HUD rechnet ZIndex für den
 -- ganzen Bildschirm, sonst bleibt das Bild unsichtbar); die allgemeine Tastenzeile ist in der offenen Welt aus (dort
--- hat die Hotbar eine eigene, beide lägen übereinander); der Killfeed rückt dort unter die Redzone-Rangliste
+-- hat die Hotbar eine eigene, beide lägen übereinander); der Killfeed rückt in einer roten Zone unter die Rangliste
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -62,11 +62,18 @@ local killfeed = find(screen, "Killfeed")
 check(keyHints ~= nil and keyHints.Visible and string.find(keyHints.Text, "SCHIESSEN", 1, true) ~= nil, "Tastenzeile im Kampfmodus")
 check(killfeed ~= nil and killfeed.Position.Y.Offset < 200, "Killfeed rechts oben (" .. (killfeed and killfeed.Position.Y.Offset or -1) .. ")")
 
--- Offene Welt: eigene Tastenzeile unter der Hotbar, Rangliste rechts oben
+-- Offene Welt: eigene Tastenzeile unter der Hotbar; in einer roten Zone steht rechts oben die Rangliste, der Killfeed
+-- rückt dann darunter
 bob:SetAttribute("Mode", "Extinction")
 SIM.Advance(0.2, 20)
 check(not keyHints.Visible, "keine allgemeine Tastenzeile in der offenen Welt")
-check(killfeed.Position.Y.Offset >= 244, "Killfeed unter der Redzone-Rangliste (" .. killfeed.Position.Y.Offset .. ")")
+check(killfeed.Position.Y.Offset < 200, "außerhalb roter Zonen Killfeed oben (" .. killfeed.Position.Y.Offset .. ")")
+bob:SetAttribute("Redzone", "Krankenhaus")
+SIM.Advance(0.2, 20)
+check(killfeed.Position.Y.Offset >= 244, "in der roten Zone Killfeed unter der Rangliste (" .. killfeed.Position.Y.Offset .. ")")
+bob:SetAttribute("Redzone", nil)
+SIM.Advance(0.2, 20)
+check(killfeed.Position.Y.Offset < 200, "Zone verlassen: Killfeed wieder oben")
 
 bob:SetAttribute("Mode", "FreeForAll")
 SIM.Advance(0.2, 20)

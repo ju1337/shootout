@@ -2692,7 +2692,7 @@ def find_spot(w, x, z, r, tries=80):
 
 
 def activities(w):
-    """Spots mit Sachen zu tun (ActivityService): Zombienester, Vorratslager, Funkgerät, Horden-Sammelpunkte."""
+    """Spots mit Sachen zu tun (ActivityService): Zombienester, Vorratslager, Funkgerät, Überlebende."""
     b = w.b
 
     def marker(kind, x, z, title, r):
@@ -2705,8 +2705,7 @@ def activities(w):
               angles=(0, w.rng.uniform(0, 360), 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
                      "Attributes": {"Attributes": {"Title": {"String": title}}}})
-        if kind != "Horde":
-            w.occupied.append((px, pz, r))
+        w.occupied.append((px, pz, r))
         return px, pz
 
     nests = [(-260, 360, "ÖDSTADT NORD"), (380, -120, "ÖDSTADT OST"), (-120, -400, "ÖDSTADT SÜD"), (-420, -160, "ÖDSTADT WEST"),
@@ -2734,11 +2733,6 @@ def activities(w):
                  (980, -540, "HOF KRÜGER"), (1080, 1230, "FLUGPLATZ")]
     for x, z, title in survivors:
         marker("Survivor", x, z, title, 3)
-    hordes = [(0, 400, "ÖDSTADT NORD"), (400, 0, "ÖDSTADT OST"), (0, -400, "ÖDSTADT SÜD"), (-400, 0, "ÖDSTADT WEST"),
-              (-250, 1150, "NORDHEIM"), (1150, 520, "SANDBACH"), (-1150, -250, "ALTENFELD"), (430, -1150, "MÜHLDORF"),
-              (230, -260, "EVAKUIERUNGSLAGER"), (1050, 1200, "FLUGPLATZ"), (960, -560, "HOF KRÜGER"), (-880, 720, "HOF LINDE")]
-    for x, z, title in hordes:
-        marker("Horde", x, z, title, 6)
 
 
 def build(bm):

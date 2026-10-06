@@ -55,7 +55,6 @@ end
 marker("Act_Nest", Vector3.new(0, 0, -400), "Testwald")
 marker("Act_Cache", Vector3.new(400, 0, 0), "Testlager")
 marker("Act_Radio", Vector3.new(-400, 0, 0), "Funkturm")
-marker("Act_Horde", Vector3.new(0, 0, 500), "Testdorf")
 
 local ground = Instance.new("Part", workspace)
 ground.Name = "Ground"
@@ -77,7 +76,6 @@ LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge
 ExtinctionConfig.Day.Fixed = 12
 ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }
-ExtinctionConfig.Activities.Horde.FirstDelay = math.huge
 Extinction.Init({ Join = function() end, Status = function() end })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }

@@ -31,8 +31,8 @@ local player = Players.LocalPlayer
 local HUD = {}
 
 local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige
--- Offene Welt (Survival): rechts oben steht die Redzone-Rangliste des ExtinctionClient (Oberkante 88, bis 144 hoch),
--- der Killfeed beginnt darunter
+-- Offene Welt (Survival): in einer roten Zone steht rechts oben die Redzone-Rangliste des ExtinctionClient (Oberkante 88,
+-- bis 144 hoch), der Killfeed beginnt dann darunter
 local SURVIVAL_KILLFEED_TOP = 244
 
 local screen -- ScreenGui (an/aus)
@@ -218,7 +218,7 @@ function HUD.Init(weaponClient)
 	-- links daneben).
 	local function layoutForDevice()
 		local killfeedTop = belowTopbar(96, 14)
-		if Modes.IsSurvival(player:GetAttribute("Mode")) then
+		if Modes.IsSurvival(player:GetAttribute("Mode")) and type(player:GetAttribute("Redzone")) == "string" then
 			killfeedTop = math.max(killfeedTop, SURVIVAL_KILLFEED_TOP)
 		end
 		match.Killfeed.Position = UDim2.new(1, -24, 0, killfeedTop)
@@ -250,7 +250,9 @@ function HUD.Init(weaponClient)
 	end
 	layoutForDevice()
 	InputActions.DeviceChanged:Connect(layoutForDevice)
-	player:GetAttributeChangedSignal("Mode"):Connect(layoutForDevice) -- offene Welt: Killfeed unter der Rangliste
+	-- offene Welt, rote Zone: Killfeed unter der Rangliste
+	player:GetAttributeChangedSignal("Mode"):Connect(layoutForDevice)
+	player:GetAttributeChangedSignal("Redzone"):Connect(layoutForDevice)
 	-- Fenstergröße geändert: neu ausrichten, nachdem die HUD-Skalierung angepasst wurde
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 		task.defer(layoutForDevice)

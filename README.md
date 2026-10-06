@@ -123,8 +123,9 @@ springt auf 10 bzw. 22 Uhr (Attribut `DayOffset` an ReplicatedStorage, `DayCycle
 **Minimap** (oben links) zoomt in der offenen Welt weiter raus (240 Studs, Karten-Attribut `MinimapRange`), zeigt nur
 Straßen und Gebäude und die Zonen als Punktkreise (grün Safe Zone, rot rote Zonen); in einer roten Zone wird ihr
 Rand rot. **Weltkarte** mit **N** (oder Knopf KARTE oben rechts): Straßen, Gebäude, Seen, Orte, Safe Zone, rote
-Zonen, Lootdrops mit Countdown und der eigene Standort. Tankstellen und Seen stehen ohne Namen auf der Karte (die Seen
-sieht man als Fläche), damit sie übersichtlich bleibt. Beim Betreten eines Ortes erscheint sein Name.
+Zonen, Wanderzone, Lootdrops mit Countdown, Vorratslager, Funkgerät und der eigene Standort. Tankstellen und Seen stehen
+ohne Namen auf der Karte (die Seen sieht man als Fläche), Zombienester und Überlebende gar nicht, damit sie übersichtlich
+bleibt. Beim Betreten eines Ortes erscheint sein Name.
 **Tag und Nacht** (`src/shared/DayCycle.lua`, `ExtinctionConfig.Day`): ein Tag dauert 24 Minuten, davon etwa
 9 Minuten Nacht (blaues Mondlicht, dichter Dunst – Feuer und die wenigen Laternen sind dann die Lichter). Die Uhrzeit
 hängt an der Serverzeit, alle sehen dieselbe; Anzeige oben rechts. Nachts kommen mehr Zombies (×1,6) und sie sehen
@@ -164,7 +165,7 @@ Brocken. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 - **Taschen am Boden** (Todestasche, Lootdrop): **E** öffnet das Fenster (einzeln nehmen), **F** nimmt alles auf einmal; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
 - **Aktivitäten** (`ActivityService.lua`, Teile `Act_<Art>` in der Gruppe Activities, Werte
-  `ExtinctionConfig.Activities`), alle auf der Weltkarte und als Marker oben:
+  `ExtinctionConfig.Activities`); auf der Weltkarte stehen nur Vorratslager und Funkgerät:
   - **Zombienester** (15, in Ödstadt, den Dörfern, Wäldern und roten Zonen): leuchtender Kern aus Fleisch, man schießt
     darauf (900 Leben). Solange es lebt und jemand in der Nähe ist, kriechen Zombies heraus. Zerstört: jeder, der
     Schaden gemacht hat, bekommt 150 Münzen und Beute direkt ins Inventar; nach 10 Minuten wächst es nach.
@@ -175,13 +176,13 @@ Brocken. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
   - **Überlebende** (10, in Dörfern, Höfen, Ödstadt, Flugplatz): **E halten** – er folgt dir. Bring ihn lebend in die
     Safe Zone (Marker oben zeigt den Weg): 250 Münzen und Beute. Zombies greifen ihn an; stirbt er, bleibt er mehr als
     90 Studs zurück oder dauert es zu lange, ist die Rettung gescheitert. Kommt nach 15 Minuten wieder.
-  - **Horden**: ab 6 Minuten alle 10-15 Minuten zieht eine Horde (14 Zombies, auch Läufer) in einen Ort 150-800 Studs
-    von einem Spieler entfernt. Wer dabei ist und 60 % erledigt, bekommt 200 Münzen und Beute.
+  - Horden gibt es nicht mehr (alte Punkte `Act_Horde` einer Karte werden ignoriert). Zombienester und Überlebende
+    stehen nicht auf der Weltkarte – man findet sie draußen.
 - **Aufträge** (`MissionService.lua`, `ExtinctionConfig.Missions`): immer drei gleichzeitig, links mit etwas Abstand
   unter dem VERLASSEN-Knopf (rutscht mit ihm, auf Touch unter der Lebensanzeige), mit Fortschrittsbalken – z. B.
   „Töte 20 Zombies“, „Töte 5 Läufer“, „Töte 10 Zombies in einer roten Zone“, „Zerstöre ein Zombienest“, „Brich 2
-  Vorratslager auf“, „Besiege eine Horde“, „Öffne einen Lootdrop“, „Erkunde: NORDHEIM“, „Überlebe 3 Minuten nachts
-  draußen“. Erledigt: Münzen und Beute direkt ins Inventar, dann kommt ein neuer Auftrag.
+  Vorratslager auf“, „Rette einen Überlebenden“, „Öffne einen Lootdrop“, „Erkunde: NORDHEIM“, „Überlebe 3 Minuten
+  nachts draußen“. Erledigt: Münzen und Beute direkt ins Inventar, dann kommt ein neuer Auftrag.
 - **Apokalypse**: Fluchtstaus mit umgekipptem Schulbus auf den Ausfallstraßen, verlassene Quarantäne-Sperren an den
   Dorfeingängen („INFIZIERT · NICHT BETRETEN“), Massengrab beim Evakuierungslager, verlassene Überlebenden-Camps im
   Wald (SOS am Boden), Leichen auf den Straßen, Notstands-Plakate („AUSGANGSSPERRE AB 20 UHR · SCHIESSBEFEHL“),
@@ -191,12 +192,12 @@ Brocken. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 - **Rote Zonen** (`RedzoneService.lua`, Teile `Redzone_<Name>`): rot-weiße Bodenlinie und Kontrollpunkte an den Straßen.
   Drinnen gilt **PvP sofort**, Anzeige „ROTE ZONE · PVP AKTIV“ mit rotem Bildschirmrand, mehr und härtere Zombies,
   bessere Beute.
-- **Redzone-Rangliste** (`src/server-shared/RedzoneBoard.lua`, Anzeige im `ExtinctionClient`): rechts oben unter der
-  Uhr die **Top 3 der Spieler-Kills (PvP)** in der roten Zone, in der man gerade steht (Wanderzone eingeschlossen),
-  außerhalb die Top 3 aller roten Zonen zusammen. Ein Kill zählt für die Zone, in der das Opfer stirbt, sonst für die
-  des Schützen; bei Gleichstand steht vorn, wer die Zahl zuerst hatte. Wer nicht unter den ersten drei steht, sieht
-  darunter seinen Platz („DU · PLATZ 5“). Die Wanderzone beginnt nach jedem Wechsel mit einer leeren Liste, wer die
-  offene Welt verlässt, fällt raus. Der Killfeed rückt in der offenen Welt unter die Rangliste (Karten-Attribut
+- **Redzone-Rangliste** (`src/server-shared/RedzoneBoard.lua`, Anzeige im `ExtinctionClient`): nur solange man in
+  einer roten Zone steht, rechts oben unter der Uhr die **Top 3 der Spieler-Kills (PvP) dieser Zone** – jede Zone hat
+  ihre eigene Liste. Die Wanderzone beginnt jede Runde neu: nach jedem Wechsel an einen anderen Ort ist ihre Liste
+  leer. Ein Kill zählt für die Zone, in der das Opfer stirbt, sonst für die des Schützen; bei Gleichstand steht vorn,
+  wer die Zahl zuerst hatte. Wer nicht unter den ersten drei steht, sieht darunter seinen Platz („DU · PLATZ 5“); wer
+  die offene Welt verlässt, fällt raus. Solange die Liste zu sehen ist, rückt der Killfeed darunter (Karten-Attribut
   `RedzoneBoard`).
 - **Lootdrops** (`AirdropService.lua`): 2,5 Minuten nach Serverstart, danach alle 7-11 Minuten eine Ansage
   „VERSORGUNGSABWURF“ mit Fackel (Lichtsäule) an der Landestelle, 45 s Vorwarnung, dann sinkt die Kiste 25 s am
@@ -623,8 +624,8 @@ am Commit:
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
-| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed dort unter der Redzone-Rangliste |
-| `redzoneboard`, `extinctionui` | Redzone-Rangliste: Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Wanderzone beginnt nach dem Wechsel neu, Verlassen; Oberfläche der offenen Welt: Rangliste rechts oben, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
+| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in einer roten Zone unter der Redzone-Rangliste |
+| `redzoneboard`, `extinctionui` | Redzone-Rangliste: eigene Liste je Zone, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Wanderzone beginnt jede Runde neu, Verlassen; Oberfläche der offenen Welt: Rangliste nur in einer roten Zone, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
 [Luau-Releases](https://github.com/luau-lang/luau/releases) werden gebraucht):

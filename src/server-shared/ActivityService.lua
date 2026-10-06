@@ -8,12 +8,9 @@
 --   Cache  Vorratslager: E halten zum Aufbrechen, der Lärm lockt Zombies an; Beute direkt ins Inventar, danach leer
 --          bis zum Respawn. In roten Zonen bessere Beute.
 --   Radio  Funkgerät (Funkturm): E halten = Notruf, ein Lootdrop wird angefordert (Abklingzeit).
---   Horde  Sammelpunkte für Horden: regelmäßig zieht eine Horde in einen Ort in der Nähe der Spieler. Wer dabei ist
---          (Range) und genug von ihr erledigt (Win), bekommt Münzen und Beute.
--- Für die Clients steht alles als JSON im Karten-Attribut "Activities": [{ Id, Kind, Title, X, Z, State, Ends, Left }]
--- (State: Active/Cleared bei Nestern, Ready/Opened bei Lagern, Ready/Cooldown beim Funk, Active bei der Horde).
+-- Für die Clients steht alles als JSON im Karten-Attribut "Activities": [{ Id, Kind, Title, X, Z, State }]
+-- (State: Active/Cleared bei Nestern, Ready/Opened bei Lagern, Ready/Cooldown beim Funk).
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
@@ -30,7 +27,7 @@ local AirdropService = require(script.Parent.AirdropService)
 local Damage = require(script.Parent.Damage)
 
 local ActivityService = {}
--- Andere Dienste (Aufträge): callback(player, kind) mit kind = "Nest" (zerstört), "Cache" (aufgebrochen), "Horde" (besiegt)
+-- Andere Dienste (Aufträge): callback(player, kind) mit kind = "Nest" (zerstört), "Cache" (aufgebrochen), "Survivor" (gerettet)
 ActivityService.OnEvent = {}
 
 local function event(player, kind)
@@ -46,8 +43,6 @@ local A = ExtinctionConfig.Activities
 local random = Random.new()
 local options = nil   -- { Map, Players() -> { Player }, InSafeZone(position) -> bool, RedzoneAt(position) -> Zone | nil }
 local spots = {}      -- { Id, Kind, Title, Position, State, ReadyAt, Model, ... }
-local horde = nil     -- laufende Horde { Spot, Models, Total, Killed, Ends, Participants }
-local nextHorde = math.huge
 local folder = workspace:FindFirstChild("ExtinctionActivities") or Instance.new("Folder")
 folder.Name = "ExtinctionActivities"
 folder.Parent = workspace
@@ -71,11 +66,6 @@ local function publish()
 		local at = spot.Root and spot.Root.Parent and spot.Root.Position or spot.Position -- Überlebende bewegen sich
 		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = at.X, Z = at.Z,
 			State = spot.State })
-	end
-	if horde then
-		table.insert(list, { Id = "Horde", Kind = "Horde", Title = horde.Spot.Title, X = horde.Spot.Position.X,
-			Z = horde.Spot.Position.Z, State = "Active", Left = horde.Total - horde.Killed,
-			Ends = workspace:GetServerTimeNow() + math.max(0, horde.Ends - now()) })
 	end
 	options.Map:SetAttribute("Activities", HttpService:JSONEncode(list))
 end
@@ -654,136 +644,10 @@ local function survivorStep(spot, t)
 	end
 end
 
--- ---------- Horde ----------
-
-local function hordeSpots()
-	local list = {}
-	for _, spot in spots do
-		if spot.Kind == "Horde" then
-			table.insert(list, spot)
-		end
-	end
-	return list
-end
-
--- Ort für die nächste Horde: in passender Entfernung zu einem Spieler draußen
-local function pickHordeSpot()
-	local cfg = A.Horde
-	local outside = playersNear(Vector3.zero, math.huge)
-	if #outside == 0 then
-		return nil
-	end
-	local player = outside[random:NextInteger(1, #outside)]
-	local root = livingRoot(player)
-	if not root then
-		return nil
-	end
-	local best, bestDistance = nil, math.huge
-	for _, spot in hordeSpots() do
-		local distance = Vector3.new(spot.Position.X - root.Position.X, 0, spot.Position.Z - root.Position.Z).Magnitude
-		if distance >= cfg.MinDistance and distance <= cfg.MaxDistance and distance < bestDistance
-			and not options.InSafeZone(spot.Position) then
-			best, bestDistance = spot, distance
-		end
-	end
-	return best
-end
-
-function ActivityService.StartHorde(spot)
-	local cfg = A.Horde
-	if horde then
-		return nil
-	end
-	spot = spot or pickHordeSpot()
-	if not spot then
-		return nil
-	end
-	local models = ZombieService.SpawnAround(spot.Position, math.ceil(cfg.Size * 0.7), 15, 55, nil, true)
-	for _, model in ZombieService.SpawnAround(spot.Position, math.floor(cfg.Size * 0.3), 15, 55, "Runner", true) do
-		table.insert(models, model)
-	end
-	if #models == 0 then
-		return nil
-	end
-	horde = { Spot = spot, Models = models, Total = #models, Killed = 0, Ends = now() + cfg.Duration, Participants = {} }
-	for _, model in models do
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.Died:Once(function()
-				if horde and table.find(horde.Models, model) then
-					local hit = Damage.LastHit(model)
-					if hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model) then
-						horde.Killed += 1
-					end
-				end
-			end)
-		end
-	end
-	announce(options.Players(), "HORDE IM ANMARSCH", spot.Title .. " · " .. #models .. " Zombies · besiegt sie für Belohnungen", "Warning")
-	publish()
-	return horde
-end
-
-local function endHorde(won)
-	local cfg = A.Horde
-	local current = horde
-	horde = nil
-	nextHorde = now() + random:NextNumber(cfg.MinInterval, cfg.MaxInterval)
-	if not current then
-		return
-	end
-	local list = {}
-	for player in current.Participants do
-		if player.Parent then
-			table.insert(list, player)
-			if won then
-				ProgressService.AddCoins(player, cfg.Coins, "Horde")
-				LootService.Grab(player, roll(current.Spot, cfg))
-				event(player, "Horde")
-			end
-		end
-	end
-	if won then
-		announce(list, "HORDE BESIEGT", current.Spot.Title .. " · +" .. cfg.Coins .. " Münzen und Beute", "Good")
-	else
-		announce(list, "DIE HORDE ZIEHT WEITER", current.Spot.Title, "Info")
-	end
-	publish()
-end
-
-local function hordeStep(t)
-	local cfg = A.Horde
-	if not horde then
-		if t >= nextHorde then
-			if not ActivityService.StartHorde() then
-				nextHorde = t + 60 -- keiner draußen oder kein passender Ort: bald nochmal
-			end
-		end
-		return
-	end
-	for _, player in playersNear(horde.Spot.Position, cfg.Range) do
-		horde.Participants[player] = true
-	end
-	local alive = 0
-	for _, model in horde.Models do
-		local humanoid = model.Parent and model:FindFirstChildOfClass("Humanoid")
-		if humanoid and humanoid.Health > 0 then
-			alive += 1
-		end
-	end
-	if alive == 0 or t >= horde.Ends then
-		endHorde(horde.Killed >= math.ceil(horde.Total * cfg.Win))
-	end
-end
-
 -- ---------- Ablauf ----------
 
 function ActivityService.Spots()
 	return spots
-end
-
-function ActivityService.Horde()
-	return horde
 end
 
 function ActivityService.Step()
@@ -799,7 +663,6 @@ function ActivityService.Step()
 			survivorStep(spot, t)
 		end
 	end
-	hordeStep(t)
 	publish()
 end
 
@@ -807,14 +670,12 @@ end
 function ActivityService.Init(opts)
 	options = opts
 	spots = {}
-	horde = nil
-	nextHorde = now() + A.Horde.FirstDelay
 	folder:ClearAllChildren()
 	local group = options.Map:FindFirstChild("Activities")
 	local n = 0
 	for _, marker in group and group:GetChildren() or {} do
 		local kind = marker:IsA("BasePart") and string.match(marker.Name, "^Act_([A-Za-z]+)")
-		if kind and (A[kind] or kind == "Horde") then
+		if kind and A[kind] then
 			n += 1
 			local _, yaw = marker.CFrame:ToOrientation()
 			local spot = { Id = kind .. n, Kind = kind, Title = marker:GetAttribute("Title") or kind,

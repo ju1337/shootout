@@ -1,6 +1,7 @@
--- Rangliste der roten Zonen (RedzoneBoard): Spieler-Kills zählen in der Zone des Opfers, sonst in der des Schützen,
--- draußen gar nicht; sortiert nach Kills (Gleichstand: wer die Zahl früher erreicht hat); die Wanderzone beginnt nach
--- jedem Wechsel neu, die Gesamtliste nicht; wer die offene Welt verlässt, fällt raus; Attribut RedzoneBoard an der Karte
+-- Rangliste der roten Zonen (RedzoneBoard): jede Zone hat ihre eigene Liste; Spieler-Kills zählen in der Zone des
+-- Opfers, sonst in der des Schützen, draußen gar nicht; sortiert nach Kills (Gleichstand: wer die Zahl früher erreicht
+-- hat); die Wanderzone beginnt jede Runde (nach jedem Wechsel) neu; wer die offene Welt verlässt, fällt raus; Attribut
+-- RedzoneBoard an der Karte (ohne Gesamtliste)
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -100,7 +101,7 @@ end
 -- Am Anfang: feste Zone mit Titel und leerer Liste
 local data = published()
 check(type(data.Zones) == "table" and type(data.Zones.Test) == "table" and data.Zones.Test.Title == "Testzone"
-	and #data.Zones.Test.List == 0 and type(data.Total) == "table" and #data.Total == 0, "leere Rangliste an der Karte")
+	and #data.Zones.Test.List == 0 and data.Total == nil, "leere Rangliste an der Karte, keine Gesamtliste")
 local moving = RedzoneService.MoveNow("Nord")
 check(moving ~= nil and moving.Key == "Nord", "Wanderzone steht in Nordheim")
 data = published()
@@ -135,26 +136,27 @@ data = published()
 check(#data.Zones.Test.List == 2 and data.Zones.Test.List[1].Name == "Carl" and data.Zones.Test.List[1].Kills == 2
 	and data.Zones.Test.List[1].Id == carl.UserId, "Liste mit Id, Name und Kills an der Karte")
 
--- Wanderzone: eigene Liste, Gesamtliste zählt alles zusammen
+-- Wanderzone: eigene Liste (die feste Zone zählt das nicht mit)
 place(dana, Vector3.new(0, 3, 900))
 place(bob, Vector3.new(20, 3, 910))
 Extinction.OnKill(dana, bob)
-check(names(RedzoneBoard.List("Wanderzone")) == "Dana=1", "Kill in der Wanderzone (" .. names(RedzoneBoard.List("Wanderzone")) .. ")")
-check(names(RedzoneBoard.List()) == "Carl=2,Alice=2,Dana=1", "Gesamtliste aller Zonen (" .. names(RedzoneBoard.List()) .. ")")
--- Wechsel der Wanderzone: neue, leere Liste; Gesamtliste bleibt
+Extinction.OnKill(dana, bob)
+check(names(RedzoneBoard.List("Wanderzone")) == "Dana=2", "Kills in der Wanderzone (" .. names(RedzoneBoard.List("Wanderzone")) .. ")")
+check(names(RedzoneBoard.List("Test")) == "Carl=2,Alice=2", "feste Zone zählt die Wanderzone nicht mit")
+-- Wechsel der Wanderzone: neue Runde mit leerer Liste, dort zählt alles von vorn
 RedzoneService.MoveNow("Nord")
 check(#RedzoneBoard.List("Wanderzone") == 0, "nach dem Wechsel beginnt die Wanderzone neu")
 data = published()
-check(type(data.Zones.Wanderzone) == "table" and #data.Zones.Wanderzone.List == 0 and #data.Total == 3,
-	"Wechsel an der Karte: Wanderzone leer, Gesamtliste unverändert")
+check(type(data.Zones.Wanderzone) == "table" and #data.Zones.Wanderzone.List == 0, "Wechsel an der Karte: Wanderzone leer")
 check(names(RedzoneBoard.List("Test")) == "Carl=2,Alice=2", "feste Zone bleibt beim Wechsel")
+Extinction.OnKill(dana, bob)
+check(names(RedzoneBoard.List("Wanderzone")) == "Dana=1", "neue Runde zählt von vorn (" .. names(RedzoneBoard.List("Wanderzone")) .. ")")
 
 -- Wer die offene Welt verlässt, fällt aus allen Listen
 Extinction.RemovePlayer(carl)
-check(names(RedzoneBoard.List("Test")) == "Alice=2" and names(RedzoneBoard.List()) == "Alice=2,Dana=1", "Carl ist raus ("
-	.. names(RedzoneBoard.List()) .. ")")
+check(names(RedzoneBoard.List("Test")) == "Alice=2", "Carl ist raus (" .. names(RedzoneBoard.List("Test")) .. ")")
 data = published()
-check(#data.Total == 2 and data.Total[1].Name == "Alice", "auch an der Karte")
+check(#data.Zones.Test.List == 1 and data.Zones.Test.List[1].Name == "Alice", "auch an der Karte")
 
 -- Ohne Wanderzone (keine Ziele mehr): Liste weg
 north:Destroy()
