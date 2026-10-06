@@ -14,10 +14,12 @@ local MovementGuard = {}
 
 local CHECK_INTERVAL = 0.2 -- so oft wird geprüft (Sekunden)
 -- Schnellste legale Bewegung waagerecht: Sprint mit Tempo-Fähigkeit und Runner ca. 47 Studs/s,
--- Fallschirmsprung 55, Rutschen 42, Sprint-Stoß 90 (nur 0,25 s)
+-- Fallschirmsprung 55, Rutschen bis 50 (bergab, MovementPhysics.SlideMax), Schwung in der Luft bis 46,
+-- Vault ca. 24, Sprint-Stoß 90 (nur 0,25 s)
 local FLAT_SPEED = 62      -- erlaubtes Dauertempo waagerecht (Studs/s)
 local FLAT_BURST = 100     -- Vorrat dafür (Studs)
--- Steigen: Treppen im Sprint ca. 30 Studs/s, Sprung 6,4 Studs, Hochziehen an Kanten bis 6,6 Studs
+-- Steigen: Treppen im Sprint ca. 30 Studs/s, Sprung 6,4 Studs, Hochziehen an Kanten bis 7,8 Studs (aus dem Sprung bis
+-- 9,5 über dem Boden), Vault bis 4,9 Studs
 local UP_SPEED = 50        -- erlaubtes Steigen (Studs/s)
 local UP_BURST = 40        -- Vorrat dafür (Studs)
 local WARN_INTERVAL = 5    -- höchstens so oft (Sekunden) pro Spieler eine Warnung ins Log

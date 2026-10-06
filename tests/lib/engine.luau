@@ -323,7 +323,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
 	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged",
-	"LastInputTypeChanged" } do
+	"LastInputTypeChanged", "JumpRequest" } do
 	SIGNAL_NAMES[name] = true
 end
 
@@ -941,6 +941,8 @@ ClassInit.Humanoid = function(self)
 	props.JumpHeight = 7.2
 	props.HipHeight = 2
 	props.MoveDirection = Vector3.zero
+	props.CameraOffset = Vector3.zero
+	props.AutoRotate = true
 	props.FloorMaterial = Enum.Material.Plastic
 	props.BreakJointsOnDeath = true
 	props.PlatformStand = false
@@ -1030,6 +1032,9 @@ ClassMethods.Humanoid = {
 	end,
 	MoveTo = function(self, position)
 		rawget(self, "__props").MoveToTarget = position
+	end,
+	Move = function(self, direction)
+		rawget(self, "__props").MoveDirection = direction
 	end,
 	ChangeState = function(self, state)
 		rawget(self, "__props").State = state
@@ -1243,6 +1248,7 @@ ClassInit.Camera = function(self)
 	props.CFrame = CFrame.new()
 	props.FieldOfView = 70
 	props.ViewportSize = Vector2.new(1920, 1080)
+	props.CameraType = Enum.CameraType.Custom
 end
 
 SIM.Instance = Instance

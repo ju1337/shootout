@@ -1,7 +1,7 @@
 -- ViewModel (ModuleScript, nur Client)
 -- Waffe mit Armen vor der eigenen Kamera (Ego-Perspektive):
 --   * Hüfte <-> Zielen: beim Zielen liegt die Visierlinie (Kimme + Korn) genau in der Bildmitte
---   * Sprint-Haltung, Schwanken beim Umsehen, Wippen beim Laufen, Eintauchen beim Landen
+--   * Sprint-Haltung, Schwanken beim Umsehen, Wippen beim Laufen, Eintauchen beim Landen, gekippt beim Rutschen
 --   * Rückschlag mit Federung, Ziehen beim Waffenwechsel
 --   * Nachlade- und Schuss-Animationen aus WeaponAnimations (Magazin, Schlitten, Pumpe, linke Hand, ...)
 -- Alles ist auf SCALE verkleinert und entsprechend näher an der Kamera: sieht gleich aus, ragt aber
@@ -112,6 +112,7 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments)
 	self.BobPhase = 0
 	self.Bob = 0
 	self.SprintBlend = 0
+	self.SlideBlend = 0
 	self.DrawStart = os.clock()
 	self.LastLook = nil
 	self.GunWorld = CFrame.new()
@@ -143,7 +144,7 @@ function ViewModel:Land(speed)
 	self.Dip.Velocity += Vector3.new(0, -math.clamp(speed, 0, 60) * 0.06, 0)
 end
 
--- state: Camera (CFrame), Aim (0..1), Sprinting, Speed (Studs/s am Boden, 0 in der Luft),
+-- state: Camera (CFrame), Aim (0..1), Sprinting, Sliding, Speed (Studs/s am Boden, 0 in der Luft),
 -- Reload/Fire = { Anim, T } oder nil, Melee (Messer gerade draußen)
 function ViewModel:Update(dt, state)
 	dt = math.min(dt, 1 / 20)
@@ -174,12 +175,18 @@ function ViewModel:Update(dt, state)
 		* CFrame.Angles(0, 0, math.sin(self.BobPhase) * math.rad(1.2) * bobAmount)
 
 	self.SprintBlend += ((state.Sprinting and state.Aim < 0.1 and 1 or 0) - self.SprintBlend) * math.min(1, dt * 10)
+	self.SlideBlend += ((state.Sliding and 1 or 0) - self.SlideBlend) * math.min(1, dt * 9)
 
 	-- Grundhaltung: Hüfte -> Zielen (Kimme in der Bildmitte) -> Sprint
 	local aim = smooth(state.Aim)
 	local base = self.Hip:Lerp(self.Aim, aim)
 	if self.SprintBlend > 0.001 then
 		base = base:Lerp(base * SPRINT, smooth(self.SprintBlend))
+	end
+	-- Rutschen: Waffe kippt zur Seite und sinkt etwas (beim Zielen weniger)
+	if self.SlideBlend > 0.001 then
+		local slide = smooth(self.SlideBlend) * (1 - aim * 0.7)
+		base = CFrame.new(0.05 * slide, -0.08 * slide, 0.05 * slide) * CFrame.Angles(0, 0, math.rad(-16) * slide) * base
 	end
 	local kick, sway = self.Kick.Value, self.Sway.Value
 	local gun = bob * CFrame.new(0, self.Dip.Value.Y, 0) * base

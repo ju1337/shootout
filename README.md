@@ -456,12 +456,27 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
   das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
   rückt die Kamera seitlich an den Kopf statt durch die Wand zu schauen (Werte oben in `src/shared/Movement.lua`)
+- **Bewegung** (`src/shared/Movement.lua`, Rechnungen und alle Werte in `src/shared/MovementPhysics.lua`):
+  - Tempo läuft weich an (Gehen -> Sprint in gut 0,2 s) und schneller wieder ab; in der Luft hält der Schwung vom
+    Absprung (Sprint loslassen bremst nicht mitten im Sprung)
+  - **Rutschen** (im Sprint ducken, Tippen reicht): Schub aus dem aktuellen Tempo (+9), Reibung (flach ca. 1 s und
+    20-30 Studs), bergab schneller und länger (bis 50 Studs/s), bergauf kürzer, mit WASD lenkbar (110°/s). Springen
+    aus dem Rutschen nimmt den Schwung mit in die Luft; mit gehaltener Ducken-Taste landen = weiter rutschen. Der
+    Schub lädt erst in 1,4 s wieder auf – Rutsch-Sprung-Ketten bleiben nahe am Sprinttempo
+  - **Springen**: Coyote-Time (0,12 s nach dem Verlassen einer Kante geht der Sprung noch), Sprungpuffer (0,15 s vor
+    dem Landen gedrückt = Sprung beim Landen), harte Landungen (ab ca. 18 Studs Fall) bremsen kurz
+  - **Hindernisse**: Springen vor einem niedrigen, dünnen Hindernis (1,3-4,4 hoch, bis 4,5 tief) im Lauf = drüber
+    (Vault, der Schwung bleibt), langsam oder an höheren Kanten (bis 7,8 über den Füßen) = hochziehen – auch aus dem
+    Sprung heraus (Leertaste/✕ gehalten, auf die Kante zu; höchstens 9,5 über dem letzten Boden)
+  - Kamera: Sichtfeld weitet sich beim Sprinten und noch mehr beim Rutschen, leichte Neigung beim Seitwärtslaufen
+    und deutliche beim Rutschen, Wippen beim Laufen (Ego), Eintauchen bei harten Landungen; in der Ego-Ansicht
+    kippt die Waffe beim Rutschen weg. Ducken gleitet (Hüfte in 0,12 s)
 - **Bewegungs-Check** (`src/server-shared/MovementGuard.lua`): Der Server vergleicht 5-mal pro Sekunde die
   zurückgelegte Strecke jedes Spielers mit dem erlaubten Tempo (waagerecht 62 Studs/s, nach oben 50, dazu ein
   Vorrat von 100 bzw. 40 Studs für Sprint-Stoß und Lag-Spitzen; Fallen ist frei). Wer schneller ist (Speedhack)
   oder springt (Teleport), wird an die letzte gültige Stelle zurückgesetzt, im Server-Log steht eine Warnung.
-  Legale Bewegungen (Sprint mit allen Boni, Rutschen, Sprint-Stoß, Fallschirmsprung, Treppen, Klettern, Lag bis
-  ca. 1,5 s) liegen darunter. Versetzt der Server einen Charakter selbst, ruft er danach
+  Legale Bewegungen (Sprint mit allen Boni, Rutschen bergab mit 50 Studs/s, Rutsch-Sprünge, Vault, Hochziehen,
+  Sprint-Stoß, Fallschirmsprung, Treppen, Lag bis ca. 1,5 s) liegen darunter. Versetzt der Server einen Charakter selbst, ruft er danach
   `MovementGuard.Teleported(character)` auf (macht `SpawnUtil.Spawn` schon)
 - **Schießen wie bei Rogue Company**:
   - Schulterkamera: dynamisches Fadenkreuz (Abstand = echte Streuung durch Laufen, Springen, Dauerfeuer),
@@ -470,7 +485,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     zeigt ein rotes ⊘ die Stelle
   - Ego-Perspektive: jede Waffe hat Kimme und Korn (mit Leuchtpunkt), das Sturmgewehr ein Rotpunktvisier (Gehäuse,
     Rahmen mit getöntem Glas, roter Punkt mittig im Fenster); beim Zielen liegt die Visierlinie genau
-    in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen, gesenkt beim Sprinten
+    in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen, gesenkt beim Sprinten, gekippt beim Rutschen
   - Nachlade-Animation je Waffe (Magazin fällt heraus, Schlitten, Spannhebel, LMG-Deckel, Revolver-Trommel,
     Schrotflinte Patrone für Patrone – Schießen bricht dort das Nachladen ab), auch in der Third-Person bei allen
     Spielern und Bots sichtbar: Charaktere halten die Waffe mit beiden Händen im Schulteranschlag auf
@@ -502,7 +517,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 
 ## Steuerung
 
-WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Slide) · Springen vor Kanten: Klettern ·
+WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Rutschen, Springen daraus nimmt den Schwung mit) ·
+Springen vor Hindernissen: drüber (im Lauf) oder hochziehen ·
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
@@ -543,6 +559,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Licht und Farbkorrektur der Welt | `Lighting` in `default.project.json` |
 | Team-Uniformfarben (je Modus eindeutig) | `Teams` in `src/server/Modes/*.lua` |
 | Schulterkamera (Versatz, Abstand, beim Zielen) | `SHOULDER_*` in `src/shared/Movement.lua` |
+| Bewegung (Sprint, Rutschen, Sprünge, Vault, Hochziehen, Kamera-Neigung) | `src/shared/MovementPhysics.lua` |
 | Minimap (Farben, Zoom) | `src/shared/Minimap.lua`, Zuschnitt auf den Kreis in `src/shared/MinimapShapes.lua` |
 | Ziel-Text und Zielmarker je Modus | `Goal` / `Objectives` in `src/shared/Modes.lua` |
 | Agenten (Leben, Tempo, Waffen, Fähigkeit, Gadget), Level | `src/shared/AgentConfig.lua` |
@@ -608,7 +625,8 @@ am Commit:
 | `medals` | Medaillen im KillService (Mehrfach-Kill, Serien, Rache, Weitschuss, ...), mit beiden Signal-Modi von Roblox |
 | `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
-| `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
+| `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Rutschen bergab, Rutsch-Sprünge, Vault, Hochziehen, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
+| `movementfeel` | Bewegungsgefühl: Tempo-Rampe, Rutschen (Schub, Reibung, Hang, Lenken, keine Tempo-Ketten), Rutsch-Sprung mit Schwung, Schwung in der Luft, Coyote-Time, Sprungpuffer, harte Landung, Vault über dünne Mauern, Hochziehen (auch aus dem Sprung), zu hohe Wände nicht, Kamera-Neigung nur bei Roblox-Kamera |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
 | `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automaten, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge |
 | `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis nur im Hub/Markt, Esc schließt |

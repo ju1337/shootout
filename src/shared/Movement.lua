@@ -1,13 +1,20 @@
 -- Movement (ModuleScript, nur Client)
--- First-Person-Ansicht, Sprinten (Shift), Ducken (STRG oder C, gedrückt halten),
--- Sliden (im Sprint ducken), Klettern über Kanten (Springen vor einer Kante) und Zielen
--- (setzt WeaponClient über SetAiming).
--- Grundtempo kommt vom Agenten, Fähigkeiten können es per "SpeedMultiplier" erhöhen.
--- Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung,
--- jederzeit mit T umschalten). Der Charakter steht links im Bild, die Bildmitte (Fadenkreuz) bleibt frei –
--- auch beim Zielen, wenn die Kamera näher heranrückt. Steht rechts eine Wand, rückt die Kamera seitlich
--- an den Kopf heran, statt durch die Wand zu schauen. Sichtfeld, Abstand und Kamera-Versatz gleiten weich
--- (RenderStep "CameraSmooth"). Schießen unterbricht den Sprint kurz.
+-- Bewegung und Kamera des eigenen Charakters. Die Rechnungen stehen in MovementPhysics, hier nur Ablauf und Roblox.
+--   * Tempo: Grundtempo vom Agenten (Fähigkeiten können es per "SpeedMultiplier" erhöhen), Sprinten (Shift), Ducken
+--     (STRG oder C, gedrückt halten), Zielen. Das Tempo läuft weich an und ab (WalkSpeed folgt einer Rampe).
+--   * Rutschen: im Sprint (oder mit Schwung) ducken. Schub aus dem aktuellen Tempo, Reibung, bergab schneller und
+--     bergauf kürzer, mit der Eingabe lenkbar. Springen aus dem Rutschen nimmt den Schwung mit in die Luft, beim Landen
+--     mit gedrückter Ducken-Taste geht es direkt weiter (Schub lädt erst wieder auf: kein Dauer-Tempo).
+--   * Springen: Coyote-Time (kurz nach dem Verlassen einer Kante geht der Sprung noch) und Sprungpuffer (kurz vor dem
+--     Landen gedrückt = Sprung beim Landen). Harte Landungen bremsen kurz und lassen die Kamera eintauchen.
+--   * Hindernisse: Springen vor einem niedrigen, dünnen Hindernis = drüberspringen (Vault, der Schwung bleibt), vor
+--     einer höheren Kante = hochziehen. Klappt auch aus dem Sprung heraus, wenn man auf die Kante zu läuft.
+--   * Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung, jederzeit mit T
+--     umschalten). Der Charakter steht links im Bild, die Bildmitte (Fadenkreuz) bleibt frei – auch beim Zielen, wenn
+--     die Kamera näher heranrückt. Steht rechts eine Wand, rückt die Kamera seitlich an den Kopf heran, statt durch die
+--     Wand zu schauen. Sichtfeld, Abstand und Kamera-Versatz gleiten weich (RenderStep "CameraSmooth"); dazu leichtes
+--     Neigen beim Seitwärtslaufen und Rutschen, Wippen beim Laufen (Ego) und Eintauchen beim Landen.
+--   * Schießen unterbricht den Sprint kurz. Zielen setzt WeaponClient über SetAiming.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,27 +27,25 @@ local Modes = require(Shared.Modes)
 local BuyConfig = require(Shared.BuyConfig)
 local InputActions = require(Shared.InputActions)
 local PlayerSettings = require(Shared.PlayerSettings)
+local P = require(Shared.MovementPhysics)
 
 local player = Players.LocalPlayer
 
 local Movement = {}
 
 local DEFAULT_SPEED = 16
-local SPRINT_FACTOR = 1.5
-local CROUCH_FACTOR = 0.5
-local AIM_FACTOR = 0.6         -- langsamer beim Zielen
 local aimSensitivity = 0.6     -- Maus langsamer beim Zielen (Einstellung "Empfindlichkeit beim Zielen")
 local SPRINT_FOV_BONUS = 8
+local SLIDE_FOV_BONUS = 6
 local CROUCH_CAMERA = Vector3.new(0, -1.3, 0)
 local CROUCH_HIP_FACTOR = 0.55 -- Körper sinkt ab (kleineres Ziel)
-local SLIDE_SPEED = 42
-local SLIDE_END_SPEED = 18
-local SLIDE_TIME = 0.7
-local SLIDE_COOLDOWN = 1.2
-local MANTLE_MIN = 2.5         -- niedrigere Hindernisse einfach überspringen
-local MANTLE_MAX = 6.5         -- höchste Kante, an der man sich hochzieht
-local MANTLE_REACH = 3.5       -- so nah muss die Wand vor einem sein
-local MANTLE_TIME = 0.3
+local CROUCH_TIME = 0.12       -- so lange dauert Hinhocken und Aufstehen
+local SLIDE_AIR_TIME = 0.18    -- so lange ohne Boden, dann ist man über eine Kante gerutscht (Schwung in die Luft)
+local JUMP_INTENT = 0.4        -- so lange nach dem Drücken zählt Springen für das Hochziehen aus der Luft
+local DIP_SPRING = 140         -- Federhärte des Eintauchens beim Landen
+local DIP_DAMPING = 18
+local TILT_SMOOTH = 8          -- wie schnell die Neigung nachzieht
+local MOMENTUM_GRACE = 0.3     -- so lange bleibt Schwung am Boden stehen, bis der Absprung kommt
 
 local normalFov = 70
 local sensitivity = 1
@@ -48,10 +53,7 @@ local sprintHeld = false
 local crouchHeld = false
 local aiming = false
 local aimFov = 50
-local sliding = false
-local lastSlide = 0
 local normalHipHeight = nil
-local mantling = false
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
 local inVehicle = false          -- sitzt in einem Fahrzeug der offenen Welt: Verfolgerkamera statt Ego/Schulter
 -- Schulterkamera: seitlicher Versatz so groß, dass der Charakter (Arme bis 2 Studs neben der Mitte) die
@@ -68,51 +70,93 @@ local sprintBlockedUntil = 0     -- Schießen unterbricht den Sprint kurz
 local fovOverride = nil          -- z.B. Fallschirmsprung
 local targetFov = 70
 local targetOffset = Vector3.zero
+local baseOffset = Vector3.zero  -- geglätteter Kamera-Versatz (ohne Wippen und Eintauchen)
 local targetDistance = SHOULDER_DISTANCE
 local currentDistance = nil      -- aktueller Abstand der Schulterkamera (nil = nicht aktiv)
+
+-- Bewegungs-Zustand
+local speedTarget = DEFAULT_SPEED -- Ziel für WalkSpeed (apply), die Rampe läuft im Heartbeat
+local walkSpeed = nil             -- zuletzt gesetztes WalkSpeed
+local hipTarget = nil
+local slide = nil                 -- { Speed, Dir, Started, AirTime }
+local lastSlideEnd = -math.huge
+local move = nil                  -- Hindernis: { Kind, Started, Duration, Start, Near, Far, Land, Target, Dir, ExitSpeed }
+local airMomentum = 0             -- Schwung in der Luft (Absprung, Rutschen, Vault)
+local momentumAt = -math.huge     -- wann er gesetzt wurde (am Boden verfällt er nach MOMENTUM_GRACE)
+local grounded = true
+local leftGroundAt = nil          -- wann der Boden verlassen wurde (Coyote-Time)
+local jumpedAt = nil              -- letzter Absprung (Zustand Jumping)
+local jumpRequestAt = nil         -- letzter Sprung-Druck in der Luft (Sprungpuffer, Hochziehen)
+local lastGroundY = nil           -- Höhe der Füße beim letzten Bodenkontakt
+local fallSpeed = 0
+local slowUntil = 0               -- harte Landung: so lange langsamer
+local dip, dipVelocity = 0, 0     -- Kamera-Eintauchen (Studs nach unten) und seine Geschwindigkeit
+local bobPhase = 0
+local roll = 0                    -- aktuelle Kamera-Neigung (Grad)
+local slideBlend = 0              -- 0..1 weich für Kamera-Neigung und Sichtfeld beim Rutschen
+
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Exclude
+groundParams.RespectCanCollide = true
 
 local function getHumanoid()
 	local character = player.Character
 	return character and character:FindFirstChildOfClass("Humanoid"), character
 end
 
--- Fallschirmsprung läuft: dann nichts an der Haltung ändern
+-- Fallschirmsprung, niedergeschlagen, Noclip: dann nichts an Haltung und Tempo ändern
 local function isDropping(humanoid)
 	return humanoid.PlatformStand
 end
 
 local function isCrouched()
-	return (crouchHeld or sliding) and Modes.IsFighting(player)
+	return (crouchHeld or slide ~= nil) and Modes.IsFighting(player)
 end
 
 local function isSprinting()
 	return sprintHeld and not aiming and not isCrouched() and os.clock() >= sprintBlockedUntil
 end
 
+-- Grundtempo ohne Sprint/Ducken/Zielen (Agent, Fähigkeiten, Runner, Stacheldraht)
+local function baseSpeed(character)
+	local agent = character and AgentConfig.Get(character:GetAttribute("Agent"))
+	local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * (character and character:GetAttribute("SpeedMultiplier") or 1)
+	if BuyConfig.Has(player, "Runner") then
+		speed *= BuyConfig.RunnerFactor
+	end
+	-- Stacheldraht (TRAPPER): 50 % langsamer
+	if character and (character:GetAttribute("SlowedUntil") or 0) > workspace:GetServerTimeNow() then
+		speed *= 0.5
+	end
+	return speed
+end
+
+local function feetOf(root, humanoid)
+	return root.Position.Y - root.Size.Y / 2 - humanoid.HipHeight
+end
+
+-- Schwung für die Luft merken (höchstens AirMomentumMax): in der Luft hält das Tempo, statt abzubremsen
+local function giveMomentum(speed)
+	airMomentum = math.min(P.AirMomentumMax, math.max(airMomentum, speed or 0))
+	momentumAt = os.clock()
+end
+
 local function apply()
 	local humanoid, character = getHumanoid()
 	local sprinting = isSprinting()
 	if humanoid then
-		local agent = AgentConfig.Get(character:GetAttribute("Agent"))
-		local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * (character:GetAttribute("SpeedMultiplier") or 1)
+		local speed = baseSpeed(character)
 		if sprinting then
-			speed *= SPRINT_FACTOR
+			speed *= P.SprintFactor
 		elseif isCrouched() then
-			speed *= CROUCH_FACTOR
+			speed *= P.CrouchFactor
 		end
 		if aiming then
-			speed *= AIM_FACTOR
+			speed *= P.AimFactor
 		end
-		if BuyConfig.Has(player, "Runner") then
-			speed *= BuyConfig.RunnerFactor
-		end
-		-- Stacheldraht (TRAPPER): 50 % langsamer
-		if (character:GetAttribute("SlowedUntil") or 0) > workspace:GetServerTimeNow() then
-			speed *= 0.5
-		end
-		humanoid.WalkSpeed = speed
+		speedTarget = speed
 
-		-- Ducken: Kamera tiefer, Körper sinkt ab (Kamera-Versatz gleitet im RenderStep "CameraSmooth")
+		-- Ducken: Kamera tiefer, Körper sinkt ab (beides gleitet: Versatz im RenderStep, Hüfte im Heartbeat)
 		normalHipHeight = normalHipHeight or humanoid.HipHeight
 		local crouched = isCrouched() and not isDropping(humanoid)
 		local offset = crouched and CROUCH_CAMERA or Vector3.zero
@@ -122,13 +166,14 @@ local function apply()
 			targetDistance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
 		end
 		targetOffset = offset
-		humanoid.HipHeight = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
+		hipTarget = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
 	end
 
 	if aiming then
 		targetFov = aimFov
 	else
-		targetFov = sprinting and normalFov + SPRINT_FOV_BONUS or normalFov
+		-- Rutschen fühlt sich schneller an als der Sprint: dessen Bonus bleibt, dazu SLIDE_FOV_BONUS (RenderStep)
+		targetFov = (sprinting or slide) and normalFov + SPRINT_FOV_BONUS or normalFov
 	end
 	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * aimSensitivity or sensitivity
 end
@@ -157,99 +202,320 @@ local function clampShoulder(character, offset)
 	return Vector3.new(math.sign(offset.X) * free, offset.Y, offset.Z), true
 end
 
--- Slide: kurzer Schub in Laufrichtung, der langsam ausläuft
+-- ---------- Rutschen ----------
+local function endSlide()
+	if not slide then
+		return
+	end
+	slide = nil
+	lastSlideEnd = os.clock()
+	apply()
+end
+
+-- Rutschen beginnen (im Sprint oder mit Schwung am Boden ducken). true = rutscht jetzt.
 local function startSlide()
 	local humanoid, character = getHumanoid()
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not humanoid or not root or sliding or isDropping(humanoid) then
-		return
+	if not humanoid or not root or slide or move or not Modes.IsFighting(player) or isDropping(humanoid) or humanoid.Sit
+		or humanoid.Health <= 0 or character:GetAttribute("Downed") then
+		return false
 	end
-	if humanoid.FloorMaterial == Enum.Material.Air or humanoid.MoveDirection.Magnitude < 0.5 then
-		return
+	if humanoid.FloorMaterial == Enum.Material.Air then
+		return false
 	end
-	if os.clock() - lastSlide < SLIDE_COOLDOWN then
-		return
+	local velocity = root.AssemblyLinearVelocity
+	local flat = Vector3.new(velocity.X, 0, velocity.Z)
+	local dir = P.Flat(humanoid.MoveDirection) or P.Flat(flat)
+	local speed = math.max(flat.Magnitude, humanoid.MoveDirection.Magnitude > 0.5 and walkSpeed or 0)
+	local base = baseSpeed(character)
+	if not dir or speed < base * P.SlideMinStart then
+		return false
 	end
-	lastSlide = os.clock()
-	sliding = true
+	slide = { Speed = P.SlideStart(speed, base * P.SprintFactor, os.clock() - lastSlideEnd), Dir = dir, Started = os.clock(),
+		AirTime = 0 }
+	walkSpeed = slide.Speed
+	humanoid.WalkSpeed = walkSpeed
 	apply()
-	local direction = humanoid.MoveDirection.Unit
-	local started = os.clock()
-	local connection
-	connection = RunService.Heartbeat:Connect(function()
-		local t = (os.clock() - started) / SLIDE_TIME
-		if t >= 1 or not root.Parent or humanoid.Health <= 0 then
-			connection:Disconnect()
-			sliding = false
-			apply()
-			return
-		end
-		local speed = SLIDE_SPEED + (SLIDE_END_SPEED - SLIDE_SPEED) * t
-		local velocity = root.AssemblyLinearVelocity
-		root.AssemblyLinearVelocity = Vector3.new(direction.X * speed, velocity.Y, direction.Z * speed)
-	end)
+	return true
 end
 
--- Klettern: Wand vor einem, oben eine Kante mit Platz darüber -> hochziehen
-local function tryMantle()
+local function stepSlide(dt, now, humanoid, character, root, onGround)
+	if not onGround then
+		slide.AirTime += dt
+		if slide.AirTime > SLIDE_AIR_TIME then
+			-- über eine Kante gerutscht: Schwung in die Luft mitnehmen
+			giveMomentum(slide.Speed)
+			endSlide()
+			return
+		end
+	else
+		slide.AirTime = 0
+	end
+	groundParams.FilterDescendantsInstances = { character }
+	local hit = workspace:Raycast(root.Position, Vector3.new(0, -(root.Size.Y / 2 + humanoid.HipHeight + 2.5), 0), groundParams)
+	local slope = hit and P.SlopeAlong(hit.Normal, slide.Dir) or 0
+	slide.Speed = P.SlideStep(slide.Speed, dt, slope, workspace.Gravity)
+	if P.SlideOver(slide.Speed, baseSpeed(character) * P.CrouchFactor, now - slide.Started) then
+		endSlide()
+	end
+end
+
+-- ---------- Hindernisse: drüberspringen oder hochziehen ----------
+-- Misst das Hindernis vor einem (Richtung dir): Abstand der Wand, Oberkante, dünn (dahinter geht es runter), Platz
+-- über der Kante, Boden dahinter und wo das Hindernis endet. nil = keins.
+local function probeObstacle(character, rootPosition, feet, dir)
+	groundParams.FilterDescendantsInstances = { character }
+	local wall = nil
+	for _, height in { 0.9, 2.4, 4.2 } do
+		local origin = Vector3.new(rootPosition.X, feet + height, rootPosition.Z)
+		local hit = workspace:Raycast(origin, dir * P.Reach, groundParams)
+		if hit and math.abs(hit.Normal.Y) < 0.7 and (not wall or hit.Distance < wall) then
+			wall = hit.Distance
+		end
+	end
+	if not wall then
+		return nil
+	end
+	local top, topPosition = nil, nil
+	for _, inset in { 0.25, 0.8 } do
+		local origin = Vector3.new(rootPosition.X, feet + P.MantleMax + 1.2, rootPosition.Z) + dir * (wall + inset)
+		local hit = workspace:Raycast(origin, Vector3.new(0, -(P.MantleMax + 1.2), 0), groundParams)
+		if hit and (not top or hit.Position.Y > top) then
+			top, topPosition = hit.Position.Y, hit.Position
+		end
+	end
+	if not top then
+		return nil
+	end
+	-- Platz über der Kante und für den Kopf auf dem Weg nach vorn (Fensterrahmen, Decken)
+	local clear = not workspace:Raycast(topPosition + Vector3.new(0, 0.2, 0), Vector3.new(0, P.Clearance, 0), groundParams)
+	if clear then
+		local head = Vector3.new(rootPosition.X, top + 2.6, rootPosition.Z)
+		clear = not workspace:Raycast(head, dir * (wall + 1.5), groundParams)
+	end
+	-- Wo endet die Oberseite? Dahinter tiefer als die Kante = dünn (drüberspringen)
+	local far, behind = nil, nil
+	for _, depth in { 1, 2, 3, P.VaultThickness } do
+		local origin = Vector3.new(rootPosition.X, top + 0.6, rootPosition.Z) + dir * (wall + depth)
+		local hit = workspace:Raycast(origin, Vector3.new(0, -(top - feet + 6), 0), groundParams)
+		if not hit or hit.Position.Y < top - 1 then
+			far, behind = depth, hit and hit.Position or nil
+			break
+		end
+	end
+	return { Wall = wall, Top = top, Thin = far ~= nil, Far = far, Behind = behind, Clear = clear }
+end
+
+local function startMove(kind, probe, dir, humanoid, root)
+	local hip = root.Size.Y / 2 + humanoid.HipHeight -- Füße bis Mitte des HumanoidRootPart
+	local start = root.Position
+	local velocity = root.AssemblyLinearVelocity
+	local speed = math.max(Vector3.new(velocity.X, 0, velocity.Z).Magnitude, walkSpeed or DEFAULT_SPEED)
+	local feet = feetOf(root, humanoid)
+	local flatStart = Vector3.new(start.X, 0, start.Z)
+	local function at(distance, y)
+		local p = flatStart + dir * distance
+		return Vector3.new(p.X, y, p.Z)
+	end
+	local over = probe.Top + hip + 0.5
+	if kind == "Vault" then
+		local landY = probe.Behind and probe.Behind.Y + hip or math.min(start.Y, over - 2)
+		move = { Kind = "Vault", Started = os.clock(), Start = start, Near = at(probe.Wall + 0.3, over),
+			Far = at(probe.Wall + probe.Far, over), Land = at(probe.Wall + probe.Far + 1.6, landY), Dir = dir,
+			Duration = P.VaultTime(probe.Top - feet, probe.Wall + probe.Far + 1.6), ExitSpeed = math.max(speed, DEFAULT_SPEED) }
+	else
+		move = { Kind = "Mantle", Started = os.clock(), Start = start, Target = at(probe.Wall + 1.4, probe.Top + hip + 0.05),
+			Dir = dir, Duration = P.MantleTime(probe.Top - feet), ExitSpeed = 4 }
+	end
+	endSlide()
+	airMomentum = 0
+	dipVelocity -= 1.6 -- kleiner Ruck der Kamera beim Abstoßen
+end
+
+local function stepMove(now, root)
+	local t = math.min(1, (now - move.Started) / move.Duration)
+	local position = move.Kind == "Vault" and P.VaultPoint(move.Start, move.Near, move.Far, move.Land, t)
+		or P.MantlePoint(move.Start, move.Target, t)
+	root.CFrame = CFrame.new(position) * root.CFrame.Rotation
+	root.AssemblyLinearVelocity = Vector3.zero
+	if t >= 1 then
+		local exit = move.Dir * move.ExitSpeed
+		root.AssemblyLinearVelocity = Vector3.new(exit.X, 0, exit.Z)
+		if move.Kind == "Vault" then
+			-- Schwung bleibt: weiter mit dem Tempo von vorher
+			giveMomentum(move.ExitSpeed)
+			walkSpeed = math.max(walkSpeed or 0, move.ExitSpeed)
+		end
+		move = nil
+	end
+end
+
+-- Hindernis vor einem nehmen (inAir = aus dem Sprung heraus). true = Bewegung läuft.
+local function tryObstacle(inAir)
 	local humanoid, character = getHumanoid()
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if mantling or sliding or not humanoid or not root or humanoid.Health <= 0 or isDropping(humanoid) then
-		return
+	if move or not humanoid or not root or humanoid.Health <= 0 or isDropping(humanoid) or humanoid.Sit or inVehicle
+		or character:GetAttribute("Downed") then
+		return false
 	end
-	if character:GetAttribute("Downed") then
-		return
+	local wish = P.Flat(humanoid.MoveDirection)
+	if inAir and (not wish or humanoid.MoveDirection.Magnitude < 0.3) then
+		return false -- in der Luft nur, wenn man auf die Kante zu will
 	end
-	local look = root.CFrame.LookVector
-	look = Vector3.new(look.X, 0, look.Z)
-	if look.Magnitude < 0.01 then
-		return
+	local dir = wish or P.Flat(root.CFrame.LookVector)
+	if not dir then
+		return false
 	end
-	look = look.Unit
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { character }
+	local feet = feetOf(root, humanoid)
+	local probe = probeObstacle(character, root.Position, feet, dir)
+	if not probe then
+		return false
+	end
+	local fromGround = inAir and lastGroundY and (probe.Top - lastGroundY) or nil
+	-- im Lauf über dünne Hindernisse drüber, langsam (oder im Stand) hinauf
+	local velocity = root.AssemblyLinearVelocity
+	local fast = Vector3.new(velocity.X, 0, velocity.Z).Magnitude >= baseSpeed(character) * 1.05
+	local kind = P.Classify(probe.Top - feet, probe.Thin, fromGround, probe.Clear, fast)
+	if not kind then
+		return false
+	end
+	startMove(kind, probe, dir, humanoid, root)
+	return true
+end
 
-	local wall = workspace:Raycast(root.Position, look * MANTLE_REACH, params)
-	if not wall then
+-- ---------- Springen ----------
+-- Springen gerade gedrückt? (Tastatur: Leertaste, Controller: ✕; Touch über die Zeitfenster nach dem Drücken)
+local function jumpHeld()
+	local device = InputActions.Device()
+	if device == "Keyboard" then
+		return UserInputService:IsKeyDown(Enum.KeyCode.Space)
+	elseif device == "Gamepad" then
+		return UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonA)
+	end
+	return false
+end
+
+local function onJumpRequest()
+	local humanoid = getHumanoid()
+	if not humanoid or humanoid.Health <= 0 or isDropping(humanoid) or humanoid.Sit or move or inVehicle then
 		return
 	end
-	local feetY = root.Position.Y - root.Size.Y / 2 - humanoid.HipHeight
-	local probe = Vector3.new(root.Position.X, feetY + MANTLE_MAX + 0.5, root.Position.Z) + look * (wall.Distance + 1.2)
-	local ledge = workspace:Raycast(probe, Vector3.new(0, -(MANTLE_MAX + 1), 0), params)
-	if not ledge then
+	local now = os.clock()
+	local inAir = humanoid.FloorMaterial == Enum.Material.Air
+	if inAir then
+		jumpRequestAt = now
+	end
+	if tryObstacle(inAir) then
 		return
 	end
-	local height = ledge.Position.Y - feetY
-	if height < MANTLE_MIN or height > MANTLE_MAX then
+	if slide then
+		-- aus dem Rutschen springen: der Schwung kommt mit (der Humanoid springt selbst)
+		giveMomentum(slide.Speed)
+		endSlide()
 		return
 	end
-	-- Oben muss Platz für den Körper sein
-	if workspace:Raycast(ledge.Position + Vector3.new(0, 0.2, 0), Vector3.new(0, 5, 0), params) then
+	if inAir and P.CoyoteOk(now, leftGroundAt, jumpedAt) then
+		-- gerade erst von der Kante: der Sprung zählt noch
+		jumpedAt = now
+		jumpRequestAt = nil
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end
+
+local function onLanded(humanoid, now)
+	local impact = fallSpeed
+	fallSpeed = 0
+	airMomentum = 0
+	dipVelocity -= P.LandDip(impact) * 9
+	if impact >= P.HardLanding and not crouchHeld then
+		slowUntil = now + P.HardLandingTime
+	end
+	if P.Buffered(now, jumpRequestAt) then
+		jumpRequestAt = nil
+		humanoid.Jump = true
 		return
+	end
+	jumpRequestAt = nil
+	if crouchHeld then
+		startSlide() -- mit Schwung gelandet und Ducken gehalten: weiter rutschen
+	end
+end
+
+-- ---------- Ablauf je Bild ----------
+local function step(dt)
+	local humanoid, character = getHumanoid()
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not root or humanoid.Health <= 0 then
+		slide, move = nil, nil
+		return
+	end
+	if isDropping(humanoid) or humanoid.Sit or inVehicle then
+		slide, move, airMomentum = nil, nil, 0
+		walkSpeed = humanoid.WalkSpeed
+		return
+	end
+	local now = os.clock()
+	local velocity = root.AssemblyLinearVelocity
+	local onGround = humanoid.FloorMaterial ~= Enum.Material.Air
+	if onGround and not grounded then
+		grounded = true
+		onLanded(humanoid, now)
+	elseif not onGround and grounded then
+		grounded = false
+		leftGroundAt = now
+		giveMomentum(walkSpeed) -- Absprung: das Tempo bleibt in der Luft (Sprint loslassen bremst nicht mitten im Sprung)
+	end
+	if onGround then
+		lastGroundY = feetOf(root, humanoid)
+	else
+		fallSpeed = math.max(0, -velocity.Y)
 	end
 
-	mantling = true
-	local startPos = root.Position
-	local target = ledge.Position + Vector3.new(0, humanoid.HipHeight + root.Size.Y / 2 + 0.1, 0)
-	local rotation = CFrame.lookAt(Vector3.zero, look)
-	local started = os.clock()
-	local connection
-	connection = RunService.Heartbeat:Connect(function()
-		local t = math.min(1, (os.clock() - started) / MANTLE_TIME)
-		-- Erst hoch, dann nach vorne
-		local up = math.min(1, t * 1.6)
-		local position = Vector3.new(
-			startPos.X + (target.X - startPos.X) * t,
-			startPos.Y + (target.Y - startPos.Y) * up,
-			startPos.Z + (target.Z - startPos.Z) * t)
-		root.CFrame = CFrame.new(position) * rotation
-		root.AssemblyLinearVelocity = Vector3.zero
-		if t >= 1 or not root.Parent then
-			connection:Disconnect()
-			mantling = false
+	if move then
+		stepMove(now, root)
+		return
+	end
+	-- aus dem Sprung an eine Kante: hochziehen, solange Springen gedrückt ist oder kurz vorher gedrückt wurde
+	if not onGround and (jumpHeld() or (jumpRequestAt ~= nil and now - jumpRequestAt <= JUMP_INTENT)
+		or (jumpedAt ~= nil and now - jumpedAt <= JUMP_INTENT)) then
+		if tryObstacle(true) then
+			return
 		end
-	end)
+	end
+	if slide then
+		stepSlide(dt, now, humanoid, character, root, onGround)
+	end
+
+	-- Tempo: Rampe zum Ziel, Rutschen direkt, in der Luft hält der Schwung
+	local target = speedTarget
+	if now < slowUntil then
+		target *= P.HardLandingSlow
+	end
+	walkSpeed = walkSpeed or humanoid.WalkSpeed
+	if onGround and airMomentum > 0 and now - momentumAt > MOMENTUM_GRACE then
+		airMomentum = 0 -- kein Absprung gekommen (z.B. Decke über dem Kopf): Schwung verfällt
+	end
+	if slide then
+		walkSpeed = slide.Speed
+	elseif not onGround and airMomentum > 0 then
+		airMomentum = P.AirStep(airMomentum, dt)
+		walkSpeed = math.max(airMomentum, P.Approach(walkSpeed, target, dt))
+	else
+		walkSpeed = P.Approach(walkSpeed, target, dt)
+	end
+	if math.abs(humanoid.WalkSpeed - walkSpeed) > 0.01 then
+		humanoid.WalkSpeed = walkSpeed
+	end
+
+	-- Ducken weich: Hüfte gleitet
+	if hipTarget and normalHipHeight then
+		local rate = normalHipHeight * (1 - CROUCH_HIP_FACTOR) / CROUCH_TIME
+		local hip = humanoid.HipHeight
+		local nextHip = hip < hipTarget and math.min(hipTarget, hip + rate * dt) or math.max(hipTarget, hip - rate * dt)
+		if math.abs(nextHip - hip) > 0.0001 then
+			humanoid.HipHeight = nextHip
+		end
+	end
 end
 
 -- An = First Person, Aus = Kamera hinter dem Ziel (z.B. beim Zuschauen)
@@ -343,6 +609,22 @@ function Movement.IsSprinting()
 	return isSprinting() and Modes.IsFighting(player) and humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.1
 end
 
+-- Rutscht der Spieler gerade? (Waffe in der Ego-Ansicht gekippt)
+function Movement.IsSliding()
+	return slide ~= nil
+end
+
+-- Springt er gerade über ein Hindernis oder zieht sich hoch? ("Vault", "Mantle" oder nil)
+function Movement.Obstacle()
+	return move and move.Kind or nil
+end
+
+-- Zustand für Tests und Anzeigen
+function Movement.State()
+	return { Slide = slide and slide.Speed or nil, SlideDir = slide and slide.Dir or nil, Obstacle = move and move.Kind or nil,
+		AirMomentum = airMomentum, SpeedTarget = speedTarget, WalkSpeed = walkSpeed, SlowUntil = slowUntil }
+end
+
 -- Schießen unterbricht den Sprint für seconds Sekunden (danach geht er von selbst weiter)
 function Movement.SuppressSprint(seconds)
 	local was = isSprinting()
@@ -376,6 +658,15 @@ function Movement.GetSensitivity()
 	return sensitivity
 end
 
+-- Kamera-Effekte (Neigen, Wippen, Eintauchen) nur in der Ego- und Schulterkamera im Kampf, und nur solange Roblox die
+-- Kamera führt (CameraType Custom rechnet sie jedes Bild neu; eine geskriptete Kamera würde sich sonst aufdrehen)
+local function cameraEffectsOn(humanoid)
+	local camera = workspace.CurrentCamera
+	return Modes.IsFighting(player) and not inVehicle and humanoid ~= nil and humanoid.Health > 0 and not humanoid.PlatformStand
+		and camera.CameraType == Enum.CameraType.Custom and not camera:GetAttribute("KillCam")
+		and (player.CameraMode == Enum.CameraMode.LockFirstPerson or Movement.IsThirdPerson())
+end
+
 function Movement.Init()
 	-- First Person nur in Kampfmodi, im Hub normale Kamera
 	local function updateCamera()
@@ -390,11 +681,10 @@ function Movement.Init()
 
 	-- Sprinten und Ducken über InputActions. Tastatur: gedrückt halten.
 	-- Controller (L3) und Touch: Sprinten schaltet um und endet, wenn man stehen bleibt.
+	-- Ducken im Sprint (oder mit Schwung) = Rutschen; Tippen reicht, das Rutschen läuft dann von selbst aus.
 	local function setCrouch(on)
-		local humanoid = getHumanoid()
-		local wasSprinting = sprintHeld and not aiming and humanoid and humanoid.MoveDirection.Magnitude > 0.5
 		crouchHeld = on
-		if on and wasSprinting and Modes.IsFighting(player) then
+		if on then
 			startSlide()
 		end
 		apply()
@@ -417,7 +707,7 @@ function Movement.Init()
 		end
 	end)
 	local wasBlocked = false
-	RunService.Heartbeat:Connect(function()
+	RunService.Heartbeat:Connect(function(dt)
 		if sprintHeld and InputActions.Device() ~= "Keyboard" then
 			local humanoid = getHumanoid()
 			if not humanoid or humanoid.MoveDirection.Magnitude < 0.1 then
@@ -431,13 +721,26 @@ function Movement.Init()
 			wasBlocked = blocked
 			apply()
 		end
+		step(math.min(dt, 0.1))
 	end)
-	-- Sichtfeld, Kamera-Versatz (Ducken, Schulter) und Abstand der Schulterkamera gleiten weich.
+	-- Rutschen: Richtung nach der Eingabe lenken und den Humanoid in diese Richtung schieben. Läuft direkt nach dem
+	-- ControlModule von Roblox (RenderPriority Input), damit dessen Eingabe gelesen und überschrieben wird.
+	RunService:BindToRenderStep("MovementSlide", Enum.RenderPriority.Input.Value + 1, function(dt)
+		local humanoid = getHumanoid()
+		if not slide or not humanoid then
+			return
+		end
+		slide.Dir = P.Steer(slide.Dir, humanoid.MoveDirection, math.min(dt, 0.1))
+		humanoid:Move(slide.Dir, false)
+	end)
+	-- Sichtfeld, Kamera-Versatz (Ducken, Schulter, Wippen, Eintauchen) und Abstand der Schulterkamera gleiten weich.
 	-- Läuft vor der Kamera von Roblox, damit sie die neuen Werte noch im selben Bild benutzt.
 	RunService:BindToRenderStep("CameraSmooth", Enum.RenderPriority.Camera.Value - 1, function(dt)
+		dt = math.min(dt, 0.1)
 		local camera = workspace.CurrentCamera
 		local alpha = math.min(1, dt * CAMERA_SMOOTH)
-		local fov = fovOverride or targetFov
+		slideBlend += ((slide and 1 or 0) - slideBlend) * math.min(1, dt * 10)
+		local fov = fovOverride or (targetFov + (aiming and 0 or SLIDE_FOV_BONUS * slideBlend))
 		if math.abs(camera.FieldOfView - fov) > 0.01 then
 			camera.FieldOfView += (fov - camera.FieldOfView) * alpha
 		end
@@ -447,14 +750,29 @@ function Movement.Init()
 			if Movement.IsThirdPerson() then
 				goal, blocked = clampShoulder(character, targetOffset)
 			end
-			local current = humanoid.CameraOffset
-			local nextOffset = current:Lerp(goal, alpha)
+			local nextOffset = baseOffset:Lerp(goal, alpha)
 			-- An eine Wand heran sofort (nicht hindurchschauen), wieder weg davon weich
 			if blocked and math.abs(nextOffset.X) > math.abs(goal.X) then
 				nextOffset = Vector3.new(goal.X, nextOffset.Y, nextOffset.Z)
 			end
-			if (current - nextOffset).Magnitude > 0.001 then
-				humanoid.CameraOffset = nextOffset
+			baseOffset = nextOffset
+			-- Eintauchen beim Landen (gedämpfte Feder) und Wippen beim Laufen (nur Ego, nicht beim Zielen)
+			dipVelocity += (-DIP_SPRING * dip - DIP_DAMPING * dipVelocity) * dt
+			dip = math.clamp(dip + dipVelocity * dt, -P.LandDipMax * 1.2, 0.4)
+			local extra = 0
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if cameraEffectsOn(humanoid) and root then
+				extra = dip
+				local velocity = root.AssemblyLinearVelocity
+				local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+				if grounded and not slide and not move and not aiming and not Movement.IsThirdPerson() then
+					bobPhase += speed * dt * math.pi / 2.6 -- ein Schritt alle 2,6 Studs
+					extra += P.Bob(bobPhase, speed / DEFAULT_SPEED)
+				end
+			end
+			local offset = baseOffset + Vector3.new(0, extra, 0)
+			if (humanoid.CameraOffset - offset).Magnitude > 0.001 then
+				humanoid.CameraOffset = offset
 			end
 		end
 		local active = Movement.IsThirdPerson() and player.CameraMode == Enum.CameraMode.Classic and humanoid ~= nil
@@ -474,7 +792,7 @@ function Movement.Init()
 		end
 		local humanoid, character = getHumanoid()
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if not humanoid or not root or humanoid.Health <= 0 or humanoid.PlatformStand or mantling then
+		if not humanoid or not root or humanoid.Health <= 0 or humanoid.PlatformStand or move then
 			return
 		end
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
@@ -485,12 +803,32 @@ function Movement.Init()
 			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
 		end
 	end)
+	-- Neigung der Kamera: seitwärts laufen leicht, rutschen deutlich. Nach der Kamera von Roblox und dem Rückstoß
+	-- (die rechnet jedes Bild ohne Neigung neu, darum sammelt sich nichts an).
+	RunService:BindToRenderStep("CameraTilt", Enum.RenderPriority.Camera.Value + 2, function(dt)
+		local humanoid, character = getHumanoid()
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local camera = workspace.CurrentCamera
+		local goal = 0
+		if root and cameraEffectsOn(humanoid) then
+			local velocity = root.AssemblyLinearVelocity
+			local strafe = velocity:Dot(camera.CFrame.RightVector) / math.max(DEFAULT_SPEED, speedTarget)
+			goal = P.Roll(strafe, slideBlend, aiming)
+		end
+		roll += (goal - roll) * math.min(1, math.min(dt, 0.1) * TILT_SMOOTH)
+		if camera.CameraType ~= Enum.CameraType.Custom then
+			roll = 0
+		elseif math.abs(roll) > 0.01 then
+			camera.CFrame *= CFrame.Angles(0, 0, math.rad(roll))
+		end
+	end)
 
-	-- Springen vor einer Kante = hochziehen (auch über den eigenen Touch-Springen-Knopf)
-	UserInputService.JumpRequest:Connect(tryMantle)
+	-- Springen: Hindernis nehmen, aus dem Rutschen springen, Coyote-Time und Sprungpuffer (auch über den eigenen
+	-- Touch-Springen-Knopf)
+	UserInputService.JumpRequest:Connect(onJumpRequest)
 	InputActions.Bind("Jump", function(began)
 		if began then
-			tryMantle()
+			onJumpRequest()
 		end
 	end)
 
@@ -536,21 +874,30 @@ function Movement.Init()
 	local function onCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		normalHipHeight = humanoid.HipHeight
-		sliding = false
+		hipTarget = normalHipHeight
+		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge
+		walkSpeed = nil
+		grounded, leftGroundAt, jumpedAt, jumpRequestAt, lastGroundY = true, nil, nil, nil, nil
+		fallSpeed, slowUntil, dip, dipVelocity = 0, 0, 0, 0
 		aiming = false
+		humanoid.StateChanged:Connect(function(_, new)
+			if new == Enum.HumanoidStateType.Jumping then
+				jumpedAt = os.clock()
+			end
+		end)
 		character:GetAttributeChangedSignal("SpeedMultiplier"):Connect(apply)
 		character:GetAttributeChangedSignal("Agent"):Connect(apply)
 		character:GetAttributeChangedSignal("SlowedUntil"):Connect(function()
 			apply()
 			task.delay(0.6, apply) -- danach wieder normales Tempo
 		end)
-		player:GetAttributeChangedSignal("Buy_Runner"):Connect(apply)
 		-- Neuer Charakter (z.B. nach Todeskamera): Kamera wieder auf Ego/Schulter
 		if not workspace.CurrentCamera:GetAttribute("KillCam") then
 			Movement.ApplyCamera()
 		end
 		apply()
 	end
+	player:GetAttributeChangedSignal("Buy_Runner"):Connect(apply)
 	player.CharacterAdded:Connect(onCharacter)
 	if player.Character then
 		task.spawn(onCharacter, player.Character)

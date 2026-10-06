@@ -149,6 +149,43 @@ legal("Treppe im Sprint, Hüpfen, Hochziehen", function(w)
 		w:Step(0.11, Vector3.new(4.7 / 0.3, 0, 0))
 	end
 end)
+-- Neue Bewegung (MovementPhysics): Rutschen bergab mit Höchsttempo, Rutsch-Sprünge mit Schwung, Vault und Hochziehen
+local MP = require("MovementPhysics")
+legal("Rutschen bergab (Höchsttempo) und Rutsch-Sprünge mit Schwung", function(w)
+	w:Step(1, X * SPRINT)
+	for _ = 1, 4 do
+		w:Step(MP.SlideMaxTime, X * MP.SlideMax)
+		w:Step(0.65, function(t)
+			return Vector3.new(MP.AirStep(MP.AirMomentumMax, t), 50 - GRAVITY * t, 0)
+		end)
+	end
+end)
+legal("Vault und Hochziehen an den größten Hindernissen, direkt nacheinander", function(w)
+	-- Bahn (Position relativ zum Start, u = 0..1) über duration Sekunden abfahren
+	local function along(duration, point)
+		w:Step(duration, function(t)
+			return (point(math.min(1, (t + DT) / duration)) - point(math.min(1, t / duration))) / DT
+		end)
+	end
+	for _ = 1, 5 do
+		w:Step(0.5, X * SPRINT)
+		-- Vault: Wand 4 vor einem, Hindernis 4,5 tief und 4,4 hoch, Landung 1,6 dahinter (Füße 0,5 über der Kante)
+		local nearP, farP, land = Vector3.new(4.3, 4.9, 0), Vector3.new(8.5, 4.9, 0), Vector3.new(10.1, 0, 0)
+		along(MP.VaultTime(MP.VaultMax, 10.1), function(u)
+			return MP.VaultPoint(Vector3.zero, nearP, farP, land, u)
+		end)
+		w:Step(0.3, X * SPRINT)
+		-- Sprung an eine Kante, dann hochziehen (7,8 über den Füßen)
+		w:Step(0.2, function(t)
+			return Vector3.new(SPRINT * 0.5, 50 - GRAVITY * t, 0)
+		end)
+		local target = Vector3.new(3.4, MP.MantleMax, 0)
+		along(MP.MantleTime(MP.MantleMax), function(u)
+			return MP.MantlePoint(Vector3.zero, target, u)
+		end)
+		w:Step(0.3, X * 4)
+	end
+end)
 legal("Lag auf der Treppe und beim Hüpfen", function(w)
 	w:Step(1, Vector3.new(SPRINT, 30, 0), true)
 	w:Step(1, X * SPRINT)

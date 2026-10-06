@@ -639,6 +639,7 @@ function WeaponClient.Init()
 					Camera = workspace.CurrentCamera.CFrame,
 					Aim = aimBlend,
 					Sprinting = Movement.IsSprinting(),
+					Sliding = Movement.IsSliding(),
 					Speed = airborne and 0 or speed,
 					Reload = reloadPose,
 					Fire = firePose,
