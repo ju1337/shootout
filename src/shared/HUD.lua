@@ -31,6 +31,9 @@ local player = Players.LocalPlayer
 local HUD = {}
 
 local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige
+-- Offene Welt (Survival): rechts oben steht die Redzone-Rangliste des ExtinctionClient (Oberkante 88, bis 144 hoch),
+-- der Killfeed beginnt darunter
+local SURVIVAL_KILLFEED_TOP = 244
 
 local screen -- ScreenGui (an/aus)
 local gui    -- skalierte Vollbild-Ebene darin (alle HUD-Elemente)
@@ -117,12 +120,14 @@ function HUD.Init(weaponClient)
 		Size = UDim2.new(0, 260, 0, 28), Text = "", TextSize = 24, Font = UITheme.Fonts.Display,
 		TextColor3 = UITheme.Colors.Good, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, gui)
 
-	-- Tastenzeile ganz unten mittig ("LMB SCHIESSEN · R NACHLADEN · ..."), dezent, nur mit Tastatur
-	local keyHints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8), Size = UDim2.new(0, 900, 0, 14),
-		Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextTransparency = 0.5,
-		TextXAlignment = Enum.TextXAlignment.Center }, gui)
+	-- Tastenzeile ganz unten mittig ("LMB SCHIESSEN · R NACHLADEN · ..."), dezent, nur mit Tastatur. Nicht in der
+	-- offenen Welt: Dort steht unter der Hotbar eine eigene Zeile (ExtinctionClient), beide lägen übereinander.
+	local keyHints = label({ Name = "KeyHints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -8),
+		Size = UDim2.new(0, 900, 0, 14), Text = "", TextSize = 10, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text,
+		TextTransparency = 0.5, TextXAlignment = Enum.TextXAlignment.Center }, gui)
 	local function updateKeyHints()
 		keyHints.Visible = not InputActions.IsTouch() and PlayerSettings.Get("KeyHints") == true
+			and not Modes.IsSurvival(player:GetAttribute("Mode"))
 		local parts = {}
 		for _, entry in { { "Fire", "SCHIESSEN" }, { "Reload", "NACHLADEN" }, { "Ability", "FÄHIGKEIT" }, { "Gadget", "GADGET" },
 			{ "Ultimate", "ULTIMATE" }, { "Weapon1", "WAFFE 1" }, { "Weapon2", "WAFFE 2" }, { "Scoreboard", "PUNKTE" } } do
@@ -135,6 +140,7 @@ function HUD.Init(weaponClient)
 	end
 	updateKeyHints()
 	InputActions.DeviceChanged:Connect(updateKeyHints)
+	player:GetAttributeChangedSignal("Mode"):Connect(updateKeyHints)
 	PlayerSettings.Changed:Connect(function(key)
 		if key == "KeyHints" then
 			updateKeyHints()
@@ -211,7 +217,11 @@ function HUD.Init(weaponClient)
 	-- VERLASSEN rechts daneben, Leben darunter nach oben links und Munition unten in die Mitte (Fähigkeiten
 	-- links daneben).
 	local function layoutForDevice()
-		match.Killfeed.Position = UDim2.new(1, -24, 0, belowTopbar(96, 14))
+		local killfeedTop = belowTopbar(96, 14)
+		if Modes.IsSurvival(player:GetAttribute("Mode")) then
+			killfeedTop = math.max(killfeedTop, SURVIVAL_KILLFEED_TOP)
+		end
+		match.Killfeed.Position = UDim2.new(1, -24, 0, killfeedTop)
 		if InputActions.IsTouch() then
 			local top = belowTopbar(58, 8)
 			minimap.Position = UDim2.new(0, 16, 0, top)
@@ -240,6 +250,7 @@ function HUD.Init(weaponClient)
 	end
 	layoutForDevice()
 	InputActions.DeviceChanged:Connect(layoutForDevice)
+	player:GetAttributeChangedSignal("Mode"):Connect(layoutForDevice) -- offene Welt: Killfeed unter der Rangliste
 	-- Fenstergröße geändert: neu ausrichten, nachdem die HUD-Skalierung angepasst wurde
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 		task.defer(layoutForDevice)

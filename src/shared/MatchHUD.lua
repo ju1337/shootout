@@ -454,6 +454,9 @@ function MatchHUD.Init(root, weaponClient)
 	UITheme.Corner(portraitCard, UITheme.Radius.Small)
 	local portraitStroke = UITheme.Stroke(portraitCard, C.Border, 1)
 	local ownPortrait = HUDIcons.Portrait(portraitCard, 68)
+	-- Das HUD rechnet ZIndex für den ganzen Bildschirm (ZIndexBehavior Global): ohne höheren Wert läge das Bild
+	-- unter der eigenen Kachel (ZIndex 3) und bliebe unsichtbar
+	ownPortrait.Frame.ZIndex = 4
 	local agentLine = label({ Position = UDim2.fromOffset(90, 8), Size = UDim2.fromOffset(230, 22), Text = "", TextSize = 21,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 }, vitalsCard)
 	-- Rüstung: 5 dünne Segmente

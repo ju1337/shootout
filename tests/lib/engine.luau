@@ -322,7 +322,8 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
-	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged" } do
+	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged",
+	"LastInputTypeChanged" } do
 	SIGNAL_NAMES[name] = true
 end
 
@@ -1891,6 +1892,21 @@ rawset(TextService, "__methods", {
 		end, GetNonChatStringForUserAsync = function()
 			return text
 		end }
+	end,
+})
+
+-- Oberfläche: Standard-UI an/aus (StarterGui), Roblox-Leiste oben 58 Pixel hoch (GuiService)
+rawset(services.StarterGui, "__methods", {
+	SetCoreGuiEnabled = function() end,
+	GetCoreGuiEnabled = function()
+		return true
+	end,
+	SetCore = function() end,
+})
+local GuiService = service("GuiService")
+rawset(GuiService, "__methods", {
+	GetGuiInset = function()
+		return Vector2.new(0, 58), Vector2.new(0, 0)
 	end,
 })
 

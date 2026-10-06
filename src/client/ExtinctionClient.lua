@@ -9,7 +9,8 @@
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
--- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil), Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
+-- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil), RedzoneBoard (Rangliste rechts oben),
+-- Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -319,6 +320,10 @@ local MOVING = Color3.fromRGB(255, 120, 40) -- Wanderzone
 local DROP = Color3.fromRGB(255, 190, 70)
 local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
+local MISSION_GAP = 24 -- Abstand der Aufträge unter dem VERLASSEN-Knopf (auf Touch unter der Lebensanzeige)
+-- Rangliste der roten Zonen rechts oben unter der Uhr; der Killfeed des HUD steht in der offenen Welt darunter
+-- (HUD.lua: SURVIVAL_KILLFEED_TOP = BOARD_TOP + BOARD_H + 12)
+local BOARD_TOP, BOARD_W, BOARD_H, BOARD_H_SHORT = 88, 250, 144, 116
 local hotbarViews = {}
 local vehicleCooldown
 
@@ -405,7 +410,7 @@ local function buildHud()
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -30), Size = UDim2.fromOffset(160, 14),
 		Text = "MÜNZEN", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, root)
-	hints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(barWidth, 16),
+	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(900, 16),
 		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 
 	-- Meldungen und Benutzen-Balken über der Hotbar
@@ -422,18 +427,37 @@ local function buildHud()
 		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 2 }, useBar)
 end
 
+-- Eine Tastenzeile unter der Hotbar für alles: Die allgemeine Zeile des HUD (SCHIESSEN, FÄHIGKEIT, ...) ist in der
+-- offenen Welt aus, sonst lägen beide Zeilen übereinander.
 local function updateHints()
 	if not hints then
 		return
 	end
 	local device = InputActions.Device()
-	if device == "Gamepad" then
-		hints.Text = "R1 / L1  WAFFE  ·  SELECT  INVENTAR  ·  △  FAHRZEUG EINPACKEN"
-	elseif device == "Touch" then
+	if device == "Touch" then
 		hints.Text = "PLÄTZE ANTIPPEN ZUM BENUTZEN  ·  TASCHE = INVENTAR  ·  PARKEN = FAHRZEUG EINPACKEN"
-	else
-		hints.Text = "1-9  BENUTZEN  ·  TAB  INVENTAR  ·  K  FAHRZEUG EINPACKEN  ·  E  INTERAGIEREN"
+		return
 	end
+	local pad = device == "Gamepad"
+	local parts, seen = {}, {}
+	for _, entry in {
+		{ InputActions.Hint("Fire"), "SCHIESSEN" },
+		{ InputActions.Hint("Reload"), "NACHLADEN" },
+		{ pad and "R1 / L1" or "1-9", pad and "WAFFE" or "BENUTZEN" },
+		{ InputActions.Hint("Inventory"), "INVENTAR" },
+		{ InputActions.Hint("Interact"), "INTERAGIEREN" },
+		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN" },
+		{ InputActions.Hint("WorldMap"), "KARTE" },
+	} do
+		local key, text = entry[1], entry[2]
+		if key ~= "" and seen[key] then -- gleiche Taste (Controller: □ lädt nach oder interagiert)
+			parts[seen[key]] ..= " / " .. text
+		elseif key ~= "" then
+			table.insert(parts, key .. "  " .. text)
+			seen[key] = #parts
+		end
+	end
+	hints.Text = table.concat(parts, "  ·  ")
 end
 
 local function updateZone()
@@ -1288,8 +1312,10 @@ function ExtinctionClient.Init()
 	mapButton.Activated:Connect(function()
 		ExtinctionMap.Toggle()
 	end)
-	-- Aufträge links unter der Minimap (Spieler-Attribut ExtMissions vom MissionService)
-	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 318), Size = UDim2.fromOffset(270, 26),
+	-- Aufträge links unter dem VERLASSEN-Knopf des HUD (Spieler-Attribut ExtMissions vom MissionService). Der Knopf rutscht
+	-- je nach Bildschirm tiefer (unter die Roblox-Leiste), auf Touch steht die Lebensanzeige darunter: die Liste folgt mit
+	-- etwas Abstand (missionTop).
+	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(270, 26),
 		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
 	UITheme.Corner(missionPanel, UITheme.Radius.Small)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, missionPanel)
@@ -1322,6 +1348,20 @@ function ExtinctionClient.Init()
 	end
 	player:GetAttributeChangedSignal("ExtMissions"):Connect(refreshMissions)
 	refreshMissions()
+	local function missionTop()
+		local hudGui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("HUD")
+		local hudRoot = hudGui and hudGui:FindFirstChild("Root")
+		local bottom = nil
+		for _, name in { "LeaveButton", "Vitals" } do
+			local item = hudRoot and hudRoot:FindFirstChild(name)
+			-- Unterkante oben angeordneter Teile (auf dem PC hängt die Lebensanzeige unten am Rand und zählt nicht);
+			-- beide HUDs haben dieselbe Skalierung, die Werte passen also direkt
+			if item and item:IsA("GuiObject") and item.Position.Y.Scale == 0 then
+				bottom = math.max(bottom or 0, item.Position.Y.Offset + item.Size.Y.Offset * (1 - item.AnchorPoint.Y))
+			end
+		end
+		return bottom and bottom + MISSION_GAP or nil
+	end
 
 	-- Uhrzeit (Tag und Nacht, DayCycle) links neben dem Kartenknopf
 	local clockText = label({ Name = "Clock", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 30),
@@ -1333,9 +1373,89 @@ function ExtinctionClient.Init()
 		Size = UDim2.fromOffset(360, 20), Text = "", TextSize = 13, Font = F.Bold, TextColor3 = MOVING,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	UITheme.Outline(movingText)
+
+	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): in einer roten Zone die Top 3 der
+	-- Spieler-Kills dort, sonst aller roten Zonen zusammen; der eigene Platz darunter, wenn man Kills hat, aber nicht
+	-- unter den ersten drei steht
+	local board = UITheme.HudPanel({ Name = "RedzoneBoard", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, BOARD_TOP),
+		Size = UDim2.fromOffset(BOARD_W, BOARD_H_SHORT) }, root, "Left")
+	local boardAccent = make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
+		Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 2 }, board)
+	local boardCaption = label({ Name = "Caption", Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 14), Text = "",
+		TextSize = 11, Font = F.Bold, TextColor3 = RED, ZIndex = 2 }, board)
+	local boardTitle = label({ Name = "Title", Position = UDim2.fromOffset(12, 20), Size = UDim2.new(1, -24, 0, 20), Text = "",
+		TextSize = 16, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 2 }, board)
+	local function boardRow(name, y, rankText, rankColor)
+		local row = make("Frame", { Name = name, Position = UDim2.fromOffset(12, y), Size = UDim2.new(1, -24, 0, 20),
+			BackgroundTransparency = 1, ZIndex = 2 }, board)
+		label({ Name = "Rank", Size = UDim2.fromOffset(24, 20), Text = rankText, TextSize = 15, Font = F.Display,
+			TextColor3 = rankColor, ZIndex = 2 }, row)
+		local who = label({ Name = "Player", Position = UDim2.fromOffset(26, 0), Size = UDim2.new(1, -74, 1, 0), Text = "",
+			TextSize = 13, Font = F.Bold, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 2 }, row)
+		local kills = label({ Name = "Kills", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
+			Size = UDim2.fromOffset(44, 20), Text = "", TextSize = 15, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right,
+			ZIndex = 2 }, row)
+		return { Row = row, Player = who, Kills = kills }
+	end
+	local boardRows = {}
+	for i = 1, 3 do
+		boardRows[i] = boardRow("Top" .. i, 44 + (i - 1) * 22, tostring(i), i == 1 and C.Gold or C.Muted)
+	end
+	local ownLine = make("Frame", { Name = "OwnLine", Position = UDim2.fromOffset(12, 113), Size = UDim2.new(1, -24, 0, 1),
+		BackgroundColor3 = C.Border, BorderSizePixel = 0, ZIndex = 2, Visible = false }, board)
+	local ownRow = boardRow("Own", 118, "", C.Primary)
+	ownRow.Row.Visible = false
+	local boardRaw, boardZone = false, false -- zuletzt gezeigter Stand (false = noch nie)
+	local function refreshBoard(raw, zoneKey)
+		local ok, data = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
+		data = ok and type(data) == "table" and data or {}
+		local zones = type(data.Zones) == "table" and data.Zones or {}
+		local list, color
+		if type(zoneKey) == "string" then
+			local moving = zoneKey == "Wanderzone"
+			local zone = type(zones[zoneKey]) == "table" and zones[zoneKey] or {}
+			boardCaption.Text = (moving and "WANDERZONE" or "ROTE ZONE") .. "  ·  TOP KILLS"
+			boardTitle.Text = upper(tostring(zone.Title or zoneKey))
+			list, color = zone.List, moving and MOVING or RED
+		else
+			boardCaption.Text = "ROTE ZONEN  ·  TOP KILLS"
+			boardTitle.Text = "ALLE ZONEN"
+			list, color = data.Total, C.Muted
+		end
+		list = type(list) == "table" and list or {}
+		boardCaption.TextColor3 = color
+		boardAccent.BackgroundColor3 = color
+		local ownRank = nil
+		for index, entry in list do
+			if type(entry) == "table" and entry.Id == player.UserId then
+				ownRank = index
+				break
+			end
+		end
+		for i, view in boardRows do
+			local entry = type(list[i]) == "table" and list[i] or nil
+			view.Player.Text = entry and tostring(entry.Name or "?") or "—"
+			view.Player.TextColor3 = entry and (i == ownRank and C.Primary or C.Text) or C.Muted
+			view.Kills.Text = entry and tostring(math.floor(tonumber(entry.Kills) or 0)) or ""
+		end
+		local showOwn = ownRank ~= nil and ownRank > #boardRows
+		ownLine.Visible = showOwn
+		ownRow.Row.Visible = showOwn
+		if showOwn then
+			ownRow.Player.Text = "DU  ·  PLATZ " .. ownRank
+			ownRow.Player.TextColor3 = C.Primary
+			ownRow.Kills.Text = tostring(math.floor(tonumber(list[ownRank].Kills) or 0))
+		end
+		board.Size = UDim2.fromOffset(BOARD_W, showOwn and BOARD_H or BOARD_H_SHORT)
+	end
+
 	RunService.Heartbeat:Connect(function()
 		if not hud.Enabled then
 			return
+		end
+		local missionY, missionX = missionTop(), InputActions.IsTouch() and 16 or 24
+		if missionY and (missionPanel.Position.Y.Offset ~= missionY or missionPanel.Position.X.Offset ~= missionX) then
+			missionPanel.Position = UDim2.fromOffset(missionX, missionY)
 		end
 		local serverTime = workspace:GetServerTimeNow()
 		local clock = DayCycle.Clock(serverTime)
@@ -1351,6 +1471,11 @@ function ExtinctionClient.Init()
 		end
 		local maps = workspace:FindFirstChild("Maps")
 		local map = maps and maps:FindFirstChild("Extinction")
+		local boardData, zoneKey = map and map:GetAttribute("RedzoneBoard"), player:GetAttribute("Redzone")
+		if boardData ~= boardRaw or zoneKey ~= boardZone then
+			boardRaw, boardZone = boardData, zoneKey
+			refreshBoard(boardData, zoneKey)
+		end
 		local raw = map and map:GetAttribute("MovingZone")
 		local ok, moving = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
 		local character = player.Character

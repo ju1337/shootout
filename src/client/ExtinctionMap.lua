@@ -133,10 +133,13 @@ local function build(map)
 			Text = "ROTE ZONE", TextSize = 12, Font = F.Display, TextColor3 = Color3.new(1, 1, 1),
 			TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, frame)
 	end
-	-- Ortsnamen (große Orte heller, kleine Orte dunkler, damit die Viertel nicht alles überdecken)
+	-- Ortsnamen (große Orte heller, kleine Orte dunkler, damit die Viertel nicht alles überdecken). Ohne Namen: Camp,
+	-- Tankstellen (Place_Tank<n>) und Seen (gleicher Schlüssel wie ein Teil Lake_<Name>) – die Seen sieht man als Fläche.
 	local places = map:FindFirstChild("Places")
 	for _, part in places and places:GetChildren() or {} do
-		if part:IsA("BasePart") and string.match(part.Name, "^Place_") and part.Name ~= "Place_Camp" then
+		local key = string.match(part.Name, "^Place_(.+)$")
+		if part:IsA("BasePart") and key and key ~= "Camp" and not string.match(key, "^Tank%d*$")
+			and not (lakes and lakes:FindFirstChild("Lake_" .. key)) then
 			local u, v = toMap(map, part.Position.X, part.Position.Z)
 			local big = part.Size.X >= 400
 			local title = label({ Name = part.Name, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(u, v),

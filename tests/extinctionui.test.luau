@@ -16,6 +16,7 @@ local Remotes = require("Remotes")
 local ProgressService = require("ProgressService")
 local WeaponService = require("WeaponService")
 local InputActions = require("InputActions")
+local UITheme = require("UITheme")
 ProgressService.Init()
 WeaponService.Init()
 
@@ -146,6 +147,61 @@ end
 check(missionRows == 3, "drei Auftragszeilen (" .. missionRows .. ")")
 check(find(hud, "Clock") ~= nil and string.find(find(hud, "Clock").Text, "TAG", 1, true) ~= nil, "Uhrzeit oben rechts (Tag)")
 
+-- Eine Tastenzeile unter der Hotbar (die allgemeine des HUD ist in der offenen Welt aus)
+local hintText = find(hud, "Hints") and find(hud, "Hints").Text or ""
+check(string.find(hintText, "LMB  SCHIESSEN", 1, true) ~= nil and string.find(hintText, "1-9  BENUTZEN", 1, true) ~= nil
+	and string.find(hintText, "TAB  INVENTAR", 1, true) ~= nil and string.find(hintText, "E  INTERAGIEREN", 1, true) ~= nil
+	and string.find(hintText, "K  FAHRZEUG EINPACKEN", 1, true) ~= nil and string.find(hintText, "N  KARTE", 1, true) ~= nil,
+	"Tastenzeile unter der Hotbar (" .. hintText .. ")")
+-- Controller: R1/L1 wechseln die Waffe, □ lädt nach oder interagiert (eine Angabe für beides)
+local UserInputService = game:GetService("UserInputService")
+InputActions.Init()
+UserInputService.LastInputTypeChanged:Fire(Enum.UserInputType.Gamepad1)
+step(0.1)
+hintText = find(hud, "Hints").Text
+check(string.find(hintText, "R2  SCHIESSEN", 1, true) ~= nil and string.find(hintText, "□  NACHLADEN / INTERAGIEREN", 1, true) ~= nil
+	and string.find(hintText, "R1 / L1  WAFFE", 1, true) ~= nil and select(2, string.gsub(hintText, "□", "")) == 1,
+	"Controller-Tastenzeile (" .. hintText .. ")")
+UserInputService.LastInputTypeChanged:Fire(Enum.UserInputType.Keyboard)
+step(0.1)
+check(string.find(find(hud, "Hints").Text, "1-9  BENUTZEN", 1, true) ~= nil, "zurück auf Tastatur")
+
+-- Aufträge stehen mit Abstand unter dem VERLASSEN-Knopf des HUD und rutschen mit ihm (hier ein nachgebautes HUD)
+local fakeHud = Instance.new("ScreenGui", playerGui)
+fakeHud.Name = "HUD"
+local fakeRoot = Instance.new("Frame", fakeHud)
+fakeRoot.Name = "Root"
+local fakeLeave = Instance.new("TextButton", fakeRoot)
+fakeLeave.Name = "LeaveButton"
+fakeLeave.Position = UDim2.new(0, 48, 0, 278)
+fakeLeave.Size = UDim2.new(0, 152, 0, 30)
+local fakeVitals = Instance.new("Frame", fakeRoot) -- PC: Lebensanzeige unten links, zählt nicht
+fakeVitals.Name = "Vitals"
+fakeVitals.AnchorPoint = Vector2.new(0, 1)
+fakeVitals.Position = UDim2.new(0, 24, 1, -24)
+fakeVitals.Size = UDim2.new(0, 330, 0, 88)
+step(0.2)
+check(missionPanel.Position.Y.Offset == 278 + 30 + 24, "Aufträge 24 unter VERLASSEN (" .. missionPanel.Position.Y.Offset .. ")")
+fakeLeave.Position = UDim2.new(0, 48, 0, 320)
+step(0.2)
+check(missionPanel.Position.Y.Offset == 320 + 30 + 24, "Aufträge rutschen mit dem Knopf (" .. missionPanel.Position.Y.Offset .. ")")
+fakeLeave.Position = UDim2.new(0, 188, 0, 58) -- Touch: VERLASSEN neben der Minimap, Lebensanzeige darunter
+fakeVitals.AnchorPoint = Vector2.new(0, 0)
+fakeVitals.Position = UDim2.new(0, 16, 0, 230)
+step(0.2)
+check(missionPanel.Position.Y.Offset == 230 + 88 + 24, "Touch: Aufträge unter der Lebensanzeige (" .. missionPanel.Position.Y.Offset .. ")")
+fakeHud:Destroy()
+
+-- Rangliste rechts oben: ohne rote Zone alle Zonen zusammen (noch leer)
+local board = find(hud, "RedzoneBoard")
+check(board ~= nil and board.Visible and string.find(texts(board), "ROTE ZONEN  ·  TOP KILLS", 1, true) ~= nil
+	and string.find(texts(board), "ALLE ZONEN", 1, true) ~= nil, "Rangliste rechts oben (alle Zonen): " .. (board and texts(board) or ""))
+check(board and find(board, "Top1"):FindFirstChild("Player").Text == "—" and not find(board, "Own").Visible,
+	"leere Rangliste ohne eigenen Platz")
+local movingLine = find(hud, "MovingZone")
+check(board and board.Position.Y.Offset >= movingLine.Position.Y.Offset + movingLine.Size.Y.Offset
+	and board.AnchorPoint.X == 1 and board.Position.X.Scale == 1, "Rangliste rechts oben unter Uhr und Wanderzone")
+
 -- Kaufen am Stand (E-Aufforderung des Clients)
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(-36, 3, 28)))
 step(0.5)
@@ -223,12 +279,31 @@ step(0.3)
 check(string.find(texts(hud), "WANDERZONE  NORDHEIM  ·  WECHSEL IN 2:0", 1, true) ~= nil, "Wanderzone unter der Uhr")
 check(not markers.Visible, "Wanderzone ohne Richtungsanzeiger")
 map:SetAttribute("MovingZone", nil)
--- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt
+-- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt.
+-- Tankstellen und Seen ohne Namen (zu unübersichtlich), die Seen bleiben als Fläche
+for key, title in { Tank0 = "Tankstelle", Teich = "Mühlteich" } do
+	local part = Instance.new("Part", map.Places)
+	part.Name = "Place_" .. key
+	part:SetAttribute("Title", title)
+	part.Size = Vector3.new(90, 4, 90)
+	part.CFrame = CFrame.new(CENTER + Vector3.new(900, 2, -900))
+end
+local lakes = Instance.new("Folder", map)
+lakes.Name = "Lakes"
+local lake = Instance.new("Part", lakes)
+lake.Name = "Lake_Teich"
+lake.Size = Vector3.new(120, 1, 120)
+lake.CFrame = CFrame.new(CENTER + Vector3.new(900, 0, -900))
 InputActions.Trigger("WorldMap", true)
 InputActions.Trigger("WorldMap", false)
 step(0.2)
 local mapGui = playerGui:FindFirstChild("ExtinctionMap")
 check(mapGui ~= nil and mapGui.Enabled, "N öffnet die Weltkarte")
+check(mapGui and find(mapGui, "Place_Oedstadt") ~= nil and string.find(texts(mapGui), "ÖDSTADT", 1, true) ~= nil, "Ortsname auf der Karte")
+check(mapGui and find(mapGui, "Place_Tank0") == nil and find(mapGui, "Place_Teich") == nil
+	and string.find(texts(mapGui), "TANKSTELLE", 1, true) == nil and string.find(texts(mapGui), "TEICH", 1, true) == nil,
+	"keine Namen für Tankstellen und Seen")
+check(mapGui and find(mapGui, "Lake") ~= nil, "See als Fläche auf der Karte")
 check(mapGui and find(mapGui, "Redzone") ~= nil and find(mapGui, "Airdrop") ~= nil and find(mapGui, "Me").Visible,
 	"Karte zeigt rote Zone, Lootdrop und den eigenen Standort")
 check(mapGui and string.find(texts(mapGui), "LOOTDROP", 1, true) ~= nil, "Lootdrop mit Text auf der Karte")
@@ -237,13 +312,38 @@ InputActions.Trigger("WorldMap", false)
 step(0.2)
 check(mapGui and not mapGui.Enabled, "N schließt die Weltkarte")
 
+-- Rangliste: draußen die Gesamtliste (eigener Name hervorgehoben), in der Zone deren Top 3 und der eigene Platz darunter
+local savedBoard = map:GetAttribute("RedzoneBoard")
+local me = tostring(bob.UserId)
+map:SetAttribute("RedzoneBoard", '{"Zones":{"Werk":{"Title":"Chemiewerk","List":[{"Id":11,"Name":"Ann","Kills":5},'
+	.. '{"Id":12,"Name":"Ben","Kills":3},{"Id":13,"Name":"Cem","Kills":2},{"Id":' .. me .. ',"Name":"Bob","Kills":1}]}},'
+	.. '"Total":[{"Id":' .. me .. ',"Name":"Bob","Kills":4},{"Id":11,"Name":"Ann","Kills":2}]}')
+step(0.2)
+local top1 = find(board, "Top1")
+check(top1.Player.Text == "Bob" and top1.Kills.Text == "4" and top1.Player.TextColor3 == UITheme.Colors.Primary,
+	"Gesamtliste: Bob vorn und hervorgehoben (" .. top1.Player.Text .. " " .. top1.Kills.Text .. ")")
+check(find(board, "Top2").Player.Text == "Ann" and find(board, "Top3").Player.Text == "—" and not find(board, "Own").Visible,
+	"Gesamtliste: Platz 2 und leerer Platz 3")
 bob:SetAttribute("Redzone", "Werk")
 step(0.3)
 check(find(hud, "RedzoneVignette").Visible and string.find(texts(hud), "ROTE ZONE  ·  PVP AKTIV", 1, true) ~= nil,
 	"in der roten Zone: roter Rand und Anzeige")
+check(string.find(texts(board), "ROTE ZONE  ·  TOP KILLS", 1, true) ~= nil and string.find(texts(board), "CHEMIEWERK", 1, true) ~= nil,
+	"Rangliste der Zone mit ihrem Namen: " .. texts(board))
+check(find(board, "Top1").Player.Text == "Ann" and find(board, "Top1").Kills.Text == "5" and find(board, "Top2").Player.Text == "Ben"
+	and find(board, "Top3").Player.Text == "Cem" and find(board, "Top3").Kills.Text == "2", "Top 3 der Zone")
+local own = find(board, "Own")
+check(own.Visible and own.Player.Text == "DU  ·  PLATZ 4" and own.Kills.Text == "1" and board.Size.Y.Offset > 120,
+	"eigener Platz unter den Top 3 (" .. own.Player.Text .. ")")
+bob:SetAttribute("Redzone", "Wanderzone")
+step(0.2)
+check(string.find(texts(board), "WANDERZONE  ·  TOP KILLS", 1, true) ~= nil and find(board, "Top1").Player.Text == "—"
+	and not own.Visible, "Wanderzone ohne Kills: leere Liste")
+map:SetAttribute("RedzoneBoard", savedBoard)
 bob:SetAttribute("Redzone", nil)
 step(0.3)
 check(not find(hud, "RedzoneVignette").Visible, "draußen kein roter Rand")
+check(string.find(texts(board), "ALLE ZONEN", 1, true) ~= nil and find(board, "Top1").Player.Text == "—", "draußen wieder alle Zonen")
 map:SetAttribute("Redzones", nil)
 map:SetAttribute("Airdrops", nil)
 step(0.3)

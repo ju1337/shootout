@@ -5,7 +5,8 @@
 -- Wer draußen stirbt, lässt seine ganze Tasche fallen (LootService) und spawnt wieder in der Safe Zone. Wer den
 -- Modus oder das Spiel draußen verlässt, verliert die Tasche genauso (im Menü erst nach einem zweiten Klick).
 -- Inventar und Lager: InventoryService. Agenten: nur passive Fähigkeiten (siehe AgentService / GadgetService).
--- Rote Zonen (RedzoneService): drinnen gilt PvP sofort, Attribut Redzone (Name) für die Anzeige.
+-- Rote Zonen (RedzoneService): drinnen gilt PvP sofort, Attribut Redzone (Name) für die Anzeige. Spieler-Kills dort
+-- zählen für die Rangliste der Zone (RedzoneBoard, Anzeige rechts oben).
 -- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt), Redzone,
 -- MapId / MapName / MapCenter (Minimap, Lichtstimmung). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
 
@@ -24,6 +25,7 @@ local InventoryService = require(ServerShared.InventoryService)
 local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
+local RedzoneBoard = require(ServerShared.RedzoneBoard)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
 local ActivityService = require(ServerShared.ActivityService)
@@ -351,6 +353,9 @@ function Extinction.Init(modeManager)
 
 	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte) und Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	RedzoneService.Init(map)
+	-- Rangliste der PvP-Kills je roter Zone (die Wanderzone beginnt nach jedem Wechsel neu)
+	RedzoneBoard.Init(map, RedzoneService.List())
+	RedzoneService.OnMoved(RedzoneBoard.Moved)
 	-- Wanderzone: rote Zone, die alle 20 Minuten an einen anderen Ort springt
 	RedzoneService.StartMoving({
 		Map = map,
@@ -509,6 +514,7 @@ function Extinction.RemovePlayer(player)
 	end
 	InventoryService.Leave(player)
 	MissionService.Leave(player)
+	RedzoneBoard.RemovePlayer(player)
 	members[player] = nil
 	local character = player.Character
 	if character then
@@ -519,11 +525,23 @@ function Extinction.RemovePlayer(player)
 	end
 end
 
--- Spieler-Kill: Kopfgeld in Münzen (Zombies bringen viel weniger, siehe ZombieService)
+-- Rote Zone, in der ein Spieler gerade steht oder gestorben ist (nicht in einer Safe Zone), sonst nil
+local function redzoneOf(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) or Extinction.SafeZoneAt(root.Position) then
+		return nil
+	end
+	return RedzoneService.At(root.Position)
+end
+
+-- Spieler-Kill: Kopfgeld in Münzen (Zombies bringen viel weniger, siehe ZombieService) und Rangliste der roten Zone
+-- (zählt in der Zone des Opfers, sonst in der des Schützen)
 function Extinction.OnKill(killer, victim)
 	if victim and victim ~= killer and members[killer] then
 		ProgressService.AddCoins(killer, ExtinctionConfig.PlayerKillCoins, "Spieler erledigt")
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
+		RedzoneBoard.Record(killer, redzoneOf(victim) or redzoneOf(killer))
 	end
 end
 

@@ -12,7 +12,8 @@
 -- anderen Ort der Karte springt (Teile Place_<Name> der Gruppe Places, ohne Camp, Seen, große Flächen und feste rote
 -- Zonen). Drinnen gilt dasselbe wie in roten Zonen (At liefert sie). Ansage an alle draußen beim Wechsel und eine Minute
 -- vorher; in der Welt steht eine flimmernde Wand (ForceField) mit Lichtsäule in der Mitte. Für die Clients im Attribut
--- "MovingZone" an der Karte: { Name, X, Z, R, Ends } (Ends = Serverzeit des nächsten Wechsels).
+-- "MovingZone" an der Karte: { Name, X, Z, R, Ends } (Ends = Serverzeit des nächsten Wechsels). Jeden Wechsel meldet
+-- OnMoved(callback) (RedzoneBoard beginnt dann für die Wanderzone eine neue Rangliste).
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,6 +29,7 @@ local moving = nil -- { Name, Title, Center, Radius, Moving = true, Ends, Key }
 local movingOptions = nil
 local movingFolder = nil
 local movingRun = 0
+local movedCallbacks = {} -- callback(moving) nach jedem Wechsel der Wanderzone (z.B. RedzoneBoard)
 
 -- map = Maps.Extinction (Gruppe Redzones mit Teilen Redzone_<Name>)
 function RedzoneService.Init(map)
@@ -188,6 +190,19 @@ local function publish()
 	end
 end
 
+-- callback(moving) nach jedem Wechsel der Wanderzone (moving = neue Zone oder nil, wenn es keine mehr gibt)
+function RedzoneService.OnMoved(callback)
+	if not table.find(movedCallbacks, callback) then
+		table.insert(movedCallbacks, callback)
+	end
+end
+
+local function moved()
+	for _, callback in movedCallbacks do
+		callback(moving)
+	end
+end
+
 -- Wanderzone an einen neuen Ort setzen (key = Ort erzwingen, sonst zufällig und nicht derselbe wie vorher)
 function RedzoneService.MoveNow(key)
 	local cfg = ExtinctionConfig.MovingZone
@@ -196,6 +211,7 @@ function RedzoneService.MoveNow(key)
 		moving = nil
 		publish()
 		buildVisual()
+		moved()
 		return nil
 	end
 	local pick = nil
@@ -221,6 +237,7 @@ function RedzoneService.MoveNow(key)
 		Ends = now() + cfg.Interval, Warned = false }
 	publish()
 	buildVisual()
+	moved()
 	announce("WANDERZONE: " .. string.upper(pick.Title), "PvP sofort · bessere Beute · wechselt in " .. math.floor(cfg.Interval / 60)
 		.. " Min", "Warning")
 	return moving
@@ -273,6 +290,7 @@ function RedzoneService.StopMoving()
 	moving = nil
 	publish()
 	buildVisual()
+	moved()
 	movingOptions = nil
 end
 

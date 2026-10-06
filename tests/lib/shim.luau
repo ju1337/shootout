@@ -246,14 +246,47 @@ end
 
 local Color3 = {}
 local Color3Meta = { __index = {} }
+function Color3Meta.__index.ToHex(c)
+	local function byte(v)
+		return math.clamp(math.floor(v * 255 + 0.5), 0, 255)
+	end
+	return string.format("%02X%02X%02X", byte(c.R), byte(c.G), byte(c.B))
+end
 function Color3Meta.__index.Lerp(a, b, t)
 	return setmetatable({ R = a.R + (b.R - a.R) * t, G = a.G + (b.G - a.G) * t, B = a.B + (b.B - a.B) * t }, Color3Meta)
 end
 function Color3.fromRGB(r, g, b) return setmetatable({ R = r / 255, G = g / 255, B = b / 255 }, Color3Meta) end
 function Color3.new(r, g, b) return setmetatable({ R = r or 0, G = g or 0, B = b or 0 }, Color3Meta) end
 
+-- Enum-Werte wie in Roblox: Enum.Gruppe.Name ist immer dasselbe Objekt mit Name, Value und EnumType (hier der Name der
+-- Gruppe); tostring ergibt "Enum.Gruppe.Name". Value: bekannte Zahlen aus ENUM_VALUES, sonst fortlaufend je Gruppe.
+local ENUM_VALUES = {
+	RenderPriority = { First = 0, Input = 100, Camera = 200, Character = 300, Last = 2000 },
+}
+local EnumItemMeta = {
+	__tostring = function(item)
+		return "Enum." .. item.EnumType .. "." .. item.Name
+	end,
+	__concat = function(a, b)
+		return tostring(a) .. tostring(b)
+	end,
+}
+local enumGroups = {}
 local Enum = setmetatable({}, { __index = function(_, group)
-	return setmetatable({}, { __index = function(_, item) return group .. "." .. item end })
+	local items = enumGroups[group]
+	if not items then
+		local count = 0
+		items = setmetatable({}, { __index = function(list, name)
+			local known = ENUM_VALUES[group]
+			count += 1
+			local item = setmetatable({ Name = name, Value = known and known[name] or count - 1, EnumType = group,
+				__type = "EnumItem" }, EnumItemMeta)
+			rawset(list, name, item)
+			return item
+		end })
+		enumGroups[group] = items
+	end
+	return items
 end })
 
 
