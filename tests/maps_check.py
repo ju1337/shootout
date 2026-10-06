@@ -79,9 +79,9 @@ def check_extinction():
     portals = [part for group, part in parts if group == "Portals"]
     if [p["Name"] for p in portals] != ["Portal_Hub"] or not inside(portals[0], 10):
         problems.append("Extinction: genau ein Tor Portal_Hub in der Safe Zone erwartet")
-    points = {}
+    points = {}  # je Name der Punkt im Camp (Safehouses haben eigene Stände mit denselben Namen)
     for group, part in parts:
-        if group == "Stands" and part["Name"] in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
+        if group == "Stands" and part["Name"] in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash") and inside(part, 10):
             points[part["Name"]] = part
     for name in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
         part = points.get(name)
@@ -116,6 +116,14 @@ def check_extinction():
         own = [part for group, part in parts if group == "Spawns_" + key]
         if len(own) < 3 or not all(math.hypot(local(p)[0] - hx, local(p)[2] - hz) <= hr - 8 for p in own):
             problems.append("Extinction: %s braucht mindestens 3 Spawns in Spawns_%s darin" % (house["Name"], key))
+    # Safehouses haben alle Händler und ein Lager
+    for house in houses:
+        hx, _, hz = local(house)
+        hr = house["Properties"]["Size"][0] / 2
+        for name in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
+            if not any(group == "Stands" and part["Name"] == name and math.hypot(local(part)[0] - hx, local(part)[2] - hz) <= hr - 4
+                       for group, part in parts):
+                problems.append("Extinction: %s ohne %s" % (house["Name"], name))
     # Haltestellen zum Reisen: eine im Camp ("Travel"), eine je Safehouse ("Travel_<Name>"), jeweils in ihrer Safe Zone
     stops = {part["Name"]: part for group, part in parts if group == "Stands" and part["Name"].startswith("Travel")}
     if "Travel" not in stops or not inside(stops["Travel"], 10):

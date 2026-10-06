@@ -1112,14 +1112,21 @@ local function setupPrompts()
 	if not stands then
 		return
 	end
-	for key, stand in ExtinctionConfig.Stands do
-		local part = stands:WaitForChild(key, 10)
-		if part then
+	-- Stände: jeder Teil mit dem Namen bekommt eine Aufforderung (Camp und Safehouses haben eigene)
+	for key in ExtinctionConfig.Stands do
+		stands:WaitForChild(key, 10)
+	end
+	for _, part in stands:GetChildren() do
+		local stand = part:IsA("BasePart") and ExtinctionConfig.Stands[part.Name]
+		if stand then
 			local prompt = make("ProximityPrompt", { Name = "StandPrompt", ActionText = "Handeln", ObjectText = stand.Title,
 				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
 				RequiresLineOfSight = false, Enabled = false }, part)
 			prompt.Triggered:Connect(function()
-				openStand(key)
+				openStand(part.Name)
+				if window then
+					window.Part = part
+				end
 			end)
 			table.insert(prompts, prompt)
 		end
@@ -1134,19 +1141,29 @@ local function setupPrompts()
 			RequiresLineOfSight = false, Enabled = inExtinction() }, part)
 		prompt.Triggered:Connect(function()
 			openTravel(part.Name)
+			if window then
+				window.Part = part
+			end
 		end)
 		table.insert(prompts, prompt)
 	end
 	for _, part in stands:GetChildren() do
 		travelPrompt(part)
 	end
-	local stashPart = stands:WaitForChild("Stash", 10)
-	if stashPart then
-		local prompt = make("ProximityPrompt", { Name = "StashPrompt", ActionText = "Lager öffnen", ObjectText = "LAGER",
-			KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
-			RequiresLineOfSight = false, Enabled = false }, stashPart)
-		prompt.Triggered:Connect(openStash)
-		table.insert(prompts, prompt)
+	stands:WaitForChild("Stash", 10)
+	for _, stashPart in stands:GetChildren() do
+		if stashPart:IsA("BasePart") and stashPart.Name == "Stash" then
+			local prompt = make("ProximityPrompt", { Name = "StashPrompt", ActionText = "Lager öffnen", ObjectText = "LAGER",
+				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
+				RequiresLineOfSight = false, Enabled = false }, stashPart)
+			prompt.Triggered:Connect(function()
+				openStash()
+				if window then
+					window.Part = stashPart
+				end
+			end)
+			table.insert(prompts, prompt)
+		end
 	end
 	for _, prompt in prompts do
 		prompt.Enabled = inExtinction()
@@ -1162,7 +1179,8 @@ local function standDistanceCheck()
 	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 	local maps = workspace:FindFirstChild("Maps")
 	local stands = maps and maps:FindFirstChild("Extinction") and maps.Extinction:FindFirstChild("Stands")
-	local part = stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point or window.Stand)
+	local part = window.Part
+		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point or window.Stand))
 	if not rootPart or not part or (rootPart.Position - part.Position).Magnitude > ExtinctionConfig.StandRange + 4 then
 		closeWindow()
 	end

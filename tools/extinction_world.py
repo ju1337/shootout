@@ -1584,24 +1584,25 @@ class World:
             box("Cover", "Crate", (2.4, 2.2, 2.4), (rng.choice((-1, 1)) * 8.2, 1.1, rng.uniform(-2, 2)), (110, 92, 62), "WoodPlanks",
                 extra=(0, rng.uniform(-15, 15), 0))
 
-    def stash_container(self, x, z, fx, fz):
-        """Lager: rostiger Container mit offenen Türen, Spinde drin, Punkt "Stash" davor."""
+    def stash_container(self, x, z, fx, fz, length=18):
+        """Lager: rostiger Container (Länge length) mit offenen Türen, Spinde drin, Punkt "Stash" davor. (x, z) = Mitte."""
         b, rng = self.b, self.rng
         yaw = self.yaw_to(fx, fz)
         f, box = self.frame(x, z, yaw)
         col = rng.choice(((60, 86, 70), (70, 84, 104), (120, 70, 50)))
-        box("Stands", "StashFloor", (8, 0.4, 18), (0, 0.2, 2), (70, 70, 72), "DiamondPlate")
+        half = length / 2
+        box("Stands", "StashFloor", (8, 0.4, length), (0, 0.2, 0), (70, 70, 72), "DiamondPlate")
         for s in (-1, 1):
-            box("Stands", "StashWall", (0.5, 8.5, 18), (s * 4, 4.25, 2), col, "CorrodedMetal")
-            box("Stands", "StashDoor", (0.3, 8.2, 3.9), (s * 5.6, 4.2, -8.6), col, "CorrodedMetal", extra=(0, s * 60, 0))
-        box("Stands", "StashRoof", (8.5, 0.5, 18.5), (0, 8.7, 2), col, "CorrodedMetal")
-        box("Stands", "StashBack", (8, 8.5, 0.5), (0, 4.25, 11), col, "CorrodedMetal")
-        for j in range(4):
-            box("Stands", "Locker", (2.4, 6.5, 2), (-2.6 if j % 2 == 0 else 2.6, 3.4, 4 + (j // 2) * 3), (90, 98, 92), "Metal")
-        box("Stands", "StashLamp", (0.6, 0.6, 0.6), (0, 7.8, -4), (255, 190, 110), "Neon", children=self.warm_light(14, 0.8))
-        b.sign2("StandSign_Stash", (6.5, 1.8, 0.2), f(0, 10.0, -6.8), "LAGER", "DEINS BLEIBT DEINS", (150, 140, 120), (40, 30, 26),
-                (60, 50, 44), angles=(0, yaw, rng.uniform(-3, 3)))
-        b.add("Stands", "Stash", (2, 2, 2), f(0, 2.5, -9.6), (226, 178, 52), "SmoothPlastic", angles=(0, yaw, 0),
+            box("Stands", "StashWall", (0.5, 8.5, length), (s * 4, 4.25, 0), col, "CorrodedMetal")
+            box("Stands", "StashDoor", (0.3, 8.2, 3.9), (s * 5.6, 4.2, -half - 1.6), col, "CorrodedMetal", extra=(0, s * 60, 0))
+        box("Stands", "StashRoof", (8.5, 0.5, length + 0.5), (0, 8.7, 0), col, "CorrodedMetal")
+        box("Stands", "StashBack", (8, 8.5, 0.5), (0, 4.25, half), col, "CorrodedMetal")
+        for j in range(4 if length >= 14 else 2):
+            box("Stands", "Locker", (2.4, 6.5, 2), (-2.6 if j % 2 == 0 else 2.6, 3.4, half - 2 - (j // 2) * 3), (90, 98, 92), "Metal")
+        box("Stands", "StashLamp", (0.6, 0.6, 0.6), (0, 7.8, -half + 2), (255, 190, 110), "Neon", children=self.warm_light(14, 0.8))
+        b.sign2("StandSign_Stash", (6.5, 1.8, 0.2), f(0, 10.0, -half + 0.6), "LAGER", "DEINS BLEIBT DEINS", (150, 140, 120),
+                (40, 30, 26), (60, 50, 44), angles=(0, yaw, rng.uniform(-3, 3)))
+        b.add("Stands", "Stash", (2, 2, 2), f(0, 2.5, -half - 2.6), (226, 178, 52), "SmoothPlastic", angles=(0, yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
 
     def camp(self):
@@ -1765,7 +1766,7 @@ class World:
         self.trader("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", 15, -36, -1, 0,
                     [(-3, 5.6, 5, 2.4, 0.2, (60, 60, 64), "Metal"), (2.5, 5.6, 5, 2.4, 0.2, (60, 60, 64), "Metal"),
                      (0, 4.0, 6, 1.2, 1.2, (150, 40, 34), "Metal")], accent=(84, 98, 70))
-        self.stash_container(-36, -18, 0, 1)
+        self.stash_container(-36, -20, 0, 1)
         self.travel_stop("Travel", "REISEN", -36, 20, 0, -1)
 
         # ---------- Landeplatz, Werkstatt, Sanitätszelt, Quarantäne, MG-Stellungen, Flutlicht ----------
@@ -1974,60 +1975,39 @@ class World:
             lx, lz = math.cos(a) * 10, fz + math.sin(a) * 10
             wx_, _, wz_ = f(lx, 0, lz)
             b.spawn(wx_, wz_, yaw=math.degrees(math.atan2(wx_ - x, wz_ - z)) + 180, group="Spawns_" + key)
-        # keine Lichterketten: Feuertonnen und ein Flutlicht am Mast
-        for lx, lz in ((-12, -16), (12, -2)):
+        # Feuertonnen am Tor, Flutlicht am Mast
+        for lx, lz in ((-9, -24), (9, -24)):
             fx_, _, fz_ = f(lx, 0, lz)
             self.fire_barrel(fx_, fz_)
         flx, _, flz = f(-10, 0, 6)
         cfx, _, cfz = f(0, 0, -6)
         self.floodlight(flx, flz, cfx - flx, cfz - flz, 11)
-        # Hof: Beete links, Wasserturm und Brennholz rechts, Pickup, Kisten, Wachturm in der hinteren Ecke, Fahne
-        for k in range(3):
-            box("Decor", "GardenBed", (3.6, 1, 9), (-22 + k * 4.6, 0.5, -10), (96, 72, 50), "WoodPlanks")
-            for j in range(4):
-                box("Decor", "Plant", (1.6, 1.3, 1.6), (-22 + k * 4.6, 1.5, -13.5 + j * 2.4), rng.choice(((70, 110, 52), (90, 128, 60))),
-                    "Grass", props={"Shape": "Ball", "CanCollide": False})
-        wtx, wtz = 22, 18
+
+        # Händler, Lager und Haltestelle (lokal: links/rechts der Feuerstelle, Front zur Mitte)
+        def place(lx, lz, dx, dz):
+            wx_, _, wz_ = f(lx, 0, lz)
+            tx_, _, tz_ = f(lx + dx, 0, lz + dz)
+            return wx_, wz_, tx_ - wx_, tz_ - wz_
+        gun = (40, 42, 46)
+        self.trader("Stand_Weapons", "WAFFEN", "MUNITION", *place(-19, -14, 1, 0),
+                    [(-4, 6.0, 4.6, 0.7, 0.4, gun, "Metal"), (1, 6.0, 4.0, 0.6, 0.4, gun, "Metal"), (-4, 4.2, 3.6, 0.6, 0.4, gun, "Metal")],
+                    accent=(96, 70, 52))
+        self.trader("Stand_Items", "SANI", "VERBAND · WESTEN", *place(19, -14, -1, 0),
+                    [(-4, 4.2, 2.4, 1.6, 1.4, (210, 206, 196), "SmoothPlastic"), (-1, 4.2, 2.4, 1.6, 1.4, (180, 50, 44), "SmoothPlastic"),
+                     (2, 6.0, 3.0, 1.6, 1.4, (86, 96, 66), "Fabric")], accent=(76, 96, 116))
+        self.trader("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", *place(-19, 6, 1, 0),
+                    [(-3, 5.6, 5, 2.4, 0.2, (60, 60, 64), "Metal"), (0, 4.0, 6, 1.2, 1.2, (150, 40, 34), "Metal")], accent=(84, 98, 70))
+        self.stash_container(*place(19, 6, -1, 0), length=10)
+        self.travel_stop("Travel_" + key, "REISEN", *place(-19, 23, 1, 0))
+        # Wasserturm hinten rechts, Fahne am Tor
+        wtx, wtz = 22, 22
         for lx in (-2.2, 2.2):
             for lz in (-2.2, 2.2):
                 box("Decor", "WaterTowerLeg", (0.6, 10, 0.6), (wtx + lx, 5, wtz + lz), dark, "Wood")
         box("Decor", "WaterTowerDeck", (6, 0.4, 6), (wtx, 10.2, wtz), wood, "WoodPlanks")
         b.cylinder("Decor", "WaterTank", 5.4, 4.6, f(wtx, 12.7, wtz), (78, 92, 96), material="CorrodedMetal")
-        for k in range(5):
-            box("Cover", "Firewood", (6, 0.9, 0.9), (22, 0.45 + k * 0.9, 6 + (k % 2) * 0.4), (120, 86, 56), "Wood",
-                props={"Shape": "Cylinder"})
-        box("Decor", "FirewoodRoof", (7, 0.3, 3), (22, 5, 6), rust, "CorrodedMetal", extra=(0, 0, 8))
-        # Haltestelle: Reisen zu den anderen Safe Zones
-        sx_, _, sz_ = f(20, 0, -9)
-        cx_, _, cz_ = f(0, 0, -9)
-        self.travel_stop("Travel_" + key, "REISEN", sx_, sz_, cx_ - sx_, cz_ - sz_)
-        # Pickup
-        px_, pz_ = -18, 8
-        body = rng.choice(((140, 60, 44), (60, 90, 120), (90, 100, 70)))
-        box("Cover", "TruckBody", (5.4, 2.4, 11), (px_, 2.2, pz_), body, "Metal")
-        box("Cover", "TruckCabin", (5, 2.2, 4.6), (px_, 4.5, pz_ - 1.6), lighten(body, -0.1), "Metal")
-        box("Decor", "TruckGlass", (5.1, 1.4, 4), (px_, 4.6, pz_ - 1.6), (50, 64, 72), "Glass", props={"Transparency": 0.4})
-        for sx_ in (-1, 1):
-            for sz_ in (-3.4, 3.4):
-                box("Cover", "TruckWheel", (0.9, 2.4, 2.4), (px_ + sx_ * 2.7, 1.2, pz_ + sz_), (24, 24, 26), "Rubber",
-                    props={"Shape": "Cylinder"})
-        for k in range(3):
-            box("Cover", "SupplyCrate", (2.8, 2.4, 2.8), (px_ + rng.uniform(-1.4, 1.4), 4.6 if k == 0 else 1.2, pz_ + 4 + k * 3.2 if k else pz_ + 3),
-                (110, 92, 62), "WoodPlanks", extra=(0, rng.uniform(-10, 10), 0))
-        tx_, tz_ = -24, 24
-        for lx in (-2.4, 2.4):
-            for lz in (-2.4, 2.4):
-                box("Walls", "TowerLeg", (0.8, 12, 0.8), (tx_ + lx, 6, tz_ + lz), dark, "Wood")
-        box("Walls", "TowerDeck", (6.4, 0.5, 6.4), (tx_, 12.2, tz_), wood, "WoodPlanks")
-        for lx, lz, sx_, sz_ in ((0, -3, 6.4, 0.4), (3, 0, 0.4, 6.4), (-3, 0, 0.4, 6.4), (0, 3, 6.4, 0.4)):
-            box("Cover", "TowerRail", (sx_, 1.6, sz_), (tx_ + lx, 13.2, tz_ + lz), wood2, "WoodPlanks")
-        box("Decor", "TowerRoof", (7.4, 0.3, 7.4), (tx_, 16.4, tz_), rust, "CorrodedMetal", extra=(0, 0, 6))
-        b.add("Walls", "TowerLadder", (2, 12, 2), f(tx_ + 4.3, 6, tz_), (90, 90, 92), "Metal", angles=(0, yaw, 0), cls="TrussPart")
-        box("Decor", "Searchlight", (1.2, 1.2, 1.6), (tx_ + 2, 14, tz_ - 2), (236, 236, 226), "Neon",
-            children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {"Face": "Front", "Range": 60, "Brightness": 1.6,
-                                                                                 "Angle": 35, "Color": rgb(255, 240, 210)}}])
-        box("Decor", "FlagPole", (0.4, 14, 0.4), (10, 7, -20), (190, 190, 186), "Metal")
-        box("Decor", "Flag", (5, 3, 0.2), (12.6, 12.4, -20), (90, 180, 100), "Fabric")
+        box("Decor", "FlagPole", (0.4, 14, 0.4), (8, 7, -22), (90, 90, 90), "Metal")
+        box("Decor", "Flag", (5, 3, 0.2), (10.6, 12.4, -22), (150, 30, 24), "Fabric")
         n = 48
         for k in range(n):
             a = 2 * math.pi * (k + 0.5) / n

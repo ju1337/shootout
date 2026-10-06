@@ -50,6 +50,9 @@ safehouse.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 600))
 local safehouseSpawns = Instance.new("Folder", map)
 safehouseSpawns.Name = "Spawns_Test"
 Instance.new("Part", safehouseSpawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 610))
+local houseStand = Instance.new("Part", map.Stands) -- zweiter Waffenstand im Safehouse (gleicher Name)
+houseStand.Name = "Stand_Weapons"
+houseStand.CFrame = CFrame.new(CENTER + Vector3.new(-12, 2.5, 600))
 local travelStop = Instance.new("Part", map.Stands)
 travelStop.Name = "Travel"
 travelStop.CFrame = CFrame.new(CENTER + Vector3.new(-36, 2.5, 16))
@@ -359,6 +362,9 @@ step(ExtinctionConfig.RespawnTime + 0.5)
 local root = alice.Character and alice.Character:FindFirstChild("HumanoidRootPart")
 check(root ~= nil and (root.Position - (CENTER + Vector3.new(0, 0, 610))).Magnitude < 12, "Respawn im Safehouse")
 check(alice:GetAttribute("InSafeZone") == true, "nach dem Respawn in der Safe Zone")
+moveTo(alice, Vector3.new(-12, 3, 594))
+check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 1) == true, "Händler im Safehouse verkauft auch")
+InventoryService.TakeAll(alice) -- Tasche wieder leer wie nach dem Respawn
 -- zurück ins Camp: Spawnpunkt wieder das Camp
 moveTo(alice, Vector3.new(0, 3, 20))
 step(0.5)

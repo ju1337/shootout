@@ -294,15 +294,22 @@ function InventoryService.Use(player, slot)
 	end
 end
 
--- Nah genug an einem Stand / am Lager? (Teile in Maps.Extinction.Stands)
+-- Nah genug an einem Stand / am Lager? (Teile in Maps.Extinction.Stands, ein Name kann mehrfach vorkommen)
 local function nearPoint(player, name)
 	local _, _, root = livingCharacter(player)
 	local maps = workspace:FindFirstChild("Maps")
 	local map = maps and maps:FindFirstChild("Extinction")
 	local stands = map and map:FindFirstChild("Stands")
-	local point = stands and stands:FindFirstChild(name)
-	return root ~= nil and point ~= nil and point:IsA("BasePart")
-		and (root.Position - point.Position).Magnitude <= ExtinctionConfig.StandRange
+	if not root or not stands then
+		return false
+	end
+	-- es kann mehrere Stände mit demselben Namen geben (Camp und Safehouses)
+	for _, point in stands:GetChildren() do
+		if point.Name == name and point:IsA("BasePart") and (root.Position - point.Position).Magnitude <= ExtinctionConfig.StandRange then
+			return true
+		end
+	end
+	return false
 end
 
 local function nearAnyStand(player)

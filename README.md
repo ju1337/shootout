@@ -55,8 +55,10 @@ Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dort
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 44):
 befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild zur
-Zufahrtsstraße, ein Holzhaus mit Veranda, warm beleuchteten Fenstern und rauchendem Schornstein, Feuerstelle mit Bänken,
-Feuertonnen und Flutlicht, Gemüsebeete, Wasserturm, Brennholz, Pickup mit Kisten, Wachturm mit Suchscheinwerfer. Drinnen kein PvP,
+Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
+**eigene Händler** (WAFFEN, SANI, WERKSTATT unter Planen), ein LAGER-Container (dasselbe Lager wie im Camp) und die
+Haltestelle REISEN, Wasserturm. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
+Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.
 
