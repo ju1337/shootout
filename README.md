@@ -49,7 +49,9 @@ Unterkunftszelte, Fahrzeughof mit Militärlastern und Tankanhänger, Lichtmasten
 Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 44):
-HESCO-Wall im Quadrat mit Durchgang zur Zufahrtsstraße, Lagerfeuer, Zelt, Wachturm, Fahne, Schild. Drinnen kein PvP,
+befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild zur
+Zufahrtsstraße, ein Holzhaus mit Veranda, warm beleuchteten Fenstern und rauchendem Schornstein, Feuerstelle mit Bänken
+unter einer Lichterkette, Gemüsebeete, Wasserturm, Brennholz, Pickup mit Kisten, Wachturm mit Suchscheinwerfer. Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.
 
