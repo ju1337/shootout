@@ -578,17 +578,17 @@ class World:
             for s in (-1, 1):
                 if w >= 18:
                     front.append((s * w / 4 + s * 1.5, max(5, w / 3 - 2), 1.2, 7.2))
-        elif w >= 22:
+        elif w >= 22 and rng.random() < 0.5:
             front += [(-w / 2 + 5, 3.4, 3.2, 6.4), (w / 2 - 5, 3.4, 3.2, 6.4)]
-        elif w >= 16:
+        elif w >= 16 and rng.random() < 0.6:
             front.append((rng.choice((-1, 1)) * (w / 2 - 4.5), 3.4, 3.2, 6.4))
         windows["S"] = front
-        windows["N"] = [(0, 3.4, 3.2, 6.4)] if w >= 14 and rng.random() < 0.5 else []
-        windows["E"] = [(0, 3.4, 3.2, 6.4)] if d >= 14 and rng.random() < 0.5 else []
-        windows["W"] = [(0, 3.4, 3.2, 6.4)] if d >= 14 and rng.random() < 0.5 else []
+        windows["N"] = [(0, 3.4, 3.2, 6.4)] if w >= 14 and rng.random() < 0.25 else []
+        windows["E"] = [(0, 3.4, 3.2, 6.4)] if d >= 14 and rng.random() < 0.2 else []
+        windows["W"] = [(0, 3.4, 3.2, 6.4)] if d >= 14 and rng.random() < 0.2 else []
         # Durchbrüche
         for side in ("S", "N", "E", "W"):
-            if rng.random() < damage * 0.35:
+            if rng.random() < damage * 0.15:
                 along = (w if side in ("N", "S") else d) / 2 - 4
                 if along > 3:
                     windows[side].append((rng.uniform(-along, along), rng.uniform(3, 6), 0, rng.uniform(3.5, h + 1)))
@@ -702,13 +702,25 @@ class World:
             n = max(1, int((length - 3) // (spacing if side in ("N", "S") else spacing * 1.6)))
             step = length / n
             centers = [-length / 2 + step * (k + 0.5) for k in range(n)]
+            # nicht jede Achse hat Fenster: höchstens die Hälfte (mindestens eine), Rückseite und Schmalseiten meist zu
+            share = 0.5 if side == "S" else 0.3
+            used = [c for c in centers if rng.random() < share] or [rng.choice(centers)]
+            if side == "S":
+                door_c = min(centers, key=abs)
+                used = sorted(set(used) | {door_c})
+            if side in ("E", "W") and rng.random() < 0.5:
+                used = []
             openings = []
             for f in range(floors):
                 y0 = f * fh
                 for c in centers:
-                    if f == 0 and side == "S" and abs(c) == min(abs(cc) for cc in centers):
+                    if c not in used:
+                        continue
+                    if f == 0 and side == "S" and c == door_c:
                         openings.append((c, 5.5, 0, 7.5))  # Eingang
                         continue
+                    if f > 0 and side == "S" and c == door_c and len(used) > 1 and rng.random() < 0.5:
+                        continue  # über der Tür nicht immer ein Fenster
                     if broken_top and f == floors - 1 and rng.random() < 0.5:
                         openings.append((c, step * 0.9, y0 + 1.2, top_y + 2))  # oben weggebrochen
                         continue
@@ -1371,10 +1383,10 @@ class World:
         if kind == "tower":  # begehbar bis aufs Dach, manchmal ein eingestürzter Stumpf
             if rng.random() < 0.1:
                 return self.ruin_tower(w, d, rng.uniform(40, 100), color, collapsed=True)
-            return self.walk_block(w, d, rng.randint(5, 8), color, "Concrete", window=5.0, spacing=9.0, broken_top=rng.random() < 0.6,
+            return self.walk_block(w, d, rng.randint(5, 8), color, "Concrete", window=4.6, spacing=11.0, broken_top=rng.random() < 0.6,
                                    style=rng.choice(("panel", "glass", "glass", "stripes", "balcony", "fire_escape")))
         if kind == "apartment":
-            return self.walk_block(w, d, rng.randint(2, 3), color, rng.choice(("Concrete", "Brick")), spacing=8.5,
+            return self.walk_block(w, d, rng.randint(2, 3), color, rng.choice(("Concrete", "Brick")), spacing=10.0,
                                    broken_top=rng.random() < 0.3)
         if kind == "shop":
             return self.ruin_house(w, d, 10, color, damage=damage, shop=rng.choice(self.SHOPS))

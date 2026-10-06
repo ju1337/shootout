@@ -72,7 +72,8 @@ Bauernhöfe, einzelne Häuser und Scheunen an allen Landstraßen, **zehn Außenp
 Steinkuppe, Krähenberg, Bärenkopf, Fuchsbau, Hoher Stein, Schwarzer Buckel, Kahlenberg, Rabenstein: Lagerhaus mit Schild,
 Wachturm, Palisade, Sandsäcke, Feuer, Vorratslager, teils ein Zombienest), der **Funkturm** auf dem Hügel, der **Flugplatz** mit Flugzeugwrack, Schwarzsee, Stausee und Mühlteich.
 **Hochhäuser und Wohnblöcke sind von unten bis aufs Dach begehbar** (`walk_block`): Stockwerke mit Decken, Rampen als
-Treppen bis aufs Dach (Brüstung), eingeschlagene Fenster (offen, teils Glassplitter oder vernagelt), Kisten, Möbel und
+Treppen bis aufs Dach (Brüstung), wenige eingeschlagene Fenster (nur einzelne Achsen, Rückseite und Schmalseiten meist zu;
+offen, teils Glassplitter oder vernagelt), Kisten, Möbel und
 Schutt als Deckung in jedem Stockwerk, Ranken mit Blätterbüscheln, die vom Dach herunterhängen, Ruß über Fenstern,
 Wassertanks, Antennen und Klimakästen auf dem Dach. Jedes Gebäude hat eine eigene Fassade (Stil zufällig, dazu Farbe,
 Material, Fensterbreite und -abstand, Stockwerkshöhe): Plattenbau mit Fugen, Altbau aus Ziegeln mit Gesimsen, Glas-Büro
