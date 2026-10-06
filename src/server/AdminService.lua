@@ -235,6 +235,14 @@ function AdminService.Init(manager)
 	}
 
 	Remotes.AdminAction.OnServerEvent:Connect(function(player, action, a, b)
+		-- Noclip (frei fliegen, durch Wände): nur für den Admin selbst, Attribut Noclip (Client fliegt, MovementGuard
+		-- lässt ihn in Ruhe, kein Schaden)
+		if action == "Noclip" and player:GetAttribute("IsAdmin") then
+			local on = not player:GetAttribute("Noclip")
+			player:SetAttribute("Noclip", on or nil)
+			Remotes.AdminStatus:FireClient(player, on and "Noclip AN (B = aus)" or "Noclip AUS")
+			return
+		end
 		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then
 			return
 		end

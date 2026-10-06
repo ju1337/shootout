@@ -435,7 +435,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Slide) · Springen vor Kanten: Klettern ·
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
-M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · 4/5/6 Killstreaks (Herrschaft)
+M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
 
 In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Inventar · E Stand/Lager/Tasche/Mitfahren ·
 K Fahrzeug einpacken · im Fahrzeug W/S/A/D, Leertaste aussteigen ·

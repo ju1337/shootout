@@ -77,6 +77,9 @@ local function step(now)
 		local track = tracks[player]
 		if not humanoid or not root or humanoid.Health <= 0 or not root:IsDescendantOf(workspace) then
 			tracks[player] = nil
+		elseif player:GetAttribute("Noclip") then
+			-- Admin-Noclip: frei fliegen erlaubt; danach gilt die Stelle neu
+			tracks[player] = newTrack(character, root, now)
 		elseif humanoid.SeatPart and humanoid.SeatPart:GetAttribute("Vehicle") then
 			-- im Fahrzeug der offenen Welt: das prüft VehicleService; nach dem Aussteigen gilt die Stelle neu
 			tracks[player] = newTrack(character, root, now)

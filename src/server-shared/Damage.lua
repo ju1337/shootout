@@ -47,7 +47,9 @@ end
 -- Gibt zurück: tatsächlicher Schaden, getötet?, niedergeschlagen?, davon von der Rüstung geschluckt
 function Damage.Apply(model, humanoid, amount, attacker)
 	-- Schutzschild oder Safe Zone der offenen Welt (Attribut "SafeZone" am Charakter): kein Schaden
-	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") or model:GetAttribute("SafeZone") then
+	local noclip = Players:GetPlayerFromCharacter(model)
+	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") or model:GetAttribute("SafeZone")
+		or (noclip and noclip:GetAttribute("Noclip")) then -- Admin im Noclip: kein Schaden
 		return 0, false, false, 0
 	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)

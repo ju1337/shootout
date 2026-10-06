@@ -103,6 +103,11 @@ local function buildControls()
 	button("Runde beenden", 120, ffaRow, nil, function()
 		send("FFAEndRound")
 	end)
+	local noclipRow = row(list)
+	label("Ich:", 15, noclipRow, { Size = UDim2.new(0, 60, 1, 0) })
+	button("NOCLIP (B)", 130, noclipRow, Color3.fromRGB(60, 120, 170), function()
+		send("Noclip")
+	end)
 end
 
 local function buildBots()

@@ -17,6 +17,7 @@ local Glide = require(script.Parent:WaitForChild("Glide"))
 local Spectator = require(script.Parent:WaitForChild("Spectator"))
 local AgentSelect = require(script.Parent:WaitForChild("AgentSelect"))
 local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
+local Noclip = require(script.Parent:WaitForChild("Noclip"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
 local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 local Downed = require(script.Parent:WaitForChild("Downed"))
@@ -71,3 +72,4 @@ task.spawn(CrateClient.Init) -- Kisten öffnen: Automaten in der Marktmitte (Waf
 ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
 VehicleClient.Init() -- offene Welt: Fahrzeuge steuern (der Fahrer rechnet die Physik), Verfolgerkamera
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist
+task.spawn(Noclip.Init) -- Admins: B = Noclip (frei fliegen)
