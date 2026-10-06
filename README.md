@@ -40,7 +40,11 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`).
+`tools/build_maps.py`): ein improvisiertes Überlebenden-Lager auf festgetretener Erde – Wall aus Containern und
+Wellblech, vier Tore mit Holz-Wachtürmen und Suchscheinwerfern, Lagerfeuer mit Baumstamm-Bänken in der Mitte
+(Spawn), Zelte mit Feldbetten, Generator und Flutlicht, Bretterwege zu den Toren; Händler als Bretterbuden
+(WAFFEN, SANI, WERKSTATT), das LAGER im Container und der Rückweg zum Hub über den Hubschrauber-Landeplatz
+(EVAKUIERUNG).
 
 **Die Welt** (3200 × 3200, `tools/extinction_world.py`) ist ein verwüstetes Land nach dem Ausbruch: in der Mitte die
 zerstörte Großstadt **Ödstadt** (Durchmesser 1450, rund 700 Gebäude: vier Ringstraßen, zwölf Radialen und schräge
@@ -55,9 +59,12 @@ Alle Häuser sind kaputt: Löcher in den Wänden, abgebrochene Mauerkronen, Däc
 (eingestürzte Platten), vernagelte Fenster, Schutt, Ruß, Ranken, Graffiti („SIE SIND DRINNEN“, „EVAKUIERUNG -> CAMP
 PHOENIX“ …); auf den Straßen ausgebrannte Autos, Blutflecken, Sperren aus Beton und Sandsäcken, brennende Tonnen
 und Rauchsäulen, die meisten Laternen sind tot. Gebäude sind Prefabs, die gedreht an die Straße gesetzt werden.
+Straßen sind dunkler Asphalt mit Mittellinie und Schlaglöchern über dem Gelände; von den Landstraßen führen
+**Feldwege** (Erde, folgen dem Hang) hinauf zu jedem Außenposten. Alle Schilder sind alt und verwittert (Bretter,
+rostiges Blech oder Stoff, mit Marker gemalt, schief, ohne Leuchten) statt moderner Leuchttafeln.
 Das Gelände ist echtes **Terrain** (Höhenfeld aus `tools/extinction_terrain.py` in
-`src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: Pflaster in den
-Ortskernen, außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall).
+`src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: in den
+Ortskernen zertrampelte Erde, Matsch und verdorrtes Gras (kein Pflaster), außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall).
 **Rote Zonen** (4): Krankenhaus St. Marien (in Ödstadt), Militärbasis Fort Eisen, Industriehafen am Stausee, JVA
 Schwarzwald – rot-weiße Linie am Boden und ein **Kontrollpunkt an jeder Straße** (Torbogen „ROTE ZONE“ / innen
 „AUSGANG“, Sperren, rotes Licht). Safe Zone mit grünem Leuchtring am Boden und Sandsack-Wall.

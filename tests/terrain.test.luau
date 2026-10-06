@@ -51,7 +51,9 @@ local flatCell = math.floor((ExtinctionTerrain.FlatLevel - ground) / 4) + 1 -- V
 check(occupancy[1][flatCell - 1][1] == 1, "unter der Oberfläche voll")
 check(near(occupancy[1][flatCell][1], 0.9, 0.05), "oberster Voxel teilweise gefüllt (" .. occupancy[1][flatCell][1] .. ")")
 check(occupancy[1][flatCell + 1][1] == 0 and materials[1][flatCell + 1][1] == Enum.Material.Air, "darüber Luft")
-check(materials[1][flatCell][1] == Enum.Material.Pavement, "Stadt: Pflaster statt Gras")
+local townMaterial = materials[1][flatCell][1]
+check(townMaterial == Enum.Material.Ground or townMaterial == Enum.Material.Mud or townMaterial == Enum.Material.LeafyGrass,
+	"Stadt: Erde, Matsch oder Gras statt Pflaster (" .. tostring(townMaterial) .. ")")
 
 -- See: Wasser über dem Becken, Sand/Schlamm darunter
 local lakeMaterials, lakeOccupancy = ExtinctionTerrain.BuildChunk(-764, 228, 4, 4)
