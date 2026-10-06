@@ -2987,10 +2987,33 @@ def weather_signs(bm, b, rng):
             visit(inst)
 
 
+SHADOW_GROUPS = ("Buildings", "Walls")  # nur diese Gruppen werfen Schatten (und nur große Teile)
+
+
+def optimize(b):
+    """FPS: Schatten nur von großen Gebäude- und Mauerteilen (Kleinkram, Boden, Deko, Licht- und Glasteile werfen keine),
+    Berührungs-Ereignisse nur für die Tore (Portals) – alles andere ist verankert und braucht kein Touched."""
+    shadows = 0
+    for group, items in b.groups.items():
+        for inst in items:
+            props = inst["Properties"]
+            size = props.get("Size") or [0, 0, 0]
+            big = max(size) >= 8 and min(size) >= 0.5
+            see_through = props.get("Transparency", 0) > 0 or props.get("Material") in ("Neon", "Glass", "ForceField")
+            if group in SHADOW_GROUPS and big and not see_through:
+                shadows += 1
+            else:
+                props["CastShadow"] = False
+            if group != "Portals":
+                props["CanTouch"] = False
+    return shadows
+
+
 def save(bm, b, filename, display_name, atmosphere):
     """Wie Builder.save, aber kompakt (die Karte ist groß)."""
     import json
     import os
+    optimize(b)
     attrs = {"DisplayName": {"String": display_name}, "Center": {"Vector3": [float(v) for v in b.origin]},
              "Atmosphere": {"String": atmosphere},
              # Minimap (Minimap.lua): weiter rausgezoomt, nur Straßen, Boden und Gebäude (kein Schutt, keine Bäume)

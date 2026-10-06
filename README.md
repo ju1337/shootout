@@ -71,6 +71,9 @@ darin der Platz mit der Safe Zone. Drumherum, über Landstraßen verbunden: die 
 Bauernhöfe, einzelne Häuser und Scheunen an allen Landstraßen, **zehn Außenposten auf Hügeln** (Wolfshöhe, Adlerhorst,
 Steinkuppe, Krähenberg, Bärenkopf, Fuchsbau, Hoher Stein, Schwarzer Buckel, Kahlenberg, Rabenstein: Lagerhaus mit Schild,
 Wachturm, Palisade, Sandsäcke, Feuer, Vorratslager, teils ein Zombienest), der **Funkturm** auf dem Hügel, der **Flugplatz** mit Flugzeugwrack, Schwarzsee, Stausee und Mühlteich.
+**FPS**: Beim Bauen der Karte (`optimize` in `tools/extinction_world.py`) werfen nur große Gebäude- und Mauerteile
+Schatten (rund 10 000 von 40 000 Teilen), Berührungs-Ereignisse gibt es nur an den Toren. Grafik NIEDRIG schaltet
+zusätzlich Schatten, Leuchten, Partikel, Feuer und Rauch ab.
 **Hochhäuser haben Form** (`skyscraper`): Stufen (oben schmaler, hinten eine Dachterrasse), Zwillingstürme auf einem
 Sockel, L-Form (Turm mit niedrigem Flügel) oder Sockel mit schlankem Turm und Spitze – jeder Teil begehbar, die Treppe
 des Sockels endet auf der Terrasse, der Eingang des oberen Teils liegt hinten. Dazu Leben: Bettlaken mit „SOS“, „HILFE“,

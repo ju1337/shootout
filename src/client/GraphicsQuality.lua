@@ -1,6 +1,6 @@
 -- GraphicsQuality (ModuleScript, nur Client)
 -- Einstellung "Grafik" (PlayerSettings): HOCH = alles an, MITTEL = ohne Sonnenstrahlen, NIEDRIG = ohne Schatten,
--- Leuchten (Bloom), Sonnenstrahlen und Partikel – für schwache Geräte. Wirkt nur beim eigenen Spieler.
+-- Leuchten (Bloom), Sonnenstrahlen, Partikel, Feuer und Rauch – für schwache Geräte. Wirkt nur beim eigenen Spieler.
 
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
@@ -23,7 +23,7 @@ local function setEmitter(emitter)
 end
 
 local function onDescendant(object)
-	if object:IsA("ParticleEmitter") then
+	if object:IsA("ParticleEmitter") or object:IsA("Fire") or object:IsA("Smoke") or object:IsA("Sparkles") then
 		setEmitter(object)
 	end
 end
