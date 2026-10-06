@@ -15,6 +15,7 @@ local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
 local RapConfig = require(Shared.RapConfig)
 local Cosmetics = require(Shared.Cosmetics)
+local DayCycle = require(Shared.DayCycle)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local LeaderboardService = require(ServerStorage:WaitForChild("ServerShared").LeaderboardService)
 local BotService = require(script.Parent.BotService)
@@ -241,6 +242,14 @@ function AdminService.Init(manager)
 			local on = not player:GetAttribute("Noclip")
 			player:SetAttribute("Noclip", on or nil)
 			Remotes.AdminStatus:FireClient(player, on and "Noclip AN (B = aus)" or "Noclip AUS")
+			return
+		end
+		-- Tag/Nacht umschalten (offene Welt): Nacht -> 10 Uhr, Tag -> 22 Uhr; danach läuft der Tag normal weiter
+		if action == "DayNight" and player:GetAttribute("IsAdmin") then
+			local clock = DayCycle.Clock(workspace:GetServerTimeNow())
+			local target = DayCycle.IsNight(clock) and 10 or 22
+			DayCycle.SetClock(target)
+			Remotes.AdminStatus:FireClient(player, target == 10 and "Jetzt Tag (10:00)" or "Jetzt Nacht (22:00)")
 			return
 		end
 		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then

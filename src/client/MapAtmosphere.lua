@@ -52,16 +52,17 @@ local PRESETS = {
 
 -- Nachtwerte für "Wasteland" (zwischen Wasteland und NIGHT wird nach DayCycle.Darkness gemischt)
 local NIGHT = {
-	Lighting = { Brightness = 0.9, Ambient = Color3.fromRGB(40, 44, 60), OutdoorAmbient = Color3.fromRGB(64, 70, 98) },
-	Atmosphere = { Density = 0.44, Haze = 1.4, Glare = 0, Color = Color3.fromRGB(58, 64, 88), Decay = Color3.fromRGB(28, 30, 44) },
-	ColorCorrection = { Saturation = -0.32, Contrast = 0.16, TintColor = Color3.fromRGB(196, 208, 255) },
+	-- hell genug zum Spielen: kräftiges bläuliches Umgebungslicht statt Schwarz, weniger Dunst
+	Lighting = { Brightness = 2.2, Ambient = Color3.fromRGB(96, 102, 128), OutdoorAmbient = Color3.fromRGB(132, 140, 176) },
+	Atmosphere = { Density = 0.34, Haze = 1.0, Glare = 0, Color = Color3.fromRGB(96, 104, 134), Decay = Color3.fromRGB(60, 64, 92) },
+	ColorCorrection = { Saturation = -0.28, Contrast = 0.06, TintColor = Color3.fromRGB(214, 222, 255) },
 	Bloom = { Intensity = 0.5, Threshold = 1.2 },
 }
 -- Blutmond (rot) und Nebel (dicht, grau) werden über Tag/Nacht gelegt
 local BLOOD = {
 	Atmosphere = { Color = Color3.fromRGB(120, 40, 36), Decay = Color3.fromRGB(70, 20, 18), Density = 0.5 },
 	ColorCorrection = { TintColor = Color3.fromRGB(255, 160, 150), Saturation = -0.1 },
-	Lighting = { Ambient = Color3.fromRGB(70, 30, 30), OutdoorAmbient = Color3.fromRGB(110, 46, 44) },
+	Lighting = { Ambient = Color3.fromRGB(120, 66, 62), OutdoorAmbient = Color3.fromRGB(160, 86, 80) },
 }
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 

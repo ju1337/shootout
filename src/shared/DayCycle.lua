@@ -5,18 +5,34 @@
 --   Darkness(clock)     0 = heller Tag, 1 = tiefe Nacht, dazwischen Dämmerung
 --   IsNight(clock)      Darkness >= 0,5 (nachts mehr Zombies, siehe ZombieService)
 --   Label(clock)        "14:20"
+--   SetClock(hour)      (nur Server, Admin) springt zur Uhrzeit: Attribut "DayOffset" (Sekunden) an ReplicatedStorage,
+--                       das alle Berechnungen zur Serverzeit addieren
 
 local ExtinctionConfig = require(script.Parent.ExtinctionConfig)
 
 local DayCycle = {}
 
 local D = ExtinctionConfig.Day
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Serverzeit plus Verschiebung durch den Admin-Knopf (Tag/Nacht)
+local function shifted(serverTime)
+	return (serverTime or 0) + (tonumber(ReplicatedStorage:GetAttribute("DayOffset")) or 0)
+end
 
 function DayCycle.Clock(serverTime)
 	if D.Fixed then
 		return D.Fixed -- feste Uhrzeit (Tests)
 	end
-	return (D.StartHour + (serverTime or 0) / D.Length * 24) % 24
+	return (D.StartHour + shifted(serverTime) / D.Length * 24) % 24
+end
+
+-- Uhrzeit (0..24) ab jetzt erzwingen; der Tag läuft danach normal weiter
+function DayCycle.SetClock(hour, serverTime)
+	serverTime = serverTime or workspace:GetServerTimeNow()
+	local offset = ((hour - D.StartHour) / 24 * D.Length - serverTime) % D.Length
+	ReplicatedStorage:SetAttribute("DayOffset", offset)
+	return offset
 end
 
 local function smooth(t)
@@ -43,7 +59,7 @@ end
 
 -- Nummer des Tages (der Abend und die folgende Nacht gehören zum selben Tag)
 function DayCycle.DayIndex(serverTime)
-	local hours = D.StartHour + (serverTime or 0) / D.Length * 24 - D.NightTo
+	local hours = D.StartHour + shifted(serverTime) / D.Length * 24 - D.NightTo
 	return math.floor(hours / 24)
 end
 
@@ -62,7 +78,7 @@ function DayCycle.Fog(serverTime)
 	if clock < D.FogFrom or clock > D.FogTo then
 		return 0
 	end
-	local day = math.floor((D.StartHour + (serverTime or 0) / D.Length * 24) / 24)
+	local day = math.floor((D.StartHour + shifted(serverTime) / D.Length * 24) / 24)
 	if ((day * 7919 + 13) % 100) / 100 >= D.FogChance then
 		return 0
 	end

@@ -77,4 +77,16 @@ for day = 0, 49 do
 end
 check(foggyDays >= 5 and foggyDays <= 30, "Nebel an manchen Morgen (" .. foggyDays .. "/50)")
 check(not fogOutside, "nachmittags kein Nebel")
+-- Admin-Knopf: Uhrzeit setzen (Verschiebung an ReplicatedStorage), danach läuft der Tag weiter
+do
+	local t0 = 12345.6
+	DayCycle.SetClock(22, t0)
+	check(math.abs(DayCycle.Clock(t0) - 22) < 0.01, "SetClock 22 -> Nacht (" .. DayCycle.Clock(t0) .. ")")
+	check(DayCycle.IsNight(DayCycle.Clock(t0)), "jetzt Nacht")
+	DayCycle.SetClock(10, t0)
+	check(math.abs(DayCycle.Clock(t0) - 10) < 0.01 and not DayCycle.IsNight(DayCycle.Clock(t0)), "SetClock 10 -> Tag")
+	local later = DayCycle.Clock(t0 + D.Length / 24)
+	check(math.abs(later - 11) < 0.01, "läuft danach normal weiter (" .. later .. ")")
+	game:GetService("ReplicatedStorage"):SetAttribute("DayOffset", nil)
+end
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

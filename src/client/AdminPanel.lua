@@ -108,6 +108,9 @@ local function buildControls()
 	button("NOCLIP (B)", 130, noclipRow, Color3.fromRGB(60, 120, 170), function()
 		send("Noclip")
 	end)
+	button("TAG / NACHT", 130, noclipRow, Color3.fromRGB(150, 120, 50), function()
+		send("DayNight")
+	end)
 end
 
 local function buildBots()

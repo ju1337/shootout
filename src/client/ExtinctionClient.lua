@@ -491,28 +491,7 @@ local function updateMarkers()
 	local entries = {}
 	if map and root3 then
 		local here = root3.Position
-		for _, zone in mapList(map, "Redzones") do
-			local dx, dz = (zone.X or 0) - here.X, (zone.Z or 0) - here.Z
-			local distance = math.sqrt(dx * dx + dz * dz)
-			if distance > (zone.R or 0) then
-				table.insert(entries, { Order = distance + 1000, X = zone.X, Z = zone.Z, Color = RED,
-					Text = "ROTE ZONE  " .. string.upper(tostring(zone.Name or "")) .. "  ·  " .. math.floor(distance - (zone.R or 0)) .. " M" })
-			end
-		end
 		local now = workspace:GetServerTimeNow()
-		-- Wanderzone: immer anzeigen, mit Zeit bis zum Wechsel
-		local movingText = map:GetAttribute("MovingZone")
-		local okMoving, moving = pcall(HttpService.JSONDecode, HttpService, type(movingText) == "string" and movingText or "null")
-		if okMoving and type(moving) == "table" and moving.X and moving.Z then
-			local dx, dz = moving.X - here.X, moving.Z - here.Z
-			local distance = math.sqrt(dx * dx + dz * dz)
-			local left = math.max(0, math.floor((moving.Ends or now) - now))
-			local clock = string.format("%d:%02d", left // 60, left % 60)
-			local inside = distance <= (moving.R or 0)
-			table.insert(entries, { Order = -7000, X = moving.X, Z = moving.Z, Color = MOVING,
-				Text = "WANDERZONE  " .. string.upper(tostring(moving.Name or "")) .. "  ·  WECHSEL IN " .. clock
-					.. (inside and "" or ("  ·  " .. math.floor(distance - (moving.R or 0)) .. " M")) })
-		end
 		for _, drop in mapList(map, "Airdrops") do
 			local dx, dz = (drop.X or 0) - here.X, (drop.Z or 0) - here.Z
 			local distance = math.floor(math.sqrt(dx * dx + dz * dz))
@@ -1263,6 +1242,11 @@ function ExtinctionClient.Init()
 		Size = UDim2.fromOffset(260, 30), Text = "", TextSize = 15, Font = F.Bold, TextColor3 = C.Text,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	UITheme.Outline(clockText)
+	-- Wanderzone: Ort, Zeit bis zum Wechsel und Entfernung als Zeile unter der Uhr (kein Richtungspfeil)
+	local movingText = label({ Name = "MovingZone", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 58),
+		Size = UDim2.fromOffset(360, 20), Text = "", TextSize = 13, Font = F.Bold, TextColor3 = MOVING,
+		TextXAlignment = Enum.TextXAlignment.Right }, root)
+	UITheme.Outline(movingText)
 	RunService.Heartbeat:Connect(function()
 		if not hud.Enabled then
 			return
@@ -1278,6 +1262,26 @@ function ExtinctionClient.Init()
 		else
 			clockText.Text = "TAG  " .. DayCycle.Label(clock)
 			clockText.TextColor3 = C.Text
+		end
+		local maps = workspace:FindFirstChild("Maps")
+		local map = maps and maps:FindFirstChild("Extinction")
+		local raw = map and map:GetAttribute("MovingZone")
+		local ok, moving = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
+		local character = player.Character
+		local root3 = character and character:FindFirstChild("HumanoidRootPart")
+		if ok and type(moving) == "table" and moving.X and moving.Z then
+			local left = math.max(0, math.floor((moving.Ends or serverTime) - serverTime))
+			local text = "WANDERZONE  " .. string.upper(tostring(moving.Name or "")) .. "  ·  WECHSEL IN "
+				.. string.format("%d:%02d", left // 60, left % 60)
+			if root3 then
+				local dx, dz = moving.X - root3.Position.X, moving.Z - root3.Position.Z
+				local distance = math.sqrt(dx * dx + dz * dz) - (moving.R or 0)
+				text ..= distance <= 0 and "  ·  DU BIST DRIN" or ("  ·  " .. math.floor(distance) .. " M")
+			end
+			movingText.Text = text
+			movingText.Visible = true
+		else
+			movingText.Visible = false
 		end
 	end)
 	-- Controller: △ (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
