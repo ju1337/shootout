@@ -74,8 +74,9 @@ Wachturm, Palisade, Sandsäcke, Feuer, Vorratslager, teils ein Zombienest), der 
 **Hochhäuser haben Form** (`skyscraper`): Stufen (oben schmaler, hinten eine Dachterrasse), Zwillingstürme auf einem
 Sockel, L-Form (Turm mit niedrigem Flügel) oder Sockel mit schlankem Turm und Spitze – jeder Teil begehbar, die Treppe
 des Sockels endet auf der Terrasse, der Eingang des oberen Teils liegt hinten. Dazu Leben: Bettlaken mit „SOS“, „HILFE“,
-„WIR LEBEN NOCH“ aus den Fenstern, Rauch aus einem Fenster, Feuer in einem Stockwerk, alte Leuchtschriften auf dem Dach
-(HOTEL KAISERHOF, STADTWERKE, RADIO ÖDSTADT …), Treppenhaus, Satellitenschüsseln oder ein Landeplatz.
+„WIR LEBEN NOCH“ aus den Fenstern, Rauch aus einem Fenster, Feuer in einem Stockwerk, Treppenhaus, Satellitenschüsseln
+oder ein Landeplatz auf dem Dach (keine Firmennamen). Vor einzelnen Fenstern kleine Balkone, oft kaputt: zur Seite
+abgesackt, Geländer verbogen oder weg und Bewehrung schaut heraus, manchmal Kisten oder Blumenkästen darauf.
 **Hochhäuser und Wohnblöcke sind von unten bis aufs Dach begehbar** (`walk_block`): Stockwerke mit Decken, Rampen als
 Treppen bis aufs Dach (Brüstung), wenige eingeschlagene Fenster (nur einzelne Achsen, Rückseite und Schmalseiten meist zu;
 offen, teils Glassplitter oder vernagelt), Kisten, Möbel und

@@ -730,10 +730,12 @@ class World:
                 if rng.random() < 0.0 and f > 0:  # (Sprenglöcher würden die Wand über alle Stockwerke zerschneiden)
                     openings.append((rng.uniform(-length / 2 + 4, length / 2 - 4), rng.uniform(3, 6), y0 + 1, y0 + rng.uniform(5, 8)))
             self.wall(pb, side, w, d, top_y + 1.4, color, mat, openings, [], base=-1.0, t=t)
-            # Fenster: Glassplitter oder Bretter in manchen Öffnungen
+            # Fenster: Glassplitter oder Bretter in manchen Öffnungen, ab und zu ein kleiner (oft kaputter) Balkon
             for c, width, lo, hi in openings:
                 if lo <= 0 or hi > top_y:
                     continue
+                if style != "balcony" and lo > fh and rng.random() < 0.1:
+                    self.small_balcony(pb, side, w, d, c, width, lo - sill)
                 r = rng.random()
                 if r < 0.07:
                     for _ in range(rng.randint(1, 2)):
@@ -871,16 +873,43 @@ class World:
         pb.style = style
         return pb
 
-    TOWER_SIGNS = (("HOTEL KAISERHOF", "★★★★"), ("STADTWERKE", "ÖDSTADT"), ("ALLIANZA", "VERSICHERUNGEN"), ("GRAND HOTEL", "SEIT 1912"),
-                   ("RADIO ÖDSTADT", "98,4 MHZ"), ("NORDBANK", "IHR VERTRAUEN"), ("TELEKOM", "ZENTRALE"), ("ZEITUNGSHAUS", "DER BOTE"),
-                   ("KLINIKUM", "VERWALTUNG"), ("BUSINESS CENTER", "BÜROS ZU VERMIETEN"))
+    def small_balcony(self, pb, side, w, d, c, width, y):
+        """Kleiner Balkon vor einem Fenster (Boden auf Höhe y): Platte mit Geländer; oft kaputt – abgesackt, Geländer
+        verbogen oder fehlend, Bewehrung schaut heraus."""
+        rng = self.rng
+        bw, depth = width + 1.6, 2.6
+        broken = rng.random()
+        tilt = rng.uniform(8, 22) if broken < 0.3 else 0          # abgesackt
+        yaw = {"S": 0, "N": 180, "E": -90, "W": 90}[side]  # lokal -Z zeigt nach außen
+        m = self.bm.rot(0, yaw, 0)
+        base = {"S": (c, -d / 2), "N": (c, d / 2), "E": (w / 2, c), "W": (-w / 2, c)}[side]
+
+        def at(lx, ly, lz):  # lokal: x entlang der Wand, -Z nach außen
+            return (base[0] + m[0][0] * lx + m[0][2] * lz, y + ly, base[1] + m[2][0] * lx + m[2][2] * lz)
+        slab_col = (128, 124, 116)
+        pb.box("Buildings", "Balcony", (bw, 0.5, depth), at(0, -0.25 - tilt * 0.05, -depth / 2), slab_col, "Concrete",
+               angles=(0, yaw, rng.choice((-1, 1)) * tilt))  # abgesackt: zur Seite gekippt
+        rail = (70, 66, 62)
+        if broken < 0.75:
+            bent = rng.uniform(-25, 25) if broken < 0.5 else 0
+            pb.box("Decor", "BalconyRail", (bw, 0.2, 0.2), at(0, 1.3, -depth + 0.1), rail, "Metal", angles=(0, yaw, bent))
+            for s_ in (-1, 1):
+                if rng.random() < 0.8:
+                    pb.box("Decor", "BalconyPost", (0.2, 1.3, 0.2), at(s_ * (bw / 2 - 0.1), 0.65, -depth + 0.1), rail, "Metal",
+                           angles=(0, yaw, rng.uniform(-10, 10)))
+        else:  # Geländer weg, Eisen schaut heraus
+            for _ in range(2):
+                pb.box("Decor", "Rebar", (0.2, 0.2, rng.uniform(1, 2)), at(rng.uniform(-bw / 2, bw / 2), 0, -depth - 0.4), (80, 60, 50),
+                       "CorrodedMetal", angles=(0, yaw, rng.uniform(-30, 30)))
+        if rng.random() < 0.3:  # Kram auf dem Balkon
+            pb.box("Decor", rng.choice(("Planter", "Crate")), (1.2, 1, 1.2), at(rng.uniform(-bw / 3, bw / 3), 0.5, -depth / 2),
+                   rng.choice(((110, 86, 60), (90, 70, 52))), "WoodPlanks", angles=(0, yaw + rng.uniform(-20, 20), 0))
 
     def skyscraper(self, w, d, color):
         """Begehbares Hochhaus mit Form: Stufen (oben schmaler, Dachterrasse), Zwillingstürme auf einem Sockel, L-Form (Turm
         und niedriger Flügel) oder Sockel mit schlankem Turm. Obere Teile stehen vorne bündig, die Treppe des Sockels kommt
         hinten auf der Terrasse heraus, der Eingang des oberen Teils liegt hinten. Dazu Leben: Bettlaken mit SOS/HILFE aus den
-        Fenstern, Rauch aus einem Fenster, Feuer in einem Stockwerk, alte Leuchtschrift auf dem Dach, Treppenhaus,
-        Landeplatz, Satellitenschüsseln."""
+        Fenstern, Rauch aus einem Fenster, Feuer in einem Stockwerk, Treppenhaus, Landeplatz, Satellitenschüsseln."""
         rng = self.rng
         pb = self.prefab()
         lighten = self.bm.lighten
@@ -964,15 +993,7 @@ class World:
             ox_, oz_ = tx + rng.uniform(-tw / 3, tw / 3), tz + rng.uniform(-td / 3, td / 6)
             pb.add("Decor", "Dish", (0.4, 2.4, 2.4), (ox_, ty + 1.6, oz_), (210, 210, 206), "Metal",
                    angles=(0, rng.uniform(0, 360), 90 - 35), props={"Shape": "Cylinder"})
-        if rng.random() < 0.6:
-            title, sub = rng.choice(self.TOWER_SIGNS)
-            sw = min(tw - 2, 22)
-            for s in (-1, 1):
-                pb.box("Decor", "SignFrame", (0.4, 7, 0.4), (tx + s * sw * 0.4, ty + 3.5, tz - td / 2 + 1), (70, 70, 74), "Metal")
-            pb.sign2(self.nm("TowerSign"), (sw, 4.4, 0.3), (tx, ty + 5.4, tz - td / 2 + 0.7), title, sub, (30, 30, 32),
-                     rng.choice(((220, 60, 50), (230, 200, 90), (90, 160, 220), (220, 220, 220))), (200, 200, 200),
-                     angles=(0, 0, rng.choice((0, 0, rng.uniform(-12, 12)))))
-        elif tw >= 18 and td >= 14:
+        if tw >= 18 and td >= 14 and rng.random() < 0.3:
             pb.add("Decor", "Helipad", (0.3, min(tw, td) - 4, min(tw, td) - 4), (tx, ty + 0.15, tz), (70, 70, 66), "Concrete",
                    angles=(0, 0, 90), props={"Shape": "Cylinder"})
             pb.floor_text("RoofH", (5, 0.1, 5), (tx, ty + 0.35, tz), "H", (220, 200, 90), yaw=0)
