@@ -298,8 +298,25 @@ end
 check(rifleInBag ~= nil and rifleInBag.Mag == 29, "Gewehr mit Magazin (29) in der Tasche")
 check(bagPart and bagPart:FindFirstChildOfClass("ProximityPrompt") ~= nil, "Tasche mit E durchsuchbar")
 check(#HttpService:JSONDecode(alice:GetAttribute("ExtStash")) == 1, "Lager behält die Pistole")
+-- eigene Tasche auf Minimap und Karte: Attribut ExtDeathBag mit Ort und Ablaufzeit
+local marker = alice:GetAttribute("ExtDeathBag") and HttpService:JSONDecode(alice:GetAttribute("ExtDeathBag"))
+check(marker and marker.Id == bagId and math.abs(marker.X - deathPos.X) <= 1 and math.abs(marker.Z - deathPos.Z) <= 1,
+	"Markierung der eigenen Tasche am Todesort")
+check(marker and math.abs(marker.Ends - (workspace:GetServerTimeNow() + ExtinctionConfig.BagLifetime)) < 2, "Markierung mit Ablaufzeit")
+local function lastBanner(player)
+	for i = #SIM.RemoteLog, 1, -1 do
+		local entry = SIM.RemoteLog[i]
+		if entry.Remote == "Notify" and entry.Player == player and entry.Args[1] == "Banner" then
+			return entry.Args[2]
+		end
+	end
+	return nil
+end
 step(5.5)
 check(alice.Character and alice.Character.Humanoid.Health > 0 and alice:GetAttribute("InSafeZone") == true, "Respawn in der Safe Zone")
+local respawnBanner = lastBanner(alice)
+check(respawnBanner and respawnBanner.Title == "DEINE TASCHE LIEGT DRAUSSEN", "nach dem Respawn: Hinweis auf die Tasche ("
+	.. tostring(respawnBanner and respawnBanner.Title) .. ")")
 
 -- ---------- Bob lootet die Tasche ----------
 enter(bob)
@@ -317,6 +334,7 @@ for _, entry in bagOf(bob) do
 end
 check(bobHasRifle, "Bob hat das Gewehr mit Magazin")
 check(LootService.Get(bagId) == nil and #workspace.ExtinctionLoot:GetChildren() == 0, "leere Tasche verschwindet")
+check(alice:GetAttribute("ExtDeathBag") == nil, "Markierung weg, sobald die Tasche leer geräumt ist")
 check(lastExt(bob, "LootClosed") ~= nil, "Fenster bei Bob geschlossen")
 
 -- ---------- PvP: beide draußen und PvP-Zeit erreicht ----------
@@ -361,6 +379,9 @@ alice.Character.Humanoid.Health = 0
 step(ExtinctionConfig.RespawnTime + 0.5)
 local root = alice.Character and alice.Character:FindFirstChild("HumanoidRootPart")
 check(root ~= nil and (root.Position - (CENTER + Vector3.new(0, 0, 610))).Magnitude < 12, "Respawn im Safehouse")
+local emptyBanner = lastBanner(alice)
+check(emptyBanner and emptyBanner.Title == "NICHTS VERLOREN" and alice:GetAttribute("ExtDeathBag") == nil,
+	"leere Tasche: keine Tasche am Boden, Hinweis nach dem Respawn")
 check(alice:GetAttribute("InSafeZone") == true, "nach dem Respawn in der Safe Zone")
 moveTo(alice, Vector3.new(-12, 3, 594))
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 1) == true, "Händler im Safehouse verkauft auch")

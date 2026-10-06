@@ -123,6 +123,23 @@ check(not ringRed(), "draußen: Rand nicht mehr rot")
 map:SetAttribute("Redzones", "[]")
 SIM.Advance(1.2, 20)
 check(#redDots() == 0, "ohne rote Zone keine roten Punkte")
+-- eigene Todestasche (Attribut ExtDeathBag): rotes X an ihrer Stelle, weit weg am Rand festgehalten
+local bagIcon = minimap and find(minimap, "DeathBag")
+check(bagIcon ~= nil and not bagIcon.Visible, "ohne Todestasche kein X auf der Minimap")
+local function offset()
+	local p = bagIcon.Position
+	return math.sqrt(p.X.Offset ^ 2 + p.Y.Offset ^ 2)
+end
+bob:SetAttribute("ExtDeathBag", '{"Id":1,"X":0,"Z":30,"Ends":0}')
+SIM.Advance(0.2, 20)
+check(bagIcon and bagIcon.Visible and math.abs(offset() - 30 / 75 * 100) < 1, "Tasche in 30 Studs: X an ihrer Stelle ("
+	.. (bagIcon and math.floor(offset()) or -1) .. ")")
+bob:SetAttribute("ExtDeathBag", '{"Id":1,"X":0,"Z":2000,"Ends":0}')
+SIM.Advance(0.2, 20)
+check(bagIcon and bagIcon.Visible and math.abs(offset() - (100 - 14)) < 1, "Tasche weit weg: X am Rand")
+bob:SetAttribute("ExtDeathBag", nil)
+SIM.Advance(0.2, 20)
+check(bagIcon and not bagIcon.Visible, "Tasche weg: X weg")
 SIM.IsServer = true
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

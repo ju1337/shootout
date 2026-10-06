@@ -171,9 +171,11 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
   Magazin bleibt am Item gespeichert. Ohne passende Munition kein Nachladen.
 - **Stände**: kaufen mit Münzen (Munition auch ×5), verkaufen an jedem Stand für 40 % des Preises.
 - **Lager**: 40 Plätze, immer sicher (auch beim Tod).
-- **Tod draußen**: die ganze Tasche fällt als **Tasche am Boden** (5 Minuten, jeder kann sie mit E durchsuchen und
-  Items oder ALLES nehmen), Respawn nach 5 s in der Safe Zone. Spieler-Kill: +120 Münzen Kopfgeld (dazu der
-  normale Kill-Lohn).
+- **Tod draußen**: die ganze Tasche fällt als **Tasche am Boden** (Rucksack mit rotem Licht und Lichtsäule, Name des
+  Toten darüber; 5 Minuten, jeder kann sie mit E durchsuchen und Items oder mit F alles nehmen), Respawn nach 5 s in der
+  Safe Zone. Der Tote sieht seine Tasche als **rotes X** auf Minimap (am Rand, wenn sie weit weg ist) und Weltkarte (mit
+  Restzeit) und bekommt nach dem Respawn einen Hinweis; war die Tasche leer, fällt nichts („NICHTS VERLOREN“).
+  Spieler-Kill: +120 Münzen Kopfgeld (dazu der normale Kill-Lohn).
 - **Verlassen**: in der Safe Zone bleibt alles genau so angeordnet in der Tasche (gespeichert im Profil). Draußen
   kostet Verlassen die Tasche (im Menü erst nach einem zweiten Klick, beim Spiel-Verlassen sofort vor dem
   Speichern); fährt der Server herunter, verliert niemand etwas.
@@ -671,7 +673,7 @@ am Commit:
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
-| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot |
+| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
 | `extbots` | Bots der offenen Welt: Spawn beim Admin (draußen, vor dem Rand der Safe Zone, sonst rote Zone), Ziele (Spieler draußen ja, in der Safe Zone nein, andere Bots nein, nahe Zombies ja), Zombies jagen und schlagen Bots, Tasche mit Waffe, Munition und Beute (rote Zone Tier 3), Kopfgeld und Rangliste nur für Spieler-Kills, Leiche weg, Obergrenze, Admin-Befehle |
 | `redzoneboard`, `extinctionui` | Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |

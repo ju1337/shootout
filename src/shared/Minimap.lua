@@ -3,13 +3,15 @@
 -- bestimmte Gruppen zeichnen (MinimapFolders); die offene Welt zeigt die Safe Zones und die rote Zone als Punktkreise. Sie dreht sich mit der Kamera (Blickrichtung = oben)
 -- und zeigt den Grundriss der aktuellen Map (Böden, Wände, Deckung aus den Parts der Map),
 -- Teamkollegen (Cyan, am Boden orange), Gegner nur kurz, wenn sie schießen oder markiert sind (rot),
--- Pings (gelb) und die Ziele (A/B) – Ziele außerhalb der Karte kleben am Rand.
+-- Pings (gelb) und die Ziele (A/B) – Ziele außerhalb der Karte kleben am Rand. In der offenen Welt außerdem die eigene
+-- Todestasche (rotes X, Spieler-Attribut ExtDeathBag), ebenfalls am Rand festgehalten.
 -- Technik: Ein Rahmen dreht sich um die Mitte, darin verschiebt sich die "Welt" (Positionen als Scale,
 -- damit nichts auf Pixel springt). Den Kreis-Zuschnitt rechnet MinimapShapes selbst aus (Stücke am Rand
 -- werden gekürzt, alles draußen ausgeblendet) – CanvasGroup/ClipsDescendants schneiden gedrehte Inhalte
 -- nicht zuverlässig ab. Neu gerechnet wird nur, wenn man sich bewegt; Drehen kostet nichts.
 
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -467,6 +469,34 @@ function Minimap.Init(root)
 		return dx * c - dz * s, dx * s + dz * c
 	end
 
+	-- Eigene Todestasche (offene Welt): rotes X, außerhalb der Karte am Rand
+	local bagIcon = objectiveIcon(overlay, "X", 22)
+	bagIcon.Holder.Name = "DeathBag"
+	bagIcon.Holder.Visible = false
+	bagIcon.Diamond.BackgroundColor3 = COLORS.Enemy
+	local bagRaw, bagAt = nil, nil -- zuletzt gelesenes Attribut, Position (Vector3) oder nil
+	local function updateBag(focus, rotation)
+		local raw = player:GetAttribute("ExtDeathBag")
+		if raw ~= bagRaw then
+			bagRaw = raw
+			bagAt = nil
+			local ok, info = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "")
+			if ok and type(info) == "table" and tonumber(info.X) and tonumber(info.Z) then
+				bagAt = Vector3.new(tonumber(info.X), 0, tonumber(info.Z))
+			end
+		end
+		bagIcon.Holder.Visible = bagAt ~= nil
+		if bagAt then
+			local radius = SIZE / 2 - 14
+			local x, y = rotate((bagAt.X - focus.X) / RANGE * (SIZE / 2), (bagAt.Z - focus.Z) / RANGE * (SIZE / 2), rotation)
+			local distance = math.sqrt(x * x + y * y)
+			if distance > radius then
+				x, y = x / distance * radius, y / distance * radius
+			end
+			bagIcon.Holder.Position = UDim2.new(0.5, x, 0.5, y)
+		end
+	end
+
 	local refreshAt = 0
 	local fighters, fightersAt = {}, 0
 	RunService.RenderStepped:Connect(function()
@@ -558,6 +588,8 @@ function Minimap.Init(root)
 				enemyDots[model] = nil
 			end
 		end
+
+		updateBag(focus, rotation)
 
 		-- Pings
 		for i = #pings, 1, -1 do

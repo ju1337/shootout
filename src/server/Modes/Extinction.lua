@@ -9,11 +9,13 @@
 -- Attribut Redzone (Name) für die Anzeige. Spieler-Kills dort zählen für die Rangliste (RedzoneBoard, Anzeige rechts
 -- oben), die mit jedem Wechsel neu beginnt.
 -- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt), Redzone,
--- MapId / MapName / MapCenter (Minimap, Lichtstimmung). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
+-- MapId / MapName / MapCenter (Minimap, Lichtstimmung), ExtDeathBag (JSON { Id, X, Z, Ends }: die eigene Todestasche, solange
+-- sie liegt – Markierung auf Minimap und Weltkarte). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
 -- Bots (Admin-Panel, ExtinctionConfig.Bots): spawnen beim Admin draußen (oder in der roten Zone), jagen Spieler draußen,
 -- wehren sich gegen Zombies und lassen beim Tod eine Tasche mit Beute fallen; ihr Kill zählt wie ein Spieler-Kill.
 
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
@@ -47,7 +49,8 @@ local ZONE_STEP = 0.2 -- so oft wird geprüft, wer in der Safe Zone ist (Sekunde
 
 local manager
 local bloodMoon = nil -- letzter Stand des Blutmonds (nil = noch nicht geprüft, dann keine Ansage)
-local members = {} -- [Player] = { Inside, PvPAt, LeaveAsked }
+local members = {} -- [Player] = { Inside, PvPAt, LeaveAsked, BagNotice }
+local deathBags = {} -- [Player] = Id der letzten eigenen Todestasche (Attribut ExtDeathBag)
 local bots = {} -- [bot] = true (Bots aus dem Admin-Panel, siehe Extinction.AddBot)
 local BOT_TEAM = { Name = "Banditen" } -- alle Bots ein Team: sie schießen nicht aufeinander
 local isWaterAt = nil -- function(x, z) -> bool (Weltkoordinaten), ab Init
@@ -188,14 +191,34 @@ local function updateZone(player, info)
 	end
 end
 
--- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt true zurück, wenn etwas gefallen ist.
+-- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt true zurück, wenn etwas gefallen ist. Der Besitzer sieht sie auf
+-- Minimap und Weltkarte (Attribut ExtDeathBag), bis sie leer geräumt oder abgelaufen ist; plündern kann sie jeder.
 local function dropBag(player, position)
 	local items = InventoryService.TakeAll(player)
 	if #items == 0 then
 		return false
 	end
-	LootService.Create(position, items, "Death", "TASCHE · " .. player.Name)
+	local id = LootService.Create(position, items, "Death", "TASCHE · " .. player.Name, { Meta = { Owner = player.UserId } })
+	local bag = id and LootService.Get(id)
+	if bag and player.Parent then
+		deathBags[player] = id
+		local at = bag.Part.Position
+		player:SetAttribute("ExtDeathBag", HttpService:JSONEncode({ Id = id, X = math.round(at.X), Z = math.round(at.Z),
+			Ends = math.round(workspace:GetServerTimeNow() + ExtinctionConfig.BagLifetime) }))
+	end
 	return true
+end
+
+-- Eine Tasche ist weg (leer geräumt, abgelaufen): Markierung des Besitzers löschen, wenn es seine letzte war
+local function bagRemoved(bag)
+	for player, id in deathBags do
+		if id == bag.Id then
+			deathBags[player] = nil
+			if player.Parent then
+				player:SetAttribute("ExtDeathBag", nil)
+			end
+		end
+	end
 end
 
 local function spawnPlayer(player)
@@ -209,6 +232,15 @@ local function spawnPlayer(player)
 		return
 	end
 	setInside(player, info, true, character)
+	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)
+	if info.BagNotice then
+		local dropped = info.BagNotice == "Dropped"
+		info.BagNotice = nil
+		notify(player, "Banner", dropped
+			and { Caption = "Gestorben", Title = "DEINE TASCHE LIEGT DRAUSSEN", Sub = "Noch " .. math.floor(ExtinctionConfig.BagLifetime / 60)
+				.. " Minuten · Markierung auf Minimap und Karte (N) · jeder kann sie plündern", Style = "Info" }
+			or { Caption = "Gestorben", Title = "NICHTS VERLOREN", Sub = "Deine Tasche war leer · das Lager bleibt immer", Style = "Info" })
+	end
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.Died:Connect(function()
 		local current = members[player]
@@ -216,7 +248,7 @@ local function spawnPlayer(player)
 		local position = root and root.Position
 		local outside = position ~= nil and not Extinction.InSafeZone(position)
 		if current and outside then
-			dropBag(player, position)
+			current.BagNotice = dropBag(player, position) and "Dropped" or "Empty"
 		end
 		for _, callback in Extinction.OnDeath do
 			task.spawn(callback, player, position, outside)
@@ -470,6 +502,8 @@ function Extinction.Init(modeManager)
 	ProgressService.OnLeaving(function(player)
 		leavePenalty(player)
 	end)
+	-- Todestasche weg: Markierung beim Besitzer löschen
+	table.insert(LootService.OnRemoved, bagRemoved)
 
 	local elapsed = 0
 	RunService.Heartbeat:Connect(function(dt)
@@ -498,6 +532,7 @@ function Extinction.Init(modeManager)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		lastTouch[player] = nil
+		deathBags[player] = nil
 	end)
 end
 
@@ -548,7 +583,9 @@ function Extinction.RemovePlayer(player)
 	if character then
 		character:SetAttribute("SafeZone", nil)
 	end
-	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle" } do
+	deathBags[player] = nil
+	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
+		"ExtDeathBag" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

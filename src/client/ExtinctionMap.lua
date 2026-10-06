@@ -1,7 +1,8 @@
 -- ExtinctionMap (ModuleScript, nur Client)
 -- Weltkarte der offenen Welt (EXTINCTION), Taste N (oder Knopf KARTE): Straßen und Flächen aus den Gruppen Roads und
 -- Ground der Karte, die Safe Zones (grün), die rote Zone (roter Kreis mit der Zeit bis zum Weiterziehen), Orte (Namen),
--- Lootdrops (orange, mit Countdown), Vorratslager und Funkgerät und der eigene Standort als Pfeil in Blickrichtung.
+-- Lootdrops (orange, mit Countdown), Vorratslager und Funkgerät, die eigene Todestasche (rotes X mit der Zeit, bis sie
+-- verschwindet, Spieler-Attribut ExtDeathBag) und der eigene Standort als Pfeil in Blickrichtung.
 -- Norden (+Z) ist oben.
 -- Zombienester und Überlebende stehen nicht auf der Karte (man findet sie draußen), damit sie übersichtlich bleibt.
 -- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops, Activities; Gruppen Roads, Ground, Places,
@@ -35,7 +36,7 @@ local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (all
 }
 local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = true, TowerStub = true, PrisonWall = true }
 
-local gui, board, layer, markers, arrow
+local gui, board, layer, markers, arrow, bagView, bagCaption
 local built = false
 local dropViews = {}       -- Lootdrops und Aktivitäten (Id -> Frame)
 local redViews, redRaw = {}, nil -- rote Zone: { Frame, Text, Ends } und zuletzt gelesenes Attribut Redzones
@@ -247,6 +248,16 @@ local function update()
 			dropViews[id] = nil
 		end
 	end
+	-- eigene Todestasche
+	local ok, bag = pcall(HttpService.JSONDecode, HttpService, tostring(player:GetAttribute("ExtDeathBag") or ""))
+	local hasBag = ok and type(bag) == "table" and tonumber(bag.X) ~= nil and tonumber(bag.Z) ~= nil
+	bagView.Visible = hasBag
+	if hasBag then
+		local u, v = toMap(map, tonumber(bag.X), tonumber(bag.Z))
+		bagView.Position = UDim2.fromScale(u, v)
+		local left = math.max(0, math.floor((tonumber(bag.Ends) or now) - now))
+		bagCaption.Text = string.format("DEINE TASCHE %d:%02d", left // 60, left % 60)
+	end
 end
 
 function ExtinctionMap.IsOpen()
@@ -288,9 +299,15 @@ function ExtinctionMap.Init()
 	arrow = label({ Name = "Me", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(22, 22), Text = "▲", TextSize = 20,
 		Font = F.Display, TextColor3 = Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, markers)
 	UITheme.Outline(arrow)
+	bagView = label({ Name = "DeathBag", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(18, 18), Text = "X", TextSize = 18,
+		Font = F.Display, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9, Visible = false }, markers)
+	UITheme.Outline(bagView)
+	bagCaption = label({ Name = "Caption", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 2),
+		Size = UDim2.fromOffset(150, 14), TextSize = 11, Font = F.Bold, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 9 }, bagView)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK", TextSize = 11,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK  ·  X DEINE TASCHE", TextSize = 11,
 		Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)
