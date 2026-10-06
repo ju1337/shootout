@@ -192,12 +192,12 @@ step(0.2)
 check(missionPanel.Position.Y.Offset == 230 + 88 + 24, "Touch: Aufträge unter der Lebensanzeige (" .. missionPanel.Position.Y.Offset .. ")")
 fakeHud:Destroy()
 
--- Rangliste rechts oben: nur in einer roten Zone zu sehen
+-- Rangliste rechts oben: nur in der roten Zone zu sehen
 local board = find(hud, "RedzoneBoard")
-check(board ~= nil and not board.Visible, "außerhalb roter Zonen keine Rangliste")
-local movingLine = find(hud, "MovingZone")
-check(board and board.Position.Y.Offset >= movingLine.Position.Y.Offset + movingLine.Size.Y.Offset
-	and board.AnchorPoint.X == 1 and board.Position.X.Scale == 1, "Rangliste rechts oben unter Uhr und Wanderzone")
+check(board ~= nil and not board.Visible, "außerhalb der roten Zone keine Rangliste")
+local zoneLine = find(hud, "RedzoneInfo")
+check(board and board.Position.Y.Offset >= zoneLine.Position.Y.Offset + zoneLine.Size.Y.Offset
+	and board.AnchorPoint.X == 1 and board.Position.X.Scale == 1, "Rangliste rechts oben unter Uhr und Zeile der roten Zone")
 
 -- Kaufen am Stand (E-Aufforderung des Clients)
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(-36, 3, 28)))
@@ -264,18 +264,18 @@ check(string.find(texts(hud), "PVP IN", 1, true) ~= nil, "Anzeige PVP IN ...")
 step(5)
 check(string.find(texts(hud), "PVP AKTIV", 1, true) ~= nil, "Anzeige PVP AKTIV")
 
--- Rote Zone und Lootdrop: Anzeige, Rand, Marker mit Entfernung
-map:SetAttribute("Redzones", '[{"Name":"Werk","X":0,"Z":-5600,"R":60}]')
+-- Rote Zone und Lootdrop: keine Richtungsanzeiger; die rote Zone (zieht alle 20 Minuten weiter) als Zeile unter der Uhr
+-- mit Ort, Zeit bis zum Wechsel und Entfernung
+local zoneLine0 = zoneLine.Visible
+map:SetAttribute("Redzones", '[{"Name":"Redzone","Title":"Nordheim","X":0,"Z":-5000,"R":170,"Ends":'
+	.. (workspace:GetServerTimeNow() + 125) .. '}]')
 map:SetAttribute("Airdrops", '[{"Id":1,"X":100,"Y":0,"Z":-5900,"State":"Warning","Eta":' .. (workspace:GetServerTimeNow() + 30) .. ',"Zone":false}]')
 step(0.3)
 local markers = find(hud, "Markers")
 check(markers ~= nil and not markers.Visible, "keine Richtungsanzeiger mit Entfernung (Lootdrop, rote Zone)")
--- Wanderzone: Zeile unter der Uhr statt Marker
-map:SetAttribute("MovingZone", '{"Name":"Nordheim","X":0,"Z":-5000,"R":170,"Ends":' .. (workspace:GetServerTimeNow() + 125) .. '}')
-step(0.3)
-check(string.find(texts(hud), "WANDERZONE  NORDHEIM  ·  WECHSEL IN 2:0", 1, true) ~= nil, "Wanderzone unter der Uhr")
-check(not markers.Visible, "Wanderzone ohne Richtungsanzeiger")
-map:SetAttribute("MovingZone", nil)
+check(not zoneLine0 and zoneLine.Visible and string.find(zoneLine.Text, "ROTE ZONE  NORDHEIM  ·  WECHSEL IN 2:0", 1, true) ~= nil
+	and string.find(zoneLine.Text, " M", 1, true) ~= nil, "rote Zone unter der Uhr: " .. zoneLine.Text)
+check(zoneLine.TextColor3 == Color3.fromRGB(226, 56, 48), "Zeile in Rot")
 -- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt.
 -- Tankstellen und Seen ohne Namen (zu unübersichtlich), die Seen bleiben als Fläche
 for key, title in { Tank0 = "Tankstelle", Teich = "Mühlteich" } do
@@ -303,21 +303,37 @@ check(mapGui and find(mapGui, "Place_Tank0") == nil and find(mapGui, "Place_Teic
 check(mapGui and find(mapGui, "Lake") ~= nil, "See als Fläche auf der Karte")
 check(mapGui and find(mapGui, "Redzone") ~= nil and find(mapGui, "Airdrop") ~= nil and find(mapGui, "Me").Visible,
 	"Karte zeigt rote Zone, Lootdrop und den eigenen Standort")
+check(mapGui and string.find(texts(mapGui), "ROTE ZONE 2:0", 1, true) ~= nil, "rote Zone mit Zeit bis zum Wechsel auf der Karte")
+check(mapGui and string.find(texts(mapGui), "WANDERZONE", 1, true) == nil, "keine Wanderzone mehr in der Legende")
+-- die Zone zieht weiter: Kreis am neuen Ort
+local circleBefore = find(mapGui, "Redzone")
+map:SetAttribute("Redzones", '[{"Name":"Redzone","Title":"Altenfeld","X":-1150,"Z":-6250,"R":170,"Ends":'
+	.. (workspace:GetServerTimeNow() + 1200) .. '}]')
+step(0.2)
+local circleAfter = find(mapGui, "Redzone")
+check(circleAfter ~= nil and circleAfter ~= circleBefore and circleAfter.Position.X.Scale < 0.3, "Kreis zieht mit")
+local circles = 0
+for _, d in mapGui:GetDescendants() do
+	if d.Name == "Redzone" then
+		circles += 1
+	end
+end
+check(circles == 1, "nur ein Kreis für die rote Zone (" .. circles .. ")")
 check(mapGui and string.find(texts(mapGui), "LOOTDROP", 1, true) ~= nil, "Lootdrop mit Text auf der Karte")
 InputActions.Trigger("WorldMap", true)
 InputActions.Trigger("WorldMap", false)
 step(0.2)
 check(mapGui and not mapGui.Enabled, "N schließt die Weltkarte")
 
--- Rangliste: nur in einer roten Zone, deren Top 3 und der eigene Platz darunter (eigener Name in den Top 3 hervorgehoben)
+-- Rangliste: nur in der roten Zone, deren Top 3 dieser Runde und der eigene Platz darunter (eigener Name in den Top 3
+-- hervorgehoben); jede Runde (neuer Ort) beginnt leer
 local savedBoard = map:GetAttribute("RedzoneBoard")
 local me = tostring(bob.UserId)
-map:SetAttribute("RedzoneBoard", '{"Zones":{"Werk":{"Title":"Chemiewerk","List":[{"Id":11,"Name":"Ann","Kills":5},'
-	.. '{"Id":12,"Name":"Ben","Kills":3},{"Id":13,"Name":"Cem","Kills":2},{"Id":' .. me .. ',"Name":"Bob","Kills":1}]},'
-	.. '"Wanderzone":{"Title":"Nordheim","List":[{"Id":' .. me .. ',"Name":"Bob","Kills":4},{"Id":11,"Name":"Ann","Kills":2}]}}}')
+map:SetAttribute("RedzoneBoard", '{"Zones":{"Redzone":{"Title":"Chemiewerk","List":[{"Id":11,"Name":"Ann","Kills":5},'
+	.. '{"Id":12,"Name":"Ben","Kills":3},{"Id":13,"Name":"Cem","Kills":2},{"Id":' .. me .. ',"Name":"Bob","Kills":1}]}}}')
 step(0.2)
 check(not board.Visible, "draußen bleibt die Rangliste aus, auch mit Kills")
-bob:SetAttribute("Redzone", "Werk")
+bob:SetAttribute("Redzone", "Redzone")
 step(0.3)
 check(find(hud, "RedzoneVignette").Visible and string.find(texts(hud), "ROTE ZONE  ·  PVP AKTIV", 1, true) ~= nil,
 	"in der roten Zone: roter Rand und Anzeige")
@@ -328,17 +344,19 @@ check(find(board, "Top1").Player.Text == "Ann" and find(board, "Top1").Kills.Tex
 local own = find(board, "Own")
 check(own.Visible and own.Player.Text == "DU  ·  PLATZ 4" and own.Kills.Text == "1" and board.Size.Y.Offset > 120,
 	"eigener Platz unter den Top 3 (" .. own.Player.Text .. ")")
-bob:SetAttribute("Redzone", "Wanderzone")
+map:SetAttribute("RedzoneBoard", '{"Zones":{"Redzone":{"Title":"Nordheim","List":[{"Id":' .. me
+	.. ',"Name":"Bob","Kills":4},{"Id":11,"Name":"Ann","Kills":2}]}}}')
 step(0.2)
 local top1 = find(board, "Top1")
-check(board.Visible and string.find(texts(board), "WANDERZONE  ·  TOP KILLS", 1, true) ~= nil
-	and string.find(texts(board), "NORDHEIM", 1, true) ~= nil, "Rangliste der Wanderzone: " .. texts(board))
+check(board.Visible and string.find(texts(board), "ROTE ZONE  ·  TOP KILLS", 1, true) ~= nil
+	and string.find(texts(board), "NORDHEIM", 1, true) ~= nil, "Rangliste mit neuem Stand: " .. texts(board))
 check(top1.Player.Text == "Bob" and top1.Kills.Text == "4" and top1.Player.TextColor3 == UITheme.Colors.Primary
 	and find(board, "Top2").Player.Text == "Ann" and find(board, "Top3").Player.Text == "—" and not own.Visible,
 	"eigener Name vorn und hervorgehoben, leerer Platz 3 (" .. top1.Player.Text .. " " .. top1.Kills.Text .. ")")
-map:SetAttribute("RedzoneBoard", '{"Zones":{"Wanderzone":{"Title":"Altenfeld","List":[]}}}') -- nächste Runde: leer
+map:SetAttribute("RedzoneBoard", '{"Zones":{"Redzone":{"Title":"Altenfeld","List":[]}}}') -- nächste Runde: leer
 step(0.2)
-check(string.find(texts(board), "ALTENFELD", 1, true) ~= nil and find(board, "Top1").Player.Text == "—", "neue Runde: leere Liste")
+check(string.find(texts(board), "ALTENFELD", 1, true) ~= nil and find(board, "Top1").Player.Text == "—"
+	and find(board, "Top1").Kills.Text == "", "neue Runde: leere Liste mit dem neuen Ort")
 map:SetAttribute("RedzoneBoard", savedBoard)
 bob:SetAttribute("Redzone", nil)
 step(0.3)
@@ -348,6 +366,7 @@ map:SetAttribute("Redzones", nil)
 map:SetAttribute("Airdrops", nil)
 step(0.3)
 check(not markers:FindFirstChild("Marker1").Visible, "ohne Daten keine Marker")
+check(not zoneLine.Visible, "ohne rote Zone keine Zeile unter der Uhr")
 
 -- Ort betreten: Banner mit dem Namen, blendet wieder aus
 local placeBanner = find(hud, "PlaceBanner")

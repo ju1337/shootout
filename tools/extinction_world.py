@@ -6,9 +6,9 @@ Aufruf über tools/build_maps.py (build_extinction). Straßen sind Linienzüge i
 zerstört: kaputte Mauerkronen, Löcher, eingestürzte Dächer, vernagelte Fenster, Schutt, Brandspuren, Graffiti,
 ausgebrannte Autos, Sperren, Feuer und Rauch.
 
-Gruppen der Karte (Server/Client lesen sie): Zone (SafeZone), Spawns, Stands, Portals, Redzones (Redzone_<Name>, Title),
-Places (Place_<Name>, Title), Lakes (Lake_<Name>, nur für die Karte), Roads (Road), Ground, Buildings, Cover, Decor,
-Nature, Walls, Loot (aus, siehe ContainerService).
+Gruppen der Karte (Server/Client lesen sie): Zone (SafeZone), Spawns, Stands, Portals, Places (Place_<Name>, Title;
+daraus wählt der Server alle 20 Minuten den Ort der roten Zone, RedzoneService), Lakes (Lake_<Name>, nur für die Karte),
+Roads (Road), Ground, Buildings, Cover, Decor, Nature, Walls, Loot (aus, siehe ContainerService).
 """
 import copy
 import math
@@ -69,7 +69,6 @@ STATION_SEG = 2
 # Tankstellen: (x, z, Zufahrt-Ziel x, z)
 GAS = [(-860, -50, -860, -132), (880, 150, 930, 270), (165, -925, 255, -910)]
 
-REDZONES = {"Krankenhaus": 150, "Militaer": 210, "Hafen": 230, "Gefaengnis": 180}
 LAKES = [("Schwarzsee", -760, 230, 120, 10), ("Stausee", 1380, -1280, 150, 11), ("Teich", 320, 860, 60, 6)]
 # Ebene Flächen (Orte mit Gebäuden): (x, z, Radius)
 FLATS = [(0, 0, 760), (-250, 1150, 250), (1150, 520, 260), (-1150, -250, 240), (430, -1150, 230), (-1150, 1150, 230),
@@ -2939,69 +2938,6 @@ class World:
         self.smoke_column(sx_, 2, sz_)
         PLACES["Bahnhof"] = ("BAHNHOF ÖDSTADT SÜD", cx, cz, 80)
 
-    # ---------- Rote Zonen: Linie am Boden, Kontrollpunkte an jeder Straße ----------
-    def redzones(self):
-        b, rng = self.b, self.rng
-        red = (226, 56, 48)
-        for key, radius in REDZONES.items():
-            title, rx, rz, _ = PLACES[key]
-            b.add("Redzones", "Redzone_" + key, (2 * radius, 160, 2 * radius), (rx, 70, rz), red, "SmoothPlastic",
-                  props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False,
-                         "Attributes": {"Attributes": {"Title": {"String": title}}}})
-            n = int(2 * math.pi * radius / 10)
-            for k in range(n):
-                a = 2 * math.pi * (k + 0.5) / n
-                px, pz = rx + math.cos(a) * radius, rz + math.sin(a) * radius
-                if abs(px) > HALF - 10 or abs(pz) > HALF - 10 or self.terrain.is_water(px, pz):
-                    continue
-                b.box("Redzones", "RedLine", (2 * math.pi * radius / n + 0.1, 0.1, 1.6), (px, self.H(px, pz) + 0.47, pz),
-                      red if k % 2 == 0 else (236, 236, 236), "SmoothPlastic", angles=(0, -math.degrees(a) + 90, 0),
-                      props={"CanCollide": False, "CanQuery": False, "CanTouch": False})
-            # Kontrollpunkte: wo die Grenze eine Straße schneidet
-            done = []
-            for ax, az, bx, bz, w in list(self.roads):
-                dx, dz = bx - ax, bz - az
-                length = math.hypot(dx, dz)
-                if length < 1:
-                    continue
-                ux, uz = dx / length, dz / length
-                fx, fz = ax - rx, az - rz
-                pb_ = fx * ux + fz * uz
-                cc = fx * fx + fz * fz - radius * radius
-                disc = pb_ * pb_ - cc
-                if disc < 0:
-                    continue
-                for t in (-pb_ - math.sqrt(disc), -pb_ + math.sqrt(disc)):
-                    if 2 < t < length - 2:
-                        x, z = ax + ux * t, az + uz * t
-                        if any(math.hypot(x - ox, z - oz) < 30 for ox, oz in done):
-                            continue
-                        done.append((x, z))
-                        out = 1 if (x - rx) * ux + (z - rz) * uz > 0 else -1
-                        self.checkpoint(x, z, ux * out, uz * out, w, title)
-
-    def checkpoint(self, x, z, ox, oz, width, title):
-        """Torbogen quer über die Straße: außen ROTE ZONE, innen AUSGANG, Sperren mit Lücke, rotes Licht."""
-        b = self.b
-        red, safe = (226, 56, 48), (96, 210, 120)
-        yaw = self.yaw_to(ox, oz)  # Vorderseite nach außen
-        m = self.bm.rot(0, yaw, 0)
-        g = max(self.H(x, z) + 0.4, 0.26)
-
-        def at(lx, ly, lz):
-            return (x + m[0][0] * lx + m[0][2] * lz, g + ly, z + m[2][0] * lx + m[2][2] * lz)
-        for s in (-1, 1):
-            b.box("Walls", "CheckpointPost", (1.2, 12, 1.2), at(s * (width / 2 + 1), 6, 0), (40, 40, 44), "Metal", angles=(0, yaw, 0))
-            b.box("Cover", "Barrier", (6, 3.2, 1.6), at(s * 6.5, 1.6, -4), (165, 162, 155), "Concrete", angles=(0, yaw, 0))
-        b.box("Walls", "CheckpointBeam", (width + 4, 1.4, 1.2), at(0, 12.4, 0), red, "Metal", angles=(0, yaw, 0))
-        b.sign2("RedzoneSignOut", (16, 3.4, 0.3), at(0, 15, -0.5), "ROTE ZONE", title + " · PVP SOFORT",
-                (40, 16, 14), red, (240, 230, 228), angles=(0, yaw, 0), glow=red)
-        b.sign2("RedzoneSignIn", (16, 3.4, 0.3), at(0, 15, 0.5), "AUSGANG", "ROTE ZONE ENDE", (24, 28, 26), safe,
-                (230, 235, 230), angles=(0, yaw + 180, 0), glow=safe)
-        b.box("Decor", "CheckpointLight", (2, 0.8, 0.8), at(0, 11.4, 0), (255, 50, 40), "Neon", angles=(0, yaw, 0),
-              children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 34, "Brightness": 1.6,
-                                                                                      "Color": self.bm.rgb(255, 60, 50)}}])
-
 
 def find_spot(w, x, z, r, tries=80):
     """Freie, ebene Stelle nahe (x, z) suchen (Spirale nach außen)."""
@@ -3223,9 +3159,9 @@ def build(bm):
         if found:
             w.heli_crash(*found)
 
-    # Bahnstrecke zuletzt (Bahnübergänge an allen Straßen), dann rote Zonen, Aktivitäten, Orte, Seen
+    # Bahnstrecke zuletzt (Bahnübergänge an allen Straßen), dann Aktivitäten, Orte, Seen (die rote Zone setzt der Server
+    # zur Laufzeit auf einen der Orte, RedzoneService)
     w.railway()
-    w.redzones()
     activities(w)
     for key, (title, x, z, r) in PLACES.items():
         b.add("Places", "Place_" + key, (2 * r, 4, 2 * r), (x, 2, z), (255, 255, 255), "SmoothPlastic",

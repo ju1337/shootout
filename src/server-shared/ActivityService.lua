@@ -6,7 +6,7 @@
 --          Zombies heraus. Zerstört: alle, die Schaden gemacht haben, bekommen Münzen und Beute direkt ins Inventar.
 --          Wächst nach Respawn Sekunden nach.
 --   Cache  Vorratslager: E halten zum Aufbrechen, der Lärm lockt Zombies an; Beute direkt ins Inventar, danach leer
---          bis zum Respawn. In roten Zonen bessere Beute.
+--          bis zum Respawn. In der roten Zone bessere Beute.
 --   Radio  Funkgerät (Funkturm): E halten = Notruf, ein Lootdrop wird angefordert (Abklingzeit).
 -- Für die Clients steht alles als JSON im Karten-Attribut "Activities": [{ Id, Kind, Title, X, Z, State }]
 -- (State: Active/Cleared bei Nestern, Ready/Opened bei Lagern, Ready/Cooldown beim Funk).

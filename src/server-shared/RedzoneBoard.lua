@@ -1,19 +1,18 @@
 -- RedzoneBoard (ModuleScript, nur Server)
--- Rangliste der roten Zonen (EXTINCTION): zählt Spieler-Kills (PvP) je Zone, jede Zone hat ihre eigene Liste. Ein Kill
--- zählt für die Zone, in der das Opfer stirbt, sonst für die des Schützen (Modes/Extinction ermittelt sie mit
--- RedzoneService.At). Die Wanderzone beginnt jede Runde neu: nach jedem Wechsel bei null (RedzoneService.OnMoved).
--- Wer die offene Welt verlässt, fällt aus allen Listen. Die Clients zeigen die Liste nur in der Zone selbst.
+-- Rangliste der roten Zone (EXTINCTION): zählt Spieler-Kills (PvP) in der Zone. Jede Runde beginnt neu: alle 20 Minuten
+-- zieht die Zone an einen anderen Ort (RedzoneService.OnMoved), dann steht die Liste wieder bei null. Ein Kill zählt, wenn
+-- das Opfer in der Zone stirbt, sonst wenn der Schütze drin steht (Modes/Extinction ermittelt das mit RedzoneService.At).
+-- Wer die offene Welt verlässt, fällt aus der Liste. Die Clients zeigen sie nur in der Zone selbst.
 -- Für die Clients steht alles als JSON im Attribut "RedzoneBoard" an der Karte:
 --   { Zones = { [Zonenname] = { Title, List } } },  List = { { Id = UserId, Name, Kills }, ... }
--- Zonenname wie im Spieler-Attribut "Redzone" (feste Zonen: Schlüssel aus Redzone_<Name>, sonst "Wanderzone").
--- Listen sind sortiert: meiste Kills zuerst, bei Gleichstand, wer die Zahl früher erreicht hat.
+-- Zonenname wie im Spieler-Attribut "Redzone", Title = Ort der Zone in dieser Runde. Listen sind sortiert: meiste Kills
+-- zuerst, bei Gleichstand, wer die Zahl früher erreicht hat.
 
 local HttpService = game:GetService("HttpService")
 
 local RedzoneBoard = {}
 
 local MAX_ENTRIES = 50 -- so viele Einträge je Liste gehen an die Clients (Platz des eigenen Eintrags)
-local MOVING = "Wanderzone"
 
 local map = nil
 local boards = {} -- [Zonenname] = { Title, Entries = { [UserId] = { Id, Name, Kills, Order } } }
@@ -48,7 +47,7 @@ local function publish()
 	map:SetAttribute("RedzoneBoard", HttpService:JSONEncode({ Zones = zones }))
 end
 
--- map = Maps.Extinction, zones = RedzoneService.List() (feste Zonen stehen gleich mit leerer Liste drin)
+-- map = Maps.Extinction, zones = RedzoneService.List() (Zonen, die schon stehen, gleich mit leerer Liste)
 function RedzoneBoard.Init(newMap, zones)
 	map = newMap
 	boards, order = {}, 0
@@ -81,9 +80,12 @@ function RedzoneBoard.Record(killer, zone)
 	return true
 end
 
--- Wanderzone hat gewechselt (moving = neue Zone oder nil): neue Runde, leere Liste am neuen Ort
-function RedzoneBoard.Moved(moving)
-	boards[MOVING] = moving and { Title = moving.Title, Entries = {} } or nil
+-- Die rote Zone ist weitergezogen (zone = Zone am neuen Ort oder nil): neue Runde, leere Liste mit dem neuen Ort
+function RedzoneBoard.Moved(zone)
+	boards = {}
+	if zone then
+		boards[zone.Name] = { Title = zone.Title, Entries = {} }
+	end
 	publish()
 end
 

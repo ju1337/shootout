@@ -5,8 +5,9 @@
 -- Wer draußen stirbt, lässt seine ganze Tasche fallen (LootService) und spawnt wieder in der Safe Zone. Wer den
 -- Modus oder das Spiel draußen verlässt, verliert die Tasche genauso (im Menü erst nach einem zweiten Klick).
 -- Inventar und Lager: InventoryService. Agenten: nur passive Fähigkeiten (siehe AgentService / GadgetService).
--- Rote Zonen (RedzoneService): drinnen gilt PvP sofort, Attribut Redzone (Name) für die Anzeige. Spieler-Kills dort
--- zählen für die Rangliste der Zone (RedzoneBoard, Anzeige rechts oben).
+-- Rote Zone (RedzoneService): eine Zone, die alle 20 Minuten an einen anderen Ort zieht; drinnen gilt PvP sofort,
+-- Attribut Redzone (Name) für die Anzeige. Spieler-Kills dort zählen für die Rangliste (RedzoneBoard, Anzeige rechts
+-- oben), die mit jedem Wechsel neu beginnt.
 -- Spieler-Attribute: InSafeZone, PvP (draußen und PvP-Zeit erreicht), PvPAt (Serverzeit, ab der PvP gilt), Redzone,
 -- MapId / MapName / MapCenter (Minimap, Lichtstimmung). Charakter-Attribut "SafeZone" schützt vor jedem Schaden.
 
@@ -145,13 +146,12 @@ local function updateZone(player, info)
 	player:SetAttribute("SafeZoneTitle", safe and safe.Title or nil)
 	-- Rote Zone: PvP sofort, Anzeige und Meldung beim Betreten/Verlassen
 	local zone = not inside and RedzoneService.At(root.Position) or nil
-	local zoneName = zone and zone.Name or nil
-	if zoneName ~= info.Redzone then
-		info.Redzone = zoneName
-		player:SetAttribute("Redzone", zoneName)
+	if zone ~= info.Redzone then -- neue Zone (auch dieselbe nach einem Wechsel des Ortes) oder raus
+		info.Redzone = zone
+		player:SetAttribute("Redzone", zone and zone.Name or nil)
 		if zone then
-			notify(player, "Banner", { Caption = zone.Moving and "Wanderzone" or "Rote Zone", Title = string.upper(zone.Title),
-				Sub = "PvP sofort · mehr Zombies · bessere Beute", Style = "Info" })
+			notify(player, "Banner", { Caption = "Rote Zone", Title = string.upper(zone.Title),
+				Sub = "PvP sofort · mehr Zombies · bessere Beute · Rangliste rechts oben", Style = "Info" })
 		elseif not inside then
 			notify(player, "Banner", { Caption = "Rote Zone verlassen", Title = "WEITER VORSICHT", Sub = "PvP bleibt aktiv", Style = "Info" })
 		end
@@ -352,13 +352,10 @@ function Extinction.Init(modeManager)
 		end
 	end)
 
-	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte) und Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
-	RedzoneService.Init(map)
-	-- Rangliste der PvP-Kills je roter Zone (die Wanderzone beginnt nach jedem Wechsel neu)
+	-- Rote Zone: zieht alle 20 Minuten an einen anderen Ort; die Rangliste der PvP-Kills beginnt dann neu
 	RedzoneBoard.Init(map, RedzoneService.List())
 	RedzoneService.OnMoved(RedzoneBoard.Moved)
-	-- Wanderzone: rote Zone, die alle 20 Minuten an einen anderen Ort springt
-	RedzoneService.StartMoving({
+	RedzoneService.Start({
 		Map = map,
 		SafeCenter = Extinction.SafeZoneCenter,
 		SafeZones = Extinction.SafeZones,
@@ -374,6 +371,7 @@ function Extinction.Init(modeManager)
 			return list
 		end,
 	})
+	-- Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
 	-- Zombies um die Spieler draußen

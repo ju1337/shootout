@@ -30,7 +30,7 @@ maps.Name = "Maps"
 local map = Instance.new("Model", maps)
 map.Name = "Extinction"
 map:SetAttribute("Center", CENTER)
-for _, name in { "Zone", "Spawns", "Portals", "Stands", "Redzones", "Loot" } do
+for _, name in { "Zone", "Spawns", "Portals", "Stands", "Places", "Loot" } do
 	Instance.new("Folder", map).Name = name
 end
 local zone = Instance.new("Part", map.Zone)
@@ -39,12 +39,11 @@ zone.Size = Vector3.new(200, 80, 200)
 zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
 Instance.new("Part", map.Spawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 
-
-local redzone = Instance.new("Part", map.Redzones)
-redzone.Name = "Redzone_Test"
+local redzone = Instance.new("Part", map.Places) -- einziger Ort für die rote Zone
+redzone.Name = "Place_Test"
 redzone:SetAttribute("Title", "Testzone")
-redzone.Size = Vector3.new(240, 40, 240)
-redzone.CFrame = CFrame.new(CENTER + Vector3.new(0, 20, -500))
+redzone.Size = Vector3.new(240, 4, 240)
+redzone.CFrame = CFrame.new(CENTER + Vector3.new(0, 2, -500))
 
 local ground = Instance.new("Part", workspace)
 ground.Name = "Ground"
@@ -196,7 +195,7 @@ A.RedzoneChance = 1
 step(A.MaxInterval + 2)
 local last = drops()[1]
 check(last ~= nil, "weiterer Abwurf")
-local inZone = last and Vector3.new(last.X - CENTER.X, 0, last.Z - (CENTER.Z - 500)).Magnitude <= 120
+local inZone = last and Vector3.new(last.X - CENTER.X, 0, last.Z - (CENTER.Z - 500)).Magnitude <= ExtinctionConfig.Redzone.Radius
 check(inZone, "mit RedzoneChance 1 landet der Abwurf in der roten Zone")
 check(last and last.Zone == "Testzone", "Zone steht im Attribut")
 check(banners(alice, "VERSORGUNGSABWURF") >= 3, "jede Landung wird angesagt")

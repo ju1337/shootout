@@ -1,6 +1,6 @@
 -- Minimap (ModuleScript, nur Client)
 -- Runde Minimap oben links wie bei Rogue Company. Maps können weiter rauszoomen (Attribut MinimapRange) und nur
--- bestimmte Gruppen zeichnen (MinimapFolders); die offene Welt zeigt die Safe Zone und rote Zonen als Punktkreise. Sie dreht sich mit der Kamera (Blickrichtung = oben)
+-- bestimmte Gruppen zeichnen (MinimapFolders); die offene Welt zeigt die Safe Zones und die rote Zone als Punktkreise. Sie dreht sich mit der Kamera (Blickrichtung = oben)
 -- und zeigt den Grundriss der aktuellen Map (Böden, Wände, Deckung aus den Parts der Map),
 -- Teamkollegen (Cyan, am Boden orange), Gegner nur kurz, wenn sie schießen oder markiert sind (rot),
 -- Pings (gelb) und die Ziele (A/B) – Ziele außerhalb der Karte kleben am Rand.
@@ -170,7 +170,7 @@ function Minimap.Init(root)
 	-- Rand, Blickrichtung (Pfeil in der Mitte), Norden am Rand
 	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, holder)
 	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, ring)
-	local ringStroke = UITheme.Stroke(ring, Color3.fromRGB(150, 156, 164), 1.5, 0.45) -- dünner heller Rand (rot in roten Zonen)
+	local ringStroke = UITheme.Stroke(ring, Color3.fromRGB(150, 156, 164), 1.5, 0.45) -- dünner heller Rand (rot in der roten Zone)
 	local overlay = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, holder)
 	UITheme.Label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20),
 		Text = "▲", TextSize = 15, TextColor3 = Color3.new(1, 1, 1), TextStrokeTransparency = 0.3,
@@ -188,13 +188,12 @@ function Minimap.Init(root)
 	local shownMap = nil
 	local clippedAt = nil    -- Mittelpunkt (Vector3) beim letzten Zuschnitt
 
-	-- Zonen der offenen Welt (Safe Zone grün, rote Zonen rot) als Punktkreise; { Frame, X, Z }
+	-- Zonen der offenen Welt als Punktkreise; { Frame, X, Z }: Safe Zones (grün, fest) und die rote Zone (zieht alle
+	-- 20 Minuten weiter, Karten-Attribut Redzones, wird bei jedem Wechsel neu gesetzt)
 	local zoneDots = {}
-	local redzones = {} -- { X, Z, R }
+	local redDots, redRaw, redzones = {}, nil, {} -- Punkte, zuletzt gelesenes Attribut, Zonen { X, Z, R }
 	local buckets, bigShapes = {}, {} -- Raster [cx][cz] = { shape } und Formen, die größer als eine Zelle sind
 	local activeShapes = {}           -- [shape] = true: Formen, die gerade Frames zeigen
-
-	local movingDots, movingKey, movingZone = {}, nil, nil -- Wanderzone (Karten-Attribut MovingZone), wird bei Wechsel neu gesetzt
 
 	local function zoneCircle(x, z, radius, color, list)
 		local n = math.max(12, math.floor(2 * math.pi * radius / ZONE_DOT))
@@ -208,26 +207,27 @@ function Minimap.Init(root)
 		end
 	end
 
-	-- Wanderzone: Punktkreis in Orange, neu bei jedem Ortswechsel
-	local function loadMoving(map)
-		local text = map and map:GetAttribute("MovingZone")
-		local key = type(text) == "string" and text or nil
-		local ok, info = pcall(function()
-			return key and game:GetService("HttpService"):JSONDecode(key) or nil
-		end)
-		local spot = ok and type(info) == "table" and tonumber(info.X) and tonumber(info.Z) and tonumber(info.R) and info or nil
-		local placeKey = spot and string.format("%d:%d:%d", spot.X, spot.Z, spot.R) or nil
-		if placeKey == movingKey then
+	-- Rote Zone (Karten-Attribut Redzones, JSON [{ X, Z, R, ... }]): Punktkreis in Rot, neu bei jedem Wechsel.
+	-- Gibt true zurück, wenn sich etwas geändert hat.
+	local function loadRedzones(map)
+		local text = map and map:GetAttribute("Redzones")
+		local raw = type(text) == "string" and text or nil
+		if raw == redRaw then
 			return false
 		end
-		movingKey = placeKey
-		for _, dotInfo in movingDots do
+		redRaw = raw
+		for _, dotInfo in redDots do
 			dotInfo.Frame:Destroy()
 		end
-		movingDots = {}
-		movingZone = spot and { X = spot.X, Z = spot.Z, R = spot.R } or nil
-		if spot then
-			zoneCircle(spot.X, spot.Z, spot.R, Color3.fromRGB(255, 120, 40), movingDots)
+		redDots, redzones = {}, {}
+		local ok, list = pcall(function()
+			return raw and game:GetService("HttpService"):JSONDecode(raw) or nil
+		end)
+		for _, info in ok and type(list) == "table" and list or {} do
+			if type(info) == "table" and tonumber(info.X) and tonumber(info.Z) and tonumber(info.R) then
+				zoneCircle(info.X, info.Z, info.R, Color3.fromRGB(226, 56, 48), redDots)
+				table.insert(redzones, { X = info.X, Z = info.Z, R = info.R })
+			end
 		end
 		return true
 	end
@@ -239,8 +239,8 @@ function Minimap.Init(root)
 		shownMap = map
 		clippedAt = nil
 		layer:ClearAllChildren()
-		shapes, buckets, bigShapes, activeShapes, zoneDots, redzones = {}, {}, {}, {}, {}, {}
-		movingDots, movingKey, movingZone = {}, nil, nil
+		shapes, buckets, bigShapes, activeShapes, zoneDots = {}, {}, {}, {}, {}
+		redDots, redRaw, redzones = {}, nil, {}
 		RANGE = map and tonumber(map:GetAttribute("MinimapRange")) or DEFAULT_RANGE
 		K = 1 / (2 * RANGE)
 		STRIP = 2 * RANGE / DEFAULT_RANGE
@@ -282,20 +282,11 @@ function Minimap.Init(root)
 				end
 			end
 		end
-		-- Zonen: Safe Zone (Teil Zone.SafeZone) und rote Zonen (Karten-Attribut Redzones, JSON [{ X, Z, R }])
+		-- Safe Zones (Teil Zone.SafeZone und Safehouses); die rote Zone kommt aus loadRedzones
 		local zone = map:FindFirstChild("Zone")
 		for _, safe in zone and zone:GetChildren() or {} do -- Camp ("SafeZone") und Safehouses ("SafeZone_<Name>")
 			if safe:IsA("BasePart") and (safe.Name == "SafeZone" or string.sub(safe.Name, 1, 9) == "SafeZone_") then
 				zoneCircle(safe.Position.X, safe.Position.Z, safe.Size.X / 2, Color3.fromRGB(112, 200, 120))
-			end
-		end
-		local ok, zones = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(map:GetAttribute("Redzones") or "[]")
-		end)
-		for _, info in ok and type(zones) == "table" and zones or {} do
-			if type(info) == "table" and tonumber(info.X) and tonumber(info.Z) and tonumber(info.R) then
-				zoneCircle(info.X, info.Z, info.R, Color3.fromRGB(226, 56, 48))
-				table.insert(redzones, { X = info.X, Z = info.Z, R = info.R })
 			end
 		end
 	end
@@ -386,14 +377,14 @@ function Minimap.Init(root)
 			end
 		end
 		local limit = (RANGE - 3) * (RANGE - 3)
-		for _, list in { zoneDots, movingDots } do
+		for _, list in { zoneDots, redDots } do
 			for _, dotInfo in list do
 				local dx, dz = dotInfo.X - px, dotInfo.Z - pz
 				dotInfo.Frame.Visible = dx * dx + dz * dz <= limit
 			end
 		end
-		-- in einer roten Zone (oder der Wanderzone): Rand der Minimap rot
-		local inside = movingZone ~= nil and (px - movingZone.X) ^ 2 + (pz - movingZone.Z) ^ 2 <= movingZone.R * movingZone.R
+		-- in der roten Zone: Rand der Minimap rot
+		local inside = false
 		for _, zone in redzones do
 			if (px - zone.X) ^ 2 + (pz - zone.Z) ^ 2 <= zone.R * zone.R then
 				inside = true
@@ -495,8 +486,8 @@ function Minimap.Init(root)
 			refreshAt = now + 1
 			local map = findMap()
 			loadMap(map)
-			if loadMoving(map) then
-				clippedAt = nil -- Punkte der neuen Wanderzone gleich zeigen
+			if loadRedzones(map) then
+				clippedAt = nil -- Punkte der roten Zone am neuen Ort gleich zeigen
 			end
 			buildObjectives(map, Modes.Get(player:GetAttribute("Mode")))
 		end

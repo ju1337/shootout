@@ -2,8 +2,10 @@
 -- Lagerkisten in der offenen Welt (EXTINCTION): Die Karte legt Teile "Spot_<Art>" in die Gruppe Loot (Art = Wood, Toolbox,
 -- Medical, Ammo, Military, siehe ExtinctionConfig.Containers). An jedem Spot steht eine Kiste (LootService, Art "Crate") mit
 -- Beute aus der Tabelle der Art; E durchsucht sie, F nimmt alles. Ist sie leer, füllt sie sich nach Containers.Respawn
--- Sekunden (±20 %) neu. Spots in einer roten Zone ziehen aus ExtinctionConfig.Redzone.ContainerTable (Tier3), Medical und
--- Ammo behalten ihre Tabelle. Abschaltbar mit ExtinctionConfig.Containers.Enabled = false (Standard: aus). Spots stehen auf dem Boden (die Karte rechnet die Geländehöhe ein), darum keine Boden-Suche.
+-- Sekunden (±20 %) neu. Liegt beim Füllen die rote Zone über dem Spot (sie zieht alle 20 Minuten weiter), zieht die Kiste
+-- aus ExtinctionConfig.Redzone.ContainerTable (Tier3), Medical und Ammo behalten ihre Tabelle. Abschaltbar mit
+-- ExtinctionConfig.Containers.Enabled = false (Standard: aus). Spots stehen auf dem Boden (die Karte rechnet die
+-- Geländehöhe ein), darum keine Boden-Suche.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -16,7 +18,7 @@ local ContainerService = {}
 local C = ExtinctionConfig.Containers
 local random = Random.new()
 local options = nil -- { RedzoneAt(position) -> Zone | nil }
-local spots = {}    -- { { Part, Kind, Position, Yaw, Id (aktuelle Kiste), Redzone } }
+local spots = {}    -- { { Part, Kind, Position, Yaw, Id (aktuelle Kiste), Redzone (beim letzten Füllen in der roten Zone) } }
 
 -- Tabelle für einen Spot: rote Zone zieht aus Tier3 (außer Sani- und Munitionskisten)
 local function tableFor(spot)
@@ -29,6 +31,7 @@ end
 
 local function fill(spot)
 	local kind = C.Kinds[spot.Kind]
+	spot.Redzone = options.RedzoneAt ~= nil and options.RedzoneAt(spot.Position) ~= nil
 	local items = ExtinctionConfig.RollLoot(tableFor(spot), random:NextInteger(kind.Items[1], kind.Items[2]), random)
 	spot.Id = LootService.Create(spot.Position, items, "Crate", kind.Name, {
 		Persist = true,
@@ -55,8 +58,7 @@ function ContainerService.Init(map, opts)
 			local position = part.Position
 			local ground = Vector3.new(position.X, position.Y - part.Size.Y / 2, position.Z)
 			local _, yaw = part.CFrame:ToOrientation()
-			table.insert(spots, { Part = part, Kind = kind, Position = ground, Yaw = yaw,
-				Redzone = options.RedzoneAt ~= nil and options.RedzoneAt(position) ~= nil })
+			table.insert(spots, { Part = part, Kind = kind, Position = ground, Yaw = yaw, Redzone = false })
 		end
 	end
 	LootService.OnRemoved[#LootService.OnRemoved + 1] = function(bag)

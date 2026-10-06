@@ -31,7 +31,7 @@ local player = Players.LocalPlayer
 local HUD = {}
 
 local AMMO_SCALE = 1          -- Waffen-/Munitionsanzeige unten rechts: so groß wie die Lebensanzeige
--- Offene Welt (Survival): in einer roten Zone steht rechts oben die Redzone-Rangliste des ExtinctionClient (Oberkante 88,
+-- Offene Welt (Survival): in der roten Zone steht rechts oben die Redzone-Rangliste des ExtinctionClient (Oberkante 88,
 -- bis 144 hoch), der Killfeed beginnt dann darunter
 local SURVIVAL_KILLFEED_TOP = 244
 

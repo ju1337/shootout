@@ -7,7 +7,7 @@
 --   3. Gelandet: Kiste (LootService, Art "Airdrop") mit bester Beute (LootTables.Airdrop, Items Einträge), E halten (OpenTime
 --      Sekunden) öffnet, F nimmt alles; Escort Zombies kommen um die Landestelle. Nach Lifetime Sekunden oder wenn sie leer
 --      ist, verschwindet die Kiste; dann beginnt die Wartezeit bis zum nächsten Abwurf.
--- Das Ziel liegt mit RedzoneChance in einer roten Zone, sonst irgendwo auf dem Boden (nicht nah am Rand, nicht nah an der Safe
+-- Das Ziel liegt mit RedzoneChance in der roten Zone, sonst irgendwo auf dem Boden (nicht nah am Rand, nicht nah an der Safe
 -- Zone, nicht im Wasser).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -80,7 +80,7 @@ end
 
 -- ---------- Ziel ----------
 
--- Landestelle: rote Zone (mit RedzoneChance) oder irgendwo; nil, wenn nichts Passendes gefunden wurde
+-- Landestelle: in der roten Zone (mit RedzoneChance) oder irgendwo; nil, wenn nichts Passendes gefunden wurde
 local function pickTarget()
 	local half = ExtinctionConfig.WorldSize / 2 - A.EdgeMargin
 	local safeCenter, safeRadius = options.SafeCenter()

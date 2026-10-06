@@ -1,19 +1,17 @@
 -- RedzoneService (ModuleScript, nur Server)
--- Rote Zonen der offenen Welt (EXTINCTION): gefährliche Gebiete mit besserer Beute. Die Karte legt sie als Teile
--- "Redzone_<Name>" in der Gruppe Redzones ab (Block, Breite = Durchmesser; nur die Lage und Größe zählen, die Optik baut die
--- Karte). Drinnen (ExtinctionConfig.Redzone):
+-- Die rote Zone der offenen Welt (EXTINCTION): ein gefährliches Gebiet mit besserer Beute, das alle Interval Sekunden
+-- (20 Minuten, ExtinctionConfig.Redzone) an einen anderen Ort der Karte zieht. Ziele sind die Orte der Karte (Teile
+-- Place_<Name> der Gruppe Places) ohne Camp, Seen, große Flächen, Safehouses und Wasser; nie zweimal derselbe hintereinander
+-- und möglichst mindestens MinMove vom alten Ort weg.
+-- Drinnen:
 --   * PvP gilt sofort (keine Wartezeit nach der Safe Zone),
 --   * mehr Zombies um jeden Spieler (PerPlayerFactor) mit Läufern und Brocken, die innerhalb der Zone spawnen,
 --   * Lagerkisten in der Zone ziehen aus Tier3 (ContainerService), Lootdrops landen bevorzugt dort (AirdropService).
--- Für die Clients steht die Liste als JSON im Attribut "Redzones" an der Karte: [{ Name, X, Z, R }].
--- Spieler-Attribut "Redzone" (Name der Zone oder nil) setzt der Modus (Modes/Extinction).
---
--- Wanderzone (ExtinctionConfig.MovingZone): eine zusätzliche rote Zone, die alle Interval Sekunden (20 Minuten) an einen
--- anderen Ort der Karte springt (Teile Place_<Name> der Gruppe Places, ohne Camp, Seen, große Flächen und feste rote
--- Zonen). Drinnen gilt dasselbe wie in roten Zonen (At liefert sie). Ansage an alle draußen beim Wechsel und eine Minute
--- vorher; in der Welt steht eine flimmernde Wand (ForceField) mit Lichtsäule in der Mitte. Für die Clients im Attribut
--- "MovingZone" an der Karte: { Name, X, Z, R, Ends } (Ends = Serverzeit des nächsten Wechsels). Jeden Wechsel meldet
--- OnMoved(callback) (RedzoneBoard beginnt dann für die Wanderzone eine neue Rangliste).
+-- Ansage an alle draußen beim Wechsel und eine Minute vorher; in der Welt steht eine flimmernde rote Wand (ForceField) mit
+-- Lichtsäule in der Mitte. Jeden Wechsel meldet OnMoved(callback): RedzoneBoard beginnt dann eine neue Runde der Rangliste.
+-- Für die Clients steht die Zone als JSON im Attribut "Redzones" an der Karte: [{ Name, Title, X, Z, R, Ends }]
+-- (eine Liste, damit später auch mehrere gehen; Ends = Serverzeit des nächsten Wechsels). Das Spieler-Attribut "Redzone"
+-- (Name der Zone oder nil) setzt der Modus (Modes/Extinction).
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,86 +22,52 @@ local Remotes = require(Shared.Remotes)
 
 local RedzoneService = {}
 
-local zones = {} -- { { Name, Center (Vector3), Radius, Title } }
-local moving = nil -- { Name, Title, Center, Radius, Moving = true, Ends, Key }
-local movingOptions = nil
-local movingFolder = nil
-local movingRun = 0
-local movedCallbacks = {} -- callback(moving) nach jedem Wechsel der Wanderzone (z.B. RedzoneBoard)
+local NAME = "Redzone" -- Name der Zone (Spieler-Attribut Redzone, Schlüssel der Rangliste)
 
--- map = Maps.Extinction (Gruppe Redzones mit Teilen Redzone_<Name>)
-function RedzoneService.Init(map)
-	zones = {}
-	local folder = map:FindFirstChild("Redzones")
-	for _, part in folder and folder:GetChildren() or {} do
-		local name = string.match(part.Name, "^Redzone_(.+)$")
-		if name and part:IsA("BasePart") then
-			table.insert(zones, { Name = name, Title = part:GetAttribute("Title") or name, Center = part.Position, Radius = part.Size.X / 2 })
-		end
-	end
-	table.sort(zones, function(a, b)
-		return a.Name < b.Name
-	end)
-	local list = {}
-	for _, zone in zones do
-		table.insert(list, { Name = zone.Title, X = zone.Center.X, Z = zone.Center.Z, R = zone.Radius })
-	end
-	map:SetAttribute("Redzones", HttpService:JSONEncode(list))
-end
+local current = nil -- { Name, Key, Title, Center (Vector3), Radius, Ends, Warned }
+local options = nil
+local visual = nil -- Wand und Lichtsäule
+local run = 0
+local movedCallbacks = {} -- callback(zone) nach jedem Wechsel (z.B. RedzoneBoard)
 
--- Rote Zone an einer Stelle (flacher Abstand) oder nil; die Wanderzone zählt mit
-function RedzoneService.At(position)
-	for _, zone in zones do
-		if Vector3.new(position.X - zone.Center.X, 0, position.Z - zone.Center.Z).Magnitude <= zone.Radius then
-			return zone
-		end
-	end
-	if moving and Vector3.new(position.X - moving.Center.X, 0, position.Z - moving.Center.Z).Magnitude <= moving.Radius then
-		return moving
-	end
-	return nil
-end
-
--- ---------- Wanderzone ----------
 local function now()
 	return workspace:GetServerTimeNow()
 end
 
--- Orte, an die die Wanderzone springen kann: { Key, Title, Center }
-function RedzoneService.MovingCandidates()
-	local cfg = ExtinctionConfig.MovingZone
-	local options = movingOptions or {}
-	local map = options.Map
-	local list = {}
-	local places = map and map:FindFirstChild("Places")
+-- Rote Zone an einer Stelle (flacher Abstand) oder nil
+function RedzoneService.At(position)
+	if current and Vector3.new(position.X - current.Center.X, 0, position.Z - current.Center.Z).Magnitude <= current.Radius then
+		return current
+	end
+	return nil
+end
+
+-- Orte, an die die Zone ziehen kann: { Key, Title, Center }
+function RedzoneService.Candidates()
+	local cfg = ExtinctionConfig.Redzone
+	local opts = options or {}
+	local places = opts.Map and opts.Map:FindFirstChild("Places")
 	local radius = cfg.Radius
 	local safe, safeRadius = nil, 0
-	if options.SafeCenter then
-		safe, safeRadius = options.SafeCenter()
+	if opts.SafeCenter then
+		safe, safeRadius = opts.SafeCenter()
 	end
 	local exclude = {}
 	for _, key in cfg.Exclude do
 		exclude[key] = true
 	end
+	local list = {}
 	for _, part in places and places:GetChildren() or {} do
 		local key = string.match(part.Name, "^Place_(.+)$")
 		if key and part:IsA("BasePart") and not exclude[key] and string.sub(key, 1, 5) ~= "Safe_" and part.Size.X <= cfg.MaxPlaceSize then
 			local center = part.Position
-			local ok = true
-			if safe and Vector3.new(center.X - safe.X, 0, center.Z - safe.Z).Magnitude < safeRadius + radius + 40 then
-				ok = false
-			end
-			for _, zone in options.SafeZones and options.SafeZones() or {} do -- Safehouses nicht in der Wanderzone
+			local ok = not (safe and Vector3.new(center.X - safe.X, 0, center.Z - safe.Z).Magnitude < safeRadius + radius + 40)
+			for _, zone in opts.SafeZones and opts.SafeZones() or {} do -- Safehouses nicht in der Zone
 				if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius + 20 then
 					ok = false
 				end
 			end
-			for _, zone in zones do
-				if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius * 0.5 then
-					ok = false
-				end
-			end
-			if ok and options.IsWater and options.IsWater(center.X, center.Z) then
+			if ok and opts.IsWater and opts.IsWater(center.X, center.Z) then
 				ok = false
 			end
 			if ok then
@@ -118,28 +82,26 @@ function RedzoneService.MovingCandidates()
 end
 
 local function announce(title, sub, style)
-	local options = movingOptions
 	if not (options and options.Players) then
 		return
 	end
 	for _, player in options.Players() do
-		Remotes.Notify:FireClient(player, "Banner", { Caption = "Wanderzone", Title = title, Sub = sub, Style = style or "Warning" })
+		Remotes.Notify:FireClient(player, "Banner", { Caption = "Rote Zone", Title = title, Sub = sub, Style = style or "Warning" })
 	end
 end
 
 -- Wand aus flimmernden Platten (ForceField) im Kreis, Lichtsäule in der Mitte
 local function buildVisual()
-	if movingFolder then
-		movingFolder:Destroy()
-		movingFolder = nil
+	if visual then
+		visual:Destroy()
+		visual = nil
 	end
-	local options = movingOptions
-	if not (moving and options and options.Map) then
+	if not (current and options and options.Map) then
 		return
 	end
-	local cfg = ExtinctionConfig.MovingZone
+	local cfg = ExtinctionConfig.Redzone
 	local folder = Instance.new("Folder")
-	folder.Name = "MovingZone"
+	folder.Name = "RedzoneWall"
 	local function part(name, size, cframe, material, transparency)
 		local p = Instance.new("Part")
 		p.Name = name
@@ -156,7 +118,7 @@ local function buildVisual()
 		p.Parent = folder
 		return p
 	end
-	local center, radius = moving.Center, moving.Radius
+	local center, radius = current.Center, current.Radius
 	local n = cfg.WallPanels
 	local width = 2 * math.pi * radius / n + 1
 	for k = 1, n do
@@ -174,23 +136,21 @@ local function buildVisual()
 	light.Brightness = 2
 	light.Parent = beam
 	folder.Parent = options.Map
-	movingFolder = folder
+	visual = folder
 end
 
 local function publish()
-	local options = movingOptions
 	if not (options and options.Map) then
 		return
 	end
-	if moving then
-		options.Map:SetAttribute("MovingZone", HttpService:JSONEncode({ Name = moving.Title, X = moving.Center.X, Z = moving.Center.Z,
-			R = moving.Radius, Ends = moving.Ends }))
-	else
-		options.Map:SetAttribute("MovingZone", nil)
+	local list = {}
+	for _, zone in RedzoneService.List() do
+		table.insert(list, { Name = zone.Name, Title = zone.Title, X = zone.Center.X, Z = zone.Center.Z, R = zone.Radius, Ends = zone.Ends })
 	end
+	options.Map:SetAttribute("Redzones", HttpService:JSONEncode(list))
 end
 
--- callback(moving) nach jedem Wechsel der Wanderzone (moving = neue Zone oder nil, wenn es keine mehr gibt)
+-- callback(zone) nach jedem Wechsel (zone = die Zone am neuen Ort oder nil, wenn es keine mehr gibt)
 function RedzoneService.OnMoved(callback)
 	if not table.find(movedCallbacks, callback) then
 		table.insert(movedCallbacks, callback)
@@ -198,19 +158,20 @@ function RedzoneService.OnMoved(callback)
 end
 
 local function moved()
+	publish()
+	buildVisual()
 	for _, callback in movedCallbacks do
-		callback(moving)
+		callback(current)
 	end
 end
 
--- Wanderzone an einen neuen Ort setzen (key = Ort erzwingen, sonst zufällig und nicht derselbe wie vorher)
+-- Zone an einen neuen Ort setzen (key = Ort erzwingen, sonst zufällig: nicht derselbe wie vorher und möglichst weit weg).
+-- Jeder Aufruf beginnt eine neue Runde (Rangliste von vorn), auch am selben Ort.
 function RedzoneService.MoveNow(key)
-	local cfg = ExtinctionConfig.MovingZone
-	local list = RedzoneService.MovingCandidates()
+	local cfg = ExtinctionConfig.Redzone
+	local list = RedzoneService.Candidates()
 	if #list == 0 then
-		moving = nil
-		publish()
-		buildVisual()
+		current = nil
 		moved()
 		return nil
 	end
@@ -221,89 +182,90 @@ function RedzoneService.MoveNow(key)
 		end
 	end
 	if not pick then
-		local choices = {}
+		local far, other = {}, {}
 		for _, entry in list do
-			if not moving or entry.Key ~= moving.Key then
-				table.insert(choices, entry)
+			if not current then
+				table.insert(far, entry)
+			elseif entry.Key ~= current.Key then
+				local away = Vector3.new(entry.Center.X - current.Center.X, 0, entry.Center.Z - current.Center.Z).Magnitude
+				table.insert(away >= cfg.MinMove and far or other, entry)
 			end
 		end
-		if #choices == 0 then
-			choices = list
-		end
-		local random = movingOptions and movingOptions.Random or Random.new()
+		local choices = #far > 0 and far or #other > 0 and other or list
+		local random = options and options.Random or Random.new()
 		pick = choices[random:NextInteger(1, #choices)]
 	end
-	moving = { Name = "Wanderzone", Key = pick.Key, Title = pick.Title, Center = pick.Center, Radius = cfg.Radius, Moving = true,
-		Ends = now() + cfg.Interval, Warned = false }
-	publish()
-	buildVisual()
+	current = { Name = NAME, Key = pick.Key, Title = pick.Title, Center = pick.Center, Radius = cfg.Radius, Ends = now() + cfg.Interval,
+		Warned = false }
 	moved()
-	announce("WANDERZONE: " .. string.upper(pick.Title), "PvP sofort · bessere Beute · wechselt in " .. math.floor(cfg.Interval / 60)
-		.. " Min", "Warning")
-	return moving
+	announce("ROTE ZONE: " .. string.upper(pick.Title), "Rangliste neu · PvP sofort · bessere Beute · zieht in "
+		.. math.floor(cfg.Interval / 60) .. " Min weiter", "Warning")
+	return current
 end
 
-function RedzoneService.Moving()
-	return moving
+-- Die rote Zone (oder nil)
+function RedzoneService.Current()
+	return current
 end
 
 -- Einmal pro Sekunde (oder öfter): Warnung kurz vor dem Wechsel, Wechsel bei Ablauf
-function RedzoneService.StepMoving()
-	if not moving then
+function RedzoneService.Step()
+	if not current then
 		return
 	end
-	local cfg = ExtinctionConfig.MovingZone
-	local left = moving.Ends - now()
+	local cfg = ExtinctionConfig.Redzone
+	local left = current.Ends - now()
 	if left <= 0 then
 		RedzoneService.MoveNow()
-	elseif left <= cfg.Warning and not moving.Warned then
-		moving.Warned = true
-		announce("WANDERZONE WECHSELT", "In " .. math.ceil(left) .. " Sekunden zieht die Zone von " .. moving.Title .. " weiter", "Info")
+	elseif left <= cfg.Warning and not current.Warned then
+		current.Warned = true
+		announce("ROTE ZONE ZIEHT WEITER", "In " .. math.ceil(left) .. " Sekunden zieht die Zone von " .. current.Title
+			.. " weiter · die Rangliste beginnt neu", "Info")
 	end
 end
 
--- options = { Map, SafeCenter() -> (Vector3, Radius), IsWater(x, z) (Weltkoordinaten), GroundY(x, z), Players(),
---             Random, Loop (Standard true: eigener Takt) }
-function RedzoneService.StartMoving(options)
-	if not ExtinctionConfig.MovingZone.Enabled then
+-- opts = { Map, SafeCenter() -> (Vector3, Radius), SafeZones() -> { { Center, Radius } }, IsWater(x, z) (Weltkoordinaten),
+--          GroundY(x, z), Players(), Random, Loop (Standard true: eigener Takt) }
+function RedzoneService.Start(opts)
+	if not ExtinctionConfig.Redzone.Enabled then
 		return
 	end
-	movingOptions = options
-	movingRun += 1
-	local run = movingRun
+	options = opts
+	run += 1
+	local myRun = run
 	RedzoneService.MoveNow()
-	if options.Loop ~= false then
+	if opts.Loop ~= false then
 		task.spawn(function()
-			while run == movingRun do
+			while myRun == run do
 				task.wait(1)
-				if run ~= movingRun then
+				if myRun ~= run then
 					break
 				end
-				RedzoneService.StepMoving()
+				RedzoneService.Step()
 			end
 		end)
 	end
 end
 
-function RedzoneService.StopMoving()
-	movingRun += 1
-	moving = nil
-	publish()
-	buildVisual()
+function RedzoneService.Stop()
+	run += 1
+	current = nil
 	moved()
-	movingOptions = nil
+	options = nil
 end
 
+-- Alle roten Zonen (jetzt höchstens eine)
 function RedzoneService.List()
-	return zones
+	return current and { current } or {}
 end
 
--- Zufällige rote Zone (random = Random), nil ohne Zonen
+-- Zufällige rote Zone (random = Random), nil ohne Zone
 function RedzoneService.Random(random)
-	if #zones == 0 then
+	local list = RedzoneService.List()
+	if #list == 0 then
 		return nil
 	end
-	return zones[(random or Random.new()):NextInteger(1, #zones)]
+	return list[(random or Random.new()):NextInteger(1, #list)]
 end
 
 return RedzoneService

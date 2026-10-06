@@ -26,7 +26,7 @@ maps.Name = "Maps"
 local map = Instance.new("Model", maps)
 map.Name = "Extinction"
 map:SetAttribute("Center", CENTER)
-for _, name in { "Zone", "Spawns", "Portals", "Stands", "Redzones", "Loot" } do
+for _, name in { "Zone", "Spawns", "Portals", "Stands", "Places", "Loot" } do
 	Instance.new("Folder", map).Name = name
 end
 local zone = Instance.new("Part", map.Zone)
@@ -35,11 +35,13 @@ zone.Size = Vector3.new(200, 80, 200)
 zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
 Instance.new("Part", map.Spawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 
-
-local redzone = Instance.new("Part", map.Redzones)
-redzone.Name = "Redzone_Test"
-redzone.Size = Vector3.new(240, 40, 240)
-redzone.CFrame = CFrame.new(CENTER + Vector3.new(0, 20, -500))
+-- Orte für die rote Zone: erst Test (Süden), später zieht sie nach Weit
+for key, offset in { Test = Vector3.new(0, 2, -500), Weit = Vector3.new(0, 2, 900) } do
+	local part = Instance.new("Part", map.Places)
+	part.Name = "Place_" .. key
+	part.Size = Vector3.new(240, 4, 240)
+	part.CFrame = CFrame.new(CENTER + offset)
+end
 
 -- Spots: zwei Holzkisten (eine in der roten Zone), eine Sanikiste, eine Munitionskiste, eine Militärkiste, ein Fremdteil
 local function spot(name, offset, yawDegrees)
@@ -73,7 +75,8 @@ local ContainerService = require("ContainerService")
 local RedzoneService = require("RedzoneService")
 InventoryService.Init()
 LootService.Init()
-RedzoneService.Init(map)
+RedzoneService.Start({ Map = map, Loop = false })
+RedzoneService.MoveNow("Test")
 -- Standard: abgeschaltet (keine Beute am Boden) – dann entsteht keine einzige Kiste
 ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 check(#ContainerService.Spots() == 0, "Kisten sind standardmäßig aus")
@@ -173,6 +176,25 @@ check(LootService.Take(alice, spots[4].Id, "All") == false, "zu weit weg: nichts
 -- Kisten laufen nicht ab (länger als die Todestasche)
 step(ExtinctionConfig.BagLifetime + 60)
 check(LootService.Get(spots[4].Id) ~= nil, "Kiste ist nach " .. (ExtinctionConfig.BagLifetime + 60) .. " s noch da")
+
+-- Die rote Zone zieht weiter: wird die Kiste am alten Ort neu gefüllt, zieht sie wieder aus ihrer eigenen Tabelle
+RedzoneService.MoveNow("Weit")
+place(Vector3.new(10, 3, -500))
+local redId = redSpot.Id
+check(redId ~= nil and LootService.Take(alice, redId, "All") == true, "Kiste am alten Ort der roten Zone geleert")
+step(ExtinctionConfig.Containers.Respawn * 1.3)
+check(redSpot.Id ~= nil and redSpot.Id ~= redId and not redSpot.Redzone, "neu gefüllt, jetzt außerhalb der roten Zone")
+local tier1 = {}
+for _, row in ExtinctionConfig.LootTables.Tier1 do
+	tier1[row.Id] = true
+end
+local refillOk = redSpot.Id ~= nil and LootService.Get(redSpot.Id) ~= nil
+for _, item in refillOk and LootService.Get(redSpot.Id).Container.Slots or {} do
+	if not tier1[item.Id] then
+		refillOk = false
+	end
+end
+check(refillOk, "Beute wieder aus Tier1 (Holzkiste)")
 
 -- Rote Zone: Tier3-Beute
 local tier3 = {}

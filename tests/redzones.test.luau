@@ -1,5 +1,6 @@
--- Rote Zonen der offenen Welt: Lage und Größe aus den Teilen Redzone_<Name>, Attribut an der Karte und am Spieler, PvP sofort
--- drinnen, mehr Zombies mit Läufern und Brocken innerhalb der Zone, Obergrenze mit Bonus, außerhalb normale Zombies
+-- Die rote Zone der offenen Welt: der Modus setzt sie auf einen Ort der Karte (Place_<Name>), Attribut an der Karte und
+-- am Spieler, PvP sofort drinnen, mehr Zombies mit Läufern und Brocken innerhalb der Zone, Obergrenze mit Bonus, außerhalb
+-- normale Zombies; zieht sie weiter, gilt alles am neuen Ort
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -26,7 +27,7 @@ maps.Name = "Maps"
 local map = Instance.new("Model", maps)
 map.Name = "Extinction"
 map:SetAttribute("Center", CENTER)
-for _, name in { "Zone", "Spawns", "Portals", "Stands", "Redzones" } do
+for _, name in { "Zone", "Spawns", "Portals", "Stands", "Places" } do
 	Instance.new("Folder", map).Name = name
 end
 local zone = Instance.new("Part", map.Zone)
@@ -35,12 +36,14 @@ zone.Size = Vector3.new(200, 80, 200)
 zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
 Instance.new("Part", map.Spawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 
-
-local redzone = Instance.new("Part", map.Redzones)
-redzone.Name = "Redzone_Test"
-redzone:SetAttribute("Title", "Testzone")
-redzone.Size = Vector3.new(240, 40, 240)
-redzone.CFrame = CFrame.new(CENTER + Vector3.new(0, 20, -500))
+-- Orte, an die die rote Zone ziehen kann (der Test setzt sie erst auf Test, später auf Weit)
+for key, offset in { Test = Vector3.new(0, 2, -500), Weit = Vector3.new(0, 2, 900) } do
+	local part = Instance.new("Part", map.Places)
+	part.Name = "Place_" .. key
+	part:SetAttribute("Title", key == "Test" and "Testzone" or "Weitweg")
+	part.Size = Vector3.new(240, 4, 240)
+	part.CFrame = CFrame.new(CENTER + offset)
+end
 
 local ground = Instance.new("Part", workspace)
 ground.Name = "Ground"
@@ -64,6 +67,7 @@ require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdro
 require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
 require("ExtinctionConfig").Zombies.KindWeights = { Walker = 1 } -- nur normale Zombies (Schreier rufen sonst Verstärkung)
 Extinction.Init({ Join = function() end, Status = function() end })
+RedzoneService.MoveNow("Test")
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
 store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
@@ -84,15 +88,17 @@ local function flatDistance(a, b)
 	return Vector3.new(a.X - b.X, 0, a.Z - b.Z).Magnitude
 end
 
--- Zonen aus der Karte
+-- Die Zone steht an ihrem Ort
+local R = ExtinctionConfig.Redzone.Radius
 local zones = RedzoneService.List()
-check(#zones == 1 and zones[1].Name == "Test" and zones[1].Title == "Testzone" and zones[1].Radius == 120, "Zone aus dem Teil gelesen")
-check(RedzoneService.At(CENTER + Vector3.new(0, 0, -500)) == zones[1] and RedzoneService.At(CENTER + Vector3.new(100, 0, -500)) == zones[1], "Mitte und Innenraum")
-check(RedzoneService.At(CENTER + Vector3.new(130, 0, -500)) == nil and RedzoneService.At(CENTER) == nil, "außerhalb keine Zone")
-check(RedzoneService.Random(Random.new(1)) == zones[1], "zufällige Zone")
+check(#zones == 1 and zones[1].Name == "Redzone" and zones[1].Key == "Test" and zones[1].Title == "Testzone" and zones[1].Radius == R,
+	"eine rote Zone am Ort der Karte")
+check(RedzoneService.At(CENTER + Vector3.new(0, 0, -500)) == zones[1] and RedzoneService.At(CENTER + Vector3.new(R - 10, 0, -500)) == zones[1], "Mitte und Innenraum")
+check(RedzoneService.At(CENTER + Vector3.new(R + 10, 0, -500)) == nil and RedzoneService.At(CENTER) == nil, "außerhalb keine Zone")
+check(RedzoneService.Random(Random.new(1)) == zones[1], "zufällige Zone = die Zone")
 local published = HttpService:JSONDecode(map:GetAttribute("Redzones"))
-check(#published == 1 and published[1].Name == "Testzone" and published[1].R == 120 and published[1].X == CENTER.X and published[1].Z == CENTER.Z - 500,
-	"Zonen als Attribut an der Karte für die Clients")
+check(#published == 1 and published[1].Title == "Testzone" and published[1].R == R and published[1].X == CENTER.X and published[1].Z == CENTER.Z - 500,
+	"Zone als Attribut an der Karte für die Clients")
 
 -- Betreten: Attribut, Meldung, PvP sofort (draußen sonst erst nach PvPDelay)
 place(alice, Vector3.new(0, 3, -170))
@@ -100,15 +106,16 @@ step(0.5)
 check(alice:GetAttribute("Redzone") == nil and alice:GetAttribute("PvP") == false, "draußen, aber keine rote Zone: PvP erst nach der Wartezeit")
 place(alice, Vector3.new(0, 3, -470))
 step(0.5)
-check(alice:GetAttribute("Redzone") == "Test", "in der roten Zone: Attribut Redzone")
+check(alice:GetAttribute("Redzone") == "Redzone", "in der roten Zone: Attribut Redzone")
 check(alice:GetAttribute("PvP") == true, "in der roten Zone gilt PvP sofort")
 local banner = false
 for _, entry in SIM.RemoteLog do
-	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2].Caption == "Rote Zone" then
+	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2].Caption == "Rote Zone"
+		and entry.Args[2].Title == "TESTZONE" then
 		banner = true
 	end
 end
-check(banner, "Meldung beim Betreten")
+check(banner, "Meldung beim Betreten (mit dem Ort)")
 place(alice, Vector3.new(0, 3, -170))
 step(0.5)
 check(alice:GetAttribute("Redzone") == nil and alice:GetAttribute("PvP") == true, "Zone verlassen: Attribut weg, PvP bleibt")
@@ -197,6 +204,35 @@ place(alice, Vector3.new(0, 3, 20))
 step(0.5)
 check(ZombieService.Spawn(CENTER + Vector3.new(500, 0, 500)) == nil, "ohne Spieler in der Zone gilt wieder die normale Obergrenze")
 Z.MaxTotal = 30
+
+-- Die Zone zieht weiter: am alten Ort ist man draußen (PvP bleibt), am neuen wieder drin (mit Meldung)
+local function banners(title) -- Meldungen beim Betreten (Titel = Ort; die Ansage an alle heißt "ROTE ZONE: <Ort>")
+	local n = 0
+	for _, entry in SIM.RemoteLog do
+		if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2].Title == title then
+			n += 1
+		end
+	end
+	return n
+end
+place(alice, Vector3.new(0, 3, -500))
+step(0.5)
+check(alice:GetAttribute("Redzone") == "Redzone", "wieder in der Zone")
+RedzoneService.MoveNow("Weit")
+step(0.5)
+check(alice:GetAttribute("Redzone") == nil and alice:GetAttribute("PvP") == true, "Zone weitergezogen: draußen, PvP bleibt")
+check(RedzoneService.At(CENTER + Vector3.new(0, 0, -500)) == nil, "alter Ort ist keine rote Zone mehr")
+local entered = banners("WEITWEG")
+place(alice, Vector3.new(0, 3, 880))
+step(0.5)
+check(alice:GetAttribute("Redzone") == "Redzone" and banners("WEITWEG") == entered + 1, "am neuen Ort wieder drin, mit Meldung")
+-- beginnt eine neue Runde, während man drinsteht (derselbe Ort, neue Zone): neue Meldung
+entered = banners("WEITWEG")
+RedzoneService.MoveNow("Weit")
+step(0.5)
+check(alice:GetAttribute("Redzone") == "Redzone" and banners("WEITWEG") == entered + 1, "neue Runde am selben Ort: wieder Meldung")
+place(alice, Vector3.new(0, 3, 20))
+step(0.5)
 
 if failures == 0 then
 	print("Rote Zonen: alles in Ordnung")

@@ -1,7 +1,8 @@
 -- ExtinctionMap (ModuleScript, nur Client)
 -- Weltkarte der offenen Welt (EXTINCTION), Taste N (oder Knopf KARTE): Straßen und Flächen aus den Gruppen Roads und
--- Ground der Karte, die Safe Zone (grün), rote Zonen (rote Kreise mit Namen), Orte (Namen), Lootdrops (orange, mit
--- Countdown), Vorratslager und Funkgerät und der eigene Standort als Pfeil in Blickrichtung. Norden (+Z) ist oben.
+-- Ground der Karte, die Safe Zones (grün), die rote Zone (roter Kreis mit der Zeit bis zum Weiterziehen), Orte (Namen),
+-- Lootdrops (orange, mit Countdown), Vorratslager und Funkgerät und der eigene Standort als Pfeil in Blickrichtung.
+-- Norden (+Z) ist oben.
 -- Zombienester und Überlebende stehen nicht auf der Karte (man findet sie draußen), damit sie übersichtlich bleibt.
 -- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops, Activities; Gruppen Roads, Ground, Places,
 -- Zone).
@@ -25,8 +26,6 @@ local ExtinctionMap = {}
 local SIZE = 640                    -- Kantenlänge der Karte (Design-Einheiten)
 local WORLD = ExtinctionConfig.WorldSize
 local RED = Color3.fromRGB(226, 56, 48)
-local MOVING = Color3.fromRGB(255, 120, 40) -- Wanderzone
-local movingView = nil
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
@@ -39,6 +38,7 @@ local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = t
 local gui, board, layer, markers, arrow
 local built = false
 local dropViews = {}       -- Lootdrops und Aktivitäten (Id -> Frame)
+local redViews, redRaw = {}, nil -- rote Zone: { Frame, Text, Ends } und zuletzt gelesenes Attribut Redzones
 local ACTIVITY_COLORS = { -- nur diese Aktivitäten stehen auf der Karte
 	Cache = Color3.fromRGB(255, 210, 90),
 	Radio = Color3.fromRGB(110, 190, 255),
@@ -125,13 +125,6 @@ local function build(map)
 			frame.Name = safe.Name
 		end
 	end
-	for _, zoneInfo in decode(map, "Redzones") do
-		local frame = circle(layer, map, zoneInfo.X or 0, zoneInfo.Z or 0, zoneInfo.R or 0, RED, 0.6, 4)
-		frame.Name = "Redzone"
-		label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(1.6, 0, 0, 16),
-			Text = "ROTE ZONE", TextSize = 12, Font = F.Display, TextColor3 = Color3.new(1, 1, 1),
-			TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, frame)
-	end
 	-- Ortsnamen (große Orte heller, kleine Orte dunkler, damit die Viertel nicht alles überdecken). Ohne Namen: Camp,
 	-- Tankstellen (Place_Tank<n>) und Seen (gleicher Schlüssel wie ein Teil Lake_<Name>) – die Seen sieht man als Fläche.
 	local places = map:FindFirstChild("Places")
@@ -170,31 +163,29 @@ local function update()
 		local look = camera and camera.CFrame.LookVector or Vector3.new(0, 0, 1)
 		arrow.Rotation = math.deg(math.atan2(look.X, look.Z))
 	end
-	-- Wanderzone (wechselt den Ort, darum bei jedem Update)
+	-- Rote Zone (zieht alle 20 Minuten weiter, darum bei jedem Update): Kreis mit der Zeit bis zum Weiterziehen
 	local now = workspace:GetServerTimeNow()
-	local movingText = map:GetAttribute("MovingZone")
-	local okMoving, moving = pcall(HttpService.JSONDecode, HttpService, type(movingText) == "string" and movingText or "null")
-	if okMoving and type(moving) == "table" and moving.X and moving.Z and moving.R then
-		local key = string.format("%d:%d:%d", moving.X, moving.Z, moving.R)
-		if not movingView or not movingView.Parent or movingView:GetAttribute("Key") ~= key then
-			if movingView then
-				movingView:Destroy()
+	local raw = map:GetAttribute("Redzones")
+	if raw ~= redRaw then
+		redRaw = raw
+		for _, view in redViews do
+			view.Frame:Destroy()
+		end
+		redViews = {}
+		for _, zoneInfo in decode(map, "Redzones") do
+			if type(zoneInfo) == "table" and tonumber(zoneInfo.X) and tonumber(zoneInfo.Z) and tonumber(zoneInfo.R) then
+				local frame = circle(markers, map, zoneInfo.X, zoneInfo.Z, zoneInfo.R, RED, 0.55, 5)
+				frame.Name = "Redzone"
+				local text = label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+					Size = UDim2.new(2.4, 0, 0, 16), TextSize = 12, Font = F.Display, TextColor3 = Color3.new(1, 1, 1),
+					TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, frame)
+				table.insert(redViews, { Frame = frame, Text = text, Ends = tonumber(zoneInfo.Ends) })
 			end
-			movingView = circle(markers, map, moving.X, moving.Z, moving.R, MOVING, 0.55, 5)
-			movingView.Name = "MovingZone"
-			movingView:SetAttribute("Key", key)
-			label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(2.4, 0, 0, 16),
-				TextSize = 12, Font = F.Display, TextColor3 = Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 },
-				movingView)
 		end
-		local left = math.max(0, math.floor((moving.Ends or now) - now))
-		local text = movingView:FindFirstChild("Text")
-		if text then
-			text.Text = string.format("WANDERZONE %d:%02d", left // 60, left % 60)
-		end
-	elseif movingView then
-		movingView:Destroy()
-		movingView = nil
+	end
+	for _, view in redViews do
+		local left = math.max(0, math.floor((view.Ends or now) - now))
+		view.Text.Text = string.format("ROTE ZONE %d:%02d", left // 60, left % 60)
 	end
 	-- Lootdrops
 	local seen = {}
@@ -299,7 +290,7 @@ function ExtinctionMap.Init()
 	UITheme.Outline(arrow)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ORANGE WANDERZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK", TextSize = 11,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK", TextSize = 11,
 		Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)

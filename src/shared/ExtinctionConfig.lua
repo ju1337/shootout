@@ -94,7 +94,7 @@ ExtinctionConfig.Stands = {
 
 -- ---------- Beute-Tabellen ----------
 -- Gewichtete Listen { Id, Count = { min, max }, Weight }. Gezogen wird mit ExtinctionConfig.RollLoot(Tabelle, Anzahl).
--- Zombie / Zombie2 = Leichen (einfach), Tier1-3 = Kisten in der Welt (3 = Militär und rote Zonen), Medical = Sanikisten,
+-- Zombie / Zombie2 = Leichen (einfach), Tier1-3 = Kisten in der Welt (3 = Militär und rote Zone), Medical = Sanikisten,
 -- Ammo = Munitionskisten, Airdrop = Versorgungsabwürfe (das Beste).
 ExtinctionConfig.LootTables = {
 	Zombie = {
@@ -107,7 +107,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 1 },
 	},
-	Zombie2 = { -- Läufer in roten Zonen: etwas besser
+	Zombie2 = { -- Läufer in der roten Zone: etwas besser
 		{ Id = "Bandage", Count = { 2, 3 }, Weight = 24 },
 		{ Id = "Ammo_9mm", Count = { 14, 30 }, Weight = 20 },
 		{ Id = "Ammo_Rifle", Count = { 10, 24 }, Weight = 14 },
@@ -144,7 +144,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 2 },
 	},
-	Tier3 = { -- Militärbasis, rote Zonen
+	Tier3 = { -- Militärbasis, rote Zone
 		{ Id = "Rifle", Count = { 1, 1 }, Weight = 10 },
 		{ Id = "DMR", Count = { 1, 1 }, Weight = 6 },
 		{ Id = "SMG", Count = { 1, 1 }, Weight = 8 },
@@ -193,7 +193,7 @@ ExtinctionConfig.ZombieDropChance = 0.55 -- Standardwert (ältere Aufrufe); die 
 ExtinctionConfig.ZombieLoot = ExtinctionConfig.LootTables.Zombie
 
 -- ---------- Lagerkisten in der Welt (Teile "Spot_<Art>" in Gruppe Loot) ----------
--- Jede Art hat eine Beute-Tabelle (Table) und eine Zahl Items (Items); Spots in roten Zonen ziehen immer aus Tier3.
+-- Jede Art hat eine Beute-Tabelle (Table) und eine Zahl Items (Items); Spots in der roten Zone ziehen aus Tier3.
 ExtinctionConfig.Containers = {
 	Enabled = false,      -- keine Beute am Boden: Beute gibt es von Zombies, Lootdrops und Ständen (true = Kisten wieder an)
 	Respawn = 480,        -- Sekunden, bis eine geleerte Kiste neu gefüllt ist
@@ -206,30 +206,26 @@ ExtinctionConfig.Containers = {
 	},
 }
 
--- ---------- Rote Zonen (Teile "Redzone_<Name>" in Gruppe Redzones: Zylinder, Radius = halbe Breite) ----------
--- Drinnen: PvP sofort, mehr und gefährlichere Zombies (Läufer, Brocken), Kisten ziehen aus Tier3, Lootdrops landen
--- bevorzugt dort.
+-- ---------- Rote Zone (RedzoneService): eine Zone, die alle Interval Sekunden an einen anderen Ort zieht ----------
+-- Ziele: Orte der Karte (Place_<Name>) außer Exclude, nicht größer als MaxPlaceSize, weit genug von der Safe Zone und den
+-- Safehouses, nicht im Wasser, nie zweimal hintereinander derselbe und möglichst weit weg vom alten (MinMove). Drinnen: PvP sofort, mehr und gefährlichere Zombies
+-- (Läufer, Brocken), Kisten ziehen aus Tier3, Lootdrops landen bevorzugt dort. Jeder Wechsel beginnt eine neue Runde der
+-- Rangliste (RedzoneBoard).
 ExtinctionConfig.Redzone = {
-	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in einer roten Zone
+	Enabled = true,
+	Interval = 20 * 60,      -- Sekunden bis zum nächsten Wechsel (eine Runde der Rangliste)
+	Warning = 60,            -- so viele Sekunden vorher kommt die Ansage
+	Radius = 170,
+	MinMove = 400,           -- der neue Ort liegt mindestens so weit vom alten weg (wenn es so einen gibt)
+	MaxPlaceSize = 600,      -- Orte mit größerem Durchmesser (Ödstadt, Innenstadt) sind kein Ziel
+	Exclude = { "Camp", "Oedstadt", "Innenstadt", "Schwarzsee", "Stausee", "Teich" },
+	Color = Color3.fromRGB(226, 56, 48),
+	WallPanels = 48,         -- flimmernde Wand (ForceField) am Rand
+	WallHeight = 70,
+	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in der roten Zone
 	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
 	KindWeights = { Walker = 50, Runner = 30, Brute = 12, Screamer = 8 },
 	ContainerTable = "Tier3",
-	PvPDelay = 0,
-}
-
--- ---------- Wanderzone (RedzoneService.StartMoving): rote Zone, die alle Interval Sekunden den Ort wechselt ----------
--- Ziele: Orte der Karte (Place_<Name>) außer Exclude, nicht größer als MaxPlaceSize, weit genug von der Safe Zone, nicht
--- auf einer festen roten Zone, nicht im Wasser. Drinnen gilt alles wie in roten Zonen (PvP sofort, Zombies, Beute).
-ExtinctionConfig.MovingZone = {
-	Enabled = true,
-	Interval = 20 * 60,      -- Sekunden bis zum nächsten Wechsel
-	Warning = 60,            -- so viele Sekunden vorher kommt die Ansage
-	Radius = 170,
-	MaxPlaceSize = 600,      -- Orte mit größerem Durchmesser (Ödstadt, Innenstadt) sind kein Ziel
-	Exclude = { "Camp", "Oedstadt", "Innenstadt", "Schwarzsee", "Stausee", "Teich" },
-	Color = Color3.fromRGB(255, 120, 40),
-	WallPanels = 48,
-	WallHeight = 70,
 }
 
 -- ---------- Tag und Nacht (DayCycle) ----------
@@ -280,7 +276,7 @@ ExtinctionConfig.Missions = {
 		{ Id = "Zombies", Text = "Töte %d Zombies", Event = "Zombie", Count = { 15, 30 }, Coins = 120, Table = "Tier1", Items = { 1, 2 } },
 		{ Id = "Runners", Text = "Töte %d Läufer", Event = "Runner", Count = { 4, 8 }, Coins = 160, Table = "Tier2", Items = { 1, 2 } },
 		{ Id = "Brutes", Text = "Töte %d Brocken", Event = "Brute", Count = { 1, 3 }, Coins = 220, Table = "Tier2", Items = { 2, 3 } },
-		{ Id = "RedZombies", Text = "Töte %d Zombies in einer roten Zone", Event = "RedZombie", Count = { 8, 15 }, Coins = 260,
+		{ Id = "RedZombies", Text = "Töte %d Zombies in der roten Zone", Event = "RedZombie", Count = { 8, 15 }, Coins = 260,
 			Table = "Tier3", Items = { 1, 2 } },
 		{ Id = "Nest", Text = "Zerstöre %d Zombienest(er)", Event = "Nest", Count = { 1, 2 }, Coins = 250, Table = "Tier2", Items = { 2, 3 } },
 		{ Id = "Cache", Text = "Brich %d Vorratslager auf", Event = "Cache", Count = { 2, 3 }, Coins = 180, Table = "Tier1", Items = { 1, 2 } },
@@ -305,7 +301,7 @@ ExtinctionConfig.Airdrop = {
 	Lifetime = 300,          -- gelandet bleibt die Kiste so lange
 	Items = { 6, 9 },        -- so viele Einträge aus LootTables.Airdrop
 	Escort = 5,              -- so viele Zombies kommen um die Landestelle
-	RedzoneChance = 0.4,     -- Wahrscheinlichkeit, in einer roten Zone zu landen
+	RedzoneChance = 0.4,     -- Wahrscheinlichkeit, in der roten Zone zu landen
 	EdgeMargin = 140,        -- Abstand zum Kartenrand
 	SafeMargin = 180,        -- Abstand zur Safe Zone
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
@@ -313,7 +309,7 @@ ExtinctionConfig.Airdrop = {
 
 -- ---------- Zombies ----------
 -- Wenige und langsame Zombies: man kann ihnen davonlaufen (Spieler laufen 16, sprinten 24). Die Standardwerte gelten für
--- den normalen Zombie (Walker), ZombieKinds überschreibt sie je Art. Läufer und Brocken gibt es nur in roten Zonen.
+-- den normalen Zombie (Walker), ZombieKinds überschreibt sie je Art. Läufer und Brocken gibt es vor allem in der roten Zone und nachts.
 ExtinctionConfig.Zombies = {
 	PerPlayer = 3,         -- so viele Zombies um jeden Spieler draußen
 	MaxTotal = 30,         -- höchstens so viele gleichzeitig auf dem Server

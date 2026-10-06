@@ -112,21 +112,22 @@ Ortskernen zertrampelte Erde, Matsch und verdorrtes Gras (kein Pflaster), außen
 `ExtinctionTerrain.ClearRoads` das Terrain im Grundriss jeder Straße, jedes Gehwegs, Feldwegs, des Gleisbetts und
 der Basis-Platte aus (nur Luft ab 2,5 Studs unter der Oberkante, keine Erde – das Voxel-Terrain würde sonst auf ganze
 4-Stud-Blöcke runden und über die Fahrbahn wachsen), damit die Straßen sichtbar obenauf liegen.
-**Rote Zonen** (4): Krankenhaus St. Marien (in Ödstadt), Militärbasis Fort Eisen, Industriehafen am Stausee, JVA
-Schwarzwald – rot-weiße Linie am Boden und ein **Kontrollpunkt an jeder Straße** (Torbogen „ROTE ZONE“ / innen
-„AUSGANG“, Sperren, rotes Licht).
-**Wanderzone** (`RedzoneService.StartMoving`, `ExtinctionConfig.MovingZone`): eine zusätzliche rote Zone (Radius 170),
-die alle **20 Minuten** an einen anderen Ort springt (Dörfer, Höfe, Außenposten, Bahnhof … – nicht Camp, Seen, die
-ganze Stadt oder feste rote Zonen). Drinnen gilt PvP sofort, mehr Zombies und bessere Beute wie in roten Zonen. Ansage
-an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde orange Wand und eine Lichtsäule; eine Zeile
-unter der Uhr nennt Ort, Zeit bis zum Wechsel und Entfernung, orange auf Minimap und Weltkarte (Karten-Attribut
-`MovingZone`). Es gibt keine Richtungsanzeiger mit Entfernung oben am Bildschirm (Ziele zeigen Minimap und Weltkarte).
+**Rote Zone** (`RedzoneService.lua`, `ExtinctionConfig.Redzone`): es gibt **genau eine** rote Zone (Radius 170). Sie
+zieht alle **20 Minuten** an einen anderen Ort der Karte (Dörfer, Krankenhaus, Militärbasis, Hafen, Gefängnis, Flugplatz,
+Höfe, Außenposten, Tankstellen, Bahnhof … – nicht Camp, Seen, die ganze Stadt, Safehouses oder Wasser), nie zweimal
+hintereinander an denselben und möglichst mindestens 400 Studs vom alten weg (`MinMove`). Drinnen gilt PvP sofort, mehr
+Zombies und bessere Beute. Ansage an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde rote Wand und
+eine Lichtsäule; eine rote Zeile unter der Uhr nennt Ort, Zeit bis zum Wechsel und Entfernung (Karten-Attribut
+`Redzones`, eine Liste – vorbereitet für später mehrere Zonen). Mit jedem Wechsel beginnt die **Rangliste** neu. Feste
+rote Zonen auf der Karte gibt es nicht mehr. Es gibt keine Richtungsanzeiger mit Entfernung oben am Bildschirm (Ziele
+zeigen Minimap und Weltkarte).
 Die Nacht ist hell genug zum Spielen (bläuliches Umgebungslicht, wenig Dunst). Admin-Panel: Knopf **TAG / NACHT**
 springt auf 10 bzw. 22 Uhr (Attribut `DayOffset` an ReplicatedStorage, `DayCycle.SetClock`).
 **Minimap** (oben links) zoomt in der offenen Welt weiter raus (240 Studs, Karten-Attribut `MinimapRange`), zeigt nur
-Straßen und Gebäude und die Zonen als Punktkreise (grün Safe Zone, rot rote Zonen); in einer roten Zone wird ihr
-Rand rot. **Weltkarte** mit **N** (oder Knopf KARTE oben rechts): Straßen, Gebäude, Seen, Orte, Safe Zone, rote
-Zonen, Wanderzone, Lootdrops mit Countdown, Vorratslager, Funkgerät und der eigene Standort. Tankstellen und Seen stehen
+Straßen und Gebäude und die Zonen als Punktkreise (grün Safe Zones, rot die rote Zone – der Kreis zieht mit); in der
+roten Zone wird ihr Rand rot. **Weltkarte** mit **N** (oder Knopf KARTE oben rechts): Straßen, Gebäude, Seen, Orte,
+Safe Zones, die rote Zone mit der Zeit bis zum Wechsel, Lootdrops mit Countdown, Vorratslager, Funkgerät und der
+eigene Standort. Tankstellen und Seen stehen
 ohne Namen auf der Karte (die Seen sieht man als Fläche), Zombienester und Überlebende gar nicht, damit sie übersichtlich
 bleibt. Beim Betreten eines Ortes erscheint sein Name.
 **Tag und Nacht** (`src/shared/DayCycle.lua`, `ExtinctionConfig.Day`): ein Tag dauert 24 Minuten, davon etwa
@@ -168,11 +169,11 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
 - **Zombies** (`src/server-shared/ZombieService.lua`): wenige und langsam – spawnen nur um Spieler draußen im
   weiteren Umkreis (80-150 Studs, nicht auf Dächern, nicht im Wasser, nicht nah an der Safe Zone), höchstens 3 pro
   Spieler und 30 auf dem Server. Sie schlurfen herum, bemerken Spieler erst auf 45 Studs und schlagen langsam zu; in
-  die Safe Zone gehen sie nicht. In roten Zonen gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
+  die Safe Zone gehen sie nicht. In der roten Zone gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
   (schnell, wenig Leben) und **Brocken** (groß, viel Leben, harte Schläge, immer Beute).
 - **Zombie-Arten**: alle mit Blutflecken und Wunden. Draußen am Tag fast nur normale Zombies, ein paar **Läufer** und
   **Schreier** (weiße Augen): sieht ein Schreier dich, schreit er (roter Ring) – alle Zombies im Umkreis jagen dich und
-  drei weitere kommen dazu. Nachts mehr Läufer, Schreier und auch **Brocken**; in roten Zonen die meisten.
+  drei weitere kommen dazu. Nachts mehr Läufer, Schreier und auch **Brocken**; in der roten Zone die meisten.
 - **Zombie-Beute**: tote Zombies bleiben mit Beute 40 Sekunden liegen (leuchten). **Einmal E** (ohne Halten) hebt
   alles auf, **direkt ins Inventar** (passt nicht alles, bleibt der Rest liegen). Zombies lassen öfter etwas fallen
   (75 %, Läufer 85 %, Brocken immer), weil es keine Beute mehr am Boden gibt.
@@ -180,11 +181,12 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
 - **Aktivitäten** (`ActivityService.lua`, Teile `Act_<Art>` in der Gruppe Activities, Werte
   `ExtinctionConfig.Activities`); auf der Weltkarte stehen nur Vorratslager und Funkgerät:
-  - **Zombienester** (15, in Ödstadt, den Dörfern, Wäldern und roten Zonen): leuchtender Kern aus Fleisch, man schießt
+  - **Zombienester** (15, in Ödstadt, den Dörfern, Wäldern, Gefängnis, Militärbasis, Hafen): leuchtender Kern aus Fleisch, man schießt
     darauf (900 Leben). Solange es lebt und jemand in der Nähe ist, kriechen Zombies heraus. Zerstört: jeder, der
     Schaden gemacht hat, bekommt 150 Münzen und Beute direkt ins Inventar; nach 10 Minuten wächst es nach.
-  - **Vorratslager** (21, an Polizei, Tankstellen, Höfen, Flugplatz, roten Zonen …): **E 10 Sekunden halten** zum
-    Aufbrechen – der Lärm lockt sofort Zombies an. Beute direkt ins Inventar (in roten Zonen die beste), danach leer
+  - **Vorratslager** (21, an Polizei, Krankenhaus, Tankstellen, Höfen, Flugplatz, Militärbasis …): **E 10 Sekunden
+    halten** zum Aufbrechen – der Lärm lockt sofort Zombies an. Beute direkt ins Inventar (in der roten Zone die beste),
+    danach leer
     für 12 Minuten.
   - **Funkgerät** am Funkturm: **E halten = Notruf**, ein Lootdrop kommt (alle 15 Minuten).
   - **Überlebende** (10, in Dörfern, Höfen, Ödstadt, Flugplatz): **E halten** – er folgt dir. Bring ihn lebend in die
@@ -194,7 +196,7 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
     stehen nicht auf der Weltkarte – man findet sie draußen.
 - **Aufträge** (`MissionService.lua`, `ExtinctionConfig.Missions`): immer drei gleichzeitig, links mit etwas Abstand
   unter dem VERLASSEN-Knopf (rutscht mit ihm, auf Touch unter der Lebensanzeige), mit Fortschrittsbalken – z. B.
-  „Töte 20 Zombies“, „Töte 5 Läufer“, „Töte 10 Zombies in einer roten Zone“, „Zerstöre ein Zombienest“, „Brich 2
+  „Töte 20 Zombies“, „Töte 5 Läufer“, „Töte 10 Zombies in der roten Zone“, „Zerstöre ein Zombienest“, „Brich 2
   Vorratslager auf“, „Rette einen Überlebenden“, „Öffne einen Lootdrop“, „Erkunde: NORDHEIM“, „Überlebe 3 Minuten
   nachts draußen“. Erledigt: Münzen und Beute direkt ins Inventar, dann kommt ein neuer Auftrag.
 - **Apokalypse**: Fluchtstaus mit umgekipptem Schulbus auf den Ausfallstraßen, verlassene Quarantäne-Sperren an den
@@ -203,22 +205,20 @@ Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
   abgestürzte Hubschrauber; fahles, gelbgraues Licht.
 - **Keine Beute am Boden**: die Lagerkisten (`ContainerService.lua`) sind abgeschaltet
   (`ExtinctionConfig.Containers.Enabled = false`). Beute gibt es von Zombies, aus Lootdrops und an den Ständen.
-- **Rote Zonen** (`RedzoneService.lua`, Teile `Redzone_<Name>`): rot-weiße Bodenlinie und Kontrollpunkte an den Straßen.
-  Drinnen gilt **PvP sofort**, Anzeige „ROTE ZONE · PVP AKTIV“ mit rotem Bildschirmrand, mehr und härtere Zombies,
-  bessere Beute.
+- **Rote Zone** (`RedzoneService.lua`): eine Zone, die alle 20 Minuten weiterzieht (siehe oben). Drinnen gilt
+  **PvP sofort**, Anzeige „ROTE ZONE · PVP AKTIV“ mit rotem Bildschirmrand, mehr und härtere Zombies, bessere Beute.
+  Beim Betreten (auch wenn eine neue Runde beginnt, während man drinsteht) kommt eine Meldung mit dem Ort.
 - **Redzone-Rangliste** (`src/server-shared/RedzoneBoard.lua`, Anzeige im `ExtinctionClient`): nur solange man in
-  einer roten Zone steht, rechts oben unter der Uhr die **Top 3 der Spieler-Kills (PvP) dieser Zone** – jede Zone hat
-  ihre eigene Liste. Die Wanderzone beginnt jede Runde neu: nach jedem Wechsel an einen anderen Ort ist ihre Liste
-  leer. Ein Kill zählt für die Zone, in der das Opfer stirbt, sonst für die des Schützen; bei Gleichstand steht vorn,
-  wer die Zahl zuerst hatte. Wer nicht unter den ersten drei steht, sieht darunter seinen Platz („DU · PLATZ 5“); wer
+  der roten Zone steht, rechts oben unter der Uhr die **Top 3 der Spieler-Kills (PvP) dieser Runde**. Jede Runde
+  dauert 20 Minuten: zieht die Zone weiter, beginnt die Liste mit dem neuen Ort wieder bei null. Ein Kill zählt, wenn
+  das Opfer in der Zone stirbt, sonst wenn der Schütze drinsteht; bei Gleichstand steht vorn, wer die Zahl zuerst
+  hatte. Wer nicht unter den ersten drei steht, sieht darunter seinen Platz („DU · PLATZ 5“); wer
   die offene Welt verlässt, fällt raus. Solange die Liste zu sehen ist, rückt der Killfeed darunter (Karten-Attribut
   `RedzoneBoard`).
 - **Lootdrops** (`AirdropService.lua`): 2,5 Minuten nach Serverstart, danach alle 7-11 Minuten eine Ansage
   „VERSORGUNGSABWURF“ mit Fackel (Lichtsäule) an der Landestelle, 45 s Vorwarnung, dann sinkt die Kiste 25 s am
-  Fallschirm (40 % Chance in einer roten Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu
+  Fallschirm (40 % Chance in der roten Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu
   Begleiter-Zombies. Bleibt 5 Minuten.
-- **Marker** oben unter der Anzeige: Lootdrops (Countdown, Entfernung) und rote Zonen (Entfernung) mit Pfeil in
-  Blickrichtung.
 - **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
   Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
   einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es
@@ -656,8 +656,9 @@ am Commit:
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
-| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in einer roten Zone unter der Redzone-Rangliste |
-| `redzoneboard`, `extinctionui` | Redzone-Rangliste: eigene Liste je Zone, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Wanderzone beginnt jede Runde neu, Verlassen; Oberfläche der offenen Welt: Rangliste nur in einer roten Zone, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
+| `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot |
+| `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
+| `redzoneboard`, `extinctionui` | Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
 [Luau-Releases](https://github.com/luau-lang/luau/releases) werden gebraucht):

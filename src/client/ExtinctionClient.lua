@@ -9,8 +9,8 @@
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
--- Coins, Redzone; Karten-Attribute Redzones/Airdrops (Marker mit Pfeil), RedzoneBoard (Rangliste rechts oben),
--- Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
+-- Coins, Redzone; Karten-Attribute Redzones (die rote Zone: Zeile unter der Uhr), Airdrops, RedzoneBoard (Rangliste
+-- rechts oben), Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -316,12 +316,11 @@ local markerHolder, vignette, placeLabel, placeSub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
-local MOVING = Color3.fromRGB(255, 120, 40) -- Wanderzone
 local DROP = Color3.fromRGB(255, 190, 70)
 local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
 local MISSION_GAP = 24 -- Abstand der Aufträge unter dem VERLASSEN-Knopf (auf Touch unter der Lebensanzeige)
--- Rangliste der roten Zone rechts oben unter der Uhr (nur in einer roten Zone); der Killfeed des HUD rückt dann darunter
+-- Rangliste der roten Zone rechts oben unter der Uhr (nur in der Zone); der Killfeed des HUD rückt dann darunter
 -- (HUD.lua: SURVIVAL_KILLFEED_TOP = BOARD_TOP + BOARD_H + 12)
 local BOARD_TOP, BOARD_W, BOARD_H, BOARD_H_SHORT = 88, 250, 144, 116
 local hotbarViews = {}
@@ -358,7 +357,7 @@ local function buildHud()
 	zoneText = label({ Size = UDim2.fromScale(1, 1), Text = "SAFE ZONE", TextSize = 18, Font = F.Display,
 		TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = SAFE }, zonePill)
 
-	-- roter Rand, solange man in einer roten Zone steht (4 Verläufe vom Rand nach innen)
+	-- roter Rand, solange man in der roten Zone steht (4 Verläufe vom Rand nach innen)
 	vignette = make("Frame", { Name = "RedzoneVignette", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
 		Active = false }, root)
 	for _, side in { { UDim2.new(1, 0, 0, 120), UDim2.fromScale(0, 0), 90 }, { UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 1, -120), 270 },
@@ -476,7 +475,7 @@ local function updateZone()
 		stroke.Color = SAFE
 	elseif vignette and vignette.Visible then
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
-		zoneText.Text = player:GetAttribute("Redzone") == "Wanderzone" and "WANDERZONE  ·  PVP AKTIV" or "ROTE ZONE  ·  PVP AKTIV"
+		zoneText.Text = "ROTE ZONE  ·  PVP AKTIV"
 		zoneText.TextColor3 = RED:Lerp(Color3.new(1, 1, 1), 0.25 * pulse)
 		stroke.Color = RED
 		vignette.Position = UDim2.fromOffset(0, 0)
@@ -495,7 +494,7 @@ local function updateZone()
 	end
 end
 
--- Marker: Liste aus den Karten-Attributen Redzones / Airdrops lesen, nach Entfernung sortieren, Pfeil zur Kamera drehen
+-- Marker: Liste aus den Karten-Attributen Airdrops / Activities lesen, nach Entfernung sortieren, Pfeil zur Kamera drehen
 local function mapList(map, attribute)
 	local text = map and map:GetAttribute(attribute)
 	if type(text) ~= "string" then
@@ -1364,20 +1363,21 @@ function ExtinctionClient.Init()
 		Size = UDim2.fromOffset(260, 30), Text = "", TextSize = 15, Font = F.Bold, TextColor3 = C.Text,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	UITheme.Outline(clockText)
-	-- Wanderzone: Ort, Zeit bis zum Wechsel und Entfernung als Zeile unter der Uhr (kein Richtungspfeil)
-	local movingText = label({ Name = "MovingZone", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 58),
-		Size = UDim2.fromOffset(360, 20), Text = "", TextSize = 13, Font = F.Bold, TextColor3 = MOVING,
+	-- Rote Zone (zieht alle 20 Minuten weiter): Ort, Zeit bis zum Wechsel und Entfernung als Zeile unter der Uhr (kein
+	-- Richtungspfeil); bei mehreren Zonen die nächste
+	local redzoneText = label({ Name = "RedzoneInfo", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 58),
+		Size = UDim2.fromOffset(360, 20), Text = "", TextSize = 13, Font = F.Bold, TextColor3 = RED,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
-	UITheme.Outline(movingText)
+	UITheme.Outline(redzoneText)
 
-	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): nur in einer roten Zone, die Top 3 der
-	-- Spieler-Kills dieser Zone (Wanderzone: dieser Runde); der eigene Platz darunter, wenn man Kills hat, aber nicht unter
-	-- den ersten drei steht
+	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): nur in der roten Zone, die Top 3 der
+	-- Spieler-Kills dieser Runde (jeder Wechsel des Ortes beginnt eine neue); der eigene Platz darunter, wenn man Kills
+	-- hat, aber nicht unter den ersten drei steht
 	local board = UITheme.HudPanel({ Name = "RedzoneBoard", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, BOARD_TOP),
 		Size = UDim2.fromOffset(BOARD_W, BOARD_H_SHORT), Visible = false }, root, "Left")
-	local boardAccent = make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
+	make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
 		Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 2 }, board)
-	local boardCaption = label({ Name = "Caption", Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 14), Text = "",
+	label({ Name = "Caption", Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 14), Text = "ROTE ZONE  ·  TOP KILLS",
 		TextSize = 11, Font = F.Bold, TextColor3 = RED, ZIndex = 2 }, board)
 	local boardTitle = label({ Name = "Title", Position = UDim2.fromOffset(12, 20), Size = UDim2.new(1, -24, 0, 20), Text = "",
 		TextSize = 16, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 2 }, board)
@@ -1410,13 +1410,9 @@ function ExtinctionClient.Init()
 		if not board.Visible then
 			return
 		end
-		local moving = zoneKey == "Wanderzone"
 		local zone = type(zones[zoneKey]) == "table" and zones[zoneKey] or {}
-		boardCaption.Text = (moving and "WANDERZONE" or "ROTE ZONE") .. "  ·  TOP KILLS"
-		boardTitle.Text = upper(tostring(zone.Title or zoneKey))
-		local list, color = type(zone.List) == "table" and zone.List or {}, moving and MOVING or RED
-		boardCaption.TextColor3 = color
-		boardAccent.BackgroundColor3 = color
+		boardTitle.Text = upper(tostring(zone.Title or ""))
+		local list = type(zone.List) == "table" and zone.List or {}
 		local ownRank = nil
 		for index, entry in list do
 			if type(entry) == "table" and entry.Id == player.UserId then
@@ -1469,23 +1465,32 @@ function ExtinctionClient.Init()
 			boardRaw, boardZone = boardData, zoneKey
 			refreshBoard(boardData, zoneKey)
 		end
-		local raw = map and map:GetAttribute("MovingZone")
-		local ok, moving = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
 		local character = player.Character
 		local root3 = character and character:FindFirstChild("HumanoidRootPart")
-		if ok and type(moving) == "table" and moving.X and moving.Z then
-			local left = math.max(0, math.floor((moving.Ends or serverTime) - serverTime))
-			local text = "WANDERZONE  " .. string.upper(tostring(moving.Name or "")) .. "  ·  WECHSEL IN "
+		local nearest, nearestDistance = nil, math.huge
+		for _, zone in mapList(map, "Redzones") do
+			if type(zone) == "table" and tonumber(zone.X) and tonumber(zone.Z) then
+				local distance = 0
+				if root3 then
+					local dx, dz = zone.X - root3.Position.X, zone.Z - root3.Position.Z
+					distance = math.sqrt(dx * dx + dz * dz) - (tonumber(zone.R) or 0)
+				end
+				if not nearest or distance < nearestDistance then
+					nearest, nearestDistance = zone, distance
+				end
+			end
+		end
+		if nearest then
+			local left = math.max(0, math.floor((tonumber(nearest.Ends) or serverTime) - serverTime))
+			local text = "ROTE ZONE  " .. string.upper(tostring(nearest.Title or "")) .. "  ·  WECHSEL IN "
 				.. string.format("%d:%02d", left // 60, left % 60)
 			if root3 then
-				local dx, dz = moving.X - root3.Position.X, moving.Z - root3.Position.Z
-				local distance = math.sqrt(dx * dx + dz * dz) - (moving.R or 0)
-				text ..= distance <= 0 and "  ·  DU BIST DRIN" or ("  ·  " .. math.floor(distance) .. " M")
+				text ..= nearestDistance <= 0 and "  ·  DU BIST DRIN" or ("  ·  " .. math.floor(nearestDistance) .. " M")
 			end
-			movingText.Text = text
-			movingText.Visible = true
+			redzoneText.Text = text
+			redzoneText.Visible = true
 		else
-			movingText.Visible = false
+			redzoneText.Visible = false
 		end
 	end)
 	-- Controller: △ (Waffenwechsel gibt es hier nicht, die Hotbar macht das)

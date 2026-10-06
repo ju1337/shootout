@@ -5,8 +5,8 @@
 -- Safe Zone. Sie schlurfen herum, bemerken Spieler in SightRange, rennen hin und schlagen zu (AttackDamage alle
 -- AttackDelay Sekunden). In die Safe Zone gehen sie nicht (sie bleiben am Rand stehen), dort gibt es auch keinen
 -- Schaden. Wer eine Weile keinen Spieler draußen in der Nähe hat, verschwindet.
--- Arten (ExtinctionConfig.ZombieKinds): Walker (normal, langsam), in roten Zonen auch Läufer (schneller) und Brocken
--- (groß, zäh, schlägt hart). In einer roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
+-- Arten (ExtinctionConfig.ZombieKinds): Walker (normal, langsam), in der roten Zone auch Läufer (schneller) und Brocken
+-- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
 -- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche: E durchsucht sie, alles geht direkt ins
 -- Inventar (LootService.Grab); was nicht passt, bleibt in der Leiche (ExtinctionConfig.Zombies.CorpseLootTime Sekunden).
 -- Körper: einfacher R6-Körper (6 Teile, schnell), Arme nach vorn, rote Augen; Animation: Roblox-Standard (R6).
@@ -368,7 +368,7 @@ local function spawnPoint(position)
 	return nil
 end
 
--- Freie Stelle innerhalb einer roten Zone (nicht direkt vor einem Spieler), nil wenn keine passt
+-- Freie Stelle innerhalb der roten Zone (nicht direkt vor einem Spieler), nil wenn keine passt
 local function redzoneSpawnPoint(zone)
 	for _ = 1, 8 do
 		local angle = random:NextNumber(0, math.pi * 2)
@@ -484,7 +484,7 @@ local function onDeath(model, info)
 	end)
 end
 
--- Wie viele Zombies der Server gerade haben darf (mit Bonus, solange jemand in einer roten Zone ist)
+-- Wie viele Zombies der Server gerade haben darf (mit Bonus, solange jemand in der roten Zone ist)
 local function maxTotal()
 	local bonus = 0
 	if options and options.RedzoneAt then
@@ -685,7 +685,7 @@ local function despawnFar(now)
 	end
 end
 
--- Pro Spieler draußen nachspawnen, bis PerPlayer Zombies in seiner Nähe sind (in roten Zonen mehr, mit Läufern und
+-- Pro Spieler draußen nachspawnen, bis PerPlayer Zombies in seiner Nähe sind (in der roten Zone mehr, mit Läufern und
 -- Brocken, und innerhalb der Zone)
 local function spawnRound()
 	for _, player in options.Players() do

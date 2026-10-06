@@ -7,6 +7,7 @@ nicht zur Mitte zeigen, Rampen, die nicht von Rang zu Rang passen, zu wenig Spaw
 import json
 import math
 import os
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORIGIN = (-1500, 0, -1500)  # MARKET_ORIGIN in tools/build_maps.py
@@ -160,22 +161,24 @@ def _rotate_in(part, point):
     return [sum(o[r][c] * d[r] for r in range(3)) for c in range(3)]
 
 
+def _redzone_config():
+    """Radius, MaxPlaceSize und Exclude der roten Zone aus src/shared/ExtinctionConfig.lua (ExtinctionConfig.Redzone)."""
+    with open(os.path.join(ROOT, "src", "shared", "ExtinctionConfig.lua"), encoding="utf-8") as f:
+        block = re.search(r"\nExtinctionConfig\.Redzone = \{(.*?)\n\}", f.read(), re.S).group(1)
+    radius = float(re.search(r"\bRadius = (\d+)", block).group(1))
+    biggest = float(re.search(r"\bMaxPlaceSize = (\d+)", block).group(1))
+    exclude = set(re.findall(r'"(\w+)"', re.search(r"\bExclude = \{(.*?)\}", block).group(1)))
+    return radius, biggest, exclude
+
+
 def check_extinction_world(parts, local, safe_radius):
-    """Rote Zonen, Orte (Banner) und Lagerkisten der offenen Welt: Namen, Lage, nichts im Boden oder in Wänden."""
+    """Orte (Banner, Ziele der roten Zone) und Lagerkisten der offenen Welt: Namen, Lage, nichts im Boden oder in Wänden."""
     problems = []
-    redzones = [part for group, part in parts if group == "Redzones" and part["Name"].startswith("Redzone_")]
-    if len(redzones) < 2:
-        problems.append("Extinction: mindestens 2 rote Zonen (Redzone_<Name> in der Gruppe Redzones) erwartet")
-    for part in redzones:
-        x, _, z = local(part)
-        r = part["Properties"]["Size"][0] / 2
-        attrs = part["Properties"].get("Attributes", {}).get("Attributes", {})
-        if not attrs.get("Title", {}).get("String"):
-            problems.append("Extinction: %s ohne Title" % part["Name"])
-        if math.hypot(x, z) < safe_radius + r + 60:
-            problems.append("Extinction: %s zu nah an der Safe Zone" % part["Name"])
-        if abs(x) + r > 1600 or abs(z) + r > 1600:
-            problems.append("Extinction: %s ragt aus der Welt" % part["Name"])
+    # Es gibt genau eine rote Zone, und die wandert (RedzoneService): feste Zonen auf der Karte darf es nicht mehr geben
+    for group, part in parts:
+        if group == "Redzones" or part["Name"].startswith("Redzone_"):
+            problems.append("Extinction: feste rote Zone %s/%s – die rote Zone wandert (RedzoneService)" % (group, part["Name"]))
+            break
     places = [part for group, part in parts if group == "Places" and part["Name"].startswith("Place_")]
     if len(places) < 8:
         problems.append("Extinction: mindestens 8 Orte (Place_<Name> in der Gruppe Places) erwartet, gefunden %d" % len(places))
@@ -183,6 +186,22 @@ def check_extinction_world(parts, local, safe_radius):
         attrs = part["Properties"].get("Attributes", {}).get("Attributes", {})
         if not attrs.get("Title", {}).get("String"):
             problems.append("Extinction: %s ohne Title" % part["Name"])
+    # Ziele der roten Zone wie RedzoneService.Candidates (ohne Wasser): genug, damit sie alle 20 Minuten woanders steht
+    radius, biggest, exclude = _redzone_config()
+    houses = [part for group, part in parts if group == "Zone" and part["Name"].startswith("SafeZone_")]
+    targets = []
+    for part in places:
+        key = part["Name"][len("Place_"):]
+        x, _, z = local(part)
+        if key in exclude or key.startswith("Safe_") or part["Properties"]["Size"][0] > biggest:
+            continue
+        if math.hypot(x, z) < safe_radius + radius + 40:
+            continue
+        if any(math.hypot(x - local(h)[0], z - local(h)[2]) < h["Properties"]["Size"][0] / 2 + radius + 20 for h in houses):
+            continue
+        targets.append(key)
+    if len(targets) < 6:
+        problems.append("Extinction: zu wenige Orte für die rote Zone (%d: %s)" % (len(targets), ", ".join(sorted(targets))))
 
     # Lagerkisten (Spot_<Art>) sind abgeschaltet (keine Beute am Boden, ContainerService.Enabled); falls die Karte
     # wieder welche bekommt, müssen die Arten stimmen
