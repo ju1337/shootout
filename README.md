@@ -139,6 +139,11 @@ weiter. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 höhere Chance, ein Item mehr). **Bosse**: die *Blutbestie* (riesig, 2400 Leben, Name und Lebensbalken über dem Kopf, roter
 Umriss) erscheint alle 2,5 Minuten bei einem Spieler draußen (höchstens 2 gleichzeitig), Ansage beim Erscheinen und beim
 Tod, 250 Münzen und Beute wie aus einem Lootdrop. Admin-Panel: Knopf **BLUTMOND** startet/beendet sofort.
+**Parkhaus** (`parking_garage`, am Südwestrand von Ödstadt an einer Straße, Ortsname PARKHAUS): Erdgeschoss und drei
+Parkdecks, Rampen hinten von Ebene zu Ebene bis aufs Dach (flach genug für Fahrzeuge), Säulen, Brüstungen,
+Parkmarkierungen, Ebenen-Nummern (P0 … DACH), Autowracks, Schranke und Kassenhäuschen, Treppenturm mit P-Schild, eine
+eingebrochene Ecke, Ranken und Graffiti. Das offene Dach ist zum Kämpfen gebaut: Betonsperren, zwei Sandsack-Nester, ein
+Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
 **Dächer für Hubschrauber**: zwei Hochhäuser haben ein freies Dach mit Landefläche (gelber Rand, H, Randlichter, Windsack).
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
