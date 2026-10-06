@@ -53,11 +53,14 @@ Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
 Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dorthin, die Zone wird zum Spawnpunkt
 (`Extinction.Travel`, nur aus einer Safe Zone, `ExtinctionConfig.TravelCooldown` Sekunden Pause).
 
-**Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 44):
-befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild zur
-Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
-**eigene Händler** (WAFFEN, SANI, WERKSTATT unter Planen), ein LAGER-Container (dasselbe Lager wie im Camp) und die
-Haltestelle REISEN, Wasserturm. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
+**Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 64,
+Hof 90 × 90 Studs): befestigte Überlebenden-Höfe – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild
+zur Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
+Wasserturm. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und die Haltestelle REISEN, rechts SANI und ein
+LAGER-Container – dasselbe Lager wie im Camp), wie im Camp mindestens 30 Studs auseinander, damit sich die
+E-Aufforderungen nicht überlappen. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
+Jedes Safehouse hat seinen eigenen Zufall (`tools/extinction_world.py`), Änderungen daran würfeln den Rest der Welt nicht
+neu.
 Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.

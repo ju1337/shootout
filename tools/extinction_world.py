@@ -57,8 +57,8 @@ for _key, _title, _x, _z in OUTPOSTS:
 # Kleine Safe Zones draußen (Safehouses): (Schlüssel, Titel, x, z) – kein PvP, Spawnpunkt (wer eine betritt, spawnt dort)
 SAFEHOUSES = [("Nord", "SAFEHOUSE NORD", -640, 980), ("Ost", "SAFEHOUSE OST", 1240, 800),
               ("Sued", "SAFEHOUSE SÜD", 780, -420), ("West", "SAFEHOUSE WEST", -1000, -620)]
-SAFEHOUSE_R = 44
-SAFEHOUSE_WALL = 30   # halbe Seitenlänge der HESCO-Wall (Ecken innerhalb SAFEHOUSE_R)
+SAFEHOUSE_R = 64
+SAFEHOUSE_WALL = 45   # halbe Seitenlänge der Palisade (Ecken innerhalb SAFEHOUSE_R)
 
 # A7: Hochstraße quer über den Norden von Ödstadt (Rampen an beiden Enden), Oberkante, Breite, Rampenlänge
 AUTOBAHN = [(-940, 560), (1000, 560)]
@@ -2211,8 +2211,18 @@ class World:
     def safehouse(self, key, title, x, z):
         """Kleine Safe Zone draußen: befestigter Überlebenden-Hof. Kiesplatz hinter einer Palisade aus Holz und Wellblech, Tor
         mit Torbogen und Schild zur Zufahrt, ein intaktes Holzhaus mit Veranda, warm beleuchteten Fenstern und rauchendem
-        Schornstein, Feuerstelle mit Bänken und Lichterkette (Spawn), Beete, Wasserturm, Brennholz, Pickup, Wachturm.
-        Teil SafeZone_<Schlüssel> (Gruppe Zone), Spawns in Spawns_<Schlüssel>."""
+        Schornstein, Feuerstelle mit Bänken (Spawn), Wasserturm. An den Seiten die Händler, das Lager und
+        die Haltestelle, je mindestens 30 Studs auseinander (wie im Camp: die E-Aufforderungen überlappen nicht).
+        Teil SafeZone_<Schlüssel> (Gruppe Zone), Spawns in Spawns_<Schlüssel>.
+        Eigener Zufall je Safehouse (Schlüssel als Startwert): Änderungen hier würfeln den Rest der Welt nicht neu."""
+        main_rng = self.rng
+        self.rng = random.Random("safehouse-" + key)
+        try:
+            self._safehouse(key, title, x, z)
+        finally:
+            self.rng = main_rng
+
+    def _safehouse(self, key, title, x, z):
         b, rng = self.b, self.rng
         R, W = SAFEHOUSE_R, SAFEHOUSE_WALL
         rgb, lighten = self.bm.rgb, self.bm.lighten
@@ -2273,7 +2283,7 @@ class World:
                     (236, 226, 196), (220, 210, 180), angles=(0, yaw + yaw_off, rng.uniform(-2, 2)))
 
         # Haus hinten in der Mitte: Holzwände, Satteldach, Fenster warm beleuchtet, Veranda, Schornstein
-        hz, hw, hd, hh = 14, 20, 12, 8
+        hz, hw, hd, hh = W - 16, 20, 12, 8
         box("Buildings", "HouseBody", (hw, hh, hd), (0, hh / 2, hz), house_c, "WoodPlanks")
         box("Buildings", "HouseBase", (hw + 0.6, 1, hd + 0.6), (0, 0.5, hz), (110, 106, 100), "Slate")
         rise = 4.5
@@ -2299,8 +2309,8 @@ class World:
         box("Cover", "PorchBench", (5, 1.2, 1.4), (-5, 1.2, hz - hd / 2 - 1.2), wood, "WoodPlanks")
         box("Decor", "PorchLamp", (0.7, 1, 0.7), (2.2, 5.6, hz - hd / 2 - 0.5), (255, 206, 140), "Neon", children=lamp_light(20, 1.2))
 
-        # Feuerstelle in der Mitte, Bänke, Spawns, Lichterkette vom Haus zu zwei Masten
-        fz = -6
+        # Feuerstelle in der Mitte, Bänke, Spawns
+        fz = -8
         for k in range(10):
             a = 2 * math.pi * k / 10
             box("Decor", "FireStone", (1.3, 0.8, 1.3), (math.cos(a) * 2.6, 0.4, fz + math.sin(a) * 2.6), (110, 106, 100), "Slate",
@@ -2318,40 +2328,43 @@ class World:
             lx, lz = math.cos(a) * 10, fz + math.sin(a) * 10
             wx_, _, wz_ = f(lx, 0, lz)
             b.spawn(wx_, wz_, yaw=math.degrees(math.atan2(wx_ - x, wz_ - z)) + 180, group="Spawns_" + key)
-        # Feuertonnen am Tor, Flutlicht am Mast
-        for lx, lz in ((-9, -24), (9, -24)):
+        # Feuertonnen am Tor, Flutlicht am Mast vorn links neben dem Haus (auf die Feuerstelle gerichtet)
+        for lx, lz in ((-9, -W + 6), (9, -W + 6)):
             fx_, _, fz_ = f(lx, 0, lz)
             self.fire_barrel(fx_, fz_)
-        flx, _, flz = f(-10, 0, 6)
-        cfx, _, cfz = f(0, 0, -6)
+        flx, _, flz = f(-14, 0, hz - 10)
+        cfx, _, cfz = f(0, 0, fz)
         self.floodlight(flx, flz, cfx - flx, cfz - flz, 11)
 
-        # Händler, Lager und Haltestelle (lokal: links/rechts der Feuerstelle, Front zur Mitte)
+        # Händler, Lager und Haltestelle an den Seiten (lokal), Front zur Mitte: links WAFFEN, WERKSTATT, REISEN, rechts SANI und
+        # LAGER; die Rückwände 10 Studs vor der Palisade, die Reihen gut 30 Studs auseinander
         def place(lx, lz, dx, dz):
             wx_, _, wz_ = f(lx, 0, lz)
             tx_, _, tz_ = f(lx + dx, 0, lz + dz)
             return wx_, wz_, tx_ - wx_, tz_ - wz_
+        side = W - 14
+        row_front, row_mid, row_back = -W + 16, 2, W - 12
         gun = (40, 42, 46)
-        self.trader("Stand_Weapons", "WAFFEN", "MUNITION", *place(-19, -14, 1, 0),
+        self.trader("Stand_Weapons", "WAFFEN", "MUNITION", *place(-side, row_front, 1, 0),
                     [(-4, 6.0, 4.6, 0.7, 0.4, gun, "Metal"), (1, 6.0, 4.0, 0.6, 0.4, gun, "Metal"), (-4, 4.2, 3.6, 0.6, 0.4, gun, "Metal")],
                     accent=(96, 70, 52))
-        self.trader("Stand_Items", "SANI", "VERBAND · WESTEN", *place(19, -14, -1, 0),
+        self.trader("Stand_Items", "SANI", "VERBAND · WESTEN", *place(side, row_front, -1, 0),
                     [(-4, 4.2, 2.4, 1.6, 1.4, (210, 206, 196), "SmoothPlastic"), (-1, 4.2, 2.4, 1.6, 1.4, (180, 50, 44), "SmoothPlastic"),
                      (2, 6.0, 3.0, 1.6, 1.4, (86, 96, 66), "Fabric")], accent=(76, 96, 116))
-        self.trader("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", *place(-19, 6, 1, 0),
+        self.trader("Stand_Vehicles", "WERKSTATT", "FAHRZEUGE", *place(-side, row_mid, 1, 0),
                     [(-3, 5.6, 5, 2.4, 0.2, (60, 60, 64), "Metal"), (0, 4.0, 6, 1.2, 1.2, (150, 40, 34), "Metal")], accent=(84, 98, 70))
-        self.stash_container(*place(19, 6, -1, 0), length=10)
-        self.travel_stop("Travel_" + key, "REISEN", *place(-19, 23, 1, 0))
+        self.stash_container(*place(side, row_mid, -1, 0), length=10)
+        self.travel_stop("Travel_" + key, "REISEN", *place(-side, row_back, 1, 0))
         # Wasserturm hinten rechts, Fahne am Tor
-        wtx, wtz = 22, 22
+        wtx, wtz = W - 8, W - 8
         for lx in (-2.2, 2.2):
             for lz in (-2.2, 2.2):
                 box("Decor", "WaterTowerLeg", (0.6, 10, 0.6), (wtx + lx, 5, wtz + lz), dark, "Wood")
         box("Decor", "WaterTowerDeck", (6, 0.4, 6), (wtx, 10.2, wtz), wood, "WoodPlanks")
         b.cylinder("Decor", "WaterTank", 5.4, 4.6, f(wtx, 12.7, wtz), (78, 92, 96), material="CorrodedMetal")
-        box("Decor", "FlagPole", (0.4, 14, 0.4), (8, 7, -22), (90, 90, 90), "Metal")
-        box("Decor", "Flag", (5, 3, 0.2), (10.6, 12.4, -22), (150, 30, 24), "Fabric")
-        n = 48
+        box("Decor", "FlagPole", (0.4, 14, 0.4), (8, 7, -W + 8), (90, 90, 90), "Metal")
+        box("Decor", "Flag", (5, 3, 0.2), (10.6, 12.4, -W + 8), (150, 30, 24), "Fabric")
+        n = 64
         for k in range(n):
             a = 2 * math.pi * (k + 0.5) / n
             b.box("Zone", "SafeEdge", (2 * math.pi * (R - 1) / n + 0.2, 0.12, 1.0), (x + math.cos(a) * (R - 1), 0.2, z + math.sin(a) * (R - 1)),

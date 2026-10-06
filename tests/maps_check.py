@@ -116,14 +116,25 @@ def check_extinction():
         own = [part for group, part in parts if group == "Spawns_" + key]
         if len(own) < 3 or not all(math.hypot(local(p)[0] - hx, local(p)[2] - hz) <= hr - 8 for p in own):
             problems.append("Extinction: %s braucht mindestens 3 Spawns in Spawns_%s darin" % (house["Name"], key))
-    # Safehouses haben alle Händler und ein Lager
+    # Safehouses haben alle Händler und ein Lager; die Punkte (samt Haltestelle) liegen wie im Camp mindestens 30 Studs
+    # auseinander, damit sich die E-Aufforderungen nicht überlappen
     for house in houses:
+        key = house["Name"][len("SafeZone_"):]
         hx, _, hz = local(house)
         hr = house["Properties"]["Size"][0] / 2
-        for name in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash"):
-            if not any(group == "Stands" and part["Name"] == name and math.hypot(local(part)[0] - hx, local(part)[2] - hz) <= hr - 4
-                       for group, part in parts):
+        own = {}
+        for name in ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash", "Travel_" + key):
+            for group, part in parts:
+                if group == "Stands" and part["Name"] == name and math.hypot(local(part)[0] - hx, local(part)[2] - hz) <= hr - 4:
+                    own[name] = local(part)
+            if name not in own and not name.startswith("Travel_"):
                 problems.append("Extinction: %s ohne %s" % (house["Name"], name))
+        names = sorted(own)
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                if math.hypot(own[a][0] - own[b][0], own[a][2] - own[b][2]) < 30:
+                    problems.append("Extinction: %s: %s und %s zu dicht beieinander (E-Aufforderungen überlappen)"
+                                    % (house["Name"], a, b))
     # Haltestellen zum Reisen: eine im Camp ("Travel"), eine je Safehouse ("Travel_<Name>"), jeweils in ihrer Safe Zone
     stops = {part["Name"]: part for group, part in parts if group == "Stands" and part["Name"].startswith("Travel")}
     if "Travel" not in stops or not inside(stops["Travel"], 10):
