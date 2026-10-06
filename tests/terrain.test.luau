@@ -32,6 +32,7 @@ for _, p in { { 0, 0 }, { 350, -300 }, { -400, 200 }, { -250, 1150 }, { 1150, 52
 end
 check(near(ExtinctionTerrain.Height(0, 0), ExtinctionTerrain.FlatLevel, 0.05), "Camp liegt auf ebener Höhe")
 check(ExtinctionTerrain.Height(-560, -760) > 25, "Funkturm steht auf einem Hügel")
+check(ExtinctionTerrain.Height(-1380, 820) > 30 and ExtinctionTerrain.Height(1400, 100) > 30, "Außenposten stehen auf Hügeln")
 
 -- Rand der Welt: Straßen führen als ebene Schneise hinaus, daneben steigt der Berg
 check(near(ExtinctionTerrain.Height(-60, 800), ExtinctionTerrain.FlatLevel, 0.4), "Landstraße nach Norden ist eben")

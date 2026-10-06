@@ -26,8 +26,8 @@ HIGHWAY_W = 22       # Landstraßen
 # Orte: Schlüssel -> (Titel, x, z, Radius) – Banner beim Betreten (kleinster Ort gewinnt) und Namen auf der Weltkarte
 PLACES = {
     "Camp": ("CAMP PHOENIX", 0, 0, 140),
-    "Oedstadt": ("ÖDSTADT", 0, 0, 520),
-    "Innenstadt": ("INNENSTADT", 0, 0, 300),
+    "Oedstadt": ("ÖDSTADT", 0, 0, 740),
+    "Innenstadt": ("INNENSTADT", 0, 0, 320),
     "Krankenhaus": ("ST. MARIEN KRANKENHAUS", 330, 320, 120),
     "Polizei": ("POLIZEIWACHE", -300, 140, 60),
     "Nordheim": ("NORDHEIM", -250, 1150, 240),
@@ -39,19 +39,27 @@ PLACES = {
     "Gefaengnis": ("JVA SCHWARZWALD", -1080, -1130, 180),
     "Flugplatz": ("FLUGPLATZ", 1050, 1250, 220),
     "Funkturm": ("FUNKTURM", -560, -760, 70),
-    "HofOst": ("BAUERNHOF KRÜGER", 720, -430, 110),
-    "HofWest": ("BAUERNHOF LINDE", -650, 560, 110),
+    "HofOst": ("BAUERNHOF KRÜGER", 960, -560, 110),
+    "HofWest": ("BAUERNHOF LINDE", -880, 720, 110),
     "Schwarzsee": ("SCHWARZSEE", -760, 230, 150),
     "Stausee": ("STAUSEE", 1380, -1280, 170),
     "Teich": ("MÜHLTEICH", 320, 860, 90),
 }
+# Außenposten auf Hügeln: (Schlüssel, Titel, x, z) – Hügel mit ebener Kuppe, oben ein Lagerhaus, Turm, Zaun, Vorratslager
+OUTPOSTS = [("Wolfshoehe", "WOLFSHÖHE", -1380, 820), ("Adlerhorst", "ADLERHORST", 1400, 100), ("Steinkuppe", "STEINKUPPE", -420, -1420),
+            ("Kraehenberg", "KRÄHENBERG", 650, 1480), ("Baerenkopf", "BÄRENKOPF", -1420, -720), ("Fuchsbau", "FUCHSBAU", 760, -1460),
+            ("HoherStein", "HOHER STEIN", 1460, -380), ("SchwarzerBuckel", "SCHWARZER BUCKEL", -820, 1460),
+            ("Kahlenberg", "KAHLENBERG", 1000, 900), ("Rabenstein", "RABENSTEIN", -980, 330)]
+for _key, _title, _x, _z in OUTPOSTS:
+    PLACES[_key] = (_title, _x, _z, 70)
+
 REDZONES = {"Krankenhaus": 150, "Militaer": 210, "Hafen": 230, "Gefaengnis": 180}
 LAKES = [("Schwarzsee", -760, 230, 120, 10), ("Stausee", 1380, -1280, 150, 11), ("Teich", 320, 860, 60, 6)]
 # Ebene Flächen (Orte mit Gebäuden): (x, z, Radius)
-FLATS = [(0, 0, 540), (-250, 1150, 250), (1150, 520, 260), (-1150, -250, 240), (430, -1150, 230), (-1150, 1150, 230),
-         (1130, -1030, 240), (-1080, -1130, 200), (720, -430, 120), (-650, 560, 120)]
+FLATS = [(0, 0, 760), (-250, 1150, 250), (1150, 520, 260), (-1150, -250, 240), (430, -1150, 230), (-1150, 1150, 230),
+         (1130, -1030, 240), (-1080, -1130, 200), (960, -560, 120), (-880, 720, 120)]
 # Gepflasterte Flächen (Terrain-Material Pflaster): Stadtkern und Dorfkerne
-PAVED = [(0, 0, 500), (-250, 1150, 120), (1150, 520, 130), (-1150, -250, 110), (430, -1150, 100), (1130, -1030, 200),
+PAVED = [(0, 0, 720), (-250, 1150, 120), (1150, 520, 130), (-1150, -250, 110), (430, -1150, 100), (1130, -1030, 200),
          (-1150, 1150, 160), (-1080, -1130, 150)]
 
 GRAFFITI = ("HILFE", "SIE SIND DRINNEN", "NICHT REINGEHEN", "EVAKUIERUNG -> CAMP PHOENIX", "TOT", "WIR LEBEN NOCH",
@@ -93,6 +101,8 @@ def terrain_layout():
     for _, x, z, r, depth in LAKES:
         t.lake(x, z, r, depth)
     t.hill(-560, -760, 170, 30, 40)
+    for _, _, x, z in OUTPOSTS:
+        t.hill(x, z, 175, 36, 32)
     t.paved = PAVED
     t.build()
     return t
@@ -101,17 +111,17 @@ def terrain_layout():
 def highway_points():
     """Landstraßen als Linienzüge (ohne Schwung; der kommt in build dazu)."""
     return [
-        [(0, 520), (-60, 800), (-250, 1000), (-250, 1150)],                       # Nord
+        [(0, 720), (-60, 860), (-250, 1000), (-250, 1150)],                       # Nord
         [(-250, 1150), (-500, 1190), (-900, 1160), (-1020, 1150)],                # Nordheim -> Militär
-        [(520, 0), (800, 240), (1000, 460), (1150, 520)],                         # Ost
+        [(720, 0), (860, 240), (1000, 460), (1150, 520)],                         # Ost
         [(1150, 520), (1160, 760), (1110, 1050), (1050, 1180)],                   # Sandbach -> Flugplatz
-        [(-520, 0), (-800, -110), (-1150, -250)],                                 # West
+        [(-720, 0), (-860, -110), (-1150, -250)],                                 # West
         [(-1150, -250), (-1160, -560), (-1090, -960)],                            # Altenfeld -> Gefängnis
-        [(0, -520), (180, -800), (430, -1150)],                                   # Süd
+        [(0, -720), (180, -860), (430, -1150)],                                   # Süd
         [(430, -1150), (720, -1110), (960, -1050)],                               # Mühldorf -> Hafen
-        [(1150, 520), (1060, 80), (860, -330), (720, -430)],                      # Sandbach -> Hof Ost
-        [(720, -430), (640, -760), (430, -1150)],                                 # Hof Ost -> Mühldorf
-        [(-1150, -250), (-1010, 200), (-650, 560), (-250, 1150)],                 # Altenfeld -> Hof West -> Nordheim
+        [(1150, 520), (1060, 80), (860, -330), (960, -560)],                      # Sandbach -> Hof Ost
+        [(960, -560), (640, -760), (430, -1150)],                                 # Hof Ost -> Mühldorf
+        [(-1150, -250), (-1010, 200), (-880, 720), (-250, 1150)],                 # Altenfeld -> Hof West -> Nordheim
         [(-250, 1150), (60, 1060), (320, 900), (760, 1080), (1050, 1180)],        # Nordheim -> Teich -> Flugplatz
         [(-1090, -960), (-800, -1000), (-560, -820)],                             # Gefängnis -> Funkturm
         [(-560, -820), (-200, -780), (180, -800)],                                # Funkturm -> Süd
@@ -210,7 +220,7 @@ class World:
     def rubble(self, x, z, size=6.0, color=(120, 116, 108), n=None, group="Cover", y=None):
         rng = self.rng
         g = self.H(x, z) if y is None else y
-        for _ in range(n or rng.randint(3, 5)):
+        for _ in range(n or rng.randint(2, 4)):
             s = rng.uniform(0.6, 1.0) * size / 3
             self.b.box(group, "Rubble", (s * rng.uniform(0.8, 1.6), s * rng.uniform(0.4, 0.9), s), (x + rng.uniform(-size / 2, size / 2),
                        g + s * 0.25, z + rng.uniform(-size / 2, size / 2)), self.bm.lighten(color, rng.uniform(-0.3, 0.1)),
@@ -408,7 +418,7 @@ class World:
         windows["W"] = [(0, 3.4, 3.2, 6.4)] if d >= 14 and rng.random() < 0.5 else []
         # Durchbrüche
         for side in ("S", "N", "E", "W"):
-            if rng.random() < damage * 0.6:
+            if rng.random() < damage * 0.35:
                 along = (w if side in ("N", "S") else d) / 2 - 4
                 if along > 3:
                     windows[side].append((rng.uniform(-along, along), rng.uniform(3, 6), 0, rng.uniform(3.5, h + 1)))
@@ -420,7 +430,7 @@ class World:
                 p = -length / 2
                 while p < length / 2:
                     q = p + rng.uniform(7, 14)
-                    low = rng.random() < damage * 0.8
+                    low = rng.random() < damage * 0.6
                     if roof == "partial" and side == "N":
                         low = False
                     if roof == "partial" and side in ("E", "W") and p > cut:
@@ -445,7 +455,7 @@ class World:
             pb.box("Buildings", "FallenRoof", (w - 2.4, 0.8, math.hypot(h - 0.5, fall) * 0.95), (0, h / 2, cut - fall / 2), roof_col,
                    "Concrete", angles=(-ang, 0, rng.uniform(-6, 6)))
         else:
-            self.local_rubble(pb, rng.uniform(-w / 4, w / 4), rng.uniform(-d / 4, d / 4), min(w, d) * 0.6, color, n=4)
+            self.local_rubble(pb, rng.uniform(-w / 4, w / 4), rng.uniform(-d / 4, d / 4), min(w, d) * 0.6, color, n=3)
         # obere Stockwerke (Wohnblock): geschlossen, dunkle Fensterbänder, eine Ecke weggesprengt
         if floors_above > 0:
             hu = floors_above * 9
@@ -454,7 +464,7 @@ class World:
                 pb.box("Buildings", "Upper", (w, hu, d * 0.55), (0, h + 0.8 + hu / 2, d * 0.225), color, mat)
                 pb.box("Buildings", "Upper", (w * 0.5, hu * rng.uniform(0.4, 0.8), d * 0.45), (w * 0.25, h + 0.8 + hu * 0.3, -d * 0.275),
                        color, mat)
-                self.local_rubble(pb, -w / 4, -d / 2 - 4, 8, color, n=4)
+                self.local_rubble(pb, -w / 4, -d / 2 - 4, 8, color, n=3)
             else:
                 pb.box("Buildings", "Upper", (w, hu, d), (0, h + 0.8 + hu / 2, 0), color, mat)
             for f in range(floors_above):
@@ -472,8 +482,8 @@ class World:
                 pb.box("Decor", "Vines", (0.3, h * rng.uniform(0.4, 0.9), rng.uniform(1.5, 3)),
                        (rng.choice((-1, 1)) * (w / 2 + 0.2), h * 0.35, rng.uniform(-d / 3, d / 3)), (60, 90, 44), "Grass",
                        props={"CanCollide": False, "CanQuery": False})
-        if rng.random() < 0.4:
-            self.local_rubble(pb, rng.uniform(-w / 2, w / 2), -d / 2 - 2.5, 5, color, n=3)
+        if rng.random() < 0.3:
+            self.local_rubble(pb, rng.uniform(-w / 2, w / 2), -d / 2 - 2.5, 5, color, n=2)
         if rng.random() < 0.5:
             pb.box("Cover", "Furniture", (rng.uniform(3, 6), rng.uniform(1.5, 3), rng.uniform(2, 4)),
                    (rng.uniform(-w / 3, w / 3), 0.8, rng.uniform(-d / 4, d / 3)), (110, 86, 60), "WoodPlanks",
@@ -530,7 +540,7 @@ class World:
                    "SmoothPlastic", props={"Transparency": 0.3, "CanCollide": False, "CanQuery": False})
         if rng.random() < 0.5:
             self.graffiti(pb, rng.choice(GRAFFITI), (0, 4, -d / 2 - 0.3), (min(14, w - 4), 3, 0.05))
-        self.local_rubble(pb, rng.uniform(-w / 3, w / 3), -d / 2 - 5, 9, color, n=4)
+        self.local_rubble(pb, rng.uniform(-w / 3, w / 3), -d / 2 - 5, 9, color, n=3)
         return pb
 
     def ruin_barn(self, w=24, d=34, h=12, color=(140, 56, 46)):
@@ -865,6 +875,37 @@ class World:
         self.stamp(pb, x - 18, z - 8, 90, y=g0 + 0.4)
         self.occupied.append((x, z, 40))
 
+    def build_outpost(self, key, title, x, z):
+        """Außenposten auf der Hügelkuppe: Lagerhaus (begehbar), Wachturm, Zaun aus Pfählen, Sandsäcke, Feuer, Schild."""
+        rng = self.rng
+        g = self.H(x, z)
+        color = rng.choice(((112, 96, 74), (96, 104, 92), (120, 116, 104)))
+        pb = self.ruin_house(26, 18, 10, color, rng.choice(("CorrodedMetal", "WoodPlanks")), damage=0.25,
+                             shop=("LAGER", title, (226, 178, 52)))
+        yaw = rng.uniform(0, 360)
+        self.stamp(pb, x, z, yaw, y=g + 0.4)
+        m = self.bm.rot(0, yaw, 0)
+        tx, tz = x + m[0][0] * 20 + m[0][2] * 10, z + m[2][0] * 20 + m[2][2] * 10
+        self.watchtower(tx, tz, 14)
+        for k in range(16):  # Palisade aus Pfählen mit Lücken
+            a = k / 16 * math.pi * 2
+            if k % 4 == 0:
+                continue
+            px, pz = x + math.cos(a) * 28, z + math.sin(a) * 28
+            self.b.box("Walls", "Palisade", (11, 5, 1), (px, self.H(px, pz) + 2.2, pz), (96, 74, 52), "WoodPlanks",
+                       angles=(rng.uniform(-6, 6), -math.degrees(a) + 90, rng.uniform(-4, 4)))
+        for k in range(3):
+            a = rng.uniform(0, 2 * math.pi)
+            px, pz = x + math.cos(a) * 22, z + math.sin(a) * 22
+            self.b.box("Cover", "Sandbags", (7, 2.8, 2.4), (px, self.H(px, pz) + 1.8, pz), (150, 134, 98), "Fabric",
+                       angles=(0, -math.degrees(a) + 90, 0))
+        fx, fz = x - m[0][2] * 16, z - m[2][2] * 16
+        self.fire(fx, fz, smoke=rng.random() < 0.5)
+        self.b.box("Decor", "FlagPole", (0.4, 14, 0.4), (x + 12, g + 7.4, z - 12), (60, 60, 64), "Metal")
+        self.b.box("Decor", "Flag", (5, 3, 0.2), (x + 14.6, g + 12.8, z - 12), rng.choice(((180, 40, 40), (40, 40, 40), (200, 200, 190))),
+                   "Fabric", angles=(0, 0, rng.uniform(-10, 10)))
+        self.occupied.append((x, z, 32))
+
     def build_church(self, x, z):
         b = self.b
         pb = self.ruin_house(20, 40, 15, (192, 186, 172), "Brick", damage=0.5)
@@ -894,28 +935,27 @@ class World:
                 pts.append((math.cos(a) * r, math.sin(a) * r))
             pts[-1] = pts[0]
             return pts
-        inner = ring(180, 14, 6)
-        middle = ring(340, 20, 22, 0.1)
-        outer = ring(480, 26, 28, 0.05)
-        streets += [inner, middle, outer]
-        for k in range(8):
-            a = math.radians(45 * k) + (0 if k % 2 == 0 else rng.uniform(-0.12, 0.12))
-            r1 = 520 if k % 2 == 0 else 470
-            pts = [(math.cos(a) * 180, math.sin(a) * 180), (math.cos(a + rng.uniform(-0.05, 0.05)) * 340,
-                                                           math.sin(a + rng.uniform(-0.05, 0.05)) * 340),
-                   (math.cos(a) * r1, math.sin(a) * r1)]
-            if k % 2 == 0:  # Achsen: genau auf die Landstraßen
-                pts = [(round(math.cos(a)) * 180, round(math.sin(a)) * 180), (round(math.cos(a)) * 340, round(math.sin(a)) * 340),
-                       (round(math.cos(a)) * 520, round(math.sin(a)) * 520)]
+        rings = [ring(180, 14, 6), ring(340, 20, 22, 0.1), ring(500, 28, 28, 0.05), ring(660, 36, 30, 0.02)]
+        streets += rings
+        for k in range(12):  # Radialen: vier Achsen genau auf die Landstraßen, dazwischen leicht schräg
+            if k % 3 == 0:
+                c, sn = round(math.cos(math.radians(30 * k))), round(math.sin(math.radians(30 * k)))
+                streets.append([(c * r, sn * r) for r in (180, 340, 500, 660, 720)])
+                continue
+            a = math.radians(30 * k) + rng.uniform(-0.1, 0.1)
+            pts = []
+            for r in (180, 340, 500, 660):
+                b = a + rng.uniform(-0.05, 0.05)
+                pts.append((math.cos(b) * r, math.sin(b) * r))
             streets.append(pts)
-        for _ in range(12):  # schräge Querstraßen zwischen den Ringen
+        for _ in range(26):  # schräge Querstraßen zwischen den Ringen
             a = rng.uniform(0, 2 * math.pi)
-            r0, r1 = rng.choice(((185, 335), (345, 475)))
-            a1 = a + rng.uniform(-0.35, 0.35)
+            r0, r1 = rng.choice(((185, 335), (345, 495), (345, 495), (505, 655), (505, 655), (505, 655)))
+            a1 = a + rng.uniform(-0.3, 0.3)
             streets.append([(math.cos(a) * r0, math.sin(a) * r0), (math.cos(a1) * r1, math.sin(a1) * r1)])
-        for _ in range(6):  # kurze Sackgassen nach außen
+        for _ in range(10):  # Sackgassen nach außen
             a = rng.uniform(0, 2 * math.pi)
-            streets.append([(math.cos(a) * 485, math.sin(a) * 485), (math.cos(a + 0.1) * 540, math.sin(a + 0.1) * 540)])
+            streets.append([(math.cos(a) * 665, math.sin(a) * 665), (math.cos(a + 0.08) * 730, math.sin(a + 0.08) * 730)])
         return streets
 
     def village_streets(self, cx, cz, radius):
@@ -946,6 +986,14 @@ class World:
             if r < 0.72:
                 return "shop", rng.uniform(18, 26), rng.uniform(14, 20)
             return "house", rng.uniform(16, 24), rng.uniform(14, 20)
+        if zone == "suburb":
+            if r < 0.25:
+                return "apartment", rng.uniform(20, 28), rng.uniform(16, 22)
+            if r < 0.45:
+                return "shop", rng.uniform(16, 24), rng.uniform(14, 18)
+            return "house", rng.uniform(14, 22), rng.uniform(12, 18)
+        if zone == "rural":
+            return ("barn", 22, 30) if r < 0.25 else ("house", rng.uniform(14, 20), rng.uniform(12, 16))
         if r < 0.72:
             return "house", rng.uniform(14, 22), rng.uniform(12, 18)
         if r < 0.86:
@@ -964,7 +1012,7 @@ class World:
     def make_building(self, kind, w, d, zone):
         rng = self.rng
         color = rng.choice(self.COLORS)
-        damage = rng.uniform(0.35, 0.9) if zone in ("downtown", "city") else rng.uniform(0.2, 0.75)
+        damage = rng.uniform(0.35, 0.9) if zone in ("downtown", "city", "suburb") else rng.uniform(0.2, 0.75)
         if kind == "tower":
             return self.ruin_tower(w, d, rng.uniform(40, 100), color)
         if kind == "apartment":
@@ -975,7 +1023,7 @@ class World:
             return self.ruin_barn()
         return self.ruin_house(w, d, rng.choice((8, 9, 10)), color, rng.choice(("Concrete", "Brick", "WoodPlanks")), damage=damage)
 
-    def line_buildings(self, ax, az, bx, bz, width, zone_of, density=1.0):
+    def line_buildings(self, ax, az, bx, bz, width, zone_of, density=1.0, gap=(10, 22)):
         """Gebäude beidseits eines Straßenstücks, Vorderseite zur Straße."""
         rng = self.rng
         length = math.hypot(bx - ax, bz - az)
@@ -998,7 +1046,7 @@ class World:
                 if rng.random() < density and t + w < length and self.free_rect(cx, cz, w, d, dx, dz) and self.flat_here(cx, cz, r):
                     pb = self.make_building(kind, w, d, zone)
                     self.place_ruin(pb, cx, cz, self.yaw_to(-nx * side, -nz * side), r)
-                    t += w + rng.uniform(10, 22)
+                    t += w + rng.uniform(*gap)
                 else:
                     t += 6
 
@@ -1569,21 +1617,25 @@ def activities(w):
             pass
     caches = [(-300, 100, "POLIZEIWACHE"), (330, 260, "ST. MARIEN"), (230, -300, "EVAKUIERUNGSLAGER"), (-1100, 1110, "FORT EISEN"),
               (-1180, 1200, "FORT EISEN"), (1100, -980, "INDUSTRIEHAFEN"), (-1040, -1100, "JVA SCHWARZWALD"),
-              (1000, 1200, "FLUGPLATZ"), (1150, 1290, "FLUGPLATZ"), (-860, -20, "TANKSTELLE WEST"), (840, 140, "TANKSTELLE OST"),
-              (50, -760, "TANKSTELLE SÜD"), (760, -470, "HOF KRÜGER"), (-610, 600, "HOF LINDE"), (-230, 1110, "NORDHEIM"),
+              (1000, 1200, "FLUGPLATZ"), (1150, 1290, "FLUGPLATZ"), (-860, -20, "TANKSTELLE WEST"), (890, 140, "TANKSTELLE OST"),
+              (165, -925, "TANKSTELLE SÜD"), (1000, -600, "HOF KRÜGER"), (-840, 760, "HOF LINDE"), (-230, 1110, "NORDHEIM"),
               (1110, 480, "SANDBACH"), (-1110, -280, "ALTENFELD"), (400, -1110, "MÜHLDORF"), (-520, -740, "FUNKTURM"),
               (60, 240, "INNENSTADT"), (-150, -200, "INNENSTADT")]
     for x, z, title in caches:
         marker("Cache", x, z, title, 4)
     marker("Radio", -540, -770, "FUNKTURM", 4)
+    for k, (key, title, x, z) in enumerate(OUTPOSTS):
+        marker("Cache", x + 8, z + 8, title, 4)
+        if k % 3 == 0:
+            marker("Nest", x - 30, z + 40, title, 9)
     survivors = [(-200, 1180, "NORDHEIM"), (1180, 560, "SANDBACH"), (-1180, -220, "ALTENFELD"), (460, -1180, "MÜHLDORF"),
-                 (260, -230, "EVAKUIERUNGSLAGER"), (-420, 300, "ÖDSTADT"), (420, -300, "ÖDSTADT"), (-680, 540, "HOF LINDE"),
-                 (740, -410, "HOF KRÜGER"), (1080, 1230, "FLUGPLATZ")]
+                 (260, -230, "EVAKUIERUNGSLAGER"), (-420, 300, "ÖDSTADT"), (420, -300, "ÖDSTADT"), (-910, 700, "HOF LINDE"),
+                 (980, -540, "HOF KRÜGER"), (1080, 1230, "FLUGPLATZ")]
     for x, z, title in survivors:
         marker("Survivor", x, z, title, 3)
     hordes = [(0, 400, "ÖDSTADT NORD"), (400, 0, "ÖDSTADT OST"), (0, -400, "ÖDSTADT SÜD"), (-400, 0, "ÖDSTADT WEST"),
               (-250, 1150, "NORDHEIM"), (1150, 520, "SANDBACH"), (-1150, -250, "ALTENFELD"), (430, -1150, "MÜHLDORF"),
-              (230, -260, "EVAKUIERUNGSLAGER"), (1050, 1200, "FLUGPLATZ"), (720, -430, "HOF KRÜGER"), (-650, 560, "HOF LINDE")]
+              (230, -260, "EVAKUIERUNGSLAGER"), (1050, 1200, "FLUGPLATZ"), (960, -560, "HOF KRÜGER"), (-880, 720, "HOF LINDE")]
     for x, z, title in hordes:
         marker("Horde", x, z, title, 6)
 
@@ -1610,6 +1662,8 @@ def build(bm):
     w.build_farm("HofWest")
     w.build_radio()
     w.build_church(-170, 1250)
+    for key, title, x, z in OUTPOSTS:
+        w.build_outpost(key, title, x, z)
 
     # Landstraßen (leicht geschwungen) und Zufahrten zur Safe Zone
     for pts in highway_points():
@@ -1617,8 +1671,16 @@ def build(bm):
     for sx, sz in ((0, 1), (1, 0), (0, -1), (-1, 0)):
         w.road(sx * (SAFE_R - 2), sz * (SAFE_R - 2), sx * 180, sz * 180, ROAD_W, lines=False, cracked=False)
     w.build_gas(-860, -50, -860, -132)
-    w.build_gas(820, 170, 858, 268)
-    w.build_gas(70, -735, 140, -735)
+    w.build_gas(880, 150, 930, 270)
+    w.build_gas(165, -925, 255, -910)
+
+    # Einzelne Häuser und Scheunen an den Landstraßen (außerhalb der Orte)
+    def rural_zone(x, z):
+        if any(math.hypot(x - fx, z - fz) < fr + 40 for fx, fz, fr in FLATS):
+            return None
+        return "rural"
+    for seg in [s_ for s_ in w.roads if s_[4] == HIGHWAY_W]:
+        w.line_buildings(seg[0], seg[1], seg[2], seg[3], seg[4], rural_zone, 0.35, gap=(50, 120))
 
     # Ödstadt: Straßen mit Gehwegen, dann Häuser an jeder Straße
     first = len(w.roads)
@@ -1628,11 +1690,11 @@ def build(bm):
 
     def city_zone(x, z):
         r = math.hypot(x, z)
-        if r < 175 or r > 545:
+        if r < 175 or r > 750:
             return None
-        return "downtown" if r < 300 else "city"
-    for seg in city_segments + [s for s in w.roads[:first] if math.hypot((s[0] + s[2]) / 2, (s[1] + s[3]) / 2) < 540]:
-        w.line_buildings(seg[0], seg[1], seg[2], seg[3], seg[4], city_zone, 0.8)
+        return "downtown" if r < 300 else ("city" if r < 540 else "suburb")
+    for seg in city_segments + [s for s in w.roads[:first] if math.hypot((s[0] + s[2]) / 2, (s[1] + s[3]) / 2) < 740]:
+        w.line_buildings(seg[0], seg[1], seg[2], seg[3], seg[4], city_zone, 0.95, gap=(4, 12))
 
     # Dörfer
     villages = [("Nordheim", 0.55), ("Sandbach", 0.6), ("Altenfeld", 0.55), ("Muehldorf", 0.55)]
@@ -1657,7 +1719,7 @@ def build(bm):
     w.street_life(village_segments, cars=0.35, fires=0.05, stains=0.2)
     w.street_life([s for s in w.roads if s[4] == HIGHWAY_W], cars=0.12, fires=0.0, lamps=False, stains=0.05)
     for sx, sz in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-        x, z = sx * 505, sz * 505
+        x, z = sx * 690, sz * 690
         w.barricade(x, z, math.degrees(math.atan2(-sx, -sz)) + 90, 24)
         w.fire(x + (8 if sz else 0) + 14 * abs(sz), z + 14 * abs(sx), smoke=True)
     for _ in range(14):
@@ -1666,15 +1728,15 @@ def build(bm):
         x, z = ax + (bx - ax) * t, az + (bz - az) * t
         if math.hypot(x, z) > 220:
             w.barricade(x, z, math.degrees(math.atan2(-(bz - az), bx - ax)) + 90, rw + 2)
-    w.overgrowth(0, 0, 520, 140)
+    w.overgrowth(0, 0, 720, 200)
     for _ in range(10):  # brennende Ruinen
-        x, z = rng.uniform(-480, 480), rng.uniform(-480, 480)
-        if 200 < math.hypot(x, z) < 500:
+        x, z = rng.uniform(-680, 680), rng.uniform(-680, 680)
+        if 200 < math.hypot(x, z) < 700:
             w.smoke_column(x, 12, z)
 
     # Apokalypse: Fluchtstaus auf den Ausfallstraßen, Quarantäne-Sperren an den Ortseingängen, Massengrab, Camps im Wald,
     # Leichen in den Straßen, Notstands-Plakate, abgestürzte Hubschrauber
-    jam_roads = [[(0, 540), (-60, 800)], [(540, 0), (800, 240)], [(-540, 0), (-800, -110)], [(0, -540), (180, -800)]]
+    jam_roads = [[(0, 740), (-60, 860)], [(740, 0), (860, 240)], [(-740, 0), (-860, -110)], [(0, -740), (180, -860)]]
     for pts in jam_roads:
         w.traffic_jam(pts, 9)
     for key, (ax, az) in (("Nordheim", (-250, 1000)), ("Sandbach", (1000, 460)), ("Altenfeld", (-1010, -200)), ("Muehldorf", (330, -1000))):
@@ -1697,7 +1759,7 @@ def build(bm):
         w.corpse(x + rng.uniform(-4, 4), z + rng.uniform(-4, 4), y=0.15)
     texts = (("NOTSTAND", "BLEIBEN SIE IN IHREN HÄUSERN"), ("EVAKUIERUNG", "ALLE BÜRGER ZUM CAMP PHOENIX"),
              ("ACHTUNG", "BISSE SOFORT MELDEN"), ("AUSGANGSSPERRE", "AB 20 UHR · SCHIESSBEFEHL"))
-    for k, (x, z) in enumerate(((60, 620), (620, -60), (-620, 60), (-60, -620), (300, 560), (-560, -300))):
+    for k, (x, z) in enumerate(((60, 790), (790, -60), (-790, 60), (-60, -790), (420, 700), (-700, -420))):
         found = find_spot(w, x, z, 10)
         if found:
             w.billboard(found[0], found[1], w.yaw_to(-found[0], -found[1]), *texts[k % len(texts)])
@@ -1710,7 +1772,7 @@ def build(bm):
         if math.hypot(x, z) > SAFE_R + 60:
             w.litter(x, z)
     for _ in range(8):
-        a, r = rng.uniform(0, 2 * math.pi), rng.uniform(220, 480)
+        a, r = rng.uniform(0, 2 * math.pi), rng.uniform(220, 680)
         found = find_spot(w, math.cos(a) * r, math.sin(a) * r, 12)
         if found:
             w.crater(*found)
@@ -1733,7 +1795,7 @@ def build(bm):
 
     # Draußen: Wald, Felsen, Schilf am Ufer
     placed, tries = 0, 0
-    while placed < 520 and tries < 60000:
+    while placed < 440 and tries < 60000:
         tries += 1
         x, z = rng.uniform(-HALF + 40, HALF - 40), rng.uniform(-HALF + 40, HALF - 40)
         density = w.terrain.noise.fbm(x / 140.0 + 40, z / 140.0 - 20, 3)

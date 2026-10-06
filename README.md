@@ -43,11 +43,14 @@ Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch da
 `tools/build_maps.py`).
 
 **Die Welt** (3200 × 3200, `tools/extinction_world.py`) ist ein verwüstetes Land nach dem Ausbruch: in der Mitte die
-zerstörte Stadt **Ödstadt** (Ringstraßen, Radialen und schräge Querstraßen statt Raster; Hochhaus-Ruinen mit
+zerstörte Großstadt **Ödstadt** (Durchmesser 1450, rund 700 Gebäude: vier Ringstraßen, zwölf Radialen und schräge
+Querstraßen statt Raster; innen Hochhäuser, außen Geschäfte, Wohnblöcke und Vorstadthäuser; Hochhaus-Ruinen mit
 Brandlöchern und abgebrochenen Spitzen, Wohnblöcke mit weggesprengten Ecken, Läden mit schiefen Schildern), mitten
 darin der Platz mit der Safe Zone. Drumherum, über Landstraßen verbunden: die Dörfer **Nordheim** (mit Kirche),
 **Sandbach**, **Altenfeld** und **Mühldorf**, das **Evakuierungslager**, die **Polizeiwache**, drei Tankstellen, zwei
-Bauernhöfe, der **Funkturm** auf dem Hügel, der **Flugplatz** mit Flugzeugwrack, Schwarzsee, Stausee und Mühlteich.
+Bauernhöfe, einzelne Häuser und Scheunen an allen Landstraßen, **zehn Außenposten auf Hügeln** (Wolfshöhe, Adlerhorst,
+Steinkuppe, Krähenberg, Bärenkopf, Fuchsbau, Hoher Stein, Schwarzer Buckel, Kahlenberg, Rabenstein: Lagerhaus mit Schild,
+Wachturm, Palisade, Sandsäcke, Feuer, Vorratslager, teils ein Zombienest), der **Funkturm** auf dem Hügel, der **Flugplatz** mit Flugzeugwrack, Schwarzsee, Stausee und Mühlteich.
 Alle Häuser sind kaputt: Löcher in den Wänden, abgebrochene Mauerkronen, Dächer ganz, halb oder gar nicht
 (eingestürzte Platten), vernagelte Fenster, Schutt, Ruß, Ranken, Graffiti („SIE SIND DRINNEN“, „EVAKUIERUNG -> CAMP
 PHOENIX“ …); auf den Straßen ausgebrannte Autos, Blutflecken, Sperren aus Beton und Sandsäcken, brennende Tonnen
