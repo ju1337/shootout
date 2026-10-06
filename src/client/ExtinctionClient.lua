@@ -315,6 +315,7 @@ local markerHolder, vignette, placeLabel, placeSub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
+local MOVING = Color3.fromRGB(255, 120, 40) -- Wanderzone
 local DROP = Color3.fromRGB(255, 190, 70)
 local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
@@ -450,7 +451,7 @@ local function updateZone()
 		stroke.Color = SAFE
 	elseif vignette and vignette.Visible then
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
-		zoneText.Text = "ROTE ZONE  ·  PVP AKTIV"
+		zoneText.Text = player:GetAttribute("Redzone") == "Wanderzone" and "WANDERZONE  ·  PVP AKTIV" or "ROTE ZONE  ·  PVP AKTIV"
 		zoneText.TextColor3 = RED:Lerp(Color3.new(1, 1, 1), 0.25 * pulse)
 		stroke.Color = RED
 		vignette.Position = UDim2.fromOffset(0, 0)
@@ -499,6 +500,19 @@ local function updateMarkers()
 			end
 		end
 		local now = workspace:GetServerTimeNow()
+		-- Wanderzone: immer anzeigen, mit Zeit bis zum Wechsel
+		local movingText = map:GetAttribute("MovingZone")
+		local okMoving, moving = pcall(HttpService.JSONDecode, HttpService, type(movingText) == "string" and movingText or "null")
+		if okMoving and type(moving) == "table" and moving.X and moving.Z then
+			local dx, dz = moving.X - here.X, moving.Z - here.Z
+			local distance = math.sqrt(dx * dx + dz * dz)
+			local left = math.max(0, math.floor((moving.Ends or now) - now))
+			local clock = string.format("%d:%02d", left // 60, left % 60)
+			local inside = distance <= (moving.R or 0)
+			table.insert(entries, { Order = -7000, X = moving.X, Z = moving.Z, Color = MOVING,
+				Text = "WANDERZONE  " .. string.upper(tostring(moving.Name or "")) .. "  ·  WECHSEL IN " .. clock
+					.. (inside and "" or ("  ·  " .. math.floor(distance - (moving.R or 0)) .. " M")) })
+		end
 		for _, drop in mapList(map, "Airdrops") do
 			local dx, dz = (drop.X or 0) - here.X, (drop.Z or 0) - here.Z
 			local distance = math.floor(math.sqrt(dx * dx + dz * dz))

@@ -9,6 +9,7 @@
 --                       { Yield = false } ohne Pausen zwischen den Blöcken.
 -- Auf ebenen Flächen (Straßen, Orte) liegt das Terrain bei Data.Flat (-0,4); die Karte baut dort bei y = 0.
 -- Ohne Terrain (z. B. Fehler beim Schreiben) bleibt der flache Boden der Karte stehen (Extinction hebt ihn dann nicht ab).
+--   ClearRoads(terrain, map, center)  räumt das Terrain über den Straßen weg (nach Generate).
 
 local Data = require(script.Parent.ExtinctionTerrainData)
 
@@ -189,6 +190,33 @@ function ExtinctionTerrain.Generate(terrain, center, options)
 		end
 	end
 	return true, count
+end
+
+-- Straßen freiräumen: Das Voxel-Terrain (4 Studs) wölbt sich an Kanten und Hängen leicht über die flachen Teile, und Gras
+-- wächst mit Halmen durch dünne Teile. Darum nach Generate für jedes Straßenteil am Boden: im Körper Erde (keine Halme),
+-- darüber Luft. Teile höher als MaxY über der Kartenmitte (Hochstraße) bleiben unberührt.
+local CLEAR_NAMES = { Road = true, Track = true, RailBed = true, Sidewalk = true, CampPad = true, Runway = true }
+local CLEAR_FOLDERS = { "Roads", "Ground" }
+
+function ExtinctionTerrain.ClearRoads(terrain, map, center, options)
+	options = options or {}
+	local maxY = options.MaxY or 4
+	local count = 0
+	for _, folderName in CLEAR_FOLDERS do
+		local folder = map:FindFirstChild(folderName)
+		for _, part in folder and folder:GetChildren() or {} do
+			if part:IsA("BasePart") and CLEAR_NAMES[part.Name] and part.Position.Y - center.Y <= maxY then
+				local cframe, size = part.CFrame, part.Size
+				terrain:FillBlock(cframe, Vector3.new(size.X + 3, size.Y, size.Z + 3), Enum.Material.Ground)
+				terrain:FillBlock(cframe * CFrame.new(0, size.Y / 2 + 6, 0), Vector3.new(size.X + 2, 12, size.Z + 2), Enum.Material.Air)
+				count += 1
+				if options.Yield ~= false and count % 200 == 0 then
+					task.wait()
+				end
+			end
+		end
+	end
+	return count
 end
 
 ExtinctionTerrain.Cell = CELL

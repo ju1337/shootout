@@ -194,7 +194,9 @@ function Minimap.Init(root)
 	local buckets, bigShapes = {}, {} -- Raster [cx][cz] = { shape } und Formen, die größer als eine Zelle sind
 	local activeShapes = {}           -- [shape] = true: Formen, die gerade Frames zeigen
 
-	local function zoneCircle(x, z, radius, color)
+	local movingDots, movingKey, movingZone = {}, nil, nil -- Wanderzone (Karten-Attribut MovingZone), wird bei Wechsel neu gesetzt
+
+	local function zoneCircle(x, z, radius, color, list)
 		local n = math.max(12, math.floor(2 * math.pi * radius / ZONE_DOT))
 		for k = 1, n do
 			local a = 2 * math.pi * k / n
@@ -202,8 +204,32 @@ function Minimap.Init(root)
 			local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(px * K, pz * K),
 				Size = UDim2.fromOffset(4, 4), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 4, Visible = false }, layer)
 			make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, frame)
-			table.insert(zoneDots, { Frame = frame, X = px, Z = pz })
+			table.insert(list or zoneDots, { Frame = frame, X = px, Z = pz })
 		end
+	end
+
+	-- Wanderzone: Punktkreis in Orange, neu bei jedem Ortswechsel
+	local function loadMoving(map)
+		local text = map and map:GetAttribute("MovingZone")
+		local key = type(text) == "string" and text or nil
+		local ok, info = pcall(function()
+			return key and game:GetService("HttpService"):JSONDecode(key) or nil
+		end)
+		local spot = ok and type(info) == "table" and tonumber(info.X) and tonumber(info.Z) and tonumber(info.R) and info or nil
+		local placeKey = spot and string.format("%d:%d:%d", spot.X, spot.Z, spot.R) or nil
+		if placeKey == movingKey then
+			return false
+		end
+		movingKey = placeKey
+		for _, dotInfo in movingDots do
+			dotInfo.Frame:Destroy()
+		end
+		movingDots = {}
+		movingZone = spot and { X = spot.X, Z = spot.Z, R = spot.R } or nil
+		if spot then
+			zoneCircle(spot.X, spot.Z, spot.R, Color3.fromRGB(255, 120, 40), movingDots)
+		end
+		return true
 	end
 
 	local function loadMap(map)
@@ -214,6 +240,7 @@ function Minimap.Init(root)
 		clippedAt = nil
 		layer:ClearAllChildren()
 		shapes, buckets, bigShapes, activeShapes, zoneDots, redzones = {}, {}, {}, {}, {}, {}
+		movingDots, movingKey, movingZone = {}, nil, nil
 		RANGE = map and tonumber(map:GetAttribute("MinimapRange")) or DEFAULT_RANGE
 		K = 1 / (2 * RANGE)
 		STRIP = 2 * RANGE / DEFAULT_RANGE
@@ -358,12 +385,14 @@ function Minimap.Init(root)
 			end
 		end
 		local limit = (RANGE - 3) * (RANGE - 3)
-		for _, dotInfo in zoneDots do
-			local dx, dz = dotInfo.X - px, dotInfo.Z - pz
-			dotInfo.Frame.Visible = dx * dx + dz * dz <= limit
+		for _, list in { zoneDots, movingDots } do
+			for _, dotInfo in list do
+				local dx, dz = dotInfo.X - px, dotInfo.Z - pz
+				dotInfo.Frame.Visible = dx * dx + dz * dz <= limit
+			end
 		end
-		-- in einer roten Zone: Rand der Minimap rot
-		local inside = false
+		-- in einer roten Zone (oder der Wanderzone): Rand der Minimap rot
+		local inside = movingZone ~= nil and (px - movingZone.X) ^ 2 + (pz - movingZone.Z) ^ 2 <= movingZone.R * movingZone.R
 		for _, zone in redzones do
 			if (px - zone.X) ^ 2 + (pz - zone.Z) ^ 2 <= zone.R * zone.R then
 				inside = true
@@ -465,6 +494,9 @@ function Minimap.Init(root)
 			refreshAt = now + 1
 			local map = findMap()
 			loadMap(map)
+			if loadMoving(map) then
+				clippedAt = nil -- Punkte der neuen Wanderzone gleich zeigen
+			end
 			buildObjectives(map, Modes.Get(player:GetAttribute("Mode")))
 		end
 		-- Zuschnitt auf den Kreis nur nach Bewegung neu rechnen

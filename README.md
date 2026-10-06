@@ -40,13 +40,13 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`): ein improvisiertes Überlebenden-Lager auf festgetretener Erde – Wall aus Containern und
-Wellblech, vier Tore mit Holz-Wachtürmen und Suchscheinwerfern, Lagerfeuer mit Baumstamm-Bänken in der Mitte
-(Spawn) unter Lichterketten, Feuertonnen, ein dreistöckiger Kommandoturm mit Leiter, Banner „PHOENIX“, Antenne und
-Suchscheinwerfer, Stacheldraht auf der Mauer und Pfahlsperren davor, Wasserturm, Gemüsebeete, Wäscheleine und eine
-Gedenkwand mit Kerzen, Zelte mit Feldbetten, Generator und Flutlicht, Bretterwege zu den Toren; Händler als Bretterbuden
-(WAFFEN, SANI, WERKSTATT), das LAGER im Container und der Rückweg zum Hub über den Hubschrauber-Landeplatz
-(EVAKUIERUNG).
+`tools/build_maps.py`, Radius 120): eine befestigte Militärbasis auf einer Betonplatte – HESCO-Wall im Quadrat mit
+Stacheldraht, Wachtürme mit Tarnnetz und Suchscheinwerfer in den Ecken (Leiter), vier Tore mit Wachhäuschen,
+hochgeklappten Schlagbäumen, Torbrücke mit Schild und Flutlicht und Betonsperren davor. In der Mitte der Appellplatz
+mit Fahnenmonument (Phoenix-Flagge), Laternen und Bänken (Spawn), gelbe Fahrspuren zu den Toren; Händler in offenen
+Containern an den Fahrspuren (WAFFEN, SANI, WERKSTATT), das LAGER mit Spinden, Sanitäts- und Kommandozelt (Funkmast),
+Unterkunftszelte, Fahrzeughof mit Militärlastern und Tankanhänger, Lichtmasten, Wassertanks, Kisten und der
+Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
 
 **Die Welt** (3200 × 3200, `tools/extinction_world.py`) ist ein verwüstetes Land nach dem Ausbruch: in der Mitte die
 zerstörte Großstadt **Ödstadt** (Durchmesser 1450, rund 700 Gebäude: vier Ringstraßen, zwölf Radialen und schräge
@@ -71,10 +71,17 @@ dem Hang) hinauf zu jedem Außenposten und zum Funkturm. Alle Schilder sind alt 
 rostiges Blech oder Stoff, mit Marker gemalt, schief, ohne Leuchten) statt moderner Leuchttafeln.
 Das Gelände ist echtes **Terrain** (Höhenfeld aus `tools/extinction_terrain.py` in
 `src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: in den
-Ortskernen zertrampelte Erde, Matsch und verdorrtes Gras (kein Pflaster), außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall).
+Ortskernen zertrampelte Erde, Matsch und verdorrtes Gras (kein Pflaster), außen Gras, Erde, Fels, Sand und Wasser); bis dahin trägt der flache Boden der Karte (Rückfall). Danach räumt
+`ExtinctionTerrain.ClearRoads` das Terrain über allen Straßen, Gehwegen, Feldwegen und dem Gleisbett weg (im Körper
+Erde ohne Grashalme, darüber Luft), damit keine Erde oder Grashalme über der Fahrbahn liegen.
 **Rote Zonen** (4): Krankenhaus St. Marien (in Ödstadt), Militärbasis Fort Eisen, Industriehafen am Stausee, JVA
 Schwarzwald – rot-weiße Linie am Boden und ein **Kontrollpunkt an jeder Straße** (Torbogen „ROTE ZONE“ / innen
-„AUSGANG“, Sperren, rotes Licht). Safe Zone mit grünem Leuchtring am Boden und Sandsack-Wall.
+„AUSGANG“, Sperren, rotes Licht).
+**Wanderzone** (`RedzoneService.StartMoving`, `ExtinctionConfig.MovingZone`): eine zusätzliche rote Zone (Radius 170),
+die alle **20 Minuten** an einen anderen Ort springt (Dörfer, Höfe, Außenposten, Bahnhof … – nicht Camp, Seen, die
+ganze Stadt oder feste rote Zonen). Drinnen gilt PvP sofort, mehr Zombies und bessere Beute wie in roten Zonen. Ansage
+an alle beim Wechsel und eine Minute vorher; in der Welt eine flimmernde orange Wand und eine Lichtsäule; Marker oben
+mit Zeit bis zum Wechsel, orange auf Minimap und Weltkarte (Karten-Attribut `MovingZone`).
 **Minimap** (oben links) zoomt in der offenen Welt weiter raus (240 Studs, Karten-Attribut `MinimapRange`), zeigt nur
 Straßen und Gebäude und die Zonen als Punktkreise (grün Safe Zone, rot rote Zonen); in einer roten Zone wird ihr
 Rand rot. **Weltkarte** mit **N** (oder Knopf KARTE oben rechts): Straßen, Gebäude, Seen, Orte, Safe Zone, rote

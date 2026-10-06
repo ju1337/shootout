@@ -110,8 +110,8 @@ local function updateZone(player, info)
 		info.Redzone = zoneName
 		player:SetAttribute("Redzone", zoneName)
 		if zone then
-			notify(player, "Banner", { Caption = "Rote Zone", Title = string.upper(zone.Title), Sub = "PvP sofort · mehr Zombies · bessere Beute",
-				Style = "Info" })
+			notify(player, "Banner", { Caption = zone.Moving and "Wanderzone" or "Rote Zone", Title = string.upper(zone.Title),
+				Sub = "PvP sofort · mehr Zombies · bessere Beute", Style = "Info" })
 		elseif not inside then
 			notify(player, "Banner", { Caption = "Rote Zone verlassen", Title = "WEITER VORSICHT", Sub = "PvP bleibt aktiv", Style = "Info" })
 		end
@@ -233,13 +233,35 @@ function Extinction.Init(modeManager)
 		local ok, written = pcall(ExtinctionTerrain.Generate, workspace.Terrain, center)
 		if not ok then
 			warn("[Extinction] Terrain nicht geschrieben: " .. tostring(written))
-		elseif written and ground and ground:IsA("BasePart") then
-			ground.Position -= Vector3.new(0, 14, 0)
+		elseif written then
+			if ground and ground:IsA("BasePart") then
+				ground.Position -= Vector3.new(0, 14, 0)
+			end
+			local cleared, err = pcall(ExtinctionTerrain.ClearRoads, workspace.Terrain, map, center)
+			if not cleared then
+				warn("[Extinction] Straßen nicht freigeräumt: " .. tostring(err))
+			end
 		end
 	end)
 
 	-- Rote Zonen (aus den Teilen Redzone_<Name> der Karte) und Lagerkisten (Teile Spot_<Art> in der Gruppe Loot)
 	RedzoneService.Init(map)
+	-- Wanderzone: rote Zone, die alle 20 Minuten an einen anderen Ort springt
+	RedzoneService.StartMoving({
+		Map = map,
+		SafeCenter = Extinction.SafeZoneCenter,
+		IsWater = isWater,
+		GroundY = function(x, z)
+			return center.Y + ExtinctionTerrain.Height(x - center.X, z - center.Z)
+		end,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
 	ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
 	-- Zombies um die Spieler draußen

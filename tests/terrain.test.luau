@@ -82,4 +82,31 @@ check(minX == -1920 and maxX == 1920 and minZ == -7920 and maxZ == -4080, "deckt
 -- Ohne Terrain-Objekt (Test/Fehler): nichts geschrieben, kein Absturz
 check(ExtinctionTerrain.Generate(nil, Vector3.new(0, 0, 0)) == false, "ohne Terrain wird nichts geschrieben")
 
+-- Straßen freiräumen: Körper mit Erde, darüber Luft; Hochstraße (weit über dem Boden) bleibt
+do
+	local fills = {}
+	local fake = { FillBlock = function(_, cframe, size, material)
+		table.insert(fills, { CFrame = cframe, Size = size, Material = material })
+	end }
+	local map = Instance.new("Model")
+	local roads = Instance.new("Folder", map)
+	roads.Name = "Roads"
+	local road = Instance.new("Part", roads)
+	road.Name = "Road"
+	road.Size = Vector3.new(40, 3, 20)
+	road.CFrame = CFrame.new(10, -1.25, -6000)
+	local deck = Instance.new("Part", roads)
+	deck.Name = "Road"
+	deck.Size = Vector3.new(60, 2.4, 34)
+	deck.CFrame = CFrame.new(10, 22.8, -5400)
+	local line = Instance.new("Part", roads)
+	line.Name = "CenterLine"
+	line.Size = Vector3.new(30, 0.02, 0.5)
+	line.CFrame = CFrame.new(10, 0.26, -6000)
+	local count = ExtinctionTerrain.ClearRoads(fake, map, Vector3.new(0, 0, -6000), { Yield = false })
+	check(count == 1 and #fills == 2, "nur das Straßenteil am Boden (" .. count .. ", " .. #fills .. ")")
+	check(fills[1].Material == Enum.Material.Ground and fills[2].Material == Enum.Material.Air, "erst Erde, dann Luft")
+	check(fills[2].CFrame.Position.Y - 6 > road.Position.Y + road.Size.Y / 2 - 0.01, "Luft beginnt an der Oberkante der Straße")
+end
+
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

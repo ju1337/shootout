@@ -216,6 +216,21 @@ ExtinctionConfig.Redzone = {
 	PvPDelay = 0,
 }
 
+-- ---------- Wanderzone (RedzoneService.StartMoving): rote Zone, die alle Interval Sekunden den Ort wechselt ----------
+-- Ziele: Orte der Karte (Place_<Name>) außer Exclude, nicht größer als MaxPlaceSize, weit genug von der Safe Zone, nicht
+-- auf einer festen roten Zone, nicht im Wasser. Drinnen gilt alles wie in roten Zonen (PvP sofort, Zombies, Beute).
+ExtinctionConfig.MovingZone = {
+	Enabled = true,
+	Interval = 20 * 60,      -- Sekunden bis zum nächsten Wechsel
+	Warning = 60,            -- so viele Sekunden vorher kommt die Ansage
+	Radius = 170,
+	MaxPlaceSize = 600,      -- Orte mit größerem Durchmesser (Ödstadt, Innenstadt) sind kein Ziel
+	Exclude = { "Camp", "Oedstadt", "Innenstadt", "Schwarzsee", "Stausee", "Teich" },
+	Color = Color3.fromRGB(255, 120, 40),
+	WallPanels = 48,
+	WallHeight = 70,
+}
+
 -- ---------- Tag und Nacht (DayCycle) ----------
 -- Ein ganzer Tag dauert Length Sekunden (24 Minuten): hell von NightTo bis NightFrom, dazwischen Nacht (ca. 9 Minuten).
 -- Nachts kommen mehr Zombies (NightZombies) und sie sehen weiter (NightSight); Feuer und Laternen sind dann die

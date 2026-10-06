@@ -23,10 +23,13 @@ local ExtinctionMap = {}
 local SIZE = 640                    -- Kantenlänge der Karte (Design-Einheiten)
 local WORLD = ExtinctionConfig.WorldSize
 local RED = Color3.fromRGB(226, 56, 48)
+local MOVING = Color3.fromRGB(255, 120, 40) -- Wanderzone
+local movingView = nil
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
+	CampPad = Color3.fromRGB(104, 104, 100),
 	Field = Color3.fromRGB(96, 80, 56),
 }
 local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = true, TowerStub = true, PrisonWall = true }
@@ -162,8 +165,33 @@ local function update()
 		local look = camera and camera.CFrame.LookVector or Vector3.new(0, 0, 1)
 		arrow.Rotation = math.deg(math.atan2(look.X, look.Z))
 	end
-	-- Lootdrops
+	-- Wanderzone (wechselt den Ort, darum bei jedem Update)
 	local now = workspace:GetServerTimeNow()
+	local movingText = map:GetAttribute("MovingZone")
+	local okMoving, moving = pcall(HttpService.JSONDecode, HttpService, type(movingText) == "string" and movingText or "null")
+	if okMoving and type(moving) == "table" and moving.X and moving.Z and moving.R then
+		local key = string.format("%d:%d:%d", moving.X, moving.Z, moving.R)
+		if not movingView or not movingView.Parent or movingView:GetAttribute("Key") ~= key then
+			if movingView then
+				movingView:Destroy()
+			end
+			movingView = circle(markers, map, moving.X, moving.Z, moving.R, MOVING, 0.55, 5)
+			movingView.Name = "MovingZone"
+			movingView:SetAttribute("Key", key)
+			label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(2.4, 0, 0, 16),
+				TextSize = 12, Font = F.Display, TextColor3 = Color3.new(1, 1, 1), TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 },
+				movingView)
+		end
+		local left = math.max(0, math.floor((moving.Ends or now) - now))
+		local text = movingView:FindFirstChild("Text")
+		if text then
+			text.Text = string.format("WANDERZONE %d:%02d", left // 60, left % 60)
+		end
+	elseif movingView then
+		movingView:Destroy()
+		movingView = nil
+	end
+	-- Lootdrops
 	local seen = {}
 	for _, drop in decode(map, "Airdrops") do
 		local id = tostring(drop.Id)
