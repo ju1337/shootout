@@ -92,18 +92,29 @@ class Terrain:
         self.hills.append((x, z, r, height, top))
 
     # ----- Formel -----
+    def _road_weight(self, x, z, blend_scale=1.0):
+        """0 = keine Straße in der Nähe, 1 = unter der Fahrbahn (samt Rand)."""
+        w = 0.0
+        for x0, z0, x1, z1, width, blend in self.roads:
+            if (x < min(x0, x1) - width - blend or x > max(x0, x1) + width + blend
+                    or z < min(z0, z1) - width - blend or z > max(z0, z1) + width + blend):
+                continue
+            dx, dz = x1 - x0, z1 - z0
+            length2 = dx * dx + dz * dz
+            t = max(0.0, min(1.0, ((x - x0) * dx + (z - z0) * dz) / length2)) if length2 > 0 else 0.0
+            d = math.hypot(x - (x0 + dx * t), z - (z0 + dz * t))
+            w = max(w, 1 - smooth((d - width / 2) / (blend * blend_scale)))
+            if w >= 1:
+                break
+        return w
+
     def _flat_weight(self, x, z):
         """0 = Gelände frei, 1 = ganz eben."""
         w = 0.0
         for fx, fz, r, blend in self.flats:
             d = math.hypot(x - fx, z - fz)
             w = max(w, 1 - smooth((d - r) / blend))
-        for x0, z0, x1, z1, width, blend in self.roads:
-            dx, dz = x1 - x0, z1 - z0
-            length2 = dx * dx + dz * dz
-            t = max(0.0, min(1.0, ((x - x0) * dx + (z - z0) * dz) / length2)) if length2 > 0 else 0.0
-            d = math.hypot(x - (x0 + dx * t), z - (z0 + dz * t))
-            w = max(w, 1 - smooth((d - width / 2) / blend))
+        w = max(w, self._road_weight(x, z))
         for x0, z0, x1, z1, blend in self.rects:
             dx = max(x0 - x, 0.0, x - x1)
             dz = max(z0 - z, 0.0, z - z1)
@@ -131,10 +142,13 @@ class Terrain:
         bumps = (self.noise.fbm(x / 55.0 + 5, z / 55.0 - 3, 3) - 0.5) * 4.0
         free = 1 - self._flat_weight(x, z)
         h = FLAT + max(-0.9, (hills + bumps) * free)
+        # Hügel und Seen weichen den Straßen (sonst läge die Fahrbahn im Hang oder schwebte über dem Ufer)
+        keep = 1 - self._road_weight(x, z, 0.6)
         for hx, hz, r, height, top in self.hills:
             d = math.hypot(x - hx, z - hz)
-            h += height * (1 - smooth((d - top) / max(1.0, r - top)))
+            h += height * (1 - smooth((d - top) / max(1.0, r - top))) * keep
         mask, floor = self._lake(x, z)
+        mask *= keep
         if mask > 0:
             h = h + (floor - h) * mask
         # Bergrand: hinter der Spielfläche steigt das Gelände steil an (statt Mauer)

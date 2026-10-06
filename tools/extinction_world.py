@@ -49,9 +49,18 @@ PLACES = {
 OUTPOSTS = [("Wolfshoehe", "WOLFSHÖHE", -1380, 820), ("Adlerhorst", "ADLERHORST", 1400, 100), ("Steinkuppe", "STEINKUPPE", -420, -1420),
             ("Kraehenberg", "KRÄHENBERG", 650, 1480), ("Baerenkopf", "BÄRENKOPF", -1420, -720), ("Fuchsbau", "FUCHSBAU", 760, -1460),
             ("HoherStein", "HOHER STEIN", 1460, -380), ("SchwarzerBuckel", "SCHWARZER BUCKEL", -820, 1460),
-            ("Kahlenberg", "KAHLENBERG", 1000, 900), ("Rabenstein", "RABENSTEIN", -980, 330)]
+            ("Kahlenberg", "KAHLENBERG", 780, 800), ("Rabenstein", "RABENSTEIN", -1330, 330)]
 for _key, _title, _x, _z in OUTPOSTS:
     PLACES[_key] = (_title, _x, _z, 70)
+
+# A7: Hochstraße quer über den Norden von Ödstadt (Rampen an beiden Enden), Oberkante, Breite, Rampenlänge
+AUTOBAHN = [(-940, 560), (1000, 560)]
+AUTOBAHN_H, AUTOBAHN_W, AUTOBAHN_RAMP = 24, 34, 180
+# Bahnstrecke vom Westrand durch den Süden von Ödstadt in den Hafen; der Bahnhof liegt an Abschnitt STATION_SEG
+RAIL = [(-1590, -470), (-900, -470), (-500, -560), (0, -600), (400, -620), (760, -760), (900, -880)]
+STATION_SEG = 2
+# Tankstellen: (x, z, Zufahrt-Ziel x, z)
+GAS = [(-860, -50, -860, -132), (880, 150, 930, 270), (165, -925, 255, -910)]
 
 REDZONES = {"Krankenhaus": 150, "Militaer": 210, "Hafen": 230, "Gefaengnis": 180}
 LAKES = [("Schwarzsee", -760, 230, 120, 10), ("Stausee", 1380, -1280, 150, 11), ("Teich", 320, 860, 60, 6)]
@@ -71,6 +80,19 @@ def dist_point_segment(px, pz, ax, az, bx, bz):
     l2 = dx * dx + dz * dz
     t = 0.0 if l2 == 0 else max(0.0, min(1.0, ((px - ax) * dx + (pz - az) * dz) / l2))
     return math.hypot(px - (ax + dx * t), pz - (az + dz * t))
+
+
+def seg_intersect(a, b, c, d):
+    """Schnittpunkt zweier Strecken a-b und c-d oder None."""
+    (ax, az), (bx, bz), (cx, cz), (dx, dz) = a, b, c, d
+    den = (bx - ax) * (dz - cz) - (bz - az) * (dx - cx)
+    if abs(den) < 1e-9:
+        return None
+    t = ((cx - ax) * (dz - cz) - (cz - az) * (dx - cx)) / den
+    u = ((cx - ax) * (bz - az) - (cz - az) * (bx - ax)) / den
+    if 0 <= t <= 1 and 0 <= u <= 1:
+        return ax + (bx - ax) * t, az + (bz - az) * t
+    return None
 
 
 def polyline(points, rng, wobble=0.0, step=60.0):
@@ -95,9 +117,16 @@ def terrain_layout():
     for x, z, r in FLATS:
         t.flat(x, z, r, 90)
     t.flat_rect(780, 1210, 1340, 1290, 70)  # Startbahn
-    for points in highway_points():
+    for points in highway_lines():
         for (ax, az), (bx, bz) in zip(points, points[1:]):
-            t.road(ax, az, bx, bz, HIGHWAY_W, 70)
+            t.road(ax, az, bx, bz, HIGHWAY_W + 4, 70)
+    (ax, az), (bx, bz) = AUTOBAHN
+    t.road(ax - 40, az, bx + 40, bz, AUTOBAHN_W + 20, 60)
+    for (ax, az), (bx, bz) in zip(RAIL, RAIL[1:]):
+        t.road(ax, az, bx, bz, 18, 60)
+    for x, z, hx, hz in GAS:
+        t.flat(x, z, 40, 50)
+        t.road(x, z, hx, hz, 18, 50)
     for _, x, z, r, depth in LAKES:
         t.lake(x, z, r, depth)
     t.hill(-560, -760, 170, 30, 40)
@@ -122,10 +151,22 @@ def highway_points():
         [(1150, 520), (1060, 80), (860, -330), (960, -560)],                      # Sandbach -> Hof Ost
         [(960, -560), (640, -760), (430, -1150)],                                 # Hof Ost -> Mühldorf
         [(-1150, -250), (-1010, 200), (-880, 720), (-250, 1150)],                 # Altenfeld -> Hof West -> Nordheim
-        [(-250, 1150), (60, 1060), (320, 900), (760, 1080), (1050, 1180)],        # Nordheim -> Teich -> Flugplatz
-        [(-1090, -960), (-800, -1000), (-560, -820)],                             # Gefängnis -> Funkturm
-        [(-560, -820), (-200, -780), (180, -800)],                                # Funkturm -> Süd
+        [(-250, 1150), (60, 1060), (330, 990), (760, 1080), (1050, 1180)],        # Nordheim -> Teich -> Flugplatz
+        [(-1090, -960), (-800, -1000), (-560, -980)],                             # Gefängnis -> am Funkturm vorbei
+        [(-560, -980), (-250, -890), (180, -800)],                                # -> Süd
     ]
+
+
+_HIGHWAY_LINES = None
+
+
+def highway_lines():
+    """Landstraßen mit Schwung – dieselben Linien für das Gelände (eben eingeschnitten) und die Fahrbahn."""
+    global _HIGHWAY_LINES
+    if _HIGHWAY_LINES is None:
+        rng = random.Random(41)
+        _HIGHWAY_LINES = [polyline(pts, rng, wobble=14, step=70) for pts in highway_points()]
+    return _HIGHWAY_LINES
 
 
 class World:
@@ -137,6 +178,8 @@ class World:
         self.H = self.terrain.sample
         self.roads = []        # (ax, az, bx, bz, Breite) aller Straßenstücke
         self.occupied = []     # (x, z, Radius) belegter Flächen (Gebäude, Anlagen)
+        self.corridors = []    # (ax, az, bx, bz, Breite) freizuhaltender Streifen (Bahn, Autobahn) – keine Häuser
+        self.pending_sidewalks = []  # Straßen, deren Gehwege sidewalks() setzt (an Kreuzungen unterbrochen)
         self.counter = 0
 
     # ---------- Grundlagen ----------
@@ -176,6 +219,9 @@ class World:
         for ax, az, bx, bz, w in self.roads:
             if dist_point_segment(x, z, ax, az, bx, bz) < r + w / 2 + road_pad:
                 return False
+        for ax, az, bx, bz, w in self.corridors:
+            if dist_point_segment(x, z, ax, az, bx, bz) < r + w / 2:
+                return False
         if abs(x) > HALF - 60 or abs(z) > HALF - 60:
             return False
         if self.terrain.is_water(x, z):
@@ -197,21 +243,97 @@ class World:
         dx, dz = (bx - ax) / length, (bz - az) / length
         yaw = math.degrees(math.atan2(-dz, dx))
         cx, cz = (ax + bx) / 2, (az + bz) / 2
+        if any(self.terrain.is_water(ax + (bx - ax) * t, az + (bz - az) * t) for t in (0, 0.25, 0.5, 0.75, 1)):
+            return  # keine Straße ins Wasser (Seeufer am Stadtrand)
         self.roads.append((ax, az, bx, bz, width))
-        # Fahrbahn etwas über dem Gelände (das Terrain darf sie nicht verdecken), dunkler Asphalt mit gelber Mitte
-        b.box("Roads", "Road", (length + width * 0.5, 0.9, width), (cx, -0.2, cz), (42, 43, 46), "Asphalt", angles=(0, yaw, 0))
-        if lines and length > 12:
+        # Fahrbahn etwas über dem Gelände (das Terrain darf sie nicht verdecken), dunkler Asphalt; der Körper reicht tief in den
+        # Boden, damit an Kanten und Senken nichts in der Luft hängt
+        b.box("Roads", "Road", (length + width * 0.5, 3.0, width), (cx, -1.25, cz), (42, 43, 46), "Asphalt", angles=(0, yaw, 0))
+        nx, nz = -dz, dx
+        if sidewalk and length > 12:
+            # Stadtstraße: weiße Randlinien, gestrichelte Mitte, ab und zu ein Zebrastreifen vor der Kreuzung
+            # (Randlinien, Mittelstriche und Gehwege setzt sidewalks(), wenn alle Straßen da sind)
+            paint = (196, 194, 184)
+            if length > 50 and rng.random() < 0.4:
+                end = rng.choice((0, 1))
+                d0 = width / 2 + 7
+                px, pz = (ax + dx * d0, az + dz * d0) if end == 0 else (bx - dx * d0, bz - dz * d0)
+                stripes = int((width - 4) // 3)
+                for k in range(stripes):
+                    off = (k - (stripes - 1) / 2) * 3
+                    b.box("Roads", "Crosswalk", (6, 0.02, 1.6), (px + nx * off, 0.265, pz + nz * off), paint, "SmoothPlastic",
+                          angles=(0, yaw, 0))
+                if rng.random() < 0.5:  # tote Ampel, oft umgeknickt
+                    s = rng.choice((-1, 1))
+                    lx_, lz_ = px + nx * s * (width / 2 + 2.5), pz + nz * s * (width / 2 + 2.5)
+                    bent = rng.choice((0, 0, rng.uniform(-30, 30)))
+                    b.box("Decor", "TrafficPole", (0.5, 11, 0.5), (lx_, 6, lz_), (52, 54, 56), "Metal", angles=(bent, yaw, 0))
+                    b.box("Decor", "TrafficLight", (1.2, 3.4, 1.0), (lx_, 10.4, lz_), (36, 38, 30), "Metal", angles=(bent, yaw, 0))
+        elif lines and length > 12:
             b.box("Roads", "CenterLine", (length - 6, 0.02, 0.5), (cx, 0.26, cz), (190, 165, 80), "SmoothPlastic", angles=(0, yaw, 0))
         if sidewalk:
-            nx, nz = -dz, dx
-            for s in (-1, 1):
-                b.box("Ground", "Sidewalk", (length, 0.9, 4), (cx + nx * s * (width / 2 + 2), -0.2, cz + nz * s * (width / 2 + 2)),
-                      (128, 126, 120), "Concrete", angles=(0, yaw, 0))
+            self.pending_sidewalks.append((ax, az, bx, bz, width))
+        if sidewalk and length > 40 and rng.random() < 0.5:  # Gullydeckel
+            t = rng.uniform(0.2, 0.8)
+            b.add("Roads", "Manhole", (0.1, 2.6, 2.6), (ax + (bx - ax) * t + nx * width / 4, 0.27, az + (bz - az) * t + nz * width / 4),
+                  (54, 54, 56), "DiamondPlate", angles=(0, 0, 90), props={"Shape": "Cylinder"})
         if cracked and length > 30 and rng.random() < 0.5:
             t = rng.uniform(0.2, 0.8)
             px, pz = ax + (bx - ax) * t, az + (bz - az) * t
             b.box("Roads", "Pothole", (rng.uniform(3, 7), 0.02, rng.uniform(2, 5)), (px + rng.uniform(-4, 4), 0.255, pz + rng.uniform(-4, 4)),
                   (30, 30, 32), "Slate", angles=(0, rng.uniform(0, 180), 0))
+
+    def sidewalks(self):
+        """Gehwege (Bordstein 0,35 über der Fahrbahn) beidseits der Stadtstraßen – dort unterbrochen, wo eine andere Straße
+        kreuzt, damit kein Bordstein quer über die Kreuzung läuft."""
+        b = self.b
+        paint = (196, 194, 184)
+        roads = [(r, min(r[0], r[2]) - r[4], max(r[0], r[2]) + r[4], min(r[1], r[3]) - r[4], max(r[1], r[3]) + r[4]) for r in self.roads]
+        for ax, az, bx, bz, width in self.pending_sidewalks:
+            length = math.hypot(bx - ax, bz - az)
+            dx, dz = (bx - ax) / length, (bz - az) / length
+            nx, nz = -dz, dx
+            yaw = math.degrees(math.atan2(-dz, dx))
+            near = [r for r, x0, x1, z0, z1 in roads
+                    if r[:4] != (ax, az, bx, bz) and x0 - 20 < max(ax, bx) and x1 + 20 > min(ax, bx) and z0 - 20 < max(az, bz) and z1 + 20 > min(az, bz)]
+            def free_at(t, off):
+                px, pz = ax + dx * t + nx * off, az + dz * t + nz * off
+                return all(dist_point_segment(px, pz, *r[:4]) > r[4] / 2 + 0.5 for r in near)
+
+            def runs(off):
+                """Abschnitte (t0, t1) entlang der Straße, die im Abstand off neben der Mitte frei von anderen Straßen sind."""
+                n = max(2, int(length // 2))
+                ok = [free_at(length * k / n, off) for k in range(n + 1)]
+                out, k = [], 0
+                while k <= n:
+                    if not ok[k]:
+                        k += 1
+                        continue
+                    j = k
+                    while j + 1 <= n and ok[j + 1]:
+                        j += 1
+                    if (j - k) * length / n >= 2:
+                        out.append((length * k / n, length * j / n))
+                    k = j + 1
+                return out
+            for s in (-1, 1):
+                for t0, t1 in runs(s * (width / 2 + 2)):
+                    tm, off = (t0 + t1) / 2, s * (width / 2 + 2)
+                    b.box("Ground", "Sidewalk", (t1 - t0, 3.0, 4), (ax + dx * tm + nx * off, -0.9, az + dz * tm + nz * off),
+                          (128, 126, 120), "Concrete", angles=(0, yaw, 0))
+                for t0, t1 in runs(s * (width / 2 - 1.4)):
+                    if t1 - t0 < 4:
+                        continue
+                    tm, off = (t0 + t1) / 2, s * (width / 2 - 1.4)
+                    b.box("Roads", "EdgeLine", (t1 - t0 - 2, 0.02, 0.4), (ax + dx * tm + nx * off, 0.26, az + dz * tm + nz * off), paint,
+                          "SmoothPlastic", angles=(0, yaw, 0))
+            n = int(length // 12)
+            for k in range(n):
+                t = length * (k + 0.5) / n
+                if self.rng.random() < 0.12 or not (free_at(t - 3, 0) and free_at(t + 3, 0)):
+                    continue  # abgefahren oder mitten auf der Kreuzung
+                b.box("Roads", "LaneDash", (5, 0.02, 0.45), (ax + dx * t, 0.26, az + dz * t), paint, "SmoothPlastic", angles=(0, yaw, 0))
+        self.pending_sidewalks = []
 
     def track(self, points, width=9):
         """Feldweg (Erde) über das Gelände: kurze Stücke folgen der Höhe, auch Hügel hinauf."""
@@ -228,9 +350,11 @@ class World:
             if flat < 0.5:
                 continue
             h0, h1 = self.H(ax, az) + 0.25, self.H(bx, bz) + 0.25
+            lift = max(0.0, self.H((ax + bx) / 2, (az + bz) / 2) + 0.25 - (h0 + h1) / 2)  # Kuppe: nicht im Boden versinken
+            h0, h1 = h0 + lift, h1 + lift
             yaw = math.degrees(math.atan2(-(bz - az), bx - ax))
             roll = math.degrees(math.atan2(h1 - h0, flat))
-            b.box("Roads", "Track", (math.hypot(flat, h1 - h0) + 1.5, 0.8, width), ((ax + bx) / 2, (h0 + h1) / 2 - 0.2, (az + bz) / 2),
+            b.box("Roads", "Track", (math.hypot(flat, h1 - h0) + 1.5, 3.6, width), ((ax + bx) / 2, (h0 + h1) / 2 - 1.6, (az + bz) / 2),
                   (104, 86, 62), "Ground", angles=(0, yaw, roll))
             self.roads.append((ax, az, bx, bz, width))
 
@@ -1100,6 +1224,9 @@ class World:
             for ax, az, bx, bz, rw in self.roads:
                 if dist_point_segment(px, pz, ax, az, bx, bz) < rw / 2 + 2.5:
                     return False
+            for ax, az, bx, bz, rw in self.corridors:
+                if dist_point_segment(px, pz, ax, az, bx, bz) < rw / 2:
+                    return False
         r = 0.5 * math.hypot(w, d) * 0.92
         for ox, oz, orr in self.occupied:
             if math.hypot(cx - ox, cz - oz) < r + orr - 1:
@@ -1310,12 +1437,12 @@ class World:
         b.sign2("Billboard_" + title[:8], (22, 8, 0.5), (x, g + 15, z), title, subtitle, (230, 230, 220), (180, 30, 30), (40, 40, 40),
                 angles=(0, yaw, self.rng.uniform(-6, 6)))
 
-    def litter(self, x, z, y=0.27):
+    def litter(self, x, z, y=0.27, spread=3.0):
         """Müll am Straßenrand: Säcke, Papier, Tonne."""
         b, rng = self.b, self.rng
         for _ in range(rng.randint(2, 4)):
             kind = rng.random()
-            px, pz = x + rng.uniform(-3, 3), z + rng.uniform(-3, 3)
+            px, pz = x + rng.uniform(-spread, spread), z + rng.uniform(-spread, spread)
             if kind < 0.45:
                 b.box("Decor", "TrashBag", (1.6, 1.3, 1.4), (px, y + 0.6, pz), (24, 24, 26), "Plastic",
                       angles=(rng.uniform(-15, 15), rng.uniform(0, 180), 0), props={"CanCollide": False})
@@ -1587,6 +1714,122 @@ class World:
                 b.cylinder("Decor", "Barrel", 2.2, 3, (x, 1.5, z), rng.choice(((60, 80, 110), (110, 40, 36), (70, 80, 50))),
                            material="CorrodedMetal")
 
+        # Kommandoturm: drei Ebenen aus Holz und Wellblech, Leiter (Truss) zur Mitte, Antenne mit Blinklicht
+        tx, tz = -48, -18
+        yaw = facing(tx, tz)
+        f = frame(tx, tz, yaw)
+        for sx in (-1, 1):
+            for sz in (-1, 1):
+                b.box("Walls", "HQLeg", (1.2, 26, 1.2), f(sx * 5.4, 13, sz * 5.4), plank, "Wood", angles=(0, yaw, 0))
+            b.box("Decor", "HQBrace", (0.5, 15, 0.5), f(sx * 5.6, 5, 0), plank, "Wood", angles=(0, yaw, 0))
+        for lv, yy in enumerate((9, 18)):
+            b.box("Walls", "HQDeck", (12, 0.6, 12), f(0, yy, 0), plank, "WoodPlanks", angles=(0, yaw, 0))
+            for side, (sx, sz, lx, lz) in enumerate(((0, 6, 12, 0.5), (6, 0, 0.5, 12), (-6, 0, 0.5, 12))):
+                b.box("Cover", "HQWall", (lx, 3.4 if lv == 0 else 4.2, lz), f(sx, yy + 2, sz), rust, "CorrodedMetal",
+                      angles=(0, yaw, rng.uniform(-2, 2)))
+        b.box("Cover", "HQSandbags", (8, 2.2, 2), f(0, 19.4, -5.4), (150, 134, 98), "Fabric", angles=(0, yaw, 0))
+        b.box("Decor", "HQRoof", (14, 0.5, 14), f(0, 25.6, 0), rust, "CorrodedMetal", angles=(5, yaw, 0))
+        b.add("Walls", "HQLadder", (2, 18, 2), f(0, 9.4, -7), (90, 90, 92), "Metal", angles=(0, yaw, 0), cls="TrussPart")
+        b.box("Decor", "HQAntenna", (0.3, 14, 0.3), f(4, 32, 4), (60, 60, 64), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "HQBeacon", (0.8, 0.8, 0.8), f(4, 39.2, 4), (255, 40, 30), "Neon", angles=(0, yaw, 0),
+              children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 24, "Brightness": 1.4,
+                                                                                      "Color": rgb(255, 60, 40)}}])
+        b.box("Decor", "HQSearchlight", (1.6, 1.6, 2), f(-3.5, 21, -5), (230, 226, 210), "Neon", angles=(-15, yaw + 180, 0),
+              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+                  "Face": "Front", "Range": 80, "Brightness": 2, "Angle": 30, "Color": rgb(255, 240, 210)}}])
+        b.box("Decor", "HQBanner", (11, 7, 0.2), f(0, 13.5, -6.3), (150, 40, 32), "Fabric", angles=(0, yaw, rng.uniform(-2, 2)))
+        b.sign2("HQSign", (10, 3, 0.2), f(0, 14.5, -6.45), "PHOENIX", "WIR GEBEN NICHT AUF", (150, 40, 32), (240, 220, 190),
+                (230, 210, 180), angles=(0, yaw, 0))
+
+        # Lichterketten um den Platz: acht Masten, durchhängende Ketten mit warmen Birnen
+        posts = []
+        for k in range(8):
+            a = math.radians(22.5 + 45 * k)
+            posts.append((math.cos(a) * 30, math.sin(a) * 30))
+            b.box("Decor", "StringPost", (0.6, 9, 0.6), (posts[-1][0], 4.5, posts[-1][1]), plank, "Wood")
+        for k in range(8):
+            (ax_, az_), (bx_, bz_) = posts[k], posts[(k + 1) % 8]
+            for j in range(1, 6):
+                t = j / 6
+                yy = 8.6 - 1.6 * math.sin(math.pi * t)
+                kids = None
+                if j == 3:
+                    kids = [{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 14, "Brightness": 0.9, "Color": warm}}]
+                b.add("Decor", "Bulb", (0.6, 0.6, 0.6), (ax_ + (bx_ - ax_) * t, yy, az_ + (bz_ - az_) * t),
+                      rng.choice(((255, 206, 140), (255, 186, 110), (255, 226, 170))), "Neon",
+                      props={"Shape": "Ball", "CanCollide": False}, children=kids)
+        # Feuertonnen auf dem Platz
+        for k in range(4):
+            a = math.radians(45 + 90 * k)
+            self.fire(math.cos(a) * 44, math.sin(a) * 44, y=0, size=4)
+
+        # Stacheldraht auf der Mauer, Pfahlsperren davor
+        for inst in list(b.groups.get("Walls", [])):
+            if inst["Name"] in ("WallContainer", "WallSheet"):
+                props = inst["Properties"]
+                pos = props["CFrame"]["CFrame"]["position"]
+                top = props["Size"][1] / 2 + pos[1] - b.origin[1]
+                ln = props["Size"][0]
+                # Rolle entlang der Länge (lokale x-Achse, wie der Zylinder): Ausrichtung der Wand übernehmen
+                b.add("Walls", "BarbedWire", (ln, 0.9, 0.9), (pos[0] - b.origin[0], top + 0.5, pos[2] - b.origin[2]), (70, 66, 62),
+                      "CorrodedMetal", props={"Shape": "Cylinder"})
+                b.groups["Walls"][-1]["Properties"]["CFrame"]["CFrame"]["orientation"] = copy.deepcopy(
+                    props["CFrame"]["CFrame"]["orientation"])
+        for k in range(44):
+            a = 2 * math.pi * (k + 0.5) / 44
+            if min(abs(math.cos(a)), abs(math.sin(a))) < 0.16:
+                continue
+            x, z = math.cos(a) * (R + 13), math.sin(a) * (R + 13)
+            for cross in (-35, 35):
+                b.box("Walls", "Stake", (0.6, 7, 0.6), (x, 2.2, z), (104, 80, 56), "Wood",
+                      angles=(0, -math.degrees(a) + 90, cross))
+
+        # Wasserturm, Gemüsebeete, Wäscheleine, Gedenkwand
+        wx, wz = -24, -82
+        for sx in (-1, 1):
+            for sz in (-1, 1):
+                b.box("Decor", "WaterTowerLeg", (0.8, 16, 0.8), (wx + sx * 3.4, 8, wz + sz * 3.4), plank, "Wood")
+        b.box("Decor", "WaterTowerDeck", (9, 0.5, 9), (wx, 16.2, wz), plank, "WoodPlanks")
+        b.cylinder("Decor", "WaterTank", 8, 7, (wx, 20, wz), (90, 96, 92), material="CorrodedMetal")
+        b.add("Decor", "WaterTowerLadder", (2, 16, 2), (wx, 8, wz + 4.6), (90, 90, 92), "Metal", cls="TrussPart")
+        for k in range(3):
+            gx, gz = 16 + k * 7, 66
+            b.box("Decor", "GardenBed", (5, 1.2, 12), (gx, 0.6, gz), (96, 72, 50), "WoodPlanks")
+            b.box("Decor", "GardenSoil", (4.4, 0.2, 11.4), (gx, 1.25, gz), (70, 52, 36), "Ground")
+            for j in range(5):
+                b.add("Decor", "Plant", (1.6, 1.4, 1.6), (gx + rng.uniform(-1, 1), 2.0, gz - 4.6 + j * 2.3),
+                      rng.choice(((70, 110, 52), (90, 128, 60), (60, 96, 48))), "Grass", props={"Shape": "Ball", "CanCollide": False})
+        (ax_, az_), (bx_, bz_) = (-60, 54), (-70, 30)
+        b.box("Decor", "LaundryLine", (math.hypot(bx_ - ax_, bz_ - az_), 0.1, 0.1), ((ax_ + bx_) / 2, 6, (az_ + bz_) / 2), (200, 200, 190),
+              "Fabric", angles=(0, math.degrees(math.atan2(-(bz_ - az_), bx_ - ax_)), 0))
+        for pxz in ((ax_, az_), (bx_, bz_)):
+            b.box("Decor", "LaundryPost", (0.5, 6.4, 0.5), (pxz[0], 3.2, pxz[1]), plank, "Wood")
+        for j in range(1, 7):
+            t = j / 7
+            b.box("Decor", "Laundry", (rng.uniform(1.4, 2.4), rng.uniform(1.6, 2.6), 0.15),
+                  (ax_ + (bx_ - ax_) * t, 4.9, az_ + (bz_ - az_) * t), rng.choice(((180, 60, 50), (60, 90, 140), (200, 196, 180), (90, 110, 70))),
+                  "Fabric", angles=(0, math.degrees(math.atan2(-(bz_ - az_), bx_ - ax_)), 0))
+        mx_, mz_ = -18, -30
+        ym = facing(mx_, mz_)  # Vorderseite zum Lagerfeuer
+        b.box("Decor", "MemorialBoard", (9, 5, 0.4), (mx_, 3.4, mz_), (96, 78, 58), "WoodPlanks", angles=(0, ym, 0))
+        for side in (-1, 1):
+            b.box("Decor", "MemorialPost", (0.5, 6, 0.5), (mx_ + side * 4.2 * math.cos(math.radians(ym)), 3, mz_ - side * 4.2 * math.sin(math.radians(ym))),
+                  plank, "Wood")
+        m20 = self.bm.rot(0, ym, 0)
+        for j in range(14):
+            lx, ly = rng.uniform(-3.8, 3.8), rng.uniform(1.6, 5.4)
+            b.box("Decor", "MemorialNote", (rng.uniform(0.8, 1.3), rng.uniform(0.9, 1.3), 0.05),
+                  (mx_ + m20[0][0] * lx + m20[0][2] * -0.25, ly, mz_ + m20[2][0] * lx + m20[2][2] * -0.25),
+                  rng.choice(((226, 220, 200), (210, 200, 170), (230, 226, 210))), "SmoothPlastic", angles=(0, ym, rng.uniform(-12, 12)))
+        for j in range(7):
+            cx_, cz_ = mx_ + m20[0][0] * rng.uniform(-4, 4) + m20[0][2] * -1.6, mz_ + m20[2][0] * rng.uniform(-4, 4) + m20[2][2] * -1.6
+            b.cylinder("Decor", "Candle", 0.35, rng.uniform(0.6, 1.2), (cx_, 0.5, cz_), (236, 230, 210), material="SmoothPlastic")
+            if j % 2 == 0:
+                b.box("Decor", "CandleFlame", (0.2, 0.3, 0.2), (cx_, 1.3, cz_), (255, 180, 80), "Neon", props={"CanCollide": False},
+                      children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 6, "Brightness": 0.8, "Color": warm}}])
+        b.sign2("MemorialSign", (8, 1.4, 0.2), (mx_ - m20[0][2] * 0.35, 6.6, mz_ - m20[2][2] * 0.35), "WIR VERGESSEN EUCH NICHT", "",
+                (96, 78, 58), (230, 220, 190), (220, 210, 180), angles=(0, ym, 0))
+
         # dezenter grüner Ring am Boden (Grenze der Safe Zone)
         n = 72
         for k in range(n):
@@ -1601,6 +1844,243 @@ class World:
                 continue
             x, z = math.cos(a) * 135, math.sin(a) * 135
             self.b.container(x, z, along_x=abs(math.sin(a)) > 0.7, color=rng.choice(((90, 110, 76), (150, 60, 50), (60, 100, 150))))
+
+    # ---------- Autobahn auf Stelzen, Bahnstrecke mit Bahnhof ----------
+    def slab(self, group, name, a, c, width, thick, color, mat, props=None):
+        """Platte von a nach c (je (x, y_oben, z)), geneigt wie die Strecke."""
+        (ax, ay, az), (bx, by, bz) = a, c
+        flat = math.hypot(bx - ax, bz - az)
+        yaw = math.degrees(math.atan2(-(bz - az), bx - ax))
+        roll = math.degrees(math.atan2(by - ay, flat))
+        self.b.box(group, name, (math.hypot(flat, by - ay), thick, width), ((ax + bx) / 2, (ay + by) / 2 - thick / 2, (az + bz) / 2),
+                   color, mat, angles=(0, yaw, roll), props=props)
+
+    def autobahn(self):
+        """A7 quer über den Norden von Ödstadt: Hochstraße auf Pfeilern, Rampen an beiden Enden, ein eingestürztes Feld,
+        Wracks und Mittelleitplanke. Die Fläche darunter bleibt frei (Korridor)."""
+        b, rng = self.b, self.rng
+        (x0, z), (x1, _) = AUTOBAHN[0], AUTOBAHN[1]
+        top, width, ramp = AUTOBAHN_H, AUTOBAHN_W, AUTOBAHN_RAMP
+        concrete, asphalt, paint = (150, 146, 138), (46, 47, 50), (196, 194, 184)
+        gap = (240, 290)  # eingestürztes Feld (x von, bis)
+
+        def height(x):
+            if x < x0 + ramp:
+                return 0.25 + (top - 0.25) * (x - x0) / ramp
+            if x > x1 - ramp:
+                return 0.25 + (top - 0.25) * (x1 - x) / ramp
+            return top
+        # Fahrbahn in Stücken (an den Rampen geneigt), Brüstung außen, Leitplanke in der Mitte
+        xs = [x0, x0 + ramp / 2, x0 + ramp] + list(range(int(x0 + ramp) + 60, int(x1 - ramp), 60)) + [x1 - ramp, x1 - ramp / 2, x1]
+        xs = sorted(set(round(v, 1) for v in xs) | set(gap))
+        for xa, xb in zip(xs, xs[1:]):
+            if gap[0] <= xa < gap[1]:
+                continue
+            ha, hb = height(xa), height(xb)
+            self.slab("Roads", "Road", (xa, ha, z), (xb + 0.05, hb, z), width, 2.4, asphalt, "Asphalt")
+            if xa < x0 + ramp - 1 or xb > x1 - ramp + 1:  # Rampe: massiver Damm bis in den Boden
+                self.slab("Buildings", "Embankment", (xa, ha - 2.4, z), (xb, hb - 2.4, z), width - 1, max(ha, hb) + 1,
+                          (120, 116, 108), "Concrete")
+            for s in (-1, 1):
+                self.slab("Walls", "Parapet", (xa, ha + 1.3, z + s * (width / 2 - 0.5)), (xb, hb + 1.3, z + s * (width / 2 - 0.5)),
+                          1.0, 1.3, concrete, "Concrete")
+                self.slab("Roads", "EdgeLine", (xa, ha + 0.02, z + s * (width / 2 - 2.5)), (xb, hb + 0.02, z + s * (width / 2 - 2.5)),
+                          0.4, 0.04, paint, "SmoothPlastic")
+            self.slab("Walls", "MedianBarrier", (xa, ha + 1.1, z), (xb, hb + 1.1, z), 1.2, 1.1, (170, 166, 158), "Concrete")
+            if ha > 6 and hb > 6:  # Brückenkante als dickerer Träger unter der Fahrbahn
+                self.slab("Buildings", "BridgeGirder", (xa, ha - 2.4, z), (xb, hb - 2.4, z), width - 6, 2.4, (120, 118, 112), "Concrete")
+        # Spurmarkierung
+        x = x0 + 12
+        while x < x1 - 12:
+            if not (gap[0] - 4 < x < gap[1] + 4):
+                for s in (-1, 1):
+                    h = height(x)
+                    b.box("Roads", "LaneDash", (8, 0.04, 0.45), (x, h + 0.03, z + s * width / 4), paint, "SmoothPlastic",
+                          angles=(0, 0, math.degrees(math.atan2(height(x + 1) - height(x - 1), 2))))
+            x += 22
+        # Pfeiler (Doppelstütze mit Querträger), nicht mitten auf eine Straße
+        x = x0 + ramp + 10
+        while x < x1 - ramp - 5:
+            h = height(x)
+            if h > 5 and not (gap[0] - 2 < x < gap[1] + 2):
+                cols = [s for s in (-1, 1) if all(dist_point_segment(x, z + s * 9, *r[:4]) > r[4] / 2 + 3 for r in self.roads)]
+                for s in cols:
+                    b.box("Buildings", "Pillar", (3.4, h - 2.4, 3.4), (x, (h - 2.4) / 2 - 0.4, z + s * 9), concrete, "Concrete")
+                if cols:
+                    b.box("Buildings", "PillarCap", (4, 2, width - 4), (x, h - 3.6, z), concrete, "Concrete")
+            x += 48
+        # eingestürztes Feld: Platte schräg auf dem Boden, Bewehrungseisen, Schutt, ein abgestürztes Auto
+        self.slab("Roads", "CollapsedDeck", (gap[0] + 2, top - 1.2, z + 3), (gap[1] - 14, 0.5, z - 2), width - 4, 2.4, asphalt, "Asphalt")
+        for k in range(6):
+            b.box("Decor", "Rebar", (0.25, 0.25, rng.uniform(4, 8)), (gap[0] + rng.uniform(-1, 1), top - 1.4, z + rng.uniform(-14, 14)),
+                  (90, 60, 44), "CorrodedMetal", angles=(rng.uniform(-40, 40), 90 + rng.uniform(-20, 20), rng.uniform(-30, 30)))
+            b.box("Decor", "Rebar", (0.25, 0.25, rng.uniform(4, 8)), (gap[1] + rng.uniform(-1, 1), top - 1.4, z + rng.uniform(-14, 14)),
+                  (90, 60, 44), "CorrodedMetal", angles=(rng.uniform(-40, 40), 90 + rng.uniform(-20, 20), rng.uniform(-30, 30)))
+        for k in range(8):
+            self.rubble(rng.uniform(gap[0], gap[1]), z + rng.uniform(-18, 18), 7, (140, 136, 128), y=0.4)
+        self.car(gap[1] - 8, z + 9, 110, burned=True, y=0.6)
+        self.smoke_column(gap[0] + 20, 3, z)
+        # Wracks und Stau auf der Hochstraße
+        for k in range(18):
+            x = rng.uniform(x0 + ramp, x1 - ramp)
+            if gap[0] - 20 < x < gap[1] + 20:
+                continue
+            s = rng.choice((-1, 1)) * rng.uniform(3, width / 2 - 4)
+            self.car(x, z + s, 90 + rng.uniform(-30, 30) + (180 if s < 0 else 0), y=top)
+        for k in range(4):
+            x = rng.uniform(x0 + ramp + 20, x1 - ramp - 20)
+            if not (gap[0] - 20 < x < gap[1] + 20):
+                self.fire(x, z + rng.choice((-1, 1)) * 12, y=top, smoke=rng.random() < 0.5)
+        # Laternen und Schilderbrücken (Schilder werden später verwittert)
+        x = x0 + ramp
+        while x < x1 - ramp:
+            if not (gap[0] - 6 < x < gap[1] + 6):
+                for s in (-1, 1):
+                    tilt = rng.choice((0, 0, rng.uniform(-20, 20)))
+                    b.box("Decor", "StreetLamp", (0.6, 12, 0.6), (x, top + 6, z + s * (width / 2 - 0.5)), (40, 42, 46), "Metal",
+                          angles=(tilt, 0, 0))
+            x += 90
+        for gx, title, sub in ((x0 + ramp + 30, "A7  ÖDSTADT-NORD", "SANDBACH 3 KM"), (x1 - ramp - 30, "A7  ÖDSTADT-NORD", "NORDHEIM 4 KM")):
+            for s in (-1, 1):
+                b.box("Decor", "GantryPost", (1, 9, 1), (gx, top + 4.5, z + s * (width / 2 - 0.5)), (110, 112, 116), "Metal")
+            b.box("Decor", "GantryBeam", (1, 1, width), (gx, top + 9, z), (110, 112, 116), "Metal")
+            for yaw in (90, -90):
+                b.sign2("AutobahnSign", (16, 4, 0.3), (gx + (-0.7 if yaw == 90 else 0.7), top + 11.2, z + (-8 if yaw == 90 else 8)),
+                        title, sub, (40, 86, 60), (230, 230, 220), (220, 220, 210), angles=(0, yaw, rng.uniform(-3, 3)))
+        # Zufahrten unten an die Landstraßen
+        self.road(x0 - 40, z, x0, z, HIGHWAY_W, cracked=False)
+        self.road(x1, z, x1 + 60, z - 20, HIGHWAY_W, cracked=False)
+
+    def railway(self):
+        """Bahnstrecke West -> Hafen: Schotterbett, Schwellen-Bohlen, Schienen; Bahnübergänge mit Schranken."""
+        b, rng = self.b, self.rng
+        for (ax, az), (bx, bz) in zip(RAIL, RAIL[1:]):
+            length = math.hypot(bx - ax, bz - az)
+            n = max(1, int(length // 40))
+            for k in range(n):
+                pa = (ax + (bx - ax) * k / n, az + (bz - az) * k / n)
+                pc = (ax + (bx - ax) * (k + 1) / n, az + (bz - az) * (k + 1) / n)
+                ext = 0.6 / max(1.0, length / n)
+                pc2 = (pa[0] + (pc[0] - pa[0]) * (1 + ext), pa[1] + (pc[1] - pa[1]) * (1 + ext))
+                self.slab("Roads", "RailBed", (pa[0], 0.55, pa[1]), (pc2[0], 0.55, pc2[1]), 10, 3.0, (104, 98, 90), "Pebble")
+                self.slab("Roads", "Sleepers", (pa[0], 0.75, pa[1]), (pc2[0], 0.75, pc2[1]), 6.6, 0.2, (78, 62, 48), "WoodPlanks")
+                dx, dz = (bx - ax) / length, (bz - az) / length
+                for s in (-1, 1):
+                    ox_, oz_ = -dz * s * 2.4, dx * s * 2.4
+                    self.slab("Roads", "Rail", (pa[0] + ox_, 1.15, pa[1] + oz_), (pc2[0] + ox_, 1.15, pc2[1] + oz_), 0.35, 0.4,
+                              (96, 74, 60), "CorrodedMetal")
+            # Bahnübergänge: wo eine Straße die Strecke kreuzt – Andreaskreuz und Schranke auf jeder Seite
+            ux, uz = (bx - ax) / length, (bz - az) / length
+            yaw = math.degrees(math.atan2(-uz, ux))
+            for rx0, rz0, rx1, rz1, w in list(self.roads):
+                hit = seg_intersect((ax, az), (bx, bz), (rx0, rz0), (rx1, rz1))
+                if not hit:
+                    continue
+                rl = math.hypot(rx1 - rx0, rz1 - rz0) or 1
+                vx, vz = (rx1 - rx0) / rl, (rz1 - rz0) / rl
+                if vx * -uz + vz * ux < 0:
+                    vx, vz = -vx, -vz
+                for s in (-1, 1):
+                    px, pz = hit[0] + vx * s * 9, hit[1] + vz * s * 9
+                    sx_, sz_ = px + ux * s * (w / 2 + 2), pz + uz * s * (w / 2 + 2)
+                    b.box("Decor", "CrossingPost", (0.4, 5, 0.4), (sx_, 2.5, sz_), (200, 200, 200), "Metal")
+                    for ang in (45, -45):
+                        b.box("Decor", "CrossingSign", (3.4, 0.5, 0.15), (sx_, 4.6, sz_), (220, 60, 50), "SmoothPlastic",
+                              angles=(0, yaw + 90, ang))
+                    up = rng.random() < 0.5
+                    ax_, az_ = px + ux * s * (w / 4 + 1), pz + uz * s * (w / 4 + 1)
+                    b.box("Decor", "CrossingArm", (w * 0.5, 0.4, 0.4), (ax_, 1.6 if not up else 3.5, az_), (210, 60, 50), "Metal",
+                          angles=(0, yaw, rng.uniform(-6, 6) if not up else s * 35))
+        # Prellbock am Ende im Hafen
+        ex, ez = RAIL[-1]
+        b.box("Walls", "BufferStop", (3, 3, 8), (ex, 1.5, ez), (160, 40, 36), "Metal",
+              angles=(0, math.degrees(math.atan2(-(RAIL[-1][1] - RAIL[-2][1]), RAIL[-1][0] - RAIL[-2][0])), 0))
+
+    def station(self):
+        """Bahnhof Ödstadt Süd: zwei Bahnsteige mit Dach, Bahnhofsgebäude, entgleister Zug."""
+        b, rng = self.b, self.rng
+        # Stelle an der Strecke suchen, an der keine Straße über die Bahnsteige läuft
+        (ax, az), (bx, bz) = RAIL[STATION_SEG], RAIL[STATION_SEG + 1]
+        length = math.hypot(bx - ax, bz - az)
+        dx, dz = (bx - ax) / length, (bz - az) / length
+        nx, nz = -dz, dx
+        if nz < 0:
+            nx, nz = -nx, -nz  # Gebäude auf der Stadtseite (Norden)
+        best = None
+        for t in range(70, int(length) - 70, 10):
+            cx, cz = ax + dx * t, az + dz * t
+            ok = all(dist_point_segment(cx + dx * u + nx * v, cz + dz * u + nz * v, *r[:4]) > r[4] / 2 + 4
+                     for r in self.roads for u in (-70, -35, 0, 35, 70) for v in (-12, 12, 34))
+            if ok:
+                best = (cx, cz)
+                break
+        if not best:
+            best = (ax + dx * length / 2, az + dz * length / 2)
+        cx, cz = best
+        yaw = math.degrees(math.atan2(-dz, dx))
+
+        def at(u, v):
+            return cx + dx * u + nx * v, cz + dz * u + nz * v
+        self.occupied.append((cx + nx * 30, cz + nz * 30, 40))
+        for v in (-9.5, 9.5):
+            px, pz = at(0, v)
+            b.box("Buildings", "Platform", (130, 2.4, 7), (px, 0.8, pz), (150, 146, 136), "Concrete", angles=(0, yaw, 0))
+            ex, ez = at(0, v - 3.2 if v > 0 else v + 3.2)
+            b.box("Decor", "PlatformEdge", (130, 0.05, 0.6), (ex, 2.03, ez), (200, 180, 70), "SmoothPlastic", angles=(0, yaw, 0))
+            for u in range(-50, 51, 20):
+                qx, qz = at(u, v + (1.5 if v > 0 else -1.5))
+                b.box("Buildings", "CanopyPost", (0.6, 8, 0.6), (qx, 6, qz), (60, 64, 68), "Metal")
+            rx, rz = at(0, v)
+            for u0, u1 in ((-56, -10), (-10, 30), (30, 56)):
+                if rng.random() < 0.25:
+                    continue  # Dach eingestürzt
+                mx, mz = at((u0 + u1) / 2, v)
+                b.box("Buildings", "Canopy", (u1 - u0, 0.4, 9), (mx, 10.2, mz), (88, 92, 96), "CorrodedMetal",
+                      angles=(rng.uniform(-3, 3), yaw, rng.uniform(-2, 2)))
+            sx, sz = at(-30, v)
+            b.sign2("StationSign", (10, 2.4, 0.25), (sx, 8, sz), "ÖDSTADT SÜD", "GLEIS %d" % (1 if v > 0 else 2), (40, 60, 110),
+                    (230, 230, 230), (220, 220, 220), angles=(0, yaw, rng.uniform(-4, 4)))
+            for u in (-40, 0, 40):
+                qx, qz = at(u, v)
+                b.box("Cover", "Bench", (5, 1.4, 1.6), (qx, 2.6, qz), (90, 70, 50), "WoodPlanks", angles=(0, yaw, 0))
+        # Bahnhofsgebäude hinter Gleis 1, Front zum Bahnsteig
+        pb = self.ruin_house(52, 20, 14, (168, 120, 96), "Brick", damage=0.45, shop=("BAHNHOF", "ÖDSTADT SÜD", (230, 220, 200)))
+        hx, hz = at(0, 26)
+        self.stamp(pb, hx, hz, self.yaw_to(-nx, -nz))
+        # Vorplatz zur Stadt: Straße bis zum nächsten Ring
+        qx, qz = at(0, 40)
+        tx, tz = qx + nx * 60, qz + nz * 60
+        best_r = min(self.roads, key=lambda r: dist_point_segment(qx, qz, *r[:4]))
+        # Fußweg/Straße vom Vorplatz zur nächsten Straße
+        rx0, rz0, rx1, rz1, _ = best_r
+        l2 = (rx1 - rx0) ** 2 + (rz1 - rz0) ** 2 or 1
+        t = max(0.0, min(1.0, ((qx - rx0) * (rx1 - rx0) + (qz - rz0) * (rz1 - rz0)) / l2))
+        jx, jz = rx0 + (rx1 - rx0) * t, rz0 + (rz1 - rz0) * t
+        if math.hypot(jx - qx, jz - qz) < 120:
+            self.road(qx, qz, jx, jz, 14, lines=False, cracked=True)
+        # Zug: Lok und Wagen auf Gleis, die letzten zwei entgleist und umgekippt
+        colors = ((150, 40, 36), (170, 168, 160), (170, 168, 160), (60, 90, 120), (170, 168, 160))
+        u = -60.0
+        for k, color in enumerate(colors):
+            lng = 22 if k == 0 else 26
+            mid = u + lng / 2
+            px, pz = at(mid, 0)
+            derail = k >= 3
+            if derail:
+                px, pz = px + nx * -(4 + 5 * (k - 3)), pz + nz * -(4 + 5 * (k - 3))
+            roll = (rng.uniform(70, 88) if k == 4 else rng.uniform(10, 25)) if derail else 0
+            ang = (0, yaw + 90 + (rng.uniform(-14, 14) if derail else 0), roll)
+            body_y = 4.2 if not derail else (3.4 if k == 4 else 4.0)
+            b.box("Buildings", "TrainCar", (6.6, 6.4, lng), (px, body_y, pz), color, "CorrodedMetal", angles=ang)
+            b.box("Decor", "TrainWindows", (6.7, 1.6, lng - 4), (px, body_y + 1.2, pz), (30, 34, 38), "Glass", angles=ang,
+                  props={"Transparency": 0.2})
+            b.box("Decor", "TrainRoof", (5.8, 0.6, lng - 1), (px, body_y + 3.5, pz), (90, 90, 92), "Metal", angles=ang)
+            if k == 0:
+                b.box("Decor", "Pantograph", (0.3, 2.4, 3), (px, body_y + 4.8, pz), (50, 50, 50), "Metal", angles=(20, yaw + 90, 0))
+            u += lng + 1.5
+        sx_, sz_ = at(30, -12)
+        self.smoke_column(sx_, 2, sz_)
+        PLACES["Bahnhof"] = ("BAHNHOF ÖDSTADT SÜD", cx, cz, 80)
 
     # ---------- Rote Zonen: Linie am Boden, Kontrollpunkte an jeder Straße ----------
     def redzones(self):
@@ -1738,6 +2218,10 @@ def build(bm):
     # Mitte: Safe Zone, dann die besonderen Orte (belegen ihre Fläche, bevor die Straßen Häuser bekommen)
     w.camp()
     w.occupied.append((0, 0, 168))
+    (ax, az), (bx, bz) = AUTOBAHN
+    w.corridors.append((ax - 40, az, bx + 60, bz, AUTOBAHN_W + 16))
+    for (ax, az), (bx, bz) in zip(RAIL, RAIL[1:]):
+        w.corridors.append((ax, az, bx, bz, 18))
     w.build_hospital()
     w.build_police()
     w.build_evac()
@@ -1753,22 +2237,30 @@ def build(bm):
         w.build_outpost(key, title, x, z)
 
     # Landstraßen (leicht geschwungen) und Zufahrten zur Safe Zone
-    for pts in highway_points():
-        w.road_line(polyline(pts, rng, wobble=14, step=70), HIGHWAY_W)
+    for pts in highway_lines():
+        w.road_line(pts, HIGHWAY_W)
     for sx, sz in ((0, 1), (1, 0), (0, -1), (-1, 0)):
         w.road(sx * (SAFE_R - 2), sz * (SAFE_R - 2), sx * 180, sz * 180, ROAD_W, lines=False, cracked=False)
-    w.build_gas(-860, -50, -860, -132)
-    w.build_gas(880, 150, 930, 270)
-    w.build_gas(165, -925, 255, -910)
+    for gas in GAS:
+        w.build_gas(*gas)
 
-    # Feldwege von der nächsten Landstraße hinauf zu den Außenposten, zum Funkturm und zu den Seeufern
-    for _, _, x, z in OUTPOSTS:
+    # Feldwege von der nächsten Landstraße hinauf zu den Außenposten und zum Funkturm
+    for _, _, x, z in OUTPOSTS + [("Funkturm", "", PLACES["Funkturm"][1], PLACES["Funkturm"][2])]:
         start = w.nearest_highway(x, z)
         if start:
             mid = ((start[0] + x) / 2 + rng.uniform(-40, 40), (start[1] + z) / 2 + rng.uniform(-40, 40))
             dx, dz = x - mid[0], z - mid[1]
             dl = math.hypot(dx, dz) or 1
             w.track([start, mid, (x - dx / dl * 30, z - dz / dl * 30)])
+
+    # Ödstadt: Straßen mit Gehwegen; darüber die Hochstraße, an der Bahn der Bahnhof
+    first = len(w.roads)
+    for pts in w.city_streets():
+        w.road_line(pts, ROAD_W, sidewalk=True)
+    city_segments = [s for s in w.roads[first:]]
+    w.autobahn()
+    w.station()
+    w.sidewalks()
 
     # Einzelne Häuser und Scheunen an den Landstraßen (außerhalb der Orte)
     def rural_zone(x, z):
@@ -1778,18 +2270,13 @@ def build(bm):
     for seg in [s_ for s_ in w.roads if s_[4] == HIGHWAY_W]:
         w.line_buildings(seg[0], seg[1], seg[2], seg[3], seg[4], rural_zone, 0.35, gap=(50, 120))
 
-    # Ödstadt: Straßen mit Gehwegen, dann Häuser an jeder Straße
-    first = len(w.roads)
-    for pts in w.city_streets():
-        w.road_line(pts, ROAD_W, sidewalk=True)
-    city_segments = [s for s in w.roads[first:]]
-
+    # Ödstadt: Häuser an jeder Straße
     def city_zone(x, z):
         r = math.hypot(x, z)
         if r < 175 or r > 750:
             return None
         return "downtown" if r < 300 else ("city" if r < 540 else "suburb")
-    for seg in city_segments + [s for s in w.roads[:first] if math.hypot((s[0] + s[2]) / 2, (s[1] + s[3]) / 2) < 740]:
+    for seg in city_segments + [s for s in w.roads[:first] if s[4] == HIGHWAY_W and math.hypot((s[0] + s[2]) / 2, (s[1] + s[3]) / 2) < 740]:
         w.line_buildings(seg[0], seg[1], seg[2], seg[3], seg[4], city_zone, 0.95, gap=(4, 12))
 
     # Dörfer
@@ -1863,10 +2350,10 @@ def build(bm):
         t = rng.uniform(0.1, 0.9)
         length = math.hypot(seg[2] - seg[0], seg[3] - seg[1]) or 1
         nx, nz = -(seg[3] - seg[1]) / length, (seg[2] - seg[0]) / length
-        side = rng.choice((-1, 1)) * (seg[4] / 2 + 2)
+        side = rng.choice((-1, 1)) * (seg[4] / 2 + 2.5)
         x, z = seg[0] + (seg[2] - seg[0]) * t + nx * side, seg[1] + (seg[3] - seg[1]) * t + nz * side
         if math.hypot(x, z) > SAFE_R + 60:
-            w.litter(x, z)
+            w.litter(x, z, y=0.6, spread=1.4)
     for _ in range(8):
         a, r = rng.uniform(0, 2 * math.pi), rng.uniform(220, 680)
         found = find_spot(w, math.cos(a) * r, math.sin(a) * r, 12)
@@ -1878,7 +2365,8 @@ def build(bm):
         if found:
             w.heli_crash(*found)
 
-    # Rote Zonen, Aktivitäten, Orte, Seen
+    # Bahnstrecke zuletzt (Bahnübergänge an allen Straßen), dann rote Zonen, Aktivitäten, Orte, Seen
+    w.railway()
     w.redzones()
     activities(w)
     for key, (title, x, z, r) in PLACES.items():

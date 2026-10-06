@@ -42,7 +42,9 @@ Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch da
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
 `tools/build_maps.py`): ein improvisiertes Überlebenden-Lager auf festgetretener Erde – Wall aus Containern und
 Wellblech, vier Tore mit Holz-Wachtürmen und Suchscheinwerfern, Lagerfeuer mit Baumstamm-Bänken in der Mitte
-(Spawn), Zelte mit Feldbetten, Generator und Flutlicht, Bretterwege zu den Toren; Händler als Bretterbuden
+(Spawn) unter Lichterketten, Feuertonnen, ein dreistöckiger Kommandoturm mit Leiter, Banner „PHOENIX“, Antenne und
+Suchscheinwerfer, Stacheldraht auf der Mauer und Pfahlsperren davor, Wasserturm, Gemüsebeete, Wäscheleine und eine
+Gedenkwand mit Kerzen, Zelte mit Feldbetten, Generator und Flutlicht, Bretterwege zu den Toren; Händler als Bretterbuden
 (WAFFEN, SANI, WERKSTATT), das LAGER im Container und der Rückweg zum Hub über den Hubschrauber-Landeplatz
 (EVAKUIERUNG).
 
@@ -59,8 +61,13 @@ Alle Häuser sind kaputt: Löcher in den Wänden, abgebrochene Mauerkronen, Däc
 (eingestürzte Platten), vernagelte Fenster, Schutt, Ruß, Ranken, Graffiti („SIE SIND DRINNEN“, „EVAKUIERUNG -> CAMP
 PHOENIX“ …); auf den Straßen ausgebrannte Autos, Blutflecken, Sperren aus Beton und Sandsäcken, brennende Tonnen
 und Rauchsäulen, die meisten Laternen sind tot. Gebäude sind Prefabs, die gedreht an die Straße gesetzt werden.
-Straßen sind dunkler Asphalt mit Mittellinie und Schlaglöchern über dem Gelände; von den Landstraßen führen
-**Feldwege** (Erde, folgen dem Hang) hinauf zu jedem Außenposten. Alle Schilder sind alt und verwittert (Bretter,
+Straßen sind dunkler Asphalt mit Schlaglöchern, deren Körper bis in den Boden reicht (nichts schwebt); das Gelände ist
+unter jeder Landstraße eben, Hügel und Seen weichen ihr aus. In Ödstadt sind es richtige Stadtstraßen: Gehwege mit
+Bordstein (an Kreuzungen unterbrochen), weiße Rand- und Mittelstriche, Zebrastreifen, Gullydeckel, tote Ampeln. Über den
+Norden der Stadt läuft die **A7** als Hochstraße auf Pfeilern (Rampen an beiden Enden, ein eingestürztes Feld, Wracks,
+Schilderbrücken), durch den Süden die **Bahnstrecke** vom Westrand in den Hafen mit Bahnübergängen und dem **Bahnhof
+Ödstadt Süd** (zwei Bahnsteige, Bahnhofsgebäude, entgleister Zug). Von den Landstraßen führen **Feldwege** (Erde, folgen
+dem Hang) hinauf zu jedem Außenposten und zum Funkturm. Alle Schilder sind alt und verwittert (Bretter,
 rostiges Blech oder Stoff, mit Marker gemalt, schief, ohne Leuchten) statt moderner Leuchttafeln.
 Das Gelände ist echtes **Terrain** (Höhenfeld aus `tools/extinction_terrain.py` in
 `src/server-shared/ExtinctionTerrainData.lua`, `ExtinctionTerrain.lua` baut es beim Serverstart: in den

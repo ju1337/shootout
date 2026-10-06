@@ -16,7 +16,7 @@ local ExtinctionTerrain = require("ExtinctionTerrain")
 
 -- Werte aus dem Python-Höhenfeld (Catmull-Rom über das 16-Stud-Raster), Abweichung nur durch die Speicherung (< 0,03)
 local expected = {
-	{ -760, 230, -11.863 }, { -560, -760, 48.163 }, { 0, 0, -0.400 }, { 123.4, -456.7, -0.400 }, { -900.2, -311.1, 0.624 },
+	{ -760, 230, -11.863 }, { -560, -760, 53.469 }, { 0, 0, -0.400 }, { 123.4, -456.7, -0.400 }, { -900.2, -311.1, 0.624 },
 	{ 330, 320, -0.400 }, { 1130, -1030, -0.400 }, { -250, 1150, -0.400 }, { 1300, 300, -0.345 }, { -1500, 1500, -0.607 },
 }
 for _, row in expected do
