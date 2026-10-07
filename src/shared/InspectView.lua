@@ -9,6 +9,7 @@
 --     Aufsätze und Werte (Schaden, Feuerrate, Magazin, Reichweite) als Balken; unten rechts die Taste zum Schließen.
 -- Alles blendet weich ein und aus.
 --   InspectView.Start(weaponName, thirdPerson)  InspectView.SetProgress(t)  InspectView.Stop()  InspectView.IsActive()
+--   InspectView.Notice(text): kurzer Hinweis unten in der Mitte, wenn Inspizieren gerade nicht geht (z.B. keine Waffe)
 
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
@@ -378,6 +379,37 @@ end
 
 function InspectView.IsActive()
 	return active
+end
+
+-- Kurzer Hinweis unten in der Mitte (blendet nach NOTICE_TIME Sekunden aus)
+local NOTICE_TIME = 2.4
+local notice, noticeLabel = nil, nil
+local noticeToken = 0
+function InspectView.Notice(text)
+	if not notice then
+		notice = make("ScreenGui", { Name = "InspectNotice", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 7 },
+			player:WaitForChild("PlayerGui"))
+		noticeLabel = label({ Name = "Notice", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -210),
+			Size = UDim2.fromOffset(0, 34), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = C.Panel,
+			BackgroundTransparency = 1, Text = "", TextSize = 15, TextTransparency = 1,
+			TextXAlignment = Enum.TextXAlignment.Center }, UITheme.ScaledRoot(notice))
+		UITheme.Corner(noticeLabel, UITheme.Radius.Small)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 18) }, noticeLabel)
+	end
+	noticeToken += 1
+	local myToken = noticeToken
+	noticeLabel.Text = text
+	tween(noticeLabel, 0.15, { TextTransparency = 0, BackgroundTransparency = 0.2 })
+	task.delay(NOTICE_TIME, function()
+		if noticeToken == myToken then
+			tween(noticeLabel, 0.4, { TextTransparency = 1, BackgroundTransparency = 1 })
+		end
+	end)
+end
+
+-- Text des letzten Hinweises (Tests)
+function InspectView.LastNotice()
+	return noticeLabel and noticeLabel.Text or nil
 end
 
 -- Weggenommene Oberflächen (Tests)

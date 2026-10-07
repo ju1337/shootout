@@ -184,22 +184,49 @@ local function stopInspect(silent)
 	end
 end
 
-local function canInspect()
+-- Warum Inspizieren gerade nicht geht: Hinweis für den Spieler (statt dass einfach nichts passiert),
+-- "" = still nicht starten (tot, Menü offen, Waffe wird gerade gezogen ...), nil = es geht
+local function inspectBlocker()
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	return current ~= nil and alive() and humanoid ~= nil and not humanoid.Sit and not humanoid.PlatformStand
-		and not reloading and not aiming and not aimHeld and knife == nil and not Movement.IsSprinting()
-		and not UITheme.IsMenuOpen() and os.clock() >= drawUntil
+	if not Modes.IsFighting(player) then
+		return "Inspizieren geht im Match und in der offenen Welt – mit einer Waffe in der Hand."
+	elseif not humanoid or humanoid.Health <= 0 or isDowned() or humanoid.PlatformStand or UITheme.IsMenuOpen() or knife then
+		return ""
+	elseif humanoid.Sit then
+		return "Im Fahrzeug gibt es keine Waffe zum Inspizieren."
+	elseif current == nil then
+		if Modes.IsSurvival(player:GetAttribute("Mode")) then
+			return player:GetAttribute("InSafeZone") and "In der Safe Zone sind Waffen gesichert – draußen eine Waffe ziehen (1-9)."
+				or "Erst eine Waffe in die Hand nehmen (1-9)."
+		end
+		return "Keine Waffe in der Hand."
+	elseif reloading then
+		return "Erst fertig nachladen."
+	elseif aiming or aimHeld then
+		return "Nicht beim Zielen."
+	elseif Movement.IsSprinting() then
+		return "Nicht beim Sprinten."
+	elseif os.clock() < drawUntil then
+		return ""
+	elseif not WeaponAnimations.Inspect(current) then
+		return "Für diese Waffe gibt es noch keine Inspektion."
+	end
+	return nil
 end
 
 local function startInspect()
-	if inspect or not canInspect() then
+	if inspect then
+		return
+	end
+	local reason = inspectBlocker()
+	if reason then
+		if reason ~= "" then
+			InspectView.Notice(reason)
+		end
 		return
 	end
 	local anim, duration = WeaponAnimations.Inspect(current)
-	if not anim then
-		return
-	end
 	fireAnim = nil
 	inspect = { Weapon = current, Anim = anim, Start = os.clock(), Duration = duration, LastT = -1 }
 	InspectView.Start(current, Movement.IsThirdPerson())
@@ -591,8 +618,8 @@ function WeaponClient.Init()
 		requestReload()
 	end)
 	InputActions.Bind("Inspect", function(began)
-		if began and fighting() then
-			toggleInspect()
+		if began then
+			toggleInspect() -- geht es gerade nicht, sagt ein Hinweis warum
 		end
 	end)
 	InputActions.Bind("Melee", function(began)
