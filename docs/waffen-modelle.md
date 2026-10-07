@@ -6,7 +6,9 @@ oder dem Modell etwas Wichtiges fehlt, bleibt die heutige Quader-Waffe – nicht
 überall benutzt: Ego-Waffe mit Armen, Waffe in der Hand (Third-Person), Rückenwaffe im Hub, Vorschauen in Lobby,
 Shop und Markt, Waffen-Symbole im HUD.
 
-Der Code dazu steht in `src/shared/GunModels.lua` (Abschnitt „Fertige 3D-Modelle“).
+Der Code dazu steht in `src/shared/GunModels.lua` (Abschnitt „Fertige 3D-Modelle“). Allgemeine Regeln für alle
+Modelle (Export-Einstellungen, Geometrie, Texturen, Stil, Abgabe-Checkliste) stehen in
+[3d-richtlinien.md](3d-richtlinien.md).
 
 ## Ablauf
 
@@ -129,7 +131,8 @@ Alle anderen Namen sind frei.
 ## Texturen und Skins
 
 **Texturen (PBR)**: pro Waffe ein Textur-Set mit Farbe (Albedo), Normal, Rauheit (Roughness) und Metall
-(Metalness), 1024 × 1024 Pixel (mehr nimmt Roblox nicht; für Pistole und Revolver reichen 512 × 512). In Studio
+(Metalness), 1024 × 1024 Pixel (Roblox kann mehr, auf Handys bringt das nichts; für Pistole und Revolver reichen
+512 × 512). Die Normal Map im **OpenGL-Format** (in Substance Painter umstellen, Standard ist DirectX). In Studio
 bekommt jedes texturierte Teil eine **SurfaceAppearance** mit ColorMap, NormalMap, RoughnessMap und MetalnessMap.
 
 **Skins – Mischform**:
@@ -196,8 +199,8 @@ Rojo legt den Ordner ReplicatedStorage › Assets › Weapons an und lässt die 
 Place. Eine mit `rojo build` gebaute Place-Datei enthält sie deshalb nicht (dort gibt es dann die Quader-Waffen) –
 veröffentlicht wird aus Studio.
 
-## Agenten
+## Fahrzeuge, Items und Agenten
 
-Als Nächstes kommen die Agenten-Modelle (gleiche Größe wie heute, ca. 5 Studs, R15-Aufbau, gleiche Trefferzonen
-für alle). Bis dahin tragen alle Spieler und Bots denselben einheitlichen Körper in Agentenfarben
-(`src/server-shared/AgentBody.lua`). Die Spezifikation für Agenten folgt in einer eigenen Datei.
+Die Vorgaben dafür stehen in [3d-richtlinien.md](3d-richtlinien.md), die Vorlagen in `art/templates/Vehicles` und
+`art/templates/Items` (erzeugt mit `python3 tools/asset_templates.py`). Agenten behalten den einheitlichen Körper
+(`src/server-shared/AgentBody.lua`) und bekommen ihre eigene Ausrüstung.

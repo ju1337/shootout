@@ -9,10 +9,12 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     ./rojo build -o build/shootout.rbxlx   # fertige Place-Datei bauen
     python3 tools/build_maps.py            # Maps neu erzeugen (nach Änderungen am Map-Skript)
     python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
+    python3 tools/asset_templates.py       # Blender-Vorlagen der Fahrzeuge und Items (art/templates/Vehicles, Items)
 
-3D-Modelle für die Waffen kommen aus Blender oder Meshy: Anleitung und Spezifikation in
-[docs/waffen-modelle.md](docs/waffen-modelle.md). Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb`
-(Sturmgewehr) und `art/sources/SMG.glb`.
+3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
+Vorlagen, Export-Einstellungen, Maße, Namen, Marker, Budgets, Texturen, Stil, Abgabe-Checkliste – steht in
+[docs/3d-richtlinien.md](docs/3d-richtlinien.md); die Waffen im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md).
+Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr) und `art/sources/SMG.glb`.
 
 ## Modi
 
@@ -608,6 +610,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
 | Agenten-Körper: Ausrüstung (Kapuze, Visier, Weste …), Hautfarbe, Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
+| Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
 | Lobby (Navigation, Seiten SPIELEN und AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
 | Lobby-Seiten LOADOUT, SHOP, BATTLE PASS | `src/shared/LobbyPages.lua` |
@@ -736,7 +739,10 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)
 - `tools/build_maps.py` – erzeugt alle Maps
 - `tools/weapon_templates.py` – erzeugt die Blender-Vorlagen der Waffen (`art/templates/Weapons`)
-- `docs` – Anleitungen (Waffenmodelle aus Blender)
+- `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
+  und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)
+- `docs` – Anleitungen: Vorgaben für alle 3D-Modelle (`3d-richtlinien.md`), Waffenmodelle aus Blender
+  (`waffen-modelle.md`)
 - `assets/Weapons` – Kopien deiner Waffenmodelle (.rbxmx) für die automatische Prüfung (das Spiel lädt die Modelle
   aus dem Place, siehe docs/waffen-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)

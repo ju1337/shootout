@@ -34,7 +34,7 @@ MAG = "Meshy_AI_roblox_ar_mag_lowpoly_1006184342_texture"
 OUT = os.path.join(SRC, "Rifle.glb")
 TEX_DIR = os.path.join(SRC, "Rifle_Texturen")
 LENGTH = 4.13   # Studs, so lang wie die Quader-Waffe (blockoutLength in GunModels)
-TEX = 1024      # Roblox nimmt höchstens 1024 x 1024
+TEX = 1024      # reicht für Handys (Roblox kann mehr)
 
 # Alle Maße unten in Meshy-Einheiten (Gewehr 190 lang): Lauf nach -x, oben +y, rechte Seite -z.
 BORE = (15.5, 0.45)                       # Laufachse (y, z)

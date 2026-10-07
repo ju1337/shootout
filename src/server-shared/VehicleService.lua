@@ -256,6 +256,7 @@ local function build(vehicleId, config, cframe)
 	model:SetAttribute("Health", config.Health)
 	return model, chassis, driverSeat
 end
+VehicleService.Build = build -- auch für die Blender-Vorlagen (tools/asset_templates.py)
 
 -- ---------- Spawnen und Einpacken ----------
 

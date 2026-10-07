@@ -1,0 +1,19 @@
+# Vorlage Loot_Death (Todestasche: großer Rucksack (rotes Licht oben)) - 1 Einheit = 1 Stud, oben +Y, vorne -Z (Roblox), Boden y = 0.
+# Ref_Loot_Death = Zielgröße (vor dem Export löschen), Point_Grip = rechte Hand. Spezifikation: docs/3d-richtlinien.md
+mtllib Loot_Death.mtl
+o Ref_Loot_Death
+v -1.200000 0.000000 -0.900000
+v -1.200000 0.000000 0.900000
+v -1.200000 1.700000 -0.900000
+v -1.200000 1.700000 0.900000
+v 1.200000 0.000000 -0.900000
+v 1.200000 0.000000 0.900000
+v 1.200000 1.700000 -0.900000
+v 1.200000 1.700000 0.900000
+usemtl c_969ca6_35
+f 1 2 4 3
+f 5 7 8 6
+f 1 5 6 2
+f 3 4 8 7
+f 1 3 7 5
+f 2 6 8 4
