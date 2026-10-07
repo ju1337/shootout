@@ -67,7 +67,7 @@ local MAX_PARTS = 40 -- mehr Teile kosten auf Handys Leistung (nur ein Hinweis)
 local WELD_NAME = "AgentWeld" -- Schweißung Modell → Spielkörper
 
 -- [Agent-Id] = { Rig = Modell, Floor = Boden unter dem HumanoidRootPart, Count } (Rig) bzw.
--- { Pieces = { { Name, Body, Agent, Template } }, Count } (starre Teile)
+-- { Pieces = Modell (Teile mit den Attributen AgentBody und AgentRest), Count } (ohne Rig)
 local assetData = {}
 local assetReport = {} -- [Name] = { Loaded = bool, Errors = { Text }, Warnings = { Text } }
 
@@ -156,7 +156,43 @@ local function prepare(part)
 	part.Massless = true
 end
 
--- ---------- Rig (Humanoid, HumanoidRootPart, Gelenke – z.B. aus dem Avatar-Setup oder als StarterCharacter gebaut)
+local R15_JOINTS = { "Root", "Waist", "Neck", "LeftShoulder", "LeftElbow", "LeftWrist", "RightShoulder", "RightElbow",
+	"RightWrist", "LeftHip", "LeftKnee", "LeftAnkle", "RightHip", "RightKnee", "RightAnkle" }
+local AVATAR_SETUP = "In Studio: Modell im Workspace anklicken › Reiter Avatar › Avatar Setup bis zum Ende, das Ergebnis "
+	.. "nach Assets.Agents legen."
+
+-- Teile, die über Gelenke oder Schweißungen (auch indirekt) mit start verbunden sind: [Teil] = true
+local function connected(model, start)
+	local links = {}
+	local function link(a, b)
+		if a and b then
+			links[a] = links[a] or {}
+			links[b] = links[b] or {}
+			table.insert(links[a], b)
+			table.insert(links[b], a)
+		end
+	end
+	for _, obj in model:GetDescendants() do
+		if obj:IsA("JointInstance") or obj:IsA("WeldConstraint") then
+			link(obj.Part0, obj.Part1)
+		elseif obj:IsA("Constraint") and obj.Attachment0 and obj.Attachment1 then
+			link(obj.Attachment0.Parent, obj.Attachment1.Parent)
+		end
+	end
+	local seen, queue = { [start] = true }, { start }
+	while #queue > 0 do
+		local part = table.remove(queue)
+		for _, other in links[part] or {} do
+			if not seen[other] then
+				seen[other] = true
+				table.insert(queue, other)
+			end
+		end
+	end
+	return seen
+end
+
+-- ---------- Rig (Humanoid und HumanoidRootPart – z.B. aus dem Avatar-Setup oder als StarterCharacter gebaut) ----------
 -- Bleibt komplett, wie es ist: Gelenke, gehäutete Meshes, Bones, Accessoires, Layered Clothing (Wraps), Humanoid.
 -- Das HumanoidRootPart wird an das des Spielkörpers geschweißt, die Gelenke übernehmen jedes Bild die Bewegung der
 -- gleichnamigen Gelenke des Spielkörpers (SyncJoints) – das Modell bewegt sich also genau wie als eigener Charakter.
@@ -166,30 +202,48 @@ local function loadRig(rig, report)
 		table.insert(report.Errors, "Modell lässt sich nicht kopieren (Archivable ist aus)")
 		return nil
 	end
-	local templateRoot = template:FindFirstChild("HumanoidRootPart")
+	local templateRoot = template:FindFirstChild("HumanoidRootPart", true)
 	for _, obj in template:GetDescendants() do
 		if obj:IsA("LuaSourceContainer") then
 			obj:Destroy() -- (z.B. Animate, Health: bewegt wird über den Spielkörper)
 		end
 	end
-	local visible = {}
-	for _, part in template:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.Anchored = false
-			prepare(part)
-			if shown(part) then
-				table.insert(visible, part)
+	local copy = template:FindFirstChildWhichIsA("Humanoid", true)
+	if not copy or not templateRoot or not templateRoot:IsA("BasePart") then
+		table.insert(report.Errors, "Humanoid oder HumanoidRootPart lässt sich nicht kopieren (Archivable ist aus)")
+		return nil
+	end
+	-- was an keinem Gelenk hängt, hängt fest am HumanoidRootPart (sonst fiele es herunter)
+	local attached = connected(template, templateRoot)
+	local visible, joints, matched = {}, 0, 0
+	for _, obj in template:GetDescendants() do
+		if obj:IsA("BasePart") then
+			obj.Anchored = false
+			prepare(obj)
+			if shown(obj) then
+				table.insert(visible, obj)
 			end
+			if not attached[obj] then
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0 = templateRoot
+				weld.Part1 = obj
+				weld.Parent = obj
+			end
+		elseif isJoint(obj) then
+			joints += 1
+			matched += table.find(R15_JOINTS, obj.Name) and 1 or 0
 		end
 	end
 	if #visible == 0 then
 		table.insert(report.Errors, "keine sichtbaren Teile im Modell")
 		return nil
 	end
-	local copy = template:FindFirstChildWhichIsA("Humanoid", true)
-	if not copy or not templateRoot then
-		table.insert(report.Errors, "Humanoid oder HumanoidRootPart lässt sich nicht kopieren (Archivable ist aus)")
-		return nil
+	if joints == 0 then
+		table.insert(report.Warnings, "Rig ohne Gelenke (Motor6D) – steht steif, bewegt sich nur als Ganzes. "
+			.. AVATAR_SETUP)
+	elseif matched < 5 then
+		table.insert(report.Warnings, "Gelenke heißen nicht wie im R15-Rig (LeftShoulder, RightHip …) – Arme und Beine "
+			.. "bewegen sich nicht. " .. AVATAR_SETUP)
 	end
 	copy.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	copy.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
@@ -217,122 +271,155 @@ local function loadRig(rig, report)
 	return { Rig = template, Floor = min.Y, Count = count }
 end
 
--- ---------- Starre Teile (ohne Rig, z.B. ein Teil <Körperteil>_<Name> pro Körperteil aus Blender) ----------
--- Jedes Teil hängt am Körperteil, zu dem es gehört, und sitzt dort genau wie im Modell (gemessen ab dem Boden).
+-- ---------- Ohne Rig (z.B. ein Teil <Körperteil>_<Name> pro Körperteil aus Blender) ----------
+-- Das Modell bleibt zusammen (Hierarchie, Bones, Texturen); jedes Teil hängt am Körperteil, zu dem es gehört, und sitzt
+-- dort genau wie im Modell (gemessen ab dem Boden). Ein Modell mit Bones (gehäutetes Mesh) hängt als Ganzes am
+-- Unterkörper.
 local function loadPieces(source, report)
-	local pieces, root, rootPart = {}, nil, nil
-	for _, obj in source:GetDescendants() do
+	local template = source:Clone()
+	if not template then
+		table.insert(report.Errors, "Modell lässt sich nicht kopieren (Archivable ist aus)")
+		return nil
+	end
+	if not template:IsA("Model") then
+		local model = Instance.new("Model")
+		template.Parent = model
+		template = model
+	end
+	-- Gelenke, Schweißungen, Skripte, Humanoid & Co. steuern hier nichts (die Teile hängen am Spielkörper)
+	local marker, rootPart, drop, skinned = nil, nil, {}, false
+	for _, obj in template:GetDescendants() do
 		local name = cleanName(obj.Name)
-		if name == "Point_Root" and obj:IsA("BasePart") then
-			root = obj.Position
-		elseif name == "Point_Root" and obj:IsA("Attachment") and obj.Parent and obj.Parent:IsA("BasePart") then
-			root = (obj.Parent.CFrame * obj.CFrame).Position
+		if obj:IsA("JointInstance") or obj:IsA("WeldConstraint") or obj:IsA("Constraint") or obj:IsA("LuaSourceContainer")
+			or obj:IsA("ValueBase") or obj:IsA("Humanoid") or obj:IsA("AnimationController") then
+			obj:Destroy()
+		elseif name == "Point_Root" and (obj:IsA("BasePart") or obj:IsA("Attachment")) then
+			marker = obj
+		elseif obj:IsA("Bone") or (obj:IsA("MeshPart") and obj.HasSkinnedMesh == true) then
+			skinned = true
 		elseif obj:IsA("BasePart") then
 			if name == "HumanoidRootPart" then
 				rootPart = obj
-			elseif shown(obj) then
-				table.insert(pieces, obj)
+			end
+			local hasBones = obj:FindFirstChildWhichIsA("Bone", true) ~= nil
+			if not hasBones and (not shown(obj) or string.match(name, "^Point_")) then
+				table.insert(drop, obj) -- unsichtbare Hilfsteile, Marker, Maßstab-Teile
 			end
 		end
 	end
-	if #pieces == 0 then
+	local function markerPosition()
+		if marker and marker:IsA("BasePart") then
+			return marker.Position
+		elseif marker and marker.Parent and marker.Parent:IsA("BasePart") then
+			return (marker.Parent.CFrame * marker.CFrame).Position
+		end
+		return nil
+	end
+	local function visibleParts()
+		local list = {}
+		for _, part in template:GetDescendants() do
+			if part:IsA("BasePart") and shown(part) and part ~= marker then
+				table.insert(list, part)
+			end
+		end
+		return list
+	end
+	local visible = visibleParts()
+	if #visible == 0 then
 		table.insert(report.Errors, "keine sichtbaren Teile im Modell")
 		return nil
 	end
 	-- Bezugsrahmen: Achsen des HumanoidRootPart (sonst des Modells), Boden = Point_Root bzw. tiefster Punkt unter der
 	-- Mitte des Rumpfs
 	local basis = rootPart and rootPart.CFrame.Rotation or CFrame.new()
-	local min, max = bounds(pieces, basis)
-	local torso = {}
-	for _, part in pieces do
-		local bodyName = bodyNameOf(part.Name)
-		if bodyName == "UpperTorso" or bodyName == "LowerTorso" then
-			table.insert(torso, part)
-		end
+	local min, max = bounds(visible, basis)
+	local scale = unitScale(max.Y - min.Y, report)
+	if scale ~= 1 then
+		template:ScaleTo(template:GetScale() * scale)
+		min, max = bounds(visible, basis)
 	end
-	local origin = root
+	local origin = markerPosition()
 	if not origin then
+		local torso = {}
+		for _, part in visible do
+			local bodyName = bodyNameOf(part.Name)
+			if bodyName == "UpperTorso" or bodyName == "LowerTorso" then
+				table.insert(torso, part)
+			end
+		end
 		local torsoMin, torsoMax = bounds(torso, basis)
 		local middle = #torso > 0 and (torsoMin + torsoMax) / 2
 			or rootPart and basis:PointToObjectSpace(rootPart.Position) or (min + max) / 2
 		origin = basis * Vector3.new(middle.X, min.Y, middle.Z)
 	end
-	local scale = unitScale(max.Y - min.Y, report)
 	local toAgent = (CFrame.new(origin) * basis):Inverse()
-
-	local entries, used = {}, {}
-	for _, original in pieces do
-		local part = original:Clone()
-		if not part then
-			table.insert(report.Warnings, original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
-			continue
-		end
-		-- nur das Aussehen bleibt: keine Teile (kommen einzeln dran), Gelenke, Rig-Attachments, Skripte und Werte der
-		-- Roblox-Skalierung
-		for _, child in part:GetDescendants() do
-			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Constraint")
-				or child:IsA("LuaSourceContainer") or child:IsA("ValueBase")
-				or (child:IsA("Attachment") and not child:IsA("Bone") and string.match(child.Name, "RigAttachment$")) then
-				child:Destroy()
-			elseif scale ~= 1 and child:IsA("Attachment") then -- (auch Bones)
-				child.CFrame = CFrame.new(child.CFrame.Position * scale) * child.CFrame.Rotation
-			elseif scale ~= 1 and child:IsA("DataModelMesh") then
-				child.Scale *= scale
-				child.Offset *= scale
+	for _, part in drop do
+		for _, child in part:GetChildren() do
+			if child:IsA("BasePart") then
+				child.Parent = part.Parent -- sichtbare Teile darin bleiben
 			end
 		end
-		local inAgent = toAgent * original.CFrame
-		inAgent = CFrame.new(inAgent.Position * scale) * inAgent.Rotation
-		local unique, count = original.Name, 1
-		while used[unique] do
+		part:Destroy()
+	end
+	if marker then
+		marker:Destroy()
+	end
+
+	-- jedes Teil: Körperteil und Lage im Agentenraum (Boden zwischen den Füßen, Blick -Z)
+	local covered, count = {}, 0
+	for _, part in template:GetDescendants() do
+		if part:IsA("BasePart") then
+			local inAgent = toAgent * part.CFrame
+			-- mit Bones (gehäutetes Mesh): alles zusammen am Unterkörper, sonst verzöge sich das Mesh
+			local bodyName = skinned and "LowerTorso" or bodyNameOf(part.Name) or nearestBodyPart(inAgent.Position)
+			if shown(part) then
+				covered[bodyName] = true
+			end
+			part:SetAttribute("AgentBody", bodyName)
+			part:SetAttribute("AgentRest", inAgent)
+			part.Anchored = true
+			prepare(part)
 			count += 1
-			unique = original.Name .. "_" .. count
-		end
-		used[unique] = true
-		part.Name = unique
-		part.Size = original.Size * scale
-		part.Anchored = true
-		prepare(part)
-		table.insert(entries, { Name = unique, Body = bodyNameOf(original.Name) or nearestBodyPart(inAgent.Position),
-			Agent = inAgent, Template = part })
-	end
-	if #entries == 0 then
-		table.insert(report.Errors, "kein Teil ließ sich kopieren")
-		return nil
-	end
-	local covered, open = {}, {}
-	for _, entry in entries do
-		covered[entry.Body] = true
-	end
-	for _, name in AgentModels.BodyParts do
-		if not covered[name] then
-			table.insert(open, name)
 		end
 	end
-	if #open > 0 then
-		table.insert(report.Warnings, "zu " .. table.concat(open, ", ") .. " gehört kein Teil – dort ist nichts zu sehen")
+	template.Name = AgentModels.ModelName
+	template:SetAttribute("AgentGear", true)
+	if skinned then
+		table.insert(report.Warnings, "gehäutetes Mesh (Bones) ohne Rig: bewegt sich als Ganzes mit dem Körper, Arme "
+			.. "und Beine nicht. " .. AVATAR_SETUP)
+	else
+		local open = {}
+		for _, name in AgentModels.BodyParts do
+			if not covered[name] then
+				table.insert(open, name)
+			end
+		end
+		if #open > 0 then
+			table.insert(report.Warnings, "zu " .. table.concat(open, ", ") .. " gehört kein Teil – dort ist nichts zu sehen")
+		end
 	end
-	if #entries > MAX_PARTS then
-		table.insert(report.Warnings, #entries .. " Teile – für Handys besser höchstens " .. MAX_PARTS
+	if count > MAX_PARTS then
+		table.insert(report.Warnings, count .. " Teile – für Handys besser höchstens " .. MAX_PARTS
 			.. " (in Blender zusammenfügen)")
 	end
-	return { Pieces = entries, Count = #entries }
+	return { Pieces = template, Count = count }
 end
 
 -- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
+-- Rig = irgendwo ein Humanoid, und daneben (im selben Modell) ein HumanoidRootPart.
 local function loadAsset(source)
 	local report = { Loaded = false, Errors = {}, Warnings = {} }
-	local humanoid = source:IsA("Humanoid") and source or source:FindFirstChildWhichIsA("Humanoid", true)
+	local humanoid = source:FindFirstChildWhichIsA("Humanoid", true)
 	local rig = humanoid and humanoid.Parent
-	local root = rig and rig:FindFirstChild("HumanoidRootPart")
-	local hasJoints = false
-	for _, obj in rig and rig:GetDescendants() or {} do
-		hasJoints = hasJoints or isJoint(obj)
-	end
+	local root = rig and rig:FindFirstChild("HumanoidRootPart", true)
 	local data
-	if rig and rig:IsA("Model") and root and root:IsA("BasePart") and hasJoints then
+	if rig and rig:IsA("Model") and root and root:IsA("BasePart") then
 		data = loadRig(rig, report)
 	else
+		if humanoid then
+			table.insert(report.Warnings, "Humanoid ohne HumanoidRootPart – kein Rig, die Teile hängen starr am Körper. "
+				.. AVATAR_SETUP)
+		end
 		data = loadPieces(source, report)
 	end
 	report.Loaded = data ~= nil
@@ -591,24 +678,29 @@ function AgentModels.Attach(container, parts, agentId, weld)
 			weldTo(anchor, holder.PrimaryPart)
 		end
 	else
-		holder = Instance.new("Model")
-		holder.Name = AgentModels.ModelName
-		holder:SetAttribute("AgentGear", true)
+		holder = data.Pieces:Clone()
 		-- Charakter: Ruhelage über die Gelenke; Figur: Ruhelage wie Body (ein gehobener Arm trägt sein Teil mit)
 		local restOf = container:FindFirstChild("HumanoidRootPart") and restFrames(container)
-		for _, entry in data.Pieces do
-			local body = parts[entry.Body]
-			if body then
-				local rest = restOf and restOf(body) or floor * AgentModels.Body[entry.Body].CFrame
-				local part = entry.Template:Clone()
-				part.CFrame = body.CFrame * rest:ToObjectSpace(floor * entry.Agent)
-				part.Anchored = not weld
-				part:SetAttribute("AgentGear", true)
-				if weld then
-					weldTo(body, part)
+		local missing = {}
+		for _, part in holder:GetDescendants() do
+			if part:IsA("BasePart") then
+				local bodyName = part:GetAttribute("AgentBody")
+				local body = parts[bodyName]
+				if body then
+					local rest = restOf and restOf(body) or floor * AgentModels.Body[bodyName].CFrame
+					part.CFrame = body.CFrame * rest:ToObjectSpace(floor * part:GetAttribute("AgentRest"))
+					part.Anchored = not weld
+					part:SetAttribute("AgentGear", true)
+					if weld then
+						weldTo(body, part)
+					end
+				else
+					table.insert(missing, part) -- Körperteil fehlt (z.B. ein Körper ohne Hände)
 				end
-				part.Parent = holder
 			end
+		end
+		for _, part in missing do
+			part:Destroy()
 		end
 	end
 	local count = 0

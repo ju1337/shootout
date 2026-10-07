@@ -230,6 +230,73 @@ local withBackpack = byName(AgentModels.Attach(backpackBody, backpackParts, "Haw
 check(changed.Hawk and withBackpack.Backpack and withBackpack.Backpack:FindFirstChildOfClass("WeldConstraint").Part0
 	== backpackParts.UpperTorso, "Teil dazu: neu geladen, hängt am Rumpf")
 
+-- ---------- Importiertes Modell mit Bones (gehäutetes Mesh), ohne Rig ----------
+-- Wie nach Import 3D: die Bones hängen an einem unsichtbaren Teil, das Mesh liegt daneben. Das Modell bleibt
+-- zusammen (Bones bei ihrem Teil, im selben Modell wie das Mesh) und hängt als Ganzes am Körper; der Output sagt,
+-- wie es ein Rig wird.
+local skinnedSource = Instance.new("Model")
+skinnedSource.Name = "Blaze"
+local armature = Instance.new("Part")
+armature.Name = "Armature"
+armature.Transparency = 1
+armature.Size = Vector3.new(0.2, 0.2, 0.2)
+armature.CFrame = CFrame.new(5, 2.2, 5)
+armature.Parent = skinnedSource
+local hips = Instance.new("Bone")
+hips.Name = "Hips"
+hips.Parent = armature
+local spine = Instance.new("Bone")
+spine.Name = "Spine"
+spine.CFrame = CFrame.new(0, 0.6, 0)
+spine.Parent = hips
+local skin = Instance.new("MeshPart")
+skin.Name = "Body"
+skin.Size = Vector3.new(2.2, 5.2, 1)
+skin.CFrame = CFrame.new(5, 2.6, 5)
+skin.TextureID = "rbxassetid://99"
+skin.Parent = skinnedSource
+skinnedSource.Parent = folder
+step(0.1)
+check(report.Blaze and report.Blaze.Loaded and hasText(report.Blaze.Warnings, "Avatar Setup"),
+	"Modell mit Bones ohne Rig: lädt, Hinweis auf das Avatar-Setup: " .. messages(report.Blaze))
+local skinBody, skinParts = restBody(CFrame.new())
+local skinHolder = AgentModels.Attach(skinBody, skinParts, "Blaze", true)
+local skinArmature = skinHolder and skinHolder:FindFirstChild("Armature")
+check(skinArmature ~= nil and skinArmature.Transparency == 1 and skinArmature:FindFirstChild("Hips") ~= nil
+	and skinArmature.Hips:FindFirstChild("Spine") ~= nil, "Bones bleiben bei ihrem Teil im Modell")
+check(skinHolder and skinHolder.Body and skinHolder.Body.TextureID == "rbxassetid://99"
+	and skinHolder.Body:FindFirstChildOfClass("WeldConstraint").Part0 == skinParts.LowerTorso
+	and skinArmature and skinArmature:FindFirstChildOfClass("WeldConstraint").Part0 == skinParts.LowerTorso,
+	"Mesh und Bones hängen zusammen am Unterkörper")
+check(skinHolder and near(skinHolder.Body.Position, Vector3.new(0, 2.6, 0)), "Mesh steht auf dem Boden")
+
+-- ---------- Rig ohne Gelenke ----------
+-- Humanoid und HumanoidRootPart, aber keine Motor6D: bleibt ein Rig, jedes Teil hängt fest am HumanoidRootPart
+local stiff = Instance.new("Model")
+stiff.Name = "Aegis"
+Instance.new("Humanoid", stiff)
+local stiffRoot = Instance.new("Part")
+stiffRoot.Name = "HumanoidRootPart"
+stiffRoot.Transparency = 1
+stiffRoot.Size = Vector3.new(2, 2, 1)
+stiffRoot.CFrame = CFrame.new(0, 3, 0)
+stiffRoot.Parent = stiff
+local stiffBody = Instance.new("MeshPart")
+stiffBody.Name = "Mesh"
+stiffBody.Size = Vector3.new(2, 5, 1)
+stiffBody.CFrame = CFrame.new(0, 2.5, 0)
+stiffBody.Parent = stiff
+stiff.Parent = folder
+step(0.1)
+check(report.Aegis and report.Aegis.Loaded and hasText(report.Aegis.Warnings, "ohne Gelenke"),
+	"Rig ohne Gelenke: lädt, Hinweis: " .. messages(report.Aegis))
+local stiffBodyModel, stiffParts = restBody(CFrame.new())
+local stiffHolder = AgentModels.Attach(stiffBodyModel, stiffParts, "Aegis", true)
+local held = stiffHolder and stiffHolder:FindFirstChild("Mesh")
+local holdWeld = held and held:FindFirstChildOfClass("WeldConstraint")
+check(holdWeld ~= nil and holdWeld.Part0 == stiffHolder.HumanoidRootPart and near(held.Position, Vector3.new(0, 2.5, 0)),
+	"Teil ohne Gelenk hängt am HumanoidRootPart, steht auf dem Boden")
+
 -- ---------- Menü-Figur ----------
 local AgentFigure = require("AgentFigure")
 local primary = Color3.fromRGB(40, 60, 50)

@@ -101,6 +101,8 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | Der Agent schaut nach hinten oder zur Seite | In Blender nach vorne (-Y in Blender, -Z in Roblox) ausrichten bzw. beim Import World Forward **Front** wählen. Bei einem R15-Rig zählt die Blickrichtung des HumanoidRootPart. |
 | Ein Teil (z.B. Haare) bewegt sich mit dem falschen Körperteil | Teil umbenennen, sodass es mit dem Körperteil beginnt, z.B. `Head_Hair`. |
 | Arme stehen waagerecht ab | Starre Teile in T-Haltung gebaut: in Blender die Arme hängend modellieren. |
+| Output sagt `Modell geladen` statt `Rig geladen` | Das Modell ist kein Rig (es fehlt der Humanoid oder das HumanoidRootPart). Dann hängt es starr am Körper, ein Modell mit Bones als Ganzes am Unterkörper (Arme und Beine bewegen sich nicht). Abhilfe: Modell in den Workspace ziehen, anklicken › Reiter **Avatar** › **Avatar Setup** bis zum Ende durchlaufen, das fertige Ergebnis nach Assets.Agents legen und wie den Agenten nennen. Danach steht `Rig geladen` im Output. |
+| `Rig ohne Gelenke` oder `Gelenke heißen nicht wie im R15-Rig` | Das Rig hat keine R15-Gelenke und steht deshalb steif. Ebenfalls mit dem Avatar-Setup zu einem R15-Rig machen. |
 | Ein Rig bewegt sich nicht (steht steif) | Seine Gelenke heißen nicht wie im R15-Rig (z.B. ein R6-Rig mit `Left Shoulder`). Mit dem Avatar-Setup ein R15-Rig daraus machen. |
 | `Modell konnte nicht angezogen werden (…)` oder `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
