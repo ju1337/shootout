@@ -69,7 +69,9 @@ local function rebuild()
 	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 	local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
+	local agentSkin = Cosmetics.AgentSkin(player, agent.Id)
+	figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon,
+		agentSkin and agentSkin.Id)
 	figure.Name = "LineupAgent"
 	figure:ScaleTo(SCALE)
 	for _, part in figure:GetDescendants() do
@@ -364,7 +366,7 @@ local function buildShopVitrine()
 					model:ScaleTo(0.7) -- passt drehend in die Vitrine
 				else
 					local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
-					model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, agent.Loadout[1])
+					model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, agent.Loadout[1], item.Id)
 					model:ScaleTo(0.6)
 				end
 				for _, part in model:GetDescendants() do

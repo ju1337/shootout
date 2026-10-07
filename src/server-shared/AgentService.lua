@@ -30,8 +30,8 @@ local function getAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 end
 
--- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper in Agentenfarben bzw. Skin mit Ausrüstung,
--- ohne eigenen Avatar (AgentBody) – bis die eigenen Agenten-Modelle aus Blender da sind
+-- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper in Agentenfarben bzw. Skin mit der Ausrüstung
+-- des Agenten (3D-Modell aus Assets.Agents oder Quader), ohne eigenen Avatar (AgentBody)
 local function applyUniform(player, character, agent)
 	-- nur den aktuellen Charakter (CharacterAdded kommt in Roblox schon, bevor er im Workspace ist – anziehen
 	-- geht trotzdem)
@@ -39,7 +39,8 @@ local function applyUniform(player, character, agent)
 		return
 	end
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	AgentBody.Dress(character, primary, accent)
+	local skin = Cosmetics.AgentSkin(player, agent.Id)
+	AgentBody.Dress(character, primary, accent, agent.Id, skin and skin.Id)
 end
 
 -- Leben und Fähigkeit beim Spawn setzen
@@ -422,10 +423,14 @@ local function setupPlayer(player)
 
 	player.CharacterAdded:Connect(function(character)
 		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
-		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus, die Ausrüstung neu anlegen
+		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus, die Ausrüstung neu anlegen (einmal für alle
+		-- Teile, die im selben Moment kommen)
+		local redressQueued = false
 		character.ChildAdded:Connect(function(child)
-			if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] then
+			if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] and not redressQueued then
+				redressQueued = true
 				task.defer(function()
+					redressQueued = false
 					applyUniform(player, character, getAgent(player))
 				end)
 			end

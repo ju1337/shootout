@@ -519,7 +519,7 @@ local function rigTemplate(agent)
 		return nil
 	end
 	model.Archivable = true
-	AgentBody.Dress(model, primary, accent)
+	AgentBody.Dress(model, primary, accent, agent.Id)
 	-- Beim Tod nicht von Roblox zerlegen lassen: das macht corpse() einheitlich (Ragdoll, dann ausblenden)
 	local templateHumanoid = model:FindFirstChildOfClass("Humanoid")
 	if templateHumanoid then

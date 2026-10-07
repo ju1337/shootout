@@ -265,7 +265,7 @@ local function buildDisplay(stand, listing)
 		model:ScaleTo(0.55)
 	else
 		local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
-		model = AgentFigure.Build(agent, item.Primary, item.Accent)
+		model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, nil, item.Id)
 		model:ScaleTo(0.42)
 	end
 	for _, part in model:GetDescendants() do

@@ -10,10 +10,12 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     python3 tools/build_maps.py            # Maps neu erzeugen (nach Änderungen am Map-Skript)
     python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
     python3 tools/asset_templates.py       # Blender-Vorlagen der Fahrzeuge und Items (art/templates/Vehicles, Items)
+    python3 tools/agent_templates.py       # Blender-Vorlage der Agenten (art/templates/Agents)
 
 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
 Vorlagen, Export-Einstellungen, Maße, Namen, Marker, Budgets, Texturen, Stil, Abgabe-Checkliste – steht in
-[docs/3d-richtlinien.md](docs/3d-richtlinien.md); die Waffen im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md).
+[docs/3d-richtlinien.md](docs/3d-richtlinien.md); Waffen und Agenten im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md)
+und [docs/agenten-modelle.md](docs/agenten-modelle.md).
 Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr) und `art/sources/SMG.glb`.
 
 ## Modi
@@ -432,8 +434,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   seines Agenten bzw. Agenten-Skins, mit Kapuze, Maske, getöntem Visier, Weste, Schulterpolstern und Gürtel wie die
   Menü-Figur. Bots tragen genau denselben Körper in den Standardfarben ihres Agenten (keine Teamfarben mehr – das
   Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben Trefferzonen. Im Hub und im
-  Markt sieht man einen Agenten- oder Skin-Wechsel sofort, im Match ab dem nächsten Spawn. Das ist der Übergang,
-  bis die eigenen Agenten-Modelle aus Blender da sind
+  Markt sieht man einen Agenten- oder Skin-Wechsel sofort, im Match ab dem nächsten Spawn. Hat ein Agent sein
+  fertiges 3D-Modell (siehe Agentenmodelle), trägt er statt der Quader-Ausrüstung dessen Ausrüstung
 - **Gleiche Trefferzonen für alle**: Getroffen werden nur Körperteile. Accessoires (auch später angehängte) und die
   Ausrüstung sind für Schüsse unsichtbar (`CanQuery = false`); der Server nimmt auch vom Client gemeldete Treffer
   nur auf treffbaren Teilen an
@@ -448,6 +450,17 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   `art/sources/Rifle.glb` (Magazin eingepasst, Holo-Visier freigeschnitten, Korn umgelegt, Spannhebel als `Bolt`,
   Marker gesetzt); dafür `tools/fbx_read.py` (FBX ohne Blender lesen) und `tools/mesh_ops.py` (schneiden, Löcher
   schließen, GLB mit Texturen schreiben)
+- **Agentenmodelle aus Blender** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
+  Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, ersetzt seine
+  Ausrüstung die Quader-Ausrüstung überall: an Spielern (Hub, Markt, Match), an Bots und in allen Vorschauen
+  (Agentenwahl, Lobby, Shop, Markt, Hub, Podest, HUD-Symbol – dort steht dann der Spielkörper mit dieser
+  Ausrüstung). Alle Agenten behalten denselben Körper (gleiche Trefferzonen); ein Modell ist nur die Ausrüstung,
+  jedes Teil heißt `<Körperteil>_<Name>` und wird an dieses Körperteil geschweißt (nie Trefferzone). Liefert das
+  Modell den Körper aus der Vorlage mit, richtet das Spiel es daran aus – Drehung, Lage und Körpergröße nach dem
+  Import sind egal. Farbzonen `Primary`/`Accent`, getöntes Visier `Glass`, Leuchtteile `Neon`, Textur-Skins im
+  Ordner `Skins`. Fehlt etwas, bleibt die Quader-Ausrüstung und Studio sagt im Output, was fehlt
+  (`[Agentenmodelle] …`). Vorlage für Blender (`.obj`) und Studio (`.rbxmx`) in `art/templates/Agents`: Körper,
+  heutige Ausrüstung schon richtig benannt, `Point_Root` – selbst ein gültiges Modell
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
@@ -630,7 +643,8 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
 | Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
-| Agenten-Körper: Ausrüstung (Kapuze, Visier, Weste …), Hautfarbe, Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
+| Agenten-Körper: Quader-Ausrüstung (Kapuze, Visier, Weste …), Hautfarbe, Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
+| Agentenmodelle (Blender): Körpermaße, Teilnamen, Farbzonen, Skins, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
@@ -725,6 +739,9 @@ am Commit:
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
+| `agentmodels` | Agenten-Lader: die Vorlage ist selbst ein gültiges Modell und sitzt genau wie die Quader-Ausrüstung (auch gedreht und verschoben importiert, an größeren Körperteilen), Farbzonen, Textur-Skins, Wechsel ohne Doppelte, Rückfall ohne Modell, alle Prüfmeldungen; Spieler, Bots und Menü-Figur tragen das Modell |
+| `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
+| `agentassets` | deine Modelle in `assets/Agents` gegen die Spezifikation (laden ohne Fehler, Textur-Skins gehören zum Agenten, jedes Teil angeschweißt und nie Trefferzone) |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
@@ -763,10 +780,12 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `tools/weapon_templates.py` – erzeugt die Blender-Vorlagen der Waffen (`art/templates/Weapons`)
 - `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
   und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)
+- `tools/agent_templates.py` – erzeugt die Vorlage der Agenten (Spielkörper und heutige Ausrüstung,
+  `art/templates/Agents`)
 - `docs` – Anleitungen: Vorgaben für alle 3D-Modelle (`3d-richtlinien.md`), Waffenmodelle aus Blender
-  (`waffen-modelle.md`)
-- `assets/Weapons` – Kopien deiner Waffenmodelle (.rbxmx) für die automatische Prüfung (das Spiel lädt die Modelle
-  aus dem Place, siehe docs/waffen-modelle.md)
+  (`waffen-modelle.md`), Agentenmodelle aus Blender (`agenten-modelle.md`)
+- `assets/Weapons`, `assets/Agents` – Kopien deiner Waffen- und Agentenmodelle (.rbxmx) für die automatische
+  Prüfung (das Spiel lädt die Modelle aus dem Place, siehe docs/waffen-modelle.md und docs/agenten-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
 - `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie, `tests/lib/rbxmx.py` liest Studio-Modelle,
   `tests/fixtures` Beispieldateien), `.github/workflows` – automatische Prüfung

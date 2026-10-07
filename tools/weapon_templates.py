@@ -156,7 +156,7 @@ def _xml_text(text):
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def write_rbxmx(weapon, parts):
+def write_rbxmx(weapon, parts, folder=OUT):
     counter = [0]
 
     def ref():
@@ -186,7 +186,7 @@ def write_rbxmx(weapon, parts):
            'xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">\n'
            '\t<Item class="Model" referent="%s"><Properties><string name="Name">%s</string></Properties>\n%s\n\t</Item>\n'
            '</roblox>\n') % (ref(), weapon, "\n".join(items))
-    with open(os.path.join(OUT, weapon + ".rbxmx"), "w", encoding="utf-8") as f:
+    with open(os.path.join(folder, weapon + ".rbxmx"), "w", encoding="utf-8") as f:
         f.write(xml)
 
 

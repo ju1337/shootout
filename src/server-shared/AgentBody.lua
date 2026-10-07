@@ -1,17 +1,19 @@
 -- AgentBody (ModuleScript, nur Server)
--- Einheitlicher Agenten-Körper für alle Charaktere, bis die eigenen Agenten-Modelle aus Blender da sind:
--- Spieler (im Hub, im Markt und im Match), Bots und Übungspuppen bekommen denselben schlanken R15-Körper
--- (Standardteile, feste Maße aus AgentConfig.BodyScale, kein Rthro, kein eigener Avatar). Damit sind die
--- Trefferzonen für alle gleich – getroffen werden nur die Körperteile.
--- Dazu die Ausrüstung der Menü-Figur (AgentFigure): Kapuze, Maske, getöntes Visier, Weste, Schulterpolster und
--- Gürtel in den Agentenfarben bzw. im Skin. Die Kapuze ist ein offener Rahmen (oben, hinten, seitlich), weil der
--- R15-Kopf rund ist: ein geschlossener Kasten würde fast das ganze Gesicht verdecken. Statt des Roblox-Gesichts
--- tragen alle Visier und Maske. Ausrüstung und Accessoires sind für Schüsse unsichtbar (CanQuery = false), auch
--- Accessoires, die erst später an den Charakter gehängt werden.
+-- Einheitlicher Agenten-Körper für alle Charaktere: Spieler (im Hub, im Markt und im Match), Bots und
+-- Übungspuppen bekommen denselben schlanken R15-Körper (Standardteile, feste Maße aus AgentConfig.BodyScale, kein
+-- Rthro, kein eigener Avatar). Damit sind die Trefferzonen für alle gleich – getroffen werden nur die Körperteile.
+-- Dazu die Ausrüstung des Agenten: sein fertiges 3D-Modell aus Assets.Agents (AgentModels, Anleitung in
+-- docs/agenten-modelle.md) oder, solange es keins gibt, die Quader-Ausrüstung der Menü-Figur: Kapuze, Maske,
+-- getöntes Visier, Weste, Schulterpolster und Gürtel in den Agentenfarben bzw. im Skin. Die Kapuze ist ein offener
+-- Rahmen (oben, hinten, seitlich), weil der R15-Kopf rund ist: ein geschlossener Kasten würde fast das ganze
+-- Gesicht verdecken. Statt des Roblox-Gesichts tragen alle Visier und Maske. Ausrüstung und Accessoires sind für
+-- Schüsse unsichtbar (CanQuery = false), auch Accessoires, die erst später an den Charakter gehängt werden.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local AgentConfig = require(Shared.AgentConfig)
+local AgentModels = require(Shared.AgentModels)
 
 local AgentBody = {}
 
@@ -20,11 +22,9 @@ local MASK = Color3.fromRGB(52, 54, 58)
 local BELT = Color3.fromRGB(30, 30, 30)
 
 -- Visier in der Welt: fast schwarz mit einem Hauch Agentenfarbe und glänzend (Glas-Material wirkt im Licht
--- des Hubs hellgrau und verschwindet fast)
-function AgentBody.VisorColor(accent)
-	return Color3.fromRGB(22, 24, 28):Lerp(accent, 0.15)
-end
-local VISOR_REFLECTANCE = 0.3
+-- des Hubs hellgrau und verschwindet fast) – gilt auch für Visiere aus 3D-Modellen (Wort Glass)
+AgentBody.VisorColor = AgentModels.VisorColor
+local VISOR_REFLECTANCE = AgentModels.VisorReflectance
 
 -- Hosen: Uniformfarbe abgedunkelt (wie bei der Menü-Figur)
 function AgentBody.PantsColor(primary)
@@ -52,28 +52,46 @@ function AgentBody.Description(primary)
 	return description
 end
 
--- Ausrüstung wie bei der Menü-Figur, relativ zum Körperteil (passt sich an dessen Größe an):
--- { Name, Körperteil, Größe (× Teilgröße), Mitte (× Teilgröße, im Teil), Farbe, Material }
+-- Quader-Ausrüstung (wie bei der Menü-Figur), relativ zum Körperteil (passt sich an dessen Größe an):
+-- { Name, Körperteil, Größe (× Teilgröße), Mitte (× Teilgröße, im Teil), Farbe, Material, Name nach der
+-- Spezifikation für 3D-Modelle (so heißt das Teil in der Vorlage art/templates/Agents/Agent.obj) }
 -- Kopf: Mitte = Mitte des Kopf-Teils, vorne = -Z; Augen liegen etwas über der Mitte.
 local GEAR = {
 	-- Kapuze als offener Rahmen um den Kopf: oben, hinten, links, rechts – das Gesicht bleibt frei
-	{ "AgentHoodTop", "Head", Vector3.new(1.16, 0.16, 1.1), Vector3.new(0, 0.56, 0.05), "Primary", Enum.Material.Fabric },
-	{ "AgentHoodBack", "Head", Vector3.new(1.16, 1.02, 0.16), Vector3.new(0, 0.07, 0.57), "Primary", Enum.Material.Fabric },
-	{ "AgentHoodLeft", "Head", Vector3.new(0.14, 0.98, 1.08), Vector3.new(-0.56, 0.08, 0.04), "Primary", Enum.Material.Fabric },
-	{ "AgentHoodRight", "Head", Vector3.new(0.14, 0.98, 1.08), Vector3.new(0.56, 0.08, 0.04), "Primary", Enum.Material.Fabric },
+	{ "AgentHoodTop", "Head", Vector3.new(1.16, 0.16, 1.1), Vector3.new(0, 0.56, 0.05), "Primary", Enum.Material.Fabric,
+		"Head_HoodTop_Primary" },
+	{ "AgentHoodBack", "Head", Vector3.new(1.16, 1.02, 0.16), Vector3.new(0, 0.07, 0.57), "Primary", Enum.Material.Fabric,
+		"Head_HoodBack_Primary" },
+	{ "AgentHoodLeft", "Head", Vector3.new(0.14, 0.98, 1.08), Vector3.new(-0.56, 0.08, 0.04), "Primary", Enum.Material.Fabric,
+		"Head_HoodLeft_Primary" },
+	{ "AgentHoodRight", "Head", Vector3.new(0.14, 0.98, 1.08), Vector3.new(0.56, 0.08, 0.04), "Primary", Enum.Material.Fabric,
+		"Head_HoodRight_Primary" },
 	-- Visier über den Augen, Maske über Mund und Kinn
-	{ "AgentVisor", "Head", Vector3.new(0.94, 0.22, 0.08), Vector3.new(0, 0.16, -0.5), "Visor", Enum.Material.SmoothPlastic },
-	{ "AgentMask", "Head", Vector3.new(0.84, 0.36, 0.07), Vector3.new(0, -0.24, -0.49), "Mask", Enum.Material.Fabric },
-	{ "AgentVest", "UpperTorso", Vector3.new(1.06, 0.7, 1.15), Vector3.new(0, 0.1, 0), "Accent", Enum.Material.Metal },
-	{ "AgentPadLeft", "LeftUpperArm", Vector3.new(1.18, 0.28, 1.18), Vector3.new(0, 0.42, 0), "Accent", Enum.Material.Metal },
-	{ "AgentPadRight", "RightUpperArm", Vector3.new(1.18, 0.28, 1.18), Vector3.new(0, 0.42, 0), "Accent", Enum.Material.Metal },
-	{ "AgentBelt", "LowerTorso", Vector3.new(1.04, 0.75, 1.06), Vector3.new(0, 0, 0), "Belt", Enum.Material.SmoothPlastic },
+	{ "AgentVisor", "Head", Vector3.new(0.94, 0.22, 0.08), Vector3.new(0, 0.16, -0.5), "Visor", Enum.Material.SmoothPlastic,
+		"Head_Visor_Glass" },
+	{ "AgentMask", "Head", Vector3.new(0.84, 0.36, 0.07), Vector3.new(0, -0.24, -0.49), "Mask", Enum.Material.Fabric,
+		"Head_Mask" },
+	{ "AgentVest", "UpperTorso", Vector3.new(1.06, 0.7, 1.15), Vector3.new(0, 0.1, 0), "Accent", Enum.Material.Metal,
+		"UpperTorso_Vest_Accent" },
+	{ "AgentPadLeft", "LeftUpperArm", Vector3.new(1.18, 0.28, 1.18), Vector3.new(0, 0.42, 0), "Accent", Enum.Material.Metal,
+		"LeftUpperArm_Pad_Accent" },
+	{ "AgentPadRight", "RightUpperArm", Vector3.new(1.18, 0.28, 1.18), Vector3.new(0, 0.42, 0), "Accent", Enum.Material.Metal,
+		"RightUpperArm_Pad_Accent" },
+	{ "AgentBelt", "LowerTorso", Vector3.new(1.04, 0.75, 1.06), Vector3.new(0, 0, 0), "Belt", Enum.Material.SmoothPlastic,
+		"LowerTorso_Belt" },
 }
 AgentBody.GearNames = {}
-AgentBody.GearAnchors = {} -- Körperteile, an denen Ausrüstung hängt: [Name] = true
+AgentBody.SpecNames = {} -- [Name der Quader-Ausrüstung] = Name in der Vorlage für 3D-Modelle
+local gearNameSet = {}
 for _, def in GEAR do
 	table.insert(AgentBody.GearNames, def[1])
-	AgentBody.GearAnchors[def[2]] = true
+	AgentBody.SpecNames[def[1]] = def[7]
+	gearNameSet[def[1]] = true
+end
+-- Körperteile, an denen Ausrüstung hängen kann (Quader oder 3D-Modell): [Name] = true
+AgentBody.GearAnchors = {}
+for _, name in AgentModels.BodyParts do
+	AgentBody.GearAnchors[name] = true
 end
 
 local function gearColor(key, primary, accent)
@@ -134,9 +152,11 @@ local function stripFace(head)
 end
 
 -- Eigenen Avatar entfernen (Kleidung, Accessoires, Gesicht), Körperfarben setzen, Ausrüstung neu anlegen.
--- Kann beliebig oft aufgerufen werden (z.B. nach einem Skin-Wechsel); die Ausrüstung wird jedes Mal neu an die
--- aktuelle Größe der Körperteile angepasst.
-function AgentBody.Dress(character, primary, accent)
+-- agentId (optional): hat der Agent ein 3D-Modell (AgentModels), trägt er dessen Ausrüstung, sonst die Quader;
+-- skinId = ausgerüsteter Agenten-Skin (Textur-Skins des Modells, optional).
+-- Kann beliebig oft aufgerufen werden (z.B. nach einem Agenten- oder Skin-Wechsel); die Ausrüstung wird jedes Mal
+-- neu an die aktuelle Größe der Körperteile angepasst.
+function AgentBody.Dress(character, primary, accent, agentId, skinId)
 	for _, obj in character:GetChildren() do
 		if obj:IsA("Accoutrement") or obj:IsA("Shirt") or obj:IsA("Pants") or obj:IsA("ShirtGraphic")
 			or obj:IsA("CharacterMesh") then
@@ -158,13 +178,26 @@ function AgentBody.Dress(character, primary, accent)
 	colors.RightLegColor3 = pants
 	colors.Parent = character
 
-	for _, def in GEAR do
-		local name, bodyPart = def[1], character:FindFirstChild(def[2])
-		local old = character:FindFirstChild(name)
-		if old then
-			old:Destroy()
+	-- alte Ausrüstung weg (Quader wie 3D-Modell), dann die neue anlegen
+	for _, child in character:GetChildren() do
+		if child:GetAttribute("AgentGear") or gearNameSet[child.Name] then
+			child:Destroy()
 		end
-		if bodyPart and bodyPart:IsA("BasePart") then
+	end
+	local bodyParts = {}
+	for _, name in AgentModels.BodyParts do
+		local part = character:FindFirstChild(name)
+		if part and part:IsA("BasePart") then
+			bodyParts[name] = part
+		end
+	end
+	if AgentModels.Attach(character, bodyParts, agentId, primary, accent, skinId, true) then
+		AgentBody.Protect(character)
+		return
+	end
+	for _, def in GEAR do
+		local name, bodyPart = def[1], bodyParts[def[2]]
+		if bodyPart then
 			local gear = Instance.new("Part")
 			gear.Name = name
 			gear.Size = bodyPart.Size * def[3]
@@ -178,6 +211,7 @@ function AgentBody.Dress(character, primary, accent)
 			gear.Massless = true
 			gear.TopSurface = Enum.SurfaceType.Smooth
 			gear.BottomSurface = Enum.SurfaceType.Smooth
+			gear:SetAttribute("AgentGear", true)
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0 = bodyPart
 			weld.Part1 = gear

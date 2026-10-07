@@ -219,14 +219,24 @@ function Cosmetics.WeaponSkin(player, agentId, weaponName)
 	return nil
 end
 
--- Farben eines Agenten (Uniform, Akzent) mit ausgerüstetem Skin
-function Cosmetics.AgentColors(player, agentId)
+-- Ausgerüsteter (und gekaufter) Skin eines Agenten oder nil
+function Cosmetics.AgentSkin(player, agentId)
 	local agent = AgentConfig.Get(agentId) or AgentConfig.Agents[1]
 	local id = player and Cosmetics.GetEquipped(player)["A:" .. agent.Id]
 	local item = id and Cosmetics.Get(id)
 	if item and Cosmetics.GetOwned(player)[id] then
-		return item.Primary, item.Accent
+		return item
 	end
+	return nil
+end
+
+-- Farben eines Agenten (Uniform, Akzent) mit ausgerüstetem Skin
+function Cosmetics.AgentColors(player, agentId)
+	local skin = Cosmetics.AgentSkin(player, agentId)
+	if skin then
+		return skin.Primary, skin.Accent
+	end
+	local agent = AgentConfig.Get(agentId) or AgentConfig.Agents[1]
 	return agent.Color:Lerp(Color3.new(0, 0, 0), 0.6), agent.Color
 end
 

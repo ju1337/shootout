@@ -1,20 +1,62 @@
 -- AgentFigure (ModuleScript, nur Client)
--- Stilisierte 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Shop, Rucksack):
--- Kapuze, getöntes Visier, Weste, Waffe in der Hand. Körper so schlank wie im Spiel (AgentConfig.BodyScale).
+-- 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Lobby, Shop, Markt, Hub, Symbole), Waffe in der Hand.
+-- Hat der Agent ein fertiges 3D-Modell (AgentModels, Assets.Agents), steht der Agenten-Körper aus dem Spiel mit
+-- dieser Ausrüstung da; sonst die stilisierte Figur mit Kapuze, getöntem Visier und Weste. Körper so schlank wie im
+-- Spiel (AgentConfig.BodyScale). Die Figur steht um den Ursprung (Füße auf 0, Blick nach -Z), ihr Drehpunkt liegt
+-- wie bisher auf Höhe 3.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local GunModels = require(ReplicatedStorage:WaitForChild("Shared").GunModels)
-local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local GunModels = require(Shared.GunModels)
+local AgentConfig = require(Shared.AgentConfig)
+local AgentModels = require(Shared.AgentModels)
 
 local AgentFigure = {}
 
 -- Kamera-Position, die die ganze Figur zeigt (Figur steht um den Ursprung, Blick nach -Z)
 AgentFigure.CameraCFrame = CFrame.lookAt(Vector3.new(0, 3.1, -9.5), Vector3.new(0, 2.8, 0))
 
+local SKIN = Color3.fromRGB(205, 160, 130)
+local ARM_RAISE = math.rad(70) -- rechter Arm nach vorne angehoben (hält die Waffe)
+local RIGHT_ARM = { "RightUpperArm", "RightLowerArm", "RightHand" }
+
+-- Figur mit dem 3D-Modell: Spielkörper in Ruhelage (rechter Arm gehoben), Ausrüstung wie im Spiel
+local function buildWithAsset(agent, primary, accent, weaponSkin, weaponName, agentSkinId)
+	local model = Instance.new("Model")
+	local pants = primary:Lerp(Color3.new(0, 0, 0), 0.5)
+	local shoulder = AgentModels.RightShoulder
+	local raise = CFrame.new(shoulder) * CFrame.Angles(ARM_RAISE, 0, 0) * CFrame.new(-shoulder)
+	local parts = {}
+	for _, name in AgentModels.BodyParts do
+		local body = AgentModels.Body[name]
+		local part = Instance.new("Part")
+		part.Name = name
+		part.Size = body.Size
+		part.CFrame = table.find(RIGHT_ARM, name) and raise * body.CFrame or body.CFrame
+		part.Color = name == "Head" and SKIN or ((string.find(name, "Leg") or string.find(name, "Foot")) and pants or primary)
+		part.Material = Enum.Material.SmoothPlastic
+		part.TopSurface = Enum.SurfaceType.Smooth
+		part.BottomSurface = Enum.SurfaceType.Smooth
+		part.Anchored = true
+		part.Parent = model
+		parts[name] = part
+	end
+	AgentModels.Attach(model, parts, agent.Id, primary, accent, agentSkinId, false)
+	local gun = GunModels.Build(weaponName or agent.Loadout[1], weaponSkin)
+	gun:PivotTo(CFrame.new(parts.RightHand.Position + Vector3.new(0, -0.12, -0.05)))
+	gun.Parent = model
+	model.WorldPivot = CFrame.new(0, 3, 0)
+	return model
+end
+
 -- primary = Uniform, accent = Visier/Weste, weaponSkin = Skin der Waffe (oder nil),
--- weaponName = gezeigte Waffe (Standard: erste Waffe des Agenten)
-function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName)
+-- weaponName = gezeigte Waffe (Standard: erste Waffe des Agenten), agentSkinId = Agenten-Skin (für Textur-Skins
+-- eines 3D-Modells, optional)
+function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName, agentSkinId)
+	if AgentModels.HasAsset(agent.Id) then
+		return buildWithAsset(agent, primary, accent, weaponSkin, weaponName, agentSkinId)
+	end
 	local model = Instance.new("Model")
 	local function part(name, size, cframe, color, material)
 		local p = Instance.new("Part")

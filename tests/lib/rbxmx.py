@@ -1,6 +1,6 @@
 """Roblox-Modelle im XML-Format (.rbxmx) für die Test-Engine.
 
-assets_lua() liest assets/<Ordner>/*.rbxmx (z.B. assets/Weapons/Rifle.rbxmx, in Studio per Rechtsklick
+assets_lua() liest assets/<Ordner>/*.rbxmx (z.B. assets/Weapons/Rifle.rbxmx oder assets/Agents/Viper.rbxmx, in Studio per Rechtsklick
 "Save to File..." gespeichert) und liefert einen Luau-Ausdruck { [Ordner] = { Instanz, ... } }, aus dem
 SIM.LoadAssets (tests/lib/engine.luau) die Instanzen unter ReplicatedStorage.Assets baut – so wie im Spiel.
 Gelesen werden nur die Eigenschaften, die Tests brauchen: Klasse, Name, CFrame, Größe, Farbe, Transparenz,
@@ -22,7 +22,7 @@ SHAPES = {0: "Ball", 1: "Block", 2: "Cylinder", 3: "Wedge", 4: "CornerWedge"}
 CFRAME_KEYS = ("X", "Y", "Z", "R00", "R01", "R02", "R10", "R11", "R12", "R20", "R21", "R22")
 
 # Ordner, die es im Spiel immer gibt (default.project.json legt sie an)
-DEFAULT_FOLDERS = ("Weapons",)
+DEFAULT_FOLDERS = ("Weapons", "Agents")
 
 
 def _numbers(element, keys):

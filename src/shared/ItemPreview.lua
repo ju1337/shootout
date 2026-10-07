@@ -44,7 +44,7 @@ function ItemPreview.Show(view, item, aspect)
 		camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(distance, distance * 0.15, 0), box.Position)
 	else
 		local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
-		local figure = AgentFigure.Build(agent, item.Primary, item.Accent)
+		local figure = AgentFigure.Build(agent, item.Primary, item.Accent, nil, nil, item.Id)
 		figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.4, 0))
 		figure.Parent = view
 		camera.FieldOfView = 36

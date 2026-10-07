@@ -19,6 +19,10 @@
         "Weapons": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true
+        },
+        "Agents": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true
         }
       }
     },

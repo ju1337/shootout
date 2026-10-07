@@ -4,7 +4,8 @@ Für alle, die 3D-Modelle für das Spiel bauen (Blender, Meshy oder andere Werkz
 Nacharbeit** ins Spiel. Ein Modell, das diese Regeln erfüllt, wird direkt eingebaut. Ein Modell, das sie nicht
 erfüllt, kommt mit einer Liste der Punkte zurück, damit es nicht jedes Mal von Hand repariert werden muss.
 
-Die Waffen haben zusätzlich eine eigene, ausführliche Anleitung: [waffen-modelle.md](waffen-modelle.md).
+Waffen und Agenten haben zusätzlich je eine eigene, ausführliche Anleitung: [waffen-modelle.md](waffen-modelle.md)
+und [agenten-modelle.md](agenten-modelle.md).
 
 ## Auf einen Blick
 
@@ -34,12 +35,13 @@ Die Waffen haben zusätzlich eine eigene, ausführliche Anleitung: [waffen-model
 | Waffen | `art/templates/Weapons/<Waffe>.obj` | heutige Quader-Waffe mit allen Markern (siehe [waffen-modelle.md](waffen-modelle.md)) |
 | Fahrzeuge | `art/templates/Vehicles/<Id>.obj` | heutiges Spielfahrzeug: Rumpf `Ref_Chassis`, Räder `Wheel_*`, Sitze `Seat_*`, Boden `Ref_Ground`; Helikopter: Drehpunkte `Point_Rotor`, `Point_TailRotor` |
 | Items, Gadgets, Behälter | `art/templates/Items/<Id>.obj` | Zielgröße `Ref_<Id>` (Boden bei 0) und Griff `Point_Grip` |
-| Agenten | erzeugst du in Studio (Abschnitt 7) | der Spielkörper in Originalgröße |
+| Agenten | `art/templates/Agents/Agent.obj` | der Spielkörper (Teile heißen wie die Körperteile, bleibt im Modell), die heutige Ausrüstung schon richtig benannt, Marker `Point_Root` |
 
 So gehst du vor:
 
 1. Vorlage in Blender importieren (Einstellungen in Abschnitt 2).
-2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht.
+2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht. Bei
+   den Agenten bleibt der Körper im Modell (Abschnitt 7).
 3. Teile benennen und die Marker (magenta Würfel) übernehmen.
 4. Texturieren.
 5. Exportieren (Abschnitt 2), wenn möglich in Studio testen, liefern (Abschnitt 8).
@@ -192,9 +194,9 @@ Darum gilt für Modelle aus KI-Werkzeugen:
 
 ## 4. Waffen
 
-Alles Wichtige steht in [waffen-modelle.md](waffen-modelle.md). Die Waffen sind die einzige Kategorie, die das
-Spiel heute schon als fertige Modelle lädt: ein Modell nach dieser Anleitung wird direkt benutzt (Ego-Waffe, Hand,
-Rücken, Vorschauen, Symbole).
+Alles Wichtige steht in [waffen-modelle.md](waffen-modelle.md). Waffen und Agenten lädt das Spiel heute schon als
+fertige Modelle: ein Modell nach dieser Anleitung wird direkt benutzt (Ego-Waffe, Hand, Rücken, Vorschauen,
+Symbole).
 
 Die wichtigsten Punkte:
 
@@ -348,17 +350,15 @@ unterscheiden sich durch ihre **Ausrüstung** und ihre **Farben**. Die Ausrüstu
 gehen durch.
 
 Der Körper: Roblox R15, klassische Proportionen, Höhe 1, Kopf 1, **Breite 0,75, Tiefe 0,8** (schlanker als
-Standard), etwa 5 Studs groß. Kein Roblox-Gesicht: Alle tragen Visier und Maske.
+Standard), etwa 5,1 Studs groß. Kein Roblox-Gesicht: Alle tragen Visier und Maske.
 
-**Körper-Vorlage erzeugen (Studio):**
+**Das Spiel lädt Agentenmodelle schon** (wie die Waffen): Ein Modell in ReplicatedStorage › Assets › Agents, das wie
+der Agent heißt, ersetzt dessen Quader-Ausrüstung an Spielern, Bots und in allen Vorschauen. Die ausführliche
+Anleitung mit Körpermaßen, Namen, Skins und allen Meldungen steht in [agenten-modelle.md](agenten-modelle.md).
 
-1. In Studio unten die Befehlszeile (View › Command Bar) öffnen und diese Zeile einfügen:
-
-       local d = Instance.new("HumanoidDescription") d.WidthScale = 0.75 d.DepthScale = 0.8 d.BodyTypeScale = 0 d.ProportionScale = 0 local m = game:GetService("Players"):CreateHumanoidModelFromDescription(d, Enum.HumanoidRigType.R15) m.Name = "AgentVorlage" m.Parent = workspace local cf, size = m:GetBoundingBox() m:PivotTo(m:GetPivot() - Vector3.new(cf.X, cf.Y - size.Y / 2, cf.Z))
-
-2. Es entsteht `AgentVorlage`: der Körper aus dem Spiel, Füße auf Höhe 0, Blick nach vorne.
-3. Rechtsklick auf `AgentVorlage` › **Export Selection…** und in Blender wie eine Vorlage importieren (Abschnitt 2).
-   Der Körper ist etwa 5 Einheiten groß.
+**Vorlage:** `art/templates/Agents/Agent.obj` (für Studio `Agent.rbxmx`). Sie enthält den Körper aus dem Spiel in
+Ruhelage (15 Teile, die genau wie die Körperteile heißen), die heutige Ausrüstung schon richtig benannt und den
+Marker `Point_Root` auf 0/0/0.
 
 **Was du baust:** die Ausrüstung eines Agenten aus **starren Teilen**. Jedes Teil hängt an genau einem Körperteil
 und bewegt sich mit ihm. Beispiele: Helm oder Kapuze, Visier, Maske, Weste, Taschen, Schulterpolster, Gürtel,
@@ -379,15 +379,22 @@ Körperteile (R15): `Head`, `UpperTorso`, `LowerTorso`, `LeftUpperArm`, `LeftLow
   nicht als Treffer, und das wäre unfair.
 - **Ein Teil, ein Körperteil:** Nichts geht über ein Gelenk hinweg. Eine Weste sitzt nur am `UpperTorso`, der Gürtel
   ist ein eigenes Teil am `LowerTorso`. Sonst reißt es beim Laufen auseinander.
-- Gebaut wird in der **Ruhehaltung der Vorlage** (Arme hängen). Das Modell nicht verschieben.
+- Gebaut wird in der **Ruhelage der Vorlage** (Arme hängen). Das Modell nicht verschieben.
 - **Arme und Hände frei** lassen: Sie halten die Waffe. Schulterpolster nicht so breit, dass sie die Waffe verdecken.
-- Marker `Point_Root` auf **0/0/0** (Boden zwischen den Füßen). Daran richtet das Spiel die Ausrüstung aus.
-- Den Körper selbst nicht mitliefern, nur die Ausrüstung.
-- **Farben:** `Primary` = Agentenfarbe (Uniform), `Accent` = zweite Farbe (Weste, Polster, Visier-Schimmer). Diese
-  Zonen färbt das Spiel bzw. der Agenten-Skin um.
+- **Den Körper aus der Vorlage im Modell lassen** (nicht verändern) und `Point_Root` auf **0/0/0** (Boden zwischen
+  den Füßen). Der Körper wird im Spiel nicht angezeigt; das Spiel richtet die Ausrüstung an ihm aus, darum sind
+  Drehung und Lage nach dem Import egal.
+- **Farben:** `Primary` = Agentenfarbe (Uniform), `Accent` = zweite Farbe (Weste, Polster, Visier-Schimmer),
+  `Glass` = getöntes Visier. Diese Zonen färbt das Spiel bzw. der Agenten-Skin um.
 - **Skins mit eigener Textur** (episch, legendär): wie bei den Waffen ein Ordner `Skins` › `<Skin-Id>` mit einer
   SurfaceAppearance je Teil, benannt wie das Teil. Skin-Ids stehen in `src/shared/Cosmetics.lua` (z.B.
   `A_Viper_Nacht`).
+
+Wer lieber am echten Körper aus Roblox modelliert: In Studio unten die Befehlszeile (View › Command Bar) öffnen und
+diese Zeile einfügen. Es entsteht `AgentVorlage` (Füße auf Höhe 0, Blick nach vorne), die man per Rechtsklick ›
+**Export Selection…** nach Blender bringt. Die Teile heißen wie die Körperteile und dürfen genauso im Modell bleiben.
+
+       local d = Instance.new("HumanoidDescription") d.WidthScale = 0.75 d.DepthScale = 0.8 d.BodyTypeScale = 0 d.ProportionScale = 0 local m = game:GetService("Players"):CreateHumanoidModelFromDescription(d, Enum.HumanoidRigType.R15) m.Name = "AgentVorlage" m.Parent = workspace local cf, size = m:GetBoundingBox() m:PivotTo(m:GetPivot() - Vector3.new(cf.X, cf.Y - size.Y / 2, cf.Z))
 
 | Id | Name | Rolle | Farbe (RGB) | Idee für den Look |
 |---|---|---|---|---|
@@ -431,12 +438,13 @@ Hochladen nach `art/sources/<Kategorie>/<Id>/` (GitHub) oder als ZIP an die Proj
 - [ ] Keine echten Marken, Logos, Kennzeichen, kein rotes Kreuz
 - [ ] Waffen: Visier offen, Visierlinie frei, Magazin und Verschluss getrennt
 - [ ] Fahrzeuge: Räder auf dem Boden, Sitz-Marker, Insassen sichtbar
-- [ ] Agenten: eng am Körper, ein Teil pro Körperteil, `Point_Root` auf 0/0/0
+- [ ] Agenten: eng am Körper, ein Teil pro Körperteil, Körper aus der Vorlage und `Point_Root` auf 0/0/0 im Modell
 - [ ] Lieferordner vollständig (Quelldatei, Export, Texturen, Vorschau, ggf. Lizenz)
 
 **In Studio testen** (wenn du Zugriff hast): Import 3D mit den Einstellungen aus Abschnitt 2, das Modell nach
 ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, dann Play. Bei Waffen steht im Output
-`[Waffenmodelle] <Waffe>: 3D-Modell geladen` oder, was fehlt.
+`[Waffenmodelle] <Waffe>: 3D-Modell geladen`, bei Agenten `[Agentenmodelle] <Agent>: 3D-Modell geladen` oder, was
+fehlt.
 
 ## 9. Häufige Fehler
 
@@ -454,27 +462,29 @@ ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, 
 
 ## 10. Für die Projektleitung: Modelle ins Spiel bringen
 
-**Waffen** lädt das Spiel schon, das geht ohne Hilfe:
+**Waffen und Agenten** lädt das Spiel schon, das geht ohne Hilfe:
 
 1. Lieferung prüfen: Checkliste abgehakt, alle Dateien da.
 2. Den Place in Studio öffnen, **Import 3D**, die `.fbx` oder `.glb` wählen. Im Fenster: World Forward **Front**,
    World Up **Top**, Scale Unit **Stud**, **Merge Meshes aus**. Importieren.
 3. Das Modell im Explorer nach **ReplicatedStorage › Assets › Weapons** ziehen und genau wie die Waffe nennen
-   (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`). Ein älteres Modell mit demselben Namen vorher
-   löschen.
+   (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`), bzw. nach **Assets › Agents** und genau wie der
+   Agent (`Viper`, `Bastion`, `Mender`, `Hawk`, `Ghost`, `Blaze`, `Aegis`, `Trapper`, `Volt`). Ein älteres Modell
+   mit demselben Namen vorher löschen.
 4. Bleiben Teile weiß oder grau: im Teil eine **SurfaceAppearance** einfügen und die Bilder aus der Lieferung setzen
    (ColorMap, NormalMap, RoughnessMap, MetalnessMap).
-5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen`. Steht dort ein Fehler, die Meldung
-   an den Designer schicken (erklärt in [waffen-modelle.md](waffen-modelle.md), „Meldungen und was zu tun ist“).
+5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen` bzw.
+   `[Agentenmodelle] Viper: 3D-Modell geladen`. Steht dort ein Fehler, die Meldung an den Designer schicken
+   (erklärt in [waffen-modelle.md](waffen-modelle.md) bzw. [agenten-modelle.md](agenten-modelle.md), jeweils
+   „Meldungen und was zu tun ist“).
 6. **Aus Studio veröffentlichen** (Datei › Publish to Roblox). Die Modelle leben im Place: nicht mit `rojo build`
    neu bauen und veröffentlichen, sonst fehlen sie.
-7. Empfohlen: Rechtsklick auf das Modell › **Save to File…** › `<Waffe>.rbxmx`, auf GitHub in `assets/Weapons`
-   hochladen (Add file › Upload files). Dann prüft GitHub das Modell bei jedem Push. Die Lieferung selbst
-   (Quelldatei, Texturen) kommt nach `art/sources/<Kategorie>/<Id>/`.
+7. Empfohlen: Rechtsklick auf das Modell › **Save to File…** › `<Id>.rbxmx`, auf GitHub in `assets/Weapons` bzw.
+   `assets/Agents` hochladen (Add file › Upload files). Dann prüft GitHub das Modell bei jedem Push. Die Lieferung
+   selbst (Quelldatei, Texturen) kommt nach `art/sources/<Kategorie>/<Id>/`.
 
-**Fahrzeuge, Items und Agenten** baut das Spiel heute noch aus Quadern; Modelle in Assets › Vehicles, Items oder
-Agents werden noch nicht gelesen. Mit dem ersten fertigen Modell einer Kategorie bekommt das Spiel einmal einen Lader
-nach genau diesen Regeln (mit Prüfmeldungen wie bei den Waffen). Danach gilt derselbe Ablauf wie bei den Waffen, nur
-mit dem Ordner der Kategorie.
+**Fahrzeuge und Items** baut das Spiel heute noch aus Quadern; Modelle in Assets › Vehicles oder Items werden noch
+nicht gelesen. Mit dem ersten fertigen Modell einer Kategorie bekommt das Spiel einmal einen Lader nach genau diesen
+Regeln (mit Prüfmeldungen wie bei Waffen und Agenten). Danach gilt derselbe Ablauf, nur mit dem Ordner der Kategorie.
 - **Vorlagen neu erzeugen**, wenn sich Fahrzeuge im Spiel ändern: `python3 tools/asset_templates.py` (Fahrzeuge und
-  Items) bzw. `python3 tools/weapon_templates.py` (Waffen).
+  Items), `python3 tools/weapon_templates.py` (Waffen) bzw. `python3 tools/agent_templates.py` (Agenten).

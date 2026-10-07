@@ -101,10 +101,10 @@ local function showWeapon(view, weaponName, skin, aspect, fill, attachments)
 	view.CurrentCamera = camera
 end
 
--- Agent mit Farben (und Waffen-Skin) zeigen
-local function showAgent(view, agent, primary, accent, weaponSkin)
+-- Agent mit Farben (und Waffen-Skin) zeigen; agentSkinId = Agenten-Skin (Textur-Skins eines 3D-Modells)
+local function showAgent(view, agent, primary, accent, weaponSkin, agentSkinId)
 	view:ClearAllChildren()
-	local figure = AgentFigure.Build(agent, primary, accent, weaponSkin)
+	local figure = AgentFigure.Build(agent, primary, accent, weaponSkin, nil, agentSkinId)
 	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.4, 0))
 	figure.Parent = view
 	local camera = make("Camera", { FieldOfView = 36 }, view)
@@ -262,7 +262,7 @@ function LobbyPages.Shop(page)
 		if item.Type == "Weapon" then
 			showWeapon(view, "Rifle", item, 234 / 160)
 		else
-			showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+			showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
 		end
 		rapBadge(card, value)
 		if count > 1 then
@@ -373,7 +373,7 @@ function LobbyPages.Shop(page)
 				if item.Type == "Weapon" then
 					showWeapon(view, "Rifle", item, 234 / 170)
 				else
-					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
 				end
 				if RapConfig.Value(item.Id) then
 					rapBadge(card, RapConfig.Value(item.Id))
@@ -896,7 +896,8 @@ function LobbyPages.Loadout(page, goToShop)
 			local agent = AgentConfig.Get(selected)
 			title.Text = agent.Name
 			local primary, accent = Cosmetics.AgentColors(player, selected)
-			showAgent(view, agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]))
+			local agentSkin = Cosmetics.AgentSkin(player, selected)
+			showAgent(view, agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]), agentSkin and agentSkin.Id)
 		end
 		equippedText.Text = "AUSGERÜSTET: " .. upper(currentName)
 	end
@@ -988,7 +989,7 @@ function LobbyPages.Pass(page)
 			if item.Type == "Weapon" then
 				showWeapon(view, "Rifle", item, CARD_W / 170)
 			else
-				showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+				showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
 			end
 			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 52), Text = upper(item.Name), TextSize = 22,
 				Font = F.Display, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, card)
@@ -1080,7 +1081,7 @@ function LobbyPages.Pass(page)
 				if item.Type == "Weapon" then
 					showWeapon(view, "Rifle", item, 200 / (INFO_H - 40))
 				else
-					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent)
+					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
 				end
 			elseif reward then
 				UITheme.Coin(preview, 72, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = 4 })

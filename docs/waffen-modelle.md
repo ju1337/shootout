@@ -202,5 +202,6 @@ veröffentlicht wird aus Studio.
 ## Fahrzeuge, Items und Agenten
 
 Die Vorgaben dafür stehen in [3d-richtlinien.md](3d-richtlinien.md), die Vorlagen in `art/templates/Vehicles` und
-`art/templates/Items` (erzeugt mit `python3 tools/asset_templates.py`). Agenten behalten den einheitlichen Körper
-(`src/server-shared/AgentBody.lua`) und bekommen ihre eigene Ausrüstung.
+`art/templates/Items` (erzeugt mit `python3 tools/asset_templates.py`). Agenten lädt das Spiel schon wie die Waffen:
+Sie behalten den einheitlichen Körper und bekommen ihre eigene Ausrüstung, Anleitung in
+[agenten-modelle.md](agenten-modelle.md), Vorlage in `art/templates/Agents`.
