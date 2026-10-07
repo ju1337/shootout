@@ -1,6 +1,6 @@
--- Spielermarkt im Client (ExtinctionClient) zusammen mit dem Server: E am Marktstand öffnet das Fenster, Item der Tasche
--- anklicken füllt Anzahl und Preis vor, ANBIETEN schickt das Angebot, es erscheint links als eigenes (ZURÜCK nimmt es
--- zurück), fremde Angebote mit KAUFEN, Filter nach Art, Weggehen schließt das Fenster
+-- Spielermarkt im Client (ExtinctionClient + ExtMarketPage) zusammen mit dem Server: E am Marktstand öffnet das Menü auf
+-- MARKT, Item der Tasche anklicken füllt Anzahl und Preis vor, ANBIETEN schickt das Angebot, unter MEINE ANGEBOTE Preis
+-- ändern und zurücknehmen, fremde Angebote mit KAUFEN, Kategorien. In der ganzen Safe Zone offen, draußen gesperrt.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -117,7 +117,20 @@ end
 step(1)
 local windowGui = playerGui:FindFirstChild("ExtinctionWindow")
 
--- ---------- Fenster öffnen ----------
+local function textOf(object)
+	if not object then
+		return ""
+	end
+	if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+		return object.Text .. " " .. texts(object)
+	end
+	return texts(object)
+end
+local function cards()
+	return findAll(find(windowGui, "Results"), "Card")
+end
+
+-- ---------- Menü auf MARKT öffnen (E am Stand) ----------
 InventoryService.Give(bob, "Rifle", 1, { Mag = 20 })
 InventoryService.Give(bob, "Ammo_Rifle", 60)
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(60, 3, -34)))
@@ -126,27 +139,28 @@ local prompt = map.Stands.Stand_Market:FindFirstChild("MarketPrompt")
 check(prompt ~= nil and prompt.ObjectText == "SPIELERMARKT", "Marktstand hat eine E-Aufforderung")
 prompt.Triggered:Fire(bob)
 step(0.3)
-check(windowGui.Enabled and string.find(texts(windowGui), "SPIELERMARKT", 1, true) ~= nil, "Markt-Fenster offen")
-check(string.find(texts(windowGui), "NOCH KEINE ANGEBOTE", 1, true) ~= nil, "leerer Markt: Hinweis")
-check(not find(windowGui, "OfferButton").Visible, "ohne Auswahl kein ANBIETEN")
+check(windowGui.Enabled and find(windowGui, "MarketPage") ~= nil, "Menü auf dem Reiter MARKT")
+check(bob:GetAttribute("InSafeZone") == true and not find(windowGui, "Lock").Visible, "in der Safe Zone: keine Sperre")
+check(string.find(texts(find(windowGui, "Empty")), "NOCH KEINE ANGEBOTE", 1, true) ~= nil, "leerer Markt: Hinweis")
 
 -- ---------- Anbieten: Gewehr anklicken, Preis eintragen ----------
+local sell = find(windowGui, "Sell")
 find(windowGui, "Bag1").Activated:Fire()
 step(0.2)
-local priceBox = find(windowGui, "OfferPrice")
-check(priceBox and priceBox.Visible and priceBox.Text == tostring(ExtinctionConfig.Get("Rifle").Price), "Preis vorgeschlagen ("
-	.. tostring(priceBox and priceBox.Text) .. ")")
-check(not find(windowGui, "OfferCount").Visible, "Waffe: keine Anzahl")
-check(find(windowGui, "OfferButton").Visible, "ANBIETEN sichtbar")
+local priceBox = find(sell, "PriceBox")
+check(priceBox.Text == tostring(ExtinctionConfig.Get("Rifle").Price), "Preis vorgeschlagen (" .. priceBox.Text .. ")")
+check(not find(sell, "CountUp").Visible, "Waffe: keine Anzahl")
 priceBox.Text = "777"
-find(windowGui, "OfferButton").Activated:Fire()
+priceBox.FocusLost:Fire(true)
+step(0.1)
+check(string.find(find(sell, "Earn").Text, tostring(777 - math.floor(777 * ExtinctionConfig.Market.FeeRate)), 1, true) ~= nil,
+	"Erlös nach Gebühr: " .. find(sell, "Earn").Text)
+find(sell, "Offer").Activated:Fire()
 step(4) -- Angebot an den Server, Karten-Attribut zurück
-local listings = find(windowGui, "Listings")
-check(string.find(texts(listings), "STURMGEWEHR", 1, true) ~= nil and string.find(texts(listings), "DEIN ANGEBOT", 1, true) ~= nil
-	and string.find(texts(listings), "MAGAZIN 20", 1, true) ~= nil, "eigenes Angebot links: " .. texts(listings))
-check(find(listings, "CancelListing") ~= nil and find(listings, "BuyListing") == nil, "eigenes Angebot: ZURÜCK statt KAUFEN")
+check(#cards() == 1 and string.find(textOf(cards()[1]), "STURMGEWEHR", 1, true) ~= nil, "eigenes Angebot als Karte")
+check(find(cards()[1], "Buy") == nil, "eigenes Angebot: kein KAUFEN")
 check(InventoryService.GetBag(bob).Slots[1] == nil, "Gewehr ist aus Bobs Tasche")
--- Munition: Anzahl änderbar
+-- Munition: ganzer Stapel
 local ammoSlot = nil
 for slot = 1, ExtinctionConfig.BagSlots do
 	local item = InventoryService.GetBag(bob).Slots[slot]
@@ -156,16 +170,40 @@ for slot = 1, ExtinctionConfig.BagSlots do
 end
 find(windowGui, "Bag" .. ammoSlot).Activated:Fire()
 step(0.2)
-local countBox = find(windowGui, "OfferCount")
-check(countBox.Visible and countBox.Text == "60", "Stapel: Anzahl vorgeschlagen (" .. countBox.Text .. ")")
-countBox.Text = "30"
-find(windowGui, "OfferPrice").Text = "45"
-find(windowGui, "OfferButton").Activated:Fire()
+check(string.find(find(sell, "CountValue").Text, "60", 1, true) == 1, "Stapel: Anzahl 60 vorgeschlagen")
+find(sell, "PriceBox").Text = "45"
+find(sell, "PriceBox").FocusLost:Fire(true)
+find(sell, "Offer").Activated:Fire()
 step(4)
-check(InventoryService.GetBag(bob).Slots[ammoSlot] and InventoryService.GetBag(bob).Slots[ammoSlot].Count == 30, "30 Schuss bleiben")
-check(#findAll(listings, "Listing") == 2, "zwei eigene Angebote")
+check(InventoryService.GetBag(bob).Slots[ammoSlot] == nil, "Munition angeboten")
+check(#cards() == 2, "zwei eigene Angebote")
 
--- ---------- fremdes Angebot kaufen, Filter ----------
+-- ---------- MEINE ANGEBOTE: Preis ändern ----------
+find(windowGui, "TabMine").Activated:Fire()
+step(0.2)
+local mine = find(windowGui, "Mine")
+check(mine.Visible and #findAll(mine, "MyOffer") == 2, "MEINE ANGEBOTE: zwei")
+local row = nil
+for _, candidate in findAll(mine, "MyOffer") do
+	if string.find(texts(candidate), "STURMGEWEHR", 1, true) then
+		row = candidate
+	end
+end
+find(row, "PriceBox").Text = "700"
+find(row, "PriceBox").FocusLost:Fire(true)
+find(row, "PriceSave").Activated:Fire()
+step(4)
+local repriced = false
+for _, entry in InventoryService.MarketOf(bob) do
+	if entry.Item == "Rifle" and entry.Price == 700 then
+		repriced = true
+	end
+end
+check(repriced, "Preis geändert auf 700")
+find(windowGui, "TabOffers").Activated:Fire()
+step(0.2)
+
+-- ---------- fremdes Angebot kaufen, Kategorien ----------
 InventoryService.Give(ann, "Medkit", 1)
 ann.Character:PivotTo(CFrame.new(CENTER + Vector3.new(60, 3, -38)))
 SIM.Advance(0.3, 20)
@@ -178,14 +216,14 @@ for slot = 1, ExtinctionConfig.BagSlots do
 end
 Remotes.ExtAction.OnServerEvent:Fire(ann, "MarketList", annSlot, 1, 150)
 step(4)
-check(string.find(texts(listings), "VON ANN", 1, true) ~= nil and find(listings, "BuyListing") ~= nil, "Anns Angebot mit KAUFEN")
-find(windowGui, "Filter_Weapon").Activated:Fire()
+find(windowGui, "Category_Weapon").Activated:Fire()
 step(0.2)
-check(#findAll(listings, "Listing") == 1 and string.find(texts(listings), "STURMGEWEHR", 1, true) ~= nil, "Filter WAFFEN")
-find(windowGui, "Filter_Gear").Activated:Fire()
+check(#cards() == 1 and string.find(textOf(cards()[1]), "STURMGEWEHR", 1, true) ~= nil, "Kategorie WAFFEN")
+find(windowGui, "Category_Gear").Activated:Fire()
 step(0.2)
-check(#findAll(listings, "Listing") == 1 and string.find(texts(listings), "MEDIKIT", 1, true) ~= nil, "Filter AUSRÜSTUNG")
-find(listings, "BuyListing").Activated:Fire()
+check(#cards() == 1 and string.find(textOf(cards()[1]), "MEDIKIT", 1, true) ~= nil and find(cards()[1], "Buy") ~= nil,
+	"Kategorie AUSRÜSTUNG: Anns Medikit mit KAUFEN")
+find(cards()[1], "Buy").Activated:Fire()
 step(4)
 local hasMedkit = false
 for _, item in InventoryService.GetBag(bob).Slots do
@@ -195,19 +233,28 @@ for _, item in InventoryService.GetBag(bob).Slots do
 end
 check(hasMedkit and ProgressService.Get(bob).Coins == 4000 - 150, "Bob hat das Medikit gekauft")
 check(ProgressService.Get(ann).Coins == 150 - math.floor(150 * ExtinctionConfig.Market.FeeRate), "Ann bekommt den Erlös")
-find(windowGui, "Filter_All").Activated:Fire()
+find(windowGui, "Category_All").Activated:Fire()
 step(0.2)
-check(#findAll(listings, "Listing") == 2, "alle: Bobs zwei Angebote übrig")
+check(#cards() == 2, "alle: Bobs zwei Angebote übrig")
 
 -- ---------- zurücknehmen ----------
-find(listings, "CancelListing").Activated:Fire()
+find(windowGui, "TabMine").Activated:Fire()
+step(0.2)
+find(find(windowGui, "Mine"), "Cancel").Activated:Fire()
 step(4)
-check(#findAll(listings, "Listing") == 1, "ein Angebot zurückgenommen")
+check(#InventoryService.MarketOf(bob) == 1, "ein Angebot zurückgenommen")
 
--- ---------- Weggehen vom Stand: der Markt ist ein Reiter des Menüs und bleibt in der Safe Zone offen ----------
+-- ---------- Weggehen: in der Safe Zone offen, draußen gesperrt ----------
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
 step(0.5)
-check(windowGui.Enabled, "Weggehen vom Stand (in der Safe Zone): Markt bleibt offen")
+check(windowGui.Enabled and not find(windowGui, "Lock").Visible, "Weggehen vom Stand (in der Safe Zone): Markt bleibt offen")
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(400, 3, 0)))
+step(1)
+check(bob:GetAttribute("InSafeZone") ~= true, "Bob ist draußen")
+check(windowGui.Enabled and find(windowGui, "Lock").Visible, "draußen: MARKT gesperrt")
+bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
+step(1)
+check(not find(windowGui, "Lock").Visible, "zurück in der Safe Zone: Sperre weg")
 
 if failures > 0 then
 	error(failures .. " Fehler")

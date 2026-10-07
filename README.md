@@ -177,7 +177,11 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   **Fahrzeugstand**, das **Lager** und das Tor zurück zum Hub (E an Stand/Lager).
 - **Draußen**: sofort schießen auf Zombies möglich, **PvP erst 5 Sekunden nach dem Verlassen** (Anzeige oben:
   SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
-- **Keine Standardwaffen**: Alles kommt aus der Tasche. **TAB** öffnet das Inventar: 30 Plätze, davon 1-9 die
+- **Menü** (**TAB** öffnet es auf INVENTAR, **M** auf dem zuletzt offenen Reiter; Controller: Select, L1/R1 blättert, ○
+  schließt): etwas kleiner als der Bildschirm, Reiter INVENTAR · MARKT · SQUAD · SHOP · BATTLE PASS · STATISTIK · CODES ·
+  OPTIONEN. Die letzten fünf sind die Seiten der Lobby (`GameMenu.BorrowPage`), verkleinert – ohne Spielmodi und
+  Startseite. Die Welt läuft weiter, während das Menü offen ist.
+- **Keine Standardwaffen**: Alles kommt aus der Tasche. Der Reiter **INVENTAR** zeigt die Tasche: 30 Plätze, davon 1-9 die
   Hotbar (Tasten **1-9**). Items ziehen und ablegen oder anklicken und den Zielplatz anklicken, Rechtsklick legt
   zwischen Hotbar und Tasche hin und her. Waffe: Taste zieht sie (nochmal = wegstecken), Heilung/Rüstung: Taste
   benutzt sie (dauert ein paar Sekunden, dabei kein Schuss).
@@ -186,9 +190,12 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Stände**: kaufen mit Münzen (Munition auch ×5), verkaufen an jedem Stand für 40 % des Preises.
 - **Spielermarkt** (`ExtMarketService`, Reiter **MARKT** im Extinction-Menü, überall in einer Safe Zone – draußen nicht): Spieler handeln untereinander mit
   allem aus der Tasche – Waffen (samt Magazin), Munition (auch Teile eines Stapels), Heilung, Westen, Spritzen und
-  Fahrzeuge – für Münzen. Rechts ein Item der Tasche anklicken, Anzahl und Preis eintragen (vorgeschlagen: der Preis am
-  Stand), ANBIETEN; links stehen alle Angebote (billigste zuerst, Filter WAFFEN/MUNITION/AUSRÜSTUNG/FAHRZEUGE) mit KAUFEN,
-  die eigenen mit PREIS ÄNDERN und ZURÜCK (Einstellzeit `At` bleibt beim Preisändern, für die Sortierung NEU). Höchstens 8 Angebote je Spieler, Preis 1-100.000, der Verkäufer bekommt den Preis minus 5 %
+  Fahrzeuge – für Münzen. Die Seite (`ExtMarketPage`): links alle Angebote als Karten mit Symbol, Werten, Verkäufer und
+  Preis (Suche, Kategorien ALLE/WAFFEN/MUNITION/AUSRÜSTUNG/FAHRZEUGE, Sortierung BILLIG ZUERST/TEUER ZUERST/NEU, KAUFEN
+  bzw. ZU TEUER), Umschalter MEINE ANGEBOTE (PREIS ÄNDERN mit ±/Feld/OK, ZURÜCKNEHMEN); rechts VERKAUFEN: Item der Tasche
+  anklicken, Anzahl und Preis mit ±, Feld oder Schieberegler (Vorschlag: der Preis am Stand), darunter günstigstes Angebot
+  und Ø desselben Items und der Erlös nach Gebühr, ANBIETEN. Außerhalb der Safe Zone liegt eine Sperre über der Seite.
+  Die Einstellzeit `At` bleibt beim Preisändern (für die Sortierung NEU). Höchstens 8 Angebote je Spieler, Preis 1-100.000, der Verkäufer bekommt den Preis minus 5 %
   Gebühr (ohne VIP-Verdopplung). Angebote stehen im Spielstand des Verkäufers (`Extinction.Market`): sie überleben Tod und
   Verlassen und sind zu sehen, solange er auf dem Server ist; Käufe werden sofort gespeichert. Ein Fahrzeug, das draußen
   steht, muss erst eingepackt werden (`ExtinctionConfig.Market`, Karten-Attribut `PlayerMarket`).
@@ -627,7 +634,7 @@ Linksklick Schießen · Rechtsklick Zielen · R Nachladen · X Waffe inspizieren
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · H Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
 
-In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Inventar · E Stand/Lager/Tasche/Mitfahren ·
+In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Menü (Inventar) · M Menü (letzter Reiter) · E Stand/Lager/Tasche/Mitfahren ·
 K Fahrzeug einpacken · N Weltkarte · J Squad · Z Ping (nur an den Squad) · im Fahrzeug W/S/A/D, Leertaste aussteigen ·
 im Helikopter W/S/A/D, Leertaste steigen, Shift sinken, F aussteigen ·
 Controller: siehe Konsole · Touch: Hotbar-Plätze antippen,
@@ -774,7 +781,9 @@ am Commit:
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
-| `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Fenster: E am Stand, Vorschlag für Anzahl und Preis, ANBIETEN, eigene mit ZURÜCK, fremde mit KAUFEN, Filter, Weggehen schließt |
+| `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
+| `extmarketpage` | Markt-Seite für sich (Mock): Suche, Kategorien, Sortierung, Karten, KAUFEN/ZU TEUER, MEINE ANGEBOTE (Preis ändern, zurücknehmen), Verkaufen mit ±, Schieberegler, günstigstem Angebot und Erlös, Sperre außerhalb der Safe Zone |
+| `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge, Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
