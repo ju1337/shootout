@@ -1561,6 +1561,100 @@ end
 
 local prompts = {}
 
+-- ---------- Hinweis-Blasen über den Ständen ----------
+-- Über jedem Stand (Camp und Safehouses) schwebt eine Sprechblase mit dem Namen und Symbolen der Ware, damit man
+-- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
+local BUBBLE_RANGE = 180
+local BUBBLE_HEIGHT = 9.5 -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): knapp über dem Dach
+local BUBBLE_CELL = 46    -- Symbolfeld in Pixeln
+local BUBBLE_BACK = Color3.fromRGB(22, 24, 28)
+local BUBBLES = {
+	Stand_Weapons = { Title = "WAFFEN", Icons = { "Rifle", "Pistol", "Ammo_Rifle" }, Color = KIND_COLORS.Weapon },
+	Stand_Items = { Title = "SANI", Icons = { "Medkit", "Vest", "AntiZombie" }, Color = KIND_COLORS.Heal },
+	Stand_Vehicles = { Title = "FAHRZEUGE", Icons = { "V_Quad", "V_Pickup", "V_Heli" }, Color = KIND_COLORS.Vehicle },
+	Stand_Market = { Title = "SPIELERMARKT", Icons = { "Coins", "SMG", "Medkit" }, Color = Color3.fromRGB(226, 182, 72) },
+	Stash = { Title = "LAGER", Icons = { "Crate" }, Color = Color3.fromRGB(150, 160, 176) },
+	Travel = { Title = "REISEN", Icons = { "Route" }, Color = Color3.fromRGB(110, 170, 220) },
+}
+local bubbles = {}
+
+-- Gezeichnete Symbole für Dinge, die keine Items sind: Münzen (Markt), Kiste (Lager), Wegweiser (Reisen)
+local function buildSymbol(parent, kind, zIndex)
+	local holder = make("Frame", { Name = "Icon", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex },
+		parent)
+	local function box(props, into)
+		props.BorderSizePixel = 0
+		props.ZIndex = zIndex
+		return make("Frame", props, into or holder)
+	end
+	if kind == "Coins" then
+		for _, offset in { Vector2.new(-6, 5), Vector2.new(5, -3) } do
+			local coin = box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, offset.X, 0.5, offset.Y),
+				Size = UDim2.fromOffset(20, 20), BackgroundColor3 = Color3.fromRGB(226, 182, 72) })
+			UITheme.Corner(coin, 10)
+			UITheme.Stroke(coin, Color3.fromRGB(150, 110, 40), 2)
+			box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(4, 10),
+				BackgroundColor3 = Color3.fromRGB(150, 110, 40) }, coin)
+		end
+	elseif kind == "Crate" then
+		local crate = box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.55), Size = UDim2.fromOffset(30, 22),
+			BackgroundColor3 = Color3.fromRGB(128, 100, 66) })
+		UITheme.Corner(crate, 3)
+		box({ Size = UDim2.new(1, 0, 0, 5), BackgroundColor3 = Color3.fromRGB(86, 66, 44) }, crate) -- Deckel
+		for _, x in { 8, 20 } do
+			box({ Position = UDim2.fromOffset(x, 5), Size = UDim2.fromOffset(2, 17), BackgroundColor3 = Color3.fromRGB(100, 78, 52) }, crate)
+		end
+		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 3), Size = UDim2.fromOffset(6, 5),
+			BackgroundColor3 = Color3.fromRGB(190, 192, 196) }, crate) -- Verschluss
+	elseif kind == "Route" then
+		local sign = Color3.fromRGB(110, 170, 220)
+		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(3, 30),
+			BackgroundColor3 = Color3.fromRGB(150, 152, 158) }) -- Pfosten
+		box({ Position = UDim2.new(0.5, -2, 0, 8), Size = UDim2.fromOffset(18, 7), BackgroundColor3 = sign }) -- nach rechts
+		box({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(0.5, 2, 0, 18), Size = UDim2.fromOffset(18, 7),
+			BackgroundColor3 = Color3.fromRGB(232, 236, 240) }) -- nach links
+	end
+	return holder
+end
+
+local function bubbleOf(name)
+	return BUBBLES[name] or (string.sub(name, 1, 7) == "Travel_" and BUBBLES.Travel) or nil
+end
+
+-- Blase an einen Stand-Punkt hängen (einmal je Punkt)
+local function addBubble(part)
+	local def = part:IsA("BasePart") and bubbleOf(part.Name)
+	if not def or part:FindFirstChild("StandBubble") then
+		return
+	end
+	local count = #def.Icons
+	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(math.max(count * BUBBLE_CELL + 20, 136), 92),
+		StudsOffset = Vector3.new(0, BUBBLE_HEIGHT, 0), MaxDistance = BUBBLE_RANGE, AlwaysOnTop = false, LightInfluence = 0,
+		Enabled = inExtinction() }, part)
+	-- Spitze unten (Sprechblase): halb hinter dem Feld, nur die untere Hälfte mit Rand ist zu sehen
+	local tail = make("Frame", { Name = "Tail", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 1, -13),
+		Size = UDim2.fromOffset(16, 16), Rotation = 45, BackgroundColor3 = BUBBLE_BACK, BackgroundTransparency = 0.08,
+		BorderSizePixel = 0, ZIndex = 1 }, gui)
+	UITheme.Stroke(tail, def.Color, 2)
+	local panel = make("Frame", { Name = "Panel", Size = UDim2.new(1, 0, 1, -13), BackgroundColor3 = BUBBLE_BACK,
+		BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 2 }, gui)
+	UITheme.Corner(panel, 10)
+	UITheme.Stroke(panel, def.Color, 2)
+	label({ Name = "Title", Position = UDim2.fromOffset(0, 5), Size = UDim2.new(1, 0, 0, 18), Text = def.Title, TextSize = 15,
+		TextColor3 = def.Color, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, panel)
+	local row = make("Frame", { Name = "Icons", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 27),
+		Size = UDim2.fromOffset(count * BUBBLE_CELL, BUBBLE_CELL - 4), BackgroundTransparency = 1, ZIndex = 3 }, panel)
+	for i, id in def.Icons do
+		local cell = make("Frame", { Name = "Cell" .. i, Position = UDim2.fromOffset((i - 1) * BUBBLE_CELL + 2, 0),
+			Size = UDim2.fromOffset(BUBBLE_CELL - 4, BUBBLE_CELL - 4), BackgroundColor3 = Color3.fromRGB(44, 46, 52),
+			BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 3 }, row)
+		UITheme.Corner(cell, 6)
+		local icon = itemConfig(id) and buildIcon(cell, id, 4) or buildSymbol(cell, id, 4)
+		icon.Name = "Icon_" .. id
+	end
+	table.insert(bubbles, gui)
+end
+
 local function setupPrompts()
 	local maps = workspace:WaitForChild("Maps")
 	local map = maps:WaitForChild("Extinction", 30)
@@ -1636,8 +1730,15 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
+	-- Hinweis-Blasen über allen Ständen, dem Lager und den Haltestellen
+	for _, part in stands:GetChildren() do
+		addBubble(part)
+	end
 	for _, prompt in prompts do
 		prompt.Enabled = inExtinction()
+	end
+	for _, gui in bubbles do
+		gui.Enabled = inExtinction()
 	end
 end
 
@@ -1688,6 +1789,9 @@ local function updateVisible()
 	end
 	for _, prompt in prompts do
 		prompt.Enabled = on
+	end
+	for _, gui in bubbles do
+		gui.Enabled = on
 	end
 	if not on then
 		closeWindow()

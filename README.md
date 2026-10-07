@@ -54,8 +54,11 @@ Kochtopf, Reifen und Kisten als Sitze (Spawn) mit Überlebenden, die am Feuer si
 Lautsprecher, Antenne mit Blinklicht, rote PHOENIX-Banner, Wache oben), Wachen auf Toren und Ecktürmen, Feuertonnen,
 verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
 MG-Stellungen an den Toren, grelles Flutlicht am Generator, Treibstoff, Regentonnen; Händler unter Planen hinter
-Paletten-Theken (WAFFEN, SANI, WERKSTATT), das LAGER im Container, die Haltestelle REISEN, eine Werkstatt und der
-Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+Paletten-Theken (WAFFEN, SANI, WERKSTATT, dazu der SPIELERMARKT dem Waffenstand gegenüber), das LAGER im Container,
+die Haltestelle REISEN, eine Werkstatt und der Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
+und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
+schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, bis 180 Studs, Wände verdecken).
 
 **Reisen**: An der Haltestelle im Camp und in jedem Safehouse (Fahrer, Teil `Travel` / `Travel_<Name>`) öffnet **E** das
 Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dorthin, die Zone wird zum Spawnpunkt
@@ -750,7 +753,7 @@ am Commit:
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
 | `extbots` | Bots der offenen Welt: Spawn beim Admin (draußen, vor dem Rand der Safe Zone, sonst rote Zone), Ziele (Spieler draußen ja, in der Safe Zone nein, andere Bots nein, nahe Zombies ja), Zombies jagen und schlagen Bots, Tasche mit Waffe, Munition und Beute (rote Zone Tier 3), Kopfgeld und Rangliste nur für Spieler-Kills, Leiche weg, Obergrenze, Admin-Befehle |
-| `redzoneboard`, `extinctionui` | Squad-Fenster (J, Einladen, Einladung annehmen, Verlassen), Squad-Liste im HUD, Squad = Team (TeamCheck); Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen |
+| `redzoneboard`, `extinctionui` | Squad-Fenster (J, Einladen, Einladung annehmen, Verlassen), Squad-Liste im HUD, Squad = Team (TeamCheck); Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen, Hinweis-Blasen über allen Ständen, Lager und Haltestelle (Titel, Symbole der Ware, Waffen als 3D-Modell, von weitem sichtbar, außerhalb der offenen Welt aus) |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den
 [Luau-Releases](https://github.com/luau-lang/luau/releases) werden gebraucht):

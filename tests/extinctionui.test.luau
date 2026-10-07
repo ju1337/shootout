@@ -35,7 +35,7 @@ zone.Size = Vector3.new(200, 80, 200)
 zone.CFrame = CFrame.new(CENTER + Vector3.new(0, 40, 0))
 Instance.new("Part", map.Spawns).CFrame = CFrame.new(CENTER + Vector3.new(0, 0.5, 13))
 for name, offset in { Stand_Weapons = Vector3.new(-36, 2.5, 34), Stand_Items = Vector3.new(36, 2.5, 34),
-	Stand_Vehicles = Vector3.new(-30, 2.5, -42), Stash = Vector3.new(52, 2.5, -30) } do
+	Stand_Vehicles = Vector3.new(-30, 2.5, -42), Stash = Vector3.new(52, 2.5, -30), Stand_Market = Vector3.new(24, 2.5, 40) } do
 	local part = Instance.new("Part", map.Stands)
 	part.Name = name
 	part.CFrame = CFrame.new(CENTER + offset)
@@ -132,6 +132,34 @@ local hud = playerGui:FindFirstChild("ExtinctionHUD")
 local windowGui = playerGui:FindFirstChild("ExtinctionWindow")
 check(hud ~= nil and hud.Enabled, "HUD in der offenen Welt sichtbar")
 check(windowGui ~= nil and not windowGui.Enabled, "kein Fenster offen")
+
+-- Hinweis-Blasen über allen Ständen, dem Lager und der Haltestelle: Name und Symbole der Ware, von weitem sichtbar
+local BUBBLE_WANT = {
+	Stand_Weapons = { "WAFFEN", { "Rifle", "Pistol", "Ammo_Rifle" } },
+	Stand_Items = { "SANI", { "Medkit", "Vest", "AntiZombie" } },
+	Stand_Vehicles = { "FAHRZEUGE", { "V_Quad", "V_Pickup", "V_Heli" } },
+	Stand_Market = { "SPIELERMARKT", { "Coins", "SMG", "Medkit" } },
+	Stash = { "LAGER", { "Crate" } },
+	Travel = { "REISEN", { "Route" } },
+}
+for name, want in BUBBLE_WANT do
+	local part = map.Stands:FindFirstChild(name)
+	local bubble = part and part:FindFirstChild("StandBubble")
+	check(bubble ~= nil and bubble:IsA("BillboardGui") and bubble.Enabled, name .. ": Blase über dem Stand")
+	if bubble then
+		local title = find(bubble, "Title")
+		check(title ~= nil and title.Text == want[1], name .. ": Titel " .. want[1])
+		for _, id in want[2] do
+			local icon = find(bubble, "Icon_" .. id)
+			check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. id)
+		end
+		check(bubble.StudsOffset.Y > 6 and bubble.MaxDistance >= 150 and not bubble.AlwaysOnTop,
+			name .. ": über dem Dach, von weitem sichtbar, Wände verdecken")
+		check(bubble.Size.X.Offset >= #want[2] * 46, name .. ": breit genug für alle Symbole")
+	end
+end
+local rifleIcon = find(map.Stands.Stand_Weapons.StandBubble, "Icon_Rifle")
+check(rifleIcon and rifleIcon:FindFirstChildWhichIsA("ViewportFrame", true) ~= nil, "Waffensymbol als 3D-Modell")
 local hotbar = hud and find(hud, "Hotbar")
 check(hotbar ~= nil and #hotbar:GetChildren() == 9, "Hotbar mit 9 Plätzen")
 check(string.find(texts(hud), "SAFE ZONE", 1, true) ~= nil, "Anzeige SAFE ZONE")
@@ -548,9 +576,11 @@ end
 step(0.3)
 check(not find(hud, "Squad").Visible and not TeamCheck.IsSquadMate(ann), "Squad aufgelöst: Liste weg, Ann wieder Gegnerin")
 
--- Modus verlassen: HUD weg
+-- Modus verlassen: HUD und Blasen weg
 bob:SetAttribute("Mode", "Hub")
 step(0.2)
 check(not hud.Enabled, "HUD außerhalb der offenen Welt aus")
+check(not map.Stands.Stand_Weapons.StandBubble.Enabled and not map.Stands.Travel.StandBubble.Enabled,
+	"Blasen außerhalb der offenen Welt aus")
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
