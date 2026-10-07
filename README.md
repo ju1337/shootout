@@ -272,6 +272,16 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   draußen mit PvP), kaputt = ausgebrannt und weg; Zombies kann man umfahren. Stirbt der Besitzer, liegt das
   Fahrzeug in seiner Tasche am Boden. Technik: unsichtbarer Rumpf auf vier reibungsfreien Kugeln, LinearVelocity
   (nur waagerecht) und AlignOrientation, der Fahrer rechnet die Physik; der Server prüft das Tempo.
+- **Waffe inspizieren** (überall mit Waffe in der Hand: **Y**, Controller □ bei vollem Magazin, Touch INSPEKT): jede
+  Waffe hat ihren eigenen Ablauf (`WeaponAnimations.Inspect`) – Sturmgewehr rollt auf die Auswurfseite und prüft das
+  Magazin, MP wirbelt um den Lauf und zieht den Spannhebel, Schrotflinte schiebt eine Patrone nach und pumpt halb,
+  Präzisionsgewehr tippt den Verschluss an, LMG klappt den Deckel auf und klopft auf den Kasten, Pistole dreht sich auf
+  den Rücken, Schlitten-Check und Wirbel um den Abzugsfinger, Revolver lässt die Trommel rattern und wirbelt zweimal.
+  Währenddessen verschwindet das HUD samt Chat (`src/shared/InspectView.lua`: HUD-Oberflächen kurz aus der PlayerGui,
+  danach unverändert zurück), Kino-Look mit Balken, dunklen Rändern, Tiefenschärfe und engerem Sichtfeld (Schulterkamera
+  rückt heran), unten links eine Karte mit Name, Skin, Meisterschaft, Aufsätzen und Werten. Schießen, Zielen, Nachladen,
+  Messer, Wechsel, Sprinten oder nochmal Y beenden es. Andere Spieler sehen es in der Third-Person (Remotes.Inspect ->
+  Charakter-Attribute InspectStart/InspectWeapon). Test: `tests/inspect.test.luau`.
 - **Helikopter** (Fahrzeugstand, 12 000 Münzen, Tier 4): fliegt mit **bis zu 4 Leuten** – Pilot (der Besitzer) links
   vorne, Kopilot und zwei Plätze hinten (Mitfahrer per E). Steuerung: **W/S** vor/zurück, **A/D** drehen,
   **Leertaste** steigen, **Shift** (oder Strg/C) sinken, **F** aussteigen; Controller: Stick, R2/L2 steigen/sinken, ✕
@@ -590,7 +600,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 
 WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Rutschen, Springen daraus nimmt den Schwung mit) ·
 Springen vor Hindernissen: drüber (im Lauf) oder hochziehen ·
-Linksklick Schießen · Rechtsklick Zielen · R Nachladen · 1/2 Waffe · V Messer · Q Fähigkeit ·
+Linksklick Schießen · Rechtsklick Zielen · R Nachladen · Y Waffe inspizieren · 1/2 Waffe · V Messer · Q Fähigkeit ·
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · X Schulter wechseln · Tab Punkte ·
 M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
 

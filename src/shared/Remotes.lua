@@ -47,6 +47,7 @@ local NAMES = {
 	"SpawnChoice", -- Client -> Server: Spawn nach dem Tod (Herrschaft): "Base", "A", "B" oder "C"
 	"UseKillstreak", -- Client -> Server: bereite Killstreak auslösen (Id, Zielpunkt beim Luftschlag)
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose
+	"Inspect",    -- Client -> Server: Waffe inspizieren (true = Start, false = Ende) – für die Third-Person-Pose
 	"MarketAction", -- Client -> Server: Markt-Stand (Claim, Release, List, Unlist, SetPrice, Buy; MarketService)
 	"MarketStatus", -- Server -> Client: Rückmeldung zum Markt (Text, Erfolg)
 	"CrateAction", -- Client -> Server: Kiste öffnen ("Open", Kisten-Id; CrateService)

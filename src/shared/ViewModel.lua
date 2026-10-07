@@ -3,7 +3,7 @@
 --   * Hüfte <-> Zielen: beim Zielen liegt die Visierlinie (Kimme + Korn) genau in der Bildmitte
 --   * Sprint-Haltung, Schwanken beim Umsehen, Wippen beim Laufen, Eintauchen beim Landen, gekippt beim Rutschen
 --   * Rückschlag mit Federung, Ziehen beim Waffenwechsel
---   * Nachlade- und Schuss-Animationen aus WeaponAnimations (Magazin, Schlitten, Pumpe, linke Hand, ...)
+--   * Nachlade-, Inspizier- und Schuss-Animationen aus WeaponAnimations (Magazin, Schlitten, Pumpe, linke Hand, ...)
 -- Alles ist auf SCALE verkleinert und entsprechend näher an der Kamera: sieht gleich aus, ragt aber
 -- nicht so leicht in Wände.
 
@@ -145,7 +145,7 @@ function ViewModel:Land(speed)
 end
 
 -- state: Camera (CFrame), Aim (0..1), Sprinting, Sliding, Speed (Studs/s am Boden, 0 in der Luft),
--- Reload/Fire = { Anim, T } oder nil, Melee (Messer gerade draußen)
+-- Reload/Inspect/Fire = { Anim, T } oder nil, Melee (Messer gerade draußen)
 function ViewModel:Update(dt, state)
 	dt = math.min(dt, 1 / 20)
 	local camera = state.Camera
@@ -202,9 +202,9 @@ function ViewModel:Update(dt, state)
 		gun = CFrame.new(0, -1.2, 0.4) * gun
 	end
 
-	-- Animationen (Nachladen hat Vorrang vor der Schuss-Animation)
+	-- Animationen (Nachladen vor Inspizieren vor der Schuss-Animation)
 	local pose = nil
-	local active = state.Reload or state.Fire
+	local active = state.Reload or state.Inspect or state.Fire
 	if active then
 		pose = WeaponAnimations.Sample(active.Anim, self.Weapon, active.T)
 		gun = gun * pose.Gun

@@ -5,6 +5,9 @@
 -- Ego-Perspektive: Waffe mit Armen vor der Kamera (ViewModel), Zielen über Kimme und Korn.
 -- Schulterkamera: der Charakter hält die Waffe mit beiden Händen (CharacterPose), dazu das Fadenkreuz (HUD).
 -- Welche Waffen man hat, steht im Charakter-Attribut "Loadout" (vom Server, je nach Agent).
+-- Inspizieren (Y, Controller: □ bei vollem Magazin, Touch: INSPEKT): eigene Animation je Waffe (WeaponAnimations),
+-- das HUD verschwindet (InspectView); Schießen, Zielen, Nachladen, Messer, Wechsel, Sprinten oder nochmal Y beenden
+-- es. Der Server zeigt es den anderen (Remotes.Inspect -> Charakter-Attribute, CharacterPose).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,6 +27,8 @@ local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
 local WeaponEffects = require(Shared.WeaponEffects)
 local CharacterPose = require(Shared.CharacterPose)
+local InspectView = require(Shared.InspectView)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -55,6 +60,7 @@ local shotCounter = 0    -- eigene Schuss-Nummern (laufen über alle Leben weite
 local reloading = false
 local reload = nil       -- { Weapon, Anim, Start, Duration, LastT } – Nachlade-Animation
 local fireAnim = nil     -- { Anim, Start, LastT } – Schuss-Animation (Schlitten, Pumpe, Hülse)
+local inspect = nil      -- { Weapon, Anim, Start, Duration, LastT } – Waffe inspizieren
 local synced = false     -- erst schießen, wenn der Server die Munition gemeldet hat
 local fireHeld = false
 local aimHeld = false
@@ -162,6 +168,51 @@ local function movementState()
 	end
 	local velocity = root.AssemblyLinearVelocity
 	return Vector3.new(velocity.X, 0, velocity.Z).Magnitude, humanoid.FloorMaterial == Enum.Material.Air, velocity
+end
+
+-- ---------- Inspizieren ----------
+
+local function stopInspect(silent)
+	if not inspect then
+		return
+	end
+	inspect = nil
+	InspectView.Stop()
+	Movement.SetInspecting(false)
+	if not silent then
+		Remotes.Inspect:FireServer(false)
+	end
+end
+
+local function canInspect()
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	return current ~= nil and alive() and humanoid ~= nil and not humanoid.Sit and not humanoid.PlatformStand
+		and not reloading and not aiming and not aimHeld and knife == nil and not Movement.IsSprinting()
+		and not UITheme.IsMenuOpen() and os.clock() >= drawUntil
+end
+
+local function startInspect()
+	if inspect or not canInspect() then
+		return
+	end
+	local anim, duration = WeaponAnimations.Inspect(current)
+	if not anim then
+		return
+	end
+	fireAnim = nil
+	inspect = { Weapon = current, Anim = anim, Start = os.clock(), Duration = duration, LastT = -1 }
+	InspectView.Start(current, Movement.IsThirdPerson())
+	Movement.SetInspecting(true)
+	Remotes.Inspect:FireServer(true)
+end
+
+local function toggleInspect()
+	if inspect then
+		stopInspect()
+	else
+		startInspect()
+	end
 end
 
 -- ---------- Nachladen ----------
@@ -380,6 +431,7 @@ local function equip(slot)
 	if not name or name == current then
 		return
 	end
+	stopInspect()
 	current = name
 	reloading = false
 	reload = nil
@@ -403,6 +455,7 @@ local function melee()
 		or player:GetAttribute("InSafeZone") then
 		return
 	end
+	stopInspect()
 	lastMelee = os.clock()
 	local camera = workspace.CurrentCamera
 	Remotes.Melee:FireServer(camera.CFrame.Position, camera.CFrame.LookVector)
@@ -447,6 +500,7 @@ end
 
 -- Nach Spawn/Respawn: auf den Stand vom Server warten (Equip ohne Namen fragt ihn an)
 local function resetWeapon()
+	stopInspect(true) -- neuer Charakter: der Server hat die Attribute mit dem alten verworfen
 	current = nil
 	reloading = false
 	reload = nil
@@ -497,6 +551,11 @@ function WeaponClient.IsFirstPerson()
 	return firstPersonView()
 end
 
+-- Inspiziert der Spieler gerade? Gibt den Zustand ({ Weapon, Anim, Start, Duration }) zurück
+function WeaponClient.Inspecting()
+	return inspect
+end
+
 function WeaponClient.Init()
 	-- Eingaben über InputActions (Tastatur, Controller und Touch-Knöpfe)
 	local function fighting()
@@ -505,6 +564,7 @@ function WeaponClient.Init()
 	InputActions.Bind("Fire", function(began)
 		fireHeld = began and fighting()
 		if fireHeld then
+			stopInspect()
 			tryFire()
 		end
 	end)
@@ -519,8 +579,20 @@ function WeaponClient.Init()
 		end
 	end)
 	InputActions.Bind("Reload", function(began)
+		if not began or not fighting() then
+			return
+		end
+		-- Controller: □ bei vollem Magazin inspiziert die Waffe (bzw. beendet das Inspizieren)
+		if InputActions.Device() == "Gamepad" and current and synced and not reloading and displayedMag() >= magSize then
+			toggleInspect()
+			return
+		end
+		stopInspect()
+		requestReload()
+	end)
+	InputActions.Bind("Inspect", function(began)
 		if began and fighting() then
-			requestReload()
+			toggleInspect()
 		end
 	end)
 	InputActions.Bind("Melee", function(began)
@@ -612,6 +684,23 @@ function WeaponClient.Init()
 				end
 			end
 		end
+		-- Inspizieren: läuft bis zum Ende, außer man schießt, zielt, lädt nach, sprintet, stirbt, setzt sich, öffnet ein Menü
+		local inspectPose = nil
+		if inspect then
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if inspect.Weapon ~= current or not isAlive or reloading or aiming or aimHeld or Movement.IsSprinting()
+				or (humanoid and (humanoid.Sit or humanoid.PlatformStand)) or UITheme.IsMenuOpen() then
+				stopInspect()
+			else
+				local t = advance(inspect, inspect.Duration)
+				if t >= 1 then
+					stopInspect()
+				else
+					inspectPose = { Anim = inspect.Anim, T = t }
+					InspectView.SetProgress(t)
+				end
+			end
+		end
 		local firePose = nil
 		if fireAnim then
 			local t = advance(fireAnim, fireAnim.Anim.Duration)
@@ -642,6 +731,7 @@ function WeaponClient.Init()
 					Sliding = Movement.IsSliding(),
 					Speed = airborne and 0 or speed,
 					Reload = reloadPose,
+					Inspect = inspectPose,
 					Fire = firePose,
 					Melee = knife ~= nil,
 				})
@@ -649,9 +739,13 @@ function WeaponClient.Init()
 		end
 
 		-- Third-Person-Haltung des eigenen Charakters
-		CharacterPose.SetLocal(aiming, Movement.IsSprinting(),
-			reloadPose and reload and { Weapon = reload.Weapon, Anim = reload.Anim, Start = reload.Start, Duration = reload.Duration },
-			isAlive and thirdPerson)
+		local localAnim = nil
+		if reloadPose and reload then
+			localAnim = { Weapon = reload.Weapon, Anim = reload.Anim, Start = reload.Start, Duration = reload.Duration }
+		elseif inspectPose and inspect then
+			localAnim = { Weapon = inspect.Weapon, Anim = inspect.Anim, Start = inspect.Start, Duration = inspect.Duration }
+		end
+		CharacterPose.SetLocal(aiming, Movement.IsSprinting(), localAnim, isAlive and thirdPerson)
 	end)
 
 	-- Server ist die Wahrheit für Munition und aktuelle Waffe
@@ -664,6 +758,7 @@ function WeaponClient.Init()
 		if name == nil then
 			-- keine Waffe in der Hand (offene Welt: weggesteckt oder Hotbar leer)
 			if current then
+				stopInspect()
 				current = nil
 				reloading = false
 				reload = nil
@@ -683,6 +778,7 @@ function WeaponClient.Init()
 				drawUntil = os.clock() + DRAW_TIME
 				WeaponEffects.ActionSound("Draw")
 			end
+			stopInspect()
 			current = name
 			reloading = false
 			reload = nil

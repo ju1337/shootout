@@ -56,6 +56,7 @@ local aimFov = 50
 local normalHipHeight = nil
 local thirdPerson = false        -- Einstellung: Schulterkamera statt Ego-Perspektive
 local inVehicle = false          -- sitzt in einem Fahrzeug der offenen Welt: Verfolgerkamera statt Ego/Schulter
+local inspecting = false         -- inspiziert gerade die Waffe (Schulterkamera rückt heran)
 -- Schulterkamera: seitlicher Versatz so groß, dass der Charakter (Arme bis 2 Studs neben der Mitte) die
 -- Bildmitte mit ca. 8° Abstand freilässt; beim Zielen näher heran, aber weiter seitlich als der Arm
 local SHOULDER_OFFSET = Vector3.new(3.4, 1.0, 0)
@@ -63,6 +64,8 @@ local SHOULDER_AIM_OFFSET = Vector3.new(2.7, 0.8, 0)
 local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste H)
 local SHOULDER_DISTANCE = 9
 local SHOULDER_AIM_DISTANCE = 5.5
+local SHOULDER_INSPECT_OFFSET = Vector3.new(2.1, 0.35, 0) -- Waffe inspizieren: Kamera näher an die Waffe
+local SHOULDER_INSPECT_DISTANCE = 4.6
 local SHOULDER_WALL_MARGIN = 0.8 -- so weit bleibt die Kamera seitlich von Wänden weg
 local HEAD_HEIGHT = 1.5          -- Höhe des Kamera-Ziels über dem HumanoidRootPart (Roblox-Kamera, R15)
 local CAMERA_SMOOTH = 12         -- wie schnell Sichtfeld, Abstand und Versatz nachziehen
@@ -161,9 +164,9 @@ local function apply()
 		local crouched = isCrouched() and not isDropping(humanoid)
 		local offset = crouched and CROUCH_CAMERA or Vector3.zero
 		if thirdPerson and Modes.IsFighting(player) and not inVehicle then
-			local shoulder = aiming and SHOULDER_AIM_OFFSET or SHOULDER_OFFSET
+			local shoulder = inspecting and SHOULDER_INSPECT_OFFSET or (aiming and SHOULDER_AIM_OFFSET or SHOULDER_OFFSET)
 			offset += Vector3.new(shoulder.X * shoulderSide, shoulder.Y, 0) -- über die Schulter
-			targetDistance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
+			targetDistance = inspecting and SHOULDER_INSPECT_DISTANCE or (aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE)
 		end
 		targetOffset = offset
 		hipTarget = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
@@ -574,6 +577,14 @@ end
 
 function Movement.InVehicle()
 	return inVehicle
+end
+
+-- Waffe inspizieren (WeaponClient): Schulterkamera rückt näher an die Waffe
+function Movement.SetInspecting(on)
+	if inspecting ~= on then
+		inspecting = on
+		apply()
+	end
 end
 
 -- Einstellung Schulterkamera an/aus

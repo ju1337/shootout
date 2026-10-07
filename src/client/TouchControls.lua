@@ -41,6 +41,7 @@ local TOP = {
 	{ "Scoreboard", "PUNKTE", 56, 60, 316, "tap" },
 	{ "Camera", "KAMERA", 56, 60, 382, "tap" },
 	{ "Ultimate", "ULT", 56, 60, 448, "tap" },
+	{ "Inspect", "INSPEKT", 56, 60, 514, "tap" }, -- Waffe inspizieren (WeaponClient)
 }
 -- Links über dem Steuerknüppel
 local LEFT = {

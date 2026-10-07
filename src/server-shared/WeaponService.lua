@@ -12,7 +12,9 @@
 -- Charakter-Attribute für die Third-Person-Animationen aller Clients:
 --   ReloadStart (Serverzeit), ReloadTime (Nachladezeit mit Upgrades), ReloadShells (Patronen, Schrotflinte –
 --   die Zeitleiste ergibt sich dann aus WeaponConfig.ShellTiming),
---   AimPitch (Blick nach oben/unten in Grad), Aiming (zielt)
+--   AimPitch (Blick nach oben/unten in Grad), Aiming (zielt),
+--   InspectStart (Serverzeit) und InspectWeapon (Waffe): Spieler inspiziert die Waffe (Taste Y, Remotes.Inspect);
+--   Schießen, Nachladen, Wechseln und Messer beenden es
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -115,11 +117,23 @@ local function pvpBlocked(attacker, victim)
 	return attacker:GetAttribute("PvP") ~= true or victim:GetAttribute("PvP") ~= true
 end
 
+-- Inspizieren beenden (für die Animation bei den anderen)
+local function clearInspect(player)
+	local character = player.Character
+	if character and character:GetAttribute("InspectStart") ~= nil then
+		character:SetAttribute("InspectStart", nil)
+		character:SetAttribute("InspectWeapon", nil)
+	end
+end
+
 -- Nachladen für die Animationen der anderen Spieler sichtbar machen (nil = vorbei)
 local function setReloadAttributes(player, duration, shells)
 	local character = player.Character
 	if not character then
 		return
+	end
+	if duration then
+		clearInspect(player)
 	end
 	character:SetAttribute("ReloadStart", duration and workspace:GetServerTimeNow() or nil)
 	character:SetAttribute("ReloadTime", duration)
@@ -509,6 +523,7 @@ local function onFire(player, origin, direction, aiming, shotId, claims)
 	if not state then
 		return
 	end
+	clearInspect(player)
 	local validId = typeof(shotId) == "number" and shotId == shotId and math.abs(shotId) < 1e9
 	if validId and shotId > (lastShotIds[player] or 0) then
 		lastShotIds[player] = math.floor(shotId)
@@ -622,8 +637,9 @@ local function onEquip(player, weaponName)
 		return
 	end
 	if typeof(weaponName) == "string" and table.find(state.Loadout, weaponName) and state.Current ~= weaponName then
-		-- Wechsel bricht Nachladen ab
+		-- Wechsel bricht Nachladen und Inspizieren ab
 		cancelReload(player, state)
+		clearInspect(player)
 		state.Current = weaponName
 		state.Bloom = 0
 		-- Wartezeit einer langsamen Waffe nicht auf die neue übertragen (Ziehen dauert ohnehin kurz)
@@ -631,6 +647,25 @@ local function onEquip(player, weaponName)
 	end
 	showToolInHand(player)
 	sendAmmo(player)
+end
+
+-- Waffe inspizieren (Taste Y): Start bzw. Ende für die Animation bei den anderen Clients. Nur lebend, mit Waffe
+-- in der Hand und nicht beim Nachladen; höchstens alle 0,25 s.
+local lastInspect = {}
+local function onInspect(player, on)
+	local now = os.clock()
+	if lastInspect[player] and now - lastInspect[player] < 0.25 then
+		return
+	end
+	lastInspect[player] = now
+	local state = states[player]
+	local humanoid, character = getLivingHumanoid(player)
+	if on == true and state and state.Current and not state.Reloading and humanoid and not character:GetAttribute("Downed") then
+		character:SetAttribute("InspectStart", workspace:GetServerTimeNow())
+		character:SetAttribute("InspectWeapon", state.Current)
+	else
+		clearInspect(player)
+	end
 end
 
 -- Blick nach oben/unten und Zielen des Spielers, damit alle Clients seine Arme passend bewegen
@@ -692,6 +727,7 @@ local function onMelee(player, origin, direction)
 		return
 	end
 	lastMelee[player] = now
+	clearInspect(player)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
@@ -740,6 +776,7 @@ function WeaponService.SetCarried(player, weaponName, mag, source)
 		return false
 	end
 	cancelReload(player, state)
+	clearInspect(player)
 	for _, tool in state.Tools or {} do
 		tool:Destroy()
 	end
@@ -798,6 +835,7 @@ function WeaponService.Init()
 	Remotes.Equip.OnServerEvent:Connect(onEquip)
 	Remotes.Melee.OnServerEvent:Connect(onMelee)
 	Remotes.AimState.OnServerEvent:Connect(onAimState)
+	Remotes.Inspect.OnServerEvent:Connect(onInspect)
 
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
@@ -808,6 +846,7 @@ function WeaponService.Init()
 		lastMelee[player] = nil
 		lastShotIds[player] = nil
 		lastAimState[player] = nil
+		lastInspect[player] = nil
 	end)
 end
 

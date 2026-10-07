@@ -2,10 +2,13 @@
 -- Nachlade- und Schuss-Animationen aller Waffen als Keyframes. Dieselben Daten bewegen die Waffe vor der
 -- eigenen Kamera (ViewModel) und die Waffe samt Armen der Charaktere in der Third-Person (CharacterPose).
 --
+-- Dazu für jede Waffe ein eigenes Inspizieren (Taste Y, WeaponClient), siehe WeaponAnimations.Inspect.
+--
 -- Zeiten sind 0..1 (Anteil der Animationsdauer), Positionen in Modell-Einheiten der Waffe (Griffpunkt =
 -- Ursprung, siehe GunModels). Spuren:
 --   Gun    = Versatz der ganzen Waffe (dreht um den Griff)
---   Hand   = linke Hand im Waffenraum: CFrame oder { Gruppe, Versatz } (folgt dann z.B. dem Magazin)
+--   Hand   = linke Hand im Waffenraum: CFrame oder { Gruppe, Versatz } (folgt dann z.B. dem Magazin) oder
+--            { "Hold", CFrame } (relativ zur Haltung ohne Gun-Versatz: bleibt ruhig, während die Waffe wirbelt)
 --   Groups = Bewegung von Teilgruppen (Magazin, Schlitten, ...) in Achsen der Waffe um ihren Mittelpunkt
 --   Hide   = Gruppe in diesen Zeiträumen unsichtbar, Show = sonst unsichtbare Gruppe sichtbar
 --   Events = { Zeit, "Sound", Name } | { Zeit, "Drop", Gruppe } (fallende Kopie) | { Zeit, "Eject" } (Hülse)
@@ -406,7 +409,387 @@ local FIRES = {
 	LMG = { Duration = 0.05, Events = { { 0, "Eject" } } },
 }
 
+-- ---------- Inspizieren (Taste Y) ----------
+-- Jede Waffe hat ihren eigenen Ablauf: hochnehmen und die Seite zur Kamera drehen, dann je nach Waffe Magazin
+-- prüfen, Verschluss oder Schlitten antippen, eine Patrone nachschieben, den Deckel öffnen, die Trommel drehen,
+-- wirbeln ... Gebaut für die Ego-Ansicht (die Waffe kommt zur Bildmitte), die Third-Person nimmt dieselben Daten.
+-- Duration = Sekunden.
+
+-- Wirbeln: Keyframes von base aus um eine Achse ("X" = überschlagen, "Z" = um den Lauf), Schritte von höchstens
+-- 120 Grad (Lerp nimmt sonst den kürzeren Weg). Erster Schritt beschleunigt, letzter bremst.
+local function spin(track, base, axis, degrees, t0, t1)
+	local steps = math.max(1, math.ceil(math.abs(degrees) / 120))
+	for i = 1, steps do
+		local angle = math.rad(degrees * i / steps)
+		local rotation = axis == "X" and CFrame.Angles(angle, 0, 0) or CFrame.Angles(0, 0, angle)
+		table.insert(track, { t0 + (t1 - t0) * i / steps, base * rotation, i == 1 and "In" or (i == steps and "Out" or nil) })
+	end
+end
+
+local function hold(x, y, z)
+	return { "Hold", CFrame.new(x, y, z) }
+end
+
+local INSPECTS = {}
+
+-- Sturmgewehr: linke Seite zeigen, über den Lauf auf die rechte Seite (Auswurf) rollen, Magazin prüfen
+INSPECTS.Rifle = { Duration = 4.2, Build = function()
+	local LH = restHand("Rifle")
+	local grab = { "Magazine", cf(0, -0.31, 0.02) }
+	local check = cf(-0.2, 0.25, 0.25, 4, 18, -20)
+	return {
+		Gun = {
+			{ 0.00, I },
+			{ 0.14, cf(-0.5, 0.42, 0.45, 6, 52, 10), "Out" },
+			{ 0.34, cf(-0.52, 0.45, 0.43, 9, 58, 14), "InOut" },
+			{ 0.50, cf(-0.45, 0.45, 0.2, 10, 38, 78), "InOut" },
+			{ 0.64, cf(-0.43, 0.44, 0.2, 7, 34, 72), "InOut" },
+			{ 0.72, check, "InOut" },
+			{ 0.80, check * cf(0, 0.03, 0, 3, 0, 0), "Out" },
+			{ 0.86, check, "InOut" },
+			{ 1.00, I, "InOut" },
+		},
+		Groups = {
+			Magazine = {
+				{ 0.73, I },
+				{ 0.77, cf(0, -0.16, 0.02, -4, 0, 0), "Out" },
+				{ 0.80, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.64, LH },
+			{ 0.72, grab, "InOut" },
+			{ 0.81, grab },
+			{ 0.92, LH, "InOut" },
+		},
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.76, "Sound", "MagOut" },
+			{ 0.80, "Sound", "MagIn" },
+		},
+	}
+end }
+
+-- MP: Seite zeigen, einmal um den Lauf wirbeln (linke Hand lässt los), Spannhebel links ziehen
+INSPECTS.SMG = { Duration = 3.8, Build = function()
+	local LH = restHand("SMG")
+	local twirl = cf(-0.35, 0.45, 0.3, 4, 20, 10)
+	local side = cf(-0.42, 0.45, 0.35, 6, 40, -22)
+	local bolt = { "Bolt", cf(-0.06, 0, 0.03) }
+	local gun = {
+		{ 0.00, I },
+		{ 0.12, cf(-0.45, 0.4, 0.4, 5, 48, 8), "Out" },
+		{ 0.28, cf(-0.47, 0.42, 0.38, 8, 54, 12), "InOut" },
+		{ 0.34, twirl, "InOut" },
+	}
+	spin(gun, twirl, "Z", 360, 0.34, 0.52)
+	for _, key in {
+		{ 0.62, side, "InOut" },
+		{ 0.72, side * cf(0, 0.02, 0, 2, 0, 0), "Out" },
+		{ 0.78, side, "InOut" },
+		{ 0.86, cf(-0.1, 0.15, 0.15, 2, 6, 6), "InOut" },
+		{ 1.00, I, "InOut" },
+	} do
+		table.insert(gun, key)
+	end
+	return {
+		Gun = gun,
+		Groups = {
+			Bolt = {
+				{ 0.67, I },
+				{ 0.71, cf(0, 0, 0.18), "Out" },
+				{ 0.75, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.28, LH },
+			{ 0.34, hold(-0.35, -0.75, 0.5), "Out" },
+			{ 0.56, hold(-0.35, -0.75, 0.5) },
+			{ 0.64, bolt, "InOut" },
+			{ 0.75, bolt },
+			{ 0.86, LH, "InOut" },
+		},
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.52, "Sound", "Slide" },
+			{ 0.71, "Sound", "Bolt" },
+			{ 0.75, "Sound", "Slide" },
+		},
+	}
+end }
+
+-- Schrotflinte: Seite zeigen, Ladeklappe zur Kamera drehen und eine Patrone nachschieben, Pumpe halb zurück
+INSPECTS.Shotgun = { Duration = 4.6, Build = function()
+	local LH = restHand("Shotgun")
+	local port = cf(-0.4, 0.45, 0.25, 15, 40, -95)
+	local pumpPose = cf(-0.2, 0.3, 0.3, 4, 10, -12)
+	local shell = { "Shell", cf(-0.02, -0.08, 0.06) }
+	local pump = { "Pump", cf(-0.02, -0.12, 0) }
+	return {
+		Gun = {
+			{ 0.00, I },
+			{ 0.12, cf(-0.45, 0.4, 0.5, 5, 50, 8), "Out" },
+			{ 0.28, cf(-0.47, 0.42, 0.5, 8, 55, 10), "InOut" },
+			{ 0.40, port, "InOut" },
+			{ 0.55, port * cf(0, 0.03, 0), "Out" },
+			{ 0.60, port, "InOut" },
+			{ 0.70, pumpPose, "InOut" },
+			{ 0.76, pumpPose * cf(0, 0, 0.03), "Out" },
+			{ 0.84, pumpPose, "InOut" },
+			{ 1.00, I, "InOut" },
+		},
+		Groups = {
+			Shell = {
+				{ 0.40, cf(-0.2, -0.45, 0.15) },
+				{ 0.50, I, "Out" },
+				{ 0.56, cf(0, 0.12, -0.25), "In" },
+				{ 1.00, I },
+			},
+			Pump = {
+				{ 0.70, I },
+				{ 0.76, cf(0, 0, 0.16), "Out" },
+				{ 0.82, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.28, LH },
+			{ 0.36, cf(-0.3, -0.7, 0.3), "InOut" },
+			{ 0.42, shell, "Out" },
+			{ 0.56, shell },
+			{ 0.64, pump, "InOut" },
+			{ 0.84, pump },
+			{ 1.00, LH, "InOut" },
+		},
+		Show = { Shell = { { 0.40, 0.56 } } },
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.55, "Sound", "Shell" },
+			{ 0.76, "Sound", "Pump" },
+			{ 0.82, "Sound", "Pump" },
+		},
+	}
+end }
+
+-- Präzisionsgewehr: lang von der Seite, auf die rechte Seite rollen und den Verschluss antippen, Magazin prüfen
+INSPECTS.DMR = { Duration = 4.2, Build = function()
+	local LH = restHand("DMR")
+	local right = cf(-0.45, 0.48, 0.2, 8, 40, 72)
+	local check = cf(-0.15, 0.3, 0.25, 4, 12, -18)
+	local bolt = { "Bolt", cf(0.08, 0.04, 0) }
+	local mag = { "Magazine", cf(0, -0.22, 0.02) }
+	return {
+		Gun = {
+			{ 0.00, I },
+			{ 0.14, cf(-0.55, 0.45, 0.5, 4, 62, 6), "Out" },
+			{ 0.34, cf(-0.57, 0.47, 0.48, 6, 66, 8), "InOut" },
+			{ 0.46, right, "InOut" },
+			{ 0.58, right * cf(0, 0.02, 0, 2, -4, 4), "InOut" },
+			{ 0.66, check, "InOut" },
+			{ 0.78, check * cf(0, 0.03, 0, 2, 0, 0), "Out" },
+			{ 0.83, check, "InOut" },
+			{ 1.00, I, "InOut" },
+		},
+		Groups = {
+			Bolt = {
+				{ 0.50, I },
+				{ 0.55, cf(0, 0, 0.2), "Out" },
+				{ 0.60, I, "In" },
+			},
+			Magazine = {
+				{ 0.68, I },
+				{ 0.73, cf(0, -0.14, 0.02, -3, 0, 0), "Out" },
+				{ 0.78, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.36, LH },
+			{ 0.44, cf(0.1, 0.65, 0.2), "InOut" },
+			{ 0.50, bolt, "Out" },
+			{ 0.60, bolt },
+			{ 0.67, mag, "InOut" },
+			{ 0.79, mag },
+			{ 0.90, LH, "InOut" },
+		},
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.55, "Sound", "Bolt" },
+			{ 0.60, "Sound", "Slide" },
+			{ 0.73, "Sound", "MagOut" },
+			{ 0.78, "Sound", "MagIn" },
+		},
+	}
+end }
+
+-- LMG: schwer hochnehmen, Deckel aufklappen und in den Zuführer schauen, Deckel zuschlagen, auf den Kasten klopfen
+INSPECTS.LMG = { Duration = 4.8, Build = function()
+	local LH = restHand("LMG")
+	local OPEN = cf(0, 0, 0.4) * cf(0, 0, 0, 70, 0, 0) * cf(0, 0, -0.4)
+	local peek = cf(-0.45, 0.25, 0.25, -22, 40, -25)
+	local pat = cf(-0.15, 0.2, 0.3, 3, 15, 12)
+	local lid = { "Cover", cf(0, 0.06, -0.36) }
+	local box = { "Magazine", cf(-0.25, 0, 0) }
+	return {
+		Gun = {
+			{ 0.00, I },
+			{ 0.16, cf(-0.5, 0.35, 0.5, 5, 45, 8), "Out" },
+			{ 0.30, cf(-0.52, 0.38, 0.48, 8, 50, 10), "InOut" },
+			{ 0.40, peek, "InOut" },
+			{ 0.62, peek * cf(0, 0.02, 0, -3, 3, -3), "InOut" },
+			{ 0.70, peek * cf(0, -0.03, 0), "Out" },
+			{ 0.76, pat, "InOut" },
+			{ 0.82, pat * cf(0, 0.03, 0, 2, 0, 0), "Out" },
+			{ 0.86, pat, "InOut" },
+			{ 1.00, I, "InOut" },
+		},
+		Groups = {
+			Cover = {
+				{ 0.34, I },
+				{ 0.42, OPEN, "Out" },
+				{ 0.64, OPEN },
+				{ 0.70, I, "In" },
+			},
+			Magazine = {
+				{ 0.80, I },
+				{ 0.82, cf(0, -0.03, 0), "Out" },
+				{ 0.86, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.30, LH },
+			{ 0.36, lid, "InOut" },
+			{ 0.42, lid },
+			{ 0.50, cf(-0.3, -0.05, -0.9), "InOut" },
+			{ 0.60, cf(-0.3, -0.05, -0.9) },
+			{ 0.64, lid, "InOut" },
+			{ 0.70, lid },
+			{ 0.78, box, "InOut" },
+			{ 0.86, box },
+			{ 1.00, LH, "InOut" },
+		},
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.41, "Sound", "Bolt" },
+			{ 0.70, "Sound", "Slide" },
+			{ 0.82, "Sound", "MagIn" },
+		},
+	}
+end }
+
+-- Pistole: linke Seite zeigen, auf den Rücken drehen (rechte Seite), Schlitten antippen, einmal um den Abzugsfinger wirbeln
+INSPECTS.Pistol = { Duration = 3.6, Build = function()
+	local LH = restHand("Pistol")
+	local press = cf(-0.2, 0.2, 0, 4, 12, -8)
+	local slide = { "Slide", cf(-0.1, 0.06, 0.32) }
+	local away = hold(-0.45, -0.85, 0.45)
+	local gun = {
+		{ 0.00, I },
+		{ 0.12, cf(-0.35, 0.35, 0.35, 6, 55, 8), "Out" },
+		{ 0.28, cf(-0.37, 0.37, 0.34, 8, 60, 10), "InOut" },
+		{ 0.36, cf(-0.37, 0.4, 0.34, 8, 60, 100), "In" },
+		{ 0.44, cf(-0.37, 0.4, 0.34, 8, 60, 190), "Out" },
+		{ 0.56, cf(-0.38, 0.41, 0.33, 9, 62, 186), "InOut" },
+		{ 0.62, cf(-0.3, 0.3, 0.3, 5, 20, 90), "In" },
+		{ 0.68, press, "Out" },
+		{ 0.76, press },
+	}
+	spin(gun, press, "X", -360, 0.79, 0.9)
+	table.insert(gun, { 1.00, I, "InOut" })
+	return {
+		Gun = gun,
+		Groups = {
+			Slide = {
+				{ 0.70, I },
+				{ 0.73, cf(0, 0, 0.12), "Out" },
+				{ 0.76, I, "In" },
+			},
+		},
+		Hand = {
+			{ 0.00, LH },
+			{ 0.10, away, "Out" },
+			{ 0.62, away },
+			{ 0.68, slide, "InOut" },
+			{ 0.76, slide },
+			{ 0.79, away, "Out" },
+			{ 0.92, away },
+			{ 1.00, LH, "InOut" },
+		},
+		Events = {
+			{ 0.02, "Sound", "Draw" },
+			{ 0.73, "Sound", "Slide" },
+			{ 0.76, "Sound", "Slide" },
+			{ 0.90, "Sound", "Draw" },
+		},
+	}
+end }
+
+-- Revolver: Trommel ausschwenken und drehen lassen (ratternd, wird langsamer), mit dem Handgelenk zuschnappen,
+-- dann zweimal um den Abzugsfinger wirbeln wie im Western
+INSPECTS.Revolver = { Duration = 4.4, Build = function()
+	local LH = restHand("Revolver")
+	local SWING = cf(-0.28, -0.1, 0, 0, 0, 25)
+	local open = cf(-0.3, 0.3, 0.1, 15, 60, -15)
+	local flick = cf(-0.2, 0.25, 0, 3, 15, 15)
+	local cylinder = { "Cylinder", cf(-0.18, 0, 0) }
+	local away = hold(-0.4, -0.8, 0.45)
+	local gun = {
+		{ 0.00, I },
+		{ 0.10, cf(-0.35, 0.3, 0.3, 10, 50, 10), "Out" },
+		{ 0.18, open, "InOut" },
+		{ 0.50, open * cf(0, 0.01, 0, 2, 4, -4), "InOut" },
+		{ 0.56, cf(-0.2, 0.27, 0, 5, 15, 25), "Out" },
+		{ 0.60, flick, "InOut" },
+	}
+	spin(gun, flick, "X", -720, 0.63, 0.88)
+	table.insert(gun, { 1.00, I, "InOut" })
+	-- Trommel: ausschwenken, zweimal drehen (immer langsamer), einschwenken
+	local drum = { { 0.12, I }, { 0.18, SWING, "Out" } }
+	local times = { 0.22, 0.265, 0.315, 0.37, 0.43, 0.5 }
+	for i, t in times do
+		table.insert(drum, { t, SWING * CFrame.Angles(0, 0, math.rad(120 * i)), i == #times and "Out" or nil })
+	end
+	table.insert(drum, { 0.56, I, "In" })
+	local events = { { 0.02, "Sound", "Draw" }, { 0.17, "Sound", "Cylinder" }, { 0.56, "Sound", "Cylinder" },
+		{ 0.88, "Sound", "Draw" } }
+	for _, t in { 0.24, 0.29, 0.34, 0.40, 0.47 } do
+		table.insert(events, { t, "Sound", "Shell" })
+	end
+	return {
+		Gun = gun,
+		Groups = { Cylinder = drum },
+		Hand = {
+			{ 0.00, LH },
+			{ 0.10, cylinder, "InOut" },
+			{ 0.18, cylinder },
+			{ 0.22, { "Cylinder", cf(-0.1, -0.12, 0.05) }, "Out" },
+			{ 0.30, away, "InOut" },
+			{ 0.92, away },
+			{ 1.00, LH, "InOut" },
+		},
+		Events = events,
+	}
+end }
+
 local reloadCache = {}
+local inspectCache = {}
+
+-- Inspizieren: Animation und Dauer in Sekunden (nil, 0 = die Waffe hat keine)
+function WeaponAnimations.Inspect(weaponName)
+	local entry = INSPECTS[weaponName]
+	if not entry then
+		return nil, 0
+	end
+	local anim = inspectCache[weaponName]
+	if not anim then
+		anim = entry.Build()
+		inspectCache[weaponName] = anim
+	end
+	return anim, entry.Duration
+end
 
 -- Nachlade-Animation. duration = Nachladezeit (mit Upgrades), shells = Patronen (nur Schrotflinte).
 -- Gibt (Animation, tatsächliche Dauer in Sekunden) zurück.
@@ -493,6 +876,9 @@ function WeaponAnimations.Sample(anim, weaponName, t)
 		pose.Hand = sample(anim.Hand, t, function(value)
 			if typeof(value) == "CFrame" then
 				return value
+			end
+			if value[1] == "Hold" then
+				return pose.Gun:Inverse() * value[2] -- Waffe * Ergebnis = Haltung * Versatz
 			end
 			-- An einer Gruppe: Hauptteil der Gruppe (bewegt) * Griff-Versatz, Achsen der Waffe
 			local group, offset = value[1], value[2]

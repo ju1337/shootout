@@ -7,12 +7,12 @@
 --   * Zielen (rechte Maustaste, bei Bots sobald sie ein Ziel haben): Waffe wird angelegt – Kimme/Visier
 --     direkt vor das rechte Auge, Kopf neigt sich an den Schaft, Oberkörper etwas vor und gerader zum Ziel,
 --     rechter Ellbogen hoch; Pistolen mit gestreckten Armen auf Augenhöhe
---   * Nachladen (Magazin raus/rein mit der linken Hand), Pumpen/Schlitten und Rückstoß
+--   * Nachladen (Magazin raus/rein mit der linken Hand), Inspizieren (Taste Y), Pumpen/Schlitten und Rückstoß
 -- Jeder Client rechnet das selbst für alle Charaktere in der Nähe: Transform der Gelenke wird nach den
 -- Animationen in RunService.PreSimulation überschrieben. Gelenke sind Motor6Ds oder – mit dem Avatar Joint
 -- Upgrade, Standard bei Spieler-Avataren – AnimationConstraints; beides wird erkannt (findJoint).
 -- Blick und Zielen der anderen kommen über die Charakter-Attribute AimPitch/Aiming (vom Server), Nachladen
--- über ReloadStart/ReloadTime/ReloadShells.
+-- über ReloadStart/ReloadTime/ReloadShells, Inspizieren über InspectStart/InspectWeapon.
 -- R15 bekommt die volle Haltung, R6 eine einfache (Arme zeigen zur Waffe).
 -- Bewegung obendrauf (prozedural, ohne Animations-Assets): Waffe wippt beim Laufen im Schrittrhythmus,
 -- Atmen im Stand, Oberkörper neigt sich beim Seitwärtslaufen, Waffe kommt beim Wechseln von unten hoch,
@@ -259,6 +259,7 @@ local function bindTool(entry, tool)
 	entry.Welds = {}
 	entry.ReloadKey = nil
 	entry.Reload = nil
+	entry.InspectKey = nil
 	entry.Fire = nil
 	for _, part in tool:GetChildren() do
 		local weld = part:IsA("BasePart") and part:FindFirstChild("GunWeld")
@@ -362,6 +363,36 @@ local function remoteReload(model, entry, inRange)
 	end
 	entry.LastT = t
 	return WeaponAnimations.Sample(reload.Anim, entry.Weapon, t), t
+end
+
+-- Inspizieren der anderen (InspectStart = Serverzeit, InspectWeapon = Waffe): dieselbe Animation wie bei einem selbst
+local function remoteInspect(model, entry, inRange)
+	local start = model:GetAttribute("InspectStart")
+	if typeof(start) ~= "number" or model:GetAttribute("InspectWeapon") ~= entry.Weapon then
+		entry.InspectKey = nil
+		return nil
+	end
+	local anim, duration = WeaponAnimations.Inspect(entry.Weapon)
+	if not anim or duration <= 0 then
+		return nil
+	end
+	local now = workspace:GetServerTimeNow()
+	local key = tostring(start) .. tostring(entry.Weapon)
+	if entry.InspectKey ~= key then
+		entry.InspectKey = key
+		entry.InspectT = math.max(-1, (now - start) / duration - 0.001) -- mittendrin gesehen: nichts nachholen
+	end
+	local t = (now - start) / duration
+	if t < 0 or t >= 1 then
+		return nil
+	end
+	if inRange then
+		for _, event in WeaponAnimations.Events(anim, entry.InspectT, t) do
+			handleEvent(entry, event, entry.Handle and entry.Handle.Position)
+		end
+	end
+	entry.InspectT = t
+	return WeaponAnimations.Sample(anim, entry.Weapon, t), t
 end
 
 -- ---------- Haltung ----------
@@ -580,7 +611,11 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 			pose = WeaponAnimations.Sample(reload.Anim, weapon, poseT)
 		end
 	else
-		pose, poseT = remoteReload(model, entry, (root.Position - cameraPosition).Magnitude < EVENT_DISTANCE)
+		local inRange = (root.Position - cameraPosition).Magnitude < EVENT_DISTANCE
+		pose, poseT = remoteReload(model, entry, inRange)
+		if not pose then
+			pose, poseT = remoteInspect(model, entry, inRange)
+		end
 	end
 	local reloading = pose ~= nil
 	if not pose and entry.Fire then
@@ -681,8 +716,8 @@ local function sendAimState()
 	end
 end
 
--- Vom WeaponClient jedes Bild: zielt, sprintet, Nachladen ({ Weapon, Anim, Start (os.clock), Duration } oder nil),
--- visible = eigener Charakter ist zu sehen (Schulterkamera)
+-- Vom WeaponClient jedes Bild: zielt, sprintet, Nachladen bzw. Inspizieren ({ Weapon, Anim, Start (os.clock), Duration }
+-- oder nil), visible = eigener Charakter ist zu sehen (Schulterkamera)
 function CharacterPose.SetLocal(aiming, sprinting, reload, visible)
 	localState.Aiming = aiming
 	localState.Sprinting = sprinting
