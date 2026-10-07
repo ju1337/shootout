@@ -25,6 +25,7 @@ local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
 local ItemPreview = require(Shared.ItemPreview)
 local Notifications = require(Shared.Notifications)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -126,6 +127,7 @@ end
 
 local function closeWindow()
 	if window then
+		InputActions.Unfocus(window.Frame)
 		window.Frame:Destroy()
 		window = nil
 		UITheme.SetBlur("Trade", false)
@@ -334,6 +336,7 @@ local function render()
 		Text = "", TextSize = 14, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 5 }, frame)
 	window.EndsAt = state.Countdown and (os.clock() + state.Countdown) or nil
 	window.State = state
+	InputActions.Refocus(frame) -- Controller: Auswahl bleibt, wo sie war, sonst in das Fenster
 end
 
 -- Zustandszeile (Countdown läuft ohne neue Nachricht vom Server)
@@ -412,6 +415,7 @@ local hint = nil
 local function closeList()
 	if listWindow then
 		listWindow.Alive = false
+		InputActions.Unfocus(listWindow.Frame)
 		listWindow.Frame:Destroy()
 		listWindow = nil
 		UITheme.SetBlur("TradeList", false)
@@ -480,6 +484,7 @@ local function fillList()
 		label({ Size = UDim2.new(1, -12, 0, 80), Text = "Gerade ist sonst niemand hier.", TextSize = 16, Font = F.Medium, TextColor3 = C.Muted,
 			TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 5 }, win.List)
 	end
+	InputActions.Refocus(win.Frame)
 end
 
 function TradeClient.OpenPlayers()
@@ -497,6 +502,7 @@ function TradeClient.OpenPlayers()
 		TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, ZIndex = 5 }, frame)
 	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
 		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeList)
+	close.Button:SetAttribute("NoFocus", true) -- Controller: schließen mit ○
 	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 5
 	local list = make("ScrollingFrame", { Name = "List", Position = UDim2.fromOffset(28, 90), Size = UDim2.new(1, -56, 1, -150), BackgroundTransparency = 1,
 		BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -509,6 +515,7 @@ function TradeClient.OpenPlayers()
 	listWindow = { Frame = frame, List = list, Alive = true }
 	UITheme.SetBlur("TradeList", true)
 	fillList()
+	InputActions.Focus(frame)
 	local win = listWindow
 	task.spawn(function()
 		while listWindow == win and win.Alive do

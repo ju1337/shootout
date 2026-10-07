@@ -9,7 +9,9 @@ local GuiService = game:GetService("GuiService")
 
 local InputActions = {}
 
--- Belegung: Keys = Tastatur/Maus, Pad = Controller. Namen der Controller-Tasten im PlayStation-Stil.
+-- Belegung: Keys = Tastatur/Maus, Pad = Controller (antippen), PadHold = Controller gedrückt halten (HOLD_TIME).
+-- Liegt auf einer Controller-Taste auch eine Halten-Aktion, lösen die Antippen-Aktionen erst beim Loslassen aus
+-- (kurz gedrückt), sonst nach HOLD_TIME die Halten-Aktion. Namen der Controller-Tasten im PlayStation-Stil.
 InputActions.Bindings = {
 	Fire = { Keys = { Enum.UserInputType.MouseButton1 }, Pad = { Enum.KeyCode.ButtonR2 } },
 	Aim = { Keys = { Enum.UserInputType.MouseButton2 }, Pad = { Enum.KeyCode.ButtonL2 } },
@@ -56,6 +58,8 @@ local KEY_NAMES = {
 	[Enum.KeyCode.Two] = "2", [Enum.KeyCode.Tab] = "TAB", [Enum.KeyCode.Four] = "4", [Enum.KeyCode.Five] = "5",
 	[Enum.KeyCode.Six] = "6",
 }
+
+InputActions.HoldTime = 0.35 -- so lange halten, bis eine PadHold-Aktion auslöst
 
 local handlers = {}  -- [Aktion] = { Callback, ... }
 local held = {}      -- [Aktion] = true, solange gedrückt
@@ -139,6 +143,20 @@ function InputActions.Focus(container, preferred)
 	end)
 end
 
+-- Nach einem Neuaufbau: nur dann neu auswählen, wenn die Auswahl nicht mehr in container liegt (z.B. weil der
+-- gewählte Knopf beim Neuaufbau verschwand) – so springt die Auswahl nicht bei jedem Update zurück an den Anfang
+function InputActions.Refocus(container)
+	if device ~= "Gamepad" or not container then
+		return
+	end
+	task.defer(function()
+		local selected = GuiService.SelectedObject
+		if not (selected and selected:IsDescendantOf(container)) and container.Parent then
+			InputActions.Focus(container)
+		end
+	end)
+end
+
 -- Auswahl aufheben, falls sie in container liegt (z.B. wenn ein Fenster schließt)
 function InputActions.Unfocus(container)
 	local selected = GuiService.SelectedObject
@@ -158,7 +176,11 @@ function InputActions.Hint(action)
 			return "L1+R1"
 		end
 		local code = binding.Pad[1]
-		return code and (PAD_NAMES[code] or code.Name) or ""
+		if code then
+			return PAD_NAMES[code] or code.Name
+		end
+		local hold = binding.PadHold and binding.PadHold[1]
+		return hold and ((PAD_NAMES[hold] or hold.Name) .. " HALTEN") or ""
 	end
 	local code = binding.Keys[1]
 	return code and (KEY_NAMES[code] or code.Name) or ""
@@ -171,6 +193,20 @@ local function matches(list, input)
 		end
 	end
 	return false
+end
+
+-- Halten-Aktionen dieser Controller-Taste (PadHold)
+local function holdActionsFor(input)
+	local result = {}
+	if input.UserInputType.Name:sub(1, 7) ~= "Gamepad" then
+		return result
+	end
+	for action, binding in InputActions.Bindings do
+		if binding.PadHold and matches(binding.PadHold, input) then
+			table.insert(result, action)
+		end
+	end
+	return result
 end
 
 -- Welche Aktionen gehören zu dieser Eingabe?
@@ -213,6 +249,7 @@ end
 
 -- Merkt sich, welche Aktionen durch welche Eingabe gestartet wurden (für das Loslassen)
 local active = {}
+local pending = {} -- [input] = { Tap = Liste, Hold = Liste, Fired = bool }: Taste mit Antippen/Halten, noch offen
 
 function InputActions.Init()
 	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
@@ -233,6 +270,21 @@ function InputActions.Init()
 		if (input.KeyCode == Enum.KeyCode.ButtonL1 and held.Gadget) or (input.KeyCode == Enum.KeyCode.ButtonR1 and held.Ability) then
 			list = { "Ultimate" }
 		end
+		-- Antippen oder Halten? Erst entscheiden, wenn klar ist, wie lange die Taste gedrückt ist
+		local holdList = holdActionsFor(input)
+		if #holdList > 0 then
+			local entry = { Tap = list, Hold = holdList, Fired = false }
+			pending[input] = entry
+			task.delay(InputActions.HoldTime, function()
+				if pending[input] == entry then
+					entry.Fired = true
+					for _, action in holdList do
+						InputActions.Trigger(action, true)
+					end
+				end
+			end)
+			return
+		end
 		if #list > 0 then
 			active[input] = list
 			for _, action in list do
@@ -241,6 +293,24 @@ function InputActions.Init()
 		end
 	end)
 	UserInputService.InputEnded:Connect(function(input)
+		local entry = pending[input]
+		if entry then
+			pending[input] = nil
+			if entry.Fired then
+				for _, action in entry.Hold do
+					InputActions.Trigger(action, false)
+				end
+			else
+				-- kurz gedrückt: die Antippen-Aktionen einmal drücken und loslassen
+				for _, action in entry.Tap do
+					InputActions.Trigger(action, true)
+				end
+				for _, action in entry.Tap do
+					InputActions.Trigger(action, false)
+				end
+			end
+			return
+		end
 		local list = active[input] or actionsFor(input)
 		active[input] = nil
 		for _, action in list do

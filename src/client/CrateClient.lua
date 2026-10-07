@@ -24,6 +24,7 @@ local RapConfig = require(Shared.RapConfig)
 local AgentConfig = require(Shared.AgentConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local Notifications = require(Shared.Notifications)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -77,6 +78,7 @@ local function closeWindow()
 		if window.Connection then
 			window.Connection:Disconnect()
 		end
+		InputActions.Unfocus(window.Frame)
 		window.Frame:Destroy()
 		window = nil
 		UITheme.SetBlur("Crate", false)
@@ -298,6 +300,7 @@ local function build(crate)
 		Font = F.Bold, TextColor3 = crate.Color, ZIndex = 5 }, frame)
 	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
 		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeWindow)
+	close.Button:SetAttribute("NoFocus", true) -- Controller: schließen mit ○
 	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 5
 	local coinsLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -76, 0, 28), Size = UDim2.fromOffset(220, 26), Text = "",
 		TextSize = 20, Font = F.Display, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
@@ -379,6 +382,7 @@ local function build(crate)
 	fillStrip(idleIds(crate))
 	strip.Position = UDim2.fromOffset(40, 0)
 	setOpenButton()
+	InputActions.Focus(frame, openButton.Button) -- Controller: gleich auf ÖFFNEN
 	return window
 end
 

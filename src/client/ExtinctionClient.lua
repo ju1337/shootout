@@ -3,7 +3,8 @@
 --   HUD: Hotbar unten (Plätze 1-9, Waffe in der Hand hervorgehoben, Fahrzeug draußen / Wartezeit), Anzeige oben
 --        (SAFE ZONE · PVP IN 3 S · PVP AKTIV), Münzen, Meldungen, Balken beim Benutzen (Verband, Weste)
 --   Tasten: 1-9 Hotbar benutzen, TAB Inventar, K Fahrzeug einpacken, E an Ständen/Lager/Taschen (ProximityPrompt)
---   Controller: R1/L1 nächste/vorige Waffe der Hotbar, Select = Inventar, △ = Fahrzeug einpacken
+--   Controller: R1/L1 nächste/vorige Waffe der Hotbar, △ = heilen (Heil-Item aus der Hotbar), Select = Inventar;
+--               gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
 --   Fenster: Inventar (TAB), Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
@@ -515,6 +516,7 @@ local function updateHints()
 		{ InputActions.Hint("Fire"), "SCHIESSEN" },
 		{ InputActions.Hint("Reload"), "NACHLADEN" },
 		{ pad and "R1 / L1" or "1-9", pad and "WAFFE" or "BENUTZEN" },
+		{ pad and InputActions.Hint("QuickHeal") or "", "HEILEN" },
 		{ InputActions.Hint("Inventory"), "INVENTAR" },
 		{ InputActions.Hint("Interact"), "INTERAGIEREN" },
 		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN" },
@@ -884,6 +886,7 @@ local function defaultClick(container, slot)
 	end
 	if window and window.Refresh then
 		window.Refresh()
+		InputActions.Refocus(window.Frame)
 	end
 	repaint()
 end
@@ -1834,12 +1837,57 @@ local function refreshAll()
 	refreshHotbar()
 	if window and window.Refresh then
 		window.Refresh()
+		InputActions.Refocus(window.Frame)
 	end
 	repaint()
 end
 
+-- Controller in der offenen Welt: dieselben Tasten tragen angetippt und gehalten zwei Aktionen (InputActions.PadHold),
+-- weil es auf dem Controller nicht genug Tasten gibt. Außerhalb gelten wieder die normalen Belegungen.
+--   Steuerkreuz oben: antippen = Ping, halten = Weltkarte
+--   Select:           antippen = Inventar, halten = Squad
+--   △:                antippen = heilen, halten = Fahrzeug einpacken
+InputActions.Bindings.QuickHeal = { Keys = {}, Pad = {} }
+local function applyPadLayout()
+	local on = inExtinction()
+	local function hold(action, code)
+		local binding = InputActions.Bindings[action]
+		if binding then
+			binding.PadHold = on and { code } or nil
+		end
+	end
+	hold("WorldMap", Enum.KeyCode.DPadUp)
+	hold("Squad", Enum.KeyCode.ButtonSelect)
+	hold("StoreVehicle", Enum.KeyCode.ButtonY)
+	InputActions.Bindings.QuickHeal.Pad = on and { Enum.KeyCode.ButtonY } or {}
+end
+
+-- Heilen mit einem Druck: Medikit, wenn viel Leben fehlt, sonst Verband (bzw. was in der Hotbar liegt)
+local function quickHeal()
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local missing = humanoid and (humanoid.MaxHealth - humanoid.Health) or 0
+	local best, bestScore = nil, -math.huge
+	for slot = 1, HOTBAR do
+		local entry = bag[slot]
+		local config = entry and itemConfig(entry.Id)
+		if config and config.Kind == "Heal" then
+			local score = entry.Id == "Medkit" and (missing >= 50 and 3 or 1) or (entry.Id == "Bandage" and 2 or 0)
+			if score > bestScore then
+				best, bestScore = slot, score
+			end
+		end
+	end
+	if best then
+		sendAction("Use", best)
+	else
+		showToast("Kein Heil-Item in der Hotbar.", false)
+	end
+end
+
 local function updateVisible()
 	local on = inExtinction()
+	applyPadLayout()
+	updateHints()
 	if hud then
 		hud.Enabled = on
 	end
@@ -1904,7 +1952,7 @@ function ExtinctionClient.Init()
 	end)
 	-- Weltkarte: N (Controller: Steuerkreuz oben), auf Touch der Knopf KARTE oben rechts
 	ExtinctionMap.Init()
-	InputActions.Bindings.WorldMap = { Keys = { Enum.KeyCode.N }, Pad = { Enum.KeyCode.DPadUp } }
+	InputActions.Bindings.WorldMap = { Keys = { Enum.KeyCode.N }, Pad = {} } -- Controller: siehe applyPadLayout
 	InputActions.Bind("WorldMap", function(began)
 		if began and inExtinction() then
 			closeWindow()
@@ -2220,13 +2268,20 @@ function ExtinctionClient.Init()
 			redzoneText.Visible = false
 		end
 	end)
-	-- Controller: △ (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
-	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = { Enum.KeyCode.ButtonY } }
+	-- Controller: △ halten (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
+	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = {} } -- Controller: △ halten (applyPadLayout)
 	InputActions.Bind("StoreVehicle", function(began)
 		if began and inExtinction() then
 			sendAction("StoreVehicle")
 		end
 	end)
+	-- Controller: △ antippen heilt mit einem Heil-Item aus der Hotbar
+	InputActions.Bind("QuickHeal", function(began)
+		if began and inExtinction() then
+			quickHeal()
+		end
+	end)
+	applyPadLayout()
 	-- Controller: R1/L1 (in der offenen Welt keine Gadgets/Fähigkeiten) wechseln die Hotbar
 	InputActions.Bind("Gadget", function(began)
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then

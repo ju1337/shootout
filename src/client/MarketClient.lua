@@ -34,6 +34,7 @@ local AgentFigure = require(Shared.AgentFigure)
 local AgentConfig = require(Shared.AgentConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local MarketSearch = require(Shared.MarketSearch)
+local InputActions = require(Shared.InputActions)
 local TradeClient = require(script.Parent:WaitForChild("TradeClient"))
 
 local player = Players.LocalPlayer
@@ -392,6 +393,7 @@ end
 
 local function closeWindow()
 	if window then
+		InputActions.Unfocus(window.Frame)
 		window.Frame:Destroy()
 		window = nil
 		UITheme.SetBlur("Market", false)
@@ -407,6 +409,7 @@ local function newWindow(kind, title, stand)
 		ZIndex = 5 }, frame)
 	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
 		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeWindow)
+	close.Button:SetAttribute("NoFocus", true) -- Controller: schließen mit ○
 	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 5
 	local rapHolder, rapText = rapLine(frame, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -76, 0, 26) },
 		player:GetAttribute("Rap") or 0, 22)
@@ -415,6 +418,7 @@ local function newWindow(kind, title, stand)
 		BackgroundTransparency = 1, ZIndex = 5 }, frame)
 	window = { Frame = frame, Body = body, Kind = kind, Stand = stand, RapText = rapText }
 	UITheme.SetBlur("Market", true)
+	InputActions.Focus(frame) -- Controller: Auswahl ins Fenster (nach dem Aufbau des Inhalts)
 	return window
 end
 
@@ -431,6 +435,7 @@ local function refreshWindow()
 	end
 	window.Pending = false
 	window.Refresh()
+	InputActions.Refocus(window.Frame)
 end
 
 -- Karte für einen Skin (Vorschau links oben, Name, Seltenheit); textWidth = Breite der Texte rechts der Vorschau

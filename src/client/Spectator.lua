@@ -1,6 +1,7 @@
 -- Spectator (ModuleScript, nur Client)
 -- Nur im Drop-Modus: Wer tot ist (oder mitten in der Runde beitritt), schaut einem
--- lebenden Teammitglied zu (auch Bot-Teamkollegen). Mit E/Q wechseln. Ohne Teammitglied: Blick von oben auf die Map.
+-- lebenden Teammitglied zu (auch Bot-Teamkollegen). Mit E/Q (Controller R1/L1, Handy: Knöpfe ZURÜCK/WEITER unten)
+-- wechseln. Ohne Teammitglied: Blick von oben auf die Map.
 -- Außerdem bekommen Teammitglieder einen Umriss in Verbündeten-Blau (wie im HUD).
 
 local Players = game:GetService("Players")
@@ -17,6 +18,34 @@ local UITheme = require(Shared.UITheme)
 local player = Players.LocalPlayer
 
 local Spectator = {}
+
+-- Handy: Knöpfe zum Wechseln (Tastatur und Controller haben Tasten)
+local touchGui
+local function showTouchButtons(on)
+	on = on and InputActions.IsTouch()
+	if not on then
+		if touchGui then
+			touchGui.Enabled = false
+		end
+		return
+	end
+	if not touchGui then
+		touchGui = UITheme.Make("ScreenGui", { Name = "SpectatorTouch", ResetOnSpawn = false, DisplayOrder = 6 },
+			player:WaitForChild("PlayerGui"))
+		for i, entry in { { "SpectatePrev", "ZURÜCK" }, { "SpectateNext", "WEITER" } } do
+			local button = UITheme.Make("TextButton", { Name = entry[1], AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.new(0.5, (i == 1 and -1 or 1) * 90, 1, -120), Size = UDim2.fromOffset(150, 52),
+				BackgroundColor3 = UITheme.Colors.Panel, BackgroundTransparency = 0.25, Text = entry[2], TextSize = 18,
+				Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, AutoButtonColor = true, BorderSizePixel = 0 }, touchGui)
+			UITheme.Corner(button, 12)
+			button.Activated:Connect(function()
+				InputActions.Trigger(entry[1], true)
+				InputActions.Trigger(entry[1], false)
+			end)
+		end
+	end
+	touchGui.Enabled = true
+end
 
 -- Kameraflug über die Map des aktuellen Team-Modus (Werte aus Modes.Overview)
 local OVERVIEW_SPEED = 0.05  -- Drehgeschwindigkeit (Bogenmaß pro Sekunde), langsamer Kameraflug
@@ -96,6 +125,7 @@ local function stopSpectating()
 	end
 	Movement.ApplyCamera()
 	HUD.SetStatus("")
+	showTouchButtons(false)
 end
 
 local function update()
@@ -125,7 +155,9 @@ local function update()
 		HUD.SetStatus("ZUSCHAUER  ·  " .. string.upper(target.Name) .. (agent and ("  ·  " .. string.upper(agent)) or "")
 			.. (InputActions.IsTouch() and "" or ("   [" .. InputActions.Hint("SpectatePrev") .. "] ZURÜCK   WEITER ["
 				.. InputActions.Hint("SpectateNext") .. "]")))
+		showTouchButtons(true)
 	else
+		showTouchButtons(false)
 		camera.CameraType = Enum.CameraType.Scriptable
 		inOverview = true
 		HUD.SetStatus("Warte auf Respawn bzw. die nächste Runde...")
