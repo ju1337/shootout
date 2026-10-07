@@ -184,11 +184,11 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Munition** kaufen oder finden: Nachladen nimmt Schuss aus der Tasche (9mm, Magnum, Schrot, Gewehr), das
   Magazin bleibt am Item gespeichert. Ohne passende Munition kein Nachladen.
 - **Stände**: kaufen mit Münzen (Munition auch ×5), verkaufen an jedem Stand für 40 % des Preises.
-- **Spielermarkt** (`ExtMarketService`, Stand **MARKT** mitten im Camp, dem Waffenstand gegenüber, E): Spieler handeln untereinander mit
+- **Spielermarkt** (`ExtMarketService`, Reiter **MARKT** im Extinction-Menü, überall in einer Safe Zone – draußen nicht): Spieler handeln untereinander mit
   allem aus der Tasche – Waffen (samt Magazin), Munition (auch Teile eines Stapels), Heilung, Westen, Spritzen und
   Fahrzeuge – für Münzen. Rechts ein Item der Tasche anklicken, Anzahl und Preis eintragen (vorgeschlagen: der Preis am
   Stand), ANBIETEN; links stehen alle Angebote (billigste zuerst, Filter WAFFEN/MUNITION/AUSRÜSTUNG/FAHRZEUGE) mit KAUFEN,
-  die eigenen mit ZURÜCK. Höchstens 8 Angebote je Spieler, Preis 1-100.000, der Verkäufer bekommt den Preis minus 5 %
+  die eigenen mit PREIS ÄNDERN und ZURÜCK (Einstellzeit `At` bleibt beim Preisändern, für die Sortierung NEU). Höchstens 8 Angebote je Spieler, Preis 1-100.000, der Verkäufer bekommt den Preis minus 5 %
   Gebühr (ohne VIP-Verdopplung). Angebote stehen im Spielstand des Verkäufers (`Extinction.Market`): sie überleben Tod und
   Verlassen und sind zu sehen, solange er auf dem Server ist; Käufe werden sofort gespeichert. Ein Fahrzeug, das draußen
   steht, muss erst eingepackt werden (`ExtinctionConfig.Market`, Karten-Attribut `PlayerMarket`).
@@ -774,7 +774,7 @@ am Commit:
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
-| `extmarket`, `extmarketui` | Spielermarkt: nur am Stand, Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Zurücknehmen, Angebote überleben Tod und Verlassen; Fenster: E am Stand, Vorschlag für Anzahl und Preis, ANBIETEN, eigene mit ZURÜCK, fremde mit KAUFEN, Filter, Weggehen schließt |
+| `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Fenster: E am Stand, Vorschlag für Anzahl und Preis, ANBIETEN, eigene mit ZURÜCK, fremde mit KAUFEN, Filter, Weggehen schließt |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |

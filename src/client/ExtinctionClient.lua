@@ -2,10 +2,13 @@
 -- Oberfläche der offenen Welt (EXTINCTION):
 --   HUD: Hotbar unten (Plätze 1-9, Waffe in der Hand hervorgehoben, Fahrzeug draußen / Wartezeit), Anzeige oben
 --        (SAFE ZONE · PVP IN 3 S · PVP AKTIV), Münzen, Meldungen, Balken beim Benutzen (Verband, Weste)
---   Tasten: 1-9 Hotbar benutzen, TAB Inventar, K Fahrzeug einpacken, E an Ständen/Lager/Taschen (ProximityPrompt)
---   Controller: R1/L1 nächste/vorige Waffe der Hotbar, △ = heilen (Heil-Item aus der Hotbar), Select = Inventar;
---               gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
---   Fenster: Inventar (TAB), Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
+--   Tasten: 1-9 Hotbar benutzen, TAB Menü (INVENTAR), M Menü (zuletzt offener Reiter), K Fahrzeug einpacken,
+--           E an Ständen/Lager/Taschen (ProximityPrompt)
+--   Controller: R1/L1 nächste/vorige Waffe der Hotbar (im Menü: Reiter), △ = heilen (Heil-Item aus der Hotbar),
+--               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
+--   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · SQUAD · SHOP ·
+--            BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten fünf sind Seiten der Lobby, GameMenu.BorrowPage)
+--   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
@@ -35,6 +38,8 @@ local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
 local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 local DayCycle = require(Shared.DayCycle)
+local GameMenu = require(Shared.GameMenu)
+local LobbyPages = require(Shared.LobbyPages)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -731,6 +736,9 @@ local function closeWindow()
 	if window.Kind == "Loot" and window.Loot then
 		sendAction("LootClose", window.Loot.Id)
 	end
+	if window.Borrowed then
+		GameMenu.ReturnPage(window.Borrowed) -- Seite der Lobby zurückgeben, bevor der Rahmen verschwindet
+	end
 	window.Frame:Destroy()
 	window = nil
 	selected = nil
@@ -742,9 +750,103 @@ local function closeWindow()
 end
 ExtinctionClient.Close = closeWindow
 
+-- ---------- Menü (TAB / M) ----------
+-- Etwas kleiner als der Bildschirm: oben die Reiter (Controller: L1/R1 blättern), rechts Münzen und Schließen, darunter
+-- der Inhalt. INVENTAR, MARKT und SQUAD baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
+-- verkleinert auf die Breite des Inhalts.
+local MENU_W, MENU_H = 1400, 820
+local CONTENT_X, CONTENT_Y = 28, 78
+local CONTENT_W, CONTENT_H = MENU_W - 2 * CONTENT_X, MENU_H - CONTENT_Y - 16
+local MENU_TABS = {
+	{ Id = "Inventory", Text = "INVENTAR" },
+	{ Id = "Market", Text = "MARKT" },
+	{ Id = "Squad", Text = "SQUAD" },
+	{ Id = "Shop", Text = "SHOP", Page = true },
+	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
+	{ Id = "Stats", Text = "STATISTIK", Page = true },
+	{ Id = "Codes", Text = "CODES", Page = true },
+	{ Id = "Settings", Text = "OPTIONEN", Page = true },
+}
+local menuTab = {} -- [Id] = Eintrag aus MENU_TABS
+for index, tab in MENU_TABS do
+	tab.Index = index
+	menuTab[tab.Id] = tab
+end
+local lastMenuTab = "Inventory"
+local openMenuTab -- unten gesetzt (öffnet einen Reiter)
+
+local function newMenu(kind, title, subtitle, accent)
+	local frame = UITheme.Card({ Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
+	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	-- Reiter
+	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(CONTENT_X, 10), Size = UDim2.new(1, -330, 0, 50),
+		BackgroundTransparency = 1, ZIndex = 5 }, frame)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 22), SortOrder = Enum.SortOrder.LayoutOrder,
+		VerticalAlignment = Enum.VerticalAlignment.Center }, tabs)
+	local pad = InputActions.Device() == "Gamepad"
+	if pad then
+		label({ Name = "PrevHint", Size = UDim2.fromOffset(30, 30), Text = "L1", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted,
+			LayoutOrder = 0, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
+	end
+	for _, tab in MENU_TABS do
+		local on = tab.Id == kind
+		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.fromOffset(0, 40), AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundTransparency = 1, Text = tab.Text, Font = F.Bold, TextSize = 17, TextColor3 = on and C.Text or C.Muted,
+			LayoutOrder = tab.Index, ZIndex = 6, AutoButtonColor = false }, tabs)
+		button:SetAttribute("NoFocus", true) -- Controller: die Auswahl startet im Inhalt, Reiter mit L1/R1
+		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
+			Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, Visible = on, ZIndex = 6 }, button)
+		button.Activated:Connect(function()
+			if not on then
+				openMenuTab(tab.Id)
+			end
+		end)
+	end
+	if pad then
+		label({ Name = "NextHint", Size = UDim2.fromOffset(30, 30), Text = "R1", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted,
+			LayoutOrder = #MENU_TABS + 1, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
+	end
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(CONTENT_X, 62), Size = UDim2.new(1, -2 * CONTENT_X, 0, 1),
+		BackgroundColor3 = C.Border, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 12), Size = UDim2.fromOffset(44, 44),
+		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeWindow)
+	close.Button:SetAttribute("NoFocus", true)
+	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 6
+	local coins = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -78, 0, 20), Size = UDim2.fromOffset(220, 30),
+		Text = "", TextSize = 24, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
+	local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(CONTENT_X, CONTENT_Y),
+		Size = UDim2.fromOffset(CONTENT_W, CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, frame)
+	local sub, body
+	if menuTab[kind].Page then
+		body = content
+	else
+		-- eigene Reiter: Titel und Unterzeile wie die Seiten der Lobby, darunter der Inhalt
+		label({ Name = "Title", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 40), Text = title, TextSize = 34,
+			Font = F.Display, ZIndex = 5 }, content)
+		sub = label({ Name = "Sub", Position = UDim2.fromOffset(2, 38), Size = UDim2.new(1, 0, 0, 16), Text = subtitle or "",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, content)
+		body = make("Frame", { Name = "Body", Position = UDim2.fromOffset(0, 60), Size = UDim2.new(1, 0, 1, -60),
+			BackgroundTransparency = 1, ZIndex = 5 }, content)
+	end
+	lastMenuTab = kind
+	return { Kind = kind, Menu = true, Frame = frame, Body = body, Coins = coins, Sub = sub }
+end
+
 local function newWindow(kind, title, subtitle, accent)
 	closeWindow()
 	windowGui.Enabled = true
+	if menuTab[kind] then
+		window = newMenu(kind, title, subtitle, accent)
+		window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
+		UITheme.SetBlur("Extinction", true)
+		RunService:BindToRenderStep("ExtinctionMouse", MOUSE_PRIORITY, function()
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+			UserInputService.MouseIconEnabled = true
+		end)
+		InputActions.Focus(window.Frame:FindFirstChild("Content")) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
+		return window
+	end
 	local frame = UITheme.Card({ Name = "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(1180, 640), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
 	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, ZIndex = 5 }, frame)
@@ -910,12 +1012,16 @@ local function openInventory()
 	local win = newWindow("Inventory", "INVENTAR", "TASCHE " .. BAG .. " PLÄTZE  ·  1-9 = HOTBAR  ·  DRAUSSEN STERBEN = ALLES WEG",
 		C.Primary)
 	local body = win.Body
-	local cell, gap = 78, 8
+	local cell, gap = 92, 10
 	sectionTitle(body, "TASCHE", UDim2.fromOffset(0, 0))
 	grid(body, "Bag", HOTBAR + 1, BAG, 7, cell, gap, UDim2.fromOffset(0, 22))
-	sectionTitle(body, "HOTBAR  ·  TASTEN 1-9", UDim2.fromOffset(0, 300))
-	grid(body, "Bag", 1, HOTBAR, HOTBAR, cell - 18, gap, UDim2.fromOffset(0, 322), true)
-	local update = detailsPanel(body, UDim2.fromOffset(700, 0), UDim2.fromOffset(424, 516))
+	sectionTitle(body, "HOTBAR  ·  TASTEN 1-9", UDim2.fromOffset(0, 348))
+	grid(body, "Bag", 1, HOTBAR, HOTBAR, 64, gap, UDim2.fromOffset(0, 370), true)
+	label({ Name = "Help", Position = UDim2.fromOffset(0, 462), Size = UDim2.fromOffset(660, 60), TextWrapped = true,
+		Text = "Anklicken und dann den Zielplatz anklicken (oder ziehen) legt ein Item um. Rechtsklick legt es zwischen Hotbar "
+			.. "und Tasche hin und her. Was du draußen bei dir trägst, verlierst du, wenn du stirbst – sicher ist nur das Lager im Camp.",
+		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
+	local update = detailsPanel(body, UDim2.fromOffset(720, 0), UDim2.fromOffset(CONTENT_W - 720, 600))
 	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
 		if container == "Bag" and bag[slot] then
@@ -1475,6 +1581,42 @@ local function openMarket()
 	win.Refresh()
 end
 
+-- Reiter aus der Lobby (SHOP, BATTLE PASS, STATISTIK, CODES, OPTIONEN): Seite ausleihen und auf die Breite des Inhalts
+-- verkleinern. Meldungen des Servers (Kaufen, Codes …) kommen als Meldung unten (Remotes.ShopStatus, siehe Init).
+local function openLobbyTab(id)
+	local win = newWindow(id)
+	local scale = math.min(CONTENT_W / LobbyPages.PAGE_W, CONTENT_H / LobbyPages.PAGE_H)
+	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H),
+		BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
+	make("UIScale", { Scale = scale }, holder)
+	if GameMenu.BorrowPage(id, holder) then
+		win.Borrowed = id
+	else
+		label({ Size = UDim2.fromOffset(CONTENT_W, 60), Text = "GERADE NICHT VERFÜGBAR", TextSize = 18, Font = F.Bold,
+			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, win.Body)
+	end
+	function win.Refresh() end
+end
+
+openMenuTab = function(id)
+	if id == "Inventory" then
+		openInventory()
+	elseif id == "Market" then
+		openMarket()
+	elseif id == "Squad" then
+		ExtinctionMap.Set(false)
+		openSquad()
+	elseif menuTab[id] then
+		openLobbyTab(id)
+	end
+end
+
+-- Controller L1/R1: Reiter weiterblättern
+local function cycleMenu(step)
+	local index = window and menuTab[window.Kind] and menuTab[window.Kind].Index or 1
+	openMenuTab(MENU_TABS[(index - 1 + step) % #MENU_TABS + 1].Id)
+end
+
 -- TASCHE AM BODEN: Inhalt links (anklicken = nehmen), eigene Tasche rechts
 -- ---------- Alles looten (Gamepass) ----------
 -- Alles auf einmal nehmen (F an Taschen, Kisten, Lootdrops und Leichen, Knopf ALLES NEHMEN im Beute-Fenster) gibt es nur
@@ -1766,10 +1908,7 @@ local function setupPrompts()
 				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
 				RequiresLineOfSight = false, Enabled = false }, marketPart)
 			prompt.Triggered:Connect(function()
-				openMarket()
-				if window then
-					window.Part = marketPart
-				end
+				openMarket() -- Menü auf dem Reiter MARKT
 			end)
 			table.insert(prompts, prompt)
 		end
@@ -1803,7 +1942,7 @@ end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
 local function standDistanceCheck()
-	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel" and window.Kind ~= "Market") then
+	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel") then
 		return
 	end
 	local character = player.Character
@@ -1812,7 +1951,7 @@ local function standDistanceCheck()
 	local stands = maps and maps:FindFirstChild("Extinction") and maps.Extinction:FindFirstChild("Stands")
 	local part = window.Part
 		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point
-			or window.Kind == "Market" and "Stand_Market" or window.Stand))
+			or window.Stand))
 	if not rootPart or not part or (rootPart.Position - part.Position).Magnitude > ExtinctionConfig.StandRange + 4 then
 		closeWindow()
 	end
@@ -1920,7 +2059,7 @@ end
 function ExtinctionClient.Init()
 	buildHud()
 	windowGui = make("ScreenGui", { Name = "ExtinctionWindow", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
-		Enabled = false }, player:WaitForChild("PlayerGui"))
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
 	-- Klicks neben das Fenster sollen nicht schießen: unsichtbarer Knopf über dem ganzen Bild
 	make("TextButton", { Name = "Blocker", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Background, BackgroundTransparency = 0.55,
 		Text = "", AutoButtonColor = false, ZIndex = 1 }, windowGui)
@@ -1947,7 +2086,7 @@ function ExtinctionClient.Init()
 		if window then
 			closeWindow()
 		else
-			openInventory()
+			openInventory() -- Menü auf dem Reiter INVENTAR
 		end
 	end)
 	-- Weltkarte: N (Controller: Steuerkreuz oben), auf Touch der Knopf KARTE oben rechts
@@ -2283,14 +2422,23 @@ function ExtinctionClient.Init()
 	end)
 	applyPadLayout()
 	-- Controller: R1/L1 (in der offenen Welt keine Gadgets/Fähigkeiten) wechseln die Hotbar
+	-- (im offenen Menü: Reiter weiterblättern)
 	InputActions.Bind("Gadget", function(began)
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
-			cycle(1)
+			if window and window.Menu then
+				cycleMenu(1)
+			else
+				cycle(1)
+			end
 		end
 	end)
 	InputActions.Bind("Ability", function(began)
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
-			cycle(-1)
+			if window and window.Menu then
+				cycleMenu(-1)
+			else
+				cycle(-1)
+			end
 		end
 	end)
 	-- Touch: der Knopf WAFFE wechselt durch die Waffen der Hotbar
@@ -2299,9 +2447,15 @@ function ExtinctionClient.Init()
 			cycle(1)
 		end
 	end)
+	-- M (Controller: Steuerkreuz unten): Menü auf dem zuletzt offenen Reiter; zu, wenn schon etwas offen ist
 	InputActions.Bind("Menu", function(began)
-		if began then
+		if not began then
+			return
+		end
+		if window then
 			closeWindow()
+		elseif inExtinction() then
+			openMenuTab(lastMenuTab)
 		end
 	end)
 	-- Controller: ○ schließt das offene Fenster (auch wenn darin gerade ein Knopf ausgewählt ist)
@@ -2336,6 +2490,14 @@ function ExtinctionClient.Init()
 		end
 	end)
 	coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
+	-- Markt-Reiter: Münzen (KAUFEN / ZU TEUER) und Safe Zone (Sperre) neu zeichnen
+	for _, attribute in { "Coins", "InSafeZone" } do
+		player:GetAttributeChangedSignal(attribute):Connect(function()
+			if window and window.Kind == "Market" and window.Refresh then
+				window.Refresh()
+			end
+		end)
+	end
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
 	-- Alles looten: F-Prompts nur mit Gamepass (auch für später entstehende Taschen, Kisten und Leichen)
 	refreshTakeAll()

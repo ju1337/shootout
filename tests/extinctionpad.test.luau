@@ -175,8 +175,8 @@ check(windowGui.Enabled and string.find(texts(windowGui), "INVENTAR", 1, true) ~
 tap(Enum.KeyCode.ButtonSelect)
 check(not windowGui.Enabled, "Select angetippt: Inventar zu")
 hold(Enum.KeyCode.ButtonSelect)
-check(windowGui.Enabled and string.find(texts(windowGui), "SQUAD", 1, true) ~= nil
-	and string.find(texts(windowGui), "INVENTAR", 1, true) == nil, "Select gehalten: Squad-Fenster, kein Inventar")
+local menuTitle = windowGui:FindFirstChild("Title", true)
+check(windowGui.Enabled and menuTitle ~= nil and menuTitle.Text == "SQUAD", "Select gehalten: Menü auf SQUAD, nicht INVENTAR")
 hold(Enum.KeyCode.ButtonSelect)
 check(not windowGui.Enabled, "Select gehalten: Squad-Fenster zu")
 

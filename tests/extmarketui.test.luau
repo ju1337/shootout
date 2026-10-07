@@ -204,10 +204,10 @@ find(listings, "CancelListing").Activated:Fire()
 step(4)
 check(#findAll(listings, "Listing") == 1, "ein Angebot zurückgenommen")
 
--- ---------- Weggehen schließt ----------
+-- ---------- Weggehen vom Stand: der Markt ist ein Reiter des Menüs und bleibt in der Safe Zone offen ----------
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
 step(0.5)
-check(not windowGui.Enabled, "Weggehen schließt den Markt")
+check(windowGui.Enabled, "Weggehen vom Stand (in der Safe Zone): Markt bleibt offen")
 
 if failures > 0 then
 	error(failures .. " Fehler")

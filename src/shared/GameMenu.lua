@@ -71,6 +71,7 @@ local playSub
 local playPage, agentPage
 local pages = {}        -- [Id] = { Frame, Refresh, Watch, Build } (Build: baut die Seite beim ersten Anzeigen)
 local navButtons = {}   -- [Id] = TextButton
+local borrowed = {}     -- [Id] = true: Seite steckt gerade im Menü der offenen Welt (GameMenu.BorrowPage)
 local headerPages = {}  -- [Id] = Chunky (STATISTIK, CODES, OPTIONEN oben rechts: Seiten, keine Fenster)
 local modeButtons = {}  -- [mode] = { Chunky, Detail, Check, Live }
 local agentCards = {}   -- [agent] = { ... }
@@ -150,7 +151,9 @@ local function showPage(name)
 		entry.Refresh, entry.Watch = built.Refresh, built.Watch
 	end
 	for id, page in pages do
-		page.Frame.Visible = id == name
+		if not borrowed[id] then
+			page.Frame.Visible = id == name
+		end
 	end
 	pageStatus.Visible = name ~= "Play"
 	updateNav()
@@ -1096,11 +1099,13 @@ local function buildLobbyPages()
 			Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H), BackgroundTransparency = 1, Visible = false }, canvas)
 		pages[id] = { Frame = frame, Build = build }
 	end
-	-- Besitz, Münzen, Ausrüstung, Pass-XP geändert: sichtbare Seite aktualisieren
+	-- Besitz, Münzen, Ausrüstung, Pass-XP geändert: sichtbare (oder ausgeliehene) Seite aktualisieren
 	player.AttributeChanged:Connect(function(attribute)
-		local entry = pages[currentPage]
-		if isOpen and entry and entry.Watch and entry.Watch[attribute] and entry.Refresh then
-			entry.Refresh()
+		for id, entry in pages do
+			local shown = borrowed[id] or (isOpen and id == currentPage)
+			if shown and entry.Watch and entry.Watch[attribute] and entry.Refresh then
+				entry.Refresh()
+			end
 		end
 	end)
 end
@@ -1165,6 +1170,40 @@ function GameMenu.AddPage(id)
 		Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H), BackgroundTransparency = 1, Visible = false }, canvas)
 	pages[id] = { Frame = frame }
 	return pages[id]
+end
+
+-- Seite der Lobby ausleihen (Menü der offenen Welt): baut sie beim ersten Mal, hängt ihren Rahmen (PAGE_W x PAGE_H)
+-- links oben an parent, zeigt und aktualisiert sie. Gibt den Rahmen zurück (nil, wenn es die Seite nicht gibt).
+-- ReturnPage(id) hängt sie wieder in die Lobby.
+function GameMenu.BorrowPage(id, parent)
+	local entry = pages[id]
+	if not entry or id == "Play" then
+		return nil
+	end
+	if entry.Build then
+		local built = entry.Build(entry.Frame)
+		entry.Build = nil
+		entry.Refresh, entry.Watch = built.Refresh, built.Watch
+	end
+	borrowed[id] = true
+	entry.Frame.Parent = parent
+	entry.Frame.Position = UDim2.fromOffset(0, 0)
+	entry.Frame.Visible = true
+	if entry.Refresh then
+		entry.Refresh()
+	end
+	return entry.Frame
+end
+
+function GameMenu.ReturnPage(id)
+	local entry = pages[id]
+	if not entry or not borrowed[id] then
+		return
+	end
+	borrowed[id] = nil
+	entry.Frame.Parent = canvas
+	entry.Frame.Position = UDim2.fromOffset(LEFT_X, 106)
+	entry.Frame.Visible = isOpen and currentPage == id
 end
 
 -- Vom SideMenu: handler(name) öffnet dessen Fenster (nil = schließen)

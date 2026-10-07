@@ -100,7 +100,7 @@ ExtinctionConfig.Stands = {
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports", "V_Heli" } },
 }
 
--- ---------- Spielermarkt (ExtMarketService, Stand "Stand_Market" im Camp) ----------
+-- ---------- Spielermarkt (ExtMarketService, Reiter MARKT im Menü, nur in der Safe Zone) ----------
 -- Spieler bieten Items aus der Tasche für Münzen an (höchstens MaxListings gleichzeitig, Preis 1 bis MaxPrice); der Käufer
 -- zahlt den Preis, der Verkäufer bekommt ihn minus FeeRate Gebühr. Angebote stehen im Spielstand des Verkäufers und sind
 -- sichtbar, solange er auf dem Server ist.

@@ -1,7 +1,8 @@
--- Spielermarkt der offenen Welt (ExtMarketService): nur am Marktstand; Anbieten nimmt das Item (auch Teile eines Stapels,
+-- Spielermarkt der offenen Welt (ExtMarketService): überall in der Safe Zone (auch weit weg vom Stand), draußen nicht; Anbieten nimmt das Item (auch Teile eines Stapels,
 -- Waffe mit Magazin) aus der Tasche in den Spielstand; Preis- und Mengengrenzen, höchstens MaxListings, kein draußen
 -- stehendes Fahrzeug; Kaufen nur zum gesehenen Preis, mit Münzen und Platz, nicht das eigene; Verkäufer bekommt den Preis
--- minus Gebühr (VIP verdoppelt das nicht); Zurücknehmen; Angebote überleben den Tod und das Verlassen (dann unsichtbar,
+-- minus Gebühr (VIP verdoppelt das nicht); Preis ändern (nur eigenes, Grenzen, nur in der Safe Zone, Einstellzeit At bleibt);
+-- Zurücknehmen; Angebote überleben den Tod und das Verlassen (dann unsichtbar,
 -- beim Wiederkommen wieder da); Attribut PlayerMarket an der Karte
 local failures = 0
 local function check(cond, msg)
@@ -72,8 +73,12 @@ local function place(player, offset)
 	player.Character:PivotTo(CFrame.new(CENTER + offset))
 	step(0.2)
 end
-local function atMarket(player)
-	place(player, Vector3.new(60, 3, -34))
+-- in der Safe Zone (Radius 100), aber weit weg vom Marktstand (64, -37)
+local function inCamp(player)
+	place(player, Vector3.new(-80, 3, 30))
+end
+local function outside(player)
+	place(player, Vector3.new(0, 3, 300))
 end
 local function market()
 	return HttpService:JSONDecode(map:GetAttribute("PlayerMarket") or "[]")
@@ -107,10 +112,12 @@ InventoryService.Give(alice, "Rifle", 1, { Mag = 25 })
 InventoryService.Give(alice, "Ammo_Rifle", 60)
 InventoryService.Give(alice, "V_Quad", 1)
 local rifleSlot = slotOf(alice, "Rifle")
-place(alice, Vector3.new(0, 3, 20))
+outside(alice)
 action(alice, "MarketList", rifleSlot, 1, 500)
-check(#market() == 0 and string.find(lastStatus(alice), "Spielermarkt", 1, true) ~= nil, "nur am Marktstand")
-atMarket(alice)
+check(#market() == 0 and string.find(lastStatus(alice), "Safe Zone", 1, true) ~= nil, "draußen nicht anbieten")
+inCamp(alice)
+check((marketPart.Position - alice.Character.HumanoidRootPart.Position).Magnitude > ExtinctionConfig.StandRange * 3
+	and alice:GetAttribute("InSafeZone") == true, "Alice steht in der Safe Zone weit weg vom Stand")
 for _, bad in { 0, -5, M.MaxPrice + 1, 0 / 0, math.huge } do
 	action(alice, "MarketList", rifleSlot, 1, bad)
 end
@@ -120,6 +127,7 @@ local list = market()
 check(#list == 1 and list[1].Item == "Rifle" and list[1].Price == 500 and list[1].Mag == 25 and list[1].SellerName == "Alice"
 	and list[1].Seller == alice.UserId, "Gewehr mit Magazin 25 für 500 angeboten")
 check(slotOf(alice, "Rifle") == nil, "Gewehr ist aus der Tasche")
+check(type(list[1].At) == "number" and math.abs(list[1].At - os.time()) <= 5, "Angebot hat die Einstellzeit At")
 local profileMarket = ProgressService.Get(alice).Extinction.Market
 check(profileMarket and #profileMarket == 1 and profileMarket[1].Item == "Rifle", "Angebot steht im Spielstand")
 -- Teil eines Stapels
@@ -154,10 +162,11 @@ for _, offer in market() do
 		rifle = offer
 	end
 end
-place(bob, Vector3.new(0, 3, 20))
+outside(bob)
 action(bob, "MarketBuy", rifle.Id, 500)
-check(ProgressService.Get(bob).Coins == 1000 and string.find(lastStatus(bob), "Spielermarkt", 1, true) ~= nil, "Kaufen nur am Stand")
-atMarket(bob)
+check(ProgressService.Get(bob).Coins == 1000 and string.find(lastStatus(bob), "Safe Zone", 1, true) ~= nil,
+	"draußen nicht kaufen")
+inCamp(bob)
 action(bob, "MarketBuy", rifle.Id, 400)
 check(ProgressService.Get(bob).Coins == 1000 and string.find(lastStatus(bob), "Preis", 1, true) ~= nil, "nur zum gesehenen Preis")
 action(alice, "MarketBuy", rifle.Id, 500)
@@ -204,7 +213,50 @@ end
 action(bob, "MarketBuy", bandageOffer.Id, bandageOffer.Price)
 check(string.find(lastStatus(bob), "Platz", 1, true) ~= nil and #market() == M.MaxListings - 1, "volle Tasche: nichts gekauft")
 
+-- ---------- Preis ändern ----------
+local function offerById(id)
+	for _, offer in market() do
+		if offer.Id == id then
+			return offer
+		end
+	end
+	return nil
+end
+local quadAt = offerById(quadOffer.Id).At
+check(type(quadAt) == "number" and quadAt > 0, "Quad-Angebot hat At")
+action(bob, "MarketPrice", quadOffer.Id, 5)
+check(offerById(quadOffer.Id).Price == 900 and string.find(lastStatus(bob), "gibt es nicht", 1, true) ~= nil,
+	"fremdes Angebot: Preis bleibt")
+for _, bad in { 0, -5, M.MaxPrice + 1, 0 / 0, math.huge, "x" } do
+	action(alice, "MarketPrice", quadOffer.Id, bad)
+end
+check(offerById(quadOffer.Id).Price == 900 and string.find(lastStatus(alice), "Preis zwischen", 1, true) ~= nil,
+	"unsinnige Preise abgelehnt")
+outside(alice)
+action(alice, "MarketPrice", quadOffer.Id, 700)
+check(offerById(quadOffer.Id).Price == 900 and string.find(lastStatus(alice), "Safe Zone", 1, true) ~= nil,
+	"draußen kein Preis ändern")
+inCamp(alice)
+step(3) -- Einstellzeit darf sich beim Preisändern nicht ändern
+action(alice, "MarketPrice", quadOffer.Id, 700)
+local changedQuad = offerById(quadOffer.Id)
+check(changedQuad and changedQuad.Price == 700 and changedQuad.At == quadAt, "Preis 900 -> 700, At unverändert")
+check(string.find(lastStatus(alice), "Neuer Preis", 1, true) ~= nil, "Meldung: neuer Preis")
+local savedQuad = nil
+for _, entry in ProgressService.Get(alice).Extinction.Market do
+	if entry.Id == quadOffer.Id then
+		savedQuad = entry
+	end
+end
+check(savedQuad and savedQuad.Price == 700, "neuer Preis steht im Spielstand")
+action(bob, "MarketBuy", quadOffer.Id, 900)
+check(slotOf(bob, "V_Quad") == nil and string.find(lastStatus(bob), "Preis", 1, true) ~= nil, "alter Preis gilt nicht mehr")
+
 -- ---------- Zurücknehmen ----------
+outside(alice)
+action(alice, "MarketCancel", quadOffer.Id)
+check(slotOf(alice, "V_Quad") == nil and string.find(lastStatus(alice), "Safe Zone", 1, true) ~= nil, "draußen nicht zurücknehmen")
+inCamp(alice)
 action(alice, "MarketCancel", quadOffer.Id)
 check(slotOf(alice, "V_Quad") ~= nil and #market() == M.MaxListings - 2, "Quad zurückgenommen")
 

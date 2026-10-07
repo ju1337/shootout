@@ -1,15 +1,17 @@
 -- ExtMarketService (ModuleScript, nur Server)
--- Spielermarkt der offenen Welt (EXTINCTION) am Stand "Stand_Market" im Camp: Spieler handeln untereinander mit allem aus
--- der Tasche – Waffen (samt Magazin), Munition, Heilung, Rüstung, Spritzen und Fahrzeuge – für Münzen
--- (ExtinctionConfig.Market).
+-- Spielermarkt der offenen Welt (EXTINCTION), Reiter MARKT im Extinction-Menü: Spieler handeln untereinander mit allem
+-- aus der Tasche – Waffen (samt Magazin), Munition, Heilung, Rüstung, Spritzen und Fahrzeuge – für Münzen
+-- (ExtinctionConfig.Market). Alle Aktionen gehen überall in einer Safe Zone (lebend, im Survival-Modus); draußen nicht.
 --   * MarketList(slot, count, price): count Stück vom Platz slot der Tasche anbieten (Stapel auch teilweise). Das Item
 --     verlässt die Tasche und liegt als Angebot im Spielstand des Verkäufers (InventoryService.MarketOf) – es geht nicht
---     verloren, wenn er stirbt oder das Spiel verlässt; sichtbar ist es, solange er auf dem Server ist.
---   * MarketBuy(id, price): nur am Stand, nur zum gesehenen Preis, mit Platz in der Tasche und genug Münzen. Das Item kommt in
---     die Tasche des Käufers, der Verkäufer bekommt den Preis minus FeeRate (ohne VIP-Verdopplung), beide eine Meldung, beide
+--     verloren, wenn er stirbt oder das Spiel verlässt; sichtbar ist es, solange er auf dem Server ist. At = Zeitpunkt
+--     des Einstellens (os.time()), damit die Clients nach NEU sortieren können.
+--   * MarketBuy(id, price): nur zum gesehenen Preis, mit Platz in der Tasche und genug Münzen. Das Item kommt in die
+--     Tasche des Käufers, der Verkäufer bekommt den Preis minus FeeRate (ohne VIP-Verdopplung), beide eine Meldung, beide
 --     Spielstände werden sofort gespeichert.
---   * MarketCancel(id): der Verkäufer nimmt sein Angebot am Stand zurück in die Tasche.
--- Für die Clients: Attribut "PlayerMarket" an der Karte (JSON [{ Id, Seller, SellerName, Item, Count, Mag, Price }],
+--   * MarketPrice(id, price): der Verkäufer ändert den Preis seines Angebots (gleiche Grenzen wie beim Anbieten; At bleibt).
+--   * MarketCancel(id): der Verkäufer nimmt sein Angebot zurück in die Tasche.
+-- Für die Clients: Attribut "PlayerMarket" an der Karte (JSON [{ Id, Seller, SellerName, Item, Count, Mag, Price, At }],
 -- billigste zuerst). Meldungen über Remotes.ExtUpdate("Status", Text, Erfolg).
 
 local Players = game:GetService("Players")
@@ -25,8 +27,9 @@ local InventoryService = require(script.Parent.InventoryService)
 local ExtMarketService = {}
 
 local M = ExtinctionConfig.Market
-local STAND = "Stand_Market"
+local SAFE_ONLY = "Handeln geht nur in der Safe Zone."
 local map = nil
+local options = nil -- { Map, InSafeZone(position) -> bool }
 local lastPublished = nil
 
 local function status(player, text, ok)
@@ -47,24 +50,42 @@ local function itemText(entry)
 	return (entry.Count > 1 and (entry.Count .. "× ") or "") .. (config and config.Name or entry.Item)
 end
 
--- Steht der Spieler lebend am Marktstand (in der offenen Welt)?
-local function atStand(player)
+-- Ist der Spieler lebend in einer Safe Zone (in der offenen Welt)? Serverseitig nachgerechnet (InSafeZone aus
+-- Extinction), sonst das Attribut "InSafeZone", das Extinction setzt.
+local function inSafeZone(player)
 	if not Modes.IsSurvival(player:GetAttribute("Mode")) then
 		return false
 	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	local stands = map and map:FindFirstChild("Stands")
-	if not humanoid or humanoid.Health <= 0 or not root or not stands then
+	if not humanoid or humanoid.Health <= 0 or not root then
 		return false
 	end
-	for _, part in stands:GetChildren() do
-		if part.Name == STAND and part:IsA("BasePart") and (part.Position - root.Position).Magnitude <= ExtinctionConfig.StandRange then
-			return true
+	if options and options.InSafeZone then
+		return options.InSafeZone(root.Position) == true
+	end
+	return player:GetAttribute("InSafeZone") == true
+end
+
+-- Gültiger Preis (ganze Zahl in den Grenzen) oder nil samt Meldung an den Spieler
+local function validPrice(player, value)
+	local price = whole(value)
+	if not price or price < 1 or price > M.MaxPrice then
+		status(player, "Preis zwischen 1 und " .. M.MaxPrice .. " Münzen.")
+		return nil
+	end
+	return price
+end
+
+-- Eigenes Angebot id des Spielers (aus seinem Spielstand) oder nil
+local function ownEntry(player, id)
+	for _, candidate in InventoryService.MarketOf(player) or {} do
+		if candidate.Id == id then
+			return candidate
 		end
 	end
-	return false
+	return nil
 end
 
 -- Alle sichtbaren Angebote (Verkäufer auf dem Server): { Entry, Seller }
@@ -96,7 +117,7 @@ function ExtMarketService.Publish()
 	for _, listing in allListings() do
 		local entry = listing.Entry
 		table.insert(list, { Id = entry.Id, Seller = listing.Seller.UserId, SellerName = listing.Seller.Name, Item = entry.Item,
-			Count = entry.Count, Mag = entry.Mag, Price = entry.Price })
+			Count = entry.Count, Mag = entry.Mag, Price = entry.Price, At = entry.At or 0 })
 	end
 	table.sort(list, function(a, b)
 		if a.Price ~= b.Price then
@@ -113,12 +134,11 @@ end
 
 -- Angebot aufgeben: count Stück vom Taschenplatz slot zum Preis price
 function ExtMarketService.List(player, slot, count, price)
-	if not atStand(player) then
-		status(player, "Anbieten kannst du nur am Spielermarkt im Camp.")
+	if not inSafeZone(player) then
+		status(player, SAFE_ONLY)
 		return false
 	end
 	local market = InventoryService.MarketOf(player)
-	price = whole(price)
 	if not market or type(slot) ~= "number" then
 		return false
 	end
@@ -126,8 +146,8 @@ function ExtMarketService.List(player, slot, count, price)
 		status(player, "Du hast schon " .. M.MaxListings .. " Angebote – nimm erst eins zurück.")
 		return false
 	end
-	if not price or price < 1 or price > M.MaxPrice then
-		status(player, "Preis zwischen 1 und " .. M.MaxPrice .. " Münzen.")
+	price = validPrice(player, price)
+	if not price then
 		return false
 	end
 	local taken, reason = InventoryService.TakeSlot(player, slot, whole(count))
@@ -146,8 +166,8 @@ end
 
 -- Kaufen: Angebot id zum gesehenen Preis price
 function ExtMarketService.Buy(player, id, price)
-	if not atStand(player) then
-		status(player, "Kaufen kannst du nur am Spielermarkt im Camp.")
+	if not inSafeZone(player) then
+		status(player, SAFE_ONLY)
 		return false
 	end
 	local listing = type(id) == "string" and find(id)
@@ -191,20 +211,40 @@ function ExtMarketService.Buy(player, id, price)
 	return true
 end
 
--- Eigenes Angebot zurücknehmen (am Stand, mit Platz in der Tasche)
+-- Preis eines eigenen Angebots ändern (in der Safe Zone; Einstellzeit At bleibt)
+function ExtMarketService.Price(player, id, price)
+	if not inSafeZone(player) then
+		status(player, SAFE_ONLY)
+		return false
+	end
+	local entry = type(id) == "string" and ownEntry(player, id)
+	if not entry then
+		status(player, "Das Angebot gibt es nicht mehr.")
+		return false
+	end
+	price = validPrice(player, price)
+	if not price then
+		return false
+	end
+	if price == entry.Price then
+		return false
+	end
+	entry.Price = price
+	InventoryService.Changed(player)
+	ExtMarketService.Publish()
+	status(player, "Neuer Preis: " .. itemText(entry) .. " für " .. price .. " Münzen", true)
+	return true
+end
+
+-- Eigenes Angebot zurücknehmen (in der Safe Zone, mit Platz in der Tasche)
 function ExtMarketService.Cancel(player, id)
-	if not atStand(player) then
-		status(player, "Zurücknehmen kannst du nur am Spielermarkt im Camp.")
+	if not inSafeZone(player) then
+		status(player, SAFE_ONLY)
 		return false
 	end
 	local market = InventoryService.MarketOf(player)
-	local entry = nil
-	for _, candidate in market or {} do
-		if candidate.Id == id then
-			entry = candidate
-		end
-	end
-	if not entry then
+	local entry = ownEntry(player, id)
+	if not market or not entry then
 		return false
 	end
 	if not InventoryService.HasSpace(player, entry.Item, entry.Count) then
@@ -219,11 +259,13 @@ function ExtMarketService.Cancel(player, id)
 	return true
 end
 
--- opts = { Map }
+-- opts = { Map, InSafeZone(position) -> bool (ohne: Spieler-Attribut "InSafeZone") }
 function ExtMarketService.Init(opts)
+	options = opts
 	map = opts.Map
 	InventoryService.Handlers.MarketList = ExtMarketService.List
 	InventoryService.Handlers.MarketBuy = ExtMarketService.Buy
+	InventoryService.Handlers.MarketPrice = ExtMarketService.Price
 	InventoryService.Handlers.MarketCancel = ExtMarketService.Cancel
 	-- Spieler kommen und gehen (ihre Angebote mit ihnen), Spielstände laden später: regelmäßig nachsehen
 	Players.PlayerRemoving:Connect(function()
