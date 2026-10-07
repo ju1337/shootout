@@ -10,7 +10,6 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     python3 tools/build_maps.py            # Maps neu erzeugen (nach Änderungen am Map-Skript)
     python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
     python3 tools/asset_templates.py       # Blender-Vorlagen der Fahrzeuge und Items (art/templates/Vehicles, Items)
-    python3 tools/agent_templates.py       # Blender-Vorlage der Agenten, alte Methode (art/templates/Agents)
 
 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
 Vorlagen, Export-Einstellungen, Maße, Namen, Marker, Budgets, Texturen, Stil, Abgabe-Checkliste – steht in
@@ -470,20 +469,14 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 - **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
   Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
   überall so aus: an Spielern (Hub, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop, Markt,
-  Hub, Podest, HUD-Symbol). Empfohlen ist ein **ganzer Charakter**: Modell in Studio importieren, mit dem
-  Avatar-Setup (Reiter Avatar) zu einem R15-Rig machen, in den Ordner ziehen, fertig. Hat das Modell einen Humanoid,
-  braucht es alle 15 R15-Körperteile; das Spiel bringt es auf die Größe des Spielkörpers, richtet es am
-  HumanoidRootPart aus, setzt jedes Körperteil an seinem Gelenk an und dreht Arme und Beine in die Haltung des
-  Spiels (T- oder A-Pose geht). Accessoires hängen an dem Körperteil, an das sie geschweißt sind. Zu sehen ist nur
-  das Modell, der normale Agentenkörper bleibt unsichtbar als Trefferzone (alle Agenten gleich leicht zu treffen,
-  Teile des Modells nie Trefferzone). Macht etwas den Spielkörper wieder sichtbar oder tauscht Roblox Körperteile
-  aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an (Kontrolle läuft, solange der Charakter lebt).
-  Fehlt etwas, bleibt der Standard-Look und
-  Studio sagt im Output, was fehlt (`[Agentenmodelle] …`). Weiter möglich (alte Methode, Modell ohne Humanoid): nur
-  Ausrüstung aus Blender auf den Standardkörper, Teile `<Körperteil>_<Name>`, Vorlage in `art/templates/Agents`.
-  Decken diese Teile Kopf, Rumpf, Arme und Beine ab, gilt das Modell ebenfalls als ganzer Charakter (nur das Modell
-  zu sehen, samt seinem mitgelieferten Körper – grau aus der Vorlage in Agentenfarben –, Spielkörper unsichtbar);
-  ebenso ein Modell nur aus den 15 Körperteilen ohne Humanoid
+  Hub, Podest, HUD-Symbol) – **genau wie in Blender**: Lage, Größe, Drehung, Farben, Materialien und Texturen
+  bleiben, nichts wird umgefärbt, gestreckt oder umgebogen. Jedes Teil hängt am Körperteil, mit dem sein Name
+  beginnt (`Head_Suit`, `LeftUpperArm_Suit`, R15-Rig: `Head` …), sonst am nächsten, und folgt den Animationen.
+  Boden = `Point_Root` oder der tiefste Punkt, vorne = HumanoidRootPart bzw. -Z. Nur bei offensichtlich falscher
+  Import-Einheit wird das ganze Modell auf 5,1 Studs gebracht. Der normale Agentenkörper bleibt unsichtbar als
+  Trefferzone (alle Agenten gleich leicht zu treffen, Teile des Modells nie Trefferzone); macht etwas ihn wieder
+  sichtbar oder tauscht Roblox Körperteile aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an. Fehlt
+  etwas, bleibt der Standard-Look und Studio sagt im Output, was fehlt (`[Agentenmodelle] …`)
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
@@ -683,7 +676,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
 | Agenten-Körper: Standard-Look (Hautfarbe, Gesicht, Agentenfarben), Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
-| Agentenmodelle (ganzer Charakter aus dem Avatar-Setup oder nur Ausrüstung): Anleitung, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
+| Agentenmodelle (genau wie in Blender): Anleitung, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
@@ -782,10 +775,10 @@ am Commit:
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
-| `agentsuit` | ganzer Charakter aus Blender ohne Humanoid und ohne eigenen Körper (Maße wie Viper_3.glb: 15 Teile `<Körperteil>_Suit`): jedes Teil sitzt genau wie im Modell, Arme lückenlos am Oberkörper, Texturen nicht übermalt |
-| `agentmodels` | Agenten-Lader: die Vorlage ist selbst ein gültiges Modell, jedes Teil sitzt wie in der Vorlage (auch gedreht und verschoben importiert, an größeren Körperteilen), Farbzonen, ganze Charaktere ohne Humanoid (mit eigenem Körper, ohne Hände/Füße, nur Körper), Wechsel ohne Doppelte, Rückfall auf den Standard-Look, alle Prüfmeldungen; Spieler, Bots und Menü-Figur tragen das Modell |
+| `agentmodels` | Agenten-Lader mit den Maßen von Viper_3.glb (15 Teile `<Körperteil>_Suit`, Haare): jedes Teil sitzt, liegt und ist so groß wie im Modell, Farbe/Material/Textur unverändert, Teile ohne Körperteil-Namen am nächsten Körperteil, ohne `Point_Root`, falsche Einheit, Prüfmeldungen, Neuladen; Spieler, Bots und Menü-Figur tragen das Modell |
+| `agentcharacter` | Agentenmodell als R15-Rig (Avatar-Setup) gedreht importiert: Blick vom HumanoidRootPart, sonst genau wie modelliert, Gelenke und Skalierungswerte weg, Bones bleiben; der Server hält den Spielkörper unsichtbar und zieht neu an, wenn Roblox Teile austauscht |
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
-| `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, bei Charakteren alle 15 Körperteile da, jedes Teil angeschweißt und nie Trefferzone) |
+| `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
@@ -826,8 +819,6 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `tools/weapon_templates.py` – erzeugt die Blender-Vorlagen der Waffen (`art/templates/Weapons`)
 - `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
   und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)
-- `tools/agent_templates.py` – erzeugt die Vorlage der Agenten (Spielkörper und heutige Ausrüstung,
-  `art/templates/Agents`)
 - `docs` – Anleitungen: Vorgaben für alle 3D-Modelle (`3d-richtlinien.md`), Waffenmodelle aus Blender
   (`waffen-modelle.md`), Agentenmodelle (`agenten-modelle.md`)
 - `assets/Weapons`, `assets/Agents` – Kopien deiner Waffen- und Agentenmodelle (.rbxmx) für die automatische

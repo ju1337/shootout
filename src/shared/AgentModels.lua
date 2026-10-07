@@ -1,24 +1,16 @@
 -- AgentModels (ModuleScript)
--- Aussehen der Agenten: fertige 3D-Modelle aus ReplicatedStorage.Assets.Agents (Anleitung in docs/agenten-modelle.md)
--- oder – solange es keins gibt – der Standard-Look aus AgentBody (Roblox-Körper mit Gesicht in den Agentenfarben).
--- Empfohlen: ein ganzes R15-Rig (mit Humanoid, z.B. aus dem Avatar-Setup von Studio) – dann ist nur das
--- Modell zu sehen, der Spielkörper bleibt unsichtbar als Trefferzone (siehe loadCharacter). Modelle ohne Humanoid
--- (Rest dieses Kopfes): decken ihre Teile den ganzen Körper ab (Kopf, Rumpf, Arme, Beine), sind sie ebenfalls ein
--- ganzer Charakter (nur das Modell zu sehen), sonst wie früher Ausrüstung auf dem sichtbaren Spielkörper.
--- Alle Agenten haben denselben Körper (gleiche Trefferzonen); ein Modell liefert nur die Ausrüstung: starre Teile,
--- jedes an genau einem Körperteil. Das Spiel hängt sie an Spieler und Bots (AgentBody.Dress: angeschweißt, nie
--- Trefferzone) und an die Figuren in Menüs, Shop und Markt (AgentFigure).
+-- Aussehen der Agenten: das 3D-Modell aus ReplicatedStorage.Assets.Agents.<Agent-Id> (Anleitung in
+-- docs/agenten-modelle.md) – genau so, wie es in Blender bzw. Studio aussieht: gleiche Teile, Lage, Größe, Farben,
+-- Materialien und Texturen. Nichts wird umgefärbt, gestreckt oder gedreht. Jedes Teil wird an das Körperteil des
+-- Spielkörpers geschweißt, zu dem es gehört, und bewegt sich mit ihm (laufen, zielen, Waffe halten). Der Spielkörper
+-- bleibt unsichtbar als Trefferzone, die Teile des Modells zählen nie als Treffer (gleiche Trefferzonen für alle).
+-- Solange es kein Modell gibt: Standard-Look aus AgentBody (Roblox-Körper mit Gesicht in den Agentenfarben).
 --
--- Aufbau eines Modells (ausführlich in docs/agenten-modelle.md):
---   Ausrüstungsteile heißen <Körperteil>_<Name>, z.B. Head_Helmet_Primary oder UpperTorso_Vest_Accent (Wörter mit
---   "_", Blender-Endungen wie ".001" sind egal). Wörter mit Bedeutung: Primary = Uniformfarbe, Accent = zweite
---   Farbe, Glass = getöntes Visier, Neon = leuchtet. Teile mit dem Wort Ref sind nur Maßstab und werden ignoriert.
---   Marker Point_Root: Boden zwischen den Füßen (kleines Teil oder Attachment, nur die Mitte zählt).
---   Körper als Bezug (empfohlen): Teile, die genau wie ein Körperteil heißen (Head, UpperTorso, ...), z.B. der Körper
---   aus der Vorlage art/templates/Agents/Agent.obj. Dann richtet das Spiel das Modell an ihnen aus (Lage, Drehung
---   und Verschiebung nach dem Import sind egal) und misst jedes Ausrüstungsteil an seinem Körperteil. Ohne Körper
---   zählen Point_Root und die Achsen des Modells (vorne = -Z, oben = +Y). Ein HumanoidRootPart (Körper aus Studio
---   exportiert) wird ignoriert.
+-- Zu welchem Körperteil ein Teil gehört: heißt es wie ein Körperteil (Head, UpperTorso, … wie im R15-Rig) oder
+-- beginnt sein Name damit (Head_Suit, LeftUpperArm_Pad), zu diesem; sonst zu dem, dem es am nächsten ist (Haare,
+-- Helm, Rucksack …). Lage: Boden zwischen den Füßen = Marker Point_Root (Teil oder Attachment), sonst der tiefste
+-- Punkt unter der Mitte des Rumpfs. Vorne = Blickrichtung des HumanoidRootPart, sonst -Z. Unsichtbare Teile
+-- (Transparency 1, z.B. das HumanoidRootPart), Marker Point_… und Maßstab-Teile Ref_… werden nicht angezeigt.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -27,11 +19,10 @@ local AgentConfig = require(script.Parent.AgentConfig)
 
 local AgentModels = {}
 
--- ---------- Der Agenten-Körper ----------
+-- ---------- Der Spielkörper ----------
 -- R15 mit klassischen Proportionen, Breite und Tiefe wie AgentConfig.BodyScale (der Kopf wird nicht verschmälert).
--- Ruhelage: Ursprung = Boden zwischen den Füßen (Point_Root), Blick nach -Z, Arme hängen. Höhen aus den Gelenken
--- des Standard-R15 (Schulter 0,563 über der Mitte des Oberkörpers, Hüfte an der Unterkante des Unterkörpers);
--- Teile überlappen an den Gelenken wie beim echten Körper. Aus diesen Werten entstehen die Vorlage und die Figuren.
+-- Ruhelage: Ursprung = Boden zwischen den Füßen, Blick nach -Z, Arme hängen. Höhen aus den Gelenken des
+-- Standard-R15; Teile überlappen an den Gelenken wie beim echten Körper. Auf diesen Körper wird ein Modell gesetzt.
 local W, D = AgentConfig.BodyScale.Width, AgentConfig.BodyScale.Depth
 local function bodyPart(width, height, depth, x, y)
 	return { Size = Vector3.new(width, height, depth), CFrame = CFrame.new(x, y, 0) }
@@ -55,47 +46,27 @@ AgentModels.Body = {
 }
 AgentModels.BodyParts = { "Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm",
 	"RightLowerArm", "RightHand", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot" }
--- Schultergelenke in Ruhelage (für Figuren, die den Arm heben)
+-- Rechtes Schultergelenk in Ruhelage (Figuren heben den Arm mit der Waffe)
 AgentModels.RightShoulder = Vector3.new(W, 3.763, 0)
-AgentModels.LeftShoulder = Vector3.new(-W, 3.763, 0)
 
--- Visier: fast schwarz mit einem Hauch Agentenfarbe und glänzend (Glas-Material wirkt im Licht des Hubs hellgrau)
-AgentModels.VisorReflectance = 0.3
-function AgentModels.VisorColor(accent)
-	return Color3.fromRGB(22, 24, 28):Lerp(accent, 0.15)
-end
-
--- Farben des Spielkörpers: Haut, Hose = Uniformfarbe abgedunkelt
+-- Standard-Look: Haut, Hose = Uniformfarbe abgedunkelt
 AgentModels.SkinColor = Color3.fromRGB(205, 160, 130)
 AgentModels.FaceTexture = "rbxasset://textures/face.png" -- Roblox-Standardgesicht
 function AgentModels.PantsColor(primary)
 	return primary:Lerp(Color3.new(0, 0, 0), 0.5)
 end
 
--- ---------- Fertige 3D-Modelle (Blender) ----------
-local ZONES = { Primary = true, Accent = true, Glass = true }
-local MAX_PARTS = 12        -- Budget pro Agent (Handys)
-local MAX_CHARACTER_PARTS = 40 -- Budget für einen ganzen Charakter
--- Deckt ein Modell ohne Humanoid mindestens diese Körperteile ab (Teile <Körperteil>_<Name>), ist es ein ganzer
--- Charakter: zu sehen ist nur das Modell (Hände und Füße stecken oft im Unterarm bzw. Unterschenkel)
-local CHARACTER_CORE = { "Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "LeftLowerArm", "RightUpperArm",
-	"RightLowerArm", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg" }
-local MAX_DISTANCE = 0.75   -- so weit darf die Mitte eines Teils außerhalb seines Körperteils liegen
-local MAX_REACH = 0.45      -- weiter steht Ausrüstung nicht ab (sähe aus wie ein Ziel, zählt aber nicht als Treffer)
-local MAX_BODY_DEVIATION = 0.4 -- mitgelieferter Körper: so weit darf ein Körperteil vom Spielkörper abweichen
-local DEFAULT_COLOR = Color3.fromRGB(52, 54, 58) -- untexturierte Teile ohne Farbzone (ein Import ist sonst weiß)
-local TEMPLATE_BODY_COLOR = Color3.fromRGB(196, 198, 204) -- Körper in der Vorlage art/templates/Agents
--- Farbzone des mitgelieferten Körpers, solange er noch der graue Körper aus der Vorlage ist (wie der Spielkörper:
--- Haut, Uniform, Hose)
-local BODY_ZONES = { Head = "Skin", UpperTorso = "Primary", LowerTorso = "Primary", LeftUpperArm = "Primary",
-	LeftLowerArm = "Primary", LeftHand = "Primary", RightUpperArm = "Primary", RightLowerArm = "Primary",
-	RightHand = "Primary", LeftUpperLeg = "Pants", LeftLowerLeg = "Pants", LeftFoot = "Pants", RightUpperLeg = "Pants",
-	RightLowerLeg = "Pants", RightFoot = "Pants" }
--- Paare links/rechts, aus denen die Querachse des mitgelieferten Körpers kommt (erstes vorhandenes)
-local SIDE_PAIRS = { { "LeftUpperArm", "RightUpperArm" }, { "LeftLowerArm", "RightLowerArm" }, { "LeftHand", "RightHand" },
-	{ "LeftUpperLeg", "RightUpperLeg" }, { "LeftLowerLeg", "RightLowerLeg" }, { "LeftFoot", "RightFoot" } }
+-- ---------- 3D-Modelle aus Assets.Agents ----------
+-- Untermodell im Charakter bzw. in der Figur, in dem die Teile des Modells hängen. Die Teile behalten ihre Namen
+-- (gehäutete Meshes finden ihre Gelenke darüber), ohne mit dem gleichnamigen Spielkörper zu kollidieren.
+AgentModels.ModelName = "AgentModel"
+local HEIGHT = 5.1 -- Scheitel bis Sohle des Spielkörpers
+-- So hoch darf ein Modell sein, damit es 1:1 bleibt (1 Blender-Einheit = 1 Stud); sonst stimmt beim Import die
+-- Einheit nicht (z.B. Zentimeter), und es wird auf die Höhe des Spielkörpers gebracht
+local MIN_HEIGHT, MAX_HEIGHT = 4, 6.5
+local MAX_PARTS = 40 -- mehr Teile kosten auf Handys Leistung (nur ein Hinweis)
 
-local assetData = {}   -- [Agent-Id] = { Gear = { Eintrag }, Character = ganzer Charakter? }
+local assetData = {}   -- [Agent-Id] = { { Name, Body, Offset, Template } }
 local assetReport = {} -- [Name] = { Loaded = bool, Errors = { Text }, Warnings = { Text } }
 
 -- Blender hängt an Kopien ".001" an – das zählt nicht zum Namen
@@ -103,23 +74,10 @@ local function cleanName(name)
 	return (string.gsub(name, "%.%d+$", ""))
 end
 
-local function wordsOf(name)
-	local list = {}
-	for word in string.gmatch(name, "[^_%.%s]+") do
-		table.insert(list, word)
-	end
-	return list
-end
-
-local function markerPosition(obj)
-	if obj:IsA("BasePart") then
-		return obj.Position
-	end
-	local parent = obj.Parent
-	if obj:IsA("Attachment") and parent and parent:IsA("BasePart") then
-		return (parent.CFrame * obj.CFrame).Position
-	end
-	return nil
+-- Körperteil, zu dem ein Teil laut Namen gehört (Head, Head_Suit, LeftUpperArm.001 …), sonst nil
+local function bodyNameOf(name)
+	local first = string.match(cleanName(name), "^[^_%.%s]+")
+	return first and AgentModels.Body[first] and first or nil
 end
 
 -- Halbe Ausdehnung eines (evtl. gedrehten) Quaders entlang der Achsen eines Bezugsraums
@@ -131,484 +89,136 @@ local function halfExtent(rotation, size)
 		math.abs(r.Z) * h.X + math.abs(u.Z) * h.Y + math.abs(l.Z) * h.Z)
 end
 
-local function sizeText(size)
-	return string.format("%.2f × %.2f × %.2f", size.X, size.Y, size.Z)
-end
-
--- Bezugsrahmen: aus dem mitgelieferten Körper (oben = Unterkörper → Kopf, rechts = linke → rechte Seite), sonst
--- Point_Root mit den Achsen des Modells. Gibt (CFrame, aus dem Körper?, Text bei falscher Größe) zurück.
-local function frameOf(root, refs)
-	local topName = refs.Head and "Head" or (refs.UpperTorso and "UpperTorso")
-	local bottomName = refs.LowerTorso and "LowerTorso" or (refs.UpperTorso and topName ~= "UpperTorso" and "UpperTorso")
-	local side
-	for _, pair in SIDE_PAIRS do
-		if refs[pair[1]] and refs[pair[2]] then
-			side = refs[pair[2]].Position - refs[pair[1]].Position
-			break
-		end
-	end
-	if topName and (bottomName or root) and side then
-		local bottom = bottomName and refs[bottomName].Position or root
-		local up = refs[topName].Position - bottom
-		local expected = AgentModels.Body[topName].CFrame.Y - (bottomName and AgentModels.Body[bottomName].CFrame.Y or 0)
-		if up.Magnitude > 0.05 and side.Magnitude > 0.05 then
-			local factor = up.Magnitude / expected
-			if factor < 0.6 or factor > 1.6 then
-				return nil, true, string.format("Körper ist %.2f-mal so groß wie im Spiel – stimmt die Einheit beim Import "
-					.. "(1 Blender-Einheit = 1 Stud)?", factor)
-			end
-			up = up.Unit
-			local right = side - up * side:Dot(up)
-			if right.Magnitude > 0.05 then
-				right = right.Unit
-				local origin = root or (bottom - up * (bottomName and AgentModels.Body[bottomName].CFrame.Y or 0))
-				return CFrame.fromMatrix(origin, right, up, right:Cross(up)), true, nil
-			end
-		end
-	end
-	if not root then
-		return nil, false, nil
-	end
-	return CFrame.new(root), false, nil
-end
-
--- ---------- Ganzer Charakter (R15-Rig, z.B. aus dem Avatar-Setup von Studio) ----------
--- Das Modell IST der Charakter: seine 15 Körperteile (Head, UpperTorso, ... – Namen wie in Roblox) werden über den
--- unsichtbaren Spielkörper gelegt, jedes folgt seinem Körperteil (laufen, zielen, Waffe halten). Getroffen wird
--- weiter nur der Spielkörper, darum sind alle Agenten gleich leicht zu treffen. Das Modell wird auf die Größe des
--- Spielkörpers gebracht, jedes Teil an seinem Gelenk angesetzt und – bei Armen und Beinen – in die Richtung des
--- Körperteils gedreht (so passt auch ein Modell in T- oder A-Haltung auf die hängenden Arme).
-local CHARACTER_HEIGHT = 5.1 -- Kopf oben bis Boden beim Spielkörper
--- Untermodell im Charakter bzw. in der Figur, in dem die Teile eines ganzen Charakters hängen
-AgentModels.ModelName = "AgentModel"
--- Gelenke des Spielkörpers in Ruhelage: Ansatzpunkt jedes Körperteils (wie die Rig-Attachments des Standard-R15)
-local JOINTS = {
-	Head = { Rig = "NeckRigAttachment", At = Vector3.new(0, 4.0, 0) },
-	UpperTorso = { Rig = "WaistRigAttachment", At = Vector3.new(0, 2.4, 0) },
-	LowerTorso = { Rig = "RootRigAttachment", At = Vector3.new(0, 2.2, 0) },
-	LeftUpperArm = { Rig = "LeftShoulderRigAttachment", At = Vector3.new(-W, 3.763, 0), Next = "LeftLowerArm" },
-	LeftLowerArm = { Rig = "LeftElbowRigAttachment", At = Vector3.new(-1.5 * W, 3.035, 0), Next = "LeftHand" },
-	LeftHand = { Rig = "LeftWristRigAttachment", At = Vector3.new(-1.5 * W, 2.275, 0), Like = "LeftLowerArm" },
-	RightUpperArm = { Rig = "RightShoulderRigAttachment", At = Vector3.new(W, 3.763, 0), Next = "RightLowerArm" },
-	RightLowerArm = { Rig = "RightElbowRigAttachment", At = Vector3.new(1.5 * W, 3.035, 0), Next = "RightHand" },
-	RightHand = { Rig = "RightWristRigAttachment", At = Vector3.new(1.5 * W, 2.275, 0), Like = "RightLowerArm" },
-	LeftUpperLeg = { Rig = "LeftHipRigAttachment", At = Vector3.new(-0.5 * W, 2.0, 0), Next = "LeftLowerLeg" },
-	LeftLowerLeg = { Rig = "LeftKneeRigAttachment", At = Vector3.new(-0.5 * W, 1.16, 0), Next = "LeftFoot" },
-	LeftFoot = { Rig = "LeftAnkleRigAttachment", At = Vector3.new(-0.5 * W, 0.253, 0), Like = "LeftLowerLeg" },
-	RightUpperLeg = { Rig = "RightHipRigAttachment", At = Vector3.new(0.5 * W, 2.0, 0), Next = "RightLowerLeg" },
-	RightLowerLeg = { Rig = "RightKneeRigAttachment", At = Vector3.new(0.5 * W, 1.16, 0), Next = "RightFoot" },
-	RightFoot = { Rig = "RightAnkleRigAttachment", At = Vector3.new(0.5 * W, 0.253, 0), Like = "RightLowerLeg" },
-}
-AgentModels.Joints = JOINTS
-
--- Kürzeste Drehung, die Richtung a auf Richtung b bringt
-local function rotationBetween(a, b)
-	a, b = a.Unit, b.Unit
-	local dot = math.clamp(a:Dot(b), -1, 1)
-	if dot > 0.99999 then
-		return CFrame.new()
-	end
-	local axis = a:Cross(b)
-	if axis.Magnitude < 1e-5 then
-		axis = math.abs(a.X) < 0.9 and a:Cross(Vector3.new(1, 0, 0)) or a:Cross(Vector3.new(0, 0, 1))
-	end
-	-- Drehung um axis (Rodrigues) auf die drei Achsen angewendet
-	local k, angle = axis.Unit, math.acos(dot)
-	local cos, sin = math.cos(angle), math.sin(angle)
-	local function turn(v)
-		return v * cos + k:Cross(v) * sin + k * k:Dot(v) * (1 - cos)
-	end
-	return CFrame.fromMatrix(Vector3.zero, turn(Vector3.new(1, 0, 0)), turn(Vector3.new(0, 1, 0)), turn(Vector3.new(0, 0, 1)))
-end
-
-local function loadCharacter(source, report)
-	local function problem(text)
-		table.insert(report.Errors, text)
-	end
-	local function hint(text)
-		table.insert(report.Warnings, text)
-	end
-	-- Körperteile und alles, was daran hängt (Haare, Helme, Accessoires …)
-	local body, extras = {}, {}
-	local rootPart = nil
-	for _, obj in source:GetDescendants() do
-		if obj:IsA("BasePart") then
-			local name = cleanName(obj.Name)
-			if name == "HumanoidRootPart" then
-				rootPart = obj
-			elseif JOINTS[name] and not body[name] then
-				body[name] = obj
-			elseif obj.Transparency < 1 and not string.match(name, "^Point_") and not table.find(wordsOf(name), "Ref") then
-				table.insert(extras, obj) -- (Marker und Maßstab-Teile aus der Vorlage nicht)
-			end
-		end
-	end
-	local missing = {}
+-- Körperteil des Spielkörpers, dem ein Punkt (Agentenraum) am nächsten ist
+local function nearestBodyPart(position)
+	local best, bestDistance = nil, math.huge
 	for _, name in AgentModels.BodyParts do
-		if not body[name] then
-			table.insert(missing, name)
+		local rest = AgentModels.Body[name]
+		local offset = (position - rest.CFrame.Position):Abs() - rest.Size / 2
+		local outside = Vector3.new(math.max(offset.X, 0), math.max(offset.Y, 0), math.max(offset.Z, 0)).Magnitude
+		local distance = outside + 0.001 * (position - rest.CFrame.Position).Magnitude -- innen: die nähere Mitte
+		if distance < bestDistance then
+			best, bestDistance = name, distance
 		end
 	end
-	if #missing > 0 then
-		problem("es fehlen Körperteile: " .. table.concat(missing, ", ") .. " – ist es ein R15-Rig (Avatar-Setup in Studio)?")
-		return nil, report
-	end
-
-	-- Bezugsrahmen des Modells: Blickrichtung vom HumanoidRootPart (sonst Unterkörper), Boden = tiefster Punkt
-	local basis = (rootPart or body.LowerTorso).CFrame.Rotation
-	local low, high = math.huge, -math.huge
-	for _, part in body do
-		local extent = halfExtent(basis:Inverse() * part.CFrame.Rotation, part.Size)
-		local y = basis:VectorToObjectSpace(part.Position).Y
-		low, high = math.min(low, y - extent.Y), math.max(high, y + extent.Y)
-	end
-	local height = high - low
-	if height < 0.1 then
-		problem("das Modell ist flach oder leer")
-		return nil, report
-	end
-	local scale = CHARACTER_HEIGHT / height
-	local center = body.LowerTorso.Position
-	local local0 = basis:VectorToObjectSpace(center)
-	local origin = basis * Vector3.new(local0.X, low, local0.Z) -- Boden unter der Hüfte
-	local toAgent = (CFrame.new(origin) * basis):Inverse()
-	-- Punkt / Lage aus dem Modell im Agentenraum (skaliert)
-	local function point(world)
-		return toAgent * world * scale
-	end
-	local function frame(cframe)
-		local inAgent = toAgent * cframe
-		return CFrame.new(inAgent.Position * scale) * inAgent.Rotation
-	end
-
-	-- Gelenke des Modells: Rig-Attachment im Körperteil, sonst Motor6D, sonst Oberkante des Teils
-	local joints = {}
-	for name, part in body do
-		local info = JOINTS[name]
-		local attachment = part:FindFirstChild(info.Rig)
-		if attachment and attachment:IsA("Attachment") then
-			joints[name] = point((part.CFrame * attachment.CFrame).Position)
-		else
-			for _, motor in source:GetDescendants() do
-				if motor:IsA("Motor6D") and motor.Part1 == part and motor.Part0 then
-					joints[name] = point((motor.Part0.CFrame * motor.C0).Position)
-					break
-				end
-			end
-			joints[name] = joints[name] or point((part.CFrame * CFrame.new(0, part.Size.Y / 2, 0)).Position)
-		end
-	end
-
-	-- Jedes Körperteil: Drehung (Arme und Beine in Richtung des Spielkörpers), dann am Gelenk ansetzen
-	local turns = {}
-	for name, info in JOINTS do
-		if info.Next then
-			local from = joints[info.Next] - joints[name]
-			local to = JOINTS[info.Next].At - info.At
-			turns[name] = from.Magnitude > 0.01 and rotationBetween(from, to) or CFrame.new()
-		end
-	end
-	local moves = {} -- [Körperteil] = Abbildung Modell (Agentenraum, skaliert) → Ruhelage des Spielkörpers
-	for name, info in JOINTS do
-		local turn = turns[name] or (info.Like and turns[info.Like]) or CFrame.new()
-		moves[name] = CFrame.new(info.At) * turn * CFrame.new(-joints[name])
-	end
-
-	local entries, used = {}, {}
-	local function add(original, bodyName)
-		local part = original:Clone()
-		if not part then
-			hint(original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
-			return
-		end
-		for _, child in part:GetDescendants() do
-			-- nur das Aussehen bleibt: keine Teile, Gelenke, Rig-Attachments, Wraps, Skripte, keine Werte der
-			-- Roblox-Skalierung (OriginalSize & Co. – sonst skaliert Roblox die Kopie wie ein Körperteil mit). Bones
-			-- bleiben (ein Skinned Mesh aus dem Avatar-Setup verformt sich mit ihnen an den Gelenken), mitskaliert.
-			if child:IsA("Bone") then
-				child.CFrame = CFrame.new(child.CFrame.Position * scale) * child.CFrame.Rotation
-			elseif child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Attachment")
-				or child:IsA("Constraint") or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") or child:IsA("ValueBase") then
-				child:Destroy()
-			end
-		end
-		-- Name wie im Rig (Head, UpperTorso, …): gehäutete Meshes aus dem Avatar-Setup finden ihre Gelenke über diese
-		-- Namen. Damit es im Charakter selbst kein zweites "Head" usw. gibt, kommen die Teile in ein eigenes
-		-- Untermodell (Attach, AgentModels.ModelName).
-		local name = cleanName(original.Name)
-		local unique, count = name, 1
-		while used[unique] do
-			count += 1
-			unique = name .. "_" .. count
-		end
-		used[unique] = true
-		local rest = AgentModels.Body[bodyName]
-		local placed = moves[bodyName] * frame(original.CFrame)
-		part.Name = unique
-		part.Size = original.Size * scale
-		part.CFrame = CFrame.new()
-		part.Anchored = true
-		part.CanCollide = false
-		part.CanQuery = false
-		part.CanTouch = false
-		part.Massless = true
-		part.Transparency = original.Transparency
-		table.insert(entries, { Name = unique, Body = bodyName, Offset = rest.CFrame:ToObjectSpace(placed),
-			RefSize = rest.Size, Template = part })
-	end
-	for _, name in AgentModels.BodyParts do
-		add(body[name], name)
-	end
-	-- Accessoires: an dem Körperteil, an das sie geschweißt sind, sonst am nächsten
-	for _, extra in extras do
-		local owner = nil
-		for _, joint in source:GetDescendants() do
-			if joint:IsA("JointInstance") or joint:IsA("WeldConstraint") then
-				local a, b = joint.Part0, joint.Part1
-				if a == extra and b and JOINTS[cleanName(b.Name)] then
-					owner = cleanName(b.Name)
-				elseif b == extra and a and JOINTS[cleanName(a.Name)] then
-					owner = cleanName(a.Name)
-				end
-			end
-			if owner then
-				break
-			end
-		end
-		if not owner then
-			local best = math.huge
-			for name, part in body do
-				local distance = (part.Position - extra.Position).Magnitude
-				if distance < best then
-					owner, best = name, distance
-				end
-			end
-		end
-		add(extra, owner)
-	end
-	if #entries > MAX_CHARACTER_PARTS then
-		hint(#entries .. " Teile – für Handys besser höchstens " .. MAX_CHARACTER_PARTS .. " (Accessoires zusammenfassen)")
-	end
-	if math.abs(scale - 1) > 0.5 then
-		hint(string.format("auf %.0f %% skaliert (Modell war %.1f Studs hoch, Spielkörper %.1f)", scale * 100, height,
-			CHARACTER_HEIGHT))
-	end
-	report.Loaded = true
-	report.Character = true
-	return { Gear = entries, Character = true }, report
+	return best
 end
 
--- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
-local function loadAsset(agentId, source)
+-- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Teile oder nil, Bericht) zurück.
+local function loadAsset(source)
 	local report = { Loaded = false, Errors = {}, Warnings = {} }
-	local function problem(text)
-		table.insert(report.Errors, text)
-	end
-	local function hint(text)
-		table.insert(report.Warnings, text)
-	end
-	-- Mit Humanoid (R15-Rig, z.B. aus dem Avatar-Setup): das Modell ist der ganze Charakter
-	if source:FindFirstChildWhichIsA("Humanoid", true) then
-		return loadCharacter(source, report)
-	end
-
-	-- Marker, Körper und Ausrüstung einsammeln
-	local root, refs, gear = nil, {}, {}
-	local bodies = {} -- alle Teile, die genau wie ein Körperteil heißen (auch doppelte, z.B. UpperTorso.001)
+	local pieces, root, rootPart = {}, nil, nil
 	for _, obj in source:GetDescendants() do
 		local name = cleanName(obj.Name)
-		local point = string.match(name, "^Point_(.+)$")
-		if point and (obj:IsA("BasePart") or obj:IsA("Attachment")) then
-			if point == "Root" then
-				root = markerPosition(obj)
-			else
-				hint("Unbekannter Marker " .. obj.Name)
-			end
+		if name == "Point_Root" and obj:IsA("BasePart") then
+			root = obj.Position
+		elseif name == "Point_Root" and obj:IsA("Attachment") and obj.Parent and obj.Parent:IsA("BasePart") then
+			root = (obj.Parent.CFrame * obj.CFrame).Position
 		elseif obj:IsA("BasePart") then
-			local words = wordsOf(name)
-			if table.find(words, "Ref") or name == "HumanoidRootPart" then
-				continue -- nur Maßstab bzw. unsichtbarer Teil des Körpers (Export des Körpers aus Studio)
-			elseif AgentModels.Body[name] then
-				refs[name] = refs[name] or obj -- Bezug zum Ausrichten: das erste (z.B. der Körper aus der Vorlage)
-				table.insert(bodies, obj)
-			elseif AgentModels.Body[words[1] or ""] then
-				table.insert(gear, obj)
-			else
-				problem(obj.Name .. ": der Name beginnt nicht mit einem Körperteil (z.B. Head_Helmet, UpperTorso_Vest)")
+			if name == "HumanoidRootPart" then
+				rootPart = obj
+			elseif obj.Transparency < 1 and not string.match(name, "^Point_") and not string.match(name, "^Ref_") then
+				table.insert(pieces, obj) -- (Marker und Maßstab-Teile wie Ref_Ground nicht)
 			end
 		end
 	end
-	if #gear == 0 then
-		-- Nur ein Körper (Teile heißen genau wie die Körperteile, z.B. ein R15-Rig ohne Humanoid): ganzer Charakter
-		local complete = true
-		for _, bodyName in AgentModels.BodyParts do
-			complete = complete and refs[bodyName] ~= nil
-		end
-		if complete then
-			-- (andere Teile sind dort Accessoires, keine falsch benannte Ausrüstung: neuer Bericht)
-			return loadCharacter(source, { Loaded = false, Errors = {}, Warnings = {} })
-		end
-		problem("keine Ausrüstung im Modell (Teile heißen <Körperteil>_<Name>, z.B. Head_Helmet)")
-	end
-	local frame, fromBody, sizeProblem = frameOf(root, refs)
-	if sizeProblem then
-		problem(sizeProblem)
-	elseif not frame then
-		problem("Marker Point_Root fehlt (Boden zwischen den Füßen)")
-	end
-	if #report.Errors > 0 then
+	if #pieces == 0 then
+		table.insert(report.Errors, "keine sichtbaren Teile im Modell")
 		return nil, report
 	end
-	if not root then
-		hint("Marker Point_Root fehlt – ausgerichtet am mitgelieferten Körper")
-	end
-	local toAgent = frame:Inverse()
 
-	-- Ruhelage eines Körperteils im Agentenraum: mitgelieferter Körper oder der Spielkörper
-	local rests = {}
-	local function restOf(bodyName)
-		if not rests[bodyName] then
-			local ref = refs[bodyName]
-			if ref and fromBody then
-				rests[bodyName] = { CFrame = CFrame.new(toAgent * ref.Position),
-					Size = halfExtent(toAgent.Rotation * ref.CFrame.Rotation, ref.Size) * 2 }
-			else
-				rests[bodyName] = AgentModels.Body[bodyName]
-			end
-		end
-		return rests[bodyName]
-	end
-	if fromBody then
-		for name in refs do
-			local size, expected = restOf(name).Size, AgentModels.Body[name].Size
-			local deviation = (size - expected):Abs()
-			if math.max(deviation.X, deviation.Y, deviation.Z) > MAX_BODY_DEVIATION then
-				hint("Körperteil " .. name .. " ist " .. sizeText(size) .. " groß, im Spiel " .. sizeText(expected)
-					.. " – ist es der schlanke Agenten-Körper aus der Vorlage?")
-			end
+	-- Bezugsrahmen: Achsen des HumanoidRootPart (sonst des Modells), Boden = Point_Root bzw. tiefster Punkt
+	local basis = rootPart and rootPart.CFrame.Rotation or CFrame.new()
+	local min, max = Vector3.one * math.huge, -Vector3.one * math.huge -- ganzes Modell
+	local torsoMin, torsoMax = min, max -- Rumpf (seine Mitte ist die Mitte des Modells)
+	for _, part in pieces do
+		local center = basis:PointToObjectSpace(part.Position)
+		local extent = halfExtent(basis:Inverse() * part.CFrame.Rotation, part.Size)
+		min, max = min:Min(center - extent), max:Max(center + extent)
+		local bodyName = bodyNameOf(part.Name)
+		if bodyName == "UpperTorso" or bodyName == "LowerTorso" then
+			torsoMin, torsoMax = torsoMin:Min(center - extent), torsoMax:Max(center + extent)
 		end
 	end
+	local height = max.Y - min.Y
+	if height < 0.1 then
+		table.insert(report.Errors, "das Modell ist flach (Teile ohne Größe)")
+		return nil, report
+	end
+	local origin = root
+	if not origin then
+		local middle = torsoMin.X <= torsoMax.X and (torsoMin + torsoMax) / 2
+			or rootPart and basis:PointToObjectSpace(rootPart.Position) or (min + max) / 2
+		origin = basis * Vector3.new(middle.X, min.Y, middle.Z)
+	end
+	local scale = 1
+	if height < MIN_HEIGHT or height > MAX_HEIGHT then
+		scale = HEIGHT / height
+		table.insert(report.Warnings, string.format("Modell ist %.2f Studs hoch, auf %.1f gebracht (mal %.4g) – stimmt "
+			.. "die Einheit beim Import (1 Blender-Einheit = 1 Stud)?", height, HEIGHT, scale))
+	end
+	local toAgent = (CFrame.new(origin) * basis):Inverse()
 
-	-- Ausrüstung: Lage relativ zum Körperteil, Farbzonen
-	local entries, used = {}, {}
-	local function addPiece(original, name, words, bodyName, offset, rest, bodyZone)
+	local entries, used, covered = {}, {}, {}
+	for _, original in pieces do
 		local part = original:Clone()
 		if not part then
-			hint(original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
-			return
+			table.insert(report.Warnings, original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
+			continue
 		end
+		-- nur das Aussehen bleibt (Mesh, Textur, SurfaceAppearance, Decals, Bones): keine Teile (kommen einzeln dran),
+		-- Gelenke, Rig-Attachments, Wraps, Skripte und Werte der Roblox-Skalierung (OriginalSize & Co.)
 		for _, child in part:GetDescendants() do
-			-- verschachtelte Teile kommen einzeln dran, Gelenke, Marker, Wraps, Skripte und Werte der Roblox-Skalierung
-			-- gehören nicht dazu
 			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Constraint")
 				or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") or child:IsA("ValueBase")
-				or (child:IsA("Attachment") and string.match(cleanName(child.Name), "^Point_")) then
+				or (child:IsA("Attachment") and not child:IsA("Bone") and string.match(child.Name, "RigAttachment$")) then
 				child:Destroy()
+			elseif scale ~= 1 and child:IsA("Attachment") then -- (auch Bones)
+				child.CFrame = CFrame.new(child.CFrame.Position * scale) * child.CFrame.Rotation
+			elseif scale ~= 1 and child:IsA("DataModelMesh") then
+				child.Scale *= scale
+				child.Offset *= scale
 			end
 		end
-		local unique, count = name, 1
+		local inAgent = toAgent * original.CFrame
+		inAgent = CFrame.new(inAgent.Position * scale) * inAgent.Rotation
+		local bodyName = bodyNameOf(original.Name) or nearestBodyPart(inAgent.Position)
+		covered[bodyName] = true
+		local unique, count = original.Name, 1
 		while used[unique] do
 			count += 1
-			unique = name .. "_" .. count
+			unique = original.Name .. "_" .. count
 		end
 		used[unique] = true
-		local zone, neon = nil, false
-		for _, word in words do
-			if not zone and ZONES[word] then
-				zone = word
-			end
-			neon = neon or word == "Neon"
-		end
-		local texture = part:IsA("MeshPart") and part.TextureID
-		local textured = part:FindFirstChildOfClass("SurfaceAppearance") ~= nil or (type(texture) == "string" and texture ~= "")
-		local plain = part.Color == Color3.new(1, 1, 1) and not textured
-		if bodyZone and not textured and (plain or part.Color == TEMPLATE_BODY_COLOR) then
-			zone = bodyZone -- Körper aus der Vorlage, noch grau bzw. weiß: in den Farben des Agenten wie der Spielkörper
-		elseif plain and not zone and not neon then
-			part.Color = DEFAULT_COLOR
-		end
-		if neon then
-			part.Material = Enum.Material.Neon
-		end
 		part.Name = unique
-		part.CFrame = offset
+		part.Size = original.Size * scale
 		part.Anchored = true
 		part.CanCollide = false
 		part.CanQuery = false
 		part.CanTouch = false
 		part.Massless = true
-		table.insert(entries, { Name = unique, Body = bodyName, Offset = offset, RefSize = rest.Size, Zone = zone,
-			NeonAccent = neon and plain, Template = part })
+		table.insert(entries, { Name = unique, Body = bodyName,
+			Offset = AgentModels.Body[bodyName].CFrame:ToObjectSpace(inAgent), Template = part })
 	end
-	for _, original in gear do
-		local name = cleanName(original.Name)
-		local words = wordsOf(name)
-		local bodyName = words[1]
-		local rest = restOf(bodyName)
-		local offset = rest.CFrame:ToObjectSpace(toAgent * original.CFrame)
-		local position, half = offset.Position, rest.Size / 2
-		local outside = Vector3.new(math.max(0, math.abs(position.X) - half.X), math.max(0, math.abs(position.Y) - half.Y),
-			math.max(0, math.abs(position.Z) - half.Z)).Magnitude
-		if outside > MAX_DISTANCE then
-			problem(string.format("%s hängt nicht am Körperteil %s (Mitte %.2f Studs daneben) – stimmen Einheit "
-				.. "(1 Blender-Einheit = 1 Stud), Lage und Richtung (Point_Root zwischen den Füßen, vorne = -Z)?",
-				original.Name, bodyName, outside))
-			continue
-		end
-		local extent = halfExtent(offset.Rotation, original.Size)
-		local reach = math.max(math.abs(position.X) + extent.X - half.X, math.abs(position.Y) + extent.Y - half.Y,
-			math.abs(position.Z) + extent.Z - half.Z)
-		if reach > MAX_REACH then
-			hint(string.format("%s steht %.2f Studs vom Körperteil %s ab – eng am Körper bauen (höchstens 0,25, Helm 0,3)",
-				original.Name, reach, bodyName))
-		end
-		addPiece(original, name, words, bodyName, offset, rest)
-	end
-	-- Deckt das Modell den ganzen Körper ab (Kopf, Rumpf, Arme, Beine – z.B. ein Charakter aus Blender ohne Humanoid,
-	-- gebaut auf der Vorlage), ist es ein ganzer Charakter wie mit Humanoid: zu sehen ist nur das Modell, der
-	-- Spielkörper bleibt unsichtbar als Trefferzone. Sonst ist es Ausrüstung auf dem sichtbaren Spielkörper.
-	local covered = {}
-	for _, entry in entries do
-		covered[entry.Body] = true
-	end
-	local whole = #entries > 0
-	for _, bodyName in CHARACTER_CORE do
-		whole = whole and covered[bodyName] == true
-	end
-	if whole then
-		-- Der mitgelieferte Körper (Teile, die genau wie Körperteile heißen) gehört dann zum Modell – in Studio sieht man
-		-- ihn ja auch – und wird mit angezeigt. Ist er noch der graue Körper aus der Vorlage, in den Agentenfarben.
-		for _, body in bodies do
-			if body.Transparency < 1 then
-				local bodyName = cleanName(body.Name)
-				local rest = restOf(bodyName)
-				addPiece(body, bodyName, { bodyName }, bodyName, rest.CFrame:ToObjectSpace(toAgent * body.CFrame), rest,
-					BODY_ZONES[bodyName])
-				covered[bodyName] = true
-			end
-		end
-		local open = {}
-		for _, bodyName in AgentModels.BodyParts do
-			if not covered[bodyName] then
-				table.insert(open, bodyName)
-			end
-		end
-		if #open > 0 then
-			hint("ganzer Charakter ohne " .. table.concat(open, ", ") .. " – dort bleibt der Spielkörper zu sehen")
-		end
-		if #entries > MAX_CHARACTER_PARTS then
-			hint(#entries .. " Teile – für Handys besser höchstens " .. MAX_CHARACTER_PARTS .. " (kleine Teile zusammenfassen)")
-		end
-	elseif #entries > MAX_PARTS then
-		hint(#entries .. " Ausrüstungsteile – höchstens " .. MAX_PARTS .. ": Teile am selben Körperteil ohne eigene "
-			.. "Farbzone in Blender zusammenfügen (spart Leistung)")
-	end
-	if #report.Errors > 0 then
+	if #entries == 0 then
+		table.insert(report.Errors, "kein Teil ließ sich kopieren")
 		return nil, report
 	end
+	local open = {}
+	for _, name in AgentModels.BodyParts do
+		if not covered[name] then
+			table.insert(open, name)
+		end
+	end
+	if #open > 0 then
+		table.insert(report.Warnings, "zu " .. table.concat(open, ", ") .. " gehört kein Teil – dort ist nichts zu sehen")
+	end
+	if #entries > MAX_PARTS then
+		table.insert(report.Warnings, #entries .. " Teile – für Handys besser höchstens " .. MAX_PARTS
+			.. " (in Blender zusammenfügen)")
+	end
 	report.Loaded = true
-	report.Character = whole or nil
-	return { Gear = entries, Character = whole }, report
+	return entries, report
 end
 
 -- Ein Modell aus Assets.Agents laden (Name = Agent-Id) und den Bericht dazu ablegen
@@ -624,12 +234,12 @@ local function loadOne(source)
 			Errors = { "unbekannter Name – Modelle heißen wie der Agent: " .. table.concat(ids, ", ") } }
 		return
 	end
-	local ok, asset, report = pcall(loadAsset, name, source)
+	local ok, entries, report = pcall(loadAsset, source)
 	if not ok then
-		asset, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(asset) } }
+		entries, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(entries) } }
 	end
 	assetReport[name] = report
-	assetData[name] = asset
+	assetData[name] = entries
 end
 
 -- Im Studio-Output (nur Server): was mit dem Modell eines Namens los ist
@@ -641,10 +251,9 @@ local function printReport(name)
 	if not report then
 		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Standard-Look")
 	elseif report.Loaded then
-		print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Character and "Charakter" or "3D-Modell")
-			.. " geladen (" .. #assetData[name].Gear .. " Teile)")
+		print("[Agentenmodelle] " .. name .. ": Modell geladen (" .. #assetData[name] .. " Teile)")
 	else
-		warn("[Agentenmodelle] " .. name .. ": 3D-Modell NICHT geladen, es bleibt der Standard-Look:\n  - "
+		warn("[Agentenmodelle] " .. name .. ": Modell NICHT geladen, es bleibt der Standard-Look:\n  - "
 			.. table.concat(report.Errors, "\n  - "))
 	end
 	if report and #report.Warnings > 0 then
@@ -762,28 +371,22 @@ else
 	end
 end
 
--- Hat der Agent ein fertiges 3D-Modell (statt des Standard-Looks)?
+-- Hat der Agent ein 3D-Modell (statt des Standard-Looks)?
 function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
 end
 
 -- Teile, die Attach aus dem Modell eines Agenten anlegt: [Name des Teils] = Körperteil, an dem es hängt; nil ohne Modell
 function AgentModels.PiecesOf(agentId)
-	local asset = agentId and assetData[agentId]
-	if not asset then
+	local entries = agentId and assetData[agentId]
+	if not entries then
 		return nil
 	end
 	local pieces = {}
-	for _, entry in asset.Gear do
+	for _, entry in entries do
 		pieces[entry.Name] = entry.Body
 	end
 	return pieces
-end
-
--- Ist das Modell ein ganzer Charakter (R15-Rig), der den Spielkörper ersetzt?
-function AgentModels.IsCharacter(agentId)
-	local asset = agentId and assetData[agentId]
-	return asset ~= nil and asset.Character == true
 end
 
 -- Prüfbericht aller Modelle in Assets.Agents: [Name] = { Loaded, Errors = { Text }, Warnings = { Text } }
@@ -791,78 +394,34 @@ function AgentModels.AssetReport()
 	return assetReport
 end
 
--- Lage und Größe eines Teils an einem Körperteil, das anders groß ist als beim Modellieren: Abstände und Größe
--- wachsen mit dem Körperteil (je Achse)
-local function fitted(entry, body)
-	local ratio = body.Size / entry.RefSize
-	local size = entry.Template.Size
-	if math.abs(ratio.X - 1) < 0.01 and math.abs(ratio.Y - 1) < 0.01 and math.abs(ratio.Z - 1) < 0.01 then
-		return entry.Offset, size
-	end
-	local rotation = entry.Offset.Rotation
-	local function along(axis)
-		return (ratio * rotation:VectorToWorldSpace(axis)).Magnitude
-	end
-	size *= Vector3.new(along(Vector3.new(1, 0, 0)), along(Vector3.new(0, 1, 0)), along(Vector3.new(0, 0, 1)))
-	return CFrame.new(entry.Offset.Position * ratio) * rotation, size
-end
-
--- Ausrüstung aus dem 3D-Modell eines Agenten an einen Körper hängen.
--- parts = { [Körperteil] = BasePart } (fehlt ein Körperteil, fehlt auch seine Ausrüstung), primary/accent = Farben
--- des Agenten (für Farbzonen), weld = true: an die Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Jedes Teil bekommt das Attribut AgentGear; die Teile
--- eines ganzen Charakters liegen zusammen im Untermodell AgentModels.ModelName (hat ebenfalls AgentGear).
--- Gibt die neuen Teile zurück, nil, wenn der Agent kein Modell hat.
-function AgentModels.Attach(container, parts, agentId, primary, accent, weld)
-	local asset = agentId and assetData[agentId]
-	if not asset then
+-- Das 3D-Modell eines Agenten an einen Körper hängen. parts = { [Körperteil] = BasePart }: diese Teile werden
+-- unsichtbar (bleiben Trefferzone), jedes Modellteil sitzt an seinem Körperteil wie im Modell. weld = true: an die
+-- Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Die Teile liegen im Untermodell
+-- AgentModels.ModelName; es und jedes Teil haben das Attribut AgentGear. Gibt die neuen Teile zurück, nil ohne Modell.
+function AgentModels.Attach(container, parts, agentId, weld)
+	local entries = agentId and assetData[agentId]
+	if not entries then
 		return nil
 	end
-	local holder = container
-	if asset.Character then
-		-- ganzer Charakter: der Spielkörper bleibt als (unsichtbare) Trefferzone, zu sehen ist nur das Modell (jedes
-		-- Körperteil, an dem etwas vom Modell hängt)
-		for _, entry in asset.Gear do
-			local body = parts[entry.Body]
-			if body then
-				body.Transparency = 1
-				for _, decal in body:GetChildren() do
-					if decal:IsA("Decal") then
-						decal.Transparency = 1
-					end
-				end
+	for _, body in parts do
+		body.Transparency = 1
+		for _, decal in body:GetChildren() do
+			if decal:IsA("Decal") then
+				decal.Transparency = 1
 			end
 		end
-		-- eigenes Untermodell: die Teile heißen wie im Rig, gehäutete Meshes finden ihre Gelenke so bei den Kopien
-		-- und nicht beim gleichnamigen Spielkörper
-		holder = Instance.new("Model")
-		holder.Name = AgentModels.ModelName
-		holder:SetAttribute("AgentGear", true)
 	end
+	local holder = Instance.new("Model")
+	holder.Name = AgentModels.ModelName
+	holder:SetAttribute("AgentGear", true)
 	local created = {}
-	for _, entry in asset.Gear do
+	for _, entry in entries do
 		local body = parts[entry.Body]
 		if not body then
 			continue
 		end
 		local part = entry.Template:Clone()
-		local offset, size = fitted(entry, body)
-		part.Size = size
-		part.CFrame = body.CFrame * offset
-		if entry.Zone == "Primary" then
-			part.Color = primary
-		elseif entry.Zone == "Skin" then
-			part.Color = AgentModels.SkinColor
-		elseif entry.Zone == "Pants" then
-			part.Color = AgentModels.PantsColor(primary)
-		elseif entry.Zone == "Accent" or entry.NeonAccent then
-			part.Color = accent
-		elseif entry.Zone == "Glass" then
-			part.Color = AgentModels.VisorColor(accent)
-			if not part:FindFirstChildOfClass("SurfaceAppearance") then
-				part.Material = Enum.Material.SmoothPlastic
-				part.Reflectance = AgentModels.VisorReflectance
-			end
-		end
+		part.CFrame = body.CFrame * entry.Offset
 		part.Anchored = not weld
 		part:SetAttribute("AgentGear", true)
 		if weld then
@@ -874,9 +433,7 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, weld)
 		part.Parent = holder
 		table.insert(created, part)
 	end
-	if holder ~= container then
-		holder.Parent = container
-	end
+	holder.Parent = container
 	return created
 end
 

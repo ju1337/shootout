@@ -1,12 +1,10 @@
---!assets art/templates
---!expose AgentModels loadAsset
 --!expose BotService rigTemplate
--- Agenten-Modelle (AgentModels): Die Vorlage art/templates/Agents/Agent.rbxmx (erzeugt von tools/agent_templates.py)
--- ist selbst ein gültiges Agenten-Modell (nur Ausrüstung). Unter Assets.Agents als "Viper" geladen, trägt VIPER genau
--- diese Ausrüstung – an Spielern, Bots und in den Menü-Figuren, jedes Teil so wie in der Vorlage an seinem Körperteil.
--- Dazu: Ausrichtung am mitgelieferten Körper (gedreht und verschoben importiert), Anpassung an andere Körpergrößen,
--- ganze Charaktere ohne Humanoid, Rückfall auf den Standard-Look ohne Modell und die Prüfmeldungen, die in Studio im
--- Output stehen.
+-- Agenten-Modelle (AgentModels): Ein Modell unter Assets.Agents, benannt wie der Agent, ist im Spiel genau so zu sehen
+-- wie in Blender bzw. Studio – jedes Teil an derselben Stelle, gleich groß, gleich gedreht, mit Farbe, Material und
+-- Textur, nichts umgefärbt oder gestreckt. Jedes Teil hängt am Körperteil, zu dem es gehört (Name, sonst das nächste),
+-- der Spielkörper bleibt unsichtbar als Trefferzone. Maße wie Viper_3.glb: 15 starre Teile <Körperteil>_Suit auf dem
+-- Spielkörper, dazu Point_Root. Außerdem: falsche Einheit, fehlender Marker, Prüfmeldungen, Neuladen, Menü-Figur,
+-- Spieler und Bots.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -16,9 +14,9 @@ local function check(cond, msg)
 end
 local function near(a, b, eps)
 	if typeof(a) == "Vector3" then
-		return (a - b).Magnitude < (eps or 1e-4)
+		return (a - b).Magnitude < (eps or 1e-3)
 	end
-	return math.abs(a - b) < (eps or 1e-4)
+	return math.abs(a - b) < (eps or 1e-3)
 end
 local function hasText(list, text)
 	for _, line in list or {} do
@@ -33,31 +31,87 @@ local function step(seconds)
 end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local folder = ReplicatedStorage.Assets.Agents
-local template = folder:FindFirstChild("Agent")
-check(template ~= nil and template:IsA("Model"), "Vorlage Agent.rbxmx unter Assets.Agents")
+local assets = ReplicatedStorage:FindFirstChild("Assets") or Instance.new("Folder", ReplicatedStorage)
+assets.Name = "Assets"
+local folder = assets:FindFirstChild("Agents") or Instance.new("Folder", assets)
+folder.Name = "Agents"
 
--- Vor dem ersten require (der Lader liest Assets.Agents beim Laden): die Vorlage als VIPER und – gedreht und
--- verschoben wie nach einem Import – als BASTION. Die Vorlage selbst bleibt unter ihrem Namen liegen.
-local viperSource = template:Clone()
-viperSource.Name = "Viper"
-viperSource.Parent = folder
-local bastionSource = template:Clone()
-bastionSource.Name = "Bastion"
-local tilt = CFrame.new(12, -3, 40) * CFrame.Angles(0.4, 2.1, -0.3)
-for _, part in bastionSource:GetDescendants() do
-	if part:IsA("BasePart") then
-		part.CFrame = tilt * part.CFrame
-	end
+-- { Name, Größe, Mitte (Boden zwischen den Füßen = 0, Blick -Z) } wie in Viper_3.glb, dazu Haare ohne Körperteil-Namen
+local SUIT = {
+	{ "Head_Suit", Vector3.new(1.3, 1.2, 1.3), Vector3.new(0, 4.6, 0) },
+	{ "LeftFoot_Suit", Vector3.new(0.75, 0.25, 0.8), Vector3.new(-0.375, 0.125, 0) },
+	{ "LeftHand_Suit", Vector3.new(0.75, 0.275, 0.8), Vector3.new(-1.125, 2.1375, 0) },
+	{ "LeftLowerArm_Suit", Vector3.new(0.75, 0.76, 0.8), Vector3.new(-1.125, 2.655, 0) },
+	{ "LeftLowerLeg_Suit", Vector3.new(0.75, 0.93, 0.8), Vector3.new(-0.375, 0.715, 0) },
+	{ "LeftUpperArm_Suit", Vector3.new(0.75, 0.915, 0.8), Vector3.new(-1.125, 3.4925, 0) },
+	{ "LeftUpperLeg_Suit", Vector3.new(0.75, 0.82, 0.8), Vector3.new(-0.375, 1.59, 0) },
+	{ "LowerTorso_Suit", Vector3.new(1.5, 0.4, 0.8), Vector3.new(0, 2.2, 0) },
+	{ "RightFoot_Suit", Vector3.new(0.75, 0.25, 0.8), Vector3.new(0.375, 0.125, 0) },
+	{ "RightHand_Suit", Vector3.new(0.75, 0.275, 0.8), Vector3.new(1.125, 2.1375, 0) },
+	{ "RightLowerArm_Suit", Vector3.new(0.75, 0.76, 0.8), Vector3.new(1.125, 2.655, 0) },
+	{ "RightLowerLeg_Suit", Vector3.new(0.75, 0.93, 0.8), Vector3.new(0.375, 0.715, 0) },
+	{ "RightUpperArm_Suit", Vector3.new(0.75, 0.915, 0.8), Vector3.new(1.125, 3.4925, 0) },
+	{ "RightUpperLeg_Suit", Vector3.new(0.75, 0.82, 0.8), Vector3.new(0.375, 1.59, 0) },
+	{ "UpperTorso_Suit", Vector3.new(1.5, 1.6, 0.8), Vector3.new(0, 3.2, 0) },
+	{ "Hair", Vector3.new(1.4, 0.3, 1.4), Vector3.new(0, 5.3, 0.05) },
+}
+local OWNER = { Hair = "Head" } -- Teil ohne Körperteil-Namen: gehört zum nächsten Körperteil
+local function ownerOf(name)
+	return OWNER[name] or string.match(name, "^[^_]+")
 end
-bastionSource.Parent = folder
+local TILT = CFrame.Angles(0, 0, math.rad(8)) -- ein Teil leicht gedreht modelliert (bleibt so)
+
+-- Modell wie nach dem Import in Studio: irgendwo in der Welt (place), evtl. in falscher Einheit (unit)
+local function suit(name, place, unit, withRoot)
+	local model = Instance.new("Model")
+	model.Name = name
+	for i, def in SUIT do
+		local part = Instance.new("MeshPart")
+		part.Name = def[1]
+		part.Size = def[2] * unit
+		part.CFrame = place * CFrame.new(def[3] * unit) * (def[1] == "LeftUpperArm_Suit" and TILT or CFrame.new())
+		part.Color = Color3.fromRGB(10 + i, 200, 30) -- Farbe aus der Datei
+		part.Material = Enum.Material.Fabric
+		part.TextureID = "rbxassetid://" .. i
+		Instance.new("SurfaceAppearance", part)
+		local scaleValue = Instance.new("Vector3Value") -- Wert der Roblox-Skalierung (z.B. aus dem Avatar-Setup)
+		scaleValue.Name = "OriginalSize"
+		scaleValue.Parent = part
+		part.Parent = model
+	end
+	local hidden = Instance.new("Part") -- unsichtbares Hilfsteil: wird nicht gezeigt
+	hidden.Name = "Collider"
+	hidden.Transparency = 1
+	hidden.Size = Vector3.new(4, 6, 2)
+	hidden.CFrame = place * CFrame.new(0, 3 * unit, 0)
+	hidden.Parent = model
+	if withRoot then
+		local root = Instance.new("Part")
+		root.Name = "Point_Root"
+		root.Size = Vector3.new(0.05, 0.05, 0.05)
+		root.CFrame = place
+		root.Parent = model
+	end
+	return model
+end
+
+-- Vor dem ersten require (der Lader liest Assets.Agents beim Laden)
+local PLACE = CFrame.new(40, 12, -25)
+suit("Viper", PLACE, 1, true).Parent = folder
+suit("Hawk", CFrame.new(-3, 7, 9), 1, false).Parent = folder -- ohne Point_Root: Boden = tiefster Punkt
+suit("Bastion", CFrame.new(0, 100, 0), 100, true).Parent = folder -- in Zentimetern importiert
+suit("Agent", PLACE, 1, true).Parent = folder -- kein Agent
+local empty = Instance.new("Model")
+empty.Name = "Ghost"
+local invisible = Instance.new("Part", empty)
+invisible.Transparency = 1
+empty.Parent = folder
 
 SIM.IsStudio = true -- Studio: Bericht im Output
 local AgentModels = require("AgentModels")
 SIM.IsStudio = false
 local AgentBody = require("AgentBody")
 local AgentConfig = require("AgentConfig")
-local Cosmetics = require("Cosmetics")
 
 -- ---------- Laden ----------
 local report = AgentModels.AssetReport()
@@ -65,423 +119,145 @@ local function messages(entry)
 	return entry and (table.concat(entry.Errors, "; ") .. " | " .. table.concat(entry.Warnings, "; ")) or "kein Bericht"
 end
 check(report.Viper and report.Viper.Loaded and #report.Viper.Errors == 0 and #report.Viper.Warnings == 0,
-	"Vorlage lädt als Agent ohne Meldungen: " .. messages(report.Viper))
-check(report.Bastion and report.Bastion.Loaded and #report.Bastion.Errors == 0 and #report.Bastion.Warnings == 0,
-	"gedreht und verschoben importiert: lädt (ausgerichtet am mitgelieferten Körper): " .. messages(report.Bastion))
+	"Viper_3 lädt ohne Meldungen: " .. messages(report.Viper))
+check(report.Hawk and report.Hawk.Loaded and #report.Hawk.Warnings == 0, "ohne Point_Root: lädt " .. messages(report.Hawk))
+check(report.Bastion and report.Bastion.Loaded and hasText(report.Bastion.Warnings, "Einheit"),
+	"falsche Einheit: lädt, Hinweis: " .. messages(report.Bastion))
 check(report.Agent and not report.Agent.Loaded and hasText(report.Agent.Errors, "unbekannter Name"),
-	"Modell mit falschem Namen gemeldet")
-check(AgentModels.HasAsset("Viper") and AgentModels.HasAsset("Bastion") and not AgentModels.HasAsset("Mender")
+	"falscher Name gemeldet")
+check(report.Ghost and not report.Ghost.Loaded and hasText(report.Ghost.Errors, "keine sichtbaren Teile"),
+	"Modell ohne sichtbare Teile gemeldet")
+check(AgentModels.HasAsset("Viper") and not AgentModels.HasAsset("Ghost") and not AgentModels.HasAsset("Mender")
 	and not AgentModels.HasAsset(nil), "HasAsset")
+local pieces = AgentModels.PiecesOf("Viper")
+local count = 0
+for name, bodyName in pieces or {} do
+	count += 1
+	check(bodyName == ownerOf(name), name .. " gehört zu " .. ownerOf(name) .. " (" .. tostring(bodyName) .. ")")
+end
+check(count == #SUIT, "alle Teile geladen (" .. count .. "), unsichtbares Hilfsteil und Marker nicht")
 
--- ---------- An einem Körper: jedes Teil wie in der Vorlage ----------
-local function rig(scale)
-	local model = Instance.new("Model")
-	model.Name = "Agent"
-	Instance.new("Humanoid", model)
-	local place = CFrame.new(5, 0, -7) * CFrame.Angles(0, 0.7, 0)
+-- ---------- An einem Körper: jedes Teil genau wie im Modell ----------
+local function restBody(where)
+	local body = Instance.new("Model")
+	local parts = {}
 	for _, name in AgentModels.BodyParts do
-		local body = AgentModels.Body[name]
+		local rest = AgentModels.Body[name]
 		local part = Instance.new("Part")
 		part.Name = name
-		part.Size = body.Size * ((scale and scale[name]) or 1)
-		part.CFrame = place * body.CFrame
-		part.Parent = model
+		part.Size = rest.Size
+		part.CFrame = where * rest.CFrame
+		part.Parent = body
+		parts[name] = part
 	end
-	model.Parent = workspace
-	return model
+	return body, parts
 end
-local primary, accent = Color3.fromRGB(40, 60, 50), Color3.fromRGB(90, 160, 110)
-
--- Maßstab ist die Vorlage selbst: jedes Ausrüstungsteil sitzt am Spielkörper so wie in der Vorlage an seinem
--- Körperteil (wächst ein Körperteil, wachsen Abstand und Größe je Achse mit), Farbzonen in den Agentenfarben
-local function compare(label, model)
-	local compared = 0
-	for _, original in template:GetChildren() do
-		local bodyName = original:IsA("BasePart") and string.match(original.Name, "^([^_]+)_")
-		local ref = bodyName and AgentModels.Body[bodyName] and template:FindFirstChild(bodyName)
-		if ref then
-			local part, body = model:FindFirstChild(original.Name), model:FindFirstChild(bodyName)
-			check(part ~= nil and body ~= nil, label .. ": " .. original.Name .. " da")
-			compared += 1
-			if part and body then
-				local ratio = body.Size / ref.Size
-				local relative = ref.CFrame:ToObjectSpace(original.CFrame)
-				local expected = body.CFrame * (CFrame.new(relative.Position * ratio) * relative.Rotation)
-				check(near(part.Position, expected.Position, 1e-3) and near(part.Size, original.Size * ratio, 1e-3)
-					and near(part.CFrame.LookVector, expected.LookVector, 1e-3)
-					and near(part.CFrame.UpVector, expected.UpVector, 1e-3), label .. ": " .. original.Name .. " sitzt wie in der Vorlage")
-				local words = string.split(original.Name, "_")
-				local color = table.find(words, "Primary") and primary or table.find(words, "Accent") and accent
-					or table.find(words, "Glass") and AgentModels.VisorColor(accent) or original.Color
-				check(part.Color == color, label .. ": " .. original.Name .. " Farbe (Zone in den Agentenfarben)")
-				if table.find(words, "Glass") then
-					check(part.Material == Enum.Material.SmoothPlastic and near(part.Reflectance, AgentModels.VisorReflectance),
-						label .. ": " .. original.Name .. " Visier dunkel und glänzend")
-				end
-				check(part.CanQuery == false and part.CanCollide == false and part.CanTouch == false and part.Massless == true
-					and part.Anchored == false, label .. ": " .. original.Name .. " nie Trefferzone, ohne Kollision und Gewicht")
-				check(part:GetAttribute("AgentGear") == true, label .. ": " .. original.Name .. " als Ausrüstung markiert")
-				local weld = part:FindFirstChildOfClass("WeldConstraint")
-				check(weld ~= nil and weld.Part0 == body and weld.Part1 == part, label .. ": " .. original.Name
-					.. " am Körperteil angeschweißt")
-			end
-		end
+local function byName(created)
+	local list = {}
+	for _, part in created or {} do
+		list[part.Name] = part
 	end
-	check(compared == 10, label .. ": alle 10 Ausrüstungsteile der Vorlage geprüft (" .. compared .. ")")
+	return list
 end
 
-local standard = rig()
-AgentBody.Dress(standard, primary, accent)
-local standardGear = 0
-for _, child in standard:GetDescendants() do
-	if child:GetAttribute("AgentGear") then
-		standardGear += 1
+local where = CFrame.new(-7, 3, 18) * CFrame.Angles(0, 0.8, 0) -- irgendwo und gedreht
+local body, parts = restBody(where)
+local created = AgentModels.Attach(body, parts, "Viper", true)
+local holder = body:FindFirstChild(AgentModels.ModelName)
+check(created ~= nil and #created == #SUIT and holder ~= nil and holder:GetAttribute("AgentGear"),
+	"alle Teile im Untermodell " .. AgentModels.ModelName)
+local placed = byName(created)
+for i, def in SUIT do
+	local part = placed[def[1]]
+	check(part ~= nil and part.Parent == holder, def[1] .. " da")
+	if part then
+		local relative = where:ToObjectSpace(part.CFrame)
+		local rotation = def[1] == "LeftUpperArm_Suit" and TILT or CFrame.new()
+		check(near(relative.Position, def[3]) and near(part.Size, def[2])
+			and relative.RightVector:Dot(rotation.RightVector) > 0.9999 and relative.UpVector:Dot(rotation.UpVector) > 0.9999,
+			def[1] .. " sitzt, liegt und ist so groß wie im Modell (" .. tostring(relative.Position) .. ", " .. tostring(part.Size) .. ")")
+		check(part.Color == Color3.fromRGB(10 + i, 200, 30) and part.Material == Enum.Material.Fabric
+			and part.TextureID == "rbxassetid://" .. i and part:FindFirstChildOfClass("SurfaceAppearance") ~= nil,
+			def[1] .. ": Farbe, Material und Textur wie im Modell")
+		check(part:FindFirstChildWhichIsA("ValueBase") == nil, def[1] .. ": ohne Werte der Roblox-Skalierung")
+		local weld = part:FindFirstChildOfClass("WeldConstraint")
+		check(weld ~= nil and weld.Part0 == parts[ownerOf(def[1])] and weld.Part1 == part,
+			def[1] .. " an " .. ownerOf(def[1]) .. " geschweißt")
+		check(part.CanQuery == false and part.CanCollide == false and part.CanTouch == false and part.Massless
+			and not part.Anchored and part:GetAttribute("AgentGear"), def[1] .. ": nie Trefferzone, bewegt sich mit")
 	end
 end
-check(standard:GetAttribute("AgentLook") == "Standard" and standardGear == 0, "ohne Agent: Standard-Look ohne Ausrüstung")
-local viper = rig()
-AgentBody.Dress(viper, primary, accent, "Viper")
-compare("Viper", viper)
-local bastion = rig()
-AgentBody.Dress(bastion, primary, accent, "Bastion")
-compare("Bastion (gedreht importiert)", bastion)
-local mender = rig()
-AgentBody.Dress(mender, primary, accent, "Mender")
-check(mender:GetAttribute("AgentLook") == "Standard" and mender:FindFirstChild("UpperTorso_Vest_Accent") == nil,
-	"Agent ohne Modell: Standard-Look")
+for name, part in parts do
+	check(part.Transparency == 1, name .. ": Spielkörper unsichtbar (Trefferzone)")
+end
+-- Arme liegen am Oberkörper an (keine Lücke in Ruhelage)
+local torso, arm = placed.UpperTorso_Suit, placed.RightUpperArm_Suit
+check(torso and arm and near(where:ToObjectSpace(torso.CFrame).Position.X + torso.Size.X / 2,
+	where:ToObjectSpace(arm.CFrame).Position.X - arm.Size.X / 2), "rechter Arm liegt am Oberkörper an")
 
--- Wechsel hin und her: nichts doppelt, nichts bleibt hängen
-AgentBody.Dress(viper, primary, accent, "Mender")
-check(viper:FindFirstChild("Head_Visor_Glass") == nil and viper:GetAttribute("AgentLook") == "Standard",
-	"Wechsel auf Agent ohne Modell: Modell-Ausrüstung weg, Standard-Look")
-AgentBody.Dress(viper, primary, accent, "Viper")
-AgentBody.Dress(viper, primary, accent, "Viper")
-local visors = 0
-for _, child in viper:GetChildren() do
-	if child.Name == "Head_Visor_Glass" then
-		visors += 1
-	end
+-- Ohne Point_Root genauso (Boden = tiefster Punkt, Mitte = Rumpf)
+local hawkBody, hawkParts = restBody(CFrame.new())
+local hawk = byName(AgentModels.Attach(hawkBody, hawkParts, "Hawk", true))
+for _, def in SUIT do
+	check(hawk[def[1]] and near(hawk[def[1]].Position, def[3]), "ohne Point_Root: " .. def[1] .. " wie im Modell")
 end
-check(visors == 1, "erneut angezogen: genau ein Visier")
+-- Falsche Einheit: auf die Höhe des Spielkörpers gebracht, Proportionen bleiben
+local bastionBody, bastionParts = restBody(CFrame.new())
+local bastion = byName(AgentModels.Attach(bastionBody, bastionParts, "Bastion", true))
+local factor = 5.1 / 5.45 -- Modell ist 5,45 hoch (Haare oben)
+check(bastion.Head_Suit and near(bastion.Head_Suit.Size, SUIT[1][2] * factor)
+	and near(bastion.Head_Suit.Position, SUIT[1][3] * factor), "falsche Einheit: skaliert, Proportionen bleiben")
+-- Ohne Modell: nichts angehängt, Körper bleibt
+local plainBody, plainParts = restBody(CFrame.new())
+check(AgentModels.Attach(plainBody, plainParts, "Mender", true) == nil and plainParts.Head.Transparency == 0,
+	"Agent ohne Modell: nichts angehängt")
 
--- Anderer Körper (z.B. größerer Kopf): Ausrüstung wächst mit
-local scale = { Head = 1.25, UpperTorso = 1.1 }
-local bigViper = rig(scale)
-AgentBody.Dress(bigViper, primary, accent, "Viper")
-compare("größerer Körper", bigViper)
-
--- Die Vorlage ist nur Ausrüstung (5 Körperteile): der Spielkörper bleibt zu sehen
-check(not AgentModels.IsCharacter("Viper") and viper:GetAttribute("AgentLook") == "Modell" and viper.UpperTorso.Transparency == 0
-	and viper.LeftLowerLeg.Transparency == 0, "nur Ausrüstung: Spielkörper sichtbar")
-for _, model in { standard, viper, bastion, mender, bigViper } do
-	model:Destroy()
-end
-
--- ---------- Ganzer Charakter ohne Humanoid ----------
--- Auf der Vorlage gebaut (z.B. in Blender), ein Teil <Körperteil>_<Name> je Körperteil: deckt das Modell Kopf, Rumpf,
--- Arme und Beine ab, ist es ein ganzer Charakter wie mit Humanoid – nur das Modell ist zu sehen, der Spielkörper bleibt
--- unsichtbar als Trefferzone (so lag sonst beides übereinander)
-local function wholeBody(model, skip)
-	for _, child in model:GetChildren() do
-		if child:IsA("BasePart") and AgentModels.Body[string.match(child.Name, "^([^_]+)_") or ""] then
-			child:Destroy() -- Ausrüstung der Vorlage weg
-		end
-	end
-	for _, name in AgentModels.BodyParts do
-		if not table.find(skip or {}, name) then
-			local piece = Instance.new("MeshPart")
-			piece.Name = name .. "_Geo"
-			piece.Size = model[name].Size * 1.04
-			piece.CFrame = model[name].CFrame
-			piece.Parent = model
-		end
-	end
-	return model
-end
-local hawkSource = wholeBody(template:Clone())
-hawkSource.Name = "Hawk"
-local ownTorso = Color3.fromRGB(70, 90, 40)
-hawkSource.UpperTorso.Color = ownTorso -- selbst eingefärbter Körper (Rest bleibt der graue Vorlagen-Körper)
--- zusätzlich ein eigener Oberkörper mit demselben Namen (Blender hängt ".001" an): wird auch gezeigt, Bezug bleibt
--- der erste
-local ownShirt = Instance.new("MeshPart")
-ownShirt.Name = "UpperTorso.001"
-ownShirt.Size = hawkSource.UpperTorso.Size * 1.1
-ownShirt.CFrame = hawkSource.UpperTorso.CFrame
-ownShirt.Color = Color3.fromRGB(90, 110, 60)
-ownShirt.Parent = hawkSource
-hawkSource.Parent = folder
-local trapperSource = wholeBody(template:Clone(), { "LeftHand", "RightHand", "LeftFoot", "RightFoot" })
-for _, name in { "LeftHand", "RightHand", "LeftFoot", "RightFoot" } do
-	trapperSource[name]:Destroy() -- auch kein mitgelieferter Körper an Händen und Füßen
-end
-trapperSource.Name = "Trapper"
-trapperSource.Parent = folder
--- Nur ein Körper (Teile heißen genau wie die Körperteile, z.B. R15-Rig ohne Humanoid): ganzer Charakter wie mit Humanoid
-local ghostSource = template:Clone()
-for _, child in ghostSource:GetChildren() do
-	if child:IsA("BasePart") and string.find(child.Name, "_", 1, true) and not string.match(child.Name, "^Point_")
-		and not string.match(child.Name, "^Ref_") then
-		child:Destroy()
-	end
-end
-ghostSource.Name = "Ghost"
-ghostSource.Parent = folder
+-- ---------- Neu laden (z.B. in Studio während des Spiels) ----------
+local changed = {}
+AgentModels.OnChanged(function(name)
+	changed[name] = true
+end)
+folder.Bastion.Name = "Mender"
 step(0.1)
-report = AgentModels.AssetReport()
-check(report.Hawk and report.Hawk.Loaded and report.Hawk.Character and #report.Hawk.Warnings == 0
-	and AgentModels.IsCharacter("Hawk"), "ganzer Körper ohne Humanoid: als Charakter geladen, ohne Hinweis auf 12 Teile: "
-	.. messages(report.Hawk))
-local hawk = rig()
-AgentBody.Dress(hawk, primary, accent, "Hawk")
-local hawkModel = hawk:FindFirstChild(AgentModels.ModelName)
-local hawkVisible = 0
-for _, name in AgentModels.BodyParts do
-	hawkVisible += hawk[name].Transparency < 1 and 1 or 0
-end
-check(hawkModel ~= nil and #hawkModel:GetChildren() == 31 and hawkVisible == 0 and hawk:GetAttribute("AgentLook") == "Charakter"
-	and AgentBody.IsDressed(hawk, "Hawk"), "ganzer Körper ohne Humanoid: Ausrüstung und mitgelieferter Körper, Spielkörper "
-	.. "unsichtbar (" .. (hawkModel and #hawkModel:GetChildren() or 0) .. " Teile, " .. hawkVisible .. " Körperteile sichtbar)")
--- Der mitgelieferte Körper wird mit angezeigt: grau aus der Vorlage in den Agentenfarben, selbst eingefärbt wie gebaut
-local torso, head, shin = hawkModel and hawkModel:FindFirstChild("UpperTorso"), hawkModel and hawkModel:FindFirstChild("Head"),
-	hawkModel and hawkModel:FindFirstChild("LeftLowerLeg")
-check(torso and torso.Color == ownTorso, "eigener Körper: Farbe wie gebaut")
-local shirt = hawkModel and hawkModel:FindFirstChild("UpperTorso_2")
-check(shirt and shirt.Color == ownShirt.Color and near(shirt.Size, hawk.UpperTorso.Size * 1.1, 1e-3),
-	"zweiter Oberkörper mit demselben Namen: auch zu sehen, Größe relativ zum ersten")
-check(head and head.Color == AgentBody.SkinColor and shin and shin.Color == AgentBody.PantsColor(primary)
-	and hawkModel.LeftUpperArm.Color == primary, "grauer Vorlagen-Körper: Haut, Uniform, Hose wie der Spielkörper")
-check(torso and near(torso.Size, hawk.UpperTorso.Size, 1e-3) and near(torso.Position, hawk.UpperTorso.Position, 1e-3)
-	and torso:FindFirstChildOfClass("WeldConstraint").Part0 == hawk.UpperTorso and torso.CanQuery == false,
-	"mitgelieferter Körper sitzt genau auf dem Spielkörper, angeschweißt, nie Trefferzone")
-check(report.Trapper and report.Trapper.Character and hasText(report.Trapper.Warnings, "ohne LeftHand"),
-	"ohne Hände und Füße: trotzdem ganzer Charakter, mit Hinweis: " .. messages(report.Trapper))
-local trapper = rig()
-AgentBody.Dress(trapper, primary, accent, "Trapper")
-check(trapper.UpperTorso.Transparency == 1 and trapper.LeftLowerArm.Transparency == 1 and trapper.LeftHand.Transparency == 0
-	and trapper.RightFoot.Transparency == 0 and AgentBody.IsDressed(trapper, "Trapper"),
-	"ohne Hände und Füße: nur dort bleibt der Spielkörper zu sehen")
-local ghostPieces = 0
-for _ in AgentModels.PiecesOf("Ghost") or {} do
-	ghostPieces += 1
-end
-check(report.Ghost and report.Ghost.Loaded and report.Ghost.Character and ghostPieces == 15,
-	"nur ein Körper ohne Ausrüstung: ganzer Charakter (15 Teile, Marker und Maßstab nicht): " .. messages(report.Ghost)
-	.. " / " .. ghostPieces .. " Teile")
-for _, model in { hawk, trapper } do
-	model:Destroy()
-end
-hawkSource:Destroy()
-trapperSource:Destroy()
-ghostSource:Destroy()
+check(changed.Bastion and changed.Mender and AgentModels.HasAsset("Mender") and not AgentModels.HasAsset("Bastion"),
+	"umbenannt: unter dem neuen Namen geladen")
+folder.Mender:Destroy()
 step(0.1)
-
--- ---------- Prüfmeldungen ----------
-local function variant(edit)
-	local model = template:Clone()
-	edit(model)
-	local data, rep = AgentModels.__loadAsset("Viper", model)
-	return data, rep
-end
-local function removeBody(model)
-	for _, name in AgentModels.BodyParts do
-		model[name]:Destroy()
-	end
-end
-local function moveAll(model, cframe, factor)
-	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") then
-			local c = part.CFrame
-			part.CFrame = cframe * (CFrame.new(c.Position * (factor or 1)) * c.Rotation)
-			part.Size *= factor or 1
-		end
-	end
-end
-local base = variant(function() end)
-local function offsetsMatch(data)
-	if not (base and data) then
-		return false
-	end
-	local byName = {}
-	for _, entry in base.Gear do
-		byName[entry.Name] = entry
-	end
-	for _, entry in data.Gear do
-		local other = byName[entry.Name]
-		if not (other and near(entry.Offset.Position, other.Offset.Position, 1e-3)
-			and near(entry.Offset.LookVector, other.Offset.LookVector, 1e-3)) then
-			return false
-		end
-	end
-	return #data.Gear == #base.Gear
-end
-
--- ohne Körper, nur verschoben: Point_Root und die Achsen des Modells reichen
-local data, rep = variant(function(model)
-	removeBody(model)
-	moveAll(model, CFrame.new(3, 1, -2))
-end)
-check(data ~= nil and #rep.Warnings == 0 and offsetsMatch(data), "ohne Körper, verschoben: gleiche Lage: " .. messages(rep))
--- ohne Körper, aber liegend importiert: kann nicht passen
-data, rep = variant(function(model)
-	removeBody(model)
-	moveAll(model, CFrame.Angles(math.rad(90), 0, 0))
-end)
-check(data == nil and hasText(rep.Errors, "hängt nicht am Körperteil"), "liegend ohne Körper gemeldet: " .. messages(rep))
--- 100-mal zu groß (FBX ohne „FBX Unit Scale“)
-data, rep = variant(function(model)
-	moveAll(model, CFrame.new(), 100)
-end)
-check(data == nil and hasText(rep.Errors, "Einheit"), "100-mal zu groß (mit Körper) gemeldet: " .. messages(rep))
-data, rep = variant(function(model)
-	removeBody(model)
-	moveAll(model, CFrame.new(), 100)
-end)
-check(data == nil and hasText(rep.Errors, "Einheit"), "100-mal zu groß (ohne Körper) gemeldet: " .. messages(rep))
--- Point_Root fehlt: ohne Körper ein Fehler, mit Körper reicht der Körper
-data, rep = variant(function(model)
-	removeBody(model)
-	model.Point_Root:Destroy()
-end)
-check(data == nil and hasText(rep.Errors, "Point_Root fehlt"), "fehlender Point_Root gemeldet: " .. messages(rep))
-data, rep = variant(function(model)
-	model.Point_Root:Destroy()
-	moveAll(model, CFrame.new(-4, 2, 9) * CFrame.Angles(0, 1, 0))
-end)
-check(data ~= nil and hasText(rep.Warnings, "Point_Root fehlt") and offsetsMatch(data),
-	"ohne Point_Root, mit Körper: lädt, Hinweis: " .. messages(rep))
--- Point_Root als Attachment (z.B. in Studio gesetzt)
-data, rep = variant(function(model)
-	local mask = model.Head_Mask
-	local marker = Instance.new("Attachment")
-	marker.Name = "Point_Root"
-	marker.CFrame = mask.CFrame:ToObjectSpace(CFrame.new(model.Point_Root.Position))
-	marker.Parent = mask
-	model.Point_Root:Destroy()
-	removeBody(model)
-end)
-check(data ~= nil and offsetsMatch(data), "Point_Root als Attachment: " .. messages(rep))
--- Namen
-data, rep = variant(function(model)
-	local stray = Instance.new("Part")
-	stray.Name = "Helmet"
-	stray.CFrame = model.Head.CFrame
-	stray.Parent = model
-end)
-check(data == nil and hasText(rep.Errors, "Helmet: der Name beginnt nicht mit einem Körperteil"), "Name ohne Körperteil gemeldet")
--- (nur ein vollständiger Körper ohne Ausrüstung ist ein ganzer Charakter, siehe oben – fehlt auch ein Körperteil,
--- ist es nichts von beidem)
-data, rep = variant(function(model)
-	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and string.find(part.Name, "_") and not string.find(part.Name, "^Point_")
-			and not string.find(part.Name, "^Ref_") then
-			part:Destroy()
-		end
-	end
-	model.LeftHand:Destroy()
-end)
-check(data == nil and hasText(rep.Errors, "keine Ausrüstung"), "Modell ohne Ausrüstung gemeldet")
-data, rep = variant(function(model)
-	model.Head_Mask.Name = "Head_Mask.001"
-	local marker = Instance.new("Part")
-	marker.Name = "Point_Backpack"
-	marker.Parent = model
-end)
-check(data ~= nil and hasText(rep.Warnings, "Unbekannter Marker Point_Backpack"), "unbekannter Marker: Hinweis")
-local names = {}
-for _, entry in data and data.Gear or {} do
-	names[entry.Name] = true
-end
-check(names.Head_Mask and not names["Head_Mask.001"], "Blender-Endung .001 zählt nicht zum Namen")
--- Körper aus Studio exportiert (AgentVorlage): mit HumanoidRootPart, kleine Abweichungen der Körperteile
-data, rep = variant(function(model)
-	local rootPart = Instance.new("Part")
-	rootPart.Name = "HumanoidRootPart"
-	rootPart.Size = Vector3.new(1.5, 2, 0.8)
-	rootPart.CFrame = CFrame.new(0, 3, 0)
-	rootPart.Parent = model
-	model.UpperTorso.Size += Vector3.new(0.04, -0.05, 0.02)
-end)
-check(data ~= nil and #rep.Warnings == 0, "Körper aus Studio (mit HumanoidRootPart): lädt ohne Meldungen: " .. messages(rep))
--- Abstand und Budget
-data, rep = variant(function(model)
-	local antenna = Instance.new("Part")
-	antenna.Name = "Head_Antenna"
-	antenna.Size = Vector3.new(0.1, 1.5, 0.1)
-	antenna.CFrame = model.Head.CFrame * CFrame.new(0.3, 1.0, 0.3)
-	antenna.Parent = model
-end)
-check(data ~= nil and hasText(rep.Warnings, "Head_Antenna steht"), "weit abstehendes Teil: Hinweis: " .. messages(rep))
-data, rep = variant(function(model)
-	for i = 1, 3 do
-		local pouch = Instance.new("Part")
-		pouch.Name = "LowerTorso_Pouch" .. i
-		pouch.Size = Vector3.new(0.2, 0.2, 0.2)
-		pouch.CFrame = model.LowerTorso.CFrame * CFrame.new(-0.5 + i * 0.25, 0, -0.45)
-		pouch.Parent = model
-	end
-end)
-check(data ~= nil and hasText(rep.Warnings, "13 Ausrüstungsteile"), "zu viele Teile: Hinweis: " .. messages(rep))
--- Körper in falscher Breite (z.B. Roblox-Standard statt schlank)
-data, rep = variant(function(model)
-	model.UpperTorso.Size = Vector3.new(2, 1.6, 1)
-end)
-check(data ~= nil and hasText(rep.Warnings, "Körperteil UpperTorso ist"), "zu breiter Körper: Hinweis: " .. messages(rep))
--- Farben: Neon und unbemalte Importe
-data, rep = variant(function(model)
-	local lamp = Instance.new("Part")
-	lamp.Name = "LeftUpperArm_Lamp_Neon"
-	lamp.Size = Vector3.new(0.15, 0.15, 0.05)
-	lamp.Color = Color3.new(1, 1, 1)
-	lamp.CFrame = model.LeftUpperArm.CFrame * CFrame.new(0, 0, -0.42)
-	lamp.Parent = model
-	local glove = Instance.new("Part")
-	glove.Name = "RightHand_Glove"
-	glove.Size = Vector3.new(0.8, 0.32, 0.85)
-	glove.Color = Color3.new(1, 1, 1)
-	glove.CFrame = model.RightHand.CFrame
-	glove.Parent = model
-end)
-local lampEntry, gloveEntry
-for _, entry in data and data.Gear or {} do
-	if entry.Name == "LeftUpperArm_Lamp_Neon" then
-		lampEntry = entry
-	elseif entry.Name == "RightHand_Glove" then
-		gloveEntry = entry
-	end
-end
-check(lampEntry and lampEntry.Template.Material == Enum.Material.Neon and lampEntry.NeonAccent, "Neon leuchtet (weiß: Akzentfarbe)")
-check(gloveEntry and gloveEntry.Template.Color == Color3.fromRGB(52, 54, 58), "unbemalter Import ohne Farbzone: dunkelgrau")
+check(not AgentModels.HasAsset("Mender"), "entfernt: kein Modell mehr")
+changed = {}
+local backpack = Instance.new("Part") -- Teil dazu (ohne Körperteil-Namen, hinten am Rumpf)
+backpack.Name = "Backpack"
+backpack.Size = Vector3.new(1, 1.2, 0.5)
+backpack.CFrame = folder.Hawk.UpperTorso_Suit.CFrame * CFrame.new(0, 0, 0.65)
+backpack.Parent = folder.Hawk
+step(0.1)
+check(changed.Hawk and AgentModels.PiecesOf("Hawk").Backpack == "UpperTorso", "Teil dazu: neu geladen, hängt am Rumpf")
 
 -- ---------- Menü-Figur ----------
 local AgentFigure = require("AgentFigure")
-local figure = AgentFigure.Build(AgentConfig.Get("Viper"), primary, accent, nil, nil, nil)
-check(figure:FindFirstChild("Head_Visor_Glass") ~= nil and figure:FindFirstChild("UpperTorso_Vest_Accent") ~= nil
-	and figure:FindFirstChild("RightHand") ~= nil and figure:FindFirstChild("Torso") == nil,
-	"Figur mit 3D-Modell: Spielkörper mit der Ausrüstung des Modells")
-check(near(figure:GetPivot().Position, Vector3.new(0, 3, 0)), "Drehpunkt der Figur wie bisher auf Höhe 3")
-local hand, pad = figure.RightHand, figure.RightUpperArm_Pad_Accent
-check(hand.Position.Z < -1 and hand.Position.Y > 2.8, "rechter Arm nach vorne gehoben")
-local restPad = AgentModels.Body.RightUpperArm.CFrame:ToObjectSpace(
-	AgentModels.Body.RightUpperArm.CFrame * CFrame.new(0, 0.42 * AgentModels.Body.RightUpperArm.Size.Y, 0))
-check(near(figure.RightUpperArm.CFrame:ToObjectSpace(pad.CFrame).Position, restPad.Position, 1e-3),
-	"Schulterpolster geht mit dem gehobenen Arm mit")
-local gun
-for _, child in figure:GetChildren() do
-	if child:IsA("Model") then
-		gun = child
+local primary = Color3.fromRGB(40, 60, 50)
+local figure = AgentFigure.Build(AgentConfig.Get("Viper"), primary, Color3.new(1, 1, 1))
+local model = figure:FindFirstChild(AgentModels.ModelName)
+local visible = 0
+for _, part in figure:GetChildren() do
+	if part:IsA("BasePart") and AgentModels.Body[part.Name] and part.Transparency < 1 then
+		visible += 1
 	end
 end
-check(gun ~= nil and (gun:GetPivot().Position - hand.Position).Magnitude < 0.3, "Waffe in der rechten Hand")
+check(model ~= nil and #model:GetChildren() == #SUIT and visible == 0, "Figur: nur das Modell zu sehen")
 for _, part in figure:GetDescendants() do
 	if part:IsA("BasePart") and not part.Anchored then
 		check(false, "Figur: " .. part.Name .. " verankert")
 	end
 end
-local old = AgentFigure.Build(AgentConfig.Get("Mender"), primary, accent)
-local oldFace = old:FindFirstChild("Head") and old.Head:FindFirstChildOfClass("Decal")
-check(old:FindFirstChild("UpperTorso") ~= nil and old.Head.Transparency == 0 and oldFace ~= nil and oldFace.Transparency == 0
-	and old:FindFirstChild("Visor") == nil and old:FindFirstChild("Torso") == nil, "ohne Modell: Standard-Figur mit Gesicht")
+local hand = model and model:FindFirstChild("RightHand_Suit")
+check(hand and hand.Position.Z < -1 and hand.Position.Y > 2.8 and near(figure.RightHand.CFrame:ToObjectSpace(hand.CFrame).Position,
+	SUIT[10][3] - AgentModels.Body.RightHand.CFrame.Position), "rechte Hand des Modells mit dem Arm gehoben")
+check(model and near(model.Head_Suit.Position, SUIT[1][3]), "Kopf des Modells wie im Modell")
+local standard = AgentFigure.Build(AgentConfig.Get("Mender"), primary, Color3.new(1, 1, 1))
+local face = standard.Head:FindFirstChildOfClass("Decal")
+check(standard:FindFirstChild(AgentModels.ModelName) == nil and standard.Head.Transparency == 0 and face ~= nil
+	and face.Transparency == 0, "ohne Modell: Standard-Figur mit Gesicht")
 
 -- ---------- Spieler und Bots ----------
 game.JobId = "server-1"
@@ -495,24 +271,21 @@ alice:SetAttribute("Mode", "Hub")
 alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
-local vPrimary, vAccent = Cosmetics.AgentColors(alice, "Viper")
-check(character and character:FindFirstChild("Head_Visor_Glass") and character:FindFirstChild("UpperTorso_Vest_Accent")
-	and character.UpperTorso_Vest_Accent.Color == vAccent and character:FindFirstChild("AgentVest") == nil,
-	"Spieler als VIPER: Ausrüstung aus dem 3D-Modell")
--- Agent ohne Modell: Standard-Look
-alice:SetAttribute("Agent", "Mender")
+local worn = character and character:FindFirstChild(AgentModels.ModelName)
+check(worn ~= nil and worn:FindFirstChild("Head_Suit") ~= nil and character:GetAttribute("AgentLook") == "Charakter"
+	and AgentBody.IsDressed(character, "Viper"), "Spieler als VIPER trägt das Modell")
+alice:SetAttribute("Agent", "Ghost")
 step(0.1)
-check(character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild("UpperTorso_Vest_Accent") == nil,
-	"Wechsel im Hub auf einen Agenten ohne Modell: Standard-Look")
--- Bot mit VIPER
+check(character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild(AgentModels.ModelName) == nil
+	and character.Head.Transparency == 0, "Wechsel im Hub auf einen Agenten ohne Modell: Standard-Look")
 local BotService = require("BotService")
 local botTemplate
 task.spawn(function()
 	botTemplate = BotService.__rigTemplate(AgentConfig.Get("Viper"))
 end)
 step(1)
-check(botTemplate ~= nil and botTemplate:FindFirstChild("Head_Visor_Glass") ~= nil
-	and botTemplate:FindFirstChild("AgentVisor") == nil, "Bot als VIPER trägt die Ausrüstung aus dem 3D-Modell")
+local botModel = botTemplate and botTemplate:FindFirstChild(AgentModels.ModelName)
+check(botModel ~= nil and botModel:FindFirstChild("Head_Suit") ~= nil, "Bot als VIPER trägt das Modell")
 
 if failures == 0 then
 	print("Agenten-Modelle: alles in Ordnung")

@@ -1,104 +1,81 @@
 # Agentenmodelle: eigene Figuren ins Spiel bringen
 
-Jeder Agent kann ein eigenes 3D-Modell bekommen. Es reicht, das Modell in Studio an die richtige Stelle zu legen und
-richtig zu benennen. Das Spiel benutzt es dann überall:
+Jeder Agent kann ein eigenes 3D-Modell bekommen. Das Spiel zeigt es **genau so, wie es in Blender bzw. Studio
+aussieht**: dieselben Teile an derselben Stelle, gleich groß, gleich gedreht, mit denselben Farben, Materialien und
+Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Modell überall:
 
 - an **Spielern** im Hub, im Markt und im Match;
 - an **Bots** mit diesem Agenten;
 - in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Hub (Aufstellung, Statue „Agent der Woche“,
   Vitrinen), Siegerpodest nach dem Match und das Agenten-Symbol im HUD.
 
-Solange es kein Modell gibt oder mit dem Modell etwas nicht stimmt, hat der Agent den **Standard-Look**: den
-Roblox-Körper mit dem Roblox-Gesicht in seinen Farben (Kopf in Hautfarbe, Oberkörper und Arme in der Agentenfarbe,
-Beine dunkler). Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
+Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem
+Roblox-Gesicht in seinen Farben. Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
 
-**Der empfohlene Weg:** Du machst aus deinem Modell in Studio mit dem **Avatar-Setup** einen fertigen
-Roblox-Charakter (R15) und legst diesen Charakter in den Ordner der Agenten. Blender, Marker oder besondere
-Teilnamen brauchst du dafür nicht.
+## So baust du das Modell (Blender)
 
-## In 5 Minuten: Agent einfügen
+Bau den Agenten auf dem Spielkörper, **in Ruhelage**: Füße auf dem Boden (Höhe 0), Blick nach vorne, **Arme hängen
+gerade nach unten**. 1 Blender-Einheit = 1 Stud, der Spielkörper ist 5,1 Studs groß.
 
-Du brauchst: Roblox Studio, den Place des Spiels und dein Modell als Datei (`.fbx`, `.obj` oder `.glb`).
+- **Ein Teil pro Körperteil** (starre Teile): Jedes Teil bewegt sich mit seinem Körperteil. Nichts über ein Gelenk
+  hinweg bauen (Oberarm und Unterarm sind getrennte Teile), sonst reißt es beim Laufen auseinander.
+- **Namen:** Das Teil heißt wie das Körperteil oder beginnt damit: `Head_Suit`, `UpperTorso_Suit`,
+  `LeftUpperArm_Suit` usw. (`Head`, `UpperTorso`, `LowerTorso`, `LeftUpperArm`, `LeftLowerArm`, `LeftHand`,
+  `RightUpperArm`, `RightLowerArm`, `RightHand`, `LeftUpperLeg`, `LeftLowerLeg`, `LeftFoot`, `RightUpperLeg`,
+  `RightLowerLeg`, `RightFoot`). Teile mit anderem Namen (Haare, Helm, Rucksack …) hängen an dem Körperteil, dem
+  sie am nächsten sind. Blender-Endungen wie `.001` sind egal.
+- **Boden (optional):** ein kleiner Würfel `Point_Root` auf 0/0/0 (Boden zwischen den Füßen). Ohne ihn steht der
+  tiefste Punkt des Modells auf dem Boden, mittig unter dem Rumpf.
+- **Nicht gezeigt** werden: unsichtbare Teile (Transparency 1), Marker `Point_…` und Maßstab-Teile `Ref_…`.
 
-1. **Place öffnen:** Studio starten und den Place des Spiels öffnen.
-2. **Fenster einblenden:** Reiter **View** › **Explorer**, **Properties** und **Output** anklicken, damit alle
-   drei offen sind.
-3. **Modell importieren:** Reiter **Home** › **Import 3D** › deine Datei auswählen › im Import-Fenster unten
-   **Import** klicken. Das Modell steht jetzt in der Welt und im Explorer unter **Workspace**.
-4. **Zum Charakter machen:** Das Modell im Explorer anklicken › Reiter **Avatar** › **Avatar Setup**. Den Schritten
-   im Fenster folgen, bis Studio einen fertigen Charakter zeigt. Hat dein Modell noch kein Skelett, richtet Studio
-   es dabei automatisch ein.
-   - So erkennst du, dass es geklappt hat: Klappst du das Modell im Explorer auf, siehst du einen **Humanoid**, ein
-     **HumanoidRootPart** und 15 Körperteile: `Head`, `UpperTorso`, `LowerTorso`, `LeftUpperArm`, `LeftLowerArm`,
-     `LeftHand`, `RightUpperArm`, `RightLowerArm`, `RightHand`, `LeftUpperLeg`, `LeftLowerLeg`, `LeftFoot`,
-     `RightUpperLeg`, `RightLowerLeg`, `RightFoot`.
-   - **Nur ausprobieren, ohne eigenes Modell:** Reiter **Avatar** › **Rig Builder** › **R15** › einen Körper
-     auswählen (z.B. Block Avatar). Es entsteht ein „Dummy“ im Workspace. Mit ihm bei Schritt 5 weitermachen.
-5. **In den Agenten-Ordner ziehen:** Im Explorer **ReplicatedStorage** › **Assets** › **Agents** aufklappen. Den
-   Charakter mit der Maus auf den Ordner **Agents** ziehen. Er muss direkt darin liegen, nicht in einem weiteren
-   Ordner.
+**Körpermaße** zum Bauen (Breite × Höhe × Tiefe in Studs, Höhe der Mitte über dem Boden): `Head` 1,20 × 1,20 × 1,20
+(4,50), `UpperTorso` 1,50 × 1,60 × 0,80 (3,20), `LowerTorso` 1,50 × 0,40 × 0,80 (2,20), Oberarme 0,75 × 1,17 × 0,80
+(3,37), Unterarme 0,75 × 1,05 × 0,80 (2,78), Hände 0,75 × 0,30 × 0,80 (2,15), Oberschenkel 0,75 × 1,22 × 0,80 (1,58),
+Unterschenkel 0,75 × 1,19 × 0,80 (0,80), Füße 0,75 × 0,30 × 0,80 (0,15). Die Arme hängen 1,125 Studs neben der
+Mitte, die Beine 0,375. Die Gelenke: Schulter auf 3,76, Ellbogen 3,04, Handgelenk 2,28, Hüfte 2,0, Knie 1,16,
+Knöchel 0,25. Liegen die Grenzen deiner Teile auf diesen Gelenken, bleibt beim Bewegen alles lückenlos.
+
+**Exportieren:** alles auswählen, `Strg+A` › Alle Transformationen, Datei › Exportieren › FBX oder glTF (.glb).
+
+Ein R15-Charakter aus dem **Avatar-Setup** von Studio geht genauso: Seine 15 Körperteile heißen schon richtig,
+vorne ist dort, wohin das HumanoidRootPart schaut. Auch er wird nicht verändert – Arme in T-Haltung bleiben also
+waagerecht. Darum auch hier: Arme hängend modellieren.
+
+## Ins Spiel bringen (Studio)
+
+1. **Place öffnen** und über Reiter **View** die Fenster **Explorer**, **Properties** und **Output** einblenden.
+2. **Importieren:** Reiter **Home** › **Import 3D** › deine Datei. Im Fenster: Scale Unit **Stud**, **Merge Meshes
+   aus**. **Import** klicken.
+3. **In den Ordner ziehen:** Im Explorer **ReplicatedStorage** › **Assets** › **Agents** aufklappen und das Modell
+   direkt auf den Ordner **Agents** ziehen (nicht in einen Unterordner).
    - Fehlt der Ordner: Rechtsklick auf ReplicatedStorage › **Insert Object** › **Folder**, `Assets` nennen. Darin
      genauso einen Ordner `Agents` anlegen.
-6. **Umbenennen:** Den Charakter anklicken, **F2** drücken (oder Rechtsklick › **Rename**) und **genau wie den
-   Agenten** nennen, z.B. `Viper` (alle Namen in der [Liste der Agenten](#liste-der-agenten), Groß- und
-   Kleinschreibung beachten). Liegt dort schon ein älteres Modell mit demselben Namen, das alte vorher löschen.
-7. **Testen:** Das Modell **vor** dem Start einfügen (nicht während Play – in Play gehören Änderungen im Explorer
-   nur zu deinem Bildschirm, der Server sieht sie nicht). Dann Reiter **Home** › **Play** (oder **F5**) und im Spiel
-   **genau diesen Agenten** wählen. Im Output steht dann zum Beispiel:
+4. **Umbenennen:** genau wie der Agent, z.B. `Viper` (siehe [Liste](#liste-der-agenten), Groß- und Kleinschreibung
+   beachten). Ein älteres Modell mit demselben Namen vorher löschen.
+5. **Testen:** Das Modell **vor** dem Start einfügen, dann **Play** (F5) und genau diesen Agenten wählen. Im Output:
 
-       [Agentenmodelle] Viper: Charakter geladen (15 Teile)
-       [Agentenmodelle] DeinName als Viper: ganzer Charakter aus dem Modell
+       [Agentenmodelle] Viper: Modell geladen (15 Teile)
+       [Agentenmodelle] DeinName als Viper: Modell aus Assets.Agents
 
-   Steht dort stattdessen „NICHT geladen“, steht direkt darunter, was fehlt (siehe
-   [Häufige Probleme](#häufige-probleme)). Mit **Stop** (oder **Umschalt+F5**) beendest du den Test.
-8. **Speichern:** **File** › **Publish to Roblox**. Die Modelle leben im Place, nur so bleiben sie erhalten.
-   Empfohlen, aber nicht nötig: eine Kopie ins Repo legen, siehe [Prüfen (GitHub)](#prüfen-github).
+6. **Speichern:** **File** › **Publish to Roblox**. Die Modelle leben im Place, nur so bleiben sie erhalten.
 
-Fertig. Spieler und Bots mit diesem Agenten sehen jetzt aus wie dein Modell.
+## Was das Spiel macht
 
-## Was das Spiel automatisch macht
-
-Du musst das Modell nicht ausrichten, nicht skalieren und nicht in eine bestimmte Haltung bringen. Das erledigt das
-Spiel beim Laden:
-
-- **Erkennen:** Hat das Modell irgendwo einen **Humanoid**, gilt es als ganzer Charakter. Dann müssen alle 15
-  Körperteile da sein. Ein Modell ohne Humanoid wird nach der alten Methode geladen (siehe
-  [ganz unten](#fortgeschritten-nur-ausrüstung-alte-methode)). Decken seine Teile dabei Kopf, Rumpf, Arme und Beine
-  ab, ist es ebenfalls ein ganzer Charakter, und zu sehen ist nur das Modell. Das gilt auch für ein Modell, das nur
-  aus den 15 Körperteilen besteht (z.B. ein R15-Rig, dem der Humanoid fehlt).
-- **Größe:** Das Modell wird auf die Größe des Spielkörpers gebracht (5,1 Studs vom Scheitel bis zu den Füßen), egal
-  wie groß es war. Die Proportionen bleiben. Musste es stark verkleinert oder vergrößert werden, kommt ein Hinweis.
-- **Blickrichtung:** Vorne ist dort, wohin das **HumanoidRootPart** schaut.
-- **Boden:** Der tiefste Punkt der Körperteile (die Füße) steht auf dem Boden.
-- **Gelenke:** Jedes Körperteil wird an seinem Gelenk angesetzt (Schulter, Ellbogen, Hüfte, Knie …). Dafür nimmt das
-  Spiel die Gelenkpunkte aus dem Avatar-Setup (Attachments wie `LeftShoulderRigAttachment`), sonst die Gelenke
-  (Motor6D) des Modells.
-- **Haltung:** Arme und Beine werden in die Richtung der Körperteile im Spiel gedreht. Darum geht jede Haltung:
-  T-Pose (Arme waagerecht), A-Pose (Arme schräg) oder hängende Arme.
-- **Accessoires** (Haare, Helm, Rucksack, Taschen …): Jedes weitere Teil hängt an dem Körperteil, an das es
-  geschweißt ist (Accessoires aus Studio sind das automatisch), sonst an dem nächstgelegenen. Ganz unsichtbare Teile
-  (Transparency 1) werden weggelassen.
-- **Bewegung:** Jedes Teil folgt seinem Körperteil. Laufen, Springen, Zielen und Waffe halten bewegen also dein
-  Modell mit, mit den Animationen des Spiels. Eigene Animationen oder Skripte im Modell werden nicht benutzt. Ohne
-  Waffe in der Hand spreizt ein ganzer Charakter die Arme nicht seitlich ab (Vor- und Zurückschwingen bleibt).
-  Rumpf und Arme sind starre Teile, die nur in Ruhe aneinanderliegen, sonst klafft unter den Achseln eine Lücke.
-  Mit Waffe bewegen sich die Arme frei. Ein kleiner Überstand im Modell hilft dann: Rumpf unter den Achseln etwas
-  breiter oder Schulterkappen, die etwas über den Rumpf reichen (0,1 bis 0,15 Studs).
-- **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder löschst es, lädt das Spiel es sofort neu und zieht
-  alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auch auf dem Server
-  passiert, z.B. in Studio im Server-Fenster oder im Modus **Run**).
-- **Treffer:** Zu sehen ist nur dein Modell. Der normale Agentenkörper bleibt unsichtbar an derselben Stelle und ist
-  die **Trefferzone**. So sind alle Agenten gleich leicht zu treffen, egal wie breit oder schmal das Modell ist.
-  Teile deines Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum: Sehr breite Teile (große Flügel,
-  Umhänge, riesige Schulterplatten) sehen wie ein Ziel aus, sind aber keins. Bleib ungefähr bei der Körperform.
-- **Im Explorer während Play:** Dein Modell hängt im Charakter unter **Workspace** › *DeinName* › **AgentModel**. Seine
-  Teile heißen wie im Avatar-Setup (`Head`, `UpperTorso` …), damit gehäutete Meshes an den Gelenken sauber bleiben.
-  Die Teile direkt im Charakter mit denselben Namen sind der unsichtbare Spielkörper (Transparency 1). Macht ihn
-  etwas wieder sichtbar, blendet der Server ihn sofort wieder aus.
-- **Aussehen:** Farben, Materialien und Texturen der Teile bleiben, wie du sie in Studio siehst (SurfaceAppearance
-  oder die Textur eines MeshParts). Gesichter als Decal am Kopf bleiben auch. Klassische Kleidung (Shirt- und
-  Pants-Objekte) wird **nicht** übernommen: Kleidung gehört in das Modell bzw. seine Textur.
-- **Farben des Agenten:** Ein Charakter-Modell wird nicht umgefärbt. Es sieht immer so aus, wie du es gebaut hast.
+- **Nichts am Aussehen:** Lage, Größe, Drehung, Farben, Materialien, Texturen (SurfaceAppearance, TextureID) und
+  Decals bleiben. Nur wenn das Modell offensichtlich in der falschen Einheit importiert wurde (kleiner als 4 oder
+  größer als 6,5 Studs), wird es als Ganzes auf 5,1 Studs gebracht, die Proportionen bleiben.
+- **Bewegung:** Jedes Teil ist an sein Körperteil geschweißt und folgt den Animationen des Spiels (laufen,
+  springen, zielen, Waffe halten). Ohne Waffe spreizt das Spiel die Arme nicht seitlich ab, damit unter den Achseln
+  keine Lücke klafft.
+- **Treffer:** Der normale Agentenkörper bleibt unsichtbar an derselben Stelle und ist die **Trefferzone**. So sind
+  alle Agenten gleich leicht zu treffen. Teile des Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum
+  ungefähr bei der Körperform bleiben: Was weit absteht (Flügel, Umhänge), sieht wie ein Ziel aus, ist aber keins.
+- **Im Explorer während Play:** Das Modell hängt unter **Workspace** › *DeinName* › **AgentModel**. Die Teile direkt
+  im Charakter mit den Körperteil-Namen sind der unsichtbare Spielkörper. Macht ihn etwas wieder sichtbar, blendet
+  der Server ihn sofort wieder aus.
+- **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder änderst es, lädt das Spiel es sofort neu und zieht
+  alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auf dem Server passiert,
+  z.B. im Modus **Run**).
 
 ## Häufige Probleme
 
@@ -106,24 +83,19 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 
 | Meldung oder was du siehst | Was du tun kannst |
 |---|---|
-| `es fehlen Körperteile: …` | Das Avatar-Setup ist nicht fertig geworden, oder Körperteile wurden umbenannt oder gelöscht. Avatar-Setup bis zum Ende durchlaufen. Die 15 Körperteile müssen genau so heißen wie in Schritt 4. |
 | `unbekannter Name – Modelle heißen wie der Agent` | Modell umbenennen: `Viper`, `Bastion`, `Mender`, `Hawk`, `Ghost`, `Blaze`, `Aegis`, `Trapper` oder `Volt`. |
-| Im Output steht gar nichts zu deinem Modell | Es liegt nicht direkt in ReplicatedStorage › Assets › Agents (z.B. noch im Workspace oder in einem Unterordner). |
-| Der Agent schaut nach hinten oder zur Seite | Die Blickrichtung kommt aus dem HumanoidRootPart. Im Avatar-Setup die Blickrichtung korrigieren. Oder: das importierte Modell vor dem Avatar-Setup so drehen, dass das Gesicht nach vorne zeigt, und das Avatar-Setup neu machen. |
-| Arme oder Beine sind verdreht oder abgeknickt | Die Gelenke sitzen an der falschen Stelle. Im Avatar-Setup prüfen, ob Schultern, Ellbogen, Hüfte und Knie richtig gesetzt sind, und es notfalls neu machen. |
-| Haare oder Helm wackeln mit der Schulter statt mit dem Kopf | Das Teil ist an kein Körperteil geschweißt und hängt deshalb am nächstgelegenen. Als Accessoire am Kopf anbringen (oder eine WeldConstraint mit Part0 = `Head` und Part1 = das Teil einfügen). |
-| `… Teile – für Handys besser höchstens 40` | Nur ein Hinweis, das Modell lädt. Für Handys besser: kleine Accessoires zusammenfassen (im 3D-Programm zu einem Teil verbinden) oder unnötige löschen. |
-| `auf … % skaliert (Modell war … Studs hoch …)` | Nur ein Hinweis, das Modell lädt. Sieht es seltsam aus, beim Import die Einheit prüfen. |
-| `das Modell ist flach oder leer` | Falsches Modell erwischt oder die Teile haben keine Größe. Neu importieren. |
+| Im Output steht gar nichts zu deinem Modell | Es liegt nicht direkt in ReplicatedStorage › Assets › Agents. |
+| `… als Viper: Standard-Look (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch, nicht direkt im Ordner, oder während Play nur auf deinem Bildschirm eingefügt. Stop, richtig einfügen, neu starten. |
+| `keine sichtbaren Teile im Modell` | Alle Teile sind unsichtbar (Transparency 1) oder das Modell ist leer. Neu importieren. |
+| `Modell ist … Studs hoch, auf 5.1 gebracht` | Beim Import stimmte die Einheit nicht (z.B. Zentimeter). Lädt trotzdem; besser mit Scale Unit **Stud** neu importieren. |
+| `zu … gehört kein Teil – dort ist nichts zu sehen` | Nur ein Hinweis. An diesem Körperteil hat das Modell nichts (z.B. Hände). |
+| `… Teile – für Handys besser höchstens 40` | Nur ein Hinweis. Kleine Teile in Blender zusammenfügen. |
 | `… lässt sich nicht kopieren (Archivable ist aus)` | Teil anklicken, in den Properties **Archivable** anhaken. |
-| `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
+| Der Agent schaut nach hinten oder zur Seite | In Blender nach vorne (-Y in Blender, -Z in Roblox) ausrichten bzw. beim Import World Forward **Front** wählen. Bei einem R15-Rig zählt die Blickrichtung des HumanoidRootPart. |
+| Ein Teil (z.B. Haare) bewegt sich mit dem falschen Körperteil | Teil umbenennen, sodass es mit dem Körperteil beginnt, z.B. `Head_Hair`. |
+| Arme stehen waagerecht ab | Das Modell ist in T-Haltung gebaut. In Blender die Arme hängend modellieren. |
+| `Modell konnte nicht angezogen werden (…)` oder `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
-| `… als Viper: Standard-Look (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
-| Im Spiel steht der Standard-Look da (Roblox-Körper mit Gesicht), obwohl es ein Modell gibt | Das Einkleiden ist nicht gelaufen, oder Roblox hat danach Körperteile ausgetauscht. Der Server prüft das laufend: nach dem Spawn mehrmals, danach alle 5 Sekunden. Er zieht dann neu an, im Output steht `Aussehen verändert (…) – neu angezogen` mit dem Grund in Klammern. Bleibt der Körper so, im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. |
-| `… als Viper: Ausrüstung aus dem Modell`, und der Spielkörper ist unter dem Modell zu sehen | Das Modell hat keinen Humanoid und deckt nicht Kopf, Rumpf, Arme und Beine ab. Deshalb gilt es nur als Ausrüstung auf dem sichtbaren Körper. Entweder mit dem Avatar-Setup zu einem R15-Rig machen (empfohlen, siehe oben) oder für jedes Körperteil ein Teil `<Körperteil>_<Name>` bauen (siehe [alte Methode](#fortgeschritten-nur-ausrüstung-alte-methode)). |
-| Man sieht durch den Charakter durch (z.B. neben der Weste oder am Hals fehlt der Körper) | Dort hat das Modell nichts: keine Ausrüstung und keinen eigenen Körper, oder der Körper ist unsichtbar (Transparency 1). Den Körper im Modell lassen (Teile, die genau wie die Körperteile heißen) bzw. sichtbar machen. Er wird bei einem ganzen Charakter mit angezeigt. |
-| Spielkörper und Modell liegen übereinander (der schmale Körper in Agentenfarben schaut durch das Modell) | Der Spielkörper ist die unsichtbare Trefferzone. Macht ihn etwas wieder sichtbar (Roblox beim Laden des Aussehens oder ein Skript), blendet der Server ihn sofort wieder aus. Im Output steht dann einmal `… wieder sichtbar gemacht – sofort wieder ausgeblendet`. Siehst du ihn trotzdem, alle Output-Zeilen mit `[Agentenmodelle]` an die Projektleitung schicken. |
-| `Modell konnte nicht angezogen werden (…) – Standard-Look` | Beim Anziehen ist ein Fehler passiert, der Agent hat deshalb den Standard-Look. Die Meldung in Klammern an die Projektleitung schicken. |
 
 ## Liste der Agenten
 
@@ -141,104 +113,17 @@ Das Modell muss genau so heißen wie in der ersten Spalte (die Ids aus `src/shar
 | `Trapper` | TRAPPER | Kontrolle | 156, 132, 92 | Fallensteller: Werkzeuggürtel, Draht, Handschuhe |
 | `Volt` | VOLT | Techniker | 204, 190, 86 | Ingenieur: Akku-Pack, Kabel, Werkzeug, leuchtende Anzeigen |
 
-Die Farbe ist die Erkennungsfarbe des Agenten. Es hilft, wenn sie im Modell gut zu sehen ist.
-
 ## Prüfen (GitHub)
 
-- **In Studio:** beim Spielstart im Output (Zeilen mit `[Agentenmodelle]`).
 - **Kopie ins Repo (empfohlen):** Rechtsklick auf das Modell unter Assets › Agents › **Save to File…** › als
-  `<Agent>.rbxmx` speichern (z.B. `Viper.rbxmx`). Die Datei auf GitHub in den Ordner `assets/Agents` hochladen
-  (**Add file** › **Upload files**). Das Spiel lädt die Modelle weiter aus dem Place, die Kopie ist nur für die
-  Prüfung.
-- **Was GitHub dann bei jedem Push prüft** (Test `agentassets`): Das Modell lädt ohne Fehler (bei einem Charakter:
-  alle 15 Körperteile da), und an einem Testkörper
-  hängt jedes Teil des Modells angeschweißt an einem Körperteil und zählt nie als Treffer. Hinweise (z.B. zu viele
-  Teile) stehen als `HINWEIS` im Log, sie lassen die Prüfung nicht scheitern.
+  `<Agent>.rbxmx` speichern und auf GitHub in den Ordner `assets/Agents` hochladen. Das Spiel lädt die Modelle weiter
+  aus dem Place, die Kopie ist nur für die Prüfung.
+- **Was GitHub bei jedem Push prüft** (Test `agentassets`): Das Modell lädt ohne Fehler, und an einem Testkörper hängt
+  jedes Teil angeschweißt an einem Körperteil und zählt nie als Treffer. Hinweise stehen als `HINWEIS` im Log.
 - **Lokal** (für Entwickler): `python3 tests/run.py` (siehe README).
 
-**Hinweis zu Rojo:** Rojo legt den Ordner ReplicatedStorage › Assets › Agents an und lässt die Modelle darin
-stehen. Eine mit `rojo build` gebaute Place-Datei enthält sie aber nicht (dort sehen alle Agenten aus wie ohne
-Modell). Veröffentlicht wird deshalb immer aus Studio.
+**Hinweis zu Rojo:** Rojo legt den Ordner ReplicatedStorage › Assets › Agents an und lässt die Modelle darin stehen.
+Eine mit `rojo build` gebaute Place-Datei enthält sie aber nicht. Veröffentlicht wird deshalb immer aus Studio.
 
-## Fortgeschritten: nur Ausrüstung (alte Methode)
-
-Der ältere Weg funktioniert weiter, ist aber aufwendiger. Er gilt für Modelle **ohne Humanoid**. Dann ist dein Modell
-nur die **Ausrüstung** (Helm, Visier, Maske, Weste, Taschen, Polster, Gürtel …), und der Agent behält den sichtbaren
-Standardkörper in seinen Farben. Jedes Teil wird an genau ein Körperteil geschweißt und zählt nie als Treffer.
-
-**Ganzer Charakter auf der Vorlage:** Baust du so den kompletten Charakter (mindestens ein Teil für `Head`,
-`UpperTorso`, `LowerTorso` und jedes Arm- und Beinteil, z.B. `UpperTorso_Shirt`, `LeftLowerLeg_Hose`), erkennt das
-Spiel ihn als ganzen Charakter. Dann ist nur dein Modell zu sehen, der Standardkörper bleibt unsichtbar als
-Trefferzone. Im Output steht `Viper: Charakter geladen (… Teile)` und `… als Viper: ganzer Charakter aus dem Modell`.
-Der mitgelieferte Körper (die Teile, die genau wie die Körperteile heißen) gehört dann zum Modell und wird **mit
-angezeigt**, so wie du ihn in Studio siehst. Ist er noch der graue Körper aus der Vorlage (ohne Textur), bekommt er
-die Farben des Agenten (Haut, Uniform, Hose). Mit eigener Textur oder Farbe bleibt er, wie du ihn gebaut hast. Soll
-er gar nicht zu sehen sein, weil die Kleidung alles abdeckt, setze seine Teile auf Transparency 1. Fehlen Hände oder
-Füße ganz (weder Ausrüstung noch Körper), bleibt dort der Standardkörper zu sehen (Hinweis `ganzer Charakter ohne …`).
-
-**Ablauf in Kürze**
-
-1. Vorlage öffnen: Blender › Datei › Importieren › Wavefront (.obj) › `art/templates/Agents/Agent.obj`
-   (Einstellungen aus [3d-richtlinien.md](3d-richtlinien.md), Abschnitt 2). Darin: der Spielkörper (15 Teile, die
-   wie die Körperteile heißen), eine Beispiel-Ausrüstung (Kapuze, Visier, Maske, Weste, Polster, Gürtel) schon richtig
-   benannt und der Marker `Point_Root`
-   (Boden zwischen den Füßen, auf 0/0/0). Ohne Blender zum Ausprobieren: `art/templates/Agents/Agent.rbxmx` per
-   **File** › **Insert from File…** in Studio einfügen, umbenennen, nach Assets › Agents legen.
-2. Um den Körper herum modellieren, in seiner Ruhelage (Arme hängen). Den Körper nicht verändern.
-3. Jedes Teil `<Körperteil>_<Name>` nennen (siehe unten).
-4. **Körper und `Point_Root` im Modell lassen.** Bei reiner Ausrüstung wird der Körper nicht angezeigt (bei einem
-   ganzen Charakter schon, siehe oben), aber das Spiel richtet die
-   Ausrüstung an ihm aus. Dann sind Drehung, Lage und Größe nach dem Import egal.
-5. Exportieren: alles auswählen, `Strg+A` › Alle Transformationen, Datei › Exportieren › FBX mit „Nur Auswahl“.
-6. In Studio: **Import 3D** mit **Merge Meshes aus**, nach Assets › Agents ziehen, wie den Agenten benennen, Play.
-   Im Output steht `[Agentenmodelle] Viper: 3D-Modell geladen (… Teile)` oder, was fehlt.
-
-**Teilnamen:** Wörter mit `_` dazwischen, das **erste Wort ist das Körperteil** (`Head`, `UpperTorso`, `LowerTorso`,
-`LeftUpperArm`, … wie oben). Danach ein freier Name, bei Bedarf mit einem dieser Wörter:
-
-| Wort | Bedeutung |
-|---|---|
-| `Primary` | Farbzone Uniform: bekommt die Uniformfarbe des Agenten |
-| `Accent` | Farbzone Akzent: bekommt die zweite Farbe |
-| `Glass` | getöntes Visier |
-| `Neon` | leuchtet (weiß importiert: in der Akzentfarbe) |
-| `Ref` | nur Maßstab, wird ignoriert (z.B. `Ref_Ground`) |
-
-Beispiele: `Head_Helmet_Primary`, `Head_Visor_Glass`, `UpperTorso_Vest_Accent`, `LowerTorso_Belt`,
-`LeftLowerLeg_KneePad`. Blender-Endungen wie `.001` zählen nicht. Teile ohne Farbzone, die weiß ankommen, werden
-dunkelgrau.
-
-**Körpermaße** (Breite × Höhe × Tiefe in Studs, Höhe der Mitte über dem Boden): `Head` 1,20 × 1,20 × 1,20 (4,50),
-`UpperTorso` 1,50 × 1,60 × 0,80 (3,20), `LowerTorso` 1,50 × 0,40 × 0,80 (2,20), Oberarme 0,75 × 1,17 × 0,80 (3,37),
-Unterarme 0,75 × 1,05 × 0,80 (2,78), Hände 0,75 × 0,30 × 0,80 (2,15), Oberschenkel 0,75 × 1,22 × 0,80 (1,58),
-Unterschenkel 0,75 × 1,19 × 0,80 (0,80), Füße 0,75 × 0,30 × 0,80 (0,15). Die Arme hängen 1,125 Studs neben der
-Mitte, die Beine 0,375.
-
-**Regeln:** Eng am Körper bauen (höchstens 0,25 Studs Abstand, Helm 0,3; ab 0,45 kommt ein Hinweis, liegt die Mitte
-eines Teils mehr als 0,75 neben seinem Körperteil, lädt das Modell nicht). Nichts über ein Gelenk hinweg (Weste nur am
-`UpperTorso`, Gürtel extra am `LowerTorso`). Arme und Hände frei lassen. Höchstens 12 Teile (sonst Hinweis), ein
-Material pro Teil, eine Textur 1024 × 1024. Für Farbzonen mit Textur
-**AlphaMode = Overlay** benutzen (umfärbbare Flächen in der ColorMap durchsichtig).
-
-**Meldungen der alten Methode**
-
-| Meldung | Lösung |
-|---|---|
-| `Marker Point_Root fehlt` | Marker aus der Vorlage übernehmen oder den Körper im Modell lassen |
-| `Marker Point_Root fehlt – ausgerichtet am mitgelieferten Körper` | nur ein Hinweis, das Modell lädt |
-| `…: der Name beginnt nicht mit einem Körperteil` | Teil umbenennen: `<Körperteil>_<Name>`, z.B. `Head_Helmet` |
-| `keine Ausrüstung im Modell` | Ausrüstungsteile wie oben benennen. Nur Körper und Marker reichen nicht |
-| `… hängt nicht am Körperteil … (Mitte … Studs daneben)` | falsches Körperteil im Namen, oder das Modell ist verschoben, gedreht oder falsch skaliert. Am einfachsten den Körper aus der Vorlage im Modell lassen |
-| `Körper ist …-mal so groß wie im Spiel – stimmt die Einheit beim Import?` | Einheit im Import-Fenster von Studio umstellen, bis der Agent etwa 5 Studs groß ist |
-| `… steht … Studs vom Körperteil … ab` | Teil enger an den Körper bauen |
-| `… Ausrüstungsteile – höchstens 12` | Teile am selben Körperteil ohne eigene Farbzone zusammenfügen |
-| `Körperteil … ist … groß, im Spiel …` | den schlanken Körper aus der Vorlage benutzen, nicht den Roblox-Standard |
-| `Unbekannter Marker …` | Tippfehler im Namen (z.B. `Point_Rot`) |
-
-**Vorlage neu erzeugen** (wenn sich der Spielkörper `AgentModels.Body` oder die Beispiel-Ausrüstung in
-`tools/agent_templates.luau` ändert): `python3 tools/agent_templates.py`. Das schreibt `art/templates/Agents/Agent.obj`, `.mtl` und `.rbxmx`;
-der Test `agentmodels` prüft, dass die Vorlage selbst ein gültiges Modell ist.
-
-**Für Entwickler:** Der Lader mit allen Prüfungen steht in `src/shared/AgentModels.lua`, angezogen wird in
-`src/server-shared/AgentBody.lua` (Spieler und Bots) und `src/shared/AgentFigure.lua` (Vorschauen). Allgemeine
-Regeln für alle 3D-Modelle stehen in [3d-richtlinien.md](3d-richtlinien.md).
+**Für Entwickler:** Der Lader steht in `src/shared/AgentModels.lua`, angezogen wird in
+`src/server-shared/AgentBody.lua` (Spieler und Bots) und `src/shared/AgentFigure.lua` (Vorschauen).

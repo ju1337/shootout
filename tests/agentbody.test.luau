@@ -22,7 +22,7 @@ local Cosmetics = require("Cosmetics")
 local AgentBody = require("AgentBody")
 
 -- ---------- Beschreibung: feste Maße, nur die Farben unterscheiden sich ----------
-local primary, accent = Color3.fromRGB(40, 60, 50), Color3.fromRGB(90, 160, 110)
+local primary = Color3.fromRGB(40, 60, 50)
 local description = AgentBody.Description(primary)
 check(description.WidthScale == AgentConfig.BodyScale.Width and description.DepthScale == AgentConfig.BodyScale.Depth,
 	"schlank wie AgentConfig.BodyScale")
@@ -77,7 +77,7 @@ check(wingHandle.CanQuery == false, "später angehängte Flügel sind auch nicht
 local shirt = Instance.new("Shirt", avatar)
 local face = Instance.new("Decal", avatar.Head)
 face.Name = "face"
-AgentBody.Dress(avatar, primary, accent)
+AgentBody.Dress(avatar, primary)
 check(hat.Parent == nil and shirt.Parent == nil, "Accessoires und Kleidung des eigenen Avatars entfernt")
 check(avatar:FindFirstChildOfClass("Accessory") == nil, "keine Accessoires mehr")
 check(face.Parent == avatar.Head and face.Transparency == 0, "Roblox-Gesicht bleibt")
@@ -101,12 +101,12 @@ local leftover = Instance.new("Part")
 leftover.Name = "AgentVest"
 leftover:SetAttribute("AgentGear", true)
 leftover.Parent = avatar
-AgentBody.Dress(avatar, primary, accent)
+AgentBody.Dress(avatar, primary)
 check(leftover.Parent == nil, "alte Ausrüstung entfernt")
 -- War vorher ein ganzer Charakter angezogen (Kopf und Gesicht unsichtbar), ist beides danach wieder da
 face.Transparency = 1
 avatar.Head.Transparency = 1
-AgentBody.Dress(avatar, primary, accent)
+AgentBody.Dress(avatar, primary)
 check(face.Transparency == 0 and avatar.Head.Transparency == 0, "Kopf und Gesicht wieder sichtbar")
 
 -- ---------- Gemeldete Treffer: nur Körperteile ----------
@@ -118,7 +118,7 @@ local target = rig()
 target.Humanoid.Health = 100
 local hat2, hatHandle2 = accessory(target, "Hat")
 hatHandle2.CFrame = target.Head.CFrame * CFrame.new(0, 0.9, 0)
-AgentBody.Dress(target, primary, accent)
+AgentBody.Dress(target, primary)
 check(hat2.Parent == nil, "Ziel als Agent angezogen")
 local _, lateHandle = accessory(target, "LateHat") -- z.B. von einem Skript nachträglich angehängt
 lateHandle.CFrame = target.Head.CFrame * CFrame.new(0, 0.9, 0)

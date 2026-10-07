@@ -35,13 +35,12 @@ und [agenten-modelle.md](agenten-modelle.md).
 | Waffen | `art/templates/Weapons/<Waffe>.obj` | heutige Quader-Waffe mit allen Markern (siehe [waffen-modelle.md](waffen-modelle.md)) |
 | Fahrzeuge | `art/templates/Vehicles/<Id>.obj` | heutiges Spielfahrzeug: Rumpf `Ref_Chassis`, Räder `Wheel_*`, Sitze `Seat_*`, Boden `Ref_Ground`; Helikopter: Drehpunkte `Point_Rotor`, `Point_TailRotor` |
 | Items, Gadgets, Behälter | `art/templates/Items/<Id>.obj` | Zielgröße `Ref_<Id>` (Boden bei 0) und Griff `Point_Grip` |
-| Agenten (nur alte Methode) | `art/templates/Agents/Agent.obj` | der Spielkörper (Teile heißen wie die Körperteile, bleibt im Modell), die heutige Ausrüstung schon richtig benannt, Marker `Point_Root`. Empfohlen ist ein ganzer Charakter ohne Vorlage, siehe Abschnitt 7 |
 
 So gehst du vor:
 
 1. Vorlage in Blender importieren (Einstellungen in Abschnitt 2).
-2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht. Bei
-   den Agenten (alte Methode) bleibt der Körper im Modell (Abschnitt 7).
+2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht. Agenten
+   haben keine Vorlage, sie werden nach den Körpermaßen gebaut (Abschnitt 7).
 3. Teile benennen und die Marker (magenta Würfel) übernehmen.
 4. Texturieren.
 5. Exportieren (Abschnitt 2), wenn möglich in Studio testen, liefern (Abschnitt 8).
@@ -114,7 +113,7 @@ zeigt nach vorne), passen deine Einstellungen. Wenn nicht, erst die Einstellunge
 |---|---|
 | `Glass` | durchsichtig (Scheiben, Visiere) |
 | `Neon` | leuchtet (Lampen, Leuchtpunkte, Displays) |
-| `Skin` (Waffen), `Paint` (Fahrzeuge), `Primary` / `Accent` (Agenten) | Farbzone: wird vom Spiel bzw. vom Skin umgefärbt |
+| `Skin` (Waffen), `Paint` (Fahrzeuge) | Farbzone: wird vom Spiel bzw. vom Skin umgefärbt (Agenten werden nie umgefärbt) |
 | `Ref` | nur Maßstab aus der Vorlage: vor dem Export löschen |
 
 ### Marker
@@ -157,8 +156,7 @@ zeigt nach vorne), passen deine Einstellungen. Wenn nicht, erst die Einstellunge
 | Item (Heilung, Munition, Spritze, Weste) | 200 – 1.200 | ≤ 3 | 256 × 256 bis 512 × 512 |
 | Gadget (Granaten, Sensor-Mine) | 300 – 800 | ≤ 3 | 256 × 256 |
 | Behälter (Taschen, Kisten) | 500 – 2.500 | ≤ 5 | 512 × 512 (Airdrop 1024 × 1024) |
-| Agent als ganzer Charakter | so wenig wie möglich | ≤ 40 (sonst Hinweis) | 1024 × 1024 |
-| Agenten-Ausrüstung (pro Agent, alte Methode) | ≤ 6.000, je Teil ≤ 4.000 | ≤ 12 | 1024 × 1024 |
+| Agent | so wenig wie möglich | ≤ 40 (sonst Hinweis) | 1024 × 1024 |
 
 Man sieht jedes Modell oft gleichzeitig: Jeder Spieler und jeder Bot trägt Waffe und Ausrüstung, und auf der Karte
 stehen viele Fahrzeuge.
@@ -349,53 +347,20 @@ Abweichung ±15 %.
 getroffen: Roblox R15, klassische Proportionen, **Breite 0,75, Tiefe 0,8**, etwa 5,1 Studs groß. So ist kein Agent
 schwerer zu treffen als ein anderer. Teile eines Agentenmodells zählen nie als Treffer, Schüsse gehen durch.
 
-**Empfohlen: der Agent als ganzer Charakter.** Das Modell in Studio importieren, mit dem **Avatar-Setup** (Reiter
-Avatar › Avatar Setup) zu einem R15-Charakter machen und nach ReplicatedStorage › Assets › Agents legen, benannt wie
-der Agent. Das Spiel bringt es selbst auf die richtige Größe, Richtung und Haltung (auch T- oder A-Pose) und zeigt es
-an Spielern, Bots und in allen Vorschauen. Keine Vorlage, keine Marker, keine besonderen Teilnamen. Die
-Schritt-für-Schritt-Anleitung steht in [agenten-modelle.md](agenten-modelle.md). Bleib ungefähr bei der Körperform:
-Was weit absteht (Flügel, Umhänge), sieht wie ein Ziel aus, zählt aber nicht als Treffer.
-
-**Alte Methode: nur Ausrüstung.** Der Rest dieses Abschnitts gilt nur für Modelle **ohne Humanoid**. Dann trägt der
-sichtbare Standardkörper deine Ausrüstung in den Farben des Agenten (kein Roblox-Gesicht, alle tragen Visier und
-Maske).
-
-**Vorlage:** `art/templates/Agents/Agent.obj` (für Studio `Agent.rbxmx`). Sie enthält den Körper aus dem Spiel in
-Ruhelage (15 Teile, die genau wie die Körperteile heißen), die heutige Ausrüstung schon richtig benannt und den
-Marker `Point_Root` auf 0/0/0.
-
-**Was du baust:** die Ausrüstung eines Agenten aus **starren Teilen**. Jedes Teil hängt an genau einem Körperteil
-und bewegt sich mit ihm. Beispiele: Helm oder Kapuze, Visier, Maske, Weste, Taschen, Schulterpolster, Gürtel,
-Holster, Handschuhe, Knieschoner, kleines Rucksack-Pack.
-
-**Namen:** `<Körperteil>_<Name>` plus bei Bedarf `Primary`, `Accent`, `Glass` oder `Neon`. Zum Beispiel
-`Head_Helmet_Primary`, `Head_Visor_Glass`, `Head_Mask`, `UpperTorso_Vest_Accent`, `LeftUpperArm_Pad_Accent`,
-`LowerTorso_Belt`, `RightLowerLeg_KneePad`.
-
-Körperteile (R15): `Head`, `UpperTorso`, `LowerTorso`, `LeftUpperArm`, `LeftLowerArm`, `LeftHand`, `RightUpperArm`,
-`RightLowerArm`, `RightHand`, `LeftUpperLeg`, `LeftLowerLeg`, `LeftFoot`, `RightUpperLeg`, `RightLowerLeg`,
-`RightFoot`.
+**So kommt ein Agent ins Spiel:** in Blender auf dem Spielkörper bauen (Ruhelage, Arme hängen, ein starres Teil pro
+Körperteil, Namen wie `Head_Suit`, `LeftUpperArm_Suit`), exportieren, in Studio importieren und nach
+ReplicatedStorage › Assets › Agents legen, benannt wie der Agent. Das Spiel zeigt das Modell **genau so wie in
+Blender** an Spielern, Bots und in allen Vorschauen: nichts wird umgefärbt, gestreckt oder gedreht, jedes Teil folgt
+seinem Körperteil. Körpermaße, Gelenkhöhen und die Schritt-für-Schritt-Anleitung stehen in
+[agenten-modelle.md](agenten-modelle.md).
 
 **Regeln:**
 
-- **Eng am Körper:** höchstens 0,25 Studs Abstand zur Körperoberfläche, ein Helm höchstens 0,3 über dem Kopf.
-  Keine großen Rucksäcke, Umhänge, Flügel oder langen Antennen. Was weit absteht, sieht wie ein Ziel aus, zählt aber
-  nicht als Treffer, und das wäre unfair.
-- **Ein Teil, ein Körperteil:** Nichts geht über ein Gelenk hinweg. Eine Weste sitzt nur am `UpperTorso`, der Gürtel
-  ist ein eigenes Teil am `LowerTorso`. Sonst reißt es beim Laufen auseinander.
-- Gebaut wird in der **Ruhelage der Vorlage** (Arme hängen). Das Modell nicht verschieben.
+- **Ein Teil, ein Körperteil:** Nichts geht über ein Gelenk hinweg, sonst reißt es beim Laufen auseinander.
+- **Ruhelage:** Füße auf Höhe 0, Blick nach vorne, Arme hängen gerade nach unten (keine T- oder A-Pose).
 - **Arme und Hände frei** lassen: Sie halten die Waffe. Schulterpolster nicht so breit, dass sie die Waffe verdecken.
-- **Den Körper aus der Vorlage im Modell lassen** (nicht verändern) und `Point_Root` auf **0/0/0** (Boden zwischen
-  den Füßen). Bei reiner Ausrüstung wird der Körper im Spiel nicht angezeigt (bei einem ganzen Charakter schon); das
-  Spiel richtet die Ausrüstung an ihm aus, darum sind Drehung und Lage nach dem Import egal.
-- **Farben:** `Primary` = Agentenfarbe (Uniform), `Accent` = zweite Farbe (Weste, Polster, Visier-Schimmer),
-  `Glass` = getöntes Visier. Diese Zonen färbt das Spiel in den Farben des Agenten.
-
-Wer lieber am echten Körper aus Roblox modelliert: In Studio unten die Befehlszeile (View › Command Bar) öffnen und
-diese Zeile einfügen. Es entsteht `AgentVorlage` (Füße auf Höhe 0, Blick nach vorne), die man per Rechtsklick ›
-**Export Selection…** nach Blender bringt. Die Teile heißen wie die Körperteile und dürfen genauso im Modell bleiben.
-
-       local d = Instance.new("HumanoidDescription") d.WidthScale = 0.75 d.DepthScale = 0.8 d.BodyTypeScale = 0 d.ProportionScale = 0 local m = game:GetService("Players"):CreateHumanoidModelFromDescription(d, Enum.HumanoidRigType.R15) m.Name = "AgentVorlage" m.Parent = workspace local cf, size = m:GetBoundingBox() m:PivotTo(m:GetPivot() - Vector3.new(cf.X, cf.Y - size.Y / 2, cf.Z))
+- **Nah an der Körperform bleiben:** Was weit absteht (Flügel, Umhänge, lange Antennen), sieht wie ein Ziel aus,
+  zählt aber nicht als Treffer, und das wäre unfair.
 
 | Id | Name | Rolle | Farbe (RGB) | Idee für den Look |
 |---|---|---|---|---|
@@ -409,8 +374,8 @@ diese Zeile einfügen. Es entsteht `AgentVorlage` (Füße auf Höhe 0, Blick nac
 | `Trapper` | TRAPPER | Kontrolle | 156, 132, 92 | Fallensteller: Werkzeuggürtel, Draht, Handschuhe |
 | `Volt` | VOLT | Techniker | 204, 190, 86 | Ingenieur: Akku-Pack, Kabel, Werkzeug, `Neon`-Anzeigen |
 
-**Eigener Körper:** geht jetzt über den ganzen Charakter (siehe oben). Er ist nur zu sehen; die Trefferzone bleibt
-der Spielkörper, darum muss der Charakter nicht genau dessen Maße haben.
+**Eigener Körper:** Das Modell ist nur zu sehen; die Trefferzone bleibt der Spielkörper, darum muss das Modell nicht
+genau dessen Maße haben. Liegen die Grenzen der Teile auf seinen Gelenken, bleibt beim Bewegen alles lückenlos.
 
 ## 8. Abgabe
 
@@ -438,13 +403,13 @@ Hochladen nach `art/sources/<Kategorie>/<Id>/` (GitHub) oder als ZIP an die Proj
 - [ ] Keine echten Marken, Logos, Kennzeichen, kein rotes Kreuz
 - [ ] Waffen: Visier offen, Visierlinie frei, Magazin und Verschluss getrennt
 - [ ] Fahrzeuge: Räder auf dem Boden, Sitz-Marker, Insassen sichtbar
-- [ ] Agenten: ganzer Charakter mit allen 15 R15-Körperteilen (Avatar-Setup), höchstens 40 Teile. Alte Methode: eng am Körper, ein Teil pro Körperteil, Körper aus der Vorlage und `Point_Root` auf 0/0/0 im Modell
+- [ ] Agenten: Ruhelage mit hängenden Armen, ein Teil pro Körperteil (`<Körperteil>_<Name>`), höchstens 40 Teile
 - [ ] Lieferordner vollständig (Quelldatei, Export, Texturen, Vorschau, ggf. Lizenz)
 
 **In Studio testen** (wenn du Zugriff hast): Import 3D mit den Einstellungen aus Abschnitt 2, das Modell nach
 ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, dann Play. Bei Waffen steht im Output
-`[Waffenmodelle] <Waffe>: 3D-Modell geladen`, bei Agenten `[Agentenmodelle] <Agent>: Charakter geladen` (alte Methode:
-`3D-Modell geladen`) oder, was fehlt.
+`[Waffenmodelle] <Waffe>: 3D-Modell geladen`, bei Agenten `[Agentenmodelle] <Agent>: Modell geladen` oder, was
+fehlt.
 
 ## 9. Häufige Fehler
 
@@ -466,8 +431,7 @@ ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, 
 
 1. Lieferung prüfen: Checkliste abgehakt, alle Dateien da.
 2. Den Place in Studio öffnen, **Import 3D**, die `.fbx` oder `.glb` wählen. Im Fenster: World Forward **Front**,
-   World Up **Top**, Scale Unit **Stud**, **Merge Meshes aus**. Importieren. Bei einem Agenten danach mit
-   **Avatar › Avatar Setup** zum Charakter machen (Anleitung in [agenten-modelle.md](agenten-modelle.md)).
+   World Up **Top**, Scale Unit **Stud**, **Merge Meshes aus**. Importieren.
 3. Das Modell im Explorer nach **ReplicatedStorage › Assets › Weapons** ziehen und genau wie die Waffe nennen
    (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`), bzw. nach **Assets › Agents** und genau wie der
    Agent (`Viper`, `Bastion`, `Mender`, `Hawk`, `Ghost`, `Blaze`, `Aegis`, `Trapper`, `Volt`). Ein älteres Modell
@@ -475,7 +439,7 @@ ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, 
 4. Bleiben Teile weiß oder grau: im Teil eine **SurfaceAppearance** einfügen und die Bilder aus der Lieferung setzen
    (ColorMap, NormalMap, RoughnessMap, MetalnessMap).
 5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen` bzw.
-   `[Agentenmodelle] Viper: Charakter geladen`. Steht dort ein Fehler, die Meldung an den Designer schicken
+   `[Agentenmodelle] Viper: Modell geladen`. Steht dort ein Fehler, die Meldung an den Designer schicken
    (erklärt in [waffen-modelle.md](waffen-modelle.md), „Meldungen und was zu tun ist“, bzw.
    [agenten-modelle.md](agenten-modelle.md), „Häufige Probleme“).
 6. **Aus Studio veröffentlichen** (Datei › Publish to Roblox). Die Modelle leben im Place: nicht mit `rojo build`
@@ -488,4 +452,4 @@ ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, 
 nicht gelesen. Mit dem ersten fertigen Modell einer Kategorie bekommt das Spiel einmal einen Lader nach genau diesen
 Regeln (mit Prüfmeldungen wie bei Waffen und Agenten). Danach gilt derselbe Ablauf, nur mit dem Ordner der Kategorie.
 - **Vorlagen neu erzeugen**, wenn sich Fahrzeuge im Spiel ändern: `python3 tools/asset_templates.py` (Fahrzeuge und
-  Items), `python3 tools/weapon_templates.py` (Waffen) bzw. `python3 tools/agent_templates.py` (Agenten).
+  Items) bzw. `python3 tools/weapon_templates.py` (Waffen).

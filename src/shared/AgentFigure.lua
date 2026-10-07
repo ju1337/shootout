@@ -1,9 +1,8 @@
 -- AgentFigure (ModuleScript, nur Client)
 -- 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Lobby, Shop, Markt, Hub, Symbole), Waffe in der Hand. Sieht aus
--- wie im Spiel: der Agenten-Körper im Roblox-Standard-Look (runder Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper
--- und Arme in der Uniformfarbe, Beine dunkler) – hat der Agent ein fertiges 3D-Modell (AgentModels, Assets.Agents),
--- trägt die Figur dieses Modell. Körper so schlank wie im Spiel (AgentConfig.BodyScale). Die Figur steht um den
--- Ursprung (Füße auf 0, Blick nach -Z), ihr Drehpunkt liegt auf Höhe 3.
+-- wie im Spiel: das 3D-Modell des Agenten (AgentModels, Assets.Agents) genau wie gebaut, ohne Modell der
+-- Agenten-Körper im Roblox-Standard-Look (runder Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in der
+-- Uniformfarbe, Beine dunkler). Die Figur steht um den Ursprung (Füße auf 0, Blick nach -Z), Drehpunkt auf Höhe 3.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -19,9 +18,9 @@ AgentFigure.CameraCFrame = CFrame.lookAt(Vector3.new(0, 3.1, -9.5), Vector3.new(
 local ARM_RAISE = math.rad(70) -- rechter Arm nach vorne angehoben (hält die Waffe)
 local RIGHT_ARM = { "RightUpperArm", "RightLowerArm", "RightHand" }
 
--- primary = Uniform, accent = zweite Farbe (Farbzonen eines 3D-Modells), weaponSkin = Skin der Waffe (oder nil),
--- weaponName = gezeigte Waffe (Standard: erste Waffe des Agenten); ein 6. Argument (früher Agenten-Skin) wird ignoriert
-function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName, _oldAgentSkin)
+-- primary = Uniform (Standard-Look), weaponSkin = Skin der Waffe (oder nil), weaponName = gezeigte Waffe (Standard:
+-- erste Waffe des Agenten); das 3. Argument (früher zweite Farbe) und ein 6. (früher Agenten-Skin) werden ignoriert
+function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, _oldAgentSkin)
 	local model = Instance.new("Model")
 	local pants = AgentModels.PantsColor(primary)
 	local shoulder = AgentModels.RightShoulder
@@ -51,8 +50,8 @@ function AgentFigure.Build(agent, primary, accent, weaponSkin, weaponName, _oldA
 	face.Texture = AgentModels.FaceTexture
 	face.Face = Enum.NormalId.Front
 	face.Parent = parts.Head
-	-- 3D-Modell des Agenten (ein ganzer Charakter blendet die Körperteile aus, die er abdeckt – samt Gesicht)
-	AgentModels.Attach(model, parts, agent.Id, primary, accent, false)
+	-- 3D-Modell des Agenten (blendet den Körper samt Gesicht aus)
+	AgentModels.Attach(model, parts, agent.Id, false)
 	local gun = GunModels.Build(weaponName or agent.Loadout[1], weaponSkin)
 	gun:PivotTo(CFrame.new(parts.RightHand.Position + Vector3.new(0, -0.12, -0.05)))
 	gun.Parent = model

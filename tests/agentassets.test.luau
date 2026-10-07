@@ -1,7 +1,7 @@
 -- Deine Agentenmodelle: assets/Agents/*.rbxmx (in Studio per Rechtsklick "Save to File..." gespeichert) gegen die
--- Spezifikation (docs/agenten-modelle.md). Jedes Modell muss laden (Name eines Agenten, Ausrüstung an Körperteilen,
--- plausible Lage und Größe), und an einem Körper sitzt jedes Teil eng an seinem Körperteil und zählt nie als Treffer.
--- Hinweise erscheinen als HINWEIS im Log.
+-- Anleitung (docs/agenten-modelle.md). Jedes Modell muss laden (Name eines Agenten, sichtbare Teile), und an einem
+-- Körper hängt jedes Teil angeschweißt an einem Körperteil und zählt nie als Treffer. Hinweise erscheinen als HINWEIS
+-- im Log.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -27,9 +27,6 @@ for _, source in models do
 	for _, warning in entry and entry.Warnings or {} do
 		print("HINWEIS " .. name .. ": " .. warning)
 	end
-	if source:FindFirstChild("Skins") then
-		print("HINWEIS " .. name .. ": Ordner Skins wird nicht mehr benutzt (Agenten-Skins gibt es nicht mehr)")
-	end
 	if entry and entry.Loaded then
 		-- an einem Körper wie im Spiel: jedes Teil hängt an seinem Körperteil und ist nie Trefferzone
 		local body = Instance.new("Model")
@@ -41,10 +38,9 @@ for _, source in models do
 			part.CFrame = rest.CFrame
 			part.Parent = body
 		end
-		local agentColor = Color3.fromRGB(90, 160, 110)
-		AgentBody.Dress(body, agentColor:Lerp(Color3.new(0, 0, 0), 0.6), agentColor, name)
+		AgentBody.Dress(body, Color3.fromRGB(40, 60, 50), name)
 		local count = 0
-		for _, part in body:GetDescendants() do -- (ganzer Charakter: im Untermodell AgentModel)
+		for _, part in body:GetDescendants() do -- (im Untermodell AgentModel)
 			if part:IsA("BasePart") and part:GetAttribute("AgentGear") then
 				count += 1
 				local weld = part:FindFirstChildOfClass("WeldConstraint")
@@ -52,16 +48,14 @@ for _, source in models do
 				check(part.CanQuery == false and part.CanCollide == false, name .. ": " .. part.Name .. " nie Trefferzone")
 			end
 		end
-		check(count > 0 and body:FindFirstChild("AgentVest") == nil, name .. ": trägt die Ausrüstung aus dem Modell")
-		if AgentModels.IsCharacter(name) then
-			-- ganzer Charakter: Spielkörper unsichtbar (Trefferzone), seine Teile bleiben die einzigen mit Körperteil-Namen
-			for _, partName in AgentModels.BodyParts do
-				local part = body:FindFirstChild(partName)
-				check(part and part.Transparency == 1, name .. ": Spielkörper " .. partName .. " unsichtbar")
-				check(part and not part:GetAttribute("AgentGear"), name .. ": " .. partName .. " ist der Spielkörper, nicht das Modell")
-			end
+		check(count > 0, name .. ": trägt das Modell")
+		-- Spielkörper unsichtbar (Trefferzone)
+		for _, partName in AgentModels.BodyParts do
+			local part = body:FindFirstChild(partName)
+			check(part and part.Transparency == 1 and not part:GetAttribute("AgentGear"), name .. ": Spielkörper " .. partName
+				.. " unsichtbar")
 		end
-		print(string.format("%s: %s geladen (%d Teile)", name, AgentModels.IsCharacter(name) and "Charakter" or "3D-Modell", count))
+		print(string.format("%s: Modell geladen (%d Teile)", name, count))
 	end
 end
 

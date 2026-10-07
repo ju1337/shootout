@@ -41,8 +41,7 @@ local function applyUniform(player, character, agent)
 		return
 	end
 	local ok, err = pcall(function()
-		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-		AgentBody.Dress(character, primary, accent, agent.Id)
+		AgentBody.Dress(character, (Cosmetics.AgentColors(player, agent.Id)), agent.Id)
 	end)
 	if not ok then
 		warn("[Agentenmodelle] " .. player.Name .. " konnte nicht als " .. tostring(agent.Id) .. " angezogen werden: "

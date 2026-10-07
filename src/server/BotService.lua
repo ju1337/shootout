@@ -516,7 +516,7 @@ local function rigTemplate(agent)
 		return templates[key]
 	end
 	building[key] = true
-	local primary, accent = Cosmetics.AgentColors(nil, agent.Id)
+	local primary = Cosmetics.AgentColors(nil, agent.Id)
 	local description = AgentBody.Description(primary)
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
 	building[key] = nil
@@ -525,7 +525,7 @@ local function rigTemplate(agent)
 		return nil
 	end
 	model.Archivable = true
-	AgentBody.Dress(model, primary, accent, agent.Id)
+	AgentBody.Dress(model, primary, agent.Id)
 	-- Beim Tod nicht von Roblox zerlegen lassen: das macht corpse() einheitlich (Ragdoll, dann ausblenden)
 	local templateHumanoid = model:FindFirstChildOfClass("Humanoid")
 	if templateHumanoid then

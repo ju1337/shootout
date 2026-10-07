@@ -1,4 +1,3 @@
---!assets art/templates
 -- Agenten-Modelle auf dem Client: AgentModels hält den Start nicht auf, wenn der Ordner Assets.Agents (noch) fehlt
 -- (z.B. im Place noch nicht angelegt oder noch nicht übertragen). Kommen Ordner oder Modelle später an, werden sie
 -- dann geladen. Auf dem Server meldet Studio im Output, was mit jedem Modell los ist.
@@ -11,10 +10,24 @@ local function check(cond, msg)
 end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assets = ReplicatedStorage.Assets
-local folder = assets.Agents
-local template = folder.Agent
+local assets = ReplicatedStorage:FindFirstChild("Assets") or Instance.new("Folder", ReplicatedStorage)
+assets.Name = "Assets"
+local folder = assets:FindFirstChild("Agents") or Instance.new("Folder")
+folder.Name = "Agents"
 folder.Parent = nil -- Ordner fehlt beim Start
+local template = Instance.new("Model") -- ein einfaches Modell: ein Kopf
+template.Name = "Agent"
+local head = Instance.new("Part")
+head.Name = "Head"
+head.Size = Vector3.new(1.2, 1.2, 1.2)
+head.CFrame = CFrame.new(0, 4.5, 0)
+head.Parent = template
+local feet = Instance.new("Part")
+feet.Name = "LeftFoot"
+feet.Size = Vector3.new(0.75, 0.3, 0.8)
+feet.CFrame = CFrame.new(0, 0.15, 0)
+feet.Parent = template
+template.Parent = folder
 
 SIM.IsServer = false
 local started = SIM.Now

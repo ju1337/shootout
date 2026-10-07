@@ -42,7 +42,7 @@ function AgentBody.Description(primary)
 	return description
 end
 
--- Körperteile, an denen ein 3D-Modell hängen kann: [Name] = true
+-- Körperteile, an denen das 3D-Modell hängt: [Name] = true
 AgentBody.GearAnchors = {}
 for _, name in AgentModels.BodyParts do
 	AgentBody.GearAnchors[name] = true
@@ -69,11 +69,9 @@ function AgentBody.Protect(character)
 	end
 end
 
--- Ganzer Charakter: der Spielkörper (Trefferzone) bleibt unsichtbar, solange das Modell der Look ist – egal, wer ihn
--- wieder sichtbar macht (Roblox setzt beim Laden des Aussehens teils Transparenz und Gesicht zurück). Sonst lägen
--- Spielkörper und Modell sichtbar übereinander.
--- [Charakter] = { [Körperteil-Name] = true }: diese Teile des Spielkörpers müssen unsichtbar bleiben (die das Modell abdeckt)
-local hiddenBody = setmetatable({}, { __mode = "k" })
+-- Mit Modell bleibt der Spielkörper (Trefferzone) unsichtbar – egal, wer ihn wieder sichtbar macht (Roblox setzt beim
+-- Laden des Aussehens teils Transparenz und Gesicht zurück). Sonst lägen Spielkörper und Modell sichtbar übereinander.
+local hiddenBody = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: Spielkörper muss unsichtbar bleiben
 local guardedParts = setmetatable({}, { __mode = "k" }) -- [Körperteil] = true: wird schon bewacht
 local revealReported = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: schon im Studio-Output gemeldet
 
@@ -94,8 +92,7 @@ local function guardBodyPart(character, part)
 	end
 	guardedParts[part] = true
 	local function enforce(what)
-		local hidden = hiddenBody[character]
-		if hidden and hidden[part.Name] and part.Parent == character then
+		if hiddenBody[character] and part.Parent == character then
 			if RunService:IsStudio() and not revealReported[character] then
 				revealReported[character] = true
 				print("[Agentenmodelle] " .. character.Name .. ": " .. what .. " am Spielkörper (" .. part.Name
@@ -116,11 +113,18 @@ local function guardBodyPart(character, part)
 	end)
 end
 
+local function removeModel(character)
+	for _, child in character:GetChildren() do
+		if child:GetAttribute("AgentGear") then
+			child:Destroy()
+		end
+	end
+end
+
 -- Eigenen Avatar entfernen (Kleidung, Accessoires), Körperfarben setzen und – hat der Agent ein 3D-Modell
 -- (AgentModels) – das Modell anlegen; sonst bleibt der Standard-Look mit dem Roblox-Gesicht.
--- Kann beliebig oft aufgerufen werden (z.B. nach einem Agentenwechsel); das Modell wird jedes Mal neu an die aktuelle
--- Größe der Körperteile angepasst.
-function AgentBody.Dress(character, primary, accent, agentId)
+-- Kann beliebig oft aufgerufen werden (z.B. nach einem Agentenwechsel); das Modell wird jedes Mal neu angelegt.
+function AgentBody.Dress(character, primary, agentId)
 	for _, obj in character:GetChildren() do
 		if obj:IsA("Accoutrement") or obj:IsA("Shirt") or obj:IsA("Pants") or obj:IsA("ShirtGraphic")
 			or obj:IsA("CharacterMesh") then
@@ -155,14 +159,9 @@ function AgentBody.Dress(character, primary, accent, agentId)
 	colors.RightLegColor3 = pants
 	colors.Parent = character
 
-	-- altes Modell weg (auch Ausrüstung älterer Versionen), dann das neue anlegen
-	for _, child in character:GetChildren() do
-		if child:GetAttribute("AgentGear") then
-			child:Destroy()
-		end
-	end
-	-- Körper wieder sichtbar, mit Gesicht (ein ganzer Charakter blendet ihn gleich wieder aus; nicht während der
-	-- Tarnung)
+	-- altes Modell weg, Körper wieder sichtbar mit Gesicht (das Modell blendet ihn gleich wieder aus; nicht während
+	-- der Tarnung)
+	removeModel(character)
 	hiddenBody[character] = nil
 	local function showBody()
 		if not character:GetAttribute("Cloaked") then
@@ -178,48 +177,38 @@ function AgentBody.Dress(character, primary, accent, agentId)
 	end
 	showBody()
 	-- 3D-Modell des Agenten; geht dabei etwas schief, bleibt der Standard-Look (nie halb angezogen)
-	local ok, attached = pcall(AgentModels.Attach, character, bodyParts, agentId, primary, accent, true)
+	local ok, attached = pcall(AgentModels.Attach, character, bodyParts, agentId, true)
 	if not ok then
 		warn("[Agentenmodelle] " .. tostring(agentId) .. ": Modell konnte nicht angezogen werden (" .. tostring(attached)
 			.. ") – Standard-Look")
-		for _, child in character:GetChildren() do
-			if child:GetAttribute("AgentGear") then
-				child:Destroy()
-			end
-		end
+		removeModel(character)
 		showBody()
 		attached = nil
 	end
-	local look = attached and (AgentModels.IsCharacter(agentId) and "Charakter" or "Modell") or "Standard"
+	local look = attached and "Charakter" or "Standard"
 	if RunService:IsStudio() and character:GetAttribute("AgentLook") ~= look then
-		print("[Agentenmodelle] " .. character.Name .. " als " .. tostring(agentId) .. ": " .. (look == "Standard"
-			and ("Standard-Look" .. (AgentModels.HasAsset(agentId) and "" or " (kein Modell \"" .. tostring(agentId)
-				.. "\" in Assets.Agents)")) or look == "Charakter" and "ganzer Charakter aus dem Modell" or "Ausrüstung aus dem Modell"))
+		print("[Agentenmodelle] " .. character.Name .. " als " .. tostring(agentId) .. ": " .. (attached
+			and "Modell aus Assets.Agents" or ("Standard-Look" .. (AgentModels.HasAsset(agentId) and ""
+				or " (kein Modell \"" .. tostring(agentId) .. "\" in Assets.Agents)"))))
 	end
 	character:SetAttribute("AgentLook", look)
 	character:SetAttribute("AgentLookOf", agentId)
-	if look == "Charakter" then
-		local covered = {}
-		for _, bodyName in AgentModels.PiecesOf(agentId) or {} do
-			covered[bodyName] = true
-		end
-		hiddenBody[character] = covered
+	if attached then
+		hiddenBody[character] = true
 		for _, part in allBodyParts do
-			if covered[part.Name] then
-				hideBodyPart(part)
-				guardBodyPart(character, part)
-			end
+			hideBodyPart(part)
+			guardBodyPart(character, part)
 		end
 	end
 	AgentBody.Protect(character)
 end
 
 -- Was am Look nicht (mehr) stimmt, als Text für den Studio-Output – nil, wenn alles sitzt (Modell an den aktuellen
--- Körperteilen, bei einem ganzen Charakter der Spielkörper samt Gesicht unsichtbar). Roblox tauscht beim Laden des
--- Aussehens manchmal noch Körperteile aus – dann hängt das Modell an den alten Teilen und fällt weg.
+-- Körperteilen, Spielkörper samt Gesicht unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch
+-- Körperteile aus – dann hängt das Modell an den alten Teilen und fällt weg.
 function AgentBody.DressProblem(character, agentId)
-	local present = {} -- [Name] = true für jedes Teil, das an einem Körperteil des Charakters hängt
-	for _, child in character:GetDescendants() do -- auch im Untermodell eines ganzen Charakters
+	local present = {} -- [Name] = true für jedes Modellteil, das an einem Körperteil des Charakters hängt
+	for _, child in character:GetDescendants() do
 		if child:IsA("BasePart") and child:GetAttribute("AgentGear") then
 			local weld = child:FindFirstChildOfClass("WeldConstraint")
 			local part0 = weld and weld.Part0
@@ -230,8 +219,7 @@ function AgentBody.DressProblem(character, agentId)
 		end
 	end
 	-- jedes Teil, das beim Anziehen angelegt wurde, muss noch da sein
-	local look = character:GetAttribute("AgentLook")
-	local expected = (look == "Modell" or look == "Charakter") and AgentModels.PiecesOf(agentId) or {}
+	local expected = character:GetAttribute("AgentLook") == "Charakter" and AgentModels.PiecesOf(agentId) or {}
 	local cloaked = character:GetAttribute("Cloaked")
 	for name, bodyName in expected do
 		local part = character:FindFirstChild(bodyName)
@@ -239,7 +227,7 @@ function AgentBody.DressProblem(character, agentId)
 			if not present[name] then
 				return name .. " fehlt"
 			end
-			if look == "Charakter" and not cloaked then
+			if not cloaked then
 				if part.Transparency < 1 then
 					return "Spielkörper sichtbar (" .. bodyName .. ")"
 				end
