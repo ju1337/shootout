@@ -270,6 +270,51 @@ check(skinHolder and skinHolder.Body and skinHolder.Body.TextureID == "rbxasseti
 	"Mesh und Bones hängen zusammen am Unterkörper")
 check(skinHolder and near(skinHolder.Body.Position, Vector3.new(0, 2.6, 0)), "Mesh steht auf dem Boden")
 
+-- ---------- Modell ohne Rig und ohne Körperteil-Namen (z.B. aus Meshy) ----------
+-- Bleibt ein Stück, genau wie gebaut, fest am Körper: nichts wird zerlegt oder einem falschen Körperteil zugeordnet
+local meshy = Instance.new("Model")
+meshy.Name = "Trapper"
+local MESHY = { { "Mesh_0", Vector3.new(1.6, 2.6, 1), Vector3.new(0, 3.3, 0) },
+	{ "Mesh_1", Vector3.new(1.6, 2.2, 1), Vector3.new(0, 1.1, 0) },
+	{ "Mesh_2", Vector3.new(1.3, 1.3, 1.3), Vector3.new(0, 4.6, 0) } } -- (Mitte = Mitte des Modells, Boden = tiefster Punkt)
+for _, def in MESHY do
+	local part = Instance.new("MeshPart")
+	part.Name = def[1]
+	part.Size = def[2]
+	part.CFrame = CFrame.new(-20, 3, 7) * CFrame.new(def[3])
+	part.Parent = meshy
+end
+meshy.Parent = folder
+step(0.1)
+check(report.Trapper and report.Trapper.Loaded and hasText(report.Trapper.Warnings, "als Ganzes")
+	and string.find(report.Trapper.Info or "", "Humanoid 0", 1, true) ~= nil,
+	"Modell ohne Namen: als Ganzes geladen, Hinweis und Aufbau im Bericht: " .. messages(report.Trapper))
+local meshyBody, meshyParts = restBody(where)
+local meshyHolder = byName(AgentModels.Attach(meshyBody, meshyParts, "Trapper", true))
+for _, def in MESHY do
+	local part = meshyHolder[def[1]]
+	local weldOf = part and part:FindFirstChildOfClass("WeldConstraint")
+	check(part and near(where:ToObjectSpace(part.CFrame).Position, def[3]) and weldOf
+		and weldOf.Part0 == meshyParts.LowerTorso, def[1] .. ": genau wie gebaut, alle am selben Teil")
+end
+-- am Charakter: fest am HumanoidRootPart
+local character0 = SIM.MakeRig("Probe")
+character0:PivotTo(CFrame.new(3, 3, 3))
+local probeParts = { Head = character0.Head, UpperTorso = character0.UpperTorso }
+local probeHolder = byName(AgentModels.Attach(character0, probeParts, "Trapper", true))
+check(probeHolder.Mesh_0 and probeHolder.Mesh_0:FindFirstChildOfClass("WeldConstraint").Part0 == character0.HumanoidRootPart
+	and probeHolder.Mesh_1 ~= nil, "am Charakter: alles fest am HumanoidRootPart (auch ohne Beine im Körper)")
+
+-- ---------- Zwei Modelle mit demselben Namen ----------
+local twinA = meshy:Clone()
+twinA.Name = "Volt"
+twinA.Parent = folder
+local twinB = meshy:Clone()
+twinB.Name = "Volt"
+twinB.Parent = folder
+step(0.1)
+check(report.Volt and hasText(report.Volt.Warnings, "2 Modelle heißen Volt"), "doppelter Name gemeldet: " .. messages(report.Volt))
+
 -- ---------- Rig ohne Gelenke ----------
 -- Humanoid und HumanoidRootPart, aber keine Motor6D: bleibt ein Rig, jedes Teil hängt fest am HumanoidRootPart
 local stiff = Instance.new("Model")

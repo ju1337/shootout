@@ -60,7 +60,11 @@ Knöchel 0,25. Liegen die Grenzen deiner Teile auf diesen Gelenken, bleibt beim 
    beachten). Ein älteres Modell mit demselben Namen vorher löschen.
 5. **Testen:** Das Modell **vor** dem Start einfügen, dann **Play** (F5) und genau diesen Agenten wählen. Im Output:
 
-       [Agentenmodelle] Viper: Rig geladen (17 Teile)        (bzw. "Modell geladen" bei starren Teilen)
+       [Agentenmodelle] Viper: Rig (bewegt sich mit) geladen (17 Teile)
+       [Agentenmodelle] Viper: Aufbau: Model, 17 Teile (16 sichtbar), Humanoid 1, HumanoidRootPart 1, Gelenke 15, Bones 0
+
+   Ohne Rig steht dort `Modell, Teile an den Körperteilen geladen` (Teile heißen `Head_…`, `LeftUpperArm_…` usw.)
+   oder `Modell als Ganzes geladen` (alles andere: genau wie gebaut, als ein Stück am Körper).
        [Agentenmodelle] DeinName als Viper: Modell aus Assets.Agents
 
 6. **Speichern:** **File** › **Publish to Roblox**. Die Modelle leben im Place, nur so bleiben sie erhalten.
@@ -101,7 +105,9 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | Der Agent schaut nach hinten oder zur Seite | In Blender nach vorne (-Y in Blender, -Z in Roblox) ausrichten bzw. beim Import World Forward **Front** wählen. Bei einem R15-Rig zählt die Blickrichtung des HumanoidRootPart. |
 | Ein Teil (z.B. Haare) bewegt sich mit dem falschen Körperteil | Teil umbenennen, sodass es mit dem Körperteil beginnt, z.B. `Head_Hair`. |
 | Arme stehen waagerecht ab | Starre Teile in T-Haltung gebaut: in Blender die Arme hängend modellieren. |
-| Output sagt `Modell geladen` statt `Rig geladen` | Das Modell ist kein Rig (es fehlt der Humanoid oder das HumanoidRootPart). Dann hängt es starr am Körper, ein Modell mit Bones als Ganzes am Unterkörper (Arme und Beine bewegen sich nicht). Abhilfe: Modell in den Workspace ziehen, anklicken › Reiter **Avatar** › **Avatar Setup** bis zum Ende durchlaufen, das fertige Ergebnis nach Assets.Agents legen und wie den Agenten nennen. Danach steht `Rig geladen` im Output. |
+| Output sagt `Modell als Ganzes geladen` | Das Modell ist kein Rig und nicht nach Körperteilen benannt. Es wird **genau wie gebaut** gezeigt und hängt als ein Stück am Körper (keine Löcher, nichts verschoben), Arme und Beine bewegen sich aber nicht mit. Damit sie mitgehen: Modell in den Workspace ziehen › Reiter **Avatar** › **Avatar Setup** bis zum Ende, das Ergebnis nach Assets.Agents (altes Modell löschen!). Dann steht `Rig (bewegt sich mit) geladen` im Output. |
+| `2 Modelle heißen Viper – es zählt nur eins` | In Assets.Agents liegen zwei Modelle mit demselben Namen (z.B. altes und neues). Das alte löschen. |
+| Die Zeile `Aufbau: …` im Output | Zeigt, was im Modell steckt (Teile, Humanoid, HumanoidRootPart, Gelenke, Bones). Ein Rig braucht Humanoid 1 und HumanoidRootPart 1, damit es sich bewegt auch Gelenke. Bei Problemen diese Zeile mitschicken. |
 | `Rig ohne Gelenke` oder `Gelenke heißen nicht wie im R15-Rig` | Das Rig hat keine R15-Gelenke und steht deshalb steif. Ebenfalls mit dem Avatar-Setup zu einem R15-Rig machen. |
 | Ein Rig bewegt sich nicht (steht steif) | Seine Gelenke heißen nicht wie im R15-Rig (z.B. ein R6-Rig mit `Left Shoulder`). Mit dem Avatar-Setup ein R15-Rig daraus machen. |
 | `Modell konnte nicht angezogen werden (…)` oder `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |

@@ -158,6 +158,8 @@ end
 
 local R15_JOINTS = { "Root", "Waist", "Neck", "LeftShoulder", "LeftElbow", "LeftWrist", "RightShoulder", "RightElbow",
 	"RightWrist", "LeftHip", "LeftKnee", "LeftAnkle", "RightHip", "RightKnee", "RightAnkle" }
+-- Ohne Rig werden die Teile nur einzeln an die Körperteile gehängt, wenn mindestens diese so benannt sind
+local SPLIT_CORE = { "Head", "UpperTorso", "LeftUpperArm", "RightUpperArm", "LeftUpperLeg", "RightUpperLeg" }
 local AVATAR_SETUP = "In Studio: Modell im Workspace anklicken › Reiter Avatar › Avatar Setup bis zum Ende, das Ergebnis "
 	.. "nach Assets.Agents legen."
 
@@ -365,13 +367,26 @@ local function loadPieces(source, report)
 		marker:Destroy()
 	end
 
-	-- jedes Teil: Körperteil und Lage im Agentenraum (Boden zwischen den Füßen, Blick -Z)
+	-- Teile einzeln an die Körperteile nur, wenn das Modell ausdrücklich so benannt ist (Kopf, Rumpf, Arme und Beine
+	-- je mit einem Teil <Körperteil>_…) und keine Bones hat. Sonst bleibt es ein Stück: genau wie gebaut, fest am
+	-- Körper (nichts wird zerlegt oder falsch zugeordnet; Arme und Beine bewegen sich dann nicht mit).
+	local named = {}
+	for _, part in template:GetDescendants() do
+		if part:IsA("BasePart") and shown(part) and bodyNameOf(part.Name) then
+			named[bodyNameOf(part.Name)] = true
+		end
+	end
+	local split = not skinned
+	for _, name in SPLIT_CORE do
+		split = split and named[name] == true
+	end
+
+	-- jedes Teil: Körperteil ("" = als Ganzes) und Lage im Agentenraum (Boden zwischen den Füßen, Blick -Z)
 	local covered, count = {}, 0
 	for _, part in template:GetDescendants() do
 		if part:IsA("BasePart") then
 			local inAgent = toAgent * part.CFrame
-			-- mit Bones (gehäutetes Mesh): alles zusammen am Unterkörper, sonst verzöge sich das Mesh
-			local bodyName = skinned and "LowerTorso" or bodyNameOf(part.Name) or nearestBodyPart(inAgent.Position)
+			local bodyName = split and (bodyNameOf(part.Name) or nearestBodyPart(inAgent.Position)) or ""
 			if shown(part) then
 				covered[bodyName] = true
 			end
@@ -384,9 +399,10 @@ local function loadPieces(source, report)
 	end
 	template.Name = AgentModels.ModelName
 	template:SetAttribute("AgentGear", true)
-	if skinned then
-		table.insert(report.Warnings, "gehäutetes Mesh (Bones) ohne Rig: bewegt sich als Ganzes mit dem Körper, Arme "
-			.. "und Beine nicht. " .. AVATAR_SETUP)
+	if not split then
+		table.insert(report.Warnings, "Modell als Ganzes am Körper (genau wie gebaut) – Arme und Beine bewegen sich nicht "
+			.. "mit. Damit sie mitgehen: ein Rig daraus machen (" .. AVATAR_SETUP .. ") oder in Blender je Körperteil ein "
+			.. "Teil <Körperteil>_<Name> bauen (Head_…, UpperTorso_…, LeftUpperArm_… usw.).")
 	else
 		local open = {}
 		for _, name in AgentModels.BodyParts do
@@ -402,13 +418,31 @@ local function loadPieces(source, report)
 		table.insert(report.Warnings, count .. " Teile – für Handys besser höchstens " .. MAX_PARTS
 			.. " (in Blender zusammenfügen)")
 	end
-	return { Pieces = template, Count = count }
+	return { Pieces = template, Count = count, Whole = not split }
 end
 
 -- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
 -- Rig = irgendwo ein Humanoid, und daneben (im selben Modell) ein HumanoidRootPart.
 local function loadAsset(source)
 	local report = { Loaded = false, Errors = {}, Warnings = {} }
+	-- Aufbau des Modells (steht in Studio im Output, hilft bei der Fehlersuche)
+	local counts = { BasePart = 0, Visible = 0, Humanoid = 0, HumanoidRootPart = 0, Joint = 0, Bone = 0 }
+	for _, obj in source:GetDescendants() do
+		if obj:IsA("BasePart") then
+			counts.BasePart += 1
+			counts.Visible += obj.Transparency < 1 and 1 or 0
+			counts.HumanoidRootPart += obj.Name == "HumanoidRootPart" and 1 or 0
+		elseif obj:IsA("Humanoid") then
+			counts.Humanoid += 1
+		elseif isJoint(obj) then
+			counts.Joint += 1
+		elseif obj:IsA("Bone") then
+			counts.Bone += 1
+		end
+	end
+	report.Info = string.format("Aufbau: %s, %d Teile (%d sichtbar), Humanoid %d, HumanoidRootPart %d, Gelenke %d, "
+		.. "Bones %d", source.ClassName, counts.BasePart, counts.Visible, counts.Humanoid, counts.HumanoidRootPart,
+		counts.Joint, counts.Bone)
 	local humanoid = source:FindFirstChildWhichIsA("Humanoid", true)
 	local rig = humanoid and humanoid.Parent
 	local root = rig and rig:FindFirstChild("HumanoidRootPart", true)
@@ -443,6 +477,14 @@ local function loadOne(source)
 	if not ok then
 		data, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(data) } }
 	end
+	local twins = 0
+	for _, other in source.Parent and source.Parent:GetChildren() or {} do
+		twins += other.Name == name and 1 or 0
+	end
+	if twins > 1 then
+		table.insert(report.Warnings, 1, twins .. " Modelle heißen " .. name .. " – es zählt nur eins, die anderen in "
+			.. "Assets.Agents löschen!")
+	end
 	assetReport[name] = report
 	assetData[name] = data
 end
@@ -456,11 +498,15 @@ local function printReport(name)
 	if not report then
 		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Standard-Look")
 	elseif report.Loaded then
-		print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Rig and "Rig" or "Modell") .. " geladen ("
-			.. assetData[name].Count .. " Teile)")
+		local data = assetData[name]
+		print("[Agentenmodelle] " .. name .. ": " .. (data.Rig and "Rig (bewegt sich mit)" or data.Whole
+			and "Modell als Ganzes" or "Modell, Teile an den Körperteilen") .. " geladen (" .. data.Count .. " Teile)")
 	else
 		warn("[Agentenmodelle] " .. name .. ": Modell NICHT geladen, es bleibt der Standard-Look:\n  - "
 			.. table.concat(report.Errors, "\n  - "))
+	end
+	if report and report.Info then
+		print("[Agentenmodelle] " .. name .. ": " .. report.Info)
 	end
 	if report and #report.Warnings > 0 then
 		warn("[Agentenmodelle] " .. name .. ": Hinweise:\n  - " .. table.concat(report.Warnings, "\n  - "))
@@ -519,7 +565,9 @@ local function watchAgents(folder)
 		end)
 	end
 	for _, source in folder:GetChildren() do
-		loadOne(source)
+		if not assetReport[source.Name] then -- (gleicher Name doppelt: das erste zählt, wie beim Neuladen)
+			loadOne(source)
+		end
 		track(source)
 	end
 	folder.ChildAdded:Connect(function(source)
@@ -686,7 +734,15 @@ function AgentModels.Attach(container, parts, agentId, weld)
 			if part:IsA("BasePart") then
 				local bodyName = part:GetAttribute("AgentBody")
 				local body = parts[bodyName]
-				if body then
+				if bodyName == "" then
+					-- als Ganzes: fest am HumanoidRootPart (Figur: am Unterkörper), genau wie gebaut
+					part.CFrame = floor * part:GetAttribute("AgentRest")
+					part.Anchored = not weld
+					part:SetAttribute("AgentGear", true)
+					if weld then
+						weldTo(anchor, part)
+					end
+				elseif body then
 					local rest = restOf and restOf(body) or floor * AgentModels.Body[bodyName].CFrame
 					part.CFrame = body.CFrame * rest:ToObjectSpace(floor * part:GetAttribute("AgentRest"))
 					part.Anchored = not weld
