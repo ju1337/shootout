@@ -475,7 +475,9 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   HumanoidRootPart aus, setzt jedes Körperteil an seinem Gelenk an und dreht Arme und Beine in die Haltung des
   Spiels (T- oder A-Pose geht). Accessoires hängen an dem Körperteil, an das sie geschweißt sind. Zu sehen ist nur
   das Modell, der normale Agentenkörper bleibt unsichtbar als Trefferzone (alle Agenten gleich leicht zu treffen,
-  Teile des Modells nie Trefferzone). Textur-Skins im Ordner `Skins`. Fehlt etwas, bleibt der Standard-Look und
+  Teile des Modells nie Trefferzone). Macht etwas den Spielkörper wieder sichtbar oder tauscht Roblox Körperteile
+  aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an (Kontrolle läuft, solange der Charakter lebt).
+  Textur-Skins im Ordner `Skins`. Fehlt etwas, bleibt der Standard-Look und
   Studio sagt im Output, was fehlt (`[Agentenmodelle] …`). Weiter möglich (alte Methode, Modell ohne Humanoid): nur
   Ausrüstung aus Blender auf den Standardkörper, Teile `<Körperteil>_<Name>`, Vorlage in `art/templates/Agents`
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines

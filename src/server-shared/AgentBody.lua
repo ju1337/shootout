@@ -152,6 +152,51 @@ local function stripFace(head)
 	end
 end
 
+-- Ganzer Charakter: der Spielkörper (Trefferzone) bleibt unsichtbar, solange das Modell der Look ist – egal, wer ihn
+-- wieder sichtbar macht (Roblox setzt beim Laden des Aussehens teils Transparenz und Gesicht zurück). Sonst lägen
+-- Spielkörper und Modell sichtbar übereinander.
+local hiddenBody = setmetatable({}, { __mode = "k" }) -- [Charakter] = true, solange der Spielkörper unsichtbar sein muss
+local guardedParts = setmetatable({}, { __mode = "k" }) -- [Körperteil] = true: wird schon bewacht
+local revealReported = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: schon im Studio-Output gemeldet
+
+local function hideBodyPart(part)
+	if part.Transparency < 1 then
+		part.Transparency = 1
+	end
+	for _, child in part:GetChildren() do
+		if child:IsA("Decal") and child.Transparency < 1 then -- auch Texture (erbt von Decal)
+			child.Transparency = 1
+		end
+	end
+end
+
+local function guardBodyPart(character, part)
+	if guardedParts[part] then
+		return
+	end
+	guardedParts[part] = true
+	local function enforce(what)
+		if hiddenBody[character] and part.Parent == character then
+			if RunService:IsStudio() and not revealReported[character] then
+				revealReported[character] = true
+				print("[Agentenmodelle] " .. character.Name .. ": " .. what .. " am Spielkörper (" .. part.Name
+					.. ") wieder sichtbar gemacht – sofort wieder ausgeblendet, zu sehen bleibt nur das Modell")
+			end
+			hideBodyPart(part)
+		end
+	end
+	part:GetPropertyChangedSignal("Transparency"):Connect(function()
+		if part.Transparency < 1 then
+			enforce("Transparenz")
+		end
+	end)
+	part.ChildAdded:Connect(function(child)
+		if child:IsA("Decal") then
+			enforce("Gesicht/Decal")
+		end
+	end)
+end
+
 -- Eigenen Avatar entfernen (Kleidung, Accessoires, Gesicht), Körperfarben setzen, Ausrüstung neu anlegen.
 -- agentId (optional): hat der Agent ein 3D-Modell (AgentModels), trägt er dessen Ausrüstung, sonst die Quader;
 -- skinId = ausgerüsteter Agenten-Skin (Textur-Skins des Modells, optional).
@@ -164,9 +209,16 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 			obj:Destroy()
 		end
 	end
-	local head = character:FindFirstChild("Head")
-	if head and head:IsA("BasePart") then
-		stripFace(head)
+	-- Körperteile; gibt es einen Namen kurz doppelt (Roblox tauscht gerade Teile aus), zählt das neueste
+	local bodyParts, allBodyParts = {}, {}
+	for _, child in character:GetChildren() do
+		if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] then
+			bodyParts[child.Name] = child
+			table.insert(allBodyParts, child)
+			if child.Name == "Head" then
+				stripFace(child)
+			end
+		end
 	end
 
 	local colors = character:FindFirstChildOfClass("BodyColors") or Instance.new("BodyColors")
@@ -185,14 +237,8 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 			child:Destroy()
 		end
 	end
-	local bodyParts = {}
-	for _, name in AgentModels.BodyParts do
-		local part = character:FindFirstChild(name)
-		if part and part:IsA("BasePart") then
-			bodyParts[name] = part
-		end
-	end
 	-- Körper wieder sichtbar (ein ganzer Charakter blendet ihn gleich wieder aus; nicht während der Tarnung)
+	hiddenBody[character] = nil
 	local function showBody()
 		if not character:GetAttribute("Cloaked") then
 			for _, part in bodyParts do
@@ -222,6 +268,13 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 	end
 	character:SetAttribute("AgentLook", look)
 	character:SetAttribute("AgentLookOf", agentId)
+	if look == "Charakter" then
+		hiddenBody[character] = true
+		for _, part in allBodyParts do
+			hideBodyPart(part)
+			guardBodyPart(character, part)
+		end
+	end
 	if attached then
 		AgentBody.Protect(character)
 		return
@@ -253,45 +306,54 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 	AgentBody.Protect(character)
 end
 
--- Sitzt der Look noch? (kein Roblox-Gesicht, Ausrüstung bzw. Modell an den aktuellen Körperteilen, bei einem ganzen
--- Charakter der Spielkörper unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch Körperteile aus –
--- dann hängt die Ausrüstung an den alten Teilen und fällt weg.
-function AgentBody.IsDressed(character, agentId)
+-- Was am Look nicht (mehr) stimmt, als Text für den Studio-Output – nil, wenn alles sitzt (kein Roblox-Gesicht,
+-- Ausrüstung bzw. Modell an den aktuellen Körperteilen, bei einem ganzen Charakter der Spielkörper unsichtbar).
+-- Roblox tauscht beim Laden des Aussehens manchmal noch Körperteile aus – dann hängt die Ausrüstung an den alten
+-- Teilen und fällt weg.
+function AgentBody.DressProblem(character, agentId)
 	local head = character:FindFirstChild("Head")
 	if head and head:FindFirstChildWhichIsA("Decal") then
-		return false
+		return "Roblox-Gesicht am Kopf"
 	end
-	local anchored = {} -- [Körperteil] = true, wenn Ausrüstung daran geschweißt ist
+	local present = {} -- [Name] = true für jedes Teil, das an einem Körperteil des Charakters hängt
 	for _, child in character:GetChildren() do
 		if child:GetAttribute("AgentGear") then
 			local weld = child:FindFirstChildOfClass("WeldConstraint")
 			local part0 = weld and weld.Part0
 			if not part0 or part0.Parent ~= character then
-				return false -- hängt an einem Körperteil, das es nicht mehr gibt
+				return child.Name .. " hängt an einem Körperteil, das es nicht mehr gibt"
 			end
-			anchored[part0.Name] = true
+			present[child.Name] = true
 		end
 	end
-	local character3d = AgentModels.IsCharacter(agentId)
-	local anchors = AgentModels.AnchorsOf(agentId)
-	if not anchors then
-		anchors = {}
+	-- jedes Teil, das beim Anziehen angelegt wurde (Modell oder – auch als Rückfall – Quader), muss noch da sein
+	local look = character:GetAttribute("AgentLook")
+	local expected = look ~= "Quader" and AgentModels.PiecesOf(agentId) or nil
+	if not expected then
+		expected = {}
 		for _, def in GEAR do
-			anchors[def[2]] = true
+			expected[def[1]] = def[2]
 		end
 	end
-	for name in anchors do
-		local part = character:FindFirstChild(name)
+	for name, bodyName in expected do
+		local part = character:FindFirstChild(bodyName)
 		if part and part:IsA("BasePart") then
-			if not anchored[name] then
-				return false
+			if not present[name] then
+				return name .. " fehlt"
 			end
-			if character3d and part.Transparency < 1 and not character:GetAttribute("Cloaked") then
-				return false
+			if look == "Charakter" and part.Transparency < 1 and not character:GetAttribute("Cloaked") then
+				return "Spielkörper sichtbar (" .. bodyName .. ")"
 			end
 		end
 	end
-	return character:GetAttribute("AgentLookOf") == agentId
+	if character:GetAttribute("AgentLookOf") ~= agentId then
+		return "trägt noch " .. tostring(character:GetAttribute("AgentLookOf"))
+	end
+	return nil
+end
+
+function AgentBody.IsDressed(character, agentId)
+	return AgentBody.DressProblem(character, agentId) == nil
 end
 
 return AgentBody

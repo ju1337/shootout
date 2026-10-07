@@ -249,10 +249,56 @@ for _, p in character:GetChildren() do
 		break
 	end
 end
-character.UpperTorso.Transparency = 0
-check(not AgentBody.IsDressed(character, "Viper"), "fehlendes Modellteil / sichtbarer Körper erkannt")
+check(not AgentBody.IsDressed(character, "Viper"), "fehlendes Modellteil erkannt")
 step(3)
 check(AgentBody.IsDressed(character, "Viper"), "nach kurzer Zeit wieder vollständig angezogen")
+
+-- Macht etwas (Roblox beim Laden des Aussehens, ein Skript) den Spielkörper wieder sichtbar oder hängt ein Gesicht an,
+-- blendet der Server ihn sofort wieder aus: Spielkörper und Modell liegen nie sichtbar übereinander
+character.UpperTorso.Transparency = 0
+step(0.1)
+check(character.UpperTorso.Transparency == 1, "sichtbar gemachter Spielkörper sofort wieder unsichtbar")
+local face = Instance.new("Decal")
+face.Name = "face"
+face.Parent = character.Head
+check(face.Transparency == 1, "neues Gesicht sofort unsichtbar")
+step(0.1)
+check(character.Head:FindFirstChildWhichIsA("Decal") == nil, "neues Gesicht entfernt")
+
+-- Roblox tauscht ein Körperteil aus (wie auf dem Screenshot: neuer Kopf mit Roblox-Gesicht): das neue kommt sichtbar
+-- dazu (kurz gibt es den Namen doppelt), das alte geht – angezogen wird das neue, das Modell hängt daran
+local oldHead = character.Head
+local newHead = Instance.new("MeshPart")
+newHead.Name = "Head"
+newHead.Size = oldHead.Size
+newHead.CFrame = oldHead.CFrame
+Instance.new("Decal", newHead).Name = "face"
+newHead.Parent = character
+step(0.1)
+check(newHead.Transparency == 1 and oldHead.Transparency == 1, "doppelter Kopf: beide unsichtbar")
+oldHead:Destroy()
+step(0.1)
+check(newHead.Transparency == 1 and newHead:FindFirstChildWhichIsA("Decal") == nil
+	and AgentBody.IsDressed(character, "Viper"), "ausgetauschter Kopf: ohne Gesicht neu angezogen")
+local onNewHead = false
+for _, p in character:GetDescendants() do
+	local weld = p:IsA("BasePart") and p:GetAttribute("AgentGear") and p:FindFirstChildOfClass("WeldConstraint")
+	onNewHead = onNewHead or (weld and weld.Part0 == newHead) == true
+end
+check(onNewHead, "Modell hängt am neuen Kopf")
+
+-- Später (nach den ersten Kontrollen) geht ein Modellteil ohne jedes Ereignis verloren: die regelmäßige Kontrolle
+-- zieht neu an, solange der Charakter lebt
+step(25)
+for _, p in character:GetDescendants() do
+	if p:IsA("BasePart") and p:GetAttribute("AgentGear") then
+		p:Destroy()
+		break
+	end
+end
+check(not AgentBody.IsDressed(character, "Viper"), "verlorenes Modellteil erkannt")
+step(6)
+check(AgentBody.IsDressed(character, "Viper"), "regelmäßige Kontrolle: wieder angezogen")
 
 -- Modell während des Spiels entfernt: Quader-Ausrüstung, Körper sichtbar
 folder.Viper:Destroy()

@@ -716,17 +716,17 @@ function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
 end
 
--- Körperteile, an denen das Modell eines Agenten hängt ([Name] = true); nil ohne Modell
-function AgentModels.AnchorsOf(agentId)
+-- Teile, die Attach aus dem Modell eines Agenten anlegt: [Name des Teils] = Körperteil, an dem es hängt; nil ohne Modell
+function AgentModels.PiecesOf(agentId)
 	local asset = agentId and assetData[agentId]
 	if not asset then
 		return nil
 	end
-	local anchors = {}
+	local pieces = {}
 	for _, entry in asset.Gear do
-		anchors[entry.Body] = true
+		pieces[entry.Name] = entry.Body
 	end
-	return anchors
+	return pieces
 end
 
 -- Ist das Modell ein ganzer Charakter (R15-Rig), der den Spielkörper ersetzt?

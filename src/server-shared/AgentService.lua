@@ -421,8 +421,15 @@ local function useUltimate(player)
 		Sub = "Volles Leben  ·  +" .. ult.Armor .. " Rüstung  ·  Fähigkeit bereit" } })
 end
 
--- Nach dem Spawn so oft (Abstände in Sekunden) nachsehen, ob der Look noch sitzt
+-- Nach dem Spawn so oft (Abstände in Sekunden) nachsehen, ob der Look noch sitzt, danach alle DRESS_PERIOD Sekunden,
+-- solange der Charakter lebt
 local DRESS_CHECKS = { 0.5, 1, 1.5, 3, 4, 10 }
+local DRESS_PERIOD = 5
+
+-- Agent, den der Charakter gerade trägt (im Match gilt ein Agentenwechsel erst beim nächsten Spawn)
+local function dressedAgent(player, character)
+	return AgentConfig.Get(character:GetAttribute("AgentLookOf")) or getAgent(player)
+end
 
 local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
@@ -434,34 +441,41 @@ local function setupPlayer(player)
 
 	player.CharacterAdded:Connect(function(character)
 		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
-		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus, die Ausrüstung neu anlegen (einmal für alle
-		-- Teile, die im selben Moment kommen)
+		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus (neue dazu, alte weg), die Ausrüstung neu
+		-- anlegen (einmal für alle Teile, die im selben Moment kommen oder gehen)
 		local redressQueued = false
-		character.ChildAdded:Connect(function(child)
+		local function queueRedress(child)
 			if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] and not redressQueued then
 				redressQueued = true
 				task.defer(function()
 					redressQueued = false
-					applyUniform(player, character, getAgent(player))
+					applyUniform(player, character, dressedAgent(player, character))
 				end)
 			end
-		end)
+		end
+		character.ChildAdded:Connect(queueRedress)
+		character.ChildRemoved:Connect(queueRedress)
 		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 		-- Nachsehen, ob der Look sitzt: Roblox lädt das Aussehen teils erst nach dem Spawn fertig (tauscht Körperteile
-		-- aus, hängt ein Gesicht an) – dann neu anziehen. Läuft auch, wenn unten etwas schiefgeht.
+		-- aus, hängt ein Gesicht an, macht den Körper wieder sichtbar) – dann neu anziehen. Läuft auch, wenn unten
+		-- etwas schiefgeht, und danach regelmäßig, solange der Charakter lebt.
 		task.spawn(function()
-			for _, pause in DRESS_CHECKS do
-				task.wait(pause)
-				if player.Character ~= character or not character.Parent then
+			local round = 0
+			while true do
+				round += 1
+				task.wait(DRESS_CHECKS[round] or DRESS_PERIOD)
+				local living = character:FindFirstChildOfClass("Humanoid")
+				if player.Character ~= character or not character.Parent or (living and living.Health <= 0) then
 					return
 				end
-				local agent = getAgent(player)
-				if not AgentBody.IsDressed(character, agent.Id) then
+				local agent = dressedAgent(player, character)
+				local problem = AgentBody.DressProblem(character, agent.Id)
+				if problem then
 					if RunService:IsStudio() then
-						print("[Agentenmodelle] " .. player.Name .. ": Aussehen nach dem Spawn verändert – neu angezogen")
+						print("[Agentenmodelle] " .. player.Name .. ": Aussehen verändert (" .. problem .. ") – neu angezogen")
 					end
 					applyUniform(player, character, agent)
 				end
@@ -477,7 +491,7 @@ local function setupPlayer(player)
 		if humanoid then
 			AgentConfig.SlimBody(humanoid)
 		end
-		applyUniform(player, character, getAgent(player))
+		applyUniform(player, character, dressedAgent(player, character))
 	end)
 	-- Im Hub und im Markt sieht man einen Agenten- oder Skin-Wechsel sofort (im Match erst beim nächsten Spawn)
 	local function redress()
