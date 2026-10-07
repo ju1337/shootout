@@ -7,7 +7,7 @@
 --   * Zielen (rechte Maustaste, bei Bots sobald sie ein Ziel haben): Waffe wird angelegt – Kimme/Visier
 --     direkt vor das rechte Auge, Kopf neigt sich an den Schaft, Oberkörper etwas vor und gerader zum Ziel,
 --     rechter Ellbogen hoch; Pistolen mit gestreckten Armen auf Augenhöhe
---   * Nachladen (Magazin raus/rein mit der linken Hand), Inspizieren (Taste Y), Pumpen/Schlitten und Rückstoß
+--   * Nachladen (Magazin raus/rein mit der linken Hand), Inspizieren (Taste X), Pumpen/Schlitten und Rückstoß
 -- Jeder Client rechnet das selbst für alle Charaktere in der Nähe: Transform der Gelenke wird nach den
 -- Animationen in RunService.PreSimulation überschrieben. Gelenke sind Motor6Ds oder – mit dem Avatar Joint
 -- Upgrade, Standard bei Spieler-Avataren – AnimationConstraints; beides wird erkannt (findJoint).

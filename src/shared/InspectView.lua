@@ -1,5 +1,5 @@
 -- InspectView (ModuleScript, nur Client)
--- Präsentation beim Inspizieren der Waffe (Taste Y, WeaponClient):
+-- Präsentation beim Inspizieren der Waffe (Taste X, WeaponClient):
 --   * Das HUD verschwindet: die HUD-Oberflächen (HUD_GUIS) werden für die Dauer aus der PlayerGui genommen und danach
 --     unverändert zurückgelegt (die Module, denen sie gehören, merken davon nichts), der Chat wird ausgeblendet.
 --     Die Touch-Knöpfe bleiben, damit man weiter steuern und abbrechen kann.
@@ -265,7 +265,7 @@ local function fillHint()
 	hint.Visible = device ~= "Touch"
 	local key = device == "Gamepad" and "□" or InputActions.Hint("Inspect")
 	if key == "" then
-		key = "Y"
+		key = "X"
 	end
 	local cap = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -112, 0.5, 0), Size = UDim2.fromOffset(30, 30),
 		BackgroundColor3 = C.Text, BackgroundTransparency = 0.88, BorderSizePixel = 0 }, hint)

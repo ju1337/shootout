@@ -5,8 +5,8 @@
 -- Ego-Perspektive: Waffe mit Armen vor der Kamera (ViewModel), Zielen über Kimme und Korn.
 -- Schulterkamera: der Charakter hält die Waffe mit beiden Händen (CharacterPose), dazu das Fadenkreuz (HUD).
 -- Welche Waffen man hat, steht im Charakter-Attribut "Loadout" (vom Server, je nach Agent).
--- Inspizieren (Y, Controller: □ bei vollem Magazin, Touch: INSPEKT): eigene Animation je Waffe (WeaponAnimations),
--- das HUD verschwindet (InspectView); Schießen, Zielen, Nachladen, Messer, Wechsel, Sprinten oder nochmal Y beenden
+-- Inspizieren (X, Controller: □ bei vollem Magazin, Touch: INSPEKT): eigene Animation je Waffe (WeaponAnimations),
+-- das HUD verschwindet (InspectView); Schießen, Zielen, Nachladen, Messer, Wechsel, Sprinten oder nochmal X beenden
 -- es. Der Server zeigt es den anderen (Remotes.Inspect -> Charakter-Attribute, CharacterPose).
 
 local Players = game:GetService("Players")

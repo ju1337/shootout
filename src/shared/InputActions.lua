@@ -39,7 +39,7 @@ InputActions.Bindings = {
 	SpectateNext = { Keys = { Enum.KeyCode.E }, Pad = { Enum.KeyCode.ButtonR1 } },
 	Jump = { Keys = {}, Pad = {} }, -- nur der Touch-Knopf (Tastatur/Controller springen über Roblox)
 	-- Waffe inspizieren; Controller: □ bei vollem Magazin (WeaponClient), Touch: Knopf INSPEKT
-	Inspect = { Keys = { Enum.KeyCode.Y }, Pad = {} },
+	Inspect = { Keys = { Enum.KeyCode.X }, Pad = {} },
 }
 
 -- Beschriftungen für Controller-Tasten (PlayStation)

@@ -13,7 +13,7 @@
 --   ReloadStart (Serverzeit), ReloadTime (Nachladezeit mit Upgrades), ReloadShells (Patronen, Schrotflinte –
 --   die Zeitleiste ergibt sich dann aus WeaponConfig.ShellTiming),
 --   AimPitch (Blick nach oben/unten in Grad), Aiming (zielt),
---   InspectStart (Serverzeit) und InspectWeapon (Waffe): Spieler inspiziert die Waffe (Taste Y, Remotes.Inspect);
+--   InspectStart (Serverzeit) und InspectWeapon (Waffe): Spieler inspiziert die Waffe (Taste X, Remotes.Inspect);
 --   Schießen, Nachladen, Wechseln und Messer beenden es
 
 local Players = game:GetService("Players")
@@ -649,7 +649,7 @@ local function onEquip(player, weaponName)
 	sendAmmo(player)
 end
 
--- Waffe inspizieren (Taste Y): Start bzw. Ende für die Animation bei den anderen Clients. Nur lebend, mit Waffe
+-- Waffe inspizieren (Taste X): Start bzw. Ende für die Animation bei den anderen Clients. Nur lebend, mit Waffe
 -- in der Hand und nicht beim Nachladen; höchstens alle 0,25 s.
 local lastInspect = {}
 local function onInspect(player, on)

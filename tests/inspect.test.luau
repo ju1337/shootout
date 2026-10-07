@@ -1,6 +1,6 @@
--- Waffe inspizieren (Taste Y): jede Waffe hat ihre eigene Animation, die in Ruhe anfängt und endet; das HUD
--- verschwindet währenddessen (InspectView) und kommt unverändert zurück; WeaponClient startet mit Y, beendet von
--- selbst, bei Schuss, Zielen oder nochmal Y und meldet es dem Server; der Server setzt die Attribute für die anderen
+-- Waffe inspizieren (Taste X): jede Waffe hat ihre eigene Animation, die in Ruhe anfängt und endet; das HUD
+-- verschwindet währenddessen (InspectView) und kommt unverändert zurück; WeaponClient startet mit X, beendet von
+-- selbst, bei Schuss, Zielen oder nochmal X und meldet es dem Server; der Server setzt die Attribute für die anderen
 -- und räumt sie bei Wechsel und Nachladen weg.
 local failures = 0
 local function check(cond, msg)
@@ -136,11 +136,17 @@ check(hud.Parent == playerGui and extHud.Parent == playerGui and extHud.Enabled 
 SIM.Advance(0.5, 20)
 check(not playerGui.Inspect.Enabled and not focus.Enabled, "Kino-Ebene und Tiefenschärfe wieder aus")
 
--- WeaponClient: Y startet, läuft von selbst aus; Schuss und nochmal Y beenden
+-- WeaponClient: X startet, läuft von selbst aus; Schuss und nochmal X beenden
 SIM.IsServer = false -- Client-Takt (RenderStepped)
 alice:SetAttribute("Mode", "FFA")
 local WeaponClient = require("WeaponClient")
 local InputActions = require("InputActions")
+-- Taste X, keine andere Aktion auf X (Messer bleibt V)
+check(InputActions.Bindings.Inspect.Keys[1] == Enum.KeyCode.X and InputActions.Hint("Inspect") == "X", "Inspizieren liegt auf X")
+for action, binding in InputActions.Bindings do
+	check(action == "Inspect" or table.find(binding.Keys, Enum.KeyCode.X) == nil, action .. " liegt auch auf X")
+end
+check(InputActions.Bindings.Melee.Keys[1] == Enum.KeyCode.V, "Messer bleibt auf V")
 WeaponClient.Init()
 Remotes.AmmoUpdate.OnClientEvent:Fire("Rifle", 30, 90, false, 30, 0, true)
 SIM.Advance(0.5, 20)
@@ -156,7 +162,7 @@ end
 InputActions.Trigger("Inspect", true)
 InputActions.Trigger("Inspect", false)
 SIM.Advance(0.1, 20)
-check(WeaponClient.Inspecting() ~= nil and WeaponClient.Inspecting().Weapon == "Rifle", "Y startet das Inspizieren")
+check(WeaponClient.Inspecting() ~= nil and WeaponClient.Inspecting().Weapon == "Rifle", "X startet das Inspizieren")
 check(InspectView.IsActive() and hud.Parent == nil, "HUD weg beim Inspizieren")
 check(inspectMessages()[1] == true, "Start an den Server gemeldet")
 local _, duration = WeaponAnimations.Inspect("Rifle")
@@ -167,7 +173,7 @@ InputActions.Trigger("Inspect", true)
 SIM.Advance(0.5, 20)
 InputActions.Trigger("Inspect", true)
 SIM.Advance(0.05, 20)
-check(WeaponClient.Inspecting() == nil and hud.Parent == playerGui, "nochmal Y beendet")
+check(WeaponClient.Inspecting() == nil and hud.Parent == playerGui, "nochmal X beendet")
 InputActions.Trigger("Inspect", true)
 SIM.Advance(0.5, 20)
 InputActions.Trigger("Fire", true)

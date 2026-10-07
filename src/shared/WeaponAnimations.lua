@@ -2,7 +2,7 @@
 -- Nachlade- und Schuss-Animationen aller Waffen als Keyframes. Dieselben Daten bewegen die Waffe vor der
 -- eigenen Kamera (ViewModel) und die Waffe samt Armen der Charaktere in der Third-Person (CharacterPose).
 --
--- Dazu für jede Waffe ein eigenes Inspizieren (Taste Y, WeaponClient), siehe WeaponAnimations.Inspect.
+-- Dazu für jede Waffe ein eigenes Inspizieren (Taste X, WeaponClient), siehe WeaponAnimations.Inspect.
 --
 -- Zeiten sind 0..1 (Anteil der Animationsdauer), Positionen in Modell-Einheiten der Waffe (Griffpunkt =
 -- Ursprung, siehe GunModels). Spuren:
@@ -409,7 +409,7 @@ local FIRES = {
 	LMG = { Duration = 0.05, Events = { { 0, "Eject" } } },
 }
 
--- ---------- Inspizieren (Taste Y) ----------
+-- ---------- Inspizieren (Taste X) ----------
 -- Jede Waffe hat ihren eigenen Ablauf: hochnehmen und die Seite zur Kamera drehen, dann je nach Waffe Magazin
 -- prüfen, Verschluss oder Schlitten antippen, eine Patrone nachschieben, den Deckel öffnen, die Trommel drehen,
 -- wirbeln ... Gebaut für die Ego-Ansicht (die Waffe kommt zur Bildmitte), die Third-Person nimmt dieselben Daten.
