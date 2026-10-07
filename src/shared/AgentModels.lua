@@ -65,6 +65,11 @@ local HEIGHT = 5.1 -- Scheitel bis Sohle des Spielkörpers
 local MIN_HEIGHT, MAX_HEIGHT = 4, 6.5
 local MAX_PARTS = 40 -- mehr Teile kosten auf Handys Leistung (nur ein Hinweis)
 local WELD_NAME = "AgentWeld" -- Schweißung Modell → Spielkörper
+-- Schwarze Füllung in den Körperteilen (Löcher im Modell sind schwarz statt durchsichtig)
+local FILL_PREFIX = "AgentFill_"
+AgentModels.FillPrefix = FILL_PREFIX
+local FILL_SIZE = 0.9
+local FILL_COLOR = Color3.fromRGB(8, 8, 10)
 
 -- [Agent-Id] = { Rig = Modell, Floor = Boden unter dem HumanoidRootPart, Count } (Rig) bzw.
 -- { Pieces = Modell (Teile mit den Attributen AgentBody und AgentRest), Count } (ohne Rig)
@@ -758,6 +763,28 @@ function AgentModels.Attach(container, parts, agentId, weld)
 		for _, part in missing do
 			part:Destroy()
 		end
+	end
+	-- Schwarze Füllung in jedem Körperteil (etwas kleiner, flackert nicht mit der Oberfläche des Modells): wo das Modell
+	-- Löcher oder Lücken hat, sieht man Schwarz statt hindurch. Hängt das Modell als Ganzes (bewegt sich nicht), steht
+	-- auch die Füllung still in der Ruhelage.
+	local still = data.Whole and (container:FindFirstChild("HumanoidRootPart") and restFrames(container) or function(body)
+		return floor * AgentModels.Body[body.Name].CFrame
+	end)
+	for name, body in parts do
+		local fill = Instance.new("Part")
+		fill.Name = FILL_PREFIX .. name
+		fill.Size = body.Size * FILL_SIZE
+		fill.CFrame = still and still(body) or body.CFrame
+		fill.Color = FILL_COLOR
+		fill.Material = Enum.Material.SmoothPlastic
+		fill.CastShadow = false
+		fill.Anchored = not weld
+		prepare(fill)
+		fill:SetAttribute("AgentGear", true)
+		if weld then
+			weldTo(still and anchor or body, fill)
+		end
+		fill.Parent = holder
 	end
 	local count = 0
 	for _, part in holder:GetDescendants() do

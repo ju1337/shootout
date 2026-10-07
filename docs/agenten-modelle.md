@@ -77,6 +77,8 @@ Knöchel 0,25. Liegen die Grenzen deiner Teile auf diesen Gelenken, bleibt beim 
 - **Bewegung:** Ein Rig übernimmt die Gelenkbewegung des Spielkörpers. Starre Teile sind an ihr Körperteil
   geschweißt; ohne Waffe spreizt das Spiel dann die Arme nicht seitlich ab, damit unter den Achseln keine Lücke
   klafft. Beim Tod fällt das Modell mit dem Körper.
+- **Schwarze Füllung:** In jedem Körperteil steckt ein schwarzer Füllkörper (etwas kleiner als das Körperteil).
+  Hat das Modell Löcher oder Lücken, sieht man dort Schwarz statt hindurch.
 - **Treffer:** Der normale Agentenkörper bleibt unsichtbar an derselben Stelle und ist die **Trefferzone**. So sind
   alle Agenten gleich leicht zu treffen. Teile des Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum
   ungefähr bei der Körperform bleiben: Was weit absteht (Flügel, Umhänge), sieht wie ein Ziel aus, ist aber keins.

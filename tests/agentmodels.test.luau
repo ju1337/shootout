@@ -158,8 +158,23 @@ end
 local where = CFrame.new(-7, 3, 18) * CFrame.Angles(0, 0.8, 0) -- irgendwo und gedreht
 local body, parts = restBody(where)
 local holder = AgentModels.Attach(body, parts, "Viper", true)
-check(holder ~= nil and holder == body:FindFirstChild(AgentModels.ModelName) and #holder:GetChildren() == #SUIT
+local function modelParts(model)
+	local count = 0
+	for _, part in model and model:GetChildren() or {} do
+		count += string.sub(part.Name, 1, #AgentModels.FillPrefix) == AgentModels.FillPrefix and 0 or 1
+	end
+	return count
+end
+check(holder ~= nil and holder == body:FindFirstChild(AgentModels.ModelName) and modelParts(holder) == #SUIT
 	and holder:GetAttribute("AgentGear"), "alle Teile im Untermodell " .. AgentModels.ModelName)
+-- Schwarze Füllung in jedem Körperteil (Löcher im Modell sind schwarz), etwas kleiner, an seinem Körperteil
+for name, part in parts do
+	local fill = holder and holder:FindFirstChild(AgentModels.FillPrefix .. name)
+	local fillWeld = fill and fill:FindFirstChildOfClass("WeldConstraint")
+	check(fill ~= nil and fill.Transparency == 0 and fill.Color.R < 0.1 and fill.CanQuery == false
+		and fill.Size.X < part.Size.X and near(fill.Position, part.Position) and fillWeld and fillWeld.Part0 == part,
+		name .. ": schwarze Füllung")
+end
 local placed = byName(holder)
 for i, def in SUIT do
 	local part = placed[def[1]]
@@ -353,7 +368,7 @@ for _, part in figure:GetChildren() do
 		visible += 1
 	end
 end
-check(model ~= nil and #model:GetChildren() == #SUIT and visible == 0, "Figur: nur das Modell zu sehen")
+check(model ~= nil and modelParts(model) == #SUIT and visible == 0, "Figur: Modell zu sehen, Spielkörper nicht")
 for _, part in figure:GetDescendants() do
 	if part:IsA("BasePart") and not part.Anchored then
 		check(false, "Figur: " .. part.Name .. " verankert")
