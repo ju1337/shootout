@@ -45,6 +45,11 @@ local function buildRig(name, skip)
 		p.CFrame = at(cframe)
 		p.Anchored = true
 		p.Parent = rig
+		-- Wert der Roblox-Skalierung (hat jedes Körperteil aus dem Avatar-Setup)
+		local originalSize = Instance.new("Vector3Value")
+		originalSize.Name = "OriginalSize"
+		originalSize.Value = p.Size
+		originalSize.Parent = p
 		parts[partName] = p
 		return p
 	end
@@ -81,6 +86,13 @@ local function buildRig(name, skip)
 	for _, partName in { "Head", "UpperTorso", "LowerTorso", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg",
 		"RightLowerLeg", "RightFoot" } do
 		rigAttachment(partName, joints[partName].Rig, joints[partName].At)
+	end
+	-- Gesichts-Bone im Kopf (dynamischer Kopf aus dem Avatar-Setup)
+	if parts.Head then
+		local jaw = Instance.new("Bone")
+		jaw.Name = "Jaw"
+		jaw.CFrame = CFrame.new(0, -0.4 * SCALE, -0.3 * SCALE)
+		jaw.Parent = parts.Head
 	end
 	-- Accessoire: Kappe, an den Kopf geschweißt
 	if parts.Head then
@@ -136,16 +148,27 @@ end
 local created = AgentModels.Attach(body, bodyParts, "Viper", Color3.new(0, 0, 0), Color3.new(1, 1, 1), nil, true)
 check(created ~= nil and #created == 16, "15 Körperteile + Kappe angehängt (" .. tostring(created and #created) .. ")")
 local byName = {}
+local holder = body:FindFirstChild(AgentModels.ModelName)
+check(holder ~= nil and holder:IsA("Model") and holder:GetAttribute("AgentGear"), "Untermodell für das Modell")
 for _, p in created or {} do
-	check(string.sub(p.Name, 1, 6) == "Model_", p.Name .. ": eigener Name (kein zweites Körperteil im Charakter)")
-	byName[string.sub(p.Name, 7)] = p
+	-- Namen wie im Rig (gehäutete Meshes finden ihre Gelenke darüber), aber im eigenen Untermodell: im Körper selbst
+	-- gibt es kein zweites "Head" usw.
+	check(p.Parent == holder, p.Name .. ": im Untermodell")
+	byName[p.Name] = p
 	local weld = p:FindFirstChildOfClass("WeldConstraint")
 	check(weld and weld.Part0 and weld.Part0.Parent == body, p.Name .. ": angeschweißt")
 	check(p.CanQuery == false and p.CanCollide == false and p:GetAttribute("AgentGear"), p.Name .. ": nie Trefferzone")
 	check(p:FindFirstChildOfClass("Attachment") == nil, p.Name .. ": ohne Rig-Attachments")
+	check(p:FindFirstChildWhichIsA("ValueBase") == nil, p.Name .. ": ohne Werte der Roblox-Skalierung")
 end
+-- Bones bleiben (gehäutete Meshes), mit dem Modell auf Spielgröße gebracht
+local jaw = byName.Head and byName.Head:FindFirstChild("Jaw")
+check(jaw ~= nil and jaw:IsA("Bone") and (jaw.CFrame.Position - Vector3.new(0, -0.4, -0.3)).Magnitude < 0.01,
+	"Gesichts-Bone bleibt, mitskaliert")
 for partName, p in bodyParts do
 	check(p.Transparency == 1, partName .. ": Spielkörper unsichtbar (Trefferzone)")
+	check(byName[partName] ~= nil and body:FindFirstChild(partName) == p, partName .. ": Kopie heißt wie im Rig, im Körper "
+		.. "bleibt der Name beim Spielkörper")
 end
 
 local function near(a, b, tolerance)
@@ -186,12 +209,12 @@ check(before ~= nil and raise ~= nil, "Arm-Daten vorhanden")
 local AgentFigure = require("AgentFigure")
 local figure = AgentFigure.Build(AgentConfig.Get("Viper"), Color3.new(0, 0, 0), Color3.new(1, 1, 1))
 local visibleBody, modelParts = 0, 0
-for _, p in figure:GetChildren() do
+for _, p in figure:GetDescendants() do
 	if p:IsA("BasePart") then
-		if AgentModels.Body[p.Name] then
-			visibleBody += p.Transparency < 1 and 1 or 0
-		elseif p:GetAttribute("AgentGear") then
+		if p:GetAttribute("AgentGear") then
 			modelParts += 1
+		elseif AgentModels.Body[p.Name] then
+			visibleBody += p.Transparency < 1 and 1 or 0
 		end
 	end
 end
@@ -202,7 +225,7 @@ check(visibleBody == 0 and modelParts == 16, "Figur: nur das Modell zu sehen (" 
 AgentBody.Dress(body, Color3.new(0, 0, 0), Color3.new(1, 1, 1), "Mender")
 check(bodyParts.Head.Transparency == 0 and body:FindFirstChild("Head_2") == nil, "anderer Agent: Körper wieder sichtbar")
 local leftover = 0
-for _, p in body:GetChildren() do
+for _, p in body:GetDescendants() do
 	if p:GetAttribute("AgentGear") and p:IsA("MeshPart") then
 		leftover += 1
 	end
@@ -226,13 +249,15 @@ local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.3)
 local function state()
 	local clones, visible = 0, 0
+	local model = character:FindFirstChild(AgentModels.ModelName)
+	for _, p in model and model:GetChildren() or {} do
+		if p:IsA("BasePart") and p:GetAttribute("AgentGear") then
+			clones += 1
+		end
+	end
 	for _, p in character:GetChildren() do
-		if p:IsA("BasePart") then
-			if p:GetAttribute("AgentGear") and string.sub(p.Name, 1, 6) == "Model_" then
-				clones += 1
-			elseif AgentModels.Body[p.Name] and p.Transparency < 1 then
-				visible += 1
-			end
+		if p:IsA("BasePart") and AgentModels.Body[p.Name] and p.Transparency < 1 then
+			visible += 1
 		end
 	end
 	return clones, visible

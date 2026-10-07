@@ -316,8 +316,8 @@ function AgentBody.DressProblem(character, agentId)
 		return "Roblox-Gesicht am Kopf"
 	end
 	local present = {} -- [Name] = true für jedes Teil, das an einem Körperteil des Charakters hängt
-	for _, child in character:GetChildren() do
-		if child:GetAttribute("AgentGear") then
+	for _, child in character:GetDescendants() do -- auch im Untermodell eines ganzen Charakters
+		if child:IsA("BasePart") and child:GetAttribute("AgentGear") then
 			local weld = child:FindFirstChildOfClass("WeldConstraint")
 			local part0 = weld and weld.Part0
 			if not part0 or part0.Parent ~= character then

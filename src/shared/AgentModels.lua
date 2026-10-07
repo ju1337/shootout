@@ -161,6 +161,8 @@ end
 -- Spielkörpers gebracht, jedes Teil an seinem Gelenk angesetzt und – bei Armen und Beinen – in die Richtung des
 -- Körperteils gedreht (so passt auch ein Modell in T- oder A-Haltung auf die hängenden Arme).
 local CHARACTER_HEIGHT = 5.1 -- Kopf oben bis Boden beim Spielkörper
+-- Untermodell im Charakter bzw. in der Figur, in dem die Teile eines ganzen Charakters hängen
+AgentModels.ModelName = "AgentModel"
 -- Gelenke des Spielkörpers in Ruhelage: Ansatzpunkt jedes Körperteils (wie die Rig-Attachments des Standard-R15)
 local JOINTS = {
 	Head = { Rig = "NeckRigAttachment", At = Vector3.new(0, 4.0, 0) },
@@ -305,21 +307,24 @@ local function loadCharacter(source, skins, report)
 			return
 		end
 		for _, child in part:GetDescendants() do
-			-- nur das Aussehen bleibt: keine Teile, Gelenke, Rig-Attachments, Wraps, Skripte. Bones bleiben (ein
-			-- Skinned Mesh aus dem Avatar-Setup verformt sich mit ihnen an den Gelenken), mit der Größe mitskaliert.
+			-- nur das Aussehen bleibt: keine Teile, Gelenke, Rig-Attachments, Wraps, Skripte, keine Werte der
+			-- Roblox-Skalierung (OriginalSize & Co. – sonst skaliert Roblox die Kopie wie ein Körperteil mit). Bones
+			-- bleiben (ein Skinned Mesh aus dem Avatar-Setup verformt sich mit ihnen an den Gelenken), mitskaliert.
 			if child:IsA("Bone") then
 				child.CFrame = CFrame.new(child.CFrame.Position * scale) * child.CFrame.Rotation
 			elseif child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Attachment")
-				or child:IsA("Constraint") or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") then
+				or child:IsA("Constraint") or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") or child:IsA("ValueBase") then
 				child:Destroy()
 			end
 		end
-		-- eigener Name: im Charakter darf es kein zweites "Head" usw. geben (Humanoid, Kamera, Treffer suchen danach)
+		-- Name wie im Rig (Head, UpperTorso, …): gehäutete Meshes aus dem Avatar-Setup finden ihre Gelenke über diese
+		-- Namen. Damit es im Charakter selbst kein zweites "Head" usw. gibt, kommen die Teile in ein eigenes
+		-- Untermodell (Attach, AgentModels.ModelName).
 		local name = cleanName(original.Name)
-		local unique, count = "Model_" .. name, 1
+		local unique, count = name, 1
 		while used[unique] do
 			count += 1
-			unique = "Model_" .. name .. "_" .. count
+			unique = name .. "_" .. count
 		end
 		used[unique] = true
 		local rest = AgentModels.Body[bodyName]
@@ -759,7 +764,8 @@ end
 -- Ausrüstung aus dem 3D-Modell eines Agenten an einen Körper hängen.
 -- parts = { [Körperteil] = BasePart } (fehlt ein Körperteil, fehlt auch seine Ausrüstung), primary/accent = Farben
 -- (Agent bzw. Skin), skinId = ausgerüsteter Agenten-Skin (für Textur-Skins, optional), weld = true: an die
--- Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Jedes Teil bekommt das Attribut AgentGear.
+-- Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Jedes Teil bekommt das Attribut AgentGear; die Teile
+-- eines ganzen Charakters liegen zusammen im Untermodell AgentModels.ModelName (hat ebenfalls AgentGear).
 -- Gibt die neuen Teile zurück, nil, wenn der Agent kein Modell hat.
 function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, weld)
 	local asset = agentId and assetData[agentId]
@@ -767,6 +773,7 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 		return nil
 	end
 	local textures = asset.Skins and skinId and asset.Skins:FindFirstChild(skinId)
+	local holder = container
 	if asset.Character then
 		-- ganzer Charakter: der Spielkörper bleibt als (unsichtbare) Trefferzone, zu sehen ist nur das Modell
 		for _, body in parts do
@@ -777,6 +784,11 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 				end
 			end
 		end
+		-- eigenes Untermodell: die Teile heißen wie im Rig, gehäutete Meshes finden ihre Gelenke so bei den Kopien
+		-- und nicht beim gleichnamigen Spielkörper
+		holder = Instance.new("Model")
+		holder.Name = AgentModels.ModelName
+		holder:SetAttribute("AgentGear", true)
 	end
 	local created = {}
 	for _, entry in asset.Gear do
@@ -816,8 +828,11 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 			joint.Part1 = part
 			joint.Parent = part
 		end
-		part.Parent = container
+		part.Parent = holder
 		table.insert(created, part)
+	end
+	if holder ~= container then
+		holder.Parent = container
 	end
 	return created
 end

@@ -84,6 +84,10 @@ Spiel beim Laden:
   die **Trefferzone**. So sind alle Agenten gleich leicht zu treffen, egal wie breit oder schmal das Modell ist.
   Teile deines Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum: Sehr breite Teile (große Flügel,
   Umhänge, riesige Schulterplatten) sehen wie ein Ziel aus, sind aber keins. Bleib ungefähr bei der Körperform.
+- **Im Explorer während Play:** Dein Modell hängt im Charakter unter **Workspace** › *DeinName* › **AgentModel**. Seine
+  Teile heißen wie im Avatar-Setup (`Head`, `UpperTorso` …), damit gehäutete Meshes an den Gelenken sauber bleiben.
+  Die Teile direkt im Charakter mit denselben Namen sind der unsichtbare Spielkörper (Transparency 1). Macht ihn
+  etwas wieder sichtbar, blendet der Server ihn sofort wieder aus.
 - **Aussehen:** Farben, Materialien und Texturen der Teile bleiben, wie du sie in Studio siehst (SurfaceAppearance
   oder die Textur eines MeshParts). Gesichter als Decal am Kopf bleiben auch. Klassische Kleidung (Shirt- und
   Pants-Objekte) wird **nicht** übernommen: Kleidung gehört in das Modell bzw. seine Textur.
