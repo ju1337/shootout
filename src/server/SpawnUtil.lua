@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Cosmetics = require(ReplicatedStorage:WaitForChild("Shared").Cosmetics)
+local AgentModels = require(ReplicatedStorage:WaitForChild("Shared").AgentModels)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local MovementGuard = require(ServerShared.MovementGuard)
 local AgentBody = require(ServerShared.AgentBody)
@@ -25,10 +26,38 @@ local function loadAgentCharacter(player)
 	return (pcall(player.LoadCharacter, player))
 end
 
+-- Hat der Agent ein 3D-Modell, wird das Modell selbst der Charakter (wie ein StarterCharacter): der geladene
+-- Roblox-Körper wird gelöscht, nur seine Skripte (Animate, Health) wandern ins Modell. Gibt true zurück, wenn getauscht.
+local function useAgentModel(player)
+	local default = player.Character
+	local model = default and AgentModels.BuildCharacter(player:GetAttribute("Agent"))
+	if not model then
+		return false
+	end
+	model.Name = player.Name
+	for _, name in { "Animate", "Health" } do
+		local script = default:FindFirstChild(name)
+		if script and script:IsA("LuaSourceContainer") and not model:FindFirstChild(name) then
+			script.Parent = model
+		end
+	end
+	model:PivotTo(default:GetPivot())
+	player.Character = model
+	model.Parent = workspace
+	default:Destroy()
+	return true
+end
+
 -- Spawnt den Spieler an cframe. protection = Sekunden Schutzschild (0/nil = keins).
 -- Gibt den neuen Charakter zurück oder nil, wenn es nicht geklappt hat.
 function SpawnUtil.Spawn(player, cframe, protection)
 	local ok = loadAgentCharacter(player)
+	if ok then
+		local swapped, err = pcall(useAgentModel, player)
+		if not swapped then
+			warn("[Agentenmodelle] " .. player.Name .. ": Modell als Charakter fehlgeschlagen (" .. tostring(err) .. ")")
+		end
+	end
 	local character = player.Character
 	if not ok or not character then
 		return nil

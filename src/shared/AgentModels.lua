@@ -65,11 +65,6 @@ local HEIGHT = 5.1 -- Scheitel bis Sohle des Spielkörpers
 local MIN_HEIGHT, MAX_HEIGHT = 4, 6.5
 local MAX_PARTS = 40 -- mehr Teile kosten auf Handys Leistung (nur ein Hinweis)
 local WELD_NAME = "AgentWeld" -- Schweißung Modell → Spielkörper
--- Schwarze Füllung in den Körperteilen (Löcher im Modell sind schwarz statt durchsichtig)
-local FILL_PREFIX = "AgentFill_"
-AgentModels.FillPrefix = FILL_PREFIX
-local FILL_SIZE = 0.9
-local FILL_COLOR = Color3.fromRGB(8, 8, 10)
 
 -- [Agent-Id] = { Rig = Modell, Floor = Boden unter dem HumanoidRootPart, Count } (Rig) bzw.
 -- { Pieces = Modell (Teile mit den Attributen AgentBody und AgentRest), Count } (ohne Rig)
@@ -275,7 +270,100 @@ local function loadRig(rig, report)
 	if #visible > MAX_PARTS then
 		table.insert(report.Warnings, #visible .. " Teile – für Handys besser höchstens " .. MAX_PARTS)
 	end
-	return { Rig = template, Floor = min.Y, Count = count }
+	-- Als eigener Charakter (AgentModels.BuildCharacter): das Rig unverändert, nur in Spielgröße; sichtbare Teile sind
+	-- die Trefferzone
+	local character = rig:Clone()
+	local characterRoot = character:FindFirstChild("HumanoidRootPart", true)
+	character.PrimaryPart = characterRoot
+	if scale ~= 1 then
+		character:ScaleTo(character:GetScale() * scale)
+	end
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") and shown(part) then
+			part.CanQuery = true
+		end
+	end
+	return { Rig = template, Floor = min.Y, Count = count, Character = character }
+end
+
+-- Charakter aus einem Modell ohne Rig: unsichtbares HumanoidRootPart (2 hoch, HIP über dem Boden) mit Humanoid, das
+-- Modell genau wie gebaut fest daran (Füße auf dem Boden, Blick -Z), seine sichtbaren Teile sind die Trefferzone. Dazu
+-- zwei unsichtbare Hilfsteile, die das Spiel braucht: "Head" (Kopfschüsse, Namensschild) über dem Kopf des Modells und
+-- "RightHand" (hält die Waffe).
+local HIP = 2
+local function characterFromPieces(pieces)
+	local character = Instance.new("Model")
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.Size = Vector3.new(2, 2, 1)
+	root.CFrame = CFrame.new(0, HIP + 1, 0)
+	root.Transparency = 1
+	root.Parent = character
+	character.PrimaryPart = root
+	local humanoid = Instance.new("Humanoid")
+	humanoid.RigType = Enum.HumanoidRigType.R15
+	humanoid.HipHeight = HIP
+	humanoid.Parent = character
+	local function fix(part, canQuery)
+		part.Anchored = false
+		part.CanCollide = false
+		part.CanQuery = canQuery
+		part.CanTouch = canQuery
+		part.Massless = true
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = root
+		weld.Part1 = part
+		weld.Parent = part
+	end
+	-- Modell als Ordner (kein eigenes Modell im Charakter: Treffer finden den Charakter über das nächste Modell)
+	local folder = Instance.new("Folder")
+	folder.Name = AgentModels.ModelName
+	folder.Parent = character
+	local model = pieces:Clone()
+	local top, headMin, headMax = 0, nil, nil
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.CFrame = part:GetAttribute("AgentRest")
+			part:SetAttribute("AgentBody", nil)
+			part:SetAttribute("AgentRest", nil)
+			part:SetAttribute("AgentGear", nil)
+			fix(part, shown(part))
+			local min, max = bounds({ part }, CFrame.new())
+			top = math.max(top, max.Y)
+			if bodyNameOf(part.Name) == "Head" then
+				headMin, headMax = headMin and headMin:Min(min) or min, headMax and headMax:Max(max) or max
+			end
+			if part.Parent:IsA("Model") then
+				part.Parent = folder
+			end
+		end
+	end
+	model:Destroy()
+	-- Kopf-Trefferzone: etwas größer als der Kopf des Modells (sonst träfe man zuerst das Modell), sonst ganz oben
+	local head = Instance.new("Part")
+	head.Name = "Head"
+	head.Transparency = 1
+	if headMin then
+		head.Size = headMax - headMin + Vector3.new(0.1, 0.1, 0.1)
+		head.CFrame = CFrame.new((headMin + headMax) / 2)
+	else
+		head.Size = Vector3.new(1.4, 1.4, 1.4)
+		head.CFrame = CFrame.new(0, top - 0.65, 0)
+	end
+	head.Parent = character
+	fix(head, true)
+	local hand = Instance.new("Part")
+	hand.Name = "RightHand"
+	hand.Transparency = 1
+	hand.Size = AgentModels.Body.RightHand.Size
+	hand.CFrame = AgentModels.Body.RightHand.CFrame
+	hand.Parent = character
+	fix(hand, false)
+	local grip = Instance.new("Attachment")
+	grip.Name = "RightGripAttachment"
+	grip.CFrame = CFrame.new(0, -0.15, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+	grip.Parent = hand
+	return character
 end
 
 -- ---------- Ohne Rig (z.B. ein Teil <Körperteil>_<Name> pro Körperteil aus Blender) ----------
@@ -423,7 +511,7 @@ local function loadPieces(source, report)
 		table.insert(report.Warnings, count .. " Teile – für Handys besser höchstens " .. MAX_PARTS
 			.. " (in Blender zusammenfügen)")
 	end
-	return { Pieces = template, Count = count, Whole = not split }
+	return { Pieces = template, Count = count, Whole = not split, Character = characterFromPieces(template) }
 end
 
 -- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
@@ -635,6 +723,25 @@ function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
 end
 
+-- Das Modell eines Agenten als eigener Charakter (statt des Roblox-Standardkörpers, für Player.Character und Bots):
+-- ein Rig unverändert, sonst das Modell genau wie gebaut an einem unsichtbaren HumanoidRootPart (siehe
+-- characterFromPieces). Füße auf dem Boden unter dem Drehpunkt (HumanoidRootPart), Blick nach -Z. Attribut
+-- AgentModelCharacter = Agent-Id. nil ohne Modell.
+function AgentModels.BuildCharacter(agentId)
+	local data = agentId and assetData[agentId]
+	if not data or not data.Character then
+		return nil
+	end
+	local character = data.Character:Clone()
+	character:SetAttribute("AgentModelCharacter", agentId)
+	return character
+end
+
+-- Ist der Charakter das Modell selbst (BuildCharacter)?
+function AgentModels.IsModelCharacter(character)
+	return character ~= nil and character:GetAttribute("AgentModelCharacter") ~= nil
+end
+
 -- Wie viele Teile Attach für einen Agenten anlegt (0 ohne Modell)
 function AgentModels.PartCount(agentId)
 	local data = agentId and assetData[agentId]
@@ -763,28 +870,6 @@ function AgentModels.Attach(container, parts, agentId, weld)
 		for _, part in missing do
 			part:Destroy()
 		end
-	end
-	-- Schwarze Füllung in jedem Körperteil (etwas kleiner, flackert nicht mit der Oberfläche des Modells): wo das Modell
-	-- Löcher oder Lücken hat, sieht man Schwarz statt hindurch. Hängt das Modell als Ganzes (bewegt sich nicht), steht
-	-- auch die Füllung still in der Ruhelage.
-	local still = data.Whole and (container:FindFirstChild("HumanoidRootPart") and restFrames(container) or function(body)
-		return floor * AgentModels.Body[body.Name].CFrame
-	end)
-	for name, body in parts do
-		local fill = Instance.new("Part")
-		fill.Name = FILL_PREFIX .. name
-		fill.Size = body.Size * FILL_SIZE
-		fill.CFrame = still and still(body) or body.CFrame
-		fill.Color = FILL_COLOR
-		fill.Material = Enum.Material.SmoothPlastic
-		fill.CastShadow = false
-		fill.Anchored = not weld
-		prepare(fill)
-		fill:SetAttribute("AgentGear", true)
-		if weld then
-			weldTo(still and anchor or body, fill)
-		end
-		fill.Parent = holder
 	end
 	local count = 0
 	for _, part in holder:GetDescendants() do

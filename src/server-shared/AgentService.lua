@@ -40,6 +40,9 @@ local function applyUniform(player, character, agent)
 	if player.Character ~= character then
 		return
 	end
+	if AgentModels.IsModelCharacter(character) then
+		return -- das Modell ist selbst der Charakter: nichts anzuziehen
+	end
 	local ok, err = pcall(function()
 		AgentBody.Dress(character, (Cosmetics.AgentColors(player, agent.Id)), agent.Id)
 	end)
@@ -438,6 +441,14 @@ local function setupPlayer(player)
 	end)
 
 	player.CharacterAdded:Connect(function(character)
+		if AgentModels.IsModelCharacter(character) then
+			-- das Modell ist selbst der Charakter (SpawnUtil): nur Leben, Fähigkeit und Namensanzeige
+			local humanoid = character:WaitForChild("Humanoid")
+			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+			humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+			applyAgent(player, character)
+			return
+		end
 		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
 		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus (neue dazu, alte weg), die Ausrüstung neu
 		-- anlegen (einmal für alle Teile, die im selben Moment kommen oder gehen)
@@ -495,12 +506,29 @@ local function setupPlayer(player)
 	local function redress()
 		local character = player.Character
 		if character and Modes.IsSocial(player:GetAttribute("Mode")) then
-			applyUniform(player, character, getAgent(player))
+			AgentService.Refresh(player)
 		end
 	end
 	player:GetAttributeChangedSignal("Agent"):Connect(redress)
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
+	end
+end
+
+-- Aussehen des Spielers auf seinen Agenten bringen: mit Modell (oder vorher mit Modell) an derselben Stelle neu
+-- spawnen – das Modell ist dann der Charakter –, sonst neu anziehen
+function AgentService.Refresh(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
+	local agent = getAgent(player)
+	if AgentModels.IsModelCharacter(character) or AgentModels.HasAsset(agent.Id) then
+		local SpawnUtil = require(game:GetService("ServerScriptService"):WaitForChild("SpawnUtil"))
+		SpawnUtil.Spawn(player, root.CFrame)
+	else
+		applyUniform(player, character, agent)
 	end
 end
 
@@ -527,7 +555,11 @@ function AgentService.Init()
 		for _, player in Players:GetPlayers() do
 			local character = player.Character
 			if character and character.Parent and getAgent(player).Id == agentId then
-				applyUniform(player, character, getAgent(player))
+				if Modes.IsSocial(player:GetAttribute("Mode")) then
+					AgentService.Refresh(player)
+				else
+					applyUniform(player, character, getAgent(player))
+				end
 			end
 		end
 	end)

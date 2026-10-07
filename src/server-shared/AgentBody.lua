@@ -215,6 +215,9 @@ end
 -- aktuellen Körperteilen, Spielkörper samt Gesicht unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch
 -- Körperteile aus – dann hängt das Modell an den alten Teilen und fällt weg.
 function AgentBody.DressProblem(character, agentId)
+	if AgentModels.IsModelCharacter(character) then
+		return nil -- das Modell ist selbst der Charakter
+	end
 	if character:GetAttribute("AgentLook") == "Charakter" then
 		-- das Modell ist vollständig da und hängt an Teilen, die es im Charakter noch gibt
 		local holder = character:FindFirstChild(AgentModels.ModelName)

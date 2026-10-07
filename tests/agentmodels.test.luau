@@ -159,22 +159,10 @@ local where = CFrame.new(-7, 3, 18) * CFrame.Angles(0, 0.8, 0) -- irgendwo und g
 local body, parts = restBody(where)
 local holder = AgentModels.Attach(body, parts, "Viper", true)
 local function modelParts(model)
-	local count = 0
-	for _, part in model and model:GetChildren() or {} do
-		count += string.sub(part.Name, 1, #AgentModels.FillPrefix) == AgentModels.FillPrefix and 0 or 1
-	end
-	return count
+	return model and #model:GetChildren() or 0
 end
 check(holder ~= nil and holder == body:FindFirstChild(AgentModels.ModelName) and modelParts(holder) == #SUIT
 	and holder:GetAttribute("AgentGear"), "alle Teile im Untermodell " .. AgentModels.ModelName)
--- Schwarze Füllung in jedem Körperteil (Löcher im Modell sind schwarz), etwas kleiner, an seinem Körperteil
-for name, part in parts do
-	local fill = holder and holder:FindFirstChild(AgentModels.FillPrefix .. name)
-	local fillWeld = fill and fill:FindFirstChildOfClass("WeldConstraint")
-	check(fill ~= nil and fill.Transparency == 0 and fill.Color.R < 0.1 and fill.CanQuery == false
-		and fill.Size.X < part.Size.X and near(fill.Position, part.Position) and fillWeld and fillWeld.Part0 == part,
-		name .. ": schwarze Füllung")
-end
 local placed = byName(holder)
 for i, def in SUIT do
 	local part = placed[def[1]]
@@ -383,7 +371,10 @@ local face = standard.Head:FindFirstChildOfClass("Decal")
 check(standard:FindFirstChild(AgentModels.ModelName) == nil and standard.Head.Transparency == 0 and face ~= nil
 	and face.Transparency == 0, "ohne Modell: Standard-Figur mit Gesicht")
 
--- ---------- Spieler und Bots ----------
+-- ---------- Spieler und Bots: das Modell ist selbst der Charakter ----------
+-- Kein Roblox-Standardkörper: der geladene Körper wird durch das Modell ersetzt (wie ein StarterCharacter). Das Modell
+-- steht genau wie gebaut an einem unsichtbaren HumanoidRootPart, seine sichtbaren Teile sind die Trefferzone; dazu
+-- unsichtbare Hilfsteile Head (Kopfschüsse) und RightHand (Waffe).
 game.JobId = "server-1"
 SIM.DataStore("PlayerData_v1")
 local AgentService = require("AgentService")
@@ -395,26 +386,52 @@ alice:SetAttribute("Mode", "Hub")
 alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
+check(character ~= nil and character == alice.Character and AgentModels.IsModelCharacter(character)
+	and character.Parent == workspace, "Spieler als VIPER: das Modell ist der Charakter")
+local function standardParts(model)
+	local count = 0
+	for _, name in AgentModels.BodyParts do
+		local part = model:FindFirstChild(name)
+		count += (part and part:IsA("BasePart") and name ~= "Head" and name ~= "RightHand") and 1 or 0
+	end
+	return count
+end
+check(character and standardParts(character) == 0, "kein Roblox-Standardkörper im Charakter")
 local worn = character and character:FindFirstChild(AgentModels.ModelName)
-check(worn ~= nil and worn:FindFirstChild("Head_Suit") ~= nil and character:GetAttribute("AgentLook") == "Charakter"
-	and AgentBody.IsDressed(character, "Viper"), "Spieler als VIPER trägt das Modell")
--- Boden unter dem HumanoidRootPart (wo der Humanoid ihn hält): jedes Teil so hoch wie im Modell
+check(worn ~= nil and worn:IsA("Folder") and worn:FindFirstChild("Head_Suit") ~= nil, "Teile des Modells im Charakter")
 local root = character.HumanoidRootPart
-local ground = root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + character.Humanoid.HipHeight), 0)
-check(worn and near(ground:ToObjectSpace(worn.Head_Suit.CFrame).Position, SUIT[1][3])
-	and near(ground:ToObjectSpace(worn.UpperTorso_Suit.CFrame).Position, SUIT[15][3]), "am Spieler: Teile wie im Modell")
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+check(humanoid ~= nil and humanoid.MaxHealth == AgentConfig.Get("Viper").Health and character:GetAttribute("Agent") == "Viper",
+	"Leben und Agent gesetzt")
+local ground = root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + humanoid.HipHeight), 0)
+for _, def in SUIT do
+	local part = worn and worn:FindFirstChild(def[1])
+	check(part and near(ground:ToObjectSpace(part.CFrame).Position, def[3]) and part.CanQuery
+		and part:FindFirstChildOfClass("WeldConstraint").Part0 == root, def[1] .. ": genau wie gebaut, Trefferzone")
+end
+local head, hand = character:FindFirstChild("Head"), character:FindFirstChild("RightHand")
+check(head and head.Transparency == 1 and head.CanQuery and near(ground:ToObjectSpace(head.CFrame).Position, SUIT[1][3])
+	and head.Size.X > SUIT[1][2].X, "unsichtbare Kopf-Trefferzone um den Kopf des Modells")
+check(hand and hand.Transparency == 1 and hand:FindFirstChild("RightGripAttachment"), "unsichtbare rechte Hand für die Waffe")
+-- Wechsel im Hub auf einen Agenten ohne Modell: neu gespawnt mit dem Standard-Look, an derselben Stelle
+local before = root.Position
 alice:SetAttribute("Agent", "Ghost")
-step(0.1)
-check(character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild(AgentModels.ModelName) == nil
-	and character.Head.Transparency == 0, "Wechsel im Hub auf einen Agenten ohne Modell: Standard-Look")
+step(0.5)
+local standard = alice.Character
+check(standard ~= character and not AgentModels.IsModelCharacter(standard) and standard:GetAttribute("AgentLook") == "Standard"
+	and (standard.HumanoidRootPart.Position - before).Magnitude < 0.5, "Wechsel auf Agent ohne Modell: Standard-Look")
+alice:SetAttribute("Agent", "Viper")
+step(0.5)
+check(AgentModels.IsModelCharacter(alice.Character), "zurück zu VIPER: wieder das Modell")
+-- Bots: das Modell ist ihr Körper
 local BotService = require("BotService")
 local botTemplate
 task.spawn(function()
 	botTemplate = BotService.__rigTemplate(AgentConfig.Get("Viper"))
 end)
 step(1)
-local botModel = botTemplate and botTemplate:FindFirstChild(AgentModels.ModelName)
-check(botModel ~= nil and botModel:FindFirstChild("Head_Suit") ~= nil, "Bot als VIPER trägt das Modell")
+check(botTemplate ~= nil and AgentModels.IsModelCharacter(botTemplate) and botTemplate:FindFirstChild("Head") ~= nil
+	and botTemplate:FindFirstChildOfClass("Humanoid") ~= nil, "Bot als VIPER: das Modell ist der Körper")
 
 if failures == 0 then
 	print("Agenten-Modelle: alles in Ordnung")

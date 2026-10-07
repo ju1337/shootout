@@ -1,3 +1,4 @@
+--!expose BotService rigTemplate
 -- Agentenmodell als Rig (Humanoid, HumanoidRootPart, Gelenke – wie ein StarterCharacter oder aus dem Avatar-Setup)
 -- unter Assets.Agents, benannt wie der Agent. Hier gedreht und verschoben importiert: Das Rig bleibt komplett
 -- (Gelenke, Rig-Attachments, Bones, Skalierungswerte, Humanoid – nur Skripte nicht), steht mit den Füßen auf dem Boden
@@ -229,7 +230,9 @@ AgentBody.Dress(body, Color3.new(0, 0, 0), "Mender")
 check(bodyParts.Head.Transparency == 0 and body:FindFirstChild(AgentModels.ModelName) == nil,
 	"anderer Agent: Körper wieder sichtbar, Modell entfernt")
 
--- ---------- Im Spiel: Spieler mit diesem Agenten ----------
+-- ---------- Im Spiel: das Rig ist selbst der Charakter ----------
+-- Wie ein StarterCharacter: der Roblox-Standardkörper wird ersetzt, das Rig bleibt unverändert (Gelenke, Bones,
+-- Skalierungswerte, eigener Humanoid), seine sichtbaren Teile sind die Trefferzone.
 game.JobId = "server-1"
 SIM.DataStore("PlayerData_v1")
 local function step(seconds)
@@ -240,108 +243,39 @@ local SpawnUtil = require("SpawnUtil")
 AgentService.Init()
 local alice = SIM.Join("Alice")
 step(1)
-alice:SetAttribute("Mode", "Hub")
+alice:SetAttribute("Mode", "FreeForAll")
 alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.3)
-local function state()
-	local clones, visible = 0, 0
-	local model = character:FindFirstChild(AgentModels.ModelName)
-	for _, p in model and model:GetChildren() or {} do
-		if p:IsA("BasePart") and p:GetAttribute("AgentGear") then
-			clones += 1
-		end
-	end
-	for _, p in character:GetChildren() do
-		if p:IsA("BasePart") and AgentModels.Body[p.Name] and p.Transparency < 1 then
-			visible += 1
-		end
-	end
-	return clones, visible
-end
-local clones, visible = state()
-check(clones > 0 and visible == 0 and character:GetAttribute("AgentLook") == "Charakter"
-	and AgentBody.IsDressed(character, "Viper"), "Spieler mit dem Modell (" .. clones .. " Modellteile, "
-	.. visible .. " Körperteile sichtbar)")
-
--- Fällt etwas weg (z.B. weil Roblox Körperteile nachträglich austauscht), zieht der Server neu an
-for _, p in character:GetChildren() do
-	if p:GetAttribute("AgentGear") then
-		p:Destroy()
-		break
-	end
-end
-check(not AgentBody.IsDressed(character, "Viper"), "fehlendes Modellteil erkannt")
-step(3)
-check(AgentBody.IsDressed(character, "Viper"), "nach kurzer Zeit wieder vollständig angezogen")
-
--- Macht etwas (Roblox beim Laden des Aussehens, ein Skript) den Spielkörper wieder sichtbar oder hängt ein Gesicht an,
--- blendet der Server ihn sofort wieder aus: Spielkörper und Modell liegen nie sichtbar übereinander
-character.UpperTorso.Transparency = 0
-step(0.1)
-check(character.UpperTorso.Transparency == 1, "sichtbar gemachter Spielkörper sofort wieder unsichtbar")
-local face = Instance.new("Decal")
-face.Name = "face"
-face.Parent = character.Head
-check(face.Transparency == 1, "neues Gesicht sofort unsichtbar")
-step(0.1)
-check(face.Transparency == 1 and AgentBody.IsDressed(character, "Viper"), "Gesicht bleibt unsichtbar")
-
--- Roblox tauscht ein Körperteil aus (wie auf dem Screenshot: neuer Kopf mit Roblox-Gesicht): das neue kommt sichtbar
--- dazu (kurz gibt es den Namen doppelt), das alte geht – angezogen wird das neue, das Modell hängt daran
-local oldHead = character.Head
-local newHead = Instance.new("MeshPart")
-newHead.Name = "Head"
-newHead.Size = oldHead.Size
-newHead.CFrame = oldHead.CFrame
-Instance.new("Decal", newHead).Name = "face"
-newHead.Parent = character
-step(0.1)
-check(newHead.Transparency == 1 and oldHead.Transparency == 1, "doppelter Kopf: beide unsichtbar")
-oldHead:Destroy()
-step(0.1)
-check(newHead.Transparency == 1 and newHead:FindFirstChildWhichIsA("Decal").Transparency == 1
-	and AgentBody.IsDressed(character, "Viper"), "ausgetauschter Kopf: unsichtbar samt Gesicht, neu angezogen")
-
--- Später (nach den ersten Kontrollen) geht ein Modellteil ohne jedes Ereignis verloren: die regelmäßige Kontrolle
--- zieht neu an, solange der Charakter lebt
-step(25)
-for _, p in character:GetDescendants() do
-	if p:IsA("BasePart") and p:GetAttribute("AgentGear") then
-		p:Destroy()
-		break
-	end
-end
-check(not AgentBody.IsDressed(character, "Viper"), "verlorenes Modellteil erkannt")
-step(6)
-check(AgentBody.IsDressed(character, "Viper"), "regelmäßige Kontrolle: wieder angezogen")
-
--- Modell während des Spiels entfernt: Standard-Look, Körper samt Gesicht sichtbar
-folder.Viper:Destroy()
+check(character == alice.Character and AgentModels.IsModelCharacter(character) and character.Name == "Alice",
+	"Spieler: das Rig ist der Charakter")
+check(character and character:FindFirstChild("Animate") ~= nil and character.Head.TextureID == "rbxassetid://7"
+	and character.Head.CanQuery and character.Head.Transparency == 0, "Kopf des Rigs: sichtbar, Trefferzone; eigene Skripte laufen mit (wie als StarterCharacter)")
+check(character and character.RightUpperArm:FindFirstChild("RightShoulder") ~= nil
+	and character.RightUpperArm:FindFirstChild("OriginalSize") ~= nil and character.Head:FindFirstChild("Jaw") ~= nil,
+	"Rig unverändert (Gelenke, Skalierungswerte, Bones)")
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+check(humanoid and humanoid.MaxHealth == AgentConfig.Get("Viper").Health and humanoid.DisplayDistanceType
+	== Enum.HumanoidDisplayDistanceType.None, "Leben gesetzt, kein Roblox-Namensschild")
+check(AgentBody.IsDressed(character, "Viper"), "nichts anzuziehen")
+-- im Match bleibt der Charakter beim Agentenwechsel bis zum nächsten Spawn
+alice:SetAttribute("Agent", "Mender")
 step(0.3)
-clones, visible = state()
-local headFace = character.Head:FindFirstChildWhichIsA("Decal")
-check(not AgentModels.HasAsset("Viper") and clones == 0 and visible > 0 and headFace ~= nil and headFace.Transparency == 0
-	and character:GetAttribute("AgentLook") == "Standard", "Modell entfernt: sofort wieder Standard-Look mit Gesicht")
--- … und wieder eingefügt (z.B. in Studio während des Spiels): sofort der ganze Charakter
-buildRig("Viper").Parent = folder
+check(alice.Character == character, "Agentenwechsel im Match: erst beim nächsten Spawn")
+character = SpawnUtil.Spawn(alice, CFrame.new(0, 5, 0))
 step(0.3)
-clones, visible = state()
-check(AgentModels.HasAsset("Viper") and clones > 0 and visible == 0 and character:GetAttribute("AgentLook") == "Charakter",
-	"Modell eingefügt: sofort mit dem Modell angezogen")
-
--- Wirft das Anziehen mit dem Modell einen Fehler, bleibt der Standard-Look (nie halb angezogen)
-local attach = AgentModels.Attach
-AgentModels.Attach = function()
-	error("kaputt")
-end
-SIM.Quiet = true
-AgentBody.Dress(character, Color3.new(0, 0, 0), "Viper")
-SIM.Quiet = false
-AgentModels.Attach = attach
-clones, visible = state()
-check(clones == 0 and visible > 0 and character:GetAttribute("AgentLook") == "Standard", "Fehler im Modell: Standard-Look")
+check(not AgentModels.IsModelCharacter(character) and character:GetAttribute("AgentLook") == "Standard",
+	"nächster Spawn als MENDER (ohne Modell): Standard-Look")
+-- Bot als VIPER: das Rig ist sein Körper
+local BotService = require("BotService")
+local template
+task.spawn(function()
+	template = BotService.__rigTemplate(AgentConfig.Get("Viper"))
+end)
+step(1)
+check(template ~= nil and AgentModels.IsModelCharacter(template) and template:FindFirstChild("RightHand") ~= nil
+	and template:FindFirstChildOfClass("Humanoid").BreakJointsOnDeath == false, "Bot: das Rig ist sein Körper")
 
 if failures == 0 then
-	print("Agentenmodell als R15-Rig: alles in Ordnung")
+	print("Agentenmodell als Rig: alles in Ordnung")
 end

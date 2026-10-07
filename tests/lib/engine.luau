@@ -1199,7 +1199,8 @@ ClassMethods.Team = {
 -- Körper aus einer HumanoidDescription (Player:LoadCharacterWithHumanoidDescription,
 -- Players:CreateHumanoidModelFromDescription): [Modell] = Beschreibung, für Tests
 SIM.DescriptionOf = setmetatable({}, { __mode = "k" })
-SIM.FailDescriptionLoad = false -- true: LoadCharacterWithHumanoidDescription schlägt fehl (z.B. Asset nicht ladbar)
+SIM.FailDescriptionLoad = false
+SIM.CharacterAddedOnSet = true -- Player.Character = Modell feuert CharacterAdded (false: alte Tests ohne Ereignis) -- true: LoadCharacterWithHumanoidDescription schlägt fehl (z.B. Asset nicht ladbar)
 
 local function loadCharacter(self, description)
 	local old = self.Character
@@ -1212,7 +1213,7 @@ local function loadCharacter(self, description)
 	local model = SIM.MakeRig(self.Name)
 	SIM.DescriptionOf[model] = description
 	model.Parent = services.Workspace
-	self.Character = model
+	rawget(self, "__props").Character = model
 	self.CharacterAdded:Fire(model)
 	if SIM.LoadCharacterDelay > 0 then
 		task.wait(SIM.LoadCharacterDelay) -- wie in Roblox: LoadCharacter wartet, bis das Aussehen geladen ist
@@ -1267,6 +1268,15 @@ ClassInit.Player = function(self)
 	props.Neutral = true
 end
 ClassSetters.Player = {
+	-- wie in Roblox: Player.Character auf ein neues Modell setzen löst CharacterAdded aus
+	Character = function(self, value)
+		local props = rawget(self, "__props")
+		local old = props.Character
+		props.Character = value
+		if value and value ~= old and SIM.CharacterAddedOnSet then
+			self.CharacterAdded:Fire(value)
+		end
+	end,
 	Name = function(self, value)
 		local props = rawget(self, "__props")
 		props.Name = value

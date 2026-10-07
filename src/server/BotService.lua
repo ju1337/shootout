@@ -515,6 +515,17 @@ local function rigTemplate(agent)
 	if templates[key] then
 		return templates[key]
 	end
+	-- Agent mit 3D-Modell: das Modell ist selbst der Körper des Bots (kein Roblox-Standardkörper)
+	local own = AgentModels.BuildCharacter(agent.Id)
+	if own then
+		own.Archivable = true
+		local ownHumanoid = own:FindFirstChildOfClass("Humanoid")
+		if ownHumanoid then
+			ownHumanoid.BreakJointsOnDeath = false
+		end
+		templates[key] = own
+		return own
+	end
 	building[key] = true
 	local primary = Cosmetics.AgentColors(nil, agent.Id)
 	local description = AgentBody.Description(primary)
