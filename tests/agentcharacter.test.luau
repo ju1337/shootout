@@ -1,8 +1,9 @@
--- Agentenmodell als R15-Rig (wie aus dem Avatar-Setup von Studio, mit Humanoid und HumanoidRootPart) unter
--- Assets.Agents, benannt wie der Agent. Hier gedreht und verschoben importiert und mit Armen in T-Haltung: Vorne ist,
--- wohin das HumanoidRootPart schaut, und sonst bleibt alles genau wie modelliert (auch die waagerechten Arme). Gelenke,
--- Rig-Attachments und Werte der Roblox-Skalierung fallen weg, Bones (gehäutete Meshes) bleiben. Der Spielkörper bleibt
--- unsichtbar als Trefferzone; der Server sorgt dafür, dass das so bleibt (Roblox tauscht Teile aus, macht sie sichtbar …).
+-- Agentenmodell als Rig (Humanoid, HumanoidRootPart, Gelenke – wie ein StarterCharacter oder aus dem Avatar-Setup)
+-- unter Assets.Agents, benannt wie der Agent. Hier gedreht und verschoben importiert: Das Rig bleibt komplett
+-- (Gelenke, Rig-Attachments, Bones, Skalierungswerte, Humanoid – nur Skripte nicht), steht mit den Füßen auf dem Boden
+-- und schaut nach vorne, sein HumanoidRootPart hängt am Spielkörper, und seine Gelenke übernehmen jedes Bild die
+-- Bewegung des Spielkörpers. Beim Tod fällt es mit. Der Spielkörper bleibt unsichtbar als Trefferzone; der Server sorgt
+-- dafür, dass das so bleibt (Roblox tauscht Teile aus, macht sie sichtbar …).
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -12,6 +13,10 @@ local function check(cond, msg)
 end
 local function near(a, b, tolerance)
 	return (a - b).Magnitude <= (tolerance or 1e-3)
+end
+local function same(a, b)
+	return near(a.Position, b.Position, 1e-6) and a.RightVector:Dot(b.RightVector) > 0.99999
+		and a.UpVector:Dot(b.UpVector) > 0.99999
 end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -45,6 +50,30 @@ for _, side in { -1, 1 } do
 end
 LAYOUT.Cap = { Vector3.new(1.3, 0.3, 1.3), CFrame.new(0, 5.2, 0) } -- Accessoire, an den Kopf geschweißt
 
+-- Gelenknamen wie im R15-Rig (alle hier am Unterkörper aufgehängt, Root am HumanoidRootPart)
+local JOINT = { Head = "Neck", UpperTorso = "Waist", LowerTorso = "Root", LeftUpperArm = "LeftShoulder",
+	LeftLowerArm = "LeftElbow", LeftHand = "LeftWrist", RightUpperArm = "RightShoulder", RightLowerArm = "RightElbow",
+	RightHand = "RightWrist", LeftUpperLeg = "LeftHip", LeftLowerLeg = "LeftKnee", LeftFoot = "LeftAnkle",
+	RightUpperLeg = "RightHip", RightLowerLeg = "RightKnee", RightFoot = "RightAnkle" }
+
+-- Gelenke wie im Rig: Part1 = partName, Part0 = HumanoidRootPart (Root) bzw. LowerTorso, in Ruhelage
+local function addJoints(model, parts, root)
+	for partName, jointName in JOINT do
+		local part, parent = parts[partName], partName == "LowerTorso" and root or parts.LowerTorso
+		if part and parent then
+			local motor = Instance.new("Motor6D")
+			motor.Name = jointName
+			motor.Part0 = parent
+			motor.Part1 = part
+			motor.C0 = parent.CFrame:ToObjectSpace(part.CFrame)
+			motor.C1 = CFrame.new()
+			motor.Transform = CFrame.new()
+			motor.Parent = part
+		end
+	end
+	return model
+end
+
 local function buildRig(name, skip)
 	local rig = Instance.new("Model")
 	rig.Name = name
@@ -62,6 +91,7 @@ local function buildRig(name, skip)
 			p.Name = partName
 			p.Size = def[1]
 			p.CFrame = PLACE * def[2]
+			p.TextureID = "rbxassetid://7"
 			p.Parent = rig
 			local originalSize = Instance.new("Vector3Value") -- Wert der Roblox-Skalierung (aus dem Avatar-Setup)
 			originalSize.Name = "OriginalSize"
@@ -73,40 +103,31 @@ local function buildRig(name, skip)
 			parts[partName] = p
 		end
 	end
-	for partName, p in parts do
-		if partName ~= "LowerTorso" and partName ~= "Cap" then
-			local motor = Instance.new("Motor6D")
-			motor.Name = partName
-			motor.Part0 = parts.LowerTorso
-			motor.Part1 = p
-			motor.Parent = p
-		end
-	end
-	if parts.Head then
-		local jaw = Instance.new("Bone") -- Gesichts-Bone (dynamischer Kopf)
-		jaw.Name = "Jaw"
-		jaw.CFrame = CFrame.new(0, -0.4, -0.3)
-		jaw.Parent = parts.Head
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = parts.Cap
-		weld.Part1 = parts.Head
-		weld.Parent = parts.Cap
-	end
+	addJoints(rig, parts, root)
+	local jaw = Instance.new("Bone") -- Gesichts-Bone (dynamischer Kopf)
+	jaw.Name = "Jaw"
+	jaw.CFrame = CFrame.new(0, -0.4, -0.3)
+	jaw.Parent = parts.Head
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = parts.Cap
+	weld.Part1 = parts.Head
+	weld.Parent = parts.Cap
+	Instance.new("Script", rig).Name = "Animate" -- Skripte laufen im Spiel nicht mit
 	return rig
 end
 
 buildRig("Viper").Parent = folder
-buildRig("Bastion", "LeftHand").Parent = folder -- ohne linke Hand
+buildRig("Bastion", "LeftHand").Parent = folder -- ohne linke Hand: ein Rig lädt trotzdem
 SIM.Advance(0.1) -- geladen wird am Ende des Moments
 SIM.IsServer = true
 local report = AgentModels.AssetReport()
-check(report.Viper and report.Viper.Loaded and #report.Viper.Warnings == 0, "Viper: R15-Rig geladen "
+check(report.Viper and report.Viper.Loaded and #report.Viper.Warnings == 0, "Viper: Rig geladen "
 	.. (report.Viper and table.concat(report.Viper.Errors, "; ") .. table.concat(report.Viper.Warnings, "; ") or ""))
-check(report.Bastion and report.Bastion.Loaded
-	and string.find(table.concat(report.Bastion.Warnings, " "), "LeftHand", 1, true) ~= nil,
-	"fehlende Hand: lädt trotzdem, Hinweis")
+check(report.Bastion and report.Bastion.Loaded, "Rig ohne linke Hand lädt")
+check(AgentModels.PartCount("Viper") == 17, "17 Teile (15 Körperteile, Kappe, HumanoidRootPart): "
+	.. AgentModels.PartCount("Viper"))
 
--- An einen Körper in Ruhelage hängen (wie AgentBody.Dress an Spielern und Bots)
+-- Spielkörper in Ruhelage mit denselben Gelenken (wie AgentBody.Dress an Spielern und Bots)
 local body = Instance.new("Model")
 local bodyParts = {}
 for _, partName in AgentModels.BodyParts do
@@ -118,27 +139,90 @@ for _, partName in AgentModels.BodyParts do
 	p.Parent = body
 	bodyParts[partName] = p
 end
-local created = AgentModels.Attach(body, bodyParts, "Viper", true)
-check(created ~= nil and #created == 16, "15 Körperteile + Kappe angehängt (" .. tostring(created and #created) .. ")")
-local holder = body:FindFirstChild(AgentModels.ModelName)
-local byName = {}
-for _, p in created or {} do
-	-- Namen wie im Rig (gehäutete Meshes finden ihre Gelenke darüber), im eigenen Untermodell
-	check(p.Parent == holder, p.Name .. ": im Untermodell")
-	byName[p.Name] = p
-	check(p:FindFirstChildOfClass("Motor6D") == nil and p:FindFirstChildOfClass("Attachment") == nil
-		and p:FindFirstChildWhichIsA("ValueBase") == nil, p.Name .. ": ohne Gelenke, Rig-Attachments und Skalierungswerte")
-	-- genau wie modelliert, Blick nach vorne (das Rig war um 90° gedreht)
-	local def = LAYOUT[p.Name]
-	check(def and near(p.Position, def[2].Position) and near(p.Size, def[1])
-		and p.CFrame.LookVector:Dot(Vector3.new(0, 0, -1)) > 0.9999, p.Name .. ": wie modelliert")
+addJoints(body, bodyParts, nil)
+local holder = AgentModels.Attach(body, bodyParts, "Viper", true)
+check(holder ~= nil and holder == body:FindFirstChild(AgentModels.ModelName) and holder:GetAttribute("AgentGear"),
+	"Rig im Untermodell " .. AgentModels.ModelName)
+holder = holder or Instance.new("Model")
+local modelRoot = holder:FindFirstChild("HumanoidRootPart")
+check(modelRoot ~= nil and holder.PrimaryPart == modelRoot, "HumanoidRootPart bleibt (PrimaryPart)")
+-- Rig bleibt komplett: Gelenke, Rig-Attachments, Bones, Skalierungswerte; nur Skripte sind weg
+for partName, def in LAYOUT do
+	local p = holder:FindFirstChild(partName)
+	check(p ~= nil, partName .. " da")
+	if p then
+		check(near(p.Position, def[2].Position) and near(p.Size, def[1]) and p.TextureID == "rbxassetid://7"
+			and p.CFrame.LookVector:Dot(Vector3.new(0, 0, -1)) > 0.9999,
+			partName .. ": wie modelliert, Blick nach vorne (" .. tostring(p.Position) .. ")")
+		check(p:FindFirstChild(partName .. "RigAttachment") ~= nil and p:FindFirstChild("OriginalSize") ~= nil,
+			partName .. ": Rig-Attachment und Skalierungswert bleiben")
+		check(p.CanQuery == false and p.CanCollide == false and p.CanTouch == false and p.Massless and not p.Anchored
+			and p:GetAttribute("AgentGear"), partName .. ": nie Trefferzone, bewegt sich mit")
+	end
+	if JOINT[partName] then
+		local motor = p and p:FindFirstChild(JOINT[partName])
+		check(motor ~= nil and motor:IsA("Motor6D") and motor.Part1 == p, partName .. ": Gelenk " .. JOINT[partName] .. " bleibt")
+	end
 end
-local jaw = byName.Head and byName.Head:FindFirstChild("Jaw")
+local jaw = holder:FindFirstChild("Head") and holder.Head:FindFirstChild("Jaw")
 check(jaw ~= nil and jaw:IsA("Bone") and near(jaw.CFrame.Position, Vector3.new(0, -0.4, -0.3)), "Gesichts-Bone bleibt")
-check(byName.Cap and byName.Cap:FindFirstChildOfClass("WeldConstraint").Part0 == bodyParts.Head, "Kappe am Kopf")
+check(holder:FindFirstChild("Animate") == nil, "Skripte des Modells laufen nicht mit")
+local inner = holder:FindFirstChildOfClass("Humanoid")
+check(inner ~= nil and inner.EvaluateStateMachine == false and inner.DisplayDistanceType
+	== Enum.HumanoidDisplayDistanceType.None, "Humanoid des Modells bleibt, steuert aber nichts")
+local rootWeld = modelRoot and modelRoot:FindFirstChildOfClass("WeldConstraint")
+check(rootWeld ~= nil and rootWeld.Part0 == bodyParts.LowerTorso and rootWeld.Part1 == modelRoot,
+	"Rig am Spielkörper angeschweißt")
 for partName, p in bodyParts do
 	check(p.Transparency == 1 and body:FindFirstChild(partName) == p, partName .. ": Spielkörper unsichtbar, behält den Namen")
 end
+
+-- Jedes Bild (Client): die Gelenke des Rigs übernehmen die Bewegung der gleichnamigen Gelenke des Spielkörpers
+local swing = CFrame.Angles(math.rad(40), 0, math.rad(-10))
+bodyParts.RightUpperArm.RightShoulder.Transform = swing
+bodyParts.LowerTorso.Root.Transform = CFrame.new(0, -0.2, 0)
+AgentModels.SyncJoints(body)
+check(same(holder.RightUpperArm.RightShoulder.Transform, swing) and same(holder.LowerTorso.Root.Transform,
+	CFrame.new(0, -0.2, 0)) and same(holder.Head.Neck.Transform, CFrame.new()), "Gelenke übernommen")
+-- Spielkörper ausgetauscht (neue Gelenke): neu zugeordnet
+local oldShoulder = bodyParts.RightUpperArm.RightShoulder
+local newShoulder = oldShoulder:Clone()
+oldShoulder:Destroy()
+newShoulder.Transform = CFrame.Angles(0, 0, math.rad(30))
+newShoulder.Parent = bodyParts.RightUpperArm
+AgentModels.SyncJoints(body)
+check(same(holder.RightUpperArm.RightShoulder.Transform, newShoulder.Transform), "neues Gelenk des Spielkörpers übernommen")
+
+-- Tod: Körperteile des Rigs an die gleichnamigen Teile des Spielkörpers geschweißt (fällt mit)
+AgentModels.WeldToBody(body)
+local welded = holder.RightUpperArm:FindFirstChildOfClass("WeldConstraint")
+check(holder.RightUpperArm:FindFirstChildOfClass("Motor6D") == nil and welded ~= nil
+	and welded.Part0 == bodyParts.RightUpperArm, "Tod: Rig hängt an den Teilen des Spielkörpers")
+
+-- Figuren (Menüs, Shop, Markt): Rig wie gebaut, verankert, Körper unsichtbar, Waffe in seiner Hand
+local AgentFigure = require("AgentFigure")
+local figure = AgentFigure.Build(AgentConfig.Get("Viper"), Color3.new(0, 0, 0), Color3.new(1, 1, 1))
+local worn = figure:FindFirstChild(AgentModels.ModelName)
+local visibleBody = 0
+for _, p in figure:GetChildren() do
+	if p:IsA("BasePart") and AgentModels.Body[p.Name] and p.Transparency < 1 then
+		visibleBody += 1
+	end
+end
+check(worn ~= nil and visibleBody == 0 and near(worn.Head.Position, LAYOUT.Head[2].Position)
+	and near(worn.LeftFoot.Position, LAYOUT.LeftFoot[2].Position), "Figur: Rig wie gebaut, Füße auf dem Boden")
+for _, p in figure:GetDescendants() do
+	if p:IsA("BasePart") and not p.Anchored then
+		check(false, "Figur: " .. p.Name .. " verankert")
+	end
+end
+local gun
+for _, child in figure:GetChildren() do
+	if child:IsA("Model") and child ~= worn then
+		gun = child
+	end
+end
+check(worn and gun and (gun:GetPivot().Position - worn.RightHand.Position).Magnitude < 0.3, "Waffe in der Hand des Rigs")
 
 -- Erneut anziehen mit einem Agenten ohne Modell: Körper wieder sichtbar, Modell weg
 AgentBody.Dress(body, Color3.new(0, 0, 0), "Mender")
@@ -218,12 +302,6 @@ oldHead:Destroy()
 step(0.1)
 check(newHead.Transparency == 1 and newHead:FindFirstChildWhichIsA("Decal").Transparency == 1
 	and AgentBody.IsDressed(character, "Viper"), "ausgetauschter Kopf: unsichtbar samt Gesicht, neu angezogen")
-local onNewHead = false
-for _, p in character:GetDescendants() do
-	local weld = p:IsA("BasePart") and p:GetAttribute("AgentGear") and p:FindFirstChildOfClass("WeldConstraint")
-	onNewHead = onNewHead or (weld and weld.Part0 == newHead) == true
-end
-check(onNewHead, "Modell hängt am neuen Kopf")
 
 -- Später (nach den ersten Kontrollen) geht ein Modellteil ohne jedes Ereignis verloren: die regelmäßige Kontrolle
 -- zieht neu an, solange der Charakter lebt

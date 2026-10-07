@@ -51,9 +51,12 @@ function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, _old
 	face.Face = Enum.NormalId.Front
 	face.Parent = parts.Head
 	-- 3D-Modell des Agenten (blendet den Körper samt Gesicht aus)
-	AgentModels.Attach(model, parts, agent.Id, false)
+	local worn = AgentModels.Attach(model, parts, agent.Id, false)
+	-- Waffe in der rechten Hand (ein Rig steht wie gebaut: dann in seiner Hand)
+	local hand = worn and worn:FindFirstChildOfClass("Humanoid") and worn:FindFirstChild("RightHand", true)
+	hand = hand and hand:IsA("BasePart") and hand or parts.RightHand
 	local gun = GunModels.Build(weaponName or agent.Loadout[1], weaponSkin)
-	gun:PivotTo(CFrame.new(parts.RightHand.Position + Vector3.new(0, -0.12, -0.05)))
+	gun:PivotTo(CFrame.new(hand.Position + Vector3.new(0, -0.12, -0.05)))
 	gun.Parent = model
 	model.WorldPivot = CFrame.new(0, 3, 0)
 	return model

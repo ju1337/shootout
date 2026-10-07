@@ -129,13 +129,8 @@ check(report.Ghost and not report.Ghost.Loaded and hasText(report.Ghost.Errors, 
 	"Modell ohne sichtbare Teile gemeldet")
 check(AgentModels.HasAsset("Viper") and not AgentModels.HasAsset("Ghost") and not AgentModels.HasAsset("Mender")
 	and not AgentModels.HasAsset(nil), "HasAsset")
-local pieces = AgentModels.PiecesOf("Viper")
-local count = 0
-for name, bodyName in pieces or {} do
-	count += 1
-	check(bodyName == ownerOf(name), name .. " gehört zu " .. ownerOf(name) .. " (" .. tostring(bodyName) .. ")")
-end
-check(count == #SUIT, "alle Teile geladen (" .. count .. "), unsichtbares Hilfsteil und Marker nicht")
+check(AgentModels.PartCount("Viper") == #SUIT, "alle Teile geladen (" .. AgentModels.PartCount("Viper")
+	.. "), unsichtbares Hilfsteil und Marker nicht")
 
 -- ---------- An einem Körper: jedes Teil genau wie im Modell ----------
 local function restBody(where)
@@ -152,9 +147,9 @@ local function restBody(where)
 	end
 	return body, parts
 end
-local function byName(created)
+local function byName(holder)
 	local list = {}
-	for _, part in created or {} do
+	for _, part in holder and holder:GetChildren() or {} do
 		list[part.Name] = part
 	end
 	return list
@@ -162,11 +157,10 @@ end
 
 local where = CFrame.new(-7, 3, 18) * CFrame.Angles(0, 0.8, 0) -- irgendwo und gedreht
 local body, parts = restBody(where)
-local created = AgentModels.Attach(body, parts, "Viper", true)
-local holder = body:FindFirstChild(AgentModels.ModelName)
-check(created ~= nil and #created == #SUIT and holder ~= nil and holder:GetAttribute("AgentGear"),
-	"alle Teile im Untermodell " .. AgentModels.ModelName)
-local placed = byName(created)
+local holder = AgentModels.Attach(body, parts, "Viper", true)
+check(holder ~= nil and holder == body:FindFirstChild(AgentModels.ModelName) and #holder:GetChildren() == #SUIT
+	and holder:GetAttribute("AgentGear"), "alle Teile im Untermodell " .. AgentModels.ModelName)
+local placed = byName(holder)
 for i, def in SUIT do
 	local part = placed[def[1]]
 	check(part ~= nil and part.Parent == holder, def[1] .. " da")
@@ -231,7 +225,10 @@ backpack.Size = Vector3.new(1, 1.2, 0.5)
 backpack.CFrame = folder.Hawk.UpperTorso_Suit.CFrame * CFrame.new(0, 0, 0.65)
 backpack.Parent = folder.Hawk
 step(0.1)
-check(changed.Hawk and AgentModels.PiecesOf("Hawk").Backpack == "UpperTorso", "Teil dazu: neu geladen, hängt am Rumpf")
+local backpackBody, backpackParts = restBody(CFrame.new())
+local withBackpack = byName(AgentModels.Attach(backpackBody, backpackParts, "Hawk", true))
+check(changed.Hawk and withBackpack.Backpack and withBackpack.Backpack:FindFirstChildOfClass("WeldConstraint").Part0
+	== backpackParts.UpperTorso, "Teil dazu: neu geladen, hängt am Rumpf")
 
 -- ---------- Menü-Figur ----------
 local AgentFigure = require("AgentFigure")
@@ -274,6 +271,11 @@ step(0.5)
 local worn = character and character:FindFirstChild(AgentModels.ModelName)
 check(worn ~= nil and worn:FindFirstChild("Head_Suit") ~= nil and character:GetAttribute("AgentLook") == "Charakter"
 	and AgentBody.IsDressed(character, "Viper"), "Spieler als VIPER trägt das Modell")
+-- Boden unter dem HumanoidRootPart (wo der Humanoid ihn hält): jedes Teil so hoch wie im Modell
+local root = character.HumanoidRootPart
+local ground = root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + character.Humanoid.HipHeight), 0)
+check(worn and near(ground:ToObjectSpace(worn.Head_Suit.CFrame).Position, SUIT[1][3])
+	and near(ground:ToObjectSpace(worn.UpperTorso_Suit.CFrame).Position, SUIT[15][3]), "am Spieler: Teile wie im Modell")
 alice:SetAttribute("Agent", "Ghost")
 step(0.1)
 check(character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild(AgentModels.ModelName) == nil

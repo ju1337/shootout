@@ -74,6 +74,7 @@ end
 local hiddenBody = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: Spielkörper muss unsichtbar bleiben
 local guardedParts = setmetatable({}, { __mode = "k" }) -- [Körperteil] = true: wird schon bewacht
 local revealReported = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: schon im Studio-Output gemeldet
+local diesWatched = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: Tod wird schon beobachtet
 
 local function hideBodyPart(part)
 	if part.Transparency < 1 then
@@ -194,6 +195,13 @@ function AgentBody.Dress(character, primary, agentId)
 	character:SetAttribute("AgentLook", look)
 	character:SetAttribute("AgentLookOf", agentId)
 	if attached then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid and not diesWatched[character] then
+			diesWatched[character] = true
+			humanoid.Died:Once(function()
+				AgentModels.WeldToBody(character) -- Agentenmodell (Rig) fällt mit dem Körper
+			end)
+		end
 		hiddenBody[character] = true
 		for _, part in allBodyParts do
 			hideBodyPart(part)
@@ -203,37 +211,37 @@ function AgentBody.Dress(character, primary, agentId)
 	AgentBody.Protect(character)
 end
 
--- Was am Look nicht (mehr) stimmt, als Text für den Studio-Output – nil, wenn alles sitzt (Modell an den aktuellen
--- Körperteilen, Spielkörper samt Gesicht unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch
+-- Was am Look nicht (mehr) stimmt, als Text für den Studio-Output – nil, wenn alles sitzt (Modell vollständig an den
+-- aktuellen Körperteilen, Spielkörper samt Gesicht unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch
 -- Körperteile aus – dann hängt das Modell an den alten Teilen und fällt weg.
 function AgentBody.DressProblem(character, agentId)
-	local present = {} -- [Name] = true für jedes Modellteil, das an einem Körperteil des Charakters hängt
-	for _, child in character:GetDescendants() do
-		if child:IsA("BasePart") and child:GetAttribute("AgentGear") then
-			local weld = child:FindFirstChildOfClass("WeldConstraint")
-			local part0 = weld and weld.Part0
-			if not part0 or part0.Parent ~= character then
-				return child.Name .. " hängt an einem Körperteil, das es nicht mehr gibt"
+	if character:GetAttribute("AgentLook") == "Charakter" then
+		-- das Modell ist vollständig da und hängt an Teilen, die es im Charakter noch gibt
+		local holder = character:FindFirstChild(AgentModels.ModelName)
+		local count = 0
+		for _, child in holder and holder:GetDescendants() or {} do
+			if child:IsA("BasePart") then
+				count += 1
+			elseif child:IsA("WeldConstraint") and child.Name == "AgentWeld" and (not child.Part0
+				or child.Part0.Parent ~= character) then
+				return child.Parent.Name .. " hängt an einem Körperteil, das es nicht mehr gibt"
 			end
-			present[child.Name] = true
 		end
-	end
-	-- jedes Teil, das beim Anziehen angelegt wurde, muss noch da sein
-	local expected = character:GetAttribute("AgentLook") == "Charakter" and AgentModels.PiecesOf(agentId) or {}
-	local cloaked = character:GetAttribute("Cloaked")
-	for name, bodyName in expected do
-		local part = character:FindFirstChild(bodyName)
-		if part and part:IsA("BasePart") then
-			if not present[name] then
-				return name .. " fehlt"
-			end
-			if not cloaked then
-				if part.Transparency < 1 then
-					return "Spielkörper sichtbar (" .. bodyName .. ")"
-				end
-				for _, decal in part:GetChildren() do
-					if decal:IsA("Decal") and decal.Transparency < 1 then
-						return "Gesicht am Spielkörper sichtbar (" .. bodyName .. ")"
+		local expected = holder and holder:GetAttribute("AgentParts") or 1
+		if count < expected then
+			return "Modell unvollständig (" .. count .. " von " .. expected .. " Teilen)"
+		end
+		-- Spielkörper samt Gesicht unsichtbar
+		if not character:GetAttribute("Cloaked") then
+			for _, part in character:GetChildren() do
+				if part:IsA("BasePart") and AgentBody.GearAnchors[part.Name] then
+					if part.Transparency < 1 then
+						return "Spielkörper sichtbar (" .. part.Name .. ")"
+					end
+					for _, decal in part:GetChildren() do
+						if decal:IsA("Decal") and decal.Transparency < 1 then
+							return "Gesicht am Spielkörper sichtbar (" .. part.Name .. ")"
+						end
 					end
 				end
 			end

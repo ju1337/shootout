@@ -546,6 +546,7 @@ local CORPSE_FADE_TIME = 0.6
 local CORPSE_FADE_STEPS = 6
 
 local function ragdoll(model)
+	AgentModels.WeldToBody(model) -- Agentenmodell (Rig) fällt mit dem Körper
 	for _, joint in model:GetDescendants() do
 		if (joint:IsA("Motor6D") or joint:IsA("AnimationConstraint")) and joint.Parent then
 			-- AnimationConstraint: Part0/Part1/C0/C1 sind lesbare Aliase der Attachments. Klappt das Kugelgelenk

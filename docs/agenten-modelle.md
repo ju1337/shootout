@@ -12,7 +12,17 @@ Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Mod
 Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem
 Roblox-Gesicht in seinen Farben. Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
 
-## So baust du das Modell (Blender)
+## Am einfachsten: ein fertiger Charakter (Rig)
+
+Funktioniert dein Modell in einer leeren Roblox-Experience als Charakter (z.B. als `StarterCharacter` oder aus dem
+**Avatar-Setup**: Humanoid, HumanoidRootPart, R15-Gelenke), dann nimm **genau dieses Modell** und leg es in den
+Ordner (Schritte unten). Das Spiel lässt es komplett, wie es ist: Gelenke, gehäutete Meshes, Bones, Accessoires,
+Layered Clothing. Es steht mit den Füßen auf dem Boden, hängt am unsichtbaren Spielkörper und übernimmt jedes Bild
+dessen Bewegung (Laufen, Springen, Zielen, Waffe halten) über die gleichnamigen Gelenke (`Root`, `Waist`, `Neck`,
+`LeftShoulder`, `RightElbow` …). Es sieht also aus und bewegt sich wie in der leeren Experience. Skripte im Modell
+(z.B. `Animate`) laufen nicht mit, bewegt wird es vom Spiel.
+
+## Ohne Rig: starre Teile aus Blender
 
 Bau den Agenten auf dem Spielkörper, **in Ruhelage**: Füße auf dem Boden (Höhe 0), Blick nach vorne, **Arme hängen
 gerade nach unten**. 1 Blender-Einheit = 1 Stud, der Spielkörper ist 5,1 Studs groß.
@@ -37,10 +47,6 @@ Knöchel 0,25. Liegen die Grenzen deiner Teile auf diesen Gelenken, bleibt beim 
 
 **Exportieren:** alles auswählen, `Strg+A` › Alle Transformationen, Datei › Exportieren › FBX oder glTF (.glb).
 
-Ein R15-Charakter aus dem **Avatar-Setup** von Studio geht genauso: Seine 15 Körperteile heißen schon richtig,
-vorne ist dort, wohin das HumanoidRootPart schaut. Auch er wird nicht verändert – Arme in T-Haltung bleiben also
-waagerecht. Darum auch hier: Arme hängend modellieren.
-
 ## Ins Spiel bringen (Studio)
 
 1. **Place öffnen** und über Reiter **View** die Fenster **Explorer**, **Properties** und **Output** einblenden.
@@ -54,7 +60,7 @@ waagerecht. Darum auch hier: Arme hängend modellieren.
    beachten). Ein älteres Modell mit demselben Namen vorher löschen.
 5. **Testen:** Das Modell **vor** dem Start einfügen, dann **Play** (F5) und genau diesen Agenten wählen. Im Output:
 
-       [Agentenmodelle] Viper: Modell geladen (15 Teile)
+       [Agentenmodelle] Viper: Rig geladen (17 Teile)        (bzw. "Modell geladen" bei starren Teilen)
        [Agentenmodelle] DeinName als Viper: Modell aus Assets.Agents
 
 6. **Speichern:** **File** › **Publish to Roblox**. Die Modelle leben im Place, nur so bleiben sie erhalten.
@@ -64,14 +70,15 @@ waagerecht. Darum auch hier: Arme hängend modellieren.
 - **Nichts am Aussehen:** Lage, Größe, Drehung, Farben, Materialien, Texturen (SurfaceAppearance, TextureID) und
   Decals bleiben. Nur wenn das Modell offensichtlich in der falschen Einheit importiert wurde (kleiner als 4 oder
   größer als 6,5 Studs), wird es als Ganzes auf 5,1 Studs gebracht, die Proportionen bleiben.
-- **Bewegung:** Jedes Teil ist an sein Körperteil geschweißt und folgt den Animationen des Spiels (laufen,
-  springen, zielen, Waffe halten). Ohne Waffe spreizt das Spiel die Arme nicht seitlich ab, damit unter den Achseln
-  keine Lücke klafft.
+- **Bewegung:** Ein Rig übernimmt die Gelenkbewegung des Spielkörpers. Starre Teile sind an ihr Körperteil
+  geschweißt; ohne Waffe spreizt das Spiel dann die Arme nicht seitlich ab, damit unter den Achseln keine Lücke
+  klafft. Beim Tod fällt das Modell mit dem Körper.
 - **Treffer:** Der normale Agentenkörper bleibt unsichtbar an derselben Stelle und ist die **Trefferzone**. So sind
   alle Agenten gleich leicht zu treffen. Teile des Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum
   ungefähr bei der Körperform bleiben: Was weit absteht (Flügel, Umhänge), sieht wie ein Ziel aus, ist aber keins.
-- **Im Explorer während Play:** Das Modell hängt unter **Workspace** › *DeinName* › **AgentModel**. Die Teile direkt
-  im Charakter mit den Körperteil-Namen sind der unsichtbare Spielkörper. Macht ihn etwas wieder sichtbar, blendet
+- **Im Explorer während Play:** Das Modell hängt unter **Workspace** › *DeinName* › **AgentModel** (ein Rig mit
+  seinem eigenen Humanoid, der aber nichts steuert). Die Teile direkt im Charakter mit den Körperteil-Namen sind der
+  unsichtbare Spielkörper. Macht ihn etwas wieder sichtbar, blendet
   der Server ihn sofort wieder aus.
 - **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder änderst es, lädt das Spiel es sofort neu und zieht
   alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auf dem Server passiert,
@@ -93,7 +100,8 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | `… lässt sich nicht kopieren (Archivable ist aus)` | Teil anklicken, in den Properties **Archivable** anhaken. |
 | Der Agent schaut nach hinten oder zur Seite | In Blender nach vorne (-Y in Blender, -Z in Roblox) ausrichten bzw. beim Import World Forward **Front** wählen. Bei einem R15-Rig zählt die Blickrichtung des HumanoidRootPart. |
 | Ein Teil (z.B. Haare) bewegt sich mit dem falschen Körperteil | Teil umbenennen, sodass es mit dem Körperteil beginnt, z.B. `Head_Hair`. |
-| Arme stehen waagerecht ab | Das Modell ist in T-Haltung gebaut. In Blender die Arme hängend modellieren. |
+| Arme stehen waagerecht ab | Starre Teile in T-Haltung gebaut: in Blender die Arme hängend modellieren. |
+| Ein Rig bewegt sich nicht (steht steif) | Seine Gelenke heißen nicht wie im R15-Rig (z.B. ein R6-Rig mit `Left Shoulder`). Mit dem Avatar-Setup ein R15-Rig daraus machen. |
 | `Modell konnte nicht angezogen werden (…)` oder `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
 
@@ -126,4 +134,5 @@ Das Modell muss genau so heißen wie in der ersten Spalte (die Ids aus `src/shar
 Eine mit `rojo build` gebaute Place-Datei enthält sie aber nicht. Veröffentlicht wird deshalb immer aus Studio.
 
 **Für Entwickler:** Der Lader steht in `src/shared/AgentModels.lua`, angezogen wird in
-`src/server-shared/AgentBody.lua` (Spieler und Bots) und `src/shared/AgentFigure.lua` (Vorschauen).
+`src/server-shared/AgentBody.lua` (Spieler und Bots) und `src/shared/AgentFigure.lua` (Vorschauen); die Gelenke
+eines Rigs übernimmt `AgentModels.SyncJoints`, aufgerufen jedes Bild aus `src/shared/CharacterPose.lua`.

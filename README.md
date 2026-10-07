@@ -469,10 +469,12 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 - **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
   Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
   überall so aus: an Spielern (Hub, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop, Markt,
-  Hub, Podest, HUD-Symbol) – **genau wie in Blender**: Lage, Größe, Drehung, Farben, Materialien und Texturen
-  bleiben, nichts wird umgefärbt, gestreckt oder umgebogen. Jedes Teil hängt am Körperteil, mit dem sein Name
-  beginnt (`Head_Suit`, `LeftUpperArm_Suit`, R15-Rig: `Head` …), sonst am nächsten, und folgt den Animationen.
-  Boden = `Point_Root` oder der tiefste Punkt, vorne = HumanoidRootPart bzw. -Z. Nur bei offensichtlich falscher
+  Hub, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
+  gestreckt, zerlegt oder umgebogen. Ein **Rig** (Humanoid, HumanoidRootPart, R15-Gelenke, z.B. StarterCharacter
+  oder Avatar-Setup) bleibt komplett (gehäutete Meshes, Bones, Accessoires, Layered Clothing), hängt am
+  HumanoidRootPart des Spielkörpers und übernimmt jedes Bild dessen Gelenkbewegung (`AgentModels.SyncJoints` aus
+  CharacterPose); beim Tod fällt es mit. **Starre Teile** ohne Rig hängen am Körperteil, mit dem ihr Name beginnt
+  (`Head_Suit`, `LeftUpperArm_Suit`), sonst am nächsten; Boden = `Point_Root` oder der tiefste Punkt. Nur bei offensichtlich falscher
   Import-Einheit wird das ganze Modell auf 5,1 Studs gebracht. Der normale Agentenkörper bleibt unsichtbar als
   Trefferzone (alle Agenten gleich leicht zu treffen, Teile des Modells nie Trefferzone); macht etwas ihn wieder
   sichtbar oder tauscht Roblox Körperteile aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an. Fehlt
@@ -776,7 +778,7 @@ am Commit:
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `agentmodels` | Agenten-Lader mit den Maßen von Viper_3.glb (15 Teile `<Körperteil>_Suit`, Haare): jedes Teil sitzt, liegt und ist so groß wie im Modell, Farbe/Material/Textur unverändert, Teile ohne Körperteil-Namen am nächsten Körperteil, ohne `Point_Root`, falsche Einheit, Prüfmeldungen, Neuladen; Spieler, Bots und Menü-Figur tragen das Modell |
-| `agentcharacter` | Agentenmodell als R15-Rig (Avatar-Setup) gedreht importiert: Blick vom HumanoidRootPart, sonst genau wie modelliert, Gelenke und Skalierungswerte weg, Bones bleiben; der Server hält den Spielkörper unsichtbar und zieht neu an, wenn Roblox Teile austauscht |
+| `agentcharacter` | Agentenmodell als Rig gedreht importiert: bleibt komplett (Gelenke, Rig-Attachments, Bones, Humanoid ohne Steuerung, keine Skripte), Füße auf dem Boden, Blick nach vorne, am Spielkörper angeschweißt, Gelenke übernehmen die Bewegung (auch nach Austausch), beim Tod angeschweißt, Figur mit Waffe in seiner Hand; der Server hält den Spielkörper unsichtbar und zieht neu an, wenn Roblox Teile austauscht |
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
 | `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |

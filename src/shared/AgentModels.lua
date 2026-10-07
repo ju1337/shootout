@@ -1,16 +1,16 @@
 -- AgentModels (ModuleScript)
 -- Aussehen der Agenten: das 3D-Modell aus ReplicatedStorage.Assets.Agents.<Agent-Id> (Anleitung in
--- docs/agenten-modelle.md) – genau so, wie es in Blender bzw. Studio aussieht: gleiche Teile, Lage, Größe, Farben,
--- Materialien und Texturen. Nichts wird umgefärbt, gestreckt oder gedreht. Jedes Teil wird an das Körperteil des
--- Spielkörpers geschweißt, zu dem es gehört, und bewegt sich mit ihm (laufen, zielen, Waffe halten). Der Spielkörper
--- bleibt unsichtbar als Trefferzone, die Teile des Modells zählen nie als Treffer (gleiche Trefferzonen für alle).
--- Solange es kein Modell gibt: Standard-Look aus AgentBody (Roblox-Körper mit Gesicht in den Agentenfarben).
+-- docs/agenten-modelle.md) – genau so, wie es in Blender bzw. Studio aussieht. Nichts wird umgefärbt, gestreckt,
+-- zerlegt oder umgebogen. Der Spielkörper bleibt unsichtbar als Trefferzone, die Teile des Modells zählen nie als
+-- Treffer (gleiche Trefferzonen für alle). Ohne Modell: Standard-Look aus AgentBody.
 --
--- Zu welchem Körperteil ein Teil gehört: heißt es wie ein Körperteil (Head, UpperTorso, … wie im R15-Rig) oder
--- beginnt sein Name damit (Head_Suit, LeftUpperArm_Pad), zu diesem; sonst zu dem, dem es am nächsten ist (Haare,
--- Helm, Rucksack …). Lage: Boden zwischen den Füßen = Marker Point_Root (Teil oder Attachment), sonst der tiefste
--- Punkt unter der Mitte des Rumpfs. Vorne = Blickrichtung des HumanoidRootPart, sonst -Z. Unsichtbare Teile
--- (Transparency 1, z.B. das HumanoidRootPart), Marker Point_… und Maßstab-Teile Ref_… werden nicht angezeigt.
+-- Zwei Arten von Modellen:
+--   * Rig (Humanoid, HumanoidRootPart, Gelenke – wie ein StarterCharacter oder aus dem Avatar-Setup): bleibt komplett
+--     (gehäutete Meshes, Bones, Accessoires, Layered Clothing). Es steht mit den Füßen auf dem Boden, sein
+--     HumanoidRootPart ist an das des Spielkörpers geschweißt, und seine Gelenke übernehmen jedes Bild die Bewegung
+--     der gleichnamigen Gelenke des Spielkörpers – es bewegt sich wie als eigener Charakter.
+--   * Starre Teile (ohne Rig): jedes Teil hängt am Körperteil, mit dem sein Name beginnt (Head_Suit, LeftUpperArm_Pad),
+--     sonst am nächsten. Boden = Marker Point_Root, sonst der tiefste Punkt unter der Mitte des Rumpfs; vorne = -Z.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -57,16 +57,18 @@ function AgentModels.PantsColor(primary)
 end
 
 -- ---------- 3D-Modelle aus Assets.Agents ----------
--- Untermodell im Charakter bzw. in der Figur, in dem die Teile des Modells hängen. Die Teile behalten ihre Namen
--- (gehäutete Meshes finden ihre Gelenke darüber), ohne mit dem gleichnamigen Spielkörper zu kollidieren.
+-- Untermodell im Charakter bzw. in der Figur, in dem das Modell hängt
 AgentModels.ModelName = "AgentModel"
 local HEIGHT = 5.1 -- Scheitel bis Sohle des Spielkörpers
 -- So hoch darf ein Modell sein, damit es 1:1 bleibt (1 Blender-Einheit = 1 Stud); sonst stimmt beim Import die
 -- Einheit nicht (z.B. Zentimeter), und es wird auf die Höhe des Spielkörpers gebracht
 local MIN_HEIGHT, MAX_HEIGHT = 4, 6.5
 local MAX_PARTS = 40 -- mehr Teile kosten auf Handys Leistung (nur ein Hinweis)
+local WELD_NAME = "AgentWeld" -- Schweißung Modell → Spielkörper
 
-local assetData = {}   -- [Agent-Id] = { { Name, Body, Offset, Template } }
+-- [Agent-Id] = { Rig = Modell, Floor = Boden unter dem HumanoidRootPart, Count } (Rig) bzw.
+-- { Pieces = { { Name, Body, Agent, Template } }, Count } (starre Teile)
+local assetData = {}
 local assetReport = {} -- [Name] = { Loaded = bool, Errors = { Text }, Warnings = { Text } }
 
 -- Blender hängt an Kopien ".001" an – das zählt nicht zum Namen
@@ -80,6 +82,26 @@ local function bodyNameOf(name)
 	return first and AgentModels.Body[first] and first or nil
 end
 
+local function isJoint(obj)
+	return obj:IsA("Motor6D") or obj:IsA("AnimationConstraint")
+end
+
+-- Teil, das ein Gelenk bewegt, und das, an dem es hängt
+local function jointParts(joint)
+	if joint:IsA("AnimationConstraint") then
+		local a0, a1 = joint.Attachment0, joint.Attachment1
+		return a1 and a1.Parent, a0 and a0.Parent
+	end
+	return joint.Part1, joint.Part0
+end
+
+-- Gezeigte Teile: sichtbar, keine Marker Point_… und Maßstab-Teile Ref_…, kein HumanoidRootPart
+local function shown(part)
+	local name = cleanName(part.Name)
+	return part.Transparency < 1 and name ~= "HumanoidRootPart" and not string.match(name, "^Point_")
+		and not string.match(name, "^Ref_")
+end
+
 -- Halbe Ausdehnung eines (evtl. gedrehten) Quaders entlang der Achsen eines Bezugsraums
 local function halfExtent(rotation, size)
 	local r, u, l, h = rotation.RightVector, rotation.UpVector, rotation.LookVector, size / 2
@@ -87,6 +109,28 @@ local function halfExtent(rotation, size)
 		math.abs(r.X) * h.X + math.abs(u.X) * h.Y + math.abs(l.X) * h.Z,
 		math.abs(r.Y) * h.X + math.abs(u.Y) * h.Y + math.abs(l.Y) * h.Z,
 		math.abs(r.Z) * h.X + math.abs(u.Z) * h.Y + math.abs(l.Z) * h.Z)
+end
+
+-- Ausdehnung von Teilen im Raum frame: min, max
+local function bounds(parts, frame)
+	local min, max = Vector3.one * math.huge, -Vector3.one * math.huge
+	for _, part in parts do
+		local center = frame:PointToObjectSpace(part.Position)
+		local extent = halfExtent(frame.Rotation:Inverse() * part.CFrame.Rotation, part.Size)
+		min, max = min:Min(center - extent), max:Max(center + extent)
+	end
+	return min, max
+end
+
+-- Faktor, falls das Modell in der falschen Einheit importiert wurde (sonst 1)
+local function unitScale(height, report)
+	if height >= MIN_HEIGHT and height <= MAX_HEIGHT then
+		return 1
+	end
+	local scale = HEIGHT / height
+	table.insert(report.Warnings, string.format("Modell ist %.2f Studs hoch, auf %.1f gebracht (mal %.4g) – stimmt "
+		.. "die Einheit beim Import (1 Blender-Einheit = 1 Stud)?", height, HEIGHT, scale))
+	return scale
 end
 
 -- Körperteil des Spielkörpers, dem ein Punkt (Agentenraum) am nächsten ist
@@ -104,9 +148,78 @@ local function nearestBodyPart(position)
 	return best
 end
 
--- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Teile oder nil, Bericht) zurück.
-local function loadAsset(source)
-	local report = { Loaded = false, Errors = {}, Warnings = {} }
+-- Teile für Charakter und Figur: nie Trefferzone, keine Kollision, kein Gewicht
+local function prepare(part)
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.Massless = true
+end
+
+-- ---------- Rig (Humanoid, HumanoidRootPart, Gelenke – z.B. aus dem Avatar-Setup oder als StarterCharacter gebaut)
+-- Bleibt komplett, wie es ist: Gelenke, gehäutete Meshes, Bones, Accessoires, Layered Clothing (Wraps), Humanoid.
+-- Das HumanoidRootPart wird an das des Spielkörpers geschweißt, die Gelenke übernehmen jedes Bild die Bewegung der
+-- gleichnamigen Gelenke des Spielkörpers (SyncJoints) – das Modell bewegt sich also genau wie als eigener Charakter.
+local function loadRig(rig, report)
+	local template = rig:Clone()
+	if not template then
+		table.insert(report.Errors, "Modell lässt sich nicht kopieren (Archivable ist aus)")
+		return nil
+	end
+	local templateRoot = template:FindFirstChild("HumanoidRootPart")
+	for _, obj in template:GetDescendants() do
+		if obj:IsA("LuaSourceContainer") then
+			obj:Destroy() -- (z.B. Animate, Health: bewegt wird über den Spielkörper)
+		end
+	end
+	local visible = {}
+	for _, part in template:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Anchored = false
+			prepare(part)
+			if shown(part) then
+				table.insert(visible, part)
+			end
+		end
+	end
+	if #visible == 0 then
+		table.insert(report.Errors, "keine sichtbaren Teile im Modell")
+		return nil
+	end
+	local copy = template:FindFirstChildWhichIsA("Humanoid", true)
+	if not copy or not templateRoot then
+		table.insert(report.Errors, "Humanoid oder HumanoidRootPart lässt sich nicht kopieren (Archivable ist aus)")
+		return nil
+	end
+	copy.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	copy.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	copy.EvaluateStateMachine = false -- steuert nichts (sonst zöge er am Spielkörper)
+	copy.BreakJointsOnDeath = false
+	copy.RequiresNeck = false
+	copy.AutomaticScalingEnabled = false
+	template.PrimaryPart = templateRoot
+	templateRoot.PivotOffset = CFrame.new()
+	local min, max = bounds(visible, templateRoot.CFrame)
+	local scale = unitScale(max.Y - min.Y, report)
+	if scale ~= 1 then
+		template:ScaleTo(template:GetScale() * scale)
+		min = bounds(visible, templateRoot.CFrame)
+	end
+	template.Name = AgentModels.ModelName
+	template:SetAttribute("AgentGear", true)
+	local count = 0
+	for _, part in template:GetDescendants() do
+		count += part:IsA("BasePart") and 1 or 0
+	end
+	if #visible > MAX_PARTS then
+		table.insert(report.Warnings, #visible .. " Teile – für Handys besser höchstens " .. MAX_PARTS)
+	end
+	return { Rig = template, Floor = min.Y, Count = count }
+end
+
+-- ---------- Starre Teile (ohne Rig, z.B. ein Teil <Körperteil>_<Name> pro Körperteil aus Blender) ----------
+-- Jedes Teil hängt am Körperteil, zu dem es gehört, und sitzt dort genau wie im Modell (gemessen ab dem Boden).
+local function loadPieces(source, report)
 	local pieces, root, rootPart = {}, nil, nil
 	for _, obj in source:GetDescendants() do
 		local name = cleanName(obj.Name)
@@ -117,60 +230,48 @@ local function loadAsset(source)
 		elseif obj:IsA("BasePart") then
 			if name == "HumanoidRootPart" then
 				rootPart = obj
-			elseif obj.Transparency < 1 and not string.match(name, "^Point_") and not string.match(name, "^Ref_") then
-				table.insert(pieces, obj) -- (Marker und Maßstab-Teile wie Ref_Ground nicht)
+			elseif shown(obj) then
+				table.insert(pieces, obj)
 			end
 		end
 	end
 	if #pieces == 0 then
 		table.insert(report.Errors, "keine sichtbaren Teile im Modell")
-		return nil, report
+		return nil
 	end
-
-	-- Bezugsrahmen: Achsen des HumanoidRootPart (sonst des Modells), Boden = Point_Root bzw. tiefster Punkt
+	-- Bezugsrahmen: Achsen des HumanoidRootPart (sonst des Modells), Boden = Point_Root bzw. tiefster Punkt unter der
+	-- Mitte des Rumpfs
 	local basis = rootPart and rootPart.CFrame.Rotation or CFrame.new()
-	local min, max = Vector3.one * math.huge, -Vector3.one * math.huge -- ganzes Modell
-	local torsoMin, torsoMax = min, max -- Rumpf (seine Mitte ist die Mitte des Modells)
+	local min, max = bounds(pieces, basis)
+	local torso = {}
 	for _, part in pieces do
-		local center = basis:PointToObjectSpace(part.Position)
-		local extent = halfExtent(basis:Inverse() * part.CFrame.Rotation, part.Size)
-		min, max = min:Min(center - extent), max:Max(center + extent)
 		local bodyName = bodyNameOf(part.Name)
 		if bodyName == "UpperTorso" or bodyName == "LowerTorso" then
-			torsoMin, torsoMax = torsoMin:Min(center - extent), torsoMax:Max(center + extent)
+			table.insert(torso, part)
 		end
-	end
-	local height = max.Y - min.Y
-	if height < 0.1 then
-		table.insert(report.Errors, "das Modell ist flach (Teile ohne Größe)")
-		return nil, report
 	end
 	local origin = root
 	if not origin then
-		local middle = torsoMin.X <= torsoMax.X and (torsoMin + torsoMax) / 2
+		local torsoMin, torsoMax = bounds(torso, basis)
+		local middle = #torso > 0 and (torsoMin + torsoMax) / 2
 			or rootPart and basis:PointToObjectSpace(rootPart.Position) or (min + max) / 2
 		origin = basis * Vector3.new(middle.X, min.Y, middle.Z)
 	end
-	local scale = 1
-	if height < MIN_HEIGHT or height > MAX_HEIGHT then
-		scale = HEIGHT / height
-		table.insert(report.Warnings, string.format("Modell ist %.2f Studs hoch, auf %.1f gebracht (mal %.4g) – stimmt "
-			.. "die Einheit beim Import (1 Blender-Einheit = 1 Stud)?", height, HEIGHT, scale))
-	end
+	local scale = unitScale(max.Y - min.Y, report)
 	local toAgent = (CFrame.new(origin) * basis):Inverse()
 
-	local entries, used, covered = {}, {}, {}
+	local entries, used = {}, {}
 	for _, original in pieces do
 		local part = original:Clone()
 		if not part then
 			table.insert(report.Warnings, original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
 			continue
 		end
-		-- nur das Aussehen bleibt (Mesh, Textur, SurfaceAppearance, Decals, Bones): keine Teile (kommen einzeln dran),
-		-- Gelenke, Rig-Attachments, Wraps, Skripte und Werte der Roblox-Skalierung (OriginalSize & Co.)
+		-- nur das Aussehen bleibt: keine Teile (kommen einzeln dran), Gelenke, Rig-Attachments, Skripte und Werte der
+		-- Roblox-Skalierung
 		for _, child in part:GetDescendants() do
 			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Constraint")
-				or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") or child:IsA("ValueBase")
+				or child:IsA("LuaSourceContainer") or child:IsA("ValueBase")
 				or (child:IsA("Attachment") and not child:IsA("Bone") and string.match(child.Name, "RigAttachment$")) then
 				child:Destroy()
 			elseif scale ~= 1 and child:IsA("Attachment") then -- (auch Bones)
@@ -182,8 +283,6 @@ local function loadAsset(source)
 		end
 		local inAgent = toAgent * original.CFrame
 		inAgent = CFrame.new(inAgent.Position * scale) * inAgent.Rotation
-		local bodyName = bodyNameOf(original.Name) or nearestBodyPart(inAgent.Position)
-		covered[bodyName] = true
 		local unique, count = original.Name, 1
 		while used[unique] do
 			count += 1
@@ -193,18 +292,18 @@ local function loadAsset(source)
 		part.Name = unique
 		part.Size = original.Size * scale
 		part.Anchored = true
-		part.CanCollide = false
-		part.CanQuery = false
-		part.CanTouch = false
-		part.Massless = true
-		table.insert(entries, { Name = unique, Body = bodyName,
-			Offset = AgentModels.Body[bodyName].CFrame:ToObjectSpace(inAgent), Template = part })
+		prepare(part)
+		table.insert(entries, { Name = unique, Body = bodyNameOf(original.Name) or nearestBodyPart(inAgent.Position),
+			Agent = inAgent, Template = part })
 	end
 	if #entries == 0 then
 		table.insert(report.Errors, "kein Teil ließ sich kopieren")
-		return nil, report
+		return nil
 	end
-	local open = {}
+	local covered, open = {}, {}
+	for _, entry in entries do
+		covered[entry.Body] = true
+	end
 	for _, name in AgentModels.BodyParts do
 		if not covered[name] then
 			table.insert(open, name)
@@ -217,8 +316,27 @@ local function loadAsset(source)
 		table.insert(report.Warnings, #entries .. " Teile – für Handys besser höchstens " .. MAX_PARTS
 			.. " (in Blender zusammenfügen)")
 	end
-	report.Loaded = true
-	return entries, report
+	return { Pieces = entries, Count = #entries }
+end
+
+-- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
+local function loadAsset(source)
+	local report = { Loaded = false, Errors = {}, Warnings = {} }
+	local humanoid = source:IsA("Humanoid") and source or source:FindFirstChildWhichIsA("Humanoid", true)
+	local rig = humanoid and humanoid.Parent
+	local root = rig and rig:FindFirstChild("HumanoidRootPart")
+	local hasJoints = false
+	for _, obj in rig and rig:GetDescendants() or {} do
+		hasJoints = hasJoints or isJoint(obj)
+	end
+	local data
+	if rig and rig:IsA("Model") and root and root:IsA("BasePart") and hasJoints then
+		data = loadRig(rig, report)
+	else
+		data = loadPieces(source, report)
+	end
+	report.Loaded = data ~= nil
+	return data, report
 end
 
 -- Ein Modell aus Assets.Agents laden (Name = Agent-Id) und den Bericht dazu ablegen
@@ -234,12 +352,12 @@ local function loadOne(source)
 			Errors = { "unbekannter Name – Modelle heißen wie der Agent: " .. table.concat(ids, ", ") } }
 		return
 	end
-	local ok, entries, report = pcall(loadAsset, source)
+	local ok, data, report = pcall(loadAsset, source)
 	if not ok then
-		entries, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(entries) } }
+		data, report = nil, { Loaded = false, Warnings = {}, Errors = { "Fehler beim Laden: " .. tostring(data) } }
 	end
 	assetReport[name] = report
-	assetData[name] = entries
+	assetData[name] = data
 end
 
 -- Im Studio-Output (nur Server): was mit dem Modell eines Namens los ist
@@ -251,7 +369,8 @@ local function printReport(name)
 	if not report then
 		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Standard-Look")
 	elseif report.Loaded then
-		print("[Agentenmodelle] " .. name .. ": Modell geladen (" .. #assetData[name] .. " Teile)")
+		print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Rig and "Rig" or "Modell") .. " geladen ("
+			.. assetData[name].Count .. " Teile)")
 	else
 		warn("[Agentenmodelle] " .. name .. ": Modell NICHT geladen, es bleibt der Standard-Look:\n  - "
 			.. table.concat(report.Errors, "\n  - "))
@@ -376,17 +495,10 @@ function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
 end
 
--- Teile, die Attach aus dem Modell eines Agenten anlegt: [Name des Teils] = Körperteil, an dem es hängt; nil ohne Modell
-function AgentModels.PiecesOf(agentId)
-	local entries = agentId and assetData[agentId]
-	if not entries then
-		return nil
-	end
-	local pieces = {}
-	for _, entry in entries do
-		pieces[entry.Name] = entry.Body
-	end
-	return pieces
+-- Wie viele Teile Attach für einen Agenten anlegt (0 ohne Modell)
+function AgentModels.PartCount(agentId)
+	local data = agentId and assetData[agentId]
+	return data and data.Count or 0
 end
 
 -- Prüfbericht aller Modelle in Assets.Agents: [Name] = { Loaded, Errors = { Text }, Warnings = { Text } }
@@ -394,13 +506,67 @@ function AgentModels.AssetReport()
 	return assetReport
 end
 
+-- Boden unter dem Körper (Blick nach -Z) und woran das Modell geschweißt wird: an Charakteren aus dem
+-- HumanoidRootPart (dort hält der Humanoid es über dem Boden), an Figuren aus dem Unterkörper (Ruhelage wie Body)
+local function floorOf(container, parts)
+	local root = container:FindFirstChild("HumanoidRootPart")
+	local humanoid = container:FindFirstChildOfClass("Humanoid")
+	if root and root:IsA("BasePart") and humanoid then
+		return root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + humanoid.HipHeight), 0), root
+	end
+	local lower = parts.LowerTorso
+	if lower then
+		return lower.CFrame * AgentModels.Body.LowerTorso.CFrame:Inverse(), lower
+	end
+	return nil, nil
+end
+
+-- Ruhelage der Körperteile eines Charakters über seine Gelenke (Animationen zählen nicht): [Teil] = CFrame
+local function restFrames(container)
+	local drivers = {}
+	for _, joint in container:GetDescendants() do
+		if isJoint(joint) then
+			local part, parent = jointParts(joint)
+			if part and parent then
+				local c0, c1
+				if joint:IsA("AnimationConstraint") then
+					c0, c1 = joint.Attachment0.CFrame, joint.Attachment1.CFrame
+				else
+					c0, c1 = joint.C0, joint.C1
+				end
+				drivers[part] = { Parent = parent, Offset = c0 * c1:Inverse() }
+			end
+		end
+	end
+	local rest = {}
+	local function restOf(part, depth)
+		if not rest[part] then
+			local driver = drivers[part]
+			rest[part] = driver and depth < 20 and restOf(driver.Parent, depth + 1) * driver.Offset or part.CFrame
+		end
+		return rest[part]
+	end
+	return function(part)
+		return restOf(part, 0)
+	end
+end
+
+local function weldTo(body, part)
+	local joint = Instance.new("WeldConstraint")
+	joint.Name = WELD_NAME
+	joint.Part0 = body
+	joint.Part1 = part
+	joint.Parent = part
+end
+
 -- Das 3D-Modell eines Agenten an einen Körper hängen. parts = { [Körperteil] = BasePart }: diese Teile werden
--- unsichtbar (bleiben Trefferzone), jedes Modellteil sitzt an seinem Körperteil wie im Modell. weld = true: an die
--- Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Die Teile liegen im Untermodell
--- AgentModels.ModelName; es und jedes Teil haben das Attribut AgentGear. Gibt die neuen Teile zurück, nil ohne Modell.
+-- unsichtbar (bleiben Trefferzone). weld = true: Charakter (angeschweißt, bewegt sich mit), sonst Figur (verankert,
+-- Ruhelage wie gebaut). Das Modell liegt im Untermodell AgentModels.ModelName (Attribut AgentGear, ebenso jedes
+-- Teil). Gibt das Untermodell zurück, nil ohne Modell.
 function AgentModels.Attach(container, parts, agentId, weld)
-	local entries = agentId and assetData[agentId]
-	if not entries then
+	local data = agentId and assetData[agentId]
+	local floor, anchor = floorOf(container, parts)
+	if not data or not floor then
 		return nil
 	end
 	for _, body in parts do
@@ -411,30 +577,109 @@ function AgentModels.Attach(container, parts, agentId, weld)
 			end
 		end
 	end
-	local holder = Instance.new("Model")
-	holder.Name = AgentModels.ModelName
-	holder:SetAttribute("AgentGear", true)
-	local created = {}
-	for _, entry in entries do
-		local body = parts[entry.Body]
-		if not body then
-			continue
+	local holder
+	if data.Rig then
+		holder = data.Rig:Clone()
+		holder:PivotTo(floor * CFrame.new(0, -data.Floor, 0))
+		for _, part in holder:GetDescendants() do
+			if part:IsA("BasePart") then
+				part.Anchored = not weld
+				part:SetAttribute("AgentGear", true)
+			end
 		end
-		local part = entry.Template:Clone()
-		part.CFrame = body.CFrame * entry.Offset
-		part.Anchored = not weld
-		part:SetAttribute("AgentGear", true)
 		if weld then
-			local joint = Instance.new("WeldConstraint")
-			joint.Part0 = body
-			joint.Part1 = part
-			joint.Parent = part
+			weldTo(anchor, holder.PrimaryPart)
 		end
-		part.Parent = holder
-		table.insert(created, part)
+	else
+		holder = Instance.new("Model")
+		holder.Name = AgentModels.ModelName
+		holder:SetAttribute("AgentGear", true)
+		-- Charakter: Ruhelage über die Gelenke; Figur: Ruhelage wie Body (ein gehobener Arm trägt sein Teil mit)
+		local restOf = container:FindFirstChild("HumanoidRootPart") and restFrames(container)
+		for _, entry in data.Pieces do
+			local body = parts[entry.Body]
+			if body then
+				local rest = restOf and restOf(body) or floor * AgentModels.Body[entry.Body].CFrame
+				local part = entry.Template:Clone()
+				part.CFrame = body.CFrame * rest:ToObjectSpace(floor * entry.Agent)
+				part.Anchored = not weld
+				part:SetAttribute("AgentGear", true)
+				if weld then
+					weldTo(body, part)
+				end
+				part.Parent = holder
+			end
+		end
 	end
+	local count = 0
+	for _, part in holder:GetDescendants() do
+		count += part:IsA("BasePart") and 1 or 0
+	end
+	holder:SetAttribute("AgentParts", count) -- so viele Teile gehören dazu (AgentBody prüft, ob alle noch da sind)
 	holder.Parent = container
-	return created
+	return holder
+end
+
+-- Nur Client, jedes Bild nach den Animationen: die Gelenke eines Rig-Modells übernehmen die Bewegung der
+-- gleichnamigen Gelenke des Spielkörpers (Laufen, Springen, Zielen, Waffe halten).
+local jointPairs = setmetatable({}, { __mode = "k" }) -- [Untermodell] = { { From, To } }
+function AgentModels.SyncJoints(character)
+	local holder = character:FindFirstChild(AgentModels.ModelName)
+	if not holder or not holder:FindFirstChildOfClass("Humanoid") then
+		return
+	end
+	local list = jointPairs[holder]
+	if list then
+		for _, pair in list do
+			if not pair.From.Parent or not pair.To.Parent then
+				list = nil -- Spielkörper ausgetauscht: neu zuordnen
+				break
+			end
+		end
+	end
+	if not list then
+		local sources = {}
+		for _, joint in character:GetDescendants() do
+			if isJoint(joint) and not joint:IsDescendantOf(holder) then
+				local part = jointParts(joint)
+				sources[joint.Name .. "/" .. (part and part.Name or "")] = joint
+			end
+		end
+		list = {}
+		for _, joint in holder:GetDescendants() do
+			if isJoint(joint) then
+				local part = jointParts(joint)
+				local from = sources[joint.Name .. "/" .. (part and part.Name or "")]
+				if from then
+					table.insert(list, { From = from, To = joint })
+				end
+			end
+		end
+		jointPairs[holder] = list
+	end
+	for _, pair in list do
+		pair.To.Transform = pair.From.Transform
+	end
+end
+
+-- Tod (Server): Die Gelenke des Spielkörpers zerfallen bzw. werden zu Kugelgelenken (Ragdoll). Damit ein Rig-Modell
+-- mitfällt statt steif stehen zu bleiben, wird jedes seiner Körperteile an das gleichnamige Teil des Spielkörpers
+-- geschweißt (statt an seinem Gelenk zu hängen).
+function AgentModels.WeldToBody(character)
+	local holder = character:FindFirstChild(AgentModels.ModelName)
+	if not holder or not holder:FindFirstChildOfClass("Humanoid") then
+		return
+	end
+	for _, joint in holder:GetDescendants() do
+		if isJoint(joint) then
+			local part = jointParts(joint)
+			local body = part and character:FindFirstChild(part.Name)
+			if body and body:IsA("BasePart") then
+				joint:Destroy()
+				weldTo(body, part)
+			end
+		end
+	end
 end
 
 return AgentModels

@@ -30,6 +30,7 @@ local WeaponEffects = require(Shared.WeaponEffects)
 local PoseMath = require(Shared.PoseMath)
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
+local AgentModels = require(Shared.AgentModels)
 
 local player = Players.LocalPlayer
 
@@ -191,8 +192,8 @@ local function rigOf(model, humanoid, root)
 	return rig
 end
 
--- Ganzer Charakter aus einem 3D-Modell (AgentModels, Charakter-Attribut AgentLook = "Charakter"): Rumpf und Arme sind
--- starre Teile, die nur in Ruhe aneinanderliegen. Spreizen die Standard-Animationen (Stehen, Laufen) die Arme
+-- Agentenmodell aus starren Teilen (AgentModels, Charakter-Attribut AgentLook = "Charakter", kein Rig): Rumpf und Arme
+-- sind starre Teile, die nur in Ruhe aneinanderliegen. Spreizen die Standard-Animationen (Stehen, Laufen) die Arme
 -- seitlich ab, klafft unter den Achseln eine Lücke. Ohne Waffe darum kein seitliches Abspreizen (Drehung um die
 -- Vorwärtsachse der Schulter); Vor- und Zurückschwingen und Eindrehen bleiben.
 local function keepArmsAtSides(rig)
@@ -597,8 +598,11 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 	end
 	if not usable then
 		deactivate(entry)
-		-- ohne Waffe: ganzer Charakter aus einem Modell hält die Arme am Körper (keine Lücke unter den Achseln)
-		if model:GetAttribute("AgentLook") == "Charakter" and humanoid and root and humanoid.Health > 0
+		-- ohne Waffe: Modell aus starren Teilen hält die Arme am Körper (keine Lücke unter den Achseln; ein Rig verformt
+		-- sich selbst)
+		local worn = model:FindFirstChild(AgentModels.ModelName)
+		if model:GetAttribute("AgentLook") == "Charakter" and worn and not worn:FindFirstChildOfClass("Humanoid")
+			and humanoid and root and humanoid.Health > 0
 			and humanoid.RigType == Enum.HumanoidRigType.R15 and not model:GetAttribute("Downed")
 			and (root.Position - cameraPosition).Magnitude <= MAX_DISTANCE then
 			local rig = ensureRig(model, entry, humanoid, root)
@@ -712,6 +716,7 @@ local function update(dt)
 				entries[model] = entry
 			end
 			updateCharacter(model, entry, dt, model == myCharacter, cameraPosition)
+			AgentModels.SyncJoints(model) -- Agentenmodell (Rig) bewegt sich mit, nach der Haltung
 		end
 	end
 	local bots = workspace:FindFirstChild("Bots")
@@ -724,6 +729,7 @@ local function update(dt)
 					entries[model] = entry
 				end
 				updateCharacter(model, entry, dt, false, cameraPosition)
+				AgentModels.SyncJoints(model)
 			end
 		end
 	end
