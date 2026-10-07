@@ -181,7 +181,7 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Munition** kaufen oder finden: Nachladen nimmt Schuss aus der Tasche (9mm, Magnum, Schrot, Gewehr), das
   Magazin bleibt am Item gespeichert. Ohne passende Munition kein Nachladen.
 - **Stände**: kaufen mit Münzen (Munition auch ×5), verkaufen an jedem Stand für 40 % des Preises.
-- **Spielermarkt** (`ExtMarketService`, Stand **MARKT** im Camp neben der Werkstatt, E): Spieler handeln untereinander mit
+- **Spielermarkt** (`ExtMarketService`, Stand **MARKT** mitten im Camp, dem Waffenstand gegenüber, E): Spieler handeln untereinander mit
   allem aus der Tasche – Waffen (samt Magazin), Munition (auch Teile eines Stapels), Heilung, Westen, Spritzen und
   Fahrzeuge – für Münzen. Rechts ein Item der Tasche anklicken, Anzahl und Preis eintragen (vorgeschlagen: der Preis am
   Stand), ANBIETEN; links stehen alle Angebote (billigste zuerst, Filter WAFFEN/MUNITION/AUSRÜSTUNG/FAHRZEUGE) mit KAUFEN,
