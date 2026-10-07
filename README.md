@@ -755,7 +755,7 @@ am Commit:
 | Test | prüft |
 |---|---|
 | `weapons` | Arm-IK (PoseMath), Visierlinien aller Waffen, Nachlade-Animationen, Waffenwerte |
-| `pose`, `pose_r6`, `rig` | Third-Person-Haltung: Waffe im Anschlag, Hände an der Waffe; Gelenk-Erkennung (Motor6D und Avatar Joint Upgrade), R6 |
+| `pose`, `pose_r6`, `rig` | Third-Person-Haltung: Waffe im Anschlag, Hände an der Waffe; Gelenk-Erkennung (Motor6D und Avatar Joint Upgrade), R6; ganzer Charakter ohne Waffe: Arme nicht seitlich abgespreizt |
 | `viewmodel` | Ego-Waffe: Kimme und Korn beim Zielen genau in der Bildmitte |
 | `minimap`, `modes` | Minimap-Zuschnitt auf den Kreis, Modus-Liste |
 | `session` | Sitzungssperre der Spielstände (Serverwechsel, Absturz, DataStore-Fehler) |
@@ -781,6 +781,7 @@ am Commit:
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
+| `agentsuit` | ganzer Charakter aus Blender ohne Humanoid und ohne eigenen Körper (Maße wie Viper_3.glb: 15 Teile `<Körperteil>_Suit`): jedes Teil sitzt genau wie im Modell, Arme lückenlos am Oberkörper, Texturen nicht übermalt |
 | `agentmodels` | Agenten-Lader: die Vorlage ist selbst ein gültiges Modell und sitzt genau wie die Quader-Ausrüstung (auch gedreht und verschoben importiert, an größeren Körperteilen), Farbzonen, Textur-Skins, Wechsel ohne Doppelte, Rückfall ohne Modell, alle Prüfmeldungen; Spieler, Bots und Menü-Figur tragen das Modell |
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
 | `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, bei Charakteren alle 15 Körperteile da, Textur-Skins gehören zum Agenten, jedes Teil angeschweißt und nie Trefferzone) |

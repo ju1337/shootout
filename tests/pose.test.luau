@@ -1,4 +1,4 @@
---!expose CharacterPose poseR15 poseR6 rigOf rigValid gripFrames
+--!expose CharacterPose poseR15 poseR6 rigOf rigValid gripFrames keepArmsAtSides
 -- Test der Third-Person-Haltung mit einem nachgebauten R15-Rig (Gelenkwerte wie beim Standard-R15)
 local failures = 0
 local function check(cond, msg)
@@ -173,5 +173,20 @@ for weaponName, info in GunModels.Info do
 	check(minAlong > 0.15 and maxAlong < 1.6, weaponName .. ": Visier zu nah/weit vom Auge")
 	check(minRaise > -0.2, weaponName .. ": Zielen senkt die Waffe")
 end
+
+-- Ganzer Charakter aus einem Modell, ohne Waffe: die Arme werden nicht seitlich abgespreizt (sonst klafft zwischen den
+-- starren Teilen von Rumpf und Arm eine Lücke), Vor-/Zurückschwingen und Eindrehen bleiben
+local idle = makeRig(CFrame.new())
+idle.LShoulder.Transform = CFrame.new(0, 0.01, 0) * CFrame.Angles(0.4, 0.05, -0.2)
+idle.RShoulder.Transform = CFrame.Angles(-0.3, 0, 0.25)
+local elbowBefore = CFrame.Angles(0.2, 0, 0.1)
+idle.LElbow.Transform = elbowBefore
+CharacterPose.__keepArmsAtSides(idle)
+local lx, ly, lz = idle.LShoulder.Transform:ToEulerAnglesXYZ()
+local rx, _, rz = idle.RShoulder.Transform:ToEulerAnglesXYZ()
+check(math.abs(lz) < 1e-6 and math.abs(rz) < 1e-6, "Arme nicht seitlich abgespreizt")
+check(math.abs(lx - 0.4) < 1e-6 and math.abs(ly - 0.05) < 1e-6 and math.abs(rx + 0.3) < 1e-6
+	and (idle.LShoulder.Transform.Position - Vector3.new(0, 0.01, 0)).Magnitude < 1e-6, "Schwingen und Eindrehen bleiben")
+check(idle.LElbow.Transform == elbowBefore, "Ellbogen unverändert")
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

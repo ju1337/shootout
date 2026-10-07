@@ -78,7 +78,11 @@ Spiel beim Laden:
   geschweißt ist (Accessoires aus Studio sind das automatisch), sonst an dem nächstgelegenen. Ganz unsichtbare Teile
   (Transparency 1) werden weggelassen.
 - **Bewegung:** Jedes Teil folgt seinem Körperteil. Laufen, Springen, Zielen und Waffe halten bewegen also dein
-  Modell mit, mit den Animationen des Spiels. Eigene Animationen oder Skripte im Modell werden nicht benutzt.
+  Modell mit, mit den Animationen des Spiels. Eigene Animationen oder Skripte im Modell werden nicht benutzt. Ohne
+  Waffe in der Hand spreizt ein ganzer Charakter die Arme nicht seitlich ab (Vor- und Zurückschwingen bleibt).
+  Rumpf und Arme sind starre Teile, die nur in Ruhe aneinanderliegen, sonst klafft unter den Achseln eine Lücke.
+  Mit Waffe bewegen sich die Arme frei. Ein kleiner Überstand im Modell hilft dann: Rumpf unter den Achseln etwas
+  breiter oder Schulterkappen, die etwas über den Rumpf reichen (0,1 bis 0,15 Studs).
 - **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder löschst es, lädt das Spiel es sofort neu und zieht
   alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auch auf dem Server
   passiert, z.B. in Studio im Server-Fenster oder im Modus **Run**).

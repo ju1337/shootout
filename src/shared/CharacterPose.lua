@@ -191,6 +191,20 @@ local function rigOf(model, humanoid, root)
 	return rig
 end
 
+-- Ganzer Charakter aus einem 3D-Modell (AgentModels, Charakter-Attribut AgentLook = "Charakter"): Rumpf und Arme sind
+-- starre Teile, die nur in Ruhe aneinanderliegen. Spreizen die Standard-Animationen (Stehen, Laufen) die Arme
+-- seitlich ab, klafft unter den Achseln eine Lücke. Ohne Waffe darum kein seitliches Abspreizen (Drehung um die
+-- Vorwärtsachse der Schulter); Vor- und Zurückschwingen und Eindrehen bleiben.
+local function keepArmsAtSides(rig)
+	for _, joint in { rig.LShoulder, rig.RShoulder } do
+		local transform = joint.Transform
+		local rx, ry, rz = transform:ToEulerAnglesXYZ()
+		if math.abs(rz) > 1e-4 then
+			joint.Transform = CFrame.new(transform.Position) * CFrame.fromEulerAnglesXYZ(rx, ry, 0)
+		end
+	end
+end
+
 -- Gelenke ersetzt (z.B. beim Nachladen des Aussehens)? Dann das Rig neu suchen.
 local function rigValid(rig, root)
 	if rig.Root ~= root or not rig.GripPart.Parent or not rig.RootJoint.Parent then
@@ -552,6 +566,23 @@ local function poseR6(entry, rig, info, pitch, pose, poseT)
 	return true
 end
 
+-- Rig des Charakters (zwischengespeichert; fehlen Gelenke noch, höchstens alle 0,5 s neu suchen)
+local function ensureRig(model, entry, humanoid, root)
+	if not entry.Rig or not rigValid(entry.Rig, root) then
+		local now = os.clock()
+		if entry.RigRetry and now < entry.RigRetry then
+			return nil
+		end
+		entry.Rig = rigOf(model, humanoid, root)
+		if not entry.Rig then
+			entry.RigRetry = now + 0.5 -- (noch) keine passenden Gelenke: nicht jedes Bild neu suchen
+			return nil
+		end
+		entry.RigRetry = nil
+	end
+	return entry.Rig
+end
+
 local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 	local tool = model:FindFirstChildOfClass("Tool")
 	local weapon = tool and tool:GetAttribute("Weapon")
@@ -566,6 +597,15 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 	end
 	if not usable then
 		deactivate(entry)
+		-- ohne Waffe: ganzer Charakter aus einem Modell hält die Arme am Körper (keine Lücke unter den Achseln)
+		if model:GetAttribute("AgentLook") == "Charakter" and humanoid and root and humanoid.Health > 0
+			and humanoid.RigType == Enum.HumanoidRigType.R15 and not model:GetAttribute("Downed")
+			and (root.Position - cameraPosition).Magnitude <= MAX_DISTANCE then
+			local rig = ensureRig(model, entry, humanoid, root)
+			if rig then
+				keepArmsAtSides(rig)
+			end
+		end
 		return
 	end
 	if (root.Position - cameraPosition).Magnitude > MAX_DISTANCE then
@@ -576,17 +616,8 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 		bindTool(entry, tool)
 		entry.EquipT = os.clock() -- Waffe kommt von unten hoch
 	end
-	if not entry.Rig or not rigValid(entry.Rig, root) then
-		local now = os.clock()
-		if entry.RigRetry and now < entry.RigRetry then
-			return
-		end
-		entry.Rig = rigOf(model, humanoid, root)
-		if not entry.Rig then
-			entry.RigRetry = now + 0.5 -- (noch) keine passenden Gelenke: nicht jedes Bild neu suchen
-			return
-		end
-		entry.RigRetry = nil
+	if not ensureRig(model, entry, humanoid, root) then
+		return
 	end
 
 	-- Eingaben: eigener Charakter direkt, andere aus den Attributen
