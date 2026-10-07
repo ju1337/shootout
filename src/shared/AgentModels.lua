@@ -3,7 +3,8 @@
 -- oder – solange es keins gibt – die Quader-Ausrüstung aus AgentBody (Kapuze, Visier, Maske, Weste, Schulterpolster,
 -- Gürtel). Empfohlen: ein ganzes R15-Rig (mit Humanoid, z.B. aus dem Avatar-Setup von Studio) – dann ist nur das
 -- Modell zu sehen, der Spielkörper bleibt unsichtbar als Trefferzone (siehe loadCharacter). Modelle ohne Humanoid
--- sind wie früher nur Ausrüstung auf dem sichtbaren Spielkörper (Rest dieses Kopfes).
+-- (Rest dieses Kopfes): decken ihre Teile den ganzen Körper ab (Kopf, Rumpf, Arme, Beine), sind sie ebenfalls ein
+-- ganzer Charakter (nur das Modell zu sehen), sonst wie früher Ausrüstung auf dem sichtbaren Spielkörper.
 -- Alle Agenten haben denselben Körper (gleiche Trefferzonen); ein Modell liefert nur die Ausrüstung: starre Teile,
 -- jedes an genau einem Körperteil. Das Spiel hängt sie an Spieler und Bots (AgentBody.Dress: angeschweißt, nie
 -- Trefferzone) und an die Figuren in Menüs, Shop und Markt (AgentFigure).
@@ -69,6 +70,11 @@ end
 -- ---------- Fertige 3D-Modelle (Blender) ----------
 local ZONES = { Primary = true, Accent = true, Glass = true }
 local MAX_PARTS = 12        -- Budget pro Agent (Handys)
+local MAX_CHARACTER_PARTS = 40 -- Budget für einen ganzen Charakter
+-- Deckt ein Modell ohne Humanoid mindestens diese Körperteile ab (Teile <Körperteil>_<Name>), ist es ein ganzer
+-- Charakter: zu sehen ist nur das Modell (Hände und Füße stecken oft im Unterarm bzw. Unterschenkel)
+local CHARACTER_CORE = { "Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "LeftLowerArm", "RightUpperArm",
+	"RightLowerArm", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg" }
 local MAX_DISTANCE = 0.75   -- so weit darf die Mitte eines Teils außerhalb seines Körperteils liegen
 local MAX_REACH = 0.45      -- weiter steht Ausrüstung nicht ab (sähe aus wie ein Ziel, zählt aber nicht als Treffer)
 local MAX_BODY_DEVIATION = 0.4 -- mitgelieferter Körper: so weit darf ein Körperteil vom Spielkörper abweichen
@@ -371,8 +377,8 @@ local function loadCharacter(source, skins, report)
 		end
 		add(extra, owner)
 	end
-	if #entries > 40 then
-		hint(#entries .. " Teile – für Handys besser höchstens 40 (Accessoires zusammenfassen)")
+	if #entries > MAX_CHARACTER_PARTS then
+		hint(#entries .. " Teile – für Handys besser höchstens " .. MAX_CHARACTER_PARTS .. " (Accessoires zusammenfassen)")
 	end
 	-- Textur-Skins: SurfaceAppearances heißen wie die Teile des Modells (z.B. UpperTorso)
 	local skinNames = {}
@@ -509,8 +515,10 @@ local function loadAsset(agentId, source)
 			continue
 		end
 		for _, child in part:GetDescendants() do
-			-- verschachtelte Teile kommen einzeln dran, Gelenke und Marker gehören nicht dazu
-			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint")
+			-- verschachtelte Teile kommen einzeln dran, Gelenke, Marker, Wraps, Skripte und Werte der Roblox-Skalierung
+			-- gehören nicht dazu
+			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Constraint")
+				or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") or child:IsA("ValueBase")
 				or (child:IsA("Attachment") and string.match(cleanName(child.Name), "^Point_")) then
 				child:Destroy()
 			end
@@ -528,7 +536,8 @@ local function loadAsset(agentId, source)
 			end
 			neon = neon or word == "Neon"
 		end
-		local textured = part:FindFirstChildOfClass("SurfaceAppearance") ~= nil
+		local texture = part:IsA("MeshPart") and part.TextureID
+		local textured = part:FindFirstChildOfClass("SurfaceAppearance") ~= nil or (type(texture) == "string" and texture ~= "")
 		local plain = part.Color == Color3.new(1, 1, 1) and not textured
 		if plain and not zone and not neon then
 			part.Color = DEFAULT_COLOR
@@ -547,7 +556,31 @@ local function loadAsset(agentId, source)
 			NeonAccent = neon and plain, Template = part })
 		names[unique] = true
 	end
-	if #entries > MAX_PARTS then
+	-- Deckt das Modell den ganzen Körper ab (Kopf, Rumpf, Arme, Beine – z.B. ein Charakter aus Blender ohne Humanoid,
+	-- gebaut auf der Vorlage), ist es ein ganzer Charakter wie mit Humanoid: zu sehen ist nur das Modell, der
+	-- Spielkörper bleibt unsichtbar als Trefferzone. Sonst ist es Ausrüstung auf dem sichtbaren Spielkörper.
+	local covered = {}
+	for _, entry in entries do
+		covered[entry.Body] = true
+	end
+	local whole = #entries > 0
+	for _, bodyName in CHARACTER_CORE do
+		whole = whole and covered[bodyName] == true
+	end
+	if whole then
+		local open = {}
+		for _, bodyName in AgentModels.BodyParts do
+			if not covered[bodyName] then
+				table.insert(open, bodyName)
+			end
+		end
+		if #open > 0 then
+			hint("ganzer Charakter ohne " .. table.concat(open, ", ") .. " – dort bleibt der Spielkörper zu sehen")
+		end
+		if #entries > MAX_CHARACTER_PARTS then
+			hint(#entries .. " Teile – für Handys besser höchstens " .. MAX_CHARACTER_PARTS .. " (kleine Teile zusammenfassen)")
+		end
+	elseif #entries > MAX_PARTS then
 		hint(#entries .. " Ausrüstungsteile – höchstens " .. MAX_PARTS .. ": Teile am selben Körperteil ohne eigene "
 			.. "Farbzone in Blender zusammenfügen (spart Leistung)")
 	end
@@ -562,7 +595,8 @@ local function loadAsset(agentId, source)
 		return nil, report
 	end
 	report.Loaded = true
-	return { Gear = entries, Skins = skins }, report
+	report.Character = whole or nil
+	return { Gear = entries, Skins = skins, Character = whole }, report
 end
 
 -- Ein Modell aus Assets.Agents laden (Name = Agent-Id) und den Bericht dazu ablegen
@@ -775,12 +809,16 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 	local textures = asset.Skins and skinId and asset.Skins:FindFirstChild(skinId)
 	local holder = container
 	if asset.Character then
-		-- ganzer Charakter: der Spielkörper bleibt als (unsichtbare) Trefferzone, zu sehen ist nur das Modell
-		for _, body in parts do
-			body.Transparency = 1
-			for _, decal in body:GetChildren() do
-				if decal:IsA("Decal") then
-					decal.Transparency = 1
+		-- ganzer Charakter: der Spielkörper bleibt als (unsichtbare) Trefferzone, zu sehen ist nur das Modell (jedes
+		-- Körperteil, an dem etwas vom Modell hängt)
+		for _, entry in asset.Gear do
+			local body = parts[entry.Body]
+			if body then
+				body.Transparency = 1
+				for _, decal in body:GetChildren() do
+					if decal:IsA("Decal") then
+						decal.Transparency = 1
+					end
 				end
 			end
 		end

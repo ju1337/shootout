@@ -479,7 +479,9 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an (Kontrolle läuft, solange der Charakter lebt).
   Textur-Skins im Ordner `Skins`. Fehlt etwas, bleibt der Standard-Look und
   Studio sagt im Output, was fehlt (`[Agentenmodelle] …`). Weiter möglich (alte Methode, Modell ohne Humanoid): nur
-  Ausrüstung aus Blender auf den Standardkörper, Teile `<Körperteil>_<Name>`, Vorlage in `art/templates/Agents`
+  Ausrüstung aus Blender auf den Standardkörper, Teile `<Körperteil>_<Name>`, Vorlage in `art/templates/Agents`.
+  Decken diese Teile Kopf, Rumpf, Arme und Beine ab, gilt das Modell ebenfalls als ganzer Charakter (nur das Modell
+  zu sehen, Spielkörper unsichtbar)
 - **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi

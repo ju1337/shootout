@@ -61,8 +61,9 @@ Du musst das Modell nicht ausrichten, nicht skalieren und nicht in eine bestimmt
 Spiel beim Laden:
 
 - **Erkennen:** Hat das Modell irgendwo einen **Humanoid**, gilt es als ganzer Charakter. Dann müssen alle 15
-  Körperteile da sein. (Ein Modell ohne Humanoid wird nach der alten Methode geladen, siehe
-  [ganz unten](#fortgeschritten-nur-ausrüstung-alte-methode).)
+  Körperteile da sein. Ein Modell ohne Humanoid wird nach der alten Methode geladen (siehe
+  [ganz unten](#fortgeschritten-nur-ausrüstung-alte-methode)). Decken seine Teile dabei Kopf, Rumpf, Arme und Beine
+  ab, ist es ebenfalls ein ganzer Charakter, und zu sehen ist nur das Modell.
 - **Größe:** Das Modell wird auf die Größe des Spielkörpers gebracht (5,1 Studs vom Scheitel bis zu den Füßen), egal
   wie groß es war. Die Proportionen bleiben. Musste es stark verkleinert oder vergrößert werden, kommt ein Hinweis.
 - **Blickrichtung:** Vorne ist dort, wohin das **HumanoidRootPart** schaut.
@@ -114,6 +115,7 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
 | `… als Viper: Quader-Ausrüstung (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
 | Im Spiel steht der normale Körper da – mit Roblox-Gesicht, ohne Modell und ohne Ausrüstung | Das Einkleiden ist nicht gelaufen, oder Roblox hat danach Körperteile ausgetauscht. Der Server prüft das laufend: nach dem Spawn mehrmals, danach alle 5 Sekunden. Er zieht dann neu an, im Output steht `Aussehen verändert (…) – neu angezogen` mit dem Grund in Klammern. Bleibt der Körper so, im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. |
+| `… als Viper: Ausrüstung aus dem Modell`, und der Spielkörper ist unter dem Modell zu sehen | Das Modell hat keinen Humanoid und deckt nicht Kopf, Rumpf, Arme und Beine ab. Deshalb gilt es nur als Ausrüstung auf dem sichtbaren Körper. Entweder mit dem Avatar-Setup zu einem R15-Rig machen (empfohlen, siehe oben) oder für jedes Körperteil ein Teil `<Körperteil>_<Name>` bauen (siehe [alte Methode](#fortgeschritten-nur-ausrüstung-alte-methode)). |
 | Spielkörper und Modell liegen übereinander (der schmale Körper in Agentenfarben schaut durch das Modell) | Der Spielkörper ist die unsichtbare Trefferzone. Macht ihn etwas wieder sichtbar (Roblox beim Laden des Aussehens oder ein Skript), blendet der Server ihn sofort wieder aus. Im Output steht dann einmal `… wieder sichtbar gemacht – sofort wieder ausgeblendet`. Siehst du ihn trotzdem, alle Output-Zeilen mit `[Agentenmodelle]` an die Projektleitung schicken. |
 | `Modell konnte nicht angezogen werden (…) – Quader-Ausrüstung` | Beim Anziehen ist ein Fehler passiert, der Agent trägt deshalb die Quader-Ausrüstung. Die Meldung in Klammern an die Projektleitung schicken. |
 
@@ -192,6 +194,12 @@ Modell). Veröffentlicht wird deshalb immer aus Studio.
 Der ältere Weg funktioniert weiter, ist aber aufwendiger. Er gilt für Modelle **ohne Humanoid**. Dann ist dein Modell
 nur die **Ausrüstung** (Helm, Visier, Maske, Weste, Taschen, Polster, Gürtel …), und der Agent behält den sichtbaren
 Standardkörper in seinen Farben. Jedes Teil wird an genau ein Körperteil geschweißt und zählt nie als Treffer.
+
+**Ganzer Charakter auf der Vorlage:** Baust du so den kompletten Charakter (mindestens ein Teil für `Head`,
+`UpperTorso`, `LowerTorso` und jedes Arm- und Beinteil, z.B. `UpperTorso_Shirt`, `LeftLowerLeg_Hose`), erkennt das
+Spiel ihn als ganzen Charakter. Dann ist nur dein Modell zu sehen, der Standardkörper bleibt unsichtbar als
+Trefferzone. Im Output steht `Viper: Charakter geladen (… Teile)` und `… als Viper: ganzer Charakter aus dem Modell`.
+Fehlen Hände oder Füße, bleibt dort der Standardkörper zu sehen (Hinweis `ganzer Charakter ohne …`).
 
 **Ablauf in Kürze**
 

@@ -175,9 +175,68 @@ AgentBody.Dress(textured, primary, accent, "Bastion", "A_Bastion_Stahl")
 local vest = textured.UpperTorso_Vest_Accent
 check(vest:FindFirstChildOfClass("SurfaceAppearance") ~= nil and vest.Color == accent, "Textur-Skin an der Weste")
 check(textured.Head_Visor_Glass:FindFirstChildOfClass("SurfaceAppearance") == nil, "Textur nur am genannten Teil")
+-- Die Vorlage ist nur Ausrüstung (5 Körperteile): der Spielkörper bleibt zu sehen
+check(not AgentModels.IsCharacter("Viper") and viper:GetAttribute("AgentLook") == "Modell" and viper.UpperTorso.Transparency == 0
+	and viper.LeftLowerLeg.Transparency == 0, "nur Ausrüstung: Spielkörper sichtbar")
 for _, model in { blockout, viper, bastion, mender, bigBlockout, bigViper, plain, textured } do
 	model:Destroy()
 end
+
+-- ---------- Ganzer Charakter ohne Humanoid ----------
+-- Auf der Vorlage gebaut (z.B. in Blender), ein Teil <Körperteil>_<Name> je Körperteil: deckt das Modell Kopf, Rumpf,
+-- Arme und Beine ab, ist es ein ganzer Charakter wie mit Humanoid – nur das Modell ist zu sehen, der Spielkörper bleibt
+-- unsichtbar als Trefferzone (so lag sonst beides übereinander)
+local function wholeBody(model, skip)
+	for _, child in model:GetChildren() do
+		if child:IsA("BasePart") and AgentModels.Body[string.match(child.Name, "^([^_]+)_") or ""] then
+			child:Destroy() -- Ausrüstung der Vorlage weg
+		end
+	end
+	for _, name in AgentModels.BodyParts do
+		if not table.find(skip or {}, name) then
+			local piece = Instance.new("MeshPart")
+			piece.Name = name .. "_Geo"
+			piece.Size = model[name].Size * 1.04
+			piece.CFrame = model[name].CFrame
+			piece.Parent = model
+		end
+	end
+	return model
+end
+local hawkSource = wholeBody(template:Clone())
+hawkSource.Name = "Hawk"
+hawkSource.Parent = folder
+local trapperSource = wholeBody(template:Clone(), { "LeftHand", "RightHand", "LeftFoot", "RightFoot" })
+trapperSource.Name = "Trapper"
+trapperSource.Parent = folder
+step(0.1)
+report = AgentModels.AssetReport()
+check(report.Hawk and report.Hawk.Loaded and report.Hawk.Character and #report.Hawk.Warnings == 0
+	and AgentModels.IsCharacter("Hawk"), "ganzer Körper ohne Humanoid: als Charakter geladen, ohne Hinweis auf 12 Teile: "
+	.. messages(report.Hawk))
+local hawk = rig()
+AgentBody.Dress(hawk, primary, accent, "Hawk")
+local hawkModel = hawk:FindFirstChild(AgentModels.ModelName)
+local hawkVisible = 0
+for _, name in AgentModels.BodyParts do
+	hawkVisible += hawk[name].Transparency < 1 and 1 or 0
+end
+check(hawkModel ~= nil and #hawkModel:GetChildren() == 15 and hawkVisible == 0 and hawk:GetAttribute("AgentLook") == "Charakter"
+	and AgentBody.IsDressed(hawk, "Hawk"), "ganzer Körper ohne Humanoid: nur das Modell zu sehen (" .. hawkVisible
+	.. " Körperteile sichtbar)")
+check(report.Trapper and report.Trapper.Character and hasText(report.Trapper.Warnings, "ohne LeftHand"),
+	"ohne Hände und Füße: trotzdem ganzer Charakter, mit Hinweis: " .. messages(report.Trapper))
+local trapper = rig()
+AgentBody.Dress(trapper, primary, accent, "Trapper")
+check(trapper.UpperTorso.Transparency == 1 and trapper.LeftLowerArm.Transparency == 1 and trapper.LeftHand.Transparency == 0
+	and trapper.RightFoot.Transparency == 0 and AgentBody.IsDressed(trapper, "Trapper"),
+	"ohne Hände und Füße: nur dort bleibt der Spielkörper zu sehen")
+for _, model in { hawk, trapper } do
+	model:Destroy()
+end
+hawkSource:Destroy()
+trapperSource:Destroy()
+step(0.1)
 
 -- ---------- Prüfmeldungen ----------
 local function variant(edit)

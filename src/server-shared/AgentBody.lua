@@ -155,7 +155,8 @@ end
 -- Ganzer Charakter: der Spielkörper (Trefferzone) bleibt unsichtbar, solange das Modell der Look ist – egal, wer ihn
 -- wieder sichtbar macht (Roblox setzt beim Laden des Aussehens teils Transparenz und Gesicht zurück). Sonst lägen
 -- Spielkörper und Modell sichtbar übereinander.
-local hiddenBody = setmetatable({}, { __mode = "k" }) -- [Charakter] = true, solange der Spielkörper unsichtbar sein muss
+-- [Charakter] = { [Körperteil-Name] = true }: diese Teile des Spielkörpers müssen unsichtbar bleiben (die das Modell abdeckt)
+local hiddenBody = setmetatable({}, { __mode = "k" })
 local guardedParts = setmetatable({}, { __mode = "k" }) -- [Körperteil] = true: wird schon bewacht
 local revealReported = setmetatable({}, { __mode = "k" }) -- [Charakter] = true: schon im Studio-Output gemeldet
 
@@ -176,7 +177,8 @@ local function guardBodyPart(character, part)
 	end
 	guardedParts[part] = true
 	local function enforce(what)
-		if hiddenBody[character] and part.Parent == character then
+		local hidden = hiddenBody[character]
+		if hidden and hidden[part.Name] and part.Parent == character then
 			if RunService:IsStudio() and not revealReported[character] then
 				revealReported[character] = true
 				print("[Agentenmodelle] " .. character.Name .. ": " .. what .. " am Spielkörper (" .. part.Name
@@ -269,10 +271,16 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 	character:SetAttribute("AgentLook", look)
 	character:SetAttribute("AgentLookOf", agentId)
 	if look == "Charakter" then
-		hiddenBody[character] = true
+		local covered = {}
+		for _, bodyName in AgentModels.PiecesOf(agentId) or {} do
+			covered[bodyName] = true
+		end
+		hiddenBody[character] = covered
 		for _, part in allBodyParts do
-			hideBodyPart(part)
-			guardBodyPart(character, part)
+			if covered[part.Name] then
+				hideBodyPart(part)
+				guardBodyPart(character, part)
+			end
 		end
 	end
 	if attached then
