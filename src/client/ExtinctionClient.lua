@@ -2304,6 +2304,12 @@ function ExtinctionClient.Init()
 			closeWindow()
 		end
 	end)
+	-- Controller: ○ schließt das offene Fenster (auch wenn darin gerade ein Knopf ausgewählt ist)
+	UserInputService.InputBegan:Connect(function(input)
+		if window and input.KeyCode == Enum.KeyCode.ButtonB then
+			closeWindow()
+		end
+	end)
 	updateHints()
 	InputActions.DeviceChanged:Connect(updateHints)
 

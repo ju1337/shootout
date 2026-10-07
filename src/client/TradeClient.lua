@@ -563,14 +563,17 @@ function TradeClient.Init()
 		updateHint()
 	end)
 	UserInputService.InputBegan:Connect(function(input, processed)
+		-- ○ schließt auch, wenn gerade ein Knopf im Fenster ausgewählt ist (dann meldet Roblox die Taste als verarbeitet)
+		if listWindow and (input.KeyCode == Enum.KeyCode.ButtonB or (input.KeyCode == Enum.KeyCode.Escape and not processed)) then
+			closeList()
+			updateHint()
+			return
+		end
 		if processed then
 			return
 		end
 		if input.KeyCode == Enum.KeyCode.T and window == nil then
 			TradeClient.TogglePlayers()
-			updateHint()
-		elseif listWindow and (input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonB) then
-			closeList()
 			updateHint()
 		end
 	end)

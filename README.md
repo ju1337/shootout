@@ -630,8 +630,24 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel �
 In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Inventar · E Stand/Lager/Tasche/Mitfahren ·
 K Fahrzeug einpacken · N Weltkarte · J Squad · Z Ping (nur an den Squad) · im Fahrzeug W/S/A/D, Leertaste aussteigen ·
 im Helikopter W/S/A/D, Leertaste steigen, Shift sinken, F aussteigen ·
-Controller: R1/L1 Waffe der Hotbar wechseln, Select Inventar, △ Fahrzeug einpacken · Touch: Hotbar-Plätze antippen,
+Controller: siehe Konsole · Touch: Hotbar-Plätze antippen,
 Knöpfe TASCHE (Inventar), PARKEN (Fahrzeug einpacken), WAFFE (nächste Waffe der Hotbar)
+
+Konsole (Controller, Tasten im PlayStation-Stil): R2 Schießen · L2 Zielen · □ Nachladen bzw. Wiederbeleben/Bombe
+(bei vollem Magazin: inspizieren) · △ Waffe wechseln · R3 Messer · L1 Fähigkeit · R1 Gadget · L1+R1 Ultimate ·
+L3 Sprint · ○ Ducken · ↑ Ping · ← Kamera · → Schulter bzw. Killstreak · ↓ Menü · Touchpad/Select Punkte ·
+beim Zuschauen L1/R1 voriges/nächstes Teammitglied.
+In EXTINCTION tragen drei Tasten zwei Belegungen, kurz antippen bzw. gedrückt halten (ab 0,35 s,
+`InputActions.HoldTime`): **↑** Ping / halten Weltkarte · **Select** Inventar / halten Squad ·
+**△** heilen (Medikit, wenn mindestens 50 Leben fehlen, sonst Verband, sonst ein anderes Heil-Item der Hotbar) /
+halten Fahrzeug parken; dazu R1/L1 Waffe der Hotbar. Die Tastenzeile zeigt das als z. B. „↑ HALTEN  KARTE“.
+Menüs und Fenster (Markt, Tausch, Kisten, Inventar, ...): beim Öffnen springt die Controller-Auswahl auf den ersten
+Knopf (das Schließen-Kreuz wird übersprungen), Steuerkreuz/Stick wählen, ✕ drückt, ○ schließt.
+
+Handy (Touch): Stick links, Knöpfe rechts (FEUER, ZIELEN, SPRUNG, DUCKEN, LADEN, FÄHIGK., GADGET, MESSER, WAFFE,
+AKTION), oben rechts PING, PUNKTE, KAMERA, ULT, INSPEKT, links SPRINT; in EXTINCTION TASCHE und PARKEN statt
+Fähigkeit/Gadget, im Helikopter HOCH/RUNTER und RAUS. Beim Zuschauen unten **ZURÜCK** / **WEITER** (voriges/nächstes
+Teammitglied).
 
 Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
 G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an der Shop-Theke öffnet den Shop
@@ -739,6 +755,8 @@ am Commit:
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
 | `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automaten, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge |
 | `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis nur im Hub/Markt, Esc schließt |
+| `padhold`, `extinctionpad` | Controller antippen/halten: kurz = Antippen-Aktion beim Loslassen, lang = Halten-Aktion bis zum Loslassen, Tasten ohne Halten sofort, Hinweis „△ HALTEN“; EXTINCTION-Belegung (↑ Ping/Karte, Select Inventar/Squad, △ heilen/parken) mit echten Tasten, Heil-Item-Wahl (Medikit/Verband/anderes, Meldung ohne), außerhalb der offenen Welt normale Belegung |
+| `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
 | `crate`, `crateui` | Kisten: getrennte Pools (Waffen/Agenten, alle handelbar), steile Chancen (Waffen 62/28/8/2 %, Agenten 75/20/5 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
 | `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Art, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
 | `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |

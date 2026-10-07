@@ -143,8 +143,50 @@ function InputActions.Focus(container, preferred)
 	end)
 end
 
+-- Namenspfad der zuletzt gewählten Auswahl (vom ScreenGui abwärts), damit Refocus nach einem Neuaufbau den
+-- gleichnamigen neuen Knopf wiederfindet
+local lastPath = nil
+local function pathOf(object)
+	local path = {}
+	local current = object
+	while current and not current:IsA("LayerCollector") do
+		table.insert(path, 1, current.Name)
+		current = current.Parent
+	end
+	return current and path or nil, current
+end
+GuiService:GetPropertyChangedSignal("SelectedObject"):Connect(function()
+	local selected = GuiService.SelectedObject
+	if selected then
+		local path, gui = pathOf(selected)
+		lastPath = path and { Gui = gui, Names = path } or nil
+	end
+end)
+
+-- Den Knopf mit demselben Namenspfad wie die letzte Auswahl in container suchen (nil, wenn es ihn nicht mehr gibt)
+local function sameAsLast(container)
+	local own, gui = pathOf(container)
+	if not (lastPath and own and gui == lastPath.Gui and #lastPath.Names > #own) then
+		return nil
+	end
+	for index, name in own do
+		if lastPath.Names[index] ~= name then
+			return nil
+		end
+	end
+	local current = container
+	for index = #own + 1, #lastPath.Names do
+		current = current:FindFirstChild(lastPath.Names[index])
+		if not current then
+			return nil
+		end
+	end
+	return current:IsA("GuiButton") and current or nil
+end
+
 -- Nach einem Neuaufbau: nur dann neu auswählen, wenn die Auswahl nicht mehr in container liegt (z.B. weil der
--- gewählte Knopf beim Neuaufbau verschwand) – so springt die Auswahl nicht bei jedem Update zurück an den Anfang
+-- gewählte Knopf beim Neuaufbau verschwand). Dann bevorzugt den gleichnamigen neuen Knopf an derselben Stelle,
+-- sonst den ersten – so springt die Auswahl nicht bei jedem Update zurück an den Anfang
 function InputActions.Refocus(container)
 	if device ~= "Gamepad" or not container then
 		return
@@ -152,7 +194,7 @@ function InputActions.Refocus(container)
 	task.defer(function()
 		local selected = GuiService.SelectedObject
 		if not (selected and selected:IsDescendantOf(container)) and container.Parent then
-			InputActions.Focus(container)
+			InputActions.Focus(container, sameAsLast(container))
 		end
 	end)
 end

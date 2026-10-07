@@ -383,11 +383,38 @@ local function classLookup(tableByClass, className, key)
 	return nil
 end
 
+-- Oberflächen: AbsolutePosition/AbsoluteSize vereinfacht aus Position, Size und AnchorPoint der Eltern berechnet
+-- (Bildschirm 1920 x 1080; UIListLayout, UIScale und Scrollen bleiben unberücksichtigt)
+SIM.ScreenSize = Vector2.new(1920, 1080)
+local function guiAbsolute(self)
+	local props = rawget(self, "__props")
+	if isA(props.ClassName, "LayerCollector") then
+		return Vector2.zero, SIM.ScreenSize
+	end
+	local parent = props.Parent
+	local parentProps = parent and rawget(parent, "__props")
+	if not parentProps or not isA(parentProps.ClassName, "GuiBase2d") then
+		return Vector2.zero, Vector2.zero
+	end
+	local parentPos, parentSize = guiAbsolute(parent)
+	local size, position = props.Size or UDim2.new(), props.Position or UDim2.new()
+	local anchor = props.AnchorPoint or Vector2.zero
+	local w = parentSize.X * size.X.Scale + size.X.Offset
+	local h = parentSize.Y * size.Y.Scale + size.Y.Offset
+	local x = parentPos.X + parentSize.X * position.X.Scale + position.X.Offset - anchor.X * w
+	local y = parentPos.Y + parentSize.Y * position.Y.Scale + position.Y.Offset - anchor.Y * h
+	return Vector2.new(x, y), Vector2.new(w, h)
+end
+
 InstMT.__index = function(self, key)
 	local props = rawget(self, "__props")
 	local value = props[key]
 	if value ~= nil then
 		return value
+	end
+	if (key == "AbsoluteSize" or key == "AbsolutePosition") and isA(props.ClassName, "GuiBase2d") then
+		local position, size = guiAbsolute(self)
+		return key == "AbsoluteSize" and size or position
 	end
 	if Methods[key] then
 		return Methods[key]
@@ -840,6 +867,9 @@ ClassInit.GuiObject = function(self)
 	props.Size = UDim2.new()
 	props.Position = UDim2.new()
 	props.AnchorPoint = Vector2.zero
+end
+ClassInit.GuiButton = function(self)
+	rawget(self, "__props").Selectable = true -- wie in Roblox: Knöpfe sind per Controller auswählbar
 end
 local function textDefaults(self)
 	local props = rawget(self, "__props")

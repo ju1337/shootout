@@ -1,5 +1,5 @@
 -- Spectator (ModuleScript, nur Client)
--- Nur im Drop-Modus: Wer tot ist (oder mitten in der Runde beitritt), schaut einem
+-- In allen Team-Modi: Wer tot ist (oder mitten in der Runde beitritt), schaut einem
 -- lebenden Teammitglied zu (auch Bot-Teamkollegen). Mit E/Q (Controller R1/L1, Handy: Knöpfe ZURÜCK/WEITER unten)
 -- wechseln. Ohne Teammitglied: Blick von oben auf die Map.
 -- Außerdem bekommen Teammitglieder einen Umriss in Verbündeten-Blau (wie im HUD).
