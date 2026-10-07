@@ -8,6 +8,8 @@
 -- options.Bots) jagen sie genauso wie Spieler.
 -- Arten (ExtinctionConfig.ZombieKinds): Walker (normal, langsam), in der roten Zone auch Läufer (schneller) und Brocken
 -- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
+-- Anti-Zombie-Spritze (Charakter-Attribut ZombieShieldUntil): solange sie wirkt, spawnt näher als Zombies.ShieldRadius am
+-- Spieler kein Zombie – egal woher (Umgebung, rote Zone, Schreier, Nester, Lootdrop-Begleiter, Bosse).
 -- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche: E durchsucht sie, alles geht direkt ins
 -- Inventar (LootService.Grab); was nicht passt, bleibt in der Leiche (ExtinctionConfig.Zombies.CorpseLootTime Sekunden).
 -- In der roten Zone gestorben: doppelte Münzen und bessere Beute (ExtinctionConfig.Redzone.Loot).
@@ -521,10 +523,28 @@ end
 -- Andere Dienste (Aufträge): callback(killer, kind, position), wenn ein Spieler einen Zombie erledigt
 ZombieService.OnKill = {}
 
+-- Wirkt bei diesem Spieler gerade die Anti-Zombie-Spritze?
+local function shielded(player)
+	local character = player.Character
+	return character ~= nil and (character:GetAttribute("ZombieShieldUntil") or 0) > workspace:GetServerTimeNow()
+end
+ZombieService.Shielded = shielded
+
+-- Liegt position zu nah an einem Spieler mit Anti-Zombie-Spritze? (dort spawnt nichts)
+local function nearShield(position)
+	for _, player in Players:GetPlayers() do
+		local root = shielded(player) and livingRoot(player)
+		if root and Vector3.new(root.Position.X - position.X, 0, root.Position.Z - position.Z).Magnitude < Z.ShieldRadius then
+			return true
+		end
+	end
+	return false
+end
+
 -- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Nester, Lager-Alarm), aber
--- höchstens ForceExtra darüber
+-- höchstens ForceExtra darüber. Nie nah an einem Spieler mit Anti-Zombie-Spritze (dann nil).
 function ZombieService.Spawn(position, kindName, force)
-	if count >= maxTotal() + (force and Z.ForceExtra or 0) then
+	if count >= maxTotal() + (force and Z.ForceExtra or 0) or nearShield(position) then
 		return nil
 	end
 	local stats = ZombieService.Kind(kindName)
@@ -706,7 +726,7 @@ end
 local function spawnRound()
 	for _, player in options.Players() do
 		local ok, root = huntable(player)
-		if ok and root and count < maxTotal() then
+		if ok and root and count < maxTotal() and not shielded(player) then
 			local zone = options.RedzoneAt and options.RedzoneAt(root.Position)
 			local wanted = zone and math.floor(Z.PerPlayer * ExtinctionConfig.Redzone.PerPlayerFactor + 0.5) or Z.PerPlayer
 			if DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow())) then

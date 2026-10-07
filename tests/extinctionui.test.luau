@@ -437,6 +437,22 @@ local bobRoot = bob.Character:FindFirstChild("HumanoidRootPart")
 check(bobRoot and (bobRoot.Position - (CENTER + Vector3.new(0, 0, 710))).Magnitude < 12, "Klick reist ins Safehouse")
 check(not windowGui.Enabled, "Fenster danach zu")
 
+-- Anti-Zombie-Spritze wirkt: Zeile unter der Zonen-Anzeige mit Restzeit
+local shield = find(hud, "ZombieShield")
+check(shield ~= nil and not shield.Visible, "ohne Spritze keine Anzeige")
+bob.Character:SetAttribute("ZombieShieldUntil", workspace:GetServerTimeNow() + 95)
+step(0.2)
+check(shield and shield.Visible and string.find(texts(shield), "ANTI-ZOMBIE-SPRITZE  1:3", 1, true) ~= nil
+	and string.find(texts(shield), "KEINE ZOMBIES", 1, true) ~= nil, "Spritze wirkt: Restzeit (" .. (shield and texts(shield) or "") .. ")")
+bob.Character:SetAttribute("ZombieShieldUntil", workspace:GetServerTimeNow() - 1)
+step(0.2)
+check(shield and not shield.Visible, "abgelaufen: Anzeige weg")
+-- Spritze in der Tasche: eigenes Symbol
+InventoryService.Give(bob, "AntiZombie", 1)
+step(0.3)
+check(string.find(texts(hud), "ANTI-ZOMBIE-SPRITZE", 1, true) ~= nil or string.find(texts(hud), "SPRITZE", 1, true) ~= nil,
+	"Spritze auf der Hotbar")
+
 -- Modus verlassen: HUD weg
 bob:SetAttribute("Mode", "Hub")
 step(0.2)

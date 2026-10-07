@@ -3,8 +3,9 @@
 -- Tasten 1-9) und das Lager in der Safe Zone (StashSlots Plätze, immer sicher). Beides steht im Profil
 -- (ProgressService) unter Extinction = { Bag = Liste, Stash = Liste } und bleibt beim Verlassen in der Safe Zone
 -- genau so angeordnet erhalten. Die Regeln für Plätze und Stapel stehen in Inventory (shared).
--- Taste 1-9 (Use): Waffe in die Hand / wegstecken (nur außerhalb der Safe Zone), Heilung und Rüstung benutzen
--- (dauert UseTime Sekunden), Fahrzeug spawnen (VehicleService meldet sich als UseVehicle an).
+-- Taste 1-9 (Use): Waffe in die Hand / wegstecken (nur außerhalb der Safe Zone), Heilung, Rüstung und die Anti-Zombie-Spritze
+-- benutzen (dauert UseTime Sekunden; die Spritze setzt das Charakter-Attribut ZombieShieldUntil: so lange spawnen bei einem
+-- keine Zombies, siehe ZombieService), Fahrzeug spawnen (VehicleService meldet sich als UseVehicle an).
 -- Stände: kaufen (Münzen) und verkaufen (SellFactor) nur in der Nähe des Stands; Lager nur in seiner Nähe.
 -- Spieler-Attribute für den Client: ExtBag, ExtStash (JSON-Listen, siehe Inventory.ToList), ExtEquipped (Platz der
 -- Waffe in der Hand, 0 = keine). Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
@@ -198,7 +199,11 @@ local function finishUse(player, state, item, config, character, humanoid)
 	if not slot or player.Character ~= character or humanoid.Health <= 0 then
 		return
 	end
-	if config.Kind == "Heal" then
+	if config.Kind == "Repel" then
+		-- Anti-Zombie-Spritze: einzige Wirkung – eine Weile spawnen bei dir keine Zombies
+		character:SetAttribute("ZombieShieldUntil", workspace:GetServerTimeNow() + config.Duration)
+		status(player, "Anti-Zombie-Spritze: " .. math.floor(config.Duration / 60) .. " Min spawnen bei dir keine Zombies", true)
+	elseif config.Kind == "Heal" then
 		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + config.Heal)
 		if config.Speed then
 			character:SetAttribute("SpeedMultiplier", config.Speed)
@@ -235,6 +240,10 @@ local function startUse(player, state, item, config)
 	end
 	if config.Kind == "Armor" and (character:GetAttribute("Armor") or 0) >= ExtinctionConfig.MaxArmor then
 		status(player, "Deine Rüstung ist voll.")
+		return
+	end
+	if config.Kind == "Repel" and (character:GetAttribute("ZombieShieldUntil") or 0) > workspace:GetServerTimeNow() then
+		status(player, "Die Anti-Zombie-Spritze wirkt noch.")
 		return
 	end
 	local token = {}
@@ -283,7 +292,7 @@ function InventoryService.Use(player, slot)
 		else
 			equip(player, state, item)
 		end
-	elseif config.Kind == "Heal" or config.Kind == "Armor" then
+	elseif config.Kind == "Heal" or config.Kind == "Armor" or config.Kind == "Repel" then
 		startUse(player, state, item, config)
 	elseif config.Kind == "Vehicle" then
 		if InventoryService.UseVehicle then

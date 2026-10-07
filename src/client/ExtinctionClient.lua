@@ -48,8 +48,11 @@ local KIND_COLORS = {
 	Heal = Color3.fromRGB(206, 86, 76),
 	Armor = Color3.fromRGB(96, 150, 196),
 	Vehicle = Color3.fromRGB(112, 178, 112),
+	Repel = Color3.fromRGB(120, 220, 120),
 }
-local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG" }
+local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG",
+	Repel = "SCHUTZ" }
+local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeige oben)
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
 local bag, stash = {}, {} -- [Platz] = { Id, N, Mag, Out }
@@ -136,6 +139,21 @@ local function buildIcon(parent, id, zIndex)
 		UITheme.Corner(vest, 6)
 		make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(1, -6, 0, 4),
 			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, vest)
+	elseif config.Kind == "Repel" then
+		-- Spritze: Kolben, Zylinder mit grünem Serum, Nadel (schräg)
+		local syringe = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
+			Size = UDim2.fromOffset(40, 10), Rotation = -35, BackgroundTransparency = 1, ZIndex = zIndex }, holder)
+		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(3, 10),
+			BackgroundColor3 = Color3.fromRGB(210, 210, 214), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 3, 0.5, 0), Size = UDim2.fromOffset(6, 2),
+			BackgroundColor3 = Color3.fromRGB(210, 210, 214), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+		local barrel = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 9, 0.5, 0), Size = UDim2.fromOffset(20, 8),
+			BackgroundColor3 = Color3.fromRGB(236, 240, 236), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+		UITheme.Corner(barrel, 2)
+		make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -1, 0.5, 0), Size = UDim2.fromOffset(13, 6),
+			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, barrel)
+		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 29, 0.5, 0), Size = UDim2.fromOffset(11, 1),
+			BackgroundColor3 = Color3.fromRGB(190, 196, 204), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
 	elseif config.Kind == "Vehicle" then
 		local vehicle = ExtinctionConfig.Vehicles[config.Vehicle]
 		local body = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.55),
@@ -179,6 +197,9 @@ local function describe(id, entry)
 			.. (config.Speed and " · kurz schneller" or "")
 	elseif config.Kind == "Armor" then
 		return "+" .. config.Armor .. " Rüstung · " .. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"
+	elseif config.Kind == "Repel" then
+		return math.floor((config.Duration or 0) / 60) .. " Min spawnen bei dir keine Zombies · "
+			.. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"
 	elseif config.Kind == "Vehicle" then
 		local vehicle = ExtinctionConfig.Vehicles[config.Vehicle]
 		return vehicle and ("Tempo " .. vehicle.Speed .. " · " .. vehicle.Health .. " Leben · " .. vehicle.Seats
@@ -312,6 +333,7 @@ end
 -- ---------- HUD ----------
 
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
+local shieldPill, shieldText
 local markerHolder, vignette, placeLabel, placeSub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
@@ -356,6 +378,15 @@ local function buildHud()
 	UITheme.Stroke(zonePill, SAFE, 1, 0.3)
 	zoneText = label({ Size = UDim2.fromScale(1, 1), Text = "SAFE ZONE", TextSize = 18, Font = F.Display,
 		TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = SAFE }, zonePill)
+
+	-- Anti-Zombie-Spritze wirkt: Zeile unter der Zonen-Anzeige mit der Restzeit
+	shieldPill = make("Frame", { Name = "ZombieShield", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 64),
+		Size = UDim2.fromOffset(400, 24), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+		Visible = false }, root)
+	UITheme.Corner(shieldPill, UITheme.Radius.Small)
+	UITheme.Stroke(shieldPill, SHIELD, 1, 0.3)
+	shieldText = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 14, Font = F.Bold, TextColor3 = SHIELD,
+		TextXAlignment = Enum.TextXAlignment.Center }, shieldPill)
 
 	-- roter Rand, solange man in der roten Zone steht (4 Verläufe vom Rand nach innen)
 	vignette = make("Frame", { Name = "RedzoneVignette", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
@@ -491,6 +522,19 @@ local function updateZone()
 		zoneText.Text = "PVP IN " .. math.ceil(left) .. " S"
 		zoneText.TextColor3 = DANGER
 		stroke.Color = DANGER
+	end
+end
+
+-- Anti-Zombie-Spritze (Charakter-Attribut ZombieShieldUntil): Restzeit oben anzeigen
+local function updateShield()
+	if not shieldPill then
+		return
+	end
+	local character = player.Character
+	local left = character and math.floor((character:GetAttribute("ZombieShieldUntil") or 0) - workspace:GetServerTimeNow()) or 0
+	shieldPill.Visible = left > 0
+	if left > 0 then
+		shieldText.Text = string.format("ANTI-ZOMBIE-SPRITZE  %d:%02d  ·  KEINE ZOMBIES BEI DIR", left // 60, left % 60)
 	end
 end
 
@@ -1591,6 +1635,7 @@ function ExtinctionClient.Init()
 			return
 		end
 		updateZone()
+		updateShield()
 		updateMarkers()
 		updatePlace()
 		standDistanceCheck()

@@ -9,6 +9,7 @@
 --   "Heal"    Leben auffüllen (Heal), dauert UseTime Sekunden
 --   "Armor"   Rüstung (Attribut "Armor", höchstens MaxArmor), dauert UseTime Sekunden
 --   "Vehicle" Fahrzeug aus Vehicles (Vehicle); Taste spawnt es und setzt einen hinein, K packt es wieder ein
+--   "Repel"   Anti-Zombie-Spritze: Duration Sekunden spawnen beim Benutzer keine Zombies (Charakter-Attribut ZombieShieldUntil)
 -- Price = Kaufpreis in Münzen (nil = nicht zu kaufen, nur zu finden). Verkaufen bringt SellFactor des Preises.
 
 local ExtinctionConfig = {}
@@ -77,6 +78,8 @@ ExtinctionConfig.Items = {
 		Speed = 1.25, SpeedTime = 6 },
 	Vest = { Kind = "Armor", Name = "Schutzweste", Armor = 50, UseTime = 3, Price = 220, MaxStack = 3, Tier = 2 },
 	HeavyVest = { Kind = "Armor", Name = "Schwere Weste", Armor = 100, UseTime = 5, Price = 550, MaxStack = 2, Tier = 3 },
+	-- Anti-Zombie-Spritze: einzige Wirkung – Duration Sekunden lang spawnen bei dir keine Zombies (Zombies.ShieldRadius)
+	AntiZombie = { Kind = "Repel", Name = "Anti-Zombie-Spritze", Duration = 180, UseTime = 2, Price = 240, MaxStack = 3, Tier = 2 },
 	-- Fahrzeuge (Fahrrad gibt es nur bei Zombies)
 	V_Bicycle = { Kind = "Vehicle", Name = "Fahrrad", Vehicle = "Bicycle", Tier = 0 },
 	V_Quad = { Kind = "Vehicle", Name = "Quad", Vehicle = "Quad", Price = 900, Tier = 1 },
@@ -88,7 +91,7 @@ ExtinctionConfig.Items = {
 ExtinctionConfig.Stands = {
 	Stand_Weapons = { Title = "WAFFENSTAND", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
 		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } },
-	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "Vest", "HeavyVest" } },
+	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports" } },
 }
 
@@ -103,6 +106,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Shell", Count = { 3, 6 }, Weight = 8 },
 		{ Id = "Ammo_Rifle", Count = { 6, 15 }, Weight = 8 },
 		{ Id = "Medkit", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "AntiZombie", Count = { 1, 1 }, Weight = 3 },
 		{ Id = "Pistol", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 1 },
@@ -113,6 +117,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Rifle", Count = { 10, 24 }, Weight = 14 },
 		{ Id = "Ammo_Shell", Count = { 5, 10 }, Weight = 10 },
 		{ Id = "Medkit", Count = { 1, 1 }, Weight = 12 },
+		{ Id = "AntiZombie", Count = { 1, 1 }, Weight = 6 },
 		{ Id = "Vest", Count = { 1, 1 }, Weight = 8 },
 		{ Id = "Pistol", Count = { 1, 1 }, Weight = 5 },
 		{ Id = "Revolver", Count = { 1, 1 }, Weight = 4 },
@@ -126,6 +131,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Rifle", Count = { 8, 16 }, Weight = 8 },
 		{ Id = "Pistol", Count = { 1, 1 }, Weight = 6 },
 		{ Id = "Medkit", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "AntiZombie", Count = { 1, 1 }, Weight = 3 },
 		{ Id = "Vest", Count = { 1, 1 }, Weight = 3 },
 		{ Id = "Revolver", Count = { 1, 1 }, Weight = 2 },
 		{ Id = "V_Bicycle", Count = { 1, 1 }, Weight = 3 },
@@ -142,6 +148,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Shotgun", Count = { 1, 1 }, Weight = 7 },
 		{ Id = "Revolver", Count = { 1, 1 }, Weight = 6 },
 		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 4 },
+		{ Id = "AntiZombie", Count = { 1, 1 }, Weight = 7 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 2 },
 	},
 	Tier3 = { -- Militärbasis, rote Zone
@@ -154,6 +161,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Vest", Count = { 1, 1 }, Weight = 10 },
 		{ Id = "Adrenaline", Count = { 1, 2 }, Weight = 8 },
 		{ Id = "Medkit", Count = { 1, 2 }, Weight = 12 },
+		{ Id = "AntiZombie", Count = { 1, 2 }, Weight = 8 },
 		{ Id = "Ammo_Rifle", Count = { 30, 60 }, Weight = 14 },
 		{ Id = "Ammo_9mm", Count = { 40, 60 }, Weight = 8 },
 		{ Id = "Ammo_Shell", Count = { 12, 20 }, Weight = 6 },
@@ -164,6 +172,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Bandage", Count = { 3, 6 }, Weight = 40 },
 		{ Id = "Medkit", Count = { 1, 2 }, Weight = 28 },
 		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 10 },
+		{ Id = "AntiZombie", Count = { 1, 2 }, Weight = 18 },
 		{ Id = "Vest", Count = { 1, 1 }, Weight = 12 },
 		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 4 },
 	},
@@ -180,6 +189,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 16 },
 		{ Id = "Adrenaline", Count = { 2, 3 }, Weight = 14 },
 		{ Id = "Medkit", Count = { 2, 3 }, Weight = 14 },
+		{ Id = "AntiZombie", Count = { 2, 3 }, Weight = 10 },
 		{ Id = "Ammo_Rifle", Count = { 60, 120 }, Weight = 18 },
 		{ Id = "Ammo_Shell", Count = { 24, 48 }, Weight = 8 },
 		{ Id = "V_Pickup", Count = { 1, 1 }, Weight = 4 },
@@ -370,6 +380,7 @@ ExtinctionConfig.Zombies = {
 	AttackDelay = 1.4,
 	CorpseTime = 4,        -- Leiche ohne Beute bleibt so lange liegen
 	CorpseLootTime = 40,   -- Leiche mit Beute (E durchsucht sie) bleibt so lange
+	ShieldRadius = 80,     -- Anti-Zombie-Spritze: so nah am Benutzer spawnt kein Zombie (egal woher: Umgebung, Schreier, Nester ...)
 }
 
 -- Arten: Health, Walk/Run (Tempo), Damage, Coins, Scale (Größe), Drop (Chance auf Beute), Items (Anzahl), Table (Beute-Tabelle),
