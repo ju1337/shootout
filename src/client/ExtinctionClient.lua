@@ -755,9 +755,20 @@ ExtinctionClient.Close = closeWindow
 -- Etwas kleiner als der Bildschirm: oben die Reiter (Controller: L1/R1 blättern), rechts Münzen und Schließen, darunter
 -- der Inhalt. INVENTAR, MARKT und SQUAD baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
 -- verkleinert auf die Breite des Inhalts.
-local MENU_W, MENU_H = 1400, 820
+-- Breite passt sich dem Bildschirm an: auf breiten Bildschirmen breiter (bis MENU_MAX_W), immer mit Rand daneben
+local MENU_MIN_W, MENU_MAX_W, MENU_MARGIN = 1400, 1760, 200
+local MENU_W, MENU_H = MENU_MIN_W, 820
 local CONTENT_X, CONTENT_Y = 28, 78
 local CONTENT_W, CONTENT_H = MENU_W - 2 * CONTENT_X, MENU_H - CONTENT_Y - 16
+
+-- Sichtbare Breite in Leinwand-Einheiten (die Leinwand ist 1600 breit, der Bildschirm oft breiter)
+local function updateMenuSize()
+	local scale = canvas and canvas:FindFirstChildOfClass("UIScale")
+	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
+	local visible = (scale and scale.Scale > 0 and viewport) and viewport.X / scale.Scale or 1600
+	MENU_W = math.floor(math.clamp(visible - MENU_MARGIN, MENU_MIN_W, MENU_MAX_W))
+	CONTENT_W = MENU_W - 2 * CONTENT_X
+end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
@@ -777,6 +788,7 @@ local lastMenuTab = "Inventory"
 local openMenuTab -- unten gesetzt (öffnet einen Reiter)
 
 local function newMenu(kind, title, subtitle, accent)
+	updateMenuSize()
 	local frame = UITheme.Card({ Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
 	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, ZIndex = 5 }, frame)
@@ -1013,16 +1025,21 @@ local function openInventory()
 	local win = newWindow("Inventory", "INVENTAR", "TASCHE " .. BAG .. " PLÄTZE  ·  1-9 = HOTBAR  ·  DRAUSSEN STERBEN = ALLES WEG",
 		C.Primary)
 	local body = win.Body
-	local cell, gap = 92, 10
+	-- Plätze wachsen mit der Breite des Menüs (Tasche gut die Hälfte, rechts die Details)
+	local gap = 10
+	local cell = math.clamp(math.floor((CONTENT_W * 0.52 - 6 * gap) / 7), 92, 112)
+	local bagWidth = 7 * cell + 6 * gap
 	sectionTitle(body, "TASCHE", UDim2.fromOffset(0, 0))
 	grid(body, "Bag", HOTBAR + 1, BAG, 7, cell, gap, UDim2.fromOffset(0, 22))
-	sectionTitle(body, "HOTBAR  ·  TASTEN 1-9", UDim2.fromOffset(0, 348))
-	grid(body, "Bag", 1, HOTBAR, HOTBAR, 64, gap, UDim2.fromOffset(0, 370), true)
-	label({ Name = "Help", Position = UDim2.fromOffset(0, 462), Size = UDim2.fromOffset(660, 60), TextWrapped = true,
+	local below = 22 + 3 * (cell + gap) + 16
+	local hot = math.floor((bagWidth - (HOTBAR - 1) * gap) / HOTBAR)
+	sectionTitle(body, "HOTBAR  ·  TASTEN 1-9", UDim2.fromOffset(0, below))
+	grid(body, "Bag", 1, HOTBAR, HOTBAR, hot, gap, UDim2.fromOffset(0, below + 22), true)
+	label({ Name = "Help", Position = UDim2.fromOffset(0, below + hot + 44), Size = UDim2.fromOffset(bagWidth, 60), TextWrapped = true,
 		Text = "Anklicken und dann den Zielplatz anklicken (oder ziehen) legt ein Item um. Rechtsklick legt es zwischen Hotbar "
 			.. "und Tasche hin und her. Was du draußen bei dir trägst, verlierst du, wenn du stirbst – sicher ist nur das Lager im Camp.",
 		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
-	local update = detailsPanel(body, UDim2.fromOffset(720, 0), UDim2.fromOffset(CONTENT_W - 720, 600))
+	local update = detailsPanel(body, UDim2.fromOffset(bagWidth + 32, 0), UDim2.fromOffset(CONTENT_W - bagWidth - 32, 600))
 	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
 		if container == "Bag" and bag[slot] then
