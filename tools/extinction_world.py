@@ -23,6 +23,8 @@ SAFE_R = 120
 CAMP_HALF = 82    # halbe Seitenlänge der Basis (HESCO-Wall im Quadrat, Ecken innerhalb SAFE_R)
 ROAD_W = 20          # Stadtstraßen
 HIGHWAY_W = 22       # Landstraßen
+# Parkhaus am Rand von Ödstadt (GTA-Stil): Breite zur Straße, Tiefe, Stockwerkshöhe, Decks über dem Erdgeschoss (oberstes = Dach)
+GARAGE_W, GARAGE_D, GARAGE_FH, GARAGE_LEVELS = 100.0, 72.0, 8.0, 4
 
 # Orte: Schlüssel -> (Titel, x, z, Radius) – Banner beim Betreten (kleinster Ort gewinnt) und Namen auf der Weltkarte
 PLACES = {
@@ -2576,9 +2578,9 @@ class World:
         """Freie, ebene Stelle für das Parkhaus am Rand von Ödstadt (Vorstadt-Ring), an einer Straße."""
         rng = random.Random("parkhaus")
         r_need = math.hypot(w, d) / 2 + 4
-        for _ in range(400):
+        for _ in range(3000):
             a = rng.uniform(0, 2 * math.pi)
-            r = rng.uniform(560, 690)
+            r = rng.uniform(540, 700)
             x, z = math.cos(a) * r, math.sin(a) * r
             if not self.free(x, z, r_need, road_pad=2) or not self.flat_here(x, z, r_need - 2):
                 continue
@@ -2594,120 +2596,389 @@ class World:
         return None
 
     def parking_garage(self, x, z, fx, fz):
-        """Parkhaus (Vorderseite mit Einfahrt zur Straße fx/fz): Erdgeschoss und drei Parkdecks, das oberste offen.
-        Rampen hinten von Ebene zu Ebene bis aufs Dach (auch für Fahrzeuge flach genug), Säulen, Brüstungen, Parkmarkierungen,
-        Ebenen-Nummern, Wracks, Treppenturm, eingebrochene Ecke, Ranken; oben viel Deckung zum Kämpfen."""
+        """Großes Parkhaus im Stil der Parkhäuser aus GTA (Vorderseite mit Ein- und Ausfahrt zur Straße fx/fz, Zufahrt bis an die
+        Straße), verwüstet: Erdgeschoss, drei Parkdecks und offenes Dach (GARAGE_LEVELS Decks, je GARAGE_FH hoch). Außen
+        umlaufende Betonbänder mit Farbstreifen je Ebene (P0 rot, P1 gelb, P2 grün, P3 blau, Dach violett), zwei Treppen- und
+        Aufzugstürme mit P-Schild, großes Schild PARKHAUS auf der Dachkante. Innen Stellplätze vorn, als Doppelreihe in der Mitte
+        und hinten, dazwischen Fahrgassen mit Pfeilen und Bodenwellen, Säulen mit Farbringen zwischen Buchten und Gassen,
+        Ebenen-Nummern, Deckenlampen (fast alle kaputt), Rampen hinten von Ebene zu Ebene (flach genug für Fahrzeuge).
+        Zombie-Welt: Wracks in den Buchten, eine mit Autos zugestellte Ausfahrt (die Einfahrt bleibt frei), verlassener
+        Militärposten neben der Einfahrt, Leichen und Blut, eingestürzte Ecke im zweiten Deck, Ranken und Graffiti; auf dem Dach
+        ein Lager der Überlebenden mit Zelten, Feuer, Sandsack-Nestern, Containern und einem abgestürzten Hubschrauber. Jede
+        Ebene führt eine Liste belegter Flächen, damit nichts ineinander steht."""
         b, rng = self.b, random.Random("parkhaus-bau")
         main_rng = self.rng
         self.rng = rng
         try:
             yaw = self.yaw_to(fx, fz)
             f, box = self.frame(x, z, yaw)
-            W, D, FH, levels = 64.0, 46.0, 7.5, 3   # Breite, Tiefe, Stockwerkshöhe, Decks über dem Erdgeschoss
-            concrete, deck_c, paint = (150, 146, 138), (112, 110, 106), (214, 210, 196)
-            t = 1.2
-            zr, hw, L = D / 2 - t - 5, 4.2, 30.0  # Rampenband hinten (Mitte, halbe Breite), Rampenlänge
-            x0 = -W / 2 + t + 3
+            W, D, FH, levels = GARAGE_W, GARAGE_D, GARAGE_FH, GARAGE_LEVELS
             top = levels * FH
-            box("Ground", "CampPad", (W + 6, 3, D + 6), (0, -1.45, 0), (96, 94, 90), "Concrete")
-            # Decks mit Rampenloch
+            concrete, band_c, deck_c = (156, 152, 144), (178, 174, 166), (108, 106, 102)
+            paint, yellow, sand = (226, 220, 200), (232, 188, 40), (150, 134, 98)
+            level_colors = [(200, 62, 50), (232, 172, 40), (70, 160, 92), (60, 124, 204), (150, 92, 192)]
+            t = 0.8                                  # Deckstärke
+            hw, L = 4.6, 36.0                        # Rampe: halbe Breite, Länge (Steigung FH/L, ca. 12,5°)
+            zr = D / 2 - 2.0 - hw                    # Mitte der Rampenspur hinten
+            x0 = -W / 2 + 8                          # Rampe beginnt hier (steigt nach +x)
+            # Tiefe (z, vorn = Straße): Säulen | Buchten | Säulen | Gasse | Doppelreihe | Säulen | Gasse | Rampe bzw. Buchten
+            front_bays = (-D / 2 + 1.9, -D / 2 + 13.6)
+            col_front = front_bays[1] + 0.8
+            aisle_a = (col_front + 0.8, col_front + 9.6)
+            mid_bays = (aisle_a[1], aisle_a[1] + 23.2)       # zwei Reihen à 11,6 (Autos Schnauze an Schnauze)
+            mid_c = (mid_bays[0] + mid_bays[1]) / 2
+            col_back = mid_bays[1] + 0.8
+            back_bays = (zr - hw - 2.4, D / 2 - 1.9)          # hinten rechts, neben der Ankunft der Rampe
+            aisle_b = (col_back + 0.8, back_bays[0])
+            lz_a, lz_b = sum(aisle_a) / 2, sum(aisle_b) / 2
+            gate = (-11.0, 11.0)                              # Ein-/Ausfahrt vorne im Erdgeschoss (lokal x)
+            hole = (W / 2 - 16.8, W / 2 - 3.2, -D / 2 + 1.6, front_bays[1] - 0.2)   # eingestürzte Ecke in Deck 2 (x, x, z, z)
+
+            # ---------- belegte Flächen je Ebene (Rechtecke im Parkhaus-Rahmen) ----------
+            occ = {k: [] for k in range(levels + 1)}
+
+            def claim(k, cx_, cz_, hx_, hz_, turn=0.0):
+                """Rechteck (halbe Größen hx_/hz_, um turn Grad gedreht) auf Ebene k als belegt eintragen; gibt es zurück."""
+                c_, s_ = abs(math.cos(math.radians(turn))), abs(math.sin(math.radians(turn)))
+                ex, ez = hx_ * c_ + hz_ * s_, hx_ * s_ + hz_ * c_
+                rect = (cx_ - ex, cx_ + ex, cz_ - ez, cz_ + ez)
+                occ[k].append(rect)
+                return rect
+
+            def place(k, cx_, cz_, hx_, hz_, turn=0.0):
+                """Wie claim, aber nur wenn auf Ebene k dort noch nichts steht."""
+                c_, s_ = abs(math.cos(math.radians(turn))), abs(math.sin(math.radians(turn)))
+                ex, ez = hx_ * c_ + hz_ * s_, hx_ * s_ + hz_ * c_
+                for ax, bx, az, bz in occ[k]:
+                    if cx_ + ex > ax and cx_ - ex < bx and cz_ + ez > az and cz_ - ez < bz:
+                        return False
+                claim(k, cx_, cz_, hx_, hz_, turn)
+                return True
+
+            def wreck(k, lx, lz, turn, burned=None, color=None):
+                """Autowrack (lang entlang z, um turn gedreht) auf Ebene k, nur wenn der Platz frei ist."""
+                if not place(k, lx, lz, 3.2, 5.6, turn):
+                    return False
+                wx_, _, wz_ = f(lx, 0, lz)
+                self.car(wx_, wz_, yaw + turn, burned=burned, y=k * FH + 0.05, color=color)
+                return True
+
+            def arrow(k, lx, lz, ux, uz):
+                """Gelber Pfeil auf dem Boden (Schaft und Spitze) in Richtung (ux, uz)."""
+                y = k * FH + (0.08 if k == 0 else 0.06)
+                box("Decor", "FloorArrow", (0.9, 0.04, 4), (lx, y, lz), yellow, "SmoothPlastic",
+                    extra=(0, math.degrees(math.atan2(ux, uz)), 0))
+                tx_, tz_ = lx + ux * 2.2, lz + uz * 2.2
+                for s in (-1, 1):
+                    dx_, dz_ = (-ux - s * uz) * 0.7071, (-uz + s * ux) * 0.7071
+                    box("Decor", "FloorArrow", (0.9, 0.04, 2.6), (tx_ + dx_, y, tz_ + dz_), yellow, "SmoothPlastic",
+                        extra=(0, math.degrees(math.atan2(dx_, dz_)), 0))
+
+            # ---------- Boden der Anlage (Asphalt) und Zufahrt bis an die Straße ----------
+            pad_d = D + 14
+            pad_front = -2 - pad_d / 2
+            box("Ground", "CampPad", (W + 22, 3, pad_d), (0, -1.45, -2), (64, 64, 66), "Asphalt")
+            reach = math.hypot(fx, fz)   # Abstand der Mitte zur Straßenmitte (vorn, -z)
+            if reach > -pad_front + 1:
+                heights = [self.H(*f(lx, 0, lz)[0::2]) for lx in (-12, 0, 12) for lz in (pad_front, (pad_front - reach) / 2, -reach + 4)]
+                if all(abs(h - et.FLAT) < 0.5 for h in heights):
+                    box("Ground", "Driveway", (24, 3, reach + pad_front + 0.5), (0, -1.46, (pad_front - reach) / 2 + 0.25), (58, 58, 60),
+                        "Asphalt")
+
+            # ---------- Decks mit Loch über der Rampe (und der eingestürzten Ecke in Deck 2) ----------
             for k in range(1, levels + 1):
                 y = k * FH
-                box("Buildings", "Deck", (W, 0.8, (zr - hw) + D / 2), (0, y - 0.4, (-D / 2 + zr - hw) / 2), deck_c, "Concrete")
-                box("Buildings", "Deck", (x0 + W / 2, 0.8, D / 2 - (zr - hw)), ((-W / 2 + x0) / 2, y - 0.4, (zr - hw + D / 2) / 2), deck_c,
-                    "Concrete")
-                box("Buildings", "Deck", (W / 2 - (x0 + L), 0.8, D / 2 - (zr - hw)), ((x0 + L + W / 2) / 2, y - 0.4, (zr - hw + D / 2) / 2),
-                    deck_c, "Concrete")
+                pieces = [(-W / 2, x0, zr - hw, D / 2), (x0 + L, W / 2, zr - hw, D / 2), (x0, x0 + L, zr + hw, D / 2)]
+                if k == 2:
+                    hx0, hx1, hz0, hz1 = hole
+                    pieces += [(-W / 2, hx0, -D / 2, zr - hw), (hx1, W / 2, -D / 2, zr - hw), (hx0, hx1, -D / 2, hz0),
+                               (hx0, hx1, hz1, zr - hw)]
+                else:
+                    pieces.append((-W / 2, W / 2, -D / 2, zr - hw))
+                for ax, bx, az, bz in pieces:
+                    box("Buildings", "Deck", (bx - ax, t, bz - az), ((ax + bx) / 2, y - t / 2, (az + bz) / 2), deck_c, "Concrete")
+                claim(k, x0 + L + 6, (zr - hw + D / 2) / 2, 6, (D / 2 - zr + hw) / 2)   # Ankunft von der Rampe frei lassen
+            for k in range(levels + 1):
+                claim(k, x0 + L / 2, zr, L / 2 + 0.5, hw + 0.3)                       # Rampe bzw. Loch darüber
+                claim(k, (x0 - W / 2) / 2, (zr - hw + D / 2) / 2, (x0 + W / 2) / 2, (D / 2 - zr + hw) / 2)   # Auffahrt
+            # Rampen: von jeder Ebene zur nächsten, Pfeile, Leitplanke zur Fahrgasse hin
             ang = math.degrees(math.atan2(FH, L))
             for k in range(levels):
                 y0 = k * FH
-                box("Buildings", "Ramp", (math.hypot(L, FH) + 0.8, 0.8, 2 * hw), (x0 + L / 2, y0 + FH / 2 - 0.3, zr), (124, 120, 112),
+                box("Buildings", "Ramp", (math.hypot(L, FH) + 0.8, t, 2 * hw), (x0 + L / 2, y0 + FH / 2 - 0.3, zr), (124, 120, 112),
                     "Concrete", extra=(0, 0, ang))
-                box("Decor", "RampArrow", (4, 0.05, 1), (x0 + L / 2, y0 + FH / 2 + 0.12, zr), paint, "SmoothPlastic", extra=(0, 0, ang))
-            # Säulen (nicht im Rampenband), Brüstungen ringsum, Einfahrt vorne im Erdgeschoss
-            for cx in range(-24, 25, 16):
-                for cz in (-D / 2 + 2, -4, 8):
+                for j in (-1, 1):
+                    box("Decor", "RampArrow", (4, 0.05, 1.1), (x0 + L / 2 + j * 9, y0 + FH / 2 + 0.12 + j * 9 * FH / L, zr), paint,
+                        "SmoothPlastic", extra=(0, 0, ang))
+                box("Walls", "RampRail", (math.hypot(L, FH), 1.1, 0.4), (x0 + L / 2, y0 + FH / 2 + 0.75, zr - hw - 0.2), yellow,
+                    "Metal", extra=(0, 0, ang))
+
+            # ---------- Säulen (Farbring je Ebene, Warnstreifen unten) zwischen Buchten und Fahrgassen ----------
+            for cx in (-48.0, -32.0, -16.0, 0.0, 16.0, 32.0, 48.0):
+                for cz in (-D / 2 + 0.9, col_front, col_back, D / 2 - 0.9):
+                    if x0 - 1 < cx < x0 + L + 1 and zr - hw - 1 < cz < zr + hw + 1:
+                        continue
                     box("Buildings", "Column", (1.6, top, 1.6), (cx, top / 2, cz), concrete, "Concrete")
+                    for k in range(levels):
+                        box("Decor", "ColumnBand", (1.7, 1.0, 1.7), (cx, k * FH + 2.6, cz), level_colors[k], "SmoothPlastic")
+                        box("Decor", "ColumnHazard", (1.72, 0.5, 1.72), (cx, k * FH + 0.25, cz), yellow, "SmoothPlastic")
+                        claim(k, cx, cz, 0.8, 0.8)
+
+            # ---------- Außen: Brüstungen, umlaufende Betonbänder mit Farbstreifen ----------
             for k in range(levels + 1):
                 y = k * FH
-                for side, size, pos in (("S", (W, 1.3, 0.8), (0, y + 0.65, -D / 2 + 0.4)), ("N", (W, 1.3, 0.8), (0, y + 0.65, D / 2 - 0.4)),
-                                        ("E", (0.8, 1.3, D), (W / 2 - 0.4, y + 0.65, 0)), ("W", (0.8, 1.3, D), (-W / 2 + 0.4, y + 0.65, 0))):
-                    if k == 0 and side == "S":  # Einfahrt und Ausgang unten vorne
-                        for sx_ in (-1, 1):
-                            box("Walls", "Parapet", (W / 2 - 9, 1.3, 0.8), (sx_ * (W / 4 + 4.5), 0.65, -D / 2 + 0.4), concrete, "Concrete")
+                sides = (("S", (W, 1.2, 0.8), (0, y + 0.6, -D / 2 + 0.4)), ("N", (W, 1.2, 0.8), (0, y + 0.6, D / 2 - 0.4)),
+                         ("E", (0.8, 1.2, D), (W / 2 - 0.4, y + 0.6, 0)), ("W", (0.8, 1.2, D), (-W / 2 + 0.4, y + 0.6, 0)))
+                for side, size, pos in sides:
+                    if k == 0 and side == "S":
+                        for ax, bx in ((-W / 2, gate[0]), (gate[1], W / 2)):
+                            box("Walls", "Parapet", (bx - ax, 1.2, 0.8), ((ax + bx) / 2, 0.6, -D / 2 + 0.4), concrete, "Concrete")
                         continue
                     box("Walls", "Parapet", size, pos, concrete, "Concrete")
-                if k > 0:  # Rand der Decks (Stirnseite, sichtbares Band außen)
-                    box("Decor", "DeckEdge", (W + 0.2, 1.2, 0.3), (0, y - 0.2, -D / 2 - 0.1), self.bm.lighten(concrete, -0.1), "Concrete")
-            # Schranke an der Einfahrt, Kassenhäuschen
-            box("Decor", "BarrierPost", (0.8, 3.2, 0.8), (-6, 1.6, -D / 2 - 2), (60, 60, 64), "Metal")
-            box("Decor", "BarrierArm", (8, 0.35, 0.35), (-2.4, 3.6, -D / 2 - 2), (210, 60, 50), "Metal", extra=(0, 0, rng.uniform(25, 60)))
-            box("Buildings", "TicketBooth", (4, 3.6, 4), (-W / 2 + 5, 1.8, -D / 2 + 4), (176, 172, 160), "Concrete")
-            box("Decor", "BoothGlass", (4.1, 1.4, 4.1), (-W / 2 + 5, 2.6, -D / 2 + 4), (50, 64, 72), "Glass", props={"Transparency": 0.5})
-            # Treppenturm vorne rechts (geschlossen), Schild PARKHAUS
-            box("Buildings", "StairTower", (7, top + 4, 7), (W / 2 + 3.5, (top + 4) / 2, -D / 2 + 3.5), (130, 126, 118), "Concrete")
-            b.sign2(self.nm("GarageSign"), (14, 3.4, 0.3), f(0, top - 2.6, -D / 2 - 0.5), "PARKHAUS", "ZENTRUM · 24 H",
-                    (40, 60, 110), (236, 236, 236), (210, 210, 210), angles=(0, yaw, rng.uniform(-4, 4)))
-            b.sign2(self.nm("GarageSign"), (5, 5, 0.3), f(W / 2 + 3.5, top + 1, -D / 2 - 0.1), "P", "", (40, 60, 110), (236, 236, 236),
-                    (210, 210, 210), angles=(0, yaw, 0))
-            # Parkmarkierungen und Ebenen-Nummern
-            for k in range(levels + 1):
-                y = k * FH + (0.05 if k else 0.07)
-                for j in range(9):
-                    lx = -W / 2 + 6 + j * 6.4
-                    box("Decor", "ParkLine", (0.25, 0.04, 6), (lx, y, -D / 2 + 5), paint, "SmoothPlastic")
-                txt = "P%d" % k if k < levels else "DACH"
-                lx_, ly_, lz_ = f(x0 + L + 6, y + 0.02, zr)
-                b.floor_text(self.nm("LevelText"), (6, 0.1, 3), (lx_, ly_, lz_), txt, (226, 200, 90), yaw=yaw + 180)
-            # Wracks auf den Ebenen, Blut, Schutt
-            for k in range(levels + 1):
-                y = k * FH
-                for j in range(rng.randint(2, 4)):
-                    lx = -W / 2 + 6 + rng.randint(0, 8) * 6.4 + 3.2
-                    wx_, _, wz_ = f(lx, 0, -D / 2 + 5)
-                    self.car(wx_, wz_, yaw + rng.uniform(-8, 8), y=y + 0.05)
-                for j in range(rng.randint(0, 2)):
-                    sx_, _, sz_ = f(rng.uniform(-W / 3, W / 3), 0, rng.uniform(-4, 6))
-                    self.stain(sx_, sz_, y=y + 0.06)
-            # Dach: Deckung zum Kämpfen
-            for j in range(8):
-                lx, lz = rng.uniform(-W / 2 + 6, W / 2 - 6), rng.uniform(-D / 2 + 12, zr - hw - 3)
-                box("Cover", "JerseyBarrier", (7, 3, 1.8), (lx, top + 1.5, lz), (176, 172, 164), "Concrete", extra=(0, rng.choice((0, 90, 30, -30)), 0))
-            for sx_, sz_ in ((-W / 2 + 7, -D / 2 + 7), (W / 2 - 9, 2)):
-                box("Cover", "Sandbags", (7, 3, 2.4), (sx_, top + 1.5, sz_), (150, 134, 98), "Fabric")
-                box("Cover", "Sandbags", (2.4, 3, 6), (sx_ + 3.6, top + 1.5, sz_ + 3), (150, 134, 98), "Fabric")
-            box("Cover", "Container", (16, 8, 7), (W / 2 - 14, top + 4, -4), (110, 60, 48), "CorrodedMetal", extra=(0, 12, 0))
-            hx, _, hz = f(-W / 4, 0, 4)
-            b.box("Cover", "HeliBody", (6, 5, 14), (hx, top + 2.4, hz), (60, 66, 54), "CorrodedMetal", angles=(8, yaw + 40, 18))
-            b.box("Cover", "HeliTail", (1.6, 1.6, 12), (hx + 5, top + 1.2, hz + 7), (60, 66, 54), "CorrodedMetal", angles=(0, yaw + 70, 8))
-            b.box("Decor", "HeliRotor", (22, 0.3, 1.2), (hx - 3, top + 0.4, hz - 3), (40, 40, 40), "Metal", angles=(0, yaw + 100, 0))
-            self.smoke_column(hx, top + 4, hz)
+                if k > 0:
+                    # Band außen (Deckkante + Brüstung als eine Fläche) mit Streifen in der Farbe der Ebene
+                    for sx_, sz_, size in ((0, -D / 2 - 0.15, (W + 0.6, 2.4, 0.3)), (0, D / 2 + 0.15, (W + 0.6, 2.4, 0.3)),
+                                           (W / 2 + 0.15, 0, (0.3, 2.4, D + 0.6)), (-W / 2 - 0.15, 0, (0.3, 2.4, D + 0.6))):
+                        box("Decor", "FacadeBand", size, (sx_, y + 0.2, sz_), band_c, "Concrete")
+                        box("Decor", "LevelStripe", (size[0] + 0.02, 0.35, size[2] + 0.02), (sx_, y + 0.9, sz_),
+                            level_colors[min(k, len(level_colors) - 1)], "SmoothPlastic")
+
+            # ---------- Treppen- und Aufzugstürme (vorne links, hinten rechts) mit Glas, P-Schild und Tür ----------
+            for tx, tz, out in ((-W / 2 - 4.5, -D / 2 + 6, -1), (W / 2 + 4.5, D / 2 - 6, 1)):
+                box("Buildings", "StairTower", (9, top + 6, 9), (tx, (top + 6) / 2, tz), (132, 128, 120), "Concrete")
+                box("Decor", "ElevatorGlass", (9.1, top + 2, 3), (tx, (top + 2) / 2 + 1, tz - 2.2), (60, 80, 92), "Glass",
+                    props={"Transparency": 0.45})
+                for k in range(levels + 1):
+                    box("Decor", "TowerStripe", (9.2, 0.6, 9.2), (tx, k * FH + 3.4, tz), level_colors[min(k, len(level_colors) - 1)],
+                        "SmoothPlastic")
+                b.sign2(self.nm("GarageSign"), (6, 6, 0.3), f(tx, top + 3.2, tz - 4.7), "P", "", (34, 70, 150), (240, 240, 240),
+                        (210, 210, 210), angles=(0, yaw, 0))
+                box("Decor", "TowerDoor", (0.2, 5.6, 3.2), (tx + out * 4.55, 2.8, tz + 1.8), (44, 46, 50), "Metal")
+                b.sign2(self.nm("GarageSign"), (3.6, 1.1, 0.2), f(tx + out * 4.62, 6.4, tz + 1.8), "AUSGANG", "TREPPENHAUS", (40, 120, 70),
+                        (240, 240, 240), (220, 220, 220), angles=(0, yaw - out * 90, 0))
+            # großes Schild PARKHAUS auf der Dachkante (zur Straße), auf zwei Stützen
             for sx_ in (-1, 1):
-                for sz_ in (-1, 1):
-                    tilt = rng.choice((0, rng.uniform(-25, 25)))
-                    box("Decor", "RoofLamp", (0.5, 9, 0.5), (sx_ * (W / 2 - 2), top + 4.5, sz_ * (D / 2 - 2)), (50, 52, 56), "Metal",
-                        extra=(tilt, 0, 0))
-            for _ in range(2):
-                cx_, _, cz_ = f(rng.uniform(-W / 3, W / 3), 0, rng.uniform(-D / 3, 0))
-                self.corpse(cx_, cz_, y=top + 0.05)
-            fx_, _, fz_ = f(4, 0, -D / 2 + 9)
+                box("Decor", "SignPost", (0.6, 7.6, 0.6), (sx_ * 11, top + 1.2 + 3.8, -D / 2 + 0.1), (70, 72, 76), "Metal")
+            b.sign2(self.nm("GarageSign"), (30, 5, 0.3), f(0, top + 6.2, -D / 2 - 0.35), "PARKHAUS", "ZENTRUM · 24 H · 4 EBENEN",
+                    (34, 70, 150), (240, 240, 240), (210, 210, 210), angles=(0, yaw, rng.uniform(-2, 2)))
+
+            # ---------- Einfahrt (offen) / Ausfahrt (Schranke zu, Wracks) mit Kasse und Durchfahrtshöhe ----------
+            booth_z = -D / 2 - 2.6
+            box("Buildings", "TicketBooth", (3.4, 3.6, 4.4), (0, 1.8, booth_z), (176, 172, 160), "Concrete")
+            box("Decor", "BoothGlass", (3.5, 1.4, 4.5), (0, 2.6, booth_z), (50, 64, 72), "Glass", props={"Transparency": 0.5})
+            box("Decor", "BoothRoof", (4.2, 0.3, 5.2), (0, 3.75, booth_z), (60, 62, 66), "Metal")
+            for lane, label_ in ((-1, "EINFAHRT"), (1, "AUSFAHRT")):
+                post_x = lane * 2.4
+                box("Decor", "BarrierPost", (0.8, 3.2, 0.8), (post_x, 1.6, -D / 2 - 4), (60, 60, 64), "Metal")
+                lift = rng.uniform(72, 84) if lane < 0 else rng.uniform(0, 4)      # Schlagbaum dreht sich am Pfosten
+                a_ = math.radians(lift)
+                box("Decor", "BarrierArm", (8, 0.35, 0.35), (post_x + lane * 4 * math.cos(a_), 3.2 + 4 * math.sin(a_), -D / 2 - 4),
+                    (210, 60, 50), "Metal", extra=(0, 0, lane * lift))
+                b.sign2(self.nm("GarageSign"), (8, 1.6, 0.3), f(lane * 5.6, FH - 1.6, -D / 2 - 0.5), label_, "MAX. 2,10 M",
+                        (34, 70, 150), (240, 240, 240), (210, 210, 210), angles=(0, yaw, 0))
+            box("Decor", "HeightBar", (gate[1] - gate[0] + 2, 0.6, 0.6), (0, FH - 0.5, -D / 2 - 1.2), yellow, "Metal")
+            arrow(0, -6.0, -D / 2 + 5, 0, 1)
+            arrow(0, 6.0, -D / 2 - 6, 0, -1)
+            box("Buildings", "PayStation", (1.6, 3.0, 1.2), (-12.0, 1.5, -D / 2 + 1.9), (70, 74, 80), "Metal")
+            box("Decor", "PayStationBand", (1.64, 0.5, 1.24), (-12.0, 2.75, -D / 2 + 1.9), yellow, "SmoothPlastic")
+            claim(0, -12.0, -D / 2 + 1.9, 0.8, 0.6)
+            claim(0, -6.0, -D / 2 + 9, 5.0, 9.0)                                   # Einfahrt bleibt frei
+            for lx, lz in ((6.0, -D / 2 + 6.2), (7.5, -D / 2 + 15.5)):             # Ausfahrt mit Wracks zugestellt
+                wreck(0, lx + rng.uniform(-0.4, 0.4), lz, 90 + rng.uniform(-12, 12), burned=True)
+            # verlassener Militärposten links neben der Einfahrt
+            mz = -D / 2 - 4.5
+            box("Cover", "Sandbags", (9, 2.6, 2.2), (-19.5, 1.3, mz - 2.5), sand, "Fabric")
+            for sx_ in (-24.0, -15.0):
+                box("Cover", "Sandbags", (2.2, 2.6, 5.5), (sx_, 1.3, mz + 0.2), sand, "Fabric")
+            box("Decor", "BarbedWire", (10, 0.8, 0.8), (-19.5, 3.0, mz - 2.5), (90, 90, 88), "DiamondPlate", props={"Transparency": 0.3})
+            box("Decor", "MilitaryCrate", (2.4, 1.6, 1.6), (-19.5, 0.8, mz + 1.5), (70, 82, 56), "WoodPlanks")
+            wx_, _, wz_ = f(-33, 0, -D / 2 - 5.5)
+            self.car(wx_, wz_, yaw + 90 + rng.uniform(-10, 10), burned=False, y=0.05, color=(70, 82, 56))
+            wx_, _, wz_ = f(-46, 0, -D / 2 - 5)
+            self.warning_sign(wx_, wz_, yaw, "QUARANTÄNE", "PARKHAUS GESPERRT")
+
+            # ---------- Stellplätze, Fahrgassen (Pfeile Richtung Rampe), Bodenwellen, Ebenen-Nummern ----------
+            def bay_lines(k, x_from, n, z_from, z_to):
+                """n Buchten à 6,5 ab x_from (Linien quer); gibt die Buchtmitten zurück."""
+                y = k * FH + (0.07 if k == 0 else 0.05)
+                for j in range(n + 1):
+                    lx = x_from + j * 6.5
+                    if k == 2 and hole[0] - 0.3 < lx < hole[1] + 0.3 and z_from < hole[3]:
+                        continue
+                    box("Decor", "ParkLine", (0.25, 0.04, (z_to - z_from) - 1.0), (lx, y, (z_from + z_to) / 2), paint, "SmoothPlastic")
+                return [(x_from + 3.25 + j * 6.5, (z_from + z_to) / 2) for j in range(n)]
+
+            bays = {}
+            for k in range(levels + 1):
+                y = k * FH + (0.07 if k == 0 else 0.05)
+                if k == 0:
+                    spots = bay_lines(0, -45.5, 5, *front_bays) + bay_lines(0, gate[1] + 2, 5, *front_bays)
+                else:
+                    spots = bay_lines(k, -45.5, 14, *front_bays)
+                spots += bay_lines(k, -39.0, 12, mid_bays[0], mid_c) + bay_lines(k, -39.0, 12, mid_c, mid_bays[1])
+                spots += bay_lines(k, x0 + L + 12, 6, *back_bays)
+                box("Decor", "ParkLine", (12 * 6.5, 0.04, 0.25), (0, y, mid_c), paint, "SmoothPlastic")
+                bays[k] = spots
+                for lz in (lz_a, lz_b):
+                    for lx in (-36, -12, 12, 36):
+                        arrow(k, lx, lz, -1, 0)
+                    if k < levels:
+                        bump_x = rng.choice((-24, 24))
+                        box("Decor", "SpeedBump", (0.8, 0.25, 7), (bump_x, k * FH + 0.12, lz), yellow, "Rubber")
+                        claim(k, bump_x, lz, 0.4, 3.5)
+                txt = "P%d" % k if k < levels else "DACH"
+                for lx, lz, size in ((x0 + L + 6, zr, (7, 0.1, 3.4)), (0, lz_a, (8, 0.1, 3.6))):
+                    b.floor_text(self.nm("LevelText"), size, f(lx, y + 0.02, lz), txt, level_colors[min(k, len(level_colors) - 1)],
+                                 yaw=yaw + 180)
+
+            # ---------- Deckenlampen: Leuchtstoffröhren über den Gassen, fast alle kaputt ----------
+            for k in range(1, levels + 1):
+                y = k * FH - t - 0.25
+                for lx in (-40, -20, 0, 20, 40):
+                    for lz in (lz_a, lz_b):
+                        if rng.random() < 0.12:
+                            box("Decor", "CeilingLamp", (5, 0.3, 0.6), (lx, y, lz), (236, 240, 250), "Neon",
+                                children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
+                                    "Range": 18, "Brightness": 0.7, "Color": self.bm.rgb(220, 232, 255)}}])
+                        elif rng.random() < 0.8:
+                            box("Decor", "CeilingLamp", (5, 0.3, 0.6), (lx, y - (0.6 if rng.random() < 0.15 else 0), lz), (88, 90, 94),
+                                "SmoothPlastic", extra=(0, 0, rng.choice((0, 0, rng.uniform(-20, 20)))))
+
+            # ---------- eingestürzte Ecke vorne rechts in Deck 2: Platte hängt schräg ins erste Deck, Schutt, Eisen ----------
+            hx0, hx1, hz0, hz1 = hole
+            hcx, hcz = (hx0 + hx1) / 2, (hz0 + hz1) / 2
+            claim(2, hcx, hcz, (hx1 - hx0) / 2 + 0.3, (hz1 - hz0) / 2 + 0.3)
+            claim(1, hcx, hcz, (hx1 - hx0) / 2, (hz1 - hz0) / 2)
+            run, drop = (hz1 - hz0) - 0.8, FH - t
+            box("Buildings", "CollapsedDeck", (math.hypot(run, drop) + 0.4, t, hx1 - hx0 - 0.8), (hcx, FH + t / 2 + drop / 2, hz1 - run / 2),
+                deck_c, "Concrete", extra=(0, 90, -math.degrees(math.atan2(drop, run))))
+            for j in range(7):
+                for _try in range(8):
+                    lx = rng.uniform(hx0 - 6, hx0 - 1.2)
+                    lz, size = rng.uniform(hz0 + 1, hz1 - 1), (rng.uniform(1.6, 3.4), rng.uniform(0.8, 1.6), rng.uniform(1.6, 3.4))
+                    turn = rng.uniform(0, 90)
+                    if place(1, lx, lz, size[0] / 2, size[2] / 2, turn):
+                        box("Cover", "Rubble", size, (lx, FH + size[1] / 2 - 0.1, lz), (140, 136, 128), "Concrete",
+                            extra=(0, turn, rng.uniform(-10, 10)))
+                        break
+            for j in range(8):
+                length_ = rng.uniform(1.8, 3.6)
+                if j < 4:
+                    pos = (rng.uniform(hx0 + 1, hx1 - 1), 2 * FH - t - length_ / 2 + 0.3, hz0 + 0.12)
+                else:
+                    pos = (rng.choice((hx0 + 0.12, hx1 - 0.12)), 2 * FH - t - length_ / 2 + 0.3, rng.uniform(hz0 + 1, hz1 - 1))
+                box("Decor", "Rebar", (0.2, length_, 0.2), pos, (90, 60, 40), "CorrodedMetal", extra=(0, rng.uniform(0, 90), rng.uniform(-25, 25)))
+            box("Decor", "WarnTape", (hx1 - hx0, 0.15, 0.06), (hcx, 2 * FH + 1.0, hz1 + 0.35), (220, 40, 40), "SmoothPlastic",
+                props={"CanCollide": False, "CanQuery": False})
+            for cx_ in (hx0 + 0.4, hx1 - 0.4):
+                box("Decor", "TrafficCone", (0.8, 1.1, 0.8), (cx_, 2 * FH + 0.55, hz1 + 0.6), (230, 110, 30), "SmoothPlastic")
+            wreck(2, 29.25, sum(front_bays) / 2, rng.uniform(-2.5, 2.5))       # Wrack direkt an der Abbruchkante
+            # quer stehendes Wrack in der hinteren Gasse von Ebene 1, Brandspuren an der Decke darüber
+            if wreck(1, -24.0, lz_b, 35, burned=True):
+                box("Decor", "Soot", (12, 0.05, 8), (-24.0, 2 * FH - t - 0.03, lz_b), (30, 28, 26), "SmoothPlastic",
+                    props={"CanCollide": False, "CanQuery": False})
+
+            # ---------- Dach: Lager der Überlebenden, Deckung, Hubschrauber ----------
+            R = levels
+            for lx, lz, turn, col in ((34.0, -3.0, 12, (110, 60, 48)), (33.0, 7.0, -5, (60, 86, 70))):
+                claim(R, lx, lz, 8.0, 3.5, turn)
+                box("Cover", "Container", (16, 8, 7), (lx, top + 4, lz), col, "CorrodedMetal", extra=(0, turn, 0))
+            for sx_, side in ((-44.0, 1), (44.0, -1)):                         # Sandsack-Nester an den vorderen Ecken
+                fz_ = -D / 2 + 2.2
+                box("Cover", "Sandbags", (8, 3, 2.4), (sx_, top + 1.5, fz_), sand, "Fabric")
+                box("Cover", "Sandbags", (2.4, 3, 6), (sx_ + side * 4.2, top + 1.5, fz_ + 3.2), sand, "Fabric")
+                box("Cover", "AmmoCrate", (2, 1.2, 1.4), (sx_ - side * 1.5, top + 0.6, fz_ + 3.4), (70, 82, 56), "WoodPlanks")
+                claim(R, sx_ + side * 0.7, fz_ + 2.5, 4.7, 3.7)
+            for lx, lz in ((-38.0, -5.0), (-29.0, -7.5), (-34.0, 5.5)):           # Zelte (Planen über Stangen)
+                claim(R, lx, lz, 3.5, 3.4)
+                col = rng.choice(((70, 90, 60), (120, 96, 60), (60, 70, 96)))
+                box("Decor", "TentRoof", (5, 0.2, 6.5), (lx - 1.4, top + 1.6, lz), col, "Fabric", extra=(0, 0, 38))
+                box("Decor", "TentRoof", (5, 0.2, 6.5), (lx + 1.4, top + 1.6, lz), col, "Fabric", extra=(0, 0, -38))
+                box("Decor", "Bedroll", (1.4, 0.3, 4), (lx, top + 0.2, lz), (90, 70, 50), "Fabric")
+            claim(R, -30.5, -0.5, 1.4, 1.4)
+            fx_, _, fz_ = f(-30.5, 0, -0.5)
             self.fire(fx_, fz_, y=top, smoke=True)
-            # eingebrochene Ecke vorne rechts im obersten Deck: Platte hängt schräg herunter, Schutt darunter
-            box("Buildings", "CollapsedDeck", (14, 0.8, 12), (W / 2 - 10, top - 4, -D / 2 + 9), deck_c, "Concrete", extra=(18, 0, -14))
-            for j in range(4):
-                lx, lz = W / 2 - 10 + rng.uniform(-5, 5), -D / 2 + 9 + rng.uniform(-4, 4)
-                box("Cover", "Rubble", (rng.uniform(2, 4), rng.uniform(1, 2), rng.uniform(2, 4)), (lx, (levels - 1) * FH + 0.8, lz),
-                    (140, 136, 128), "Concrete", extra=(rng.uniform(-20, 20), rng.uniform(0, 90), rng.uniform(-20, 20)))
-            # Ranken und Graffiti außen
-            for j in range(3):
-                lx = rng.uniform(-W / 2 + 4, W / 2 - 4)
-                length = rng.uniform(8, top)
-                box("Decor", "Vines", (rng.uniform(2, 3.4), length, 0.4), (lx, top + 1 - length / 2, -D / 2 - 0.5), (58, 88, 44),
-                    "LeafyGrass", props={"CanCollide": False, "CanQuery": False})
-            gx_, gy_, gz_ = f(-W / 4, FH + 3.5, -D / 2 - 0.5)
-            self.graffiti(b, rng.choice(("NICHT RAUF", "SIE SIND OBEN", "HILFE", "LAUF")), (gx_, gy_, gz_), (12, 2.6, 0.05), yaw)
-            self.occupied.append((x, z, math.hypot(W, D) / 2 + 4))
-            PLACES["Parkhaus"] = ("PARKHAUS", x, z, 60)
+            claim(R, -44.1, 9.0, 1.8, 0.9)
+            for lx in (-45.0, -43.2):
+                b.cylinder("Decor", "WaterBarrel", 1.6, 2.4, f(lx, top + 1.2, 9.0), (40, 70, 120), material="Plastic")
+            claim(R, -45.0, 0.5, 1.3, 2.8)
+            for lz in (2.0, -1.0):
+                box("Cover", "SupplyCrate", (2.6, 2.4, 2.6), (-45.0, top + 1.2, lz), (110, 92, 62), "WoodPlanks",
+                    extra=(0, rng.uniform(-6, 6), 0))
+            claim(R, -22.0, lz_b + 1.2, 9, 3.5)
+            b.floor_text(self.nm("SOS"), (18, 0.1, 7), f(-22.0, top + 0.08, lz_b + 1.2), "S O S", (236, 236, 236), yaw=yaw + 180)
+            # abgestürzter Hubschrauber: Rumpf, abgebrochenes Heck, Rotor daneben, Rauch
+            hcx_, hcz_ = 8.0, -3.0
+            claim(R, hcx_, hcz_, 3.0, 7.0, 40)
+            b.box("Cover", "HeliBody", (6, 5, 14), f(hcx_, top + 2.4, hcz_), (60, 66, 54), "CorrodedMetal", angles=(8, yaw + 40, 18))
+            rear_x, rear_z = hcx_ + 7 * math.sin(math.radians(40)), hcz_ + 7 * math.cos(math.radians(40))
+            tail_x, tail_z = rear_x + 6 * math.sin(math.radians(70)), rear_z + 6 * math.cos(math.radians(70))
+            claim(R, tail_x, tail_z, 0.8, 6.0, 70)
+            b.box("Cover", "HeliTail", (1.6, 1.6, 12), f(tail_x, top + 1.2, tail_z), (60, 66, 54), "CorrodedMetal", angles=(0, yaw + 70, 8))
+            claim(R, -12.0, 3.0, 11.0, 0.6, 75)
+            b.box("Decor", "HeliRotor", (22, 0.3, 1.2), f(-12.0, top + 0.25, 3.0), (40, 40, 40), "Metal", angles=(0, yaw + 75, 2))
+            sx_, _, sz_ = f(hcx_, 0, hcz_)
+            self.smoke_column(sx_, top + 4, sz_)
+            claim(R, -W / 2 + 4, D / 2 - 5, 0.6, 0.6)
+            box("Decor", "RadioMast", (0.4, 14, 0.4), (-W / 2 + 4, top + 7, D / 2 - 5), (60, 60, 64), "Metal")
+            # Lichtmasten auf der Brüstung (vorne in der Mitte steht das Schild)
+            for sx_ in (-1, 0, 1):
+                for sz_ in (-1, 1):
+                    if sx_ == 0 and sz_ < 0:
+                        continue
+                    lx, lz = sx_ * (W / 2 - 3), sz_ * (D / 2 - 0.4)
+                    box("Decor", "RoofLamp", (0.5, 9, 0.5), (lx, top + 1.2 + 4.5, lz), (50, 52, 56), "Metal")
+                    box("Decor", "RoofLampHead", (2.2, 0.5, 0.9), (lx, top + 1.2 + 9.2, lz - sz_ * 0.5), (64, 66, 70), "Metal")
+            # Deckung: Betonleitwände, wo Platz ist
+            placed = 0
+            for _try in range(80):
+                if placed >= 8:
+                    break
+                lx, lz = rng.uniform(-W / 2 + 6, W / 2 - 6), rng.uniform(aisle_a[0] + 1, aisle_b[1] - 1)
+                turn = rng.choice((0, 90, 30, -30))
+                if place(R, lx, lz, 3.5, 0.9, turn):
+                    box("Cover", "JerseyBarrier", (7, 3, 1.8), (lx, top + 1.5, lz), (176, 172, 164), "Concrete", extra=(0, turn, 0))
+                    placed += 1
+
+            # ---------- Wracks in den Buchten, Blut und Leichen auf jeder Ebene ----------
+            for k in range(levels + 1):
+                spots = list(bays[k])
+                rng.shuffle(spots)
+                want = rng.randint(4, 7) if k < levels else rng.randint(3, 5)
+                for lx, lz in spots:
+                    if want <= 0:
+                        break
+                    if wreck(k, lx, lz, rng.uniform(-2.5, 2.5) + rng.choice((0, 180))):
+                        want -= 1
+                for j in range(rng.randint(1, 3)):
+                    sx_, _, sz_ = f(rng.uniform(-W / 2 + 6, W / 2 - 6), 0, rng.uniform(aisle_a[0], aisle_b[1]))
+                    self.stain(sx_, sz_, y=k * FH + 0.06)
+                for j in range(rng.randint(1, 2) if k < levels else 3):
+                    for _try in range(12):
+                        lx, lz = rng.uniform(-W / 2 + 8, W / 2 - 8), rng.uniform(aisle_a[0] + 1, aisle_b[1] - 1)
+                        if place(k, lx, lz, 3.0, 3.0):
+                            cx_, _, cz_ = f(lx, 0, lz)
+                            self.corpse(cx_, cz_, y=k * FH + 0.05)
+                            break
+
+            # ---------- Ranken und Graffiti außen ----------
+            vines = [("S", v) for v in (-46.0, -41.0, 38.0, 44.0)] + [("E", v) for v in (-28.0, 4.0, 18.0)] + \
+                [("W", v) for v in (-14.0, 6.0, 24.0)]
+            for side, v in vines:
+                v += rng.uniform(-1.5, 1.5)
+                length, width = rng.uniform(10, top - 2), rng.uniform(2, 3.2)
+                vy = top + 1 - length / 2
+                if side == "S":
+                    size, pos = (width, length, 0.4), (v, vy, -D / 2 - 0.6)
+                else:
+                    size, pos = (0.4, length, width), ((1 if side == "E" else -1) * (W / 2 + 0.6), vy, v)
+                box("Decor", "Vines", size, pos, (58, 88, 44), "LeafyGrass", props={"CanCollide": False, "CanQuery": False})
+            for text, gx, k in (("SIE SIND OBEN", -26.0, 1), ("NICHT RAUF", 22.0, 2)):
+                self.graffiti(b, text, f(gx, k * FH + 0.2, -D / 2 - 0.36), (12, 2.0, 0.05), yaw)
+            self.graffiti(b, "LAUF", f(W / 2 + 0.36, FH + 0.2, -10.0), (9, 2.0, 0.05), yaw - 90)
+            self.graffiti(b, "HILFE", f(-W / 2 - 4.5, 5.0, -D / 2 + 1.44), (7, 2.6, 0.05), yaw)
+            self.occupied.append((x, z, math.hypot(W, D) / 2 + 6))
+            PLACES["Parkhaus"] = ("PARKHAUS", x, z, 75)
         finally:
             self.rng = main_rng
 
@@ -3062,7 +3333,7 @@ def build(bm):
     w.autobahn()
     w.station()
     w.sidewalks()
-    spot = w.find_garage_spot(64, 46)  # Parkhaus am Rand von Ödstadt (vor den Häusern, damit der Platz frei bleibt)
+    spot = w.find_garage_spot(GARAGE_W, GARAGE_D)  # Parkhaus am Rand von Ödstadt (vor den Häusern, damit der Platz frei bleibt)
     if spot:
         w.parking_garage(*spot)
 

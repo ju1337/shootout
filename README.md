@@ -154,11 +154,15 @@ und Zombies jagen ihn. Bots sind ein Team (*Banditen*) und schießen nicht aufei
 dort keine. Beim Tod fällt eine **Tasche** mit seiner Waffe, Munition und Beute (Tier 2, in der roten Zone Tier 3);
 der Schütze bekommt 80 Münzen, in der roten Zone zählt der Kill für die Rangliste. Kein Respawn: die Leiche verschwindet
 nach 8 Sekunden.
-**Parkhaus** (`parking_garage`, am Südwestrand von Ödstadt an einer Straße, Ortsname PARKHAUS): Erdgeschoss und drei
-Parkdecks, Rampen hinten von Ebene zu Ebene bis aufs Dach (flach genug für Fahrzeuge), Säulen, Brüstungen,
-Parkmarkierungen, Ebenen-Nummern (P0 … DACH), Autowracks, Schranke und Kassenhäuschen, Treppenturm mit P-Schild, eine
-eingebrochene Ecke, Ranken und Graffiti. Das offene Dach ist zum Kämpfen gebaut: Betonsperren, zwei Sandsack-Nester, ein
-Container, ein abgestürzter Hubschrauber mit Rauch, Wracks, Feuertonne.
+**Parkhaus** (`parking_garage`, am Ostrand von Ödstadt an einer Straße, Ortsname PARKHAUS): großes Parkhaus im
+GTA-Stil (100 × 72 Studs) mit Erdgeschoss, drei Parkdecks und offenem Dach; jede Ebene hat ihre Farbe (P0 rot, P1 gelb,
+P2 grün, P3 blau, DACH violett) an den Fassadenbändern, Säulenringen und Ebenen-Nummern. Zufahrt von der Straße, Einfahrt
+mit offener Schranke, Kassenhäuschen und Durchfahrtshöhe, die Ausfahrt mit Wracks zugestellt, daneben ein verlassener
+Militärposten. Innen Stellplätze vorne, als Doppelreihe in der Mitte und hinten, Fahrgassen mit Pfeilen und Bodenwellen,
+Deckenlampen (fast alle kaputt), Wracks in den Buchten, Rampen hinten von Ebene zu Ebene bis aufs Dach (flach genug für
+Fahrzeuge). Zwei Treppen- und Aufzugstürme mit P-Schild, ein großes PARKHAUS-Schild auf der Dachkante, im zweiten Deck
+eine eingestürzte Ecke (die Platte hängt ins erste Deck), Ranken und Graffiti. Auf dem Dach lagern Überlebende: Zelte,
+Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter Hubschrauber mit Rauch, Betonsperren, SOS.
 **Dächer für Hubschrauber**: zwei Hochhäuser haben ein freies Dach mit Landefläche (gelber Rand, H, Randlichter, Windsack).
 
 - **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
