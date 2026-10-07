@@ -531,6 +531,11 @@ function VehicleService.Hit(attacker, model, amount)
 	if attacker and attacker ~= owner and attacker:GetAttribute("PvP") ~= true then
 		return 0
 	end
+	-- Fahrzeug eines Squad-Mitglieds: kein Schaden
+	local squad = attacker and attacker ~= owner and attacker:GetAttribute("SquadId")
+	if squad and squad == owner:GetAttribute("SquadId") then
+		return 0
+	end
 	local health = math.max(0, (model:GetAttribute("Health") or 0) - amount)
 	model:SetAttribute("Health", health)
 	if health <= 0 then

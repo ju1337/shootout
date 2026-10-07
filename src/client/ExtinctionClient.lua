@@ -11,6 +11,8 @@
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
 -- Coins, Redzone; Karten-Attribute Redzones (die rote Zone: Zeile unter der Uhr), Airdrops, RedzoneBoard (Rangliste
 -- rechts oben), Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
+-- Squad (J oder Knopf SQUAD): Fenster zum Einladen/Annehmen/Verlassen (PartyService über Remotes.PartyAction), Liste der
+-- Mitglieder links unter den Aufträgen (Ort bzw. Entfernung, Leben). In der offenen Welt ist der Squad das Team.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -478,6 +480,7 @@ local function updateHints()
 		{ InputActions.Hint("Interact"), "INTERAGIEREN" },
 		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN" },
 		{ InputActions.Hint("WorldMap"), "KARTE" },
+		{ InputActions.Hint("Squad"), "SQUAD" },
 	} do
 		local key, text = entry[1], entry[2]
 		if key ~= "" and seen[key] then -- gleiche Taste (Controller: □ lädt nach oder interagiert)
@@ -973,6 +976,158 @@ local function openTravel(pointName)
 	function win.Refresh() end
 end
 
+-- ---------- SQUAD: bis zu 4 Spieler, in der offenen Welt ein Team ----------
+
+local pendingInvite = nil -- { Name, UserId, Until } (Einladung, angenommen wird im Squad-Fenster)
+
+local function squadInfo()
+	local raw = player:GetAttribute("Party")
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "")
+	return ok and type(data) == "table" and type(data.Members) == "table" and data or nil
+end
+
+-- Ort eines Mitspielers für Liste und Fenster: Text und Leben (0..1, nil = unbekannt)
+local function whereIs(other)
+	if not other or not other.Parent then
+		return "OFFLINE", nil
+	end
+	if other:GetAttribute("Mode") ~= player:GetAttribute("Mode") then
+		return "NICHT IN DER OFFENEN WELT", nil
+	end
+	local character = other.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not root or humanoid.Health <= 0 then
+		return "TOT", 0
+	end
+	local mine = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local distance = mine and math.floor(Vector3.new(root.Position.X - mine.Position.X, 0, root.Position.Z - mine.Position.Z).Magnitude) or 0
+	local title = other:GetAttribute("SafeZoneTitle")
+	local where = other:GetAttribute("InSafeZone") and upper(type(title) == "string" and title or "SAFE ZONE") or (distance .. " M")
+	return where, humanoid.Health / math.max(1, humanoid.MaxHealth)
+end
+
+local function partyAction(action, userId)
+	Remotes.PartyAction:FireServer(action, userId)
+end
+
+local function openSquad()
+	local ALLY = C.Ally
+	local win = newWindow("Squad", "SQUAD", "BIS ZU 4 SPIELER  ·  KEIN FRIENDLY FIRE  ·  PINGS NUR FÜR DEN SQUAD  ·  NAMEN UND "
+		.. "PUNKTE AUF DER MINIMAP", ALLY)
+	local body = win.Body
+	sectionTitle(body, "DEIN SQUAD", UDim2.fromOffset(0, 0), 540)
+	sectionTitle(body, "SPIELER IN DER OFFENEN WELT", UDim2.fromOffset(580, 0), 540)
+	local function column(x, name)
+		local list = make("ScrollingFrame", { Name = name, Position = UDim2.fromOffset(x, 24), Size = UDim2.fromOffset(540, 420),
+			BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
+			AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
+		make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+		return list
+	end
+	local mine, others = column(0, "SquadMembers"), column(580, "SquadPlayers")
+	local leave = UITheme.Chunky({ Name = "LeaveSquad", Position = UDim2.fromOffset(0, 462), Size = UDim2.fromOffset(260, 52),
+		Color = C.Bad:Lerp(Color3.new(0, 0, 0), 0.25), Text = "SQUAD VERLASSEN", TextSize = 18, ZIndex = 5 }, body, function()
+		partyAction("Leave")
+	end)
+	local whereLabels = {} -- { Label, Player } (Entfernung laufend nachführen)
+
+	local function row(parent, order, name, sub, buttons)
+		local entry = make("Frame", { Name = "Row", Size = UDim2.new(1, -8, 0, 56), BackgroundColor3 = C.Card, BorderSizePixel = 0,
+			LayoutOrder = order, ZIndex = 5 }, parent)
+		UITheme.Corner(entry, UITheme.Radius.Small)
+		label({ Name = "Name", Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -260, 0, 24), Text = name, TextSize = 20,
+			Font = F.Display, ZIndex = 6 }, entry)
+		local subLabel = label({ Name = "Where", Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -260, 0, 16), Text = sub or "",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, entry)
+		for index, info in buttons or {} do
+			UITheme.Chunky({ Name = info.Name, AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, -10 - (index - 1) * 126, 0.5, 0), Size = UDim2.fromOffset(118, 40), Color = info.Color,
+				Text = info.Text, TextSize = 15, ZIndex = 6 }, entry, info.Run)
+		end
+		return entry, subLabel
+	end
+
+	function win.Refresh()
+		whereLabels = {}
+		for _, list in { mine, others } do
+			for _, child in list:GetChildren() do
+				if child:IsA("Frame") then
+					child:Destroy()
+				end
+			end
+		end
+		local party = squadInfo()
+		local iAmLeader = not party or party.Leader == player.UserId
+		local inParty = {}
+		local order = 0
+		-- offene Einladung oben in der eigenen Spalte
+		if pendingInvite and os.clock() < pendingInvite.Until then
+			order += 1
+			local invite = pendingInvite
+			row(mine, order, "EINLADUNG VON " .. upper(invite.Name), "ANNEHMEN = SQUAD BEITRETEN", {
+				{ Name = "AcceptInvite", Text = "ANNEHMEN", Color = C.Good:Lerp(Color3.new(0, 0, 0), 0.2), Run = function()
+					partyAction("Accept", invite.UserId)
+					pendingInvite = nil
+				end },
+				{ Name = "DeclineInvite", Text = "ABLEHNEN", Color = C.Panel, Run = function()
+					partyAction("Decline", invite.UserId)
+					pendingInvite = nil
+					win.Refresh()
+				end },
+			})
+		end
+		if party then
+			for _, member in party.Members do
+				order += 1
+				inParty[member.UserId] = true
+				local other = Players:GetPlayerByUserId(member.UserId)
+				local isMe = member.UserId == player.UserId
+				local buttons = (iAmLeader and not isMe) and { { Name = "Kick", Text = "ENTFERNEN", Color = C.Panel, Run = function()
+					partyAction("Kick", member.UserId)
+				end } } or nil
+				local _, whereLabel = row(mine, order, (member.UserId == party.Leader and "★  " or "") .. upper(tostring(member.Name)),
+					isMe and "DU" or (whereIs(other)), buttons)
+				if not isMe then
+					table.insert(whereLabels, { Label = whereLabel, Player = other })
+				end
+			end
+		else
+			order += 1
+			row(mine, order, "DU SPIELST ALLEIN", "LADE RECHTS JEMANDEN EIN – ALS SQUAD SEID IHR EIN TEAM")
+		end
+		leave.Button.Visible = party ~= nil
+		local count = 0
+		for _, other in Players:GetPlayers() do
+			if other ~= player and not inParty[other.UserId] and Modes.IsSurvival(other:GetAttribute("Mode")) then
+				count += 1
+				local busy = other:GetAttribute("SquadId") ~= nil
+				local full = party ~= nil and #party.Members >= 4
+				local canInvite = iAmLeader and not busy and not full
+				local _, whereLabel = row(others, count, upper(other.Name), busy and "SCHON IN EINEM SQUAD" or (whereIs(other)),
+					canInvite and { { Name = "Invite", Text = "EINLADEN", Color = C.Good:Lerp(Color3.new(0, 0, 0), 0.2), Run = function()
+						partyAction("Invite", other.UserId)
+					end } } or nil)
+				if not busy then
+					table.insert(whereLabels, { Label = whereLabel, Player = other })
+				end
+			end
+		end
+		if count == 0 then
+			row(others, 1, "NIEMAND SONST HIER", "MITSPIELER KOMMEN ÜBER DAS TOR IM HUB")
+		end
+	end
+	-- Entfernungen laufend nachführen (ohne die Knöpfe neu zu bauen)
+	function win.Tick()
+		for _, entry in whereLabels do
+			if entry.Label.Parent then
+				entry.Label.Text = (whereIs(entry.Player))
+			end
+		end
+	end
+	win.Refresh()
+end
+
 -- STAND: links kaufen, rechts verkaufen (eigene Tasche anklicken)
 local function openStand(standKey)
 	local stand = ExtinctionConfig.Stands[standKey]
@@ -1351,9 +1506,112 @@ function ExtinctionClient.Init()
 	mapButton.Activated:Connect(function()
 		ExtinctionMap.Toggle()
 	end)
+	-- Squad: J (oder Knopf unter KARTE) öffnet das Fenster; Einladungen nimmt man dort an
+	InputActions.Bindings.Squad = { Keys = { Enum.KeyCode.J }, Pad = {} }
+	local function toggleSquad()
+		if window and window.Kind == "Squad" then
+			closeWindow()
+		else
+			ExtinctionMap.Set(false)
+			openSquad()
+		end
+	end
+	InputActions.Bind("Squad", function(began)
+		if began and inExtinction() then
+			toggleSquad()
+		end
+	end)
+	local squadButton = make("TextButton", { Name = "SquadButton", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 62),
+		Size = UDim2.fromOffset(110, 22), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+		Text = "", AutoButtonColor = true }, root)
+	UITheme.Corner(squadButton, UITheme.Radius.Small)
+	local squadButtonText = label({ Size = UDim2.fromScale(1, 1), Text = "SQUAD  ·  J", TextSize = 12, Font = F.Bold, TextColor3 = C.Text,
+		TextXAlignment = Enum.TextXAlignment.Center }, squadButton)
+	squadButton.Activated:Connect(toggleSquad)
+	-- Einladung: Hinweis (die Maus ist im Spiel gefangen, darum annehmen im Squad-Fenster)
+	Remotes.PartyInvite.OnClientEvent:Connect(function(name, userId)
+		if not inExtinction() then
+			return
+		end
+		pendingInvite = { Name = tostring(name), UserId = userId, Until = os.clock() + 55 }
+		showToast(upper(tostring(name)) .. " LÄDT DICH IN DEN SQUAD EIN  ·  " .. (InputActions.Hint("Squad") ~= ""
+			and (InputActions.Hint("Squad") .. " ZUM ANNEHMEN") or "SQUAD ZUM ANNEHMEN"), true)
+		if window and window.Kind == "Squad" then
+			window.Refresh()
+		end
+	end)
+	-- Meldungen des Squad-Systems (Einladung gesendet, Squad voll ...)
+	Remotes.ShopStatus.OnClientEvent:Connect(function(text, ok)
+		if inExtinction() and type(text) == "string" then
+			showToast(text, ok == true)
+		end
+	end)
+	player:GetAttributeChangedSignal("Party"):Connect(function()
+		if window and window.Kind == "Squad" then
+			window.Refresh()
+		end
+	end)
+	-- Squad-Liste links unter den Aufträgen: Mitglieder mit Ort/Entfernung und Leben
+	local squadPanel = make("Frame", { Name = "Squad", Position = UDim2.fromOffset(24, 480), Size = UDim2.fromOffset(270, 26),
+		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y,
+		Visible = false }, root)
+	UITheme.Corner(squadPanel, UITheme.Radius.Small)
+	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, squadPanel)
+	make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10),
+		PaddingRight = UDim.new(0, 10) }, squadPanel)
+	label({ Name = "Head", LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 16), Text = "SQUAD", TextSize = 13, Font = F.Display,
+		TextColor3 = C.Ally }, squadPanel)
+	local squadRows = {} -- [UserId] = { Frame, Where, Fill, Player }
+	local function refreshSquadPanel()
+		local party = squadInfo()
+		local seen = {}
+		local order = 0
+		for _, member in party and party.Members or {} do
+			if member.UserId ~= player.UserId then
+				order += 1
+				seen[member.UserId] = true
+				local entry = squadRows[member.UserId]
+				if not entry then
+					local frame = make("Frame", { Name = "Member", Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 }, squadPanel)
+					local nameLabel = label({ Name = "Name", Size = UDim2.new(1, -110, 0, 16), Text = "", TextSize = 12, Font = F.Bold,
+						TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
+					local where = label({ Name = "Where", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
+						Size = UDim2.fromOffset(108, 16), Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
+						TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
+					local bar = make("Frame", { Position = UDim2.fromOffset(0, 20), Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = C.Card,
+						BorderSizePixel = 0 }, frame)
+					local fill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Ally, BorderSizePixel = 0 }, bar)
+					entry = { Frame = frame, Name = nameLabel, Where = where, Fill = fill }
+					squadRows[member.UserId] = entry
+				end
+				entry.Frame.LayoutOrder = order
+				entry.Name.Text = (member.UserId == party.Leader and "★ " or "") .. upper(tostring(member.Name))
+				entry.Player = Players:GetPlayerByUserId(member.UserId)
+			end
+		end
+		for userId, entry in squadRows do
+			if not seen[userId] then
+				entry.Frame:Destroy()
+				squadRows[userId] = nil
+			end
+		end
+		squadPanel.Visible = order > 0
+		squadButtonText.Text = order > 0 and ("SQUAD " .. (order + 1) .. "/4  ·  J") or "SQUAD  ·  J"
+	end
+	local function tickSquadPanel()
+		for _, entry in squadRows do
+			local where, health = whereIs(entry.Player)
+			entry.Where.Text = where
+			entry.Fill.Size = UDim2.fromScale(math.clamp(health or 0, 0, 1), 1)
+			entry.Fill.BackgroundColor3 = (health or 1) <= 0.3 and C.Bad or C.Ally
+		end
+	end
+	player:GetAttributeChangedSignal("Party"):Connect(refreshSquadPanel)
+	refreshSquadPanel()
 	-- Aufträge links unter dem VERLASSEN-Knopf des HUD (Spieler-Attribut ExtMissions vom MissionService). Der Knopf rutscht
 	-- je nach Bildschirm tiefer (unter die Roblox-Leiste), auf Touch steht die Lebensanzeige darunter: die Liste folgt mit
 	-- etwas Abstand (missionTop).
+	local missionHeight = 0
 	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(270, 26),
 		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
 	UITheme.Corner(missionPanel, UITheme.Radius.Small)
@@ -1371,6 +1629,7 @@ function ExtinctionClient.Init()
 		local ok, list = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ExtMissions") or "[]")
 		list = ok and type(list) == "table" and list or {}
 		missionPanel.Visible = #list > 0
+		missionHeight = #list > 0 and (30 + 34 * #list) or 0 -- Kopf, Zeilen, Abstände (für die Squad-Liste darunter)
 		for index, mission in list do
 			local row = make("Frame", { Name = "Mission", LayoutOrder = index, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 },
 				missionPanel)
@@ -1488,6 +1747,16 @@ function ExtinctionClient.Init()
 		local missionY, missionX = missionTop(), InputActions.IsTouch() and 16 or 24
 		if missionY and (missionPanel.Position.Y.Offset ~= missionY or missionPanel.Position.X.Offset ~= missionX) then
 			missionPanel.Position = UDim2.fromOffset(missionX, missionY)
+		end
+		local squadY = missionPanel.Position.Y.Offset + (missionHeight > 0 and missionHeight + 10 or 0)
+		if squadPanel.Position.Y.Offset ~= squadY or squadPanel.Position.X.Offset ~= missionPanel.Position.X.Offset then
+			squadPanel.Position = UDim2.fromOffset(missionPanel.Position.X.Offset, squadY)
+		end
+		if squadPanel.Visible then
+			tickSquadPanel()
+		end
+		if window and window.Kind == "Squad" and window.Tick then
+			window.Tick()
 		end
 		local serverTime = workspace:GetServerTimeNow()
 		local clock = DayCycle.Clock(serverTime)

@@ -102,10 +102,15 @@ local function reportMag(state, ammo)
 	end
 end
 
--- PvP-Regel der offenen Welt: Spieler gegen Spieler nur, wenn beide ihre PvP-Zeit haben (draußen, 5 s nach der Safe Zone)
+-- PvP-Regel der offenen Welt: Spieler gegen Spieler nur, wenn beide ihre PvP-Zeit haben (draußen, 5 s nach der Safe Zone),
+-- und nie im eigenen Squad (Spieler-Attribut SquadId, PartyService)
 local function pvpBlocked(attacker, victim)
 	if not victim or victim == attacker or not Modes.IsSurvival(attacker:GetAttribute("Mode")) then
 		return false
+	end
+	local squad = attacker:GetAttribute("SquadId")
+	if squad ~= nil and squad == victim:GetAttribute("SquadId") then
+		return true
 	end
 	return attacker:GetAttribute("PvP") ~= true or victim:GetAttribute("PvP") ~= true
 end

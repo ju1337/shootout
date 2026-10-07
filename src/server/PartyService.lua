@@ -5,6 +5,10 @@
 -- Spieler-Attribut "Party" (JSON): { Leader = UserId, Members = { { UserId, Name }, ... } }
 -- Spieler-Attribut "PartyReady" (true/nil): BEREIT-Schalter in der Lobby; zurückgesetzt, sobald der
 -- Squad in einen Kampfmodus wechselt oder man den Squad verlässt.
+-- Spieler-Attribut "SquadId" (Zahl/nil): gleiche Zahl = gleicher Squad. In der offenen Welt (EXTINCTION) ist der Squad das
+-- Team: kein Friendly Fire (WeaponService, VehicleService), Pings nur an den Squad (PingService), Namen, Punkte auf der
+-- Minimap und Squad-Liste für die Mitglieder (TeamCheck, ExtinctionClient). Verlässt der Anführer die offene Welt, bleiben die
+-- anderen dort (draußen würde Verlassen sonst ihre Tasche kosten); betritt er sie, kommt der Squad mit.
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -17,7 +21,8 @@ local PartyService = {}
 local MAX_SIZE = 4
 local INVITE_TIME = 60 -- Sekunden gültig
 
-local partyOf = {}  -- [Player] = party ({ Leader = Player, Members = { Player, ... } })
+local partyOf = {}  -- [Player] = party ({ Id, Leader = Player, Members = { Player, ... } })
+local nextId = 0
 local invites = {}  -- [Player] = { [Anführer] = Ablaufzeit }
 local manager = nil
 
@@ -29,6 +34,7 @@ local function publish(party)
 	local data = HttpService:JSONEncode({ Leader = party.Leader.UserId, Members = list })
 	for _, member in party.Members do
 		member:SetAttribute("Party", data)
+		member:SetAttribute("SquadId", party.Id)
 	end
 end
 
@@ -40,6 +46,7 @@ local function leave(player)
 	partyOf[player] = nil
 	player:SetAttribute("Party", nil)
 	player:SetAttribute("PartyReady", nil)
+	player:SetAttribute("SquadId", nil)
 	local index = table.find(party.Members, player)
 	if index then
 		table.remove(party.Members, index)
@@ -50,6 +57,7 @@ local function leave(player)
 			partyOf[member] = nil
 			member:SetAttribute("Party", nil)
 			member:SetAttribute("PartyReady", nil)
+			member:SetAttribute("SquadId", nil)
 		end
 		return
 	end
@@ -69,6 +77,11 @@ end
 function PartyService.Members(player)
 	local party = partyOf[player]
 	return party and party.Members or { player }
+end
+
+-- Sind beide im selben Squad?
+function PartyService.SameSquad(a, b)
+	return a ~= nil and b ~= nil and partyOf[a] ~= nil and partyOf[a] == partyOf[b]
 end
 
 local function status(player, text)
@@ -112,7 +125,8 @@ function actions.Accept(player, userId)
 	leave(player)
 	local party = partyOf[leader]
 	if not party then
-		party = { Leader = leader, Members = { leader } }
+		nextId += 1
+		party = { Id = nextId, Leader = leader, Members = { leader } }
 		partyOf[leader] = party
 	end
 	if #party.Members >= MAX_SIZE then
@@ -171,7 +185,8 @@ function PartyService.Init(modeManager)
 			return
 		end
 		for _, member in party.Members do
-			if member ~= player and member:GetAttribute("Mode") ~= modeId then
+			-- aus der offenen Welt wird niemand mitgezogen (draußen kostet Verlassen die Tasche)
+			if member ~= player and member:GetAttribute("Mode") ~= modeId and member:GetAttribute("Mode") ~= "Extinction" then
 				task.spawn(manager.Join, member, modeId)
 			end
 		end

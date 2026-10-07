@@ -1,10 +1,12 @@
 -- TeamCheck (ModuleScript, nur Client)
 -- Wer gehört zu wem? Spieler über Player.Team, Bots über ihr Modell (Workspace.Bots) bzw.
--- ReplicatedStorage.BotInfo (bleibt auch nach dem Tod erhalten). Benutzt von Fadenkreuz,
--- Killfeed, Minimap und Teamleiste.
+-- ReplicatedStorage.BotInfo (bleibt auch nach dem Tod erhalten). In der offenen Welt (keine Teams) ist der eigene Squad
+-- das Team (Spieler-Attribut SquadId, PartyService). Benutzt von Fadenkreuz, Killfeed, Minimap, Teamleiste und
+-- Namensschildern.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Modes = require(script.Parent.Modes)
 
 local player = Players.LocalPlayer
 
@@ -23,6 +25,16 @@ end
 
 local function myTeamName()
 	return player.Team and player.Team.Name or nil
+end
+
+-- Mitglied des eigenen Squads in der offenen Welt (beide dort, gleiche SquadId)?
+function TeamCheck.IsSquadMate(other)
+	if not other or other == player then
+		return false
+	end
+	local mode = player:GetAttribute("Mode")
+	local squad = player:GetAttribute("SquadId")
+	return squad ~= nil and Modes.IsSurvival(mode) and other:GetAttribute("Mode") == mode and other:GetAttribute("SquadId") == squad
 end
 
 -- Teamname zu einem Spieler- oder Bot-Namen (nil = kein Team, z.B. Free-for-All)
@@ -45,6 +57,10 @@ function TeamCheck.Relation(name)
 	if mine ~= nil and mine == theirs then
 		return "Mate"
 	end
+	local other = Players:FindFirstChild(name)
+	if other and other:IsA("Player") and TeamCheck.IsSquadMate(other) then
+		return "Mate"
+	end
 	return "Enemy"
 end
 
@@ -62,7 +78,7 @@ function TeamCheck.IsEnemy(model)
 	local other = Players:GetPlayerFromCharacter(model)
 	if other then
 		return other ~= player and other:GetAttribute("Mode") == player:GetAttribute("Mode")
-			and not (player.Team ~= nil and other.Team == player.Team)
+			and not (player.Team ~= nil and other.Team == player.Team) and not TeamCheck.IsSquadMate(other)
 	end
 	if model:GetAttribute("IsDummy") then
 		return true
@@ -91,8 +107,11 @@ function TeamCheck.Fighters()
 	if not mode then
 		return list
 	end
+	-- offene Welt: man selbst und der eigene Squad (alle anderen sind keine festen Gegner)
+	local survival = Modes.IsSurvival(mode)
 	for _, other in Players:GetPlayers() do
-		if other:GetAttribute("Mode") == mode and other.Team then
+		local squadMate = survival and TeamCheck.IsSquadMate(other)
+		if other:GetAttribute("Mode") == mode and (other.Team or squadMate or (survival and other == player)) then
 			local character = other.Character
 			table.insert(list, {
 				Name = other.Name,
@@ -100,7 +119,7 @@ function TeamCheck.Fighters()
 				AgentId = (character and character:GetAttribute("Agent")) or other:GetAttribute("Agent"),
 				Player = other,
 				IsSelf = other == player,
-				IsMate = mine ~= nil and other.Team.Name == mine,
+				IsMate = squadMate or (mine ~= nil and other.Team ~= nil and other.Team.Name == mine),
 				State = TeamCheck.StateOf(character),
 			})
 		end

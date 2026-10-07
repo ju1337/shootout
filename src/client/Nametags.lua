@@ -17,6 +17,7 @@ local TitleConfig = require(Shared.TitleConfig)
 local UITheme = require(Shared.UITheme)
 local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
+local TeamCheck = require(Shared.TeamCheck)
 
 local player = Players.LocalPlayer
 
@@ -284,7 +285,7 @@ local function update()
 		local character = other.Character
 		if character and other ~= player then
 			local sameMode = other:GetAttribute("Mode") == myMode
-			local mate = player.Team ~= nil and other.Team == player.Team
+			local mate = (player.Team ~= nil and other.Team == player.Team) or TeamCheck.IsSquadMate(other)
 			local level = LevelConfig.Get(other)
 			if inHub and sameMode then
 				-- Hub/Markt: Name in Prestige-Farbe (ab Prestige 1), Rang darunter, RAP darüber

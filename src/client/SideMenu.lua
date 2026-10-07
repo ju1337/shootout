@@ -361,7 +361,8 @@ local function buildSquad()
 		end)
 	end)
 
-	-- Einladung (erscheint überall, auch außerhalb des Hubs)
+	-- Einladung (erscheint überall außerhalb der offenen Welt; dort ist die Maus im Spiel gefangen, die Einladung nimmt man
+	-- im Squad-Fenster an, siehe ExtinctionClient)
 	local inviteGui = make("ScreenGui", { Name = "PartyInvite", ResetOnSpawn = false, DisplayOrder = 30 }, player.PlayerGui)
 	local popup = make("Frame", { AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -24, 1, -140), Size = UDim2.new(0, 360, 0, 120),
 		BackgroundColor3 = PANEL, Visible = false }, inviteGui)
@@ -382,10 +383,13 @@ local function buildSquad()
 		popup.Visible = false
 	end)
 	Remotes.PartyInvite.OnClientEvent:Connect(function(name, userId)
+		if Modes.IsSurvival(player:GetAttribute("Mode")) then
+			return
+		end
 		inviteId += 1
 		local myId = inviteId
 		inviter = userId
-		inviteText.Text = name .. " lädt dich in seinen Squad ein."
+		inviteText.Text = name .. " lädt dich in den Squad ein."
 		popup.Visible = true
 		task.delay(20, function()
 			if inviteId == myId then

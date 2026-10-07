@@ -453,6 +453,101 @@ step(0.3)
 check(string.find(texts(hud), "ANTI-ZOMBIE-SPRITZE", 1, true) ~= nil or string.find(texts(hud), "SPRITZE", 1, true) ~= nil,
 	"Spritze auf der Hotbar")
 
+-- ---------- Squad: J öffnet das Fenster, Einladen, Einladung annehmen, Liste im HUD, Squad = Team ----------
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+local ann = SIM.Join("Ann")
+Instance.new("Backpack", ann).Name = "Backpack"
+step(2)
+ann:SetAttribute("Mode", "Extinction")
+Extinction.AddPlayer(ann)
+step(0.5)
+local function lastParty(kind)
+	for i = #SIM.RemoteLog, 1, -1 do
+		local entry = SIM.RemoteLog[i]
+		if entry.Player == "server" and entry.Remote == "PartyAction" and entry.Args[1] == kind then
+			return entry.Args
+		end
+	end
+	return nil
+end
+check(find(hud, "SquadButton") ~= nil and string.find(texts(find(hud, "SquadButton")), "SQUAD", 1, true) ~= nil, "Knopf SQUAD im HUD")
+check(string.find(find(hud, "Hints").Text, "J  SQUAD", 1, true) ~= nil, "Tastenzeile: J SQUAD")
+InputActions.Trigger("Squad", true)
+InputActions.Trigger("Squad", false)
+step(0.2)
+check(windowGui.Enabled and string.find(texts(windowGui), "SQUAD", 1, true) ~= nil, "J öffnet das Squad-Fenster")
+check(string.find(texts(windowGui), "DU SPIELST ALLEIN", 1, true) ~= nil, "allein: Hinweis")
+local players = find(windowGui, "SquadPlayers")
+check(players and string.find(texts(players), "ANN", 1, true) ~= nil, "Ann steht in der Liste der Spieler")
+local invite = players and find(players, "Invite")
+check(invite ~= nil, "Knopf EINLADEN")
+if invite then
+	invite.Activated:Fire()
+	step(0.1)
+end
+local sent = lastParty("Invite")
+check(sent and sent[2] == ann.UserId, "Einladung an Ann geschickt")
+-- Einladung von Ann: Hinweis, im Fenster annehmen
+Remotes.PartyInvite.OnClientEvent:Fire("Ann", ann.UserId)
+step(0.2)
+check(string.find(texts(windowGui), "EINLADUNG VON ANN", 1, true) ~= nil, "Einladung im Squad-Fenster")
+local accept = find(windowGui, "AcceptInvite")
+check(accept ~= nil, "Knopf ANNEHMEN")
+if accept then
+	accept.Activated:Fire()
+	step(0.1)
+end
+local accepted = lastParty("Accept")
+check(accepted and accepted[2] == ann.UserId, "Annahme an den Server geschickt")
+InputActions.Trigger("Squad", true)
+InputActions.Trigger("Squad", false)
+step(0.2)
+check(not windowGui.Enabled, "J schließt das Squad-Fenster")
+-- im Squad (so setzt es der PartyService): Liste im HUD, Ann ist Teamkollegin
+local TeamCheck = require("TeamCheck")
+local HttpService = game:GetService("HttpService")
+check(not TeamCheck.IsSquadMate(ann) and TeamCheck.IsEnemy(ann.Character), "ohne Squad ist Ann eine Gegnerin")
+local partyData = HttpService:JSONEncode({ Leader = ann.UserId, Members = { { UserId = ann.UserId, Name = "Ann" },
+	{ UserId = bob.UserId, Name = "Bob" } } })
+for _, member in { ann, bob } do
+	member:SetAttribute("Party", partyData)
+	member:SetAttribute("SquadId", 7)
+end
+ann.Character:PivotTo(CFrame.new(bob.Character:GetPivot().Position + Vector3.new(80, 0, 0))) -- draußen vor dem Safehouse
+step(0.5)
+local squadPanel = find(hud, "Squad")
+check(squadPanel and squadPanel.Visible and string.find(texts(squadPanel), "ANN", 1, true) ~= nil, "Squad-Liste im HUD mit Ann")
+check(squadPanel and string.find(texts(squadPanel), "80 M", 1, true) ~= nil, "Entfernung zu Ann (" .. (squadPanel and texts(squadPanel) or "") .. ")")
+check(string.find(texts(find(hud, "SquadButton")), "2/4", 1, true) ~= nil, "Knopf zeigt 2/4")
+check(TeamCheck.IsSquadMate(ann) and TeamCheck.Relation("Ann") == "Mate" and not TeamCheck.IsEnemy(ann.Character),
+	"im Squad ist Ann Teamkollegin")
+local mateListed = false
+for _, fighter in TeamCheck.Fighters() do
+	if fighter.Name == "Ann" and fighter.IsMate then
+		mateListed = true
+	end
+end
+check(mateListed, "Ann als Teamkollegin für die Minimap")
+InputActions.Trigger("Squad", true)
+InputActions.Trigger("Squad", false)
+step(0.2)
+local members = find(windowGui, "SquadMembers")
+check(members and string.find(texts(members), "★  ANN", 1, true) ~= nil and find(windowGui, "LeaveSquad").Visible,
+	"Fenster: Ann als Anführerin, VERLASSEN sichtbar")
+check(find(members, "Kick") == nil, "nur die Anführerin kann entfernen")
+find(windowGui, "LeaveSquad").Activated:Fire()
+step(0.1)
+check(lastParty("Leave") ~= nil, "Verlassen an den Server geschickt")
+InputActions.Trigger("Squad", true)
+InputActions.Trigger("Squad", false)
+step(0.2)
+for _, member in { ann, bob } do
+	member:SetAttribute("Party", nil)
+	member:SetAttribute("SquadId", nil)
+end
+step(0.3)
+check(not find(hud, "Squad").Visible and not TeamCheck.IsSquadMate(ann), "Squad aufgelöst: Liste weg, Ann wieder Gegnerin")
+
 -- Modus verlassen: HUD weg
 bob:SetAttribute("Mode", "Hub")
 step(0.2)
