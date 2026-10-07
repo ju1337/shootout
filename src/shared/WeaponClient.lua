@@ -6,8 +6,8 @@
 -- Schulterkamera: der Charakter hält die Waffe mit beiden Händen (CharacterPose), dazu das Fadenkreuz (HUD).
 -- Welche Waffen man hat, steht im Charakter-Attribut "Loadout" (vom Server, je nach Agent).
 -- Inspizieren (X, Controller: □ bei vollem Magazin, Touch: INSPEKT): eigene Animation je Waffe (WeaponAnimations),
--- das HUD verschwindet (InspectView); Schießen, Zielen, Nachladen, Messer, Wechsel, Sprinten oder nochmal X beenden
--- es. Der Server zeigt es den anderen (Remotes.Inspect -> Charakter-Attribute, CharacterPose).
+-- als Arcade-Trick mitten im Spiel – HUD bleibt, geht auch beim Laufen und Sprinten; Schießen, Zielen, Nachladen,
+-- Messer, Wechsel oder nochmal X beenden es. Der Server zeigt es den anderen (Remotes.Inspect -> Charakter-Attribute, CharacterPose).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -177,8 +177,6 @@ local function stopInspect(silent)
 		return
 	end
 	inspect = nil
-	InspectView.Stop()
-	Movement.SetInspecting(false)
 	if not silent then
 		Remotes.Inspect:FireServer(false)
 	end
@@ -205,8 +203,6 @@ local function inspectBlocker()
 		return "Erst fertig nachladen."
 	elseif aiming or aimHeld then
 		return "Nicht beim Zielen."
-	elseif Movement.IsSprinting() then
-		return "Nicht beim Sprinten."
 	elseif os.clock() < drawUntil then
 		return ""
 	elseif not WeaponAnimations.Inspect(current) then
@@ -229,8 +225,6 @@ local function startInspect()
 	local anim, duration = WeaponAnimations.Inspect(current)
 	fireAnim = nil
 	inspect = { Weapon = current, Anim = anim, Start = os.clock(), Duration = duration, LastT = -1 }
-	InspectView.Start(current, Movement.IsThirdPerson())
-	Movement.SetInspecting(true)
 	Remotes.Inspect:FireServer(true)
 end
 
@@ -711,11 +705,12 @@ function WeaponClient.Init()
 				end
 			end
 		end
-		-- Inspizieren: läuft bis zum Ende, außer man schießt, zielt, lädt nach, sprintet, stirbt, setzt sich, öffnet ein Menü
+		-- Inspizieren: läuft bis zum Ende (auch beim Sprinten), außer man schießt, zielt, lädt nach, stirbt, setzt sich,
+		-- öffnet ein Menü
 		local inspectPose = nil
 		if inspect then
 			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-			if inspect.Weapon ~= current or not isAlive or reloading or aiming or aimHeld or Movement.IsSprinting()
+			if inspect.Weapon ~= current or not isAlive or reloading or aiming or aimHeld
 				or (humanoid and (humanoid.Sit or humanoid.PlatformStand)) or UITheme.IsMenuOpen() then
 				stopInspect()
 			else
@@ -724,7 +719,6 @@ function WeaponClient.Init()
 					stopInspect()
 				else
 					inspectPose = { Anim = inspect.Anim, T = t }
-					InspectView.SetProgress(t)
 				end
 			end
 		end

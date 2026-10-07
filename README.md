@@ -288,11 +288,11 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   Magazin, MP wirbelt um den Lauf und zieht den Spannhebel, Schrotflinte schiebt eine Patrone nach und pumpt halb,
   Präzisionsgewehr tippt den Verschluss an, LMG klappt den Deckel auf und klopft auf den Kasten, Pistole dreht sich auf
   den Rücken, Schlitten-Check und Wirbel um den Abzugsfinger, Revolver lässt die Trommel rattern und wirbelt zweimal.
-  Währenddessen verschwindet das HUD samt Chat (`src/shared/InspectView.lua`: HUD-Oberflächen kurz aus der PlayerGui,
-  danach unverändert zurück), Kino-Look mit Balken, dunklen Rändern, Tiefenschärfe und engerem Sichtfeld (Schulterkamera
-  rückt heran), unten links eine Karte mit Name, Skin, Meisterschaft, Aufsätzen und Werten. Schießen, Zielen, Nachladen,
-  Messer, Wechsel, Sprinten oder nochmal X beenden es. Geht es gerade nicht (keine Waffe in der Hand, in der Safe
-  Zone sind Waffen gesichert, im Hub, beim Nachladen/Zielen/Sprinten, im Fahrzeug), erscheint unten kurz ein Hinweis. Andere Spieler sehen es in der Third-Person (Remotes.Inspect ->
+  Ein Arcade-Trick mitten im Spiel: HUD und Kamera bleiben, wie sie sind, und es geht auch beim Laufen und Sprinten
+  (die Waffe wird dabei nicht in die Sprint-Haltung gesenkt). Schießen, Zielen, Nachladen, Messer, Wechsel oder nochmal
+  X beenden es. Geht es gerade nicht (keine Waffe in der Hand, in der Safe Zone sind Waffen gesichert, im Hub, beim
+  Nachladen/Zielen, im Fahrzeug), erscheint unten kurz ein Hinweis (`src/shared/InspectView.lua`). Andere Spieler sehen
+  es in der Third-Person (Remotes.Inspect ->
   Charakter-Attribute InspectStart/InspectWeapon). Test: `tests/inspect.test.luau`.
 - **Helikopter** (Fahrzeugstand, 12 000 Münzen, Tier 4): fliegt mit **bis zu 4 Leuten** – Pilot (der Besitzer) links
   vorne, Kopilot und zwei Plätze hinten (Mitfahrer per E). Steuerung: **W/S** vor/zurück, **A/D** drehen,

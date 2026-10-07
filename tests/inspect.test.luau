@@ -1,7 +1,7 @@
--- Waffe inspizieren (Taste X): jede Waffe hat ihre eigene Animation, die in Ruhe anfängt und endet; das HUD
--- verschwindet währenddessen (InspectView) und kommt unverändert zurück; WeaponClient startet mit X, beendet von
--- selbst, bei Schuss, Zielen oder nochmal X und meldet es dem Server; der Server setzt die Attribute für die anderen
--- und räumt sie bei Wechsel und Nachladen weg.
+-- Waffe inspizieren (Taste X): jede Waffe hat ihre eigene Animation, die in Ruhe anfängt und endet. Arcade-Trick
+-- mitten im Spiel: das HUD bleibt, keine Kino-Effekte, keine Werte-Karte, geht auch beim Sprinten. WeaponClient
+-- startet mit X, beendet von selbst, bei Schuss, Zielen oder nochmal X und meldet es dem Server; der Server setzt die
+-- Attribute für die anderen und räumt sie bei Wechsel und Nachladen weg.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -114,27 +114,7 @@ local touch = Instance.new("ScreenGui", playerGui)
 touch.Name = "TouchControls"
 
 local InspectView = require("InspectView")
-InspectView.Start("Rifle", false)
-check(InspectView.IsActive(), "Präsentation läuft")
-check(hud.Parent == nil and extHud.Parent == nil, "HUD-Oberflächen verschwinden")
-check(touch.Parent == playerGui, "Touch-Knöpfe bleiben")
-check(playerGui:FindFirstChild("Inspect") and playerGui.Inspect.Enabled, "Kino-Ebene sichtbar")
-local focus = game:GetService("Lighting"):FindFirstChild("InspectFocus")
-check(focus and focus.Enabled, "Tiefenschärfe an")
-local card = playerGui.Inspect:FindFirstChild("Card", true)
-local texts = {}
-for _, obj in card:GetDescendants() do
-	if obj:IsA("TextLabel") then
-		texts[obj.Text] = true
-	end
-end
-check(texts["STURMGEWEHR"] and texts["SCHADEN"] and texts["FEUERRATE"] and texts["MAGAZIN"] and texts["REICHWEITE"],
-	"Karte zeigt Name und Werte")
-check(texts["STANDARD"] and texts["KEINE"], "Karte zeigt Skin und Aufsätze")
-InspectView.Stop()
-check(hud.Parent == playerGui and extHud.Parent == playerGui and extHud.Enabled == false, "HUD kommt unverändert zurück")
-SIM.Advance(0.5, 20)
-check(not playerGui.Inspect.Enabled and not focus.Enabled, "Kino-Ebene und Tiefenschärfe wieder aus")
+local Lighting = game:GetService("Lighting")
 
 -- WeaponClient: X startet, läuft von selbst aus; Schuss und nochmal X beenden
 SIM.IsServer = false -- Client-Takt (RenderStepped)
@@ -163,11 +143,13 @@ InputActions.Trigger("Inspect", true)
 InputActions.Trigger("Inspect", false)
 SIM.Advance(0.1, 20)
 check(WeaponClient.Inspecting() ~= nil and WeaponClient.Inspecting().Weapon == "Rifle", "X startet das Inspizieren")
-check(InspectView.IsActive() and hud.Parent == nil, "HUD weg beim Inspizieren")
+check(hud.Parent == playerGui and extHud.Parent == playerGui and touch.Parent == playerGui, "HUD bleibt beim Inspizieren")
+check(playerGui:FindFirstChild("Inspect") == nil and Lighting:FindFirstChild("InspectFocus") == nil,
+	"keine Kino-Ebene, keine Tiefenschärfe, keine Werte-Karte")
 check(inspectMessages()[1] == true, "Start an den Server gemeldet")
 local _, duration = WeaponAnimations.Inspect("Rifle")
 SIM.Advance(duration + 0.1, 20)
-check(WeaponClient.Inspecting() == nil and not InspectView.IsActive() and hud.Parent == playerGui, "läuft von selbst aus, HUD zurück")
+check(WeaponClient.Inspecting() == nil, "läuft von selbst aus")
 check(inspectMessages()[2] == false, "Ende an den Server gemeldet")
 InputActions.Trigger("Inspect", true)
 SIM.Advance(0.5, 20)
@@ -187,6 +169,25 @@ InputActions.Trigger("Aim", true)
 SIM.Advance(0.1, 20)
 InputActions.Trigger("Aim", false)
 check(WeaponClient.Inspecting() == nil, "Zielen beendet das Inspizieren")
+
+-- Beim Sprinten: geht los und läuft weiter (Arcade)
+local Movement = require("Movement")
+Movement.Init()
+local humanoid = alice.Character:FindFirstChildOfClass("Humanoid")
+humanoid.MoveDirection = Vector3.new(0, 0, -1)
+InputActions.Trigger("Sprint", true)
+SIM.Advance(0.6, 20)
+local sprinting = Movement.IsSprinting()
+InputActions.Trigger("Inspect", true)
+SIM.Advance(0.5, 20)
+check(sprinting and WeaponClient.Inspecting() ~= nil, "Inspizieren startet beim Sprinten und läuft weiter")
+InputActions.Trigger("Sprint", false)
+humanoid.MoveDirection = Vector3.zero
+if WeaponClient.Inspecting() then
+	InputActions.Trigger("Inspect", true)
+	SIM.Advance(0.1, 20)
+end
+
 
 -- Geht es nicht, sagt ein Hinweis warum (statt dass nichts passiert)
 local Modes = require("Modes")

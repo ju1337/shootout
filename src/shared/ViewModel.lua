@@ -174,7 +174,7 @@ function ViewModel:Update(dt, state)
 	local bob = CFrame.new(math.sin(self.BobPhase) * 0.045 * bobAmount, -math.abs(math.cos(self.BobPhase)) * 0.05 * bobAmount, 0)
 		* CFrame.Angles(0, 0, math.sin(self.BobPhase) * math.rad(1.2) * bobAmount)
 
-	self.SprintBlend += ((state.Sprinting and state.Aim < 0.1 and 1 or 0) - self.SprintBlend) * math.min(1, dt * 10)
+	self.SprintBlend += ((state.Sprinting and state.Aim < 0.1 and not state.Inspect and 1 or 0) - self.SprintBlend) * math.min(1, dt * 10)
 	self.SlideBlend += ((state.Sliding and 1 or 0) - self.SlideBlend) * math.min(1, dt * 9)
 
 	-- Grundhaltung: Hüfte -> Zielen (Kimme in der Bildmitte) -> Sprint
