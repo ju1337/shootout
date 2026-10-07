@@ -7,3 +7,4 @@ rojo
 __pycache__/
 build/
 sourcemap.json
+.claude/worktrees/
