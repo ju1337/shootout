@@ -95,6 +95,16 @@ ExtinctionConfig.Stands = {
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports" } },
 }
 
+-- ---------- Spielermarkt (ExtMarketService, Stand "Stand_Market" im Camp) ----------
+-- Spieler bieten Items aus der Tasche für Münzen an (höchstens MaxListings gleichzeitig, Preis 1 bis MaxPrice); der Käufer
+-- zahlt den Preis, der Verkäufer bekommt ihn minus FeeRate Gebühr. Angebote stehen im Spielstand des Verkäufers und sind
+-- sichtbar, solange er auf dem Server ist.
+ExtinctionConfig.Market = {
+	MaxListings = 8,
+	MaxPrice = 100000,
+	FeeRate = 0.05,
+}
+
 -- ---------- Beute-Tabellen ----------
 -- Gewichtete Listen { Id, Count = { min, max }, Weight }. Gezogen wird mit ExtinctionConfig.RollLoot(Tabelle, Anzahl).
 -- Zombie / Zombie2 = Leichen (einfach), Tier1-3 = Kisten in der Welt (3 = Militär und rote Zone), Medical = Sanikisten,

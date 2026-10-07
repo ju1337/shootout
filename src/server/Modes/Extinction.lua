@@ -5,6 +5,7 @@
 -- Wer draußen stirbt, lässt seine ganze Tasche fallen (LootService) und spawnt wieder in der Safe Zone. Wer den
 -- Modus oder das Spiel draußen verlässt, verliert die Tasche genauso (im Menü erst nach einem zweiten Klick).
 -- Inventar und Lager: InventoryService. Agenten: nur passive Fähigkeiten (siehe AgentService / GadgetService).
+-- Spielermarkt (Stand im Camp): ExtMarketService.
 -- Rote Zone (RedzoneService): eine Zone, die alle 20 Minuten an einen anderen Ort zieht; drinnen gilt PvP sofort,
 -- Attribut Redzone (Name) für die Anzeige. Spieler-Kills dort zählen für die Rangliste (RedzoneBoard, Anzeige rechts
 -- oben), die mit jedem Wechsel neu beginnt.
@@ -36,6 +37,7 @@ local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
 local ActivityService = require(ServerShared.ActivityService)
 local MissionService = require(ServerShared.MissionService)
+local ExtMarketService = require(ServerShared.ExtMarketService)
 local VehicleService = require(ServerShared.VehicleService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
@@ -500,6 +502,9 @@ function Extinction.Init(modeManager)
 			return list
 		end,
 	})
+
+	-- Spielermarkt am Stand "Stand_Market" im Camp: Spieler handeln Items gegen Münzen
+	ExtMarketService.Init({ Map = map })
 
 	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Überlebende, Orte, Nacht ...)
 	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })

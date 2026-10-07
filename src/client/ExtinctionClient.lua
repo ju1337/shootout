@@ -1231,6 +1231,208 @@ local function openStand(standKey)
 	win.Refresh()
 end
 
+-- SPIELERMARKT (Stand "Stand_Market" im Camp): links alle Angebote (Karten-Attribut PlayerMarket vom ExtMarketService),
+-- rechts die eigene Tasche – ein Item anklicken, Anzahl und Preis eintragen, ANBIETEN
+local MARKET_FILTERS = {
+	{ Key = "All", Text = "ALLE" },
+	{ Key = "Weapon", Text = "WAFFEN" },
+	{ Key = "Ammo", Text = "MUNITION" },
+	{ Key = "Gear", Text = "AUSRÜSTUNG" },
+	{ Key = "Vehicle", Text = "FAHRZEUGE" },
+}
+local function marketGroup(kind)
+	if kind == "Heal" or kind == "Armor" or kind == "Repel" then
+		return "Gear"
+	end
+	return kind
+end
+
+-- Vorschlag für den Preis: Preis am Stand (Munition anteilig), sonst das Doppelte des Verkaufspreises
+local function suggestedPrice(id, count)
+	local config = itemConfig(id)
+	if config and config.Price then
+		return math.max(1, math.floor(config.Price / (config.Pack or 1) * count + 0.5))
+	end
+	return math.max(1, ExtinctionConfig.SellPrice(id, count) * 2)
+end
+
+local function openMarket()
+	local win = newWindow("Market", "SPIELERMARKT", "SPIELER KAUFEN UND VERKAUFEN  ·  MÜNZEN  ·  "
+		.. math.floor(ExtinctionConfig.Market.FeeRate * 100 + 0.5) .. " % GEBÜHR  ·  ANGEBOTE BLEIBEN IN DEINEM SPIELSTAND",
+		Color3.fromRGB(226, 178, 52))
+	local body = win.Body
+	local maps = workspace:FindFirstChild("Maps")
+	local map = maps and maps:FindFirstChild("Extinction")
+	local filter = "All"
+	sectionTitle(body, "ANGEBOTE", UDim2.fromOffset(0, 0), 300)
+	local chips = make("Frame", { Position = UDim2.fromOffset(0, 22), Size = UDim2.fromOffset(600, 34), BackgroundTransparency = 1,
+		ZIndex = 5 }, body)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder },
+		chips)
+	local listFrame = make("ScrollingFrame", { Name = "Listings", Position = UDim2.fromOffset(0, 64), Size = UDim2.fromOffset(600, 450),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, listFrame)
+
+	sectionTitle(body, "DEINE TASCHE  ·  ANKLICKEN = ANBIETEN", UDim2.fromOffset(640, 0), 480)
+	grid(body, "Bag", 1, BAG, 6, 64, 8, UDim2.fromOffset(640, 22), true)
+	local offerInfo = label({ Name = "OfferInfo", Position = UDim2.fromOffset(640, 392), Size = UDim2.fromOffset(470, 36), Text = "",
+		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
+	local function input(name, x, width, placeholder)
+		local box = make("TextBox", { Name = name, Position = UDim2.fromOffset(x, 436), Size = UDim2.fromOffset(width, 44),
+			BackgroundColor3 = C.Card, BorderSizePixel = 0, Text = "", PlaceholderText = placeholder, ClearTextOnFocus = false,
+			Font = F.Bold, TextSize = 18, TextColor3 = C.Text, PlaceholderColor3 = C.Muted, ZIndex = 6 }, body)
+		UITheme.Corner(box, UITheme.Radius.Small)
+		UITheme.Stroke(box, C.Border, 1, 0.3)
+		return box
+	end
+	local countBox = input("OfferCount", 640, 110, "ANZAHL")
+	local priceBox = input("OfferPrice", 760, 150, "PREIS")
+	local offerButton = UITheme.Chunky({ Name = "OfferButton", Position = UDim2.fromOffset(920, 436), Size = UDim2.fromOffset(190, 44),
+		Color = C.Primary, TextColor = C.PrimaryText, Text = "ANBIETEN", TextSize = 18, ZIndex = 6 }, body, function()
+		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
+		if not entry then
+			return
+		end
+		local count = math.floor(tonumber(countBox.Text) or entry.N or 1)
+		sendAction("MarketList", selected.Slot, count, tonumber(priceBox.Text))
+		selected = nil
+		win.Refresh()
+	end)
+
+	local function listings()
+		local raw = map and map:GetAttribute("PlayerMarket")
+		local ok, list = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "[]")
+		return ok and type(list) == "table" and list or {}
+	end
+
+	local function buildList()
+		for _, child in listFrame:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+		local mine, shown = 0, 0
+		for _, offer in listings() do
+			local config = itemConfig(offer.Item)
+			local own = offer.Seller == player.UserId
+			if own then
+				mine += 1
+			end
+			if config and (filter == "All" or marketGroup(config.Kind) == filter) then
+				shown += 1
+				local row = make("Frame", { Name = "Listing", Size = UDim2.new(1, -8, 0, 64), BackgroundColor3 = C.Card,
+					BackgroundTransparency = own and 0.05 or 0.2, BorderSizePixel = 0, LayoutOrder = shown, ZIndex = 5 }, listFrame)
+				UITheme.Corner(row, UITheme.Radius.Small)
+				if own then
+					UITheme.Stroke(row, C.Primary, 1, 0.4)
+				end
+				local iconBox = make("Frame", { Position = UDim2.fromOffset(6, 4), Size = UDim2.fromOffset(72, 56), BackgroundTransparency = 1,
+					ZIndex = 6 }, row)
+				local icon = buildIcon(iconBox, offer.Item, 6)
+				icon.Size = UDim2.fromScale(1, 1)
+				icon.Position = UDim2.fromScale(0.5, 0.5)
+				local count = tonumber(offer.Count) or 1
+				label({ Position = UDim2.fromOffset(86, 8), Size = UDim2.fromOffset(300, 24), Text = upper(config.Name)
+					.. (count > 1 and ("  ×" .. count) or ""), TextSize = 19, Font = F.Display, ZIndex = 6 }, row)
+				label({ Position = UDim2.fromOffset(86, 36), Size = UDim2.fromOffset(300, 18), Text = (own and "DEIN ANGEBOT"
+					or ("VON " .. upper(tostring(offer.SellerName)))) .. "  ·  " .. (config.Kind == "Weapon" and offer.Mag
+					and ("MAGAZIN " .. offer.Mag) or (KIND_NAMES[config.Kind] or "")), TextSize = 11, Font = F.Bold,
+					TextColor3 = C.Muted, ZIndex = 6 }, row)
+				local price = tonumber(offer.Price) or 0
+				if own then
+					UITheme.Chunky({ Name = "CancelListing", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+						Size = UDim2.fromOffset(170, 44), Color = C.Panel, StrokeColor = C.Border, Text = UITheme.FormatNumber(price)
+							.. "  ·  ZURÜCK", TextSize = 15, ZIndex = 6 }, row, function()
+						sendAction("MarketCancel", offer.Id)
+					end)
+				else
+					UITheme.Chunky({ Name = "BuyListing", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+						Size = UDim2.fromOffset(170, 44), Color = C.Primary, TextColor = C.PrimaryText,
+						Text = UITheme.FormatNumber(price) .. "  ·  KAUFEN", TextSize = 15, ZIndex = 6 }, row, function()
+						sendAction("MarketBuy", offer.Id, price)
+					end)
+				end
+			end
+		end
+		if shown == 0 then
+			label({ Name = "Empty", Size = UDim2.new(1, -8, 0, 40), Text = filter == "All" and "NOCH KEINE ANGEBOTE – BIETE RECHTS ETWAS AN"
+				or "IN DIESER KATEGORIE GIBT ES GERADE NICHTS", TextSize = 14, Font = F.Bold, TextColor3 = C.Muted,
+				TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, listFrame)
+		end
+		return mine
+	end
+
+	for index, info in MARKET_FILTERS do
+		UITheme.Chunky({ Name = "Filter_" .. info.Key, Size = UDim2.fromOffset(info.Key == "Gear" and 128 or 108, 32), LayoutOrder = index,
+			Color = C.Panel, StrokeColor = C.Border, Text = info.Text, TextSize = 13, ZIndex = 6 }, chips, function()
+			filter = info.Key
+			win.Refresh()
+		end)
+	end
+
+	onSlotClick = function(container, slot)
+		if container == "Bag" and bag[slot] then
+			selected = { Container = container, Slot = slot }
+			local entry = bag[slot]
+			countBox.Text = tostring(entry.N or 1)
+			priceBox.Text = tostring(suggestedPrice(entry.Id, entry.N or 1))
+		else
+			selected = nil
+		end
+		win.Refresh()
+	end
+	onSlotDrop = defaultDrop
+	onSlotRightClick = function(container, slot)
+		if container == "Bag" and bag[slot] then
+			quickSwap(slot)
+		end
+	end
+
+	function win.Refresh()
+		win.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
+		for _, chip in chips:GetChildren() do
+			local key = chip:IsA("GuiObject") and string.match(chip.Name, "^Filter_(.+)$")
+			local face = key and chip:FindFirstChild("Face")
+			if face then
+				face.BackgroundColor3 = key == filter and C.Primary or C.Panel
+				local text = face:FindFirstChild("Label")
+				if text then
+					text.TextColor3 = key == filter and C.PrimaryText or C.Text
+				end
+			end
+		end
+		local mine = buildList()
+		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
+		local full = mine >= ExtinctionConfig.Market.MaxListings
+		if entry then
+			local config = itemConfig(entry.Id)
+			offerInfo.Text = upper(config.Name) .. (entry.N > 1 and ("  ×" .. entry.N) or "") .. "  ·  DEINE ANGEBOTE " .. mine .. "/"
+				.. ExtinctionConfig.Market.MaxListings .. (entry.Out and "\nDas Fahrzeug ist draußen – erst einpacken (K)."
+				or (full and "\nDu hast schon alle Angebote belegt – nimm links eins zurück." or "\nAnzahl und Preis eintragen, dann ANBIETEN."))
+		else
+			offerInfo.Text = "DEINE ANGEBOTE " .. mine .. "/" .. ExtinctionConfig.Market.MaxListings
+				.. "  ·  Klick ein Item deiner Tasche an, um es anzubieten. Angebote sieht jeder auf dem Server."
+		end
+		local active = entry ~= nil and not entry.Out and not full
+		countBox.Visible = entry ~= nil and (entry.N or 1) > 1
+		priceBox.Visible = entry ~= nil
+		offerButton.Button.Visible = active
+		repaint()
+	end
+	if map then
+		local connection
+		connection = map:GetAttributeChangedSignal("PlayerMarket"):Connect(function()
+			if window ~= win then
+				connection:Disconnect()
+				return
+			end
+			win.Refresh()
+		end)
+	end
+	win.Refresh()
+end
+
 -- TASCHE AM BODEN: Inhalt links (anklicken = nehmen), eigene Tasche rechts
 local function openLoot(data)
 	local win = window
@@ -1368,6 +1570,21 @@ local function setupPrompts()
 	for _, part in stands:GetChildren() do
 		travelPrompt(part)
 	end
+	-- Spielermarkt (nur im Camp)
+	for _, marketPart in stands:GetChildren() do
+		if marketPart:IsA("BasePart") and marketPart.Name == "Stand_Market" then
+			local prompt = make("ProximityPrompt", { Name = "MarketPrompt", ActionText = "Handeln", ObjectText = "SPIELERMARKT",
+				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
+				RequiresLineOfSight = false, Enabled = false }, marketPart)
+			prompt.Triggered:Connect(function()
+				openMarket()
+				if window then
+					window.Part = marketPart
+				end
+			end)
+			table.insert(prompts, prompt)
+		end
+	end
 	stands:WaitForChild("Stash", 10)
 	for _, stashPart in stands:GetChildren() do
 		if stashPart:IsA("BasePart") and stashPart.Name == "Stash" then
@@ -1390,7 +1607,7 @@ end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
 local function standDistanceCheck()
-	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel") then
+	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel" and window.Kind ~= "Market") then
 		return
 	end
 	local character = player.Character
@@ -1398,7 +1615,8 @@ local function standDistanceCheck()
 	local maps = workspace:FindFirstChild("Maps")
 	local stands = maps and maps:FindFirstChild("Extinction") and maps.Extinction:FindFirstChild("Stands")
 	local part = window.Part
-		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point or window.Stand))
+		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point
+			or window.Kind == "Market" and "Stand_Market" or window.Stand))
 	if not rootPart or not part or (rootPart.Position - part.Position).Magnitude > ExtinctionConfig.StandRange + 4 then
 		closeWindow()
 	end

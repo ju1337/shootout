@@ -2209,6 +2209,16 @@ class World:
                      (0, 4.0, 6, 1.2, 1.2, (150, 40, 34), "Metal")], accent=(84, 98, 70))
         self.stash_container(-36, -20, 0, 1)
         self.travel_stop("Travel", "REISEN", -36, 20, 0, -1)
+        # Spielermarkt neben der Werkstatt (Südost), Front zur Mitte; Ware: Kisten, Kanister, Gewehr, Reifen. Eigene
+        # Zufallszahlen, damit der Rest der Welt genau so bleibt wie vor dem Markt
+        world_rng, self.rng = self.rng, random.Random(4711)
+        try:
+            self.trader("Stand_Market", "MARKT", "SPIELER HANDELN", 69.5, -40.1, -64.1, 37.0,
+                        [(-4, 6.0, 4.6, 0.7, 0.4, gun, "Metal"), (-1, 4.2, 2.4, 1.6, 1.4, (170, 40, 34), "Metal"),
+                         (2, 4.2, 2.0, 2.0, 2.0, (40, 40, 42), "Rubber"), (3, 6.0, 2.4, 1.4, 1.4, (190, 150, 60), "WoodPlanks")],
+                        accent=(150, 112, 40))
+        finally:
+            self.rng = world_rng
 
         # ---------- Landeplatz, Werkstatt, Sanitätszelt, Quarantäne, MG-Stellungen, Flutlicht ----------
         hx, hz = 54, 54

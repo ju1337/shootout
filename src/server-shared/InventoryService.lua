@@ -1,7 +1,7 @@
 -- InventoryService (ModuleScript, nur Server)
 -- Inventar der offenen Welt (EXTINCTION): Tasche mit ExtinctionConfig.BagSlots Plätzen (Plätze 1-9 = Hotbar,
 -- Tasten 1-9) und das Lager in der Safe Zone (StashSlots Plätze, immer sicher). Beides steht im Profil
--- (ProgressService) unter Extinction = { Bag = Liste, Stash = Liste } und bleibt beim Verlassen in der Safe Zone
+-- (ProgressService) unter Extinction = { Bag = Liste, Stash = Liste, Market = Angebote } und bleibt beim Verlassen in der Safe Zone
 -- genau so angeordnet erhalten. Die Regeln für Plätze und Stapel stehen in Inventory (shared).
 -- Taste 1-9 (Use): Waffe in die Hand / wegstecken (nur außerhalb der Safe Zone), Heilung, Rüstung und die Anti-Zombie-Spritze
 -- benutzen (dauert UseTime Sekunden; die Spritze setzt das Charakter-Attribut ZombieShieldUntil: so lange spawnen bei einem
@@ -28,7 +28,7 @@ local InventoryService = {}
 
 local HOTBAR = ExtinctionConfig.HotbarSlots
 
-local states = {} -- [Player] = { Profile, Bag, Stash, Equipped (Item-Tabelle), Using, Dirty }
+local states = {} -- [Player] = { Profile, Bag, Stash, Market (Angebote im Spielermarkt), Equipped (Item-Tabelle), Using, Dirty }
 
 -- Andere Dienste hängen sich hier an (sie brauchen InventoryService, nicht umgekehrt):
 -- Handlers[Aktion] = function(player, ...) für Remotes.ExtAction (LootService: Loot/Drop, VehicleService: StoreVehicle)
@@ -76,10 +76,21 @@ local function stateOf(player)
 		return state
 	end
 	local data = type(profile.Extinction) == "table" and profile.Extinction or {}
+	-- Angebote im Spielermarkt (ExtMarketService): nur gültige Einträge übernehmen
+	local market = {}
+	for _, entry in type(data.Market) == "table" and data.Market or {} do
+		if type(entry) == "table" and type(entry.Id) == "string" and type(entry.Item) == "string" and ExtinctionConfig.Get(entry.Item)
+			and tonumber(entry.Count) and tonumber(entry.Price) then
+			table.insert(market, { Id = entry.Id, Item = entry.Item, Count = math.max(1, math.floor(entry.Count)),
+				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Price = math.max(1, math.floor(entry.Price)),
+				At = tonumber(entry.At) or 0 })
+		end
+	end
 	state = {
 		Profile = profile,
 		Bag = Inventory.FromList(data.Bag, ExtinctionConfig.BagSlots),
 		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots),
+		Market = market,
 	}
 	states[player] = state
 	return state
@@ -98,7 +109,7 @@ end
 local function flush(player, state)
 	state.Dirty = false
 	local bag, stash = Inventory.ToList(state.Bag), Inventory.ToList(state.Stash)
-	state.Profile.Extinction = { Bag = bag, Stash = stash }
+	state.Profile.Extinction = { Bag = bag, Stash = stash, Market = state.Market }
 	if player.Parent then
 		player:SetAttribute("ExtBag", HttpService:JSONEncode(bag))
 		player:SetAttribute("ExtStash", HttpService:JSONEncode(stash))
@@ -495,6 +506,42 @@ function InventoryService.Changed(player)
 	end
 end
 
+-- Angebote des Spielers im Spielermarkt (veränderbare Liste, nach Änderungen InventoryService.Changed aufrufen) oder nil
+function InventoryService.MarketOf(player)
+	local state = stateOf(player)
+	return state and state.Market
+end
+
+-- Passen count Stück von id in die Tasche?
+function InventoryService.HasSpace(player, id, count)
+	local state = stateOf(player)
+	return state ~= nil and Inventory.SpaceFor(state.Bag, id) >= count
+end
+
+-- count Stück von Platz slot der Tasche nehmen (Waffe in der Hand wird weggesteckt, draußen stehendes Fahrzeug nicht).
+-- Gibt { Id, Count, Mag } zurück oder nil und den Grund.
+function InventoryService.TakeSlot(player, slot, count)
+	local state = stateOf(player)
+	local item = state and type(slot) == "number" and state.Bag.Slots[slot]
+	if not item then
+		return nil, "Da liegt nichts."
+	end
+	if isOut(item) then
+		return nil, "Pack das Fahrzeug erst ein (K)."
+	end
+	count = math.clamp(wholeNumber(count, item.Count), 1, item.Count)
+	if state.Equipped == item then
+		holster(player, state)
+	end
+	local taken = { Id = item.Id, Count = count, Mag = item.Mag }
+	item.Count -= count
+	if item.Count <= 0 then
+		state.Bag.Slots[slot] = nil
+	end
+	changed(player, state)
+	return taken
+end
+
 -- Items in die Tasche legen, gibt die Anzahl zurück, die gepasst hat
 function InventoryService.Give(player, id, count, extra)
 	local state = stateOf(player)
@@ -605,7 +652,7 @@ function InventoryService.Init()
 		local state = states[player]
 		if state and state.Profile == ProgressService.Get(player) then
 			syncMag(player, state)
-			state.Profile.Extinction = { Bag = Inventory.ToList(state.Bag), Stash = Inventory.ToList(state.Stash) }
+			state.Profile.Extinction = { Bag = Inventory.ToList(state.Bag), Stash = Inventory.ToList(state.Stash), Market = state.Market }
 		end
 	end)
 

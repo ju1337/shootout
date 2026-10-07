@@ -742,9 +742,10 @@ function ProgressService.AddCoins(player, amount, reason)
 		return
 	end
 	ledgerOf(player)
-	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin und Verkäufen in der offenen Welt)
+	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin, Verkäufen in der offenen Welt und
+	-- Erlösen im Spielermarkt – das Geld kommt dort von anderen Spielern)
 	if RobuxConfig.Has(player, "VIP") and reason and reason ~= "Robux" and reason ~= "Code" and reason ~= "Admin"
-		and reason ~= "Verkauf" then
+		and reason ~= "Verkauf" and reason ~= "Markt" then
 		amount *= 2
 	end
 	profile.Coins += math.floor(amount)
