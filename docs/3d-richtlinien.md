@@ -435,12 +435,29 @@ ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, 
 | Dünne Flächen ohne Dicke | von hinten unsichtbar | Dicke geben |
 | Echte Logos, Marken, rotes Kreuz | Roblox-Moderation | Fantasie-Namen, grünes Kreuz |
 
-## 10. Für die Projektleitung: wie es danach weitergeht
+## 10. Für die Projektleitung: Modelle ins Spiel bringen
 
-- **Waffen** lädt das Spiel schon. Ein Modell nach dieser Anleitung kommt direkt ins Spiel, die automatische Prüfung
-  bei jedem Push meldet Fehler (siehe [waffen-modelle.md](waffen-modelle.md)).
-- **Fahrzeuge, Items und Agenten** baut das Spiel heute noch aus Quadern. Mit dem ersten fertigen Modell einer
-  Kategorie bekommt das Spiel einmal einen Lader nach genau diesen Regeln (mit Prüfmeldungen wie bei den Waffen).
-  Danach ist jedes weitere Modell dieser Kategorie ohne Nacharbeit einsetzbar.
+**Waffen** lädt das Spiel schon, das geht ohne Hilfe:
+
+1. Lieferung prüfen: Checkliste abgehakt, alle Dateien da.
+2. Den Place in Studio öffnen, **Import 3D**, die `.fbx` oder `.glb` wählen. Im Fenster: World Forward **Front**,
+   World Up **Top**, Scale Unit **Stud**, **Merge Meshes aus**. Importieren.
+3. Das Modell im Explorer nach **ReplicatedStorage › Assets › Weapons** ziehen und genau wie die Waffe nennen
+   (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`). Ein älteres Modell mit demselben Namen vorher
+   löschen.
+4. Bleiben Teile weiß oder grau: im Teil eine **SurfaceAppearance** einfügen und die Bilder aus der Lieferung setzen
+   (ColorMap, NormalMap, RoughnessMap, MetalnessMap).
+5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen`. Steht dort ein Fehler, die Meldung
+   an den Designer schicken (erklärt in [waffen-modelle.md](waffen-modelle.md), „Meldungen und was zu tun ist“).
+6. **Aus Studio veröffentlichen** (Datei › Publish to Roblox). Die Modelle leben im Place: nicht mit `rojo build`
+   neu bauen und veröffentlichen, sonst fehlen sie.
+7. Empfohlen: Rechtsklick auf das Modell › **Save to File…** › `<Waffe>.rbxmx`, auf GitHub in `assets/Weapons`
+   hochladen (Add file › Upload files). Dann prüft GitHub das Modell bei jedem Push. Die Lieferung selbst
+   (Quelldatei, Texturen) kommt nach `art/sources/<Kategorie>/<Id>/`.
+
+**Fahrzeuge, Items und Agenten** baut das Spiel heute noch aus Quadern; Modelle in Assets › Vehicles, Items oder
+Agents werden noch nicht gelesen. Mit dem ersten fertigen Modell einer Kategorie bekommt das Spiel einmal einen Lader
+nach genau diesen Regeln (mit Prüfmeldungen wie bei den Waffen). Danach gilt derselbe Ablauf wie bei den Waffen, nur
+mit dem Ordner der Kategorie.
 - **Vorlagen neu erzeugen**, wenn sich Fahrzeuge im Spiel ändern: `python3 tools/asset_templates.py` (Fahrzeuge und
   Items) bzw. `python3 tools/weapon_templates.py` (Waffen).
