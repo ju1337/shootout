@@ -322,14 +322,12 @@ local function buildModes()
 			Text = upper(mode.Tag or ""), TextSize = big and 12 or 10, Font = F.Bold, TextColor3 = C.Muted }, face)
 		if big then
 			-- Hauptmodus: Streifen in der Modusfarbe und kurze Zeile, worum es geht
-			make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0, 6, 1, 0),
-				BackgroundColor3 = mode.Color or C.Primary, BorderSizePixel = 0 }, face)
+			UITheme.AccentBar(face, mode.Color or C.Primary, { Side = "Right", Thickness = 6 })
 			label({ Position = UDim2.fromOffset(18, 70), Size = UDim2.new(1, -40, 0, 16), Text = "SAFE ZONE · ZOMBIES · PVP · FAHRZEUGE",
 				TextSize = 10, Font = F.Bold, TextColor3 = mode.Color or C.Primary }, face)
 		end
 		-- aktiv: Bernstein-Balken am linken Rand
-		local check = make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0,
-			Visible = false }, face)
+		local check = UITheme.AccentBar(face, C.Primary, { Side = "Left", Visible = false })
 		local live = label({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0), Size = UDim2.fromOffset(80, 20),
 			Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Good, TextXAlignment = Enum.TextXAlignment.Right }, face)
 		if not mode.Available then

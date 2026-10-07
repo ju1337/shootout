@@ -791,7 +791,7 @@ local function newMenu(kind, title, subtitle, accent)
 	updateMenuSize()
 	local frame = UITheme.Card({ Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, accent or C.Primary, { ZIndex = 5 })
 	-- Reiter
 	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(CONTENT_X, 10), Size = UDim2.new(1, -330, 0, 50),
 		BackgroundTransparency = 1, ZIndex = 5 }, frame)
@@ -862,7 +862,7 @@ local function newWindow(kind, title, subtitle, accent)
 	end
 	local frame = UITheme.Card({ Name = "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(1180, 640), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, accent or C.Primary, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -400, 0, 40), Text = title, TextSize = 34, Font = F.Display,
 		ZIndex = 5 }, frame)
 	local sub = label({ Position = UDim2.fromOffset(30, 54), Size = UDim2.new(1, -400, 0, 16), Text = subtitle or "", TextSize = 12,
@@ -2177,8 +2177,7 @@ function ExtinctionClient.Init()
 	-- hat, aber nicht unter den ersten drei steht
 	local board = UITheme.HudPanel({ Name = "RedzoneBoard", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, BOARD_TOP),
 		Size = UDim2.fromOffset(BOARD_W, BOARD_H_SHORT), Visible = false }, root, "Left")
-	make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
-		Size = UDim2.new(0, 2, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 2 }, board)
+	UITheme.AccentBar(board, RED, { Side = "Right", Thickness = 2, ZIndex = 2 })
 	label({ Name = "Caption", Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 0, 14), Text = "ROTE ZONE  ·  TOP KILLS",
 		TextSize = 11, Font = F.Bold, TextColor3 = RED, ZIndex = 2 }, board)
 	local boardTitle = label({ Name = "Title", Position = UDim2.fromOffset(12, 20), Size = UDim2.new(1, -24, 0, 20), Text = "",

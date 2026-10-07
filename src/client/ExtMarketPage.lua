@@ -417,8 +417,7 @@ function ExtMarketPage.Build(body, ctx)
 		card:SetAttribute("Own", own)
 		UITheme.Corner(card, UITheme.Radius.Large)
 		UITheme.Stroke(card, own and C.Primary or kindColor, 1, own and 0.15 or 0.6)
-		make("Frame", { Name = "Accent", Position = UDim2.fromOffset(14, 0), Size = UDim2.new(1, -28, 0, 3),
-			BackgroundColor3 = own and C.Primary or kindColor, BorderSizePixel = 0, ZIndex = 6 }, card)
+		UITheme.AccentBar(card, own and C.Primary or kindColor, { Inset = 14, ZIndex = 6 })
 		local stage = make("Frame", { Name = "Stage", Position = UDim2.fromOffset(10, 12), Size = UDim2.new(1, -20, 0, 104),
 			BackgroundColor3 = C.Background, BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 5 }, card)
 		UITheme.Corner(stage, UITheme.Radius.Medium)
@@ -523,8 +522,7 @@ function ExtMarketPage.Build(body, ctx)
 		row:SetAttribute("ListingId", offer.Id)
 		UITheme.Corner(row, UITheme.Radius.Large)
 		UITheme.Stroke(row, kindColor, 1, 0.6)
-		make("Frame", { Name = "Accent", Position = UDim2.fromOffset(0, 12), Size = UDim2.new(0, 3, 1, -24),
-			BackgroundColor3 = kindColor, BorderSizePixel = 0, ZIndex = 6 }, row)
+		UITheme.AccentBar(row, kindColor, { Side = "Left", ZIndex = 6 })
 		bigIcon(row, offer.Item, UDim2.fromOffset(90, 72), UDim2.fromOffset(12, 10), 6)
 		label({ Name = "Name", Position = UDim2.fromOffset(112, 12), Size = UDim2.fromOffset(296, 24),
 			Text = upper(config and config.Name or tostring(offer.Item)) .. (count > 1 and ("  ×" .. format(count)) or ""),

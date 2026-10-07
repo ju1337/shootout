@@ -84,8 +84,7 @@ end
 local function requestCard(data)
 	local card = UITheme.Card({ Name = "Request" .. tostring(data.From), Size = UDim2.fromOffset(340, 104),
 		BackgroundTransparency = 0.05 }, requestList)
-	make("Frame", { Size = UDim2.new(0, 4, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = C.Rap, BorderSizePixel = 0,
-		ZIndex = 2 }, card)
+	UITheme.AccentBar(card, C.Rap, { Side = "Left", Thickness = 4, ZIndex = 2 })
 	label({ Position = UDim2.fromOffset(18, 10), Size = UDim2.new(1, -30, 0, 16), Text = "TAUSCH-ANFRAGE", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Rap, ZIndex = 2 }, card)
 	label({ Position = UDim2.fromOffset(18, 26), Size = UDim2.new(1, -30, 0, 26), Text = upper(tostring(data.Name)) .. " MÖCHTE TAUSCHEN",
@@ -222,7 +221,7 @@ local function render()
 			child:Destroy()
 		end
 	end
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Rap, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, C.Rap, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 18), Size = UDim2.new(1, -300, 0, 40), Text = "TAUSCH MIT " .. upper(state.Partner.Name),
 		TextSize = 34, Font = F.Display, ZIndex = 5 }, frame)
 	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(150, 44), Color = C.Card,
@@ -496,7 +495,7 @@ function TradeClient.OpenPlayers()
 	closeList()
 	local frame = UITheme.Card({ Name = "TradeListWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 		Size = UDim2.fromOffset(760, 560), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
-	make("Frame", { Name = "Accent", Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Rap, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, C.Rap, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -120, 0, 40), Text = "TAUSCHEN", TextSize = 34, Font = F.Display, ZIndex = 5 }, frame)
 	label({ Position = UDim2.fromOffset(28, 54), Size = UDim2.new(1, -120, 0, 18), Text = "SPIELER IN DEINEM BEREICH  ·  NAH GENUG HERANGEHEN, DANN ANFRAGEN",
 		TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, ZIndex = 5 }, frame)

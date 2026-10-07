@@ -111,8 +111,7 @@ local function render()
 		order += 1
 		local frame, inner = rowFrame(order, entry.IsMe and ME or nil)
 		-- Farbstreifen links (Team/Ich)
-		make("Frame", { Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = entry.IsMe and C.Accent or accent or C.Border,
-			BorderSizePixel = 0 }, frame)
+		UITheme.AccentBar(frame, entry.IsMe and C.Accent or accent or C.Border, { Side = "Left", Thickness = 4 })
 		local kd = entry.Deaths > 0 and entry.Kills / entry.Deaths or entry.Kills
 		cells(inner, {
 			Name = entry.Name, Rank = entry.Rank, Agent = entry.Agent and string.upper(entry.Agent.Name) or "–",

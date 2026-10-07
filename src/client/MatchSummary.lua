@@ -287,7 +287,7 @@ function MatchSummary.Init()
 	-- MVP-Karte
 	local mvpCard = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 302),
 		Size = UDim2.new(0, 520, 0, 64), BackgroundColor3 = C.Card }, canvas)
-	make("Frame", { Size = UDim2.new(0, 5, 1, 0), BackgroundColor3 = C.Gold, BorderSizePixel = 0 }, mvpCard)
+	UITheme.AccentBar(mvpCard, C.Gold, { Side = "Left", Thickness = 5 })
 	label({ Position = UDim2.new(0, 24, 0, 6), Size = UDim2.new(1, -48, 0, 18), Text = "MVP DES MATCHES",
 		Font = F.Title, TextSize = 16, TextColor3 = C.Gold }, mvpCard)
 	local mvpName = label({ Position = UDim2.new(0, 24, 0, 24), Size = UDim2.new(1, -150, 0, 36),
@@ -304,8 +304,7 @@ function MatchSummary.Init()
 	local tiles = {}
 	for i, key in { "KILLS", "TODE", "K/D", "SCHADEN" } do
 		local tile = UITheme.Panel({ Size = UDim2.new(0, 181, 1, 0), BackgroundColor3 = C.Card, LayoutOrder = i }, tilesFrame)
-		make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = i == 3 and C.Accent or C.Border,
-			BorderSizePixel = 0 }, tile)
+		UITheme.AccentBar(tile, i == 3 and C.Accent or C.Border)
 		label({ Position = UDim2.new(0, 0, 0, 10), Size = UDim2.new(1, 0, 0, 20), Text = key,
 			Font = F.Title, TextSize = 16, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, tile)
 		tiles[key] = label({ Position = UDim2.new(0, 0, 0, 32), Size = UDim2.new(1, 0, 0, 52),

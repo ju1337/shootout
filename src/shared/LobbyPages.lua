@@ -265,7 +265,7 @@ function LobbyPages.Shop(page)
 			LayoutOrder = order }, grid)
 		UITheme.Corner(card, UITheme.Radius.XL)
 		UITheme.Stroke(card, rarity.Color, 1, 0.5)
-		make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+		UITheme.AccentBar(card, rarity.Color)
 		local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 160) }, card)
 		if item.Type == "Weapon" then
 			showWeapon(view, "Rifle", item, 234 / 160)
@@ -376,7 +376,7 @@ function LobbyPages.Shop(page)
 					LayoutOrder = order }, grid)
 				UITheme.Corner(card, UITheme.Radius.XL)
 				UITheme.Stroke(card, rarity.Color, 1, 0.5)
-				make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+				UITheme.AccentBar(card, rarity.Color)
 				local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 170) }, card)
 				if item.Type == "Weapon" then
 					showWeapon(view, "Rifle", item, 234 / 170)
@@ -931,7 +931,7 @@ function LobbyPages.Loadout(page, goToShop)
 				fillOptions()
 			end)
 			row.Stroke.Transparency = on and 0.3 or 0.6
-			make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = C.Primary, BorderSizePixel = 0, Visible = on }, row.Face)
+			UITheme.AccentBar(row.Face, C.Primary, { Side = "Left", Visible = on })
 		end
 	end
 
@@ -987,7 +987,7 @@ function LobbyPages.Pass(page)
 		local baseColor, baseTransparency = rarity and rarity.Color or C.Border, rarity and 0.35 or 0
 		local stroke = UITheme.Stroke(card, baseColor, 1, baseTransparency)
 		if rarity then
-			make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = rarity.Color, BorderSizePixel = 0 }, card)
+			UITheme.AccentBar(card, rarity.Color)
 		end
 		label({ Position = UDim2.fromOffset(14, 12), Size = UDim2.new(1, -28, 0, 16), Text = "STUFE " .. tier, TextSize = 11, Font = F.Bold,
 			TextColor3 = C.Muted }, card)

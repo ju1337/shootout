@@ -156,8 +156,7 @@ local function buildCard(column, entry, index)
 	-- links ausblenden, damit die Karte zur Bildmitte hin in die Welt übergeht
 	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.95),
 		NumberSequenceKeypoint.new(0.45, 0.25), NumberSequenceKeypoint.new(1, 0) }) }, inner)
-	local accent = make("Frame", { Name = "Accent", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
-		Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = entry.Color, BorderSizePixel = 0 }, inner)
+	local accent = UITheme.AccentBar(inner, entry.Color, { Side = "Right" })
 
 	-- Kachel mit Symbol und pulsierendem Schein dahinter
 	local halo = make("Frame", { Name = "Halo", AnchorPoint = Vector2.new(0.5, 0.5),

@@ -104,6 +104,13 @@ step(0.3)
 local gui = playerGui:FindFirstChild("Crates")
 local window = find(gui, function(d) return d.Name == "CrateWindow" end)
 check(window ~= nil, "Fenster offen")
+-- Akzentstreifen oben bleibt innerhalb der Rundung: um den Eckenradius des Fensters eingerückt, runde Enden
+local accent = window:FindFirstChild("Accent")
+local windowRadius = window:FindFirstChildOfClass("UICorner").CornerRadius.Offset
+local accentCorner = accent and accent:FindFirstChildOfClass("UICorner")
+check(accent ~= nil and accent.Position.X.Offset == windowRadius and accent.Position.Y.Offset == 0
+	and accent.Size.X.Scale == 1 and accent.Size.X.Offset == -2 * windowRadius, "Akzentstreifen um den Radius eingerückt")
+check(accentCorner ~= nil and accentCorner.CornerRadius.Scale == 1, "Akzentstreifen mit runden Enden")
 check(labelWith(window, "WAFFEN-KISTE") ~= nil and labelStarting(window, "WAFFEN-SKINS") ~= nil, "Titel: Waffen-Kiste")
 check(labelWith(window, "CHANCEN") ~= nil and labelWith(window, "DAS STECKT DRIN") ~= nil, "Chancen und Inhalt")
 check(labelWith(window, "62.0 %") ~= nil and labelWith(window, "2.0 %") ~= nil, "Chancen in Prozent (62 % gewöhnlich, 2 % legendär)")

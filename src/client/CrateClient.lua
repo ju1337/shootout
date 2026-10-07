@@ -109,8 +109,7 @@ local function tile(parent, itemId, index)
 		label({ Position = UDim2.fromOffset(6, 100), Size = UDim2.new(1, -12, 0, 14), Text = kind, TextSize = 10, Font = F.Bold,
 			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, frame)
 	end
-	make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 5), BackgroundColor3 = color,
-		BorderSizePixel = 0, ZIndex = 7 }, frame)
+	UITheme.AccentBar(frame, color, { Side = "Bottom", Thickness = 5, ZIndex = 7 }) -- Seltenheit unten, innerhalb der Rundung
 	return frame
 end
 
@@ -170,7 +169,7 @@ local function showResult(result)
 		ZIndex = 9 }, window.Frame)
 	local card = UITheme.Card({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(560, 420),
 		ZIndex = 9 }, overlay)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 9 }, card)
+	UITheme.AccentBar(card, color, { Thickness = 4, ZIndex = 9 })
 	label({ Position = UDim2.fromOffset(0, 16), Size = UDim2.new(1, 0, 0, 22), Text = upper(rarity and rarity.Name or ""), TextSize = 16,
 		Font = F.Bold, TextColor3 = color, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, card)
 	label({ Position = UDim2.fromOffset(0, 38), Size = UDim2.new(1, 0, 0, 44), Text = upper(item.Name), TextSize = 40, Font = F.Display,
@@ -294,7 +293,7 @@ local function build(crate)
 	closeWindow()
 	local frame = UITheme.Card({ Name = "CrateWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 		Size = UDim2.fromOffset(WIN_W, WIN_H), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
-	make("Frame", { Name = "Accent", Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = crate.Color, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, crate.Color, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -300, 0, 40), Text = crate.Name, TextSize = 34, Font = F.Display, ZIndex = 5 }, frame)
 	label({ Position = UDim2.fromOffset(28, 54), Size = UDim2.new(1, -300, 0, 18), Text = crate.Sub .. "  ·  EIN SKIN PRO KISTE", TextSize = 12,
 		Font = F.Bold, TextColor3 = crate.Color, ZIndex = 5 }, frame)
@@ -362,8 +361,7 @@ local function build(crate)
 		local rarity = Cosmetics.Rarities[item.Rarity]
 		local cell = make("Frame", { LayoutOrder = index, BackgroundColor3 = C.Card, ZIndex = 5 }, list)
 		UITheme.Corner(cell, UITheme.Radius.Small)
-		make("Frame", { Size = UDim2.new(0, 4, 1, -12), Position = UDim2.fromOffset(0, 6), BackgroundColor3 = rarity.Color, BorderSizePixel = 0,
-			ZIndex = 5 }, cell)
+		UITheme.AccentBar(cell, rarity.Color, { Side = "Left", Thickness = 4, ZIndex = 5 })
 		local kind = item.Type == "Agent" and upper((AgentConfig.Get(item.Agent) or { Name = "" }).Name) or "WAFFE"
 		label({ Position = UDim2.fromOffset(14, 5), Size = UDim2.new(1, -20, 0, 22), Text = upper(item.Name), TextSize = 15, Font = F.Display,
 			TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)

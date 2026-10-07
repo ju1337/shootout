@@ -5,8 +5,8 @@
 -- Comic-Konturen. Überschriften, Zahlen und Knöpfe in der schmalen Oswald, kleine Beschriftungen in Gotham.
 -- Achtung: Oswald kennt in Roblox nur lateinische Zeichen – Symbole wie ✕ ✓ ★ ◆ → ∞ erscheinen dort als
 -- Kästchen. Solche Zeichen nur in Gotham-Texten verwenden oder zeichnen (Cross, Diamond, Coin).
--- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Kontur,
--- Schild (Tag), Raute, Münze, RAP-Symbol. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
+-- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Akzentstreifen (AccentBar),
+-- Kontur, Schild (Tag), Raute, Münze, RAP-Symbol. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
 -- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
 
 local Lighting = game:GetService("Lighting")
@@ -281,6 +281,44 @@ function UITheme.Card(props, parent)
 	UITheme.Corner(frame, radius)
 	UITheme.Stroke(frame, C.Border, 1, 0.25)
 	return frame
+end
+
+-- Farbiger Akzentstreifen an der Kante einer abgerundeten Karte (Standard oben). Ein eckiger Streifen über die volle
+-- Breite ragt an den gerundeten Ecken über die Karte hinaus; dieser liegt an der Kante an, ist an beiden Enden um den
+-- Eckenradius der Karte eingerückt (bleibt also auf der geraden Kante) und hat voll gerundete Enden.
+-- Radius aus dem UICorner der Karte (ohne festen Radius: UITheme.Radius.XL).
+-- props (optional): Side ("Top", "Bottom", "Left", "Right"), Thickness (Standard 3 px), Inset (Abstand der Enden von
+--   den Ecken, mindestens der Radius) sowie Eigenschaften des Frames (Name, ZIndex, Visible, BackgroundTransparency ...).
+-- Gibt den Frame zurück.
+function UITheme.AccentBar(parent, color, props)
+	local options = props or {}
+	local side = options.Side or "Top"
+	local thickness = options.Thickness or 3
+	local radius = UITheme.Radius.XL
+	local corner = parent:FindFirstChildOfClass("UICorner")
+	if corner and corner.CornerRadius.Scale == 0 then
+		radius = corner.CornerRadius.Offset
+	end
+	local inset = math.max(options.Inset or 0, radius)
+	local frameProps = { Name = "Accent", BackgroundColor3 = color or C.Primary, BorderSizePixel = 0,
+		ZIndex = parent:IsA("GuiObject") and parent.ZIndex or 1 }
+	for key, value in options do
+		if key ~= "Side" and key ~= "Thickness" and key ~= "Inset" then
+			frameProps[key] = value
+		end
+	end
+	if side == "Left" or side == "Right" then
+		frameProps.AnchorPoint = Vector2.new(side == "Right" and 1 or 0, 0)
+		frameProps.Position = UDim2.new(side == "Right" and 1 or 0, 0, 0, inset)
+		frameProps.Size = UDim2.new(0, thickness, 1, -2 * inset)
+	else
+		frameProps.AnchorPoint = Vector2.new(0, side == "Bottom" and 1 or 0)
+		frameProps.Position = UDim2.new(0, inset, side == "Bottom" and 1 or 0, 0)
+		frameProps.Size = UDim2.new(1, -2 * inset, 0, thickness)
+	end
+	local bar = make("Frame", frameProps, parent)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, bar) -- runde Enden (Roblox begrenzt auf die halbe Dicke)
+	return bar
 end
 
 -- HUD-Fläche über der 3D-Welt: dunkel und durchsichtig, zur Bildmitte hin auslaufend

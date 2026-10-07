@@ -404,7 +404,7 @@ local function newWindow(kind, title, stand)
 	closeWindow()
 	local frame = UITheme.Card({ Name = "MarketWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 		Size = UDim2.fromOffset(WIN_W, WIN_H), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
-	make("Frame", { Name = "Accent", Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Rap, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.AccentBar(frame, C.Rap, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 18), Size = UDim2.new(1, -300, 0, 40), Text = title, TextSize = 34, Font = F.Display,
 		ZIndex = 5 }, frame)
 	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
@@ -446,8 +446,7 @@ local function itemCard(parent, item, size, order, textWidth)
 		ZIndex = 5 }, parent)
 	UITheme.Corner(card, UITheme.Radius.Large)
 	UITheme.Stroke(card, rarity and rarity.Color or C.Border, 1, 0.55)
-	make("Frame", { Size = UDim2.new(0, 3, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = rarity and rarity.Color or C.Border,
-		BorderSizePixel = 0, ZIndex = 5 }, card)
+	UITheme.AccentBar(card, rarity and rarity.Color or C.Border, { Side = "Left", ZIndex = 5 })
 	local view = ItemPreview.New(card, { Position = UDim2.fromOffset(10, 8), Size = UDim2.fromOffset(104, 74), ZIndex = 5 })
 	ItemPreview.Show(view, item, 104 / 74)
 	local width = textWidth and UDim2.fromOffset(textWidth, 0) or UDim2.new(1, -134, 0, 0)
@@ -831,8 +830,7 @@ local function openSearch()
 				LayoutOrder = index, ZIndex = 5 }, results)
 			UITheme.Corner(row, UITheme.Radius.Large)
 			UITheme.Stroke(row, rarityColor, 1, 0.6)
-			make("Frame", { Size = UDim2.new(0, 4, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = rarityColor,
-				BorderSizePixel = 0, ZIndex = 5 }, row)
+			UITheme.AccentBar(row, rarityColor, { Side = "Left", Thickness = 4, ZIndex = 5 })
 			label({ Position = UDim2.fromOffset(18, 8), Size = UDim2.fromOffset(300, 26), Text = upper(item.Name), TextSize = 21,
 				Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
 			local kind = item.Type == "Agent" and ("AGENT  ·  " .. upper((AgentConfig.Get(item.Agent) or { Name = "" }).Name)) or "WAFFEN-SKIN"
@@ -994,8 +992,7 @@ local function openOffers()
 					LayoutOrder = order, ZIndex = 5 }, list)
 				UITheme.Corner(row, UITheme.Radius.Large)
 				UITheme.Stroke(row, color, 1, 0.55)
-				make("Frame", { Size = UDim2.new(0, 4, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = color,
-					BorderSizePixel = 0, ZIndex = 5 }, row)
+				UITheme.AccentBar(row, color, { Side = "Left", Thickness = 4, ZIndex = 5 })
 				label({ Position = UDim2.fromOffset(18, 10), Size = UDim2.fromOffset(320, 26), Text = upper(item.Name), TextSize = 22,
 					Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
 				local asked = askedBySlot[offer.Slot] or 0
@@ -1156,8 +1153,7 @@ end
 local function buildBar()
 	local bar = UITheme.Card({ Name = "MarketBar", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
 		Size = UDim2.fromOffset(1120, 56), BackgroundTransparency = 0.1 }, root)
-	make("Frame", { Size = UDim2.new(0, 4, 1, -16), Position = UDim2.fromOffset(0, 8), BackgroundColor3 = C.Rap, BorderSizePixel = 0,
-		ZIndex = 2 }, bar)
+	UITheme.AccentBar(bar, C.Rap, { Side = "Left", Thickness = 4, ZIndex = 2 })
 	label({ Position = UDim2.fromOffset(18, 6), Size = UDim2.fromOffset(110, 44), Text = "MARKT", TextSize = 32, Font = F.Display,
 		ZIndex = 2 }, bar)
 	local rapRow

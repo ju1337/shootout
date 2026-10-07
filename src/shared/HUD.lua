@@ -340,7 +340,7 @@ function HUD.Init(weaponClient)
 		Visible = false,
 	}, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, recap)
-	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = UITheme.Colors.Bad, BorderSizePixel = 0 }, recap)
+	UITheme.AccentBar(recap, UITheme.Colors.Bad, { Side = "Left" })
 	local recapTitle = label({ Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -34, 0, 30), Text = "",
 		TextSize = 26, Font = Enum.Font.Oswald, TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Left }, recap)
 	local recapInfo = label({ Position = UDim2.new(0, 18, 0, 42), Size = UDim2.new(1, -34, 0, 22), Text = "",

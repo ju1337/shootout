@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local AgentConfig = require(Shared.AgentConfig)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -341,7 +342,7 @@ local function build()
 		BorderSizePixel = 0, Visible = false, Active = true }, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
 	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.5 }, panel)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, panel)
+	UITheme.AccentBar(panel, ACCENT, { Thickness = 4 })
 
 	label("ADMIN-PANEL", 24, panel, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 30),
 		Font = Enum.Font.Oswald, TextColor3 = ACCENT })

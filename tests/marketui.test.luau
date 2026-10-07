@@ -124,6 +124,12 @@ MarketClient.OpenSearch()
 step(0.5)
 local window = find(gui, "MarketWindow")
 check(window ~= nil, "SUCHE öffnet ein Fenster")
+-- Akzentstreifen oben bleibt innerhalb der Rundung: um den Eckenradius des Fensters eingerückt, runde Enden
+local accent = window:FindFirstChild("Accent")
+local windowRadius = window:FindFirstChildOfClass("UICorner").CornerRadius.Offset
+check(accent ~= nil and accent.Position.X.Offset == windowRadius and accent.Size.X.Offset == -2 * windowRadius
+	and accent:FindFirstChildOfClass("UICorner") ~= nil and accent:FindFirstChildOfClass("UICorner").CornerRadius.Scale == 1,
+	"Akzentstreifen im Fenster eingerückt, runde Enden")
 local results = find(window, "Results")
 local function rows()
 	local n = 0

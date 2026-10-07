@@ -383,9 +383,8 @@ function MatchHUD.Init(root, weaponClient)
 		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
 			Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 		-- farbige Kante rechts: Team des Schützen (eigene Kills Bernstein)
-		local accent = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 2, 1, 0),
-			BackgroundColor3 = mine and C.Primary or nameColor(killerName or victimName), BackgroundTransparency = 1,
-			BorderSizePixel = 0 }, row)
+		local accent = UITheme.AccentBar(row, mine and C.Primary or nameColor(killerName or victimName),
+			{ Side = "Right", Thickness = 2, BackgroundTransparency = 1 })
 
 		local texts = {}
 		local function text(value, color, order, size)

@@ -438,8 +438,7 @@ local function buildStats()
 	for i, key in order do
 		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, tile)
-		make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = (key == "KD" or key == "WinRate") and ACCENT or BORDER,
-			BorderSizePixel = 0 }, tile)
+		UITheme.AccentBar(tile, (key == "KD" or key == "WinRate") and ACCENT or BORDER, { Side = "Left" })
 		text({ Position = UDim2.new(0, 14, 0, 10), Size = UDim2.new(1, -20, 0, 16), Text = titles[key], TextSize = 11,
 			TextColor3 = GRAY }, tile)
 		tiles[key] = text({ Position = UDim2.new(0, 14, 0, 30), Size = UDim2.new(1, -20, 0, 40), Text = "–", TextSize = 30,

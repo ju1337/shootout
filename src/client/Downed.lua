@@ -64,7 +64,7 @@ local function build()
 	-- Eigener Zustand am Boden (Karte mit rotem Streifen)
 	downedPanel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.62, 0),
 		Size = UDim2.new(0, 420, 0, 112), BackgroundTransparency = 0.1, Visible = false }, gui)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = RED, BorderSizePixel = 0 }, downedPanel)
+	UITheme.AccentBar(downedPanel, RED)
 	label({ Position = UDim2.new(0, 0, 0, 10), Size = UDim2.new(1, 0, 0, 40), Text = "NIEDERGESCHLAGEN", TextSize = 36,
 		TextColor3 = RED }, downedPanel)
 	bleedLabel = label({ Position = UDim2.new(0, 0, 0, 52), Size = UDim2.new(1, 0, 0, 24), Text = "", TextSize = 18,
@@ -74,7 +74,7 @@ local function build()
 	-- Hinweis beim Teamkollegen
 	promptPanel = UITheme.Panel({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.6, 0),
 		Size = UDim2.new(0, 380, 0, 64), BackgroundTransparency = 0.1, Visible = false }, gui)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = GREEN, BorderSizePixel = 0 }, promptPanel)
+	UITheme.AccentBar(promptPanel, GREEN)
 	promptLabel = label({ Position = UDim2.new(0, 0, 0, 8), Size = UDim2.new(1, 0, 0, 28), Text = "", TextSize = 22 }, promptPanel)
 	promptBar = progressBar(promptPanel, 44, GREEN)
 end
