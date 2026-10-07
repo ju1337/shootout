@@ -176,6 +176,9 @@ check(escortNear, "Begleiter in 20 bis 50 Studs Abstand")
 -- Alice nimmt alles: Kiste weg, Abwurf vorbei, nächster nach der Wartezeit
 place(alice, target - CENTER + Vector3.new(0, 3, 4))
 local ownedBefore = 0
+check(LootService.Take(alice, bag.Id, "All") == false and LootService.Get(bag.Id) ~= nil,
+	"ohne Gamepass ALLES LOOTEN kein Alles-Nehmen, die Kiste bleibt")
+alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
 check(LootService.Take(alice, bag.Id, "All") == true, "Alice nimmt alles")
 local owned = 0
 for _, entry in Inventory.Items(InventoryService.GetBag(alice)) do

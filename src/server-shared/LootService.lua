@@ -5,8 +5,10 @@
 --   Drop     "Fallen lassen" aus dem Inventar: kleiner Beutel, 90 Sekunden (DropLifetime).
 --   Crate    Lagerkiste in der Welt (ContainerService): bleibt, bis sie leer ist, dann füllt sie sich später neu.
 --   Airdrop  Versorgungsabwurf (AirdropService): großes Kiste, E halten zum Öffnen.
--- Jeder, der nah genug ist, kann mit E durchsuchen (Fenster) oder mit F alles auf einmal nehmen und Items herausnehmen.
--- Zombie-Leichen laufen nicht über Fenster: LootService.Grab legt die Beute direkt ins Inventar (E an der Leiche).
+--   Corpse   Beute in einer Zombie-Leiche (LootService.Attach): ohne eigenes Modell, die Leiche selbst ist die Tasche.
+-- Jeder, der nah genug ist, kann mit E durchsuchen (Fenster) und Items einzeln herausnehmen. Alles auf einmal nehmen
+-- (F bzw. Knopf ALLES NEHMEN) gibt es nur mit dem Gamepass ALLES LOOTEN (RobuxConfig, Attribut Pass_LootAll); ohne ihn
+-- öffnet F das Fenster. Belohnungen (Aufträge, Verstecke) legt LootService.Grab direkt ins Inventar.
 -- Modelle liegen in Workspace.ExtinctionLoot (Teil "LootBag" mit ProximityPrompts), Inhalt nur auf dem Server.
 -- Client: Remotes.ExtUpdate("Loot", { Id, Title, Items }) öffnet/aktualisiert das Fenster, ("LootClosed", Id) schließt es.
 -- Herausnehmen: Remotes.ExtAction("Loot", Id, Platz) bzw. ("Loot", Id, "All").
@@ -20,9 +22,18 @@ local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
 local Modes = require(Shared.Modes)
+local RobuxConfig = require(Shared.RobuxConfig)
 local InventoryService = require(script.Parent.InventoryService)
 
 local LootService = {}
+
+-- Alles auf einmal nehmen: nur mit dem Gamepass
+LootService.TakeAllPass = "LootAll"
+LootService.TakeAllHint = "ALLES NEHMEN gibt es mit dem Gamepass ALLES LOOTEN im Robux-Shop. Einzeln herausnehmen geht immer."
+
+function LootService.CanTakeAll(player)
+	return RobuxConfig.Has(player, LootService.TakeAllPass)
+end
 
 LootService.OnRemoved = {}
 -- callback(player, bag): jemand hat eine Tasche/Kiste geöffnet oder alles genommen (Aufträge zählen Lootdrops)
@@ -80,7 +91,7 @@ end
 local function inRange(player, bag)
 	local root = rootOf(player)
 	return root ~= nil and bag.Part.Parent ~= nil
-		and (root.Position - bag.Part.Position).Magnitude <= ExtinctionConfig.LootRange
+		and (root.Position - bag.Part.Position).Magnitude <= (bag.Range or ExtinctionConfig.LootRange)
 		and Modes.IsSurvival(player:GetAttribute("Mode"))
 end
 
@@ -107,7 +118,11 @@ function LootService.Remove(id)
 			Remotes.ExtUpdate:FireClient(viewer, "LootClosed", id)
 		end
 	end
-	bag.Model:Destroy()
+	if bag.Detach then
+		bag.Detach() -- Beute an einem fremden Modell (Leiche): nur Prompts weg, das Modell regelt sein Besitzer
+	else
+		bag.Model:Destroy()
+	end
 	for _, callback in LootService.OnRemoved do
 		local ok, err = pcall(callback, bag)
 		if not ok then
@@ -209,6 +224,31 @@ local function buildModel(kind, look, spec, id, ground, yaw)
 	return model, main
 end
 
+-- F: alles auf einmal nehmen (ohne Fenster). Der Client zeigt den Prompt nur mit dem Gamepass ALLES LOOTEN.
+local function takeAllPrompt(part, title, hold, range)
+	local takeAll = Instance.new("ProximityPrompt")
+	takeAll.Name = "TakeAllPrompt"
+	takeAll.ActionText = "Alles nehmen"
+	takeAll.ObjectText = title
+	takeAll.KeyboardKeyCode = Enum.KeyCode.F
+	takeAll.GamepadKeyCode = Enum.KeyCode.ButtonX
+	takeAll.HoldDuration = hold
+	takeAll.UIOffset = Vector2.new(0, 70)
+	takeAll.MaxActivationDistance = range
+	takeAll.RequiresLineOfSight = false
+	takeAll.Parent = part
+	return takeAll
+end
+
+-- F gedrückt: mit Gamepass alles nehmen, sonst das Fenster öffnen (dort einzeln herausnehmen)
+local function takeAllTriggered(player, id)
+	if LootService.CanTakeAll(player) then
+		LootService.Take(player, id, "All")
+	elseif LootService.Open(player, id) then
+		InventoryService.Status(player, LootService.TakeAllHint)
+	end
+end
+
 -- Neue Tasche/Kiste bei position (wird auf den Boden gelegt). items = { { Id, Count, Mag } }, kind = "Death", "Drop", "Crate"
 -- oder "Airdrop". options = { Persist (kein Ablauf), HoldTime (Sekunden E halten), SpotKind, Meta, Lifetime, NoGround }.
 -- Gibt die Id zurück (nil, wenn nichts drin wäre).
@@ -302,18 +342,7 @@ function LootService.Create(position, items, kind, title, options)
 	prompt.MaxActivationDistance = ExtinctionConfig.LootRange - 1
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = part
-	-- F: alles auf einmal nehmen (ohne Fenster)
-	local takeAll = Instance.new("ProximityPrompt")
-	takeAll.Name = "TakeAllPrompt"
-	takeAll.ActionText = "Alles nehmen"
-	takeAll.ObjectText = title
-	takeAll.KeyboardKeyCode = Enum.KeyCode.F
-	takeAll.GamepadKeyCode = Enum.KeyCode.ButtonX
-	takeAll.HoldDuration = hold
-	takeAll.UIOffset = Vector2.new(0, 70)
-	takeAll.MaxActivationDistance = ExtinctionConfig.LootRange - 1
-	takeAll.RequiresLineOfSight = false
-	takeAll.Parent = part
+	local takeAll = takeAllPrompt(part, title, hold, ExtinctionConfig.LootRange - 1)
 	model.Parent = folder
 
 	local lifetime = options.Lifetime or (kind == "Death" and ExtinctionConfig.BagLifetime or ExtinctionConfig.DropLifetime)
@@ -334,7 +363,78 @@ function LootService.Create(position, items, kind, title, options)
 		LootService.Open(player, id)
 	end)
 	takeAll.Triggered:Connect(function(player)
-		LootService.Take(player, id, "All")
+		takeAllTriggered(player, id)
+	end)
+	return id
+end
+
+-- Beute an einem vorhandenen Modell (z.B. Zombie-Leiche): wie eine Tasche, nur ohne eigenes Modell – part (z.B. der
+-- Rumpf) trägt die Prompts. E öffnet das Fenster (einzeln herausnehmen), F nimmt alles (Gamepass). items = { { Id, Count,
+-- Mag } }. options = { PromptName (Standard "LootPrompt"), ActionText, ObjectText (Name vor der Inhaltsangabe), Range
+-- (Abstand für E/F), Lifetime (Sekunden), OnRemoved (leer oder abgelaufen: z.B. Leiche ausblenden) }.
+-- Gibt die Id zurück (nil, wenn nichts drin wäre). Das Modell bleibt Sache des Aufrufers.
+function LootService.Attach(model, part, items, title, options)
+	options = options or {}
+	local list = {}
+	for _, item in items do
+		if ExtinctionConfig.Get(item.Id) and (item.Count or 0) > 0 then
+			table.insert(list, item)
+		end
+	end
+	if #list == 0 then
+		return nil
+	end
+	nextId += 1
+	local id = nextId
+	local container = Inventory.New(#list)
+	for slot, item in list do
+		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag }
+	end
+	local range = options.Range or (ExtinctionConfig.LootRange - 1)
+	local name = options.ObjectText or title
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = options.PromptName or "LootPrompt"
+	prompt.ActionText = options.ActionText or "Durchsuchen"
+	prompt.ObjectText = name .. " · " .. LootService.Summary(list)
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = range
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = part
+	local takeAll = takeAllPrompt(part, name, 0, range)
+	local bag = {
+		Id = id,
+		Title = title,
+		Kind = "Corpse",
+		Container = container,
+		Model = model,
+		Part = part,
+		Range = range + 3, -- Leichen rutschen noch etwas (Ragdoll)
+		Expires = os.clock() + (options.Lifetime or ExtinctionConfig.DropLifetime),
+		Viewers = {},
+	}
+	function bag.Refresh()
+		local rest = {}
+		for _, item in container.Slots do
+			if item then
+				table.insert(rest, { Id = item.Id, Count = item.Count })
+			end
+		end
+		prompt.ObjectText = name .. " · " .. LootService.Summary(rest)
+	end
+	function bag.Detach()
+		prompt:Destroy()
+		takeAll:Destroy()
+		if options.OnRemoved then
+			options.OnRemoved()
+		end
+	end
+	bags[id] = bag
+	prompt.Triggered:Connect(function(player)
+		LootService.Open(player, id)
+	end)
+	takeAll.Triggered:Connect(function(player)
+		takeAllTriggered(player, id)
 	end)
 	return id
 end
@@ -362,12 +462,19 @@ local function refreshLabel(bag)
 	if bag.Label then
 		bag.Label.Text = n .. (n == 1 and " ITEM" or " ITEMS")
 	end
+	if bag.Refresh then
+		bag.Refresh()
+	end
 end
 
--- Item herausnehmen: slot = Platz in der Tasche oder "All"
+-- Item herausnehmen: slot = Platz in der Tasche oder "All" (nur mit dem Gamepass ALLES LOOTEN)
 function LootService.Take(player, id, slot)
 	local bag = type(id) == "number" and bags[id]
 	if not bag then
+		return false
+	end
+	if slot == "All" and not LootService.CanTakeAll(player) then
+		InventoryService.Status(player, LootService.TakeAllHint)
 		return false
 	end
 	if not inRange(player, bag) then
@@ -430,7 +537,7 @@ function LootService.Take(player, id, slot)
 	return moved
 end
 
--- Beute direkt ins Inventar (E an einer Zombie-Leiche): items = { { Id, Count, Mag } }. Gibt zurück: Rest (was nicht mehr
+-- Belohnung direkt ins Inventar (Aufträge, Verstecke): items = { { Id, Count, Mag } }. Gibt zurück: Rest (was nicht mehr
 -- hineinpasste) und den Text, was genommen wurde. Meldet dem Spieler, was er bekommen hat.
 function LootService.Grab(player, items)
 	local rest, got = {}, {}

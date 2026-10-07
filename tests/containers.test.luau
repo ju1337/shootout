@@ -85,6 +85,7 @@ ContainerService.Init(map, { RedzoneAt = RedzoneService.At })
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
+alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN: Kisten mit einem Druck leeren
 Instance.new("Backpack", alice).Name = "Backpack"
 step(2)
 alice:SetAttribute("Mode", "Extinction")

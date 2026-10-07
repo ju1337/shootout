@@ -197,6 +197,7 @@ if bag then
 	-- Alice nimmt alles (E/F an der Tasche)
 	alice.Character:PivotTo(CFrame.new(deathPos + Vector3.new(2, 0, 0)))
 	step(0.2)
+	alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
 	check(LootService.Take(alice, bag.Id, "All") == true, "Alice plündert die Tasche des Bots")
 	check(InventoryService.GetBag(alice) and require("Inventory").Count(InventoryService.GetBag(alice), first.ItemId) == 1,
 		"Waffe des Bots in Alices Tasche")

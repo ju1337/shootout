@@ -12,6 +12,10 @@ RobuxConfig.Passes = {
 		Description = "Doppelte Münzen für immer · goldenes VIP über dem Namen", Color = Color3.fromRGB(255, 200, 60) },
 	{ Id = "DoubleXP", PassId = 0, Robux = 299, Name = "DOPPEL-XP",
 		Description = "Für immer doppelte XP für Level, Agenten und Battle Pass", Color = Color3.fromRGB(150, 120, 210) },
+	-- EXTINCTION: Beute mit einem Druck ganz einsammeln (ohne Pass: im Beute-Fenster einzeln herausnehmen)
+	{ Id = "LootAll", PassId = 0, Robux = 149, Name = "ALLES LOOTEN", Badge = "ALLES",
+		Description = "EXTINCTION: Taschen, Kisten, Lootdrops und Leichen mit einem Druck leeren (F oder ALLES NEHMEN)",
+		Color = Color3.fromRGB(110, 200, 140) },
 }
 
 -- Entwicklerprodukte: beliebig oft kaufbar. Coins, Spins (Glücksrad), BoostMinutes (Doppel-XP), Items (Skins)

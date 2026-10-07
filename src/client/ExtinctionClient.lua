@@ -5,7 +5,8 @@
 --   Tasten: 1-9 Hotbar benutzen, TAB Inventar, K Fahrzeug einpacken, E an Ständen/Lager/Taschen (ProximityPrompt)
 --   Controller: R1/L1 nächste/vorige Waffe der Hotbar, Select = Inventar, △ = Fahrzeug einpacken
 --   Fenster: Inventar (TAB), Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
---            Tasche am Boden (Inhalt links, eigene Tasche rechts)
+--            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
+--            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
 -- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
@@ -19,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -28,6 +30,7 @@ local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local GunModels = require(Shared.GunModels)
+local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
 local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 local DayCycle = require(Shared.DayCycle)
@@ -1470,6 +1473,54 @@ local function openMarket()
 end
 
 -- TASCHE AM BODEN: Inhalt links (anklicken = nehmen), eigene Tasche rechts
+-- ---------- Alles looten (Gamepass) ----------
+-- Alles auf einmal nehmen (F an Taschen, Kisten, Lootdrops und Leichen, Knopf ALLES NEHMEN im Beute-Fenster) gibt es nur
+-- mit dem Gamepass ALLES LOOTEN. Ohne ihn ist der F-Prompt aus (nur bei diesem Spieler) und man nimmt im Fenster einzeln
+-- heraus; der Knopf führt dann zum Kauf. Der Server prüft das auch (LootService.Take).
+local LOOT_ALL_PASS = "LootAll"
+
+local function canTakeAll()
+	return RobuxConfig.Has(player, LOOT_ALL_PASS)
+end
+
+local function buyLootAll()
+	local pass = RobuxConfig.Pass(LOOT_ALL_PASS)
+	if pass and pass.PassId ~= 0 then
+		MarketplaceService:PromptGamePassPurchase(player, pass.PassId)
+	else
+		showToast("Gamepass ALLES LOOTEN kommt bald in den Robux-Shop. Bis dahin: Items anklicken", false)
+	end
+end
+
+local function paintTakeAll(button)
+	if canTakeAll() then
+		button.SetColor(C.Primary, C.PrimaryText)
+		button.SetText("ALLES NEHMEN")
+	else
+		button.SetColor(C.MutedBack, C.Text)
+		button.SetText("ALLES NEHMEN · GAMEPASS")
+	end
+end
+
+-- F-Prompt einer Tasche/Kiste/Leiche nur mit Gamepass zeigen
+local function applyTakeAll(obj)
+	if obj:IsA("ProximityPrompt") and obj.Name == "TakeAllPrompt" then
+		obj.Enabled = canTakeAll()
+	end
+end
+
+local function refreshTakeAll()
+	for _, name in { "ExtinctionLoot", "Zombies" } do
+		local folder = workspace:FindFirstChild(name)
+		for _, obj in folder and folder:GetDescendants() or {} do
+			applyTakeAll(obj)
+		end
+	end
+	if window and window.Kind == "Loot" and window.TakeAll then
+		paintTakeAll(window.TakeAll)
+	end
+end
+
 local function openLoot(data)
 	local win = window
 	if not win or win.Kind ~= "Loot" or not win.Loot or win.Loot.Id ~= data.Id then
@@ -1480,10 +1531,15 @@ local function openLoot(data)
 		sectionTitle(body, "INHALT", UDim2.fromOffset(0, 0))
 		win.LootHolder = make("Frame", { Position = UDim2.fromOffset(0, 22), Size = UDim2.fromOffset(560, 420),
 			BackgroundTransparency = 1, ZIndex = 5 }, body)
-		UITheme.Chunky({ Position = UDim2.fromOffset(0, 466), Size = UDim2.fromOffset(260, 48), Color = C.Primary,
+		win.TakeAll = UITheme.Chunky({ Position = UDim2.fromOffset(0, 466), Size = UDim2.fromOffset(300, 48), Color = C.Primary,
 			TextColor = C.PrimaryText, Text = "ALLES NEHMEN", TextSize = 18, ZIndex = 6 }, body, function()
-			sendAction("Loot", data.Id, "All")
+			if canTakeAll() then
+				sendAction("Loot", data.Id, "All")
+			else
+				buyLootAll()
+			end
 		end)
+		paintTakeAll(win.TakeAll)
 		sectionTitle(body, "DEINE TASCHE", UDim2.fromOffset(640, 0), 480)
 		grid(body, "Bag", 1, BAG, 6, 64, 8, UDim2.fromOffset(640, 22), true)
 		onSlotClick = function(container, slot)
@@ -2220,6 +2276,10 @@ function ExtinctionClient.Init()
 	end)
 	coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
 	player:GetAttributeChangedSignal("Mode"):Connect(updateVisible)
+	-- Alles looten: F-Prompts nur mit Gamepass (auch für später entstehende Taschen, Kisten und Leichen)
+	refreshTakeAll()
+	workspace.DescendantAdded:Connect(applyTakeAll)
+	player:GetAttributeChangedSignal("Pass_" .. LOOT_ALL_PASS):Connect(refreshTakeAll)
 	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b)
 		if kind == "Status" then
 			showToast(tostring(a), b == true)

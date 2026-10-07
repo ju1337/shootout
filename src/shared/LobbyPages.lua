@@ -101,6 +101,14 @@ local function showWeapon(view, weaponName, skin, aspect, fill, attachments)
 	view.CurrentCamera = camera
 end
 
+-- Watch-Liste plus alle Gamepässe (Pass_<Id>): Karten im Robux-Shop zeigen nach dem Kauf sofort GEKAUFT
+local function robuxWatch(watch)
+	for _, pass in RobuxConfig.Passes do
+		watch["Pass_" .. pass.Id] = true
+	end
+	return watch
+end
+
 -- Agent mit Farben (und Waffen-Skin) zeigen; agentSkinId = Agenten-Skin (Textur-Skins eines 3D-Modells)
 local function showAgent(view, agent, primary, accent, weaponSkin, agentSkinId)
 	view:ClearAllChildren()
@@ -210,7 +218,7 @@ function LobbyPages.Shop(page)
 		elseif entry.Coins then
 			UITheme.Coin(top, 70, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) })
 		else
-			label({ Size = UDim2.fromScale(1, 1), Text = entry.Spins and "×" .. entry.Spins or (isPass and entry.Name or "2× XP"),
+			label({ Size = UDim2.fromScale(1, 1), Text = entry.Spins and "×" .. entry.Spins or (isPass and (entry.Badge or entry.Name) or "2× XP"),
 				TextSize = 46, Font = F.Display, TextColor3 = entry.Color, TextXAlignment = Enum.TextXAlignment.Center }, top)
 		end
 		if entry.Tag then
@@ -411,8 +419,7 @@ function LobbyPages.Shop(page)
 		updateButtons()
 		updateRobux()
 		updateSellInfo()
-	end, Watch = { Coins = true, Owned = true, Rap = true, RapValue = true, Reserved = true, Pass_VIP = true,
-		Pass_DoubleXP = true } }
+	end, Watch = robuxWatch({ Coins = true, Owned = true, Rap = true, RapValue = true, Reserved = true }) }
 end
 
 -- =====================================================================

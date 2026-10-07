@@ -325,6 +325,14 @@ bob.Character:PivotTo(CFrame.new(deathPos + Vector3.new(3, 0, 0)))
 step(0.3)
 check(LootService.Open(bob, bagId) == true, "Bob öffnet die Tasche")
 check(lastExt(bob, "Loot") ~= nil and #lastExt(bob, "Loot")[2].Items >= 3, "Inhalt an Bob geschickt")
+-- Alles auf einmal nur mit dem Gamepass ALLES LOOTEN; F ohne Pass öffnet das Fenster (dort einzeln nehmen)
+check(LootService.Take(bob, bagId, "All") == false and LootService.Get(bagId) ~= nil, "ohne Gamepass: nicht alles auf einmal")
+local hint = lastExt(bob, "Status")
+check(hint ~= nil and string.find(tostring(hint[2]), "ALLES LOOTEN", 1, true) ~= nil, "Hinweis auf den Gamepass")
+local bagModel = LootService.Get(bagId).Part
+bagModel.TakeAllPrompt.Triggered:Fire(bob)
+check(LootService.Get(bagId) ~= nil and lastExt(bob, "Loot") ~= nil, "F ohne Gamepass: Tasche bleibt, Fenster offen")
+bob:SetAttribute("Pass_LootAll", true)
 check(LootService.Take(bob, bagId, "All") == true, "alles genommen")
 local bobHasRifle = false
 for _, entry in bagOf(bob) do

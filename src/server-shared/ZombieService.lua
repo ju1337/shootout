@@ -10,8 +10,9 @@
 -- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
 -- Anti-Zombie-Spritze (Charakter-Attribut ZombieShieldUntil): solange sie wirkt, spawnt näher als Zombies.ShieldRadius am
 -- Spieler kein Zombie – egal woher (Umgebung, rote Zone, Schreier, Nester, Lootdrop-Begleiter, Bosse).
--- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche: E durchsucht sie, alles geht direkt ins
--- Inventar (LootService.Grab); was nicht passt, bleibt in der Leiche (ExtinctionConfig.Zombies.CorpseLootTime Sekunden).
+-- Tod: der Schütze bekommt Münzen (je Art, wenig). Beute steckt in der Leiche (LootService.Attach): E öffnet das
+-- Beute-Fenster, dort nimmt man Items einzeln heraus; F nimmt alles (nur mit dem Gamepass ALLES LOOTEN). Die Leiche
+-- bleibt ExtinctionConfig.Zombies.CorpseLootTime Sekunden liegen, leer geräumt verschwindet sie kurz darauf.
 -- In der roten Zone gestorben: doppelte Münzen und bessere Beute (ExtinctionConfig.Redzone.Loot).
 -- Körper: einfacher R6-Körper (6 Teile, schnell), Arme nach vorn, rote Augen; Animation: Roblox-Standard (R6).
 -- Modelle in Workspace.Zombies, Attribut IsZombie (Messer und Schüsse treffen sie, der Ping-Ausgleich kennt sie).
@@ -24,7 +25,6 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
 local Damage = require(script.Parent.Damage)
-local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
 local LootService = require(script.Parent.LootService)
 
@@ -420,20 +420,18 @@ local function rollCorpseLoot(stats, blood, red)
 end
 ZombieService.RollCorpseLoot = rollCorpseLoot
 
--- E an der Leiche: Beute direkt ins Inventar. Was nicht passt, bleibt liegen.
-local function attachCorpsePrompt(model, root, info, items)
-	local corpse = { Items = items }
-	info.Corpse = corpse
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.Name = "CorpsePrompt"
-	prompt.ActionText = "Aufheben"
-	prompt.ObjectText = info.Name .. " · " .. LootService.Summary(items)
-	prompt.KeyboardKeyCode = Enum.KeyCode.E
-	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
-	prompt.HoldDuration = 0 -- einmal E, kein Halten
-	prompt.MaxActivationDistance = CORPSE_RANGE
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = root
+-- Großbuchstaben inkl. Umlaute (string.upper kennt nur ASCII: "Läufer" -> "LäUFER")
+local function upper(text)
+	local result = string.upper(text)
+	result = string.gsub(result, "ä", "Ä")
+	result = string.gsub(result, "ö", "Ö")
+	result = string.gsub(result, "ü", "Ü")
+	return result
+end
+
+-- Beute in der Leiche: E öffnet das Beute-Fenster (einzeln herausnehmen), F nimmt alles (Gamepass ALLES LOOTEN).
+-- Leer geräumt verschwindet die Leiche kurz darauf.
+local function attachCorpseLoot(model, root, info, items)
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "LootHighlight"
 	highlight.FillTransparency = 1
@@ -441,27 +439,26 @@ local function attachCorpsePrompt(model, root, info, items)
 	highlight.OutlineTransparency = 0.35
 	highlight.DepthMode = Enum.HighlightDepthMode.Occluded
 	highlight.Parent = model
-	prompt.Triggered:Connect(function(player)
-		local playerRoot = livingRoot(player)
-		if not playerRoot or not Modes.IsSurvival(player:GetAttribute("Mode"))
-			or (playerRoot.Position - root.Position).Magnitude > CORPSE_RANGE + 3 or #corpse.Items == 0 then
-			return
-		end
-		local rest = LootService.Grab(player, corpse.Items)
-		corpse.Items = rest
-		if #rest == 0 then
-			prompt:Destroy()
+	local corpse = {}
+	info.Corpse = corpse
+	corpse.LootId = LootService.Attach(model, root, items, "LEICHE · " .. upper(info.Name), {
+		PromptName = "CorpsePrompt",
+		ActionText = "Durchsuchen",
+		ObjectText = info.Name,
+		Range = CORPSE_RANGE,
+		Lifetime = Z.CorpseLootTime + 1, -- die Leiche selbst verschwindet nach CorpseLootTime (onDeath)
+		OnRemoved = function()
 			highlight:Destroy()
-			info.Corpse = nil
+			if info.Corpse == corpse then
+				info.Corpse = nil
+			end
 			task.delay(1.5, function()
 				if model.Parent then
 					model:Destroy()
 				end
 			end)
-		else
-			prompt.ObjectText = info.Name .. " · " .. LootService.Summary(rest)
-		end
-	end)
+		end,
+	})
 end
 
 local function remove(model)
@@ -493,7 +490,7 @@ local function onDeath(model, info)
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
 	local items = root and rollCorpseLoot(info.Stats, info.Blood, red) or {}
 	if #items > 0 and root then
-		attachCorpsePrompt(model, root, info, items)
+		attachCorpseLoot(model, root, info, items)
 	end
 	task.delay(#items > 0 and Z.CorpseLootTime or Z.CorpseTime, function()
 		if model.Parent then

@@ -206,7 +206,7 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   erste abgelaufen ist; der Tod beendet die Wirkung.
 - **Lager**: 40 Plätze, immer sicher (auch beim Tod).
 - **Tod draußen**: die ganze Tasche fällt als **Tasche am Boden** (Rucksack mit rotem Licht und Lichtsäule, Name des
-  Toten darüber; 5 Minuten, jeder kann sie mit E durchsuchen und Items oder mit F alles nehmen), Respawn nach 5 s in der
+  Toten darüber; 5 Minuten, jeder kann sie mit E durchsuchen und Items einzeln nehmen), Respawn nach 5 s in der
   Safe Zone. Der Tote sieht seine Tasche als **rotes X** auf Minimap (am Rand, wenn sie weit weg ist) und Weltkarte (mit
   Restzeit) und bekommt nach dem Respawn einen Hinweis; war die Tasche leer, fällt nichts („NICHTS VERLOREN“).
   Spieler-Kill: +120 Münzen Kopfgeld (dazu der normale Kill-Lohn).
@@ -221,11 +221,17 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Zombie-Arten**: alle mit Blutflecken und Wunden. Draußen am Tag fast nur normale Zombies, ein paar **Läufer** und
   **Schreier** (weiße Augen): sieht ein Schreier dich, schreit er (roter Ring) – alle Zombies im Umkreis jagen dich und
   drei weitere kommen dazu. Nachts mehr Läufer, Schreier und auch **Brocken**; in der roten Zone die meisten.
-- **Zombie-Beute**: tote Zombies bleiben mit Beute 40 Sekunden liegen (leuchten). **Einmal E** (ohne Halten) hebt
-  alles auf, **direkt ins Inventar** (passt nicht alles, bleibt der Rest liegen). Zombies lassen öfter etwas fallen
-  (75 %, Läufer 85 %, Brocken immer), weil es keine Beute mehr am Boden gibt.
-- **Taschen am Boden** (Todestasche, Lootdrop): **E** öffnet das Fenster (einzeln nehmen), **F** nimmt alles auf einmal; das
+- **Zombie-Beute**: tote Zombies bleiben mit Beute 40 Sekunden liegen (leuchten). **Einmal E** (ohne Halten) öffnet
+  das Beute-Fenster wie bei einer Tasche: Items einzeln anklicken (passt etwas nicht, bleibt es in der Leiche); leer
+  geräumt verschwindet die Leiche. Zombies lassen öfter etwas fallen (75 %, Läufer 85 %, Brocken immer), weil es keine
+  Beute mehr am Boden gibt.
+- **Taschen am Boden** (Todestasche, Lootdrop, Kisten): **E** öffnet das Fenster, Items **einzeln** anklicken; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
+- **Alles looten = Gamepass** (`RobuxConfig.Passes`, Id `LootAll`, Attribut `Pass_LootAll`): Alles auf einmal nehmen –
+  **F** an Taschen, Kisten, Lootdrops und Leichen oder der Knopf **ALLES NEHMEN** im Fenster – gibt es nur mit dem
+  Gamepass **ALLES LOOTEN** aus dem Robux-Shop (SHOP › ROBUX). Ohne ihn ist der F-Prompt ausgeblendet, der Knopf heißt
+  „ALLES NEHMEN · GAMEPASS“ und öffnet den Kauf; der Server lehnt „alles“ ohne Pass ab (F öffnet dann nur das Fenster).
+  Solange in `RobuxConfig` noch keine PassId eingetragen ist, steht im Shop „BALD“.
 - **Aktivitäten** (`ActivityService.lua`, Teile `Act_<Art>` in der Gruppe Activities, Werte
   `ExtinctionConfig.Activities`); auf der Weltkarte stehen nur Vorratslager und Funkgerät:
   - **Zombienester** (15, in Ödstadt, den Dörfern, Wäldern, Gefängnis, Militärbasis, Hafen): leuchtender Kern aus Fleisch, man schießt
@@ -702,6 +708,8 @@ Schutz der Spielstände (`src/server-shared/SessionStore.lua`, genutzt von `Prog
 - **Herunterfahren:** alle Spieler werden gleichzeitig gespeichert und freigegeben (höchstens 25 s).
 - **Robux-Käufe** (`RobuxService`): Ein Kauf wird Roblox erst bestätigt, wenn der Stand mit dem Kauf sicher
   gespeichert ist; sonst fragt Roblox später erneut (jede Kauf-Nummer wird trotzdem nur einmal gutgeschrieben).
+  Gamepässe (`RobuxConfig.Passes`): VIP, DOPPEL-XP und ALLES LOOTEN – die PassId aus dem Creator Hub eintragen, dann
+  zeigt der Shop den Preis und prüft den Besitz beim Beitreten und nach dem Kauf.
 
 ## Tests und automatische Prüfung
 

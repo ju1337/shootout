@@ -148,9 +148,11 @@ local goal = hunter.Humanoid.MoveToTarget
 check(goal == nil or flatDistance(goal, CENTER) >= 100, "Zombie geht nicht in die Safe Zone")
 check(alice.Character.Humanoid.Health == inside, "in der Safe Zone kein Schaden")
 
--- Tod: wenige Münzen für den Schützen, die Beute steckt in der Leiche (E: direkt ins Inventar, kein Beutel am Boden)
+-- Tod: wenige Münzen für den Schützen, die Beute steckt in der Leiche (kein Beutel am Boden). E öffnet das Beute-Fenster,
+-- dort nimmt man einzeln heraus; alles auf einmal (F) nur mit dem Gamepass ALLES LOOTEN
 local Inventory = require("Inventory")
 local InventoryService = require("InventoryService")
+local LootService = require("LootService")
 ExtinctionConfig.ZombieKinds.Walker.Drop = 1
 place(alice, Vector3.new(0, 3, -400))
 step(0.5)
@@ -163,7 +165,9 @@ check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, 
 	.. ProgressService.Get(alice).Coins - coins)
 check(#workspace.ExtinctionLoot:GetChildren() == bags, "kein Beutel am Boden: die Beute steckt in der Leiche")
 local prompt = victim.HumanoidRootPart:FindFirstChild("CorpsePrompt")
-check(prompt ~= nil and prompt.ActionText == "Aufheben" and prompt.HoldDuration == 0, "Leiche mit Beute: einmal E (Aufheben, ohne Halten)")
+check(prompt ~= nil and prompt.ActionText == "Durchsuchen" and prompt.HoldDuration == 0,
+	"Leiche mit Beute: einmal E (Durchsuchen, ohne Halten)")
+check(victim.HumanoidRootPart:FindFirstChild("TakeAllPrompt") ~= nil, "F = alles nehmen (Gamepass)")
 check(victim:FindFirstChild("LootHighlight") ~= nil, "Leiche mit Beute leuchtet kurz auf")
 check(prompt and string.find(prompt.ObjectText, "Zombie", 1, true) ~= nil, "Prompt zeigt, was drinsteckt: " .. tostring(prompt and prompt.ObjectText))
 step(6)
@@ -176,17 +180,42 @@ local function countItems(player)
 	end
 	return total
 end
+-- letztes Beute-Fenster, das der Server an den Spieler geschickt hat
+local function lastLoot(player)
+	for i = #SIM.RemoteLog, 1, -1 do
+		local entry = SIM.RemoteLog[i]
+		if entry.Remote == "ExtUpdate" and entry.Player == player and entry.Args[1] == "Loot" then
+			return entry.Args[2], i
+		end
+	end
+	return nil, 0
+end
 local lowTier = true
 local before = countItems(alice)
 -- zu weit weg: nichts passiert
 place(alice, Vector3.new(60, 3, -400))
+local _, logBefore = lastLoot(alice)
 prompt.Triggered:Fire(alice)
-check(countItems(alice) == before and prompt.Parent ~= nil, "zu weit weg: Leiche bleibt unberührt")
+local _, logAfter = lastLoot(alice)
+check(countItems(alice) == before and prompt.Parent ~= nil and logAfter == logBefore, "zu weit weg: Leiche bleibt unberührt")
 place(alice, Vector3.new(0, 3, -400))
 victim:PivotTo(CFrame.new(alice.Character.HumanoidRootPart.Position + Vector3.new(0, 0, -2)))
 prompt.Triggered:Fire(alice)
+local loot = lastLoot(alice)
+check(loot ~= nil and #loot.Items > 0 and countItems(alice) == before,
+	"E an der Leiche: Beute-Fenster mit dem Inhalt, noch nichts genommen")
+check(loot and loot.Title == "LEICHE · ZOMBIE", "Fenstertitel nennt die Leiche (" .. tostring(loot and loot.Title) .. ")")
+-- ohne Gamepass nicht alles auf einmal (F öffnet nur das Fenster)
+check(loot and LootService.Take(alice, loot.Id, "All") == false and countItems(alice) == before,
+	"ohne Gamepass ALLES LOOTEN: nicht alles auf einmal")
+victim.HumanoidRootPart.TakeAllPrompt.Triggered:Fire(alice)
+check(countItems(alice) == before, "F ohne Gamepass nimmt nichts")
+-- einzeln herausnehmen
+for _, entry in loot and loot.Items or {} do
+	LootService.Take(alice, loot.Id, entry.S)
+end
 local after = countItems(alice)
-check(after > before, "E an der Leiche: Beute direkt im Inventar (" .. before .. " -> " .. after .. ")")
+check(after > before, "einzeln herausgenommen: Beute im Inventar (" .. before .. " -> " .. after .. ")")
 local allowed = {}
 for _, entry in ExtinctionConfig.LootTables.Zombie do
 	allowed[entry.Id] = true
@@ -197,10 +226,12 @@ for _, entry in Inventory.Items(InventoryService.GetBag(alice)) do
 	end
 end
 check(lowTier, "nur Beute aus der Zombie-Tabelle (einfach)")
+check(victim.HumanoidRootPart:FindFirstChild("CorpsePrompt") == nil and victim:FindFirstChild("LootHighlight") == nil,
+	"leer geräumt: kein Prompt, kein Leuchten")
 step(2)
 check(victim.Parent == nil, "durchsuchte Leiche verschwindet")
 
--- Tasche voll: Beute bleibt in der Leiche, später nehmen
+-- Tasche voll: Beute bleibt in der Leiche, später nehmen (mit Gamepass alles auf einmal)
 ExtinctionConfig.ZombieKinds.Walker.Drop = 1
 local second = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -4))
 Damage.Apply(second, second.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
@@ -210,8 +241,10 @@ local saved = Inventory.Clear(fullBag)
 for slot = 1, fullBag.Size do
 	fullBag.Slots[slot] = { Id = "Pistol", Count = 1, Mag = 0 }
 end
+alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
 local corpsePrompt = second.HumanoidRootPart:FindFirstChild("CorpsePrompt")
-corpsePrompt.Triggered:Fire(alice)
+local takeAllPrompt = second.HumanoidRootPart:FindFirstChild("TakeAllPrompt")
+takeAllPrompt.Triggered:Fire(alice)
 check(corpsePrompt.Parent ~= nil and second.Parent ~= nil, "Tasche voll: Beute bleibt in der Leiche")
 local fullMessage = false
 for _, entry in SIM.RemoteLog do
@@ -221,9 +254,11 @@ for _, entry in SIM.RemoteLog do
 end
 check(fullMessage, "Meldung: Tasche voll")
 Inventory.Clear(fullBag)
-corpsePrompt.Triggered:Fire(alice)
+takeAllPrompt.Triggered:Fire(alice)
+check(countItems(alice) > 0, "mit Gamepass: F nimmt alles auf einmal")
 step(2)
 check(second.Parent == nil, "nach Platz schaffen: Beute genommen, Leiche weg")
+alice:SetAttribute("Pass_LootAll", nil)
 for _, item in saved do
 	Inventory.Add(fullBag, item.Id, item.Count, { Mag = item.Mag })
 end

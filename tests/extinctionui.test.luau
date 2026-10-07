@@ -406,32 +406,66 @@ bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 150)))
 step(5)
 check(not placeBanner.Visible, "Banner blendet wieder aus")
 
--- Tasche am Boden: durchsuchen, alles nehmen
+-- Tasche am Boden: durchsuchen, einzeln nehmen; ALLES NEHMEN (und F) nur mit dem Gamepass ALLES LOOTEN
 local id = LootService.Create(bob.Character.HumanoidRootPart.Position + Vector3.new(2, 0, 0),
 	{ { Id = "Bandage", Count = 2 }, { Id = "Ammo_9mm", Count = 15 } }, "Drop", "BEUTEL")
+step(0.1)
+local bagPart = LootService.Get(id).Part
+check(bagPart.TakeAllPrompt.Enabled == false, "ohne Gamepass kein F-Prompt (nur bei Bob)")
 LootService.Open(bob, id)
 step(0.3)
 check(windowGui.Enabled and string.find(texts(windowGui), "BEUTEL", 1, true) ~= nil, "Taschen-Fenster offen")
-local takeAll = nil
-for _, d in windowGui:GetDescendants() do
-	if d:IsA("TextLabel") and d.Text == "ALLES NEHMEN" then
-		takeAll = d:FindFirstAncestorWhichIsA("TextButton")
+local function takeAllButton()
+	for _, d in windowGui:GetDescendants() do
+		if d:IsA("TextLabel") and string.sub(d.Text, 1, 12) == "ALLES NEHMEN" then
+			return d:FindFirstAncestorWhichIsA("TextButton"), d.Text
+		end
+	end
+	return nil, nil
+end
+local takeAll, takeAllText = takeAllButton()
+check(takeAll ~= nil and takeAllText == "ALLES NEHMEN · GAMEPASS", "ohne Gamepass: Knopf führt zum Gamepass ("
+	.. tostring(takeAllText) .. ")")
+local logBefore = #SIM.RemoteLog
+if takeAll then
+	takeAll.Activated:Fire()
+end
+step(0.3)
+local sentAll = false
+for i = logBefore + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	if entry.Remote == "ExtAction" and entry.Args[1] == "Loot" and entry.Args[3] == "All" then
+		sentAll = true
 	end
 end
-check(takeAll ~= nil, "Knopf ALLES NEHMEN")
+check(not sentAll and LootService.Get(id) ~= nil, "ohne Gamepass: nichts auf einmal genommen")
+check(string.find(texts(hud), "ALLES LOOTEN", 1, true) ~= nil, "Hinweis auf den Gamepass")
+-- einzeln: Verband anklicken
+find(windowGui, "Loot1").Activated:Fire()
+step(0.3)
+local function bobHas(itemId, count)
+	for _, item in InventoryService.GetBag(bob).Slots do
+		if item.Id == itemId and item.Count == count then
+			return true
+		end
+	end
+	return false
+end
+check(bobHas("Bandage", 2) and LootService.Get(id) ~= nil, "einzeln genommen: Verbände in Bobs Tasche, Munition bleibt liegen")
+-- Gamepass gekauft: Knopf und F-Prompt gehen sofort
+bob:SetAttribute("Pass_LootAll", true)
+step(0.2)
+takeAll, takeAllText = takeAllButton()
+check(takeAllText == "ALLES NEHMEN" and bagPart.TakeAllPrompt.Enabled, "mit Gamepass: ALLES NEHMEN und F-Prompt")
+local ammoBefore = require("Inventory").Count(InventoryService.GetBag(bob), "Ammo_9mm")
 if takeAll then
 	takeAll.Activated:Fire()
 end
 step(0.5)
 check(LootService.Get(id) == nil, "Tasche leer genommen und weg")
 check(not windowGui.Enabled, "Fenster schließt, wenn die Tasche weg ist")
-local hasBandage = false
-for _, item in InventoryService.GetBag(bob).Slots do
-	if item.Id == "Bandage" and item.Count == 2 then
-		hasBandage = true
-	end
-end
-check(hasBandage, "Verbände in Bobs Tasche")
+check(require("Inventory").Count(InventoryService.GetBag(bob), "Ammo_9mm") == ammoBefore + 15, "Munition in Bobs Tasche")
+bob:SetAttribute("Pass_LootAll", nil)
 
 -- Lager: nur in der Nähe, anklicken legt hinüber
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(52, 3, -24)))
