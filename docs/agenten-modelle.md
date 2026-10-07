@@ -8,8 +8,9 @@ richtig zu benennen. Das Spiel benutzt es dann überall:
 - in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Hub (Aufstellung, Statue „Agent der Woche“,
   Vitrinen), Siegerpodest nach dem Match und das Agenten-Symbol im HUD.
 
-Solange es kein Modell gibt oder mit dem Modell etwas nicht stimmt, sieht der Agent aus wie bisher (Standardkörper
-mit Quader-Ausrüstung). Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
+Solange es kein Modell gibt oder mit dem Modell etwas nicht stimmt, hat der Agent den **Standard-Look**: den
+Roblox-Körper mit dem Roblox-Gesicht in seinen Farben (Kopf in Hautfarbe, Oberkörper und Arme in der Agentenfarbe,
+Beine dunkler). Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
 
 **Der empfohlene Weg:** Du machst aus deinem Modell in Studio mit dem **Avatar-Setup** einen fertigen
 Roblox-Charakter (R15) und legst diesen Charakter in den Ordner der Agenten. Blender, Marker oder besondere
@@ -98,7 +99,6 @@ Spiel beim Laden:
   oder die Textur eines MeshParts). Gesichter als Decal am Kopf bleiben auch. Klassische Kleidung (Shirt- und
   Pants-Objekte) wird **nicht** übernommen: Kleidung gehört in das Modell bzw. seine Textur.
 - **Farben des Agenten:** Ein Charakter-Modell wird nicht umgefärbt. Es sieht immer so aus, wie du es gebaut hast.
-  Für Skins siehe [Textur-Skins](#textur-skins).
 
 ## Häufige Probleme
 
@@ -118,47 +118,12 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | `… lässt sich nicht kopieren (Archivable ist aus)` | Teil anklicken, in den Properties **Archivable** anhaken. |
 | `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
-| `… als Viper: Quader-Ausrüstung (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
-| Im Spiel steht der normale Körper da – mit Roblox-Gesicht, ohne Modell und ohne Ausrüstung | Das Einkleiden ist nicht gelaufen, oder Roblox hat danach Körperteile ausgetauscht. Der Server prüft das laufend: nach dem Spawn mehrmals, danach alle 5 Sekunden. Er zieht dann neu an, im Output steht `Aussehen verändert (…) – neu angezogen` mit dem Grund in Klammern. Bleibt der Körper so, im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. |
+| `… als Viper: Standard-Look (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
+| Im Spiel steht der Standard-Look da (Roblox-Körper mit Gesicht), obwohl es ein Modell gibt | Das Einkleiden ist nicht gelaufen, oder Roblox hat danach Körperteile ausgetauscht. Der Server prüft das laufend: nach dem Spawn mehrmals, danach alle 5 Sekunden. Er zieht dann neu an, im Output steht `Aussehen verändert (…) – neu angezogen` mit dem Grund in Klammern. Bleibt der Körper so, im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. |
 | `… als Viper: Ausrüstung aus dem Modell`, und der Spielkörper ist unter dem Modell zu sehen | Das Modell hat keinen Humanoid und deckt nicht Kopf, Rumpf, Arme und Beine ab. Deshalb gilt es nur als Ausrüstung auf dem sichtbaren Körper. Entweder mit dem Avatar-Setup zu einem R15-Rig machen (empfohlen, siehe oben) oder für jedes Körperteil ein Teil `<Körperteil>_<Name>` bauen (siehe [alte Methode](#fortgeschritten-nur-ausrüstung-alte-methode)). |
 | Man sieht durch den Charakter durch (z.B. neben der Weste oder am Hals fehlt der Körper) | Dort hat das Modell nichts: keine Ausrüstung und keinen eigenen Körper, oder der Körper ist unsichtbar (Transparency 1). Den Körper im Modell lassen (Teile, die genau wie die Körperteile heißen) bzw. sichtbar machen. Er wird bei einem ganzen Charakter mit angezeigt. |
 | Spielkörper und Modell liegen übereinander (der schmale Körper in Agentenfarben schaut durch das Modell) | Der Spielkörper ist die unsichtbare Trefferzone. Macht ihn etwas wieder sichtbar (Roblox beim Laden des Aussehens oder ein Skript), blendet der Server ihn sofort wieder aus. Im Output steht dann einmal `… wieder sichtbar gemacht – sofort wieder ausgeblendet`. Siehst du ihn trotzdem, alle Output-Zeilen mit `[Agentenmodelle]` an die Projektleitung schicken. |
-| `Modell konnte nicht angezogen werden (…) – Quader-Ausrüstung` | Beim Anziehen ist ein Fehler passiert, der Agent trägt deshalb die Quader-Ausrüstung. Die Meldung in Klammern an die Projektleitung schicken. |
-
-## Textur-Skins
-
-Die Texturen deines Modells bleiben im Spiel, wie sie sind. Ein Agenten-Skin (episch, legendär) kann zusätzlich
-eigene Texturen bekommen:
-
-1. Rechtsklick auf dein Modell (z.B. `Viper`) › **Insert Object** › **Folder**, den Ordner `Skins` nennen. Er muss
-   direkt im Modell liegen.
-2. In `Skins` je Skin einen Ordner anlegen, benannt mit der **Skin-Id** (Tabelle unten), z.B. `A_Viper_Nacht`.
-3. In diesen Ordner je Teil eine **SurfaceAppearance** legen (Rechtsklick › Insert Object › SurfaceAppearance),
-   **genau benannt wie das Teil**, das sie bekommen soll, z.B. `UpperTorso`, `Head` oder `LeftUpperLeg`. Die Bilder
-   (ColorMap, NormalMap, RoughnessMap, MetalnessMap) in den Properties setzen.
-
-Im Spiel ersetzt diese SurfaceAppearance dann die Textur des Teils, solange der Skin ausgerüstet ist. Teile ohne
-eigene SurfaceAppearance im Skin-Ordner behalten ihre normale Textur.
-
-- **Accessoires:** Die Teile in Accessoires heißen oft alle `Handle`. Eine SurfaceAppearance `Handle` bekämen dann
-  alle. Willst du einem Accessoire eine eigene Skin-Textur geben, das Teil vorher eindeutig umbenennen (z.B.
-  `Haare`, `Helm`) und die SurfaceAppearance genauso nennen.
-- **Namen genau prüfen:** Bei einem Charakter-Modell meldet das Spiel keinen Tippfehler im Namen einer
-  SurfaceAppearance. Heißt sie anders als das Teil, bleibt einfach die normale Textur.
-- **Skins ohne eigenen Ordner:** Sie färben ein Charakter-Modell nicht um. Der Agent sieht mit so einem Skin genauso
-  aus wie ohne. Soll jeder Skin anders aussehen, für jeden Skin einen Ordner anlegen.
-
-| Agent | Skin-Ids (`src/shared/Cosmetics.lua`) |
-|---|---|
-| `Viper` | `A_Viper_Nacht`, `A_Viper_Gift`, `A_Viper_Saison` |
-| `Bastion` | `A_Bastion_Stahl`, `A_Bastion_Royal` |
-| `Mender` | `A_Mender_Feld`, `A_Mender_Neon` |
-| `Hawk` | `A_Hawk_Wueste`, `A_Hawk_Phantom` |
-| `Ghost` | `A_Ghost_Schatten`, `A_Ghost_Nebel` |
-| `Blaze` | `A_Blaze_Inferno`, `A_Blaze_Asche` |
-| `Aegis` | `A_Aegis_Bollwerk`, `A_Aegis_Sanitaet` |
-| `Trapper` | `A_Trapper_Wildnis`, `A_Trapper_Jaeger` |
-| `Volt` | `A_Volt_Hochspannung`, `A_Volt_Kupfer` |
+| `Modell konnte nicht angezogen werden (…) – Standard-Look` | Beim Anziehen ist ein Fehler passiert, der Agent hat deshalb den Standard-Look. Die Meldung in Klammern an die Projektleitung schicken. |
 
 ## Liste der Agenten
 
@@ -186,7 +151,7 @@ Die Farbe ist die Erkennungsfarbe des Agenten. Es hilft, wenn sie im Modell gut 
   (**Add file** › **Upload files**). Das Spiel lädt die Modelle weiter aus dem Place, die Kopie ist nur für die
   Prüfung.
 - **Was GitHub dann bei jedem Push prüft** (Test `agentassets`): Das Modell lädt ohne Fehler (bei einem Charakter:
-  alle 15 Körperteile da), die Ordner in `Skins` heißen wie echte Skins dieses Agenten, und an einem Testkörper
+  alle 15 Körperteile da), und an einem Testkörper
   hängt jedes Teil des Modells angeschweißt an einem Körperteil und zählt nie als Treffer. Hinweise (z.B. zu viele
   Teile) stehen als `HINWEIS` im Log, sie lassen die Prüfung nicht scheitern.
 - **Lokal** (für Entwickler): `python3 tests/run.py` (siehe README).
@@ -215,7 +180,8 @@ Füße ganz (weder Ausrüstung noch Körper), bleibt dort der Standardkörper zu
 
 1. Vorlage öffnen: Blender › Datei › Importieren › Wavefront (.obj) › `art/templates/Agents/Agent.obj`
    (Einstellungen aus [3d-richtlinien.md](3d-richtlinien.md), Abschnitt 2). Darin: der Spielkörper (15 Teile, die
-   wie die Körperteile heißen), die heutige Quader-Ausrüstung schon richtig benannt und der Marker `Point_Root`
+   wie die Körperteile heißen), eine Beispiel-Ausrüstung (Kapuze, Visier, Maske, Weste, Polster, Gürtel) schon richtig
+   benannt und der Marker `Point_Root`
    (Boden zwischen den Füßen, auf 0/0/0). Ohne Blender zum Ausprobieren: `art/templates/Agents/Agent.rbxmx` per
    **File** › **Insert from File…** in Studio einfügen, umbenennen, nach Assets › Agents legen.
 2. Um den Körper herum modellieren, in seiner Ruhelage (Arme hängen). Den Körper nicht verändern.
@@ -232,7 +198,7 @@ Füße ganz (weder Ausrüstung noch Körper), bleibt dort der Standardkörper zu
 
 | Wort | Bedeutung |
 |---|---|
-| `Primary` | Farbzone Uniform: bekommt die Uniformfarbe des Agenten bzw. Skins |
+| `Primary` | Farbzone Uniform: bekommt die Uniformfarbe des Agenten |
 | `Accent` | Farbzone Akzent: bekommt die zweite Farbe |
 | `Glass` | getöntes Visier |
 | `Neon` | leuchtet (weiß importiert: in der Akzentfarbe) |
@@ -251,8 +217,7 @@ Mitte, die Beine 0,375.
 **Regeln:** Eng am Körper bauen (höchstens 0,25 Studs Abstand, Helm 0,3; ab 0,45 kommt ein Hinweis, liegt die Mitte
 eines Teils mehr als 0,75 neben seinem Körperteil, lädt das Modell nicht). Nichts über ein Gelenk hinweg (Weste nur am
 `UpperTorso`, Gürtel extra am `LowerTorso`). Arme und Hände frei lassen. Höchstens 12 Teile (sonst Hinweis), ein
-Material pro Teil, eine Textur 1024 × 1024. Textur-Skins wie oben, die SurfaceAppearances heißen dann wie die
-Ausrüstungsteile (z.B. `Skins` › `A_Bastion_Royal` › `UpperTorso_Vest_Accent`). Für Farbzonen mit Textur
+Material pro Teil, eine Textur 1024 × 1024. Für Farbzonen mit Textur
 **AlphaMode = Overlay** benutzen (umfärbbare Flächen in der ColorMap durchsichtig).
 
 **Meldungen der alten Methode**
@@ -269,10 +234,9 @@ Ausrüstungsteile (z.B. `Skins` › `A_Bastion_Royal` › `UpperTorso_Vest_Accen
 | `… Ausrüstungsteile – höchstens 12` | Teile am selben Körperteil ohne eigene Farbzone zusammenfügen |
 | `Körperteil … ist … groß, im Spiel …` | den schlanken Körper aus der Vorlage benutzen, nicht den Roblox-Standard |
 | `Unbekannter Marker …` | Tippfehler im Namen (z.B. `Point_Rot`) |
-| `Skins/…/…: kein Teil mit diesem Namen` | SurfaceAppearance im Skin-Ordner genau wie das Teil benennen |
 
-**Vorlage neu erzeugen** (wenn sich der Spielkörper `AgentModels.Body` oder die Quader-Ausrüstung in `AgentBody`
-ändert): `python3 tools/agent_templates.py`. Das schreibt `art/templates/Agents/Agent.obj`, `.mtl` und `.rbxmx`;
+**Vorlage neu erzeugen** (wenn sich der Spielkörper `AgentModels.Body` oder die Beispiel-Ausrüstung in
+`tools/agent_templates.luau` ändert): `python3 tools/agent_templates.py`. Das schreibt `art/templates/Agents/Agent.obj`, `.mtl` und `.rbxmx`;
 der Test `agentmodels` prüft, dass die Vorlage selbst ein gültiges Modell ist.
 
 **Für Entwickler:** Der Lader mit allen Prüfungen steht in `src/shared/AgentModels.lua`, angezogen wird in

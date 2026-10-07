@@ -4,13 +4,13 @@
 Inhalt (1 Einheit = 1 Stud, oben +Y, vorne -Z wie in Roblox, Boden bei y = 0):
 - der Agenten-Körper aus dem Spiel in Ruhelage (src/shared/AgentModels.lua): 15 Teile, die genau wie die
   R15-Körperteile heißen (Head, UpperTorso, ...). Er bleibt im Modell: Das Spiel richtet die Ausrüstung an ihm aus.
-- die heutige Quader-Ausrüstung (src/server-shared/AgentBody.lua), schon nach der Spezifikation benannt
-  (docs/agenten-modelle.md), z.B. Head_Visor_Glass, UpperTorso_Vest_Accent.
+- eine Beispiel-Ausrüstung (Kapuze, Visier, Maske, Weste, Schulterpolster, Gürtel; tools/agent_templates.luau),
+  schon nach der Spezifikation benannt (docs/agenten-modelle.md), z.B. Head_Visor_Glass, UpperTorso_Vest_Accent.
 - Marker Point_Root auf 0/0/0 (Boden zwischen den Füßen) und Ref_Ground (Boden, nur Maßstab).
 Blender: Datei > Import > Wavefront (.obj). Studio: Datei > Insert from File... (.rbxmx) – nach ReplicatedStorage >
 Assets > Agents gelegt und wie ein Agent benannt (z.B. Viper), verhält sie sich genau wie ein fertiges Modell.
 
-Neu erzeugen (z.B. nach Änderungen an AgentModels.Body oder an der Quader-Ausrüstung):
+Neu erzeugen (z.B. nach Änderungen an AgentModels.Body oder an der Beispiel-Ausrüstung):
     python3 tools/agent_templates.py [--luau PFAD]
 Gebraucht wird der Luau-Interpreter wie für die Tests.
 """
@@ -68,7 +68,7 @@ def main():
     write_obj(OUT, NAME, parts, [
         "Vorlage Agent - 1 Einheit = 1 Stud, oben +Y, vorne -Z (Roblox), Boden y = 0, Point_Root = Boden zwischen den Füßen.",
         "Head, UpperTorso, ... = der Agenten-Körper aus dem Spiel (im Modell lassen, das Spiel richtet sich danach).",
-        "<Körperteil>_<Name> = Ausrüstung (heute: Quader), Ref_Ground nur Maßstab. Spezifikation: docs/agenten-modelle.md"])
+        "<Körperteil>_<Name> = Ausrüstung (Beispiel), Ref_Ground nur Maßstab. Spezifikation: docs/agenten-modelle.md"])
     write_rbxmx(NAME, parts, OUT)
     body = sum(1 for p in parts if "_" not in p["name"])
     print("%s: %d Körperteile, %d Ausrüstungsteile -> art/templates/Agents/%s.obj/.mtl/.rbxmx"

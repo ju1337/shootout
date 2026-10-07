@@ -496,8 +496,9 @@ end
 -- dauern – während dieser Zeit konnte ein Bot schon entfernt, neu gespawnt oder die Runde vorbei sein,
 -- und dann blieb ein zweites ("verwaistes") Modell in der Welt stehen. Deshalb wird jeder Agent nur
 -- einmal gebaut und danach geklont: Klonen wartet nicht.
--- Bots sehen aus wie Spieler mit diesem Agenten (ohne Skin): derselbe Körper (AgentBody), dieselbe Ausrüstung,
--- dieselben Trefferzonen. Das Team erkennt man wie bei Spielern am Namensschild (nur fürs eigene Team).
+-- Bots sehen aus wie Spieler mit diesem Agenten: derselbe Körper (AgentBody) im Standard-Look bzw. mit dem 3D-Modell
+-- des Agenten, wenn es eins gibt, dieselben Trefferzonen. Das Team erkennt man wie bei Spielern am Namensschild (nur
+-- fürs eigene Team).
 local SPAWN_RETRY = 3 -- Sekunden bis zum nächsten Versuch, wenn ein Körper nicht gebaut werden konnte
 local templates = {}  -- [Agent-Id] = Modell (außerhalb des Workspace)
 local building = {}   -- [Agent-Id] = true, solange die Vorlage gebaut wird

@@ -106,12 +106,6 @@ local function buildRig(name, skip)
 end
 
 local viperRig = buildRig("Viper")
-local skins = Instance.new("Folder", viperRig)
-skins.Name = "Skins"
-local skinFolder = Instance.new("Folder", skins)
-skinFolder.Name = "A_Viper_Nacht"
-Instance.new("SurfaceAppearance", skinFolder).Name = "UpperTorso"
-Instance.new("SurfaceAppearance", skinFolder).Name = "UperTorso" -- Tippfehler
 viperRig.Parent = folder
 buildRig("Bastion", "LeftHand").Parent = folder -- unvollständig
 SIM.Advance(0.1) -- geladen wird am Ende des Moments
@@ -125,11 +119,6 @@ for _, text in report.Viper and report.Viper.Warnings or {} do
 	warned = warned or string.find(text, "skaliert", 1, true) ~= nil
 end
 check(warned, "Hinweis: Modell skaliert (doppelt so groß)")
-local typo = false
-for _, text in report.Viper and report.Viper.Warnings or {} do
-	typo = typo or string.find(text, "UperTorso", 1, true) ~= nil
-end
-check(typo, "Hinweis: Textur-Skin mit falschem Teilnamen")
 check(report.Bastion and not report.Bastion.Loaded and not AgentModels.HasAsset("Bastion")
 	and string.find(table.concat(report.Bastion.Errors, " "), "LeftHand", 1, true) ~= nil, "fehlendes Körperteil gemeldet")
 
@@ -145,7 +134,7 @@ for _, partName in AgentModels.BodyParts do
 	p.Parent = body
 	bodyParts[partName] = p
 end
-local created = AgentModels.Attach(body, bodyParts, "Viper", Color3.new(0, 0, 0), Color3.new(1, 1, 1), nil, true)
+local created = AgentModels.Attach(body, bodyParts, "Viper", Color3.new(0, 0, 0), Color3.new(1, 1, 1), true)
 check(created ~= nil and #created == 16, "15 Körperteile + Kappe angehängt (" .. tostring(created and #created) .. ")")
 local byName = {}
 local holder = body:FindFirstChild(AgentModels.ModelName)
@@ -288,7 +277,7 @@ face.Name = "face"
 face.Parent = character.Head
 check(face.Transparency == 1, "neues Gesicht sofort unsichtbar")
 step(0.1)
-check(character.Head:FindFirstChildWhichIsA("Decal") == nil, "neues Gesicht entfernt")
+check(face.Transparency == 1 and AgentBody.IsDressed(character, "Viper"), "Gesicht bleibt unsichtbar")
 
 -- Roblox tauscht ein Körperteil aus (wie auf dem Screenshot: neuer Kopf mit Roblox-Gesicht): das neue kommt sichtbar
 -- dazu (kurz gibt es den Namen doppelt), das alte geht – angezogen wird das neue, das Modell hängt daran
@@ -303,8 +292,8 @@ step(0.1)
 check(newHead.Transparency == 1 and oldHead.Transparency == 1, "doppelter Kopf: beide unsichtbar")
 oldHead:Destroy()
 step(0.1)
-check(newHead.Transparency == 1 and newHead:FindFirstChildWhichIsA("Decal") == nil
-	and AgentBody.IsDressed(character, "Viper"), "ausgetauschter Kopf: ohne Gesicht neu angezogen")
+check(newHead.Transparency == 1 and newHead:FindFirstChildWhichIsA("Decal").Transparency == 1
+	and AgentBody.IsDressed(character, "Viper"), "ausgetauschter Kopf: unsichtbar samt Gesicht, neu angezogen")
 local onNewHead = false
 for _, p in character:GetDescendants() do
 	local weld = p:IsA("BasePart") and p:GetAttribute("AgentGear") and p:FindFirstChildOfClass("WeldConstraint")
@@ -325,20 +314,21 @@ check(not AgentBody.IsDressed(character, "Viper"), "verlorenes Modellteil erkann
 step(6)
 check(AgentBody.IsDressed(character, "Viper"), "regelmäßige Kontrolle: wieder angezogen")
 
--- Modell während des Spiels entfernt: Quader-Ausrüstung, Körper sichtbar
+-- Modell während des Spiels entfernt: Standard-Look, Körper samt Gesicht sichtbar
 folder.Viper:Destroy()
 step(0.3)
 clones, visible = state()
-check(not AgentModels.HasAsset("Viper") and clones == 0 and visible > 0 and character:FindFirstChild("AgentVisor") ~= nil
-	and character:GetAttribute("AgentLook") == "Quader", "Modell entfernt: sofort wieder Quader-Ausrüstung")
+local headFace = character.Head:FindFirstChildWhichIsA("Decal")
+check(not AgentModels.HasAsset("Viper") and clones == 0 and visible > 0 and headFace ~= nil and headFace.Transparency == 0
+	and character:GetAttribute("AgentLook") == "Standard", "Modell entfernt: sofort wieder Standard-Look mit Gesicht")
 -- … und wieder eingefügt (z.B. in Studio während des Spiels): sofort der ganze Charakter
 buildRig("Viper").Parent = folder
 step(0.3)
 clones, visible = state()
-check(AgentModels.IsCharacter("Viper") and clones > 0 and visible == 0 and character:FindFirstChild("AgentVisor") == nil,
+check(AgentModels.IsCharacter("Viper") and clones > 0 and visible == 0 and character:GetAttribute("AgentLook") == "Charakter",
 	"Modell eingefügt: sofort als ganzer Charakter angezogen")
 
--- Wirft das Anziehen mit dem Modell einen Fehler, trägt der Agent die Quader-Ausrüstung (nie ohne Look)
+-- Wirft das Anziehen mit dem Modell einen Fehler, bleibt der Standard-Look (nie halb angezogen)
 local attach = AgentModels.Attach
 AgentModels.Attach = function()
 	error("kaputt")
@@ -348,7 +338,7 @@ AgentBody.Dress(character, Color3.new(0, 0, 0), Color3.new(1, 1, 1), "Viper")
 SIM.Quiet = false
 AgentModels.Attach = attach
 clones, visible = state()
-check(clones == 0 and visible > 0 and character:FindFirstChild("AgentVisor") ~= nil, "Fehler im Modell: Quader-Ausrüstung")
+check(clones == 0 and visible > 0 and character:GetAttribute("AgentLook") == "Standard", "Fehler im Modell: Standard-Look")
 
 if failures == 0 then
 	print("Ganzer Charakter: alles in Ordnung")

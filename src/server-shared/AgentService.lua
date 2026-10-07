@@ -32,8 +32,8 @@ local function getAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 end
 
--- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper in Agentenfarben bzw. Skin mit der Ausrüstung
--- des Agenten (3D-Modell aus Assets.Agents oder Quader), ohne eigenen Avatar (AgentBody)
+-- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper im Roblox-Standard-Look in den Agentenfarben bzw.
+-- das 3D-Modell des Agenten aus Assets.Agents, ohne eigenen Avatar (AgentBody)
 local function applyUniform(player, character, agent)
 	-- nur den aktuellen Charakter (CharacterAdded kommt in Roblox schon, bevor er im Workspace ist – anziehen
 	-- geht trotzdem)
@@ -42,8 +42,7 @@ local function applyUniform(player, character, agent)
 	end
 	local ok, err = pcall(function()
 		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-		local skin = Cosmetics.AgentSkin(player, agent.Id)
-		AgentBody.Dress(character, primary, accent, agent.Id, skin and skin.Id)
+		AgentBody.Dress(character, primary, accent, agent.Id)
 	end)
 	if not ok then
 		warn("[Agentenmodelle] " .. player.Name .. " konnte nicht als " .. tostring(agent.Id) .. " angezogen werden: "
@@ -493,7 +492,7 @@ local function setupPlayer(player)
 		end
 		applyUniform(player, character, dressedAgent(player, character))
 	end)
-	-- Im Hub und im Markt sieht man einen Agenten- oder Skin-Wechsel sofort (im Match erst beim nächsten Spawn)
+	-- Im Hub und im Markt sieht man einen Agentenwechsel sofort (im Match erst beim nächsten Spawn)
 	local function redress()
 		local character = player.Character
 		if character and Modes.IsSocial(player:GetAttribute("Mode")) then
@@ -501,7 +500,6 @@ local function setupPlayer(player)
 		end
 	end
 	player:GetAttributeChangedSignal("Agent"):Connect(redress)
-	player:GetAttributeChangedSignal("Equipped"):Connect(redress)
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
 	end

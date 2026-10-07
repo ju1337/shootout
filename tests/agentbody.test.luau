@@ -1,9 +1,9 @@
 --!expose BotService rigTemplate
 --!expose WeaponService validClaim
--- Agenten-Körper (bis die Agenten-Modelle aus Blender da sind): Spieler spawnen überall als Agent mit derselben
--- Körper-Beschreibung wie Bots (gleiche Trefferzonen), der eigene Avatar (Kleidung, Accessoires, Gesicht) ist weg,
--- Ausrüstung in Agentenfarben bzw. Skin. Accessoires und Ausrüstung sind nie Trefferzone – auch später angehängte,
--- auch nicht über einen vom Client gemeldeten Treffer.
+-- Agenten-Körper: Spieler spawnen überall als Agent mit derselben Körper-Beschreibung wie Bots (gleiche Trefferzonen),
+-- der eigene Avatar (Kleidung, Accessoires) ist weg. Ohne 3D-Modell: Roblox-Standard-Look in den Agentenfarben (Gesicht
+-- bleibt, keine Quader-Ausrüstung). Accessoires sind nie Trefferzone – auch später angehängte, auch nicht über einen
+-- vom Client gemeldeten Treffer.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -17,7 +17,6 @@ end
 
 game.JobId = "server-1"
 SIM.DataStore("PlayerData_v1")
-local HttpService = game:GetService("HttpService")
 local AgentConfig = require("AgentConfig")
 local Cosmetics = require("Cosmetics")
 local AgentBody = require("AgentBody")
@@ -74,82 +73,41 @@ check(avatar.Head.CanQuery == true and avatar.UpperTorso.CanQuery == true, "Kör
 local _, wingHandle = accessory(avatar, "Wings")
 check(wingHandle.CanQuery == false, "später angehängte Flügel sind auch nicht treffbar")
 
--- ---------- Anziehen: Avatar weg, Ausrüstung dran, Farben ----------
+-- ---------- Anziehen: Avatar weg, Roblox-Standard-Look in den Agentenfarben ----------
 local shirt = Instance.new("Shirt", avatar)
 local face = Instance.new("Decal", avatar.Head)
 face.Name = "face"
 AgentBody.Dress(avatar, primary, accent)
-check(hat.Parent == nil and shirt.Parent == nil and face.Parent == nil, "Accessoires, Kleidung und Gesicht entfernt")
+check(hat.Parent == nil and shirt.Parent == nil, "Accessoires und Kleidung des eigenen Avatars entfernt")
 check(avatar:FindFirstChildOfClass("Accessory") == nil, "keine Accessoires mehr")
-for _, name in AgentBody.GearNames do
-	local gear = avatar:FindFirstChild(name)
-	check(gear ~= nil, "Ausrüstung " .. name)
-	if gear then
-		check(gear.CanQuery == false and gear.CanCollide == false and gear.CanTouch == false and gear.Massless == true,
-			name .. ": kein Teil der Trefferzone, ohne Kollision und Gewicht")
-		local weld = gear:FindFirstChildOfClass("WeldConstraint")
-		check(weld ~= nil and weld.Part1 == gear and weld.Part0 ~= nil and weld.Part0.Parent == avatar,
-			name .. ": am Körperteil festgeschweißt")
+check(face.Parent == avatar.Head and face.Transparency == 0, "Roblox-Gesicht bleibt")
+check(avatar:GetAttribute("AgentLook") == "Standard", "Standard-Look (kein Modell)")
+local gearCount = 0
+for _, child in avatar:GetDescendants() do
+	if child:GetAttribute("AgentGear") then
+		gearCount += 1
 	end
 end
-check(avatar.AgentVest.Color == accent and avatar.AgentHoodTop.Color == primary
-	and avatar.AgentVisor.Color == AgentBody.VisorColor(accent), "Ausrüstung in Agentenfarben")
-check(avatar.AgentVisor.Material == Enum.Material.SmoothPlastic and avatar.AgentVisor.Reflectance > 0,
-	"Visier dunkel und glänzend (kein Glas, das im Hub hell wirkt)")
+check(gearCount == 0, "keine Ausrüstung (keine Quader mehr)")
 local colors = avatar:FindFirstChildOfClass("BodyColors")
-check(colors ~= nil and colors.TorsoColor3 == primary and colors.HeadColor3 == AgentBody.SkinColor, "Körperfarben")
--- Lage: Visier über den Augen (etwas über der Kopfmitte), Maske über Mund und Kinn, beide vorne im Gesicht;
--- Kapuze als offener Rahmen (oben, hinten, seitlich), vorne frei; Weste am Oberkörper
-local head = avatar.Head
-local function headLocal(part)
-	return head.CFrame:PointToObjectSpace(part.Position)
+check(colors ~= nil and colors.TorsoColor3 == primary and colors.LeftArmColor3 == primary
+	and colors.HeadColor3 == AgentBody.SkinColor and colors.LeftLegColor3 == AgentBody.PantsColor(primary),
+	"Körperfarben: Haut, Uniform, Hose")
+for _, name in { "Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm" } do
+	check(avatar[name].Transparency == 0, name .. ": sichtbar")
 end
-local visorLocal, maskLocal = headLocal(avatar.AgentVisor), headLocal(avatar.AgentMask)
--- Augen des Standard-Kopfs liegen etwa 0,2 bis 0,25 Kopfhöhen über der Mitte: das Visier muss sie abdecken
-local visorTop = visorLocal.Y + avatar.AgentVisor.Size.Y / 2
-local visorBottom = visorLocal.Y - avatar.AgentVisor.Size.Y / 2
-check(visorLocal.Z < -head.Size.Z * 0.45 and visorTop >= head.Size.Y * 0.25 and visorBottom <= head.Size.Y * 0.15,
-	string.format("Visier vorne über den Augen (%.2f bis %.2f Kopfhöhen)", visorBottom / head.Size.Y, visorTop / head.Size.Y))
-check(maskLocal.Z < -head.Size.Z * 0.45 and maskLocal.Y < 0 and maskLocal.Y - avatar.AgentMask.Size.Y / 2 > -head.Size.Y / 2,
-	"Maske unten im Gesicht, nicht unter dem Kinn")
-check(visorLocal.Y - avatar.AgentVisor.Size.Y / 2 > maskLocal.Y + avatar.AgentMask.Size.Y / 2 - 0.05,
-	"Visier und Maske überdecken sich nicht")
-check(headLocal(avatar.AgentHoodTop).Y > head.Size.Y / 2 and headLocal(avatar.AgentHoodBack).Z > head.Size.Z / 2
-	and headLocal(avatar.AgentHoodLeft).X < -head.Size.X / 2 and headLocal(avatar.AgentHoodRight).X > head.Size.X / 2,
-	"Kapuze oben, hinten und seitlich um den Kopf")
-for _, name in { "AgentHoodTop", "AgentHoodBack", "AgentHoodLeft", "AgentHoodRight" } do
-	local part = avatar[name]
-	local front = headLocal(part).Z - part.Size.Z / 2
-	check(front > -head.Size.Z / 2 - 0.05, name .. ": Gesicht bleibt frei (nichts vor dem Gesicht)")
-end
-check((avatar.AgentVest.Position - avatar.UpperTorso.Position).Magnitude < 0.5, "Weste am Oberkörper")
--- Gesicht: auch ein später angehängtes Decal (Roblox lädt das Aussehen teils nach) verschwindet
-local lateFace = Instance.new("Decal")
-lateFace.Name = "face"
-lateFace.Parent = head
-step(0.1)
-check(lateFace.Parent == nil and head:FindFirstChildOfClass("Decal") == nil, "nachträglich angehängtes Gesicht entfernt")
--- nochmal anziehen (anderer Skin): nichts doppelt, nur umgefärbt
-local accent2 = Color3.fromRGB(200, 40, 40)
-AgentBody.Dress(avatar, primary, accent2)
-local vests = 0
-for _, child in avatar:GetChildren() do
-	if child.Name == "AgentVest" then
-		vests += 1
-	end
-end
-check(vests == 1 and avatar.AgentVest.Color == accent2, "erneutes Anziehen: nichts doppelt, neue Farbe")
--- Wird der Kopf größer (z.B. Skalierung nach dem Laden), passt sich die Ausrüstung beim nächsten Anziehen an
-head.Size = head.Size * 1.25
-AgentBody.Dress(avatar, primary, accent2)
-check(math.abs(avatar.AgentVisor.Size.X - head.Size.X * 0.94) < 1e-6, "Ausrüstung an neue Kopfgröße angepasst")
-local weldCount = 0
-for _, child in avatar.AgentVisor:GetChildren() do
-	if child:IsA("WeldConstraint") then
-		weldCount += 1
-	end
-end
-check(weldCount == 1, "genau eine Schweißnaht pro Ausrüstungsteil")
+-- Ausrüstung von früher (z.B. Quader einer älteren Version) verschwindet beim Anziehen
+local leftover = Instance.new("Part")
+leftover.Name = "AgentVest"
+leftover:SetAttribute("AgentGear", true)
+leftover.Parent = avatar
+AgentBody.Dress(avatar, primary, accent)
+check(leftover.Parent == nil, "alte Ausrüstung entfernt")
+-- War vorher ein ganzer Charakter angezogen (Kopf und Gesicht unsichtbar), ist beides danach wieder da
+face.Transparency = 1
+avatar.Head.Transparency = 1
+AgentBody.Dress(avatar, primary, accent)
+check(face.Transparency == 0 and avatar.Head.Transparency == 0, "Kopf und Gesicht wieder sichtbar")
 
 -- ---------- Gemeldete Treffer: nur Körperteile ----------
 local WeaponService = require("WeaponService")
@@ -172,7 +130,6 @@ local function claim(part)
 end
 check(claim(target.Head) == target.Head, "Kopftreffer zählt")
 check(claim(lateHandle) == nil, "Treffer auf ein Accessoire zählt nicht")
-check(claim(target.AgentHoodTop) == nil and claim(target.AgentVest) == nil, "Treffer auf die Ausrüstung zählt nicht")
 shooter:Destroy()
 target:Destroy()
 avatar:Destroy()
@@ -188,28 +145,29 @@ alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
 local loaded = character and SIM.DescriptionOf[character]
-local vPrimary, vAccent = Cosmetics.AgentColors(alice, "Viper")
+local vPrimary = Cosmetics.AgentColors(alice, "Viper")
 check(loaded ~= nil, "Spieler mit Agenten-Körper geladen (nicht mit dem eigenen Avatar)")
 check(loaded and loaded.TorsoColor == vPrimary and loaded.WidthScale == AgentConfig.BodyScale.Width,
 	"Körper in Viper-Farben, schlank")
-check(character and character:FindFirstChild("AgentVisor") and character.AgentVest.Color == vAccent,
-	"Ausrüstung auch im Hub (Agent überall)")
+check(character and character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild("AgentVest") == nil,
+	"Standard-Look auch im Hub (Agent überall), ohne Quader")
+check(character and character.Head:FindFirstChildOfClass("Decal") ~= nil, "mit Roblox-Gesicht")
 
--- Skin-Wechsel im Hub: sofort sichtbar
-local skin = Cosmetics.Get("A_Viper_Nacht")
-alice:SetAttribute("Owned", HttpService:JSONEncode({ A_Viper_Nacht = 1 }))
-alice:SetAttribute("Equipped", HttpService:JSONEncode({ ["A:Viper"] = "A_Viper_Nacht" }))
+-- Agentenwechsel im Hub: sofort in den neuen Farben
+alice:SetAttribute("Agent", "Bastion")
 step(0.1)
-check(character.AgentVest.Color == skin.Accent and character.AgentHoodTop.Color == skin.Primary,
-	"Skin im Hub sofort angezogen")
+local bPrimary = Cosmetics.AgentColors(alice, "Bastion")
+check(character.BodyColors.TorsoColor3 == bPrimary and character:GetAttribute("AgentLookOf") == "Bastion",
+	"Agentenwechsel im Hub sofort")
 -- Im Match erst beim nächsten Spawn
 alice:SetAttribute("Mode", "FreeForAll")
-alice:SetAttribute("Equipped", HttpService:JSONEncode({}))
+alice:SetAttribute("Agent", "Viper")
 step(0.1)
-check(character.AgentVest.Color == skin.Accent, "im Match ändert sich der Look erst beim nächsten Spawn")
+check(character:GetAttribute("AgentLookOf") == "Bastion", "im Match ändert sich der Look erst beim nächsten Spawn")
 character = SpawnUtil.Spawn(alice, CFrame.new(0, 5, 0))
 step(0.5)
-check(character and character.AgentVest.Color == vAccent, "nächster Spawn ohne Skin")
+check(character and character:GetAttribute("AgentLookOf") == "Viper" and character.BodyColors.TorsoColor3 == vPrimary,
+	"nächster Spawn als Viper")
 
 -- Kann der Agenten-Körper nicht geladen werden: normaler Charakter, aber trotzdem als Agent angezogen
 SIM.Quiet = true
@@ -219,7 +177,8 @@ step(0.5)
 SIM.FailDescriptionLoad = false
 SIM.Quiet = false
 check(character ~= nil and SIM.DescriptionOf[character] == nil, "Rückfall auf den normalen Charakter")
-check(character and character:FindFirstChild("AgentVisor") ~= nil, "auch dann als Agent angezogen")
+check(character and character:GetAttribute("AgentLook") == "Standard" and character:GetAttribute("AgentLookOf") == "Viper",
+	"auch dann als Agent angezogen")
 
 -- ---------- Bots: derselbe Körper wie Spieler mit diesem Agenten ----------
 local BotService = require("BotService")
@@ -235,9 +194,10 @@ if botDescription and loaded then
 	for _, key in { "WidthScale", "DepthScale", "HeightScale", "HeadScale", "BodyTypeScale", "ProportionScale" } do
 		check(botDescription[key] == loaded[key], "Bot und Spieler gleich: " .. key)
 	end
-	local defaultPrimary, defaultAccent = Cosmetics.AgentColors(nil, "Viper")
+	local defaultPrimary = Cosmetics.AgentColors(nil, "Viper")
 	check(botDescription.TorsoColor == defaultPrimary, "Bot in den Standardfarben seines Agenten (nicht in Teamfarbe)")
-	check(template:FindFirstChild("AgentVest") and template.AgentVest.Color == defaultAccent, "Bot trägt dieselbe Ausrüstung")
+	check(template:GetAttribute("AgentLook") == "Standard" and template.BodyColors.TorsoColor3 == defaultPrimary,
+		"Bot im selben Standard-Look")
 end
 local again
 task.spawn(function()

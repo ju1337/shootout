@@ -1,7 +1,7 @@
 -- AgentModels (ModuleScript)
 -- Aussehen der Agenten: fertige 3D-Modelle aus ReplicatedStorage.Assets.Agents (Anleitung in docs/agenten-modelle.md)
--- oder – solange es keins gibt – die Quader-Ausrüstung aus AgentBody (Kapuze, Visier, Maske, Weste, Schulterpolster,
--- Gürtel). Empfohlen: ein ganzes R15-Rig (mit Humanoid, z.B. aus dem Avatar-Setup von Studio) – dann ist nur das
+-- oder – solange es keins gibt – der Standard-Look aus AgentBody (Roblox-Körper mit Gesicht in den Agentenfarben).
+-- Empfohlen: ein ganzes R15-Rig (mit Humanoid, z.B. aus dem Avatar-Setup von Studio) – dann ist nur das
 -- Modell zu sehen, der Spielkörper bleibt unsichtbar als Trefferzone (siehe loadCharacter). Modelle ohne Humanoid
 -- (Rest dieses Kopfes): decken ihre Teile den ganzen Körper ab (Kopf, Rumpf, Arme, Beine), sind sie ebenfalls ein
 -- ganzer Charakter (nur das Modell zu sehen), sonst wie früher Ausrüstung auf dem sichtbaren Spielkörper.
@@ -19,8 +19,6 @@
 --   und Verschiebung nach dem Import sind egal) und misst jedes Ausrüstungsteil an seinem Körperteil. Ohne Körper
 --   zählen Point_Root und die Achsen des Modells (vorne = -Z, oben = +Y). Ein HumanoidRootPart (Körper aus Studio
 --   exportiert) wird ignoriert.
---   Textur-Skins: Ordner "Skins" im Modell, darin je Skin ein Ordner mit der Skin-Id (z.B. "A_Viper_Nacht") mit
---   SurfaceAppearances, benannt wie die Teile, die sie bekommen.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -69,6 +67,7 @@ end
 
 -- Farben des Spielkörpers: Haut, Hose = Uniformfarbe abgedunkelt
 AgentModels.SkinColor = Color3.fromRGB(205, 160, 130)
+AgentModels.FaceTexture = "rbxasset://textures/face.png" -- Roblox-Standardgesicht
 function AgentModels.PantsColor(primary)
 	return primary:Lerp(Color3.new(0, 0, 0), 0.5)
 end
@@ -96,7 +95,7 @@ local BODY_ZONES = { Head = "Skin", UpperTorso = "Primary", LowerTorso = "Primar
 local SIDE_PAIRS = { { "LeftUpperArm", "RightUpperArm" }, { "LeftLowerArm", "RightLowerArm" }, { "LeftHand", "RightHand" },
 	{ "LeftUpperLeg", "RightUpperLeg" }, { "LeftLowerLeg", "RightLowerLeg" }, { "LeftFoot", "RightFoot" } }
 
-local assetData = {}   -- [Agent-Id] = { Gear = { Eintrag }, Skins = Ordner oder nil }
+local assetData = {}   -- [Agent-Id] = { Gear = { Eintrag }, Character = ganzer Charakter? }
 local assetReport = {} -- [Name] = { Loaded = bool, Errors = { Text }, Warnings = { Text } }
 
 -- Blender hängt an Kopien ".001" an – das zählt nicht zum Namen
@@ -222,7 +221,7 @@ local function rotationBetween(a, b)
 	return CFrame.fromMatrix(Vector3.zero, turn(Vector3.new(1, 0, 0)), turn(Vector3.new(0, 1, 0)), turn(Vector3.new(0, 0, 1)))
 end
 
-local function loadCharacter(source, skins, report)
+local function loadCharacter(source, report)
 	local function problem(text)
 		table.insert(report.Errors, text)
 	end
@@ -233,9 +232,6 @@ local function loadCharacter(source, skins, report)
 	local body, extras = {}, {}
 	local rootPart = nil
 	for _, obj in source:GetDescendants() do
-		if skins and (obj == skins or obj:IsDescendantOf(skins)) then
-			continue
-		end
 		if obj:IsA("BasePart") then
 			local name = cleanName(obj.Name)
 			if name == "HumanoidRootPart" then
@@ -357,7 +353,7 @@ local function loadCharacter(source, skins, report)
 		part.CanTouch = false
 		part.Massless = true
 		part.Transparency = original.Transparency
-		table.insert(entries, { Name = unique, SkinName = name, Body = bodyName, Offset = rest.CFrame:ToObjectSpace(placed),
+		table.insert(entries, { Name = unique, Body = bodyName, Offset = rest.CFrame:ToObjectSpace(placed),
 			RefSize = rest.Size, Template = part })
 	end
 	for _, name in AgentModels.BodyParts do
@@ -393,25 +389,13 @@ local function loadCharacter(source, skins, report)
 	if #entries > MAX_CHARACTER_PARTS then
 		hint(#entries .. " Teile – für Handys besser höchstens " .. MAX_CHARACTER_PARTS .. " (Accessoires zusammenfassen)")
 	end
-	-- Textur-Skins: SurfaceAppearances heißen wie die Teile des Modells (z.B. UpperTorso)
-	local skinNames = {}
-	for _, entry in entries do
-		skinNames[entry.SkinName] = true
-	end
-	for _, folder in skins and skins:GetChildren() or {} do
-		for _, appearance in folder:GetChildren() do
-			if appearance:IsA("SurfaceAppearance") and not skinNames[cleanName(appearance.Name)] then
-				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
-			end
-		end
-	end
 	if math.abs(scale - 1) > 0.5 then
 		hint(string.format("auf %.0f %% skaliert (Modell war %.1f Studs hoch, Spielkörper %.1f)", scale * 100, height,
 			CHARACTER_HEIGHT))
 	end
 	report.Loaded = true
 	report.Character = true
-	return { Gear = entries, Skins = skins, Character = true }, report
+	return { Gear = entries, Character = true }, report
 end
 
 -- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.
@@ -423,19 +407,15 @@ local function loadAsset(agentId, source)
 	local function hint(text)
 		table.insert(report.Warnings, text)
 	end
-	local skins = source:FindFirstChild("Skins")
 	-- Mit Humanoid (R15-Rig, z.B. aus dem Avatar-Setup): das Modell ist der ganze Charakter
 	if source:FindFirstChildWhichIsA("Humanoid", true) then
-		return loadCharacter(source, skins, report)
+		return loadCharacter(source, report)
 	end
 
 	-- Marker, Körper und Ausrüstung einsammeln
 	local root, refs, gear = nil, {}, {}
 	local bodies = {} -- alle Teile, die genau wie ein Körperteil heißen (auch doppelte, z.B. UpperTorso.001)
 	for _, obj in source:GetDescendants() do
-		if skins and (obj == skins or obj:IsDescendantOf(skins)) then
-			continue
-		end
 		local name = cleanName(obj.Name)
 		local point = string.match(name, "^Point_(.+)$")
 		if point and (obj:IsA("BasePart") or obj:IsA("Attachment")) then
@@ -466,7 +446,7 @@ local function loadAsset(agentId, source)
 		end
 		if complete then
 			-- (andere Teile sind dort Accessoires, keine falsch benannte Ausrüstung: neuer Bericht)
-			return loadCharacter(source, skins, { Loaded = false, Errors = {}, Warnings = {} })
+			return loadCharacter(source, { Loaded = false, Errors = {}, Warnings = {} })
 		end
 		problem("keine Ausrüstung im Modell (Teile heißen <Körperteil>_<Name>, z.B. Head_Helmet)")
 	end
@@ -510,7 +490,7 @@ local function loadAsset(agentId, source)
 	end
 
 	-- Ausrüstung: Lage relativ zum Körperteil, Farbzonen
-	local entries, used, names = {}, {}, {}
+	local entries, used = {}, {}
 	local function addPiece(original, name, words, bodyName, offset, rest, bodyZone)
 		local part = original:Clone()
 		if not part then
@@ -559,7 +539,6 @@ local function loadAsset(agentId, source)
 		part.Massless = true
 		table.insert(entries, { Name = unique, Body = bodyName, Offset = offset, RefSize = rest.Size, Zone = zone,
 			NeonAccent = neon and plain, Template = part })
-		names[unique] = true
 	end
 	for _, original in gear do
 		local name = cleanName(original.Name)
@@ -624,19 +603,12 @@ local function loadAsset(agentId, source)
 		hint(#entries .. " Ausrüstungsteile – höchstens " .. MAX_PARTS .. ": Teile am selben Körperteil ohne eigene "
 			.. "Farbzone in Blender zusammenfügen (spart Leistung)")
 	end
-	for _, folder in skins and skins:GetChildren() or {} do
-		for _, appearance in folder:GetChildren() do
-			if appearance:IsA("SurfaceAppearance") and not names[cleanName(appearance.Name)] then
-				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
-			end
-		end
-	end
 	if #report.Errors > 0 then
 		return nil, report
 	end
 	report.Loaded = true
 	report.Character = whole or nil
-	return { Gear = entries, Skins = skins, Character = whole }, report
+	return { Gear = entries, Character = whole }, report
 end
 
 -- Ein Modell aus Assets.Agents laden (Name = Agent-Id) und den Bericht dazu ablegen
@@ -667,12 +639,12 @@ local function printReport(name)
 	end
 	local report = assetReport[name]
 	if not report then
-		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Quader-Ausrüstung")
+		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Standard-Look")
 	elseif report.Loaded then
 		print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Character and "Charakter" or "3D-Modell")
 			.. " geladen (" .. #assetData[name].Gear .. " Teile)")
 	else
-		warn("[Agentenmodelle] " .. name .. ": 3D-Modell NICHT geladen, es bleibt die Quader-Ausrüstung:\n  - "
+		warn("[Agentenmodelle] " .. name .. ": 3D-Modell NICHT geladen, es bleibt der Standard-Look:\n  - "
 			.. table.concat(report.Errors, "\n  - "))
 	end
 	if report and #report.Warnings > 0 then
@@ -689,7 +661,7 @@ end
 -- Ordner mit den Modellen: Rojo legt ReplicatedStorage.Assets.Agents an, die Modelle selbst liegen im Place.
 -- Server und Client laden neu, sobald ein Modell dazukommt, sich ändert, umbenannt oder entfernt wird – auch
 -- während das Spiel läuft (z.B. in Studio eingefügt). Der Client wartet nicht auf den Ordner (bis dahin zeigen die
--- Vorschauen die Quader-Ausrüstung).
+-- Vorschauen den Standard-Look).
 local function watchAgents(folder)
 	local nameOf = {} -- [Modell] = Name, unter dem es zuletzt geladen wurde
 	local pending = {} -- Namen, die am Ende dieses Moments neu geladen werden
@@ -779,10 +751,10 @@ else
 	-- In Studio steht im Output, was mit jedem Modell los ist (auch wenn noch keins da ist)
 	if RunService:IsStudio() then
 		if not folder then
-			warn("[Agentenmodelle] Ordner ReplicatedStorage.Assets.Agents fehlt – alle Agenten tragen die Quader-Ausrüstung")
+			warn("[Agentenmodelle] Ordner ReplicatedStorage.Assets.Agents fehlt – alle Agenten haben den Standard-Look")
 		elseif next(assetReport) == nil then
-			print("[Agentenmodelle] noch keine Modelle in ReplicatedStorage.Assets.Agents – alle Agenten tragen die "
-				.. "Quader-Ausrüstung")
+			print("[Agentenmodelle] noch keine Modelle in ReplicatedStorage.Assets.Agents – alle Agenten haben den "
+				.. "Standard-Look")
 		end
 		for name in assetReport do
 			printReport(name)
@@ -790,7 +762,7 @@ else
 	end
 end
 
--- Hat der Agent ein fertiges 3D-Modell (statt der Quader-Ausrüstung)?
+-- Hat der Agent ein fertiges 3D-Modell (statt des Standard-Looks)?
 function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
 end
@@ -837,16 +809,14 @@ end
 
 -- Ausrüstung aus dem 3D-Modell eines Agenten an einen Körper hängen.
 -- parts = { [Körperteil] = BasePart } (fehlt ein Körperteil, fehlt auch seine Ausrüstung), primary/accent = Farben
--- (Agent bzw. Skin), skinId = ausgerüsteter Agenten-Skin (für Textur-Skins, optional), weld = true: an die
--- Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Jedes Teil bekommt das Attribut AgentGear; die Teile
+-- des Agenten (für Farbzonen), weld = true: an die Körperteile geschweißt (Charaktere), sonst verankert (Figuren). Jedes Teil bekommt das Attribut AgentGear; die Teile
 -- eines ganzen Charakters liegen zusammen im Untermodell AgentModels.ModelName (hat ebenfalls AgentGear).
 -- Gibt die neuen Teile zurück, nil, wenn der Agent kein Modell hat.
-function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, weld)
+function AgentModels.Attach(container, parts, agentId, primary, accent, weld)
 	local asset = agentId and assetData[agentId]
 	if not asset then
 		return nil
 	end
-	local textures = asset.Skins and skinId and asset.Skins:FindFirstChild(skinId)
 	local holder = container
 	if asset.Character then
 		-- ganzer Charakter: der Spielkörper bleibt als (unsichtbare) Trefferzone, zu sehen ist nur das Modell (jedes
@@ -878,15 +848,6 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 		local offset, size = fitted(entry, body)
 		part.Size = size
 		part.CFrame = body.CFrame * offset
-		local appearance = textures and textures:FindFirstChild(entry.SkinName or entry.Name)
-		if appearance and appearance:IsA("SurfaceAppearance") then
-			for _, old in part:GetChildren() do
-				if old:IsA("SurfaceAppearance") then
-					old:Destroy()
-				end
-			end
-			appearance:Clone().Parent = part
-		end
 		if entry.Zone == "Primary" then
 			part.Color = primary
 		elseif entry.Zone == "Skin" then

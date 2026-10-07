@@ -76,7 +76,7 @@ for _, name in AgentModels.BodyParts do
 	part.Parent = body
 	parts[name] = part
 end
-local created = AgentModels.Attach(body, parts, "Viper", Color3.new(0.2, 0.3, 0.2), Color3.new(0.4, 0.6, 0.4), nil, true)
+local created = AgentModels.Attach(body, parts, "Viper", Color3.new(0.2, 0.3, 0.2), Color3.new(0.4, 0.6, 0.4), true)
 check(created ~= nil and #created == 15, "15 Teile angehängt (" .. tostring(created and #created) .. ")")
 local byName = {}
 for _, part in created or {} do
@@ -107,7 +107,9 @@ for name, part in parts do
 	check(part.Transparency == 1, name .. ": Spielkörper unsichtbar")
 end
 for _, part in created or {} do
-	check(part.CanQuery == false and part.CanCollide == false, part.Name .. ": nie Trefferzone")
+	local weld = part:FindFirstChildOfClass("WeldConstraint")
+	check(part.CanQuery == false and part.CanCollide == false and weld ~= nil and weld.Part0 ~= nil and weld.Part0.Parent == body,
+		part.Name .. ": nie Trefferzone, am Spielkörper angeschweißt")
 end
 
 if failures == 0 then

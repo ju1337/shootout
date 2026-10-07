@@ -446,12 +446,13 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   wieder frei
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
 - **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): Im Hub, im
-  Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper in den Farben
-  seines Agenten bzw. Agenten-Skins, mit Kapuze, Maske, getöntem Visier, Weste, Schulterpolstern und Gürtel wie die
-  Menü-Figur. Bots tragen genau denselben Körper in den Standardfarben ihres Agenten (keine Teamfarben mehr – das
-  Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben Trefferzonen. Im Hub und im
-  Markt sieht man einen Agenten- oder Skin-Wechsel sofort, im Match ab dem nächsten Spawn. Hat ein Agent sein
-  fertiges 3D-Modell (siehe Agentenmodelle), sieht er stattdessen aus wie dieses Modell
+  Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper im
+  Roblox-Standard-Look in den Farben seines Agenten: Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in
+  der Agentenfarbe, Beine dunkler (keine Kapuze/Weste/Quader-Ausrüstung mehr). Bots tragen genau denselben Körper
+  (keine Teamfarben – das Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben
+  Trefferzonen. Im Hub und im Markt sieht man einen Agentenwechsel sofort, im Match ab dem nächsten Spawn. Hat ein
+  Agent ein fertiges 3D-Modell (siehe Agentenmodelle), tragen Spieler und Bots mit diesem Agenten automatisch dieses
+  Modell, auch in allen Menü-Figuren
 - **Gleiche Trefferzonen für alle**: Getroffen werden nur Körperteile. Accessoires (auch später angehängte) und die
   Ausrüstung sind für Schüsse unsichtbar (`CanQuery = false`); der Server nimmt auch vom Client gemeldete Treffer
   nur auf treffbaren Teilen an
@@ -477,7 +478,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   das Modell, der normale Agentenkörper bleibt unsichtbar als Trefferzone (alle Agenten gleich leicht zu treffen,
   Teile des Modells nie Trefferzone). Macht etwas den Spielkörper wieder sichtbar oder tauscht Roblox Körperteile
   aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an (Kontrolle läuft, solange der Charakter lebt).
-  Textur-Skins im Ordner `Skins`. Fehlt etwas, bleibt der Standard-Look und
+  Fehlt etwas, bleibt der Standard-Look und
   Studio sagt im Output, was fehlt (`[Agentenmodelle] …`). Weiter möglich (alte Methode, Modell ohne Humanoid): nur
   Ausrüstung aus Blender auf den Standardkörper, Teile `<Körperteil>_<Name>`, Vorlage in `art/templates/Agents`.
   Decken diese Teile Kopf, Rumpf, Arme und Beine ab, gilt das Modell ebenfalls als ganzer Charakter (nur das Modell
@@ -681,8 +682,8 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
 | Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
-| Agenten-Körper: Quader-Ausrüstung (Kapuze, Visier, Weste …), Hautfarbe, Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
-| Agentenmodelle (ganzer Charakter aus dem Avatar-Setup oder nur Ausrüstung): Anleitung, Skins, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
+| Agenten-Körper: Standard-Look (Hautfarbe, Gesicht, Agentenfarben), Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
+| Agentenmodelle (ganzer Charakter aus dem Avatar-Setup oder nur Ausrüstung): Anleitung, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
@@ -777,14 +778,14 @@ am Commit:
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `trade` | Tauschen: Anfrage (Hub/Markt, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
-| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Ausrüstung in Agentenfarben, Skin-Wechsel im Hub sofort, Rückfall auf den normalen Charakter; Accessoires und Ausrüstung nie Trefferzone (auch nicht als gemeldeter Treffer) |
+| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), Agentenwechsel im Hub sofort, Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
 | `agentsuit` | ganzer Charakter aus Blender ohne Humanoid und ohne eigenen Körper (Maße wie Viper_3.glb: 15 Teile `<Körperteil>_Suit`): jedes Teil sitzt genau wie im Modell, Arme lückenlos am Oberkörper, Texturen nicht übermalt |
-| `agentmodels` | Agenten-Lader: die Vorlage ist selbst ein gültiges Modell und sitzt genau wie die Quader-Ausrüstung (auch gedreht und verschoben importiert, an größeren Körperteilen), Farbzonen, Textur-Skins, Wechsel ohne Doppelte, Rückfall ohne Modell, alle Prüfmeldungen; Spieler, Bots und Menü-Figur tragen das Modell |
+| `agentmodels` | Agenten-Lader: die Vorlage ist selbst ein gültiges Modell, jedes Teil sitzt wie in der Vorlage (auch gedreht und verschoben importiert, an größeren Körperteilen), Farbzonen, ganze Charaktere ohne Humanoid (mit eigenem Körper, ohne Hände/Füße, nur Körper), Wechsel ohne Doppelte, Rückfall auf den Standard-Look, alle Prüfmeldungen; Spieler, Bots und Menü-Figur tragen das Modell |
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
-| `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, bei Charakteren alle 15 Körperteile da, Textur-Skins gehören zum Agenten, jedes Teil angeschweißt und nie Trefferzone) |
+| `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, bei Charakteren alle 15 Körperteile da, jedes Teil angeschweißt und nie Trefferzone) |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |

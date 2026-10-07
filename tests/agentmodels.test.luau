@@ -2,10 +2,11 @@
 --!expose AgentModels loadAsset
 --!expose BotService rigTemplate
 -- Agenten-Modelle (AgentModels): Die Vorlage art/templates/Agents/Agent.rbxmx (erzeugt von tools/agent_templates.py)
--- ist selbst ein gültiges Agenten-Modell. Unter Assets.Agents als "Viper" geladen, trägt VIPER genau die Ausrüstung,
--- die er heute als Quader trägt – an Spielern, Bots und in den Menü-Figuren. Dazu: Ausrichtung am mitgelieferten
--- Körper (gedreht und verschoben importiert), Anpassung an andere Körpergrößen, Textur-Skins, Rückfall ohne Modell
--- und die Prüfmeldungen, die in Studio im Output stehen.
+-- ist selbst ein gültiges Agenten-Modell (nur Ausrüstung). Unter Assets.Agents als "Viper" geladen, trägt VIPER genau
+-- diese Ausrüstung – an Spielern, Bots und in den Menü-Figuren, jedes Teil so wie in der Vorlage an seinem Körperteil.
+-- Dazu: Ausrichtung am mitgelieferten Körper (gedreht und verschoben importiert), Anpassung an andere Körpergrößen,
+-- ganze Charaktere ohne Humanoid, Rückfall auf den Standard-Look ohne Modell und die Prüfmeldungen, die in Studio im
+-- Output stehen.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -32,13 +33,12 @@ local function step(seconds)
 end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
 local folder = ReplicatedStorage.Assets.Agents
 local template = folder:FindFirstChild("Agent")
 check(template ~= nil and template:IsA("Model"), "Vorlage Agent.rbxmx unter Assets.Agents")
 
 -- Vor dem ersten require (der Lader liest Assets.Agents beim Laden): die Vorlage als VIPER und – gedreht und
--- verschoben wie nach einem Import, mit Textur-Skin – als BASTION. Die Vorlage selbst bleibt unter ihrem Namen liegen.
+-- verschoben wie nach einem Import – als BASTION. Die Vorlage selbst bleibt unter ihrem Namen liegen.
 local viperSource = template:Clone()
 viperSource.Name = "Viper"
 viperSource.Parent = folder
@@ -50,18 +50,6 @@ for _, part in bastionSource:GetDescendants() do
 		part.CFrame = tilt * part.CFrame
 	end
 end
-local skins = Instance.new("Folder")
-skins.Name = "Skins"
-local steel = Instance.new("Folder")
-steel.Name = "A_Bastion_Stahl"
-steel.Parent = skins
-local vestTexture = Instance.new("SurfaceAppearance")
-vestTexture.Name = "UpperTorso_Vest_Accent"
-vestTexture.Parent = steel
-local strayTexture = Instance.new("SurfaceAppearance")
-strayTexture.Name = "Head_Helmet"
-strayTexture.Parent = steel
-skins.Parent = bastionSource
 bastionSource.Parent = folder
 
 SIM.IsStudio = true -- Studio: Bericht im Output
@@ -78,16 +66,14 @@ local function messages(entry)
 end
 check(report.Viper and report.Viper.Loaded and #report.Viper.Errors == 0 and #report.Viper.Warnings == 0,
 	"Vorlage lädt als Agent ohne Meldungen: " .. messages(report.Viper))
-check(report.Bastion and report.Bastion.Loaded and #report.Bastion.Errors == 0,
+check(report.Bastion and report.Bastion.Loaded and #report.Bastion.Errors == 0 and #report.Bastion.Warnings == 0,
 	"gedreht und verschoben importiert: lädt (ausgerichtet am mitgelieferten Körper): " .. messages(report.Bastion))
-check(report.Bastion and #report.Bastion.Warnings == 1 and hasText(report.Bastion.Warnings, "Skins/A_Bastion_Stahl/Head_Helmet"),
-	"Textur ohne passendes Teil gemeldet: " .. messages(report.Bastion))
 check(report.Agent and not report.Agent.Loaded and hasText(report.Agent.Errors, "unbekannter Name"),
 	"Modell mit falschem Namen gemeldet")
 check(AgentModels.HasAsset("Viper") and AgentModels.HasAsset("Bastion") and not AgentModels.HasAsset("Mender")
 	and not AgentModels.HasAsset(nil), "HasAsset")
 
--- ---------- An einem Körper: genau wie die Quader-Ausrüstung ----------
+-- ---------- An einem Körper: jedes Teil wie in der Vorlage ----------
 local function rig(scale)
 	local model = Instance.new("Model")
 	model.Name = "Agent"
@@ -106,79 +92,88 @@ local function rig(scale)
 end
 local primary, accent = Color3.fromRGB(40, 60, 50), Color3.fromRGB(90, 160, 110)
 
-local function compare(label, model, blockout)
-	for _, gearName in AgentBody.GearNames do
-		local spec = AgentBody.SpecNames[gearName]
-		local quad, part = blockout:FindFirstChild(gearName), model:FindFirstChild(spec)
-		check(part ~= nil and quad ~= nil, label .. ": " .. spec .. " da")
-		if part and quad then
-			check(near(part.Position, quad.Position, 1e-3) and near(part.Size, quad.Size, 1e-3)
-				and near(part.CFrame.LookVector, quad.CFrame.LookVector, 1e-3)
-				and near(part.CFrame.UpVector, quad.CFrame.UpVector, 1e-3), label .. ": " .. spec .. " sitzt wie die Quader")
-			check(part.Color == quad.Color and part.Material == quad.Material
-				and near(part.Reflectance or 0, quad.Reflectance or 0), label .. ": " .. spec .. " Farbe und Material wie die Quader")
-			check(part.CanQuery == false and part.CanCollide == false and part.CanTouch == false and part.Massless == true
-				and part.Anchored == false, label .. ": " .. spec .. " nie Trefferzone, ohne Kollision und Gewicht")
-			check(part:GetAttribute("AgentGear") == true, label .. ": " .. spec .. " als Ausrüstung markiert")
-			local weld = part:FindFirstChildOfClass("WeldConstraint")
-			local body = model:FindFirstChild(string.match(spec, "^[^_]+"))
-			check(weld ~= nil and weld.Part0 == body and weld.Part1 == part, label .. ": " .. spec .. " am Körperteil angeschweißt")
+-- Maßstab ist die Vorlage selbst: jedes Ausrüstungsteil sitzt am Spielkörper so wie in der Vorlage an seinem
+-- Körperteil (wächst ein Körperteil, wachsen Abstand und Größe je Achse mit), Farbzonen in den Agentenfarben
+local function compare(label, model)
+	local compared = 0
+	for _, original in template:GetChildren() do
+		local bodyName = original:IsA("BasePart") and string.match(original.Name, "^([^_]+)_")
+		local ref = bodyName and AgentModels.Body[bodyName] and template:FindFirstChild(bodyName)
+		if ref then
+			local part, body = model:FindFirstChild(original.Name), model:FindFirstChild(bodyName)
+			check(part ~= nil and body ~= nil, label .. ": " .. original.Name .. " da")
+			compared += 1
+			if part and body then
+				local ratio = body.Size / ref.Size
+				local relative = ref.CFrame:ToObjectSpace(original.CFrame)
+				local expected = body.CFrame * (CFrame.new(relative.Position * ratio) * relative.Rotation)
+				check(near(part.Position, expected.Position, 1e-3) and near(part.Size, original.Size * ratio, 1e-3)
+					and near(part.CFrame.LookVector, expected.LookVector, 1e-3)
+					and near(part.CFrame.UpVector, expected.UpVector, 1e-3), label .. ": " .. original.Name .. " sitzt wie in der Vorlage")
+				local words = string.split(original.Name, "_")
+				local color = table.find(words, "Primary") and primary or table.find(words, "Accent") and accent
+					or table.find(words, "Glass") and AgentModels.VisorColor(accent) or original.Color
+				check(part.Color == color, label .. ": " .. original.Name .. " Farbe (Zone in den Agentenfarben)")
+				if table.find(words, "Glass") then
+					check(part.Material == Enum.Material.SmoothPlastic and near(part.Reflectance, AgentModels.VisorReflectance),
+						label .. ": " .. original.Name .. " Visier dunkel und glänzend")
+				end
+				check(part.CanQuery == false and part.CanCollide == false and part.CanTouch == false and part.Massless == true
+					and part.Anchored == false, label .. ": " .. original.Name .. " nie Trefferzone, ohne Kollision und Gewicht")
+				check(part:GetAttribute("AgentGear") == true, label .. ": " .. original.Name .. " als Ausrüstung markiert")
+				local weld = part:FindFirstChildOfClass("WeldConstraint")
+				check(weld ~= nil and weld.Part0 == body and weld.Part1 == part, label .. ": " .. original.Name
+					.. " am Körperteil angeschweißt")
+			end
 		end
 	end
-	check(model:FindFirstChild("AgentVest") == nil and model:FindFirstChild("AgentHoodTop") == nil,
-		label .. ": keine Quader-Ausrüstung dazu")
+	check(compared == 10, label .. ": alle 10 Ausrüstungsteile der Vorlage geprüft (" .. compared .. ")")
 end
 
-local blockout = rig()
-AgentBody.Dress(blockout, primary, accent)
-check(blockout:FindFirstChild("AgentVest") ~= nil and blockout.AgentVest:GetAttribute("AgentGear") == true,
-	"ohne Agent: Quader-Ausrüstung (markiert)")
+local standard = rig()
+AgentBody.Dress(standard, primary, accent)
+local standardGear = 0
+for _, child in standard:GetDescendants() do
+	if child:GetAttribute("AgentGear") then
+		standardGear += 1
+	end
+end
+check(standard:GetAttribute("AgentLook") == "Standard" and standardGear == 0, "ohne Agent: Standard-Look ohne Ausrüstung")
 local viper = rig()
 AgentBody.Dress(viper, primary, accent, "Viper")
-compare("Viper", viper, blockout)
+compare("Viper", viper)
 local bastion = rig()
 AgentBody.Dress(bastion, primary, accent, "Bastion")
-compare("Bastion (gedreht importiert)", bastion, blockout)
+compare("Bastion (gedreht importiert)", bastion)
 local mender = rig()
 AgentBody.Dress(mender, primary, accent, "Mender")
-check(mender:FindFirstChild("AgentVest") ~= nil and mender:FindFirstChild("UpperTorso_Vest_Accent") == nil,
-	"Agent ohne Modell: Quader-Ausrüstung")
+check(mender:GetAttribute("AgentLook") == "Standard" and mender:FindFirstChild("UpperTorso_Vest_Accent") == nil,
+	"Agent ohne Modell: Standard-Look")
 
 -- Wechsel hin und her: nichts doppelt, nichts bleibt hängen
 AgentBody.Dress(viper, primary, accent, "Mender")
-check(viper:FindFirstChild("Head_Visor_Glass") == nil and viper:FindFirstChild("AgentVisor") ~= nil,
-	"Wechsel auf Agent ohne Modell: Modell-Ausrüstung weg, Quader dran")
+check(viper:FindFirstChild("Head_Visor_Glass") == nil and viper:GetAttribute("AgentLook") == "Standard",
+	"Wechsel auf Agent ohne Modell: Modell-Ausrüstung weg, Standard-Look")
 AgentBody.Dress(viper, primary, accent, "Viper")
 AgentBody.Dress(viper, primary, accent, "Viper")
 local visors = 0
 for _, child in viper:GetChildren() do
-	if child.Name == "Head_Visor_Glass" or child.Name == "AgentVisor" then
+	if child.Name == "Head_Visor_Glass" then
 		visors += 1
 	end
 end
 check(visors == 1, "erneut angezogen: genau ein Visier")
 
--- Anderer Körper (z.B. größerer Kopf): Ausrüstung wächst mit, wie die Quader
+-- Anderer Körper (z.B. größerer Kopf): Ausrüstung wächst mit
 local scale = { Head = 1.25, UpperTorso = 1.1 }
-local bigBlockout = rig(scale)
-AgentBody.Dress(bigBlockout, primary, accent)
 local bigViper = rig(scale)
 AgentBody.Dress(bigViper, primary, accent, "Viper")
-compare("größerer Körper", bigViper, bigBlockout)
+compare("größerer Körper", bigViper)
 
--- Textur-Skin: nur mit diesem Skin, Farbe der Zone bleibt
-local plain = rig()
-AgentBody.Dress(plain, primary, accent, "Bastion")
-check(plain.UpperTorso_Vest_Accent:FindFirstChildOfClass("SurfaceAppearance") == nil, "ohne Skin keine Textur")
-local textured = rig()
-AgentBody.Dress(textured, primary, accent, "Bastion", "A_Bastion_Stahl")
-local vest = textured.UpperTorso_Vest_Accent
-check(vest:FindFirstChildOfClass("SurfaceAppearance") ~= nil and vest.Color == accent, "Textur-Skin an der Weste")
-check(textured.Head_Visor_Glass:FindFirstChildOfClass("SurfaceAppearance") == nil, "Textur nur am genannten Teil")
 -- Die Vorlage ist nur Ausrüstung (5 Körperteile): der Spielkörper bleibt zu sehen
 check(not AgentModels.IsCharacter("Viper") and viper:GetAttribute("AgentLook") == "Modell" and viper.UpperTorso.Transparency == 0
 	and viper.LeftLowerLeg.Transparency == 0, "nur Ausrüstung: Spielkörper sichtbar")
-for _, model in { blockout, viper, bastion, mender, bigBlockout, bigViper, plain, textured } do
+for _, model in { standard, viper, bastion, mender, bigViper } do
 	model:Destroy()
 end
 
@@ -484,7 +479,9 @@ for _, part in figure:GetDescendants() do
 	end
 end
 local old = AgentFigure.Build(AgentConfig.Get("Mender"), primary, accent)
-check(old:FindFirstChild("Torso") ~= nil and old:FindFirstChild("Visor") ~= nil, "ohne Modell: bisherige Figur")
+local oldFace = old:FindFirstChild("Head") and old.Head:FindFirstChildOfClass("Decal")
+check(old:FindFirstChild("UpperTorso") ~= nil and old.Head.Transparency == 0 and oldFace ~= nil and oldFace.Transparency == 0
+	and old:FindFirstChild("Visor") == nil and old:FindFirstChild("Torso") == nil, "ohne Modell: Standard-Figur mit Gesicht")
 
 -- ---------- Spieler und Bots ----------
 game.JobId = "server-1"
@@ -502,19 +499,11 @@ local vPrimary, vAccent = Cosmetics.AgentColors(alice, "Viper")
 check(character and character:FindFirstChild("Head_Visor_Glass") and character:FindFirstChild("UpperTorso_Vest_Accent")
 	and character.UpperTorso_Vest_Accent.Color == vAccent and character:FindFirstChild("AgentVest") == nil,
 	"Spieler als VIPER: Ausrüstung aus dem 3D-Modell")
--- Skin im Hub: neue Farben sofort
-local skin = Cosmetics.Get("A_Viper_Nacht")
-alice:SetAttribute("Owned", HttpService:JSONEncode({ A_Viper_Nacht = 1 }))
-alice:SetAttribute("Equipped", HttpService:JSONEncode({ ["A:Viper"] = "A_Viper_Nacht" }))
-step(0.1)
-check(Cosmetics.AgentSkin(alice, "Viper") == skin, "ausgerüsteter Skin")
-check(character.UpperTorso_Vest_Accent.Color == skin.Accent and character.Head_HoodTop_Primary.Color == skin.Primary,
-	"Skin-Farben auf der Modell-Ausrüstung")
--- Agent ohne Modell: Quader
+-- Agent ohne Modell: Standard-Look
 alice:SetAttribute("Agent", "Mender")
 step(0.1)
-check(character:FindFirstChild("AgentVest") ~= nil and character:FindFirstChild("UpperTorso_Vest_Accent") == nil,
-	"Wechsel im Hub auf einen Agenten ohne Modell: Quader-Ausrüstung")
+check(character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild("UpperTorso_Vest_Accent") == nil,
+	"Wechsel im Hub auf einen Agenten ohne Modell: Standard-Look")
 -- Bot mit VIPER
 local BotService = require("BotService")
 local botTemplate

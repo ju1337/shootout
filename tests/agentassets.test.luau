@@ -1,7 +1,7 @@
 -- Deine Agentenmodelle: assets/Agents/*.rbxmx (in Studio per Rechtsklick "Save to File..." gespeichert) gegen die
 -- Spezifikation (docs/agenten-modelle.md). Jedes Modell muss laden (Name eines Agenten, Ausrüstung an Körperteilen,
--- plausible Lage und Größe), Textur-Skins müssen zu echten Skins dieses Agenten gehören, und an einem Körper sitzt
--- jedes Teil eng an seinem Körperteil und zählt nie als Treffer. Hinweise erscheinen als HINWEIS im Log.
+-- plausible Lage und Größe), und an einem Körper sitzt jedes Teil eng an seinem Körperteil und zählt nie als Treffer.
+-- Hinweise erscheinen als HINWEIS im Log.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -13,11 +13,10 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AgentModels = require("AgentModels")
 local AgentBody = require("AgentBody")
-local Cosmetics = require("Cosmetics")
 
 local models = ReplicatedStorage.Assets.Agents:GetChildren()
 if #models == 0 then
-	print("Noch keine Agentenmodelle in assets/Agents – alle Agenten tragen die Quader-Ausrüstung")
+	print("Noch keine Agentenmodelle in assets/Agents – alle Agenten haben den Standard-Look")
 end
 local report = AgentModels.AssetReport()
 for _, source in models do
@@ -28,11 +27,8 @@ for _, source in models do
 	for _, warning in entry and entry.Warnings or {} do
 		print("HINWEIS " .. name .. ": " .. warning)
 	end
-	local skins = source:FindFirstChild("Skins")
-	for _, folder in skins and skins:GetChildren() or {} do
-		local item = Cosmetics.Get(folder.Name)
-		check(item ~= nil and item.Type == "Agent" and item.Agent == name,
-			name .. ": Skins/" .. folder.Name .. " ist kein Agenten-Skin von " .. name)
+	if source:FindFirstChild("Skins") then
+		print("HINWEIS " .. name .. ": Ordner Skins wird nicht mehr benutzt (Agenten-Skins gibt es nicht mehr)")
 	end
 	if entry and entry.Loaded then
 		-- an einem Körper wie im Spiel: jedes Teil hängt an seinem Körperteil und ist nie Trefferzone
@@ -48,7 +44,7 @@ for _, source in models do
 		local agentColor = Color3.fromRGB(90, 160, 110)
 		AgentBody.Dress(body, agentColor:Lerp(Color3.new(0, 0, 0), 0.6), agentColor, name)
 		local count = 0
-		for _, part in body:GetChildren() do
+		for _, part in body:GetDescendants() do -- (ganzer Charakter: im Untermodell AgentModel)
 			if part:IsA("BasePart") and part:GetAttribute("AgentGear") then
 				count += 1
 				local weld = part:FindFirstChildOfClass("WeldConstraint")

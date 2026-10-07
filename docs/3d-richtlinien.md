@@ -386,13 +386,10 @@ Körperteile (R15): `Head`, `UpperTorso`, `LowerTorso`, `LeftUpperArm`, `LeftLow
 - Gebaut wird in der **Ruhelage der Vorlage** (Arme hängen). Das Modell nicht verschieben.
 - **Arme und Hände frei** lassen: Sie halten die Waffe. Schulterpolster nicht so breit, dass sie die Waffe verdecken.
 - **Den Körper aus der Vorlage im Modell lassen** (nicht verändern) und `Point_Root` auf **0/0/0** (Boden zwischen
-  den Füßen). Der Körper wird im Spiel nicht angezeigt; das Spiel richtet die Ausrüstung an ihm aus, darum sind
-  Drehung und Lage nach dem Import egal.
+  den Füßen). Bei reiner Ausrüstung wird der Körper im Spiel nicht angezeigt (bei einem ganzen Charakter schon); das
+  Spiel richtet die Ausrüstung an ihm aus, darum sind Drehung und Lage nach dem Import egal.
 - **Farben:** `Primary` = Agentenfarbe (Uniform), `Accent` = zweite Farbe (Weste, Polster, Visier-Schimmer),
-  `Glass` = getöntes Visier. Diese Zonen färbt das Spiel bzw. der Agenten-Skin um.
-- **Skins mit eigener Textur** (episch, legendär): wie bei den Waffen ein Ordner `Skins` › `<Skin-Id>` mit einer
-  SurfaceAppearance je Teil, benannt wie das Teil. Skin-Ids stehen in `src/shared/Cosmetics.lua` (z.B.
-  `A_Viper_Nacht`).
+  `Glass` = getöntes Visier. Diese Zonen färbt das Spiel in den Farben des Agenten.
 
 Wer lieber am echten Körper aus Roblox modelliert: In Studio unten die Befehlszeile (View › Command Bar) öffnen und
 diese Zeile einfügen. Es entsteht `AgentVorlage` (Füße auf Höhe 0, Blick nach vorne), die man per Rechtsklick ›
