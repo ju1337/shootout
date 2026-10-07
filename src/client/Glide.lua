@@ -2,6 +2,8 @@
 -- Fallschirmsprung beim Absprung: Körper liegt waagerecht in der Luft (wie ein Skydiver),
 -- mit WASD steuern, ohne Eingabe leicht nach vorne gleiten. Kurz über dem Boden
 -- richtet sich der Charakter auf und bremst ab, damit niemand Fallschaden bekommt.
+-- Start: Charakter-Attribut "Dropping" (Server, Absprung zu Rundenbeginn) oder Glide.Start(character) (z.B. Aussteigen
+-- hoch aus einem Helikopter, VehicleClient).
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -79,6 +81,8 @@ local function start(character)
 		end
 	end)
 end
+
+Glide.Start = start
 
 function Glide.Init()
 	local function watch(character)

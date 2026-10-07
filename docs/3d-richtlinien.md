@@ -32,7 +32,7 @@ Die Waffen haben zusätzlich eine eigene, ausführliche Anleitung: [waffen-model
 | Kategorie | Vorlagen | Inhalt |
 |---|---|---|
 | Waffen | `art/templates/Weapons/<Waffe>.obj` | heutige Quader-Waffe mit allen Markern (siehe [waffen-modelle.md](waffen-modelle.md)) |
-| Fahrzeuge | `art/templates/Vehicles/<Id>.obj` | heutiges Spielfahrzeug: Rumpf `Ref_Chassis`, Räder `Wheel_*`, Sitze `Seat_*`, Boden `Ref_Ground` |
+| Fahrzeuge | `art/templates/Vehicles/<Id>.obj` | heutiges Spielfahrzeug: Rumpf `Ref_Chassis`, Räder `Wheel_*`, Sitze `Seat_*`, Boden `Ref_Ground`; Helikopter: Drehpunkte `Point_Rotor`, `Point_TailRotor` |
 | Items, Gadgets, Behälter | `art/templates/Items/<Id>.obj` | Zielgröße `Ref_<Id>` (Boden bei 0) und Griff `Point_Grip` |
 | Agenten | erzeugst du in Studio (Abschnitt 7) | der Spielkörper in Originalgröße |
 
@@ -238,6 +238,7 @@ Karosserie den Rumpf ungefähr aus (Länge und Breite ±10 %).
 | `Quad` | Quad | 4,6 × 2,0 × 6,6 | 2,4 × 1,2 | −1,9 / +1,9 | ±2,0 | 1 | orange |
 | `Pickup` | Geländewagen | 6,4 × 2,6 × 12,5 | 2,6 × 1,0 | −4,85 / +4,85 | ±3,0 | 4 | oliv |
 | `Sports` | Sportwagen | 6,2 × 1,9 × 12,0 | 2,6 × 1,0 | −4,6 / +4,6 | ±2,9 | 2 | rot |
+| `Heli` | Helikopter | 6,4 × 2,0 × 12,0 | Kufen statt Rädern | – | ±2,7 | 4 | oliv |
 
 Alle Maße in Studs. Die Unterkante des Rumpfs liegt 1,4 Studs über dem Boden. Vorne ist −z, die Mitte des Rumpfs
 liegt bei x = z = 0.
@@ -275,6 +276,22 @@ liegt bei x = z = 0.
 - Optional ein zweites Textur-Set **ausgebrannt** (`<Id>_Burned_…`). Damit können die Autowracks auf der Karte
   dasselbe Modell benutzen.
 - **Neues Fahrzeug** (Motorrad, LKW, Bus …): vorher Bescheid geben. Dann gibt es zuerst Werte und eine Vorlage.
+
+**Helikopter (`Heli`):** Der Rumpf ist der Kabinenboden. Dazu kommen ein Heckausleger bis etwa z = +14,7, ein Hauptrotor
+mit Ø 24 und ein Heckrotor mit Ø 4,4 (Vorlage `art/templates/Vehicles/Heli.obj`). Pilot links vorne (`Seat_Driver`),
+Kopilot rechts vorne (`Seat_2`), zwei Plätze hinten (`Seat_3`, `Seat_4`).
+
+| Teil | Name | Hinweis |
+|---|---|---|
+| Kufen | `Skid_L`, `Skid_R` | statt Rädern; Unterkante auf 0, bei x = ±2,7; vorne hochgebogen |
+| Hauptrotor | `Rotor_Main` | eigenes Objekt, dreht um +Y. Ursprung genau auf `Point_Rotor` |
+| Heckrotor | `Rotor_Tail` | eigenes Objekt, dreht um +X. Ursprung genau auf `Point_TailRotor`, rechts am Leitwerk |
+| Scheiben | `Glass_Windshield`, `Glass_…` | Front verglast. Die Seiten sind offen oder aus `Glass`, die Insassen bleiben sichtbar |
+| Lichter | `Neon_NavLeft` (rot), `Neon_NavRight` (grün), `Neon_Tail` | Positionslichter. Optional `Point_Searchlight` unter der Nase |
+
+- Die Rotorblätter sind flach und rundum gleich (2 gekreuzte oder 4 Blätter), damit die Drehung rund aussieht. Sie
+  kollidieren nicht und dürfen über den Rumpf hinausragen.
+- Über den hinteren Sitzen bleiben mindestens 3,2 Studs bis zum Dach frei, der Rotor sitzt darüber.
 
 ## 6. Items, Gadgets und Behälter
 

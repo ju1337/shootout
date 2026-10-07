@@ -550,20 +550,20 @@ function Movement.ApplyCamera()
 	Movement.SetFirstPerson(Modes.IsFighting(player))
 end
 
--- Fahrzeug der offenen Welt: Kamera hinter dem Fahrzeug (Roblox folgt dem Fahrersitz), Maus frei.
--- Beim Aussteigen wieder Ego- bzw. Schulterkamera.
-function Movement.SetVehicle(on)
+-- Fahrzeug der offenen Welt: Kamera hinter dem Fahrzeug (Roblox folgt dem Fahrersitz), Maus frei. far = Helikopter
+-- (Rotor und Heck brauchen mehr Abstand). Beim Aussteigen wieder Ego- bzw. Schulterkamera.
+function Movement.SetVehicle(on, far)
 	if inVehicle == on then
 		return
 	end
 	inVehicle = on
 	if on then
 		player.CameraMode = Enum.CameraMode.Classic
-		player.CameraMaxZoomDistance = 45
-		player.CameraMinZoomDistance = 16 -- erst herauszoomen, dann frei
+		player.CameraMaxZoomDistance = far and 90 or 45
+		player.CameraMinZoomDistance = far and 32 or 16 -- erst herauszoomen, dann frei
 		task.delay(0.2, function()
 			if inVehicle then
-				player.CameraMinZoomDistance = 8
+				player.CameraMinZoomDistance = far and 14 or 8
 			end
 		end)
 	else

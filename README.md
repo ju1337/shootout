@@ -272,6 +272,16 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   draußen mit PvP), kaputt = ausgebrannt und weg; Zombies kann man umfahren. Stirbt der Besitzer, liegt das
   Fahrzeug in seiner Tasche am Boden. Technik: unsichtbarer Rumpf auf vier reibungsfreien Kugeln, LinearVelocity
   (nur waagerecht) und AlignOrientation, der Fahrer rechnet die Physik; der Server prüft das Tempo.
+- **Helikopter** (Fahrzeugstand, 12 000 Münzen, Tier 4): fliegt mit **bis zu 4 Leuten** – Pilot (der Besitzer) links
+  vorne, Kopilot und zwei Plätze hinten (Mitfahrer per E). Steuerung: **W/S** vor/zurück, **A/D** drehen,
+  **Leertaste** steigen, **Shift** (oder Strg/C) sinken, **F** aussteigen; Controller: Stick, R2/L2 steigen/sinken, ✕
+  aussteigen; Touch: Stick, Knöpfe HOCH/RUNTER statt FEUER/ZIELEN, RAUS. Am Boden erst abheben, ohne Eingabe hält er die
+  Höhe; er neigt sich beim Fliegen und in Kurven, die Rotoren drehen sich. Höchstens 320 Studs hoch (über der Mitte der
+  Welt), am Rand der Welt geht es nicht weiter. Wer hoch oben aussteigt, gleitet mit dem Fallschirmsprung zu Boden.
+  Ohne Pilot sinkt er langsam senkrecht und setzt auf (Autorotation); einpacken (K) nur gelandet; zerschossen stürzt er
+  ab. HUD: Tempo, **Höhe**, Zustand, die Tastenzeile zeigt die Flugsteuerung. Technik: LinearVelocity in alle Richtungen
+  (trägt das Gewicht), Rotoren an Motor6D (jeder Client dreht sie), Tasten schluckt eine ContextActionService-Aktion mit
+  hohem Vorrang; der Server prüft zusätzlich Steigen, Flughöhe und Weltrand (Test: `tests/heli.test.luau`).
 - **Agenten**: nur passive Fähigkeiten (keine Q/G/F), Leben und Tempo wie sonst.
 
 Code: `src/server/Modes/Extinction.lua` (Safe Zone, PvP, Tod/Verlassen), `src/server-shared/InventoryService.lua`
@@ -586,6 +596,7 @@ M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel �
 
 In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Inventar · E Stand/Lager/Tasche/Mitfahren ·
 K Fahrzeug einpacken · N Weltkarte · J Squad · Z Ping (nur an den Squad) · im Fahrzeug W/S/A/D, Leertaste aussteigen ·
+im Helikopter W/S/A/D, Leertaste steigen, Shift sinken, F aussteigen ·
 Controller: R1/L1 Waffe der Hotbar wechseln, Select Inventar, △ Fahrzeug einpacken · Touch: Hotbar-Plätze antippen,
 Knöpfe TASCHE (Inventar), PARKEN (Fahrzeug einpacken), WAFFE (nächste Waffe der Hotbar)
 

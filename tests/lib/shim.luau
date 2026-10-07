@@ -262,6 +262,7 @@ function Color3.new(r, g, b) return setmetatable({ R = r or 0, G = g or 0, B = b
 -- Gruppe); tostring ergibt "Enum.Gruppe.Name". Value: bekannte Zahlen aus ENUM_VALUES, sonst fortlaufend je Gruppe.
 local ENUM_VALUES = {
 	RenderPriority = { First = 0, Input = 100, Camera = 200, Character = 300, Last = 2000 },
+	ContextActionPriority = { Low = 1000, Medium = 2000, Default = 2000, High = 3000 },
 }
 local EnumItemMeta = {
 	__tostring = function(item)

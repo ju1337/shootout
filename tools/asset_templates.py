@@ -4,7 +4,8 @@
 Maßstab 1 Einheit = 1 Stud, oben = +Y, vorne = -Z (Roblox), Boden bei y = 0. Spezifikation: docs/3d-richtlinien.md.
 - Fahrzeuge: das heutige Quader-Fahrzeug aus dem Spiel (VehicleService) in Ruhelage. Ref_Chassis ist der unsichtbare
   Rumpf, der im Spiel kollidiert und getroffen wird; Wheel_* sind die Räder an ihrer Achse (Durchmesser wie im Spiel);
-  Seat_* sind Marker auf der Sitzfläche (Seat_Driver = Fahrer). Ref_* nur zum Drumherum-Bauen, vor dem Export löschen.
+  Seat_* sind Marker auf der Sitzfläche (Seat_Driver = Fahrer). Helikopter: Point_Rotor / Point_TailRotor sind die
+  Drehpunkte der Rotoren (Hauptrotor dreht um +Y, Heckrotor um +X). Ref_* nur zum Drumherum-Bauen, vor dem Export löschen.
 - Items, Gadgets, Behälter: Ref_<Id> ist die Zielgröße (Boden bei y = 0), Point_Grip die Stelle der rechten Hand.
 
 Neu erzeugen (z.B. nach Änderungen an ExtinctionConfig.Vehicles oder VehicleService):
@@ -105,6 +106,10 @@ def template_parts(vehicle, parts):
             out.append(marker(seat, (x, top, z), 0.12))
         elif name == "Chassis":
             out.append(dict(part, name="Ref_Chassis", color=(230, 120, 40), transparency=0.7))
+        elif name in ("RotorHub", "TailRotorHub"):
+            # Drehpunkt (Motor6D im Spiel) als Marker, die Nabe selbst als Maßstab
+            out.append(marker("Point_Rotor" if name == "RotorHub" else "Point_TailRotor", (x, y, z), 0.2))
+            out.append(dict(part, name="Ref_" + name, color=part["color"], transparency=part["transparency"]))
         else:
             out.append(dict(part, name="Ref_" + name, color=part["color"], transparency=part["transparency"]))
     # Boden als dünne Platte (Unterkante der Räder = Boden)
@@ -162,9 +167,12 @@ def main():
     args = parser.parse_args()
     for vehicle, parts in sorted(collect_vehicles(args.luau).items()):
         out = template_parts(vehicle, parts)
+        rotors = any(p["name"] == "Point_Rotor" for p in out)
         write_obj(OUT_VEHICLES, vehicle, out, [
             "Vorlage Fahrzeug %s - 1 Einheit = 1 Stud, oben +Y, vorne -Z (Roblox), Boden y = 0." % vehicle,
-            "Ref_Chassis = Rumpf im Spiel (kollidiert, wird getroffen). Wheel_* = Räder an der Achse, Seat_* = Sitzflächen.",
+            "Ref_Chassis = Rumpf im Spiel (kollidiert, wird getroffen). "
+            + ("Point_Rotor / Point_TailRotor = Drehpunkte der Rotoren (um +Y bzw. +X), Seat_* = Sitzflächen."
+               if rotors else "Wheel_* = Räder an der Achse, Seat_* = Sitzflächen."),
             "Ref_* nur als Maßstab: vor dem Export löschen. Spezifikation: docs/3d-richtlinien.md"])
         print("%-8s %2d Teile -> art/templates/Vehicles/%s.obj/.mtl" % (vehicle, len(out), vehicle))
     for item in ITEMS:

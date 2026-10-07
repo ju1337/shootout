@@ -1882,8 +1882,26 @@ rawset(UserInputService, "__methods", {
 	IsKeyDown = function(_, key)
 		return SIM.KeysDown[key] == true
 	end,
+	IsGamepadButtonDown = function(_, _gamepad, key)
+		return SIM.KeysDown[key] == true
+	end,
 	GetMouseLocation = function()
 		return Vector2.new(0, 0)
+	end,
+})
+
+-- Aktionen über ContextActionService: SIM.BoundActions[Name] = { Callback, Priority, Inputs } (Tests rufen Callback auf)
+local ContextActionService = service("ContextActionService")
+SIM.BoundActions = {}
+rawset(ContextActionService, "__methods", {
+	BindAction = function(_, name, callback, _button, ...)
+		SIM.BoundActions[name] = { Callback = callback, Priority = Enum.ContextActionPriority.Default.Value, Inputs = { ... } }
+	end,
+	BindActionAtPriority = function(_, name, callback, _button, priority, ...)
+		SIM.BoundActions[name] = { Callback = callback, Priority = priority, Inputs = { ... } }
+	end,
+	UnbindAction = function(_, name)
+		SIM.BoundActions[name] = nil
 	end,
 })
 

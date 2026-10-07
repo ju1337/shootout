@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Modes = require(Shared.Modes)
+local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local C = UITheme.Colors
@@ -52,6 +53,13 @@ local SURVIVAL = {
 	{ "StoreVehicle", "PARKEN", 72, 305, 245, "tap" },
 }
 local SURVIVAL_HIDDEN = { Ability = true, Gadget = true, Ultimate = true, Scoreboard = true }
+-- Pilot eines Helikopters: steigen und sinken (gedrückt halten) an den Plätzen von FEUER und ZIELEN; die Kampfknöpfe
+-- sind dann aus (im Fahrzeug gibt es keine Waffe). SPRUNG heißt in jedem Fahrzeug RAUS (aussteigen).
+local HELI = {
+	{ "HeliUp", "HOCH", 120, 130, 170, "hold" },
+	{ "HeliDown", "RUNTER", 84, 290, 130, "hold" },
+}
+local HELI_HIDDEN = { Fire = true, Aim = true, Reload = true, Melee = true, SwapWeapon = true, Crouch = true }
 
 local gui
 local buttons = {} -- [Aktion] = Knopf
@@ -116,6 +124,18 @@ local function makeButton(parent, entry, anchor)
 	return button
 end
 
+-- Sitzt der Spieler in einem Fahrzeug, und steuert er gerade einen Helikopter?
+local function seatState()
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	local seat = humanoid and humanoid.SeatPart
+	if not seat then
+		return false, false
+	end
+	local model = seat:IsA("VehicleSeat") and seat.Parent
+	local config = model and ExtinctionConfig.Vehicles[model:GetAttribute("VehicleId")]
+	return true, config ~= nil and config.Kind == "Heli" and model:GetAttribute("Owner") == player.UserId
+end
+
 -- Roblox-Standard-Springen-Knopf im Kampf ausblenden (wir haben einen eigenen), im Hub zeigen
 local function setDefaultJump(visible)
 	local touchGui = player.PlayerGui:FindFirstChild("TouchGui")
@@ -143,11 +163,17 @@ function TouchControls.Init()
 	for _, entry in SURVIVAL do
 		makeButton(root, entry, "right")
 	end
+	for _, entry in HELI do
+		makeButton(root, entry, "right").Visible = false
+	end
 
-	-- Springen: Charakter springen lassen (Klettern an Kanten erledigt Movement über dieselbe Aktion)
+	-- Springen: Charakter springen lassen (Klettern an Kanten erledigt Movement über dieselbe Aktion); im Sitz: aussteigen
 	InputActions.Bind("Jump", function(began)
 		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if began and humanoid then
+			if humanoid.SeatPart then
+				humanoid.Sit = false
+			end
 			humanoid.Jump = true
 		end
 	end)
@@ -180,6 +206,19 @@ function TouchControls.Init()
 		end
 		for _, entry in SURVIVAL do
 			buttons[entry[1]].Button.Visible = survival
+		end
+		-- im Fahrzeug: SPRUNG = RAUS; als Helikopter-Pilot HOCH/RUNTER statt der Kampfknöpfe
+		local seated, pilot = seatState()
+		buttons.Jump.Button.Text = seated and "RAUS" or "SPRUNG"
+		for action in HELI_HIDDEN do
+			buttons[action].Button.Visible = not pilot
+		end
+		for _, entry in HELI do
+			local action = entry[1]
+			if not pilot and InputActions.IsHeld(action) then
+				InputActions.Trigger(action, false) -- ausgestiegen, während der Knopf gedrückt war
+			end
+			buttons[action].Button.Visible = pilot
 		end
 		-- Gadget leer: Knopf abdunkeln
 		local charges = player:GetAttribute("Gadgets") or 0

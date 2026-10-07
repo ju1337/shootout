@@ -54,6 +54,10 @@ ExtinctionConfig.Vehicles = {
 		Size = Vector3.new(6.4, 2.6, 12.5), Color = Color3.fromRGB(86, 104, 70), Seats = 4 },
 	Sports = { Name = "Sportwagen", Tier = 3, Speed = 110, Accel = 46, Turn = 85, Health = 380, Kind = "Car",
 		Size = Vector3.new(6.2, 1.9, 12), Color = Color3.fromRGB(200, 40, 40), Seats = 2 },
+	-- Helikopter: fliegt (VehicleClient). Climb = Steigen/Sinken (Studs/s), Ceiling = höchste Flughöhe über der Mitte der
+	-- Welt (MapCenter), Descent = Sinken ohne Pilot (Autorotation, bis er aufsetzt). Pilot vorne links, Kopilot, zwei hinten.
+	Heli = { Name = "Helikopter", Tier = 4, Speed = 90, Accel = 26, Turn = 70, Health = 900, Kind = "Heli",
+		Size = Vector3.new(6.4, 2.0, 12), Color = Color3.fromRGB(64, 76, 58), Seats = 4, Climb = 28, Ceiling = 320, Descent = 14 },
 }
 
 -- ---------- Items ----------
@@ -85,6 +89,7 @@ ExtinctionConfig.Items = {
 	V_Quad = { Kind = "Vehicle", Name = "Quad", Vehicle = "Quad", Price = 900, Tier = 1 },
 	V_Pickup = { Kind = "Vehicle", Name = "Geländewagen", Vehicle = "Pickup", Price = 2600, Tier = 2 },
 	V_Sports = { Kind = "Vehicle", Name = "Sportwagen", Vehicle = "Sports", Price = 5200, Tier = 3 },
+	V_Heli = { Kind = "Vehicle", Name = "Helikopter", Vehicle = "Heli", Price = 12000, Tier = 4 },
 }
 
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
@@ -92,7 +97,7 @@ ExtinctionConfig.Stands = {
 	Stand_Weapons = { Title = "WAFFENSTAND", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
 		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } },
 	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
-	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports" } },
+	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports", "V_Heli" } },
 }
 
 -- ---------- Spielermarkt (ExtMarketService, Stand "Stand_Market" im Camp) ----------

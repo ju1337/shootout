@@ -29,6 +29,7 @@ local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local GunModels = require(Shared.GunModels)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
+local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 local DayCycle = require(Shared.DayCycle)
 
 local player = Players.LocalPlayer
@@ -156,6 +157,28 @@ local function buildIcon(parent, id, zIndex)
 			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, barrel)
 		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 29, 0.5, 0), Size = UDim2.fromOffset(11, 1),
 			BackgroundColor3 = Color3.fromRGB(190, 196, 204), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+	elseif config.Kind == "Vehicle" and (ExtinctionConfig.Vehicles[config.Vehicle] or {}).Kind == "Heli" then
+		-- Helikopter (Nase links): Kabine mit Scheibe, Heckausleger mit Leitwerk, Rotor auf dem Mast, Kufen auf Streben
+		local paint = ExtinctionConfig.Vehicles[config.Vehicle].Color
+		local metal = Color3.fromRGB(34, 34, 36)
+		local cabin = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, -8, 0.56, 0),
+			Size = UDim2.fromOffset(20, 12), BackgroundColor3 = paint, BorderSizePixel = 0, ZIndex = zIndex }, holder)
+		UITheme.Corner(cabin, 6)
+		local pane = make("Frame", { Position = UDim2.fromOffset(2, 2), Size = UDim2.fromOffset(8, 5),
+			BackgroundColor3 = Color3.fromRGB(150, 180, 200), BorderSizePixel = 0, ZIndex = zIndex }, cabin)
+		UITheme.Corner(pane, 3)
+		for _, part in {
+			{ Vector2.new(0, 0.5), UDim2.new(1, -3, 0.5, -1), UDim2.fromOffset(19, 3), paint },   -- Heckausleger
+			{ Vector2.new(1, 1), UDim2.new(1, 16, 0.5, 1), UDim2.fromOffset(3, 8), paint },       -- Seitenleitwerk
+			{ Vector2.new(0.5, 1), UDim2.new(0.5, 0, 0, 0), UDim2.fromOffset(2, 3), metal },      -- Mast
+			{ Vector2.new(0.5, 1), UDim2.new(0.5, 0, 0, -3), UDim2.fromOffset(38, 2), metal },    -- Rotor
+			{ Vector2.new(0.5, 0), UDim2.new(0.5, 0, 1, 3), UDim2.fromOffset(24, 2), metal },     -- Kufe
+			{ Vector2.new(0.5, 0), UDim2.new(0, 6, 1, 0), UDim2.fromOffset(2, 3), metal },        -- Streben
+			{ Vector2.new(0.5, 0), UDim2.new(0, 14, 1, 0), UDim2.fromOffset(2, 3), metal },
+		} do
+			make("Frame", { AnchorPoint = part[1], Position = part[2], Size = part[3], BackgroundColor3 = part[4], BorderSizePixel = 0,
+				ZIndex = zIndex }, cabin)
+		end
 	elseif config.Kind == "Vehicle" then
 		local vehicle = ExtinctionConfig.Vehicles[config.Vehicle]
 		local body = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.55),
@@ -204,8 +227,8 @@ local function describe(id, entry)
 			.. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"
 	elseif config.Kind == "Vehicle" then
 		local vehicle = ExtinctionConfig.Vehicles[config.Vehicle]
-		return vehicle and ("Tempo " .. vehicle.Speed .. " · " .. vehicle.Health .. " Leben · " .. vehicle.Seats
-			.. (vehicle.Seats == 1 and " Sitz" or " Sitze")) or ""
+		return vehicle and ((vehicle.Kind == "Heli" and "Fliegt · " or "") .. "Tempo " .. vehicle.Speed .. " · " .. vehicle.Health
+			.. " Leben · " .. vehicle.Seats .. (vehicle.Seats == 1 and " Sitz" or " Sitze")) or ""
 	end
 	return ""
 end
@@ -460,12 +483,25 @@ local function buildHud()
 end
 
 -- Eine Tastenzeile unter der Hotbar für alles: Die allgemeine Zeile des HUD (SCHIESSEN, FÄHIGKEIT, ...) ist in der
--- offenen Welt aus, sonst lägen beide Zeilen übereinander.
+-- offenen Welt aus, sonst lägen beide Zeilen übereinander. Als Pilot eines Helikopters zeigt sie die Flugsteuerung.
+local heliHints = false
 local function updateHints()
 	if not hints then
 		return
 	end
 	local device = InputActions.Device()
+	if heliHints then
+		if device == "Touch" then
+			hints.Text = "STICK = FLIEGEN  ·  HOCH / RUNTER = STEIGEN / SINKEN  ·  RAUS = AUSSTEIGEN  ·  PARKEN = EINPACKEN (GELANDET)"
+		elseif device == "Gamepad" then
+			hints.Text = "L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  " .. InputActions.Hint("StoreVehicle")
+				.. "  EINPACKEN (GELANDET)"
+		else
+			hints.Text = "W / S  VOR / ZURÜCK  ·  A / D  DREHEN  ·  LEERTASTE  STEIGEN  ·  SHIFT  SINKEN  ·  F  AUSSTEIGEN  ·  "
+				.. InputActions.Hint("StoreVehicle") .. "  EINPACKEN (GELANDET)"
+		end
+		return
+	end
 	if device == "Touch" then
 		hints.Text = "PLÄTZE ANTIPPEN ZUM BENUTZEN  ·  TASCHE = INVENTAR  ·  PARKEN = FAHRZEUG EINPACKEN"
 		return
@@ -2131,18 +2167,33 @@ function ExtinctionClient.Init()
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local seat = humanoid and humanoid.SeatPart
 		local vehicle = seat and seat:GetAttribute("Vehicle") and seat.Parent
+		local pilot = false
 		if vehicle and vehicle:GetAttribute("VehicleId") and vehicle.PrimaryPart then
 			local velocity = vehicle.PrimaryPart.AssemblyLinearVelocity
 			local speed = math.floor(Vector3.new(velocity.X, 0, velocity.Z).Magnitude + 0.5)
 			local health = math.ceil(100 * (vehicle:GetAttribute("Health") or 0) / math.max(1, vehicle:GetAttribute("MaxHealth") or 1))
-			vehicleCooldown.Text = upper(vehicle.Name) .. "  ·  TEMPO " .. speed .. "  ·  ZUSTAND " .. health .. " %"
-				.. (vehicle:GetAttribute("Owner") == player.UserId and "  ·  K EINPACKEN" or "")
+			local owner = vehicle:GetAttribute("Owner") == player.UserId
+			local heli = (ExtinctionConfig.Vehicles[vehicle:GetAttribute("VehicleId")] or {}).Kind == "Heli"
+			local text = upper(vehicle.Name) .. "  ·  TEMPO " .. speed
+			local landed = true
+			if heli then
+				-- Helikopter: Höhe über dem Boden; einpacken erst gelandet
+				local height = VehicleClient.Height(vehicle)
+				landed = height < 4
+				text ..= "  ·  HÖHE " .. (height < math.huge and math.max(0, math.floor(height + 0.5)) or "–")
+				pilot = owner and seat:IsA("VehicleSeat")
+			end
+			vehicleCooldown.Text = text .. "  ·  ZUSTAND " .. health .. " %" .. ((owner and landed) and "  ·  K EINPACKEN" or "")
 			vehicleCooldown.TextColor3 = health <= 30 and C.Bad or C.Text
 		else
 			local readyAt = player:GetAttribute("ExtVehicleReadyAt") or 0
 			local left = readyAt - workspace:GetServerTimeNow()
 			vehicleCooldown.Text = left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or ""
 			vehicleCooldown.TextColor3 = C.Muted
+		end
+		if pilot ~= heliHints then
+			heliHints = pilot
+			updateHints()
 		end
 	end)
 
