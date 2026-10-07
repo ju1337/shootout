@@ -366,6 +366,18 @@ local function loadCharacter(source, skins, report)
 	if #entries > 40 then
 		hint(#entries .. " Teile – für Handys besser höchstens 40 (Accessoires zusammenfassen)")
 	end
+	-- Textur-Skins: SurfaceAppearances heißen wie die Teile des Modells (z.B. UpperTorso)
+	local skinNames = {}
+	for _, entry in entries do
+		skinNames[entry.SkinName] = true
+	end
+	for _, folder in skins and skins:GetChildren() or {} do
+		for _, appearance in folder:GetChildren() do
+			if appearance:IsA("SurfaceAppearance") and not skinNames[cleanName(appearance.Name)] then
+				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
+			end
+		end
+	end
 	if math.abs(scale - 1) > 0.5 then
 		hint(string.format("auf %.0f %% skaliert (Modell war %.1f Studs hoch, Spielkörper %.1f)", scale * 100, height,
 			CHARACTER_HEIGHT))

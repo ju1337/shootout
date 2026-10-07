@@ -92,7 +92,14 @@ local function buildRig(name, skip)
 	return rig
 end
 
-buildRig("Viper").Parent = folder
+local viperRig = buildRig("Viper")
+local skins = Instance.new("Folder", viperRig)
+skins.Name = "Skins"
+local skinFolder = Instance.new("Folder", skins)
+skinFolder.Name = "A_Viper_Nacht"
+Instance.new("SurfaceAppearance", skinFolder).Name = "UpperTorso"
+Instance.new("SurfaceAppearance", skinFolder).Name = "UperTorso" -- Tippfehler
+viperRig.Parent = folder
 buildRig("Bastion", "LeftHand").Parent = folder -- unvollständig
 SIM.IsServer = true
 local report = AgentModels.AssetReport()
@@ -104,6 +111,11 @@ for _, text in report.Viper and report.Viper.Warnings or {} do
 	warned = warned or string.find(text, "skaliert", 1, true) ~= nil
 end
 check(warned, "Hinweis: Modell skaliert (doppelt so groß)")
+local typo = false
+for _, text in report.Viper and report.Viper.Warnings or {} do
+	typo = typo or string.find(text, "UperTorso", 1, true) ~= nil
+end
+check(typo, "Hinweis: Textur-Skin mit falschem Teilnamen")
 check(report.Bastion and not report.Bastion.Loaded and not AgentModels.HasAsset("Bastion")
 	and string.find(table.concat(report.Bastion.Errors, " "), "LeftHand", 1, true) ~= nil, "fehlendes Körperteil gemeldet")
 

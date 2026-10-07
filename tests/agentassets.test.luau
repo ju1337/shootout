@@ -57,7 +57,15 @@ for _, source in models do
 			end
 		end
 		check(count > 0 and body:FindFirstChild("AgentVest") == nil, name .. ": trägt die Ausrüstung aus dem Modell")
-		print(string.format("%s: 3D-Modell geladen (%d Teile)", name, count))
+		if AgentModels.IsCharacter(name) then
+			-- ganzer Charakter: Spielkörper unsichtbar (Trefferzone), seine Teile bleiben die einzigen mit Körperteil-Namen
+			for _, partName in AgentModels.BodyParts do
+				local part = body:FindFirstChild(partName)
+				check(part and part.Transparency == 1, name .. ": Spielkörper " .. partName .. " unsichtbar")
+				check(part and not part:GetAttribute("AgentGear"), name .. ": " .. partName .. " ist der Spielkörper, nicht das Modell")
+			end
+		end
+		print(string.format("%s: %s geladen (%d Teile)", name, AgentModels.IsCharacter(name) and "Charakter" or "3D-Modell", count))
 	end
 end
 
