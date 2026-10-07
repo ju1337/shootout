@@ -18,7 +18,7 @@ local AgentModels = require(Shared.AgentModels)
 
 local AgentBody = {}
 
-AgentBody.SkinColor = Color3.fromRGB(205, 160, 130)
+AgentBody.SkinColor = AgentModels.SkinColor
 local MASK = Color3.fromRGB(52, 54, 58)
 local BELT = Color3.fromRGB(30, 30, 30)
 
@@ -28,9 +28,7 @@ AgentBody.VisorColor = AgentModels.VisorColor
 local VISOR_REFLECTANCE = AgentModels.VisorReflectance
 
 -- Hosen: Uniformfarbe abgedunkelt (wie bei der Menü-Figur)
-function AgentBody.PantsColor(primary)
-	return primary:Lerp(Color3.new(0, 0, 0), 0.5)
-end
+AgentBody.PantsColor = AgentModels.PantsColor
 
 -- Beschreibung des Körpers für Player:LoadCharacterWithHumanoidDescription bzw.
 -- Players:CreateHumanoidModelFromDescription. Alle Körperteile Standard (0), keine Kleidung, keine Accessoires,

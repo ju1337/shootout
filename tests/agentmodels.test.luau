@@ -205,10 +205,33 @@ local function wholeBody(model, skip)
 end
 local hawkSource = wholeBody(template:Clone())
 hawkSource.Name = "Hawk"
+local ownTorso = Color3.fromRGB(70, 90, 40)
+hawkSource.UpperTorso.Color = ownTorso -- selbst eingefärbter Körper (Rest bleibt der graue Vorlagen-Körper)
+-- zusätzlich ein eigener Oberkörper mit demselben Namen (Blender hängt ".001" an): wird auch gezeigt, Bezug bleibt
+-- der erste
+local ownShirt = Instance.new("MeshPart")
+ownShirt.Name = "UpperTorso.001"
+ownShirt.Size = hawkSource.UpperTorso.Size * 1.1
+ownShirt.CFrame = hawkSource.UpperTorso.CFrame
+ownShirt.Color = Color3.fromRGB(90, 110, 60)
+ownShirt.Parent = hawkSource
 hawkSource.Parent = folder
 local trapperSource = wholeBody(template:Clone(), { "LeftHand", "RightHand", "LeftFoot", "RightFoot" })
+for _, name in { "LeftHand", "RightHand", "LeftFoot", "RightFoot" } do
+	trapperSource[name]:Destroy() -- auch kein mitgelieferter Körper an Händen und Füßen
+end
 trapperSource.Name = "Trapper"
 trapperSource.Parent = folder
+-- Nur ein Körper (Teile heißen genau wie die Körperteile, z.B. R15-Rig ohne Humanoid): ganzer Charakter wie mit Humanoid
+local ghostSource = template:Clone()
+for _, child in ghostSource:GetChildren() do
+	if child:IsA("BasePart") and string.find(child.Name, "_", 1, true) and not string.match(child.Name, "^Point_")
+		and not string.match(child.Name, "^Ref_") then
+		child:Destroy()
+	end
+end
+ghostSource.Name = "Ghost"
+ghostSource.Parent = folder
 step(0.1)
 report = AgentModels.AssetReport()
 check(report.Hawk and report.Hawk.Loaded and report.Hawk.Character and #report.Hawk.Warnings == 0
@@ -221,9 +244,21 @@ local hawkVisible = 0
 for _, name in AgentModels.BodyParts do
 	hawkVisible += hawk[name].Transparency < 1 and 1 or 0
 end
-check(hawkModel ~= nil and #hawkModel:GetChildren() == 15 and hawkVisible == 0 and hawk:GetAttribute("AgentLook") == "Charakter"
-	and AgentBody.IsDressed(hawk, "Hawk"), "ganzer Körper ohne Humanoid: nur das Modell zu sehen (" .. hawkVisible
-	.. " Körperteile sichtbar)")
+check(hawkModel ~= nil and #hawkModel:GetChildren() == 31 and hawkVisible == 0 and hawk:GetAttribute("AgentLook") == "Charakter"
+	and AgentBody.IsDressed(hawk, "Hawk"), "ganzer Körper ohne Humanoid: Ausrüstung und mitgelieferter Körper, Spielkörper "
+	.. "unsichtbar (" .. (hawkModel and #hawkModel:GetChildren() or 0) .. " Teile, " .. hawkVisible .. " Körperteile sichtbar)")
+-- Der mitgelieferte Körper wird mit angezeigt: grau aus der Vorlage in den Agentenfarben, selbst eingefärbt wie gebaut
+local torso, head, shin = hawkModel and hawkModel:FindFirstChild("UpperTorso"), hawkModel and hawkModel:FindFirstChild("Head"),
+	hawkModel and hawkModel:FindFirstChild("LeftLowerLeg")
+check(torso and torso.Color == ownTorso, "eigener Körper: Farbe wie gebaut")
+local shirt = hawkModel and hawkModel:FindFirstChild("UpperTorso_2")
+check(shirt and shirt.Color == ownShirt.Color and near(shirt.Size, hawk.UpperTorso.Size * 1.1, 1e-3),
+	"zweiter Oberkörper mit demselben Namen: auch zu sehen, Größe relativ zum ersten")
+check(head and head.Color == AgentBody.SkinColor and shin and shin.Color == AgentBody.PantsColor(primary)
+	and hawkModel.LeftUpperArm.Color == primary, "grauer Vorlagen-Körper: Haut, Uniform, Hose wie der Spielkörper")
+check(torso and near(torso.Size, hawk.UpperTorso.Size, 1e-3) and near(torso.Position, hawk.UpperTorso.Position, 1e-3)
+	and torso:FindFirstChildOfClass("WeldConstraint").Part0 == hawk.UpperTorso and torso.CanQuery == false,
+	"mitgelieferter Körper sitzt genau auf dem Spielkörper, angeschweißt, nie Trefferzone")
 check(report.Trapper and report.Trapper.Character and hasText(report.Trapper.Warnings, "ohne LeftHand"),
 	"ohne Hände und Füße: trotzdem ganzer Charakter, mit Hinweis: " .. messages(report.Trapper))
 local trapper = rig()
@@ -231,11 +266,19 @@ AgentBody.Dress(trapper, primary, accent, "Trapper")
 check(trapper.UpperTorso.Transparency == 1 and trapper.LeftLowerArm.Transparency == 1 and trapper.LeftHand.Transparency == 0
 	and trapper.RightFoot.Transparency == 0 and AgentBody.IsDressed(trapper, "Trapper"),
 	"ohne Hände und Füße: nur dort bleibt der Spielkörper zu sehen")
+local ghostPieces = 0
+for _ in AgentModels.PiecesOf("Ghost") or {} do
+	ghostPieces += 1
+end
+check(report.Ghost and report.Ghost.Loaded and report.Ghost.Character and ghostPieces == 15,
+	"nur ein Körper ohne Ausrüstung: ganzer Charakter (15 Teile, Marker und Maßstab nicht): " .. messages(report.Ghost)
+	.. " / " .. ghostPieces .. " Teile")
 for _, model in { hawk, trapper } do
 	model:Destroy()
 end
 hawkSource:Destroy()
 trapperSource:Destroy()
+ghostSource:Destroy()
 step(0.1)
 
 -- ---------- Prüfmeldungen ----------
@@ -331,6 +374,8 @@ data, rep = variant(function(model)
 	stray.Parent = model
 end)
 check(data == nil and hasText(rep.Errors, "Helmet: der Name beginnt nicht mit einem Körperteil"), "Name ohne Körperteil gemeldet")
+-- (nur ein vollständiger Körper ohne Ausrüstung ist ein ganzer Charakter, siehe oben – fehlt auch ein Körperteil,
+-- ist es nichts von beidem)
 data, rep = variant(function(model)
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") and string.find(part.Name, "_") and not string.find(part.Name, "^Point_")
@@ -338,6 +383,7 @@ data, rep = variant(function(model)
 			part:Destroy()
 		end
 	end
+	model.LeftHand:Destroy()
 end)
 check(data == nil and hasText(rep.Errors, "keine Ausrüstung"), "Modell ohne Ausrüstung gemeldet")
 data, rep = variant(function(model)

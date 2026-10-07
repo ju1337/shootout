@@ -63,7 +63,8 @@ Spiel beim Laden:
 - **Erkennen:** Hat das Modell irgendwo einen **Humanoid**, gilt es als ganzer Charakter. Dann müssen alle 15
   Körperteile da sein. Ein Modell ohne Humanoid wird nach der alten Methode geladen (siehe
   [ganz unten](#fortgeschritten-nur-ausrüstung-alte-methode)). Decken seine Teile dabei Kopf, Rumpf, Arme und Beine
-  ab, ist es ebenfalls ein ganzer Charakter, und zu sehen ist nur das Modell.
+  ab, ist es ebenfalls ein ganzer Charakter, und zu sehen ist nur das Modell. Das gilt auch für ein Modell, das nur
+  aus den 15 Körperteilen besteht (z.B. ein R15-Rig, dem der Humanoid fehlt).
 - **Größe:** Das Modell wird auf die Größe des Spielkörpers gebracht (5,1 Studs vom Scheitel bis zu den Füßen), egal
   wie groß es war. Die Proportionen bleiben. Musste es stark verkleinert oder vergrößert werden, kommt ein Hinweis.
 - **Blickrichtung:** Vorne ist dort, wohin das **HumanoidRootPart** schaut.
@@ -116,6 +117,7 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | `… als Viper: Quader-Ausrüstung (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
 | Im Spiel steht der normale Körper da – mit Roblox-Gesicht, ohne Modell und ohne Ausrüstung | Das Einkleiden ist nicht gelaufen, oder Roblox hat danach Körperteile ausgetauscht. Der Server prüft das laufend: nach dem Spawn mehrmals, danach alle 5 Sekunden. Er zieht dann neu an, im Output steht `Aussehen verändert (…) – neu angezogen` mit dem Grund in Klammern. Bleibt der Körper so, im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. |
 | `… als Viper: Ausrüstung aus dem Modell`, und der Spielkörper ist unter dem Modell zu sehen | Das Modell hat keinen Humanoid und deckt nicht Kopf, Rumpf, Arme und Beine ab. Deshalb gilt es nur als Ausrüstung auf dem sichtbaren Körper. Entweder mit dem Avatar-Setup zu einem R15-Rig machen (empfohlen, siehe oben) oder für jedes Körperteil ein Teil `<Körperteil>_<Name>` bauen (siehe [alte Methode](#fortgeschritten-nur-ausrüstung-alte-methode)). |
+| Man sieht durch den Charakter durch (z.B. neben der Weste oder am Hals fehlt der Körper) | Dort hat das Modell nichts: keine Ausrüstung und keinen eigenen Körper, oder der Körper ist unsichtbar (Transparency 1). Den Körper im Modell lassen (Teile, die genau wie die Körperteile heißen) bzw. sichtbar machen. Er wird bei einem ganzen Charakter mit angezeigt. |
 | Spielkörper und Modell liegen übereinander (der schmale Körper in Agentenfarben schaut durch das Modell) | Der Spielkörper ist die unsichtbare Trefferzone. Macht ihn etwas wieder sichtbar (Roblox beim Laden des Aussehens oder ein Skript), blendet der Server ihn sofort wieder aus. Im Output steht dann einmal `… wieder sichtbar gemacht – sofort wieder ausgeblendet`. Siehst du ihn trotzdem, alle Output-Zeilen mit `[Agentenmodelle]` an die Projektleitung schicken. |
 | `Modell konnte nicht angezogen werden (…) – Quader-Ausrüstung` | Beim Anziehen ist ein Fehler passiert, der Agent trägt deshalb die Quader-Ausrüstung. Die Meldung in Klammern an die Projektleitung schicken. |
 
@@ -199,7 +201,11 @@ Standardkörper in seinen Farben. Jedes Teil wird an genau ein Körperteil gesch
 `UpperTorso`, `LowerTorso` und jedes Arm- und Beinteil, z.B. `UpperTorso_Shirt`, `LeftLowerLeg_Hose`), erkennt das
 Spiel ihn als ganzen Charakter. Dann ist nur dein Modell zu sehen, der Standardkörper bleibt unsichtbar als
 Trefferzone. Im Output steht `Viper: Charakter geladen (… Teile)` und `… als Viper: ganzer Charakter aus dem Modell`.
-Fehlen Hände oder Füße, bleibt dort der Standardkörper zu sehen (Hinweis `ganzer Charakter ohne …`).
+Der mitgelieferte Körper (die Teile, die genau wie die Körperteile heißen) gehört dann zum Modell und wird **mit
+angezeigt**, so wie du ihn in Studio siehst. Ist er noch der graue Körper aus der Vorlage (ohne Textur), bekommt er
+die Farben des Agenten (Haut, Uniform, Hose). Mit eigener Textur oder Farbe bleibt er, wie du ihn gebaut hast. Soll
+er gar nicht zu sehen sein, weil die Kleidung alles abdeckt, setze seine Teile auf Transparency 1. Fehlen Hände oder
+Füße ganz (weder Ausrüstung noch Körper), bleibt dort der Standardkörper zu sehen (Hinweis `ganzer Charakter ohne …`).
 
 **Ablauf in Kürze**
 
@@ -210,7 +216,8 @@ Fehlen Hände oder Füße, bleibt dort der Standardkörper zu sehen (Hinweis `ga
    **File** › **Insert from File…** in Studio einfügen, umbenennen, nach Assets › Agents legen.
 2. Um den Körper herum modellieren, in seiner Ruhelage (Arme hängen). Den Körper nicht verändern.
 3. Jedes Teil `<Körperteil>_<Name>` nennen (siehe unten).
-4. **Körper und `Point_Root` im Modell lassen.** Der Körper wird nicht angezeigt, aber das Spiel richtet die
+4. **Körper und `Point_Root` im Modell lassen.** Bei reiner Ausrüstung wird der Körper nicht angezeigt (bei einem
+   ganzen Charakter schon, siehe oben), aber das Spiel richtet die
    Ausrüstung an ihm aus. Dann sind Drehung, Lage und Größe nach dem Import egal.
 5. Exportieren: alles auswählen, `Strg+A` › Alle Transformationen, Datei › Exportieren › FBX mit „Nur Auswahl“.
 6. In Studio: **Import 3D** mit **Merge Meshes aus**, nach Assets › Agents ziehen, wie den Agenten benennen, Play.

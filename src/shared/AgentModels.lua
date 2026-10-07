@@ -67,6 +67,12 @@ function AgentModels.VisorColor(accent)
 	return Color3.fromRGB(22, 24, 28):Lerp(accent, 0.15)
 end
 
+-- Farben des Spielkörpers: Haut, Hose = Uniformfarbe abgedunkelt
+AgentModels.SkinColor = Color3.fromRGB(205, 160, 130)
+function AgentModels.PantsColor(primary)
+	return primary:Lerp(Color3.new(0, 0, 0), 0.5)
+end
+
 -- ---------- Fertige 3D-Modelle (Blender) ----------
 local ZONES = { Primary = true, Accent = true, Glass = true }
 local MAX_PARTS = 12        -- Budget pro Agent (Handys)
@@ -79,6 +85,13 @@ local MAX_DISTANCE = 0.75   -- so weit darf die Mitte eines Teils außerhalb sei
 local MAX_REACH = 0.45      -- weiter steht Ausrüstung nicht ab (sähe aus wie ein Ziel, zählt aber nicht als Treffer)
 local MAX_BODY_DEVIATION = 0.4 -- mitgelieferter Körper: so weit darf ein Körperteil vom Spielkörper abweichen
 local DEFAULT_COLOR = Color3.fromRGB(52, 54, 58) -- untexturierte Teile ohne Farbzone (ein Import ist sonst weiß)
+local TEMPLATE_BODY_COLOR = Color3.fromRGB(196, 198, 204) -- Körper in der Vorlage art/templates/Agents
+-- Farbzone des mitgelieferten Körpers, solange er noch der graue Körper aus der Vorlage ist (wie der Spielkörper:
+-- Haut, Uniform, Hose)
+local BODY_ZONES = { Head = "Skin", UpperTorso = "Primary", LowerTorso = "Primary", LeftUpperArm = "Primary",
+	LeftLowerArm = "Primary", LeftHand = "Primary", RightUpperArm = "Primary", RightLowerArm = "Primary",
+	RightHand = "Primary", LeftUpperLeg = "Pants", LeftLowerLeg = "Pants", LeftFoot = "Pants", RightUpperLeg = "Pants",
+	RightLowerLeg = "Pants", RightFoot = "Pants" }
 -- Paare links/rechts, aus denen die Querachse des mitgelieferten Körpers kommt (erstes vorhandenes)
 local SIDE_PAIRS = { { "LeftUpperArm", "RightUpperArm" }, { "LeftLowerArm", "RightLowerArm" }, { "LeftHand", "RightHand" },
 	{ "LeftUpperLeg", "RightUpperLeg" }, { "LeftLowerLeg", "RightLowerLeg" }, { "LeftFoot", "RightFoot" } }
@@ -229,8 +242,8 @@ local function loadCharacter(source, skins, report)
 				rootPart = obj
 			elseif JOINTS[name] and not body[name] then
 				body[name] = obj
-			elseif obj.Transparency < 1 then
-				table.insert(extras, obj)
+			elseif obj.Transparency < 1 and not string.match(name, "^Point_") and not table.find(wordsOf(name), "Ref") then
+				table.insert(extras, obj) -- (Marker und Maßstab-Teile aus der Vorlage nicht)
 			end
 		end
 	end
@@ -418,6 +431,7 @@ local function loadAsset(agentId, source)
 
 	-- Marker, Körper und Ausrüstung einsammeln
 	local root, refs, gear = nil, {}, {}
+	local bodies = {} -- alle Teile, die genau wie ein Körperteil heißen (auch doppelte, z.B. UpperTorso.001)
 	for _, obj in source:GetDescendants() do
 		if skins and (obj == skins or obj:IsDescendantOf(skins)) then
 			continue
@@ -435,7 +449,8 @@ local function loadAsset(agentId, source)
 			if table.find(words, "Ref") or name == "HumanoidRootPart" then
 				continue -- nur Maßstab bzw. unsichtbarer Teil des Körpers (Export des Körpers aus Studio)
 			elseif AgentModels.Body[name] then
-				refs[name] = obj
+				refs[name] = refs[name] or obj -- Bezug zum Ausrichten: das erste (z.B. der Körper aus der Vorlage)
+				table.insert(bodies, obj)
 			elseif AgentModels.Body[words[1] or ""] then
 				table.insert(gear, obj)
 			else
@@ -444,6 +459,15 @@ local function loadAsset(agentId, source)
 		end
 	end
 	if #gear == 0 then
+		-- Nur ein Körper (Teile heißen genau wie die Körperteile, z.B. ein R15-Rig ohne Humanoid): ganzer Charakter
+		local complete = true
+		for _, bodyName in AgentModels.BodyParts do
+			complete = complete and refs[bodyName] ~= nil
+		end
+		if complete then
+			-- (andere Teile sind dort Accessoires, keine falsch benannte Ausrüstung: neuer Bericht)
+			return loadCharacter(source, skins, { Loaded = false, Errors = {}, Warnings = {} })
+		end
 		problem("keine Ausrüstung im Modell (Teile heißen <Körperteil>_<Name>, z.B. Head_Helmet)")
 	end
 	local frame, fromBody, sizeProblem = frameOf(root, refs)
@@ -487,32 +511,11 @@ local function loadAsset(agentId, source)
 
 	-- Ausrüstung: Lage relativ zum Körperteil, Farbzonen
 	local entries, used, names = {}, {}, {}
-	for _, original in gear do
-		local name = cleanName(original.Name)
-		local words = wordsOf(name)
-		local bodyName = words[1]
-		local rest = restOf(bodyName)
-		local offset = rest.CFrame:ToObjectSpace(toAgent * original.CFrame)
-		local position, half = offset.Position, rest.Size / 2
-		local outside = Vector3.new(math.max(0, math.abs(position.X) - half.X), math.max(0, math.abs(position.Y) - half.Y),
-			math.max(0, math.abs(position.Z) - half.Z)).Magnitude
-		if outside > MAX_DISTANCE then
-			problem(string.format("%s hängt nicht am Körperteil %s (Mitte %.2f Studs daneben) – stimmen Einheit "
-				.. "(1 Blender-Einheit = 1 Stud), Lage und Richtung (Point_Root zwischen den Füßen, vorne = -Z)?",
-				original.Name, bodyName, outside))
-			continue
-		end
-		local extent = halfExtent(offset.Rotation, original.Size)
-		local reach = math.max(math.abs(position.X) + extent.X - half.X, math.abs(position.Y) + extent.Y - half.Y,
-			math.abs(position.Z) + extent.Z - half.Z)
-		if reach > MAX_REACH then
-			hint(string.format("%s steht %.2f Studs vom Körperteil %s ab – eng am Körper bauen (höchstens 0,25, Helm 0,3)",
-				original.Name, reach, bodyName))
-		end
+	local function addPiece(original, name, words, bodyName, offset, rest, bodyZone)
 		local part = original:Clone()
 		if not part then
 			hint(original.Name .. " lässt sich nicht kopieren (Archivable ist aus)")
-			continue
+			return
 		end
 		for _, child in part:GetDescendants() do
 			-- verschachtelte Teile kommen einzeln dran, Gelenke, Marker, Wraps, Skripte und Werte der Roblox-Skalierung
@@ -539,7 +542,9 @@ local function loadAsset(agentId, source)
 		local texture = part:IsA("MeshPart") and part.TextureID
 		local textured = part:FindFirstChildOfClass("SurfaceAppearance") ~= nil or (type(texture) == "string" and texture ~= "")
 		local plain = part.Color == Color3.new(1, 1, 1) and not textured
-		if plain and not zone and not neon then
+		if bodyZone and not textured and (plain or part.Color == TEMPLATE_BODY_COLOR) then
+			zone = bodyZone -- Körper aus der Vorlage, noch grau bzw. weiß: in den Farben des Agenten wie der Spielkörper
+		elseif plain and not zone and not neon then
 			part.Color = DEFAULT_COLOR
 		end
 		if neon then
@@ -556,6 +561,30 @@ local function loadAsset(agentId, source)
 			NeonAccent = neon and plain, Template = part })
 		names[unique] = true
 	end
+	for _, original in gear do
+		local name = cleanName(original.Name)
+		local words = wordsOf(name)
+		local bodyName = words[1]
+		local rest = restOf(bodyName)
+		local offset = rest.CFrame:ToObjectSpace(toAgent * original.CFrame)
+		local position, half = offset.Position, rest.Size / 2
+		local outside = Vector3.new(math.max(0, math.abs(position.X) - half.X), math.max(0, math.abs(position.Y) - half.Y),
+			math.max(0, math.abs(position.Z) - half.Z)).Magnitude
+		if outside > MAX_DISTANCE then
+			problem(string.format("%s hängt nicht am Körperteil %s (Mitte %.2f Studs daneben) – stimmen Einheit "
+				.. "(1 Blender-Einheit = 1 Stud), Lage und Richtung (Point_Root zwischen den Füßen, vorne = -Z)?",
+				original.Name, bodyName, outside))
+			continue
+		end
+		local extent = halfExtent(offset.Rotation, original.Size)
+		local reach = math.max(math.abs(position.X) + extent.X - half.X, math.abs(position.Y) + extent.Y - half.Y,
+			math.abs(position.Z) + extent.Z - half.Z)
+		if reach > MAX_REACH then
+			hint(string.format("%s steht %.2f Studs vom Körperteil %s ab – eng am Körper bauen (höchstens 0,25, Helm 0,3)",
+				original.Name, reach, bodyName))
+		end
+		addPiece(original, name, words, bodyName, offset, rest)
+	end
 	-- Deckt das Modell den ganzen Körper ab (Kopf, Rumpf, Arme, Beine – z.B. ein Charakter aus Blender ohne Humanoid,
 	-- gebaut auf der Vorlage), ist es ein ganzer Charakter wie mit Humanoid: zu sehen ist nur das Modell, der
 	-- Spielkörper bleibt unsichtbar als Trefferzone. Sonst ist es Ausrüstung auf dem sichtbaren Spielkörper.
@@ -568,6 +597,17 @@ local function loadAsset(agentId, source)
 		whole = whole and covered[bodyName] == true
 	end
 	if whole then
+		-- Der mitgelieferte Körper (Teile, die genau wie Körperteile heißen) gehört dann zum Modell – in Studio sieht man
+		-- ihn ja auch – und wird mit angezeigt. Ist er noch der graue Körper aus der Vorlage, in den Agentenfarben.
+		for _, body in bodies do
+			if body.Transparency < 1 then
+				local bodyName = cleanName(body.Name)
+				local rest = restOf(bodyName)
+				addPiece(body, bodyName, { bodyName }, bodyName, rest.CFrame:ToObjectSpace(toAgent * body.CFrame), rest,
+					BODY_ZONES[bodyName])
+				covered[bodyName] = true
+			end
+		end
 		local open = {}
 		for _, bodyName in AgentModels.BodyParts do
 			if not covered[bodyName] then
@@ -849,6 +889,10 @@ function AgentModels.Attach(container, parts, agentId, primary, accent, skinId, 
 		end
 		if entry.Zone == "Primary" then
 			part.Color = primary
+		elseif entry.Zone == "Skin" then
+			part.Color = AgentModels.SkinColor
+		elseif entry.Zone == "Pants" then
+			part.Color = AgentModels.PantsColor(primary)
 		elseif entry.Zone == "Accent" or entry.NeonAccent then
 			part.Color = accent
 		elseif entry.Zone == "Glass" then
