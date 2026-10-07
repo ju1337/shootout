@@ -191,6 +191,12 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 			bodyParts[name] = part
 		end
 	end
+	-- Körper wieder sichtbar (ein ganzer Charakter blendet ihn gleich wieder aus; nicht während der Tarnung)
+	if not character:GetAttribute("Cloaked") then
+		for _, part in bodyParts do
+			part.Transparency = 0
+		end
+	end
 	if AgentModels.Attach(character, bodyParts, agentId, primary, accent, skinId, true) then
 		AgentBody.Protect(character)
 		return
