@@ -146,6 +146,7 @@ check(near(P.Roll(0, 1, false), P.SlideRoll), "Rutschen neigt deutlich")
 check(math.abs(P.Roll(1, 0, true)) < math.abs(P.Roll(1, 0, false)), "beim Zielen kaum Neigung")
 check(P.LandDip(20) == 0 and near(P.LandDip(200), P.LandDipMax), "Eintauchen erst bei harten Landungen")
 check(P.Bob(0, 1) == 0 and P.Bob(math.pi / 2, 1) < 0 and P.Bob(math.pi / 2, 0) == 0, "Wippen nur beim Laufen")
+check(math.abs(P.Bob(math.pi / 2, 5)) <= 0.02, "Wippen dezent: höchstens 0,02 Studs, auch beim Sprinten")
 
 -- ---------- Movement im Simulator ----------
 -- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12) und eine Kante in 8,5

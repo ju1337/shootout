@@ -171,8 +171,9 @@ function ViewModel:Update(dt, state)
 	self.BobPhase += dt * (4 + state.Speed * 0.42)
 	self.Bob += (moving - self.Bob) * math.min(1, dt * 8)
 	local bobAmount = self.Bob * (1 - state.Aim * 0.85)
-	local bob = CFrame.new(math.sin(self.BobPhase) * 0.045 * bobAmount, -math.abs(math.cos(self.BobPhase)) * 0.05 * bobAmount, 0)
-		* CFrame.Angles(0, 0, math.sin(self.BobPhase) * math.rad(1.2) * bobAmount)
+	-- dezent: wenige Hundertstel Studs und ein halbes Grad, damit die Waffe ruhig im Bild bleibt
+	local bob = CFrame.new(math.sin(self.BobPhase) * 0.016 * bobAmount, -math.abs(math.cos(self.BobPhase)) * 0.018 * bobAmount, 0)
+		* CFrame.Angles(0, 0, math.sin(self.BobPhase) * math.rad(0.4) * bobAmount)
 
 	self.SprintBlend += ((state.Sprinting and state.Aim < 0.1 and not state.Inspect and 1 or 0) - self.SprintBlend) * math.min(1, dt * 10)
 	self.SlideBlend += ((state.Sliding and 1 or 0) - self.SlideBlend) * math.min(1, dt * 9)

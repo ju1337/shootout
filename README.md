@@ -573,7 +573,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     (Vault, der Schwung bleibt), langsam oder an höheren Kanten (bis 7,8 über den Füßen) = hochziehen – auch aus dem
     Sprung heraus (Leertaste/✕ gehalten, auf die Kante zu; höchstens 9,5 über dem letzten Boden)
   - Kamera: Sichtfeld weitet sich beim Sprinten und noch mehr beim Rutschen, leichte Neigung beim Seitwärtslaufen
-    und deutliche beim Rutschen, Wippen beim Laufen (Ego), Eintauchen bei harten Landungen; in der Ego-Ansicht
+    und deutliche beim Rutschen, dezentes Wippen beim Laufen (Ego, höchstens 0,02 Studs), Eintauchen bei harten Landungen; in der Ego-Ansicht
     kippt die Waffe beim Rutschen weg. Ducken gleitet (Hüfte in 0,12 s)
 - **Bewegungs-Check** (`src/server-shared/MovementGuard.lua`): Der Server vergleicht 5-mal pro Sekunde die
   zurückgelegte Strecke jedes Spielers mit dem erlaubten Tempo (waagerecht 62 Studs/s, nach oben 50, dazu ein
@@ -589,7 +589,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     zeigt ein rotes ⊘ die Stelle
   - Ego-Perspektive: jede Waffe hat Kimme und Korn (mit Leuchtpunkt), das Sturmgewehr ein Rotpunktvisier (Gehäuse,
     Rahmen mit getöntem Glas, roter Punkt mittig im Fenster); beim Zielen liegt die Visierlinie genau
-    in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen, gesenkt beim Sprinten, gekippt beim Rutschen
+    in der Bildmitte; Waffe mit Armen, schwankt beim Umsehen, wippt beim Laufen nur leicht, gesenkt beim Sprinten, gekippt beim Rutschen
   - Nachlade-Animation je Waffe (Magazin fällt heraus, Schlitten, Spannhebel, LMG-Deckel, Revolver-Trommel,
     Schrotflinte Patrone für Patrone – Schießen bricht dort das Nachladen ab), auch in der Third-Person bei allen
     Spielern und Bots sichtbar: Charaktere halten die Waffe mit beiden Händen im Schulteranschlag auf

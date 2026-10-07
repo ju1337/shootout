@@ -190,9 +190,11 @@ function P.LandDip(fallSpeed)
 end
 
 -- Wippen der Kamera beim Laufen (Studs nach unten): phase läuft mit der Strecke, speedRatio = Tempo / Gehtempo
+-- Dezent: höchstens P.BobMax Studs (beim Sprinten), damit das Bild ruhig bleibt
+P.BobMax = 0.018
 function P.Bob(phase, speedRatio)
-	local amount = math.clamp(speedRatio, 0, 1.6)
-	return -math.abs(math.sin(phase)) * 0.055 * amount
+	local amount = math.clamp(speedRatio, 0, 1.3) / 1.3
+	return -math.abs(math.sin(phase)) * P.BobMax * amount
 end
 
 return P
