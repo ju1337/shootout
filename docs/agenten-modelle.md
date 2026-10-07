@@ -41,9 +41,12 @@ Du brauchst: Roblox Studio, den Place des Spiels und dein Modell als Datei (`.fb
 6. **Umbenennen:** Den Charakter anklicken, **F2** drücken (oder Rechtsklick › **Rename**) und **genau wie den
    Agenten** nennen, z.B. `Viper` (alle Namen in der [Liste der Agenten](#liste-der-agenten), Groß- und
    Kleinschreibung beachten). Liegt dort schon ein älteres Modell mit demselben Namen, das alte vorher löschen.
-7. **Testen:** Reiter **Home** › **Play** (oder **F5**). Im Output steht dann zum Beispiel:
+7. **Testen:** Das Modell **vor** dem Start einfügen (nicht während Play – in Play gehören Änderungen im Explorer
+   nur zu deinem Bildschirm, der Server sieht sie nicht). Dann Reiter **Home** › **Play** (oder **F5**) und im Spiel
+   **genau diesen Agenten** wählen. Im Output steht dann zum Beispiel:
 
        [Agentenmodelle] Viper: Charakter geladen (15 Teile)
+       [Agentenmodelle] DeinName als Viper: ganzer Charakter aus dem Modell
 
    Steht dort stattdessen „NICHT geladen“, steht direkt darunter, was fehlt (siehe
    [Häufige Probleme](#häufige-probleme)). Mit **Stop** (oder **Umschalt+F5**) beendest du den Test.
@@ -74,6 +77,9 @@ Spiel beim Laden:
   (Transparency 1) werden weggelassen.
 - **Bewegung:** Jedes Teil folgt seinem Körperteil. Laufen, Springen, Zielen und Waffe halten bewegen also dein
   Modell mit, mit den Animationen des Spiels. Eigene Animationen oder Skripte im Modell werden nicht benutzt.
+- **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder löschst es, lädt das Spiel es sofort neu und zieht
+  alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auch auf dem Server
+  passiert, z.B. in Studio im Server-Fenster oder im Modus **Run**).
 - **Treffer:** Zu sehen ist nur dein Modell. Der normale Agentenkörper bleibt unsichtbar an derselben Stelle und ist
   die **Trefferzone**. So sind alle Agenten gleich leicht zu treffen, egal wie breit oder schmal das Modell ist.
   Teile deines Modells zählen nie als Treffer, Schüsse gehen hindurch. Darum: Sehr breite Teile (große Flügel,
@@ -102,6 +108,9 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | `… lässt sich nicht kopieren (Archivable ist aus)` | Teil anklicken, in den Properties **Archivable** anhaken. |
 | `Fehler beim Laden: …` | Die ganze Meldung an die Projektleitung schicken. |
 | Nach dem Neustart von Studio ist das Modell weg | Den Place mit **File** › **Publish to Roblox** speichern. |
+| `… als Viper: Quader-Ausrüstung (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch geschrieben, nicht direkt im Ordner `Agents`, oder während Play nur auf deinem Bildschirm eingefügt. Stop drücken, Modell richtig einfügen, neu starten. |
+| Im Spiel steht der normale Körper da – mit Roblox-Gesicht, ohne Modell und ohne Ausrüstung | Das Einkleiden ist nicht gelaufen. Im Output nach roten Fehlermeldungen suchen (auch weiter oben) und nach der Zeile `… als …:`. Fehlt sie, den ganzen Output (Rechtsklick › Alles kopieren) an die Projektleitung schicken. Der Server sieht in den ersten Sekunden nach dem Spawn mehrmals nach und zieht neu an (`Aussehen nach dem Spawn verändert – neu angezogen`). |
+| `Modell konnte nicht angezogen werden (…) – Quader-Ausrüstung` | Beim Anziehen ist ein Fehler passiert, der Agent trägt deshalb die Quader-Ausrüstung. Die Meldung in Klammern an die Projektleitung schicken. |
 
 ## Textur-Skins
 

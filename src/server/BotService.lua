@@ -22,6 +22,7 @@ local GameSettings = require(Shared.GameSettings)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
+local AgentModels = require(Shared.AgentModels)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
@@ -500,6 +501,10 @@ end
 local SPAWN_RETRY = 3 -- Sekunden bis zum nächsten Versuch, wenn ein Körper nicht gebaut werden konnte
 local templates = {}  -- [Agent-Id] = Modell (außerhalb des Workspace)
 local building = {}   -- [Agent-Id] = true, solange die Vorlage gebaut wird
+-- Neues oder geändertes 3D-Modell eines Agenten: Vorlage beim nächsten Bot neu bauen
+AgentModels.OnChanged(function(agentId)
+	templates[agentId] = nil
+end)
 
 local function rigTemplate(agent)
 	local key = agent.Id

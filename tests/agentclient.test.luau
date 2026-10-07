@@ -34,6 +34,7 @@ check(AgentModels.AssetReport().Agent ~= nil and not AgentModels.AssetReport().A
 local ghost = template:Clone()
 ghost.Name = "Ghost"
 ghost.Parent = folder
+SIM.Advance(0.1) -- geladen wird am Ende des Moments (mehrere Änderungen = einmal laden)
 check(AgentModels.HasAsset("Ghost"), "später angekommenes Modell geladen")
 SIM.IsServer = true
 

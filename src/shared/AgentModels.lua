@@ -305,8 +305,11 @@ local function loadCharacter(source, skins, report)
 			return
 		end
 		for _, child in part:GetDescendants() do
-			-- nur das Aussehen bleibt: keine Teile, Gelenke, Attachments/Bones, Wraps, Skripte
-			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Attachment")
+			-- nur das Aussehen bleibt: keine Teile, Gelenke, Rig-Attachments, Wraps, Skripte. Bones bleiben (ein
+			-- Skinned Mesh aus dem Avatar-Setup verformt sich mit ihnen an den Gelenken), mit der Größe mitskaliert.
+			if child:IsA("Bone") then
+				child.CFrame = CFrame.new(child.CFrame.Position * scale) * child.CFrame.Rotation
+			elseif child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Attachment")
 				or child:IsA("Constraint") or child:IsA("BaseWrap") or child:IsA("LuaSourceContainer") then
 				child:Destroy()
 			end
@@ -578,16 +581,90 @@ local function loadOne(source)
 	assetData[name] = asset
 end
 
+-- Im Studio-Output (nur Server): was mit dem Modell eines Namens los ist
+local function printReport(name)
+	if RunService:IsClient() or not RunService:IsStudio() then
+		return
+	end
+	local report = assetReport[name]
+	if not report then
+		print("[Agentenmodelle] " .. name .. ": kein Modell mehr – Quader-Ausrüstung")
+	elseif report.Loaded then
+		print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Character and "Charakter" or "3D-Modell")
+			.. " geladen (" .. #assetData[name].Gear .. " Teile)")
+	else
+		warn("[Agentenmodelle] " .. name .. ": 3D-Modell NICHT geladen, es bleibt die Quader-Ausrüstung:\n  - "
+			.. table.concat(report.Errors, "\n  - "))
+	end
+	if report and #report.Warnings > 0 then
+		warn("[Agentenmodelle] " .. name .. ": Hinweise:\n  - " .. table.concat(report.Warnings, "\n  - "))
+	end
+end
+
+local changedCallbacks = {}
+-- callback(Name) läuft, wenn sich das Modell eines Agenten ändert (neu eingefügt, ersetzt, umbenannt, entfernt)
+function AgentModels.OnChanged(callback)
+	table.insert(changedCallbacks, callback)
+end
+
 -- Ordner mit den Modellen: Rojo legt ReplicatedStorage.Assets.Agents an, die Modelle selbst liegen im Place.
--- Der Client wartet nicht darauf: Kommen Ordner oder Modelle erst nach dem Start an, werden sie dann geladen (bis
--- dahin zeigen die Vorschauen die Quader-Ausrüstung).
+-- Server und Client laden neu, sobald ein Modell dazukommt, sich ändert, umbenannt oder entfernt wird – auch
+-- während das Spiel läuft (z.B. in Studio eingefügt). Der Client wartet nicht auf den Ordner (bis dahin zeigen die
+-- Vorschauen die Quader-Ausrüstung).
 local function watchAgents(folder)
+	local nameOf = {} -- [Modell] = Name, unter dem es zuletzt geladen wurde
+	local pending = {} -- Namen, die am Ende dieses Moments neu geladen werden
+	local function reload(name)
+		assetData[name], assetReport[name] = nil, nil
+		local source = folder:FindFirstChild(name)
+		if source then
+			loadOne(source)
+		end
+		printReport(name)
+		for _, callback in changedCallbacks do
+			task.spawn(callback, name)
+		end
+	end
+	local function schedule(name)
+		if not name or pending[name] then
+			return
+		end
+		pending[name] = true
+		task.defer(function()
+			pending[name] = nil
+			reload(name)
+		end)
+	end
+	local function track(source)
+		nameOf[source] = source.Name
+		source:GetPropertyChangedSignal("Name"):Connect(function()
+			if nameOf[source] then
+				schedule(nameOf[source])
+				nameOf[source] = source.Name
+				schedule(source.Name)
+			end
+		end)
+		-- Änderungen im Modell (Teile dazu, weg, ersetzt): neu laden
+		source.DescendantAdded:Connect(function()
+			schedule(nameOf[source])
+		end)
+		source.DescendantRemoving:Connect(function()
+			schedule(nameOf[source])
+		end)
+	end
 	for _, source in folder:GetChildren() do
 		loadOne(source)
+		track(source)
 	end
-	if RunService:IsClient() then
-		folder.ChildAdded:Connect(loadOne)
-	end
+	folder.ChildAdded:Connect(function(source)
+		track(source)
+		schedule(source.Name)
+	end)
+	folder.ChildRemoved:Connect(function(source)
+		local name = nameOf[source]
+		nameOf[source] = nil
+		schedule(name)
+	end)
 end
 
 local function whenChild(parent, name, callback)
@@ -614,20 +691,22 @@ else
 	local folder = assets and assets:FindFirstChild("Agents")
 	if folder then
 		watchAgents(folder)
+	else
+		-- Ordner kommt erst später (z.B. in Studio angelegt): dann ab da beobachten
+		whenChild(ReplicatedStorage, "Assets", function(later)
+			whenChild(later, "Agents", watchAgents)
+		end)
 	end
-	-- In Studio steht im Output, was mit jedem Modell los ist
+	-- In Studio steht im Output, was mit jedem Modell los ist (auch wenn noch keins da ist)
 	if RunService:IsStudio() then
-		for name, report in assetReport do
-			if report.Loaded then
-				print("[Agentenmodelle] " .. name .. ": " .. (assetData[name].Character and "Charakter" or "3D-Modell")
-					.. " geladen (" .. #assetData[name].Gear .. " Teile)")
-			else
-				warn("[Agentenmodelle] " .. name .. ": 3D-Modell NICHT geladen, es bleibt die Quader-Ausrüstung:\n  - "
-					.. table.concat(report.Errors, "\n  - "))
-			end
-			if #report.Warnings > 0 then
-				warn("[Agentenmodelle] " .. name .. ": Hinweise:\n  - " .. table.concat(report.Warnings, "\n  - "))
-			end
+		if not folder then
+			warn("[Agentenmodelle] Ordner ReplicatedStorage.Assets.Agents fehlt – alle Agenten tragen die Quader-Ausrüstung")
+		elseif next(assetReport) == nil then
+			print("[Agentenmodelle] noch keine Modelle in ReplicatedStorage.Assets.Agents – alle Agenten tragen die "
+				.. "Quader-Ausrüstung")
+		end
+		for name in assetReport do
+			printReport(name)
 		end
 	end
 end
@@ -635,6 +714,19 @@ end
 -- Hat der Agent ein fertiges 3D-Modell (statt der Quader-Ausrüstung)?
 function AgentModels.HasAsset(agentId)
 	return agentId ~= nil and assetData[agentId] ~= nil
+end
+
+-- Körperteile, an denen das Modell eines Agenten hängt ([Name] = true); nil ohne Modell
+function AgentModels.AnchorsOf(agentId)
+	local asset = agentId and assetData[agentId]
+	if not asset then
+		return nil
+	end
+	local anchors = {}
+	for _, entry in asset.Gear do
+		anchors[entry.Body] = true
+	end
+	return anchors
 end
 
 -- Ist das Modell ein ganzer Charakter (R15-Rig), der den Spielkörper ersetzt?

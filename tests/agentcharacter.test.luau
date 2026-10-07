@@ -21,6 +21,7 @@ local AgentConfig = require("AgentConfig")
 -- Als Client laden: der Client lädt auch Modelle, die erst nach dem Start in Assets.Agents ankommen
 SIM.IsServer = false
 local AgentModels = require("AgentModels")
+local AgentBody = require("AgentBody")
 local W = AgentConfig.BodyScale.Width
 local SCALE = 2
 local PLACE = CFrame.new(100, 50, 30) * CFrame.Angles(0, math.rad(90), 0) -- irgendwo und gedreht importiert
@@ -101,6 +102,7 @@ Instance.new("SurfaceAppearance", skinFolder).Name = "UpperTorso"
 Instance.new("SurfaceAppearance", skinFolder).Name = "UperTorso" -- Tippfehler
 viperRig.Parent = folder
 buildRig("Bastion", "LeftHand").Parent = folder -- unvollständig
+SIM.Advance(0.1) -- geladen wird am Ende des Moments
 SIM.IsServer = true
 local report = AgentModels.AssetReport()
 check(report.Viper and report.Viper.Loaded and report.Viper.Character, "Viper: als ganzer Charakter geladen "
@@ -197,7 +199,6 @@ check(visibleBody == 0 and modelParts == 16, "Figur: nur das Modell zu sehen (" 
 	.. modelParts .. " Modellteile)")
 
 -- Erneut anziehen mit einem Agenten ohne Modell: Körper wieder sichtbar
-local AgentBody = require("AgentBody")
 AgentBody.Dress(body, Color3.new(0, 0, 0), Color3.new(1, 1, 1), "Mender")
 check(bodyParts.Head.Transparency == 0 and body:FindFirstChild("Head_2") == nil, "anderer Agent: Körper wieder sichtbar")
 local leftover = 0
@@ -207,6 +208,76 @@ for _, p in body:GetChildren() do
 	end
 end
 check(leftover == 0, "Modellteile beim Umziehen entfernt")
+
+-- ---------- Im Spiel: Spieler mit diesem Agenten ----------
+game.JobId = "server-1"
+SIM.DataStore("PlayerData_v1")
+local function step(seconds)
+	SIM.Run(SIM.Now + (seconds or 1))
+end
+local AgentService = require("AgentService")
+local SpawnUtil = require("SpawnUtil")
+AgentService.Init()
+local alice = SIM.Join("Alice")
+step(1)
+alice:SetAttribute("Mode", "Hub")
+alice:SetAttribute("Agent", "Viper")
+local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
+step(0.3)
+local function state()
+	local clones, visible = 0, 0
+	for _, p in character:GetChildren() do
+		if p:IsA("BasePart") then
+			if p:GetAttribute("AgentGear") and string.sub(p.Name, 1, 6) == "Model_" then
+				clones += 1
+			elseif AgentModels.Body[p.Name] and p.Transparency < 1 then
+				visible += 1
+			end
+		end
+	end
+	return clones, visible
+end
+local clones, visible = state()
+check(clones > 0 and visible == 0 and character:GetAttribute("AgentLook") == "Charakter"
+	and AgentBody.IsDressed(character, "Viper"), "Spieler als ganzer Charakter (" .. clones .. " Modellteile, "
+	.. visible .. " Körperteile sichtbar)")
+
+-- Fällt etwas weg (z.B. weil Roblox Körperteile nachträglich austauscht), zieht der Server neu an
+for _, p in character:GetChildren() do
+	if p:GetAttribute("AgentGear") then
+		p:Destroy()
+		break
+	end
+end
+character.UpperTorso.Transparency = 0
+check(not AgentBody.IsDressed(character, "Viper"), "fehlendes Modellteil / sichtbarer Körper erkannt")
+step(3)
+check(AgentBody.IsDressed(character, "Viper"), "nach kurzer Zeit wieder vollständig angezogen")
+
+-- Modell während des Spiels entfernt: Quader-Ausrüstung, Körper sichtbar
+folder.Viper:Destroy()
+step(0.3)
+clones, visible = state()
+check(not AgentModels.HasAsset("Viper") and clones == 0 and visible > 0 and character:FindFirstChild("AgentVisor") ~= nil
+	and character:GetAttribute("AgentLook") == "Quader", "Modell entfernt: sofort wieder Quader-Ausrüstung")
+-- … und wieder eingefügt (z.B. in Studio während des Spiels): sofort der ganze Charakter
+buildRig("Viper").Parent = folder
+step(0.3)
+clones, visible = state()
+check(AgentModels.IsCharacter("Viper") and clones > 0 and visible == 0 and character:FindFirstChild("AgentVisor") == nil,
+	"Modell eingefügt: sofort als ganzer Charakter angezogen")
+
+-- Wirft das Anziehen mit dem Modell einen Fehler, trägt der Agent die Quader-Ausrüstung (nie ohne Look)
+local attach = AgentModels.Attach
+AgentModels.Attach = function()
+	error("kaputt")
+end
+SIM.Quiet = true
+AgentBody.Dress(character, Color3.new(0, 0, 0), Color3.new(1, 1, 1), "Viper")
+SIM.Quiet = false
+AgentModels.Attach = attach
+clones, visible = state()
+check(clones == 0 and visible > 0 and character:FindFirstChild("AgentVisor") ~= nil, "Fehler im Modell: Quader-Ausrüstung")
 
 if failures == 0 then
 	print("Ganzer Charakter: alles in Ordnung")

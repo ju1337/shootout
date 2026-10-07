@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 local ServerStorage = game:GetService("ServerStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -19,6 +20,7 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
 local AgentBody = require(ServerShared.AgentBody)
+local AgentModels = require(Shared.AgentModels)
 
 local AgentService = {}
 
@@ -38,9 +40,15 @@ local function applyUniform(player, character, agent)
 	if player.Character ~= character then
 		return
 	end
-	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	local skin = Cosmetics.AgentSkin(player, agent.Id)
-	AgentBody.Dress(character, primary, accent, agent.Id, skin and skin.Id)
+	local ok, err = pcall(function()
+		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
+		local skin = Cosmetics.AgentSkin(player, agent.Id)
+		AgentBody.Dress(character, primary, accent, agent.Id, skin and skin.Id)
+	end)
+	if not ok then
+		warn("[Agentenmodelle] " .. player.Name .. " konnte nicht als " .. tostring(agent.Id) .. " angezogen werden: "
+			.. tostring(err))
+	end
 end
 
 -- Leben und Fähigkeit beim Spawn setzen
@@ -413,6 +421,9 @@ local function useUltimate(player)
 		Sub = "Volles Leben  ·  +" .. ult.Armor .. " Rüstung  ·  Fähigkeit bereit" } })
 end
 
+-- Nach dem Spawn so oft (Abstände in Sekunden) nachsehen, ob der Look noch sitzt
+local DRESS_CHECKS = { 0.5, 1, 1.5, 3, 4, 10 }
+
 local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
 	player:SetAttribute("UltCharge", 0)
@@ -439,6 +450,23 @@ local function setupPlayer(player)
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		-- Nachsehen, ob der Look sitzt: Roblox lädt das Aussehen teils erst nach dem Spawn fertig (tauscht Körperteile
+		-- aus, hängt ein Gesicht an) – dann neu anziehen. Läuft auch, wenn unten etwas schiefgeht.
+		task.spawn(function()
+			for _, pause in DRESS_CHECKS do
+				task.wait(pause)
+				if player.Character ~= character or not character.Parent then
+					return
+				end
+				local agent = getAgent(player)
+				if not AgentBody.IsDressed(character, agent.Id) then
+					if RunService:IsStudio() then
+						print("[Agentenmodelle] " .. player.Name .. ": Aussehen nach dem Spawn verändert – neu angezogen")
+					end
+					applyUniform(player, character, agent)
+				end
+			end
+		end)
 		AgentConfig.SlimBody(humanoid) -- schlanker Körperbau wie alle Charaktere
 		applyAgent(player, character)
 		applyUniform(player, character, getAgent(player))
@@ -482,6 +510,16 @@ function AgentService.Init()
 	Remotes.UseAbility.OnServerEvent:Connect(useAbility)
 	Remotes.UseUltimate.OnServerEvent:Connect(useUltimate)
 
+	-- Modell eines Agenten neu (z.B. in Studio während des Spiels eingefügt), geändert oder entfernt: alle Spieler
+	-- mit diesem Agenten gleich neu anziehen
+	AgentModels.OnChanged(function(agentId)
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			if character and character.Parent and getAgent(player).Id == agentId then
+				applyUniform(player, character, getAgent(player))
+			end
+		end
+	end)
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
 		setupPlayer(player)

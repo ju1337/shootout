@@ -10,6 +10,7 @@
 -- Schüsse unsichtbar (CanQuery = false), auch Accessoires, die erst später an den Charakter gehängt werden.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local AgentConfig = require(Shared.AgentConfig)
@@ -192,12 +193,36 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 		end
 	end
 	-- Körper wieder sichtbar (ein ganzer Charakter blendet ihn gleich wieder aus; nicht während der Tarnung)
-	if not character:GetAttribute("Cloaked") then
-		for _, part in bodyParts do
-			part.Transparency = 0
+	local function showBody()
+		if not character:GetAttribute("Cloaked") then
+			for _, part in bodyParts do
+				part.Transparency = 0
+			end
 		end
 	end
-	if AgentModels.Attach(character, bodyParts, agentId, primary, accent, skinId, true) then
+	showBody()
+	-- 3D-Modell des Agenten; geht dabei etwas schief, trägt er die Quader-Ausrüstung (nie ohne Look)
+	local ok, attached = pcall(AgentModels.Attach, character, bodyParts, agentId, primary, accent, skinId, true)
+	if not ok then
+		warn("[Agentenmodelle] " .. tostring(agentId) .. ": Modell konnte nicht angezogen werden (" .. tostring(attached)
+			.. ") – Quader-Ausrüstung")
+		for _, child in character:GetChildren() do
+			if child:GetAttribute("AgentGear") then
+				child:Destroy()
+			end
+		end
+		showBody()
+		attached = nil
+	end
+	local look = attached and (AgentModels.IsCharacter(agentId) and "Charakter" or "Modell") or "Quader"
+	if RunService:IsStudio() and character:GetAttribute("AgentLook") ~= look then
+		print("[Agentenmodelle] " .. character.Name .. " als " .. tostring(agentId) .. ": " .. (look == "Quader"
+			and ("Quader-Ausrüstung" .. (AgentModels.HasAsset(agentId) and "" or " (kein Modell \"" .. tostring(agentId)
+				.. "\" in Assets.Agents)")) or look == "Charakter" and "ganzer Charakter aus dem Modell" or "Ausrüstung aus dem Modell"))
+	end
+	character:SetAttribute("AgentLook", look)
+	character:SetAttribute("AgentLookOf", agentId)
+	if attached then
 		AgentBody.Protect(character)
 		return
 	end
@@ -226,6 +251,47 @@ function AgentBody.Dress(character, primary, accent, agentId, skinId)
 		end
 	end
 	AgentBody.Protect(character)
+end
+
+-- Sitzt der Look noch? (kein Roblox-Gesicht, Ausrüstung bzw. Modell an den aktuellen Körperteilen, bei einem ganzen
+-- Charakter der Spielkörper unsichtbar). Roblox tauscht beim Laden des Aussehens manchmal noch Körperteile aus –
+-- dann hängt die Ausrüstung an den alten Teilen und fällt weg.
+function AgentBody.IsDressed(character, agentId)
+	local head = character:FindFirstChild("Head")
+	if head and head:FindFirstChildWhichIsA("Decal") then
+		return false
+	end
+	local anchored = {} -- [Körperteil] = true, wenn Ausrüstung daran geschweißt ist
+	for _, child in character:GetChildren() do
+		if child:GetAttribute("AgentGear") then
+			local weld = child:FindFirstChildOfClass("WeldConstraint")
+			local part0 = weld and weld.Part0
+			if not part0 or part0.Parent ~= character then
+				return false -- hängt an einem Körperteil, das es nicht mehr gibt
+			end
+			anchored[part0.Name] = true
+		end
+	end
+	local character3d = AgentModels.IsCharacter(agentId)
+	local anchors = AgentModels.AnchorsOf(agentId)
+	if not anchors then
+		anchors = {}
+		for _, def in GEAR do
+			anchors[def[2]] = true
+		end
+	end
+	for name in anchors do
+		local part = character:FindFirstChild(name)
+		if part and part:IsA("BasePart") then
+			if not anchored[name] then
+				return false
+			end
+			if character3d and part.Transparency < 1 and not character:GetAttribute("Cloaked") then
+				return false
+			end
+		end
+	end
+	return character:GetAttribute("AgentLookOf") == agentId
 end
 
 return AgentBody
