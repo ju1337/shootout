@@ -146,10 +146,12 @@ end
 -- ---------- Symbole ----------
 
 -- Kleine 3D-Waffe (ViewportFrame) bzw. gezeichnetes Symbol für Munition, Heilung, Rüstung, Fahrzeug
-local function buildIcon(parent, id, zIndex)
+-- aspect = Breite / Höhe der Fläche (nil = Standard): Waffenmodelle füllen dann die ganze Breite (Hotbar im HUD)
+local function buildIcon(parent, id, zIndex, aspect)
 	local config = itemConfig(id)
-	local holder = make("Frame", { Name = "Icon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.46),
-		Size = UDim2.fromScale(0.86, 0.62), BackgroundTransparency = 1, ZIndex = zIndex }, parent)
+	local holder = make("Frame", { Name = "Icon", AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, aspect and 0.42 or 0.46), Size = UDim2.fromScale(aspect and 0.96 or 0.86, aspect and 0.72 or 0.62),
+		BackgroundTransparency = 1, ZIndex = zIndex }, parent)
 	if not config then
 		return holder
 	end
@@ -164,7 +166,8 @@ local function buildIcon(parent, id, zIndex)
 			local box, size = model:GetBoundingBox()
 			local camera = Instance.new("Camera")
 			camera.FieldOfView = 30
-			local distance = math.max(size.Z, size.Y * 2.2) / 2 / math.tan(math.rad(15)) * 1.05 + size.X / 2
+			local fit = aspect and math.max(size.Z / aspect, size.Y * 1.2) or math.max(size.Z, size.Y * 2.2)
+			local distance = fit / 2 / math.tan(math.rad(15)) * 1.05 + size.X / 2
 			camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(distance, distance * 0.12, 0), box.Position)
 			camera.Parent = view
 			view.CurrentCamera = camera
@@ -395,7 +398,10 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 			child:Destroy()
 		end
 		if id then
-			buildIcon(view.Content, id, view.Frame.ZIndex + 1)
+			local frameSize = view.Frame.Size
+			local aspect = view.Container == "Hotbar" and frameSize.X.Offset > frameSize.Y.Offset
+				and frameSize.X.Offset * 0.96 / (frameSize.Y.Offset * 0.72) or nil
+			buildIcon(view.Content, id, view.Frame.ZIndex + 1, aspect)
 		end
 	end
 	local config = id and itemConfig(id)
