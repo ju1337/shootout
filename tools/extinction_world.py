@@ -3639,8 +3639,24 @@ def build(bm):
 
 def weather_signs(bm, b, rng):
     """Alle Schilder alt machen: Holz, Rost oder vergilbtes Blech statt glatter Tafeln, kein Leuchten, handgemalte Schrift
-    (PermanentMarker / SpecialElite) in verblichenen Farben, leicht schief."""
+    (PermanentMarker / SpecialElite) in verblichenen Farben, leicht schief.
+
+    Die Schilder im Camp (liegen vorne) haben eigene Zufallszahlen; die übrigen Schilder bekommen den Zufallsgenerator
+    so, wie ihn die Schilder des früheren Camps hinterließen (tools/saved/extinction_after_camp.json) – so sehen sie
+    genau aus wie vor dem Umbau des Camps."""
     boards = ((96, 78, 58), (88, 70, 52), (110, 72, 52), (176, 168, 146), (70, 66, 60))
+    camp_rng = random.Random(9115)
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved", "extinction_after_camp.json")) as f:
+        saved = json.load(f)
+    if saved.get("signs_before_sha") == hashlib.sha256(repr(rng.getstate()).encode()).hexdigest():
+        rng.setstate((saved["signs_state"][0], tuple(saved["signs_state"][1]), saved["signs_state"][2]))
+    else:
+        print("Hinweis: Zufallszahlen vor den Schildern geändert – die Schilder der Welt sehen anders aus")
+    world_rng = rng
+
+    def in_camp(inst):
+        x, _, z = inst["Properties"]["CFrame"]["CFrame"]["position"]
+        return math.hypot(x - ORIGIN[0], z - ORIGIN[2]) < 140
 
     def faded(color):
         r, g, b_ = (int(v * 255) if v <= 1 else int(v) for v in color)
@@ -3651,6 +3667,7 @@ def weather_signs(bm, b, rng):
         children = inst.get("Children", [])
         guis = [c for c in children if c.get("ClassName") == "SurfaceGui" and c.get("Name") in ("SignGui",)]
         if guis:
+            rng = camp_rng if in_camp(inst) else world_rng
             props = inst["Properties"]
             props["Material"] = rng.choice(("WoodPlanks", "WoodPlanks", "CorrodedMetal", "Fabric"))
             props["Color"] = bm.rgb(*rng.choice(boards))
