@@ -1824,12 +1824,13 @@ end
 
 -- GUIDE: alles Wichtige zur offenen Welt zum Nachlesen, links die Themen, rechts der Text. Zahlen kommen aus den
 -- Configs (stimmen also immer), Tasten aus InputActions (Tastatur oder Controller, je nach Gerät).
-local guideTopic = 1
-local function key(action, fallback)
-	local hint = InputActions.Hint(action)
-	return hint ~= "" and ("[" .. hint .. "]") or (fallback or "the button on screen")
-end
-local function guideTopics()
+-- in einer Tabelle gebündelt: ExtinctionClient ist nah an der Grenze für lokale Variablen auf oberster Ebene
+local Guide = { Topic = 1 }
+function Guide.Topics()
+	local function key(action, fallback)
+		local hint = InputActions.Hint(action)
+		return hint ~= "" and ("[" .. hint .. "]") or (fallback or "the button on screen")
+	end
 	local E = ExtinctionConfig
 	local R, RP, S, BM, BO, A = E.Redzone, E.RedPoints, E.Storm, E.BloodMoon, E.Bounty, E.Airdrop
 	local repel = E.Items.AntiZombie and E.Items.AntiZombie.Duration or 180
@@ -1933,11 +1934,11 @@ local function guideTopics()
 	}
 end
 
-local function openGuide()
+function Guide.Open()
 	local C = UITheme.MenuColors
 	local win = newWindow("Guide", "GUIDE", "EVERYTHING YOU NEED TO KNOW ABOUT THE OPEN WORLD")
 	local body = win.Body
-	local topics = guideTopics()
+	local topics = Guide.Topics()
 	local listW, gap = 230, 20
 	local rightX = listW + gap
 	local rightW = Inv.CONTENT_W - rightX
@@ -1953,9 +1954,9 @@ local function openGuide()
 	local buttons, stripes = {}, {}
 
 	function win.Refresh()
-		local topic = topics[guideTopic] or topics[1]
+		local topic = topics[Guide.Topic] or topics[1]
 		for index, button in buttons do
-			local on = index == guideTopic
+			local on = index == Guide.Topic
 			button.BackgroundTransparency = on and 0.8 or 0.92
 			button.TextColor3 = on and C.Text or C.Muted
 			stripes[index].Visible = on
@@ -1977,7 +1978,7 @@ local function openGuide()
 	for index, topic in topics do
 		local button = Inv.flatButton({ Name = "Topic_" .. index, Size = UDim2.new(1, 0, 0, 44), Text = topic.Title,
 			TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = index }, list, function()
-			guideTopic = index
+			Guide.Topic = index
 			win.Refresh()
 		end)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 18) }, button)
@@ -2622,7 +2623,7 @@ openMenuTab = function(id)
 		openLoot()
 	elseif id == "Guide" then
 		ExtinctionMap.Set(false)
-		openGuide()
+		Guide.Open()
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
