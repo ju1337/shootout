@@ -1,6 +1,7 @@
 -- Tauschen: Anfrage (nur Hub/Markt, nah beieinander), ablehnen, annehmen, gegenseitige Anfrage, Angebote (nur
 -- handelbare freie Skins, RAP bis zum Guthaben), BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss
--- (alles auf einmal, gespeichert), Abbruch (Knopf, Moduswechsel, Spiel verlassen), fehlgeschlagener Tausch
+-- (alles auf einmal, gespeichert), Abbruch (Knopf, Moduswechsel, Spiel verlassen), fehlgeschlagener Tausch,
+-- entfernte Agenten-Skins aus alten Spielständen sind weg und nicht tauschbar
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -48,11 +49,16 @@ local function last(player, kind)
 end
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 1000, Owned = { W_Lava = 2, W_Rekrut = true }, Equipped = { ["W:Rifle"] = "W_Lava" } }
-store.Data.u2 = { XP = {}, Coins = 0, Rap = 500, Owned = { W_Kalender = 1, A_Ghost_Nebel = 1 }, Equipped = {} }
+-- Bobs alter Spielstand hat noch einen Agenten-Skin (gibt es nicht mehr)
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 500, Owned = { W_Kalender = 1, W_Chrom = 1, A_Ghost_Nebel = 1 },
+	Equipped = { ["A:Ghost"] = "A_Ghost_Nebel" } }
 store.Data.u3 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
 store.Data.u4 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
 local alice, bob, carl, dana = SIM.Join("Alice"), SIM.Join("Bob"), SIM.Join("Carl"), SIM.Join("Dana")
 step(2)
+check(ProgressService.ItemCount(bob, "A_Ghost_Nebel") == 0 and ProgressService.ItemCount(bob, "W_Chrom") == 1,
+	"alter Agenten-Skin beim Laden entfernt, Waffen-Skins bleiben")
+check(next(ProgressService.Get(bob).Equipped) == nil, "kein Agenten-Skin mehr ausgerüstet")
 place(alice, "Hub", Vector3.new(0, 3, 0))
 place(bob, "Domination", Vector3.new(4, 3, 0))
 
@@ -99,6 +105,7 @@ check(EconomyService.ReservedCount(alice, "W_Lava", "Trade") == 1, "eine Lava wi
 check(select(2, act(alice, "SetRap", 5000)) == false, "nicht mehr RAP als vorhanden")
 act(alice, "SetRap", 300)
 act(bob, "AddItem", "W_Kalender")
+check(select(2, act(bob, "AddItem", "A_Ghost_Nebel")) == false, "entfernter Agenten-Skin nicht tauschbar")
 state = last(bob, "State")
 check(state.Theirs.Items.W_Lava == 1 and state.Theirs.Rap == 300 and state.Mine.Items.W_Kalender == 1,
 	"Bob sieht beide Angebote")
@@ -108,7 +115,7 @@ act(alice, "Ready", true)
 act(bob, "Ready", true)
 check(last(alice, "State").Countdown ~= nil, "Countdown läuft, wenn beide bereit sind")
 step(RapConfig.TradeConfirmTime - 1)
-act(bob, "AddItem", "A_Ghost_Nebel")
+act(bob, "AddItem", "W_Chrom")
 check(last(alice, "State").Mine.Ready == false and last(alice, "State").Countdown == nil, "Änderung: BEREIT zurück")
 step(3)
 check(ProgressService.ItemCount(bob, "W_Lava") == 0, "nach Änderung kein Tausch")
@@ -120,7 +127,7 @@ act(bob, "Ready", true)
 step(RapConfig.TradeConfirmTime + 0.5)
 check(TradeService.TradeOf(alice) == nil and TradeService.TradeOf(bob) == nil, "Tausch beendet")
 check(ProgressService.ItemCount(alice, "W_Lava") == 1 and ProgressService.ItemCount(bob, "W_Lava") == 1, "Lava gewandert")
-check(ProgressService.ItemCount(alice, "W_Kalender") == 1 and ProgressService.ItemCount(alice, "A_Ghost_Nebel") == 1,
+check(ProgressService.ItemCount(alice, "W_Kalender") == 1 and ProgressService.ItemCount(alice, "W_Chrom") == 1,
 	"Bobs Skins bei Alice")
 check(ProgressService.ItemCount(bob, "W_Kalender") == 0, "Bob hat den Kalender-Skin abgegeben")
 check(alice:GetAttribute("Rap") == 700 and bob:GetAttribute("Rap") == 800, "RAP gewandert (ohne Gebühr)")
@@ -129,6 +136,8 @@ check(EconomyService.ReservedCount(alice, "W_Lava") == 0 and EconomyService.Rese
 check(last(alice, "Done") ~= nil and last(bob, "Done") ~= nil, "beide bekommen die Abschluss-Meldung")
 step(2)
 check(store.Data.u1.Owned.W_Kalender == 1 and store.Data.u2.Owned.W_Lava == 1 and store.Data.u1.Rap == 700, "gespeichert")
+check(store.Data.u2.Owned.A_Ghost_Nebel == nil and store.Data.u2.Equipped["A:Ghost"] == nil,
+	"entfernter Agenten-Skin auch im gespeicherten Stand weg")
 
 -- Gegenseitige Anfrage startet sofort
 place(carl, "Market", Vector3.new(-1500, 3, -1500))

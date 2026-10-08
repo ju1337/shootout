@@ -1,9 +1,9 @@
 -- LobbyPages (ModuleScript, nur Client)
 -- Seiten LOADOUT, SHOP und BATTLE PASS der Lobby (GameMenu). Sie liegen direkt in der Lobby unter der
 -- Kopfzeile – kein eigenes Fenster – und nutzen das gemeinsame Design (UITheme):
---   LOADOUT:     links Waffen bzw. Agenten (Reiter WAFFEN · AGENTEN), Mitte große 3D-Vorschau mit dem
---                ausgerüsteten Skin, rechts die eigenen Skins zum Ausrüsten (Standard + gekaufte)
---   SHOP:        Reiter WAFFEN-SKINS · AGENTEN-SKINS, Karten mit 3D-Vorschau, Seltenheit, RAP-Wert und KAUFEN · Preis;
+--   LOADOUT:     links die Waffen, Mitte große 3D-Vorschau mit dem ausgerüsteten Skin, rechts die eigenen Skins
+--                zum Ausrüsten (Standard + gekaufte) bzw. die Aufsätze (Agenten haben keine Skins)
+--   SHOP:        Reiter WAFFEN-SKINS: Karten mit 3D-Vorschau, Seltenheit, RAP-Wert und KAUFEN · Preis;
 --                Reiter VERKAUFEN: eigene handelbare Skins ans System zurückverkaufen (sofort RAP, RapConfig)
 --   BATTLE PASS: Saison, Stufe und Fortschritt, alle Stufen als waagerechte Leiste (die nächste hervorgehoben),
 --                darunter die nächste Belohnung und wie man Pass-XP sammelt
@@ -17,10 +17,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
-local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local GunModels = require(Shared.GunModels)
-local AgentFigure = require(Shared.AgentFigure)
 local PassConfig = require(Shared.PassConfig)
 local UITheme = require(Shared.UITheme)
 local AttachmentConfig = require(Shared.AttachmentConfig)
@@ -107,17 +105,6 @@ local function robuxWatch(watch)
 		watch["Pass_" .. pass.Id] = true
 	end
 	return watch
-end
-
--- Agent mit Farben (und Waffen-Skin) zeigen; agentSkinId = Agenten-Skin (Textur-Skins eines 3D-Modells)
-local function showAgent(view, agent, primary, accent, weaponSkin, agentSkinId)
-	view:ClearAllChildren()
-	local figure = AgentFigure.Build(agent, primary, accent, weaponSkin, nil, agentSkinId)
-	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.4, 0))
-	figure.Parent = view
-	local camera = make("Camera", { FieldOfView = 36 }, view)
-	camera.CFrame = AgentFigure.CameraCFrame
-	view.CurrentCamera = camera
 end
 
 -- Reiter wie die Navigation der Lobby (aktiv: weiß mit Bernstein-Strich). Gibt select(name) zurück.
@@ -267,11 +254,7 @@ function LobbyPages.Shop(page)
 		UITheme.Stroke(card, rarity.Color, 1, 0.5)
 		UITheme.AccentBar(card, rarity.Color)
 		local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 160) }, card)
-		if item.Type == "Weapon" then
-			showWeapon(view, "Rifle", item, 234 / 160)
-		else
-			showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
-		end
+		showWeapon(view, "Rifle", item, 234 / 160)
 		rapBadge(card, value)
 		if count > 1 then
 			UITheme.Tag({ Position = UDim2.fromOffset(10, 12), Text = "×" .. count, TextSize = 13, BackgroundColor3 = C.Secondary,
@@ -279,12 +262,8 @@ function LobbyPages.Shop(page)
 		end
 		label({ Position = UDim2.fromOffset(16, 176), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
 			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		local sub = upper(rarity.Name)
-		if item.Type == "Agent" then
-			sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
-		end
-		label({ Position = UDim2.fromOffset(16, 206), Size = UDim2.new(1, -32, 0, 16), Text = sub, TextSize = 11, Font = F.Bold,
-			TextColor3 = rarity.Color }, card)
+		label({ Position = UDim2.fromOffset(16, 206), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
+			Font = F.Bold, TextColor3 = rarity.Color }, card)
 		local free = count - held
 		label({ Position = UDim2.fromOffset(16, 224), Size = UDim2.new(1, -32, 0, 16), TextSize = 11, Font = F.Bold,
 			TextColor3 = held > 0 and C.Primary or C.Muted,
@@ -378,22 +357,14 @@ function LobbyPages.Shop(page)
 				UITheme.Stroke(card, rarity.Color, 1, 0.5)
 				UITheme.AccentBar(card, rarity.Color)
 				local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 170) }, card)
-				if item.Type == "Weapon" then
-					showWeapon(view, "Rifle", item, 234 / 170)
-				else
-					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
-				end
+				showWeapon(view, "Rifle", item, 234 / 170)
 				if RapConfig.Value(item.Id) then
 					rapBadge(card, RapConfig.Value(item.Id))
 				end
 				label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
 					Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-				local sub = upper(rarity.Name)
-				if item.Type == "Agent" then
-					sub ..= "  ·  " .. AgentConfig.Get(item.Agent).Name
-				end
-				label({ Position = UDim2.fromOffset(16, 216), Size = UDim2.new(1, -32, 0, 16), Text = sub, TextSize = 11, Font = F.Bold,
-					TextColor3 = rarity.Color }, card)
+				label({ Position = UDim2.fromOffset(16, 216), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
+					Font = F.Bold, TextColor3 = rarity.Color }, card)
 				local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
 					Size = UDim2.new(1, -28, 0, 40), Color = C.MutedBack, Text = "", TextSize = 17 }, card, function()
 					if not Cosmetics.GetOwned(player)[item.Id] then
@@ -408,8 +379,8 @@ function LobbyPages.Shop(page)
 
 	sellInfo = label({ Position = UDim2.fromOffset(0, 42), Size = UDim2.fromOffset(PAGE_W, 12), Text = "", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Rap, Visible = false }, page)
-	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
-		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
+	tabs(page, { "WAFFEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
+		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
 		fill()
 	end)("WAFFEN-SKINS")
 	return { Refresh = function()
@@ -428,13 +399,12 @@ end
 
 -- goToShop(): Lobby auf die SHOP-Seite wechseln
 function LobbyPages.Loadout(page, goToShop)
-	local mode = "Weapon" -- "Weapon" oder "Agent"
-	local selected = WEAPON_ORDER[1]
+	local selected = WEAPON_ORDER[1] -- gewählte Waffe
 	local STAGE_X, STAGE_W = 340, 720
 	local RIGHT_X = STAGE_X + STAGE_W + 30
 	local RIGHT_W = PAGE_W - RIGHT_X
 
-	-- links: Waffen bzw. Agenten
+	-- links: die Waffen
 	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(300, PAGE_H - 54),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
 		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, page)
@@ -815,7 +785,7 @@ function LobbyPages.Loadout(page, goToShop)
 	local fillList -- vorab, weil sich Liste und Skins gegenseitig neu aufbauen
 
 	local function fillOptions()
-		local showAttachments = rightMode == "AUFSÄTZE" and mode == "Weapon"
+		local showAttachments = rightMode == "AUFSÄTZE"
 		attachPanel.Visible = showAttachments
 		if not showAttachments then
 			tip.Visible = false
@@ -830,14 +800,13 @@ function LobbyPages.Loadout(page, goToShop)
 		clear(options)
 		local owned = Cosmetics.GetOwned(player)
 		local equipped = Cosmetics.GetEquipped(player)
-		local slot = (mode == "Weapon" and "W:" or "A:") .. selected
+		local slot = "W:" .. selected
 		local current = equipped[slot]
 		if current and not owned[current] then
 			current = nil
 		end
 		local entries = { { Id = nil, Name = "Standard", Sub = "STANDARD", Color = C.Muted } }
-		local items = mode == "Weapon" and Cosmetics.List("Weapon") or Cosmetics.List("Agent", selected)
-		for _, item in items do
+		for _, item in Cosmetics.List("Weapon") do
 			if owned[item.Id] and not item.Mastery then
 				local rarity = Cosmetics.Rarities[item.Rarity]
 				table.insert(entries, { Id = item.Id, Name = item.Name, Sub = upper(rarity.Name), Color = rarity.Color })
@@ -845,7 +814,7 @@ function LobbyPages.Loadout(page, goToShop)
 		end
 		local ownedCount = #entries - 1
 		-- Meisterschaft: alle Tarnungen dieser Waffe, gesperrte mit Kill-Fortschritt
-		if mode == "Weapon" and MasteryConfig.HasMastery(selected) then
+		if MasteryConfig.HasMastery(selected) then
 			local kills = MasteryConfig.Kills(player, selected)
 			for _, tier in MasteryConfig.Tiers do
 				local id = MasteryConfig.ItemId(selected, tier.Id)
@@ -887,40 +856,24 @@ function LobbyPages.Loadout(page, goToShop)
 				make("Frame", { Size = UDim2.fromScale(entry.Progress, 1), BackgroundColor3 = entry.Color, BorderSizePixel = 0 }, track)
 			end
 		end
-		if mode == "Weapon" and MasteryConfig.HasMastery(selected) then
+		if MasteryConfig.HasMastery(selected) then
 			hint.Text = "Weitere Skins gibt es im SHOP. Meisterschafts-Tarnungen schaltest du mit Kills mit dieser Waffe frei."
 		else
-			hint.Text = ownedCount == 0 and "Noch keine Skins dafür – im SHOP gibt es Waffen- und Agenten-Skins."
+			hint.Text = ownedCount == 0 and "Noch keine Skins dafür – im SHOP gibt es Waffen-Skins."
 				or "Weitere Skins gibt es im SHOP."
 		end
 
 		-- große Vorschau mit dem ausgerüsteten Skin
-		if mode == "Weapon" then
-			title.Text = upper(WeaponConfig.Get(selected).DisplayName)
-			showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75,
-				AttachmentConfig.EquippedList(player, selected))
-		else
-			local agent = AgentConfig.Get(selected)
-			title.Text = agent.Name
-			local primary, accent = Cosmetics.AgentColors(player, selected)
-			local agentSkin = Cosmetics.AgentSkin(player, selected)
-			showAgent(view, agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, agent.Loadout[1]), agentSkin and agentSkin.Id)
-		end
+		title.Text = upper(WeaponConfig.Get(selected).DisplayName)
+		showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75,
+			AttachmentConfig.EquippedList(player, selected))
 		equippedText.Text = "AUSGERÜSTET: " .. upper(currentName)
 	end
 
 	fillList = function()
 		clear(list)
-		local names = {}
-		if mode == "Weapon" then
-			names = WEAPON_ORDER
-		else
-			for _, agent in AgentConfig.Agents do
-				table.insert(names, agent.Id)
-			end
-		end
-		for i, name in names do
-			local text = mode == "Weapon" and WeaponConfig.Get(name).DisplayName or AgentConfig.Get(name).Name
+		for i, name in WEAPON_ORDER do
+			local text = WeaponConfig.Get(name).DisplayName
 			local on = name == selected
 			local row = UITheme.Chunky({ Size = UDim2.new(1, -8, 0, 46), LayoutOrder = i, Color = on and C.Secondary or C.Panel,
 				StrokeColor = on and C.Primary or C.Border, Text = upper(text), TextSize = 20, TextColor = on and C.Primary or C.Text,
@@ -939,14 +892,10 @@ function LobbyPages.Loadout(page, goToShop)
 		rightMode = name
 		fillOptions()
 	end)
-	tabs(page, { "WAFFEN", "AGENTEN" }, 0, 0, 300, function(name)
-		mode = name == "WAFFEN" and "Weapon" or "Agent"
-		selected = mode == "Weapon" and WEAPON_ORDER[1] or AgentConfig.Agents[1].Id
-		-- Waffen öffnen mit den Aufsätzen, Agenten haben nur Skins
-		selectRight(mode == "Weapon" and "AUFSÄTZE" or "SKINS")
-		fillList()
-		fillOptions()
-	end)("WAFFEN")
+	-- links nur die Waffen (Agenten haben keine Skins): ein Reiter als Überschrift
+	tabs(page, { "WAFFEN" }, 0, 0, 300, function() end)("WAFFEN")
+	fillList()
+	selectRight("AUFSÄTZE") -- Waffen öffnen mit den Aufsätzen
 	return { Refresh = fillOptions, Watch = { Owned = true, Equipped = true, Attachments = true, Coins = true, Stats = true } }
 end
 
@@ -993,11 +942,7 @@ function LobbyPages.Pass(page)
 			TextColor3 = C.Muted }, card)
 		if item then
 			local view = viewport({ Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 0, 170) }, card)
-			if item.Type == "Weapon" then
-				showWeapon(view, "Rifle", item, CARD_W / 170)
-			else
-				showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
-			end
+			showWeapon(view, "Rifle", item, CARD_W / 170)
 			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 52), Text = upper(item.Name), TextSize = 22,
 				Font = F.Display, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, card)
 			label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = upper(rarity.Name) .. "  ·  EXKLUSIV",
@@ -1085,11 +1030,7 @@ function LobbyPages.Pass(page)
 			clear(preview)
 			if item then
 				local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 4 }, preview)
-				if item.Type == "Weapon" then
-					showWeapon(view, "Rifle", item, 200 / (INFO_H - 40))
-				else
-					showAgent(view, AgentConfig.Get(item.Agent), item.Primary, item.Accent, nil, item.Id)
-				end
+				showWeapon(view, "Rifle", item, 200 / (INFO_H - 40))
 			elseif reward then
 				UITheme.Coin(preview, 72, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = 4 })
 			end

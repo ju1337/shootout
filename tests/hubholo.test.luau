@@ -1,6 +1,7 @@
---!expose HubLineup buildAgentOfWeek
+--!expose HubLineup buildAgentOfWeek buildShopVitrine dailyOffers
 -- Hub: Statue „Agent der Woche“ mit Holo-Schrift darüber (11 Studs breit). In Kameranähe blendet die Schrift aus –
 -- rausgezoomt neben der Statue oder steil von oben hing sie sonst riesig vor dem Bild. Weiter weg ist sie voll da.
+-- Shop-Vitrine: drei verschiedene Waffen-Skins des Tages (Agenten-Skins gibt es nicht mehr), je mit Schild.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -82,6 +83,41 @@ if billboard then
 	check(billboard.Enabled and highest <= 0.45 + 1e-6, "wieder weiter weg: voll sichtbar")
 end
 
+-- Shop-Vitrine: drei Angebote des Tages, alles kaufbare Waffen-Skins, jedes nur einmal
+local Cosmetics = require("Cosmetics")
+local offers = HubLineup.__dailyOffers()
+local seen = {}
+check(#offers == 3, "drei Angebote des Tages")
+for _, item in offers do
+	check(item.Type == "Weapon" and Cosmetics.ForSale(item) and not seen[item.Id], "Angebot: kaufbarer Waffen-Skin " .. item.Id)
+	seen[item.Id] = true
+end
+Instance.new("Part", decor).Name = "ShopCounter"
+for index = 1, 3 do
+	local display = Instance.new("Part", decor)
+	display.Name = "ShopDisplay" .. index
+	display.CFrame = CFrame.new(-30, 4.6, index * 8)
+	Instance.new("Part", decor).Name = "ShopPlaque" .. index
+end
+task.spawn(HubLineup.__buildShopVitrine)
+SIM.Advance(0.2)
+local shown = {}
+for _, gui in player.PlayerGui:GetChildren() do
+	if gui.Name == "PlaqueGui" then
+		shown[gui.ItemName.Text] = true
+	end
+end
+for _, item in offers do
+	check(shown[string.upper(item.Name)], "Schild in der Vitrine: " .. item.Name)
+end
+local rifles = 0
+for _, child in workspace:GetChildren() do
+	if child:IsA("Model") and child.Name == "Rifle" then
+		rifles += 1
+	end
+end
+check(rifles == 3, "drei Waffen drehen sich in den Vitrinen (" .. rifles .. ")")
+
 if failures == 0 then
-	print("Holo-Schrift Agent der Woche: alles in Ordnung")
+	print("Holo-Schrift Agent der Woche und Shop-Vitrine: alles in Ordnung")
 end

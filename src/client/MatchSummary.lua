@@ -194,8 +194,7 @@ local function buildPodium(parent)
 			local primary, accent = Cosmetics.AgentColors(owner, agent.Id)
 			local weapon = agent.Loadout[1]
 			local skin = owner and Cosmetics.WeaponSkin(owner, agent.Id, weapon) or nil
-			local agentSkin = owner and Cosmetics.AgentSkin(owner, agent.Id)
-			local ok, figure = pcall(AgentFigure.Build, agent, primary, accent, skin, weapon, agentSkin and agentSkin.Id)
+			local ok, figure = pcall(AgentFigure.Build, agent, primary, accent, skin, weapon)
 			if ok and figure then
 				figure:PivotTo(CFrame.new(place.X, place.Height, 0) * CFrame.Angles(0, place.Yaw, 0) * figure:GetPivot())
 				figure.Parent = figures

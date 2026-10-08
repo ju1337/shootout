@@ -1,5 +1,5 @@
--- Kisten: zwei getrennte Kisten (Waffen, Agenten), Pools und Chancen, Öffnen (Ort, Münzen, Wartezeit), Gewinn im
--- Inventar, Duplikate (Münzen zurück), handelbare Duplikate als zweites Stück, Rolle mit dem Gewinn an festem Platz
+-- Kisten: nur die Waffen-Kiste (die Agenten-Kiste ist ausgebaut), Pool und Chancen, Öffnen (Ort, Münzen, Wartezeit),
+-- Gewinn im Inventar, Duplikate (Münzen zurück), handelbare Duplikate als zweites Stück, Rolle mit dem Gewinn an festem Platz
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -22,21 +22,16 @@ local CrateService = require("CrateService")
 ProgressService.Init()
 CrateService.Init()
 
--- Pools
-local weaponCrate, agentCrate = CrateConfig.Get("Weapon"), CrateConfig.Get("Agent")
-check(weaponCrate and agentCrate and #CrateConfig.Crates == 2, "zwei Kisten: Waffen und Agenten")
+-- Pool
+local weaponCrate = CrateConfig.Get("Weapon")
+check(weaponCrate ~= nil and #CrateConfig.Crates == 1, "genau eine Kiste: die Waffen-Kiste")
+check(CrateConfig.Get("Agent") == nil, "die Agenten-Kiste gibt es nicht mehr")
 check(CrateConfig.Get("Nix") == nil, "unbekannte Kiste")
-local weaponPool, agentPool = CrateConfig.Pool(weaponCrate), CrateConfig.Pool(agentCrate)
-check(#weaponPool >= 8 and #agentPool >= 8, "genug Skins in beiden Pools")
+local weaponPool = CrateConfig.Pool(weaponCrate)
+check(#weaponPool >= 8, "genug Skins im Pool")
 for _, item in weaponPool do
 	check(item.Type == "Weapon" and Cosmetics.ForSale(item), "Waffen-Pool: nur kaufbare Waffen-Skins (" .. item.Id .. ")")
-end
-for _, item in weaponPool do
 	check(RapConfig.Tradeable(item.Id), "Waffen-Pool: handelbar mit RAP-Wert (" .. item.Id .. ")")
-end
-for _, item in agentPool do
-	check(RapConfig.Tradeable(item.Id), "Agenten-Pool: handelbar mit RAP-Wert (" .. item.Id .. ")")
-	check(item.Type == "Agent" and Cosmetics.ForSale(item), "Agenten-Pool: nur kaufbare Agenten-Skins (" .. item.Id .. ")")
 	check(not item.Pass and not item.Reward and not item.Robux, "keine Pass-, Belohnungs- oder Robux-Skins in der Kiste")
 end
 
@@ -49,8 +44,6 @@ for _, crate in CrateConfig.Crates do
 	end
 	check(math.abs(sum - 1) < 1e-9, crate.Id .. ": Chancen ergeben 100 %")
 end
-local agentOdds = CrateConfig.Odds(agentCrate)
-check(agentOdds[1].Rarity == "Rare", "Agenten-Kiste: keine gewöhnlichen Skins (es gibt keine)")
 local weaponOdds = CrateConfig.Odds(weaponCrate)
 check(#weaponOdds == 4 and weaponOdds[1].Rarity == "Common" and weaponOdds[4].Rarity == "Legendary", "Waffen-Kiste: alle vier Seltenheiten")
 check(weaponOdds[1].Chance > weaponOdds[2].Chance and weaponOdds[3].Chance > weaponOdds[4].Chance, "seltener = unwahrscheinlicher")
@@ -70,9 +63,6 @@ for _, entry in weaponOdds do
 end
 for _, item in weaponPool do
 	check(seen[item.Id], "jeder Waffen-Skin kommt vor: " .. item.Id)
-end
-for _ = 1, 500 do
-	check(CrateConfig.Roll(agentCrate, random).Type == "Agent", "Agenten-Kiste gibt nur Agenten-Skins")
 end
 
 -- Öffnen
@@ -95,6 +85,7 @@ local ok, message = CrateService.Open(alice, "Weapon")
 check(ok == false and string.find(message, "Markt", 1, true) ~= nil, "im Match keine Kisten: " .. tostring(message))
 alice:SetAttribute("Mode", "Market")
 check(CrateService.Open(alice, "Nix") == false, "unbekannte Kiste öffnen")
+check(CrateService.Open(alice, "Agent") == false, "die alte Agenten-Kiste lässt sich nicht mehr öffnen")
 check(CrateService.Open(alice, 42) == false, "Kisten-Id muss ein Text sein")
 bob:SetAttribute("Mode", "Market")
 ok, message = CrateService.Open(bob, "Weapon")
@@ -125,16 +116,15 @@ local spent, refunds, duplicates, copies = 0, 0, 0, 0
 local expected = {}
 expected[result.Item] = 1
 for i = 1, 80 do
-	local crateId = i % 2 == 0 and "Agent" or "Weapon"
-	local crate = CrateConfig.Get(crateId)
+	local crate = weaponCrate
 	local pre = ProgressService.Get(alice).Coins
-	local opened, r = CrateService.Open(alice, crateId)
+	local opened, r = CrateService.Open(alice, crate.Id)
 	check(opened == true, "Kiste " .. i .. " öffnen: " .. tostring(r))
 	if opened then
 		spent += crate.Price
 		refunds += r.Refund
 		local item = Cosmetics.Get(r.Item)
-		check(item.Type == crate.Type, "Kiste " .. crateId .. " gibt Skin der Art " .. crate.Type)
+		check(item.Type == crate.Type, "Kiste " .. crate.Id .. " gibt Skin der Art " .. crate.Type)
 		check(r.Reel[r.Index] == r.Item and #r.Reel == CrateConfig.ReelLength, "Rolle stimmt")
 		for _, id in r.Reel do
 			check(Cosmetics.Get(id) ~= nil and Cosmetics.Get(id).Type == crate.Type, "Rolle enthält nur Skins der Kiste")
@@ -165,12 +155,13 @@ end
 check(copies > 0, "bei 80 Kisten kommt dasselbe handelbare Stück mehrfach vor (" .. copies .. ")")
 check(duplicates == 0, "alle Kisten-Skins sind handelbar: nie ein Duplikat mit Münzen zurück (" .. duplicates .. ")")
 check(ProgressService.Get(alice).Coins == coinsBefore - spent + refunds, "Gesamtbilanz der Münzen")
-local weaponsOwned, agentsOwned = 0, 0
+local weaponsOwned = 0
 for id in ProgressService.Get(alice).Owned do
 	local item = Cosmetics.Get(id)
-	if item.Type == "Weapon" then weaponsOwned += 1 else agentsOwned += 1 end
+	check(item ~= nil and item.Type == "Weapon", "nur Waffen-Skins aus der Kiste: " .. id)
+	weaponsOwned += 1
 end
-check(weaponsOwned >= 8 and agentsOwned >= 8, "beide Kisten haben Skins geliefert (" .. weaponsOwned .. " Waffen, " .. agentsOwned .. " Agenten)")
+check(weaponsOwned >= 8, "die Kiste hat viele verschiedene Skins geliefert (" .. weaponsOwned .. ")")
 step(2)
 check(store.Data.u1.Coins == ProgressService.Get(alice).Coins, "nach der Kiste gespeichert")
 
@@ -179,10 +170,16 @@ Remotes.CrateAction.OnServerEvent:Fire(bob, "Open", "Weapon")
 step(0.2)
 local denied = lastResult(bob)
 check(denied and denied.Ok == false and string.find(denied.Message, "Münzen", 1, true) ~= nil, "Remote: Fehlermeldung an Bob")
-Remotes.CrateAction.OnServerEvent:Fire(alice, "Open", "Agent")
+Remotes.CrateAction.OnServerEvent:Fire(alice, "Open", "Weapon")
 step(0.2)
 check(lastResult(alice) and lastResult(alice).Ok == true, "Remote: Alice bekommt das Ergebnis")
-Remotes.CrateAction.OnServerEvent:Fire(alice, "Quatsch", "Agent")
+step(CrateConfig.Cooldown + 0.1)
+Remotes.CrateAction.OnServerEvent:Fire(alice, "Open", "Agent")
+step(0.2)
+local gone = lastResult(alice)
+check(gone and gone.Ok == false and string.find(gone.Message, "gibt es nicht", 1, true) ~= nil,
+	"Remote: alte Agenten-Kiste wird abgelehnt: " .. tostring(gone and gone.Message))
+Remotes.CrateAction.OnServerEvent:Fire(alice, "Quatsch", "Weapon")
 
 if failures == 0 then
 	print("Kisten: alles in Ordnung")

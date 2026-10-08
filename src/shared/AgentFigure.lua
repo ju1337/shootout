@@ -19,8 +19,8 @@ local ARM_RAISE = math.rad(70) -- rechter Arm nach vorne angehoben (hält die Wa
 local RIGHT_ARM = { "RightUpperArm", "RightLowerArm", "RightHand" }
 
 -- primary = Uniform (Standard-Look), weaponSkin = Skin der Waffe (oder nil), weaponName = gezeigte Waffe (Standard:
--- erste Waffe des Agenten); das 3. Argument (früher zweite Farbe) und ein 6. (früher Agenten-Skin) werden ignoriert
-function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, _oldAgentSkin)
+-- erste Waffe des Agenten); das 3. Argument (früher zweite Farbe) wird ignoriert
+function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName)
 	local model = Instance.new("Model")
 	local pants = AgentModels.PantsColor(primary)
 	local shoulder = AgentModels.RightShoulder

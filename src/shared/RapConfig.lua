@@ -1,6 +1,6 @@
 -- RapConfig (ModuleScript)
--- RAP ist die zweite Währung (wie in Sniper Duels / Sniper Arena): Man bekommt sie nur über Skins. Jeder handelbare Skin –
--- Waffe oder Agent – hat einen RAP-Wert. Er startet bei einem Basiswert (Values) und wandert wie ein "Recent Average
+-- RAP ist die zweite Währung (wie in Sniper Duels / Sniper Arena): Man bekommt sie nur über Skins. Jeder handelbare
+-- Waffen-Skin hat einen RAP-Wert. Er startet bei einem Basiswert (Values) und wandert wie ein "Recent Average
 -- Price": nach jedem Verkauf im Markt rückt er ein Zehntel (LiveWeight) Richtung Verkaufspreis, begrenzt auf
 -- LiveMin bis LiveMax mal Basiswert (Live, vom Server an alle Clients). Die Werte sind steil gestaffelt wie bei Sniper
 -- Duels: gewöhnliche Skins 1 bis 10 RAP, seltene zweistellig, epische dreistellig, legendäre vier- bis fünfstellig,
@@ -59,14 +59,8 @@ RapConfig.Values = {
 	W_Kirsche = 30, W_Mitternacht = 35, W_Carbon = 45,
 	W_Gletscher = 260, W_Koralle = 340,
 	W_Lava = 3200, W_Chrom = 5500, W_Galaxie = 8500,
-	-- Shop: Agenten-Skins
-	A_Viper_Nacht = 40, A_Bastion_Stahl = 40, A_Mender_Feld = 40, A_Hawk_Wueste = 40,
-	A_Ghost_Schatten = 55, A_Blaze_Asche = 55, A_Aegis_Sanitaet = 55, A_Trapper_Wildnis = 55, A_Volt_Kupfer = 55,
-	A_Viper_Gift = 420, A_Mender_Neon = 420,
-	A_Blaze_Inferno = 520, A_Aegis_Bollwerk = 520, A_Volt_Hochspannung = 520,
-	A_Bastion_Royal = 4500, A_Hawk_Phantom = 4800, A_Ghost_Nebel = 7500, A_Trapper_Jaeger = 8000,
 	-- Battle Pass (nur in der Saison zu bekommen)
-	W_Saison = 2500, W_Goldrausch = 35000, A_Viper_Saison = 45000,
+	W_Saison = 2500, W_Saison_Elite = 45000, W_Goldrausch = 35000,
 	-- Glücksrad, Login-Kalender (Tag 7), Wochen-Bonus
 	W_Gluecksklee = 1800, W_Kalender = 18000,
 	W_Woche_Kobalt = 1000, W_Woche_Smaragd = 1100, W_Woche_Purpur = 1200, W_Woche_Bernstein = 1300, W_Woche_Titan = 1500,

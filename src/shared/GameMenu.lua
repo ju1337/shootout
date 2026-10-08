@@ -512,9 +512,7 @@ local function buildAgentStage()
 			if figure then
 				figure:Destroy()
 			end
-			local agentSkin = Cosmetics.AgentSkin(player, agent.Id)
-			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon,
-				agentSkin and agentSkin.Id)
+			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
 			figure.Parent = viewport
 		end
 		role.Text = upper(agent.Role)
@@ -996,8 +994,7 @@ local function buildAgentPage()
 		camera.CFrame = AgentFigure.CameraCFrame
 		viewport.CurrentCamera = camera
 		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-		local agentSkin = Cosmetics.AgentSkin(player, agent.Id)
-		local figure = AgentFigure.Build(agent, primary, accent, nil, nil, agentSkin and agentSkin.Id)
+		local figure = AgentFigure.Build(agent, primary, accent)
 		figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.35, 0))
 		figure.Parent = viewport
 

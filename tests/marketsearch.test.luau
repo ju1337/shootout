@@ -1,5 +1,6 @@
--- Marktsuche: Textsuche (Name, Seltenheit, Besitzer, Art, ohne Umlaute), Filter (Seltenheit, Art, Höchstpreis),
--- Sortierung (Preis, Schnäppchen, Seltenheit) – stabil und ohne fremde Angebote zu verlieren
+-- Marktsuche: Textsuche (Name, Seltenheit, Besitzer, Art, ohne Umlaute), Filter (Seltenheit, Höchstpreis; nach Art
+-- nicht mehr, es gibt nur Waffen-Skins), Sortierung (Preis, Schnäppchen, Seltenheit) – stabil und ohne fremde Angebote
+-- zu verlieren
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -12,15 +13,11 @@ local MarketSearch = require("MarketSearch")
 local Cosmetics = require("Cosmetics")
 local RapConfig = require("RapConfig")
 
--- ein Skin je Seltenheit (handelbar, mit RAP-Wert), dazu ein Agenten-Skin falls vorhanden
-local byRarity, agentItem = {}, nil
+-- ein Skin je Seltenheit (handelbar, mit RAP-Wert)
+local byRarity = {}
 for _, item in Cosmetics.Items do
-	if RapConfig.Tradeable(item.Id) and (RapConfig.Value(item.Id) or 0) > 0 then
-		if item.Type == "Weapon" and not byRarity[item.Rarity] then
-			byRarity[item.Rarity] = item
-		elseif item.Type == "Agent" and not agentItem then
-			agentItem = item
-		end
+	if RapConfig.Tradeable(item.Id) and (RapConfig.Value(item.Id) or 0) > 0 and not byRarity[item.Rarity] then
+		byRarity[item.Rarity] = item
 	end
 end
 check(byRarity.Rare and byRarity.Epic and byRarity.Legendary, "Testdaten: handelbare Skins in drei Seltenheiten")
@@ -75,11 +72,7 @@ state = MarketSearch.NewState()
 state.Rarity = "Epic"
 check(#MarketSearch.Run(entries, state) == 2, "Seltenheit Episch")
 state.Rarity = nil
-state.Type = "Agent"
-check(#MarketSearch.Run(entries, state) == 0, "keine Agenten-Skins im Angebot")
-state.Type = "Weapon"
-check(#MarketSearch.Run(entries, state) == 5, "Art Waffen")
-state.Type = nil
+check(MarketSearch.Types == nil, "kein Filter nach Art (nur Waffen-Skins)")
 state.MaxPrice = value(rare)
 list = MarketSearch.Run(entries, state)
 check(#list >= 1 and list[#list].Price <= value(rare), "Höchstpreis")
@@ -98,12 +91,17 @@ state.Text = "episch alice"
 check(ids(MarketSearch.Run(entries, state)) == "1.2", "mehrere Wörter: alle müssen passen")
 state.Text = "nichtda"
 check(#MarketSearch.Run(entries, state) == 0, "nichts gefunden")
+state.Text = "waffe"
+check(#MarketSearch.Run(entries, state) == 5, "Suche nach Art: alle sind Waffen-Skins")
+state.Text = "agent"
+check(#MarketSearch.Run(entries, state) == 0, "keine Agenten-Skins mehr")
 check(MarketSearch.Fold("Großmeister Ärger Übung") == "grossmeister arger ubung", "Umlaute und ß werden gefaltet")
 
--- unbekannte Skins fallen weg, Eingabe wird nicht verändert
+-- unbekannte Skins (auch entfernte Agenten-Skins) fallen weg, Eingabe wird nicht verändert
 local before = #entries
 local withGhost = { table.unpack(entries) }
 table.insert(withGhost, { Stand = 9, Owner = 1, OwnerName = "x", Slot = 1, Item = "gibt_es_nicht", Price = 5 })
+table.insert(withGhost, { Stand = 9, Owner = 1, OwnerName = "x", Slot = 2, Item = "A_Ghost_Nebel", Price = 5 })
 check(#MarketSearch.Run(withGhost, MarketSearch.NewState()) == 5, "unbekannter Skin wird ignoriert")
 check(#entries == before and entries[1].ItemData == nil, "Eingabe bleibt unverändert")
 

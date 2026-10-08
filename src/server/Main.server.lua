@@ -54,7 +54,7 @@ MovementGuard.Init() -- Bewegungs-Check gegen Speedhacks und Teleports
 BackWeapon.Init() -- im Hub: Standardwaffe des Agenten auf dem Rücken
 EconomyService.Init() -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
 TradeService.Init() -- Tauschen zwischen Spielern im Hub und im Markt
-CrateService.Init() -- Kisten öffnen (Waffen-Kiste, Agenten-Kiste) im Markt
+CrateService.Init() -- Kisten öffnen (Waffen-Kiste) im Markt
 InventoryService.Init() -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
 LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
 AgentService.Init()

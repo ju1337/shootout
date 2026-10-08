@@ -347,9 +347,10 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     ein Klick rüstet eine aus (Bernstein-Rahmen, AUSGERÜSTET), daneben die feste Zweitwaffe. Die Wahl gilt pro
     Agent für jeden Spawn, in der Agentenwahl vor dem Match lässt sie sich weiter ändern; auf den Agentenkarten
     steht die ausgerüstete Waffe hell
-  - LOADOUT: links Waffen bzw. Agenten, Mitte große 3D-Vorschau mit ausgerüstetem Skin, rechts die eigenen Skins
+  - LOADOUT: links die Waffen, Mitte große 3D-Vorschau mit ausgerüstetem Skin, rechts die eigenen Skins
     zum Ausrüsten und ZUM SHOP
-  - SHOP: Waffen- und Agenten-Skins als Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis
+  - SHOP: Waffen-Skins als Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis (Agenten-Skins gibt es nicht mehr:
+    Agenten haben den Standard-Look oder ihr 3D-Modell)
   - BATTLE PASS: Saison, Stufe, Fortschritt, alle 30 Stufen als Leiste (nächste hervorgehoben), darunter die
     nächste Belohnung mit Vorschau und wie man Pass-XP sammelt
   - OPTIONEN: Karten STEUERUNG, ANZEIGE und TON links, KAMERA und TREFFER rechts; unter TREFFER (Hitmarker,
@@ -374,10 +375,10 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   dem Login-Kalender; gedreht wird nur im Hub in der Nähe des Rads (Server prüft). Den Knopf im Seitenmenü gibt
   es nicht mehr
 - **RAP – zweite Währung** (`src/shared/RapConfig.lua`, Server `src/server-shared/EconomyService.lua`): RAP bekommt
-  man nur über Skins. Jeder handelbare Skin (Waffe oder Agent) hat einen RAP-Wert, **steil gestaffelt wie bei Sniper
+  man nur über Skins. Jeder handelbare Waffen-Skin hat einen RAP-Wert, **steil gestaffelt wie bei Sniper
   Duels**: gewöhnliche Skins 1-10 RAP (Waldtarn 2, Wüste 3), seltene zweistellig (30-55), epische dreistellig (260-520,
   Battle-Pass-Skin Saison-Neon 2.500), legendäre vier- bis fünfstellig (Lava 3.200 bis Galaxie 8.500, Kalender-Skin
-  18.000), Battle-Pass-Goldrausch 35.000, Saison-Agentin 45.000 und die Robux-Skins Royal 90.000 / Hologramm 150.000.
+  18.000), Battle-Pass-Goldrausch 35.000, Battle-Pass-Saison-Elite 45.000 (Stufe 20) und die Robux-Skins Royal 90.000 / Hologramm 150.000.
   RAP heißt *Recent Average Price*: Der Wert startet beim Basiswert (`RapConfig.Values`) und rückt nach **jedem Verkauf im
   Markt** ein Zehntel Richtung Verkaufspreis (`RAP + (Preis - RAP) / 10`, begrenzt auf 0,25- bis 8-fach des Basiswerts;
   `RapConfig.NextLive`). Der lebende Wert liegt im DataStore `MarketHistory_v1` (Schlüssel `rap`, gilt für alle Server)
@@ -400,13 +401,13 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Client `src/client/MarketClient.lua`, Map `build_market()` in `tools/build_maps.py`): wie die Trading Plaza in
   Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT an der Ostwand des Hubs oder den Knopf MARKT im
   Seitenmenü (im Markt heißt er ZUM HUB), zurück durchs Tor im Süden der Halle.
-  - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand zwei
-    Kisten-Automaten, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
+  - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand der
+    Kisten-Automat, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
     Das Tor zurück zum Hub steht am Ende der Südrampe (oberster Rang); schneller geht es über den Knopf ZUM HUB im Seitenmenü. Darum liegen wie in einem
     Theater drei Ränge, die nach außen stufenweise höher werden (Stände 1-12, 13-28, 29-48); alle Stände zeigen zur Mitte.
     Vier Rampen (Norden, Osten, Süden, Westen) führen über alle Ränge nach oben, die Stufen kann man auch springen.
   - **SUCHE** (Knopf oben oder E am Such-Terminal, Logik in `src/shared/MarketSearch.lua`): alle Angebote aller Stände
-    durchsuchen (Skin, Seltenheit, Besitzer, Stand), filtern nach Seltenheit, Waffen/Agenten, nur Bezahlbares oder
+    durchsuchen (Skin, Seltenheit, Besitzer, Stand), filtern nach Seltenheit, nur Bezahlbares oder
     Merkliste, sortieren nach Preis, **Schnäppchen** (am weitesten unter dem RAP-Wert) oder Seltenheit. **HIN** zeigt
     einen Pfeil mit Entfernung über dem Stand.
   - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v1`,
@@ -418,9 +419,9 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   - **Stand beanspruchen**: an einem freien Stand **E** – man bleibt, wo man steht (kein Teleport), das Schild über dem
     Stand zeigt den eigenen Namen. Einer pro Spieler.
   - **Kisten** (Automaten in der Mitte, Server `src/server-shared/CrateService.lua`, Client `src/client/CrateClient.lua`,
-    Chancen und Preise in `src/shared/CrateConfig.lua`): **WAFFEN-KISTE** (450 Münzen) und **AGENTEN-KISTE** (800 Münzen),
-    getrennt. E am Automaten öffnet das Fenster: Chancen je Seltenheit, alle Skins der Kiste, ÖFFNEN lässt die Rolle
-    laufen und zeigt den Gewinn. Gezogen wird aus den im Shop kaufbaren Skins der jeweiligen Art. Schon besessene
+    Chancen und Preise in `src/shared/CrateConfig.lua`): **WAFFEN-KISTE** (450 Münzen; die
+    Agenten-Kiste gibt es nicht mehr). E am Automaten öffnet das Fenster: Chancen je Seltenheit, alle Skins der Kiste, ÖFFNEN lässt die Rolle
+    laufen und zeigt den Gewinn. Gezogen wird aus den im Shop kaufbaren Waffen-Skins. Schon besessene
     gebundene Skins geben 30 % ihres Shop-Preises als Münzen zurück; handelbare Skins (mit RAP-Wert) landen als weiteres
     Stück im Inventar und lassen sich im Markt verkaufen. Der Server würfelt und bucht, die Rolle ist nur die Show.
   - **MEIN STAND** (E am eigenen Stand oder Knopf in der Markt-Leiste oben): links sechs Plätze (Preis ändern,
@@ -443,7 +444,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   alles auf einmal getauscht und gespeichert. Jede Änderung nimmt BEREIT bei beiden zurück (niemand kann im letzten
   Moment etwas austauschen); Abbruch per Knopf, Moduswechsel oder Verlassen – angebotene Skins sind dann sofort
   wieder frei
-- **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level + Skins
+- **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level
 - **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): Im Hub, im
   Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper im
   Roblox-Standard-Look in den Farben seines Agenten: Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in
@@ -762,15 +763,16 @@ am Commit:
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Rutschen bergab, Rutsch-Sprünge, Vault, Hochziehen, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `movementfeel` | Bewegungsgefühl: Tempo-Rampe, Rutschen (Schub, Reibung, Hang, Lenken, keine Tempo-Ketten), Rutsch-Sprung mit Schwung, Schwung in der Luft, Coyote-Time, Sprungpuffer, harte Landung, Vault über dünne Mauern, Hochziehen (auch aus dem Sprung), zu hohe Wände nicht, Kamera-Neigung nur bei Roblox-Kamera |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
-| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automaten, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge |
+| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge |
 | `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis nur im Hub/Markt, Esc schließt |
 | `padhold`, `extinctionpad` | Controller antippen/halten: kurz = Antippen-Aktion beim Loslassen, lang = Halten-Aktion bis zum Loslassen, Tasten ohne Halten sofort, Hinweis „△ HALTEN“; EXTINCTION-Belegung (↑ Ping/Karte, Select Inventar/Squad, △ heilen/parken) mit echten Tasten, Heil-Item-Wahl (Medikit/Verband/anderes, Meldung ohne), außerhalb der offenen Welt normale Belegung |
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
-| `crate`, `crateui` | Kisten: getrennte Pools (Waffen/Agenten, alle handelbar), steile Chancen (Waffen 62/28/8/2 %, Agenten 75/20/5 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
-| `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Art, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
+| `crate`, `crateui` | Kisten: nur die Waffen-Kiste (alle handelbar), steile Chancen (62/28/8/2 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
+| `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
 | `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
+| `skins` | Nur noch Waffen-Skins: keine Agenten-Skins (Cosmetics, RAP, Kisten), Agentenfarben immer Standard, Battle-Pass-Stufe 20 = Saison-Elite, alte Spielstände verlieren entfernte Skins (Besitz, Plätze "A:", Merkliste), SHOP/LOADOUT/BATTLE PASS ohne Agenten-Skins |
 | `trade` | Tauschen: Anfrage (Hub/Markt, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
 | `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), Agentenwechsel im Hub sofort, Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |

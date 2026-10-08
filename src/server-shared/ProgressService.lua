@@ -52,6 +52,35 @@ local function defaultProfile()
 		Season = RankConfig.CurrentSeason() } }
 end
 
+-- Alte Spielstände: Skins, die es nicht mehr gibt (z.B. die entfernten Agenten-Skins), fallen aus Besitz und
+-- Merkliste weg; ausgerüstet bleiben nur bekannte Waffen-Skins ("W:<Waffe>", Agenten-Skins "A:<Agent>" gibt es nicht
+-- mehr). So sehen Inventar, RAP-Wert, Markt und Tausch nur Skins aus Cosmetics.
+local function cleanItems(profile)
+	local owned = {}
+	for id, count in type(profile.Owned) == "table" and profile.Owned or {} do
+		if Cosmetics.Get(id) then
+			owned[id] = count
+		end
+	end
+	profile.Owned = owned
+	local equipped = {}
+	for slot, id in type(profile.Equipped) == "table" and profile.Equipped or {} do
+		if type(slot) == "string" and string.sub(slot, 1, 2) == "W:" and Cosmetics.Get(id) then
+			equipped[slot] = id
+		end
+	end
+	profile.Equipped = equipped
+	if type(profile.MarketWatch) == "table" then
+		local watch = {}
+		for id, on in profile.MarketWatch do
+			if Cosmetics.Get(id) then
+				watch[id] = on
+			end
+		end
+		profile.MarketWatch = watch
+	end
+end
+
 -- Gespeicherte Daten in ein Profil übernehmen (auch das alte Format { Viper = xp, ... })
 local function toProfile(data)
 	local profile = defaultProfile()
@@ -75,6 +104,7 @@ local function toProfile(data)
 		end
 		profile.AccountXP = math.min(sum, LevelConfig.MaxXP)
 	end
+	cleanItems(profile)
 	return profile
 end
 
@@ -899,7 +929,7 @@ function ProgressService.SpendRap(player, amount)
 	return true
 end
 
--- slot = "W:<Waffe>" oder "A:<Agent>", itemId = nil zum Ablegen
+-- slot = "W:<Waffe>", itemId = nil zum Ablegen
 function ProgressService.SetEquipped(player, slot, itemId)
 	local profile = profiles[player]
 	if profile then

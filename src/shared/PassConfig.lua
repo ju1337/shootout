@@ -15,7 +15,7 @@ for tier = 1, 30 do
 	if tier == 10 then
 		PassConfig.Tiers[tier] = { Item = "W_Saison" }
 	elseif tier == 20 then
-		PassConfig.Tiers[tier] = { Item = "A_Viper_Saison" }
+		PassConfig.Tiers[tier] = { Item = "W_Saison_Elite" }
 	elseif tier == 30 then
 		PassConfig.Tiers[tier] = { Item = "W_Goldrausch" }
 	else

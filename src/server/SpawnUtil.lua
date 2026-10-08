@@ -1,6 +1,6 @@
 -- SpawnUtil (ModuleScript, nur Server)
 -- Charakter neu laden und an eine bestimmte Stelle setzen. Jeder Spieler spawnt als Agent: einheitlicher Körper
--- in den Farben seines Agenten bzw. Skins (AgentBody), nicht mit dem eigenen Roblox-Avatar.
+-- in den Farben seines Agenten (AgentBody), nicht mit dem eigenen Roblox-Avatar.
 
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

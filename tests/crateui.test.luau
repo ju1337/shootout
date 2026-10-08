@@ -1,5 +1,6 @@
 -- Kisten-Oberfläche (CrateClient) im Simulator: Automaten mit Prompt, Fenster mit Chancen und Inhalt, ÖFFNEN beim Server,
--- Rolle läuft und bleibt auf dem Gewinn stehen, Gewinn-Karte, NOCHMAL, zu wenig Münzen, Fenster zu während der Rolle
+-- Rolle läuft und bleibt auf dem Gewinn stehen, Gewinn-Karte, NOCHMAL, zu wenig Münzen, Fenster zu während der Rolle;
+-- die ausgebaute Agenten-Kiste hat weder Prompt noch Fenster
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -28,6 +29,7 @@ local map = Instance.new("Model", maps)
 map.Name = "Market"
 local decor = Instance.new("Folder", map) -- wie in der echten Map: Automaten liegen im Ordner Decor, nicht direkt unter der Map
 decor.Name = "Decor"
+-- dazu ein Automat der ausgebauten Agenten-Kiste, wie er in einer alten Map noch stehen könnte
 for _, name in { "CrateWeapon", "CrateAgent" } do
 	Instance.new("Part", decor).Name = name
 end
@@ -93,10 +95,9 @@ local function relay()
 	return nil
 end
 
--- Automaten haben ein E-Prompt
-for _, name in { "CrateWeapon", "CrateAgent" } do
-	check(decor[name]:FindFirstChildOfClass("ProximityPrompt") ~= nil, name .. ": Prompt")
-end
+-- Der Automat der Waffen-Kiste hat ein E-Prompt, der alte der Agenten-Kiste nicht
+check(decor.CrateWeapon:FindFirstChildOfClass("ProximityPrompt") ~= nil, "CrateWeapon: Prompt")
+check(decor.CrateAgent:FindFirstChildOfClass("ProximityPrompt") == nil, "CrateAgent: kein Prompt (Kiste ausgebaut)")
 
 -- Waffen-Kiste öffnen
 CrateClient.Open("Weapon")
@@ -157,19 +158,20 @@ check(labelStarting(window, "ZU WENIG MÜNZEN") ~= nil, "Knopf: zu wenig Münzen
 click(window, "ZU WENIG")
 check(labelStarting(window, "Nicht genug Münzen") ~= nil, "Hinweis im Fenster")
 
--- Agenten-Kiste: anderes Fenster, nur Agenten
+-- Die Agenten-Kiste gibt es nicht mehr: kein neues Fenster, das der Waffen-Kiste bleibt offen
 ProgressService.Get(alice).Coins = 5000
 alice:SetAttribute("Coins", 5000)
 CrateClient.Open("Agent")
 step(0.3)
-window = find(gui, function(d) return d.Name == "CrateWindow" end)
-check(window ~= nil and labelWith(window, "AGENTEN-KISTE") ~= nil, "Agenten-Kiste")
-check(labelWith(window, "WALDTARN") == nil, "kein Waffen-Skin in der Agenten-Kiste")
-check(labelWith(window, "NACHTSCHLANGE") ~= nil, "Agenten-Skin im Inhalt")
+check(find(gui, function(d) return d.Name == "CrateWindow" end) == window and labelWith(gui, "AGENTEN-KISTE") == nil,
+	"keine Agenten-Kiste")
+for _, item in pool do
+	check(item.Type == "Weapon", "nur Waffen-Skins in der Kiste: " .. item.Id)
+end
 step(2)
-click(window, "ÖFFNEN  ·  800")
+check(click(window, "ÖFFNEN  ·  450"), "wieder genug Münzen: ÖFFNEN")
 local third = relay()
-check(third ~= nil and third.Ok == true and Cosmetics.Get(third.Item).Type == "Agent", "Agenten-Kiste gibt Agenten-Skin")
+check(third ~= nil and third.Ok == true and Cosmetics.Get(third.Item).Type == "Weapon", "dritte Kiste gibt einen Waffen-Skin")
 step(1)
 -- Fenster schließen, während die Rolle läuft: Gewinn kommt als Karte
 CrateClient.Open("Weapon")

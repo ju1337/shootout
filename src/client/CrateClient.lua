@@ -1,6 +1,6 @@
 -- CrateClient (ModuleScript, nur Client)
--- Kisten öffnen (Server: CrateService, Chancen und Preise: CrateConfig). In der Marktmitte stehen zwei Automaten, eine
--- Waffen-Kiste und eine Agenten-Kiste; E öffnet das Fenster:
+-- Kisten öffnen (Server: CrateService, Chancen und Preise: CrateConfig). In der Marktmitte steht der Automat der
+-- Waffen-Kiste; E öffnet das Fenster:
 --   * oben die Rolle (Skins ziehen vorbei und bleiben unter der Markierung stehen), darunter die Chancen je Seltenheit
 --     und alle Skins, die in der Kiste stecken (mit RAP-Wert, falls handelbar),
 --   * ÖFFNEN zieht Münzen ab (der Server würfelt, die Rolle zeigt nur das Ergebnis),
@@ -21,7 +21,6 @@ local UITheme = require(Shared.UITheme)
 local Cosmetics = require(Shared.Cosmetics)
 local CrateConfig = require(Shared.CrateConfig)
 local RapConfig = require(Shared.RapConfig)
-local AgentConfig = require(Shared.AgentConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local Notifications = require(Shared.Notifications)
 local InputActions = require(Shared.InputActions)
@@ -85,7 +84,7 @@ local function closeWindow()
 	end
 end
 
--- Skin-Kachel für die Rolle: Farbfläche (Agenten zweifarbig), Name, Seltenheit
+-- Skin-Kachel für die Rolle: Farbfläche, Name, Seltenheit
 local function tile(parent, itemId, index)
 	local item = Cosmetics.Get(itemId)
 	local rarity = item and Cosmetics.Rarities[item.Rarity]
@@ -95,18 +94,12 @@ local function tile(parent, itemId, index)
 	UITheme.Corner(frame, UITheme.Radius.Large)
 	UITheme.Stroke(frame, color, 1, 0.5)
 	if item then
-		local primary = item.Type == "Agent" and (item.Primary or color) or (item.Color or color)
-		local accent = item.Type == "Agent" and (item.Accent or primary) or primary
-		local left = make("Frame", { Position = UDim2.fromOffset(8, 8), Size = UDim2.new(0.5, -8, 0, 60), BackgroundColor3 = primary,
+		local swatch = make("Frame", { Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 60), BackgroundColor3 = item.Color or color,
 			BorderSizePixel = 0, ZIndex = 6 }, frame)
-		UITheme.Corner(left, UITheme.Radius.Small)
-		local right = make("Frame", { Position = UDim2.new(0.5, 0, 0, 8), Size = UDim2.new(0.5, -8, 0, 60), BackgroundColor3 = accent,
-			BorderSizePixel = 0, ZIndex = 6 }, frame)
-		UITheme.Corner(right, UITheme.Radius.Small)
+		UITheme.Corner(swatch, UITheme.Radius.Small)
 		label({ Position = UDim2.fromOffset(6, 72), Size = UDim2.new(1, -12, 0, 28), Text = upper(item.Name), TextSize = 14, Font = F.Display,
 			TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, frame)
-		local kind = item.Type == "Agent" and upper((AgentConfig.Get(item.Agent) or { Name = "" }).Name) or "WAFFE"
-		label({ Position = UDim2.fromOffset(6, 100), Size = UDim2.new(1, -12, 0, 14), Text = kind, TextSize = 10, Font = F.Bold,
+		label({ Position = UDim2.fromOffset(6, 100), Size = UDim2.new(1, -12, 0, 14), Text = "WAFFE", TextSize = 10, Font = F.Bold,
 			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, frame)
 	end
 	UITheme.AccentBar(frame, color, { Side = "Bottom", Thickness = 5, ZIndex = 7 }) -- Seltenheit unten, innerhalb der Rundung
@@ -362,12 +355,11 @@ local function build(crate)
 		local cell = make("Frame", { LayoutOrder = index, BackgroundColor3 = C.Card, ZIndex = 5 }, list)
 		UITheme.Corner(cell, UITheme.Radius.Small)
 		UITheme.AccentBar(cell, rarity.Color, { Side = "Left", Thickness = 4, ZIndex = 5 })
-		local kind = item.Type == "Agent" and upper((AgentConfig.Get(item.Agent) or { Name = "" }).Name) or "WAFFE"
 		label({ Position = UDim2.fromOffset(14, 5), Size = UDim2.new(1, -20, 0, 22), Text = upper(item.Name), TextSize = 15, Font = F.Display,
 			TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)
 		local value = RapConfig.Value(item.Id)
 		label({ Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -20, 0, 16), TextSize = 11, Font = F.Bold, TextColor3 = value and C.Rap or C.Muted,
-			Text = kind .. (value and ("  ·  RAP " .. format(value)) or ""), TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)
+			Text = "WAFFE" .. (value and ("  ·  RAP " .. format(value)) or ""), TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)
 	end
 
 	local openButton = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(420, 58),
@@ -396,7 +388,7 @@ function CrateClient.Init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
 	root = UITheme.ScaledRoot(gui, nil, nil, 0.55)
 
-	-- Automaten in der Marktmitte: Parts "CrateWeapon" und "CrateAgent"
+	-- Automat in der Marktmitte: Part "Crate<Kisten-Id>" (Waffen-Kiste: "CrateWeapon")
 	local map = workspace:WaitForChild("Maps"):WaitForChild("Market", 30)
 	if map then
 		for _, crate in CrateConfig.Crates do

@@ -69,7 +69,7 @@ LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
 task.spawn(HubWheel.Init) -- Glücksrad in der Ecke des Hubs (wartet auf die Hub-Map)
 task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet auf die Markt-Map)
 TradeClient.Init() -- Tauschen im Hub und im Markt (G an anderen Spielern)
-task.spawn(CrateClient.Init) -- Kisten öffnen: Automaten in der Marktmitte (Waffen-Kiste, Agenten-Kiste)
+task.spawn(CrateClient.Init) -- Kisten öffnen: Automat in der Marktmitte (Waffen-Kiste)
 ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
 DeathScreen.Init() -- offene Welt: Todesbildschirm mit Gegner, Tasche und Respawn-Countdown
 VehicleClient.Init() -- offene Welt: Fahrzeuge steuern (der Fahrer rechnet die Physik), Verfolgerkamera

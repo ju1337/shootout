@@ -2,17 +2,16 @@
 -- Suche, Filter und Sortierung für alle Angebote im Markt (Fenster SUCHE im MarketClient). Reine Logik ohne
 -- Oberfläche, damit sie sich testen lässt: Eingabe sind die Angebote aller Stände, Ausgabe die gefilterte, sortierte Liste.
 --   Eintrag: { Stand = Nummer, Owner = UserId, OwnerName = Name, Slot = Platz, Item = Skin-Id, Price = RAP }
---   Zustand: { Text = "lava rot", Rarity = "Epic" | nil, Type = "Weapon" | "Agent" | nil, MaxPrice = Zahl | nil, Sort = Id }
+--   Zustand: { Text = "lava rot", Rarity = "Epic" | nil, MaxPrice = Zahl | nil, Sort = Id }
+--   Es gibt nur Waffen-Skins, darum gibt es keinen Filter nach Art.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Cosmetics = require(Shared.Cosmetics)
 local RapConfig = require(Shared.RapConfig)
-local AgentConfig = require(Shared.AgentConfig)
 
 local MarketSearch = {}
 
 MarketSearch.RarityOrder = { "Common", "Rare", "Epic", "Legendary" }
-MarketSearch.Types = { { Id = "Weapon", Name = "WAFFEN" }, { Id = "Agent", Name = "AGENTEN" } }
 MarketSearch.Sorts = {
 	{ Id = "PriceAsc", Name = "PREIS ▲" },
 	{ Id = "PriceDesc", Name = "PREIS ▼" },
@@ -21,7 +20,7 @@ MarketSearch.Sorts = {
 }
 
 function MarketSearch.NewState()
-	return { Text = "", Rarity = nil, Type = nil, MaxPrice = nil, Sort = "PriceAsc" }
+	return { Text = "", Rarity = nil, MaxPrice = nil, Sort = "PriceAsc" }
 end
 
 -- klein, ohne Umlaute: "Großmeister" findet man auch mit "grossmeister"
@@ -47,20 +46,14 @@ function MarketSearch.Diff(item, price)
 	return price / value - 1
 end
 
--- Suchtext durch Leerzeichen getrennt: jedes Wort muss in Skin-Name, Seltenheit, Art, Agent oder Standbesitzer vorkommen
+-- Suchtext durch Leerzeichen getrennt: jedes Wort muss in Skin-Name, Seltenheit, Art oder Standbesitzer vorkommen
 local function matches(entry, item, terms)
 	if #terms == 0 then
 		return true
 	end
 	local rarity = Cosmetics.Rarities[item.Rarity]
-	local haystack = { item.Name, rarity and rarity.Name or "", entry.OwnerName or "", "stand " .. tostring(entry.Stand) }
-	if item.Type == "Agent" then
-		table.insert(haystack, "agent")
-		table.insert(haystack, (AgentConfig.Get(item.Agent) or { Name = "" }).Name)
-	else
-		table.insert(haystack, "waffe")
-		table.insert(haystack, "waffen-skin")
-	end
+	local haystack = { item.Name, rarity and rarity.Name or "", entry.OwnerName or "", "stand " .. tostring(entry.Stand),
+		"waffe", "waffen-skin" }
 	local text = fold(table.concat(haystack, " "))
 	for _, term in terms do
 		if not string.find(text, term, 1, true) then
@@ -86,7 +79,6 @@ function MarketSearch.Run(entries, state)
 		local item = Cosmetics.Get(entry.Item)
 		if item
 			and (not state.Rarity or item.Rarity == state.Rarity)
-			and (not state.Type or item.Type == state.Type)
 			and (not state.MaxPrice or entry.Price <= state.MaxPrice)
 			and matches(entry, item, terms)
 		then

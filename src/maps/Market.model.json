@@ -24916,15 +24916,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          0.64,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -24932,9 +24932,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -24962,15 +24962,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          2.84,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -24978,9 +24978,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25008,15 +25008,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          4.99,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25024,9 +25024,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25054,15 +25054,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1488.618,
+         -1483.878,
          2.84,
-         -1477.633
+         -1480.767
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25070,9 +25070,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25100,15 +25100,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1484.886,
+         -1480.767,
          2.84,
-         -1479.965
+         -1483.878
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25116,9 +25116,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25146,15 +25146,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1487.865,
+         -1483.807,
          3.04,
-         -1480.58
+         -1483.807
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25162,9 +25162,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25208,15 +25208,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1487.812,
+         -1483.737,
          6.54,
-         -1480.495
+         -1483.737
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25224,9 +25224,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25406,15 +25406,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1487.812,
+         -1483.737,
          5.79,
-         -1480.495
+         -1483.737
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25422,9 +25422,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25455,15 +25455,15 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1487.812,
+         -1483.737,
          7.29,
-         -1480.495
+         -1483.737
         ],
         "orientation": [
          [
-          0.848048,
+          0.707107,
           0.0,
-          0.529919
+          0.707107
          ],
          [
           0.0,
@@ -25471,9 +25471,9 @@
           0.0
          ],
          [
-          -0.529919,
+          -0.707107,
           0.0,
-          0.848048
+          0.707107
          ]
         ]
        }
@@ -25504,25 +25504,25 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          9.84,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
-          0.224951,
           0.0,
-          0.97437
+          0.0,
+          1.0
          ],
          [
-          0.688984,
           0.707107,
-          -0.159064
+          0.707107,
+          -0.0
          ],
          [
-          -0.688984,
+          -0.707107,
           0.707107,
-          0.159064
+          0.0
          ]
         ]
        }
@@ -25551,25 +25551,25 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          9.84,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
-          0.224951,
           0.0,
-          0.97437
+          0.0,
+          1.0
          ],
          [
-          0.688984,
           0.707107,
-          -0.159064
+          0.707107,
+          -0.0
          ],
          [
-          -0.688984,
+          -0.707107,
           0.707107,
-          0.159064
+          0.0
          ]
         ]
        }
@@ -25597,9 +25597,9 @@
       "CFrame": {
        "CFrame": {
         "position": [
-         -1486.752,
+         -1482.322,
          6.64,
-         -1478.799
+         -1482.322
         ],
         "orientation": [
          [
@@ -25624,736 +25624,6 @@
        0.8314,
        0.6667,
        0.3137
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Shape": "Cylinder",
-      "Transparency": 0.8,
-      "CanCollide": false
-     }
-    },
-    {
-     "Name": "CrateBaseAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       6,
-       0.8,
-       5
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         0.64,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1255,
-       0.149
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateBodyAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       5,
-       3.6,
-       4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         2.84,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3765,
-       0.6431,
-       0.8392
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateLidAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       5.4,
-       0.7,
-       4.4
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         4.99,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.5294,
-       0.7294,
-       0.8784
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateBandAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       3.8,
-       4.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1479.965,
-         2.84,
-         -1484.886
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1255,
-       0.149
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateBandAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       0.4,
-       3.8,
-       4.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1477.633,
-         2.84,
-         -1488.618
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1255,
-       0.149
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       3.2,
-       2,
-       0.3
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1480.58,
-         3.04,
-         -1487.865
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.6235,
-       0.7843,
-       0.902
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.15
-     },
-     "Children": [
-      {
-       "Name": "Light",
-       "ClassName": "PointLight",
-       "Properties": {
-        "Range": 16,
-        "Brightness": 1.0,
-        "Color": [
-         0.3765,
-         0.6431,
-         0.8392
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "Name": "CrateSignAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       5,
-       1.5,
-       0.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1480.495,
-         6.54,
-         -1487.812
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3922,
-       0.7059,
-       0.902
-      ],
-      "Material": "Glass",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.86,
-      "CanCollide": false,
-      "CanQuery": false,
-      "Attributes": {
-       "Attributes": {
-        "Holo": {
-         "Bool": true
-        }
-       }
-      }
-     },
-     "Children": [
-      {
-       "Name": "SignGui",
-       "ClassName": "SurfaceGui",
-       "Properties": {
-        "Face": "Front",
-        "LightInfluence": 0,
-        "Brightness": 1.4,
-        "SizingMode": "PixelsPerStud",
-        "PixelsPerStud": 40
-       },
-       "Children": [
-        {
-         "Name": "Title",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.58,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "AGENTEN-KISTE",
-          "TextScaled": true,
-          "Font": "Oswald",
-          "TextColor3": [
-           0.5608,
-           0.749,
-           0.8863
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Subtitle",
-         "ClassName": "TextLabel",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0.04,
-             0
-            ],
-            [
-             0.64,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             0.92,
-             0
-            ],
-            [
-             0.26,
-             0
-            ]
-           ]
-          },
-          "BackgroundTransparency": 1,
-          "Text": "800 M\u00dcNZEN",
-          "TextScaled": true,
-          "Font": "GothamBold",
-          "TextColor3": [
-           0.9451,
-           0.9529,
-           0.9647
-          ],
-          "TextStrokeTransparency": 0.45,
-          "TextStrokeColor3": [
-           0.1569,
-           0.4706,
-           0.7059
-          ]
-         }
-        },
-        {
-         "Name": "Bar",
-         "ClassName": "Frame",
-         "Properties": {
-          "Position": {
-           "UDim2": [
-            [
-             0,
-             0
-            ],
-            [
-             0.94,
-             0
-            ]
-           ]
-          },
-          "Size": {
-           "UDim2": [
-            [
-             1,
-             0
-            ],
-            [
-             0.06,
-             0
-            ]
-           ]
-          },
-          "BackgroundColor3": [
-           0.3765,
-           0.6431,
-           0.8392
-          ],
-          "BorderSizePixel": 0,
-          "BackgroundTransparency": 0.3
-         }
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "Name": "CrateSignAgentHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       5.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1480.495,
-         5.79,
-         -1487.812
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.498,
-       0.7137,
-       0.8706
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.4,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "CrateSignAgentHoloEdge",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       5.2,
-       0.1,
-       0.1
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1480.495,
-         7.29,
-         -1487.812
-        ],
-        "orientation": [
-         [
-          0.529919,
-          0.0,
-          0.848048
-         ],
-         [
-          0.0,
-          1.0,
-          0.0
-         ],
-         [
-          -0.848048,
-          0.0,
-          0.529919
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.498,
-       0.7137,
-       0.8706
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.15,
-      "CanCollide": false,
-      "CanQuery": false
-     }
-    },
-    {
-     "Name": "CrateIconAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       1.8,
-       1.8,
-       1.8
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         9.84,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          -0.224951,
-          0.0,
-          0.97437
-         ],
-         [
-          0.688984,
-          0.707107,
-          0.159064
-         ],
-         [
-          -0.688984,
-          0.707107,
-          -0.159064
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.5608,
-       0.749,
-       0.8863
-      ],
-      "Material": "Neon",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth",
-      "Transparency": 0.1
-     }
-    },
-    {
-     "Name": "CrateIconBandAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       2.0,
-       0.35,
-       2.0
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         9.84,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          -0.224951,
-          0.0,
-          0.97437
-         ],
-         [
-          0.688984,
-          0.707107,
-          0.159064
-         ],
-         [
-          -0.688984,
-          0.707107,
-          -0.159064
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.1176,
-       0.1255,
-       0.149
-      ],
-      "Material": "Metal",
-      "TopSurface": "Smooth",
-      "BottomSurface": "Smooth"
-     }
-    },
-    {
-     "Name": "CrateBeamAgent",
-     "ClassName": "Part",
-     "Properties": {
-      "Anchored": true,
-      "Size": [
-       7,
-       2.2,
-       2.2
-      ],
-      "CFrame": {
-       "CFrame": {
-        "position": [
-         -1478.799,
-         6.64,
-         -1486.752
-        ],
-        "orientation": [
-         [
-          0.0,
-          -1.0,
-          0.0
-         ],
-         [
-          1.0,
-          0.0,
-          0.0
-         ],
-         [
-          0.0,
-          0.0,
-          1.0
-         ]
-        ]
-       }
-      },
-      "Color": [
-       0.3765,
-       0.6431,
-       0.8392
       ],
       "Material": "Neon",
       "TopSurface": "Smooth",

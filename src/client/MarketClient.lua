@@ -9,7 +9,7 @@
 --   * Fenster STAND: Angebote eines anderen Stands mit Preis, RAP-Wert und Preisverlauf, KAUFEN (zweimal klicken),
 --     Gegenangebot machen, Skin merken.
 --   * Fenster SUCHE (Knopf oben oder E am Such-Terminal auf dem Marktplatz): alle Angebote aller Stände durchsuchen
---     (MarketSearch), nach Seltenheit, Art, Preis und Merkliste filtern, sortieren; HIN zeigt den Weg zum Stand.
+--     (MarketSearch), nach Seltenheit, Preis und Merkliste filtern, sortieren; HIN zeigt den Weg zum Stand.
 --   * Fenster GEGENANGEBOTE (Knopf oben, nur mit eigenem Stand): Gebote annehmen oder ablehnen.
 --   * Knopf TAUSCH oben (oder Taste T): Spielerliste zum Tauschen (TradeClient).
 --   * Stand-Name im Fenster MEIN STAND; Tafeln in der Halle: Übersicht der freien Stände, beliebteste Händler.
@@ -30,8 +30,6 @@ local Cosmetics = require(Shared.Cosmetics)
 local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
 local GunModels = require(Shared.GunModels)
-local AgentFigure = require(Shared.AgentFigure)
-local AgentConfig = require(Shared.AgentConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local MarketSearch = require(Shared.MarketSearch)
 local InputActions = require(Shared.InputActions)
@@ -260,15 +258,8 @@ local function buildDisplay(stand, listing)
 	if not spot or not item then
 		return
 	end
-	local model
-	if item.Type == "Weapon" then
-		model = GunModels.Build(item.Weapon or "Rifle", item)
-		model:ScaleTo(0.55)
-	else
-		local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
-		model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, nil, item.Id)
-		model:ScaleTo(0.42)
-	end
+	local model = GunModels.Build(item.Weapon or "Rifle", item)
+	model:ScaleTo(0.55)
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.Anchored = true
@@ -278,14 +269,14 @@ local function buildDisplay(stand, listing)
 		end
 	end
 	model.Parent = displayFolder
-	local box, size = model:GetBoundingBox()
+	local box = model:GetBoundingBox()
 	-- Preisschild über dem Skin
 	local rarity = Cosmetics.Rarities[item.Rarity]
 	local tag = Instance.new("BillboardGui")
 	tag.Name = "PriceTag"
 	tag.ResetOnSpawn = false
 	tag.Size = UDim2.fromOffset(150, 44)
-	tag.StudsOffset = Vector3.new(0, item.Type == "Agent" and 1.9 or 1.15, 0)
+	tag.StudsOffset = Vector3.new(0, 1.15, 0)
 	tag.MaxDistance = 45
 	tag.LightInfluence = 0
 	tag.Adornee = spot
@@ -304,8 +295,8 @@ local function buildDisplay(stand, listing)
 	UITheme.RapIcon(holder, 14, { LayoutOrder = 1 })
 	label({ Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X, Text = format(listing.Price) .. " RAP",
 		TextSize = 18, Font = F.Display, TextColor3 = C.Rap, LayoutOrder = 2 }, holder)
-	stand.Displays[listing.Slot] = { Model = model, Tag = tag, Spot = spot, Agent = item.Type == "Agent",
-		Offset = model:GetPivot():ToObjectSpace(box), Height = size.Y, Phase = listing.Slot * 1.3 + stand.Id }
+	stand.Displays[listing.Slot] = { Model = model, Tag = tag, Spot = spot, Offset = model:GetPivot():ToObjectSpace(box),
+		Phase = listing.Slot * 1.3 + stand.Id }
 end
 
 -- Schild, Prompt und (im Markt) die ausgestellten Skins eines Stands an seine Attribute anpassen
@@ -452,9 +443,8 @@ local function itemCard(parent, item, size, order, textWidth)
 	local width = textWidth and UDim2.fromOffset(textWidth, 0) or UDim2.new(1, -134, 0, 0)
 	label({ Position = UDim2.fromOffset(124, 10), Size = width + UDim2.fromOffset(0, 24), Text = upper(item.Name), TextSize = 21,
 		Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, card)
-	local kind = item.Type == "Agent" and ("  ·  " .. (AgentConfig.Get(item.Agent) or { Name = "" }).Name) or "  ·  WAFFEN-SKIN"
 	label({ Position = UDim2.fromOffset(124, 36), Size = width + UDim2.fromOffset(0, 14), Text = upper(rarity and rarity.Name or "")
-		.. (textWidth and "" or kind), TextSize = 11, Font = F.Bold, TextColor3 = rarity and rarity.Color or C.Muted,
+		.. (textWidth and "" or "  ·  WAFFEN-SKIN"), TextSize = 11, Font = F.Bold, TextColor3 = rarity and rarity.Color or C.Muted,
 		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, card)
 	return card
 end
@@ -833,9 +823,8 @@ local function openSearch()
 			UITheme.AccentBar(row, rarityColor, { Side = "Left", Thickness = 4, ZIndex = 5 })
 			label({ Position = UDim2.fromOffset(18, 8), Size = UDim2.fromOffset(300, 26), Text = upper(item.Name), TextSize = 21,
 				Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
-			local kind = item.Type == "Agent" and ("AGENT  ·  " .. upper((AgentConfig.Get(item.Agent) or { Name = "" }).Name)) or "WAFFEN-SKIN"
 			label({ Position = UDim2.fromOffset(18, 38), Size = UDim2.fromOffset(300, 20), Text = upper(rarity and rarity.Name or "")
-				.. "  ·  " .. (historyLine(item.Id) or kind), TextSize = 11, Font = F.Bold, TextColor3 = rarityColor,
+				.. "  ·  " .. (historyLine(item.Id) or "WAFFEN-SKIN"), TextSize = 11, Font = F.Bold, TextColor3 = rarityColor,
 				TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
 			label({ Position = UDim2.fromOffset(330, 12), Size = UDim2.fromOffset(130, 20), Text = "STAND " .. entry.Stand,
 				TextSize = 16, Font = F.Display, ZIndex = 5 }, row)
@@ -894,7 +883,7 @@ local function openSearch()
 			end)
 			x += width + 8
 		end
-		-- Zeile 2: Seltenheit, Art, bezahlbar, Merkliste
+		-- Zeile 2: Seltenheit, bezahlbar, Merkliste
 		x = 0
 		searchChip(controls, "ALLE", x, 52, 64, state.Rarity == nil, function()
 			change(function()
@@ -913,16 +902,6 @@ local function openSearch()
 			if state.Rarity ~= id then
 				chip.Label.TextColor3 = info.Color
 			end
-			x += width + 8
-		end
-		x += 12
-		for _, kind in MarketSearch.Types do
-			local width = #kind.Name * 9 + 28
-			searchChip(controls, kind.Name, x, 52, width, state.Type == kind.Id, function()
-				change(function()
-					state.Type = if state.Type == kind.Id then nil else kind.Id
-				end)
-			end)
 			x += width + 8
 		end
 		x += 12
@@ -1329,14 +1308,8 @@ function MarketClient.Init()
 				end
 				display.Placed = true
 				local spin = CFrame.Angles(0, t * 0.7 + display.Phase, 0)
-				if display.Agent then
-					-- Figur steht auf Theke bzw. Regal
-					local base = display.Spot.Position - Vector3.new(0, 0.85, 0)
-					display.Model:PivotTo(CFrame.new(base + Vector3.new(0, display.Height / 2, 0)) * spin * display.Offset:Inverse())
-				else
-					display.Model:PivotTo(CFrame.new(display.Spot.Position + Vector3.new(0, math.sin(t * 1.6 + display.Phase) * 0.08, 0))
-						* spin * display.Offset:Inverse())
-				end
+				display.Model:PivotTo(CFrame.new(display.Spot.Position + Vector3.new(0, math.sin(t * 1.6 + display.Phase) * 0.08, 0))
+					* spin * display.Offset:Inverse())
 			end
 		end
 	end)

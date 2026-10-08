@@ -12,7 +12,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORIGIN = (-1500, 0, -1500)  # MARKET_ORIGIN in tools/build_maps.py
 STAND_PARTS = ("Base", "Counter", "Prompt", "Sign", "Display1", "Display2", "Display3", "Display4", "Display5", "Display6")
-CLIENT_PARTS = ("SearchTerminal", "CrateWeapon", "CrateAgent", "OverviewBoard", "TopBoard")
+CLIENT_PARTS = ("SearchTerminal", "CrateWeapon", "OverviewBoard", "TopBoard")
 
 
 def _parts(node, found=None, path=""):
@@ -230,6 +230,10 @@ def check_market():
     for name in CLIENT_PARTS:
         if len(by_name.get(name, [])) != 1:
             problems.append("%s: genau ein Teil erwartet, gefunden %d" % (name, len(by_name.get(name, []))))
+    # Die Agenten-Kiste ist ausgebaut: kein Teil ihres Automaten darf übrig sein
+    leftovers = sorted(name for name in by_name if name.startswith("Crate") and "Agent" in name)
+    if leftovers:
+        problems.append("Reste der Agenten-Kiste: %s" % ", ".join(leftovers))
     portals = [part for group, part in parts if group == "Portals" and part["Name"].startswith("Portal_")]
     if [p["Name"] for p in portals] != ["Portal_Hub"]:
         problems.append("Gruppe Portals: genau Portal_Hub erwartet")

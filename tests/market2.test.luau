@@ -1,5 +1,6 @@
 -- Markt, Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, Ablauf,
--- Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (Durchschnitt, DataStore), Händler-Rangliste
+-- Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (Durchschnitt, DataStore), Händler-Rangliste;
+-- entfernte Agenten-Skins in alten Daten (Merkliste, Preisverlauf, lebender RAP) fallen weg
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -41,6 +42,10 @@ for id = 1, 3 do
 	spot.Name = "OwnerSpot"
 	spot.CFrame = CFrame.new(-1525, 0.9, -1530 + id * 14)
 end
+-- Alter Stand im DataStore: Preisverlauf und lebender RAP eines entfernten Agenten-Skins
+local historyData = SIM.DataStore("MarketHistory_v1").Data
+historyData.sales = { A_Ghost_Nebel = { { Time = os.time(), Price = 7000 } } }
+historyData.rap = { A_Ghost_Nebel = 8000 }
 local MarketService = require("MarketService")
 local MarketMode = require("Market")
 local joined = {}
@@ -76,10 +81,13 @@ end
 
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = { W_Lava = 3, W_Kirsche = 3 }, Equipped = {} }
-store.Data.u2 = { XP = {}, Coins = 0, Rap = 5000, Owned = {}, Equipped = {} }
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 5000, Owned = {}, Equipped = {}, MarketWatch = { A_Ghost_Nebel = true } }
 store.Data.u3 = { XP = {}, Coins = 0, Rap = 5000, Owned = {}, Equipped = {} }
 local alice, bob, carl = SIM.Join("Alice"), SIM.Join("Bob"), SIM.Join("Carl")
 step(2)
+check(next(ProgressService.Get(bob).MarketWatch) == nil, "entfernter Agenten-Skin nicht mehr auf der Merkliste")
+check(HttpService:JSONDecode(map:GetAttribute("PriceStats")).A_Ghost_Nebel == nil and RapConfig.Live.A_Ghost_Nebel == nil,
+	"entfernter Agenten-Skin weder im Preisverlauf noch im lebenden RAP")
 local function remoteCount(player, remote)
 	local n = 0
 	for _, entry in SIM.RemoteLog do
@@ -289,6 +297,9 @@ end
 stats = HttpService:JSONDecode(map:GetAttribute("PriceStats"))
 check(stats.W_Lava == nil, "Verkäufe älter als " .. RapConfig.HistoryDays .. " Tage zählen nicht mehr")
 check(stats.W_Kirsche and stats.W_Kirsche.N == 1 and stats.W_Kirsche.Avg == 220, "nur der neue Kirsche-Verkauf zählt")
+step(1)
+check(historyData.sales.A_Ghost_Nebel == nil and historyData.rap.A_Ghost_Nebel == nil and historyData.sales.W_Kirsche ~= nil,
+	"beim Speichern fällt der entfernte Skin aus dem DataStore")
 
 if failures == 0 then
 	print("Markt Teil 2: alles in Ordnung")

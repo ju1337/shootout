@@ -1858,15 +1858,15 @@ MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64),
 
 
 def build_market():
-    """Markt als Theater-Rund (Radius 94, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal, zwei
-    Kisten-Automaten, Tafeln, Tor zurück zum Hub). Darum drei breite Ränge, die nach außen stufenweise höher werden
+    """Markt als Theater-Rund (Radius 94, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal,
+    Kisten-Automat, Tafeln, Tor zurück zum Hub). Darum drei breite Ränge, die nach außen stufenweise höher werden
     (2,4 / 5,4 / 8,4 m); auf jedem Rang stehen die Stände mit der Vorderseite zur Mitte (12 + 16 + 20 = 48). Das Tor
     zurück zum Hub steht am Ende der Südrampe (oberster Rang), damit der Platz frei bleibt. Vier
     Rampen (Himmelsrichtungen) führen vom Platz über alle Ränge nach oben, die Stufen dazwischen kann man auch
     springen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client),
     sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum Gang) und dem Prompt-Punkt vor der
     Theke ("Prompt"). Besitzer, Name und Angebote setzt der Server als Attribute an den Ordner. Der Client beschreibt
-    außerdem "OverviewBoard" und "TopBoard" und hängt an "SearchTerminal" sowie "CrateWeapon" / "CrateAgent" ein
+    außerdem "OverviewBoard" und "TopBoard" und hängt an "SearchTerminal" sowie "CrateWeapon" ein
     E-Prompt. Winkel phi: 0 = +x, 90 = +z (Norden)."""
     b = Builder(MARKET_ORIGIN)
     b.holo = True
@@ -1955,7 +1955,7 @@ def build_market():
           children=[{"Name": "Light", "ClassName": "PointLight",
                      "Properties": {"Range": 20, "Brightness": 0.9, "Color": rgb(*rap)}}])
 
-    # Kisten-Automaten am Platzrand (Viertel 1), Vorderseite zur Mitte
+    # Kisten-Automat am Platzrand (Mitte von Viertel 1), Vorderseite zur Mitte
     def crate_machine(key, title, sub, phi, color):
         cx, cz = polar(25, phi)
         yaw = 90 - phi  # lokal: -Z = Vorderseite zur Mitte
@@ -1976,8 +1976,7 @@ def build_market():
         b.box("Decor", "CrateIconBand" + key, (2.0, 0.35, 2.0), at(0, 9.6, 0), (30, 32, 38), "Metal", angles=(45, yaw + 45, 0))
         b.cylinder("Decor", "CrateBeam" + key, 2.2, 7, at(0, 6.4, 0), color, "Neon", props={"Transparency": 0.8, "CanCollide": False})
 
-    crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN", 58, (212, 170, 80))
-    crate_machine("Agent", "AGENTEN-KISTE", "800 MÜNZEN", 32, (96, 164, 214))
+    crate_machine("Weapon", "WAFFEN-KISTE", "450 MÜNZEN", 45, (212, 170, 80))
 
     # Tafeln am Platzrand: freie Stände (Viertel 2), beliebteste Händler (Viertel 3), Vorderseite zur Mitte
     for name, phi, width in (("OverviewBoard", 135, 16), ("TopBoard", 225, 14)):

@@ -62,6 +62,18 @@ do
 	end
 end
 
+-- Gespeicherte Werte je Skin ({ [Skin] = ... } aus "rap" bzw. "sales"): Skins, die es nicht mehr gibt (z.B. die
+-- entfernten Agenten-Skins), fallen beim Laden und beim nächsten Speichern weg
+local function knownItems(map)
+	local clean = {}
+	for id, value in type(map) == "table" and map or {} do
+		if typeof(id) == "string" and Cosmetics.Get(id) then
+			clean[id] = value
+		end
+	end
+	return clean
+end
+
 -- ---------- Veröffentlichen ----------
 
 local function offerList(stand)
@@ -145,7 +157,7 @@ local function updateLive(itemId, price)
 	if historyStore then
 		task.spawn(function()
 			pcall(historyStore.UpdateAsync, historyStore, "rap", function(old)
-				old = type(old) == "table" and old or {}
+				old = knownItems(old)
 				old[itemId] = RapConfig.NextLive(itemId, price, old[itemId] or RapConfig.Base(itemId))
 				return old
 			end)
@@ -165,7 +177,7 @@ local function recordSale(itemId, price)
 	if historyStore then
 		task.spawn(function()
 			pcall(historyStore.UpdateAsync, historyStore, "sales", function(old)
-				old = type(old) == "table" and old or {}
+				old = knownItems(old)
 				local saved = type(old[itemId]) == "table" and old[itemId] or {}
 				table.insert(saved, sale)
 				while #saved > RapConfig.HistoryKeep do
@@ -689,8 +701,8 @@ function MarketService.Init(map)
 			end
 			local ok, saved = pcall(historyStore.GetAsync, historyStore, "sales")
 			if ok and type(saved) == "table" then
-				for id, sales in saved do
-					if type(sales) == "table" and typeof(id) == "string" then
+				for id, sales in knownItems(saved) do
+					if type(sales) == "table" then
 						local merged = {}
 						for _, sale in sales do
 							if type(sale) == "table" and tonumber(sale.Time) and tonumber(sale.Price) then

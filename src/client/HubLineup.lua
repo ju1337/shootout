@@ -1,6 +1,6 @@
 -- HubLineup (ModuleScript, nur Client)
 -- Wie in der Rogue-Company-Lobby: Auf der Lineup-Bühne im Hangar steht groß der eigene Agent
--- (mit Skin und gewählter Primärwaffe) und dreht sich langsam. Nur lokal sichtbar.
+-- (mit gewählter Primärwaffe und deren Skin) und dreht sich langsam. Nur lokal sichtbar.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -69,9 +69,7 @@ local function rebuild()
 	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 	local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
 	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	local agentSkin = Cosmetics.AgentSkin(player, agent.Id)
-	figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon,
-		agentSkin and agentSkin.Id)
+	figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
 	figure.Name = "LineupAgent"
 	figure:ScaleTo(SCALE)
 	for _, part in figure:GetDescendants() do
@@ -98,7 +96,7 @@ local function rebuild()
 	end
 end
 
--- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") mit Elite-Skin
+-- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") im Elite-Look
 -- (Gold, glänzend, Leuchtkontur, Funken) und Holo-Schrift darüber ("AgentOfWeekHolo"). Jede Woche
 -- (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der Serverzeit berechnet, für alle gleich.
 local STATUE_SCALE = 1.8
@@ -117,18 +115,9 @@ function HubLineup.HoloVisibility(distance)
 	return math.clamp((distance - HOLO_HIDE) / (HOLO_FULL - HOLO_HIDE), 0, 1)
 end
 
--- Elite-Skin: Uniform aus dem besten Shop-Skin des Agenten (sonst dunkel in Agentenfarbe), Weste/Visier Gold
+-- Elite-Look der Statue: Uniform dunkel in Agentenfarbe, Weste/Visier Gold
 local function eliteColors(agent)
-	local best, bestRank = nil, 0
-	local ranks = { Rare = 1, Epic = 2, Legendary = 3 }
-	for _, item in Cosmetics.List("Agent", agent.Id) do
-		local rank = ranks[item.Rarity] or 0
-		if rank > bestRank then
-			best, bestRank = item, rank
-		end
-	end
-	local primary = best and bestRank >= 2 and best.Primary or agent.Color:Lerp(Color3.new(0, 0, 0), 0.7)
-	return primary, GOLD
+	return agent.Color:Lerp(Color3.new(0, 0, 0), 0.7), GOLD
 end
 
 local function buildAgentOfWeek()
@@ -197,12 +186,9 @@ local function buildAgentOfWeek()
 				part.Anchored = true
 				part.CanCollide = false
 				part.CanQuery = false
-				-- Gold glänzt (Foil), Visier leuchtet in der Agentenfarbe
+				-- Gold glänzt (Foil)
 				if part.Color == GOLD then
 					part.Material = Enum.Material.Foil
-				end
-				if part.Name == "Visor" then
-					part.Color = agent.Color
 				end
 			end
 		end
@@ -213,8 +199,8 @@ local function buildAgentOfWeek()
 		highlight.OutlineTransparency = 0.25
 		highlight.DepthMode = Enum.HighlightDepthMode.Occluded
 		highlight.Parent = statue
-		local torso = statue.PrimaryPart
-		if torso then
+		local torso = statue:FindFirstChild("UpperTorso", true)
+		if torso and torso:IsA("BasePart") then
 			local sparkles = Instance.new("ParticleEmitter")
 			sparkles.Color = ColorSequence.new(GOLD)
 			sparkles.LightEmission = 1
@@ -261,32 +247,24 @@ local function buildAgentOfWeek()
 	end)
 end
 
--- Shop-Vitrine im kompakten Hub: drei Angebote des Tages (zwei Waffen-Skins, ein Agenten-Skin) drehen sich in
--- den Vitrinen ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
+-- Shop-Vitrine im kompakten Hub: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
+-- ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
 -- An der Theke ("ShopCounter") öffnet E den Shop. Angebote wechseln täglich (Serverzeit, für alle gleich).
 local DAY = 24 * 3600
 
 local function dailyOffers()
 	local day = math.floor(workspace:GetServerTimeNow() / DAY)
 	local random = Random.new(day * 7919 + 17)
-	local weapons, agents = {}, {}
+	local weapons = {}
 	for _, item in Cosmetics.List("Weapon") do
 		if Cosmetics.ForSale(item) then
 			table.insert(weapons, item)
 		end
 	end
-	for _, item in Cosmetics.List("Agent") do
-		if Cosmetics.ForSale(item) then
-			table.insert(agents, item)
-		end
-	end
 	local offers = {}
-	local first = table.remove(weapons, random:NextInteger(1, #weapons))
-	local agentItem = agents[random:NextInteger(1, #agents)]
-	local second = table.remove(weapons, random:NextInteger(1, #weapons))
-	table.insert(offers, first)
-	table.insert(offers, agentItem) -- Agent in der Mitte
-	table.insert(offers, second)
+	for _ = 1, math.min(3, #weapons) do
+		table.insert(offers, table.remove(weapons, random:NextInteger(1, #weapons)))
+	end
 	return offers, day
 end
 
@@ -360,15 +338,8 @@ local function buildShopVitrine()
 		for index, item in offers do
 			local spot = decor:FindFirstChild("ShopDisplay" .. index)
 			if spot then
-				local model
-				if item.Type == "Weapon" then
-					model = GunModels.Build("Rifle", item)
-					model:ScaleTo(0.7) -- passt drehend in die Vitrine
-				else
-					local agent = AgentConfig.Get(item.Agent) or AgentConfig.Agents[1]
-					model = AgentFigure.Build(agent, item.Primary, item.Accent, nil, agent.Loadout[1], item.Id)
-					model:ScaleTo(0.6)
-				end
+				local model = GunModels.Build("Rifle", item)
+				model:ScaleTo(0.7) -- passt drehend in die Vitrine
 				for _, part in model:GetDescendants() do
 					if part:IsA("BasePart") then
 						part.Anchored = true
@@ -379,8 +350,7 @@ local function buildShopVitrine()
 				model.Parent = workspace
 				-- Waffe um die Mitte ihres Umrisses drehen (nicht um den Griff)
 				local box = model:GetBoundingBox()
-				table.insert(models, { Model = model, Spot = spot, Agent = item.Type == "Agent",
-					Offset = model:GetPivot():ToObjectSpace(box) })
+				table.insert(models, { Model = model, Spot = spot, Offset = model:GetPivot():ToObjectSpace(box) })
 				plaque(index, item)
 			end
 		end
@@ -395,12 +365,7 @@ local function buildShopVitrine()
 		end
 		for i, entry in models do
 			local spin = CFrame.Angles(0, t * 0.6 + i, 0)
-			if entry.Agent then
-				-- Figur steht auf dem Boden der Vitrine
-				entry.Model:PivotTo(CFrame.new(entry.Spot.Position + Vector3.new(0, -2.1 + 3 * 0.6, 0)) * spin)
-			else
-				entry.Model:PivotTo(CFrame.new(entry.Spot.Position) * spin * entry.Offset:Inverse())
-			end
+			entry.Model:PivotTo(CFrame.new(entry.Spot.Position) * spin * entry.Offset:Inverse())
 		end
 	end)
 end

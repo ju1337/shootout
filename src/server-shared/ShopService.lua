@@ -47,14 +47,10 @@ function actions.Buy(player, itemId)
 		return "Nicht genug Münzen.", false
 	end
 	ProgressService.GiveItem(player, itemId)
-	-- Agenten-Skins direkt anziehen
-	if item.Type == "Agent" then
-		ProgressService.SetEquipped(player, "A:" .. item.Agent, itemId)
-	end
 	return item.Name .. " gekauft!", true
 end
 
--- Skin ausrüsten. Waffen-Skins brauchen die Zielwaffe.
+-- Waffen-Skin auf die Zielwaffe ausrüsten (Agenten haben keine Skins)
 function actions.Equip(player, itemId, weaponName)
 	local item = Cosmetics.Get(itemId)
 	if item and item.Mastery and item.Weapon and not ProgressService.Owns(player, itemId) then
@@ -65,28 +61,23 @@ function actions.Equip(player, itemId, weaponName)
 	if not item or not ProgressService.Owns(player, itemId) then
 		return "Diesen Skin besitzt du nicht.", false
 	end
-	if item.Type == "Weapon" then
-		if typeof(weaponName) ~= "string" or not WeaponConfig.Get(weaponName) then
-			return "Unbekannte Waffe.", false
-		end
-		if not Cosmetics.FitsWeapon(item, weaponName) then
-			return "Diese Tarnung gibt es nur für " .. WeaponConfig.Get(item.Weapon).DisplayName .. ".", false
-		end
-		ProgressService.SetEquipped(player, "W:" .. weaponName, itemId)
-		return item.Name .. " auf " .. WeaponConfig.Get(weaponName).DisplayName .. " ausgerüstet.", true
+	if typeof(weaponName) ~= "string" or not WeaponConfig.Get(weaponName) then
+		return "Unbekannte Waffe.", false
 	end
-	ProgressService.SetEquipped(player, "A:" .. item.Agent, itemId)
-	return item.Name .. " ausgerüstet.", true
+	if not Cosmetics.FitsWeapon(item, weaponName) then
+		return "Diese Tarnung gibt es nur für " .. WeaponConfig.Get(item.Weapon).DisplayName .. ".", false
+	end
+	ProgressService.SetEquipped(player, "W:" .. weaponName, itemId)
+	return item.Name .. " auf " .. WeaponConfig.Get(weaponName).DisplayName .. " ausgerüstet.", true
 end
 
--- Standard-Aussehen: slot = "W:<Waffe>" oder "A:<Agent>"
+-- Standard-Aussehen: slot = "W:<Waffe>"
 function actions.Unequip(player, slot)
 	if typeof(slot) ~= "string" then
 		return "Ungültig.", false
 	end
-	local kind, name = string.match(slot, "^(%u):(%w+)$")
-	local valid = (kind == "W" and WeaponConfig.Get(name)) or (kind == "A" and AgentConfig.Get(name))
-	if not valid then
+	local name = string.match(slot, "^W:(%w+)$")
+	if not name or not WeaponConfig.Get(name) then
 		return "Ungültig.", false
 	end
 	ProgressService.SetEquipped(player, slot, nil)
