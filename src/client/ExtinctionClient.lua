@@ -980,6 +980,7 @@ local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
 	{ Id = "Loot", Text = "LOOT" },
+	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
@@ -1821,6 +1822,172 @@ local function openLoot()
 	win.Refresh()
 end
 
+-- GUIDE: alles Wichtige zur offenen Welt zum Nachlesen, links die Themen, rechts der Text. Zahlen kommen aus den
+-- Configs (stimmen also immer), Tasten aus InputActions (Tastatur oder Controller, je nach Gerät).
+local guideTopic = 1
+local function key(action, fallback)
+	local hint = InputActions.Hint(action)
+	return hint ~= "" and ("[" .. hint .. "]") or (fallback or "the button on screen")
+end
+local function guideTopics()
+	local E = ExtinctionConfig
+	local R, RP, S, BM, BO, A = E.Redzone, E.RedPoints, E.Storm, E.BloodMoon, E.Bounty, E.Airdrop
+	local repel = E.Items.AntiZombie and E.Items.AntiZombie.Duration or 180
+	local bullet = "•  "
+	return {
+		{ Title = "GETTING STARTED", Lines = {
+			bullet .. "You spawn in a <b>safe zone</b> (the camp or a safehouse). No PvP there, your weapons stay holstered.",
+			bullet .. "Leave the safe zone to loot and fight. <b>PvP starts " .. E.PvPDelay .. " seconds</b> after you leave "
+				.. "(instantly in the red zone).",
+			bullet .. "Your <b>spawn point</b> is the last safe zone you entered.",
+			bullet .. "If you die outside, your <b>bag drops</b> where you died – it is marked on your map. Your container and "
+				.. "stash are always safe.",
+			bullet .. "Grab the free <b>STARTER KIT</b> at the kit vendor right next to the spawn.",
+			bullet .. "Once a day a <b>daily crate</b> lands in your stash.",
+		} },
+		{ Title = "INVENTORY", Lines = {
+			bullet .. "Open it with " .. key("Inventory") .. ". Click an item to select it, drag it to move it.",
+			bullet .. "<b>Bag</b>: " .. E.BagSlots .. " slots, the first " .. E.HotbarSlots .. " are your hotbar (keys 1-"
+				.. E.HotbarSlots .. "). You lose the bag when you die outside.",
+			bullet .. "<b>Container</b>: " .. E.SafeSlots .. " slots, reachable everywhere, <b>kept when you die</b>.",
+			bullet .. "<b>Stash</b>: " .. E.StashSlots .. " slots in the safe zone, always safe.",
+			bullet .. "Hotbar keys: weapon in hand or holster it, use bandages, medkits, vests and syringes, throw grenades, "
+				.. "spawn vehicles.",
+			bullet .. "Quick heal: " .. key("QuickHeal", "the heal button") .. ".",
+			bullet .. "<b>Attachments</b>: drag one onto a weapon to attach it.",
+		} },
+		{ Title = "TRADING", Lines = {
+			bullet .. "<b>Weapon stand, pharmacy, vehicle workshop</b>: buy with coins. You can sell anything at any stand for "
+				.. math.floor(E.SellFactor * 100) .. " % of its price.",
+			bullet .. "<b>Player market</b> (MARKET tab, only in the safe zone): sell your items to other players. Fee "
+				.. math.floor(E.Market.FeeRate * 100) .. " %.",
+			bullet .. "<b>The Fixer</b> (black van in the west street of the camp) sells attachments, LMG, DMR, heavy vests and "
+				.. "more for <b>red zone points (RZ)</b>.",
+			bullet .. "<b>Kits</b> at the kit vendor next to the spawn – every kit has its own cooldown.",
+			bullet .. "The <b>LOOT</b> tab shows what you can get from drops and event crates.",
+		} },
+		{ Title = "ZOMBIES", Lines = {
+			bullet .. "<b>Walker</b>: slow, you can outrun it.  <b>Runner</b>: fast.  <b>Screamer</b>: when it sees you, it "
+				.. "screams and calls the others.  <b>Brute</b>: big and tough.",
+			bullet .. "<b>Armored</b>: the helmet blocks most headshot damage until it flies off, the vest protects the body. "
+				.. "Double coins.",
+			bullet .. "At <b>night</b> there are more zombies.",
+			bullet .. "The <b>anti-zombie syringe</b> stops zombies from spawning near you for " .. math.floor(repel / 60)
+				.. " minutes.",
+			bullet .. "Zombies often carry loot – press " .. key("Interact") .. " at the corpse.",
+			bullet .. "<b>Bosses</b>: The Surgeon guards the hospital. Blood Beasts appear during the blood moon.",
+		} },
+		{ Title = "RED ZONE", Lines = {
+			bullet .. "A red area on the map that moves to a new place every " .. math.floor(R.Interval / 60) .. " minutes.",
+			bullet .. "<b>PvP is instant</b>, there are more and tougher zombies and the <b>loot is better</b>.",
+			bullet .. "Only here you earn <b>red zone points (RZ)</b>: " .. RP.PlayerKill .. " per player or bot kill, "
+				.. RP.ZombieKill .. " per zombie.",
+			bullet .. "When the zone moves, the top 3 of its leaderboard get " .. RP.Rank[1] .. " / " .. RP.Rank[2] .. " / "
+				.. RP.Rank[3] .. " RZ.",
+			bullet .. "Spend RZ at <b>The Fixer</b>. RZ are saved, you keep them when you die.",
+		} },
+		{ Title = "EVENTS", Lines = {
+			bullet .. "<b>Loot drop</b>: every " .. math.floor(A.MinInterval / 60) .. "-" .. math.floor(A.MaxInterval / 60)
+				.. " min a crate lands with a flare, often in the red zone. Hold " .. key("Interact") .. " to open it.",
+			bullet .. "<b>Convoy</b>: armed trucks drive along a road. Shoot them until they stop, kill the guards – the cargo "
+				.. "always has attachments.",
+			bullet .. "<b>Heli crash</b>: follow the smoke trail. When the fire is out, two military crates wait at the wreck.",
+			bullet .. "<b>Horde crate</b>: start it with " .. key("Interact") .. " and hold the area through three zombie waves.",
+			bullet .. "<b>Blood moon</b>: every " .. math.floor(BM.Interval / 60) .. " min for " .. math.floor(BM.Duration / 60)
+				.. " min – tougher zombies, better loot, Blood Beasts.",
+			bullet .. "<b>Storm night</b>: every " .. math.floor(S.Interval / 60) .. " min – <b>PvP is off</b>, armored zombies "
+				.. "everywhere. Reach the shared goal together and everyone who fought gets a storm crate.",
+			bullet .. "<b>Bounty</b>: " .. BO.MinKills .. " player kills in a row and you are wanted – your position flashes "
+				.. "on the map. Whoever kills you takes the bounty.",
+		} },
+		{ Title = "VEHICLES", Lines = {
+			bullet .. "Buy them at the <b>vehicle workshop</b>: quad, off-roader, sports car, helicopter. Bicycles drop from "
+				.. "zombies.",
+			bullet .. "Put the vehicle on your hotbar and press its key to spawn it.",
+			bullet .. key("StoreVehicle") .. " packs it away again.",
+			bullet .. "Vehicles can be destroyed – then they are gone. Run over zombies to clear the way.",
+		} },
+		{ Title = "SQUAD & MAP", Lines = {
+			bullet .. "<b>Squad</b> " .. key("Squad") .. ": play with up to 4 friends – no friendly fire, you see each other "
+				.. "on the map.",
+			bullet .. "<b>Map</b> " .. key("WorldMap") .. ": events, red zone, safe zones, bosses and your dropped bag.",
+			bullet .. "<b>Ping</b> " .. key("Ping") .. ": mark a spot or an enemy for your squad.",
+		} },
+		{ Title = "HIDEOUT", Lines = {
+			bullet .. "Your own house in the camp – open it at the door.",
+			bullet .. "Upgrade it with coins and items:",
+			bullet .. "<b>Field bed</b>: more health.  <b>Workbench</b>: discount at the traders.",
+			bullet .. "<b>Medical station</b>: heal and put on vests faster.  <b>Generator</b>: coins every hour, even "
+				.. "while you are offline.",
+		} },
+		{ Title = "CONTROLS", Lines = {
+			bullet .. "Inventory " .. key("Inventory") .. "  ·  Interact " .. key("Interact") .. "  ·  Reload "
+				.. key("Reload"),
+			bullet .. "Sprint " .. key("Sprint") .. "  ·  Crouch " .. key("Crouch") .. "  ·  Aim " .. key("Aim")
+				.. "  ·  Fire " .. key("Fire"),
+			bullet .. "Map " .. key("WorldMap") .. "  ·  Squad " .. key("Squad") .. "  ·  Ping " .. key("Ping"),
+			bullet .. "Store vehicle " .. key("StoreVehicle") .. "  ·  Quick heal " .. key("QuickHeal", "the heal button")
+				.. "  ·  Menu " .. key("Menu"),
+			bullet .. "Hotbar: keys 1-" .. E.HotbarSlots .. ".",
+		} },
+	}
+end
+
+local function openGuide()
+	local C = UITheme.MenuColors
+	local win = newWindow("Guide", "GUIDE", "EVERYTHING YOU NEED TO KNOW ABOUT THE OPEN WORLD")
+	local body = win.Body
+	local topics = guideTopics()
+	local listW, gap = 230, 20
+	local rightX = listW + gap
+	local rightW = Inv.CONTENT_W - rightX
+	local list = make("Frame", { Name = "Topics", Size = UDim2.fromOffset(listW, Inv.CONTENT_H), BackgroundTransparency = 1,
+		ZIndex = 6 }, body)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	local title = label({ Name = "TopicTitle", Position = UDim2.fromOffset(rightX, 0), Size = UDim2.fromOffset(rightW, 28),
+		Text = "", TextSize = 24, Font = F.Display, ZIndex = 6 }, body)
+	local scroll = make("ScrollingFrame", { Name = "Text", Position = UDim2.fromOffset(rightX, 44),
+		Size = UDim2.fromOffset(rightW, Inv.CONTENT_H - 44), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4,
+		ScrollBarImageColor3 = C.Muted, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 6 }, body)
+	make("UIListLayout", { Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }, scroll)
+	local buttons, stripes = {}, {}
+
+	function win.Refresh()
+		local topic = topics[guideTopic] or topics[1]
+		for index, button in buttons do
+			local on = index == guideTopic
+			button.BackgroundTransparency = on and 0.8 or 0.92
+			button.TextColor3 = on and C.Text or C.Muted
+			stripes[index].Visible = on
+		end
+		title.Text = topic.Title
+		for _, child in scroll:GetChildren() do
+			if child:IsA("TextLabel") then
+				child:Destroy()
+			end
+		end
+		for order, line in topic.Lines do
+			label({ Name = "Line" .. order, Size = UDim2.new(1, -12, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = line,
+				RichText = true, TextWrapped = true, TextSize = 17, Font = F.Medium, TextColor3 = C.Text, LayoutOrder = order,
+				TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 7 }, scroll)
+		end
+		scroll.CanvasPosition = Vector2.zero
+	end
+
+	for index, topic in topics do
+		local button = Inv.flatButton({ Name = "Topic_" .. index, Size = UDim2.new(1, 0, 0, 44), Text = topic.Title,
+			TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = index }, list, function()
+			guideTopic = index
+			win.Refresh()
+		end)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 18) }, button)
+		stripes[index] = make("Frame", { Name = "Stripe", Position = UDim2.new(0, -18, 0, 0), Size = UDim2.new(0, 3, 1, 0),
+			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = false, ZIndex = 8 }, button)
+		buttons[index] = button
+	end
+	win.Refresh()
+end
+
 -- VERSTECK: Module ausbauen (Münzen und Items aus Tasche oder Lager), Generator abholen
 local HIDEOUT = Color3.fromRGB(200, 160, 110)
 local function itemCountEverywhere(id)
@@ -2453,6 +2620,9 @@ openMenuTab = function(id)
 	elseif id == "Loot" then
 		ExtinctionMap.Set(false)
 		openLoot()
+	elseif id == "Guide" then
+		ExtinctionMap.Set(false)
+		openGuide()
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
