@@ -264,6 +264,9 @@ InputActions.Trigger("Inventory", true)
 InputActions.Trigger("Inventory", false)
 step(0.2)
 check(windowGui.Enabled and string.find(texts(windowGui), "INVENTAR", 1, true) ~= nil, "TAB öffnet das Inventar")
+check(find(windowGui, "Safe1") ~= nil and find(windowGui, "Safe" .. require("ExtinctionConfig").SafeSlots) ~= nil
+	and string.find(texts(windowGui), "CONTAINER", 1, true) ~= nil, "Inventar zeigt den Container mit allen Plätzen")
+check(find(windowGui, "Sidebar") ~= nil and find(windowGui, "Filter_Weapon") ~= nil, "Seitenleiste und Filter")
 find(windowGui, "Bag1").Activated:Fire()
 step(0.1)
 check(string.find(texts(windowGui), "AUF DIE HOTBAR", 1, true) == nil and string.find(texts(windowGui), "IN DIE TASCHE", 1, true) ~= nil,

@@ -13,7 +13,7 @@
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
 -- Items ziehen und ablegen (Maus) oder anklicken und dann den Zielplatz anklicken; Rechtsklick legt ein Item
 -- zwischen Hotbar und Tasche hin und her. Der Server prüft alles (InventoryService, LootService).
--- Daten: Spieler-Attribute ExtBag, ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
+-- Daten: Spieler-Attribute ExtBag, ExtSafe (Container), ExtStash, ExtEquipped, ExtVehicle, ExtVehicleReadyAt, InSafeZone, PvP, PvPAt,
 -- Coins, Redzone; Karten-Attribute Redzones (die rote Zone: Zeile unter der Uhr), Airdrops, RedzoneBoard (Rangliste
 -- rechts oben), Weltkarte (N, ExtinctionMap); Remotes.ExtUpdate ("Status", "Loot", "LootClosed", "UseStart", "UseEnd").
 -- Squad (J oder Knopf SQUAD): Fenster zum Einladen/Annehmen/Verlassen (PartyService über Remotes.PartyAction), Liste der
@@ -59,6 +59,10 @@ local ExtinctionClient = {}
 local HOTBAR = ExtinctionConfig.HotbarSlots
 local BAG = ExtinctionConfig.BagSlots
 local STASH = ExtinctionConfig.StashSlots
+local SAFE_SLOTS = ExtinctionConfig.SafeSlots
+local MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
+local GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
+local TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DANGER = Color3.fromRGB(215, 85, 45)
 local KIND_COLORS = {
@@ -82,7 +86,8 @@ end
 local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeige oben)
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
-local bag, stash = {}, {} -- [Platz] = { Id, N, Mag, Out }
+local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
+local filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
 local equipped = 0
 local hud, root, windowGui, canvas
 local window = nil -- { Kind, Frame, Refresh, Stand, Loot }
@@ -287,6 +292,8 @@ local slotViews = {} -- [Container .. ":" .. Platz] = { Frame, Stroke, Content, 
 local function entryOf(container, slot)
 	if container == "Bag" or container == "Hotbar" then
 		return bag[slot]
+	elseif container == "Safe" then
+		return safe[slot]
 	elseif container == "Stash" then
 		return stash[slot]
 	elseif container == "Loot" and window and window.Loot then
@@ -297,6 +304,11 @@ local function entryOf(container, slot)
 		end
 	end
 	return nil
+end
+
+-- Seltenheit eines Items (Strich unten an der Kachel): Tier 2-4, sonst nil
+local function tierColor(config)
+	return config and TIER_COLORS[config.Tier] or nil
 end
 
 -- Platz-Inhalt neu zeichnen (nur wenn sich Item oder Anzahl geändert haben)
@@ -314,17 +326,23 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 	local config = id and itemConfig(id)
 	local countText = ""
 	if entry and entry.N and entry.N > 1 then
-		countText = tostring(entry.N)
+		countText = "x" .. entry.N
 	elseif config and config.Kind == "Weapon" and entry.Mag then
 		countText = tostring(entry.Mag)
 	end
 	view.Count.Text = countText
 	view.Name.Text = config and upper(config.Name) or ""
 	view.Overlay.Visible = entry ~= nil and entry.Out == true
-	view.Stroke.Color = isSelected and C.Primary or (isEquipped and SAFE or (config and KIND_COLORS[config.Kind] or C.Border))
-	view.Stroke.Thickness = (isSelected or isEquipped) and 2 or 1
-	view.Stroke.Transparency = (isSelected or isEquipped) and 0 or (config and 0.45 or 0.7)
-	view.Frame.BackgroundColor3 = isEquipped and Color3.fromRGB(34, 46, 38) or C.Card
+	local tier = tierColor(config)
+	view.Rarity.Visible = tier ~= nil
+	view.Rarity.BackgroundColor3 = tier or C.Border
+	-- Rand nur, wenn ausgewählt (rot) oder in der Hand (grün)
+	view.Stroke.Enabled = isSelected or isEquipped
+	view.Stroke.Color = isSelected and MENU_RED or SAFE
+	view.Frame.BackgroundColor3 = isEquipped and Color3.fromRGB(22, 36, 26) or TILE
+	view.Frame.BackgroundTransparency = config and 0.28 or 0.5
+	-- Filter im Inventar: nicht passende Items abgedunkelt
+	view.Dim.Visible = config ~= nil and filterKinds ~= nil and view.Container ~= "Hotbar" and not filterKinds[config.Kind]
 end
 
 local function repaint()
@@ -345,28 +363,47 @@ local onSlotClick, onSlotDrop, onSlotRightClick -- unten gesetzt (je nach Fenste
 -- Ein Platz als Knopf. container = "Bag", "Stash", "Loot", "Hotbar" (HUD, nur benutzen)
 local function slotButton(parent, container, slot, size, position, zIndex, keyText)
 	local frame = make("TextButton", { Name = container .. slot, Size = size, Position = position or UDim2.new(), Text = "",
-		AutoButtonColor = false, BackgroundColor3 = C.Card, BackgroundTransparency = 0.12, BorderSizePixel = 0, ZIndex = zIndex,
+		AutoButtonColor = false, BackgroundColor3 = TILE, BackgroundTransparency = 0.5, BorderSizePixel = 0, ZIndex = zIndex,
 		LayoutOrder = slot }, parent)
-	UITheme.Corner(frame, UITheme.Radius.Small)
-	local stroke = UITheme.Stroke(frame, C.Border, 1, 0.6)
+	UITheme.Corner(frame, 3)
+	local stroke = make("UIStroke", { Color = MENU_RED, Thickness = 2, Enabled = false, ApplyStrokeMode = Enum.ApplyStrokeMode.Border },
+		frame)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex + 1 }, frame)
-	local count = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -5, 1, -3), Size = UDim2.fromOffset(40, 14),
-		Text = "", TextSize = 12, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = zIndex + 3 }, frame)
+	local small = size.X.Offset < 70
+	local count = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -5, 1, small and -3 or -4), Size = UDim2.fromOffset(46, 14),
+		Text = "", TextSize = small and 11 or 12, Font = F.Bold, TextColor3 = Color3.fromRGB(206, 203, 196),
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = zIndex + 3 }, frame)
 	UITheme.Outline(count)
-	local name = label({ Position = UDim2.new(0, 4, 1, -14), Size = UDim2.new(1, -30, 0, 12), Text = "", TextSize = 8,
-		Font = F.Bold, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = zIndex + 3,
-		Visible = size.X.Offset >= 70 }, frame)
+	local name = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -4), Size = UDim2.new(1, -46, 0, 14), Text = "",
+		TextSize = 11, Font = F.Medium, TextColor3 = Color3.fromRGB(190, 187, 180), TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = zIndex + 3, Visible = not small }, frame)
 	local key = nil
 	if keyText then
-		key = label({ Position = UDim2.fromOffset(5, 3), Size = UDim2.fromOffset(16, 14), Text = keyText, TextSize = 12,
+		key = label({ Position = UDim2.fromOffset(6, 4), Size = UDim2.fromOffset(16, 14), Text = keyText, TextSize = 12,
 			Font = F.Bold, TextColor3 = C.Muted, ZIndex = zIndex + 3 }, frame)
 	end
+	-- Seltenheit: farbiger Strich unten
+	local rarity = make("Frame", { Name = "Rarity", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1),
+		Size = UDim2.new(1, 0, 0, 2), BorderSizePixel = 0, Visible = false, ZIndex = zIndex + 2 }, frame)
+	local dim = make("Frame", { Name = "Dim", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.35, BorderSizePixel = 0, Visible = false, ZIndex = zIndex + 4 }, frame)
+	UITheme.Corner(dim, 3)
 	local overlay = label({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 0.35, BackgroundColor3 = C.Background,
 		Text = "DRAUSSEN", TextSize = 10, Font = F.Bold, TextColor3 = SAFE, TextXAlignment = Enum.TextXAlignment.Center,
 		ZIndex = zIndex + 4, Visible = false }, frame)
-	UITheme.Corner(overlay, UITheme.Radius.Small)
+	UITheme.Corner(overlay, 3)
+	frame.MouseEnter:Connect(function()
+		if not stroke.Enabled then
+			frame.BackgroundColor3 = Color3.fromRGB(30, 32, 37)
+		end
+	end)
+	frame.MouseLeave:Connect(function()
+		if not stroke.Enabled then
+			frame.BackgroundColor3 = TILE
+		end
+	end)
 	local view = { Frame = frame, Stroke = stroke, Content = content, Count = count, Name = name, Key = key, Overlay = overlay,
-		Container = container, Slot = slot }
+		Rarity = rarity, Dim = dim, Container = container, Slot = slot }
 	slotViews[container .. ":" .. slot .. ":" .. tostring(frame)] = view
 
 	if container ~= "Hotbar" then
@@ -804,14 +841,17 @@ end
 ExtinctionClient.Close = closeWindow
 
 -- ---------- Menü (TAB / M) ----------
--- Etwas kleiner als der Bildschirm: oben die Reiter (Controller: L1/R1 blättern), rechts Münzen und Schließen, darunter
--- der Inhalt. INVENTAR, MARKT und SQUAD baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
+-- Fast so groß wie der Bildschirm und halbtransparent (die Welt bleibt unscharf sichtbar): links die Seitenleiste mit
+-- den Reitern (Controller: L1/R1 blättern), rechts die Fläche mit Kopfzeile (Titel, Münzen, Schließen) und Inhalt.
+-- INVENTAR, MARKT, SQUAD und ERFOLGE baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
 -- verkleinert auf die Breite des Inhalts.
 -- Breite passt sich dem Bildschirm an: auf breiten Bildschirmen breiter (bis MENU_MAX_W), immer mit Rand daneben
-local MENU_MIN_W, MENU_MAX_W, MENU_MARGIN = 1400, 1760, 200
-local MENU_W, MENU_H = MENU_MIN_W, 820
-local CONTENT_X, CONTENT_Y = 28, 78
-local CONTENT_W, CONTENT_H = MENU_W - 2 * CONTENT_X, MENU_H - CONTENT_Y - 16
+local MENU_MIN_W, MENU_MAX_W, MENU_MARGIN = 1560, 1840, 40
+local MENU_W, MENU_H = MENU_MIN_W, 860
+local SIDEBAR_W = 210
+local HEADER_Y, HEADER_H = 18, 50
+local CONTENT_X, CONTENT_Y = 22, 84 -- in der Fläche rechts der Seitenleiste
+local CONTENT_W, CONTENT_H = MENU_W - SIDEBAR_W - 2 * CONTENT_X, MENU_H - CONTENT_Y - 18
 
 -- Sichtbare Breite in Leinwand-Einheiten (die Leinwand ist 1600 breit, der Bildschirm oft breiter)
 local function updateMenuSize()
@@ -819,7 +859,7 @@ local function updateMenuSize()
 	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
 	local visible = (scale and scale.Scale > 0 and viewport) and viewport.X / scale.Scale or 1600
 	MENU_W = math.floor(math.clamp(visible - MENU_MARGIN, MENU_MIN_W, MENU_MAX_W))
-	CONTENT_W = MENU_W - 2 * CONTENT_X
+	CONTENT_W = MENU_W - SIDEBAR_W - 2 * CONTENT_X
 end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
@@ -840,29 +880,71 @@ end
 local lastMenuTab = "Inventory"
 local openMenuTab -- unten gesetzt (öffnet einen Reiter)
 
-local function newMenu(kind, title, subtitle, accent)
+-- Flacher Knopf ohne Rand: primary = rot gefüllt, sonst dunkel halbtransparent (Menü, Details)
+local function flatButton(props, parent, onClick)
+	local primary = props.Primary
+	props.Primary = nil
+	local button = make("TextButton", { Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false, BorderSizePixel = 0,
+		BackgroundColor3 = primary and MENU_RED or Color3.new(1, 1, 1), BackgroundTransparency = primary and 0 or 0.92,
+		Font = F.Bold, TextSize = 15, TextColor3 = C.Text, ZIndex = 7 }, parent)
+	for key, value in props do
+		button[key] = value
+	end
+	UITheme.Corner(button, 3)
+	local rest = button.BackgroundTransparency
+	button.MouseEnter:Connect(function()
+		button.BackgroundTransparency = primary and 0.12 or 0.86
+	end)
+	button.MouseLeave:Connect(function()
+		button.BackgroundTransparency = rest
+	end)
+	if onClick then
+		button.Activated:Connect(onClick)
+	end
+	return button
+end
+
+local function newMenu(kind, title, subtitle)
 	updateMenuSize()
-	local frame = UITheme.Card({ Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
-	UITheme.AccentBar(frame, accent or C.Primary, { ZIndex = 5 })
-	-- Reiter
-	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(CONTENT_X, 10), Size = UDim2.new(1, -330, 0, 50),
-		BackgroundTransparency = 1, ZIndex = 5 }, frame)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 22), SortOrder = Enum.SortOrder.LayoutOrder,
-		VerticalAlignment = Enum.VerticalAlignment.Center }, tabs)
+	local frame = make("Frame", { Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
+	-- Seitenleiste: Name des Modus, Reiter untereinander, unten der Hinweis zum Schließen
+	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, SIDEBAR_W, 1, 0), BackgroundColor3 = GLASS,
+		BackgroundTransparency = 0.14, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	label({ Name = "Logo", Position = UDim2.fromOffset(24, 26), Size = UDim2.new(1, -48, 0, 26), Text = "EXTINCTION", TextSize = 24,
+		Font = F.Display, TextColor3 = MENU_RED, ZIndex = 6 }, sidebar)
+	label({ Name = "LogoSub", Position = UDim2.fromOffset(25, 52), Size = UDim2.new(1, -48, 0, 14), Text = "OFFENE WELT", TextSize = 11,
+		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
+	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(0, 96), Size = UDim2.new(1, 0, 1, -150),
+		BackgroundTransparency = 1, ZIndex = 5 }, sidebar)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder },
+		tabs)
 	local pad = InputActions.Device() == "Gamepad"
 	if pad then
-		label({ Name = "PrevHint", Size = UDim2.fromOffset(30, 30), Text = "L1", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted,
+		label({ Name = "PrevHint", Size = UDim2.new(1, 0, 0, 22), Text = "L1", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 			LayoutOrder = 0, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
 	for _, tab in MENU_TABS do
 		local on = tab.Id == kind
-		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.fromOffset(0, 40), AutomaticSize = Enum.AutomaticSize.X,
-			BackgroundTransparency = 1, Text = tab.Text, Font = F.Bold, TextSize = 17, TextColor3 = on and C.Text or C.Muted,
-			LayoutOrder = tab.Index, ZIndex = 6, AutoButtonColor = false }, tabs)
+		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(1, 0, 0, 46), BackgroundColor3 = Color3.new(1, 1, 1),
+			BackgroundTransparency = on and 0.92 or 1, BorderSizePixel = 0, Text = tab.Text, Font = F.Bold, TextSize = 15,
+			TextColor3 = on and C.Text or C.Muted, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = tab.Index, ZIndex = 6,
+			AutoButtonColor = false }, tabs)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 24) }, button)
 		button:SetAttribute("NoFocus", true) -- Controller: die Auswahl startet im Inhalt, Reiter mit L1/R1
-		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
-			Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, Visible = on, ZIndex = 6 }, button)
+		-- aktiver Reiter: roter Streifen links
+		make("Frame", { Name = "Underline", Position = UDim2.new(0, -24, 0, 0), Size = UDim2.new(0, 3, 1, 0),
+			BackgroundColor3 = MENU_RED, BorderSizePixel = 0, Visible = on, ZIndex = 7 }, button)
+		if not on then
+			button.MouseEnter:Connect(function()
+				button.TextColor3 = C.Text
+				button.BackgroundTransparency = 0.96
+			end)
+			button.MouseLeave:Connect(function()
+				button.TextColor3 = C.Muted
+				button.BackgroundTransparency = 1
+			end)
+		end
 		button.Activated:Connect(function()
 			if not on then
 				openMenuTab(tab.Id)
@@ -870,40 +952,53 @@ local function newMenu(kind, title, subtitle, accent)
 		end)
 	end
 	if pad then
-		label({ Name = "NextHint", Size = UDim2.fromOffset(30, 30), Text = "R1", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted,
+		label({ Name = "NextHint", Size = UDim2.new(1, 0, 0, 22), Text = "R1", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 			LayoutOrder = #MENU_TABS + 1, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
-	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(CONTENT_X, 62), Size = UDim2.new(1, -2 * CONTENT_X, 0, 1),
-		BackgroundColor3 = C.Border, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 5 }, frame)
-	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 12), Size = UDim2.fromOffset(44, 44),
-		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeWindow)
-	close.Button:SetAttribute("NoFocus", true)
-	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 6
-	local coins = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -78, 0, 20), Size = UDim2.fromOffset(220, 30),
-		Text = "", TextSize = 24, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
+	label({ Name = "CloseHint", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -20), Size = UDim2.new(1, -48, 0, 14),
+		Text = pad and "○  SCHLIESSEN" or "TAB / M  SCHLIESSEN", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
+
+	-- Fläche rechts: Kopfzeile und Inhalt
+	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(SIDEBAR_W, 0), Size = UDim2.new(1, -SIDEBAR_W, 1, 0),
+		BackgroundColor3 = GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(CONTENT_X, HEADER_Y),
+		Size = UDim2.new(1, -2 * CONTENT_X, 0, HEADER_H), BackgroundColor3 = GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+		ZIndex = 5 }, panel)
+	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
+	local titleRow = make("Frame", { Name = "TitleRow", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -320, 1, 0),
+		BackgroundTransparency = 1, ZIndex = 6 }, header)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder,
+		VerticalAlignment = Enum.VerticalAlignment.Center }, titleRow)
+	label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = title or menuTab[kind].Text,
+		TextSize = 20, Font = F.Display, LayoutOrder = 1, ZIndex = 6 }, titleRow)
+	local sub = label({ Name = "Sub", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = subtitle or "",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, LayoutOrder = 2, ZIndex = 6 }, titleRow)
+	local close = make("TextButton", { Name = "Close", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0),
+		Size = UDim2.fromOffset(42, 42), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, Text = "",
+		AutoButtonColor = false, ZIndex = 6 }, header)
+	close:SetAttribute("NoFocus", true)
+	UITheme.Cross(close, 14, C.Text, 2).ZIndex = 7
+	close.MouseEnter:Connect(function()
+		close.BackgroundTransparency = 0.9
+	end)
+	close.MouseLeave:Connect(function()
+		close.BackgroundTransparency = 1
+	end)
+	close.Activated:Connect(closeWindow)
+	local coins = label({ Name = "Coins", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -60, 0.5, 0),
+		Size = UDim2.fromOffset(220, 24), Text = "", TextSize = 18, Font = F.Display, TextColor3 = C.Gold,
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6 }, header)
 	local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(CONTENT_X, CONTENT_Y),
-		Size = UDim2.fromOffset(CONTENT_W, CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, frame)
-	local sub, body
-	if menuTab[kind].Page then
-		body = content
-	else
-		-- eigene Reiter: Titel und Unterzeile wie die Seiten der Lobby, darunter der Inhalt
-		label({ Name = "Title", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 40), Text = title, TextSize = 34,
-			Font = F.Display, ZIndex = 5 }, content)
-		sub = label({ Name = "Sub", Position = UDim2.fromOffset(2, 38), Size = UDim2.new(1, 0, 0, 16), Text = subtitle or "",
-			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, content)
-		body = make("Frame", { Name = "Body", Position = UDim2.fromOffset(0, 60), Size = UDim2.new(1, 0, 1, -60),
-			BackgroundTransparency = 1, ZIndex = 5 }, content)
-	end
+		Size = UDim2.fromOffset(CONTENT_W, CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, panel)
 	lastMenuTab = kind
-	return { Kind = kind, Menu = true, Frame = frame, Body = body, Coins = coins, Sub = sub }
+	return { Kind = kind, Menu = true, Frame = frame, Body = content, Coins = coins, Sub = sub, Header = header }
 end
 
 local function newWindow(kind, title, subtitle, accent)
 	closeWindow()
 	windowGui.Enabled = true
 	if menuTab[kind] then
-		window = newMenu(kind, title, subtitle, accent)
+		window = newMenu(kind, title, subtitle)
 		window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
 		UITheme.SetBlur("Extinction", true)
 		RunService:BindToRenderStep("ExtinctionMouse", MOUSE_PRIORITY, function()
@@ -957,23 +1052,28 @@ local function grid(parent, container, first, last, columns, cell, gap, position
 	return holder
 end
 
--- Details zum gewählten Item (Inventar-Fenster)
+-- Details zum gewählten Item (Inventar-Fenster): großes Bild, Name, Art und Seltenheit, Werte, darunter die Aktionen
 local function detailsPanel(parent, position, size)
-	local panel = make("Frame", { Position = position, Size = size, BackgroundColor3 = C.Card, BackgroundTransparency = 0.2,
-		BorderSizePixel = 0, ZIndex = 5 }, parent)
-	UITheme.Corner(panel, UITheme.Radius.Medium)
-	UITheme.Stroke(panel, C.Border, 1, 0.5)
-	local iconHolder = make("Frame", { Position = UDim2.fromOffset(16, 16), Size = UDim2.new(1, -32, 0, 120),
-		BackgroundTransparency = 1, ZIndex = 6 }, panel)
-	local name = label({ Position = UDim2.fromOffset(18, 146), Size = UDim2.new(1, -36, 0, 28), Text = "", TextSize = 26,
+	local panel = make("Frame", { Name = "Details", Position = position, Size = size, BackgroundColor3 = GLASS,
+		BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 5 }, parent)
+	local stage = make("Frame", { Name = "Stage", Position = UDim2.fromOffset(16, 16), Size = UDim2.new(1, -32, 0, 170),
+		BackgroundColor3 = TILE, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 6 }, panel)
+	UITheme.Corner(stage, 3)
+	local stageRarity = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
+		BorderSizePixel = 0, Visible = false, ZIndex = 7 }, stage)
+	local iconHolder = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 7 }, stage)
+	local name = label({ Position = UDim2.fromOffset(18, 200), Size = UDim2.new(1, -36, 0, 28), Text = "", TextSize = 24,
 		Font = F.Display, ZIndex = 6 }, panel)
-	local kind = label({ Position = UDim2.fromOffset(18, 176), Size = UDim2.new(1, -36, 0, 14), Text = "", TextSize = 11,
+	local kind = label({ Position = UDim2.fromOffset(18, 230), Size = UDim2.new(1, -36, 0, 14), Text = "", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, panel)
-	local info = label({ Position = UDim2.fromOffset(18, 196), Size = UDim2.new(1, -36, 0, 60), Text = "", TextSize = 13,
-		Font = F.Medium, TextColor3 = C.Text, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 6 }, panel)
+	make("Frame", { Position = UDim2.fromOffset(18, 254), Size = UDim2.new(1, -36, 0, 1), BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 6 }, panel)
+	local info = label({ Position = UDim2.fromOffset(18, 266), Size = UDim2.new(1, -36, 0, 80), Text = "", TextSize = 13,
+		Font = F.Medium, TextColor3 = Color3.fromRGB(200, 197, 190), TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
+		ZIndex = 6 }, panel)
 	local buttons = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -16), Size = UDim2.new(1, -32, 0, 320),
 		BackgroundTransparency = 1, ZIndex = 6 }, panel)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Bottom }, buttons)
 	local shownId = nil
 	local function update(actions)
@@ -983,27 +1083,29 @@ local function detailsPanel(parent, position, size)
 			shownId = id
 			iconHolder:ClearAllChildren()
 			if id then
-				local icon = buildIcon(iconHolder, id, 7)
-				icon.Size = UDim2.fromScale(0.9, 0.9)
+				local icon = buildIcon(iconHolder, id, 8)
+				icon.Size = UDim2.fromScale(0.8, 0.8)
 				icon.Position = UDim2.fromScale(0.5, 0.5)
 			end
 		end
 		local config = id and itemConfig(id)
+		local tier = tierColor(config)
+		stageRarity.Visible = tier ~= nil
+		stageRarity.BackgroundColor3 = tier or C.Border
 		name.Text = config and upper(config.Name) or "NICHTS GEWÄHLT"
-		kind.Text = config and (KIND_NAMES[config.Kind] or "") .. (config.Kind == "Attachment" and TIER_NAMES[config.Tier]
-			and ("  ·  " .. TIER_NAMES[config.Tier]) or "") .. ((entry.N or 1) > 1 and ("  ·  " .. entry.N .. " STÜCK") or "") or ""
-		kind.TextColor3 = config and (config.Kind == "Attachment" and TIER_COLORS[config.Tier] or KIND_COLORS[config.Kind]) or C.Muted
-		info.Text = config and describe(id, entry) or "Klick ein Item an oder zieh es auf einen anderen Platz. Rechtsklick: "
-			.. "zwischen Hotbar und Tasche hin und her."
+		kind.Text = config and (KIND_NAMES[config.Kind] or "") .. (TIER_NAMES[config.Tier] and ("  ·  " .. TIER_NAMES[config.Tier]) or "")
+			.. ((entry.N or 1) > 1 and ("  ·  " .. entry.N .. " STÜCK") or "") or ""
+		kind.TextColor3 = tier or C.Muted
+		info.Text = config and describe(id, entry) or "Klick ein Item an oder zieh es auf einen anderen Platz. Rechtsklick legt es "
+			.. "zwischen Tasche und Schnellleiste hin und her, aus dem Container zurück in die Tasche."
 		for _, child in buttons:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
 			end
 		end
 		for i, action in actions or {} do
-			UITheme.Chunky({ Size = UDim2.new(1, 0, 0, 40), LayoutOrder = i, Color = action.Primary and C.Primary or C.Panel,
-				TextColor = action.Primary and C.PrimaryText or C.Text, StrokeColor = C.Border, Text = action.Text, TextSize = 16,
-				ZIndex = 7 }, buttons, action.Run)
+			flatButton({ Name = "Action" .. i, Size = UDim2.new(1, 0, 0, 40), LayoutOrder = i, Primary = action.Primary,
+				Text = action.Text }, buttons, action.Run)
 		end
 	end
 	return update
@@ -1074,33 +1176,139 @@ local function defaultDrop(fromContainer, fromSlot, toContainer, toSlot)
 	sendAction("Move", fromContainer, fromSlot, toContainer, toSlot)
 end
 
--- INVENTAR (TAB): Tasche oben, Hotbar unten, Details rechts
+-- Belegte Plätze in [first, last] einer Liste
+local function usedSlots(list, first, last)
+	local n = 0
+	for slot = first, last do
+		if list[slot] then
+			n += 1
+		end
+	end
+	return n
+end
+
+-- Abschnitt im Inventar: Titel links (mit Symbol/Schild), Belegung rechts
+local function sectionHeader(parent, name, text, y, width, tagText)
+	local row = make("Frame", { Name = name, Position = UDim2.fromOffset(0, y), Size = UDim2.fromOffset(width, 20),
+		BackgroundTransparency = 1, ZIndex = 5 }, parent)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
+		VerticalAlignment = Enum.VerticalAlignment.Center }, row)
+	label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = text, TextSize = 13,
+		Font = F.Display, LayoutOrder = 2, ZIndex = 6 }, row)
+	if tagText then
+		local tag = label({ Name = "Tag", Size = UDim2.new(0, 0, 0, 18), AutomaticSize = Enum.AutomaticSize.X, Text = tagText,
+			TextSize = 11, Font = F.Bold, TextColor3 = Color3.fromRGB(255, 150, 150), BackgroundColor3 = MENU_RED,
+			BackgroundTransparency = 0.78, LayoutOrder = 3, ZIndex = 6 }, row)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 7) }, tag)
+		UITheme.Corner(tag, 3)
+	end
+	local fill = label({ Name = name .. "Fill", Position = UDim2.fromOffset(width - 200, y), Size = UDim2.fromOffset(200, 20),
+		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = Color3.fromRGB(196, 193, 186), TextXAlignment = Enum.TextXAlignment.Right,
+		ZIndex = 6 }, parent)
+	return row, fill
+end
+
+-- Kleines Schloss aus Formen (Container)
+local function lockIcon(parent, color, order)
+	local holder = make("Frame", { Name = "Lock", Size = UDim2.fromOffset(12, 16), BackgroundTransparency = 1, LayoutOrder = order,
+		ZIndex = 6 }, parent)
+	local shackle = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(8, 10),
+		BackgroundTransparency = 1, ZIndex = 6 }, holder)
+	UITheme.Corner(shackle, 4)
+	make("UIStroke", { Color = color, Thickness = 2 }, shackle)
+	make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1), Size = UDim2.fromOffset(12, 9),
+		BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 7 }, holder)
+	return holder
+end
+
+-- Filter des Inventars (Kopfzeile): Art(en) der Items, die hell bleiben
+local FILTERS = {
+	{ Id = "All", Text = "ALLE" },
+	{ Id = "Weapon", Text = "WAFFEN", Kinds = { Weapon = true } },
+	{ Id = "Ammo", Text = "MUNITION", Kinds = { Ammo = true } },
+	{ Id = "Heal", Text = "HEILUNG", Kinds = { Heal = true, Repel = true } },
+	{ Id = "Armor", Text = "RÜSTUNG", Kinds = { Armor = true } },
+	{ Id = "Attachment", Text = "AUFSÄTZE", Kinds = { Attachment = true } },
+	{ Id = "Vehicle", Text = "FAHRZEUGE", Kinds = { Vehicle = true } },
+}
+local filterId = "All"
+
+-- INVENTAR (TAB): links Tasche, Container (sicher, bleibt beim Tod) und Schnellleiste, rechts die Details
 local function openInventory()
-	local win = newWindow("Inventory", "INVENTAR", "TASCHE " .. BAG .. " PLÄTZE  ·  1-9 = HOTBAR  ·  DRAUSSEN STERBEN = ALLES WEG",
-		C.Primary)
+	local win = newWindow("Inventory", "INVENTAR", "")
 	local body = win.Body
-	-- Plätze wachsen mit der Breite des Menüs (Tasche gut die Hälfte, rechts die Details)
-	local gap = 10
-	local cell = math.clamp(math.floor((CONTENT_W * 0.52 - 6 * gap) / 7), 92, 112)
-	local bagWidth = 7 * cell + 6 * gap
-	sectionTitle(body, "TASCHE", UDim2.fromOffset(0, 0))
-	grid(body, "Bag", HOTBAR + 1, BAG, 7, cell, gap, UDim2.fromOffset(0, 22))
-	local below = 22 + 3 * (cell + gap) + 16
-	local hot = math.floor((bagWidth - (HOTBAR - 1) * gap) / HOTBAR)
-	sectionTitle(body, "HOTBAR  ·  TASTEN 1-9", UDim2.fromOffset(0, below))
-	grid(body, "Bag", 1, HOTBAR, HOTBAR, hot, gap, UDim2.fromOffset(0, below + 22), true)
-	label({ Name = "Help", Position = UDim2.fromOffset(0, below + hot + 44), Size = UDim2.fromOffset(bagWidth, 60), TextWrapped = true,
-		Text = "Anklicken und dann den Zielplatz anklicken (oder ziehen) legt ein Item um. Rechtsklick legt es zwischen Hotbar "
-			.. "und Tasche hin und her. Was du draußen bei dir trägst, verlierst du, wenn du stirbst – sicher ist nur das Lager im Camp.",
-		TextSize = 13, Font = F.Medium, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
-	local update = detailsPanel(body, UDim2.fromOffset(bagWidth + 32, 0), UDim2.fromOffset(CONTENT_W - bagWidth - 32, 600))
+	-- Filter in der Kopfzeile (rechts vor den Münzen)
+	local filterRow = make("Frame", { Name = "Filters", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -300, 0.5, 0),
+		Size = UDim2.fromOffset(700, 32), BackgroundTransparency = 1, ZIndex = 6 }, win.Header)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center }, filterRow)
+	local filterButtons = {}
+	local function paintFilters()
+		for id, button in filterButtons do
+			local on = id == filterId
+			button.TextColor3 = on and C.Text or C.Muted
+			button.BackgroundTransparency = on and 0.88 or 1
+		end
+	end
+	for i, filter in FILTERS do
+		local button = make("TextButton", { Name = "Filter_" .. filter.Id, Size = UDim2.fromOffset(0, 30), AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, Text = filter.Text, TextSize = 12,
+			Font = F.Bold, TextColor3 = C.Muted, AutoButtonColor = false, LayoutOrder = i, ZIndex = 7 }, filterRow)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, button)
+		UITheme.Corner(button, 3)
+		button:SetAttribute("NoFocus", true)
+		filterButtons[filter.Id] = button
+		button.Activated:Connect(function()
+			filterId = filter.Id
+			filterKinds = filter.Kinds
+			paintFilters()
+			repaint()
+		end)
+	end
+	filterKinds = nil
+	for _, filter in FILTERS do
+		if filter.Id == filterId then
+			filterKinds = filter.Kinds
+		end
+	end
+	paintFilters()
+
+	-- Breite der Raster: gut 60 % des Inhalts, rechts die Details
+	local gap = 8
+	local width = math.min(780, math.floor(CONTENT_W * 0.6))
+	local bagCols, safeCols = 7, 10
+	local bagCell = math.floor((width - (bagCols - 1) * gap) / bagCols)
+	local safeCell = math.floor((width - (safeCols - 1) * gap) / safeCols)
+	local hotCell = math.floor((width - (HOTBAR - 1) * gap) / HOTBAR)
+	local bagSlots = BAG - HOTBAR
+	local y = 0
+	local _, bagFill = sectionHeader(body, "BagHeader", "TASCHE", y, width)
+	grid(body, "Bag", HOTBAR + 1, BAG, bagCols, bagCell, gap, UDim2.fromOffset(0, y + 28))
+	y += 28 + math.ceil(bagSlots / bagCols) * (bagCell + gap) + 14
+	local safeRow, safeFill = sectionHeader(body, "SafeHeader", "CONTAINER", y, width, "BLEIBT BEIM TOD")
+	lockIcon(safeRow, MENU_RED, 1)
+	grid(body, "Safe", 1, SAFE_SLOTS, safeCols, safeCell, gap, UDim2.fromOffset(0, y + 28))
+	y += 28 + math.ceil(SAFE_SLOTS / safeCols) * (safeCell + gap) + 14
+	local _, hotFill = sectionHeader(body, "HotbarHeader", "SCHNELLLEISTE", y, width)
+	hotFill.Text = "TASTEN 1-" .. HOTBAR
+	grid(body, "Bag", 1, HOTBAR, HOTBAR, hotCell, gap, UDim2.fromOffset(0, y + 28), true)
+	y += 28 + hotCell + 12
+	label({ Name = "Help", Position = UDim2.fromOffset(0, y), Size = UDim2.fromOffset(width, 36), TextWrapped = true,
+		Text = "Ziehen oder anklicken und Zielplatz wählen legt ein Item um. Stirbst du draußen, ist die Tasche weg – "
+			.. "was im Container liegt, behältst du.",
+		TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
+	local update = detailsPanel(body, UDim2.fromOffset(width + 24, 0), UDim2.fromOffset(CONTENT_W - width - 24, math.min(CONTENT_H, y + 36)))
 	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
 		if container == "Bag" and bag[slot] then
 			quickSwap(slot)
+		elseif container == "Safe" and safe[slot] then
+			sendAction("Move", "Safe", slot, "Bag", nil)
 		end
 	end
 	function win.Refresh()
+		bagFill.Text = usedSlots(bag, HOTBAR + 1, BAG) .. " / " .. bagSlots .. " PLÄTZE"
+		safeFill.Text = usedSlots(safe, 1, SAFE_SLOTS) .. " / " .. SAFE_SLOTS .. " PLÄTZE"
 		local actions = {}
 		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
 		if entry then
@@ -1114,11 +1322,15 @@ local function openInventory()
 					quickSwap(slot)
 				end })
 			else
-				table.insert(actions, { Text = "AUF DIE HOTBAR", Primary = true, Run = function()
+				table.insert(actions, { Text = "AUF DIE SCHNELLLEISTE", Primary = true, Run = function()
 					selected = nil
 					quickSwap(slot)
 				end })
 			end
+			table.insert(actions, { Text = "IN DEN CONTAINER", Run = function()
+				selected = nil
+				sendAction("Move", "Bag", slot, "Safe", nil)
+			end })
 			table.insert(actions, { Text = "FALLEN LASSEN", Run = function()
 				selected = nil
 				sendAction("Drop", slot)
@@ -1132,6 +1344,12 @@ local function openInventory()
 					end })
 				end
 			end
+		elseif selected and selected.Container == "Safe" and safe[selected.Slot] then
+			local slot = selected.Slot
+			table.insert(actions, { Text = "IN DIE TASCHE", Primary = true, Run = function()
+				selected = nil
+				sendAction("Move", "Safe", slot, "Bag", nil)
+			end })
 		end
 		update(actions)
 		repaint()
@@ -1383,14 +1601,19 @@ end
 local function openStash()
 	local win = newWindow("Stash", "LAGER", "IMMER SICHER  ·  ANKLICKEN = HINÜBERLEGEN  ·  ZIEHEN = AUF EINEN PLATZ", Color3.fromRGB(226, 178, 52))
 	local body = win.Body
-	local cell, gap = 62, 7
-	sectionTitle(body, "TASCHE  (1-9 = HOTBAR)", UDim2.fromOffset(0, 0))
-	grid(body, "Bag", 1, BAG, 6, cell, gap, UDim2.fromOffset(0, 22), true)
-	sectionTitle(body, "LAGER  ·  " .. STASH .. " PLÄTZE", UDim2.fromOffset(470, 0))
-	grid(body, "Stash", 1, STASH, 8, cell, gap, UDim2.fromOffset(470, 22))
+	-- drei Spalten: Tasche, Container, Lager
+	local cell, gap = 54, 6
+	sectionTitle(body, "TASCHE  (1-9 = HOTBAR)", UDim2.fromOffset(0, 0), 300)
+	grid(body, "Bag", 1, BAG, 5, cell, gap, UDim2.fromOffset(0, 22), true)
+	local safeX = 5 * (cell + gap) + 24
+	sectionTitle(body, "CONTAINER  ·  " .. SAFE_SLOTS, UDim2.fromOffset(safeX, 0), 240)
+	grid(body, "Safe", 1, SAFE_SLOTS, 4, cell, gap, UDim2.fromOffset(safeX, 22))
+	local stashX = safeX + 4 * (cell + gap) + 24
+	sectionTitle(body, "LAGER  ·  " .. STASH .. " PLÄTZE", UDim2.fromOffset(stashX, 0), 400)
+	grid(body, "Stash", 1, STASH, 8, cell, gap, UDim2.fromOffset(stashX, 22))
 	onSlotClick = function(container, slot)
 		if entryOf(container, slot) then
-			sendAction("Move", container, slot, container == "Bag" and "Stash" or "Bag", nil)
+			sendAction("Move", container, slot, container == "Stash" and "Bag" or "Stash", nil)
 		end
 	end
 	onSlotDrop = defaultDrop
@@ -2181,6 +2404,7 @@ end
 
 local function refreshAll()
 	bag = decodeList(player:GetAttribute("ExtBag"))
+	safe = decodeList(player:GetAttribute("ExtSafe"))
 	stash = decodeList(player:GetAttribute("ExtStash"))
 	equipped = player:GetAttribute("ExtEquipped") or 0
 	if selected and not entryOf(selected.Container, selected.Slot) then
@@ -2692,7 +2916,7 @@ function ExtinctionClient.Init()
 	end)
 
 	-- Daten vom Server
-	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped" } do
+	for _, attribute in { "ExtBag", "ExtSafe", "ExtStash", "ExtEquipped" } do
 		player:GetAttributeChangedSignal(attribute):Connect(refreshAll)
 	end
 	for _, attribute in { "Achievements", "Stats" } do

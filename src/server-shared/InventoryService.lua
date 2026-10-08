@@ -1,13 +1,14 @@
 -- InventoryService (ModuleScript, nur Server)
 -- Inventar der offenen Welt (EXTINCTION): Tasche mit ExtinctionConfig.BagSlots Plätzen (Plätze 1-9 = Hotbar,
--- Tasten 1-9) und das Lager in der Safe Zone (StashSlots Plätze, immer sicher). Beides steht im Profil
--- (ProgressService) unter Extinction = { Bag = Liste, Stash = Liste, Market = Angebote } und bleibt beim Verlassen in der Safe Zone
+-- Tasten 1-9), der Container (SafeSlots Plätze: sichere Tasche, überall erreichbar, bleibt beim Tod) und das Lager in der
+-- Safe Zone (StashSlots Plätze, immer sicher). Alles steht im Profil (ProgressService) unter
+-- Extinction = { Bag = Liste, Safe = Liste, Stash = Liste, Market = Angebote } und bleibt beim Verlassen in der Safe Zone
 -- genau so angeordnet erhalten. Die Regeln für Plätze und Stapel stehen in Inventory (shared).
 -- Taste 1-9 (Use): Waffe in die Hand / wegstecken (nur außerhalb der Safe Zone), Heilung, Rüstung und die Anti-Zombie-Spritze
 -- benutzen (dauert UseTime Sekunden; die Spritze setzt das Charakter-Attribut ZombieShieldUntil: so lange spawnen bei einem
 -- keine Zombies, siehe ZombieService), Fahrzeug spawnen (VehicleService meldet sich als UseVehicle an).
 -- Stände: kaufen (Münzen) und verkaufen (SellFactor) nur in der Nähe des Stands; Lager nur in seiner Nähe.
--- Spieler-Attribute für den Client: ExtBag, ExtStash (JSON-Listen, siehe Inventory.ToList), ExtEquipped (Platz der
+-- Spieler-Attribute für den Client: ExtBag, ExtSafe, ExtStash (JSON-Listen, siehe Inventory.ToList), ExtEquipped (Platz der
 -- Waffe in der Hand, 0 = keine), ExtAttach (Aufsätze der Waffe in der Hand, liest AttachmentConfig).
 -- Aufsätze ("Attachment"): auf eine Waffe ziehen (Move) oder Taste mit der Waffe in der Hand (Use) baut sie an,
 -- Aktion "Detach" (Platz der Waffe, Aufsatz-Platz) nimmt einen ab; ein ersetzter oder abgenommener Aufsatz kommt in die Tasche. Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
@@ -31,7 +32,7 @@ local InventoryService = {}
 
 local HOTBAR = ExtinctionConfig.HotbarSlots
 
-local states = {} -- [Player] = { Profile, Bag, Stash, Market (Angebote im Spielermarkt), Equipped (Item-Tabelle), Using, Dirty }
+local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im Spielermarkt), Equipped (Item-Tabelle), Using, Dirty }
 
 -- Andere Dienste hängen sich hier an (sie brauchen InventoryService, nicht umgekehrt):
 -- Handlers[Aktion] = function(player, ...) für Remotes.ExtAction (LootService: Loot/Drop, VehicleService: StoreVehicle)
@@ -92,6 +93,7 @@ local function stateOf(player)
 	state = {
 		Profile = profile,
 		Bag = Inventory.FromList(data.Bag, ExtinctionConfig.BagSlots),
+		Safe = Inventory.FromList(data.Safe, ExtinctionConfig.SafeSlots),
 		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots),
 		Market = market,
 	}
@@ -108,14 +110,20 @@ local function slotOf(container, item)
 	return nil
 end
 
+local function profileData(state)
+	return { Bag = Inventory.ToList(state.Bag), Safe = Inventory.ToList(state.Safe), Stash = Inventory.ToList(state.Stash),
+		Market = state.Market }
+end
+
 -- Stand ins Profil schreiben und an den Client schicken
 local function flush(player, state)
 	state.Dirty = false
-	local bag, stash = Inventory.ToList(state.Bag), Inventory.ToList(state.Stash)
-	state.Profile.Extinction = { Bag = bag, Stash = stash, Market = state.Market }
+	local data = profileData(state)
+	state.Profile.Extinction = data
 	if player.Parent then
-		player:SetAttribute("ExtBag", HttpService:JSONEncode(bag))
-		player:SetAttribute("ExtStash", HttpService:JSONEncode(stash))
+		player:SetAttribute("ExtBag", HttpService:JSONEncode(data.Bag))
+		player:SetAttribute("ExtSafe", HttpService:JSONEncode(data.Safe))
+		player:SetAttribute("ExtStash", HttpService:JSONEncode(data.Stash))
 		local equipped = state.Equipped and slotOf(state.Bag, state.Equipped)
 		player:SetAttribute("ExtEquipped", equipped or 0)
 	end
@@ -444,6 +452,8 @@ end
 local function container(player, state, name)
 	if name == "Bag" then
 		return state.Bag
+	elseif name == "Safe" then
+		return state.Safe -- Container: überall erreichbar
 	elseif name == "Stash" and nearPoint(player, "Stash") then
 		return state.Stash
 	end
@@ -455,7 +465,7 @@ local function isOut(item)
 	return item and item.Out == true
 end
 
--- Item verschieben: innerhalb der Tasche (Hotbar anordnen) oder zwischen Tasche und Lager.
+-- Item verschieben: innerhalb der Tasche (Hotbar anordnen), zwischen Tasche und Container (überall) oder Lager.
 -- toSlot = nil: automatisch einsortieren.
 function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	if not inExtinction(player) or type(fromSlot) ~= "number" or (toSlot ~= nil and type(toSlot) ~= "number") then
@@ -489,7 +499,8 @@ function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	end
 	if not Inventory.Move(from, fromSlot, to, toSlot) then
 		if toSlot == nil then
-			status(player, toName == "Stash" and "Das Lager ist voll." or "Deine Tasche ist voll.")
+			status(player, toName == "Stash" and "Das Lager ist voll." or toName == "Safe" and "Der Container ist voll."
+				or "Deine Tasche ist voll.")
 		end
 		return false
 	end
@@ -651,20 +662,23 @@ function InventoryService.TakeSlot(player, slot, count)
 	return taken
 end
 
--- Stückzahl eines Items in Tasche und Lager zusammen (Versteck: Baukosten)
+-- Stückzahl eines Items in Tasche, Container und Lager zusammen (Versteck: Baukosten)
 function InventoryService.CountEverywhere(player, id)
 	local state = stateOf(player)
-	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Stash, id)) or 0
+	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Safe, id) + Inventory.Count(state.Stash, id)) or 0
 end
 
--- count Stück eines Items nehmen, erst aus dem Lager, dann aus der Tasche (Waffe/Fahrzeug in Gebrauch nicht). Gibt die
--- genommene Anzahl zurück.
+-- count Stück eines Items nehmen, erst aus dem Lager, dann aus dem Container, dann aus der Tasche (Waffe/Fahrzeug in
+-- Gebrauch nicht). Gibt die genommene Anzahl zurück.
 function InventoryService.TakeEverywhere(player, id, count)
 	local state = stateOf(player)
 	if not state then
 		return 0
 	end
 	local taken = Inventory.Remove(state.Stash, id, count)
+	if taken < count then
+		taken += Inventory.Remove(state.Safe, id, count - taken)
+	end
 	if taken < count then
 		for slot = state.Bag.Size, 1, -1 do
 			local item = state.Bag.Slots[slot]
@@ -714,7 +728,7 @@ function InventoryService.Give(player, id, count, extra)
 end
 
 -- Tod oder Verlassen außerhalb der Safe Zone: ganze Tasche leeren (inkl. Waffe in der Hand mit ihrem Magazin),
--- gibt die Items zurück (für die Tasche am Boden). Das Lager bleibt.
+-- gibt die Items zurück (für die Tasche am Boden). Container und Lager bleiben.
 function InventoryService.TakeAll(player)
 	local state = stateOf(player)
 	if not state then
@@ -756,7 +770,7 @@ function InventoryService.Leave(player)
 		item.Out = nil
 	end
 	flush(player, state)
-	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped", "ExtAttach" } do
+	for _, attribute in { "ExtBag", "ExtSafe", "ExtStash", "ExtEquipped", "ExtAttach" } do
 		player:SetAttribute(attribute, nil)
 	end
 end
@@ -814,7 +828,7 @@ function InventoryService.Init()
 		local state = states[player]
 		if state and state.Profile == ProgressService.Get(player) then
 			syncMag(player, state)
-			state.Profile.Extinction = { Bag = Inventory.ToList(state.Bag), Stash = Inventory.ToList(state.Stash), Market = state.Market }
+			state.Profile.Extinction = profileData(state)
 		end
 	end)
 

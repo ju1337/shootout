@@ -26,6 +26,7 @@ ExtinctionConfig.WorldSize = 3200    -- Kantenlänge der Welt in Studs (EXTINCTI
 ExtinctionConfig.HotbarSlots = 9     -- Plätze 1-9 = Tasten 1-9
 ExtinctionConfig.BagSlots = 30       -- Tasche gesamt (inkl. Hotbar)
 ExtinctionConfig.StashSlots = 40     -- Lager in der Safe Zone (immer sicher)
+ExtinctionConfig.SafeSlots = 20      -- Container: sichere Tasche, überall erreichbar, bleibt beim Tod
 ExtinctionConfig.StandRange = 14     -- so nah muss man am Stand/Lager sein (Studs)
 ExtinctionConfig.TravelCooldown = 10 -- Sekunden zwischen zwei Reisen (Haltestellen in den Safe Zones)
 ExtinctionConfig.SellFactor = 0.4    -- Verkauf: Anteil vom Kaufpreis
