@@ -124,6 +124,12 @@ function BloodMoonService.Step()
 		end
 		return
 	end
+	-- nie während der Sturmnacht: dann nach ihrem Ende
+	if DayCycle.IsStorm(t) and t >= nextStart - B.Warning then
+		nextStart = (tonumber(ReplicatedStorage:GetAttribute("StormEnd")) or t) + B.Warning + 120
+		warned = false
+		return
+	end
 	if not warned and t >= nextStart - B.Warning then
 		warned = true
 		announce("DER BLUTMOND STEIGT AUF", "In " .. B.Warning .. " Sekunden · sucht euch Deckung oder Beute", "Warning")

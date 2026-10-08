@@ -369,6 +369,18 @@ function AdminService.Init(manager)
 			end
 			return
 		end
+		-- Sturmnacht sofort starten / beenden (offene Welt)
+		if action == "Storm" and player:GetAttribute("IsAdmin") then
+			local StormService = require(ServerStorage:WaitForChild("ServerShared").StormService)
+			if StormService.Active() then
+				StormService.Stop()
+				Remotes.AdminStatus:FireClient(player, "Sturmnacht beendet")
+			else
+				StormService.Start()
+				Remotes.AdminStatus:FireClient(player, "Sturmnacht gestartet (10 Minuten)")
+			end
+			return
+		end
 		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then
 			return
 		end

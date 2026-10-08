@@ -22,6 +22,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local DayCycle = require(Shared.DayCycle)
 local WeaponConfig = require(Shared.WeaponConfig)
 local AgentConfig = require(Shared.AgentConfig)
 local GameSettings = require(Shared.GameSettings)
@@ -115,6 +116,9 @@ local function pvpBlocked(attacker, victim)
 	local squad = attacker:GetAttribute("SquadId")
 	if squad ~= nil and squad == victim:GetAttribute("SquadId") then
 		return true
+	end
+	if DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
+		return true -- Sturmnacht: PvP ausgesetzt
 	end
 	return attacker:GetAttribute("PvP") ~= true or victim:GetAttribute("PvP") ~= true
 end

@@ -33,6 +33,7 @@ local LootService = require(ServerShared.LootService)
 local ZombieService = require(ServerShared.ZombieService)
 local RedzoneService = require(ServerShared.RedzoneService)
 local BloodMoonService = require(ServerShared.BloodMoonService)
+local StormService = require(ServerShared.StormService)
 local RedzoneBoard = require(ServerShared.RedzoneBoard)
 local ContainerService = require(ServerShared.ContainerService)
 local AirdropService = require(ServerShared.AirdropService)
@@ -181,7 +182,9 @@ local function updateZone(player, info)
 			notify(player, "Banner", { Caption = "Rote Zone verlassen", Title = "WEITER VORSICHT", Sub = "PvP bleibt aktiv", Style = "Info" })
 		end
 	end
-	if zone and not player:GetAttribute("PvP") then
+	-- Sturmnacht: PvP für alle aus (auch in der roten Zone), bis Storm.Grace Sekunden nach dem Sturm
+	local paused, resumeAt = DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
+	if zone and not paused and not player:GetAttribute("PvP") then
 		info.PvPAt = nil
 		player:SetAttribute("PvP", true)
 	end
@@ -195,9 +198,25 @@ local function updateZone(player, info)
 			notify(player, "Banner", { Caption = "Safe Zone verlassen", Title = "VORSICHT",
 				Sub = "Zombies · PvP in " .. ExtinctionConfig.PvPDelay .. " Sekunden", Style = "Info" })
 		end
-	elseif not inside and info.PvPAt and os.clock() >= info.PvPAt then
+	elseif not inside and not paused and info.PvPAt and os.clock() >= info.PvPAt then
 		info.PvPAt = nil
 		player:SetAttribute("PvP", true)
+	end
+	if not inside and paused then
+		info.StormPaused = true
+		info.PvPAt = nil
+		if player:GetAttribute("PvP") then
+			player:SetAttribute("PvP", false)
+		end
+		if player:GetAttribute("PvPAt") ~= resumeAt then
+			player:SetAttribute("PvPAt", resumeAt)
+		end
+	elseif info.StormPaused then
+		info.StormPaused = nil
+		if not inside then -- Pause vorbei: draußen gilt PvP sofort wieder
+			player:SetAttribute("PvP", true)
+			player:SetAttribute("PvPAt", nil)
+		end
 	end
 	-- Schutz gilt pro Charakter (nach dem Respawn neu setzen)
 	if character:GetAttribute("SafeZone") ~= (inside or nil) then
@@ -524,6 +543,18 @@ function Extinction.Init(modeManager)
 
 	-- Blutmond-Ereignis (10 Minuten, stärkere Zombies, bessere Beute, Bosse)
 	BloodMoonService.Init({
+		InSafeZone = Extinction.InSafeZone,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+
+	-- Sturmnacht (10 Minuten Gewitter, PvP aus, gepanzerte Zombies, gemeinsames Ziel)
+	StormService.Init({
 		InSafeZone = Extinction.InSafeZone,
 		Players = function()
 			local list = {}

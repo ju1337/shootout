@@ -682,6 +682,52 @@ ExtinctionConfig.BloodMoon = {
 	BossMaxDistance = 120,
 }
 
+-- ---------- Sturmnacht (StormService): heftiges Gewitter als Ereignis von Duration Sekunden ----------
+-- Alle Interval Sekunden (das erste nach FirstDelay, nie während des Blutmonds), Warning Sekunden vorher eine Ansage.
+-- Während des Sturms ist PvP für alle aus (auch in der roten Zone), danach erst nach Grace Sekunden wieder an.
+-- Zombies: Zombies-mal so viele, Arten nach KindWeights, ArmoredChance davon gepanzert; alle WaveInterval Sekunden kommt
+-- bei jedem Spieler draußen eine Welle (WaveSize gepanzerte und ein gepanzerter Brocken).
+-- Gemeinsames Ziel: Goal gepanzerte Zombies (PerPlayer je Spieler draußen beim Start, zwischen Min und Max). Wer im Sturm
+-- mindestens einen Zombie erledigt hat, bekommt am Ende Reward (Ziel erreicht: Münzen, RZ und Items ins Lager) oder
+-- FailCoins (nicht erreicht).
+-- Blitze: alle MinEvery bis MaxEvery Sekunden bei einem zufälligen Spieler draußen, meist MinDistance bis MaxDistance
+-- entfernt, mit NearChance ganz nah (NearMin bis NearMax); Damage im Umkreis Radius für Spieler und Zombies.
+-- Stand für alle: Attribute StormStart / StormEnd / StormKills / StormGoal an ReplicatedStorage, Remote StormStrike.
+ExtinctionConfig.Storm = {
+	Enabled = true,
+	FirstDelay = 40 * 60,
+	Interval = 70 * 60,
+	Warning = 60,
+	Duration = 600,
+	Grace = 15,
+	Zombies = 1.4,
+	KindWeights = { Walker = 45, Runner = 30, Screamer = 10, Brute = 15 },
+	ArmoredChance = 0.75,
+	WaveInterval = 90,
+	FirstWave = 20,
+	WaveSize = 5,
+	Goal = { PerPlayer = 15, Min = 20, Max = 150 },
+	Reward = { Coins = 500, RedPoints = 15, Items = { { "Airdrop", 2 }, { "Tier3", 2 } } },
+	FailCoins = 150,
+	Lightning = { MinEvery = 5, MaxEvery = 12, MinDistance = 25, MaxDistance = 90, NearChance = 0.2, NearMin = 8,
+		NearMax = 16, Radius = 9, Damage = 30 },
+}
+
+-- ---------- Gepanzerte Zombies (ZombieService, Damage) ----------
+-- Helm und Weste schlucken Schaden: Helm nur bei Kopftreffern (HelmetFactor des Schadens, bis Helmet aufgebraucht ist,
+-- dann fliegt er weg), Weste bei allen anderen Treffern (VestFactor, bis Vest aufgebraucht). Außerhalb des Sturms ist ein
+-- Zombie mit Chance gepanzert, in der roten Zone mit RedzoneChance. Gepanzerte geben CoinFactor-mal Münzen und XPFactor-mal XP.
+ExtinctionConfig.ArmoredZombies = {
+	Chance = 0.04,
+	RedzoneChance = 0.12,
+	Helmet = 60,
+	HelmetFactor = 0.8,
+	Vest = 120,
+	VestFactor = 0.7,
+	CoinFactor = 2,
+	XPFactor = 1.5,
+}
+
 -- ---------- Abfragen ----------
 
 -- Beute ziehen: count Einträge aus der Tabelle (gewichtet, ohne denselben Eintrag zweimal). random = Random.

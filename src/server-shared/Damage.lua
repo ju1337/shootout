@@ -1,6 +1,7 @@
 -- Damage (ModuleScript, nur Server)
 -- Zentrale Stelle für Schaden an Spielern und Bots (Waffen der Spieler und der Bots).
--- Achtet auf Schutzschilde, die Safe Zone (Attribut "SafeZone") und Rüstung (Attribut "Armor") und schlägt im Drop-Modus
+-- Achtet auf Schutzschilde, die Safe Zone (Attribut "SafeZone"), Rüstung (Attribut "Armor"), Helm/Weste gepanzerter Zombies
+-- (ZHelmet / ZVest) und schlägt im Drop-Modus
 -- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge").
 
 local ServerStorage = game:GetService("ServerStorage")
@@ -9,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local ExtinctionConfig = require(ReplicatedStorage:WaitForChild("Shared").ExtinctionConfig)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
 
@@ -69,13 +71,25 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		Remotes.DamageFrom:FireClient(victim, attackerRoot.Position, amount)
 	end
 
-	-- Rüstung schluckt zuerst
+	-- Gepanzerte Zombies (Attribute ZHelmet / ZVest): Helm schluckt einen Teil der Kopftreffer, Weste den der übrigen
 	local absorbed = 0
+	local plating = attacker and attacker.Headshot and "ZHelmet" or "ZVest"
+	local plate = model:GetAttribute(plating)
+	if plate and plate > 0 then
+		local A = ExtinctionConfig.ArmoredZombies
+		local share = plating == "ZHelmet" and A.HelmetFactor or A.VestFactor
+		absorbed = math.min(plate, amount * share)
+		model:SetAttribute(plating, plate - absorbed)
+		amount -= absorbed
+	end
+
+	-- Rüstung schluckt zuerst
 	local armor = model:GetAttribute("Armor") or 0
 	if armor > 0 then
-		absorbed = math.min(armor, amount)
-		model:SetAttribute("Armor", armor - absorbed)
-		amount -= absorbed
+		local taken = math.min(armor, amount)
+		model:SetAttribute("Armor", armor - taken)
+		absorbed += taken
+		amount -= taken
 		if amount <= 0 then
 			chargeUltimate(attacker, model, absorbed, false)
 			return absorbed, false, false, absorbed

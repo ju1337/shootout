@@ -738,6 +738,12 @@ local function updateZone()
 		for _, strip in vignette:GetChildren() do
 			strip.BackgroundTransparency = 0.35 * (1 - pulse)
 		end
+	elseif DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
+		local _, resumeAt = DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
+		local storm = DayCycle.IsStorm(workspace:GetServerTimeNow())
+		zoneText.Text = storm and "STORM  ·  NO PVP" or ("NO PVP  ·  PVP IN " .. math.ceil(math.max(0, resumeAt - workspace:GetServerTimeNow())) .. " S")
+		zoneText.TextColor3 = Color3.fromRGB(150, 180, 255)
+		stroke.Color = Color3.fromRGB(150, 180, 255)
 	elseif player:GetAttribute("PvP") then
 		zoneText.Text = "PVP AKTIV"
 		zoneText.TextColor3 = C.Bad
@@ -3281,7 +3287,14 @@ function ExtinctionClient.Init()
 		end
 		local serverTime = workspace:GetServerTimeNow()
 		local clock = DayCycle.Clock(serverTime)
-		if DayCycle.IsBloodMoon(serverTime) then
+		if DayCycle.IsStorm(serverTime) then
+			local left = math.floor(DayCycle.StormLeft(serverTime))
+			local kills = ReplicatedStorage:GetAttribute("StormKills") or 0
+			local goal = ReplicatedStorage:GetAttribute("StormGoal") or 0
+			clockText.Text = string.format("STORM NIGHT  %d:%02d  ·  NO PVP  ·  ARMORED %d/%d%s", left // 60, left % 60, kills, goal,
+				kills >= goal and goal > 0 and "  ✓" or "")
+			clockText.TextColor3 = kills >= goal and goal > 0 and Color3.fromRGB(120, 220, 140) or Color3.fromRGB(150, 180, 255)
+		elseif DayCycle.IsBloodMoon(serverTime) then
 			local left = math.floor(DayCycle.BloodMoonLeft(serverTime))
 			clockText.Text = string.format("BLUTMOND  %d:%02d  ·  BOSSE · BESSERE BEUTE", left // 60, left % 60)
 			clockText.TextColor3 = Color3.fromRGB(255, 70, 60)

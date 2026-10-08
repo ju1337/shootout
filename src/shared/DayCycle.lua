@@ -5,6 +5,7 @@
 --   Darkness(clock)     0 = heller Tag, 1 = tiefe Nacht, dazwischen Dämmerung
 --   IsNight(clock)      Darkness >= 0,5 (nachts mehr Zombies, siehe ZombieService)
 --   IsBloodMoon(t)      läuft gerade das Blutmond-Ereignis? (BloodMoonService, Attribute an ReplicatedStorage)
+--   IsStorm(t)          läuft gerade die Sturmnacht? (StormService); StormFactor, StormLeft, StormPvPPaused
 --   Label(clock)        "14:20"
 --   SetClock(hour)      (nur Server, Admin) springt zur Uhrzeit: Attribut "DayOffset" (Sekunden) an ReplicatedStorage,
 --                       das alle Berechnungen zur Serverzeit addieren
@@ -83,6 +84,48 @@ function DayCycle.BloodMoonLeft(serverTime)
 		return 0
 	end
 	return math.max(0, finish - (serverTime or 0))
+end
+
+-- Sturmnacht: Ereignis (StormService) mit den Attributen StormStart / StormEnd (Serverzeit) an ReplicatedStorage
+function DayCycle.IsStorm(serverTime)
+	local start = tonumber(ReplicatedStorage:GetAttribute("StormStart"))
+	local finish = tonumber(ReplicatedStorage:GetAttribute("StormEnd"))
+	local t = serverTime or 0
+	return start ~= nil and finish ~= nil and t >= start and t < finish
+end
+
+-- Sekunden bis zum Ende des Sturms (0, wenn keiner ist)
+function DayCycle.StormLeft(serverTime)
+	local finish = tonumber(ReplicatedStorage:GetAttribute("StormEnd"))
+	if not finish or not DayCycle.IsStorm(serverTime) then
+		return 0
+	end
+	return math.max(0, finish - (serverTime or 0))
+end
+
+-- Stärke des Sturms 0..1: zieht in FADE Sekunden auf und genauso wieder ab (Licht, Regen, Wind)
+local STORM_FADE = 25
+function DayCycle.StormFactor(serverTime)
+	local start = tonumber(ReplicatedStorage:GetAttribute("StormStart"))
+	local finish = tonumber(ReplicatedStorage:GetAttribute("StormEnd"))
+	local t = serverTime or 0
+	if not start or not finish or t < start or t >= finish + STORM_FADE then
+		return 0
+	end
+	return math.clamp(math.min((t - start) / STORM_FADE, (finish + STORM_FADE - t) / STORM_FADE), 0, 1)
+end
+
+-- PvP ausgesetzt? Während des Sturms und Storm.Grace Sekunden danach. Gibt außerdem die Serverzeit zurück, ab der es
+-- wieder gilt.
+function DayCycle.StormPvPPaused(serverTime)
+	local start = tonumber(ReplicatedStorage:GetAttribute("StormStart"))
+	local finish = tonumber(ReplicatedStorage:GetAttribute("StormEnd"))
+	local t = serverTime or 0
+	if not start or not finish or t < start then
+		return false, nil
+	end
+	local resume = finish + ExtinctionConfig.Storm.Grace
+	return t < resume, resume
 end
 
 -- Nebel 0..1 (an manchen Tagen morgens)

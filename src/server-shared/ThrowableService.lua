@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local DayCycle = require(Shared.DayCycle)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Modes = require(Shared.Modes)
@@ -50,6 +51,9 @@ local function canHurt(thrower, model)
 	local squad = thrower:GetAttribute("SquadId")
 	if squad ~= nil and squad == victim:GetAttribute("SquadId") then
 		return false
+	end
+	if DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
+		return false -- Sturmnacht: PvP ausgesetzt
 	end
 	return thrower:GetAttribute("PvP") == true and victim:GetAttribute("PvP") == true
 end

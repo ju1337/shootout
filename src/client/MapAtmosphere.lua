@@ -64,6 +64,14 @@ local BLOOD = {
 	ColorCorrection = { TintColor = Color3.fromRGB(255, 160, 150), Saturation = -0.1 },
 	Lighting = { Ambient = Color3.fromRGB(120, 66, 62), OutdoorAmbient = Color3.fromRGB(160, 86, 80) },
 }
+-- Sturmnacht (DayCycle.StormFactor): dunkel, kalt, dichter grauer Dunst, Wolkendecke zu
+local STORM = {
+	Lighting = { Brightness = 0.9, Ambient = Color3.fromRGB(70, 76, 90), OutdoorAmbient = Color3.fromRGB(88, 96, 112) },
+	Atmosphere = { Density = 0.52, Haze = 3.2, Glare = 0, Color = Color3.fromRGB(104, 110, 122), Decay = Color3.fromRGB(64, 68, 80) },
+	ColorCorrection = { Saturation = -0.5, Contrast = 0.2, TintColor = Color3.fromRGB(205, 216, 235) },
+	Bloom = { Intensity = 0.35, Threshold = 1.4 },
+}
+local STORM_CLOUDS = { Cover = 0.95, Density = 0.9, Color = Color3.fromRGB(58, 62, 70) }
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
 local TWEEN = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
@@ -152,6 +160,7 @@ local function cycle()
 	local dark = DayCycle.Darkness(clock)
 	local blood = DayCycle.IsBloodMoon(serverTime) and math.max(dark, 0.7) or 0 -- auch in der Morgendämmerung noch rot
 	local fog = DayCycle.Fog(serverTime)
+	local storm = DayCycle.StormFactor(serverTime)
 	Lighting.ClockTime = clock
 	local objects = targets()
 	for section, values in PRESETS.Wasteland do
@@ -165,9 +174,35 @@ local function cycle()
 					if red ~= nil and blood > 0 then
 						value = mix(value, red, blood)
 					end
+					local gray = STORM[section] and STORM[section][key]
+					if gray ~= nil and storm > 0 then
+						value = mix(value, gray, storm)
+					end
 					object[key] = value
 				end
 			end
+		end
+	end
+	-- Wolkendecke im Sturm (Clouds am Terrain; fehlen sie, werden sie angelegt und danach wieder weggenommen)
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
+	if storm > 0 and not clouds then
+		clouds = Instance.new("Clouds")
+		clouds.Cover = 0
+		clouds.Density = 0
+		clouds:SetAttribute("StormMade", true)
+		clouds.Parent = workspace.Terrain
+	end
+	if clouds then
+		if clouds:GetAttribute("BaseCover") == nil then
+			clouds:SetAttribute("BaseCover", clouds.Cover)
+			clouds:SetAttribute("BaseDensity", clouds.Density)
+			clouds:SetAttribute("BaseColor", clouds.Color)
+		end
+		clouds.Cover = mix(clouds:GetAttribute("BaseCover"), STORM_CLOUDS.Cover, storm)
+		clouds.Density = mix(clouds:GetAttribute("BaseDensity"), STORM_CLOUDS.Density, storm)
+		clouds.Color = clouds:GetAttribute("BaseColor"):Lerp(STORM_CLOUDS.Color, storm)
+		if storm <= 0 and clouds:GetAttribute("StormMade") then
+			clouds:Destroy()
 		end
 	end
 	local atmosphere = objects.Atmosphere

@@ -22,6 +22,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local DayCycle = require(Shared.DayCycle)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
 local Modes = require(Shared.Modes)
@@ -687,7 +688,8 @@ function VehicleService.Hit(attacker, model, amount)
 	if options and options.InSafeZone(entry.Chassis.Position) then
 		return 0
 	end
-	if attacker and attacker ~= owner and attacker:GetAttribute("PvP") ~= true then
+	if attacker and attacker ~= owner and (attacker:GetAttribute("PvP") ~= true
+		or DayCycle.StormPvPPaused(workspace:GetServerTimeNow())) then
 		return 0
 	end
 	-- Fahrzeug eines Squad-Mitglieds: kein Schaden

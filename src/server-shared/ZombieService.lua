@@ -75,11 +75,13 @@ function ZombieService.Kind(name)
 	}
 end
 
--- Art würfeln: rote Zone (Redzone.KindWeights), sonst Tag/Nacht (Zombies.KindWeights / NightKindWeights)
+-- Art würfeln: Sturmnacht (Storm.KindWeights), rote Zone (Redzone.KindWeights), sonst Tag/Nacht (Zombies.KindWeights /
+-- NightKindWeights)
 local function rollKind(inRedzone)
 	local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
 	local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow())
-	local weights = inRedzone and ExtinctionConfig.Redzone.KindWeights
+	local storm = DayCycle.IsStorm(workspace:GetServerTimeNow())
+	local weights = (storm and ExtinctionConfig.Storm.KindWeights) or inRedzone and ExtinctionConfig.Redzone.KindWeights
 		or (blood and ExtinctionConfig.Day.BloodMoonKindWeights) or (night and Z.NightKindWeights or Z.KindWeights) or { Walker = 1 }
 	local total = 0
 	for _, weight in weights do
@@ -478,13 +480,16 @@ local function onDeath(model, info)
 	local hit = Damage.LastHit(model)
 	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
 	if killer then
-		ProgressService.AddCoins(killer, info.Coins * (red and ExtinctionConfig.Redzone.Loot.CoinFactor or 1), "Zombie")
+		local A = ExtinctionConfig.ArmoredZombies
+		ProgressService.AddCoins(killer, info.Coins * (red and ExtinctionConfig.Redzone.Loot.CoinFactor or 1)
+			* (info.Armored and A.CoinFactor or 1), "Zombie")
 		-- XP für den aktiven Agenten (zählt auch fürs Spielerlevel und den Battle Pass); die Münzen sind oben schon gezahlt
-		ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), info.Stats.XP, info.Name, false, true)
+		ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), math.floor(info.Stats.XP * (info.Armored and A.XPFactor or 1)),
+			info.Name, false, true)
 		ProgressService.AddStat(killer, "Zombies", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
 		for _, callback in ZombieService.OnKill do
-			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero)
+			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero, info.Armored == true)
 			if not ok then
 				warn("ZombieService.OnKill: " .. tostring(err))
 			end
@@ -517,10 +522,11 @@ local function maxTotal()
 	local now = workspace:GetServerTimeNow()
 	local night = DayCycle.IsNight(DayCycle.Clock(now))
 	local blood = DayCycle.IsBloodMoon(now) and ExtinctionConfig.Day.BloodMoonZombies or 1
-	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) * blood + 0.5) + bonus
+	local storm = DayCycle.IsStorm(now) and ExtinctionConfig.Storm.Zombies or 1
+	return math.floor(Z.MaxTotal * (night and ExtinctionConfig.Day.NightZombies or 1) * blood * storm + 0.5) + bonus
 end
 
--- Andere Dienste (Aufträge): callback(killer, kind, position), wenn ein Spieler einen Zombie erledigt
+-- Andere Dienste (Aufträge): callback(killer, kind, position, armored), wenn ein Spieler einen Zombie erledigt
 ZombieService.OnKill = {}
 
 -- Wirkt bei diesem Spieler gerade die Anti-Zombie-Spritze?
@@ -541,9 +547,93 @@ local function nearShield(position)
 	return false
 end
 
+-- Gepanzert? armored = true/false erzwingt es, nil würfelt: Sturmnacht Storm.ArmoredChance, rote Zone
+-- ArmoredZombies.RedzoneChance, sonst ArmoredZombies.Chance. Bosse nie.
+local function rollArmored(position, armored, stats)
+	if stats.Boss or armored == false then
+		return false
+	end
+	if armored == true then
+		return true
+	end
+	local A = ExtinctionConfig.ArmoredZombies
+	local chance = A.Chance
+	if DayCycle.IsStorm(workspace:GetServerTimeNow()) then
+		chance = ExtinctionConfig.Storm.ArmoredChance
+	elseif options and options.RedzoneAt and options.RedzoneAt(position) then
+		chance = A.RedzoneChance
+	end
+	return random:NextNumber() < chance
+end
+
+-- Helm und Weste anbauen (vor dem Skalieren, damit sie mitwachsen). Treffer gehen durch sie hindurch (CanQuery aus):
+-- Kopf und Körper bleiben die Trefferzonen, Damage zieht den Schutz von den Attributen ZHelmet / ZVest ab.
+local ARMOR_COLOR = Color3.fromRGB(58, 64, 52)
+local function armorPart(model, name, size, attachTo, offset, material)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Color = ARMOR_COLOR
+	p.Material = material
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	p.CFrame = attachTo.CFrame * offset
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = attachTo
+	weld.Part1 = p
+	weld.Parent = p
+	p.Parent = model
+	return p
+end
+
+local function addArmor(model)
+	local A = ExtinctionConfig.ArmoredZombies
+	local head, torso = model:FindFirstChild("Head"), model:FindFirstChild("Torso")
+	if head then
+		armorPart(model, "ZHelmetPart", Vector3.new(2.15, 0.65, 1.25), head, CFrame.new(0, 0.35, 0), Enum.Material.Metal)
+		armorPart(model, "ZHelmetPart", Vector3.new(2.2, 0.12, 1.4), head, CFrame.new(0, 0.05, -0.08), Enum.Material.Metal)
+	end
+	if torso then
+		armorPart(model, "ZVestPart", Vector3.new(2.15, 1.7, 1.25), torso, CFrame.new(0, 0.1, 0), Enum.Material.Fabric)
+		for _, x in { -0.55, 0.55 } do
+			armorPart(model, "ZVestPart", Vector3.new(0.7, 0.5, 0.2), torso, CFrame.new(x, -0.35, -0.68), Enum.Material.Fabric)
+		end
+	end
+	model:SetAttribute("ZHelmet", A.Helmet)
+	model:SetAttribute("ZVest", A.Vest)
+	-- aufgebraucht: Teile fallen ab
+	local function knockOff(name, attribute)
+		model:GetAttributeChangedSignal(attribute):Connect(function()
+			if (model:GetAttribute(attribute) or 0) > 0 then
+				return
+			end
+			for _, child in model:GetChildren() do
+				if child.Name == name and child:IsA("BasePart") then
+					local weld = child:FindFirstChildOfClass("WeldConstraint")
+					if weld then
+						weld:Destroy()
+					end
+					child.Massless = false
+					child.CanCollide = true
+					child:ApplyImpulse(Vector3.new(random:NextNumber(-1, 1), 1.5, random:NextNumber(-1, 1)) * child:GetMass() * 25)
+					task.delay(6, function()
+						if child.Parent then
+							child:Destroy()
+						end
+					end)
+				end
+			end
+		end)
+	end
+	knockOff("ZHelmetPart", "ZHelmet")
+	knockOff("ZVestPart", "ZVest")
+end
+
 -- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Nester, Lager-Alarm), aber
--- höchstens ForceExtra darüber. Nie nah an einem Spieler mit Anti-Zombie-Spritze (dann nil).
-function ZombieService.Spawn(position, kindName, force)
+-- höchstens ForceExtra darüber. Nie nah an einem Spieler mit Anti-Zombie-Spritze (dann nil). armored: siehe rollArmored.
+function ZombieService.Spawn(position, kindName, force, armored)
 	if count >= maxTotal() + (force and Z.ForceExtra or 0) or nearShield(position) then
 		return nil
 	end
@@ -571,6 +661,10 @@ function ZombieService.Spawn(position, kindName, force)
 	humanoid.Health = health
 	humanoid.WalkSpeed = stats.Walk
 	local speed = stats.Run * random:NextNumber(0.88, 1.12) * (blood and B.Speed or 1)
+	armored = rollArmored(position, armored, stats)
+	if armored then
+		addArmor(model)
+	end
 	if stats.Scale ~= 1 then
 		model:ScaleTo(stats.Scale)
 	end
@@ -627,7 +721,7 @@ function ZombieService.Spawn(position, kindName, force)
 	end)
 	local info = { Humanoid = humanoid, Root = root, Target = nil, NextAttack = 0, NextWander = 0, LastPos = root.Position,
 		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage * (blood and B.Damage or 1), Coins = stats.Coins,
-		Kind = stats.Id, Name = stats.Name, Stats = stats, Blood = blood }
+		Kind = stats.Id, Name = (armored and "Armored " or "") .. stats.Name, Stats = stats, Blood = blood, Armored = armored }
 	zombies[model] = info
 	count += 1
 	playAnimations(humanoid, speed)
@@ -735,6 +829,9 @@ local function spawnRound()
 					wanted = math.floor(wanted * ExtinctionConfig.Day.BloodMoonZombies + 0.5) -- Blutmond: noch mehr
 				end
 			end
+			if DayCycle.IsStorm(workspace:GetServerTimeNow()) then
+				wanted = math.floor(wanted * ExtinctionConfig.Storm.Zombies + 0.5) -- Sturmnacht: mehr
+			end
 			local around = 0
 			for _, info in zombies do
 				if (info.Root.Position - root.Position).Magnitude <= Z.SpawnMax + 20 then
@@ -788,8 +885,9 @@ function ZombieService.GroundAt(x, z)
 end
 
 -- amount Zombies der Art kindName in einem Ring (minRadius bis maxRadius) um center spawnen (z.B. Begleiter eines Lootdrops).
--- Gibt die gespawnten Modelle zurück (weniger, wenn kein Platz oder die Obergrenze erreicht ist).
-function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName, force)
+-- Gibt die gespawnten Modelle zurück (weniger, wenn kein Platz oder die Obergrenze erreicht ist). kindName = "Random":
+-- Art wie beim normalen Spawnen würfeln. armored: siehe ZombieService.Spawn.
+function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName, force, armored)
 	local spawned = {}
 	for _ = 1, amount do
 		for _ = 1, 6 do
@@ -797,7 +895,7 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 			local distance = random:NextNumber(minRadius, maxRadius)
 			local point = groundAt(center.X + math.cos(angle) * distance, center.Z + math.sin(angle) * distance)
 			if point then
-				local model = ZombieService.Spawn(point, kindName, force)
+				local model = ZombieService.Spawn(point, kindName == "Random" and rollKind(false) or kindName, force, armored)
 				if model then
 					table.insert(spawned, model)
 				end
