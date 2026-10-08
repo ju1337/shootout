@@ -374,7 +374,7 @@ function HUD.Init(weaponClient)
 		recapTitle.Text = "AUSGESCHALTET VON " .. UITheme.Upper(tostring(killerName))
 		recapInfo.Text = (agent and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
 			.. "  ·  hatte noch " .. tostring(killerHealth) .. " Leben"
-		recap.Visible = true
+		recap.Visible = not Modes.IsSurvival(player:GetAttribute("Mode")) -- offene Welt: großer Todesbildschirm (DeathScreen)
 		task.delay(4, function()
 			if recapId == myId then
 				recap.Visible = false
