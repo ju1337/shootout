@@ -59,10 +59,12 @@ local ExtinctionClient = {}
 local HOTBAR = ExtinctionConfig.HotbarSlots
 local BAG = ExtinctionConfig.BagSlots
 local STASH = ExtinctionConfig.StashSlots
-local SAFE_SLOTS = ExtinctionConfig.SafeSlots
-local MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
-local GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
-local TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
+-- Werte und Hilfen von Menü und Inventar in einer Tabelle (Luau erlaubt höchstens 200 lokale Variablen pro Ebene)
+local Inv = {}
+Inv.SAFE_SLOTS = ExtinctionConfig.SafeSlots
+Inv.MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
+Inv.GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
+Inv.TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DANGER = Color3.fromRGB(215, 85, 45)
 local KIND_COLORS = {
@@ -87,7 +89,7 @@ local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeig
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
-local filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
+Inv.filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
 local equipped = 0
 local hud, root, windowGui, canvas
 local window = nil -- { Kind, Frame, Refresh, Stand, Loot }
@@ -307,7 +309,7 @@ local function entryOf(container, slot)
 end
 
 -- Seltenheit eines Items (Strich unten an der Kachel): Tier 2-4, sonst nil
-local function tierColor(config)
+function Inv.tierColor(config)
 	return config and TIER_COLORS[config.Tier] or nil
 end
 
@@ -333,16 +335,16 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 	view.Count.Text = countText
 	view.Name.Text = config and upper(config.Name) or ""
 	view.Overlay.Visible = entry ~= nil and entry.Out == true
-	local tier = tierColor(config)
+	local tier = Inv.tierColor(config)
 	view.Rarity.Visible = tier ~= nil
 	view.Rarity.BackgroundColor3 = tier or C.Border
 	-- Rand nur, wenn ausgewählt (rot) oder in der Hand (grün)
 	view.Stroke.Enabled = isSelected or isEquipped
-	view.Stroke.Color = isSelected and MENU_RED or SAFE
-	view.Frame.BackgroundColor3 = isEquipped and Color3.fromRGB(22, 36, 26) or TILE
+	view.Stroke.Color = isSelected and Inv.MENU_RED or SAFE
+	view.Frame.BackgroundColor3 = isEquipped and Color3.fromRGB(22, 36, 26) or Inv.TILE
 	view.Frame.BackgroundTransparency = config and 0.28 or 0.5
 	-- Filter im Inventar: nicht passende Items abgedunkelt
-	view.Dim.Visible = config ~= nil and filterKinds ~= nil and view.Container ~= "Hotbar" and not filterKinds[config.Kind]
+	view.Dim.Visible = config ~= nil and Inv.filterKinds ~= nil and view.Container ~= "Hotbar" and not Inv.filterKinds[config.Kind]
 end
 
 local function repaint()
@@ -363,10 +365,10 @@ local onSlotClick, onSlotDrop, onSlotRightClick -- unten gesetzt (je nach Fenste
 -- Ein Platz als Knopf. container = "Bag", "Stash", "Loot", "Hotbar" (HUD, nur benutzen)
 local function slotButton(parent, container, slot, size, position, zIndex, keyText)
 	local frame = make("TextButton", { Name = container .. slot, Size = size, Position = position or UDim2.new(), Text = "",
-		AutoButtonColor = false, BackgroundColor3 = TILE, BackgroundTransparency = 0.5, BorderSizePixel = 0, ZIndex = zIndex,
+		AutoButtonColor = false, BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.5, BorderSizePixel = 0, ZIndex = zIndex,
 		LayoutOrder = slot }, parent)
 	UITheme.Corner(frame, 3)
-	local stroke = make("UIStroke", { Color = MENU_RED, Thickness = 2, Enabled = false, ApplyStrokeMode = Enum.ApplyStrokeMode.Border },
+	local stroke = make("UIStroke", { Color = Inv.MENU_RED, Thickness = 2, Enabled = false, ApplyStrokeMode = Enum.ApplyStrokeMode.Border },
 		frame)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex + 1 }, frame)
 	local small = size.X.Offset < 70
@@ -399,7 +401,7 @@ local function slotButton(parent, container, slot, size, position, zIndex, keyTe
 	end)
 	frame.MouseLeave:Connect(function()
 		if not stroke.Enabled then
-			frame.BackgroundColor3 = TILE
+			frame.BackgroundColor3 = Inv.TILE
 		end
 	end)
 	local view = { Frame = frame, Stroke = stroke, Content = content, Count = count, Name = name, Key = key, Overlay = overlay,
@@ -845,21 +847,21 @@ ExtinctionClient.Close = closeWindow
 -- den Reitern (Controller: L1/R1 blättern), rechts die Fläche mit Kopfzeile (Titel, Münzen, Schließen) und Inhalt.
 -- INVENTAR, MARKT, SQUAD und ERFOLGE baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
 -- verkleinert auf die Breite des Inhalts.
--- Breite passt sich dem Bildschirm an: auf breiten Bildschirmen breiter (bis MENU_MAX_W), immer mit Rand daneben
-local MENU_MIN_W, MENU_MAX_W, MENU_MARGIN = 1560, 1840, 40
-local MENU_W, MENU_H = MENU_MIN_W, 860
-local SIDEBAR_W = 210
-local HEADER_Y, HEADER_H = 18, 50
-local CONTENT_X, CONTENT_Y = 22, 84 -- in der Fläche rechts der Seitenleiste
-local CONTENT_W, CONTENT_H = MENU_W - SIDEBAR_W - 2 * CONTENT_X, MENU_H - CONTENT_Y - 18
+-- Breite passt sich dem Bildschirm an: auf breiten Bildschirmen breiter (bis Inv.MENU_MAX_W), immer mit Rand daneben
+Inv.MENU_MIN_W, Inv.MENU_MAX_W, Inv.MENU_MARGIN = 1560, 1840, 40
+Inv.MENU_W, Inv.MENU_H = Inv.MENU_MIN_W, 860
+Inv.SIDEBAR_W = 210
+Inv.HEADER_Y, Inv.HEADER_H = 18, 50
+Inv.CONTENT_X, Inv.CONTENT_Y = 22, 84 -- in der Fläche rechts der Seitenleiste
+Inv.CONTENT_W, Inv.CONTENT_H = Inv.MENU_W - Inv.SIDEBAR_W - 2 * Inv.CONTENT_X, Inv.MENU_H - Inv.CONTENT_Y - 18
 
 -- Sichtbare Breite in Leinwand-Einheiten (die Leinwand ist 1600 breit, der Bildschirm oft breiter)
 local function updateMenuSize()
 	local scale = canvas and canvas:FindFirstChildOfClass("UIScale")
 	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
 	local visible = (scale and scale.Scale > 0 and viewport) and viewport.X / scale.Scale or 1600
-	MENU_W = math.floor(math.clamp(visible - MENU_MARGIN, MENU_MIN_W, MENU_MAX_W))
-	CONTENT_W = MENU_W - SIDEBAR_W - 2 * CONTENT_X
+	Inv.MENU_W = math.floor(math.clamp(visible - Inv.MENU_MARGIN, Inv.MENU_MIN_W, Inv.MENU_MAX_W))
+	Inv.CONTENT_W = Inv.MENU_W - Inv.SIDEBAR_W - 2 * Inv.CONTENT_X
 end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
@@ -881,11 +883,11 @@ local lastMenuTab = "Inventory"
 local openMenuTab -- unten gesetzt (öffnet einen Reiter)
 
 -- Flacher Knopf ohne Rand: primary = rot gefüllt, sonst dunkel halbtransparent (Menü, Details)
-local function flatButton(props, parent, onClick)
+function Inv.flatButton(props, parent, onClick)
 	local primary = props.Primary
 	props.Primary = nil
 	local button = make("TextButton", { Size = UDim2.new(1, 0, 0, 40), AutoButtonColor = false, BorderSizePixel = 0,
-		BackgroundColor3 = primary and MENU_RED or Color3.new(1, 1, 1), BackgroundTransparency = primary and 0 or 0.92,
+		BackgroundColor3 = primary and Inv.MENU_RED or Color3.new(1, 1, 1), BackgroundTransparency = primary and 0 or 0.92,
 		Font = F.Bold, TextSize = 15, TextColor3 = C.Text, ZIndex = 7 }, parent)
 	for key, value in props do
 		button[key] = value
@@ -907,12 +909,12 @@ end
 local function newMenu(kind, title, subtitle)
 	updateMenuSize()
 	local frame = make("Frame", { Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(MENU_W, MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
+		Size = UDim2.fromOffset(Inv.MENU_W, Inv.MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
 	-- Seitenleiste: Name des Modus, Reiter untereinander, unten der Hinweis zum Schließen
-	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, SIDEBAR_W, 1, 0), BackgroundColor3 = GLASS,
+	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.GLASS,
 		BackgroundTransparency = 0.14, BorderSizePixel = 0, ZIndex = 5 }, frame)
 	label({ Name = "Logo", Position = UDim2.fromOffset(24, 26), Size = UDim2.new(1, -48, 0, 26), Text = "EXTINCTION", TextSize = 24,
-		Font = F.Display, TextColor3 = MENU_RED, ZIndex = 6 }, sidebar)
+		Font = F.Display, TextColor3 = Inv.MENU_RED, ZIndex = 6 }, sidebar)
 	label({ Name = "LogoSub", Position = UDim2.fromOffset(25, 52), Size = UDim2.new(1, -48, 0, 14), Text = "OFFENE WELT", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
 	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(0, 96), Size = UDim2.new(1, 0, 1, -150),
@@ -934,7 +936,7 @@ local function newMenu(kind, title, subtitle)
 		button:SetAttribute("NoFocus", true) -- Controller: die Auswahl startet im Inhalt, Reiter mit L1/R1
 		-- aktiver Reiter: roter Streifen links
 		make("Frame", { Name = "Underline", Position = UDim2.new(0, -24, 0, 0), Size = UDim2.new(0, 3, 1, 0),
-			BackgroundColor3 = MENU_RED, BorderSizePixel = 0, Visible = on, ZIndex = 7 }, button)
+			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = on, ZIndex = 7 }, button)
 		if not on then
 			button.MouseEnter:Connect(function()
 				button.TextColor3 = C.Text
@@ -959,12 +961,12 @@ local function newMenu(kind, title, subtitle)
 		Text = pad and "○  SCHLIESSEN" or "TAB / M  SCHLIESSEN", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
 
 	-- Fläche rechts: Kopfzeile und Inhalt
-	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(SIDEBAR_W, 0), Size = UDim2.new(1, -SIDEBAR_W, 1, 0),
-		BackgroundColor3 = GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0, ZIndex = 5 }, frame)
-	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(CONTENT_X, HEADER_Y),
-		Size = UDim2.new(1, -2 * CONTENT_X, 0, HEADER_H), BackgroundColor3 = GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(Inv.SIDEBAR_W, 0), Size = UDim2.new(1, -Inv.SIDEBAR_W, 1, 0),
+		BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.HEADER_Y),
+		Size = UDim2.new(1, -2 * Inv.CONTENT_X, 0, Inv.HEADER_H), BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0,
 		ZIndex = 5 }, panel)
-	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
+	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
 	local titleRow = make("Frame", { Name = "TitleRow", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -320, 1, 0),
 		BackgroundTransparency = 1, ZIndex = 6 }, header)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -988,8 +990,8 @@ local function newMenu(kind, title, subtitle)
 	local coins = label({ Name = "Coins", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -60, 0.5, 0),
 		Size = UDim2.fromOffset(220, 24), Text = "", TextSize = 18, Font = F.Display, TextColor3 = C.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6 }, header)
-	local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(CONTENT_X, CONTENT_Y),
-		Size = UDim2.fromOffset(CONTENT_W, CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, panel)
+	local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.CONTENT_Y),
+		Size = UDim2.fromOffset(Inv.CONTENT_W, Inv.CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, panel)
 	lastMenuTab = kind
 	return { Kind = kind, Menu = true, Frame = frame, Body = content, Coins = coins, Sub = sub, Header = header }
 end
@@ -1054,10 +1056,10 @@ end
 
 -- Details zum gewählten Item (Inventar-Fenster): großes Bild, Name, Art und Seltenheit, Werte, darunter die Aktionen
 local function detailsPanel(parent, position, size)
-	local panel = make("Frame", { Name = "Details", Position = position, Size = size, BackgroundColor3 = GLASS,
+	local panel = make("Frame", { Name = "Details", Position = position, Size = size, BackgroundColor3 = Inv.GLASS,
 		BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 5 }, parent)
 	local stage = make("Frame", { Name = "Stage", Position = UDim2.fromOffset(16, 16), Size = UDim2.new(1, -32, 0, 170),
-		BackgroundColor3 = TILE, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 6 }, panel)
+		BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 6 }, panel)
 	UITheme.Corner(stage, 3)
 	local stageRarity = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
 		BorderSizePixel = 0, Visible = false, ZIndex = 7 }, stage)
@@ -1089,7 +1091,7 @@ local function detailsPanel(parent, position, size)
 			end
 		end
 		local config = id and itemConfig(id)
-		local tier = tierColor(config)
+		local tier = Inv.tierColor(config)
 		stageRarity.Visible = tier ~= nil
 		stageRarity.BackgroundColor3 = tier or C.Border
 		name.Text = config and upper(config.Name) or "NICHTS GEWÄHLT"
@@ -1104,7 +1106,7 @@ local function detailsPanel(parent, position, size)
 			end
 		end
 		for i, action in actions or {} do
-			flatButton({ Name = "Action" .. i, Size = UDim2.new(1, 0, 0, 40), LayoutOrder = i, Primary = action.Primary,
+			Inv.flatButton({ Name = "Action" .. i, Size = UDim2.new(1, 0, 0, 40), LayoutOrder = i, Primary = action.Primary,
 				Text = action.Text }, buttons, action.Run)
 		end
 	end
@@ -1177,7 +1179,7 @@ local function defaultDrop(fromContainer, fromSlot, toContainer, toSlot)
 end
 
 -- Belegte Plätze in [first, last] einer Liste
-local function usedSlots(list, first, last)
+function Inv.usedSlots(list, first, last)
 	local n = 0
 	for slot = first, last do
 		if list[slot] then
@@ -1188,7 +1190,7 @@ local function usedSlots(list, first, last)
 end
 
 -- Abschnitt im Inventar: Titel links (mit Symbol/Schild), Belegung rechts
-local function sectionHeader(parent, name, text, y, width, tagText)
+function Inv.sectionHeader(parent, name, text, y, width, tagText)
 	local row = make("Frame", { Name = name, Position = UDim2.fromOffset(0, y), Size = UDim2.fromOffset(width, 20),
 		BackgroundTransparency = 1, ZIndex = 5 }, parent)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -1197,7 +1199,7 @@ local function sectionHeader(parent, name, text, y, width, tagText)
 		Font = F.Display, LayoutOrder = 2, ZIndex = 6 }, row)
 	if tagText then
 		local tag = label({ Name = "Tag", Size = UDim2.new(0, 0, 0, 18), AutomaticSize = Enum.AutomaticSize.X, Text = tagText,
-			TextSize = 11, Font = F.Bold, TextColor3 = Color3.fromRGB(255, 150, 150), BackgroundColor3 = MENU_RED,
+			TextSize = 11, Font = F.Bold, TextColor3 = Color3.fromRGB(255, 150, 150), BackgroundColor3 = Inv.MENU_RED,
 			BackgroundTransparency = 0.78, LayoutOrder = 3, ZIndex = 6 }, row)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 7) }, tag)
 		UITheme.Corner(tag, 3)
@@ -1209,7 +1211,7 @@ local function sectionHeader(parent, name, text, y, width, tagText)
 end
 
 -- Kleines Schloss aus Formen (Container)
-local function lockIcon(parent, color, order)
+function Inv.lockIcon(parent, color, order)
 	local holder = make("Frame", { Name = "Lock", Size = UDim2.fromOffset(12, 16), BackgroundTransparency = 1, LayoutOrder = order,
 		ZIndex = 6 }, parent)
 	local shackle = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(8, 10),
@@ -1222,7 +1224,7 @@ local function lockIcon(parent, color, order)
 end
 
 -- Filter des Inventars (Kopfzeile): Art(en) der Items, die hell bleiben
-local FILTERS = {
+Inv.FILTERS = {
 	{ Id = "All", Text = "ALLE" },
 	{ Id = "Weapon", Text = "WAFFEN", Kinds = { Weapon = true } },
 	{ Id = "Ammo", Text = "MUNITION", Kinds = { Ammo = true } },
@@ -1231,7 +1233,7 @@ local FILTERS = {
 	{ Id = "Attachment", Text = "AUFSÄTZE", Kinds = { Attachment = true } },
 	{ Id = "Vehicle", Text = "FAHRZEUGE", Kinds = { Vehicle = true } },
 }
-local filterId = "All"
+Inv.filterId = "All"
 
 -- INVENTAR (TAB): links Tasche, Container (sicher, bleibt beim Tod) und Schnellleiste, rechts die Details
 local function openInventory()
@@ -1245,12 +1247,12 @@ local function openInventory()
 	local filterButtons = {}
 	local function paintFilters()
 		for id, button in filterButtons do
-			local on = id == filterId
+			local on = id == Inv.filterId
 			button.TextColor3 = on and C.Text or C.Muted
 			button.BackgroundTransparency = on and 0.88 or 1
 		end
 	end
-	for i, filter in FILTERS do
+	for i, filter in Inv.FILTERS do
 		local button = make("TextButton", { Name = "Filter_" .. filter.Id, Size = UDim2.fromOffset(0, 30), AutomaticSize = Enum.AutomaticSize.X,
 			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, BorderSizePixel = 0, Text = filter.Text, TextSize = 12,
 			Font = F.Bold, TextColor3 = C.Muted, AutoButtonColor = false, LayoutOrder = i, ZIndex = 7 }, filterRow)
@@ -1259,37 +1261,37 @@ local function openInventory()
 		button:SetAttribute("NoFocus", true)
 		filterButtons[filter.Id] = button
 		button.Activated:Connect(function()
-			filterId = filter.Id
-			filterKinds = filter.Kinds
+			Inv.filterId = filter.Id
+			Inv.filterKinds = filter.Kinds
 			paintFilters()
 			repaint()
 		end)
 	end
-	filterKinds = nil
-	for _, filter in FILTERS do
-		if filter.Id == filterId then
-			filterKinds = filter.Kinds
+	Inv.filterKinds = nil
+	for _, filter in Inv.FILTERS do
+		if filter.Id == Inv.filterId then
+			Inv.filterKinds = filter.Kinds
 		end
 	end
 	paintFilters()
 
 	-- Breite der Raster: gut 60 % des Inhalts, rechts die Details
 	local gap = 8
-	local width = math.min(780, math.floor(CONTENT_W * 0.6))
+	local width = math.min(780, math.floor(Inv.CONTENT_W * 0.6))
 	local bagCols, safeCols = 7, 10
 	local bagCell = math.floor((width - (bagCols - 1) * gap) / bagCols)
 	local safeCell = math.floor((width - (safeCols - 1) * gap) / safeCols)
 	local hotCell = math.floor((width - (HOTBAR - 1) * gap) / HOTBAR)
 	local bagSlots = BAG - HOTBAR
 	local y = 0
-	local _, bagFill = sectionHeader(body, "BagHeader", "TASCHE", y, width)
+	local _, bagFill = Inv.sectionHeader(body, "BagHeader", "TASCHE", y, width)
 	grid(body, "Bag", HOTBAR + 1, BAG, bagCols, bagCell, gap, UDim2.fromOffset(0, y + 28))
 	y += 28 + math.ceil(bagSlots / bagCols) * (bagCell + gap) + 14
-	local safeRow, safeFill = sectionHeader(body, "SafeHeader", "CONTAINER", y, width, "BLEIBT BEIM TOD")
-	lockIcon(safeRow, MENU_RED, 1)
-	grid(body, "Safe", 1, SAFE_SLOTS, safeCols, safeCell, gap, UDim2.fromOffset(0, y + 28))
-	y += 28 + math.ceil(SAFE_SLOTS / safeCols) * (safeCell + gap) + 14
-	local _, hotFill = sectionHeader(body, "HotbarHeader", "SCHNELLLEISTE", y, width)
+	local safeRow, safeFill = Inv.sectionHeader(body, "SafeHeader", "CONTAINER", y, width, "BLEIBT BEIM TOD")
+	Inv.lockIcon(safeRow, Inv.MENU_RED, 1)
+	grid(body, "Safe", 1, Inv.SAFE_SLOTS, safeCols, safeCell, gap, UDim2.fromOffset(0, y + 28))
+	y += 28 + math.ceil(Inv.SAFE_SLOTS / safeCols) * (safeCell + gap) + 14
+	local _, hotFill = Inv.sectionHeader(body, "HotbarHeader", "SCHNELLLEISTE", y, width)
 	hotFill.Text = "TASTEN 1-" .. HOTBAR
 	grid(body, "Bag", 1, HOTBAR, HOTBAR, hotCell, gap, UDim2.fromOffset(0, y + 28), true)
 	y += 28 + hotCell + 12
@@ -1297,7 +1299,7 @@ local function openInventory()
 		Text = "Ziehen oder anklicken und Zielplatz wählen legt ein Item um. Stirbst du draußen, ist die Tasche weg – "
 			.. "was im Container liegt, behältst du.",
 		TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
-	local update = detailsPanel(body, UDim2.fromOffset(width + 24, 0), UDim2.fromOffset(CONTENT_W - width - 24, math.min(CONTENT_H, y + 36)))
+	local update = detailsPanel(body, UDim2.fromOffset(width + 24, 0), UDim2.fromOffset(Inv.CONTENT_W - width - 24, math.min(Inv.CONTENT_H, y + 36)))
 	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
 		if container == "Bag" and bag[slot] then
@@ -1307,8 +1309,8 @@ local function openInventory()
 		end
 	end
 	function win.Refresh()
-		bagFill.Text = usedSlots(bag, HOTBAR + 1, BAG) .. " / " .. bagSlots .. " PLÄTZE"
-		safeFill.Text = usedSlots(safe, 1, SAFE_SLOTS) .. " / " .. SAFE_SLOTS .. " PLÄTZE"
+		bagFill.Text = Inv.usedSlots(bag, HOTBAR + 1, BAG) .. " / " .. bagSlots .. " PLÄTZE"
+		safeFill.Text = Inv.usedSlots(safe, 1, Inv.SAFE_SLOTS) .. " / " .. Inv.SAFE_SLOTS .. " PLÄTZE"
 		local actions = {}
 		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
 		if entry then
@@ -1414,7 +1416,7 @@ local function openAchievements()
 	local summary = label({ Name = "Summary", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 22), Text = "", TextSize = 16,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, body)
 	local cols, gap = 4, 14
-	local cardW = math.floor((CONTENT_W - gap * (cols - 1)) / cols)
+	local cardW = math.floor((Inv.CONTENT_W - gap * (cols - 1)) / cols)
 	local cardH = 150
 	local views = {}
 	for index, achievement in AchievementConfig.List do
@@ -1606,8 +1608,8 @@ local function openStash()
 	sectionTitle(body, "TASCHE  (1-9 = HOTBAR)", UDim2.fromOffset(0, 0), 300)
 	grid(body, "Bag", 1, BAG, 5, cell, gap, UDim2.fromOffset(0, 22), true)
 	local safeX = 5 * (cell + gap) + 24
-	sectionTitle(body, "CONTAINER  ·  " .. SAFE_SLOTS, UDim2.fromOffset(safeX, 0), 240)
-	grid(body, "Safe", 1, SAFE_SLOTS, 4, cell, gap, UDim2.fromOffset(safeX, 22))
+	sectionTitle(body, "CONTAINER  ·  " .. Inv.SAFE_SLOTS, UDim2.fromOffset(safeX, 0), 240)
+	grid(body, "Safe", 1, Inv.SAFE_SLOTS, 4, cell, gap, UDim2.fromOffset(safeX, 22))
 	local stashX = safeX + 4 * (cell + gap) + 24
 	sectionTitle(body, "LAGER  ·  " .. STASH .. " PLÄTZE", UDim2.fromOffset(stashX, 0), 400)
 	grid(body, "Stash", 1, STASH, 8, cell, gap, UDim2.fromOffset(stashX, 22))
@@ -1938,7 +1940,7 @@ local function openMarket()
 	local win = newWindow("Market", "SPIELERMARKT", "SPIELER KAUFEN UND VERKAUFEN  ·  MÜNZEN  ·  "
 		.. math.floor(ExtinctionConfig.Market.FeeRate * 100 + 0.5) .. " % GEBÜHR  ·  NUR IN DER SAFE ZONE  ·  ANGEBOTE BLEIBEN "
 		.. "IN DEINEM SPIELSTAND", Color3.fromRGB(226, 178, 52))
-	local holder = make("Frame", { Name = "MarketHolder", Position = UDim2.fromOffset((CONTENT_W - 1304) // 2, 0),
+	local holder = make("Frame", { Name = "MarketHolder", Position = UDim2.fromOffset((Inv.CONTENT_W - 1304) // 2, 0),
 		Size = UDim2.fromOffset(1304, 668), BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	local maps = workspace:FindFirstChild("Maps")
 	local map = maps and maps:FindFirstChild("Extinction")
@@ -2009,14 +2011,14 @@ end
 -- verkleinern. Meldungen des Servers (Kaufen, Codes …) kommen als Meldung unten (Remotes.ShopStatus, siehe Init).
 local function openLobbyTab(id)
 	local win = newWindow(id)
-	local scale = math.min(CONTENT_W / LobbyPages.PAGE_W, CONTENT_H / LobbyPages.PAGE_H)
+	local scale = math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
 	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H),
 		BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	make("UIScale", { Scale = scale }, holder)
 	if GameMenu.BorrowPage(id, holder) then
 		win.Borrowed = id
 	else
-		label({ Size = UDim2.fromOffset(CONTENT_W, 60), Text = "GERADE NICHT VERFÜGBAR", TextSize = 18, Font = F.Bold,
+		label({ Size = UDim2.fromOffset(Inv.CONTENT_W, 60), Text = "GERADE NICHT VERFÜGBAR", TextSize = 18, Font = F.Bold,
 			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, win.Body)
 	end
 	function win.Refresh() end
