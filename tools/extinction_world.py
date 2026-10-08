@@ -2477,6 +2477,154 @@ class World:
         box("Cover", "Car", (5, 2.4, 10.5), (0, 1.6, 0), body, "Metal")
         box("Cover", "CarCabin", (4.6, 1.9, 5), (0, 3.7, 0.6), self.bm.lighten(body, -0.15), "Metal")
 
+    # ---------- Vorfeld um das Camp (zwischen Camp-Mauer und Stadt) ----------
+    def camp_outskirts(self):
+        """Das Vorfeld um Camp Phoenix ist nicht mehr leer: je Ecke ein Thema – Nordost Flüchtlingslager (Zelte,
+        Feuertonnen, Wäsche, Wassertank), Südost Fahrzeugfriedhof (Wracks, Bus, Reifen), Südwest Feldlazarett mit
+        Gräbern, Nordwest Militärdepot (Panzer, Sandsack-Stellungen, Container, Wachturm). Vor den Toren warten Autos am
+        Straßenrand, dazu Bäume, Büsche und Schutt. Läuft nach allen Straßen (die bleiben frei) mit eigenen Zufallszahlen
+        und ohne Schilder (weather_signs) – der Rest der Welt bleibt gleich."""
+        world_rng, self.rng = self.rng, random.Random(9117)
+        try:
+            self._camp_outskirts()
+        finally:
+            self.rng = world_rng
+
+    def _outskirt_spots(self, quadrant, n, spacing, inner=96, outer=156):
+        """n freie Stellen im Vorfeld eines Quadranten (sx, sz): außerhalb des Camps, nicht auf Straßen, mit Abstand."""
+        rng = self.rng
+        sx, sz = quadrant
+        spots = []
+        for _ in range(n * 40):
+            if len(spots) >= n:
+                break
+            x, z = sx * rng.uniform(18, outer), sz * rng.uniform(18, outer)
+            r = math.hypot(x, z)
+            if r > outer or max(abs(x), abs(z)) < inner - 4 or r < inner:
+                continue
+            if min(abs(x), abs(z)) < 18:  # Torstraßen
+                continue
+            if any(dist_point_segment(x, z, ax, az, bx, bz) < w / 2 + 6 for ax, az, bx, bz, w in self.roads):
+                continue
+            if any(math.hypot(x - px, z - pz) < spacing for px, pz in spots + self._outskirt_used):
+                continue
+            spots.append((x, z))
+        self._outskirt_used += spots
+        return spots
+
+    def _outskirt_tree(self, x, z):
+        b, rng = self.b, self.rng
+        g = self.H(x, z)
+        h = rng.uniform(9, 15)
+        b.box("Decor", "OutskirtTrunk", (1.4, h, 1.4), (x, g + h / 2 - 0.5, z), (92, 68, 46), "Wood")
+        r = rng.uniform(8, 12)
+        b.add("Decor", "OutskirtCrown", (r, r * 0.85, r), (x, g + h + r / 4, z), (rng.randint(64, 92), rng.randint(90, 116), 50),
+              "LeafyGrass", props={"Shape": "Ball", "CanCollide": False})
+
+    def _camp_outskirts(self):
+        b, rng = self.b, self.rng
+        self._outskirt_used = []
+        # Nordost: Flüchtlingslager
+        for x, z in self._outskirt_spots((1, 1), 9, 14):
+            self.tent(x, z, rng.uniform(0, 360), rng.choice(((60, 86, 110), (150, 120, 60), (84, 98, 70), (120, 60, 50), (170, 170, 160))),
+                      collapsed=rng.random() < 0.15)
+        for x, z in self._outskirt_spots((1, 1), 3, 16):
+            self.fire_barrel(x, z, y=self.H(x, z) + 0.4)
+            for k in range(2):
+                b.box("Cover", "Crate", (2.6, 2.4, 2.6), (x + rng.uniform(-5, 5), self.H(x, z) + 1.6, z + rng.uniform(-5, 5)), (110, 92, 62),
+                      "WoodPlanks", angles=(0, rng.uniform(0, 90), 0))
+        for x, z in self._outskirt_spots((1, 1), 2, 20):
+            g = self.H(x, z)
+            for s in (-1, 1):
+                b.box("Decor", "ClothesPole", (0.3, 7, 0.3), (x + s * 7, g + 3.5, z), (90, 80, 70), "Wood")
+            b.box("Decor", "ClothesLine", (14, 0.1, 0.1), (x, g + 6.6, z), (200, 200, 196), "SmoothPlastic", props={"CanCollide": False})
+            for k in range(4):
+                b.box("Decor", "Laundry", (1.8, 2.4, 0.1), (x - 5 + k * 3.2, g + 5.3, z),
+                      rng.choice(((180, 60, 50), (200, 196, 186), (70, 90, 130), (120, 140, 90))), "Fabric", props={"CanCollide": False})
+        for x, z in self._outskirt_spots((1, 1), 1, 20):
+            g = self.H(x, z)
+            for dx in (-2, 2):
+                for dz in (-2, 2):
+                    b.box("Decor", "TankLeg", (0.4, 6, 0.4), (x + dx, g + 3, z + dz), (70, 60, 50), "Metal")
+            b.cylinder("Cover", "WaterTank", 6, 5, (x, g + 8.5, z), (60, 84, 110), material="Plastic")
+        # Südost: Fahrzeugfriedhof
+        for x, z in self._outskirt_spots((1, -1), 11, 11):
+            self.car(x, z, rng.uniform(0, 360))
+        for x, z in self._outskirt_spots((1, -1), 1, 24):
+            self.bus(x, z, rng.uniform(0, 360))
+        for x, z in self._outskirt_spots((1, -1), 4, 10):
+            g = self.H(x, z)
+            for k in range(rng.randint(2, 4)):
+                b.add("Cover", "TireStack", (1.2, 3, 3), (x + rng.uniform(-0.3, 0.3), g + 0.6 + k * 1.2, z + rng.uniform(-0.3, 0.3)),
+                      (26, 26, 26), "Rubber", angles=(0, 0, 90), props={"Shape": "Cylinder"})
+        # Südwest: Feldlazarett und Gräber
+        for x, z in self._outskirt_spots((-1, -1), 4, 18):
+            g = self.H(x, z)
+            yaw = rng.uniform(0, 360)
+            b.box("Buildings", "MedTent", (10, 4, 14), (x, g + 2, z), (206, 202, 190), "Fabric", angles=(0, yaw, 0))
+            b.box("Decor", "MedTentRoof", (10.6, 0.3, 14.6), (x, g + 4.6, z), (196, 192, 180), "Fabric", angles=(0, yaw, 0))
+            a = math.radians(yaw)
+            for sx_, sy_ in ((3.4, 1), (1, 3.4)):
+                b.box("Decor", "RedCross", (sx_, sy_, 0.1), (x - math.sin(a) * 7.05, g + 2.6, z - math.cos(a) * 7.05), (180, 30, 28),
+                      "SmoothPlastic", angles=(0, yaw, 0))
+        for x, z in self._outskirt_spots((-1, -1), 1, 30):
+            g = self.H(x, z)
+            for row in range(3):
+                for col in range(5):
+                    gx, gz = x - 10 + col * 5, z - 5 + row * 6
+                    b.box("Decor", "Grave", (2, 0.4, 4), (gx, g + 0.25, gz + 1.6), (84, 66, 50), "Ground")
+                    b.box("Decor", "GraveCross", (0.4, 3, 0.4), (gx, g + 1.5, gz), (110, 90, 66), "Wood")
+                    b.box("Decor", "GraveCrossBar", (1.8, 0.35, 0.35), (gx, g + 2.3, gz), (110, 90, 66), "Wood")
+        # Nordwest: Militärdepot
+        for x, z in self._outskirt_spots((-1, 1), 1, 24):
+            self.tank(x, z, rng.uniform(0, 360), burned=False)
+        for x, z in self._outskirt_spots((-1, 1), 1, 20):
+            self.watchtower(x, z, 14)
+        for x, z in self._outskirt_spots((-1, 1), 3, 16):
+            g = self.H(x, z)
+            for k in range(8):  # Sandsack-Ring
+                a = 2 * math.pi * k / 8
+                b.box("Cover", "Sandbags", (3.4, 2.2, 1.6), (x + math.sin(a) * 4, g + 1.1, z + math.cos(a) * 4), (150, 134, 98), "Fabric",
+                      angles=(0, math.degrees(a), 0))
+        for x, z in self._outskirt_spots((-1, 1), 2, 20):
+            g = self.H(x, z)
+            yaw = rng.uniform(0, 360)
+            col = rng.choice(((60, 86, 70), (84, 98, 70), (110, 60, 48)))
+            b.box("Buildings", "DepotContainer", (8, 8.5, 18), (x, g + 4.25, z), col, "CorrodedMetal", angles=(0, yaw, 0))
+            if rng.random() < 0.6:
+                b.box("Buildings", "DepotContainer", (8, 8.5, 18), (x, g + 12.75, z), self.bm.lighten(col, -0.15), "CorrodedMetal",
+                      angles=(0, yaw + rng.uniform(-6, 6), 0))
+        for x, z in self._outskirt_spots((-1, 1), 3, 10):
+            g = self.H(x, z)
+            for k in range(rng.randint(2, 4)):
+                b.box("Cover", "AmmoCrate", (3, 1.6, 1.8), (x + rng.uniform(-2, 2), g + 0.8 + (k // 2) * 1.6, z + rng.uniform(-2, 2)),
+                      (70, 84, 54), "Metal", angles=(0, rng.uniform(0, 180), 0))
+        # vor den Toren: Autos am Straßenrand (Richtung Camp), Betonsperren
+        for side in range(4):
+            dx, dz = ((0, 1), (1, 0), (0, -1), (-1, 0))[side]
+            nx, nz = -dz, dx
+            for k in range(3):
+                d = 110 + k * 14
+                lane = 14 if k % 2 == 0 else -14
+                x, z = dx * d + nx * lane, dz * d + nz * lane
+                if not any(dist_point_segment(x, z, ax, az, bx, bz) < w / 2 + 3 for ax, az, bx, bz, w in self.roads
+                           if not (abs(ax) < 3 and abs(bx) < 3) and not (abs(az) < 3 and abs(bz) < 3)):
+                    self.car(x, z, math.degrees(math.atan2(-dx, -dz)) + rng.uniform(-10, 10))
+        # überall: Bäume, Büsche, Schutt
+        for quadrant in ((1, 1), (1, -1), (-1, -1), (-1, 1)):
+            for x, z in self._outskirt_spots(quadrant, 5, 12):
+                self._outskirt_tree(x, z)
+            for x, z in self._outskirt_spots(quadrant, 6, 8):
+                g = self.H(x, z)
+                b.add("Decor", "Bush", (rng.uniform(3, 5), rng.uniform(2, 3), rng.uniform(3, 5)), (x, g + 1, z),
+                      (rng.randint(60, 84), rng.randint(84, 104), 46), "LeafyGrass", props={"Shape": "Ball", "CanCollide": False})
+            for x, z in self._outskirt_spots(quadrant, 3, 10):
+                g = self.H(x, z)
+                for k in range(4):
+                    b.box("Cover", "Rubble", (rng.uniform(1.5, 3.5), rng.uniform(1, 2), rng.uniform(1.5, 3.5)),
+                          (x + rng.uniform(-3, 3), g + 0.6, z + rng.uniform(-3, 3)), (124, 118, 108), "Concrete",
+                          angles=(rng.uniform(-20, 20), rng.uniform(0, 180), rng.uniform(-20, 20)))
+
     def travel_stop(self, name, title, x, z, fx, fz):
         """Haltestelle für Reisen zwischen den Safe Zones: Wartehäuschen, Schild, Fahrer (Punkt name in Stands) und ein Bus."""
         b, rng = self.b, self.rng
@@ -3667,6 +3815,7 @@ def build(bm):
                     break
             if reeds >= 22:
                 break
+    w.camp_outskirts()  # Vorfeld um das Camp (nach den Straßen, eigene Zufallszahlen)
     weather_signs(bm, b, rng)
     save(bm, b, "Extinction.model.json", "Ödstadt", "Wasteland")
     return w
