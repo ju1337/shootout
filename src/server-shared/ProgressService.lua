@@ -160,7 +160,10 @@ local function ensureSet(player, profile, set)
 			end
 		end
 		for _ = 1, math.min(pick.Count, #pool) do
-			table.insert(ids, table.remove(pool, random:NextInteger(1, #pool)).Id)
+			local quest = table.remove(pool, random:NextInteger(1, #pool))
+			if quest then
+				table.insert(ids, quest.Id)
+			end
 		end
 	end
 	profile[set.Key] = { Period = period, Ids = ids, Progress = {}, Claimed = {} }

@@ -103,7 +103,7 @@ function QuestBoard.new(parent, width, height, options)
 	for i, def in { { "Arcade", "ARCADE" }, { "Extinction", "EXTINCTION" } } do
 		tabs[def[1]] = button({ Position = UDim2.fromOffset((i - 1) * 168, 0), Size = UDim2.fromOffset(160, 36), Text = def[2],
 			TextSize = 16 }, root, function()
-			board.SetMode(def[1])
+			(board :: any).SetMode(def[1]) -- SetMode steht weiter unten
 		end)
 	end
 
