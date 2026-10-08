@@ -37,6 +37,8 @@ local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
+local AchievementConfig = require(Shared.AchievementConfig)
+local TitleConfig = require(Shared.TitleConfig)
 local GunModels = require(Shared.GunModels)
 local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
@@ -823,6 +825,7 @@ local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
 	{ Id = "Squad", Text = "SQUAD" },
+	{ Id = "Achievements", Text = "ERFOLGE" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
 	{ Id = "Stats", Text = "STATISTIK", Page = true },
@@ -1132,6 +1135,127 @@ local function openInventory()
 		end
 		update(actions)
 		repaint()
+	end
+	win.Refresh()
+end
+
+-- ---------- ERFOLGE (Reiter im Menü): Abzeichen mit Bronze, Silber, Gold ----------
+
+-- Abzeichen-Symbol aus Formen (size x size), color = Farbe der Stufe
+local function badgeIcon(parent, kind, size, color, zIndex)
+	local holder = make("Frame", { Name = "Badge", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(size, size), BackgroundTransparency = 1, ZIndex = zIndex }, parent)
+	local ring = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = color:Lerp(Color3.new(0, 0, 0), 0.65),
+		BorderSizePixel = 0, ZIndex = zIndex }, holder)
+	UITheme.Corner(ring, size)
+	UITheme.Stroke(ring, color, 2)
+	local dark = color:Lerp(Color3.new(0, 0, 0), 0.65)
+	local function f(x, y, w, h, c, rot, round)
+		local p = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(x, y), Size = UDim2.fromScale(w, h),
+			BackgroundColor3 = c or color, BorderSizePixel = 0, Rotation = rot or 0, ZIndex = zIndex + 1 }, holder)
+		if round then
+			make("UICorner", { CornerRadius = UDim.new(round, 0) }, p)
+		end
+		return p
+	end
+	if kind == "Skull" then
+		f(0.5, 0.45, 0.46, 0.4, color, 0, 0.5); f(0.5, 0.63, 0.3, 0.14, color)
+		f(0.41, 0.45, 0.1, 0.1, dark, 0, 0.5); f(0.59, 0.45, 0.1, 0.1, dark, 0, 0.5)
+	elseif kind == "Fist" then
+		f(0.5, 0.52, 0.42, 0.34, color, 0, 0.2); for i = 0, 3 do f(0.36 + i * 0.093, 0.36, 0.08, 0.1, color, 0, 0.4) end
+	elseif kind == "Crosshair" then
+		local r = f(0.5, 0.5, 0.46, 0.46, dark, 0, 0.5); UITheme.Stroke(r, color, 2)
+		f(0.5, 0.5, 0.06, 0.6, color); f(0.5, 0.5, 0.6, 0.06, color)
+	elseif kind == "Shield" then
+		f(0.5, 0.44, 0.4, 0.3, color, 0, 0.15); f(0.5, 0.6, 0.29, 0.29, color, 45)
+	elseif kind == "Fire" then
+		f(0.5, 0.56, 0.32, 0.32, color, 45, 0.3); f(0.5, 0.42, 0.18, 0.18, color, 45, 0.3)
+	elseif kind == "Lock" then
+		local arc = f(0.5, 0.38, 0.3, 0.3, dark, 0, 0.5); UITheme.Stroke(arc, color, 3); f(0.5, 0.58, 0.42, 0.28, color, 0, 0.15)
+	elseif kind == "Heart" then
+		f(0.42, 0.44, 0.2, 0.2, color, 0, 0.5); f(0.58, 0.44, 0.2, 0.2, color, 0, 0.5); f(0.5, 0.54, 0.22, 0.22, color, 45)
+	elseif kind == "Crate" then
+		f(0.5, 0.54, 0.44, 0.32, color, 0, 0.1); f(0.5, 0.4, 0.48, 0.08, color); f(0.5, 0.54, 0.05, 0.32, dark)
+	elseif kind == "Truck" then
+		f(0.44, 0.48, 0.36, 0.22, color, 0, 0.1); f(0.68, 0.52, 0.14, 0.16, color, 0, 0.1)
+		f(0.36, 0.64, 0.1, 0.1, color, 0, 0.5); f(0.64, 0.64, 0.1, 0.1, color, 0, 0.5)
+	elseif kind == "List" then
+		for i = 0, 2 do f(0.54, 0.38 + i * 0.12, 0.34, 0.06, color); f(0.33, 0.38 + i * 0.12, 0.06, 0.06, color) end
+	elseif kind == "House" then
+		f(0.5, 0.58, 0.36, 0.26, color); f(0.5, 0.42, 0.28, 0.28, color, 45)
+	else -- Star
+		f(0.5, 0.5, 0.34, 0.34, color, 0); f(0.5, 0.5, 0.34, 0.34, color, 45)
+	end
+	return holder
+end
+
+local function openAchievements()
+	local win = newWindow("Achievements", "ERFOLGE", "ABZEICHEN FÜR DEIN PROFIL  ·  JEDE STUFE GIBT MÜNZEN  ·  BRONZE · SILBER · GOLD",
+		C.Primary)
+	local body = win.Body
+	local summary = label({ Name = "Summary", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 22), Text = "", TextSize = 16,
+		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, body)
+	local cols, gap = 4, 14
+	local cardW = math.floor((CONTENT_W - gap * (cols - 1)) / cols)
+	local cardH = 150
+	local views = {}
+	for index, achievement in AchievementConfig.List do
+		local col, row = (index - 1) % cols, (index - 1) // cols
+		local card = UITheme.Card({ Name = "Achievement_" .. achievement.Id, Position = UDim2.fromOffset(col * (cardW + gap),
+			34 + row * (cardH + gap)), Size = UDim2.fromOffset(cardW, cardH), ZIndex = 6 }, body)
+		local iconHolder = make("Frame", { Position = UDim2.fromOffset(16, 16), Size = UDim2.fromOffset(64, 64), BackgroundTransparency = 1,
+			ZIndex = 7 }, card)
+		local name = label({ Name = "Name", Position = UDim2.fromOffset(92, 16), Size = UDim2.new(1, -108, 0, 22),
+			Text = upper(achievement.Name), TextSize = 19, Font = F.Display, ZIndex = 7 }, card)
+		label({ Name = "Text", Position = UDim2.fromOffset(92, 40), Size = UDim2.new(1, -108, 0, 32), Text = achievement.Text,
+			TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
+			ZIndex = 7 }, card)
+		local pips = {}
+		for tier = 1, 3 do
+			local pip = make("Frame", { Name = "Tier" .. tier, Position = UDim2.fromOffset(16 + (tier - 1) * 24, 94), Size = UDim2.fromOffset(18, 6),
+				BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, card)
+			UITheme.Corner(pip, 3)
+			pips[tier] = pip
+		end
+		local progress = label({ Name = "Progress", Position = UDim2.fromOffset(92, 88), Size = UDim2.new(1, -108, 0, 16), Text = "",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 7 }, card)
+		local track = make("Frame", { Name = "Track", Position = UDim2.new(0, 16, 1, -26), Size = UDim2.new(1, -32, 0, 6),
+			BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, card)
+		UITheme.Corner(track, 3)
+		local fill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0,
+			ZIndex = 7 }, track)
+		UITheme.Corner(fill, 3)
+		views[achievement.Id] = { Icon = iconHolder, Name = name, Pips = pips, Progress = progress, Fill = fill, Shown = -1 }
+	end
+	function win.Refresh()
+		local data = AchievementConfig.Data(player)
+		local stats = TitleConfig.DataFromPlayer(player).Stats or {}
+		local counts = { 0, 0, 0 }
+		local total = 0
+		for _, achievement in AchievementConfig.List do
+			local view = views[achievement.Id]
+			local tier = math.clamp(tonumber(data[achievement.Id]) or 0, 0, 3)
+			total += tier
+			if tier > 0 then
+				counts[tier] += 1
+			end
+			local color = tier > 0 and AchievementConfig.Tiers[tier].Color or Color3.fromRGB(90, 96, 104)
+			if view.Shown ~= tier then
+				view.Shown = tier
+				view.Icon:ClearAllChildren()
+				badgeIcon(view.Icon, achievement.Icon, 64, color, 8)
+			end
+			for t, pip in view.Pips do
+				pip.BackgroundColor3 = t <= tier and AchievementConfig.Tiers[t].Color or C.Card
+			end
+			local value = tonumber(stats[achievement.Stat]) or 0
+			local goal = achievement.Goals[math.min(tier + 1, 3)]
+			view.Progress.Text = tier >= 3 and "GESCHAFFT" or (UITheme.FormatNumber(math.min(value, goal)) .. " / " .. UITheme.FormatNumber(goal))
+			view.Fill.Size = UDim2.fromScale(tier >= 3 and 1 or math.clamp(value / goal, 0, 1), 1)
+			view.Fill.BackgroundColor3 = tier >= 3 and AchievementConfig.Tiers[3].Color or C.Primary
+		end
+		summary.Text = string.format("%d VON %d STUFEN  ·  %d× GOLD  ·  %d× SILBER  ·  %d× BRONZE", total, #AchievementConfig.List * 3,
+			counts[3], counts[2], counts[1])
 	end
 	win.Refresh()
 end
@@ -1683,6 +1807,9 @@ openMenuTab = function(id)
 	elseif id == "Squad" then
 		ExtinctionMap.Set(false)
 		openSquad()
+	elseif id == "Achievements" then
+		ExtinctionMap.Set(false)
+		openAchievements()
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
@@ -2567,6 +2694,13 @@ function ExtinctionClient.Init()
 	-- Daten vom Server
 	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped" } do
 		player:GetAttributeChangedSignal(attribute):Connect(refreshAll)
+	end
+	for _, attribute in { "Achievements", "Stats" } do
+		player:GetAttributeChangedSignal(attribute):Connect(function()
+			if window and window.Kind == "Achievements" and window.Refresh then
+				window.Refresh()
+			end
+		end)
 	end
 	player:GetAttributeChangedSignal("Hideout"):Connect(function()
 		if window and window.Kind == "Hideout" and window.Refresh then

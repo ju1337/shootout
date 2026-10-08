@@ -17,6 +17,7 @@ local PerkService = require(ServerShared.PerkService)
 local PingService = require(ServerShared.PingService)
 local LeaderboardService = require(ServerShared.LeaderboardService)
 local RewardService = require(ServerShared.RewardService)
+local AchievementService = require(ServerShared.AchievementService)
 local KillstreakService = require(ServerShared.KillstreakService)
 local RobuxService = require(ServerShared.RobuxService)
 local ClanService = require(ServerShared.ClanService)
@@ -45,6 +46,7 @@ LeaderboardService.Init()
 WeaponService.Init()
 KillService.Init()
 RewardService.Init()
+AchievementService.Init() -- Erfolge-Wand: Stufen bei jeder Statistik-Änderung prüfen
 KillstreakService.Init() -- Killstreak-Belohnungen in Herrschaft (Radar, Luftschlag, Schutzschild)
 RobuxService.Init() -- Robux-Shop: Gamepässe und Entwicklerprodukte
 ClanService.Init() -- Clans über alle Server

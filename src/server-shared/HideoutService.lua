@@ -108,6 +108,7 @@ function HideoutService.Upgrade(player, moduleId)
 	end
 	data[moduleId] = level + 1
 	HideoutService.Publish(player)
+	ProgressService.AddStat(player, "ExtHideout", 1) -- Erfolg Bauherr
 	InventoryService.Status(player, module.Name .. " auf Stufe " .. (level + 1) .. " ausgebaut", true)
 	return true
 end

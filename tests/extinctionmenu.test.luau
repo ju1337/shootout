@@ -1,5 +1,5 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · SQUAD (eigene Seiten) und SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der
+-- es wieder. Reiter INVENTAR · MARKT · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der
 -- Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
@@ -121,7 +121,7 @@ for _, tab in menu().Tabs:GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,SQUAD,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,SQUAD,ERFOLGE,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -136,6 +136,10 @@ key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt")
 key(Enum.KeyCode.M)
 check(title() == "SQUAD", "M öffnet den letzten Reiter (SQUAD)")
+menu().Tabs.Tab_Achievements.Activated:Fire()
+step(0.1)
+check(title() == "ERFOLGE" and activeTab() == "Achievements", "Klick auf ERFOLGE")
+check(find(menu(), "Achievement_Zombies") ~= nil and find(menu(), "Achievement_Veteran") ~= nil, "Erfolge-Wand mit Karten")
 
 -- Lobby-Seiten: ausgeliehen, verkleinert, beim Schließen zurück in die Lobby
 for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do

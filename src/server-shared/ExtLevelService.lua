@@ -34,13 +34,17 @@ function ExtLevelService.Publish(player)
 	player:SetAttribute("ExtLevel", (ExtLevelConfig.FromXP(xp)))
 end
 
--- EP geben (nur in der offenen Welt). reason: kurzer Text für die Anzeige. Gibt das neue Level zurück.
-function ExtLevelService.Add(player, amount, reason)
+-- EP geben (nur in der offenen Welt). reason: kurzer Text für die Anzeige, stat: Statistik, die um 1 steigt (für die
+-- Erfolge, z.B. "ExtZombies"). Gibt das neue Level zurück.
+function ExtLevelService.Add(player, amount, reason, stat)
 	amount = math.floor(tonumber(amount) or 0)
 	if amount <= 0 or not player.Parent or not Modes.IsSurvival(player:GetAttribute("Mode")) or not ProgressService.Get(player) then
 		return nil
 	end
 	local before = ExtLevelConfig.FromXP(totalXP(player))
+	if stat then
+		ProgressService.AddStat(player, stat, 1)
+	end
 	ProgressService.AddStat(player, ExtLevelConfig.Stat, amount)
 	ExtLevelService.Publish(player)
 	local after = player:GetAttribute("ExtLevel")
@@ -63,12 +67,15 @@ function ExtLevelService.Init(opts)
 			if opts.RedzoneAt and position and opts.RedzoneAt(position) then
 				xp += R.RedZombie
 			end
-			ExtLevelService.Add(killer, xp, "Zombie")
+			if kind == "Brute" and Modes.IsSurvival(killer:GetAttribute("Mode")) then
+				ProgressService.AddStat(killer, "ExtBrutes", 1)
+			end
+			ExtLevelService.Add(killer, xp, "Zombie", "ExtZombies")
 		end
 	end)
 	table.insert(ActivityService.OnEvent, function(player, kind)
 		if R[kind] then
-			ExtLevelService.Add(player, R[kind], kind)
+			ExtLevelService.Add(player, R[kind], kind, "Ext" .. kind .. "s")
 		end
 	end)
 	table.insert(LootService.OnOpened, function(player, bag)
@@ -77,12 +84,12 @@ function ExtLevelService.Init(opts)
 			openedDrops[player] = seen
 			if not seen[bag.Id] then
 				seen[bag.Id] = true
-				ExtLevelService.Add(player, R.Airdrop, "Lootdrop")
+				ExtLevelService.Add(player, R.Airdrop, "Lootdrop", "ExtAirdrops")
 			end
 		end
 	end)
 	table.insert(MissionService.OnComplete, function(player)
-		ExtLevelService.Add(player, R.Mission, "Auftrag")
+		ExtLevelService.Add(player, R.Mission, "Auftrag", "ExtMissions")
 	end)
 end
 

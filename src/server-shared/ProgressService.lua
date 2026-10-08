@@ -327,6 +327,8 @@ end
 -- Dauerhafte Werte (Kills, Deaths, Assists, Headshots, Damage, ShotsFired, ShotsHit, Revives,
 -- Plants, Defuses, Matches, Wins, Losses, RoundsWon, Kills_<AgentId>). Wird gebündelt gesynct.
 local dirty = {}
+-- Rückrufe function(player, key, value) nach jeder Änderung einer Statistik (z.B. Erfolge)
+ProgressService.OnStat = {}
 
 function ProgressService.AddStat(player, key, amount)
 	local profile = profiles[player]
@@ -336,6 +338,12 @@ function ProgressService.AddStat(player, key, amount)
 	profile.Stats = profile.Stats or {}
 	profile.Stats[key] = (profile.Stats[key] or 0) + (amount or 1)
 	dirty[player] = true
+	for _, callback in ProgressService.OnStat do
+		local ok, err = pcall(callback, player, key, profile.Stats[key])
+		if not ok then
+			warn("ProgressService.OnStat: " .. tostring(err))
+		end
+	end
 end
 
 -- ---------- Match-Abrechnung ----------
