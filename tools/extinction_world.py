@@ -2181,6 +2181,26 @@ class World:
         b.add("Stands", "Stand_Red", (2, 2, 2), f(5.2, 2.5, -5.2), (200, 60, 60), "SmoothPlastic", angles=(0, self.yaw_to(1, 0), 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
 
+    def kit_vendor(self):
+        """Kit-Händler auf dem Platz direkt westlich vom Spawn-Ring: Tisch mit Kisten, grünes Schild KITS, Händler mit Mütze
+        (Punkt Kits: KitService). Blickt zur Platzmitte. Ohne Zufall (ändert die Welt nicht)."""
+        b = self.b
+        f, box = self.frame(-14.0, 0.0, self.yaw_to(1, 0))  # lokal -Z = zur Platzmitte
+        green, wood, dark = (70, 150, 90), (120, 92, 62), (44, 46, 48)
+        box("Cover", "KitTable", (7, 0.4, 2.2), (0, 3, -1.4), wood, "WoodPlanks")
+        for lx in (-3.1, 3.1):
+            box("Decor", "KitTableLeg", (0.4, 2.8, 1.8), (lx, 1.4, -1.4), dark, "Metal")
+        for lx, col in ((-2.2, green), (0, (200, 170, 70)), (2.2, (90, 130, 190))):
+            box("Decor", "KitBox", (1.6, 1.1, 1.3), (lx, 3.75, -1.4), col, "SmoothPlastic")
+            box("Decor", "KitBoxBand", (0.3, 1.15, 1.35), (lx, 3.75, -1.4), (240, 220, 120), "SmoothPlastic")
+        for lx in (-3.6, 3.6):
+            box("Decor", "KitPole", (0.35, 9, 0.35), (lx, 4.5, 1.6), dark, "Metal")
+        box("Decor", "KitAwning", (8, 0.25, 4.4), (0, 9, -0.2), green, "Fabric", extra=(-8, 0, 0))
+        b.sign("KitSign", (5.4, 1.6, 0.25), f(0, 7.6, 1.5), "KITS", green, (245, 245, 235), angles=(0, self.yaw_to(1, 0), 0))
+        self.npc_figure(box, 0, 0.6, jacket=(60, 120, 76), pants=(40, 42, 48), cap=(46, 96, 60))
+        b.add("Stands", "Kits", (2, 2, 2), f(0, 2.5, -4), green, "SmoothPlastic", angles=(0, self.yaw_to(1, 0), 0),
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+
     def npc_figure(self, box, lx, lz, jacket, pants, cap=None, skin=(196, 156, 126)):
         """Stehende Figur (Händler, Fahrer) im Rahmen box, Blick nach lokal -Z: Beine, Körper, Arme, Kopf, Mütze mit Schirm.
         Ohne Zufall (ändert die Welt nicht)."""
@@ -4141,6 +4161,7 @@ def build(bm):
     # Mitte: Safe Zone, dann die besonderen Orte (belegen ihre Fläche, bevor die Straßen Häuser bekommen)
     w.camp()
     w.schieber()  # Schwarzmarkt in der Weststraße (ohne Zufall)
+    w.kit_vendor()  # Kit-Händler am Spawn (ohne Zufall)
     w.occupied.append((0, 0, 168))
     (ax, az), (bx, bz) = AUTOBAHN
     w.corridors.append((ax - 40, az, bx + 60, bz, AUTOBAHN_W + 16))
@@ -4354,7 +4375,7 @@ def build(bm):
     return w
 
 
-FRESH_SIGNS = ("RestStopSign", "PriceSign", "HaltSign", "BarracksSign")
+FRESH_SIGNS = ("RestStopSign", "PriceSign", "HaltSign", "BarracksSign", "KitSign")
 
 
 def weather_signs(bm, b, rng):

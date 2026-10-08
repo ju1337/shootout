@@ -27,6 +27,7 @@ local EconomyService = require(ServerShared.EconomyService)
 local TradeService = require(ServerShared.TradeService)
 local CrateService = require(ServerShared.CrateService)
 local InventoryService = require(ServerShared.InventoryService)
+local KitService = require(ServerShared.KitService)
 local LootService = require(ServerShared.LootService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
@@ -57,6 +58,7 @@ EconomyService.Init() -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und
 TradeService.Init() -- Tauschen zwischen Spielern im Hub und im Markt
 CrateService.Init() -- Kisten öffnen (Waffen-Kiste) im Markt
 InventoryService.Init() -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
+KitService.Init() -- Kit-Händler am Spawn im Camp (Starter Kit usw.)
 LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
 AgentService.Init()
 AdminService.Init(ModeManager)

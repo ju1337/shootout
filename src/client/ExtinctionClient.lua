@@ -36,6 +36,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
+local KitConfig = require(Shared.KitConfig)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local AchievementConfig = require(Shared.AchievementConfig)
 local TitleConfig = require(Shared.TitleConfig)
@@ -1113,7 +1114,7 @@ end
 
 -- Alle Fenster (Menü-Reiter, Stände, Lager, Beute, Reisen, Versteck) im selben halbtransparenten Rahmen; nur die
 -- Reiter haben die Seitenleiste. Fenster mit festem Aufbau (FIXED_WINDOWS) bekommen ihre alte Inhaltsgröße, mittig.
-local FIXED_WINDOWS = { Travel = true, Hideout = true }
+local FIXED_WINDOWS = { Travel = true, Hideout = true, Kits = true }
 local function newWindow(kind, title, subtitle)
 	closeWindow()
 	windowGui.Enabled = true
@@ -1922,6 +1923,55 @@ local function openTravel(pointName)
 	function win.Refresh() end
 end
 
+-- KITS: beim Kit-Händler am Spawn (Punkt KitConfig.Point) Kits abholen, je Kit eine Wartezeit (Attribut "Kits")
+local function openKits(part)
+	local C = UITheme.MenuColors
+	local win = newWindow("Kits", "KITS", "FREE GEAR  ·  EVERY KIT HAS ITS OWN COOLDOWN")
+	win.Part = part
+	local views = {}
+	for index, kit in KitConfig.List do
+		local column, row = (index - 1) % 2, (index - 1) // 2
+		local x, y = column * 552, 10 + row * 150
+		local chunky = UITheme.Chunky({ Name = "Kit_" .. kit.Id, Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(536, 78),
+			Color = kit.Color:Lerp(Color3.new(0, 0, 0), 0.55), StrokeColor = kit.Color, Text = kit.Name, TextSize = 22,
+			ZIndex = 5 }, win.Body, function()
+			sendAction("ClaimKit", kit.Id)
+		end)
+		local info = label({ Position = UDim2.fromOffset(x + 4, y + 84), Size = UDim2.fromOffset(528, 18),
+			Text = string.upper(kit.Description), TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5,
+			TextXAlignment = Enum.TextXAlignment.Left }, win.Body)
+		info.TextTruncate = Enum.TextTruncate.AtEnd
+		views[kit] = chunky
+	end
+	function win.Refresh()
+		local ok, claimed = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Kits") or "{}")
+		claimed = ok and type(claimed) == "table" and claimed or {}
+		local now = os.time()
+		for kit, chunky in views do
+			local state
+			if #kit.Items == 0 then
+				state = "COMING SOON"
+			elseif kit.Pass and player:GetAttribute("Pass_" .. kit.Pass) ~= true then
+				state = kit.Pass .. " ONLY"
+			else
+				local remaining = KitConfig.Remaining(kit, claimed, now)
+				state = remaining > 0 and KitConfig.FormatTime(remaining) or "CLAIM"
+			end
+			chunky.Label.Text = kit.Name .. "  ·  " .. state
+		end
+	end
+	win.Refresh()
+	-- Wartezeiten herunterzählen, solange das Fenster offen ist
+	task.spawn(function()
+		while window == win do
+			task.wait(1)
+			if window == win then
+				win.Refresh()
+			end
+		end
+	end)
+end
+
 -- ---------- SQUAD: bis zu 4 Spieler, in der offenen Welt ein Team ----------
 
 local pendingInvite = nil -- { Name, UserId, Until } (Einladung, angenommen wird im Squad-Fenster)
@@ -2499,6 +2549,7 @@ local BUBBLES = {
 	Travel = { Icon = "Route" },
 	Hideout = { Icon = "House" },
 	Stand_Red = { Icon = "RedPoints" },
+	[KitConfig.Point] = { Icon = "Kit" },
 }
 local bubbles = {}
 
@@ -2534,6 +2585,15 @@ local function buildSymbol(parent, kind, zIndex)
 		end
 		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 3), Size = UDim2.fromOffset(6, 5),
 			BackgroundColor3 = Color3.fromRGB(190, 192, 196) }, crate) -- Verschluss
+	elseif kind == "Kit" then
+		local color = Color3.fromRGB(96, 200, 120)
+		local present = box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 16), Size = UDim2.fromOffset(28, 22),
+			BackgroundColor3 = color })
+		UITheme.Corner(present, 3)
+		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(32, 8),
+			BackgroundColor3 = color:Lerp(Color3.new(1, 1, 1), 0.2) }) -- Deckel
+		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(6, 28),
+			BackgroundColor3 = Color3.fromRGB(240, 220, 120) }) -- Band
 	elseif kind == "House" then
 		local wall = Color3.fromRGB(200, 160, 110)
 		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20), Size = UDim2.fromOffset(26, 18),
@@ -2654,6 +2714,23 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
+	-- Kit-Händler am Spawn (kann später geladen werden)
+	local function kitPrompt(kitPart)
+		if not kitPart:IsA("BasePart") or kitPart.Name ~= KitConfig.Point or kitPart:FindFirstChild("KitPrompt") then
+			return
+		end
+		local prompt = make("ProximityPrompt", { Name = "KitPrompt", ActionText = "Open", ObjectText = "KITS",
+			KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
+			RequiresLineOfSight = false, Enabled = inExtinction() }, kitPart)
+		prompt.Triggered:Connect(function()
+			openKits(kitPart)
+		end)
+		table.insert(prompts, prompt)
+	end
+	for _, kitPart in stands:GetChildren() do
+		kitPrompt(kitPart)
+	end
+	stands.ChildAdded:Connect(kitPrompt)
 	-- Versteck (eigenes Haus im Camp)
 	for _, hideoutPart in stands:GetChildren() do
 		if hideoutPart:IsA("BasePart") and hideoutPart.Name == HideoutConfig.Point then
@@ -2689,7 +2766,8 @@ end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
 local function standDistanceCheck()
-	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel" and window.Kind ~= "Hideout") then
+	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel" and window.Kind ~= "Hideout"
+		and window.Kind ~= "Kits") then
 		return
 	end
 	local character = player.Character
@@ -3237,6 +3315,11 @@ function ExtinctionClient.Init()
 			end
 		end)
 	end
+	player:GetAttributeChangedSignal("Kits"):Connect(function()
+		if window and window.Kind == "Kits" and window.Refresh then
+			window.Refresh()
+		end
+	end)
 	player:GetAttributeChangedSignal("Hideout"):Connect(function()
 		if window and window.Kind == "Hideout" and window.Refresh then
 			window.Refresh()
