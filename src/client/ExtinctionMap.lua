@@ -37,6 +37,7 @@ local DROP = Color3.fromRGB(255, 170, 60)
 local CONVOY = Color3.fromRGB(236, 96, 64)
 local HORDE = Color3.fromRGB(200, 90, 220)
 local HELI = Color3.fromRGB(255, 120, 40)
+local BOSS = Color3.fromRGB(190, 30, 30)
 local CONVOY_STATES = { Waiting = "KONVOI WARTET", Driving = "KONVOI", Halted = "KONVOI GESTOPPT", Loot = "KONVOI-LADUNG" }
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
@@ -311,6 +312,30 @@ local function update()
 				or "HELI-WRACK"
 		end
 	end
+	-- Bosse: dunkelrote Raute mit Name, tot mit Zeit bis zur Rückkehr
+	for _, bossInfo in decode(map, "Bosses") do
+		local id = "Boss" .. tostring(bossInfo.Id)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "Boss", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(14, 14), Rotation = 45,
+				BackgroundColor3 = BOSS, BorderSizePixel = 0, ZIndex = 9 }, markers)
+			UITheme.Stroke(view, Color3.new(1, 1, 1), 1.5, 0.1)
+			local caption = label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 6), Rotation = -45,
+				Size = UDim2.fromOffset(160, 14), TextSize = 11, Font = F.Display, TextColor3 = Color3.fromRGB(255, 110, 100),
+				TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, view)
+			UITheme.Outline(caption)
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, bossInfo.X or 0, bossInfo.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
+		view.BackgroundColor3 = bossInfo.Alive and BOSS or Color3.fromRGB(80, 70, 70)
+		local text = view:FindFirstChild("Text")
+		if text then
+			local left = math.max(0, math.floor((tonumber(bossInfo.RespawnAt) or now) - now))
+			text.Text = tostring(bossInfo.Name) .. ((not bossInfo.Alive and left > 0) and string.format(" %d:%02d", left // 60, left % 60) or "")
+		end
+	end
 	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do
 		local color = ACTIVITY_COLORS[act.Kind]
@@ -528,6 +553,7 @@ function ExtinctionMap.Init()
 		{ "Dot", CONVOY, "KONVOI" },
 		{ "Square", HORDE, "HORDEN-KISTE" },
 		{ "Dot", HELI, "HELI-WRACK" },
+		{ "Diamond", BOSS, "BOSS (BEWACHT SEIN GEBÄUDE)" },
 		{ "Square", ACTIVITY_COLORS.Cache, "VORRATSLAGER" },
 		{ "Dot", ACTIVITY_COLORS.Radio, "FUNKGERÄT" },
 		{ "Square", RED, "X  DEINE TASCHE" },

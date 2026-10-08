@@ -98,6 +98,16 @@ function AdminService.Init(manager)
 			local crash = serverShared("HeliCrashService").Start(position)
 			return crash and ("Heli stürzt ab" .. (position and " (40 Studs vor dir)" or "")) or "Es läuft schon ein Heli-Absturz."
 		end,
+		ExtBosses = function()
+			local BossService = serverShared("BossService")
+			local names = {}
+			for id, boss in BossService.All() do
+				if BossService.SpawnNow(id) then
+					table.insert(names, boss.Config.Name)
+				end
+			end
+			return #names > 0 and ("Boss da: " .. table.concat(names, ", ")) or "Kein Boss (Ort fehlt auf der Karte?)"
+		end,
 		ExtConvoy = function()
 			local convoy = serverShared("ConvoyService").Start()
 			return convoy and ("Konvoi gestartet: " .. tostring(convoy.Path and convoy.Path.Name or "")) or "Es fährt schon ein Konvoi."

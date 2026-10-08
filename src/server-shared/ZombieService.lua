@@ -845,6 +845,11 @@ function ZombieService.Scream(model, target)
 	end
 end
 
+-- Zustand eines Zombies (Damage, Coins, Speed, Kind …) zum Anpassen, z.B. für Bosse (BossService); nil = kein Zombie
+function ZombieService.Info(model)
+	return zombies[model]
+end
+
 -- Anzahl lebender Zombies (für Tests und das Admin-Panel)
 function ZombieService.Count()
 	return count

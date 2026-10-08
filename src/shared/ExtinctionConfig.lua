@@ -467,6 +467,44 @@ ExtinctionConfig.Airdrop = {
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
 }
 
+-- ---------- Bosse (BossService) ----------
+-- Große Zombies, die ein Gebäude bewachen (Place = Ort aus der Gruppe Places der Karte, Teil Place_<Ort>). Ein Boss erscheint,
+-- sobald ein Spieler näher als WakeRange ist, und nach dem Tod erst nach RespawnTime Sekunden wieder. Kind = Zombie-Art als
+-- Grundlage, dazu Health, Scale (Größe), Damage (pro Schlag), Speed, Color (Kittel/Körper).
+-- Fähigkeit "Syringe": alle AbilityEvery Sekunden wirft er eine Spritze auf den nächsten Spieler in AbilityRange: AbilityDamage
+-- Schaden und SlowFactor Tempo für SlowTime Sekunden.
+-- Beute in der Leiche (Tasche am Boden): Always immer, dazu jede Zeile aus Chances mit ihrer Chance; Coins für den Killer.
+-- Stand für die Karte: Attribut "Bosses" [{ Id, Name, X, Z, Alive, RespawnAt }].
+ExtinctionConfig.Bosses = {
+	Chirurg = {
+		Name = "DER CHIRURG",
+		Place = "Krankenhaus",
+		Kind = "Brute",
+		Health = 1600,
+		Scale = 1.6,
+		Damage = 22,
+		Speed = 13,
+		Color = Color3.fromRGB(214, 218, 212),
+		WakeRange = 220,
+		RespawnTime = 25 * 60,
+		Ability = "Syringe",
+		AbilityEvery = 6,
+		AbilityRange = 45,
+		AbilityDamage = 12,
+		SlowFactor = 0.6,
+		SlowTime = 3,
+		Coins = 400,
+		Always = { { "Medkit", 2 }, { "Bandage", 4 } },
+		Chances = {
+			{ Chance = 0.05, Id = "AntiZombie", Count = 3 },
+			{ Chance = 0.2, Id = "Medkit", Count = 2 },
+			{ Chance = 0.12, Id = "Adrenaline", Count = 2 },
+			{ Chance = 0.25, Id = "HeavyVest", Count = 1 },
+			{ Chance = 0.04, Id = "Att_FastMag", Count = 1 },
+		},
+	},
+}
+
 -- ---------- Heli-Absturz (HeliCrashService) ----------
 -- Alle MinInterval bis MaxInterval Sekunden (zuerst nach FirstDelay, nur mit MinPlayers draußen) stürzt ein Militär-Heli ab:
 -- er fliegt FlyTime Sekunden mit Rauchfahne über die Karte (Ziel unbekannt) und schlägt irgendwo ein. Das Wrack brennt BurnTime

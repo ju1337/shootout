@@ -45,6 +45,7 @@ local HideoutService = require(ServerShared.HideoutService)
 local ThrowableService = require(ServerShared.ThrowableService)
 local HordeService = require(ServerShared.HordeService)
 local HeliCrashService = require(ServerShared.HeliCrashService)
+local BossService = require(ServerShared.BossService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -557,6 +558,19 @@ function Extinction.Init(modeManager)
 		Map = map,
 		InSafeZone = Extinction.InSafeZone,
 		PickTarget = AirdropService.PickTarget,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+
+	-- Bosse an ihren Gebäuden (Chirurg am Krankenhaus)
+	BossService.Init({
+		Map = map,
+		InSafeZone = Extinction.InSafeZone,
 		Players = function()
 			local list = {}
 			for player in members do
