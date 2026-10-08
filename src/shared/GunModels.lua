@@ -365,6 +365,7 @@ end
 -- Marker im Modell (kleine Teile, nur die Mitte zählt; wie das Modell beim Import gedreht ist, ist egal):
 --   Point_Mount       – sitzt auf der Waffe (Mündung bzw. Schiene)
 --   Point_Muzzle      – Mündungs-Aufsätze: vorderes Ende, gibt die Laufrichtung
+--   Point_Front       – Griffe: ein Punkt weiter vorn auf der Schiene, gibt die Laufrichtung (Griff hängt unter dem Handschutz)
 --   Point_SightRear / Point_SightFront – Visiere: Visierlinie (beim Zielen liegt sie in der Bildmitte)
 -- Teile mit Glass im Namen werden Glas, mit Neon oder Reticle leuchten sie. Attribut EyeRelief am Modell (Visiere):
 -- Abstand Auge - Visier beim Zielen (Standard 0,45).
@@ -399,8 +400,8 @@ local function attachmentSource(id)
 		local up = upward.Magnitude > 1e-3 and upward.Unit or Vector3.yAxis
 		local back = -forward
 		frame = CFrame.fromMatrix(points.Mount, up:Cross(back), up, back)
-	elseif points.Muzzle and (points.Muzzle - points.Mount).Magnitude > 1e-3 then
-		frame = CFrame.lookAt(points.Mount, points.Muzzle)
+	elseif (points.Muzzle or points.Front) and ((points.Muzzle or points.Front) - points.Mount).Magnitude > 1e-3 then
+		frame = CFrame.lookAt(points.Mount, points.Muzzle or points.Front)
 	else
 		return nil
 	end
@@ -414,6 +415,18 @@ local function attachmentAsset(model, id, mount)
 		return false
 	end
 	for _, original in data.Parts do
+		if string.find(original.Name, "Reticle", 1, true) then
+			-- Leuchtpunkt: ein sauberer, runder Punkt in der Mitte des Teils (wie beim Rotpunkt der Waffen)
+			local dot = Instance.new("Part")
+			dot.Name = "Att" .. id .. "_Neon_Reticle"
+			dot.Shape = Enum.PartType.Ball
+			dot.Size = Vector3.new(0.012, 0.012, 0.012)
+			dot.Color = RETICLE
+			dot.Material = Enum.Material.Neon
+			dot.CFrame = CFrame.new(mount) * data.Frame:ToObjectSpace(CFrame.new(original.Position))
+			dot.Parent = model
+			continue
+		end
 		local part = original:Clone()
 		for _, child in part:GetDescendants() do
 			if child:IsA("BasePart") or child:IsA("JointInstance") or child:IsA("WeldConstraint") then
@@ -524,7 +537,16 @@ local function addAttachments(model, weaponName, attachments)
 	end
 	if long and info.LeftHand then
 		local hand = info.LeftHand
-		if has.VerticalGrip then
+		-- Griff als eigenes 3D-Modell (Assets.Attachments), Point_Mount unter dem Handschutz an der linken Hand
+		local gripModel = false
+		for _, id in { "VerticalGrip", "AngledGrip" } do
+			if has[id] and not gripModel and assetData[weaponName] then
+				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z))
+			end
+		end
+		if gripModel then
+			-- schon angebaut
+		elseif has.VerticalGrip then
 			attachPart(model, "AttGrip", V(0.15, 0.48, 0.17), CFrame.new(hand + V(0.03, -0.32, 0.12)))
 		elseif has.AngledGrip then
 			attachPart(model, "AttAngledGrip", V(0.14, 0.34, 0.42), CFrame.new(hand + V(0.03, -0.22, 0.05))

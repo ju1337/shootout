@@ -43,7 +43,7 @@ Die `SMG` ist bereits fertig (MP7 A1, siehe `art/sources/README.md`, erzeugt mit
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
 (Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr
-(`python3 tools/rifle_glb.py`, Ergebnis `art/sources/Rifle.glb`): Teile benennen, Marker setzen, Größe und Richtung,
+(`tools/attachments/ar15_v2.py`, Ergebnis `art/sources/Rifle.glb`): Teile benennen, Marker setzen, Größe und Richtung,
 Magazin einpassen, Visier freischneiden. Werkzeuge dafür: `tools/fbx_read.py` (FBX lesen ohne Blender) und
 `tools/mesh_ops.py` (Schneiden, Löcher schließen, GLB mit Texturen schreiben).
 
@@ -66,7 +66,7 @@ Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff
 
 | Name im Modell | Waffe | Länge | Visier | Bewegliche Gruppen | Besonderes |
 |---|---|---|---|---|---|
-| `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (Holo-Visier, Visierlinie 1,08) |
+| `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (AR-15 ohne Aufsätze, Kimme/Korn als Visierlinie; Holo-Visier als Aufsatz) |
 | `SMG` | Maschinenpistole | 2,38 | 0,81 | Magazine, Bolt | |
 | `Shotgun` | Schrotflinte | 3,95 | 0,76 | Pump, Shell | Shell = Patrone, nur beim Nachladen sichtbar |
 | `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | |

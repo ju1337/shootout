@@ -502,9 +502,9 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   bestimmen Animationsgruppen, Skin-Zonen, Leuchtpunkte und Glas; epische/legendäre Skins können eigene Texturen
   bekommen (Ordner `Skins`). Fehlt etwas, bleibt die Quader-Waffe und Studio sagt im Output, was fehlt. Vorlagen
   für Blender (`.obj`) und Studio (`.rbxmx`) in `art/templates/Weapons`. Fertige Modelle aus anderen Quellen
-  (z.B. Meshy-FBX) bereiten Skripte vor: `tools/rifle_glb.py` macht aus Gewehr und Magazin das Sturmgewehr
-  `art/sources/Rifle.glb` (Magazin eingepasst, Holo-Visier freigeschnitten, Korn umgelegt, Spannhebel als `Bolt`,
-  Marker gesetzt); dafür `tools/fbx_read.py` (FBX ohne Blender lesen) und `tools/mesh_ops.py` (schneiden, Löcher
+  (z.B. Meshy-GLB) bereiten Skripte vor: `tools/attachments/ar15_v2.py` macht das Sturmgewehr `art/sources/Rifle.glb`
+  (AR-15 ohne Aufsätze, Magazin als `Magazine`, Marker gesetzt; Aufsätze siehe `tools/attachments/README.md`), das alte
+  Gewehr mit fest eingebautem Holo-Visier liegt noch als `art/sources/Rifle_alt.glb` (`tools/rifle_glb.py`); dafür `tools/fbx_read.py` (FBX ohne Blender lesen) und `tools/mesh_ops.py` (schneiden, Löcher
   schließen, GLB mit Texturen schreiben)
 - **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
   Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
