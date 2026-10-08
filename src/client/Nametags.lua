@@ -1,9 +1,12 @@
 -- Nametags (ModuleScript, nur Client)
 -- Eigene Namensschilder statt der Roblox-Namen (die Gegner durch Wände verraten würden):
---   Hub/Markt: alle Spieler mit Prestige-Abzeichen (PrestigeEmblem: Symbol je Stufe), Name und Rang, darüber
---             ihr RAP (Guthaben + Wert der handelbaren Skins, RapConfig) in der Farbe seiner Stufe
---             (auch das eigene Schild, sobald man sich von außen sieht)
+--   Hub/Markt und Safe Zones in Extinction: alle Spieler (dort wird nicht gekämpft) mit dem vollen Schild
+--             (auch das eigene, sobald man sich von außen sieht)
 --   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Verbündeten-Blau (wie im HUD), Gegner ohne Namen
+-- Aussehen wie die Kacheln von Inventar und Hotbar: flache, dunkle, halbdurchsichtige Kachel mit knapper Rundung,
+-- ohne Rand, unten ein feiner Strich in Prestige-Farbe (wie der Seltenheits-Strich der Items). Darin links das
+-- Prestige-Abzeichen mit Level, rechts oben Team-Rang (DEV, VIP …) als kleines Farbschild und der Name, darunter
+-- eine Zeile: Rang-Abzeichen + Rang · RAP (Symbol + kurze Zahl in der Farbe der RAP-Stufe) · gewählter Titel.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,10 +24,15 @@ local Modes = require(Shared.Modes)
 local TeamCheck = require(Shared.TeamCheck)
 
 local player = Players.LocalPlayer
+local C = UITheme.Colors
+local F = UITheme.Fonts
+local make = UITheme.Make
 
 local Nametags = {}
 
 local TAG_NAME = "ShootoutNametag"
+local TILE = Color3.fromRGB(14, 15, 18) -- wie die Kacheln im Inventar (ExtinctionClient Inv.TILE)
+local EMBLEM = 38
 
 local function removeTag(model)
 	local tag = model and model:FindFirstChild(TAG_NAME)
@@ -34,150 +42,103 @@ local function removeTag(model)
 end
 
 local emblems = {} -- [Schild] = PrestigeEmblem (wird beim Entfernen des Schilds gelöscht)
+local parts = {} -- [Schild] = Teile des Schilds (siehe buildTag)
 
-local function newLabel(parent, props)
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.TextScaled = true
-	label.TextStrokeTransparency = 0.4
-	for key, value in props do
-		label[key] = value
-	end
-	label.Parent = parent
+local function text(parent, props)
+	props.BackgroundTransparency = 1
+	props.TextScaled = false
+	props.AutomaticSize = props.AutomaticSize or Enum.AutomaticSize.X
+	props.TextXAlignment = Enum.TextXAlignment.Left
+	props.TextColor3 = props.TextColor3 or C.Text
+	local label = make("TextLabel", props, parent)
+	UITheme.Outline(label)
 	return label
 end
 
-local parts = {} -- [Schild] = { Title, Subtitle, SubRow, RankHolder, RankEmblem, Emblem, Bar, Row, Rap, RapText, RapStroke }
+local function row(parent, name, order, padding)
+	local frame = make("Frame", { Name = name, Size = UDim2.new(), AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundTransparency = 1, LayoutOrder = order }, parent)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, padding), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+	return frame
+end
 
--- Schild (ohne Kasten): links das Prestige-Abzeichen mit Level, rechts der Name groß, darunter ein kurzer
--- Strich in Prestige-Farbe und der Rang in Rangfarbe. Alles mittig über dem Kopf, Schrift mit dunkler Kontur.
+-- kleiner Punkt als Trenner in der Info-Zeile (gezeichnet, nicht jede Schrift hat "·")
+local function dot(parent, order)
+	local holder = make("Frame", { Name = "Dot" .. order, Size = UDim2.fromOffset(7, 12), BackgroundTransparency = 1,
+		LayoutOrder = order }, parent)
+	local d = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(3, 3), BackgroundColor3 = C.Muted, BorderSizePixel = 0 }, holder)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, d)
+	return holder
+end
+
+-- RAP kurz: 950, 12.4K, 3.1M
+function Nametags.ShortNumber(n)
+	n = math.floor(n or 0)
+	local function short(value, suffix)
+		local s = string.format("%.1f", value)
+		return (string.gsub(s, "%.0$", "")) .. suffix
+	end
+	if n >= 1e6 then
+		return short(math.floor(n / 1e5) / 10, "M")
+	elseif n >= 1e4 then
+		return short(math.floor(n / 1e2) / 10, "K")
+	end
+	return UITheme.FormatNumber(n)
+end
+
 local function buildTag(model, head)
-	local tag = Instance.new("BillboardGui")
-	tag.Name = TAG_NAME
-	tag.Size = UDim2.new(0, 360, 0, 70)
-	tag.StudsOffset = Vector3.new(0, 2.9, 0)
-	tag.MaxDistance = 120
-	tag.AlwaysOnTop = false
-	tag.LightInfluence = 0
+	local tag = make("BillboardGui", { Name = TAG_NAME, Size = UDim2.fromOffset(340, 64), StudsOffset = Vector3.new(0, 2.6, 0),
+		MaxDistance = 120, AlwaysOnTop = false, LightInfluence = 0 }, nil)
 
-	-- dezente, durchsichtige Karte mit feinem Rand um Abzeichen und Text
-	local row = Instance.new("Frame")
-	row.Name = "Row"
-	row.AnchorPoint = Vector2.new(0.5, 0.5)
-	row.Position = UDim2.fromScale(0.5, 0.5)
-	row.Size = UDim2.new(0, 0, 0, 0)
-	row.AutomaticSize = Enum.AutomaticSize.XY
-	row.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
-	row.BackgroundTransparency = 0.6
-	row.Parent = tag
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = row
-	local edge = Instance.new("UIStroke")
-	edge.Color = Color3.new(1, 1, 1)
-	edge.Transparency = 0.8
-	edge.Parent = row
-	local inset = Instance.new("UIPadding")
-	inset.PaddingLeft = UDim.new(0, 4)
-	inset.PaddingRight = UDim.new(0, 12)
-	inset.PaddingTop = UDim.new(0, 2)
-	inset.PaddingBottom = UDim.new(0, 2)
-	inset.Parent = row
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.Padding = UDim.new(0, 6)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = row
+	-- Kachel unten mittig im Schild (wächst nach oben und zur Seite)
+	local card = make("Frame", { Name = "Card", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
+		Size = UDim2.new(), AutomaticSize = Enum.AutomaticSize.XY, BackgroundColor3 = TILE, BackgroundTransparency = 0.35,
+		BorderSizePixel = 0 }, tag)
+	UITheme.Corner(card, 3)
+	local content = row(card, "Row", 1, 7)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 4),
+		PaddingBottom = UDim.new(0, 6) }, content)
+	-- Prestige-Strich unten (an den Enden um die Rundung eingerückt)
+	local strip = make("Frame", { Name = "Strip", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 3, 1, 0),
+		Size = UDim2.new(1, -6, 0, 2), BorderSizePixel = 0, ZIndex = 2 }, card)
 
-	local holder = Instance.new("Frame")
-	holder.Name = "Emblem"
-	holder.Size = UDim2.new(0, 58, 0, 58)
-	holder.BackgroundTransparency = 1
-	holder.LayoutOrder = 1
-	holder.Parent = row
-	emblems[tag] = PrestigeEmblem.new(holder, 58)
+	local holder = make("Frame", { Name = "Emblem", Size = UDim2.fromOffset(EMBLEM, EMBLEM), BackgroundTransparency = 1,
+		LayoutOrder = 1 }, content)
+	emblems[tag] = PrestigeEmblem.new(holder, EMBLEM)
 
-	local column = Instance.new("Frame")
-	column.Name = "Text"
-	column.Size = UDim2.new(0, 0, 0, 0)
-	column.AutomaticSize = Enum.AutomaticSize.XY
-	column.BackgroundTransparency = 1
-	column.LayoutOrder = 2
-	column.Parent = row
-	local lines = Instance.new("UIListLayout")
-	lines.SortOrder = Enum.SortOrder.LayoutOrder
-	lines.Padding = UDim.new(0, 2)
-	lines.Parent = column
-	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 26), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 26, Font = Enum.Font.BuilderSansExtraBold, TextXAlignment = Enum.TextXAlignment.Left, RichText = true,
-		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.35, LayoutOrder = 1 })
-	local bar = Instance.new("Frame")
-	bar.Name = "Bar"
-	bar.Size = UDim2.new(0, 34, 0, 2)
-	bar.BorderSizePixel = 0
-	bar.LayoutOrder = 2
-	bar.Parent = column
-	-- Unterzeile: kleines Rang-Abzeichen + Rang (und Titel)
-	local subRow = Instance.new("Frame")
-	subRow.Name = "SubRow"
-	subRow.Size = UDim2.new(0, 0, 0, 0)
-	subRow.AutomaticSize = Enum.AutomaticSize.XY
-	subRow.BackgroundTransparency = 1
-	subRow.LayoutOrder = 3
-	subRow.Parent = column
-	local subLayout = Instance.new("UIListLayout")
-	subLayout.FillDirection = Enum.FillDirection.Horizontal
-	subLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	subLayout.Padding = UDim.new(0, 3)
-	subLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	subLayout.Parent = subRow
-	local rankHolder = Instance.new("Frame")
-	rankHolder.Name = "Rank"
-	rankHolder.Size = UDim2.new(0, 20, 0, 20)
-	rankHolder.BackgroundTransparency = 1
-	rankHolder.LayoutOrder = 1
-	rankHolder.Parent = subRow
-	local rankEmblem = RankEmblem.new(rankHolder, 20)
-	local subtitle = newLabel(subRow, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 15, Font = Enum.Font.BuilderSansBold, TextXAlignment = Enum.TextXAlignment.Left,
-		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.45, LayoutOrder = 2, RichText = true })
+	local column = make("Frame", { Name = "Text", Size = UDim2.new(), AutomaticSize = Enum.AutomaticSize.XY,
+		BackgroundTransparency = 1, LayoutOrder = 2 }, content)
+	make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 1),
+		VerticalAlignment = Enum.VerticalAlignment.Center }, column)
 
-	-- RAP über der Karte (nur Hub und Markt): Raute + Zahl in der Farbe der RAP-Stufe
-	local rap = Instance.new("Frame")
-	rap.Name = "Rap"
-	rap.AnchorPoint = Vector2.new(0.5, 0)
-	rap.Position = UDim2.fromScale(0.5, 0)
-	rap.Size = UDim2.new(0, 0, 0, 24)
-	rap.AutomaticSize = Enum.AutomaticSize.X
-	rap.BackgroundColor3 = Color3.fromRGB(12, 16, 22)
-	rap.BackgroundTransparency = 0.45
-	rap.Visible = false
-	rap.Parent = tag
-	local rapCorner = Instance.new("UICorner")
-	rapCorner.CornerRadius = UDim.new(0, 12)
-	rapCorner.Parent = rap
-	local rapStroke = Instance.new("UIStroke")
-	rapStroke.Thickness = 1
-	rapStroke.Transparency = 0.35
-	rapStroke.Parent = rap
-	local rapPad = Instance.new("UIPadding")
-	rapPad.PaddingLeft = UDim.new(0, 7)
-	rapPad.PaddingRight = UDim.new(0, 10)
-	rapPad.Parent = rap
-	local rapLayout = Instance.new("UIListLayout")
-	rapLayout.FillDirection = Enum.FillDirection.Horizontal
-	rapLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	rapLayout.Padding = UDim.new(0, 5)
-	rapLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	rapLayout.Parent = rap
-	UITheme.RapIcon(rap, 15, { LayoutOrder = 1 })
-	local rapText = newLabel(rap, { Name = "Amount", Size = UDim2.new(0, 0, 0, 20), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 19, Font = Enum.Font.BuilderSansExtraBold, TextStrokeColor3 = Color3.fromRGB(8, 10, 14),
-		TextStrokeTransparency = 0.4, LayoutOrder = 2 })
+	-- oben: Team-Rang als Farbschild + Name
+	local top = row(column, "Top", 1, 5)
+	local staff = make("TextLabel", { Name = "Staff", Size = UDim2.fromOffset(0, 15), AutomaticSize = Enum.AutomaticSize.X,
+		TextSize = 11, Font = F.Display, TextColor3 = C.PrimaryText, BorderSizePixel = 0, Text = "", Visible = false,
+		LayoutOrder = 1 }, top)
+	UITheme.Corner(staff, 3)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, staff)
+	local title = text(top, { Name = "Title", Size = UDim2.fromOffset(0, 21), TextSize = 20, Font = F.Display, RichText = true,
+		LayoutOrder = 2 })
 
-	parts[tag] = { Title = title, Subtitle = subtitle, SubRow = subRow, RankHolder = rankHolder, RankEmblem = rankEmblem,
-		Emblem = holder, Bar = bar, Row = row, Rap = rap, RapText = rapText, RapStroke = rapStroke }
+	-- darunter: Rang · RAP · Titel
+	local info = row(column, "Info", 2, 4)
+	local rankHolder = make("Frame", { Name = "Rank", Size = UDim2.fromOffset(15, 15), BackgroundTransparency = 1,
+		LayoutOrder = 1 }, info)
+	local rankEmblem = RankEmblem.new(rankHolder, 15)
+	local rankText = text(info, { Name = "Subtitle", Size = UDim2.fromOffset(0, 14), TextSize = 12, Font = F.Bold, LayoutOrder = 2 })
+	local rapDot = dot(info, 3)
+	local rapIcon = UITheme.RapIcon(info, 12, { Name = "RapIcon", LayoutOrder = 4 })
+	local rapText = text(info, { Name = "Rap", Size = UDim2.fromOffset(0, 14), TextSize = 12, Font = F.Bold, LayoutOrder = 5 })
+	local titleDot = dot(info, 6)
+	local titleText = text(info, { Name = "PlayerTitle", Size = UDim2.fromOffset(0, 14), TextSize = 12, Font = F.Bold,
+		LayoutOrder = 7 })
+
+	parts[tag] = { Card = card, Strip = strip, Emblem = holder, Staff = staff, Title = title, Info = info,
+		RankHolder = rankHolder, RankEmblem = rankEmblem, RankText = rankText, RapDot = rapDot, RapIcon = rapIcon,
+		RapText = rapText, TitleDot = titleDot, TitleText = titleText }
 	tag.Destroying:Connect(function()
 		emblems[tag] = nil
 		parts[tag] = nil
@@ -187,8 +148,8 @@ local function buildTag(model, head)
 	return tag
 end
 
--- Schild erzeugen bzw. aktualisieren. info: { Name, Color, Subtitle, SubColor, Rank (RankConfig.Get, für das
--- Rang-Abzeichen), Player (für das Prestige-Abzeichen), Rap (Zahl: RAP über der Karte zeigen, nil = keins) }
+-- Schild erzeugen bzw. aktualisieren. info: { Name, Color, Staff (StaffConfig-Rang), Rank (RankConfig.Get),
+-- Player (für Prestige-Abzeichen und -Strich), Rap (Zahl, nil = keins), Title (TitleConfig-Eintrag, nil = keiner) }
 local function setTag(model, info)
 	local head = model:FindFirstChild("Head")
 	if not head then
@@ -201,86 +162,106 @@ local function setTag(model, info)
 		end
 		tag = buildTag(model, head)
 	end
+	-- Instance Streaming: der Kopf kann neu geladen werden, das Schild hängt dann am neuen
+	if tag.Adornee ~= head then
+		tag.Adornee = head
+	end
 	local p = parts[tag]
 	p.Title.Text = info.Name
 	p.Title.TextColor3 = info.Color
-	p.Subtitle.Text = info.Subtitle or ""
-	p.Subtitle.TextColor3 = info.SubColor or Color3.fromRGB(200, 210, 225)
-	p.SubRow.Visible = info.Subtitle ~= nil
-	-- Mit RAP wird das Schild höher: RAP oben, Karte darunter (etwas weiter über dem Kopf)
-	local rap = info.Rap
-	p.Rap.Visible = rap ~= nil
-	tag.Size = UDim2.new(0, 360, 0, rap and 98 or 70)
-	tag.StudsOffset = Vector3.new(0, rap and 3.25 or 2.9, 0)
-	p.Row.Position = rap and UDim2.new(0.5, 0, 1, -35) or UDim2.fromScale(0.5, 0.5)
+	local staff = info.Staff
+	p.Staff.Visible = staff ~= nil
+	if staff then
+		p.Staff.Text = staff.Name
+		p.Staff.BackgroundColor3 = staff.Color
+	end
+
+	local rank, rap, playerTitle = info.Rank, info.Rap, info.Title
+	p.Info.Visible = rank ~= nil or rap ~= nil or playerTitle ~= nil
+	p.RankHolder.Visible = rank ~= nil
+	p.RankText.Visible = rank ~= nil
+	if rank then
+		p.RankEmblem:SetRank(rank)
+		p.RankText.Text = rank.Display
+		p.RankText.TextColor3 = rank.Color
+	end
+	p.RapDot.Visible = rap ~= nil and rank ~= nil
+	p.RapIcon.Visible = rap ~= nil
+	p.RapText.Visible = rap ~= nil
 	if rap then
-		local color = RapConfig.TierColor(rap)
-		p.RapText.Text = UITheme.FormatNumber(rap) .. " RAP"
-		p.RapText.TextColor3 = color
-		p.RapStroke.Color = color
-		p.RapStroke.Thickness = rap >= RapConfig.Tiers[5].Min and 2 or 1
+		p.RapText.Text = Nametags.ShortNumber(rap)
+		p.RapText.TextColor3 = RapConfig.TierColor(rap)
 	end
-	p.RankHolder.Visible = info.Rank ~= nil
-	if info.Rank then
-		p.RankEmblem:SetRank(info.Rank)
+	p.TitleDot.Visible = playerTitle ~= nil and (rank ~= nil or rap ~= nil)
+	p.TitleText.Visible = playerTitle ~= nil
+	if playerTitle then
+		p.TitleText.Text = UITheme.Upper(playerTitle.Name)
+		p.TitleText.TextColor3 = playerTitle.Color
 	end
+
 	-- Ohne Abzeichen (Bots) nur der Name
 	p.Emblem.Visible = info.Player ~= nil
-	p.Bar.Visible = info.Player ~= nil
+	p.Strip.Visible = info.Player ~= nil
 	if info.Player then
 		local level = LevelConfig.Get(info.Player)
 		local emblem = emblems[tag]
 		if not emblem then
 			p.Emblem:ClearAllChildren()
-			emblem = PrestigeEmblem.new(p.Emblem, 58)
+			emblem = PrestigeEmblem.new(p.Emblem, EMBLEM)
 			emblems[tag] = emblem
 		end
 		emblem:Set(level.Level, level.Prestige)
-		p.Bar.BackgroundColor3 = level.Color
+		p.Strip.BackgroundColor3 = level.Color
 	end
 end
 
--- Team-Rang davor (StaffConfig: OWNER, DEV, MOD … und VIP mit dem Gamepass)
-local function withRank(target, name)
-	local rank = StaffConfig.Of(target)
-	return rank and (StaffConfig.Prefix(rank, 18) .. " " .. name) or name
-end
-
--- Name mit Clan-Kürzel und Team-Rang davor
+-- Name mit Clan-Kürzel davor (Team-Rang steht als eigenes Schild davor)
 local function displayName(target)
-	local name = target.Name
 	local tag = target:GetAttribute("ClanTag")
 	if tag then
-		name = '<font color="#8FC3FF">[' .. tag .. ']</font> ' .. name
+		return '<font color="#8FC3FF">[' .. tag .. ']</font> ' .. target.Name
 	end
-	return withRank(target, name)
+	return target.Name
 end
 
--- Unterzeile: Rang und (falls gewählt) Titel in seiner Farbe
-local function subtitleFor(target, rank)
+-- Gewählter Titel (nil = Standardtitel, dann keiner)
+local function titleOf(target)
 	local title = TitleConfig.Get(target:GetAttribute("Title") or "")
 	if not title or title.Id == TitleConfig.Default then
-		return rank.Display
+		return nil
 	end
-	return rank.Display .. '  ·  <font color="#' .. title.Color:ToHex() .. '">' .. UITheme.Upper(title.Name) .. "</font>"
+	return title
 end
 
--- RAP über dem Kopf: Guthaben + Wert der handelbaren Skins
+-- RAP: Guthaben + Wert der handelbaren Skins
 local function rapOf(target)
 	return math.floor((tonumber(target:GetAttribute("Rap")) or 0) + (tonumber(target:GetAttribute("RapValue")) or 0))
 end
 
+-- Volles Schild zum Angeben: Prestige-Abzeichen, Team-Rang, Name, Rang, RAP, Titel
+local function showcase(target)
+	local level = LevelConfig.Get(target)
+	return { Name = displayName(target), Color = level.Prestige > 0 and level.Color or C.Text, Staff = StaffConfig.Of(target),
+		Rank = RankConfig.Get(target:GetAttribute("Elo") or RankConfig.StartElo), Player = target, Rap = rapOf(target),
+		Title = titleOf(target) }
+end
+
+-- Zeigt der Spieler im Modus mode gerade sein volles Schild? Hub/Markt immer, Extinction in der Safe Zone
+-- (Camp und Safehouses: dort ist kein PvP, also verrät der Name niemanden)
+function Nametags.Showcase(mode, inSafeZone)
+	if mode == nil then
+		return false
+	end
+	return Modes.IsSocial(mode) or (Modes.IsSurvival(mode) and inSafeZone == true)
+end
+
 local function update()
 	local myMode = player:GetAttribute("Mode")
-	local inHub = myMode ~= nil and Modes.IsSocial(myMode) -- Hub und Markt
-	-- Eigenes Schild: nur im Hub (sichtbar, wenn man sich von außen sieht)
+	-- Eigenes Schild (sichtbar, wenn man sich von außen sieht)
 	local myCharacter = player.Character
 	if myCharacter then
-		if inHub then
-			local level = LevelConfig.Get(player)
-			local rank = RankConfig.Get(player:GetAttribute("Elo") or RankConfig.StartElo)
-			setTag(myCharacter, { Name = displayName(player), Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-				Subtitle = subtitleFor(player, rank), SubColor = rank.Color, Rank = rank, Player = player, Rap = rapOf(player) })
+		if Nametags.Showcase(myMode, player:GetAttribute("InSafeZone")) then
+			setTag(myCharacter, showcase(player))
 		else
 			removeTag(myCharacter)
 		end
@@ -288,17 +269,13 @@ local function update()
 	for _, other in Players:GetPlayers() do
 		local character = other.Character
 		if character and other ~= player then
-			local sameMode = other:GetAttribute("Mode") == myMode
+			local sameMode = myMode ~= nil and other:GetAttribute("Mode") == myMode
 			local mate = (player.Team ~= nil and other.Team == player.Team) or TeamCheck.IsSquadMate(other)
-			local level = LevelConfig.Get(other)
-			if inHub and sameMode then
-				-- Hub/Markt: Name in Prestige-Farbe (ab Prestige 1), Rang darunter, RAP darüber
-				local rank = RankConfig.Get(other:GetAttribute("Elo") or RankConfig.StartElo)
-				setTag(character, { Name = displayName(other), Color = level.Prestige > 0 and level.Color or Color3.new(1, 1, 1),
-					Subtitle = subtitleFor(other, rank), SubColor = rank.Color, Rank = rank, Player = other, Rap = rapOf(other) })
+			if sameMode and Nametags.Showcase(myMode, other:GetAttribute("InSafeZone")) then
+				setTag(character, showcase(other))
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
-				setTag(character, { Name = withRank(other, other.Name), Color = UITheme.Colors.Ally, Player = other })
+				setTag(character, { Name = other.Name, Color = C.Ally, Staff = StaffConfig.Of(other), Player = other })
 			else
 				removeTag(character)
 			end
@@ -311,7 +288,7 @@ local function update()
 			local mate = player.Team ~= nil and model:GetAttribute("TeamName") == player.Team.Name
 				and model:GetAttribute("Mode") == myMode
 			if mate then
-				setTag(model, { Name = model.Name, Color = UITheme.Colors.Ally })
+				setTag(model, { Name = model.Name, Color = C.Ally })
 			else
 				removeTag(model)
 			end
