@@ -873,6 +873,15 @@ function Movement.Init()
 
 	local function onCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
+		if character:GetAttribute("AgentModelCharacter") then
+			-- Agentenmodell als Charakter: beim ersten Join kippt es sonst kurz um und liegt steif (FallingDown)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+			if humanoid:GetState() == Enum.HumanoidStateType.FallingDown
+				or humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
+				humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end
+		end
 		normalHipHeight = humanoid.HipHeight
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge

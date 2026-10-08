@@ -42,6 +42,12 @@ local function useAgentModel(player)
 		end
 	end
 	model:PivotTo(default:GetPivot())
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		-- nicht umkippen, solange noch der Server rechnet (der Client schaltet es bei sich auch ab, Movement)
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+	end
 	player.Character = model
 	model.Parent = workspace
 	default:Destroy()
