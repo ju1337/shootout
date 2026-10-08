@@ -89,6 +89,8 @@ local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeig
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
+Inv.attachBoxes = nil :: { [string]: any }? -- Aufsatz-Plätze im Info-Fenster (Waffe)
+Inv.popupWeapon = nil :: { Container: string, Slot: number }? -- Waffe im Info-Fenster
 Inv.hiddenGuis = nil :: { ScreenGui }? -- solange das Menü offen ist ausgeblendete Oberflächen
 Inv.filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
 local equipped = 0
@@ -1083,7 +1085,7 @@ end
 
 -- Info-Fenster neben dem angeklickten Item (Inventar): Art und Seltenheit, Name, Werte, darunter die Aktionen.
 -- Gibt update(actions) zurück; ohne Auswahl ist es unsichtbar.
-Inv.POPUP_W = 270
+Inv.POPUP_W = 300
 function Inv.itemPopup(body)
 	local popup = make("Frame", { Name = "ItemPopup", Size = UDim2.fromOffset(Inv.POPUP_W, 100), BackgroundColor3 = Inv.GLASS,
 		BackgroundTransparency = 0.03, BorderSizePixel = 0, Visible = false, ZIndex = 20 }, body)
@@ -1103,6 +1105,7 @@ function Inv.itemPopup(body)
 				view = candidate
 			end
 		end
+		Inv.attachBoxes, Inv.popupWeapon = nil, nil
 		if not config or not view then
 			popup.Visible = false
 			return
@@ -1118,7 +1121,11 @@ function Inv.itemPopup(body)
 			TextSize = 19, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 21 }, popup)
 		y += 32
 		-- Werte: eine Zeile je Angabe (aus describe, getrennt an " · " und Zeilenumbrüchen)
-		local text = string.gsub(describe(entry.Id, entry), "\n", "  ·  ")
+		local described = describe(entry.Id, entry)
+		if config.Kind == "Weapon" then
+			described = string.gsub(described, "\nAufsätze:.*$", "") -- stehen unten als Plätze
+		end
+		local text = string.gsub(described, "\n", "  ·  ")
 		for part in string.gmatch(text .. "  ·  ", "(.-)  ?·  ") do
 			part = string.match(part, "^%s*(.-)%s*$")
 			if part ~= "" then
@@ -1133,6 +1140,83 @@ function Inv.itemPopup(body)
 			end
 		end
 		y += 8
+		-- Waffe: vier Aufsatz-Plätze. Aufsatz aus Tasche/Container hierher ziehen baut ihn an, Klick auf einen belegten Platz
+		-- nimmt ihn ab (kommt in die Tasche)
+		local boxes = {}
+		if config.Kind == "Weapon" and (selected.Container == "Bag" or selected.Container == "Safe") then
+			Inv.popupWeapon = { Container = selected.Container, Slot = selected.Slot }
+			label({ Name = "AttTitle", Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 14), Text = "AUFSÄTZE",
+				TextSize = 11, Font = F.Display, TextColor3 = C.Muted, ZIndex = 21 }, popup)
+			label({ Name = "AttHint", Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 14), Text = "HIERHER ZIEHEN",
+				TextSize = 10, Font = F.Bold, TextColor3 = Color3.fromRGB(120, 118, 112), TextXAlignment = Enum.TextXAlignment.Right,
+				ZIndex = 21 }, popup)
+			y += 20
+			local slots = AttachmentConfig.Slots
+			local gap = 6
+			local boxW = math.floor((Inv.POPUP_W - 28 - gap * (#slots - 1)) / #slots)
+			for index, slotInfo in slots do
+				local attId = type(entry.A) == "table" and entry.A[slotInfo.Id] or nil
+				local att = attId and AttachmentConfig.Get(attId)
+				local attTier = att and TIER_COLORS[att.Tier or 2]
+				local box = make("TextButton", { Name = "AttSlot_" .. slotInfo.Id, Position = UDim2.fromOffset(14 + (index - 1) * (boxW + gap), y),
+					Size = UDim2.fromOffset(boxW, boxW), BackgroundColor3 = Inv.TILE, BackgroundTransparency = att and 0.1 or 0.45,
+					BorderSizePixel = 0, AutoButtonColor = false, Text = "", ZIndex = 22 }, popup)
+				UITheme.Corner(box, 3)
+				local stroke = make("UIStroke", { Color = Color3.new(1, 1, 1), Transparency = att and 1 or 0.82, Thickness = 1,
+					ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, box)
+				if att then
+					local icon = AttachmentIcons.Build(box, attId, math.floor(boxW * 0.62), attTier or C.Text)
+					icon.AnchorPoint = Vector2.new(0.5, 0.5)
+					icon.Position = UDim2.fromScale(0.5, 0.45)
+					icon.ZIndex = 23
+					for _, part in icon:GetDescendants() do
+						if part:IsA("GuiObject") then
+							part.ZIndex = 23
+						end
+					end
+					make("Frame", { Name = "Tier", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
+						BackgroundColor3 = attTier or C.Border, BorderSizePixel = 0, ZIndex = 23 }, box)
+				else
+					label({ Name = "Plus", Size = UDim2.fromScale(1, 0.8), Text = "+", TextSize = 22, Font = F.Display,
+						TextColor3 = Color3.fromRGB(110, 108, 104), TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 23 }, box)
+				end
+				label({ Name = "SlotName", Position = UDim2.fromOffset(14 + (index - 1) * (boxW + gap), y + boxW + 3), Size = UDim2.fromOffset(boxW, 12),
+					Text = upper(att and att.Name or slotInfo.Name), TextSize = 9, Font = F.Bold, TextTruncate = Enum.TextTruncate.AtEnd,
+					TextColor3 = att and (attTier or C.Text) or C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 22 }, popup)
+				box.MouseEnter:Connect(function()
+					hovered = { Container = "Attach", Slot = slotInfo.Id }
+				end)
+				box.MouseLeave:Connect(function()
+					if hovered and hovered.Container == "Attach" and hovered.Slot == slotInfo.Id then
+						hovered = nil
+					end
+				end)
+				box.Activated:Connect(function()
+					local weapon = Inv.popupWeapon
+					if not weapon then
+						return
+					end
+					if attId then
+						sendAction("Detach", weapon.Slot, slotInfo.Id, weapon.Container)
+						return
+					end
+					-- leerer Platz (Controller, Handy): ersten passenden Aufsatz aus Tasche oder Container anbauen
+					for _, source in { { "Bag", bag }, { "Safe", safe } } do
+						for itemSlot, item in source[2] do
+							local itemCfg = itemConfig(item.Id)
+							if itemCfg and itemCfg.Kind == "Attachment" and itemCfg.Slot == slotInfo.Id then
+								sendAction("Move", source[1], itemSlot, weapon.Container, weapon.Slot)
+								return
+							end
+						end
+					end
+					showToast("Kein passender Aufsatz (" .. slotInfo.Name .. ") dabei – die gibt es im Konvoi.", false)
+				end)
+				boxes[slotInfo.Id] = { Box = box, Stroke = stroke, Filled = att ~= nil }
+			end
+			Inv.attachBoxes = boxes
+			y += boxW + 22
+		end
 		for i, action in actions or {} do
 			Inv.flatButton({ Name = "Action" .. i, Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 34), Primary = action.Primary,
 				Text = action.Text, TextSize = 13, ZIndex = 22 }, popup, action.Run)
@@ -1211,6 +1295,18 @@ local function defaultClick(container, slot)
 end
 
 local function defaultDrop(fromContainer, fromSlot, toContainer, toSlot)
+	if toContainer == "Attach" then
+		-- Aufsatz auf einen Platz im Info-Fenster: auf die Waffe ziehen (der Server baut ihn an seinen Platz); Waffe bleibt gewählt
+		local weapon = Inv.popupWeapon
+		local entry = entryOf(fromContainer, fromSlot)
+		local config = entry and itemConfig(entry.Id)
+		if weapon and config and config.Kind == "Attachment" and (fromContainer == "Bag" or fromContainer == "Safe") then
+			sendAction("Move", fromContainer, fromSlot, weapon.Container, weapon.Slot)
+		elseif config and config.Kind ~= "Attachment" then
+			showToast("Nur Aufsätze passen hier hin.", false)
+		end
+		return
+	end
 	selected = nil
 	if fromContainer == "Loot" then
 		-- aus der Beute direkt auf einen Platz der Tasche oder des Containers
@@ -2264,6 +2360,14 @@ local function updateDrag()
 	if not drag.Moved and (mouse - drag.Start).Magnitude > 6 then
 		drag.Moved = true
 		local entry = entryOf(drag.Container, drag.Slot)
+		-- passenden Aufsatz-Platz im Info-Fenster rot umranden
+		local dragConfig = entry and itemConfig(entry.Id)
+		for slotId, boxView in Inv.attachBoxes or {} do
+			local match = dragConfig and dragConfig.Kind == "Attachment" and dragConfig.Slot == slotId
+			boxView.Stroke.Color = match and Inv.MENU_RED or Color3.new(1, 1, 1)
+			boxView.Stroke.Thickness = match and 2 or 1
+			boxView.Stroke.Transparency = match and 0 or (boxView.Filled and 1 or 0.82)
+		end
 		if entry then
 			drag.Ghost = make("Frame", { Size = UDim2.fromOffset(62, 62), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = C.Card,
 				BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 50 }, windowGui)

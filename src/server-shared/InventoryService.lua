@@ -341,13 +341,14 @@ local function attach(player, state, attFrom, attSlot, weapon)
 	return true
 end
 
--- Aufsatz-Platz slotId der Waffe auf Platz weaponSlot (Tasche) abnehmen; er kommt in die Tasche
-function InventoryService.Detach(player, weaponSlot, slotId)
+-- Aufsatz-Platz slotId der Waffe auf Platz weaponSlot abnehmen (where = "Bag" oder "Safe", Standard Tasche); er kommt in
+-- die Tasche
+function InventoryService.Detach(player, weaponSlot, slotId, where)
 	if not inExtinction(player) or type(weaponSlot) ~= "number" or type(slotId) ~= "string" then
 		return false
 	end
 	local state = stateOf(player)
-	local weapon = state and state.Bag.Slots[weaponSlot]
+	local weapon = state and (where == "Safe" and state.Safe or state.Bag).Slots[weaponSlot]
 	local attId = weapon and weapon.Att and weapon.Att[slotId]
 	if not attId then
 		return false
