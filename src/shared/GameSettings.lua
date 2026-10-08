@@ -38,6 +38,7 @@ GameSettings.List = {
 	-- (ausgebaut) { Key = "TDMTickets", Group = "Team Deathmatch", Label = "Leben pro Team", Default = 60, Min = 5, Max = 200, Step = 5 },
 	-- (ausgebaut) { Key = "TDMRoundTime", Group = "Team Deathmatch", Label = "Matchzeit (Sek.)", Default = 600, Min = 120, Max = 1800, Step = 60 },
 	-- (ausgebaut) { Key = "TDMRounds", Group = "Team Deathmatch", Label = "Runden zum Sieg", Default = 1, Min = 1, Max = 5, Step = 1 },
+	{ Key = "CrossServer", Group = "Allgemein", Label = "Arcade über Server (1 = an)", Default = 1, Min = 0, Max = 1, Step = 1 },
 	{ Key = "DamageMultiplier", Group = "Allgemein", Label = "Schaden ×", Default = 1, Min = 0.1, Max = 5, Step = 0.1 },
 	{ Key = "XPMultiplier", Group = "Allgemein", Label = "XP ×", Default = 1, Min = 0, Max = 10, Step = 0.5 },
 	{ Key = "AutoFillBots", Group = "Bots", Label = "Auto-Bots (1 = an)", Default = 1, Min = 0, Max = 1, Step = 1 },

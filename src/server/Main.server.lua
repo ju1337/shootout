@@ -31,6 +31,7 @@ local LootService = require(ServerShared.LootService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
+local MatchmakingService = require(script.Parent.MatchmakingService)
 
 -- Charaktere spawnen nur, wenn ein Modus es sagt
 Players.CharacterAutoLoads = false
@@ -60,4 +61,6 @@ LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E du
 AgentService.Init()
 AdminService.Init(ModeManager)
 PartyService.Init(ModeManager)
+-- Arcade über mehrere Server: auf Server mit mehr Spielern im Modus wechseln, der Squad kommt mit
+MatchmakingService.Init(ModeManager, { Group = PartyService.Followers, Regroup = PartyService.Regroup })
 ModeManager.Init()

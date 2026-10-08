@@ -1513,6 +1513,11 @@ function TeamRoundMode.new(config)
 		task.spawn(matchLoop)
 	end
 
+	-- Echte Spieler und freie Plätze (Auffüll-Bots machen Platz) – für das Matchmaking über mehrere Server
+	function mode.Slots()
+		return count(), math.max(0, TEAM_SIZE * 2 - (count() + botCount() - autoBotCount()))
+	end
+
 	function mode.CanJoin(player)
 		-- Auffüll-Bots machen Platz und zählen hier nicht
 		-- Ranked erst ab Spielerlevel config.RequiredLevel (Summe der Agenten-Level)

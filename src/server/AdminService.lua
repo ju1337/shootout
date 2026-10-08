@@ -82,7 +82,7 @@ function AdminService.Init(manager)
 			if not player or typeof(modeId) ~= "string" then
 				return "Spieler nicht gefunden."
 			end
-			manager.Join(player, modeId)
+			manager.Join(player, modeId, true) -- Admin verschiebt auf diesem Server (kein Serverwechsel)
 			return player.Name .. " -> " .. modeId
 		end,
 		SwitchTeam = function(userId)

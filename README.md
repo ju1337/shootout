@@ -31,8 +31,22 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 | Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
 
 Die Minispiele haben kein Tor mehr im Hub: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
-SPIEL = vollster Arcade-Modus mit freiem Platz). Oben im Menü steht groß EXTINCTION und ist vorgewählt
-(`Featured` / `Arcade` in `src/shared/Modes.lua`).
+SPIEL = vollster Arcade-Modus mit freiem Platz, auch auf anderen Servern). Oben im Menü steht groß EXTINCTION und ist
+vorgewählt (`Featured` / `Arcade` in `src/shared/Modes.lua`).
+
+**Arcade über mehrere Server** (`src/server/MatchmakingService.lua`, Einstellungen in `Modes.Matchmaking`): Damit
+Arcade-Runden nicht mit Bots laufen, nur weil sich die Spieler eines Servers auf alle Modi verteilen, meldet jeder
+öffentliche Server alle 10 Sekunden in der MemoryStore-Map `ArcadeServers_v1`, wie viele echte Spieler in Herrschaft,
+Free-for-All, Wingman und 1v1 Arena sind und wie viele Plätze frei sind (Meldung verfällt nach 45 Sekunden). Wählt
+jemand einen dieser Modi (oder SCHNELLES SPIEL), sucht der Server zuerst einen anderen Server, auf dem dort **mehr echte
+Spieler** sind als hier und der Platz für den ganzen Squad hat (im Modus und auf dem Server). Gibt es einen, geht es per
+Teleport dorthin („Wechsle auf einen Server mit 3 Spielern in HERRSCHAFT …“): der Squad-Anführer nimmt seinen Squad mit
+(außer denen in der offenen Welt), drüben landet man direkt im Modus, und der Squad ist wieder zusammen (nur wer sich
+gegenseitig in den Teleport-Daten nennt). Sonst wird wie bisher hier gespielt – so sammeln sich die Arcade-Spieler auf
+wenigen Servern. Schlägt der Teleport fehl (Server voll, Fehler, nach 30 Sekunden nicht angekommen), spielt man hier;
+danach und nach der Ankunft wird man eine Minute lang nicht weitergeschickt. Aus in Studio (kein Teleport), auf privaten
+Servern, ohne MemoryStore und mit der Live-Einstellung **Arcade über Server** = 0. Hub, offene Welt, Markt und Training
+bleiben immer auf dem eigenen Server. Squad-Mitglieder, die dem Anführer folgen, bleiben auf seinem Server.
 
 ELO gibt es in jedem Modus (kein eigenes Ranked-Matchmaking). Ausgebaute Modi (Drop, Strikeout, Demolition,
 Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src/server/Modes/`.
@@ -737,6 +751,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Ränge (Ranked) | `src/shared/RankConfig.lua` |
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |
 | Modi im Menü | `src/shared/Modes.lua` |
+| Arcade über mehrere Server: Modi, Meldeintervall, Verfall, Wartezeiten | `Modes.Matchmaking` in `src/shared/Modes.lua`; an/aus: Einstellung `CrossServer` |
 | Rückenwaffe im Hub (Größe `SCALE`, Neigung `TILT`, Abstand zum Rücken) | `src/server-shared/BackWeapon.lua` |
 | Bewegungs-Check (erlaubtes Tempo, Vorrat) | `FLAT_*`, `UP_*` in `src/server-shared/MovementGuard.lua` |
 | Admins | `ADMIN_IDS` in `src/server/AdminService.lua` |
@@ -814,6 +829,7 @@ am Commit:
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
 | `extmarketpage` | Markt-Seite für sich (Mock): Suche, Kategorien, Sortierung, Karten, KAUFEN/ZU TEUER, MEINE ANGEBOTE (Preis ändern, zurücknehmen), Verkaufen mit ±, Schieberegler, günstigstem Angebot und Erlös, Sperre außerhalb der Safe Zone |
 | `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge, Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
+| `matchmaking` | Arcade über mehrere Server: eigene Meldung (nur Arcade-Modi, verfällt), Wechsel auf einen Server mit mehr echten Spielern (nicht auf volle, nicht bei Gleichstand, nicht zu einem anderen Place, Platz für den ganzen Squad), Teleport-Daten, Squad geht zusammen und folgt hier, Fehlschlag sofort / TeleportInitFailed / Zeitüberschreitung: hier spielen und eine Weile nicht weiterschicken, SCHNELLES SPIEL sieht andere Server, Hub/Extinction/Markt bleiben, Einstellung aus, Ankunft direkt im Modus mit Squad (nur gegenseitig, kein fremder Place), verfallene Server, MemoryStore gestört, Herunterfahren |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
