@@ -8,7 +8,8 @@
 --   * Springen: Coyote-Time (kurz nach dem Verlassen einer Kante geht der Sprung noch) und Sprungpuffer (kurz vor dem
 --     Landen gedrückt = Sprung beim Landen). Harte Landungen bremsen kurz und lassen die Kamera eintauchen.
 --   * Hindernisse: Springen vor einem niedrigen, dünnen Hindernis = drüberspringen (Vault, der Schwung bleibt), vor
---     einer höheren Kante = hochziehen. Klappt auch aus dem Sprung heraus, wenn man auf die Kante zu läuft.
+--     einer höheren Kante = hochziehen. Klappt auch aus dem Sprung heraus, wenn man auf die Kante zu läuft. Auf
+--     Dächer (Teile namens "Roof") zieht man sich nie hoch: dahin geht es nur über Treppen und Leitern.
 --   * Kamera in Kampfmodi: Ego-Perspektive oder Schulterkamera wie bei Rogue Company (Einstellung, jederzeit mit T
 --     umschalten). Der Charakter steht links im Bild, die Bildmitte (Fadenkreuz) bleibt frei – auch beim Zielen, wenn
 --     die Kamera näher heranrückt. Steht rechts eine Wand, rückt die Kamera seitlich an den Kopf heran, statt durch die
@@ -280,6 +281,9 @@ local function probeObstacle(character, rootPosition, feet, dir)
 	for _, inset in { 0.25, 0.8 } do
 		local origin = Vector3.new(rootPosition.X, feet + P.MantleMax + 1.2, rootPosition.Z) + dir * (wall + inset)
 		local hit = workspace:Raycast(origin, Vector3.new(0, -(P.MantleMax + 1.2), 0), groundParams)
+		if hit and hit.Instance.Name == "Roof" then
+			return nil -- aufs Dach nur über Treppen und Leitern
+		end
 		if hit and (not top or hit.Position.Y > top) then
 			top, topPosition = hit.Position.Y, hit.Position
 		end
@@ -882,6 +886,9 @@ function Movement.Init()
 				humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end
 		end
+		-- feste Sprunghöhe (sonst Roblox-Standard bzw. JumpPower 50 bei Agentenmodellen: man käme fast aufs Dach)
+		humanoid.UseJumpPower = false
+		humanoid.JumpHeight = P.JumpHeight
 		normalHipHeight = humanoid.HipHeight
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge

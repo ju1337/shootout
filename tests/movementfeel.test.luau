@@ -149,7 +149,8 @@ check(P.Bob(0, 1) == 0 and P.Bob(math.pi / 2, 1) < 0 and P.Bob(math.pi / 2, 0) =
 check(math.abs(P.Bob(math.pi / 2, 5)) <= 0.02, "Wippen dezent: höchstens 0,02 Studs, auch beim Sprinten")
 
 -- ---------- Movement im Simulator ----------
--- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12) und eine Kante in 8,5
+-- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12), eine Kante in 6,8,
+-- eine in 8,5 (Dachhöhe) und ein flaches Dach (4)
 local boxes = {}
 local function box(center, size)
 	local part = Instance.new("Part", workspace)
@@ -161,7 +162,10 @@ box(Vector3.new(0, -5, 0), Vector3.new(1000, 10, 1000))
 box(Vector3.new(4, 1.5, 0), Vector3.new(1, 3, 10))        -- dünne Mauer bei x = 3,5..4,5
 box(Vector3.new(8, 3, 40), Vector3.new(10, 6, 10))        -- Block bei x = 3..13, oben 6
 box(Vector3.new(8, 6, 80), Vector3.new(10, 12, 10))       -- hohe Wand, oben 12
-box(Vector3.new(8, 4.25, 120), Vector3.new(10, 8.5, 10))  -- Kante in 8,5
+box(Vector3.new(8, 3.4, 120), Vector3.new(10, 6.8, 10))   -- Kante in 6,8
+box(Vector3.new(8, 4.25, 160), Vector3.new(10, 8.5, 10))  -- Kante in 8,5
+box(Vector3.new(8, 2, 200), Vector3.new(10, 4, 10))       -- Dach in 4
+boxes[#boxes].Part.Name = "Roof"
 local AXES = { "X", "Y", "Z" }
 local UNIT = { X = Vector3.new(1, 0, 0), Y = Vector3.new(0, 1, 0), Z = Vector3.new(0, 0, 1) }
 SIM.RaycastHandler = function(origin, direction)
@@ -380,12 +384,12 @@ frames(0.2)
 jump()
 check(Movement.Obstacle() == nil, "zu hohe Wand: kein Hochziehen")
 
--- Kante in 8,5: vom Boden zu hoch, aus dem Sprung (Leertaste gehalten, auf die Wand zu) erreichbar
+-- Kante in 6,8: vom Boden zu hoch, aus dem Sprung (Leertaste gehalten, auf die Wand zu) erreichbar
 at(Vector3.new(0, 3, 120))
 humanoid.MoveDirection = X
 frames(0.2)
 jump()
-check(Movement.Obstacle() == nil, "Kante in 8,5 vom Boden aus zu hoch")
+check(Movement.Obstacle() == nil, "Kante in 6,8 vom Boden aus zu hoch")
 SIM.KeysDown[Enum.KeyCode.Space] = true
 humanoid.FloorMaterial = Enum.Material.Air
 root.CFrame = CFrame.new(0, 4.6, 120)
@@ -393,7 +397,28 @@ frames(2 / 60)
 check(Movement.Obstacle() == "Mantle", "aus dem Sprung an die Kante: hochziehen")
 frames(0.7)
 SIM.KeysDown[Enum.KeyCode.Space] = nil
-check(near(root.Position.Y, 8.5 + 3, 0.2), "oben auf der Kante (" .. tostring(root.Position) .. ")")
+check(near(root.Position.Y, 6.8 + 3, 0.2), "oben auf der Kante (" .. tostring(root.Position) .. ")")
+
+-- Kante in 8,5 (Dachhöhe): auch aus dem Sprung nicht erreichbar
+at(Vector3.new(0, 3, 160))
+humanoid.MoveDirection = X
+frames(0.2)
+SIM.KeysDown[Enum.KeyCode.Space] = true
+humanoid.FloorMaterial = Enum.Material.Air
+root.CFrame = CFrame.new(0, 6.6, 160)
+frames(2 / 60)
+SIM.KeysDown[Enum.KeyCode.Space] = nil
+check(Movement.Obstacle() == nil, "Kante in 8,5 auch aus dem Sprung zu hoch")
+
+-- Dach: nie hochziehen, auch wenn es niedrig ist (nur über Treppen und Leitern)
+at(Vector3.new(0, 3, 200))
+humanoid.MoveDirection = X
+frames(0.5)
+jump()
+check(Movement.Obstacle() == nil, "aufs Dach kein Hochziehen")
+
+-- Sprunghöhe fest eingestellt
+check(humanoid.UseJumpPower == false and humanoid.JumpHeight == P.JumpHeight, "Sprunghöhe " .. tostring(humanoid.JumpHeight))
 
 -- Kamera-Neigung: beim Seitwärtslaufen ja, bei einer geskripteten Kamera (Agentenwahl, Zuschauen) nie
 local camera = workspace.CurrentCamera
