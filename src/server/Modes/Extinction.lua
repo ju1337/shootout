@@ -775,6 +775,17 @@ function Extinction.AddPlayer(player)
 	MissionService.Join(player)
 	spawnPlayer(player)
 	ExtDailyService.Claim(player) -- tägliche Kiste ins Lager (einmal am Tag)
+	-- Beim allerersten Mal: Hinweis auf den GUIDE-Reiter (Profil GuideHinted, danach nie wieder)
+	local profile = ProgressService.Get(player)
+	if profile and not profile.GuideHinted then
+		profile.GuideHinted = true
+		task.delay(5, function()
+			if members[player] then
+				notify(player, "Banner", { Caption = "Welcome", Title = "NEW HERE?",
+					Sub = "Open the menu (M) and pick GUIDE – everything is explained there", Style = "Good" })
+			end
+		end)
+	end
 end
 
 function Extinction.RemovePlayer(player)
