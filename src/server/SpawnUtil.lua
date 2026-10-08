@@ -45,6 +45,11 @@ local function useAgentModel(player)
 	player.Character = model
 	model.Parent = workspace
 	default:Destroy()
+	-- Physik gleich beim Spieler (sonst rechnet kurz der Server, und der Charakter kann umkippen)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		pcall(root.SetNetworkOwner, root, player)
+	end
 	return true
 end
 

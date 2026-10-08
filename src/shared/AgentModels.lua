@@ -280,11 +280,26 @@ local function loadRig(rig, report)
 	if scale ~= 1 then
 		character:ScaleTo(character:GetScale() * scale)
 	end
+	-- Wie ein Roblox-Charakter: nur das HumanoidRootPart stößt an, die Körperteile nicht (aus Studio importierte
+	-- MeshParts kollidieren sonst untereinander und mit dem Boden, der Charakter kippt um und bleibt liegen)
+	local parts = {}
 	for _, part in character:GetDescendants() do
-		if part:IsA("BasePart") and shown(part) then
-			part.CanQuery = true
+		if part:IsA("BasePart") then
+			part.Anchored = false
+			part.CanCollide = part == characterRoot
+			part.CanQuery = shown(part)
+			part.Massless = part ~= characterRoot
+			if shown(part) then
+				table.insert(parts, part)
+			end
 		end
 	end
+	-- Hüfthöhe aus dem Modell: Füße genau auf dem Boden (der Import setzt sie oft falsch)
+	local humanoid = character:FindFirstChildWhichIsA("Humanoid", true)
+	humanoid.RigType = Enum.HumanoidRigType.R15
+	humanoid.AutomaticScalingEnabled = false
+	local feet = bounds(parts, characterRoot.CFrame)
+	humanoid.HipHeight = math.max(-feet.Y - characterRoot.Size.Y / 2, 0)
 	return { Rig = template, Floor = min.Y, Count = count, Character = character }
 end
 
