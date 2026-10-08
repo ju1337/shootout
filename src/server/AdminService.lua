@@ -53,8 +53,73 @@ function AdminService.Init(manager)
 		return player and player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	end
 
+	local function serverShared(name)
+		return require(ServerStorage:WaitForChild("ServerShared")[name])
+	end
+
+	-- Position des Admins (offene Welt) oder nil
+	local function adminPosition(admin)
+		local root = admin and admin.Character and admin.Character:FindFirstChild("HumanoidRootPart")
+		return root and root.Position or nil
+	end
+
 	-- Jede Aktion gibt einen Text für das Panel zurück (admin = der Spieler, der den Befehl geschickt hat)
 	local actions = {
+		-- ---------- Events der offenen Welt (Extinction) ----------
+		-- Lootdrop: where = "Here" landet beim Admin, sonst zufällig
+		ExtAirdrop = function(where, _, admin)
+			local AirdropService = serverShared("AirdropService")
+			local position = where == "Here" and adminPosition(admin) or nil
+			if where == "Here" and not position then
+				return "Kein Charakter – geh in die offene Welt."
+			end
+			local drop = AirdropService.Start(position)
+			return drop and ("Lootdrop gestartet" .. (position and " (bei dir)" or "")) or "Es läuft schon ein Lootdrop (oder kein Ziel gefunden)."
+		end,
+		ExtConvoy = function()
+			local convoy = serverShared("ConvoyService").Start()
+			return convoy and ("Konvoi gestartet: " .. tostring(convoy.Path and convoy.Path.Name or "")) or "Es fährt schon ein Konvoi."
+		end,
+		ExtRedzone = function()
+			local zone = serverShared("RedzoneService").MoveNow()
+			return zone and ("Rote Zone jetzt: " .. zone.Title) or "Keine rote Zone möglich."
+		end,
+		ExtHorde = function(amount, _, admin)
+			local position = adminPosition(admin)
+			if not position or admin:GetAttribute("Mode") ~= "Extinction" then
+				return "Nur in der offenen Welt."
+			end
+			amount = math.clamp(tonumber(amount) or 12, 1, 40)
+			serverShared("ZombieService").SpawnAround(position, amount, 18, 45, nil, true)
+			return amount .. " Zombies um dich herum"
+		end,
+		-- Items ins eigene Inventar (zum Testen): "Attachments" = je ein Aufsatz, "Throwables" = Granaten und Molotows,
+		-- "Kit" = Sturmgewehr, Munition, Medikits, Westen
+		ExtGive = function(kind, _, admin)
+			if admin:GetAttribute("Mode") ~= "Extinction" then
+				return "Nur in der offenen Welt."
+			end
+			local ExtinctionConfig = require(Shared.ExtinctionConfig)
+			local InventoryService = serverShared("InventoryService")
+			local list = {}
+			if kind == "Attachments" then
+				for _, id in ExtinctionConfig.AttachmentItems do
+					table.insert(list, { id, 1 })
+				end
+			elseif kind == "Throwables" then
+				list = { { "Grenade", 3 }, { "Molotov", 3 } }
+			else
+				list = { { "Rifle", 1 }, { "Ammo_Rifle", 120 }, { "Medkit", 3 }, { "HeavyVest", 1 }, { "Adrenaline", 2 } }
+			end
+			local given, missing = 0, 0
+			for _, entry in list do
+				local added = InventoryService.Give(admin, entry[1], entry[2])
+				given += added
+				missing += entry[2] - added
+			end
+			return "+" .. given .. " Items" .. (missing > 0 and (" (" .. missing .. " passten nicht in die Tasche)") or "")
+		end,
+
 		SetSetting = function(key, value)
 			if typeof(key) ~= "string" or not GameSettings.Def(key) or typeof(value) ~= "number" then
 				return "Ungültige Einstellung."

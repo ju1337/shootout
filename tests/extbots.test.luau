@@ -295,6 +295,33 @@ local panelPos = viaPanel and viaPanel.Model and viaPanel.Model:GetPivot().Posit
 check(panelPos ~= nil and flat(panelPos, alice.Character.HumanoidRootPart.Position) <= B.SpawnMax + 0.5,
 	"Panel-Bot spawnt beim Admin")
 
+-- Events der offenen Welt aus dem Panel
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtAirdrop", "Here")
+step(0.3)
+local AirdropService = require("AirdropService")
+check(#AirdropService.Active() == 1 and string.find(lastStatus() or "", "Lootdrop gestartet", 1, true) ~= nil,
+	"Lootdrop beim Admin: " .. tostring(lastStatus()))
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtAirdrop")
+step(0.3)
+check(string.find(lastStatus() or "", "schon", 1, true) ~= nil, "zweiter Lootdrop: Meldung " .. tostring(lastStatus()))
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtRedzone")
+step(0.3)
+check(string.find(lastStatus() or "", "Rote Zone", 1, true) ~= nil or string.find(lastStatus() or "", "Keine", 1, true) ~= nil,
+	"Rote Zone weiter: " .. tostring(lastStatus()))
+local ZombieService = require("ZombieService")
+local before = ZombieService.Count()
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtHorde", 5)
+step(0.3)
+check(ZombieService.Count() >= before + 1 and string.find(lastStatus() or "", "Zombies", 1, true) ~= nil,
+	"Zombie-Horde: " .. tostring(lastStatus()) .. " (" .. before .. " -> " .. ZombieService.Count() .. ")")
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtGive", "Throwables")
+step(0.3)
+check(string.find(lastStatus() or "", "Items", 1, true) ~= nil and string.find(alice:GetAttribute("ExtBag") or "", "Grenade", 1, true) ~= nil,
+	"Granaten ins Inventar: " .. tostring(lastStatus()))
+Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtConvoy")
+step(0.3)
+check(string.find(lastStatus() or "", "Konvoi", 1, true) ~= nil, "Konvoi aus dem Panel: " .. tostring(lastStatus()))
+
 if failures > 0 then
 	error(failures .. " Fehler")
 end
