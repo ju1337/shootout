@@ -57,6 +57,22 @@ local function build(name, opts, looped)
 		sound.PlaybackRegion = NumberRange.new(clip.Region[1], clip.Region[2])
 		length = clip.Region[2] - clip.Region[1]
 	end
+	-- Stimmfilter: Höhen weg (dumpf, kehlig) und angeraut
+	local voice = def.Voice
+	if voice then
+		if voice.Muffle then
+			local eq = Instance.new("EqualizerSoundEffect")
+			eq.HighGain = voice.Muffle
+			eq.MidGain = voice.Muffle * 0.3
+			eq.LowGain = 2
+			eq.Parent = sound
+		end
+		if voice.Grit and voice.Grit > 0 then
+			local grit = Instance.new("DistortionSoundEffect")
+			grit.Level = voice.Grit
+			grit.Parent = sound
+		end
+	end
 	local range = opts.Range or def.Range or 80
 	if range > 0 then
 		sound.RollOffMode = Enum.RollOffMode.InverseTapered

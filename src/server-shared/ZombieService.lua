@@ -465,25 +465,27 @@ local function remove(model)
 	end
 end
 
--- Stimme eines Zombies (SoundLibrary): Brocken brüllen beim Bemerken und Zuschlagen, Läufer klingen höher, Bosse
--- tiefer. Höchstens alle VOICE_GAP Sekunden je Zombie (force = trotzdem, z.B. Tod).
+-- Stimme eines Zombies (SoundLibrary): wie in Unturned hat jeder Zombie seine eigene Stimmlage (VoicePitch, beim
+-- Spawnen gewürfelt), Brocken brüllen beim Bemerken und Zuschlagen, Läufer klingen etwas höher, Bosse tiefer.
+-- Höchstens alle VOICE_GAP Sekunden je Zombie (force = trotzdem, z.B. Tod).
 local VOICE_GAP = 1.2
+local AGGRO_COOLDOWN = 8 -- Sekunden, bis derselbe Zombie wieder beim Entdecken schreit
 local function voice(info, name, force)
 	local now = os.clock()
 	if not force and now < (info.QuietUntil or 0) then
 		return
 	end
 	info.QuietUntil = now + VOICE_GAP
-	local pitch = 1
+	local pitch = info.VoicePitch or 1
 	if info.Stats and info.Stats.Boss then
-		pitch = 0.7
+		pitch *= 0.7
 	elseif info.Kind == "Brute" then
-		pitch = 0.85
+		pitch *= 0.85
 		if name == "ZombieAggro" or name == "ZombieAttack" then
 			name = "BruteRoar"
 		end
 	elseif info.Kind == "Runner" then
-		pitch = 1.15
+		pitch *= 1.08
 	end
 	Sfx.At(name, info.Root, { Pitch = pitch })
 end
@@ -869,7 +871,8 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	end)
 	local info = { Humanoid = humanoid, Root = root, Target = nil, NextAttack = 0, NextWander = 0, LastPos = root.Position,
 		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage * (blood and B.Damage or 1), Coins = stats.Coins,
-		Kind = stats.Id, Name = (armored and "Armored " or "") .. stats.Name, Stats = stats, Blood = blood, Armored = armored }
+		Kind = stats.Id, Name = (armored and "Armored " or "") .. stats.Name, Stats = stats, Blood = blood, Armored = armored,
+		VoicePitch = random:NextNumber(0.88, 1.1) }
 	zombies[model] = info
 	count += 1
 	playAnimations(humanoid, speed)
@@ -909,16 +912,19 @@ local function step(model, info, now)
 			ZombieService.Scream(model, target)
 		end
 	end
-	if target and not info.Target then
-		voice(info, "ZombieAggro") -- hat jemanden bemerkt
+	-- hat jemanden bemerkt: Schrei, aber nicht jedes Mal, wenn er das Ziel kurz verliert und wiederfindet
+	if target and not info.Target and now >= (info.NextAggro or 0) then
+		info.NextAggro = now + AGGRO_COOLDOWN
+		voice(info, "ZombieAggro", true)
+		info.NextGroan = now + random:NextNumber(1.5, 3)
 	end
 	info.Target = target
-	-- hin und wieder stöhnen (beim Jagen öfter); nicht gleich beim Spawnen
+	-- Leerlauf: hin und wieder leise stöhnen; beim Jagen kurz und oft knurren; nicht gleich beim Spawnen
 	if not info.NextGroan then
 		info.NextGroan = now + random:NextNumber(2, 10)
 	elseif now >= info.NextGroan then
-		info.NextGroan = now + (target and random:NextNumber(4, 8) or random:NextNumber(6, 14))
-		voice(info, "ZombieIdle")
+		info.NextGroan = now + (target and random:NextNumber(2.5, 5) or random:NextNumber(8, 18))
+		voice(info, target and "ZombieChase" or "ZombieIdle")
 	end
 	if target then
 		local targetRoot, targetHumanoid, character = livingRoot(target)
