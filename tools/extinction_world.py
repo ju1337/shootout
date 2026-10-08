@@ -2150,6 +2150,19 @@ class World:
                 shop = self.TOWN_STATIONS[key]
             self.townhouse(cx, cz, yaw, w, D, floors, shop=shop, key=key, garage=kind == "garage", bus=kind == "bus")
 
+    def npc_figure(self, box, lx, lz, jacket, pants, cap=None, skin=(196, 156, 126)):
+        """Stehende Figur (Händler, Fahrer) im Rahmen box, Blick nach lokal -Z: Beine, Körper, Arme, Kopf, Mütze mit Schirm.
+        Ohne Zufall (ändert die Welt nicht)."""
+        for s_ in (-1, 1):
+            box("Decor", "NpcLeg", (0.9, 2.6, 1.0), (lx + s_ * 0.5, 1.3, lz), pants, "Fabric")
+            box("Decor", "NpcArm", (0.8, 2.4, 0.9), (lx + s_ * 1.45, 3.75, lz), jacket, "Fabric")
+            box("Decor", "NpcHand", (0.7, 0.6, 0.7), (lx + s_ * 1.45, 2.3, lz), skin, "SmoothPlastic")
+        box("Decor", "NpcTorso", (2.1, 2.5, 1.1), (lx, 3.85, lz), jacket, "Fabric")
+        box("Decor", "NpcHead", (1.2, 1.25, 1.2), (lx, 5.75, lz), skin, "SmoothPlastic")
+        if cap:
+            box("Decor", "NpcCap", (1.35, 0.45, 1.35), (lx, 6.55, lz), cap, "Fabric")
+            box("Decor", "NpcVisor", (1.2, 0.15, 0.6), (lx, 6.4, lz - 0.9), cap, "Fabric")
+
     def townhouse(self, x, z, yaw, w, d, floors, shop=None, key=None, garage=False, bus=False):
         """Altbau (Front lokal -Z): Putz, Sockel, Gesimse, Fenster mit Rahmen, Sprossen, Bank und oft Läden, Satteldach mit
         Giebeln, Schornstein, Fallrohr. Erdgeschoss: Laden (Schild, Schaufenster, Ausgabe-Theke in der Tür, Markise,
@@ -2228,6 +2241,13 @@ class World:
             for s in (-1, 1):
                 box("Decor", "CanopyPost", (0.4, 8.6, 0.4), (s * (w / 2 - 1.5), 4.3, fz - 3.8), (60, 62, 64), "Metal")
             box("Cover", "BusBench", (5, 1.2, 1.4), (-w / 4 - 1, 1.1, fz - 1.4), (104, 78, 54), "WoodPlanks")
+            # Busfahrer (NPC für REISEN) unter dem Vordach neben der Theke, Blick zur Straße, dazu ein Haltestellenschild
+            self.npc_figure(box, 3.4, fz - 2.6, jacket=(52, 70, 104), pants=(40, 42, 48), cap=(30, 40, 70))
+            box("Decor", "BusStopPole", (0.3, 8, 0.3), (w / 2 - 2.2, 4, fz - 3.6), (150, 152, 150), "Metal")
+            box("Decor", "BusStopSign", (2.2, 2.2, 0.15), (w / 2 - 2.2, 7.4, fz - 3.6), (232, 196, 40), "SmoothPlastic")
+            box("Decor", "BusStopH", (0.35, 1.4, 0.05), (w / 2 - 2.55, 7.4, fz - 3.7), (40, 110, 60), "SmoothPlastic")
+            box("Decor", "BusStopH", (0.35, 1.4, 0.05), (w / 2 - 1.85, 7.4, fz - 3.7), (40, 110, 60), "SmoothPlastic")
+            box("Decor", "BusStopH", (0.7, 0.3, 0.05), (w / 2 - 2.2, 7.4, fz - 3.7), (40, 110, 60), "SmoothPlastic")
         if key:
             b.add("Stands", key, (2, 2, 2), f(0, 2.5, fz - 4), (200, 200, 200), "SmoothPlastic", angles=(0, yaw, 0),
                   props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
