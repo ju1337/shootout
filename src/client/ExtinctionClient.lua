@@ -1665,15 +1665,14 @@ local prompts = {}
 -- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
 local BUBBLE_RANGE = 180
 local BUBBLE_HEIGHT = 9.5 -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): knapp über dem Dach
-local BUBBLE_CELL = 46    -- Symbolfeld in Pixeln
-local BUBBLE_BACK = Color3.fromRGB(22, 24, 28)
+local BUBBLE_SIZE = 38    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
 local BUBBLES = {
-	Stand_Weapons = { Title = "WAFFEN", Icons = { "Rifle", "Pistol", "Ammo_Rifle" }, Color = KIND_COLORS.Weapon },
-	Stand_Items = { Title = "SANI", Icons = { "Medkit", "Vest", "AntiZombie" }, Color = KIND_COLORS.Heal },
-	Stand_Vehicles = { Title = "FAHRZEUGE", Icons = { "V_Quad", "V_Pickup", "V_Heli" }, Color = KIND_COLORS.Vehicle },
-	Stand_Market = { Title = "SPIELERMARKT", Icons = { "Coins", "SMG", "Medkit" }, Color = Color3.fromRGB(226, 182, 72) },
-	Stash = { Title = "LAGER", Icons = { "Crate" }, Color = Color3.fromRGB(150, 160, 176) },
-	Travel = { Title = "REISEN", Icons = { "Route" }, Color = Color3.fromRGB(110, 170, 220) },
+	Stand_Weapons = { Icon = "Rifle" },
+	Stand_Items = { Icon = "Medkit" },
+	Stand_Vehicles = { Icon = "V_Pickup" },
+	Stand_Market = { Icon = "Coins" },
+	Stash = { Icon = "Crate" },
+	Travel = { Icon = "Route" },
 }
 local bubbles = {}
 
@@ -1720,37 +1719,17 @@ local function bubbleOf(name)
 	return BUBBLES[name] or (string.sub(name, 1, 7) == "Travel_" and BUBBLES.Travel) or nil
 end
 
--- Blase an einen Stand-Punkt hängen (einmal je Punkt)
+-- Symbol über einen Stand-Punkt hängen (einmal je Punkt): nur das Symbol der Station, klein, ohne Rahmen
 local function addBubble(part)
 	local def = part:IsA("BasePart") and bubbleOf(part.Name)
 	if not def or part:FindFirstChild("StandBubble") then
 		return
 	end
-	local count = #def.Icons
-	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(math.max(count * BUBBLE_CELL + 20, 136), 92),
+	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(BUBBLE_SIZE, BUBBLE_SIZE),
 		StudsOffset = Vector3.new(0, BUBBLE_HEIGHT, 0), MaxDistance = BUBBLE_RANGE, AlwaysOnTop = false, LightInfluence = 0,
 		Enabled = inExtinction() }, part)
-	-- Spitze unten (Sprechblase): halb hinter dem Feld, nur die untere Hälfte mit Rand ist zu sehen
-	local tail = make("Frame", { Name = "Tail", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 1, -13),
-		Size = UDim2.fromOffset(16, 16), Rotation = 45, BackgroundColor3 = BUBBLE_BACK, BackgroundTransparency = 0.08,
-		BorderSizePixel = 0, ZIndex = 1 }, gui)
-	UITheme.Stroke(tail, def.Color, 2)
-	local panel = make("Frame", { Name = "Panel", Size = UDim2.new(1, 0, 1, -13), BackgroundColor3 = BUBBLE_BACK,
-		BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 2 }, gui)
-	UITheme.Corner(panel, 10)
-	UITheme.Stroke(panel, def.Color, 2)
-	label({ Name = "Title", Position = UDim2.fromOffset(0, 5), Size = UDim2.new(1, 0, 0, 18), Text = def.Title, TextSize = 15,
-		TextColor3 = def.Color, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 3 }, panel)
-	local row = make("Frame", { Name = "Icons", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 27),
-		Size = UDim2.fromOffset(count * BUBBLE_CELL, BUBBLE_CELL - 4), BackgroundTransparency = 1, ZIndex = 3 }, panel)
-	for i, id in def.Icons do
-		local cell = make("Frame", { Name = "Cell" .. i, Position = UDim2.fromOffset((i - 1) * BUBBLE_CELL + 2, 0),
-			Size = UDim2.fromOffset(BUBBLE_CELL - 4, BUBBLE_CELL - 4), BackgroundColor3 = Color3.fromRGB(44, 46, 52),
-			BackgroundTransparency = 0.15, BorderSizePixel = 0, ZIndex = 3 }, row)
-		UITheme.Corner(cell, 6)
-		local icon = itemConfig(id) and buildIcon(cell, id, 4) or buildSymbol(cell, id, 4)
-		icon.Name = "Icon_" .. id
-	end
+	local icon = itemConfig(def.Icon) and buildIcon(gui, def.Icon, 1) or buildSymbol(gui, def.Icon, 1)
+	icon.Name = "Icon_" .. def.Icon
 	table.insert(bubbles, gui)
 end
 

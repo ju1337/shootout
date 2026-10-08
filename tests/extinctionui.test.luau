@@ -133,29 +133,26 @@ local windowGui = playerGui:FindFirstChild("ExtinctionWindow")
 check(hud ~= nil and hud.Enabled, "HUD in der offenen Welt sichtbar")
 check(windowGui ~= nil and not windowGui.Enabled, "kein Fenster offen")
 
--- Hinweis-Blasen über allen Ständen, dem Lager und der Haltestelle: Name und Symbole der Ware, von weitem sichtbar
+-- Symbole über allen Ständen, dem Lager und der Haltestelle: nur ein kleines Symbol der Station, ohne Rahmen und Titel
 local BUBBLE_WANT = {
-	Stand_Weapons = { "WAFFEN", { "Rifle", "Pistol", "Ammo_Rifle" } },
-	Stand_Items = { "SANI", { "Medkit", "Vest", "AntiZombie" } },
-	Stand_Vehicles = { "FAHRZEUGE", { "V_Quad", "V_Pickup", "V_Heli" } },
-	Stand_Market = { "SPIELERMARKT", { "Coins", "SMG", "Medkit" } },
-	Stash = { "LAGER", { "Crate" } },
-	Travel = { "REISEN", { "Route" } },
+	Stand_Weapons = "Rifle",
+	Stand_Items = "Medkit",
+	Stand_Vehicles = "V_Pickup",
+	Stand_Market = "Coins",
+	Stash = "Crate",
+	Travel = "Route",
 }
 for name, want in BUBBLE_WANT do
 	local part = map.Stands:FindFirstChild(name)
 	local bubble = part and part:FindFirstChild("StandBubble")
-	check(bubble ~= nil and bubble:IsA("BillboardGui") and bubble.Enabled, name .. ": Blase über dem Stand")
+	check(bubble ~= nil and bubble:IsA("BillboardGui") and bubble.Enabled, name .. ": Symbol über dem Stand")
 	if bubble then
-		local title = find(bubble, "Title")
-		check(title ~= nil and title.Text == want[1], name .. ": Titel " .. want[1])
-		for _, id in want[2] do
-			local icon = find(bubble, "Icon_" .. id)
-			check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. id)
-		end
+		local icon = find(bubble, "Icon_" .. want)
+		check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. want)
+		check(find(bubble, "Title") == nil and find(bubble, "Panel") == nil, name .. ": kein Titel, kein Rahmen")
+		check(bubble.Size.X.Offset <= 48 and bubble.Size.Y.Offset <= 48, name .. ": klein")
 		check(bubble.StudsOffset.Y > 6 and bubble.MaxDistance >= 150 and not bubble.AlwaysOnTop,
 			name .. ": über dem Dach, von weitem sichtbar, Wände verdecken")
-		check(bubble.Size.X.Offset >= #want[2] * 46, name .. ": breit genug für alle Symbole")
 	end
 end
 local rifleIcon = find(map.Stands.Stand_Weapons.StandBubble, "Icon_Rifle")
