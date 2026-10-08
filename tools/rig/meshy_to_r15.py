@@ -18,7 +18,7 @@ ARM_SPREAD_DEG = 8       # Winkel der Oberarme zur Senkrechten nach dem Umposen
 
 # Meshy-Knochen -> R15-Teil (Gewichte werden zusammengelegt)
 MERGE = {
-    "Hips": "LowerTorso", "Spine02": "LowerTorso",
+    "Hips": "LowerTorso", "Spine02": "UpperTorso",  # Taille tief: die ganze Weste gehört zur Brust
     "Spine01": "UpperTorso", "Spine": "UpperTorso",
     "LeftShoulder": "UpperTorso", "RightShoulder": "UpperTorso",
     "neck": "Head", "Head": "Head",
@@ -30,7 +30,7 @@ MERGE = {
 # R15-Knochen: (Elternknochen, Meshy-Knochen, dessen Kopf das Gelenk ist)
 R15 = {
     "LowerTorso": ("HumanoidRootPart", "Hips"),
-    "UpperTorso": ("LowerTorso", "Spine01"),
+    "UpperTorso": ("LowerTorso", "Spine02"),
     "Head": ("UpperTorso", "neck"),
     "LeftUpperArm": ("UpperTorso", "LeftArm"), "LeftLowerArm": ("LeftUpperArm", "LeftForeArm"), "LeftHand": ("LeftLowerArm", "LeftHand"),
     "RightUpperArm": ("UpperTorso", "RightArm"), "RightLowerArm": ("RightUpperArm", "RightForeArm"), "RightHand": ("RightLowerArm", "RightHand"),

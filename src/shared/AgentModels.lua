@@ -215,6 +215,7 @@ local function loadRig(rig, report)
 		table.insert(report.Errors, "Humanoid oder HumanoidRootPart lässt sich nicht kopieren (Archivable ist aus)")
 		return nil
 	end
+	templateRoot.Transparency = 1 -- wie bei jedem Roblox-Charakter (aus Blender importiert ist es oft eine sichtbare Box)
 	-- was an keinem Gelenk hängt, hängt fest am HumanoidRootPart (sonst fiele es herunter)
 	local attached = connected(template, templateRoot)
 	local visible, joints, matched = {}, 0, 0
@@ -275,6 +276,7 @@ local function loadRig(rig, report)
 	local character = rig:Clone()
 	local characterRoot = character:FindFirstChild("HumanoidRootPart", true)
 	character.PrimaryPart = characterRoot
+	characterRoot.Transparency = 1
 	if scale ~= 1 then
 		character:ScaleTo(character:GetScale() * scale)
 	end
