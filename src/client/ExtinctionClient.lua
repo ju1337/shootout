@@ -614,20 +614,28 @@ local function buildHud()
 		markerRows[i] = { Row = row, Arrow = arrow, Text = text }
 	end
 
-	-- unten: Hotbar
-	local cell, gap = 64, 6
-	local barWidth = HOTBAR * cell + (HOTBAR - 1) * gap
-	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -26),
-		Size = UDim2.fromOffset(barWidth, cell), BackgroundTransparency = 1 }, root)
+	-- unten: Hotbar im Stil der Schnellleiste im Inventar: Kacheln breiter als hoch (mit Namen) auf einer Glasfläche wie das Menü
+	-- Touch: schmalere Kacheln ohne Namen, sonst reicht die Leiste bis unter die Knöpfe rechts (WAFFE)
+	local cell, cellH, gap, pad = 96, 58, 8, 6
+	if InputActions.Device() == "Touch" then
+		cell = 64
+	end
+	local barWidth = HOTBAR * cell + (HOTBAR - 1) * gap + 2 * pad
+	local back = make("Frame", { Name = "HotbarBack", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24),
+		Size = UDim2.fromOffset(barWidth, cellH + 2 * pad), BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.42,
+		BorderSizePixel = 0 }, root)
+	UITheme.Corner(back, 4)
+	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24 - pad),
+		Size = UDim2.fromOffset(barWidth - 2 * pad, cellH), BackgroundTransparency = 1 }, root)
 	for slot = 1, HOTBAR do
-		local view = slotButton(bar, "Hotbar", slot, UDim2.fromOffset(cell, cell),
+		local view = slotButton(bar, "Hotbar", slot, UDim2.fromOffset(cell, cellH),
 			UDim2.fromOffset((slot - 1) * (cell + gap), 0), 2, tostring(slot))
 		view.Frame.Activated:Connect(function()
 			Inv.useSlot(slot)
 		end)
 		hotbarViews[slot] = view
 	end
-	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -98), Size = UDim2.fromOffset(560, 18),
+	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -100), Size = UDim2.fromOffset(560, 18),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -46),
 		Size = UDim2.fromOffset(160, 22), Text = "", TextSize = 20, Font = F.Display, TextColor3 = C.Primary,
