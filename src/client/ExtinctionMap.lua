@@ -35,6 +35,7 @@ local RED = Color3.fromRGB(226, 56, 48)
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
 local CONVOY = Color3.fromRGB(236, 96, 64)
+local HORDE = Color3.fromRGB(200, 90, 220)
 local CONVOY_STATES = { Waiting = "KONVOI WARTET", Driving = "KONVOI", Halted = "KONVOI GESTOPPT", Loot = "KONVOI-LADUNG" }
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
@@ -266,6 +267,27 @@ local function update()
 			text.Text = CONVOY_STATES[convoy.State] or "KONVOI"
 		end
 	end
+	-- Horden-Kiste: lila Quadrat mit Fortschritt
+	for _, horde in decode(map, "Hordes") do
+		local id = "Horde" .. tostring(horde.Id)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "Horde", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(14, 14),
+				BackgroundColor3 = HORDE, BorderSizePixel = 0, ZIndex = 9 }, markers)
+			UITheme.Stroke(view, Color3.new(0, 0, 0), 1.5, 0.2)
+			label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4), Size = UDim2.fromOffset(150, 14),
+				TextSize = 11, Font = F.Bold, TextColor3 = HORDE, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, view)
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, horde.X or 0, horde.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
+		local text = view:FindFirstChild("Text")
+		if text then
+			text.Text = horde.State == "Siege" and string.format("HORDE %d %%", math.floor((tonumber(horde.Progress) or 0) * 100))
+				or "HORDEN-KISTE"
+		end
+	end
 	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do
 		local color = ACTIVITY_COLORS[act.Kind]
@@ -481,6 +503,7 @@ function ExtinctionMap.Init()
 		{ "Ring", RED, "ROTE ZONE (ZIEHT WEITER)" },
 		{ "Diamond", DROP, "LOOTDROP" },
 		{ "Dot", CONVOY, "KONVOI" },
+		{ "Square", HORDE, "HORDEN-KISTE" },
 		{ "Square", ACTIVITY_COLORS.Cache, "VORRATSLAGER" },
 		{ "Dot", ACTIVITY_COLORS.Radio, "FUNKGERÄT" },
 		{ "Square", RED, "X  DEINE TASCHE" },

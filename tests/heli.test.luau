@@ -58,6 +58,7 @@ local VehicleService = require("VehicleService")
 InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge
+ExtinctionConfig.Horde.Enabled = false -- keine Horden-Kiste (eigener Test: horde)
 ExtinctionConfig.Day.Fixed = 12
 Extinction.Init({ Join = function() end, Status = function() end })
 ExtinctionConfig.Zombies.PerPlayer = 0

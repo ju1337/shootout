@@ -287,6 +287,12 @@ end
 
 -- opts = { Map, Center (Vector3), InSafeZone(position), SafeCenter() -> (Vector3, Radius), Players() -> { Player },
 --          RedzoneAt(position) -> Zone | nil, RedzoneRandom() -> Zone | nil }
+-- Zufällige freie Stelle draußen (auch für andere Events, z.B. die Horden-Kiste)
+function AirdropService.PickTarget()
+	local target = pickTarget()
+	return target
+end
+
 function AirdropService.Init(opts)
 	options = opts
 	nextAt = os.clock() + A.FirstDelay

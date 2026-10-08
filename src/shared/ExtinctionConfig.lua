@@ -467,6 +467,38 @@ ExtinctionConfig.Airdrop = {
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
 }
 
+-- ---------- Horden-Kiste (HordeService) ----------
+-- Alle MinInterval bis MaxInterval Sekunden (zuerst nach FirstDelay, nur mit MinPlayers draußen) steht irgendwo eine verriegelte
+-- Versorgungskiste mit Signalfeuer. E halten startet die Belagerung: solange Spieler im Umkreis Radius sind, läuft der
+-- Fortschritt (HoldTime Sekunden für einen Spieler, jeder weitere +50 %), und bei At (Anteil) kommt eine Welle Zombies
+-- (Count, Arten KindWeights) zwischen SpawnMin und SpawnMax Studs. Ist niemand mehr da, steht der Fortschritt; nach
+-- PauseLimit Sekunden ohne Spieler fällt er auf 0 zurück. Bei 100 % öffnet sich die Kiste: Items aus Table, dazu
+-- BonusItems aus BonusTable, Coins für alle, die mitgehalten haben. Ungeöffnet verschwindet sie nach Lifetime Sekunden.
+-- Stand für die Clients: Karten-Attribut "Hordes" [{ Id, X, Z, State, Progress, Wave }].
+ExtinctionConfig.Horde = {
+	Enabled = true,
+	FirstDelay = 9 * 60,
+	MinInterval = 14 * 60,
+	MaxInterval = 22 * 60,
+	MinPlayers = 1,
+	HoldTime = 90,
+	Radius = 16,
+	PauseLimit = 60,
+	Lifetime = 10 * 60,
+	Waves = {
+		{ At = 0, Count = 8, KindWeights = { Walker = 70, Runner = 30 } },
+		{ At = 0.34, Count = 12, KindWeights = { Walker = 50, Runner = 35, Screamer = 15 } },
+		{ At = 0.67, Count = 16, KindWeights = { Walker = 40, Runner = 35, Brute = 25 } },
+	},
+	SpawnMin = 28,
+	SpawnMax = 55,
+	Table = "Tier3",
+	Items = { 4, 5 },
+	BonusTable = "Airdrop",
+	BonusItems = { 1, 2 },
+	Coins = 150,
+}
+
 -- ---------- Zombies ----------
 -- Wenige und langsame Zombies: man kann ihnen davonlaufen (Spieler laufen 16, sprinten 24). Die Standardwerte gelten für
 -- den normalen Zombie (Walker), ZombieKinds überschreibt sie je Art. Läufer und Brocken gibt es vor allem in der roten Zone und nachts.

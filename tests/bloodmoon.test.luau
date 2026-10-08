@@ -53,6 +53,7 @@ local BloodMoonService = require("BloodMoonService")
 InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge
+ExtinctionConfig.Horde.Enabled = false -- keine Horden-Kiste (eigener Test: horde)
 ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }
 ExtinctionConfig.Zombies.NightKindWeights = { Walker = 1 }
 ExtinctionConfig.Day.BloodMoonKindWeights = { Walker = 1 }

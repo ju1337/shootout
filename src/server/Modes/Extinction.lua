@@ -43,6 +43,7 @@ local VehicleService = require(ServerShared.VehicleService)
 local ConvoyService = require(ServerShared.ConvoyService)
 local HideoutService = require(ServerShared.HideoutService)
 local ThrowableService = require(ServerShared.ThrowableService)
+local HordeService = require(ServerShared.HordeService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -530,6 +531,25 @@ function Extinction.Init(modeManager)
 
 	-- Granaten und Molotows (Hotbar-Taste wirft in Blickrichtung)
 	ThrowableService.Init()
+
+	-- Horden-Kiste: Kiste gegen Zombiewellen halten, dann Beute
+	HordeService.Init({
+		Map = map,
+		InSafeZone = Extinction.InSafeZone,
+		PickTarget = AirdropService.PickTarget,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+		Reward = function(player, coins, text)
+			if members[player] then
+				ProgressService.AddCoins(player, coins, text)
+			end
+		end,
+	})
 
 	-- Konvoi: fährt eine Landstraße entlang, anhalten (Schüsse), Wachen erledigen, Ladung holen
 	ConvoyService.Init({

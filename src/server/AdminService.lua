@@ -76,6 +76,17 @@ function AdminService.Init(manager)
 			local drop = AirdropService.Start(position)
 			return drop and ("Lootdrop gestartet" .. (position and " (bei dir)" or "")) or "Es läuft schon ein Lootdrop (oder kein Ziel gefunden)."
 		end,
+		ExtHordeCrate = function(where, _, admin)
+			local position = where == "Here" and adminPosition(admin) or nil
+			if where == "Here" and not position then
+				return "Kein Charakter – geh in die offene Welt."
+			end
+			if position then
+				position += (admin.Character.HumanoidRootPart.CFrame.LookVector * Vector3.new(1, 0, 1)) * 10 - Vector3.new(0, 3, 0)
+			end
+			local horde = serverShared("HordeService").Start(position)
+			return horde and ("Horden-Kiste aufgestellt" .. (position and " (vor dir)" or "")) or "Es steht schon eine Horden-Kiste."
+		end,
 		ExtConvoy = function()
 			local convoy = serverShared("ConvoyService").Start()
 			return convoy and ("Konvoi gestartet: " .. tostring(convoy.Path and convoy.Path.Name or "")) or "Es fährt schon ein Konvoi."

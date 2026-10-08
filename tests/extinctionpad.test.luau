@@ -50,6 +50,7 @@ local ExtinctionConfig = require("ExtinctionConfig")
 InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge
+ExtinctionConfig.Horde.Enabled = false -- keine Horden-Kiste (eigener Test: horde)
 ExtinctionConfig.Day.Fixed = 12
 ExtinctionConfig.Zombies.PerPlayer = 0
 ExtinctionConfig.Redzone.Enabled = false

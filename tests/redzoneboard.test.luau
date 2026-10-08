@@ -62,6 +62,7 @@ local HttpService = game:GetService("HttpService")
 InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge -- hier keine Lootdrops
+ExtinctionConfig.Horde.Enabled = false -- keine Horden-Kiste (eigener Test: horde)
 ExtinctionConfig.Day.Fixed = 12
 ExtinctionConfig.Zombies.PerPlayer = 0 -- keine Zombies: niemand soll hier nebenbei sterben
 Extinction.Init({ Join = function() end, Status = function() end })
