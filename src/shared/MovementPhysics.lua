@@ -90,6 +90,7 @@ P.AirDrag = 5            -- Schwung (aus Rutschen oder Vault) nimmt in der Luft 
 P.AirMomentumMax = 46
 P.Coyote = 0.12          -- Sprung kurz nach dem Verlassen einer Kante zählt noch
 P.JumpBuffer = 0.15      -- Sprung kurz vor dem Landen wird beim Landen ausgeführt
+P.JumpHeight = 4.5       -- Sprunghöhe in Studs (Roblox-Standard 7,2 ist fast anderthalb Körper hoch)
 
 function P.AirStep(momentum, dt)
 	return math.max(0, momentum - P.AirDrag * dt)
@@ -111,8 +112,8 @@ end
 -- ---------- Hindernisse ----------
 P.VaultMin = 1.3         -- niedriger: einfach weiterlaufen (Stufen nimmt der Humanoid selbst)
 P.VaultMax = 4.4         -- bis zu dieser Höhe springt man über dünne Hindernisse
-P.MantleMax = 7.8        -- höchste Kante über den Füßen, an der man sich hochzieht
-P.MantleFromGround = 9.5 -- aus dem Sprung: Kante höchstens so hoch über dem letzten Boden
+P.MantleMax = 6.2        -- höchste Kante über den Füßen, an der man sich hochzieht (Arme gestreckt)
+P.MantleFromGround = 7   -- aus dem Sprung: Kante höchstens so hoch über dem letzten Boden (Dächer ab 9 nur über Treppen)
 P.VaultThickness = 4.5   -- dünner als das (dahinter geht es runter): drüberspringen
 P.Reach = 4              -- so nah muss die Wand vor einem sein
 P.Clearance = 4.6        -- so viel Platz braucht der Körper über der Kante
