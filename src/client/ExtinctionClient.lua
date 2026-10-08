@@ -75,9 +75,10 @@ local KIND_COLORS = {
 	Vehicle = Color3.fromRGB(112, 178, 112),
 	Repel = Color3.fromRGB(120, 220, 120),
 	Attachment = Color3.fromRGB(176, 136, 232),
+	Throwable = Color3.fromRGB(226, 120, 60),
 }
 local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG",
-	Repel = "SCHUTZ", Attachment = "AUFSATZ" }
+	Repel = "SCHUTZ", Attachment = "AUFSATZ", Throwable = "WURFWAFFE" }
 -- Seltenheit der Aufsätze (Tier) als Name und Farbe
 local TIER_NAMES = { [2] = "HÄUFIG", [3] = "SELTEN", [4] = "SEHR SELTEN" }
 local TIER_COLORS = { [2] = Color3.fromRGB(120, 176, 230), [3] = Color3.fromRGB(176, 136, 232), [4] = Color3.fromRGB(236, 178, 70) }
@@ -123,6 +124,18 @@ end
 
 local function sendAction(...)
 	Remotes.ExtAction:FireServer(...)
+end
+
+-- Hotbar-Platz benutzen; Wurfwaffen fliegen in Blickrichtung der Kamera
+function Inv.useSlot(slot)
+	local entry = bag[slot]
+	local config = entry and itemConfig(entry.Id)
+	if config and config.Kind == "Throwable" then
+		local camera = workspace.CurrentCamera
+		sendAction("Throw", slot, camera and camera.CFrame.LookVector or nil)
+	else
+		sendAction("Use", slot)
+	end
 end
 
 -- ---------- Symbole ----------
@@ -191,6 +204,39 @@ local function buildIcon(parent, id, zIndex)
 			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, barrel)
 		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 29, 0.5, 0), Size = UDim2.fromOffset(11, 1),
 			BackgroundColor3 = Color3.fromRGB(190, 196, 204), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+	elseif config.Kind == "Throwable" and config.Throwable == "Molotov" then
+		-- Flasche mit Hals und brennendem Lappen (schräg)
+		local bottle = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.56), Size = UDim2.fromOffset(14, 22),
+			Rotation = 20, BackgroundColor3 = Color3.fromRGB(96, 128, 62), BorderSizePixel = 0, ZIndex = zIndex }, holder)
+		UITheme.Corner(bottle, 4)
+		make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.new(1, 0, 0.45, 0),
+			BackgroundColor3 = Color3.fromRGB(176, 120, 54), BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = zIndex }, bottle)
+		local neck = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, 1), Size = UDim2.fromOffset(6, 8),
+			BackgroundColor3 = Color3.fromRGB(96, 128, 62), BorderSizePixel = 0, ZIndex = zIndex }, bottle)
+		local rag = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, 1), Size = UDim2.fromOffset(8, 6),
+			BackgroundColor3 = Color3.fromRGB(210, 196, 170), BorderSizePixel = 0, ZIndex = zIndex }, neck)
+		local flame = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, 1), Size = UDim2.fromOffset(9, 11),
+			BackgroundColor3 = Color3.fromRGB(255, 140, 40), BorderSizePixel = 0, ZIndex = zIndex }, rag)
+		UITheme.Corner(flame, 5)
+		make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -1), Size = UDim2.fromOffset(5, 6),
+			BackgroundColor3 = Color3.fromRGB(255, 220, 90), BorderSizePixel = 0, ZIndex = zIndex }, flame)
+	elseif config.Kind == "Throwable" then
+		-- Handgranate: runder Körper mit Rillen, Bügel und Sicherungsring
+		local body = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.58), Size = UDim2.fromOffset(20, 24),
+			BackgroundColor3 = Color3.fromRGB(78, 94, 62), BorderSizePixel = 0, ZIndex = zIndex }, holder)
+		UITheme.Corner(body, 10)
+		for _, y in { 7, 12, 17 } do
+			make("Frame", { Position = UDim2.fromOffset(2, y), Size = UDim2.new(1, -4, 0, 1), BackgroundColor3 = Color3.fromRGB(52, 64, 42),
+				BorderSizePixel = 0, ZIndex = zIndex }, body)
+		end
+		local top = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, 2), Size = UDim2.fromOffset(8, 6),
+			BackgroundColor3 = Color3.fromRGB(150, 150, 146), BorderSizePixel = 0, ZIndex = zIndex }, body)
+		make("Frame", { Position = UDim2.fromOffset(6, 0), Size = UDim2.fromOffset(4, 16), BackgroundColor3 = Color3.fromRGB(150, 150, 146),
+			BorderSizePixel = 0, ZIndex = zIndex }, top)
+		local ring = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(7, 7),
+			BackgroundTransparency = 1, ZIndex = zIndex }, top)
+		UITheme.Corner(ring, 4)
+		make("UIStroke", { Color = Color3.fromRGB(190, 190, 186), Thickness = 1.5 }, ring)
 	elseif config.Kind == "Attachment" then
 		local icon = AttachmentIcons.Build(holder, config.Attachment, 34, TIER_COLORS[config.Tier] or color)
 		icon.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -279,6 +325,14 @@ local function describe(id, entry)
 			.. (config.Speed and " · kurz schneller" or "")
 	elseif config.Kind == "Armor" then
 		return "+" .. config.Armor .. " Rüstung · " .. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"
+	elseif config.Kind == "Throwable" then
+		local cfg = ExtinctionConfig.Throwables[config.Throwable]
+		if config.Throwable == "Molotov" then
+			return "Brennt " .. cfg.Duration .. " s · Radius " .. cfg.Radius .. " · " .. math.floor(cfg.TickDamage / cfg.Tick)
+				.. " Schaden pro s (Zombies doppelt) · Taste wirft"
+		end
+		return "Explodiert nach " .. string.gsub(tostring(cfg.Fuse), "%.", ",") .. " s · bis " .. cfg.Damage .. " Schaden · Radius "
+			.. cfg.Radius .. " · Taste wirft"
 	elseif config.Kind == "Repel" then
 		return math.floor((config.Duration or 0) / 60) .. " Min spawnen bei dir keine Zombies · "
 			.. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"
@@ -553,7 +607,7 @@ local function buildHud()
 		local view = slotButton(bar, "Hotbar", slot, UDim2.fromOffset(cell, cell),
 			UDim2.fromOffset((slot - 1) * (cell + gap), 0), 2, tostring(slot))
 		view.Frame.Activated:Connect(function()
-			sendAction("Use", slot)
+			Inv.useSlot(slot)
 		end)
 		hotbarViews[slot] = view
 	end
@@ -1369,7 +1423,7 @@ end
 -- Filter des Inventars (Kopfzeile): Art(en) der Items, die hell bleiben
 Inv.FILTERS = {
 	{ Id = "All", Text = "ALLE" },
-	{ Id = "Weapon", Text = "WAFFEN", Kinds = { Weapon = true } },
+	{ Id = "Weapon", Text = "WAFFEN", Kinds = { Weapon = true, Throwable = true } },
 	{ Id = "Ammo", Text = "MUNITION", Kinds = { Ammo = true } },
 	{ Id = "Heal", Text = "HEILUNG", Kinds = { Heal = true, Repel = true } },
 	{ Id = "Armor", Text = "RÜSTUNG", Kinds = { Armor = true } },
@@ -1486,7 +1540,7 @@ local function openInventory()
 			local slot = selected.Slot
 			if slot <= HOTBAR then
 				table.insert(actions, { Text = "BENUTZEN  (" .. slot .. ")", Primary = true, Run = function()
-					sendAction("Use", slot)
+					Inv.useSlot(slot)
 				end })
 				table.insert(actions, { Text = "IN DIE TASCHE", Run = function()
 					selected = nil
@@ -2670,7 +2724,7 @@ local function quickHeal()
 		end
 	end
 	if best then
-		sendAction("Use", best)
+		Inv.useSlot(best)
 	else
 		showToast("Kein Heil-Item in der Hotbar.", false)
 	end
@@ -2703,7 +2757,7 @@ local function cycle(direction)
 		local entry = bag[slot]
 		local config = entry and itemConfig(entry.Id)
 		if config and config.Kind == "Weapon" then
-			sendAction("Use", slot)
+			Inv.useSlot(slot)
 			return
 		end
 	end
@@ -2727,7 +2781,7 @@ function ExtinctionClient.Init()
 		InputActions.Bindings[action] = { Keys = { keys[slot] }, Pad = {} }
 		InputActions.Bind(action, function(began)
 			if began and inExtinction() then
-				sendAction("Use", slot)
+				Inv.useSlot(slot)
 			end
 		end)
 	end

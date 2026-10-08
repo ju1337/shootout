@@ -42,6 +42,7 @@ local ExtMarketService = require(ServerShared.ExtMarketService)
 local VehicleService = require(ServerShared.VehicleService)
 local ConvoyService = require(ServerShared.ConvoyService)
 local HideoutService = require(ServerShared.HideoutService)
+local ThrowableService = require(ServerShared.ThrowableService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -526,6 +527,9 @@ function Extinction.Init(modeManager)
 
 	-- Eigenes Versteck: Module ausbauen, Generator abholen (Haus VERSTECK im Camp)
 	HideoutService.Init()
+
+	-- Granaten und Molotows (Hotbar-Taste wirft in Blickrichtung)
+	ThrowableService.Init()
 
 	-- Konvoi: fährt eine Landstraße entlang, anhalten (Schüsse), Wachen erledigen, Ladung holen
 	ConvoyService.Init({

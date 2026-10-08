@@ -39,6 +39,7 @@ local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im
 -- UseVehicle(player, slot, item) für Fahrzeuge auf der Hotbar, DropItems(player, items, position) für "Fallen lassen"
 InventoryService.Handlers = {}
 InventoryService.UseVehicle = nil
+InventoryService.UseThrowable = nil -- function(player, slot, item, direction) (ThrowableService)
 InventoryService.DropItems = nil
 
 local function status(player, text, ok)
@@ -407,6 +408,10 @@ function InventoryService.Use(player, slot)
 		if InventoryService.UseVehicle then
 			InventoryService.UseVehicle(player, slot, item)
 		end
+	elseif config.Kind == "Throwable" then
+		if InventoryService.UseThrowable then
+			InventoryService.UseThrowable(player, slot, item, nil)
+		end
 	elseif config.Kind == "Ammo" then
 		status(player, config.Name .. " wird beim Nachladen benutzt.")
 	elseif config.Kind == "Attachment" then
@@ -417,6 +422,20 @@ function InventoryService.Use(player, slot)
 			status(player, "Nimm die Waffe in die Hand oder zieh den Aufsatz im Inventar auf sie.")
 		end
 	end
+end
+
+-- Taste 1-9 mit Wurfwaffe: in Blickrichtung (direction vom Client) werfen
+function InventoryService.Throw(player, slot, direction)
+	if not inExtinction(player) or type(slot) ~= "number" or slot < 1 or slot > HOTBAR or slot ~= math.floor(slot) then
+		return
+	end
+	local state = stateOf(player)
+	local item = state and state.Bag.Slots[slot]
+	local config = item and ExtinctionConfig.Get(item.Id)
+	if not config or config.Kind ~= "Throwable" or not InventoryService.UseThrowable then
+		return
+	end
+	InventoryService.UseThrowable(player, slot, item, typeof(direction) == "Vector3" and direction or nil)
 end
 
 -- Nah genug an einem Stand / am Lager / am Versteck? (Teile in Maps.Extinction.Stands, ein Name kann mehrfach vorkommen)
@@ -801,6 +820,8 @@ function InventoryService.Init()
 			InventoryService.Holster(player)
 		elseif action == "Detach" then
 			InventoryService.Detach(player, ...)
+		elseif action == "Throw" then
+			InventoryService.Throw(player, ...)
 		elseif InventoryService.Handlers[action] then
 			InventoryService.Handlers[action](player, ...)
 		end

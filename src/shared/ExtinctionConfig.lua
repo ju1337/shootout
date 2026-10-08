@@ -10,6 +10,7 @@
 --   "Armor"   Rüstung (Attribut "Armor", höchstens MaxArmor), dauert UseTime Sekunden
 --   "Vehicle" Fahrzeug aus Vehicles (Vehicle); Taste spawnt es und setzt einen hinein, K packt es wieder ein
 --   "Repel"   Anti-Zombie-Spritze: Duration Sekunden spawnen beim Benutzer keine Zombies (Charakter-Attribut ZombieShieldUntil)
+--   "Throwable" Granate oder Molotow (Throwable = Eintrag in Throwables): Taste wirft in Blickrichtung (ThrowableService)
 --   "Attachment" Waffen-Aufsatz (Attachment = Id in AttachmentConfig, Slot = Platz): auf eine Waffe in der Tasche ziehen
 --             (oder Taste mit der Waffe in der Hand) hängt ihn an diese Waffe; ein alter Aufsatz desselben Platzes
 --             kommt zurück in die Tasche. Er bleibt an der Waffe (Inventar-Feld Att) und geht mit ihr verloren.
@@ -90,6 +91,9 @@ ExtinctionConfig.Items = {
 	HeavyVest = { Kind = "Armor", Name = "Schwere Weste", Armor = 100, UseTime = 5, Price = 550, MaxStack = 2, Tier = 3 },
 	-- Anti-Zombie-Spritze: einzige Wirkung – Duration Sekunden lang spawnen bei dir keine Zombies (Zombies.ShieldRadius)
 	AntiZombie = { Kind = "Repel", Name = "Anti-Zombie-Spritze", Duration = 180, UseTime = 2, Price = 240, MaxStack = 3, Tier = 2 },
+	-- Wurfwaffen (Werte in Throwables)
+	Grenade = { Kind = "Throwable", Name = "Granate", Throwable = "Frag", Price = 320, MaxStack = 3, Tier = 2 },
+	Molotov = { Kind = "Throwable", Name = "Molotow", Throwable = "Molotov", Price = 240, MaxStack = 3, Tier = 2 },
 	-- Fahrzeuge (Fahrrad gibt es nur bei Zombies)
 	V_Bicycle = { Kind = "Vehicle", Name = "Fahrrad", Vehicle = "Bicycle", Tier = 0 },
 	V_Quad = { Kind = "Vehicle", Name = "Quad", Vehicle = "Quad", Price = 900, Tier = 1 },
@@ -111,7 +115,7 @@ end
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
 ExtinctionConfig.Stands = {
 	Stand_Weapons = { Title = "WAFFENSTAND", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
-		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } },
+		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle", "Grenade", "Molotov" } },
 	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports", "V_Heli" } },
 }
@@ -154,6 +158,7 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Pistol", Count = { 1, 1 }, Weight = 5 },
 		{ Id = "Revolver", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 3 },
+		{ Id = "Molotov", Count = { 1, 1 }, Weight = 2 },
 	},
 	Tier1 = { -- Häuser, Hinterhöfe
 		{ Id = "Bandage", Count = { 1, 2 }, Weight = 30 },
@@ -182,6 +187,8 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Adrenaline", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "AntiZombie", Count = { 1, 1 }, Weight = 7 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 2 },
+		{ Id = "Molotov", Count = { 1, 2 }, Weight = 5 },
+		{ Id = "Grenade", Count = { 1, 1 }, Weight = 2 },
 	},
 	Tier3 = { -- Militärbasis, rote Zone
 		{ Id = "Rifle", Count = { 1, 1 }, Weight = 10 },
@@ -199,6 +206,8 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Shell", Count = { 12, 20 }, Weight = 6 },
 		{ Id = "V_Quad", Count = { 1, 1 }, Weight = 3 },
 		{ Id = "V_Pickup", Count = { 1, 1 }, Weight = 1 },
+		{ Id = "Grenade", Count = { 1, 2 }, Weight = 8 },
+		{ Id = "Molotov", Count = { 1, 2 }, Weight = 6 },
 	},
 	Medical = {
 		{ Id = "Bandage", Count = { 3, 6 }, Weight = 40 },
@@ -226,7 +235,20 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Shell", Count = { 24, 48 }, Weight = 8 },
 		{ Id = "V_Pickup", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "V_Sports", Count = { 1, 1 }, Weight = 1 },
+		{ Id = "Grenade", Count = { 2, 3 }, Weight = 10 },
 	},
+}
+
+-- ---------- Wurfwaffen (ThrowableService) ----------
+-- Speed/Up = Wurf (Studs/s nach vorn und nach oben), Cooldown zwischen zwei Würfen.
+-- Frag: explodiert nach Fuse Sekunden; Damage in der Mitte, am Rand (Radius) noch EdgeFactor davon; Wände schützen.
+-- Molotov: zerplatzt beim Aufprall (spätestens nach Fuse Sekunden) zu einem Feuer mit Radius, das Duration Sekunden brennt
+-- und alle Tick Sekunden TickDamage macht (Zombies ZombieFactor-fach). Spieler nur nach den PvP-Regeln, nie der Werfer
+-- selbst und nie der eigene Squad. Fahrzeuge und der Konvoi nehmen Schaden (VehicleFactor).
+ExtinctionConfig.Throwables = {
+	Frag = { Speed = 70, Up = 20, Fuse = 2.5, Radius = 18, Damage = 120, EdgeFactor = 0.3, VehicleFactor = 3, Cooldown = 1 },
+	Molotov = { Speed = 62, Up = 18, Fuse = 3, Radius = 11, Duration = 8, Tick = 0.5, TickDamage = 6, ZombieFactor = 2,
+		VehicleFactor = 2, Cooldown = 1 },
 }
 
 -- Aufsätze in der Beute: je Tabelle Gewicht pro Seltenheit (2/3/4); fehlende Seltenheit = kommt dort nicht vor.
