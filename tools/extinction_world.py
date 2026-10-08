@@ -2309,10 +2309,7 @@ class World:
                 tx, tz = sx * 13, sz * 13
                 b.box("Cover", "Planter", (4, 1.2, 4), (tx, 0.6, tz), (120, 116, 108), "Concrete")
                 b.box("Decor", "PlanterSoil", (3.4, 0.2, 3.4), (tx, 1.25, tz), (70, 56, 44), "Ground")
-                b.box("Decor", "TreeTrunkCamp", (0.9, 9, 0.9), (tx, 5.5, tz), (88, 70, 54), "Wood")
-                for k in range(3):
-                    b.add("Decor", "TreeCrown", (6.5 - k, 5.5 - k, 6.5 - k), (tx + rng.uniform(-1, 1), 10.5 + k * 2.2, tz + rng.uniform(-1, 1)),
-                          rng.choice(((74, 98, 56), (64, 88, 50), (84, 104, 60))), "LeafyGrass", props={"Shape": "Ball", "CanCollide": False})
+                self.dead_tree(tx, tz, g=1.2, scale=0.8)
                 self.camp_lamp(sx * (SQ - 2), sz * 9, self.yaw_to(-sx, 0))
                 f, box = self.frame(sx * 16, sz * 16, self.yaw_to(sx, sz))
                 box("Cover", "Bench", (5, 0.4, 1.6), (0, 1.5, 0), (110, 84, 58), "WoodPlanks")
@@ -2455,9 +2452,7 @@ class World:
             return
         # gewöhnlicher Hof: zwei Bäume, Schuppen, zwei Zelte, Wäscheleine, Auto
         for tx, tz in ((sx * 66, sz * 70), (sx * 40, sz * 72)):
-            b.box("Decor", "TreeTrunkCamp", (1, 10, 1), (tx, 5, tz), (88, 70, 54), "Wood")
-            b.add("Decor", "TreeCrown", (8, 7, 8), (tx, 11.5, tz), rng.choice(((74, 98, 56), (64, 88, 50))), "LeafyGrass",
-                  props={"Shape": "Ball", "CanCollide": False})
+            self.dead_tree(tx, tz, g=0.0)
         f, box = self.frame(sx * 70, sz * 46, self.yaw_to(-sx, 0))
         box("Buildings", "Shed", (10, 7, 8), (0, 3.5, 0), (110, 92, 70), "WoodPlanks")
         box("Buildings", "ShedRoof", (11, 0.4, 9), (0, 7.3, 0), (90, 92, 94), "CorrodedMetal", extra=(6, 0, 0))
@@ -2512,14 +2507,60 @@ class World:
         self._outskirt_used += spots
         return spots
 
-    def _outskirt_tree(self, x, z):
+    def dead_tree(self, x, z, g=None, scale=1.0, group="Decor"):
+        """Toter Baum der Apokalypse: dunkler, leicht schiefer Stamm (oft abgebrochen, manchmal verkohlt), kahle krumme
+        Äste, höchstens ein paar vertrocknete braune Blattreste. Kein Teil heißt Trunk/Rock (Safe-Zone-Prüfung)."""
         b, rng = self.b, self.rng
-        g = self.H(x, z)
-        h = rng.uniform(9, 15)
-        b.box("Decor", "OutskirtTrunk", (1.4, h, 1.4), (x, g + h / 2 - 0.5, z), (92, 68, 46), "Wood")
-        r = rng.uniform(8, 12)
-        b.add("Decor", "OutskirtCrown", (r, r * 0.85, r), (x, g + h + r / 4, z), (rng.randint(64, 92), rng.randint(90, 116), 50),
-              "LeafyGrass", props={"Shape": "Ball", "CanCollide": False})
+        g = self.H(x, z) if g is None else g
+        charred = rng.random() < 0.3
+        bark = (34, 31, 29) if charred else rng.choice(((66, 58, 50), (74, 64, 54), (58, 52, 48)))
+        h = rng.uniform(8, 14) * scale
+        broken = rng.random() < 0.35
+        if broken:
+            h *= rng.uniform(0.45, 0.7)
+        lean_yaw, lean = rng.uniform(0, 360), rng.uniform(0, 7)
+        b.box(group, "DeadTrunk", (1.3 * scale, h, 1.3 * scale), (x, g + h / 2 - 0.4, z), bark, "Wood",
+              angles=self.bm.yaw_tilt(lean_yaw, lean))
+        if broken:
+            b.box(group, "DeadStump", (1.0 * scale, 1.2, 1.0 * scale), (x, g + h - 0.2, z), self.bm.lighten(bark, 0.15), "Wood",
+                  angles=(rng.uniform(-25, 25), rng.uniform(0, 90), rng.uniform(-25, 25)), props={"CanCollide": False})
+        for _ in range(rng.randint(2, 5) if not broken else rng.randint(1, 2)):
+            length = rng.uniform(3, 6) * scale
+            yaw, tilt = rng.uniform(0, 360), rng.uniform(35, 70)
+            base_y = g + h * rng.uniform(0.55, 0.95)
+            dx, dy, dz = math.sin(math.radians(yaw)) * math.sin(math.radians(tilt)), math.cos(math.radians(tilt)), \
+                math.cos(math.radians(yaw)) * math.sin(math.radians(tilt))
+            b.box(group, "DeadBranch", (0.45 * scale, length, 0.45 * scale), (x + dx * length / 2, base_y + dy * length / 2,
+                  z + dz * length / 2), bark, "Wood", angles=self.bm.yaw_tilt(yaw, tilt), props={"CanCollide": False})
+            if rng.random() < 0.5:  # Zweig am Ast
+                twig = length * 0.5
+                tx, ty, tz = x + dx * length * 0.8, base_y + dy * length * 0.8, z + dz * length * 0.8
+                tyaw, ttilt = yaw + rng.uniform(-60, 60), rng.uniform(20, 50)
+                ex, ey, ez = math.sin(math.radians(tyaw)) * math.sin(math.radians(ttilt)), math.cos(math.radians(ttilt)), \
+                    math.cos(math.radians(tyaw)) * math.sin(math.radians(ttilt))
+                b.box(group, "DeadTwig", (0.25 * scale, twig, 0.25 * scale), (tx + ex * twig / 2, ty + ey * twig / 2, tz + ez * twig / 2),
+                      bark, "Wood", angles=self.bm.yaw_tilt(tyaw, ttilt), props={"CanCollide": False})
+        if not charred and not broken and rng.random() < 0.35:  # ein paar vertrocknete Blattreste
+            for _ in range(rng.randint(1, 2)):
+                r = rng.uniform(2, 3.4) * scale
+                b.add(group, "DryLeaves", (r, r * 0.7, r), (x + rng.uniform(-2, 2), g + h * rng.uniform(0.8, 1.0), z + rng.uniform(-2, 2)),
+                      rng.choice(((120, 100, 62), (106, 92, 58), (134, 112, 70))), "Grass",
+                      props={"Shape": "Ball", "CanCollide": False})
+
+    def dry_scrub(self, x, z, g=None):
+        """Vertrocknetes Gestrüpp: ein paar flache braune Büschel und dürre Halme."""
+        b, rng = self.b, self.rng
+        g = self.H(x, z) if g is None else g
+        for _ in range(rng.randint(2, 3)):
+            b.add("Decor", "DryScrub", (rng.uniform(1.8, 3.2), rng.uniform(0.8, 1.4), rng.uniform(1.8, 3.2)),
+                  (x + rng.uniform(-1.5, 1.5), g + 0.4, z + rng.uniform(-1.5, 1.5)),
+                  rng.choice(((112, 98, 64), (98, 88, 60), (124, 110, 72))), "Grass", props={"Shape": "Ball", "CanCollide": False})
+        for _ in range(rng.randint(3, 5)):
+            b.box("Decor", "DryStalk", (0.15, rng.uniform(1.5, 2.8), 0.15), (x + rng.uniform(-1.5, 1.5), g + 1, z + rng.uniform(-1.5, 1.5)),
+                  (110, 96, 64), "Wood", angles=(rng.uniform(-20, 20), 0, rng.uniform(-20, 20)), props={"CanCollide": False})
+
+    def _outskirt_tree(self, x, z):
+        self.dead_tree(x, z)
 
     def _camp_outskirts(self):
         b, rng = self.b, self.rng
@@ -2615,9 +2656,7 @@ class World:
             for x, z in self._outskirt_spots(quadrant, 5, 12):
                 self._outskirt_tree(x, z)
             for x, z in self._outskirt_spots(quadrant, 6, 8):
-                g = self.H(x, z)
-                b.add("Decor", "Bush", (rng.uniform(3, 5), rng.uniform(2, 3), rng.uniform(3, 5)), (x, g + 1, z),
-                      (rng.randint(60, 84), rng.randint(84, 104), 46), "LeafyGrass", props={"Shape": "Ball", "CanCollide": False})
+                self.dry_scrub(x, z)
             for x, z in self._outskirt_spots(quadrant, 3, 10):
                 g = self.H(x, z)
                 for k in range(4):
