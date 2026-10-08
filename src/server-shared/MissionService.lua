@@ -93,6 +93,10 @@ end
 
 -- Fortschritt melden: event wie in Pool[].Event, amount (Standard 1), place = Ort-Schlüssel (nur "Place")
 function MissionService.Progress(player, event, amount, place)
+	-- dieselben Ereignisse zählen für die Extinction-Aufträge (QuestConfig, Ereignis mit X davor)
+	if event ~= "Place" then
+		ProgressService.QuestEvent(player, "X" .. event, amount or 1)
+	end
 	local state = states[player]
 	if not state then
 		return

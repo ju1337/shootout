@@ -490,12 +490,36 @@ function Extinction.Init(modeManager)
 		end
 	end)
 	RedzoneService.OnMoved(RedzoneBoard.Moved)
-	-- Zombies in der roten Zone: je 1 RZ
-	table.insert(ZombieService.OnKill, function(killer, _, position)
+	-- Zombies in der roten Zone: je 1 RZ; gepanzerte zählen für die Aufträge (XArmored)
+	table.insert(ZombieService.OnKill, function(killer, _, position, armored)
 		if members[killer] and RedzoneService.At(position) then
 			RedPointsService.Add(killer, ExtinctionConfig.RedPoints.ZombieKill, nil)
 		end
+		if armored and members[killer] then
+			ProgressService.QuestEvent(killer, "XArmored", 1)
+		end
 	end)
+	-- Belohnung der Extinction-Aufträge (QuestConfig): Beute ins Lager (passt nichts: Tasche), RZ
+	ProgressService.QuestExtras = function(player, quest)
+		local lines = {}
+		if quest.Loot then
+			for _, item in ExtinctionConfig.RollLoot(quest.Loot[1], quest.Loot[2], random) do
+				local put = InventoryService.GiveStash(player, item.Id, item.Count)
+				if put < item.Count then
+					put += InventoryService.Give(player, item.Id, item.Count - put)
+				end
+				local config = ExtinctionConfig.Get(item.Id)
+				if put > 0 and config then
+					table.insert(lines, (put > 1 and (put .. "× ") or "") .. config.Name .. " (Lager)")
+				end
+			end
+		end
+		if quest.RedPoints then
+			RedPointsService.Add(player, quest.RedPoints, nil)
+			table.insert(lines, "+" .. quest.RedPoints .. " RZ")
+		end
+		return lines
+	end
 	RedzoneService.Start({
 		Map = map,
 		SafeCenter = Extinction.SafeZoneCenter,
@@ -858,6 +882,7 @@ function Extinction.OnKill(killer, victim)
 			RedPointsService.Add(killer, ExtinctionConfig.RedPoints.PlayerKill, "Spieler in der roten Zone")
 		end
 		BountyService.OnKill(killer, victim)
+		ProgressService.QuestEvent(killer, "XPlayerKill", 1)
 		Telemetry.Event(killer, "PlayerKill", 1, "Extinction", zone and "Redzone" or "Open")
 	end
 end

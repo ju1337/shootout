@@ -30,6 +30,7 @@ local HitFeedback = require(Shared.HitFeedback)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local Modes = require(Shared.Modes)
+local QuestBoard = require(script.Parent:WaitForChild("QuestBoard"))
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
@@ -136,138 +137,19 @@ end
 
 -- ---------- AUFTRÄGE ----------
 
--- Gibt es einen fertigen, noch nicht abgeholten Auftrag (täglich oder wöchentlich) oder den Wochen-Bonus?
+-- Fertiger, nicht abgeholter Auftrag (Arcade, Extinction, VIP & BOOSTER) oder Wochen-Bonus? (Punkt am Knopf)
 local function questReady()
-	for _, attribute in { "Quests", "Weekly" } do
-		local data = QuestConfig.Read(player, attribute)
-		if data and data.Ids then
-			local allClaimed = true
-			for _, id in data.Ids do
-				local quest = QuestConfig.Get(id)
-				local claimed = (data.Claimed or {})[id] == true
-				allClaimed = allClaimed and claimed
-				if quest and not claimed and ((data.Progress or {})[id] or 0) >= quest.Goal then
-					return true
-				end
-			end
-			if attribute == "Weekly" and allClaimed and #data.Ids > 0 and not data.Bonus then
-				return true
-			end
-		end
-	end
-	return false
+	return QuestBoard.Ready()
 end
 
--- "5 h 12 min" bzw. "3 T 4 h"
-local function timeLeft(seconds)
-	if seconds >= 86400 then
-		return math.floor(seconds / 86400) .. " T " .. math.floor(seconds % 86400 / 3600) .. " h"
-	end
-	return math.floor(seconds / 3600) .. " h " .. math.floor(seconds % 3600 / 60) .. " min"
-end
-
+-- Fenster AUFTRÄGE: Inhalt baut QuestBoard (Reiter ARCADE / EXTINCTION, Spalten Täglich, Wöchentlich, VIP & BOOSTER)
 local function buildQuests()
-	local frame = makePanel("Quests", "AUFTRÄGE", 1000, 580)
-	local columns = {}
-	for i, info in { { "TÄGLICH", "Jeden Tag neu" }, { "WÖCHENTLICH", "Jeden Montag neu · alle geschafft = Wochen-Bonus" } } do
-		local x = i == 1 and 24 or 512
-		text({ Position = UDim2.new(0, x, 0, 62), Size = UDim2.new(0, 300, 0, 24), Text = info[1], TextSize = 20,
-			Font = UITheme.Fonts.Title, TextColor3 = i == 1 and ACCENT or UITheme.Colors.Gold }, frame)
-		local timer = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(0, x + 464, 0, 64), Size = UDim2.new(0, 200, 0, 20),
-			Text = "", TextSize = 14, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, frame)
-		text({ Position = UDim2.new(0, x, 0, 86), Size = UDim2.new(0, 464, 0, 18), Text = info[2], TextSize = 13,
-			Font = UITheme.Fonts.Body, TextColor3 = GRAY }, frame)
-		local list = make("Frame", { Position = UDim2.new(0, x, 0, 114), Size = UDim2.new(0, 464, 1, -160),
-			BackgroundTransparency = 1 }, frame)
-		make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-		columns[i] = { List = list, Timer = timer }
-	end
-	make("Frame", { Position = UDim2.new(0, 499, 0, 66), Size = UDim2.new(0, 1, 1, -110), BackgroundColor3 = BORDER,
-		BorderSizePixel = 0 }, frame)
-
-	-- Eine Auftragszeile: Text, Fortschritt, Belohnung, Knopf
-	local function questRow(list, order, quest, data, color)
-		local id = quest.Id
-		local progress = (data.Progress or {})[id] or 0
-		local claimed = (data.Claimed or {})[id] == true
-		local done = progress >= quest.Goal
-		local row = make("Frame", { Size = UDim2.new(1, 0, 0, 72), BackgroundColor3 = CARD, LayoutOrder = order }, list)
-		make("UICorner", { CornerRadius = UDim.new(0, 10) }, row)
-		text({ Position = UDim2.new(0, 14, 0, 9), Size = UDim2.new(1, -164, 0, 22), Text = quest.Text, TextSize = 17,
-			TextTruncate = Enum.TextTruncate.AtEnd }, row)
-		text({ Position = UDim2.new(0, 14, 0, 33), Size = UDim2.new(1, -164, 0, 16),
-			Text = math.min(progress, quest.Goal) .. " / " .. quest.Goal .. "   ·   " .. formatNumber(quest.Reward) .. " Münzen",
-			TextSize = 13, TextColor3 = GRAY }, row)
-		local barBack = make("Frame", { Position = UDim2.new(0, 14, 0, 56), Size = UDim2.new(1, -164, 0, 4),
-			BackgroundColor3 = BORDER, BorderSizePixel = 0 }, row)
-		make("Frame", { Size = UDim2.new(math.clamp(progress / quest.Goal, 0, 1), 0, 1, 0), BorderSizePixel = 0,
-			BackgroundColor3 = done and GREEN or color }, barBack)
-		button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.new(0, 128, 0, 42),
-			TextSize = 15, Text = claimed and "ABGEHOLT" or (done and "ABHOLEN" or "OFFEN"),
-			BackgroundColor3 = (done and not claimed) and ACCENT or UITheme.Colors.MutedBack,
-			TextColor3 = (done and not claimed) and ON_ACCENT or GRAY }, row, function()
-			if done and not claimed then
-				Remotes.ShopAction:FireServer("ClaimQuest", id)
-			end
-		end)
-	end
-
-	local function clearList(list)
-		for _, child in list:GetChildren() do
-			if child:IsA("Frame") then
-				child:Destroy()
-			end
-		end
-	end
-
+	local width, height = 1180, 660
+	local frame = makePanel("Quests", "AUFTRÄGE", width, height)
+	local board = QuestBoard.new(frame, width - 48, height - 64 - 48, { Mode = "Arcade" })
+	board.Frame.Position = UDim2.fromOffset(24, 64)
 	panels.Quests.Refresh = function()
-		local now = workspace:GetServerTimeNow()
-		columns[1].Timer.Text = "NEU IN " .. timeLeft(QuestConfig.DayLeft(now))
-		columns[2].Timer.Text = "NEU IN " .. timeLeft(QuestConfig.WeekLeft(now))
-
-		-- Täglich
-		clearList(columns[1].List)
-		local daily = QuestConfig.Read(player, "Quests")
-		for i, id in daily and daily.Ids or {} do
-			local quest = QuestConfig.Get(id)
-			if quest then
-				questRow(columns[1].List, i, quest, daily, ACCENT)
-			end
-		end
-
-		-- Wöchentlich + Bonus
-		clearList(columns[2].List)
-		local weekly = QuestConfig.Read(player, "Weekly")
-		if not weekly or not weekly.Ids then
-			return
-		end
-		local allClaimed = #weekly.Ids > 0
-		for i, id in weekly.Ids do
-			local quest = QuestConfig.Get(id)
-			if quest then
-				questRow(columns[2].List, i, quest, weekly, UITheme.Colors.Gold)
-				allClaimed = allClaimed and (weekly.Claimed or {})[id] == true
-			end
-		end
-		local skin = Cosmetics.Get(QuestConfig.BonusSkin(weekly.Week or 0))
-		local rarity = skin and Cosmetics.Rarities[skin.Rarity]
-		local bonus = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = CARD, LayoutOrder = 99 }, columns[2].List)
-		make("UICorner", { CornerRadius = UDim.new(0, 10) }, bonus)
-		make("UIStroke", { Color = UITheme.Colors.Gold, Transparency = weekly.Bonus and 0.7 or 0.2 }, bonus)
-		text({ Position = UDim2.new(0, 14, 0, 9), Size = UDim2.new(1, -164, 0, 22), Text = "WOCHEN-BONUS", TextSize = 18,
-			Font = UITheme.Fonts.Title, TextColor3 = UITheme.Colors.Gold }, bonus)
-		text({ Position = UDim2.new(0, 14, 0, 34), Size = UDim2.new(1, -164, 0, 18), RichText = true,
-			Text = formatNumber(QuestConfig.WeeklyBonus.Coins) .. " Münzen" .. (skin and (' + Skin <font color="#'
-				.. (rarity and rarity.Color or UITheme.Colors.Gold):ToHex() .. '">' .. skin.Name .. "</font>") or ""),
-			TextSize = 14, TextColor3 = GRAY }, bonus)
-		button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.new(0, 128, 0, 42),
-			TextSize = 15, Text = weekly.Bonus and "ABGEHOLT" or (allClaimed and "ABHOLEN" or "GESPERRT"),
-			BackgroundColor3 = (allClaimed and not weekly.Bonus) and UITheme.Colors.Gold or UITheme.Colors.MutedBack,
-			TextColor3 = (allClaimed and not weekly.Bonus) and ON_ACCENT or GRAY }, bonus, function()
-			if allClaimed and not weekly.Bonus then
-				Remotes.ShopAction:FireServer("ClaimWeeklyBonus")
-			end
-		end)
+		board.Refresh()
 	end
 end
 
@@ -1445,7 +1327,7 @@ function SideMenu.Init()
 	end)
 	-- Münzen, Besitz, Ausrüstung geändert: offenes Fenster aktualisieren
 	player.AttributeChanged:Connect(function(name)
-		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or name == "Quests" or name == "Weekly" or name == "LoginData" or name == "ClanTag" or name == "ClanData"
+		if name == "Coins" or name == "Owned" or name == "Equipped" or name == "LastDaily" or QuestBoard.Watch[name] or name == "LoginData" or name == "ClanTag" or name == "ClanData"
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
 			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then

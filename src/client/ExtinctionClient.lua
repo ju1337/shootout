@@ -959,7 +959,7 @@ ExtinctionClient.Close = closeWindow
 -- ---------- Menü (TAB / M) ----------
 -- Fast so groß wie der Bildschirm und halbtransparent (die Welt bleibt unscharf sichtbar): links die Seitenleiste mit
 -- den Reitern (Controller: L1/R1 blättern), rechts die Fläche mit Kopfzeile (Titel, Münzen, Schließen) und Inhalt.
--- INVENTAR, MARKT, SQUAD und ERFOLGE baut dieses Modul; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
+-- INVENTAR, MARKT, SQUAD und ERFOLGE baut dieses Modul, AUFTRÄGE das QuestBoard; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
 -- verkleinert auf die Breite des Inhalts.
 -- Breite passt sich dem Bildschirm an: auf breiten Bildschirmen breiter (bis Inv.MENU_MAX_W), immer mit Rand daneben
 Inv.MENU_MIN_W, Inv.MENU_MAX_W, Inv.MENU_MARGIN = 1560, 1840, 40
@@ -980,6 +980,7 @@ end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
+	{ Id = "Quests", Text = "AUFTRÄGE" },
 	{ Id = "Loot", Text = "LOOT" },
 	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
@@ -2636,6 +2637,15 @@ openMenuTab = function(id)
 	elseif id == "Guide" then
 		ExtinctionMap.Set(false)
 		Guide.Open()
+	elseif id == "Quests" then
+		-- Aufträge (Extinction, Arcade, VIP & BOOSTER): Inhalt baut QuestBoard
+		ExtinctionMap.Set(false)
+		local win = newWindow("Quests", "AUFTRÄGE", "TÄGLICH  ·  WÖCHENTLICH  ·  VIP & BOOSTER  ·  BEUTE GEHT INS LAGER")
+		local board = require(script.Parent.QuestBoard).new(win.Body, Inv.CONTENT_W, Inv.CONTENT_H,
+			{ Mode = "Extinction", ZIndex = 6, Colors = UITheme.MenuColors })
+		function win.Refresh()
+			board.Refresh()
+		end
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end

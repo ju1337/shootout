@@ -116,6 +116,7 @@ local function onDeath(boss, model)
 	if killer then
 		ProgressService.AddCoins(killer, cfg.Coins, "Boss")
 		ProgressService.AddStat(killer, "Bosses", 1)
+		ProgressService.QuestEvent(killer, "XBoss", 1)
 	end
 	for _, player in options.Players() do
 		Remotes.Notify:FireClient(player, "Banner", { Caption = "Boss", Title = cfg.Name .. " IST TOT",

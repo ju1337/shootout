@@ -142,6 +142,35 @@ local function ensureWeekly(player, profile)
 	profile.Weekly = { Week = week, Ids = ids, Progress = {}, Claimed = {}, Bonus = false }
 end
 
+-- Weitere Sätze (QuestConfig.Sets: Extinction, VIP & BOOSTER) für den aktuellen Tag bzw. die aktuelle Woche anlegen
+local function ensureSet(player, profile, set)
+	local period = set.Period == "Week" and QuestConfig.Week() or QuestConfig.Today()
+	local current = profile[set.Key]
+	if type(current) == "table" and current.Period == period then
+		return current
+	end
+	local seed = set.Period == "Week" and period or tonumber((string.gsub(period, "-", "")))
+	local random = Random.new(player.UserId * 13 + seed + #set.Key * 101)
+	local ids = {}
+	for _, pick in set.Picks do
+		local pool = {}
+		for _, quest in pick.Pool do
+			if not pick.Mode or quest.Mode == pick.Mode then
+				table.insert(pool, quest)
+			end
+		end
+		for _ = 1, math.min(pick.Count, #pool) do
+			table.insert(ids, table.remove(pool, random:NextInteger(1, #pool)).Id)
+		end
+	end
+	profile[set.Key] = { Period = period, Ids = ids, Progress = {}, Claimed = {} }
+	return profile[set.Key]
+end
+
+-- Extra-Belohnung von Extinction-Aufträgen (Loot ins Lager, RZ): setzt Modes/Extinction,
+-- function(player, quest) -> Liste von Texten
+ProgressService.QuestExtras = nil
+
 -- Profil als Attribute an den Spieler hängen (damit Client und andere Skripte es lesen können)
 function ProgressService.Sync(player)
 	local profile = profiles[player]
@@ -173,6 +202,9 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
 	ensureWeekly(player, profile)
 	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
+	for _, set in QuestConfig.Sets do
+		player:SetAttribute(set.Key, HttpService:JSONEncode(ensureSet(player, profile, set)))
+	end
 	player:SetAttribute("Title", profile.Title or TitleConfig.Default)
 	player:SetAttribute("LoginData", HttpService:JSONEncode(profile.Login or {}))
 	player:SetAttribute("WheelData", HttpService:JSONEncode(profile.Wheel or {}))
@@ -537,11 +569,19 @@ function ProgressService.QuestEvent(player, event, amount)
 	end
 	ensureQuests(player, profile)
 	ensureWeekly(player, profile)
+	local sets = { profile.Quests, profile.Weekly }
+	for _, def in QuestConfig.Sets do
+		table.insert(sets, ensureSet(player, profile, def))
+	end
+	-- Arcade-Aufträge zählen nicht in der offenen Welt, VIP & BOOSTER nur für Berechtigte
+	local inExtinction = player:GetAttribute("Mode") == "Extinction"
+	local special = QuestConfig.IsSpecial(player)
 	local changed = false
-	for _, set in { profile.Quests, profile.Weekly } do
+	for _, set in sets do
 		for _, id in set.Ids do
 			local quest = QuestConfig.Get(id)
-			if quest and quest.Event == event and not set.Claimed[id] then
+			if quest and quest.Event == event and not set.Claimed[id]
+				and not (quest.Mode == "Arcade" and inExtinction) and (special or not quest.Special) then
 				local before = set.Progress[id] or 0
 				if before < quest.Goal then
 					set.Progress[id] = math.min(quest.Goal, before + (amount or 1))
@@ -563,7 +603,11 @@ function ProgressService.ClaimQuest(player, id)
 		return "Unbekannter Auftrag.", false
 	end
 	ensureWeekly(player, profile)
-	local set = quest.Weekly and profile.Weekly or profile.Quests
+	local def = quest.Set and QuestConfig.GetSet(quest.Set)
+	local set = def and ensureSet(player, profile, def) or (quest.Weekly and profile.Weekly or profile.Quests)
+	if quest.Special and not QuestConfig.IsSpecial(player) then
+		return "Nur für VIP & BOOSTER.", false
+	end
 	if not table.find(set.Ids or {}, id) then
 		return "Unbekannter Auftrag.", false
 	end
@@ -574,8 +618,22 @@ function ProgressService.ClaimQuest(player, id)
 		return "Auftrag noch nicht geschafft.", false
 	end
 	set.Claimed[id] = true
+	local lines = { "+" .. quest.Reward .. " Münzen" }
+	if quest.Spins then
+		ProgressService.AddSpins(player, quest.Spins)
+		table.insert(lines, "+" .. quest.Spins .. " Glücksrad-Drehs")
+	end
+	if (quest.Loot or quest.RedPoints) and ProgressService.QuestExtras then
+		local ok, extra = pcall(ProgressService.QuestExtras, player, quest)
+		if ok and type(extra) == "table" then
+			table.move(extra, 1, #extra, #lines + 1, lines)
+		end
+	end
 	ProgressService.AddCoins(player, quest.Reward, quest.Weekly and "Wochen-Auftrag" or "Auftrag") -- synct auch die Aufträge
 	ProgressService.AddPassXP(player, quest.Weekly and PassConfig.QuestXP * 3 or PassConfig.QuestXP)
+	if #lines > 1 then
+		Remotes.Reward:FireClient(player, { Title = quest.Special and "VIP-AUFTRAG" or "AUFTRAG", Lines = lines })
+	end
 	return "+" .. quest.Reward .. " Münzen für \"" .. quest.Text .. "\"!", true
 end
 

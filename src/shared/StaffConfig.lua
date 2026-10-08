@@ -24,6 +24,7 @@ StaffConfig.Ranks = {
 	{ Id = "Helper", Name = "HELPER", Icon = "✚", Color = Color3.fromRGB(127, 178, 255), Power = 40,
 		Kick = true },
 	{ Id = "Creator", Name = "CREATOR", Icon = "🎬", Color = Color3.fromRGB(190, 100, 255), Power = 20 },
+	{ Id = "Booster", Name = "BOOSTER", Icon = "💎", Color = Color3.fromRGB(255, 115, 250), Power = 15 },
 	{ Id = "VIP", Name = "VIP", Icon = "⭐", Color = Color3.fromRGB(255, 210, 74), Power = 10 },
 }
 

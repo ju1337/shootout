@@ -142,6 +142,7 @@ local function reward()
 			if won then
 				local R = S.Reward
 				ProgressService.AddCoins(player, R.Coins, "Storm Night")
+				ProgressService.QuestEvent(player, "XStorm", 1)
 				RedPointsService.Add(player, R.RedPoints, "Storm Night")
 				local names = {}
 				for _, roll in R.Items do
