@@ -622,6 +622,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   - Free-for-All: oben in der Mitte die eigenen Kills, das Ziel und wer führt, darunter die ersten drei
   - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout;
     im Kampf kein Mauszeiger über dem Fadenkreuz
+  - Namensschild zum Angeben (Hub, Markt und Safe Zones in Extinction): flache Kachel im Stil der Hotbar mit
+    Prestige-Abzeichen, Team-Rang (DEV, VIP …), Name, darunter Rang · RAP (kurz, z.B. 12.4K) · Titel
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
   das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
   rückt die Kamera seitlich an den Kopf statt durch die Wand zu schauen (Werte oben in `src/shared/Movement.lua`)
