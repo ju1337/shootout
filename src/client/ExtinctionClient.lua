@@ -2310,6 +2310,14 @@ local function openSquad()
 		Color = C.Bad:Lerp(Color3.new(0, 0, 0), 0.25), Text = "SQUAD VERLASSEN", TextSize = 18, ZIndex = 5 }, body, function()
 		partyAction("Leave")
 	end)
+	-- Roblox-Einladung an Freunde (SocialService); der Server belohnt, wenn ein Freund darüber beitritt
+	UITheme.Chunky({ Name = "InviteFriends", Position = UDim2.fromOffset(272, Inv.CONTENT_H - 72),
+		Size = UDim2.fromOffset(260, 48), Color = C.Good:Lerp(Color3.new(0, 0, 0), 0.2), Text = "FREUNDE EINLADEN", TextSize = 18,
+		ZIndex = 5 }, body, function()
+		if not require(Shared.Invites).Prompt() then -- kein lokales Modul: Limit der lokalen Variablen (tests/locals)
+			showToast("Einladung gerade nicht möglich.", false)
+		end
+	end)
 	local whereLabels = {} -- { Label, Player } (Entfernung laufend nachführen)
 
 	local function row(parent, order, name, sub, buttons)

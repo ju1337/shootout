@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local AchievementConfig = require(Shared.AchievementConfig)
 local ProgressService = require(script.Parent.ProgressService)
+local Badges = require(script.Parent.Badges)
 
 local AchievementService = {}
 
@@ -49,6 +50,7 @@ function AchievementService.Check(player, stat)
 			end
 			Remotes.Notify:FireClient(player, "Banner", { Caption = "Erfolg · " .. AchievementConfig.Tiers[tier].Name,
 				Title = string.upper(achievement.Name), Sub = achievement.Text .. " · +" .. coins .. " Münzen", Style = "Good" })
+			Badges.OnAchievement(player, achievement.Id, tier) -- GOLD = Roblox-Badge
 		end
 	end
 	if changed then

@@ -50,6 +50,7 @@ local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
 local Telemetry = require(ServerShared.Telemetry)
+local Badges = require(ServerShared.Badges)
 
 local TUTORIAL_DONE_STEP = 9 -- Onboarding-Trichter: 1 Beitritt, 2 offene Welt, 3-8 Tutorial-Schritte, 9 fertig
 local RedPointsService = require(ServerShared.RedPointsService)
@@ -428,6 +429,9 @@ function Extinction.Init(modeManager)
 		end
 		player:SetAttribute("ExtTutorial", nil)
 		Telemetry.Onboarding(player, TUTORIAL_DONE_STEP, result == "Skip" and "TutorialSkipped" or "TutorialDone")
+		if result ~= "Skip" then
+			Badges.Trigger(player, "Tutorial")
+		end
 	end
 
 	-- Tor zurück zum Hub (in der Safe Zone, darum ohne Verlust)

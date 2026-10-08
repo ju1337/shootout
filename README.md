@@ -711,6 +711,21 @@ in Studio wird nichts gesendet, alles läuft über pcall):
 - **Fortschritt** (`LogProgressionEvent`): Level-Aufstieg eines Agenten.
 Neue Ereignisse: `Telemetry.Event(player, name, value, feld1, feld2, feld3)`. Test: `tests/telemetry.test.luau`.
 
+## Freunde einladen und Badges
+
+**Freunde einladen** (`src/shared/Invites.lua`, Knopf **FREUNDE EINLADEN** im Squad-Fenster der Lobby und der offenen
+Welt): öffnet die Roblox-Einladung (SocialService). Tritt ein Freund über die Einladung bei (ReferredByPlayerId in seinen
+Join-Daten), bekommt der Einladende, wenn er auf dem Server ist, `InviteService.Reward` Münzen (300), eine Meldung,
+die Statistik `Invites` und beim ersten Mal das Badge ANWERBER; jeder Freund zählt nur einmal (Profil `Invited`).
+Analytics-Ereignis `InviteJoin` (`src/server-shared/InviteService.lua`).
+
+**Badges** (`src/shared/BadgeConfig.lua`, Server `src/server-shared/Badges.lua`): Willkommen (erster Beitritt),
+Überlebenstraining (Tutorial fertig, nicht übersprungen), Anwerber (erster Freund über eine Einladung) und je ein Badge
+für jeden Erfolg der Erfolge-Wand auf GOLD. IDs eintragen: Creator Hub › dein Spiel › Engagement › Badges anlegen und
+die ID bei `BadgeId` einsetzen; solange sie 0 ist, wird das Badge im Profil vorgemerkt und beim nächsten Laden
+nachgetragen (`Badges = { [Id] = true | "Pending" }`). Jedes Badge wird je Spieler nur einmal bei Roblox angefragt.
+Test: `tests/badges.test.luau`.
+
 ## Sperrliste (Kick und Ban)
 
 Admin-Panel (P) › Reiter **SPIELER**: oben das Feld **Grund** (sieht der Spieler), daneben Sperren per **UserId** (auch
@@ -769,6 +784,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Persönliche Einstellungen (OPTIONEN: Liste, Standardwerte, Karten) | `src/shared/PlayerSettings.lua` |
 | Anzeigesprache (Englisch Standard): Wörterbuch Deutsch → Englisch | `src/shared/LocaleStrings.lua`, Technik `src/shared/Locale.lua` |
 | Spielanalyse (AnalyticsService), Sperrliste (DataStore `Bans_v1`) | `src/server-shared/Telemetry.lua`, `src/server-shared/BanService.lua` |
+| Badges (IDs aus dem Creator Hub), Einladungs-Belohnung | `src/shared/BadgeConfig.lua`, `InviteService.Reward` in `src/server-shared/InviteService.lua` |
 | Medaillen (Name, Stufe, Bonus-XP) | `src/shared/Medals.lua`; Auslöser (Mehrfach-Kill-Fenster, Weitschuss, Comeback, Serie beendet) oben in `src/server-shared/KillService.lua`, Münzen der Kill-Boni in `src/shared/RewardConfig.lua` |
 | Meldungen (Medaillen, Banner, Ziel-Meldungen, Level-Karte: Position, Standzeit, Farben, Klang) | `src/shared/Notifications.lua` |
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |

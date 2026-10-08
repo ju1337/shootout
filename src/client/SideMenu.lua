@@ -14,6 +14,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Invites = require(Shared.Invites)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentConfig = require(Shared.AgentConfig)
 local GameMenu = require(Shared.GameMenu)
@@ -181,6 +182,17 @@ local function buildSquad()
 	button({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -48), Size = UDim2.new(0, 220, 0, 44),
 		Text = "SQUAD VERLASSEN", TextSize = 16, BackgroundColor3 = Color3.fromRGB(140, 45, 50) }, frame, function()
 		Remotes.PartyAction:FireServer("Leave")
+	end)
+	-- Roblox-Einladung an Freunde (SocialService); der Server belohnt, wenn ein Freund darüber beitritt
+	local inviteFriends = button({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 256, 1, -48), Size = UDim2.new(0, 220, 0, 44),
+		Text = "FREUNDE EINLADEN", TextSize = 16, BackgroundColor3 = GREEN }, frame, function() end)
+	inviteFriends.Activated:Connect(function()
+		if not Invites.Prompt() then
+			inviteFriends.Text = "EINLADUNG GERADE NICHT MÖGLICH"
+			task.delay(2, function()
+				inviteFriends.Text = "FREUNDE EINLADEN"
+			end)
+		end
 	end)
 
 	local function row(parent, order, name, buttonText, buttonColor, onClick)

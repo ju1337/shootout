@@ -31,6 +31,8 @@ local KitService = require(ServerShared.KitService)
 local LootService = require(ServerShared.LootService)
 local Telemetry = require(ServerShared.Telemetry)
 local BanService = require(ServerShared.BanService)
+local Badges = require(ServerShared.Badges)
+local InviteService = require(ServerShared.InviteService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
@@ -53,6 +55,8 @@ WeaponService.Init()
 KillService.Init()
 RewardService.Init()
 AchievementService.Init() -- Erfolge-Wand: Stufen bei jeder Statistik-Änderung prüfen
+Badges.Init() -- Roblox-Badges (Begrüßung, Tutorial, Anwerber, Erfolge auf GOLD)
+InviteService.Init() -- Freunde einladen: Belohnung für den Einladenden
 KillstreakService.Init() -- Killstreak-Belohnungen in Herrschaft (Radar, Luftschlag, Schutzschild)
 RobuxService.Init() -- Robux-Shop: Gamepässe und Entwicklerprodukte
 ClanService.Init() -- Clans über alle Server
