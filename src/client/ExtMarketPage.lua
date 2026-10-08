@@ -31,11 +31,12 @@ local M = ExtinctionConfig.Market
 local ExtMarketPage = {}
 
 local CATEGORIES = {
-	{ Key = "All", Text = "ALLE", Width = 80 },
-	{ Key = "Weapon", Text = "WAFFEN", Width = 100 },
-	{ Key = "Ammo", Text = "MUNITION", Width = 112 },
-	{ Key = "Gear", Text = "AUSRÜSTUNG", Width = 132 },
-	{ Key = "Vehicle", Text = "FAHRZEUGE", Width = 120 },
+	{ Key = "All", Text = "ALLE", Width = 64 },
+	{ Key = "Weapon", Text = "WAFFEN", Width = 90 },
+	{ Key = "Ammo", Text = "MUNITION", Width = 100 },
+	{ Key = "Gear", Text = "AUSRÜSTUNG", Width = 120 },
+	{ Key = "Attachment", Text = "AUFSÄTZE", Width = 100 },
+	{ Key = "Vehicle", Text = "FAHRZEUGE", Width = 108 },
 }
 -- Pfeile nur in Gotham (Oswald kennt sie nicht): der Sortier-Knopf hat kleine Schrift, also Gotham Bold
 local SORTS = {
@@ -51,10 +52,12 @@ local RIGHT_X, RIGHT_W = 884, 420
 local CARD_W, CARD_H, CARD_GAP = 205, 262, 10
 local BAG_COLUMNS, BAG_CELL, BAG_GAP = 6, 58, 6
 
--- Heilung, Rüstung und Spritzen laufen unter AUSRÜSTUNG
+-- Heilung, Rüstung und Spritzen laufen unter AUSRÜSTUNG, Granaten und Molotows unter WAFFEN
 local function groupOf(kind)
 	if kind == "Heal" or kind == "Armor" or kind == "Repel" then
 		return "Gear"
+	elseif kind == "Throwable" then
+		return "Weapon"
 	end
 	return kind
 end
@@ -292,14 +295,14 @@ function ExtMarketPage.Build(body, ctx)
 	-- ---------- Suche und Kategorien (nur ANGEBOTE) ----------
 	local filterBar = make("Frame", { Name = "Filters", Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(LEFT_W, 44),
 		BackgroundTransparency = 1, ZIndex = 5 }, content)
-	local search = make("TextBox", { Name = "Search", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromOffset(280, 44),
-		BackgroundColor3 = C.Background, BorderSizePixel = 0, Text = "", PlaceholderText = "SUCHEN: NAME ODER VERKÄUFER",
+	local search = make("TextBox", { Name = "Search", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromOffset(210, 44),
+		BackgroundColor3 = C.Background, BorderSizePixel = 0, Text = "", PlaceholderText = "SUCHEN",
 		PlaceholderColor3 = C.Muted, ClearTextOnFocus = false, Font = F.Bold, TextSize = 15, TextColor3 = C.Text,
 		TextXAlignment = Enum.TextXAlignment.Left, Selectable = true, ZIndex = 7 }, filterBar)
 	UITheme.Corner(search, UITheme.Radius.Small)
 	UITheme.Stroke(search, C.Border, 1, 0.2)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 46) }, search)
-	local searchClear = button({ Name = "SearchClear", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(0, 276, 0.5, 0),
+	local searchClear = button({ Name = "SearchClear", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(0, 206, 0.5, 0),
 		Size = UDim2.fromOffset(36, 36), Color = C.Card, Text = "", Visible = false }, filterBar, function()
 		search.Text = ""
 	end)
@@ -318,10 +321,10 @@ function ExtMarketPage.Build(body, ctx)
 		end
 	end)
 	local chips = {}
-	local x = 292
+	local x = 216
 	for _, info in CATEGORIES do
 		chips[info.Key] = button({ Name = "Category_" .. info.Key, Position = UDim2.fromOffset(x, 0),
-			Size = UDim2.fromOffset(info.Width, 44), Color = C.Panel, StrokeColor = C.Border, Text = info.Text, TextSize = 14 },
+			Size = UDim2.fromOffset(info.Width, 44), Color = C.Panel, StrokeColor = C.Border, Text = info.Text, TextSize = 13 },
 			filterBar, function()
 			state.Category = info.Key
 			refresh()

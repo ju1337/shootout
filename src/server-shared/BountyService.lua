@@ -1,7 +1,7 @@
 -- BountyService (ModuleScript, nur Server)
 -- Kopfgeld der offenen Welt (Werte in ExtinctionConfig.Bounty): Wer draußen mehrere Spieler hintereinander erledigt, wird
--- gesucht. Der Gesuchte steht für alle rot auf der Karte (Attribut "Bounty" an der Karte, jede Sekunde neu), alle bekommen eine
--- Ansage. Wer ihn erledigt, kassiert das Kopfgeld; jeder weitere Kill des Gesuchten erhöht es. Überlebt er lange genug draußen,
+-- gesucht, alle bekommen eine Ansage. Sein Standort blitzt nur ab und zu kurz rot auf der Karte auf (Attribut "Bounty" an der
+-- Karte; X/Z nur während RevealTime, alle RevealEvery Sekunden). Wer ihn erledigt, kassiert das Kopfgeld; jeder weitere Kill des Gesuchten erhöht es. Überlebt er lange genug draußen,
 -- bekommt er selbst einen Teil davon. Stirbt er anders oder verlässt er das Spiel, verfällt es.
 -- Anbindung: Modes/Extinction ruft OnKill(killer, victim) bei Spieler-Kills und OnDeath(player) bei jedem Tod.
 
@@ -32,9 +32,10 @@ local function publish()
 	local data = nil
 	if target then
 		local root = target.Player.Character and target.Player.Character:FindFirstChild("HumanoidRootPart")
+		local visible = root ~= nil and os.clock() < (target.RevealUntil or 0)
 		data = { UserId = target.Player.UserId, Name = target.Player.Name, Reward = target.Reward,
 			Left = math.max(0, math.floor(B.SurviveTime - target.Survived)),
-			X = root and math.floor(root.Position.X) or nil, Z = root and math.floor(root.Position.Z) or nil }
+			X = visible and math.floor(root.Position.X) or nil, Z = visible and math.floor(root.Position.Z) or nil }
 	end
 	options.Map:SetAttribute("Bounty", data and HttpService:JSONEncode(data) or "")
 end
@@ -67,11 +68,12 @@ local function mark(player)
 	if target then
 		target.Player:SetAttribute("Bounty", nil)
 	end
-	target = { Player = player, Reward = rewardFor(streak), Survived = 0 }
+	target = { Player = player, Reward = rewardFor(streak), Survived = 0, RevealUntil = os.clock() + B.RevealTime,
+		NextReveal = os.clock() + B.RevealEvery }
 	player:SetAttribute("Bounty", target.Reward)
 	publish()
 	announce("KOPFGELD AUF " .. string.upper(player.Name), streak .. " Kills in Folge · " .. target.Reward
-		.. " Münzen für den, der ihn erledigt · rot auf der Karte (N)")
+		.. " Münzen für den, der ihn erledigt · sein Standort blitzt ab und zu auf der Karte (N) auf")
 end
 
 -- Spieler-Kill draußen (Extinction.OnKill)
@@ -149,6 +151,18 @@ function BountyService.Init(opts)
 		local root = target.Player.Character and target.Player.Character:FindFirstChild("HumanoidRootPart")
 		if root and not options.InSafeZone(root.Position) then
 			target.Survived += step
+		end
+		-- Standort kurz zeigen
+		local now = os.clock()
+		if now >= (target.NextReveal or 0) then
+			target.NextReveal = now + B.RevealEvery
+			target.RevealUntil = now + B.RevealTime
+			for _, other in options.Players() do
+				if other ~= target.Player then
+					Remotes.Notify:FireClient(other, "Banner", { Caption = "Kopfgeld", Title = "GESUCHTER GESICHTET",
+						Sub = target.Player.Name .. " · " .. B.RevealTime .. " s auf der Karte (N)", Style = "Warning" })
+				end
+			end
 		end
 		if target.Survived >= B.SurviveTime then
 			local player, reward = target.Player, math.floor(target.Reward * B.SurviveFactor)

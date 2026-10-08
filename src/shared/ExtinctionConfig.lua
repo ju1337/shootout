@@ -469,10 +469,11 @@ ExtinctionConfig.Airdrop = {
 
 -- ---------- Kopfgeld (BountyService) ----------
 -- Wer draußen MinKills Spieler hintereinander erledigt (ohne zu sterben), bekommt ein Kopfgeld: Base Münzen, für jeden weiteren
--- Kill PerKill mehr. Es gibt immer nur einen Gesuchten (der mit der längeren Serie übernimmt). Er steht für alle rot auf der Karte.
+-- Kill PerKill mehr. Es gibt immer nur einen Gesuchten (der mit der längeren Serie übernimmt). Sein Standort blitzt nur ab und zu
+-- auf der Karte auf: alle RevealEvery Sekunden für RevealTime Sekunden (der erste gleich beim Markieren), dazwischen nicht.
 -- Wer ihn erledigt, kassiert das Kopfgeld. Überlebt er SurviveTime Sekunden draußen (in der Safe Zone läuft die Zeit nicht),
 -- bekommt er selbst SurviveFactor davon und ist nicht mehr gesucht. Stirbt er anders (Zombies, Feuer), verfällt es.
--- Stand für die Clients: Karten-Attribut "Bounty" { UserId, Name, X, Z, Reward, Left } (leer = niemand gesucht),
+-- Stand für die Clients: Karten-Attribut "Bounty" { UserId, Name, Reward, Left, X, Z (nur beim Aufblitzen) } (leer = niemand),
 -- Spieler-Attribut "Bounty" (Höhe) beim Gesuchten.
 ExtinctionConfig.Bounty = {
 	Enabled = true,
@@ -481,6 +482,8 @@ ExtinctionConfig.Bounty = {
 	PerKill = 200,
 	SurviveTime = 600,
 	SurviveFactor = 0.5,
+	RevealEvery = 60,
+	RevealTime = 8,
 }
 
 -- ---------- Bosse (BossService) ----------

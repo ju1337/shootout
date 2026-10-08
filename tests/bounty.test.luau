@@ -153,6 +153,8 @@ step(2)
 enter(alice)
 
 local K = ExtinctionConfig.Bounty
+K.RevealEvery = 6
+K.RevealTime = 2
 local BountyService = require("BountyService")
 local HttpService2 = game:GetService("HttpService")
 require("ExtDailyConfig").Enabled = false
@@ -175,10 +177,14 @@ local victims = {}
 for i = 1, K.MinKills - 1 do
 	Extinction.OnKill(alice, bob)
 end
-check(bounty() == nil, "zwei Kills: noch kein Kopfgeld")
+check(bounty() == nil, "eine Serie unter MinKills: noch kein Kopfgeld")
 Extinction.OnKill(alice, bob)
 local b = bounty()
-check(b and b.Name == "Alice" and b.Reward == K.Base and b.X ~= nil, "drei Kills: Kopfgeld auf Alice, Ort auf der Karte")
+check(b and b.Name == "Alice" and b.Reward == K.Base and b.X ~= nil, "Serie voll: Kopfgeld auf Alice, Ort blitzt auf")
+step(K.RevealTime + 1.5)
+check(bounty() and bounty().X == nil, "nach dem Aufblitzen nicht mehr auf der Karte")
+step(K.RevealEvery - K.RevealTime)
+check(bounty() and bounty().X ~= nil, "blitzt wieder auf")
 check(alice:GetAttribute("Bounty") == K.Base, "Attribut am Gesuchten")
 Extinction.OnKill(alice, bob)
 check(bounty().Reward == K.Base + K.PerKill, "vierter Kill: Kopfgeld steigt")
