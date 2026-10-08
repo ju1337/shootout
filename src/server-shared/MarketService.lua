@@ -15,7 +15,12 @@
 --   * Preisverlauf: jeder Verkauf wird im DataStore "MarketHistory_v1" gezählt; Durchschnitt der letzten Tage liegt
 --     als Attribut PriceStats an der Markt-Map. TopSellers: Händler dieses Servers mit den meisten Verkäufen.
 --   * Lebender RAP: jeder Verkauf verschiebt den RAP des Skins ein Zehntel Richtung Verkaufspreis (RapConfig.NextLive,
---     DataStore-Schlüssel "rap", Attribut RapLive an ReplicatedStorage für alle Clients).
+--     Attribut RapLive an ReplicatedStorage für alle Clients).
+--   * Speichern für viele Server: die Skins sind nach Namen auf RapConfig.HistoryShards Einträge "shard_<n>" verteilt
+--     ({ Sales = { [Skin] = { { Time, Price } } }, Rap = { [Skin] = Wert } }). Ein Server sammelt seine Verkäufe und
+--     schreibt höchstens alle RapConfig.HistoryFlush Sekunden einmal je betroffenem Eintrag (beim Herunterfahren
+--     sofort); alle RapConfig.HistoryRefresh Sekunden lädt er die Einträge neu (Verkäufe der anderen Server).
+--     Die alten Einträge "sales" und "rap" (vor der Aufteilung) werden nur noch gelesen.
 --   * Release: Stand abgeben – auch von selbst, sobald der Besitzer den Markt verlässt (Runde, Hub) oder das Spiel.
 --     Seine Skins sind dann wieder frei, jemand anderes kann den Stand nehmen.
 -- Zustand für alle Clients als Attribute am Stand-Ordner (Maps.Market.Stand_<n>): Owner (UserId, 0 = frei),
@@ -146,7 +151,176 @@ local function publishLive()
 	ReplicatedStorage:SetAttribute("RapLive", HttpService:JSONEncode(RapConfig.Live))
 end
 
--- Lebenden RAP nach einem Verkauf zu price nachziehen (sofort hier, im DataStore für alle Server)
+-- Gültige Verkäufe aus gespeicherten Daten
+local function cleanSales(list)
+	local out = {}
+	for _, sale in type(list) == "table" and list or {} do
+		if type(sale) == "table" and tonumber(sale.Time) and tonumber(sale.Price) then
+			table.insert(out, { Time = tonumber(sale.Time), Price = tonumber(sale.Price) })
+		end
+	end
+	return out
+end
+
+-- Gespeicherter Stand: alte Einträge (nur lesen), je Eintrag shard_<n> der zuletzt gelesene/geschriebene Wert, und was
+-- dieser Server noch nicht gespeichert hat (pendingSales: Verkäufe, pendingLive: Preise in der Reihenfolge der Verkäufe)
+local legacySales, legacyRap = {}, {}
+local shards = {}      -- [n] = { Sales = { [Skin] = { ... } }, Rap = { [Skin] = Wert } }
+local pendingSales = {} -- [Skin] = { { Time, Price } }
+local pendingLive = {}  -- [Skin] = { Preis, ... }
+local flushing = false
+
+-- Eintrag für einen Skin: fest nach dem Namen, damit alle Server denselben nehmen
+function MarketService.ShardOf(itemId)
+	local hash = 0
+	for index = 1, #itemId do
+		hash = (hash * 31 + string.byte(itemId, index)) % 1000003
+	end
+	return hash % RapConfig.HistoryShards + 1
+end
+
+local function shardKey(n)
+	return "shard_" .. n
+end
+
+-- Gespeicherten Eintrag säubern: nur bekannte Skins, gültige Verkäufe, Zahlen
+local function cleanShard(data)
+	data = type(data) == "table" and data or {}
+	local sales, rap = {}, {}
+	for id, list in knownItems(data.Sales) do
+		sales[id] = cleanSales(list)
+	end
+	for id, value in knownItems(data.Rap) do
+		if type(value) == "number" and value == value then
+			rap[id] = value
+		end
+	end
+	return { Sales = sales, Rap = rap }
+end
+
+-- Verlauf und lebenden RAP aus allem Gespeicherten und den noch offenen Verkäufen dieses Servers neu aufbauen
+local function rebuild()
+	local merged = {}
+	local function add(id, list)
+		local into = merged[id] or {}
+		merged[id] = into
+		for _, sale in list do
+			table.insert(into, sale)
+		end
+	end
+	for id, list in legacySales do
+		add(id, list)
+	end
+	local live = table.clone(legacyRap)
+	for _, data in shards do
+		for id, list in data.Sales do
+			add(id, list)
+		end
+		for id, value in data.Rap do
+			live[id] = value
+		end
+	end
+	for id, list in pendingSales do
+		add(id, list)
+	end
+	for id, list in merged do
+		table.sort(list, function(a, b)
+			return a.Time < b.Time
+		end)
+		while #list > RapConfig.HistoryKeep do
+			table.remove(list, 1)
+		end
+	end
+	history = merged
+	-- Skins mit offenen Verkäufen behalten ihren Wert hier (schon nachgezogen), die übrigen nehmen den gespeicherten
+	for id in pendingLive do
+		live[id] = RapConfig.Live[id]
+	end
+	RapConfig.SetLive(live)
+end
+
+-- Offene Verkäufe speichern: ein UpdateAsync je betroffenem Eintrag. Klappt es nicht, bleiben sie offen (nächster Versuch).
+local function flush()
+	if not historyStore or flushing or (next(pendingSales) == nil and next(pendingLive) == nil) then
+		return
+	end
+	flushing = true
+	local sales, live = pendingSales, pendingLive
+	pendingSales, pendingLive = {}, {}
+	local byShard = {}
+	local function bucket(id)
+		local n = MarketService.ShardOf(id)
+		byShard[n] = byShard[n] or { Sales = {}, Live = {} }
+		return byShard[n]
+	end
+	for id, list in sales do
+		bucket(id).Sales[id] = list
+	end
+	for id, prices in live do
+		bucket(id).Live[id] = prices
+	end
+	for n, batch in byShard do
+		local ok, saved = pcall(historyStore.UpdateAsync, historyStore, shardKey(n), function(old)
+			local data = cleanShard(old)
+			for id, list in batch.Sales do
+				local into = data.Sales[id] or {}
+				data.Sales[id] = into
+				for _, sale in list do
+					table.insert(into, sale)
+				end
+				table.sort(into, function(a, b)
+					return a.Time < b.Time
+				end)
+				while #into > RapConfig.HistoryKeep do
+					table.remove(into, 1)
+				end
+			end
+			for id, prices in batch.Live do
+				local value = data.Rap[id] or legacyRap[id] or RapConfig.Base(id)
+				for _, price in prices do
+					value = RapConfig.NextLive(id, price, value) or value
+				end
+				data.Rap[id] = value
+			end
+			return data
+		end)
+		if ok and type(saved) == "table" then
+			shards[n] = cleanShard(saved)
+		else
+			-- später nochmal: vor die Verkäufe, die inzwischen dazugekommen sind
+			for id, list in batch.Sales do
+				local newer = pendingSales[id] or {}
+				pendingSales[id] = table.move(newer, 1, #newer, #list + 1, table.clone(list))
+			end
+			for id, prices in batch.Live do
+				local newer = pendingLive[id] or {}
+				pendingLive[id] = table.move(newer, 1, #newer, #prices + 1, table.clone(prices))
+			end
+		end
+	end
+	flushing = false
+	rebuild()
+	publishStats()
+	publishLive()
+end
+
+-- Alle Einträge neu lesen (Verkäufe der anderen Server)
+local function refresh()
+	if not historyStore then
+		return
+	end
+	for n = 1, RapConfig.HistoryShards do
+		local ok, data = pcall(historyStore.GetAsync, historyStore, shardKey(n))
+		if ok then
+			shards[n] = cleanShard(data)
+		end
+	end
+	rebuild()
+	publishStats()
+	publishLive()
+end
+
+-- Lebenden RAP nach einem Verkauf zu price nachziehen (sofort hier, gespeichert mit dem nächsten flush)
 local function updateLive(itemId, price)
 	local value = RapConfig.NextLive(itemId, price)
 	if not value then
@@ -154,18 +328,12 @@ local function updateLive(itemId, price)
 	end
 	RapConfig.Live[itemId] = value
 	publishLive()
-	if historyStore then
-		task.spawn(function()
-			pcall(historyStore.UpdateAsync, historyStore, "rap", function(old)
-				old = knownItems(old)
-				old[itemId] = RapConfig.NextLive(itemId, price, old[itemId] or RapConfig.Base(itemId))
-				return old
-			end)
-		end)
-	end
+	local prices = pendingLive[itemId] or {}
+	pendingLive[itemId] = prices
+	table.insert(prices, price)
 end
 
--- Verkauf im Preisverlauf zählen (Zwischenspeicher sofort, DataStore im Hintergrund)
+-- Verkauf im Preisverlauf zählen (sofort hier, gespeichert mit dem nächsten flush)
 local function recordSale(itemId, price)
 	local list = history[itemId] or {}
 	history[itemId] = list
@@ -174,21 +342,14 @@ local function recordSale(itemId, price)
 	while #list > RapConfig.HistoryKeep do
 		table.remove(list, 1)
 	end
-	if historyStore then
-		task.spawn(function()
-			pcall(historyStore.UpdateAsync, historyStore, "sales", function(old)
-				old = knownItems(old)
-				local saved = type(old[itemId]) == "table" and old[itemId] or {}
-				table.insert(saved, sale)
-				while #saved > RapConfig.HistoryKeep do
-					table.remove(saved, 1)
-				end
-				old[itemId] = saved
-				return old
-			end)
-		end)
-	end
+	local pending = pendingSales[itemId] or {}
+	pendingSales[itemId] = pending
+	table.insert(pending, sale)
 end
+
+-- Sofort speichern (Tests, Herunterfahren) bzw. neu laden
+MarketService.FlushHistory = flush
+MarketService.RefreshHistory = refresh
 
 -- ---------- Hilfen ----------
 
@@ -691,38 +852,44 @@ function MarketService.Init(map)
 	end
 	publishStats()
 	publishLive()
-	-- Preisverlauf und lebenden RAP aus dem DataStore (alle Server) dazunehmen
+	-- Preisverlauf und lebenden RAP aus dem DataStore (alle Server) dazunehmen, danach regelmäßig speichern und neu laden
 	if historyStore then
 		task.spawn(function()
 			local liveOk, live = pcall(historyStore.GetAsync, historyStore, "rap")
-			if liveOk and type(live) == "table" then
-				RapConfig.SetLive(live)
-				publishLive()
-			end
-			local ok, saved = pcall(historyStore.GetAsync, historyStore, "sales")
-			if ok and type(saved) == "table" then
-				for id, sales in knownItems(saved) do
-					if type(sales) == "table" then
-						local merged = {}
-						for _, sale in sales do
-							if type(sale) == "table" and tonumber(sale.Time) and tonumber(sale.Price) then
-								table.insert(merged, { Time = sale.Time, Price = sale.Price })
-							end
-						end
-						for _, sale in history[id] or {} do
-							table.insert(merged, sale)
-						end
-						table.sort(merged, function(a, b)
-							return a.Time < b.Time
-						end)
-						while #merged > RapConfig.HistoryKeep do
-							table.remove(merged, 1)
-						end
-						history[id] = merged
+			if liveOk then
+				for id, value in knownItems(live) do
+					if type(value) == "number" and value == value then
+						legacyRap[id] = value
 					end
 				end
-				publishStats()
 			end
+			local ok, saved = pcall(historyStore.GetAsync, historyStore, "sales")
+			if ok then
+				for id, list in knownItems(saved) do
+					legacySales[id] = cleanSales(list)
+				end
+			end
+			refresh()
+		end)
+		task.spawn(function()
+			-- jeder Server mit eigenem Versatz, damit nicht alle zur selben Sekunde schreiben
+			task.wait(Random.new():NextNumber(0, RapConfig.HistoryFlush))
+			local sinceRefresh = 0
+			while true do
+				flush()
+				task.wait(RapConfig.HistoryFlush)
+				sinceRefresh += RapConfig.HistoryFlush
+				if sinceRefresh >= RapConfig.HistoryRefresh then
+					sinceRefresh = 0
+					refresh()
+				end
+			end
+		end)
+		game:BindToClose(function()
+			while flushing do
+				task.wait(0.1)
+			end
+			flush()
 		end)
 	end
 	Remotes.MarketAction.OnServerEvent:Connect(function(player, action, a, b, c)

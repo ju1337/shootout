@@ -431,7 +431,12 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     Merkliste, sortieren nach Preis, **Schnäppchen** (am weitesten unter dem RAP-Wert) oder Seltenheit. **HIN** zeigt
     einen Pfeil mit Entfernung über dem Stand.
   - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v1`,
-    gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND.
+    gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND. Damit auch viele Server nicht in dieselben
+    Einträge drängeln, sind die Skins nach Namen auf 8 Einträge `shard_<n>` verteilt (Verkäufe und lebender RAP
+    zusammen); jeder Server sammelt seine Verkäufe und schreibt höchstens einmal pro Minute je Eintrag (mit eigenem
+    Versatz, beim Herunterfahren sofort, bei einem Fehler beim nächsten Mal), alle 5 Minuten lädt er die Verkäufe der
+    anderen Server neu (`HistoryShards`, `HistoryFlush`, `HistoryRefresh` in `RapConfig`). Die alten Einträge `sales`
+    und `rap` werden nur noch gelesen.
   - **Merkliste**: MERKEN an einem Skin – bietet jemand ihn an, kommt eine Meldung (im Profil gespeichert).
   - **Gegenangebote**: an fremden Ständen ANGEBOT MACHEN (mindestens der halbe Preis, 45 s gültig, eins pro Stand).
     Der Besitzer sieht sie unter **ANGEBOTE** in der Leiste und nimmt an (Verkauf zum Gebot) oder lehnt ab.
@@ -723,7 +728,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
 | RAP: Werte der handelbaren Skins, Rückkaufquote, Marktgebühr, Plätze pro Stand, Tausch (Countdown, Reichweite), Farbstufen über dem Kopf | `src/shared/RapConfig.lua` |
 | Kisten: Preise, Chancen (Gewichte je Seltenheit), Duplikat-Rückgabe, Wartezeit | `src/shared/CrateConfig.lua` |
-| Markt: Gebührenstufen, Gegenangebote (Mindestgebot, Dauer), Stand-Name, Merkliste, Preisverlauf | `FeeTiers`, `MinOfferFraction`, `OfferSeconds`, `StandNameLength`, `WatchLimit`, `HistoryDays` in `src/shared/RapConfig.lua` |
+| Markt: Gebührenstufen, Gegenangebote (Mindestgebot, Dauer), Stand-Name, Merkliste, Preisverlauf (Tage, Einträge, Speichern/Neuladen) | `FeeTiers`, `MinOfferFraction`, `OfferSeconds`, `StandNameLength`, `WatchLimit`, `HistoryDays`, `HistoryShards`, `HistoryFlush`, `HistoryRefresh` in `src/shared/RapConfig.lua` |
 | Markt-Stände (Reichweite zum Beanspruchen/Kaufen) | `ClaimRange`, `BuyRange` in `src/server-shared/MarketService.lua`; Halle in `build_market()` in `tools/build_maps.py` |
 | Glücksrad: Felder, Gewichte, Farben | `LoginConfig.Wheel` in `src/shared/LoginConfig.lua`; Dreh-Dauer und Runden in `src/client/HubWheel.lua` |
 | Killstreaks (Kills, Namen, Farben) | `src/shared/KillstreakConfig.lua`; Anzeige in `src/client/KillstreakHUD.lua` |
@@ -789,7 +794,7 @@ am Commit:
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
 | `crate`, `crateui` | Kisten: nur die Waffen-Kiste (alle handelbar), steile Chancen (62/28/8/2 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
 | `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
-| `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
+| `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (gesammelt und verteilt gespeichert, ein Schreibzugriff je Eintrag, Fehler und Herunterfahren, Verkäufe anderer Server, alte Einträge lesen), Händler-Rangliste |
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `skins` | Nur noch Waffen-Skins: keine Agenten-Skins (Cosmetics, RAP, Kisten), Agentenfarben immer Standard, Battle-Pass-Stufe 20 = Saison-Elite, alte Spielstände verlieren entfernte Skins (Besitz, Plätze "A:", Merkliste), SHOP/LOADOUT/BATTLE PASS ohne Agenten-Skins |
