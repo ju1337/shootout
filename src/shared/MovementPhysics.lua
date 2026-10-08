@@ -10,6 +10,7 @@ local P = {}
 P.SprintFactor = 1.5
 P.CrouchFactor = 0.5
 P.AimFactor = 0.6
+P.SprintForward = 0.5 -- Sprint nur nach vorn: Eingabe höchstens 60° neben der Blickrichtung (schräg vorn geht noch)
 P.AccelUp = 34      -- Studs/s² beim Schneller-Werden (Gehen -> Sprint in gut 0,2 s: man spürt das Anlaufen)
 P.AccelDown = 80    -- Studs/s² beim Langsamer-Werden (Zielen, Ducken, Sprint loslassen, Schwung nach dem Landen)
 
@@ -91,6 +92,36 @@ P.AirMomentumMax = 46
 P.Coyote = 0.12          -- Sprung kurz nach dem Verlassen einer Kante zählt noch
 P.JumpBuffer = 0.15      -- Sprung kurz vor dem Landen wird beim Landen ausgeführt
 P.JumpHeight = 4.5       -- Sprunghöhe in Studs (Roblox-Standard 7,2 ist fast anderthalb Körper hoch)
+
+-- Lenken in der Luft: die Laufrichtung (MoveDirection, Länge 0..1) folgt der Eingabe nur mit AirAccel pro Sekunde,
+-- ohne Eingabe läuft sie langsam aus (AirRelease). Ein Sprung trägt so seinen Schwung, statt mitten in der Luft auf der
+-- Stelle umzudrehen (Roblox lenkt in der Luft sonst genauso hart wie am Boden).
+P.AirAccel = 4.5   -- volle Umkehr in gut 0,4 s, 90° in gut 0,3 s
+P.AirRelease = 1.5 -- Tasten los: der Schwung trägt noch ein Stück weiter
+
+function P.AirSteer(current, input, dt)
+	local target = Vector3.new(input.X, 0, input.Z)
+	if target.Magnitude > 1 then
+		target = target.Unit
+	end
+	local rate = target.Magnitude > 0.1 and P.AirAccel or P.AirRelease
+	local delta = target - current
+	local maxStep = rate * dt
+	if delta.Magnitude <= maxStep then
+		return target
+	end
+	return current + delta.Unit * maxStep
+end
+
+-- Sprint erlaubt? input = Eingabe (MoveDirection), look = Blickrichtung. Im Stand zählt es als vorn.
+function P.SprintAllowed(input, look)
+	local wish = P.Flat(input)
+	local forward = P.Flat(look)
+	if not wish or not forward or input.Magnitude < 0.1 then
+		return true
+	end
+	return wish:Dot(forward) >= P.SprintForward
+end
 
 function P.AirStep(momentum, dt)
 	return math.max(0, momentum - P.AirDrag * dt)

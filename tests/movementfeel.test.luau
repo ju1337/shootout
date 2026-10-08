@@ -148,6 +148,24 @@ check(P.LandDip(20) == 0 and near(P.LandDip(200), P.LandDipMax), "Eintauchen ers
 check(P.Bob(0, 1) == 0 and P.Bob(math.pi / 2, 1) < 0 and P.Bob(math.pi / 2, 0) == 0, "Wippen nur beim Laufen")
 check(math.abs(P.Bob(math.pi / 2, 5)) <= 0.02, "Wippen dezent: höchstens 0,02 Studs, auch beim Sprinten")
 
+-- Lenken in der Luft: Umdrehen dauert, ohne Eingabe trägt der Schwung weiter
+local fwd, back, side = Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1)
+local air, airT = fwd, 0
+while air.X > -0.99 and airT < 2 do
+	air = P.AirSteer(air, back, DT)
+	airT += DT
+end
+check(airT > 0.3 and airT < 0.6, "in der Luft umdrehen dauert 0,3-0,6 s (" .. airT .. ")")
+check(P.AirSteer(fwd, side, 0.1).X > 0.5, "seitlich lenken in der Luft nur nach und nach")
+check(P.AirSteer(fwd, Vector3.zero, 0.2).X > 0.6, "Tasten los in der Luft: Schwung trägt weiter")
+check(P.AirSteer(Vector3.zero, fwd, 0.1).Magnitude < 0.5, "aus dem Stand gesprungen: kein voller Schub in der Luft")
+-- Sprint nur nach vorn (schräg vorn geht noch)
+check(P.SprintAllowed(fwd, fwd), "Sprint geradeaus")
+check(P.SprintAllowed((fwd + side).Unit, fwd), "Sprint schräg vorn")
+check(not P.SprintAllowed(side, fwd), "kein Sprint seitwärts")
+check(not P.SprintAllowed(back, fwd), "kein Sprint rückwärts")
+check(P.SprintAllowed(Vector3.zero, fwd), "im Stand blockiert nichts")
+
 -- ---------- Movement im Simulator ----------
 -- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12), eine Kante in 6,8,
 -- eine in 8,5 (Dachhöhe) und ein flaches Dach (4)
@@ -222,6 +240,7 @@ local character = bob.Character
 local humanoid = character:FindFirstChildOfClass("Humanoid")
 local root = character:FindFirstChild("HumanoidRootPart")
 local X = Vector3.new(1, 0, 0)
+workspace.CurrentCamera.CFrame = CFrame.lookAt(Vector3.new(0, 5, 0), Vector3.new(1, 5, 0)) -- Blick nach +X (Sprint nach vorn)
 local function at(position, velocity)
 	root.CFrame = CFrame.new(position)
 	root.AssemblyLinearVelocity = velocity or Vector3.zero
@@ -245,6 +264,14 @@ check(humanoid.WalkSpeed > 16 and humanoid.WalkSpeed < 23, "Sprint springt nicht
 frames(0.5)
 check(near(humanoid.WalkSpeed, 24, 0.01), "nach 0,5 s volles Sprinttempo (" .. humanoid.WalkSpeed .. ")")
 check(Movement.IsSprinting(), "sprintet")
+
+-- seitwärts kein Sprint, wieder nach vorn: Sprint geht weiter (Taste gehalten)
+humanoid.MoveDirection = Vector3.new(0, 0, 1)
+frames(0.3)
+check(not Movement.IsSprinting() and near(humanoid.WalkSpeed, 16, 0.01), "seitwärts kein Sprint (" .. humanoid.WalkSpeed .. ")")
+humanoid.MoveDirection = X
+frames(0.5)
+check(Movement.IsSprinting() and near(humanoid.WalkSpeed, 24, 0.01), "nach vorn wieder Sprint")
 
 -- Rutschen: Schub, läuft aus, Tippen reicht
 root.AssemblyLinearVelocity = X * 24

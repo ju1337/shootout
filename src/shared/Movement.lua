@@ -1,12 +1,14 @@
 -- Movement (ModuleScript, nur Client)
 -- Bewegung und Kamera des eigenen Charakters. Die Rechnungen stehen in MovementPhysics, hier nur Ablauf und Roblox.
 --   * Tempo: Grundtempo vom Agenten (Fähigkeiten können es per "SpeedMultiplier" erhöhen), Sprinten (Shift), Ducken
---     (STRG oder C, gedrückt halten), Zielen. Das Tempo läuft weich an und ab (WalkSpeed folgt einer Rampe).
+--     (STRG oder C, gedrückt halten), Zielen. Das Tempo läuft weich an und ab (WalkSpeed folgt einer Rampe). Sprinten
+--     nur nach vorn (schräg vorn geht noch); halten oder umschalten (Einstellung "Sprinten").
 --   * Rutschen: im Sprint (oder mit Schwung) ducken. Schub aus dem aktuellen Tempo, Reibung, bergab schneller und
 --     bergauf kürzer, mit der Eingabe lenkbar. Springen aus dem Rutschen nimmt den Schwung mit in die Luft, beim Landen
 --     mit gedrückter Ducken-Taste geht es direkt weiter (Schub lädt erst wieder auf: kein Dauer-Tempo).
 --   * Springen: Coyote-Time (kurz nach dem Verlassen einer Kante geht der Sprung noch) und Sprungpuffer (kurz vor dem
---     Landen gedrückt = Sprung beim Landen). Harte Landungen bremsen kurz und lassen die Kamera eintauchen.
+--     Landen gedrückt = Sprung beim Landen). Harte Landungen bremsen kurz und lassen die Kamera eintauchen. In der
+--     Luft lenkt man nur begrenzt (der Sprung trägt seinen Schwung, kein Umdrehen auf der Stelle).
 --   * Hindernisse: Springen vor einem niedrigen, dünnen Hindernis = drüberspringen (Vault, der Schwung bleibt), vor
 --     einer höheren Kante = hochziehen. Klappt auch aus dem Sprung heraus, wenn man auf die Kante zu läuft. Auf
 --     Dächer (Teile namens "Roof") zieht man sich nie hoch: dahin geht es nur über Treppen und Leitern.
@@ -95,6 +97,10 @@ local dip, dipVelocity = 0, 0     -- Kamera-Eintauchen (Studs nach unten) und se
 local bobPhase = 0
 local roll = 0                    -- aktuelle Kamera-Neigung (Grad)
 local slideBlend = 0              -- 0..1 weich für Kamera-Neigung und Sichtfeld beim Rutschen
+local rawMove = Vector3.zero      -- Eingabe vom ControlModule in diesem Bild (bevor Rutschen/Luft sie überschreiben)
+local lastMoveOut = nil           -- zuletzt selbst gesetzte Laufrichtung (Rutschen, Luft)
+local airMove = nil               -- Laufrichtung in der Luft (Länge 0..1), nil = am Boden
+local sprintForward = true        -- Eingabe zeigt nach vorn (sonst kein Sprint)
 
 local groundParams = RaycastParams.new()
 groundParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -115,7 +121,7 @@ local function isCrouched()
 end
 
 local function isSprinting()
-	return sprintHeld and not aiming and not isCrouched() and os.clock() >= sprintBlockedUntil
+	return sprintHeld and sprintForward and not aiming and not isCrouched() and os.clock() >= sprintBlockedUntil
 end
 
 -- Grundtempo ohne Sprint/Ducken/Zielen (Agent, Fähigkeiten, Runner, Stacheldraht)
@@ -130,6 +136,16 @@ local function baseSpeed(character)
 		speed *= 0.5
 	end
 	return speed
+end
+
+-- Eingabe des Spielers (nicht die beim Rutschen oder in der Luft überschriebene Laufrichtung)
+local function wishMove(humanoid)
+	return lastMoveOut and rawMove or humanoid.MoveDirection
+end
+
+-- Sprinten halten (Tastatur, Standard) oder umschalten (Einstellung, Controller L3, Touch)
+local function holdSprint()
+	return InputActions.Device() == "Keyboard" and not PlayerSettings.Get("ToggleSprint")
 end
 
 local function feetOf(root, humanoid)
@@ -226,8 +242,9 @@ local function startSlide()
 	end
 	local velocity = root.AssemblyLinearVelocity
 	local flat = Vector3.new(velocity.X, 0, velocity.Z)
-	local dir = P.Flat(humanoid.MoveDirection) or P.Flat(flat)
-	local speed = math.max(flat.Magnitude, humanoid.MoveDirection.Magnitude > 0.5 and walkSpeed or 0)
+	local input = wishMove(humanoid)
+	local dir = P.Flat(input) or P.Flat(flat)
+	local speed = math.max(flat.Magnitude, input.Magnitude > 0.5 and walkSpeed or 0)
 	local base = baseSpeed(character)
 	if not dir or speed < base * P.SlideMinStart then
 		return false
@@ -362,8 +379,9 @@ local function tryObstacle(inAir)
 		or character:GetAttribute("Downed") then
 		return false
 	end
-	local wish = P.Flat(humanoid.MoveDirection)
-	if inAir and (not wish or humanoid.MoveDirection.Magnitude < 0.3) then
+	local input = wishMove(humanoid)
+	local wish = P.Flat(input)
+	if inAir and (not wish or input.Magnitude < 0.3) then
 		return false -- in der Luft nur, wenn man auf die Kante zu will
 	end
 	local dir = wish or P.Flat(root.CFrame.LookVector)
@@ -610,7 +628,7 @@ end
 -- Sprintet der Spieler gerade (gedrückt, in Bewegung, nicht durch Schießen unterbrochen)?
 function Movement.IsSprinting()
 	local humanoid = getHumanoid()
-	return isSprinting() and Modes.IsFighting(player) and humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.1
+	return isSprinting() and Modes.IsFighting(player) and humanoid ~= nil and wishMove(humanoid).Magnitude > 0.1
 end
 
 -- Rutscht der Spieler gerade? (Waffe in der Ego-Ansicht gekippt)
@@ -694,7 +712,7 @@ function Movement.Init()
 		apply()
 	end
 	InputActions.Bind("Sprint", function(began)
-		if InputActions.Device() == "Keyboard" then
+		if holdSprint() then
 			sprintHeld = began
 		elseif began then
 			sprintHeld = not sprintHeld
@@ -712,12 +730,16 @@ function Movement.Init()
 	end)
 	local wasBlocked = false
 	RunService.Heartbeat:Connect(function(dt)
-		if sprintHeld and InputActions.Device() ~= "Keyboard" then
-			local humanoid = getHumanoid()
-			if not humanoid or humanoid.MoveDirection.Magnitude < 0.1 then
-				sprintHeld = false
-				apply()
-			end
+		-- Sprint nur nach vorn; umgeschalteter Sprint endet beim Stehenbleiben oder wenn man nicht mehr nach vorn läuft
+		local humanoid = getHumanoid()
+		local forward = humanoid == nil or P.SprintAllowed(wishMove(humanoid), workspace.CurrentCamera.CFrame.LookVector)
+		if sprintHeld and not holdSprint() and (not humanoid or wishMove(humanoid).Magnitude < 0.1 or not forward) then
+			sprintHeld = false
+			apply()
+		end
+		if forward ~= sprintForward then
+			sprintForward = forward
+			apply()
 		end
 		-- Sprint-Unterbrechung durch Schießen vorbei: Tempo wieder anpassen
 		local blocked = os.clock() < sprintBlockedUntil
@@ -727,15 +749,43 @@ function Movement.Init()
 		end
 		step(math.min(dt, 0.1))
 	end)
-	-- Rutschen: Richtung nach der Eingabe lenken und den Humanoid in diese Richtung schieben. Läuft direkt nach dem
-	-- ControlModule von Roblox (RenderPriority Input), damit dessen Eingabe gelesen und überschrieben wird.
+	-- Rutschen: Richtung nach der Eingabe lenken und den Humanoid in diese Richtung schieben. In der Luft: Laufrichtung
+	-- folgt der Eingabe nur begrenzt (AirSteer). Läuft direkt nach dem ControlModule von Roblox (RenderPriority Input),
+	-- damit dessen Eingabe gelesen und überschrieben wird.
+	local FREE_STATES = { [Enum.HumanoidStateType.Climbing] = true, [Enum.HumanoidStateType.Swimming] = true,
+		[Enum.HumanoidStateType.Seated] = true }
 	RunService:BindToRenderStep("MovementSlide", Enum.RenderPriority.Input.Value + 1, function(dt)
-		local humanoid = getHumanoid()
-		if not slide or not humanoid then
+		dt = math.min(dt, 0.1)
+		local humanoid, character = getHumanoid()
+		if not humanoid then
 			return
 		end
-		slide.Dir = P.Steer(slide.Dir, humanoid.MoveDirection, math.min(dt, 0.1))
-		humanoid:Move(slide.Dir, false)
+		rawMove = humanoid.MoveDirection -- frisch vom ControlModule (setzt sie jedes Bild neu)
+		lastMoveOut = nil
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local airborne = humanoid.FloorMaterial == Enum.Material.Air and not slide and not move and not inVehicle
+			and not isDropping(humanoid) and not FREE_STATES[humanoid:GetState()] and root ~= nil
+		if not airborne then
+			airMove = nil
+		end
+		local out = nil
+		if slide then
+			slide.Dir = P.Steer(slide.Dir, rawMove, dt)
+			out = slide.Dir
+		elseif airborne then
+			if not airMove then
+				-- Absprung: in die Richtung weiter, in die man gerade läuft
+				local velocity = (root :: BasePart).AssemblyLinearVelocity
+				local flat = Vector3.new(velocity.X, 0, velocity.Z) / math.max(walkSpeed or DEFAULT_SPEED, 1)
+				airMove = flat.Magnitude > 1 and flat.Unit or flat
+			end
+			airMove = P.AirSteer(airMove, rawMove, dt)
+			out = airMove
+		end
+		if out then
+			humanoid:Move(out, false)
+			lastMoveOut = out
+		end
 	end)
 	-- Sichtfeld, Kamera-Versatz (Ducken, Schulter, Wippen, Eintauchen) und Abstand der Schulterkamera gleiten weich.
 	-- Läuft vor der Kamera von Roblox, damit sie die neuen Werte noch im selben Bild benutzt.
@@ -892,6 +942,7 @@ function Movement.Init()
 		normalHipHeight = humanoid.HipHeight
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge
+		airMove, lastMoveOut, rawMove = nil, nil, Vector3.zero
 		walkSpeed = nil
 		grounded, leftGroundAt, jumpedAt, jumpRequestAt, lastGroundY = true, nil, nil, nil, nil
 		fallSpeed, slowUntil, dip, dipVelocity = 0, 0, 0, 0

@@ -29,6 +29,8 @@ PlayerSettings.List = {
 		Min = 0.2, Max = 1.5, Step = 0.05, Format = "%.2f", Hint = "Faktor auf die Maus-Empfindlichkeit" },
 	{ Key = "ToggleAim", Category = "Controls", Label = "Zielen", Type = "Choice", Default = false,
 		Options = { { false, "HALTEN" }, { true, "UMSCHALTEN" } } },
+	{ Key = "ToggleSprint", Category = "Controls", Label = "Sprinten", Type = "Choice", Default = false,
+		Options = { { false, "HALTEN" }, { true, "UMSCHALTEN" } } },
 	{ Key = "Fov", Category = "Camera", Label = "Sichtfeld (FOV)", Type = "Slider", Default = 70, Min = 60, Max = 100, Step = 1,
 		Format = "%d" },
 	{ Key = "ThirdPerson", Category = "Camera", Label = "Kamera im Kampf", Type = "Choice", Default = false,
