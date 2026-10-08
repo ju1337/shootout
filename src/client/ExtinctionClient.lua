@@ -1665,7 +1665,8 @@ local prompts = {}
 -- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
 local BUBBLE_RANGE = 180
 local BUBBLE_HEIGHT = 9.5 -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): knapp über dem Dach
-local BUBBLE_SIZE = 58    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
+local BUBBLE_SIZE = 96    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
+local ICON_BASE = 46      -- in dieser Größe sind die Symbole gezeichnet; UIScale bringt sie auf BUBBLE_SIZE
 local BUBBLES = {
 	Stand_Weapons = { Icon = "Rifle" },
 	Stand_Items = { Icon = "Medkit" },
@@ -1728,7 +1729,11 @@ local function addBubble(part)
 	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(BUBBLE_SIZE, BUBBLE_SIZE),
 		StudsOffset = Vector3.new(0, BUBBLE_HEIGHT, 0), MaxDistance = BUBBLE_RANGE, AlwaysOnTop = false, LightInfluence = 0,
 		Enabled = inExtinction() }, part)
-	local icon = itemConfig(def.Icon) and buildIcon(gui, def.Icon, 1) or buildSymbol(gui, def.Icon, 1)
+	-- die Symbole sind mit festen Pixelmaßen gezeichnet: in Grundgröße bauen und als Ganzes hochskalieren
+	local holder = make("Frame", { Name = "IconHolder", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(ICON_BASE, ICON_BASE), BackgroundTransparency = 1 }, gui)
+	make("UIScale", { Scale = BUBBLE_SIZE / ICON_BASE }, holder)
+	local icon = itemConfig(def.Icon) and buildIcon(holder, def.Icon, 1) or buildSymbol(holder, def.Icon, 1)
 	icon.Name = "Icon_" .. def.Icon
 	table.insert(bubbles, gui)
 end
