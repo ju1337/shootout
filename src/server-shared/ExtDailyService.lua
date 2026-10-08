@@ -25,7 +25,7 @@ end
 -- Beim Betreten: Kiste geben, falls heute noch keine. Gibt den Tag der Serie zurück (nil = schon bekommen).
 function ExtDailyService.Claim(player)
 	local profile = ProgressService.Get(player)
-	if not profile then
+	if not profile or not ExtDailyConfig.Enabled then
 		return nil
 	end
 	local now = os.time()

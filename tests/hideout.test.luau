@@ -92,6 +92,7 @@ local manager = {
 	end,
 }
 require("ExtinctionConfig").Airdrop.FirstDelay = math.huge -- hier keine Lootdrops (eigener Test: airdrop)
+require("ExtDailyConfig").Enabled = false -- tägliche Kiste: eigener Test (extdaily)
 require("ExtinctionConfig").Day.Fixed = 12 -- immer Tag (nachts mehr Zombies; eigener Test: daycycle)
 require("ExtinctionConfig").Zombies.KindWeights = { Walker = 1 } -- nur normale Zombies (Schreier rufen sonst Verstärkung)
 Extinction.Init(manager)

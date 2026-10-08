@@ -7,6 +7,8 @@
 
 local ExtDailyConfig = {}
 
+ExtDailyConfig.Enabled = true
+
 ExtDailyConfig.Days = {
 	{ Items = { { "Bandage", 3 }, { "Ammo_9mm", 60 } } },
 	{ Items = { { "Vest", 1 }, { "Medkit", 1 } } },
