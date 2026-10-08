@@ -969,6 +969,156 @@ function AgentModels.SyncJoints(character)
 	end
 end
 
+-- ---------- Arme für die Ego-Perspektive (ViewModel) ----------
+local ARM_SEGMENTS = { Upper = "UpperArm", Lower = "LowerArm", Hand = "Hand" }
+
+-- Gelenkpunkt im Ruhe-Raum: Lage des Gelenks an seinem Elternteil (C0 bzw. Attachment0)
+local function jointPoint(container, restOf, jointName, partName)
+	for _, joint in container:GetDescendants() do
+		if isJoint(joint) and joint.Name == jointName then
+			local part, parent = jointParts(joint)
+			if part and parent and cleanName(part.Name) == partName then
+				local c0 = joint:IsA("AnimationConstraint") and joint.Attachment0.CFrame or joint.C0
+				return (restOf(parent) * c0).Position
+			end
+		end
+	end
+	return nil
+end
+
+local function armCopy(part, name)
+	local copy = part:Clone()
+	if not copy then
+		return nil -- Archivable aus
+	end
+	for _, child in copy:GetDescendants() do
+		if child:IsA("JointInstance") or child:IsA("WeldConstraint") or child:IsA("Constraint")
+			or child:IsA("BasePart") or child:IsA("LuaSourceContainer") then
+			child:Destroy()
+		end
+	end
+	copy.Name = name
+	copy.Anchored = true
+	copy.CanCollide = false
+	copy.CanQuery = false
+	copy.CanTouch = false
+	copy.CastShadow = false
+	copy.Massless = true
+	copy.LocalTransparencyModifier = 0
+	copy:SetAttribute("AgentGear", nil)
+	return copy
+end
+
+-- Die echten Arme eines Charakters als Kopien für die Waffe vor der Kamera: die Arme des 3D-Modells (Rig oder Teile
+-- an den Körperteilen), sonst die des Spielkörpers. Alles im Ruhe-Raum des Charakters (Arme hängen, Blick -Z):
+-- { Right = Seite, Left = Seite }, Seite = { Shoulder, Elbow, Wrist = Vector3,
+-- Pieces = { { Part = Kopie, Rest = CFrame, Segment = "Upper" | "Lower" | "Hand" } } }.
+-- nil, wenn sich die Arme nicht finden lassen (z.B. Modell als Ganzes am Körper).
+-- Gelenke des Spielkörpers in Ruhelage (Raum: Boden zwischen den Füßen): Schulter, Ellbogen, Handgelenk
+local function bodyArmJoints(side)
+	local sign = side == "Right" and 1 or -1
+	local upper, lower, hand = AgentModels.Body[side .. "UpperArm"], AgentModels.Body[side .. "LowerArm"],
+		AgentModels.Body[side .. "Hand"]
+	local function between(a, b) -- Mitte der Überlappung: Unterkante von a, Oberkante von b
+		local y = (a.CFrame.Y - a.Size.Y / 2 + b.CFrame.Y + b.Size.Y / 2) / 2
+		return Vector3.new(b.CFrame.X, y, 0)
+	end
+	local shoulder = AgentModels.RightShoulder
+	return Vector3.new(shoulder.X * sign, shoulder.Y, shoulder.Z), between(upper, lower), between(lower, hand)
+end
+
+-- Charakter aus einem Modell ohne Rig (characterFromPieces): alles hängt fest am HumanoidRootPart, die Arme werden
+-- wie beim Laden über ihre Namen bzw. das nächste Körperteil gefunden
+local function piecesCharacterArms(character, holder)
+	local data = assetData[character:GetAttribute("AgentModelCharacter")]
+	local root = character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not data or data.Whole or not root or not humanoid then
+		return nil
+	end
+	local ground = root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + humanoid.HipHeight), 0)
+	local result = {}
+	for _, side in { "Right", "Left" } do
+		local entry = { Pieces = {} }
+		entry.Shoulder, entry.Elbow, entry.Wrist = bodyArmJoints(side)
+		for _, part in holder:GetDescendants() do
+			if part:IsA("BasePart") and shown(part) then
+				local rest = ground:ToObjectSpace(part.CFrame)
+				local bodyName = bodyNameOf(part.Name) or nearestBodyPart(rest.Position)
+				for segment, suffix in ARM_SEGMENTS do
+					local copy = bodyName == side .. suffix and armCopy(part, bodyName .. "_" .. (#entry.Pieces + 1))
+					if copy then
+						table.insert(entry.Pieces, { Part = copy, Rest = rest, Segment = segment })
+					end
+				end
+			end
+		end
+		if #entry.Pieces == 0 then
+			return nil
+		end
+		result[side] = entry
+	end
+	return result
+end
+
+function AgentModels.ArmPieces(character)
+	if not character then
+		return nil
+	end
+	local holder = character:FindFirstChild(AgentModels.ModelName)
+	if holder and AgentModels.IsModelCharacter(character) and not character:FindFirstChild("RightUpperArm") then
+		return piecesCharacterArms(character, holder)
+	end
+	local rig = holder and holder:FindFirstChildOfClass("Humanoid") and holder or nil
+	local body = rig or character -- hier liegen die Gelenke
+	local restOf = restFrames(body)
+	local root = body:FindFirstChild("HumanoidRootPart", rig ~= nil) or body:FindFirstChild("UpperTorso", rig ~= nil)
+	if not root or not root:IsA("BasePart") then
+		return nil
+	end
+	local toRoot = restOf(root):Inverse()
+	local result = {}
+	for _, side in { "Right", "Left" } do
+		local entry = { Pieces = {} }
+		entry.Shoulder = jointPoint(body, restOf, side .. "Shoulder", side .. "UpperArm")
+		entry.Elbow = jointPoint(body, restOf, side .. "Elbow", side .. "LowerArm")
+		entry.Wrist = jointPoint(body, restOf, side .. "Wrist", side .. "Hand")
+		if not entry.Shoulder or not entry.Elbow or not entry.Wrist then
+			return nil
+		end
+		entry.Shoulder, entry.Elbow, entry.Wrist = toRoot * entry.Shoulder, toRoot * entry.Elbow, toRoot * entry.Wrist
+		for segment, suffix in ARM_SEGMENTS do
+			local bodyName = side .. suffix
+			local function add(part, rest)
+				local copy = shown(part) and armCopy(part, bodyName .. "_" .. (#entry.Pieces + 1))
+				if copy then
+					table.insert(entry.Pieces, { Part = copy, Rest = toRoot * rest, Segment = segment })
+				end
+			end
+			if holder and not rig then
+				-- Teile des Modells, die am Körperteil hängen (AgentModels.Attach)
+				local bodyPart = character:FindFirstChild(bodyName)
+				for _, part in holder:GetDescendants() do
+					if bodyPart and part:IsA("BasePart") and part:GetAttribute("AgentBody") == bodyName then
+						add(part, restOf(bodyPart) * bodyPart.CFrame:ToObjectSpace(part.CFrame))
+					end
+				end
+			else
+				for _, part in body:GetDescendants() do
+					if part:IsA("BasePart") and cleanName(part.Name) == bodyName then
+						add(part, restOf(part))
+					end
+				end
+			end
+		end
+		if #entry.Pieces == 0 then
+			return nil
+		end
+		result[side] = entry
+	end
+	return result
+end
+
 -- Tod (Server): Die Gelenke des Spielkörpers zerfallen bzw. werden zu Kugelgelenken (Ragdoll). Damit ein Rig-Modell
 -- mitfällt statt steif stehen zu bleiben, wird jedes seiner Körperteile an das gleichnamige Teil des Spielkörpers
 -- geschweißt (statt an seinem Gelenk zu hängen).

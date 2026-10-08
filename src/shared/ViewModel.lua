@@ -33,6 +33,8 @@ local LEFT_SHOULDER = Vector3.new(-0.7, -1.8, -0.2)
 local UPPER_ARM, FOREARM = 1.7, 1.8
 local SLEEVE_WIDTH = 0.34
 local GLOVE_COLOR = Color3.fromRGB(38, 38, 44)
+-- Echte Arme des Charakters: so dick wie am Körper mal ARM_THICKNESS (die Länge passt sich den Armen oben an)
+local ARM_THICKNESS = 0.6
 
 -- Feder für weiche Bewegungen (Wert, Geschwindigkeit als Vector3)
 local function newSpring()
@@ -75,8 +77,52 @@ local function armPart(name, color, material, parent)
 	return part
 end
 
--- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten)
-function ViewModel.new(weaponName, skin, sleeveColor, attachments)
+-- Echte Arme (AgentModels.ArmPieces) einbauen: jedes Teil hängt an seinem Knochen (Oberarm, Unterarm, Hand) und
+-- wird mit ihm gestreckt (Länge wie UPPER_ARM/FOREARM, Dicke ARM_THICKNESS)
+local function buildRealArm(side)
+	local bones = {
+		Upper = { From = side.Shoulder, To = side.Elbow },
+		Lower = { From = side.Elbow, To = side.Wrist },
+		Hand = { From = side.Wrist, To = side.Wrist + (side.Wrist - side.Elbow) },
+	}
+	local lengths = { Upper = UPPER_ARM * SCALE, Lower = FOREARM * SCALE }
+	for segment, bone in bones do
+		local axis = bone.To - bone.From
+		if axis.Magnitude < 1e-3 then
+			return nil
+		end
+		bone.Axis = axis.Unit
+		bone.Length = axis.Magnitude
+		bone.Cross = ARM_THICKNESS * SCALE
+		bone.Stretch = lengths[segment] and lengths[segment] / bone.Length or bone.Cross -- Hand: nicht gestreckt
+	end
+	local pieces = {}
+	for _, piece in side.Pieces do
+		local bone = bones[piece.Segment]
+		local function stretch(v)
+			local along = bone.Axis * v:Dot(bone.Axis)
+			return along * bone.Stretch + (v - along) * bone.Cross
+		end
+		local rest = piece.Rest
+		local size = piece.Part.Size
+		piece.Part.Size = Vector3.new(stretch(rest.RightVector).Magnitude * size.X, stretch(rest.UpVector).Magnitude * size.Y,
+			stretch(rest.LookVector).Magnitude * size.Z)
+		local offset = rest.Position - bone.From -- Lage zum Gelenk (Ruhe-Raum)
+		local along = offset:Dot(bone.Axis)
+		table.insert(pieces, {
+			Part = piece.Part,
+			Bone = piece.Segment,
+			Along = along, -- entlang des Knochens (wird mit ihm gestreckt)
+			Across = (offset - bone.Axis * along) * bone.Cross, -- quer dazu
+			Rotation = rest.Rotation,
+		})
+	end
+	return { Pieces = pieces, Bones = bones }
+end
+
+-- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten),
+-- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe)
+function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms)
 	local self = setmetatable({}, ViewModel)
 	self.Weapon = weaponName
 	self.Info = GunModels.Info[weaponName]
@@ -95,10 +141,21 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments)
 			})
 		end
 	end
-	-- Arme: Oberarm + Unterarm im Ärmel, Handschuh
+	-- Arme: die echten des Charakters, sonst Oberarm + Unterarm im Ärmel, Handschuh
 	self.Arms = {}
+	local right = arms and arms.Right and buildRealArm(arms.Right)
+	local left = right and arms.Left and buildRealArm(arms.Left)
+	if right and left then
+		self.RealArms = { Right = right, Left = left }
+		for _, arm in self.RealArms do
+			for _, piece in arm.Pieces do
+				piece.Part.Parent = self.Model
+			end
+		end
+	end
 	for _, side in { "Right", "Left" } do
-		self.Arms[side] = {
+		local real = self.RealArms and self.RealArms[side]
+		self.Arms[side] = real or {
 			Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.Fabric, self.Model),
 			Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.Fabric, self.Model),
 			Glove = armPart(side .. "Glove", GLOVE_COLOR, Enum.Material.SmoothPlastic, self.Model),
@@ -241,6 +298,10 @@ function ViewModel:PlaceArm(arm, camera, hand, shoulderLocal, poleLocal)
 	local shoulder = camera * (shoulderLocal * SCALE)
 	local wrist = (hand * CFrame.new(0, -0.02 * SCALE, 0.16 * SCALE)).Position
 	local elbow = PoseMath.SolveTwoBone(shoulder, wrist, UPPER_ARM * SCALE, FOREARM * SCALE, camera:VectorToWorldSpace(poleLocal))
+	if arm.Pieces then
+		self:PlaceRealArm(arm, shoulder, elbow, wrist)
+		return
+	end
 	local function segment(part, from, to)
 		local length = (to - from).Magnitude
 		part.Size = Vector3.new(SLEEVE_WIDTH * SCALE, SLEEVE_WIDTH * SCALE, math.max(length, 0.01))
@@ -250,6 +311,30 @@ function ViewModel:PlaceArm(arm, camera, hand, shoulderLocal, poleLocal)
 	segment(arm.Fore, elbow, wrist)
 	arm.Glove.Size = Vector3.new(0.3, 0.33, 0.38) * SCALE
 	arm.Glove.CFrame = hand
+end
+
+-- Echte Arme: Knochen drehen wie bei den Figuren (PoseMath.AlignBone, Ellbogen-Achse = X im Ruhe-Raum), die Hand
+-- verlängert den Unterarm
+function ViewModel:PlaceRealArm(arm, shoulder, elbow, wrist)
+	local upperDir, lowerDir = elbow - shoulder, wrist - elbow
+	local hinge = upperDir:Cross(lowerDir)
+	if hinge.Magnitude < 1e-4 then
+		hinge = upperDir:Cross(Vector3.yAxis)
+	end
+	local bones = arm.Bones
+	local upperRot = PoseMath.AlignBone(bones.Upper.Axis, Vector3.xAxis, upperDir, hinge)
+	local lowerRot = PoseMath.AlignBone(bones.Lower.Axis, Vector3.xAxis, lowerDir, hinge)
+	local frames = {
+		Upper = { CFrame.new(shoulder) * upperRot, upperDir.Magnitude / bones.Upper.Length },
+		-- Unterarm reicht immer bis zur Hand (auch wenn die Hand weiter weg ist als FOREARM)
+		Lower = { CFrame.new(elbow) * lowerRot, lowerDir.Magnitude / bones.Lower.Length },
+		Hand = { CFrame.new(wrist) * PoseMath.AlignBone(bones.Hand.Axis, Vector3.xAxis, lowerDir, hinge), bones.Hand.Stretch },
+	}
+	for _, piece in arm.Pieces do
+		local frame, stretch = frames[piece.Bone][1], frames[piece.Bone][2]
+		local bone = bones[piece.Bone]
+		piece.Part.CFrame = frame * CFrame.new(bone.Axis * piece.Along * stretch + piece.Across) * piece.Rotation
+	end
 end
 
 -- Weltposition und Richtung der Mündung (für Mündungsfeuer und Leuchtspur)

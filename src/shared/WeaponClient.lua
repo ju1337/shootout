@@ -27,6 +27,7 @@ local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
 local WeaponEffects = require(Shared.WeaponEffects)
 local SkinEffects = require(Shared.SkinEffects)
+local AgentModels = require(Shared.AgentModels)
 local CharacterPose = require(Shared.CharacterPose)
 local InspectView = require(Shared.InspectView)
 local UITheme = require(Shared.UITheme)
@@ -126,8 +127,10 @@ local function updateViewModel()
 	end
 	if current and GunModels.Info[current] then
 		local sleeve = Cosmetics.AgentColors(player, agentId())
+		-- die echten Arme des Charakters (3D-Modell bzw. Spielkörper), sonst Ärmel und Handschuhe
+		local ok, arms = pcall(AgentModels.ArmPieces, player.Character)
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
-			AttachmentConfig.EquippedList(player, current))
+			AttachmentConfig.EquippedList(player, current), ok and arms or nil)
 		viewModel:Draw()
 	end
 end
@@ -892,6 +895,31 @@ function WeaponClient.Init()
 	end)
 
 	player.CharacterAdded:Connect(resetWeapon)
+
+	-- Arme vor der Kamera neu, wenn das 3D-Modell oder die Arme des Charakters später kommen bzw. ausgetauscht werden
+	local armsPending = false
+	local function refreshArms(child)
+		local name = child.Name
+		if armsPending or not (name == AgentModels.ModelName or string.find(name, "Arm$") or string.find(name, "Hand$")) then
+			return
+		end
+		armsPending = true
+		task.defer(function()
+			armsPending = false
+			if current and viewModel then
+				updateViewModel()
+				viewModel.DrawStart = 0 -- ohne erneutes Ziehen
+			end
+		end)
+	end
+	local function watchCharacter(character)
+		character.ChildAdded:Connect(refreshArms)
+		character.ChildRemoved:Connect(refreshArms)
+	end
+	player.CharacterAdded:Connect(watchCharacter)
+	if player.Character then
+		watchCharacter(player.Character)
+	end
 end
 
 return WeaponClient
