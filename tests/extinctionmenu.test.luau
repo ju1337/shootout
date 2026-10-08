@@ -181,7 +181,7 @@ pad(Enum.KeyCode.ButtonR1)
 step(0.2)
 local GuiService = game:GetService("GuiService")
 local selected = GuiService.SelectedObject
-check(selected ~= nil and selected:IsDescendantOf(menu().Content), "Controller-Auswahl im Inhalt")
+check(selected ~= nil and selected:IsDescendantOf(menu():FindFirstChild("Content", true)), "Controller-Auswahl im Inhalt")
 pad(Enum.KeyCode.ButtonB)
 check(menu() == nil, "○ schließt das Menü")
 check(GuiService.SelectedObject == nil or not GuiService.SelectedObject:IsDescendantOf(windowGui), "Auswahl aufgehoben")

@@ -1005,7 +1005,7 @@ local function newWindow(kind, title, subtitle, accent)
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 			UserInputService.MouseIconEnabled = true
 		end)
-		InputActions.Focus(window.Frame:FindFirstChild("Content")) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
+		InputActions.Focus(window.Frame:FindFirstChild("Content", true)) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
 		return window
 	end
 	local frame = UITheme.Card({ Name = "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
