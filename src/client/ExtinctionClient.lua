@@ -68,6 +68,7 @@ Inv.SAFE_SLOTS = ExtinctionConfig.SafeSlots
 Inv.MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
 Inv.GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
 Inv.TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
+Inv.Tutorial = require(script.Parent:WaitForChild("ExtTutorial")) -- geführtes Tutorial für neue Spieler
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DANGER = Color3.fromRGB(215, 85, 45)
 local KIND_COLORS = {
@@ -1986,6 +1987,17 @@ function Guide.Open()
 			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = false, ZIndex = 8 }, button)
 		buttons[index] = button
 	end
+	-- unter den Themen: Tutorial starten oder (läuft es) überspringen
+	local running = Inv.Tutorial.IsActive()
+	Inv.flatButton({ Name = "Tutorial", Primary = not running, Size = UDim2.new(1, 0, 0, 44),
+		Text = running and "SKIP TUTORIAL" or "START TUTORIAL", LayoutOrder = #topics + 1 }, list, function()
+		closeWindow()
+		if running then
+			Inv.Tutorial.Stop()
+		else
+			Inv.Tutorial.Start(false)
+		end
+	end)
 	win.Refresh()
 end
 
@@ -3158,6 +3170,9 @@ end
 
 function ExtinctionClient.Init()
 	buildHud()
+	Inv.Tutorial.Init({ WindowKind = function()
+		return window and window.Kind or nil
+	end })
 	windowGui = make("ScreenGui", { Name = "ExtinctionWindow", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
 	-- Klicks neben das Fenster sollen nicht schießen: unsichtbarer Knopf über dem ganzen Bild

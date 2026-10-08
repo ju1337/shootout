@@ -399,6 +399,14 @@ function Extinction.Init(modeManager)
 	InventoryService.Handlers.Travel = function(player, key)
 		Extinction.Travel(player, key)
 	end
+	-- Tutorial fertig oder übersprungen (ExtTutorial): danach nie wieder von selbst
+	InventoryService.Handlers.Tutorial = function(player)
+		local profile = ProgressService.Get(player)
+		if profile then
+			profile.TutorialDone = true
+		end
+		player:SetAttribute("ExtTutorial", nil)
+	end
 
 	-- Tor zurück zum Hub (in der Safe Zone, darum ohne Verlust)
 	local lastTouch = {}
@@ -775,16 +783,11 @@ function Extinction.AddPlayer(player)
 	MissionService.Join(player)
 	spawnPlayer(player)
 	ExtDailyService.Claim(player) -- tägliche Kiste ins Lager (einmal am Tag)
-	-- Beim allerersten Mal: Hinweis auf den GUIDE-Reiter (Profil GuideHinted, danach nie wieder)
+	-- Neue Spieler: geführtes Tutorial (ExtTutorial auf dem Client), bis es fertig oder übersprungen ist (Profil
+	-- TutorialDone). Wer die offene Welt schon kannte (GuideHinted aus der Zeit vor dem Tutorial), bekommt es nicht.
 	local profile = ProgressService.Get(player)
-	if profile and not profile.GuideHinted then
-		profile.GuideHinted = true
-		task.delay(5, function()
-			if members[player] then
-				notify(player, "Banner", { Caption = "Welcome", Title = "NEW HERE?",
-					Sub = "Open the menu (M) and pick GUIDE – everything is explained there", Style = "Good" })
-			end
-		end)
+	if profile and not profile.TutorialDone and not profile.GuideHinted then
+		player:SetAttribute("ExtTutorial", true)
 	end
 end
 
@@ -804,7 +807,7 @@ function Extinction.RemovePlayer(player)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag" } do
+		"ExtDeathBag", "ExtTutorial" } do
 		player:SetAttribute(attribute, nil)
 	end
 end
