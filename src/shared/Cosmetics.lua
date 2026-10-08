@@ -6,6 +6,7 @@
 -- Besitz und Ausrüstung kommen vom Server als Spieler-Attribute (JSON): "Owned", "Equipped".
 -- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin
 -- Mastery = Kills: Meisterschafts-Tarnung (MasteryConfig), nur für die Waffe in Weapon, nicht kaufbar.
+-- Effects = Stil aus SkinEffects (Glitzer, Glut, Licht, Feuerstoß beim Schießen). Test = nicht in Kisten.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -112,6 +113,11 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(255, 110, 120), Material = Enum.Material.SmoothPlastic },
 	{ Id = "W_Chrom", Type = "Weapon", Name = "Chrom", Rarity = "Legendary", Price = 1400,
 		Color = Color3.fromRGB(220, 225, 235), Material = Enum.Material.Foil },
+
+	-- Test-Skins (Test = true): im Shop kaufbar, aber nicht in Kisten (CrateConfig)
+	-- Drachengold: nur Sturmgewehr; Texturen in Assets.Weapons.Rifle.Skins.W_Drachengold, Effekte siehe SkinEffects
+	{ Id = "W_Drachengold", Type = "Weapon", Name = "Drachengold", Rarity = "Legendary", Price = 1, Test = true,
+		Weapon = "Rifle", Effects = "Drachengold", Color = Color3.fromRGB(235, 175, 55), Material = Enum.Material.Foil },
 }
 
 -- Meisterschafts-Tarnungen: pro Waffe eine je Stufe
