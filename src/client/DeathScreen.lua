@@ -105,6 +105,16 @@ local function setKiller(name, weapon, health, agentId)
 	killerBar.BackgroundColor3 = ratio > 0.5 and C.Good or ratio > 0.25 and C.Primary or C.Bad
 end
 
+local function updateCountdown()
+	if not shown or not diedAt then
+		return
+	end
+	local total = ExtinctionConfig.RespawnTime
+	local left = math.max(0, total - (os.clock() - diedAt))
+	countText.Text = tostring(math.ceil(left))
+	fill.Size = UDim2.fromScale(1 - left / total, 1)
+end
+
 local function show(outside)
 	shown = true
 	if outside then
@@ -120,6 +130,7 @@ local function show(outside)
 	local home = player:GetAttribute("ExtHome")
 	placeText.Text = UITheme.Upper(type(home) == "string" and home ~= "" and home or DEFAULT_HOME)
 	screen.Enabled = true
+	updateCountdown()
 	root.Shade.BackgroundTransparency = 1
 	TweenService:Create(root.Shade, TweenInfo.new(0.4), { BackgroundTransparency = 0.35 }):Play()
 end
@@ -171,15 +182,7 @@ function DeathScreen.Init()
 			hide()
 		end
 	end)
-	RunService.RenderStepped:Connect(function()
-		if not shown or not diedAt then
-			return
-		end
-		local total = ExtinctionConfig.RespawnTime
-		local left = math.max(0, total - (os.clock() - diedAt))
-		countText.Text = tostring(math.ceil(left))
-		fill.Size = UDim2.fromScale(1 - left / total, 1)
-	end)
+	RunService.Heartbeat:Connect(updateCountdown)
 end
 
 -- Für Tests: ist der Todesbildschirm gerade zu sehen?
