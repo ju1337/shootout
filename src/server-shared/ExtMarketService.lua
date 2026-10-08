@@ -117,7 +117,7 @@ function ExtMarketService.Publish()
 	for _, listing in allListings() do
 		local entry = listing.Entry
 		table.insert(list, { Id = entry.Id, Seller = listing.Seller.UserId, SellerName = listing.Seller.Name, Item = entry.Item,
-			Count = entry.Count, Mag = entry.Mag, Price = entry.Price, At = entry.At or 0 })
+			Count = entry.Count, Mag = entry.Mag, Att = entry.Att, Price = entry.Price, At = entry.At or 0 })
 	end
 	table.sort(list, function(a, b)
 		if a.Price ~= b.Price then
@@ -155,7 +155,7 @@ function ExtMarketService.List(player, slot, count, price)
 		status(player, reason or "Das geht nicht.")
 		return false
 	end
-	local entry = { Id = HttpService:GenerateGUID(false), Item = taken.Id, Count = taken.Count, Mag = taken.Mag, Price = price,
+	local entry = { Id = HttpService:GenerateGUID(false), Item = taken.Id, Count = taken.Count, Mag = taken.Mag, Att = taken.Att, Price = price,
 		At = os.time() }
 	table.insert(market, entry)
 	InventoryService.Changed(player)
@@ -199,7 +199,7 @@ function ExtMarketService.Buy(player, id, price)
 		return false
 	end
 	table.remove(market, index)
-	InventoryService.Give(player, entry.Item, entry.Count, { Mag = entry.Mag })
+	InventoryService.Give(player, entry.Item, entry.Count, { Mag = entry.Mag, Att = entry.Att })
 	local earned = entry.Price - math.floor(entry.Price * M.FeeRate)
 	ProgressService.AddCoins(seller, earned, "Markt")
 	InventoryService.Changed(seller)
@@ -252,7 +252,7 @@ function ExtMarketService.Cancel(player, id)
 		return false
 	end
 	table.remove(market, table.find(market, entry))
-	InventoryService.Give(player, entry.Item, entry.Count, { Mag = entry.Mag })
+	InventoryService.Give(player, entry.Item, entry.Count, { Mag = entry.Mag, Att = entry.Att })
 	InventoryService.Changed(player)
 	ExtMarketService.Publish()
 	status(player, "Zurückgenommen: " .. itemText(entry), true)

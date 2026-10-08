@@ -8,7 +8,9 @@
 -- keine Zombies, siehe ZombieService), Fahrzeug spawnen (VehicleService meldet sich als UseVehicle an).
 -- Stände: kaufen (Münzen) und verkaufen (SellFactor) nur in der Nähe des Stands; Lager nur in seiner Nähe.
 -- Spieler-Attribute für den Client: ExtBag, ExtStash (JSON-Listen, siehe Inventory.ToList), ExtEquipped (Platz der
--- Waffe in der Hand, 0 = keine). Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
+-- Waffe in der Hand, 0 = keine), ExtAttach (Aufsätze der Waffe in der Hand, liest AttachmentConfig).
+-- Aufsätze ("Attachment"): auf eine Waffe ziehen (Move) oder Taste mit der Waffe in der Hand (Use) baut sie an,
+-- Aktion "Detach" (Platz der Waffe, Aufsatz-Platz) nimmt einen ab; ein ersetzter oder abgenommener Aufsatz kommt in die Tasche. Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
 -- Meldungen an den Client: Remotes.ExtUpdate("Status", Text, Erfolg).
 
 local Players = game:GetService("Players")
@@ -83,7 +85,7 @@ local function stateOf(player)
 			and tonumber(entry.Count) and tonumber(entry.Price) then
 			table.insert(market, { Id = entry.Id, Item = entry.Item, Count = math.max(1, math.floor(entry.Count)),
 				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Price = math.max(1, math.floor(entry.Price)),
-				At = tonumber(entry.At) or 0 })
+				At = tonumber(entry.At) or 0, Att = Inventory.CleanAttachments(entry.Item, entry.Att) })
 		end
 	end
 	state = {
@@ -157,6 +159,16 @@ local function syncMag(player, state)
 	end
 end
 
+-- Aufsätze der Waffe in der Hand für AttachmentConfig (Rückstoß, Magazin, Schalldämpfer, 3D-Modell); nil = keine Waffe
+local function publishAttachments(player, item)
+	local config = item and ExtinctionConfig.Get(item.Id)
+	if config and config.Kind == "Weapon" and item.Att and next(item.Att) then
+		player:SetAttribute("ExtAttach", HttpService:JSONEncode({ W = config.Weapon, A = item.Att }))
+	else
+		player:SetAttribute("ExtAttach", nil)
+	end
+end
+
 local function holster(player, state)
 	if not state.Equipped then
 		return
@@ -164,6 +176,7 @@ local function holster(player, state)
 	syncMag(player, state)
 	state.Equipped = nil
 	WeaponService.SetCarried(player, nil)
+	publishAttachments(player, nil)
 end
 
 -- Waffe wegstecken (z.B. beim Betreten der Safe Zone oder beim Einsteigen)
@@ -178,8 +191,11 @@ end
 local function equip(player, state, item)
 	holster(player, state)
 	local config = ExtinctionConfig.Get(item.Id)
+	publishAttachments(player, item) -- vor SetCarried: Magazingröße mit Aufsätzen
 	if WeaponService.SetCarried(player, config.Weapon, item.Mag, sourceFor(player, state, item)) then
 		state.Equipped = item
+	else
+		publishAttachments(player, nil)
 	end
 	flush(player, state)
 end
@@ -271,6 +287,73 @@ local function startUse(player, state, item, config)
 	end)
 end
 
+-- ---------- Aufsätze ----------
+
+-- Aufsatz (Item im Container attFrom, Platz attSlot) an die Waffe weapon hängen. Ein alter Aufsatz desselben Platzes
+-- kommt in die Tasche (passt er nicht hinein, bleibt alles wie es war). Gibt true zurück, wenn angebaut.
+local function attach(player, state, attFrom, attSlot, weapon)
+	local attItem = attFrom.Slots[attSlot]
+	local attConfig = attItem and ExtinctionConfig.Get(attItem.Id)
+	local weaponConfig = weapon and ExtinctionConfig.Get(weapon.Id)
+	if not attConfig or attConfig.Kind ~= "Attachment" or not weaponConfig or weaponConfig.Kind ~= "Weapon" then
+		return false
+	end
+	local slotId = attConfig.Slot
+	local old = weapon.Att and weapon.Att[slotId]
+	if old == attConfig.Attachment then
+		status(player, weaponConfig.Name .. " hat schon " .. attConfig.Name .. ".")
+		return false
+	end
+	attItem.Count -= 1
+	if attItem.Count <= 0 then
+		attFrom.Slots[attSlot] = nil
+	end
+	if old and Inventory.Add(state.Bag, "Att_" .. old, 1) < 1 then
+		-- alter Aufsatz passt nicht in die Tasche: rückgängig
+		if attFrom.Slots[attSlot] == nil then
+			attFrom.Slots[attSlot] = attItem
+		end
+		attItem.Count += 1
+		status(player, "Kein Platz für den alten Aufsatz in deiner Tasche.")
+		return false
+	end
+	weapon.Att = weapon.Att or {}
+	weapon.Att[slotId] = attConfig.Attachment
+	if state.Equipped == weapon then
+		equip(player, state, weapon) -- neu ziehen: Magazin, Rückstoß, Modell mit dem neuen Aufsatz
+	end
+	changed(player, state)
+	status(player, attConfig.Name .. " an " .. weaponConfig.Name .. " gebaut" .. (old and (" (alter Aufsatz in der Tasche)") or ""), true)
+	return true
+end
+
+-- Aufsatz-Platz slotId der Waffe auf Platz weaponSlot (Tasche) abnehmen; er kommt in die Tasche
+function InventoryService.Detach(player, weaponSlot, slotId)
+	if not inExtinction(player) or type(weaponSlot) ~= "number" or type(slotId) ~= "string" then
+		return false
+	end
+	local state = stateOf(player)
+	local weapon = state and state.Bag.Slots[weaponSlot]
+	local attId = weapon and weapon.Att and weapon.Att[slotId]
+	if not attId then
+		return false
+	end
+	if Inventory.Add(state.Bag, "Att_" .. attId, 1) < 1 then
+		status(player, "Kein Platz in deiner Tasche.")
+		return false
+	end
+	weapon.Att[slotId] = nil
+	if next(weapon.Att) == nil then
+		weapon.Att = nil
+	end
+	if state.Equipped == weapon then
+		equip(player, state, weapon)
+	end
+	changed(player, state)
+	status(player, ExtinctionConfig.Get("Att_" .. attId).Name .. " abgenommen", true)
+	return true
+end
+
 -- ---------- Aktionen ----------
 
 -- Taste 1-9: Item auf diesem Hotbar-Platz benutzen
@@ -311,6 +394,13 @@ function InventoryService.Use(player, slot)
 		end
 	elseif config.Kind == "Ammo" then
 		status(player, config.Name .. " wird beim Nachladen benutzt.")
+	elseif config.Kind == "Attachment" then
+		-- an die Waffe in der Hand bauen
+		if state.Equipped then
+			attach(player, state, state.Bag, slot, state.Equipped)
+		else
+			status(player, "Nimm die Waffe in die Hand oder zieh den Aufsatz im Inventar auf sie.")
+		end
 	end
 end
 
@@ -372,6 +462,14 @@ function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	end
 	local item = from.Slots[fromSlot]
 	local target = toSlot and to.Slots[toSlot]
+	-- Aufsatz auf eine Waffe gezogen: anbauen statt tauschen
+	local itemConfig = item and ExtinctionConfig.Get(item.Id)
+	local targetConfig = target and ExtinctionConfig.Get(target.Id)
+	if itemConfig and itemConfig.Kind == "Attachment" and targetConfig and targetConfig.Kind == "Weapon" then
+		local done = attach(player, state, from, fromSlot, target)
+		checkEquipped(player, state)
+		return done
+	end
 	if from ~= to and (isOut(item) or isOut(target)) then
 		status(player, "Pack das Fahrzeug erst ein (K).")
 		return false
@@ -483,7 +581,7 @@ function InventoryService.Drop(player, slot)
 		holster(player, state)
 	end
 	state.Bag.Slots[slot] = nil
-	InventoryService.DropItems(player, { { Id = item.Id, Count = item.Count, Mag = item.Mag } },
+	InventoryService.DropItems(player, { { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = item.Att } },
 		root.Position + root.CFrame.LookVector * 3)
 	changed(player, state)
 	return true
@@ -519,7 +617,7 @@ function InventoryService.HasSpace(player, id, count)
 end
 
 -- count Stück von Platz slot der Tasche nehmen (Waffe in der Hand wird weggesteckt, draußen stehendes Fahrzeug nicht).
--- Gibt { Id, Count, Mag } zurück oder nil und den Grund.
+-- Gibt { Id, Count, Mag, Att } zurück oder nil und den Grund.
 function InventoryService.TakeSlot(player, slot, count)
 	local state = stateOf(player)
 	local item = state and type(slot) == "number" and state.Bag.Slots[slot]
@@ -533,7 +631,7 @@ function InventoryService.TakeSlot(player, slot, count)
 	if state.Equipped == item then
 		holster(player, state)
 	end
-	local taken = { Id = item.Id, Count = count, Mag = item.Mag }
+	local taken = { Id = item.Id, Count = count, Mag = item.Mag, Att = item.Att }
 	item.Count -= count
 	if item.Count <= 0 then
 		state.Bag.Slots[slot] = nil
@@ -566,6 +664,7 @@ function InventoryService.TakeAll(player)
 	if state.Equipped then
 		state.Equipped = nil
 		WeaponService.SetCarried(player, nil)
+		publishAttachments(player, nil)
 	end
 	cancelUse(player, state)
 	for _, item in state.Bag.Slots do
@@ -597,7 +696,7 @@ function InventoryService.Leave(player)
 		item.Out = nil
 	end
 	flush(player, state)
-	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped" } do
+	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped", "ExtAttach" } do
 		player:SetAttribute(attribute, nil)
 	end
 end
@@ -619,6 +718,8 @@ function InventoryService.Init()
 			InventoryService.Drop(player, ...)
 		elseif action == "Holster" then
 			InventoryService.Holster(player)
+		elseif action == "Detach" then
+			InventoryService.Detach(player, ...)
 		elseif InventoryService.Handlers[action] then
 			InventoryService.Handlers[action](player, ...)
 		end
@@ -631,6 +732,7 @@ function InventoryService.Init()
 			if state then
 				state.Equipped = nil
 				state.Using = nil
+				player:SetAttribute("ExtAttach", nil)
 				if inExtinction(player) then
 					flush(player, state)
 				end

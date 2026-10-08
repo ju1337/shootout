@@ -1,12 +1,13 @@
 -- Inventory (ModuleScript)
 -- Reine Logik für Plätze mit Items (Tasche des Spielers, Lager, Taschen am Boden) – ohne Roblox-Objekte, damit
 -- Server und Tests dieselben Regeln benutzen.
--- Container = { Size = n, Slots = { [Platz] = item } }, item = { Id = "Rifle", Count = 1, Mag = 30 }
+-- Container = { Size = n, Slots = { [Platz] = item } }, item = { Id = "Rifle", Count = 1, Mag = 30, Att = { [Platz] = Aufsatz } }
 -- Plätze 1..HotbarSlots der Tasche sind die Hotbar (Tasten 1-9). Stapelgrößen aus ExtinctionConfig.MaxStack.
--- Gespeichert/übertragen wird als Liste { { S = Platz, Id = ..., N = Anzahl, Mag = ..., Out = Fahrzeug draußen } }
+-- Gespeichert/übertragen wird als Liste { { S = Platz, Id = ..., N = Anzahl, Mag = ..., A = Aufsätze, Out = Fahrzeug draußen } }
 -- (keine Lücken im JSON). Out gilt nur zur Laufzeit und wird beim Laden ignoriert.
 
 local ExtinctionConfig = require(script.Parent.ExtinctionConfig)
+local AttachmentConfig = require(script.Parent.AttachmentConfig)
 
 local Inventory = {}
 
@@ -14,9 +15,27 @@ function Inventory.New(size)
 	return { Size = size, Slots = {} }
 end
 
-local function copyItem(item)
-	return { Id = item.Id, Count = item.Count, Mag = item.Mag }
+-- Aufsätze einer Waffe prüfen und kopieren ({ [Platz] = Id }); nil, wenn keine (oder kein Waffen-Item)
+function Inventory.CleanAttachments(id, att)
+	local config = ExtinctionConfig.Get(id)
+	if not config or config.Kind ~= "Weapon" or type(att) ~= "table" then
+		return nil
+	end
+	local clean = nil
+	for slot, attId in att do
+		local item = AttachmentConfig.Get(attId)
+		if item and item.Slot == slot then
+			clean = clean or {}
+			clean[slot] = attId
+		end
+	end
+	return clean
 end
+
+local function copyItem(item)
+	return { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = Inventory.CleanAttachments(item.Id, item.Att) }
+end
+Inventory.Copy = copyItem
 
 -- Liste (gespeichert/JSON) -> Container. Unbekannte Items und Plätze außerhalb fallen weg.
 function Inventory.FromList(list, size)
@@ -31,7 +50,8 @@ function Inventory.FromList(list, size)
 		if slot and slot == math.floor(slot) and slot >= 1 and slot <= size and type(id) == "string"
 			and ExtinctionConfig.Get(id) and count and count >= 1 and not container.Slots[slot] then
 			container.Slots[slot] = { Id = id, Count = math.min(count, ExtinctionConfig.MaxStack(id)),
-				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil }
+				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil,
+				Att = Inventory.CleanAttachments(id, entry.A) }
 		end
 	end
 	return container
@@ -43,7 +63,7 @@ function Inventory.ToList(container)
 	for slot = 1, container.Size do
 		local item = container.Slots[slot]
 		if item then
-			table.insert(list, { S = slot, Id = item.Id, N = item.Count, Mag = item.Mag, Out = item.Out })
+			table.insert(list, { S = slot, Id = item.Id, N = item.Count, Mag = item.Mag, A = item.Att, Out = item.Out })
 		end
 	end
 	return list
@@ -123,7 +143,7 @@ function Inventory.SpaceFor(container, id)
 	return space
 end
 
--- count Stück hinzufügen: erst auf vorhandene Stapel, dann auf leere Plätze. extra = { Mag = ... } für Waffen.
+-- count Stück hinzufügen: erst auf vorhandene Stapel, dann auf leere Plätze. extra = { Mag = ..., Att = ... } für Waffen.
 -- Gibt zurück, wie viele hineingepasst haben (der Rest bleibt draußen).
 function Inventory.Add(container, id, count, extra, prefer)
 	local max = ExtinctionConfig.MaxStack(id)
@@ -149,7 +169,8 @@ function Inventory.Add(container, id, count, extra, prefer)
 			break
 		end
 		local put = math.min(left, max)
-		container.Slots[slot] = { Id = id, Count = put, Mag = extra and extra.Mag or nil }
+		container.Slots[slot] = { Id = id, Count = put, Mag = extra and extra.Mag or nil,
+			Att = extra and Inventory.CleanAttachments(id, extra.Att) or nil }
 		left -= put
 	end
 	return math.floor(count) - left

@@ -10,7 +10,12 @@
 --   "Armor"   Rüstung (Attribut "Armor", höchstens MaxArmor), dauert UseTime Sekunden
 --   "Vehicle" Fahrzeug aus Vehicles (Vehicle); Taste spawnt es und setzt einen hinein, K packt es wieder ein
 --   "Repel"   Anti-Zombie-Spritze: Duration Sekunden spawnen beim Benutzer keine Zombies (Charakter-Attribut ZombieShieldUntil)
+--   "Attachment" Waffen-Aufsatz (Attachment = Id in AttachmentConfig, Slot = Platz): auf eine Waffe in der Tasche ziehen
+--             (oder Taste mit der Waffe in der Hand) hängt ihn an diese Waffe; ein alter Aufsatz desselben Platzes
+--             kommt zurück in die Tasche. Er bleibt an der Waffe (Inventar-Feld Att) und geht mit ihr verloren.
 -- Price = Kaufpreis in Münzen (nil = nicht zu kaufen, nur zu finden). Verkaufen bringt SellFactor des Preises.
+
+local AttachmentConfig = require(script.Parent.AttachmentConfig)
 
 local ExtinctionConfig = {}
 
@@ -92,13 +97,28 @@ ExtinctionConfig.Items = {
 	V_Heli = { Kind = "Vehicle", Name = "Helikopter", Vehicle = "Heli", Price = 12000, Tier = 4 },
 }
 
+-- Waffen-Aufsätze als Items ("Att_<Id>"), aus AttachmentConfig; Preis etwa die Hälfte der Lobby, Seltenheit 4 nur zu finden
+ExtinctionConfig.AttachmentItems = {}
+for _, att in AttachmentConfig.List do
+	local id = "Att_" .. att.Id
+	ExtinctionConfig.Items[id] = { Kind = "Attachment", Name = att.Name, Attachment = att.Id, Slot = att.Slot,
+		Price = (att.Tier or 2) < 4 and math.floor(att.Price * 0.5 / 10) * 10 or nil, MaxStack = 3, Tier = att.Tier or 2 }
+	table.insert(ExtinctionConfig.AttachmentItems, id)
+end
+
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
 ExtinctionConfig.Stands = {
 	Stand_Weapons = { Title = "WAFFENSTAND", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
-		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } },
+		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } }, -- Aufsätze (Seltenheit 2-3) hängt der Block unten an
 	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports", "V_Heli" } },
 }
+
+for _, id in ExtinctionConfig.AttachmentItems do
+	if ExtinctionConfig.Items[id].Price then
+		table.insert(ExtinctionConfig.Stands.Stand_Weapons.Items, id)
+	end
+end
 
 -- ---------- Spielermarkt (ExtMarketService, Reiter MARKT im Menü, nur in der Safe Zone) ----------
 -- Spieler bieten Items aus der Tasche für Münzen an (höchstens MaxListings gleichzeitig, Preis 1 bis MaxPrice); der Käufer
@@ -211,6 +231,24 @@ ExtinctionConfig.LootTables = {
 		{ Id = "V_Sports", Count = { 1, 1 }, Weight = 1 },
 	},
 }
+
+-- Aufsätze in der Beute: je Tabelle Gewicht pro Seltenheit (2/3/4); fehlende Seltenheit = kommt dort nicht vor
+local ATTACHMENT_LOOT = {
+	Zombie = { [2] = 0.6 },
+	Zombie2 = { [2] = 1.4, [3] = 0.7, [4] = 0.2 },
+	Tier1 = { [2] = 0.8 },
+	Tier2 = { [2] = 1.6, [3] = 0.8, [4] = 0.2 },
+	Tier3 = { [2] = 1.2, [3] = 1.6, [4] = 0.8 },
+	Airdrop = { [3] = 2.4, [4] = 1.6 },
+}
+for tableName, weights in ATTACHMENT_LOOT do
+	for _, id in ExtinctionConfig.AttachmentItems do
+		local weight = weights[ExtinctionConfig.Items[id].Tier]
+		if weight then
+			table.insert(ExtinctionConfig.LootTables[tableName], { Id = id, Count = { 1, 1 }, Weight = weight })
+		end
+	end
+end
 
 -- Zombies lassen Beute in der Leiche: einmal E (ohne Halten) hebt sie auf, alles geht direkt ins Inventar (passt etwas nicht mehr hinein,
 -- bleibt es in der Leiche). Chance pro Zombie je Art (ZombieKinds), Anzahl und Tabelle ebenfalls dort.

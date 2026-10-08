@@ -68,7 +68,7 @@ local function contents(bag)
 	for slot = 1, bag.Container.Size do
 		local item = bag.Container.Slots[slot]
 		if item then
-			table.insert(list, { S = slot, Id = item.Id, N = item.Count, Mag = item.Mag })
+			table.insert(list, { S = slot, Id = item.Id, N = item.Count, Mag = item.Mag, A = item.Att })
 		end
 	end
 	return list
@@ -267,7 +267,7 @@ function LootService.Create(position, items, kind, title, options)
 	local id = nextId
 	local container = Inventory.New(math.max(#list, 1))
 	for slot, item in list do
-		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag }
+		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = item.Att }
 	end
 	local look = LOOKS[kind] or LOOKS.Drop
 	if options.Size or options.Color then
@@ -388,7 +388,7 @@ function LootService.Attach(model, part, items, title, options)
 	local id = nextId
 	local container = Inventory.New(#list)
 	for slot, item in list do
-		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag }
+		container.Slots[slot] = { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = item.Att }
 	end
 	local range = options.Range or (ExtinctionConfig.LootRange - 1)
 	local name = options.ObjectText or title
@@ -542,12 +542,12 @@ end
 function LootService.Grab(player, items)
 	local rest, got = {}, {}
 	for _, item in items do
-		local added = InventoryService.Give(player, item.Id, item.Count, { Mag = item.Mag })
+		local added = InventoryService.Give(player, item.Id, item.Count, { Mag = item.Mag, Att = item.Att })
 		if added > 0 then
 			table.insert(got, { Id = item.Id, Count = added })
 		end
 		if added < item.Count then
-			table.insert(rest, { Id = item.Id, Count = item.Count - added, Mag = item.Mag })
+			table.insert(rest, { Id = item.Id, Count = item.Count - added, Mag = item.Mag, Att = item.Att })
 		end
 	end
 	if #got > 0 then

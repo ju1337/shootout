@@ -33,6 +33,8 @@ local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
+local AttachmentConfig = require(Shared.AttachmentConfig)
+local AttachmentIcons = require(Shared.AttachmentIcons)
 local GunModels = require(Shared.GunModels)
 local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
@@ -62,9 +64,17 @@ local KIND_COLORS = {
 	Armor = Color3.fromRGB(96, 150, 196),
 	Vehicle = Color3.fromRGB(112, 178, 112),
 	Repel = Color3.fromRGB(120, 220, 120),
+	Attachment = Color3.fromRGB(176, 136, 232),
 }
 local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG",
-	Repel = "SCHUTZ" }
+	Repel = "SCHUTZ", Attachment = "AUFSATZ" }
+-- Seltenheit der Aufsätze (Tier) als Name und Farbe
+local TIER_NAMES = { [2] = "HÄUFIG", [3] = "SELTEN", [4] = "SEHR SELTEN" }
+local TIER_COLORS = { [2] = Color3.fromRGB(120, 176, 230), [3] = Color3.fromRGB(176, 136, 232), [4] = Color3.fromRGB(236, 178, 70) }
+local SLOT_NAMES = {}
+for _, slotInfo in AttachmentConfig.Slots do
+	SLOT_NAMES[slotInfo.Id] = slotInfo.Name
+end
 local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeige oben)
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
@@ -167,6 +177,16 @@ local function buildIcon(parent, id, zIndex)
 			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, barrel)
 		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 29, 0.5, 0), Size = UDim2.fromOffset(11, 1),
 			BackgroundColor3 = Color3.fromRGB(190, 196, 204), BorderSizePixel = 0, ZIndex = zIndex }, syringe)
+	elseif config.Kind == "Attachment" then
+		local icon = AttachmentIcons.Build(holder, config.Attachment, 34, TIER_COLORS[config.Tier] or color)
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		icon.ZIndex = zIndex
+		for _, part in icon:GetChildren() do
+			if part:IsA("GuiObject") then
+				part.ZIndex = zIndex
+			end
+		end
 	elseif config.Kind == "Vehicle" and (ExtinctionConfig.Vehicles[config.Vehicle] or {}).Kind == "Heli" then
 		-- Helikopter (Nase links): Kabine mit Scheibe, Heckausleger mit Leitwerk, Rotor auf dem Mast, Kufen auf Streben
 		local paint = ExtinctionConfig.Vehicles[config.Vehicle].Color
@@ -216,8 +236,21 @@ local function describe(id, entry)
 		local weapon = WeaponConfig.Get(config.Weapon)
 		local ammo = itemConfig(config.Ammo)
 		local mag = entry and entry.Mag or (weapon and weapon.MagazineSize)
-		return string.format("Magazin %s/%d · %s · %d Schaden", tostring(mag or "?"), weapon and weapon.MagazineSize or 0,
-			ammo and ammo.Name or "?", weapon and weapon.Damage or 0)
+		local size = weapon and weapon.MagazineSize or 0
+		local names = {}
+		for _, slotInfo in AttachmentConfig.Slots do
+			local att = entry and type(entry.A) == "table" and AttachmentConfig.Get(entry.A[slotInfo.Id])
+			if att then
+				size = slotInfo.Id == "Magazine" and math.floor(size * (att.Effects.Mag or 1)) or size
+				table.insert(names, att.Name)
+			end
+		end
+		return string.format("Magazin %s/%d · %s · %d Schaden", tostring(mag or "?"), size, ammo and ammo.Name or "?",
+			weapon and weapon.Damage or 0) .. (#names > 0 and ("\nAufsätze: " .. table.concat(names, ", ")) or "")
+	elseif config.Kind == "Attachment" then
+		local att = AttachmentConfig.Get(config.Attachment)
+		return (att and att.Description or "") .. " · Platz: " .. (SLOT_NAMES[config.Slot] or config.Slot)
+			.. "\nAuf eine Waffe ziehen (oder Taste mit der Waffe in der Hand) baut ihn an. Er bleibt an dieser Waffe."
 	elseif config.Kind == "Ammo" then
 		local users = {}
 		for _, other in ExtinctionConfig.Items do
@@ -918,7 +951,7 @@ local function detailsPanel(parent, position, size)
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, panel)
 	local info = label({ Position = UDim2.fromOffset(18, 196), Size = UDim2.new(1, -36, 0, 60), Text = "", TextSize = 13,
 		Font = F.Medium, TextColor3 = C.Text, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 6 }, panel)
-	local buttons = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -16), Size = UDim2.new(1, -32, 0, 150),
+	local buttons = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 16, 1, -16), Size = UDim2.new(1, -32, 0, 320),
 		BackgroundTransparency = 1, ZIndex = 6 }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Bottom }, buttons)
@@ -937,8 +970,9 @@ local function detailsPanel(parent, position, size)
 		end
 		local config = id and itemConfig(id)
 		name.Text = config and upper(config.Name) or "NICHTS GEWÄHLT"
-		kind.Text = config and (KIND_NAMES[config.Kind] or "") .. ((entry.N or 1) > 1 and ("  ·  " .. entry.N .. " STÜCK") or "") or ""
-		kind.TextColor3 = config and KIND_COLORS[config.Kind] or C.Muted
+		kind.Text = config and (KIND_NAMES[config.Kind] or "") .. (config.Kind == "Attachment" and TIER_NAMES[config.Tier]
+			and ("  ·  " .. TIER_NAMES[config.Tier]) or "") .. ((entry.N or 1) > 1 and ("  ·  " .. entry.N .. " STÜCK") or "") or ""
+		kind.TextColor3 = config and (config.Kind == "Attachment" and TIER_COLORS[config.Tier] or KIND_COLORS[config.Kind]) or C.Muted
 		info.Text = config and describe(id, entry) or "Klick ein Item an oder zieh es auf einen anderen Platz. Rechtsklick: "
 			.. "zwischen Hotbar und Tasche hin und her."
 		for _, child in buttons:GetChildren() do
@@ -1069,6 +1103,15 @@ local function openInventory()
 				selected = nil
 				sendAction("Drop", slot)
 			end })
+			-- angebaute Aufsätze abnehmen (kommen in die Tasche)
+			for _, slotInfo in AttachmentConfig.Slots do
+				local att = type(entry.A) == "table" and AttachmentConfig.Get(entry.A[slotInfo.Id])
+				if att then
+					table.insert(actions, { Text = upper(att.Name) .. " ABNEHMEN", Run = function()
+						sendAction("Detach", slot, slotInfo.Id)
+					end })
+				end
+			end
 		end
 		update(actions)
 		repaint()
