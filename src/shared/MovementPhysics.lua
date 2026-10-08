@@ -8,7 +8,7 @@ local P = {}
 
 -- ---------- Tempo ----------
 P.SpeedScale = 1.15   -- alle Lauftempi (Agent-Grundtempo × das): flotter als der Roblox-Standard 16
-P.SprintFactor = 1.5
+P.SprintFactor = 1.35  -- Sprint (Gehen 18,4 -> Sprint knapp 25)
 P.CrouchFactor = 0.5
 P.AimFactor = 0.6
 P.SprintForward = -0.3 -- Sprint vorwärts und seitwärts, nur nicht rückwärts (Eingabe mehr als gut 107° neben dem Blick)

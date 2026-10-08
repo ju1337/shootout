@@ -93,7 +93,7 @@ local function legal(name, fn)
 	print("ok   legal: " .. name)
 end
 
-local SPRINT = 54 -- schnellster Sprint: 18 × 1,15 (Tempo-Faktor) × 1,6 (Adrenalin) × 1,5 × 1,08 (Runner)
+local SPRINT = 54 -- schnellster Sprint: 18 × 1,15 (Tempo-Faktor) × 1,6 (Adrenalin) × 1,35 × 1,08 (Runner) ≈ 48, mit Reserve
 local X = Vector3.new(1, 0, 0)
 local function hop(t)
 	return 50 - GRAVITY * (t % (2 * 50 / GRAVITY))
