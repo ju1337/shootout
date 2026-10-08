@@ -49,66 +49,109 @@ end
 
 local DISTANT_FROM = 140
 
--- Alle Aufnahmen vorab laden, damit der erste Schuss nicht stumm bleibt
-task.defer(function()
-	local ContentProvider = game:GetService("ContentProvider")
-	local list = {}
-	for _, set in WeaponConfig.SoundSets do
-		for _, clip in set do
-			local sound = Instance.new("Sound")
-			sound.SoundId = clip.Id
-			table.insert(list, sound)
-		end
-	end
-	for _, clip in WeaponConfig.ActionSounds do
-		local sound = Instance.new("Sound")
-		sound.SoundId = clip.Id
-		table.insert(list, sound)
-	end
-	pcall(ContentProvider.PreloadAsync, ContentProvider, list)
-end)
+-- Stimmen-Pool: je Aufnahme ein paar fertig geladene Sounds (2D in SoundService, 3D an je einem Attachment), die
+-- reihum wiederverwendet werden. Ein neu erzeugter Sound muss erst laden und spielt dann oft spürbar zu spät;
+-- ein geladener spielt sofort. Sind alle Stimmen belegt, wird die älteste neu gestartet (ihr Nachhall ist dann leise).
+local VOICES_2D = 6
+local VOICES_3D = 8
+local pools = {} -- [Id .. "2D"/"3D"] = { Voices = { { Sound, Anchor, Eq } }, Next }
 
--- Sound für eine Aufnahme (clip = { Id, Gain, Region }); volume/speed kommen dazu. Gibt Sound und Dauer zurück.
-local function makeSound(clip, volume, speed)
+local soundFolder = Instance.new("Folder")
+soundFolder.Name = "WeaponSounds"
+soundFolder.Parent = SoundService
+
+local function newVoice(clip, positional)
 	local sound = Instance.new("Sound")
 	sound.SoundId = clip.Id
-	sound.Volume = math.min(10, volume * (clip.Gain or 1))
-	sound.PlaybackSpeed = speed
-	local length = 4
 	if clip.Region then
 		sound.PlaybackRegionsEnabled = true
 		sound.PlaybackRegion = NumberRange.new(clip.Region[1], clip.Region[2])
-		length = clip.Region[2] - clip.Region[1]
 	end
-	return sound, length / speed + 0.3
-end
-
-local function playAt(clip, position, volume, speed, rolloff, distant)
-	local anchor = Instance.new("Attachment")
-	anchor.WorldPosition = position
-	anchor.Parent = workspace.Terrain
-	local sound, life = makeSound(clip, volume, speed)
-	sound.RollOffMode = Enum.RollOffMode.InverseTapered
-	sound.RollOffMinDistance = 12
-	sound.RollOffMaxDistance = rolloff
-	if distant then
+	local voice = { Sound = sound }
+	if positional then
+		sound.RollOffMode = Enum.RollOffMode.InverseTapered
+		sound.RollOffMinDistance = 12
 		local eq = Instance.new("EqualizerSoundEffect")
 		eq.LowGain = 2
 		eq.MidGain = -5
 		eq.HighGain = -20
+		eq.Enabled = false
 		eq.Parent = sound
+		local anchor = Instance.new("Attachment")
+		anchor.Name = "WeaponSound"
+		anchor.Parent = workspace.Terrain
+		sound.Parent = anchor
+		voice.Anchor, voice.Eq = anchor, eq
+	else
+		sound.Parent = soundFolder
 	end
-	sound.Parent = anchor
+	return voice
+end
+
+local function poolFor(clip, positional)
+	local key = clip.Id .. (positional and "3D" or "2D")
+	local pool = pools[key]
+	if not pool then
+		pool = { Voices = {}, Next = 1 }
+		for _ = 1, positional and VOICES_3D or VOICES_2D do
+			table.insert(pool.Voices, newVoice(clip, positional))
+		end
+		pools[key] = pool
+	end
+	return pool
+end
+
+local function nextVoice(clip, positional)
+	local pool = poolFor(clip, positional)
+	local voice = pool.Voices[pool.Next]
+	pool.Next = pool.Next % #pool.Voices + 1
+	return voice
+end
+
+local function start(voice, clip, volume, speed)
+	local sound = voice.Sound
+	if sound.IsPlaying then
+		sound:Stop()
+	end
+	sound.Volume = math.min(10, volume * (clip.Gain or 1))
+	sound.PlaybackSpeed = speed
+	sound.TimePosition = clip.Region and clip.Region[1] or 0
 	sound:Play()
-	Debris:AddItem(anchor, life)
+end
+
+local function playAt(clip, position, volume, speed, rolloff, distant)
+	local voice = nextVoice(clip, true)
+	voice.Anchor.WorldPosition = position
+	voice.Sound.RollOffMaxDistance = rolloff
+	voice.Eq.Enabled = distant == true
+	start(voice, clip, volume, speed)
 end
 
 local function play2D(clip, volume, speed)
-	local sound, life = makeSound(clip, volume, speed)
-	sound.Parent = SoundService
-	sound:Play()
-	Debris:AddItem(sound, life)
+	start(nextVoice(clip, false), clip, volume, speed)
 end
+
+-- Alle Stimmen gleich beim Start anlegen und laden, damit schon der erste Schuss sofort kommt
+task.defer(function()
+	local ContentProvider = game:GetService("ContentProvider")
+	local list = {}
+	local function add(clip)
+		for _, positional in { false, true } do
+			for _, voice in poolFor(clip, positional).Voices do
+				table.insert(list, voice.Sound)
+			end
+		end
+	end
+	for _, set in WeaponConfig.SoundSets do
+		for _, clip in set do
+			add(clip)
+		end
+	end
+	for _, clip in WeaponConfig.ActionSounds do
+		add(clip)
+	end
+	pcall(ContentProvider.PreloadAsync, ContentProvider, list)
+end)
 
 -- Zufällige Aufnahme aus einem Set, nie zweimal hintereinander dieselbe
 local lastClip = {}
