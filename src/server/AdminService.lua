@@ -203,6 +203,19 @@ function AdminService.Init(manager)
 			return "+" .. given .. " Items" .. (missing > 0 and (" (" .. missing .. " passten nicht in die Tasche)") or "")
 		end,
 
+		-- Rote-Zone-Punkte (RZ) für sich selbst, zum Testen des Schiebers: amount aus dem Eingabefeld (1..1.000.000)
+		GiveRedPoints = function(amount, _, admin)
+			amount = math.floor(tonumber(amount) or 0)
+			if amount < 1 then
+				return "Ungültige Menge."
+			end
+			amount = math.min(amount, 1000000)
+			if not serverShared("RedPointsService").Add(admin, amount) then
+				return "Kein Spielstand geladen."
+			end
+			return "+" .. amount .. " RZ (jetzt " .. serverShared("RedPointsService").Get(admin) .. ")"
+		end,
+
 		SetSetting = function(key, value)
 			if typeof(key) ~= "string" or not GameSettings.Def(key) or typeof(value) ~= "number" then
 				return "Ungültige Einstellung."

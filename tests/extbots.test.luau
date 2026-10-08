@@ -323,6 +323,21 @@ check(string.find(lastStatus() or "", "Items", 1, true) ~= nil and string.find(a
 Remotes.AdminAction.OnServerEvent:Fire(alice, "ExtConvoy")
 step(0.3)
 check(string.find(lastStatus() or "", "Konvoi", 1, true) ~= nil, "Konvoi aus dem Panel: " .. tostring(lastStatus()))
+-- RZ für sich selbst aus dem Panel
+local rzBefore = alice:GetAttribute("RedPoints") or 0
+Remotes.AdminAction.OnServerEvent:Fire(alice, "GiveRedPoints", 250)
+step(0.3)
+check(alice:GetAttribute("RedPoints") == rzBefore + 250 and string.find(lastStatus() or "", "RZ", 1, true) ~= nil,
+	"RZ aus dem Panel: " .. tostring(lastStatus()))
+Remotes.AdminAction.OnServerEvent:Fire(alice, "GiveRedPoints", "abc")
+step(0.3)
+check(alice:GetAttribute("RedPoints") == rzBefore + 250 and string.find(lastStatus() or "", "Ungültig", 1, true) ~= nil,
+	"ungültige RZ-Menge: " .. tostring(lastStatus()))
+SIM.IsStudio = false
+alice:SetAttribute("IsAdmin", false)
+Remotes.AdminAction.OnServerEvent:Fire(alice, "GiveRedPoints", 999)
+step(0.3)
+check(alice:GetAttribute("RedPoints") == rzBefore + 250, "ohne Admin keine RZ")
 
 if failures > 0 then
 	error(failures .. " Fehler")

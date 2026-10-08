@@ -247,6 +247,22 @@ local function buildEvents(page)
 	button("AUSRÜSTUNG", 110, r3, "Teal", function()
 		send("ExtGive", "Kit")
 	end)
+	-- Rote-Zone-Punkte (RZ): Menge eintippen, dann RZ GEBEN
+	local r4 = row(give)
+	local rzBox = make("TextBox", { Size = UDim2.new(0, 110, 0, 30), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
+		Font = Enum.Font.BuilderSansBold, TextSize = 13, TextColor3 = TEXT, PlaceholderText = "Menge RZ",
+		PlaceholderColor3 = MUTED, Text = "100", ClearTextOnFocus = false }, r4)
+	corner(rzBox, 6)
+	rzBox:GetPropertyChangedSignal("Text"):Connect(function()
+		local digits = string.gsub(rzBox.Text, "%D", "")
+		if digits ~= rzBox.Text then
+			rzBox.Text = digits
+		end
+	end)
+	button("RZ GEBEN", 100, r4, "Blood", function()
+		send("GiveRedPoints", tonumber(rzBox.Text) or 0)
+	end)
+	order(give)
 end
 
 -- Live-Status der Events (Karten-Attribute der offenen Welt, Blutmond/Sturm aus DayCycle)
