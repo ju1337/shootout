@@ -175,7 +175,6 @@ ProgressService.Get(alice).ExtDaily = { Date = ExtDailyConfig.Date(os.time() - 8
 local coins = ProgressService.Get(alice).Coins
 check(ExtDailyService.Claim(alice) == 7, "Tag 7")
 check(has("LMG") or has("DMR"), "seltene Waffe")
-check(has("Att_Suppressor") or has("Att_DrumMag"), "sehr seltener Aufsatz")
 check(ProgressService.Get(alice).Coins == coins + ExtDailyConfig.Days[7].Coins, "Münzen am Tag 7")
 
 if failures == 0 then

@@ -1,7 +1,7 @@
 -- ExtDailyConfig (ModuleScript)
 -- Tägliche Kiste der offenen Welt: Beim ersten Betreten von EXTINCTION an einem Tag (UTC) liegt eine Kiste im Lager.
 -- Wer am Vortag eine bekommen hat, rückt einen Tag weiter (1 bis 7, danach wieder 1); wer einen Tag auslässt, fängt bei 1
--- an. Tag 7 ist der große Preis: eine seltene Waffe mit sehr seltenem Aufsatz.
+-- an. Tag 7 ist der große Preis: eine seltene Waffe. (Waffen-Aufsätze gibt es nur im Konvoi und in Lootdrops.)
 -- Days[n] = { Items = { { Id, Anzahl } }, Pick = { Liste, aus der ein Item zufällig kommt }, Coins }
 -- Profil: ExtDaily = { Date = "YYYY-MM-DD", Day = n }; Spieler-Attribut "ExtDaily" (JSON, gleiche Form).
 
@@ -12,11 +12,11 @@ ExtDailyConfig.Enabled = true
 ExtDailyConfig.Days = {
 	{ Items = { { "Bandage", 3 }, { "Ammo_9mm", 60 } } },
 	{ Items = { { "Vest", 1 }, { "Medkit", 1 } } },
-	{ Items = { { "Ammo_Rifle", 60 } }, Pick = { "Att_Compensator", "Att_ShortBarrel", "Att_VerticalGrip", "Att_Laser", "Att_FastMag" } },
+	{ Items = { { "Ammo_Rifle", 60 } }, Pick = { "SMG", "Shotgun", "Revolver" } },
 	{ Items = { { "AntiZombie", 2 }, { "Medkit", 2 } } },
-	{ Items = { { "HeavyVest", 1 } }, Pick = { "Att_MuzzleBrake", "Att_LongBarrel", "Att_HeavyBarrel", "Att_AngledGrip", "Att_ExtendedMag" } },
+	{ Items = { { "HeavyVest", 1 } }, Pick = { "Adrenaline", "Medkit", "AntiZombie" } },
 	{ Items = { { "Adrenaline", 2 }, { "Ammo_Rifle", 120 } } },
-	{ Items = { { "Ammo_Rifle", 120 } }, Pick = { "LMG", "DMR" }, Pick2 = { "Att_Suppressor", "Att_DrumMag" }, Coins = 400 },
+	{ Items = { { "Ammo_Rifle", 120 } }, Pick = { "LMG", "DMR" }, Coins = 400 },
 }
 
 -- Datum (UTC) zu einem Zeitpunkt

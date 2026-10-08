@@ -145,20 +145,33 @@ enter(alice)
 
 -- Items und Stand
 check(ExtinctionConfig.Get("Att_Compensator") and ExtinctionConfig.Get("Att_Compensator").Kind == "Attachment", "Aufsatz-Item")
-check(ExtinctionConfig.Get("Att_Suppressor").Price == nil, "Schalldämpfer (sehr selten) nur zu finden")
-check(table.find(ExtinctionConfig.Stands.Stand_Weapons.Items, "Att_ExtendedMag") ~= nil, "Magazin am Waffenstand")
+check(ExtinctionConfig.Get("Att_Suppressor").Price == nil and ExtinctionConfig.Get("Att_Compensator").Price == nil,
+	"Aufsätze sind nicht zu kaufen")
+local atStand = false
+for _, id in ExtinctionConfig.Stands.Stand_Weapons.Items do
+	atStand = atStand or string.sub(id, 1, 4) == "Att_"
+end
+check(not atStand, "kein Aufsatz am Waffenstand")
+check(ExtinctionConfig.SellPrice("Att_Compensator", 1) > 0, "Aufsätze lassen sich verkaufen")
 local inLoot = false
 for _, entry in ExtinctionConfig.LootTables.Airdrop do
 	inLoot = inLoot or entry.Id == "Att_Suppressor"
 end
-check(inLoot, "Schalldämpfer in den Lootdrops")
+check(inLoot, "Schalldämpfer selten in Lootdrops")
+check(#ExtinctionConfig.LootTables.ConvoyAttachments == #ExtinctionConfig.AttachmentItems, "Konvoi: alle Aufsätze möglich")
+for _, name in { "Zombie", "Zombie2", "Tier1", "Tier2", "Tier3", "Medical", "Ammo" } do
+	for _, entry in ExtinctionConfig.LootTables[name] do
+		check(string.sub(entry.Id, 1, 4) ~= "Att_", "kein Aufsatz in " .. name)
+	end
+end
+check(ExtinctionConfig.Convoy.Attachments and ExtinctionConfig.Convoy.Attachments[1] >= 1, "Konvoi bringt sicher Aufsätze")
 
 moveTo(alice, Vector3.new(-36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Sturmgewehr gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Att_ExtendedMag") == true, "erweitertes Magazin gekauft")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Compensator") == true, "Kompensator gekauft")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Suppressor") == false, "Schalldämpfer nicht zu kaufen")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Att_ExtendedMag") == false, "Magazin nicht zu kaufen")
+check(InventoryService.Give(alice, "Att_ExtendedMag", 1) == 1, "erweitertes Magazin (aus dem Konvoi)")
+check(InventoryService.Give(alice, "Att_Compensator", 1) == 1, "Kompensator (aus dem Konvoi)")
 local rifleSlot, magSlot, compSlot
 for s = 1, ExtinctionConfig.BagSlots do
 	local entry = slot(alice, s)

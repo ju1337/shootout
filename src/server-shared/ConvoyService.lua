@@ -205,6 +205,11 @@ local function release(convoy)
 	local truck = convoy.Vehicles[2].Model
 	local at = (truck:GetPivot() * CFrame.new(0, 0, 14)).Position
 	local items = ExtinctionConfig.RollLoot(K.Table, random:NextInteger(K.Items[1], K.Items[2]), random)
+	if K.Attachments then -- Waffen-Aufsätze gibt es sicher nur im Konvoi
+		for _, item in ExtinctionConfig.RollLoot("ConvoyAttachments", random:NextInteger(K.Attachments[1], K.Attachments[2]), random) do
+			table.insert(items, item)
+		end
+	end
 	convoy.LootId = LootService.Create(at, items, "Airdrop", "KONVOI-LADUNG",
 		{ HoldTime = K.OpenTime, Lifetime = K.Lifetime, Meta = { Convoy = convoy.Id } })
 	for player in convoy.Attackers do

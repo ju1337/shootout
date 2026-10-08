@@ -98,28 +98,24 @@ ExtinctionConfig.Items = {
 	V_Heli = { Kind = "Vehicle", Name = "Helikopter", Vehicle = "Heli", Price = 12000, Tier = 4 },
 }
 
--- Waffen-Aufsätze als Items ("Att_<Id>"), aus AttachmentConfig; Preis etwa die Hälfte der Lobby, Seltenheit 4 nur zu finden
+-- Waffen-Aufsätze als Items ("Att_<Id>"), aus AttachmentConfig. Nicht zu kaufen: es gibt sie nur im Konvoi (sicher 2-3
+-- Stück, Convoy.Attachments) und selten in Lootdrops. Value = Wert beim Verkaufen (etwa die Hälfte der Lobby).
 ExtinctionConfig.AttachmentItems = {}
 for _, att in AttachmentConfig.List do
 	local id = "Att_" .. att.Id
 	ExtinctionConfig.Items[id] = { Kind = "Attachment", Name = att.Name, Attachment = att.Id, Slot = att.Slot,
-		Price = (att.Tier or 2) < 4 and math.floor(att.Price * 0.5 / 10) * 10 or nil, MaxStack = 3, Tier = att.Tier or 2 }
+		Value = math.floor(att.Price * 0.5 / 10) * 10, MaxStack = 3, Tier = att.Tier or 2 }
 	table.insert(ExtinctionConfig.AttachmentItems, id)
 end
 
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
 ExtinctionConfig.Stands = {
 	Stand_Weapons = { Title = "WAFFENSTAND", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
-		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } }, -- Aufsätze (Seltenheit 2-3) hängt der Block unten an
+		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle" } },
 	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
 	Stand_Vehicles = { Title = "FAHRZEUGSTAND", Items = { "V_Quad", "V_Pickup", "V_Sports", "V_Heli" } },
 }
 
-for _, id in ExtinctionConfig.AttachmentItems do
-	if ExtinctionConfig.Items[id].Price then
-		table.insert(ExtinctionConfig.Stands.Stand_Weapons.Items, id)
-	end
-end
 
 -- ---------- Spielermarkt (ExtMarketService, Reiter MARKT im Menü, nur in der Safe Zone) ----------
 -- Spieler bieten Items aus der Tasche für Münzen an (höchstens MaxListings gleichzeitig, Preis 1 bis MaxPrice); der Käufer
@@ -233,14 +229,12 @@ ExtinctionConfig.LootTables = {
 	},
 }
 
--- Aufsätze in der Beute: je Tabelle Gewicht pro Seltenheit (2/3/4); fehlende Seltenheit = kommt dort nicht vor
+-- Aufsätze in der Beute: je Tabelle Gewicht pro Seltenheit (2/3/4); fehlende Seltenheit = kommt dort nicht vor.
+-- ConvoyAttachments = nur Aufsätze (die sicheren Stücke aus dem Konvoi), sonst nur selten im Lootdrop.
+ExtinctionConfig.LootTables.ConvoyAttachments = {}
 local ATTACHMENT_LOOT = {
-	Zombie = { [2] = 0.6 },
-	Zombie2 = { [2] = 1.4, [3] = 0.7, [4] = 0.2 },
-	Tier1 = { [2] = 0.8 },
-	Tier2 = { [2] = 1.6, [3] = 0.8, [4] = 0.2 },
-	Tier3 = { [2] = 1.2, [3] = 1.6, [4] = 0.8 },
-	Airdrop = { [3] = 2.4, [4] = 1.6 },
+	ConvoyAttachments = { [2] = 5, [3] = 3, [4] = 1.2 },
+	Airdrop = { [3] = 1.2, [4] = 0.6 },
 }
 for tableName, weights in ATTACHMENT_LOOT do
 	for _, id in ExtinctionConfig.AttachmentItems do
@@ -359,6 +353,7 @@ ExtinctionConfig.Convoy = {
 	GunDamage = 9,
 	Table = "Airdrop",
 	Items = { 4, 6 },
+	Attachments = { 2, 3 }, -- dazu sicher so viele Waffen-Aufsätze (Tabelle ConvoyAttachments) – nur hier gibt es sie sicher
 	Coins = 250,
 	OpenTime = 6,
 	Lifetime = 300,
@@ -591,7 +586,7 @@ function ExtinctionConfig.SellPrice(id, count)
 	if not item then
 		return 0
 	end
-	local price = item.Price or (item.Tier or 0) * 60 + 40
+	local price = item.Price or item.Value or (item.Tier or 0) * 60 + 40
 	local each = item.Pack and price / item.Pack or price
 	return math.floor(each * (count or 1) * ExtinctionConfig.SellFactor)
 end

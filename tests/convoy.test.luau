@@ -161,6 +161,13 @@ banner = lastBanner(alice)
 check(banner and banner.Title == "KONVOI GEKNACKT", "Ansage: geknackt")
 local bag = LootService.Get(convoy.LootId)
 check(bag ~= nil and bag.Kind == "Airdrop", "Kiste wie ein Lootdrop (E halten)")
+local attachments = 0
+for _, item in bag and bag.Container.Slots or {} do
+	if string.sub(item.Id, 1, 4) == "Att_" then
+		attachments += 1
+	end
+end
+check(attachments >= K.Attachments[1], "Ladung mit sicheren Waffen-Aufsätzen (" .. attachments .. ")")
 
 -- Kiste weg: vorbei, Fahrzeuge weg
 LootService.Remove(convoy.LootId)
