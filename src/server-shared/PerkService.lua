@@ -61,7 +61,8 @@ function PerkService.Init()
 				local perk = BuyConfig.Has(player, "Regen")
 				local passive = character and AgentConfig.PassiveOf(character, "Regen") -- Passiv AEGIS
 				local delay = perk and BuyConfig.RegenDelay or 6
-				if humanoid and humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth and (perk or passive)
+				-- in Extinction heilt nichts von selbst (nur Items), auch nicht Perk oder Passiv
+				if humanoid and player:GetAttribute("Mode") ~= "Extinction" and humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth and (perk or passive)
 					and not character:GetAttribute("Downed") and now - (character:GetAttribute("LastDamaged") or 0) >= delay then
 					local rate = (perk and BuyConfig.RegenPerSecond or 0) + (passive and 2 or 0)
 					humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + rate * TICK)

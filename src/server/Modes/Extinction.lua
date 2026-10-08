@@ -281,6 +281,12 @@ local function spawnPlayer(player)
 	if not character then
 		return
 	end
+	-- keine automatische Lebensregeneration: Roblox' Standard-Skript "Health" heilt sonst ständig nach,
+	-- geheilt wird hier nur mit Items (Verband, Medkit ...)
+	local regen = character:FindFirstChild("Health")
+	if regen and regen:IsA("LuaSourceContainer") then
+		regen:Destroy()
+	end
 	setInside(player, info, true, character)
 	giveAdminLoadout(player)
 	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)

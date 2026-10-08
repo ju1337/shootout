@@ -1,6 +1,6 @@
 -- Offene Welt (EXTINCTION): Safe Zone und PvP-Zeit, Kaufen am Stand (Nähe, Münzen, Platz), Hotbar (Waffe nur
 -- draußen, Wegstecken in der Safe Zone), Munition aus dem Inventar (Nachladen, Magazin am Item), Heilen mit Dauer,
--- Verkaufen, Lager (nur am Lager, bleibt beim Tod), Tod draußen = Tasche am Boden, Looten durch andere,
+-- Verkaufen, keine automatische Lebensregeneration, Lager (nur am Lager, bleibt beim Tod), Tod draußen = Tasche am Boden, Looten durch andere,
 -- Verlassen draußen nur mit zweitem Klick und dann ohne Tasche, Verlassen in der Safe Zone behält alles
 -- (Anordnung bleibt), Spiel verlassen draußen = Tasche weg (vor dem Speichern), Herunterfahren ohne Verlust,
 -- PvP nur wenn beide draußen und ihre PvP-Zeit erreicht haben
@@ -25,6 +25,14 @@ local WeaponService = require("WeaponService")
 local Damage = require("Damage")
 ProgressService.Init()
 WeaponService.Init()
+
+-- wie in Roblox: jeder Charakter bekommt das Standard-Skript "Health" (heilt ständig nach)
+local makeRig = SIM.MakeRig
+SIM.MakeRig = function(name)
+	local model = makeRig(name)
+	Instance.new("Script", model).Name = "Health"
+	return model
+end
 
 -- Karte wie aus tools/build_maps.py: Safe Zone (Radius 100) um (0, 0, -6000), Spawns, Stände, Lager, Tor zum Hub
 local CENTER = Vector3.new(0, 0, -6000)
@@ -151,6 +159,7 @@ check(Extinction.CanJoin(alice) == true, "Spielstand geladen: Beitreten möglich
 -- ---------- Ankunft in der Safe Zone ----------
 enter(alice)
 check(alice.Character ~= nil, "Alice gespawnt")
+check(alice.Character:FindFirstChild("Health") == nil, "keine automatische Lebensregeneration (Health-Skript entfernt)")
 check(alice:GetAttribute("InSafeZone") == true and alice:GetAttribute("CanFight") == false, "Spawn in der Safe Zone, kein Kampf")
 check(alice.Character:GetAttribute("SafeZone") == true, "Charakter in der Safe Zone geschützt")
 check(alice:GetAttribute("ExtBag") == "[]", "leere Tasche")
