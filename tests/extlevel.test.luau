@@ -175,8 +175,12 @@ check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Nest, "Nest
 before = alice:GetAttribute("ExtXP")
 local bag = { Kind = "Airdrop", Id = 77 }
 fire(LootService.OnOpened, alice, bag)
+step(0.1) -- (kann nebenbei einen Lootdrop-Auftrag erledigen: dann kommen dessen EP dazu)
+local afterFirst = alice:GetAttribute("ExtXP")
+check(afterFirst >= before + ExtLevelConfig.Rewards.Airdrop, "Lootdrop gibt EP")
 fire(LootService.OnOpened, alice, bag)
-check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Airdrop, "Lootdrop zählt je Kiste einmal")
+step(0.1)
+check(alice:GetAttribute("ExtXP") == afterFirst, "dieselbe Kiste zählt nur einmal")
 before = alice:GetAttribute("ExtXP")
 fire(MissionService.OnComplete, alice, {})
 step(0.1)
