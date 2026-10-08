@@ -944,7 +944,7 @@ local function newMenu(kind, title, subtitle)
 	local isTab = menuTab[kind] ~= nil
 	local sideW = isTab and Inv.SIDEBAR_W or 0
 	Inv.CONTENT_W = Inv.MENU_W - sideW - 2 * Inv.CONTENT_X
-	local frame = make("Frame", { Name = "Menu", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+	local frame = make("Frame", { Name = isTab and "Menu" or "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(Inv.MENU_W, Inv.MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
 	-- Seitenleiste: Name des Modus, Reiter untereinander, unten der Hinweis zum Schließen
 	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.GLASS,
@@ -1039,44 +1039,25 @@ local function newMenu(kind, title, subtitle)
 	return { Kind = kind, Menu = isTab, Frame = frame, Body = content, Coins = coins, Sub = sub, Header = header, Toast = menuToast }
 end
 
-local function newWindow(kind, title, subtitle, accent)
+-- Alle Fenster (Menü-Reiter, Stände, Lager, Beute, Reisen, Versteck) im selben halbtransparenten Rahmen; nur die
+-- Reiter haben die Seitenleiste. Fenster mit festem Aufbau (FIXED_WINDOWS) bekommen ihre alte Inhaltsgröße, mittig.
+local FIXED_WINDOWS = { Travel = true, Hideout = true }
+local function newWindow(kind, title, subtitle)
 	closeWindow()
 	windowGui.Enabled = true
-	if menuTab[kind] or kind == "Loot" then
-		window = newMenu(kind, title, subtitle)
-		Inv.hideHud(true)
-		window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
-		UITheme.SetBlur("Extinction", true)
-		RunService:BindToRenderStep("ExtinctionMouse", MOUSE_PRIORITY, function()
-			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-			UserInputService.MouseIconEnabled = true
-		end)
-		InputActions.Focus(window.Frame:FindFirstChild("Content", true)) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
-		return window
+	window = newMenu(kind, title, subtitle)
+	if FIXED_WINDOWS[kind] then
+		window.Body = make("Frame", { Name = "Body", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10),
+			Size = UDim2.fromOffset(1124, 532), BackgroundTransparency = 1, ZIndex = 5 }, window.Body)
 	end
-	local frame = UITheme.Card({ Name = "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(1180, 640), BackgroundTransparency = 0.04, ZIndex = 5 }, canvas)
-	UITheme.AccentBar(frame, accent or C.Primary, { ZIndex = 5 })
-	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -400, 0, 40), Text = title, TextSize = 34, Font = F.Display,
-		ZIndex = 5 }, frame)
-	local sub = label({ Position = UDim2.fromOffset(30, 54), Size = UDim2.new(1, -400, 0, 16), Text = subtitle or "", TextSize = 12,
-		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, frame)
-	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 18), Size = UDim2.fromOffset(44, 44),
-		Color = C.Card, StrokeColor = C.Border, Text = "", ZIndex = 5 }, frame, closeWindow)
-	close.Button:SetAttribute("NoFocus", true)
-	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 6
-	local coins = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -80, 0, 24), Size = UDim2.fromOffset(220, 30),
-		Text = "", TextSize = 24, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
-	local body = make("Frame", { Name = "Body", Position = UDim2.fromOffset(28, 84), Size = UDim2.new(1, -56, 1, -108),
-		BackgroundTransparency = 1, ZIndex = 5 }, frame)
-	window = { Kind = kind, Frame = frame, Body = body, Coins = coins, Sub = sub }
-	coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
+	Inv.hideHud(true)
+	window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
 	UITheme.SetBlur("Extinction", true)
 	RunService:BindToRenderStep("ExtinctionMouse", MOUSE_PRIORITY, function()
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
 	end)
-	InputActions.Focus(frame) -- Controller: Auswahl auf den ersten Platz (nach dem Aufbau)
+	InputActions.Focus(window.Frame:FindFirstChild("Content", true)) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
 	return window
 end
 
@@ -1502,8 +1483,7 @@ local function badgeIcon(parent, kind, size, color, zIndex)
 end
 
 local function openAchievements()
-	local win = newWindow("Achievements", "ERFOLGE", "ABZEICHEN FÜR DEIN PROFIL  ·  JEDE STUFE GIBT MÜNZEN  ·  BRONZE · SILBER · GOLD",
-		C.Primary)
+	local win = newWindow("Achievements", "ERFOLGE", "ABZEICHEN FÜR DEIN PROFIL  ·  JEDE STUFE GIBT MÜNZEN  ·  BRONZE · SILBER · GOLD")
 	local body = win.Body
 	local summary = label({ Name = "Summary", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 22), Text = "", TextSize = 16,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, body)
@@ -1587,8 +1567,7 @@ local function itemCountEverywhere(id)
 end
 
 local function openHideout()
-	local win = newWindow("Hideout", "VERSTECK", "MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION",
-		HIDEOUT)
+	local win = newWindow("Hideout", "VERSTECK", "MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION")
 	local body = win.Body
 	local modules = HideoutConfig.Modules
 	local gap = 16
@@ -1693,18 +1672,26 @@ end
 
 -- LAGER: Tasche links, Lager rechts; anklicken legt ins andere
 local function openStash()
-	local win = newWindow("Stash", "LAGER", "IMMER SICHER  ·  ANKLICKEN = HINÜBERLEGEN  ·  ZIEHEN = AUF EINEN PLATZ", Color3.fromRGB(226, 178, 52))
+	local win = newWindow("Stash", "LAGER", "IMMER SICHER  ·  ANKLICKEN = HINÜBERLEGEN  ·  ZIEHEN = AUF EINEN PLATZ")
 	local body = win.Body
-	-- drei Spalten: Tasche, Container, Lager
-	local cell, gap = 54, 6
-	sectionTitle(body, "TASCHE  (1-9 = HOTBAR)", UDim2.fromOffset(0, 0), 300)
-	grid(body, "Bag", 1, BAG, 5, cell, gap, UDim2.fromOffset(0, 22), true)
-	local safeX = 5 * (cell + gap) + 24
-	sectionTitle(body, "CONTAINER  ·  " .. Inv.SAFE_SLOTS, UDim2.fromOffset(safeX, 0), 240)
-	grid(body, "Safe", 1, Inv.SAFE_SLOTS, 4, cell, gap, UDim2.fromOffset(safeX, 22))
-	local stashX = safeX + 4 * (cell + gap) + 24
-	sectionTitle(body, "LAGER  ·  " .. STASH .. " PLÄTZE", UDim2.fromOffset(stashX, 0), 400)
-	grid(body, "Stash", 1, STASH, 8, cell, gap, UDim2.fromOffset(stashX, 22))
+	-- links das eigene Inventar, rechts das Lager
+	local invW = math.floor(Inv.CONTENT_W * 0.52)
+	local refreshGrids = Inv.inventoryGrids(body, 0, invW)
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(invW + 20, 0), Size = UDim2.new(0, 1, 1, -30),
+		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 5 }, body)
+	local stashX = invW + 40
+	local stashW = Inv.CONTENT_W - stashX
+	local cols, gap = 8, 8
+	local cell = math.floor((stashW - (cols - 1) * gap) / cols)
+	local cellH = math.clamp(math.floor(cell * 0.62), 56, 96)
+	local stashRow, stashFill = Inv.sectionHeader(body, "StashHeader", "LAGER", 0, stashW)
+	stashRow.Position = UDim2.fromOffset(stashX, 0)
+	stashFill.Position = UDim2.fromOffset(stashX + stashW - 200, 0)
+	grid(body, "Stash", 1, STASH, cols, cell, gap, UDim2.fromOffset(stashX, 28), false, cellH)
+	label({ Name = "Help", Position = UDim2.fromOffset(stashX, 28 + math.ceil(STASH / cols) * (cellH + gap) + 10),
+		Size = UDim2.fromOffset(stashW, 40), TextWrapped = true, Text = "Anklicken legt ein Item ins Lager bzw. zurück in die Tasche. "
+			.. "Ziehen legt es auf einen bestimmten Platz – auch direkt in den Container.", TextSize = 12, Font = F.Medium,
+		TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
 	onSlotClick = function(container, slot)
 		if entryOf(container, slot) then
 			sendAction("Move", container, slot, container == "Stash" and "Bag" or "Stash", nil)
@@ -1713,6 +1700,8 @@ local function openStash()
 	onSlotDrop = defaultDrop
 	onSlotRightClick = onSlotClick
 	function win.Refresh()
+		refreshGrids()
+		stashFill.Text = Inv.usedSlots(stash, 1, STASH) .. " / " .. STASH .. " PLÄTZE"
 		repaint()
 	end
 	win.Refresh()
@@ -1726,7 +1715,7 @@ local function openTravel(pointName)
 	if not zoneFolder then
 		return
 	end
-	local win = newWindow("Travel", "REISEN", "WÄHLE EINE SAFE ZONE  ·  DORT SPAWNST DU AB JETZT NACH DEM TOD", SAFE)
+	local win = newWindow("Travel", "REISEN", "WÄHLE EINE SAFE ZONE  ·  DORT SPAWNST DU AB JETZT NACH DEM TOD")
 	win.Point = pointName
 	local character = player.Character
 	local root3 = character and character:FindFirstChild("HumanoidRootPart")
@@ -1800,7 +1789,7 @@ end
 local function openSquad()
 	local ALLY = C.Ally
 	local win = newWindow("Squad", "SQUAD", "BIS ZU 4 SPIELER  ·  KEIN FRIENDLY FIRE  ·  PINGS NUR FÜR DEN SQUAD  ·  NAMEN UND "
-		.. "PUNKTE AUF DER MINIMAP", ALLY)
+		.. "PUNKTE AUF DER MINIMAP")
 	local body = win.Body
 	sectionTitle(body, "DEIN SQUAD", UDim2.fromOffset(0, 0), 540)
 	sectionTitle(body, "SPIELER IN DER OFFENEN WELT", UDim2.fromOffset(580, 0), 540)
@@ -1921,97 +1910,99 @@ local function openStand(standKey)
 		return
 	end
 	local win = newWindow("Stand", stand.Title, "KAUFEN MIT MÜNZEN  ·  RECHTS EIN ITEM ANKLICKEN ZUM VERKAUFEN ("
-		.. math.floor(ExtinctionConfig.SellFactor * 100) .. " %)", DANGER)
+		.. math.floor(ExtinctionConfig.SellFactor * 100) .. " %)")
 	win.Stand = standKey
 	local body = win.Body
-	sectionTitle(body, "ANGEBOT", UDim2.fromOffset(0, 0))
-	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 22), Size = UDim2.fromOffset(600, 494),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
+	-- links das Angebot, rechts das eigene Inventar (anklicken = Info-Fenster mit Verkaufen)
+	local listW = math.floor(Inv.CONTENT_W * 0.42)
+	Inv.backdrop(body, win)
+	Inv.sectionHeader(body, "OfferHeader", "ANGEBOT", 0, listW)
+	local list = make("ScrollingFrame", { Name = "Offer", Position = UDim2.fromOffset(0, 28), Size = UDim2.fromOffset(listW + 8, Inv.CONTENT_H - 40),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 	for i, id in stand.Items do
 		local config = itemConfig(id)
-		local row = make("Frame", { Size = UDim2.new(1, -10, 0, 74), BackgroundColor3 = C.Card, BackgroundTransparency = 0.1,
-			BorderSizePixel = 0, LayoutOrder = i, ZIndex = 5 }, list)
-		UITheme.Corner(row, UITheme.Radius.Medium)
-		UITheme.Stroke(row, KIND_COLORS[config.Kind] or C.Border, 1, 0.6)
-		local iconBox = make("Frame", { Position = UDim2.fromOffset(8, 6), Size = UDim2.fromOffset(96, 62), BackgroundTransparency = 1,
+		local tier = Inv.tierColor(config)
+		local row = make("Frame", { Name = "Offer_" .. id, Size = UDim2.new(0, listW, 0, 78), BackgroundColor3 = Inv.TILE,
+			BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = i, ZIndex = 5 }, list)
+		UITheme.Corner(row, 3)
+		make("Frame", { Name = "Tier", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = tier or Color3.fromRGB(70, 72, 78),
+			BorderSizePixel = 0, ZIndex = 6 }, row)
+		local iconBox = make("Frame", { Position = UDim2.fromOffset(12, 8), Size = UDim2.fromOffset(104, 62), BackgroundTransparency = 1,
 			ZIndex = 6 }, row)
 		local icon = buildIcon(iconBox, id, 6)
 		icon.Size = UDim2.fromScale(1, 1)
 		icon.Position = UDim2.fromScale(0.5, 0.5)
-		label({ Position = UDim2.fromOffset(114, 10), Size = UDim2.fromOffset(250, 26), Text = upper(config.Name)
-			.. (config.Pack and ("  ×" .. config.Pack) or ""), TextSize = 21, Font = F.Display, ZIndex = 6 }, row)
-		label({ Position = UDim2.fromOffset(114, 40), Size = UDim2.fromOffset(300, 28), Text = describe(id), TextSize = 11,
+		label({ Position = UDim2.fromOffset(126, 12), Size = UDim2.new(1, -330, 0, 22), Text = upper(config.Name)
+			.. (config.Pack and ("  ×" .. config.Pack) or ""), TextSize = 17, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 6 }, row)
+		label({ Position = UDim2.fromOffset(126, 36), Size = UDim2.new(1, -330, 0, 34), Text = describe(id), TextSize = 11,
 			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 6 }, row)
 		local stack = (config.MaxStack or 1) > 1
 		local function buy(qty)
 			sendAction("Buy", standKey, id, qty)
 		end
-		UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, stack and -84 or -10, 0.5, 0),
-			Size = UDim2.fromOffset(120, 44), Color = C.Primary, TextColor = C.PrimaryText, Text = tostring(config.Price),
-			TextSize = 20, ZIndex = 6 }, row, function()
+		-- Kaufen: rot mit Preis und Münze, bei Stapeln daneben ×5
+		local buyButton = Inv.flatButton({ Name = "Buy", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, stack and -76 or -12, 0.5, 0),
+			Size = UDim2.fromOffset(118, 40), Primary = true, Text = "" }, row, function()
 			buy(1)
 		end)
+		local priceRow = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8 }, buyButton)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center }, priceRow)
+		UITheme.Coin(priceRow, 14, { LayoutOrder = 1, ZIndex = 8 })
+		label({ Name = "Price", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = tostring(config.Price),
+			TextSize = 17, Font = F.Display, LayoutOrder = 2, ZIndex = 8 }, priceRow)
 		if stack then
-			UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(66, 44),
-				Color = C.Panel, StrokeColor = C.Border, Text = "×5", TextSize = 18, ZIndex = 6 }, row, function()
+			Inv.flatButton({ Name = "Buy5", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(58, 40),
+				Text = "×5", TextSize = 15 }, row, function()
 				buy(5)
 			end)
 		end
 	end
-	sectionTitle(body, "DEINE TASCHE  ·  ANKLICKEN = VERKAUFEN", UDim2.fromOffset(640, 0), 480)
-	grid(body, "Bag", 1, BAG, 6, 64, 8, UDim2.fromOffset(640, 22), true)
-	local sellInfo = label({ Position = UDim2.fromOffset(640, 400), Size = UDim2.fromOffset(470, 60), Text = "", TextSize = 13,
-		Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
-	local sellButtons = make("Frame", { Position = UDim2.fromOffset(640, 466), Size = UDim2.fromOffset(470, 48),
-		BackgroundTransparency = 1, ZIndex = 5 }, body)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
-		SortOrder = Enum.SortOrder.LayoutOrder }, sellButtons)
-	onSlotClick = function(container, slot)
-		if container == "Bag" and bag[slot] then
-			selected = { Container = container, Slot = slot }
-		else
-			selected = nil
-		end
-		win.Refresh()
-	end
-	onSlotDrop = defaultDrop
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(listW + 20, 0), Size = UDim2.new(0, 1, 1, -30),
+		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 5 }, body)
+	local refreshGrids = Inv.inventoryGrids(body, listW + 40, Inv.CONTENT_W - listW - 40)
+	local update = Inv.itemPopup(body)
+	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
 		if container == "Bag" and bag[slot] then
 			quickSwap(slot)
+		elseif container == "Safe" and safe[slot] then
+			sendAction("Move", "Safe", slot, "Bag", nil)
 		end
 	end
 	function win.Refresh()
 		win.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
-		for _, child in sellButtons:GetChildren() do
-			if child:IsA("GuiObject") then
-				child:Destroy()
-			end
-		end
+		refreshGrids()
+		local actions = {}
 		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
 		if entry then
-			local config = itemConfig(entry.Id)
 			local slot = selected.Slot
-			sellInfo.Text = upper(config.Name) .. (entry.N > 1 and ("  ×" .. entry.N) or "") .. "\nVerkauf: "
-				.. ExtinctionConfig.SellPrice(entry.Id, 1) .. " pro Stück, alles " .. ExtinctionConfig.SellPrice(entry.Id, entry.N)
-				.. " Münzen" .. (entry.Out and "\nDas Fahrzeug ist draußen – erst einpacken (K)." or "")
-			if entry.N > 1 then
-				UITheme.Chunky({ Size = UDim2.fromOffset(150, 44), LayoutOrder = 1, Color = C.Panel, StrokeColor = C.Border,
-					Text = "1 VERKAUFEN", TextSize = 16, ZIndex = 6 }, sellButtons, function()
-					sendAction("Sell", slot, 1)
-				end)
+			local count = entry.N or 1
+			if entry.Out then
+				table.insert(actions, { Text = "FAHRZEUG ERST EINPACKEN (K)", Run = function() end })
+			else
+				table.insert(actions, { Text = (count > 1 and "ALLE VERKAUFEN  ·  " or "VERKAUFEN  ·  ")
+					.. ExtinctionConfig.SellPrice(entry.Id, count), Primary = true, Run = function()
+					selected = nil
+					sendAction("Sell", slot, count)
+				end })
+				if count > 1 then
+					table.insert(actions, { Text = "1 VERKAUFEN  ·  " .. ExtinctionConfig.SellPrice(entry.Id, 1), Run = function()
+						sendAction("Sell", slot, 1)
+					end })
+				end
 			end
-			UITheme.Chunky({ Size = UDim2.fromOffset(entry.N > 1 and 200 or 240, 44), LayoutOrder = 2, Color = C.Primary,
-				TextColor = C.PrimaryText, Text = (entry.N > 1 and "ALLE VERKAUFEN" or "VERKAUFEN"), TextSize = 16, ZIndex = 6 },
-				sellButtons, function()
+		elseif selected and selected.Container == "Safe" and safe[selected.Slot] then
+			local slot = selected.Slot
+			table.insert(actions, { Text = "IN DIE TASCHE (ZUM VERKAUFEN)", Primary = true, Run = function()
 				selected = nil
-				sendAction("Sell", slot, entry.N)
-			end)
-		else
-			selected = nil
-			sellInfo.Text = "Was du findest, kannst du hier zu Münzen machen. Waffen, Munition, Heilung und Fahrzeuge."
+				sendAction("Move", "Safe", slot, "Bag", nil)
+			end })
 		end
+		update(actions)
 		repaint()
 	end
 	win.Refresh()
@@ -2031,7 +2022,7 @@ end
 local function openMarket()
 	local win = newWindow("Market", "SPIELERMARKT", "SPIELER KAUFEN UND VERKAUFEN  ·  MÜNZEN  ·  "
 		.. math.floor(ExtinctionConfig.Market.FeeRate * 100 + 0.5) .. " % GEBÜHR  ·  NUR IN DER SAFE ZONE  ·  ANGEBOTE BLEIBEN "
-		.. "IN DEINEM SPIELSTAND", Color3.fromRGB(226, 178, 52))
+		.. "IN DEINEM SPIELSTAND")
 	local holder = make("Frame", { Name = "MarketHolder", Position = UDim2.fromOffset((Inv.CONTENT_W - 1304) // 2, 0),
 		Size = UDim2.fromOffset(1304, 668), BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	local maps = workspace:FindFirstChild("Maps")
