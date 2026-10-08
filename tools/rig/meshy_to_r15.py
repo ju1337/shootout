@@ -181,6 +181,7 @@ select_only(arm, box, *parts.values())
 bpy.ops.export_scene.fbx(
     filepath=OUT, use_selection=True, object_types={"ARMATURE", "MESH"},
     add_leaf_bones=False, bake_anim=False, path_mode="COPY", embed_textures=True,
+    apply_scale_options="FBX_SCALE_UNITS",  # 1 Blender-Einheit = 1 Stud in der Datei (Standard rechnet in cm um: x100)
     mesh_smooth_type="FACE", use_armature_deform_only=False,
 )
 print("REPORT exported", OUT)
