@@ -231,6 +231,9 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   das Beute-Fenster wie bei einer Tasche: Items einzeln anklicken (passt etwas nicht, bleibt es in der Leiche); leer
   geräumt verschwindet die Leiche. Zombies lassen öfter etwas fallen (75 %, Läufer 85 %, Brocken immer), weil es keine
   Beute mehr am Boden gibt.
+- **Zombie-XP**: jeder erledigte Zombie gibt **XP** für den aktiven Agenten, das Spielerlevel und den Battle Pass
+  (Zombie 10, Läufer 20, Schreier 25, Brocken 50, Blutbestie 600; `XP` in `ExtinctionConfig.ZombieKinds`). Doppel-XP und
+  Agent der Woche wirken mit; Münzen gibt es dafür keine extra (nur die wenigen Zombie-Münzen).
 - **Taschen am Boden** (Todestasche, Lootdrop, Kisten): **E** öffnet das Fenster, Items **einzeln** anklicken; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
 - **Alles looten = Gamepass** (`RobuxConfig.Passes`, Id `LootAll`, Attribut `Pass_LootAll`): Alles auf einmal nehmen –

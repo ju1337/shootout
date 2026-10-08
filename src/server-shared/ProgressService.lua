@@ -941,8 +941,9 @@ end
 -- ---------- XP ----------
 
 -- XP für einen Agenten vergeben (+ Münzen, außer bei Admin-XP). reason wird angezeigt.
--- quiet = keine "+XP"-Zeile im HUD (z.B. Medaillen zeigen ihre XP selbst). Gibt die vergebenen XP zurück.
-function ProgressService.AddXP(player, agentId, amount, reason, quiet)
+-- quiet = keine "+XP"-Zeile im HUD (z.B. Medaillen zeigen ihre XP selbst), noCoins = keine Münzen dazu (Zombies zahlen
+-- ihre Münzen selbst). Gibt die vergebenen XP zurück.
+function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 	local profile = profiles[player]
 	if not profile or not AgentConfig.Get(agentId) then
 		return 0
@@ -969,7 +970,7 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet)
 	-- Spielerlevel: alle XP zählen (auch wenn der Agent schon Max-Level ist)
 	profile.AccountXP = math.min((profile.AccountXP or 0) + amount, LevelConfig.MaxXP)
 
-	local coins = reason ~= "Admin" and math.floor(amount * Cosmetics.CoinsPerXP) or 0
+	local coins = (reason ~= "Admin" and not noCoins) and math.floor(amount * Cosmetics.CoinsPerXP) or 0
 	if RobuxConfig.Has(player, "VIP") then
 		coins *= 2 -- Gamepass VIP: doppelte Münzen
 	end
