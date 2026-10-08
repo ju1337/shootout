@@ -10,6 +10,7 @@ local HttpService = game:GetService("HttpService")
 local LevelConfig = require(script.Parent.LevelConfig)
 local MasteryConfig = require(script.Parent.MasteryConfig)
 local RankConfig = require(script.Parent.RankConfig)
+local ExtLevelConfig = require(script.Parent.ExtLevelConfig)
 
 local TitleConfig = {}
 
@@ -61,6 +62,12 @@ TitleConfig.List = {
 	{ Id = "Arsenal", Name = "Arsenal", Text = "Gold-Tarnung auf allen Waffen", Mastery = "Gold",
 		Goal = #MasteryConfig.Weapons, Color = Color3.fromRGB(255, 196, 52) },
 }
+
+-- Titel der offenen Welt (Extinction-Level, ExtLevelConfig)
+for _, title in ExtLevelConfig.Titles do
+	table.insert(TitleConfig.List, { Id = title.Id, Name = title.Name, Text = "Extinction-Level " .. title.Level,
+		Stat = ExtLevelConfig.Stat, Goal = ExtLevelConfig.TotalFor(title.Level), Color = title.Color })
+end
 
 local byId = {}
 for _, title in TitleConfig.List do

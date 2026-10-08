@@ -24,6 +24,7 @@ local ZombieService = require(script.Parent.ZombieService)
 local ActivityService = require(script.Parent.ActivityService)
 
 local MissionService = {}
+MissionService.OnComplete = {} -- Rückrufe function(player, def) nach jedem erledigten Auftrag (z.B. Extinction-EP)
 
 local M = ExtinctionConfig.Missions
 local random = Random.new()
@@ -79,6 +80,9 @@ local function complete(player, state, index)
 	Remotes.Notify:FireClient(player, "Banner", { Caption = "Auftrag", Title = "AUFTRAG ERLEDIGT",
 		Sub = mission.Text .. " · +" .. def.Coins .. " Münzen", Style = "Good" })
 	table.remove(state.Missions, index)
+	for _, callback in MissionService.OnComplete do
+		task.spawn(callback, player, def)
+	end
 	local fresh = newMission(state)
 	if fresh then
 		table.insert(state.Missions, fresh)

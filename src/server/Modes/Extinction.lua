@@ -25,6 +25,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local DayCycle = require(Shared.DayCycle)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local ProgressService = require(ServerShared.ProgressService)
 local InventoryService = require(ServerShared.InventoryService)
@@ -41,6 +42,7 @@ local ExtMarketService = require(ServerShared.ExtMarketService)
 local VehicleService = require(ServerShared.VehicleService)
 local ConvoyService = require(ServerShared.ConvoyService)
 local HideoutService = require(ServerShared.HideoutService)
+local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
@@ -511,6 +513,9 @@ function Extinction.Init(modeManager)
 	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Überlebende, Orte, Nacht ...)
 	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })
 
+	-- Extinction-Level: EP für Zombies, Spieler, Bots, Aktivitäten, Lootdrops, Konvoi und Aufträge
+	ExtLevelService.Init({ RedzoneAt = RedzoneService.At })
+
 	-- Fahrzeuge (Taste spawnt, K packt ein); Tod oder Verlassen: Fahrzeug weg
 	VehicleService.Init({ InSafeZone = Extinction.InSafeZone })
 	table.insert(Extinction.OnDeath, function(player)
@@ -549,6 +554,7 @@ function Extinction.Init(modeManager)
 			if members[player] then
 				ProgressService.AddCoins(player, coins, text)
 				InventoryService.Status(player, "+" .. coins .. " Münzen: " .. text, true)
+				ExtLevelService.Add(player, ExtLevelConfig.Rewards.Convoy, "Konvoi")
 			end
 		end,
 	})
@@ -622,6 +628,7 @@ function Extinction.AddPlayer(player)
 	player:SetAttribute("ModeText", "")
 	InventoryService.Enter(player)
 	HideoutService.Publish(player) -- vor dem Spawn: Feldbett zählt schon beim ersten Leben
+	ExtLevelService.Publish(player)
 	MissionService.Join(player)
 	spawnPlayer(player)
 end
@@ -661,6 +668,7 @@ end
 function Extinction.OnKill(killer, victim)
 	if victim and victim ~= killer and members[killer] then
 		ProgressService.AddCoins(killer, ExtinctionConfig.PlayerKillCoins, "Spieler erledigt")
+		ExtLevelService.Add(killer, ExtLevelConfig.Rewards.PlayerKill, "Spieler")
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
 		RedzoneBoard.Record(killer, redzoneOf(victim) or redzoneOf(killer))
 	end
@@ -761,6 +769,7 @@ local function botDied(bot)
 			local coins = ExtinctionConfig.Bots.KillCoins
 			ProgressService.AddCoins(killer, coins, "Bot erledigt")
 			InventoryService.Status(killer, "+" .. coins .. " Münzen für " .. bot.Name, true)
+			ExtLevelService.Add(killer, ExtLevelConfig.Rewards.BotKill, "Bot")
 			RedzoneBoard.Record(killer, zone or redzoneOf(killer))
 		end
 	end

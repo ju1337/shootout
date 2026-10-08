@@ -36,6 +36,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
+local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local GunModels = require(Shared.GunModels)
 local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
@@ -402,6 +403,7 @@ end
 -- ---------- HUD ----------
 
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
+local levelText, levelFill, xpPopup, xpPopupId
 local shieldPill, shieldText
 local markerHolder, vignette, placeLabel, placeSub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
@@ -509,6 +511,20 @@ local function buildHud()
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -30), Size = UDim2.fromOffset(160, 14),
 		Text = "MÜNZEN", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, root)
+
+	-- Extinction-Level rechts neben der Hotbar: Level, EP-Balken, kurz "+N EP" bei jedem Gewinn
+	local levelBox = make("Frame", { Name = "ExtLevel", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0.5, barWidth / 2 + 14, 1, -30),
+		Size = UDim2.fromOffset(170, 36), BackgroundTransparency = 1 }, root)
+	levelText = label({ Name = "Level", Size = UDim2.new(1, 0, 0, 22), Text = "LEVEL 1", TextSize = 20, Font = F.Display,
+		TextColor3 = C.Text }, levelBox)
+	local track = make("Frame", { Name = "Track", Position = UDim2.fromOffset(0, 26), Size = UDim2.new(1, 0, 0, 4),
+		BackgroundColor3 = C.Card, BorderSizePixel = 0 }, levelBox)
+	UITheme.Corner(track, 2)
+	levelFill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, track)
+	UITheme.Corner(levelFill, 2)
+	xpPopup = label({ Name = "XPPopup", Position = UDim2.fromOffset(0, -20), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15,
+		Font = F.Bold, TextColor3 = C.Primary, Visible = false }, levelBox)
+	UITheme.Outline(xpPopup)
 	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(900, 16),
 		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 
@@ -2602,8 +2618,29 @@ function ExtinctionClient.Init()
 			end)
 		elseif kind == "UseEnd" then
 			useBar.Visible = false
+		elseif kind == "ExtXP" and xpPopup then
+			xpPopupId = (xpPopupId or 0) + 1
+			local id = xpPopupId
+			xpPopup.Text = "+" .. tostring(a) .. " EP" .. (b and ("  ·  " .. upper(tostring(b))) or "")
+			xpPopup.Visible = true
+			task.delay(1.6, function()
+				if xpPopupId == id then
+					xpPopup.Visible = false
+				end
+			end)
 		end
 	end)
+	-- Extinction-Level und EP-Balken
+	local function updateLevel()
+		if not levelText then
+			return
+		end
+		local level, into, need = ExtLevelConfig.FromXP(player:GetAttribute("ExtXP") or 0)
+		levelText.Text = "LEVEL " .. level
+		levelFill.Size = UDim2.fromScale(need > 0 and into / need or 1, 1)
+	end
+	player:GetAttributeChangedSignal("ExtXP"):Connect(updateLevel)
+	updateLevel()
 	player.CharacterAdded:Connect(function(character)
 		useBar.Visible = false
 		closeWindow()
