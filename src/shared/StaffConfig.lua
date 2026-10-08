@@ -27,6 +27,10 @@ StaffConfig.Ranks = {
 	{ Id = "VIP", Name = "VIP", Icon = "⭐", Color = Color3.fromRGB(255, 210, 74), Power = 10 },
 }
 
+-- Staff-Chat (eigener Kanal mit Reiter "STAFF", Befehl /s): alle Ränge ab dieser Stärke (Helper und höher)
+StaffConfig.ChatPower = 40
+StaffConfig.ChatChannel = "Staff"
+
 -- Feste Ränge: [Roblox-UserId] = Rang-Id, z.B. [12345678] = "Mod"
 StaffConfig.Members = {
 }

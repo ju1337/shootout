@@ -2,10 +2,12 @@
 -- Setzt beim Beitreten den Team-Rang (StaffConfig) als Spieler-Attribut "StaffRank", dazu "IsAdmin" (ganzes
 -- Admin-Panel) und "IsMod" (nur Moderation im Admin-Panel). Im Spiel vergebene Ränge liegen im DataStore
 -- "StaffRanks_v1" (Schlüssel = UserId); StaffService.Assign ändert sie (Rechte prüft AdminService).
+-- Staff-Chat: eigener TextChannel "Staff" (Reiter im Chatfenster), Mitglieder = Ränge ab StaffConfig.ChatPower.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local DataStoreService = game:GetService("DataStoreService")
+local TextChatService = game:GetService("TextChatService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StaffConfig = require(ReplicatedStorage:WaitForChild("Shared").StaffConfig)
@@ -52,6 +54,40 @@ local function ownerRank(player)
 	return nil
 end
 
+-- Kanal des Staff-Chats (einmal anlegen)
+local channel
+local function staffChannel()
+	if not channel then
+		local folder = TextChatService:FindFirstChild("TextChannels") or TextChatService:WaitForChild("TextChannels", 10)
+		if not folder then
+			return nil
+		end
+		channel = folder:FindFirstChild(StaffConfig.ChatChannel) or Instance.new("TextChannel")
+		channel.Name = StaffConfig.ChatChannel
+		channel.Parent = folder
+	end
+	return channel
+end
+
+-- Spieler in den Staff-Chat aufnehmen bzw. entfernen
+local function setChatMember(player, member)
+	local c = staffChannel()
+	if not c then
+		return
+	end
+	local source
+	for _, child in c:GetChildren() do
+		if child:IsA("TextSource") and child.UserId == player.UserId then
+			source = child
+		end
+	end
+	if member and not source then
+		pcall(c.AddUserAsync, c, player.UserId)
+	elseif not member and source then
+		source:Destroy()
+	end
+end
+
 local function apply(player)
 	if not player.Parent then
 		return
@@ -71,6 +107,7 @@ local function apply(player)
 	local admin = (rank and rank.Admin) or table.find(StaffService.AdminIds, player.UserId) ~= nil
 	player:SetAttribute("IsAdmin", admin == true)
 	player:SetAttribute("IsMod", (not admin and rank and rank.Kick) == true)
+	task.spawn(setChatMember, player, rank ~= nil and rank.Power >= StaffConfig.ChatPower)
 end
 
 local function load(player)
@@ -133,6 +170,11 @@ function StaffService.StoredPower(userId)
 end
 
 function StaffService.Init()
+	-- Reiter im Chatfenster, damit der Staff-Chat einen eigenen Tab hat
+	pcall(function()
+		TextChatService:WaitForChild("ChannelTabsConfiguration", 10).Enabled = true
+	end)
+	task.spawn(staffChannel)
 	local function added(player)
 		load(player)
 		player:GetAttributeChangedSignal("Pass_VIP"):Connect(function()
