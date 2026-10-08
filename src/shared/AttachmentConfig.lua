@@ -61,7 +61,7 @@ AttachmentConfig.List = {
 	{ Id = "DrumMag", Tier = 4, Slot = "Magazine", Name = "Trommelmagazin", Description = "+60 % Magazin, langsameres Nachladen",
 		Price = 1200, Effects = { Mag = 1.6, Reload = 1.3 }, Pros = { "+60 % Magazin" }, Cons = { "+30 % Nachladezeit" } },
 	-- Visier (nur lange Waffen mit fertigem 3D-Modell; Modell in Assets.Attachments.HoloSight)
-	{ Id = "HoloSight", Tier = 3, Slot = "Optic", Name = "Holo-Visier", Description = "Klares Zielbild mit Leuchtring",
+	{ Id = "HoloSight", Tier = 3, Slot = "Optic", Name = "Holo-Visier", Description = "Klares Zielbild mit Leuchtpunkt",
 		Price = 900, Effects = { Spread = 0.95 }, Pros = { "Klares Zielbild", "−5 % Streuung" }, Cons = {} },
 }
 
