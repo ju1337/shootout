@@ -380,7 +380,14 @@ function ExtinctionMap.Set(open)
 	end
 	gui.Enabled = open == true
 	if gui.Enabled then
+		-- Maus frei, solange die Karte offen ist (direkt nach der Kamera, die sie sonst wieder sperrt)
+		RunService:BindToRenderStep("ExtinctionMapMouse", Enum.RenderPriority.Camera.Value + 1, function()
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+			UserInputService.MouseIconEnabled = true
+		end)
 		update()
+	else
+		RunService:UnbindFromRenderStep("ExtinctionMapMouse")
 	end
 end
 
