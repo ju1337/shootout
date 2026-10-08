@@ -415,7 +415,12 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 	view.Stroke.Enabled = isSelected or isEquipped
 	view.Stroke.Color = isSelected and Inv.MENU_RED or SAFE
 	view.Frame.BackgroundColor3 = isEquipped and Color3.fromRGB(22, 36, 26) or Inv.TILE
-	view.Frame.BackgroundTransparency = config and 0.28 or 0.5
+	-- Hotbar im HUD liegt direkt über der Spielwelt: durchsichtiger als im Menü
+	if view.Container == "Hotbar" then
+		view.Frame.BackgroundTransparency = config and 0.5 or 0.7
+	else
+		view.Frame.BackgroundTransparency = config and 0.28 or 0.5
+	end
 	-- Filter im Inventar: nicht passende Items abgedunkelt
 	view.Dim.Visible = config ~= nil and Inv.filterKinds ~= nil and view.Container ~= "Hotbar" and not Inv.filterKinds[config.Kind]
 end
@@ -614,19 +619,15 @@ local function buildHud()
 		markerRows[i] = { Row = row, Arrow = arrow, Text = text }
 	end
 
-	-- unten: Hotbar im Stil der Schnellleiste im Inventar: Kacheln breiter als hoch (mit Namen) auf einer Glasfläche wie das Menü
+	-- unten: Hotbar im Stil der Schnellleiste im Inventar: Kacheln breiter als hoch (mit Namen), etwas durchsichtiger (paintSlot)
 	-- Touch: schmalere Kacheln ohne Namen, sonst reicht die Leiste bis unter die Knöpfe rechts (WAFFE)
-	local cell, cellH, gap, pad = 96, 58, 8, 6
+	local cell, cellH, gap = 96, 58, 8
 	if InputActions.Device() == "Touch" then
 		cell = 64
 	end
-	local barWidth = HOTBAR * cell + (HOTBAR - 1) * gap + 2 * pad
-	local back = make("Frame", { Name = "HotbarBack", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24),
-		Size = UDim2.fromOffset(barWidth, cellH + 2 * pad), BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.42,
-		BorderSizePixel = 0 }, root)
-	UITheme.Corner(back, 4)
-	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -24 - pad),
-		Size = UDim2.fromOffset(barWidth - 2 * pad, cellH), BackgroundTransparency = 1 }, root)
+	local barWidth = HOTBAR * cell + (HOTBAR - 1) * gap
+	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
+		Size = UDim2.fromOffset(barWidth, cellH), BackgroundTransparency = 1 }, root)
 	for slot = 1, HOTBAR do
 		local view = slotButton(bar, "Hotbar", slot, UDim2.fromOffset(cell, cellH),
 			UDim2.fromOffset((slot - 1) * (cell + gap), 0), 2, tostring(slot))
