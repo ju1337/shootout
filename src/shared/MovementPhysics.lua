@@ -7,12 +7,13 @@
 local P = {}
 
 -- ---------- Tempo ----------
+P.SpeedScale = 1.15   -- alle Lauftempi (Agent-Grundtempo × das): flotter als der Roblox-Standard 16
 P.SprintFactor = 1.5
 P.CrouchFactor = 0.5
 P.AimFactor = 0.6
-P.SprintForward = 0.5 -- Sprint nur nach vorn: Eingabe höchstens 60° neben der Blickrichtung (schräg vorn geht noch)
-P.AccelUp = 34      -- Studs/s² beim Schneller-Werden (Gehen -> Sprint in gut 0,2 s: man spürt das Anlaufen)
-P.AccelDown = 80    -- Studs/s² beim Langsamer-Werden (Zielen, Ducken, Sprint loslassen, Schwung nach dem Landen)
+P.SprintForward = -0.3 -- Sprint vorwärts und seitwärts, nur nicht rückwärts (Eingabe mehr als gut 107° neben dem Blick)
+P.AccelUp = 75      -- Studs/s² beim Schneller-Werden (Gehen -> Sprint in gut 0,1 s: direkt, aber nicht ruckartig)
+P.AccelDown = 120   -- Studs/s² beim Langsamer-Werden (Zielen, Ducken, Sprint loslassen, Schwung nach dem Landen)
 
 -- Laufgeschwindigkeit (WalkSpeed) einen Schritt Richtung Ziel
 function P.Approach(current, target, dt)
@@ -92,12 +93,14 @@ P.AirMomentumMax = 46
 P.Coyote = 0.12          -- Sprung kurz nach dem Verlassen einer Kante zählt noch
 P.JumpBuffer = 0.15      -- Sprung kurz vor dem Landen wird beim Landen ausgeführt
 P.JumpHeight = 4.5       -- Sprunghöhe in Studs (Roblox-Standard 7,2 ist fast anderthalb Körper hoch)
+P.FallGravity = 1.6      -- beim Fallen zieht die Schwerkraft so viel stärker: knackiger Sprung statt Schweben, die
+                         -- Sprunghöhe bleibt (nach oben normale Schwerkraft)
 
 -- Lenken in der Luft: die Laufrichtung (MoveDirection, Länge 0..1) folgt der Eingabe nur mit AirAccel pro Sekunde,
 -- ohne Eingabe läuft sie langsam aus (AirRelease). Ein Sprung trägt so seinen Schwung, statt mitten in der Luft auf der
 -- Stelle umzudrehen (Roblox lenkt in der Luft sonst genauso hart wie am Boden).
-P.AirAccel = 4.5   -- volle Umkehr in gut 0,4 s, 90° in gut 0,3 s
-P.AirRelease = 1.5 -- Tasten los: der Schwung trägt noch ein Stück weiter
+P.AirAccel = 8     -- volle Umkehr in 0,25 s, 90° in knapp 0,2 s
+P.AirRelease = 3   -- Tasten los: der Schwung trägt noch ein Stück weiter
 
 function P.AirSteer(current, input, dt)
 	local target = Vector3.new(input.X, 0, input.Z)
@@ -203,7 +206,7 @@ function P.MantlePoint(start, target, t)
 end
 
 -- ---------- Kamera ----------
-P.StrafeRoll = 1.6      -- Grad bei vollem Seitwärtslaufen
+P.StrafeRoll = 0.7      -- Grad bei vollem Seitwärtslaufen (dezent, sonst schwankt das Bild beim Strafen)
 P.SlideRoll = 5         -- Grad beim Rutschen
 P.LandDipMax = 0.9      -- Studs, so tief taucht die Kamera bei harten Landungen ein
 P.HardLanding = 85      -- ab dieser Fallgeschwindigkeit bremst die Landung kurz (Studs/s)

@@ -819,6 +819,7 @@ ClassInit.BasePart = function(self)
 	props.CanTouch = true
 	props.Massless = false
 	props.AssemblyLinearVelocity = Vector3.zero
+	props.AssemblyMass = 1 -- vereinfacht (z.B. für VectorForce-Rechnungen)
 	props.AssemblyAngularVelocity = Vector3.zero
 	props.Color = Color3.new(0.64, 0.64, 0.64)
 end

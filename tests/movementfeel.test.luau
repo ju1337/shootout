@@ -25,13 +25,13 @@ while speed < 24 - 1e-6 and t < 2 do
 	speed = P.Approach(speed, 24, DT)
 	t += DT
 end
-check(t > 0.15 and t < 0.35, "Gehen -> Sprint läuft in 0,15-0,35 s an (" .. t .. ")")
+check(t > 0.05 and t < 0.2, "Gehen -> Sprint läuft in 0,05-0,2 s an (" .. t .. ")")
 speed, t = 24, 0
 while speed > 16 + 1e-6 and t < 2 do
 	speed = P.Approach(speed, 16, DT)
 	t += DT
 end
-check(t < 0.15, "Abbremsen schneller als Anlaufen (" .. t .. ")")
+check(t < 0.1, "Abbremsen zügig (" .. t .. ")")
 
 -- Rutschen: flach, bergab, bergauf
 local function slideRun(startSpeed, slope, crouch)
@@ -155,14 +155,15 @@ while air.X > -0.99 and airT < 2 do
 	air = P.AirSteer(air, back, DT)
 	airT += DT
 end
-check(airT > 0.3 and airT < 0.6, "in der Luft umdrehen dauert 0,3-0,6 s (" .. airT .. ")")
-check(P.AirSteer(fwd, side, 0.1).X > 0.5, "seitlich lenken in der Luft nur nach und nach")
-check(P.AirSteer(fwd, Vector3.zero, 0.2).X > 0.6, "Tasten los in der Luft: Schwung trägt weiter")
-check(P.AirSteer(Vector3.zero, fwd, 0.1).Magnitude < 0.5, "aus dem Stand gesprungen: kein voller Schub in der Luft")
--- Sprint nur nach vorn (schräg vorn geht noch)
+check(airT > 0.15 and airT < 0.4, "in der Luft umdrehen dauert 0,15-0,4 s (" .. airT .. ")")
+check(P.AirSteer(fwd, side, 0.05).X > 0.5, "seitlich lenken in der Luft nur nach und nach")
+check(P.AirSteer(fwd, Vector3.zero, 0.1).X > 0.6, "Tasten los in der Luft: Schwung trägt weiter")
+check(P.AirSteer(Vector3.zero, fwd, 0.05).Magnitude < 0.5, "aus dem Stand gesprungen: kein voller Schub in der Luft")
+-- Sprint vorwärts und seitwärts, nicht rückwärts
 check(P.SprintAllowed(fwd, fwd), "Sprint geradeaus")
 check(P.SprintAllowed((fwd + side).Unit, fwd), "Sprint schräg vorn")
-check(not P.SprintAllowed(side, fwd), "kein Sprint seitwärts")
+check(P.SprintAllowed(side, fwd), "Sprint seitwärts")
+check(not P.SprintAllowed((back + side).Unit, fwd), "kein Sprint schräg rückwärts")
 check(not P.SprintAllowed(back, fwd), "kein Sprint rückwärts")
 check(P.SprintAllowed(Vector3.zero, fwd), "im Stand blockiert nichts")
 
@@ -240,6 +241,8 @@ local character = bob.Character
 local humanoid = character:FindFirstChildOfClass("Humanoid")
 local root = character:FindFirstChild("HumanoidRootPart")
 local X = Vector3.new(1, 0, 0)
+local WALK = 16 * P.SpeedScale -- Gehtempo (Standard-Agent)
+local RUN = WALK * P.SprintFactor
 workspace.CurrentCamera.CFrame = CFrame.lookAt(Vector3.new(0, 5, 0), Vector3.new(1, 5, 0)) -- Blick nach +X (Sprint nach vorn)
 local function at(position, velocity)
 	root.CFrame = CFrame.new(position)
@@ -256,29 +259,29 @@ at(Vector3.new(0, 3, -40))
 frames(0.5)
 
 -- Sprint: läuft weich an
-check(near(humanoid.WalkSpeed, 16, 0.01), "Gehtempo am Anfang (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, WALK, 0.01), "Gehtempo am Anfang (" .. humanoid.WalkSpeed .. ")")
 humanoid.MoveDirection = X
 InputActions.Trigger("Sprint", true)
 frames(1 / 60)
-check(humanoid.WalkSpeed > 16 and humanoid.WalkSpeed < 23, "Sprint springt nicht sofort auf volles Tempo (" .. humanoid.WalkSpeed .. ")")
+check(humanoid.WalkSpeed > WALK and humanoid.WalkSpeed < RUN - 1, "Sprint springt nicht sofort auf volles Tempo (" .. humanoid.WalkSpeed .. ")")
 frames(0.5)
-check(near(humanoid.WalkSpeed, 24, 0.01), "nach 0,5 s volles Sprinttempo (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, RUN, 0.01), "nach 0,5 s volles Sprinttempo (" .. humanoid.WalkSpeed .. ")")
 check(Movement.IsSprinting(), "sprintet")
 
--- seitwärts kein Sprint, wieder nach vorn: Sprint geht weiter (Taste gehalten)
-humanoid.MoveDirection = Vector3.new(0, 0, 1)
+-- rückwärts kein Sprint, wieder nach vorn: Sprint geht weiter (Taste gehalten)
+humanoid.MoveDirection = -X
 frames(0.3)
-check(not Movement.IsSprinting() and near(humanoid.WalkSpeed, 16, 0.01), "seitwärts kein Sprint (" .. humanoid.WalkSpeed .. ")")
+check(not Movement.IsSprinting() and near(humanoid.WalkSpeed, WALK, 0.01), "rückwärts kein Sprint (" .. humanoid.WalkSpeed .. ")")
 humanoid.MoveDirection = X
 frames(0.5)
-check(Movement.IsSprinting() and near(humanoid.WalkSpeed, 24, 0.01), "nach vorn wieder Sprint")
+check(Movement.IsSprinting() and near(humanoid.WalkSpeed, RUN, 0.01), "nach vorn wieder Sprint")
 
 -- Rutschen: Schub, läuft aus, Tippen reicht
-root.AssemblyLinearVelocity = X * 24
+root.AssemblyLinearVelocity = X * RUN
 local fovBefore = workspace.CurrentCamera.FieldOfView
 InputActions.Trigger("Crouch", true)
 check(Movement.IsSliding(), "Ducken im Sprint = Rutschen")
-check(near(humanoid.WalkSpeed, 24 + P.SlideBoost, 0.01), "Rutschen mit Schub (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, RUN + P.SlideBoost, 0.01), "Rutschen mit Schub (" .. humanoid.WalkSpeed .. ")")
 InputActions.Trigger("Crouch", false)
 -- Eingabe seitwärts (wie vom ControlModule): die Rutschrichtung dreht nur langsam mit, der Humanoid wird in die
 -- Rutschrichtung geschoben, nicht in die Eingabe
@@ -287,7 +290,7 @@ frames(1 / 60)
 local steered = humanoid.MoveDirection
 check(steered.X > 0.99 and steered.Z > 0.01, "Rutschen lenkt langsam zur Eingabe (" .. tostring(steered) .. ")")
 frames(0.3)
-check(Movement.IsSliding() and humanoid.WalkSpeed < 24 + P.SlideBoost, "Tippen reicht, das Rutschen läuft aus")
+check(Movement.IsSliding() and humanoid.WalkSpeed < RUN + P.SlideBoost, "Tippen reicht, das Rutschen läuft aus")
 check((humanoid.MoveDirection - steered).Magnitude < 1e-6, "ohne neue Eingabe bleibt die Rutschrichtung")
 check(workspace.CurrentCamera.FieldOfView > fovBefore, "Sichtfeld weitet sich beim Rutschen")
 frames(1.6)
@@ -296,7 +299,7 @@ check(not Movement.IsSliding(), "Rutschen endet von selbst")
 -- Rutsch-Sprung: Schwung in die Luft, hält in der Luft, baut nach dem Landen ab
 frames(1.5) -- Schub lädt wieder auf
 humanoid.MoveDirection = X
-root.AssemblyLinearVelocity = X * 24
+root.AssemblyLinearVelocity = X * RUN
 InputActions.Trigger("Crouch", true)
 InputActions.Trigger("Crouch", false)
 frames(0.1)
@@ -309,7 +312,7 @@ frames(0.4)
 check(humanoid.WalkSpeed > 26, "in der Luft hält der Schwung (" .. humanoid.WalkSpeed .. ")")
 humanoid.FloorMaterial = Enum.Material.Plastic
 frames(0.5)
-check(near(humanoid.WalkSpeed, 24, 0.01), "nach dem Landen zurück auf Sprinttempo (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, RUN, 0.01), "nach dem Landen zurück auf Sprinttempo (" .. humanoid.WalkSpeed .. ")")
 
 -- Absprung im Sprint, in der Luft Sprint loslassen: das Tempo bleibt bis zur Landung
 humanoid.FloorMaterial = Enum.Material.Air
@@ -319,18 +322,18 @@ frames(0.4)
 check(humanoid.WalkSpeed > 21, "in der Luft bremst Sprint-Loslassen kaum (" .. humanoid.WalkSpeed .. ")")
 humanoid.FloorMaterial = Enum.Material.Plastic
 frames(0.3)
-check(near(humanoid.WalkSpeed, 16, 0.01), "nach der Landung Gehtempo (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, WALK, 0.01), "nach der Landung Gehtempo (" .. humanoid.WalkSpeed .. ")")
 InputActions.Trigger("Sprint", true)
 frames(0.5)
 -- Rutsch-Sprung ohne Absprung (z.B. Decke über dem Kopf): der Schwung verfällt am Boden
 frames(1.5)
-root.AssemblyLinearVelocity = X * 24
+root.AssemblyLinearVelocity = X * RUN
 humanoid.MoveDirection = X
 InputActions.Trigger("Crouch", true)
 InputActions.Trigger("Crouch", false)
 frames(0.1)
 jump()
-check(Movement.State().AirMomentum > 24, "Schwung gemerkt")
+check(Movement.State().AirMomentum > RUN, "Schwung gemerkt")
 frames(0.5)
 check(Movement.State().AirMomentum == 0, "ohne Absprung verfällt der Schwung")
 frames(0.5)
@@ -367,15 +370,17 @@ humanoid.Jump = false
 humanoid.FloorMaterial = Enum.Material.Air
 root.AssemblyLinearVelocity = Vector3.new(0, -110, 0)
 frames(0.1)
-root.AssemblyLinearVelocity = X * 24
+check(root:FindFirstChild("FallGravity") and root.FallGravity.Force.Y < 0, "beim Fallen zieht die Schwerkraft stärker")
+root.AssemblyLinearVelocity = X * RUN
 humanoid.FloorMaterial = Enum.Material.Plastic
 frames(0.2)
-check(humanoid.WalkSpeed < 24 * P.HardLandingSlow + 0.5, "harte Landung bremst (" .. humanoid.WalkSpeed .. ")")
+check(root.FallGravity.Force.Y == 0, "am Boden normale Schwerkraft")
+check(humanoid.WalkSpeed < RUN * P.HardLandingSlow + 0.5, "harte Landung bremst (" .. humanoid.WalkSpeed .. ")")
 frames(0.6)
-check(near(humanoid.WalkSpeed, 24, 0.01), "danach wieder volles Tempo")
+check(near(humanoid.WalkSpeed, RUN, 0.01), "danach wieder volles Tempo")
 
 -- Vault: im Lauf über die dünne Mauer, Schwung bleibt
-at(Vector3.new(0, 3, 0), X * 24)
+at(Vector3.new(0, 3, 0), X * RUN)
 humanoid.MoveDirection = X
 frames(1 / 60)
 jump()
@@ -449,7 +454,7 @@ check(humanoid.UseJumpPower == false and humanoid.JumpHeight == P.JumpHeight, "S
 
 -- Kamera-Neigung: beim Seitwärtslaufen ja, bei einer geskripteten Kamera (Agentenwahl, Zuschauen) nie
 local camera = workspace.CurrentCamera
-at(Vector3.new(0, 3, -80), camera.CFrame.RightVector * 24)
+at(Vector3.new(0, 3, -80), camera.CFrame.RightVector * RUN)
 humanoid.MoveDirection = camera.CFrame.RightVector
 local before = camera.CFrame
 frames(0.3)

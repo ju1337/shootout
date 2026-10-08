@@ -13,7 +13,7 @@ local RunService = game:GetService("RunService")
 local MovementGuard = {}
 
 local CHECK_INTERVAL = 0.2 -- so oft wird geprüft (Sekunden)
--- Schnellste legale Bewegung waagerecht: Sprint mit Tempo-Fähigkeit und Runner ca. 47 Studs/s,
+-- Schnellste legale Bewegung waagerecht: Sprint mit Tempo-Fähigkeit und Runner ca. 54 Studs/s,
 -- Fallschirmsprung 55, Rutschen bis 50 (bergab, MovementPhysics.SlideMax), Schwung in der Luft bis 46,
 -- Vault ca. 24, Sprint-Stoß 90 (nur 0,25 s)
 local FLAT_SPEED = 62      -- erlaubtes Dauertempo waagerecht (Studs/s)

@@ -2,13 +2,14 @@
 -- Bewegung und Kamera des eigenen Charakters. Die Rechnungen stehen in MovementPhysics, hier nur Ablauf und Roblox.
 --   * Tempo: Grundtempo vom Agenten (Fähigkeiten können es per "SpeedMultiplier" erhöhen), Sprinten (Shift), Ducken
 --     (STRG oder C, gedrückt halten), Zielen. Das Tempo läuft weich an und ab (WalkSpeed folgt einer Rampe). Sprinten
---     nur nach vorn (schräg vorn geht noch); halten oder umschalten (Einstellung "Sprinten").
+--     nicht rückwärts; halten oder umschalten (Einstellung "Sprinten").
 --   * Rutschen: im Sprint (oder mit Schwung) ducken. Schub aus dem aktuellen Tempo, Reibung, bergab schneller und
 --     bergauf kürzer, mit der Eingabe lenkbar. Springen aus dem Rutschen nimmt den Schwung mit in die Luft, beim Landen
 --     mit gedrückter Ducken-Taste geht es direkt weiter (Schub lädt erst wieder auf: kein Dauer-Tempo).
 --   * Springen: Coyote-Time (kurz nach dem Verlassen einer Kante geht der Sprung noch) und Sprungpuffer (kurz vor dem
 --     Landen gedrückt = Sprung beim Landen). Harte Landungen bremsen kurz und lassen die Kamera eintauchen. In der
---     Luft lenkt man nur begrenzt (der Sprung trägt seinen Schwung, kein Umdrehen auf der Stelle).
+--     Luft lenkt man nur begrenzt (der Sprung trägt seinen Schwung, kein Umdrehen auf der Stelle). Beim Fallen zieht
+--     die Schwerkraft stärker (knackiger Sprung, gleiche Höhe).
 --   * Hindernisse: Springen vor einem niedrigen, dünnen Hindernis = drüberspringen (Vault, der Schwung bleibt), vor
 --     einer höheren Kante = hochziehen. Klappt auch aus dem Sprung heraus, wenn man auf die Kante zu läuft. Auf
 --     Dächer (Teile namens "Roof") zieht man sich nie hoch: dahin geht es nur über Treppen und Leitern.
@@ -47,7 +48,7 @@ local SLIDE_AIR_TIME = 0.18    -- so lange ohne Boden, dann ist man über eine K
 local JUMP_INTENT = 0.4        -- so lange nach dem Drücken zählt Springen für das Hochziehen aus der Luft
 local DIP_SPRING = 140         -- Federhärte des Eintauchens beim Landen
 local DIP_DAMPING = 18
-local TILT_SMOOTH = 8          -- wie schnell die Neigung nachzieht
+local TILT_SMOOTH = 14         -- wie schnell die Neigung nachzieht
 local MOMENTUM_GRACE = 0.3     -- so lange bleibt Schwung am Boden stehen, bis der Absprung kommt
 
 local normalFov = 70
@@ -68,7 +69,7 @@ local SHOULDER_DISTANCE = 9
 local SHOULDER_AIM_DISTANCE = 5.5
 local SHOULDER_WALL_MARGIN = 0.8 -- so weit bleibt die Kamera seitlich von Wänden weg
 local HEAD_HEIGHT = 1.5          -- Höhe des Kamera-Ziels über dem HumanoidRootPart (Roblox-Kamera, R15)
-local CAMERA_SMOOTH = 12         -- wie schnell Sichtfeld, Abstand und Versatz nachziehen
+local CAMERA_SMOOTH = 18         -- wie schnell Sichtfeld, Abstand und Versatz nachziehen
 local sprintBlockedUntil = 0     -- Schießen unterbricht den Sprint kurz
 local fovOverride = nil          -- z.B. Fallschirmsprung
 local targetFov = 70
@@ -100,7 +101,8 @@ local slideBlend = 0              -- 0..1 weich für Kamera-Neigung und Sichtfel
 local rawMove = Vector3.zero      -- Eingabe vom ControlModule in diesem Bild (bevor Rutschen/Luft sie überschreiben)
 local lastMoveOut = nil           -- zuletzt selbst gesetzte Laufrichtung (Rutschen, Luft)
 local airMove = nil               -- Laufrichtung in der Luft (Länge 0..1), nil = am Boden
-local sprintForward = true        -- Eingabe zeigt nach vorn (sonst kein Sprint)
+local sprintForward = true        -- Eingabe zeigt nicht nach hinten (sonst kein Sprint)
+local fallForce = nil             -- VectorForce: stärkere Schwerkraft beim Fallen (P.FallGravity)
 
 local groundParams = RaycastParams.new()
 groundParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -127,7 +129,8 @@ end
 -- Grundtempo ohne Sprint/Ducken/Zielen (Agent, Fähigkeiten, Runner, Stacheldraht)
 local function baseSpeed(character)
 	local agent = character and AgentConfig.Get(character:GetAttribute("Agent"))
-	local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * (character and character:GetAttribute("SpeedMultiplier") or 1)
+	local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * P.SpeedScale
+		* (character and character:GetAttribute("SpeedMultiplier") or 1)
 	if BuyConfig.Has(player, "Runner") then
 		speed *= BuyConfig.RunnerFactor
 	end
@@ -472,6 +475,9 @@ local function step(dt)
 		return
 	end
 	if isDropping(humanoid) or humanoid.Sit or inVehicle then
+		if fallForce then
+			fallForce.Force = Vector3.zero
+		end
 		slide, move, airMomentum = nil, nil, 0
 		walkSpeed = humanoid.WalkSpeed
 		return
@@ -491,6 +497,16 @@ local function step(dt)
 		lastGroundY = feetOf(root, humanoid)
 	else
 		fallSpeed = math.max(0, -velocity.Y)
+	end
+	-- beim Fallen stärkere Schwerkraft (nicht an Leitern, im Wasser, beim Hindernis)
+	if fallForce then
+		local state = humanoid:GetState()
+		local falling = not onGround and not move and velocity.Y < 0 and state ~= Enum.HumanoidStateType.Climbing
+			and state ~= Enum.HumanoidStateType.Swimming
+		local force = falling and Vector3.new(0, -root.AssemblyMass * workspace.Gravity * (P.FallGravity - 1), 0) or Vector3.zero
+		if fallForce.Force ~= force then
+			fallForce.Force = force
+		end
 	end
 
 	if move then
@@ -730,7 +746,7 @@ function Movement.Init()
 	end)
 	local wasBlocked = false
 	RunService.Heartbeat:Connect(function(dt)
-		-- Sprint nur nach vorn; umgeschalteter Sprint endet beim Stehenbleiben oder wenn man nicht mehr nach vorn läuft
+		-- kein Sprint rückwärts; umgeschalteter Sprint endet beim Stehenbleiben oder Rückwärtslaufen
 		local humanoid = getHumanoid()
 		local forward = humanoid == nil or P.SprintAllowed(wishMove(humanoid), workspace.CurrentCamera.CFrame.LookVector)
 		if sprintHeld and not holdSprint() and (not humanoid or wishMove(humanoid).Magnitude < 0.1 or not forward) then
@@ -943,6 +959,20 @@ function Movement.Init()
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge
 		airMove, lastMoveOut, rawMove = nil, nil, Vector3.zero
+		local root = character:WaitForChild("HumanoidRootPart", 5)
+		fallForce = nil
+		if root then
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "FallGravityAttachment"
+			attachment.Parent = root
+			fallForce = Instance.new("VectorForce")
+			fallForce.Name = "FallGravity"
+			fallForce.Attachment0 = attachment
+			fallForce.RelativeTo = Enum.ActuatorRelativeTo.World
+			fallForce.ApplyAtCenterOfMass = true
+			fallForce.Force = Vector3.zero
+			fallForce.Parent = root
+		end
 		walkSpeed = nil
 		grounded, leftGroundAt, jumpedAt, jumpRequestAt, lastGroundY = true, nil, nil, nil, nil
 		fallSpeed, slowUntil, dip, dipVelocity = 0, 0, 0, 0
