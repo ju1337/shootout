@@ -267,6 +267,7 @@ BotService.Destroy(extra)
 
 -- ---------- Admin-Panel ----------
 SIM.IsStudio = true
+require("StaffService").Init() -- setzt IsAdmin (in Studio jeder Developer)
 local AdminService = require("AdminService")
 local modules = { Extinction = Extinction }
 AdminService.Init({ GetModule = function(id)

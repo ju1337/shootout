@@ -171,7 +171,7 @@ end
 
 function StaffService.Init()
 	-- Reiter im Chatfenster, damit der Staff-Chat einen eigenen Tab hat
-	pcall(function()
+	task.spawn(pcall, function()
 		TextChatService:WaitForChild("ChannelTabsConfiguration", 10).Enabled = true
 	end)
 	task.spawn(staffChannel)
