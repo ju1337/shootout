@@ -194,6 +194,36 @@ local function connected(model, start)
 	return seen
 end
 
+-- HumanoidRootPart wie bei jedem Roblox-Charakter: genau eins und unsichtbar. Aus Blender importiert ist es oft eine
+-- sichtbare Box, und mit Rig Type R15 legt Studio oft ein zweites an. Das echte trägt das Gelenk "Root".
+local function fixRoots(model)
+	local roots = {}
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and cleanName(part.Name) == "HumanoidRootPart" then
+			table.insert(roots, part)
+		end
+	end
+	local real = roots[1]
+	for _, joint in model:GetDescendants() do
+		if joint:IsA("Motor6D") and joint.Name == "Root" and table.find(roots, joint.Part0) then
+			real = joint.Part0
+		end
+	end
+	for _, part in roots do
+		if part ~= real then
+			-- nicht löschen (darin können Bones hängen), nur umbenennen und ausblenden
+			part.Name = "ExtraRootPart"
+			part.Transparency = 1
+			part.CanCollide = false
+			part.Massless = true
+		end
+	end
+	if real then
+		real.Name = "HumanoidRootPart"
+		real.Transparency = 1
+	end
+end
+
 -- ---------- Rig (Humanoid und HumanoidRootPart – z.B. aus dem Avatar-Setup oder als StarterCharacter gebaut) ----------
 -- Bleibt komplett, wie es ist: Gelenke, gehäutete Meshes, Bones, Accessoires, Layered Clothing (Wraps), Humanoid.
 -- Das HumanoidRootPart wird an das des Spielkörpers geschweißt, die Gelenke übernehmen jedes Bild die Bewegung der
@@ -204,6 +234,7 @@ local function loadRig(rig, report)
 		table.insert(report.Errors, "Modell lässt sich nicht kopieren (Archivable ist aus)")
 		return nil
 	end
+	fixRoots(template)
 	local templateRoot = template:FindFirstChild("HumanoidRootPart", true)
 	for _, obj in template:GetDescendants() do
 		if obj:IsA("LuaSourceContainer") then
@@ -215,7 +246,6 @@ local function loadRig(rig, report)
 		table.insert(report.Errors, "Humanoid oder HumanoidRootPart lässt sich nicht kopieren (Archivable ist aus)")
 		return nil
 	end
-	templateRoot.Transparency = 1 -- wie bei jedem Roblox-Charakter (aus Blender importiert ist es oft eine sichtbare Box)
 	-- was an keinem Gelenk hängt, hängt fest am HumanoidRootPart (sonst fiele es herunter)
 	local attached = connected(template, templateRoot)
 	local visible, joints, matched = {}, 0, 0
@@ -274,9 +304,9 @@ local function loadRig(rig, report)
 	-- Als eigener Charakter (AgentModels.BuildCharacter): das Rig unverändert, nur in Spielgröße; sichtbare Teile sind
 	-- die Trefferzone
 	local character = rig:Clone()
+	fixRoots(character)
 	local characterRoot = character:FindFirstChild("HumanoidRootPart", true)
 	character.PrimaryPart = characterRoot
-	characterRoot.Transparency = 1
 	if scale ~= 1 then
 		character:ScaleTo(character:GetScale() * scale)
 	end
