@@ -64,14 +64,31 @@ Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dort
 (`Extinction.Travel`, nur aus einer Safe Zone, `ExtinctionConfig.TravelCooldown` Sekunden Pause).
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 64,
-Hof 90 × 90 Studs): befestigte Überlebenden-Höfe (Schlammboden mit Bretterwegen, Palisade mit Autowracks, Wellblech und Stacheldraht, Spieße
-und tote Infizierte davor, Wachtürme an den vorderen Ecken, MG-Stellung, Pickup, Zelte, Generator, Laternen) – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild
-zur Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
-Wasserturm. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und die Haltestelle REISEN, rechts SANI und ein
-LAGER-Container – dasselbe Lager wie im Camp), wie im Camp mindestens 30 Studs auseinander, damit sich die
-E-Aufforderungen nicht überlappen. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
-Jedes Safehouse hat seinen eigenen Zufall (`tools/extinction_world.py`), Änderungen daran würfeln den Rest der Welt nicht
-neu.
+Hof 90 × 90 Studs). **Jedes sieht anders aus** (`SAFEHOUSE_STYLES` in `tools/extinction_world.py`, je Stil eine Methode
+`_safehouse_<stil>`; `tests/maps_check.py` prüft eigenen Boden und eigene Bauteile):
+- **NORD – Gehöft**: Schlammboden mit Bretterwegen, Palisade aus Brettern, Wellblech und gestapelten Autowracks mit
+  Stacheldraht und Spießen davor, Holztor mit Torbogen, Holzhaus mit Veranda und Schornstein, Wasserturm, hölzerne
+  Wachtürme, Pickup, Zelte, Generator, rote Fahne.
+- **OST – Raststätte**: Asphalt mit Parkplätzen und abgestellten Autos, Mauer aus gestapelten bunten Containern (hochkant an
+  den Ecken, vorne mit Plattform und Scheinwerfer), Tor mit Stahlträger, rot-weißer Schranke und Betonsperren davor; flaches
+  Rasthaus mit vernagelter Glasfront, rotem Vordach und Leuchtschild RASTSTÄTTE, Tankstellen-Dach mit Zapfsäulen,
+  Preis-Mast, Wohnmobile, Getränkeautomaten, Straßenlaternen mit kaltem Licht.
+- **SÜD – Kloster**: Kopfsteinpflaster mit Steinplatten-Weg, Feldsteinmauer mit Zinnen (Lücken mit Brettern und Sandsäcken
+  geflickt), weiße Banner mit rotem Kreuz, runde Ecktürme (hinten mit Spitzdach), Steinbogen-Tor mit offenem Eisengitter
+  und Glocke, Kapelle mit Rosette, bunten Fenstern und Glockenturm mit Kreuz, Friedhof hinter Eisenzaun, Gemüsebeete,
+  Brunnen, Krankenwagen.
+- **WEST – Militärposten**: Kies mit Betonplatten, Mauer aus HESCO-Sandkörben mit NATO-Draht, Checkpoint zwischen
+  Beton-T-Wänden mit Wachhäuschen, Schranke, Nagelband und HALT-Schild; Baracke aus Wohncontainern (Schild FOB WEST) mit
+  Funkmast und Blinklicht, Stahl-Wachtürme mit Tarnnetz, Hubschrauber-Landeplatz, Armeezelte, Geländewagen unter
+  Tarnnetz, Munitionskisten.
+
+Gleich in allen: Tor mit Schild zur Zufahrtsstraße, tote Infizierte davor, Feuerstelle mit Bänken (Spawn) in der Mitte,
+Feuertonnen und Flutlicht, MG-Stellung links hinter dem Tor. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und
+die Haltestelle REISEN, rechts SANI und ein LAGER-Container – dasselbe Lager wie im Camp) an denselben Stellen, wie im Camp
+mindestens 30 Studs auseinander, damit sich die E-Aufforderungen nicht überlappen; die Planen der Händler haben die Farben
+des Stils. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
+Jedes Safehouse hat seinen eigenen Zufall, Änderungen daran würfeln den Rest der Welt nicht neu (die eigenen Schilder der
+Stile – `FRESH_SIGNS` – bleiben dafür beim Altern der Schilder außen vor).
 Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.
