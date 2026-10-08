@@ -1665,7 +1665,7 @@ local prompts = {}
 -- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
 local BUBBLE_RANGE = 180
 local BUBBLE_HEIGHT = 9.5 -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): knapp über dem Dach
-local BUBBLE_SIZE = 38    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
+local BUBBLE_SIZE = 58    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
 local BUBBLES = {
 	Stand_Weapons = { Icon = "Rifle" },
 	Stand_Items = { Icon = "Medkit" },

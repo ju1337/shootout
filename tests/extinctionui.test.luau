@@ -150,7 +150,7 @@ for name, want in BUBBLE_WANT do
 		local icon = find(bubble, "Icon_" .. want)
 		check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. want)
 		check(find(bubble, "Title") == nil and find(bubble, "Panel") == nil, name .. ": kein Titel, kein Rahmen")
-		check(bubble.Size.X.Offset <= 48 and bubble.Size.Y.Offset <= 48, name .. ": klein")
+		check(bubble.Size.X.Offset >= 48 and bubble.Size.X.Offset <= 72, name .. ": gut zu sehen, aber kein großes Schild")
 		check(bubble.StudsOffset.Y > 6 and bubble.MaxDistance >= 150 and not bubble.AlwaysOnTop,
 			name .. ": über dem Dach, von weitem sichtbar, Wände verdecken")
 	end

@@ -2228,11 +2228,39 @@ class World:
             cx = rng.uniform(-w / 3, w / 3)
             box("Decor", "Chimney", (1.8, 4.5, 1.8), (cx, top + rise * 0.75 + 1.6, rng.uniform(0.5, 2.5)), (124, 84, 66), "Brick")
             box("Decor", "ChimneyCap", (2.2, 0.4, 2.2), (cx, top + rise * 0.75 + 4, rng.uniform(0.5, 2.5)), (90, 88, 86), "Concrete")
+        self.town_grime(f, yaw, box, w, top, fz, n, step, gf, fh, floors, shop is not None or garage)
         side = rng.choice((-1, 1))
         box("Decor", "Downpipe", (0.4, top, 0.4), (side * (w / 2 - 0.5), top / 2, fz - 0.35), (92, 96, 100), "Metal")
         if rng.random() < 0.15:
             box("Decor", "Dish", (1.6, 1.6, 0.3), (-side * (w / 2 - 2), top - 3, fz - 0.4), (200, 200, 196), "Metal",
                 extra=(15, 20, 0))
+
+    def town_grime(self, f, yaw, box, w, top, fz, n, step, gf, fh, floors, shop):
+        """Etwas verranzt, nicht kaputt: Schmutz über dem Sockel, Laufspuren unter Fensterbänken und Traufe, abgeplatzter
+        Putz (Ziegel schaut heraus), Ruß, manchmal Graffiti unten."""
+        rng = self.rng
+        thin = {"CanCollide": False, "CanQuery": False}
+        box("Decor", "Dirt", (w + 0.1, 1.8, 0.1), (0, 2.4, fz - 0.31), (64, 56, 46), "SmoothPlastic",
+            props=dict(thin, Transparency=0.55))
+        for _ in range(rng.randint(1, 3)):  # Laufspuren
+            c = -w / 2 + step * (rng.randrange(n) + 0.5)
+            k = rng.randint(1, max(1, floors - 1))
+            length = rng.uniform(2.5, 5.5)
+            box("Decor", "Streak", (rng.uniform(0.6, 1.4), length, 0.1), (c + rng.uniform(-0.8, 0.8), gf + (k - 1) * fh + 2.1 - length / 2,
+                fz - 0.29), (58, 54, 48), "SmoothPlastic", props=dict(thin, Transparency=0.6))
+        for _ in range(rng.randint(1, 2)):
+            length = rng.uniform(2, 4)
+            box("Decor", "Streak", (rng.uniform(1, 2.2), length, 0.1), (rng.uniform(-w / 2 + 1.5, w / 2 - 1.5), top - 0.6 - length / 2,
+                fz - 0.29), (58, 54, 48), "SmoothPlastic", props=dict(thin, Transparency=0.65))
+        if rng.random() < 0.6:  # abgeplatzter Putz
+            box("Decor", "PlasterGone", (rng.uniform(1.6, 3.4), rng.uniform(1.2, 2.4), 0.12),
+                (rng.uniform(-w / 2 + 2, w / 2 - 2), rng.uniform(gf - 3, top - 2), fz - 0.3), (128, 84, 66), "Brick", props=thin)
+        if rng.random() < 0.3:
+            box("Decor", "Soot", (rng.uniform(2.4, 3.6), rng.uniform(2.5, 4), 0.1), (rng.uniform(-w / 3, w / 3), gf + rng.uniform(1, 4),
+                fz - 0.3), (30, 28, 26), "SmoothPlastic", props=dict(thin, Transparency=0.45))
+        if not shop and rng.random() < 0.3:
+            self.graffiti(self.b, rng.choice(("WIR LEBEN NOCH", "PHOENIX", "KEIN WASSER", "X", "HILFE KOMMT")),
+                          f(rng.uniform(-w / 4, w / 4), 3.2, fz - 0.4), (min(8, w - 4), 1.8, 0.05), yaw)
 
     def town_window(self, box, c, y0, fz, frame_c, shutter_c, trim):
         """Fenster im Obergeschoss: Rahmen, Glas, Sprossen, Bank; oft Läden, manchmal vernagelt oder ein Blumenkasten."""
@@ -2249,13 +2277,16 @@ class World:
             box("Decor", "Transom", (2.3, 0.18, 0.34), (c, y0 + 5.6, fz - 0.18), frame_c, "WoodPlanks")
         box("Decor", "Sill", (3.4, 0.3, 0.7), (c, y0 + 2.25, fz - 0.35), trim, "Concrete")
         if r > 0.55:
+            loose = rng.random() < 0.12
             for s in (-1, 1):
-                box("Decor", "Shutter", (1.3, 4.6, 0.2), (c + s * 2.15, y0 + 4.8, fz - 0.2), shutter_c, "WoodPlanks")
+                hang = loose and s == 1
+                box("Decor", "Shutter", (1.3, 4.6, 0.2), (c + s * 2.15 + (0.4 if hang else 0), y0 + 4.8 - (0.5 if hang else 0), fz - 0.3),
+                    shutter_c, "WoodPlanks", extra=(0, 0, -14 if hang else 0))
         if 0.4 < r < 0.5:
             box("Decor", "FlowerBox", (2.6, 0.7, 0.7), (c, y0 + 2.7, fz - 0.55), (110, 80, 56), "WoodPlanks")
 
     def town_square(self):
-        """Platz: Pflaster, Brunnen in der Mitte (Spawn rundum), Bäume in Beeten, Bänke, Laternen, Litfaßsäule."""
+        """Platz: Pflaster, Mitte frei (Spawn), Bäume in Beeten, Bänke, Laternen, Litfaßsäule, etwas Müll."""
         b, rng = self.b, self.rng
         SQ = self.TOWN_SQ
         stone = (128, 122, 114)
@@ -2265,15 +2296,11 @@ class World:
                 size = (2 * SQ, 0.3, 0.8) if axis == 0 else (0.8, 0.3, 2 * SQ)
                 pos = (0, 0.15, s * (SQ - 0.4)) if axis == 0 else (s * (SQ - 0.4), 0.15, 0)
                 b.box("Ground", "SquareEdge", size, pos, (104, 100, 94), "Slate")
-        # Brunnen
-        b.cylinder("Cover", "FountainBasin", 13, 1.8, (0, 0.9, 0), (150, 146, 136), material="Slate")
-        b.cylinder("Decor", "FountainWater", 11.6, 0.3, (0, 1.65, 0), (70, 96, 104), material="Glass")
-        b.cylinder("Cover", "FountainColumn", 2.2, 5, (0, 3.5, 0), (150, 146, 136), material="Slate")
-        b.cylinder("Decor", "FountainBowl", 5, 0.8, (0, 6, 0), (150, 146, 136), material="Slate")
-        b.cylinder("Decor", "FountainTop", 1, 1.6, (0, 7.2, 0), (130, 126, 118), material="Slate")
+        # Mitte frei: dort spawnt man (Ring, Blick nach außen), nur ein Gullydeckel
+        b.box("Ground", "Drain", (2, 0.08, 2), (0, 0.14, 0), (60, 60, 62), "DiamondPlate")
         for k in range(10):
             a = 2 * math.pi * (k + 0.5) / 10
-            x, z = math.sin(a) * 9.5, math.cos(a) * 9.5
+            x, z = math.sin(a) * 6, math.cos(a) * 6
             b.spawn(x, z, yaw=math.degrees(math.atan2(x, z)) + 180)
         # Bäume in Beeten an den Platzecken, Bänke, Laternen
         for sx in (-1, 1):
@@ -2291,6 +2318,13 @@ class World:
                 box("Decor", "BenchBack", (5, 1.6, 0.3), (0, 2.5, 0.8), (110, 84, 58), "WoodPlanks")  # Blick zu den Läden
                 for s in (-1, 1):
                     box("Decor", "BenchLeg", (0.3, 1.3, 1.4), (s * 2.2, 0.65, 0), (50, 50, 52), "Metal")
+        for k in range(5):  # Müllsäcke und Papier an den Rändern
+            mx, mz = rng.choice((-1, 1)) * rng.uniform(SQ - 5, SQ - 2), rng.uniform(-SQ + 4, SQ - 4)
+            if rng.random() < 0.5:
+                mx, mz = mz, mx
+            b.add("Decor", "TrashBag", (1.6, 1.3, 1.5), (mx, 0.7, mz), (28, 30, 30), "Plastic", props={"Shape": "Ball"})
+            b.box("Decor", "Paper", (1, 0.05, 1.3), (mx + rng.uniform(-2, 2), 0.15, mz + rng.uniform(-2, 2)), (200, 196, 180),
+                  "SmoothPlastic", angles=(0, rng.uniform(0, 180), 0), props={"CanCollide": False})
         b.cylinder("Cover", "AdColumn", 3, 8, (SQ - 6, 4, -6), (180, 172, 150), material="Concrete")
         b.cylinder("Decor", "AdColumnCap", 3.6, 0.6, (SQ - 6, 8.3, -6), (60, 74, 64), material="Metal")
 
