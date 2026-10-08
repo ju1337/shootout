@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Bereitet das Sturmgewehr (AR-556 aus Meshy) für den Studio-Import vor:
-art/sources/Meshy_AI_roblox_ar556_*.fbx + Meshy_AI_roblox_ar_mag_*.fbx -> art/sources/Rifle.glb
+"""ALTES Sturmgewehr (AR-556 aus Meshy, mit fest eingebautem Holo-Visier) – ersetzt durch das AR-15 ohne Aufsätze
+(art/sources/Rifle.glb, tools/attachments/ar15_v2.py). Bleibt als Rifle_alt.glb erhalten:
+art/sources/Meshy_AI_roblox_ar556_*.fbx + Meshy_AI_roblox_ar_mag_*.fbx -> art/sources/Rifle_alt.glb
 
 Fertig nach docs/waffen-modelle.md:
   * Skin_Body: das Gewehr. Das eingebaute Magazin ist herausgeschnitten (der Schacht unten geschlossen), das Fenster
@@ -31,7 +32,7 @@ import mesh_ops as M  # noqa: E402
 SRC = os.path.join(ROOT, "art", "sources")
 GUN = "Meshy_AI_roblox_ar556_lowpoly_1006184328_texture"
 MAG = "Meshy_AI_roblox_ar_mag_lowpoly_1006184342_texture"
-OUT = os.path.join(SRC, "Rifle.glb")
+OUT = os.path.join(SRC, "Rifle_alt.glb")
 TEX_DIR = os.path.join(SRC, "Rifle_Texturen")
 LENGTH = 4.13   # Studs, so lang wie die Quader-Waffe (blockoutLength in GunModels)
 TEX = 1024      # reicht für Handys (Roblox kann mehr)

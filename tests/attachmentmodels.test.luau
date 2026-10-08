@@ -1,5 +1,5 @@
 -- Aufsatz-Modelle (Assets.Attachments): Holo-Visier, Schalldämpfer und Winkelgriff mit den Maßen aus art/sources/Attachments
--- am Sturmgewehr (Maße wie art/sources/Rifle_AR15v2). Geprüft: Sitz an Schiene, Mündung und Handschutz, Zielen durchs
+-- am Sturmgewehr (Maße wie art/sources/Rifle.glb). Geprüft: Sitz an Schiene, Mündung und Handschutz, Zielen durchs
 -- Visier (Leuchtpunkt genau auf der Ziellinie, rund und leuchtend), keine Klotz-Aufsätze, Pistole ohne Visier.
 local failures = 0
 local function check(c, m) if not c then failures += 1 print("FEHLER: " .. m) end end
