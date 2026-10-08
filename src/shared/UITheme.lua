@@ -35,6 +35,16 @@ UITheme.Colors = {
 	Rap = Color3.fromRGB(86, 214, 170),        -- RAP (zweite Währung, RapConfig.Color)
 	Shadow = Color3.new(0, 0, 0),
 }
+-- Farben im Menü der offenen Welt (halbtransparent, Rot als Akzent statt Bernstein): Seiten im Menü nehmen diese
+-- Tabelle statt Colors; was hier fehlt, kommt aus Colors
+UITheme.MenuColors = setmetatable({
+	Primary = Color3.fromRGB(214, 58, 58),
+	PrimaryText = Color3.fromRGB(255, 255, 255),
+	Card = Color3.fromRGB(18, 19, 23),
+	CardHover = Color3.fromRGB(30, 32, 37),
+	Panel = Color3.fromRGB(26, 27, 31),
+	MutedBack = Color3.fromRGB(26, 27, 31),
+}, { __index = UITheme.Colors })
 UITheme.Colors.Ally = UITheme.Colors.Accent
 UITheme.Colors.Enemy = UITheme.Colors.Bad
 

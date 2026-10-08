@@ -1483,6 +1483,7 @@ local function badgeIcon(parent, kind, size, color, zIndex)
 end
 
 local function openAchievements()
+	local C = UITheme.MenuColors
 	local win = newWindow("Achievements", "ERFOLGE", "ABZEICHEN FÜR DEIN PROFIL  ·  JEDE STUFE GIBT MÜNZEN  ·  BRONZE · SILBER · GOLD")
 	local body = win.Body
 	local summary = label({ Name = "Summary", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 22), Text = "", TextSize = 16,
@@ -1493,8 +1494,10 @@ local function openAchievements()
 	local views = {}
 	for index, achievement in AchievementConfig.List do
 		local col, row = (index - 1) % cols, (index - 1) // cols
-		local card = UITheme.Card({ Name = "Achievement_" .. achievement.Id, Position = UDim2.fromOffset(col * (cardW + gap),
-			34 + row * (cardH + gap)), Size = UDim2.fromOffset(cardW, cardH), ZIndex = 6 }, body)
+		local card = make("Frame", { Name = "Achievement_" .. achievement.Id, Position = UDim2.fromOffset(col * (cardW + gap),
+			34 + row * (cardH + gap)), Size = UDim2.fromOffset(cardW, cardH), BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.3,
+			BorderSizePixel = 0, ZIndex = 6 }, body)
+		UITheme.Corner(card, 3)
 		local iconHolder = make("Frame", { Position = UDim2.fromOffset(16, 16), Size = UDim2.fromOffset(64, 64), BackgroundTransparency = 1,
 			ZIndex = 7 }, card)
 		local name = label({ Name = "Name", Position = UDim2.fromOffset(92, 16), Size = UDim2.new(1, -108, 0, 22),
@@ -1567,6 +1570,7 @@ local function itemCountEverywhere(id)
 end
 
 local function openHideout()
+	local C = UITheme.MenuColors
 	local win = newWindow("Hideout", "VERSTECK", "MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION")
 	local body = win.Body
 	local modules = HideoutConfig.Modules
@@ -1709,6 +1713,7 @@ end
 
 -- REISEN: an einer Haltestelle (Teil "Travel" / "Travel_<Name>" in Stands) eine andere Safe Zone wählen
 local function openTravel(pointName)
+	local C = UITheme.MenuColors
 	local maps = workspace:FindFirstChild("Maps")
 	local map = maps and maps:FindFirstChild("Extinction")
 	local zoneFolder = map and map:FindFirstChild("Zone")
@@ -1787,29 +1792,32 @@ local function partyAction(action, userId)
 end
 
 local function openSquad()
+	local C = UITheme.MenuColors
 	local ALLY = C.Ally
 	local win = newWindow("Squad", "SQUAD", "BIS ZU 4 SPIELER  ·  KEIN FRIENDLY FIRE  ·  PINGS NUR FÜR DEN SQUAD  ·  NAMEN UND "
 		.. "PUNKTE AUF DER MINIMAP")
 	local body = win.Body
-	sectionTitle(body, "DEIN SQUAD", UDim2.fromOffset(0, 0), 540)
-	sectionTitle(body, "SPIELER IN DER OFFENEN WELT", UDim2.fromOffset(580, 0), 540)
+	-- zwei Spalten über die ganze Breite, unten SQUAD VERLASSEN
+	local colW = math.floor((Inv.CONTENT_W - 40) / 2)
+	Inv.sectionHeader(body, "MineHeader", "DEIN SQUAD", 0, colW)
+	Inv.sectionHeader(body, "OthersHeader", "SPIELER IN DER OFFENEN WELT", 0, colW).Position = UDim2.fromOffset(colW + 40, 0)
 	local function column(x, name)
-		local list = make("ScrollingFrame", { Name = name, Position = UDim2.fromOffset(x, 24), Size = UDim2.fromOffset(540, 420),
+		local list = make("ScrollingFrame", { Name = name, Position = UDim2.fromOffset(x, 28), Size = UDim2.fromOffset(colW, Inv.CONTENT_H - 110),
 			BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, CanvasSize = UDim2.new(),
 			AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
 		make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 		return list
 	end
-	local mine, others = column(0, "SquadMembers"), column(580, "SquadPlayers")
-	local leave = UITheme.Chunky({ Name = "LeaveSquad", Position = UDim2.fromOffset(0, 462), Size = UDim2.fromOffset(260, 52),
+	local mine, others = column(0, "SquadMembers"), column(colW + 40, "SquadPlayers")
+	local leave = UITheme.Chunky({ Name = "LeaveSquad", Position = UDim2.fromOffset(0, Inv.CONTENT_H - 72), Size = UDim2.fromOffset(260, 48),
 		Color = C.Bad:Lerp(Color3.new(0, 0, 0), 0.25), Text = "SQUAD VERLASSEN", TextSize = 18, ZIndex = 5 }, body, function()
 		partyAction("Leave")
 	end)
 	local whereLabels = {} -- { Label, Player } (Entfernung laufend nachführen)
 
 	local function row(parent, order, name, sub, buttons)
-		local entry = make("Frame", { Name = "Row", Size = UDim2.new(1, -8, 0, 56), BackgroundColor3 = C.Card, BorderSizePixel = 0,
-			LayoutOrder = order, ZIndex = 5 }, parent)
+		local entry = make("Frame", { Name = "Row", Size = UDim2.new(1, -8, 0, 56), BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.3,
+			BorderSizePixel = 0, LayoutOrder = order, ZIndex = 5 }, parent)
 		UITheme.Corner(entry, UITheme.Radius.Small)
 		label({ Name = "Name", Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -260, 0, 24), Text = name, TextSize = 20,
 			Font = F.Display, ZIndex = 6 }, entry)

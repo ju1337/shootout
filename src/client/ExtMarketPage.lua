@@ -21,7 +21,7 @@ local UITheme = require(Shared.UITheme)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local InputActions = require(Shared.InputActions)
 
-local C = UITheme.Colors
+local C = UITheme.MenuColors -- im Menü der offenen Welt: Rot statt Bernstein
 local F = UITheme.Fonts
 local make, label = UITheme.Make, UITheme.Label
 local upper = UITheme.Upper
