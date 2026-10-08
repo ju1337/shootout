@@ -57,8 +57,8 @@ local SURVIVAL_HIDDEN = { Ability = true, Gadget = true, Ultimate = true, Scoreb
 -- Pilot eines Helikopters: steigen und sinken (gedrückt halten) an den Plätzen von FEUER und ZIELEN; die Kampfknöpfe
 -- sind dann aus (im Fahrzeug gibt es keine Waffe). SPRUNG heißt in jedem Fahrzeug RAUS (aussteigen).
 local HELI = {
-	{ "HeliUp", "HOCH", 120, 130, 170, "hold" },
-	{ "HeliDown", "RUNTER", 84, 290, 130, "hold" },
+	{ "HeliUp", "STEIGEN", 120, 130, 170, "hold" },
+	{ "HeliDown", "SINKEN", 84, 290, 130, "hold" },
 }
 local HELI_HIDDEN = { Fire = true, Aim = true, Reload = true, Melee = true, SwapWeapon = true, Crouch = true }
 
@@ -208,7 +208,7 @@ function TouchControls.Init()
 		for _, entry in SURVIVAL do
 			buttons[entry[1]].Button.Visible = survival
 		end
-		-- im Fahrzeug: SPRUNG = RAUS; als Helikopter-Pilot HOCH/RUNTER statt der Kampfknöpfe
+		-- im Fahrzeug: SPRUNG = RAUS; als Helikopter-Pilot STEIGEN/SINKEN statt der Kampfknöpfe
 		local seated, pilot = seatState()
 		buttons.Jump.Button.Text = seated and "RAUS" or "SPRUNG"
 		for action in HELI_HIDDEN do

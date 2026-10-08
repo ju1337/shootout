@@ -47,6 +47,8 @@ local pages, tabButtons = {}, {}
 local valueLabels = {} -- [Key] = Label
 local eventStatus = {} -- [Event] = Label
 local botCountLabel
+local reasonBox, banIdBox, banSection -- Reiter SPIELER: Grund für Kick/Ban, UserId zum Sperren, Sperrliste
+local bans = {} -- zuletzt vom Server geschickte Sperrliste (Remotes.AdminData "Bans")
 local isOpen = false
 local currentTab = "Events"
 local playerSignature = ""
@@ -490,8 +492,92 @@ local function refreshPlayers()
 		button("Handelbarer Skin", 130, season, "Teal", function()
 			send("GiveTradeSkin", p.UserId)
 		end)
+		-- Rauswerfen und Sperren (BanService); der Grund steht im Feld oben
+		local moderation = row(box)
+		button("KICK", 70, moderation, "Warn", function()
+			send("Kick", p.UserId, reasonBox and reasonBox.Text or "")
+		end)
+		for _, def in { { "BAN 1 TAG", 1, 90 }, { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
+			button(def[1], def[3], moderation, "Danger", function()
+				send("Ban", p.UserId, { Days = def[2], Reason = reasonBox and reasonBox.Text or "" })
+			end)
+		end
 		order(box)
 	end
+end
+
+-- Eingabefeld (Grund, UserId)
+local function textBox(placeholder, width, parent, props)
+	local box = make("TextBox", { Size = UDim2.new(0, width, 0, 30), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
+		Font = Enum.Font.BuilderSans, TextSize = 13, TextColor3 = TEXT, Text = "", PlaceholderText = placeholder,
+		PlaceholderColor3 = MUTED, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left }, parent)
+	corner(box, 6)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, box)
+	for key, value in props or {} do
+		box[key] = value
+	end
+	return box
+end
+
+-- Sperrliste neu zeichnen (aus bans)
+local function refreshBans()
+	if not banSection then
+		return
+	end
+	for _, child in banSection:GetChildren() do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+	if #bans == 0 then
+		local empty = card(banSection)
+		label("Keine Sperren", 13, empty, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+		return
+	end
+	for i, entry in bans do
+		local box = card(banSection)
+		box.LayoutOrder = i
+		label(tostring(entry.Name) .. "  ·  " .. tostring(entry.UserId), 15, box, { Font = Enum.Font.BuilderSansExtraBold })
+		label(tostring(entry.Reason) .. "  ·  " .. tostring(entry.Left) .. "  ·  von " .. tostring(entry.By), 12, box,
+			{ TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+		local r = row(box)
+		button("ENTSPERREN", 110, r, "Good", function()
+			send("Unban", entry.UserId)
+		end)
+		order(box)
+	end
+end
+
+-- Kopf des Reiters SPIELER: Grund, Sperre per UserId, Sperrliste
+local function buildModeration(page)
+	section("Kick und Sperre", page)
+	local head = card(page)
+	reasonBox = textBox("Grund (sieht der Spieler)", 300, head)
+	reasonBox.Text = "Regelverstoß"
+	label("Kick und Bans stehen bei jedem Spieler unten; Sperren gelten auf allen Servern.", 12, head,
+		{ TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+	local r = row(head)
+	banIdBox = textBox("UserId", 120, r)
+	for _, def in { { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
+		button(def[1], def[3], r, "Danger", function()
+			local id = tonumber(banIdBox.Text)
+			if id then
+				send("Ban", id, { Days = def[2], Reason = reasonBox.Text })
+			else
+				statusLabel.Text = "UserId eingeben"
+			end
+		end)
+	end
+	section("Sperrliste", page)
+	local tools = row(page)
+	button("AKTUALISIEREN", 130, tools, nil, function()
+		send("BanList")
+	end)
+	banSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
+		page)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, banSection)
+	refreshBans()
+	section("Spieler auf diesem Server", page)
 end
 
 -- ---------- Rahmen ----------
@@ -591,6 +677,7 @@ local function build()
 	buildBots(newPage("Bots"))
 	buildSettings(newPage("Settings"))
 	local playersPage = newPage("Players")
+	buildModeration(playersPage)
 	playerSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1 }, playersPage)
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, playerSection)
@@ -618,6 +705,13 @@ function AdminPanel.Init()
 		statusLabel.Text = message
 		statusLabel.TextColor3 = TEXT
 	end)
+	Remotes.AdminData.OnClientEvent:Connect(function(kind, data)
+		if kind == "Bans" and type(data) == "table" then
+			bans = data
+			refreshBans()
+		end
+	end)
+	send("BanList")
 	ReplicatedStorage.AttributeChanged:Connect(function()
 		if isOpen then
 			refreshSettings()

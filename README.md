@@ -345,7 +345,7 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Helikopter** (Fahrzeugstand, 12 000 Münzen, Tier 4): fliegt mit **bis zu 4 Leuten** – Pilot (der Besitzer) links
   vorne, Kopilot und zwei Plätze hinten (Mitfahrer per E). Steuerung: **W/S** vor/zurück, **A/D** drehen,
   **Leertaste** steigen, **Shift** (oder Strg/C) sinken, **F** aussteigen; Controller: Stick, R2/L2 steigen/sinken, ✕
-  aussteigen; Touch: Stick, Knöpfe HOCH/RUNTER statt FEUER/ZIELEN, RAUS. Am Boden erst abheben, ohne Eingabe hält er die
+  aussteigen; Touch: Stick, Knöpfe STEIGEN/SINKEN statt FEUER/ZIELEN, RAUS. Am Boden erst abheben, ohne Eingabe hält er die
   Höhe; er neigt sich beim Fliegen und in Kurven, die Rotoren drehen sich. Höchstens 320 Studs hoch (über der Mitte der
   Welt), am Rand der Welt geht es nicht weiter. Wer hoch oben aussteigt, gleitet mit dem Fallschirmsprung zu Boden.
   Ohne Pilot sinkt er langsam senkrecht und setzt auf (Autorotation); einpacken (K) nur gelandet; zerschossen stürzt er
@@ -676,6 +676,53 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     - dazu rote Treffer-Richtungsbögen und die Kill-Meldung
   - unendliche Reserve-Munition in allen Arcade-Modi (Anzeige „∞“), in EXTINCTION Munition aus dem Inventar
 
+## Sprache
+
+Das Spiel erscheint **standardmäßig auf Englisch (US)**. Der Code schreibt alle Texte weiter auf Deutsch; der Client
+(`src/shared/Locale.lua`, Start in `ClientMain`) schlägt jeden Text, der in ein TextLabel, einen TextButton, den
+PlaceholderText einer TextBox oder einen ProximityPrompt kommt (auch Schilder und Blasen in der Welt), in
+`src/shared/LocaleStrings.lua` (Deutsch → Englisch, rund 2100 Einträge) nach und ersetzt ihn beim Setzen. Deutsch sehen
+nur Spieler mit deutscher Roblox-Sprache (`Player.LocaleId` „de-…“) oder wer in OPTIONEN › ANZEIGE › **SPRACHE** DEUTSCH
+wählt (AUTOMATISCH = Englisch, Deutsch nur bei deutscher Roblox-Sprache; die Wahl wirkt sofort auf alle Texte).
+Einträge: `["SPIELEN"] = "PLAY"` für genaue Texte, `["Töte {1} Zombies"] = "Kill {1} zombies"` für zusammengesetzte
+(Platzhalter {1}, {2} … für Zahlen und Namen; die Teile werden selbst noch einmal nachgeschlagen, z. B. „Verband“).
+Texte ohne Eintrag bleiben, wie sie sind – darum stehen Ortsnamen (Nordheim, Ödstadt) und englische Texte nicht drin.
+Eingetippter Text in Eingabefeldern wird nie angefasst. Der Server übersetzt mit `Locale.ForPlayer` nur, was nicht über
+ein Textfeld läuft (Kick-Nachrichten).
+
+Neue Texte: auf Deutsch in den Code schreiben und den Eintrag in `LocaleStrings.lua` ergänzen (Schlüssel = genau der
+Text auf dem Bildschirm, bei `string.upper`/`UITheme.Upper` also die Großschreibung). `python3 tools/locale_scan.py`
+listet deutsche Texte ohne Eintrag (`-v` alle einzeln); `tools/locale_merge.py` setzt Teil-Wörterbücher zusammen.
+Test: `tests/locale.test.luau` (prüft auch, dass jedes Muster in beiden Sprachen dieselben Platzhalter hat).
+
+## Spielanalyse (Analytics)
+
+`src/server-shared/Telemetry.lua` schickt Spiel-Ereignisse an den Roblox **AnalyticsService** (Creator Hub › Analytics;
+in Studio wird nichts gesendet, alles läuft über pcall):
+- **Wirtschaft** (`LogEconomyEvent`): jede Münz- und RAP-Bewegung aus `ProgressService` – Quelle mit Grund (Zombie,
+  Auftrag, XP, Robux = IAP, Markt/Verkauf = Shop …), Senke mit Grund und Item (`SpendCoins(player, amount, reason, sku)`:
+  Stand, Skin, Agent, Versteck, Spielermarkt, Clan, Kiste) und dem Kontostand danach.
+- **Onboarding-Trichter** (`LogOnboardingFunnelStepEvent`): 1 Beigetreten (Profil geladen), 2 Offene Welt betreten,
+  3–8 die Tutorial-Schritte (der Client meldet `ExtAction "Tutorial", "Step", n`), 9 Tutorial fertig oder übersprungen.
+  Jeder Schritt zählt je Spieler nur einmal (höchster Schritt im Profil `OnboardingStep`).
+- **Ereignisse** (`LogCustomEvent`): `ModeJoin` (Modus), `PlayerKill` und `Death` in der offenen Welt (Ursache
+  Spieler/Zombie, rote Zone oder nicht), `MissionDone` (Auftrag), `ZombieKills` gesammelt je Spieler (alle 60 s und
+  beim Verlassen als Summe, damit nicht jeder Kill ein Aufruf ist).
+- **Fortschritt** (`LogProgressionEvent`): Level-Aufstieg eines Agenten.
+Neue Ereignisse: `Telemetry.Event(player, name, value, feld1, feld2, feld3)`. Test: `tests/telemetry.test.luau`.
+
+## Sperrliste (Kick und Ban)
+
+Admin-Panel (P) › Reiter **SPIELER**: oben das Feld **Grund** (sieht der Spieler), daneben Sperren per **UserId** (auch
+für Spieler, die nicht auf dem Server sind), die **Sperrliste** mit ENTSPERREN und AKTUALISIEREN, darunter jeder
+Spieler des Servers mit **KICK**, **BAN 1 TAG**, **BAN 7 TAGE**, **BAN DAUERHAFT**. `src/server-shared/BanService.lua`:
+Sperren liegen im DataStore `Bans_v1` (Schlüssel `List`: UserId → Name, Grund, Ablauf, von wem, wann), jeder Server
+lädt die Liste beim Start und jede Minute neu, Änderungen gehen sofort per MessagingService („Bans“) an alle Server;
+gesperrte Spieler werden beim Beitreten gekickt (Nachricht in ihrer Sprache mit Grund und Restzeit). Zusätzlich
+`Players:BanAsync`/`UnbanAsync` (Sperre von Roblox, wirkt auch gegen Zweitkonten; fehlt das, greift die Liste allein).
+Gründe laufen durch den Textfilter. Aktionen (`AdminService`): `Kick`, `Ban` (UserId, { Days, Reason }), `Unban`,
+`BanList` → `Remotes.AdminData "Bans"`. Test: `tests/bans.test.luau`.
+
 ## Steuerung
 
 WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Rutschen, Springen daraus nimmt den Schwung mit) ·
@@ -703,7 +750,7 @@ Knopf (das Schließen-Kreuz wird übersprungen), Steuerkreuz/Stick wählen, ✕ 
 
 Handy (Touch): Stick links, Knöpfe rechts (FEUER, ZIELEN, SPRUNG, DUCKEN, LADEN, FÄHIGK., GADGET, MESSER, WAFFE,
 AKTION), oben rechts PING, PUNKTE, KAMERA, ULT, INSPEKT, links SPRINT; in EXTINCTION TASCHE und PARKEN statt
-Fähigkeit/Gadget, im Helikopter HOCH/RUNTER und RAUS. Beim Zuschauen unten **ZURÜCK** / **WEITER** (voriges/nächstes
+Fähigkeit/Gadget, im Helikopter STEIGEN/SINKEN und RAUS. Beim Zuschauen unten **ZURÜCK** / **WEITER** (voriges/nächstes
 Teammitglied).
 
 Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
@@ -720,6 +767,8 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Fadenkreuz, Treffer-Richtung, Kill-Meldung | `src/shared/CombatHUD.lua` |
 | Hitmarker- und Schadenszahl-Stile, Farben je Treffer-Art, Treffer-Töne (`HitFeedback.Sounds`), Kombo | `src/shared/HitFeedback.lua` |
 | Persönliche Einstellungen (OPTIONEN: Liste, Standardwerte, Karten) | `src/shared/PlayerSettings.lua` |
+| Anzeigesprache (Englisch Standard): Wörterbuch Deutsch → Englisch | `src/shared/LocaleStrings.lua`, Technik `src/shared/Locale.lua` |
+| Spielanalyse (AnalyticsService), Sperrliste (DataStore `Bans_v1`) | `src/server-shared/Telemetry.lua`, `src/server-shared/BanService.lua` |
 | Medaillen (Name, Stufe, Bonus-XP) | `src/shared/Medals.lua`; Auslöser (Mehrfach-Kill-Fenster, Weitschuss, Comeback, Serie beendet) oben in `src/server-shared/KillService.lua`, Münzen der Kill-Boni in `src/shared/RewardConfig.lua` |
 | Meldungen (Medaillen, Banner, Ziel-Meldungen, Level-Karte: Position, Standzeit, Farben, Klang) | `src/shared/Notifications.lua` |
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
@@ -878,5 +927,6 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `assets/Weapons`, `assets/Agents` – Kopien deiner Waffen- und Agentenmodelle (.rbxmx) für die automatische
   Prüfung (das Spiel lädt die Modelle aus dem Place, siehe docs/waffen-modelle.md und docs/agenten-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
+- `tools/locale_scan.py`, `tools/locale_merge.py` – Übersetzung: fehlende Texte finden, Wörterbücher zusammensetzen
 - `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie, `tests/lib/rbxmx.py` liest Studio-Modelle,
   `tests/fixtures` Beispieldateien), `.github/workflows` – automatische Prüfung

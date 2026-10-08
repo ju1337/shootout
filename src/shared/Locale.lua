@@ -1,0 +1,309 @@
+-- Locale (ModuleScript)
+-- Sprache der Anzeige. Der Code schreibt alle Texte auf Deutsch; auf dem Bildschirm erscheint das Spiel aber
+-- **standardmäßig auf Englisch (US)**: Jeder Text, der in einem TextLabel, TextButton oder als PlaceholderText einer
+-- TextBox landet, wird beim Setzen in LocaleStrings (Deutsch -> Englisch) nachgeschlagen und ersetzt. Deutsch sehen
+-- nur Spieler, deren Roblox-Sprache Deutsch ist (Player.LocaleId "de-de"), oder wer in OPTIONEN › ANZEIGE › SPRACHE
+-- DEUTSCH wählt (PlayerSettings "Language": "auto" | "en" | "de").
+--
+-- Einträge in LocaleStrings:
+--   ["SPIELEN"] = "PLAY"                      genauer Text
+--   ["Töte {1} Zombies"] = "Kill {1} zombies"  Muster: {1}, {2} … stehen für veränderliche Teile (Zahlen, Namen);
+--                                              die Teile werden selbst noch einmal genau nachgeschlagen ("Verband")
+-- Texte ohne Eintrag bleiben, wie sie sind (so bleiben englische Texte und Namen der Welt unverändert).
+-- Fehlende Einträge findet `python3 tools/locale_scan.py`. Der Server nutzt Locale.Translate nur für Texte,
+-- die nicht über ein Textfeld laufen (z.B. Kick-Nachrichten).
+--
+-- Technik: Locale.Init (Client) hängt sich an alle Textobjekte in PlayerGui und Workspace (Schilder, Blasen, auch
+-- ProximityPrompts: ActionText/ObjectText) und an GetPropertyChangedSignal("Text"); das Ersetzen passiert sofort im selben Aufruf, in dem der Code den Text setzt.
+-- Eigene Zuweisungen erkennt der Hörer am gemerkten Ergebnis und lässt sie durch. Texte ohne Buchstaben
+-- (Zähler, Uhrzeiten) werden gar nicht erst nachgeschlagen. Muster sind nach ihrem ersten Wort sortiert, damit
+-- pro Text nur wenige Muster geprüft werden; Ergebnisse werden zwischengespeichert.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local Locale = {}
+
+Locale.Default = "en"                 -- Sprache für alle, die nicht Deutsch eingestellt haben
+Locale.Languages = { "en", "de" }     -- bekannte Sprachen (de = Quelltext, en = LocaleStrings)
+
+local strings = nil                   -- Deutsch -> Englisch (genau)
+local patterns = nil                  -- { [erstesWort] = { { Pattern, Template, Count } } }, "" = beginnt mit Platzhalter
+local cache = {}
+local cacheSize = 0
+local CACHE_LIMIT = 3000
+local language = Locale.Default
+local setting = "auto"                -- "auto" | "en" | "de"
+local lastSet = setmetatable({}, { __mode = "k" }) -- [Textobjekt] = { [Eigenschaft] = zuletzt von uns gesetzter Text }
+local started = false
+
+local LETTERS = "[%a\128-\255]"      -- Buchstabe (auch Umlaute in UTF-8)
+
+-- Sprache aus Roblox-Locale ("de-de" -> "de"), sonst Standard
+local function fromLocaleId(localeId)
+	local code = string.lower(string.match(tostring(localeId or ""), "^(%a%a)") or "")
+	if code == "de" then
+		return "de"
+	end
+	return Locale.Default
+end
+
+-- ---------- Wörterbuch ----------
+
+local function escapePattern(s)
+	return (string.gsub(s, "[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"))
+end
+
+local function firstWord(s)
+	return string.match(s, "^(%S+)") or ""
+end
+
+local function load()
+	if strings then
+		return
+	end
+	strings, patterns = {}, {}
+	local ok, table_ = pcall(function()
+		return require(script.Parent:WaitForChild("LocaleStrings"))
+	end)
+	if not ok or type(table_) ~= "table" then
+		return
+	end
+	for source, target in table_ do
+		if type(source) == "string" and type(target) == "string" then
+			if string.find(source, "{%d}") then
+				-- Muster: Text um die Platzhalter herum wörtlich, Platzhalter fangen alles (auch leer)
+				local count = 0
+				local pattern = "^" .. string.gsub(escapePattern(source), "{(%d)}", function()
+					count += 1
+					return "(.-)"
+				end) .. "$"
+				local head = string.match(source, "^([^{%s]+)") -- erstes Wort, wenn es nicht mit {n} beginnt
+				local key = (head and not string.find(head, "{")) and head or ""
+				patterns[key] = patterns[key] or {}
+				table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count })
+			else
+				strings[source] = target
+			end
+		end
+	end
+	-- längere Muster zuerst: sie sind genauer als kurze mit frühem Platzhalter
+	for _, list in patterns do
+		table.sort(list, function(a, b)
+			return #a.Source > #b.Source
+		end)
+	end
+end
+
+-- Text in die Zielsprache übersetzen (nil = kein Eintrag). Reihenfolge: genau, dann Muster.
+local function lookup(text, depth)
+	local exact = strings[text]
+	if exact then
+		return exact
+	end
+	local function try(list)
+		if not list then
+			return nil
+		end
+		for _, entry in list do
+			local captures = { string.match(text, entry.Pattern) }
+			if captures[1] ~= nil then
+				local result = string.gsub(entry.Template, "{(%d)}", function(index)
+					local value = captures[tonumber(index) or 0] or ""
+					-- veränderliche Teile einmal genau nachschlagen (Item-Namen, Orte, …)
+					if depth < 1 and string.find(value, LETTERS) then
+						value = lookup(value, depth + 1) or value
+					end
+					return value
+				end)
+				return result
+			end
+		end
+		return nil
+	end
+	return try(patterns[firstWord(text)]) or try(patterns[""])
+end
+
+-- Übersetzung für die aktuelle Sprache (oder lang). Ohne Eintrag oder auf Deutsch kommt der Text unverändert zurück.
+function Locale.Translate(text, lang)
+	if type(text) ~= "string" or text == "" or (lang or language) == "de" then
+		return text
+	end
+	load()
+	local hit = cache[text]
+	if hit ~= nil then
+		return hit or text
+	end
+	local result = nil
+	if string.find(text, LETTERS) then
+		result = lookup(text, 0)
+	end
+	if cacheSize >= CACHE_LIMIT then
+		cache, cacheSize = {}, 0
+	end
+	cache[text] = result or false
+	cacheSize += 1
+	return result or text
+end
+
+-- Übersetzung für einen bestimmten Spieler (Server): dessen Roblox-Sprache entscheidet, Einstellung "Language" zählt
+-- über das Attribut ClientSettings nicht – das reicht für Kick-Nachrichten und Ähnliches.
+function Locale.ForPlayer(player, text)
+	local lang = Locale.Default
+	if player then
+		local ok, localeId = pcall(function()
+			return player.LocaleId
+		end)
+		lang = fromLocaleId(ok and localeId or nil)
+	end
+	return Locale.Translate(text, lang)
+end
+
+function Locale.Language()
+	return language
+end
+
+-- Sprache bestimmen: Einstellung vor Roblox-Sprache
+local function resolve()
+	if setting == "de" or setting == "en" then
+		return setting
+	end
+	local player = Players.LocalPlayer
+	local ok, localeId = pcall(function()
+		return player and player.LocaleId
+	end)
+	return fromLocaleId(ok and localeId or nil)
+end
+
+-- ---------- Textobjekte (Client) ----------
+
+local function isTextObject(obj)
+	return obj:IsA("TextLabel") or obj:IsA("TextButton")
+end
+
+local function apply(obj, property)
+	local current = obj[property]
+	if type(current) ~= "string" or current == "" then
+		return
+	end
+	local translated = Locale.Translate(current)
+	if translated ~= current then
+		lastSet[obj] = lastSet[obj] or {}
+		lastSet[obj][property] = translated
+		obj[property] = translated
+	end
+end
+
+local sources = setmetatable({}, { __mode = "k" }) -- [Textobjekt] = { { Property, Source } … }
+
+-- Welche Eigenschaften eines Objekts Anzeigetext tragen
+local function textProperties(obj)
+	if isTextObject(obj) then
+		return { "Text" }
+	elseif obj:IsA("TextBox") then
+		return { "PlaceholderText" } -- den eingetippten Text nie anfassen
+	elseif obj:IsA("ProximityPrompt") then
+		return { "ActionText", "ObjectText" }
+	end
+	return nil
+end
+
+local function hook(obj)
+	local properties = textProperties(obj)
+	if not properties then
+		return
+	end
+	local entries = {}
+	sources[obj] = entries
+	for _, property in properties do
+		local entry = { Property = property, Source = obj[property] }
+		table.insert(entries, entry)
+		lastSet[obj] = lastSet[obj] or {}
+		obj:GetPropertyChangedSignal(property):Connect(function()
+			local now = obj[property]
+			if lastSet[obj][property] == now then
+				lastSet[obj][property] = nil -- das Echo der eigenen Zuweisung (einmal verbrauchen)
+				return
+			end
+			entry.Source = now -- der Code hat selbst neuen Text gesetzt
+			apply(obj, property)
+		end)
+		apply(obj, property)
+	end
+end
+
+local function hookTree(root)
+	for _, obj in root:GetDescendants() do
+		hook(obj)
+	end
+	root.DescendantAdded:Connect(hook)
+end
+
+-- Nach einem Sprachwechsel alle bekannten Texte vom Original aus neu übersetzen
+function Locale.Refresh()
+	cache, cacheSize = {}, 0
+	for obj, entries in sources do
+		for _, entry in entries do
+			local original = entry.Source
+			if type(original) == "string" and original ~= "" then
+				local translated = Locale.Translate(original)
+				if obj[entry.Property] ~= translated then
+					lastSet[obj] = lastSet[obj] or {}
+					lastSet[obj][entry.Property] = translated
+					obj[entry.Property] = translated
+				end
+			end
+		end
+	end
+end
+
+-- Einstellung "Language" ("auto" | "en" | "de") übernehmen
+function Locale.SetSetting(value)
+	setting = (value == "de" or value == "en") and value or "auto"
+	local before = language
+	language = resolve()
+	if started and language ~= before then
+		Locale.Refresh()
+	end
+end
+
+-- Client: Sprache bestimmen und alle Textobjekte übersetzen (PlayerGui und Workspace). settingsModule = PlayerSettings
+-- (Get("Language") und Changed), damit die Option OPTIONEN › SPRACHE sofort wirkt.
+function Locale.Init(settingsModule)
+	if started or not RunService:IsClient() then
+		return
+	end
+	started = true
+	if settingsModule then
+		Locale.SetSetting(settingsModule.Get("Language"))
+		settingsModule.Changed:Connect(function(key, value)
+			if key == "Language" then
+				Locale.SetSetting(value)
+			end
+		end)
+	else
+		language = resolve()
+	end
+	local player = Players.LocalPlayer
+	local gui = player and player:FindFirstChild("PlayerGui")
+	if gui then
+		hookTree(gui)
+	elseif player then
+		player.ChildAdded:Connect(function(child)
+			if child.Name == "PlayerGui" then
+				hookTree(child)
+			end
+		end)
+	end
+	hookTree(workspace)
+end
+
+-- Für Tests: Zustand zurücksetzen
+function Locale._Reset()
+	strings, patterns, cache, cacheSize = nil, nil, {}, 0
+	language, setting, started = Locale.Default, "auto", false
+	lastSet = setmetatable({}, { __mode = "k" })
+	sources = setmetatable({}, { __mode = "k" })
+end
+
+return Locale

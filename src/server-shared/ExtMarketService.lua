@@ -188,7 +188,7 @@ function ExtMarketService.Buy(player, id, price)
 		status(player, "Kein Platz in deiner Tasche.")
 		return false
 	end
-	if not ProgressService.SpendCoins(player, entry.Price) then
+	if not ProgressService.SpendCoins(player, entry.Price, "Spielermarkt", entry.Item) then
 		status(player, "Nicht genug Münzen (" .. entry.Price .. " nötig).")
 		return false
 	end

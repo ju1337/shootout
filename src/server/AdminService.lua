@@ -204,6 +204,27 @@ function AdminService.Init(manager)
 		end,
 
 		-- Rote-Zone-Punkte (RZ) für sich selbst, zum Testen des Schiebers: amount aus dem Eingabefeld (1..1.000.000)
+		-- Sperrliste (BanService): Kick(userId, Grund), Ban(userId, { Days, Reason }), Unban(userId), BanList
+		Kick = function(userId, reason, admin)
+			return serverShared("BanService").Kick(admin, userId, reason)
+		end,
+		Ban = function(userId, options, admin)
+			local days = type(options) == "table" and options.Days or options
+			local reason = type(options) == "table" and options.Reason or nil
+			local result = serverShared("BanService").Ban(admin, userId, days, reason)
+			Remotes.AdminData:FireClient(admin, "Bans", serverShared("BanService").List())
+			return result
+		end,
+		Unban = function(userId, _, admin)
+			local result = serverShared("BanService").Unban(admin, userId)
+			Remotes.AdminData:FireClient(admin, "Bans", serverShared("BanService").List())
+			return result
+		end,
+		BanList = function(_, _, admin)
+			local bans = serverShared("BanService").List()
+			Remotes.AdminData:FireClient(admin, "Bans", bans)
+			return #bans .. " Sperren"
+		end,
 		GiveRedPoints = function(amount, _, admin)
 			amount = math.floor(tonumber(amount) or 0)
 			if amount < 1 then

@@ -9,7 +9,7 @@
 -- Leertaste: aussteigen (Roblox), K: einpacken (ExtinctionClient -> VehicleService).
 --
 -- Helikopter (Kind "Heli", LinearVelocity in alle Richtungen): W/S vor/zurück, A/D drehen, Leertaste steigen,
--- Shift/Strg/C sinken, F aussteigen; Controller: Stick, R2 steigen, L2 sinken, ✕ aussteigen; Touch: Stick, HOCH/RUNTER
+-- Shift/Strg/C sinken, F aussteigen; Controller: Stick, R2 steigen, L2 sinken, ✕ aussteigen; Touch: Stick, STEIGEN/SINKEN
 -- (TouchControls, Aktionen HeliUp/HeliDown), SPRUNG aussteigen. Ohne Eingabe hält er die Höhe; am Boden fliegt und
 -- dreht er erst nach dem Abheben. Höchstens Ceiling über MapCenter, am Rand der Welt (EDGE) nicht weiter hinaus. Er
 -- neigt sich in Flugrichtung und in Kurven. Solange man fliegt, schluckt eine ContextActionService-Aktion mit hohem

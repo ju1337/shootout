@@ -24,6 +24,7 @@ local NAMES = {
 	"XPGain",     -- Server -> Client: XP bekommen (Menge fürs Spielerlevel, Grund, Agent, LevelUp, Münzen, leise)
 	"AdminAction", -- Client -> Server: Admin-Befehl (Aktion, Wert1, Wert2)
 	"AdminStatus", -- Server -> Admin: Rückmeldung im Admin-Panel
+	"AdminData",   -- Server -> Admin: Daten fürs Admin-Panel (Art, Daten): "Bans" = Sperrliste (BanService)
 	"ShopAction", -- Client -> Server: Shop/Rucksack (Aktion, Wert1, Wert2)
 	"ShopStatus", -- Server -> Client: Rückmeldung (Text, Erfolg)
 	"Revive",     -- Client -> Server: E zum Wiederbeleben gedrückt (true) / losgelassen (false)

@@ -29,6 +29,8 @@ local CrateService = require(ServerShared.CrateService)
 local InventoryService = require(ServerShared.InventoryService)
 local KitService = require(ServerShared.KitService)
 local LootService = require(ServerShared.LootService)
+local Telemetry = require(ServerShared.Telemetry)
+local BanService = require(ServerShared.BanService)
 local ModeManager = require(script.Parent.ModeManager)
 local AdminService = require(script.Parent.AdminService)
 local PartyService = require(script.Parent.PartyService)
@@ -37,6 +39,8 @@ local MatchmakingService = require(script.Parent.MatchmakingService)
 -- Charaktere spawnen nur, wenn ein Modus es sagt
 Players.CharacterAutoLoads = false
 
+BanService.Init() -- zuerst: gesperrte Spieler sofort rauswerfen
+Telemetry.Init() -- Spielanalyse (AnalyticsService)
 ProgressService.Init()
 ShopService.Init()
 DownedService.Init()

@@ -38,6 +38,10 @@ PlayerSettings.List = {
 	{ Key = "CrosshairColor", Category = "Display", Label = "Fadenkreuz-Farbe", Type = "Choice", Default = "White",
 		Options = { { "White", "WEISS" }, { "Green", "GRÜN" }, { "Yellow", "GELB" }, { "Cyan", "CYAN" }, { "Pink", "PINK" } } },
 	{ Key = "KeyHints", Category = "Display", Label = "Tastenhinweise unten", Type = "Toggle", Default = true },
+	-- Anzeigesprache (Locale): Automatisch = Englisch, Deutsch nur bei deutscher Roblox-Sprache
+	{ Key = "Language", Category = "Display", Label = "Sprache", Type = "Choice", Default = "auto",
+		Options = { { "auto", "AUTOMATISCH" }, { "en", "ENGLISH" }, { "de", "DEUTSCH" } },
+		Hint = "Automatisch: Englisch, Deutsch bei deutscher Roblox-Sprache" },
 	{ Key = "Graphics", Category = "Display", Label = "Grafik", Type = "Choice", Default = "High",
 		Options = { { "High", "HOCH" }, { "Medium", "MITTEL" }, { "Low", "NIEDRIG" } },
 		Hint = "Niedrig: ohne Schatten, Partikel und Leuchteffekte (mehr FPS)" },

@@ -19,6 +19,7 @@ local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
 local ProgressService = require(script.Parent.ProgressService)
+local Telemetry = require(script.Parent.Telemetry)
 local LootService = require(script.Parent.LootService)
 local ZombieService = require(script.Parent.ZombieService)
 local ActivityService = require(script.Parent.ActivityService)
@@ -80,6 +81,7 @@ local function complete(player, state, index)
 	Remotes.Notify:FireClient(player, "Banner", { Caption = "Auftrag", Title = "AUFTRAG ERLEDIGT",
 		Sub = mission.Text .. " · +" .. def.Coins .. " Münzen", Style = "Good" })
 	table.remove(state.Missions, index)
+	Telemetry.Event(player, "MissionDone", 1, def.Id or def.Kind or mission.Text)
 	for _, callback in MissionService.OnComplete do
 		task.spawn(callback, player, def)
 	end

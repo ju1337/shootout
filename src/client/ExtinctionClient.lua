@@ -679,7 +679,7 @@ local function updateHints()
 	local device = InputActions.Device()
 	if heliHints then
 		if device == "Touch" then
-			hints.Text = "STICK = FLIEGEN  ·  HOCH / RUNTER = STEIGEN / SINKEN  ·  RAUS = AUSSTEIGEN  ·  PARKEN = EINPACKEN (GELANDET)"
+			hints.Text = "STICK = FLIEGEN  ·  STEIGEN / SINKEN  ·  RAUS = AUSSTEIGEN  ·  PARKEN = EINPACKEN (GELANDET)"
 		elseif device == "Gamepad" then
 			hints.Text = "L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  " .. InputActions.Hint("StoreVehicle")
 				.. "  EINPACKEN (GELANDET)"

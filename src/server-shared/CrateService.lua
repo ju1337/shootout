@@ -43,7 +43,7 @@ function CrateService.Open(player, crateId)
 	if lastOpen[player] and now - lastOpen[player] < CrateConfig.Cooldown then
 		return false, "Nicht so schnell."
 	end
-	if not ProgressService.SpendCoins(player, crate.Price) then
+	if not ProgressService.SpendCoins(player, crate.Price, "Kiste", crateId) then
 		return false, "Nicht genug Münzen (" .. crate.Price .. " nötig)."
 	end
 	lastOpen[player] = now

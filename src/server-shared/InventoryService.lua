@@ -578,7 +578,7 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 			status(player, "Nicht genug Rote-Zone-Punkte (" .. price .. " RZ nötig) – die gibt es nur in der roten Zone.")
 			return false
 		end
-	elseif not ProgressService.SpendCoins(player, price) then
+	elseif not ProgressService.SpendCoins(player, price, "Stand", itemId) then
 		status(player, "Nicht genug Münzen (" .. price .. " nötig).")
 		return false
 	end

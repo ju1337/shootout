@@ -32,6 +32,8 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local RapConfig = require(Shared.RapConfig)
 local SessionStore = require(script.Parent.SessionStore)
 
+local Telemetry = require(script.Parent.Telemetry)
+
 local ProgressService = {}
 
 local AUTOSAVE_INTERVAL = 120 -- Sekunden (erneuert auch die Sitzungssperre, siehe SessionStore.LockTimeout)
@@ -709,6 +711,7 @@ local function load(player)
 	checkSeason(player, profile) -- neue Ranked-Saison seit dem letzten Besuch?
 	loaded[player] = true
 	ProgressService.Sync(player)
+	Telemetry.Onboarding(player, 1, "Joined")
 end
 
 -- Speichern (nur mit eigener Sperre). release = Sperre dabei freigeben (Spieler geht, Server fährt herunter).
@@ -789,16 +792,19 @@ function ProgressService.AddCoins(player, amount, reason)
 	profile.Coins += math.floor(amount)
 	record(player, reason, 0, math.floor(amount))
 	ProgressService.Sync(player)
+	Telemetry.Economy(player, "Source", "Coins", math.floor(amount), profile.Coins,
+		reason == "Robux" and "IAP" or (reason == "Markt" or reason == "Verkauf") and "Shop" or "Gameplay", nil, reason)
 end
 
--- Gibt true zurück, wenn genug Münzen da waren
-function ProgressService.SpendCoins(player, amount)
+-- Gibt true zurück, wenn genug Münzen da waren. reason/sku (optional) nur für die Analyse (Telemetry): wofür, welches Item
+function ProgressService.SpendCoins(player, amount, reason, sku)
 	local profile = profiles[player]
 	if not profile or profile.Coins < amount then
 		return false
 	end
 	profile.Coins -= amount
 	ProgressService.Sync(player)
+	Telemetry.Economy(player, "Sink", "Coins", amount, profile.Coins, "Shop", sku, reason or "Unbekannt")
 	return true
 end
 
@@ -915,6 +921,7 @@ function ProgressService.AddRap(player, amount)
 	end
 	profile.Rap = math.floor(tonumber(profile.Rap) or 0) + amount
 	ProgressService.Sync(player)
+	Telemetry.Economy(player, "Source", "RAP", amount, profile.Rap, "Gameplay")
 end
 
 -- Gibt true zurück, wenn genug RAP da war
@@ -926,6 +933,7 @@ function ProgressService.SpendRap(player, amount)
 	end
 	profile.Rap = math.floor(tonumber(profile.Rap) or 0) - amount
 	ProgressService.Sync(player)
+	Telemetry.Economy(player, "Sink", "RAP", amount, profile.Rap, "Shop")
 	return true
 end
 
@@ -977,8 +985,14 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 	profile.Coins += coins
 	record(player, reason, amount, coins)
 	ProgressService.Sync(player)
+	if coins > 0 then
+		Telemetry.Economy(player, "Source", "Coins", coins, profile.Coins, "Gameplay", nil, "XP")
+	end
 
 	local levelUp = AgentConfig.LevelFromXP(after) > AgentConfig.LevelFromXP(before)
+	if levelUp then
+		Telemetry.Progression(player, "Agent", "Complete", AgentConfig.LevelFromXP(after), tostring(agentId))
+	end
 	Remotes.XPGain:FireClient(player, amount, reason, agentId, levelUp, coins, quiet == true) -- auch bei Agent auf Max-Level
 	-- Alle XP zählen auch für den Battle Pass (auch wenn der Agent schon Max-Level ist)
 	if reason ~= "Admin" then
@@ -1045,6 +1059,15 @@ function ProgressService.SetPrestige(player, prestige, level)
 end
 
 function ProgressService.Init()
+	Telemetry.BindProfile(function(player)
+		local profile = profiles[player]
+		return profile and profile.OnboardingStep or nil
+	end, function(player, step)
+		local profile = profiles[player]
+		if profile then
+			profile.OnboardingStep = step
+		end
+	end)
 	local ok, result = pcall(function()
 		return DataStoreService:GetDataStore("PlayerData_v1")
 	end)

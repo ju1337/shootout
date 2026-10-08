@@ -49,6 +49,9 @@ local HordeService = require(ServerShared.HordeService)
 local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
+local Telemetry = require(ServerShared.Telemetry)
+
+local TUTORIAL_DONE_STEP = 9 -- Onboarding-Trichter: 1 Beitritt, 2 offene Welt, 3-8 Tutorial-Schritte, 9 fertig
 local RedPointsService = require(ServerShared.RedPointsService)
 local KitService = require(ServerShared.KitService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
@@ -304,6 +307,11 @@ local function spawnPlayer(player)
 		local root = character:FindFirstChild("HumanoidRootPart")
 		local position = root and root.Position
 		local outside = position ~= nil and not Extinction.InSafeZone(position)
+		local lastHit = Damage.LastHit(character)
+		local cause = lastHit and lastHit.Model and (Players:GetPlayerFromCharacter(lastHit.Model) and "Player"
+			or lastHit.Model:GetAttribute("IsZombie") and "Zombie" or "Other") or "Other"
+		Telemetry.Event(player, "Death", 1, "Extinction", cause,
+			(position and RedzoneService.At(position)) and "Redzone" or "Open")
 		if current and outside then
 			current.BagNotice = dropBag(player, position) and "Dropped" or "Empty"
 		end
@@ -405,13 +413,21 @@ function Extinction.Init(modeManager)
 	InventoryService.Handlers.Travel = function(player, key)
 		Extinction.Travel(player, key)
 	end
-	-- Tutorial fertig oder übersprungen (ExtTutorial): danach nie wieder von selbst
-	InventoryService.Handlers.Tutorial = function(player)
+	-- Tutorial (ExtTutorial): "Step", n, Id = Schritt n erreicht (nur Analyse: Onboarding-Trichter 3 ff.);
+	-- "Done"/"Skip" = fertig oder übersprungen, danach nie wieder von selbst (Profil TutorialDone)
+	InventoryService.Handlers.Tutorial = function(player, result, index, stepId)
+		if result == "Step" then
+			if type(index) == "number" and index >= 1 and index <= 20 then
+				Telemetry.Onboarding(player, 2 + math.floor(index), "Tutorial:" .. tostring(stepId))
+			end
+			return
+		end
 		local profile = ProgressService.Get(player)
 		if profile then
 			profile.TutorialDone = true
 		end
 		player:SetAttribute("ExtTutorial", nil)
+		Telemetry.Onboarding(player, TUTORIAL_DONE_STEP, result == "Skip" and "TutorialSkipped" or "TutorialDone")
 	end
 
 	-- Tor zurück zum Hub (in der Safe Zone, darum ohne Verlust)
@@ -787,6 +803,7 @@ function Extinction.AddPlayer(player)
 	KitService.Publish(player)
 	ExtLevelService.Publish(player)
 	MissionService.Join(player)
+	Telemetry.Onboarding(player, 2, "EnteredExtinction")
 	spawnPlayer(player)
 	ExtDailyService.Claim(player) -- tägliche Kiste ins Lager (einmal am Tag)
 	-- Neue Spieler: geführtes Tutorial (ExtTutorial auf dem Client), bis es fertig oder übersprungen ist (Profil
@@ -841,6 +858,7 @@ function Extinction.OnKill(killer, victim)
 			RedPointsService.Add(killer, ExtinctionConfig.RedPoints.PlayerKill, "Spieler in der roten Zone")
 		end
 		BountyService.OnKill(killer, victim)
+		Telemetry.Event(killer, "PlayerKill", 1, "Extinction", zone and "Redzone" or "Open")
 	end
 end
 

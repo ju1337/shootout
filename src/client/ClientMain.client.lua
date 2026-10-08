@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local InputActions = require(Shared.InputActions)
 local PlayerSettings = require(Shared.PlayerSettings)
+local Locale = require(Shared.Locale)
 local Movement = require(Shared.Movement)
 local WeaponClient = require(Shared.WeaponClient)
 local CharacterPose = require(Shared.CharacterPose)
@@ -43,6 +44,7 @@ local DeathScreen = require(script.Parent:WaitForChild("DeathScreen"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
+Locale.Init(PlayerSettings) -- Anzeige standardmäßig Englisch (US); Deutsch nach Roblox-Sprache oder Option SPRACHE
 Movement.Init()
 WeaponClient.Init()
 CharacterPose.Init() -- Third-Person: Waffe mit beiden Händen bei allen Charakteren

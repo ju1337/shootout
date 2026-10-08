@@ -224,6 +224,7 @@ local function enterStep(index)
 		Sfx.UI("StingGood")
 		return
 	end
+	Remotes.ExtAction:FireServer("Tutorial", "Step", index, step.Id) -- nur für die Analyse (Onboarding-Trichter)
 	if step.Start then
 		step.Start()
 	end

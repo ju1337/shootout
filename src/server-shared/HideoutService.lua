@@ -93,7 +93,7 @@ function HideoutService.Upgrade(player, moduleId)
 			return false
 		end
 	end
-	if not ProgressService.SpendCoins(player, nextLevel.Coins) then
+	if not ProgressService.SpendCoins(player, nextLevel.Coins, "Versteck") then
 		InventoryService.Status(player, "Nicht genug Münzen (" .. nextLevel.Coins .. " nötig).")
 		return false
 	end

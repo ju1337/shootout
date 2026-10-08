@@ -43,7 +43,7 @@ function actions.Buy(player, itemId)
 	if ProgressService.Owns(player, itemId) then
 		return "Du besitzt " .. item.Name .. " schon.", false
 	end
-	if not ProgressService.SpendCoins(player, item.Price) then
+	if not ProgressService.SpendCoins(player, item.Price, "Skin", itemId) then
 		return "Nicht genug Münzen.", false
 	end
 	ProgressService.GiveItem(player, itemId)
@@ -147,7 +147,7 @@ function actions.UnlockAgent(player, agentId)
 	if not agent.Price or (profile.Agents and profile.Agents[agentId]) then
 		return agent.Name .. " ist schon freigeschaltet.", false
 	end
-	if not ProgressService.SpendCoins(player, agent.Price) then
+	if not ProgressService.SpendCoins(player, agent.Price, "Agent", agentId) then
 		return "Nicht genug Münzen (" .. agent.Price .. " nötig).", false
 	end
 	profile.Agents = profile.Agents or {}

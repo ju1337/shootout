@@ -14,6 +14,7 @@ local Modes = require(Shared.Modes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local ProgressService = require(ServerShared.ProgressService)
+local Telemetry = require(ServerShared.Telemetry)
 local MatchmakingService = require(script.Parent.MatchmakingService)
 
 local ModeManager = {}
@@ -126,6 +127,7 @@ function ModeManager.Join(player, modeId, here)
 	player:SetAttribute("Mode", modeId)
 	module.AddPlayer(player)
 	switching[player] = nil
+	Telemetry.Event(player, "ModeJoin", 1, modeId)
 	joinedEvent:Fire(player, modeId)
 end
 

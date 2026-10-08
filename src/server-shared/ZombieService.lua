@@ -27,6 +27,7 @@ local DayCycle = require(Shared.DayCycle)
 local Sfx = require(Shared.Sfx)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
+local Telemetry = require(script.Parent.Telemetry)
 local LootService = require(script.Parent.LootService)
 
 local ZombieService = {}
@@ -510,6 +511,7 @@ local function onDeath(model, info)
 		ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), math.floor(info.Stats.XP * (info.Armored and A.XPFactor or 1)),
 			info.Name, false, true)
 		ProgressService.AddStat(killer, "Zombies", 1)
+		Telemetry.Count(killer, "ZombieKills", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
 		for _, callback in ZombieService.OnKill do
 			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero, info.Armored == true)

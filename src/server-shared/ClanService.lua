@@ -147,7 +147,7 @@ function ClanService.Create(player, name, tag)
 	if not data then
 		return "Gerade nicht möglich, bitte später nochmal.", false
 	end
-	ProgressService.SpendCoins(player, ClanService.CreateCost)
+	ProgressService.SpendCoins(player, ClanService.CreateCost, "Clan")
 	profile.Clan = tag
 	publish(player, data)
 	return "Clan [" .. tag .. "] " .. name .. " gegründet!", true
