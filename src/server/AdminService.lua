@@ -1,10 +1,9 @@
 -- AdminService (ModuleScript, nur Server)
--- Befehle aus dem Admin-Panel. Jeder Befehl wird hier geprüft: nur Admins dürfen.
--- Admin ist: in Studio jeder, sonst der Besitzer des Spiels (bzw. Rang 254+ in der Gruppe)
--- und alle UserIds in ADMIN_IDS.
+-- Befehle aus dem Admin-Panel. Jeder Befehl wird hier geprüft: Admins (Attribut "IsAdmin") dürfen alles,
+-- Moderatoren (Team-Rang mit Kick/BanDays/Unban, siehe StaffConfig) nur Kick, Sperren und die Sperrliste, und das nur
+-- gegen schwächere Ränge. Ränge und Admin-Status setzt StaffService.
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
@@ -20,20 +19,61 @@ local ProgressService = require(ServerStorage:WaitForChild("ServerShared").Progr
 local LeaderboardService = require(ServerStorage:WaitForChild("ServerShared").LeaderboardService)
 local BotService = require(script.Parent.BotService)
 
+local StaffConfig = require(Shared.StaffConfig)
+local StaffService = require(script.Parent.StaffService)
+
 local AdminService = {}
 
--- Weitere Admins hier eintragen (Roblox-UserIds), z.B. { 12345678 }
-local ADMIN_IDS = {}
+-- Aktionen, die Moderatoren (ohne vollen Admin) benutzen dürfen
+local MOD_ACTIONS = { Kick = true, Ban = true, Unban = true, BanList = true }
 
-local function isAdmin(player)
-	if RunService:IsStudio() or table.find(ADMIN_IDS, player.UserId) then
+-- Darf player diese Aktion? Gibt false und einen Grund zurück, wenn nicht.
+local function allowed(player, action, a, b)
+	local rank = StaffConfig.Of(player)
+	if action == "SetRank" then
+		local target = StaffConfig.Get(b)
+		if not (rank and rank.Assign) then
+			return false, "Keine Rechte, Ränge zu vergeben."
+		elseif target and target.Power > rank.Assign then
+			return false, "Diesen Rang darfst du nicht vergeben."
+		elseif StaffService.StoredPower(a) >= rank.Power then
+			return false, "Dieser Spieler hat einen gleich hohen oder höheren Rang."
+		end
 		return true
 	end
-	if game.CreatorType == Enum.CreatorType.User then
-		return player.UserId == game.CreatorId
+	if player:GetAttribute("IsAdmin") and not MOD_ACTIONS[action] then
+		return true
 	end
-	local ok, rank = pcall(player.GetRankInGroup, player, game.CreatorId)
-	return ok and rank >= 254
+	if not MOD_ACTIONS[action] then
+		return false
+	end
+	if player:GetAttribute("IsAdmin") and not rank then
+		return true -- Admin ohne sichtbaren Rang (StaffService.AdminIds)
+	end
+	if not rank then
+		return false
+	end
+	if action == "BanList" then
+		return rank.Kick == true
+	end
+	if action == "Kick" and not rank.Kick then
+		return false, "Keine Rechte zum Rauswerfen."
+	end
+	if action == "Unban" and not rank.Unban then
+		return false, "Keine Rechte zum Entsperren."
+	end
+	if action == "Ban" then
+		local days = math.floor(tonumber(type(b) == "table" and b.Days or b) or 0)
+		if rank.BanDays == nil then
+			return false, "Keine Rechte zum Sperren."
+		elseif rank.BanDays > 0 and (days <= 0 or days > rank.BanDays) then
+			return false, "Du darfst höchstens " .. rank.BanDays .. " Tage sperren."
+		end
+	end
+	if (action == "Kick" or action == "Ban") and StaffService.StoredPower(a) >= rank.Power then
+		return false, "Dieser Spieler hat einen gleich hohen oder höheren Rang."
+	end
+	return true
 end
 
 function AdminService.Init(manager)
@@ -219,6 +259,10 @@ function AdminService.Init(manager)
 			local result = serverShared("BanService").Unban(admin, userId)
 			Remotes.AdminData:FireClient(admin, "Bans", serverShared("BanService").List())
 			return result
+		end,
+		-- Team-Rang vergeben (StaffService): rankId nil = Rang entfernen
+		SetRank = function(userId, rankId)
+			return StaffService.Assign(userId, rankId)
 		end,
 		BanList = function(_, _, admin)
 			local bans = serverShared("BanService").List()
@@ -459,20 +503,19 @@ function AdminService.Init(manager)
 			end
 			return
 		end
-		if not player:GetAttribute("IsAdmin") or typeof(action) ~= "string" or not actions[action] then
+		if typeof(action) ~= "string" or not actions[action] then
+			return
+		end
+		local ok, reason = allowed(player, action, a, b)
+		if not ok then
+			if reason then
+				Remotes.AdminStatus:FireClient(player, reason)
+			end
 			return
 		end
 		local ok, message = pcall(actions[action], a, b, player)
 		Remotes.AdminStatus:FireClient(player, ok and tostring(message) or ("Fehler: " .. tostring(message)))
 	end)
-
-	local function onPlayerAdded(player)
-		player:SetAttribute("IsAdmin", isAdmin(player))
-	end
-	Players.PlayerAdded:Connect(onPlayerAdded)
-	for _, player in Players:GetPlayers() do
-		task.spawn(onPlayerAdded, player)
-	end
 end
 
 return AdminService

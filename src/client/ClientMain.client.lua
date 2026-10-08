@@ -19,6 +19,7 @@ local Spectator = require(script.Parent:WaitForChild("Spectator"))
 local AgentSelect = require(script.Parent:WaitForChild("AgentSelect"))
 local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
 local Noclip = require(script.Parent:WaitForChild("Noclip"))
+local ChatTags = require(script.Parent:WaitForChild("ChatTags"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
 local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 local Downed = require(script.Parent:WaitForChild("Downed"))
@@ -80,3 +81,4 @@ DeathScreen.Init() -- offene Welt: Todesbildschirm mit Gegner, Tasche und Respaw
 VehicleClient.Init() -- offene Welt: Fahrzeuge steuern (der Fahrer rechnet die Physik), Verfolgerkamera
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist
 task.spawn(Noclip.Init) -- Admins: B = Noclip (frei fliegen)
+ChatTags.Init() -- Team-Ränge als Präfix im Chat (StaffConfig)

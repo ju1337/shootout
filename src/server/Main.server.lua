@@ -65,6 +65,7 @@ InventoryService.Init() -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, 
 KitService.Init() -- Kit-Händler am Spawn im Camp (Starter Kit usw.)
 LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
 AgentService.Init()
+require(script.Parent.StaffService).Init() -- Team-Ränge, IsAdmin / IsMod
 AdminService.Init(ModeManager)
 PartyService.Init(ModeManager)
 -- Arcade über mehrere Server: auf Server mit mehr Spielern im Modus wechseln, der Squad kommt mit

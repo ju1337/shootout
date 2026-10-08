@@ -1,5 +1,7 @@
 -- AdminPanel (ModuleScript, nur Client)
--- Nur für Admins (Attribut "IsAdmin" vom Server). Öffnen/Schließen mit P oder dem ADMIN-Knopf.
+-- Für Admins (Attribut "IsAdmin" vom Server) mit allen Reitern; Moderatoren (Attribut "IsMod", Team-Rang aus StaffConfig)
+-- sehen nur SPIELER mit Kick und den Sperren, die ihr Rang erlaubt. Öffnen/Schließen mit P oder dem ADMIN-Knopf.
+-- Wer Ränge vergeben darf (StaffConfig Assign), sieht bei jedem Spieler und unter der Sperre eine Rang-Zeile.
 -- Aufbau: Kopfzeile (Titel, Rückmeldung, Schließen), Reiter (SPIEL, EVENTS, BOTS, EINSTELLUNGEN, SPIELER), darunter die
 -- Seite des Reiters. EVENTS zeigt jedes Event der offenen Welt als Karte mit Live-Status und START / HIER / STOP.
 -- Alle Befehle prüft der Server noch einmal (AdminService).
@@ -15,6 +17,7 @@ local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local DayCycle = require(Shared.DayCycle)
+local StaffConfig = require(Shared.StaffConfig)
 
 local player = Players.LocalPlayer
 
@@ -122,10 +125,55 @@ local function card(parent)
 	return frame
 end
 
+-- Rechte des eigenen Rangs; volle Admins ohne Rang (StaffService.AdminIds) dürfen alles außer Ränge vergeben
+local function rights()
+	return StaffConfig.Of(player) or (player:GetAttribute("IsAdmin") and { Kick = true, BanDays = 0, Unban = true, Power = 0 })
+		or {}
+end
+
+local function full()
+	return player:GetAttribute("IsAdmin") == true
+end
+
+-- Sperre über days Tage (0 = dauerhaft) erlaubt?
+local function banAllowed(days)
+	local limit = rights().BanDays
+	return limit ~= nil and (limit == 0 or (days > 0 and days <= limit))
+end
+
 local function send(action, a, b)
 	statusLabel.Text = "…"
 	statusLabel.TextColor3 = MUTED
 	Remotes.AdminAction:FireServer(action, a, b)
+end
+
+-- Knöpfe zum Rang-Vergeben (nur Ränge bis StaffConfig Assign des eigenen Rangs) für eine UserId
+local function rankButtons(parent, getUserId)
+	local assign = rights().Assign
+	if not assign then
+		return
+	end
+	local r = row(parent)
+	for _, rank in StaffConfig.Ranks do
+		if rank.Power <= assign then
+			button(rank.Name, #rank.Name * 8 + 22, r, rank.Color:Lerp(Color3.new(0, 0, 0), 0.4), function()
+				local id = getUserId()
+				if id then
+					send("SetRank", id, rank.Id)
+				else
+					statusLabel.Text = "UserId eingeben"
+				end
+			end)
+		end
+	end
+	button("KEIN RANG", 86, r, nil, function()
+		local id = getUserId()
+		if id then
+			send("SetRank", id, nil)
+		else
+			statusLabel.Text = "UserId eingeben"
+		end
+	end)
 end
 
 local function section(title, parent)
@@ -407,7 +455,7 @@ local function refreshPlayers()
 	local parts = {}
 	for _, p in Players:GetPlayers() do
 		table.insert(parts, p.UserId .. ":" .. tostring(p:GetAttribute("Mode")) .. ":" .. tostring(p.Team)
-			.. ":" .. tostring(p:GetAttribute("Agent")))
+			.. ":" .. tostring(p:GetAttribute("Agent")) .. ":" .. tostring(p:GetAttribute("StaffRank")))
 	end
 	local signature = table.concat(parts, "|")
 	if signature == playerSignature then
@@ -424,83 +472,102 @@ local function refreshPlayers()
 		local box = card(playerSection)
 		box.LayoutOrder = i
 		local agent = AgentConfig.Get(p:GetAttribute("Agent"))
-		label(p.Name, 16, box, { Font = Enum.Font.BuilderSansExtraBold })
+		local staff = StaffConfig.Of(p)
+		label((staff and (StaffConfig.Prefix(staff, 13) .. "  ") or "") .. p.Name, 16, box,
+			{ Font = Enum.Font.BuilderSansExtraBold, RichText = true })
 		label(tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "") .. "  ·  " .. (agent and agent.Name or "?"),
 			12, box, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
-		local moves = row(box)
-		local short = { Hub = "Hub", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
-			Arena = "1v1", Training = "Train" }
-		for _, modeId in { "Hub", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
-			button(short[modeId], 52, moves, nil, function()
-				send("MovePlayer", p.UserId, modeId)
+		-- Spieler verschieben, Werte ändern: nur volle Admins
+		if full() then
+			local moves = row(box)
+			local short = { Hub = "Hub", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
+				Arena = "1v1", Training = "Train" }
+			for _, modeId in { "Hub", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
+				button(short[modeId], 52, moves, nil, function()
+					send("MovePlayer", p.UserId, modeId)
+				end)
+			end
+			button("Team", 56, moves, "Accent", function()
+				send("SwitchTeam", p.UserId)
+			end).TextColor3 = DARK_TEXT
+			local actions = row(box)
+			button("Heilen", 60, actions, "Good", function()
+				send("Heal", p.UserId)
+			end)
+			button("Töten", 56, actions, "Danger", function()
+				send("Kill", p.UserId)
+			end)
+			button("+500 XP", 70, actions, nil, function()
+				send("GiveXP", p.UserId, 500)
+			end)
+			button("+5000 XP", 76, actions, nil, function()
+				send("GiveXP", p.UserId, 5000)
+			end)
+			button("+1000 Münzen", 100, actions, "Warn", function()
+				send("GiveCoins", p.UserId, 1000)
+			end)
+			button("+5 Stufen", 80, actions, "Teal", function()
+				send("GivePassXP", p.UserId, 5000)
+			end)
+			local prestige = row(box)
+			button("Max Prestige", 104, prestige, "Warn", function()
+				send("SetPrestige", p.UserId, "max")
+			end)
+			button("Prestige +1", 94, prestige, "Purple", function()
+				send("SetPrestige", p.UserId, "next")
+			end)
+			button("Level 100", 84, prestige, nil, function()
+				send("SetPrestige", p.UserId, "level100")
+			end)
+			button("Prestige 0", 88, prestige, "Danger", function()
+				send("SetPrestige", p.UserId, 0)
+			end)
+			local elo = row(box)
+			button("Max ELO", 76, elo, "Warn", function()
+				send("SetElo", p.UserId, "max")
+			end)
+			for _, step in { 100, 1, -1, -100 } do
+				button((step > 0 and "+" or "−") .. math.abs(step), 52, elo, nil, function()
+					send("SetElo", p.UserId, step)
+				end)
+			end
+			button("ELO zurück", 90, elo, "Danger", function()
+				send("SetElo", p.UserId, "reset")
+			end)
+			local season = row(box)
+			button("Saisonende testen", 140, season, "Purple", function()
+				send("SetElo", p.UserId, "season")
+			end)
+			button("+10.000 RAP", 104, season, "Teal", function()
+				send("GiveRap", p.UserId, 10000)
+			end)
+			button("Handelbarer Skin", 130, season, "Teal", function()
+				send("GiveTradeSkin", p.UserId)
 			end)
 		end
-		button("Team", 56, moves, "Accent", function()
-			send("SwitchTeam", p.UserId)
-		end).TextColor3 = DARK_TEXT
-		local actions = row(box)
-		button("Heilen", 60, actions, "Good", function()
-			send("Heal", p.UserId)
-		end)
-		button("Töten", 56, actions, "Danger", function()
-			send("Kill", p.UserId)
-		end)
-		button("+500 XP", 70, actions, nil, function()
-			send("GiveXP", p.UserId, 500)
-		end)
-		button("+5000 XP", 76, actions, nil, function()
-			send("GiveXP", p.UserId, 5000)
-		end)
-		button("+1000 Münzen", 100, actions, "Warn", function()
-			send("GiveCoins", p.UserId, 1000)
-		end)
-		button("+5 Stufen", 80, actions, "Teal", function()
-			send("GivePassXP", p.UserId, 5000)
-		end)
-		local prestige = row(box)
-		button("Max Prestige", 104, prestige, "Warn", function()
-			send("SetPrestige", p.UserId, "max")
-		end)
-		button("Prestige +1", 94, prestige, "Purple", function()
-			send("SetPrestige", p.UserId, "next")
-		end)
-		button("Level 100", 84, prestige, nil, function()
-			send("SetPrestige", p.UserId, "level100")
-		end)
-		button("Prestige 0", 88, prestige, "Danger", function()
-			send("SetPrestige", p.UserId, 0)
-		end)
-		local elo = row(box)
-		button("Max ELO", 76, elo, "Warn", function()
-			send("SetElo", p.UserId, "max")
-		end)
-		for _, step in { 100, 1, -1, -100 } do
-			button((step > 0 and "+" or "−") .. math.abs(step), 52, elo, nil, function()
-				send("SetElo", p.UserId, step)
-			end)
-		end
-		button("ELO zurück", 90, elo, "Danger", function()
-			send("SetElo", p.UserId, "reset")
-		end)
-		local season = row(box)
-		button("Saisonende testen", 140, season, "Purple", function()
-			send("SetElo", p.UserId, "season")
-		end)
-		button("+10.000 RAP", 104, season, "Teal", function()
-			send("GiveRap", p.UserId, 10000)
-		end)
-		button("Handelbarer Skin", 130, season, "Teal", function()
-			send("GiveTradeSkin", p.UserId)
-		end)
 		-- Rauswerfen und Sperren (BanService); der Grund steht im Feld oben
-		local moderation = row(box)
-		button("KICK", 70, moderation, "Warn", function()
-			send("Kick", p.UserId, reasonBox and reasonBox.Text or "")
-		end)
-		for _, def in { { "BAN 1 TAG", 1, 90 }, { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
-			button(def[1], def[3], moderation, "Danger", function()
-				send("Ban", p.UserId, { Days = def[2], Reason = reasonBox and reasonBox.Text or "" })
-			end)
+		-- (nur gegen schwächere Ränge, nicht gegen sich selbst; der Server prüft es noch einmal)
+		local mine = rights()
+		local outranked = StaffConfig.Of(player) == nil and full() or StaffConfig.Power(p) < (mine.Power or 0)
+		if p ~= player and outranked then
+			local moderation = row(box)
+			if mine.Kick then
+				button("KICK", 70, moderation, "Warn", function()
+					send("Kick", p.UserId, reasonBox and reasonBox.Text or "")
+				end)
+			end
+			for _, def in { { "BAN 1 TAG", 1, 90 }, { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
+				if banAllowed(def[2]) then
+					button(def[1], def[3], moderation, "Danger", function()
+						send("Ban", p.UserId, { Days = def[2], Reason = reasonBox and reasonBox.Text or "" })
+					end)
+				end
+			end
+			if mine.Assign then
+				rankButtons(box, function()
+					return p.UserId
+				end)
+			end
 		end
 		order(box)
 	end
@@ -540,10 +607,12 @@ local function refreshBans()
 		label(tostring(entry.Name) .. "  ·  " .. tostring(entry.UserId), 15, box, { Font = Enum.Font.BuilderSansExtraBold })
 		label(tostring(entry.Reason) .. "  ·  " .. tostring(entry.Left) .. "  ·  von " .. tostring(entry.By), 12, box,
 			{ TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
-		local r = row(box)
-		button("ENTSPERREN", 110, r, "Good", function()
-			send("Unban", entry.UserId)
-		end)
+		if rights().Unban then
+			local r = row(box)
+			button("ENTSPERREN", 110, r, "Good", function()
+				send("Unban", entry.UserId)
+			end)
+		end
 		order(box)
 	end
 end
@@ -559,13 +628,22 @@ local function buildModeration(page)
 	local r = row(head)
 	banIdBox = textBox("UserId", 120, r)
 	for _, def in { { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
-		button(def[1], def[3], r, "Danger", function()
-			local id = tonumber(banIdBox.Text)
-			if id then
-				send("Ban", id, { Days = def[2], Reason = reasonBox.Text })
-			else
-				statusLabel.Text = "UserId eingeben"
-			end
+		if banAllowed(def[2]) then
+			button(def[1], def[3], r, "Danger", function()
+				local id = tonumber(banIdBox.Text)
+				if id then
+					send("Ban", id, { Days = def[2], Reason = reasonBox.Text })
+				else
+					statusLabel.Text = "UserId eingeben"
+				end
+			end)
+		end
+	end
+	-- Rang per UserId vergeben (auch für Spieler, die gerade nicht online sind)
+	if rights().Assign then
+		label("Team-Rang für diese UserId:", 12, head, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+		rankButtons(head, function()
+			return tonumber(banIdBox.Text)
 		end)
 	end
 	section("Sperrliste", page)
@@ -629,7 +707,8 @@ local function build()
 	gui = make("ScreenGui", { Name = "AdminPanel", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20 },
 		player:WaitForChild("PlayerGui"))
 
-	toggleButton = button("ADMIN (P)", 110, gui, "Accent", function()
+	local staff = StaffConfig.Of(player)
+	toggleButton = button(full() and "ADMIN (P)" or "MOD (P)", 110, gui, "Accent", function()
 		setOpen(not isOpen)
 	end)
 	toggleButton.Position = UDim2.new(0, 150, 0, 6)
@@ -644,8 +723,8 @@ local function build()
 	-- Kopfzeile: Akzentstreifen, Titel, Rückmeldung, Schließen
 	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = HEADER, BorderSizePixel = 0 }, panel)
 	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, header)
-	label("ADMIN", 22, header, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(0, 200, 0, 26),
-		Font = Enum.Font.BuilderSansExtraBold, TextColor3 = ACCENT })
+	label("ADMIN" .. (staff and ("  " .. StaffConfig.Prefix(staff, 15)) or ""), 22, header, { Position = UDim2.new(0, 16, 0, 10),
+		Size = UDim2.new(0, 300, 0, 26), Font = Enum.Font.BuilderSansExtraBold, TextColor3 = ACCENT, RichText = true })
 	statusLabel = label("Bereit", 13, header, { Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -80, 0, 18),
 		Font = Enum.Font.BuilderSans, TextColor3 = MUTED, TextTruncate = Enum.TextTruncate.AtEnd })
 	local close = button("✕", 36, header, nil, function()
@@ -662,6 +741,9 @@ local function build()
 		SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
 	for index, def in { { "Game", "SPIEL", 80 }, { "Events", "EVENTS", 90 }, { "Bots", "BOTS", 74 },
 		{ "Settings", "EINSTELLUNGEN", 130 }, { "Players", "SPIELER", 96 } } do
+		if not full() and def[1] ~= "Players" then
+			continue -- Moderatoren: nur SPIELER
+		end
 		local tab = make("TextButton", { Size = UDim2.new(0, def[3], 1, 0), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
 			Font = Enum.Font.BuilderSansExtraBold, TextSize = 13, TextColor3 = MUTED, Text = def[2], AutoButtonColor = false,
 			LayoutOrder = index }, tabs)
@@ -684,15 +766,16 @@ local function build()
 	for _, page in pages do
 		order(page)
 	end
+	if not full() then
+		currentTab = "Players"
+	end
 	showTab(currentTab)
 end
 
 function AdminPanel.Init()
-	if not player:GetAttribute("IsAdmin") then
-		player:GetAttributeChangedSignal("IsAdmin"):Wait()
-	end
-	if not player:GetAttribute("IsAdmin") then
-		return
+	-- warten, bis der Server Admin oder Moderator setzt (StaffService)
+	while not (player:GetAttribute("IsAdmin") or player:GetAttribute("IsMod")) do
+		player.AttributeChanged:Wait()
 	end
 	build()
 

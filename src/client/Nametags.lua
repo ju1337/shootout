@@ -14,6 +14,7 @@ local RankConfig = require(Shared.RankConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local RankEmblem = require(Shared.RankEmblem)
 local TitleConfig = require(Shared.TitleConfig)
+local StaffConfig = require(Shared.StaffConfig)
 local UITheme = require(Shared.UITheme)
 local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
@@ -239,17 +240,20 @@ local function setTag(model, info)
 	end
 end
 
--- Name mit Clan-Kürzel und goldenem VIP davor (Gamepass VIP)
+-- Team-Rang davor (StaffConfig: OWNER, DEV, MOD … und VIP mit dem Gamepass)
+local function withRank(target, name)
+	local rank = StaffConfig.Of(target)
+	return rank and (StaffConfig.Prefix(rank, 18) .. " " .. name) or name
+end
+
+-- Name mit Clan-Kürzel und Team-Rang davor
 local function displayName(target)
 	local name = target.Name
 	local tag = target:GetAttribute("ClanTag")
 	if tag then
 		name = '<font color="#8FC3FF">[' .. tag .. ']</font> ' .. name
 	end
-	if target:GetAttribute("Pass_VIP") == true then
-		name = '<font color="#FFD24A">VIP</font> ' .. name
-	end
-	return name
+	return withRank(target, name)
 end
 
 -- Unterzeile: Rang und (falls gewählt) Titel in seiner Farbe
@@ -294,7 +298,7 @@ local function update()
 					Subtitle = subtitleFor(other, rank), SubColor = rank.Color, Rank = rank, Player = other, Rap = rapOf(other) })
 			elseif sameMode and mate then
 				-- Kampf: nur Teamkollegen, Name in Verbündeten-Blau, Abzeichen bleibt
-				setTag(character, { Name = other.Name, Color = UITheme.Colors.Ally, Player = other })
+				setTag(character, { Name = withRank(other, other.Name), Color = UITheme.Colors.Ally, Player = other })
 			else
 				removeTag(character)
 			end
