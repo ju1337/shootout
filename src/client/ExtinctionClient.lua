@@ -35,6 +35,7 @@ local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
+local HideoutConfig = require(Shared.HideoutConfig)
 local GunModels = require(Shared.GunModels)
 local RobuxConfig = require(Shared.RobuxConfig)
 local ExtinctionMap = require(script.Parent:WaitForChild("ExtinctionMap"))
@@ -1119,6 +1120,125 @@ local function openInventory()
 	win.Refresh()
 end
 
+-- VERSTECK: Module ausbauen (Münzen und Items aus Tasche oder Lager), Generator abholen
+local HIDEOUT = Color3.fromRGB(200, 160, 110)
+local function itemCountEverywhere(id)
+	local n = 0
+	for _, list in { bag, stash } do
+		for _, entry in list do
+			if entry.Id == id then
+				n += entry.N or 1
+			end
+		end
+	end
+	return n
+end
+
+local function openHideout()
+	local win = newWindow("Hideout", "VERSTECK", "MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION",
+		HIDEOUT)
+	local body = win.Body
+	local modules = HideoutConfig.Modules
+	local gap = 16
+	local cardW = math.floor((1180 - 56 - gap * (#modules - 1)) / #modules)
+	local views = {}
+	for i, module in modules do
+		local card = UITheme.Card({ Name = "Module_" .. module.Id, Position = UDim2.fromOffset((i - 1) * (cardW + gap), 0),
+			Size = UDim2.fromOffset(cardW, 524), ZIndex = 6 }, body)
+		local view = { Card = card, Module = module }
+		label({ Name = "Name", Position = UDim2.fromOffset(18, 16), Size = UDim2.new(1, -36, 0, 28), Text = upper(module.Name),
+			TextSize = 24, Font = F.Display, ZIndex = 7 }, card)
+		label({ Name = "Text", Position = UDim2.fromOffset(18, 46), Size = UDim2.new(1, -36, 0, 34), Text = module.Text, TextSize = 13,
+			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 7 }, card)
+		view.Pips = {}
+		for level = 1, #module.Levels do
+			local pip = make("Frame", { Name = "Pip" .. level, Position = UDim2.new((level - 1) / #module.Levels, level == 1 and 18 or 4, 0, 90),
+				Size = UDim2.new(1 / #module.Levels, level == 1 and -22 or -8, 0, 6), BackgroundColor3 = C.Card, BorderSizePixel = 0,
+				ZIndex = 7 }, card)
+			UITheme.Corner(pip, 3)
+			view.Pips[level] = pip
+		end
+		view.Level = label({ Name = "Level", Position = UDim2.fromOffset(18, 104), Size = UDim2.new(1, -36, 0, 16), Text = "",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, card)
+		view.Now = label({ Name = "Now", Position = UDim2.fromOffset(18, 126), Size = UDim2.new(1, -36, 0, 24), Text = "", TextSize = 20,
+			Font = F.Display, TextColor3 = HIDEOUT, ZIndex = 7 }, card)
+		view.Next = label({ Name = "Next", Position = UDim2.fromOffset(18, 156), Size = UDim2.new(1, -36, 0, 18), Text = "", TextSize = 14,
+			Font = F.Bold, TextColor3 = C.Text, ZIndex = 7 }, card)
+		label({ Name = "CostCaption", Position = UDim2.fromOffset(18, 196), Size = UDim2.new(1, -36, 0, 14), Text = "KOSTEN",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, card)
+		view.Costs = make("Frame", { Name = "Costs", Position = UDim2.fromOffset(18, 214), Size = UDim2.new(1, -36, 0, 120),
+			BackgroundTransparency = 1, ZIndex = 7 }, card)
+		make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, view.Costs)
+		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -18),
+			Size = UDim2.new(1, -36, 0, 44), Color = C.Primary, TextColor = C.PrimaryText, Text = "", TextSize = 16, ZIndex = 7 }, card,
+			function()
+				sendAction("HideoutUpgrade", module.Id)
+			end)
+		if module.Id == "Generator" then
+			view.Pending = label({ Name = "Pending", Position = UDim2.fromOffset(18, 350), Size = UDim2.new(1, -36, 0, 22), Text = "",
+				TextSize = 18, Font = F.Display, TextColor3 = C.Primary, ZIndex = 7 }, card)
+			view.Collect = UITheme.Chunky({ Name = "Collect", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -70),
+				Size = UDim2.new(1, -36, 0, 40), Color = C.Card, StrokeColor = C.Border, Text = "ABHOLEN", TextSize = 15, ZIndex = 7 }, card,
+				function()
+					sendAction("HideoutCollect")
+				end)
+		end
+		views[module.Id] = view
+	end
+	function win.Refresh()
+		local data = HideoutConfig.Data(player)
+		local coins = player:GetAttribute("Coins") or 0
+		for _, module in modules do
+			local view = views[module.Id]
+			local level = HideoutConfig.Level(data, module.Id)
+			for index, pip in view.Pips do
+				pip.BackgroundColor3 = index <= level and HIDEOUT or C.Card
+			end
+			view.Level.Text = level == 0 and "NICHT GEBAUT" or ("STUFE " .. level .. " VON " .. #module.Levels)
+			view.Now.Text = level > 0 and string.format(module.Format, module.Levels[level].Value) or "KEIN BONUS"
+			local nextLevel = module.Levels[level + 1]
+			view.Next.Text = nextLevel and ("Nächste Stufe: " .. string.format(module.Format, nextLevel.Value)) or "Ganz ausgebaut"
+			for _, child in view.Costs:GetChildren() do
+				if child:IsA("GuiObject") then
+					child:Destroy()
+				end
+			end
+			local affordable = nextLevel ~= nil
+			if nextLevel then
+				local enough = coins >= nextLevel.Coins
+				affordable = affordable and enough
+				label({ Name = "Coins", Size = UDim2.new(1, 0, 0, 18), Text = UITheme.FormatNumber(nextLevel.Coins) .. " Münzen", TextSize = 15,
+					Font = F.Bold, TextColor3 = enough and C.Text or C.Bad, LayoutOrder = 0, ZIndex = 7 }, view.Costs)
+				for index, need in nextLevel.Items do
+					local have = itemCountEverywhere(need[1])
+					local config = itemConfig(need[1])
+					affordable = affordable and have >= need[2]
+					label({ Name = "Item" .. index, Size = UDim2.new(1, 0, 0, 18), Text = string.format("%d× %s  (%d/%d)", need[2],
+						config and config.Name or need[1], math.min(have, need[2]), need[2]), TextSize = 15, Font = F.Bold,
+						TextColor3 = have >= need[2] and C.Text or C.Bad, LayoutOrder = index, ZIndex = 7 }, view.Costs)
+				end
+			end
+			view.Upgrade.SetText(nextLevel and ("AUSBAUEN AUF STUFE " .. (level + 1)) or "GANZ AUSGEBAUT")
+			view.Upgrade.SetColor(affordable and C.Primary or C.Card, affordable and C.PrimaryText or C.Muted)
+			if view.Pending then
+				local pending = HideoutConfig.Pending(data, math.floor(workspace:GetServerTimeNow()))
+				view.Pending.Text = level > 0 and ("ERZEUGT: " .. UITheme.FormatNumber(pending) .. " MÜNZEN") or ""
+				view.Collect.Button.Visible = level > 0
+			end
+		end
+	end
+	win.Refresh()
+	-- Generator zählt sichtbar hoch, solange das Fenster offen ist
+	task.spawn(function()
+		while window == win do
+			task.wait(1)
+			if window == win then
+				win.Refresh()
+			end
+		end
+	end)
+end
+
 -- LAGER: Tasche links, Lager rechts; anklicken legt ins andere
 local function openStash()
 	local win = newWindow("Stash", "LAGER", "IMMER SICHER  ·  ANKLICKEN = HINÜBERLEGEN  ·  ZIEHEN = AUF EINEN PLATZ", Color3.fromRGB(226, 178, 52))
@@ -1717,6 +1837,7 @@ local BUBBLES = {
 	Stand_Market = { Icon = "Coins" },
 	Stash = { Icon = "Crate" },
 	Travel = { Icon = "Route" },
+	Hideout = { Icon = "House" },
 }
 local bubbles = {}
 
@@ -1748,6 +1869,15 @@ local function buildSymbol(parent, kind, zIndex)
 		end
 		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 3), Size = UDim2.fromOffset(6, 5),
 			BackgroundColor3 = Color3.fromRGB(190, 192, 196) }, crate) -- Verschluss
+	elseif kind == "House" then
+		local wall = Color3.fromRGB(200, 160, 110)
+		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20), Size = UDim2.fromOffset(26, 18),
+			BackgroundColor3 = wall })
+		local roof = box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, 18), Size = UDim2.fromOffset(22, 22),
+			Rotation = 45, BackgroundColor3 = Color3.fromRGB(150, 74, 56) })
+		roof.ZIndex = zIndex - 1
+		box({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 0, 38), Size = UDim2.fromOffset(7, 10),
+			BackgroundColor3 = Color3.fromRGB(70, 52, 40) })
 	elseif kind == "Route" then
 		local sign = Color3.fromRGB(110, 170, 220)
 		box({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(3, 30),
@@ -1853,6 +1983,21 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
+	-- Versteck (eigenes Haus im Camp)
+	for _, hideoutPart in stands:GetChildren() do
+		if hideoutPart:IsA("BasePart") and hideoutPart.Name == HideoutConfig.Point then
+			local prompt = make("ProximityPrompt", { Name = "HideoutPrompt", ActionText = "Versteck öffnen", ObjectText = "VERSTECK",
+				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
+				RequiresLineOfSight = false, Enabled = false }, hideoutPart)
+			prompt.Triggered:Connect(function()
+				openHideout()
+				if window then
+					window.Part = hideoutPart
+				end
+			end)
+			table.insert(prompts, prompt)
+		end
+	end
 	-- Hinweis-Blasen über allen Ständen, dem Lager und den Haltestellen
 	for _, part in stands:GetChildren() do
 		addBubble(part)
@@ -1867,7 +2012,7 @@ end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
 local function standDistanceCheck()
-	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel") then
+	if not window or (window.Kind ~= "Stand" and window.Kind ~= "Stash" and window.Kind ~= "Travel" and window.Kind ~= "Hideout") then
 		return
 	end
 	local character = player.Character
@@ -1875,8 +2020,8 @@ local function standDistanceCheck()
 	local maps = workspace:FindFirstChild("Maps")
 	local stands = maps and maps:FindFirstChild("Extinction") and maps.Extinction:FindFirstChild("Stands")
 	local part = window.Part
-		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Travel" and window.Point
-			or window.Stand))
+		or (stands and stands:FindFirstChild(window.Kind == "Stash" and "Stash" or window.Kind == "Hideout" and HideoutConfig.Point
+			or window.Kind == "Travel" and window.Point or window.Stand))
 	if not rootPart or not part or (rootPart.Position - part.Position).Magnitude > ExtinctionConfig.StandRange + 4 then
 		closeWindow()
 	end
@@ -2407,6 +2552,11 @@ function ExtinctionClient.Init()
 	for _, attribute in { "ExtBag", "ExtStash", "ExtEquipped" } do
 		player:GetAttributeChangedSignal(attribute):Connect(refreshAll)
 	end
+	player:GetAttributeChangedSignal("Hideout"):Connect(function()
+		if window and window.Kind == "Hideout" and window.Refresh then
+			window.Refresh()
+		end
+	end)
 	player:GetAttributeChangedSignal("Coins"):Connect(function()
 		coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
 		if window and window.Coins then

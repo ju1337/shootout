@@ -23,6 +23,7 @@ local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
 local Modes = require(Shared.Modes)
+local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local WeaponService = require(script.Parent.WeaponService)
 
@@ -275,10 +276,15 @@ local function startUse(player, state, item, config)
 	end
 	local token = {}
 	state.Using = token
+	-- Sanistation im Versteck: Heilen und Westen anlegen geht schneller
+	local useTime = config.UseTime
+	if config.Kind == "Heal" or config.Kind == "Armor" then
+		useTime *= 1 - HideoutConfig.Value(player, "Medical") / 100
+	end
 	character:SetAttribute("UsingItem", config.Name)
-	character:SetAttribute("UseEnd", workspace:GetServerTimeNow() + config.UseTime)
-	Remotes.ExtUpdate:FireClient(player, "UseStart", config.Name, config.UseTime)
-	task.delay(config.UseTime, function()
+	character:SetAttribute("UseEnd", workspace:GetServerTimeNow() + useTime)
+	Remotes.ExtUpdate:FireClient(player, "UseStart", config.Name, useTime)
+	task.delay(useTime, function()
 		if state.Using ~= token then
 			return -- abgebrochen
 		end
@@ -404,7 +410,7 @@ function InventoryService.Use(player, slot)
 	end
 end
 
--- Nah genug an einem Stand / am Lager? (Teile in Maps.Extinction.Stands, ein Name kann mehrfach vorkommen)
+-- Nah genug an einem Stand / am Lager / am Versteck? (Teile in Maps.Extinction.Stands, ein Name kann mehrfach vorkommen)
 local function nearPoint(player, name)
 	local _, _, root = livingCharacter(player)
 	local maps = workspace:FindFirstChild("Maps")
@@ -420,6 +426,10 @@ local function nearPoint(player, name)
 		end
 	end
 	return false
+end
+
+InventoryService.NearPoint = function(player, name)
+	return nearPoint(player, name)
 end
 
 local function nearAnyStand(player)
@@ -515,7 +525,8 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 		status(player, "Kein Platz in deiner Tasche.")
 		return false
 	end
-	local price = config.Price * qty
+	-- Werkbank im Versteck: Rabatt
+	local price = math.floor(config.Price * qty * (1 - HideoutConfig.Value(player, "Workbench") / 100))
 	if not ProgressService.SpendCoins(player, price) then
 		status(player, "Nicht genug Münzen (" .. price .. " nötig).")
 		return false
@@ -637,6 +648,42 @@ function InventoryService.TakeSlot(player, slot, count)
 		state.Bag.Slots[slot] = nil
 	end
 	changed(player, state)
+	return taken
+end
+
+-- Stückzahl eines Items in Tasche und Lager zusammen (Versteck: Baukosten)
+function InventoryService.CountEverywhere(player, id)
+	local state = stateOf(player)
+	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Stash, id)) or 0
+end
+
+-- count Stück eines Items nehmen, erst aus dem Lager, dann aus der Tasche (Waffe/Fahrzeug in Gebrauch nicht). Gibt die
+-- genommene Anzahl zurück.
+function InventoryService.TakeEverywhere(player, id, count)
+	local state = stateOf(player)
+	if not state then
+		return 0
+	end
+	local taken = Inventory.Remove(state.Stash, id, count)
+	if taken < count then
+		for slot = state.Bag.Size, 1, -1 do
+			local item = state.Bag.Slots[slot]
+			if taken >= count then
+				break
+			end
+			if item and item.Id == id and item ~= state.Equipped and not isOut(item) then
+				local take = math.min(count - taken, item.Count)
+				item.Count -= take
+				taken += take
+				if item.Count <= 0 then
+					state.Bag.Slots[slot] = nil
+				end
+			end
+		end
+	end
+	if taken > 0 then
+		changed(player, state)
+	end
 	return taken
 end
 

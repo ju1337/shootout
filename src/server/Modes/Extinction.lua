@@ -40,6 +40,7 @@ local MissionService = require(ServerShared.MissionService)
 local ExtMarketService = require(ServerShared.ExtMarketService)
 local VehicleService = require(ServerShared.VehicleService)
 local ConvoyService = require(ServerShared.ConvoyService)
+local HideoutService = require(ServerShared.HideoutService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
@@ -517,6 +518,9 @@ function Extinction.Init(modeManager)
 	end)
 	table.insert(Extinction.OnLeave, VehicleService.Despawn)
 
+	-- Eigenes Versteck: Module ausbauen, Generator abholen (Haus VERSTECK im Camp)
+	HideoutService.Init()
+
 	-- Konvoi: fährt eine Landstraße entlang, anhalten (Schüsse), Wachen erledigen, Ladung holen
 	ConvoyService.Init({
 		Map = map,
@@ -617,6 +621,7 @@ function Extinction.AddPlayer(player)
 	player:SetAttribute("MapCenter", map:GetAttribute("Center"))
 	player:SetAttribute("ModeText", "")
 	InventoryService.Enter(player)
+	HideoutService.Publish(player) -- vor dem Spawn: Feldbett zählt schon beim ersten Leben
 	MissionService.Join(player)
 	spawnPlayer(player)
 end

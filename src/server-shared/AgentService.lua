@@ -16,6 +16,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
 local BuyConfig = require(Shared.BuyConfig)
+local HideoutConfig = require(Shared.HideoutConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
@@ -57,6 +58,10 @@ local function applyAgent(player, character)
 	local agent = getAgent(player)
 	local humanoid = character:WaitForChild("Humanoid")
 	local health = agent.Health + (BuyConfig.Has(player, "Tough") and BuyConfig.ToughHealth or 0)
+	-- Feldbett im Versteck: mehr Leben in der offenen Welt
+	if Modes.IsSurvival(player:GetAttribute("Mode")) then
+		health += HideoutConfig.Value(player, "Bed")
+	end
 	humanoid.MaxHealth = health
 	humanoid.Health = health
 	character:SetAttribute("Agent", agent.Id)

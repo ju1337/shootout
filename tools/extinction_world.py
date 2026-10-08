@@ -2084,7 +2084,7 @@ class World:
         (1, 1): {"A": [(15, "station:Stand_Weapons", 2), (16, "shop:CAFÉ ZENTRAL|GESCHLOSSEN", 3)],
                  "B": [(15, "house", 3)],
                  "C": [(14, "house", 2), (14, "gap", 0), (10, "house", 2)],
-                 "D": [(20, "house", 3), (18, "house", 2)], "yard": "heli"},
+                 "D": [(20, "station:Hideout", 3), (18, "house", 2)], "yard": "heli"},
         (1, -1): {"A": [(15, "shop:BÄCKEREI|BROT GEGEN MARKEN", 2), (16, "house", 3)],
                   "B": [(15, "station:Stand_Items", 2)],
                   "C": [(16, "bus", 2), (22, "house", 3)],
@@ -2105,6 +2105,7 @@ class World:
         "Stash": ("LAGERHAUS", "DEINS BLEIBT DEINS", (176, 186, 200)),
         "Stand_Vehicles": ("KFZ-WERKSTATT", "FAHRZEUGE · REPARATUR", (110, 176, 230)),
         "Travel": ("BUSBAHNHOF", "FAHRT ZU ANDEREN SAFE ZONES", (110, 170, 220)),
+        "Hideout": ("VERSTECK", "DEIN UNTERSCHLUPF · AUSBAUEN", (200, 160, 110)),
     }
 
     def house_row(self, line, row):
