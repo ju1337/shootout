@@ -39,6 +39,7 @@ local ActivityService = require(ServerShared.ActivityService)
 local MissionService = require(ServerShared.MissionService)
 local ExtMarketService = require(ServerShared.ExtMarketService)
 local VehicleService = require(ServerShared.VehicleService)
+local ConvoyService = require(ServerShared.ConvoyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
@@ -516,6 +517,38 @@ function Extinction.Init(modeManager)
 	end)
 	table.insert(Extinction.OnLeave, VehicleService.Despawn)
 
+	-- Konvoi: fährt eine Landstraße entlang, anhalten (Schüsse), Wachen erledigen, Ladung holen
+	ConvoyService.Init({
+		Map = map,
+		Center = center,
+		InSafeZone = Extinction.InSafeZone,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+		SpawnGuard = function(cframe, itemId)
+			return Extinction.AddGuard(cframe, itemId)
+		end,
+		GuardAlive = function(bot)
+			return bots[bot] == true and not bot.Dead
+		end,
+		RemoveGuard = function(bot)
+			if bots[bot] and not bot.Dead then
+				bots[bot] = nil
+				BotService.Destroy(bot)
+			end
+		end,
+		Reward = function(player, coins, text)
+			if members[player] then
+				ProgressService.AddCoins(player, coins, text)
+				InventoryService.Status(player, "+" .. coins .. " Münzen: " .. text, true)
+			end
+		end,
+	})
+
 	-- Spiel verlassen: vor dem letzten Speichern die Strafe anwenden (draußen = Tasche weg)
 	ProgressService.OnLeaving(function(player)
 		leavePenalty(player)
@@ -711,6 +744,7 @@ end
 
 -- Bot tot: Tasche am Boden, Kopfgeld und Rangliste für den Spieler, der zuletzt getroffen hat; Leiche später weg
 local function botDied(bot)
+	bot.Dead = true
 	local model = bot.Model
 	local root = model and model:FindFirstChild("HumanoidRootPart")
 	if root then
@@ -766,6 +800,33 @@ function Extinction.AddBot(bot, _teamName, admin)
 		botDied(bot)
 	end)
 	return true
+end
+
+-- Wache an einer festen Stelle (Konvoi): wie ein Bot aus dem Admin-Panel, aber ohne Obergrenze, mit gegebener Waffe und
+-- kleinerem Jagdradius um die Stelle. Gibt den Bot zurück.
+function Extinction.AddGuard(cframe, itemId)
+	local item = itemId and ExtinctionConfig.Get(itemId)
+	if not item or item.Kind ~= "Weapon" then
+		itemId = ExtinctionConfig.Bots.Weapons[1]
+	end
+	local bot = BotService.Create(ExtinctionConfig.ModeId)
+	bot.Name = "KONVOI-WACHE"
+	bots[bot] = true
+	BotService.SetTeam(bot, BOT_TEAM)
+	bot.ItemId = itemId
+	bot.Weapon = ExtinctionConfig.Get(itemId).Weapon
+	bot.Home = cframe.Position
+	bot.HuntRange = ExtinctionConfig.Convoy.GuardRange
+	bot.ZombieRange = ExtinctionConfig.Bots.ZombieRange
+	bot.AllowPoint = function(position)
+		return not Extinction.InSafeZone(position)
+	end
+	bot.NoGadgets = true
+	bot.CanFight = true
+	task.spawn(BotService.SpawnModel, bot, cframe, function()
+		botDied(bot)
+	end)
+	return bot
 end
 
 function Extinction.RemoveBot(bot)

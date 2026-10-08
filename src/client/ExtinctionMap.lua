@@ -1,11 +1,11 @@
 -- ExtinctionMap (ModuleScript, nur Client)
 -- Weltkarte der offenen Welt (EXTINCTION), Taste N (oder Knopf KARTE): Straßen und Flächen aus den Gruppen Roads und
 -- Ground der Karte, die Safe Zones (grün), die rote Zone (roter Kreis mit der Zeit bis zum Weiterziehen), Orte (Namen),
--- Lootdrops (orange, mit Countdown), Vorratslager und Funkgerät, die eigene Todestasche (rotes X mit der Zeit, bis sie
+-- Lootdrops (orange, mit Countdown), der Konvoi (roter Punkt mit Zustand), Vorratslager und Funkgerät, die eigene Todestasche (rotes X mit der Zeit, bis sie
 -- verschwindet, Spieler-Attribut ExtDeathBag) und der eigene Standort als Pfeil in Blickrichtung.
 -- Norden (+Z) ist oben.
 -- Zombienester und Überlebende stehen nicht auf der Karte (man findet sie draußen), damit sie übersichtlich bleibt.
--- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops, Activities; Gruppen Roads, Ground, Places,
+-- Daten: Karte workspace.Maps.Extinction (Attribute Center, Redzones, Airdrops, Convoys, Activities; Gruppen Roads, Ground, Places,
 -- Zone).
 
 local Players = game:GetService("Players")
@@ -29,6 +29,8 @@ local WORLD = ExtinctionConfig.WorldSize
 local RED = Color3.fromRGB(226, 56, 48)
 local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
+local CONVOY = Color3.fromRGB(236, 96, 64)
+local CONVOY_STATES = { Waiting = "KONVOI WARTET", Driving = "KONVOI", Halted = "KONVOI GESTOPPT", Loot = "KONVOI-LADUNG" }
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
 	CampPad = Color3.fromRGB(104, 104, 100),
@@ -210,6 +212,27 @@ local function update()
 			text.Text = drop.State == "Landed" and "LOOTDROP" or ("LOOTDROP " .. math.max(0, math.ceil((drop.Eta or now) - now)) .. " S")
 		end
 	end
+	-- Konvoi: roter Punkt mit Zustand
+	for _, convoy in decode(map, "Convoys") do
+		local id = "Convoy" .. tostring(convoy.Id)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "Convoy", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(14, 14),
+				BackgroundColor3 = CONVOY, BorderSizePixel = 0, ZIndex = 9 }, markers)
+			make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, view)
+			UITheme.Stroke(view, Color3.new(0, 0, 0), 1.5, 0.2)
+			label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4), Size = UDim2.fromOffset(140, 14),
+				TextSize = 11, Font = F.Bold, TextColor3 = CONVOY, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, view)
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, convoy.X or 0, convoy.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
+		local text = view:FindFirstChild("Text")
+		if text then
+			text.Text = CONVOY_STATES[convoy.State] or "KONVOI"
+		end
+	end
 	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do
 		local color = ACTIVITY_COLORS[act.Kind]
@@ -307,7 +330,7 @@ function ExtinctionMap.Init()
 		ZIndex = 9 }, bagView)
 	-- Legende
 	local legend = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -6), Size = UDim2.fromOffset(SIZE - 16, 16),
-		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ■ LAGER  ·  ● FUNK  ·  X DEINE TASCHE", TextSize = 11,
+		Text = "▲ DU  ·  GRÜN SAFE ZONE  ·  ROT ROTE ZONE  ·  ◆ LOOTDROP  ·  ● KONVOI  ·  ■ LAGER  ·  ● FUNK  ·  X DEINE TASCHE", TextSize = 11,
 		Font = F.Bold,
 		TextColor3 = C.Text, ZIndex = 9 }, board)
 	UITheme.Outline(legend)

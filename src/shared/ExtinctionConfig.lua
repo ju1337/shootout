@@ -327,6 +327,48 @@ ExtinctionConfig.Bots = {
 	CorpseTime = 8,
 }
 
+-- ---------- Konvoi (ConvoyService) ----------
+-- Alle MinInterval bis MaxInterval Sekunden (zuerst nach FirstDelay, nur wenn mindestens MinPlayers draußen sind) fährt ein
+-- bewaffneter Konvoi eine Landstraße entlang (Routes: Punkte relativ zur Kartenmitte, aus tools/extinction_world.py –
+-- zufällig vorwärts oder rückwärts): Begleitfahrzeug, Lkw mit Ladung, Begleitfahrzeug. Warning Sekunden vorher steht er
+-- am Start (Ansage, Markierung). Unterwegs schießen die Begleitfahrzeuge auf Spieler in GunRange (alle GunEvery Sekunden,
+-- Treffer mit GunChance, GunDamage Schaden). Schüsse auf ein Fahrzeug ziehen vom Konvoi Leben ab (Health); fällt es unter
+-- HaltAt (Anteil), hält der Konvoi an und Guards Wachen (Bots mit GuardWeapons) steigen aus. Sind alle Wachen erledigt
+-- (oder nach GuardTimeout Sekunden), wird die Ladung frei: Kiste (E halten OpenTime Sekunden) mit Items Einträgen aus
+-- Table, dazu Coins Münzen für alle, die den Konvoi beschossen haben. Kommt er ans Ende der Strecke, ist er entkommen.
+-- Die Kiste bleibt Lifetime Sekunden. Stand für die Clients: Karten-Attribut "Convoys" [{ Id, X, Z, State, Route }].
+ExtinctionConfig.Convoy = {
+	Enabled = true,
+	FirstDelay = 8 * 60,
+	MinInterval = 18 * 60,
+	MaxInterval = 28 * 60,
+	MinPlayers = 1,
+	Warning = 45,
+	Speed = 16,
+	Spacing = 22,           -- Abstand der Fahrzeuge (Studs entlang der Straße)
+	Health = 2400,
+	HaltAt = 0.7,
+	Guards = 4,
+	GuardWeapons = { "SMG", "Rifle", "Shotgun", "Rifle" },
+	GuardRange = 140,
+	GuardTimeout = 150,
+	GunRange = 130,
+	GunEvery = 0.9,
+	GunChance = 0.45,
+	GunDamage = 9,
+	Table = "Airdrop",
+	Items = { 4, 6 },
+	Coins = 250,
+	OpenTime = 6,
+	Lifetime = 300,
+}
+ExtinctionConfig.Convoy.Routes = {
+	{ Name = "Militär → Flugplatz", Points = { { -1020, 1150 }, { -980, 1153 }, { -940, 1157 }, { -900, 1160 }, { -861, 1164 }, { -821, 1168 }, { -781, 1175 }, { -742, 1182 }, { -702, 1186 }, { -663, 1191 }, { -623, 1191 }, { -583, 1191 }, { -543, 1191 }, { -503, 1190 }, { -464, 1179 }, { -426, 1167 }, { -386, 1162 }, { -347, 1159 }, { -307, 1155 }, { -267, 1152 }, { -227, 1146 }, { -188, 1140 }, { -149, 1131 }, { -110, 1120 }, { -73, 1107 }, { -36, 1091 }, { 2, 1078 }, { 40, 1066 }, { 78, 1053 }, { 115, 1039 }, { 153, 1026 }, { 192, 1020 }, { 232, 1014 }, { 271, 1005 }, { 310, 995 }, { 348, 996 }, { 386, 1007 }, { 425, 1019 }, { 463, 1029 }, { 502, 1038 }, { 542, 1045 }, { 581, 1050 }, { 621, 1055 }, { 661, 1060 }, { 700, 1067 }, { 739, 1075 }, { 777, 1087 }, { 815, 1101 }, { 852, 1117 }, { 887, 1134 }, { 925, 1148 }, { 963, 1161 }, { 1002, 1170 }, { 1041, 1178 }, { 1050, 1180 } } },
+	{ Name = "Gefängnis → Nordheim", Points = { { -1090, -960 }, { -1098, -921 }, { -1105, -881 }, { -1109, -842 }, { -1113, -802 }, { -1117, -762 }, { -1121, -722 }, { -1128, -683 }, { -1137, -644 }, { -1147, -605 }, { -1158, -567 }, { -1159, -527 }, { -1158, -487 }, { -1153, -448 }, { -1147, -408 }, { -1145, -368 }, { -1143, -328 }, { -1146, -288 }, { -1150, -248 }, { -1141, -209 }, { -1132, -170 }, { -1121, -132 }, { -1110, -94 }, { -1096, -56 }, { -1082, -19 }, { -1067, 18 }, { -1052, 56 }, { -1039, 93 }, { -1027, 131 }, { -1017, 170 }, { -1007, 209 }, { -994, 247 }, { -982, 285 }, { -971, 323 }, { -961, 362 }, { -953, 401 }, { -945, 441 }, { -939, 480 }, { -931, 519 }, { -924, 559 }, { -915, 598 }, { -906, 636 }, { -894, 675 }, { -882, 713 }, { -852, 737 }, { -818, 758 }, { -784, 779 }, { -750, 800 }, { -717, 822 }, { -684, 845 }, { -651, 868 }, { -619, 891 }, { -587, 915 }, { -555, 940 }, { -523, 964 }, { -491, 988 }, { -459, 1012 }, { -427, 1035 }, { -394, 1058 }, { -361, 1080 }, { -327, 1102 }, { -293, 1123 }, { -259, 1144 }, { -250, 1150 } } },
+	{ Name = "Hafen → Flugplatz", Points = { { 960, -1050 }, { 922, -1062 }, { 884, -1074 }, { 846, -1087 }, { 808, -1100 }, { 768, -1105 }, { 729, -1109 }, { 689, -1114 }, { 649, -1119 }, { 611, -1129 }, { 572, -1139 }, { 532, -1145 }, { 493, -1150 }, { 453, -1150 }, { 440, -1136 }, { 462, -1102 }, { 483, -1068 }, { 503, -1034 }, { 522, -998 }, { 539, -962 }, { 555, -926 }, { 571, -889 }, { 588, -853 }, { 606, -817 }, { 626, -783 }, { 652, -754 }, { 688, -737 }, { 724, -718 }, { 758, -698 }, { 791, -676 }, { 823, -652 }, { 855, -628 }, { 887, -604 }, { 921, -583 }, { 956, -563 }, { 950, -527 }, { 938, -488 }, { 924, -451 }, { 909, -414 }, { 890, -379 }, { 869, -345 }, { 872, -310 }, { 892, -276 }, { 911, -241 }, { 929, -205 }, { 945, -168 }, { 960, -131 }, { 974, -94 }, { 989, -57 }, { 1006, -20 }, { 1023, 16 }, { 1043, 50 }, { 1061, 86 }, { 1070, 125 }, { 1080, 163 }, { 1091, 202 }, { 1102, 240 }, { 1113, 279 }, { 1122, 318 }, { 1129, 357 }, { 1135, 397 }, { 1139, 436 }, { 1144, 476 }, { 1149, 516 }, { 1157, 555 }, { 1164, 594 }, { 1165, 634 }, { 1164, 674 }, { 1162, 714 }, { 1160, 754 }, { 1157, 794 }, { 1153, 834 }, { 1142, 872 }, { 1132, 911 }, { 1122, 950 }, { 1114, 989 }, { 1111, 1029 }, { 1104, 1068 }, { 1092, 1106 }, { 1074, 1141 }, { 1053, 1175 }, { 1050, 1180 } } },
+	{ Name = "Gefängnis → Süd", Points = { { -1090, -960 }, { -1051, -970 }, { -1013, -980 }, { -973, -984 }, { -933, -986 }, { -893, -987 }, { -853, -991 }, { -814, -998 }, { -775, -995 }, { -735, -987 }, { -696, -981 }, { -656, -977 }, { -616, -977 }, { -576, -979 }, { -538, -971 }, { -501, -956 }, { -464, -942 }, { -426, -928 }, { -387, -918 }, { -348, -911 }, { -309, -903 }, { -270, -894 }, { -231, -885 }, { -192, -874 }, { -153, -866 }, { -114, -859 }, { -74, -854 }, { -34, -850 }, { 5, -844 }, { 45, -837 }, { 84, -828 }, { 122, -818 }, { 160, -806 }, { 180, -800 } } },
+}
+
 -- ---------- Tag und Nacht (DayCycle) ----------
 -- Ein ganzer Tag dauert Length Sekunden (24 Minuten): hell von NightTo bis NightFrom, dazwischen Nacht (ca. 9 Minuten).
 -- Nachts kommen mehr Zombies (NightZombies) und sie sehen weiter (NightSight); Feuer und Laternen sind dann die
