@@ -2195,11 +2195,16 @@ local function openLoot(data)
 		win.Loot = data
 		local body = win.Body
 		-- links die Beute, rechts das eigene Inventar (Tasche, Container, Schnellleiste)
-		local lootW = 380
+		-- Beute bekommt gut ein Drittel der Breite, Kacheln so groß wie die der Tasche
+		local lootW = math.floor(Inv.CONTENT_W * 0.38)
+		win.LootCell = math.floor((lootW - 3 * 8) / 4)
+		win.LootCellH = math.clamp(math.floor(win.LootCell * 0.55), 72, 104)
 		Inv.backdrop(body, win)
 		Inv.sectionHeader(body, "LootHeader", "BEUTE", 0, lootW)
-		win.LootHolder = make("Frame", { Name = "LootHolder", Position = UDim2.fromOffset(0, 28), Size = UDim2.fromOffset(lootW, 520),
-			BackgroundTransparency = 1, ZIndex = 5 }, body)
+		-- viele Items: scrollen
+		win.LootHolder = make("ScrollingFrame", { Name = "LootHolder", Position = UDim2.fromOffset(0, 28),
+			Size = UDim2.fromOffset(lootW + 8, Inv.CONTENT_H - 28 - 30 - 46 - 14), BackgroundTransparency = 1, BorderSizePixel = 0,
+			ScrollBarThickness = 3, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
 		win.TakeAll = UITheme.Chunky({ Name = "TakeAll", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 0, Inv.CONTENT_H - 30),
 			Size = UDim2.fromOffset(lootW, 46), Color = Inv.MENU_RED, TextColor = C.Text, Text = "ALLES NEHMEN", TextSize = 16, ZIndex = 6 },
 			body, function()
@@ -2245,7 +2250,7 @@ local function openLoot(data)
 		count = math.max(count, entry.S)
 	end
 	if count > 0 then
-		grid(win.LootHolder, "Loot", 1, count, 4, 89, 8, UDim2.new(), false, 80)
+		grid(win.LootHolder, "Loot", 1, count, 4, win.LootCell, 8, UDim2.new(), false, win.LootCellH)
 	end
 	win.Refresh()
 end
