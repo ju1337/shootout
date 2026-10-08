@@ -169,6 +169,22 @@ def translate(output, bundle_name, line_map):
     return re.sub(r"[^\s\"']*" + re.escape(bundle_name) + r":(\d+)", repl, output)
 
 
+TOP_LEVEL_LOCALS_MAX = 185
+
+
+def top_level_locals(source):
+    """Zählt die lokalen Namen auf oberster Ebene (Zeilen ohne Einrückung: local x, local a, b, local function f)."""
+    count = 0
+    for line in source.split("\n"):
+        if re.match(r"^local function \w+", line):
+            count += 1
+            continue
+        match = re.match(r"^local ([\w, ]+?)\s*(=|$|--)", line)
+        if match:
+            count += len([n for n in match.group(1).split(",") if n.strip()])
+    return count
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tests ohne Roblox ausführen")
     parser.add_argument("names", nargs="*", help="nur Tests, deren Dateiname das Wort enthält")
@@ -224,6 +240,24 @@ def main():
             failed.append(name)
     # Karten-Prüfung (ohne Luau): nur wenn nicht einzelne Tests ausgewählt wurden
     if not args.names:
+        # Roblox bricht ein Skript mit mehr als 200 lokalen Variablen auf oberster Ebene ab ("Out of local registers") –
+        # die Tests bündeln Module anders und merken das nicht. Grenze mit Luft für Zwischenwerte.
+        started = time.time()
+        crowded = []
+        for folder, _, files in os.walk(os.path.join(ROOT, "src")):
+            for name in files:
+                if name.endswith(".lua") or name.endswith(".luau"):
+                    path = os.path.join(folder, name)
+                    count = top_level_locals(read(path))
+                    if count > TOP_LEVEL_LOCALS_MAX:
+                        crowded.append("%s: %d lokale Variablen auf oberster Ebene (höchstens %d)"
+                                       % (os.path.relpath(path, ROOT), count, TOP_LEVEL_LOCALS_MAX))
+        print("%s locals (%.1f s)" % ("ok    " if not crowded else "FEHLER", time.time() - started))
+        for problem in crowded:
+            print("       FEHLER: " + problem)
+        runs.append(("locals", "immediate", "locals", None))
+        if crowded:
+            failed.append("locals")
         import maps_check
         started = time.time()
         problems = maps_check.check()

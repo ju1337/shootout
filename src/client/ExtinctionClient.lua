@@ -89,6 +89,7 @@ local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeig
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
+Inv.hiddenGuis = nil :: { ScreenGui }? -- solange das Menü offen ist ausgeblendete Oberflächen
 Inv.filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
 local equipped = 0
 local hud, root, windowGui, canvas
@@ -1101,9 +1102,9 @@ end
 
 -- Info-Fenster neben dem angeklickten Item (Inventar): Art und Seltenheit, Name, Werte, darunter die Aktionen.
 -- Gibt update(actions) zurück; ohne Auswahl ist es unsichtbar.
-local POPUP_W = 270
+Inv.POPUP_W = 270
 function Inv.itemPopup(body)
-	local popup = make("Frame", { Name = "ItemPopup", Size = UDim2.fromOffset(POPUP_W, 100), BackgroundColor3 = Inv.GLASS,
+	local popup = make("Frame", { Name = "ItemPopup", Size = UDim2.fromOffset(Inv.POPUP_W, 100), BackgroundColor3 = Inv.GLASS,
 		BackgroundTransparency = 0.03, BorderSizePixel = 0, Visible = false, ZIndex = 20 }, body)
 	UITheme.Corner(popup, 3)
 	local topLine = make("Frame", { Name = "TierLine", Size = UDim2.new(1, 0, 0, 2), BorderSizePixel = 0, ZIndex = 21 }, popup)
@@ -1167,11 +1168,11 @@ function Inv.itemPopup(body)
 		end
 		local tileW = view.Frame.Size.X.Offset
 		local x = tileX + tileW + 10
-		if x + POPUP_W > Inv.CONTENT_W then
-			x = tileX - POPUP_W - 10
+		if x + Inv.POPUP_W > Inv.CONTENT_W then
+			x = tileX - Inv.POPUP_W - 10
 		end
 		popup.Position = UDim2.fromOffset(x, math.clamp(tileY, 0, math.max(0, Inv.CONTENT_H - height)))
-		popup.Size = UDim2.fromOffset(POPUP_W, height)
+		popup.Size = UDim2.fromOffset(Inv.POPUP_W, height)
 		popup.Visible = true
 	end
 	return update
