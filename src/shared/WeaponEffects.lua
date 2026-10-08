@@ -44,64 +44,132 @@ local function effectPart(props)
 end
 
 -- ---------- Sounds ----------
+-- Aufnahmen aus WeaponConfig.SoundSets / ActionSounds: Gain gleicht sie an, Region spielt nur einen Teil.
+-- Schüsse anderer: 3D an der Mündung; ab DISTANT_FROM Studs klingt es dumpfer (Höhen weg), wie Schüsse in der Ferne.
 
-local function playAt(id, position, volume, speed, rolloff)
+local DISTANT_FROM = 140
+
+-- Alle Aufnahmen vorab laden, damit der erste Schuss nicht stumm bleibt
+task.defer(function()
+	local ContentProvider = game:GetService("ContentProvider")
+	local list = {}
+	for _, set in WeaponConfig.SoundSets do
+		for _, clip in set do
+			local sound = Instance.new("Sound")
+			sound.SoundId = clip.Id
+			table.insert(list, sound)
+		end
+	end
+	for _, clip in WeaponConfig.ActionSounds do
+		local sound = Instance.new("Sound")
+		sound.SoundId = clip.Id
+		table.insert(list, sound)
+	end
+	pcall(ContentProvider.PreloadAsync, ContentProvider, list)
+end)
+
+-- Sound für eine Aufnahme (clip = { Id, Gain, Region }); volume/speed kommen dazu. Gibt Sound und Dauer zurück.
+local function makeSound(clip, volume, speed)
+	local sound = Instance.new("Sound")
+	sound.SoundId = clip.Id
+	sound.Volume = math.min(10, volume * (clip.Gain or 1))
+	sound.PlaybackSpeed = speed
+	local length = 4
+	if clip.Region then
+		sound.PlaybackRegionsEnabled = true
+		sound.PlaybackRegion = NumberRange.new(clip.Region[1], clip.Region[2])
+		length = clip.Region[2] - clip.Region[1]
+	end
+	return sound, length / speed + 0.3
+end
+
+local function playAt(clip, position, volume, speed, rolloff, distant)
 	local anchor = Instance.new("Attachment")
 	anchor.WorldPosition = position
 	anchor.Parent = workspace.Terrain
-	local sound = Instance.new("Sound")
-	sound.SoundId = id
-	sound.Volume = volume
-	sound.PlaybackSpeed = speed
+	local sound, life = makeSound(clip, volume, speed)
+	sound.RollOffMode = Enum.RollOffMode.InverseTapered
+	sound.RollOffMinDistance = 12
 	sound.RollOffMaxDistance = rolloff
+	if distant then
+		local eq = Instance.new("EqualizerSoundEffect")
+		eq.LowGain = 2
+		eq.MidGain = -5
+		eq.HighGain = -20
+		eq.Parent = sound
+	end
 	sound.Parent = anchor
 	sound:Play()
-	Debris:AddItem(anchor, 3)
+	Debris:AddItem(anchor, life)
 end
 
-local function play2D(id, volume, speed)
-	local sound = Instance.new("Sound")
-	sound.SoundId = id
-	sound.Volume = volume
-	sound.PlaybackSpeed = speed
+local function play2D(clip, volume, speed)
+	local sound, life = makeSound(clip, volume, speed)
 	sound.Parent = SoundService
 	sound:Play()
-	Debris:AddItem(sound, 3)
+	Debris:AddItem(sound, life)
+end
+
+-- Zufällige Aufnahme aus einem Set, nie zweimal hintereinander dieselbe
+local lastClip = {}
+local function pickClip(setName)
+	local set = WeaponConfig.SoundSets[setName]
+	if not set or #set == 0 then
+		return nil
+	end
+	local index = math.random(1, #set)
+	if #set > 1 and index == lastClip[setName] then
+		index = index % #set + 1
+	end
+	lastClip[setName] = index
+	return set[index]
 end
 
 -- Schuss-Sound. own = eigener Schuss (ohne Raumklang, sofort). Mehrere Kugeln eines Schrotschusses
 -- kommen als einzelne Meldungen: dann nur ein Sound.
 local lastKey, lastTime = nil, 0
--- volume = Faktor (z.B. 0.3 mit Schalldämpfer), hört man auch weniger weit
-function WeaponEffects.GunSound(weaponName, position, own, volume)
-	local id = WeaponConfig.Sounds[weaponName]
-	if not id then
+-- suppressed = mit Schalldämpfer (eigener Klang, leiser, nur in der Nähe zu hören). Alte Aufrufe übergeben eine Zahl < 1.
+function WeaponEffects.GunSound(weaponName, position, own, suppressed)
+	local def = WeaponConfig.Sounds[weaponName]
+	if not def then
 		return
+	end
+	if type(suppressed) == "number" then
+		suppressed = suppressed < 1
 	end
 	local key = tostring(position) .. weaponName
 	if key == lastKey and os.clock() - lastTime < 0.05 then
 		return
 	end
 	lastKey, lastTime = key, os.clock()
-	local speed = 0.95 + math.random() * 0.1
-	volume = volume or 1
+	local clip = pickClip(suppressed and def.Suppressed or def.Set)
+	if not clip then
+		return
+	end
+	local pitch = (suppressed and def.SuppressedPitch or def.Pitch or 1) * (0.97 + math.random() * 0.06)
+	local volume = (def.Volume or 1) * (suppressed and WeaponConfig.SuppressedVolume or 1)
 	if own then
-		play2D(id, 0.55 * volume, speed)
+		play2D(clip, 0.5 * volume, pitch)
 	else
-		playAt(id, position, 0.8 * volume, speed, volume < 1 and 90 or 300)
+		local camera = workspace.CurrentCamera
+		local distance = camera and (camera.CFrame.Position - position).Magnitude or 0
+		playAt(clip, position, 0.9 * volume, pitch, suppressed and 120 or 700, not suppressed and distance > DISTANT_FROM)
 	end
 end
 
--- Hantier-Geräusch (WeaponConfig.ActionSounds). position = nil: eigenes, ohne Raumklang
-function WeaponEffects.ActionSound(name, position)
-	local def = WeaponConfig.ActionSounds[name]
-	if not def then
+-- Hantier-Geräusch (WeaponConfig.ActionSounds). position = nil: eigenes, ohne Raumklang.
+-- weaponName (optional): Waffe, deren Variante gilt (ActionSoundsByWeapon, z.B. Pistolenmagazin)
+function WeaponEffects.ActionSound(name, position, weaponName)
+	local byWeapon = weaponName and WeaponConfig.ActionSoundsByWeapon[weaponName]
+	local clip = WeaponConfig.ActionSounds[byWeapon and byWeapon[name] or name] or WeaponConfig.ActionSounds[name]
+	if not clip then
 		return
 	end
+	local speed = 0.97 + math.random() * 0.06
 	if position then
-		playAt(def[1], position, def[2] * 0.8, def[3], 60)
+		playAt(clip, position, (clip.Volume or 0.5) * 0.8, speed, 60, false)
 	else
-		play2D(def[1], def[2], def[3])
+		play2D(clip, clip.Volume or 0.5, speed)
 	end
 end
 

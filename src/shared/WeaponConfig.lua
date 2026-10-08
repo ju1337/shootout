@@ -35,30 +35,84 @@ WeaponConfig.BloomRecovery = 6
 WeaponConfig.InfiniteAmmoEverywhere = true
 WeaponConfig.InfiniteAmmoModes = { Training = true }
 
--- Schuss-Sounds (Roblox-Audio-IDs). Bleibt ein Sound stumm, ist die ID nicht (mehr) öffentlich:
--- in Studio unter Toolbox → Audio einen freien Schuss-Sound suchen und dessen ID hier eintragen.
-WeaponConfig.Sounds = {
-	Rifle = "rbxassetid://92011177452282",
-	SMG = "rbxassetid://92011177452282",
-	LMG = "rbxassetid://92011177452282",
-	DMR = "rbxassetid://3102797479",
-	Shotgun = "rbxassetid://3102797479",
-	Pistol = "rbxassetid://6240772711",
-	Revolver = "rbxassetid://3102797479",
+-- Schuss-Sounds: echte Aufnahmen aus der Roblox-Soundbibliothek (Pro Sound Effects, in jedem Spiel frei nutzbar).
+-- SoundSets: je Klang mehrere Aufnahmen (werden zufällig abgewechselt). Gain gleicht die Aufnahmen aneinander an,
+-- Region = { Start, Ende } spielt nur diesen Teil der Aufnahme (Sekunden; ohne Region die ganze).
+-- Rifle M4A1, SMG 9mm Beretta (trocken, kurz), LMG Galil .223 (tiefer gestimmt), DMR Barrett M82, Shotgun Remington 870
+-- und Savage, Pistol 9mm Beretta, Revolver S&W .357 Magnum; SupPistol schallgedämpfte 9mm / H&K SOCOM .45,
+-- SupRifle Schalldämpfer für Gewehre.
+WeaponConfig.SoundSets = {
+	Rifle = { { Id = "rbxassetid://9113198012", Gain = 1.10, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9113185301", Gain = 0.86, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9113185655", Gain = 0.91, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9113185628", Gain = 0.89, Region = { 0, 0.9 } } },
+	SMG = { { Id = "rbxassetid://9114694336", Gain = 0.92, Region = { 0, 0.5 } },
+		{ Id = "rbxassetid://9114694435", Gain = 0.85, Region = { 0, 0.5 } },
+		{ Id = "rbxassetid://9114694481", Gain = 0.94, Region = { 0, 0.5 } },
+		{ Id = "rbxassetid://9114694502", Gain = 0.88, Region = { 0, 0.5 } },
+		{ Id = "rbxassetid://9114695068", Gain = 0.84, Region = { 0, 0.5 } } },
+	LMG = { { Id = "rbxassetid://9114550557", Gain = 0.92, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9114550686", Gain = 1.01, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9114550847", Gain = 1.01, Region = { 0, 0.9 } },
+		{ Id = "rbxassetid://9114551018", Gain = 1.05, Region = { 0, 0.9 } } },
+	DMR = { { Id = "rbxassetid://9118173999", Gain = 1.74 },
+		{ Id = "rbxassetid://9118173739", Gain = 1.82, Region = { 0, 1.05 } },
+		{ Id = "rbxassetid://9118173988", Gain = 1.95, Region = { 0, 1.05 } } },
+	Shotgun = { { Id = "rbxassetid://9114724281", Gain = 1.07 },
+		{ Id = "rbxassetid://9114708745", Gain = 0.86 },
+		{ Id = "rbxassetid://9112912844", Gain = 2.09, Region = { 0, 1.2 } } },
+	Pistol = { { Id = "rbxassetid://9114717487", Gain = 1.11 },
+		{ Id = "rbxassetid://9114713313", Gain = 1.86 },
+		{ Id = "rbxassetid://9114713446", Gain = 2.07 },
+		{ Id = "rbxassetid://9114717607", Gain = 0.98 } },
+	Revolver = { { Id = "rbxassetid://9119296692", Gain = 1.72 },
+		{ Id = "rbxassetid://9119296693", Gain = 1.45, Region = { 0, 0.58 } },
+		{ Id = "rbxassetid://9119296682", Gain = 1.58, Region = { 0, 0.95 } },
+		{ Id = "rbxassetid://9119296944", Gain = 1.57, Region = { 0, 1.85 } } },
+	SupPistol = { { Id = "rbxassetid://9117399808", Gain = 2.88, Region = { 0, 0.42 } },
+		{ Id = "rbxassetid://9117398178", Gain = 2.60, Region = { 0, 0.32 } },
+		{ Id = "rbxassetid://9119134538", Gain = 0.99, Region = { 0, 0.32 } } },
+	SupRifle = { { Id = "rbxassetid://9119136817", Gain = 0.90, Region = { 0, 0.29 } },
+		{ Id = "rbxassetid://9119136875", Gain = 0.90, Region = { 0, 0.29 } },
+		{ Id = "rbxassetid://9119137181", Gain = 0.94, Region = { 0, 0.25 } } },
 }
 
--- Geräusche beim Nachladen und Hantieren (in Roblox eingebaute Sounds, keine Asset-ID nötig).
--- { Sound, Lautstärke, Tonhöhe }
+-- Klang je Waffe: Set (Schuss), Volume, Pitch (Tonhöhe); mit Schalldämpfer Suppressed (Set) und SuppressedPitch
+WeaponConfig.Sounds = {
+	Rifle = { Set = "Rifle", Volume = 1, Pitch = 1, Suppressed = "SupRifle", SuppressedPitch = 1 },
+	SMG = { Set = "SMG", Volume = 0.85, Pitch = 1.06, Suppressed = "SupPistol", SuppressedPitch = 1.05 },
+	LMG = { Set = "LMG", Volume = 1.05, Pitch = 0.9, Suppressed = "SupRifle", SuppressedPitch = 0.88 },
+	DMR = { Set = "DMR", Volume = 1, Pitch = 1.08, Suppressed = "SupRifle", SuppressedPitch = 0.92 },
+	Shotgun = { Set = "Shotgun", Volume = 1.1, Pitch = 1, Suppressed = "SupRifle", SuppressedPitch = 0.75 },
+	Pistol = { Set = "Pistol", Volume = 0.85, Pitch = 1, Suppressed = "SupPistol", SuppressedPitch = 1 },
+	Revolver = { Set = "Revolver", Volume = 1, Pitch = 0.97, Suppressed = "SupPistol", SuppressedPitch = 0.85 },
+}
+WeaponConfig.SuppressedVolume = 0.55 -- Schalldämpfer: so viel leiser (und nur in der Nähe zu hören)
+
+-- Geräusche beim Nachladen und Hantieren (ebenfalls Pro Sound Effects): Id, Gain, Region wie oben, Volume.
+-- Die Animationen nennen den Namen (MagOut, Pump …); ActionSoundsByWeapon ersetzt ihn je Waffe.
 WeaponConfig.ActionSounds = {
-	MagOut = { "rbxasset://sounds/clickfast.wav", 0.5, 0.75 },
-	MagIn = { "rbxasset://sounds/clickfast.wav", 0.6, 1.0 },
-	Bolt = { "rbxasset://sounds/switch.wav", 0.5, 0.85 },
-	Slide = { "rbxasset://sounds/switch.wav", 0.45, 1.15 },
-	Shell = { "rbxasset://sounds/clickfast.wav", 0.4, 1.3 },
-	Pump = { "rbxasset://sounds/switch.wav", 0.55, 0.7 },
-	Cylinder = { "rbxasset://sounds/clickfast.wav", 0.45, 1.5 },
-	Empty = { "rbxasset://sounds/clickfast.wav", 0.5, 1.8 },
-	Draw = { "rbxasset://sounds/switch.wav", 0.3, 1.3 },
+	MagOut = { Id = "rbxassetid://9116347612", Gain = 0.44, Region = { 0.2, 0.6 }, Volume = 0.6 },
+	MagIn = { Id = "rbxassetid://9116347432", Gain = 0.58, Region = { 0.6, 1 }, Volume = 0.7 },
+	PistolMagOut = { Id = "rbxassetid://9113104176", Gain = 1.15, Region = { 0, 0.27 }, Volume = 0.6 },
+	PistolMagIn = { Id = "rbxassetid://9113104176", Gain = 0.45, Region = { 0.27, 0.7 }, Volume = 0.6 },
+	Bolt = { Id = "rbxassetid://9116345318", Gain = 2.48, Region = { 0.9, 1.4 }, Volume = 0.6 },
+	Slide = { Id = "rbxassetid://9113104509", Gain = 1.78, Region = { 0.75, 1.15 }, Volume = 0.6 },
+	Shell = { Id = "rbxassetid://9117396156", Gain = 1.26, Region = { 0, 0.35 }, Volume = 0.5 },
+	Pump = { Id = "rbxassetid://9112910934", Gain = 1.22, Region = { 0, 0.48 }, Volume = 0.7 },
+	Cylinder = { Id = "rbxassetid://9114764731", Gain = 3.24, Region = { 0.15, 0.5 }, Volume = 0.5 },
+	Empty = { Id = "rbxassetid://9117402073", Gain = 4.00, Region = { 1.83, 2.2 }, Volume = 0.5 },
+	Draw = { Id = "rbxassetid://9114701864", Gain = 0.44, Region = { 0, 0.6 }, Volume = 0.4 },
+	RifleDraw = { Id = "rbxassetid://9116362330", Gain = 4.00, Region = { 0.25, 0.75 }, Volume = 0.4 },
+}
+WeaponConfig.ActionSoundsByWeapon = {
+	Pistol = { MagOut = "PistolMagOut", MagIn = "PistolMagIn" },
+	Revolver = { MagOut = "PistolMagOut", MagIn = "PistolMagIn" },
+	Rifle = { Draw = "RifleDraw" },
+	SMG = { Draw = "RifleDraw" },
+	LMG = { Draw = "RifleDraw" },
+	DMR = { Draw = "RifleDraw" },
+	Shotgun = { Draw = "RifleDraw" },
 }
 
 WeaponConfig.Weapons = {

@@ -299,7 +299,7 @@ end
 local function handleEvent(event)
 	local kind = event[2]
 	if kind == "Sound" then
-		WeaponEffects.ActionSound(event[3])
+		WeaponEffects.ActionSound(event[3], nil, current)
 	elseif kind == "Eject" then
 		ejectShell()
 	elseif kind == "Drop" or kind == "Spill" then
@@ -361,7 +361,7 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 		end
 	end
 	local muzzleCF, flashScale = muzzle()
-	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced and 0.45 or 1)
+	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced == true)
 	WeaponEffects.MuzzleFlash(muzzleCF, flashScale)
 	local claims = {}
 	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
@@ -404,7 +404,7 @@ local function tryFire()
 			requestReload() -- leer: automatisch nachladen
 		elseif now - lastDryClick > 0.3 then
 			lastDryClick = now
-			WeaponEffects.ActionSound("Empty")
+			WeaponEffects.ActionSound("Empty", nil, current)
 		end
 		return
 	end
@@ -462,7 +462,7 @@ local function equip(slot)
 	drawUntil = os.clock() + DRAW_TIME
 	equipTime = os.clock()
 	updateViewModel()
-	WeaponEffects.ActionSound("Draw")
+	WeaponEffects.ActionSound("Draw", nil, name)
 	if aiming then
 		Movement.SetAiming(true, WeaponConfig.Get(name).AimFov)
 	end
@@ -797,7 +797,7 @@ function WeaponClient.Init()
 			-- Der Server hat die Waffe gewechselt (offene Welt: Taste 1-9): Ziehen wie beim eigenen Wechsel
 			if current ~= nil or Modes.IsSurvival(player:GetAttribute("Mode")) then
 				drawUntil = os.clock() + DRAW_TIME
-				WeaponEffects.ActionSound("Draw")
+				WeaponEffects.ActionSound("Draw", nil, name)
 			end
 			stopInspect()
 			current = name
@@ -860,7 +860,7 @@ function WeaponClient.Init()
 			end
 		end
 		if firstPellet then
-			WeaponEffects.GunSound(weaponName, start, false, silenced and 0.3 or 1)
+			WeaponEffects.GunSound(weaponName, start, false, silenced == true)
 			if not silenced and (endPos - start).Magnitude > 0.01 then
 				WeaponEffects.MuzzleFlash(CFrame.lookAt(start, endPos), 1)
 			end

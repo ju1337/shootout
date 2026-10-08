@@ -335,7 +335,7 @@ end
 local function handleEvent(entry, event, position)
 	local kind = event[2]
 	if kind == "Sound" then
-		WeaponEffects.ActionSound(event[3], position)
+		WeaponEffects.ActionSound(event[3], position, entry.Weapon)
 	elseif kind == "Drop" then
 		WeaponEffects.DropCopy(GunModels.GroupParts(entry.Tool, event[3]), Vector3.new(0, -3, 0), true, 3)
 	elseif kind == "Spill" then
