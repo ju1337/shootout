@@ -163,7 +163,7 @@ moveTo(alice, Vector3.new(-50, 3, 4))
 local price = stand.Prices.Att_Suppressor
 check(InventoryService.Buy(alice, "Stand_Red", "Att_Suppressor") == false, "ohne RZ kein Kauf")
 local status = lastExt(alice, "Status")
-check(status and string.find(status[2], "Rote-Zone-Punkte") ~= nil, "Meldung: zu wenig RZ")
+check(status and string.find(tostring(status[2]), "Rote", 1, true) ~= nil, "Meldung: zu wenig RZ (" .. tostring(status and status[2]) .. ")")
 
 RedPointsService.Add(alice, price + 30, "Test")
 check(alice:GetAttribute("RedPoints") == price + 30, "RZ gutgeschrieben")

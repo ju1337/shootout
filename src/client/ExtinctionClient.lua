@@ -2584,15 +2584,17 @@ local function setupPrompts()
 		return
 	end
 	-- Stände: jeder Teil mit dem Namen bekommt eine Aufforderung (Camp und Safehouses haben eigene)
-	for key in ExtinctionConfig.Stands do
-		stands:WaitForChild(key, 10)
+	for key, info in ExtinctionConfig.Stands do
+		if not info.Optional then
+			stands:WaitForChild(key, 10)
+		end
 	end
-	for _, part in stands:GetChildren() do
+	local function standPrompt(part)
 		local stand = part:IsA("BasePart") and ExtinctionConfig.Stands[part.Name]
-		if stand then
+		if stand and not part:FindFirstChild("StandPrompt") then
 			local prompt = make("ProximityPrompt", { Name = "StandPrompt", ActionText = "Handeln", ObjectText = stand.Title,
 				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
-				RequiresLineOfSight = false, Enabled = false }, part)
+				RequiresLineOfSight = false, Enabled = inExtinction() }, part)
 			prompt.Triggered:Connect(function()
 				openStand(part.Name)
 				if window then
@@ -2602,6 +2604,10 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
+	for _, part in stands:GetChildren() do
+		standPrompt(part)
+	end
+	stands.ChildAdded:Connect(standPrompt) -- später geladene Teile (z.B. der Schieber)
 	-- Haltestellen (Reisen): im Camp "Travel", in den Safehouses "Travel_<Name>"
 	local function travelPrompt(part)
 		if not part:IsA("BasePart") or not (part.Name == "Travel" or string.sub(part.Name, 1, 7) == "Travel_") then
@@ -2667,6 +2673,12 @@ local function setupPrompts()
 	for _, part in stands:GetChildren() do
 		addBubble(part)
 	end
+	stands.ChildAdded:Connect(function(part)
+		addBubble(part)
+		for _, gui in bubbles do
+			gui.Enabled = inExtinction()
+		end
+	end)
 	for _, prompt in prompts do
 		prompt.Enabled = inExtinction()
 	end

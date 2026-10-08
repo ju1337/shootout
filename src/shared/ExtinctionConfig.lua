@@ -142,7 +142,8 @@ do
 		prices[id] = tierPrice[ExtinctionConfig.Items[id].Tier] or 80
 		table.insert(items, id)
 	end
-	ExtinctionConfig.Stands.Stand_Red = { Title = "DER SCHIEBER", Currency = "RedPoints", Items = items, Prices = prices }
+	-- Optional: nicht jede Karte hat den Schieber (Clients warten nicht auf den Punkt)
+	ExtinctionConfig.Stands.Stand_Red = { Title = "DER SCHIEBER", Currency = "RedPoints", Items = items, Prices = prices, Optional = true }
 end
 
 -- ---------- Spielermarkt (ExtMarketService, Reiter MARKT im Menü, nur in der Safe Zone) ----------
