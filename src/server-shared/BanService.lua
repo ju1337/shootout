@@ -236,13 +236,17 @@ local function onPlayerAdded(player)
 end
 
 function BanService.Init()
-	load()
 	Players.PlayerAdded:Connect(onPlayerAdded)
-	for _, player in Players:GetPlayers() do
-		onPlayerAdded(player)
-	end
+	-- DataStore und MessagingService im Hintergrund: antworten sie nicht (Studio, Ausfall), darf der Serverstart
+	-- nicht daran hängen. Wer vor dem Laden beitritt, wird danach geprüft.
+	task.spawn(function()
+		load()
+		for _, player in Players:GetPlayers() do
+			onPlayerAdded(player)
+		end
+	end)
 	-- Änderungen anderer Server sofort übernehmen
-	pcall(MessagingService.SubscribeAsync, MessagingService, BanService.Topic, function(message)
+	task.spawn(pcall, MessagingService.SubscribeAsync, MessagingService, BanService.Topic, function(message)
 		local data = type(message) == "table" and message.Data or nil
 		if type(data) ~= "table" or type(data.UserId) ~= "string" then
 			return

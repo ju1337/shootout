@@ -4,6 +4,23 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
+-- Wächter: hängt der Start irgendwo (Modul, das nicht zurückkommt, DataStore-Aufruf ohne Antwort), steht im Output,
+-- wo – sonst bekommt der Spieler nie einen Modus und sieht nur den Ladebildschirm.
+local current = "Module laden"
+task.spawn(function()
+	local waited = 0
+	while current do
+		waited += task.wait(5)
+		if current then
+			warn(string.format("[Start] Server hängt seit %d s bei: %s", waited, current))
+		end
+	end
+end)
+local function start(name, init, ...)
+	current = name
+	init(...)
+end
+
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local WeaponService = require(ServerShared.WeaponService)
 local KillService = require(ServerShared.KillService)
@@ -41,37 +58,38 @@ local MatchmakingService = require(script.Parent.MatchmakingService)
 -- Charaktere spawnen nur, wenn ein Modus es sagt
 Players.CharacterAutoLoads = false
 
-BanService.Init() -- zuerst: gesperrte Spieler sofort rauswerfen
-Telemetry.Init() -- Spielanalyse (AnalyticsService)
-ProgressService.Init()
-ShopService.Init()
-DownedService.Init()
-BuyService.Init()
-GadgetService.Init()
-PerkService.Init()
-PingService.Init()
-LeaderboardService.Init()
-WeaponService.Init()
-KillService.Init()
-RewardService.Init()
-AchievementService.Init() -- Erfolge-Wand: Stufen bei jeder Statistik-Änderung prüfen
-Badges.Init() -- Roblox-Badges (Begrüßung, Tutorial, Anwerber, Erfolge auf GOLD)
-InviteService.Init() -- Freunde einladen: Belohnung für den Einladenden
-KillstreakService.Init() -- Killstreak-Belohnungen in Herrschaft (Radar, Luftschlag, Schutzschild)
-RobuxService.Init() -- Robux-Shop: Gamepässe und Entwicklerprodukte
-ClanService.Init() -- Clans über alle Server
-MovementGuard.Init() -- Bewegungs-Check gegen Speedhacks und Teleports
-BackWeapon.Init() -- im Hub: Standardwaffe des Agenten auf dem Rücken
-EconomyService.Init() -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
-TradeService.Init() -- Tauschen zwischen Spielern im Hub und im Markt
-CrateService.Init() -- Kisten öffnen (Waffen-Kiste) im Markt
-InventoryService.Init() -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
-KitService.Init() -- Kit-Händler am Spawn im Camp (Starter Kit usw.)
-LootService.Init() -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
-AgentService.Init()
-require(script.Parent.StaffService).Init() -- Team-Ränge, IsAdmin / IsMod
-AdminService.Init(ModeManager)
-PartyService.Init(ModeManager)
+start("BanService.Init", BanService.Init) -- zuerst: gesperrte Spieler sofort rauswerfen
+start("Telemetry.Init", Telemetry.Init) -- Spielanalyse (AnalyticsService)
+start("ProgressService.Init", ProgressService.Init)
+start("ShopService.Init", ShopService.Init)
+start("DownedService.Init", DownedService.Init)
+start("BuyService.Init", BuyService.Init)
+start("GadgetService.Init", GadgetService.Init)
+start("PerkService.Init", PerkService.Init)
+start("PingService.Init", PingService.Init)
+start("LeaderboardService.Init", LeaderboardService.Init)
+start("WeaponService.Init", WeaponService.Init)
+start("KillService.Init", KillService.Init)
+start("RewardService.Init", RewardService.Init)
+start("AchievementService.Init", AchievementService.Init) -- Erfolge-Wand: Stufen bei jeder Statistik-Änderung prüfen
+start("Badges.Init", Badges.Init) -- Roblox-Badges (Begrüßung, Tutorial, Anwerber, Erfolge auf GOLD)
+start("InviteService.Init", InviteService.Init) -- Freunde einladen: Belohnung für den Einladenden
+start("KillstreakService.Init", KillstreakService.Init) -- Killstreak-Belohnungen in Herrschaft (Radar, Luftschlag, Schutzschild)
+start("RobuxService.Init", RobuxService.Init) -- Robux-Shop: Gamepässe und Entwicklerprodukte
+start("ClanService.Init", ClanService.Init) -- Clans über alle Server
+start("MovementGuard.Init", MovementGuard.Init) -- Bewegungs-Check gegen Speedhacks und Teleports
+start("BackWeapon.Init", BackWeapon.Init) -- im Hub: Standardwaffe des Agenten auf dem Rücken
+start("EconomyService.Init", EconomyService.Init) -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
+start("TradeService.Init", TradeService.Init) -- Tauschen zwischen Spielern im Hub und im Markt
+start("CrateService.Init", CrateService.Init) -- Kisten öffnen (Waffen-Kiste) im Markt
+start("InventoryService.Init", InventoryService.Init) -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
+start("KitService.Init", KitService.Init) -- Kit-Händler am Spawn im Camp (Starter Kit usw.)
+start("LootService.Init", LootService.Init) -- offene Welt: Taschen am Boden (Tod, Zombie-Beute) mit E durchsuchen
+start("AgentService.Init", AgentService.Init)
+start("StaffService.Init", require(script.Parent.StaffService).Init) -- Team-Ränge, IsAdmin / IsMod
+start("AdminService.Init", AdminService.Init, ModeManager)
+start("PartyService.Init", PartyService.Init, ModeManager)
 -- Arcade über mehrere Server: auf Server mit mehr Spielern im Modus wechseln, der Squad kommt mit
-MatchmakingService.Init(ModeManager, { Group = PartyService.Followers, Regroup = PartyService.Regroup })
-ModeManager.Init()
+start("MatchmakingService.Init", MatchmakingService.Init, ModeManager, { Group = PartyService.Followers, Regroup = PartyService.Regroup })
+start("ModeManager.Init", ModeManager.Init)
+current = nil
