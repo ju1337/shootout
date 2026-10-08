@@ -164,7 +164,8 @@ local agentId = ProgressService.ActiveAgent(alice)
 local agentXP = ProgressService.Get(alice).XP[agentId] or 0
 local logStart = #SIM.RemoteLog
 local bags = #workspace.ExtinctionLoot:GetChildren()
-local victim = ZombieService.All()[1]
+-- eigener Walker: die Art (und damit Drop) steht beim Spawnen fest, ungepanzert für die normalen Münzen
+local victim = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -20), "Walker", true, false)
 local victimKind = ZombieService.Kind(victim:GetAttribute("ZombieKind"))
 Damage.Apply(victim, victim.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
 step(0.2)

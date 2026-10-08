@@ -136,7 +136,7 @@ end
 local walker = ExtinctionConfig.ZombieKinds.Walker
 local function killZombie(offset)
 	local before = zombieCoins
-	local model = ZombieService.Spawn(CENTER + offset, "Walker", true)
+	local model = ZombieService.Spawn(CENTER + offset, "Walker", true, false) -- ungepanzert (die zählen doppelt)
 	Damage.Apply(model, model.Humanoid, 10000, { Player = alice, Weapon = "Rifle" })
 	step(0.2)
 	local prompt = model:FindFirstChild("CorpsePrompt", true)

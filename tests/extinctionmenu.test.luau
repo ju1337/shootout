@@ -1,6 +1,6 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der
--- Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- es wieder. Reiter INVENTAR · MARKT · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS · STATISTIK ·
+-- CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
 local function check(cond, msg)
@@ -123,7 +123,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,SQUAD,ERFOLGE,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,LOOT,GUIDE,SQUAD,ERFOLGE,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
