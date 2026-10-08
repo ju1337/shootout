@@ -130,7 +130,7 @@ end
 local function spawn(boss)
 	local cfg = boss.Config
 	local ground = ZombieService.GroundAt(boss.Home.X, boss.Home.Z) or boss.Home
-	local model = ZombieService.Spawn(ground, cfg.Kind, true)
+	local model = ZombieService.Spawn(ground, cfg.Kind, true, false) -- Bosse nie gepanzert
 	if not model then
 		return false
 	end
@@ -141,7 +141,9 @@ local function spawn(boss)
 		model:ScaleTo(cfg.Scale)
 	end)
 	for _, child in model:GetChildren() do
-		if child:IsA("BasePart") and child.Name ~= "HumanoidRootPart" and child.Name ~= "Eye" and child.Name ~= "Blood"
+		if child.Name == "Outfit" then
+			child:Destroy() -- eigenes Aussehen, keine Zombie-Kleidung
+		elseif child:IsA("BasePart") and child.Name ~= "HumanoidRootPart" and child.Name ~= "Eye" and child.Name ~= "Blood"
 			and child.Name ~= "Head" then
 			child.Color = cfg.Color
 		end

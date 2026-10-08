@@ -99,13 +99,6 @@ local function rollKind(inRedzone)
 	return last
 end
 
--- Farben: Haut, Oberteil, Hose (zerrissen, verblichen)
-local LOOKS = {
-	{ Color3.fromRGB(122, 146, 104), Color3.fromRGB(96, 78, 64), Color3.fromRGB(56, 60, 74) },
-	{ Color3.fromRGB(140, 150, 112), Color3.fromRGB(70, 82, 96), Color3.fromRGB(70, 62, 52) },
-	{ Color3.fromRGB(112, 132, 100), Color3.fromRGB(128, 112, 86), Color3.fromRGB(48, 50, 54) },
-	{ Color3.fromRGB(150, 156, 120), Color3.fromRGB(110, 56, 50), Color3.fromRGB(60, 66, 58) },
-}
 
 -- R6-Körper aus Teilen und Gelenken (Standardmaße von Roblox)
 local function part(model, name, size, color)
@@ -134,7 +127,7 @@ end
 local function buildTemplate()
 	local model = Instance.new("Model")
 	model.Name = "Zombie"
-	local skin, shirt, pants = LOOKS[1][1], LOOKS[1][2], LOOKS[1][3]
+	local skin, shirt, pants = Color3.fromRGB(122, 146, 104), Color3.fromRGB(96, 78, 64), Color3.fromRGB(56, 60, 74)
 	local root = part(model, "HumanoidRootPart", Vector3.new(2, 2, 1), skin)
 	root.Transparency = 1
 	root.CanCollide = false
@@ -547,6 +540,133 @@ local function nearShield(position)
 	return false
 end
 
+-- ---------- Aussehen: fünf Zombie-Typen, zufällig ----------
+-- Je Typ: Haut, Oberteil und Hose (je eine Farbe aus der Liste), Sleeves = Ärmel lang (Arme in Oberteilfarbe), und
+-- Outfit-Teile (Mütze, Haare, Weste …), angeschweißt, ohne Kollision und ohne Treffer (CanQuery aus: Kopf und Körper
+-- bleiben die Trefferzonen). Gepanzerte tragen statt Kopfbedeckung und Oberteil-Extras Helm und Weste.
+-- Der sichtbare Kopf (Head-Mesh) ist etwa 1,25 groß: Oberkante bei +0,62, Gesicht bei z = -0,6.
+local function rgb(r, g, b)
+	return Color3.fromRGB(r, g, b)
+end
+local SKINS = { rgb(122, 146, 104), rgb(140, 150, 112), rgb(112, 132, 100), rgb(150, 156, 120), rgb(128, 138, 118) }
+
+local function outfit(model, attachTo, size, offset, color, material, shape)
+	local p = Instance.new("Part")
+	p.Name = "Outfit"
+	p.Size = size
+	p.Color = color
+	p.Material = material or Enum.Material.Fabric
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	p.CFrame = attachTo.CFrame * offset
+	if shape == "Sphere" then
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	elseif shape == "Cylinder" then
+		p.Shape = Enum.PartType.Cylinder
+	end
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = attachTo
+	weld.Part1 = p
+	weld.Parent = p
+	p.Parent = model
+	return p
+end
+
+local UPRIGHT = CFrame.Angles(0, 0, math.rad(90)) -- Zylinder stehend (Achse nach oben)
+
+local VARIANTS = {
+	-- Zivilist: verblichenes Hemd, Jeans, wirre Haare
+	{ Id = "Civilian", Shirts = { rgb(96, 78, 64), rgb(70, 82, 96), rgb(110, 56, 50), rgb(84, 96, 70) },
+		Pants = { rgb(56, 60, 74), rgb(48, 50, 54), rgb(70, 62, 52) },
+		Head = function(model, head, torso, look)
+			local hair = ({ rgb(40, 30, 24), rgb(70, 50, 30), rgb(30, 30, 30) })[random:NextInteger(1, 3)]
+			outfit(model, head, Vector3.new(1.3, 0.45, 1.32), CFrame.new(0, 0.42, 0.06), hair, Enum.Material.Fabric, "Sphere")
+		end,
+		Body = function(model, head, torso, look)
+			-- zerrissener Saum: dunkler Streifen unten am Hemd
+			outfit(model, torso, Vector3.new(2.02, 0.25, 1.02), CFrame.new(0, -0.85, 0), look.Shirt:Lerp(rgb(0, 0, 0), 0.35))
+		end },
+	-- Bauarbeiter: Warnweste mit Reflexstreifen, Schutzhelm
+	{ Id = "Worker", Shirts = { rgb(90, 90, 96), rgb(70, 80, 100) }, Pants = { rgb(60, 54, 46), rgb(54, 58, 66) },
+		Head = function(model, head, torso, look)
+			local hat = ({ rgb(230, 190, 40), rgb(230, 120, 40), rgb(225, 225, 220) })[random:NextInteger(1, 3)]
+			outfit(model, head, Vector3.new(1.38, 0.7, 1.42), CFrame.new(0, 0.42, 0.02), hat, Enum.Material.SmoothPlastic, "Sphere")
+			outfit(model, head, Vector3.new(0.07, 1.5, 1.62), CFrame.new(0, 0.25, -0.06) * UPRIGHT, hat, Enum.Material.SmoothPlastic,
+				"Cylinder")
+		end,
+		Body = function(model, head, torso, look)
+			local vest = ({ rgb(226, 150, 40), rgb(200, 220, 50) })[random:NextInteger(1, 2)]
+			outfit(model, torso, Vector3.new(2.06, 1.7, 1.06), CFrame.new(0, 0.1, 0), vest)
+			for _, y in { -0.15, -0.55 } do
+				outfit(model, torso, Vector3.new(2.08, 0.14, 1.08), CFrame.new(0, y, 0), rgb(205, 210, 215), Enum.Material.SmoothPlastic)
+			end
+		end },
+	-- Patient aus dem Krankenhaus: langes Krankenhaushemd, nackte Beine, Kopfverband
+	{ Id = "Patient", Shirts = { rgb(150, 190, 200), rgb(176, 196, 186), rgb(196, 206, 214) }, Pants = { "Skin" },
+		Head = function(model, head, torso, look)
+			outfit(model, head, Vector3.new(0.26, 1.32, 1.32), CFrame.new(0, 0.4, 0) * UPRIGHT, rgb(224, 222, 210), Enum.Material.Fabric,
+				"Cylinder")
+		end,
+		Body = function(model, head, torso, look)
+			outfit(model, torso, Vector3.new(2.06, 2.7, 1.06), CFrame.new(0, -0.32, 0), look.Shirt) -- reicht bis über die Knie
+		end },
+	-- Häftling aus dem Gefängnis: orangefarbener Overall mit Nummer, Glatze
+	{ Id = "Prisoner", Shirts = { rgb(214, 110, 40), rgb(200, 96, 36) }, Pants = { "Shirt" }, Sleeves = true,
+		Body = function(model, head, torso, look)
+			outfit(model, torso, Vector3.new(0.7, 0.4, 0.05), CFrame.new(-0.45, 0.45, -0.52), rgb(230, 228, 220), Enum.Material.SmoothPlastic)
+			outfit(model, torso, Vector3.new(0.5, 0.08, 0.06), CFrame.new(-0.45, 0.45, -0.55), rgb(40, 40, 40), Enum.Material.SmoothPlastic)
+		end },
+	-- Polizist: dunkelblaue Uniform, Mütze mit Schirm, Abzeichen, Gürtel
+	{ Id = "Police", Shirts = { rgb(40, 52, 82), rgb(48, 58, 74) }, Pants = { rgb(30, 34, 46) }, Sleeves = true,
+		Head = function(model, head, torso, look)
+			local cap = rgb(28, 32, 44)
+			outfit(model, head, Vector3.new(0.4, 1.4, 1.4), CFrame.new(0, 0.55, 0.04) * UPRIGHT, cap, Enum.Material.Fabric, "Cylinder")
+			outfit(model, head, Vector3.new(1.0, 0.08, 0.45), CFrame.new(0, 0.38, -0.72), rgb(20, 20, 22), Enum.Material.SmoothPlastic)
+			outfit(model, head, Vector3.new(0.3, 0.2, 0.05), CFrame.new(0, 0.58, -0.71), rgb(210, 176, 70), Enum.Material.Metal)
+		end,
+		Body = function(model, head, torso, look)
+			outfit(model, torso, Vector3.new(0.3, 0.35, 0.05), CFrame.new(-0.5, 0.45, -0.52), rgb(210, 176, 70), Enum.Material.Metal)
+			outfit(model, torso, Vector3.new(2.06, 0.22, 1.06), CFrame.new(0, -0.88, 0), rgb(20, 20, 22), Enum.Material.SmoothPlastic)
+		end },
+}
+
+-- Typ würfeln, einfärben und Outfit anbauen (vor dem Skalieren). armored = keine Kopfbedeckung/Oberteil-Extras.
+local function dress(model, armored)
+	local variant = VARIANTS[random:NextInteger(1, #VARIANTS)]
+	local look = { Skin = SKINS[random:NextInteger(1, #SKINS)] }
+	look.Shirt = variant.Shirts[random:NextInteger(1, #variant.Shirts)]
+	local pants = variant.Pants[random:NextInteger(1, #variant.Pants)]
+	look.Pants = pants == "Skin" and look.Skin or pants == "Shirt" and look.Shirt or pants
+	for _, child in model:GetChildren() do
+		if child:IsA("BasePart") and child.Name ~= "Eye" and child.Name ~= "HumanoidRootPart" and child.Name ~= "Blood" then
+			local name = child.Name
+			if name == "Torso" then
+				child.Color = look.Shirt
+			elseif name == "Left Leg" or name == "Right Leg" then
+				child.Color = look.Pants
+			elseif (name == "Left Arm" or name == "Right Arm") and variant.Sleeves then
+				child.Color = look.Shirt
+			else
+				child.Color = look.Skin
+			end
+		end
+	end
+	model:SetAttribute("ZombieLook", variant.Id)
+	local head, torso = model:FindFirstChild("Head"), model:FindFirstChild("Torso")
+	if head and torso and not armored then
+		if variant.Head then
+			variant.Head(model, head, torso, look)
+		end
+		if variant.Body then
+			variant.Body(model, head, torso, look)
+		end
+	end
+end
+
 -- Gepanzert? armored = true/false erzwingt es, nil würfelt: Sturmnacht Storm.ArmoredChance, rote Zone
 -- ArmoredZombies.RedzoneChance, sonst ArmoredZombies.Chance. Bosse nie.
 local function rollArmored(position, armored, stats)
@@ -592,8 +712,14 @@ local function addArmor(model)
 	local A = ExtinctionConfig.ArmoredZombies
 	local head, torso = model:FindFirstChild("Head"), model:FindFirstChild("Torso")
 	if head then
-		armorPart(model, "ZHelmetPart", Vector3.new(2.15, 0.65, 1.25), head, CFrame.new(0, 0.35, 0), Enum.Material.Metal)
-		armorPart(model, "ZHelmetPart", Vector3.new(2.2, 0.12, 1.4), head, CFrame.new(0, 0.05, -0.08), Enum.Material.Metal)
+		-- runde Kuppel in Kopfgröße (der sichtbare Kopf ist ~1,25 breit), Rand knapp über den Augen
+		local dome = armorPart(model, "ZHelmetPart", Vector3.new(1.42, 0.7, 1.45), head, CFrame.new(0, 0.42, 0.02), Enum.Material.Metal)
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = dome
+		local rim = armorPart(model, "ZHelmetPart", Vector3.new(0.08, 1.52, 1.55), head,
+			CFrame.new(0, 0.24, 0.0) * CFrame.Angles(0, 0, math.rad(90)), Enum.Material.Metal)
+		rim.Shape = Enum.PartType.Cylinder
 	end
 	if torso then
 		armorPart(model, "ZVestPart", Vector3.new(2.15, 1.7, 1.25), torso, CFrame.new(0, 0.1, 0), Enum.Material.Fabric)
@@ -640,13 +766,8 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	local stats = ZombieService.Kind(kindName)
 	template = template or buildTemplate()
 	local model = template:Clone()
-	local look = LOOKS[random:NextInteger(1, #LOOKS)]
-	for _, child in model:GetChildren() do
-		if child:IsA("BasePart") and child.Name ~= "Eye" and child.Name ~= "HumanoidRootPart" and child.Name ~= "Blood" then
-			child.Color = (child.Name == "Torso" and look[2]) or ((child.Name == "Left Leg" or child.Name == "Right Leg") and look[3])
-				or look[1]
-		end
-	end
+	armored = rollArmored(position, armored, stats)
+	dress(model, armored)
 	for _, child in model:GetChildren() do
 		if child.Name == "Eye" then
 			child.Color = stats.Eyes
@@ -661,7 +782,6 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	humanoid.Health = health
 	humanoid.WalkSpeed = stats.Walk
 	local speed = stats.Run * random:NextNumber(0.88, 1.12) * (blood and B.Speed or 1)
-	armored = rollArmored(position, armored, stats)
 	if armored then
 		addArmor(model)
 	end
