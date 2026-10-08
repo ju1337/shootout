@@ -277,6 +277,21 @@ function AirdropService.Start(position)
 	return drop
 end
 
+-- Admin: alle Abwürfe sofort beenden (Kisten verschwinden). Gibt die Anzahl zurück.
+function AirdropService.Stop()
+	local stopped = 0
+	for _, drop in table.clone(active) do
+		stopped += 1
+		if drop.LootId and LootService.Get(drop.LootId) then
+			LootService.Remove(drop.LootId) -- OnRemoved beendet den Abwurf
+		end
+		if drop.State ~= "Gone" then
+			finish(drop)
+		end
+	end
+	return stopped
+end
+
 function AirdropService.Active()
 	return active
 end

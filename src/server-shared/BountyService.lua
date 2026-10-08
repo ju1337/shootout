@@ -177,4 +177,13 @@ function BountyService.Init(opts)
 	end)
 end
 
+-- Admin: Kopfgeld sofort aufheben. Gibt true zurück, wenn jemand gesucht war.
+function BountyService.Stop()
+	if not target then
+		return false
+	end
+	clear()
+	return true
+end
+
 return BountyService

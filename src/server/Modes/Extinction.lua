@@ -24,6 +24,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local DayCycle = require(Shared.DayCycle)
+local Inventory = require(Shared.Inventory)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
@@ -254,6 +255,22 @@ local function bagRemoved(bag)
 	end
 end
 
+-- Zum Entwickeln: Admins spawnen immer mit ExtinctionConfig.AdminLoadout (fehlende Waffen kommen dazu, Munition wird
+-- bis zur Menge aufgefüllt; was nicht passt, bleibt weg)
+local function giveAdminLoadout(player)
+	if not player:GetAttribute("IsAdmin") or not ExtinctionConfig.AdminLoadout then
+		return
+	end
+	for _, entry in ExtinctionConfig.AdminLoadout do
+		local id, count = entry[1], entry[2]
+		local bag = InventoryService.GetBag(player)
+		local have = bag and Inventory.Count(bag, id) or 0 -- nur die Tasche zählt (Lager ist zum Testen egal)
+		if have < count then
+			InventoryService.Give(player, id, count - have)
+		end
+	end
+end
+
 local function spawnPlayer(player)
 	local info = members[player]
 	if not info then
@@ -265,6 +282,7 @@ local function spawnPlayer(player)
 		return
 	end
 	setInside(player, info, true, character)
+	giveAdminLoadout(player)
 	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)
 	if info.BagNotice then
 		local dropped = info.BagNotice == "Dropped"

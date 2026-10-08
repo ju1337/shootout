@@ -386,6 +386,20 @@ function ConvoyService.Hit(player, _model, damage)
 	end
 end
 
+-- Admin: Konvoi sofort beenden (Fahrzeuge, Wachen und Ladung weg). Gibt true zurück, wenn einer lief.
+function ConvoyService.Stop()
+	local convoy = current
+	if not convoy then
+		return false
+	end
+	cleanup(convoy)
+	if convoy.LootId and LootService.Get(convoy.LootId) then
+		LootService.Remove(convoy.LootId)
+	end
+	finish(convoy)
+	return true
+end
+
 function ConvoyService.Current()
 	return current
 end

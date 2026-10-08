@@ -1,33 +1,54 @@
 -- AdminPanel (ModuleScript, nur Client)
 -- Nur für Admins (Attribut "IsAdmin" vom Server). Öffnen/Schließen mit P oder dem ADMIN-Knopf.
+-- Aufbau: Kopfzeile (Titel, Rückmeldung, Schließen), Reiter (SPIEL, EVENTS, BOTS, EINSTELLUNGEN, SPIELER), darunter die
+-- Seite des Reiters. EVENTS zeigt jedes Event der offenen Welt als Karte mit Live-Status und START / HIER / STOP.
 -- Alle Befehle prüft der Server noch einmal (AdminService).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local GameSettings = require(Shared.GameSettings)
 local AgentConfig = require(Shared.AgentConfig)
-local UITheme = require(Shared.UITheme)
+local DayCycle = require(Shared.DayCycle)
 
 local player = Players.LocalPlayer
 
 local AdminPanel = {}
 
+-- Farben (Rogue-Company-Stil: Navy und Cyan)
 local ACCENT = Color3.fromRGB(40, 210, 230)
-local PANEL = Color3.fromRGB(13, 22, 36)
-local ROW = Color3.fromRGB(18, 30, 48)
-local BUTTON = Color3.fromRGB(30, 50, 74)
-local DANGER = Color3.fromRGB(190, 50, 60)
-local GRAY = Color3.fromRGB(130, 155, 175)
+local PANEL = Color3.fromRGB(10, 16, 28)
+local HEADER = Color3.fromRGB(14, 24, 40)
+local CARD = Color3.fromRGB(18, 30, 48)
+local BUTTON = Color3.fromRGB(32, 48, 70)
+local TEXT = Color3.fromRGB(235, 242, 248)
+local MUTED = Color3.fromRGB(130, 155, 175)
+local DARK_TEXT = Color3.fromRGB(10, 20, 30)
+local TONES = {
+	Accent = ACCENT,
+	Good = Color3.fromRGB(56, 160, 92),
+	Danger = Color3.fromRGB(196, 56, 64),
+	Warn = Color3.fromRGB(200, 140, 40),
+	Event = Color3.fromRGB(170, 84, 50),
+	Night = Color3.fromRGB(70, 92, 150),
+	Blood = Color3.fromRGB(150, 36, 40),
+	Purple = Color3.fromRGB(116, 84, 176),
+	Teal = Color3.fromRGB(40, 150, 120),
+}
+local PANEL_W = 560
 
-local gui, panel, list, statusLabel, playerSection, toggleButton
+local gui, panel, statusLabel, playerSection, toggleButton
+local pages, tabButtons = {}, {}
 local valueLabels = {} -- [Key] = Label
+local eventStatus = {} -- [Event] = Label
 local botCountLabel
 local isOpen = false
+local currentTab = "Events"
 local playerSignature = ""
 
 local function make(className, props, parent)
@@ -39,6 +60,10 @@ local function make(className, props, parent)
 	return obj
 end
 
+local function corner(obj, radius)
+	make("UICorner", { CornerRadius = UDim.new(0, radius or 6) }, obj)
+end
+
 local function label(textValue, size, parent, props)
 	props = props or {}
 	props.Text = textValue
@@ -46,23 +71,32 @@ local function label(textValue, size, parent, props)
 	props.BackgroundTransparency = 1
 	props.Font = props.Font or Enum.Font.BuilderSansBold
 	props.TextSize = size
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
+	props.TextColor3 = props.TextColor3 or TEXT
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return make("TextLabel", props, parent)
 end
 
-local function button(textValue, width, parent, color, onClick)
+-- Knopf: tone = Name aus TONES oder Color3 (gefüllt), nil = dunkel; beim Darüberfahren heller
+local function button(textValue, width, parent, tone, onClick)
+	local base = typeof(tone) == "Color3" and tone or (tone and TONES[tone]) or BUTTON
 	local b = make("TextButton", {
 		Size = UDim2.new(0, width, 0, 30),
-		BackgroundColor3 = color or BUTTON,
+		BackgroundColor3 = base,
 		BorderSizePixel = 0,
 		Font = Enum.Font.BuilderSansBold,
-		TextSize = 14,
-		TextColor3 = Color3.new(1, 1, 1),
+		TextSize = 13,
+		TextColor3 = TEXT,
 		Text = textValue,
-		AutoButtonColor = true,
+		AutoButtonColor = false,
 	}, parent)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, b)
+	corner(b, 6)
+	local info = TweenInfo.new(0.12)
+	b.MouseEnter:Connect(function()
+		TweenService:Create(b, info, { BackgroundColor3 = base:Lerp(Color3.new(1, 1, 1), 0.15) }):Play()
+	end)
+	b.MouseLeave:Connect(function()
+		TweenService:Create(b, info, { BackgroundColor3 = base }):Play()
+	end)
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -75,196 +109,272 @@ local function row(parent, height)
 	return frame
 end
 
+-- Karte (dunkler Kasten mit Innenabstand, wächst mit dem Inhalt)
+local function card(parent)
+	local frame = make("Frame", { Size = UDim2.new(1, -8, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = CARD,
+		BorderSizePixel = 0 }, parent)
+	corner(frame, 8)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 10),
+		PaddingBottom = UDim.new(0, 10) }, frame)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+	return frame
+end
+
 local function send(action, a, b)
-	statusLabel.Text = "..."
+	statusLabel.Text = "…"
+	statusLabel.TextColor3 = MUTED
 	Remotes.AdminAction:FireServer(action, a, b)
 end
 
-local function section(title)
-	label(title, 18, list, { TextColor3 = ACCENT, Font = Enum.Font.BuilderSansExtraBold })
+local function section(title, parent)
+	local holder = make("Frame", { Size = UDim2.new(1, -8, 0, 26), BackgroundTransparency = 1 }, parent)
+	label(title, 13, holder, { Size = UDim2.new(1, 0, 0, 18), TextColor3 = ACCENT, Font = Enum.Font.BuilderSansExtraBold })
+	make("Frame", { Position = UDim2.new(0, 0, 1, -2), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = ACCENT,
+		BackgroundTransparency = 0.7, BorderSizePixel = 0 }, holder)
+	return holder
 end
 
-local function buildControls()
-	section("SPIEL STEUERN")
+-- Reihenfolge = Erstellungsreihenfolge (für Seiten und Karten mit UIListLayout)
+local function order(page)
+	for i, child in page:GetChildren() do
+		if child:IsA("GuiObject") then
+			child.LayoutOrder = i
+		end
+	end
+end
+
+-- ---------- Seiten ----------
+
+local function buildGame(page)
+	section("MODI", page)
 	for _, modeId in { "Domination", "Wingman", "Arena" } do
-		local modeRow = row(list)
-		label(modeId .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
-		button("JETZT STARTEN", 130, modeRow, Color3.fromRGB(60, 150, 80), function()
+		local c = card(page)
+		label(modeId, 15, c)
+		local r = row(c)
+		button("JETZT STARTEN", 130, r, "Good", function()
 			send("ModeStart", modeId)
 		end)
-		button("Runde beenden", 120, modeRow, nil, function()
+		button("RUNDE BEENDEN", 130, r, nil, function()
 			send("ModeEndRound", modeId)
 		end)
-		button("Reset", 70, modeRow, DANGER, function()
+		button("RESET", 80, r, "Danger", function()
 			send("ModeResetMatch", modeId)
 		end)
+		order(c)
 	end
-	local ffaRow = row(list)
-	label("FFA:", 15, ffaRow, { Size = UDim2.new(0, 60, 1, 0) })
-	button("Runde beenden", 120, ffaRow, nil, function()
+	local ffa = card(page)
+	label("Free for All", 15, ffa)
+	button("RUNDE BEENDEN", 130, row(ffa), nil, function()
 		send("FFAEndRound")
 	end)
-	local noclipRow = row(list)
-	label("Ich:", 15, noclipRow, { Size = UDim2.new(0, 60, 1, 0) })
-	button("NOCLIP (B)", 130, noclipRow, Color3.fromRGB(60, 120, 170), function()
+	order(ffa)
+	section("ICH", page)
+	local me = card(page)
+	local r = row(me)
+	button("NOCLIP (B)", 120, r, "Night", function()
 		send("Noclip")
 	end)
-	button("TAG / NACHT", 130, noclipRow, Color3.fromRGB(150, 120, 50), function()
+	button("TAG / NACHT", 120, r, "Warn", function()
 		send("DayNight")
-	end)
-	button("BLUTMOND", 120, noclipRow, Color3.fromRGB(150, 40, 36), function()
-		send("BloodMoon")
 	end)
 end
 
--- Events der offenen Welt (Extinction) sofort starten und Test-Items
-local function buildEvents()
-	section("EXTINCTION-EVENTS")
-	local EVENT = Color3.fromRGB(160, 70, 50)
-	local r1 = row(list)
-	button("LOOTDROP", 100, r1, EVENT, function()
-		send("ExtAirdrop")
-	end)
-	button("LOOTDROP HIER", 130, r1, EVENT, function()
-		send("ExtAirdrop", "Here")
-	end)
-	button("KONVOI", 90, r1, EVENT, function()
-		send("ExtConvoy")
-	end)
-	local r2 = row(list)
-	button("ROTE ZONE WEITER", 150, r2, EVENT, function()
-		send("ExtRedzone")
-	end)
-	button("ZOMBIE-HORDE", 120, r2, EVENT, function()
+-- Event-Karte: Name, Live-Status rechts, Knöpfe darunter. buttons = { { Text, Aktion, Wert, Ton, Breite } }
+local function eventCard(page, key, title, buttons)
+	local c = card(page)
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1 }, c)
+	label(title, 15, head, { Size = UDim2.new(0.6, 0, 1, 0) })
+	eventStatus[key] = label("", 12, head, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.new(0.4, 0, 1, 0), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = MUTED })
+	local r = row(c)
+	for _, def in buttons do
+		button(def[1], def[5] or 90, r, def[4], function()
+			send(def[2], def[3])
+		end)
+	end
+	order(c)
+end
+
+local function buildEvents(page)
+	section("ALLES", page)
+	local all = card(page)
+	local r = row(all, 34)
+	button("ALLE EVENTS BEENDEN", 200, r, "Danger", function()
+		send("ExtStop", "All")
+	end).Size = UDim2.new(0, 200, 0, 34)
+	button("ZOMBIES ENTFERNEN", 170, r, nil, function()
+		send("ExtStop", "Zombies")
+	end).Size = UDim2.new(0, 170, 0, 34)
+	section("EVENTS DER OFFENEN WELT", page)
+	eventCard(page, "Airdrop", "Lootdrop", {
+		{ "START", "ExtAirdrop", nil, "Event" }, { "BEI MIR", "ExtAirdrop", "Here", "Event" }, { "STOP", "ExtStop", "Airdrop", "Danger" } })
+	eventCard(page, "Convoy", "Konvoi", {
+		{ "START", "ExtConvoy", nil, "Event" }, { "STOP", "ExtStop", "Convoy", "Danger" } })
+	eventCard(page, "HeliCrash", "Heli-Absturz", {
+		{ "START", "ExtHeliCrash", nil, "Event" }, { "VOR MIR", "ExtHeliCrash", "Here", "Event" },
+		{ "STOP", "ExtStop", "HeliCrash", "Danger" } })
+	eventCard(page, "Horde", "Horden-Kiste", {
+		{ "START", "ExtHordeCrate", nil, "Event" }, { "VOR MIR", "ExtHordeCrate", "Here", "Event" },
+		{ "STOP", "ExtStop", "HordeCrate", "Danger" } })
+	eventCard(page, "BloodMoon", "Blutmond", {
+		{ "START", "BloodMoon", nil, "Blood" }, { "STOP", "ExtStop", "BloodMoon", "Danger" } })
+	eventCard(page, "Storm", "Sturmnacht", {
+		{ "START", "Storm", nil, "Night" }, { "STOP", "ExtStop", "Storm", "Danger" } })
+	eventCard(page, "Bounty", "Kopfgeld", {
+		{ "AUF MICH", "ExtBountyMe", nil, "Blood" }, { "STOP", "ExtStop", "Bounty", "Danger" } })
+	eventCard(page, "Redzone", "Rote Zone", { { "WEITERZIEHEN", "ExtRedzone", nil, "Event", 130 } })
+	section("SPAWNEN", page)
+	local spawn = card(page)
+	local r2 = row(spawn)
+	button("12 ZOMBIES UM MICH", 160, r2, "Event", function()
 		send("ExtHorde", 12)
 	end)
-	button("BLUTMOND", 100, r2, Color3.fromRGB(150, 40, 36), function()
-		send("BloodMoon")
-	end)
-	local rStorm = row(list)
-	button("STURMNACHT", 120, rStorm, Color3.fromRGB(60, 80, 130), function()
-		send("Storm")
-	end)
-	local rHeli = row(list)
-	button("HELI-ABSTURZ", 120, rHeli, EVENT, function()
-		send("ExtHeliCrash")
-	end)
-	button("HELI-ABSTURZ HIER", 150, rHeli, EVENT, function()
-		send("ExtHeliCrash", "Here")
-	end)
-	button("BOSSE SPAWNEN", 120, rHeli, Color3.fromRGB(150, 30, 30), function()
+	button("BOSSE SPAWNEN", 140, r2, "Blood", function()
 		send("ExtBosses")
 	end)
-	local rBounty = row(list)
-	button("KOPFGELD AUF MICH", 160, rBounty, Color3.fromRGB(170, 30, 30), function()
-		send("ExtBountyMe")
-	end)
-	local r3 = row(list)
-	button("HORDEN-KISTE", 120, r3, EVENT, function()
-		send("ExtHordeCrate")
-	end)
-	button("HORDEN-KISTE HIER", 150, r3, EVENT, function()
-		send("ExtHordeCrate", "Here")
-	end)
-	button("TAG / NACHT", 110, r3, Color3.fromRGB(150, 120, 50), function()
+	button("TAG / NACHT", 110, r2, "Warn", function()
 		send("DayNight")
 	end)
-	local r4 = row(list)
-	label("Mir geben:", 15, r4, { Size = UDim2.new(0, 80, 1, 0) })
-	button("AUFSÄTZE", 90, r4, nil, function()
+	section("MIR GEBEN", page)
+	local give = card(page)
+	local r3 = row(give)
+	button("AUFSÄTZE", 100, r3, "Teal", function()
 		send("ExtGive", "Attachments")
 	end)
-	button("GRANATEN", 90, r4, nil, function()
+	button("GRANATEN", 100, r3, "Teal", function()
 		send("ExtGive", "Throwables")
 	end)
-	button("AUSRÜSTUNG", 100, r4, nil, function()
+	button("AUSRÜSTUNG", 110, r3, "Teal", function()
 		send("ExtGive", "Kit")
 	end)
 end
 
-local function buildBots()
-	section("BOTS")
-	local ffaRow = row(list)
-	label("FFA:", 15, ffaRow, { Size = UDim2.new(0, 60, 1, 0) })
-	button("+1 Bot", 80, ffaRow, nil, function()
+-- Live-Status der Events (Karten-Attribute der offenen Welt, Blutmond/Sturm aus DayCycle)
+local function refreshEvents()
+	local maps = workspace:FindFirstChild("Maps")
+	local map = maps and maps:FindFirstChild("Extinction")
+	local function listActive(attribute)
+		local raw = map and map:GetAttribute(attribute)
+		return type(raw) == "string" and raw ~= "" and raw ~= "[]"
+	end
+	local now = workspace:GetServerTimeNow()
+	local bounty = map and map:GetAttribute("Bounty")
+	local states = {
+		Airdrop = listActive("Airdrops"),
+		Convoy = listActive("Convoys"),
+		HeliCrash = listActive("HeliCrashes"),
+		Horde = listActive("Hordes"),
+		BloodMoon = DayCycle.IsBloodMoon(now),
+		Storm = DayCycle.IsStorm(now),
+		Bounty = type(bounty) == "string" and bounty ~= "",
+	}
+	for key, statusText in eventStatus do
+		if key ~= "Redzone" then
+			local on = states[key]
+			statusText.Text = on and "● LÄUFT" or "○ aus"
+			statusText.TextColor3 = on and TONES.Good:Lerp(Color3.new(1, 1, 1), 0.2) or MUTED
+		end
+	end
+end
+
+local function buildBots(page)
+	section("BOTS", page)
+	local ffa = card(page)
+	label("Free for All", 15, ffa)
+	local r = row(ffa)
+	button("+1 BOT", 80, r, nil, function()
 		send("SpawnBot", "FreeForAll")
 	end)
-	button("+5 Bots", 80, ffaRow, nil, function()
+	button("+5 BOTS", 80, r, nil, function()
 		for _ = 1, 5 do
 			send("SpawnBot", "FreeForAll")
 		end
 	end)
+	order(ffa)
 	-- { Modus, Team A, Farbe A, Team B, Farbe B, Plätze }
 	for _, entry in {
 		{ "Domination", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
 		{ "Wingman", "Alpha", Color3.fromRGB(60, 150, 100), "Bravo", Color3.fromRGB(150, 130, 40), 4 },
 		{ "Arena", "Links", Color3.fromRGB(120, 70, 170), "Rechts", Color3.fromRGB(70, 120, 170), 2 },
 	} do
-		local modeRow = row(list)
-		label(entry[1] .. ":", 15, modeRow, { Size = UDim2.new(0, 80, 1, 0) })
-		button("+1 " .. entry[2], 75, modeRow, entry[3], function()
+		local c = card(page)
+		label(entry[1], 15, c)
+		local mr = row(c)
+		button("+1 " .. entry[2], 90, mr, entry[3], function()
 			send("SpawnBot", entry[1], entry[2])
 		end)
-		button("+1 " .. entry[4], 75, modeRow, entry[5], function()
+		button("+1 " .. entry[4], 90, mr, entry[5], function()
 			send("SpawnBot", entry[1], entry[4])
 		end)
-		button("Auffüllen", 100, modeRow, nil, function()
+		button("AUFFÜLLEN", 100, mr, nil, function()
 			for _ = 1, entry[6] do
 				send("SpawnBot", entry[1])
 			end
 		end)
+		order(c)
 	end
 	-- Offene Welt: Bots spawnen beim Admin (draußen; in der Safe Zone vor ihrem Rand), sonst in der roten Zone
-	local extRow = row(list)
-	label("Extinction:", 15, extRow, { Size = UDim2.new(0, 80, 1, 0) })
-	button("+1 Bot", 70, extRow, Color3.fromRGB(150, 70, 40), function()
+	local ext = card(page)
+	label("Extinction", 15, ext)
+	local er = row(ext)
+	button("+1 BOT", 80, er, "Event", function()
 		send("SpawnBot", "Extinction")
 	end)
-	button("+5 Bots", 76, extRow, Color3.fromRGB(150, 70, 40), function()
+	button("+5 BOTS", 80, er, "Event", function()
 		for _ = 1, 5 do
 			send("SpawnBot", "Extinction")
 		end
 	end)
-	button("Entfernen", 90, extRow, DANGER, function()
+	button("ENTFERNEN", 100, er, "Danger", function()
 		send("RemoveBots", "Extinction")
 	end)
-	local removeRow = row(list)
-	button("Alle Bots entfernen", 170, removeRow, DANGER, function()
+	order(ext)
+	local all = card(page)
+	button("ALLE BOTS ENTFERNEN", 180, row(all), "Danger", function()
 		send("RemoveBots")
 	end)
-	botCountLabel = label("", 14, removeRow, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.BuilderSans,
-		TextColor3 = GRAY })
+	botCountLabel = label("", 13, all, { Font = Enum.Font.BuilderSans, TextColor3 = MUTED })
+	order(all)
 end
 
 local function refreshBots()
+	if not botCountLabel then
+		return
+	end
 	local counts = {}
-	for _, info in ReplicatedStorage:WaitForChild("BotInfo"):GetChildren() do
+	local folder = ReplicatedStorage:FindFirstChild("BotInfo")
+	for _, info in folder and folder:GetChildren() or {} do
 		local mode = info:GetAttribute("Mode")
 		counts[mode] = (counts[mode] or 0) + 1
 	end
-	botCountLabel.Text = "FFA " .. (counts.FreeForAll or 0) .. " · Drop " .. (counts.Drop or 0)
-		.. " · Strike " .. (counts.Strikeout or 0) .. " · Demo " .. (counts.Demolition or 0)
-		.. " · Wing " .. (counts.Wingman or 0) .. " · Ext " .. (counts.Extinction or 0)
+	botCountLabel.Text = "FFA " .. (counts.FreeForAll or 0) .. "  ·  Herrschaft " .. (counts.Drop or 0) .. "  ·  Wingman "
+		.. (counts.Wingman or 0) .. "  ·  Extinction " .. (counts.Extinction or 0)
 end
 
-local function buildSettings()
-	section("EINSTELLUNGEN")
-	local lastGroup = nil
+local function buildSettings(page)
+	local lastGroup, c = nil, nil
 	for _, def in GameSettings.List do
 		if def.Group ~= lastGroup then
+			if c then
+				order(c)
+			end
 			lastGroup = def.Group
-			label(def.Group, 14, list, { TextColor3 = GRAY })
+			section(string.upper(def.Group), page)
+			c = card(page)
 		end
-		local r = row(list)
-		label(def.Label, 15, r, { Size = UDim2.new(0, 200, 1, 0), Font = Enum.Font.BuilderSans })
+		local r = row(c)
+		label(def.Label, 14, r, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.BuilderSans })
 		button("−", 34, r, nil, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) - def.Step)
 		end)
-		valueLabels[def.Key] = label("", 16, r, { Size = UDim2.new(0, 60, 1, 0),
-			TextXAlignment = Enum.TextXAlignment.Center })
+		valueLabels[def.Key] = label("", 15, r, { Size = UDim2.new(0, 60, 1, 0), TextXAlignment = Enum.TextXAlignment.Center,
+			TextColor3 = ACCENT })
 		button("+", 34, r, nil, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) + def.Step)
 		end)
+	end
+	if c then
+		order(c)
 	end
 end
 
@@ -293,86 +403,96 @@ local function refreshPlayers()
 		end
 	end
 	for i, p in Players:GetPlayers() do
-		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 168), BackgroundColor3 = ROW, BorderSizePixel = 0,
-			LayoutOrder = i }, playerSection)
-		make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)
-		make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 6) }, box)
-		make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, box)
+		local box = card(playerSection)
+		box.LayoutOrder = i
 		local agent = AgentConfig.Get(p:GetAttribute("Agent"))
-		label(p.Name .. "  ·  " .. tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "")
-			.. "  ·  " .. (agent and agent.Name or "?"), 15, box)
+		label(p.Name, 16, box, { Font = Enum.Font.BuilderSansExtraBold })
+		label(tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "") .. "  ·  " .. (agent and agent.Name or "?"),
+			12, box, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
 		local moves = row(box)
 		local short = { Hub = "Hub", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
 			Arena = "1v1", Training = "Train" }
 		for _, modeId in { "Hub", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
-			button(short[modeId], 46, moves, nil, function()
+			button(short[modeId], 52, moves, nil, function()
 				send("MovePlayer", p.UserId, modeId)
 			end)
 		end
-		button("Team", 60, moves, nil, function()
+		button("Team", 56, moves, "Accent", function()
 			send("SwitchTeam", p.UserId)
-		end)
+		end).TextColor3 = DARK_TEXT
 		local actions = row(box)
-		button("Heilen", 56, actions, Color3.fromRGB(60, 150, 80), function()
+		button("Heilen", 60, actions, "Good", function()
 			send("Heal", p.UserId)
 		end)
-		button("Töten", 52, actions, DANGER, function()
+		button("Töten", 56, actions, "Danger", function()
 			send("Kill", p.UserId)
 		end)
-		button("+500 XP", 66, actions, nil, function()
+		button("+500 XP", 70, actions, nil, function()
 			send("GiveXP", p.UserId, 500)
 		end)
 		button("+5000 XP", 76, actions, nil, function()
 			send("GiveXP", p.UserId, 5000)
 		end)
-		button("+1000 💰", 80, actions, Color3.fromRGB(150, 120, 30), function()
+		button("+1000 Münzen", 100, actions, "Warn", function()
 			send("GiveCoins", p.UserId, 1000)
 		end)
-		button("+5 Stufen", 80, actions, Color3.fromRGB(40, 140, 120), function()
+		button("+5 Stufen", 80, actions, "Teal", function()
 			send("GivePassXP", p.UserId, 5000)
 		end)
 		local prestige = row(box)
-		button("Max Prestige", 100, prestige, Color3.fromRGB(170, 120, 30), function()
+		button("Max Prestige", 104, prestige, "Warn", function()
 			send("SetPrestige", p.UserId, "max")
 		end)
-		button("Prestige +1", 90, prestige, Color3.fromRGB(110, 80, 170), function()
+		button("Prestige +1", 94, prestige, "Purple", function()
 			send("SetPrestige", p.UserId, "next")
 		end)
-		button("Level 100", 80, prestige, nil, function()
+		button("Level 100", 84, prestige, nil, function()
 			send("SetPrestige", p.UserId, "level100")
 		end)
-		button("Prestige 0", 84, prestige, DANGER, function()
+		button("Prestige 0", 88, prestige, "Danger", function()
 			send("SetPrestige", p.UserId, 0)
 		end)
 		local elo = row(box)
-		button("Max ELO", 74, elo, Color3.fromRGB(170, 120, 30), function()
+		button("Max ELO", 76, elo, "Warn", function()
 			send("SetElo", p.UserId, "max")
 		end)
-		button("+100", 52, elo, nil, function()
-			send("SetElo", p.UserId, 100)
-		end)
-		button("+1", 40, elo, nil, function()
-			send("SetElo", p.UserId, 1)
-		end)
-		button("−1", 40, elo, nil, function()
-			send("SetElo", p.UserId, -1)
-		end)
-		button("−100", 52, elo, nil, function()
-			send("SetElo", p.UserId, -100)
-		end)
-		button("ELO zurück", 84, elo, DANGER, function()
+		for _, step in { 100, 1, -1, -100 } do
+			button((step > 0 and "+" or "−") .. math.abs(step), 52, elo, nil, function()
+				send("SetElo", p.UserId, step)
+			end)
+		end
+		button("ELO zurück", 90, elo, "Danger", function()
 			send("SetElo", p.UserId, "reset")
 		end)
 		local season = row(box)
-		button("Saisonende testen", 140, season, Color3.fromRGB(110, 80, 170), function()
+		button("Saisonende testen", 140, season, "Purple", function()
 			send("SetElo", p.UserId, "season")
 		end)
-		button("+10.000 RAP", 100, season, Color3.fromRGB(40, 150, 115), function()
+		button("+10.000 RAP", 104, season, "Teal", function()
 			send("GiveRap", p.UserId, 10000)
 		end)
-		button("Handelbarer Skin", 130, season, Color3.fromRGB(40, 150, 115), function()
+		button("Handelbarer Skin", 130, season, "Teal", function()
 			send("GiveTradeSkin", p.UserId)
 		end)
+		order(box)
+	end
+end
+
+-- ---------- Rahmen ----------
+
+local function showTab(id)
+	currentTab = id
+	for tabId, page in pages do
+		page.Visible = tabId == id
+	end
+	for tabId, tab in tabButtons do
+		local on = tabId == id
+		tab.BackgroundColor3 = on and ACCENT or BUTTON
+		tab.TextColor3 = on and DARK_TEXT or MUTED
+	end
+	if id == "Players" then
+		playerSignature = ""
+		refreshPlayers()
 	end
 end
 
@@ -380,9 +500,10 @@ local function setOpen(open)
 	isOpen = open
 	panel.Visible = open
 	if open then
-		playerSignature = ""
 		refreshSettings()
-		refreshPlayers()
+		refreshEvents()
+		refreshBots()
+		showTab(currentTab)
 		RunService:BindToRenderStep("AdminMouse", Enum.RenderPriority.Camera.Value + 2, function()
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 			UserInputService.MouseIconEnabled = true
@@ -392,48 +513,75 @@ local function setOpen(open)
 	end
 end
 
+local function newPage(id)
+	local page = make("ScrollingFrame", { Name = "Page_" .. id, Position = UDim2.new(0, 16, 0, 112), Size = UDim2.new(1, -24, 1, -124),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = ACCENT,
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false }, panel)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, page)
+	make("UIPadding", { PaddingBottom = UDim.new(0, 12) }, page)
+	pages[id] = page
+	return page
+end
+
 local function build()
 	gui = make("ScreenGui", { Name = "AdminPanel", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20 },
 		player:WaitForChild("PlayerGui"))
 
-	toggleButton = button("ADMIN (P)", 110, gui, ACCENT, function()
+	toggleButton = button("ADMIN (P)", 110, gui, "Accent", function()
 		setOpen(not isOpen)
 	end)
 	toggleButton.Position = UDim2.new(0, 150, 0, 6)
-	toggleButton.TextColor3 = Color3.fromRGB(20, 20, 20)
+	toggleButton.TextColor3 = DARK_TEXT
 
 	panel = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -20, 0.5, 0),
-		Size = UDim2.new(0, 460, 0.85, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.05,
-		BorderSizePixel = 0, Visible = false, Active = true }, gui)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, panel)
-	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.5 }, panel)
-	UITheme.AccentBar(panel, ACCENT, { Thickness = 4 })
+		Size = UDim2.new(0, PANEL_W, 0.88, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.03,
+		BorderSizePixel = 0, Visible = false, Active = true, ClipsDescendants = true }, gui)
+	corner(panel, 12)
+	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.2 }, panel)
 
-	label("ADMIN-PANEL", 24, panel, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 30),
+	-- Kopfzeile: Akzentstreifen, Titel, Rückmeldung, Schließen
+	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = HEADER, BorderSizePixel = 0 }, panel)
+	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, header)
+	label("ADMIN", 22, header, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(0, 200, 0, 26),
 		Font = Enum.Font.BuilderSansExtraBold, TextColor3 = ACCENT })
-	statusLabel = label("", 14, panel, { Position = UDim2.new(0, 16, 0, 42), Size = UDim2.new(1, -32, 0, 20),
-		Font = Enum.Font.BuilderSans, TextColor3 = GRAY })
+	statusLabel = label("Bereit", 13, header, { Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -80, 0, 18),
+		Font = Enum.Font.BuilderSans, TextColor3 = MUTED, TextTruncate = Enum.TextTruncate.AtEnd })
+	local close = button("✕", 36, header, nil, function()
+		setOpen(false)
+	end)
+	close.AnchorPoint = Vector2.new(1, 0)
+	close.Position = UDim2.new(1, -14, 0, 14)
+	close.Size = UDim2.new(0, 36, 0, 36)
 
-	list = make("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 68), Size = UDim2.new(1, -24, 1, -80),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y }, panel)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-
-	buildControls()
-	buildEvents()
-	buildBots()
-	buildSettings()
-	section("SPIELER")
-	playerSection = make("Frame", { Size = UDim2.new(1, -8, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1 }, list)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, playerSection)
-
-	-- Reihenfolge = Erstellungsreihenfolge
-	for i, child in list:GetChildren() do
-		if child:IsA("GuiObject") then
-			child.LayoutOrder = i
-		end
+	-- Reiter
+	local tabs = make("Frame", { Position = UDim2.new(0, 16, 0, 74), Size = UDim2.new(1, -32, 0, 30), BackgroundTransparency = 1 },
+		panel)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
+	for index, def in { { "Game", "SPIEL", 80 }, { "Events", "EVENTS", 90 }, { "Bots", "BOTS", 74 },
+		{ "Settings", "EINSTELLUNGEN", 130 }, { "Players", "SPIELER", 96 } } do
+		local tab = make("TextButton", { Size = UDim2.new(0, def[3], 1, 0), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
+			Font = Enum.Font.BuilderSansExtraBold, TextSize = 13, TextColor3 = MUTED, Text = def[2], AutoButtonColor = false,
+			LayoutOrder = index }, tabs)
+		corner(tab, 15)
+		tab.Activated:Connect(function()
+			showTab(def[1])
+		end)
+		tabButtons[def[1]] = tab
 	end
+
+	buildGame(newPage("Game"))
+	buildEvents(newPage("Events"))
+	buildBots(newPage("Bots"))
+	buildSettings(newPage("Settings"))
+	local playersPage = newPage("Players")
+	playerSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1 }, playersPage)
+	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, playerSection)
+	for _, page in pages do
+		order(page)
+	end
+	showTab(currentTab)
 end
 
 function AdminPanel.Init()
@@ -452,6 +600,7 @@ function AdminPanel.Init()
 	end)
 	Remotes.AdminStatus.OnClientEvent:Connect(function(message)
 		statusLabel.Text = message
+		statusLabel.TextColor3 = TEXT
 	end)
 	ReplicatedStorage.AttributeChanged:Connect(function()
 		if isOpen then
@@ -461,8 +610,11 @@ function AdminPanel.Init()
 	task.spawn(function()
 		while true do
 			if isOpen then
-				refreshPlayers()
+				refreshEvents()
 				refreshBots()
+				if currentTab == "Players" then
+					refreshPlayers()
+				end
 			end
 			task.wait(1)
 		end

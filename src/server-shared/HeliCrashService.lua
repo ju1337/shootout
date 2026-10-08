@@ -317,6 +317,15 @@ function HeliCrashService.Start(target)
 	return current
 end
 
+-- Admin: Heli-Absturz sofort beenden (Heli, Wrack und Kisten weg). Gibt true zurück, wenn einer lief.
+function HeliCrashService.Stop()
+	if not current then
+		return false
+	end
+	remove()
+	return true
+end
+
 function HeliCrashService.Current()
 	return current
 end

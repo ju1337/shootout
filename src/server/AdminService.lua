@@ -132,6 +132,50 @@ function AdminService.Init(manager)
 			serverShared("ZombieService").SpawnAround(position, amount, 18, 45, nil, true)
 			return amount .. " Zombies um dich herum"
 		end,
+		-- Event sofort beenden: which = "Airdrop", "Convoy", "HeliCrash", "HordeCrate", "BloodMoon", "Storm", "Bounty",
+		-- "Zombies" (alle entfernen) oder "All" (alles davon)
+		ExtStop = function(which)
+			local done = {}
+			local function stop(name, label, fn)
+				if which == name or which == "All" then
+					local result = fn()
+					if result == true or (type(result) == "number" and result > 0) then
+						table.insert(done, label .. (type(result) == "number" and (" (" .. result .. ")") or ""))
+					end
+				end
+			end
+			local DayCycle = require(Shared.DayCycle)
+			local now = workspace:GetServerTimeNow()
+			stop("Airdrop", "Lootdrop", function()
+				return serverShared("AirdropService").Stop()
+			end)
+			stop("Convoy", "Konvoi", function()
+				return serverShared("ConvoyService").Stop()
+			end)
+			stop("HeliCrash", "Heli-Absturz", function()
+				return serverShared("HeliCrashService").Stop()
+			end)
+			stop("HordeCrate", "Horden-Kiste", function()
+				return serverShared("HordeService").Stop()
+			end)
+			stop("BloodMoon", "Blutmond", function()
+				local active = DayCycle.IsBloodMoon(now)
+				serverShared("BloodMoonService").Stop()
+				return active
+			end)
+			stop("Storm", "Sturmnacht", function()
+				local active = DayCycle.IsStorm(now)
+				serverShared("StormService").Stop()
+				return active
+			end)
+			stop("Bounty", "Kopfgeld", function()
+				return serverShared("BountyService").Stop()
+			end)
+			stop("Zombies", "Zombies", function()
+				return serverShared("ZombieService").ClearAll()
+			end)
+			return #done > 0 and ("Beendet: " .. table.concat(done, ", ")) or "Da lief nichts."
+		end,
 		-- Items ins eigene Inventar (zum Testen): "Attachments" = je ein Aufsatz, "Throwables" = Granaten und Molotows,
 		-- "Kit" = Sturmgewehr, Munition, Medikits, Westen
 		ExtGive = function(kind, _, admin)

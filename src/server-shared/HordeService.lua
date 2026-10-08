@@ -320,6 +320,15 @@ function HordeService.Begin(player, horde)
 	return true
 end
 
+-- Admin: Horden-Kiste sofort entfernen. Gibt true zurück, wenn eine stand.
+function HordeService.Stop()
+	if not current then
+		return false
+	end
+	remove()
+	return true
+end
+
 function HordeService.Current()
 	return current
 end

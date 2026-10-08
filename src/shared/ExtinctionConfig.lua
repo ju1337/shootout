@@ -35,6 +35,8 @@ ExtinctionConfig.MaxArmor = 100
 
 -- ---------- Safe Zone und PvP ----------
 ExtinctionConfig.PvPDelay = 5        -- Sekunden nach dem Verlassen der Safe Zone, bis PvP gilt
+-- Zum Entwickeln: Admins (Attribut IsAdmin) spawnen in der offenen Welt immer mit diesen Items (fehlende werden ergänzt)
+ExtinctionConfig.AdminLoadout = { { "Rifle", 1 }, { "Ammo_Rifle", 150 }, { "Pistol", 1 }, { "Ammo_9mm", 60 } }
 ExtinctionConfig.RespawnTime = 5     -- nach dem Tod: Respawn in der Safe Zone
 ExtinctionConfig.LeaveConfirmTime = 6 -- Verlassen außerhalb der Safe Zone: zweimal klicken innerhalb dieser Zeit
 

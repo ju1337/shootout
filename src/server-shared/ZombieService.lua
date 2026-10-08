@@ -1115,6 +1115,19 @@ function ZombieService.Info(model)
 	return zombies[model]
 end
 
+-- Admin: alle Zombies entfernen (auch Blutbestien; Bosse an festen Orten bleiben, die regelt BossService). Gibt die Anzahl zurück.
+function ZombieService.ClearAll()
+	local removed = 0
+	for model, info in zombies do
+		if not model:GetAttribute("IsBoss") then
+			remove(model)
+			model:Destroy()
+			removed += 1
+		end
+	end
+	return removed
+end
+
 -- Anzahl lebender Zombies (für Tests und das Admin-Panel)
 function ZombieService.Count()
 	return count
