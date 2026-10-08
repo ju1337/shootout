@@ -53,7 +53,7 @@ end
 local function label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or Enum.Font.BuilderSansBold
 	props.TextStrokeTransparency = 0.7
 	return make("TextLabel", props, parent)
 end
@@ -112,7 +112,7 @@ function HUD.Init(weaponClient)
 
 	-- Hinweis bei fast leerem Magazin (unter dem Fadenkreuz)
 	local reloadHint = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 90),
-		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 20, Font = Enum.Font.Oswald,
+		Size = UDim2.new(0, 300, 0, 24), Text = "", TextSize = 20, Font = Enum.Font.BuilderSansExtraBold,
 		TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 
 	-- Geld in Team-Modi (über der Munition) und kurze Meldung "+200 $"
@@ -175,7 +175,7 @@ function HUD.Init(weaponClient)
 
 	-- ---------- Großer Countdown vor Rundenbeginn (3, 2, 1, LOS!) ----------
 	local countdown = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.42, 0),
-		Size = UDim2.new(0, 300, 0, 160), Text = "", TextSize = 130, Font = Enum.Font.Oswald,
+		Size = UDim2.new(0, 300, 0, 160), Text = "", TextSize = 130, Font = Enum.Font.BuilderSansExtraBold,
 		TextColor3 = UITheme.Colors.Text, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, gui)
 	local countdownScale = make("UIScale", {}, countdown)
 	local lastShown = nil
@@ -284,7 +284,7 @@ function HUD.Init(weaponClient)
 		Size = UDim2.new(0, 360, 0, 26),
 		Text = "",
 		TextSize = 20,
-		Font = Enum.Font.Oswald,
+		Font = Enum.Font.BuilderSansExtraBold,
 		TextColor3 = UITheme.Colors.Primary,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Visible = false,
@@ -342,9 +342,9 @@ function HUD.Init(weaponClient)
 	make("UICorner", { CornerRadius = UDim.new(0, UITheme.Radius.Small) }, recap)
 	UITheme.AccentBar(recap, UITheme.Colors.Bad, { Side = "Left" })
 	local recapTitle = label({ Position = UDim2.new(0, 18, 0, 8), Size = UDim2.new(1, -34, 0, 30), Text = "",
-		TextSize = 26, Font = Enum.Font.Oswald, TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Left }, recap)
+		TextSize = 26, Font = Enum.Font.BuilderSansExtraBold, TextColor3 = UITheme.Colors.Bad, TextXAlignment = Enum.TextXAlignment.Left }, recap)
 	local recapInfo = label({ Position = UDim2.new(0, 18, 0, 42), Size = UDim2.new(1, -34, 0, 22), Text = "",
-		TextSize = 14, Font = Enum.Font.GothamMedium, TextColor3 = UITheme.Colors.Text,
+		TextSize = 14, Font = Enum.Font.BuilderSansMedium, TextColor3 = UITheme.Colors.Text,
 		TextXAlignment = Enum.TextXAlignment.Left }, recap)
 	local recapId = 0
 	Remotes.DeathRecap.OnClientEvent:Connect(function(killerName, weaponName, killerHealth, agentId, killerModel)

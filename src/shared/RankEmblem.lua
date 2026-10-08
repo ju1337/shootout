@@ -123,7 +123,7 @@ function RankEmblem.new(parent, size)
 	division.Position = UDim2.new(0.5, 0, 0.53, 0)
 	division.Size = UDim2.new(0.34, 0, 0.22, 0)
 	division.BackgroundTransparency = 1
-	division.Font = Enum.Font.GothamBlack
+	division.Font = Enum.Font.BuilderSansExtraBold
 	division.TextScaled = true
 	division.ZIndex = 7
 	division.Parent = root

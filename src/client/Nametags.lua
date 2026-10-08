@@ -109,7 +109,7 @@ local function buildTag(model, head)
 	lines.Padding = UDim.new(0, 2)
 	lines.Parent = column
 	local title = newLabel(column, { Name = "Title", Size = UDim2.new(0, 0, 0, 26), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 26, Font = Enum.Font.Oswald, TextXAlignment = Enum.TextXAlignment.Left, RichText = true,
+		TextScaled = false, TextSize = 26, Font = Enum.Font.BuilderSansExtraBold, TextXAlignment = Enum.TextXAlignment.Left, RichText = true,
 		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.35, LayoutOrder = 1 })
 	local bar = Instance.new("Frame")
 	bar.Name = "Bar"
@@ -139,7 +139,7 @@ local function buildTag(model, head)
 	rankHolder.Parent = subRow
 	local rankEmblem = RankEmblem.new(rankHolder, 20)
 	local subtitle = newLabel(subRow, { Name = "Subtitle", Size = UDim2.new(0, 0, 0, 16), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 15, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left,
+		TextScaled = false, TextSize = 15, Font = Enum.Font.BuilderSansBold, TextXAlignment = Enum.TextXAlignment.Left,
 		TextStrokeColor3 = Color3.fromRGB(8, 10, 14), TextStrokeTransparency = 0.45, LayoutOrder = 2, RichText = true })
 
 	-- RAP über der Karte (nur Hub und Markt): Raute + Zahl in der Farbe der RAP-Stufe
@@ -172,7 +172,7 @@ local function buildTag(model, head)
 	rapLayout.Parent = rap
 	UITheme.RapIcon(rap, 15, { LayoutOrder = 1 })
 	local rapText = newLabel(rap, { Name = "Amount", Size = UDim2.new(0, 0, 0, 20), AutomaticSize = Enum.AutomaticSize.X,
-		TextScaled = false, TextSize = 19, Font = Enum.Font.Oswald, TextStrokeColor3 = Color3.fromRGB(8, 10, 14),
+		TextScaled = false, TextSize = 19, Font = Enum.Font.BuilderSansExtraBold, TextStrokeColor3 = Color3.fromRGB(8, 10, 14),
 		TextStrokeTransparency = 0.4, LayoutOrder = 2 })
 
 	parts[tag] = { Title = title, Subtitle = subtitle, SubRow = subRow, RankHolder = rankHolder, RankEmblem = rankEmblem,

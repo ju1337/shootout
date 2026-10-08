@@ -166,7 +166,7 @@ function HubWheel.Build(spot, parent)
 		text.BackgroundTransparency = 1
 		text.Text = field.Text
 		text.TextScaled = true
-		text.Font = Enum.Font.GothamBlack
+		text.Font = Enum.Font.BuilderSansExtraBold
 		text.TextColor3 = Color3.new(1, 1, 1)
 		text.TextStrokeTransparency = 0.35
 		text.Parent = surface
@@ -235,9 +235,9 @@ local function buildBoard(board)
 		return label
 	end
 	return {
-		Title = line("Title", 0.06, 0.24, Enum.Font.GothamBlack, GOLD),
-		Status = line("Status", 0.34, 0.34, Enum.Font.Oswald, Color3.new(1, 1, 1)),
-		Hint = line("Hint", 0.72, 0.2, Enum.Font.GothamBold, Color3.fromRGB(170, 178, 190)),
+		Title = line("Title", 0.06, 0.24, Enum.Font.BuilderSansExtraBold, GOLD),
+		Status = line("Status", 0.34, 0.34, Enum.Font.BuilderSansExtraBold, Color3.new(1, 1, 1)),
+		Hint = line("Hint", 0.72, 0.2, Enum.Font.BuilderSansBold, Color3.fromRGB(170, 178, 190)),
 	}
 end
 

@@ -44,7 +44,7 @@ local function label(textValue, size, parent, props)
 	props.Text = textValue
 	props.Size = props.Size or UDim2.new(1, 0, 0, size + 8)
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or Enum.Font.BuilderSansBold
 	props.TextSize = size
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
@@ -56,7 +56,7 @@ local function button(textValue, width, parent, color, onClick)
 		Size = UDim2.new(0, width, 0, 30),
 		BackgroundColor3 = color or BUTTON,
 		BorderSizePixel = 0,
-		Font = Enum.Font.GothamBold,
+		Font = Enum.Font.BuilderSansBold,
 		TextSize = 14,
 		TextColor3 = Color3.new(1, 1, 1),
 		Text = textValue,
@@ -81,7 +81,7 @@ local function send(action, a, b)
 end
 
 local function section(title)
-	label(title, 18, list, { TextColor3 = ACCENT, Font = Enum.Font.Oswald })
+	label(title, 18, list, { TextColor3 = ACCENT, Font = Enum.Font.BuilderSansExtraBold })
 end
 
 local function buildControls()
@@ -167,7 +167,7 @@ local function buildBots()
 	button("Alle Bots entfernen", 170, removeRow, DANGER, function()
 		send("RemoveBots")
 	end)
-	botCountLabel = label("", 14, removeRow, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.Gotham,
+	botCountLabel = label("", 14, removeRow, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.BuilderSans,
 		TextColor3 = GRAY })
 end
 
@@ -191,7 +191,7 @@ local function buildSettings()
 			label(def.Group, 14, list, { TextColor3 = GRAY })
 		end
 		local r = row(list)
-		label(def.Label, 15, r, { Size = UDim2.new(0, 200, 1, 0), Font = Enum.Font.Gotham })
+		label(def.Label, 15, r, { Size = UDim2.new(0, 200, 1, 0), Font = Enum.Font.BuilderSans })
 		button("−", 34, r, nil, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) - def.Step)
 		end)
@@ -345,9 +345,9 @@ local function build()
 	UITheme.AccentBar(panel, ACCENT, { Thickness = 4 })
 
 	label("ADMIN-PANEL", 24, panel, { Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 30),
-		Font = Enum.Font.Oswald, TextColor3 = ACCENT })
+		Font = Enum.Font.BuilderSansExtraBold, TextColor3 = ACCENT })
 	statusLabel = label("", 14, panel, { Position = UDim2.new(0, 16, 0, 42), Size = UDim2.new(1, -32, 0, 20),
-		Font = Enum.Font.Gotham, TextColor3 = GRAY })
+		Font = Enum.Font.BuilderSans, TextColor3 = GRAY })
 
 	list = make("ScrollingFrame", { Position = UDim2.new(0, 16, 0, 68), Size = UDim2.new(1, -24, 1, -80),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6, CanvasSize = UDim2.new(),

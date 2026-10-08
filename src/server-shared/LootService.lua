@@ -314,7 +314,7 @@ function LootService.Create(position, items, kind, title, options)
 	text.Name = "Title"
 	text.Size = UDim2.new(1, 0, 0.55, 0)
 	text.BackgroundTransparency = 1
-	text.Font = Enum.Font.GothamBold
+	text.Font = Enum.Font.BuilderSansBold
 	text.TextSize = 14
 	text.TextColor3 = look.Light
 	text.TextStrokeTransparency = 0.4
@@ -325,7 +325,7 @@ function LootService.Create(position, items, kind, title, options)
 	count.Position = UDim2.fromScale(0, 0.55)
 	count.Size = UDim2.new(1, 0, 0.45, 0)
 	count.BackgroundTransparency = 1
-	count.Font = Enum.Font.GothamMedium
+	count.Font = Enum.Font.BuilderSansMedium
 	count.TextSize = 11
 	count.TextColor3 = Color3.fromRGB(220, 224, 230)
 	count.TextStrokeTransparency = 0.5

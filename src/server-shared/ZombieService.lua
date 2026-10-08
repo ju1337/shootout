@@ -589,7 +589,7 @@ function ZombieService.Spawn(position, kindName, force)
 		title.Text = string.upper(stats.Name)
 		title.TextColor3 = Color3.fromRGB(255, 70, 60)
 		title.TextStrokeTransparency = 0.3
-		title.Font = Enum.Font.GothamBlack
+		title.Font = Enum.Font.BuilderSansExtraBold
 		title.TextScaled = true
 		title.Parent = board
 		local bar = Instance.new("Frame")

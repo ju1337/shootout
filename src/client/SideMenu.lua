@@ -64,7 +64,7 @@ end
 
 local function text(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Font = UITheme.FontFor(props.Font or Enum.Font.GothamBold, props.TextSize)
+	props.Font = UITheme.FontFor(props.Font or Enum.Font.BuilderSansBold, props.TextSize)
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return make("TextLabel", props, parent)
@@ -671,7 +671,7 @@ local function buildClan()
 	local frame = makePanel("Clan", "CLAN", 860, 560)
 	local function box(parent, y, placeholder, maxLength)
 		local textBox = make("TextBox", { Position = UDim2.new(0, 20, 0, y), Size = UDim2.new(1, -40, 0, 46),
-			BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 20,
+			BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.BuilderSansBold, TextSize = 20,
 			TextColor3 = Color3.new(1, 1, 1), PlaceholderText = placeholder, PlaceholderColor3 = GRAY, Text = "",
 			ClearTextOnFocus = false }, parent)
 		make("UICorner", { CornerRadius = UDim.new(0, 8) }, textBox)
@@ -801,7 +801,7 @@ local function buildCodes()
 	text({ Position = UDim2.new(0, 32, 0, 62), Size = UDim2.new(1, -64, 0, 20),
 		Text = "Neue Codes gibt es bei Updates und Events.", TextSize = 15, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, card)
 	local box = make("TextBox", { Position = UDim2.new(0, 32, 0, 100), Size = UDim2.new(1, -64, 0, 56),
-		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.GothamBold, TextSize = 24,
+		BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.BuilderSansBold, TextSize = 24,
 		TextColor3 = Color3.new(1, 1, 1), PlaceholderText = "CODE", PlaceholderColor3 = GRAY, Text = "",
 		ClearTextOnFocus = false }, card)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, box)

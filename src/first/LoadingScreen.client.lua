@@ -46,7 +46,7 @@ local function label(text, size, y, color, font)
 	obj.Position = UDim2.new(0.5, 0, y, 0)
 	obj.Size = UDim2.new(0.9, 0, 0, size + 10)
 	obj.BackgroundTransparency = 1
-	obj.Font = font or Enum.Font.Oswald
+	obj.Font = font or Enum.Font.BuilderSansExtraBold
 	obj.TextSize = size
 	obj.TextColor3 = color or Color3.new(1, 1, 1)
 	obj.Text = text
@@ -63,9 +63,9 @@ line.Size = UDim2.new(0, 56, 0, 2)
 line.BackgroundColor3 = AMBER
 line.BorderSizePixel = 0
 line.Parent = background
-label("TACTICAL OPERATIONS", 16, 0.53, AMBER, Enum.Font.GothamBold)
-local status = label("Lade Einsatzgebiet ...", 16, 0.72, Color3.fromRGB(134, 142, 152), Enum.Font.GothamBold)
-local tip = label(TIPS[math.random(#TIPS)], 17, 0.86, Color3.fromRGB(190, 194, 200), Enum.Font.Gotham)
+label("TACTICAL OPERATIONS", 16, 0.53, AMBER, Enum.Font.BuilderSansBold)
+local status = label("Lade Einsatzgebiet ...", 16, 0.72, Color3.fromRGB(134, 142, 152), Enum.Font.BuilderSansBold)
+local tip = label(TIPS[math.random(#TIPS)], 17, 0.86, Color3.fromRGB(190, 194, 200), Enum.Font.BuilderSans)
 
 local barBack = Instance.new("Frame")
 barBack.AnchorPoint = Vector2.new(0.5, 0.5)

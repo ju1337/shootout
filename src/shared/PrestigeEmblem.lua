@@ -120,7 +120,7 @@ function PrestigeEmblem.new(parent, size)
 	level.Position = UDim2.new(0.5, 0, 0.42, 0)
 	level.Size = UDim2.new(0.36, 0, 0.2, 0)
 	level.BackgroundTransparency = 1
-	level.Font = Enum.Font.GothamBlack
+	level.Font = Enum.Font.BuilderSansExtraBold
 	level.TextScaled = true
 	level.TextColor3 = Color3.new(1, 1, 1)
 	level.ZIndex = 6
@@ -144,7 +144,7 @@ function PrestigeEmblem.new(parent, size)
 	stars.Position = UDim2.new(0.5, 0, 0.74, 0)
 	stars.Size = UDim2.new(0.7, 0, 0.22, 0)
 	stars.BackgroundTransparency = 1
-	stars.Font = Enum.Font.GothamBlack
+	stars.Font = Enum.Font.BuilderSansExtraBold
 	stars.TextScaled = true
 	stars.TextStrokeTransparency = 0.4
 	stars.ZIndex = 3

@@ -132,7 +132,7 @@ local function billboard(adornee, title, color, offset)
 	text.Name = "Title"
 	text.Size = UDim2.new(1, 0, 0.55, 0)
 	text.BackgroundTransparency = 1
-	text.Font = Enum.Font.GothamBold
+	text.Font = Enum.Font.BuilderSansBold
 	text.TextSize = 14
 	text.TextColor3 = color
 	text.TextStrokeTransparency = 0.4
@@ -143,7 +143,7 @@ local function billboard(adornee, title, color, offset)
 	sub.Position = UDim2.fromScale(0, 0.55)
 	sub.Size = UDim2.new(1, 0, 0.45, 0)
 	sub.BackgroundTransparency = 1
-	sub.Font = Enum.Font.GothamMedium
+	sub.Font = Enum.Font.BuilderSansMedium
 	sub.TextSize = 11
 	sub.TextColor3 = Color3.fromRGB(220, 224, 230)
 	sub.TextStrokeTransparency = 0.5

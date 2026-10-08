@@ -1,10 +1,9 @@
 -- UITheme (ModuleScript, nur Client)
--- Einheitliches Design für alle Menüs im nüchternen Taktik-Look: Graphit als Grund, gedecktes
--- Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene Team, Rot für
--- Gegner. Flache Knöpfe und Flächen mit weich gerundeten Ecken und 1 px Rand, keine Schatten oder
--- Comic-Konturen. Überschriften, Zahlen und Knöpfe in der schmalen Oswald, kleine Beschriftungen in Gotham.
--- Achtung: Oswald kennt in Roblox nur lateinische Zeichen – Symbole wie ✕ ✓ ★ ◆ → ∞ erscheinen dort als
--- Kästchen. Solche Zeichen nur in Gotham-Texten verwenden oder zeichnen (Cross, Diamond, Coin).
+-- Einheitliches, cleanes Design für alle Menüs und das HUD: fast schwarzes Neutralgrau als Grund, ruhige Flächen
+-- mit haarfeinem hellem Rand, Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene
+-- Team, Rot für Gegner. Flach, knappe Rundungen, keine Schatten, keine Comic-Konturen. Schrift durchgehend
+-- Builder Sans (die moderne Roblox-Schrift): Überschriften und Zahlen extra fett, Beschriftungen fett/mittel.
+-- Sonderzeichen wie ✕ ✓ ★ ◆ → ∞ besser zeichnen (Cross, Diamond, Coin) – nicht jede Schrift hat sie.
 -- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Akzentstreifen (AccentBar),
 -- Kontur, Schild (Tag), Raute, Münze, RAP-Symbol. Inhalte liegen auf einer "Leinwand" mit fester Größe in der
 -- Bildschirmmitte, die als Ganzes skaliert wird (Canvas). So rutscht nichts nach links.
@@ -14,25 +13,25 @@ local TweenService = game:GetService("TweenService")
 
 local UITheme = {}
 
--- Farben: dunkles Graphit, gedeckte Signalfarben (nichts Knalliges)
+-- Farben: neutrales, fast schwarzes Grau, klare Signalfarben (nichts Knalliges)
 UITheme.Colors = {
-	Background = Color3.fromRGB(12, 14, 17),   -- Grund (Graphit)
-	Panel = Color3.fromRGB(19, 22, 26),        -- Flächen und Fenster
-	Card = Color3.fromRGB(27, 31, 36),         -- Karten und Knöpfe in Flächen
-	CardHover = Color3.fromRGB(35, 40, 46),    -- Hover, Spuren
-	Secondary = Color3.fromRGB(35, 40, 46),
-	MutedBack = Color3.fromRGB(30, 34, 40),
-	Border = Color3.fromRGB(58, 64, 72),
-	Primary = Color3.fromRGB(212, 170, 80),    -- gedecktes Bernstein: aktiv, Hauptknöpfe, Schilder
-	PrimaryText = Color3.fromRGB(14, 16, 19),  -- dunkle Schrift auf Bernstein/Blau
-	Accent = Color3.fromRGB(96, 164, 214),     -- Stahlblau: eigenes Team, Verbündete
-	AccentDark = Color3.fromRGB(40, 78, 108),
-	Play = Color3.fromRGB(212, 170, 80),       -- großer SPIELEN-Knopf
-	Text = Color3.fromRGB(228, 231, 235),
-	Muted = Color3.fromRGB(134, 142, 152),     -- gedämpfte Schrift
-	Good = Color3.fromRGB(112, 178, 112),
-	Bad = Color3.fromRGB(206, 70, 58),         -- Gegner, Warnungen
-	Gold = Color3.fromRGB(200, 166, 92),
+	Background = Color3.fromRGB(10, 11, 13),   -- Grund
+	Panel = Color3.fromRGB(16, 18, 21),        -- Flächen und Fenster
+	Card = Color3.fromRGB(24, 27, 31),         -- Karten und Knöpfe in Flächen
+	CardHover = Color3.fromRGB(32, 36, 41),    -- Hover, Spuren
+	Secondary = Color3.fromRGB(32, 36, 41),
+	MutedBack = Color3.fromRGB(27, 30, 35),
+	Border = Color3.fromRGB(52, 57, 64),       -- Ränder (haarfein, siehe Stroke)
+	Primary = Color3.fromRGB(236, 178, 70),    -- Bernstein: aktiv, Hauptknöpfe, Schilder
+	PrimaryText = Color3.fromRGB(12, 13, 15),  -- dunkle Schrift auf Bernstein/Blau
+	Accent = Color3.fromRGB(88, 164, 226),     -- Stahlblau: eigenes Team, Verbündete
+	AccentDark = Color3.fromRGB(34, 72, 104),
+	Play = Color3.fromRGB(236, 178, 70),       -- großer SPIELEN-Knopf
+	Text = Color3.fromRGB(236, 238, 241),
+	Muted = Color3.fromRGB(136, 144, 156),     -- gedämpfte Schrift
+	Good = Color3.fromRGB(104, 194, 122),
+	Bad = Color3.fromRGB(228, 76, 64),         -- Gegner, Warnungen
+	Gold = Color3.fromRGB(214, 176, 96),
 	Rap = Color3.fromRGB(86, 214, 170),        -- RAP (zweite Währung, RapConfig.Color)
 	Shadow = Color3.new(0, 0, 0),
 }
@@ -40,16 +39,17 @@ UITheme.Colors.Ally = UITheme.Colors.Accent
 UITheme.Colors.Enemy = UITheme.Colors.Bad
 
 UITheme.Fonts = {
-	Display = Enum.Font.Oswald,      -- schmale Überschriften, Zahlen und Knöpfe (Großbuchstaben)
-	Title = Enum.Font.Oswald,
-	Bold = Enum.Font.GothamBold,     -- kleine Beschriftungen
-	Medium = Enum.Font.GothamMedium,
-	Body = Enum.Font.Gotham,
+	Display = Enum.Font.BuilderSansExtraBold, -- Überschriften, Zahlen und Knöpfe (Großbuchstaben)
+	Title = Enum.Font.BuilderSansBold,
+	Bold = Enum.Font.BuilderSansBold,         -- Beschriftungen
+	Medium = Enum.Font.BuilderSansMedium,
+	Body = Enum.Font.BuilderSans,
 }
 
--- Weich gerundete Ecken (weniger kantig). Alle Fenster nutzen dieselben Stufen.
-UITheme.Radius = { Small = 8, Medium = 10, Large = 12, XL = 14, XXL = 18 }
-UITheme.MinRadius = 6 -- auch fest eingetragene kleine Rundungen werden mindestens so weich
+-- Knappe, präzise Rundungen. Alle Fenster nutzen dieselben Stufen.
+UITheme.Radius = { Small = 4, Medium = 6, Large = 8, XL = 10, XXL = 12 }
+UITheme.MinRadius = 3 -- auch fest eingetragene kleine Rundungen werden mindestens so weich
+UITheme.MaxRadius = 12 -- fest eingetragene große Rundungen höchstens so rund (Pillen mit Rundung in Skala bleiben)
 
 local C = UITheme.Colors
 
@@ -64,11 +64,19 @@ end
 local make = UITheme.Make
 
 function UITheme.Corner(parent, radius)
-	return make("UICorner", { CornerRadius = UDim.new(0, math.max(radius or 10, UITheme.MinRadius)) }, parent)
+	local r = radius or UITheme.Radius.Medium
+	-- sehr große Werte sind Kreise/Pillen (z.B. Corner(frame, size)): die bleiben rund
+	if r < 40 then
+		r = math.clamp(r, UITheme.MinRadius, UITheme.MaxRadius)
+	end
+	return make("UICorner", { CornerRadius = UDim.new(0, r) }, parent)
 end
 
+-- Rand: der Standardrand (ohne Farbe) ist eine haarfeine helle Linie, die auf jedem Grund ruhig wirkt
 function UITheme.Stroke(parent, color, thickness, transparency)
-	return make("UIStroke", { Color = color or C.Border, Thickness = thickness or 1, Transparency = transparency or 0,
+	local hairline = color == nil or color == C.Border
+	return make("UIStroke", { Color = hairline and Color3.new(1, 1, 1) or color, Thickness = thickness or 1,
+		Transparency = hairline and 0.9 + (transparency or 0) * 0.1 or (transparency or 0),
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, parent)
 end
 
@@ -83,7 +91,7 @@ function UITheme.Outline(textObject, thickness, color)
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual, LineJoinMode = Enum.LineJoinMode.Round }, textObject)
 end
 
--- Schmale Display-Schrift nur für große Texte: klein ist Oswald schlecht lesbar, dort Gotham Bold
+-- Extra fette Display-Schrift nur für große Texte: klein wirkt sie gedrungen, dort Bold
 function UITheme.FontFor(font, textSize)
 	if font == UITheme.Fonts.Display and (textSize or 14) < 16 then
 		return UITheme.Fonts.Bold
@@ -272,14 +280,14 @@ end
 -- props.Radius (optional) überschreibt die Rundung.
 function UITheme.Card(props, parent)
 	props.BackgroundColor3 = props.BackgroundColor3 or C.Panel
-	props.BackgroundTransparency = props.BackgroundTransparency or 0.12
+	props.BackgroundTransparency = props.BackgroundTransparency or 0.06
 	props.BorderSizePixel = 0
 	props.ZIndex = props.ZIndex or 2
 	local radius = math.min(props.Radius or UITheme.Radius.XL, UITheme.Radius.XL)
 	props.Radius = nil
 	local frame = make("Frame", props, parent)
 	UITheme.Corner(frame, radius)
-	UITheme.Stroke(frame, C.Border, 1, 0.25)
+	UITheme.Stroke(frame, C.Border, 1)
 	return frame
 end
 
@@ -336,7 +344,7 @@ function UITheme.HudPanel(props, parent, fadeTo)
 	return frame
 end
 
--- Schließen-Kreuz aus zwei Strichen (unabhängig von der Schrift: Oswald hat kein "✕")
+-- Schließen-Kreuz aus zwei Strichen (unabhängig von der Schrift)
 function UITheme.Cross(parent, size, color, thickness)
 	local holder = make("Frame", { Name = "Cross", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(size, size), BackgroundTransparency = 1 }, parent)

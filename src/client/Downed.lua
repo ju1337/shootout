@@ -38,7 +38,7 @@ end
 
 local function label(props, parent)
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.Oswald
+	props.Font = props.Font or Enum.Font.BuilderSansExtraBold
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextStrokeTransparency = 0.4
 	return make("TextLabel", props, parent)

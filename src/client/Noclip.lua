@@ -124,7 +124,7 @@ function Noclip.Init()
 	label.Position = UDim2.new(0.5, 0, 0, 4)
 	label.Size = UDim2.fromOffset(360, 22)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.BuilderSansBold
 	label.TextSize = 15
 	label.TextColor3 = Color3.fromRGB(120, 220, 255)
 	label.TextStrokeTransparency = 0.3

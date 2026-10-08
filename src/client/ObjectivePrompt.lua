@@ -43,7 +43,7 @@ function ObjectivePrompt.Init()
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 28)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.Oswald
+	label.Font = Enum.Font.BuilderSansExtraBold
 	label.TextSize = 20
 	label.TextColor3 = Color3.fromRGB(255, 120, 120)
 	label.TextStrokeTransparency = 0.4

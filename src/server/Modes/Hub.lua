@@ -104,7 +104,7 @@ local function placeStatue(place, entry)
 		local name = Instance.new("TextLabel")
 		name.Size = UDim2.new(1, 0, 0.55, 0)
 		name.BackgroundTransparency = 1
-		name.Font = Enum.Font.GothamBlack
+		name.Font = Enum.Font.BuilderSansExtraBold
 		name.TextScaled = true
 		name.TextColor3 = Color3.new(1, 1, 1)
 		name.TextStrokeTransparency = 0.3
@@ -114,7 +114,7 @@ local function placeStatue(place, entry)
 		info.Position = UDim2.new(0, 0, 0.55, 0)
 		info.Size = UDim2.new(1, 0, 0.45, 0)
 		info.BackgroundTransparency = 1
-		info.Font = Enum.Font.Oswald
+		info.Font = Enum.Font.BuilderSansExtraBold
 		info.TextScaled = true
 		info.TextColor3 = rank.Color
 		info.TextStrokeTransparency = 0.3

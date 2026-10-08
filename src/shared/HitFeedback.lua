@@ -35,7 +35,7 @@ HitFeedback.Colors = {
 }
 local COLORS = HitFeedback.Colors
 local BLACK = Color3.new(0, 0, 0)
-local NUMBER_FONT = Enum.Font.Oswald
+local NUMBER_FONT = Enum.Font.BuilderSansExtraBold
 
 local COMBO_WINDOW = 0.65 -- so lange nach einem Treffer zählt der nächste am selben Ziel zur Kombo
 local MAX_BOOST = 6       -- ab so vielen Kombo-Treffern wächst nichts mehr

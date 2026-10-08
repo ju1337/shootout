@@ -57,7 +57,7 @@ local function showPing(position, enemy, pingerName)
 	local icon = Instance.new("TextLabel")
 	icon.Size = UDim2.new(1, 0, 0.6, 0)
 	icon.BackgroundTransparency = 1
-	icon.Font = Enum.Font.GothamBold
+	icon.Font = Enum.Font.BuilderSansBold
 	icon.TextSize = 26
 	icon.Text = enemy and "!" or "▼"
 	icon.TextColor3 = enemy and Color3.fromRGB(226, 72, 60) or Color3.fromRGB(212, 170, 80)
@@ -67,7 +67,7 @@ local function showPing(position, enemy, pingerName)
 	name.Position = UDim2.new(0, 0, 0.6, 0)
 	name.Size = UDim2.new(1, 0, 0.4, 0)
 	name.BackgroundTransparency = 1
-	name.Font = Enum.Font.GothamBold
+	name.Font = Enum.Font.BuilderSansBold
 	name.TextSize = 13
 	name.Text = enemy and ("GEGNER · " .. pingerName) or pingerName
 	name.TextColor3 = Color3.new(1, 1, 1)

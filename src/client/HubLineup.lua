@@ -164,9 +164,9 @@ local function buildAgentOfWeek()
 			table.insert(holoLabels, label)
 			return label
 		end
-		text(0, 0.22, Enum.Font.GothamBold, HOLO).Text = "AGENT DER WOCHE"
-		nameLabel = text(0.22, 0.52, Enum.Font.Oswald, Color3.new(1, 1, 1))
-		infoLabel = text(0.76, 0.22, Enum.Font.GothamBold, HOLO)
+		text(0, 0.22, Enum.Font.BuilderSansBold, HOLO).Text = "AGENT DER WOCHE"
+		nameLabel = text(0.22, 0.52, Enum.Font.BuilderSansExtraBold, Color3.new(1, 1, 1))
+		infoLabel = text(0.76, 0.22, Enum.Font.BuilderSansBold, HOLO)
 		-- dünne Holo-Linie unter der Überschrift
 		line = Instance.new("Frame")
 		line.AnchorPoint = Vector2.new(0.5, 0)
@@ -327,7 +327,7 @@ local function buildShopVitrine()
 			surface.PixelsPerStud = 60
 			surface.Adornee = part
 			surface.Parent = player:WaitForChild("PlayerGui")
-			for _, spec in { { "ItemName", 0.04, 0.46, Enum.Font.Oswald }, { "ItemInfo", 0.54, 0.4, Enum.Font.GothamBold } } do
+			for _, spec in { { "ItemName", 0.04, 0.46, Enum.Font.BuilderSansExtraBold }, { "ItemInfo", 0.54, 0.4, Enum.Font.BuilderSansBold } } do
 				local label = Instance.new("TextLabel")
 				label.Name = spec[1]
 				label.Position = UDim2.new(0.05, 0, spec[2], 0)
@@ -421,7 +421,7 @@ local function buildMissionBoard()
 	local title = Instance.new("TextLabel")
 	title.Size = UDim2.new(1, 0, 0.16, 0)
 	title.BackgroundTransparency = 1
-	title.Font = Enum.Font.Oswald
+	title.Font = Enum.Font.BuilderSansExtraBold
 	title.TextScaled = true
 	title.TextColor3 = Color3.fromRGB(212, 170, 80)
 	title.Text = "EINSATZ-ÜBERSICHT"
@@ -430,7 +430,7 @@ local function buildMissionBoard()
 	list.Position = UDim2.new(0.06, 0, 0.2, 0)
 	list.Size = UDim2.new(0.88, 0, 0.76, 0)
 	list.BackgroundTransparency = 1
-	list.Font = Enum.Font.Oswald
+	list.Font = Enum.Font.BuilderSansExtraBold
 	list.TextSize = 30
 	list.TextColor3 = Color3.fromRGB(228, 231, 235)
 	list.TextXAlignment = Enum.TextXAlignment.Left
@@ -453,7 +453,7 @@ local function buildMissionBoard()
 			local countLabel = Instance.new("TextLabel")
 			countLabel.Size = UDim2.new(1, 0, 1, 0)
 			countLabel.BackgroundTransparency = 1
-			countLabel.Font = Enum.Font.Oswald
+			countLabel.Font = Enum.Font.BuilderSansExtraBold
 			countLabel.TextScaled = true
 			countLabel.Text = ""
 			countLabel.Parent = gateGui
@@ -531,7 +531,7 @@ local function buildLeaderboards()
 			title.BackgroundColor3 = info.Color
 			title.BackgroundTransparency = holo and 0.7 or 0.15
 			title.BorderSizePixel = 0
-			title.Font = Enum.Font.Oswald
+			title.Font = Enum.Font.BuilderSansExtraBold
 			title.TextScaled = true
 			title.TextColor3 = holo and Color3.new(1, 1, 1) or Color3.fromRGB(14, 16, 19)
 			title.TextStrokeTransparency = holo and 0.6 or 1
@@ -548,7 +548,7 @@ local function buildLeaderboards()
 				season.Position = UDim2.new(0.97, 0, 0.025, 0)
 				season.Size = UDim2.new(0.5, 0, 0.08, 0)
 				season.BackgroundTransparency = 1
-				season.Font = Enum.Font.Oswald
+				season.Font = Enum.Font.BuilderSansExtraBold
 				season.TextScaled = true
 				season.TextXAlignment = Enum.TextXAlignment.Right
 				season.TextColor3 = holo and Color3.fromRGB(255, 225, 150) or Color3.fromRGB(14, 16, 19)
@@ -587,9 +587,9 @@ local function buildLeaderboards()
 				end
 				rows[i] = {
 					Frame = row,
-					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.Oswald),
-					Name = cell(0.13, 0.5, Enum.TextXAlignment.Left, Enum.Font.GothamBold),
-					Value = cell(0.6, 0.38, Enum.TextXAlignment.Right, Enum.Font.Oswald),
+					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.BuilderSansExtraBold),
+					Name = cell(0.13, 0.5, Enum.TextXAlignment.Left, Enum.Font.BuilderSansBold),
+					Value = cell(0.6, 0.38, Enum.TextXAlignment.Right, Enum.Font.BuilderSansExtraBold),
 				}
 			end
 			local function update()
@@ -685,7 +685,7 @@ local function buildPhotoBoard()
 		local hint = Instance.new("TextLabel")
 		hint.Size = UDim2.fromScale(1, 1)
 		hint.BackgroundTransparency = 1
-		hint.Font = Enum.Font.Oswald
+		hint.Font = Enum.Font.BuilderSansExtraBold
 		hint.TextScaled = true
 		hint.TextColor3 = Color3.fromRGB(120, 185, 235)
 		hint.Text = "BILD FOLGT"

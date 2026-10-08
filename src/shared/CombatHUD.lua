@@ -47,7 +47,7 @@ local make = UITheme.Make
 local function label(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 1
 	props.TextColor3 = props.TextColor3 or WHITE
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or Enum.Font.BuilderSansBold
 	props.TextStrokeTransparency = props.TextStrokeTransparency or 0.4
 	return make("TextLabel", props, parent)
 end
@@ -250,9 +250,9 @@ function CombatHUD.Init(gui, weaponClient)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
 		Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, killNotice)
 	local killTitle = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
-		Font = Enum.Font.Oswald, LayoutOrder = 2 }, killNotice)
+		Font = Enum.Font.BuilderSansExtraBold, LayoutOrder = 2 }, killNotice)
 	local killName = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
-		Font = Enum.Font.Oswald, LayoutOrder = 3 }, killNotice)
+		Font = Enum.Font.BuilderSansExtraBold, LayoutOrder = 3 }, killNotice)
 	local killScale = make("UIScale", {}, killNotice)
 	local killId = 0
 	local function showKill(killed, name)
