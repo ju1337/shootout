@@ -6,14 +6,14 @@
 -- (für jedes Teil der AR die Gold-Textur + "Aufsaetze" für Visier, Schalldämpfer, Griff).
 -- Die Waffe selbst wird nicht verändert – den Skin sieht nur, wer ihn im Shop gekauft und ausgerüstet hat.
 local IDS = {
-	Color = 0, -- Drachengold_Color.png
-	Normal = 0, -- Drachengold_Normal.png
-	Roughness = 0, -- Drachengold_Roughness.png
-	Metalness = 0, -- Drachengold_Metalness.png
-	Emissive = 0, -- Drachengold_Emissive.png (Lava-Glühen)
-	Glitzer = 0, -- FX_Glitzer.png
-	Glut = 0, -- FX_Glut.png
-	Flamme = 0, -- FX_Flamme.png
+	Color = 88331684470741, -- Drachengold_Color.png
+	Normal = 132303539386958, -- Drachengold_Normal.png
+	Roughness = 86156491508027, -- Drachengold_Roughness.png
+	Metalness = 76966203756367, -- Drachengold_Metalness.png
+	Emissive = 76587727648510, -- Drachengold_Emissive.png (Lava-Glühen)
+	Glitzer = 92462690456150, -- FX_Glitzer.png
+	Glut = 90333709813491, -- FX_Glut.png
+	Flamme = 130268591969568, -- FX_Flamme.png
 }
 local SKIN = "W_Drachengold"
 local GLUT = Color3.fromRGB(255, 110, 25)
