@@ -844,7 +844,7 @@ function Inv.hideHud(on)
 		end
 	elseif not on and Inv.hiddenGuis then
 		for _, gui in Inv.hiddenGuis do
-			if gui.Parent then
+			if gui.Parent and (gui ~= hud or inExtinction()) then
 				gui.Enabled = true
 			end
 		end
@@ -2569,7 +2569,7 @@ local function updateVisible()
 	applyPadLayout()
 	updateHints()
 	if hud then
-		hud.Enabled = on
+		hud.Enabled = on and not Inv.hiddenGuis -- bei offenem Fenster bleibt es versteckt (Inv.hideHud)
 	end
 	for _, prompt in prompts do
 		prompt.Enabled = on
@@ -3114,6 +3114,7 @@ function ExtinctionClient.Init()
 
 	-- Anzeige oben und Wartezeit fürs Fahrzeug
 	RunService.Heartbeat:Connect(function()
+		standDistanceCheck() -- vor der Prüfung unten: solange ein Fenster offen ist, ist das HUD ausgeblendet
 		if not hud.Enabled then
 			return
 		end
@@ -3121,7 +3122,6 @@ function ExtinctionClient.Init()
 		updateShield()
 		updateMarkers()
 		updatePlace()
-		standDistanceCheck()
 		-- im Fahrzeug: Name, Tempo und Zustand; sonst die Wartezeit nach dem Einpacken
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
