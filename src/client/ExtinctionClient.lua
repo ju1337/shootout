@@ -1724,12 +1724,12 @@ local function openAchievements()
 	win.Refresh()
 end
 
--- LOOT: was in Lootdrop, Konvoi, Heli-Absturz, Horden-Kiste und bei Bossen liegen kann (LootInfo), links die Quelle,
+-- LOOT: was in Lootdrop, Konvoi, Heli-Absturz und Horden-Kiste liegen kann (LootInfo), links die Quelle,
 -- rechts die Items mit Chance (mindestens einmal in der Kiste) und Menge
 local lootSource = 1
 local function openLoot()
 	local C = UITheme.MenuColors
-	local win = newWindow("Loot", "LOOT", "WHAT YOU CAN GET FROM CRATES, EVENTS AND BOSSES")
+	local win = newWindow("Loot", "LOOT", "WHAT YOU CAN GET FROM DROPS AND EVENT CRATES")
 	local body = win.Body
 	local listW, gap = 230, 20
 	local rightX = listW + gap

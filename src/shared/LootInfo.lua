@@ -1,8 +1,8 @@
 -- LootInfo (ModuleScript, Client)
--- Was man aus Lootdrop, Konvoi, Heli-Absturz, Horden-Kiste und Bossen bekommen kann (Reiter LOOT im Extinction-Menü).
+-- Was man aus Lootdrop, Konvoi, Heli-Absturz und Horden-Kiste bekommen kann (Reiter LOOT im Extinction-Menü).
 -- Die Chancen kommen aus denselben Werten, mit denen die Server würfeln (ExtinctionConfig.RollLoot): jede Quelle wird
 -- Trials-mal nachgewürfelt; Chance = Anteil der Kisten, in denen das Item mindestens einmal liegt. Aufsätze werden je
--- Seltenheit zu einer Zeile zusammengefasst. Bosse: Always (sicher) und Chances (feste Chance je Zeile) direkt.
+-- Seltenheit zu einer Zeile zusammengefasst.
 
 local ExtinctionConfig = require(script.Parent.ExtinctionConfig)
 
@@ -34,11 +34,6 @@ LootInfo.Sources = {
 			.. (Ho.Items[2] + Ho.BonusItems[2]) .. " items",
 		Rolls = { { Table = Ho.Table, Items = Ho.Items }, { Table = Ho.BonusTable, Items = Ho.BonusItems } } },
 }
-for id, boss in ExtinctionConfig.Bosses do
-	table.insert(LootInfo.Sources, { Id = "Boss_" .. id, Name = boss.Name, Color = Color3.fromRGB(176, 136, 232),
-		Info = "Boss at " .. string.upper(boss.Place) .. "  ·  respawns after " .. math.floor(boss.RespawnTime / 60) .. " min",
-		Boss = boss })
-end
 
 -- Zeilen-Schlüssel: Aufsätze je Seltenheit zusammen ("Att_T3"), sonst die Item-Id
 local function rowKey(id)
@@ -70,49 +65,28 @@ function LootInfo.Rows(source)
 		return cache[source.Id]
 	end
 	local rows = {}
-	if source.Boss then
-		local byId = {}
-		local function add(id, count, chance)
-			local row = byId[id]
-			if row then
-				row.Chance = 1 - (1 - row.Chance) * (1 - chance)
-				row.Count = { math.min(row.Count[1], count), math.max(row.Count[2], count) }
-			else
-				local config = ExtinctionConfig.Items[id]
-				byId[id] = { Key = id, Id = id, Tier = config and config.Tier or 1, Chance = chance, Count = { count, count } }
-				table.insert(rows, byId[id])
-			end
-		end
-		for _, entry in source.Boss.Always or {} do
-			add(entry[1], entry[2], 1)
-		end
-		for _, entry in source.Boss.Chances or {} do
-			add(entry.Id, entry.Count, entry.Chance)
-		end
-	else
-		local random = Random.new(source.Id:len() * 7919)
-		local hits, firstId, tiers = {}, {}, {}
-		for _ = 1, TRIALS do
-			local seen = {}
-			for _, roll in source.Rolls do
-				if not roll.Chance or random:NextNumber() < roll.Chance then
-					for _, item in ExtinctionConfig.RollLoot(roll.Table, random:NextInteger(roll.Items[1], roll.Items[2]), random) do
-						local key, tier = rowKey(item.Id)
-						seen[key] = true
-						firstId[key] = firstId[key] or item.Id
-						tiers[key] = tier
-					end
+	local random = Random.new(source.Id:len() * 7919)
+	local hits, firstId, tiers = {}, {}, {}
+	for _ = 1, TRIALS do
+		local seen = {}
+		for _, roll in source.Rolls do
+			if not roll.Chance or random:NextNumber() < roll.Chance then
+				for _, item in ExtinctionConfig.RollLoot(roll.Table, random:NextInteger(roll.Items[1], roll.Items[2]), random) do
+					local key, tier = rowKey(item.Id)
+					seen[key] = true
+					firstId[key] = firstId[key] or item.Id
+					tiers[key] = tier
 				end
 			end
-			for key in seen do
-				hits[key] = (hits[key] or 0) + 1
-			end
 		end
-		local ranges = countRanges(source)
-		for key, n in hits do
-			table.insert(rows, { Key = key, Id = firstId[key], Tier = tiers[key], Chance = n / TRIALS,
-				Count = ranges[key] or { 1, 1 }, Attachment = string.sub(key, 1, 5) == "Att_T" or nil })
+		for key in seen do
+			hits[key] = (hits[key] or 0) + 1
 		end
+	end
+	local ranges = countRanges(source)
+	for key, n in hits do
+		table.insert(rows, { Key = key, Id = firstId[key], Tier = tiers[key], Chance = n / TRIALS,
+			Count = ranges[key] or { 1, 1 }, Attachment = string.sub(key, 1, 5) == "Att_T" or nil })
 	end
 	table.sort(rows, function(a, b)
 		if a.Chance ~= b.Chance then
