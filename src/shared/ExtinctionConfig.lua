@@ -476,9 +476,9 @@ ExtinctionConfig.Airdrop = {
 -- Spieler-Attribut "Bounty" (Höhe) beim Gesuchten.
 ExtinctionConfig.Bounty = {
 	Enabled = true,
-	MinKills = 3,
-	Base = 300,
-	PerKill = 150,
+	MinKills = 10,
+	Base = 1000,
+	PerKill = 200,
 	SurviveTime = 600,
 	SurviveFactor = 0.5,
 }
