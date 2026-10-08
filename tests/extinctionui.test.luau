@@ -271,6 +271,8 @@ find(windowGui, "Bag1").Activated:Fire()
 step(0.1)
 check(string.find(texts(windowGui), "AUF DIE HOTBAR", 1, true) == nil and string.find(texts(windowGui), "IN DIE TASCHE", 1, true) ~= nil,
 	"Details zum gewählten Item mit Aktionen")
+check(find(windowGui, "ItemPopup") and find(windowGui, "ItemPopup").Visible and find(windowGui, "AttSlot_Muzzle") ~= nil
+	and find(windowGui, "AttSlot_Magazine") ~= nil, "Info-Fenster der Waffe mit Aufsatz-Plätzen")
 find(windowGui, "Bag14").Activated:Fire()
 step(0.3)
 local move = lastAction("Move")
