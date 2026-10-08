@@ -361,15 +361,17 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 		end
 	end
 	local muzzleCF, flashScale = muzzle()
+	-- Ego: Feuer und Spuranfang hängen an der Waffe vor der Kamera, auch beim Seitwärtslaufen
+	local followCamera = firstPersonView()
 	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced == true)
-	WeaponEffects.MuzzleFlash(muzzleCF, flashScale)
+	WeaponEffects.MuzzleFlash(muzzleCF, flashScale, followCamera)
 	local claims = {}
 	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
 		WeaponConfig.ShotSeed(player.UserId, shotId))
 	for i, direction in directions do
 		local result = workspace:Raycast(shotOrigin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (shotOrigin + direction * cfg.Range)
-		WeaponEffects.Tracer(muzzleCF.Position, endPos, true)
+		WeaponEffects.Tracer(muzzleCF.Position, endPos, true, followCamera)
 		local kind = hitKindOf(result)
 		if kind then
 			WeaponEffects.Impact(endPos, result.Normal, kind)

@@ -218,8 +218,19 @@ end
 
 -- ---------- Mündungsfeuer ----------
 
+-- Effekte an der eigenen Waffe vor der Kamera (Ego): Die Waffe hängt an der Kamera und ist klein und nah davor.
+-- Läuft man seitwärts, wandert sie mit, ein fest in der Welt stehender Blitz bzw. Spuranfang bliebe aber zurück und
+-- stünde nach ein, zwei Bildern mitten im Bild. Darum folgen solche Effekte der Kamera (Lage relativ zur Kamera).
+local attachedFlashes = {} -- { Part, Local } – Mündungsfeuer, das der Kamera folgt
+
+local function cameraCFrame()
+	local camera = workspace.CurrentCamera
+	return camera and camera.CFrame or CFrame.new()
+end
+
 -- cframe: an der Mündung, LookVector = Schussrichtung. scale = Größe (Waffe vor der Kamera ist kleiner)
-function WeaponEffects.MuzzleFlash(cframe, scale)
+-- followCamera = true: eigene Waffe vor der Kamera, das Feuer bleibt an der Mündung, auch wenn man sich bewegt
+function WeaponEffects.MuzzleFlash(cframe, scale, followCamera)
 	scale = scale or 1
 	local spin = CFrame.Angles(0, 0, math.random() * math.pi)
 	local core = effectPart({
@@ -254,13 +265,20 @@ function WeaponEffects.MuzzleFlash(cframe, scale)
 	Debris:AddItem(core, 0.05)
 	Debris:AddItem(flame, 0.04)
 	Debris:AddItem(star, 0.035)
+	if followCamera then
+		local camera = cameraCFrame()
+		for _, part in { core, flame, star } do
+			table.insert(attachedFlashes, { Part = part, Local = camera:ToObjectSpace(part.CFrame) })
+		end
+	end
 end
 
 -- ---------- Leuchtspur ----------
 
 local tracers = {}
 
-function WeaponEffects.Tracer(startPos, endPos, own)
+-- followCamera = true: Spur aus der eigenen Waffe vor der Kamera, der Anfang bleibt an der Mündung (siehe oben)
+function WeaponEffects.Tracer(startPos, endPos, own, followCamera)
 	local delta = endPos - startPos
 	local distance = delta.Magnitude
 	if distance < 1 then
@@ -274,12 +292,29 @@ function WeaponEffects.Tracer(startPos, endPos, own)
 		Transparency = own and 0.4 or 0.2,
 	})
 	table.insert(tracers, { Part = part, Start = startPos, Dir = delta / distance, Distance = distance, Traveled = 0,
-		Length = length })
+		Length = length, End = endPos,
+		StartLocal = followCamera and cameraCFrame():PointToObjectSpace(startPos) or nil })
 end
 
 RunService.RenderStepped:Connect(function(dt)
+	local camera = cameraCFrame()
+	for i = #attachedFlashes, 1, -1 do
+		local flash = attachedFlashes[i]
+		if flash.Part.Parent then
+			flash.Part.CFrame = camera * flash.Local
+		else
+			table.remove(attachedFlashes, i)
+		end
+	end
 	for i = #tracers, 1, -1 do
 		local tracer = tracers[i]
+		if tracer.StartLocal then
+			local start = camera * tracer.StartLocal
+			local delta = tracer.End - start
+			if delta.Magnitude >= 1 then
+				tracer.Start, tracer.Dir, tracer.Distance = start, delta.Unit, delta.Magnitude
+			end
+		end
 		tracer.Traveled += TRACER_SPEED * dt
 		local head = math.min(tracer.Traveled, tracer.Distance)
 		local tail = math.max(0, tracer.Traveled - tracer.Length)
