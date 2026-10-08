@@ -100,6 +100,18 @@ local started = os.clock()
 while player:GetAttribute("Mode") == nil and os.clock() - started < 15 do
 	task.wait(0.1)
 end
+-- Kein Modus nach 15 s: der Server hängt (meist fehlen die Karten unter Workspace.Maps, z.B. Rojo nicht fertig
+-- synchronisiert). Statt in eine leere Welt auszublenden, den Grund anzeigen und weiter warten.
+if player:GetAttribute("Mode") == nil then
+	local maps = workspace:FindFirstChild("Maps")
+	if not maps or not maps:FindFirstChild("Hub") or not maps:FindFirstChild("Extinction") then
+		status.Text = "Karten fehlen im Workspace (Maps) – Rojo verbinden oder die gebaute Place-Datei öffnen"
+	else
+		status.Text = "Server antwortet nicht – Fehler im Output-Fenster prüfen"
+	end
+	status.TextColor3 = AMBER
+	player:GetAttributeChangedSignal("Mode"):Wait()
+end
 status.Text = "Bereit"
 TweenService:Create(bar, TweenInfo.new(0.4), { Size = UDim2.new(1, 0, 1, 0) }):Play()
 task.wait(0.6)

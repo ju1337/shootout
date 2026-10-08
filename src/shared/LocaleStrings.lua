@@ -1022,6 +1022,8 @@ return {
 	["Kürzel eingeben (2–4 Zeichen)."] = "Enter a tag (2–4 characters).",
 	["L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  {1}  EINPACKEN (GELANDET)"] = "L-STICK  FLY  ·  R2  CLIMB  ·  L2  DESCEND  ·  ✕  GET OUT  ·  {1}  STORE (LANDED)",
 	["Lade Einsatzgebiet ..."] = "Loading operation area ...",
+	["Karten fehlen im Workspace (Maps) – Rojo verbinden oder die gebaute Place-Datei öffnen"] = "Maps are missing from Workspace (Maps) – connect Rojo or open the built place file",
+	["Server antwortet nicht – Fehler im Output-Fenster prüfen"] = "Server is not responding – check the Output window for errors",
 	["Lade Freunde über SQUAD ein – ihr landet im selben Team."] = "Invite friends via SQUAD – you'll end up on the same team.",
 	["LADE RECHTS JEMANDEN EIN – ALS SQUAD SEID IHR EIN TEAM"] = "INVITE SOMEONE ON THE RIGHT – AS A SQUAD YOU ARE ONE TEAM",
 	["LADEN"] = "RELOAD",

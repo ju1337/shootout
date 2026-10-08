@@ -160,9 +160,9 @@ local function ensureSet(player, profile, set)
 			end
 		end
 		for _ = 1, math.min(pick.Count, #pool) do
-			local picked = table.remove(pool, random:NextInteger(1, #pool))
-			if picked then
-				table.insert(ids, picked.Id)
+			local quest = table.remove(pool, random:NextInteger(1, #pool))
+			if quest then
+				table.insert(ids, quest.Id)
 			end
 		end
 	end
@@ -395,7 +395,6 @@ end
 -- Plants, Defuses, Matches, Wins, Losses, RoundsWon, Kills_<AgentId>). Wird gebündelt gesynct.
 local dirty = {}
 -- Rückrufe function(player, key, value) nach jeder Änderung einer Statistik (z.B. Erfolge)
-ProgressService.OnLoaded = {} -- Rückrufe function(player) nach dem Laden des Profils (Badges, …)
 ProgressService.OnStat = {}
 
 function ProgressService.AddStat(player, key, amount)
@@ -774,9 +773,6 @@ local function load(player)
 	loaded[player] = true
 	ProgressService.Sync(player)
 	Telemetry.Onboarding(player, 1, "Joined")
-	for _, callback in ProgressService.OnLoaded do
-		task.spawn(callback, player)
-	end
 end
 
 -- Speichern (nur mit eigener Sperre). release = Sperre dabei freigeben (Spieler geht, Server fährt herunter).
