@@ -1255,8 +1255,8 @@ ClassMethods.Player = {
 	GetMouse = function()
 		return { Hit = CFrame.new(), Target = nil, X = 0, Y = 0 }
 	end,
-	GetJoinData = function()
-		return {}
+	GetJoinData = function(self)
+		return SIM.JoinData[self.UserId] or {}
 	end,
 	RequestStreamAroundAsync = function() end,
 }
@@ -1901,6 +1901,110 @@ rawset(MessagingService, "__methods", {
 		return { Disconnect = function() end }
 	end,
 })
+
+-- MemoryStoreService: Sorted Maps mit Ablaufzeit in virtueller Zeit. SIM.MemoryStore(name) = { Name, Items =
+-- { [Schlüssel] = { Value, Expires } }, FailNext (so viele Anfragen schlagen fehl), Calls }
+local memoryMaps = {}
+local function memoryMap(name)
+	if memoryMaps[name] then
+		return memoryMaps[name]
+	end
+	local map = { Name = name, Items = {}, FailNext = 0, Calls = 0 }
+	local function request()
+		map.Calls += 1
+		if map.FailNext > 0 then
+			map.FailNext -= 1
+			error("MemoryStore: Anfrage fehlgeschlagen (Test)")
+		end
+	end
+	local function alive(key)
+		local item = map.Items[key]
+		if item and item.Expires <= SIM.Now then
+			map.Items[key] = nil
+			return nil
+		end
+		return item
+	end
+	function map.SetAsync(_, key, value, expiration)
+		request()
+		assert(type(expiration) == "number" and expiration > 0, "MemoryStore SetAsync: Ablaufzeit fehlt")
+		map.Items[key] = { Value = deepcopy(value), Expires = SIM.Now + expiration }
+		return true
+	end
+	function map.GetAsync(_, key)
+		request()
+		local item = alive(key)
+		return item and deepcopy(item.Value) or nil
+	end
+	function map.UpdateAsync(_, key, transform, expiration)
+		request()
+		local item = alive(key)
+		local value = transform(item and deepcopy(item.Value) or nil)
+		if value ~= nil then
+			map.Items[key] = { Value = deepcopy(value), Expires = SIM.Now + expiration }
+		end
+		return value
+	end
+	function map.RemoveAsync(_, key)
+		request()
+		map.Items[key] = nil
+	end
+	function map.GetRangeAsync(_, direction, count)
+		request()
+		local keys = {}
+		for key in map.Items do
+			if alive(key) then
+				table.insert(keys, key)
+			end
+		end
+		table.sort(keys, function(a, b)
+			if direction == Enum.SortDirection.Descending then
+				return tostring(a) > tostring(b)
+			end
+			return tostring(a) < tostring(b)
+		end)
+		local out = {}
+		for index = 1, math.min(count, #keys) do
+			table.insert(out, { key = keys[index], value = deepcopy(map.Items[keys[index]].Value) })
+		end
+		return out
+	end
+	memoryMaps[name] = map
+	return map
+end
+SIM.MemoryStore = memoryMap
+local MemoryStoreService = service("MemoryStoreService")
+rawset(MemoryStoreService, "__methods", {
+	GetSortedMap = function(_, name)
+		return memoryMap(name)
+	end,
+})
+
+-- TeleportService: Teleports landen in SIM.Teleports ({ PlaceId, Players, Options }), SIM.TeleportFail Aufrufe schlagen fehl.
+-- Ankunft auf einem anderen Server nachspielen: SIM.JoinData[UserId] = { SourcePlaceId, TeleportData } vor SIM.Join.
+SIM.Teleports = {}
+SIM.TeleportFail = 0
+SIM.JoinData = {}
+local TeleportService = service("TeleportService")
+rawget(TeleportService, "__props").TeleportInitFailed = SIM.Signal()
+rawset(TeleportService, "__methods", {
+	TeleportAsync = function(_, placeId, players, options)
+		if SIM.TeleportFail > 0 then
+			SIM.TeleportFail -= 1
+			error("TeleportAsync fehlgeschlagen (Test)")
+		end
+		table.insert(SIM.Teleports, { PlaceId = placeId, Players = table.clone(players), Options = options })
+		return { PrivateServerId = "", ReservedServerAccessCode = "" }
+	end,
+})
+ClassMethods.TeleportOptions = {
+	SetTeleportData = function(self, data)
+		rawset(self, "__teleportData", deepcopy(data))
+	end,
+	GetTeleportData = function(self)
+		return deepcopy(rawget(self, "__teleportData"))
+	end,
+}
 
 local BadgeService = service("BadgeService")
 rawset(BadgeService, "__methods", {

@@ -157,12 +157,26 @@ ExtinctionConfig.ZombieKinds.Walker.Drop = 1
 place(alice, Vector3.new(0, 3, -400))
 step(0.5)
 local coins = ProgressService.Get(alice).Coins
+local accountXP = ProgressService.Get(alice).AccountXP or 0
+local agentId = ProgressService.ActiveAgent(alice)
+local agentXP = ProgressService.Get(alice).XP[agentId] or 0
+local logStart = #SIM.RemoteLog
 local bags = #workspace.ExtinctionLoot:GetChildren()
 local victim = ZombieService.All()[1]
+local victimKind = ZombieService.Kind(victim:GetAttribute("ZombieKind"))
 Damage.Apply(victim, victim.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
 step(0.2)
-check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, "Münzen für den Zombie: "
+check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, "Münzen für den Zombie (XP ohne Münzen): "
 	.. ProgressService.Get(alice).Coins - coins)
+check(victimKind.XP > 0 and (ProgressService.Get(alice).AccountXP or 0) == accountXP + victimKind.XP,
+	"Zombie gibt XP fürs Spielerlevel: " .. (ProgressService.Get(alice).AccountXP or 0) - accountXP)
+check((ProgressService.Get(alice).XP[agentId] or 0) == agentXP + victimKind.XP, "XP für den aktiven Agenten")
+local xpShown = false
+for i = logStart + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	xpShown = xpShown or (entry.Remote == "XPGain" and entry.Player == alice and entry.Args[1] == victimKind.XP)
+end
+check(xpShown, "+XP erscheint im HUD")
 check(#workspace.ExtinctionLoot:GetChildren() == bags, "kein Beutel am Boden: die Beute steckt in der Leiche")
 local prompt = victim.HumanoidRootPart:FindFirstChild("CorpsePrompt")
 check(prompt ~= nil and prompt.ActionText == "Durchsuchen" and prompt.HoldDuration == 0,

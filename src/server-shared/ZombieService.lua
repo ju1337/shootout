@@ -64,6 +64,7 @@ function ZombieService.Kind(name)
 		Run = kind.Run or Z.RunSpeed,
 		Damage = kind.Damage or Z.AttackDamage,
 		Coins = kind.Coins or ExtinctionConfig.ZombieCoins,
+		XP = kind.XP or ExtinctionConfig.ZombieXP,
 		Scale = kind.Scale or 1,
 		Drop = kind.Drop or ExtinctionConfig.ZombieDropChance,
 		Items = kind.Items or { 1, 1 },
@@ -478,6 +479,8 @@ local function onDeath(model, info)
 	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
 	if killer then
 		ProgressService.AddCoins(killer, info.Coins * (red and ExtinctionConfig.Redzone.Loot.CoinFactor or 1), "Zombie")
+		-- XP für den aktiven Agenten (zählt auch fürs Spielerlevel und den Battle Pass); die Münzen sind oben schon gezahlt
+		ProgressService.AddXP(killer, ProgressService.ActiveAgent(killer), info.Stats.XP, info.Name, false, true)
 		ProgressService.AddStat(killer, "Zombies", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
 		for _, callback in ZombieService.OnKill do

@@ -31,8 +31,22 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 | Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
 
 Die Minispiele haben kein Tor mehr im Hub: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
-SPIEL = vollster Arcade-Modus mit freiem Platz). Oben im Menü steht groß EXTINCTION und ist vorgewählt
-(`Featured` / `Arcade` in `src/shared/Modes.lua`).
+SPIEL = vollster Arcade-Modus mit freiem Platz, auch auf anderen Servern). Oben im Menü steht groß EXTINCTION und ist
+vorgewählt (`Featured` / `Arcade` in `src/shared/Modes.lua`).
+
+**Arcade über mehrere Server** (`src/server/MatchmakingService.lua`, Einstellungen in `Modes.Matchmaking`): Damit
+Arcade-Runden nicht mit Bots laufen, nur weil sich die Spieler eines Servers auf alle Modi verteilen, meldet jeder
+öffentliche Server alle 10 Sekunden in der MemoryStore-Map `ArcadeServers_v1`, wie viele echte Spieler in Herrschaft,
+Free-for-All, Wingman und 1v1 Arena sind und wie viele Plätze frei sind (Meldung verfällt nach 45 Sekunden). Wählt
+jemand einen dieser Modi (oder SCHNELLES SPIEL), sucht der Server zuerst einen anderen Server, auf dem dort **mehr echte
+Spieler** sind als hier und der Platz für den ganzen Squad hat (im Modus und auf dem Server). Gibt es einen, geht es per
+Teleport dorthin („Wechsle auf einen Server mit 3 Spielern in HERRSCHAFT …“): der Squad-Anführer nimmt seinen Squad mit
+(außer denen in der offenen Welt), drüben landet man direkt im Modus, und der Squad ist wieder zusammen (nur wer sich
+gegenseitig in den Teleport-Daten nennt). Sonst wird wie bisher hier gespielt – so sammeln sich die Arcade-Spieler auf
+wenigen Servern. Schlägt der Teleport fehl (Server voll, Fehler, nach 30 Sekunden nicht angekommen), spielt man hier;
+danach und nach der Ankunft wird man eine Minute lang nicht weitergeschickt. Aus in Studio (kein Teleport), auf privaten
+Servern, ohne MemoryStore und mit der Live-Einstellung **Arcade über Server** = 0. Hub, offene Welt, Markt und Training
+bleiben immer auf dem eigenen Server. Squad-Mitglieder, die dem Anführer folgen, bleiben auf seinem Server.
 
 ELO gibt es in jedem Modus (kein eigenes Ranked-Matchmaking). Ausgebaute Modi (Drop, Strikeout, Demolition,
 Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src/server/Modes/`.
@@ -64,14 +78,31 @@ Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dort
 (`Extinction.Travel`, nur aus einer Safe Zone, `ExtinctionConfig.TravelCooldown` Sekunden Pause).
 
 **Safehouses** (4 kleine Safe Zones draußen: NORD, OST, SÜD, WEST, Teile `SafeZone_<Name>` in der Gruppe Zone, Radius 64,
-Hof 90 × 90 Studs): befestigte Überlebenden-Höfe (Schlammboden mit Bretterwegen, Palisade mit Autowracks, Wellblech und Stacheldraht, Spieße
-und tote Infizierte davor, Wachtürme an den vorderen Ecken, MG-Stellung, Pickup, Zelte, Generator, Laternen) – Palisade aus Holz und Wellblech, Tor mit Torbogen, Laternen und Schild
-zur Zufahrtsstraße, ein Holzhaus mit Veranda und Schornstein, Feuerstelle mit Bänken (Spawn), Feuertonnen und Flutlicht,
-Wasserturm. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und die Haltestelle REISEN, rechts SANI und ein
-LAGER-Container – dasselbe Lager wie im Camp), wie im Camp mindestens 30 Studs auseinander, damit sich die
-E-Aufforderungen nicht überlappen. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
-Jedes Safehouse hat seinen eigenen Zufall (`tools/extinction_world.py`), Änderungen daran würfeln den Rest der Welt nicht
-neu.
+Hof 90 × 90 Studs). **Jedes sieht anders aus** (`SAFEHOUSE_STYLES` in `tools/extinction_world.py`, je Stil eine Methode
+`_safehouse_<stil>`; `tests/maps_check.py` prüft eigenen Boden und eigene Bauteile):
+- **NORD – Gehöft**: Schlammboden mit Bretterwegen, Palisade aus Brettern, Wellblech und gestapelten Autowracks mit
+  Stacheldraht und Spießen davor, Holztor mit Torbogen, Holzhaus mit Veranda und Schornstein, Wasserturm, hölzerne
+  Wachtürme, Pickup, Zelte, Generator, rote Fahne.
+- **OST – Raststätte**: Asphalt mit Parkplätzen und abgestellten Autos, Mauer aus gestapelten bunten Containern (hochkant an
+  den Ecken, vorne mit Plattform und Scheinwerfer), Tor mit Stahlträger, rot-weißer Schranke und Betonsperren davor; flaches
+  Rasthaus mit vernagelter Glasfront, rotem Vordach und Leuchtschild RASTSTÄTTE, Tankstellen-Dach mit Zapfsäulen,
+  Preis-Mast, Wohnmobile, Getränkeautomaten, Straßenlaternen mit kaltem Licht.
+- **SÜD – Kloster**: Kopfsteinpflaster mit Steinplatten-Weg, Feldsteinmauer mit Zinnen (Lücken mit Brettern und Sandsäcken
+  geflickt), weiße Banner mit rotem Kreuz, runde Ecktürme (hinten mit Spitzdach), Steinbogen-Tor mit offenem Eisengitter
+  und Glocke, Kapelle mit Rosette, bunten Fenstern und Glockenturm mit Kreuz, Friedhof hinter Eisenzaun, Gemüsebeete,
+  Brunnen, Krankenwagen.
+- **WEST – Militärposten**: Kies mit Betonplatten, Mauer aus HESCO-Sandkörben mit NATO-Draht, Checkpoint zwischen
+  Beton-T-Wänden mit Wachhäuschen, Schranke, Nagelband und HALT-Schild; Baracke aus Wohncontainern (Schild FOB WEST) mit
+  Funkmast und Blinklicht, Stahl-Wachtürme mit Tarnnetz, Hubschrauber-Landeplatz, Armeezelte, Geländewagen unter
+  Tarnnetz, Munitionskisten.
+
+Gleich in allen: Tor mit Schild zur Zufahrtsstraße, tote Infizierte davor, Feuerstelle mit Bänken (Spawn) in der Mitte,
+Feuertonnen und Flutlicht, MG-Stellung links hinter dem Tor. An den Seiten **eigene Händler** (links WAFFEN, WERKSTATT und
+die Haltestelle REISEN, rechts SANI und ein LAGER-Container – dasselbe Lager wie im Camp) an denselben Stellen, wie im Camp
+mindestens 30 Studs auseinander, damit sich die E-Aufforderungen nicht überlappen; die Planen der Händler haben die Farben
+des Stils. Mehrere Stände dürfen denselben Namen haben (Server und Client prüfen den nächsten).
+Jedes Safehouse hat seinen eigenen Zufall, Änderungen daran würfeln den Rest der Welt nicht neu (die eigenen Schilder der
+Stile – `FRESH_SIGNS` – bleiben dafür beim Altern der Schilder außen vor).
 Drinnen kein PvP,
 Zombies bleiben draußen. Die zuletzt betretene Safe Zone (Camp oder Safehouse) ist der **Spawnpunkt** nach dem Tod
 (Spawns im Ordner `Spawns_<Name>`, Meldung „Spawnpunkt gesetzt“); grün auf Minimap und Weltkarte.
@@ -231,6 +262,9 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   das Beute-Fenster wie bei einer Tasche: Items einzeln anklicken (passt etwas nicht, bleibt es in der Leiche); leer
   geräumt verschwindet die Leiche. Zombies lassen öfter etwas fallen (75 %, Läufer 85 %, Brocken immer), weil es keine
   Beute mehr am Boden gibt.
+- **Zombie-XP**: jeder erledigte Zombie gibt **XP** für den aktiven Agenten, das Spielerlevel und den Battle Pass
+  (Zombie 10, Läufer 20, Schreier 25, Brocken 50, Blutbestie 600; `XP` in `ExtinctionConfig.ZombieKinds`). Doppel-XP und
+  Agent der Woche wirken mit; Münzen gibt es dafür keine extra (nur die wenigen Zombie-Münzen).
 - **Taschen am Boden** (Todestasche, Lootdrop, Kisten): **E** öffnet das Fenster, Items **einzeln** anklicken; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
 - **Alles looten = Gamepass** (`RobuxConfig.Passes`, Id `LootAll`, Attribut `Pass_LootAll`): Alles auf einmal nehmen –
@@ -411,7 +445,12 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     Merkliste, sortieren nach Preis, **Schnäppchen** (am weitesten unter dem RAP-Wert) oder Seltenheit. **HIN** zeigt
     einen Pfeil mit Entfernung über dem Stand.
   - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v1`,
-    gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND.
+    gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND. Damit auch viele Server nicht in dieselben
+    Einträge drängeln, sind die Skins nach Namen auf 8 Einträge `shard_<n>` verteilt (Verkäufe und lebender RAP
+    zusammen); jeder Server sammelt seine Verkäufe und schreibt höchstens einmal pro Minute je Eintrag (mit eigenem
+    Versatz, beim Herunterfahren sofort, bei einem Fehler beim nächsten Mal), alle 5 Minuten lädt er die Verkäufe der
+    anderen Server neu (`HistoryShards`, `HistoryFlush`, `HistoryRefresh` in `RapConfig`). Die alten Einträge `sales`
+    und `rap` werden nur noch gelesen.
   - **Merkliste**: MERKEN an einem Skin – bietet jemand ihn an, kommt eine Meldung (im Profil gespeichert).
   - **Gegenangebote**: an fremden Ständen ANGEBOT MACHEN (mindestens der halbe Preis, 45 s gültig, eins pro Stand).
     Der Besitzer sieht sie unter **ANGEBOTE** in der Leiste und nimmt an (Verkauf zum Gebot) oder lehnt ab.
@@ -703,7 +742,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Skins und Preise im Shop | `src/shared/Cosmetics.lua` |
 | RAP: Werte der handelbaren Skins, Rückkaufquote, Marktgebühr, Plätze pro Stand, Tausch (Countdown, Reichweite), Farbstufen über dem Kopf | `src/shared/RapConfig.lua` |
 | Kisten: Preise, Chancen (Gewichte je Seltenheit), Duplikat-Rückgabe, Wartezeit | `src/shared/CrateConfig.lua` |
-| Markt: Gebührenstufen, Gegenangebote (Mindestgebot, Dauer), Stand-Name, Merkliste, Preisverlauf | `FeeTiers`, `MinOfferFraction`, `OfferSeconds`, `StandNameLength`, `WatchLimit`, `HistoryDays` in `src/shared/RapConfig.lua` |
+| Markt: Gebührenstufen, Gegenangebote (Mindestgebot, Dauer), Stand-Name, Merkliste, Preisverlauf (Tage, Einträge, Speichern/Neuladen) | `FeeTiers`, `MinOfferFraction`, `OfferSeconds`, `StandNameLength`, `WatchLimit`, `HistoryDays`, `HistoryShards`, `HistoryFlush`, `HistoryRefresh` in `src/shared/RapConfig.lua` |
 | Markt-Stände (Reichweite zum Beanspruchen/Kaufen) | `ClaimRange`, `BuyRange` in `src/server-shared/MarketService.lua`; Halle in `build_market()` in `tools/build_maps.py` |
 | Glücksrad: Felder, Gewichte, Farben | `LoginConfig.Wheel` in `src/shared/LoginConfig.lua`; Dreh-Dauer und Runden in `src/client/HubWheel.lua` |
 | Killstreaks (Kills, Namen, Farben) | `src/shared/KillstreakConfig.lua`; Anzeige in `src/client/KillstreakHUD.lua` |
@@ -712,6 +751,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Ränge (Ranked) | `src/shared/RankConfig.lua` |
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |
 | Modi im Menü | `src/shared/Modes.lua` |
+| Arcade über mehrere Server: Modi, Meldeintervall, Verfall, Wartezeiten | `Modes.Matchmaking` in `src/shared/Modes.lua`; an/aus: Einstellung `CrossServer` |
 | Rückenwaffe im Hub (Größe `SCALE`, Neigung `TILT`, Abstand zum Rücken) | `src/server-shared/BackWeapon.lua` |
 | Bewegungs-Check (erlaubtes Tempo, Vorrat) | `FLAT_*`, `UP_*` in `src/server-shared/MovementGuard.lua` |
 | Admins | `ADMIN_IDS` in `src/server/AdminService.lua` |
@@ -769,7 +809,7 @@ am Commit:
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
 | `crate`, `crateui` | Kisten: nur die Waffen-Kiste (alle handelbar), steile Chancen (62/28/8/2 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
 | `marketsearch` | Marktsuche: Text (ohne Umlaute, mehrere Wörter), Filter (Seltenheit, Höchstpreis), Sortierung (Preis, Schnäppchen, Seltenheit) |
-| `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf, Händler-Rangliste |
+| `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (gesammelt und verteilt gespeichert, ein Schreibzugriff je Eintrag, Fehler und Herunterfahren, Verkäufe anderer Server, alte Einträge lesen), Händler-Rangliste |
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `skins` | Nur noch Waffen-Skins: keine Agenten-Skins (Cosmetics, RAP, Kisten), Agentenfarben immer Standard, Battle-Pass-Stufe 20 = Saison-Elite, alte Spielstände verlieren entfernte Skins (Besitz, Plätze "A:", Merkliste), SHOP/LOADOUT/BATTLE PASS ohne Agenten-Skins |
@@ -789,6 +829,7 @@ am Commit:
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
 | `extmarketpage` | Markt-Seite für sich (Mock): Suche, Kategorien, Sortierung, Karten, KAUFEN/ZU TEUER, MEINE ANGEBOTE (Preis ändern, zurücknehmen), Verkaufen mit ±, Schieberegler, günstigstem Angebot und Erlös, Sperre außerhalb der Safe Zone |
 | `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge, Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
+| `matchmaking` | Arcade über mehrere Server: eigene Meldung (nur Arcade-Modi, verfällt), Wechsel auf einen Server mit mehr echten Spielern (nicht auf volle, nicht bei Gleichstand, nicht zu einem anderen Place, Platz für den ganzen Squad), Teleport-Daten, Squad geht zusammen und folgt hier, Fehlschlag sofort / TeleportInitFailed / Zeitüberschreitung: hier spielen und eine Weile nicht weiterschicken, SCHNELLES SPIEL sieht andere Server, Hub/Extinction/Markt bleiben, Einstellung aus, Ankunft direkt im Modus mit Squad (nur gegenseitig, kein fremder Place), verfallene Server, MemoryStore gestört, Herunterfahren |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |

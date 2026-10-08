@@ -209,6 +209,18 @@ Modes.Market = {
 	Available = true,
 }
 
+-- Arcade über mehrere Server (MatchmakingService): Wer in einen dieser Modi will, wechselt auf einen Server, auf dem dort
+-- mehr echte Spieler sind (wenn es einen mit Platz gibt). Die Reihenfolge ist auch die von SCHNELLES SPIEL bei Gleichstand.
+Modes.Matchmaking = {
+	Modes = { "Domination", "FreeForAll", "Wingman", "Arena" },
+	MapName = "ArcadeServers_v1", -- MemoryStore Sorted Map: [JobId] = { Place, Free, Modes = { [Id] = { P, F } } }
+	Interval = 10,      -- so oft meldet jeder Server seine Zahlen (Sekunden)
+	Expire = 45,        -- so lange gilt eine Meldung (danach gilt der Server als weg)
+	Cache = 5,          -- so lange wird die Liste der Server wiederverwendet
+	Cooldown = 60,      -- so lange wird ein Spieler nach einem Wechsel (oder Fehlschlag) nicht wieder weitergeschickt
+	TeleportTimeout = 30, -- kommt der Teleport so lange nicht an, wird hier gespielt
+}
+
 -- Modus per Id holen (inkl. Hub und Markt), nil wenn unbekannt
 function Modes.Get(id)
 	if id == Modes.Hub.Id then

@@ -372,6 +372,20 @@ function FreeForAll.Init()
 	end)
 end
 
+-- Echte Spieler und freie Plätze (für das Matchmaking über mehrere Server)
+function FreeForAll.Slots()
+	local players, fixed = 0, 0
+	for _ in members do
+		players += 1
+	end
+	for bot in bots do
+		if not bot.AutoFill then
+			fixed += 1 -- Auffüll-Bots machen Platz, vom Admin gesetzte nicht
+		end
+	end
+	return players, math.max(0, MAX_PLAYERS - players - fixed)
+end
+
 function FreeForAll.CanJoin()
 	if count() >= MAX_PLAYERS then
 		return false, "Free-for-All ist voll (" .. MAX_PLAYERS .. "/" .. MAX_PLAYERS .. ")."

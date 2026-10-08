@@ -1,6 +1,7 @@
 -- ModeManager (ModuleScript, nur Server)
 -- Verwaltet, welcher Spieler in welchem Modus ist (Hub, Free-for-All, Drop).
--- Ersetzt den Teleport: Moduswechsel = Spieler in den Bereich des Modus setzen.
+-- Moduswechsel = Spieler in den Bereich des Modus setzen. Nur für Arcade-Modi kann es vorher auf einen anderen Server
+-- gehen, auf dem dort mehr Spieler sind (MatchmakingService); dort landet man direkt im Modus.
 -- Spieler-Attribute: Mode (Id), CanFight (darf schießen/Fähigkeit), ModeText (Info oben im HUD)
 
 local Players = game:GetService("Players")
@@ -10,7 +11,10 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
-local KillService = require(ServerStorage:WaitForChild("ServerShared").KillService)
+local ServerShared = ServerStorage:WaitForChild("ServerShared")
+local KillService = require(ServerShared.KillService)
+local ProgressService = require(ServerShared.ProgressService)
+local MatchmakingService = require(script.Parent.MatchmakingService)
 
 local ModeManager = {}
 
@@ -43,35 +47,45 @@ function ModeManager.Status(player, text)
 	Remotes.MenuStatus:FireClient(player, text)
 end
 
--- Schnelles Spiel: Arcade-Modus mit den meisten Spielern, der noch Platz hat (sonst Herrschaft)
-local QUICK_MODES = { "Domination", "FreeForAll", "Wingman", "Arena" }
+-- Schnelles Spiel: Arcade-Modus mit den meisten Spielern (hier oder auf einem anderen Server), der noch Platz hat
+-- (sonst Herrschaft)
 local function quickMode(player)
+	local size = #MatchmakingService.Group(player)
 	local best, bestCount = "Domination", -1
-	for _, modeId in QUICK_MODES do
+	for _, modeId in Modes.Matchmaking.Modes do
 		local module = modules[modeId]
+		local count = -1
 		if module and module.CanJoin(player) then
-			local count = 0
+			count = 0
 			for _, other in Players:GetPlayers() do
 				if other:GetAttribute("Mode") == modeId then
 					count += 1
 				end
 			end
-			if count > bestCount then
-				best, bestCount = modeId, count
-			end
+		end
+		local remote = MatchmakingService.Best(modeId, size)
+		if remote and remote.Players > count then
+			count = remote.Players
+		end
+		if count > bestCount then
+			best, bestCount = modeId, count
 		end
 	end
 	return best
 end
 
--- Spieler in einen Modus schicken (ersetzt den Teleport)
-function ModeManager.Join(player, modeId)
+-- Spieler in einen Modus schicken. here = true: auf diesem Server bleiben (Squad folgt dem Anführer, Ankunft per
+-- Matchmaking, fehlgeschlagener Serverwechsel)
+function ModeManager.Join(player, modeId, here)
+	if switching[player] or player:GetAttribute("Teleporting") then
+		return
+	end
 	if modeId == "Quick" then
 		modeId = quickMode(player)
 	end
 	local info = Modes.Get(modeId)
 	local module = modules[modeId]
-	if not info or switching[player] then
+	if not info then
 		return
 	end
 	if not info.Available or not module then
@@ -83,15 +97,22 @@ function ModeManager.Join(player, modeId)
 		ModeManager.Status(player, "Du bist bereits in " .. info.Name .. ".")
 		return
 	end
+	-- Der alte Modus darf nachfragen (offene Welt: außerhalb der Safe Zone kostet Verlassen die Tasche)
+	local currentModule = current and modules[current]
+	if currentModule and currentModule.ConfirmLeave and not currentModule.ConfirmLeave(player, modeId) then
+		return
+	end
+	-- Arcade: lieber auf einen Server, auf dem in diesem Modus mehr Spieler sind (der Squad kommt mit)
+	if not here and MatchmakingService.Route(player, modeId) then
+		return
+	end
 	local ok, reason = module.CanJoin(player)
 	if not ok then
 		ModeManager.Status(player, reason)
 		return
 	end
-	-- Der alte Modus darf nachfragen (offene Welt: außerhalb der Safe Zone kostet Verlassen die Tasche)
-	local currentModule = current and modules[current]
-	if currentModule and currentModule.ConfirmLeave and not currentModule.ConfirmLeave(player, modeId) then
-		return
+	if switching[player] or player:GetAttribute("Mode") ~= current then
+		return -- während der Suche schon woanders hin
 	end
 
 	switching[player] = true
@@ -143,9 +164,19 @@ function ModeManager.Init()
 		end
 	end)
 
-	-- Neue Spieler starten im Hub
+	-- Neue Spieler starten im Hub; wer per Matchmaking kommt, gleich in seinem Arcade-Modus (Spielstand abwarten)
 	local function onPlayerAdded(player)
 		ModeManager.Join(player, "Hub")
+		local modeId = MatchmakingService.Arrival(player)
+		if modeId then
+			local waited = 0
+			while player.Parent and not ProgressService.IsLoaded(player) and waited < 15 do
+				waited += task.wait(0.25)
+			end
+			if player.Parent and player:GetAttribute("Mode") == "Hub" then
+				ModeManager.Join(player, modeId, true)
+			end
+		end
 	end
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	for _, player in Players:GetPlayers() do

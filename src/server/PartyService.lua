@@ -84,6 +84,63 @@ function PartyService.SameSquad(a, b)
 	return a ~= nil and b ~= nil and partyOf[a] ~= nil and partyOf[a] == partyOf[b]
 end
 
+-- Wer mit dem Spieler den Server wechselt (MatchmakingService): als Anführer sein Squad – ohne die, die gerade in der
+-- offenen Welt sind (wie beim Moduswechsel) –, sonst nur er selbst
+function PartyService.Followers(player)
+	local party = partyOf[player]
+	if not party or party.Leader ~= player then
+		return { player }
+	end
+	local list = {}
+	for _, member in party.Members do
+		if member == player or member:GetAttribute("Mode") ~= "Extinction" then
+			table.insert(list, member)
+		end
+	end
+	return list
+end
+
+-- Squad nach einem Serverwechsel wieder bilden: party = { Leader = UserId, Members = { UserId } } aus den Ankunftsdaten.
+-- Zusammen kommt nur, wer sich gegenseitig nennt (Anführer listet das Mitglied, das Mitglied nennt den Anführer).
+local regroup = {} -- [UserId] = { Leader, Members = { [UserId] = true }, Expires }
+local REGROUP_TIME = 120
+
+local function tryRegroup()
+	for _, member in Players:GetPlayers() do
+		local mine = regroup[member.UserId]
+		local leader = mine and Players:GetPlayerByUserId(mine.Leader)
+		local theirs = leader and regroup[leader.UserId]
+		if mine and os.clock() > mine.Expires then
+			regroup[member.UserId] = nil
+		elseif leader and leader ~= member and theirs and theirs.Leader == leader.UserId and theirs.Members[member.UserId]
+			and not partyOf[member] then
+			local party = partyOf[leader]
+			if not party then
+				nextId += 1
+				party = { Id = nextId, Leader = leader, Members = { leader } }
+				partyOf[leader] = party
+			end
+			if party.Leader == leader and #party.Members < MAX_SIZE then
+				table.insert(party.Members, member)
+				partyOf[member] = party
+				publish(party)
+			end
+			regroup[member.UserId] = nil
+		end
+	end
+end
+
+function PartyService.Regroup(player, party)
+	local members = {}
+	for _, id in party.Members do
+		if tonumber(id) then
+			members[tonumber(id)] = true
+		end
+	end
+	regroup[player.UserId] = { Leader = tonumber(party.Leader), Members = members, Expires = os.clock() + REGROUP_TIME }
+	tryRegroup()
+end
+
 local function status(player, text)
 	Remotes.ShopStatus:FireClient(player, text, true)
 end
@@ -136,9 +193,9 @@ function actions.Accept(player, userId)
 	table.insert(party.Members, player)
 	partyOf[player] = party
 	publish(party)
-	-- Gleich in den Modus des Anführers mitkommen
+	-- Gleich in den Modus des Anführers mitkommen (auf diesem Server)
 	if manager and leader:GetAttribute("Mode") ~= player:GetAttribute("Mode") then
-		manager.Join(player, leader:GetAttribute("Mode"))
+		manager.Join(player, leader:GetAttribute("Mode"), true)
 	end
 end
 
@@ -187,13 +244,14 @@ function PartyService.Init(modeManager)
 		for _, member in party.Members do
 			-- aus der offenen Welt wird niemand mitgezogen (draußen kostet Verlassen die Tasche)
 			if member ~= player and member:GetAttribute("Mode") ~= modeId and member:GetAttribute("Mode") ~= "Extinction" then
-				task.spawn(manager.Join, member, modeId)
+				task.spawn(manager.Join, member, modeId, true)
 			end
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		leave(player)
 		invites[player] = nil
+		regroup[player.UserId] = nil
 	end)
 end
 

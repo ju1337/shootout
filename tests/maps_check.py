@@ -137,6 +137,23 @@ def check_extinction():
                 if math.hypot(own[a][0] - own[b][0], own[a][2] - own[b][2]) < 30:
                     problems.append("Extinction: %s: %s und %s zu dicht beieinander (E-Aufforderungen überlappen)"
                                     % (house["Name"], a, b))
+    # Jedes Safehouse sieht anders aus: Boden (Material) und eigene Bauteile, die es in keinem anderen Safehouse gibt
+    looks = {}
+    for house in houses:
+        hx, _, hz = local(house)
+        hr = house["Properties"]["Size"][0] / 2
+        near = [part for group, part in parts
+                if group not in ("Zone", "Stands") and not group.startswith("Spawns")
+                and math.hypot(local(part)[0] - hx, local(part)[2] - hz) <= hr]
+        pad = [part for part in near if part["Name"] == "CampPad"]
+        looks[house["Name"]] = (pad[0]["Properties"]["Material"] if pad else None, {part["Name"] for part in near})
+    for name, (material, own_names) in looks.items():
+        others = [look for other, look in looks.items() if other != name]
+        if material is None or any(material == m for m, _ in others):
+            problems.append("Extinction: %s braucht einen eigenen Boden (CampPad mit anderem Material)" % name)
+        unique = own_names - set().union(*(n for _, n in others)) if others else own_names
+        if len(unique) < 8:
+            problems.append("Extinction: %s sieht aus wie die anderen Safehouses (nur %d eigene Bauteile)" % (name, len(unique)))
     # Haltestellen zum Reisen: eine im Camp ("Travel"), eine je Safehouse ("Travel_<Name>"), jeweils in ihrer Safe Zone
     stops = {part["Name"]: part for group, part in parts if group == "Stands" and part["Name"].startswith("Travel")}
     if "Travel" not in stops or not inside(stops["Travel"], 10):
