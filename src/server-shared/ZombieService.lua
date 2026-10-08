@@ -866,6 +866,7 @@ function ZombieService.Spawn(position, kindName, force, armored)
 		glow.Parent = model
 	end
 	model:PivotTo(CFrame.new(position + Vector3.new(0, 3 * stats.Scale, 0)) * CFrame.Angles(0, random:NextNumber(0, math.pi * 2), 0))
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	local root = model:FindFirstChild("HumanoidRootPart")
 	pcall(function()

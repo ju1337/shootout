@@ -356,6 +356,7 @@ function LootService.Create(position, items, kind, title, options)
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = part
 	local takeAll = takeAllPrompt(part, title, hold, ExtinctionConfig.LootRange - 1)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 
 	local lifetime = options.Lifetime or (kind == "Death" and ExtinctionConfig.BagLifetime or ExtinctionConfig.DropLifetime)

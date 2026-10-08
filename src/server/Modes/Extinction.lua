@@ -24,6 +24,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local DayCycle = require(Shared.DayCycle)
+local WorldLayout = require(Shared.WorldLayout)
 local Inventory = require(Shared.Inventory)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
@@ -400,7 +401,9 @@ function Extinction.Travel(player, key)
 		return false
 	end
 	travelAt[player] = os.clock()
-	character:PivotTo(SpawnUtil.Pick(folder))
+	local spot = SpawnUtil.Pick(folder)
+	SpawnUtil.Prestream(player, spot.Position)
+	character:PivotTo(spot)
 	MovementGuard.Teleported(character)
 	info.Home = key
 	player:SetAttribute("ExtHome", target.Title)
@@ -433,6 +436,9 @@ function Extinction.Init(modeManager)
 			Badges.Trigger(player, "Tutorial")
 		end
 	end
+
+	-- Grundriss für die Weltkarte (Clients haben mit Streaming nur die Teile in ihrer Nähe)
+	WorldLayout.Publish(map)
 
 	-- Tor zurück zum Hub (in der Safe Zone, darum ohne Verlust)
 	local lastTouch = {}
@@ -765,15 +771,29 @@ function Extinction.Init(modeManager)
 	-- Todestasche weg: Markierung beim Besitzer löschen
 	table.insert(LootService.OnRemoved, bagRemoved)
 
-	local elapsed = 0
+	local elapsed, publishAt = 0, 0
 	RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
 		if elapsed < ZONE_STEP then
 			return
 		end
 		elapsed = 0
+		publishAt += 1
+		local publish = publishAt % 5 == 0 -- einmal pro Sekunde
 		for player, info in members do
 			updateZone(player, info)
+			-- Streaming: Squad-Liste und Karte brauchen Ort und Leben auch, wenn der Charakter beim Mitspieler nicht geladen ist
+			local character = publish and player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			local health = humanoid and root and humanoid.Health > 0 and humanoid.Health / math.max(1, humanoid.MaxHealth) or 0
+			if publish then
+				player:SetAttribute("ExtHealth", math.floor(health * 100 + 0.5) / 100)
+			end
+			if root then
+				local p = root.Position
+				player:SetAttribute("ExtPos", Vector3.new(math.floor(p.X), 0, math.floor(p.Z)))
+			end
 		end
 		-- Blutmond beginnt/endet: Ansage an alle in der offenen Welt
 		local blood = DayCycle.IsBloodMoon(workspace:GetServerTimeNow())

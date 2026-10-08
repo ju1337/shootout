@@ -19183,7 +19183,7 @@
   },
   {
    "Name": "Objective",
-   "ClassName": "Folder",
+   "ClassName": "Model",
    "Children": [
     {
      "Name": "SiteA",
@@ -19332,7 +19332,10 @@
       "CanCollide": false
      }
     }
-   ]
+   ],
+   "Properties": {
+    "ModelStreamingMode": "Persistent"
+   }
   },
   {
    "Name": "Decor",

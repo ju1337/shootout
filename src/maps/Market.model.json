@@ -14,7 +14,8 @@
      ]
     }
    }
-  }
+  },
+  "ModelStreamingMode": "Persistent"
  },
  "Children": [
   {

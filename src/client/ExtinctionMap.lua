@@ -19,6 +19,7 @@ local HttpService = game:GetService("HttpService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UITheme = require(Shared.UITheme)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local WorldLayout = require(Shared.WorldLayout)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -44,7 +45,7 @@ local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (all
 	CampPad = Color3.fromRGB(104, 104, 100),
 	Field = Color3.fromRGB(96, 80, 56),
 }
-local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = true, TowerStub = true, PrisonWall = true }
+local builtLayout = nil -- Grundriss (Attribut Layout), mit dem die Karte gebaut wurde
 
 local gui, board, world, layer, markers, arrow, bagView, bagCaption, zoomText
 local bountyView, bountyCaption -- Kopfgeld (roter Punkt)
@@ -84,12 +85,12 @@ local function decode(map, attribute)
 	return ok and type(list) == "table" and list or {}
 end
 
-local function rect(parent, map, part, color, z)
-	local u, v = toMap(map, part.Position.X, part.Position.Z)
-	local right = part.CFrame.RightVector -- Straßen liegen schräg: Drehung um die Hochachse übernehmen
+-- entry: Rechteck aus WorldLayout (Mitte X/Z, Breite W, Tiefe D, Drehung; Straßen liegen schräg)
+local function rect(parent, map, entry, color, z)
+	local u, v = toMap(map, entry.X, entry.Z)
 	local frame = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(u, v),
-		Size = UDim2.fromScale(part.Size.X / WORLD, part.Size.Z / WORLD), BackgroundColor3 = color, BorderSizePixel = 0,
-		Rotation = math.deg(math.atan2(-right.Z, right.X)), ZIndex = z }, parent)
+		Size = UDim2.fromScale(entry.W / WORLD, entry.D / WORLD), BackgroundColor3 = color, BorderSizePixel = 0,
+		Rotation = entry.Rotation, ZIndex = z }, parent)
 	return frame
 end
 
@@ -122,11 +123,20 @@ local function build(map)
 			Text = tostring(i), TextSize = 12, Font = F.Display, TextColor3 = Color3.fromRGB(200, 200, 196), TextTransparency = 0.3,
 			ZIndex = 3 }, layer)
 	end
-	local ground = map:FindFirstChild("Ground")
-	for _, part in ground and ground:GetChildren() or {} do
-		local color = part:IsA("BasePart") and GROUND_COLORS[part.Name]
+	-- Flächen, Dächer und Straßen: Grundriss vom Server (WorldLayout), mit Streaming fehlen hier sonst ferne Teile
+	builtLayout = map:GetAttribute("Layout")
+	local ROAD = Color3.fromRGB(128, 130, 134)
+	local BUILDING = Color3.fromRGB(92, 88, 82)
+	local order = { Ground = 1, Buildings = 2, Roads = 3 } -- Reihenfolge wie früher: Boden, Gebäude, Straßen obenauf
+	local entries = WorldLayout.Read(map)
+	table.sort(entries, function(a, b)
+		return (order[a.Group] or 0) < (order[b.Group] or 0)
+	end)
+	for _, entry in entries do
+		local color = entry.Group == "Ground" and GROUND_COLORS[entry.Name] or entry.Group == "Buildings" and BUILDING
+			or entry.Group == "Roads" and ROAD
 		if color then
-			rect(layer, map, part, color, 2)
+			rect(layer, map, entry, color, entry.Group == "Roads" and 3 or 2)
 		end
 	end
 	local lakes = map:FindFirstChild("Lakes")
@@ -134,18 +144,6 @@ local function build(map)
 		if part:IsA("BasePart") then
 			local frame = circle(layer, map, part.Position.X, part.Position.Z, part.Size.X / 2, Color3.fromRGB(46, 84, 110), 0, 2)
 			frame.Name = "Lake"
-		end
-	end
-	local buildings = map:FindFirstChild("Buildings")
-	for _, part in buildings and buildings:GetChildren() or {} do
-		if part:IsA("BasePart") and BUILDING_PARTS[part.Name] then
-			rect(layer, map, part, Color3.fromRGB(92, 88, 82), 2)
-		end
-	end
-	local roads = map:FindFirstChild("Roads")
-	for _, part in roads and roads:GetChildren() or {} do
-		if part:IsA("BasePart") and part.Name == "Road" then
-			rect(layer, map, part, Color3.fromRGB(128, 130, 134), 3)
 		end
 	end
 	local zone = map:FindFirstChild("Zone")
@@ -189,7 +187,7 @@ local function update()
 	if not map then
 		return
 	end
-	if not built then
+	if not built or map:GetAttribute("Layout") ~= builtLayout then
 		build(map)
 	end
 	-- eigener Standort und Blickrichtung

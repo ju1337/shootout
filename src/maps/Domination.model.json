@@ -37875,7 +37875,7 @@
   },
   {
    "Name": "Objective",
-   "ClassName": "Folder",
+   "ClassName": "Model",
    "Children": [
     {
      "Name": "FlagA",
@@ -38024,7 +38024,10 @@
       "CanCollide": false
      }
     }
-   ]
+   ],
+   "Properties": {
+    "ModelStreamingMode": "Persistent"
+   }
   }
  ]
 }

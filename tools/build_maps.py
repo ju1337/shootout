@@ -11,6 +11,8 @@ import math
 import os
 import random
 
+import streaming
+
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
 MAP_NAMES = {"TDM": "Kraftwerk", "Domination": "Kraftwerk", "FreeForAll": "Altstadt", "Favela": "Favela", "Orbit": "Orbit",
              "Lagune": "Lagune", "Mondbasis": "Mondbasis", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
@@ -561,6 +563,7 @@ class Builder:
             "Properties": {"Attributes": {"Attributes": attrs}},
             "Children": [{"Name": g, "ClassName": "Folder", "Children": c} for g, c in self.groups.items()],
         }
+        streaming.apply(model, filename.replace(".model.json", ""))  # was der Client immer braucht (Streaming)
         os.makedirs(OUT_DIR, exist_ok=True)
         with open(os.path.join(OUT_DIR, filename), "w") as f:
             json.dump(model, f, indent=1)

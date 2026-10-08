@@ -185,6 +185,11 @@ local function buildPreview(mapId)
 	local preview = { Ready = false }
 	previews[mapId] = preview
 	task.spawn(function()
+		-- Streaming: die Map liegt weit weg und ist beim Client sonst nicht geladen – vorher holen (danach bleibt die Kopie)
+		local center = source:GetAttribute("Center")
+		if typeof(center) == "Vector3" then
+			pcall(player.RequestStreamAroundAsync, player, center, 5)
+		end
 		-- Spielfläche: der Boden der Map (Ordner/Teil "Ground"), sonst alles
 		local floor: Bounds = {}
 		local ground = source:FindFirstChild("Ground")

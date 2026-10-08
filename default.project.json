@@ -56,7 +56,11 @@
       "$className": "Workspace",
       "$ignoreUnknownInstances": true,
       "$properties": {
-        "StreamingEnabled": false
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 192,
+        "StreamingTargetRadius": 1024,
+        "StreamOutBehavior": "Opportunistic",
+        "StreamingIntegrityMode": "MinimumRadiusPause"
       },
       "Maps": {
         "$path": "src/maps"

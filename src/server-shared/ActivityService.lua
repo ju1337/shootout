@@ -224,6 +224,7 @@ local function buildNest(spot)
 		sub.Text = math.max(0, math.ceil(health)) .. " / " .. cfg.Health
 	end)
 	model:SetAttribute("Activity", spot.Id)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	spot.Model = model
 	spot.Humanoid = humanoid
@@ -333,6 +334,7 @@ local function buildCache(spot)
 	spot.SubText = sub
 	local p = prompt(model.Box, "Aufbrechen", "Vorratslager", A.Cache.HoldTime)
 	spot.Prompt = p
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	spot.Model = model
 	-- schon beim Anfangen macht das Aufbrechen Lärm
@@ -401,6 +403,7 @@ local function buildRadio(spot)
 	p.Triggered:Connect(function(player)
 		ActivityService.UseRadio(player, spot)
 	end)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	spot.Model = model
 	spot.State = "Ready"
@@ -530,6 +533,7 @@ local function buildSurvivor(spot)
 	p.Triggered:Connect(function(player)
 		ActivityService.Rescue(player, spot)
 	end)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	pcall(function()
 		root:SetNetworkOwner(nil)

@@ -85,6 +85,7 @@ local function buildVehicle(kind)
 	model.PrimaryPart = body
 	-- Treffer landen über WeaponService.OnConvoyHit hier
 	model:SetAttribute("Convoy", true)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	return model
 end

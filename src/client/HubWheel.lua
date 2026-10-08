@@ -250,7 +250,7 @@ end
 
 function HubWheel.Init()
 	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
-	local spot = decor:WaitForChild("WheelSpot", 10)
+	local spot = decor:WaitForChild("WheelSpot", 60)
 	if not spot then
 		return -- Hub ohne Glücksrad (alter Hangar)
 	end

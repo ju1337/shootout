@@ -684,6 +684,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	humanoid.Health = agent.Health
 	humanoid.WalkSpeed = agent.WalkSpeed
 	owners[model] = bot
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = modelFolder
 	model:PivotTo(cframe)
 	pcall(function()

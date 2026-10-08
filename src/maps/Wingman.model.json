@@ -15597,7 +15597,7 @@
   },
   {
    "Name": "Objective",
-   "ClassName": "Folder",
+   "ClassName": "Model",
    "Children": [
     {
      "Name": "CapturePoint",
@@ -15832,7 +15832,10 @@
       "BottomSurface": "Smooth"
      }
     }
-   ]
+   ],
+   "Properties": {
+    "ModelStreamingMode": "Persistent"
+   }
   },
   {
    "Name": "Decor",

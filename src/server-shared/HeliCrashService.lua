@@ -89,6 +89,7 @@ local function buildFlying()
 	local fire = Instance.new("Fire")
 	fire.Size = 6
 	fire.Parent = body
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	-- Rotor und Warnton im Cockpit (enden mit dem Modell beim Aufprall)
 	Sfx.Loop("HeliLoop", body)
@@ -134,6 +135,7 @@ local function buildWreck(target)
 		light.Brightness = 2.5
 		light.Parent = spot
 	end
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	return model
 end

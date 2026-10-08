@@ -43,7 +43,7 @@ local STAGE_FACING = Vector3.new(0, 0, -1)
 local lineupEnabled = false
 local rebuildLineup -- vorab (rebuild steht weiter unten)
 task.spawn(function()
-	local spot = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("LineupSpot", 10)
+	local spot = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("LineupSpot", 60)
 	if spot then
 		STAGE_POSITION = spot.Position
 		STAGE_FACING = spot.CFrame.LookVector
@@ -122,8 +122,8 @@ end
 
 local function buildAgentOfWeek()
 	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
-	local spot = decor:WaitForChild("AgentOfWeekSpot", 10)
-	local holoPoint = decor:WaitForChild("AgentOfWeekHolo", 10)
+	local spot = decor:WaitForChild("AgentOfWeekSpot", 60)
+	local holoPoint = decor:WaitForChild("AgentOfWeekHolo", 60)
 	if not spot then
 		return
 	end
@@ -270,7 +270,7 @@ end
 
 local function buildShopVitrine()
 	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
-	local counter = decor:WaitForChild("ShopCounter", 10)
+	local counter = decor:WaitForChild("ShopCounter", 60)
 	if not counter then
 		return -- alter Hangar ohne Shop
 	end
@@ -372,7 +372,7 @@ end
 
 -- Einsatz-Tafel im Hangar: live, wie viele Spieler in welchem Modus sind
 local function buildMissionBoard()
-	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("MissionBoard", 10)
+	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("MissionBoard", 60)
 	if not board then
 		return
 	end
@@ -478,7 +478,7 @@ end
 local function buildLeaderboards()
 	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
 	for board, info in BOARD_INFO do
-		local part = decor:WaitForChild("Leaderboard_" .. board, 10)
+		local part = decor:WaitForChild("Leaderboard_" .. board, 60)
 		if part then
 			-- Holo-Tafel (Attribut "Holo"): durchsichtig, leuchtende Schrift, kaum Hintergrund
 			local holo = part:GetAttribute("Holo") == true
@@ -625,7 +625,7 @@ end
 local PHOTO_IMAGE = ""
 
 local function buildPhotoBoard()
-	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("PhotoBoard", 10)
+	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("PhotoBoard", 60)
 	if not board then
 		return
 	end

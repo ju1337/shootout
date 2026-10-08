@@ -59,9 +59,40 @@ local function useAgentModel(player)
 	return true
 end
 
+-- Streaming: dem Client die Umgebung von position schon schicken, bevor man ihn dorthin setzt (wartet nicht; bis der
+-- Boden da ist, hält Roblox den Charakter an, StreamingIntegrityMode in default.project.json)
+function SpawnUtil.Prestream(player, position)
+	task.spawn(pcall, player.RequestStreamAroundAsync, player, position, 5)
+end
+
+-- Streaming ohne Charakter (Agentenwahl, Warten, Zuschauen): um position streamen, damit der Client die Map sieht.
+-- Ein unsichtbarer verankerter Punkt je Spieler dient als ReplicationFocus; SpawnUtil.Spawn schaltet zurück.
+local focusParts = {}
+function SpawnUtil.FocusOn(player, position)
+	local part = focusParts[player]
+	if not part or not part.Parent then
+		part = Instance.new("Part")
+		part.Name = "StreamFocus_" .. player.UserId
+		part.Anchored, part.CanCollide, part.CanQuery, part.CanTouch = true, false, false, false
+		part.Transparency = 1
+		part.Size = Vector3.one
+		part.Parent = workspace
+		focusParts[player] = part
+		player.AncestryChanged:Connect(function()
+			if not player.Parent and focusParts[player] then
+				focusParts[player]:Destroy()
+				focusParts[player] = nil
+			end
+		end)
+	end
+	part.Position = position
+	player.ReplicationFocus = part
+end
+
 -- Spawnt den Spieler an cframe. protection = Sekunden Schutzschild (0/nil = keins).
 -- Gibt den neuen Charakter zurück oder nil, wenn es nicht geklappt hat.
 function SpawnUtil.Spawn(player, cframe, protection)
+	SpawnUtil.Prestream(player, cframe.Position)
 	local ok = loadAgentCharacter(player)
 	if ok then
 		local swapped, err = pcall(useAgentModel, player)
@@ -73,6 +104,8 @@ function SpawnUtil.Spawn(player, cframe, protection)
 	if not ok or not character then
 		return nil
 	end
+	character.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: bei den anderen ganz oder gar nicht
+	player.ReplicationFocus = nil -- wieder um den Charakter streamen (ohne Charakter: SpawnUtil.FocusOn)
 	character:PivotTo(cframe)
 	MovementGuard.Teleported(character) -- neue Stelle ist gültig, kein Teleport-Verstoß
 

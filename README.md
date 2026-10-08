@@ -11,6 +11,14 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
     python3 tools/weapon_templates.py      # Blender-Vorlagen der Waffen neu erzeugen (art/templates/Weapons)
     python3 tools/asset_templates.py       # Blender-Vorlagen der Fahrzeuge und Items (art/templates/Vehicles, Items)
 
+**Streaming:** `Workspace.StreamingEnabled` ist an (Radius 1024, mindestens 192, entfernte Teile werden wieder entladen).
+Der Client hat nur die Teile in seiner Nähe; Client-Skripte dürfen sich also nicht darauf verlassen, dass ein Teil einer
+Map existiert (nil prüfen, `WaitForChild` mit Zeitlimit, auf `DescendantAdded` hören). Immer vollständig geladen sind Hub
+und Markt sowie die Gruppen Zone, Places, Stands, Lakes und Objective jeder Map (`tools/streaming.py`, setzt
+`ModelStreamingMode = Persistent`). Den Grundriss der Weltkarte schickt der Server als Karten-Attribut `Layout`
+(`WorldLayout`), Ort und Leben von Squad-Mitgliedern als Spieler-Attribute `ExtPos` / `ExtHealth`. Vom Server erzeugte
+Modelle (Bots, Zombies, Fahrzeuge, Beute …) sind `Atomic`.
+
 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
 Vorlagen, Export-Einstellungen, Maße, Namen, Marker, Budgets, Texturen, Stil, Abgabe-Checkliste – steht in
 [docs/3d-richtlinien.md](docs/3d-richtlinien.md); Waffen und Agenten im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md)

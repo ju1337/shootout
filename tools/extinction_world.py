@@ -4469,6 +4469,8 @@ def save(bm, b, filename, display_name, atmosphere):
              "MinimapRange": {"Float64": 240.0}, "MinimapFolders": {"String": "Roads,Ground,Buildings,Walls,Stands"}}
     model = {"ClassName": "Model", "Properties": {"Attributes": {"Attributes": attrs}},
              "Children": [{"Name": g, "ClassName": "Folder", "Children": c} for g, c in b.groups.items()]}
+    import streaming
+    streaming.apply(model, filename.replace(".model.json", ""))  # was der Client immer braucht (Streaming)
     os.makedirs(bm.OUT_DIR, exist_ok=True)
     with open(os.path.join(bm.OUT_DIR, filename), "w") as f:
         json.dump(model, f, separators=(",", ":"))

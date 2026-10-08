@@ -234,6 +234,54 @@ function Minimap.Init(root)
 		return true
 	end
 
+	-- Ein Teil der Map als Form eintragen. Mit Streaming kommen Teile erst nach und nach (und nach dem Wegstreamen als
+	-- neue Instanz wieder): darum merkt sich seenParts jede Form an Lage und Größe und trägt sie nur einmal ein.
+	local seenParts = {}
+	local onlyFolders = nil -- MinimapFolders der Map oder nil = alle Gruppen
+	local mapConnection = nil
+	local function addPart(part, folderName)
+		local color, z = styleOf(part, folderName)
+		if not color then
+			return
+		end
+		local p, size = part.Position, part.Size
+		local key = string.format("%d,%d,%d,%d,%d,%d,%s", p.X * 10, p.Y * 10, p.Z * 10, size.X * 10, size.Y * 10, size.Z * 10,
+			part.Name)
+		if seenParts[key] then
+			return
+		end
+		seenParts[key] = true
+		local center, width, depth, angle = footprint(part)
+		if z == 4 then
+			width, depth = math.max(width, 1.2), math.max(depth, 1.2) -- Wände mindestens 1 Pixel
+		end
+		local shape = { Rect = MinimapShapes.Rect(center.X, center.Z, width, depth, angle),
+			Color = color, Z = z, Frames = {}, Shown = {}, Count = 0 }
+		table.insert(shapes, shape)
+		if math.max(width, depth) > CELL then
+			table.insert(bigShapes, shape)
+		else
+			local cx, cz = math.floor(center.X / CELL), math.floor(center.Z / CELL)
+			buckets[cx] = buckets[cx] or {}
+			buckets[cx][cz] = buckets[cx][cz] or {}
+			table.insert(buckets[cx][cz], shape)
+		end
+		clippedAt = nil -- neue Form gleich zeigen
+	end
+
+	-- Gruppe der Map (direktes Kind), zu der ein Teil gehört, wenn sie gezeichnet wird
+	local function drawnFolder(map, part)
+		local folder = part
+		while folder and folder.Parent ~= map do
+			folder = folder.Parent
+		end
+		if not folder or folder == part or SKIP_FOLDERS[folder.Name] or string.sub(folder.Name, 1, 6) == "Spawns"
+			or (onlyFolders and not onlyFolders[folder.Name]) then
+			return nil
+		end
+		return folder
+	end
+
 	local function loadMap(map)
 		if map == shownMap then
 			return
@@ -243,6 +291,11 @@ function Minimap.Init(root)
 		layer:ClearAllChildren()
 		shapes, buckets, bigShapes, activeShapes, zoneDots = {}, {}, {}, {}, {}
 		redDots, redRaw, redzones = {}, nil, {}
+		seenParts = {}
+		if mapConnection then
+			mapConnection:Disconnect()
+			mapConnection = nil
+		end
 		RANGE = map and tonumber(map:GetAttribute("MinimapRange")) or DEFAULT_RANGE
 		K = 1 / (2 * RANGE)
 		STRIP = 2 * RANGE / DEFAULT_RANGE
@@ -250,47 +303,45 @@ function Minimap.Init(root)
 			return
 		end
 		-- MinimapFolders (z. B. "Roads,Ground,Buildings"): nur diese Gruppen zeichnen (große Maps mit viel Schutt)
-		local only = nil
+		onlyFolders = nil
 		local list = map:GetAttribute("MinimapFolders")
 		if type(list) == "string" then
-			only = {}
+			onlyFolders = {}
 			for name in string.gmatch(list, "[^,%s]+") do
-				only[name] = true
+				onlyFolders[name] = true
 			end
 		end
-		for _, folder in map:GetChildren() do
-			if not SKIP_FOLDERS[folder.Name] and string.sub(folder.Name, 1, 6) ~= "Spawns" and (not only or only[folder.Name]) then
-				for _, part in folder:GetDescendants() do
-					if part:IsA("BasePart") then
-						local color, z = styleOf(part, folder.Name)
-						if color then
-							local center, width, depth, angle = footprint(part)
-							if z == 4 then
-								width, depth = math.max(width, 1.2), math.max(depth, 1.2) -- Wände mindestens 1 Pixel
-							end
-							local shape = { Rect = MinimapShapes.Rect(center.X, center.Z, width, depth, angle),
-								Color = color, Z = z, Frames = {}, Shown = {}, Count = 0 }
-							table.insert(shapes, shape)
-							if math.max(width, depth) > CELL then
-								table.insert(bigShapes, shape)
-							else
-								local cx, cz = math.floor(center.X / CELL), math.floor(center.Z / CELL)
-								buckets[cx] = buckets[cx] or {}
-								buckets[cx][cz] = buckets[cx][cz] or {}
-								table.insert(buckets[cx][cz], shape)
-							end
-						end
-					end
+		for _, part in map:GetDescendants() do
+			if part:IsA("BasePart") then
+				local folder = drawnFolder(map, part)
+				if folder then
+					addPart(part, folder.Name)
 				end
 			end
 		end
 		-- Safe Zones (Teil Zone.SafeZone und Safehouses); die rote Zone kommt aus loadRedzones
-		local zone = map:FindFirstChild("Zone")
-		for _, safe in zone and zone:GetChildren() or {} do -- Camp ("SafeZone") und Safehouses ("SafeZone_<Name>")
-			if safe:IsA("BasePart") and (safe.Name == "SafeZone" or string.sub(safe.Name, 1, 9) == "SafeZone_") then
+		local function safeZone(safe)
+			if safe:IsA("BasePart") and safe.Parent and safe.Parent.Name == "Zone" and safe.Parent.Parent == map
+				and (safe.Name == "SafeZone" or string.sub(safe.Name, 1, 9) == "SafeZone_") and not seenParts["Zone:" .. safe.Name] then
+				seenParts["Zone:" .. safe.Name] = true
 				zoneCircle(safe.Position.X, safe.Position.Z, safe.Size.X / 2, Color3.fromRGB(112, 200, 120))
+				clippedAt = nil
 			end
 		end
+		local zone = map:FindFirstChild("Zone")
+		for _, safe in zone and zone:GetChildren() or {} do -- Camp ("SafeZone") und Safehouses ("SafeZone_<Name>")
+			safeZone(safe)
+		end
+		-- Streaming: Teile (und die Zone), die erst später ankommen, dazunehmen
+		mapConnection = map.DescendantAdded:Connect(function(part)
+			if part:IsA("BasePart") then
+				safeZone(part)
+				local folder = drawnFolder(map, part)
+				if folder then
+					addPart(part, folder.Name)
+				end
+			end
+		end)
 	end
 
 	local function clipShape(shape, px, pz)
@@ -461,6 +512,9 @@ function Minimap.Init(root)
 			if part and part:IsA("BasePart") then
 				table.insert(objectiveIcons, { Icon = objectiveIcon(overlay, objective.Label, 26), Part = part })
 			end
+		end
+		if #objectiveIcons < #modeInfo.Objectives then
+			shownObjectives = nil -- Ziele noch nicht (alle) geladen: beim nächsten Durchgang nochmal
 		end
 	end
 

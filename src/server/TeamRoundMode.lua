@@ -372,12 +372,21 @@ function TeamRoundMode.new(config)
 		end
 	end
 
+	-- Streaming: ohne Charakter um die Mitte der Map streamen (Agentenwahl, Kameraflug, Zuschauen)
+	local function focusMap(player)
+		local center = map and map:GetAttribute("Center")
+		if typeof(center) == "Vector3" and not (player.Character and player.Character.Parent) then
+			SpawnUtil.FocusOn(player, center + Vector3.new(0, 20, 0))
+		end
+	end
+
 	-- Charaktere und Bot-Modelle entfernen (für Agentenwahl / Warten)
 	local function clearCharacters()
 		for player in members do
 			if player.Character then
 				player.Character:Destroy()
 			end
+			focusMap(player)
 		end
 		for bot in bots do
 			BotService.Despawn(bot)
@@ -563,6 +572,7 @@ function TeamRoundMode.new(config)
 			player:SetAttribute("MapName", map:GetAttribute("DisplayName") or map.Name)
 			player:SetAttribute("MapId", map.Name)
 			player:SetAttribute("MapCenter", map:GetAttribute("Center"))
+			focusMap(player)
 		end
 	end
 
@@ -1558,6 +1568,7 @@ function TeamRoundMode.new(config)
 		if player.Character then
 			player.Character:Destroy()
 		end
+		focusMap(player)
 		-- Modi mit unbegrenztem Respawn (Herrschaft): kurz Agent und Ausrüstung wählen, dann sofort einsteigen
 		if roundActive and config.Respawn and player.Team then
 			useTicket(player, function()

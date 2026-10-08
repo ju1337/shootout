@@ -773,6 +773,9 @@ function MatchHUD.Init(root, weaponClient)
 					Letter = letter, Distance = distance, State = state })
 			end
 		end
+		if #markers < #mode.Objectives then
+			shownKey = nil -- Ziele noch nicht (alle) geladen: beim nächsten Durchgang nochmal
+		end
 	end
 
 	RunService.RenderStepped:Connect(function()

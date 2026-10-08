@@ -377,8 +377,11 @@ function VehicleClient.SpinRotors(dt)
 	end
 	for _, model in vehicles:GetChildren() do
 		local spin = rotors[model]
-		if spin == nil then
-			local chassis = model:IsA("Model") and model.PrimaryPart
+		if spin and (not spin.Chassis.Parent or not spin.Main.Parent) then
+			spin = nil -- Streaming: weg- und wieder hergestreamt, Teile neu suchen
+		end
+		local chassis = model:IsA("Model") and model.PrimaryPart
+		if spin == nil and (chassis or not model:IsA("Model")) then -- ohne PrimaryPart (noch nicht gestreamt): später
 			local main = chassis and chassis:FindFirstChild("RotorMotor")
 			if chassis and main and main:IsA("Motor6D") then
 				local tail = chassis:FindFirstChild("TailRotorMotor")
@@ -389,7 +392,7 @@ function VehicleClient.SpinRotors(dt)
 			end
 			rotors[model] = spin
 		end
-		if spin then
+		if spin and spin.Chassis.Parent then
 			local seat = spin.Seat
 			local alive = (model:GetAttribute("Health") or 0) > 0
 			local airborne = math.abs(spin.Chassis.AssemblyLinearVelocity.Y) > 1

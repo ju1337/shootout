@@ -149,6 +149,7 @@ local function buildFlare(target)
 	smoke.Speed = NumberRange.new(6, 12)
 	smoke.Transparency = NumberSequence.new(0.35, 1)
 	smoke.Parent = beam
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	Sfx.Loop("FlareLoop", disc) -- Signalfeuer zischt (endet mit dem Modell)
 	return model
@@ -168,6 +169,7 @@ local function buildCrateFall()
 		part(model, "Rope" .. index, Vector3.new(0.12, 0.12, (top - corner).Magnitude), CFrame.lookAt(mid, top), Color3.fromRGB(60, 60, 60))
 	end
 	model.PrimaryPart = body
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	Sfx.Loop("ParachuteLoop", canopy) -- Fallschirm flattert
 	return model

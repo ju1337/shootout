@@ -18767,7 +18767,7 @@
   },
   {
    "Name": "Objective",
-   "ClassName": "Folder",
+   "ClassName": "Model",
    "Children": [
     {
      "Name": "CapturePoint",
@@ -18818,7 +18818,10 @@
       "CanCollide": false
      }
     }
-   ]
+   ],
+   "Properties": {
+    "ModelStreamingMode": "Persistent"
+   }
   }
  ]
 }

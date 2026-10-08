@@ -595,6 +595,7 @@ function VehicleService.Use(player, _, item)
 	local model, chassis, driverSeat = build(itemConfig.Vehicle, config, cframe)
 	model:SetAttribute("Owner", player.UserId)
 	model:SetAttribute("OwnerName", player.Name)
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
 	active[player] = { Model = model, Chassis = chassis, Seat = driverSeat, Item = item, Config = config,
 		LastPos = chassis.Position, LastTime = os.clock() }

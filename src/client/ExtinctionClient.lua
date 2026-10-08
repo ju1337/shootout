@@ -2287,16 +2287,24 @@ local function whereIs(other)
 		return "NICHT IN DER OFFENEN WELT", nil
 	end
 	local character = other.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not humanoid or not root or humanoid.Health <= 0 then
+	local humanoid = character and character.Parent and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character.Parent and character:FindFirstChild("HumanoidRootPart")
+	local position, health
+	if humanoid and root then
+		position, health = root.Position, humanoid.Health > 0 and humanoid.Health / math.max(1, humanoid.MaxHealth) or 0
+	else
+		-- Streaming: weit weg ist der Charakter hier nicht geladen, dann Ort und Leben vom Server (Spieler-Attribute)
+		local pos = other:GetAttribute("ExtPos")
+		position, health = typeof(pos) == "Vector3" and pos or nil, tonumber(other:GetAttribute("ExtHealth")) or 0
+	end
+	if not position or health <= 0 then
 		return "TOT", 0
 	end
 	local mine = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	local distance = mine and math.floor(Vector3.new(root.Position.X - mine.Position.X, 0, root.Position.Z - mine.Position.Z).Magnitude) or 0
+	local distance = mine and math.floor(Vector3.new(position.X - mine.Position.X, 0, position.Z - mine.Position.Z).Magnitude) or 0
 	local title = other:GetAttribute("SafeZoneTitle")
 	local where = other:GetAttribute("InSafeZone") and upper(type(title) == "string" and title or "SAFE ZONE") or (distance .. " M")
-	return where, humanoid.Health / math.max(1, humanoid.MaxHealth)
+	return where, health
 end
 
 local function partyAction(action, userId)
@@ -2958,14 +2966,14 @@ end
 local function setupPrompts()
 	local maps = workspace:WaitForChild("Maps")
 	local map = maps:WaitForChild("Extinction", 30)
-	local stands = map and map:WaitForChild("Stands", 10)
+	local stands = map and map:WaitForChild("Stands", 60)
 	if not stands then
 		return
 	end
 	-- Stände: jeder Teil mit dem Namen bekommt eine Aufforderung (Camp und Safehouses haben eigene)
 	for key, info in ExtinctionConfig.Stands do
 		if not info.Optional then
-			stands:WaitForChild(key, 10)
+			stands:WaitForChild(key, 60)
 		end
 	end
 	local function standPrompt(part)
@@ -3018,7 +3026,7 @@ local function setupPrompts()
 			table.insert(prompts, prompt)
 		end
 	end
-	stands:WaitForChild("Stash", 10)
+	stands:WaitForChild("Stash", 60)
 	for _, stashPart in stands:GetChildren() do
 		if stashPart:IsA("BasePart") and stashPart.Name == "Stash" then
 			local prompt = make("ProximityPrompt", { Name = "StashPrompt", ActionText = "Lager öffnen", ObjectText = "LAGER",
