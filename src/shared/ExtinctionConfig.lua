@@ -467,6 +467,22 @@ ExtinctionConfig.Airdrop = {
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
 }
 
+-- ---------- Kopfgeld (BountyService) ----------
+-- Wer draußen MinKills Spieler hintereinander erledigt (ohne zu sterben), bekommt ein Kopfgeld: Base Münzen, für jeden weiteren
+-- Kill PerKill mehr. Es gibt immer nur einen Gesuchten (der mit der längeren Serie übernimmt). Er steht für alle rot auf der Karte.
+-- Wer ihn erledigt, kassiert das Kopfgeld. Überlebt er SurviveTime Sekunden draußen (in der Safe Zone läuft die Zeit nicht),
+-- bekommt er selbst SurviveFactor davon und ist nicht mehr gesucht. Stirbt er anders (Zombies, Feuer), verfällt es.
+-- Stand für die Clients: Karten-Attribut "Bounty" { UserId, Name, X, Z, Reward, Left } (leer = niemand gesucht),
+-- Spieler-Attribut "Bounty" (Höhe) beim Gesuchten.
+ExtinctionConfig.Bounty = {
+	Enabled = true,
+	MinKills = 3,
+	Base = 300,
+	PerKill = 150,
+	SurviveTime = 600,
+	SurviveFactor = 0.5,
+}
+
 -- ---------- Bosse (BossService) ----------
 -- Große Zombies, die ein Gebäude bewachen (Place = Ort aus der Gruppe Places der Karte, Teil Place_<Ort>). Ein Boss erscheint,
 -- sobald ein Spieler näher als WakeRange ist, und nach dem Tod erst nach RespawnTime Sekunden wieder. Kind = Zombie-Art als

@@ -108,6 +108,13 @@ function AdminService.Init(manager)
 			end
 			return #names > 0 and ("Boss da: " .. table.concat(names, ", ")) or "Kein Boss (Ort fehlt auf der Karte?)"
 		end,
+		ExtBountyMe = function(_, _, admin)
+			if admin:GetAttribute("Mode") ~= "Extinction" then
+				return "Nur in der offenen Welt."
+			end
+			local bounty = serverShared("BountyService").Force(admin)
+			return bounty and ("Kopfgeld auf dich: " .. bounty.Reward .. " Münzen") or "Kopfgeld ging nicht."
+		end,
 		ExtConvoy = function()
 			local convoy = serverShared("ConvoyService").Start()
 			return convoy and ("Konvoi gestartet: " .. tostring(convoy.Path and convoy.Path.Name or "")) or "Es fährt schon ein Konvoi."

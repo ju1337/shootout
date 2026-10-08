@@ -47,6 +47,7 @@ local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (all
 local BUILDING_PARTS = { Roof = true, FallenRoof = true, Upper = true, Tower = true, TowerStub = true, PrisonWall = true }
 
 local gui, board, world, layer, markers, arrow, bagView, bagCaption, zoomText
+local bountyView, bountyCaption -- Kopfgeld (roter Punkt)
 local view = { Zoom = 1, U = 0.5, V = 0.5 } -- Zoom und Kartenmitte (Anteil 0..1)
 local smallNames = {} -- Namen kleiner Orte: erst ab Zoom 1.8
 local stick = Vector2.zero -- rechter Stick (Controller): verschieben
@@ -374,6 +375,24 @@ local function update()
 			dropViews[id] = nil
 		end
 	end
+	-- Kopfgeld: der Gesuchte als roter Punkt mit Name und Höhe (pulsiert)
+	local bountyRaw = map:GetAttribute("Bounty")
+	local okBounty, bounty = false, nil
+	if type(bountyRaw) == "string" and bountyRaw ~= "" then
+		okBounty, bounty = pcall(HttpService.JSONDecode, HttpService, bountyRaw)
+	end
+	local hasBounty = okBounty and type(bounty) == "table" and tonumber(bounty.X) ~= nil and tonumber(bounty.Z) ~= nil
+	bountyView.Visible = hasBounty
+	if hasBounty then
+		local u, v = toMap(map, tonumber(bounty.X), tonumber(bounty.Z))
+		bountyView.Position = UDim2.fromScale(u, v)
+		local pulse = 18 + math.sin(os.clock() * 6) * 4
+		bountyView.Size = UDim2.fromOffset(pulse, pulse)
+		local mine = tonumber(bounty.UserId) == player.UserId
+		bountyCaption.Text = (mine and "DU · " or "") .. "KOPFGELD " .. string.upper(tostring(bounty.Name)) .. " · "
+			.. tostring(bounty.Reward) .. " MÜNZEN"
+	end
+
 	-- eigene Todestasche
 	local ok, bag = pcall(HttpService.JSONDecode, HttpService, tostring(player:GetAttribute("ExtDeathBag") or ""))
 	local hasBag = ok and type(bag) == "table" and tonumber(bag.X) ~= nil and tonumber(bag.Z) ~= nil
@@ -523,6 +542,15 @@ function ExtinctionMap.Init()
 		Size = UDim2.fromOffset(150, 14), TextSize = 11, Font = F.Bold, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Center,
 		ZIndex = 9 }, bagView)
 
+	bountyView = make("Frame", { Name = "Bounty", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(18, 18),
+		BackgroundColor3 = RED, BorderSizePixel = 0, Visible = false, ZIndex = 10 }, markers)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, bountyView)
+	UITheme.Stroke(bountyView, Color3.new(1, 1, 1), 2, 0)
+	bountyCaption = label({ Name = "Caption", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4),
+		Size = UDim2.fromOffset(240, 14), TextSize = 12, Font = F.Display, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 10 }, bountyView)
+	UITheme.Outline(bountyCaption)
+
 	-- rechts: Zoom und Legende
 	local side = make("Frame", { Name = "Side", Position = UDim2.fromOffset(SIZE + 24, 58), Size = UDim2.fromOffset(SIDE, SIZE),
 		BackgroundTransparency = 1 }, panel)
@@ -554,6 +582,7 @@ function ExtinctionMap.Init()
 		{ "Square", HORDE, "HORDEN-KISTE" },
 		{ "Dot", HELI, "HELI-WRACK" },
 		{ "Diamond", BOSS, "BOSS (BEWACHT SEIN GEBÄUDE)" },
+		{ "Dot", RED, "KOPFGELD (GESUCHTER SPIELER)" },
 		{ "Square", ACTIVITY_COLORS.Cache, "VORRATSLAGER" },
 		{ "Dot", ACTIVITY_COLORS.Radio, "FUNKGERÄT" },
 		{ "Square", RED, "X  DEINE TASCHE" },

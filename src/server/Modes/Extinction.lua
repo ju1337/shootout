@@ -46,6 +46,7 @@ local ThrowableService = require(ServerShared.ThrowableService)
 local HordeService = require(ServerShared.HordeService)
 local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
+local BountyService = require(ServerShared.BountyService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -580,6 +581,22 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
+	-- Kopfgeld: wer mehrere Spieler in Folge erledigt, wird gesucht (rot auf der Karte)
+	BountyService.Init({
+		Map = map,
+		InSafeZone = Extinction.InSafeZone,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+	table.insert(Extinction.OnDeath, function(player)
+		BountyService.OnDeath(player)
+	end)
+
 	-- Konvoi: fährt eine Landstraße entlang, anhalten (Schüsse), Wachen erledigen, Ladung holen
 	ConvoyService.Init({
 		Map = map,
@@ -696,6 +713,7 @@ function Extinction.RemovePlayer(player)
 	InventoryService.Leave(player)
 	MissionService.Leave(player)
 	RedzoneBoard.RemovePlayer(player)
+	BountyService.RemovePlayer(player)
 	members[player] = nil
 	local character = player.Character
 	if character then
@@ -726,6 +744,7 @@ function Extinction.OnKill(killer, victim)
 		ExtLevelService.Add(killer, ExtLevelConfig.Rewards.PlayerKill, "Spieler", "ExtPlayerKills")
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
 		RedzoneBoard.Record(killer, redzoneOf(victim) or redzoneOf(killer))
+		BountyService.OnKill(killer, victim)
 	end
 end
 
