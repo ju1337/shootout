@@ -90,6 +90,7 @@ local SHIELD = Color3.fromRGB(150, 230, 70) -- Anti-Zombie-Spritze wirkt (Anzeig
 local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera.Value + 1): Maus frei, solange ein Fenster offen ist
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
+Inv.redText = nil :: TextLabel? -- Rote-Zone-Punkte im HUD
 Inv.attachBoxes = nil :: { [string]: any }? -- Aufsatz-Plätze im Info-Fenster (Waffe)
 Inv.popupWeapon = nil :: { Container: string, Slot: number }? -- Waffe im Info-Fenster
 Inv.hiddenGuis = nil :: { ScreenGui }? -- solange das Menü offen ist ausgeblendete Oberflächen
@@ -284,6 +285,17 @@ local function buildIcon(parent, id, zIndex)
 		end
 	end
 	return holder
+end
+
+-- Rote-Zone-Punkte als Symbol: rote Raute mit "RZ" (füllt parent)
+function Inv.rzIcon(parent, zIndex)
+	local diamond = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.62, 0.62),
+		Rotation = 45, BackgroundColor3 = Color3.fromRGB(200, 40, 40), BorderSizePixel = 0, ZIndex = zIndex }, parent)
+	UITheme.Corner(diamond, 3)
+	make("UIStroke", { Color = Color3.fromRGB(255, 200, 190), Thickness = 1.5 }, diamond)
+	label({ Size = UDim2.fromScale(1, 1), Text = "RZ", TextScaled = true, Font = F.Display, TextColor3 = Color3.new(1, 1, 1),
+		TextXAlignment = Enum.TextXAlignment.Center, ZIndex = zIndex + 1 }, parent)
+	return diamond
 end
 
 -- Kurzbeschreibung eines Items (für Details und Stände)
@@ -618,6 +630,10 @@ local function buildHud()
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
 	label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -30), Size = UDim2.fromOffset(160, 14),
 		Text = "MÜNZEN", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, root)
+	-- Rote-Zone-Punkte über den Münzen
+	Inv.redText = label({ Name = "RedPoints", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -70),
+		Size = UDim2.fromOffset(160, 18), Text = "", TextSize = 15, Font = F.Display, TextColor3 = Color3.fromRGB(230, 70, 60),
+		TextXAlignment = Enum.TextXAlignment.Right }, root)
 
 	-- Extinction-Level rechts neben der Hotbar: Level, EP-Balken, kurz "+N EP" bei jedem Gewinn
 	local levelBox = make("Frame", { Name = "ExtLevel", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0.5, barWidth / 2 + 14, 1, -30),
@@ -2071,6 +2087,7 @@ local function openStand(standKey)
 		.. math.floor(ExtinctionConfig.SellFactor * 100) .. " %)")
 	win.Stand = standKey
 	local body = win.Body
+	local redStand = stand.Currency == "RedPoints" -- der Schieber: Preise in Rote-Zone-Punkten
 	-- links das Angebot, rechts das eigene Inventar (anklicken = Info-Fenster mit Verkaufen)
 	local listW = math.floor(Inv.CONTENT_W * 0.42)
 	Inv.backdrop(body, win)
@@ -2109,9 +2126,15 @@ local function openStand(standKey)
 		local priceRow = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8 }, buyButton)
 		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
 			HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center }, priceRow)
-		UITheme.Coin(priceRow, 14, { LayoutOrder = 1, ZIndex = 8 })
-		label({ Name = "Price", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = tostring(config.Price),
-			TextSize = 17, Font = F.Display, LayoutOrder = 2, ZIndex = 8 }, priceRow)
+		if redStand then
+			local rz = make("Frame", { Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = 8 }, priceRow)
+			Inv.rzIcon(rz, 9)
+		else
+			UITheme.Coin(priceRow, 14, { LayoutOrder = 1, ZIndex = 8 })
+		end
+		label({ Name = "Price", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+			Text = tostring(redStand and stand.Prices[id] or config.Price), TextSize = 17, Font = F.Display, LayoutOrder = 2, ZIndex = 8 },
+			priceRow)
 		if stack then
 			Inv.flatButton({ Name = "Buy5", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(58, 40),
 				Text = "×5", TextSize = 15 }, row, function()
@@ -2132,7 +2155,8 @@ local function openStand(standKey)
 		end
 	end
 	function win.Refresh()
-		win.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
+		win.Coins.Text = redStand and (UITheme.FormatNumber(player:GetAttribute("RedPoints") or 0) .. " RZ")
+			or (UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN")
 		refreshGrids()
 		local actions = {}
 		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
@@ -2474,6 +2498,7 @@ local BUBBLES = {
 	Stash = { Icon = "Crate" },
 	Travel = { Icon = "Route" },
 	Hideout = { Icon = "House" },
+	Stand_Red = { Icon = "RedPoints" },
 }
 local bubbles = {}
 
@@ -2485,6 +2510,10 @@ local function buildSymbol(parent, kind, zIndex)
 		props.BorderSizePixel = 0
 		props.ZIndex = zIndex
 		return make("Frame", props, into or holder)
+	end
+	if kind == "RedPoints" then
+		Inv.rzIcon(holder, zIndex)
+		return holder
 	end
 	if kind == "Coins" then
 		for _, offset in { Vector2.new(-6, 5), Vector2.new(5, -3) } do
@@ -3201,6 +3230,17 @@ function ExtinctionClient.Init()
 			window.Refresh()
 		end
 	end)
+	local function paintRedPoints()
+		local points = player:GetAttribute("RedPoints") or 0
+		if Inv.redText then
+			Inv.redText.Text = UITheme.FormatNumber(points) .. " RZ"
+		end
+		if window and window.Stand == "Stand_Red" and window.Refresh then
+			window.Refresh()
+		end
+	end
+	player:GetAttributeChangedSignal("RedPoints"):Connect(paintRedPoints)
+	paintRedPoints()
 	player:GetAttributeChangedSignal("Coins"):Connect(function()
 		coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
 		if window and window.Coins then

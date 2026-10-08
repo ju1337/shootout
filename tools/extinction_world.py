@@ -2150,6 +2150,37 @@ class World:
                 shop = self.TOWN_STATIONS[key]
             self.townhouse(cx, cz, yaw, w, D, floors, shop=shop, key=key, garage=kind == "garage", bus=kind == "bus")
 
+    def schieber(self):
+        """Schwarzmarkt in der Weststraße des Camps: schwarzer Transporter mit offener Seitentür (Kisten, rotes Licht), daneben der
+        Schieber mit Kapuze (Punkt Stand_Red: Händler für Rote-Zone-Punkte). Ohne Zufall (ändert die Welt nicht)."""
+        b = self.b
+        vx, vz = -55.0, -4.0
+        f, box = self.frame(vx, vz, self.yaw_to(1, 0))  # Nase (lokal -Z) zum Platz, lokal +X = Norden (Straßenmitte)
+        black, trim = (26, 27, 30), (60, 62, 66)
+        box("Cover", "VanBody", (5.4, 5.2, 9), (0, 3.1, 1.5), black, "Metal")
+        box("Cover", "VanCab", (5.2, 3.6, 3.4), (0, 2.3, -4.6), black, "Metal")
+        box("Decor", "VanWindshield", (4.6, 1.6, 0.2), (0, 3.4, -6.35), (40, 52, 60), "Glass")
+        box("Decor", "VanBumper", (5.6, 0.6, 0.4), (0, 0.9, -6.5), trim, "Metal")
+        for lx in (-2.6, 2.6):
+            for lz in (-4.4, 3.8):
+                box("Decor", "VanWheel", (0.8, 2, 2), (lx, 1, lz), (18, 18, 18), "Rubber")
+        # offene Seitentür (Norden): Tür aufgeschoben, Kisten und rotes Licht im Laderaum
+        box("Decor", "VanDoor", (0.25, 4.2, 3.6), (2.95, 3, 4.4), black, "Metal")
+        box("Decor", "VanOpening", (0.1, 4, 3.6), (2.72, 3, 0.9), (12, 10, 10), "SmoothPlastic")
+        box("Stands", "SchieberLight", (0.2, 0.3, 3), (2.6, 5.2, 0.9), (255, 40, 40), "Neon",
+            children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 16, "Brightness": 1.6,
+                                                                                 "Color": self.bm.rgb(255, 40, 40)}}])
+        for lz, h in ((0.2, 1.4), (1.6, 1.0)):
+            box("Decor", "SchieberCrate", (1.8, h, 1.3), (1.6, 1.0 + h / 2, lz), (70, 84, 56), "Metal")
+        box("Decor", "SchieberCase", (1.6, 0.5, 1.1), (3.6, 0.9, 0.9), (30, 30, 34), "Metal")
+        box("Decor", "SchieberCaseStand", (1.6, 0.6, 1.1), (3.6, 0.3, 0.9), (110, 88, 62), "WoodPlanks")
+        # der Schieber: Kapuze, dunkle Jacke, zum Platz gedreht
+        self.npc_figure(box, 4.2, -2.2, jacket=(34, 34, 38), pants=(28, 28, 32), cap=None, skin=(170, 132, 104))
+        box("Decor", "NpcHood", (1.5, 1.5, 1.5), (4.2, 5.9, -2.05), (40, 40, 44), "Fabric")
+        box("Decor", "NpcScarf", (1.3, 0.5, 1.25), (4.2, 5.25, -2.25), (150, 30, 30), "Fabric")
+        b.add("Stands", "Stand_Red", (2, 2, 2), f(5.2, 2.5, -5.2), (200, 60, 60), "SmoothPlastic", angles=(0, self.yaw_to(1, 0), 0),
+              props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+
     def npc_figure(self, box, lx, lz, jacket, pants, cap=None, skin=(196, 156, 126)):
         """Stehende Figur (Händler, Fahrer) im Rahmen box, Blick nach lokal -Z: Beine, Körper, Arme, Kopf, Mütze mit Schirm.
         Ohne Zufall (ändert die Welt nicht)."""
@@ -4109,6 +4140,7 @@ def build(bm):
 
     # Mitte: Safe Zone, dann die besonderen Orte (belegen ihre Fläche, bevor die Straßen Häuser bekommen)
     w.camp()
+    w.schieber()  # Schwarzmarkt in der Weststraße (ohne Zufall)
     w.occupied.append((0, 0, 168))
     (ax, az), (bx, bz) = AUTOBAHN
     w.corridors.append((ax - 40, az, bx + 60, bz, AUTOBAHN_W + 16))

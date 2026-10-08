@@ -27,6 +27,7 @@ local Modes = require(Shared.Modes)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local WeaponService = require(script.Parent.WeaponService)
+local RedPointsService = require(script.Parent.RedPointsService)
 
 local InventoryService = {}
 
@@ -536,7 +537,10 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 	end
 	local stand = ExtinctionConfig.Stands[standKey]
 	local config = ExtinctionConfig.Get(itemId)
-	if not stand or not config or not config.Price or not table.find(stand.Items, itemId) then
+	-- der Schieber verkauft gegen Rote-Zone-Punkte (eigene Preisliste), alle anderen gegen Münzen
+	local redPoints = stand and stand.Currency == "RedPoints"
+	local unitPrice = config and (redPoints and stand.Prices and stand.Prices[itemId] or (not redPoints and config.Price))
+	if not stand or not config or not unitPrice or not table.find(stand.Items, itemId) then
 		return false
 	end
 	if not nearPoint(player, standKey) then
@@ -556,15 +560,21 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 		status(player, "Kein Platz in deiner Tasche.")
 		return false
 	end
-	-- Werkbank im Versteck: Rabatt
-	local price = math.floor(config.Price * qty * (1 - HideoutConfig.Value(player, "Workbench") / 100))
-	if not ProgressService.SpendCoins(player, price) then
+	-- Werkbank im Versteck: Rabatt (nur auf Münzen)
+	local price = redPoints and unitPrice * qty or math.floor(unitPrice * qty * (1 - HideoutConfig.Value(player, "Workbench") / 100))
+	if redPoints then
+		if not RedPointsService.Spend(player, price) then
+			status(player, "Nicht genug Rote-Zone-Punkte (" .. price .. " RZ nötig) – die gibt es nur in der roten Zone.")
+			return false
+		end
+	elseif not ProgressService.SpendCoins(player, price) then
 		status(player, "Nicht genug Münzen (" .. price .. " nötig).")
 		return false
 	end
 	Inventory.Add(state.Bag, itemId, count)
 	changed(player, state)
-	status(player, "Gekauft: " .. (count > 1 and (count .. "× ") or "") .. config.Name .. " für " .. price .. " Münzen", true)
+	status(player, "Gekauft: " .. (count > 1 and (count .. "× ") or "") .. config.Name .. " für " .. price
+		.. (redPoints and " RZ" or " Münzen"), true)
 	return true
 end
 

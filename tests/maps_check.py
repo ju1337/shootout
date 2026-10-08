@@ -81,7 +81,7 @@ def check_extinction():
     if [p["Name"] for p in portals] != ["Portal_Hub"] or not inside(portals[0], 10):
         problems.append("Extinction: genau ein Tor Portal_Hub in der Safe Zone erwartet")
     points = {}  # je Name der Punkt im Camp (Safehouses haben eigene Stände mit denselben Namen; den Spielermarkt gibt es nur im Camp)
-    camp_points = ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash", "Stand_Market", "Hideout")
+    camp_points = ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash", "Stand_Market", "Hideout", "Stand_Red")
     for group, part in parts:
         if group == "Stands" and part["Name"] in camp_points and inside(part, 10):
             points[part["Name"]] = part

@@ -47,6 +47,7 @@ local HordeService = require(ServerShared.HordeService)
 local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
+local RedPointsService = require(ServerShared.RedPointsService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -407,7 +408,26 @@ function Extinction.Init(modeManager)
 
 	-- Rote Zone: zieht alle 20 Minuten an einen anderen Ort; die Rangliste der PvP-Kills beginnt dann neu
 	RedzoneBoard.Init(map, RedzoneService.List())
+	-- vor dem Zurücksetzen der Rangliste: die besten drei der alten Runde bekommen Rote-Zone-Punkte
+	RedzoneService.OnMoved(function()
+		local ranks = ExtinctionConfig.RedPoints.Rank
+		for place, entry in RedzoneBoard.List("Redzone") do
+			local player = Players:GetPlayerByUserId(entry.Id)
+			if place > #ranks then
+				break
+			end
+			if player and members[player] and entry.Kills > 0 then
+				RedPointsService.Add(player, ranks[place], "Platz " .. place .. " der roten Zone")
+			end
+		end
+	end)
 	RedzoneService.OnMoved(RedzoneBoard.Moved)
+	-- Zombies in der roten Zone: je 1 RZ
+	table.insert(ZombieService.OnKill, function(killer, _, position)
+		if members[killer] and RedzoneService.At(position) then
+			RedPointsService.Add(killer, ExtinctionConfig.RedPoints.ZombieKill, nil)
+		end
+	end)
 	RedzoneService.Start({
 		Map = map,
 		SafeCenter = Extinction.SafeZoneCenter,
@@ -699,6 +719,7 @@ function Extinction.AddPlayer(player)
 	player:SetAttribute("ModeText", "")
 	InventoryService.Enter(player)
 	HideoutService.Publish(player) -- vor dem Spawn: Feldbett zählt schon beim ersten Leben
+	RedPointsService.Publish(player)
 	ExtLevelService.Publish(player)
 	MissionService.Join(player)
 	spawnPlayer(player)
@@ -743,7 +764,11 @@ function Extinction.OnKill(killer, victim)
 		ProgressService.AddCoins(killer, ExtinctionConfig.PlayerKillCoins, "Spieler erledigt")
 		ExtLevelService.Add(killer, ExtLevelConfig.Rewards.PlayerKill, "Spieler", "ExtPlayerKills")
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
-		RedzoneBoard.Record(killer, redzoneOf(victim) or redzoneOf(killer))
+		local zone = redzoneOf(victim) or redzoneOf(killer)
+		RedzoneBoard.Record(killer, zone)
+		if zone then
+			RedPointsService.Add(killer, ExtinctionConfig.RedPoints.PlayerKill, "Spieler in der roten Zone")
+		end
 		BountyService.OnKill(killer, victim)
 	end
 end
@@ -845,6 +870,9 @@ local function botDied(bot)
 			InventoryService.Status(killer, "+" .. coins .. " Münzen für " .. bot.Name, true)
 			ExtLevelService.Add(killer, ExtLevelConfig.Rewards.BotKill, "Bot", "ExtBotKills")
 			RedzoneBoard.Record(killer, zone or redzoneOf(killer))
+			if zone or redzoneOf(killer) then
+				RedPointsService.Add(killer, ExtinctionConfig.RedPoints.BotKill, "Bot in der roten Zone")
+			end
 		end
 	end
 	task.delay(ExtinctionConfig.Bots.CorpseTime, function()

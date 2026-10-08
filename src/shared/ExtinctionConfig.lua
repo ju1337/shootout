@@ -122,6 +122,29 @@ ExtinctionConfig.Stands = {
 }
 
 
+-- ---------- Rote-Zone-Punkte (RZ, RedPointsService) und der Schieber ----------
+-- RZ gibt es nur in der roten Zone: Spieler-Kill PlayerKill, Bot-Kill BotKill, Zombie-Kill ZombieKill; zieht die Zone weiter,
+-- bekommen die besten drei der Rangliste Rank[1..3]. Gespeichert im Profil (RedPoints), bleiben beim Tod.
+-- Der Schieber (Stand_Red, schwarzer Transporter in der Weststraße des Camps) verkauft nur gegen RZ (Stands.Stand_Red.Prices).
+ExtinctionConfig.RedPoints = {
+	PlayerKill = 10,
+	BotKill = 5,
+	ZombieKill = 1,
+	Rank = { 50, 30, 15 },
+}
+do
+	local prices = {
+		LMG = 140, DMR = 110, HeavyVest = 45, Adrenaline = 20, Grenade = 15, Molotov = 12,
+	}
+	local items = { "LMG", "DMR", "HeavyVest", "Adrenaline", "Grenade", "Molotov" }
+	local tierPrice = { [2] = 40, [3] = 80, [4] = 150 }
+	for _, id in ExtinctionConfig.AttachmentItems do
+		prices[id] = tierPrice[ExtinctionConfig.Items[id].Tier] or 80
+		table.insert(items, id)
+	end
+	ExtinctionConfig.Stands.Stand_Red = { Title = "DER SCHIEBER", Currency = "RedPoints", Items = items, Prices = prices }
+end
+
 -- ---------- Spielermarkt (ExtMarketService, Reiter MARKT im Menü, nur in der Safe Zone) ----------
 -- Spieler bieten Items aus der Tasche für Münzen an (höchstens MaxListings gleichzeitig, Preis 1 bis MaxPrice); der Käufer
 -- zahlt den Preis, der Verkäufer bekommt ihn minus FeeRate Gebühr. Angebote stehen im Spielstand des Verkäufers und sind
