@@ -101,7 +101,7 @@ local function title()
 end
 local function activeTab()
 	local m = menu()
-	for _, tab in m and m.Tabs:GetChildren() or {} do
+	for _, tab in m and m:FindFirstChild("Tabs", true):GetChildren() or {} do
 		local line = tab:FindFirstChild("Underline")
 		if line and line.Visible then
 			return string.sub(tab.Name, 5)
@@ -116,7 +116,7 @@ check(menu() ~= nil and title() == "INVENTAR" and activeTab() == "Inventory", "T
 local size = menu() and menu().Size
 check(size and size.X.Offset < 1600 and size.Y.Offset < 900, "Menü kleiner als der Bildschirm")
 local names = {}
-for _, tab in menu().Tabs:GetChildren() do
+for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 	if tab:IsA("TextButton") then
 		names[tab.LayoutOrder] = tab.Text
 	end
@@ -129,21 +129,21 @@ check(menu() == nil, "TAB nochmal: zu")
 
 -- Reiter wechseln per Klick; M öffnet den zuletzt offenen Reiter
 key(Enum.KeyCode.Tab)
-menu().Tabs.Tab_Squad.Activated:Fire()
+menu():FindFirstChild("Tabs", true).Tab_Squad.Activated:Fire()
 step(0.1)
 check(title() == "SQUAD" and activeTab() == "Squad", "Klick auf SQUAD")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt")
 key(Enum.KeyCode.M)
 check(title() == "SQUAD", "M öffnet den letzten Reiter (SQUAD)")
-menu().Tabs.Tab_Achievements.Activated:Fire()
+menu():FindFirstChild("Tabs", true).Tab_Achievements.Activated:Fire()
 step(0.1)
 check(title() == "ERFOLGE" and activeTab() == "Achievements", "Klick auf ERFOLGE")
 check(find(menu(), "Achievement_Zombies") ~= nil and find(menu(), "Achievement_Veteran") ~= nil, "Erfolge-Wand mit Karten")
 
 -- Lobby-Seiten: ausgeliehen, verkleinert, beim Schließen zurück in die Lobby
 for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
-	menu().Tabs["Tab_" .. id].Activated:Fire()
+	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	step(0.1)
 	check(activeTab() == id, id .. ": Reiter aktiv")
 	local holder = menu() and menu():FindFirstChild("PageHolder", true)
