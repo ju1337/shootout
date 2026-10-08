@@ -467,8 +467,10 @@ local function refreshLabel(bag)
 	end
 end
 
--- Item herausnehmen: slot = Platz in der Tasche oder "All" (nur mit dem Gamepass ALLES LOOTEN)
-function LootService.Take(player, id, slot)
+-- Item herausnehmen: slot = Platz in der Tasche oder "All" (nur mit dem Gamepass ALLES LOOTEN).
+-- toName = "Bag" (Standard) oder "Safe" (Container), toSlot = Zielplatz (nil = einsortieren; belegt mit etwas anderem
+-- = einsortieren, damit nichts in die Tasche am Boden getauscht wird)
+function LootService.Take(player, id, slot, toName, toSlot)
 	local bag = type(id) == "number" and bags[id]
 	if not bag then
 		return false
@@ -484,9 +486,12 @@ function LootService.Take(player, id, slot)
 	if slot == "All" then
 		opened(player, bag)
 	end
-	local playerBag = InventoryService.GetBag(player)
+	local playerBag = toName == "Safe" and slot ~= "All" and InventoryService.GetSafe(player) or InventoryService.GetBag(player)
 	if not playerBag then
 		return false
+	end
+	if type(toSlot) ~= "number" or slot == "All" or toSlot ~= math.floor(toSlot) or toSlot < 1 or toSlot > playerBag.Size then
+		toSlot = nil
 	end
 	local slots = {}
 	if slot == "All" then
@@ -503,7 +508,12 @@ function LootService.Take(player, id, slot)
 		if item then
 			local before = item.Count
 			local id_ = item.Id
-			if Inventory.Move(bag.Container, s, playerBag, nil) then
+			local target = toSlot and playerBag.Slots[toSlot]
+			local into = toSlot
+			if target and (target.Id ~= id_ or ExtinctionConfig.MaxStack(id_) <= 1) then
+				into = nil
+			end
+			if Inventory.Move(bag.Container, s, playerBag, into) then
 				moved = true
 			end
 			local left = bag.Container.Slots[s]
@@ -517,7 +527,8 @@ function LootService.Take(player, id, slot)
 		end
 	end
 	if full then
-		InventoryService.Status(player, "Deine Tasche ist voll.")
+		InventoryService.Status(player, playerBag == InventoryService.GetSafe(player) and "Der Container ist voll."
+			or "Deine Tasche ist voll.")
 	elseif moved and slot == "All" then
 		InventoryService.Status(player, "+ " .. LootService.Summary(taken), true)
 	end

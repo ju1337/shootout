@@ -233,6 +233,40 @@ step(ExtinctionConfig.RespawnTime + 0.5)
 check(alice.Character and alice.Character.Humanoid.Health > 0, "Respawn")
 check(find(safeOf(alice), "Rifle") ~= nil, "nach dem Respawn: Gewehr im Container")
 
+-- Beute direkt in den Container (Zielplatz) oder einsortiert in die Tasche
+moveTo(alice, Vector3.new(0, 3, 300))
+local lootId = LootService.Create(alice.Character.HumanoidRootPart.Position + Vector3.new(2, 0, 0),
+	{ { Id = "Medkit", Count = 1 }, { Id = "Pistol", Count = 1, Mag = 5 } }, "Drop", "BEUTEL")
+step(0.1)
+local bandageSlot = find(safeOf(alice), "Bandage").S
+check(InventoryService.Move(alice, "Safe", bandageSlot, "Bag", nil) == true, "einen Verband aus dem vollen Container genommen")
+local freeSafe = nil
+for s = 1, ExtinctionConfig.SafeSlots do
+	local taken = false
+	for _, entry in safeOf(alice) do
+		taken = taken or entry.S == s
+	end
+	if not taken then
+		freeSafe = s
+		break
+	end
+end
+check(freeSafe ~= nil and LootService.Take(alice, lootId, 1, "Safe", freeSafe) == true, "Beute auf einen freien Platz im Container")
+local medkit = find(safeOf(alice), "Medkit")
+check(medkit ~= nil and medkit.S == freeSafe, "Medkit auf dem gewählten Platz im Container")
+check(LootService.Take(alice, lootId, 2, "Safe", 3) == false or find(safeOf(alice), "Pistol") == nil,
+	"belegter Platz und voller Container: nichts getauscht")
+check(LootService.Take(alice, lootId, 2, "Bag", nil) == true and LootService.Get(lootId) == nil, "Rest in die Tasche, Beutel weg")
+check(InventoryService.Move(alice, "Safe", freeSafe, "Bag", nil) == true, "Medkit zurück in die Tasche")
+local bandageBack = nil
+for _, entry in bagOf(alice) do
+	if entry.Id == "Bandage" then
+		bandageBack = entry.S
+	end
+end
+check(bandageBack ~= nil and InventoryService.Move(alice, "Bag", bandageBack, "Safe", freeSafe) == true, "Verband zurück in den Container")
+moveTo(alice, Vector3.new(0, 3, 0))
+
 -- am Lager: Container <-> Lager
 moveTo(alice, Vector3.new(52, 3, -26))
 check(InventoryService.Move(alice, "Safe", 3, "Stash", nil) == true, "am Lager: Container -> Lager")

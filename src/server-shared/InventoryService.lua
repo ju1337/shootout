@@ -617,6 +617,12 @@ function InventoryService.GetBag(player)
 	return state and state.Bag
 end
 
+-- Container des Spielers (sichere Tasche, Inventory-Container) oder nil
+function InventoryService.GetSafe(player)
+	local state = stateOf(player)
+	return state and state.Safe
+end
+
 -- Nach einer Änderung von außen (Looten, Fahrzeug): speichern und anzeigen
 function InventoryService.Changed(player)
 	local state = states[player]
