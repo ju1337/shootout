@@ -15,6 +15,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
@@ -242,6 +243,17 @@ local function halt(convoy)
 			table.insert(convoy.Guards, guard)
 		end
 	end
+	-- Bremsen, Motoren laufen nur noch leise im Leerlauf
+	local truck = convoy.Vehicles[2] and convoy.Vehicles[2].Model
+	if truck and truck.PrimaryPart then
+		Sfx.At("AirBrakes", truck.PrimaryPart)
+	end
+	for _, vehicle in convoy.Vehicles do
+		if vehicle.Engine then
+			vehicle.Engine.Volume *= 0.4
+			vehicle.Engine.PlaybackSpeed *= 0.8
+		end
+	end
 	announce("KONVOI GESTOPPT", "Wachen steigen aus · erledige sie, dann ist die Ladung frei")
 	publish()
 end
@@ -292,6 +304,10 @@ local function tick(now, dt)
 	if convoy.State == "Waiting" then
 		if now >= convoy.DepartAt then
 			convoy.State = "Driving"
+			local truck = convoy.Vehicles[2] and convoy.Vehicles[2].Model
+			if truck and truck.PrimaryPart then
+				Sfx.At("TruckHorn", truck.PrimaryPart)
+			end
 			announce("KONVOI FÄHRT LOS", "Auf der Strecke " .. convoy.Path.Name .. " · halte ihn auf")
 		end
 	elseif convoy.State == "Driving" then
@@ -339,6 +355,13 @@ function ConvoyService.Start(routeIndex)
 		{ Kind = "Escort", Model = buildVehicle("Escort") },
 	}
 	convoy.Distance = (#convoy.Vehicles - 1) * K.Spacing -- alle Fahrzeuge am Start hintereinander
+	-- Motoren: Lkw tief, Begleitfahrzeuge etwas höher und leiser (enden mit den Modellen)
+	for _, vehicle in convoy.Vehicles do
+		if vehicle.Model.PrimaryPart then
+			vehicle.Engine = Sfx.Loop("TruckLoop", vehicle.Model.PrimaryPart, vehicle.Kind == "Truck" and { Volume = 1 }
+				or { Volume = 0.7, Pitch = 1.25 })
+		end
+	end
 	current = convoy
 	place(convoy)
 	publish()

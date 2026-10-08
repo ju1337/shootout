@@ -20,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
@@ -263,6 +264,9 @@ local function finishUse(player, state, item, config, character, humanoid)
 	changed(player, state)
 end
 
+-- Geräusch beim Benutzen je Item (sonst nach Art: Weste Schnalle, Heilung Reißverschluss, Spritze Sprühstoß)
+local USE_SOUNDS = { Bandage = "Bandage", Medkit = "Zipper", Adrenaline = "Spray", AntiZombie = "Spray" }
+
 local function startUse(player, state, item, config)
 	local character, humanoid = livingCharacter(player)
 	if not character or not humanoid then
@@ -293,6 +297,13 @@ local function startUse(player, state, item, config)
 	end
 	character:SetAttribute("UsingItem", config.Name)
 	character:SetAttribute("UseEnd", workspace:GetServerTimeNow() + useTime)
+	-- Geräusch beim Benutzen (hören auch andere in der Nähe)
+	local useSound = USE_SOUNDS[item.Id] or (config.Kind == "Armor" and "Buckle") or (config.Kind == "Heal" and "Zipper")
+		or (config.Kind == "Repel" and "Spray")
+	local useRoot = character:FindFirstChild("HumanoidRootPart")
+	if useSound and useRoot then
+		Sfx.At(useSound, useRoot)
+	end
 	Remotes.ExtUpdate:FireClient(player, "UseStart", config.Name, useTime)
 	task.delay(useTime, function()
 		if state.Using ~= token then
@@ -573,6 +584,7 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 	end
 	Inventory.Add(state.Bag, itemId, count)
 	changed(player, state)
+	Sfx.ToPlayers({ player }, "Register")
 	status(player, "Gekauft: " .. (count > 1 and (count .. "× ") or "") .. config.Name .. " für " .. price
 		.. (redPoints and " RZ" or " Münzen"), true)
 	return true
@@ -610,6 +622,7 @@ function InventoryService.Sell(player, slot, count)
 		ProgressService.AddCoins(player, price, "Verkauf")
 	end
 	changed(player, state)
+	Sfx.ToPlayers({ player }, "Coins")
 	status(player, "Verkauft: " .. (count > 1 and (count .. "× ") or "") .. name .. " für " .. price .. " Münzen", true)
 	return true
 end

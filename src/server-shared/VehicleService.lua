@@ -22,6 +22,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local DayCycle = require(Shared.DayCycle)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
@@ -48,6 +49,7 @@ folder.Parent = workspace
 
 local options = nil -- { InSafeZone(position) }
 local active = {}   -- [Player] = { Model, Chassis, Seat, Item, Config, LastPos, LastTime }
+local ENGINE_SOUNDS -- unten gesetzt (Motor-Sound je Fahrzeug)
 
 local function status(player, text, ok)
 	InventoryService.Status(player, text, ok)
@@ -596,6 +598,14 @@ function VehicleService.Use(player, _, item)
 	model.Parent = folder
 	active[player] = { Model = model, Chassis = chassis, Seat = driverSeat, Item = item, Config = config,
 		LastPos = chassis.Position, LastTime = os.clock() }
+	-- Motor (Fahrrad ohne): Tonhöhe und Lautstärke folgen dem Tempo (siehe Init)
+	local engine = ENGINE_SOUNDS[itemConfig.Vehicle]
+	if engine then
+		local sound = Sfx.Loop(engine, chassis)
+		if sound then
+			active[player].Engine, active[player].EnginePitch, active[player].EngineVolume = sound, sound.PlaybackSpeed, sound.Volume
+		end
+	end
 	item.Out = true
 	watchSeats(player, model)
 	VehicleService.WatchRam(player, model, chassis)
@@ -648,6 +658,10 @@ local function wreck(owner, entry)
 	explosion.DestroyJointRadiusPercent = 0
 	explosion.Position = chassis.Position
 	explosion.Parent = workspace
+	Sfx.At("GrenadeExplosion", chassis.Position)
+	if entry.Engine then
+		entry.Engine:Destroy()
+	end
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") and part.Transparency < 1 then
 			part.Color = Color3.fromRGB(30, 28, 26)
@@ -737,6 +751,21 @@ function VehicleService.Get(player)
 end
 
 -- opts = { InSafeZone(position) }
+-- Motor-Sound je Fahrzeug (SoundLibrary)
+ENGINE_SOUNDS = { Quad = "QuadLoop", Pickup = "CarLoop", Sports = "SportsLoop", Heli = "HeliLoop" }
+
+-- Motor nachführen: im Stand leise und tief, bei Höchsttempo laut und hoch; ohne Fahrer nur Leerlauf
+local function updateEngine(entry)
+	local sound = entry.Engine
+	if not sound or not sound.Parent then
+		return
+	end
+	local ratio = math.clamp(entry.Chassis.AssemblyLinearVelocity.Magnitude / math.max(1, entry.Config.Speed), 0, 1)
+	local driven = entry.Seat and entry.Seat.Occupant ~= nil
+	sound.PlaybackSpeed = entry.EnginePitch * (0.75 + 0.6 * ratio)
+	sound.Volume = math.min(10, entry.EngineVolume * (driven and (0.55 + 0.6 * ratio) or 0.25))
+end
+
 function VehicleService.Init(opts)
 	options = opts
 	InventoryService.UseVehicle = VehicleService.Use
@@ -747,8 +776,15 @@ function VehicleService.Init(opts)
 	end)
 	-- Tempo-Check: Fahrzeuge, die schneller sind als erlaubt, zurücksetzen. Helikopter auch beim Steigen, über der
 	-- Flughöhe und außerhalb der Welt. Jedes Bild: Helikopter ohne Pilot, die sinken, setzen auf.
-	local elapsed = 0
+	local elapsed, engineElapsed = 0, 0
 	RunService.Heartbeat:Connect(function(dt)
+		engineElapsed += dt
+		if engineElapsed >= 0.1 then
+			engineElapsed = 0
+			for _, entry in active do
+				updateEngine(entry)
+			end
+		end
 		for _, entry in active do
 			if entry.Config.Kind == "Heli" and entry.Chassis.Parent and not entry.Seat.Occupant then
 				local drive = entry.Chassis:FindFirstChild("Drive")

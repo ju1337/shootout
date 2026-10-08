@@ -26,6 +26,7 @@ local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Sfx = require(Shared.Sfx)
 local UITheme = require(Shared.UITheme)
 local Medals = require(Shared.Medals)
 local AgentConfig = require(Shared.AgentConfig)
@@ -633,7 +634,12 @@ local function buildBanner(root)
 		caption.TextTransparency = 1
 		tween(caption, 0.3, { TextTransparency = 0 }, nil, nil, 0.2)
 
-		-- Klang: tiefer Schlag, bei Sieg/Niederlage zwei Töne steigend bzw. fallend
+		-- Klang: eigener Klang (data.Sound, SoundLibrary), Warnung/Erfolg der offenen Welt als Signalton, sonst tiefer
+		-- Schlag; bei Sieg/Niederlage zwei Töne steigend bzw. fallend
+		if type(data.Sound) == "string" or data.Style == "Warning" or data.Style == "Good" then
+			Sfx.UI(type(data.Sound) == "string" and data.Sound or (data.Style == "Warning" and "StingWarning" or "StingGood"))
+			return big and BANNER_HOLD + 0.9 or BANNER_HOLD
+		end
 		tone(THUD, 0.42, 0.7)
 		if data.Style == "Win" then
 			tone(PING, 1.0, 0.4, 0.08)

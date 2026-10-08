@@ -19,6 +19,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Sfx = require(Shared.Sfx)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
 local Modes = require(Shared.Modes)
@@ -40,6 +41,18 @@ LootService.OnRemoved = {}
 LootService.OnOpened = {}
 
 local function opened(player, bag)
+	-- Geräusch an der Tasche/Kiste: Kisten der Events beim ersten Öffnen schwerer Verschluss, sonst Reißverschluss
+	local part = bag.Part
+	if part and part.Parent then
+		if bag.Kind == "Airdrop" or bag.Kind == "Crate" then
+			if not bag.SoundDone then
+				bag.SoundDone = true
+				Sfx.At("CrateOpen", part)
+			end
+		else
+			Sfx.At("Zipper", part, { Volume = 0.8 })
+		end
+	end
 	for _, callback in LootService.OnOpened do
 		local ok, err = pcall(callback, player, bag)
 		if not ok then
@@ -531,6 +544,7 @@ function LootService.Take(player, id, slot, toName, toSlot)
 			or "Deine Tasche ist voll.")
 	elseif moved and slot == "All" then
 		InventoryService.Status(player, "+ " .. LootService.Summary(taken), true)
+		Sfx.ToPlayers({ player }, "Pickup")
 	end
 	if moved then
 		InventoryService.Changed(player)

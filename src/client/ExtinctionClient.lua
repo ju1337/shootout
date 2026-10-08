@@ -37,6 +37,7 @@ local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
 local KitConfig = require(Shared.KitConfig)
+local Sfx = require(Shared.Sfx)
 local LootInfo = require(Shared.LootInfo)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local AchievementConfig = require(Shared.AchievementConfig)
@@ -1941,6 +1942,7 @@ end
 
 -- LAGER: Tasche links, Lager rechts; anklicken legt ins andere
 local function openStash()
+	Sfx.UI("Locker")
 	local win = newWindow("Stash", "LAGER", "IMMER SICHER  ·  ANKLICKEN = HINÜBERLEGEN  ·  ZIEHEN = AUF EINEN PLATZ")
 	local body = win.Body
 	-- links das eigene Inventar, rechts das Lager

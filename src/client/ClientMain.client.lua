@@ -64,6 +64,7 @@ Nametags.Init()
 MapVote.Init()
 MapAtmosphere.Init() -- Lichtstimmung je Map (Weltraum, Tropen)
 StormClient.Init() -- Sturmnacht der offenen Welt: Regen, Wind, Blitze, Donner
+require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Sfx")).InitClient() -- Geräusche vom Server, vorladen
 GraphicsQuality.Init() -- Einstellung Grafik (Schatten, Partikel, Leuchten)
 KillstreakHUD.Init() -- Killstreaks in Herrschaft rechts am Rand (Tasten 4/5/6)
 TouchControls.Init()

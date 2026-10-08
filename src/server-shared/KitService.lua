@@ -7,6 +7,7 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local KitConfig = require(Shared.KitConfig)
 local RobuxConfig = require(Shared.RobuxConfig)
@@ -63,6 +64,7 @@ function KitService.Claim(player, kitId)
 			end
 		end
 	end
+	Sfx.ToPlayers({ player }, "AmmoBox")
 	status(player, kit.Name .. " claimed" .. (stashed and " – your bag was full, the rest is in your stash." or "!"), true)
 end
 

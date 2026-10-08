@@ -24,6 +24,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
+local Sfx = require(Shared.Sfx)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
 local LootService = require(script.Parent.LootService)
@@ -464,9 +465,36 @@ local function remove(model)
 	end
 end
 
+-- Stimme eines Zombies (SoundLibrary): Brocken brüllen beim Bemerken und Zuschlagen, Läufer klingen höher, Bosse
+-- tiefer. Höchstens alle VOICE_GAP Sekunden je Zombie (force = trotzdem, z.B. Tod).
+local VOICE_GAP = 1.2
+local function voice(info, name, force)
+	local now = os.clock()
+	if not force and now < (info.QuietUntil or 0) then
+		return
+	end
+	info.QuietUntil = now + VOICE_GAP
+	local pitch = 1
+	if info.Stats and info.Stats.Boss then
+		pitch = 0.7
+	elseif info.Kind == "Brute" then
+		pitch = 0.85
+		if name == "ZombieAggro" or name == "ZombieAttack" then
+			name = "BruteRoar"
+		end
+	elseif info.Kind == "Runner" then
+		pitch = 1.15
+	end
+	Sfx.At(name, info.Root, { Pitch = pitch })
+end
+ZombieService.Voice = voice
+
 local function onDeath(model, info)
 	local root = info.Root
 	remove(model)
+	if root and root.Parent then
+		voice(info, "ZombieDeath", true)
+	end
 	-- in der roten Zone gestorben: mehr Münzen, bessere Beute
 	local red = root and options and options.RedzoneAt and options.RedzoneAt(root.Position) ~= nil
 	-- Münzen für den, der zuletzt getroffen hat (Spieler)
@@ -848,6 +876,13 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	humanoid.Died:Once(function()
 		onDeath(model, info)
 	end)
+	local lastHealth = humanoid.Health
+	humanoid.HealthChanged:Connect(function(value)
+		if value < lastHealth - 0.5 and value > 0 then
+			voice(info, "ZombieHurt")
+		end
+		lastHealth = value
+	end)
 	return model
 end
 
@@ -874,7 +909,17 @@ local function step(model, info, now)
 			ZombieService.Scream(model, target)
 		end
 	end
+	if target and not info.Target then
+		voice(info, "ZombieAggro") -- hat jemanden bemerkt
+	end
 	info.Target = target
+	-- hin und wieder stöhnen (beim Jagen öfter); nicht gleich beim Spawnen
+	if not info.NextGroan then
+		info.NextGroan = now + random:NextNumber(2, 10)
+	elseif now >= info.NextGroan then
+		info.NextGroan = now + (target and random:NextNumber(4, 8) or random:NextNumber(6, 14))
+		voice(info, "ZombieIdle")
+	end
 	if target then
 		local targetRoot, targetHumanoid, character = livingRoot(target)
 		if not targetRoot or not targetHumanoid or not character then
@@ -886,6 +931,7 @@ local function step(model, info, now)
 			humanoid:MoveTo(root.Position) -- stehen bleiben und zuschlagen
 			if now >= info.NextAttack then
 				info.NextAttack = now + Z.AttackDelay
+				voice(info, "ZombieAttack")
 				Damage.Apply(character, targetHumanoid, info.Damage, { Model = model, BotName = info.Name, Weapon = "Zombie" })
 			end
 		else
@@ -1032,6 +1078,7 @@ function ZombieService.Scream(model, target)
 	if not root then
 		return
 	end
+	Sfx.At("ZombieScream", root)
 	for other, info in zombies do
 		if other ~= model and (info.Root.Position - root.Position).Magnitude <= Z.ScreamRange then
 			info.Target = target

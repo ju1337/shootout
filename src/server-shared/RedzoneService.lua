@@ -81,12 +81,13 @@ function RedzoneService.Candidates()
 	return list
 end
 
-local function announce(title, sub, style)
+local function announce(title, sub, style, sound)
 	if not (options and options.Players) then
 		return
 	end
 	for _, player in options.Players() do
-		Remotes.Notify:FireClient(player, "Banner", { Caption = "Rote Zone", Title = title, Sub = sub, Style = style or "Warning" })
+		Remotes.Notify:FireClient(player, "Banner", { Caption = "Rote Zone", Title = title, Sub = sub, Style = style or "Warning",
+			Sound = sound })
 	end
 end
 
@@ -199,7 +200,7 @@ function RedzoneService.MoveNow(key)
 		Warned = false }
 	moved()
 	announce("ROTE ZONE: " .. string.upper(pick.Title), "Rangliste neu · PvP sofort · bessere Beute · zieht in "
-		.. math.floor(cfg.Interval / 60) .. " Min weiter", "Warning")
+		.. math.floor(cfg.Interval / 60) .. " Min weiter", "Warning", "PoliceSiren")
 	return current
 end
 

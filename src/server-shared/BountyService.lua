@@ -22,9 +22,10 @@ local options = nil -- { Map, Players(), InSafeZone(position) }
 local streaks = {} -- [Player] = Kills seit dem letzten Tod
 local target = nil -- { Player, Reward, Survived (Sekunden draußen) }
 
-local function announce(title, sub, style)
+local function announce(title, sub, style, sound)
 	for _, player in options.Players() do
-		Remotes.Notify:FireClient(player, "Banner", { Caption = "Kopfgeld", Title = title, Sub = sub, Style = style or "Warning" })
+		Remotes.Notify:FireClient(player, "Banner", { Caption = "Kopfgeld", Title = title, Sub = sub, Style = style or "Warning",
+			Sound = sound })
 	end
 end
 
@@ -73,7 +74,7 @@ local function mark(player)
 	player:SetAttribute("Bounty", target.Reward)
 	publish()
 	announce("KOPFGELD AUF " .. string.upper(player.Name), streak .. " Kills in Folge · " .. target.Reward
-		.. " Münzen für den, der ihn erledigt · sein Standort blitzt ab und zu auf der Karte (N) auf")
+		.. " Münzen für den, der ihn erledigt · sein Standort blitzt ab und zu auf der Karte (N) auf", "Warning", "RadioCall")
 end
 
 -- Spieler-Kill draußen (Extinction.OnKill)
@@ -160,7 +161,7 @@ function BountyService.Init(opts)
 			for _, other in options.Players() do
 				if other ~= target.Player then
 					Remotes.Notify:FireClient(other, "Banner", { Caption = "Kopfgeld", Title = "GESUCHTER GESICHTET",
-						Sub = target.Player.Name .. " · " .. B.RevealTime .. " s auf der Karte (N)", Style = "Warning" })
+						Sub = target.Player.Name .. " · " .. B.RevealTime .. " s auf der Karte (N)", Style = "Warning", Sound = "RadioCall" })
 				end
 			end
 		end

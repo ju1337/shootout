@@ -17,6 +17,7 @@ local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Sfx = require(Shared.Sfx)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
 local ZombieService = require(script.Parent.ZombieService)
@@ -149,6 +150,7 @@ local function buildFlare(target)
 	smoke.Transparency = NumberSequence.new(0.35, 1)
 	smoke.Parent = beam
 	model.Parent = folder
+	Sfx.Loop("FlareLoop", disc) -- Signalfeuer zischt (endet mit dem Modell)
 	return model
 end
 
@@ -167,6 +169,7 @@ local function buildCrateFall()
 	end
 	model.PrimaryPart = body
 	model.Parent = folder
+	Sfx.Loop("ParachuteLoop", canopy) -- Fallschirm flattert
 	return model
 end
 
@@ -193,6 +196,7 @@ local function finish(drop)
 end
 
 local function land(drop)
+	Sfx.At("CrateLand", drop.Target + Vector3.new(0, 2, 0))
 	if drop.Falling then
 		drop.Falling:Destroy()
 		drop.Falling = nil
@@ -267,6 +271,7 @@ function AirdropService.Start(position)
 	drop.Flare = buildFlare(target)
 	table.insert(active, drop)
 	publish()
+	Sfx.ToPlayers(options.Players(), "RadioCall")
 	announce("VERSORGUNGSABWURF", (zone and ("In der roten Zone " .. zone.Title .. " · ") or "") .. "Landet in " .. A.Warning + A.FallTime
 		.. " Sekunden · Markierung auf dem Bildschirm")
 	return drop

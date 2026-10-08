@@ -11,6 +11,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
@@ -78,6 +79,7 @@ local function build(position)
 		light.Range = 24
 		light.Brightness = 2.5
 		light.Parent = flare
+		Sfx.Loop("FlareLoop", flare, { Volume = 0.7 }) -- Signalfeuer zischt
 		local smoke = Instance.new("Smoke")
 		smoke.Color = Color3.fromRGB(200, 40, 30)
 		smoke.Opacity = 0.35
@@ -191,6 +193,7 @@ end
 local function spawnWave(index)
 	local wave = H.Waves[index]
 	current.Wave = index
+	Sfx.At("WaveSting", current.Position + Vector3.new(0, 3, 0))
 	for _ = 1, wave.Count do
 		ZombieService.SpawnAround(current.Position, 1, H.SpawnMin, H.SpawnMax, rollKind(wave.KindWeights), true)
 	end
@@ -308,6 +311,9 @@ function HordeService.Begin(player, horde)
 	current.State = "Siege"
 	current.Holders[player] = true
 	current.Prompt.Enabled = false
+	if current.Model and current.Model.PrimaryPart then
+		Sfx.At("Siren", current.Model.PrimaryPart) -- Belagerung beginnt
+	end
 	spawnWave(1)
 	refreshLabel()
 	publish()

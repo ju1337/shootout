@@ -11,6 +11,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
@@ -87,6 +88,9 @@ function BloodMoonService.SpawnBoss()
 	end
 	if model then
 		bosses[model] = true
+		if model:FindFirstChild("HumanoidRootPart") then
+			Sfx.At("BossRoar", model.HumanoidRootPart)
+		end
 		announce("EINE BLUTBESTIE IST ERWACHT", "In der Nähe von " .. pick.Player.Name .. " · töte sie für die beste Beute", "Warning")
 	end
 	return model
@@ -101,6 +105,12 @@ function BloodMoonService.Start(duration)
 	nextBoss = t + B.FirstBoss
 	nextStart = t + math.max(B.Interval, duration + 60)
 	warned = false
+	if options and options.Players then
+		Sfx.ToPlayers(options.Players(), "ChurchBell")
+		task.delay(2.5, function()
+			Sfx.ToPlayers(options.Players(), "Howl")
+		end)
+	end
 	announce("BLUTMOND", math.floor(duration / 60) .. " Minuten · stärkere Zombies · bessere Beute · Bosse", "Warning")
 end
 

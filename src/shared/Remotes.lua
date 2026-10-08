@@ -57,6 +57,7 @@ local NAMES = {
 	"ExtAction",  -- Client -> Server: offene Welt (Use, Move, Buy, Sell, Drop, Loot, StoreVehicle, ...; InventoryService)
 	"ExtUpdate",  -- Server -> Client: offene Welt (Art, Daten): "Status", "Loot", "LootClosed", "UseStart", "UseEnd", ...
 	"StormStrike", -- Server -> alle: Blitzeinschlag der Sturmnacht (Position)
+	"PlaySfx",    -- Server -> Client: Geräusch aus SoundLibrary (Name, Position oder nil = 2D, Optionen; Sfx)
 }
 
 local folder

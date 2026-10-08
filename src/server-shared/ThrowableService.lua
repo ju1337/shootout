@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local DayCycle = require(Shared.DayCycle)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
@@ -146,6 +147,8 @@ local function explode(thrower, position, cfg)
 	explosion.DestroyJointRadiusPercent = 0
 	explosion.ExplosionType = Enum.ExplosionType.NoCraters
 	explosion.Parent = workspace
+	Sfx.At("GrenadeExplosion", position)
+	Sfx.At("BlastLayer", position)
 	local origin = position + Vector3.new(0, 1, 0)
 	for _, model in targets(thrower) do
 		local root = model:FindFirstChild("HumanoidRootPart")
@@ -199,6 +202,9 @@ local function ignite(thrower, position, cfg)
 	center.Size = 9
 	center.Heat = 12
 	center.Parent = area
+	Sfx.At("BottleBreak", ground)
+	Sfx.At("FireIgnite", ground)
+	Sfx.Loop("FireLoopSmall", area) -- brennt, bis die Fläche verschwindet
 	Debris:AddItem(area, cfg.Duration + 0.5)
 	local burn = { Position = ground, Radius = cfg.Radius, Until = os.clock() + cfg.Duration }
 	table.insert(fires, burn)
@@ -279,6 +285,15 @@ local function launch(thrower, kind, origin, direction, cfg)
 		end)
 		task.delay(cfg.Fuse, burst)
 	else
+		-- springt auf: Klirren beim Aufschlagen (höchstens alle 0,25 s)
+		local lastBounce = 0
+		part.Touched:Connect(function(hit)
+			if os.clock() - lastBounce < 0.25 or (thrower.Character and hit:IsDescendantOf(thrower.Character)) then
+				return
+			end
+			lastBounce = os.clock()
+			Sfx.At("GrenadeBounce", part)
+		end)
 		task.delay(cfg.Fuse, function()
 			if part.Parent then
 				local position = part.Position

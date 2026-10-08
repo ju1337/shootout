@@ -10,6 +10,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
@@ -89,6 +90,9 @@ local function buildFlying()
 	fire.Size = 6
 	fire.Parent = body
 	model.Parent = folder
+	-- Rotor und Warnton im Cockpit (enden mit dem Modell beim Aufprall)
+	Sfx.Loop("HeliLoop", body)
+	Sfx.Loop("HeliAlarm", body)
 	return model
 end
 
@@ -202,7 +206,12 @@ local function crash()
 	explosion.BlastPressure = 0
 	explosion.DestroyJointRadiusPercent = 0
 	explosion.Parent = workspace
+	Sfx.At("HeliImpact", target + Vector3.new(0, 2, 0))
+	Sfx.At("BigExplosion", target + Vector3.new(0, 2, 0))
 	current.Model = buildWreck(target)
+	if current.Model.PrimaryPart then
+		current.Fire = Sfx.Loop("FireLoopBig", current.Model.PrimaryPart) -- Wrack brennt
+	end
 	current.State = "Burning"
 	current.BurnEnds = os.clock() + K.BurnTime
 	current.BurnEndsServer = workspace:GetServerTimeNow() + K.BurnTime
@@ -213,6 +222,10 @@ end
 
 local function releaseLoot()
 	extinguish(current.Model)
+	if current.Fire then
+		current.Fire:Destroy()
+		current.Fire = nil
+	end
 	current.State = "Loot"
 	current.Loot = {}
 	for i = 1, K.Crates do

@@ -13,6 +13,7 @@ local Players = game:GetService("Players")
 local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
@@ -161,6 +162,9 @@ local function spawn(boss)
 		info.Boss = true
 	end
 	addNameplate(model, cfg, humanoid)
+	if model:FindFirstChild("HumanoidRootPart") then
+		Sfx.At("BossRoar", model.HumanoidRootPart) -- erwacht
+	end
 	boss.Model, boss.Humanoid = model, humanoid
 	boss.NextAbility = os.clock() + cfg.AbilityEvery
 	humanoid.Died:Once(function()
@@ -202,6 +206,7 @@ local function throwSyringe(boss, target)
 		end
 	end)
 	Damage.Apply(target.Root.Parent, target.Humanoid, cfg.AbilityDamage, { Model = boss.Model, BotName = cfg.Name, Weapon = "Spritze" })
+	Sfx.At("Spray", target.Root)
 	local character = target.Root.Parent
 	character:SetAttribute("SpeedMultiplier", cfg.SlowFactor)
 	task.delay(cfg.SlowTime, function()
