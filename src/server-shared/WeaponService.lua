@@ -37,6 +37,8 @@ local WeaponService = {}
 
 -- Treffer auf ein Fahrzeug der offenen Welt: function(player, vehicleModel, damage) (setzt VehicleService)
 WeaponService.OnVehicleHit = nil
+-- Treffer auf ein Konvoi-Fahrzeug (Modell mit Attribut "Convoy"): function(player, model, damage) (setzt ConvoyService)
+WeaponService.OnConvoyHit = nil
 
 -- Wird gefeuert, wenn ein Spieler einen anderen Spieler tötet:
 -- (killer: Player, victim: Player oder nil bei Bots, weaponName, headshot, victimName, victimModel oder nil)
@@ -347,8 +349,13 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		return
 	end
 
-	-- Fahrzeug der offenen Welt getroffen (VehicleService prüft Safe Zone und PvP)
+	-- Fahrzeug der offenen Welt getroffen (VehicleService prüft Safe Zone und PvP); Konvoi: ConvoyService
 	local model = hitPart:FindFirstAncestorOfClass("Model")
+	if model and model:GetAttribute("Convoy") and WeaponService.OnConvoyHit then
+		WeaponService.OnConvoyHit(player, model, cfg.Damage * WeaponConfig.FalloffFactor(cfg, (hitPosition - origin).Magnitude)
+			* GameSettings.Get("DamageMultiplier"))
+		return
+	end
 	if model and model:GetAttribute("VehicleId") and WeaponService.OnVehicleHit then
 		WeaponService.OnVehicleHit(player, model, cfg.Damage * WeaponConfig.FalloffFactor(cfg, (hitPosition - origin).Magnitude)
 			* GameSettings.Get("DamageMultiplier"))

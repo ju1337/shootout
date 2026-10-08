@@ -112,7 +112,8 @@ check(banner and banner.Title == "KONVOI GESICHTET", "Ansage: gesichtet")
 local trucks = workspace.ExtinctionConvoy:GetChildren()
 check(#trucks == 3, "drei Fahrzeuge (" .. #trucks .. ")")
 local truck = workspace.ExtinctionConvoy:FindFirstChild("ConvoyTruck")
-check(truck and truck:GetAttribute("VehicleId") == "Convoy", "Lkw ist treffbar wie ein Fahrzeug")
+check(truck and truck:GetAttribute("Convoy") == true and truck:GetAttribute("VehicleId") == nil, "Lkw: Konvoi, kein Spieler-Fahrzeug")
+check(WeaponService.OnConvoyHit == ConvoyService.Hit, "WeaponService meldet Konvoi-Treffer")
 
 -- fährt los
 local startPos = truck:GetPivot().Position
@@ -126,16 +127,16 @@ check(math.abs(truck:GetPivot().Position.Y - 0) < 1, "auf dem Boden")
 -- Treffer aus der Safe Zone zählen nicht
 alice.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
 step(0.5)
-WeaponService.OnVehicleHit(alice, truck, 5000)
+WeaponService.OnConvoyHit(alice, truck, 5000)
 check(convoy.Health == K.Health, "Schüsse aus der Safe Zone zählen nicht")
 alice.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 300)))
 step(0.5)
 
 -- beschießen bis zum Anhalten
 local coinsBefore = ProgressService.Get(alice).Coins
-WeaponService.OnVehicleHit(alice, truck, K.Health * 0.2)
+WeaponService.OnConvoyHit(alice, truck, K.Health * 0.2)
 check(convoy.State == "Driving", "ein paar Treffer: fährt weiter")
-WeaponService.OnVehicleHit(alice, truck, K.Health * 0.2)
+WeaponService.OnConvoyHit(alice, truck, K.Health * 0.2)
 check(convoy.State == "Halted", "unter HaltAt: angehalten")
 step(1) -- Wachen bauen
 check(#convoy.Guards == K.Guards, "Wachen steigen aus (" .. #convoy.Guards .. ")")

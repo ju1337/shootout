@@ -3,7 +3,7 @@
 -- Begleitfahrzeug) fährt eine Landstraße entlang.
 --   1. Warten (Warning Sekunden) am Start: Ansage an alle, Markierung auf der Karte.
 --   2. Fahren: alle Fahrzeuge folgen der Strecke (verankert, Höhe vom Boden), die Begleitfahrzeuge schießen auf Spieler in
---      der Nähe. Schüsse auf ein Fahrzeug (WeaponService.OnVehicleHit) kosten den Konvoi Leben.
+--      der Nähe. Schüsse auf ein Fahrzeug (WeaponService.OnConvoyHit, Modelle mit Attribut "Convoy") kosten den Konvoi Leben.
 --   3. Angehalten (Leben unter HaltAt): Wachen steigen aus (Bots über options.SpawnGuard), Ansage.
 --   4. Ladung frei (alle Wachen tot oder GuardTimeout): Kiste mit bester Beute am Lkw, Münzen für alle Angreifer.
 --   Ende der Strecke ohne Halt: entkommen. Danach Wartezeit bis zum nächsten Konvoi.
@@ -82,8 +82,7 @@ local function buildVehicle(kind)
 		end
 	end
 	model.PrimaryPart = body
-	-- Treffer landen über WeaponService.OnVehicleHit hier (VehicleId wie bei Spieler-Fahrzeugen)
-	model:SetAttribute("VehicleId", "Convoy")
+	-- Treffer landen über WeaponService.OnConvoyHit hier
 	model:SetAttribute("Convoy", true)
 	model.Parent = folder
 	return model
@@ -342,7 +341,7 @@ function ConvoyService.Start(routeIndex)
 	return convoy
 end
 
--- Treffer auf ein Konvoi-Fahrzeug (aus WeaponService.OnVehicleHit)
+-- Treffer auf ein Konvoi-Fahrzeug (aus WeaponService.OnConvoyHit)
 function ConvoyService.Hit(player, _model, damage)
 	local convoy = current
 	if not convoy or (convoy.State ~= "Driving" and convoy.State ~= "Waiting") then
@@ -368,15 +367,7 @@ function ConvoyService.Init(opts)
 	options = opts
 	nextAt = os.clock() + K.FirstDelay
 	publish()
-	-- Treffer: Konvoi-Fahrzeuge hier, alle anderen wie bisher (VehicleService)
-	local previous = WeaponService.OnVehicleHit
-	WeaponService.OnVehicleHit = function(player, model, damage)
-		if model:GetAttribute("Convoy") then
-			ConvoyService.Hit(player, model, damage)
-		elseif previous then
-			previous(player, model, damage)
-		end
-	end
+	WeaponService.OnConvoyHit = ConvoyService.Hit
 	LootService.OnRemoved[#LootService.OnRemoved + 1] = function(bag)
 		local convoy = current
 		if convoy and convoy.State == "Loot" and bag.Meta and bag.Meta.Convoy == convoy.Id then
