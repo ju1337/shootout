@@ -26,6 +26,7 @@ local PlayerSettings = require(Shared.PlayerSettings)
 local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
 local WeaponEffects = require(Shared.WeaponEffects)
+local SkinEffects = require(Shared.SkinEffects)
 local CharacterPose = require(Shared.CharacterPose)
 local InspectView = require(Shared.InspectView)
 local UITheme = require(Shared.UITheme)
@@ -365,6 +366,11 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 	local followCamera = firstPersonView()
 	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced == true)
 	WeaponEffects.MuzzleFlash(muzzleCF, flashScale, followCamera)
+	-- Effekt-Skin (z.B. Drachengold): Feuerstoß an der Mündung
+	local skinTool = ownTool()
+	if skinTool and skinTool:GetAttribute("SkinFx") then
+		SkinEffects.Breath(muzzleCF, flashScale, current, skinTool:GetAttribute("SkinId"), skinTool:GetAttribute("SkinFx"))
+	end
 	local claims = {}
 	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
 		WeaponConfig.ShotSeed(player.UserId, shotId))
@@ -580,6 +586,7 @@ function WeaponClient.Inspecting()
 end
 
 function WeaponClient.Init()
+	SkinEffects.Init() -- Effekt-Skins: Glühen pulsiert, Glitzer beim Ausrüsten
 	-- Eingaben über InputActions (Tastatur, Controller und Touch-Knöpfe)
 	local function fighting()
 		return Modes.IsFighting(player)
@@ -865,6 +872,11 @@ function WeaponClient.Init()
 			WeaponEffects.GunSound(weaponName, start, false, silenced == true)
 			if not silenced and (endPos - start).Magnitude > 0.01 then
 				WeaponEffects.MuzzleFlash(CFrame.lookAt(start, endPos), 1)
+				local tool = model and model:FindFirstChildOfClass("Tool")
+				if tool and tool:GetAttribute("SkinFx") then
+					SkinEffects.Breath(CFrame.lookAt(start, endPos), 1, tool:GetAttribute("Weapon"), tool:GetAttribute("SkinId"),
+						tool:GetAttribute("SkinFx"))
+				end
 			end
 		end
 		if not silenced then

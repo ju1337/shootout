@@ -13,6 +13,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local SkinEffects = require(script.Parent.SkinEffects)
+
 local GunModels = {}
 local assetData -- (unten gefüllt) fertige Modelle der Waffen
 
@@ -928,7 +930,8 @@ local function loadAsset(weaponName, source)
 	end
 	for _, folder in skins and skins:GetChildren() or {} do
 		for _, appearance in folder:GetChildren() do
-			if appearance:IsA("SurfaceAppearance") and not template:FindFirstChild(cleanName(appearance.Name)) then
+			if appearance:IsA("SurfaceAppearance") and appearance.Name ~= "Aufsaetze" -- Aufsaetze: für alle Aufsätze (SkinEffects)
+				and not template:FindFirstChild(cleanName(appearance.Name)) then
 				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
 			end
 		end
@@ -1044,6 +1047,8 @@ function GunModels.Build(weaponName, skin, attachments)
 	local asset = assetData[weaponName]
 	local model = asset and buildFromAsset(asset, skin) or buildBlockout(weaponName, skin)
 	addAttachments(model, weaponName, attachments)
+	-- Effekt-Skins (z.B. Drachengold): Glitzer, Glut, Licht, Textur auf den Aufsätzen (SkinEffects)
+	SkinEffects.Apply(model, skin, asset and asset.Skins and skin and skin.Id and asset.Skins:FindFirstChild(skin.Id))
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") then
 			part:SetAttribute("Rest", part.CFrame) -- Ruhelage im Modell (auch für angebaute Aufsätze)
@@ -1069,6 +1074,10 @@ function GunModels.BuildTool(weaponName, displayName, skin, attachments)
 	tool.ManualActivationOnly = true
 	tool.RequiresHandle = true
 	tool:SetAttribute("Weapon", weaponName)
+	if skin and skin.Effects then -- für den Feuerstoß bei Schüssen anderer Spieler (WeaponClient)
+		tool:SetAttribute("SkinFx", skin.Effects)
+		tool:SetAttribute("SkinId", skin.Id)
+	end
 
 	local handle = model.PrimaryPart
 	for _, part in model:GetChildren() do

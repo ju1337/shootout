@@ -40,7 +40,7 @@ end
 function CrateConfig.Pool(crate)
 	local pool = {}
 	for _, item in Cosmetics.Items do
-		if item.Type == crate.Type and Cosmetics.ForSale(item) then
+		if item.Type == crate.Type and Cosmetics.ForSale(item) and not item.Test then
 			table.insert(pool, item)
 		end
 	end
