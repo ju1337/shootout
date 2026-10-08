@@ -37,6 +37,7 @@ local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
 local KitConfig = require(Shared.KitConfig)
+local LootInfo = require(Shared.LootInfo)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local AchievementConfig = require(Shared.AchievementConfig)
 local TitleConfig = require(Shared.TitleConfig)
@@ -971,6 +972,7 @@ end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
+	{ Id = "Loot", Text = "LOOT" },
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
@@ -1722,6 +1724,96 @@ local function openAchievements()
 	win.Refresh()
 end
 
+-- LOOT: was in Lootdrop, Konvoi, Heli-Absturz, Horden-Kiste und bei Bossen liegen kann (LootInfo), links die Quelle,
+-- rechts die Items mit Chance (mindestens einmal in der Kiste) und Menge
+local lootSource = 1
+local function openLoot()
+	local C = UITheme.MenuColors
+	local win = newWindow("Loot", "LOOT", "WHAT YOU CAN GET FROM CRATES, EVENTS AND BOSSES")
+	local body = win.Body
+	local listW, gap = 230, 20
+	local rightX = listW + gap
+	local rightW = Inv.CONTENT_W - rightX
+	local list = make("Frame", { Name = "Sources", Size = UDim2.fromOffset(listW, Inv.CONTENT_H), BackgroundTransparency = 1,
+		ZIndex = 6 }, body)
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	local title = label({ Name = "SourceTitle", Position = UDim2.fromOffset(rightX, 0), Size = UDim2.fromOffset(rightW, 28),
+		Text = "", TextSize = 24, Font = F.Display, ZIndex = 6 }, body)
+	local info = label({ Name = "SourceInfo", Position = UDim2.fromOffset(rightX, 30), Size = UDim2.fromOffset(rightW, 18),
+		Text = "", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, body)
+	info.TextTruncate = Enum.TextTruncate.AtEnd
+	local scroll = make("ScrollingFrame", { Name = "Items", Position = UDim2.fromOffset(rightX, 60),
+		Size = UDim2.fromOffset(rightW, Inv.CONTENT_H - 60), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4,
+		ScrollBarImageColor3 = C.Muted, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 6 }, body)
+	local cardGap = 12
+	local columns = math.max(2, math.floor((rightW - 8 + cardGap) / (180 + cardGap)))
+	local cardW = math.floor((rightW - 8 - cardGap * (columns - 1)) / columns)
+	local cardH = 156
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(cardW, cardH), CellPadding = UDim2.fromOffset(cardGap, cardGap),
+		SortOrder = Enum.SortOrder.LayoutOrder }, scroll)
+	local buttons, stripes = {}, {}
+
+	local function card(row, order)
+		local config = itemConfig(row.Id)
+		local rarity, rarityColor = LootInfo.Rarity(row.Chance)
+		local frame = make("Frame", { Name = "Loot_" .. row.Key, BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.3,
+			BorderSizePixel = 0, LayoutOrder = order, ZIndex = 7 }, scroll)
+		UITheme.Corner(frame, 3)
+		make("Frame", { Name = "RarityLine", Size = UDim2.new(1, 0, 0, 2), BackgroundColor3 = rarityColor, BorderSizePixel = 0,
+			ZIndex = 8 }, frame)
+		local iconBox = make("Frame", { Name = "IconBox", Position = UDim2.fromOffset(0, 8), Size = UDim2.new(1, 0, 0, 72),
+			BackgroundTransparency = 1, ZIndex = 8 }, frame)
+		buildIcon(iconBox, row.Id, 8)
+		local name = row.Attachment and LootInfo.AttachmentNames[row.Tier] or (config and upper(config.Name)) or row.Id
+		label({ Name = "Name", Position = UDim2.fromOffset(12, 84), Size = UDim2.new(1, -24, 0, 18), Text = name, TextSize = 14,
+			Font = F.Bold, ZIndex = 8, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
+		local count = row.Count[1] == row.Count[2] and (row.Count[1] .. "×") or (row.Count[1] .. "–" .. row.Count[2] .. "×")
+		label({ Name = "Count", Position = UDim2.fromOffset(12, 104), Size = UDim2.new(1, -24, 0, 16), Text = count,
+			TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 8 }, frame)
+		label({ Name = "Rarity", Position = UDim2.new(0, 12, 1, -28), Size = UDim2.new(1, -24, 0, 18), Text = rarity, TextSize = 12,
+			Font = F.Bold, TextColor3 = rarityColor, ZIndex = 8 }, frame)
+		label({ Name = "Chance", Position = UDim2.new(0, 12, 1, -32), Size = UDim2.new(1, -24, 0, 24),
+			Text = LootInfo.FormatChance(row.Chance), TextSize = 22, Font = F.Display, TextColor3 = C.Text,
+			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 8 }, frame)
+	end
+
+	function win.Refresh()
+		local source = LootInfo.Sources[lootSource] or LootInfo.Sources[1]
+		for index, button in buttons do
+			local on = index == lootSource
+			button.BackgroundTransparency = on and 0.8 or 0.92
+			button.TextColor3 = on and C.Text or C.Muted
+			stripes[index].Visible = on
+		end
+		title.Text = source.Name
+		title.TextColor3 = source.Color
+		info.Text = string.upper(source.Info)
+		for _, child in scroll:GetChildren() do
+			if child:IsA("Frame") then
+				child:Destroy()
+			end
+		end
+		for order, row in LootInfo.Rows(source) do
+			card(row, order)
+		end
+		scroll.CanvasPosition = Vector2.zero
+	end
+
+	for index, source in LootInfo.Sources do
+		local button = Inv.flatButton({ Name = "Source_" .. source.Id, Size = UDim2.new(1, 0, 0, 48), Text = source.Name,
+			TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = index }, list, function()
+			lootSource = index
+			win.Refresh()
+		end)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 18) }, button)
+		local stripe = make("Frame", { Name = "Stripe", Position = UDim2.new(0, -18, 0, 0), Size = UDim2.new(0, 3, 1, 0),
+			BackgroundColor3 = source.Color, BorderSizePixel = 0, Visible = false, ZIndex = 8 }, button)
+		stripes[index] = stripe
+		buttons[index] = button
+	end
+	win.Refresh()
+end
+
 -- VERSTECK: Module ausbauen (Münzen und Items aus Tasche oder Lager), Generator abholen
 local HIDEOUT = Color3.fromRGB(200, 160, 110)
 local function itemCountEverywhere(id)
@@ -2350,6 +2442,9 @@ openMenuTab = function(id)
 	elseif id == "Achievements" then
 		ExtinctionMap.Set(false)
 		openAchievements()
+	elseif id == "Loot" then
+		ExtinctionMap.Set(false)
+		openLoot()
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
