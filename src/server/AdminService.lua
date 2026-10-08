@@ -87,6 +87,17 @@ function AdminService.Init(manager)
 			local horde = serverShared("HordeService").Start(position)
 			return horde and ("Horden-Kiste aufgestellt" .. (position and " (vor dir)" or "")) or "Es steht schon eine Horden-Kiste."
 		end,
+		ExtHeliCrash = function(where, _, admin)
+			local position = where == "Here" and adminPosition(admin) or nil
+			if where == "Here" and not position then
+				return "Kein Charakter – geh in die offene Welt."
+			end
+			if position then
+				position += (admin.Character.HumanoidRootPart.CFrame.LookVector * Vector3.new(1, 0, 1)) * 40 - Vector3.new(0, 3, 0)
+			end
+			local crash = serverShared("HeliCrashService").Start(position)
+			return crash and ("Heli stürzt ab" .. (position and " (40 Studs vor dir)" or "")) or "Es läuft schon ein Heli-Absturz."
+		end,
 		ExtConvoy = function()
 			local convoy = serverShared("ConvoyService").Start()
 			return convoy and ("Konvoi gestartet: " .. tostring(convoy.Path and convoy.Path.Name or "")) or "Es fährt schon ein Konvoi."

@@ -1,6 +1,5 @@
--- Extinction-Level (ExtLevelService, ExtLevelConfig): EP nur in der offenen Welt, für Zombies (Art und rote Zone),
--- Aktivitäten, Lootdrops (je Kiste einmal), Aufträge, Spieler- und Bot-Kills; Level aus der Statistik ExtXP mit
--- Meldung beim Aufstieg (Titel-Level mit Titel); Titel ab Level 5 über TitleConfig freigeschaltet; Spieler-Attribute.
+-- Heli-Absturz (HeliCrashService): Heli fliegt (noch nicht auf der Karte), schlägt ein, Wrack brennt (Schaden in der Nähe,
+-- Zombies kommen), danach Kisten am Wrack; leer geräumt ist alles weg.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -70,6 +69,15 @@ for name, position in standPos do
 	part.CFrame = CFrame.new(position)
 end
 
+local ground = Instance.new("Part", workspace)
+ground.Name = "Ground"
+SIM.RaycastHandler = function(origin, direction)
+	if direction.Y >= 0 then
+		return nil
+	end
+	return { Position = Vector3.new(origin.X, 0, origin.Z), Normal = Vector3.new(0, 1, 0), Instance = ground, Material = Enum.Material.Grass }
+end
+
 local InventoryService = require("InventoryService")
 local LootService = require("LootService")
 local Extinction = require("Extinction")
@@ -135,77 +143,52 @@ local function enter(player)
 	step(0.3)
 end
 
-local ExtLevelConfig = require("ExtLevelConfig")
-local ExtLevelService = require("ExtLevelService")
-local TitleConfig = require("TitleConfig")
-local ZombieService = require("ZombieService")
-local ActivityService = require("ActivityService")
-local MissionService = require("MissionService")
+local AttachmentConfig = require("AttachmentConfig")
+local Inventory = require("Inventory")
 
-store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+store.Data.u1 = { XP = {}, Coins = 5000, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
 Instance.new("Backpack", alice).Name = "Backpack"
 step(2)
-
--- Kurve
-check(ExtLevelConfig.FromXP(0) == 1, "Start Level 1")
-local level, into, need = ExtLevelConfig.FromXP(ExtLevelConfig.TotalFor(5) + 10)
-check(level == 5 and into == 10 and need == ExtLevelConfig.XPForLevel(5), "Level aus EP")
-check(ExtLevelConfig.FromXP(10 ^ 9) == ExtLevelConfig.MaxLevel, "höchstens MaxLevel")
-
--- außerhalb der offenen Welt: keine EP
-alice:SetAttribute("Mode", "FreeForAll")
-check(ExtLevelService.Add(alice, 100, "Test") == nil, "keine EP außerhalb")
 enter(alice)
-check(alice:GetAttribute("ExtLevel") == 1 and alice:GetAttribute("ExtXP") == 0, "Attribute beim Betreten")
 
--- Ereignisse
-local function fire(list, ...)
-	for _, callback in list do
-		callback(...)
-	end
-end
-fire(ZombieService.OnKill, alice, "Walker", CENTER + Vector3.new(0, 0, 300))
-check(alice:GetAttribute("ExtXP") == ExtLevelConfig.Rewards.Zombie, "Zombie: " .. ExtLevelConfig.Rewards.Zombie .. " EP")
-fire(ZombieService.OnKill, alice, "Brute", CENTER + Vector3.new(0, 0, 300))
-check(alice:GetAttribute("ExtXP") == ExtLevelConfig.Rewards.Zombie + ExtLevelConfig.Kinds.Brute, "Brocken gibt mehr")
-local popup = lastExt(alice, "ExtXP")
-check(popup and popup[2] == ExtLevelConfig.Kinds.Brute, "Anzeige +EP an den Client")
-local before = alice:GetAttribute("ExtXP")
-fire(ActivityService.OnEvent, alice, "Nest")
-check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Nest, "Nest zerstört")
-before = alice:GetAttribute("ExtXP")
-local bag = { Kind = "Airdrop", Id = 77 }
-fire(LootService.OnOpened, alice, bag)
-step(0.1) -- (kann nebenbei einen Lootdrop-Auftrag erledigen: dann kommen dessen EP dazu)
-local afterFirst = alice:GetAttribute("ExtXP")
-check(afterFirst >= before + ExtLevelConfig.Rewards.Airdrop, "Lootdrop gibt EP")
-fire(LootService.OnOpened, alice, bag)
-step(0.1)
-check(alice:GetAttribute("ExtXP") == afterFirst, "dieselbe Kiste zählt nur einmal")
-before = alice:GetAttribute("ExtXP")
-fire(MissionService.OnComplete, alice, {})
-step(0.1)
-check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Mission, "Auftrag erledigt")
+local K = ExtinctionConfig.HeliCrash
+K.FlyTime = 2
+K.BurnTime = 3
+K.Zombies = 2
+local HeliCrashService = require("HeliCrashService")
+local ZombieService = require("ZombieService")
+local HttpService2 = game:GetService("HttpService")
+require("ExtDailyConfig").Enabled = false
 
--- Aufstieg bis Level 5: Meldung mit Titel, Titel freigeschaltet
-local toFive = ExtLevelConfig.TotalFor(5) - alice:GetAttribute("ExtXP")
-ExtLevelService.Add(alice, toFive, "Test")
-check(alice:GetAttribute("ExtLevel") == 5, "Level 5")
-local banner = nil
-for i = #SIM.RemoteLog, 1, -1 do
-	local entry = SIM.RemoteLog[i]
-	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" then
-		banner = entry.Args[2]
-		break
-	end
+moveTo(alice, Vector3.new(0, 3, 300))
+step(5.5)
+local target = alice.Character.HumanoidRootPart.Position + Vector3.new(4, -3, 0)
+local crash = HeliCrashService.Start(target)
+step(0.3)
+check(crash ~= nil and crash.State == "Flying" and workspace.ExtinctionHeliCrash:FindFirstChild("CrashingHeli") ~= nil, "Heli fliegt")
+check(#HttpService2:JSONDecode(map:GetAttribute("HeliCrashes") or "[]") == 0, "im Flug noch nicht auf der Karte")
+check(HeliCrashService.Start() == nil, "nur einer gleichzeitig")
+local zombiesBefore = ZombieService.Count()
+local health = alice.Character.Humanoid.Health
+step(K.FlyTime + 0.3)
+check(crash.State == "Burning" and workspace.ExtinctionHeliCrash:FindFirstChild("HeliWreck") ~= nil, "eingeschlagen, Wrack brennt")
+local list = HttpService2:JSONDecode(map:GetAttribute("HeliCrashes") or "[]")
+check(#list == 1 and list[1].State == "Burning", "Wrack auf der Karte")
+check(ZombieService.Count() > zombiesBefore, "Zombies kommen zum Absturz")
+step(1)
+check(alice.Character.Humanoid.Health < health, "Feuer am Wrack macht Schaden (" .. health .. " -> " .. alice.Character.Humanoid.Health .. ")")
+moveTo(alice, Vector3.new(0, 3, 380))
+local lootBefore = #workspace.ExtinctionLoot:GetChildren()
+step(K.BurnTime)
+check(crash.State == "Loot", "Feuer aus")
+check(#workspace.ExtinctionLoot:GetChildren() == lootBefore + K.Crates, "Kisten am Wrack")
+for _, id in crash.Loot do
+	require("LootService").Remove(id)
 end
-check(banner and banner.Title == "LEVEL 5" and string.find(banner.Sub, "Überlebender", 1, true) ~= nil, "Meldung mit neuem Titel")
-local title = TitleConfig.Get("Ext_Ueberlebender")
-check(title ~= nil and TitleConfig.Unlocked(title, ProgressService.TitleData(alice)), "Titel Überlebender frei")
-check(not TitleConfig.Unlocked(TitleConfig.Get("Ext_Pluenderer"), ProgressService.TitleData(alice)), "Plünderer noch gesperrt")
-check(ProgressService.Get(alice).Stats.ExtXP == ExtLevelConfig.TotalFor(5), "EP im Profil (Statistik)")
+step(0.5)
+check(HeliCrashService.Current() == nil and workspace.ExtinctionHeliCrash:FindFirstChild("HeliWreck") == nil, "leer geräumt: alles weg")
 
 if failures == 0 then
-	print("Extinction-Level in Ordnung")
+	print("Heli-Absturz: alles in Ordnung")
 end

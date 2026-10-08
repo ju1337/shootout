@@ -66,6 +66,7 @@ InventoryService.Init()
 LootService.Init()
 ExtinctionConfig.Airdrop.FirstDelay = math.huge -- hier keine Lootdrops
 ExtinctionConfig.Horde.Enabled = false -- keine Horden-Kiste (eigener Test: horde)
+ExtinctionConfig.HeliCrash.Enabled = false -- kein Heli-Absturz (eigener Test: helicrash)
 ExtinctionConfig.Day.Fixed = 12
 ExtinctionConfig.Zombies.PerPlayer = 0 -- Zombies nur, wo der Test sie hinstellt
 ExtinctionConfig.Zombies.KindWeights = { Walker = 1 }

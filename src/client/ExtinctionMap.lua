@@ -36,6 +36,7 @@ local SAFE = Color3.fromRGB(112, 200, 120)
 local DROP = Color3.fromRGB(255, 170, 60)
 local CONVOY = Color3.fromRGB(236, 96, 64)
 local HORDE = Color3.fromRGB(200, 90, 220)
+local HELI = Color3.fromRGB(255, 120, 40)
 local CONVOY_STATES = { Waiting = "KONVOI WARTET", Driving = "KONVOI", Halted = "KONVOI GESTOPPT", Loot = "KONVOI-LADUNG" }
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
@@ -288,6 +289,28 @@ local function update()
 				or "HORDEN-KISTE"
 		end
 	end
+	-- Heli-Wrack: oranges Kreuz-Symbol (Raute) mit Zustand
+	for _, crashInfo in decode(map, "HeliCrashes") do
+		local id = "Heli" .. tostring(crashInfo.Id)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "HeliCrash", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(16, 16),
+				BackgroundColor3 = HELI, BorderSizePixel = 0, ZIndex = 9 }, markers)
+			make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, view)
+			UITheme.Stroke(view, Color3.new(0, 0, 0), 1.5, 0.2)
+			label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4), Size = UDim2.fromOffset(150, 14),
+				TextSize = 11, Font = F.Bold, TextColor3 = HELI, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, view)
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, crashInfo.X or 0, crashInfo.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
+		local text = view:FindFirstChild("Text")
+		if text then
+			text.Text = crashInfo.State == "Burning" and ("HELI BRENNT " .. math.max(0, math.ceil((tonumber(crashInfo.Ends) or now) - now)) .. " S")
+				or "HELI-WRACK"
+		end
+	end
 	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do
 		local color = ACTIVITY_COLORS[act.Kind]
@@ -504,6 +527,7 @@ function ExtinctionMap.Init()
 		{ "Diamond", DROP, "LOOTDROP" },
 		{ "Dot", CONVOY, "KONVOI" },
 		{ "Square", HORDE, "HORDEN-KISTE" },
+		{ "Dot", HELI, "HELI-WRACK" },
 		{ "Square", ACTIVITY_COLORS.Cache, "VORRATSLAGER" },
 		{ "Dot", ACTIVITY_COLORS.Radio, "FUNKGERÄT" },
 		{ "Square", RED, "X  DEINE TASCHE" },

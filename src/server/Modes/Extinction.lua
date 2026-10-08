@@ -44,6 +44,7 @@ local ConvoyService = require(ServerShared.ConvoyService)
 local HideoutService = require(ServerShared.HideoutService)
 local ThrowableService = require(ServerShared.ThrowableService)
 local HordeService = require(ServerShared.HordeService)
+local HeliCrashService = require(ServerShared.HeliCrashService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
@@ -548,6 +549,20 @@ function Extinction.Init(modeManager)
 			if members[player] then
 				ProgressService.AddCoins(player, coins, text)
 			end
+		end,
+	})
+
+	-- Heli-Absturz: Wrack brennt, dann Militärkisten
+	HeliCrashService.Init({
+		Map = map,
+		InSafeZone = Extinction.InSafeZone,
+		PickTarget = AirdropService.PickTarget,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
 		end,
 	})
 

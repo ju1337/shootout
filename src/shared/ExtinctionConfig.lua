@@ -467,6 +467,34 @@ ExtinctionConfig.Airdrop = {
 	MinPlayers = 1,          -- ohne Spieler draußen gibt es keinen Abwurf
 }
 
+-- ---------- Heli-Absturz (HeliCrashService) ----------
+-- Alle MinInterval bis MaxInterval Sekunden (zuerst nach FirstDelay, nur mit MinPlayers draußen) stürzt ein Militär-Heli ab:
+-- er fliegt FlyTime Sekunden mit Rauchfahne über die Karte (Ziel unbekannt) und schlägt irgendwo ein. Das Wrack brennt BurnTime
+-- Sekunden (im Umkreis FireRadius alle Tick Sekunden TickDamage für alle, auch Zombies); erst danach liegen Crates Kisten am
+-- Wrack (Items aus Table, BonusItems aus BonusTable, mit AttachmentChance ein Waffen-Aufsatz). Der Lärm lockt Zombies Zombies
+-- Zombies an. Nach Lifetime Sekunden ist alles weg. Stand für die Clients: Karten-Attribut "HeliCrashes" [{ Id, X, Z, State, Ends }]
+-- – erst ab dem Einschlag (vorher weiß niemand, wo).
+ExtinctionConfig.HeliCrash = {
+	Enabled = true,
+	FirstDelay = 14 * 60,
+	MinInterval = 20 * 60,
+	MaxInterval = 32 * 60,
+	MinPlayers = 1,
+	FlyTime = 12,
+	BurnTime = 60,
+	FireRadius = 14,
+	Tick = 0.5,
+	TickDamage = 6,
+	Crates = 2,
+	Table = "Tier3",
+	Items = { 3, 4 },
+	BonusTable = "Airdrop",
+	BonusItems = { 1, 1 },
+	AttachmentChance = 0.35,
+	Zombies = 10,
+	Lifetime = 8 * 60,
+}
+
 -- ---------- Horden-Kiste (HordeService) ----------
 -- Alle MinInterval bis MaxInterval Sekunden (zuerst nach FirstDelay, nur mit MinPlayers draußen) steht irgendwo eine verriegelte
 -- Versorgungskiste mit Signalfeuer. E halten startet die Belagerung: solange Spieler im Umkreis Radius sind, läuft der
