@@ -12,6 +12,31 @@ Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Mod
 Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem
 Roblox-Gesicht in seinen Farben. Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
 
+## Modell von Meshy AI (empfohlen)
+
+Meshy liefert eine FBX mit Skelett, aber die Knochen heißen wie bei Mixamo (`Hips`, `LeftArm`, `LeftForeArm` …).
+Roblox-Animationen bewegen nur R15-Gelenke, deshalb steht so ein Modell sonst steif da. Ein Script baut es in einen
+echten R15-Charakter um: Knochen auf R15 umbenannt, Mesh in die 15 Körperteile geteilt, Arme hängend, Weste und Rucksack
+an der Brust, 5,3 Studs hoch, Textur eingebettet.
+
+1. **Umbauen** (Mac, Blender muss installiert sein), im Ordner des Repos im Terminal:
+
+       /Applications/Blender.app/Contents/MacOS/Blender -b --python tools/rig/meshy_to_r15.py -- ~/Downloads/Meshy_AI_Character_output.fbx ~/Downloads/Bastion_R15.fbx
+
+   Der erste Pfad ist die FBX von Meshy, der zweite die neue Datei. Dauert etwa eine Minute; am Ende steht
+   `REPORT exported …` und `REPORT height 5.3`.
+2. **In Studio importieren:** Reiter **Home** › **Import 3D** › die neue Datei. Im Fenster: **Scale Unit: Stud**,
+   **Merge Meshes: aus**, unter **Rig General** **Rig Type: R15**. **Import** klicken.
+3. Weiter wie unten unter [Ins Spiel bringen](#ins-spiel-bringen-studio) ab Schritt 3 (in den Ordner ziehen,
+   umbenennen, testen). Im Output muss `Rig (bewegt sich mit) geladen` stehen.
+
+Steht dort `Modell als Ganzes` oder `Gelenke 0`, hat Studio beim Import kein Rig gebaut (meist Rig Type nicht auf R15):
+Modell löschen und neu importieren. Notfalls das Modell in den Workspace ziehen › Reiter **Avatar** › **Avatar Setup**
+bis zum Ende, das Ergebnis nach Assets.Agents.
+
+Hängt ein Teil der Ausrüstung am falschen Körperteil (bleibt z.B. stehen, wenn sich der Oberkörper beugt), liegt das an
+der Zuordnung der Meshy-Knochen in `MERGE` oben in `tools/rig/meshy_to_r15.py`. Dann die Projektleitung fragen.
+
 ## Am einfachsten: ein fertiger Charakter (Rig)
 
 Funktioniert dein Modell in einer leeren Roblox-Experience als Charakter (z.B. als `StarterCharacter` oder aus dem
@@ -100,7 +125,8 @@ Die Meldungen stehen beim Spielstart im Output, Zeilen mit `[Agentenmodelle]`.
 | Im Output steht gar nichts zu deinem Modell | Es liegt nicht direkt in ReplicatedStorage › Assets › Agents. |
 | `… als Viper: Standard-Look (kein Modell "Viper" in Assets.Agents)` | Der Server kennt das Modell nicht: Name falsch, nicht direkt im Ordner, oder während Play nur auf deinem Bildschirm eingefügt. Stop, richtig einfügen, neu starten. |
 | `keine sichtbaren Teile im Modell` | Alle Teile sind unsichtbar (Transparency 1) oder das Modell ist leer. Neu importieren. |
-| `Modell ist … Studs hoch, auf 5.1 gebracht` | Beim Import stimmte die Einheit nicht (z.B. Zentimeter). Lädt trotzdem; besser mit Scale Unit **Stud** neu importieren. |
+| `Modell ist … Studs hoch, auf 5.1 gebracht` | Beim Import stimmte die Einheit nicht (z.B. Zentimeter). Lädt trotzdem, ein Modell mit Bones wirkt dann aber zusammengedrückt. Mit Scale Unit **Stud** neu importieren; aus Blender mit Apply Scalings **FBX Units Scale** exportieren (macht `meshy_to_r15.py` schon). |
+| Modell von Meshy steht steif, nur der Roblox-Körper darunter bewegt sich | Die Meshy-Knochen heißen nicht wie R15. Mit `tools/rig/meshy_to_r15.py` umbauen (siehe [Modell von Meshy AI](#modell-von-meshy-ai-empfohlen)). |
 | `zu … gehört kein Teil – dort ist nichts zu sehen` | Nur ein Hinweis. An diesem Körperteil hat das Modell nichts (z.B. Hände). |
 | `… Teile – für Handys besser höchstens 40` | Nur ein Hinweis. Kleine Teile in Blender zusammenfügen. |
 | `… lässt sich nicht kopieren (Archivable ist aus)` | Teil anklicken, in den Properties **Archivable** anhaken. |
