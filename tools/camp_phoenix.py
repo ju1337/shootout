@@ -2,8 +2,7 @@
 
 Eine runde Altstadt (Stil DayZ/Tarkov, aber gepflegt): von innen nach außen
 
-  * PHÖNIXPLATZ (Radius PLAZA_R): Kopfsteinpflaster, in der Mitte der Brunnen mit der goldenen Statue „Agent der
-    Woche“ (Statue setzt der Client an AgentOfWeekSpot), Spawn-Ring um den Brunnen, Bänke, Bäume in Kübeln, Laternen,
+  * PHÖNIXPLATZ (Radius PLAZA_R): Kopfsteinpflaster, in der Mitte ein runder Brunnen, Spawn-Ring um den Brunnen, Bänke, Bäume in Kübeln, Laternen,
     Lichterketten, Café-Terrasse, das Siegerpodest vor dem Rathaus.
   * INNERER HÄUSERRING (Fronten bei INNER_R): acht Altbauten mit Läden im Erdgeschoss, Schilder zum Platz, je Seite
     ein breites und ein schmales Haus:
@@ -22,7 +21,7 @@ Eine runde Altstadt (Stil DayZ/Tarkov, aber gepflegt): von innen nach außen
 
 Geometrie: Kompass th in Grad ab Norden (+Z) im Uhrzeigersinn, Osten = +X; P(r, th) gibt (x, z). Jedes Haus hat
 seine Vorderseite bei lokal -Z und schaut zur Mitte. Die Teile, die Server und Client suchen (Shop, Rad, Bestenlisten,
-Podest, Statue, Markt-Tor), landen in der Gruppe "Zentrale" (immer geladen, src/shared/Zentrale.lua).
+Podest, Markt-Tor), landen in der Gruppe "Zentrale" (immer geladen, src/shared/Zentrale.lua).
 Läuft mit eigenen Zufallszahlen (World.camp).
 """
 import math
@@ -109,7 +108,7 @@ class CampPhoenix:
         for k in range(1, n):
             t = k / n
             dy = -sag * 4 * t * (1 - t)
-            self.b.add("Decor", "Bulb", (0.45, 0.45, 0.45), (ax + (bx - ax) * t, y + dy - 0.3, az + (bz - az) * t), color, "Neon",
+            self.b.add("Decor", "Bulb", (0.35, 0.35, 0.35), (ax + (bx - ax) * t, y + dy - 0.3, az + (bz - az) * t), color, "SmoothPlastic",
                        props={"Shape": "Ball", "CanCollide": False, "CanQuery": False})
 
     def camp_lamp(self, x, z, fx, fz):
@@ -118,7 +117,8 @@ class CampPhoenix:
         box("Decor", "LampBase", (0.9, 1.2, 0.9), (0, 0.6, 0), DARK, "Metal")
         box("Decor", "LampPost", (0.45, 11, 0.45), (0, 6, 0), DARK, "Metal")
         box("Decor", "LampArm", (0.3, 0.3, 2.2), (0, 11.2, -1), DARK, "Metal")
-        box("Decor", "LampHead", (1, 1.3, 1), (0, 10.6, -2), (255, 226, 180), "Neon",
+        # kein Neon: mit dem Bloom der Map würde der Kopf zu einer riesigen weißen Kugel; Licht kommt vom PointLight
+        box("Decor", "LampHead", (1, 1.3, 1), (0, 10.6, -2), (255, 232, 200), "SmoothPlastic",
             children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 30, "Brightness": 1.1,
                                                                                  "Color": self.bm.rgb(255, 220, 170)}}])
         box("Decor", "LampHat", (1.4, 0.3, 1.4), (0, 11.4, -2), DARK, "Metal")
@@ -277,32 +277,13 @@ class CampPhoenix:
         return math.degrees(math.asin(LINE / INNER_R))
 
     def fountain(self):
-        """Brunnen in der Platzmitte: Stufe, Becken mit Wasser, vier Speier, Säule mit der Statue „Agent der Woche“
-        (AgentOfWeekSpot, Schrift darüber an AgentOfWeekHolo), Inschriften."""
+        """Brunnen in der Platzmitte: Stufe und rundes Becken mit Wasser (ohne Säule und Statue)."""
         b = self.b
-        g = "Zentrale"
         b.cylinder("Decor", "FountainStep", 19, 0.5, (0, 0.47, 0), STONE, material="Concrete")
         b.cylinder("Cover", "FountainBasin", 16, 2.2, (0, 1.8, 0), (138, 134, 126), material="Concrete")
         b.cylinder("Decor", "FountainRim", 16.6, 0.4, (0, 2.95, 0), STONE_DARK, material="Slate")
         b.cylinder("Decor", "FountainWater", 14.8, 0.3, (0, 2.6, 0), (70, 128, 168), material="Glass",
                    props={"Transparency": 0.35, "CanCollide": False, "Reflectance": 0.2})
-        b.cylinder(g, "FountainColumn", 5, 3.4, (0, 4.6, 0), (120, 116, 108), material="Concrete")
-        b.cylinder(g, "FountainPlinth", 7, 0.9, (0, 6.75, 0), (96, 92, 86), material="Slate")
-        b.cylinder(g, "FountainBand", 7.3, 0.3, (0, 6.5, 0), (176, 128, 64), material="Metal")
-        for th in (45, 135, 225, 315):
-            x, z, yaw = self.at_center(2.9, th)
-            f, box = self.frame(x, z, yaw + 180)  # lokal -Z nach außen
-            box("Decor", "FountainSpout", (0.8, 0.8, 1.2), (0, 4.3, -0.4), (176, 128, 64), "Metal")
-            box("Decor", "FountainJet", (0.5, 0.5, 3.2), (0, 3.6, -2.2), (150, 200, 230), "Glass", extra=(-35, 0, 0),
-                props={"Transparency": 0.4, "CanCollide": False, "CanQuery": False})
-        b.add(g, "AgentOfWeekSpot", (1, 0.2, 1), (0, 7.3, 0), GOLD, "SmoothPlastic", angles=(0, 180, 0),
-              props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.add(g, "AgentOfWeekHolo", (1, 1, 1), (0, 20.5, 0), GOLD, "SmoothPlastic",
-              props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        for th, text in ((0, "AGENT DER WOCHE"), (180, "+50 % XP MIT IHM")):
-            x, z, yaw = self.at_center(8.5, th)
-            b.sign2("MonumentPlaque", (5, 1.1, 0.2), (x, 1.9, z), text, "", (54, 48, 40), (226, 190, 120), (200, 190, 170),
-                    angles=(0, yaw + 180, 0))
 
     def podium(self, x, z, yaw):
         """SIEGERPODEST der Top 3 vor dem Rathaus (Statuen setzt der Server an Podium1-3): drei Steinsockel auf einer
@@ -679,7 +660,7 @@ class CampPhoenix:
             box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), (0, 2.7, fz + 4.5), GOLD, "Neon", props={"Transparency": 0.2})
             self.b.holo_panel("Zentrale", "WheelBoard", (5.2, 1.9, 0.15), f(0, 3.35, fz + 4.3), angles=bm.yaw_tilt(yaw, 35))
             for k in range(int(w // 1.2)):
-                box("Decor", "MarqueeBulb", (0.45, 0.45, 0.45), (-w / 2 + 0.9 + k * 1.2, gf - 1.9, fz + 0.1), (255, 226, 150), "Neon",
+                box("Decor", "MarqueeBulb", (0.45, 0.45, 0.45), (-w / 2 + 0.9 + k * 1.2, gf - 1.9, fz + 0.1), (255, 226, 150), "SmoothPlastic",
                     props={"Shape": "Ball", "CanCollide": False})
             for s in (-1, 1):
                 box("Decor", "BoothLamp", (1.0, 0.6, 1.0), (s * (w / 2 - 3), gf - 1.9, fz + 3), (255, 240, 210), "Neon",
