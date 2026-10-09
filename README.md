@@ -225,6 +225,13 @@ weiter. An manchen Morgen liegt **dichter Nebel** (bis etwa 10:30 Uhr).
 höhere Chance, ein Item mehr). **Bosse**: die *Blutbestie* (riesig, 2400 Leben, Name und Lebensbalken über dem Kopf, roter
 Umriss) erscheint alle 2,5 Minuten bei einem Spieler draußen (höchstens 2 gleichzeitig), Ansage beim Erscheinen und beim
 Tod, 250 Münzen und Beute wie aus einem Lootdrop. Admin-Panel: Knopf **BLUTMOND** startet/beendet sofort.
+**Welt-Ambiente** (`src/client/Ambience.lua`, Einträge `Ambient…` in `src/shared/SoundLibrary.lua`): 2D-Schleifen, die
+alle halbe Sekunde zur Lage des Spielers passen und in 2 Sekunden überblenden – draußen am Tag Wind und Vögel, nachts
+Wind und Grillen; in einer Safe Zone stattdessen das Camp (knisterndes Feuer); in der roten Zone ein tiefes Dröhnen
+dazu; beim Blutmond ein dumpfer Schlag zum Start und ein noch dunkleres Dröhnen; in der Sturmnacht leiser (Regen und
+Wind macht `StormClient`). Die Lautstärke folgt der Einstellung *Lautstärke (Effekte)*; Sound-IDs lassen sich in
+`SoundLibrary.lua` tauschen (`AmbientWindDay`, `AmbientBirds`, `AmbientNight`, `AmbientCamp`, `AmbientRedzone`,
+`AmbientBloodMoon`, `BloodMoonStinger`).
 **Bots in der offenen Welt** (Admin-Panel, Zeile *Extinction*: **+1 Bot**, **+5 Bots**, **Entfernen**;
 `ExtinctionConfig.Bots`): Gegner zum Testen von PvP, Todestaschen und Rangliste. Sie spawnen 25-45 Studs um den Admin
 (steht er in einer Safe Zone, gleich vor ihrem Rand in seiner Richtung; ist er nicht in der offenen Welt, in der roten

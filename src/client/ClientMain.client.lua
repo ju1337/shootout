@@ -32,6 +32,7 @@ local Nametags = require(script.Parent:WaitForChild("Nametags"))
 local MapVote = require(script.Parent:WaitForChild("MapVote"))
 local MapAtmosphere = require(script.Parent:WaitForChild("MapAtmosphere"))
 local StormClient = require(script.Parent:WaitForChild("StormClient"))
+local Ambience = require(script.Parent:WaitForChild("Ambience"))
 local GraphicsQuality = require(script.Parent:WaitForChild("GraphicsQuality"))
 local KillstreakHUD = require(script.Parent:WaitForChild("KillstreakHUD"))
 local TouchControls = require(script.Parent:WaitForChild("TouchControls"))
@@ -68,6 +69,7 @@ Nametags.Init()
 MapVote.Init()
 MapAtmosphere.Init() -- Lichtstimmung je Map (Weltraum, Tropen)
 StormClient.Init() -- Sturmnacht der offenen Welt: Regen, Wind, Blitze, Donner
+Ambience.Init() -- Welt-Ambiente der offenen Welt: Wind, Vögel, Grillen, Camp-Feuer, Dröhnen in der roten Zone / beim Blutmond
 require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Sfx")).InitClient() -- Geräusche vom Server, vorladen
 GraphicsQuality.Init() -- Einstellung Grafik (Schatten, Partikel, Leuchten)
 KillstreakHUD.Init() -- Killstreaks in Herrschaft rechts am Rand (Tasten 4/5/6)
