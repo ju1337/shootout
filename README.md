@@ -949,7 +949,8 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
   und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)
 - `docs` – Anleitungen: Vorgaben für alle 3D-Modelle (`3d-richtlinien.md`), Waffenmodelle aus Blender
-  (`waffen-modelle.md`), Agentenmodelle (`agenten-modelle.md`)
+  (`waffen-modelle.md`), Agentenmodelle (`agenten-modelle.md`), Spielseite im Creator Hub auf Englisch: Name,
+  Beschreibung, Thumbnails, Altersfragebogen (`spielseite.md`)
 - `assets/Weapons`, `assets/Agents` – Kopien deiner Waffen- und Agentenmodelle (.rbxmx) für die automatische
   Prüfung (das Spiel lädt die Modelle aus dem Place, siehe docs/waffen-modelle.md und docs/agenten-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
