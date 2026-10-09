@@ -7,13 +7,17 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/supp_v2.py  <meshy.glb> art/sources/Attachments/Suppressor.glb
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
+    python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/ExtendedMag.glb
 
 - **ar15_v2**: Magazin entlang der schrägen Kante des Schachts als `Magazine` herausgeschnitten, Marker Point_* (Kimme
   und Korn als Visierlinie), 4,13 Studs lang. Die Maße (Kimme, Korn, Griff, Schacht) gelten für dieses eine Meshy-Modell.
 - **supp_v2**: Point_Mount (über dem Mündungsfeuerdämpfer), Point_Muzzle (vorderes Ende), 0,21 Studs dick.
 - **holo_v2**: Sichtfenster durch das Gehäuse geschnitten (Innenwände, Glas), ein Leuchtpunkt (`Neon_Reticle`, im Spiel
   rund), Point_Mount, Point_SightRear/SightFront.
+- **mag_full**: Magazin in voller Qualität (414.690 Dreiecke in 22 Teilen `Magazine_Ext_01…`), an der Stelle des
+  eingebauten AR-Magazins; Point_Mount = Mitte des eingebauten Magazins. Im Spiel ersetzt es das eingebaute Magazin
+  und wandert beim Nachladen mit.
 - **grip_v2**: Point_Mount (Oberkante der Schienenklemme), Point_Front (Richtung zum Lauf).
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
-`AngledGrip`). Lader: `src/shared/GunModels.lua`.
+`AngledGrip`, `ExtendedMag`). Lader: `src/shared/GunModels.lua`.

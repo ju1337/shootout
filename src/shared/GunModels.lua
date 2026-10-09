@@ -561,7 +561,31 @@ local function addAttachments(model, weaponName, attachments)
 	end
 	local magName = GunModels.GroupMainPart(weaponName, "Magazine")
 	local mag = magName and model:FindFirstChild(magName)
-	if mag and mag:IsA("BasePart") then
+	-- Magazin-Aufsatz als eigenes 3D-Modell (Assets.Attachments, Point_Mount = Mitte des eingebauten Magazins):
+	-- ersetzt das eingebaute Magazin und wandert beim Nachladen mit (Gruppe Magazine)
+	local magModel = false
+	if mag and mag:IsA("BasePart") and assetData[weaponName] then
+		for _, id in { "ExtendedMag", "DrumMag", "FastMag" } do
+			if has[id] and not magModel then
+				local before = {}
+				for _, child in model:GetChildren() do
+					before[child] = true
+				end
+				magModel = attachmentAsset(model, id, mag.Position)
+				if magModel then
+					for _, child in model:GetChildren() do
+						if not before[child] and child:IsA("BasePart") then
+							child:SetAttribute("Group", "Magazine")
+						end
+					end
+					mag:Destroy()
+				end
+			end
+		end
+	end
+	if magModel then
+		-- schon angebaut
+	elseif mag and mag:IsA("BasePart") then
 		if has.ExtendedMag then
 			-- länger nach unten
 			local extra = mag.Size.Y * 0.35
