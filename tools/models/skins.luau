@@ -18,10 +18,12 @@ local SKINS = {
 	},
 	{
 		Id = "W_Splitterlicht",
-		Textures = { Color = "", Normal = "", Roughness = "", Metalness = "", Emissive = "" },
+		Textures = { Color = "99136908861448", Normal = "126624004325595", Roughness = "121179829337104",
+			Metalness = "122872738540040", Emissive = "70404628104932" },
 		Glow = { Tint = { 255, 255, 255 }, Strength = 2 },
-		FX = { Glitzer = "", Splitter = "", Staub = "", Muendungsblitz = "", Prismaring = "", Leuchtspur = "",
-			Einschlag = "", Emblem = "" },
+		FX = { Glitzer = "134875643310091", Splitter = "130677581126374", Staub = "89890220258426",
+			Muendungsblitz = "121533793284101", Prismaring = "86750518345969", Leuchtspur = "103811217451772",
+			Einschlag = "92445896050173", Emblem = "126040453631246" },
 	},
 }
 local PARTS = { "Skin_Body", "Magazine", "Aufsaetze" } -- Teile der AR (+ alle Aufsätze)

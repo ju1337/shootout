@@ -63,5 +63,65 @@
         </Properties>
       </Item>
     </Item>
+    <Item class="Folder" referent="5">
+      <Properties>
+        <string name="Name">W_Splitterlicht</string>
+        <BinaryString name="AttributesSerialize">CAAAAAwAAABGWF9FaW5zY2hsYWcCDgAAADkyNDQ1ODk2MDUwMTczCQAAAEZYX0VtYmxlbQIPAAAAMTI2MDQwNDUzNjMxMjQ2CgAAAEZYX0dsaXR6ZXICDwAAADEzNDg3NTY0MzMxMDA5MQ0AAABGWF9MZXVjaHRzcHVyAg8AAAAxMDM4MTEyMTc0NTE3NzIRAAAARlhfTXVlbmR1bmdzYmxpdHoCDwAAADEyMTUzMzc5MzI4NDEwMQ0AAABGWF9QcmlzbWFyaW5nAg4AAAA4Njc1MDUxODM0NTk2OQsAAABGWF9TcGxpdHRlcgIPAAAAMTMwNjc3NTgxMTI2Mzc0CAAAAEZYX1N0YXViAg4AAAA4OTg5MDIyMDI1ODQyNg==</BinaryString>
+      </Properties>
+      <Item class="SurfaceAppearance" referent="6">
+        <Properties>
+          <string name="Name">Skin_Body</string>
+          <Content name="ColorMap"><url>rbxassetid://99136908861448</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://70404628104932</uri>
+          </Content>
+          <float name="EmissiveStrength">2</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://122872738540040</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://126624004325595</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://121179829337104</url></Content>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="7">
+        <Properties>
+          <string name="Name">Magazine</string>
+          <Content name="ColorMap"><url>rbxassetid://99136908861448</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://70404628104932</uri>
+          </Content>
+          <float name="EmissiveStrength">2</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://122872738540040</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://126624004325595</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://121179829337104</url></Content>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="8">
+        <Properties>
+          <string name="Name">Aufsaetze</string>
+          <Content name="ColorMap"><url>rbxassetid://99136908861448</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://70404628104932</uri>
+          </Content>
+          <float name="EmissiveStrength">2</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>1</G>
+            <B>1</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://122872738540040</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://126624004325595</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://121179829337104</url></Content>
+        </Properties>
+      </Item>
+    </Item>
   </Item>
 </roblox>
