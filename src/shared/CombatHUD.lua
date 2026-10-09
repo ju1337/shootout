@@ -7,7 +7,7 @@
 --   * Hitmarker, Schadenszahlen und Treffer-Töne in mehreren Stilen: HitFeedback (Einstellungen „Hitmarker“ und
 --     „Schadenszahlen“)
 --   * Treffer-Richtung: rote Bögen um die Mitte zeigen zum Angreifer (stärker bei viel Schaden)
---   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN, ohne Symbol), Nachlade-Balken, Anzeige "Schuss blockiert"
+--   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN) mit XP-Zeile darunter, mittig unter dem Fadenkreuz, Nachlade-Balken, Anzeige "Schuss blockiert"
 --     (Schulterkamera: zwischen Waffe und Ziel ist etwas im Weg)
 
 local Players = game:GetService("Players")
@@ -241,36 +241,97 @@ function CombatHUD.Init(gui, weaponClient)
 		blocked.Visible = showBlocked
 	end)
 
-	-- ---------- Kill-Meldung ----------
-	local killNotice = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 56),
-		Size = UDim2.new(0, 0, 0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = UITheme.Colors.Background,
-		BackgroundTransparency = 0.4, BorderSizePixel = 0, Visible = false }, gui)
+	-- ---------- Kill-Meldung und XP ----------
+	-- Ein gemeinsamer Block mittig unter dem Fadenkreuz, weit genug unten, dass er das Ziel nicht verdeckt:
+	-- oben die Kill-Karte (farbiges Schild ELIMINIERT / NIEDERGESCHLAGEN + Name, Akzentstrich in derselben Farbe,
+	-- im Stil der Hotbar-Kacheln), darunter die XP-Zeile ("+100 XP · KILL", Münzen in Gold). Medaillen-XP kommen leise
+	-- (quiet), die zeigt die Medaille selbst. Level-Aufstiege meldet Notifications.
+	local feed = make("Frame", { Name = "KillFeedback", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.5, 150),
+		Size = UDim2.new(0, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.XY, BackgroundTransparency = 1 }, gui)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, feed)
+
+	local killNotice = make("Frame", { Name = "Kill", Size = UDim2.new(0, 0, 0, 38), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundColor3 = UITheme.Colors.Background, BackgroundTransparency = 0.25, BorderSizePixel = 0, Visible = false,
+		LayoutOrder = 1 }, feed)
 	UITheme.Corner(killNotice, UITheme.Radius.Small)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, killNotice)
+	UITheme.Stroke(killNotice)
+	local killAccent = UITheme.AccentBar(killNotice, KILL_RED, { Side = "Bottom", Thickness = 2 })
+	local killRow = make("Frame", { Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1 }, killNotice)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 16) }, killRow)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
-		Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, killNotice)
-	local killTitle = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
-		Font = Enum.Font.BuilderSansExtraBold, LayoutOrder = 2 }, killNotice)
-	local killName = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 20,
-		Font = Enum.Font.BuilderSansExtraBold, LayoutOrder = 3 }, killNotice)
-	local killScale = make("UIScale", {}, killNotice)
+		Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, killRow)
+	local killTag = make("Frame", { Size = UDim2.new(0, 0, 0, 24), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundColor3 = KILL_RED, BorderSizePixel = 0, LayoutOrder = 1 }, killRow)
+	UITheme.Corner(killTag, 3)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, killTag)
+	local killTitle = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 14,
+		Font = Enum.Font.BuilderSansExtraBold, TextStrokeTransparency = 1 }, killTag)
+	local killName = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 22,
+		Font = Enum.Font.BuilderSansExtraBold, TextStrokeTransparency = 0.7, LayoutOrder = 2 }, killRow)
+
+	local xpRow = make("Frame", { Name = "XP", Size = UDim2.new(0, 0, 0, 24), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1, Visible = false, LayoutOrder = 2 }, feed)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder }, xpRow)
+	local function xpLabel(order, size, color)
+		return label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = size,
+			Font = Enum.Font.BuilderSansExtraBold, TextColor3 = color, LayoutOrder = order }, xpRow)
+	end
+	local xpAmount = xpLabel(1, 20, UITheme.Colors.Primary)
+	local xpCoins = xpLabel(2, 17, UITheme.Colors.Gold)
+	local xpDot = xpLabel(3, 17, UITheme.Colors.Muted)
+	xpDot.Text = "·"
+	local xpReason = xpLabel(4, 17, UITheme.Colors.Text)
+
+	-- kurzes Aufploppen
+	local function pop(object, from)
+		local s = object:FindFirstChildOfClass("UIScale") or make("UIScale", {}, object)
+		s.Scale = from
+		TweenService:Create(s, TweenInfo.new(0.16, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	end
+
 	local killId = 0
 	local function showKill(killed, name)
 		killId += 1
 		local myId = killId
 		local color = killed and KILL_RED or DOWN_ORANGE
 		killTitle.Text = killed and "ELIMINIERT" or "NIEDERGESCHLAGEN"
-		killTitle.TextColor3 = color
+		killTag.BackgroundColor3 = color
+		killAccent.BackgroundColor3 = color
 		killName.Text = UITheme.Upper(tostring(name))
 		killNotice.Visible = true
-		killScale.Scale = 1.06
-		TweenService:Create(killScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-		task.delay(1.8, function()
+		pop(killNotice, 1.12)
+		task.delay(2.2, function()
 			if killId == myId then
 				killNotice.Visible = false
 			end
 		end)
 	end
+
+	local xpId = 0
+	Remotes.XPGain.OnClientEvent:Connect(function(amount, reason, _, _, coins, quiet)
+		if quiet then
+			return
+		end
+		xpId += 1
+		local myId = xpId
+		xpAmount.Text = "+" .. amount .. " XP"
+		xpCoins.Visible = (coins or 0) > 0
+		xpCoins.Text = xpCoins.Visible and ("+" .. coins .. " MÜNZEN") or ""
+		local why = reason and UITheme.Upper(tostring(reason)) or ""
+		xpReason.Text = why
+		xpReason.Visible = why ~= ""
+		xpDot.Visible = why ~= ""
+		xpRow.Visible = true
+		pop(xpRow, 1.2)
+		task.delay(2.2, function()
+			if xpId == myId then
+				xpRow.Visible = false
+			end
+		end)
+	end)
 
 	-- Treffer: Hitmarker, Schadenszahl und Ton (HitFeedback), dazu die Kill-Meldung
 	HitFeedback.Init(gui)
