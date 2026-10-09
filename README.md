@@ -292,6 +292,11 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   anderen Spielern spawnen sie normal. Restzeit oben unter der Zonen-Anzeige; eine zweite Spritze geht erst, wenn die
   erste abgelaufen ist; der Tod beendet die Wirkung.
 - **Lager**: 40 Plätze, immer sicher (auch beim Tod).
+- **Ausrüstungen** (im Lager-Fenster, zwei Vorlagen AUSRÜSTUNG 1/2): SPEICHERN merkt sich die Anordnung der Tasche
+  (Plätze, Items, Anzahl, Aufsätze der Waffen – kein Magazin) im Profil (`Extinction.Loadouts`). AUSRÜSTUNG 1/2 legt
+  sie an (nur am Lager in der Safe Zone): Was nicht dazugehört, geht ins Lager (voll: bleibt in der Tasche), die Teile
+  kommen aus Lager und Tasche auf ihre Plätze – Waffen möglichst mit denselben Aufsätzen, sonst werden lose Aufsätze
+  aus dem Lager angebaut; Stapel so viel wie da ist. Was fehlt, steht in der Meldung („Fehlt: Medkit ×2, AK-47“).
 - **Tod draußen**: die ganze Tasche fällt als **Tasche am Boden** (Rucksack mit rotem Licht und Lichtsäule, Name des
   Toten darüber; 5 Minuten, jeder kann sie mit E durchsuchen und Items einzeln nehmen), Respawn nach 5 s in der
   Safe Zone. Der Tote sieht seine Tasche als **rotes X** auf Minimap (am Rand, wenn sie weit weg ist) und Weltkarte (mit
