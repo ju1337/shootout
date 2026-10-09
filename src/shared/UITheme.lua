@@ -10,6 +10,7 @@
 
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local UITheme = {}
 
@@ -474,8 +475,49 @@ end
 function UITheme.IsMenuOpenBy(user)
 	return blurUsers[user] == true
 end
+-- Blickrichtung über offene Fenster hinweg halten: Beim Öffnen des ersten Fensters merken, beim Schließen des letzten
+-- ein paar Bilder lang zurücksetzen. Sonst zieht die Kamera danach hoch (oder zur Seite): Roblox zählt den Sprung des
+-- Mauszeigers von der Fensterstelle (Beute-Raster, Knöpfe unten) zurück in die Bildmitte als Mausbewegung, und bei
+-- freier Maus kann sich die Kamera hinter dem Fenster mitdrehen.
+local HOLD_TIME = 0.2 -- so lange (und mindestens HOLD_FRAMES Bilder) nach dem Schließen zurücksetzen
+local HOLD_FRAMES = 4
+local cameraUsers = {}
+local heldLook = nil
+local holdSerial = 0
+
+function UITheme.HoldCamera(user, on)
+	local wasHeld = next(cameraUsers) ~= nil
+	cameraUsers[user] = on and true or nil
+	local held = next(cameraUsers) ~= nil
+	local camera = workspace.CurrentCamera
+	if held and not wasHeld then
+		heldLook = camera and camera.CameraType == Enum.CameraType.Custom and camera.CFrame.LookVector or nil
+		holdSerial += 1
+		RunService:UnbindFromRenderStep("UIHoldCamera")
+	elseif wasHeld and not held and heldLook then
+		local look = heldLook
+		heldLook = nil
+		holdSerial += 1
+		local serial = holdSerial
+		local untilTime, frames = os.clock() + HOLD_TIME, 0
+		-- direkt nach der Kamera von Roblox (die rechnet jedes Bild von der aktuellen Blickrichtung aus weiter)
+		RunService:BindToRenderStep("UIHoldCamera", Enum.RenderPriority.Camera.Value + 1, function()
+			local current = workspace.CurrentCamera
+			frames += 1
+			if serial ~= holdSerial or not current or current.CameraType ~= Enum.CameraType.Custom
+				or current:GetAttribute("KillCam") or (frames > HOLD_FRAMES and os.clock() > untilTime) then
+				RunService:UnbindFromRenderStep("UIHoldCamera")
+				return
+			end
+			local position = current.CFrame.Position
+			current.CFrame = CFrame.lookAt(position, position + look)
+		end)
+	end
+end
+
 function UITheme.SetBlur(user, on)
 	blurUsers[user] = on or nil
+	UITheme.HoldCamera(user, on)
 	if not blur then
 		blur = make("BlurEffect", { Name = "MenuBlur", Size = 0 }, Lighting)
 	end

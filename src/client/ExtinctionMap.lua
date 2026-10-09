@@ -496,6 +496,7 @@ function ExtinctionMap.Set(open)
 	else
 		RunService:UnbindFromRenderStep("ExtinctionMapMouse")
 	end
+	UITheme.HoldCamera("ExtinctionMap", gui.Enabled) -- Blickrichtung nach dem Schließen wie vorher
 end
 
 function ExtinctionMap.Toggle()

@@ -19,6 +19,7 @@ local GameSettings = require(Shared.GameSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local DayCycle = require(Shared.DayCycle)
 local StaffConfig = require(Shared.StaffConfig)
+local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
@@ -702,6 +703,7 @@ local function setOpen(open)
 	else
 		RunService:UnbindFromRenderStep("AdminMouse")
 	end
+	UITheme.HoldCamera("Admin", open) -- Blickrichtung nach dem Schließen wie vorher
 end
 
 local function newPage(id)

@@ -238,6 +238,7 @@ local function closeIntro()
 		intro = nil
 	end
 	RunService:UnbindFromRenderStep("ExtTutorialMouse")
+	UITheme.HoldCamera("ExtTutorial", false)
 end
 
 -- Tutorial starten (withIntro = erst die Karte WELCOME mit START / SKIP)
@@ -282,6 +283,7 @@ function ExtTutorial.Start(withIntro)
 		finish("Skip")
 	end)
 	state.Started = true
+	UITheme.HoldCamera("ExtTutorial", true) -- Blickrichtung nach dem Schließen wie vorher
 	RunService:BindToRenderStep("ExtTutorialMouse", Enum.RenderPriority.Camera.Value + 2, function()
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
