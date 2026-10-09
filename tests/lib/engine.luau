@@ -1884,13 +1884,31 @@ rawset(CollectionService, "__methods", {
 	end,
 })
 
+-- PathfindingService: ComputeAsync liefert eine gerade Wegpunkt-Reihe (Abstand WaypointSpacing, Action Walk) mit Status
+-- Success. SIM.PathHandler(start, goal, agentParameters) kann sie ersetzen: Liste von { Position, Action } oder nil = NoPath.
+SIM.PathHandler = nil
 local PathfindingService = service("PathfindingService")
 rawset(PathfindingService, "__methods", {
-	CreatePath = function()
-		local path = { Status = Enum.PathStatus.NoPath, Blocked = SIM.Signal() }
-		function path:ComputeAsync() end
+	CreatePath = function(_, agentParameters)
+		local path = { Status = Enum.PathStatus.NoPath, Blocked = SIM.Signal(), Unblocked = SIM.Signal(), __waypoints = {} }
+		local spacing = agentParameters and agentParameters.WaypointSpacing or 4
+		function path:ComputeAsync(start, goal)
+			local waypoints
+			if SIM.PathHandler then
+				waypoints = SIM.PathHandler(start, goal, agentParameters)
+			else
+				waypoints = {}
+				local offset = goal - start
+				local steps = math.max(1, math.ceil(offset.Magnitude / spacing))
+				for i = 0, steps do
+					table.insert(waypoints, { Position = start + offset * (i / steps), Action = Enum.PathWaypointAction.Walk, Label = "" })
+				end
+			end
+			self.__waypoints = waypoints or {}
+			self.Status = waypoints and Enum.PathStatus.Success or Enum.PathStatus.NoPath
+		end
 		function path:GetWaypoints()
-			return {}
+			return table.clone(self.__waypoints)
 		end
 		function path:Destroy() end
 		return path

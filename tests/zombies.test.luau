@@ -133,6 +133,59 @@ check(target ~= nil and flatDistance(target, alice.Character.HumanoidRootPart.Po
 check(hunter.Humanoid.WalkSpeed > Z.WalkSpeed, "jagen ist schneller als schlurfen")
 check(Z.PerPlayer <= 4 and Z.MaxTotal <= 36, "wenige Zombies: höchstens " .. Z.PerPlayer .. " pro Spieler")
 
+-- Wegfindung: steht eine Mauer zwischen Zombie und Alice (waagerechter Raycast auf Brusthöhe trifft), folgt der Zombie
+-- einem Pfad des PathfindingService statt gerade auf sie zu: nächster Wegpunkt = Umweg um die Mauer, Jump-Wegpunkt springt
+local wall = Instance.new("Part", workspace)
+wall.Name = "Wall"
+local wallUp = false
+local paths = 0
+local groundRays = SIM.RaycastHandler
+SIM.RaycastHandler = function(origin, direction, params)
+	if wallUp and math.abs(direction.Y) < 50 then
+		return { Position = origin + direction * 0.5, Normal = Vector3.new(1, 0, 0), Instance = wall }
+	end
+	return groundRays(origin, direction, params)
+end
+SIM.PathHandler = function(start, goal)
+	paths += 1
+	return { { Position = start, Action = Enum.PathWaypointAction.Walk },
+		{ Position = start + Vector3.new(0, 0, 10), Action = Enum.PathWaypointAction.Jump },
+		{ Position = goal, Action = Enum.PathWaypointAction.Walk } }
+end
+local ZP = ExtinctionConfig.ZombiePath
+check(ZP.Enabled == true and ZP.PerFrame >= 1 and ZP.Recompute >= 1, "Wegfindung an, mit Budget pro Frame")
+wallUp = true
+step(0.6)
+local waypoint = hunter.Humanoid.MoveToTarget
+check(paths == 1, "Sichtlinie verbaut: ein Pfad berechnet (" .. paths .. ")")
+check(waypoint ~= nil and flatDistance(waypoint, hunter.HumanoidRootPart.Position + Vector3.new(0, 0, 10)) < 1,
+	"Zombie läuft zum nächsten Wegpunkt (Umweg um die Mauer)")
+check(hunter.Humanoid.Jump == true, "Jump-Wegpunkt: Zombie springt")
+step(1)
+check(paths == 1, "Ziel steht still: kein neuer Pfad")
+place(alice, Vector3.new(0, 3, -170 + ZP.MoveTolerance + 4)) -- Alice geht ein Stück weiter als MoveTolerance
+step(0.3)
+check(paths == 2, "Ziel bewegt, Recompute abgelaufen: neuer Pfad (" .. paths .. ")")
+-- Budget: viele Zombies hinter der Mauer bekommen höchstens PerFrame Pfade je KI-Runde, danach alle
+local crowd = {}
+for i = 1, ZP.PerFrame + 2 do
+	table.insert(crowd, ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(30, -3, i * 3)))
+end
+local before = paths
+step(0.25)
+check(paths - before <= ZP.PerFrame, "höchstens " .. ZP.PerFrame .. " Pfade pro Runde (" .. (paths - before) .. ")")
+step(1)
+check(paths - before == #crowd, "danach haben alle Zombies ihren Pfad (" .. (paths - before) .. ")")
+for _, model in crowd do
+	model:Destroy()
+end
+-- Mauer weg: wieder gerade auf Alice zu
+wallUp = false
+SIM.PathHandler = nil
+step(2.5)
+target = hunter.Humanoid.MoveToTarget
+check(target ~= nil and flatDistance(target, alice.Character.HumanoidRootPart.Position) < 1, "freie Sicht: wieder direkt auf Alice zu")
+
 -- Zuschlagen
 local health = alice.Character.Humanoid.Health
 hunter:PivotTo(alice.Character:GetPivot() * CFrame.new(0, 0, 3))

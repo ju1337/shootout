@@ -660,6 +660,22 @@ ExtinctionConfig.Zombies = {
 	ShieldRadius = 80,     -- Anti-Zombie-Spritze: so nah am Benutzer spawnt kein Zombie (egal woher: Umgebung, Schreier, Nester ...)
 }
 
+-- Wegfindung beim Jagen (PathfindingService): nur Zombies mit Ziel und nur, wenn die gerade Linie zum Ziel verbaut ist
+-- (Mauern und Häuser der Altstadt, Ruinen). Ist der Weg frei, laufen sie wie bisher direkt hin; ohne Ziel schlurfen sie
+-- wie bisher. Pfade sind teuer: je Zombie frühestens alle Recompute Sekunden ein neuer, und nur, wenn sich das Ziel seit
+-- der Berechnung mehr als MoveTolerance Studs bewegt hat, der Pfad fehlschlug oder verbaut wurde (Path.Blocked). Pro
+-- Heartbeat höchstens PerFrame Berechnungen auf dem ganzen Server, die anderen Zombies warten (bis dahin gerade hin).
+ExtinctionConfig.ZombiePath = {
+	Enabled = true,
+	Recompute = 1.5,     -- Sekunden: frühestens dann wieder ein neuer Pfad je Zombie
+	MoveTolerance = 8,   -- Studs: hat sich das Ziel seit der Berechnung weniger bewegt, bleibt der Pfad
+	PerFrame = 4,        -- höchstens so viele Pfad-Berechnungen pro Heartbeat (alle Zombies zusammen)
+	WaypointReach = 3.5, -- Studs: so nah am Wegpunkt gilt er als erreicht
+	AgentRadius = 2.5,   -- Parameter für PathfindingService:CreatePath
+	AgentHeight = 5,
+	WaypointSpacing = 6,
+}
+
 -- Arten: Health, Walk/Run (Tempo), Damage, Coins, XP (für Agent, Spielerlevel und Battle Pass, ohne Münzen), Scale (Größe),
 -- Drop (Chance auf Beute), Items (Anzahl), Table (Beute-Tabelle),
 -- Eyes (Augenfarbe). Walker fehlt hier bewusst bei Werten, die in ExtinctionConfig.Zombies stehen (siehe ZombieService.Kind).

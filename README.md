@@ -303,7 +303,8 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 - **Zombies** (`src/server-shared/ZombieService.lua`): wenige und langsam – spawnen nur um Spieler draußen im
   weiteren Umkreis (80-150 Studs, nicht auf Dächern, nicht im Wasser, nicht nah an der Safe Zone), höchstens 3 pro
   Spieler und 30 auf dem Server. Sie schlurfen herum, bemerken Spieler erst auf 45 Studs und schlagen langsam zu; in
-  die Safe Zone gehen sie nicht. In der roten Zone gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
+  die Safe Zone gehen sie nicht. Beim Jagen laufen sie direkt hin; ist die Sichtlinie verbaut (Mauern, Häuser, Ruinen),
+  suchen sie einen Weg über den PathfindingService (`ExtinctionConfig.ZombiePath`: sparsam, höchstens 4 Pfade pro Frame). In der roten Zone gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
   (schnell, wenig Leben) und **Brocken** (groß, viel Leben, harte Schläge, immer Beute).
 - **Zombie-Arten**: alle mit Blutflecken und Wunden. Draußen am Tag fast nur normale Zombies, ein paar **Läufer** und
   **Schreier** (weiße Augen): sieht ein Schreier dich, schreit er (roter Ring) – alle Zombies im Umkreis jagen dich und

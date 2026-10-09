@@ -4,7 +4,14 @@
 -- Spieler und MaxTotal auf dem Server) – nur auf dem Boden (nicht auf Dächern), nicht im Wasser und nicht nah an der
 -- Safe Zone. Sie schlurfen herum, bemerken Spieler in SightRange, rennen hin und schlagen zu (AttackDamage alle
 -- AttackDelay Sekunden). In die Safe Zone gehen sie nicht (sie bleiben am Rand stehen), dort gibt es auch keinen
--- Schaden. Wer eine Weile keinen Spieler draußen in der Nähe hat, verschwindet. Bots der offenen Welt (Admin-Panel,
+-- Schaden.
+-- Wegfindung (ExtinctionConfig.ZombiePath): beim Jagen prüft ein Raycast auf Brusthöhe (ohne Charaktere, Zombies und
+-- Beute), ob die gerade Linie zum Ziel frei ist. Wenn ja: direkt hin (MoveTo). Wenn nicht (Mauern, Häuser, Ruinen):
+-- Pfad vom PathfindingService, Wegpunkt für Wegpunkt (Jump-Wegpunkte: springen), jeder Wegpunkt mit clampOutside.
+-- Neuer Pfad frühestens alle Recompute Sekunden und nur, wenn das Ziel sich mehr als MoveTolerance Studs bewegt hat,
+-- der Pfad fehlschlug oder verbaut wurde; pro Heartbeat höchstens PerFrame Berechnungen für alle Zombies zusammen
+-- (die Berechnung läuft in einem eigenen Thread, bis sie fertig ist läuft der Zombie gerade). Ohne Pfad: gerade hin.
+-- Ohne Ziel (Schlurfen) keine Wegfindung. Wer eine Weile keinen Spieler draußen in der Nähe hat, verschwindet. Bots der offenen Welt (Admin-Panel,
 -- options.Bots) jagen sie genauso wie Spieler.
 -- Arten (ExtinctionConfig.ZombieKinds): Walker (normal, langsam), in der roten Zone auch Läufer (schneller) und Brocken
 -- (groß, zäh, schlägt hart). In der roten Zone (RedzoneService) spawnen mehr Zombies, innerhalb der Zone.
@@ -20,6 +27,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local PathfindingService = game:GetService("PathfindingService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
@@ -33,6 +41,7 @@ local LootService = require(script.Parent.LootService)
 local ZombieService = {}
 
 local Z = ExtinctionConfig.Zombies
+local P = ExtinctionConfig.ZombiePath
 local AI_STEP = 0.25        -- Sekunden zwischen zwei KI-Schritten (alle Zombies, verteilt)
 local WANDER_RADIUS = 30
 local LONELY_TIME = 8       -- so lange ohne Spieler draußen in der Nähe, dann verschwindet ein Zombie
@@ -50,7 +59,10 @@ folder.Parent = workspace
 
 local options = nil  -- { Map, InSafeZone(position), SafeCenter(), Players() -> Liste der Spieler in der offenen Welt,
                      --   RedzoneAt(position) -> Zone | nil, IsWater(x, z) -> bool, Bots() -> Bot-Modelle (auch Ziele) }
-local zombies = {}   -- [Model] = { Humanoid, Root, Target, NextAttack, NextWander, LastPos, StuckTime, Speed, Walk, Damage, Coins, Kind }
+local zombies = {}   -- [Model] = { Humanoid, Root, Target, NextAttack, NextWander, LastPos, StuckTime, Speed, Walk, Damage, Coins, Kind,
+                     --   Path, Waypoints, WaypointIndex, PathGoal, PathAt, PathBusy, PathBlocked (Wegfindung, siehe followPath) }
+local pathBudget = 0 -- Pfad-Berechnungen, die in diesem Heartbeat noch erlaubt sind (ZombiePath.PerFrame)
+local castParams = nil -- RaycastParams für die Sichtlinie beim Jagen (je KI-Runde neu: ohne Charaktere, Zombies, Beute)
 local count = 0
 local template = nil
 local random = Random.new()
@@ -460,9 +472,14 @@ local function attachCorpseLoot(model, root, info, items)
 end
 
 local function remove(model)
-	if zombies[model] then
+	local info = zombies[model]
+	if info then
 		zombies[model] = nil
 		count -= 1
+		if info.Path then
+			info.Path:Destroy()
+			info.Path = nil
+		end
 	end
 end
 
@@ -894,6 +911,100 @@ end
 
 -- ---------- KI ----------
 
+-- Raycast-Filter für die Sichtlinie beim Jagen: Zombies, Beute, Spieler-Charaktere und Bots zählen nicht als Hindernis
+local function buildCastParams()
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = { folder }
+	local loot = workspace:FindFirstChild("ExtinctionLoot")
+	if loot then
+		table.insert(ignore, loot)
+	end
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+	end
+	for _, bot in options.Bots and options.Bots() or {} do
+		table.insert(ignore, bot)
+	end
+	params.FilterDescendantsInstances = ignore
+	return params
+end
+
+-- Ist die gerade Linie vom Zombie zum Ziel (Brusthöhe) verbaut?
+local function lineBlocked(root, targetRoot)
+	local origin = root.Position
+	local direction = targetRoot.Position - origin
+	if direction.Magnitude < 0.5 then
+		return false
+	end
+	castParams = castParams or buildCastParams()
+	return workspace:Raycast(origin, direction, castParams) ~= nil
+end
+
+-- Neuen Pfad anfordern (im eigenen Thread, ComputeAsync wartet). Höchstens PerFrame je Heartbeat: ist das Budget
+-- aufgebraucht, passiert nichts und der nächste KI-Schritt versucht es wieder.
+local function requestPath(info, root, goal, now)
+	if info.PathBusy or pathBudget <= 0 then
+		return
+	end
+	pathBudget -= 1
+	local path = info.Path
+	if not path then
+		path = PathfindingService:CreatePath({ AgentRadius = P.AgentRadius, AgentHeight = P.AgentHeight, AgentCanJump = true,
+			WaypointSpacing = P.WaypointSpacing })
+		info.Path = path
+		path.Blocked:Connect(function(index)
+			if info.Waypoints and index >= (info.WaypointIndex or 1) then
+				info.PathBlocked = true -- vor dem Zombie verbaut: beim nächsten Schritt neu berechnen
+			end
+		end)
+	end
+	info.PathBusy, info.PathAt, info.PathGoal, info.PathBlocked = true, now, goal, false
+	task.spawn(function()
+		local ok = pcall(path.ComputeAsync, path, root.Position, goal)
+		info.PathBusy = false
+		if ok and path.Status == Enum.PathStatus.Success and info.Path == path then
+			info.Waypoints = path:GetWaypoints()
+			info.WaypointIndex = 2 -- der erste Wegpunkt ist die eigene Position
+		else
+			info.Waypoints = nil -- kein Weg: gerade hin, später noch einmal versuchen
+		end
+	end)
+end
+
+-- Jagen mit verbauter Sichtlinie: dem Pfad folgen, solange keiner da ist (noch nicht berechnet, fehlgeschlagen,
+-- abgelaufen) gerade auf das Ziel zu
+local function followPath(info, humanoid, root, goal, now)
+	local waypoints = info.Waypoints
+	local stale = waypoints == nil or info.PathBlocked or info.PathGoal == nil
+		or (goal - info.PathGoal).Magnitude > P.MoveTolerance
+	if stale and now - (info.PathAt or -math.huge) >= P.Recompute then
+		requestPath(info, root, goal, now)
+		waypoints = info.Waypoints
+	end
+	local waypoint = waypoints and waypoints[info.WaypointIndex]
+	if waypoint then
+		local offset = waypoint.Position - root.Position
+		if Vector3.new(offset.X, 0, offset.Z).Magnitude < P.WaypointReach then
+			info.WaypointIndex += 1
+			waypoint = waypoints[info.WaypointIndex]
+		end
+	end
+	if not waypoint then
+		if waypoints and not info.PathBusy then
+			info.Waypoints = nil -- Pfad abgelaufen, Ziel aber noch verbaut: beim nächsten Schritt neu berechnen
+		end
+		humanoid:MoveTo(goal)
+		return
+	end
+	if waypoint.Action == Enum.PathWaypointAction.Jump then
+		humanoid.Jump = true
+	end
+	humanoid:MoveTo(clampOutside(waypoint.Position))
+end
+
 local function step(model, info, now)
 	local humanoid, root = info.Humanoid, info.Root
 	if not model.Parent or humanoid.Health <= 0 or not root.Parent then
@@ -944,7 +1055,13 @@ local function step(model, info, now)
 				Damage.Apply(character, targetHumanoid, info.Damage, { Model = model, BotName = info.Name, Weapon = "Zombie" })
 			end
 		else
-			humanoid:MoveTo(clampOutside(targetRoot.Position))
+			local goal = clampOutside(targetRoot.Position)
+			if P.Enabled and lineBlocked(root, targetRoot) then
+				followPath(info, humanoid, root, goal, now)
+			else
+				info.Waypoints = nil -- freie Sicht: direkt hin
+				humanoid:MoveTo(goal)
+			end
 		end
 	elseif now >= info.NextWander then
 		-- herumschlurfen
@@ -1033,8 +1150,10 @@ function ZombieService.Init(opts)
 		aiElapsed += dt
 		spawnElapsed += dt
 		despawnElapsed += dt
+		pathBudget = P.PerFrame
 		if aiElapsed >= AI_STEP then
 			aiElapsed = 0
+			castParams = nil -- Filter je Runde neu (Charaktere und Bots ändern sich)
 			local now = os.clock()
 			for model, info in zombies do
 				local ok, err = pcall(step, model, info, now)
