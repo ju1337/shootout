@@ -3747,7 +3747,7 @@ def build(bm):
     return w
 
 
-FRESH_SIGNS = ("RestStopSign", "PriceSign", "HaltSign", "BarracksSign", "KitSign")
+FRESH_SIGNS = ("RestStopSign", "PriceSign", "HaltSign", "BarracksSign", "KitSign", "CryptSign")
 
 
 def weather_signs(bm, b, rng):

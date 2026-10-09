@@ -97,7 +97,8 @@ der Tür und Markise), von innen nach außen:
   und dem Schieber-Transporter/Rote Zone), SO **Fuhrpark** (KFZ-WERKSTATT, Ersatzteile, Hotel zur Post; hinten
   Tankstelle, Landeplatz, Parkplatz), SW **Depot** (BUSBAHNHOF mit dem Bus am Bordstein der Südstraße, die
   **MARKTHALLE** mit dem grünen Tor `Portal_Market`, Spedition; hinten Container, Portalkran, Paletten), NW
-  **Wohnviertel** (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer mit Überlebenden, Wäscheleine, Wasserturm).
+  **Wohnviertel** (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer mit Überlebenden, Wäscheleine, Wasserturm und an der
+  Nordstraße die Gruftkapelle **KATAKOMBEN**, der Eingang zu den Dungeons).
 - Ringmauer aus Betonfertigteilen mit Stacheldraht (wie im ersten Camp), vier Tore aus Container-Türmen (außen CAMP
   PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
 
@@ -377,8 +378,9 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   Abwurf in die neue Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu Begleiter-Zombies. Bleibt
   5 Minuten.
 - **Dungeons** (`src/server-shared/DungeonService.lua`, Anzeige `src/client/DungeonClient.lua`, Werte
-  `ExtinctionConfig.Dungeon`): vier feste Eingänge draußen (BUNKER NORD, OST, SÜD, WEST; Betonbunker mit violett
-  flimmerndem Durchgang, Schild DUNGEON, auf der Weltkarte als violettes Quadrat). **E am Bunker** verbraucht einen
+  `ExtinctionConfig.Dungeon`): der Eingang ist die **Gruftkapelle KATAKOMBEN im Camp** (Hof des Wohnviertels an der
+  Nordstraße: Kalkstein, Treppengiebel, violett flimmernder Durchgang, Laternen, Kiesweg zur Straße; Punkt `DungeonGate`
+  in der Gruppe Zentrale; auf der Weltkarte als violettes Quadrat). **E an der Kapelle** verbraucht einen
   **Dungeon-Schlüssel** (Item `DungeonKey`, aus Tasche oder Container; nicht zu kaufen, im Spielermarkt handelbar) und
   bringt dich und alle Squad-Mitglieder, die höchstens 30 Studs entfernt stehen, in eine eigene, abgeschlossene Halle
   abseits der Karte (bis zu 8 Gruppen gleichzeitig). Die Halle ist **„Die Katakomben“** (Bauplan
@@ -391,13 +393,14 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   kein Regen. Draufsicht: `python3 tools/dungeon_render.py dungeon.png`. Nach 10 Sekunden kommt Welle 1, danach **Welle um Welle mehr
   Zombies** aus den Gittern in den Wänden: jede Welle mehr (je Spieler noch mehr), mehr Leben, ab Welle 3 Brocken, ab
   Welle 4 gepanzerte, jede 5. Welle eine Blutbestie (`ExtinctionConfig.DungeonWave`). Nach jeder geschafften Welle leuchtet
-  das **Portal** an der Stirnseite 20 Sekunden grün: E dort = raus vor den Bunker mit der Beute aller geschafften Wellen
+  das **Portal** an der Stirnseite 20 Sekunden grün: E dort = raus vor die Kapelle mit der Beute aller geschafften Wellen
   (Münzen, Items in die Tasche bzw. was nicht passt ins Lager, 60 EP je Welle; `ExtinctionConfig.DungeonReward`), sonst
-  geht es mit der nächsten Welle weiter. Tod im Dungeon zählt wie draußen: die Tasche fällt **vor dem Bunker**, die
+  geht es mit der nächsten Welle weiter. Tod im Dungeon zählt wie draußen: die Tasche fällt **vor der Kapelle**, die
   Dungeon-Beute ist weg. Die Anti-Zombie-Spritze wirkt drinnen nicht. Oben in der Mitte zeigt eine Anzeige Welle,
   Zombies übrig bzw. Countdown und die gesammelte Beute. **Schlüssel finden**: 5 % bei normalen Zombies (nicht im
   Dungeon), dazu in Lootdrops (35 %), am Heli-Wrack (50 %), in der Horden-Kiste, der Konvoi-Ladung und bei Bossen (je 60 %)
-  und in der Sturmnacht-Belohnung (50 %) (`Dungeon.KeyChances`). Test: `tests/dungeon.test.luau`.
+  und in der Sturmnacht-Belohnung (50 %) (`Dungeon.KeyChances`). Zum Testen haben Admins nach jedem Spawn
+  mindestens 10 Schlüssel dabei (`Dungeon.TestKeys`, 0 = aus). Test: `tests/dungeon.test.luau`.
 - **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
   Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
   einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es

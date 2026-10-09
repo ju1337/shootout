@@ -1,6 +1,6 @@
--- Dungeons (DungeonService): Eingänge auf der Karte, E ohne Schlüssel geht nicht, mit Schlüssel kommt der Squad in der Nähe
+-- Dungeons (DungeonService): Eingang (Gruftkapelle) im Camp, E ohne Schlüssel geht nicht, mit Schlüssel kommt der Squad in der Nähe
 -- mit (Schlüssel weg, Fremde bleiben draußen), Welle um Welle Zombies aus den Gittern, nach jeder Welle Portal offen:
--- hindurch = Beute und zurück vor den Bunker; Tod im Dungeon = Tasche vor dem Bunker, Beute weg; leere Halle wird abgebaut.
+-- hindurch = Beute und zurück vor die Kapelle; Tod im Dungeon = Tasche vor der Kapelle, Beute weg; leere Halle wird abgebaut.
 -- Dazu: Schlüssel droppen bei normalen Zombies (nicht im Dungeon) und in Event-Beute, Wellen werden größer.
 local failures = 0
 local function check(cond, msg)
@@ -32,9 +32,13 @@ local map = Instance.new("Model", maps)
 map.Name = "Extinction"
 map:SetAttribute("DisplayName", "Ödland")
 map:SetAttribute("Center", CENTER)
-for _, name in { "Zone", "Spawns", "Portals", "Stands" } do
+for _, name in { "Zone", "Spawns", "Portals", "Stands", "Zentrale" } do
 	Instance.new("Folder", map).Name = name
 end
+-- Punkt vor der Gruftkapelle im Camp (tools/camp_phoenix.py crypt_gate), Blick zur Straße (+X)
+local gate = Instance.new("Part", map.Zentrale)
+gate.Name = "DungeonGate"
+gate.CFrame = CFrame.lookAt(CENTER + Vector3.new(-40, 3, 70), CENTER + Vector3.new(0, 3, 70))
 local zone = Instance.new("Part", map.Zone)
 zone.Name = "SafeZone"
 zone.Size = Vector3.new(200, 80, 200)
@@ -163,12 +167,13 @@ check(#ExtinctionConfig.AddDungeonKey({}, "Gibtsnicht", Random.new(1)) == 0, "un
 
 -- ---------- Eingänge ----------
 local entrances = HttpService:JSONDecode(map:GetAttribute("Dungeons") or "[]")
-check(#entrances == #D.Entrances, "alle Eingänge auf der Karte (" .. #entrances .. ")")
+check(#entrances == 1 and entrances[1].Title == D.Title, "Eingang auf der Karte (" .. #entrances .. ")")
 local entrance = DungeonService.Entrances()[1]
 local model = entrance and entrance.Model
 local prompt = model and model:FindFirstChild("DungeonPrompt", true)
-check(prompt ~= nil and prompt.ActionText ~= "", "Bunker mit E-Aufforderung")
-check(not Extinction.InSafeZone(entrance.Position), "Eingang draußen")
+check(prompt ~= nil and prompt.ActionText ~= "" and prompt.Parent == gate, "Kapelle mit E-Aufforderung")
+check(Extinction.InSafeZone(entrance.Position), "Eingang im Camp (Safe Zone)")
+check((entrance.Exit.Position - gate.Position):Dot(gate.CFrame.LookVector) > 3, "Ausgang vor der Tür")
 
 store.Data.u1 = { XP = {}, Coins = 1000, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
@@ -178,9 +183,11 @@ for _, player in { alice, bob, carl } do
 	Instance.new("Backpack", player).Name = "Backpack"
 end
 step(2)
+carl:SetAttribute("IsAdmin", true) -- Admins haben zum Testen Schlüssel dabei
 for _, player in { alice, bob, carl } do
 	enter(player)
 end
+check(countIn(carl, D.KeyItem) == D.TestKeys and countIn(alice, D.KeyItem) == 0, "Admin hat " .. D.TestKeys .. " Test-Schlüssel, andere keine")
 local function goTo(player, offset)
 	player.Character:PivotTo(CFrame.new(entrance.Position + offset))
 end
@@ -252,21 +259,29 @@ check(member and member.Cleared == 1 and member.Coins == ExtinctionConfig.Dungeo
 	"Beute für Welle 1 gesammelt")
 check((lastBanner(alice) or {}).Title == "WELLE 1 GESCHAFFT", "Ansage: Welle geschafft")
 
--- Alice geht durchs Portal: Beute, vor dem Bunker
+-- Alice geht durchs Portal: Beute, vor der Kapelle
 local coins = ProgressService.Get(alice).Coins
+local logBefore = #SIM.RemoteLog
 run.Hall.Prompt.Triggered:Fire(alice)
 step(0.3)
 check(DungeonService.RunOf(alice) == nil and alice:GetAttribute("Dungeon") == nil, "Alice ist raus")
-check((alice.Character.HumanoidRootPart.Position - entrance.Exit.Position).Magnitude < 5, "Alice steht vor dem Bunker")
+check((alice.Character.HumanoidRootPart.Position - entrance.Exit.Position).Magnitude < 5, "Alice steht vor der Kapelle")
 check(ProgressService.Get(alice).Coins >= coins + ExtinctionConfig.DungeonReward(1).Coins, "Münzen ausgezahlt")
-check((lastBanner(alice) or {}).Title == "DUNGEON GESCHAFFT", "Ansage: Dungeon geschafft")
+local cleared = false -- (danach kann die Safe-Zone-Ansage kommen: der Ausgang liegt im Camp)
+for i = logBefore + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2].Title == "DUNGEON GESCHAFFT" then
+		cleared = true
+	end
+end
+check(cleared, "Ansage: Dungeon geschafft")
 check(DungeonService.RunOf(bob) == run, "Bob bleibt drin")
 
 -- nach der Pause: Welle 2
 step(D.BreakTime + 0.5)
 check(run.State == "Wave" and run.Wave == 2 and not run.Hall.Prompt.Enabled, "Pause vorbei: Welle 2, Portal zu")
 
--- Bob stirbt im Dungeon: Tasche vor dem Bunker, Halle abgebaut
+-- Bob stirbt im Dungeon: Tasche vor der Kapelle, Halle abgebaut
 InventoryService.Give(bob, "Bandage", 3)
 step(0.2)
 local hall = run.Model
@@ -281,7 +296,7 @@ for _, bagModel in workspace.ExtinctionLoot:GetChildren() do
 		bagNear = true
 	end
 end
-check(bagNear, "Bobs Tasche liegt vor dem Bunker")
+check(bagNear, "Bobs Tasche liegt vor der Kapelle")
 check(hall.Parent == nil and next(DungeonService.Runs()) == nil, "leere Halle abgebaut")
 
 -- ---------- Schlüssel bei Zombies ----------

@@ -634,8 +634,8 @@ ExtinctionConfig.Horde = {
 }
 
 -- ---------- Dungeons (DungeonService) ----------
--- Feste Eingänge draußen (Entrances, X/Z relativ zur Mitte der Welt; der Bunker steht auf der nächsten freien, ebenen
--- Stelle). E am Eingang verbraucht einen Dungeon-Schlüssel (KeyItem, aus Tasche oder Container) und nimmt den ganzen Squad
+-- Eingang im Camp Phoenix (Safe Zone): die Gruftkapelle KATAKOMBEN im Hof des Wohnviertels an der Nordstraße
+-- (tools/camp_phoenix.py crypt_gate, Punkt Gate in der Gruppe Zentrale). E am Eingang verbraucht einen Dungeon-Schlüssel (KeyItem, aus Tasche oder Container) und nimmt den ganzen Squad
 -- mit, der höchstens SquadRange Studs entfernt steht. Jede Gruppe bekommt ihre eigene Halle abseits der Karte (Origin
 -- relativ zur Mitte, je Gruppe SlotSpacing weiter, höchstens MaxRuns gleichzeitig). Nach StartDelay Sekunden kommt Welle 1,
 -- jede weitere ist größer und härter (ExtinctionConfig.DungeonWave). Ist eine Welle erledigt, öffnet sich das Portal für
@@ -650,13 +650,9 @@ ExtinctionConfig.Dungeon = {
 	Enabled = true,
 	KeyItem = "DungeonKey",
 	KeyChances = { Zombie = 0.05, Boss = 0.6, Airdrop = 0.35, HeliCrash = 0.5, Horde = 0.6, Convoy = 0.6, Storm = 0.5 },
-	Entrances = {
-		{ Key = "Nord", Title = "BUNKER NORD", X = 450, Z = 1150 },
-		{ Key = "Ost", Title = "BUNKER OST", X = 1180, Z = -180 },
-		{ Key = "Sued", Title = "BUNKER SÜD", X = -150, Z = -1200 },
-		{ Key = "West", Title = "BUNKER WEST", X = -1050, Z = 230 },
-	},
-	EntranceSearch = 90,     -- so weit sucht der Server um X/Z nach einer freien, ebenen Stelle für den Bunker
+	Gate = "DungeonGate",    -- Punkt vor der Tür der Gruftkapelle (Gruppe Zentrale der Map)
+	Title = "KATAKOMBEN",
+	TestKeys = 10,           -- zum Testen: Admins (Attribut IsAdmin) haben nach jedem Spawn mindestens so viele Schlüssel (0 = aus)
 	EntranceRange = 10,      -- so nah muss man für E am Eingang sein
 	SquadRange = 30,         -- Squad-Mitglieder so nah am Eingang kommen mit
 	Origin = Vector3.new(-1200, 1500, -2900), -- erste Halle (relativ zur Mitte der Welt: südlich außerhalb, hoch oben)

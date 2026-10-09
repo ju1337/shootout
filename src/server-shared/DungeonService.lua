@@ -1,10 +1,10 @@
 -- DungeonService (ModuleScript, nur Server)
--- Dungeons der offenen Welt (Werte in ExtinctionConfig.Dungeon): An festen Orten draußen steht je ein Bunker mit
--- flimmerndem Durchgang. E am Eingang verbraucht einen Dungeon-Schlüssel (Item "DungeonKey" aus Tasche oder Container) und
+-- Dungeons der offenen Welt (Werte in ExtinctionConfig.Dungeon): Der Eingang ist die Gruftkapelle KATAKOMBEN im Camp
+-- Phoenix (Punkt Dungeon.Gate) mit flimmerndem Durchgang. E am Eingang verbraucht einen Dungeon-Schlüssel (Item "DungeonKey" aus Tasche oder Container) und
 -- bringt den Spieler samt Squad (wer nah genug am Eingang steht) in eine eigene, abgeschlossene Halle abseits der Karte.
 -- Dort kommen Welle um Welle Zombies aus Gittern in den Wänden, jede Welle größer und härter (ExtinctionConfig.DungeonWave).
 -- Ist eine Welle erledigt, leuchtet das Portal an der Stirnseite für Dungeon.BreakTime Sekunden grün: wer hindurchgeht (E),
--- kommt vor dem Bunker wieder heraus und bekommt die Beute aller Wellen, die er lebend geschafft hat (Münzen, Items in die
+-- kommt vor der Kapelle wieder heraus und bekommt die Beute aller Wellen, die er lebend geschafft hat (Münzen, Items in die
 -- Tasche bzw. ins Lager, EP). Danach schließt es, und die nächste Welle beginnt. Wer im Dungeon stirbt, verliert die
 -- Dungeon-Beute; seine Tasche fällt draußen vor dem Eingang (Extinction.dropBag fragt BagSpot). Ist niemand mehr drin,
 -- wird die Halle abgebaut.
@@ -22,6 +22,7 @@ local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DungeonLayout = require(Shared.DungeonLayout)
+local Zentrale = require(Shared.Zentrale)
 local ZombieService = require(script.Parent.ZombieService)
 local InventoryService = require(script.Parent.InventoryService)
 local ProgressService = require(script.Parent.ProgressService)
@@ -114,141 +115,32 @@ local function publishEntrances()
 	options.Map:SetAttribute("Dungeons", HttpService:JSONEncode(list))
 end
 
--- ---------- Eingänge ----------
+-- ---------- Eingang ----------
 
--- Freie, ebene Stelle für den Bunker nahe (x, z) (Weltkoordinaten): nicht im Wasser, nicht in einer Safe Zone, keine
--- Gebäude, Straßen oder Bäume im Grundriss. Sucht in Ringen bis Dungeon.EntranceSearch; findet sie nichts, bleibt es bei (x, z).
-local function findSpot(x, z)
-	local params = OverlapParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local ignore = { folder }
-	for _, name in { "Zone", "Places", "Ground", "Lakes" } do
-		local child = options.Map:FindFirstChild(name)
-		if child then
-			table.insert(ignore, child)
-		end
+-- Eingang im Camp: Punkt Dungeon.Gate (Gruppe Zentrale der Map, immer geladen) vor der Gruftkapelle KATAKOMBEN
+-- (tools/camp_phoenix.py crypt_gate). Daran hängt die E-Aufforderung; wer rauskommt, steht ein paar Schritte davor.
+local function setupGate()
+	local zentrale = options.Map:FindFirstChild(Zentrale.Group)
+	local gate = zentrale and zentrale:FindFirstChild(D.Gate)
+	if not gate or not gate:IsA("BasePart") then
+		warn("DungeonService: Punkt " .. tostring(D.Gate) .. " fehlt im Camp, kein Dungeon-Eingang")
+		return nil
 	end
-	params.FilterDescendantsInstances = ignore
-	local function free(px, pz)
-		if options.IsWater and options.IsWater(px, pz) then
-			return nil
-		end
-		local y = options.GroundY(px, pz)
-		for _, offset in { Vector2.new(9, 0), Vector2.new(-9, 0), Vector2.new(0, 9), Vector2.new(0, -9) } do
-			if options.IsWater and options.IsWater(px + offset.X, pz + offset.Y) then
-				return nil
-			end
-			if math.abs(options.GroundY(px + offset.X, pz + offset.Y) - y) > 3 then
-				return nil -- zu steil
-			end
-		end
-		local position = Vector3.new(px, y, pz)
-		if options.InSafeZone(position) then
-			return nil
-		end
-		local ok, hits = pcall(function()
-			return workspace:GetPartBoundsInBox(CFrame.new(position + Vector3.new(0, 7, 0)), Vector3.new(26, 12, 26), params)
-		end)
-		if ok and hits and #hits > 0 then
-			return nil
-		end
-		return position
-	end
-	for radius = 0, D.EntranceSearch, 10 do
-		local steps = radius == 0 and 1 or math.max(6, math.floor(radius / 5))
-		for i = 0, steps - 1 do
-			local angle = i / steps * math.pi * 2
-			local spot = free(x + math.cos(angle) * radius, z + math.sin(angle) * radius)
-			if spot then
-				return spot
-			end
-		end
-	end
-	return Vector3.new(x, options.GroundY(x, z), z)
-end
-
--- Bunker aus Beton mit Stahltür-Rahmen, flimmerndem violettem Durchgang, Warnlampen und Schild; vorn der E-Prompt.
-local function buildEntrance(entrance)
-	local model = Instance.new("Model")
-	model.Name = "DungeonEntrance_" .. entrance.Key
-	local base = entrance.CFrame -- Blick (−Z) = Vorderseite
-	local concrete = Color3.fromRGB(118, 122, 112)
-	local dark = Color3.fromRGB(70, 72, 68)
-	local steel = Color3.fromRGB(64, 66, 70)
-	local purple = Color3.fromRGB(170, 70, 255)
-	part(model, "Foundation", Vector3.new(22, 6, 18), base * CFrame.new(0, -2.4, 1), dark, Enum.Material.Concrete)
-	local body = part(model, "Body", Vector3.new(18, 9, 13), base * CFrame.new(0, 4.5, 3), concrete, Enum.Material.Concrete)
-	model.PrimaryPart = body
-	part(model, "Roof", Vector3.new(20, 1.4, 15), base * CFrame.new(0, 9.7, 3), dark, Enum.Material.Concrete)
-	-- Sandsäcke auf dem Dach und ein Lüftungsrohr
-	part(model, "Vent", Vector3.new(1.6, 3, 1.6), base * CFrame.new(5.5, 11.8, 6), steel, Enum.Material.CorrodedMetal)
-	for i = -1, 1 do
-		part(model, "Sandbag", Vector3.new(3.2, 1.1, 1.8), base * CFrame.new(i * 3.4 - 2, 11, 7), Color3.fromRGB(150, 132, 96),
-			Enum.Material.Fabric)
-	end
-	-- vorgezogener Eingang: Wangen, Sturz, Stahlrahmen
-	for _, x in { -4.6, 4.6 } do
-		part(model, "Cheek", Vector3.new(2.2, 9, 4), base * CFrame.new(x, 4.5, -5.5), concrete, Enum.Material.Concrete)
-		part(model, "Frame", Vector3.new(0.6, 7.4, 0.6), base * CFrame.new(x * 0.72, 3.7, -7.2), steel, Enum.Material.Metal)
-	end
-	part(model, "Lintel", Vector3.new(11.4, 2, 4), base * CFrame.new(0, 8.4, -5.5), concrete, Enum.Material.Concrete)
-	part(model, "FrameTop", Vector3.new(7.2, 0.6, 0.6), base * CFrame.new(0, 7.4, -7.2), steel, Enum.Material.Metal)
-	part(model, "Door", Vector3.new(6.4, 7.2, 0.3), base * CFrame.new(0, 3.6, -3.6), Color3.fromRGB(8, 6, 12), Enum.Material.SmoothPlastic)
-	local rift = part(model, "Rift", Vector3.new(6, 6.8, 0.2), base * CFrame.new(0, 3.5, -4.2), purple, Enum.Material.Neon, false)
-	rift.Transparency = 0.35
-	light(rift, purple, 22, 2.2)
-	local mist = Instance.new("ParticleEmitter")
-	mist.Color = ColorSequence.new(purple)
-	mist.LightEmission = 0.8
-	mist.Size = NumberSequence.new(1.2, 0)
-	mist.Transparency = NumberSequence.new(0.4, 1)
-	mist.Lifetime = NumberRange.new(1.2, 2)
-	mist.Rate = 10
-	mist.Speed = NumberRange.new(1, 2.5)
-	mist.SpreadAngle = Vector2.new(25, 25)
-	mist.EmissionDirection = Enum.NormalId.Front
-	mist.Parent = rift
-	-- Vorplatz aus Beton vor der Tür
-	part(model, "Apron", Vector3.new(9, 0.6, 5), base * CFrame.new(0, 0.3, -10.4), dark, Enum.Material.Concrete)
-	-- Warnlampen neben der Tür
-	for _, x in { -6.2, 6.2 } do
-		local lamp = part(model, "Lamp", Vector3.new(0.8, 0.8, 0.8), base * CFrame.new(x, 7.2, -7.7), Color3.fromRGB(255, 70, 50),
-			Enum.Material.Neon, false)
-		light(lamp, Color3.fromRGB(255, 80, 60), 14, 1.4)
-	end
-	-- Schild über dem Eingang
-	local board = part(model, "Sign", Vector3.new(10, 2, 0.3), base * CFrame.new(0, 10.2, -7.7), Color3.fromRGB(30, 26, 22),
-		Enum.Material.Metal)
-	sign(board, Enum.NormalId.Front, "DUNGEON · " .. entrance.Title, Color3.fromRGB(220, 170, 255))
-	-- Anzeige von weitem
-	local gui = Instance.new("BillboardGui")
-	gui.Name = "Label"
-	gui.Size = UDim2.fromOffset(220, 40)
-	gui.StudsOffset = Vector3.new(0, 10, 0)
-	gui.MaxDistance = 260
-	gui.Parent = body
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.Text = "DUNGEON"
-	text.Font = Enum.Font.BuilderSansExtraBold
-	text.TextSize = 22
-	text.TextColor3 = Color3.fromRGB(205, 150, 255)
-	text.TextStrokeTransparency = 0.3
-	text.Parent = gui
+	local base = gate.CFrame -- Blick (−Z) = von der Tür weg zur Straße
+	local entrance = { Key = "Camp", Title = D.Title, Position = gate.Position, CFrame = base, Exit = base * CFrame.new(0, 0, -5),
+		Model = gate }
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "DungeonPrompt"
 	prompt.ActionText = "Betreten (Dungeon-Schlüssel)"
-	prompt.ObjectText = "Dungeon"
+	prompt.ObjectText = "Katakomben"
 	prompt.HoldDuration = 1
 	prompt.MaxActivationDistance = D.EntranceRange
 	prompt.RequiresLineOfSight = false
-	prompt.Parent = rift
+	prompt.Parent = gate
 	prompt.Triggered:Connect(function(player)
 		DungeonService.Enter(player, entrance)
 	end)
-	model.Parent = folder
-	return model
+	return entrance
 end
 
 -- ---------- Halle ----------
@@ -410,7 +302,7 @@ local function endRun(run)
 	runs[run.Slot] = nil
 end
 
--- Spieler verlässt den Lauf. reason: "Portal" (Beute auszahlen, vor den Bunker), "Dead" (Beute verloren), sonst still.
+-- Spieler verlässt den Lauf. reason: "Portal" (Beute auszahlen, vor die Kapelle), "Dead" (Beute verloren), sonst still.
 local function leaveRun(run, player, reason)
 	local member = run.Members[player]
 	if not member then
@@ -642,7 +534,7 @@ end
 
 -- ---------- Schnittstelle ----------
 
--- Spieler betritt den Dungeon an entrance (E am Bunker): Schlüssel nehmen, Squad in der Nähe mitnehmen. Gibt den Lauf zurück.
+-- Spieler betritt den Dungeon an entrance (E an der Kapelle): Schlüssel nehmen, Squad in der Nähe mitnehmen. Gibt den Lauf zurück.
 function DungeonService.Enter(player, entrance)
 	if not options or not D.Enabled or not entrance or playerRun[player] or not options.IsMember(player) then
 		return nil
@@ -686,7 +578,7 @@ function DungeonService.RunOf(player)
 	return playerRun[player]
 end
 
--- Wo die Tasche eines Spielers fällt, der im Dungeon stirbt oder das Spiel verlässt: vor dem Bunker (nil = nicht im Dungeon)
+-- Wo die Tasche eines Spielers fällt, der im Dungeon stirbt oder das Spiel verlässt: vor der Kapelle (nil = nicht im Dungeon)
 function DungeonService.BagSpot(player)
 	local run = playerRun[player]
 	return run and run.Entrance.Exit.Position or nil
@@ -716,7 +608,7 @@ function DungeonService.Runs()
 	return runs
 end
 
--- Admin: alle Läufe beenden (Spieler kommen vor ihren Bunker, ohne Beute). Gibt die Anzahl zurück.
+-- Admin: alle Läufe beenden (Spieler kommen vor die Kapelle, ohne Beute). Gibt die Anzahl zurück.
 function DungeonService.StopAll()
 	local count = 0
 	for _, run in runs do
@@ -738,14 +630,8 @@ function DungeonService.Init(opts)
 	options = opts
 	entrances = {}
 	if D.Enabled then
-		for _, entry in D.Entrances do
-			local position = findSpot(options.Center.X + entry.X, options.Center.Z + entry.Z)
-			-- Vorderseite zur Mitte der Welt
-			local look = Vector3.new(options.Center.X, position.Y, options.Center.Z)
-			local base = (look - position).Magnitude > 1 and CFrame.lookAt(position, look) or CFrame.new(position)
-			local entrance = { Key = entry.Key, Title = entry.Title, Position = position, CFrame = base,
-				Exit = base * CFrame.new(0, 3, -15) }
-			entrance.Model = buildEntrance(entrance)
+		local entrance = setupGate()
+		if entrance then
 			table.insert(entrances, entrance)
 		end
 	end

@@ -263,7 +263,7 @@ end
 -- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt true zurück, wenn etwas gefallen ist. Der Besitzer sieht sie auf
 -- Minimap und Weltkarte (Attribut ExtDeathBag), bis sie leer geräumt oder abgelaufen ist; plündern kann sie jeder.
 local function dropBag(player, position)
-	position = DungeonService.BagSpot(player) or position -- im Dungeon gestorben: Tasche vor dem Bunker
+	position = DungeonService.BagSpot(player) or position -- im Dungeon gestorben: Tasche vor der Gruftkapelle im Camp
 	local items = InventoryService.TakeAll(player)
 	if #items == 0 then
 		return false
@@ -308,6 +308,19 @@ local function giveAdminLoadout(player)
 	end
 end
 
+-- Zum Testen der Dungeons: Admins haben nach jedem Spawn mindestens Dungeon.TestKeys Schlüssel dabei (Tasche oder Container;
+-- auch im echten Spiel, 0 schaltet es ab)
+local function giveTestKeys(player)
+	local D = ExtinctionConfig.Dungeon
+	if not player:GetAttribute("IsAdmin") or (D.TestKeys or 0) <= 0 then
+		return
+	end
+	local have = InventoryService.CountCarried(player, D.KeyItem)
+	if have < D.TestKeys then
+		InventoryService.Give(player, D.KeyItem, D.TestKeys - have)
+	end
+end
+
 local function spawnPlayer(player)
 	local info = members[player]
 	if not info then
@@ -327,6 +340,7 @@ local function spawnPlayer(player)
 	player:SetAttribute("CombatUntil", nil) -- nach dem Tod nicht mehr im Kampf
 	setInside(player, info, true, character)
 	giveAdminLoadout(player)
+	giveTestKeys(player)
 	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)
 	if info.BagNotice then
 		local dropped = info.BagNotice == "Dropped"
@@ -840,7 +854,7 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
-	-- Dungeons: Bunker draußen, E mit Dungeon-Schlüssel, eigene Halle mit Zombiewellen, Portal nach jeder Welle
+	-- Dungeons: Gruftkapelle im Camp, E mit Dungeon-Schlüssel, eigene Halle mit Zombiewellen, Portal nach jeder Welle
 	DungeonService.Init({
 		Map = map,
 		Center = center,

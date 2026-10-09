@@ -16,7 +16,8 @@ Eine runde Altstadt (Stil DayZ/Tarkov, aber gepflegt): von innen nach außen
       NO MARKTVIERTEL (KIT-AUSGABE, Garküche, Stoffe, Funk; hinten die Marktgasse mit dem Schieber),
       SO FUHRPARK (KFZ-WERKSTATT, Ersatzteile, Hotel; hinten Tankstelle, Landeplatz, Parkplatz),
       SW DEPOT (BUSBAHNHOF, MARKTHALLE mit dem Tor zur Markt-Welt, Spedition; hinten Container und Kran),
-      NW WOHNVIERTEL (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer, Wasserturm).
+      NW WOHNVIERTEL (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer, Wasserturm, Gruftkapelle
+        KATAKOMBEN = Dungeon-Eingang).
   * Betonmauer mit Stacheldraht (CAMP_WALL_R, wie im alten Camp), vier Tore, davor das Sperrgebiet.
 
 Geometrie: Kompass th in Grad ab Norden (+Z) im Uhrzeigersinn, Osten = +X; P(r, th) gibt (x, z). Jedes Haus hat
@@ -982,7 +983,7 @@ class CampPhoenix:
 
     def yard_living(self):
         """NW: Hof des Wohnviertels – Gemeinschaftsgarten, Lagerfeuer mit Bänken und Überlebenden, Wäscheleine,
-        Wasserturm, Stromaggregat mit Flutlicht, ein Baum, ein Schuppen."""
+        Wasserturm, Stromaggregat mit Flutlicht, ein Baum, ein Schuppen; an der Nordstraße die Gruftkapelle KATAKOMBEN."""
         b, rng = self.b, self.rng
         self.yard_pad(270, (106, 100, 80), "Ground")
         self.garden(*self.at_center(96, 299))
@@ -1015,7 +1016,7 @@ class CampPhoenix:
             b.box("Decor", "Laundry", (1.8, 2.4, 0.1), (x0 + (x1 - x0) * t, 5.3, z0 + (z1 - z0) * t),
                   rng.choice(((180, 60, 50), (200, 196, 186), (70, 90, 130), (120, 140, 90))), "Fabric",
                   angles=(0, yaw, 0), props={"CanCollide": False})
-        wx, wz = P(102, 346)
+        wx, wz = P(94, 314)
         for dx in (-2.5, 2.5):
             for dz in (-2.5, 2.5):
                 b.box("Decor", "TankLeg", (0.5, 10, 0.5), (wx + dx, 5, wz + dz), (70, 60, 50), "Wood")
@@ -1027,8 +1028,62 @@ class CampPhoenix:
             children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {"Color": self.bm.rgb(60, 58, 56), "Opacity": 0.15,
                                                                              "RiseVelocity": 5, "Size": 3}}])
         self.floodlight(*self._xz(f, -6, -2), fx - gx, fz - gz, 13)
-        self.plaza_tree(*P(90, 340), scale=1.1)
+        self.plaza_tree(*P(92, 322), scale=1.1)
         self.shed(*self.at_center(89, 290))
+        gx, gz = P(93, 344)
+        self.crypt_gate(gx, gz + 2.5, self.yaw_to(1, 0))  # Front zur Nordstraße (nach Osten)
+
+    def crypt_gate(self, x, z, yaw):
+        """ABGANG ZU DEN KATAKOMBEN (Dungeon-Eingang): kleine Gruftkapelle aus Kalkstein mit Treppengiebel, Schieferdach,
+        Strebepfeilern und violett flimmerndem Durchgang; davor Stufen, zwei Laternen, Kiesweg zur Straße. Der Punkt
+        DungeonGate (Gruppe Zentrale, unsichtbar) vor der Tür trägt auf dem Server die E-Aufforderung (DungeonService).
+        Ohne Zufallszahlen, damit der Rest des Camps gleich bleibt."""
+        f, box = self.frame(x, z, yaw)
+        W, D, H, rise = 12, 10, 7, 3.5
+        fz = -D / 2
+        stone, stone_dark, roof_c = (176, 170, 156), (120, 116, 108), (66, 68, 76)
+        purple, door_w, door_h = (170, 90, 255), 4.4, 6
+        box("Decor", "CryptPlinth", (W + 0.6, 0.8, D + 0.6), (0, 0.4, 0), stone_dark, "Slate")
+        box("Buildings", "CryptWall", (W, H, 1), (0, H / 2, D / 2 - 0.5), stone, "Limestone")
+        for s in (-1, 1):
+            box("Buildings", "CryptWall", (1, H, D), (s * (W / 2 - 0.5), H / 2, 0), stone, "Limestone")
+            pw = (W - door_w) / 2
+            box("Buildings", "CryptWall", (pw, H, 1), (s * (door_w / 2 + pw / 2), H / 2, fz + 0.5), stone, "Limestone")
+            for lz in (fz, D / 2):  # Strebepfeiler an den Ecken
+                box("Decor", "CryptButtress", (1.4, H - 1, 1.4), (s * W / 2, (H - 1) / 2, lz), stone_dark, "Cobblestone")
+            slope = math.degrees(math.atan2(rise, W / 2))
+            box("Buildings", "CryptRoof", (math.hypot(W / 2, rise) + 0.8, 0.5, D + 1.2), (s * W / 4, H + rise / 2 + 0.2, 0), roof_c,
+                "Slate", extra=(0, 0, -s * slope))
+            box("Decor", "DoorPilaster", (0.8, door_h, 1.4), (s * (door_w / 2 + 0.4), door_h / 2, fz), stone_dark, "Cobblestone")
+        box("Buildings", "CryptWall", (door_w, H - door_h, 1), (0, door_h + (H - door_h) / 2, fz + 0.5), stone, "Limestone")
+        box("Decor", "DoorLintel", (door_w + 2.4, 1, 1.6), (0, door_h + 0.5, fz), stone_dark, "Cobblestone")
+        # Treppengiebel vorn und hinten
+        for gz, gname in ((fz + 0.5, "CryptGable"), (D / 2 - 0.5, "CryptGable")):
+            for k, gw in enumerate((W - 1, W - 4.6, W - 8.2)):
+                box("Buildings", gname, (gw, 1.2, 1), (0, H + 0.6 + k * 1.2, gz), stone, "Limestone")
+        box("Decor", "GableCross", (0.4, 2.2, 0.4), (0, H + 4.7, fz + 0.5), stone_dark, "Cobblestone")
+        box("Decor", "GableCross", (1.4, 0.4, 0.4), (0, H + 5.2, fz + 0.5), stone_dark, "Cobblestone")
+        # dunkler Abgang mit violettem Flimmern
+        box("Decor", "CryptFloor", (W - 2, 0.3, D - 2), (0, 0.95, 0.5), (24, 22, 28), "Slate")
+        box("Decor", "Doorway", (door_w, door_h, 0.3), (0, door_h / 2, fz + 1.6), (8, 6, 12), "SmoothPlastic")
+        box("Decor", "CryptRift", (door_w - 0.4, door_h - 0.4, 0.2), (0, door_h / 2, fz + 1.1), purple, "Neon",
+            props={"CanCollide": False, "Transparency": 0.45, "CastShadow": False},
+            children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 18, "Brightness": 1.8,
+                                                                                 "Color": self.bm.rgb(*purple)}}])
+        for k in range(2):  # Stufen vor der Tür
+            box("Decor", "CryptStep", (door_w + 2.6 - k * 1.2, 0.4, 1.4), (0, 0.2 + k * 0.4, fz - 1.6 + k * 0.7), stone_dark, "Slate")
+        for s in (-1, 1):  # Laternen und Urnen
+            box("Decor", "LanternPost", (0.4, 4.4, 0.4), (s * 4.4, 2.2, fz - 2.4), (40, 40, 44), "Metal")
+            box("Decor", "Lantern", (0.9, 1.2, 0.9), (s * 4.4, 4.8, fz - 2.4), (200, 150, 255), "Neon", props={"CanCollide": False},
+                children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 14, "Brightness": 1.2,
+                                                                                     "Color": self.bm.rgb(190, 130, 255)}}])
+            self.b.cylinder("Decor", "Urn", 1.6, 1.8, f(s * 5.4, 0.9, fz - 1.2), stone_dark, material="Cobblestone")
+        self.b.sign2("CryptSign", (7.2, 1.8, 0.3), f(0, H + 1.6, fz - 0.15), "KATAKOMBEN", "DUNGEON · E MIT DUNGEON-SCHLÜSSEL",
+                     (24, 20, 30), (210, 160, 255), (214, 206, 224), angles=(0, yaw, 0), glow=purple)
+        # Kiesweg zur Straße
+        box("Ground", "Sidewalk", (4.6, 0.2, 9), (0, 0.04, fz - 2.3 - 4.5), GRAVEL, "Pebble")
+        self.b.add("Zentrale", "DungeonGate", (2, 2, 2), f(0, 3, fz - 3.5), purple, "SmoothPlastic", angles=(0, yaw, 0),
+                   props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
 
     def garden(self, x, z, yaw):
         """Gemüsebeete mit Zaun und Vogelscheuche."""
