@@ -600,7 +600,7 @@ function LobbyPages.Loadout(page, goToShop)
 		tipName.Text = upper(item.Name)
 		tipSlot.Text = "AUFSATZ  ·  " .. upper(slotName)
 		local lines = {}
-		for _, pro in item.Pros or {} do
+		for _, pro in AttachmentConfig.Pros(item, selected) do
 			table.insert(lines, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
 		end
 		for _, con in item.Cons or {} do
@@ -701,7 +701,7 @@ function LobbyPages.Loadout(page, goToShop)
 				label({ Position = UDim2.fromOffset(110, 32), Size = UDim2.new(1, -150, 0, 28), Text = item and upper(item.Name) or "LEER",
 					TextSize = 26, Font = F.Display, TextColor3 = item and C.Text or C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, row)
 				local summary = {}
-				for _, pro in item and item.Pros or {} do
+				for _, pro in AttachmentConfig.Pros(item, weaponName) do
 					table.insert(summary, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
 				end
 				for _, con in item and item.Cons or {} do
@@ -780,7 +780,7 @@ function LobbyPages.Loadout(page, goToShop)
 				label({ Position = UDim2.fromOffset(110, 12), Size = UDim2.new(1, -124, 0, 28), Text = upper(item.Name), TextSize = 24,
 					Font = F.Display, TextColor3 = isOn and C.Primary or C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, row)
 				local lines = {}
-				for _, pro in item.Pros or {} do
+				for _, pro in AttachmentConfig.Pros(item, weaponName) do
 					table.insert(lines, '<font color="#' .. C.Good:ToHex() .. '">+ ' .. pro .. "</font>")
 				end
 				for _, con in item.Cons or {} do

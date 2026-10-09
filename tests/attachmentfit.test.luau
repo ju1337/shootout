@@ -85,6 +85,12 @@ alice:SetAttribute("Attachments", HttpService:JSONEncode({ Owned = { Pistol = { 
 check(AttachmentConfig.Effects(alice, "Pistol").Recoil == 1, "Griff an der Pistole wirkt nicht")
 check(#AttachmentConfig.EquippedList(alice, "Pistol") == 0, "Griff an der Pistole wird nicht gezeigt")
 
+-- Erweitertes Magazin: Sturmgewehr 40 Schuss, andere Waffen weiter +30 %
+local extItem = AttachmentConfig.Get("ExtendedMag")
+check(extItem.WeaponEffects.Rifle.Mag == 1.34 and extItem.Effects.Mag == 1.3, "erweitertes Magazin: Werte")
+check(math.floor(30 * extItem.WeaponEffects.Rifle.Mag) == 40, "Sturmgewehr: 40 Schuss")
+check(AttachmentConfig.Pros(extItem, "Rifle")[1] == "40 Schuss" and AttachmentConfig.Pros(extItem, "SMG")[1] == "+30 % Magazin",
+	"Texte je Waffe")
 if failures == 0 then
 	print("Aufsatz-Kompatibilität in Ordnung")
 end

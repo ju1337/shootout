@@ -21,6 +21,7 @@ return {
 	["+25 Schild bis zum nächsten Tod (bzw. Rundenende)"] = "+25 shield until your next death (or end of round)",
 	["+25 XP je Kill in Folge"] = "+25 XP per consecutive kill",
 	["+30 % Magazin"] = "+30% magazine",
+	["40 Schuss"] = "40 rounds",
 	["+30 % Nachladezeit"] = "+30% reload time",
 	["+30 % Reichweite"] = "+30% range",
 	["+30 % Reichweite, etwas mehr Streuung in Bewegung"] = "+30% range, slightly more spread while moving",

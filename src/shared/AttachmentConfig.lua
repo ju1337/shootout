@@ -58,7 +58,9 @@ AttachmentConfig.List = {
 		Cons = {} },
 	-- Magazin
 	{ Id = "ExtendedMag", Tier = 3, Slot = "Magazine", Name = "Erweitertes Magazin", Description = "+30 % Magazin", Price = 900,
-		Effects = { Mag = 1.3 }, Pros = { "+30 % Magazin" }, Cons = {} },
+		Effects = { Mag = 1.3 }, Pros = { "+30 % Magazin" }, Cons = {},
+		-- Sturmgewehr: 40 statt 30 Schuss (passend zum 60er-Modell, gewollt nicht mehr)
+		WeaponEffects = { Rifle = { Mag = 1.34 } }, WeaponPros = { Rifle = { "40 Schuss" } } },
 	{ Id = "FastMag", Tier = 2, Slot = "Magazine", Name = "Schnellmagazin", Description = "Nachladen 25 % schneller", Price = 800,
 		Effects = { Reload = 0.75 }, Pros = { "−25 % Nachladezeit" }, Cons = {} },
 	{ Id = "DrumMag", Tier = 4, Slot = "Magazine", Name = "Trommelmagazin", Description = "+60 % Magazin, langsameres Nachladen",
@@ -126,6 +128,11 @@ function AttachmentConfig.WeaponsFor(id)
 	end
 	table.sort(list)
 	return list
+end
+
+-- Plus-Texte eines Aufsatzes für eine Waffe (eigene Texte für einzelne Waffen: WeaponPros)
+function AttachmentConfig.Pros(item, weaponName)
+	return item and (item.WeaponPros and item.WeaponPros[weaponName] or item.Pros) or {}
 end
 
 local byId = {}
@@ -222,7 +229,8 @@ function AttachmentConfig.Effects(player, weaponName)
 	for _, id in AttachmentConfig.Equipped(player, weaponName) do
 		local item = byId[id]
 		if item and AttachmentConfig.Fits(weaponName, id) and AttachmentConfig.Owns(player, weaponName, id) then
-			for key, factor in item.Effects do
+			-- eigene Werte für einzelne Waffen (WeaponEffects), sonst die allgemeinen
+			for key, factor in item.WeaponEffects and item.WeaponEffects[weaponName] or item.Effects do
 				if type(factor) == "boolean" then
 					result[key] = result[key] or factor
 				else
