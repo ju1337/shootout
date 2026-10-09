@@ -165,6 +165,22 @@ local function updateZone(player, info)
 		return
 	end
 	local safe = Extinction.SafeZoneAt(root.Position)
+	-- Im Kampf (CombatUntil, Damage): nicht hinein. Wer es trotzdem über den Rand schafft, kommt auf den Rand zurück
+	if safe and not info.Inside and (player:GetAttribute("CombatUntil") or 0) > workspace:GetServerTimeNow() then
+		local flat = Vector3.new(root.Position.X - safe.Center.X, 0, root.Position.Z - safe.Center.Z)
+		local direction = flat.Magnitude > 0.1 and flat.Unit or Vector3.new(1, 0, 0)
+		local out = Vector3.new(safe.Center.X, root.Position.Y, safe.Center.Z) + direction * (safe.Radius + 4)
+		local seat = character:FindFirstChildOfClass("Humanoid").SeatPart
+		local mover = seat and seat:FindFirstAncestorOfClass("Model") or character
+		mover:PivotTo(CFrame.new(out - root.Position) * mover:GetPivot())
+		root.AssemblyLinearVelocity = Vector3.zero
+		MovementGuard.Teleported(character)
+		if not info.CombatNotice or os.clock() - info.CombatNotice > 3 then
+			info.CombatNotice = os.clock()
+			InventoryService.Status(player, "Im Kampf kommst du nicht in die Safe Zone.")
+		end
+		return
+	end
 	local inside = safe ~= nil
 	-- Spawnpunkt: die zuletzt betretene Safe Zone (Camp oder Safehouse)
 	if safe and info.Home ~= safe.Key then
@@ -294,6 +310,7 @@ local function spawnPlayer(player)
 	if regen and regen:IsA("LuaSourceContainer") then
 		regen:Destroy()
 	end
+	player:SetAttribute("CombatUntil", nil) -- nach dem Tod nicht mehr im Kampf
 	setInside(player, info, true, character)
 	giveAdminLoadout(player)
 	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)
@@ -891,7 +908,7 @@ function Extinction.RemovePlayer(player)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag", "ExtTutorial", "TutorialEquip" } do
+		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

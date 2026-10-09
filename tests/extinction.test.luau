@@ -377,6 +377,17 @@ step(5)
 shoot(bob, alice, 101)
 check(alice.Character.Humanoid.Health < 100, "nach 5 Sekunden draußen: PvP-Schaden")
 
+-- ---------- Im Kampf: Safe Zone gesperrt (CombatUntil), danach wieder offen ----------
+local now = workspace:GetServerTimeNow()
+check((alice:GetAttribute("CombatUntil") or 0) > now and (bob:GetAttribute("CombatUntil") or 0) > now,
+	"Treffer Spieler gegen Spieler: beide im Kampf")
+moveTo(alice, Vector3.new(0, 3, 590))
+step(0.5)
+local aliceRoot = alice.Character.HumanoidRootPart
+check(alice:GetAttribute("InSafeZone") ~= true and not Extinction.InSafeZone(aliceRoot.Position),
+	"im Kampf nicht ins Safehouse (zurück an den Rand)")
+step(ExtinctionConfig.CombatTime)
+
 -- ---------- Safehouse: kein PvP, wird zum Spawnpunkt ----------
 check(Extinction.InSafeZone(CENTER + Vector3.new(20, 0, 600)) and not Extinction.InSafeZone(CENTER + Vector3.new(0, 0, 660)),
 	"Safehouse zählt als Safe Zone")

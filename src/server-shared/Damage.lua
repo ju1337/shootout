@@ -64,6 +64,14 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		}
 	end
 	model:SetAttribute("LastDamaged", os.clock())
+	-- Kampf in der offenen Welt (Spieler gegen Spieler): beide kommen eine Weile nicht in die Safe Zone
+	local hitPlayer = Players:GetPlayerFromCharacter(model)
+	local shooter = attacker and attacker.Player
+	if hitPlayer and shooter and shooter ~= hitPlayer and hitPlayer:GetAttribute("Mode") == "Extinction" then
+		local untilTime = workspace:GetServerTimeNow() + ExtinctionConfig.CombatTime
+		hitPlayer:SetAttribute("CombatUntil", untilTime)
+		shooter:SetAttribute("CombatUntil", untilTime)
+	end
 	-- Getroffener Spieler sieht, aus welcher Richtung (Treffer-Anzeige im HUD)
 	local victim = Players:GetPlayerFromCharacter(model)
 	local attackerRoot = attackerModel and attackerModel:FindFirstChild("HumanoidRootPart")
