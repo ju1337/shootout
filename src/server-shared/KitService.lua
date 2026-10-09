@@ -32,15 +32,15 @@ function KitService.Claim(player, kitId)
 		return
 	end
 	if #kit.Items == 0 then
-		status(player, kit.Name .. " is coming soon.")
+		status(player, kit.Name .. " ist bald verfügbar.")
 		return
 	end
 	if not InventoryService.NearPoint(player, KitConfig.Point) then
-		status(player, "Get closer to the kit vendor.")
+		status(player, "Geh näher an den Kit-Händler.")
 		return
 	end
 	if kit.Pass and not RobuxConfig.Has(player, kit.Pass) then
-		status(player, "You need the " .. kit.Pass .. " pass for the " .. kit.Name .. ".")
+		status(player, "Für das " .. kit.Name .. " brauchst du den Gamepass " .. kit.Pass .. ".")
 		return
 	end
 	if type(profile.Kits) ~= "table" then
@@ -49,7 +49,7 @@ function KitService.Claim(player, kitId)
 	local now = os.time()
 	local remaining = KitConfig.Remaining(kit, profile.Kits, now)
 	if remaining > 0 then
-		status(player, kit.Name .. " is ready again in " .. KitConfig.FormatTime(remaining) .. ".")
+		status(player, kit.Name .. " ist wieder bereit in " .. KitConfig.FormatTime(remaining) .. ".")
 		return
 	end
 	profile.Kits[kit.Id] = now
@@ -65,7 +65,7 @@ function KitService.Claim(player, kitId)
 		end
 	end
 	Sfx.ToPlayers({ player }, "AmmoBox")
-	status(player, kit.Name .. " claimed" .. (stashed and " – your bag was full, the rest is in your stash." or "!"), true)
+	status(player, kit.Name .. (stashed and " abgeholt – die Tasche war voll, der Rest liegt im Lager." or " abgeholt!"), true)
 end
 
 function KitService.Init()
