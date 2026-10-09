@@ -153,21 +153,40 @@ check(character and character:GetAttribute("AgentLook") == "Standard" and charac
 	"Standard-Look auch im Markt (Agent überall), ohne Quader")
 check(character and character.Head:FindFirstChildOfClass("Decal") ~= nil, "mit Roblox-Gesicht")
 
--- Agentenwechsel im Markt: sofort in den neuen Farben
+-- Nur noch ein Agent: ein anderer Agent (Attribut oder SelectAgent) zählt nicht, der Look bleibt Viper
 alice:SetAttribute("Agent", "Bastion")
 step(0.1)
-local bPrimary = Cosmetics.AgentColors(alice, "Bastion")
-check(character.BodyColors.TorsoColor3 == bPrimary and character:GetAttribute("AgentLookOf") == "Bastion",
-	"Agentenwechsel im Markt sofort")
--- Im Match erst beim nächsten Spawn
-alice:SetAttribute("Mode", "FreeForAll")
+check(character:GetAttribute("AgentLookOf") == "Viper" and character.BodyColors.TorsoColor3 == vPrimary,
+	"anderer Agent wird ignoriert")
+local Remotes = require("Remotes")
 alice:SetAttribute("Agent", "Viper")
+Remotes.SelectAgent.OnServerEvent:Fire(alice, "Bastion")
 step(0.1)
-check(character:GetAttribute("AgentLookOf") == "Bastion", "im Match ändert sich der Look erst beim nächsten Spawn")
+check(alice:GetAttribute("Agent") == AgentConfig.MainId, "SelectAgent: nur der eine Agent wählbar")
+
+-- Agenten-Skin ausrüsten: sofort neu angezogen (Farbe und Material, Kopf bleibt Standard), ablegen = Standard-Look
+local HttpService = game:GetService("HttpService")
+local skin = Cosmetics.Get("AS_Panzerstahl")
+alice:SetAttribute("Owned", HttpService:JSONEncode({ AS_Panzerstahl = 1 }))
+alice:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Panzerstahl" }))
+step(0.1)
+check(character.BodyColors.TorsoColor3 == skin.Color and character.BodyColors.LeftArmColor3 == skin.Color,
+	"Agenten-Skin: Uniform in der Skin-Farbe")
+check(character.UpperTorso.Material == skin.Material and character.Head.Material == Enum.Material.Plastic,
+	"Agenten-Skin: Material am Körper, nicht am Kopf")
+alice:SetAttribute("Equipped", HttpService:JSONEncode({}))
+step(0.1)
+check(character.BodyColors.TorsoColor3 == vPrimary and character.UpperTorso.Material == Enum.Material.Plastic,
+	"Skin abgelegt: wieder Standard-Look")
+-- Im Match: neuer Spawn trägt den Skin
+alice:SetAttribute("Mode", "FreeForAll")
+alice:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Panzerstahl" }))
 character = SpawnUtil.Spawn(alice, CFrame.new(0, 5, 0))
 step(0.5)
-check(character and character:GetAttribute("AgentLookOf") == "Viper" and character.BodyColors.TorsoColor3 == vPrimary,
-	"nächster Spawn als Viper")
+check(character and character:GetAttribute("AgentLookOf") == "Viper" and character.BodyColors.TorsoColor3 == skin.Color,
+	"nächster Spawn als Viper mit Skin")
+alice:SetAttribute("Equipped", HttpService:JSONEncode({}))
+step(0.1)
 
 -- Kann der Agenten-Körper nicht geladen werden: normaler Charakter, aber trotzdem als Agent angezogen
 SIM.Quiet = true

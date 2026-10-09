@@ -413,16 +413,12 @@ local head, hand = character:FindFirstChild("Head"), character:FindFirstChild("R
 check(head and head.Transparency == 1 and head.CanQuery and near(ground:ToObjectSpace(head.CFrame).Position, SUIT[1][3])
 	and head.Size.X > SUIT[1][2].X, "unsichtbare Kopf-Trefferzone um den Kopf des Modells")
 check(hand and hand.Transparency == 1 and hand:FindFirstChild("RightGripAttachment"), "unsichtbare rechte Hand für die Waffe")
--- Wechsel im Markt auf einen Agenten ohne Modell: neu gespawnt mit dem Standard-Look, an derselben Stelle
-local before = root.Position
+-- Nur noch ein Agent: ein anderer Agent am Spieler (auch einer ohne Modell) ändert den Look nicht
 alice:SetAttribute("Agent", "Ghost")
 step(0.5)
-local standard = alice.Character
-check(standard ~= character and not AgentModels.IsModelCharacter(standard) and standard:GetAttribute("AgentLook") == "Standard"
-	and (standard.HumanoidRootPart.Position - before).Magnitude < 0.5, "Wechsel auf Agent ohne Modell: Standard-Look")
+check(alice.Character == character and AgentModels.IsModelCharacter(alice.Character), "anderer Agent: Modell bleibt")
 alice:SetAttribute("Agent", "Viper")
 step(0.5)
-check(AgentModels.IsModelCharacter(alice.Character), "zurück zu VIPER: wieder das Modell")
 -- Bots: das Modell ist ihr Körper
 local BotService = require("BotService")
 local botTemplate

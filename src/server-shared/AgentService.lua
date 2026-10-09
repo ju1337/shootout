@@ -30,8 +30,9 @@ local function serverNow()
 	return workspace:GetServerTimeNow()
 end
 
+-- Es gibt nur noch einen Agenten (AgentConfig.MainId): ein anderer gespeicherter oder gesetzter Agent zählt nicht
 local function getAgent(player)
-	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
+	return AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
 end
 
 -- Agenten-Look überall (offene Welt, Markt, Match): einheitlicher Körper im Roblox-Standard-Look in den Agentenfarben bzw.
@@ -46,7 +47,8 @@ local function applyUniform(player, character, agent)
 		return -- das Modell ist selbst der Charakter: nichts anzuziehen
 	end
 	local ok, err = pcall(function()
-		AgentBody.Dress(character, (Cosmetics.AgentColors(player, agent.Id)), agent.Id)
+		local primary, _, material = Cosmetics.AgentColors(player, agent.Id)
+		AgentBody.Dress(character, primary, agent.Id, material)
 	end)
 	if not ok then
 		warn("[Agentenmodelle] " .. player.Name .. " konnte nicht als " .. tostring(agent.Id) .. " angezogen werden: "
@@ -441,7 +443,7 @@ local function dressedAgent(player, character)
 end
 
 local function setupPlayer(player)
-	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
+	player:SetAttribute("Agent", AgentConfig.MainId)
 	player:SetAttribute("UltCharge", 0)
 	-- Neuer Modus (oder zurück im Camp): Ultimate beginnt wieder bei 0
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
@@ -510,14 +512,27 @@ local function setupPlayer(player)
 		end
 		applyUniform(player, character, dressedAgent(player, character))
 	end)
-	-- Im Markt sieht man einen Agentenwechsel sofort (im Match erst beim nächsten Spawn)
-	local function redress()
+	-- Nur noch ein Agent: ein anderer gesetzter Agent wird sofort zurückgesetzt (kein Umziehen, kein Neuspawn)
+	player:GetAttributeChangedSignal("Agent"):Connect(function()
+		if player:GetAttribute("Agent") ~= AgentConfig.MainId then
+			player:SetAttribute("Agent", AgentConfig.MainId)
+		end
+	end)
+	-- Agenten-Skin gewechselt (Menü SKINS): sofort neu anziehen, überall (nur Farben und Material, kein Neuspawn)
+	local lastSkin = Cosmetics.AgentSkin(player)
+	local function skinChanged()
+		local skin = Cosmetics.AgentSkin(player)
+		if skin == lastSkin then
+			return
+		end
+		lastSkin = skin
 		local character = player.Character
-		if character and Modes.IsSocial(player:GetAttribute("Mode")) then
-			AgentService.Refresh(player)
+		if character and character.Parent then
+			applyUniform(player, character, dressedAgent(player, character))
 		end
 	end
-	player:GetAttributeChangedSignal("Agent"):Connect(redress)
+	player:GetAttributeChangedSignal("Equipped"):Connect(skinChanged)
+	player:GetAttributeChangedSignal("Owned"):Connect(skinChanged) -- z.B. Creator-Rang weg
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
 	end
@@ -541,13 +556,13 @@ function AgentService.Refresh(player)
 end
 
 function AgentService.Init()
-	-- Agent wählen (gilt ab dem nächsten Spawn). lock = true: Wahl bestätigen (Drop-Agentenwahl).
+	-- Agent wählen (gilt ab dem nächsten Spawn; nur noch AgentConfig.MainId). lock = true: Wahl bestätigen (Drop-Agentenwahl).
 	-- Bestätigte Wahl kann erst in der nächsten Agentenwahl geändert werden.
 	Remotes.SelectAgent.OnServerEvent:Connect(function(player, id, lock)
 		if player:GetAttribute("AgentLocked") then
 			return
 		end
-		if typeof(id) == "string" and AgentConfig.Get(id) and AgentConfig.IsUnlocked(player, id) then
+		if id == AgentConfig.MainId then -- nur der eine Agent
 			player:SetAttribute("Agent", id)
 			if lock == true then
 				player:SetAttribute("AgentLocked", true)

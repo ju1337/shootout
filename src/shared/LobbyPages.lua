@@ -30,6 +30,8 @@ local RapConfig = require(Shared.RapConfig)
 local PaidRandom = require(Shared.PaidRandom)
 local OddsPanel = require(Shared.OddsPanel)
 local WeaponEffects = require(Shared.WeaponEffects)
+local AgentConfig = require(Shared.AgentConfig)
+local AgentFigure = require(Shared.AgentFigure)
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
 
@@ -103,6 +105,20 @@ local function showWeapon(view, weaponName, skin, aspect, fill, attachments)
 	view.CurrentCamera = camera
 end
 
+-- Der eine Agent (AgentConfig.MainId) mit einem Agenten-Skin (nil = Standard-Look) als ganze Figur, leicht gedreht
+function LobbyPages.ShowAgent(view, skin, weaponName)
+	view:ClearAllChildren()
+	local agent = AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
+	local primary = skin and skin.Color or agent.Color:Lerp(Color3.new(0, 0, 0), 0.6)
+	local figure = AgentFigure.Build(agent, primary, agent.Color, nil, weaponName, skin and skin.Material)
+	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.45, 0))
+	figure.Parent = view
+	local camera = make("Camera", { FieldOfView = 30 }, view)
+	camera.CFrame = AgentFigure.CameraCFrame * CFrame.new(0, 0, 4.5)
+	view.CurrentCamera = camera
+	return figure
+end
+
 -- Watch-Liste plus alle Gamepässe (Pass_<Id>): Karten im Robux-Shop zeigen nach dem Kauf sofort GEKAUFT
 local function robuxWatch(watch)
 	for _, pass in RobuxConfig.Passes do
@@ -158,7 +174,7 @@ function LobbyPages.Shop(page)
 	local currentType = "Weapon"
 	local cards = {} -- [itemId] = { Buy = Chunky }
 
-	label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 12), Size = UDim2.fromOffset(600, 16),
+	local hint = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 12), Size = UDim2.fromOffset(600, 16),
 		Text = "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
 		TextXAlignment = Enum.TextXAlignment.Right }, page)
 	local grid = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
@@ -371,7 +387,11 @@ function LobbyPages.Shop(page)
 				UITheme.Stroke(card, rarity.Color, 1, 0.5)
 				UITheme.AccentBar(card, rarity.Color)
 				local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 170) }, card)
-				showWeapon(view, "Rifle", item, 234 / 170)
+				if item.Type == "Agent" then
+					LobbyPages.ShowAgent(view, item)
+				else
+					showWeapon(view, "Rifle", item, 234 / 170)
+				end
 				if RapConfig.Value(item.Id) then
 					rapBadge(card, RapConfig.Value(item.Id))
 				end
@@ -393,8 +413,10 @@ function LobbyPages.Shop(page)
 
 	sellInfo = label({ Position = UDim2.fromOffset(0, 42), Size = UDim2.fromOffset(PAGE_W, 12), Text = "", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Rap, Visible = false }, page)
-	tabs(page, { "WAFFEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
-		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
+	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
+		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
+		hint.Text = currentType == "Agent" and "AGENTEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS"
+			or "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS"
 		fill()
 	end)("WAFFEN-SKINS")
 	return { Refresh = function()

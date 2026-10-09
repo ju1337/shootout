@@ -289,6 +289,10 @@ local STAT_GETTERS = {
 	Speed = function(agent) return agent.WalkSpeed end,
 	Utility = function(agent) return -agent.Ability.Cooldown end,
 }
+-- Nur noch ein Agent im Spiel: alle Spieler spielen ihn, die übrigen Agenten sind ausgeblendet und nicht wählbar
+-- (Werte bleiben für Bots und spätere Rückkehr). Sein Aussehen ändert man mit Agenten-Skins (Cosmetics, Menü SKINS).
+AgentConfig.MainId = AgentConfig.Agents[1].Id
+
 function AgentConfig.StatValue(key, agent)
 	local get = STAT_GETTERS[key]
 	local low, high = math.huge, -math.huge

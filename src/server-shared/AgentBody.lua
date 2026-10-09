@@ -125,7 +125,8 @@ end
 -- Eigenen Avatar entfernen (Kleidung, Accessoires), Körperfarben setzen und – hat der Agent ein 3D-Modell
 -- (AgentModels) – das Modell anlegen; sonst bleibt der Standard-Look mit dem Roblox-Gesicht.
 -- Kann beliebig oft aufgerufen werden (z.B. nach einem Agentenwechsel); das Modell wird jedes Mal neu angelegt.
-function AgentBody.Dress(character, primary, agentId)
+-- material = Material des Körpers (Agenten-Skin, ohne Kopf); nil = Roblox-Standard (Plastic)
+function AgentBody.Dress(character, primary, agentId, material)
 	for _, obj in character:GetChildren() do
 		if obj:IsA("Accoutrement") or obj:IsA("Shirt") or obj:IsA("Pants") or obj:IsA("ShirtGraphic")
 			or obj:IsA("CharacterMesh") then
@@ -159,6 +160,9 @@ function AgentBody.Dress(character, primary, agentId)
 	colors.LeftLegColor3 = pants
 	colors.RightLegColor3 = pants
 	colors.Parent = character
+	for name, part in bodyParts do
+		part.Material = name == "Head" and Enum.Material.Plastic or (material or Enum.Material.Plastic)
+	end
 
 	-- altes Modell weg, Körper wieder sichtbar mit Gesicht (das Modell blendet ihn gleich wieder aus; nicht während
 	-- der Tarnung)

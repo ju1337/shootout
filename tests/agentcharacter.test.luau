@@ -258,14 +258,14 @@ local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 check(humanoid and humanoid.MaxHealth == AgentConfig.Get("Viper").Health and humanoid.DisplayDistanceType
 	== Enum.HumanoidDisplayDistanceType.None, "Leben gesetzt, kein Roblox-Namensschild")
 check(AgentBody.IsDressed(character, "Viper"), "nichts anzuziehen")
--- im Match bleibt der Charakter beim Agentenwechsel bis zum nächsten Spawn
+-- Nur noch ein Agent: ein anderer Agent am Spieler zählt nicht, auch nicht beim nächsten Spawn
 alice:SetAttribute("Agent", "Mender")
 step(0.3)
-check(alice.Character == character, "Agentenwechsel im Match: erst beim nächsten Spawn")
+check(alice.Character == character, "anderer Agent: Charakter bleibt")
 character = SpawnUtil.Spawn(alice, CFrame.new(0, 5, 0))
 step(0.3)
-check(not AgentModels.IsModelCharacter(character) and character:GetAttribute("AgentLook") == "Standard",
-	"nächster Spawn als MENDER (ohne Modell): Standard-Look")
+check(AgentModels.IsModelCharacter(character) and character:GetAttribute("Agent") == AgentConfig.MainId,
+	"nächster Spawn wieder als der eine Agent (Rig)")
 -- Bot als VIPER: das Rig ist sein Körper
 local BotService = require("BotService")
 local template

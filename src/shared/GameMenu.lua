@@ -8,7 +8,7 @@
 --   rechts: Battle Pass (Stufe, Fortschritt, nächste Belohnung), täglicher Auftrag, großer SPIELEN-Knopf
 --           mit Modus, Spielerzahl und Ping
 -- Jeder Reiter ist eine eigene Seite unter der Kopfzeile (Modi und Squad gehören nur zu SPIELEN):
---   AGENTEN:     links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Werte, Standardwaffe – eine
+--   AGENTEN (ausgeblendet, es gibt nur noch einen Agenten – AgentConfig.MainId): links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Werte, Standardwaffe – eine
 --                der zwei Primärwaffen ausrüsten –, Fähigkeit, Gadget, Passiv, Level, WÄHLEN/FREISCHALTEN),
 --                rechts alle Agenten als Karten (ausgerüstete Primärwaffe hell)
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
@@ -99,7 +99,7 @@ local function setStatus(message, color)
 end
 
 local function currentAgent()
-	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
+	return AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
 end
 
 local function decode(raw)
@@ -525,7 +525,7 @@ local function buildAgentStage()
 	UITheme.Outline(name, 1)
 	local change = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 752),
 		Size = UDim2.fromOffset(240, 24), BackgroundTransparency = 1, Text = "AGENT WECHSELN", Font = F.Bold, TextSize = 12,
-		TextColor3 = C.Muted }, stage)
+		TextColor3 = C.Muted, Visible = false }, stage) -- nur noch ein Agent: nichts zu wechseln
 	change.Activated:Connect(function()
 		showPage("Agents")
 	end)
@@ -533,16 +533,16 @@ local function buildAgentStage()
 	local figure, shownKey = nil, nil
 	local function refresh()
 		local agent = currentAgent()
-		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
+		local primary, accent, material = Cosmetics.AgentColors(player, agent.Id)
 		local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
-		local key = agent.Id .. tostring(primary) .. tostring(accent) .. tostring(weapon)
+		local key = agent.Id .. tostring(primary) .. tostring(accent) .. tostring(material) .. tostring(weapon)
 			.. tostring(Cosmetics.WeaponSkin(player, agent.Id, weapon))
 		if key ~= shownKey then
 			shownKey = key
 			if figure then
 				figure:Destroy()
 			end
-			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
+			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
 			figure.Parent = viewport
 		end
 		role.Text = upper(agent.Role)

@@ -240,9 +240,15 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
 - **Menü** (**TAB** öffnet es auf INVENTAR, **M** auf dem zuletzt offenen Reiter; Controller: Select, L1/R1 blättert, ○
   schließt): etwas kleiner als der Bildschirm, Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE ·
-  LOADOUT · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN. LOADOUT bis OPTIONEN sind die Seiten der Lobby
-  (`GameMenu.BorrowPage`), verkleinert. Unten AGENTEN und SPIELEN · ARCADE: Links, die das Menü schließen und die Lobby
-  auf dieser Seite öffnen (L1/R1 überspringt sie). Die Welt läuft weiter, während das Menü offen ist.
+  LOADOUT · SKINS · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN. LOADOUT und SHOP bis OPTIONEN sind die Seiten der
+  Lobby (`GameMenu.BorrowPage`), verkleinert. Nur solange Arcade an ist, unten SPIELEN · ARCADE: ein Link, der das Menü
+  schließt und die Lobby dort öffnet (L1/R1 überspringt ihn). Die Welt läuft weiter, während das Menü offen ist.
+- **Ein Agent, Agenten-Skins**: Es gibt nur noch einen Agenten (`AgentConfig.MainId`, der bisherige Standard VIPER); die
+  übrigen Agenten sind ausgeblendet und nicht wählbar (Daten bleiben, Bots nutzen sie weiter). Sein Aussehen ändern
+  **Agenten-Skins** (`Cosmetics`, Type "Agent": Uniformfarbe und Material, gebunden, nicht in Kisten): kaufen im SHOP unter
+  AGENTEN-SKINS, ausrüsten im Reiter **SKINS** (`src/client/SkinMenu.lua`): links der Agent groß in 3D mit dem angeklickten
+  Skin, rechts alle Skins als Kacheln (STANDARD zuerst, ausgerüstet grün umrandet, gesperrte abgedunkelt mit IM SHOP).
+  Der Server zieht den Agenten sofort um, überall.
 - **Keine Standardwaffen**: Alles kommt aus der Tasche. Der Reiter **INVENTAR** zeigt die Tasche: 30 Plätze, davon 1-9 die
   Hotbar (Tasten **1-9**). Items ziehen und ablegen oder anklicken und den Zielplatz anklicken, Rechtsklick legt
   zwischen Hotbar und Tasche hin und her. Waffe: Taste zieht sie (nochmal = wegstecken), Heilung/Rüstung: Taste
@@ -401,13 +407,13 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   eindeutig), getönte Glas-Visiere statt Neon, weniger Sättigung und Bloom in der Farbkorrektur
   (`default.project.json`), die Arena aus Beton statt lila Plastik, im Camp Bernstein-Lichtleisten und
   gedeckte Tore, Schilder in Oswald (`tools/build_maps.py`)
-- **Lobby** (M; ohne Arcade ohne SPIELEN, beginnt bei AGENTEN): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP ·
+- **Lobby** (M; ohne Arcade ohne SPIELEN, beginnt bei LOADOUT): oben Logo, Reiter SPIELEN · LOADOUT · SHOP ·
   BATTLE PASS (aktiv mit Bernstein-Strich), Münzen, Level, STATISTIK, CODES, OPTIONEN. Jeder Reiter ist eine eigene
   Seite in der Lobby (kein Extra-Fenster):
   - SPIELEN: links Spielmodi (aktiv heller mit Bernstein-Balken, live Spielerzahl) und der Squad (Anführer mit
     Stern, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze laden ein); Mitte der gewählte Agent groß in
     3D; rechts Battle Pass, täglicher Auftrag und der große SPIELEN-Knopf mit Modus, Spielerzahl und Ping
-  - AGENTEN: links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Beschreibung, Werte,
+  - AGENTEN (ausgeblendet, nur noch ein Agent): links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Beschreibung, Werte,
     STANDARDWAFFE, Fähigkeit, Gadget, Passiv, Agenten-Level, Kills und WÄHLEN/FREISCHALTEN), rechts alle Agenten
     als Karten. Ein Klick wählt einen freien Agenten; gesperrte schaltet man nur bewusst über den Knopf der
     Detailkarte frei. STANDARDWAFFE: die zwei Primärwaffen des Agenten als Karten mit 3D-Vorschau (mit Skin) –
@@ -416,8 +422,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     steht die ausgerüstete Waffe hell
   - LOADOUT: links die Waffen, Mitte große 3D-Vorschau mit ausgerüstetem Skin, rechts die eigenen Skins
     zum Ausrüsten und ZUM SHOP
-  - SHOP: Waffen-Skins als Karten mit 3D-Vorschau, Seltenheit und KAUFEN · Preis (Agenten-Skins gibt es nicht mehr:
-    Agenten haben den Standard-Look oder ihr 3D-Modell)
+  - SHOP: Waffen-Skins und (Reiter AGENTEN-SKINS) Agenten-Skins als Karten mit 3D-Vorschau, Seltenheit und
+    KAUFEN · Preis
   - BATTLE PASS: Saison, Stufe, Fortschritt, alle 30 Stufen als Leiste (nächste hervorgehoben), darunter die
     nächste Belohnung mit Vorschau und wie man Pass-XP sammelt
   - OPTIONEN: Karten STEUERUNG, ANZEIGE und TON links, KAMERA und TREFFER rechts; unter TREFFER (Hitmarker,
@@ -825,7 +831,8 @@ Safe Zones: G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-An
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
-| Lobby (Navigation, Seiten SPIELEN und AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
+| Lobby (Navigation, Seite SPIELEN, ausgeblendete Seite AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
+| Reiter SKINS (Agenten-Skins ausrüsten) | `src/client/SkinMenu.lua` |
 | Lobby-Seiten LOADOUT, SHOP, BATTLE PASS | `src/shared/LobbyPages.lua` |
 | Fenster (Statistik, Codes, Optionen, Aufträge, Täglich, Squad) und Markt-Menüliste | `src/client/SideMenu.lua` |
 | Match-HUD (Punktestand, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
@@ -915,10 +922,10 @@ am Commit:
 | `market2` | Markt Teil 2: Gebühr nach Preis, Gegenangebote (annehmen, ablehnen, zurückziehen, Ablauf, Preisänderung), Stand-Name, Merkliste samt Meldung, Preisverlauf (gesammelt und verteilt gespeichert, ein Schreibzugriff je Eintrag, Fehler und Herunterfahren, Verkäufe anderer Server, alte Einträge lesen), Händler-Rangliste |
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
-| `skins` | Nur noch Waffen-Skins: keine Agenten-Skins (Cosmetics, RAP, Kisten), Agentenfarben immer Standard, Battle-Pass-Stufe 20 = Saison-Elite, alte Spielstände verlieren entfernte Skins (Besitz, Plätze "A:", Merkliste), SHOP/LOADOUT/BATTLE PASS ohne Agenten-Skins |
+| `skins` | Waffen-Skins und neue Agenten-Skins (Platz "Agent", gebunden, nicht in Kisten): kaufen, ausrüsten, ablegen, Farbe/Material, Speichern und Laden; alte Agenten-Skins bleiben entfernt (Besitz, Plätze "A:", Merkliste), Battle-Pass-Stufe 20 = Saison-Elite, SHOP mit Reiter AGENTEN-SKINS |
 | `trade` | Tauschen: Anfrage (Markt/Safe Zone, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen/Safe Zone verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
-| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), Agentenwechsel im Markt sofort, Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
+| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), nur ein Agent wählbar, Agenten-Skin sofort angezogen (Farbe, Material), Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
@@ -932,7 +939,7 @@ am Commit:
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
 | `extmarketpage` | Markt-Seite für sich (Mock): Suche, Kategorien, Sortierung, Karten, KAUFEN/ZU TEUER, MEINE ANGEBOTE (Preis ändern, zurücknehmen), Verkaufen mit ±, Schieberegler, günstigstem Angebot und Erlös, Sperre außerhalb der Safe Zone |
-| `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge, Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
+| `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge (ohne AGENTEN), Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, SKINS (Kacheln, Vorschau, AUSRÜSTEN), Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
 | `matchmaking` | Arcade über mehrere Server: eigene Meldung (nur Arcade-Modi, verfällt), Wechsel auf einen Server mit mehr echten Spielern (nicht auf volle, nicht bei Gleichstand, nicht zu einem anderen Place, Platz für den ganzen Squad), Teleport-Daten, Squad geht zusammen und folgt hier, Fehlschlag sofort / TeleportInitFailed / Zeitüberschreitung: hier spielen und eine Weile nicht weiterschicken, SCHNELLES SPIEL sieht andere Server, Extinction/Markt bleiben, neue Spieler im Camp, Einstellung aus, Ankunft direkt im Modus mit Squad (nur gegenseitig, kein fremder Place), verfallene Server, MemoryStore gestört, Herunterfahren |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |

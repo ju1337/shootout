@@ -7,9 +7,9 @@
 --   Controller: R1/L1 nächste/vorige Waffe der Hotbar (im Menü: Reiter), △ = heilen (Heil-Item aus der Hotbar),
 --               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
 --   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · AUFTRÄGE · LOOT ·
---            GUIDE · SQUAD · ERFOLGE · LOADOUT · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten sechs sind
---            Seiten der Lobby, GameMenu.BorrowPage). AGENTEN gibt es nicht mehr. SPIELEN · ARCADE gibt es nur,
---            solange Arcade an ist (Modes.ArcadeEnabled; Extinction ist das Hauptspiel).
+--            GUIDE · SQUAD · ERFOLGE · LOADOUT · SKINS (Agenten-Skins, SkinMenu) · SHOP · BATTLE PASS · STATISTIK · CODES ·
+--            OPTIONEN (LOADOUT und die letzten fünf sind Seiten der Lobby, GameMenu.BorrowPage). SPIELEN · ARCADE (Link in
+--            die Lobby) gibt es nur, solange Arcade an ist (Modes.ArcadeEnabled; Extinction ist das Hauptspiel).
 --   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
@@ -1058,6 +1058,7 @@ local MENU_TABS = {
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
 	{ Id = "Loadout", Text = "LOADOUT", Page = true, PageId = "Inventory" },
+	{ Id = "Skins", Text = "SKINS" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
 	{ Id = "Stats", Text = "STATISTIK", Page = true },
@@ -2837,6 +2838,15 @@ openMenuTab = function(id)
 	elseif id == "Guide" then
 		ExtinctionMap.Set(false)
 		Guide.Open()
+	elseif id == "Skins" then
+		-- Agenten-Skins ausrüsten (SkinMenu); gesperrte führen in den SHOP
+		ExtinctionMap.Set(false)
+		local win = newWindow("Skins", "SKINS", "STATTE DEINEN AGENTEN MIT FREIGESCHALTETEN SKINS AUS")
+		local page = require(script.Parent.SkinMenu).Build(win.Body, Inv.CONTENT_W, Inv.CONTENT_H, { Tile = Inv.TILE, Red = Inv.MENU_RED, Glass = Inv.GLASS,
+			OpenShop = function()
+				openMenuTab("Shop")
+			end })
+		win.Refresh = page.Refresh
 	elseif id == "Quests" then
 		-- Aufträge (Extinction, VIP & BOOSTER; Arcade nur, solange Arcade an ist): Inhalt baut QuestBoard
 		ExtinctionMap.Set(false)
@@ -3848,6 +3858,13 @@ function ExtinctionClient.Init()
 	for _, attribute in { "Achievements", "Stats" } do
 		player:GetAttributeChangedSignal(attribute):Connect(function()
 			if window and window.Kind == "Achievements" and window.Refresh then
+				window.Refresh()
+			end
+		end)
+	end
+	for _, attribute in { "Owned", "Equipped" } do
+		player:GetAttributeChangedSignal(attribute):Connect(function()
+			if window and window.Kind == "Skins" and window.Refresh then
 				window.Refresh()
 			end
 		end)

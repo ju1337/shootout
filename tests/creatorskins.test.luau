@@ -34,7 +34,11 @@ for _, id in ids do
 	check(not Cosmetics.ForSale(item), id .. ": nicht im Shop")
 	check(not RapConfig.Tradeable(id), id .. ": nicht handelbar")
 	check(not inPool[id], id .. ": nicht in der Kiste")
-	check(item.Weapon == nil and Cosmetics.FitsWeapon(item, "Pistol") and Cosmetics.FitsWeapon(item, "LMG"), id .. ": alle Waffen")
+	if item.Type == "Agent" then
+		check(not Cosmetics.FitsWeapon(item, "Pistol"), id .. ": Agenten-Skin, auf keine Waffe")
+	else
+		check(item.Weapon == nil and Cosmetics.FitsWeapon(item, "Pistol") and Cosmetics.FitsWeapon(item, "LMG"), id .. ": alle Waffen")
+	end
 end
 
 store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
