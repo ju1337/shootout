@@ -445,6 +445,38 @@ function Extinction.Travel(player, key)
 	return true
 end
 
+-- Admin: Spieler ins Camp bringen (raus aus einem Dungeon, Spawnpunkt wird das Camp). Gibt true zurück, wenn es ging.
+function Extinction.AdminToCamp(player)
+	local info = members[player]
+	local root, character = rootOf(player)
+	local folder = map:FindFirstChild("Spawns")
+	if not info or not root or not folder or #folder:GetChildren() == 0 then
+		return false
+	end
+	DungeonService.OnLeave(player)
+	local spot = SpawnUtil.Pick(folder)
+	SpawnUtil.Prestream(player, spot.Position)
+	character:PivotTo(spot)
+	MovementGuard.Teleported(character)
+	info.Home = ""
+	for _, zone in Extinction.SafeZones() do
+		if zone.Key == "" then
+			player:SetAttribute("ExtHome", zone.Title)
+		end
+	end
+	return true
+end
+
+-- Admin: Spieler sofort neu spawnen (an seinem Spawnpunkt, ohne Tod und ohne Taschenverlust)
+function Extinction.AdminRespawn(player)
+	if not members[player] then
+		return false
+	end
+	DungeonService.OnLeave(player)
+	spawnPlayer(player)
+	return true
+end
+
 function Extinction.Init(modeManager)
 	manager = modeManager
 	InventoryService.Handlers.Travel = function(player, key)

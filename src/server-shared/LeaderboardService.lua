@@ -52,6 +52,7 @@ end
 
 local stores = {} -- [Name] = OrderedDataStore
 local names = {}  -- [UserId] = Name (Cache)
+local hiddenIds = {} -- [UserId] = true: vom Admin versteckt (aus den Listen gefiltert, auch solange der DataStore nachhängt)
 
 local function nameOf(userId)
 	if names[userId] then
@@ -72,9 +73,14 @@ local function submitPlayer(player)
 	if not profile then
 		return
 	end
+	hiddenIds[player.UserId] = profile.HideBoards or nil
+	player:SetAttribute("HideBoards", profile.HideBoards or nil)
 	for board, getValue in BOARDS do
 		local store = stores[board]
-		if store then
+		if store and profile.HideBoards then
+			-- vom Admin versteckt (Admin-Panel): Eintrag entfernen statt eintragen
+			task.spawn(pcall, store.RemoveAsync, store, tostring(player.UserId))
+		elseif store then
 			local value = math.floor(getValue(profile))
 			task.spawn(function()
 				local ok, err = pcall(store.SetAsync, store, tostring(player.UserId), value)
@@ -96,7 +102,7 @@ local function localList(getValue)
 	local list = {}
 	for _, player in Players:GetPlayers() do
 		local profile = ProgressService.Get(player)
-		if profile then
+		if profile and not profile.HideBoards then
 			table.insert(list, { Name = player.Name, UserId = player.UserId, Value = math.floor(getValue(profile)) })
 		end
 	end
@@ -119,7 +125,7 @@ local function refresh()
 				list = {}
 				for _, entry in pages:GetCurrentPage() do
 					local userId = tonumber(entry.key)
-					if userId then
+					if userId and not hiddenIds[userId] then
 						table.insert(list, { Name = nameOf(userId), UserId = userId, Value = entry.value })
 					end
 				end
@@ -137,6 +143,23 @@ local function refresh()
 			ReplicatedStorage:SetAttribute("RankedLeaderboard", HttpService:JSONEncode(ranked))
 		end
 	end
+end
+
+-- Vom Admin vor den Bestenlisten versteckt? (Profil HideBoards) Umschalten mit SetHidden, wirkt sofort.
+function LeaderboardService.IsHidden(player)
+	local profile = ProgressService.Get(player)
+	return profile ~= nil and profile.HideBoards == true
+end
+
+function LeaderboardService.SetHidden(player, hidden)
+	local profile = ProgressService.Get(player)
+	if not profile then
+		return false
+	end
+	profile.HideBoards = hidden or nil
+	submitPlayer(player)
+	task.spawn(refresh)
+	return true
 end
 
 function LeaderboardService.Init()

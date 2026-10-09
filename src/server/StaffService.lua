@@ -151,12 +151,12 @@ function StaffService.Assign(userId, rankId)
 	return (online and online.Name or tostring(id)) .. ": " .. (rank and rank.Name or "kein Rang")
 end
 
--- Im Spiel vergebener Rang einer UserId (für die Rechteprüfung), auch offline
-function StaffService.StoredPower(userId)
+-- Rang einer UserId (online: der aktuelle, offline: fest im Code oder im Spiel vergeben) oder nil
+function StaffService.StoredRank(userId)
 	local id = tonumber(userId) or 0
 	local online = Players:GetPlayerByUserId(id)
 	if online then
-		return StaffConfig.Power(online)
+		return StaffConfig.Of(online)
 	end
 	local rankId = StaffConfig.Members[id]
 	local s = getStore()
@@ -165,7 +165,12 @@ function StaffService.StoredPower(userId)
 		stored[id] = ok and StaffConfig.Get(value) and value or false
 	end
 	rankId = better(rankId, stored[id] or nil)
-	local rank = StaffConfig.Get(rankId)
+	return StaffConfig.Get(rankId)
+end
+
+-- Stärke des Rangs einer UserId (für die Rechteprüfung), auch offline
+function StaffService.StoredPower(userId)
+	local rank = StaffService.StoredRank(userId)
 	return rank and rank.Power or 0
 end
 

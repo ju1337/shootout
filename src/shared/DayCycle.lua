@@ -7,6 +7,7 @@
 --   IsBloodMoon(t)      läuft gerade das Blutmond-Ereignis? (BloodMoonService, Attribute an ReplicatedStorage)
 --   IsStorm(t)          läuft gerade die Sturmnacht? (StormService); StormFactor, StormLeft, StormPvPPaused
 --   Label(clock)        "14:20"
+--   Fog(t)              Nebel 0..1 (Admin: Attribut "FogOverride" legt ihn fest)
 --   SetClock(hour)      (nur Server, Admin) springt zur Uhrzeit: Attribut "DayOffset" (Sekunden) an ReplicatedStorage,
 --                       das alle Berechnungen zur Serverzeit addieren
 
@@ -128,8 +129,13 @@ function DayCycle.StormPvPPaused(serverTime)
 	return t < resume, resume
 end
 
--- Nebel 0..1 (an manchen Tagen morgens)
+-- Nebel 0..1 (an manchen Tagen morgens). Der Admin kann ihn festlegen: Attribut "FogOverride" (0..1) an
+-- ReplicatedStorage, ohne Attribut wieder automatisch.
 function DayCycle.Fog(serverTime)
+	local override = tonumber(ReplicatedStorage:GetAttribute("FogOverride"))
+	if override then
+		return math.clamp(override, 0, 1)
+	end
 	local clock = DayCycle.Clock(serverTime)
 	if clock < D.FogFrom or clock > D.FogTo then
 		return 0

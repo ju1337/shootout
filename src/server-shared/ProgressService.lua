@@ -876,6 +876,40 @@ function ProgressService.SaveNow(player)
 	return save(player)
 end
 
+-- Admin (Suche): Profil einer UserId nur lesen, auch offline (ohne Sperre, ändert nichts).
+-- Gibt Profil, online? zurück; nil, false, Fehler wenn nichts zu lesen ist.
+function ProgressService.Peek(userId)
+	local id = math.floor(tonumber(userId) or 0)
+	local online = Players:GetPlayerByUserId(id)
+	if online and profiles[online] then
+		return profiles[online], true
+	end
+	if not store then
+		return nil, false, "Kein DataStore (Studio ohne API-Zugriff?)"
+	end
+	local ok, data = pcall(store.Store.GetAsync, store.Store, "u" .. id)
+	if not ok then
+		return nil, false, tostring(data)
+	end
+	if data == nil then
+		return nil, false, "Kein Spielstand"
+	end
+	return toProfile(data), false
+end
+
+-- Admin: Spielstand komplett zurücksetzen (wie ein neuer Spieler) und sofort speichern. Danach muss der Spieler neu
+-- beitreten (AdminService kickt ihn), damit alle Dienste mit dem leeren Stand anfangen. Gibt true zurück, wenn ein
+-- Profil da war.
+function ProgressService.Reset(player)
+	if not profiles[player] then
+		return false
+	end
+	profiles[player] = defaultProfile()
+	ProgressService.Sync(player)
+	ProgressService.SaveNow(player)
+	return true
+end
+
 -- Profil fertig geladen? Ohne DataStore oder wenn er in Studio nicht erreichbar ist: sobald das Profil da ist
 -- (dann gilt der Stand nur für die Sitzung, gespeichert wird nur ein wirklich geladenes Profil)
 function ProgressService.IsLoaded(player)

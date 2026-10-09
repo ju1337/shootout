@@ -55,7 +55,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 	-- Schutzschild oder Safe Zone der offenen Welt (Attribut "SafeZone" am Charakter): kein Schaden
 	local noclip = Players:GetPlayerFromCharacter(model)
 	if humanoid.Health <= 0 or model:FindFirstChildOfClass("ForceField") or model:GetAttribute("SafeZone")
-		or (noclip and noclip:GetAttribute("Noclip")) then -- Admin im Noclip: kein Schaden
+		or (noclip and (noclip:GetAttribute("Noclip") or noclip:GetAttribute("AdminGod"))) then -- Admin: Noclip oder Gottmodus
 		return 0, false, false, 0
 	end
 	-- Spawnschutz der offenen Welt (ProtectedUntil): Geschützte nehmen keinen Schaden und teilen keinen aus

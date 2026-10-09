@@ -808,11 +808,35 @@ die ID bei `BadgeId` einsetzen; solange sie 0 ist, wird das Badge im Profil vorg
 nachgetragen (`Badges = { [Id] = true | "Pending" }`). Jedes Badge wird je Spieler nur einmal bei Roblox angefragt.
 Test: `tests/badges.test.luau`.
 
-## Sperrliste (Kick und Ban)
+## Admin-Panel
 
-Admin-Panel (P) › Reiter **SPIELER**: oben das Feld **Grund** (sieht der Spieler), daneben Sperren per **UserId** (auch
-für Spieler, die nicht auf dem Server sind), die **Sperrliste** mit ENTSPERREN und AKTUALISIEREN, darunter jeder
-Spieler des Servers mit **KICK**, **BAN 1 TAG**, **BAN 7 TAGE**, **BAN DAUERHAFT**. `src/server-shared/BanService.lua`:
+P oder Knopf **ADMIN (P)**. Aufbau wie ein klassisches Roblox-Admin-Panel (`src/client/AdminPanel.lua`): Kopfzeile mit
+Krone, Rang-Abzeichen und Umschalter **DIESER SERVER / ALLE SERVER**, links große bunte Kategorien, in der Mitte die
+Spielerliste (Avatar, AKTUALISIEREN, unten Sperre/Entsperren per UserId), rechts der gewählte Spieler mit Werte-Kacheln
+(Münzen, RZ, Level, RAP, Zombies, Kills) und Aktionsknöpfen. Unten steht die Rückmeldung des Servers.
+
+- **SPIELER**: Menge eintippen → +MÜNZEN / SET MÜNZEN / +RZ / SET RZ / +XP / SET LEVEL / SET PRESTIGE / +RAP / SET RAP;
+  Item der offenen Welt mit `<` `>` wählen (Anzahl, was nicht in die Tasche passt, kommt ins Lager), Skin geben,
+  Dungeon-Schlüssel; HINGEHEN, HERHOLEN, INS CAMP, EINFRIEREN, RESPAWN (ohne Tod und Taschenverlust), HEILEN, TÖTEN;
+  VOR BESTENLISTE VERSTECKEN (Profil `HideBoards`); Grund + Tage (0 = für immer) → KICK, BAN; RESET DATA (zweimal
+  klicken, Spielstand wie neu, Spieler wird gekickt); Team-Rang.
+- **EFFEKTE**: Gottmodus (Attribut `AdminGod`, kein Schaden), Doppel-XP 30 Min / 2 Std / 24 Std, Einfrieren, Noclip.
+- **EVENTS**: jedes Event der offenen Welt mit Live-Status und START / BEI MIR / STOP, Bosse, Zombies, Dungeons beenden.
+- **NACHRICHTEN**: Ankündigung an alle (Banner) und Nachricht an den gewählten Spieler (Textfilter).
+- **WELT**: Uhrzeit (06/12/18/22/00 Uhr), Nebel fest oder automatisch (`FogOverride`), Sturmnacht, Blutmond, Bots.
+- **LOGS**: Admin-Log dieses Servers (die letzten 150 Aktionen; alles geht außerdem in die Discord-Logs).
+- **ÖKONOMIE**: Münzen an alle, MIR GEBEN (Aufsätze, Granaten, Ausrüstung, Schlüssel, RZ), allgemeine Einstellungen.
+- **SUCHE**: Spieler per Name oder UserId, auch offline (Profil nur gelesen): Werte, Rang, Sperre, BAN / UNBAN, Rang;
+  darunter die Sperrliste.
+
+Mit **ALLE SERVER** laufen Server-Aktionen (Events, Ankündigung, Uhrzeit, Nebel, Münzen an alle) per MessagingService
+(Thema `AdminGlobal`) auf jedem Server. Rechte prüft `AdminService`: Owner/Developer (Admin) dürfen alles, aber Werte
+ändern, herholen, einfrieren, zurücksetzen usw. nur bei schwächeren Rängen oder sich selbst; Moderatoren sehen nur
+SPIELER und SUCHE mit den Sperren, die ihr Rang erlaubt. Test: `tests/adminpanel.test.luau`.
+
+### Sperrliste (Kick und Ban)
+
+`src/server-shared/BanService.lua`:
 Sperren liegen im DataStore `Bans_v1` (Schlüssel `List`: UserId → Name, Grund, Ablauf, von wem, wann), jeder Server
 lädt die Liste beim Start und jede Minute neu, Änderungen gehen sofort per MessagingService („Bans“) an alle Server;
 gesperrte Spieler werden beim Beitreten gekickt (Nachricht in ihrer Sprache mit Grund und Restzeit). Zusätzlich

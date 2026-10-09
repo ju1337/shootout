@@ -1,10 +1,16 @@
 -- AdminPanel (ModuleScript, nur Client)
--- Für Admins (Attribut "IsAdmin" vom Server) mit allen Reitern; Moderatoren (Attribut "IsMod", Team-Rang aus StaffConfig)
--- sehen nur SPIELER mit Kick und den Sperren, die ihr Rang erlaubt. Öffnen/Schließen mit P oder dem ADMIN-Knopf.
--- Wer Ränge vergeben darf (StaffConfig Assign), sieht bei jedem Spieler und unter der Sperre eine Rang-Zeile.
--- Aufbau: Kopfzeile (Titel, Rückmeldung, Schließen), Reiter (SPIEL, EVENTS, BOTS, EINSTELLUNGEN, SPIELER), darunter die
--- Seite des Reiters. EVENTS zeigt jedes Event der offenen Welt als Karte mit Live-Status und START / HIER / STOP.
--- Alle Befehle prüft der Server noch einmal (AdminService).
+-- Für Admins (Attribut "IsAdmin" vom Server) mit allen Kategorien; Moderatoren (Attribut "IsMod", Team-Rang aus
+-- StaffConfig) sehen nur SPIELER und SUCHE mit Kick und den Sperren, die ihr Rang erlaubt. Öffnen/Schließen mit P oder
+-- dem ADMIN-Knopf.
+-- Aufbau (wie ein klassisches Roblox-Admin-Panel):
+--   * Kopfzeile: Krone, ADMIN PANEL, Rang-Abzeichen, Umschalter DIESER SERVER / ALLE SERVER, Schließen
+--   * links große bunte Kategorie-Knöpfe: SPIELER, EFFEKTE, EVENTS, NACHRICHTEN, WELT, LOGS, ÖKONOMIE, SUCHE
+--   * SPIELER / EFFEKTE / NACHRICHTEN: in der Mitte die Spielerliste (Avatar, Name, AKTUALISIEREN, Sperre per UserId),
+--     rechts die Detailansicht des gewählten Spielers (Werte-Kacheln oben, Aktionsknöpfe darunter)
+--   * die anderen Kategorien nutzen Mitte und rechts zusammen als eine Seite
+--   * unten eine Zeile mit der Rückmeldung des Servers
+-- Mit ALLE SERVER laufen Server-Aktionen (Events, Ankündigung, Uhrzeit, Nebel, Münzen an alle) über Remote "AllServers"
+-- auf jedem Server. Alle Befehle prüft der Server noch einmal (AdminService).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,47 +22,107 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local GameSettings = require(Shared.GameSettings)
-local AgentConfig = require(Shared.AgentConfig)
 local DayCycle = require(Shared.DayCycle)
 local StaffConfig = require(Shared.StaffConfig)
+local LevelConfig = require(Shared.LevelConfig)
+local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local Cosmetics = require(Shared.Cosmetics)
 local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
 
 local AdminPanel = {}
 
--- Farben (Rogue-Company-Stil: Navy und Cyan)
-local ACCENT = Color3.fromRGB(40, 210, 230)
-local PANEL = Color3.fromRGB(10, 16, 28)
-local HEADER = Color3.fromRGB(14, 24, 40)
-local CARD = Color3.fromRGB(18, 30, 48)
-local BUTTON = Color3.fromRGB(32, 48, 70)
-local TEXT = Color3.fromRGB(235, 242, 248)
-local MUTED = Color3.fromRGB(130, 155, 175)
-local DARK_TEXT = Color3.fromRGB(10, 20, 30)
-local TONES = {
-	Accent = ACCENT,
-	Good = Color3.fromRGB(56, 160, 92),
-	Danger = Color3.fromRGB(196, 56, 64),
-	Warn = Color3.fromRGB(200, 140, 40),
-	Event = Color3.fromRGB(170, 84, 50),
-	Night = Color3.fromRGB(70, 92, 150),
-	Blood = Color3.fromRGB(150, 36, 40),
-	Purple = Color3.fromRGB(116, 84, 176),
-	Teal = Color3.fromRGB(40, 150, 120),
+-- ---------- Aussehen ----------
+local FONT = Enum.Font.FredokaOne
+local BODY_FONT = Enum.Font.GothamBold
+local PANEL_W, PANEL_H = 1000, 600
+local HEADER_H = 64
+local WHITE = Color3.new(1, 1, 1)
+local C = {
+	Body = Color3.fromRGB(44, 46, 56),
+	Column = Color3.fromRGB(30, 32, 40),
+	Card = Color3.fromRGB(54, 57, 68),
+	Field = Color3.fromRGB(36, 38, 46),
+	Dark = Color3.fromRGB(68, 72, 84),
+	Text = Color3.fromRGB(245, 246, 250),
+	Muted = Color3.fromRGB(160, 166, 182),
+	Header = Color3.fromRGB(226, 38, 58),
+	HeaderDark = Color3.fromRGB(176, 18, 40),
+	Gold = Color3.fromRGB(255, 204, 40),
+	Blue = Color3.fromRGB(32, 150, 245),
+	Green = Color3.fromRGB(70, 200, 70),
+	Red = Color3.fromRGB(226, 46, 64),
+	Orange = Color3.fromRGB(245, 140, 30),
+	Purple = Color3.fromRGB(150, 70, 225),
+	Yellow = Color3.fromRGB(245, 190, 30),
+	Teal = Color3.fromRGB(30, 180, 160),
+	Pink = Color3.fromRGB(230, 70, 170),
 }
-local PANEL_W = 560
 
-local gui, panel, statusLabel, playerSection, toggleButton
-local pages, tabButtons = {}, {}
-local valueLabels = {} -- [Key] = Label
-local eventStatus = {} -- [Event] = Label
-local botCountLabel
-local reasonBox, banIdBox, banSection -- Reiter SPIELER: Grund für Kick/Ban, UserId zum Sperren, Sperrliste
-local bans = {} -- zuletzt vom Server geschickte Sperrliste (Remotes.AdminData "Bans")
+-- Kategorien: { Id, Text, Symbol, Farbe, mit Spielerliste?, nur volle Admins? }
+local CATEGORIES = {
+	{ Id = "Players", Text = "SPIELER", Icon = "🙂", Color = C.Blue, List = true },
+	{ Id = "Effects", Text = "EFFEKTE", Icon = "⚡", Color = C.Yellow, List = true, Admin = true },
+	{ Id = "Events", Text = "EVENTS", Icon = "⭐", Color = C.Purple, Admin = true },
+	{ Id = "Messages", Text = "NACHRICHTEN", Icon = "💬", Color = C.Green, List = true, Admin = true },
+	{ Id = "World", Text = "WELT", Icon = "🌍", Color = C.Orange, Admin = true },
+	{ Id = "Logs", Text = "LOGS", Icon = "📜", Color = Color3.fromRGB(120, 70, 210), Admin = true },
+	{ Id = "Economy", Text = "ÖKONOMIE", Icon = "💰", Color = C.Gold, Admin = true },
+	{ Id = "Lookup", Text = "SUCHE", Icon = "🔍", Color = C.Red },
+}
+
+-- Aktionen, die mit ALLE SERVER auf jedem Server laufen (wie AdminService GLOBAL)
+local GLOBAL = { Announce = true, ExtAirdrop = true, ExtConvoy = true, ExtHeliCrash = true, ExtHordeCrate = true,
+	ExtBosses = true, ExtRedzone = true, ExtStop = true, BloodMoon = true, Storm = true, SetClock = true, SetFog = true,
+	GiveAllCoins = true, DungeonStopAll = true }
+
+-- ---------- Zustand ----------
+local gui, panel, statusLabel, toggleButton, scopeButton
+local pages, categoryButtons = {}, {}
+local listColumn, listHolder, listTitle, contentArea
+local currentCategory = "Players"
+local selectedId = nil -- UserId des gewählten Spielers
+local allServers = false
 local isOpen = false
-local currentTab = "Events"
-local playerSignature = ""
+local listSignature = ""
+local detailBuilders = {} -- [Kategorie] = function(frame, target)
+local detailFrames = {} -- [Kategorie] = ScrollingFrame rechts
+local tiles = {} -- [Key] = TextLabel (Werte des gewählten Spielers, Attribut Icon = Symbol davor)
+local watchConnection = nil -- AttributeChanged des gewählten Spielers (Einfrieren, Gottmodus, Rang)
+local hideButton
+local eventStatus = {} -- [Event] = TextLabel
+local valueLabels = {} -- [Einstellung] = TextLabel
+local botCountLabel
+local bans = {}
+local banSection
+local logSection
+local lookupSection
+local logs = {}
+local lookup = nil
+
+-- Item- und Skin-Auswahl (Pfeile < >)
+local itemIds = {}
+for id in ExtinctionConfig.Items do
+	table.insert(itemIds, id)
+end
+table.sort(itemIds, function(a, b)
+	local ia, ib = ExtinctionConfig.Get(a), ExtinctionConfig.Get(b)
+	if ia.Kind ~= ib.Kind then
+		return tostring(ia.Kind) < tostring(ib.Kind)
+	end
+	return tostring(ia.Name) < tostring(ib.Name)
+end)
+local skinIds = {}
+for _, item in Cosmetics.Items do
+	table.insert(skinIds, item.Id)
+end
+table.sort(skinIds, function(a, b)
+	return tostring(Cosmetics.Get(a).Name) < tostring(Cosmetics.Get(b).Name)
+end)
+local itemIndex, skinIndex = 1, 1
+
+-- ---------- Bausteine ----------
 
 local function make(className, props, parent)
 	local obj = Instance.new(className)
@@ -68,64 +134,183 @@ local function make(className, props, parent)
 end
 
 local function corner(obj, radius)
-	make("UICorner", { CornerRadius = UDim.new(0, radius or 6) }, obj)
+	make("UICorner", { CornerRadius = UDim.new(0, radius or 8) }, obj)
 end
 
-local function label(textValue, size, parent, props)
+local function stroke(obj, color, thickness, transparency)
+	return make("UIStroke", { Color = color or Color3.new(0, 0, 0), Thickness = thickness or 2,
+		Transparency = transparency or 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, obj)
+end
+
+local function padding(obj, all)
+	make("UIPadding", { PaddingLeft = UDim.new(0, all), PaddingRight = UDim.new(0, all), PaddingTop = UDim.new(0, all),
+		PaddingBottom = UDim.new(0, all) }, obj)
+end
+
+local function list(obj, gap, horizontal)
+	return make("UIListLayout", { Padding = UDim.new(0, gap or 6), SortOrder = Enum.SortOrder.LayoutOrder,
+		FillDirection = horizontal and Enum.FillDirection.Horizontal or Enum.FillDirection.Vertical,
+		VerticalAlignment = horizontal and Enum.VerticalAlignment.Center or Enum.VerticalAlignment.Top }, obj)
+end
+
+local function label(text, size, parent, props)
 	props = props or {}
-	props.Text = textValue
-	props.Size = props.Size or UDim2.new(1, 0, 0, size + 8)
+	props.Text = text
+	props.Size = props.Size or UDim2.new(1, 0, 0, size + 6)
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.BuilderSansBold
+	props.Font = props.Font or FONT
 	props.TextSize = size
-	props.TextColor3 = props.TextColor3 or TEXT
+	props.TextColor3 = props.TextColor3 or C.Text
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
+	props.TextTruncate = props.TextTruncate or Enum.TextTruncate.AtEnd
 	return make("TextLabel", props, parent)
 end
 
--- Knopf: tone = Name aus TONES oder Color3 (gefüllt), nil = dunkel; beim Darüberfahren heller
-local function button(textValue, width, parent, tone, onClick)
-	local base = typeof(tone) == "Color3" and tone or (tone and TONES[tone]) or BUTTON
-	local b = make("TextButton", {
-		Size = UDim2.new(0, width, 0, 30),
-		BackgroundColor3 = base,
-		BorderSizePixel = 0,
-		Font = Enum.Font.BuilderSansBold,
-		TextSize = 13,
-		TextColor3 = TEXT,
-		Text = textValue,
-		AutoButtonColor = false,
-	}, parent)
-	corner(b, 6)
-	local info = TweenInfo.new(0.12)
+-- Glänzender bunter Knopf (Verlauf, dunkler Rand, Schrift mit Kontur); beim Darüberfahren heller
+local function button(text, width, parent, color, onClick, height)
+	local base = color or C.Dark
+	local b = make("TextButton", { Size = UDim2.new(width <= 1 and width or 0, width > 1 and width or 0, 0, height or 34),
+		BackgroundColor3 = base, BorderSizePixel = 0, Font = FONT, TextSize = 15, TextColor3 = WHITE, Text = text,
+		AutoButtonColor = false, TextStrokeTransparency = 0.55, TextWrapped = true }, parent)
+	corner(b, 8)
+	stroke(b, base:Lerp(Color3.new(0, 0, 0), 0.45), 2)
+	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(WHITE, Color3.fromRGB(200, 200, 200)) }, b)
+	local info = TweenInfo.new(0.1)
 	b.MouseEnter:Connect(function()
-		TweenService:Create(b, info, { BackgroundColor3 = base:Lerp(Color3.new(1, 1, 1), 0.15) }):Play()
+		TweenService:Create(b, info, { BackgroundColor3 = b:GetAttribute("Base") and b:GetAttribute("Base"):Lerp(WHITE, 0.18)
+			or base:Lerp(WHITE, 0.18) }):Play()
 	end)
 	b.MouseLeave:Connect(function()
-		TweenService:Create(b, info, { BackgroundColor3 = base }):Play()
+		TweenService:Create(b, info, { BackgroundColor3 = b:GetAttribute("Base") or base }):Play()
 	end)
-	b.Activated:Connect(onClick)
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
 	return b
 end
 
--- Zeile mit Knöpfen nebeneinander
+-- Farbe eines Knopfs später ändern (Umschalter)
+local function recolor(b, color)
+	b:SetAttribute("Base", color)
+	b.BackgroundColor3 = color
+	local s = b:FindFirstChildOfClass("UIStroke")
+	if s then
+		s.Color = color:Lerp(Color3.new(0, 0, 0), 0.45)
+	end
+end
+
+-- Zeile, deren Knöpfe sich die Breite teilen (Breiten < 1 = Anteil, sonst Pixel)
 local function row(parent, height)
-	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, height or 30), BackgroundTransparency = 1 }, parent)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
-		VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, height or 34), BackgroundTransparency = 1 }, parent)
+	list(frame, 6, true)
 	return frame
 end
 
--- Karte (dunkler Kasten mit Innenabstand, wächst mit dem Inhalt)
+-- n Knöpfe gleichmäßig in einer Zeile: defs = { { Text, Farbe, onClick }, ... }
+local function buttonRow(parent, defs, height)
+	local r = row(parent, height)
+	local count = #defs
+	local result = {}
+	for i, def in defs do
+		local b = button(def[1], 1, r, def[2], def[3], height)
+		b.Size = UDim2.new(1 / count, -6 * (count - 1) / count, 1, 0)
+		b.LayoutOrder = i
+		result[i] = b
+	end
+	return r, result
+end
+
+local function textBox(placeholder, parent, props)
+	local box = make("TextBox", { Size = UDim2.new(0, 120, 0, 34), BackgroundColor3 = C.Field, BorderSizePixel = 0,
+		Font = BODY_FONT, TextSize = 13, TextColor3 = C.Text, Text = "", PlaceholderText = placeholder,
+		PlaceholderColor3 = C.Muted, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd }, parent)
+	corner(box, 8)
+	stroke(box, Color3.fromRGB(20, 22, 28), 1.5)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 8) }, box)
+	for key, value in props or {} do
+		box[key] = value
+	end
+	return box
+end
+
+-- Nur Ziffern (optional mit Minus) im Feld zulassen
+local function numeric(box, allowMinus)
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		local clean = string.gsub(box.Text, allowMinus and "[^%d%-]" or "%D", "")
+		if clean ~= box.Text then
+			box.Text = clean
+		end
+	end)
+end
+
+-- Abschnitts-Überschrift
+local function section(title, parent)
+	return label(title, 16, parent, { Size = UDim2.new(1, 0, 0, 22), TextColor3 = C.Gold })
+end
+
+-- Karte (dunkler Kasten, wächst mit dem Inhalt)
 local function card(parent)
-	local frame = make("Frame", { Size = UDim2.new(1, -8, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = CARD,
+	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = C.Card,
 		BorderSizePixel = 0 }, parent)
-	corner(frame, 8)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 10),
-		PaddingBottom = UDim.new(0, 10) }, frame)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, frame)
+	corner(frame, 10)
+	padding(frame, 10)
+	list(frame, 6)
 	return frame
 end
+
+-- Reihenfolge = Erstellungsreihenfolge
+local function order(frame)
+	for i, child in frame:GetChildren() do
+		if child:IsA("GuiObject") then
+			child.LayoutOrder = i
+		end
+	end
+end
+
+local function clear(frame)
+	for _, child in frame:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+end
+
+local function scroller(parent, props)
+	local frame = make("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0,
+		ScrollBarThickness = 5, ScrollBarImageColor3 = C.Gold, CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollingDirection = Enum.ScrollingDirection.Y }, parent)
+	for key, value in props or {} do
+		frame[key] = value
+	end
+	list(frame, 8)
+	make("UIPadding", { PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }, frame)
+	return frame
+end
+
+local function avatar(userId, size, parent)
+	local image = make("ImageLabel", { Size = UDim2.new(0, size, 0, size), BackgroundColor3 = C.Field, BorderSizePixel = 0,
+		Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(userId) .. "&w=150&h=150" }, parent)
+	corner(image, size // 2)
+	stroke(image, C.Gold, 2)
+	return image
+end
+
+-- Zahl kurz: 1234 -> 1.2K, 2500000 -> 2.5M
+local function short(n)
+	n = tonumber(n) or 0
+	local abs = math.abs(n)
+	if abs >= 1e9 then
+		return string.format("%.1fB", n / 1e9)
+	elseif abs >= 1e6 then
+		return string.format("%.1fM", n / 1e6)
+	elseif abs >= 1e4 then
+		return string.format("%.1fK", n / 1e3)
+	end
+	return tostring(math.floor(n))
+end
+
+-- ---------- Rechte ----------
 
 -- Rechte des eigenen Rangs; volle Admins ohne Rang (StaffService.AdminIds) dürfen alles außer Ränge vergeben
 local function rights()
@@ -143,10 +328,67 @@ local function banAllowed(days)
 	return limit ~= nil and (limit == 0 or (days > 0 and days <= limit))
 end
 
+-- Darf ich gegen diesen Spieler vorgehen? (schwächerer Rang oder ich selbst; der Server prüft es noch einmal)
+local function outranks(target)
+	if target == player then
+		return true
+	end
+	local mine = StaffConfig.Of(player)
+	if not mine then
+		return full()
+	end
+	return StaffConfig.Power(target) < mine.Power
+end
+
+-- ---------- Senden ----------
+
+local function setStatus(text, color)
+	if statusLabel then
+		statusLabel.Text = text
+		statusLabel.TextColor3 = color or C.Muted
+	end
+end
+
 local function send(action, a, b)
-	statusLabel.Text = "…"
-	statusLabel.TextColor3 = MUTED
+	setStatus("…")
 	Remotes.AdminAction:FireServer(action, a, b)
+end
+
+-- Server-Aktion: mit ALLE SERVER auf jedem Server, sonst nur hier
+local function sendScoped(action, a, b)
+	if allServers and GLOBAL[action] and a ~= "Here" then
+		setStatus("… (alle Server)")
+		Remotes.AdminAction:FireServer("AllServers", action, { A = a, B = b })
+	else
+		send(action, a, b)
+	end
+end
+
+local function selected()
+	return selectedId and Players:GetPlayerByUserId(selectedId) or nil
+end
+
+-- Knopf mit Sicherheitsabfrage: erster Klick "SICHER?", zweiter innerhalb von 3 s führt aus
+local function confirmButton(text, width, parent, color, onConfirm)
+	local armed = false
+	local b
+	b = button(text, width, parent, color, function()
+		if armed then
+			armed = false
+			b.Text = text
+			onConfirm()
+			return
+		end
+		armed = true
+		b.Text = "SICHER?"
+		task.delay(3, function()
+			if armed then
+				armed = false
+				b.Text = text
+			end
+		end)
+	end)
+	return b
 end
 
 -- Knöpfe zum Rang-Vergeben (nur Ränge bis StaffConfig Assign des eigenen Rangs) für eine UserId
@@ -155,172 +397,554 @@ local function rankButtons(parent, getUserId)
 	if not assign then
 		return
 	end
-	local r = row(parent)
+	local defs = {}
 	for _, rank in StaffConfig.Ranks do
 		if rank.Power <= assign then
-			button(rank.Name, #rank.Name * 8 + 22, r, rank.Color:Lerp(Color3.new(0, 0, 0), 0.4), function()
+			table.insert(defs, { rank.Name, rank.Color:Lerp(Color3.new(0, 0, 0), 0.25), function()
 				local id = getUserId()
 				if id then
 					send("SetRank", id, rank.Id)
 				else
-					statusLabel.Text = "UserId eingeben"
+					setStatus("UserId eingeben", C.Red)
 				end
-			end)
+			end })
 		end
 	end
-	button("KEIN RANG", 86, r, nil, function()
+	table.insert(defs, { "KEIN RANG", C.Dark, function()
 		local id = getUserId()
 		if id then
 			send("SetRank", id, nil)
 		else
-			statusLabel.Text = "UserId eingeben"
+			setStatus("UserId eingeben", C.Red)
 		end
-	end)
-end
-
-local function section(title, parent)
-	local holder = make("Frame", { Size = UDim2.new(1, -8, 0, 26), BackgroundTransparency = 1 }, parent)
-	label(title, 13, holder, { Size = UDim2.new(1, 0, 0, 18), TextColor3 = ACCENT, Font = Enum.Font.BuilderSansExtraBold })
-	make("Frame", { Position = UDim2.new(0, 0, 1, -2), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = ACCENT,
-		BackgroundTransparency = 0.7, BorderSizePixel = 0 }, holder)
-	return holder
-end
-
--- Reihenfolge = Erstellungsreihenfolge (für Seiten und Karten mit UIListLayout)
-local function order(page)
-	for i, child in page:GetChildren() do
-		if child:IsA("GuiObject") then
-			child.LayoutOrder = i
-		end
+	end })
+	-- höchstens 5 pro Zeile
+	for i = 1, #defs, 5 do
+		buttonRow(parent, { defs[i], defs[i + 1], defs[i + 2], defs[i + 3], defs[i + 4] }, 30)
 	end
 end
 
--- ---------- Seiten ----------
+-- ---------- Spielerliste (Mitte) ----------
 
-local function buildGame(page)
-	-- Runden der Arcade-Modi steuern: nur solange Arcade an ist (Modes.ArcadeEnabled)
-	if Modes.ArcadeEnabled then
-		section("MODI", page)
-		for _, modeId in { "Domination", "Wingman", "Arena" } do
-			local c = card(page)
-			label(modeId, 15, c)
-			local r = row(c)
-			button("JETZT STARTEN", 130, r, "Good", function()
-				send("ModeStart", modeId)
-			end)
-			button("RUNDE BEENDEN", 130, r, nil, function()
-				send("ModeEndRound", modeId)
-			end)
-			button("RESET", 80, r, "Danger", function()
-				send("ModeResetMatch", modeId)
-			end)
-			order(c)
+local function refreshTiles()
+	local target = selected()
+	if not target then
+		return
+	end
+	local stats: { [string]: any } = {}
+	pcall(function()
+		stats = game:GetService("HttpService"):JSONDecode(target:GetAttribute("Stats") or "{}")
+	end)
+	local level = LevelConfig.Get(target)
+	local values = {
+		Coins = short(target:GetAttribute("Coins")),
+		RedPoints = short(target:GetAttribute("RedPoints")),
+		Level = tostring(level.Level) .. (level.Prestige > 0 and (" P" .. level.Prestige) or ""),
+		Rap = short(target:GetAttribute("Rap")),
+		Zombies = short(stats.Zombies),
+		Kills = short(stats.Kills),
+	}
+	for key, tile in tiles do
+		if tile.Parent then
+			tile.Text = tostring(tile:GetAttribute("Icon") or "") .. " " .. (values[key] or "0")
 		end
-		local ffa = card(page)
-		label("Free for All", 15, ffa)
-		button("RUNDE BEENDEN", 130, row(ffa), nil, function()
-			send("FFAEndRound")
+	end
+	if hideButton and hideButton.Parent then
+		local hidden = target:GetAttribute("HideBoards") == true
+		hideButton.Text = hidden and "IN BESTENLISTE ZEIGEN" or "VOR BESTENLISTE VERSTECKEN"
+		recolor(hideButton, hidden and C.Green or C.Red)
+	end
+end
+
+local refreshDetail, refreshList
+
+local function selectPlayer(userId)
+	selectedId = userId
+	refreshList(true) -- Markierung neu zeichnen
+	refreshDetail()
+end
+
+refreshList = function(force)
+	if not listHolder then
+		return
+	end
+	local parts = {}
+	for _, p in Players:GetPlayers() do
+		table.insert(parts, p.UserId .. ":" .. tostring(p:GetAttribute("StaffRank")))
+	end
+	local signature = table.concat(parts, "|") .. "#" .. tostring(selectedId)
+	if signature == listSignature and not force then
+		return
+	end
+	listSignature = signature
+	clear(listHolder)
+	local all = Players:GetPlayers()
+	listTitle.Text = "SPIELER (" .. #all .. ")"
+	-- gewählter Spieler weg: niemanden mehr anzeigen
+	if selectedId and not Players:GetPlayerByUserId(selectedId) then
+		selectedId = nil
+		refreshDetail()
+	end
+	for i, p in all do
+		local on = p.UserId == selectedId
+		local entry = make("TextButton", { Size = UDim2.new(1, 0, 0, 54), BackgroundColor3 = on and C.Blue or C.Card,
+			BorderSizePixel = 0, AutoButtonColor = false, Text = "", LayoutOrder = i }, listHolder)
+		corner(entry, 10)
+		stroke(entry, on and C.Blue:Lerp(Color3.new(0, 0, 0), 0.4) or Color3.fromRGB(22, 24, 30), 2)
+		local face = avatar(p.UserId, 40, entry)
+		face.Position = UDim2.new(0, 7, 0.5, -20)
+		local staff = StaffConfig.Of(p)
+		label((staff and (StaffConfig.Prefix(staff, 11) .. " ") or "") .. p.DisplayName, 15, entry,
+			{ Position = UDim2.new(0, 54, 0, 7), Size = UDim2.new(1, -60, 0, 20), RichText = true })
+		label("@" .. p.Name, 12, entry, { Position = UDim2.new(0, 54, 0, 28), Size = UDim2.new(1, -60, 0, 16),
+			TextColor3 = on and WHITE or C.Muted, Font = BODY_FONT })
+		entry.Activated:Connect(function()
+			selectPlayer(p.UserId)
 		end)
-		order(ffa)
 	end
-	section("ICH", page)
-	local me = card(page)
-	local r = row(me)
-	button("NOCLIP (B)", 120, r, "Night", function()
-		send("Noclip")
-	end)
-	button("TAG / NACHT", 120, r, "Warn", function()
-		send("DayNight")
-	end)
 end
 
--- Event-Karte: Name, Live-Status rechts, Knöpfe darunter. buttons = { { Text, Aktion, Wert, Ton, Breite } }
+local function buildListColumn(parent)
+	listColumn = make("Frame", { Size = UDim2.new(0, 250, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0 }, parent)
+	corner(listColumn, 12)
+	padding(listColumn, 10)
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 }, listColumn)
+	listTitle = label("SPIELER (0)", 17, head, { Size = UDim2.new(0.55, 0, 1, 0), TextColor3 = C.Gold })
+	local refresh = button("AKTUALISIEREN", 1, head, C.Blue, function()
+		refreshList(true)
+		refreshDetail()
+	end, 28)
+	refresh.AnchorPoint = Vector2.new(1, 0)
+	refresh.Position = UDim2.new(1, 0, 0, 1)
+	refresh.Size = UDim2.new(0.45, 0, 0, 28)
+	refresh.TextSize = 12
+	listHolder = scroller(listColumn, { Position = UDim2.new(0, 0, 0, 38), Size = UDim2.new(1, 8, 1, -124) })
+	-- unten: Sperre per UserId (auch offline), Grund und Dauer aus der Detailansicht bzw. Standard
+	local foot = make("Frame", { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 78),
+		BackgroundTransparency = 1 }, listColumn)
+	list(foot, 6)
+	local idBox = textBox("UserId (offline)", foot, { Size = UDim2.new(1, 0, 0, 34) })
+	numeric(idBox)
+	local defs = {}
+	if banAllowed(0) or banAllowed(7) then
+		table.insert(defs, { "BAN ID", C.Red, function()
+			local id = tonumber(idBox.Text)
+			if not id then
+				setStatus("UserId eingeben", C.Red)
+				return
+			end
+			send("Ban", id, { Days = banAllowed(0) and 0 or 7, Reason = "Regelverstoß" })
+		end })
+	end
+	if rights().Unban then
+		table.insert(defs, { "UNBAN", C.Green, function()
+			local id = tonumber(idBox.Text)
+			if id then
+				send("Unban", id)
+			else
+				setStatus("UserId eingeben", C.Red)
+			end
+		end })
+	end
+	if #defs > 0 then
+		buttonRow(foot, defs, 34)
+	end
+	order(foot)
+end
+
+-- ---------- Detailansicht (rechts) ----------
+
+-- Kopf: Avatar, Name, @Name · UserId, Rang, VERSTECKEN; darunter die Werte-Kacheln
+local function detailHead(frame, target)
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundTransparency = 1 }, frame)
+	avatar(target.UserId, 60, head).Position = UDim2.new(0, 0, 0, 2)
+	local staff = StaffConfig.Of(target)
+	label(string.upper(target.DisplayName) .. (staff and ("  " .. StaffConfig.Prefix(staff, 13)) or ""), 22, head,
+		{ Position = UDim2.new(0, 72, 0, 6), Size = UDim2.new(1, -270, 0, 28), RichText = true })
+	label("@" .. target.Name .. " · " .. target.UserId .. " · " .. tostring(target:GetAttribute("Mode") or "?"), 13, head,
+		{ Position = UDim2.new(0, 72, 0, 36), Size = UDim2.new(1, -270, 0, 18), TextColor3 = C.Muted, Font = BODY_FONT })
+	if full() and outranks(target) then
+		hideButton = button("VOR BESTENLISTE VERSTECKEN", 1, head, C.Red, function()
+			send("HideLeaderboard", target.UserId)
+		end, 32)
+		hideButton.AnchorPoint = Vector2.new(1, 0)
+		hideButton.Position = UDim2.new(1, 0, 0, 4)
+		hideButton.Size = UDim2.new(0, 190, 0, 32)
+		hideButton.TextSize = 12
+	end
+	-- Werte-Kacheln
+	local tileRow = make("Frame", { Size = UDim2.new(1, 0, 0, 52), BackgroundTransparency = 1 }, frame)
+	list(tileRow, 6, true)
+	local defs = { { "Coins", "MÜNZEN", "🪙" }, { "RedPoints", "RZ", "🔴" }, { "Level", "LEVEL", "⭐" }, { "Rap", "RAP", "💎" },
+		{ "Zombies", "ZOMBIES", "🧟" }, { "Kills", "KILLS", "🎯" } }
+	tiles = {}
+	for i, def in defs do
+		local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0,
+			LayoutOrder = i }, tileRow)
+		corner(tile, 8)
+		stroke(tile, Color3.fromRGB(20, 22, 28), 1.5)
+		local value = label(def[3] .. " 0", 16, tile, { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -12, 0, 22) })
+		label(def[2], 11, tile, { Position = UDim2.new(0, 8, 0, 28), Size = UDim2.new(1, -12, 0, 16), TextColor3 = C.Muted })
+		value:SetAttribute("Icon", def[3])
+		tiles[def[1]] = value
+	end
+	refreshTiles()
+end
+
+-- Kick, Ban mit Grund und Dauer, Daten zurücksetzen, Rang
+local function moderationRows(frame, target)
+	local mine = rights()
+	if target == player or not outranks(target) then
+		return
+	end
+	local r = row(frame)
+	local reasonBox = textBox("Grund", r, { Size = UDim2.new(0.3, -6, 1, 0), Text = "Regelverstoß" })
+	local daysBox = textBox("Tage (0 = für immer)", r, { Size = UDim2.new(0.22, -6, 1, 0) })
+	numeric(daysBox)
+	local rest = make("Frame", { Size = UDim2.new(0.48, 0, 1, 0), BackgroundTransparency = 1 }, r)
+	list(rest, 6, true)
+	local defs = {}
+	if mine.Kick then
+		table.insert(defs, { "KICK", C.Orange, function()
+			send("Kick", target.UserId, reasonBox.Text)
+		end })
+	end
+	if mine.BanDays ~= nil then
+		table.insert(defs, { "BAN", C.Red, function()
+			local days = tonumber(daysBox.Text) or (banAllowed(0) and 0 or 1)
+			if not banAllowed(days) then
+				setStatus("So lange darfst du nicht sperren (höchstens " .. tostring(mine.BanDays) .. " Tage).", C.Red)
+				return
+			end
+			send("Ban", target.UserId, { Days = days, Reason = reasonBox.Text })
+		end })
+	end
+	for i, def in defs do
+		local b = button(def[1], 1, rest, def[2], def[3])
+		b.Size = UDim2.new(full() and 0.3 or 0.5, -6, 1, 0)
+		b.LayoutOrder = i
+	end
+	if full() then
+		local reset = confirmButton("RESET DATA", 1, rest, C.Red:Lerp(C.Pink, 0.3), function()
+			send("ResetData", target.UserId, "CONFIRM")
+		end)
+		reset.Size = UDim2.new(0.4, -6, 1, 0)
+		reset.LayoutOrder = 9
+	end
+	if mine.Assign then
+		label("TEAM-RANG", 13, frame, { TextColor3 = C.Muted })
+		rankButtons(frame, function()
+			return target.UserId
+		end)
+	end
+end
+
+-- Pfeil-Auswahl: < Name > und ein Knopf daneben
+local function picker(frame, getText, step, actionText, actionColor, onAction, extra)
+	local r = row(frame)
+	local left = button("<", 1, r, C.Dark, nil)
+	left.Size = UDim2.new(0, 40, 1, 0)
+	local name = label("", 15, r, { Size = UDim2.new(0.42, -46, 1, 0), TextXAlignment = Enum.TextXAlignment.Center })
+	name.BackgroundTransparency = 0
+	name.BackgroundColor3 = C.Field
+	corner(name, 8)
+	local right = button(">", 1, r, C.Dark, nil)
+	right.Size = UDim2.new(0, 40, 1, 0)
+	if extra then
+		extra(r)
+	end
+	local go = button(actionText, 1, r, actionColor, onAction)
+	go.Size = UDim2.new(0.3, 0, 1, 0)
+	local function update()
+		name.Text = getText()
+	end
+	left.Activated:Connect(function()
+		step(-1)
+		update()
+	end)
+	right.Activated:Connect(function()
+		step(1)
+		update()
+	end)
+	update()
+	order(r)
+	return r
+end
+
+detailBuilders.Players = function(frame, target)
+	detailHead(frame, target)
+	if full() then
+		-- Werte: Menge eintippen, dann +/SET
+		local r1 = row(frame)
+		local amountBox = textBox("Menge (z.B. 1000)", r1, { Size = UDim2.new(0.28, -6, 1, 0) })
+		numeric(amountBox, true)
+		local function value(key, op)
+			return function()
+				local amount = tonumber(amountBox.Text)
+				if not amount then
+					setStatus("Menge eingeben", C.Red)
+					return
+				end
+				send("PlayerValue", target.UserId, { Key = key, Op = op, Amount = amount })
+			end
+		end
+		for i, def in { { "+MÜNZEN", C.Green, value("Coins", "Add") }, { "SET MÜNZEN", C.Dark, value("Coins", "Set") },
+			{ "+RZ", C.Red, value("RedPoints", "Add") }, { "SET RZ", C.Dark, value("RedPoints", "Set") } } do
+			local b = button(def[1], 1, r1, def[2], def[3])
+			b.Size = UDim2.new(0.18, -6, 1, 0)
+			b.LayoutOrder = i + 1
+			b.TextSize = 13
+		end
+		buttonRow(frame, { { "+XP", C.Purple, value("XP", "Add") }, { "SET LEVEL", C.Dark, value("Level", "Set") },
+			{ "SET PRESTIGE", C.Dark, value("Prestige", "Set") }, { "+RAP", C.Orange, value("Rap", "Add") },
+			{ "SET RAP", C.Yellow, value("Rap", "Set") } })
+		-- Item der offenen Welt
+		local countBox
+		picker(frame, function()
+			local item = ExtinctionConfig.Get(itemIds[itemIndex])
+			return item and item.Name or "?"
+		end, function(delta)
+			itemIndex = (itemIndex - 1 + delta) % #itemIds + 1
+		end, "ITEM GEBEN", C.Green, function()
+			send("GiveItem", target.UserId, { Id = itemIds[itemIndex], Count = tonumber(countBox.Text) or 1 })
+		end, function(r)
+			countBox = textBox("Anzahl", r, { Size = UDim2.new(0.12, -6, 1, 0), Text = "1" })
+			numeric(countBox)
+		end)
+		-- Skin
+		picker(frame, function()
+			local item = Cosmetics.Get(skinIds[skinIndex])
+			return item and item.Name or "?"
+		end, function(delta)
+			skinIndex = (skinIndex - 1 + delta) % #skinIds + 1
+		end, "SKIN GEBEN", C.Purple, function()
+			send("GiveSkin", target.UserId, skinIds[skinIndex])
+		end, function(r)
+			button("🔑 SCHLÜSSEL", 1, r, C.Teal, function()
+				send("GiveItem", target.UserId, { Id = ExtinctionConfig.Dungeon.KeyItem, Count = 1 })
+			end).Size = UDim2.new(0.12, -6, 1, 0)
+		end)
+		-- Bewegen
+		local frozen = target:GetAttribute("AdminFrozen") == true
+		local defs = { { "HINGEHEN", C.Blue, function()
+			send("GoTo", target.UserId)
+		end } }
+		if outranks(target) then
+			table.insert(defs, { "HERHOLEN", C.Blue, function()
+				send("Bring", target.UserId)
+			end })
+			table.insert(defs, { "INS CAMP", C.Blue, function()
+				send("SendCamp", target.UserId)
+			end })
+			table.insert(defs, { frozen and "AUFTAUEN" or "EINFRIEREN", C.Dark, function()
+				send("Freeze", target.UserId)
+			end })
+			table.insert(defs, { "RESPAWN", C.Dark, function()
+				send("Respawn", target.UserId)
+			end })
+		end
+		buttonRow(frame, defs)
+		local life = { { "HEILEN", C.Green, function()
+			send("Heal", target.UserId)
+		end } }
+		if outranks(target) then
+			table.insert(life, { "TÖTEN", C.Red, function()
+				send("Kill", target.UserId)
+			end })
+		end
+		-- Arcade-Modi: verschieben und Team wechseln nur, solange Arcade an ist
+		if Modes.ArcadeEnabled and outranks(target) then
+			table.insert(life, { "TEAM", C.Dark, function()
+				send("SwitchTeam", target.UserId)
+			end })
+			table.insert(life, { "FFA", C.Dark, function()
+				send("MovePlayer", target.UserId, "FreeForAll")
+			end })
+		end
+		buttonRow(frame, life)
+	end
+	moderationRows(frame, target)
+end
+
+detailBuilders.Effects = function(frame, target)
+	detailHead(frame, target)
+	section("EFFEKTE", frame)
+	local god = target:GetAttribute("AdminGod") == true
+	buttonRow(frame, {
+		{ god and "GOTTMODUS AUS" or "GOTTMODUS AN", C.Yellow, function()
+			send("God", target.UserId)
+		end },
+		{ "HEILEN", C.Green, function()
+			send("Heal", target.UserId)
+		end },
+	}, 40)
+	buttonRow(frame, {
+		{ "DOPPEL-XP 30 MIN", C.Purple, function()
+			send("XPBoost", target.UserId, 30)
+		end },
+		{ "DOPPEL-XP 2 STD", C.Purple, function()
+			send("XPBoost", target.UserId, 120)
+		end },
+		{ "DOPPEL-XP 24 STD", C.Purple, function()
+			send("XPBoost", target.UserId, 1440)
+		end },
+	}, 40)
+	if outranks(target) then
+		local frozen = target:GetAttribute("AdminFrozen") == true
+		buttonRow(frame, {
+			{ frozen and "AUFTAUEN" or "EINFRIEREN", C.Blue, function()
+				send("Freeze", target.UserId)
+			end },
+			{ "RESPAWN", C.Dark, function()
+				send("Respawn", target.UserId)
+			end },
+			{ "TÖTEN", C.Red, function()
+				send("Kill", target.UserId)
+			end },
+		}, 40)
+	end
+	section("ICH", frame)
+	buttonRow(frame, {
+		{ "NOCLIP (B)", C.Teal, function()
+			send("Noclip")
+		end },
+		{ "MEIN GOTTMODUS", C.Yellow, function()
+			send("God", player.UserId)
+		end },
+	}, 40)
+end
+
+detailBuilders.Messages = function(frame, target)
+	detailHead(frame, target)
+	section("NACHRICHT AN " .. string.upper(target.DisplayName), frame)
+	local r = row(frame, 40)
+	local box = textBox("Nachricht (sieht nur dieser Spieler)", r, { Size = UDim2.new(0.72, -6, 1, 0) })
+	button("SENDEN", 1, r, C.Green, function()
+		if box.Text ~= "" then
+			send("Message", target.UserId, box.Text)
+			box.Text = ""
+		end
+	end).Size = UDim2.new(0.28, 0, 1, 0)
+end
+
+-- Rechte Seite neu bauen (gewählter Spieler, aktuelle Kategorie)
+refreshDetail = function()
+	local frame = detailFrames[currentCategory]
+	if not frame then
+		return
+	end
+	clear(frame)
+	hideButton = nil
+	tiles = {}
+	if watchConnection then
+		watchConnection:Disconnect()
+		watchConnection = nil
+	end
+	local target = selected()
+	if target then
+		-- Knopftexte (EINFRIEREN/AUFTAUEN, Gottmodus, Rang) folgen den Attributen des Spielers
+		watchConnection = target.AttributeChanged:Connect(function(name)
+			if name == "AdminFrozen" or name == "AdminGod" or name == "StaffRank" then
+				task.defer(refreshDetail)
+			end
+		end)
+	end
+	if not target then
+		local hint = card(frame)
+		label("Wähle links einen Spieler aus.", 16, hint, { TextColor3 = C.Muted })
+		if currentCategory == "Messages" then
+			-- Ankündigung geht auch ohne Spieler
+			section("ANKÜNDIGUNG AN ALLE", frame)
+			local r = row(frame, 40)
+			local box = textBox("Text der Ankündigung", r, { Size = UDim2.new(0.72, -6, 1, 0) })
+			button("ANKÜNDIGEN", 1, r, C.Green, function()
+				if box.Text ~= "" then
+					sendScoped("Announce", box.Text)
+					box.Text = ""
+				end
+			end).Size = UDim2.new(0.28, 0, 1, 0)
+		end
+		order(frame)
+		return
+	end
+	detailBuilders[currentCategory](frame, target)
+	if currentCategory == "Messages" then
+		section("ANKÜNDIGUNG AN ALLE", frame)
+		local r = row(frame, 40)
+		local box = textBox("Text der Ankündigung", r, { Size = UDim2.new(0.72, -6, 1, 0) })
+		button("ANKÜNDIGEN", 1, r, C.Green, function()
+			if box.Text ~= "" then
+				sendScoped("Announce", box.Text)
+				box.Text = ""
+			end
+		end).Size = UDim2.new(0.28, 0, 1, 0)
+	end
+	order(frame)
+end
+
+-- ---------- Seiten ohne Spielerliste ----------
+
+-- Event-Karte: Name, Live-Status rechts, Knöpfe darunter. buttons = { { Text, Aktion, Wert, Farbe } }
 local function eventCard(page, key, title, buttons)
 	local c = card(page)
-	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1 }, c)
-	label(title, 15, head, { Size = UDim2.new(0.6, 0, 1, 0) })
-	eventStatus[key] = label("", 12, head, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(0.4, 0, 1, 0), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = MUTED })
-	local r = row(c)
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1 }, c)
+	label(title, 17, head, { Size = UDim2.new(0.6, 0, 1, 0) })
+	eventStatus[key] = label("", 13, head, { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.new(0.4, 0, 1, 0), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = C.Muted })
+	local defs = {}
 	for _, def in buttons do
-		button(def[1], def[5] or 90, r, def[4], function()
-			send(def[2], def[3])
-		end)
+		table.insert(defs, { def[1], def[4], function()
+			sendScoped(def[2], def[3])
+		end })
 	end
+	buttonRow(c, defs)
 	order(c)
 end
 
 local function buildEvents(page)
 	section("ALLES", page)
 	local all = card(page)
-	local r = row(all, 34)
-	button("ALLE EVENTS BEENDEN", 200, r, "Danger", function()
-		send("ExtStop", "All")
-	end).Size = UDim2.new(0, 200, 0, 34)
-	button("ZOMBIES ENTFERNEN", 170, r, nil, function()
-		send("ExtStop", "Zombies")
-	end).Size = UDim2.new(0, 170, 0, 34)
+	buttonRow(all, {
+		{ "ALLE EVENTS BEENDEN", C.Red, function()
+			sendScoped("ExtStop", "All")
+		end },
+		{ "ZOMBIES ENTFERNEN", C.Dark, function()
+			sendScoped("ExtStop", "Zombies")
+		end },
+		{ "DUNGEONS BEENDEN", C.Dark, function()
+			sendScoped("DungeonStopAll")
+		end },
+	}, 38)
+	order(all)
 	section("EVENTS DER OFFENEN WELT", page)
 	eventCard(page, "Airdrop", "Lootdrop", {
-		{ "START", "ExtAirdrop", nil, "Event" }, { "BEI MIR", "ExtAirdrop", "Here", "Event" }, { "STOP", "ExtStop", "Airdrop", "Danger" } })
-	eventCard(page, "Convoy", "Konvoi", {
-		{ "START", "ExtConvoy", nil, "Event" }, { "STOP", "ExtStop", "Convoy", "Danger" } })
-	eventCard(page, "HeliCrash", "Heli-Absturz", {
-		{ "START", "ExtHeliCrash", nil, "Event" }, { "VOR MIR", "ExtHeliCrash", "Here", "Event" },
-		{ "STOP", "ExtStop", "HeliCrash", "Danger" } })
-	eventCard(page, "Horde", "Horden-Kiste", {
-		{ "START", "ExtHordeCrate", nil, "Event" }, { "VOR MIR", "ExtHordeCrate", "Here", "Event" },
-		{ "STOP", "ExtStop", "HordeCrate", "Danger" } })
-	eventCard(page, "BloodMoon", "Blutmond", {
-		{ "START", "BloodMoon", nil, "Blood" }, { "STOP", "ExtStop", "BloodMoon", "Danger" } })
-	eventCard(page, "Storm", "Sturmnacht", {
-		{ "START", "Storm", nil, "Night" }, { "STOP", "ExtStop", "Storm", "Danger" } })
-	eventCard(page, "Bounty", "Kopfgeld", {
-		{ "AUF MICH", "ExtBountyMe", nil, "Blood" }, { "STOP", "ExtStop", "Bounty", "Danger" } })
-	eventCard(page, "Redzone", "Rote Zone", { { "WEITERZIEHEN", "ExtRedzone", nil, "Event", 130 } })
+		{ "START", "ExtAirdrop", nil, C.Orange }, { "BEI MIR", "ExtAirdrop", "Here", C.Orange }, { "STOP", "ExtStop", "Airdrop", C.Red } })
+	eventCard(page, "Convoy", "Konvoi", { { "START", "ExtConvoy", nil, C.Orange }, { "STOP", "ExtStop", "Convoy", C.Red } })
+	eventCard(page, "HeliCrash", "Heli-Absturz", { { "START", "ExtHeliCrash", nil, C.Orange },
+		{ "VOR MIR", "ExtHeliCrash", "Here", C.Orange }, { "STOP", "ExtStop", "HeliCrash", C.Red } })
+	eventCard(page, "Horde", "Horden-Kiste", { { "START", "ExtHordeCrate", nil, C.Orange },
+		{ "VOR MIR", "ExtHordeCrate", "Here", C.Orange }, { "STOP", "ExtStop", "HordeCrate", C.Red } })
+	eventCard(page, "BloodMoon", "Blutmond", { { "START", "BloodMoon", "Start", C.Red:Lerp(Color3.new(0, 0, 0), 0.3) },
+		{ "STOP", "ExtStop", "BloodMoon", C.Red } })
+	eventCard(page, "Storm", "Sturmnacht", { { "START", "Storm", "Start", Color3.fromRGB(70, 92, 170) },
+		{ "STOP", "ExtStop", "Storm", C.Red } })
+	eventCard(page, "Bounty", "Kopfgeld", { { "AUF MICH", "ExtBountyMe", nil, C.Red:Lerp(Color3.new(0, 0, 0), 0.3) },
+		{ "STOP", "ExtStop", "Bounty", C.Red } })
+	eventCard(page, "Redzone", "Rote Zone", { { "WEITERZIEHEN", "ExtRedzone", nil, C.Orange } })
 	section("SPAWNEN", page)
 	local spawn = card(page)
-	local r2 = row(spawn)
-	button("12 ZOMBIES UM MICH", 160, r2, "Event", function()
-		send("ExtHorde", 12)
-	end)
-	button("BOSSE SPAWNEN", 140, r2, "Blood", function()
-		send("ExtBosses")
-	end)
-	button("TAG / NACHT", 110, r2, "Warn", function()
-		send("DayNight")
-	end)
-	section("MIR GEBEN", page)
-	local give = card(page)
-	local r3 = row(give)
-	button("AUFSÄTZE", 100, r3, "Teal", function()
-		send("ExtGive", "Attachments")
-	end)
-	button("GRANATEN", 100, r3, "Teal", function()
-		send("ExtGive", "Throwables")
-	end)
-	button("AUSRÜSTUNG", 110, r3, "Teal", function()
-		send("ExtGive", "Kit")
-	end)
-	button("DUNGEON-SCHLÜSSEL", 150, r3, "Teal", function()
-		send("ExtGive", "DungeonKey")
-	end)
-	-- Rote-Zone-Punkte (RZ): Menge eintippen, dann RZ GEBEN
-	local r4 = row(give)
-	local rzBox = make("TextBox", { Size = UDim2.new(0, 110, 0, 30), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
-		Font = Enum.Font.BuilderSansBold, TextSize = 13, TextColor3 = TEXT, PlaceholderText = "Menge RZ",
-		PlaceholderColor3 = MUTED, Text = "100", ClearTextOnFocus = false }, r4)
-	corner(rzBox, 6)
-	rzBox:GetPropertyChangedSignal("Text"):Connect(function()
-		local digits = string.gsub(rzBox.Text, "%D", "")
-		if digits ~= rzBox.Text then
-			rzBox.Text = digits
-		end
-	end)
-	button("RZ GEBEN", 100, r4, "Blood", function()
-		send("GiveRedPoints", tonumber(rzBox.Text) or 0)
-	end)
-	order(give)
+	buttonRow(spawn, {
+		{ "12 ZOMBIES UM MICH", C.Orange, function()
+			send("ExtHorde", 12)
+		end },
+		{ "30 ZOMBIES UM MICH", C.Orange, function()
+			send("ExtHorde", 30)
+		end },
+		{ "BOSSE SPAWNEN", C.Red, function()
+			sendScoped("ExtBosses")
+		end },
+	})
+	order(spawn)
 end
 
 -- Live-Status der Events (Karten-Attribute der offenen Welt, Blutmond/Sturm aus DayCycle)
@@ -346,88 +970,159 @@ local function refreshEvents()
 		if key ~= "Redzone" then
 			local on = states[key]
 			statusText.Text = on and "● LÄUFT" or "○ aus"
-			statusText.TextColor3 = on and TONES.Good:Lerp(Color3.new(1, 1, 1), 0.2) or MUTED
+			statusText.TextColor3 = on and C.Green or C.Muted
 		end
 	end
 end
 
-local function buildBots(page)
+local clockLabel
+local function buildWorld(page)
+	section("UHRZEIT", page)
+	local time = card(page)
+	clockLabel = label("", 15, time, { TextColor3 = C.Muted, Font = BODY_FONT })
+	local defs = {}
+	for _, hour in { 6, 12, 18, 22, 0 } do
+		table.insert(defs, { string.format("%02d:00", hour), hour >= 6 and hour < 20 and C.Orange or Color3.fromRGB(70, 92, 170),
+			function()
+				sendScoped("SetClock", hour)
+			end })
+	end
+	buttonRow(time, defs, 38)
+	order(time)
+	section("WETTER", page)
+	local weather = card(page)
+	buttonRow(weather, {
+		{ "KEIN NEBEL", C.Blue, function()
+			sendScoped("SetFog", 0)
+		end },
+		{ "LEICHTER NEBEL", C.Dark, function()
+			sendScoped("SetFog", 0.5)
+		end },
+		{ "DICHTER NEBEL", C.Dark, function()
+			sendScoped("SetFog", 1)
+		end },
+		{ "AUTOMATISCH", C.Green, function()
+			sendScoped("SetFog", "auto")
+		end },
+	}, 38)
+	buttonRow(weather, {
+		{ "STURMNACHT AN/AUS", Color3.fromRGB(70, 92, 170), function()
+			sendScoped("Storm")
+		end },
+		{ "BLUTMOND AN/AUS", C.Red:Lerp(Color3.new(0, 0, 0), 0.3), function()
+			sendScoped("BloodMoon")
+		end },
+	}, 38)
+	order(weather)
+	section("ICH", page)
+	local me = card(page)
+	buttonRow(me, {
+		{ "NOCLIP (B)", C.Teal, function()
+			send("Noclip")
+		end },
+		{ "TAG / NACHT", C.Orange, function()
+			send("DayNight")
+		end },
+	})
+	order(me)
+	-- Bots der offenen Welt (spawnen beim Admin draußen, sonst in der roten Zone)
 	section("BOTS", page)
-	local ffa = card(page)
-	label("Free for All", 15, ffa)
-	local r = row(ffa)
-	button("+1 BOT", 80, r, nil, function()
-		send("SpawnBot", "FreeForAll")
-	end)
-	button("+5 BOTS", 80, r, nil, function()
-		for _ = 1, 5 do
-			send("SpawnBot", "FreeForAll")
-		end
-	end)
-	order(ffa)
-	-- { Modus, Team A, Farbe A, Team B, Farbe B, Plätze }
-	for _, entry in {
-		{ "Domination", "Rot", Color3.fromRGB(150, 50, 50), "Blau", Color3.fromRGB(50, 80, 160), 10 },
-		{ "Wingman", "Alpha", Color3.fromRGB(60, 150, 100), "Bravo", Color3.fromRGB(150, 130, 40), 4 },
-		{ "Arena", "Links", Color3.fromRGB(120, 70, 170), "Rechts", Color3.fromRGB(70, 120, 170), 2 },
-	} do
-		local c = card(page)
-		label(entry[1], 15, c)
-		local mr = row(c)
-		button("+1 " .. entry[2], 90, mr, entry[3], function()
-			send("SpawnBot", entry[1], entry[2])
-		end)
-		button("+1 " .. entry[4], 90, mr, entry[5], function()
-			send("SpawnBot", entry[1], entry[4])
-		end)
-		button("AUFFÜLLEN", 100, mr, nil, function()
-			for _ = 1, entry[6] do
-				send("SpawnBot", entry[1])
-			end
-		end)
-		order(c)
-	end
-	-- Offene Welt: Bots spawnen beim Admin (draußen; in der Safe Zone vor ihrem Rand), sonst in der roten Zone
-	local ext = card(page)
-	label("Extinction", 15, ext)
-	local er = row(ext)
-	button("+1 BOT", 80, er, "Event", function()
-		send("SpawnBot", "Extinction")
-	end)
-	button("+5 BOTS", 80, er, "Event", function()
-		for _ = 1, 5 do
+	local bots = card(page)
+	buttonRow(bots, {
+		{ "+1 BOT", C.Orange, function()
 			send("SpawnBot", "Extinction")
+		end },
+		{ "+5 BOTS", C.Orange, function()
+			for _ = 1, 5 do
+				send("SpawnBot", "Extinction")
+			end
+		end },
+		{ "ALLE BOTS ENTFERNEN", C.Red, function()
+			send("RemoveBots")
+		end },
+	})
+	botCountLabel = label("", 13, bots, { TextColor3 = C.Muted, Font = BODY_FONT })
+	order(bots)
+	-- Arcade-Modi steuern und ihre Einstellungen: nur solange Arcade an ist (Modes.ArcadeEnabled)
+	if Modes.ArcadeEnabled then
+		section("MODI", page)
+		for _, modeId in { "Domination", "Wingman", "Arena" } do
+			local c = card(page)
+			label(modeId, 15, c)
+			buttonRow(c, {
+				{ "JETZT STARTEN", C.Green, function()
+					send("ModeStart", modeId)
+				end },
+				{ "RUNDE BEENDEN", C.Dark, function()
+					send("ModeEndRound", modeId)
+				end },
+				{ "RESET", C.Red, function()
+					send("ModeResetMatch", modeId)
+				end },
+			})
+			order(c)
 		end
-	end)
-	button("ENTFERNEN", 100, er, "Danger", function()
-		send("RemoveBots", "Extinction")
-	end)
-	order(ext)
-	local all = card(page)
-	button("ALLE BOTS ENTFERNEN", 180, row(all), "Danger", function()
-		send("RemoveBots")
-	end)
-	botCountLabel = label("", 13, all, { Font = Enum.Font.BuilderSans, TextColor3 = MUTED })
-	order(all)
+	end
 end
 
-local function refreshBots()
-	if not botCountLabel then
+local function refreshWorld()
+	if clockLabel then
+		local now = workspace:GetServerTimeNow()
+		clockLabel.Text = "Jetzt " .. DayCycle.Label(DayCycle.Clock(now)) .. (DayCycle.Fog(now) > 0.05 and "  ·  Nebel" or "")
+	end
+	if botCountLabel then
+		local count = 0
+		local folder = ReplicatedStorage:FindFirstChild("BotInfo")
+		for _, info in folder and folder:GetChildren() or {} do
+			if info:GetAttribute("Mode") == "Extinction" then
+				count += 1
+			end
+		end
+		botCountLabel.Text = "Bots in der offenen Welt: " .. count
+	end
+end
+
+-- Logs: Admin-Log (neueste zuerst)
+local function refreshLogs()
+	if not logSection then
 		return
 	end
-	local counts = {}
-	local folder = ReplicatedStorage:FindFirstChild("BotInfo")
-	for _, info in folder and folder:GetChildren() or {} do
-		local mode = info:GetAttribute("Mode")
-		counts[mode] = (counts[mode] or 0) + 1
+	clear(logSection)
+	if #logs == 0 then
+		label("Noch keine Einträge", 14, card(logSection), { TextColor3 = C.Muted })
+		return
 	end
-	botCountLabel.Text = "FFA " .. (counts.FreeForAll or 0) .. "  ·  Herrschaft " .. (counts.Drop or 0) .. "  ·  Wingman "
-		.. (counts.Wingman or 0) .. "  ·  Extinction " .. (counts.Extinction or 0)
+	for i, entry in logs do
+		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = i % 2 == 0 and C.Card or C.Column,
+			BorderSizePixel = 0, LayoutOrder = i }, logSection)
+		corner(box, 8)
+		label(os.date("%H:%M", tonumber(entry.At) or 0) .. "  " .. tostring(entry.Admin) .. "  ·  " .. tostring(entry.Action)
+			.. (entry.Target ~= "" and ("  →  " .. tostring(entry.Target)) or ""), 14, box,
+			{ Position = UDim2.new(0, 10, 0, 4), Size = UDim2.new(1, -20, 0, 18) })
+		label(tostring(entry.Text), 12, box, { Position = UDim2.new(0, 10, 0, 23), Size = UDim2.new(1, -20, 0, 16),
+			TextColor3 = C.Muted, Font = BODY_FONT })
+	end
+end
+
+local function buildLogs(page)
+	local head = row(page, 36)
+	label("ADMIN-LOG (DIESER SERVER)", 17, head, { Size = UDim2.new(0.7, 0, 1, 0), TextColor3 = C.Gold })
+	button("AKTUALISIEREN", 1, head, C.Blue, function()
+		send("Logs")
+	end).Size = UDim2.new(0.3, 0, 1, 0)
+	logSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
+		page)
+	list(logSection, 4)
+	refreshLogs()
 end
 
 local function buildSettings(page)
 	local lastGroup, c = nil, nil
 	for _, def in GameSettings.List do
+		-- ohne Arcade nur die allgemeinen Einstellungen (Arcade-Modi laufen nicht)
+		if not Modes.ArcadeEnabled and def.Group ~= "Allgemein" then
+			continue
+		end
 		if def.Group ~= lastGroup then
 			if c then
 				order(c)
@@ -437,15 +1132,18 @@ local function buildSettings(page)
 			c = card(page)
 		end
 		local r = row(c)
-		label(def.Label, 14, r, { Size = UDim2.new(0, 260, 1, 0), Font = Enum.Font.BuilderSans })
-		button("−", 34, r, nil, function()
+		label(def.Label, 15, r, { Size = UDim2.new(0.55, 0, 1, 0), Font = BODY_FONT })
+		local minus = button("−", 1, r, C.Dark, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) - def.Step)
 		end)
-		valueLabels[def.Key] = label("", 15, r, { Size = UDim2.new(0, 60, 1, 0), TextXAlignment = Enum.TextXAlignment.Center,
-			TextColor3 = ACCENT })
-		button("+", 34, r, nil, function()
+		minus.Size = UDim2.new(0, 40, 1, 0)
+		valueLabels[def.Key] = label("", 16, r, { Size = UDim2.new(0, 70, 1, 0), TextXAlignment = Enum.TextXAlignment.Center,
+			TextColor3 = C.Gold })
+		local plus = button("+", 1, r, C.Dark, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) + def.Step)
 		end)
+		plus.Size = UDim2.new(0, 40, 1, 0)
+		order(r)
 	end
 	if c then
 		order(c)
@@ -458,233 +1156,206 @@ local function refreshSettings()
 	end
 end
 
--- Spielerliste neu bauen (nur wenn sich etwas geändert hat)
-local function refreshPlayers()
-	local parts = {}
-	for _, p in Players:GetPlayers() do
-		table.insert(parts, p.UserId .. ":" .. tostring(p:GetAttribute("Mode")) .. ":" .. tostring(p.Team)
-			.. ":" .. tostring(p:GetAttribute("Agent")) .. ":" .. tostring(p:GetAttribute("StaffRank")))
+local function buildEconomy(page)
+	section("ALLE SPIELER", page)
+	local all = card(page)
+	local defs = {}
+	for _, amount in { 1000, 10000, 100000 } do
+		table.insert(defs, { "+" .. short(amount) .. " MÜNZEN AN ALLE", C.Gold, function()
+			sendScoped("GiveAllCoins", amount)
+		end })
 	end
-	local signature = table.concat(parts, "|")
-	if signature == playerSignature then
-		return
-	end
-	playerSignature = signature
-
-	for _, child in playerSection:GetChildren() do
-		if child:IsA("Frame") then
-			child:Destroy()
-		end
-	end
-	for i, p in Players:GetPlayers() do
-		local box = card(playerSection)
-		box.LayoutOrder = i
-		local agent = AgentConfig.Get(p:GetAttribute("Agent"))
-		local staff = StaffConfig.Of(p)
-		label((staff and (StaffConfig.Prefix(staff, 13) .. "  ") or "") .. p.Name, 16, box,
-			{ Font = Enum.Font.BuilderSansExtraBold, RichText = true })
-		label(tostring(p:GetAttribute("Mode")) .. (p.Team and ("  ·  " .. p.Team.Name) or "") .. "  ·  " .. (agent and agent.Name or "?"),
-			12, box, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
-		-- Spieler verschieben, Werte ändern: nur volle Admins
-		if full() then
-			local moves = row(box)
-			local short = { Extinction = "Camp", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
-				Arena = "1v1", Training = "Train" }
-			for _, modeId in { "Extinction", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
-				-- Arcade-Modi nur, solange Arcade an ist
-				if Modes.IsArcade(modeId) and not Modes.ArcadeEnabled then
-					continue
-				end
-				button(short[modeId], 52, moves, nil, function()
-					send("MovePlayer", p.UserId, modeId)
-				end)
-			end
-			button("Team", 56, moves, "Accent", function()
-				send("SwitchTeam", p.UserId)
-			end).TextColor3 = DARK_TEXT
-			local actions = row(box)
-			button("Heilen", 60, actions, "Good", function()
-				send("Heal", p.UserId)
-			end)
-			button("Töten", 56, actions, "Danger", function()
-				send("Kill", p.UserId)
-			end)
-			button("+500 XP", 70, actions, nil, function()
-				send("GiveXP", p.UserId, 500)
-			end)
-			button("+5000 XP", 76, actions, nil, function()
-				send("GiveXP", p.UserId, 5000)
-			end)
-			button("+1000 Münzen", 100, actions, "Warn", function()
-				send("GiveCoins", p.UserId, 1000)
-			end)
-			button("+5 Stufen", 80, actions, "Teal", function()
-				send("GivePassXP", p.UserId, 5000)
-			end)
-			local prestige = row(box)
-			button("Max Prestige", 104, prestige, "Warn", function()
-				send("SetPrestige", p.UserId, "max")
-			end)
-			button("Prestige +1", 94, prestige, "Purple", function()
-				send("SetPrestige", p.UserId, "next")
-			end)
-			button("Level 100", 84, prestige, nil, function()
-				send("SetPrestige", p.UserId, "level100")
-			end)
-			button("Prestige 0", 88, prestige, "Danger", function()
-				send("SetPrestige", p.UserId, 0)
-			end)
-			local elo = row(box)
-			button("Max ELO", 76, elo, "Warn", function()
-				send("SetElo", p.UserId, "max")
-			end)
-			for _, step in { 100, 1, -1, -100 } do
-				button((step > 0 and "+" or "−") .. math.abs(step), 52, elo, nil, function()
-					send("SetElo", p.UserId, step)
-				end)
-			end
-			button("ELO zurück", 90, elo, "Danger", function()
-				send("SetElo", p.UserId, "reset")
-			end)
-			local season = row(box)
-			button("Saisonende testen", 140, season, "Purple", function()
-				send("SetElo", p.UserId, "season")
-			end)
-			button("+10.000 RAP", 104, season, "Teal", function()
-				send("GiveRap", p.UserId, 10000)
-			end)
-			button("Handelbarer Skin", 130, season, "Teal", function()
-				send("GiveTradeSkin", p.UserId)
-			end)
-		end
-		-- Rauswerfen und Sperren (BanService); der Grund steht im Feld oben
-		-- (nur gegen schwächere Ränge, nicht gegen sich selbst; der Server prüft es noch einmal)
-		local mine = rights()
-		local outranked = StaffConfig.Of(player) == nil and full() or StaffConfig.Power(p) < (mine.Power or 0)
-		if p ~= player and outranked then
-			local moderation = row(box)
-			if mine.Kick then
-				button("KICK", 70, moderation, "Warn", function()
-					send("Kick", p.UserId, reasonBox and reasonBox.Text or "")
-				end)
-			end
-			for _, def in { { "BAN 1 TAG", 1, 90 }, { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
-				if banAllowed(def[2]) then
-					button(def[1], def[3], moderation, "Danger", function()
-						send("Ban", p.UserId, { Days = def[2], Reason = reasonBox and reasonBox.Text or "" })
-					end)
-				end
-			end
-			if mine.Assign then
-				rankButtons(box, function()
-					return p.UserId
-				end)
-			end
-		end
-		order(box)
-	end
+	buttonRow(all, defs, 38)
+	order(all)
+	section("MIR GEBEN", page)
+	local give = card(page)
+	buttonRow(give, {
+		{ "AUFSÄTZE", C.Teal, function()
+			send("ExtGive", "Attachments")
+		end },
+		{ "GRANATEN", C.Teal, function()
+			send("ExtGive", "Throwables")
+		end },
+		{ "AUSRÜSTUNG", C.Teal, function()
+			send("ExtGive", "Kit")
+		end },
+		{ "DUNGEON-SCHLÜSSEL", C.Teal, function()
+			send("ExtGive", "DungeonKey")
+		end },
+	})
+	local r = row(give)
+	local rzBox = textBox("Menge RZ", r, { Size = UDim2.new(0.3, -6, 1, 0), Text = "100" })
+	numeric(rzBox)
+	button("RZ GEBEN", 1, r, C.Red, function()
+		send("GiveRedPoints", tonumber(rzBox.Text) or 0)
+	end).Size = UDim2.new(0.3, 0, 1, 0)
+	order(r)
+	order(give)
+	buildSettings(page)
 end
 
--- Eingabefeld (Grund, UserId)
-local function textBox(placeholder, width, parent, props)
-	local box = make("TextBox", { Size = UDim2.new(0, width, 0, 30), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
-		Font = Enum.Font.BuilderSans, TextSize = 13, TextColor3 = TEXT, Text = "", PlaceholderText = placeholder,
-		PlaceholderColor3 = MUTED, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left }, parent)
-	corner(box, 6)
-	make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, box)
-	for key, value in props or {} do
-		box[key] = value
-	end
-	return box
-end
-
--- Sperrliste neu zeichnen (aus bans)
+-- Sperrliste (Suche)
 local function refreshBans()
 	if not banSection then
 		return
 	end
-	for _, child in banSection:GetChildren() do
-		if child:IsA("Frame") then
-			child:Destroy()
-		end
-	end
+	clear(banSection)
 	if #bans == 0 then
-		local empty = card(banSection)
-		label("Keine Sperren", 13, empty, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+		label("Keine Sperren", 14, card(banSection), { TextColor3 = C.Muted })
 		return
 	end
 	for i, entry in bans do
 		local box = card(banSection)
 		box.LayoutOrder = i
-		label(tostring(entry.Name) .. "  ·  " .. tostring(entry.UserId), 15, box, { Font = Enum.Font.BuilderSansExtraBold })
+		label(tostring(entry.Name) .. "  ·  " .. tostring(entry.UserId), 16, box)
 		label(tostring(entry.Reason) .. "  ·  " .. tostring(entry.Left) .. "  ·  von " .. tostring(entry.By), 12, box,
-			{ TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
+			{ TextColor3 = C.Muted, Font = BODY_FONT })
 		if rights().Unban then
-			local r = row(box)
-			button("ENTSPERREN", 110, r, "Good", function()
+			local r = row(box, 30)
+			button("ENTSPERREN", 1, r, C.Green, function()
 				send("Unban", entry.UserId)
-			end)
+			end, 30).Size = UDim2.new(0, 130, 1, 0)
 		end
 		order(box)
 	end
 end
 
--- Kopf des Reiters SPIELER: Grund, Sperre per UserId, Sperrliste
-local function buildModeration(page)
-	section("Kick und Sperre", page)
-	local head = card(page)
-	reasonBox = textBox("Grund (sieht der Spieler)", 300, head)
-	reasonBox.Text = "Regelverstoß"
-	label("Kick und Bans stehen bei jedem Spieler unten; Sperren gelten auf allen Servern.", 12, head,
-		{ TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
-	local r = row(head)
-	banIdBox = textBox("UserId", 120, r)
-	for _, def in { { "BAN 7 TAGE", 7, 100 }, { "BAN DAUERHAFT", 0, 130 } } do
-		if banAllowed(def[2]) then
-			button(def[1], def[3], r, "Danger", function()
-				local id = tonumber(banIdBox.Text)
-				if id then
-					send("Ban", id, { Days = def[2], Reason = reasonBox.Text })
-				else
-					statusLabel.Text = "UserId eingeben"
-				end
-			end)
-		end
+-- Ergebnis der Suche (AdminData "Lookup")
+local function refreshLookup()
+	if not lookupSection then
+		return
 	end
-	-- Rang per UserId vergeben (auch für Spieler, die gerade nicht online sind)
+	clear(lookupSection)
+	if not lookup then
+		return
+	end
+	local data = lookup
+	local box = card(lookupSection)
+	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 60), BackgroundTransparency = 1 }, box)
+	avatar(data.UserId, 56, head)
+	local rank = StaffConfig.Get(data.Rank)
+	label(string.upper(tostring(data.Name)) .. (rank and ("  " .. StaffConfig.Prefix(rank, 13)) or ""), 20, head,
+		{ Position = UDim2.new(0, 68, 0, 4), Size = UDim2.new(1, -70, 0, 26), RichText = true })
+	label(tostring(data.UserId) .. "  ·  " .. (data.Online and "auf diesem Server" or "nicht auf diesem Server")
+		.. (data.Hidden and "  ·  vor Bestenliste versteckt" or ""), 13, head,
+		{ Position = UDim2.new(0, 68, 0, 32), Size = UDim2.new(1, -70, 0, 18), TextColor3 = C.Muted, Font = BODY_FONT })
+	if data.Found then
+		local tileRow = make("Frame", { Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1 }, box)
+		list(tileRow, 6, true)
+		local defs = { { "🪙 " .. short(data.Coins), "MÜNZEN" }, { "🔴 " .. short(data.RedPoints), "RZ" },
+			{ "⭐ " .. tostring(data.Level) .. (data.Prestige > 0 and (" P" .. data.Prestige) or ""), "LEVEL" },
+			{ "💎 " .. short(data.Rap), "RAP" }, { "🧟 " .. short(data.Zombies), "ZOMBIES" }, { "🎯 " .. short(data.Kills), "KILLS" } }
+		for i, def in defs do
+			local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0,
+				LayoutOrder = i }, tileRow)
+			corner(tile, 8)
+			label(def[1], 15, tile, { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -12, 0, 20) })
+			label(def[2], 11, tile, { Position = UDim2.new(0, 8, 0, 26), Size = UDim2.new(1, -12, 0, 14), TextColor3 = C.Muted })
+		end
+	else
+		label("Kein Spielstand gefunden" .. (data.Error and (" (" .. tostring(data.Error) .. ")") or ""), 13, box,
+			{ TextColor3 = C.Muted, Font = BODY_FONT })
+	end
+	if data.Ban then
+		local untilTime = tonumber(data.Ban.Until) or 0
+		label("GESPERRT " .. (untilTime == 0 and "dauerhaft" or ("bis " .. os.date("%d.%m.%Y %H:%M", untilTime))) .. "  ·  "
+			.. tostring(data.Ban.Reason) .. "  ·  von " .. tostring(data.Ban.By), 14, box, { TextColor3 = C.Red })
+	end
+	-- Moderation per UserId (der Server prüft den Rang, auch offline)
+	local r = row(box)
+	local reasonBox = textBox("Grund", r, { Size = UDim2.new(0.3, -6, 1, 0), Text = "Regelverstoß" })
+	local daysBox = textBox("Tage (0 = für immer)", r, { Size = UDim2.new(0.22, -6, 1, 0) })
+	numeric(daysBox)
+	if rights().BanDays ~= nil then
+		button("BAN", 1, r, C.Red, function()
+			local days = tonumber(daysBox.Text) or (banAllowed(0) and 0 or 1)
+			if not banAllowed(days) then
+				setStatus("So lange darfst du nicht sperren.", C.Red)
+				return
+			end
+			send("Ban", data.UserId, { Days = days, Reason = reasonBox.Text })
+			task.delay(1, function()
+				send("Lookup", data.UserId)
+			end)
+		end).Size = UDim2.new(0.22, -6, 1, 0)
+	end
+	if rights().Unban and data.Ban then
+		button("UNBAN", 1, r, C.Green, function()
+			send("Unban", data.UserId)
+			task.delay(1, function()
+				send("Lookup", data.UserId)
+			end)
+		end).Size = UDim2.new(0.22, -6, 1, 0)
+	end
+	order(r)
 	if rights().Assign then
-		label("Team-Rang für diese UserId:", 12, head, { TextColor3 = MUTED, Font = Enum.Font.BuilderSans })
-		rankButtons(head, function()
-			return tonumber(banIdBox.Text)
+		label("TEAM-RANG", 13, box, { TextColor3 = C.Muted })
+		rankButtons(box, function()
+			return data.UserId
 		end)
 	end
-	section("Sperrliste", page)
-	local tools = row(page)
-	button("AKTUALISIEREN", 130, tools, nil, function()
-		send("BanList")
+	order(box)
+end
+
+local function buildLookup(page)
+	section("SPIELER SUCHEN (AUCH OFFLINE)", page)
+	local r = row(page, 40)
+	local box = textBox("Name oder UserId", r, { Size = UDim2.new(0.7, -6, 1, 0) })
+	local function search()
+		if box.Text ~= "" then
+			send("Lookup", box.Text)
+		end
+	end
+	box.FocusLost:Connect(function(enter)
+		if enter then
+			search()
+		end
 	end)
+	button("SUCHEN", 1, r, C.Red, search).Size = UDim2.new(0.3, 0, 1, 0)
+	lookupSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
+		page)
+	list(lookupSection, 8)
+	local head = row(page, 36)
+	label("SPERRLISTE", 16, head, { Size = UDim2.new(0.7, 0, 1, 0), TextColor3 = C.Gold })
+	button("AKTUALISIEREN", 1, head, C.Blue, function()
+		send("BanList")
+	end).Size = UDim2.new(0.3, 0, 1, 0)
 	banSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
 		page)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, banSection)
+	list(banSection, 8)
 	refreshBans()
-	section("Spieler auf diesem Server", page)
 end
 
 -- ---------- Rahmen ----------
 
-local function showTab(id)
-	currentTab = id
-	for tabId, page in pages do
-		page.Visible = tabId == id
+local function showCategory(id)
+	currentCategory = id
+	local def
+	for _, entry in CATEGORIES do
+		if entry.Id == id then
+			def = entry
+		end
 	end
-	for tabId, tab in tabButtons do
-		local on = tabId == id
-		tab.BackgroundColor3 = on and ACCENT or BUTTON
-		tab.TextColor3 = on and DARK_TEXT or MUTED
+	local withList = def and def.List
+	listColumn.Visible = withList == true
+	contentArea.Position = withList and UDim2.new(0, 260, 0, 0) or UDim2.new(0, 0, 0, 0)
+	contentArea.Size = withList and UDim2.new(1, -260, 1, 0) or UDim2.new(1, 0, 1, 0)
+	for pageId, page in pages do
+		page.Visible = pageId == id
 	end
-	if id == "Players" then
-		playerSignature = ""
-		refreshPlayers()
+	for catId, b in categoryButtons do
+		local on = catId == id
+		local s = b:FindFirstChild("Selected")
+		if s then
+			s.Enabled = on
+		end
+		b.Size = on and UDim2.new(1, 0, 0, 50) or UDim2.new(1, -10, 0, 46)
+	end
+	if withList then
+		refreshList(true)
+		refreshDetail()
+	elseif id == "Logs" then
+		send("Logs")
 	end
 end
 
@@ -694,8 +1365,8 @@ local function setOpen(open)
 	if open then
 		refreshSettings()
 		refreshEvents()
-		refreshBots()
-		showTab(currentTab)
+		refreshWorld()
+		showCategory(currentCategory)
 		RunService:BindToRenderStep("AdminMouse", Enum.RenderPriority.Camera.Value + 2, function()
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 			UserInputService.MouseIconEnabled = true
@@ -706,83 +1377,133 @@ local function setOpen(open)
 	UITheme.HoldCamera("Admin", open) -- Blickrichtung nach dem Schließen wie vorher
 end
 
-local function newPage(id)
-	local page = make("ScrollingFrame", { Name = "Page_" .. id, Position = UDim2.new(0, 16, 0, 112), Size = UDim2.new(1, -24, 1, -124),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = ACCENT,
-		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false }, panel)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, page)
-	make("UIPadding", { PaddingBottom = UDim.new(0, 12) }, page)
+local function newPage(id, withList)
+	if withList then
+		local frame = scroller(contentArea, { Name = "Detail_" .. id, Visible = false })
+		detailFrames[id] = frame
+		pages[id] = frame
+		return frame
+	end
+	local page = scroller(contentArea, { Name = "Page_" .. id, Visible = false })
 	pages[id] = page
 	return page
 end
 
+-- Panel an den Bildschirm anpassen (kleine Bildschirme, Handy)
+local function fitScale(scale)
+	local camera = workspace.CurrentCamera
+	local size = camera and camera.ViewportSize or Vector2.new(1280, 720)
+	scale.Scale = math.min(1.1, size.X * 0.96 / PANEL_W, size.Y * 0.9 / PANEL_H)
+end
+
 local function build()
-	gui = make("ScreenGui", { Name = "AdminPanel", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20 },
-		player:WaitForChild("PlayerGui"))
+	gui = make("ScreenGui", { Name = "AdminPanel", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
 
-	local staff = StaffConfig.Of(player)
-	toggleButton = button(full() and "ADMIN (P)" or "MOD (P)", 110, gui, "Accent", function()
+	toggleButton = button(full() and "ADMIN (P)" or "MOD (P)", 110, gui, C.Header, function()
 		setOpen(not isOpen)
-	end)
+	end, 30)
 	toggleButton.Position = UDim2.new(0, 150, 0, 6)
-	toggleButton.TextColor3 = DARK_TEXT
+	toggleButton.TextSize = 14
 
-	panel = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -20, 0.5, 0),
-		Size = UDim2.new(0, PANEL_W, 0.88, 0), BackgroundColor3 = PANEL, BackgroundTransparency = 0.03,
-		BorderSizePixel = 0, Visible = false, Active = true, ClipsDescendants = true }, gui)
-	corner(panel, 12)
-	make("UIStroke", { Color = Color3.fromRGB(40, 70, 95), Thickness = 1.2 }, panel)
-
-	-- Kopfzeile: Akzentstreifen, Titel, Rückmeldung, Schließen
-	local header = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = HEADER, BorderSizePixel = 0 }, panel)
-	make("Frame", { Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = ACCENT, BorderSizePixel = 0 }, header)
-	label("ADMIN" .. (staff and ("  " .. StaffConfig.Prefix(staff, 15)) or ""), 22, header, { Position = UDim2.new(0, 16, 0, 10),
-		Size = UDim2.new(0, 300, 0, 26), Font = Enum.Font.BuilderSansExtraBold, TextColor3 = ACCENT, RichText = true })
-	statusLabel = label("Bereit", 13, header, { Position = UDim2.new(0, 16, 0, 36), Size = UDim2.new(1, -80, 0, 18),
-		Font = Enum.Font.BuilderSans, TextColor3 = MUTED, TextTruncate = Enum.TextTruncate.AtEnd })
-	local close = button("✕", 36, header, nil, function()
-		setOpen(false)
-	end)
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -14, 0, 14)
-	close.Size = UDim2.new(0, 36, 0, 36)
-
-	-- Reiter
-	local tabs = make("Frame", { Position = UDim2.new(0, 16, 0, 74), Size = UDim2.new(1, -32, 0, 30), BackgroundTransparency = 1 },
-		panel)
-	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
-		SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
-	for index, def in { { "Game", "SPIEL", 80 }, { "Events", "EVENTS", 90 }, { "Bots", "BOTS", 74 },
-		{ "Settings", "EINSTELLUNGEN", 130 }, { "Players", "SPIELER", 96 } } do
-		if not full() and def[1] ~= "Players" then
-			continue -- Moderatoren: nur SPIELER
-		end
-		local tab = make("TextButton", { Size = UDim2.new(0, def[3], 1, 0), BackgroundColor3 = BUTTON, BorderSizePixel = 0,
-			Font = Enum.Font.BuilderSansExtraBold, TextSize = 13, TextColor3 = MUTED, Text = def[2], AutoButtonColor = false,
-			LayoutOrder = index }, tabs)
-		corner(tab, 15)
-		tab.Activated:Connect(function()
-			showTab(def[1])
+	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, PANEL_W, 0, PANEL_H), BackgroundColor3 = C.Body, BorderSizePixel = 0, Visible = false,
+		Active = true }, gui)
+	corner(panel, 16)
+	stroke(panel, Color3.fromRGB(16, 16, 20), 4)
+	local scale = make("UIScale", {}, panel)
+	fitScale(scale)
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+			fitScale(scale)
 		end)
-		tabButtons[def[1]] = tab
 	end
 
-	buildGame(newPage("Game"))
-	buildEvents(newPage("Events"))
-	buildBots(newPage("Bots"))
-	buildSettings(newPage("Settings"))
-	local playersPage = newPage("Players")
-	buildModeration(playersPage)
-	playerSection = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1 }, playersPage)
-	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, playerSection)
+	-- Kopfzeile: Krone, Titel, Rang-Abzeichen, Server-Umschalter, Schließen
+	local header = make("Frame", { Size = UDim2.new(1, 0, 0, HEADER_H), BackgroundColor3 = C.Header, BorderSizePixel = 0 }, panel)
+	corner(header, 16)
+	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(C.Header, C.HeaderDark) }, header)
+	-- untere Ecken eckig (Übergang zum Körper)
+	make("Frame", { Position = UDim2.new(0, 0, 1, -16), Size = UDim2.new(1, 0, 0, 16), BackgroundColor3 = C.HeaderDark,
+		BorderSizePixel = 0 }, header)
+	label("👑", 38, header, { Position = UDim2.new(0, 14, 0, 8), Size = UDim2.new(0, 50, 0, 46),
+		TextXAlignment = Enum.TextXAlignment.Center, TextTruncate = Enum.TextTruncate.None })
+	label("ADMIN PANEL", 32, header, { Position = UDim2.new(0, 70, 0, 12), Size = UDim2.new(0, 260, 0, 40),
+		TextStrokeTransparency = 0.4 })
+	local staff = StaffConfig.Of(player)
+	local badge = make("TextLabel", { Position = UDim2.new(0, 330, 0, 17), Size = UDim2.new(0, 130, 0, 30),
+		BackgroundColor3 = C.Gold, BorderSizePixel = 0, Font = FONT, TextSize = 15, TextColor3 = Color3.fromRGB(70, 40, 0),
+		Text = staff and staff.Name or (full() and "ADMIN" or "MOD") }, header)
+	corner(badge, 8)
+	stroke(badge, Color3.fromRGB(150, 100, 0), 2)
+	if full() then
+		scopeButton = button("DIESER SERVER", 1, header, C.Blue, function()
+			allServers = not allServers
+			scopeButton.Text = allServers and "ALLE SERVER" or "DIESER SERVER"
+			recolor(scopeButton, allServers and C.Purple or C.Blue)
+			setStatus(allServers and "Server-Aktionen (Events, Ankündigung, Welt, Münzen an alle) laufen jetzt auf ALLEN Servern."
+				or "Aktionen nur auf diesem Server.", allServers and C.Gold or C.Muted)
+		end, 40)
+		scopeButton.AnchorPoint = Vector2.new(1, 0)
+		scopeButton.Position = UDim2.new(1, -72, 0, 12)
+		scopeButton.Size = UDim2.new(0, 220, 0, 40)
+		scopeButton.TextSize = 17
+	end
+	local close = button("✕", 1, header, C.HeaderDark, function()
+		setOpen(false)
+	end, 44)
+	close.AnchorPoint = Vector2.new(1, 0)
+	close.Position = UDim2.new(1, -14, 0, 10)
+	close.Size = UDim2.new(0, 44, 0, 44)
+	close.TextSize = 24
+
+	-- Körper: links Kategorien, rechts Inhalt; unten die Rückmeldung
+	local body = make("Frame", { Position = UDim2.new(0, 14, 0, HEADER_H + 12), Size = UDim2.new(1, -28, 1, -HEADER_H - 50),
+		BackgroundTransparency = 1 }, panel)
+	local categories = make("Frame", { Size = UDim2.new(0, 210, 1, 0), BackgroundTransparency = 1 }, body)
+	list(categories, 8)
+	local main = make("Frame", { Position = UDim2.new(0, 222, 0, 0), Size = UDim2.new(1, -222, 1, 0), BackgroundTransparency = 1 },
+		body)
+	buildListColumn(main)
+	contentArea = make("Frame", { BackgroundColor3 = C.Column, BorderSizePixel = 0 }, main)
+	corner(contentArea, 12)
+	padding(contentArea, 10)
+
+	statusLabel = label("Bereit", 13, panel, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -8),
+		Size = UDim2.new(1, -40, 0, 20), TextColor3 = C.Muted, Font = BODY_FONT })
+
+	for index, def in CATEGORIES do
+		if def.Admin and not full() then
+			continue -- Moderatoren: nur SPIELER und SUCHE
+		end
+		local b = button("", 1, categories, def.Color, function()
+			showCategory(def.Id)
+		end, 46)
+		b.Size = UDim2.new(1, -10, 0, 46)
+		b.LayoutOrder = index
+		make("UIStroke", { Name = "Selected", Color = WHITE, Thickness = 3, Enabled = false,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+		label(def.Icon, 26, b, { Position = UDim2.new(0, 8, 0, 6), Size = UDim2.new(0, 36, 0, 34),
+			TextXAlignment = Enum.TextXAlignment.Center, TextTruncate = Enum.TextTruncate.None })
+		label(def.Text, 18, b, { Position = UDim2.new(0, 48, 0, 8), Size = UDim2.new(1, -56, 0, 30),
+			TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5 })
+		categoryButtons[def.Id] = b
+	end
+
+	newPage("Players", true)
+	if full() then
+		newPage("Effects", true)
+		buildEvents(newPage("Events"))
+		newPage("Messages", true)
+		buildWorld(newPage("World"))
+		buildLogs(newPage("Logs"))
+		buildEconomy(newPage("Economy"))
+	end
+	buildLookup(newPage("Lookup"))
 	for _, page in pages do
 		order(page)
 	end
-	if not full() then
-		currentTab = "Players"
-	end
-	showTab(currentTab)
+	showCategory(currentCategory)
 end
 
 function AdminPanel.Init()
@@ -798,13 +1519,21 @@ function AdminPanel.Init()
 		end
 	end)
 	Remotes.AdminStatus.OnClientEvent:Connect(function(message)
-		statusLabel.Text = message
-		statusLabel.TextColor3 = TEXT
+		setStatus(tostring(message), C.Text)
 	end)
 	Remotes.AdminData.OnClientEvent:Connect(function(kind, data)
-		if kind == "Bans" and type(data) == "table" then
+		if type(data) ~= "table" then
+			return
+		end
+		if kind == "Bans" then
 			bans = data
 			refreshBans()
+		elseif kind == "Logs" then
+			logs = data
+			refreshLogs()
+		elseif kind == "Lookup" then
+			lookup = data
+			refreshLookup()
 		end
 	end)
 	send("BanList")
@@ -817,9 +1546,10 @@ function AdminPanel.Init()
 		while true do
 			if isOpen then
 				refreshEvents()
-				refreshBots()
-				if currentTab == "Players" then
-					refreshPlayers()
+				refreshWorld()
+				if detailFrames[currentCategory] then
+					refreshList(false)
+					refreshTiles()
 				end
 			end
 			task.wait(1)

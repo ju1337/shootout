@@ -1,8 +1,14 @@
 -- AdminService (ModuleScript, nur Server)
 -- Befehle aus dem Admin-Panel. Jeder Befehl wird hier geprüft: Admins (Attribut "IsAdmin") dürfen alles,
--- Moderatoren (Team-Rang mit Kick/BanDays/Unban, siehe StaffConfig) nur Kick, Sperren und die Sperrliste, und das nur
--- gegen schwächere Ränge. Ränge und Admin-Status setzt StaffService.
+-- Moderatoren (Team-Rang mit Kick/BanDays/Unban, siehe StaffConfig) nur Kick, Sperren, die Sperrliste und die Suche,
+-- und das nur gegen schwächere Ränge. Ränge und Admin-Status setzt StaffService.
+-- Auch Admins können schwerwiegende Aktionen (Werte ändern, einfrieren, herholen, Daten zurücksetzen ...) nur gegen
+-- schwächere Ränge oder sich selbst ausführen (TARGETED).
+-- Umschalter DIESER SERVER / ALLE SERVER: Aktion "AllServers" (Aktion, { A, B }) führt Server-Aktionen aus GLOBAL hier
+-- aus und schickt sie über MessagingService (Thema AdminGlobal) an alle anderen Server.
+-- Jede Aktion landet im Admin-Log (die letzten LOG_SIZE, Reiter LOGS) und in den Discord-Logs (Moderation).
 
+local MessagingService = game:GetService("MessagingService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
@@ -16,9 +22,12 @@ local RankConfig = require(Shared.RankConfig)
 local RapConfig = require(Shared.RapConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local DayCycle = require(Shared.DayCycle)
+local Locale = require(Shared.Locale)
+local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local LeaderboardService = require(ServerStorage:WaitForChild("ServerShared").LeaderboardService)
 local BotService = require(script.Parent.BotService)
+local SpawnUtil = require(script.Parent.SpawnUtil)
 
 local StaffConfig = require(Shared.StaffConfig)
 local StaffService = require(script.Parent.StaffService)
@@ -26,7 +35,20 @@ local StaffService = require(script.Parent.StaffService)
 local AdminService = {}
 
 -- Aktionen, die Moderatoren (ohne vollen Admin) benutzen dürfen
-local MOD_ACTIONS = { Kick = true, Ban = true, Unban = true, BanList = true }
+local MOD_ACTIONS = { Kick = true, Ban = true, Unban = true, BanList = true, Lookup = true }
+
+-- Aktionen gegen einen Spieler (UserId als erster Wert), die nur gegen schwächere Ränge (oder sich selbst) gehen
+local TARGETED = { PlayerValue = true, Bring = true, SendCamp = true, Freeze = true, Respawn = true, Kill = true,
+	ResetData = true, HideLeaderboard = true, MovePlayer = true, SwitchTeam = true, Message = true }
+
+-- Aktionen, die auf allen Servern laufen können (Umschalter ALLE SERVER); sie brauchen keinen Admin vor Ort
+local GLOBAL = { Announce = true, ExtAirdrop = true, ExtConvoy = true, ExtHeliCrash = true, ExtHordeCrate = true,
+	ExtBosses = true, ExtRedzone = true, ExtStop = true, BloodMoon = true, Storm = true, SetClock = true, SetFog = true,
+	GiveAllCoins = true, DungeonStopAll = true }
+
+AdminService.Topic = "AdminGlobal"
+local LOG_SIZE = 150
+local log = {} -- neueste zuerst: { At, Admin, Action, Target, Text }
 
 -- Darf player diese Aktion? Gibt false und einen Grund zurück, wenn nicht.
 local function allowed(player, action, a, b)
@@ -43,6 +65,9 @@ local function allowed(player, action, a, b)
 		return true
 	end
 	if player:GetAttribute("IsAdmin") and not MOD_ACTIONS[action] then
+		if TARGETED[action] and rank and tonumber(a) ~= player.UserId and StaffService.StoredPower(a) >= rank.Power then
+			return false, "Dieser Spieler hat einen gleich hohen oder höheren Rang."
+		end
 		return true
 	end
 	if not MOD_ACTIONS[action] then
@@ -54,7 +79,7 @@ local function allowed(player, action, a, b)
 	if not rank then
 		return false
 	end
-	if action == "BanList" then
+	if action == "BanList" or action == "Lookup" then
 		return rank.Kick == true
 	end
 	if action == "Kick" and not rank.Kick then
@@ -104,8 +129,334 @@ function AdminService.Init(manager)
 		return root and root.Position or nil
 	end
 
-	-- Jede Aktion gibt einen Text für das Panel zurück (admin = der Spieler, der den Befehl geschickt hat)
+	-- Text eines Admins für andere Spieler (Ankündigung, Nachricht): gefiltert, höchstens 150 Zeichen
+	local function filterText(admin, text)
+		text = string.sub(tostring(text or ""), 1, 150)
+		if text == "" then
+			return nil
+		end
+		local ok, result = pcall(function()
+			return game:GetService("TextService"):FilterStringAsync(text, admin.UserId):GetNonChatStringForBroadcastAsync()
+		end)
+		return ok and result or nil
+	end
+
+	local function rootOf(player)
+		local humanoid = humanoidOf(player)
+		local root = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		return humanoid and humanoid.Health > 0 and root or nil
+	end
+
+	-- Charakter von who neben die Stelle at (CFrame) setzen
+	local function teleport(who, at)
+		local character = who.Character
+		local spot = at * CFrame.new(0, 0, 4)
+		SpawnUtil.Prestream(who, spot.Position)
+		character:PivotTo(spot)
+		serverShared("MovementGuard").Teleported(character)
+	end
+
+	-- Werte eines Spielers (Reiter SPIELER, Kacheln oben): Name für die Rückmeldung, aktueller Wert, setzen
+	local function levelOf(profile)
+		return (LevelConfig.FromXP(profile.AccountXP or 0))
+	end
+	local VALUES = {
+		Coins = { Name = "Münzen", Max = 1000000000, Get = function(profile)
+			return profile.Coins or 0
+		end, Set = function(_, profile, value)
+			profile.Coins = value
+		end },
+		RedPoints = { Name = "RZ", Max = 10000000, Get = function(profile)
+			return math.floor(tonumber(profile.RedPoints) or 0)
+		end, Set = function(player, profile, value)
+			profile.RedPoints = value
+			serverShared("RedPointsService").Publish(player)
+		end },
+		Rap = { Name = "RAP", Max = 1000000000, Get = function(profile)
+			return math.floor(tonumber(profile.Rap) or 0)
+		end, Set = function(_, profile, value)
+			profile.Rap = value
+		end },
+		XP = { Name = "XP", Max = LevelConfig.MaxXP, Get = function(profile)
+			return profile.AccountXP or 0
+		end, Set = function(_, profile, value)
+			profile.AccountXP = value
+		end },
+		Level = { Name = "Level", Min = 1, Max = LevelConfig.MaxLevel, Get = levelOf, Set = function(player, profile, value)
+			ProgressService.SetPrestige(player, profile.Prestige or 0, value)
+		end },
+		Prestige = { Name = "Prestige", Max = LevelConfig.MaxPrestige, Get = function(profile)
+			return profile.Prestige or 0
+		end, Set = function(player, profile, value)
+			ProgressService.SetPrestige(player, value, levelOf(profile))
+		end },
+	}
+
+	-- Jede Aktion gibt einen Text für das Panel zurück (admin = der Spieler, der den Befehl geschickt hat;
+	-- nil, wenn die Aktion von einem anderen Server kommt, siehe GLOBAL)
 	local actions = {
+		-- ---------- Spieler (Reiter SPIELER: Detailansicht des gewählten Spielers) ----------
+		-- Wert ändern: opts = { Key (VALUES), Op = "Add" | "Set", Amount }
+		PlayerValue = function(userId, opts)
+			local player = target(userId)
+			local profile = player and ProgressService.Get(player)
+			if not profile then
+				return "Spieler nicht gefunden."
+			end
+			local def = type(opts) == "table" and VALUES[opts.Key]
+			local amount = type(opts) == "table" and tonumber(opts.Amount)
+			if not def or not amount or (opts.Op ~= "Add" and opts.Op ~= "Set") or amount ~= amount then
+				return "Ungültiger Wert."
+			end
+			amount = math.clamp(math.floor(amount), -def.Max, def.Max)
+			local value = opts.Op == "Add" and def.Get(profile) + amount or amount
+			value = math.clamp(value, def.Min or 0, def.Max)
+			def.Set(player, profile, value)
+			ProgressService.Sync(player)
+			return player.Name .. ": " .. def.Name .. " = " .. def.Get(profile)
+		end,
+		-- Item der offenen Welt in die Tasche (was nicht passt, ins Lager): opts = { Id, Count }
+		GiveItem = function(userId, opts)
+			local player = target(userId)
+			local id = type(opts) == "table" and opts.Id
+			local config = typeof(id) == "string" and ExtinctionConfig.Get(id)
+			if not player or not ProgressService.Get(player) then
+				return "Spieler nicht gefunden."
+			elseif not config then
+				return "Unbekanntes Item."
+			end
+			local count = math.clamp(math.floor(tonumber(opts.Count) or 1), 1, 999)
+			local InventoryService = serverShared("InventoryService")
+			local bag = InventoryService.Give(player, id, count)
+			local stash = bag < count and InventoryService.GiveStash(player, id, count - bag) or 0
+			local missing = count - bag - stash
+			return player.Name .. ": +" .. (bag + stash) .. "× " .. config.Name .. (stash > 0 and (" (" .. stash .. " ins Lager)") or "")
+				.. (missing > 0 and (" · " .. missing .. " passten nicht") or "")
+		end,
+		-- Skin (Cosmetics) geben, auch als weiteres Stück
+		GiveSkin = function(userId, skinId)
+			local player = target(userId)
+			local item = typeof(skinId) == "string" and Cosmetics.Get(skinId)
+			if not player or not ProgressService.Get(player) then
+				return "Spieler nicht gefunden."
+			elseif not item then
+				return "Unbekannter Skin."
+			end
+			ProgressService.GiveItem(player, skinId)
+			return player.Name .. ": Skin " .. item.Name
+		end,
+		-- Doppel-XP für minutes Minuten
+		XPBoost = function(userId, minutes)
+			local player = target(userId)
+			if not player or not ProgressService.Get(player) then
+				return "Spieler nicht gefunden."
+			end
+			minutes = math.clamp(math.floor(tonumber(minutes) or 30), 1, 1440)
+			ProgressService.AddXPBoost(player, minutes)
+			return player.Name .. ": Doppel-XP +" .. minutes .. " Min."
+		end,
+		-- Gottmodus an/aus (kein Schaden, Damage.Apply)
+		God = function(userId)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local on = not player:GetAttribute("AdminGod")
+			player:SetAttribute("AdminGod", on or nil)
+			return player.Name .. (on and ": Gottmodus AN" or ": Gottmodus AUS")
+		end,
+		-- Admin springt zum Spieler
+		GoTo = function(userId, _, admin)
+			local player = target(userId)
+			local there, here = rootOf(player), rootOf(admin)
+			if not there or not here then
+				return "Spieler hat keinen Charakter."
+			elseif player:GetAttribute("Mode") ~= admin:GetAttribute("Mode") then
+				return "Nicht in derselben Welt."
+			end
+			teleport(admin, there.CFrame)
+			return "Bei " .. player.Name
+		end,
+		-- Spieler zum Admin holen
+		Bring = function(userId, _, admin)
+			local player = target(userId)
+			local there, here = rootOf(player), rootOf(admin)
+			if not there or not here then
+				return "Spieler hat keinen Charakter."
+			elseif player:GetAttribute("Mode") ~= admin:GetAttribute("Mode") then
+				return "Nicht in derselben Welt."
+			end
+			teleport(player, here.CFrame)
+			return player.Name .. " geholt"
+		end,
+		-- Ins Camp: in der offenen Welt per Teleport (raus aus dem Dungeon), sonst in die offene Welt schicken
+		SendCamp = function(userId)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local extinction = manager.GetModule("Extinction")
+			if player:GetAttribute("Mode") == "Extinction" and extinction and extinction.AdminToCamp then
+				return extinction.AdminToCamp(player) and (player.Name .. " ist im Camp") or "Spieler hat keinen Charakter."
+			end
+			manager.Join(player, "Extinction", true)
+			return player.Name .. " -> Camp"
+		end,
+		-- Einfrieren an/aus (Charakter verankert; endet mit dem nächsten Spawn)
+		Freeze = function(userId)
+			local player = target(userId)
+			local root = rootOf(player)
+			if not root then
+				return "Spieler hat keinen Charakter."
+			end
+			local on = not player:GetAttribute("AdminFrozen")
+			player:SetAttribute("AdminFrozen", on or nil)
+			root.Anchored = on
+			return player.Name .. (on and " eingefroren" or " aufgetaut")
+		end,
+		-- Neu spawnen (offene Welt: am Spawnpunkt, ohne Tod und ohne Taschenverlust)
+		Respawn = function(userId)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			local extinction = manager.GetModule("Extinction")
+			if not (extinction and extinction.AdminRespawn and extinction.AdminRespawn(player)) then
+				player:LoadCharacter()
+			end
+			return player.Name .. " neu gespawnt"
+		end,
+		-- Vor den Bestenlisten verstecken an/aus (LeaderboardService)
+		HideLeaderboard = function(userId)
+			local player = target(userId)
+			if not player or not ProgressService.Get(player) then
+				return "Spieler nicht gefunden."
+			end
+			local hidden = not LeaderboardService.IsHidden(player)
+			LeaderboardService.SetHidden(player, hidden)
+			return player.Name .. (hidden and ": vor den Bestenlisten versteckt" or ": wieder in den Bestenlisten")
+		end,
+		-- Spielstand komplett zurücksetzen (nur mit confirm = "CONFIRM"), danach Kick zum Neu-Beitreten
+		ResetData = function(userId, confirm)
+			local player = target(userId)
+			if confirm ~= "CONFIRM" then
+				return "Nicht bestätigt."
+			elseif not player or not ProgressService.Reset(player) then
+				return "Spieler nicht gefunden."
+			end
+			local name = player.Name
+			player:Kick(Locale.ForPlayer(player, "Dein Spielstand wurde von einem Admin zurückgesetzt. Bitte tritt neu bei."))
+			return name .. ": Daten zurückgesetzt"
+		end,
+		-- Nachricht nur an diesen Spieler (Banner)
+		Message = function(userId, text, admin)
+			local player = target(userId)
+			if not player then
+				return "Spieler nicht gefunden."
+			end
+			text = filterText(admin, text)
+			if not text then
+				return "Nachricht eingeben."
+			end
+			Remotes.Notify:FireClient(player, "Banner", { Caption = "Nachricht vom Team", Title = "Nachricht", Sub = text,
+				Style = "Info" })
+			return "Nachricht an " .. player.Name .. " geschickt"
+		end,
+		-- Suche (auch offline): query = UserId oder Name. Daten an das Panel (AdminData "Lookup")
+		Lookup = function(query, _, admin)
+			local id = tonumber(query)
+			if not id and typeof(query) == "string" and query ~= "" then
+				local ok, result = pcall(Players.GetUserIdFromNameAsync, Players, query)
+				id = ok and tonumber(result) or nil
+			end
+			if not id or id <= 0 then
+				return "Spieler nicht gefunden."
+			end
+			local profile, online, err = ProgressService.Peek(id)
+			local okName, name = pcall(Players.GetNameFromUserIdAsync, Players, id)
+			local rank = StaffService.StoredRank(id)
+			local ban = serverShared("BanService").Get(id)
+			local stats = profile and type(profile.Stats) == "table" and profile.Stats or {}
+			Remotes.AdminData:FireClient(admin, "Lookup", {
+				UserId = id, Name = okName and name or ("#" .. id), Online = online == true, Found = profile ~= nil,
+				Error = err, Rank = rank and rank.Id or nil,
+				Ban = ban and { Reason = ban.Reason, Until = ban.Until, By = ban.By } or nil,
+				Coins = profile and profile.Coins or 0, RedPoints = profile and math.floor(tonumber(profile.RedPoints) or 0) or 0,
+				Rap = profile and math.floor(tonumber(profile.Rap) or 0) or 0, Level = profile and levelOf(profile) or 0,
+				Prestige = profile and profile.Prestige or 0, Zombies = stats.Zombies or 0, Kills = stats.Kills or 0,
+				Missions = stats.ExtMissions or 0, Hidden = profile ~= nil and profile.HideBoards == true,
+			})
+			return (okName and name or ("#" .. id)) .. (profile and "" or (" · " .. tostring(err or "kein Spielstand")))
+		end,
+		-- Admin-Log an das Panel (AdminData "Logs")
+		Logs = function(_, _, admin)
+			Remotes.AdminData:FireClient(admin, "Logs", log)
+			return #log .. " Einträge"
+		end,
+
+		-- ---------- Server (auch auf allen Servern, siehe GLOBAL) ----------
+		-- Ankündigung als Banner an alle
+		Announce = function(text, _, admin)
+			if admin then
+				text = filterText(admin, text)
+			end
+			if typeof(text) ~= "string" or text == "" then
+				return "Text eingeben."
+			end
+			Remotes.Notify:FireAllClients("Banner", { Caption = "Ankündigung", Title = "Ankündigung", Sub = text, Style = "Info" })
+			return "Ankündigung gesendet"
+		end,
+		-- Uhrzeit der offenen Welt setzen (0..24)
+		SetClock = function(hour)
+			hour = tonumber(hour)
+			if not hour then
+				return "Ungültige Uhrzeit."
+			end
+			DayCycle.SetClock(math.clamp(hour, 0, 23.99))
+			return "Uhrzeit " .. DayCycle.Label(math.clamp(hour, 0, 23.99))
+		end,
+		-- Nebel: Zahl 0..1 = fest, sonst wieder automatisch
+		SetFog = function(value)
+			value = tonumber(value)
+			ReplicatedStorage:SetAttribute("FogOverride", value and math.clamp(value, 0, 1) or nil)
+			return value and ("Nebel " .. math.floor(math.clamp(value, 0, 1) * 100) .. " %") or "Nebel automatisch"
+		end,
+		-- Allen Spielern auf dem Server Münzen geben
+		GiveAllCoins = function(amount)
+			amount = math.clamp(math.floor(tonumber(amount) or 0), 1, 1000000)
+			local count = 0
+			for _, player in Players:GetPlayers() do
+				if ProgressService.Get(player) then
+					ProgressService.AddCoins(player, amount, "Admin")
+					count += 1
+				end
+			end
+			return count .. " Spieler +" .. amount .. " Münzen"
+		end,
+		-- Alle Dungeon-Läufe beenden
+		DungeonStopAll = function()
+			return serverShared("DungeonService").StopAll() .. " Dungeon-Läufe beendet"
+		end,
+		-- Blutmond / Sturmnacht: mode = "Start", "Stop" oder nil (umschalten)
+		BloodMoon = function(mode)
+			local BloodMoonService = serverShared("BloodMoonService")
+			if mode == "Stop" or (mode ~= "Start" and BloodMoonService.Active()) then
+				BloodMoonService.Stop()
+				return "Blutmond beendet"
+			end
+			BloodMoonService.Start()
+			return "Blutmond gestartet (10 Minuten)"
+		end,
+		Storm = function(mode)
+			local StormService = serverShared("StormService")
+			if mode == "Stop" or (mode ~= "Start" and StormService.Active()) then
+				StormService.Stop()
+				return "Sturmnacht beendet"
+			end
+			StormService.Start()
+			return "Sturmnacht gestartet (10 Minuten)"
+		end,
+
 		-- ---------- Events der offenen Welt (Extinction) ----------
 		-- Lootdrop: where = "Here" landet beim Admin, sonst zufällig
 		ExtAirdrop = function(where, _, admin)
@@ -482,28 +833,35 @@ function AdminService.Init(manager)
 			Remotes.AdminStatus:FireClient(player, target == 10 and "Jetzt Tag (10:00)" or "Jetzt Nacht (22:00)")
 			return
 		end
-		-- Blutmond sofort starten / beenden (offene Welt)
-		if action == "BloodMoon" and player:GetAttribute("IsAdmin") then
-			local BloodMoonService = require(ServerStorage:WaitForChild("ServerShared").BloodMoonService)
-			if BloodMoonService.Active() then
-				BloodMoonService.Stop()
-				Remotes.AdminStatus:FireClient(player, "Blutmond beendet")
-			else
-				BloodMoonService.Start()
-				Remotes.AdminStatus:FireClient(player, "Blutmond gestartet (10 Minuten)")
+		-- Umschalter ALLE SERVER: hier ausführen und an alle anderen Server schicken
+		if action == "AllServers" then
+			local inner, args = a, type(b) == "table" and b or {}
+			if typeof(inner) ~= "string" or not GLOBAL[inner] or not actions[inner] then
+				return
 			end
-			return
-		end
-		-- Sturmnacht sofort starten / beenden (offene Welt)
-		if action == "Storm" and player:GetAttribute("IsAdmin") then
-			local StormService = require(ServerStorage:WaitForChild("ServerShared").StormService)
-			if StormService.Active() then
-				StormService.Stop()
-				Remotes.AdminStatus:FireClient(player, "Sturmnacht beendet")
-			else
-				StormService.Start()
-				Remotes.AdminStatus:FireClient(player, "Sturmnacht gestartet (10 Minuten)")
+			local ok, reason = allowed(player, inner, args.A, args.B)
+			if not ok then
+				if reason then
+					Remotes.AdminStatus:FireClient(player, reason)
+				end
+				return
 			end
+			local valueA = args.A
+			if inner == "Announce" then
+				valueA = filterText(player, valueA) -- einmal hier filtern, die anderen Server zeigen den Text nur an
+				if not valueA then
+					Remotes.AdminStatus:FireClient(player, "Text eingeben.")
+					return
+				end
+			end
+			local okRun, message = pcall(actions[inner], valueA, args.B, nil)
+			message = okRun and tostring(message) or ("Fehler: " .. tostring(message))
+			task.spawn(pcall, MessagingService.PublishAsync, MessagingService, AdminService.Topic,
+				{ Action = inner, A = valueA, B = args.B, Server = game.JobId, By = player.Name })
+			Remotes.AdminStatus:FireClient(player, "Alle Server: " .. message)
+			AdminService.Record(player.Name, inner .. " (alle Server)", valueA, message)
+			DiscordLog.Log("Moderation", "Admin: " .. inner .. " (alle Server)", message,
+				{ { "Admin", DiscordLog.Who(player) }, { "Wert 1", tostring(valueA) }, { "Wert 2", tostring(args.B) } })
 			return
 		end
 		if typeof(action) ~= "string" or not actions[action] then
@@ -516,11 +874,51 @@ function AdminService.Init(manager)
 			end
 			return
 		end
-		local ok, message = pcall(actions[action], a, b, player)
-		Remotes.AdminStatus:FireClient(player, ok and tostring(message) or ("Fehler: " .. tostring(message)))
-		DiscordLog.Log("Moderation", "Admin: " .. action, ok and tostring(message) or ("Fehler: " .. tostring(message)),
+		local okRun, message = pcall(actions[action], a, b, player)
+		message = okRun and tostring(message) or ("Fehler: " .. tostring(message))
+		Remotes.AdminStatus:FireClient(player, message)
+		if action ~= "Logs" and action ~= "BanList" then
+			AdminService.Record(player.Name, action, a, message)
+		end
+		DiscordLog.Log("Moderation", "Admin: " .. action, message,
 			{ { "Admin", DiscordLog.Who(player) }, { "Wert 1", tostring(a) }, { "Wert 2", tostring(b) } })
 	end)
+
+	-- Aktionen von anderen Servern (ALLE SERVER)
+	task.spawn(pcall, MessagingService.SubscribeAsync, MessagingService, AdminService.Topic, function(message)
+		local data = type(message) == "table" and message.Data
+		if type(data) ~= "table" or data.Server == game.JobId or not GLOBAL[data.Action] or not actions[data.Action] then
+			return
+		end
+		local ok, result = pcall(actions[data.Action], data.A, data.B, nil)
+		AdminService.Record(tostring(data.By) .. " (anderer Server)", data.Action, data.A, ok and tostring(result) or "Fehler")
+	end)
+
+	-- Einfrieren endet mit dem nächsten Spawn
+	local function watch(player)
+		player.CharacterAdded:Connect(function()
+			player:SetAttribute("AdminFrozen", nil)
+		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
+end
+
+-- Eintrag ins Admin-Log (neueste zuerst, höchstens LOG_SIZE)
+function AdminService.Record(adminName, action, targetValue, text)
+	local targetPlayer = Players:GetPlayerByUserId(tonumber(targetValue) or 0)
+	table.insert(log, 1, { At = os.time(), Admin = tostring(adminName), Action = tostring(action),
+		Target = targetPlayer and targetPlayer.Name or (targetValue ~= nil and typeof(targetValue) ~= "table" and tostring(targetValue) or ""),
+		Text = string.sub(tostring(text), 1, 200) })
+	while #log > LOG_SIZE do
+		table.remove(log)
+	end
+end
+
+function AdminService.Log()
+	return log
 end
 
 return AdminService
