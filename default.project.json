@@ -45,6 +45,12 @@
           "$ignoreUnknownInstances": true,
           "AS_Scout": {
             "$path": "models/Agents/AS_Scout.rbxmx"
+          },
+          "AS_TacticalScout": {
+            "$path": "models/Agents/AS_TacticalScout.rbxmx"
+          },
+          "AS_ShadowScout": {
+            "$path": "models/Agents/AS_ShadowScout.rbxmx"
           }
         }
       }

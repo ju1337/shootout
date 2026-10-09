@@ -7,6 +7,8 @@
 | `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
 | `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |
 | `Agents/AS_Scout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_Scout (Agenten-Skin Scout) |
+| `Agents/AS_TacticalScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_TacticalScout (Agenten-Skin Tactical Scout) |
+| `Agents/AS_ShadowScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_ShadowScout (Agenten-Skin Shadow Scout) |
 | `Skins/Rifle.rbxmx` | ReplicatedStorage › Assets › Weapons › Rifle › Skins (Texturen + Effekt-Bilder aller Skins) |
 
 Eingetragen in `default.project.json`. Wer Rojo verbindet (`rojo serve` + Connect; Rojo 7.7.1 empfohlen – ältere Versionen lesen die Dateien auch, übertragen MeshParts aber erst ab 7.6), hat die Modelle
