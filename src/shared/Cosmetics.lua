@@ -97,6 +97,9 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(230, 140, 30), Material = Enum.Material.Glass },
 	{ Id = "W_Woche_Titan", Type = "Weapon", Name = "Titan", Rarity = "Epic", Reward = true,
 		Color = Color3.fromRGB(110, 115, 125), Material = Enum.Material.DiamondPlate },
+	-- VIP & BOOSTER: erster Wochen-Auftrag (QuestConfig.SpecialWeeklyPool)
+	{ Id = "W_Unterstuetzer", Type = "Weapon", Name = "Unterstützer", Rarity = "Epic", Reward = true,
+		Color = Color3.fromRGB(255, 115, 250), Material = Enum.Material.Foil },
 	{ Id = "W_PrestigeBronze", Type = "Weapon", Name = "Prestige Bronze", Rarity = "Rare", Reward = true,
 		Color = Color3.fromRGB(176, 112, 64), Material = Enum.Material.Metal },
 	{ Id = "W_PrestigeGold", Type = "Weapon", Name = "Prestige Gold", Rarity = "Epic", Reward = true,

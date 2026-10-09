@@ -156,7 +156,7 @@ function QuestBoard.new(parent, width, height, options)
 			TextTruncate = Enum.TextTruncate.AtEnd, TextColor3 = locked and GRAY or UITheme.Colors.Text }, row)
 		text({ Position = UDim2.fromOffset(14, y + 22), Size = UDim2.new(1, -150, 0, 30), TextWrapped = true,
 			TextYAlignment = Enum.TextYAlignment.Top,
-			Text = math.min(progress, quest.Goal) .. " / " .. quest.Goal .. "  ·  " .. QuestConfig.RewardText(quest, Locale.Translate),
+			Text = math.min(progress, quest.Goal) .. " / " .. quest.Goal .. "  ·  " .. QuestConfig.RewardText(quest, Locale.Translate, Cosmetics.GetOwned(player)),
 			TextSize = 12, TextColor3 = GRAY }, row)
 		local barBack = make("Frame", { Position = UDim2.new(0, 14, 1, -12), Size = UDim2.new(1, -150, 0, 4),
 			BackgroundColor3 = BORDER, BorderSizePixel = 0 }, row)

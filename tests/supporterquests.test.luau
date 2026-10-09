@@ -1,0 +1,84 @@
+-- VIP & BOOSTER-Aufträge: je Tag und Woche 2 Arcade + 2 Extinction, nur Berechtigte (Gamepass VIP, Team-Rang ab
+-- BOOSTER) zählen und holen ab; Wochen-Aufträge geben einmal den gebundenen Skin Unterstützer
+local failures = 0
+local function check(cond, msg)
+	if not cond then
+		failures += 1
+		print("FEHLER: " .. msg)
+	end
+end
+local function step(seconds)
+	SIM.Run(SIM.Now + (seconds or 1))
+end
+
+game.JobId = "server-1"
+local store = SIM.DataStore("PlayerData_v1")
+local QuestConfig = require("QuestConfig")
+local Cosmetics = require("Cosmetics")
+local RapConfig = require("RapConfig")
+local ProgressService = require("ProgressService")
+ProgressService.Init()
+
+check(Cosmetics.Get("W_Unterstuetzer") ~= nil and not RapConfig.Tradeable("W_Unterstuetzer")
+	and not Cosmetics.ForSale(Cosmetics.Get("W_Unterstuetzer")), "Skin Unterstützer: gebunden, nicht im Shop")
+for _, quest in QuestConfig.SpecialWeeklyPool do
+	check(quest.Item == "W_Unterstuetzer", quest.Id .. ": gibt den Skin")
+end
+
+store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+local booster, normal = SIM.Join("Booster"), SIM.Join("Normal")
+booster:SetAttribute("StaffRank", "Booster")
+step(2)
+
+local function count(player, key, mode)
+	local data = QuestConfig.Read(player, key) or {}
+	local n = 0
+	for _, id in data.Ids or {} do
+		if QuestConfig.Get(id).Mode == mode then
+			n += 1
+		end
+	end
+	return n, data
+end
+for _, key in { "SpecialQuests", "SpecialWeekly" } do
+	check(count(booster, key, "Arcade") == 2 and count(booster, key, "Extinction") == 2, key .. ": 2 Arcade + 2 Extinction")
+end
+
+-- einen Arcade-Wochen-Auftrag schaffen und abholen
+local _, weekly = count(booster, "SpecialWeekly", "Arcade")
+local questId
+for _, id in weekly.Ids do
+	if QuestConfig.Get(id).Mode == "Arcade" then
+		questId = id
+		break
+	end
+end
+local quest = QuestConfig.Get(questId)
+check(string.find(QuestConfig.RewardText(quest), "Skin Unterstützer", 1, true) ~= nil, "Belohnung nennt den Skin")
+ProgressService.QuestEvent(booster, quest.Event, quest.Goal)
+ProgressService.QuestEvent(normal, quest.Event, quest.Goal)
+local message, ok = ProgressService.ClaimQuest(booster, questId)
+check(ok == true, "abholen: " .. tostring(message))
+check(ProgressService.Owns(booster, "W_Unterstuetzer"), "Skin bekommen")
+check(QuestConfig.RewardText(quest, nil, Cosmetics.GetOwned(booster)):find("Skin", 1, true) == nil, "im Besitz: Skin nicht mehr genannt")
+
+-- zweiter Wochen-Auftrag: kein zweites Stück
+for _, id in weekly.Ids do
+	local other = QuestConfig.Get(id)
+	if id ~= questId then
+		ProgressService.QuestEvent(booster, other.Event, other.Goal)
+		ProgressService.ClaimQuest(booster, id)
+		break
+	end
+end
+check(ProgressService.ItemCount(booster, "W_Unterstuetzer") == 1, "nur ein Stück")
+
+-- ohne Berechtigung: nichts
+message, ok = ProgressService.ClaimQuest(normal, questId)
+check(ok == false and not ProgressService.Owns(normal, "W_Unterstuetzer"), "ohne VIP/Booster kein Abholen: " .. tostring(message))
+
+if failures > 0 then
+	error(failures .. " Fehler")
+end
+print("supporterquests: alles ok")

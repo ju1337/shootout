@@ -640,6 +640,11 @@ function ProgressService.ClaimQuest(player, id)
 		ProgressService.AddSpins(player, quest.Spins)
 		table.insert(lines, "+" .. quest.Spins .. " Glücksrad-Drehs")
 	end
+	local item = quest.Item and Cosmetics.Get(quest.Item)
+	if item and grantSkin(profile, item.Id) then
+		ProgressService.LedgerItem(player, item.Name, item.Rarity)
+		table.insert(lines, "Neuer Skin: " .. item.Name)
+	end
 	if (quest.Loot or quest.RedPoints) and ProgressService.QuestExtras then
 		local ok, extra = pcall(ProgressService.QuestExtras, player, quest)
 		if ok and type(extra) == "table" then

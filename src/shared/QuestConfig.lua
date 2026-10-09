@@ -11,11 +11,12 @@
 -- XSurvivor, XNightMinute, XStorm, XBoss) und kommen aus Modes/Extinction (über MissionService und die Event-Dienste).
 --
 -- VIP & BOOSTER (QuestConfig.IsSpecial: Gamepass VIP oder Team-Rang ab BOOSTER): Spezial-Aufträge in beiden Modi,
--- je Tag 1 Arcade + 1 Extinction (SpecialPool) und je Woche 1 Arcade + 1 Extinction (SpecialWeeklyPool).
--- Alle sehen sie, aber nur Berechtigte sammeln Fortschritt und können abholen.
+-- je Tag 2 Arcade + 2 Extinction (SpecialPool) und je Woche 2 Arcade + 2 Extinction (SpecialWeeklyPool).
+-- Alle sehen sie, aber nur Berechtigte sammeln Fortschritt und können abholen. Die Wochen-Aufträge geben beim ersten
+-- Mal den gebundenen Skin Unterstützer (Item, nicht handelbar).
 --
 -- Belohnung: Reward = Münzen, dazu optional Spins (Glücksrad-Drehs), Loot = { Tabelle, Anzahl } (ExtinctionConfig.LootTables,
--- ins Lager) und RedPoints (RZ). Die neuen Sätze stehen in QuestConfig.Sets (Profilfeld und Attribut = Key).
+-- ins Lager), RedPoints (RZ) und Item (Skin, nur wenn noch nicht im Besitz). Die neuen Sätze stehen in QuestConfig.Sets (Profilfeld und Attribut = Key).
 
 local HttpService = game:GetService("HttpService")
 local StaffConfig = require(script.Parent.StaffConfig)
@@ -87,6 +88,9 @@ QuestConfig.ExtWeeklyPool = {
 
 -- ---------- VIP & BOOSTER ----------
 
+-- Skin für VIP & BOOSTER (Cosmetics, Reward, nicht handelbar): gibt es mit dem ersten Wochen-Auftrag
+local SUPPORTER_SKIN = "W_Unterstuetzer"
+
 QuestConfig.SpecialPool = {
 	{ Id = "S_Kills20", Mode = "Arcade", Text = "Erziele 20 Kills", Event = "Kill", Goal = 20, Reward = 400, Spins = 1 },
 	{ Id = "S_Wins3", Mode = "Arcade", Text = "Gewinne 3 Runden", Event = "RoundWin", Goal = 3, Reward = 400, Spins = 1 },
@@ -98,16 +102,28 @@ QuestConfig.SpecialPool = {
 		Reward = 500, Loot = { "Tier3", 2 } },
 	{ Id = "S_XRed25", Mode = "Extinction", Text = "Töte 25 Zombies in der roten Zone", Event = "XRedZombie", Goal = 25,
 		Reward = 500, Loot = { "Tier3", 1 }, RedPoints = 10 },
+	{ Id = "S_Streak2", Mode = "Arcade", Text = "Schaffe 2-mal eine 5er-Killserie", Event = "Streak5", Goal = 2, Reward = 400,
+		Spins = 1 },
+	{ Id = "S_Revive4", Mode = "Arcade", Text = "Belebe 4 Teamkollegen wieder", Event = "Revive", Goal = 4, Reward = 400, Spins = 1 },
+	{ Id = "S_XBrutes5", Mode = "Extinction", Text = "Töte 5 Brocken", Event = "XBrute", Goal = 5, Reward = 500,
+		Loot = { "Tier3", 1 } },
+	{ Id = "S_XNest2", Mode = "Extinction", Text = "Zerstöre 2 Zombienester", Event = "XNest", Goal = 2, Reward = 500,
+		Loot = { "Tier3", 2 } },
 }
 
 QuestConfig.SpecialWeeklyPool = {
 	{ Id = "SW_MatchWins8", Mode = "Arcade", Text = "Gewinne 8 Matches", Event = "MatchWin", Goal = 8, Reward = 2000,
-		Spins = 3 },
-	{ Id = "SW_Kills250", Mode = "Arcade", Text = "Erziele 250 Kills", Event = "Kill", Goal = 250, Reward = 2000, Spins = 3 },
+		Spins = 3, Item = SUPPORTER_SKIN },
+	{ Id = "SW_Kills250", Mode = "Arcade", Text = "Erziele 250 Kills", Event = "Kill", Goal = 250, Reward = 2000, Spins = 3,
+		Item = SUPPORTER_SKIN },
 	{ Id = "SW_XZombies600", Mode = "Extinction", Text = "Töte 600 Zombies", Event = "XZombie", Goal = 600, Reward = 2500,
-		Loot = { "Airdrop", 2 } },
+		Loot = { "Airdrop", 2 }, Item = SUPPORTER_SKIN },
 	{ Id = "SW_XStorm3", Mode = "Extinction", Text = "Schafft 3-mal das Ziel einer Sturmnacht", Event = "XStorm", Goal = 3,
-		Reward = 2500, Loot = { "Airdrop", 2 }, RedPoints = 30 },
+		Reward = 2500, Loot = { "Airdrop", 2 }, RedPoints = 30, Item = SUPPORTER_SKIN },
+	{ Id = "SW_Headshots60", Mode = "Arcade", Text = "60 Kills per Kopfschuss", Event = "Headshot", Goal = 60, Reward = 2000,
+		Spins = 3, Item = SUPPORTER_SKIN },
+	{ Id = "SW_XSurvivor8", Mode = "Extinction", Text = "Rette 8 Überlebende", Event = "XSurvivor", Goal = 8, Reward = 2500,
+		Loot = { "Airdrop", 2 }, Item = SUPPORTER_SKIN },
 }
 
 -- Weitere Auftrags-Sätze (neben Quests/Weekly): Key = Profilfeld und Spieler-Attribut, Period Day/Week,
@@ -116,11 +132,11 @@ QuestConfig.Sets = {
 	{ Key = "ExtQuests", Period = "Day", Picks = { { Pool = QuestConfig.ExtPool, Count = QuestConfig.ExtPerDay } } },
 	{ Key = "ExtWeekly", Period = "Week", Picks = { { Pool = QuestConfig.ExtWeeklyPool, Count = QuestConfig.ExtPerWeek } } },
 	{ Key = "SpecialQuests", Period = "Day", Special = true, Picks = {
-		{ Pool = QuestConfig.SpecialPool, Count = 1, Mode = "Arcade" },
-		{ Pool = QuestConfig.SpecialPool, Count = 1, Mode = "Extinction" } } },
+		{ Pool = QuestConfig.SpecialPool, Count = 2, Mode = "Arcade" },
+		{ Pool = QuestConfig.SpecialPool, Count = 2, Mode = "Extinction" } } },
 	{ Key = "SpecialWeekly", Period = "Week", Special = true, Picks = {
-		{ Pool = QuestConfig.SpecialWeeklyPool, Count = 1, Mode = "Arcade" },
-		{ Pool = QuestConfig.SpecialWeeklyPool, Count = 1, Mode = "Extinction" } } },
+		{ Pool = QuestConfig.SpecialWeeklyPool, Count = 2, Mode = "Arcade" },
+		{ Pool = QuestConfig.SpecialWeeklyPool, Count = 2, Mode = "Extinction" } } },
 }
 
 -- Alle Wochen-Aufträge geschafft: Münzen + Skin der Woche (wechselt jede Woche; schon im Besitz = nur Münzen)
@@ -178,7 +194,8 @@ end
 -- Belohnung als Text, z.B. "500 Münzen · 2× Beute Stufe 3 · 10 RZ" (Beute = zufällige Items aus der Tabelle)
 local LOOT_NAMES = { Tier1 = "Beute Stufe 1", Tier2 = "Beute Stufe 2", Tier3 = "Beute Stufe 3", Airdrop = "Lootdrop-Beute" }
 -- translate (optional, Client: Locale.Translate) übersetzt jedes Teil einzeln
-function QuestConfig.RewardText(quest, translate)
+-- owned (optional): Besitz des Spielers (Cosmetics.GetOwned); einen Skin, den er schon hat, nicht nennen
+function QuestConfig.RewardText(quest, translate, owned)
 	translate = translate or function(text)
 		return text
 	end
@@ -191,6 +208,10 @@ function QuestConfig.RewardText(quest, translate)
 	end
 	if quest.RedPoints then
 		table.insert(parts, quest.RedPoints .. " RZ")
+	end
+	local item = quest.Item and require(script.Parent.Cosmetics).Get(quest.Item)
+	if item and not (owned and owned[item.Id]) then
+		table.insert(parts, translate("Skin " .. item.Name))
 	end
 	return table.concat(parts, " · ")
 end
