@@ -1369,7 +1369,7 @@ def build_zentrale(b):
     # außen: Wellblech-Bänder, Sockel, Lüfter und Antenne auf dem Dach
     for s in (-1, 1):
         b.box("Decor", "ShellBand", (side + t + 0.2, 3, 0.3), (s * (door / 2 + (side + t) / 2), H - 2.5, z0 - t - 0.15), corrugated,
-              "CorrugatedMetal")
+              "DiamondPlate")
         b.box("Decor", "ShellBase", (side + t + 0.2, 1.6, 0.4), (s * (door / 2 + (side + t) / 2), 0.8, z0 - t - 0.2), shell_dark,
               "Concrete")
     for x, z in ((-18, 10), (16, -14)):

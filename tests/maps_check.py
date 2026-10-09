@@ -5,6 +5,7 @@ Läuft als Teil von tests/run.py (Test "maps"). Gefangen werden Fehler, die die 
 eigene kleine Karte bauen: fehlende Teile (z.B. SearchTerminal), Stände ohne Prompt oder Ausstellplätze, Stände, die
 nicht zur Mitte zeigen, Rampen, die nicht von Rang zu Rang passen, zu wenig Spawns.
 """
+import glob
 import json
 import math
 import os
@@ -253,7 +254,39 @@ def check_extinction_world(parts, local, safe_radius):
 
 def check():
     """Gibt eine Liste von Fehlermeldungen zurück (leer = alles in Ordnung)."""
-    return check_market() + check_no_hub() + check_extinction()
+    return check_materials() + check_market() + check_no_hub() + check_extinction()
+
+
+# Enum.Material (Roblox): ein anderer Name lässt rojo serve/build abbrechen ("Invalid value for property Part.Material")
+MATERIALS = {
+    "Asphalt", "Basalt", "Brick", "Cardboard", "Carpet", "CeramicTiles", "ClayRoofTiles", "Cobblestone", "Concrete",
+    "CorrodedMetal", "CrackedLava", "DiamondPlate", "Fabric", "Foil", "ForceField", "Glacier", "Glass", "Granite", "Grass",
+    "Ground", "Ice", "LeafyGrass", "Leather", "Limestone", "Marble", "Metal", "Mud", "Neon", "Pavement", "Pebble", "Plaster",
+    "Plastic", "Rock", "RoofShingles", "Rubber", "Salt", "Sand", "Sandstone", "Slate", "SmoothPlastic", "Snow", "Water", "Wood",
+    "WoodPlanks",
+}
+
+
+def check_materials():
+    """Jede Map und jede gespeicherte Vorlage: nur Materialien, die es in Roblox gibt."""
+    problems = []
+    paths = sorted(glob.glob(os.path.join(ROOT, "src", "**", "*.model.json"), recursive=True)
+                   + glob.glob(os.path.join(ROOT, "tools", "saved", "*.model.json")))
+    for path in paths:
+        bad = {}
+
+        def walk(node):
+            material = node.get("Properties", {}).get("Material")
+            if isinstance(material, str) and material not in MATERIALS:
+                bad[material] = bad.get(material, 0) + 1
+            for child in node.get("Children", []):
+                walk(child)
+
+        with open(path, encoding="utf-8") as f:
+            walk(json.load(f))
+        for material, count in sorted(bad.items()):
+            problems.append("%s: Material %s gibt es nicht (%d Teile)" % (os.path.relpath(path, ROOT), material, count))
+    return problems
 
 
 def check_market():
