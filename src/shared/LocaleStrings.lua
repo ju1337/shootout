@@ -1604,6 +1604,7 @@ return {
 	["Spiele 10 Matches"] = "Play 10 matches",
 	["Spiele 5 Runden in Team-Modi"] = "Play 5 rounds in team modes",
 	["SPIELEN"] = "PLAY",
+	["SPIELEN · ARCADE"] = "PLAY · ARCADE",
 	["SPIELER"] = "PLAYERS",
 	["Spieler"] = "Player",
 	["Spieler auf diesem Server"] = "Players on this server",

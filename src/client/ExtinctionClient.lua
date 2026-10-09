@@ -6,8 +6,9 @@
 --           E an Ständen/Lager/Taschen (ProximityPrompt)
 --   Controller: R1/L1 nächste/vorige Waffe der Hotbar (im Menü: Reiter), △ = heilen (Heil-Item aus der Hotbar),
 --               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
---   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · SQUAD · SHOP ·
---            BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten fünf sind Seiten der Lobby, GameMenu.BorrowPage)
+--   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · SQUAD · LOADOUT ·
+--            SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten sechs sind Seiten der Lobby, GameMenu.BorrowPage),
+--            dazu AGENTEN und SPIELEN · ARCADE als Links in die Lobby
 --   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
@@ -1044,11 +1045,15 @@ local MENU_TABS = {
 	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
+	{ Id = "Loadout", Text = "LOADOUT", Page = true, PageId = "Inventory" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
 	{ Id = "Stats", Text = "STATISTIK", Page = true },
 	{ Id = "Codes", Text = "CODES", Page = true },
 	{ Id = "Settings", Text = "OPTIONEN", Page = true },
+	-- Links in die Lobby (ganze Seiten, passen nicht ins Menü): schließen das Menü und öffnen die Lobby dort
+	{ Id = "Agents", Text = "AGENTEN", Lobby = "Agents" },
+	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play" },
 }
 local menuTab = {} -- [Id] = Eintrag aus MENU_TABS
 for index, tab in MENU_TABS do
@@ -1106,9 +1111,11 @@ local function newMenu(kind, title, subtitle)
 		label({ Name = "PrevHint", Size = UDim2.new(1, 0, 0, 22), Text = "L1", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 			LayoutOrder = 0, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
+	-- Höhe je Reiter: alle passen in die Seitenleiste (Menühöhe minus Logo und Schließen-Hinweis)
+	local tabH = math.min(46, math.floor((Inv.MENU_H - 200 - (pad and 44 or 0)) / #MENU_TABS) - 2)
 	for _, tab in MENU_TABS do
 		local on = tab.Id == kind
-		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(1, 0, 0, 46), BackgroundColor3 = Color3.new(1, 1, 1),
+		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(1, 0, 0, tabH), BackgroundColor3 = Color3.new(1, 1, 1),
 			BackgroundTransparency = on and 0.92 or 1, BorderSizePixel = 0, Text = tab.Text, Font = F.Bold, TextSize = 15,
 			TextColor3 = on and C.Text or C.Muted, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = tab.Index, ZIndex = 6,
 			AutoButtonColor = false }, tabs)
@@ -2778,16 +2785,17 @@ local function openMarket()
 	win.Refresh()
 end
 
--- Reiter aus der Lobby (SHOP, BATTLE PASS, STATISTIK, CODES, OPTIONEN): Seite ausleihen und auf die Breite des Inhalts
--- verkleinern. Meldungen des Servers (Kaufen, Codes …) kommen als Meldung unten (Remotes.ShopStatus, siehe Init).
+-- Reiter aus der Lobby (LOADOUT, SHOP, BATTLE PASS, STATISTIK, CODES, OPTIONEN): Seite ausleihen und auf die Breite des
+-- Inhalts verkleinern. Meldungen des Servers (Kaufen, Codes …) kommen als Meldung unten (Remotes.ShopStatus, siehe Init).
 local function openLobbyTab(id)
 	local win = newWindow(id)
+	local pageId = menuTab[id].PageId or id
 	local scale = math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
 	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H),
 		BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	make("UIScale", { Scale = scale }, holder)
-	if GameMenu.BorrowPage(id, holder) then
-		win.Borrowed = id
+	if GameMenu.BorrowPage(pageId, holder) then
+		win.Borrowed = pageId
 	else
 		label({ Size = UDim2.fromOffset(Inv.CONTENT_W, 60), Text = "GERADE NICHT VERFÜGBAR", TextSize = 18, Font = F.Bold,
 			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, win.Body)
@@ -2821,6 +2829,9 @@ openMenuTab = function(id)
 		function win.Refresh()
 			board.Refresh()
 		end
+	elseif menuTab[id] and menuTab[id].Lobby then
+		closeWindow()
+		GameMenu.Open(menuTab[id].Lobby)
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
@@ -2829,7 +2840,10 @@ end
 -- Controller L1/R1: Reiter weiterblättern
 local function cycleMenu(step)
 	local index = window and menuTab[window.Kind] and menuTab[window.Kind].Index or 1
-	openMenuTab(MENU_TABS[(index - 1 + step) % #MENU_TABS + 1].Id)
+	repeat -- Links in die Lobby überspringen (würden das Menü schließen)
+		index = (index - 1 + step) % #MENU_TABS + 1
+	until not MENU_TABS[index].Lobby
+	openMenuTab(MENU_TABS[index].Id)
 end
 
 -- TASCHE AM BODEN: Inhalt links (anklicken = nehmen), eigene Tasche rechts

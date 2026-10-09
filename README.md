@@ -1,7 +1,7 @@
 # Shootout
 
-Roblox-Shooter im Stil von Rogue Company. Alles läuft in **einem** Place: Hub, Modi und Training
-sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in Studio.
+Roblox-Shooter im Stil von Rogue Company. Alles läuft in **einem** Place: offene Welt, Markt, Modi und
+Training sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in Studio.
 
 ## Entwickeln
 
@@ -13,8 +13,8 @@ sind eigene Bereiche der Welt, Moduswechsel funktionieren deshalb auch direkt in
 
 **Streaming:** `Workspace.StreamingEnabled` ist an (Radius 1024, mindestens 192, entfernte Teile werden wieder entladen).
 Der Client hat nur die Teile in seiner Nähe; Client-Skripte dürfen sich also nicht darauf verlassen, dass ein Teil einer
-Map existiert (nil prüfen, `WaitForChild` mit Zeitlimit, auf `DescendantAdded` hören). Immer vollständig geladen sind Hub
-und Markt sowie die Gruppen Zone, Places, Stands, Lakes und Objective jeder Map (`tools/streaming.py`, setzt
+Map existiert (nil prüfen, `WaitForChild` mit Zeitlimit, auf `DescendantAdded` hören). Immer vollständig geladen sind der
+Markt sowie die Gruppen Zone, Places, Stands, Lakes, Objective und Zentrale jeder Map (`tools/streaming.py`, setzt
 `ModelStreamingMode = Persistent`). Den Grundriss der Weltkarte schickt der Server als Karten-Attribut `Layout`
 (`WorldLayout`), Ort und Leben von Squad-Mitgliedern als Spieler-Attribute `ExtPos` / `ExtHealth`. Vom Server erzeugte
 Modelle (Bots, Zombies, Fahrzeuge, Beute …) sind `Atomic`.
@@ -29,16 +29,15 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| Hub | Kompakte Einsatzzentrale: an der Nordwand nur noch das große Tor nach EXTINCTION (Tafeln SAFE ZONE / DRAUSSEN links und rechts, Banner ARCADE darüber), Kartentisch mit Einsatz-Tafel, Bühne mit eigenem Agenten, Wand der Bestenlisten + Top-3-Statuen. Alter Hangar: `HUB_STYLE = "classic"` in `tools/build_maps.py` (fertig auch in `tools/saved/Hub_classic.model.json`) | Hub (0, 0, 0) |
-| **EXTINCTION** (Hauptmodus) | Offene Welt mit Safe Zone, Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
-| Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Hub, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ samt **Einsatzzentrale** (Shop, Bestenlisten + Top-3-Statuen, Agent der Woche, Glücksrad, Tor MARKT, Terminal SPIELEN), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT in der Einsatzzentrale, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
 | Wingman (Arcade) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
 | 1v1 Arena (Arcade) | Duell | Arena (0, 0, 3000) |
 | Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
 
-Die Minispiele haben kein Tor mehr im Hub: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
+Die Minispiele haben kein eigenes Tor: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
 SPIEL = vollster Arcade-Modus mit freiem Platz, auch auf anderen Servern). Oben im Menü steht groß EXTINCTION und ist
 vorgewählt (`Featured` / `Arcade` in `src/shared/Modes.lua`).
 
@@ -49,12 +48,13 @@ Free-for-All, Wingman und 1v1 Arena sind und wie viele Plätze frei sind (Meldun
 jemand einen dieser Modi (oder SCHNELLES SPIEL), sucht der Server zuerst einen anderen Server, auf dem dort **mehr echte
 Spieler** sind als hier und der Platz für den ganzen Squad hat (im Modus und auf dem Server). Gibt es einen, geht es per
 Teleport dorthin („Wechsle auf einen Server mit 3 Spielern in HERRSCHAFT …“): der Squad-Anführer nimmt seinen Squad mit
-(außer denen in der offenen Welt), drüben landet man direkt im Modus, und der Squad ist wieder zusammen (nur wer sich
-gegenseitig in den Teleport-Daten nennt). Sonst wird wie bisher hier gespielt – so sammeln sich die Arcade-Spieler auf
-wenigen Servern. Schlägt der Teleport fehl (Server voll, Fehler, nach 30 Sekunden nicht angekommen), spielt man hier;
-danach und nach der Ankunft wird man eine Minute lang nicht weitergeschickt. Aus in Studio (kein Teleport), auf privaten
-Servern, ohne MemoryStore und mit der Live-Einstellung **Arcade über Server** = 0. Hub, offene Welt, Markt und Training
-bleiben immer auf dem eigenen Server. Squad-Mitglieder, die dem Anführer folgen, bleiben auf seinem Server.
+(wer im Camp ist, kommt mit, wer draußen in der offenen Welt ist, bleibt), drüben landet man direkt im Modus, und der
+Squad ist wieder zusammen (nur wer sich gegenseitig in den Teleport-Daten nennt). Sonst wird wie bisher hier gespielt –
+so sammeln sich die Arcade-Spieler auf wenigen Servern. Schlägt der Teleport fehl (Server voll, Fehler, nach 30 Sekunden
+nicht angekommen), spielt man hier; danach und nach der Ankunft wird man eine Minute lang nicht weitergeschickt. Aus
+in Studio (kein Teleport), auf privaten Servern, ohne MemoryStore und mit der Live-Einstellung **Arcade über Server** = 0.
+Offene Welt, Markt und Training bleiben immer auf dem eigenen Server. Squad-Mitglieder, die dem Anführer folgen, bleiben
+auf seinem Server.
 
 ELO gibt es in jedem Modus (kein eigenes Ranked-Matchmaking). Ausgebaute Modi (Drop, Strikeout, Demolition,
 Ranked, Extraction, TDM) stehen in `Modes.Disabled`; ihr Code liegt noch in `src/server/Modes/`.
@@ -65,9 +65,10 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 ## Extinction (offene Welt)
 
-Vorbild: Überlebens-Server wie „GLife Extinction“. Man geht im Hub durch das große Tor und landet in der
+Vorbild: Überlebens-Server wie „GLife Extinction“. Einen eigenen Hub gibt es nicht: Man startet direkt in der
 **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`, Radius 120): ein Überlebenden-Bollwerk aus Schrott – die Mauer aus gestapelten Autowracks,
+`tools/build_maps.py`, Radius 165, Mauer-Quadrat mit halber Seite 115, `SAFE_R` / `CAMP_HALF` in
+`tools/extinction_world.py`): ein Überlebenden-Bollwerk aus Schrott – die Mauer aus gestapelten Autowracks,
 Containern und Wellblech mit Stacheldraht, davor Holzspieße, tote Infizierte und ein brennender Leichenhaufen. Vier Tore
 zwischen hochkant gestellten Containern mit Sandsack-Nest, MG und Scheinwerfer, gesprühte Warnungen („SAFE ZONE ·
 KEINE INFIZIERTEN“, „DRAUSSEN STIRBT MAN“), Gerüsttürme in den Ecken. Drinnen Schlamm und Bretterwege, eine Feuerstelle mit
@@ -76,7 +77,13 @@ Lautsprecher, Antenne mit Blinklicht, rote PHOENIX-Banner, Wache oben), Wachen a
 verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
 MG-Stellungen an den Toren, grelles Flutlicht am Generator, Treibstoff, Regentonnen; Händler unter Planen hinter
 Paletten-Theken (WAFFEN, SANI, WERKSTATT, dazu der SPIELERMARKT dem Waffenstand gegenüber), das LAGER im Container,
-die Haltestelle REISEN, eine Werkstatt und der Landeplatz mit Hubschrauber als Rückweg zum Hub (EVAKUIERUNG).
+die Haltestelle REISEN, eine Werkstatt und der Landeplatz mit Hubschrauber (EVAKUIERUNG, ohne Portal).
+In der Nordwest-Ecke steht die Halle **EINSATZZENTRALE** (Eingang von der Nordstraße, ein Schild auf dem Camp-Platz zeigt
+hin; gebaut von `build_zentrale()` in `tools/build_maps.py`, platziert von `zentrale()` in `tools/extinction_world.py`,
+Teile in der immer geladenen Gruppe `Zentrale`, Zugriff über `src/shared/Zentrale.lua`): Shop-Vitrinen mit Theke
+(E öffnet den Shop), Wand der Bestenlisten mit Podest der Top-3-Statuen (Server `src/server/ZentraleService.lua`),
+Statue „Agent der Woche“, Glücksrad, Auftrags- und Fototafel, das grüne Tor MARKT (`Portal_Market`) und das
+Arcade-Terminal **SPIELEN** (E öffnet Lobby/Spielmenü).
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
 und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
 schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, bis 180 Studs, Wände verdecken).
@@ -218,15 +225,16 @@ eine eingestürzte Ecke (die Platte hängt ins erste Deck), Ranken und Graffiti.
 Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter Hubschrauber mit Rauch, Betonsperren, SOS.
 **Dächer für Hubschrauber**: zwei Hochhäuser haben ein freies Dach mit Landefläche (gelber Rand, H, Randlichter, Windsack).
 
-- **Safe Zone** (grüner Ring, Radius 100): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
+- **Safe Zone** (grüner Ring, Radius 165): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
-  **Fahrzeugstand**, das **Lager** und das Tor zurück zum Hub (E an Stand/Lager).
+  **Fahrzeugstand**, das **Lager** und die Einsatzzentrale (E an Stand/Lager).
 - **Draußen**: sofort schießen auf Zombies möglich, **PvP erst 5 Sekunden nach dem Verlassen** (Anzeige oben:
   SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
 - **Menü** (**TAB** öffnet es auf INVENTAR, **M** auf dem zuletzt offenen Reiter; Controller: Select, L1/R1 blättert, ○
-  schließt): etwas kleiner als der Bildschirm, Reiter INVENTAR · MARKT · SQUAD · SHOP · BATTLE PASS · STATISTIK · CODES ·
-  OPTIONEN. Die letzten fünf sind die Seiten der Lobby (`GameMenu.BorrowPage`), verkleinert – ohne Spielmodi und
-  Startseite. Die Welt läuft weiter, während das Menü offen ist.
+  schließt): etwas kleiner als der Bildschirm, Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE ·
+  LOADOUT · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN. LOADOUT bis OPTIONEN sind die Seiten der Lobby
+  (`GameMenu.BorrowPage`), verkleinert. Unten AGENTEN und SPIELEN · ARCADE: Links, die das Menü schließen und die Lobby
+  auf dieser Seite öffnen (L1/R1 überspringt sie). Die Welt läuft weiter, während das Menü offen ist.
 - **Keine Standardwaffen**: Alles kommt aus der Tasche. Der Reiter **INVENTAR** zeigt die Tasche: 30 Plätze, davon 1-9 die
   Hotbar (Tasten **1-9**). Items ziehen und ablegen oder anklicken und den Zielplatz anklicken, Rechtsklick legt
   zwischen Hotbar und Tasche hin und her. Waffe: Taste zieht sie (nochmal = wegstecken), Heilung/Rüstung: Taste
@@ -346,7 +354,7 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   den Rücken, Schlitten-Check und Wirbel um den Abzugsfinger, Revolver lässt die Trommel rattern und wirbelt zweimal.
   Ein Arcade-Trick mitten im Spiel: HUD und Kamera bleiben, wie sie sind, und es geht auch beim Laufen und Sprinten
   (die Waffe wird dabei nicht in die Sprint-Haltung gesenkt). Schießen, Zielen, Nachladen, Messer, Wechsel oder nochmal
-  X beenden es. Geht es gerade nicht (keine Waffe in der Hand, in der Safe Zone sind Waffen gesichert, im Hub, beim
+  X beenden es. Geht es gerade nicht (keine Waffe in der Hand, in der Safe Zone sind Waffen gesichert, im Markt, beim
   Nachladen/Zielen, im Fahrzeug), erscheint unten kurz ein Hinweis (`src/shared/InspectView.lua`). Andere Spieler sehen
   es in der Third-Person (Remotes.Inspect ->
   Charakter-Attribute InspectStart/InspectWeapon). Test: `tests/inspect.test.luau`.
@@ -372,7 +380,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 
 - **Statistik** (dauerhaft): Kills, Tode, K/D, Assists, Kopfschuss- und Trefferquote, Siegquote, ..., Verlauf der letzten 10 Matches (STATS-Fenster)
 - **ELO in jedem Modus**: Start 1000, 5 Platzierungsspiele, Ränge Bronze III bis Meister, Peak, globale Top 10
-- **Squads**: bis 4 Spieler, folgen dem Anführer, landen im selben Team
+- **Squads**: bis 4 Spieler, folgen dem Anführer (in einen Arcade-Modus nur die im Camp, nicht die draußen),
+  landen im selben Team
 - **Realistischer Taktik-Look** (`src/shared/UITheme.lua`): Graphit als Grund, gedecktes Bernstein als einzige
   Signalfarbe (aktiv, Hauptknöpfe), Stahlblau fürs eigene Team, Rot für Gegner; flache Knöpfe und Flächen mit
   kaum gerundeten Ecken und 1 px Rand, keine Schatten-Lippen oder Comic-Konturen; Überschriften, Zahlen und
@@ -382,11 +391,11 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   (`UITheme.Cross`), Raute und Münze gezeichnet und ∞ kommt aus Roboto. Dazu passend: gedeckte
   Agenten-, Modus- und Team-Uniformfarben (Burgund/Sturmblau, Erdgrün/Rehbraun, Rost/Sandblau – über alle Modi
   eindeutig), getönte Glas-Visiere statt Neon, weniger Sättigung und Bloom in der Farbkorrektur
-  (`default.project.json`), die Arena aus Beton statt lila Plastik, im Hub Bernstein-Lichtleisten und
+  (`default.project.json`), die Arena aus Beton statt lila Plastik, in der Einsatzzentrale Bernstein-Lichtleisten und
   gedeckte Tore, Schilder in Oswald (`tools/build_maps.py`)
-- **Lobby** (M bzw. SPIELEN im Hub): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS (aktiv mit
-  Bernstein-Strich), Münzen, Level, STATISTIK, CODES, OPTIONEN. Jeder Reiter ist eine eigene Seite in der Lobby
-  (kein Extra-Fenster):
+- **Lobby** (M bzw. Terminal SPIELEN in der Einsatzzentrale): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP ·
+  BATTLE PASS (aktiv mit Bernstein-Strich), Münzen, Level, STATISTIK, CODES, OPTIONEN. Jeder Reiter ist eine eigene
+  Seite in der Lobby (kein Extra-Fenster):
   - SPIELEN: links Spielmodi (aktiv heller mit Bernstein-Balken, live Spielerzahl) und der Squad (Anführer mit
     Stern, Level, BEREIT/NICHT BEREIT zum Umschalten, freie Plätze laden ein); Mitte der gewählte Agent groß in
     3D; rechts Battle Pass, täglicher Auftrag und der große SPIELEN-Knopf mit Modus, Spielerzahl und Ping
@@ -407,23 +416,23 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     Schadenszahlen) eine Live-Vorschau: Puppe mit Fadenkreuz, auf die eine Trefferfolge mit Kopftreffer und Kill
     läuft – leise in Schleife, nach dem Umschalten oder per Klick mit Ton. Alles wirkt sofort und wird gespeichert
   - Statistik, Codes, Optionen, Aufträge, tägliche Belohnung und Squad öffnen weiterhin ein Fenster darüber
-- **Hub**: Spielerkarte (Level, Prestige, Rang, Münzen), schlichte Menüliste (Shop, Loadout, Agenten, Battle
+- **Markt-Menü**: Spielerkarte (Level, Prestige, Rang, Münzen), schlichte Menüliste (Shop, Loadout, Agenten, Battle
   Pass öffnen die Lobby auf der passenden Seite; Aufträge, Täglich, Squad, Statistik, Codes, Optionen als
   Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
   Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
   Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
-- **Agent der Woche** (Hub-Mitte, `src/client/HubLineup.lua`): goldene Statue des Agenten der Woche dreht sich
+- **Agent der Woche** (Einsatzzentrale, `src/client/HubLineup.lua`): goldene Statue des Agenten der Woche dreht sich
   auf dem Sockel, darüber schwebt eine Holo-Schrift (Name, Rolle, +50 % XP, diese Woche gratis). Kommt die Kamera
   nah heran (rausgezoomt neben der Statue, steil von oben), blendet die Schrift weich aus (ab 16 Studs, unter 9
   ganz weg), statt riesig vor dem Bild zu hängen
-- **Glücksrad im Hub** (`src/client/HubWheel.lua`, in der Ecke links vom Spawn am Ende eines eigenen Teppichs, schräg zur Hallenmitte gedreht): großes Rad mit acht
+- **Glücksrad in der Einsatzzentrale** (`src/client/HubWheel.lua`): großes Rad mit acht
   Feldern (`LoginConfig.Wheel`), Rand mit Lichtern und Zeiger oben; Podest, Ständer, Schild und Pult kommen aus
   der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E** (Controller □, Touch: Antippen): der Server
   lost das Feld aus, das Rad dreht ein paar Runden, der Zeiger klackt an jedem Steg, die Lichter laufen mit, das
   Rad hält genau auf dem Gewinn, das Feld blinkt und eine Belohnungs-Karte erscheint. Die Tafel am Pult zeigt
   GRATIS-DREH BEREIT, Extra-Drehs oder die Zeit bis zum nächsten Gratis-Dreh. Einmal am Tag gratis, Extra-Drehs aus
-  dem Login-Kalender; gedreht wird nur im Hub in der Nähe des Rads (Server prüft). Den Knopf im Seitenmenü gibt
-  es nicht mehr
+  dem Login-Kalender; gedreht wird nur in Extinction höchstens 30 Studs von `WheelSpot` (Server
+  prüft). Den Knopf im Seitenmenü gibt es nicht mehr
 - **RAP – zweite Währung** (`src/shared/RapConfig.lua`, Server `src/server-shared/EconomyService.lua`): RAP bekommt
   man nur über Skins. Jeder handelbare Waffen-Skin hat einen RAP-Wert, **steil gestaffelt wie bei Sniper
   Duels**: gewöhnliche Skins 1-10 RAP (Waldtarn 2, Wüste 3), seltene zweistellig (30-55), epische dreistellig (260-520,
@@ -441,19 +450,19 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Mit dem RAP kauft man im Markt Skins von anderen Spielern. Handelbare Skins kann man mehrfach besitzen
   (Duplikate aus Glücksrad, Login-Kalender, Wochen-Bonus, Robux-Paket oder Markt); gebunden – ohne RAP-Wert –
   bleiben gewöhnliche Skins, Belohnungen für Level, Prestige, Rang und Saison und die Meisterschafts-Tarnungen.
-  Angezeigt wird RAP in der Lobby-Kopfzeile (neben den Münzen), auf der Spielerkarte im Hub, als Wert-Schild auf
-  den Shop-Karten und **über dem Kopf jedes Spielers** (nur im Hub und im Markt): Guthaben + Wert seiner
+  Angezeigt wird RAP in der Lobby-Kopfzeile (neben den Münzen), auf der Spielerkarte im Markt, als Wert-Schild auf
+  den Shop-Karten und **über dem Kopf jedes Spielers** (nur im Markt und in Safe Zones): Guthaben + Wert seiner
   handelbaren Skins, die Farbe zeigt die Stufe (grau, mint ab 100, blau ab 1.000, lila ab 10.000, gold ab
   50.000, rot ab 250.000). Skins, die gerade an einem Stand oder in einem Tausch liegen, bleiben im Inventar,
   lassen sich aber nicht gleichzeitig verkaufen. Alte Spielstände (Besitz = true) zählen als 1 Stück.
   Admin-Panel: **+10.000 RAP** und **Handelbarer Skin** zum Testen
 - **Markt** (Theater-Rund mit 48 Ständen; Server `src/server-shared/MarketService.lua` + `src/server/Modes/Market.lua`,
   Client `src/client/MarketClient.lua`, Map `build_market()` in `tools/build_maps.py`): wie die Trading Plaza in
-  Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT an der Ostwand des Hubs oder den Knopf MARKT im
-  Seitenmenü (im Markt heißt er ZUM HUB), zurück durchs Tor im Süden der Halle.
+  Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT in der Einsatzzentrale oder den Knopf MARKT im
+  Seitenmenü (im Markt heißt er ZUM CAMP), zurück durchs Tor im Süden der Halle ins Camp.
   - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand der
     Kisten-Automat, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
-    Das Tor zurück zum Hub steht am Ende der Südrampe (oberster Rang); schneller geht es über den Knopf ZUM HUB im Seitenmenü. Darum liegen wie in einem
+    Das Tor zurück ins Camp (`Portal_Extinction`) steht am Ende der Südrampe (oberster Rang); schneller geht es über den Knopf ZUM CAMP im Seitenmenü. Darum liegen wie in einem
     Theater drei Ränge, die nach außen stufenweise höher werden (Stände 1-12, 13-28, 29-48); alle Stände zeigen zur Mitte.
     Vier Rampen (Norden, Osten, Süden, Westen) führen über alle Ränge nach oben, die Stufen kann man auch springen.
   - **SUCHE** (Knopf oben oder E am Such-Terminal, Logik in `src/shared/MarketSearch.lua`): alle Angebote aller Stände
@@ -486,26 +495,27 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     KAUFEN zweimal klicken. Bezahlt wird mit RAP, die Marktgebühr (nach Preis gestaffelt) geht beim Verkäufer ab; beide Spielstände
     werden sofort gespeichert, der Verkäufer bekommt eine Meldung. Der Server prüft Nähe zum Stand, ob der
     angezeigte Preis noch stimmt und ob genug RAP da ist.
-  - **Stand weg**: Wer den Markt verlässt (in eine Runde, in den Hub, Spiel verlassen) oder ABGEBEN drückt, verliert
+  - **Stand weg**: Wer den Markt verlässt (in eine Runde, ins Camp, Spiel verlassen) oder ABGEBEN drückt, verliert
     den Stand – die angebotenen Skins waren nur zurückgelegt und sind sofort wieder frei im Inventar, jemand anderes
     kann den Stand nehmen. Squads werden nicht mit in den Markt gezogen
-- **Tauschen** (Server `src/server-shared/TradeService.lua`, Client `src/client/TradeClient.lua`): im Hub oder im
-  Markt die Taste **T** drücken (im Markt auch der Knopf **TAUSCH** oben): Die Spielerliste zeigt alle Spieler im selben
+- **Tauschen** (Server `src/server-shared/TradeService.lua`, Client `src/client/TradeClient.lua`): im Markt oder in
+  einer Safe Zone der offenen Welt (`Modes.InLounge`). Im Markt die Taste **T** (oder der Knopf **TAUSCH** oben; in
+  Extinction ist T die Kamera, dort über den Spieler-Prompt): Die Spielerliste zeigt alle Spieler im selben
   Bereich mit Entfernung und Inventarwert, **TAUSCH ANFRAGEN** schickt die Anfrage (nah genug herangehen,
   `RapConfig.TradeRange`). Alternativ an einem anderen Spieler **G** halten (Controller △, Touch: Antippen) schickt eine Anfrage; sie erscheint
   rechts als Karte mit ANNEHMEN / ABLEHNEN (20 s gültig, fragen sich beide gegenseitig, geht der Tausch sofort auf).
   Im Tausch-Fenster legt jeder handelbare Skins (**+** aus der eigenen Liste, **-** nimmt wieder raus) und RAP
   hinein, der RAP-Wert beider Seiten steht oben. Sind beide **BEREIT**, läuft ein Countdown von 4 s, dann wird
   alles auf einmal getauscht und gespeichert. Jede Änderung nimmt BEREIT bei beiden zurück (niemand kann im letzten
-  Moment etwas austauschen); Abbruch per Knopf, Moduswechsel oder Verlassen – angebotene Skins sind dann sofort
-  wieder frei
+  Moment etwas austauschen); Abbruch per Knopf, Moduswechsel, Verlassen der Safe Zone oder des Spiels – angebotene
+  Skins sind dann sofort wieder frei
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level
-- **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): Im Hub, im
-  Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper im
+- **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): In der offenen
+  Welt, im Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper im
   Roblox-Standard-Look in den Farben seines Agenten: Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in
   der Agentenfarbe, Beine dunkler (keine Kapuze/Weste/Quader-Ausrüstung mehr). Bots tragen genau denselben Körper
   (keine Teamfarben – das Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben
-  Trefferzonen. Im Hub und im Markt sieht man einen Agentenwechsel sofort, im Match ab dem nächsten Spawn. Hat ein
+  Trefferzonen. Im Markt sieht man einen Agentenwechsel sofort, im Match ab dem nächsten Spawn. Hat ein
   Agent ein fertiges 3D-Modell (siehe Agentenmodelle), tragen Spieler und Bots mit diesem Agenten automatisch dieses
   Modell, auch in allen Menü-Figuren
 - **Gleiche Trefferzonen für alle**: Getroffen werden nur Körperteile. Accessoires (auch später angehängte) und die
@@ -524,8 +534,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   schließen, GLB mit Texturen schreiben)
 - **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
   Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
-  überall so aus: an Spielern (Hub, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop, Markt,
-  Hub, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
+  überall so aus: an Spielern (offene Welt, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop,
+  Markt, Einsatzzentrale, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
   gestreckt, zerlegt oder umgebogen. Ein **Rig** (Humanoid, HumanoidRootPart, R15-Gelenke, z.B. StarterCharacter
   oder Avatar-Setup) bleibt komplett (gehäutete Meshes, Bones, Accessoires, Layered Clothing), hängt am
   HumanoidRootPart des Spielkörpers und übernimmt jedes Bild dessen Gelenkbewegung (`AgentModels.SyncJoints` aus
@@ -535,7 +545,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Trefferzone (alle Agenten gleich leicht zu treffen, Teile des Modells nie Trefferzone); macht etwas ihn wieder
   sichtbar oder tauscht Roblox Körperteile aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an. Fehlt
   etwas, bleibt der Standard-Look und Studio sagt im Output, was fehlt (`[Agentenmodelle] …`)
-- **Rückenwaffe im Hub** (`src/server-shared/BackWeapon.lua`): Im Hub trägt jeder Spieler die Standardwaffe seines
+- **Rückenwaffe im Markt** (`src/server-shared/BackWeapon.lua`): Im Markt trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
   (Waffe in der Hand) und nach dem Tod ist sie weg
@@ -563,7 +573,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz
   und steigt sofort ein
 - **Unendliche Reserve-Munition in allen Modi** (nachladen muss man trotzdem; `WeaponConfig.InfiniteAmmoEverywhere`)
-- **Level im Match** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links; im Hub steht das Level
+- **Level im Match** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links; im Markt steht das Level
   groß auf der Spielerkarte
 - **Battle Pass, tägliche Aufträge, Shop, Codes**
 - **Map-Rotation** pro Match, Todeskamera, Schnelles Spiel
@@ -602,7 +612,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     (Böden, Wände, Deckung), Teamkollegen, Pings, Gegner nur kurz, wenn sie schießen oder per Radar markiert
     sind; Ziele/Flaggen in der Farbe des Besitzers, außerhalb kleben sie am Rand
   - darunter ein VERLASSEN-Knopf: erster Klick fragt rot nach („WIRKLICH VERLASSEN?“), ein zweiter Klick
-    innerhalb von 3 s bringt einen zurück in den Hub (auf Touch-Geräten rechts neben der Minimap); ganz unten
+    innerhalb von 3 s bringt einen zurück ins Camp (auf Touch-Geräten rechts neben der Minimap; in EXTINCTION
+    heißt er LOBBY und öffnet das Spielmenü wie M); ganz unten
     eine dezente Tastenzeile (in EXTINCTION ersetzt durch die Zeile unter der Hotbar mit Schießen, Nachladen, 1-9,
     Inventar, Interagieren, Fahrzeug und Karte)
   - rechts: Killfeed – dunkle Zeilen mit farbiger Kante, Waffe als graue Schrift, eigene Kills mit
@@ -622,7 +633,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   - Free-for-All: oben in der Mitte die eigenen Kills, das Ziel und wer führt, darunter die ersten drei
   - dazu Treffer-Richtung, großer Countdown, Namensschilder nur fürs Team; auf Touch-Geräten angepasstes Layout;
     im Kampf kein Mauszeiger über dem Fadenkreuz
-  - Namensschild zum Angeben (Hub, Markt und Safe Zones in Extinction): flache Kachel im Stil der Hotbar mit
+  - Namensschild zum Angeben (Markt und Safe Zones in Extinction): flache Kachel im Stil der Hotbar mit
     Prestige-Abzeichen, Team-Rang (DEV, VIP …), Name, darunter Rang · RAP (kurz, z.B. 12.4K) · Titel
 - **Kamera**: Ego oder Schulter (T), Schulter wechseln (X). Schulterkamera wie bei RC: Charakter links im Bild,
   das Fadenkreuz bleibt frei – auch beim Zielen, wenn die Kamera näher heranrückt; steht rechts eine Wand,
@@ -754,7 +765,7 @@ WASD/Leertaste · Shift Sprint · STRG/C Ducken (im Sprint: Rutschen, Springen d
 Springen vor Hindernissen: drüber (im Lauf) oder hochziehen ·
 Linksklick Schießen · Rechtsklick Zielen · R Nachladen · X Waffe inspizieren · 1/2 Waffe · V Messer · Q Fähigkeit ·
 G Gadget · F Ultimate · E Wiederbeleben/Bombe · Z Ping · T Kamera (Ego/Schulter) · H Schulter wechseln · Tab Punkte ·
-M Menü (im Hub; im Match: VERLASSEN-Knopf unter der Minimap) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
+M Menü (im Markt und in Extinction; im Match: VERLASSEN-Knopf unter der Minimap, Menü: ZURÜCK INS CAMP) · P Admin-Panel · B Noclip (nur Admins: frei fliegen durch Wände, WASD + Leertaste/Strg, Shift schneller, kein Schaden) · 4/5/6 Killstreaks (Herrschaft)
 
 In EXTINCTION: 1-9 Hotbar benutzen (Waffe, Heilung, Fahrzeug) · TAB Menü (Inventar) · M Menü (letzter Reiter) · E Stand/Lager/Tasche/Mitfahren ·
 K Fahrzeug einpacken · N Weltkarte · J Squad · Z Ping (nur an den Squad) · im Fahrzeug W/S/A/D, Leertaste aussteigen ·
@@ -778,8 +789,9 @@ AKTION), oben rechts PING, PUNKTE, KAMERA, ULT, INSPEKT, links SPRINT; in EXTINC
 Fähigkeit/Gadget, im Helikopter STEIGEN/SINKEN und RAUS. Beim Zuschauen unten **ZURÜCK** / **WEITER** (voriges/nächstes
 Teammitglied).
 
-Im Hub und im Markt: T öffnet die Tausch-Spielerliste, E am Pult dreht das Glücksrad, E am Stand beansprucht/verwaltet/öffnet ihn,
-G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an der Shop-Theke öffnet den Shop
+Im Markt: T öffnet die Tausch-Spielerliste, E am Stand beansprucht/verwaltet/öffnet ihn. In der Einsatzzentrale: E am
+Pult dreht das Glücksrad, E an der Shop-Theke öffnet den Shop, E am Terminal SPIELEN öffnet die Lobby. Im Markt und in
+Safe Zones: G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage
 
 ## Wo stelle ich was ein?
 
@@ -807,7 +819,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
 | Lobby (Navigation, Seiten SPIELEN und AGENTEN, Modi, Squad, SPIELEN-Knopf) | `src/shared/GameMenu.lua` |
 | Lobby-Seiten LOADOUT, SHOP, BATTLE PASS | `src/shared/LobbyPages.lua` |
-| Fenster (Statistik, Codes, Optionen, Aufträge, Täglich, Squad) und Hub-Menüliste | `src/client/SideMenu.lua` |
+| Fenster (Statistik, Codes, Optionen, Aufträge, Täglich, Squad) und Markt-Menüliste | `src/client/SideMenu.lua` |
 | Match-HUD (Punktestand, Killfeed, Leben, Munition, Zielmarker) | `src/shared/MatchHUD.lua`, Anordnung und Größe der Munitionsanzeige (`AMMO_SCALE`) in `src/shared/HUD.lua` |
 | Fähigkeits-Zeilen (Fähigkeit, Gadget, Ultimate) | `src/shared/AbilityClient.lua`, Ultimate-Werte in `AgentConfig.Ultimate` |
 | VERLASSEN-Knopf (Bestätigungszeit) | `CONFIRM_TIME` in `src/shared/LeaveButton.lua` |
@@ -835,7 +847,7 @@ G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage, E an 
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |
 | Modi im Menü | `src/shared/Modes.lua` |
 | Arcade über mehrere Server: Modi, Meldeintervall, Verfall, Wartezeiten | `Modes.Matchmaking` in `src/shared/Modes.lua`; an/aus: Einstellung `CrossServer` |
-| Rückenwaffe im Hub (Größe `SCALE`, Neigung `TILT`, Abstand zum Rücken) | `src/server-shared/BackWeapon.lua` |
+| Rückenwaffe im Markt (Größe `SCALE`, Neigung `TILT`, Abstand zum Rücken) | `src/server-shared/BackWeapon.lua` |
 | Bewegungs-Check (erlaubtes Tempo, Vorrat) | `FLAT_*`, `UP_*` in `src/server-shared/MovementGuard.lua` |
 | Admins | `ADMIN_IDS` in `src/server/AdminService.lua` |
 | Codes | `CODES` in `src/server-shared/ShopService.lua` |
@@ -881,13 +893,13 @@ am Commit:
 | `session` | Sitzungssperre der Spielstände (Serverwechsel, Absturz, DataStore-Fehler) |
 | `progress` | Spielstand laden/speichern mit Sperre, Robux-Käufe erst nach dem Speichern bestätigt, Kick bei Ladefehler, Speichern beim Herunterfahren |
 | `medals` | Medaillen im KillService (Mehrfach-Kill, Serien, Rache, Weitschuss, ...), mit beiden Signal-Modi von Roblox |
-| `backweapon` | Rückenwaffe im Hub: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
+| `backweapon` | Rückenwaffe im Markt: Lage hinter dem Rücken für alle Primärwaffen, folgt Agent, Waffenwahl und Skin, weg im Kampfmodus und beim Tod |
 | `settings`, `hitfeedback` | Einstellungen speichern (auch AUS-Werte), Stilwahl; alle Hitmarker- und Schadenszahl-Stile laufen durch und räumen auf, Kombo-Ton, Vorschau |
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Rutschen bergab, Rutsch-Sprünge, Vault, Hochziehen, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `movementfeel` | Bewegungsgefühl: Tempo-Rampe, Rutschen (Schub, Reibung, Hang, Lenken, keine Tempo-Ketten), Rutsch-Sprung mit Schwung, Schwung in der Luft, Coyote-Time, Sprungpuffer, harte Landung, Vault über dünne Mauern, Hochziehen (auch aus dem Sprung), zu hohe Wände nicht, Kamera-Neigung nur bei Roblox-Kamera |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
-| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge |
-| `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis nur im Hub/Markt, Esc schließt |
+| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge; Einsatzzentrale mit allen Teilen, kein Hub mehr |
+| `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis T nur im Markt, Esc schließt |
 | `padhold`, `extinctionpad` | Controller antippen/halten: kurz = Antippen-Aktion beim Loslassen, lang = Halten-Aktion bis zum Loslassen, Tasten ohne Halten sofort, Hinweis „△ HALTEN“; EXTINCTION-Belegung (↑ Ping/Karte, Select Inventar/Squad, △ heilen/parken) mit echten Tasten, Heil-Item-Wahl (Medikit/Verband/anderes, Meldung ohne), außerhalb der offenen Welt normale Belegung |
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
 | `crate`, `crateui` | Kisten: nur die Waffen-Kiste (alle handelbar), steile Chancen (62/28/8/2 %), Öffnen (Ort, Münzen, Wartezeit), weitere Stücke, Rolle mit dem Gewinn an festem Platz; Fenster mit Rolle, Gewinn-Karte, NOCHMAL |
@@ -896,9 +908,9 @@ am Commit:
 | `marketui`, `marketui2` | Markt-Oberfläche im Simulator: Suche, Stand-Fenster, Gegenangebote, MEIN STAND mit Stand-Name, Tafeln |
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `skins` | Nur noch Waffen-Skins: keine Agenten-Skins (Cosmetics, RAP, Kisten), Agentenfarben immer Standard, Battle-Pass-Stufe 20 = Saison-Elite, alte Spielstände verlieren entfernte Skins (Besitz, Plätze "A:", Merkliste), SHOP/LOADOUT/BATTLE PASS ohne Agenten-Skins |
-| `trade` | Tauschen: Anfrage (Hub/Markt, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen, fehlgeschlagener Tausch ändert nichts |
+| `trade` | Tauschen: Anfrage (Markt/Safe Zone, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen/Safe Zone verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
-| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), Agentenwechsel im Hub sofort, Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
+| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), Agentenwechsel im Markt sofort, Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
@@ -907,13 +919,13 @@ am Commit:
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
 | `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `attachmentfit` | Aufsätze nur auf passenden Waffen (`AttachmentConfig.ByWeapon`, z.B. kein Griff am Revolver, kein Visier an Kurzwaffen): Lobby-Kauf und -Ausrüsten prüfen, unpassende wirken nicht, alte Spielstände legen sie ab und erstatten den Preis |
-| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Hub am Rad |
+| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur in der Einsatzzentrale am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
 | `extmarketpage` | Markt-Seite für sich (Mock): Suche, Kategorien, Sortierung, Karten, KAUFEN/ZU TEUER, MEINE ANGEBOTE (Preis ändern, zurücknehmen), Verkaufen mit ±, Schieberegler, günstigstem Angebot und Erlös, Sperre außerhalb der Safe Zone |
 | `extinctionmenu` | Menü der offenen Welt: TAB/M öffnen und schließen, Reiter in der Reihenfolge, Lobby-Seiten ausgeliehen, verkleinert und zurückgegeben, Controller L1/R1 rundum, Auswahl im Inhalt, ○ schließt |
-| `matchmaking` | Arcade über mehrere Server: eigene Meldung (nur Arcade-Modi, verfällt), Wechsel auf einen Server mit mehr echten Spielern (nicht auf volle, nicht bei Gleichstand, nicht zu einem anderen Place, Platz für den ganzen Squad), Teleport-Daten, Squad geht zusammen und folgt hier, Fehlschlag sofort / TeleportInitFailed / Zeitüberschreitung: hier spielen und eine Weile nicht weiterschicken, SCHNELLES SPIEL sieht andere Server, Hub/Extinction/Markt bleiben, Einstellung aus, Ankunft direkt im Modus mit Squad (nur gegenseitig, kein fremder Place), verfallene Server, MemoryStore gestört, Herunterfahren |
+| `matchmaking` | Arcade über mehrere Server: eigene Meldung (nur Arcade-Modi, verfällt), Wechsel auf einen Server mit mehr echten Spielern (nicht auf volle, nicht bei Gleichstand, nicht zu einem anderen Place, Platz für den ganzen Squad), Teleport-Daten, Squad geht zusammen und folgt hier, Fehlschlag sofort / TeleportInitFailed / Zeitüberschreitung: hier spielen und eine Weile nicht weiterschicken, SCHNELLES SPIEL sieht andere Server, Extinction/Markt bleiben, neue Spieler im Camp, Einstellung aus, Ankunft direkt im Modus mit Squad (nur gegenseitig, kein fremder Place), verfallene Server, MemoryStore gestört, Herunterfahren |
 | `squads` | Squads der offenen Welt: Einladen/Annehmen setzen dieselbe SquadId, kein Friendly Fire, Schaden an anderen schon, Pings nur an den Squad (nicht an andere, im Free-for-All nicht), Squad-Mitglied kein gepingter Gegner, Anführer verlässt die offene Welt: Squad bleibt, betritt sie: Squad kommt mit, Verlassen löst auf |
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
@@ -941,7 +953,7 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
   CoD-Stil), Menü, Bewegung, RapConfig (RAP-Werte), ItemPreview (3D-Vorschau eines Skins)
 - `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings,
   EconomyService (RAP, Rückverkauf, Reservierungen), MarketService (Stände), TradeService (Tauschen)
-- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi (inkl. Hub und Markt), Bots, Admin
+- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi (inkl. Extinction und Markt), Einsatzzentrale, Bots, Admin
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, HubWheel (Glücksrad),
   MarketClient (Markt), TradeClient (Tauschen), KillstreakHUD, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)

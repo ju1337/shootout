@@ -3,7 +3,7 @@
 Das Spiel benutzt für jede Waffe ein fertiges 3D-Modell, sobald es in Studio unter
 **ReplicatedStorage › Assets › Weapons** liegt und so heißt wie die Waffe (`Rifle`, `SMG`, …). Solange es keins gibt
 oder dem Modell etwas Wichtiges fehlt, bleibt die heutige Quader-Waffe – nichts geht kaputt. Das Modell wird
-überall benutzt: Ego-Waffe mit Armen, Waffe in der Hand (Third-Person), Rückenwaffe im Hub, Vorschauen in Lobby,
+überall benutzt: Ego-Waffe mit Armen, Waffe in der Hand (Third-Person), Rückenwaffe im Markt, Vorschauen in Lobby,
 Shop und Markt, Waffen-Symbole im HUD.
 
 Der Code dazu steht in `src/shared/GunModels.lua` (Abschnitt „Fertige 3D-Modelle“). Allgemeine Regeln für alle

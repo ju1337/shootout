@@ -4,9 +4,9 @@ Jeder Agent kann ein eigenes 3D-Modell bekommen. Das Spiel zeigt es **genau so, 
 aussieht**: dieselben Teile an derselben Stelle, gleich groß, gleich gedreht, mit denselben Farben, Materialien und
 Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Modell überall:
 
-- an **Spielern** im Hub, im Markt und im Match;
+- an **Spielern** in der offenen Welt, im Markt und im Match;
 - an **Bots** mit diesem Agenten;
-- in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Hub (Aufstellung, Statue „Agent der Woche“,
+- in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Einsatzzentrale (Statue „Agent der Woche“,
   Vitrinen), Siegerpodest nach dem Match und das Agenten-Symbol im HUD.
 
 Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem
@@ -110,7 +110,7 @@ Knöchel 0,25. Liegen die Grenzen deiner Teile auf diesen Gelenken, bleibt beim 
 - **Treffer:** Die sichtbaren Teile des Modells sind die Trefferzone, Kopfschüsse zählen am Kopf. Wie leicht ein
   Agent zu treffen ist, hängt also von der Form des Modells ab.
 - **Im Explorer während Play:** **Workspace** › *DeinName* ist das Modell (ohne Rig liegen seine Teile im Ordner
-  **AgentModel**). Agentenwechsel im Hub und im Markt: Der Spieler wird an derselben Stelle neu gespawnt.
+  **AgentModel**). Agentenwechsel im Markt: Der Spieler wird an derselben Stelle neu gespawnt.
 - **Neu laden:** Fügst du ein Modell ein, ersetzt, benennst um oder änderst es, lädt das Spiel es sofort neu und zieht
   alle Spieler und Bots mit diesem Agenten neu an (im laufenden Spiel nur, wenn die Änderung auf dem Server passiert,
   z.B. im Modus **Run**).

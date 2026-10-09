@@ -1,6 +1,7 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS · STATISTIK ·
--- CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- es wieder. Reiter INVENTAR · MARKT · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und LOADOUT · SHOP · BATTLE PASS ·
+-- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben), AGENTEN und
+-- SPIELEN · ARCADE als Links in die Lobby. Controller: L1/R1 blättert, Auswahl startet im Inhalt.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
 local function check(cond, msg)
@@ -123,7 +124,8 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN,AGENTEN,"
+	.. "SPIELEN · ARCADE",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -144,12 +146,12 @@ check(title() == "ERFOLGE" and activeTab() == "Achievements", "Klick auf ERFOLGE
 check(find(menu(), "Achievement_Zombies") ~= nil and find(menu(), "Achievement_Veteran") ~= nil, "Erfolge-Wand mit Karten")
 
 -- Lobby-Seiten: ausgeliehen, verkleinert, beim Schließen zurück in die Lobby
-for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
+for _, id in { "Loadout", "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	step(0.1)
 	check(activeTab() == id, id .. ": Reiter aktiv")
 	local holder = menu() and menu():FindFirstChild("PageHolder", true)
-	local page = holder and holder:FindFirstChild(id .. "Page")
+	local page = holder and holder:FindFirstChild((if id == "Loadout" then "Inventory" else id) .. "Page")
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
 	local scale = holder and holder:FindFirstChildOfClass("UIScale")
 	check(scale ~= nil and scale.Scale < 1 and scale.Scale > 0.8, id .. ": verkleinert")
@@ -161,6 +163,16 @@ check(lobbyGui ~= nil and lobbyGui:FindFirstChild("SettingsPage", true) ~= nil, 
 check(not lobbyGui.Enabled, "Lobby bleibt in der offenen Welt zu")
 key(Enum.KeyCode.M)
 check(activeTab() == "Settings", "M: wieder OPTIONEN")
+-- AGENTEN: Link in die Lobby (Menü zu, Lobby auf der Seite AGENTEN), Lobby wieder zu
+menu():FindFirstChild("Tabs", true).Tab_Agents.Activated:Fire()
+step(0.1)
+check(menu() == nil and lobbyGui.Enabled, "AGENTEN: Menü zu, Lobby offen")
+local agentsPage = lobbyGui:FindFirstChild("AgentsPage", true)
+check(agentsPage ~= nil and agentsPage.Visible, "AGENTEN: Seite der Lobby sichtbar")
+GameMenu.SetOpen(false)
+step(0.1)
+key(Enum.KeyCode.M)
+check(activeTab() == "Settings", "M nach dem Lobby-Link: wieder OPTIONEN")
 
 -- Controller: R1/L1 blättern (rundum), Auswahl im Inhalt, nicht auf den Reitern
 UserInputService.LastInputTypeChanged:Fire(Enum.UserInputType.Gamepad1)
