@@ -6,7 +6,9 @@
 -- das Feld aus (ShopAction "SpinWheel" -> Remotes.WheelResult), das Rad dreht ein paar Runden und bleibt genau
 -- dort stehen, der Zeiger klackt an jedem Steg, die Lichter laufen mit, danach blinkt das Gewinnfeld und eine
 -- Belohnungs-Karte erscheint. Die Tafel auf dem Pult ("WheelBoard") zeigt, ob ein Gratis- oder Extra-Dreh bereit
--- ist bzw. wann der nächste kommt. Einmal am Tag gratis, dazu Extra-Drehs (Login-Kalender).
+-- ist bzw. wann der nächste kommt. Einmal am Tag gratis, dazu Extra-Drehs (Login-Kalender, Robux-Shop).
+-- Weil man Drehs für Robux kaufen kann, steht auf jedem Feld seine Chance, und am Pult öffnet Q (bzw. Antippen des
+-- zweiten Knopfs) das Fenster CHANCEN mit allen Gewinnen (OddsPanel, Roblox-Regeln für bezahlte Zufallsitems).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +25,8 @@ local Cosmetics = require(Shared.Cosmetics)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local Notifications = require(Shared.Notifications)
+local PaidRandom = require(Shared.PaidRandom)
+local OddsPanel = require(Shared.OddsPanel)
 
 local player = Players.LocalPlayer
 
@@ -134,8 +138,9 @@ function HubWheel.Build(spot, parent)
 	part(spin, "Part", { Name = "Disc", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, 2 * R + 0.2, 2 * R + 0.2),
 		CFrame = face * CFrame.Angles(0, math.pi / 2, 0), Color = DARK, Material = Enum.Material.Metal })
 
-	-- Felder aus je zwei Keilen, Trennstege, Beschriftung
+	-- Felder aus je zwei Keilen, Trennstege, Beschriftung mit Chance
 	local slices = {}
+	local odds = LoginConfig.WheelOdds()
 	for i, field in LoginConfig.Wheel do
 		local center = (i - 1) * SLICE
 		local wedges = {}
@@ -162,7 +167,7 @@ function HubWheel.Build(spot, parent)
 		surface.LightInfluence = 0.3
 		surface.Parent = label
 		local text = Instance.new("TextLabel")
-		text.Size = UDim2.fromScale(1, 1)
+		text.Size = UDim2.fromScale(1, 0.7)
 		text.BackgroundTransparency = 1
 		text.Text = field.Text
 		text.TextScaled = true
@@ -170,6 +175,17 @@ function HubWheel.Build(spot, parent)
 		text.TextColor3 = Color3.new(1, 1, 1)
 		text.TextStrokeTransparency = 0.35
 		text.Parent = surface
+		local chance = Instance.new("TextLabel")
+		chance.Name = "Chance"
+		chance.Position = UDim2.fromScale(0, 0.68)
+		chance.Size = UDim2.fromScale(1, 0.3)
+		chance.BackgroundTransparency = 1
+		chance.Text = PaidRandom.Percent(odds[i])
+		chance.TextScaled = true
+		chance.Font = Enum.Font.BuilderSansBold
+		chance.TextColor3 = Color3.fromRGB(255, 244, 220)
+		chance.TextStrokeTransparency = 0.5
+		chance.Parent = surface
 		slices[i] = { Wedges = wedges, Color = field.Color }
 	end
 	-- Nabe
@@ -269,6 +285,22 @@ function HubWheel.Init()
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = console
 
+	-- Chancen ansehen (immer möglich, auch ohne Dreh)
+	local oddsPrompt = Instance.new("ProximityPrompt")
+	oddsPrompt.Name = "OddsPrompt"
+	oddsPrompt.ActionText = "Chancen ansehen"
+	oddsPrompt.ObjectText = "Glücksrad"
+	oddsPrompt.KeyboardKeyCode = Enum.KeyCode.Q
+	oddsPrompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+	oddsPrompt.HoldDuration = 0
+	oddsPrompt.MaxActivationDistance = 12
+	oddsPrompt.RequiresLineOfSight = false
+	oddsPrompt.UIOffset = Vector2.new(0, 72)
+	oddsPrompt.Parent = console
+	oddsPrompt.Triggered:Connect(function()
+		OddsPanel.Show("Glücksrad", OddsPanel.WheelRows())
+	end)
+
 	local rotation = 0          -- aktuelle Drehung (Grad)
 	local spinning = false      -- Rad dreht (oder wartet auf den Server)
 	local waitingSince = nil    -- Anfrage geschickt, noch keine Antwort
@@ -306,7 +338,7 @@ function HubWheel.Init()
 		elseif ready then
 			board.Status.Text = free and "GRATIS-DREH BEREIT" or ("EXTRA-DREH BEREIT  ·  " .. extra)
 			board.Status.TextColor3 = Color3.new(1, 1, 1)
-			board.Hint.Text = InputActions.IsTouch() and "TIPPE AUF DREHEN" or "E DRÜCKEN ZUM DREHEN"
+			board.Hint.Text = InputActions.IsTouch() and "TIPPE AUF DREHEN" or "E DREHEN  ·  Q CHANCEN"
 		else
 			board.Status.Text = "NÄCHSTER DREH IN " .. clock(86400 - now % 86400)
 			board.Status.TextColor3 = Color3.fromRGB(170, 178, 190)

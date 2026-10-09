@@ -113,7 +113,7 @@ check(accent ~= nil and accent.Position.X.Offset == windowRadius and accent.Posi
 	and accent.Size.X.Scale == 1 and accent.Size.X.Offset == -2 * windowRadius, "Akzentstreifen um den Radius eingerückt")
 check(accentCorner ~= nil and accentCorner.CornerRadius.Scale == 1, "Akzentstreifen mit runden Enden")
 check(labelWith(window, "WAFFEN-KISTE") ~= nil and labelStarting(window, "WAFFEN-SKINS") ~= nil, "Titel: Waffen-Kiste")
-check(labelWith(window, "CHANCEN") ~= nil and labelWith(window, "DAS STECKT DRIN") ~= nil, "Chancen und Inhalt")
+check(labelWith(window, "CHANCEN") ~= nil and labelWith(window, "DAS STECKT DRIN  ·  CHANCE JE SKIN") ~= nil, "Chancen und Inhalt")
 check(labelWith(window, "62.0 %") ~= nil and labelWith(window, "2.0 %") ~= nil, "Chancen in Prozent (62 % gewöhnlich, 2 % legendär)")
 local pool = CrateConfig.Pool(CrateConfig.Get("Weapon"))
 for _, item in pool do

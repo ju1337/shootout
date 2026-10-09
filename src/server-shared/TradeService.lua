@@ -9,6 +9,7 @@
 --   4. Ready: Sind beide BEREIT, läuft ein Countdown (RapConfig.TradeConfirmTime). Jede Änderung an einem Angebot
 --      nimmt beide BEREIT zurück und stoppt den Countdown – so kann niemand im letzten Moment etwas austauschen.
 --   5. Nach dem Countdown wird alles auf einmal getauscht (EconomyService.Exchange) und beide Spielstände gespeichert.
+-- Nur wenn beide laut PolicyGate handeln dürfen (Roblox-Regeln je Land).
 -- Abbruch: Cancel, Moduswechsel oder Spiel verlassen eines der beiden. Remotes: TradeAction (Client -> Server),
 -- TradeUpdate (Server -> Client: "Request" { From, Name, Seconds }, "State" {...}, "Closed" { Reason },
 -- "Done" { Partner, Received, Gave }, "Status" { Text, Success }).
@@ -24,6 +25,7 @@ local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
 local EconomyService = require(script.Parent.EconomyService)
+local PolicyGate = require(script.Parent.PolicyGate)
 
 local TradeService = {}
 
@@ -56,6 +58,13 @@ local function canMeet(a, b)
 	local rb = b.Character and b.Character:FindFirstChild("HumanoidRootPart")
 	if not ra or not rb or (ra.Position - rb.Position).Magnitude > RapConfig.TradeRange then
 		return false, "Geh näher an " .. b.Name .. " heran."
+	end
+	-- Roblox: wer gekaufte Gegenstände nicht handeln darf (PolicyGate), tauscht gar nicht
+	if not PolicyGate.TradeAllowed(a) then
+		return false, "Tauschen ist in deinem Land nicht erlaubt."
+	end
+	if not PolicyGate.TradeAllowed(b) then
+		return false, "Mit " .. b.Name .. " kann man nicht tauschen (Ländervorgabe von Roblox)."
 	end
 	return true
 end

@@ -70,6 +70,20 @@ function CrateConfig.Odds(crate)
 	return odds
 end
 
+-- Chance je Skin (Roblox verlangt sie für jedes Endergebnis): Chance der Seltenheit / Skins dieser Seltenheit.
+-- Gibt { [Skin-Id] = Chance (0..1) } zurück, Summe 1.
+function CrateConfig.ItemOdds(crate)
+	local chance = {}
+	for _, entry in CrateConfig.Odds(crate) do
+		chance[entry.Rarity] = entry.Chance / entry.Count
+	end
+	local odds = {}
+	for _, item in CrateConfig.Pool(crate) do
+		odds[item.Id] = chance[item.Rarity] or 0
+	end
+	return odds
+end
+
 -- Einen Skin ziehen: Seltenheit nach Gewicht, dann gleichverteilt. random = Random (Standard: neu)
 function CrateConfig.Roll(crate, random)
 	random = random or Random.new()

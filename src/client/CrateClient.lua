@@ -2,7 +2,8 @@
 -- Kisten öffnen (Server: CrateService, Chancen und Preise: CrateConfig). In der Marktmitte steht der Automat der
 -- Waffen-Kiste; E öffnet das Fenster:
 --   * oben die Rolle (Skins ziehen vorbei und bleiben unter der Markierung stehen), darunter die Chancen je Seltenheit
---     und alle Skins, die in der Kiste stecken (mit RAP-Wert, falls handelbar),
+--     und alle Skins, die in der Kiste stecken, mit ihrer Chance (Roblox-Pflicht, PaidRandom) und RAP-Wert,
+--   * wo Roblox bezahlte Zufallsitems verbietet (Attribut PaidRandomOk = false), bleibt ÖFFNEN gesperrt,
 --   * ÖFFNEN zieht Münzen ab (der Server würfelt, die Rolle zeigt nur das Ergebnis),
 --   * danach eine Gewinn-Karte: neu, weiteres Stück (handelbar) oder Duplikat mit Münzen zurück.
 -- Esc oder X schließt; der Gewinn ist dann schon im Inventar und kommt als Meldung.
@@ -24,6 +25,7 @@ local RapConfig = require(Shared.RapConfig)
 local ItemPreview = require(Shared.ItemPreview)
 local Notifications = require(Shared.Notifications)
 local InputActions = require(Shared.InputActions)
+local PaidRandom = require(Shared.PaidRandom)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -114,6 +116,9 @@ local function setOpenButton()
 	local button = window.Open
 	if window.Spinning then
 		button.SetText("ÖFFNET …")
+		button.SetColor(C.MutedBack, C.Muted)
+	elseif not PaidRandom.ShowRandom(player) then
+		button.SetText("IN DEINEM LAND NICHT VERFÜGBAR")
 		button.SetColor(C.MutedBack, C.Muted)
 	elseif coins() < crate.Price then
 		button.SetText("ZU WENIG MÜNZEN  ·  " .. format(crate.Price))
@@ -260,6 +265,11 @@ function CrateClient.Request()
 		return
 	end
 	local crate = window.Crate
+	if not PaidRandom.ShowRandom(player) then
+		window.Status.Text = "Kisten gibt es in deinem Land nicht. Skins kannst du im Shop direkt kaufen."
+		window.Status.TextColor3 = C.Bad
+		return
+	end
 	if coins() < crate.Price then
 		window.Status.Text = "Nicht genug Münzen – " .. format(crate.Price) .. " nötig."
 		window.Status.TextColor3 = C.Bad
@@ -333,8 +343,11 @@ local function build(crate)
 	end
 
 	-- Inhalt der Kiste
-	label({ Position = UDim2.fromOffset(40, 340), Size = UDim2.fromOffset(400, 18), Text = "DAS STECKT DRIN", TextSize = 13, Font = F.Bold,
-		TextColor3 = C.Muted, ZIndex = 5 }, frame)
+	label({ Position = UDim2.fromOffset(40, 340), Size = UDim2.fromOffset(400, 18), Text = "DAS STECKT DRIN  ·  CHANCE JE SKIN", TextSize = 13,
+		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, frame)
+	label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromOffset(40 + VIEW_W, 340), Size = UDim2.fromOffset(460, 18),
+		Text = PaidRandom.Note, TextSize = 11, Font = F.Medium, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
+	local itemOdds = CrateConfig.ItemOdds(crate)
 	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(40, 362), Size = UDim2.fromOffset(VIEW_W, 170), BackgroundTransparency = 1,
 		BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ZIndex = 5 }, frame)
@@ -359,7 +372,8 @@ local function build(crate)
 			TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)
 		local value = RapConfig.Value(item.Id)
 		label({ Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -20, 0, 16), TextSize = 11, Font = F.Bold, TextColor3 = value and C.Rap or C.Muted,
-			Text = "WAFFE" .. (value and ("  ·  RAP " .. format(value)) or ""), TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, cell)
+			Text = PaidRandom.Percent(itemOdds[item.Id]) .. (value and ("  ·  RAP " .. format(value)) or ""), TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 5 }, cell)
 	end
 
 	local openButton = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(420, 58),
@@ -432,6 +446,7 @@ function CrateClient.Init()
 		end
 	end)
 	player:GetAttributeChangedSignal("Coins"):Connect(setOpenButton)
+	player:GetAttributeChangedSignal("PaidRandomOk"):Connect(setOpenButton)
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
 		if window and player:GetAttribute("Mode") ~= "Market" and player:GetAttribute("Mode") ~= "Hub" then
 			closeWindow()

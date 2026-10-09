@@ -2,6 +2,7 @@
 -- Kisten öffnen (CrateConfig): Münzen abbuchen, Skin ziehen, dem Spieler geben, Ergebnis samt Rolle an den Client.
 -- Remotes: CrateAction (Client -> Server: "Open", Kisten-Id), CrateResult (Server -> Client, siehe CrateConfig).
 -- Gezogen wird erst nach der Bezahlung; schlägt etwas fehl, bekommt der Spieler seine Münzen zurück.
+-- Wo Roblox bezahlte Zufallsitems verbietet (PolicyGate), bleibt die Kiste zu.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,6 +12,7 @@ local Remotes = require(Shared.Remotes)
 local CrateConfig = require(Shared.CrateConfig)
 local RapConfig = require(Shared.RapConfig)
 local ProgressService = require(script.Parent.ProgressService)
+local PolicyGate = require(script.Parent.PolicyGate)
 
 local CrateService = {}
 
@@ -35,6 +37,10 @@ function CrateService.Open(player, crateId)
 	end
 	if not modeAllowed(player) then
 		return false, "Kisten öffnest du im Markt."
+	end
+	-- Roblox: bezahlte Zufallsitems (Münzen gibt es auch für Robux) sind in manchen Ländern verboten (PolicyGate)
+	if not PolicyGate.RandomAllowed(player) then
+		return false, "Kisten gibt es in deinem Land nicht. Skins kannst du im Shop direkt kaufen."
 	end
 	if not ProgressService.IsLoaded(player) then
 		return false, "Deine Daten werden noch geladen."

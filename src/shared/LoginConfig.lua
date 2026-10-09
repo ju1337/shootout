@@ -32,6 +32,19 @@ LoginConfig.Wheel = {
 	{ Text = "JACKPOT", Coins = 2500, Weight = 2, Color = Color3.fromRGB(255, 200, 60) },
 }
 
+-- Chance je Feld (0..1, gleiche Reihenfolge wie Wheel, Summe 1). Muss sichtbar sein, weil man Drehs für Robux kauft.
+function LoginConfig.WheelOdds()
+	local total = 0
+	for _, field in LoginConfig.Wheel do
+		total += field.Weight
+	end
+	local odds = {}
+	for index, field in LoginConfig.Wheel do
+		odds[index] = total > 0 and field.Weight / total or 0
+	end
+	return odds
+end
+
 -- Heutiges und gestriges Datum (UTC) zur Serverzeit now
 function LoginConfig.Date(now)
 	return os.date("!%Y-%m-%d", math.floor(now))

@@ -48,6 +48,7 @@ local KitService = require(ServerShared.KitService)
 local LootService = require(ServerShared.LootService)
 local Telemetry = require(ServerShared.Telemetry)
 local DiscordLog = require(ServerShared.DiscordLog)
+local PolicyGate = require(ServerShared.PolicyGate)
 local BanService = require(ServerShared.BanService)
 local Badges = require(ServerShared.Badges)
 local InviteService = require(ServerShared.InviteService)
@@ -62,6 +63,7 @@ Players.CharacterAutoLoads = false
 start("DiscordLog.Init", DiscordLog.Init) -- Discord-Logs (Secret "DiscordLog"), fängt ab hier Fehler/Warnungen
 start("BanService.Init", BanService.Init) -- zuerst: gesperrte Spieler sofort rauswerfen
 start("Telemetry.Init", Telemetry.Init) -- Spielanalyse (AnalyticsService)
+start("PolicyGate.Init", PolicyGate.Init) -- Roblox-Regeln je Land: bezahlte Zufallsitems (Kisten) und Handel
 start("ProgressService.Init", ProgressService.Init)
 start("ShopService.Init", ShopService.Init)
 start("DownedService.Init", DownedService.Init)

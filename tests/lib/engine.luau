@@ -1661,6 +1661,20 @@ function SIM.Advance(seconds, fps)
 	SIM.Run(target)
 end
 
+-- PolicyService: SIM.Policy ist die Antwort für alle Spieler (Tests ändern sie), PolicyFail = so viele Anfragen schlagen fehl
+SIM.Policy = { ArePaidRandomItemsRestricted = false, IsPaidItemTradingAllowed = true }
+SIM.PolicyFail = 0
+local PolicyService = service("PolicyService")
+rawset(PolicyService, "__methods", {
+	GetPolicyInfoForPlayerAsync = function()
+		if SIM.PolicyFail > 0 then
+			SIM.PolicyFail -= 1
+			error("HTTP 500 (Policy)")
+		end
+		return table.clone(SIM.Policy)
+	end,
+})
+
 local Debris = service("Debris")
 rawset(Debris, "__methods", {
 	AddItem = function(_, item, lifetime)

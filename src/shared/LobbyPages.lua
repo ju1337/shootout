@@ -27,6 +27,8 @@ local AttachmentIcons = require(Shared.AttachmentIcons)
 local InputActions = require(Shared.InputActions)
 local RobuxConfig = require(Shared.RobuxConfig)
 local RapConfig = require(Shared.RapConfig)
+local PaidRandom = require(Shared.PaidRandom)
+local OddsPanel = require(Shared.OddsPanel)
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
 
@@ -180,6 +182,8 @@ function LobbyPages.Shop(page)
 	end
 
 	-- Reiter ROBUX: Gamepässe und Entwicklerprodukte (RobuxConfig). Ohne ID: "BALD", sonst Roblox-Kaufdialog.
+	-- Glücksrad-Drehs sind bezahlte Zufallsitems: Knopf CHANCEN auf der Karte, und wo Roblox sie verbietet
+	-- (PaidRandom.ShowRandom), fehlt die Karte ganz.
 	local robuxButtons = {} -- { Buy, Pass } zum Aktualisieren (gekauft?)
 	local function updateRobux()
 		for _, entry in robuxButtons do
@@ -211,6 +215,12 @@ function LobbyPages.Shop(page)
 		if entry.Tag then
 			UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 8), Text = entry.Tag, TextSize = 12,
 				BackgroundColor3 = entry.Color, TextColor3 = C.PrimaryText }, top)
+		end
+		if not isPass and PaidRandom.IsRandomProduct(entry) then
+			UITheme.Chunky({ Name = "Odds", Position = UDim2.fromOffset(8, 8), Size = UDim2.fromOffset(96, 28), Color = C.Card,
+				StrokeColor = entry.Color, Text = "CHANCEN", TextSize = 13 }, top, function()
+				OddsPanel.Show("Glücksrad", OddsPanel.WheelRows())
+			end)
 		end
 		label({ Position = UDim2.fromOffset(16, 180), Size = UDim2.new(1, -32, 0, 28), Text = entry.Name, TextSize = 22,
 			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
@@ -341,8 +351,10 @@ function LobbyPages.Shop(page)
 				robuxCard(order, pass, true)
 			end
 			for _, product in RobuxConfig.Products do
-				order += 1
-				robuxCard(order, product, false)
+				if not PaidRandom.IsRandomProduct(product) or PaidRandom.ShowRandom(player) then
+					order += 1
+					robuxCard(order, product, false)
+				end
 			end
 			updateRobux()
 			return

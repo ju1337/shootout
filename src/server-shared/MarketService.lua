@@ -26,6 +26,7 @@
 -- Zustand für alle Clients als Attribute am Stand-Ordner (Maps.Market.Stand_<n>): Owner (UserId, 0 = frei),
 -- OwnerName, StandName, Listings (JSON [{ Slot, Item, Price }]), Offers (JSON [{ Id, Slot, Item, Buyer,
 -- BuyerName, Price, Expires }]). An der Map: PriceStats (JSON { [Skin] = { Avg, N, Last } }), TopSellers (JSON).
+-- Anbieten, Kaufen und Gegenangebote nur, wenn PolicyGate den Handel erlaubt (Roblox-Regeln je Land).
 -- Remotes: MarketAction (Client -> Server), MarketStatus (Server -> Client: Text, Erfolg).
 
 local Players = game:GetService("Players")
@@ -41,8 +42,11 @@ local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
 local EconomyService = require(script.Parent.EconomyService)
+local PolicyGate = require(script.Parent.PolicyGate)
 
 local MarketService = {}
+
+local TRADE_BLOCKED = "Handeln mit anderen Spielern ist in deinem Land nicht erlaubt."
 
 MarketService.Key = "Stand"     -- Schlüssel der Reservierungen
 MarketService.ClaimRange = 18   -- so nah muss man zum Beanspruchen am Stand sein (Studs)
@@ -528,6 +532,9 @@ function actions.List(player, itemId, price)
 	if not item or not RapConfig.Tradeable(itemId) then
 		return "Diesen Skin kann man nicht handeln.", false
 	end
+	if not PolicyGate.TradeAllowed(player) then
+		return TRADE_BLOCKED, false
+	end
 	price = RapConfig.CleanPrice(price)
 	if not price then
 		return "Preis zwischen " .. RapConfig.MinPrice .. " und " .. format(RapConfig.MaxPrice) .. " RAP.", false
@@ -632,6 +639,12 @@ local function sell(stand, slot, buyer, price)
 	if not listing or not owner then
 		return "Dieses Angebot gibt es nicht mehr.", false
 	end
+	if not PolicyGate.TradeAllowed(buyer) then
+		return TRADE_BLOCKED, false
+	end
+	if not PolicyGate.TradeAllowed(owner) then
+		return "Von " .. owner.Name .. " kann man nicht kaufen (Ländervorgabe von Roblox).", false
+	end
 	local item = Cosmetics.Get(listing.Item)
 	local ok, reason = EconomyService.Exchange(owner, buyer, { Items = { [listing.Item] = 1 } }, { Rap = price },
 		MarketService.Key, RapConfig.FeeRate(price))
@@ -694,6 +707,9 @@ function actions.Offer(player, id, slot, price)
 	end
 	if not inMarket(player) then
 		return "Angebote machen kann man nur im Markt.", false
+	end
+	if not PolicyGate.TradeAllowed(player) then
+		return TRADE_BLOCKED, false
 	end
 	if distance(player, stand) > MarketService.BuyRange then
 		return "Geh näher an den Stand.", false
