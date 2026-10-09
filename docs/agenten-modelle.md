@@ -12,6 +12,19 @@ Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Mod
 Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem
 Roblox-Gesicht in seinen Farben. Kaputt geht dabei nichts, und Studio schreibt in den Output, was fehlt.
 
+## Agenten-Skins mit eigenem Modell (z.B. Scout)
+
+Es gibt nur noch einen Agenten; andere Figuren sind **Agenten-Skins**. Ein Skin bekommt ein eigenes 3D-Modell mit
+`Model = true` in `src/shared/Cosmetics.lua` (Beispiel `AS_Scout`). Das Modell liegt in **Assets › Agents** und heißt
+**wie die Skin-Id** (`AS_Scout`), sonst gilt alles wie unten. Wer den Skin ausrüstet (Menü SKINS), wird zu diesem
+Modell: in der Safe Zone sofort, draußen beim Betreten der Safe Zone bzw. beim nächsten Spawn (Leben bleibt). Ohne
+Modell im Place sieht der Skin aus wie ein Farb-Skin (Farbe/Material aus Cosmetics).
+
+Meshy-Modell ohne Skelett (statische GLB, Arme hängen): `python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb>`
+zerlegt es in die 15 starren Teile (Schnitthöhen siehe Skript). Fertig für den Scout: `art/sources/Agents/AS_Scout.glb`
+→ Import 3D (Scale Unit **Stud**, **Merge Meshes aus**, **kein Rig**) → nach Assets › Agents → `AS_Scout` nennen.
+Schöner bewegt sich ein Modell mit Skelett (Meshy „Rigging“, dann der Weg unten).
+
 ## Modell von Meshy AI (empfohlen)
 
 Meshy liefert eine FBX mit Skelett, aber die Knochen heißen wie bei Mixamo (`Hips`, `LeftArm`, `LeftForeArm` …).

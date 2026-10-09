@@ -153,6 +153,10 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(150, 22, 34), Material = Enum.Material.Foil },
 	{ Id = "AS_Goldjunge", Type = "Agent", Name = "Goldjunge", Rarity = "Legendary", Price = 2500,
 		Color = Color3.fromRGB(226, 178, 58), Material = Enum.Material.Foil },
+	-- Agenten-Skins mit eigenem 3D-Modell (Model = true): Modell in ReplicatedStorage.Assets.Agents.<Id>
+	-- (docs/agenten-modelle.md). Ohne Modell im Place: Farbe/Material wie die anderen Skins.
+	{ Id = "AS_Scout", Type = "Agent", Name = "Scout", Rarity = "Epic", Price = 1, Test = true, Model = true,
+		Color = Color3.fromRGB(70, 80, 55), Material = Enum.Material.Fabric },
 	-- Creator-Skin: mit Team-Rang CREATOR (wie die Creator-Waffen-Skins)
 	{ Id = "AS_Creator", Type = "Agent", Name = "Creator", Rarity = "Legendary", Reward = true, Creator = true,
 		Color = Color3.fromRGB(150, 70, 230), Material = Enum.Material.Foil },

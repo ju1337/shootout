@@ -31,7 +31,7 @@ end
 -- Roblox-Körper wird gelöscht, nur seine Skripte (Animate, Health) wandern ins Modell. Gibt true zurück, wenn getauscht.
 local function useAgentModel(player)
 	local default = player.Character
-	local model = default and AgentModels.BuildCharacter(AgentConfig.MainId)
+	local model = default and AgentModels.BuildCharacter(AgentModels.LookFor(AgentConfig.MainId, Cosmetics.AgentSkin(player)))
 	if not model then
 		return false
 	end

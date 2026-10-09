@@ -518,8 +518,38 @@ local function setupPlayer(player)
 			player:SetAttribute("Agent", AgentConfig.MainId)
 		end
 	end)
-	-- Agenten-Skin gewechselt (Menü SKINS): sofort neu anziehen, überall (nur Farben und Material, kein Neuspawn)
+	-- Agenten-Skin gewechselt (Menü SKINS): Farben/Material sofort neu anziehen, überall. Wechselt dabei das 3D-Modell
+	-- (Skin mit eigenem Modell, AgentModels.LookFor), muss der Charakter neu gebaut werden: in der Safe Zone sofort an
+	-- derselben Stelle (Leben bleibt), draußen beim Betreten der Safe Zone bzw. beim nächsten Spawn.
 	local lastSkin = Cosmetics.AgentSkin(player)
+	local function wornLook(character)
+		return character:GetAttribute("AgentModelCharacter") or AgentConfig.MainId
+	end
+	local function inSafeZone(character)
+		return character:GetAttribute("SafeZone") == true or player:GetAttribute("InSafeZone") == true
+	end
+	local function swapLook()
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if not humanoid or humanoid.Health <= 0 then
+			return
+		end
+		local look = AgentModels.LookFor(AgentConfig.MainId, Cosmetics.AgentSkin(player))
+		local wantsModel = AgentModels.HasAsset(look)
+		if wornLook(character) == look and AgentModels.IsModelCharacter(character) == wantsModel then
+			return
+		end
+		if not inSafeZone(character) then
+			return -- später: Safe Zone betreten oder neu spawnen
+		end
+		local health = humanoid.Health
+		AgentService.Refresh(player)
+		local fresh = player.Character
+		local freshHumanoid = fresh and fresh ~= character and fresh:FindFirstChildOfClass("Humanoid")
+		if freshHumanoid then
+			freshHumanoid.Health = math.min(health, freshHumanoid.MaxHealth)
+		end
+	end
 	local function skinChanged()
 		local skin = Cosmetics.AgentSkin(player)
 		if skin == lastSkin then
@@ -529,10 +559,12 @@ local function setupPlayer(player)
 		local character = player.Character
 		if character and character.Parent then
 			applyUniform(player, character, dressedAgent(player, character))
+			swapLook()
 		end
 	end
 	player:GetAttributeChangedSignal("Equipped"):Connect(skinChanged)
 	player:GetAttributeChangedSignal("Owned"):Connect(skinChanged) -- z.B. Creator-Rang weg
+	player:GetAttributeChangedSignal("InSafeZone"):Connect(swapLook)
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
 	end
@@ -547,7 +579,8 @@ function AgentService.Refresh(player)
 		return
 	end
 	local agent = getAgent(player)
-	if AgentModels.IsModelCharacter(character) or AgentModels.HasAsset(agent.Id) then
+	local look = AgentModels.LookFor(agent.Id, Cosmetics.AgentSkin(player))
+	if AgentModels.IsModelCharacter(character) or AgentModels.HasAsset(look) then
 		local SpawnUtil = require(game:GetService("ServerScriptService"):WaitForChild("SpawnUtil"))
 		SpawnUtil.Spawn(player, root.CFrame)
 	else

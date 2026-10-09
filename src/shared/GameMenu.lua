@@ -526,13 +526,16 @@ local function buildAgentStage()
 		local primary, accent, material = Cosmetics.AgentColors(player, agent.Id)
 		local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
 		local key = agent.Id .. tostring(primary) .. tostring(accent) .. tostring(material) .. tostring(weapon)
+			.. tostring(Cosmetics.AgentSkin(player))
 			.. tostring(Cosmetics.WeaponSkin(player, agent.Id, weapon))
 		if key ~= shownKey then
 			shownKey = key
 			if figure then
 				figure:Destroy()
 			end
-			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
+			local look = Cosmetics.AgentSkin(player)
+			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material,
+				look and look.Model and look.Id or nil)
 			figure.Parent = viewport
 		end
 		role.Text = upper(agent.Role)

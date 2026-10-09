@@ -601,16 +601,24 @@ local function loadAsset(source)
 end
 
 -- Ein Modell aus Assets.Agents laden (Name = Agent-Id) und den Bericht dazu ablegen
+-- Agenten-Skins mit eigenem 3D-Modell (Cosmetics, Type "Agent", Model = true): Modell heißt wie die Skin-Id
+local function modelSkin(name)
+	local ok, Cosmetics = pcall(require, script.Parent.Cosmetics)
+	local item = ok and Cosmetics.Get(name)
+	return item ~= nil and item.Type == "Agent" and item.Model == true
+end
+
 local function loadOne(source)
 	local name = source.Name
-	if not AgentConfig.Get(name) then
+	if not AgentConfig.Get(name) and not modelSkin(name) then
 		local ids = {}
 		for _, agent in AgentConfig.Agents do
 			table.insert(ids, agent.Id)
 		end
 		table.sort(ids)
 		assetReport[name] = { Loaded = false, Warnings = {},
-			Errors = { "unbekannter Name – Modelle heißen wie der Agent: " .. table.concat(ids, ", ") } }
+			Errors = { "unbekannter Name – Modelle heißen wie der Agent (" .. table.concat(ids, ", ")
+				.. ") oder wie ein Agenten-Skin mit Model = true (Cosmetics, z.B. AS_Scout)" } }
 		return
 	end
 	local ok, data, report = pcall(loadAsset, source)
@@ -763,6 +771,14 @@ else
 			printReport(name)
 		end
 	end
+end
+
+-- Welches Modell ein Spieler trägt: der Agenten-Skin mit eigenem Modell (wenn es geladen ist), sonst der Agent
+function AgentModels.LookFor(agentId, skin)
+	if skin and skin.Model and skin.Id and assetData[skin.Id] then
+		return skin.Id
+	end
+	return agentId
 end
 
 -- Hat der Agent ein 3D-Modell (statt des Standard-Looks)?

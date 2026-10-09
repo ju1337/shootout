@@ -20,8 +20,8 @@ local RIGHT_ARM = { "RightUpperArm", "RightLowerArm", "RightHand" }
 
 -- primary = Uniform (Standard-Look), weaponSkin = Skin der Waffe (oder nil), weaponName = gezeigte Waffe (Standard:
 -- erste Waffe des Agenten), material = Material des Körpers (Agenten-Skin, nil = Standard); das 3. Argument (früher
--- zweite Farbe) wird ignoriert
-function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, material)
+-- zweite Farbe) wird ignoriert; look = Id eines Modells in Assets.Agents (Agenten-Skin mit Modell, Standard: der Agent)
+function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, material, look)
 	local model = Instance.new("Model")
 	local pants = AgentModels.PantsColor(primary)
 	local shoulder = AgentModels.RightShoulder
@@ -52,7 +52,7 @@ function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, mate
 	face.Face = Enum.NormalId.Front
 	face.Parent = parts.Head
 	-- 3D-Modell des Agenten (blendet den Körper samt Gesicht aus)
-	local worn = AgentModels.Attach(model, parts, agent.Id, false)
+	local worn = AgentModels.Attach(model, parts, look and AgentModels.HasAsset(look) and look or agent.Id, false)
 	-- Waffe in der rechten Hand (ein Rig steht wie gebaut: dann in seiner Hand)
 	local hand = worn and worn:FindFirstChildOfClass("Humanoid") and worn:FindFirstChild("RightHand", true)
 	hand = hand and hand:IsA("BasePart") and hand or parts.RightHand
