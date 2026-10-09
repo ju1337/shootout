@@ -3149,7 +3149,29 @@ local function buildSymbol(parent, kind, zIndex)
 		Inv.rzIcon(holder, zIndex)
 		return holder
 	end
-	if kind == "Coins" then
+	if kind == "Rifle" then -- flaches Gewehr: Lauf, Gehäuse, Schaft, Magazin, Griff
+		local metal = Color3.fromRGB(226, 228, 232)
+		box({ Position = UDim2.fromOffset(4, 17), Size = UDim2.fromOffset(38, 6), BackgroundColor3 = metal })
+		box({ Position = UDim2.fromOffset(2, 15), Size = UDim2.fromOffset(9, 10), BackgroundColor3 = metal }) -- Schaft
+		box({ Position = UDim2.fromOffset(20, 23), Size = UDim2.fromOffset(5, 10), BackgroundColor3 = metal, Rotation = 12 }) -- Magazin
+		box({ Position = UDim2.fromOffset(13, 23), Size = UDim2.fromOffset(4, 7), BackgroundColor3 = metal, Rotation = -15 }) -- Griff
+		box({ Position = UDim2.fromOffset(18, 13), Size = UDim2.fromOffset(10, 4), BackgroundColor3 = metal }) -- Visier
+	elseif kind == "Medkit" then -- weißes Kreuz
+		local white = Color3.fromRGB(236, 238, 241)
+		box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(30, 10),
+			BackgroundColor3 = white })
+		box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(10, 30),
+			BackgroundColor3 = white })
+	elseif kind == "V_Pickup" then -- Auto von der Seite: Karosserie, Kabine, zwei Räder
+		local white = Color3.fromRGB(226, 228, 232)
+		box({ Position = UDim2.fromOffset(4, 20), Size = UDim2.fromOffset(38, 10), BackgroundColor3 = white })
+		box({ Position = UDim2.fromOffset(12, 11), Size = UDim2.fromOffset(16, 10), BackgroundColor3 = white })
+		for _, x in { 8, 30 } do
+			local wheel = box({ Position = UDim2.fromOffset(x, 26), Size = UDim2.fromOffset(9, 9), BackgroundColor3 = Color3.fromRGB(60, 64, 70) })
+			UITheme.Corner(wheel, 5)
+			UITheme.Stroke(wheel, white, 2)
+		end
+	elseif kind == "Coins" then
 		for _, offset in { Vector2.new(-6, 5), Vector2.new(5, -3) } do
 			local coin = box({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, offset.X, 0.5, offset.Y),
 				Size = UDim2.fromOffset(20, 20), BackgroundColor3 = Color3.fromRGB(226, 182, 72) })
@@ -3214,11 +3236,11 @@ local function addBubble(part)
 	end
 	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(120, BUBBLE.Disc + 22),
 		StudsOffset = Vector3.new(0, BUBBLE.Height, 0), MaxDistance = BUBBLE.Range, AlwaysOnTop = false, LightInfluence = 0,
-		Enabled = bubblesOn() }, part)
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = bubblesOn() }, part)
 	local disc = make("Frame", { Name = "Disc", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
 		Size = UDim2.fromOffset(BUBBLE.Disc, BUBBLE.Disc), BackgroundColor3 = UITheme.Colors.Panel, BackgroundTransparency = 0.12,
 		BorderSizePixel = 0 }, gui)
-	UITheme.Corner(disc, BUBBLE.Disc // 2)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, disc) -- Kreis (UITheme.Corner begrenzt kleine Radien)
 	UITheme.Stroke(disc, def.Color, 2)
 	-- die Symbole sind mit festen Pixelmaßen gezeichnet: in Grundgröße bauen und als Ganzes skalieren
 	local holder = make("Frame", { Name = "IconHolder", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
@@ -3227,7 +3249,8 @@ local function addBubble(part)
 	make("TextLabel", { Name = "Label", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
 		Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1, Text = def.Label, Font = Enum.Font.GothamBold, TextSize = 13,
 		TextColor3 = UITheme.Colors.Text, TextStrokeTransparency = 0.4, TextStrokeColor3 = Color3.new(0, 0, 0) }, gui)
-	local icon = itemConfig(def.Icon) and buildIcon(holder, def.Icon, 1) or buildSymbol(holder, def.Icon, 1)
+	-- flache, gezeichnete Symbole (keine 3D-Modelle: die wären auf der dunklen Scheibe nicht zu erkennen)
+	local icon = buildSymbol(holder, def.Icon, 2)
 	icon.Name = "Icon_" .. def.Icon
 	table.insert(bubbles, gui)
 end
