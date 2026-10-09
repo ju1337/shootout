@@ -2,8 +2,8 @@
 -- Für Admins (Attribut "IsAdmin" vom Server) mit allen Kategorien; Moderatoren (Attribut "IsMod", Team-Rang aus
 -- StaffConfig) sehen nur SPIELER und SUCHE mit Kick und den Sperren, die ihr Rang erlaubt. Öffnen/Schließen mit P oder
 -- dem ADMIN-Knopf.
--- Aussehen wie das Menü der offenen Welt (TAB/M, ExtinctionClient): dunkles Glas (halbtransparent, Welt unscharf
--- dahinter), Rot als einziger Akzent, flache Knöpfe, Schrift Builder Sans (UITheme), keine Symbole/Emojis.
+-- Aussehen wie das Menü der offenen Welt (TAB/M, ExtinctionClient), aber deckend fast schwarz (nichts scheint durch),
+-- Rot als einziger Akzent, flache Knöpfe, Schrift Builder Sans (UITheme), keine Symbole/Emojis.
 -- Aufbau (wie die Vorlage, im Stil des Spiels):
 --   * links die Seitenleiste: ADMIN mit Rang, darunter die Kategorien SPIELER, EFFEKTE, EVENTS, NACHRICHTEN, WELT,
 --     LOGS, ÖKONOMIE, SUCHE (aktive mit rotem Streifen links)
@@ -44,7 +44,13 @@ local SIDEBAR_W = 210
 local HEADER_Y, HEADER_H = 18, 50
 local WHITE = Color3.new(1, 1, 1)
 local RED = Color3.fromRGB(214, 58, 58) -- Akzent wie im Menü der offenen Welt (aktiver Reiter, Hauptknöpfe)
-local GLASS = Color3.fromRGB(8, 9, 11)  -- Grund der halbtransparenten Flächen
+local GLASS = Color3.fromRGB(8, 9, 11)  -- Knopf ADMIN (P) über der Welt
+-- Flächen des Panels deckend (die Welt soll nicht durchscheinen): Seitenleiste fast schwarz, Fläche, Kopfzeile und
+-- Spalten in leicht helleren Stufen, Kästen (Karten, Kacheln, Felder) eine Stufe heller
+local BLACK = Color3.fromRGB(5, 5, 6)
+local SURFACE = Color3.fromRGB(11, 12, 14)
+local RAISED = Color3.fromRGB(17, 18, 21)
+local BOX = Color3.fromRGB(22, 24, 28)
 -- Knopf-Arten (Wert bei button()/buttonRow): C.Green = Hauptaktion (rot gefüllt), C.Red = gefährlich (dunkel mit roter
 -- Schrift), alles andere flach und halbtransparent. Als Textfarbe stehen C.Green/C.Red für Gut/Schlecht.
 local C = {
@@ -172,8 +178,8 @@ end
 -- helle Schicht über dem Glas. Beim Darüberfahren etwas heller.
 local function style(b, color)
 	local kind = color == C.Green and "Primary" or color == C.Red and "Danger" or "Flat"
-	local rest = kind == "Primary" and 0 or kind == "Danger" and 0.3 or 0.92
-	b.BackgroundColor3 = kind == "Primary" and RED or kind == "Danger" and GLASS or WHITE
+	local rest = kind == "Primary" and 0 or kind == "Danger" and 0 or 0.92
+	b.BackgroundColor3 = kind == "Primary" and RED or kind == "Danger" and BLACK or WHITE
 	b.BackgroundTransparency = rest
 	b.TextColor3 = kind == "Danger" and C.Red or C.Text
 	b:SetAttribute("Rest", rest)
@@ -232,7 +238,7 @@ local function buttonRow(parent, defs, height)
 end
 
 local function textBox(placeholder, parent, props)
-	local box = make("TextBox", { Size = UDim2.new(0, 120, 0, 34), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+	local box = make("TextBox", { Size = UDim2.new(0, 120, 0, 34), BackgroundColor3 = BOX, BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		Font = BODY_FONT, TextSize = 13, TextColor3 = C.Text, Text = "", PlaceholderText = placeholder,
 		PlaceholderColor3 = C.Muted, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
@@ -263,8 +269,8 @@ end
 
 -- Karte (dunkler Kasten, wächst mit dem Inhalt)
 local function card(parent)
-	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = GLASS,
-		BackgroundTransparency = 0.35, BorderSizePixel = 0 }, parent)
+	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = BOX,
+		BackgroundTransparency = 0, BorderSizePixel = 0 }, parent)
 	corner(frame, 4)
 	stroke(frame)
 	padding(frame, 10)
@@ -528,7 +534,7 @@ refreshList = function(force)
 end
 
 local function buildListColumn(parent)
-	listColumn = make("Frame", { Size = UDim2.new(0, 260, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.25,
+	listColumn = make("Frame", { Size = UDim2.new(0, 260, 1, 0), BackgroundColor3 = RAISED, BackgroundTransparency = 0,
 		BorderSizePixel = 0 }, parent)
 	corner(listColumn, 4)
 	padding(listColumn, 10)
@@ -603,7 +609,7 @@ local function detailHead(frame, target)
 		{ "Zombies", "ZOMBIES" }, { "Kills", "KILLS" } }
 	tiles = {}
 	for i, def in defs do
-		local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+		local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = BOX, BackgroundTransparency = 0,
 			BorderSizePixel = 0, LayoutOrder = i }, tileRow)
 		corner(tile, 4)
 		stroke(tile)
@@ -668,8 +674,8 @@ local function picker(frame, getText, step, actionText, actionColor, onAction, e
 	local left = button("<", 1, r, C.Dark, nil)
 	left.Size = UDim2.new(0, 40, 1, 0)
 	local name = label("", 15, r, { Size = UDim2.new(0.42, -46, 1, 0), TextXAlignment = Enum.TextXAlignment.Center })
-	name.BackgroundColor3 = GLASS
-	name.BackgroundTransparency = 0.35
+	name.BackgroundColor3 = BOX
+	name.BackgroundTransparency = 0
 	corner(name, 3)
 	local right = button(">", 1, r, C.Dark, nil)
 	right.Size = UDim2.new(0, 40, 1, 0)
@@ -1269,7 +1275,7 @@ local function refreshLookup()
 			{ tostring(data.Level) .. (data.Prestige > 0 and (" P" .. data.Prestige) or ""), "LEVEL" },
 			{ short(data.Rap), "RAP" }, { short(data.Zombies), "ZOMBIES" }, { short(data.Kills), "KILLS" } }
 		for i, def in defs do
-			local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+			local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = BOX, BackgroundTransparency = 0,
 				BorderSizePixel = 0, LayoutOrder = i }, tileRow)
 			corner(tile, 4)
 			stroke(tile)
@@ -1434,8 +1440,8 @@ local function build()
 	toggleButton.Position = UDim2.new(0, 150, 0, 6)
 	toggleButton.TextSize = 13
 	toggleButton.BackgroundColor3 = GLASS
-	toggleButton.BackgroundTransparency = 0.3
-	toggleButton:SetAttribute("Rest", 0.3)
+	toggleButton.BackgroundTransparency = 0.1
+	toggleButton:SetAttribute("Rest", 0.1)
 	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0 }, toggleButton)
 
 	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -1449,7 +1455,7 @@ local function build()
 	end
 
 	-- Seitenleiste: ADMIN, Rang, Kategorien untereinander, unten der Hinweis zum Schließen
-	local sidebar = make("Frame", { Size = UDim2.new(0, SIDEBAR_W, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.14,
+	local sidebar = make("Frame", { Size = UDim2.new(0, SIDEBAR_W, 1, 0), BackgroundColor3 = BLACK, BackgroundTransparency = 0,
 		BorderSizePixel = 0 }, panel)
 	label("ADMIN", 24, sidebar, { Position = UDim2.new(0, 24, 0, 40), Size = UDim2.new(1, -48, 0, 28), Font = F.Display,
 		TextColor3 = RED })
@@ -1491,9 +1497,9 @@ local function build()
 
 	-- Fläche rechts: Kopfzeile (roter Strich, Titel, Server-Umschalter, Schließen), Inhalt, Rückmeldung
 	local right = make("Frame", { Position = UDim2.new(0, SIDEBAR_W, 0, 0), Size = UDim2.new(1, -SIDEBAR_W, 1, 0),
-		BackgroundColor3 = GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0 }, panel)
+		BackgroundColor3 = SURFACE, BackgroundTransparency = 0, BorderSizePixel = 0 }, panel)
 	local header = make("Frame", { Position = UDim2.new(0, 22, 0, HEADER_Y), Size = UDim2.new(1, -44, 0, HEADER_H),
-		BackgroundColor3 = GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0 }, right)
+		BackgroundColor3 = RAISED, BackgroundTransparency = 0, BorderSizePixel = 0 }, right)
 	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0 }, header)
 	headerTitle = label("SPIELER", 20, header, { Position = UDim2.new(0, 20, 0, 0), Size = UDim2.new(0.5, 0, 1, 0),
 		Font = F.Display })
