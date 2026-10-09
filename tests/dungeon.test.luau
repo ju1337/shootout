@@ -1,6 +1,6 @@
 -- Dungeons (DungeonService): Eingang (Gruftkapelle) im Camp, E ohne Schlüssel geht nicht, mit Schlüssel kommt der Squad in der Nähe
 -- mit (Schlüssel weg, Fremde bleiben draußen), Welle um Welle Zombies aus den Gittern, nach jeder Welle Portal offen:
--- hindurch = Beute und zurück vor die Kapelle; Tod im Dungeon = Tasche vor der Kapelle, Beute weg; leere Halle wird abgebaut.
+-- hindurch = Beute und zurück vor die Kapelle; Tod im Dungeon = Tasche weg, Beute weg; leere Halle wird abgebaut.
 -- Dazu: Schlüssel droppen bei normalen Zombies (nicht im Dungeon) und in Event-Beute, Wellen werden größer.
 local failures = 0
 local function check(cond, msg)
@@ -281,7 +281,7 @@ check(DungeonService.RunOf(bob) == run, "Bob bleibt drin")
 step(D.BreakTime + 0.5)
 check(run.State == "Wave" and run.Wave == 2 and not run.Hall.Prompt.Enabled, "Pause vorbei: Welle 2, Portal zu")
 
--- Bob stirbt im Dungeon: Tasche vor der Kapelle, Halle abgebaut
+-- Bob stirbt im Dungeon: Tasche weg (fällt nirgends), Halle abgebaut
 InventoryService.Give(bob, "Bandage", 3)
 step(0.2)
 local hall = run.Model
@@ -296,7 +296,8 @@ for _, bagModel in workspace.ExtinctionLoot:GetChildren() do
 		bagNear = true
 	end
 end
-check(bagNear, "Bobs Tasche liegt vor der Kapelle")
+check(not bagNear and bob:GetAttribute("ExtDeathBag") == nil, "keine Tasche vor der Kapelle")
+check(countIn(bob, "Bandage") == 0, "Bobs Tasche ist weg")
 check(hall.Parent == nil and next(DungeonService.Runs()) == nil, "leere Halle abgebaut")
 
 -- ---------- Schlüssel bei Zombies ----------

@@ -395,8 +395,8 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   Welle 4 gepanzerte, jede 5. Welle eine Blutbestie (`ExtinctionConfig.DungeonWave`). Nach jeder geschafften Welle leuchtet
   das **Portal** an der Stirnseite 20 Sekunden grün: E dort = raus vor die Kapelle mit der Beute aller geschafften Wellen
   (Münzen, Items in die Tasche bzw. was nicht passt ins Lager, 60 EP je Welle; `ExtinctionConfig.DungeonReward`), sonst
-  geht es mit der nächsten Welle weiter. Tod im Dungeon zählt wie draußen: die Tasche fällt **vor der Kapelle**, die
-  Dungeon-Beute ist weg. Die Anti-Zombie-Spritze wirkt drinnen nicht. Oben in der Mitte zeigt eine Anzeige Welle,
+  geht es mit der nächsten Welle weiter. Tod im Dungeon: die **Tasche ist weg** (es fällt kein Beutel, nur das Lager bleibt), die
+  Dungeon-Beute auch. Die Anti-Zombie-Spritze wirkt drinnen nicht. Oben in der Mitte zeigt eine Anzeige Welle,
   Zombies übrig bzw. Countdown und die gesammelte Beute. **Schlüssel finden**: 5 % bei normalen Zombies (nicht im
   Dungeon), dazu in Lootdrops (35 %), am Heli-Wrack (50 %), in der Horden-Kiste, der Konvoi-Ladung und bei Bossen (je 60 %)
   und in der Sturmnacht-Belohnung (50 %) (`Dungeon.KeyChances`). Zum Testen haben Admins nach jedem Spawn

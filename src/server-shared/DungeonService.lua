@@ -6,7 +6,7 @@
 -- Ist eine Welle erledigt, leuchtet das Portal an der Stirnseite für Dungeon.BreakTime Sekunden grün: wer hindurchgeht (E),
 -- kommt vor der Kapelle wieder heraus und bekommt die Beute aller Wellen, die er lebend geschafft hat (Münzen, Items in die
 -- Tasche bzw. ins Lager, EP). Danach schließt es, und die nächste Welle beginnt. Wer im Dungeon stirbt, verliert die
--- Dungeon-Beute; seine Tasche fällt draußen vor dem Eingang (Extinction.dropBag fragt BagSpot). Ist niemand mehr drin,
+-- Dungeon-Beute und seine Tasche: es fällt keine (Extinction.dropBag fragt RunOf), nur das Lager bleibt. Ist niemand mehr drin,
 -- wird die Halle abgebaut.
 -- Stand für die Clients: Karten-Attribut "Dungeons" [{ Key, Title, X, Z }] (Weltkarte), Spieler-Attribut "Dungeon" (JSON
 -- { T = Titel, S = "Start"/"Wave"/"Break", W = Welle, L = Zombies übrig, E = Serverzeit bis Start/Ende der Pause,
@@ -576,12 +576,6 @@ end
 -- Lauf eines Spielers (nil = nicht im Dungeon)
 function DungeonService.RunOf(player)
 	return playerRun[player]
-end
-
--- Wo die Tasche eines Spielers fällt, der im Dungeon stirbt oder das Spiel verlässt: vor der Kapelle (nil = nicht im Dungeon)
-function DungeonService.BagSpot(player)
-	local run = playerRun[player]
-	return run and run.Entrance.Exit.Position or nil
 end
 
 -- Tod (Extinction.OnDeath): raus aus dem Lauf, Beute verloren

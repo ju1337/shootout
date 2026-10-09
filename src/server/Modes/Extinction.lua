@@ -260,13 +260,16 @@ local function updateZone(player, info)
 	end
 end
 
--- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt true zurück, wenn etwas gefallen ist. Der Besitzer sieht sie auf
--- Minimap und Weltkarte (Attribut ExtDeathBag), bis sie leer geräumt oder abgelaufen ist; plündern kann sie jeder.
+-- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt "Dropped" zurück, wenn etwas gefallen ist, "Lost" im Dungeon
+-- (dort ist die Tasche weg, es fällt nichts), sonst "Empty". Der Besitzer sieht sie auf Minimap und Weltkarte (Attribut
+-- ExtDeathBag), bis sie leer geräumt oder abgelaufen ist; plündern kann sie jeder.
 local function dropBag(player, position)
-	position = DungeonService.BagSpot(player) or position -- im Dungeon gestorben: Tasche vor der Gruftkapelle im Camp
+	local inDungeon = DungeonService.RunOf(player) ~= nil
 	local items = InventoryService.TakeAll(player)
 	if #items == 0 then
-		return false
+		return "Empty"
+	elseif inDungeon then
+		return "Lost"
 	end
 	local id = LootService.Create(position, items, "Death", "TASCHE · " .. player.Name, { Meta = { Owner = player.UserId } })
 	local bag = id and LootService.Get(id)
@@ -276,7 +279,7 @@ local function dropBag(player, position)
 		player:SetAttribute("ExtDeathBag", HttpService:JSONEncode({ Id = id, X = math.round(at.X), Z = math.round(at.Z),
 			Ends = math.round(workspace:GetServerTimeNow() + ExtinctionConfig.BagLifetime) }))
 	end
-	return true
+	return "Dropped"
 end
 
 -- Eine Tasche ist weg (leer geräumt, abgelaufen): Markierung des Besitzers löschen, wenn es seine letzte war
@@ -343,12 +346,19 @@ local function spawnPlayer(player)
 	giveTestKeys(player)
 	-- nach dem Tod: Hinweis, wo die eigene Tasche liegt (bzw. dass nichts verloren ging)
 	if info.BagNotice then
-		local dropped = info.BagNotice == "Dropped"
+		local notice = info.BagNotice
 		info.BagNotice = nil
-		notify(player, "Banner", dropped
-			and { Caption = "Gestorben", Title = "DEINE TASCHE LIEGT DRAUSSEN", Sub = "Noch " .. math.floor(ExtinctionConfig.BagLifetime / 60)
-				.. " Minuten · Markierung auf Minimap und Karte (N) · jeder kann sie plündern", Style = "Info" }
-			or { Caption = "Gestorben", Title = "NICHTS VERLOREN", Sub = "Deine Tasche war leer · das Lager bleibt immer", Style = "Info" })
+		if notice == "Dropped" then
+			notify(player, "Banner", { Caption = "Gestorben", Title = "DEINE TASCHE LIEGT DRAUSSEN", Sub = "Noch "
+				.. math.floor(ExtinctionConfig.BagLifetime / 60) .. " Minuten · Markierung auf Minimap und Karte (N) · jeder kann sie plündern",
+				Style = "Info" })
+		elseif notice == "Lost" then
+			notify(player, "Banner", { Caption = "Gestorben", Title = "TASCHE IM DUNGEON VERLOREN",
+				Sub = "Wer im Dungeon stirbt, verliert alles, was er dabei hatte · das Lager bleibt immer", Style = "Warning" })
+		else
+			notify(player, "Banner", { Caption = "Gestorben", Title = "NICHTS VERLOREN", Sub = "Deine Tasche war leer · das Lager bleibt immer",
+				Style = "Info" })
+		end
 	end
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.Died:Connect(function()
@@ -362,7 +372,7 @@ local function spawnPlayer(player)
 		Telemetry.Event(player, "Death", 1, "Extinction", cause,
 			(position and RedzoneService.At(position)) and "Redzone" or "Open")
 		if current and outside then
-			current.BagNotice = dropBag(player, position) and "Dropped" or "Empty"
+			current.BagNotice = dropBag(player, position)
 		end
 		for _, callback in Extinction.OnDeath do
 			task.spawn(callback, player, position, outside)
