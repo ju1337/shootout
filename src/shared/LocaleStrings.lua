@@ -1033,6 +1033,7 @@ return {
 	["L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  {1}  EINPACKEN (GELANDET)"] = "L-STICK  FLY  ·  R2  CLIMB  ·  L2  DESCEND  ·  ✕  GET OUT  ·  {1}  STORE (LANDED)",
 	["Lade Einsatzgebiet ..."] = "Loading operation area ...",
 	["Karten fehlen im Workspace (Maps) – Rojo verbinden oder die gebaute Place-Datei öffnen"] = "Maps are missing from Workspace (Maps) – connect Rojo or open the built place file",
+	["Mit Spawnschutz wird nichts geworfen."] = "No throwing during spawn protection.",
 	["Nur mit dem Gamepass VIP"] = "VIP game pass only",
 	["NUR MIT {1}"] = "{1} ONLY",
 	["Pistole, MP, Munition, Verbände, Weste und ein Fahrrad"] = "Pistol, SMG, ammo, bandages, a vest and a bike",
@@ -2208,4 +2209,5 @@ return {
 	["✓  {1} Münzen + Skin {2}"] = "✓  {1} Coins + Skin {2}",
 	["✓ ABGEHOLT"] = "✓ CLAIMED",
 	["🔒 NUR VIP"] = "🔒 VIP ONLY",
+	["🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  {1} s"] = "🛡 SPAWN PROTECTION  ·  NO SHOOTING YET  ·  {1} s",
 }

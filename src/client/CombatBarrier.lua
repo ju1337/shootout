@@ -4,6 +4,7 @@
 --   * rote Wand aus Kraftfeld um jede Safe Zone in der Nähe (nur bei diesem Spieler, mit Kollision: man läuft dagegen)
 --   * Anzeige oben in der Mitte: IM KAMPF · SAFE ZONE GESPERRT mit Countdown
 -- Nach ExtinctionConfig.CombatTime Sekunden ohne neuen Treffer verschwindet beides.
+-- Dieselbe Anzeige zeigt in Blau den Spawnschutz nach dem Verlassen einer Safe Zone (Attribut ProtectedUntil).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -103,15 +104,27 @@ local function buildGui()
 	stroke.Parent = label
 end
 
+local function setLook(color, back)
+	label.BackgroundColor3 = back
+	label:FindFirstChildOfClass("UIStroke").Color = color
+end
+
 local function update()
 	local active = inCombat()
-	gui.Enabled = active
+	local protectedLeft = (player:GetAttribute("ProtectedUntil") or 0) - workspace:GetServerTimeNow()
+	local protected = not active and protectedLeft > 0 and player:GetAttribute("Mode") == "Extinction"
+	gui.Enabled = active or protected
+	if protected then
+		setLook(Color3.fromRGB(90, 170, 255), Color3.fromRGB(26, 70, 130))
+		label.Text = "🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  " .. math.ceil(protectedLeft) .. " s"
+	end
 	if not active then
 		if next(walls) then
 			clearWalls()
 		end
 		return
 	end
+	setLook(RED, Color3.fromRGB(150, 30, 34))
 	local left = math.ceil((player:GetAttribute("CombatUntil") or 0) - workspace:GetServerTimeNow())
 	label.Text = "⚔ IM KAMPF  ·  SAFE ZONE GESPERRT  ·  " .. left .. " s"
 	-- Wände um Safe Zones in der Nähe (Streaming: weit entfernte sind evtl. gar nicht geladen)

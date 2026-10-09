@@ -208,10 +208,16 @@ InventoryService.Use(alice, 1)
 check(WeaponService.CarriedWeapon(alice) == nil, "in der Safe Zone keine Waffe in der Hand")
 check(string.find(lastExt(alice, "Status")[2], "gesichert", 1, true) ~= nil, "Hinweis: Waffen gesichert")
 moveTo(alice, Vector3.new(0, 3, 160))
-check(alice:GetAttribute("InSafeZone") == false and alice:GetAttribute("CanFight") == true, "draußen: Kampf erlaubt")
+check(alice:GetAttribute("InSafeZone") == false and alice:GetAttribute("CanFight") == false, "Spawnschutz: noch kein Kampf")
+check(math.abs((alice:GetAttribute("ProtectedUntil") or 0) - (workspace:GetServerTimeNow() + ExtinctionConfig.SpawnProtection)) < 0.6,
+	"Spawnschutz läuft " .. ExtinctionConfig.SpawnProtection .. " Sekunden")
+local protectedHumanoid = alice.Character.Humanoid
+check(Damage.Apply(alice.Character, protectedHumanoid, 30, nil) == 0 and protectedHumanoid.Health == 100,
+	"Spawnschutz: kein Schaden (auch nicht von Zombies)")
 check(alice:GetAttribute("PvP") == false and alice.Character:GetAttribute("SafeZone") == nil, "PvP noch nicht an, Schutz weg")
 check(math.abs(alice:GetAttribute("PvPAt") - (workspace:GetServerTimeNow() + 5)) < 0.6, "PvP-Zeit in 5 Sekunden")
 step(5.2)
+check(alice:GetAttribute("CanFight") == true and alice:GetAttribute("ProtectedUntil") == nil, "nach dem Spawnschutz: Kampf erlaubt")
 check(alice:GetAttribute("PvP") == true, "nach 5 Sekunden PvP an")
 InventoryService.Use(alice, 1)
 check(WeaponService.CarriedWeapon(alice) == "Rifle", "Taste 1: Sturmgewehr in der Hand")

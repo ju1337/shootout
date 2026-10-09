@@ -140,7 +140,7 @@ end
 local function setInside(player, info, inside, character)
 	info.Inside = inside
 	player:SetAttribute("InSafeZone", inside)
-	player:SetAttribute("CanFight", not inside)
+	player:SetAttribute("CanFight", false) -- drinnen nie, draußen erst nach dem Spawnschutz (updateZone)
 	if character then
 		character:SetAttribute("SafeZone", inside or nil)
 	end
@@ -150,9 +150,14 @@ local function setInside(player, info, inside, character)
 		player:SetAttribute("PvP", false)
 		player:SetAttribute("PvPAt", nil)
 		player:SetAttribute("Redzone", nil)
+		info.ProtectAt = nil
+		player:SetAttribute("ProtectedUntil", nil)
 		InventoryService.Holster(player) -- Waffen bleiben in der Safe Zone gesichert
 	else
 		player:SetAttribute("TutorialEquip", nil) -- Tutorial: draußen gilt wieder die normale Regel
+		-- Spawnschutz: ein paar Sekunden unverwundbar, dafür selbst noch kein Schießen (Damage, CanFight)
+		info.ProtectAt = os.clock() + ExtinctionConfig.SpawnProtection
+		player:SetAttribute("ProtectedUntil", workspace:GetServerTimeNow() + ExtinctionConfig.SpawnProtection)
 		info.PvPAt = os.clock() + ExtinctionConfig.PvPDelay
 		player:SetAttribute("PvP", false)
 		player:SetAttribute("PvPAt", workspace:GetServerTimeNow() + ExtinctionConfig.PvPDelay)
@@ -224,6 +229,12 @@ local function updateZone(player, info)
 	elseif not inside and not paused and info.PvPAt and os.clock() >= info.PvPAt then
 		info.PvPAt = nil
 		player:SetAttribute("PvP", true)
+	end
+	-- Spawnschutz vorbei: ab jetzt schießen (und getroffen werden)
+	if not inside and info.ProtectAt and os.clock() >= info.ProtectAt then
+		info.ProtectAt = nil
+		player:SetAttribute("ProtectedUntil", nil)
+		player:SetAttribute("CanFight", true)
 	end
 	if not inside and paused then
 		info.StormPaused = true
@@ -908,7 +919,7 @@ function Extinction.RemovePlayer(player)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil" } do
+		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil", "ProtectedUntil" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

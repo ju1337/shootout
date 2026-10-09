@@ -54,6 +54,12 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		or (noclip and noclip:GetAttribute("Noclip")) then -- Admin im Noclip: kein Schaden
 		return 0, false, false, 0
 	end
+	-- Spawnschutz der offenen Welt (ProtectedUntil): Geschützte nehmen keinen Schaden und teilen keinen aus
+	local now = workspace:GetServerTimeNow()
+	if (noclip and (noclip:GetAttribute("ProtectedUntil") or 0) > now)
+		or (attacker and attacker.Player and (attacker.Player:GetAttribute("ProtectedUntil") or 0) > now) then
+		return 0, false, false, 0
+	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)
 	local attackerModel = attacker and (attacker.Model or (attacker.Player and attacker.Player.Character))
 	if attackerModel then

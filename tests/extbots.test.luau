@@ -18,6 +18,7 @@ end
 game.JobId = "server-1"
 local store = SIM.DataStore("PlayerData_v1")
 local ExtinctionConfig = require("ExtinctionConfig")
+ExtinctionConfig.SpawnProtection = 0 -- Spawnschutz prüft tests/extinction; hier wird gleich nach dem Verlassen geschossen
 local ProgressService = require("ProgressService")
 local WeaponService = require("WeaponService")
 local Damage = require("Damage")

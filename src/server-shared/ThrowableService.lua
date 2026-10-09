@@ -320,6 +320,10 @@ function ThrowableService.Throw(player, slot, item, direction)
 		InventoryService.Status(player, "In der Safe Zone wird nichts geworfen.")
 		return false
 	end
+	if (player:GetAttribute("ProtectedUntil") or 0) > workspace:GetServerTimeNow() then
+		InventoryService.Status(player, "Mit Spawnschutz wird nichts geworfen.")
+		return false
+	end
 	if humanoid.SeatPart then
 		InventoryService.Status(player, "Aus dem Fahrzeug kannst du nicht werfen.")
 		return false
