@@ -83,15 +83,16 @@ Mauer bei Radius 110). Das Camp ist **modern und aufgeräumt**: Flachdachhäuser
 Holz mit Fensterbändern, Glas, Leuchtschildern und farbigen Lisenen (Generator `block` in `camp_phoenix.py`), keine
 Bäume, keine Bänke. An jeder Station steht ein **Händler** (Figur aus Teilen im R15-Schnitt mit Gesicht, `shopkeeper`,
 nicht anklickbar). Von innen nach außen:
-- **Phönixplatz** (offen bis an die Ringstraße, Radius 54.5, Spawn): heller Plattenbelag mit dunklen Fugenbändern und
-  Wegweisern im Boden zu den Toren, flaches Becken mit Fontänen, Spawn-Ring, LED-Lichtmasten, Fahnen, Poller. Auf den
-  Diagonalen vier offene **Pavillons** (Flachdach mit Leuchtkante, Glasseiten, Schild auf dem Dach), die Achsen bleiben
-  frei: NO **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter des Menüs), SO **GLÜCKSRAD** (Rad an
-  der Rückwand, Pult vorn), SW **RUHMESWAND** (**LAGEBERICHT**: Spieler in der offenen Welt und im Markt, Blutmond und
-  Sturmnacht; Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE an den Seitenwänden; davor das
-  **Siegerpodest** mit Statuen der Top 3 nach Level, Server `src/server/ZentraleService.lua`), NW **TAUSCHMARKT**.
-- Eine **Ringstraße** (Radius 59.5) mit Zebrastreifen an den Mündungen und vier **Hauptstraßen** (Asphalt, Gehsteige,
-  LED-Laternen) zu den Toren.
+- **Phönixplatz** (offen bis an die Ringstraße, Radius 54.5): heller Plattenbelag mit dunklen Fugenbändern und
+  Wegweisern im Boden zu den Toren, die Spawns frei in der Mitte, Poller am Rand; keine Laternen, Fahnen oder Banner.
+  Auf den Diagonalen, die Achsen bleiben frei: offene **Pavillons** (Flachdach mit Leuchtkante, Glasseiten, Schild auf
+  dem Dach) NO **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter des Menüs), SO **GLÜCKSRAD** (Rad
+  an der Rückwand, Pult vorn), NW **TAUSCHMARKT**; im SW frei stehend die **RUHMESWAND**: fünf Bildschirme auf Stelen im
+  Bogen (**LAGEBERICHT** in der Mitte: Spieler in der offenen Welt und im Markt, Blutmond und Sturmnacht; links und
+  rechts die Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE), davor das **Siegerpodest** mit
+  Statuen der Top 3 nach Level (Server `src/server/ZentraleService.lua`).
+- Eine **Ringstraße** (Radius 59.5) mit Zebrastreifen an den Mündungen und vier **Hauptstraßen** (Asphalt, Gehsteige)
+  zu den Toren.
 - **Häuserring** an der Ringstraße (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe; die
   Stationen liegen als offene Läden mit Theke in den Eckhäusern an den Hauptstraßen): NO **KIT-AUSGABE**, Café, Stoffe,
   **WAFFEN & MUNITION** (hinten Food-Court mit zwei Kiosken und dem Schieber-Transporter/Rote Zone), SO

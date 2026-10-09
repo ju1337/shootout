@@ -169,7 +169,7 @@ local function buildShopVitrine()
 	end)
 end
 
--- Lagebericht im Pavillon RUHMESWAND (Part "MissionBoard"). Offene Welt (Arcade aus): Lage für alle – wie viele Spieler
+-- Lagebericht an der Ruhmeswand (Part "MissionBoard"). Offene Welt (Arcade aus): Lage für alle – wie viele Spieler
 -- draußen in der Welt und im Markt sind, Blutmond und Sturmnacht (läuft gerade / kommt in etwa N Minuten).
 -- Mit Arcade wie früher im Hub: live, wie viele Spieler in welchem Modus sind (nur Modi, die man betreten kann).
 local BLOOD, STORM = ExtinctionConfig.BloodMoon, ExtinctionConfig.Storm

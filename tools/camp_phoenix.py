@@ -3,14 +3,13 @@
 Ein modernes, aufgeräumtes Camp (Glas, Sichtbeton, Stahl, Leuchtstreifen; keine Bäume, keine Bänke), von innen nach außen:
 
   * PHÖNIXPLATZ (offen bis an die Ringstraße, Radius PLAZA_R): heller Plattenbelag mit dunklen Fugenbändern, in der
-    Mitte ein flaches Wasserbecken mit Fontänen, Spawn-Ring darum, Lichtmasten, Fahnen, Poller am Rand. Auf den
-    Diagonalen vier offene PAVILLONS (Flachdach, Glasseiten, Leuchtkante, Schild auf dem Dach), Front zur Mitte:
-      NO AUSRÜSTER (Vitrinen mit ShopDisplay1-3, Theke ShopCounter)
-      SO GLÜCKSRAD (Rad an der Rückwand = WheelSpot, Pult WheelConsole)
-      SW RUHMESWAND (LAGEBERICHT an der Rückwand, die vier Bestenlisten an den Seitenwänden, davor das Siegerpodest)
-      NW TAUSCHMARKT (Stand_Market)
+    Mitte die Spawns (frei, ohne Brunnen), Poller am Rand; keine Laternen, Fahnen oder Banner. Auf den Diagonalen:
+      NO AUSRÜSTER, SO GLÜCKSRAD, NW TAUSCHMARKT als offene PAVILLONS (Flachdach, Glasseiten, Leuchtkante, Schild auf
+        dem Dach, Front zur Mitte; Vitrinen ShopDisplay1-3 und Theke ShopCounter, Rad WheelSpot mit Pult, Stand_Market)
+      SW RUHMESWAND frei stehend: Lagebericht und vier Bestenlisten als Bildschirme auf Stelen im Bogen, davor das
+        Siegerpodest
     Die Straßen-Achsen bleiben frei: von der Mitte sieht man alle Pavillons, die Läden und die vier Tore.
-  * Vier HAUPTSTRASSEN (Asphalt, Gehsteige, LED-Laternen) von der RINGSTRASSE (RING_R) zu den Toren, Zebrastreifen über die
+  * Vier HAUPTSTRASSEN (Asphalt, Gehsteige) von der RINGSTRASSE (RING_R) zu den Toren, Zebrastreifen über die
     Ringstraße neben jeder Mündung.
   * HÄUSERRING an der Ringstraße (Fronten bei OUTER_R): moderne Flachdachhäuser, je Viertel vier mit einer Gasse in der
     Mitte; die Stationen haben einen offenen Laden mit Theke und Händler:
@@ -72,7 +71,6 @@ STATIONS = {
 PAVILIONS = {
     "outfitter": ("AUSRÜSTER", "SKINS · ANGEBOTE DES TAGES · AN DER THEKE E DRÜCKEN", GOLD),
     "wheel": ("GLÜCKSRAD", "TÄGLICH GRATIS DREHEN · E AM PULT", GOLD),
-    "fame": ("RUHMESWAND", "LAGEBERICHT · BESTENLISTEN · SIEGERPODEST", (226, 190, 120)),
     "trade": STATIONS["Stand_Market"],
 }
 # Kleidung der Händler: Hemd, Hose, dazu wahlweise Weste, Kittel, Krawatte, Fliege, Mütze, Kapuze, Haare
@@ -133,25 +131,6 @@ class CampPhoenix:
         for k in range(4):
             self.b.box(group, name, (2 * apothem, thickness, 2 * apothem), (0, top - thickness / 2, 0), color, mat,
                        angles=(0, k * 22.5, 0))
-
-    def camp_lamp(self, x, z, fx, fz, h=13):
-        """Moderne LED-Laterne: schlanker Mast, Ausleger zur Seite (fx, fz), flacher Leuchtkopf mit Licht nach unten."""
-        f, box = self.frame(x, z, self.yaw_to(fx, fz))
-        box("Decor", "LampBase", (0.9, 0.8, 0.9), (0, 0.4, 0), ANTHRACITE, "Metal")
-        box("Decor", "LampPost", (0.45, h, 0.45), (0, h / 2, 0), ANTHRACITE, "Metal")
-        box("Decor", "LampArm", (0.3, 0.3, 2.6), (0, h - 0.15, -1.2), ANTHRACITE, "Metal")
-        # kein Neon: mit dem Bloom der Map würde der Kopf zu einer großen weißen Fläche; Licht kommt vom SpotLight
-        box("Decor", "LampHead", (1.1, 0.35, 2.6), (0, h - 0.4, -2.6), (236, 240, 246), "SmoothPlastic",
-            children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {"Face": "Bottom", "Range": 36, "Brightness": 1.4,
-                                                                                 "Angle": 110, "Color": self.bm.rgb(236, 240, 255)}}])
-
-    def mast_light(self, x, z, fx, fz, h=14):
-        """Flutlicht auf schlankem Stahlmast (Höfe, Sportplatz)."""
-        b = self.b
-        b.box("Decor", "FloodPole", (0.6, h, 0.6), (x, h / 2, z), STEEL, "Metal")
-        b.box("Decor", "FloodLamp", (2.2, 1.0, 0.8), (x, h - 0.4, z), (236, 240, 246), "SmoothPlastic", angles=(0, self.yaw_to(fx, fz), 0),
-              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {"Face": "Front", "Range": 60, "Brightness": 2.0,
-                                                                                   "Angle": 70, "Color": self.bm.rgb(230, 236, 255)}}])
 
     def container(self, x, z, yaw, color, y=0.0, length=16, group="Buildings", doors=False):
         """Seecontainer (8 x 8.5 x length), Längsseite entlang lokal X."""
@@ -252,8 +231,8 @@ class CampPhoenix:
 
     # ---------- Phönixplatz ----------
     def plaza(self):
-        """Offener Platz bis an die Ringstraße: Plattenbelag, Fugenbänder, Becken mit Fontänen und Spawn-Ring, die vier
-        Pavillons auf den Diagonalen, das Siegerpodest vor der Ruhmeswand, Lichtmasten, Fahnen, Poller am Rand."""
+        """Offener Platz bis an die Ringstraße: Plattenbelag, Fugenbänder, Spawns in der Mitte, drei Pavillons und die frei
+        stehende Ruhmeswand auf den Diagonalen, das Siegerpodest davor, Poller am Rand."""
         b = self.b
         self.polygon_pad("Square", PLAZA_R - 1, PAVE, "Pavement", 0.22)
         self.arc_pad("SquareEdge", PLAZA_R - 1.4, PLAZA_R, 0, 360, PAVE_DARK, "Slate", 0.32, step=5, thickness=0.4)
@@ -266,27 +245,16 @@ class CampPhoenix:
             x, z = P(45, th)  # Wegweiser im Boden, lesbar auf dem Weg nach außen
             dx, dz = P(1, th)
             b.floor_text("PlazaGateLabel", (12, 0.1, 1.8), (x, 0.3, z), text, (236, 226, 206), yaw=self.yaw_to(dx, dz))
-        self.fountain()
-        for k in range(10):
-            th = 360 * (k + 0.5) / 10
-            x, z = P(13, th)
+        b.spawn(0, 0, yaw=0)  # Spawn mitten auf dem Platz
+        for k in range(9):
+            th = 360 * (k + 0.5) / 9
+            x, z = P(7, th)
             b.spawn(x, z, yaw=th)  # Blick nach außen
         self.pavilion(45, "outfitter")
         self.pavilion(135, "wheel")
-        self.pavilion(225, "fame")
         self.pavilion(315, "trade")
-        self.podium(*self.at_center(PAV_R - PAV_D / 2 - 7, 225))
-        for k in range(8):  # Lichtmasten zwischen Achsen und Pavillons
-            x, z = P(PLAZA_R - 4, 22.5 + 45 * k)
-            self.camp_lamp(x, z, -x, -z, h=14)
-        for th in (0, 90, 180, 270):  # Fahnen beidseits der Mündungen
-            for d in (-1, 1):
-                x, z = P(PLAZA_R - 2.5, th + d * 13)
-                b.box("Decor", "FlagPole", (0.5, 18, 0.5), (x, 9, z), STEEL, "Metal")
-                b.box("Decor", "FlagBanner", (0.15, 7, 3.4), (x, 14, z), PHOENIX, "Fabric", angles=(0, -th + 90, 0),
-                      props={"CanCollide": False})
-                b.box("Decor", "FlagStripe", (0.2, 7, 0.6), (x, 14, z), WHITE, "Fabric",
-                      angles=(0, -th + 90, 0), props={"CanCollide": False})
+        self.fame_wall(225)
+        self.podium(*self.at_center(29, 225))
         for step in range(60):  # Poller mit Leuchtkopf am Platzrand, Lücken an den Zebrastreifen
             th = 3 + step * 6
             if any(abs((th - c + 180) % 360 - 180) < 3.5 for c in self._crossings()):
@@ -300,25 +268,6 @@ class CampPhoenix:
         """Winkel der Zebrastreifen über die Ringstraße: in Verlängerung der Gehsteige jeder Hauptstraße."""
         a = math.degrees(math.asin((STREET_W / 2 + WALK_W / 2) / RING_R))
         return [g + s * a for g in (0, 90, 180, 270) for s in (-1, 1)]
-
-    def fountain(self):
-        """Flaches rundes Becken in der Platzmitte: Sichtbetonrand, Wasser, Fontänen im Kreis und eine hohe in der Mitte,
-        Unterwasserlichter."""
-        b = self.b
-        b.cylinder("Decor", "FountainStep", 22, 0.5, (0, 0.47, 0), LIGHT, material="Concrete")
-        b.cylinder("Cover", "FountainBasin", 19, 1.4, (0, 1.2, 0), WHITE, material="Concrete")
-        b.cylinder("Decor", "FountainRim", 19.4, 0.25, (0, 2.0, 0), ANTHRACITE, material="Slate")
-        b.cylinder("Decor", "FountainWater", 17.6, 0.3, (0, 1.75, 0), (70, 140, 180), material="Glass",
-                   props={"Transparency": 0.35, "CanCollide": False, "Reflectance": 0.2})
-        jet = {"CanCollide": False, "CanQuery": False, "Transparency": 0.45}
-        for k in range(12):
-            x, z = P(6.5, k * 30)
-            b.cylinder("Decor", "FountainJet", 0.45, 4, (x, 3.8, z), (210, 236, 255), material="Glass", props=jet)
-            lx, lz = P(7.6, k * 30 + 15)
-            b.box("Decor", "FountainLight", (0.6, 0.2, 0.6), (lx, 1.6, lz), (120, 210, 255), "Neon", props=dict(NO_HIT))
-        b.cylinder("Decor", "FountainJet", 1.1, 9, (0, 6.2, 0), (210, 236, 255), material="Glass", props=jet)
-        b.add("Decor", "FountainSpray", (2.6, 2.6, 2.6), (0, 10.8, 0), (220, 240, 255), "Glass",
-              props=dict(jet, Shape="Ball", Transparency=0.6))
 
     def podium(self, x, z, yaw):
         """SIEGERPODEST der Top 3 vor der Ruhmeswand (Statuen setzt der Server an Podium1-3): drei Sockel auf einer
@@ -411,18 +360,27 @@ class CampPhoenix:
         self.b.floor_text("WheelFloorLabel", (8, 0.1, 2), f(0, 0.55, fz + 2.4), "E AM PULT", GOLD, yaw=yaw + 180)
         self.shopkeeper(box, 5.0, fz + 4.6, OUTFITS["wheel"], y=0.5, pose="stand")
 
-    def _pav_fame(self, f, box, yaw, W, D, H, fz, accent):
-        """RUHMESWAND: Lagebericht (MissionBoard) an der Rückwand, die vier Bestenlisten Leaderboard_* an den Seitenwänden."""
-        self.showcase("MissionBoard", 10, 5.6, *self._xz(f, 0, D / 2 - 1.2), 5.6, yaw)
-        self.b.sign2("NoticeTitle", (10, 1.3, 0.25), f(0, 9.4, D / 2 - 1.15), "LAGEBERICHT", "SPIELER · BLUTMOND · STURMNACHT",
-                     (24, 26, 30), (226, 190, 120), (200, 196, 186), angles=(0, yaw, 0))
-        boards = (("Zombies", "ZOMBIES", (200, 166, 92), -1, -4.2), ("Kills", "KILLS", (206, 70, 58), -1, 3.4),
-                  ("Level", "LEVEL", (96, 164, 214), 1, -4.2), ("Missions", "AUFTRÄGE", (112, 178, 112), 1, 3.4))
-        for board, title, bcolor, side, lz in boards:
-            sx = side * (W / 2 - 1.3)
-            self.showcase("Leaderboard_" + board, 6, 6, *self._xz(f, sx, lz), 5.4, yaw + 90 * side)
-            self.b.sign2("BoardsTitle", (6, 1.1, 0.25), f(sx + side * 0.05, 9.3, lz), "RUHMESWAND · " + title, "GLOBALE TOP 10",
-                         (24, 26, 30), bcolor, (236, 239, 243), angles=(0, yaw + 90 * side, 0))
+    def fame_wall(self, th0):
+        """RUHMESWAND frei auf dem Platz: fünf Bildschirme auf schlanken Stelen im Bogen, Front zur Mitte – in der Mitte
+        der Lagebericht (MissionBoard), links und rechts die vier Bestenlisten Leaderboard_*, je mit Titel darüber.
+        Davor das Siegerpodest."""
+        r, y = PAV_R, 8.5
+        screens = (("MissionBoard", 10, 5.6, 0, "NoticeTitle", "LAGEBERICHT", "SPIELER · BLUTMOND · STURMNACHT", (226, 190, 120)),
+                   ("Leaderboard_Zombies", 6, 6, -26, "BoardsTitle", "RUHMESWAND · ZOMBIES", "GLOBALE TOP 10", (200, 166, 92)),
+                   ("Leaderboard_Kills", 6, 6, -14, "BoardsTitle", "RUHMESWAND · KILLS", "GLOBALE TOP 10", (206, 70, 58)),
+                   ("Leaderboard_Level", 6, 6, 14, "BoardsTitle", "RUHMESWAND · LEVEL", "GLOBALE TOP 10", (96, 164, 214)),
+                   ("Leaderboard_Missions", 6, 6, 26, "BoardsTitle", "RUHMESWAND · AUFTRÄGE", "GLOBALE TOP 10", (112, 178, 112)))
+        for name, w, h, off, sign, title, sub, color in screens:
+            x, z, yaw = self.at_center(r, th0 + off)
+            f, box = self.frame(x, z, yaw)
+            box("Decor", "ScreenBase", (w * 0.7, 0.4, 2.2), (0, 0.42, 0.3), ANTHRACITE, "Concrete")
+            leg = y - h / 2 - 0.7
+            for s_ in (-1, 1):
+                box("Decor", "ScreenLeg", (0.4, leg, 0.4), (s_ * w * 0.28, 0.6 + leg / 2, 0.3), ANTHRACITE, "Metal")
+            box("Decor", "ScreenGlow", (w * 0.7, 0.08, 0.3), (0, 0.66, -0.85), color, "Neon", props=dict(NO_HIT, Transparency=0.2))
+            self.showcase(name, w, h, x, z, y, yaw)
+            self.b.sign2(sign, (w, 1.3, 0.25), f(0, y + h / 2 + 1.4, 0.2), title, sub, (24, 26, 30), color, (236, 239, 243),
+                         angles=(0, yaw, 0))
 
     def _pav_trade(self, f, box, yaw, W, D, H, fz, accent):
         """TAUSCHMARKT: lange Theke mit Händlerin, Regale mit Ware an den Seiten, Punkt Stand_Market davor."""
@@ -453,7 +411,7 @@ class CampPhoenix:
     # ---------- Straßen ----------
     def street(self, th):
         """Hauptstraße von der Ringstraße zum Tor (Richtung th): Asphalt mit Mittelstreifen, Gehsteige mit Bordstein,
-        LED-Laternen, ein Schachtdeckel."""
+        ein Schachtdeckel."""
         b, rng = self.b, self.rng
         f, box = self.frame(0, 0, th)  # lokal +Z = nach außen
         r0, r1 = RING_R + RING_W / 2 - 0.2, CAMP_WALL_R + 1
@@ -464,15 +422,10 @@ class CampPhoenix:
         for s in (-1, 1):
             box("Ground", "Sidewalk", (WALK_W, 0.5, c - a), (s * (STREET_W / 2 + WALK_W / 2), 0.25, (a + c) / 2), LIGHT, "Concrete")
             box("Ground", "Curb", (0.4, 0.55, c - a), (s * (STREET_W / 2 + 0.2), 0.27, (a + c) / 2), STEEL, "Concrete")
-        for k, lz in enumerate((78, 94)):
-            s = 1 if k % 2 == 0 else -1
-            x, z = self._xz(f, s * (STREET_W / 2 + 1.6), lz)
-            dx, dz = self._dir(f, -s, 0)
-            self.camp_lamp(x, z, dx, dz)
         box("Ground", "Manhole", (2, 0.08, 2), (rng.uniform(-3, 3), 0.14, 72), (60, 60, 62), "DiamondPlate")
 
     def ring_road(self):
-        """Ringstraße um den Platz: Asphalt, Mittelstreifen, Gehsteig außen, Zebrastreifen, LED-Laternen außen."""
+        """Ringstraße um den Platz: Asphalt, Mittelstreifen, Gehsteig außen, Zebrastreifen."""
         self.arc_pad("Sidewalk", RING_R - RING_W / 2, RING_R + RING_W / 2, 0, 360, ASPHALT, "Asphalt", 0.1, step=5)
         for k in range(48):
             th = 360 * k / 48
@@ -486,12 +439,6 @@ class CampPhoenix:
                 r = RING_R - RING_W / 2 + 0.9 + k * 1.65
                 x, z, yaw = self.at_center(r, th)
                 self.b.box("Ground", "Crosswalk", (3.6, 0.06, 0.8), (x, 0.15, z), (236, 236, 230), "SmoothPlastic", angles=(0, yaw, 0))
-        for k in range(16):
-            th = 11.25 + 22.5 * k
-            if near_axis(th, 14):
-                continue
-            x, z = P(OUTER_R - 1.2, th)
-            self.camp_lamp(x, z, -x, -z)
 
     # ---------- Häuser ----------
     def house(self, r_front, th, w, floors, kind, sides=0):
@@ -789,7 +736,7 @@ class CampPhoenix:
 
     def yard_food(self):
         """NO: Food-Court hinter dem Marktviertel – zwei Kioske an der Gasse, am Ende der Gasse der Schieber-Transporter
-        (Stand_Red), Lichtmasten."""
+        (Stand_Red)."""
         self.yard_pad(0, (150, 150, 146), "Concrete")
         self.arc_pad("Sidewalk", YARD_R0, YARD_R1 - 6, 40.5, 49.5, LIGHT, "Concrete", 0.14, step=5)
         for th, title, sub, accent, look in ((31, "GARKÜCHE", "HEUTE: EINTOPF", (176, 60, 40), "kiosk"),
@@ -798,12 +745,9 @@ class CampPhoenix:
             lx, lz = P(93, 45)
             self.kiosk(x, z, self.yaw_to(lx - x, lz - z), title, sub, accent, OUTFITS[look])
         self.schieber(*self.at_center(103, 45))
-        for th in (22, 68):
-            x, z = P(100, th)
-            self.mast_light(x, z, *P(-1, th), h=12)
 
     def yard_motor_pool(self):
-        """SO: Fuhrpark – Tankstelle, Landeplatz am Ende der Gasse, Parkplatz mit Ladesäulen und zwei Autos, Flutlicht."""
+        """SO: Fuhrpark – Tankstelle, Landeplatz am Ende der Gasse, Parkplatz mit Ladesäulen und zwei Autos."""
         self.yard_pad(90, (70, 72, 74), "Asphalt")
         self.fuel_station(*self.at_center(91, 110))
         hx, hz = P(95, 135)
@@ -827,7 +771,6 @@ class CampPhoenix:
         for th, color in ((158, (40, 44, 52)), (170, (196, 200, 206))):
             x, z, yaw = self.at_center(95, th)
             self.parked_car(x, z, yaw + 180, color)
-        self.mast_light(*P(105, 150), *P(-1, 150), 13)
 
     def parked_car(self, x, z, yaw, color):
         """Modernes Auto (heil, sauber): Karosserie, Glasdach, Räder, Lichter."""
@@ -883,7 +826,6 @@ class CampPhoenix:
             for j in range(2):
                 box("Cover", "Pallet", (2.6, 0.5, 2.6), (lx, 0.25 + j * 1.6, 0), (170, 140, 100), "WoodPlanks")
                 box("Cover", "PalletLoad", (2.4, 1.1, 2.4), (lx, 1.05 + j * 1.6, 0), (214, 210, 200), "SmoothPlastic")
-        self.mast_light(*P(105, 196), *P(-1, 196), 13)
 
     def forklift(self, x, z, yaw):
         """Gabelstapler (gelb) mit Mast und Gabel nach lokal -Z."""
@@ -899,7 +841,7 @@ class CampPhoenix:
                 box("Decor", "ForkliftWheel", (0.6, 1.4, 1.4), (lx, 0.7, lz), (24, 24, 26), "Rubber", props={"Shape": "Cylinder"})
 
     def yard_sports(self):
-        """NW: Sportplatz (umzäunter Basketballplatz mit Flutlicht), Solarfeld mit Speicher und an der Nordstraße der
+        """NW: Sportplatz (umzäunter Basketballplatz), Solarfeld mit Speicher und an der Nordstraße der
         Abgang zu den KATAKOMBEN (Dungeon-Eingang)."""
         self.yard_pad(270, (120, 122, 124), "Concrete")
         self.sports_court(*self.at_center(95, 297))
@@ -920,7 +862,7 @@ class CampPhoenix:
         self.crypt_gate(gx, gz + 2.5, self.yaw_to(1, 0))  # Front zur Nordstraße (nach Osten)
 
     def sports_court(self, x, z, yaw):
-        """Basketballplatz: blauer Belag mit Linien, Körbe an den Enden, Gitterzaun mit Öffnung zur Mitte, zwei Flutlichter."""
+        """Basketballplatz: blauer Belag mit Linien, Körbe an den Enden, Gitterzaun mit Öffnung zur Mitte."""
         f, box = self.frame(x, z, yaw)
         L, Wd = 26, 15
         white = (236, 236, 230)
@@ -946,9 +888,6 @@ class CampPhoenix:
         for lx in (-fl / 2, -3, 3, fl / 2):
             for lz in (-fw / 2, fw / 2):
                 box("Decor", "FencePost", (0.4, 6.4, 0.4), (lx, 3.2, lz), ANTHRACITE, "Metal")
-        for s in (-1, 1):
-            px, pz = self._xz(f, s * (fl / 2 + 1.5), fw / 2 + 1)
-            self.mast_light(px, pz, x - px, z - pz, h=14)
 
     def crypt_gate(self, x, z, yaw):
         """ABGANG ZU DEN KATAKOMBEN (Dungeon-Eingang): Portal aus dunklem Sichtbeton mit auskragendem Dach, im Tor eine
