@@ -2227,10 +2227,42 @@ local function openStash()
 	stashRow.Position = UDim2.fromOffset(stashX, 0)
 	stashFill.Position = UDim2.fromOffset(stashX + stashW - 200, 0)
 	grid(body, "Stash", 1, STASH, cols, cell, gap, UDim2.fromOffset(stashX, 28), false, cellH)
-	label({ Name = "Help", Position = UDim2.fromOffset(stashX, 28 + math.ceil(STASH / cols) * (cellH + gap) + 10),
+	local helpY = 28 + math.ceil(STASH / cols) * (cellH + gap) + 10
+	label({ Name = "Help", Position = UDim2.fromOffset(stashX, helpY),
 		Size = UDim2.fromOffset(stashW, 40), TextWrapped = true, Text = "Anklicken legt ein Item ins Lager bzw. zurück in die Tasche. "
 			.. "Ziehen legt es auf einen bestimmten Platz – auch direkt in den Container.", TextSize = 12, Font = F.Medium,
 		TextColor3 = C.Muted, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 5 }, body)
+	-- Ausrüstungen: je Vorlage ein Knopf zum Anlegen (holt die Teile aus dem Lager) und ein kleiner zum Speichern
+	-- (merkt sich die Anordnung der Tasche); ohne gespeicherte Vorlage ist der Anlegen-Knopf gedämpft (Attribut ExtLoadouts)
+	local loadoutY = helpY + 52
+	local loadoutButtons = {}
+	local saveW, loadoutGap = 104, 10
+	local applyW = math.floor((stashW - loadoutGap * 3) / 2) - saveW
+	for index = 1, 2 do
+		local x = stashX + (index - 1) * (applyW + saveW + loadoutGap * 2)
+		loadoutButtons[index] = UITheme.Chunky({ Name = "Loadout" .. index, Position = UDim2.fromOffset(x, loadoutY),
+			Size = UDim2.fromOffset(applyW, 40), Color = UITheme.MenuColors.Primary, TextColor = UITheme.MenuColors.PrimaryText,
+			Text = "AUSRÜSTUNG " .. index, TextSize = 15, ZIndex = 5 }, body, function()
+			sendAction("LoadoutApply", index)
+		end)
+		UITheme.Chunky({ Name = "LoadoutSave" .. index, Position = UDim2.fromOffset(x + applyW + loadoutGap, loadoutY),
+			Size = UDim2.fromOffset(saveW, 40), Color = UITheme.MenuColors.Card, StrokeColor = C.Border, Text = "SPEICHERN",
+			TextSize = 13, ZIndex = 5 }, body, function()
+			sendAction("LoadoutSave", index)
+		end)
+	end
+	label({ Name = "LoadoutHelp", Position = UDim2.fromOffset(stashX, loadoutY + 46), Size = UDim2.fromOffset(stashW, 18),
+		Text = "Speichert die Anordnung deiner Tasche · Anlegen holt die Teile aus dem Lager", TextSize = 12, Font = F.Medium,
+		TextColor3 = C.Muted, ZIndex = 5 }, body)
+	local function refreshLoadouts()
+		local sizes = HttpService:JSONDecode(player:GetAttribute("ExtLoadouts") or "[]")
+		for index, chunky in loadoutButtons do
+			local saved = type(sizes) == "table" and tonumber(sizes[index]) or 0
+			chunky.SetText(saved > 0 and ("AUSRÜSTUNG " .. index .. "  ·  " .. saved) or ("AUSRÜSTUNG " .. index))
+			chunky.SetColor(saved > 0 and UITheme.MenuColors.Primary or UITheme.MenuColors.Panel,
+				saved > 0 and UITheme.MenuColors.PrimaryText or C.Muted)
+		end
+	end
 	onSlotClick = function(container, slot)
 		if entryOf(container, slot) then
 			sendAction("Move", container, slot, container == "Stash" and "Bag" or "Stash", nil)
@@ -2241,6 +2273,7 @@ local function openStash()
 	function win.Refresh()
 		refreshGrids()
 		stashFill.Text = Inv.usedSlots(stash, 1, STASH) .. " / " .. STASH .. " PLÄTZE"
+		refreshLoadouts()
 		repaint()
 	end
 	win.Refresh()
@@ -3504,6 +3537,12 @@ function ExtinctionClient.Init()
 	end)
 	player:GetAttributeChangedSignal("Party"):Connect(function()
 		if window and window.Kind == "Squad" then
+			window.Refresh()
+		end
+	end)
+	-- Ausrüstung gespeichert: Knöpfe im Lager-Fenster (die Tasche selbst ändert sich dabei nicht)
+	player:GetAttributeChangedSignal("ExtLoadouts"):Connect(function()
+		if window and window.Kind == "Stash" and window.Refresh then
 			window.Refresh()
 		end
 	end)

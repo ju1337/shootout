@@ -12,6 +12,11 @@
 -- Waffe in der Hand, 0 = keine), ExtAttach (Aufsätze der Waffe in der Hand, liest AttachmentConfig).
 -- Aufsätze ("Attachment"): auf eine Waffe ziehen (Move) oder Taste mit der Waffe in der Hand (Use) baut sie an,
 -- Aktion "Detach" (Platz der Waffe, Aufsatz-Platz) nimmt einen ab; ein ersetzter oder abgenommener Aufsatz kommt in die Tasche. Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
+-- Ausrüstungen (Loadouts, Extinction.Loadouts[1..2]): LoadoutSave merkt sich die Anordnung der Tasche als Vorlage (Plätze,
+-- Ids, Anzahl, Aufsatz-Ids – kein Magazin), LoadoutApply (nur am Lager in der Safe Zone) räumt die Tasche ins Lager und
+-- holt die Teile der Vorlage aus Lager und Tasche auf ihre Plätze (Waffen möglichst mit denselben Aufsätzen, fehlende
+-- Aufsätze lose aus dem Lager; Stapel so viel wie da ist). Was fehlt, meldet der Status. Spieler-Attribut ExtLoadouts
+-- (JSON-Liste: belegte Plätze je Vorlage, 0 = leer).
 -- Meldungen an den Client: Remotes.ExtUpdate("Status", Text, Erfolg).
 
 local Players = game:GetService("Players")
@@ -31,12 +36,14 @@ local ProgressService = require(script.Parent.ProgressService)
 local KitConfig = require(ReplicatedStorage:WaitForChild("Shared").KitConfig)
 local WeaponService = require(script.Parent.WeaponService)
 local RedPointsService = require(script.Parent.RedPointsService)
+local Locale = require(Shared.Locale)
 
 local InventoryService = {}
 
 local HOTBAR = ExtinctionConfig.HotbarSlots
+local LOADOUTS = 2 -- gespeicherte Ausrüstungen je Spieler
 
-local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im Spielermarkt), Equipped (Item-Tabelle), Using, Dirty }
+local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im Spielermarkt), Loadouts, Equipped (Item-Tabelle), Using, Dirty }
 
 -- Andere Dienste hängen sich hier an (sie brauchen InventoryService, nicht umgekehrt):
 -- Handlers[Aktion] = function(player, ...) für Remotes.ExtAction (LootService: Loot/Drop, VehicleService: StoreVehicle)
@@ -74,6 +81,26 @@ local function livingCharacter(player)
 	return nil, nil, nil
 end
 
+-- Gespeicherte Ausrüstung aus dem Profil prüfen: { { S = Platz, Id, N = Anzahl, Att = { [Platz] = Aufsatz } } }, nach
+-- Platz sortiert; unbekannte Items, doppelte und ungültige Plätze fallen weg
+local function cleanLoadout(list)
+	local clean, used = {}, {}
+	for _, entry in type(list) == "table" and list or {} do
+		local slot = type(entry) == "table" and tonumber(entry.S)
+		local id = type(entry) == "table" and entry.Id
+		if slot and slot == math.floor(slot) and slot >= 1 and slot <= ExtinctionConfig.BagSlots and not used[slot]
+			and type(id) == "string" and ExtinctionConfig.Get(id) then
+			used[slot] = true
+			local count = math.clamp(math.floor(tonumber(entry.N) or 1), 1, ExtinctionConfig.MaxStack(id))
+			table.insert(clean, { S = slot, Id = id, N = count, Att = (Inventory.CleanAttachments(id, entry.Att)) })
+		end
+	end
+	table.sort(clean, function(a, b)
+		return a.S < b.S
+	end)
+	return clean
+end
+
 -- Zustand des Spielers (aus dem Profil geladen). Wird das Profil ersetzt (Laden fertig), neu lesen.
 local function stateOf(player)
 	local profile = ProgressService.Get(player)
@@ -106,7 +133,11 @@ local function stateOf(player)
 		Safe = Inventory.FromList(data.Safe, ExtinctionConfig.SafeSlots, loose),
 		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots, loose),
 		Market = market,
+		Loadouts = {},
 	}
+	for index = 1, LOADOUTS do
+		state.Loadouts[index] = cleanLoadout(type(data.Loadouts) == "table" and data.Loadouts[index])
+	end
 	-- Abgenommene Aufsätze ins Lager, sonst in Tasche oder Container
 	for _, attId in loose do
 		for _, target in { state.Stash, state.Bag, state.Safe } do
@@ -131,7 +162,7 @@ end
 
 local function profileData(state)
 	return { Bag = Inventory.ToList(state.Bag), Safe = Inventory.ToList(state.Safe), Stash = Inventory.ToList(state.Stash),
-		Market = state.Market }
+		Market = state.Market, Loadouts = state.Loadouts }
 end
 
 -- Stand ins Profil schreiben und an den Client schicken
@@ -143,6 +174,11 @@ local function flush(player, state)
 		player:SetAttribute("ExtBag", HttpService:JSONEncode(data.Bag))
 		player:SetAttribute("ExtSafe", HttpService:JSONEncode(data.Safe))
 		player:SetAttribute("ExtStash", HttpService:JSONEncode(data.Stash))
+		local sizes = {}
+		for index = 1, LOADOUTS do
+			sizes[index] = #state.Loadouts[index]
+		end
+		player:SetAttribute("ExtLoadouts", HttpService:JSONEncode(sizes))
 		local equipped = state.Equipped and slotOf(state.Bag, state.Equipped)
 		player:SetAttribute("ExtEquipped", equipped or 0)
 	end
@@ -689,6 +725,220 @@ function InventoryService.Drop(player, slot)
 	return true
 end
 
+-- ---------- Ausrüstungen (Loadouts) ----------
+
+-- Anordnung der Tasche als Vorlage index (1..LOADOUTS) merken: Plätze, Ids, Anzahl und Aufsatz-Ids, kein Magazin
+function InventoryService.LoadoutSave(player, index)
+	index = wholeNumber(index, 0)
+	if not inExtinction(player) or index < 1 or index > LOADOUTS then
+		return false
+	end
+	local state = stateOf(player)
+	if not state then
+		return false
+	end
+	local template = {}
+	for slot = 1, state.Bag.Size do
+		local item = state.Bag.Slots[slot]
+		if item then
+			table.insert(template, { S = slot, Id = item.Id, N = item.Count, Att = item.Att and table.clone(item.Att) or nil })
+		end
+	end
+	if #template == 0 then
+		status(player, "Deine Tasche ist leer – nichts zu speichern.")
+		return false
+	end
+	state.Loadouts[index] = template
+	flush(player, state)
+	status(player, "Ausrüstung " .. index .. " gespeichert (" .. #template .. " Plätze)", true)
+	return true
+end
+
+-- Haben zwei Waffen dieselben Aufsätze (beide { [Platz] = Id } oder nil)?
+local function sameAttachments(a, b)
+	for slotId, attId in a or {} do
+		if (b or {})[slotId] ~= attId then
+			return false
+		end
+	end
+	for slotId, attId in b or {} do
+		if (a or {})[slotId] ~= attId then
+			return false
+		end
+	end
+	return true
+end
+
+-- Kopie der Plätze (für den Rückweg); draußen stehende Fahrzeuge bleiben dasselbe Objekt (VehicleService hält es)
+local function copySlots(slots)
+	local copy = {}
+	for slot, item in slots do
+		copy[slot] = isOut(item) and item
+			or { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = item.Att and table.clone(item.Att) or nil }
+	end
+	return copy
+end
+
+-- Vorlage index anlegen: nur am Lager in der Safe Zone. Was nicht zur Vorlage gehört, geht ins Lager (voll: bleibt in
+-- der Tasche), die Teile der Vorlage kommen aus Tasche und Lager auf ihre Plätze. Fehlendes meldet der Status.
+function InventoryService.LoadoutApply(player, index)
+	index = wholeNumber(index, 0)
+	if not inExtinction(player) or index < 1 or index > LOADOUTS then
+		return false
+	end
+	local state = stateOf(player)
+	if not state then
+		return false
+	end
+	local template = state.Loadouts[index]
+	if #template == 0 then
+		status(player, "Ausrüstung " .. index .. " ist noch leer – erst SPEICHERN.")
+		return false
+	end
+	if not player:GetAttribute("InSafeZone") or not nearPoint(player, "Stash") then
+		status(player, "Das Lager erreichst du nur in der Safe Zone direkt am Lager.")
+		return false
+	end
+	if state.Using then
+		status(player, "Du benutzt schon etwas.")
+		return false
+	end
+	holster(player, state)
+	local bag, stash = state.Bag, state.Stash
+	local backupBag, backupStash = copySlots(bag.Slots), copySlots(stash.Slots)
+	-- 1. Tasche ausräumen (draußen stehende Fahrzeuge bleiben auf ihrem Platz)
+	local pool = {}
+	for slot = 1, bag.Size do
+		local item = bag.Slots[slot]
+		if item and not isOut(item) then
+			bag.Slots[slot] = nil
+			table.insert(pool, item)
+		end
+	end
+	-- Quellen: erst der bisherige Inhalt der Tasche, dann das Lager
+	local function candidates(id)
+		local list = {}
+		for _, item in pool do
+			if item.Id == id then
+				table.insert(list, item)
+			end
+		end
+		for slot = 1, stash.Size do
+			local item = stash.Slots[slot]
+			if item and item.Id == id and not isOut(item) then
+				table.insert(list, item)
+			end
+		end
+		return list
+	end
+	local function remove(item)
+		local i = table.find(pool, item)
+		if i then
+			table.remove(pool, i)
+			return
+		end
+		for slot, other in stash.Slots do
+			if other == item then
+				stash.Slots[slot] = nil
+				return
+			end
+		end
+	end
+	local function take(item, count) -- count Stück von item (ganz weg, wenn leer)
+		item.Count -= count
+		if item.Count <= 0 then
+			remove(item)
+		end
+	end
+	local function place(slot, item)
+		if not bag.Slots[slot] then
+			bag.Slots[slot] = item
+		elseif Inventory.Add(bag, item.Id, item.Count, item) < item.Count then
+			table.insert(pool, item) -- Platz belegt (Fahrzeug draußen) und kein anderer frei: wie alles Übrige
+		end
+	end
+	-- 2. Vorlage füllen
+	local missing = {}
+	for _, entry in template do
+		local config = ExtinctionConfig.Get(entry.Id)
+		if config.Kind == "Weapon" then
+			local list = candidates(entry.Id)
+			local pick = nil
+			for _, item in list do
+				if sameAttachments(item.Att, entry.Att) then
+					pick = item
+					break
+				end
+			end
+			pick = pick or list[1]
+			if pick then
+				remove(pick)
+				-- gespeicherte Aufsätze nachrüsten: lose Aufsätze aus Tasche oder Lager; ein ersetzter geht wie alles Übrige
+				for slotId, attId in entry.Att or {} do
+					if not (pick.Att and pick.Att[slotId] == attId) then
+						local loose = candidates("Att_" .. attId)[1]
+						if loose then
+							take(loose, 1)
+							local old = pick.Att and pick.Att[slotId]
+							pick.Att = pick.Att or {}
+							pick.Att[slotId] = attId
+							if old then
+								table.insert(pool, { Id = "Att_" .. old, Count = 1 })
+							end
+						else
+							table.insert(missing, Locale.ForPlayer(player, ExtinctionConfig.Get("Att_" .. attId).Name))
+						end
+					end
+				end
+				place(entry.S, pick)
+			else
+				table.insert(missing, Locale.ForPlayer(player, config.Name))
+			end
+		else
+			local got = 0
+			for _, item in candidates(entry.Id) do
+				if got >= entry.N then
+					break
+				end
+				local n = math.min(entry.N - got, item.Count)
+				take(item, n)
+				got += n
+			end
+			if got > 0 then
+				place(entry.S, { Id = entry.Id, Count = got })
+			end
+			if got < entry.N then
+				table.insert(missing, Locale.ForPlayer(player, config.Name) .. (entry.N - got > 1 and (" ×" .. (entry.N - got)) or ""))
+			end
+		end
+	end
+	-- 3. Übriges ins Lager, was nicht passt, auf freie Plätze der Tasche
+	local overflow = false
+	for _, item in pool do
+		local put = Inventory.Add(stash, item.Id, item.Count, item, "Bag")
+		if put < item.Count then
+			put += Inventory.Add(bag, item.Id, item.Count - put, item)
+		end
+		if put < item.Count then
+			overflow = true
+			break
+		end
+	end
+	if overflow then
+		bag.Slots, stash.Slots = backupBag, backupStash
+		flush(player, state)
+		status(player, "Kein Platz: Tasche und Lager sind voll.")
+		return false
+	end
+	changed(player, state)
+	if #missing > 0 then
+		status(player, "Ausrüstung " .. index .. " angelegt – Fehlt: " .. table.concat(missing, ", "))
+	else
+		status(player, "Ausrüstung " .. index .. " angelegt", true)
+	end
+	return true
+end
+
 -- ---------- Für andere Dienste ----------
 
 -- Tasche des Spielers (Inventory-Container) oder nil
@@ -856,7 +1106,7 @@ function InventoryService.Leave(player)
 		item.Out = nil
 	end
 	flush(player, state)
-	for _, attribute in { "ExtBag", "ExtSafe", "ExtStash", "ExtEquipped", "ExtAttach" } do
+	for _, attribute in { "ExtBag", "ExtSafe", "ExtStash", "ExtLoadouts", "ExtEquipped", "ExtAttach" } do
 		player:SetAttribute(attribute, nil)
 	end
 end
@@ -882,6 +1132,10 @@ function InventoryService.Init()
 			InventoryService.Detach(player, ...)
 		elseif action == "Throw" then
 			InventoryService.Throw(player, ...)
+		elseif action == "LoadoutSave" then
+			InventoryService.LoadoutSave(player, ...)
+		elseif action == "LoadoutApply" then
+			InventoryService.LoadoutApply(player, ...)
 		elseif InventoryService.Handlers[action] then
 			InventoryService.Handlers[action](player, ...)
 		end
