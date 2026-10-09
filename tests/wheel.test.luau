@@ -1,6 +1,6 @@
--- Glücksrad in der Einsatzzentrale: Feld unter dem Zeiger und Zielwinkel (Rad bleibt auf dem ausgelosten Feld stehen), Dreiecke
+-- Glücksrad im Camp: Feld unter dem Zeiger und Zielwinkel (Rad bleibt auf dem ausgelosten Feld stehen), Dreiecke
 -- aus zwei Keilen, Aufbau des Rads (Teile, Drehrichtung), Server dreht nur in der
--- Einsatzzentrale in der Nähe des Rads
+-- Camp in der Nähe des Rads
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -112,7 +112,7 @@ check(HubWheel.IndexAt(slice) == count, "dann zeigt der Zeiger aufs letzte Feld"
 local top = wheel.Face * Vector3.new(0, 3.6, 0.36)
 check(near(labels[count].Position, top, 1e-3), "letztes Feld steht jetzt oben")
 
--- Server: nur in der offenen Welt (Einsatzzentrale im Camp) und in der Nähe des Rads
+-- Server: nur in der offenen Welt (Camp im Camp) und in der Nähe des Rads
 local Remotes = require("Remotes")
 local ShopService = require("ShopService")
 local ProgressService = require("ProgressService")

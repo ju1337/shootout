@@ -1,8 +1,8 @@
 -- Zentrale (ModuleScript)
--- Einsatzzentrale in Camp Phoenix (Safe Zone der offenen Welt, früher der Hub): Halle mit Shop-Vitrine, Bestenlisten,
--- Top-3-Podest, Agent der Woche, Glücksrad, Einsatz-Tafel und dem Tor zum Markt. Die Teile liegen in der Gruppe
--- "Zentrale" der Map Extinction (immer geladen, siehe tools/streaming.py); gebaut von build_zentrale() in
--- tools/build_maps.py, aufgestellt von zentrale() in tools/extinction_world.py.
+-- Phönixplatz in Camp Phoenix (Safe Zone der offenen Welt, früher der Hub): Agent der Woche, Glücksrad, Ausrüster mit
+-- Shop-Vitrine, Ruhmeswand mit Bestenlisten, Siegerpodest mit Lagebericht und das Tor zum Markt im Depot. Die Teile
+-- liegen in der Gruppe "Zentrale" der Map Extinction (immer geladen, siehe tools/streaming.py); gebaut in
+-- tools/camp_phoenix.py.
 
 local Zentrale = {}
 

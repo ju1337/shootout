@@ -95,7 +95,7 @@ function actions.ClaimDaily(player)
 	return ProgressService.ClaimLogin(player)
 end
 
--- Das Glücksrad steht in der Einsatzzentrale im Camp (Teil "WheelSpot" der Gruppe Zentrale): nur dort und in seiner
+-- Das Glücksrad steht im Camp am Phönixplatz (Teil "WheelSpot" der Gruppe Zentrale): nur dort und in seiner
 -- Nähe drehen
 local WHEEL_RANGE = 30
 local function nearWheel(player)
@@ -112,7 +112,7 @@ end
 
 function actions.SpinWheel(player)
 	if not nearWheel(player) then
-		return "Das Glücksrad steht in der Einsatzzentrale im Camp – geh zum Pult davor.", false
+		return "Das Glücksrad steht im Camp am Phönixplatz – geh zum Pult davor.", false
 	end
 	return ProgressService.SpinWheel(player)
 end

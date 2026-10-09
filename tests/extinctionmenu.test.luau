@@ -1,7 +1,9 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und LOADOUT · SHOP · BATTLE PASS ·
--- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben), AGENTEN und
--- SPIELEN · ARCADE als Links in die Lobby. Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS ·
+-- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben), AGENTEN als Link in
+-- die Lobby. Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (LOADOUT bleibt), AUFTRÄGE ohne Reiter
+-- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt AGENTEN.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
 local function check(cond, msg)
@@ -124,8 +126,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN,AGENTEN,"
-	.. "SPIELEN · ARCADE",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN,AGENTEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -146,6 +147,33 @@ check(title() == "ERFOLGE" and activeTab() == "Achievements", "Klick auf ERFOLGE
 check(find(menu(), "Achievement_Zombies") ~= nil and find(menu(), "Achievement_Veteran") ~= nil, "Erfolge-Wand mit Karten")
 
 -- Lobby-Seiten: ausgeliehen, verkleinert, beim Schließen zurück in die Lobby
+-- Sichtbar auf dem Bildschirm (alle Vorfahren sichtbar)?
+local function shown(object)
+	local current = object
+	while current and not current:IsA("LayerCollector") do
+		if current:IsA("GuiObject") and not current.Visible then
+			return false
+		end
+		current = current.Parent
+	end
+	return current == nil or current.Enabled
+end
+local function shownTexts(root)
+	local out = {}
+	for _, d in root:GetDescendants() do
+		if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text ~= "" and shown(d) then
+			out[d.Text] = true
+		end
+	end
+	return out
+end
+
+-- AUFTRÄGE: ohne Arcade nur EXTINCTION
+menu():FindFirstChild("Tabs", true).Tab_Quests.Activated:Fire()
+step(0.1)
+local questTexts = shownTexts(menu())
+check(title() == "AUFTRÄGE" and questTexts.EXTINCTION and not questTexts.ARCADE, "AUFTRÄGE: kein Reiter ARCADE")
+
 for _, id in { "Loadout", "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	step(0.1)
@@ -169,6 +197,22 @@ step(0.1)
 check(menu() == nil and lobbyGui.Enabled, "AGENTEN: Menü zu, Lobby offen")
 local agentsPage = lobbyGui:FindFirstChild("AgentsPage", true)
 check(agentsPage ~= nil and agentsPage.Visible, "AGENTEN: Seite der Lobby sichtbar")
+-- Lobby ohne Arcade: kein SPIELEN, ARCADE, SCHNELLES SPIEL; Open("Play") und Open() zeigen AGENTEN
+local lobbyTexts = shownTexts(lobbyGui)
+check(lobbyTexts.AGENTEN and lobbyTexts.LOADOUT and lobbyTexts.SHOP and lobbyTexts["BATTLE PASS"] and lobbyTexts.STATISTIK,
+	"Lobby: AGENTEN, SHOP, BATTLE PASS, STATISTIK, LOADOUT da")
+for _, text in { "SPIELEN", "ARCADE", "SCHNELLES SPIEL", "SPIELMODUS", "FREE-FOR-ALL", "HERRSCHAFT" } do
+	check(not lobbyTexts[text], "Lobby ohne Arcade: kein " .. text)
+end
+for _, tab in { "Play", "Modes" } do
+	GameMenu.Open(tab)
+	step(0.1)
+	local playPage = lobbyGui:FindFirstChild("PlayPage", true)
+	check(agentsPage.Visible and not (playPage and playPage.Visible), "GameMenu.Open(" .. tab .. "): AGENTEN statt SPIELEN")
+end
+GameMenu.Open()
+step(0.1)
+check(agentsPage.Visible, "GameMenu.Open(): AGENTEN")
 GameMenu.SetOpen(false)
 step(0.1)
 key(Enum.KeyCode.M)
@@ -199,6 +243,18 @@ check(selected ~= nil and selected:IsDescendantOf(menu():FindFirstChild("Content
 pad(Enum.KeyCode.ButtonB)
 check(menu() == nil, "○ schließt das Menü")
 check(GuiService.SelectedObject == nil or not GuiService.SelectedObject:IsDescendantOf(windowGui), "Auswahl aufgehoben")
+
+-- VERLASSEN-Knopf: in der offenen Welt ausgeblendet (kein LOBBY mehr), im Markt zurück ins Camp
+local LeaveButton = require("LeaveButton")
+local leaveGui = Instance.new("ScreenGui", playerGui)
+local leave = LeaveButton.new(leaveGui, { Name = "LeaveButton", Size = UDim2.fromOffset(152, 30) })
+check(not leave.Button.Visible, "VERLASSEN: in der offenen Welt ausgeblendet")
+bob:SetAttribute("Mode", "Market")
+step(0.1)
+check(leave.Button.Visible and leave.Label.Text == "VERLASSEN", "VERLASSEN: im Markt sichtbar")
+bob:SetAttribute("Mode", "Extinction")
+step(0.1)
+check(not leave.Button.Visible, "VERLASSEN: zurück in der offenen Welt wieder aus")
 
 if failures == 0 then
 	print("Menü der offenen Welt: alles in Ordnung")

@@ -1,6 +1,6 @@
 -- QuestBoard (ModuleScript, nur Client)
 -- Inhalt des Fensters AUFTRÄGE (Markt: SideMenu, offene Welt: Reiter AUFTRÄGE im Menü von ExtinctionClient).
--- Oben die Reiter ARCADE / EXTINCTION, darunter drei Spalten: TÄGLICH, WÖCHENTLICH (Arcade mit Wochen-Bonus) und
+-- Oben die Reiter ARCADE / EXTINCTION (ARCADE nur, solange Arcade an ist: Modes.ArcadeEnabled), darunter drei Spalten: TÄGLICH, WÖCHENTLICH (Arcade mit Wochen-Bonus) und
 -- VIP & BOOSTER (je ein Spezial-Auftrag am Tag und in der Woche für den gewählten Modus; ohne Berechtigung gesperrt).
 -- Daten: Spieler-Attribute Quests/Weekly (Arcade), ExtQuests/ExtWeekly, SpecialQuests/SpecialWeekly (QuestConfig).
 --   QuestBoard.new(parent, width, height, { Mode = "Arcade" | "Extinction", ZIndex = n, Colors = UITheme.MenuColors })
@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local QuestConfig = require(Shared.QuestConfig)
+local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local UITheme = require(Shared.UITheme)
 local Locale = require(Shared.Locale)
@@ -43,13 +44,18 @@ function QuestBoard.Ready()
 	local special = QuestConfig.IsSpecial(player)
 	for _, attribute in { "Quests", "Weekly", "ExtQuests", "ExtWeekly", "SpecialQuests", "SpecialWeekly" } do
 		local data = QuestConfig.Read(player, attribute)
+		-- Arcade aus: Arcade-Aufträge sind nicht zu sehen, also auch kein Punkt dafür
+		if (attribute == "Quests" or attribute == "Weekly") and not Modes.ArcadeEnabled then
+			data = nil
+		end
 		if data and data.Ids then
 			local allClaimed = true
 			for _, id in data.Ids do
 				local quest = QuestConfig.Get(id)
 				local claimed = (data.Claimed or {})[id] == true
 				allClaimed = allClaimed and claimed
-				if quest and not claimed and ((data.Progress or {})[id] or 0) >= quest.Goal and (special or not quest.Special) then
+				if quest and not claimed and ((data.Progress or {})[id] or 0) >= quest.Goal and (special or not quest.Special)
+					and QuestConfig.ModeActive(quest.Mode) then
 					return true
 				end
 			end
@@ -69,6 +75,9 @@ function QuestBoard.new(parent, width, height, options)
 	local ACCENT, ON_ACCENT, CARD = palette.Primary, palette.PrimaryText, palette.Card
 	local MUTED_BACK = palette.MutedBack
 	local board = { Mode = options.Mode or (player:GetAttribute("Mode") == "Extinction" and "Extinction" or "Arcade") }
+	if not QuestConfig.ModeActive(board.Mode) then
+		board.Mode = "Extinction" -- Arcade aus: nur Extinction-Aufträge
+	end
 
 	local function make(className, props, into)
 		local obj = Instance.new(className)
@@ -98,9 +107,13 @@ function QuestBoard.new(parent, width, height, options)
 		parent)
 	board.Frame = root
 
-	-- Reiter ARCADE / EXTINCTION
+	-- Reiter ARCADE / EXTINCTION (ohne Arcade nur EXTINCTION)
 	local tabs = {}
-	for i, def in { { "Arcade", "ARCADE" }, { "Extinction", "EXTINCTION" } } do
+	local tabDefs = { { "Arcade", "ARCADE" }, { "Extinction", "EXTINCTION" } }
+	if not QuestConfig.ModeActive("Arcade") then
+		table.remove(tabDefs, 1)
+	end
+	for i, def in tabDefs do
 		tabs[def[1]] = button({ Position = UDim2.fromOffset((i - 1) * 168, 0), Size = UDim2.fromOffset(160, 36), Text = def[2],
 			TextSize = 16 }, root, function()
 			(board :: any).SetMode(def[1]) -- SetMode steht weiter unten
@@ -258,7 +271,7 @@ function QuestBoard.new(parent, width, height, options)
 	end
 
 	function board.SetMode(mode)
-		board.Mode = mode
+		board.Mode = QuestConfig.ModeActive(mode) and mode or "Extinction"
 		board.Refresh()
 	end
 

@@ -3,7 +3,7 @@
 Mit Streaming bekommt jeder Client nur die Teile in seiner Nähe (Radius in default.project.json). Was der Client
 immer vollständig braucht, wird als Model mit ModelStreamingMode "Persistent" gespeichert:
   * ganze Maps, auf denen Client-Skripte viele einzelne Teile suchen (Markt)
-  * einzelne Gruppen der übrigen Maps (z. B. Zone, Orte, Stände und die Einsatzzentrale der offenen Welt, Ziele der
+  * einzelne Gruppen der übrigen Maps (z. B. Zone, Orte, Stände und die Camp der offenen Welt, Ziele der
     Arcade-Maps).
     Eine Gruppe ist sonst ein Folder; als Model verhält sie sich für Skripte gleich (FindFirstChild, GetChildren …).
 

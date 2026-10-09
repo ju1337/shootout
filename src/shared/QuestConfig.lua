@@ -4,7 +4,8 @@
 -- wer alle schafft, holt zusätzlich den Wochen-Bonus (Münzen + wechselnder exklusiver Skin).
 -- Event = welches Spielereignis zählt (Kill, Headshot, RoundWin, RoundPlayed, MatchPlayed, MatchWin, Streak5,
 -- Revive, Gadget). Fortschritt kommt vom Server als Spieler-Attribute "Quests" und "Weekly" (JSON).
--- Arcade-Aufträge zählen nur außerhalb von Extinction.
+-- Arcade-Aufträge zählen nur außerhalb von Extinction. Solange Arcade aus ist (Modes.ArcadeEnabled), werden keine neuen
+-- Arcade-Aufträge verteilt (tägliche/wöchentliche Arcade-Sätze leer, VIP & BOOSTER nur Extinction), siehe ModeActive.
 --
 -- Extinction (offene Welt) hat eigene Aufträge: ExtPool (täglich, ExtPerDay) und ExtWeeklyPool (wöchentlich, ExtPerWeek).
 -- Ihre Ereignisse beginnen mit X (XZombie, XRunner, XBrute, XRedZombie, XArmored, XPlayerKill, XAirdrop, XNest, XCache,
@@ -20,6 +21,7 @@
 
 local HttpService = game:GetService("HttpService")
 local StaffConfig = require(script.Parent.StaffConfig)
+local Modes = require(script.Parent.Modes)
 
 local QuestConfig = {}
 
@@ -171,6 +173,11 @@ for _, set in QuestConfig.Sets do
 			quest.Mode = quest.Mode or "Extinction"
 		end
 	end
+end
+
+-- Gibt es Aufträge dieses Modus gerade? ("Arcade" nur, solange Modes.ArcadeEnabled an ist; nil/"Extinction" immer)
+function QuestConfig.ModeActive(mode)
+	return mode ~= "Arcade" or Modes.ArcadeEnabled == true
 end
 
 function QuestConfig.GetSet(key)

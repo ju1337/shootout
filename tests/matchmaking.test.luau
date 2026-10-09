@@ -4,7 +4,9 @@
 -- folgen dem Anführer hier; Fehlschlag (sofort oder TeleportInitFailed) und Zeitüberschreitung: hier spielen, danach
 -- eine Weile nicht weiterschicken; SCHNELLES SPIEL sieht die anderen Server; Ankunft: direkt in den Modus, Squad wieder
 -- zusammen (nur gegenseitig), fremder Place zählt nicht; Einstellung CrossServer aus; alte Meldungen verfallen;
--- Extinction/Markt nie; Herunterfahren löscht die eigene Meldung
+-- Extinction/Markt nie; Herunterfahren löscht die eigene Meldung.
+-- Arcade aus (Modes.ArcadeEnabled = false, Standard): JoinMode zu Arcade-Modi und SCHNELLES SPIEL abgelehnt (Spieler
+-- bleibt, Meldung), keine Zahlen, kein Serverwechsel, Ankunft mit Arcade-Modus startet im Camp; Admins dürfen weiter.
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -20,6 +22,7 @@ game.JobId = "server-1"
 game.PlaceId = 777
 local Remotes = require("Remotes")
 local Modes = require("Modes")
+Modes.ArcadeEnabled = true -- Matchmaking gibt es nur für Arcade; der ausgeschaltete Fall steht unten
 local GameSettings = require("GameSettings")
 local C = Modes.Matchmaking
 
@@ -242,6 +245,30 @@ step(1)
 servers.FailNext = 5
 join(kim, "Wingman")
 check(kim:GetAttribute("Mode") == "Wingman", "MemoryStore gestört: hier")
+
+-- Arcade aus: nichts davon
+Modes.ArcadeEnabled = false
+local leo = SIM.Join("Leo")
+step(1)
+SIM.Teleports = {}
+join(leo, "Domination")
+check(leo:GetAttribute("Mode") == "Extinction" and #SIM.Teleports == 0, "Arcade aus: JoinMode Herrschaft abgelehnt")
+check(status(leo) == "Arcade-Modi sind gerade nicht verfügbar.", "Arcade aus: Meldung " .. tostring(status(leo)))
+join(leo, "Quick")
+join(leo, "Training")
+check(leo:GetAttribute("Mode") == "Extinction" and #SIM.Teleports == 0, "Arcade aus: SCHNELLES SPIEL und Training abgelehnt")
+join(leo, "Market")
+check(leo:GetAttribute("Mode") == "Market", "Arcade aus: Markt geht weiter")
+check(not MatchmakingService.Handles("Domination") and next(MatchmakingService.Snapshot().Modes) == nil,
+	"Arcade aus: keine Arcade-Zahlen")
+SIM.JoinData[905] = { SourcePlaceId = 777, TeleportData = { Mode = "Arena" } }
+local late = SIM.AddPlayer("Late", 905)
+step(1)
+check(late:GetAttribute("Mode") == "Extinction", "Arcade aus: Ankunft mit Arena startet im Camp")
+ModeManager.Join(leo, "Wingman") -- Admin (AdminService ruft ModeManager.Join direkt)
+step(0.5)
+check(leo:GetAttribute("Mode") == "Wingman" and #SIM.Teleports == 0, "Arcade aus: Admin verschiebt weiter (hier)")
+Modes.ArcadeEnabled = true
 
 -- Herunterfahren: eigene Meldung weg
 servers.FailNext = 0

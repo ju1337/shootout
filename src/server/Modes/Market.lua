@@ -2,7 +2,7 @@
 -- Markthalle: kein Kampf. Spieler beanspruchen Stände, bieten Skins für RAP an und kaufen bei anderen
 -- (MarketService). Wer den Markt verlässt (Runde, Camp, Spiel verlassen), verliert seinen Stand – die Skins darauf
 -- waren nur zurückgelegt und sind sofort wieder frei. Das Tor im Süden ("Portal_Extinction") führt zurück ins Camp
--- (Einsatzzentrale in der Safe Zone der offenen Welt).
+-- (Camp in der Safe Zone der offenen Welt).
 
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")

@@ -1,5 +1,5 @@
 --!expose HubLineup buildAgentOfWeek buildShopVitrine dailyOffers
--- Einsatzzentrale: Statue „Agent der Woche“ mit Holo-Schrift darüber (11 Studs breit). In Kameranähe blendet die Schrift aus –
+-- Camp: Statue „Agent der Woche“ mit Holo-Schrift darüber (11 Studs breit). In Kameranähe blendet die Schrift aus –
 -- rausgezoomt neben der Statue oder steil von oben hing sie sonst riesig vor dem Bild. Weiter weg ist sie voll da.
 -- Shop-Vitrine: drei verschiedene Waffen-Skins des Tages (Agenten-Skins gibt es nicht mehr), je mit Schild.
 local failures = 0
@@ -18,7 +18,7 @@ local player = SIM.AddPlayer("Spieler")
 Instance.new("Folder", player).Name = "PlayerGui"
 rawget(SIM.Players, "__props").LocalPlayer = player
 
--- Einsatzzentrale wie in der Map: Statue auf dem Sockel, Holo-Punkt 17 Studs hoch
+-- Camp wie in der Map: Statue auf dem Sockel, Holo-Punkt 17 Studs hoch
 local maps = Instance.new("Folder", workspace)
 maps.Name = "Maps"
 local world = Instance.new("Model", maps)

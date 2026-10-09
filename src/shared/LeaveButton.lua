@@ -2,7 +2,9 @@
 -- VERLASSEN-Knopf: der erste Klick fragt nach (rot, "WIRKLICH VERLASSEN?"), ein zweiter Klick innerhalb von
 -- CONFIRM_TIME Sekunden bringt einen zurück ins Camp (Safe Zone der offenen Welt, Modes.Home). Im Match-HUD unter der
 -- Minimap und in der Map-Abstimmung (die das HUD verdeckt). In der offenen Welt selbst gibt es nichts zu verlassen:
--- dort heißt der Knopf LOBBY und öffnet das Spielmenü (Arcade-Modi, Shop, Loadout, Agenten, Battle Pass).
+-- dort ist der Knopf ausgeblendet (Extinction ist das Hauptspiel). Nur solange Arcade an ist (Modes.ArcadeEnabled),
+-- heißt er dort LOBBY und öffnet das Spielmenü (Arcade-Modi, Shop, Loadout, Agenten, Battle Pass).
+-- Im Markt bringt er einen wie gewohnt zurück ins Camp.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +36,11 @@ function LeaveButton.new(parent, props)
 	props.TextSize = props.TextSize or 17
 	local button = UITheme.Chunky(props, parent)
 	button.Face.BackgroundTransparency = 0.3
+	-- In der offenen Welt ohne Arcade: nichts zu verlassen, kein Spielmenü zum Öffnen
+	local function updateVisible()
+		button.Button.Visible = Modes.ArcadeEnabled or not atHome()
+	end
+	updateVisible()
 	local confirmUntil = 0
 	local clicks = 0 -- zählt Klicks, damit verspätete Rücksetzer nur den eigenen Zustand zurücksetzen
 	local function reset()
@@ -41,6 +48,7 @@ function LeaveButton.new(parent, props)
 		button.SetText(atHome() and "LOBBY" or "VERLASSEN")
 		button.SetColor(UITheme.Colors.Background, UITheme.Colors.Text)
 		button.SetStroke(UITheme.Colors.Border, 1)
+		updateVisible()
 	end
 	button.Button.Activated:Connect(function()
 		if atHome() then

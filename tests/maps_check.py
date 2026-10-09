@@ -1,4 +1,4 @@
-"""Prüft die erzeugten Karten (Markt, Extinction mit der Einsatzzentrale in src/maps/) auf alles, was Server und Client
+"""Prüft die erzeugten Karten (Markt, Extinction mit Camp Phoenix in src/maps/) auf alles, was Server und Client
 darin suchen.
 
 Läuft als Teil von tests/run.py (Test "maps"). Gefangen werden Fehler, die die Luau-Tests nicht sehen, weil sie ihre
@@ -46,23 +46,23 @@ def _load_cached(name):
     return _cache[name]
 
 
-# Teile der Einsatzzentrale (früher der Hub), die Server und Client in der Gruppe Zentrale suchen (src/shared/Zentrale.lua)
+# Teile im Camp Phoenix (früher der Hub), die Server und Client in der Gruppe Zentrale suchen (src/shared/Zentrale.lua)
 ZENTRALE_PARTS = ("AgentOfWeekSpot", "AgentOfWeekHolo", "ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
                   "ShopPlaque1", "ShopPlaque2", "ShopPlaque3", "MissionBoard", "PhotoBoard", "Leaderboard_Elo",
                   "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Wins", "Podium1", "Podium2", "Podium3", "WheelSpot",
-                  "WheelConsole", "WheelBoard", "GateCount_Market", "ArcadeTerminalBase")
+                  "WheelConsole", "WheelBoard", "GateCount_Market")
 
 
 def check_no_hub():
     """Den Hub gibt es nicht mehr: man startet in der Safe Zone der offenen Welt."""
     if os.path.exists(os.path.join(ROOT, "src", "maps", "Hub.model.json")):
-        return ["Hub.model.json gibt es noch – der Hub ist in die Einsatzzentrale im Camp gewandert"]
+        return ["Hub.model.json gibt es noch – der Hub ist ins Camp Phoenix gewandert"]
     return []
 
 
 def check_extinction():
     """Offene Welt: Safe Zone (Server liest den Radius), Spawns und Tor zum Markt darin, Stände und Lager darin,
-    nicht zu nah beieinander, die Einsatzzentrale mit allen Teilen darin; Welt groß genug; kein Baum oder Fels in der
+    nicht zu nah beieinander, alle Teile aus dem früheren Hub im Camp; Welt groß genug; kein Baum oder Fels in der
     Safe Zone."""
     problems = []
     origin = (0, 0, -6000)  # EXTINCTION_ORIGIN in tools/build_maps.py, Center in Modes.lua
@@ -92,7 +92,7 @@ def check_extinction():
         problems.append("Extinction: mindestens 6 Spawns tief in der Safe Zone erwartet (%d)" % len(spawns))
     portals = [part for group, part in parts if group == "Portals"]
     if [p["Name"] for p in portals] != ["Portal_Market"] or not inside(portals[0], 10):
-        problems.append("Extinction: genau ein Tor Portal_Market (Einsatzzentrale) in der Safe Zone erwartet")
+        problems.append("Extinction: genau ein Tor Portal_Market (Depot im Camp) in der Safe Zone erwartet")
     groups = {child.get("Name"): child for child in _load_cached("Extinction").get("Children", [])}
     zentrale = groups.get("Zentrale")
     if not zentrale or zentrale.get("ClassName") != "Model" or zentrale.get("Properties", {}).get("ModelStreamingMode") != "Persistent":

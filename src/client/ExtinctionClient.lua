@@ -6,9 +6,10 @@
 --           E an Ständen/Lager/Taschen (ProximityPrompt)
 --   Controller: R1/L1 nächste/vorige Waffe der Hotbar (im Menü: Reiter), △ = heilen (Heil-Item aus der Hotbar),
 --               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
---   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · SQUAD · LOADOUT ·
---            SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten sechs sind Seiten der Lobby, GameMenu.BorrowPage),
---            dazu AGENTEN und SPIELEN · ARCADE als Links in die Lobby
+--   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · AUFTRÄGE · LOOT ·
+--            GUIDE · SQUAD · ERFOLGE · LOADOUT · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten sechs sind
+--            Seiten der Lobby, GameMenu.BorrowPage), dazu AGENTEN als Link in die Lobby. SPIELEN · ARCADE gibt es nur,
+--            solange Arcade an ist (Modes.ArcadeEnabled; Extinction ist das Hauptspiel).
 --   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
 --            Kisten, Lootdrops und Leichen nur mit dem Gamepass ALLES LOOTEN, sonst führt der Knopf zum Kauf)
@@ -1053,8 +1054,14 @@ local MENU_TABS = {
 	{ Id = "Settings", Text = "OPTIONEN", Page = true },
 	-- Links in die Lobby (ganze Seiten, passen nicht ins Menü): schließen das Menü und öffnen die Lobby dort
 	{ Id = "Agents", Text = "AGENTEN", Lobby = "Agents" },
-	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play" },
+	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play", Arcade = true },
 }
+-- Arcade aus (Modes.ArcadeEnabled): SPIELEN · ARCADE weglassen
+for index = #MENU_TABS, 1, -1 do
+	if MENU_TABS[index].Arcade and not Modes.ArcadeEnabled then
+		table.remove(MENU_TABS, index)
+	end
+end
 local menuTab = {} -- [Id] = Eintrag aus MENU_TABS
 for index, tab in MENU_TABS do
 	tab.Index = index
@@ -2821,7 +2828,7 @@ openMenuTab = function(id)
 		ExtinctionMap.Set(false)
 		Guide.Open()
 	elseif id == "Quests" then
-		-- Aufträge (Extinction, Arcade, VIP & BOOSTER): Inhalt baut QuestBoard
+		-- Aufträge (Extinction, VIP & BOOSTER; Arcade nur, solange Arcade an ist): Inhalt baut QuestBoard
 		ExtinctionMap.Set(false)
 		local win = newWindow("Quests", "AUFTRÄGE", "TÄGLICH  ·  WÖCHENTLICH  ·  VIP & BOOSTER  ·  BEUTE GEHT INS LAGER")
 		local board = require(script.Parent.QuestBoard).new(win.Body, Inv.CONTENT_W, Inv.CONTENT_H,
@@ -3578,7 +3585,7 @@ function ExtinctionClient.Init()
 			local item = hudRoot and hudRoot:FindFirstChild(name)
 			-- Unterkante oben angeordneter Teile (auf dem PC hängt die Lebensanzeige unten am Rand und zählt nicht);
 			-- beide HUDs haben dieselbe Skalierung, die Werte passen also direkt
-			if item and item:IsA("GuiObject") and item.Position.Y.Scale == 0 then
+			if item and item:IsA("GuiObject") and item.Visible and item.Position.Y.Scale == 0 then
 				bottom = math.max(bottom or 0, item.Position.Y.Offset + item.Size.Y.Offset * (1 - item.AnchorPoint.Y))
 			end
 		end

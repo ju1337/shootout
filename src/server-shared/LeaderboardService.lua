@@ -1,7 +1,7 @@
 -- LeaderboardService (ModuleScript, nur Server)
 -- Globale Bestenlisten (Top 10) über OrderedDataStores: ELO, Kills, Siege und Spielerlevel (inkl. Prestige).
 -- Werte werden regelmäßig für alle Spieler eingetragen. Ohne DataStore (z.B. in Studio ohne API-Zugriff)
--- zeigen die Listen die Spieler auf dem Server, damit die Tafeln in der Einsatzzentrale nie leer sind.
+-- zeigen die Listen die Spieler auf dem Server, damit die Tafeln im Camp nie leer sind.
 -- Ergebnis als JSON in ReplicatedStorage-Attributen "Leaderboard_<Name>": { { Name, UserId, Value }, ... }
 -- Zusätzlich "RankedLeaderboard" ({ Name, Elo }) für das STATS-Fenster.
 

@@ -9,6 +9,8 @@
 -- wird wie bisher hier gespielt – so füllt sich ein Server, und die anderen schicken ihre Arcade-Spieler dorthin.
 -- Aus: in Studio, auf privaten/reservierten Servern, ohne MemoryStore, wenn die Einstellung CrossServer 0 ist und für
 -- Spieler, die gerade erst per Matchmaking gekommen sind (Cooldown). Schlägt der Teleport fehl, wird hier gespielt.
+-- Solange Arcade aus ist (Modes.ArcadeEnabled), meldet der Server nichts, schickt niemanden weiter und nimmt keine
+-- Arcade-Ankünfte an (Modes.MatchmakingModes() ist leer).
 -- Spieler-Attribut "Teleporting" (true/nil): Teleport läuft, solange keine anderen Moduswechsel.
 
 local Players = game:GetService("Players")
@@ -33,7 +35,7 @@ local teleporting = {} -- [Player] = Modus, solange der Teleport läuft
 
 -- Wird dieser Modus server-übergreifend gefüllt?
 function MatchmakingService.Handles(modeId)
-	return table.find(C.Modes, modeId) ~= nil
+	return table.find(Modes.MatchmakingModes(), modeId) ~= nil
 end
 
 local function active()
@@ -58,7 +60,7 @@ end
 -- Was dieser Server meldet
 function MatchmakingService.Snapshot()
 	local modes = {}
-	for _, modeId in C.Modes do
+	for _, modeId in Modes.MatchmakingModes() do
 		local players, free = slots(modeId)
 		modes[modeId] = { P = players, F = free }
 	end
@@ -66,7 +68,7 @@ function MatchmakingService.Snapshot()
 end
 
 local function publish()
-	if map and active() then
+	if map and active() and Modes.ArcadeEnabled then
 		pcall(map.SetAsync, map, game.JobId, MatchmakingService.Snapshot(), C.Expire)
 	end
 end

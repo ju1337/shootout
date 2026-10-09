@@ -1,5 +1,5 @@
 -- ZentraleService (ModuleScript, nur Server)
--- Einsatzzentrale in Camp Phoenix (früher der Hub): Siegertreppchen mit Avatar-Statuen der Top 3 nach ELO.
+-- Phönixplatz in Camp Phoenix (früher der Hub): Siegertreppchen mit Avatar-Statuen der Top 3 nach ELO.
 -- Die Teile (Podium1..3) liegen in der Gruppe Zentrale der Map Extinction (siehe Shared/Zentrale).
 
 local Players = game:GetService("Players")

@@ -1,5 +1,5 @@
 -- HubWheel (ModuleScript, nur Client)
--- Das Glücksrad steht als großes Rad in der Einsatzzentrale im Camp (Teil "WheelSpot" der Gruppe Zentrale, siehe
+-- Das Glücksrad steht als großes Rad im Camp am Phönixplatz (Teil "WheelSpot" der Gruppe Zentrale, siehe
 -- Shared/Zentrale: Mitte des Rads, LookVector = Vorderseite). Podest, Ständer und Schild kommen aus der Map, das Rad baut dieses Modul lokal:
 -- acht farbige Felder (LoginConfig.Wheel) aus Keilen, goldene Trennstege, Beschriftung, Nabe, Rand mit
 -- Lichtern und oben ein Zeiger. Am Pult davor ("WheelConsole") öffnet E bzw. Antippen den Dreh: der Server lost

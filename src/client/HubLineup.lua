@@ -1,5 +1,5 @@
 -- HubLineup (ModuleScript, nur Client)
--- Einsatzzentrale in Camp Phoenix (früher der Hub, Teile in der Gruppe Zentrale der Map Extinction, siehe
+-- Phönixplatz in Camp Phoenix (früher der Hub, Teile in der Gruppe Zentrale der Map Extinction, siehe
 -- Shared/Zentrale): Agent der Woche als goldene Statue, Shop-Vitrine mit Theke, Einsatz-Tafel, Bestenlisten,
 -- Bildtafel. Gibt es einen Part "LineupSpot", steht dort groß der eigene Agent (mit gewählter Primärwaffe und deren
 -- Skin) und dreht sich langsam. Nur lokal sichtbar.
@@ -40,7 +40,7 @@ end
 local HubLineup = {}
 
 -- Bühne mit dem eigenen Agenten: nur wenn die Zentrale einen Part "LineupSpot" hat;
--- Position = Füße, LookVector = Blickrichtung der Figur. Die Einsatzzentrale hat stattdessen den Shop.
+-- Position = Füße, LookVector = Blickrichtung der Figur. Das Camp hat stattdessen den Shop.
 local STAGE_POSITION = Vector3.new(0, 1.2, 18)
 local STAGE_FACING = Vector3.new(0, 0, -1)
 local lineupEnabled = false
@@ -252,7 +252,7 @@ local function buildAgentOfWeek()
 	end)
 end
 
--- Shop-Vitrine in der Einsatzzentrale: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
+-- Shop-Vitrine beim Ausrüster im Camp: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
 -- ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
 -- An der Theke ("ShopCounter") öffnet E den Shop. Angebote wechseln täglich (Serverzeit, für alle gleich).
 local DAY = 24 * 3600
@@ -378,7 +378,7 @@ local function buildShopVitrine()
 	end)
 end
 
--- Einsatz-Tafel in der Einsatzzentrale: live, wie viele Spieler in welchem Modus sind
+-- Lagebericht am Siegerpodest: live, wie viele Spieler in welchem Modus sind (nur Modi, die man gerade betreten kann)
 local function buildMissionBoard()
 	local board = Zentrale.Part("MissionBoard", 60)
 	if not board then
@@ -397,7 +397,7 @@ local function buildMissionBoard()
 	title.Font = Enum.Font.BuilderSansExtraBold
 	title.TextScaled = true
 	title.TextColor3 = Color3.fromRGB(212, 170, 80)
-	title.Text = "EINSATZ-ÜBERSICHT"
+	title.Text = "LAGEBERICHT"
 	title.Parent = surface
 	local list = Instance.new("TextLabel")
 	list.Position = UDim2.new(0.06, 0, 0.2, 0)
@@ -444,7 +444,7 @@ local function buildMissionBoard()
 		counts = ok and counts or {}
 		local lines = {}
 		for _, mode in Modes.List do
-			if mode.Available then
+			if mode.Available and Modes.Joinable(mode.Id) then
 				local n = counts[mode.Id] or 0
 				local color = n > 0 and "#70B270" or "#5E656E"
 				table.insert(lines, mode.Name .. '   <font color="' .. color .. '">' .. n .. " Spieler</font>")
@@ -462,7 +462,7 @@ local function buildMissionBoard()
 	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(update)
 end
 
--- Bestenlisten-Tafeln in der Einsatzzentrale (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
+-- Bestenlisten-Tafeln an der Ruhmeswand im Camp (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
 local BOARD_INFO = {
 	Elo = { Title = "HÖCHSTE ELO", Color = Color3.fromRGB(212, 170, 80) },
 	Kills = { Title = "MEISTE KILLS", Color = Color3.fromRGB(206, 70, 58) },
@@ -672,29 +672,8 @@ local function buildPhotoBoard()
 	end
 end
 
--- Arcade-Terminal in der Einsatzzentrale: öffnet das Spielmenü (Lobby) wie der LOBBY-Knopf
-local function buildArcadeTerminal()
-	local base = Zentrale.Part("ArcadeTerminalBase", 60)
-	if not base then
-		return
-	end
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Lobby öffnen"
-	prompt.ObjectText = "SPIELEN"
-	prompt.KeyboardKeyCode = Enum.KeyCode.E
-	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
-	prompt.HoldDuration = 0
-	prompt.MaxActivationDistance = 10
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = base
-	prompt.Triggered:Connect(function()
-		GameMenu.Open("Play")
-	end)
-end
-
 function HubLineup.Init()
 	updateExposure()
-	task.spawn(buildArcadeTerminal)
 	task.spawn(buildPhotoBoard)
 	player:GetAttributeChangedSignal("Mode"):Connect(updateExposure)
 	task.spawn(buildMissionBoard)

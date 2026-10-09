@@ -95,6 +95,6 @@ start("AdminService.Init", AdminService.Init, ModeManager)
 start("PartyService.Init", PartyService.Init, ModeManager)
 -- Arcade über mehrere Server: auf Server mit mehr Spielern im Modus wechseln, der Squad kommt mit
 start("MatchmakingService.Init", MatchmakingService.Init, ModeManager, { Group = PartyService.Followers, Regroup = PartyService.Regroup })
-start("ZentraleService.Init", require(script.Parent.ZentraleService).Init) -- Einsatzzentrale im Camp: Top-3-Statuen
+start("ZentraleService.Init", require(script.Parent.ZentraleService).Init) -- Camp im Camp: Top-3-Statuen
 start("ModeManager.Init", ModeManager.Init)
 current = nil

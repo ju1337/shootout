@@ -14,8 +14,12 @@
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
 --   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
 -- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
--- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: LOBBY unter der Minimap); es öffnet
--- sich NICHT von selbst. Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas) und skaliert mit.
+-- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: AGENTEN
+-- im Menü der offenen Welt); es öffnet sich NICHT von selbst. Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas)
+-- und skaliert mit.
+-- Solange Arcade aus ist (Modes.ArcadeEnabled, Extinction ist das Hauptspiel), fehlt SPIELEN (Modi, Squad, großer
+-- SPIELEN-Knopf, SCHNELLES SPIEL) ganz; LOADOUT (Skins und Aufsätze ausrüsten) bleibt: die Lobby beginnt bei AGENTEN, und der
+-- SPIELEN-Knopf im Markt führt direkt zurück in die offene Welt (Modes.Home).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -57,14 +61,15 @@ local SQUAD_SIZE = 4
 -- Schnelles Spiel: der Server wählt den vollsten Arcade-Modus mit freiem Platz
 local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Arcade-Modus mit freiem Platz", Available = true }
 
--- Navigation: Seite in der Lobby oder Fenster des SideMenu
-local NAV = {
-	{ Id = "Play", Text = "SPIELEN" },
+-- Navigation: Seite in der Lobby oder Fenster des SideMenu (Arcade = nur solange Modes.ArcadeEnabled an ist)
+local ALL_NAV = {
+	{ Id = "Play", Text = "SPIELEN", Arcade = true },
 	{ Id = "Agents", Text = "AGENTEN" },
 	{ Id = "Inventory", Text = "LOADOUT" },
 	{ Id = "Shop", Text = "SHOP" },
 	{ Id = "Pass", Text = "BATTLE PASS" },
 }
+local NAV = {} -- die gerade angebotenen Reiter (beim Aufbau aus ALL_NAV)
 
 local gui, background, canvas, statusLabel, pageStatus, openButton, hubButton, closeButton
 local play -- großer SPIELEN-Knopf (Chunky) mit Unterzeile
@@ -140,9 +145,27 @@ local function updateNav()
 	end
 end
 
-local function showPage(name)
+-- Gibt es die Seite gerade? (SPIELEN nur, solange Arcade an ist)
+local function pageOffered(name)
 	if not pages[name] then
-		name = "Play"
+		return false
+	end
+	for _, entry in ALL_NAV do
+		if entry.Id == name and entry.Arcade then
+			return Modes.ArcadeEnabled == true
+		end
+	end
+	return true
+end
+
+-- Erste Seite der Lobby (SPIELEN bzw. ohne Arcade AGENTEN)
+local function firstPage()
+	return NAV[1] and NAV[1].Id or "Agents"
+end
+
+local function showPage(name)
+	if not pageOffered(name) then
+		name = firstPage()
 	end
 	currentPage = name
 	local entry = pages[name]
@@ -191,6 +214,12 @@ local function buildHeader()
 		BackgroundTransparency = 1 }, canvas)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
 		VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, nav)
+	table.clear(NAV)
+	for _, entry in ALL_NAV do
+		if Modes.ArcadeEnabled or not entry.Arcade then
+			table.insert(NAV, entry)
+		end
+	end
 	for i, entry in NAV do
 		local button = make("TextButton", { Size = UDim2.fromOffset(0, 40), AutomaticSize = Enum.AutomaticSize.X,
 			BackgroundTransparency = 1, BorderSizePixel = 0, AutoButtonColor = false,
@@ -1122,7 +1151,11 @@ function GameMenu.SetOpen(open: boolean)
 	end
 	-- Controller: Auswahl auf den Spielen-Knopf setzen bzw. beim Schließen aufheben
 	if open and InputActions.Device() == "Gamepad" then
-		GuiService.SelectedObject = play.Button
+		if currentPage == "Play" then
+			GuiService.SelectedObject = play.Button
+		elseif pages[currentPage] then
+			InputActions.Focus(pages[currentPage].Frame)
+		end
 	elseif not open and GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(gui) then
 		GuiService.SelectedObject = nil
 	end
@@ -1140,7 +1173,8 @@ function GameMenu.SetOpen(open: boolean)
 end
 
 -- tab: Seite der Lobby ("Play"/"Modes", "Agents", "Inventory", "Shop", "Pass") oder ein Fenster des SideMenu
--- ("Quests", "Daily", "Squad", "Rewards", "Titles"); "Stats", "Codes", "Settings" sind Seiten
+-- ("Quests", "Daily", "Squad", "Rewards", "Titles"); "Stats", "Codes", "Settings" sind Seiten.
+-- Ohne Arcade öffnen nil, "Play" und "Modes" die erste Seite (AGENTEN).
 function GameMenu.Open(tab)
 	GameMenu.SetOpen(true)
 	if tab == nil or tab == "Modes" then
@@ -1150,7 +1184,7 @@ function GameMenu.Open(tab)
 		openPanel(nil)
 		showPage(tab)
 	else
-		showPage("Play")
+		showPage(firstPage())
 		openPanel(tab)
 	end
 end
@@ -1351,7 +1385,7 @@ function GameMenu.Init()
 	buildAgentPage()
 	buildLobbyPages()
 	selectMode(Modes.Featured() or QUICK)
-	showPage("Play")
+	showPage(firstPage())
 
 	-- Ping im SPIELEN-Knopf alle 2 s aktualisieren
 	task.spawn(function()
@@ -1363,7 +1397,8 @@ function GameMenu.Init()
 		end
 	end)
 
-	-- Im Markt: großer Knopf unten mittig öffnet das Menü; in der offenen Welt der LOBBY-Knopf unter der Minimap
+	-- Im Markt: großer Knopf unten mittig öffnet das Menü (ohne Arcade: zurück in die offene Welt); in der offenen Welt
+	-- gibt es keinen LOBBY-Knopf mehr (LeaveButton ist dort ausgeblendet)
 	LeaveButton.OpenMenu = function()
 		GameMenu.Open("Play")
 	end
@@ -1371,7 +1406,11 @@ function GameMenu.Init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player.PlayerGui)
 	openButton = buildHubPlay(openGui)
 	openButton.Button.Activated:Connect(function()
-		GameMenu.SetOpen(true)
+		if Modes.ArcadeEnabled then
+			GameMenu.SetOpen(true)
+		else
+			Remotes.JoinMode:FireServer(Modes.Home) -- nur EXTINCTION: SPIELEN = zurück in die offene Welt
+		end
 	end)
 	updateHubPlay()
 
@@ -1410,12 +1449,12 @@ function GameMenu.Init()
 	-- Meldungen vom Server (Modus voll, kommt bald, ...) öffnen das Menü mit der Meldung
 	Remotes.MenuStatus.OnClientEvent:Connect(function(message)
 		GameMenu.SetOpen(true)
-		showPage("Play")
+		showPage("Play") -- ohne Arcade: erste Seite, Meldung in der Zeile unten
 		setStatus(message)
 	end)
 
 	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Markt den SPIELEN-Knopf zeigen (in der offenen Welt
-	-- öffnet der LOBBY-Knopf unter der Minimap das Menü, siehe LeaveButton)
+	-- führt AGENTEN im Menü der offenen Welt in die Lobby)
 	local function onModeChanged()
 		local mode = player:GetAttribute("Mode")
 		if mode == nil then

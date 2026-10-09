@@ -14,6 +14,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Modes = require(Shared.Modes)
 local GameSettings = require(Shared.GameSettings)
 local AgentConfig = require(Shared.AgentConfig)
 local DayCycle = require(Shared.DayCycle)
@@ -196,28 +197,31 @@ end
 -- ---------- Seiten ----------
 
 local function buildGame(page)
-	section("MODI", page)
-	for _, modeId in { "Domination", "Wingman", "Arena" } do
-		local c = card(page)
-		label(modeId, 15, c)
-		local r = row(c)
-		button("JETZT STARTEN", 130, r, "Good", function()
-			send("ModeStart", modeId)
+	-- Runden der Arcade-Modi steuern: nur solange Arcade an ist (Modes.ArcadeEnabled)
+	if Modes.ArcadeEnabled then
+		section("MODI", page)
+		for _, modeId in { "Domination", "Wingman", "Arena" } do
+			local c = card(page)
+			label(modeId, 15, c)
+			local r = row(c)
+			button("JETZT STARTEN", 130, r, "Good", function()
+				send("ModeStart", modeId)
+			end)
+			button("RUNDE BEENDEN", 130, r, nil, function()
+				send("ModeEndRound", modeId)
+			end)
+			button("RESET", 80, r, "Danger", function()
+				send("ModeResetMatch", modeId)
+			end)
+			order(c)
+		end
+		local ffa = card(page)
+		label("Free for All", 15, ffa)
+		button("RUNDE BEENDEN", 130, row(ffa), nil, function()
+			send("FFAEndRound")
 		end)
-		button("RUNDE BEENDEN", 130, r, nil, function()
-			send("ModeEndRound", modeId)
-		end)
-		button("RESET", 80, r, "Danger", function()
-			send("ModeResetMatch", modeId)
-		end)
-		order(c)
+		order(ffa)
 	end
-	local ffa = card(page)
-	label("Free for All", 15, ffa)
-	button("RUNDE BEENDEN", 130, row(ffa), nil, function()
-		send("FFAEndRound")
-	end)
-	order(ffa)
 	section("ICH", page)
 	local me = card(page)
 	local r = row(me)
@@ -483,6 +487,10 @@ local function refreshPlayers()
 			local short = { Extinction = "Camp", Market = "Markt", FreeForAll = "FFA", Domination = "Herr.", Wingman = "Wing",
 				Arena = "1v1", Training = "Train" }
 			for _, modeId in { "Extinction", "Market", "FreeForAll", "Domination", "Wingman", "Arena", "Training" } do
+				-- Arcade-Modi nur, solange Arcade an ist
+				if Modes.IsArcade(modeId) and not Modes.ArcadeEnabled then
+					continue
+				end
 				button(short[modeId], 52, moves, nil, function()
 					send("MovePlayer", p.UserId, modeId)
 				end)

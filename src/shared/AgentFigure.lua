@@ -1,5 +1,5 @@
 -- AgentFigure (ModuleScript, nur Client)
--- 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Lobby, Shop, Markt, Einsatzzentrale, Symbole), Waffe in der Hand. Sieht aus
+-- 3D-Figur eines Agenten für Vorschauen (Agentenwahl, Lobby, Shop, Markt, Camp, Symbole), Waffe in der Hand. Sieht aus
 -- wie im Spiel: das 3D-Modell des Agenten (AgentModels, Assets.Agents) genau wie gebaut, ohne Modell der
 -- Agenten-Körper im Roblox-Standard-Look (runder Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in der
 -- Uniformfarbe, Beine dunkler). Die Figur steht um den Ursprung (Füße auf 0, Blick nach -Z), Drehpunkt auf Höhe 3.

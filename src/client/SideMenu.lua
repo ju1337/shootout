@@ -143,11 +143,12 @@ local function questReady()
 	return QuestBoard.Ready()
 end
 
--- Fenster AUFTRÄGE: Inhalt baut QuestBoard (Reiter ARCADE / EXTINCTION, Spalten Täglich, Wöchentlich, VIP & BOOSTER)
+-- Fenster AUFTRÄGE: Inhalt baut QuestBoard (Reiter ARCADE / EXTINCTION, Spalten Täglich, Wöchentlich, VIP & BOOSTER;
+-- ohne Arcade nur EXTINCTION)
 local function buildQuests()
 	local width, height = 1180, 660
 	local frame = makePanel("Quests", "AUFTRÄGE", width, height)
-	local board = QuestBoard.new(frame, width - 48, height - 64 - 48, { Mode = "Arcade" })
+	local board = QuestBoard.new(frame, width - 48, height - 64 - 48, { Mode = Modes.ArcadeEnabled and "Arcade" or "Extinction" })
 	board.Frame.Position = UDim2.fromOffset(24, 64)
 	panels.Quests.Refresh = function()
 		board.Refresh()

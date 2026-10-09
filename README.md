@@ -29,13 +29,18 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ samt **Einsatzzentrale** (Shop, Bestenlisten + Top-3-Statuen, Agent der Woche, Glücksrad, Tor MARKT, Terminal SPIELEN), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
-| Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT in der Einsatzzentrale, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (rundes Lager: Phönixplatz mit Agent der Woche, Glücksrad, Ausrüster/Shop, Ruhmeswand, Siegerpodest; Tor MARKT im Depot), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
 | Wingman (Arcade) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
 | 1v1 Arena (Arcade) | Duell | Arena (0, 0, 3000) |
 | Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
+
+**Arcade ist gerade aus** (`Modes.ArcadeEnabled = false` in `src/shared/Modes.lua`; Extinction ist das Hauptspiel): Es
+gibt kein SPIELEN in der Lobby und im Menü der offenen Welt, keine Arcade-Aufträge, der Server lehnt Beitritte zu
+Arcade-Modi und SCHNELLES SPIEL ab, und das Matchmaking über Server ruht. Admins können Spieler weiter in jeden Modus
+schicken. Mit `true` ist alles wieder da (Code der Modi unverändert). Was folgt, beschreibt den eingeschalteten Zustand.
 
 Die Minispiele haben kein eigenes Tor: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
 SPIEL = vollster Arcade-Modus mit freiem Platz, auch auf anderen Servern). Oben im Menü steht groß EXTINCTION und ist
@@ -65,25 +70,28 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 
 ## Extinction (offene Welt)
 
-Vorbild: Überlebens-Server wie „GLife Extinction“. Einen eigenen Hub gibt es nicht: Man startet direkt in der
-**Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von `build_extinction()` in
-`tools/build_maps.py`, Radius 165, Mauer-Quadrat mit halber Seite 115, `SAFE_R` / `CAMP_HALF` in
-`tools/extinction_world.py`): ein Überlebenden-Bollwerk aus Schrott – die Mauer aus gestapelten Autowracks,
-Containern und Wellblech mit Stacheldraht, davor Holzspieße, tote Infizierte und ein brennender Leichenhaufen. Vier Tore
-zwischen hochkant gestellten Containern mit Sandsack-Nest, MG und Scheinwerfer, gesprühte Warnungen („SAFE ZONE ·
-KEINE INFIZIERTEN“, „DRAUSSEN STIRBT MAN“), Gerüsttürme in den Ecken. Drinnen Schlamm und Bretterwege, eine Feuerstelle mit
-Kochtopf, Reifen und Kisten als Sitze (Spawn) mit Überlebenden, die am Feuer sitzen, daneben ein Wach- und Funkturm aus Gerüst (Sandsäcke, Scheinwerfer,
-Lautsprecher, Antenne mit Blinklicht, rote PHOENIX-Banner, Wache oben), Wachen auf Toren und Ecktürmen, Feuertonnen,
-verbarrikadierte Häuser, Sanitätszelt, Quarantäne-Käfig,
-MG-Stellungen an den Toren, grelles Flutlicht am Generator, Treibstoff, Regentonnen; Händler unter Planen hinter
-Paletten-Theken (WAFFEN, SANI, WERKSTATT, dazu der SPIELERMARKT dem Waffenstand gegenüber), das LAGER im Container,
-die Haltestelle REISEN, eine Werkstatt und der Landeplatz mit Hubschrauber (EVAKUIERUNG, ohne Portal).
-In der Nordwest-Ecke steht die Halle **EINSATZZENTRALE** (Eingang von der Nordstraße, ein Schild auf dem Camp-Platz zeigt
-hin; gebaut von `build_zentrale()` in `tools/build_maps.py`, platziert von `zentrale()` in `tools/extinction_world.py`,
-Teile in der immer geladenen Gruppe `Zentrale`, Zugriff über `src/shared/Zentrale.lua`): Shop-Vitrinen mit Theke
-(E öffnet den Shop), Wand der Bestenlisten mit Podest der Top-3-Statuen (Server `src/server/ZentraleService.lua`),
-Statue „Agent der Woche“, Glücksrad, Auftrags- und Fototafel, das grüne Tor MARKT (`Portal_Market`) und das
-Arcade-Terminal **SPIELEN** (E öffnet Lobby/Spielmenü).
+Vorbild: Überlebens-Server wie „GLife Extinction“. Extinction ist das Hauptspiel; einen eigenen Hub gibt es nicht: Man
+startet direkt in der **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von
+`build_extinction()` in `tools/build_maps.py`, das Camp selbst baut `tools/camp_phoenix.py`, Safe Zone Radius 165,
+Mauer bei Radius 140). Das Camp ist **rund** und hat klare Wege:
+- **Phönixplatz** in der Mitte (Spawn): Pflaster mit Phönix-Mosaik, Denkmal mit der Statue „Agent der Woche“,
+  Feuerschalen, Bänke, Fahnen.
+- Um den Platz in den vier Ecken, jeweils zum Platz hin: **Glücksrad**-Bühne (NO), **Ausrüster** mit Shop-Vitrinen und
+  Theke (E öffnet den Shop) und dem Kit-Händler (SO), **Ruhmeswand** mit den vier Bestenlisten (SW), **Siegerpodest**
+  der Top-3-Statuen (Server `src/server/ZentraleService.lua`) mit Lagebericht und Fototafel (NW).
+- Vier **Hauptwege** mit Bretterstegen, Laternen und Lichterketten vom Platz zu den vier Toren, dazu ein **Ringweg**
+  (Radius 60) mit Wegweisern an den Kreuzungen.
+- Vier **Viertel** zwischen Ringweg und Mauer: **BASAR** (NO: Waffen & Munition, Sani, Garküche, Trödelstände unter
+  Planen, hinten der Schieber/Rote Zone), **FUHRPARK** (SO: KFZ-Werkstatt, Busbahnhof/Reisen, Tankstelle, Landeplatz,
+  Tanklager, Parkplatz), **DEPOT** (SW: Lager-Container, Tauschmarkt, das grüne Tor **MARKTHALLE** `Portal_Market`
+  unter dem Portalkran, Container-Stapel, Paletten), **WOHNLAGER** (NW: Lagerfeuer mit Überlebenden, Zelte,
+  Gemeinschafts- und Sanitätszelt, Gemüsebeete, Wäscheleinen, Wasserturm, Generator, das **VERSTECK**).
+- Ringmauer aus Containern und Wellblech mit Stacheldraht, vier Tore (außen CAMP PHOENIX, innen AUSGANG), Wachtürme
+  auf den Diagonalen; davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
+
+Die Teile, die Server und Client suchen (Statue, Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
+Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt
+beim Umbau gleich.
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
 und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
 schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, bis 180 Studs, Wände verdecken).
@@ -227,7 +235,7 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 
 - **Safe Zone** (grüner Ring, Radius 165): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
   beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
-  **Fahrzeugstand**, das **Lager** und die Einsatzzentrale (E an Stand/Lager).
+  **Fahrzeugstand**, das **Lager** und der Phönixplatz (E an Stand/Lager).
 - **Draußen**: sofort schießen auf Zombies möglich, **PvP erst 5 Sekunden nach dem Verlassen** (Anzeige oben:
   SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
 - **Menü** (**TAB** öffnet es auf INVENTAR, **M** auf dem zuletzt offenen Reiter; Controller: Select, L1/R1 blättert, ○
@@ -391,9 +399,9 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   (`UITheme.Cross`), Raute und Münze gezeichnet und ∞ kommt aus Roboto. Dazu passend: gedeckte
   Agenten-, Modus- und Team-Uniformfarben (Burgund/Sturmblau, Erdgrün/Rehbraun, Rost/Sandblau – über alle Modi
   eindeutig), getönte Glas-Visiere statt Neon, weniger Sättigung und Bloom in der Farbkorrektur
-  (`default.project.json`), die Arena aus Beton statt lila Plastik, in der Einsatzzentrale Bernstein-Lichtleisten und
+  (`default.project.json`), die Arena aus Beton statt lila Plastik, im Camp Bernstein-Lichtleisten und
   gedeckte Tore, Schilder in Oswald (`tools/build_maps.py`)
-- **Lobby** (M bzw. Terminal SPIELEN in der Einsatzzentrale): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP ·
+- **Lobby** (M; ohne Arcade ohne SPIELEN, beginnt bei AGENTEN): oben Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP ·
   BATTLE PASS (aktiv mit Bernstein-Strich), Münzen, Level, STATISTIK, CODES, OPTIONEN. Jeder Reiter ist eine eigene
   Seite in der Lobby (kein Extra-Fenster):
   - SPIELEN: links Spielmodi (aktiv heller mit Bernstein-Balken, live Spielerzahl) und der Squad (Anführer mit
@@ -421,11 +429,11 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
   Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
   Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
-- **Agent der Woche** (Einsatzzentrale, `src/client/HubLineup.lua`): goldene Statue des Agenten der Woche dreht sich
+- **Agent der Woche** (Phönixplatz im Camp, `src/client/HubLineup.lua`): goldene Statue des Agenten der Woche dreht sich
   auf dem Sockel, darüber schwebt eine Holo-Schrift (Name, Rolle, +50 % XP, diese Woche gratis). Kommt die Kamera
   nah heran (rausgezoomt neben der Statue, steil von oben), blendet die Schrift weich aus (ab 16 Studs, unter 9
   ganz weg), statt riesig vor dem Bild zu hängen
-- **Glücksrad in der Einsatzzentrale** (`src/client/HubWheel.lua`): großes Rad mit acht
+- **Glücksrad im Camp** (`src/client/HubWheel.lua`): großes Rad mit acht
   Feldern (`LoginConfig.Wheel`), Rand mit Lichtern und Zeiger oben; Podest, Ständer, Schild und Pult kommen aus
   der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E** (Controller □, Touch: Antippen): der Server
   lost das Feld aus, das Rad dreht ein paar Runden, der Zeiger klackt an jedem Steg, die Lichter laufen mit, das
@@ -458,7 +466,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Admin-Panel: **+10.000 RAP** und **Handelbarer Skin** zum Testen
 - **Markt** (Theater-Rund mit 48 Ständen; Server `src/server-shared/MarketService.lua` + `src/server/Modes/Market.lua`,
   Client `src/client/MarketClient.lua`, Map `build_market()` in `tools/build_maps.py`): wie die Trading Plaza in
-  Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKT in der Einsatzzentrale oder den Knopf MARKT im
+  Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKTHALLE im Depot des Camps oder den Knopf MARKT im
   Seitenmenü (im Markt heißt er ZUM CAMP), zurück durchs Tor im Süden der Halle ins Camp.
   - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand der
     Kisten-Automat, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
@@ -535,7 +543,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
 - **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
   Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
   überall so aus: an Spielern (offene Welt, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop,
-  Markt, Einsatzzentrale, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
+  Markt, Camp, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
   gestreckt, zerlegt oder umgebogen. Ein **Rig** (Humanoid, HumanoidRootPart, R15-Gelenke, z.B. StarterCharacter
   oder Avatar-Setup) bleibt komplett (gehäutete Meshes, Bones, Accessoires, Layered Clothing), hängt am
   HumanoidRootPart des Spielkörpers und übernimmt jedes Bild dessen Gelenkbewegung (`AgentModels.SyncJoints` aus
@@ -789,8 +797,8 @@ AKTION), oben rechts PING, PUNKTE, KAMERA, ULT, INSPEKT, links SPRINT; in EXTINC
 Fähigkeit/Gadget, im Helikopter STEIGEN/SINKEN und RAUS. Beim Zuschauen unten **ZURÜCK** / **WEITER** (voriges/nächstes
 Teammitglied).
 
-Im Markt: T öffnet die Tausch-Spielerliste, E am Stand beansprucht/verwaltet/öffnet ihn. In der Einsatzzentrale: E am
-Pult dreht das Glücksrad, E an der Shop-Theke öffnet den Shop, E am Terminal SPIELEN öffnet die Lobby. Im Markt und in
+Im Markt: T öffnet die Tausch-Spielerliste, E am Stand beansprucht/verwaltet/öffnet ihn. Im Camp: E am
+Pult dreht das Glücksrad, E an der Theke des Ausrüsters öffnet den Shop. Im Markt und in
 Safe Zones: G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-Anfrage
 
 ## Wo stelle ich was ein?
@@ -898,7 +906,7 @@ am Commit:
 | `movement` | Bewegungs-Check: legale Bewegungen (Sprint, Rutschen bergab, Rutsch-Sprünge, Vault, Hochziehen, Sprint-Stoß, Fallschirm, Lag) nie zurückgesetzt, Speedhacks und Teleports schon |
 | `movementfeel` | Bewegungsgefühl: Tempo-Rampe, Rutschen (Schub, Reibung, Hang, Lenken, keine Tempo-Ketten), Rutsch-Sprung mit Schwung, Schwung in der Luft, Coyote-Time, Sprungpuffer, harte Landung, Vault über dünne Mauern, Hochziehen (auch aus dem Sprung), zu hohe Wände nicht, Kamera-Neigung nur bei Roblox-Kamera |
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
-| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge; Einsatzzentrale mit allen Teilen, kein Hub mehr |
+| `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge; alle Teile des früheren Hubs im Camp, kein Hub mehr |
 | `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis T nur im Markt, Esc schließt |
 | `padhold`, `extinctionpad` | Controller antippen/halten: kurz = Antippen-Aktion beim Loslassen, lang = Halten-Aktion bis zum Loslassen, Tasten ohne Halten sofort, Hinweis „△ HALTEN“; EXTINCTION-Belegung (↑ Ping/Karte, Select Inventar/Squad, △ heilen/parken) mit echten Tasten, Heil-Item-Wahl (Medikit/Verband/anderes, Meldung ohne), außerhalb der offenen Welt normale Belegung |
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
@@ -919,7 +927,7 @@ am Commit:
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
 | `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `attachmentfit` | Aufsätze nur auf passenden Waffen (`AttachmentConfig.ByWeapon`, z.B. kein Griff am Revolver, kein Visier an Kurzwaffen): Lobby-Kauf und -Ausrüsten prüfen, unpassende wirken nicht, alte Spielstände legen sie ab und erstatten den Preis |
-| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur in der Einsatzzentrale am Rad |
+| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Camp am Rad |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |
@@ -953,7 +961,7 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
   CoD-Stil), Menü, Bewegung, RapConfig (RAP-Werte), ItemPreview (3D-Vorschau eines Skins)
 - `src/server-shared` – Server-Dienste: Schaden, Kills, Agenten, Fortschritt, Shop, Gadgets, Perks, Pings,
   EconomyService (RAP, Rückverkauf, Reservierungen), MarketService (Stände), TradeService (Tauschen)
-- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi (inkl. Extinction und Markt), Einsatzzentrale, Bots, Admin
+- `src/server` – Modus-Verwaltung, Team-Runden-Logik, Modi (inkl. Extinction und Markt), Siegerpodest im Camp, Bots, Admin
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, HubWheel (Glücksrad),
   MarketClient (Markt), TradeClient (Tauschen), KillstreakHUD, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)

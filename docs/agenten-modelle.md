@@ -6,7 +6,7 @@ Texturen. Nichts wird umgefärbt, gestreckt oder umgebogen. Zu sehen ist das Mod
 
 - an **Spielern** in der offenen Welt, im Markt und im Match;
 - an **Bots** mit diesem Agenten;
-- in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Einsatzzentrale (Statue „Agent der Woche“,
+- in allen **Vorschauen**: Agentenwahl, AGENTEN-Seite, Shop, Markt, Camp Phoenix (Statue „Agent der Woche“,
   Vitrinen), Siegerpodest nach dem Match und das Agenten-Symbol im HUD.
 
 Solange es kein Modell gibt oder es nicht lädt, hat der Agent den **Standard-Look**: den Roblox-Körper mit dem

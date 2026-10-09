@@ -9,11 +9,15 @@
 --        AttackAlert/DefendAlert solange die Uhr des Ziels läuft, z.B. Bombe gelegt)
 -- Objectives = Ziel-Parts der Map (Maps.<Map>.Objective.<Part>) mit Buchstaben für Marker und Minimap
 -- Featured = Hauptmodus (groß oben im Menü): EXTINCTION, dort startet jeder (Modes.Home)
--- Arcade = Minispiel (im Menü unter ARCADE)
+-- Arcade = Minispiel (im Menü unter ARCADE; nur solange Modes.ArcadeEnabled an ist)
 -- Survival = offene Welt mit eigenem Inventar (Hotbar 1-9 statt Waffe 1/2, keine Standardwaffen),
 --            Safe Zone, PvP außerhalb, nur passive Agenten-Fähigkeiten (siehe ExtinctionConfig)
 
 local Modes = {}
+
+-- Arcade-Modi vorerst aus, Extinction ist das Hauptspiel: kein SPIELEN im Menü, kein Beitritt, kein Matchmaking, keine
+-- Arcade-Aufträge. Code, Maps und Configs der Arcade-Modi bleiben; auf true stellen, um sie zurückzuholen.
+Modes.ArcadeEnabled = false
 
 Modes.List = {
 	{
@@ -191,11 +195,11 @@ Modes.Disabled = {
 }
 
 -- Startpunkt und Ziel von "Zurück": Spieler beginnen in der Safe Zone der offenen Welt (Camp Phoenix, dort steht auch die
--- Einsatzzentrale mit Shop, Bestenlisten und Glücksrad). Einen eigenen Hub gibt es nicht mehr.
+-- Camp mit Shop, Bestenlisten und Glücksrad). Einen eigenen Hub gibt es nicht mehr.
 Modes.Home = "Extinction"
 
 -- Der Markt: eigene Halle mit Ständen (MarketService), kein Kampfmodus. Erreichbar über das Tor MARKT in der
--- Einsatzzentrale (Camp Phoenix) und den Knopf MARKT im Menü, nicht über die Modus-Liste.
+-- Camp (Camp Phoenix) und den Knopf MARKT im Menü, nicht über die Modus-Liste.
 Modes.Market = {
 	Id = "Market",
 	Name = "MARKT",
@@ -206,6 +210,7 @@ Modes.Market = {
 
 -- Arcade über mehrere Server (MatchmakingService): Wer in einen dieser Modi will, wechselt auf einen Server, auf dem dort
 -- mehr echte Spieler sind (wenn es einen mit Platz gibt). Die Reihenfolge ist auch die von SCHNELLES SPIEL bei Gleichstand.
+-- Solange Modes.ArcadeEnabled aus ist, meldet und wechselt MatchmakingService nichts (Modes.MatchmakingModes() ist leer).
 Modes.Matchmaking = {
 	Modes = { "Domination", "FreeForAll", "Wingman", "Arena" },
 	MapName = "ArcadeServers_v1", -- MemoryStore Sorted Map: [JobId] = { Place, Free, Modes = { [Id] = { P, F } } }
@@ -215,6 +220,11 @@ Modes.Matchmaking = {
 	Cooldown = 60,      -- so lange wird ein Spieler nach einem Wechsel (oder Fehlschlag) nicht wieder weitergeschickt
 	TeleportTimeout = 30, -- kommt der Teleport so lange nicht an, wird hier gespielt
 }
+
+-- Modi, die gerade server-übergreifend gefüllt werden (leer, solange Arcade aus ist)
+function Modes.MatchmakingModes()
+	return Modes.ArcadeEnabled and Modes.Matchmaking.Modes or {}
+end
 
 -- Modus per Id holen (inkl. Markt), nil wenn unbekannt
 function Modes.Get(id)
@@ -258,9 +268,27 @@ function Modes.IsSurvival(id)
 	return mode ~= nil and mode.Survival == true
 end
 
--- Minispiele (im Menü unter ARCADE) und der Hauptmodus (groß oben)
+-- Minispiel (Arcade = true in Modes.List)? Unabhängig davon, ob Arcade gerade an ist
+function Modes.IsArcade(id)
+	local mode = Modes.Get(id)
+	return mode ~= nil and mode.Arcade == true
+end
+
+-- Darf man diesen Modus gerade betreten? Extinction und Markt immer, Arcade-Modi (und SCHNELLES SPIEL = "Quick") nur
+-- mit Modes.ArcadeEnabled
+function Modes.Joinable(id)
+	if id == "Quick" or Modes.IsArcade(id) then
+		return Modes.ArcadeEnabled == true
+	end
+	return Modes.Get(id) ~= nil
+end
+
+-- Minispiele (im Menü unter ARCADE; leer, solange Arcade aus ist) und der Hauptmodus (groß oben)
 function Modes.Arcade()
 	local list = {}
+	if not Modes.ArcadeEnabled then
+		return list
+	end
 	for _, mode in Modes.List do
 		if mode.Arcade then
 			table.insert(list, mode)

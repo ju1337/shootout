@@ -1,5 +1,7 @@
 -- VIP & BOOSTER-Aufträge: je Tag und Woche 2 Arcade + 2 Extinction, nur Berechtigte (Gamepass VIP, Team-Rang ab
--- BOOSTER) zählen und holen ab; Wochen-Aufträge geben einmal den gebundenen Skin Unterstützer
+-- BOOSTER) zählen und holen ab; Wochen-Aufträge geben einmal den gebundenen Skin Unterstützer.
+-- Arcade aus (Modes.ArcadeEnabled = false, Standard): keine neuen Arcade-Aufträge (VIP & BOOSTER nur Extinction,
+-- tägliche/wöchentliche Arcade-Sätze leer, kein Wochen-Bonus ohne Wochen-Aufträge)
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -13,6 +15,8 @@ end
 
 game.JobId = "server-1"
 local store = SIM.DataStore("PlayerData_v1")
+local Modes = require("Modes")
+Modes.ArcadeEnabled = true -- erst mit Arcade (Arcade-Aufträge), unten ohne
 local QuestConfig = require("QuestConfig")
 local Cosmetics = require("Cosmetics")
 local RapConfig = require("RapConfig")
@@ -77,6 +81,25 @@ check(ProgressService.ItemCount(booster, "W_Unterstuetzer") == 1, "nur ein Stüc
 -- ohne Berechtigung: nichts
 message, ok = ProgressService.ClaimQuest(normal, questId)
 check(ok == false and not ProgressService.Owns(normal, "W_Unterstuetzer"), "ohne VIP/Booster kein Abholen: " .. tostring(message))
+
+-- Arcade aus: neue Spieler bekommen keine Arcade-Aufträge
+Modes.ArcadeEnabled = false
+store.Data.u3 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+local vip = SIM.Join("Vip")
+vip:SetAttribute("StaffRank", "Booster")
+step(2)
+for _, key in { "SpecialQuests", "SpecialWeekly" } do
+	check(count(vip, key, "Arcade") == 0 and count(vip, key, "Extinction") == 2, key .. ": Arcade aus: 0 Arcade + 2 Extinction")
+end
+for _, key in { "Quests", "Weekly" } do
+	local data = QuestConfig.Read(vip, key)
+	check(data ~= nil and #data.Ids == 0, key .. ": Arcade aus: keine Arcade-Aufträge")
+end
+check(#(QuestConfig.Read(vip, "ExtQuests") or { Ids = {} }).Ids > 0, "Arcade aus: Extinction-Aufträge gibt es weiter")
+message, ok = ProgressService.ClaimWeeklyBonus(vip)
+check(ok == false, "Arcade aus: kein Wochen-Bonus ohne Wochen-Aufträge: " .. tostring(message))
+check(not QuestConfig.ModeActive("Arcade") and QuestConfig.ModeActive("Extinction"), "ModeActive")
+Modes.ArcadeEnabled = true
 
 if failures > 0 then
 	error(failures .. " Fehler")

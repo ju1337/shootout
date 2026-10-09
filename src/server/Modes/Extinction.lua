@@ -1,7 +1,7 @@
 -- Extinction (ModuleScript, nur Server)
 -- Offene Welt und Start des Spiels (Modes.Home): Spieler beginnen in der Safe Zone ("Camp Phoenix", Mitte der Map
 -- Maps.Extinction). Dort gibt es keinen Schaden und keine Waffen in der Hand, aber Stände, Lager und die
--- Einsatzzentrale (früher der Hub: Shop, Bestenlisten, Glücksrad, Tor zum Markt; Gruppe Zentrale, ZentraleService).
+-- Camp (früher der Hub: Shop, Bestenlisten, Glücksrad, Tor zum Markt; Gruppe Zentrale, ZentraleService).
 -- Draußen spawnen Zombies (ZombieService), 5 Sekunden nach dem Verlassen der Safe Zone ist PvP an.
 -- Wer draußen stirbt, lässt seine ganze Tasche fallen (LootService) und spawnt wieder in der Safe Zone. Wer den
 -- Modus oder das Spiel draußen verlässt, verliert die Tasche genauso (im Menü erst nach einem zweiten Klick).
@@ -482,7 +482,7 @@ function Extinction.Init(modeManager)
 	-- Grundriss für die Weltkarte (Clients haben mit Streaming nur die Teile in ihrer Nähe)
 	WorldLayout.Publish(map)
 
-	-- Tore (Portal_<ModusId>, z.B. zum Markt in der Einsatzzentrale; in der Safe Zone, darum ohne Verlust)
+	-- Tore (Portal_<ModusId>, z.B. zum Markt im Camp; in der Safe Zone, darum ohne Verlust)
 	local lastTouch = {}
 	for _, pad in map:WaitForChild("Portals"):GetChildren() do
 		local target = string.match(pad.Name, "^Portal_(.+)$")

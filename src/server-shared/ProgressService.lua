@@ -118,7 +118,8 @@ local function ensureQuests(player, profile)
 		return
 	end
 	local random = Random.new(player.UserId + tonumber((string.gsub(today, "-", ""))))
-	local pool = table.clone(QuestConfig.Pool)
+	-- Arcade aus: keine neuen Arcade-Aufträge (der Satz bleibt leer, bis Arcade wieder an ist)
+	local pool = QuestConfig.ModeActive("Arcade") and table.clone(QuestConfig.Pool) or {}
 	local ids = {}
 	for _ = 1, math.min(QuestConfig.PerDay, #pool) do
 		local quest = table.remove(pool, random:NextInteger(1, #pool))
@@ -134,7 +135,7 @@ local function ensureWeekly(player, profile)
 		return
 	end
 	local random = Random.new(player.UserId * 7 + week)
-	local pool = table.clone(QuestConfig.WeeklyPool)
+	local pool = QuestConfig.ModeActive("Arcade") and table.clone(QuestConfig.WeeklyPool) or {}
 	local ids = {}
 	for _ = 1, math.min(QuestConfig.PerWeek, #pool) do
 		local quest = table.remove(pool, random:NextInteger(1, #pool))
@@ -156,7 +157,8 @@ local function ensureSet(player, profile, set)
 	for _, pick in set.Picks do
 		local pool = {}
 		for _, quest in pick.Pool do
-			if not pick.Mode or quest.Mode == pick.Mode then
+			-- Arcade aus: keine Arcade-Aufträge (auch nicht bei VIP & BOOSTER)
+			if (not pick.Mode or quest.Mode == pick.Mode) and QuestConfig.ModeActive(quest.Mode) then
 				table.insert(pool, quest)
 			end
 		end
@@ -673,6 +675,9 @@ function ProgressService.ClaimWeeklyBonus(player)
 	local weekly = profile.Weekly
 	if weekly.Bonus then
 		return "Wochen-Bonus schon abgeholt.", false
+	end
+	if #weekly.Ids == 0 then
+		return "Erst alle Wochen-Aufträge abschließen und abholen.", false -- Arcade aus: keine Wochen-Aufträge, kein Bonus
 	end
 	for _, id in weekly.Ids do
 		if not weekly.Claimed[id] then

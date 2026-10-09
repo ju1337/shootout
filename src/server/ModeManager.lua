@@ -1,8 +1,11 @@
 -- ModeManager (ModuleScript, nur Server)
 -- Verwaltet, welcher Spieler in welchem Modus ist (offene Welt, Markt, Arcade-Modi). Start ist die Safe Zone der offenen
--- Welt (Modes.Home, Camp Phoenix mit der Einsatzzentrale); einen eigenen Hub gibt es nicht mehr.
+-- Welt (Modes.Home, Camp Phoenix mit dem Phönixplatz); einen eigenen Hub gibt es nicht mehr.
 -- Moduswechsel = Spieler in den Bereich des Modus setzen. Nur für Arcade-Modi kann es vorher auf einen anderen Server
 -- gehen, auf dem dort mehr Spieler sind (MatchmakingService); dort landet man direkt im Modus.
+-- Solange Arcade aus ist (Modes.ArcadeEnabled), lehnt JoinMode Arcade-Modi und SCHNELLES SPIEL ab (der Spieler bleibt,
+-- wo er ist); wer per Teleport mit einem Arcade-Modus ankommt, startet in Modes.Home. Admins (AdminService) dürfen
+-- weiter direkt verschieben.
 -- Spieler-Attribute: Mode (Id), CanFight (darf schießen/Fähigkeit), ModeText (Info oben im HUD)
 
 local Players = game:GetService("Players")
@@ -137,9 +140,17 @@ function ModeManager.Init()
 	end
 
 	Remotes.JoinMode.OnServerEvent:Connect(function(player, modeId)
-		if typeof(modeId) == "string" then
-			ModeManager.Join(player, modeId)
+		if typeof(modeId) ~= "string" then
+			return
 		end
+		-- Arcade aus: Arcade-Modi und SCHNELLES SPIEL nicht vom Client aus
+		if not Modes.Joinable(modeId) then
+			if modeId == "Quick" or Modes.IsArcade(modeId) then
+				ModeManager.Status(player, "Arcade-Modi sind gerade nicht verfügbar.")
+			end
+			return
+		end
+		ModeManager.Join(player, modeId)
 	end)
 
 	-- Kills an den Modus des Killers weitergeben
@@ -150,7 +161,7 @@ function ModeManager.Init()
 		end
 	end)
 
-	-- Spielerzahlen pro Modus (für Menü-Karten und Einsatz-Tafel in der Einsatzzentrale)
+	-- Spielerzahlen pro Modus (für Menü-Karten und Einsatz-Tafel im Camp)
 	task.spawn(function()
 		local HttpService = game:GetService("HttpService")
 		while true do
@@ -176,7 +187,7 @@ function ModeManager.Init()
 		if not player.Parent or player:GetAttribute("Mode") ~= nil then
 			return
 		end
-		if modeId then
+		if modeId and Modes.Joinable(modeId) then
 			ModeManager.Join(player, modeId, true)
 		end
 		if player.Parent and player:GetAttribute("Mode") == nil then
