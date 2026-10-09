@@ -2,12 +2,15 @@
 -- Für Admins (Attribut "IsAdmin" vom Server) mit allen Kategorien; Moderatoren (Attribut "IsMod", Team-Rang aus
 -- StaffConfig) sehen nur SPIELER und SUCHE mit Kick und den Sperren, die ihr Rang erlaubt. Öffnen/Schließen mit P oder
 -- dem ADMIN-Knopf.
--- Aufbau (wie ein klassisches Roblox-Admin-Panel):
---   * Kopfzeile: Krone, ADMIN PANEL, Rang-Abzeichen, Umschalter DIESER SERVER / ALLE SERVER, Schließen
---   * links große bunte Kategorie-Knöpfe: SPIELER, EFFEKTE, EVENTS, NACHRICHTEN, WELT, LOGS, ÖKONOMIE, SUCHE
---   * SPIELER / EFFEKTE / NACHRICHTEN: in der Mitte die Spielerliste (Avatar, Name, AKTUALISIEREN, Sperre per UserId),
---     rechts die Detailansicht des gewählten Spielers (Werte-Kacheln oben, Aktionsknöpfe darunter)
---   * die anderen Kategorien nutzen Mitte und rechts zusammen als eine Seite
+-- Aussehen wie das Menü der offenen Welt (TAB/M, ExtinctionClient): dunkles Glas (halbtransparent, Welt unscharf
+-- dahinter), Rot als einziger Akzent, flache Knöpfe, Schrift Builder Sans (UITheme), keine Symbole/Emojis.
+-- Aufbau (wie die Vorlage, im Stil des Spiels):
+--   * links die Seitenleiste: ADMIN mit Rang, darunter die Kategorien SPIELER, EFFEKTE, EVENTS, NACHRICHTEN, WELT,
+--     LOGS, ÖKONOMIE, SUCHE (aktive mit rotem Streifen links)
+--   * rechts die Fläche mit Kopfzeile (Titel der Kategorie, Umschalter DIESER SERVER / ALLE SERVER, Schließen)
+--   * SPIELER / EFFEKTE / NACHRICHTEN: in der Fläche links die Spielerliste (Avatar, Name, AKTUALISIEREN, Sperre per
+--     UserId), rechts die Detailansicht des gewählten Spielers (Werte-Kacheln oben, Aktionsknöpfe darunter)
+--   * die anderen Kategorien nutzen die ganze Fläche
 --   * unten eine Zeile mit der Rückmeldung des Servers
 -- Mit ALLE SERVER laufen Server-Aktionen (Events, Ankündigung, Uhrzeit, Nebel, Münzen an alle) über Remote "AllServers"
 -- auf jedem Server. Alle Befehle prüft der Server noch einmal (AdminService).
@@ -15,7 +18,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -33,43 +35,43 @@ local player = Players.LocalPlayer
 
 local AdminPanel = {}
 
--- ---------- Aussehen ----------
-local FONT = Enum.Font.FredokaOne
-local BODY_FONT = Enum.Font.GothamBold
-local PANEL_W, PANEL_H = 1000, 600
-local HEADER_H = 64
+-- ---------- Aussehen (wie das Menü der offenen Welt) ----------
+local F = UITheme.Fonts
+local FONT = F.Bold
+local BODY_FONT = F.Medium
+local PANEL_W, PANEL_H = 1200, 680
+local SIDEBAR_W = 210
+local HEADER_Y, HEADER_H = 18, 50
 local WHITE = Color3.new(1, 1, 1)
+local RED = Color3.fromRGB(214, 58, 58) -- Akzent wie im Menü der offenen Welt (aktiver Reiter, Hauptknöpfe)
+local GLASS = Color3.fromRGB(8, 9, 11)  -- Grund der halbtransparenten Flächen
+-- Knopf-Arten (Wert bei button()/buttonRow): C.Green = Hauptaktion (rot gefüllt), C.Red = gefährlich (dunkel mit roter
+-- Schrift), alles andere flach und halbtransparent. Als Textfarbe stehen C.Green/C.Red für Gut/Schlecht.
 local C = {
-	Body = Color3.fromRGB(44, 46, 56),
-	Column = Color3.fromRGB(30, 32, 40),
-	Card = Color3.fromRGB(54, 57, 68),
-	Field = Color3.fromRGB(36, 38, 46),
-	Dark = Color3.fromRGB(68, 72, 84),
-	Text = Color3.fromRGB(245, 246, 250),
-	Muted = Color3.fromRGB(160, 166, 182),
-	Header = Color3.fromRGB(226, 38, 58),
-	HeaderDark = Color3.fromRGB(176, 18, 40),
-	Gold = Color3.fromRGB(255, 204, 40),
-	Blue = Color3.fromRGB(32, 150, 245),
-	Green = Color3.fromRGB(70, 200, 70),
-	Red = Color3.fromRGB(226, 46, 64),
-	Orange = Color3.fromRGB(245, 140, 30),
-	Purple = Color3.fromRGB(150, 70, 225),
-	Yellow = Color3.fromRGB(245, 190, 30),
-	Teal = Color3.fromRGB(30, 180, 160),
-	Pink = Color3.fromRGB(230, 70, 170),
+	Text = UITheme.Colors.Text,
+	Muted = UITheme.Colors.Muted,
+	Gold = UITheme.Colors.Gold,
+	Green = UITheme.Colors.Good,
+	Red = UITheme.Colors.Bad,
+	Dark = UITheme.Colors.Card,
+	Blue = UITheme.Colors.Card,
+	Orange = UITheme.Colors.Card,
+	Purple = UITheme.Colors.Card,
+	Yellow = UITheme.Colors.Card,
+	Teal = UITheme.Colors.Card,
+	Pink = UITheme.Colors.Card,
 }
 
--- Kategorien: { Id, Text, Symbol, Farbe, mit Spielerliste?, nur volle Admins? }
+-- Kategorien: { Id, Text, mit Spielerliste?, nur volle Admins? }
 local CATEGORIES = {
-	{ Id = "Players", Text = "SPIELER", Icon = "🙂", Color = C.Blue, List = true },
-	{ Id = "Effects", Text = "EFFEKTE", Icon = "⚡", Color = C.Yellow, List = true, Admin = true },
-	{ Id = "Events", Text = "EVENTS", Icon = "⭐", Color = C.Purple, Admin = true },
-	{ Id = "Messages", Text = "NACHRICHTEN", Icon = "💬", Color = C.Green, List = true, Admin = true },
-	{ Id = "World", Text = "WELT", Icon = "🌍", Color = C.Orange, Admin = true },
-	{ Id = "Logs", Text = "LOGS", Icon = "📜", Color = Color3.fromRGB(120, 70, 210), Admin = true },
-	{ Id = "Economy", Text = "ÖKONOMIE", Icon = "💰", Color = C.Gold, Admin = true },
-	{ Id = "Lookup", Text = "SUCHE", Icon = "🔍", Color = C.Red },
+	{ Id = "Players", Text = "SPIELER", List = true },
+	{ Id = "Effects", Text = "EFFEKTE", List = true, Admin = true },
+	{ Id = "Events", Text = "EVENTS", Admin = true },
+	{ Id = "Messages", Text = "NACHRICHTEN", List = true, Admin = true },
+	{ Id = "World", Text = "WELT", Admin = true },
+	{ Id = "Logs", Text = "LOGS", Admin = true },
+	{ Id = "Economy", Text = "ÖKONOMIE", Admin = true },
+	{ Id = "Lookup", Text = "SUCHE" },
 }
 
 -- Aktionen, die mit ALLE SERVER auf jedem Server laufen (wie AdminService GLOBAL)
@@ -80,7 +82,7 @@ local GLOBAL = { Announce = true, ExtAirdrop = true, ExtConvoy = true, ExtHeliCr
 -- ---------- Zustand ----------
 local gui, panel, statusLabel, toggleButton, scopeButton
 local pages, categoryButtons = {}, {}
-local listColumn, listHolder, listTitle, contentArea
+local listColumn, listHolder, listTitle, contentArea, headerTitle
 local currentCategory = "Players"
 local selectedId = nil -- UserId des gewählten Spielers
 local allServers = false
@@ -88,7 +90,7 @@ local isOpen = false
 local listSignature = ""
 local detailBuilders = {} -- [Kategorie] = function(frame, target)
 local detailFrames = {} -- [Kategorie] = ScrollingFrame rechts
-local tiles = {} -- [Key] = TextLabel (Werte des gewählten Spielers, Attribut Icon = Symbol davor)
+local tiles = {} -- [Key] = TextLabel (Werte des gewählten Spielers)
 local watchConnection = nil -- AttributeChanged des gewählten Spielers (Einfrieren, Gottmodus, Rang)
 local hideButton
 local eventStatus = {} -- [Event] = TextLabel
@@ -134,12 +136,12 @@ local function make(className, props, parent)
 end
 
 local function corner(obj, radius)
-	make("UICorner", { CornerRadius = UDim.new(0, radius or 8) }, obj)
+	UITheme.Corner(obj, radius or 3)
 end
 
+-- Haarfeiner heller Rand (UITheme)
 local function stroke(obj, color, thickness, transparency)
-	return make("UIStroke", { Color = color or Color3.new(0, 0, 0), Thickness = thickness or 2,
-		Transparency = transparency or 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, obj)
+	return UITheme.Stroke(obj, color, thickness or 1, transparency)
 end
 
 local function padding(obj, all)
@@ -166,22 +168,36 @@ local function label(text, size, parent, props)
 	return make("TextLabel", props, parent)
 end
 
--- Glänzender bunter Knopf (Verlauf, dunkler Rand, Schrift mit Kontur); beim Darüberfahren heller
+-- Flacher Knopf wie im Menü der offenen Welt: Hauptaktion rot gefüllt, gefährlich dunkel mit roter Schrift, sonst
+-- helle Schicht über dem Glas. Beim Darüberfahren etwas heller.
+local function style(b, color)
+	local kind = color == C.Green and "Primary" or color == C.Red and "Danger" or "Flat"
+	local rest = kind == "Primary" and 0 or kind == "Danger" and 0.3 or 0.92
+	b.BackgroundColor3 = kind == "Primary" and RED or kind == "Danger" and GLASS or WHITE
+	b.BackgroundTransparency = rest
+	b.TextColor3 = kind == "Danger" and C.Red or C.Text
+	b:SetAttribute("Rest", rest)
+	local edge = b:FindFirstChild("Edge")
+	if kind == "Danger" and not edge then
+		edge = make("UIStroke", { Name = "Edge", Color = C.Red, Thickness = 1, Transparency = 0.55,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
+	end
+	if edge then
+		edge.Enabled = kind == "Danger"
+	end
+end
+
 local function button(text, width, parent, color, onClick, height)
-	local base = color or C.Dark
 	local b = make("TextButton", { Size = UDim2.new(width <= 1 and width or 0, width > 1 and width or 0, 0, height or 34),
-		BackgroundColor3 = base, BorderSizePixel = 0, Font = FONT, TextSize = 15, TextColor3 = WHITE, Text = text,
-		AutoButtonColor = false, TextStrokeTransparency = 0.55, TextWrapped = true }, parent)
-	corner(b, 8)
-	stroke(b, base:Lerp(Color3.new(0, 0, 0), 0.45), 2)
-	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(WHITE, Color3.fromRGB(200, 200, 200)) }, b)
-	local info = TweenInfo.new(0.1)
+		BorderSizePixel = 0, Font = FONT, TextSize = 14, Text = text, AutoButtonColor = false, TextWrapped = true }, parent)
+	corner(b, 3)
+	style(b, color)
 	b.MouseEnter:Connect(function()
-		TweenService:Create(b, info, { BackgroundColor3 = b:GetAttribute("Base") and b:GetAttribute("Base"):Lerp(WHITE, 0.18)
-			or base:Lerp(WHITE, 0.18) }):Play()
+		local rest = b:GetAttribute("Rest") or 0.92
+		b.BackgroundTransparency = rest == 0 and 0.12 or rest - 0.06
 	end)
 	b.MouseLeave:Connect(function()
-		TweenService:Create(b, info, { BackgroundColor3 = b:GetAttribute("Base") or base }):Play()
+		b.BackgroundTransparency = b:GetAttribute("Rest") or 0.92
 	end)
 	if onClick then
 		b.Activated:Connect(onClick)
@@ -189,14 +205,9 @@ local function button(text, width, parent, color, onClick, height)
 	return b
 end
 
--- Farbe eines Knopfs später ändern (Umschalter)
+-- Art eines Knopfs später ändern (Umschalter)
 local function recolor(b, color)
-	b:SetAttribute("Base", color)
-	b.BackgroundColor3 = color
-	local s = b:FindFirstChildOfClass("UIStroke")
-	if s then
-		s.Color = color:Lerp(Color3.new(0, 0, 0), 0.45)
-	end
+	style(b, color)
 end
 
 -- Zeile, deren Knöpfe sich die Breite teilen (Breiten < 1 = Anteil, sonst Pixel)
@@ -221,12 +232,13 @@ local function buttonRow(parent, defs, height)
 end
 
 local function textBox(placeholder, parent, props)
-	local box = make("TextBox", { Size = UDim2.new(0, 120, 0, 34), BackgroundColor3 = C.Field, BorderSizePixel = 0,
+	local box = make("TextBox", { Size = UDim2.new(0, 120, 0, 34), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+		BorderSizePixel = 0,
 		Font = BODY_FONT, TextSize = 13, TextColor3 = C.Text, Text = "", PlaceholderText = placeholder,
 		PlaceholderColor3 = C.Muted, ClearTextOnFocus = false, TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd }, parent)
-	corner(box, 8)
-	stroke(box, Color3.fromRGB(20, 22, 28), 1.5)
+	corner(box, 3)
+	stroke(box)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 8) }, box)
 	for key, value in props or {} do
 		box[key] = value
@@ -244,16 +256,17 @@ local function numeric(box, allowMinus)
 	end)
 end
 
--- Abschnitts-Überschrift
+-- Abschnitts-Überschrift (klein, gedämpft, wie im Menü der offenen Welt)
 local function section(title, parent)
-	return label(title, 16, parent, { Size = UDim2.new(1, 0, 0, 22), TextColor3 = C.Gold })
+	return label(title, 12, parent, { Size = UDim2.new(1, 0, 0, 20), TextColor3 = C.Muted, Font = F.Bold })
 end
 
 -- Karte (dunkler Kasten, wächst mit dem Inhalt)
 local function card(parent)
-	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = C.Card,
-		BorderSizePixel = 0 }, parent)
-	corner(frame, 10)
+	local frame = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = GLASS,
+		BackgroundTransparency = 0.35, BorderSizePixel = 0 }, parent)
+	corner(frame, 4)
+	stroke(frame)
 	padding(frame, 10)
 	list(frame, 6)
 	return frame
@@ -278,7 +291,7 @@ end
 
 local function scroller(parent, props)
 	local frame = make("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0,
-		ScrollBarThickness = 5, ScrollBarImageColor3 = C.Gold, CanvasSize = UDim2.new(),
+		ScrollBarThickness = 3, ScrollBarImageColor3 = RED, CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollingDirection = Enum.ScrollingDirection.Y }, parent)
 	for key, value in props or {} do
 		frame[key] = value
@@ -289,10 +302,10 @@ local function scroller(parent, props)
 end
 
 local function avatar(userId, size, parent)
-	local image = make("ImageLabel", { Size = UDim2.new(0, size, 0, size), BackgroundColor3 = C.Field, BorderSizePixel = 0,
-		Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(userId) .. "&w=150&h=150" }, parent)
-	corner(image, size // 2)
-	stroke(image, C.Gold, 2)
+	local image = make("ImageLabel", { Size = UDim2.new(0, size, 0, size), BackgroundColor3 = WHITE, BackgroundTransparency = 0.92,
+		BorderSizePixel = 0, Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(userId) .. "&w=150&h=150" }, parent)
+	corner(image, 4)
+	stroke(image)
 	return image
 end
 
@@ -400,7 +413,7 @@ local function rankButtons(parent, getUserId)
 	local defs = {}
 	for _, rank in StaffConfig.Ranks do
 		if rank.Power <= assign then
-			table.insert(defs, { rank.Name, rank.Color:Lerp(Color3.new(0, 0, 0), 0.25), function()
+			table.insert(defs, { rank.Name, nil, function()
 				local id = getUserId()
 				if id then
 					send("SetRank", id, rank.Id)
@@ -446,7 +459,7 @@ local function refreshTiles()
 	}
 	for key, tile in tiles do
 		if tile.Parent then
-			tile.Text = tostring(tile:GetAttribute("Icon") or "") .. " " .. (values[key] or "0")
+			tile.Text = values[key] or "0"
 		end
 	end
 	if hideButton and hideButton.Parent then
@@ -487,17 +500,27 @@ refreshList = function(force)
 	end
 	for i, p in all do
 		local on = p.UserId == selectedId
-		local entry = make("TextButton", { Size = UDim2.new(1, 0, 0, 54), BackgroundColor3 = on and C.Blue or C.Card,
-			BorderSizePixel = 0, AutoButtonColor = false, Text = "", LayoutOrder = i }, listHolder)
-		corner(entry, 10)
-		stroke(entry, on and C.Blue:Lerp(Color3.new(0, 0, 0), 0.4) or Color3.fromRGB(22, 24, 30), 2)
+		-- wie die Reiter im Menü: gewählt heller mit rotem Streifen links
+		local entry = make("TextButton", { Size = UDim2.new(1, 0, 0, 54), BackgroundColor3 = WHITE,
+			BackgroundTransparency = on and 0.9 or 0.96, BorderSizePixel = 0, AutoButtonColor = false, Text = "", LayoutOrder = i },
+			listHolder)
+		corner(entry, 3)
+		make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, Visible = on }, entry)
+		if not on then
+			entry.MouseEnter:Connect(function()
+				entry.BackgroundTransparency = 0.93
+			end)
+			entry.MouseLeave:Connect(function()
+				entry.BackgroundTransparency = 0.96
+			end)
+		end
 		local face = avatar(p.UserId, 40, entry)
-		face.Position = UDim2.new(0, 7, 0.5, -20)
+		face.Position = UDim2.new(0, 9, 0.5, -20)
 		local staff = StaffConfig.Of(p)
 		label((staff and (StaffConfig.Prefix(staff, 11) .. " ") or "") .. p.DisplayName, 15, entry,
 			{ Position = UDim2.new(0, 54, 0, 7), Size = UDim2.new(1, -60, 0, 20), RichText = true })
 		label("@" .. p.Name, 12, entry, { Position = UDim2.new(0, 54, 0, 28), Size = UDim2.new(1, -60, 0, 16),
-			TextColor3 = on and WHITE or C.Muted, Font = BODY_FONT })
+			TextColor3 = C.Muted, Font = BODY_FONT })
 		entry.Activated:Connect(function()
 			selectPlayer(p.UserId)
 		end)
@@ -505,12 +528,13 @@ refreshList = function(force)
 end
 
 local function buildListColumn(parent)
-	listColumn = make("Frame", { Size = UDim2.new(0, 250, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0 }, parent)
-	corner(listColumn, 12)
+	listColumn = make("Frame", { Size = UDim2.new(0, 260, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.25,
+		BorderSizePixel = 0 }, parent)
+	corner(listColumn, 4)
 	padding(listColumn, 10)
 	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 }, listColumn)
-	listTitle = label("SPIELER (0)", 17, head, { Size = UDim2.new(0.55, 0, 1, 0), TextColor3 = C.Gold })
-	local refresh = button("AKTUALISIEREN", 1, head, C.Blue, function()
+	listTitle = label("SPIELER (0)", 16, head, { Size = UDim2.new(0.55, 0, 1, 0), Font = F.Display })
+	local refresh = button("AKTUALISIEREN", 1, head, nil, function()
 		refreshList(true)
 		refreshDetail()
 	end, 28)
@@ -559,8 +583,8 @@ local function detailHead(frame, target)
 	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundTransparency = 1 }, frame)
 	avatar(target.UserId, 60, head).Position = UDim2.new(0, 0, 0, 2)
 	local staff = StaffConfig.Of(target)
-	label(string.upper(target.DisplayName) .. (staff and ("  " .. StaffConfig.Prefix(staff, 13)) or ""), 22, head,
-		{ Position = UDim2.new(0, 72, 0, 6), Size = UDim2.new(1, -270, 0, 28), RichText = true })
+	label(UITheme.Upper(target.DisplayName) .. (staff and ("  " .. StaffConfig.Prefix(staff, 13)) or ""), 22, head,
+		{ Position = UDim2.new(0, 72, 0, 6), Size = UDim2.new(1, -270, 0, 28), RichText = true, Font = F.Display })
 	label("@" .. target.Name .. " · " .. target.UserId .. " · " .. tostring(target:GetAttribute("Mode") or "?"), 13, head,
 		{ Position = UDim2.new(0, 72, 0, 36), Size = UDim2.new(1, -270, 0, 18), TextColor3 = C.Muted, Font = BODY_FONT })
 	if full() and outranks(target) then
@@ -575,20 +599,19 @@ local function detailHead(frame, target)
 	-- Werte-Kacheln
 	local tileRow = make("Frame", { Size = UDim2.new(1, 0, 0, 52), BackgroundTransparency = 1 }, frame)
 	list(tileRow, 6, true)
-	local defs = { { "Coins", "MÜNZEN", "🪙" }, { "RedPoints", "RZ", "🔴" }, { "Level", "LEVEL", "⭐" }, { "Rap", "RAP", "💎" },
-		{ "Zombies", "ZOMBIES", "🧟" }, { "Kills", "KILLS", "🎯" } }
+	local defs = { { "Coins", "MÜNZEN" }, { "RedPoints", "RZ" }, { "Level", "LEVEL" }, { "Rap", "RAP" },
+		{ "Zombies", "ZOMBIES" }, { "Kills", "KILLS" } }
 	tiles = {}
 	for i, def in defs do
-		local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0,
-			LayoutOrder = i }, tileRow)
-		corner(tile, 8)
-		stroke(tile, Color3.fromRGB(20, 22, 28), 1.5)
-		local value = label(def[3] .. " 0", 16, tile, { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -12, 0, 22) })
-		label(def[2], 11, tile, { Position = UDim2.new(0, 8, 0, 28), Size = UDim2.new(1, -12, 0, 16), TextColor3 = C.Muted })
-		value:SetAttribute("Icon", def[3])
-		tiles[def[1]] = value
+		local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+			BorderSizePixel = 0, LayoutOrder = i }, tileRow)
+		corner(tile, 4)
+		stroke(tile)
+		tiles[def[1]] = label("0", 20, tile, { Position = UDim2.new(0, 10, 0, 5), Size = UDim2.new(1, -16, 0, 24),
+			Font = F.Display, TextColor3 = def[1] == "Coins" and C.Gold or C.Text })
+		label(def[2], 11, tile, { Position = UDim2.new(0, 10, 0, 30), Size = UDim2.new(1, -16, 0, 14), TextColor3 = C.Muted })
 	end
-	refreshTiles()
+		refreshTiles()
 end
 
 -- Kick, Ban mit Grund und Dauer, Daten zurücksetzen, Rang
@@ -625,7 +648,7 @@ local function moderationRows(frame, target)
 		b.LayoutOrder = i
 	end
 	if full() then
-		local reset = confirmButton("RESET DATA", 1, rest, C.Red:Lerp(C.Pink, 0.3), function()
+		local reset = confirmButton("RESET DATA", 1, rest, C.Red, function()
 			send("ResetData", target.UserId, "CONFIRM")
 		end)
 		reset.Size = UDim2.new(0.4, -6, 1, 0)
@@ -645,9 +668,9 @@ local function picker(frame, getText, step, actionText, actionColor, onAction, e
 	local left = button("<", 1, r, C.Dark, nil)
 	left.Size = UDim2.new(0, 40, 1, 0)
 	local name = label("", 15, r, { Size = UDim2.new(0.42, -46, 1, 0), TextXAlignment = Enum.TextXAlignment.Center })
-	name.BackgroundTransparency = 0
-	name.BackgroundColor3 = C.Field
-	corner(name, 8)
+	name.BackgroundColor3 = GLASS
+	name.BackgroundTransparency = 0.35
+	corner(name, 3)
 	local right = button(">", 1, r, C.Dark, nil)
 	right.Size = UDim2.new(0, 40, 1, 0)
 	if extra then
@@ -720,7 +743,7 @@ detailBuilders.Players = function(frame, target)
 		end, "SKIN GEBEN", C.Purple, function()
 			send("GiveSkin", target.UserId, skinIds[skinIndex])
 		end, function(r)
-			button("🔑 SCHLÜSSEL", 1, r, C.Teal, function()
+			button("SCHLÜSSEL", 1, r, C.Teal, function()
 				send("GiveItem", target.UserId, { Id = ExtinctionConfig.Dungeon.KeyItem, Count = 1 })
 			end).Size = UDim2.new(0.12, -6, 1, 0)
 		end)
@@ -924,11 +947,11 @@ local function buildEvents(page)
 		{ "VOR MIR", "ExtHeliCrash", "Here", C.Orange }, { "STOP", "ExtStop", "HeliCrash", C.Red } })
 	eventCard(page, "Horde", "Horden-Kiste", { { "START", "ExtHordeCrate", nil, C.Orange },
 		{ "VOR MIR", "ExtHordeCrate", "Here", C.Orange }, { "STOP", "ExtStop", "HordeCrate", C.Red } })
-	eventCard(page, "BloodMoon", "Blutmond", { { "START", "BloodMoon", "Start", C.Red:Lerp(Color3.new(0, 0, 0), 0.3) },
+	eventCard(page, "BloodMoon", "Blutmond", { { "START", "BloodMoon", "Start", nil },
 		{ "STOP", "ExtStop", "BloodMoon", C.Red } })
-	eventCard(page, "Storm", "Sturmnacht", { { "START", "Storm", "Start", Color3.fromRGB(70, 92, 170) },
+	eventCard(page, "Storm", "Sturmnacht", { { "START", "Storm", "Start", nil },
 		{ "STOP", "ExtStop", "Storm", C.Red } })
-	eventCard(page, "Bounty", "Kopfgeld", { { "AUF MICH", "ExtBountyMe", nil, C.Red:Lerp(Color3.new(0, 0, 0), 0.3) },
+	eventCard(page, "Bounty", "Kopfgeld", { { "AUF MICH", "ExtBountyMe", nil, nil },
 		{ "STOP", "ExtStop", "Bounty", C.Red } })
 	eventCard(page, "Redzone", "Rote Zone", { { "WEITERZIEHEN", "ExtRedzone", nil, C.Orange } })
 	section("SPAWNEN", page)
@@ -982,7 +1005,7 @@ local function buildWorld(page)
 	clockLabel = label("", 15, time, { TextColor3 = C.Muted, Font = BODY_FONT })
 	local defs = {}
 	for _, hour in { 6, 12, 18, 22, 0 } do
-		table.insert(defs, { string.format("%02d:00", hour), hour >= 6 and hour < 20 and C.Orange or Color3.fromRGB(70, 92, 170),
+		table.insert(defs, { string.format("%02d:00", hour), hour >= 6 and hour < 20 and C.Orange or nil,
 			function()
 				sendScoped("SetClock", hour)
 			end })
@@ -1006,10 +1029,10 @@ local function buildWorld(page)
 		end },
 	}, 38)
 	buttonRow(weather, {
-		{ "STURMNACHT AN/AUS", Color3.fromRGB(70, 92, 170), function()
+		{ "STURMNACHT AN/AUS", nil, function()
 			sendScoped("Storm")
 		end },
-		{ "BLUTMOND AN/AUS", C.Red:Lerp(Color3.new(0, 0, 0), 0.3), function()
+		{ "BLUTMOND AN/AUS", nil, function()
 			sendScoped("BloodMoon")
 		end },
 	}, 38)
@@ -1093,9 +1116,9 @@ local function refreshLogs()
 		return
 	end
 	for i, entry in logs do
-		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = i % 2 == 0 and C.Card or C.Column,
-			BorderSizePixel = 0, LayoutOrder = i }, logSection)
-		corner(box, 8)
+		local box = make("Frame", { Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = WHITE,
+			BackgroundTransparency = i % 2 == 0 and 0.96 or 0.93, BorderSizePixel = 0, LayoutOrder = i }, logSection)
+		corner(box, 4)
 		label(os.date("%H:%M", tonumber(entry.At) or 0) .. "  " .. tostring(entry.Admin) .. "  ·  " .. tostring(entry.Action)
 			.. (entry.Target ~= "" and ("  →  " .. tostring(entry.Target)) or ""), 14, box,
 			{ Position = UDim2.new(0, 10, 0, 4), Size = UDim2.new(1, -20, 0, 18) })
@@ -1106,7 +1129,7 @@ end
 
 local function buildLogs(page)
 	local head = row(page, 36)
-	label("ADMIN-LOG (DIESER SERVER)", 17, head, { Size = UDim2.new(0.7, 0, 1, 0), TextColor3 = C.Gold })
+	label("ADMIN-LOG (DIESER SERVER)", 16, head, { Size = UDim2.new(0.7, 0, 1, 0), Font = F.Display })
 	button("AKTUALISIEREN", 1, head, C.Blue, function()
 		send("Logs")
 	end).Size = UDim2.new(0.3, 0, 1, 0)
@@ -1138,7 +1161,7 @@ local function buildSettings(page)
 		end)
 		minus.Size = UDim2.new(0, 40, 1, 0)
 		valueLabels[def.Key] = label("", 16, r, { Size = UDim2.new(0, 70, 1, 0), TextXAlignment = Enum.TextXAlignment.Center,
-			TextColor3 = C.Gold })
+			TextColor3 = C.Text })
 		local plus = button("+", 1, r, C.Dark, function()
 			send("SetSetting", def.Key, GameSettings.Get(def.Key) + def.Step)
 		end)
@@ -1242,14 +1265,15 @@ local function refreshLookup()
 	if data.Found then
 		local tileRow = make("Frame", { Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1 }, box)
 		list(tileRow, 6, true)
-		local defs = { { "🪙 " .. short(data.Coins), "MÜNZEN" }, { "🔴 " .. short(data.RedPoints), "RZ" },
-			{ "⭐ " .. tostring(data.Level) .. (data.Prestige > 0 and (" P" .. data.Prestige) or ""), "LEVEL" },
-			{ "💎 " .. short(data.Rap), "RAP" }, { "🧟 " .. short(data.Zombies), "ZOMBIES" }, { "🎯 " .. short(data.Kills), "KILLS" } }
+		local defs = { { short(data.Coins), "MÜNZEN" }, { short(data.RedPoints), "RZ" },
+			{ tostring(data.Level) .. (data.Prestige > 0 and (" P" .. data.Prestige) or ""), "LEVEL" },
+			{ short(data.Rap), "RAP" }, { short(data.Zombies), "ZOMBIES" }, { short(data.Kills), "KILLS" } }
 		for i, def in defs do
-			local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = C.Column, BorderSizePixel = 0,
-				LayoutOrder = i }, tileRow)
-			corner(tile, 8)
-			label(def[1], 15, tile, { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -12, 0, 20) })
+			local tile = make("Frame", { Size = UDim2.new(1 / #defs, -5, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.35,
+				BorderSizePixel = 0, LayoutOrder = i }, tileRow)
+			corner(tile, 4)
+			stroke(tile)
+			label(def[1], 18, tile, { Position = UDim2.new(0, 8, 0, 4), Size = UDim2.new(1, -12, 0, 22), Font = F.Display })
 			label(def[2], 11, tile, { Position = UDim2.new(0, 8, 0, 26), Size = UDim2.new(1, -12, 0, 14), TextColor3 = C.Muted })
 		end
 	else
@@ -1316,7 +1340,7 @@ local function buildLookup(page)
 		page)
 	list(lookupSection, 8)
 	local head = row(page, 36)
-	label("SPERRLISTE", 16, head, { Size = UDim2.new(0.7, 0, 1, 0), TextColor3 = C.Gold })
+	label("SPERRLISTE", 16, head, { Size = UDim2.new(0.7, 0, 1, 0), Font = F.Display })
 	button("AKTUALISIEREN", 1, head, C.Blue, function()
 		send("BanList")
 	end).Size = UDim2.new(0.3, 0, 1, 0)
@@ -1338,18 +1362,20 @@ local function showCategory(id)
 	end
 	local withList = def and def.List
 	listColumn.Visible = withList == true
-	contentArea.Position = withList and UDim2.new(0, 260, 0, 0) or UDim2.new(0, 0, 0, 0)
-	contentArea.Size = withList and UDim2.new(1, -260, 1, 0) or UDim2.new(1, 0, 1, 0)
+	contentArea.Position = withList and UDim2.new(0, 276, 0, 0) or UDim2.new(0, 0, 0, 0)
+	contentArea.Size = withList and UDim2.new(1, -276, 1, 0) or UDim2.new(1, 0, 1, 0)
 	for pageId, page in pages do
 		page.Visible = pageId == id
 	end
+	-- aktiver Reiter: weiße Schrift, helle Schicht, roter Streifen links (wie im Menü der offenen Welt)
 	for catId, b in categoryButtons do
 		local on = catId == id
-		local s = b:FindFirstChild("Selected")
-		if s then
-			s.Enabled = on
-		end
-		b.Size = on and UDim2.new(1, 0, 0, 50) or UDim2.new(1, -10, 0, 46)
+		b.TextColor3 = on and C.Text or C.Muted
+		b.BackgroundTransparency = on and 0.92 or 1
+		b.Underline.Visible = on
+	end
+	if headerTitle and def then
+		headerTitle.Text = def.Text
 	end
 	if withList then
 		refreshList(true)
@@ -1375,6 +1401,7 @@ local function setOpen(open)
 		RunService:UnbindFromRenderStep("AdminMouse")
 	end
 	UITheme.HoldCamera("Admin", open) -- Blickrichtung nach dem Schließen wie vorher
+	UITheme.SetBlur("Admin", open) -- Welt dahinter unscharf wie beim Menü der offenen Welt
 end
 
 local function newPage(id, withList)
@@ -1400,17 +1427,19 @@ local function build()
 	gui = make("ScreenGui", { Name = "AdminPanel", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
 
-	toggleButton = button(full() and "ADMIN (P)" or "MOD (P)", 110, gui, C.Header, function()
+	-- Knopf oben links: dunkles Glas mit rotem Streifen
+	toggleButton = button(full() and "ADMIN (P)" or "MOD (P)", 110, gui, nil, function()
 		setOpen(not isOpen)
 	end, 30)
 	toggleButton.Position = UDim2.new(0, 150, 0, 6)
-	toggleButton.TextSize = 14
+	toggleButton.TextSize = 13
+	toggleButton.BackgroundColor3 = GLASS
+	toggleButton.BackgroundTransparency = 0.3
+	toggleButton:SetAttribute("Rest", 0.3)
+	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0 }, toggleButton)
 
 	panel = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, PANEL_W, 0, PANEL_H), BackgroundColor3 = C.Body, BorderSizePixel = 0, Visible = false,
-		Active = true }, gui)
-	corner(panel, 16)
-	stroke(panel, Color3.fromRGB(16, 16, 20), 4)
+		Size = UDim2.new(0, PANEL_W, 0, PANEL_H), BackgroundTransparency = 1, Visible = false, Active = true }, gui)
 	local scale = make("UIScale", {}, panel)
 	fitScale(scale)
 	if workspace.CurrentCamera then
@@ -1419,76 +1448,89 @@ local function build()
 		end)
 	end
 
-	-- Kopfzeile: Krone, Titel, Rang-Abzeichen, Server-Umschalter, Schließen
-	local header = make("Frame", { Size = UDim2.new(1, 0, 0, HEADER_H), BackgroundColor3 = C.Header, BorderSizePixel = 0 }, panel)
-	corner(header, 16)
-	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(C.Header, C.HeaderDark) }, header)
-	-- untere Ecken eckig (Übergang zum Körper)
-	make("Frame", { Position = UDim2.new(0, 0, 1, -16), Size = UDim2.new(1, 0, 0, 16), BackgroundColor3 = C.HeaderDark,
-		BorderSizePixel = 0 }, header)
-	label("👑", 38, header, { Position = UDim2.new(0, 14, 0, 8), Size = UDim2.new(0, 50, 0, 46),
-		TextXAlignment = Enum.TextXAlignment.Center, TextTruncate = Enum.TextTruncate.None })
-	label("ADMIN PANEL", 32, header, { Position = UDim2.new(0, 70, 0, 12), Size = UDim2.new(0, 260, 0, 40),
-		TextStrokeTransparency = 0.4 })
+	-- Seitenleiste: ADMIN, Rang, Kategorien untereinander, unten der Hinweis zum Schließen
+	local sidebar = make("Frame", { Size = UDim2.new(0, SIDEBAR_W, 1, 0), BackgroundColor3 = GLASS, BackgroundTransparency = 0.14,
+		BorderSizePixel = 0 }, panel)
+	label("ADMIN", 24, sidebar, { Position = UDim2.new(0, 24, 0, 40), Size = UDim2.new(1, -48, 0, 28), Font = F.Display,
+		TextColor3 = RED })
 	local staff = StaffConfig.Of(player)
-	local badge = make("TextLabel", { Position = UDim2.new(0, 330, 0, 17), Size = UDim2.new(0, 130, 0, 30),
-		BackgroundColor3 = C.Gold, BorderSizePixel = 0, Font = FONT, TextSize = 15, TextColor3 = Color3.fromRGB(70, 40, 0),
-		Text = staff and staff.Name or (full() and "ADMIN" or "MOD") }, header)
-	corner(badge, 8)
-	stroke(badge, Color3.fromRGB(150, 100, 0), 2)
-	if full() then
-		scopeButton = button("DIESER SERVER", 1, header, C.Blue, function()
-			allServers = not allServers
-			scopeButton.Text = allServers and "ALLE SERVER" or "DIESER SERVER"
-			recolor(scopeButton, allServers and C.Purple or C.Blue)
-			setStatus(allServers and "Server-Aktionen (Events, Ankündigung, Welt, Münzen an alle) laufen jetzt auf ALLEN Servern."
-				or "Aktionen nur auf diesem Server.", allServers and C.Gold or C.Muted)
-		end, 40)
-		scopeButton.AnchorPoint = Vector2.new(1, 0)
-		scopeButton.Position = UDim2.new(1, -72, 0, 12)
-		scopeButton.Size = UDim2.new(0, 220, 0, 40)
-		scopeButton.TextSize = 17
-	end
-	local close = button("✕", 1, header, C.HeaderDark, function()
-		setOpen(false)
-	end, 44)
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -14, 0, 10)
-	close.Size = UDim2.new(0, 44, 0, 44)
-	close.TextSize = 24
-
-	-- Körper: links Kategorien, rechts Inhalt; unten die Rückmeldung
-	local body = make("Frame", { Position = UDim2.new(0, 14, 0, HEADER_H + 12), Size = UDim2.new(1, -28, 1, -HEADER_H - 50),
-		BackgroundTransparency = 1 }, panel)
-	local categories = make("Frame", { Size = UDim2.new(0, 210, 1, 0), BackgroundTransparency = 1 }, body)
-	list(categories, 8)
-	local main = make("Frame", { Position = UDim2.new(0, 222, 0, 0), Size = UDim2.new(1, -222, 1, 0), BackgroundTransparency = 1 },
-		body)
-	buildListColumn(main)
-	contentArea = make("Frame", { BackgroundColor3 = C.Column, BorderSizePixel = 0 }, main)
-	corner(contentArea, 12)
-	padding(contentArea, 10)
-
-	statusLabel = label("Bereit", 13, panel, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -8),
-		Size = UDim2.new(1, -40, 0, 20), TextColor3 = C.Muted, Font = BODY_FONT })
-
+	label(UITheme.Upper((staff and staff.Name or (full() and "ADMIN" or "MOD")) .. " · PANEL"), 11, sidebar,
+		{ Position = UDim2.new(0, 25, 0, 68), Size = UDim2.new(1, -48, 0, 14), TextColor3 = C.Muted })
+	local categories = make("Frame", { Position = UDim2.new(0, 0, 0, 110), Size = UDim2.new(1, 0, 1, -160),
+		BackgroundTransparency = 1 }, sidebar)
+	list(categories, 2)
+	label("P  SCHLIESSEN", 11, sidebar, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -20),
+		Size = UDim2.new(1, -48, 0, 14), TextColor3 = C.Muted })
 	for index, def in CATEGORIES do
 		if def.Admin and not full() then
 			continue -- Moderatoren: nur SPIELER und SUCHE
 		end
-		local b = button("", 1, categories, def.Color, function()
+		local b = make("TextButton", { Name = "Tab_" .. def.Id, Size = UDim2.new(1, 0, 0, 46), BackgroundColor3 = WHITE,
+			BackgroundTransparency = 1, BorderSizePixel = 0, Text = def.Text, Font = FONT, TextSize = 15, TextColor3 = C.Muted,
+			TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false, LayoutOrder = index }, categories)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 24) }, b)
+		make("Frame", { Name = "Underline", Position = UDim2.new(0, -24, 0, 0), Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED,
+			BorderSizePixel = 0, Visible = false }, b)
+		b.MouseEnter:Connect(function()
+			if currentCategory ~= def.Id then
+				b.TextColor3 = C.Text
+				b.BackgroundTransparency = 0.96
+			end
+		end)
+		b.MouseLeave:Connect(function()
+			if currentCategory ~= def.Id then
+				b.TextColor3 = C.Muted
+				b.BackgroundTransparency = 1
+			end
+		end)
+		b.Activated:Connect(function()
 			showCategory(def.Id)
-		end, 46)
-		b.Size = UDim2.new(1, -10, 0, 46)
-		b.LayoutOrder = index
-		make("UIStroke", { Name = "Selected", Color = WHITE, Thickness = 3, Enabled = false,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-		label(def.Icon, 26, b, { Position = UDim2.new(0, 8, 0, 6), Size = UDim2.new(0, 36, 0, 34),
-			TextXAlignment = Enum.TextXAlignment.Center, TextTruncate = Enum.TextTruncate.None })
-		label(def.Text, 18, b, { Position = UDim2.new(0, 48, 0, 8), Size = UDim2.new(1, -56, 0, 30),
-			TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.5 })
+		end)
 		categoryButtons[def.Id] = b
 	end
+
+	-- Fläche rechts: Kopfzeile (roter Strich, Titel, Server-Umschalter, Schließen), Inhalt, Rückmeldung
+	local right = make("Frame", { Position = UDim2.new(0, SIDEBAR_W, 0, 0), Size = UDim2.new(1, -SIDEBAR_W, 1, 0),
+		BackgroundColor3 = GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0 }, panel)
+	local header = make("Frame", { Position = UDim2.new(0, 22, 0, HEADER_Y), Size = UDim2.new(1, -44, 0, HEADER_H),
+		BackgroundColor3 = GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0 }, right)
+	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0 }, header)
+	headerTitle = label("SPIELER", 20, header, { Position = UDim2.new(0, 20, 0, 0), Size = UDim2.new(0.5, 0, 1, 0),
+		Font = F.Display })
+	if full() then
+		scopeButton = button("DIESER SERVER", 1, header, nil, function()
+			allServers = not allServers
+			scopeButton.Text = allServers and "ALLE SERVER" or "DIESER SERVER"
+			recolor(scopeButton, allServers and C.Green or nil)
+			setStatus(allServers and "Server-Aktionen (Events, Ankündigung, Welt, Münzen an alle) laufen jetzt auf ALLEN Servern."
+				or "Aktionen nur auf diesem Server.", allServers and C.Text or C.Muted)
+		end, 34)
+		scopeButton.AnchorPoint = Vector2.new(1, 0.5)
+		scopeButton.Position = UDim2.new(1, -56, 0.5, 0)
+		scopeButton.Size = UDim2.new(0, 170, 0, 34)
+	end
+	local close = make("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0),
+		Size = UDim2.new(0, 42, 0, 42), BackgroundColor3 = WHITE, BackgroundTransparency = 1, Text = "", AutoButtonColor = false },
+		header)
+	UITheme.Cross(close, 14, C.Text, 2)
+	close.MouseEnter:Connect(function()
+		close.BackgroundTransparency = 0.9
+	end)
+	close.MouseLeave:Connect(function()
+		close.BackgroundTransparency = 1
+	end)
+	close.Activated:Connect(function()
+		setOpen(false)
+	end)
+
+	local main = make("Frame", { Position = UDim2.new(0, 22, 0, HEADER_Y + HEADER_H + 16),
+		Size = UDim2.new(1, -44, 1, -(HEADER_Y + HEADER_H + 16) - 40), BackgroundTransparency = 1 }, right)
+	buildListColumn(main)
+	contentArea = make("Frame", { BackgroundTransparency = 1 }, main)
+
+	statusLabel = label("Bereit", 13, right, { AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -12),
+		Size = UDim2.new(1, -48, 0, 18), TextColor3 = C.Muted })
+	UITheme.Outline(statusLabel)
 
 	newPage("Players", true)
 	if full() then

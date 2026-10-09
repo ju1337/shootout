@@ -2541,6 +2541,8 @@ return {
 	["🔒 NUR VIP"] = "🔒 VIP ONLY",
 	["🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  {1} s"] = "🛡 SPAWN PROTECTION  ·  NO SHOOTING YET  ·  {1} s",
 	-- Admin-Panel
+	["P  SCHLIESSEN"] = "P  CLOSE",
+	["{1} · PANEL"] = "{1} · PANEL",
 	["EFFEKTE"] = "EFFECTS",
 	["EVENTS"] = "EVENTS",
 	["NACHRICHTEN"] = "MESSAGES",
