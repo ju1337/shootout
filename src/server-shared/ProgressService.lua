@@ -170,6 +170,17 @@ local function ensureSet(player, profile, set)
 	return profile[set.Key]
 end
 
+-- Nur die Aufträge als Attribute senden (QuestEvent: jeder Zombie-Kill zählt, da wäre ein ganzes Sync viel zu teuer)
+local function publishQuests(player, profile)
+	ensureQuests(player, profile)
+	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
+	ensureWeekly(player, profile)
+	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
+	for _, set in QuestConfig.Sets do
+		player:SetAttribute(set.Key, HttpService:JSONEncode(ensureSet(player, profile, set)))
+	end
+end
+
 -- Extra-Belohnung von Extinction-Aufträgen (Loot ins Lager, RZ): setzt Modes/Extinction,
 -- function(player, quest) -> Liste von Texten
 ProgressService.QuestExtras = nil
@@ -201,13 +212,7 @@ function ProgressService.Sync(player)
 	local ranked = profile.Ranked or {}
 	player:SetAttribute("Elo", ranked.Elo or RankConfig.StartElo)
 	player:SetAttribute("RankedData", HttpService:JSONEncode(ranked))
-	ensureQuests(player, profile)
-	player:SetAttribute("Quests", HttpService:JSONEncode(profile.Quests))
-	ensureWeekly(player, profile)
-	player:SetAttribute("Weekly", HttpService:JSONEncode(profile.Weekly))
-	for _, set in QuestConfig.Sets do
-		player:SetAttribute(set.Key, HttpService:JSONEncode(ensureSet(player, profile, set)))
-	end
+	publishQuests(player, profile)
 	player:SetAttribute("Title", profile.Title or TitleConfig.Default)
 	player:SetAttribute("LoginData", HttpService:JSONEncode(profile.Login or {}))
 	player:SetAttribute("WheelData", HttpService:JSONEncode(profile.Wheel or {}))
@@ -595,7 +600,7 @@ function ProgressService.QuestEvent(player, event, amount)
 		end
 	end
 	if changed then
-		ProgressService.Sync(player)
+		publishQuests(player, profile)
 	end
 end
 
@@ -841,6 +846,33 @@ end
 
 -- ---------- Münzen ----------
 
+-- Sync nach Münzen: einzeln sofort (wie immer), aber höchstens alle 0,25 s; was in der Zwischenzeit kommt, wird gesammelt
+-- und kurz danach einmal gesynct. Zombie-Kills geben Münzen am laufenden Band, und ein ganzes Sync pro Kill (Besitz,
+-- Statistik, Aufträge ... als JSON) kostet in der Sturmnacht spürbar Serverzeit. Münzen selbst stehen immer sofort.
+local SYNC_GAP = 0.25
+local lastCoinSync = {}
+local syncPending = {}
+local function syncSoon(player, profile)
+	player:SetAttribute("Coins", profile.Coins)
+	local now = os.clock()
+	if now - (lastCoinSync[player] or 0) >= SYNC_GAP and not syncPending[player] then
+		lastCoinSync[player] = now
+		ProgressService.Sync(player)
+		return
+	end
+	if syncPending[player] then
+		return
+	end
+	syncPending[player] = true
+	task.delay(SYNC_GAP, function()
+		syncPending[player] = nil
+		lastCoinSync[player] = os.clock()
+		if player.Parent then
+			ProgressService.Sync(player)
+		end
+	end)
+end
+
 -- reason: wofür (erscheint in der Belohnungs-Übersicht am Matchende)
 function ProgressService.AddCoins(player, amount, reason)
 	local profile = profiles[player]
@@ -856,7 +888,7 @@ function ProgressService.AddCoins(player, amount, reason)
 	end
 	profile.Coins += math.floor(amount)
 	record(player, reason, 0, math.floor(amount))
-	ProgressService.Sync(player)
+	syncSoon(player, profile)
 	Telemetry.Economy(player, "Source", "Coins", math.floor(amount), profile.Coins,
 		reason == "Robux" and "IAP" or (reason == "Markt" or reason == "Verkauf") and "Shop" or "Gameplay", nil, reason)
 end
@@ -1151,6 +1183,7 @@ function ProgressService.Init()
 		task.spawn(load, player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
+		lastCoinSync[player] = nil
 		if not shuttingDown then
 			for _, callback in leaving do
 				local ok, err = pcall(callback, player)

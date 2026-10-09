@@ -396,6 +396,11 @@ local function tryFire()
 	if not synced or not current or not alive() then
 		return
 	end
+	-- Server lässt hier nicht schießen (Safe Zone mit Waffe im Tutorial, zwischen Runden): gar nicht erst anfangen,
+	-- sonst knallt es nur lokal und das Magazin springt zurück
+	if player:GetAttribute("CanFight") == false then
+		return
+	end
 	local cfg = WeaponConfig.Get(current)
 	local now = os.clock()
 	if now < drawUntil or now - lastShot < cfg.FireDelay then

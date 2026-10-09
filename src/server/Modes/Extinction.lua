@@ -261,10 +261,11 @@ local function bagRemoved(bag)
 	end
 end
 
--- Zum Entwickeln: Admins spawnen immer mit ExtinctionConfig.AdminLoadout (fehlende Waffen kommen dazu, Munition wird
--- bis zur Menge aufgefüllt; was nicht passt, bleibt weg)
+-- Zum Entwickeln: Admins spawnen in Studio immer mit ExtinctionConfig.AdminLoadout (fehlende Waffen kommen dazu, Munition
+-- wird bis zur Menge aufgefüllt; was nicht passt, bleibt weg). Nur in Studio: im echten Spiel könnte man sonst Waffen ins
+-- Lager legen, neu spawnen und beliebig viele erzeugen (und im Markt verkaufen).
 local function giveAdminLoadout(player)
-	if not player:GetAttribute("IsAdmin") or not ExtinctionConfig.AdminLoadout then
+	if not RunService:IsStudio() or not player:GetAttribute("IsAdmin") or not ExtinctionConfig.AdminLoadout then
 		return
 	end
 	for _, entry in ExtinctionConfig.AdminLoadout do
