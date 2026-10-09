@@ -299,7 +299,7 @@ local function startUse(player, state, item, config)
 	character:SetAttribute("UsingItem", config.Name)
 	character:SetAttribute("UseEnd", workspace:GetServerTimeNow() + useTime)
 	-- Geräusch beim Benutzen (hören auch andere in der Nähe)
-	local useSound = USE_SOUNDS[item.Id] or (config.Kind == "Armor" and "Buckle") or (config.Kind == "Heal" and "Zipper")
+	local useSound = USE_SOUNDS[config.Base or item.Id] or (config.Kind == "Armor" and "Buckle") or (config.Kind == "Heal" and "Zipper")
 		or (config.Kind == "Repel" and "Spray")
 	local useRoot = character:FindFirstChild("HumanoidRootPart")
 	if useSound and useRoot then
@@ -608,6 +608,10 @@ function InventoryService.Sell(player, slot, count)
 	end
 	if isOut(item) then
 		status(player, "Pack das Fahrzeug erst ein (K).")
+		return false
+	end
+	if ExtinctionConfig.Get(item.Id).Kit then
+		status(player, "Items aus Kits kann man nicht verkaufen.")
 		return false
 	end
 	count = math.clamp(wholeNumber(count, item.Count), 1, item.Count)

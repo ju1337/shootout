@@ -105,6 +105,20 @@ ExtinctionConfig.Items = {
 	V_Heli = { Kind = "Vehicle", Name = "Helikopter", Vehicle = "Heli", Price = 12000, Tier = 4 },
 }
 
+-- Kit-Ausführungen (KitConfig): gleiche Werte wie das Original, Id "<Id>_Kit", Name mit "(Kit)", unverkäuflich (weder am
+-- Stand noch im Spielermarkt, Kit = true). Munition bleibt die normale (Nachladen sucht die Munitions-Id); die bringt aus
+-- Kits beim Verkaufen 0 Münzen (KitConfig.SellSplit).
+ExtinctionConfig.KitVariants = { "Pistol", "SMG", "Bandage", "Vest", "V_Bicycle" }
+for _, base in ExtinctionConfig.KitVariants do
+	local variant = table.clone(ExtinctionConfig.Items[base])
+	variant.Price = nil
+	variant.Value = 0
+	variant.Kit = true
+	variant.Base = base
+	variant.Name = variant.Name .. " (Kit)"
+	ExtinctionConfig.Items[base .. "_Kit"] = variant
+end
+
 -- Waffen-Aufsätze als Items ("Att_<Id>"), aus AttachmentConfig. Nicht zu kaufen: es gibt sie nur im Konvoi (sicher 2-3
 -- Stück, Convoy.Attachments) und selten in Lootdrops. Value = Wert beim Verkaufen (etwa die Hälfte der Lobby).
 ExtinctionConfig.AttachmentItems = {}
@@ -796,7 +810,7 @@ end
 -- den Preis ihrer Stufe (gefundene Fahrräder usw.).
 function ExtinctionConfig.SellPrice(id, count)
 	local item = ExtinctionConfig.Items[id]
-	if not item then
+	if not item or item.Kit then
 		return 0
 	end
 	local price = item.Price or item.Value or (item.Tier or 0) * 60 + 40

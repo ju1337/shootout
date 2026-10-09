@@ -150,6 +150,14 @@ function ExtMarketService.List(player, slot, count, price)
 	if not price then
 		return false
 	end
+	-- Items aus Kits (ExtinctionConfig.KitVariants) sind unverkäuflich
+	local bag = InventoryService.GetBag(player)
+	local offered = bag and bag.Slots[slot]
+	local offeredConfig = offered and ExtinctionConfig.Get(offered.Id)
+	if offeredConfig and offeredConfig.Kit then
+		status(player, "Items aus Kits kann man nicht verkaufen.")
+		return false
+	end
 	local taken, reason = InventoryService.TakeSlot(player, slot, whole(count))
 	if not taken then
 		status(player, reason or "Das geht nicht.")

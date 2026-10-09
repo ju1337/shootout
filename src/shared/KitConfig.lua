@@ -1,6 +1,7 @@
 -- KitConfig (ModuleScript, Server und Client)
 -- Kits beim Kit-Händler am Spawn im Camp (Punkt KitConfig.Point in Stands, KitService). Jedes Kit hat eine Wartezeit
 -- (Cooldown, Sekunden) und optional einen Gamepass aus RobuxConfig (Pass). Items = { { Item-Id, Anzahl } }; ein Kit
+-- (Kit-Ausführungen "<Id>_Kit" aus ExtinctionConfig.KitVariants sind unverkäuflich)
 -- ohne Items wird als BALD VERFÜGBAR angezeigt und kann nicht abgeholt werden. Abgeholt: Profil Kits[Id] = os.time().
 -- Anzeige: Every = Wartezeit als Text, Style = Aussehen der Kiste im Fenster (KitCrate: Wood, Metal, Gold).
 
@@ -11,7 +12,8 @@ KitConfig.Point = "Kits"
 KitConfig.List = {
 	{ Id = "Starter", Name = "STARTER KIT", Description = "Pistole, MP, Munition, Verbände, Weste und ein Fahrrad",
 		Every = "ALLE 30 MIN", Style = "Wood", Cooldown = 30 * 60, Color = Color3.fromRGB(96, 200, 120),
-		Items = { { "Pistol", 1 }, { "SMG", 1 }, { "Ammo_9mm", 150 }, { "Bandage", 5 }, { "Vest", 1 }, { "V_Bicycle", 1 } } },
+		Items = { { "Pistol_Kit", 1 }, { "SMG_Kit", 1 }, { "Ammo_9mm", 150 }, { "Bandage_Kit", 5 }, { "Vest_Kit", 1 },
+			{ "V_Bicycle_Kit", 1 } } },
 	{ Id = "Daily", Name = "DAILY KIT", Description = "Jeden Tag frische Ausrüstung", Every = "TÄGLICH", Style = "Metal",
 		Cooldown = 24 * 3600, Color = Color3.fromRGB(110, 176, 230), Items = {} },
 	{ Id = "Weekly", Name = "WEEKLY KIT", Description = "Einmal pro Woche die großen Sachen", Every = "WÖCHENTLICH",

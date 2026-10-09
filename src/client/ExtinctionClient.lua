@@ -2617,6 +2617,8 @@ local function openStand(standKey)
 			local count = entry.N or 1
 			if entry.Out then
 				table.insert(actions, { Text = "FAHRZEUG ERST EINPACKEN (K)", Run = function() end })
+			elseif itemConfig(entry.Id) and itemConfig(entry.Id).Kit then
+				table.insert(actions, { Text = "AUS DEM KIT · UNVERKÄUFLICH", Run = function() end })
 			else
 				-- Stück aus Kits bringen nichts (KitConfig.SellSplit, Attribut KitCredit)
 				local okCredit, credit = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("KitCredit") or "{}")
@@ -3260,7 +3262,8 @@ local function quickHeal()
 		local entry = bag[slot]
 		local config = entry and itemConfig(entry.Id)
 		if config and config.Kind == "Heal" then
-			local score = entry.Id == "Medkit" and (missing >= 50 and 3 or 1) or (entry.Id == "Bandage" and 2 or 0)
+			local id = config.Base or entry.Id -- Kit-Ausführung zählt wie das Original
+			local score = id == "Medkit" and (missing >= 50 and 3 or 1) or (id == "Bandage" and 2 or 0)
 			if score > bestScore then
 				best, bestScore = slot, score
 			end
