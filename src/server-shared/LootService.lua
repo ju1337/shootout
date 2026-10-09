@@ -265,6 +265,58 @@ end
 -- Neue Tasche/Kiste bei position (wird auf den Boden gelegt). items = { { Id, Count, Mag } }, kind = "Death", "Drop", "Crate"
 -- oder "Airdrop". options = { Persist (kein Ablauf), HoldTime (Sekunden E halten), SpotKind, Meta, Lifetime, NoGround }.
 -- Gibt die Id zurück (nil, wenn nichts drin wäre).
+-- Boden unter einer Stelle (Tod, Verlassen, Fallenlassen) oder nil ohne Boden. Zählt nur, was man betreten kann:
+-- Charaktere, Bots, Zombies, Leichen, Fahrzeuge, Taschen und Teile ohne Kollision (Blätter, Zonen, Effekte) fallen durch,
+-- sonst schwebt die Tasche, sobald die Leiche oder das Auto weg ist. Der Strahl reicht weit genug für Tode im Sprung,
+-- im Fall oder auf Dächern.
+local GROUND_DEPTH = 1000
+
+local function bodyOf(part)
+	local node = part.Parent
+	while node and node ~= workspace do
+		if node:FindFirstChildOfClass("Humanoid") then
+			return node
+		end
+		node = node.Parent
+	end
+	return nil
+end
+
+local function groundBelow(position)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.RespectCanCollide = true
+	local ignore = { folder }
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+	end
+	for _, name in { "Bots", "Zombies", "ExtinctionVehicles" } do
+		local extra = workspace:FindFirstChild(name)
+		if extra then
+			table.insert(ignore, extra)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	-- knapp über dem Rumpf ansetzen: so landet nichts auf einer niedrigen Decke über dem Toten
+	local origin = position + Vector3.new(0, 1.5, 0)
+	for _ = 1, 8 do
+		local hit = workspace:Raycast(origin, Vector3.new(0, -GROUND_DEPTH, 0), params)
+		if not hit then
+			return nil
+		end
+		local body = hit.Instance and bodyOf(hit.Instance)
+		if not body then
+			return hit.Position
+		end
+		-- eine Leiche oder ein Modell mit Humanoid ist kein Boden: ausnehmen und weiter nach unten
+		table.insert(ignore, body)
+		params.FilterDescendantsInstances = ignore
+	end
+	return nil
+end
+
 function LootService.Create(position, items, kind, title, options)
 	options = options or {}
 	local list = {}
@@ -287,24 +339,10 @@ function LootService.Create(position, items, kind, title, options)
 		look = { Size = options.Size or look.Size, Color = options.Color or look.Color, Light = look.Light, Range = look.Range }
 	end
 
-	-- auf den Boden legen (Charaktere und andere Taschen ignorieren)
+	-- auf den Boden legen (siehe groundBelow)
 	local ground = position
 	if not options.NoGround then
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		local ignore = { folder }
-		for _, player in Players:GetPlayers() do
-			if player.Character then
-				table.insert(ignore, player.Character)
-			end
-		end
-		local zombies = workspace:FindFirstChild("Zombies")
-		if zombies then
-			table.insert(ignore, zombies)
-		end
-		params.FilterDescendantsInstances = ignore
-		local hit = workspace:Raycast(position + Vector3.new(0, 3, 0), Vector3.new(0, -60, 0), params)
-		ground = hit and hit.Position or position
+		ground = groundBelow(position) or position
 	end
 
 	local model, part = buildModel(kind, look, { SpotKind = options.SpotKind }, id, ground, options.Yaw or math.rad(math.random(0, 359)))
