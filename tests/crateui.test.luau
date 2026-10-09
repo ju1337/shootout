@@ -120,7 +120,7 @@ for _, item in pool do
 	check(labelWith(window, UITheme.Upper(item.Name)) ~= nil, "im Inhalt: " .. item.Name)
 end
 check(labelStarting(window, "ÖFFNEN  ·  450") ~= nil, "Knopf zeigt den Preis")
-check(labelStarting(window, "MÜNZEN  1.000") ~= nil or labelStarting(window, "MÜNZEN  1000") ~= nil, "Münzen oben")
+check(labelStarting(window, "MÜNZEN  1.000") ~= nil or labelStarting(window, "MÜNZEN  1,000") ~= nil or labelStarting(window, "MÜNZEN  1000") ~= nil, "Münzen oben")
 
 -- ÖFFNEN
 check(click(window, "ÖFFNEN  ·  450"), "ÖFFNEN klickbar")

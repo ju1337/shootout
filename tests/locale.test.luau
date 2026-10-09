@@ -61,6 +61,11 @@ check(Locale.Translate("SPIELEN") == "PLAY", "genauer Text übersetzt")
 check(Locale.Translate("30 / 90") == "30 / 90", "Zahlen bleiben")
 check(Locale.Translate("Kein Eintrag dafür xyz") == "Kein Eintrag dafür xyz", "ohne Eintrag unverändert")
 check(Locale.Translate("") == "", "leerer Text bleibt leer")
+-- großgeschriebene Fassung (Anzeigen schreiben mit UITheme.Upper groß, bevor der Text gesetzt wird)
+check(Locale.Translate("TÖTE 19 ZOMBIES") == "KILL 19 ZOMBIES", "Muster in Großbuchstaben: " .. Locale.Translate("TÖTE 19 ZOMBIES"))
+check(Locale.Translate("TÖTE 14 ZOMBIES IN DER ROTEN ZONE") == "KILL 14 ZOMBIES IN THE RED ZONE",
+	"längeres Muster in Großbuchstaben: " .. Locale.Translate("TÖTE 14 ZOMBIES IN DER ROTEN ZONE"))
+check(Locale.Translate("TÖTE 3 BROCKEN") == "KILL 3 BRUTES", "genauer Text in Großbuchstaben")
 
 -- Muster mit Platzhaltern und verschachteltem Nachschlagen (echte Einträge aus LocaleStrings)
 local sample = nil
@@ -122,6 +127,7 @@ PlayerSettings.Set("Language", "auto")
 flush()
 check(Locale.Language() == "en", "Automatisch mit en-us = Englisch")
 check(label.Text == "PLAY", "zurück auf Englisch übersetzt wieder: " .. label.Text)
+check(require("UITheme").FormatNumber(22526) == "22,526", "Englisch: Tausenderkomma (" .. require("UITheme").FormatNumber(22526) .. ")")
 
 -- Automatisch mit deutscher Roblox-Sprache = Deutsch (Init neu, nur Sprache und Translate – die Hörer bleiben)
 Locale._Reset()
@@ -131,6 +137,7 @@ flush()
 check(Locale.Language() == "de", "de-de automatisch Deutsch")
 check(Locale.Translate("SPIELEN") == "SPIELEN", "auf Deutsch bleibt der Text")
 check(Locale.Translate("SPIELEN", "en") == "PLAY", "Translate mit Sprache en")
+check(require("UITheme").FormatNumber(22526) == "22.526", "Deutsch: Tausenderpunkt")
 
 -- Server-Seite: ForPlayer nach Roblox-Sprache
 local alice = SIM.AddPlayer("Alice", 1002)

@@ -54,6 +54,15 @@ local function escapePattern(s)
 	return (string.gsub(s, "[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"))
 end
 
+-- wie UITheme.Upper (Umlaute in UTF-8 mit)
+local function upperText(s)
+	local loud = string.upper(s)
+	loud = string.gsub(loud, "ä", "Ä")
+	loud = string.gsub(loud, "ö", "Ö")
+	loud = string.gsub(loud, "ü", "Ü")
+	return loud
+end
+
 local function firstWord(s)
 	return string.match(s, "^(%S+)") or ""
 end
@@ -69,22 +78,37 @@ local function load()
 	if not ok or type(table_) ~= "table" then
 		return
 	end
+	-- Großgeschriebene Fassung jedes Eintrags dazu: viele Anzeigen schreiben veränderliche Texte (Aufträge, Aktionen)
+	-- erst mit UITheme.Upper groß und setzen sie dann; "TÖTE 19 ZOMBIES" findet so "Töte {1} Zombies".
+	-- Eigene Einträge in Großbuchstaben haben Vorrang.
+	local entries = {}
 	for source, target in table_ do
 		if type(source) == "string" and type(target) == "string" then
-			if string.find(source, "{%d}") then
-				-- Muster: Text um die Platzhalter herum wörtlich, Platzhalter fangen alles (auch leer)
-				local count = 0
-				local pattern = "^" .. string.gsub(escapePattern(source), "{(%d)}", function()
-					count += 1
-					return "(.-)"
-				end) .. "$"
-				local head = string.match(source, "^([^{%s]+)") -- erstes Wort, wenn es nicht mit {n} beginnt
-				local key = (head and not string.find(head, "{")) and head or ""
-				patterns[key] = patterns[key] or {}
-				table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count })
-			else
-				strings[source] = target
+			entries[source] = target
+		end
+	end
+	for source, target in table_ do
+		if type(source) == "string" and type(target) == "string" then
+			local loud = upperText(source)
+			if entries[loud] == nil then
+				entries[loud] = upperText(target)
 			end
+		end
+	end
+	for source, target in entries do
+		if string.find(source, "{%d}") then
+			-- Muster: Text um die Platzhalter herum wörtlich, Platzhalter fangen alles (auch leer)
+			local count = 0
+			local pattern = "^" .. string.gsub(escapePattern(source), "{(%d)}", function()
+				count += 1
+				return "(.-)"
+			end) .. "$"
+			local head = string.match(source, "^([^{%s]+)") -- erstes Wort, wenn es nicht mit {n} beginnt
+			local key = (head and not string.find(head, "{")) and head or ""
+			patterns[key] = patterns[key] or {}
+			table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count })
+		else
+			strings[source] = target
 		end
 	end
 	-- längere Muster zuerst: sie sind genauer als kurze mit frühem Platzhalter

@@ -248,7 +248,7 @@ end
 step(0.5)
 check(ProgressService.Get(bob).Coins == 2900, "Sturmgewehr gekauft (2900 Münzen übrig)")
 check(string.find(texts(hud), "STURMGEWEHR", 1, true) ~= nil, "Hotbar zeigt das Sturmgewehr")
-check(string.find(texts(windowGui), "2.900 MÜNZEN", 1, true) ~= nil, "Fenster zeigt die neuen Münzen")
+check(string.find(texts(windowGui), "2,900 MÜNZEN", 1, true) ~= nil or string.find(texts(windowGui), "2.900 MÜNZEN", 1, true) ~= nil, "Fenster zeigt die neuen Münzen")
 
 -- Verkaufen: Platz in der Tasche anklicken, dann VERKAUFEN
 local slotButton = find(windowGui, "Bag1")

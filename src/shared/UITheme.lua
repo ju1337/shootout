@@ -441,11 +441,19 @@ function UITheme.Diamond(parent, size, position, color, strokeColor)
 	return diamond
 end
 
--- Zahl mit Tausenderpunkten ("12.450")
+-- Zahl mit Tausendertrennzeichen in der Anzeigesprache: Englisch "12,450", Deutsch "12.450"
+local localeModule = nil
 function UITheme.FormatNumber(n)
+	if localeModule == nil then
+		local ok, result = pcall(function()
+			return require(script.Parent:WaitForChild("Locale")) :: any
+		end)
+		localeModule = ok and result or false
+	end
+	local sep = (localeModule and localeModule.Language() ~= "de") and "," or "."
 	local s = tostring(math.floor(n or 0))
-	local formatted = string.reverse((string.gsub(string.reverse(s), "(%d%d%d)", "%1.")))
-	return (string.gsub(formatted, "^%.", ""))
+	local formatted = string.reverse((string.gsub(string.reverse(s), "(%d%d%d)", "%1" .. sep)))
+	return (string.gsub(formatted, "^[%.,]", ""))
 end
 
 -- Hintergrund-Unschärfe, solange mindestens ein Menü offen ist
