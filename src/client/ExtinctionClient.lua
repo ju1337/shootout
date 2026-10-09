@@ -3114,9 +3114,9 @@ local prompts = {}
 -- ---------- Hinweis-Blasen über den Ständen ----------
 -- Über jedem Stand (Camp und Safehouses) schwebt eine Sprechblase mit dem Namen und Symbolen der Ware, damit man
 -- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
-local BUBBLE_RANGE = 180
-local BUBBLE_HEIGHT = 9.5 -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): knapp über dem Dach
-local BUBBLE_SIZE = 96    -- nur das Symbol, ohne Rahmen und Titel (Pixel)
+local BUBBLE_RANGE = 260
+local BUBBLE_HEIGHT = 22  -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): hoch über den Dächern im Camp, quer über den Platz zu sehen
+local BUBBLE_SIZE = 110   -- nur das Symbol, ohne Rahmen und Titel (Pixel)
 local ICON_BASE = 46      -- in dieser Größe sind die Symbole gezeichnet; UIScale bringt sie auf BUBBLE_SIZE
 local BUBBLES = {
 	Stand_Weapons = { Icon = "Rifle" },

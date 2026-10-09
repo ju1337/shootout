@@ -1,6 +1,6 @@
 -- Zentrale (ModuleScript)
--- Phönixplatz in Camp Phoenix (Safe Zone der offenen Welt, früher der Hub): Glücksrad, Ausrüster mit Shop-Vitrine,
--- Rathauslaube mit Lagebericht und Ruhmeswand (Bestenlisten), Siegerpodest und das Tor zum Markt im Depot. Die Teile
+-- Phönixplatz in Camp Phoenix (Safe Zone der offenen Welt, früher der Hub): Pavillons Glücksrad, Ausrüster mit
+-- Shop-Vitrine und Ruhmeswand mit Lagebericht und Bestenlisten, Siegerpodest und das Tor zum Markt in der Markthalle. Die Teile
 -- liegen in der Gruppe "Zentrale" der Map Extinction (immer geladen, siehe tools/streaming.py); gebaut in
 -- tools/camp_phoenix.py.
 

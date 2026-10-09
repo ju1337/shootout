@@ -29,7 +29,7 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (runde Altstadt: Phönixplatz mit Brunnen, Rathaus mit Lagebericht und Ruhmeswand, Ausrüster/Shop, Glücksrad, Siegerpodest; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (rund und modern: offener Phönixplatz mit Pavillons Ausrüster/Shop, Glücksrad, Ruhmeswand mit Lagebericht und Siegerpodest, Tauschmarkt; Händler an allen Stationen; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
@@ -79,35 +79,40 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 Vorbild: Überlebens-Server wie „GLife Extinction“. Extinction ist das Hauptspiel; einen eigenen Hub gibt es nicht: Man
 startet direkt in der **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von
 `build_extinction()` in `tools/build_maps.py`, das Camp selbst baut `tools/camp_phoenix.py`, Safe Zone Radius 165,
-Mauer bei Radius 110). Das Camp ist eine **runde Altstadt**: Altbauten mit Putzfassaden, Ziegeldächern, Fensterläden
-und Blumenkästen (Generator `townhouse` in `camp_phoenix.py`, Läden im Erdgeschoss mit Schild, Schaufenstern, Theke in
-der Tür und Markise), von innen nach außen:
-- **Phönixplatz** (Radius 36, Spawn): Kopfsteinpflaster, runder Brunnen (Becken mit Wasser), Spawn-Ring, Bänke
-  unter Bäumen in Kübeln, Lichterketten, Altstadt-Laternen, Fahnen, Wegweiser; davor die Café-Terrasse und das
-  **Siegerpodest** mit Statuen der Top 3 nach Level (Server `src/server/ZentraleService.lua`) vor dem Rathaus.
-- **Innerer Häuserring** (8 Altbauten, Fronten bei Radius 36.5, je Seite ein breites und ein schmales Haus, Rückseiten
-  mit Fenstern zur Ringstraße): NO **AUSRÜSTER** (offene Arkade mit den drei Shop-Vitrinen und der Theke, E öffnet den
-  SHOP-Reiter des Menüs) und **WAFFEN & MUNITION**; SO **CAFÉ ZENTRAL** und **APOTHEKE** (Items); SW **RATHAUS** mit Uhrturm und offener
-  Rathauslaube (**LAGEBERICHT**: Spieler in der offenen Welt und im Markt, Blutmond und Sturmnacht; **RUHMESWAND**:
-  Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE als Schaukästen) und **TAUSCHMARKT**; NW **GLÜCKSRAD** (Spielhalle mit dem Rad an der Rückwand, Pult vorn) und
-  **LAGERHAUS** (Lager).
-- Vier **Hauptstraßen** (Asphalt, Gehsteige, Laternen) vom Platz zu den Toren und eine **Ringstraße** (Radius 59.5).
-- **Äußerer Häuserring** (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe): NO
-  **Marktviertel** (KIT-AUSGABE = Kit-Händler, Garküche, Stoffe, Funk & Batterien; hinten die Marktgasse mit Trödelständen
-  und dem Schieber-Transporter/Rote Zone), SO **Fuhrpark** (KFZ-WERKSTATT, Ersatzteile, Hotel zur Post; hinten
-  Tankstelle, Landeplatz, Parkplatz), SW **Depot** (BUSBAHNHOF mit dem Bus am Bordstein der Südstraße, die
-  **MARKTHALLE** mit dem grünen Tor `Portal_Market`, Spedition; hinten Container, Portalkran, Paletten), NW
-  **Wohnviertel** (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer mit Überlebenden, Wäscheleine, Wasserturm und an der
-  Nordstraße die Gruftkapelle **KATAKOMBEN**, der Eingang zu den Dungeons).
-- Ringmauer aus Betonfertigteilen mit Stacheldraht (wie im ersten Camp), vier Tore aus Container-Türmen (außen CAMP
-  PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
+Mauer bei Radius 110). Das Camp ist **modern und aufgeräumt**: Flachdachhäuser aus Putz, Sichtbeton, Metall oder
+Holz mit Fensterbändern, Glas, Leuchtschildern und farbigen Lisenen (Generator `block` in `camp_phoenix.py`), keine
+Bäume, keine Bänke. An jeder Station steht ein **Händler** (Figur aus Teilen im R15-Schnitt mit Gesicht, `shopkeeper`,
+nicht anklickbar). Von innen nach außen:
+- **Phönixplatz** (offen bis an die Ringstraße, Radius 54.5, Spawn): heller Plattenbelag mit dunklen Fugenbändern und
+  Wegweisern im Boden zu den Toren, flaches Becken mit Fontänen, Spawn-Ring, LED-Lichtmasten, Fahnen, Poller. Auf den
+  Diagonalen vier offene **Pavillons** (Flachdach mit Leuchtkante, Glasseiten, Schild auf dem Dach), die Achsen bleiben
+  frei: NO **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter des Menüs), SO **GLÜCKSRAD** (Rad an
+  der Rückwand, Pult vorn), SW **RUHMESWAND** (**LAGEBERICHT**: Spieler in der offenen Welt und im Markt, Blutmond und
+  Sturmnacht; Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE an den Seitenwänden; davor das
+  **Siegerpodest** mit Statuen der Top 3 nach Level, Server `src/server/ZentraleService.lua`), NW **TAUSCHMARKT**.
+- Eine **Ringstraße** (Radius 59.5) mit Zebrastreifen an den Mündungen und vier **Hauptstraßen** (Asphalt, Gehsteige,
+  LED-Laternen) zu den Toren.
+- **Häuserring** an der Ringstraße (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe; die
+  Stationen liegen als offene Läden mit Theke in den Eckhäusern an den Hauptstraßen): NO **KIT-AUSGABE**, Café, Stoffe,
+  **WAFFEN & MUNITION** (hinten Food-Court mit zwei Kiosken und dem Schieber-Transporter/Rote Zone), SO
+  **KFZ-WERKSTATT**, Ersatzteile, Hotel, **APOTHEKE** (hinten Tankstelle, Landeplatz, Parkplatz mit Ladesäulen), SW
+  **BUSBAHNHOF** (Bus am Bordstein der Südstraße), **MARKTHALLE** mit dem grünen Tor `Portal_Market`, **LAGERHAUS**
+  (hinten Container, Portalkran, Paletten), NW **VERSTECK**, Wohnhäuser, Schule (hinten Sportplatz, Solarfeld und an der
+  Nordstraße der Abgang **KATAKOMBEN**, der Eingang zu den Dungeons).
+- Ringmauer aus Betonfertigteilen mit Stacheldraht und Leuchtband, vier Tore aus Container-Türmen (außen CAMP
+  PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks. Die Schilder im Camp
+  bleiben neu (keine Verwitterung wie draußen).
+
+Draufsicht zum Prüfen ohne Studio: `python3 tools/camp_render.py camp.png` (Stände gelb, Teile der Zentrale grün,
+Spawns blau).
 
 Die Teile, die Server und Client suchen (Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
-Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 45 Studs auseinander
+Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 35 Studs auseinander
 (`tests/maps_check.py` verlangt 30). Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt beim Umbau gleich.
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
 und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
-schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, bis 180 Studs, Wände verdecken).
+schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, 22 Studs über dem Stand und damit
+über den Dächern, bis 260 Studs, Wände verdecken).
 
 **Tutorial** (`src/client/ExtTutorial.lua`): Wer zum ersten Mal in die offene Welt kommt, bekommt eine Karte WELCOME mit
 START TUTORIAL / SKIP. Danach führt eine Tafel oben in der Mitte durch sechs Schritte, jeder geht erst weiter, wenn er

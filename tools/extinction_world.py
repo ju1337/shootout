@@ -2031,10 +2031,11 @@ class World(CampPhoenix):
             box("Decor", "SurvivorGun", (0.35, 0.45, 3.2), (0.4, ty + 0.5, -1.4), (34, 34, 36), "Metal", props=props)
 
     def camp(self):
-        """Safe Zone "Camp Phoenix": rundes Lager mitten in Ödstadt (tools/camp_phoenix.py). In der Mitte der Phönixplatz
-        (Spawn, Agent der Woche), drumherum Glücksrad, Ausrüster, Ruhmeswand und Siegerpodest, dann eine Ringstraße und
-        vier Viertel: Basar (NO), Fuhrpark (SO), Depot mit Tor zur Markthalle (SW) und Wohnviertel (NW). Außen eine
-        Mauer aus Containern mit vier Toren und Wachtürmen, davor das Sperrgebiet.
+        """Safe Zone "Camp Phoenix": rundes, modernes Lager mitten in Ödstadt (tools/camp_phoenix.py). In der Mitte der
+        offene Phönixplatz (Spawn) mit den Pavillons Ausrüster, Glücksrad, Ruhmeswand mit Siegerpodest und Tauschmarkt,
+        dann eine Ringstraße mit dem Häuserring (Stationen mit Händlern) und vier Höfe: Food-Court (NO), Fuhrpark (SO),
+        Depot mit Markthalle (SW) und Sportplatz mit dem Abgang zu den Katakomben (NW). Außen eine Betonmauer mit vier
+        Toren und Wachtürmen, davor das Sperrgebiet.
 
         Das Camp hat eigene Zufallszahlen. Danach steht der Zufallsgenerator der Welt wieder genau dort, wo ihn das
         frühere Camp hinterließ (tools/saved/extinction_after_camp.json) – der Rest der Welt bleibt so unverändert."""
@@ -3754,12 +3755,11 @@ def weather_signs(bm, b, rng):
     """Alle Schilder alt machen: Holz, Rost oder vergilbtes Blech statt glatter Tafeln, kein Leuchten, handgemalte Schrift
     (PermanentMarker / SpecialElite) in verblichenen Farben, leicht schief.
 
-    Die Schilder im Camp (liegen vorne) haben eigene Zufallszahlen; die übrigen Schilder bekommen den Zufallsgenerator
+    Die Schilder im Camp Phoenix bleiben neu (modernes Camp: Leuchtschilder); die übrigen Schilder bekommen den Zufallsgenerator
     so, wie ihn die Schilder des früheren Camps hinterließen (tools/saved/extinction_after_camp.json) – so sehen sie
     genau aus wie vor dem Umbau des Camps. Die eigenen Schilder der Safehouse-Stile (FRESH_SIGNS: Leuchtschild der Raststätte,
     Militärschilder) bleiben neu und brauchen keine Zufallszahlen, damit die übrigen Schilder der Welt gleich bleiben."""
     boards = ((96, 78, 58), (88, 70, 52), (110, 72, 52), (176, 168, 146), (70, 66, 60))
-    camp_rng = random.Random(9115)
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved", "extinction_after_camp.json")) as f:
         saved = json.load(f)
     if saved.get("signs_before_sha") == hashlib.sha256(repr(rng.getstate()).encode()).hexdigest():
@@ -3780,8 +3780,8 @@ def weather_signs(bm, b, rng):
     def visit(inst):
         children = inst.get("Children", [])
         guis = [c for c in children if c.get("ClassName") == "SurfaceGui" and c.get("Name") in ("SignGui",)]
-        if guis and inst.get("Name") not in FRESH_SIGNS:
-            rng = camp_rng if in_camp(inst) else world_rng
+        if guis and inst.get("Name") not in FRESH_SIGNS and not in_camp(inst):
+            rng = world_rng
             props = inst["Properties"]
             props["Material"] = rng.choice(("WoodPlanks", "WoodPlanks", "CorrodedMetal", "Fabric"))
             props["Color"] = bm.rgb(*rng.choice(boards))
