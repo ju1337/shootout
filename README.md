@@ -29,7 +29,7 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (rundes Lager: Phönixplatz mit Agent der Woche, Glücksrad, Ausrüster/Shop, Ruhmeswand, Siegerpodest; Tor MARKT im Depot), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (runde Altstadt: Phönixplatz mit Agent der Woche, Rathaus mit Lagebericht und Ruhmeswand, Ausrüster/Shop, Glücksrad, Siegerpodest; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
@@ -73,25 +73,31 @@ Niederschlagen/Wiederbeleben, Bots). Ein neuer Team-Modus ist eine kurze Konfigu
 Vorbild: Überlebens-Server wie „GLife Extinction“. Extinction ist das Hauptspiel; einen eigenen Hub gibt es nicht: Man
 startet direkt in der **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Map `Extinction`, erzeugt von
 `build_extinction()` in `tools/build_maps.py`, das Camp selbst baut `tools/camp_phoenix.py`, Safe Zone Radius 165,
-Mauer bei Radius 140). Das Camp ist **rund** und hat klare Wege:
-- **Phönixplatz** in der Mitte (Spawn): Pflaster mit Phönix-Mosaik, Denkmal mit der Statue „Agent der Woche“,
-  Feuerschalen, Bänke, Fahnen.
-- Um den Platz in den vier Ecken, jeweils zum Platz hin: **Glücksrad**-Bühne (NO), **Ausrüster** mit Shop-Vitrinen und
-  Theke (E öffnet den Shop) und dem Kit-Händler (SO), **Ruhmeswand** mit den vier Bestenlisten (SW), **Siegerpodest**
-  der Top-3-Statuen (Server `src/server/ZentraleService.lua`) mit Lagebericht und Fototafel (NW).
-- Vier **Hauptwege** mit Bretterstegen, Laternen und Lichterketten vom Platz zu den vier Toren, dazu ein **Ringweg**
-  (Radius 60) mit Wegweisern an den Kreuzungen.
-- Vier **Viertel** zwischen Ringweg und Mauer: **BASAR** (NO: Waffen & Munition, Sani, Garküche, Trödelstände unter
-  Planen, hinten der Schieber/Rote Zone), **FUHRPARK** (SO: KFZ-Werkstatt, Busbahnhof/Reisen, Tankstelle, Landeplatz,
-  Tanklager, Parkplatz), **DEPOT** (SW: Lager-Container, Tauschmarkt, das grüne Tor **MARKTHALLE** `Portal_Market`
-  unter dem Portalkran, Container-Stapel, Paletten), **WOHNLAGER** (NW: Lagerfeuer mit Überlebenden, Zelte,
-  Gemeinschafts- und Sanitätszelt, Gemüsebeete, Wäscheleinen, Wasserturm, Generator, das **VERSTECK**).
-- Ringmauer aus Containern und Wellblech mit Stacheldraht, vier Tore (außen CAMP PHOENIX, innen AUSGANG), Wachtürme
-  auf den Diagonalen; davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
+Mauer bei Radius 110). Das Camp ist eine **runde Altstadt**: Altbauten mit Putzfassaden, Ziegeldächern, Fensterläden
+und Blumenkästen (Generator `townhouse` in `camp_phoenix.py`, Läden im Erdgeschoss mit Schild, Schaufenstern, Theke in
+der Tür und Markise), von innen nach außen:
+- **Phönixplatz** (Radius 36, Spawn): Kopfsteinpflaster, Brunnen mit der Statue „Agent der Woche“, Spawn-Ring, Bänke
+  unter Bäumen in Kübeln, Lichterketten, Altstadt-Laternen, Fahnen, Wegweiser; davor die Café-Terrasse und das
+  **Siegerpodest** der Top-3-Statuen (Server `src/server/ZentraleService.lua`) vor dem Rathaus.
+- **Innerer Häuserring** (8 Altbauten, Fronten bei Radius 36.5, je Seite ein breites und ein schmales Haus, Rückseiten
+  mit Fenstern zur Ringstraße): NO **AUSRÜSTER** (offene Arkade mit den drei Shop-Vitrinen und der Theke, E öffnet den
+  Shop) und **WAFFEN & MUNITION**; SO **CAFÉ ZENTRAL** und **APOTHEKE** (Items); SW **RATHAUS** mit Uhrturm und offener
+  Rathauslaube (**LAGEBERICHT** = Missionstafel, **RUHMESWAND** = die vier Bestenlisten als Schaukästen, Fototafel an
+  der Straßenseite) und **TAUSCHMARKT**; NW **GLÜCKSRAD** (Spielhalle mit dem Rad an der Rückwand, Pult vorn) und
+  **LAGERHAUS** (Lager).
+- Vier **Hauptstraßen** (Asphalt, Gehsteige, Laternen) vom Platz zu den Toren und eine **Ringstraße** (Radius 59.5).
+- **Äußerer Häuserring** (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe): NO
+  **Marktviertel** (KIT-AUSGABE = Kit-Händler, Garküche, Stoffe, Funk & Batterien; hinten die Marktgasse mit Trödelständen
+  und dem Schieber-Transporter/Rote Zone), SO **Fuhrpark** (KFZ-WERKSTATT, Ersatzteile, Hotel zur Post; hinten
+  Tankstelle, Landeplatz, Parkplatz), SW **Depot** (BUSBAHNHOF mit dem Bus am Bordstein der Südstraße, die
+  **MARKTHALLE** mit dem grünen Tor `Portal_Market`, Spedition; hinten Container, Portalkran, Paletten), NW
+  **Wohnviertel** (VERSTECK, Wohnhäuser, Schule; hinten Garten, Lagerfeuer mit Überlebenden, Wäscheleine, Wasserturm).
+- Ringmauer aus Betonfertigteilen mit Stacheldraht (wie im ersten Camp), vier Tore aus Container-Türmen (außen CAMP
+  PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
 
 Die Teile, die Server und Client suchen (Statue, Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
-Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt
-beim Umbau gleich.
+Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 45 Studs auseinander
+(`tests/maps_check.py` verlangt 30). Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt beim Umbau gleich.
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
 und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
 schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, bis 180 Studs, Wände verdecken).
