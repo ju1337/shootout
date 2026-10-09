@@ -197,7 +197,15 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Coins", profile.Coins)
 	player:SetAttribute("Rap", math.floor(tonumber(profile.Rap) or 0))
 	player:SetAttribute("RapValue", RapConfig.InventoryValue(profile.Owned))
-	player:SetAttribute("Owned", HttpService:JSONEncode(profile.Owned))
+	-- Creator-Skins stehen nicht im Spielstand: nur anzeigen, solange der Team-Rang reicht
+	local owned = profile.Owned
+	if Cosmetics.CreatorUnlocked(player) then
+		owned = table.clone(profile.Owned)
+		for _, id in Cosmetics.CreatorItems() do
+			owned[id] = 1
+		end
+	end
+	player:SetAttribute("Owned", HttpService:JSONEncode(owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
 	player:SetAttribute("PassXP", profile.PassXP or 0)
@@ -753,6 +761,10 @@ local function load(player)
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
 		ledgers[player] = nil
 	end)
+	-- Team-Rang geändert: Creator-Skins frei bzw. gesperrt
+	player:GetAttributeChangedSignal("StaffRank"):Connect(function()
+		ProgressService.Sync(player)
+	end)
 	profiles[player] = defaultProfile()
 	ProgressService.Sync(player)
 	if not store then
@@ -970,6 +982,10 @@ function ProgressService.ItemCount(player, itemId)
 end
 
 function ProgressService.Owns(player, itemId)
+	local item = Cosmetics.Get(itemId)
+	if item and item.Creator then
+		return Cosmetics.CreatorUnlocked(player)
+	end
 	return ProgressService.ItemCount(player, itemId) > 0
 end
 

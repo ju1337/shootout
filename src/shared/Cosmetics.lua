@@ -7,12 +7,16 @@
 -- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin
 -- Mastery = Kills: Meisterschafts-Tarnung (MasteryConfig), nur für die Waffe in Weapon, nicht kaufbar.
 -- Effects = Stil aus SkinEffects (Glitzer, Glut, Licht, Feuerstoß beim Schießen). Test = nicht in Kisten.
+-- Creator = true: Creator-Skin, frei für alle mit Team-Rang CREATOR oder höher (StaffConfig), nicht kaufbar und nicht
+-- handelbar. Er steht nicht im Spielstand: ProgressService zeigt ihn als Besitz, solange der Rang da ist; ohne Rang ist
+-- er gesperrt (ausgerüstet bleibt gespeichert und kommt mit dem Rang zurück).
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local MasteryConfig = require(ReplicatedStorage:WaitForChild("Shared").MasteryConfig)
+local StaffConfig = require(ReplicatedStorage:WaitForChild("Shared").StaffConfig)
 
 local Cosmetics = {}
 
@@ -114,6 +118,12 @@ Cosmetics.Items = {
 	{ Id = "W_Chrom", Type = "Weapon", Name = "Chrom", Rarity = "Legendary", Price = 1400,
 		Color = Color3.fromRGB(220, 225, 235), Material = Enum.Material.Foil },
 
+	-- Creator-Skins (Creator = true): für Content Creator mit Team-Rang CREATOR, für alle Waffen
+	{ Id = "W_Creator", Type = "Weapon", Name = "Creator", Rarity = "Legendary", Reward = true, Creator = true,
+		Color = Color3.fromRGB(150, 70, 230), Material = Enum.Material.Foil },
+	{ Id = "W_CreatorLive", Type = "Weapon", Name = "Live", Rarity = "Legendary", Reward = true, Creator = true,
+		Color = Color3.fromRGB(235, 45, 70), Material = Enum.Material.Neon },
+
 	-- Test-Skins (Test = true): im Shop kaufbar, aber nicht in Kisten (CrateConfig)
 	-- Drachengold: nur Sturmgewehr; Texturen in Assets.Weapons.Rifle.Skins.W_Drachengold, Effekte siehe SkinEffects
 	{ Id = "W_Drachengold", Type = "Weapon", Name = "Drachengold", Rarity = "Legendary", Price = 1, Test = true,
@@ -157,6 +167,23 @@ function Cosmetics.List(itemType)
 	for _, item in Cosmetics.Items do
 		if item.Type == itemType then
 			table.insert(list, item)
+		end
+	end
+	return list
+end
+
+-- Darf der Spieler die Creator-Skins benutzen? (Team-Rang CREATOR oder höher)
+function Cosmetics.CreatorUnlocked(player)
+	local creator = StaffConfig.Get("Creator")
+	return creator ~= nil and StaffConfig.Power(player) >= creator.Power
+end
+
+-- Alle Creator-Skins (Ids)
+function Cosmetics.CreatorItems()
+	local list = {}
+	for _, item in Cosmetics.Items do
+		if item.Creator then
+			table.insert(list, item.Id)
 		end
 	end
 	return list
