@@ -381,7 +381,14 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   flimmerndem Durchgang, Schild DUNGEON, auf der Weltkarte als violettes Quadrat). **E am Bunker** verbraucht einen
   **Dungeon-Schlüssel** (Item `DungeonKey`, aus Tasche oder Container; nicht zu kaufen, im Spielermarkt handelbar) und
   bringt dich und alle Squad-Mitglieder, die höchstens 30 Studs entfernt stehen, in eine eigene, abgeschlossene Halle
-  abseits der Karte (bis zu 8 Gruppen gleichzeitig). Nach 10 Sekunden kommt Welle 1, danach **Welle um Welle mehr
+  abseits der Karte (bis zu 8 Gruppen gleichzeitig). Die Halle ist **„Die Katakomben“** (Bauplan
+  `src/shared/DungeonLayout.lua`): man startet erhöht in der **Letzten Stellung** im Süden (Sandsäcke, Feuerschalen, das
+  Portal in der Rückwand), davor führt eine 16 Studs breite **Treppe** als Engstelle ins **Kirchenschiff** mit
+  Säulenreihen (zwei eingestürzt), Sarkophagen als Deckung und dem grün leuchtenden **Giftbrunnen** in der Mitte. Links
+  und rechts liegen die **Galerien** mit Knochennischen und Gittern in den Außenwänden, durch je drei Bögen mit dem
+  Schiff verbunden; im Norden hinter dem Fallgitter-Tor die rot beleuchtete **Gruft**. Die Zombies kommen aus den sechs
+  Galerie-Gittern und der Gruft und laufen alle auf die Treppe zu. Drinnen kühler grüngrauer Dunst statt Tag/Nacht,
+  kein Regen. Draufsicht: `python3 tools/dungeon_render.py dungeon.png`. Nach 10 Sekunden kommt Welle 1, danach **Welle um Welle mehr
   Zombies** aus den Gittern in den Wänden: jede Welle mehr (je Spieler noch mehr), mehr Leben, ab Welle 3 Brocken, ab
   Welle 4 gepanzerte, jede 5. Welle eine Blutbestie (`ExtinctionConfig.DungeonWave`). Nach jeder geschafften Welle leuchtet
   das **Portal** an der Stirnseite 20 Sekunden grün: E dort = raus vor den Bunker mit der Beute aller geschafften Wellen

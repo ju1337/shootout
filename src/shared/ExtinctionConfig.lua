@@ -662,7 +662,6 @@ ExtinctionConfig.Dungeon = {
 	Origin = Vector3.new(-1200, 1500, -2900), -- erste Halle (relativ zur Mitte der Welt: südlich außerhalb, hoch oben)
 	SlotSpacing = 300,
 	MaxRuns = 8,
-	Hall = { Width = 120, Depth = 92, Height = 28 },
 	StartDelay = 10,
 	BreakTime = 20,
 	MaxAlive = 14,           -- so viele Zombies einer Welle gleichzeitig, der Rest kommt nach

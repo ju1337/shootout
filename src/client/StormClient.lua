@@ -40,8 +40,10 @@ local RAIN_SOUND = "rbxassetid://9112794090" -- Starkregen auf Beton (Schleife)
 local WIND_SOUND = "rbxassetid://9114057128" -- Wind mit Böen (Schleife)
 local SOUND_SPEED = 1200 -- Studs pro Sekunde (Verzögerung des Donners)
 
+-- in der offenen Welt (nicht im Dungeon: dort unten regnet und donnert es nicht)
 local function inWorld()
-	return Modes.IsSurvival(player:GetAttribute("Mode"))
+	local dungeon = player:GetAttribute("Dungeon")
+	return Modes.IsSurvival(player:GetAttribute("Mode")) and not (type(dungeon) == "string" and dungeon ~= "")
 end
 
 local function newSound(clip, volume, parent)

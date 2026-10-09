@@ -71,6 +71,17 @@ local STORM = {
 	ColorCorrection = { Saturation = -0.5, Contrast = 0.2, TintColor = Color3.fromRGB(205, 216, 235) },
 	Bloom = { Intensity = 0.35, Threshold = 1.4 },
 }
+-- Im Dungeon (Spieler-Attribut "Dungeon", DungeonService): kühle, feuchte Gruft, dichter grüngrauer Dunst, Fackeln
+-- und Giftbrunnen leuchten über Bloom. Wird beim Betreten/Verlassen weich über alles andere gelegt (Sturm, Nebel, Nacht).
+local DUNGEON = {
+	Lighting = { Brightness = 0.3, Ambient = Color3.fromRGB(54, 58, 72), OutdoorAmbient = Color3.fromRGB(54, 58, 72) },
+	Atmosphere = { Density = 0.6, Haze = 2.4, Glare = 0, Color = Color3.fromRGB(70, 80, 78), Decay = Color3.fromRGB(34, 40, 40) },
+	ColorCorrection = { Saturation = -0.2, Contrast = 0.18, TintColor = Color3.fromRGB(210, 225, 220) },
+	Bloom = { Intensity = 0.6, Threshold = 1.1 },
+}
+local DUNGEON_FADE = 1.5 -- Sekunden für den Übergang
+local dungeonMix = 0
+local lastCycle = nil
 local STORM_CLOUDS = { Cover = 0.95, Density = 0.9, Color = Color3.fromRGB(58, 62, 70) }
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
@@ -211,6 +222,28 @@ local function cycle()
 		atmosphere.Haze = mix(atmosphere.Haze, 6, fog)
 		atmosphere.Color = atmosphere.Color:Lerp(Color3.fromRGB(176, 178, 172), fog)
 	end
+	-- Dungeon zuletzt: im Dungeon zählt nur seine Stimmung
+	local now = os.clock()
+	local step = lastCycle and math.min(1, (now - lastCycle) / DUNGEON_FADE) or 1
+	lastCycle = now
+	local inside = MapAtmosphere.InDungeon() and 1 or 0
+	dungeonMix = dungeonMix + math.clamp(inside - dungeonMix, -step, step)
+	if dungeonMix > 0 then
+		for section, values in DUNGEON do
+			local object = objects[section]
+			if object then
+				for key, value in values do
+					object[key] = mix(object[key], value, dungeonMix)
+				end
+			end
+		end
+	end
+end
+
+-- ist der lokale Spieler gerade in einem Dungeon? (auch für Regen/Sturm-Effekte)
+function MapAtmosphere.InDungeon()
+	local raw = player:GetAttribute("Dungeon")
+	return type(raw) == "string" and raw ~= ""
 end
 MapAtmosphere.Cycle = cycle
 

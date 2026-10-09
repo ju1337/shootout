@@ -527,6 +527,7 @@ return {
 	["DIE HORDE IST ZURÜCKGESCHLAGEN · BEUTE LIEGT BEREIT"] = "THE HORDE IS BEATEN BACK · LOOT IS READY",
 	["Die Horde ist zurückgeschlagen · Beute liegt bereit"] = "The horde is beaten back · loot is ready",
 	["Die Hotbar ist voll."] = "The hotbar is full.",
+	["DIE KATAKOMBEN"] = "THE CATACOMBS",
 	["DIE KISTEN AM WRACK SIND JETZT ZUGÄNGLICH"] = "THE CRATES AT THE WRECK ARE NOW ACCESSIBLE",
 	["Die Kisten am Wrack sind jetzt zugänglich"] = "The crates at the wreck are now accessible",
 	["Die Ladung liegt am Lkw · E halten zum Öffnen"] = "The cargo is at the truck · Hold E to open",

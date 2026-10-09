@@ -21,6 +21,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local DungeonLayout = require(Shared.DungeonLayout)
 local ZombieService = require(script.Parent.ZombieService)
 local InventoryService = require(script.Parent.InventoryService)
 local ProgressService = require(script.Parent.ProgressService)
@@ -252,98 +253,65 @@ end
 
 -- ---------- Halle ----------
 
--- Abgeschlossene Halle mit Boden "Ground" (Oberkante y = 0 von origin), Ziegelwänden, Decke mit Trägern, Lampen, vier
--- Pfeilern und Sandsack-Deckung. Gitter in den Wänden (Spawns der Zombies), vorn das Portal. Gibt Modell und Stellen zurück.
+-- Halle nach dem Bauplan DungeonLayout ("Die Katakomben"): Teile relativ zu origin (Boden des Schiffs y = 0). Gibt Modell
+-- und Stellen zurück: Grates (Zombie-Spawns, Weltpunkte), Spawns (Spieler, CFrames), Portal-Feld mit Licht und Prompt.
+local function rgb(c)
+	return Color3.fromRGB(c[1], c[2], c[3])
+end
+
 local function buildHall(origin)
-	local hall = D.Hall
-	local W, Dp, H = hall.Width, hall.Depth, hall.Height
+	local layout = DungeonLayout.Build()
 	local model = Instance.new("Model")
 	model.Name = "DungeonHall"
-	local brick = Color3.fromRGB(92, 76, 68)
-	local concrete = Color3.fromRGB(84, 86, 84)
-	local steel = Color3.fromRGB(58, 60, 64)
-	local floor = part(model, "Ground", Vector3.new(W + 8, 2, Dp + 8), origin * CFrame.new(0, -1, 0), Color3.fromRGB(60, 58, 56),
-		Enum.Material.Slate)
-	model.PrimaryPart = floor
-	part(model, "Ceiling", Vector3.new(W + 8, 2, Dp + 8), origin * CFrame.new(0, H + 1, 0), Color3.fromRGB(46, 46, 48), Enum.Material.Concrete)
-	for _, side in { { Vector3.new(W + 8, H, 4), Vector3.new(0, H / 2, Dp / 2 + 2) }, { Vector3.new(W + 8, H, 4), Vector3.new(0, H / 2, -Dp / 2 - 2) },
-		{ Vector3.new(4, H, Dp), Vector3.new(W / 2 + 2, H / 2, 0) }, { Vector3.new(4, H, Dp), Vector3.new(-W / 2 - 2, H / 2, 0) } } do
-		part(model, "Wall", side[1], origin * CFrame.new(side[2]), brick, Enum.Material.Brick)
-		-- Sockel aus Beton
-		local skirt = Vector3.new(math.max(side[1].X - 0.2, 1), 3, math.max(side[1].Z - 0.2, 1))
-		local inward = -side[2].Unit * 0.6
-		part(model, "Skirting", skirt, origin * CFrame.new(Vector3.new(side[2].X, 1.5, side[2].Z) + Vector3.new(inward.X, 0, inward.Z)),
-			concrete, Enum.Material.Concrete, false)
-	end
-	-- Deckenträger mit Lampen
-	for i = -2, 2 do
-		local x = i * W / 5
-		part(model, "Beam", Vector3.new(2, 2, Dp), origin * CFrame.new(x, H - 1, 0), steel, Enum.Material.CorrodedMetal)
-	end
-	for _, spot in { Vector2.new(-36, -22), Vector2.new(36, -22), Vector2.new(-36, 22), Vector2.new(36, 22), Vector2.new(0, 0) } do
-		part(model, "Chain", Vector3.new(0.3, 6, 0.3), origin * CFrame.new(spot.X, H - 5, spot.Y), steel, Enum.Material.Metal, false)
-		part(model, "Shade", Vector3.new(3, 0.8, 3), origin * CFrame.new(spot.X, H - 8.3, spot.Y), steel, Enum.Material.Metal, false)
-		local bulb = part(model, "Bulb", Vector3.new(1.2, 0.6, 1.2), origin * CFrame.new(spot.X, H - 8.9, spot.Y),
-			Color3.fromRGB(255, 196, 120), Enum.Material.Neon, false)
-		light(bulb, Color3.fromRGB(255, 190, 120), 52, 1.6)
-	end
-	-- Pfeiler und Deckung
-	for _, spot in { Vector2.new(-32, -12), Vector2.new(32, -12), Vector2.new(-32, 18), Vector2.new(32, 18) } do
-		part(model, "Pillar", Vector3.new(5, H, 5), origin * CFrame.new(spot.X, H / 2, spot.Y), concrete, Enum.Material.Concrete)
-	end
-	for _, spot in { Vector3.new(-14, 0, -8), Vector3.new(14, 0, -8), Vector3.new(0, 0, 12) } do
-		part(model, "Sandbags", Vector3.new(10, 2.6, 2.6), origin * CFrame.new(spot + Vector3.new(0, 1.3, 0)), Color3.fromRGB(140, 122, 90),
-			Enum.Material.Fabric)
-	end
-	for _, spot in { Vector3.new(-52, 0, -36), Vector3.new(52, 0, -36), Vector3.new(-54, 0, 30) } do
-		part(model, "Crate", Vector3.new(4, 4, 4), origin * CFrame.new(spot + Vector3.new(0, 2, 0)), Color3.fromRGB(116, 86, 54),
-			Enum.Material.WoodPlanks)
-	end
-	-- Blutflecken am Boden
-	for _ = 1, 8 do
-		local stain = part(model, "Blood", Vector3.new(0.1, random:NextNumber(3, 7), random:NextNumber(3, 7)),
-			origin * CFrame.new(random:NextNumber(-W / 2 + 6, W / 2 - 6), 0.05, random:NextNumber(-Dp / 2 + 6, Dp / 2 - 6))
-				* CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(80, 14, 12), Enum.Material.SmoothPlastic, false)
-		stain.Shape = Enum.PartType.Cylinder
-		stain.Transparency = 0.2
-	end
-	-- Gitter (Zombie-Spawns): hinten drei, an den Seiten je zwei
-	local grates = {}
-	local gratePlaces = {
-		{ Vector3.new(-40, 0, Dp / 2), Vector3.new(0, 0, -1) }, { Vector3.new(0, 0, Dp / 2), Vector3.new(0, 0, -1) },
-		{ Vector3.new(40, 0, Dp / 2), Vector3.new(0, 0, -1) },
-		{ Vector3.new(W / 2, 0, 24), Vector3.new(-1, 0, 0) }, { Vector3.new(W / 2, 0, -6), Vector3.new(-1, 0, 0) },
-		{ Vector3.new(-W / 2, 0, 24), Vector3.new(1, 0, 0) }, { Vector3.new(-W / 2, 0, -6), Vector3.new(1, 0, 0) },
-	}
-	for _, place in gratePlaces do
-		local at, inward = place[1], place[2]
-		local face = origin * CFrame.lookAt(at + inward * 0.2 + Vector3.new(0, 5, 0), at + inward * 2 + Vector3.new(0, 5, 0))
-		part(model, "GrateHole", Vector3.new(8, 10, 0.4), face, Color3.fromRGB(6, 6, 8), Enum.Material.SmoothPlastic, false)
-		for k = -3, 3 do
-			part(model, "GrateBar", Vector3.new(0.35, 10, 0.35), face * CFrame.new(k * 1.15, 0, -0.4), steel, Enum.Material.Metal, false)
+	local field, glow
+	for _, spec in layout.Parts do
+		local cframe = origin * CFrame.new(spec.P[1], spec.P[2], spec.P[3]) * CFrame.Angles(0, math.rad(spec.R or 0), 0)
+			* CFrame.Angles(0, 0, math.rad(spec.RZ or 0))
+		local material = Enum.Material[spec.M or "SmoothPlastic"] or Enum.Material.SmoothPlastic
+		local p = part(model, spec.N, Vector3.new(spec.S[1], spec.S[2], spec.S[3]), cframe, rgb(spec.C), material, spec.K ~= false)
+		p.Transparency = spec.T or 0
+		if spec.Shape == "Cylinder" then
+			p.Shape = Enum.PartType.Cylinder
+		elseif spec.Shape == "Ball" then
+			p.Shape = Enum.PartType.Ball
 		end
-		local lamp = part(model, "GrateLamp", Vector3.new(1, 0.6, 0.6), face * CFrame.new(0, 6, -0.4), Color3.fromRGB(255, 60, 40),
-			Enum.Material.Neon, false)
-		light(lamp, Color3.fromRGB(255, 60, 40), 12, 1)
-		table.insert(grates, origin * (at + inward * 4))
+		if (spec.T or 0) >= 1 or spec.M == "Neon" or spec.K == false then
+			p.CastShadow = false
+		end
+		local l = spec.L and light(p, Color3.fromRGB(spec.L[1], spec.L[2], spec.L[3]), spec.L[4], spec.L[5])
+		if spec.F then
+			local fire = Instance.new("Fire")
+			fire.Size = spec.F
+			fire.Heat = spec.F * 2
+			fire.Color = Color3.fromRGB(255, 140, 50)
+			fire.SecondaryColor = Color3.fromRGB(255, 220, 120)
+			fire.Parent = p
+		end
+		if spec.Mist then
+			local mist = Instance.new("ParticleEmitter")
+			mist.Name = "Mist"
+			mist.Color = ColorSequence.new(rgb(spec.Mist))
+			mist.Size = NumberSequence.new(9, 14)
+			mist.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.3, 0.82),
+				NumberSequenceKeypoint.new(1, 1) })
+			mist.Lifetime = NumberRange.new(6, 9)
+			mist.Rate = 3
+			mist.Speed = NumberRange.new(0.5, 1.5)
+			mist.SpreadAngle = Vector2.new(180, 10)
+			mist.RotSpeed = NumberRange.new(-8, 8)
+			mist.LightInfluence = 0.6
+			mist.Parent = p
+		end
+		if spec.Sign then
+			sign(p, Enum.NormalId[spec.Sign[2]] or Enum.NormalId.Front, spec.Sign[1], rgb(spec.Sign[3]),
+				spec.Sign[4] and Enum.Font[spec.Sign[4]] or nil)
+		end
+		if spec.N == "Ground" then
+			model.PrimaryPart = p
+		elseif spec.N == "PortalField" then
+			field, glow = p, l
+		end
 	end
-	-- Graffiti an der Seitenwand
-	local scrawl = part(model, "Graffiti", Vector3.new(0.2, 5, 22), origin * CFrame.new(W / 2 - 0.2, 12, 10), brick, Enum.Material.Brick, false)
-	scrawl.Transparency = 1
-	sign(scrawl, Enum.NormalId.Left, "KEIN ZURÜCK", Color3.fromRGB(150, 24, 20), Enum.Font.PermanentMarker)
-	-- Portal vorn in der Mitte: Rahmen, Feld (zu: rot und blass, offen: grün und hell), Schild AUSGANG
-	local portalAt = Vector3.new(0, 0, -Dp / 2 + 1.5)
-	for _, x in { -5.2, 5.2 } do
-		part(model, "PortalPillar", Vector3.new(1.6, 14, 1.6), origin * CFrame.new(portalAt + Vector3.new(x, 7, 0)), steel, Enum.Material.Metal)
-	end
-	part(model, "PortalTop", Vector3.new(12, 1.6, 1.6), origin * CFrame.new(portalAt + Vector3.new(0, 14.2, 0)), steel, Enum.Material.Metal)
-	local field = part(model, "PortalField", Vector3.new(8.8, 13.4, 0.4), origin * CFrame.new(portalAt + Vector3.new(0, 6.8, 0)),
-		Color3.fromRGB(200, 40, 40), Enum.Material.Neon, false)
-	field.Transparency = 0.75
-	local glow = light(field, Color3.fromRGB(200, 40, 40), 18, 0.6)
-	local exitSign = part(model, "ExitSign", Vector3.new(8, 1.8, 0.3), origin * CFrame.new(portalAt + Vector3.new(0, 16.4, 0.4)),
-		Color3.fromRGB(20, 22, 20), Enum.Material.Metal)
-	sign(exitSign, Enum.NormalId.Back, "AUSGANG", Color3.fromRGB(110, 230, 140))
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "PortalPrompt"
 	prompt.ActionText = "Dungeon verlassen"
@@ -354,9 +322,13 @@ local function buildHall(origin)
 	prompt.Enabled = false
 	prompt.Parent = field
 	model.Parent = folder
-	local spawns = {}
-	for i = -2, 1 do
-		table.insert(spawns, origin * CFrame.new(i * 5 + 2.5, 3, -Dp / 2 + 12))
+	local grates, spawns = {}, {}
+	for _, point in layout.ZombieSpawns do
+		table.insert(grates, origin * Vector3.new(point[1], point[2], point[3]))
+	end
+	for _, point in layout.PlayerSpawns do
+		-- Blick nach Norden ins Schiff (−z der Halle zeigt zum Portal)
+		table.insert(spawns, origin * CFrame.new(point[1], point[2], point[3]) * CFrame.Angles(0, math.pi, 0))
 	end
 	return model, { Grates = grates, Spawns = spawns, Field = field, Glow = glow, Prompt = prompt }
 end
@@ -583,8 +555,9 @@ local function tickRun(run, now)
 			end
 		else
 			local localPos = run.Origin:PointToObjectSpace(root.Position)
-			if math.abs(localPos.X) > D.Hall.Width or math.abs(localPos.Z) > D.Hall.Depth or localPos.Y < -30
-				or localPos.Y > D.Hall.Height + 20 then
+			local b = DungeonLayout.Bounds
+			if localPos.X < b.MinX - 20 or localPos.X > b.MaxX + 20 or localPos.Z < b.MinZ - 20 or localPos.Z > b.MaxZ + 20
+				or localPos.Y < -30 or localPos.Y > DungeonLayout.Height + 20 then
 				leaveRun(run, player, nil)
 			end
 		end
