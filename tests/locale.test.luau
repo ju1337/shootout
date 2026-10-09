@@ -66,6 +66,8 @@ check(Locale.Translate("TÖTE 19 ZOMBIES") == "KILL 19 ZOMBIES", "Muster in Gro�
 check(Locale.Translate("TÖTE 14 ZOMBIES IN DER ROTEN ZONE") == "KILL 14 ZOMBIES IN THE RED ZONE",
 	"längeres Muster in Großbuchstaben: " .. Locale.Translate("TÖTE 14 ZOMBIES IN DER ROTEN ZONE"))
 check(Locale.Translate("TÖTE 3 BROCKEN") == "KILL 3 BRUTES", "genauer Text in Großbuchstaben")
+-- Muster, dessen erstes Wort einen Platzhalter enthält ("+{1} Leben"): der Text beginnt dann mit "+25", nicht mit "+"
+check(Locale.Translate("+25 Leben · 2,5 s") == "+25 health · 2,5 s", "Muster mit Platzhalter im ersten Wort: " .. Locale.Translate("+25 Leben · 2,5 s"))
 
 -- Muster mit Platzhaltern und verschachteltem Nachschlagen (echte Einträge aus LocaleStrings)
 local sample = nil
