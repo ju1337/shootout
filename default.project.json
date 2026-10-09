@@ -20,7 +20,7 @@
           "$className": "Folder",
           "$ignoreUnknownInstances": true,
           "Rifle": {
-            "$path": "models/Weapons/Rifle.rbxm",
+            "$path": "models/Weapons/Rifle.rbxmx",
             "$ignoreUnknownInstances": true
           }
         },
@@ -28,13 +28,13 @@
           "$className": "Folder",
           "$ignoreUnknownInstances": true,
           "HoloSight": {
-            "$path": "models/Attachments/HoloSight.rbxm"
+            "$path": "models/Attachments/HoloSight.rbxmx"
           },
           "Suppressor": {
-            "$path": "models/Attachments/Suppressor.rbxm"
+            "$path": "models/Attachments/Suppressor.rbxmx"
           },
           "AngledGrip": {
-            "$path": "models/Attachments/AngledGrip.rbxm"
+            "$path": "models/Attachments/AngledGrip.rbxmx"
           }
         },
         "Agents": {

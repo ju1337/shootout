@@ -2,17 +2,22 @@
 
 | Datei | landet in Studio unter |
 |---|---|
-| `Weapons/Rifle.rbxm` | ReplicatedStorage › Assets › Weapons › Rifle |
-| `Attachments/HoloSight.rbxm` | ReplicatedStorage › Assets › Attachments › HoloSight |
-| `Attachments/Suppressor.rbxm` | ReplicatedStorage › Assets › Attachments › Suppressor |
-| `Attachments/AngledGrip.rbxm` | ReplicatedStorage › Assets › Attachments › AngledGrip |
+| `Weapons/Rifle.rbxmx` | ReplicatedStorage › Assets › Weapons › Rifle |
+| `Attachments/HoloSight.rbxmx` | ReplicatedStorage › Assets › Attachments › HoloSight |
+| `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
+| `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |
 
-Eingetragen in `default.project.json`. Wer Rojo verbindet (`rojo serve` + Connect, Rojo ab 7.6), hat die Modelle
+Eingetragen in `default.project.json`. Wer Rojo verbindet (`rojo serve` + Connect; Rojo 7.7.1 empfohlen – ältere Versionen lesen die Dateien auch, übertragen MeshParts aber erst ab 7.6), hat die Modelle
 – niemand muss mehr die GLB-Dateien importieren. Die Meshes und Texturen sind schon bei Roblox hochgeladen, die
 Dateien zeigen nur auf ihre Nummern (rbxassetid).
 
 **Modell ändern:** in Studio neu importieren (Import 3D, Scale Unit Stud, Merge Meshes aus), richtig benennen,
-Rechtsklick › Save to File… › als `.rbxm` hier überschreiben und pushen. Änderungen direkt am Modell in Studio
+Rechtsklick › Save to File… › als `.rbxm` speichern und umwandeln (Studio speichert neue Typen, die Rojo vor 7.7 nicht lesen kann):
+
+    lune run tools/models/rbxm_to_rbxmx.luau Rifle.rbxm models/Weapons/Rifle.rbxmx
+    python3 tools/models/rbxmx_legacy.py models/Weapons/Rifle.rbxmx ContentId:TexturePack
+
+(lune 0.10.5 oder neuer.) Änderungen direkt am Modell in Studio
 überschreibt Rojo beim nächsten Sync.
 
 **Ausnahme:** Unter `Rifle` darf Studio eigene Ordner behalten (`$ignoreUnknownInstances`), z.B. die Skin-Texturen
