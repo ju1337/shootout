@@ -941,6 +941,12 @@ local function buildSettings()
 	end)
 
 	local CARD_W, ROW_H, CONTROL_W = 748, 62, 380
+	-- Karten liegen in einer Scrollfläche unter dem Titel: beide Spalten zusammen sind höher als die Seite (PAGE_H)
+	local SCROLL_Y, SCROLL_BAR = 72, 8
+	local scroll = make("ScrollingFrame", { Name = "Cards", Position = UDim2.fromOffset(0, SCROLL_Y),
+		Size = UDim2.new(1, 0, 1, -SCROLL_Y), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = SCROLL_BAR,
+		ScrollBarImageColor3 = GRAY, ScrollingDirection = Enum.ScrollingDirection.Y, CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.None, Selectable = false }, frame)
 	local function slider(row, setting)
 		local holder = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
 			Size = UDim2.fromOffset(CONTROL_W, 36), BackgroundTransparency = 1 }, row)
@@ -974,6 +980,7 @@ local function buildSettings()
 		track.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
+				scroll.ScrollingEnabled = false -- Ziehen am Regler (Finger) soll nicht die Seite scrollen
 				setFromX(input.Position.X)
 			end
 		end)
@@ -983,8 +990,9 @@ local function buildSettings()
 			end
 		end)
 		UserInputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
 				dragging = false
+				scroll.ScrollingEnabled = true
 			end
 		end)
 		updaters[setting.Key] = function()
@@ -1049,7 +1057,7 @@ local function buildSettings()
 
 	-- Karten in zwei Spalten, untereinander
 	local PREVIEW_H = 214
-	local columnY = { 72, 72 }
+	local columnY = { 0, 0 }
 	for _, category in PlayerSettings.Categories do
 		local list = {}
 		for _, setting in PlayerSettings.List do
@@ -1058,12 +1066,12 @@ local function buildSettings()
 			end
 		end
 		local column = category.Column == 2 and 2 or 1
-		local x = column == 1 and 0 or CARD_W + 24
+		local x = column == 1 and 0 or CARD_W + 24 - SCROLL_BAR
 		local y = columnY[column]
 		local height = 52 + #list * ROW_H + 8 + (category.Preview and PREVIEW_H or 0)
 		columnY[column] = y + height + 20
 		local card = UITheme.Card({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, height),
-			BackgroundTransparency = 0.1 }, frame)
+			BackgroundTransparency = 0.1 }, scroll)
 		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
 			BorderSizePixel = 0 }, card)
 		text({ Position = UDim2.fromOffset(32, 12), Size = UDim2.new(1, -52, 0, 30), Text = category.Name, TextSize = 24,
@@ -1116,6 +1124,9 @@ local function buildSettings()
 			end)
 		end
 	end
+
+	-- Höhe der Scrollfläche: längere der beiden Spalten (ohne den Abstand nach der letzten Karte)
+	scroll.CanvasSize = UDim2.fromOffset(0, math.max(columnY[1], columnY[2]) - 20)
 
 	local function updateAll()
 		for _, update in updaters do
