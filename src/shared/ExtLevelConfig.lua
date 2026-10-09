@@ -1,8 +1,9 @@
 -- ExtLevelConfig (ModuleScript)
--- Extinction-Level: eigene Erfahrung für die offene Welt (EP), gesammelt mit Zombies, Spielern, Bots, Nestern, Lagern,
--- Überlebenden, Lootdrops, dem Konvoi und Aufträgen (ExtLevelService). Gespeichert als Statistik "ExtXP" (Profil Stats).
--- Ab bestimmten Leveln gibt es Titel (über dem Kopf, Fenster TITEL), die TitleConfig aus Titles übernimmt.
--- Spieler-Attribute: ExtLevel, ExtXP (gesamt).
+-- EP der offenen Welt, gesammelt mit Zombies, Spielern, Bots, Nestern, Lagern, Überlebenden, Lootdrops, dem Konvoi
+-- und Aufträgen (ExtLevelService). Sie zählen fürs Spielerlevel (LevelConfig) – ein eigenes Extinction-Level gibt es
+-- nicht mehr. Die Statistik "ExtXP" (Profil Stats) zählt weiter mit (Erfolg Ödland-Veteran); die alte Level-Kurve
+-- (XPForLevel, TotalFor, FromXP) braucht ProgressService noch für die einmalige Übernahme alter Spielstände.
+-- Ab bestimmten Spielerleveln gibt es Titel der offenen Welt (über dem Kopf, Fenster TITEL), siehe TitleConfig.
 
 local ExtLevelConfig = {}
 
@@ -25,7 +26,7 @@ ExtLevelConfig.Rewards = {
 }
 ExtLevelConfig.Kinds = { Runner = 14, Brute = 30, Screamer = 16 }
 
--- EP von Level l auf l + 1
+-- Alte Kurve des Extinction-Levels: EP von Level l auf l + 1
 function ExtLevelConfig.XPForLevel(level)
 	return 400 + 120 * (level - 1)
 end
@@ -53,7 +54,7 @@ function ExtLevelConfig.FromXP(xp)
 	return level, xp, ExtLevelConfig.XPForLevel(level)
 end
 
--- Titel ab einem Level (TitleConfig übernimmt sie mit Stat = ExtXP und Goal = TotalFor(Level))
+-- Titel ab einem Spielerlevel (TitleConfig übernimmt sie als Level-Bedingung)
 ExtLevelConfig.Titles = {
 	{ Level = 5, Id = "Ext_Ueberlebender", Name = "Überlebender", Color = Color3.fromRGB(150, 190, 130) },
 	{ Level = 10, Id = "Ext_Pluenderer", Name = "Plünderer", Color = Color3.fromRGB(200, 170, 110) },
@@ -61,15 +62,5 @@ ExtLevelConfig.Titles = {
 	{ Level = 30, Id = "Ext_Raeuber", Name = "Konvoi-Räuber", Color = Color3.fromRGB(226, 90, 70) },
 	{ Level = 40, Id = "Ext_Legende", Name = "Legende von Ödstadt", Color = Color3.fromRGB(240, 196, 70) },
 }
-
--- Titel, der bei genau diesem Level freigeschaltet wird (oder nil)
-function ExtLevelConfig.TitleAt(level)
-	for _, title in ExtLevelConfig.Titles do
-		if title.Level == level then
-			return title
-		end
-	end
-	return nil
-end
 
 return ExtLevelConfig

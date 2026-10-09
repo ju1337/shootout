@@ -2,7 +2,8 @@
 -- Spielerlevel im Match: Prestige-Abzeichen mit Level, "LEVEL 23" und XP-Balken unten links über der
 -- Lebensanzeige (Touch: oben links unter Minimap und Leben). Im Markt nicht – dort steht das Level groß
 -- in der Lobby. Ausgeblendet, solange ein Menü offen ist (Spiel- und Seitenmenü, Agentenwahl,
--- Map-Abstimmung, Match-Zusammenfassung, Punktestand).
+-- Map-Abstimmung, Match-Zusammenfassung, Punktestand). In der offenen Welt nicht: dort steht das Level als schmale
+-- Zeile unter der Hotbar (ExtinctionClient).
 
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
@@ -97,7 +98,8 @@ function LevelBadge.Init()
 			return
 		end
 		nextCheck = now + 0.2
-		screen.Enabled = Modes.IsFighting(player) and not menuOpen() -- im Markt zeigt die Lobby das Level
+		-- im Markt zeigt die Lobby das Level, in der offenen Welt die Zeile unter der Hotbar
+		screen.Enabled = Modes.IsFighting(player) and not Modes.IsSurvival(player:GetAttribute("Mode")) and not menuOpen()
 		if screen.Enabled then
 			place()
 		end

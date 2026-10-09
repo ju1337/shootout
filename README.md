@@ -587,8 +587,11 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   nach 9 s). Rüstung und Extra-Gadget gelten bis zum nächsten Tod. Wer während Herrschaft dazukommt, wählt kurz
   und steigt sofort ein
 - **Unendliche Reserve-Munition in allen Modi** (nachladen muss man trotzdem; `WeaponConfig.InfiniteAmmoEverywhere`)
-- **Level im Match** (außer in Menüs): Prestige-Abzeichen, Level und XP-Balken unten links; im Markt steht das Level
-  groß auf der Spielerkarte
+- **Ein Level für alles** (Spielerlevel mit Prestige, `LevelConfig`): XP aus Kämpfen und die EP der offenen Welt
+  (Zombies, Nester, Lootdrops, Konvoi, Aufträge …, `ExtLevelConfig`) zählen aufs selbe Level; ELO bleibt getrennt. In
+  der offenen Welt steht es als schmale Zeile unter der Hotbar (LEVEL, Balken in Prestige-Farbe, XP bzw. kurz
+  „+N XP · GRUND“), in anderen Modi unten links; im Markt groß auf der Spielerkarte. Das frühere eigene
+  Extinction-Level wird beim Laden einmal übernommen (EP addiert, mindestens das alte Level)
 - **Battle Pass, tägliche Aufträge, Shop, Codes**
 - **Map-Rotation** pro Match, Todeskamera, Schnelles Spiel
 - **Meldungen im Stil von Call of Duty** (eigene Ebene über HUD und Menüs, mit Klang):

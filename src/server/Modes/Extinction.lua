@@ -695,7 +695,7 @@ function Extinction.Init(modeManager)
 	-- Aufträge (je Spieler drei: Zombies, Nester, Lager, Überlebende, Orte, Nacht ...)
 	MissionService.Init({ Map = map, InSafeZone = Extinction.InSafeZone, RedzoneAt = RedzoneService.At })
 
-	-- Extinction-Level: EP für Zombies, Spieler, Bots, Aktivitäten, Lootdrops, Konvoi und Aufträge
+	-- EP der offenen Welt (zählen fürs Spielerlevel): Zombies, Spieler, Bots, Aktivitäten, Lootdrops, Konvoi und Aufträge
 	ExtLevelService.Init({ RedzoneAt = RedzoneService.At })
 
 	-- Fahrzeuge (Taste spawnt, K packt ein); Tod oder Verlassen: Fahrzeug weg
@@ -891,7 +891,6 @@ function Extinction.AddPlayer(player)
 	HideoutService.Publish(player) -- vor dem Spawn: Feldbett zählt schon beim ersten Leben
 	RedPointsService.Publish(player)
 	KitService.Publish(player)
-	ExtLevelService.Publish(player)
 	MissionService.Join(player)
 	Telemetry.Onboarding(player, 2, "EnteredExtinction")
 	spawnPlayer(player)

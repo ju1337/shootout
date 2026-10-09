@@ -1,6 +1,7 @@
--- Extinction-Level (ExtLevelService, ExtLevelConfig): EP nur in der offenen Welt, für Zombies (Art und rote Zone),
--- Aktivitäten, Lootdrops (je Kiste einmal), Aufträge, Spieler- und Bot-Kills; Level aus der Statistik ExtXP mit
--- Meldung beim Aufstieg (Titel-Level mit Titel); Titel ab Level 5 über TitleConfig freigeschaltet; Spieler-Attribute.
+-- EP der offenen Welt (ExtLevelService, ExtLevelConfig): nur in der offenen Welt, für Zombies (Art und rote Zone),
+-- Aktivitäten, Lootdrops (je Kiste einmal), Aufträge, Spieler- und Bot-Kills. Es gibt nur EIN Level: die EP gehen ins
+-- Spielerlevel (AccountXP, LevelConfig), die Statistik ExtXP zählt mit; Titel der offenen Welt ab Spielerlevel 5.
+-- Alte Spielstände mit eigenem Extinction-Level werden einmal ins Spielerlevel übernommen (ohne Verlust).
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -142,7 +143,15 @@ local ZombieService = require("ZombieService")
 local ActivityService = require("ActivityService")
 local MissionService = require("MissionService")
 
-store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+local LevelConfig = require("LevelConfig")
+local function accountXP(player)
+	return player:GetAttribute("AccountXP") or 0
+end
+local function extXP(player)
+	return ProgressService.Get(player).Stats.ExtXP or 0
+end
+
+store.Data.u1 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, AccountXP = 0, LevelMerged = true }
 local alice = SIM.Join("Alice")
 Instance.new("Backpack", alice).Name = "Backpack"
 step(2)
@@ -157,7 +166,9 @@ check(ExtLevelConfig.FromXP(10 ^ 9) == ExtLevelConfig.MaxLevel, "höchstens MaxL
 alice:SetAttribute("Mode", "FreeForAll")
 check(ExtLevelService.Add(alice, 100, "Test") == nil, "keine EP außerhalb")
 enter(alice)
-check(alice:GetAttribute("ExtLevel") == 1 and alice:GetAttribute("ExtXP") == 0, "Attribute beim Betreten")
+check(alice:GetAttribute("ExtLevel") == nil, "kein eigenes Extinction-Level mehr")
+-- (in den Ereignissen kommen nur EP der offenen Welt dazu: Agenten-XP für Zombies gibt der echte ZombieService)
+local startXP = accountXP(alice)
 
 -- Ereignisse
 local function fire(list, ...)
@@ -166,46 +177,84 @@ local function fire(list, ...)
 	end
 end
 fire(ZombieService.OnKill, alice, "Walker", CENTER + Vector3.new(0, 0, 300))
-check(alice:GetAttribute("ExtXP") == ExtLevelConfig.Rewards.Zombie, "Zombie: " .. ExtLevelConfig.Rewards.Zombie .. " EP")
+check(accountXP(alice) == startXP + ExtLevelConfig.Rewards.Zombie, "Zombie: " .. ExtLevelConfig.Rewards.Zombie .. " XP aufs Spielerlevel")
+check(extXP(alice) == ExtLevelConfig.Rewards.Zombie, "Statistik ExtXP zählt mit")
 fire(ZombieService.OnKill, alice, "Brute", CENTER + Vector3.new(0, 0, 300))
-check(alice:GetAttribute("ExtXP") == ExtLevelConfig.Rewards.Zombie + ExtLevelConfig.Kinds.Brute, "Brocken gibt mehr")
+check(accountXP(alice) == startXP + ExtLevelConfig.Rewards.Zombie + ExtLevelConfig.Kinds.Brute, "Brocken gibt mehr")
 local popup = lastExt(alice, "ExtXP")
-check(popup and popup[2] == ExtLevelConfig.Kinds.Brute, "Anzeige +EP an den Client")
-local before = alice:GetAttribute("ExtXP")
+check(popup and popup[2] == ExtLevelConfig.Kinds.Brute, "Anzeige +XP an den Client")
+local before = accountXP(alice)
 fire(ActivityService.OnEvent, alice, "Nest")
-check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Nest, "Nest zerstört")
-before = alice:GetAttribute("ExtXP")
+check(accountXP(alice) == before + ExtLevelConfig.Rewards.Nest, "Nest zerstört")
+before = accountXP(alice)
 local bag = { Kind = "Airdrop", Id = 77 }
 fire(LootService.OnOpened, alice, bag)
 step(0.1) -- (kann nebenbei einen Lootdrop-Auftrag erledigen: dann kommen dessen EP dazu)
-local afterFirst = alice:GetAttribute("ExtXP")
-check(afterFirst >= before + ExtLevelConfig.Rewards.Airdrop, "Lootdrop gibt EP")
+local afterFirst = accountXP(alice)
+check(afterFirst >= before + ExtLevelConfig.Rewards.Airdrop, "Lootdrop gibt XP")
 fire(LootService.OnOpened, alice, bag)
 step(0.1)
-check(alice:GetAttribute("ExtXP") == afterFirst, "dieselbe Kiste zählt nur einmal")
-before = alice:GetAttribute("ExtXP")
+check(accountXP(alice) == afterFirst, "dieselbe Kiste zählt nur einmal")
+before = accountXP(alice)
 fire(MissionService.OnComplete, alice, {})
 step(0.1)
-check(alice:GetAttribute("ExtXP") == before + ExtLevelConfig.Rewards.Mission, "Auftrag erledigt")
+check(accountXP(alice) == before + ExtLevelConfig.Rewards.Mission, "Auftrag erledigt")
+check(ProgressService.Get(alice).AccountXP == accountXP(alice), "XP im Profil")
 
--- Aufstieg bis Level 5: Meldung mit Titel, Titel freigeschaltet
-local toFive = ExtLevelConfig.TotalFor(5) - alice:GetAttribute("ExtXP")
-ExtLevelService.Add(alice, toFive, "Test")
-check(alice:GetAttribute("ExtLevel") == 5, "Level 5")
-local banner = nil
-for i = #SIM.RemoteLog, 1, -1 do
-	local entry = SIM.RemoteLog[i]
-	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" then
-		banner = entry.Args[2]
-		break
-	end
+-- Spielerlevel 5: Titel der offenen Welt frei (Meldung kommt über das Spielerlevel, keine eigene Extinction-Meldung)
+local toFive = 0
+for l = 1, 4 do
+	toFive += LevelConfig.XPForLevel(l)
 end
-check(banner and banner.Title == "LEVEL 5" and string.find(banner.Sub, "Überlebender", 1, true) ~= nil, "Meldung mit neuem Titel")
+local level = ExtLevelService.Add(alice, toFive - accountXP(alice), "Test")
+check(level == 5 and LevelConfig.Get(alice).Level == 5, "Spielerlevel 5")
 local title = TitleConfig.Get("Ext_Ueberlebender")
 check(title ~= nil and TitleConfig.Unlocked(title, ProgressService.TitleData(alice)), "Titel Überlebender frei")
 check(not TitleConfig.Unlocked(TitleConfig.Get("Ext_Pluenderer"), ProgressService.TitleData(alice)), "Plünderer noch gesperrt")
-check(ProgressService.Get(alice).Stats.ExtXP == ExtLevelConfig.TotalFor(5), "EP im Profil (Statistik)")
+for _, entry in SIM.RemoteLog do
+	if entry.Remote == "Notify" and entry.Player == alice and entry.Args[1] == "Banner" and entry.Args[2]
+		and entry.Args[2].Caption == "Extinction" then
+		check(false, "keine eigene Extinction-Level-Meldung mehr")
+		break
+	end
+end
+
+-- Übernahme alter Spielstände: EP kommen aufs Spielerlevel, mindestens bis zum alten Extinction-Level
+local function totalFor(level_)
+	local xp = 0
+	for l = 1, level_ - 1 do
+		xp += LevelConfig.XPForLevel(l)
+	end
+	return xp
+end
+-- (a) altes Extinction-Level 12, Spielerlevel 3: Spielerlevel mindestens 12
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, AccountXP = totalFor(3),
+	Stats = { ExtXP = ExtLevelConfig.TotalFor(12) + 5 } }
+local bob = SIM.Join("Bob")
+step(2)
+local bobProfile = ProgressService.Get(bob)
+check(bobProfile.LevelMerged == true, "Übernahme vermerkt")
+check(LevelConfig.FromXP(bobProfile.AccountXP) >= 12, "Spielerlevel nicht unter dem alten Extinction-Level")
+check(bobProfile.AccountXP >= totalFor(3) + ExtLevelConfig.TotalFor(12), "XP addiert (Spielerlevel-Fortschritt bleibt)")
+check(bobProfile.Stats.ExtXP == ExtLevelConfig.TotalFor(12) + 5, "Statistik bleibt (Erfolg)")
+-- (b) hohes Spielerlevel, kleines Extinction-Level: XP addiert
+store.Data.u3 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, AccountXP = totalFor(40), Prestige = 2,
+	Stats = { ExtXP = 300 } }
+local cara = SIM.Join("Cara")
+step(2)
+check(ProgressService.Get(cara).AccountXP == totalFor(40) + 300, "XP addiert")
+check(ProgressService.Get(cara).Prestige == 2, "Prestige bleibt")
+-- (c) schon übernommen: nicht noch einmal
+store.Data.u4 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, AccountXP = 1000, LevelMerged = true,
+	Stats = { ExtXP = 5000 } }
+local dora = SIM.Join("Dora")
+step(2)
+check(ProgressService.Get(dora).AccountXP == 1000, "nur einmal übernommen")
+-- (d) neuer Spieler: gilt als übernommen
+local eve = SIM.Join("Eve")
+step(2)
+check(ProgressService.Get(eve).LevelMerged == true, "neues Profil gilt als übernommen")
 
 if failures == 0 then
-	print("Extinction-Level in Ordnung")
+	print("Spielerlevel aus der offenen Welt in Ordnung")
 end

@@ -63,10 +63,10 @@ TitleConfig.List = {
 		Goal = #MasteryConfig.Weapons, Color = Color3.fromRGB(255, 196, 52) },
 }
 
--- Titel der offenen Welt (Extinction-Level, ExtLevelConfig)
+-- Titel der offenen Welt (ab einem Spielerlevel, ExtLevelConfig)
 for _, title in ExtLevelConfig.Titles do
-	table.insert(TitleConfig.List, { Id = title.Id, Name = title.Name, Text = "Extinction-Level " .. title.Level,
-		Stat = ExtLevelConfig.Stat, Goal = ExtLevelConfig.TotalFor(title.Level), Color = title.Color })
+	table.insert(TitleConfig.List, { Id = title.Id, Name = title.Name, Text = "Spielerlevel " .. title.Level,
+		Level = title.Level, Goal = title.Level, Color = title.Color })
 end
 
 local byId = {}

@@ -42,7 +42,7 @@ local HideoutConfig = require(Shared.HideoutConfig)
 local KitConfig = require(Shared.KitConfig)
 local Sfx = require(Shared.Sfx)
 local LootInfo = require(Shared.LootInfo)
-local ExtLevelConfig = require(Shared.ExtLevelConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local AchievementConfig = require(Shared.AchievementConfig)
 local TitleConfig = require(Shared.TitleConfig)
 local GunModels = require(Shared.GunModels)
@@ -538,7 +538,7 @@ end
 -- ---------- HUD ----------
 
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
-local levelText, levelFill, xpPopup, xpPopupId
+local levelText, levelFill, levelXP, xpPopupId
 local shieldPill, shieldText
 local markerHolder, vignette
 local placeUi = {} -- Banner beim Betreten eines Ortes: Banner (Rahmen), Title, Sub
@@ -682,21 +682,23 @@ local function buildHud()
 		Size = UDim2.fromOffset(22, 22), BackgroundTransparency = 1 }, redRow)
 	Inv.rzIcon(rzHolder, 1)
 
-	-- Extinction-Level rechts neben der Hotbar: Level, EP-Balken, kurz "+N EP" bei jedem Gewinn
-	local levelBox = make("Frame", { Name = "ExtLevel", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0.5, barWidth / 2 + 14, 1, -30),
-		Size = UDim2.fromOffset(170, 36), BackgroundTransparency = 1 }, root)
-	levelText = label({ Name = "Level", Size = UDim2.new(1, 0, 0, 22), Text = "LEVEL 1", TextSize = 20, Font = F.Display,
-		TextColor3 = C.Text }, levelBox)
-	local track = make("Frame", { Name = "Track", Position = UDim2.fromOffset(0, 26), Size = UDim2.new(1, 0, 0, 4),
-		BackgroundColor3 = C.Card, BorderSizePixel = 0 }, levelBox)
-	UITheme.Corner(track, 2)
-	levelFill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, track)
+	-- Spielerlevel (das eine Level, LevelConfig) als schmale Zeile direkt unter der Hotbar: "LEVEL 12", XP-Balken in
+	-- Prestige-Farbe, rechts "395 / 1000 XP" (kurz "+N XP · GRUND" bei jedem Gewinn, siehe ExtUpdate "ExtXP")
+	local levelRow = make("Frame", { Name = "PlayerLevel", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12),
+		Size = UDim2.fromOffset(barWidth, 13), BackgroundTransparency = 1 }, root)
+	levelText = label({ Name = "Level", Size = UDim2.new(0, 140, 1, 0), Text = "LEVEL 1", TextSize = 14, Font = F.Display,
+		TextColor3 = C.Text }, levelRow)
+	UITheme.Outline(levelText)
+	local levelTrack = make("Frame", { Name = "Track", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 72, 0.5, 0),
+		Size = UDim2.new(1, -72 - 156, 0, 4), BackgroundColor3 = C.Card, BackgroundTransparency = 0.15, BorderSizePixel = 0 }, levelRow)
+	UITheme.Corner(levelTrack, 2)
+	levelFill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, levelTrack)
 	UITheme.Corner(levelFill, 2)
-	xpPopup = label({ Name = "XPPopup", Position = UDim2.fromOffset(0, -20), Size = UDim2.new(1, 0, 0, 18), Text = "", TextSize = 15,
-		Font = F.Bold, TextColor3 = C.Primary, Visible = false }, levelBox)
-	UITheme.Outline(xpPopup)
-	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6), Size = UDim2.fromOffset(900, 16),
-		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
+	levelXP = label({ Name = "XP", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 148, 1, 0),
+		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, levelRow)
+	UITheme.Outline(levelXP)
+	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -1), Size = UDim2.fromOffset(900, 11),
+		Text = "", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 
 	-- Meldungen und Benutzen-Balken über der Hotbar
 	toast = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -126), Size = UDim2.fromOffset(620, 22),
@@ -3915,6 +3917,7 @@ function ExtinctionClient.Init()
 	refreshTakeAll()
 	workspace.DescendantAdded:Connect(applyTakeAll)
 	player:GetAttributeChangedSignal("Pass_" .. LOOT_ALL_PASS):Connect(refreshTakeAll)
+	local updateLevel -- (unten, nach den Meldungen)
 	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b)
 		if kind == "Status" then
 			showToast(tostring(a), b == true)
@@ -3940,28 +3943,41 @@ function ExtinctionClient.Init()
 			end)
 		elseif kind == "UseEnd" then
 			useBar.Visible = false
-		elseif kind == "ExtXP" and xpPopup then
+		elseif kind == "ExtXP" and levelXP then
 			xpPopupId = (xpPopupId or 0) + 1
 			local id = xpPopupId
-			xpPopup.Text = "+" .. tostring(a) .. " EP" .. (b and ("  ·  " .. upper(tostring(b))) or "")
-			xpPopup.Visible = true
+			levelXP.Text = "+" .. tostring(a) .. " XP" .. (b and ("  ·  " .. upper(tostring(b))) or "")
+			levelXP.TextColor3 = C.Primary
 			task.delay(1.6, function()
 				if xpPopupId == id then
-					xpPopup.Visible = false
+					xpPopupId = nil
+					updateLevel()
 				end
 			end)
 		end
 	end)
-	-- Extinction-Level und EP-Balken
-	local function updateLevel()
+	-- Spielerlevel unter der Hotbar (gleiche Werte wie überall: AccountXP, Prestige)
+	updateLevel = function()
 		if not levelText then
 			return
 		end
-		local level, into, need = ExtLevelConfig.FromXP(player:GetAttribute("ExtXP") or 0)
-		levelText.Text = "LEVEL " .. level
-		levelFill.Size = UDim2.fromScale(need > 0 and into / need or 1, 1)
+		local info = LevelConfig.Get(player)
+		levelText.Text = (info.Prestige > 0 and ("P" .. info.Prestige .. " · ") or "") .. "LEVEL " .. info.Level
+		levelText.TextColor3 = info.Prestige > 0 and info.Color or C.Text
+		local bounds = levelText.TextBounds -- Balken beginnt direkt hinter dem Text (P3 · LEVEL 100 ist breiter)
+		local left = math.max(bounds and bounds.X or 0, 56) + 10
+		local track = levelFill.Parent
+		track.Position = UDim2.new(0, left, 0.5, 0)
+		track.Size = UDim2.new(1, -left - 156, 0, 4)
+		levelFill.Size = UDim2.fromScale(math.clamp(info.Progress, 0, 1), 1)
+		levelFill.BackgroundColor3 = info.Color
+		if not xpPopupId then
+			levelXP.Text = info.Needed > 0 and (info.XP .. " / " .. info.Needed .. " XP") or "MAXIMALES LEVEL"
+			levelXP.TextColor3 = C.Muted
+		end
 	end
-	player:GetAttributeChangedSignal("ExtXP"):Connect(updateLevel)
+	player:GetAttributeChangedSignal("AccountXP"):Connect(updateLevel)
+	player:GetAttributeChangedSignal("Prestige"):Connect(updateLevel)
 	updateLevel()
 	player.CharacterAdded:Connect(function(character)
 		useBar.Visible = false
