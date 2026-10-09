@@ -353,9 +353,8 @@ function AgentConfig.SkinForLevel(level)
 end
 
 -- Hat der Spieler den Agenten freigeschaltet? (Spieler-Attribut "UnlockedAgents", JSON)
--- Agent der Woche: wechselt jeden Montag (0 Uhr UTC), für alle gleich (Serverzeit). Diese Woche gratis
--- spielbar und +50 % XP (AgentOfWeekXP), wenn man mit ihm spielt. Steht als Statue im Camp (Camp Phoenix).
-AgentConfig.AgentOfWeekXP = 1.5
+-- Agent der Woche: wechselt jede Woche (Sonntag 0 Uhr UTC), für alle gleich (Serverzeit). Diese Woche gratis
+-- spielbar (nur noch für IsUnlocked, z.B. Arcade-Agentenwahl). Kein XP-Bonus und keine Statue im Camp mehr.
 local WEEK = 7 * 24 * 3600
 local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag
 function AgentConfig.AgentOfWeek()

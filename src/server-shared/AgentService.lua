@@ -591,7 +591,7 @@ function AgentService.Init()
 		setupPlayer(player)
 	end
 
-	-- Ultimate lädt langsam von selbst, solange man im Kampf lebt
+	-- Ultimate lädt langsam von selbst, solange man im Kampf lebt (nicht in der offenen Welt: dort gibt es keine Ultimate)
 	task.spawn(function()
 		local perSecond = AgentConfig.Ultimate.ChargePerSecond
 		while true do
@@ -599,7 +599,8 @@ function AgentService.Init()
 			for _, player in Players:GetPlayers() do
 				local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 				local charge = player:GetAttribute("UltCharge") or 0
-				if player:GetAttribute("CanFight") and humanoid and humanoid.Health > 0 and charge < 100 then
+				if player:GetAttribute("CanFight") and humanoid and humanoid.Health > 0 and charge < 100
+					and not Modes.IsSurvival(player:GetAttribute("Mode")) then
 					player:SetAttribute("UltCharge", math.min(100, charge + perSecond))
 				end
 			end

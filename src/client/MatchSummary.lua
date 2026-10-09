@@ -455,9 +455,6 @@ function MatchSummary.Init()
 			table.insert(fades, addLine(order, "KEINE BELOHNUNGEN IN DIESEM MATCH", nil, nil, C.Muted))
 		end
 		local notes = {}
-		if progress.AgentOfWeek then
-			table.insert(notes, "+50 % XP · AGENT DER WOCHE")
-		end
 		if progress.DoubleXP then
 			table.insert(notes, "DOPPEL-XP")
 		end

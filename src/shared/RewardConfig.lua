@@ -1,25 +1,40 @@
 -- RewardConfig (ModuleScript)
 -- Belohnungen außer den laufenden XP/Münzen pro Aktion:
 --   Killserien (Kills ohne zu sterben), Spielerlevel-Meilensteine (Münzen in jedem Prestige-Durchgang neu,
---   Skins einmalig), Prestige-Belohnungen (exklusive Skins), Rang-Meilensteine pro Saison (erster Aufstieg).
+--   Skins einmalig), Prestige-Belohnungen (exklusive Skins), Rang-Meilensteine pro Saison (erster Aufstieg, nur Arcade).
 -- Laufende Belohnungen: XP pro Aktion stehen in AgentConfig.XPRewards, Münzen = 25 pro 100 XP
 -- (Cosmetics.CoinsPerXP), Aufträge in QuestConfig. Vergeben wird alles vom RewardService (Server), die
 -- Kill-Boni (Rache, Serie beendet, Killserien) vom KillService zusammen mit den Medaillen (Medals).
 
+local ExtLevelConfig = require(script.Parent.ExtLevelConfig)
+
 local RewardConfig = {}
 
--- Übersicht der laufenden Belohnungen (nur für die Anzeige im Belohnungs-Fenster)
+-- Übersicht der laufenden Belohnungen (nur für die Anzeige im Belohnungs-Fenster): { Aktion, Belohnung, nur Arcade }.
+-- Zeilen mit drittem Feld true gibt es nur in Arcade-Modi (Niederschlagen/Wiederbeleben, Runden, Matches); das Fenster
+-- zeigt sie nur mit Modes.ArcadeEnabled.
 RewardConfig.PerAction = {
 	{ "Kill", "100 XP · 25 Münzen" },
 	{ "Kopfschuss-Kill", "+25 XP" },
 	{ "Assist", "30 XP" },
-	{ "Wiederbeleben", "50 XP" },
+	{ "Wiederbeleben", "50 XP", true },
 	{ "Multikill", "+25 XP je Kill in Folge" },
-	{ "Clutch / ACE", "100 XP je Gegner / 300 XP" },
-	{ "Rundensieg", "150 XP" },
-	{ "Matchsieg", "400 XP · 100 Münzen" },
+	{ "Clutch / ACE", "100 XP je Gegner / 300 XP", true },
+	{ "Rundensieg", "150 XP", true },
+	{ "Matchsieg", "400 XP · 100 Münzen", true },
 	{ "Rache", "75 Münzen" },
 	{ "Serie beendet", "100 Münzen" },
+}
+
+-- Offene Welt: XP fürs Spielerlevel (ExtLevelService.Add, Werte aus ExtLevelConfig.Rewards; nur Anzeige)
+local EP = ExtLevelConfig.Rewards
+RewardConfig.OpenWorld = {
+	{ "Zombienest", EP.Nest .. " XP" },
+	{ "Vorratslager", EP.Cache .. " XP" },
+	{ "Überlebender", EP.Survivor .. " XP" },
+	{ "Lootdrop", EP.Airdrop .. " XP" },
+	{ "Konvoi", EP.Convoy .. " XP" },
+	{ "Auftrag", EP.Mission .. " XP" },
 }
 
 -- Kill-Boni: Rache (den letzten eigenen Killer erledigen), Serie beendet (Gegner mit Killserie ab 5 stoppen)

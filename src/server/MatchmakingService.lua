@@ -227,6 +227,9 @@ function MatchmakingService.Init(modeManager, opts)
 	if RunService:IsStudio() or (game.PrivateServerId or "") ~= "" then
 		return -- in Studio geht kein Teleport, private Server bleiben unter sich
 	end
+	if not Modes.ArcadeEnabled then
+		return -- ohne Arcade gibt es nichts zu vermitteln (kein MemoryStore, keine Schleife)
+	end
 	local ok, result = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, C.MapName)
 	if not ok then
 		warn("Matchmaking aus: " .. tostring(result))

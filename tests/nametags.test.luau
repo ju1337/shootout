@@ -1,4 +1,4 @@
--- Namensschilder (Nametags): volles Schild (Prestige, Team-Rang, Name, Rang, RAP, Titel) im Markt und in der Safe Zone
+-- Namensschilder (Nametags): volles Schild (Prestige, Team-Rang, Name, Rang nur mit Arcade, RAP, Titel) im Markt und in der Safe Zone
 -- von Extinction, draußen in der offenen Welt keins für Fremde; RAP kurz (12.4K); Kopf neu geladen (Streaming).
 local failures = 0
 local function check(cond, msg)
@@ -49,7 +49,12 @@ check(tag ~= nil, "Markt: Schild über Alice")
 if tag then
 	check(find(tag, "Title").Text == "Alice", "Name (" .. tostring(find(tag, "Title").Text) .. ")")
 	check(find(tag, "Rap").Visible and find(tag, "Rap").Text == "12.4K", "RAP kurz in der Info-Zeile")
-	check(find(tag, "Subtitle").Text ~= "", "Rang steht da")
+	-- Ranked-Rang nur mit Arcade (ohne Arcade gibt es kein Ranked)
+	if require("Modes").ArcadeEnabled then
+		check(find(tag, "Subtitle").Visible and find(tag, "Subtitle").Text ~= "", "Rang steht da")
+	else
+		check(not find(tag, "Subtitle").Visible, "ohne Arcade kein Rang")
+	end
 	check(find(tag, "Strip").Visible, "Prestige-Strich")
 	check(not find(tag, "Staff").Visible, "kein Team-Rang-Schild ohne Rang")
 	check(tag.Adornee == alice.Character:FindFirstChild("Head"), "hängt am Kopf")

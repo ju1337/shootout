@@ -317,32 +317,41 @@ local function makePage(name, title, subtitle)
 end
 
 local function buildStats()
-	local frame, page = makePage("Stats", "STATISTIK", "DEINE WERTE ÜBER ALLE MODI  ·  RANG  ·  LETZTE MATCHES")
-	-- Linke Seite: Kacheln
-	local grid = make("Frame", { Position = UDim2.new(0, 0, 0, 72), Size = UDim2.new(0, 744, 0, 376),
-		BackgroundTransparency = 1 }, frame)
-	make("UIGridLayout", { CellSize = UDim2.new(0, 178, 0, 86), CellPadding = UDim2.new(0, 10, 0, 10),
-		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+	-- Ohne Arcade nur die offene Welt: Kampfwerte und Extinction-Werte in großen Kacheln über die ganze Breite; Rang,
+	-- ELO-Bestenliste und Match-Verlauf (nur Arcade-Modi schreiben sie) bleiben ausgeblendet
+	local arcade = Modes.ArcadeEnabled == true
+	local frame, page = makePage("Stats", "STATISTIK", arcade and "DEINE WERTE ÜBER ALLE MODI  ·  RANG  ·  LETZTE MATCHES"
+		or "DEINE WERTE IN DER OFFENEN WELT")
+	-- Linke Seite (ohne Arcade: ganze Seite): Kacheln, 4 x 4
+	local grid = make("Frame", { Position = UDim2.new(0, 0, 0, 72),
+		Size = arcade and UDim2.new(0, 744, 0, 376) or UDim2.new(0, 1520, 0, 614), BackgroundTransparency = 1 }, frame)
+	make("UIGridLayout", { CellSize = arcade and UDim2.new(0, 178, 0, 86) or UDim2.new(0, 372, 0, 146),
+		CellPadding = UDim2.new(0, 10, 0, 10), SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	local tiles = {}
-	local order = { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate", "Accuracy",
-		"AvgDamage", "Revives", "Captures", "AvgKills", "BestStreak", "Favorite" }
+	local order = arcade and { "KD", "Kills", "Deaths", "Assists", "WinRate", "Matches", "Wins", "Clutches", "HSRate",
+		"Accuracy", "AvgDamage", "Revives", "Captures", "AvgKills", "BestStreak", "Favorite" }
+		or { "KD", "Kills", "Deaths", "Assists", "HSRate", "Accuracy", "BestStreak", "Bounties", "Zombies", "Bandits",
+			"Bosses", "Damage", "Nests", "Survivors", "Convoys", "Missions" }
 	local titles = { KD = "K/D", Kills = "KILLS", Deaths = "TODE", Assists = "ASSISTS", WinRate = "SIEGQUOTE",
 		Matches = "MATCHES", Wins = "SIEGE", Clutches = "CLUTCHES", HSRate = "KOPFSCHUSS-QUOTE", Accuracy = "TREFFERQUOTE",
 		AvgDamage = "Ø SCHADEN/MATCH", Revives = "WIEDERBELEBT", Captures = "FLAGGEN EINGENOMMEN", AvgKills = "Ø KILLS/MATCH",
-		BestStreak = "BESTE KILLSERIE", Favorite = "LIEBLINGS-AGENT" }
+		BestStreak = "BESTE KILLSERIE", Favorite = "LIEBLINGS-AGENT", Zombies = "ZOMBIES", Bandits = "BANDITEN",
+		Bosses = "BOSSE", Damage = "SCHADEN GESAMT", Nests = "NESTER", Survivors = "GERETTET", Convoys = "KONVOIS",
+		Missions = "AUFTRÄGE", Bounties = "KOPFGELDER" }
 	for i, key in order do
 		local tile = make("Frame", { BackgroundColor3 = CARD, LayoutOrder = i }, grid)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, tile)
-		UITheme.AccentBar(tile, (key == "KD" or key == "WinRate") and ACCENT or BORDER, { Side = "Left" })
-		text({ Position = UDim2.new(0, 14, 0, 10), Size = UDim2.new(1, -20, 0, 16), Text = titles[key], TextSize = 11,
-			TextColor3 = GRAY }, tile)
-		tiles[key] = text({ Position = UDim2.new(0, 14, 0, 30), Size = UDim2.new(1, -20, 0, 40), Text = "–", TextSize = 30,
+		UITheme.AccentBar(tile, (key == "KD" or key == "WinRate" or key == "Zombies") and ACCENT or BORDER, { Side = "Left" })
+		text({ Position = UDim2.new(0, arcade and 14 or 20, 0, arcade and 10 or 16), Size = UDim2.new(1, -20, 0, 16),
+			Text = titles[key], TextSize = arcade and 11 or 13, TextColor3 = GRAY }, tile)
+		tiles[key] = text({ Position = arcade and UDim2.new(0, 14, 0, 30) or UDim2.new(0, 20, 0, 52),
+			Size = UDim2.new(1, -20, 0, arcade and 40 or 64), Text = "–", TextSize = arcade and 30 or 52,
 			Font = UITheme.Fonts.Title, TextScaled = false }, tile)
 	end
 
-	-- Rechte Seite: Ranked
+	-- Rechte Seite: Ranked (nur Arcade)
 	local rankedBox = make("Frame", { Position = UDim2.new(0, 768, 0, 72), Size = UDim2.new(0, 752, 0, 230),
-		BackgroundColor3 = CARD }, frame)
+		BackgroundColor3 = CARD, Visible = arcade }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, rankedBox)
 	local seasonText = text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "",
 		TextSize = 13, TextColor3 = ACCENT }, rankedBox)
@@ -360,7 +369,7 @@ local function buildStats()
 
 	-- Bestenliste
 	local board = make("Frame", { Position = UDim2.new(0, 768, 0, 314), Size = UDim2.new(0, 752, 0, 416),
-		BackgroundColor3 = CARD }, frame)
+		BackgroundColor3 = CARD, Visible = arcade }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, board)
 	text({ Position = UDim2.new(0, 16, 0, 10), Size = UDim2.new(1, -32, 0, 18), Text = "TOP 10 · ELO", TextSize = 13,
 		TextColor3 = ACCENT }, board)
@@ -369,7 +378,7 @@ local function buildStats()
 
 	-- Match-Verlauf (letzte 10 Matches)
 	local history = make("Frame", { Position = UDim2.new(0, 0, 0, 460), Size = UDim2.new(0, 744, 0, 270),
-		BackgroundColor3 = CARD }, frame)
+		BackgroundColor3 = CARD, Visible = arcade }, frame)
 	make("UICorner", { CornerRadius = UDim.new(0, 10) }, history)
 	text({ Position = UDim2.new(0, 16, 0, 8), Size = UDim2.new(1, -32, 0, 18), Text = "LETZTE MATCHES", TextSize = 13,
 		TextColor3 = ACCENT }, history)
@@ -390,8 +399,54 @@ local function buildStats()
 	local historyEmpty = text({ Position = UDim2.new(0, 16, 0, 34), Size = UDim2.new(1, -32, 0, 20),
 		Text = "Noch keine Matches gespielt.", TextSize = 15, Font = UITheme.Fonts.Body, TextColor3 = GRAY }, history)
 
-	page.Watch = { Stats = true, Elo = true, RankedData = true, MatchHistory = true }
+	page.Watch = arcade and { Stats = true, Elo = true, RankedData = true, MatchHistory = true } or { Stats = true }
 	page.Refresh = function()
+		local stats = decodeAttribute(player, "Stats")
+		local function get(key)
+			return stats[key] or 0
+		end
+		-- Werte aller Kacheln (die gerade gezeigten übernehmen ihren); Schlüssel der Statistik: ProgressService.AddStat
+		local values = {
+			KD = string.format("%.2f", ratio(get("Kills"), get("Deaths"))),
+			Kills = formatNumber(get("Kills")),
+			Deaths = formatNumber(get("Deaths")),
+			Assists = formatNumber(get("Assists")),
+			WinRate = percent(get("Wins"), get("Matches")),
+			Matches = tostring(get("Matches")),
+			Wins = tostring(get("Wins")),
+			Clutches = tostring(get("Clutches")),
+			HSRate = percent(get("Headshots"), get("Kills")),
+			Accuracy = percent(get("ShotsHit"), get("ShotsFired")),
+			AvgDamage = tostring(math.floor(ratio(get("Damage"), math.max(1, get("Matches"))))),
+			Revives = formatNumber(get("Revives")),
+			Captures = tostring(get("Captures")),
+			AvgKills = string.format("%.1f", ratio(get("Kills"), math.max(1, get("Matches")))),
+			BestStreak = tostring(get("BestStreak")),
+			Zombies = formatNumber(get("Zombies")),        -- ZombieService (jeder Zombie)
+			Bandits = formatNumber(get("ExtBotKills")),    -- Banditen und Konvoi-Wachen (Extinction)
+			Bosses = formatNumber(get("Bosses")),          -- BossService
+			Damage = formatNumber(get("Damage")),          -- WeaponService (Schaden aller eigenen Treffer)
+			Nests = formatNumber(get("ExtNests")),         -- ExtLevelService (über ActivityService)
+			Survivors = formatNumber(get("ExtSurvivors")),
+			Convoys = formatNumber(get("ExtConvoys")),
+			Missions = formatNumber(get("ExtMissions")),
+			Bounties = formatNumber(get("Bounties")),      -- BountyService (Kopfgeld eingesammelt)
+		}
+		for key, label in tiles do
+			label.Text = values[key] or "–"
+		end
+		if not arcade then
+			return
+		end
+		local favorite, most = nil, 0
+		for _, agent in AgentConfig.Agents do
+			if get("Kills_" .. agent.Id) > most then
+				favorite, most = agent, get("Kills_" .. agent.Id)
+			end
+		end
+		tiles.Favorite.Text = favorite and favorite.Name or "–"
+		tiles.Favorite.TextColor3 = favorite and favorite.Color or Color3.new(1, 1, 1)
+
 		local list = decodeAttribute(player, "MatchHistory")
 		historyEmpty.Visible = #list == 0
 		for i, cells in rows do
@@ -413,34 +468,6 @@ local function buildStats()
 				end
 			end
 		end
-
-		local stats = decodeAttribute(player, "Stats")
-		local function get(key)
-			return stats[key] or 0
-		end
-		tiles.KD.Text = string.format("%.2f", ratio(get("Kills"), get("Deaths")))
-		tiles.Kills.Text = tostring(get("Kills"))
-		tiles.Deaths.Text = tostring(get("Deaths"))
-		tiles.Assists.Text = tostring(get("Assists"))
-		tiles.WinRate.Text = percent(get("Wins"), get("Matches"))
-		tiles.Matches.Text = tostring(get("Matches"))
-		tiles.Wins.Text = tostring(get("Wins"))
-		tiles.Clutches.Text = tostring(get("Clutches"))
-		tiles.HSRate.Text = percent(get("Headshots"), get("Kills"))
-		tiles.Accuracy.Text = percent(get("ShotsHit"), get("ShotsFired"))
-		tiles.AvgDamage.Text = tostring(math.floor(ratio(get("Damage"), math.max(1, get("Matches")))))
-		tiles.Revives.Text = tostring(get("Revives"))
-		tiles.Captures.Text = tostring(get("Captures"))
-		tiles.AvgKills.Text = string.format("%.1f", ratio(get("Kills"), math.max(1, get("Matches"))))
-		tiles.BestStreak.Text = tostring(get("BestStreak"))
-		local favorite, most = nil, 0
-		for _, agent in AgentConfig.Agents do
-			if get("Kills_" .. agent.Id) > most then
-				favorite, most = agent, get("Kills_" .. agent.Id)
-			end
-		end
-		tiles.Favorite.Text = favorite and favorite.Name or "–"
-		tiles.Favorite.TextColor3 = favorite and favorite.Color or Color3.new(1, 1, 1)
 
 		local ranked = decodeAttribute(player, "RankedData")
 		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
@@ -716,8 +743,9 @@ local function buildCodes()
 end
 
 -- ---------- BELOHNUNGEN ----------
--- Übersicht: was man pro Aktion bekommt, Killserien, Level-Meilensteine (dieser Prestige-Durchgang),
--- Prestige-Skins und Rang-Meilensteine der Saison. Erledigt = grün mit Haken, nächstes Ziel hervorgehoben.
+-- Übersicht: was man pro Aktion bekommt (auch in der offenen Welt), Killserien, Level-Meilensteine (dieser
+-- Prestige-Durchgang), Prestige-Skins und (nur mit Arcade) Rang-Meilensteine der Saison und Saison-Ende.
+-- Erledigt = grün mit Haken, nächstes Ziel hervorgehoben.
 
 local function buildRewards()
 	local frame = makePanel("Rewards", "BELOHNUNGEN", 1120, 640)
@@ -732,7 +760,7 @@ local function buildRewards()
 		return list
 	end
 	local levelList = column(24, "LEVEL-MEILENSTEINE  ·  DIESER PRESTIGE-DURCHGANG")
-	local specialList = column(390, "PRESTIGE  ·  RANG DIESER SAISON  ·  SAISON-ENDE")
+	local specialList = column(390, Modes.ArcadeEnabled and "PRESTIGE  ·  RANG DIESER SAISON  ·  SAISON-ENDE" or "PRESTIGE")
 	local actionList = column(756, "PRO AKTION  ·  KILLSERIEN")
 
 	-- Zeile: links Titel, rechts Belohnung, Farbe nach Zustand ("done", "next", "open")
@@ -792,7 +820,8 @@ local function buildRewards()
 			row(specialList, order, "PRESTIGE " .. milestone.Prestige, rewardText(milestone), done and "done" or "open",
 				LevelConfig.PrestigeColors[milestone.Prestige])
 		end
-		for _, milestone in RewardConfig.Rank do
+		-- Ranked (Rang-Meilensteine, Saison-Ende) gibt es nur mit Arcade
+		for _, milestone in (if Modes.ArcadeEnabled then RewardConfig.Rank else {}) do
 			order += 1
 			local done = claimed["S" .. RankConfig.CurrentSeason() .. "_" .. milestone.Tier] == true
 			local tierColor
@@ -805,7 +834,7 @@ local function buildRewards()
 		end
 		-- Saison-Ende: was es für den höchsten Rang der laufenden Saison gibt (aktueller Peak hervorgehoben)
 		local peakTier = RankConfig.Get(decodeAttribute(player, "RankedData").Peak or RankConfig.StartElo).Name
-		for _, entry in RewardConfig.SeasonEnd do
+		for _, entry in (if Modes.ArcadeEnabled then RewardConfig.SeasonEnd else {}) do
 			order += 1
 			local tierColor
 			for _, tier in RankConfig.Tiers do
@@ -818,7 +847,12 @@ local function buildRewards()
 		end
 		clear(actionList)
 		for i, entry in RewardConfig.PerAction do
-			row(actionList, i, string.upper(entry[1]), entry[2], "open", ACCENT)
+			if Modes.ArcadeEnabled or not entry[3] then -- entry[3]: nur in Arcade-Modi
+				row(actionList, i, string.upper(entry[1]), entry[2], "open", ACCENT)
+			end
+		end
+		for i, entry in RewardConfig.OpenWorld do
+			row(actionList, 50 + i, UITheme.Upper(entry[1]), entry[2], "open", ACCENT)
 		end
 		for i, streak in RewardConfig.Streaks do
 			row(actionList, 100 + i, streak.Kills .. " KILLS IN FOLGE", UITheme.FormatNumber(streak.Coins) .. " Münzen", "open",
@@ -854,6 +888,10 @@ local function buildTitles()
 			local value, goal = TitleConfig.Progress(title, data)
 			local unlocked = value >= goal
 			local isOn = title.Id == selected.Id
+			-- Titel aus Arcade-Modi (Ranked, Siege, Wochen-Boni ...) ohne Arcade nur, wenn schon erreicht oder ausgewählt
+			if title.Arcade and not Modes.ArcadeEnabled and not unlocked and not isOn then
+				continue
+			end
 			local card = make("TextButton", { Text = "", AutoButtonColor = false, BackgroundColor3 = CARD,
 				BackgroundTransparency = unlocked and 0.05 or 0.45, LayoutOrder = (unlocked and 0 or 100) + i }, grid)
 			make("UICorner", { CornerRadius = UDim.new(0, 10) }, card)
@@ -1131,7 +1169,7 @@ local function togglePanel(name)
 	setPanel(openPanel ~= name and name or nil)
 end
 
--- Lobby auf einer Seite öffnen (SHOP, LOADOUT, AGENTEN, BATTLE PASS sind Seiten der Lobby, keine Fenster)
+-- Lobby auf einer Seite öffnen (SHOP, LOADOUT, BATTLE PASS sind Seiten der Lobby, keine Fenster)
 local function openLobby(page)
 	setPanel(nil)
 	GameMenu.Open(page)
@@ -1213,11 +1251,19 @@ local function buildPlayerCard()
 		bar.BackgroundColor3 = info.Color
 		levelCaption.Text = info.Prestige > 0 and ("PRESTIGE " .. info.Prestige) or "LEVEL"
 		levelCaption.TextColor3 = info.Prestige > 0 and info.Color or GRAY
-		local elo = player:GetAttribute("Elo") or RankConfig.StartElo
-		local rank = RankConfig.Get(elo)
-		cardRank:SetRank(rank)
-		local color = string.format("#%02X%02X%02X", rank.Color.R * 255, rank.Color.G * 255, rank.Color.B * 255)
-		rankLabel.Text = '<font color="' .. color .. '">' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
+		-- Ranked-Rang nur mit Arcade; sonst steht dort das Spielerlevel (ohne Ranked bliebe die ELO beim Startwert)
+		rankHolder.Visible = Modes.ArcadeEnabled == true
+		rankLabel.Position = UDim2.new(0, Modes.ArcadeEnabled and 118 or 92, 0, 38)
+		if Modes.ArcadeEnabled then
+			local elo = player:GetAttribute("Elo") or RankConfig.StartElo
+			local rank = RankConfig.Get(elo)
+			cardRank:SetRank(rank)
+			local color = string.format("#%02X%02X%02X", rank.Color.R * 255, rank.Color.G * 255, rank.Color.B * 255)
+			rankLabel.Text = '<font color="' .. color .. '">' .. rank.Display .. "</font>   ·   " .. elo .. " ELO"
+		else
+			rankLabel.Text = "LEVEL " .. info.Level
+			rankLabel.TextColor3 = info.Prestige > 0 and info.Color or Color3.new(1, 1, 1)
+		end
 		bar.Size = UDim2.new(info.Progress, 0, 1, 0)
 		xpLabel.Text = info.Needed > 0 and (formatNumber(info.XP) .. " / " .. formatNumber(info.Needed) .. " XP")
 			or (info.CanPrestige and "MAX-LEVEL – bereit für Prestige!" or "MAX-LEVEL")

@@ -48,8 +48,8 @@ def _load_cached(name):
 
 # Teile im Camp Phoenix (früher der Hub), die Server und Client in der Gruppe Zentrale suchen (src/shared/Zentrale.lua)
 ZENTRALE_PARTS = ("ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
-                  "ShopPlaque1", "ShopPlaque2", "ShopPlaque3", "MissionBoard", "PhotoBoard", "Leaderboard_Elo",
-                  "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Wins", "Podium1", "Podium2", "Podium3", "WheelSpot",
+                  "ShopPlaque1", "ShopPlaque2", "ShopPlaque3", "MissionBoard", "Leaderboard_Zombies",
+                  "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Missions", "Podium1", "Podium2", "Podium3", "WheelSpot",
                   "WheelConsole", "WheelBoard", "GateCount_Market")
 
 

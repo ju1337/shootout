@@ -172,9 +172,8 @@ Damage.Apply(victim, victim.Humanoid, 1000, { Player = alice, Weapon = "Rifle" }
 step(0.2)
 check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.ZombieCoins, "Münzen für den Zombie (XP ohne Münzen): "
 	.. ProgressService.Get(alice).Coins - coins)
--- (dazu die EP der offenen Welt: es gibt nur ein Level, ExtLevelService)
-local extReward = require("ExtLevelConfig").Rewards.Zombie
-check(victimKind.XP > 0 and (ProgressService.Get(alice).AccountXP or 0) == accountXP + victimKind.XP + extReward,
+-- (nur einmal: die EP der offenen Welt zählen für Kills nur in der Statistik, ExtLevelService.Count)
+check(victimKind.XP > 0 and (ProgressService.Get(alice).AccountXP or 0) == accountXP + victimKind.XP,
 	"Zombie gibt XP fürs Spielerlevel: " .. (ProgressService.Get(alice).AccountXP or 0) - accountXP)
 check((ProgressService.Get(alice).XP[agentId] or 0) == agentXP + victimKind.XP, "XP für den aktiven Agenten")
 local xpShown = false

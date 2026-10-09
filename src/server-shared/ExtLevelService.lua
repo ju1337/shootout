@@ -1,7 +1,9 @@
 -- ExtLevelService (ModuleScript, nur Server)
--- EP der offenen Welt (Werte in ExtLevelConfig): für Zombies, Spieler, Bots, Nester, Lager, Überlebende, Funk,
--- Lootdrops, den Konvoi und erledigte Aufträge. Es gibt nur noch EIN Level: die EP gehen ins Spielerlevel
--- (ProgressService.AddAccountXP, LevelConfig). Die Statistik ExtXP zählt weiter mit (Erfolg Ödland-Veteran).
+-- EP der offenen Welt (Werte in ExtLevelConfig): für Nester, Lager, Überlebende, Funk, Lootdrops, den Konvoi und
+-- erledigte Aufträge. Es gibt nur noch EIN Level: die EP gehen ins Spielerlevel (ProgressService.AddAccountXP,
+-- LevelConfig; mit XP-Faktor und Doppel-XP). Kills (Zombies, Spieler, Bots) geben Level-XP nur über
+-- ProgressService.AddXP (ZombieService, KillService) – hier zählen sie nur in der Statistik (Count).
+-- Die Statistik ExtXP zählt alle EP mit (Erfolg Ödland-Veteran).
 -- Aufstiegs-Meldung und Titel kommen über das Spielerlevel (Notifications, RewardService, TitleConfig).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,9 +24,10 @@ local ExtLevelService = {}
 local R = ExtLevelConfig.Rewards
 local openedDrops = setmetatable({}, { __mode = "k" }) -- [Player] = { [BagId] = true }
 
--- EP geben (nur in der offenen Welt). reason: kurzer Text für die Anzeige, stat: Statistik, die um 1 steigt (für die
--- Erfolge, z.B. "ExtZombies"). Gibt das neue Spielerlevel zurück.
-function ExtLevelService.Add(player, amount, reason, stat)
+-- Nur Statistik (nur in der offenen Welt): stat steigt um 1 (für die Erfolge, z.B. "ExtZombies"), ExtXP um amount.
+-- Keine Level-XP und keine Anzeige (für Kills: deren XP kommen schon über ProgressService.AddXP).
+-- Gibt die ganzzahligen EP zurück, nil wenn nichts gezählt wurde.
+function ExtLevelService.Count(player, amount, stat)
 	amount = math.floor(tonumber(amount) or 0)
 	if amount <= 0 or not player.Parent or not Modes.IsSurvival(player:GetAttribute("Mode")) or not ProgressService.Get(player) then
 		return nil
@@ -33,8 +36,20 @@ function ExtLevelService.Add(player, amount, reason, stat)
 		ProgressService.AddStat(player, stat, 1)
 	end
 	ProgressService.AddStat(player, ExtLevelConfig.Stat, amount)
-	ProgressService.AddAccountXP(player, amount)
-	Remotes.ExtUpdate:FireClient(player, "ExtXP", amount, reason)
+	return amount
+end
+
+-- EP geben (nur in der offenen Welt): Statistik wie Count, dazu Spielerlevel-XP (mit XP-Faktor und Doppel-XP) und
+-- "+N XP" unter der Hotbar. reason: kurzer Text für die Anzeige. Gibt das neue Spielerlevel zurück.
+function ExtLevelService.Add(player, amount, reason, stat)
+	amount = ExtLevelService.Count(player, amount, stat)
+	if not amount then
+		return nil
+	end
+	local gained, doubled = ProgressService.AddAccountXP(player, amount)
+	if gained > 0 then
+		Remotes.ExtUpdate:FireClient(player, "ExtXP", gained, doubled and (tostring(reason) .. " · Doppel-XP") or reason)
+	end
 	return LevelConfig.Get(player).Level
 end
 
@@ -50,7 +65,7 @@ function ExtLevelService.Init(opts)
 			if kind == "Brute" and Modes.IsSurvival(killer:GetAttribute("Mode")) then
 				ProgressService.AddStat(killer, "ExtBrutes", 1)
 			end
-			ExtLevelService.Add(killer, xp, "Zombie", "ExtZombies")
+			ExtLevelService.Count(killer, xp, "ExtZombies") -- Level-XP gibt ZombieService (AddXP)
 		end
 	end)
 	table.insert(ActivityService.OnEvent, function(player, kind)

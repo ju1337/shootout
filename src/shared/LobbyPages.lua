@@ -1024,7 +1024,9 @@ function LobbyPages.Pass(page)
 	label({ Position = UDim2.fromOffset(24, 20), Size = UDim2.fromOffset(400, 16), Text = "SO SAMMELST DU PASS-XP", TextSize = 12,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 3 }, howCard)
 	local tileW = math.floor((PAGE_W - 760 - 48 - 2 * 16) / 3)
-	for i, entry in { { "1 : 1", "Jedes XP im Spiel zählt auch für den Pass" },
+	-- 1 : 1 zählt nur, was über ProgressService.AddXP läuft (Zombies, Kills, Medaillen); EP der offenen Welt (Nester,
+	-- Konvois, Missionen ...) gehen nur ins Spielerlevel
+	for i, entry in { { "1 : 1", "XP für Zombies, Kills und Medaillen zählt auch für den Pass" },
 		{ "+" .. PassConfig.QuestXP, "Pass-XP pro abgeholtem täglichen Auftrag" },
 		{ UITheme.FormatNumber(PassConfig.XPPerTier), "Pass-XP pro Stufe – die Belohnung gibt es sofort" } } do
 		local x = 24 + (i - 1) * (tileW + 16)

@@ -34,6 +34,7 @@ local LevelConfig = require(Shared.LevelConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local InputActions = require(Shared.InputActions)
 local TopStack = require(Shared.TopStack)
+local Modes = require(Shared.Modes)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -903,7 +904,8 @@ function Notifications.Init()
 		layers.Objective.Clear()
 	end)
 
-	-- Agent aufgestiegen (kommt mit den XP vom Server)
+	-- Agenten-Level gestiegen (kommt mit den XP vom Server). Ohne Arcade gibt es nur noch das Spielerlevel: dann keine
+	-- eigene Level-Karte, nur wenn dabei ein Waffen-Skin (Gold, Diamant) frei wird
 	Remotes.XPGain.OnClientEvent:Connect(function(_, _, agentId, levelUp)
 		local agent = AgentConfig.Get(agentId)
 		if not levelUp or not agent then
@@ -912,8 +914,13 @@ function Notifications.Init()
 		local level = AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agentId))
 		local skin = AgentConfig.SkinForLevel(level)
 		local unlocked = skin and skin.Level == level
-		Notifications.Progress({ Caption = agent.Name .. " aufgestiegen", Title = "Level " .. level, Badge = tostring(level),
-			Sub = unlocked and (skin.Name .. "-Skin freigeschaltet") or "Agenten-Level", Color = agent.Color })
+		if Modes.ArcadeEnabled then
+			Notifications.Progress({ Caption = agent.Name .. " aufgestiegen", Title = "Level " .. level, Badge = tostring(level),
+				Sub = unlocked and (skin.Name .. "-Skin freigeschaltet") or "Agenten-Level", Color = agent.Color })
+		elseif unlocked then
+			Notifications.Progress({ Caption = "Waffen-Skin freigeschaltet", Title = skin.Name,
+				Sub = "Für alle Waffen ohne ausgerüsteten Skin", Color = skin.Color })
+		end
 	end)
 
 	-- Spielerlevel gestiegen (Prestige setzt das Level zurück, das zählt nicht)

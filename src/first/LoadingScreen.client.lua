@@ -12,15 +12,18 @@ ReplicatedFirst:RemoveDefaultLoadingScreen()
 local GRAPHITE = Color3.fromRGB(12, 14, 17)
 local AMBER = Color3.fromRGB(212, 170, 80)
 
+-- Tipps zur offenen Welt (Extinction); übersetzt werden sie wie alle Texte über LocaleStrings, sobald Locale läuft
 local TIPS = {
-	"Halte E bei niedergeschlagenen Teamkollegen, um sie wiederzubeleben.",
+	"Camp Phoenix ist eine Safe Zone: Dort nimmst du keinen Schaden. Draußen gilt nach 5 Sekunden PvP.",
+	"Wer draußen stirbt, lässt seine Tasche fallen – Container und Lager bleiben dir.",
+	"Wertvolles ins LAGERHAUS im Camp legen: Das Lager ist immer sicher.",
+	"Das Tor in der MARKTHALLE führt aus dem Camp in den Markt.",
+	"Einmal am Tag gratis drehen: das GLÜCKSRAD im Camp.",
+	"Das Starter Kit gibt es gratis an der KIT-AUSGABE im Camp – alle 30 Minuten neu.",
 	"Mit Rechtsklick zielst du genauer – die Streuung sinkt stark.",
 	"Im Sprint STRG drücken: Slide!",
-	"Z markiert Gegner für dein ganzes Team.",
-	"Kaufe in der Agentenwahl Rüstung und Perks – das Geld gilt nur für das Match.",
-	"Jeder Agent hat zwei Primärwaffen zur Auswahl.",
-	"Mit V erledigst du niedergeschlagene Gegner sofort mit dem Messer.",
-	"Lade Freunde über SQUAD ein – ihr landet im selben Team.",
+	"Z markiert Orte und Gegner für deinen Squad.",
+	"Lade Freunde über SQUAD ein – kein Friendly Fire, gemeinsame Pings und Minimap.",
 	"Mit T wechselst du zwischen Ego- und Schulterkamera, mit H die Schulter.",
 }
 

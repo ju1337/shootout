@@ -1,19 +1,17 @@
 -- HubLineup (ModuleScript, nur Client)
 -- Phönixplatz in Camp Phoenix (früher der Hub, Teile in der Gruppe Zentrale der Map Extinction, siehe
--- Shared/Zentrale): Agent der Woche als goldene Statue, Shop-Vitrine mit Theke, Einsatz-Tafel, Bestenlisten,
--- Bildtafel. Gibt es einen Part "LineupSpot", steht dort groß der eigene Agent (mit gewählter Primärwaffe und deren
--- Skin) und dreht sich langsam. Nur lokal sichtbar.
+-- Shared/Zentrale): Shop-Vitrine mit Theke, Lagebericht (Lage der offenen Welt: Spieler, Blutmond, Sturmnacht),
+-- Bestenlisten an der Ruhmeswand, Leuchtpartikel am Siegerpodest. Nur lokal sichtbar.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local AgentConfig = require(Shared.AgentConfig)
-local AgentFigure = require(Shared.AgentFigure)
 local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
-local RankConfig = require(Shared.RankConfig)
+local DayCycle = require(Shared.DayCycle)
+local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local HttpService = game:GetService("HttpService")
 local GunModels = require(Shared.GunModels)
 local GameMenu = require(Shared.GameMenu)
@@ -39,222 +37,10 @@ end
 
 local HubLineup = {}
 
--- Bühne mit dem eigenen Agenten: nur wenn die Zentrale einen Part "LineupSpot" hat;
--- Position = Füße, LookVector = Blickrichtung der Figur. Das Camp hat stattdessen den Shop.
-local STAGE_POSITION = Vector3.new(0, 1.2, 18)
-local STAGE_FACING = Vector3.new(0, 0, -1)
-local lineupEnabled = false
-local rebuildLineup -- vorab (rebuild steht weiter unten)
-task.spawn(function()
-	local spot = Zentrale.Part("LineupSpot", 60)
-	if spot then
-		STAGE_POSITION = spot.Position
-		STAGE_FACING = spot.CFrame.LookVector
-		lineupEnabled = true
-		if rebuildLineup then
-			rebuildLineup()
-		end
-	end
-end)
-local SCALE = 1.7
-
-local figure = nil
-
-local function rebuild()
-	rebuildLineup = rebuild
-	if figure then
-		figure:Destroy()
-		figure = nil
-	end
-	if player:GetAttribute("Mode") ~= Zentrale.Map or not lineupEnabled then
-		return
-	end
-	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
-	local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
-	local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-	figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
-	figure.Name = "LineupAgent"
-	figure:ScaleTo(SCALE)
-	for _, part in figure:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.CanCollide = false
-			part.CanQuery = false
-		end
-	end
-	figure.Parent = workspace
-	-- Schild über der Bühne: Name des Agenten in seiner Farbe, darunter Level und wo man ihn wechselt
-	local banner = Zentrale.Part("StageBanner")
-	local signGui = banner and banner:FindFirstChild("SignGui")
-	if signGui then
-		local title, subtitle = signGui:FindFirstChild("Title"), signGui:FindFirstChild("Subtitle")
-		if title then
-			title.Text = string.upper(agent.Name)
-			title.TextColor3 = agent.Color:Lerp(Color3.new(1, 1, 1), 0.25)
-		end
-		if subtitle then
-			subtitle.Text = "DEIN AGENT  ·  LEVEL " .. AgentConfig.LevelFromXP(AgentConfig.GetXP(player, agent.Id))
-				.. "  ·  WECHSELN UNTER AGENTEN"
-		end
-	end
-end
-
--- Agent der Woche: Statue auf dem Sockel in der Hallenmitte (Part "AgentOfWeekSpot") im Elite-Look
--- (Gold, glänzend, Leuchtkontur, Funken) und Holo-Schrift darüber ("AgentOfWeekHolo"). Jede Woche
--- (ab Montag 0 Uhr UTC) ist der nächste Agent dran – aus der Serverzeit berechnet, für alle gleich.
-local STATUE_SCALE = 1.8
-local GOLD = Color3.fromRGB(230, 182, 74)
-local HOLO = Color3.fromRGB(140, 210, 245)
--- Die Holo-Schrift ist 11 Studs breit: kommt die Kamera nah heran (rausgezoomt neben der Statue, steil von oben),
--- hinge sie riesig vor dem Bild. Darum blendet sie in Kameranähe aus: ab HOLO_FULL Studs voll da, unter HOLO_HIDE weg.
-local HOLO_HIDE, HOLO_FULL = 9, 16
-
-function HubLineup.AgentOfWeek()
-	return AgentConfig.AgentOfWeek()
-end
-
--- Sichtbarkeit der Holo-Schrift (0 = weg, 1 = voll) nach dem Abstand der Kamera
-function HubLineup.HoloVisibility(distance)
-	return math.clamp((distance - HOLO_HIDE) / (HOLO_FULL - HOLO_HIDE), 0, 1)
-end
-
--- Elite-Look der Statue: Uniform dunkel in Agentenfarbe, Weste/Visier Gold
-local function eliteColors(agent)
-	return agent.Color:Lerp(Color3.new(0, 0, 0), 0.7), GOLD
-end
-
-local function buildAgentOfWeek()
-	local decor = Zentrale.Folder(60)
-	if not decor then
-		return
-	end
-	local spot = decor:WaitForChild("AgentOfWeekSpot", 60)
-	local holoPoint = decor:WaitForChild("AgentOfWeekHolo", 60)
-	if not spot then
-		return
-	end
-	-- Holo-Schrift: schwebt über dem Agenten, schaut immer zur Kamera, leicht flackernd
-	local billboard, line, nameLabel, infoLabel, holoLabels = nil, nil, nil, nil, {}
-	if holoPoint then
-		billboard = Instance.new("BillboardGui")
-		billboard.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
-		billboard.Name = "AgentOfWeekHolo"
-		billboard.Adornee = holoPoint
-		billboard.Size = UDim2.new(11, 0, 3.4, 0) -- in Studs: wirkt wie ein Hologramm im Raum
-		billboard.LightInfluence = 0
-		billboard.MaxDistance = 160
-		billboard.Parent = player:WaitForChild("PlayerGui")
-		local function text(y, h, font, color)
-			local label = Instance.new("TextLabel")
-			label.Position = UDim2.new(0, 0, y, 0)
-			label.Size = UDim2.new(1, 0, h, 0)
-			label.BackgroundTransparency = 1
-			label.Font = font
-			label.TextScaled = true
-			label.TextColor3 = color
-			label.TextTransparency = 0.1
-			label.TextStrokeColor3 = Color3.fromRGB(40, 120, 180)
-			label.TextStrokeTransparency = 0.5
-			label.Parent = billboard
-			table.insert(holoLabels, label)
-			return label
-		end
-		text(0, 0.22, Enum.Font.BuilderSansBold, HOLO).Text = "AGENT DER WOCHE"
-		nameLabel = text(0.22, 0.52, Enum.Font.BuilderSansExtraBold, Color3.new(1, 1, 1))
-		infoLabel = text(0.76, 0.22, Enum.Font.BuilderSansBold, HOLO)
-		-- dünne Holo-Linie unter der Überschrift
-		line = Instance.new("Frame")
-		line.AnchorPoint = Vector2.new(0.5, 0)
-		line.Position = UDim2.new(0.5, 0, 0.22, 0)
-		line.Size = UDim2.new(0.55, 0, 0, 2)
-		line.BackgroundColor3 = HOLO
-		line.BackgroundTransparency = 0.3
-		line.BorderSizePixel = 0
-		line.Parent = billboard
-	end
-
-	local statue, shownId = nil, nil
-	local function refresh()
-		local agent = HubLineup.AgentOfWeek()
-		if agent.Id == shownId then
-			return
-		end
-		shownId = agent.Id
-		if statue then
-			statue:Destroy()
-		end
-		local primary, accent = eliteColors(agent)
-		statue = AgentFigure.Build(agent, primary, accent, Cosmetics.Get("W_Goldrausch"), agent.Loadout[1])
-		statue.Name = "AgentOfWeek"
-		statue:ScaleTo(STATUE_SCALE)
-		for _, part in statue:GetDescendants() do
-			if part:IsA("BasePart") then
-				part.Anchored = true
-				part.CanCollide = false
-				part.CanQuery = false
-				-- Gold glänzt (Foil)
-				if part.Color == GOLD then
-					part.Material = Enum.Material.Foil
-				end
-			end
-		end
-		-- Leuchtkontur und Gold-Funken
-		local highlight = Instance.new("Highlight")
-		highlight.FillTransparency = 1
-		highlight.OutlineColor = GOLD
-		highlight.OutlineTransparency = 0.25
-		highlight.DepthMode = Enum.HighlightDepthMode.Occluded
-		highlight.Parent = statue
-		local torso = statue:FindFirstChild("UpperTorso", true)
-		if torso and torso:IsA("BasePart") then
-			local sparkles = Instance.new("ParticleEmitter")
-			sparkles.Color = ColorSequence.new(GOLD)
-			sparkles.LightEmission = 1
-			sparkles.Rate = 6
-			sparkles.Lifetime = NumberRange.new(1.2, 2)
-			sparkles.Speed = NumberRange.new(0.5, 1.5)
-			sparkles.SpreadAngle = Vector2.new(180, 180)
-			sparkles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 0) })
-			sparkles.Parent = torso
-		end
-		statue.Parent = workspace
-		if nameLabel then
-			nameLabel.Text = string.upper(agent.Name)
-			nameLabel.TextColor3 = agent.Color:Lerp(Color3.new(1, 1, 1), 0.35)
-			infoLabel.Text = string.upper(agent.Role) .. "  ·  +50 % XP  ·  DIESE WOCHE GRATIS"
-		end
-	end
-	refresh()
-	-- Langsam drehen, Holo-Schrift leicht flackern und in Kameranähe ausblenden; einmal pro Minute auf neue Woche prüfen
-	local lastCheck = os.clock()
-	RunService.RenderStepped:Connect(function()
-		local t = os.clock()
-		if t - lastCheck > 60 then
-			lastCheck = t
-			refresh()
-		end
-		if statue and statue.Parent then
-			local base = spot.Position + Vector3.new(0, 3 * STATUE_SCALE, 0)
-			statue:PivotTo(CFrame.lookAt(base, base + spot.CFrame.LookVector) * CFrame.Angles(0, t * 0.35, 0))
-		end
-		if billboard then
-			local camera = workspace.CurrentCamera
-			local visible = camera and HubLineup.HoloVisibility((camera.CFrame.Position - holoPoint.Position).Magnitude) or 1
-			billboard.Enabled = visible > 0
-			if visible > 0 then
-				local flicker = (math.random() < 0.02) and 0.45 or 0.1
-				for _, label in holoLabels do
-					label.TextTransparency = 1 - (1 - flicker) * visible
-					label.TextStrokeTransparency = 1 - 0.5 * visible
-				end
-				line.BackgroundTransparency = 1 - 0.7 * visible
-			end
-		end
-	end)
-end
-
 -- Shop-Vitrine beim Ausrüster im Camp: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
 -- ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
--- An der Theke ("ShopCounter") öffnet E den Shop. Angebote wechseln täglich (Serverzeit, für alle gleich).
+-- An der Theke ("ShopCounter") öffnet E den Shop (offene Welt: SHOP-Reiter im EXTINCTION-Menü). Angebote wechseln
+-- täglich (Serverzeit, für alle gleich).
 local DAY = 24 * 3600
 
 local function dailyOffers()
@@ -293,6 +79,11 @@ local function buildShopVitrine()
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = counter
 	prompt.Triggered:Connect(function()
+		-- Offene Welt: wie überall dort der SHOP-Reiter des EXTINCTION-Menüs (erst hier laden, damit sich die
+		-- Ladereihenfolge der Module nicht ändert); sonst (Arcade) die Lobby
+		if Modes.IsSurvival(player:GetAttribute("Mode")) and require(script.Parent.ExtinctionClient).OpenTab("Shop") then
+			return
+		end
 		GameMenu.Open("Shop")
 	end)
 
@@ -378,7 +169,65 @@ local function buildShopVitrine()
 	end)
 end
 
--- Lagebericht am Siegerpodest: live, wie viele Spieler in welchem Modus sind (nur Modi, die man gerade betreten kann)
+-- Lagebericht in der Rathauslaube (Part "MissionBoard"). Offene Welt (Arcade aus): Lage für alle – wie viele Spieler
+-- draußen in der Welt und im Markt sind, Blutmond und Sturmnacht (läuft gerade / kommt in etwa N Minuten).
+-- Mit Arcade wie früher im Hub: live, wie viele Spieler in welchem Modus sind (nur Modi, die man betreten kann).
+local BLOOD, STORM = ExtinctionConfig.BloodMoon, ExtinctionConfig.Storm
+local GREEN, GREY = Color3.fromRGB(112, 178, 112), Color3.fromRGB(134, 142, 152)
+
+-- Nächster Start eines Ereignisses, geschätzt wie im Dienst (BloodMoonService/StormService): letzter Start + Pause.
+-- Wäre es während des anderen Ereignisses fällig, schiebt der Server es auf dessen Ende (+ Warnung + 2 Minuten).
+-- nil = noch keins gelaufen (das erste kommt FirstDelay nach dem Serverstart, den der Client nicht kennt)
+local function nextEvent(startAttr, pause, warning, otherActive, otherEndAttr)
+	local start = tonumber(ReplicatedStorage:GetAttribute(startAttr))
+	if not start then
+		return nil
+	end
+	local nextStart = start + pause
+	local otherEnd = tonumber(ReplicatedStorage:GetAttribute(otherEndAttr))
+	if otherActive and otherEnd and nextStart - warning <= otherEnd then
+		nextStart = otherEnd + warning + 120
+	end
+	return nextStart
+end
+
+-- Text und Farbe für ein Ereignis, das gerade nicht läuft
+local function upcoming(enabled, nextStart, now)
+	if not enabled or not nextStart then
+		return "RUHIG", GREY
+	elseif nextStart > now then
+		return "IN CA. " .. math.max(1, math.ceil((nextStart - now) / 60)) .. " MIN", Color3.fromRGB(228, 231, 235)
+	end
+	return "BALD", Color3.fromRGB(240, 196, 120)
+end
+
+-- Zeilen der offenen Welt: { Name, function(counts, now) -> Text, Farbe }
+local STATUS_LINES = {
+	{ "OFFENE WELT", function(counts)
+		local n = counts[Zentrale.Map] or 0
+		return n .. " SPIELER", n > 0 and GREEN or GREY
+	end },
+	{ "MARKT", function(counts)
+		local n = counts[Modes.Market.Id] or 0
+		return n .. " SPIELER", n > 0 and GREEN or GREY
+	end },
+	{ "BLUTMOND", function(_, now)
+		if DayCycle.IsBloodMoon(now) then
+			return "AKTIV · NOCH " .. math.max(1, math.ceil(DayCycle.BloodMoonLeft(now) / 60)) .. " MIN", Color3.fromRGB(255, 70, 60)
+		end
+		return upcoming(BLOOD.Enabled, nextEvent("BloodMoonStart", math.max(BLOOD.Interval, BLOOD.Duration + 60), BLOOD.Warning,
+			DayCycle.IsStorm(now), "StormEnd"), now)
+	end },
+	{ "STURMNACHT", function(_, now)
+		if DayCycle.IsStorm(now) then
+			return "AKTIV · " .. (ReplicatedStorage:GetAttribute("StormKills") or 0) .. "/"
+				.. (ReplicatedStorage:GetAttribute("StormGoal") or 0) .. " GEPANZERTE", Color3.fromRGB(150, 180, 255)
+		end
+		return upcoming(STORM.Enabled, nextEvent("StormStart", math.max(STORM.Interval, STORM.Duration + 120), STORM.Warning,
+			DayCycle.IsBloodMoon(now), "BloodMoonEnd"), now)
+	end },
+}
+
 local function buildMissionBoard()
 	local board = Zentrale.Part("MissionBoard", 60)
 	if not board then
@@ -399,17 +248,42 @@ local function buildMissionBoard()
 	title.TextColor3 = Color3.fromRGB(212, 170, 80)
 	title.Text = "LAGEBERICHT"
 	title.Parent = surface
-	local list = Instance.new("TextLabel")
-	list.Position = UDim2.new(0.06, 0, 0.2, 0)
-	list.Size = UDim2.new(0.88, 0, 0.76, 0)
-	list.BackgroundTransparency = 1
-	list.Font = Enum.Font.BuilderSansExtraBold
-	list.TextSize = 30
-	list.TextColor3 = Color3.fromRGB(228, 231, 235)
-	list.TextXAlignment = Enum.TextXAlignment.Left
-	list.TextYAlignment = Enum.TextYAlignment.Top
-	list.RichText = true
-	list.Parent = surface
+	local list, values = nil, {}
+	if Modes.ArcadeEnabled then
+		list = Instance.new("TextLabel")
+		list.Position = UDim2.new(0.06, 0, 0.2, 0)
+		list.Size = UDim2.new(0.88, 0, 0.76, 0)
+		list.BackgroundTransparency = 1
+		list.Font = Enum.Font.BuilderSansExtraBold
+		list.TextSize = 30
+		list.TextColor3 = Color3.fromRGB(228, 231, 235)
+		list.TextXAlignment = Enum.TextXAlignment.Left
+		list.TextYAlignment = Enum.TextYAlignment.Top
+		list.RichText = true
+		list.Parent = surface
+	else
+		-- je Zeile links der Name, rechts der Wert (einzelne Felder, damit jedes für sich übersetzt wird)
+		for i, line in STATUS_LINES do
+			local function cell(x, w, align, color)
+				local label = Instance.new("TextLabel")
+				label.Position = UDim2.new(x, 0, 0.22 + (i - 1) * 0.19, 0)
+				label.Size = UDim2.new(w, 0, 0.15, 0)
+				label.BackgroundTransparency = 1
+				label.Font = Enum.Font.BuilderSansExtraBold
+				label.TextScaled = true
+				label.TextColor3 = color
+				label.TextXAlignment = align
+				label.Text = ""
+				local limit = Instance.new("UITextSizeConstraint")
+				limit.MaxTextSize = 30 -- kurze Texte nicht größer als die langen
+				limit.Parent = label
+				label.Parent = surface
+				return label
+			end
+			cell(0.06, 0.4, Enum.TextXAlignment.Left, Color3.fromRGB(228, 231, 235)).Text = line[1]
+			values[i] = cell(0.46, 0.48, Enum.TextXAlignment.Right, GREY)
+		end
+	end
 	-- Spielerzahl-Felder an den Toren (Parts "GateCount_<ModusId>")
 	local gateLabels = {}
 	for _, part in board.Parent:GetChildren() do
@@ -441,41 +315,59 @@ local function buildMissionBoard()
 
 	local function update()
 		local ok, counts = pcall(HttpService.JSONDecode, HttpService, ReplicatedStorage:GetAttribute("ModeCounts") or "{}")
-		counts = ok and counts or {}
-		local lines = {}
-		for _, mode in Modes.List do
-			if mode.Available and Modes.Joinable(mode.Id) then
-				local n = counts[mode.Id] or 0
-				local color = n > 0 and "#70B270" or "#5E656E"
-				table.insert(lines, mode.Name .. '   <font color="' .. color .. '">' .. n .. " Spieler</font>")
+		counts = ok and type(counts) == "table" and counts or {}
+		if list then
+			local lines = {}
+			for _, mode in Modes.List do
+				if mode.Available and Modes.Joinable(mode.Id) then
+					local n = counts[mode.Id] or 0
+					local color = n > 0 and "#70B270" or "#5E656E"
+					table.insert(lines, mode.Name .. '   <font color="' .. color .. '">' .. n .. " Spieler</font>")
+				end
 			end
+			list.Text = table.concat(lines, "\n")
 		end
-		list.Text = table.concat(lines, "\n")
+		local now = workspace:GetServerTimeNow()
+		for i, label in values do
+			local text, color = STATUS_LINES[i][2](counts, now)
+			label.Text = text
+			label.TextColor3 = color
+		end
 		-- Spielerzahl unter jedem Tor-Schild
 		for id, countLabel in gateLabels do
 			local n = counts[id] or 0
 			countLabel.Text = n > 0 and (n .. " SPIELER") or "FREI"
-			countLabel.TextColor3 = n > 0 and Color3.fromRGB(112, 178, 112) or Color3.fromRGB(134, 142, 152)
+			countLabel.TextColor3 = n > 0 and GREEN or GREY
 		end
 	end
 	update()
 	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(update)
+	if not list then
+		-- Ereignisse beginnen und enden sofort, die Minuten zählen nebenher herunter
+		for _, name in { "BloodMoonStart", "BloodMoonEnd", "StormStart", "StormEnd", "StormKills", "StormGoal" } do
+			ReplicatedStorage:GetAttributeChangedSignal(name):Connect(update)
+		end
+		task.spawn(function()
+			while surface.Parent do
+				task.wait(15)
+				update()
+			end
+		end)
+	end
 end
 
 -- Bestenlisten-Tafeln an der Ruhmeswand im Camp (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
 local BOARD_INFO = {
-	Elo = { Title = "HÖCHSTE ELO", Color = Color3.fromRGB(212, 170, 80) },
+	Zombies = { Title = "MEISTE ZOMBIES", Color = Color3.fromRGB(212, 170, 80) },
 	Kills = { Title = "MEISTE KILLS", Color = Color3.fromRGB(206, 70, 58) },
 	Level = { Title = "HÖCHSTES LEVEL", Color = Color3.fromRGB(96, 164, 214) },
-	Wins = { Title = "MEISTE SIEGE", Color = Color3.fromRGB(112, 178, 112) },
+	Missions = { Title = "MEISTE AUFTRÄGE", Color = Color3.fromRGB(112, 178, 112) },
 }
 local PLACE_COLORS = { Color3.fromRGB(212, 176, 96), Color3.fromRGB(190, 194, 200), Color3.fromRGB(176, 120, 76) }
 
 local function formatValue(board, value)
 	value = tonumber(value) or 0
-	if board == "Elo" then
-		return value .. "  " .. RankConfig.Get(value).Display, RankConfig.Get(value).Color
-	elseif board == "Level" then
+	if board == "Level" then
 		local prestige, level = value // 1000, value % 1000
 		return (prestige > 0 and ("P" .. prestige .. " · ") or "") .. "LV " .. level, nil
 	end
@@ -513,31 +405,6 @@ local function buildLeaderboards()
 			title.TextStrokeTransparency = holo and 0.6 or 1
 			title.Text = info.Title
 			title.Parent = surface
-			-- ELO-Tafel: Saison und Countdown bis zum Saison-Ende rechts im Titel
-			if board == "Elo" then
-				title.TextXAlignment = Enum.TextXAlignment.Left
-				local pad = Instance.new("UIPadding")
-				pad.PaddingLeft = UDim.new(0.03, 0)
-				pad.Parent = title
-				local season = Instance.new("TextLabel")
-				season.AnchorPoint = Vector2.new(1, 0)
-				season.Position = UDim2.new(0.97, 0, 0.025, 0)
-				season.Size = UDim2.new(0.5, 0, 0.08, 0)
-				season.BackgroundTransparency = 1
-				season.Font = Enum.Font.BuilderSansExtraBold
-				season.TextScaled = true
-				season.TextXAlignment = Enum.TextXAlignment.Right
-				season.TextColor3 = holo and Color3.fromRGB(255, 225, 150) or Color3.fromRGB(14, 16, 19)
-				season.TextStrokeTransparency = holo and 0.6 or 1
-				season.Parent = surface
-				task.spawn(function()
-					while season.Parent do
-						season.Text = "SAISON " .. RankConfig.CurrentSeason() .. " · ENDET IN "
-							.. RankConfig.FormatLeft(RankConfig.SeasonLeft())
-						task.wait(30)
-					end
-				end)
-			end
 			local rows = {}
 			for i = 1, 10 do
 				local row = Instance.new("Frame")
@@ -634,69 +501,13 @@ local function updateExposure()
 	lighting.ExposureCompensation = Modes.IsSocial(player:GetAttribute("Mode")) and HUB_EXPOSURE or normalExposure
 end
 
--- Große Bildtafel an der Rückwand (Part "PhotoBoard"). Bild hochladen: Roblox Studio → Ansicht → Asset-Manager →
--- Bilder → Massenimport, Rechtsklick aufs Bild → Asset-ID kopieren und hier eintragen (z.B. "rbxassetid://123456").
-local PHOTO_IMAGE = ""
-
-local function buildPhotoBoard()
-	local board = Zentrale.Part("PhotoBoard", 60)
-	if not board then
-		return
-	end
-	local surface = Instance.new("SurfaceGui")
-	surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
-	surface.Name = "PhotoBoardGui"
-	surface.Face = Enum.NormalId.Front
-	surface.LightInfluence = 0
-	surface.Brightness = 1.1
-	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	surface.PixelsPerStud = 40
-	surface.Adornee = board
-	surface.Parent = player:WaitForChild("PlayerGui")
-	if PHOTO_IMAGE ~= "" then
-		local image = Instance.new("ImageLabel")
-		image.Size = UDim2.fromScale(1, 1)
-		image.BackgroundTransparency = 1
-		image.ScaleType = Enum.ScaleType.Crop
-		image.Image = PHOTO_IMAGE
-		image.Parent = surface
-	else
-		local hint = Instance.new("TextLabel")
-		hint.Size = UDim2.fromScale(1, 1)
-		hint.BackgroundTransparency = 1
-		hint.Font = Enum.Font.BuilderSansExtraBold
-		hint.TextScaled = true
-		hint.TextColor3 = Color3.fromRGB(120, 185, 235)
-		hint.Text = "BILD FOLGT"
-		hint.Parent = surface
-	end
-end
-
 function HubLineup.Init()
 	updateExposure()
-	task.spawn(buildPhotoBoard)
 	player:GetAttributeChangedSignal("Mode"):Connect(updateExposure)
 	task.spawn(buildMissionBoard)
 	task.spawn(addParticles)
 	task.spawn(buildLeaderboards)
-	-- Statue „Agent der Woche“ gibt es nicht mehr (nur noch ein Agent, Brunnen ohne Säule)
 	task.spawn(buildShopVitrine)
-	rebuild()
-	player.AttributeChanged:Connect(function(name)
-		if name == "Mode" or name == "Agent" or name == "Equipped" or name == "Owned" or name == "Loadouts"
-			or string.sub(name, 1, 3) == "XP_" then
-			rebuild()
-		end
-	end)
-	-- Langsam hin und her drehen, Blick in Richtung der Bühnen-Markierung
-	RunService.RenderStepped:Connect(function()
-		if figure then
-			local angle = math.sin(os.clock() * 0.5) * 0.5
-			local height = 3 * SCALE -- Figur steht mit den Füßen auf der Bühne
-			local base = STAGE_POSITION + Vector3.new(0, height, 0)
-			figure:PivotTo(CFrame.lookAt(base, base + STAGE_FACING) * CFrame.Angles(0, angle, 0))
-		end
-	end)
 end
 
 return HubLineup

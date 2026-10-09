@@ -1,9 +1,10 @@
 -- LeaderboardService (ModuleScript, nur Server)
--- Globale Bestenlisten (Top 10) über OrderedDataStores: ELO, Kills, Siege und Spielerlevel (inkl. Prestige).
+-- Globale Bestenlisten (Top 10) über OrderedDataStores für die Ruhmeswand im Camp: Zombies, Aufträge, Kills und
+-- Spielerlevel (inkl. Prestige). ELO kommt nur dazu, solange Arcade an ist (Modes.ArcadeEnabled, Ranked).
 -- Werte werden regelmäßig für alle Spieler eingetragen. Ohne DataStore (z.B. in Studio ohne API-Zugriff)
 -- zeigen die Listen die Spieler auf dem Server, damit die Tafeln im Camp nie leer sind.
 -- Ergebnis als JSON in ReplicatedStorage-Attributen "Leaderboard_<Name>": { { Name, UserId, Value }, ... }
--- Zusätzlich "RankedLeaderboard" ({ Name, Elo }) für das STATS-Fenster.
+-- Mit ELO-Liste zusätzlich "RankedLeaderboard" ({ Name, Elo }) für das STATS-Fenster.
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
@@ -14,6 +15,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local Modes = require(Shared.Modes)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local LeaderboardService = {}
@@ -22,22 +24,31 @@ local REFRESH = 60 -- Sekunden zwischen zwei Abfragen der Top 10
 local SUBMIT = 120 -- Sekunden zwischen zwei Einträgen aller Spieler
 local TOP = 10
 
--- Bestenlisten: Name -> Wert eines Profils
+-- Bestenlisten: Name -> Wert eines Profils (Tafeln Leaderboard_<Name> in der Gruppe Zentrale, siehe HubLineup)
 local BOARDS = {
-	Elo = function(profile)
-		return profile.Ranked and profile.Ranked.Elo or RankConfig.StartElo
+	-- erledigte Zombies (ZombieService)
+	Zombies = function(profile)
+		return profile.Stats and profile.Stats.Zombies or 0
+	end,
+	-- erledigte Aufträge der offenen Welt (ExtLevelService, Statistik ExtMissions)
+	Missions = function(profile)
+		return profile.Stats and profile.Stats.ExtMissions or 0
 	end,
 	Kills = function(profile)
 		return profile.Stats and profile.Stats.Kills or 0
-	end,
-	Wins = function(profile)
-		return profile.Stats and profile.Stats.Wins or 0
 	end,
 	-- Level-Wert: Prestige * 1000 + Level (sortiert Prestige zuerst)
 	Level = function(profile)
 		return (profile.Prestige or 0) * 1000 + LevelConfig.FromXP(profile.AccountXP or 0)
 	end,
 }
+-- ELO (Ranked) nur mit Arcade: ohne Arcade ändert sie sich nicht mehr. Siege (Stats.Wins) bleiben im Profil, haben
+-- aber keine Tafel mehr.
+if Modes.ArcadeEnabled then
+	BOARDS.Elo = function(profile)
+		return profile.Ranked and profile.Ranked.Elo or RankConfig.StartElo
+	end
+end
 
 local stores = {} -- [Name] = OrderedDataStore
 local names = {}  -- [UserId] = Name (Cache)

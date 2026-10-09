@@ -939,7 +939,7 @@ end
 function Extinction.OnKill(killer, victim)
 	if victim and victim ~= killer and members[killer] then
 		ProgressService.AddCoins(killer, ExtinctionConfig.PlayerKillCoins, "Spieler erledigt")
-		ExtLevelService.Add(killer, ExtLevelConfig.Rewards.PlayerKill, "Spieler", "ExtPlayerKills")
+		ExtLevelService.Count(killer, ExtLevelConfig.Rewards.PlayerKill, "ExtPlayerKills") -- Level-XP: KillService (AddXP)
 		InventoryService.Status(killer, "+" .. ExtinctionConfig.PlayerKillCoins .. " Münzen für " .. victim.Name, true)
 		local zone = redzoneOf(victim) or redzoneOf(killer)
 		RedzoneBoard.Record(killer, zone)
@@ -1047,7 +1047,7 @@ local function botDied(bot)
 			local coins = ExtinctionConfig.Bots.KillCoins
 			ProgressService.AddCoins(killer, coins, "Bot erledigt")
 			InventoryService.Status(killer, "+" .. coins .. " Münzen für " .. bot.Name, true)
-			ExtLevelService.Add(killer, ExtLevelConfig.Rewards.BotKill, "Bot", "ExtBotKills")
+			ExtLevelService.Count(killer, ExtLevelConfig.Rewards.BotKill, "ExtBotKills") -- Level-XP: KillService (AddXP)
 			RedzoneBoard.Record(killer, zone or redzoneOf(killer))
 			if zone or redzoneOf(killer) then
 				RedPointsService.Add(killer, ExtinctionConfig.RedPoints.BotKill, "Bot in der roten Zone")

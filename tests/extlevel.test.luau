@@ -1,6 +1,7 @@
--- EP der offenen Welt (ExtLevelService, ExtLevelConfig): nur in der offenen Welt, für Zombies (Art und rote Zone),
--- Aktivitäten, Lootdrops (je Kiste einmal), Aufträge, Spieler- und Bot-Kills. Es gibt nur EIN Level: die EP gehen ins
--- Spielerlevel (AccountXP, LevelConfig), die Statistik ExtXP zählt mit; Titel der offenen Welt ab Spielerlevel 5.
+-- EP der offenen Welt (ExtLevelService, ExtLevelConfig): nur in der offenen Welt, für Aktivitäten, Lootdrops (je Kiste
+-- einmal) und Aufträge. Es gibt nur EIN Level: die EP gehen ins Spielerlevel (AccountXP, LevelConfig, mit Doppel-XP),
+-- die Statistik ExtXP zählt mit; Titel der offenen Welt ab Spielerlevel 5. Kills (Zombies, Spieler, Bots) zählen hier
+-- nur in der Statistik (Count) – ihre Level-XP kommen einmal über ProgressService.AddXP.
 -- Alte Spielstände mit eigenem Extinction-Level werden einmal ins Spielerlevel übernommen (ohne Verlust).
 local failures = 0
 local function check(cond, msg)
@@ -176,16 +177,30 @@ local function fire(list, ...)
 		callback(...)
 	end
 end
+-- Zombie-Kills: nur Statistik (keine zweiten Level-XP, keine zweite "+XP"-Anzeige)
 fire(ZombieService.OnKill, alice, "Walker", CENTER + Vector3.new(0, 0, 300))
-check(accountXP(alice) == startXP + ExtLevelConfig.Rewards.Zombie, "Zombie: " .. ExtLevelConfig.Rewards.Zombie .. " XP aufs Spielerlevel")
+check(accountXP(alice) == startXP, "Zombie: keine EP aufs Spielerlevel (XP gibt nur AddXP)")
 check(extXP(alice) == ExtLevelConfig.Rewards.Zombie, "Statistik ExtXP zählt mit")
+check(ProgressService.Get(alice).Stats.ExtZombies == 1, "Statistik ExtZombies zählt mit")
 fire(ZombieService.OnKill, alice, "Brute", CENTER + Vector3.new(0, 0, 300))
-check(accountXP(alice) == startXP + ExtLevelConfig.Rewards.Zombie + ExtLevelConfig.Kinds.Brute, "Brocken gibt mehr")
-local popup = lastExt(alice, "ExtXP")
-check(popup and popup[2] == ExtLevelConfig.Kinds.Brute, "Anzeige +XP an den Client")
+check(accountXP(alice) == startXP, "Brocken: auch keine EP aufs Spielerlevel")
+check(extXP(alice) == ExtLevelConfig.Rewards.Zombie + ExtLevelConfig.Kinds.Brute, "Brocken zählt mehr in der Statistik")
+check(lastExt(alice, "ExtXP") == nil, "keine EP-Anzeige für Kills")
 local before = accountXP(alice)
 fire(ActivityService.OnEvent, alice, "Nest")
 check(accountXP(alice) == before + ExtLevelConfig.Rewards.Nest, "Nest zerstört")
+local popup = lastExt(alice, "ExtXP")
+check(popup and popup[2] == ExtLevelConfig.Rewards.Nest and popup[3] == "Nest", "Anzeige +XP an den Client")
+-- Doppel-XP (Gamepass/Boost) gilt auch für die EP
+alice:SetAttribute("Pass_DoubleXP", true)
+before = accountXP(alice)
+local beforeStat = extXP(alice)
+fire(ActivityService.OnEvent, alice, "Nest")
+check(accountXP(alice) == before + 2 * ExtLevelConfig.Rewards.Nest, "Doppel-XP: doppelte EP aufs Spielerlevel")
+check(extXP(alice) == beforeStat + ExtLevelConfig.Rewards.Nest, "Statistik zählt die einfachen EP")
+popup = lastExt(alice, "ExtXP")
+check(popup and popup[2] == 2 * ExtLevelConfig.Rewards.Nest and popup[3] == "Nest · Doppel-XP", "Anzeige mit Doppel-XP")
+alice:SetAttribute("Pass_DoubleXP", nil)
 before = accountXP(alice)
 local bag = { Kind = "Airdrop", Id = 77 }
 fire(LootService.OnOpened, alice, bag)

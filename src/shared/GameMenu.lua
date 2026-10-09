@@ -8,9 +8,7 @@
 --   rechts: Battle Pass (Stufe, Fortschritt, nächste Belohnung), täglicher Auftrag, großer SPIELEN-Knopf
 --           mit Modus, Spielerzahl und Ping
 -- Jeder Reiter ist eine eigene Seite unter der Kopfzeile (Modi und Squad gehören nur zu SPIELEN):
---   AGENTEN (ausgeblendet, es gibt nur noch einen Agenten – AgentConfig.MainId): links eine Detailkarte (überfahrener bzw. angeklickter Agent: Rolle, Werte, Standardwaffe – eine
---                der zwei Primärwaffen ausrüsten –, Fähigkeit, Gadget, Passiv, Level, WÄHLEN/FREISCHALTEN),
---                rechts alle Agenten als Karten (ausgerüstete Primärwaffe hell)
+--   Keine AGENTEN-Seite mehr: es gibt nur noch einen Agenten (AgentConfig.MainId), Aussehen über Skins
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
 --   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
 -- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
@@ -34,7 +32,6 @@ local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local AgentConfig = require(Shared.AgentConfig)
 local LevelConfig = require(Shared.LevelConfig)
-local WeaponConfig = require(Shared.WeaponConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local AgentFigure = require(Shared.AgentFigure)
 local PassConfig = require(Shared.PassConfig)
@@ -42,7 +39,6 @@ local QuestConfig = require(Shared.QuestConfig)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local LobbyPages = require(Shared.LobbyPages)
-local HUDIcons = require(Shared.HUDIcons)
 local LeaveButton = require(Shared.LeaveButton)
 
 local player = Players.LocalPlayer
@@ -64,7 +60,7 @@ local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Arcade-Modus mit 
 -- Navigation: Seite in der Lobby oder Fenster des SideMenu (Arcade = nur solange Modes.ArcadeEnabled an ist)
 local ALL_NAV = {
 	{ Id = "Play", Text = "SPIELEN", Arcade = true },
-	-- AGENTEN: ausgeblendet (es gibt nur noch einen Agenten, Aussehen über Skins); die Seite selbst bleibt im Code
+	-- AGENTEN gibt es nicht mehr (nur noch ein Agent, Aussehen über Skins)
 	{ Id = "Inventory", Text = "LOADOUT" },
 	{ Id = "Shop", Text = "SHOP" },
 	{ Id = "Pass", Text = "BATTLE PASS" },
@@ -74,13 +70,13 @@ local NAV = {} -- die gerade angebotenen Reiter (beim Aufbau aus ALL_NAV)
 local gui, background, canvas, statusLabel, pageStatus, openButton, hubButton, closeButton
 local play -- großer SPIELEN-Knopf (Chunky) mit Unterzeile
 local playSub
-local playPage, agentPage
+local updateHints -- Steuerungs-Hinweise unten neu schreiben (Gerät, Modus)
+local playPage
 local pages = {}        -- [Id] = { Frame, Refresh, Watch, Build } (Build: baut die Seite beim ersten Anzeigen)
 local navButtons = {}   -- [Id] = TextButton
 local borrowed = {}     -- [Id] = true: Seite steckt gerade im Menü der offenen Welt (GameMenu.BorrowPage)
 local headerPages = {}  -- [Id] = Chunky (STATISTIK, CODES, OPTIONEN oben rechts: Seiten, keine Fenster)
 local modeButtons = {}  -- [mode] = { Chunky, Detail, Check, Live }
-local agentCards = {}   -- [agent] = { ... }
 local selectedMode
 local currentPage = "Play"
 local isOpen = false
@@ -145,9 +141,9 @@ local function updateNav()
 	end
 end
 
--- Gibt es die Seite gerade? (SPIELEN nur, solange Arcade an ist; AGENTEN gar nicht mehr)
+-- Gibt es die Seite gerade? (SPIELEN nur, solange Arcade an ist)
 local function pageOffered(name)
-	if not pages[name] or name == "Agents" then
+	if not pages[name] then
 		return false
 	end
 	for _, entry in ALL_NAV do
@@ -523,12 +519,6 @@ local function buildAgentStage()
 	local name = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 664), Size = UDim2.fromOffset(780, 84),
 		Text = "", TextSize = 84, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, stage)
 	UITheme.Outline(name, 1)
-	local change = make("TextButton", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 752),
-		Size = UDim2.fromOffset(240, 24), BackgroundTransparency = 1, Text = "AGENT WECHSELN", Font = F.Bold, TextSize = 12,
-		TextColor3 = C.Muted, Visible = false }, stage) -- nur noch ein Agent: nichts zu wechseln
-	change.Activated:Connect(function()
-		showPage("Agents")
-	end)
 
 	local figure, shownKey = nil, nil
 	local function refresh()
@@ -776,16 +766,22 @@ local function buildPlay()
 	local hints = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -10), Size = UDim2.fromOffset(1500, 18),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextTransparency = 0.2,
 		TextXAlignment = Enum.TextXAlignment.Center }, canvas)
-	local function updateHints()
+	-- Offene Welt: keine Fähigkeit, keine Gadgets, TAB öffnet das Inventar statt der Punkteliste
+	local ARCADE_ONLY = { Ability = true, Gadget = true, Scoreboard = true }
+	updateHints = function()
 		if InputActions.IsTouch() then
 			hints.Text = "ALLE AKTIONEN ÜBER DIE KNÖPFE AM BILDSCHIRMRAND  ·  LINKS BEWEGEN, RECHTS WISCHEN ZUM UMSEHEN"
 			return
 		end
+		local survival = Modes.IsSurvival(player:GetAttribute("Mode"))
 		local parts = {}
 		for _, entry in { { "Fire", "Schießen" }, { "Aim", "Zielen" }, { "Ability", "Fähigkeit" }, { "Gadget", "Gadget" },
 			{ "Reload", "Nachladen" }, { "Melee", "Messer" }, { "Crouch", "Ducken/Slide" }, { "Sprint", "Sprinten" },
-			{ "Interact", "Aktion" }, { "Ping", "Ping" }, { "Camera", "Kamera" }, { "Scoreboard", "Punkte" }, { "Menu", "Menü" } } do
-			local key = InputActions.Hint(entry[1])
+			{ "Interact", "Aktion" }, { "Ping", "Ping" }, { "Camera", "Kamera" }, { "Scoreboard", "Punkte" },
+			{ "Inventory", "Inventar" }, { "Menu", "Menü" } } do
+			-- Inventar nur in der offenen Welt (die Taste meldet ExtinctionClient erst dort an)
+			local skip = if survival then ARCADE_ONLY[entry[1]] else entry[1] == "Inventory"
+			local key = if skip then "" else InputActions.Hint(entry[1])
 			if key ~= "" then
 				table.insert(parts, key .. " " .. upper(entry[2]))
 			end
@@ -794,317 +790,7 @@ local function buildPlay()
 	end
 	updateHints()
 	InputActions.DeviceChanged:Connect(updateHints)
-end
-
--- ---------- Seite AGENTEN ----------
-
--- Agent wählen bzw. (gesperrt) mit Münzen freischalten
-local function activateAgent(agent)
-	if not AgentConfig.IsUnlocked(player, agent.Id) then
-		Remotes.ShopAction:FireServer("UnlockAgent", agent.Id)
-		return
-	end
-	Remotes.SelectAgent:FireServer(agent.Id)
-	setStatus(agent.Name .. " gewählt – aktiv ab dem nächsten Spawn.")
-end
-
-local function buildAgentPage()
-	agentPage = make("Frame", { Name = "AgentsPage", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false },
-		canvas)
-	local hovered, pinned = nil, nil -- überfahrener Agent (Vorschau) und zuletzt angeklickter
-
-	-- ----- Detailkarte links -----
-	local detail = UITheme.Card({ Name = "AgentDetail", Position = UDim2.fromOffset(LEFT_X, 106), Size = UDim2.fromOffset(LEFT_W, 730) },
-		agentPage)
-	local function text(props)
-		props.ZIndex = 3
-		return label(props, detail)
-	end
-	local role = UITheme.Tag({ Position = UDim2.fromOffset(20, 20), Text = "", TextSize = 11, BackgroundColor3 = C.Secondary,
-		TextColor3 = C.Primary, ZIndex = 3 }, detail)
-	local name = text({ Position = UDim2.fromOffset(20, 46), Size = UDim2.new(1, -40, 0, 58), Text = "", TextSize = 60, Font = F.Display })
-	local description = text({ Position = UDim2.fromOffset(20, 108), Size = UDim2.new(1, -40, 0, 36), Text = "", TextSize = 13,
-		Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top })
-
-	text({ Position = UDim2.fromOffset(20, 152), Size = UDim2.fromOffset(300, 16), Text = "WERTE", TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted })
-	local statRows = {}
-	for i, entry in { { "Health", "LEBEN" }, { "Speed", "TEMPO" }, { "Utility", "FÄHIGKEIT" } } do
-		local y = 172 + (i - 1) * 22
-		text({ Position = UDim2.fromOffset(20, y), Size = UDim2.fromOffset(90, 16), Text = entry[2], TextSize = 11, Font = F.Bold })
-		local segments = {}
-		for s = 1, 10 do
-			segments[s] = make("Frame", { Position = UDim2.fromOffset(112 + (s - 1) * 15, y + 5), Size = UDim2.fromOffset(13, 6),
-				BackgroundColor3 = C.Background, BorderSizePixel = 0, ZIndex = 3 }, detail)
-		end
-		local value = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, y), Size = UDim2.fromOffset(50, 16),
-			Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right })
-		statRows[entry[1]] = { Segments = segments, Value = value }
-	end
-
-	-- Standardwaffe: eine der zwei Primärwaffen ausrüsten (gilt bei jedem Spawn mit dem Agenten, im Markt auf dem Rücken)
-	local shownAgent = nil -- Agent, den die Detailkarte gerade zeigt
-	text({ Position = UDim2.fromOffset(20, 246), Size = UDim2.fromOffset(150, 16), Text = "STANDARDWAFFE", TextSize = 12,
-		Font = F.Bold, TextColor3 = C.Muted })
-	local secondaryText = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 246), Size = UDim2.fromOffset(160, 16),
-		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right })
-	local weaponCards = {}
-	for i = 1, 2 do
-		local button = make("TextButton", { Name = "Weapon" .. i, Position = UDim2.fromOffset(20 + (i - 1) * 154, 268),
-			Size = UDim2.fromOffset(146, 82), BackgroundColor3 = C.Background, BorderSizePixel = 0, Text = "", AutoButtonColor = false,
-			ZIndex = 3 }, detail)
-		UITheme.Corner(button, UITheme.Radius.Small)
-		local stroke = UITheme.Stroke(button, C.Border, 1)
-		local holder = make("Frame", { Position = UDim2.fromOffset(8, 4), Size = UDim2.fromOffset(130, 42), BackgroundTransparency = 1,
-			ZIndex = 3 }, button)
-		local weaponName = label({ Position = UDim2.fromOffset(10, 46), Size = UDim2.new(1, -20, 0, 18), Text = "", TextSize = 16,
-			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 4 }, button)
-		local tag = label({ Position = UDim2.fromOffset(10, 64), Size = UDim2.new(1, -20, 0, 12), Text = "", TextSize = 10,
-			Font = F.Bold, TextColor3 = C.Muted, ZIndex = 4 }, button)
-		local card = { Button = button, Stroke = stroke, Holder = holder, Name = weaponName, Tag = tag, Weapon = nil, Shown = nil }
-		button.MouseEnter:Connect(function()
-			button.BackgroundColor3 = C.CardHover
-		end)
-		button.MouseLeave:Connect(function()
-			button.BackgroundColor3 = C.Background
-		end)
-		button.Activated:Connect(function()
-			local agent = shownAgent or currentAgent()
-			if card.Weapon and card.Weapon ~= AgentConfig.LoadoutFor(player, agent.Id)[1] then
-				Remotes.ShopAction:FireServer("SelectPrimary", agent.Id, card.Weapon)
-			end
-		end)
-		weaponCards[i] = card
-	end
-
-	text({ Position = UDim2.fromOffset(20, 364), Size = UDim2.fromOffset(300, 16), Text = "FÄHIGKEITEN", TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted })
-	local abilityRows = {}
-	for i = 1, 3 do
-		local y = 386 + (i - 1) * 56
-		local key = text({ Position = UDim2.fromOffset(20, y), Size = UDim2.fromOffset(30, 30), Text = "", TextSize = 13, Font = F.Bold,
-			TextColor3 = C.Primary, BackgroundTransparency = 0, BackgroundColor3 = C.Background,
-			TextXAlignment = Enum.TextXAlignment.Center })
-		UITheme.Corner(key, UITheme.Radius.Small)
-		UITheme.Stroke(key, C.Primary, 1)
-		local diamond = UITheme.Diamond(key, 10, UDim2.fromScale(0.5, 0.5), C.Primary) -- Passiv (Oswald hat kein "◆")
-		diamond.ZIndex = 4
-		local rowName = text({ Position = UDim2.fromOffset(62, y - 1), Size = UDim2.new(1, -82, 0, 18), Text = "", TextSize = 13,
-			RichText = true, TextTruncate = Enum.TextTruncate.AtEnd })
-		local rowText = text({ Position = UDim2.fromOffset(62, y + 18), Size = UDim2.new(1, -82, 0, 36), Text = "", TextSize = 11,
-			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top })
-		abilityRows[i] = { Key = key, Diamond = diamond, Name = rowName, Text = rowText }
-	end
-
-	text({ Position = UDim2.fromOffset(20, 556), Size = UDim2.fromOffset(300, 16), Text = "AGENTEN-LEVEL", TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted })
-	local levelText = text({ Position = UDim2.fromOffset(20, 574), Size = UDim2.fromOffset(160, 28), Text = "", TextSize = 28,
-		Font = F.Display })
-	local xpText = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 584), Size = UDim2.fromOffset(180, 16),
-		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right })
-	local levelBack = make("Frame", { Position = UDim2.fromOffset(20, 608), Size = UDim2.new(1, -40, 0, 4), BackgroundColor3 = C.Background,
-		BorderSizePixel = 0, ZIndex = 3 }, detail)
-	local levelBar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0, ZIndex = 3 },
-		levelBack)
-	local killsText = text({ Position = UDim2.fromOffset(20, 620), Size = UDim2.new(1, -40, 0, 16), Text = "", TextSize = 11,
-		Font = F.Bold, TextColor3 = C.Muted })
-
-	local action = UITheme.Chunky({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -20), Size = UDim2.new(1, -40, 0, 52),
-		Color = C.Primary, Text = "", TextSize = 24, TextColor = C.PrimaryText, ZIndex = 3 }, detail, function()
-		local agent = pinned or currentAgent()
-		if agent ~= currentAgent() or not AgentConfig.IsUnlocked(player, agent.Id) then
-			activateAgent(agent)
-		end
-	end)
-
-	local function showWeapons(agent)
-		local chosen = AgentConfig.LoadoutFor(player, agent.Id)[1]
-		for i, card in weaponCards do
-			local weapon = (agent.Primaries or { agent.Loadout[1] })[i]
-			card.Weapon = weapon
-			card.Button.Visible = weapon ~= nil
-			if weapon then
-				local skin = Cosmetics.WeaponSkin(player, agent.Id, weapon)
-				local key = weapon .. "|" .. tostring(skin and skin.Name)
-				if key ~= card.Shown then
-					card.Shown = key
-					local old = card.Holder:FindFirstChildWhichIsA("ViewportFrame")
-					if old then
-						old:Destroy()
-					end
-					local preview = HUDIcons.WeaponModel(card.Holder, weapon, 130, 42, skin)
-					if preview then
-						preview.ZIndex = 3
-					end
-				end
-				local equipped = weapon == chosen
-				card.Name.Text = upper(WeaponConfig.Get(weapon).DisplayName)
-				card.Tag.Text = equipped and "AUSGERÜSTET" or "AUSRÜSTEN"
-				card.Tag.TextColor3 = equipped and C.Primary or C.Muted
-				card.Stroke.Color = equipped and C.Primary or C.Border
-				card.Stroke.Thickness = equipped and 2 or 1
-			end
-		end
-		secondaryText.Text = "+ " .. upper(WeaponConfig.Get(agent.Loadout[2]).DisplayName)
-	end
-
-	local function showDetail()
-		local agent = hovered or pinned or currentAgent()
-		shownAgent = agent
-		showWeapons(agent)
-		local stats = decode(player:GetAttribute("Stats"))
-		role.Text = upper(agent.Role)
-		name.Text = agent.Name
-		description.Text = agent.Description or ""
-		for stat, row in statRows do
-			local value = AgentConfig.StatValue(stat, agent)
-			for i, segment in row.Segments do
-				segment.BackgroundColor3 = i <= value and C.Primary or C.Background
-			end
-			row.Value.Text = stat == "Health" and tostring(agent.Health) or stat == "Speed" and tostring(agent.WalkSpeed)
-				or (agent.Ability.Cooldown .. " s")
-		end
-		local rows = {
-			{ AgentConfig.AbilityKey.Name, agent.Ability.Name, agent.Ability.Cooldown .. " s", agent.Ability.Description or "" },
-			{ AgentConfig.GadgetKey.Name, agent.Gadget.Name, (agent.Gadget.Charges or 1) .. "×", AgentConfig.GadgetDescription(agent.Gadget) },
-			{ "", agent.Passive and agent.Passive.Name or "–", "PASSIV", agent.Passive and agent.Passive.Description or "" },
-		}
-		for i, row in rows do
-			local entry = abilityRows[i]
-			entry.Key.Text = row[1]
-			entry.Diamond.Visible = row[1] == ""
-			entry.Name.Text = string.format('%s  <font color="#%s">· %s</font>', upper(row[2]), C.Muted:ToHex(), row[3])
-			entry.Text.Text = row[4]
-		end
-		local xp = AgentConfig.GetXP(player, agent.Id)
-		local level = AgentConfig.LevelFromXP(xp)
-		levelText.Text = "LEVEL " .. level
-		levelBar.Size = UDim2.fromScale(AgentConfig.LevelProgress(xp), 1)
-		xpText.Text = level >= AgentConfig.MaxLevel and "MAX-LEVEL"
-			or (UITheme.FormatNumber(AgentConfig.LevelProgress(xp) * AgentConfig.XPPerLevel) .. " / "
-				.. UITheme.FormatNumber(AgentConfig.XPPerLevel) .. " XP")
-		killsText.Text = (stats["Kills_" .. agent.Id] or 0) .. " KILLS MIT " .. agent.Name
-
-		-- Knopf für den angezeigten Agenten
-		local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
-		if not unlocked then
-			local affordable = (player:GetAttribute("Coins") or 0) >= (agent.Price or 0)
-			action.SetText("FREISCHALTEN  ·  " .. UITheme.FormatNumber(agent.Price or 0))
-			action.SetColor(affordable and C.Primary or C.MutedBack, affordable and C.PrimaryText or C.Bad)
-		elseif agent == currentAgent() then
-			action.SetText("GEWÄHLT")
-			action.SetColor(C.MutedBack, C.Muted)
-		else
-			action.SetText("WÄHLEN")
-			action.SetColor(C.Primary, C.PrimaryText)
-		end
-	end
-
-	-- ----- Karten rechts -----
-	label({ Position = UDim2.fromOffset(410, 106), Size = UDim2.fromOffset(800, 22),
-		Text = "AGENTEN  ·  KLICKEN ZUM WÄHLEN, GESPERRTE LINKS FREISCHALTEN", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted },
-		agentPage)
-	local grid = make("Frame", { Position = UDim2.fromOffset(410, 134), Size = UDim2.fromOffset(1150, 702), BackgroundTransparency = 1 },
-		agentPage)
-	-- 5 Spalten x 2 Reihen (bis 10 Agenten)
-	make("UIGridLayout", { CellSize = UDim2.fromOffset(218, 344), CellPadding = UDim2.fromOffset(14, 14),
-		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
-
-	local refresh -- vorab (Karten-Ereignisse rufen es auf)
-	for i, agent in AgentConfig.Agents do
-		local card = make("TextButton", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.08, BorderSizePixel = 0, Text = "",
-			AutoButtonColor = false, LayoutOrder = i }, grid)
-		UITheme.Corner(card, UITheme.Radius.XL)
-		local stroke = UITheme.Stroke(card, C.Border, 1)
-		-- 3D-Figur oben
-		local viewport = make("ViewportFrame", { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 156),
-			BackgroundTransparency = 1, Ambient = Color3.fromRGB(135, 140, 158), LightColor = Color3.fromRGB(255, 245, 235),
-			LightDirection = Vector3.new(-0.5, -1, 0.6) }, card)
-		local camera = make("Camera", { FieldOfView = 34 }, viewport)
-		camera.CFrame = AgentFigure.CameraCFrame
-		viewport.CurrentCamera = camera
-		local primary, accent = Cosmetics.AgentColors(player, agent.Id)
-		local figure = AgentFigure.Build(agent, primary, accent)
-		figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.35, 0))
-		figure.Parent = viewport
-
-		label({ Position = UDim2.fromOffset(14, 160), Size = UDim2.new(1, -74, 0, 32), Text = agent.Name, TextSize = 28,
-			Font = F.Display }, card)
-		local level = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 168), Size = UDim2.fromOffset(60, 20),
-			Text = "", TextSize = 13, Font = F.Bold, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right }, card)
-		UITheme.Tag({ Position = UDim2.fromOffset(14, 194), Text = upper(agent.Role), TextSize = 11, BackgroundColor3 = C.Secondary,
-			TextColor3 = C.Muted }, card)
-		local barBack = make("Frame", { Position = UDim2.fromOffset(14, 224), Size = UDim2.new(1, -28, 0, 3), BackgroundColor3 = C.Background,
-			BorderSizePixel = 0 }, card)
-		local bar = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Primary, BorderSizePixel = 0 }, barBack)
-		local weaponLine = label({ Position = UDim2.fromOffset(14, 234), Size = UDim2.new(1, -28, 0, 16), Text = "", TextSize = 11,
-			Font = F.Medium, TextColor3 = C.Muted, RichText = true, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		label({ Position = UDim2.fromOffset(14, 252), Size = UDim2.new(1, -28, 0, 16), Text = "Q  " .. upper(agent.Ability.Name),
-			TextSize = 12, Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 16), Text = "G  " .. upper(agent.Gadget.Name),
-			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		local badge = label({ Position = UDim2.fromOffset(14, 296), Size = UDim2.new(1, -28, 0, 34), Text = "", TextSize = 16,
-			Font = F.Display, BackgroundTransparency = 0, BackgroundColor3 = C.Secondary, TextXAlignment = Enum.TextXAlignment.Center }, card)
-		UITheme.Corner(badge, UITheme.Radius.Small)
-
-		-- Überfahren: Vorschau links; Klick: links festhalten und (wenn frei) wählen – Freischalten nur über den Knopf links
-		card.MouseEnter:Connect(function()
-			card.BackgroundColor3 = C.Card
-			hovered = agent
-			showDetail()
-		end)
-		card.MouseLeave:Connect(function()
-			card.BackgroundColor3 = C.Panel
-			if hovered == agent then
-				hovered = nil
-				showDetail()
-			end
-		end)
-		card.Activated:Connect(function()
-			pinned = agent
-			if AgentConfig.IsUnlocked(player, agent.Id) then
-				activateAgent(agent)
-			else
-				setStatus(agent.Name .. " ist gesperrt – links mit Münzen freischalten.")
-			end
-			refresh()
-		end)
-		agentCards[agent] = { Card = card, Stroke = stroke, Badge = badge, Level = level, Bar = bar, Weapons = weaponLine }
-	end
-
-	refresh = function()
-		local chosen = currentAgent()
-		for agent, entry in agentCards do
-			local isChosen = agent == chosen
-			local unlocked = AgentConfig.IsUnlocked(player, agent.Id)
-			entry.Stroke.Color = isChosen and C.Primary or (agent == pinned and C.Text or C.Border)
-			entry.Stroke.Thickness = isChosen and 2 or 1
-			entry.Stroke.Transparency = (not isChosen and agent == pinned) and 0.4 or 0
-			entry.Badge.Text = not unlocked and ("GESPERRT  ·  " .. UITheme.FormatNumber(agent.Price))
-				or (isChosen and "GEWÄHLT" or "WÄHLEN")
-			entry.Badge.BackgroundColor3 = isChosen and C.Primary or (unlocked and C.Secondary or C.MutedBack)
-			entry.Badge.TextColor3 = isChosen and C.PrimaryText or (unlocked and C.Text or C.Muted)
-			local xp = AgentConfig.GetXP(player, agent.Id)
-			entry.Level.Text = "LV " .. AgentConfig.LevelFromXP(xp)
-			entry.Bar.Size = UDim2.fromScale(AgentConfig.LevelProgress(xp), 1)
-			-- Waffen: ausgerüstete Primärwaffe hell, die andere und die Sekundärwaffe gedämpft
-			local chosenWeapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
-			local names = {}
-			for _, weapon in agent.Primaries or { agent.Loadout[1] } do
-				local weaponName = WeaponConfig.Get(weapon).DisplayName
-				table.insert(names, weapon == chosenWeapon
-					and string.format('<font color="#%s">%s</font>', C.Text:ToHex(), weaponName) or weaponName)
-			end
-			entry.Weapons.Text = table.concat(names, " / ") .. " + " .. WeaponConfig.Get(agent.Loadout[2]).DisplayName
-		end
-		showDetail()
-	end
-	refresh()
-	player.AttributeChanged:Connect(refresh)
-	pages.Agents = { Frame = agentPage, Refresh = function()
-		hovered = nil
-		refresh()
-	end }
+	player:GetAttributeChangedSignal("Mode"):Connect(updateHints)
 end
 
 -- ---------- Seiten LOADOUT, SHOP, BATTLE PASS (LobbyPages, beim ersten Anzeigen gebaut) ----------
@@ -1161,6 +847,7 @@ function GameMenu.SetOpen(open: boolean)
 	end
 	if open then
 		GameMenu.UpdatePlay()
+		updateHints() -- Inventar-Taste gibt es erst, wenn die offene Welt sie angemeldet hat
 		background.BackgroundTransparency = 1
 		TweenService:Create(background, TweenInfo.new(0.2), { BackgroundTransparency = 0.3 }):Play()
 		RunService:BindToRenderStep("GameMenuMouse", Enum.RenderPriority.Camera.Value + 1, function()
@@ -1172,9 +859,9 @@ function GameMenu.SetOpen(open: boolean)
 	end
 end
 
--- tab: Seite der Lobby ("Play"/"Modes", "Agents", "Inventory", "Shop", "Pass") oder ein Fenster des SideMenu
+-- tab: Seite der Lobby ("Play"/"Modes", "Inventory", "Shop", "Pass") oder ein Fenster des SideMenu
 -- ("Quests", "Daily", "Squad", "Rewards", "Titles"); "Stats", "Codes", "Settings" sind Seiten.
--- Ohne Arcade öffnen nil, "Play", "Modes" und "Agents" die erste Seite (LOADOUT).
+-- Ohne Arcade öffnen nil, "Play" und "Modes" die erste Seite (LOADOUT).
 function GameMenu.Open(tab)
 	GameMenu.SetOpen(true)
 	if tab == nil or tab == "Modes" then
@@ -1382,7 +1069,6 @@ function GameMenu.Init()
 	buildPass()
 	buildDaily()
 	buildPlay()
-	buildAgentPage()
 	buildLobbyPages()
 	selectMode(Modes.Featured() or QUICK)
 	showPage(firstPage())

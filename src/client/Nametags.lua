@@ -238,11 +238,13 @@ local function rapOf(target)
 	return math.floor((tonumber(target:GetAttribute("Rap")) or 0) + (tonumber(target:GetAttribute("RapValue")) or 0))
 end
 
--- Volles Schild zum Angeben: Prestige-Abzeichen, Team-Rang, Name, Rang, RAP, Titel
+-- Volles Schild zum Angeben: Prestige-Abzeichen, Team-Rang, Name, Rang, RAP, Titel. Den Ranked-Rang nur mit Arcade
+-- (ohne Arcade gibt es kein Ranked, die ELO bliebe für immer auf dem Startwert)
 local function showcase(target)
 	local level = LevelConfig.Get(target)
 	return { Name = displayName(target), Color = level.Prestige > 0 and level.Color or C.Text, Staff = StaffConfig.Of(target),
-		Rank = RankConfig.Get(target:GetAttribute("Elo") or RankConfig.StartElo), Player = target, Rap = rapOf(target),
+		Rank = Modes.ArcadeEnabled and RankConfig.Get(target:GetAttribute("Elo") or RankConfig.StartElo) or nil,
+		Player = target, Rap = rapOf(target),
 		Title = titleOf(target) }
 end
 

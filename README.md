@@ -29,7 +29,7 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (runde Altstadt: Phönixplatz mit Agent der Woche, Rathaus mit Lagebericht und Ruhmeswand, Ausrüster/Shop, Glücksrad, Siegerpodest; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (runde Altstadt: Phönixplatz mit Brunnen, Rathaus mit Lagebericht und Ruhmeswand, Ausrüster/Shop, Glücksrad, Siegerpodest; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
 | Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
@@ -40,7 +40,13 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 **Arcade ist gerade aus** (`Modes.ArcadeEnabled = false` in `src/shared/Modes.lua`; Extinction ist das Hauptspiel): Es
 gibt kein SPIELEN in der Lobby und im Menü der offenen Welt, keine Arcade-Aufträge, der Server lehnt Beitritte zu
 Arcade-Modi und SCHNELLES SPIEL ab, und das Matchmaking über Server ruht. Admins können Spieler weiter in jeden Modus
-schicken. Mit `true` ist alles wieder da (Code der Modi unverändert). Was folgt, beschreibt den eingeschalteten Zustand.
+schicken. Ohne Arcade blendet das Spiel auch alles aus, was nur Arcade füttert: Ranked-Rang auf Namensschildern
+und der Spielerkarte (dort steht das Level), Rang-Meilensteine und Saison-Ende unter BELOHNUNGEN, Arcade-Titel unter
+TITEL (außer schon erreichte), Ranked-Kasten, ELO-Top-10 und Matchverlauf unter STATISTIK (dort stehen stattdessen
+Werte der offenen Welt), Fähigkeit/Gadget/Punkte in den Steuerungs-Hinweisen; Ultimate lädt nicht, ERSTES BLUT und
+die Saison-Rangbelohnung gibt es nicht, Agenten-Level-Karten kommen nur noch, wenn ein Waffen-Skin frei wird (Gold
+bei 5, Diamant bei 10), und der Matchmaking-Dienst öffnet keine MemoryStore-Map. Mit `true` ist alles wieder da (Code
+der Modi unverändert). Was folgt, beschreibt den eingeschalteten Zustand.
 
 Die Minispiele haben kein eigenes Tor: Man startet sie im Menü (M) unter **ARCADE** (dort auch SCHNELLES
 SPIEL = vollster Arcade-Modus mit freiem Platz, auch auf anderen Servern). Oben im Menü steht groß EXTINCTION und ist
@@ -76,14 +82,14 @@ startet direkt in der **Safe Zone** „Camp Phoenix“ in der Mitte der Welt (Ma
 Mauer bei Radius 110). Das Camp ist eine **runde Altstadt**: Altbauten mit Putzfassaden, Ziegeldächern, Fensterläden
 und Blumenkästen (Generator `townhouse` in `camp_phoenix.py`, Läden im Erdgeschoss mit Schild, Schaufenstern, Theke in
 der Tür und Markise), von innen nach außen:
-- **Phönixplatz** (Radius 36, Spawn): Kopfsteinpflaster, Brunnen mit der Statue „Agent der Woche“, Spawn-Ring, Bänke
+- **Phönixplatz** (Radius 36, Spawn): Kopfsteinpflaster, runder Brunnen (Becken mit Wasser), Spawn-Ring, Bänke
   unter Bäumen in Kübeln, Lichterketten, Altstadt-Laternen, Fahnen, Wegweiser; davor die Café-Terrasse und das
-  **Siegerpodest** der Top-3-Statuen (Server `src/server/ZentraleService.lua`) vor dem Rathaus.
+  **Siegerpodest** mit Statuen der Top 3 nach Level (Server `src/server/ZentraleService.lua`) vor dem Rathaus.
 - **Innerer Häuserring** (8 Altbauten, Fronten bei Radius 36.5, je Seite ein breites und ein schmales Haus, Rückseiten
   mit Fenstern zur Ringstraße): NO **AUSRÜSTER** (offene Arkade mit den drei Shop-Vitrinen und der Theke, E öffnet den
-  Shop) und **WAFFEN & MUNITION**; SO **CAFÉ ZENTRAL** und **APOTHEKE** (Items); SW **RATHAUS** mit Uhrturm und offener
-  Rathauslaube (**LAGEBERICHT** = Missionstafel, **RUHMESWAND** = die vier Bestenlisten als Schaukästen, Fototafel an
-  der Straßenseite) und **TAUSCHMARKT**; NW **GLÜCKSRAD** (Spielhalle mit dem Rad an der Rückwand, Pult vorn) und
+  SHOP-Reiter des Menüs) und **WAFFEN & MUNITION**; SO **CAFÉ ZENTRAL** und **APOTHEKE** (Items); SW **RATHAUS** mit Uhrturm und offener
+  Rathauslaube (**LAGEBERICHT**: Spieler in der offenen Welt und im Markt, Blutmond und Sturmnacht; **RUHMESWAND**:
+  Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE als Schaukästen) und **TAUSCHMARKT**; NW **GLÜCKSRAD** (Spielhalle mit dem Rad an der Rückwand, Pult vorn) und
   **LAGERHAUS** (Lager).
 - Vier **Hauptstraßen** (Asphalt, Gehsteige, Laternen) vom Platz zu den Toren und eine **Ringstraße** (Radius 59.5).
 - **Äußerer Häuserring** (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe): NO
@@ -95,7 +101,7 @@ der Tür und Markise), von innen nach außen:
 - Ringmauer aus Betonfertigteilen mit Stacheldraht (wie im ersten Camp), vier Tore aus Container-Türmen (außen CAMP
   PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks.
 
-Die Teile, die Server und Client suchen (Statue, Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
+Die Teile, die Server und Client suchen (Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
 Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 45 Studs auseinander
 (`tests/maps_check.py` verlangt 30). Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt beim Umbau gleich.
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
@@ -307,8 +313,8 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   geräumt verschwindet die Leiche. Zombies lassen öfter etwas fallen (75 %, Läufer 85 %, Brocken immer), weil es keine
   Beute mehr am Boden gibt.
 - **Zombie-XP**: jeder erledigte Zombie gibt **XP** für den aktiven Agenten, das Spielerlevel und den Battle Pass
-  (Zombie 10, Läufer 20, Schreier 25, Brocken 50, Blutbestie 600; `XP` in `ExtinctionConfig.ZombieKinds`). Doppel-XP und
-  Agent der Woche wirken mit; Münzen gibt es dafür keine extra (nur die wenigen Zombie-Münzen).
+  (Zombie 10, Läufer 20, Schreier 25, Brocken 50, Blutbestie 600; `XP` in `ExtinctionConfig.ZombieKinds`). Doppel-XP wirkt
+  mit; das sind die einzigen Level-XP für den Kill (die EP-Liste zählt Zombies nur in der Statistik); Münzen gibt es dafür keine extra (nur die wenigen Zombie-Münzen).
 - **Taschen am Boden** (Todestasche, Lootdrop, Kisten): **E** öffnet das Fenster, Items **einzeln** anklicken; das
   Schild zeigt die Anzahl der Items. Meldung unten „+ 2 Verband, 30 9mm …“.
 - **Alles looten = Gamepass** (`RobuxConfig.Passes`, Id `LootAll`, Attribut `Pass_LootAll`): Alles auf einmal nehmen –
@@ -441,10 +447,6 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
   Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
   Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
-- **Agent der Woche** (Phönixplatz im Camp, `src/client/HubLineup.lua`): goldene Statue des Agenten der Woche dreht sich
-  auf dem Sockel, darüber schwebt eine Holo-Schrift (Name, Rolle, +50 % XP, diese Woche gratis). Kommt die Kamera
-  nah heran (rausgezoomt neben der Statue, steil von oben), blendet die Schrift weich aus (ab 16 Studs, unter 9
-  ganz weg), statt riesig vor dem Bild zu hängen
 - **Glücksrad im Camp** (`src/client/HubWheel.lua`): großes Rad mit acht
   Feldern (`LoginConfig.Wheel`), Rand mit Lichtern und Zeiger oben; Podest, Ständer, Schild und Pult kommen aus
   der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E** (Controller □, Touch: Antippen): der Server
@@ -594,7 +596,8 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   und steigt sofort ein
 - **Unendliche Reserve-Munition in allen Modi** (nachladen muss man trotzdem; `WeaponConfig.InfiniteAmmoEverywhere`)
 - **Ein Level für alles** (Spielerlevel mit Prestige, `LevelConfig`): XP aus Kämpfen und die EP der offenen Welt
-  (Zombies, Nester, Lootdrops, Konvoi, Aufträge …, `ExtLevelConfig`) zählen aufs selbe Level; ELO bleibt getrennt. In
+  (Nester, Lager, Überlebende, Lootdrops, Konvoi, Aufträge, `ExtLevelConfig`) zählen aufs selbe Level; Kills geben
+  ihre XP nur einmal (am Fadenkreuz), Doppel-XP, XP-Boost und XP-Faktor gelten auch für die EP; ELO bleibt getrennt. In
   der offenen Welt steht es als schmale Zeile unter der Hotbar (LEVEL, Balken in Prestige-Farbe, XP bzw. kurz
   „+N XP · GRUND“), in anderen Modi unten links; im Markt groß auf der Spielerkarte. Das frühere eigene
   Extinction-Level wird beim Laden einmal übernommen (EP addiert, mindestens das alte Level)
@@ -933,7 +936,7 @@ am Commit:
 | `market` | Markt: Stand beanspruchen (Markt, Nähe, einer pro Spieler), anbieten (handelbar, freie Stücke, höchstens sechs), Preis ändern, kaufen (Nähe, gesehener Preis, RAP, Gebühr, gespeichert), Stand frei beim Verlassen |
 | `skins` | Waffen-Skins und neue Agenten-Skins (Platz "Agent", gebunden, nicht in Kisten): kaufen, ausrüsten, ablegen, Farbe/Material, Speichern und Laden; alte Agenten-Skins bleiben entfernt (Besitz, Plätze "A:", Merkliste), Battle-Pass-Stufe 20 = Saison-Elite, SHOP mit Reiter AGENTEN-SKINS |
 | `trade` | Tauschen: Anfrage (Markt/Safe Zone, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen/Safe Zone verlassen, fehlgeschlagener Tausch ändert nichts |
-| `hubholo` | Holo-Schrift „Agent der Woche“: hängt über der Statue, bleibt nach dem Respawn, blendet in Kameranähe aus (rausgezoomt daneben, steil von oben), weiter weg voll sichtbar |
+| `hubholo` | Shop-Vitrine im Camp (Ausrüster-Theke) und Tagesangebote (`dailyOffers`) |
 | `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), nur ein Agent wählbar, Agenten-Skin sofort angezogen (Farbe, Material), Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |

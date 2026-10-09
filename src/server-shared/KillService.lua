@@ -199,9 +199,9 @@ local function awardMedals(killer, victim, weaponName, headshot, victimName, vic
 		ProgressService.AddStat(killer, "BestStreak", streak - best)
 	end
 
-	-- Erstes Blut der Runde
+	-- Erstes Blut der Runde (nicht in der offenen Welt: dort gibt es keine Runden)
 	local mode = killer:GetAttribute("Mode")
-	if mode and not firstBloodTaken[mode] then
+	if mode and not Modes.IsSurvival(mode) and not firstBloodTaken[mode] then
 		firstBloodTaken[mode] = true
 		add("FirstBlood")
 	end

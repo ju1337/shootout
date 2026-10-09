@@ -1,5 +1,6 @@
 -- ZentraleService (ModuleScript, nur Server)
--- Phönixplatz in Camp Phoenix (früher der Hub): Siegertreppchen mit Avatar-Statuen der Top 3 nach ELO.
+-- Phönixplatz in Camp Phoenix (früher der Hub): Siegertreppchen mit Avatar-Statuen der Top 3 nach Spielerlevel
+-- (Bestenliste Level vom LeaderboardService, Prestige zuerst).
 -- Die Teile (Podium1..3) liegen in der Gruppe Zentrale der Map Extinction (siehe Shared/Zentrale).
 
 local Players = game:GetService("Players")
@@ -7,21 +8,33 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local RankConfig = require(Shared.RankConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local Zentrale = require(Shared.Zentrale)
 
 local ZentraleService = {}
 
 local folder = nil
 
--- ---------- Siegertreppchen: Avatar-Statuen der Top 3 nach ELO ----------
-local statues = {} -- [Platz] = { UserId, Model }
+-- ---------- Siegertreppchen: Avatar-Statuen der Top 3 nach Level ----------
+local statues = {} -- [Platz] = { UserId, Model, Info }
+
+-- Level-Zeile des Namensschilds: Wert der Bestenliste = Prestige * 1000 + Level, Farbe nach Prestige
+local function showLevel(info, value)
+	value = tonumber(value) or 0
+	local prestige, level = value // 1000, value % 1000
+	info.Text = (prestige > 0 and ("P" .. prestige .. " · ") or "") .. "LV " .. level
+	info.TextColor3 = LevelConfig.PrestigeColors[math.min(prestige, LevelConfig.MaxPrestige)] or LevelConfig.PrestigeColors[0]
+end
 
 local function placeStatue(place, entry)
 	local pad = folder and folder:FindFirstChild("Podium" .. place)
 	local current = statues[place]
 	if current and entry and current.UserId == entry.UserId then
-		return -- gleiche Person, nichts zu tun
+		-- gleiche Person: nur das Level auf dem Schild nachziehen
+		if current.Info then
+			showLevel(current.Info, entry.Value)
+		end
+		return
 	end
 	if current and current.Model then
 		current.Model:Destroy()
@@ -69,10 +82,10 @@ local function placeStatue(place, entry)
 		lowest = root and (root.Position.Y - root.Size.Y / 2 - (humanoid and humanoid.HipHeight or 2)) or top.Y
 	end
 	model:PivotTo(model:GetPivot() + Vector3.new(0, top.Y - lowest, 0))
-	-- Namensschild mit ELO und Rang
+	-- Namensschild mit Platz, Name und Level
 	local head = model:FindFirstChild("Head")
+	local info = nil
 	if head then
-		local rank = RankConfig.Get(entry.Value)
 		local billboard = Instance.new("BillboardGui")
 		billboard.Size = UDim2.new(5.5, 0, 1.3, 0) -- in Studs, damit es den Titel dahinter nicht überdeckt
 		billboard.StudsOffset = Vector3.new(0, 1.8, 0)
@@ -88,15 +101,14 @@ local function placeStatue(place, entry)
 		name.TextStrokeTransparency = 0.3
 		name.Text = "#" .. place .. "  " .. tostring(entry.Name)
 		name.Parent = billboard
-		local info = Instance.new("TextLabel")
+		info = Instance.new("TextLabel")
 		info.Position = UDim2.new(0, 0, 0.55, 0)
 		info.Size = UDim2.new(1, 0, 0.45, 0)
 		info.BackgroundTransparency = 1
 		info.Font = Enum.Font.BuilderSansExtraBold
 		info.TextScaled = true
-		info.TextColor3 = rank.Color
 		info.TextStrokeTransparency = 0.3
-		info.Text = rank.Display .. "  ·  " .. tostring(entry.Value) .. " ELO"
+		showLevel(info, entry.Value)
 		info.Parent = billboard
 	end
 	-- Inzwischen ersetzt? Dann wegwerfen
@@ -105,11 +117,12 @@ local function placeStatue(place, entry)
 		return
 	end
 	statues[place].Model = model
+	statues[place].Info = info
 	model.Parent = folder
 end
 
 local function updatePodium()
-	local ok, list = pcall(HttpService.JSONDecode, HttpService, ReplicatedStorage:GetAttribute("Leaderboard_Elo") or "[]")
+	local ok, list = pcall(HttpService.JSONDecode, HttpService, ReplicatedStorage:GetAttribute("Leaderboard_Level") or "[]")
 	list = ok and type(list) == "table" and list or {}
 	for place = 1, 3 do
 		task.spawn(placeStatue, place, list[place])
@@ -124,7 +137,7 @@ function ZentraleService.Init()
 			return
 		end
 		updatePodium()
-		ReplicatedStorage:GetAttributeChangedSignal("Leaderboard_Elo"):Connect(updatePodium)
+		ReplicatedStorage:GetAttributeChangedSignal("Leaderboard_Level"):Connect(updatePodium)
 	end)
 end
 

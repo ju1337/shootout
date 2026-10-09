@@ -302,7 +302,7 @@ class CampPhoenix:
                        props={"Shape": "Cylinder", "CanCollide": False})
             pb.add("Decor", "PodiumGlow", (0.1, 5.6, 5.6), (0, 0.65, 0), gold, "Neon", angles=(0, 0, 90),
                    props={"Shape": "Cylinder", "Transparency": 0.7, "CanCollide": False})
-            pb.floor_text("PodiumTitle", (14, 0.1, 2.2), (0, 0.3, -4.8), "SIEGERPODEST · TOP 3 NACH ELO", gold, yaw=180)
+            pb.floor_text("PodiumTitle", (14, 0.1, 2.2), (0, 0.3, -4.8), "SIEGERPODEST · TOP 3 NACH LEVEL", gold, yaw=180)
         self._feature(build, x, z, yaw)
 
     def cafe_terrace(self):
@@ -503,7 +503,7 @@ class CampPhoenix:
         self.house_door(boxb, w, fz, n, step, frame_c, trim, 0 if n % 2 else -step / 2, back=True)
         # Seitenwand an einer Hauptstraße: Fenster
         if sides:
-            self.side_windows(box, sides, w, d, floors, gf, fh, frame_c, shutter_c, trim, photo=(special == "rathaus"))
+            self.side_windows(box, sides, w, d, floors, gf, fh, frame_c, shutter_c, trim)
         # Dach: zwei Flächen, Giebel an den Seiten, First, Schornstein
         rise = d * 0.34
         slope = math.degrees(math.atan2(rise, d / 2))
@@ -553,20 +553,14 @@ class CampPhoenix:
                     box("Decor", "Board", (3.4, 0.7, 0.2), (c, 3.7 + j * 1.3, fz - 0.32), (128, 102, 72), "WoodPlanks",
                         extra=(0, 0, rng.uniform(-10, 10)))
 
-    def side_windows(self, box, side, w, d, floors, gf, fh, frame_c, shutter_c, trim, photo=False):
-        """Fenster in der Seitenwand side (±1 = lokal ±X), alle Stockwerke; beim Rathaus hängt unten die Bildtafel
-        (PhotoBoard, Gruppe Zentrale) statt der Erdgeschoss-Fenster."""
+    def side_windows(self, box, side, w, d, floors, gf, fh, frame_c, shutter_c, trim):
+        """Fenster in der Seitenwand side (±1 = lokal ±X), alle Stockwerke."""
         sx = side * (w / 2)
         m = max(1, int((d - 2) // 5))
         zstep = d / m
         rot = (0, -90 * side, 0)
         for k in range(floors):
             y0 = gf + (k - 1) * fh if k else 0
-            if k == 0 and photo:
-                box("Decor", "PhotoBoardFrame", (8.8, 6.8, 0.4), (sx + side * 0.2, 5.6, 0), (84, 62, 46), "WoodPlanks", extra=rot)
-                box("Zentrale", "PhotoBoard", (8, 6, 0.4), (sx + side * 0.45, 5.6, 0), (22, 25, 30), "SmoothPlastic", extra=rot)
-                box("Decor", "PhotoBoardRoof", (9.6, 0.4, 1.4), (sx + side * 0.7, 9.4, 0), (112, 60, 48), "RoofShingles", extra=rot)
-                continue
             for i in range(m):
                 c = -d / 2 + zstep * (i + 0.5)
                 if k == 0:
@@ -632,10 +626,10 @@ class CampPhoenix:
                     "Fabric", extra=(-14, 0, 0))
         elif special == "rathaus":
             self.showcase("MissionBoard", 10, 5.6, *self._xz(f, 0, d / 2 - 1.0), 5.6, yaw)
-            self.b.sign2("NoticeTitle", (10, 1.3, 0.25), f(0, 9.3, d / 2 - 0.95), "LAGEBERICHT", "AUFGABEN · LAGE · BLUTMOND",
+            self.b.sign2("NoticeTitle", (10, 1.3, 0.25), f(0, 9.3, d / 2 - 0.95), "LAGEBERICHT", "SPIELER · BLUTMOND · STURMNACHT",
                          (54, 48, 40), (226, 190, 120), (200, 190, 170), angles=(0, yaw, 0))
-            boards = (("Elo", "ELO", (200, 166, 92), -1, -2.5), ("Kills", "KILLS", (206, 70, 58), -1, 4.5),
-                      ("Level", "LEVEL", (96, 164, 214), 1, -2.5), ("Wins", "SIEGE", (112, 178, 112), 1, 4.5))
+            boards = (("Zombies", "ZOMBIES", (200, 166, 92), -1, -2.5), ("Kills", "KILLS", (206, 70, 58), -1, 4.5),
+                      ("Level", "LEVEL", (96, 164, 214), 1, -2.5), ("Missions", "AUFTRÄGE", (112, 178, 112), 1, 4.5))
             for board, title, bcolor, side, lz in boards:
                 sx = side * (w / 2 - 1.1)
                 self.showcase("Leaderboard_" + board, 6, 6, *self._xz(f, sx, lz), 5.4, yaw + 90 * side)

@@ -147,7 +147,7 @@ ExtinctionConfig.Stands = {
 -- ---------- Rote-Zone-Punkte (RZ, RedPointsService) und der Schieber ----------
 -- RZ gibt es nur in der roten Zone: Spieler-Kill PlayerKill, Bot-Kill BotKill, Zombie-Kill ZombieKill; zieht die Zone weiter,
 -- bekommen die besten drei der Rangliste Rank[1..3]. Gespeichert im Profil (RedPoints), bleiben beim Tod.
--- Der Schieber (Stand_Red, schwarzer Transporter in der Weststraße des Camps) verkauft nur gegen RZ (Stands.Stand_Red.Prices).
+-- Der Schieber (Stand_Red, schwarzer Transporter in der Marktgasse im Nordosten des Camps) verkauft nur gegen RZ (Stands.Stand_Red.Prices).
 ExtinctionConfig.RedPoints = {
 	PlayerKill = 2,
 	BotKill = 2,

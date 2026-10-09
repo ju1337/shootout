@@ -1,6 +1,7 @@
 -- RewardService (ModuleScript, nur Server)
 -- Vergibt die Belohnungen aus RewardConfig:
---   Spielerlevel-Meilensteine, Prestige-Skins, Rang-Meilensteine pro Saison, Waffen-Meisterschaft, Titel.
+--   Spielerlevel-Meilensteine, Prestige-Skins, Rang-Meilensteine pro Saison (nur mit Arcade), Waffen-Meisterschaft,
+--   Titel.
 --   Die Kill-Boni (Killserien, Rache, Serie beendet) vergibt KillService zusammen mit den Medaillen.
 -- Prüft automatisch, sobald sich Level (AccountXP), Prestige oder ELO eines Spielers ändern.
 -- Abgeholte Meilensteine stehen im Profil (profile.Rewards.Claimed) und als JSON im Spieler-Attribut
@@ -20,6 +21,7 @@ local TitleConfig = require(Shared.TitleConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
+local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local ProgressService = require(ServerShared.ProgressService)
@@ -104,20 +106,23 @@ function RewardService.Check(player)
 			grant(player, "PRESTIGE " .. milestone.Prestige, milestone, "Prestige" .. milestone.Prestige)
 		end
 	end
-	-- Rang (erster Aufstieg pro Saison)
-	local elo = ProgressService.GetElo(player)
-	for _, milestone in RewardConfig.Rank do
-		local key = "S" .. RankConfig.CurrentSeason() .. "_" .. milestone.Tier
-		local tierElo
-		for _, tier in RankConfig.Tiers do
-			if tier.Name == milestone.Tier then
-				tierElo = tier.Elo
+	-- Rang (erster Aufstieg pro Saison): nur mit Arcade (Ranked), sonst bekäme jeder mit der Start-ELO jede Saison
+	-- "RANG SILBER ERREICHT", ohne gespielt zu haben
+	if Modes.ArcadeEnabled then
+		local elo = ProgressService.GetElo(player)
+		for _, milestone in RewardConfig.Rank do
+			local key = "S" .. RankConfig.CurrentSeason() .. "_" .. milestone.Tier
+			local tierElo
+			for _, tier in RankConfig.Tiers do
+				if tier.Name == milestone.Tier then
+					tierElo = tier.Elo
+				end
 			end
-		end
-		if tierElo and elo >= tierElo and not claimed[key] then
-			claimed[key] = true
-			changed = true
-			grant(player, "RANG " .. string.upper(milestone.Tier) .. " ERREICHT", milestone)
+			if tierElo and elo >= tierElo and not claimed[key] then
+				claimed[key] = true
+				changed = true
+				grant(player, "RANG " .. string.upper(milestone.Tier) .. " ERREICHT", milestone)
+			end
 		end
 	end
 	if changed then

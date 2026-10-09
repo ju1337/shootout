@@ -1,7 +1,8 @@
 -- ExtLevelConfig (ModuleScript)
--- EP der offenen Welt, gesammelt mit Zombies, Spielern, Bots, Nestern, Lagern, Überlebenden, Lootdrops, dem Konvoi
--- und Aufträgen (ExtLevelService). Sie zählen fürs Spielerlevel (LevelConfig) – ein eigenes Extinction-Level gibt es
--- nicht mehr. Die Statistik "ExtXP" (Profil Stats) zählt weiter mit (Erfolg Ödland-Veteran); die alte Level-Kurve
+-- EP der offenen Welt, gesammelt mit Nestern, Lagern, Überlebenden, Lootdrops, dem Konvoi und Aufträgen
+-- (ExtLevelService.Add). Sie zählen fürs Spielerlevel (LevelConfig) – ein eigenes Extinction-Level gibt es nicht mehr.
+-- Kills (Zombie, PlayerKill, BotKill) zählen nur in der Statistik (ExtLevelService.Count); ihre Level-XP kommen
+-- einmal über ProgressService.AddXP. Die Statistik "ExtXP" (Profil Stats) zählt weiter mit (Erfolg Ödland-Veteran); die alte Level-Kurve
 -- (XPForLevel, TotalFor, FromXP) braucht ProgressService noch für die einmalige Übernahme alter Spielstände.
 -- Ab bestimmten Spielerleveln gibt es Titel der offenen Welt (über dem Kopf, Fenster TITEL), siehe TitleConfig.
 

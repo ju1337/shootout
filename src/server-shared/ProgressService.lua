@@ -455,7 +455,7 @@ end
 -- Sammelt XP und Münzen nach Grund (Kill, Matchsieg, Killserie, ...) seit Matchbeginn bzw. seit der letzten
 -- Zusammenfassung, dazu Level, Prestige und ELO vom Anfang. Daraus baut TakeLedger die Belohnungs-Übersicht
 -- am Matchende. Beim Moduswechsel fängt sie neu an (entsteht beim ersten Gewinn, also vor der Änderung).
-local ledgers = {} -- [Player] = { Lines, Order, XP, Coins, Items, AccountXP, Prestige, Elo, AgentOfWeek }
+local ledgers = {} -- [Player] = { Lines, Order, XP, Coins, Items, AccountXP, Prestige, Elo, DoubleXP }
 
 local function ledgerOf(player)
 	local profile = profiles[player]
@@ -477,10 +477,7 @@ local function record(player, reason, xp, coins)
 		return
 	end
 	reason = tostring(reason or "Bonus")
-	-- "Kill · Agent der Woche" / "Kill · Doppel-XP" zählt als "Kill", der Bonus steht einmal unten in der Übersicht
-	if string.find(reason, " · Agent der Woche", 1, true) then
-		ledger.AgentOfWeek = true
-	end
+	-- "Kill · Doppel-XP" zählt als "Kill", der Bonus steht einmal unten in der Übersicht
 	if string.find(reason, " · Doppel-XP", 1, true) then
 		ledger.DoubleXP = true
 	end
@@ -510,7 +507,7 @@ function ProgressService.LedgerItem(player, name, rarity)
 end
 
 -- Übersicht für die Match-Zusammenfassung holen und neu anfangen:
--- { Lines = { { Name, Count, XP, Coins } }, XP, Coins, Items, AgentOfWeek,
+-- { Lines = { { Name, Count, XP, Coins } }, XP, Coins, Items, DoubleXP,
 --   Level = { Before, BeforeProgress, After, AfterProgress, PrestigeBefore, Prestige },
 --   Elo = { Before, After, Matches } }
 function ProgressService.TakeLedger(player)
@@ -531,7 +528,6 @@ function ProgressService.TakeLedger(player)
 		XP = ledger.XP,
 		Coins = ledger.Coins,
 		Items = ledger.Items,
-		AgentOfWeek = ledger.AgentOfWeek == true,
 		DoubleXP = ledger.DoubleXP == true,
 		Level = {
 			Before = beforeLevel,
@@ -1142,11 +1138,6 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 		return 0
 	end
 	amount = math.floor(amount * GameSettings.Get("XPMultiplier"))
-	-- Agent der Woche: +50 % XP
-	if reason ~= "Admin" and agentId == AgentConfig.AgentOfWeek().Id then
-		amount = math.floor(amount * AgentConfig.AgentOfWeekXP)
-		reason = tostring(reason) .. " · Agent der Woche"
-	end
 	-- Doppel-XP (Login-Kalender, Glücksrad, Gamepass)
 	if reason ~= "Admin" and ((profile.XPBoostUntil or 0) > os.time() or RobuxConfig.Has(player, "DoubleXP")) then
 		amount *= 2
@@ -1186,16 +1177,26 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 	return amount
 end
 
--- Nur Spielerlevel-XP (ohne Agent, Münzen und Battle Pass), z.B. die EP der offenen Welt (ExtLevelService)
+-- Nur Spielerlevel-XP (ohne Agent, Münzen und Battle Pass), z.B. die EP der offenen Welt (ExtLevelService).
+-- Mit XP-Faktor (GameSettings) und Doppel-XP (Login-Kalender, Glücksrad, Gamepass) wie AddXP.
+-- Gibt die vergebenen XP zurück und ob sie verdoppelt wurden.
 function ProgressService.AddAccountXP(player, amount)
 	local profile = profiles[player]
 	amount = math.floor(tonumber(amount) or 0)
 	if not profile or amount <= 0 then
-		return 0
+		return 0, false
+	end
+	amount = math.floor(amount * GameSettings.Get("XPMultiplier"))
+	local doubled = (profile.XPBoostUntil or 0) > os.time() or RobuxConfig.Has(player, "DoubleXP")
+	if doubled then
+		amount *= 2
+	end
+	if amount <= 0 then
+		return 0, false
 	end
 	profile.AccountXP = math.min((profile.AccountXP or 0) + amount, LevelConfig.MaxXP)
 	player:SetAttribute("AccountXP", profile.AccountXP) -- (reicht für Anzeige und Belohnungen, ohne ganzen Sync)
-	return amount
+	return amount, doubled
 end
 
 -- Prestige: nur auf Max-Level. Level zurück auf 1, Prestige +1, Münzen als Belohnung.

@@ -42,7 +42,7 @@ AchievementConfig.List = {
 	{ Id = "Hideout", Name = "Bauherr", Text = "Module im Versteck ausbauen", Stat = "ExtHideout", Icon = "House",
 		Goals = { 1, 6, 12 }, Coins = { 200, 1000, 3000 } },
 	{ Id = "Veteran", Name = "Ödland-Veteran", Text = "In der offenen Welt XP sammeln", Stat = ExtLevelConfig.Stat,
-		Icon = "Star", Goals = { ExtLevelConfig.TotalFor(10), ExtLevelConfig.TotalFor(25), ExtLevelConfig.TotalFor(50) },
+		Icon = "Star", Goals = { 10000, 50000, 150000 },
 		Coins = { 500, 2000, 6000 } },
 }
 

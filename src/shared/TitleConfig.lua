@@ -3,6 +3,8 @@
 -- (neben dem Rang) und auf der Spielerkarte. Ausgewählt wird im Fenster TITEL.
 -- Bedingungen: Stat = Statistik-Schlüssel (Stats), Prestige, Level (Spielerlevel), BestElo (höchste ELO je),
 -- Mastery = Anzahl Waffen mit Tarnung dieser Stufe. Goal = nötiger Wert.
+-- Arcade = true: nur in Arcade-Modi zu holen (Wiederbeleben, Herrschaft, Siege, Wochen-Boni, Ranked); das Fenster TITEL
+-- zeigt sie ohne Modes.ArcadeEnabled nur, wenn schon erreicht oder ausgewählt. Sie bleiben in der Liste (Get, Prüfung).
 -- Server prüft beim Auswählen und meldet neue Titel (RewardService). Spieler-Attribut "Title" = Id.
 
 local HttpService = game:GetService("HttpService")
@@ -39,13 +41,13 @@ TitleConfig.List = {
 		Color = Color3.fromRGB(206, 70, 58) },
 	{ Id = "Spielverderber", Name = "Spielverderber", Text = "25 Killserien beendet", Stat = "Shutdowns", Goal = 25,
 		Color = Color3.fromRGB(190, 110, 230) },
-	{ Id = "Sanitaeter", Name = "Sanitäter", Text = "50 Wiederbelebungen", Stat = "Revives", Goal = 50,
+	{ Id = "Sanitaeter", Name = "Sanitäter", Text = "50 Wiederbelebungen", Stat = "Revives", Goal = 50, Arcade = true,
 		Color = Color3.fromRGB(80, 210, 130) },
-	{ Id = "Eroberer", Name = "Eroberer", Text = "100 Punkte erobert (Herrschaft)", Stat = "Captures", Goal = 100,
+	{ Id = "Eroberer", Name = "Eroberer", Text = "100 Punkte erobert (Herrschaft)", Stat = "Captures", Goal = 100, Arcade = true,
 		Color = Color3.fromRGB(96, 164, 214) },
-	{ Id = "Champion", Name = "Champion", Text = "100 Siege", Stat = "Wins", Goal = 100,
+	{ Id = "Champion", Name = "Champion", Text = "100 Siege", Stat = "Wins", Goal = 100, Arcade = true,
 		Color = Color3.fromRGB(212, 170, 80) },
-	{ Id = "Wochenkrieger", Name = "Wochenkrieger", Text = "5 Wochen-Boni abgeholt", Stat = "WeeklyBonus", Goal = 5,
+	{ Id = "Wochenkrieger", Name = "Wochenkrieger", Text = "5 Wochen-Boni abgeholt", Stat = "WeeklyBonus", Goal = 5, Arcade = true,
 		Color = Color3.fromRGB(240, 210, 120) },
 	{ Id = "Aufsteiger", Name = "Aufsteiger", Text = "Spielerlevel 50", Level = 50, Goal = 50,
 		Color = Color3.fromRGB(96, 164, 214) },
@@ -53,9 +55,9 @@ TitleConfig.List = {
 		Color = LevelConfig.PrestigeColors[1] },
 	{ Id = "Unsterblich", Name = "Unsterblich", Text = "Prestige 10", Prestige = true, Goal = 10,
 		Color = Color3.fromRGB(255, 255, 255) },
-	{ Id = "Diamantklasse", Name = "Diamantklasse", Text = "Rang Diamant erreicht", BestElo = true,
+	{ Id = "Diamantklasse", Name = "Diamantklasse", Text = "Rang Diamant erreicht", BestElo = true, Arcade = true,
 		Goal = tierElo("Diamant"), Color = RankConfig.Tiers[5].Color },
-	{ Id = "Meister", Name = "Großmeister", Text = "Rang Meister erreicht", BestElo = true,
+	{ Id = "Meister", Name = "Großmeister", Text = "Rang Meister erreicht", BestElo = true, Arcade = true,
 		Goal = tierElo("Meister"), Color = RankConfig.Tiers[6].Color },
 	{ Id = "Waffenmeister", Name = "Waffenmeister", Text = "Dunkle Materie auf einer Waffe", Mastery = "DunkleMaterie",
 		Goal = 1, Color = Color3.fromRGB(150, 70, 230) },

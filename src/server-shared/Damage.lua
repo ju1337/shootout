@@ -2,7 +2,7 @@
 -- Zentrale Stelle für Schaden an Spielern und Bots (Waffen der Spieler und der Bots).
 -- Achtet auf Schutzschilde, die Safe Zone (Attribut "SafeZone"), Rüstung (Attribut "Armor"), Helm/Weste gepanzerter Zombies
 -- (ZHelmet / ZVest) und schlägt im Drop-Modus
--- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge").
+-- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge", nicht in der offenen Welt).
 
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
+local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ExtinctionConfig = require(ReplicatedStorage:WaitForChild("Shared").ExtinctionConfig)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
@@ -34,11 +35,14 @@ function Damage.Contributors(model)
 	return contributors[model] or {}
 end
 
--- Ultimate des angreifenden Spielers aufladen (Schaden, Kill/Niederschlag)
+-- Ultimate des angreifenden Spielers aufladen (Schaden, Kill/Niederschlag). Nicht in der offenen Welt (keine Ultimate).
 local function chargeUltimate(attacker, model, dealt, finished)
 	local player = attacker and attacker.Player
 	if not player or dealt <= 0 or player.Character == model then
 		return -- kein Aufladen an sich selbst (z.B. eigene Granate)
+	end
+	if Modes.IsSurvival(player:GetAttribute("Mode")) then
+		return
 	end
 	local ult = AgentConfig.Ultimate
 	local gain = dealt * ult.ChargePerDamage + (finished and ult.ChargePerKill or 0)

@@ -1932,7 +1932,7 @@ function Guide.Topics()
 			bullet .. "Your <b>spawn point</b> is the last safe zone you entered.",
 			bullet .. "If you die outside, your <b>bag drops</b> where you died – it is marked on your map. Your container and "
 				.. "stash are always safe.",
-			bullet .. "Grab the free <b>STARTER KIT</b> at the kit vendor right next to the spawn.",
+			bullet .. "Grab the free <b>STARTER KIT</b> at the <b>KIT COUNTER</b> on the north street of the camp.",
 			bullet .. "Once a day a <b>daily crate</b> lands in your stash.",
 		} },
 		{ Title = "INVENTORY", Lines = {
@@ -1951,9 +1951,9 @@ function Guide.Topics()
 				.. math.floor(E.SellFactor * 100) .. " % of its price.",
 			bullet .. "<b>Player market</b> (MARKET tab, only in the safe zone): sell your items to other players. Fee "
 				.. math.floor(E.Market.FeeRate * 100) .. " %.",
-			bullet .. "<b>The Fixer</b> (black van in the west street of the camp) sells attachments, LMG, DMR, heavy vests and "
+			bullet .. "<b>The Fixer</b> (black van in the market alley in the northeast of the camp) sells attachments, LMG, DMR, heavy vests and "
 				.. "more for <b>red zone points (RZ)</b>.",
-			bullet .. "<b>Kits</b> at the kit vendor next to the spawn – every kit has its own cooldown.",
+			bullet .. "<b>Kits</b> at the kit vendor on the north street of the camp – every kit has its own cooldown.",
 			bullet .. "The <b>LOOT</b> tab shows what you can get from drops and event crates.",
 		} },
 		{ Title = "ZOMBIES", Lines = {
@@ -2864,6 +2864,16 @@ openMenuTab = function(id)
 	elseif menuTab[id] then
 		openLobbyTab(id)
 	end
+end
+
+-- Reiter des EXTINCTION-Menüs von außen öffnen (z.B. "Shop" an der Theke im Camp, HubLineup). false = geht noch
+-- nicht (Init noch nicht gelaufen, kein Fenster-Gui), dann nimmt der Aufrufer etwas anderes
+function ExtinctionClient.OpenTab(id: string): boolean
+	if not windowGui or not openMenuTab then
+		return false
+	end
+	openMenuTab(id)
+	return true
 end
 
 -- Controller L1/R1: Reiter weiterblättern
