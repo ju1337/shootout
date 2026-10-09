@@ -32,6 +32,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
+local TopStack = require(Shared.TopStack)
 local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
@@ -539,7 +540,8 @@ end
 local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, hints
 local levelText, levelFill, xpPopup, xpPopupId
 local shieldPill, shieldText
-local markerHolder, vignette, placeLabel, placeSub
+local markerHolder, vignette
+local placeUi = {} -- Banner beim Betreten eines Ortes: Banner (Rahmen), Title, Sub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
@@ -613,12 +615,21 @@ local function buildHud()
 	end
 
 	-- Banner beim Betreten eines Ortes (blendet nach einigen Sekunden aus)
-	placeSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.2, 0), Size = UDim2.fromOffset(600, 18), Text = "",
-		TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, root)
-	placeLabel = label({ Name = "PlaceBanner", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0.2, 18),
+	-- (alles oben in der Mitte liegt per TopStack untereinander: Zone, Spritze, Spawnschutz, Tutorial, Ort, Banner)
+	local placeBanner = make("Frame", { Name = "PlaceBanner", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 180),
+		Size = UDim2.fromOffset(700, 62), BackgroundTransparency = 1, Visible = false }, root)
+	local placeSub = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.fromOffset(600, 18), Text = "",
+		TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, placeBanner)
+	local placeLabel = label({ Name = "PlaceTitle", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 18),
 		Size = UDim2.fromOffset(700, 44), Text = "", TextSize = 36, Font = F.Display, TextColor3 = C.Text,
-		TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, root)
+		TextXAlignment = Enum.TextXAlignment.Center }, placeBanner)
 	UITheme.Outline(placeLabel)
+	TopStack.Register(zonePill, { Order = TopStack.Order.Zone })
+	TopStack.Register(shieldPill, { Order = TopStack.Order.Shield })
+	placeUi.Banner, placeUi.Title, placeUi.Sub = placeBanner, placeLabel, placeSub
+	TopStack.Register(placeBanner, { Order = TopStack.Order.Place, MinY = 0.2, Height = function()
+		return 62
+	end })
 
 	-- Marker unter der Anzeige: rote Zonen und Lootdrops mit Pfeil und Entfernung
 	markerHolder = make("Frame", { Name = "Markers", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 66),
@@ -934,7 +945,7 @@ local function loadPlaces(map)
 end
 
 local function updatePlace()
-	if not placeLabel then
+	if not placeUi.Banner then
 		return
 	end
 	local maps = workspace:FindFirstChild("Maps")
@@ -957,18 +968,18 @@ local function updatePlace()
 	if here ~= currentPlace then
 		currentPlace = here
 		if here then
-			placeLabel.Text = upper(here.Title)
-			placeSub.Text = "ORT"
+			placeUi.Title.Text = upper(here.Title)
+			placeUi.Sub.Text = "ORT"
 			placeShownAt = os.clock()
 		end
 	end
 	local age = os.clock() - placeShownAt
 	local visible = age < 4.2
-	placeLabel.Visible, placeSub.Visible = visible, visible
+	placeUi.Banner.Visible = visible
 	if visible then
 		local alpha = age < 0.5 and (1 - age / 0.5) or (age > 3.2 and (age - 3.2) or 0)
 		alpha = math.clamp(alpha, 0, 1)
-		placeLabel.TextTransparency, placeSub.TextTransparency = alpha, alpha
+		placeUi.Title.TextTransparency, placeUi.Sub.TextTransparency = alpha, alpha
 	end
 end
 

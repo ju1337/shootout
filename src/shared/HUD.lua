@@ -276,7 +276,38 @@ function HUD.Init(weaponClient)
 		reloadHint.Text = prefix .. (mag == 0 and "NACHLADEN" or "WENIG MUNITION")
 	end)
 
-	-- XP zeigt CombatHUD zusammen mit der Kill-Meldung unter dem Fadenkreuz
+	-- XP rechts neben dem Fadenkreuz wie die Punkte bei CoD ("+100 XP · KILL"). Medaillen-XP kommen leise
+	-- (quiet), die zeigt die Medaille selbst. Level-Aufstiege meldet Notifications.
+	local xpText = label({
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0.5, 46, 0.5, 0),
+		Size = UDim2.new(0, 360, 0, 26),
+		Text = "",
+		TextSize = 20,
+		Font = Enum.Font.BuilderSansExtraBold,
+		TextColor3 = UITheme.Colors.Primary,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Visible = false,
+	}, gui)
+	local xpScale = make("UIScale", {}, xpText)
+	local xpId = 0
+	Remotes.XPGain.OnClientEvent:Connect(function(amount, reason, _, _, coins, quiet)
+		if quiet then
+			return
+		end
+		xpId += 1
+		local myId = xpId
+		xpText.Text = "+" .. amount .. " XP" .. ((coins or 0) > 0 and ("  +" .. coins .. " MÜNZEN") or "") .. "  ·  "
+			.. UITheme.Upper(tostring(reason))
+		xpText.Visible = true
+		xpScale.Scale = 1.2
+		TweenService:Create(xpScale, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Scale = 1 }):Play()
+		task.delay(2, function()
+			if xpId == myId then
+				xpText.Visible = false
+			end
+		end)
+	end)
 
 	-- Geld (nur während eines Drop-Matches)
 	local function updateMoney()
