@@ -5,6 +5,7 @@
 --   * Anzeige oben in der Mitte: IM KAMPF · SAFE ZONE GESPERRT mit Countdown
 -- Nach ExtinctionConfig.CombatTime Sekunden ohne neuen Treffer verschwindet beides.
 -- Dieselbe Anzeige zeigt in Blau den Spawnschutz nach dem Verlassen einer Safe Zone (Attribut ProtectedUntil).
+-- Sie sieht aus wie die Zonen-Anzeige darüber und reiht sich per TopStack zwischen Zone und Tutorial / Ortsname / Banner ein.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,6 +13,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UITheme = require(Shared.UITheme)
+local TopStack = require(Shared.TopStack)
 
 local player = Players.LocalPlayer
 
@@ -80,6 +82,8 @@ local function clearWalls()
 	table.clear(walls)
 end
 
+local BLUE = Color3.fromRGB(110, 180, 255)
+
 local function buildGui()
 	gui = Instance.new("ScreenGui")
 	gui.Name = "CombatBarrier"
@@ -88,24 +92,30 @@ local function buildGui()
 	gui.DisplayOrder = 8
 	gui.Enabled = false
 	gui.Parent = player:WaitForChild("PlayerGui")
-	label = UITheme.Label({ Name = "Combat", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 132),
-		Size = UDim2.fromOffset(0, 34), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 18,
-		Font = UITheme.Fonts.Display, TextColor3 = Color3.new(1, 1, 1), BackgroundColor3 = Color3.fromRGB(150, 30, 34),
-		BackgroundTransparency = 0.15, TextXAlignment = Enum.TextXAlignment.Center }, gui)
-	UITheme.Corner(label, 8)
+	local root = UITheme.ScaledRoot(gui)
+	-- wie die Zonen-Anzeige (ExtinctionClient): dunkle Fläche, farbiger Rand, Schrift in derselben Farbe
+	label = UITheme.Label({ Name = "Combat", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 66),
+		Size = UDim2.fromOffset(0, 30), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 17,
+		Font = UITheme.Fonts.Display, TextColor3 = RED, BackgroundColor3 = UITheme.Colors.Panel,
+		BackgroundTransparency = 0.25, TextXAlignment = Enum.TextXAlignment.Center }, root)
+	UITheme.Corner(label, UITheme.Radius.Small)
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 16)
-	pad.PaddingRight = UDim.new(0, 16)
+	pad.PaddingLeft = UDim.new(0, 18)
+	pad.PaddingRight = UDim.new(0, 18)
 	pad.Parent = label
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = RED
-	stroke.Thickness = 1.5
+	stroke.Thickness = 1
+	stroke.Transparency = 0.3
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = label
+	TopStack.Register(label, { Order = TopStack.Order.Status, Height = function()
+		return 30
+	end })
 end
 
-local function setLook(color, back)
-	label.BackgroundColor3 = back
+local function setLook(color)
+	label.TextColor3 = color
 	label:FindFirstChildOfClass("UIStroke").Color = color
 end
 
@@ -115,7 +125,7 @@ local function update()
 	local protected = not active and protectedLeft > 0 and player:GetAttribute("Mode") == "Extinction"
 	gui.Enabled = active or protected
 	if protected then
-		setLook(Color3.fromRGB(90, 170, 255), Color3.fromRGB(26, 70, 130))
+		setLook(BLUE)
 		label.Text = "🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  " .. math.ceil(protectedLeft) .. " s"
 	end
 	if not active then
@@ -124,7 +134,7 @@ local function update()
 		end
 		return
 	end
-	setLook(RED, Color3.fromRGB(150, 30, 34))
+	setLook(RED)
 	local left = math.ceil((player:GetAttribute("CombatUntil") or 0) - workspace:GetServerTimeNow())
 	label.Text = "⚔ IM KAMPF  ·  SAFE ZONE GESPERRT  ·  " .. left .. " s"
 	-- Wände um Safe Zones in der Nähe (Streaming: weit entfernte sind evtl. gar nicht geladen)

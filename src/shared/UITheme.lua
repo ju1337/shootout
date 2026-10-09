@@ -414,13 +414,18 @@ end
 
 -- Vollbild-Ebene, die mit der Bildschirmgröße skaliert (HUD auf Handy kleiner, auf PC 1:1).
 -- Kinder positioniert man wie gewohnt an den Rändern. Gibt den Frame zurück.
+-- Maßstab einer solchen Ebene bei dieser Bildschirmgröße (auch für Rechnungen in ihren Einheiten, z.B. TopStack)
+function UITheme.RootScale(viewport, designWidth, designHeight, minScale)
+	return math.clamp(math.min(viewport.X / (designWidth or 1600), viewport.Y / (designHeight or 900)), minScale or 0.45, 1)
+end
+
 function UITheme.ScaledRoot(screenGui, designWidth, designHeight, minScale)
 	designWidth, designHeight = designWidth or 1600, designHeight or 900
 	local root = make("Frame", { Name = "Root", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0) }, screenGui)
 	local scale = make("UIScale", {}, root)
 	local function update()
 		local viewport = workspace.CurrentCamera.ViewportSize
-		local s = math.clamp(math.min(viewport.X / designWidth, viewport.Y / designHeight), minScale or 0.45, 1)
+		local s = UITheme.RootScale(viewport, designWidth, designHeight, minScale)
 		scale.Scale = s
 		-- Größe ausgleichen, damit die Ebene nach dem Skalieren wieder den ganzen Bildschirm füllt
 		root.Size = UDim2.new(1 / s, 0, 1 / s, 0)

@@ -18,6 +18,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
+local TopStack = require(Shared.TopStack)
 local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local KitConfig = require(Shared.KitConfig)
@@ -374,6 +375,8 @@ function ExtTutorial.Init(options: { WindowKind: (() -> string?)? }?)
 	panel = UITheme.HudPanel({ Name = "Panel", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 120),
 		Size = UDim2.fromOffset(520, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 0.2, Visible = false },
 		canvas)
+	-- unter Zone und Spawnschutz, über Ortsname und Banner (TopStack: nichts liegt übereinander)
+	TopStack.Register(panel, { Order = TopStack.Order.Tutorial })
 	make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 14), PaddingLeft = UDim.new(0, 16),
 		PaddingRight = UDim.new(0, 16) }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, panel)

@@ -33,6 +33,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local InputActions = require(Shared.InputActions)
+local TopStack = require(Shared.TopStack)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -61,7 +62,7 @@ local MEDAL_TOP = 170       -- Oberkante der Medaille unter der Bildschirmmitte:
                             -- über den Fähigkeiten-Karten unten in der Mitte (AbilityClient)
 local MEDAL_TOP_TOUCH = 90  -- Touch: unten in der Mitte liegen Munition, Geld und Fähigkeiten, darum höher
 local MEDAL_PAD = 70        -- Rand in der CanvasGroup, damit das große Abzeichen beim Einfliegen nicht abgeschnitten wird
-local BANNER_Y = 0.3        -- Mitte des Banners (Anteil der Bildschirmhöhe): zwischen Ziel-Meldungen und Countdown
+local BANNER_Y = 0.3        -- Mitte des Banners (Anteil der Bildschirmhöhe), weiter unten wenn oben belegt (TopStack)
 local OBJECTIVE_Y = 150     -- Ziel-Meldungen unter Punktestand und Zustandsschild
 local MEDAL_MIN = 0.7       -- Mindest-Standzeit, wenn schon die nächste Meldung wartet
 local BANNER_MIN = 1.6
@@ -584,6 +585,11 @@ local function buildBanner(root)
 		TextColor3 = C.Text }, group)
 
 	local fade = fader(group)
+	-- oben in der Mitte unter Zone, Spawnschutz und Ortsname einreihen (Höhe: Zielhöhe, das Band öffnet sich erst)
+	local stackHeight = 0
+	TopStack.Register(group, { Order = TopStack.Order.Banner, MinY = BANNER_Y, Height = function()
+		return stackHeight
+	end })
 
 	local function show(data)
 		local color = STYLES[data.Style] or C.Primary
@@ -602,6 +608,7 @@ local function buildBanner(root)
 		sub.Visible = hasSub
 		-- von oben nach unten anordnen (Überschrift, Titel, Zeile darunter), alles um die Mitte des Bands
 		local height = 12 + (hasCaption and 20 or 0) + titleSize + 8 + (hasSub and 20 or 0) + 14
+		stackHeight = height
 		local y = -height / 2 + 12
 		if hasCaption then
 			caption.Position = UDim2.new(0.5, 0, 0.5, y + 9)
