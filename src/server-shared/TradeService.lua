@@ -18,6 +18,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local DiscordLog = require(game:GetService("ServerStorage"):WaitForChild("ServerShared").DiscordLog)
 local Cosmetics = require(Shared.Cosmetics)
 local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
@@ -115,6 +116,19 @@ local function execute(trade)
 	end
 	trades[a], trades[b] = nil, nil
 	trade.Closed = true
+	local function describe(offer)
+		local parts = {}
+		for itemId, count in offer.Items or {} do
+			table.insert(parts, itemId .. (count > 1 and (" ×" .. count) or ""))
+		end
+		table.sort(parts)
+		if (offer.Rap or 0) > 0 then
+			table.insert(parts, offer.Rap .. " RAP")
+		end
+		return #parts > 0 and table.concat(parts, ", ") or "nichts"
+	end
+	DiscordLog.Log("Economy", "Tausch", DiscordLog.Who(a) .. " ⇄ " .. DiscordLog.Who(b), {
+		{ a.Name .. " gibt", describe(trade.Offers[a]) }, { b.Name .. " gibt", describe(trade.Offers[b]) } })
 	EconomyService.ClearKey(a, TradeService.Key)
 	EconomyService.ClearKey(b, TradeService.Key)
 	for _, p in { a, b } do

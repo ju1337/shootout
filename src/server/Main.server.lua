@@ -47,6 +47,7 @@ local InventoryService = require(ServerShared.InventoryService)
 local KitService = require(ServerShared.KitService)
 local LootService = require(ServerShared.LootService)
 local Telemetry = require(ServerShared.Telemetry)
+local DiscordLog = require(ServerShared.DiscordLog)
 local BanService = require(ServerShared.BanService)
 local Badges = require(ServerShared.Badges)
 local InviteService = require(ServerShared.InviteService)
@@ -58,6 +59,7 @@ local MatchmakingService = require(script.Parent.MatchmakingService)
 -- Charaktere spawnen nur, wenn ein Modus es sagt
 Players.CharacterAutoLoads = false
 
+start("DiscordLog.Init", DiscordLog.Init) -- Discord-Logs (Secret "DiscordLog"), fängt ab hier Fehler/Warnungen
 start("BanService.Init", BanService.Init) -- zuerst: gesperrte Spieler sofort rauswerfen
 start("Telemetry.Init", Telemetry.Init) -- Spielanalyse (AnalyticsService)
 start("ProgressService.Init", ProgressService.Init)

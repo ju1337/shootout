@@ -11,6 +11,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local DiscordLog = require(game:GetService("ServerStorage"):WaitForChild("ServerShared").DiscordLog)
 local RobuxConfig = require(Shared.RobuxConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
@@ -86,6 +87,9 @@ function RobuxService.Init()
 				warn("Robux-Kauf fehlgeschlagen: " .. tostring(err))
 				return Enum.ProductPurchaseDecision.NotProcessedYet
 			end
+			DiscordLog.Log("Economy", "Robux-Kauf", tostring(product.Name or product.Id), {
+				{ "Spieler", DiscordLog.Who(player) }, { "Robux", tostring(receipt.CurrencySpent) },
+				{ "Produkt-Id", tostring(receipt.ProductId) } })
 			table.insert(profile.Receipts, receipt.PurchaseId)
 			while #profile.Receipts > RECEIPT_MEMORY do
 				table.remove(profile.Receipts, 1)

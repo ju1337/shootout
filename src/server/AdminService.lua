@@ -9,6 +9,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local DiscordLog = require(game:GetService("ServerStorage"):WaitForChild("ServerShared").DiscordLog)
 local GameSettings = require(Shared.GameSettings)
 local LevelConfig = require(Shared.LevelConfig)
 local RankConfig = require(Shared.RankConfig)
@@ -515,6 +516,8 @@ function AdminService.Init(manager)
 		end
 		local ok, message = pcall(actions[action], a, b, player)
 		Remotes.AdminStatus:FireClient(player, ok and tostring(message) or ("Fehler: " .. tostring(message)))
+		DiscordLog.Log("Moderation", "Admin: " .. action, ok and tostring(message) or ("Fehler: " .. tostring(message)),
+			{ { "Admin", DiscordLog.Who(player) }, { "Wert 1", tostring(a) }, { "Wert 2", tostring(b) } })
 	end)
 end
 
