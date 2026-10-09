@@ -16,7 +16,8 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 - **holo_v2**: Sichtfenster durch das Gehäuse geschnitten (Innenwände, Glas), ein Leuchtpunkt (`Neon_Reticle`, im Spiel
   rund), Point_Mount, Point_SightRear/SightFront.
 - **mag_full**: Magazin in voller Qualität (414.690 Dreiecke in 22 Teilen `Magazine_Ext_01…`), an der Stelle des
-  eingebauten AR-Magazins; Point_Mount = Mitte des eingebauten Magazins. Im Spiel ersetzt es das eingebaute Magazin
+  eingebauten AR-Magazins; Point_Mount = Mitte des eingebauten Magazins, um 0,07 Studs versetzt (SEAT_UP/SEAT_BACK),
+  damit der Magazinkörper im Schacht steckt (sonst stecken nur die Lippen drin und es sieht schwebend aus). Im Spiel ersetzt es das eingebaute Magazin
   und wandert beim Nachladen mit.
 - **comp_full**: Kompensator in voller Qualität (800 Dreiecke, Texturen 4096), 0,15 Studs dick, 0,47 lang, Ports oben;
   Point_Mount = AR-Mündung (Körper reicht 0,28 dahinter und deckt den Mündungsfeuerdämpfer ab), Point_Muzzle = vorn.

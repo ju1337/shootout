@@ -5,7 +5,8 @@
 # Nichts wird reduziert: alle Dreiecke und die Texturen in Originalgröße bleiben. Roblox erlaubt höchstens 20.000
 # Dreiecke pro Teil, deshalb wird das Magazin entlang seiner Länge in Stücke Magazine_Ext_01, _02 … geteilt.
 # Lage: an der Stelle des eingebauten AR-Magazins (gleiche Neigung, Oberkante im Schacht, Tiefe wie das Original).
-# Point_Mount = Mitte des eingebauten Magazins (dort setzt das Spiel den Aufsatz hin), Point_Front = Richtung Lauf.
+# Point_Mount = Mitte des eingebauten Magazins (dort setzt das Spiel den Aufsatz hin), um SEAT_UP/SEAT_BACK versetzt,
+# damit das Magazin tief genug im Schacht sitzt; Point_Front = Richtung Lauf.
 # Eingabe stehend: lange Achse Z (Lippen oben), vorne = +X, Dicke = Y.
 import bpy, sys, numpy as np
 from mathutils import Matrix, Vector
@@ -14,6 +15,9 @@ args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 FBX, RIFLE, OUT = args[0], args[1], args[2]
 PREFIX = FBX[:-4]
 MAX_TRIS = 19500
+# Sitz im Schacht: das Meshy-Magazin ist oben schmaler (nur die Lippen) – so weit tiefer in den Schacht (entlang des
+# Magazins) bzw. nach hinten, damit der Körper im Schacht steckt und keine Lücke bleibt
+SEAT_UP, SEAT_BACK = 0.07, 0.02
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=RIFLE)
@@ -94,7 +98,9 @@ def marker(name, pos):
     bpy.ops.mesh.primitive_cube_add(size=0.03, location=tuple(pos))
     mk = bpy.context.active_object
     mk.name = mk.data.name = name
-marker("Point_Mount", mount)
-marker("Point_Front", mount + np.array([0, 0.3, 0]))
+# Marker statt Teile verschieben: Point_Mount landet im Spiel auf der Mitte des eingebauten Magazins
+seat = mount - up * SEAT_UP + fwd * SEAT_BACK
+marker("Point_Mount", seat)
+marker("Point_Front", seat + np.array([0, 0.3, 0]))
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.export_scene.gltf(filepath=OUT, export_format="GLB", export_yup=True, export_apply=True, export_animations=False)
