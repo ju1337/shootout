@@ -25,6 +25,8 @@ build("AngledGrip", att, {{"AngledGrip_01", -0.0267,-0.3187,-0.1303, 0.1038,0.06
 build("ExtendedMag", att, {{"Magazine_Ext_01", -0.0013,0.0550,0.6380, 0.1600,0.3000,0.3900},{"Magazine_Ext_02", -0.0013,-0.6000,0.7900, 0.1600,1.1000,0.4500},{"Point_Mount", -0.0013,-0.2004,0.7202, 0.0300,0.0300,0.0300},{"Point_Front", -0.0013,-0.2004,1.0202, 0.0300,0.0300,0.0300}}, CFrame.new(-7, 2, 12) * CFrame.Angles(0, math.rad(180), 0))
 -- Kompensator (art/sources/Attachments/Compensator.glb): Point_Mount = AR-Mündung, Körper reicht 0,28 dahinter
 build("Compensator", att, {{"Compensator", -0.0000,0.5261,2.6769, 0.1500,0.1500,0.4670},{"Point_Mount", -0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.5261,2.9105, 0.0300,0.0300,0.0300}}, CFrame.new(-4, 6, -9) * CFrame.Angles(0, math.rad(180), 0))
+-- Mündungsbremse (art/sources/Attachments/MuzzleBrake.glb): wie der Kompensator, 0,539 lang
+build("MuzzleBrake", att, {{"MuzzleBrake", -0.0000,0.5261,2.7129, 0.1500,0.1460,0.5390},{"Point_Mount", -0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.5261,2.9824, 0.0300,0.0300,0.0300}}, CFrame.new(8, -3, 4) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -83,16 +85,20 @@ if baseMag and ext1 and ext2 then
 end
 check(GunModels.Build("Pistol", nil, { "ExtendedMag" }):FindFirstChild("AttExtendedMag_Magazine_Ext_01") == nil,
 	"Quader-Waffe bekommt das AR-Magazin")
--- Kompensator: 3D-Modell statt Klotz, an der Mündung, Laufrichtung
-local c = GunModels.Build("Rifle", nil, { "Compensator" })
-local comp = c:FindFirstChild("AttCompensator_Compensator")
-check(comp ~= nil and c:FindFirstChild("AttCompensator") == nil, "Kompensator-Modell nicht angebaut")
-check(c:FindFirstChild("AttCompensator_Point_Muzzle") == nil, "Kompensator-Marker angebaut")
-if comp then
-	local r = c.PrimaryPart.CFrame:ToObjectSpace(comp.CFrame)
-	local muzzle = GunModels.Info.Rifle.Muzzle
-	print("HINWEIS Kompensator " .. tostring(r.Position) .. ", Muendung " .. tostring(muzzle))
-	check((r.Position - (muzzle + Vector3.new(0, 0, 0.0465))).Magnitude < 0.01, "Kompensator sitzt nicht an der Muendung")
-	check(math.abs(r.LookVector:Dot(Vector3.zAxis)) > 0.999 and r.UpVector.Y > 0.999, "Kompensator verdreht")
+-- Mündungsaufsätze: 3D-Modell statt Klotz, an der Mündung (reicht 0,28 dahinter), Laufrichtung
+for _, case in { { "Compensator", 0.467, "AttCompensator" }, { "MuzzleBrake", 0.539, "AttBrake" } } do
+	local id, length, block = case[1], case[2], case[3]
+	local c = GunModels.Build("Rifle", nil, { id })
+	local part = c:FindFirstChild("Att" .. id .. "_" .. id)
+	check(part ~= nil and c:FindFirstChild(block) == nil, id .. ": Modell nicht angebaut")
+	check(c:FindFirstChild("Att" .. id .. "_Point_Muzzle") == nil, id .. ": Marker angebaut")
+	if part then
+		local r = c.PrimaryPart.CFrame:ToObjectSpace(part.CFrame)
+		local muzzle = GunModels.Info.Rifle.Muzzle
+		local want = muzzle + Vector3.new(0, 0, 0.28 - length / 2)
+		print("HINWEIS " .. id .. " " .. tostring(r.Position) .. ", soll " .. tostring(want))
+		check((r.Position - want).Magnitude < 0.01, id .. " sitzt nicht an der Muendung")
+		check(math.abs(r.LookVector:Dot(Vector3.zAxis)) > 0.999 and r.UpVector.Y > 0.999, id .. " verdreht")
+	end
 end
 if failures == 0 then print("HINWEIS alles ok") end
