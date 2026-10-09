@@ -103,7 +103,8 @@ local function load()
 				count += 1
 				return "(.-)"
 			end) .. "$"
-			local head = string.match(source, "^([^{%s]+)") -- erstes Wort, wenn es nicht mit {n} beginnt
+			-- Schlüssel = erstes Wort (bis zum Leerzeichen), wenn darin kein {n} steckt – sonst "" ("+{1} Leben" fängt mit "+25" an)
+			local head = string.match(source, "^(%S+)")
 			local key = (head and not string.find(head, "{")) and head or ""
 			patterns[key] = patterns[key] or {}
 			table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count })
