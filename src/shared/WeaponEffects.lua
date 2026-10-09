@@ -9,6 +9,7 @@ local SoundService = game:GetService("SoundService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local WeaponConfig = require(ReplicatedStorage:WaitForChild("Shared").WeaponConfig)
+local AttachmentConfig = require(ReplicatedStorage:WaitForChild("Shared").AttachmentConfig)
 
 local WeaponEffects = {}
 
@@ -172,7 +173,8 @@ end
 -- kommen als einzelne Meldungen: dann nur ein Sound.
 local lastKey, lastTime = nil, 0
 -- suppressed = mit Schalldämpfer (eigener Klang, leiser, nur in der Nähe zu hören). Alte Aufrufe übergeben eine Zahl < 1.
-function WeaponEffects.GunSound(weaponName, position, own, suppressed)
+-- loud = Lautstärke-Faktor der Aufsätze (Mündungsbremse, Kompensator: AttachmentConfig Loud)
+function WeaponEffects.GunSound(weaponName, position, own, suppressed, loud)
 	local def = WeaponConfig.Sounds[weaponName]
 	if not def then
 		return
@@ -190,7 +192,7 @@ function WeaponEffects.GunSound(weaponName, position, own, suppressed)
 		return
 	end
 	local pitch = (suppressed and def.SuppressedPitch or def.Pitch or 1) * (0.97 + math.random() * 0.06)
-	local volume = (def.Volume or 1) * (suppressed and WeaponConfig.SuppressedVolume or 1)
+	local volume = (def.Volume or 1) * (suppressed and WeaponConfig.SuppressedVolume or 1) * (tonumber(loud) or 1)
 	if own then
 		play2D(clip, 0.5 * volume, pitch)
 	else
@@ -202,13 +204,23 @@ end
 
 -- Hantier-Geräusch (WeaponConfig.ActionSounds). position = nil: eigenes, ohne Raumklang.
 -- weaponName (optional): Waffe, deren Variante gilt (ActionSoundsByWeapon, z.B. Pistolenmagazin)
-function WeaponEffects.ActionSound(name, position, weaponName)
+-- owner (optional): Spieler mit der Waffe; seine Aufsätze können den Klang ersetzen (ActionSoundsByAttachment)
+function WeaponEffects.ActionSound(name, position, weaponName, owner)
 	local byWeapon = weaponName and WeaponConfig.ActionSoundsByWeapon[weaponName]
-	local clip = WeaponConfig.ActionSounds[byWeapon and byWeapon[name] or name] or WeaponConfig.ActionSounds[name]
+	local key = byWeapon and byWeapon[name] or name
+	if owner and weaponName then
+		for _, id in AttachmentConfig.EquippedList(owner, weaponName) do
+			local swap = WeaponConfig.ActionSoundsByAttachment[id]
+			if swap and swap[name] then
+				key = swap[name]
+			end
+		end
+	end
+	local clip = WeaponConfig.ActionSounds[key] or WeaponConfig.ActionSounds[name]
 	if not clip then
 		return
 	end
-	local speed = 0.97 + math.random() * 0.06
+	local speed = (clip.Pitch or 1) * (0.97 + math.random() * 0.06)
 	if position then
 		playAt(clip, position, (clip.Volume or 0.5) * 0.8, speed, 60, false)
 	else

@@ -24,14 +24,15 @@ AttachmentConfig.Slots = {
 
 -- Wirkung als Faktoren: Recoil (Rückstoß), Spread (Streuung immer), HipSpread (Streuung ohne Zielen),
 -- MoveSpread (zusätzliche Streuung in Bewegung), Range (Reichweite), Falloff (ab wann der Schaden sinkt),
--- Mag (Magazingröße), Reload (Nachladezeit). Silenced = true: Gegner sehen kein Mündungsfeuer/keine Leuchtspur.
+-- Mag (Magazingröße), Reload (Nachladezeit), Loud (Lautstärke des Schusses). Silenced = true: Gegner sehen kein
+-- Mündungsfeuer/keine Leuchtspur.
 -- Pros/Cons: kurze Plus-/Minus-Texte für die Lobby (grün/rot)
 AttachmentConfig.List = {
 	-- Mündung
 	{ Id = "Compensator", Tier = 2, Slot = "Muzzle", Name = "Kompensator", Description = "−20 % Rückstoß", Price = 800,
-		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {} },
+		Effects = { Recoil = 0.8, Loud = 1.15 }, Pros = { "−20 % Rückstoß" }, Cons = { "+15 % Lautstärke" } },
 	{ Id = "MuzzleBrake", Tier = 3, Slot = "Muzzle", Name = "Mündungsbremse", Description = "−15 % Streuung", Price = 900,
-		Effects = { Spread = 0.85 }, Pros = { "−15 % Streuung" }, Cons = {} },
+		Effects = { Spread = 0.85, Loud = 1.15 }, Pros = { "−15 % Streuung" }, Cons = { "+15 % Lautstärke" } },
 	{ Id = "Suppressor", Tier = 4, Slot = "Muzzle", Name = "Schalldämpfer", Description = "Leise, für Gegner kein Mündungsfeuer",
 		Price = 1100, Effects = { Silenced = true, Range = 0.9 }, Pros = { "Leise, kein Feuer/Leuchtspur" },
 		Cons = { "−10 % Reichweite" } },
@@ -148,7 +149,7 @@ function AttachmentConfig.EquippedList(player, weaponName)
 end
 
 local NEUTRAL = { Recoil = 1, Spread = 1, HipSpread = 1, MoveSpread = 1, Range = 1, Falloff = 1, Mag = 1, Reload = 1,
-	Silenced = false }
+	Loud = 1, Silenced = false }
 
 -- Zusammengerechnete Wirkung der ausgerüsteten Aufsätze einer Waffe (alle Faktoren, 1 = keine Änderung)
 function AttachmentConfig.Effects(player, weaponName)

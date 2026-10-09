@@ -108,6 +108,9 @@ local function setAiming(on)
 		return
 	end
 	aiming = on
+	if on and current then
+		WeaponEffects.ActionSound("AimIn") -- leises Rascheln beim Anlegen
+	end
 	SkinEffects.SetAiming(on) -- Effekt-Skins: beim Zielen keine Dauer-Partikel an der eigenen Waffe
 	local cfg = current and WeaponConfig.Get(current)
 	Movement.SetAiming(on, cfg and cfg.AimFov or 50)
@@ -304,7 +307,7 @@ end
 local function handleEvent(event)
 	local kind = event[2]
 	if kind == "Sound" then
-		WeaponEffects.ActionSound(event[3], nil, current)
+		WeaponEffects.ActionSound(event[3], nil, current, player)
 	elseif kind == "Eject" then
 		ejectShell()
 	elseif kind == "Drop" or kind == "Spill" then
@@ -368,8 +371,9 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 	local muzzleCF, flashScale = muzzle()
 	-- Ego: Feuer und Spuranfang hängen an der Waffe vor der Kamera, auch beim Seitwärtslaufen
 	local followCamera = firstPersonView()
-	local silenced = AttachmentConfig.Effects(player, current).Silenced == true
-	WeaponEffects.GunSound(current, muzzleCF.Position, true, silenced)
+	local attachmentEffects = AttachmentConfig.Effects(player, current)
+	local silenced = attachmentEffects.Silenced == true
+	WeaponEffects.GunSound(current, muzzleCF.Position, true, silenced, attachmentEffects.Loud)
 	-- Effekt-Skin: eigenes Mündungsfeuer (Splitterlicht) bzw. Feuerstoß dazu (Drachengold), Leuchtspur, Einschlag
 	local skinTool = ownTool()
 	local skinFx = skinTool and skinTool:GetAttribute("SkinFx")
@@ -893,7 +897,8 @@ function WeaponClient.Init()
 		local skinFx = skinTool and skinTool:GetAttribute("SkinFx")
 		local skinWeapon, skinId = skinTool and skinTool:GetAttribute("Weapon"), skinTool and skinTool:GetAttribute("SkinId")
 		if firstPellet then
-			WeaponEffects.GunSound(weaponName, start, false, silenced == true)
+			local loud = typeof(shooter) == "Instance" and shooter:IsA("Player") and AttachmentConfig.Effects(shooter, weaponName).Loud or 1
+			WeaponEffects.GunSound(weaponName, start, false, silenced == true, loud)
 			if not silenced and (endPos - start).Magnitude > 0.01 then
 				local muzzleCF = CFrame.lookAt(start, endPos)
 				if not (skinFx and SkinEffects.Shot(muzzleCF, 1, skinWeapon, skinId, skinFx, false, false, false)) then

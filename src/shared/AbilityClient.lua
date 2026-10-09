@@ -18,6 +18,7 @@ local AgentConfig = require(Shared.AgentConfig)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
+local Sfx = require(Shared.Sfx)
 local C = UITheme.Colors
 local make = UITheme.Make
 
@@ -246,6 +247,7 @@ function AbilityClient.Init()
 		abilityRow.Key.TextColor3 = ready and C.Text or C.Muted
 		if ready and not wasReady then
 			pulse(abilityRow)
+			Sfx.UI("AbilityReady")
 		end
 		wasReady = ready
 

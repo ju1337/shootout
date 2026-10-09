@@ -16,6 +16,7 @@ return {
 	["+10 % Streuung aus der Hüfte"] = "+10% hip-fire spread",
 	["+10.000 RAP"] = "+10,000 RAP",
 	["+1000 Münzen"] = "+1000 Coins",
+	["+15 % Lautstärke"] = "+15% volume",
 	["+15 % Streuung in Bewegung"] = "+15% spread while moving",
 	["+25 Schild bis zum nächsten Tod (bzw. Rundenende)"] = "+25 shield until your next death (or end of round)",
 	["+25 XP je Kill in Folge"] = "+25 XP per consecutive kill",

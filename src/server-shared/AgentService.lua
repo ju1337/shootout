@@ -22,6 +22,7 @@ local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
 local AgentBody = require(ServerShared.AgentBody)
 local AgentModels = require(Shared.AgentModels)
+local Sfx = require(Shared.Sfx)
 
 local AgentService = {}
 
@@ -379,6 +380,7 @@ local function useAbility(player)
 	player:SetAttribute("AbilityActiveUntil", now + agent.Ability.Duration)
 
 	local abilityType = agent.Ability.Type
+	Sfx.At("Ability" .. abilityType, root) -- jede Fähigkeit hat ihr Geräusch (SoundLibrary), auch Gegner hören es
 	if abilityType == "Boost" then
 		doBoost(character, root, agent)
 	elseif abilityType == "Wall" then
@@ -423,6 +425,7 @@ local function useUltimate(player)
 	player:SetAttribute("Gadgets", (player:GetAttribute("Gadgets") or 0) + 1)
 	local agent = AgentConfig.Get(character:GetAttribute("Agent")) or getAgent(player)
 	sparkle(root, agent.Color, 2.5)
+	Sfx.At("AbilityUltimate", root)
 	Remotes.Notify:FireClient(player, "Medal", { { Id = "Ultimate", Title = ult.Name,
 		Sub = "Volles Leben  ·  +" .. ult.Armor .. " Rüstung  ·  Fähigkeit bereit" } })
 end

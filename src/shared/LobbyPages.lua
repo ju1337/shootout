@@ -29,6 +29,7 @@ local RobuxConfig = require(Shared.RobuxConfig)
 local RapConfig = require(Shared.RapConfig)
 local PaidRandom = require(Shared.PaidRandom)
 local OddsPanel = require(Shared.OddsPanel)
+local WeaponEffects = require(Shared.WeaponEffects)
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
 
@@ -485,7 +486,7 @@ function LobbyPages.Loadout(page, goToShop)
 
 	-- Wirkung mit einem anderen Aufsatz in einem Platz (für die Vorschau beim Überfahren)
 	local function effectsWith(weaponName, slotId, itemId)
-		local result = { Recoil = 1, Spread = 1, HipSpread = 1, MoveSpread = 1, Range = 1, Falloff = 1, Mag = 1, Reload = 1 }
+		local result = { Recoil = 1, Spread = 1, HipSpread = 1, MoveSpread = 1, Range = 1, Falloff = 1, Mag = 1, Reload = 1, Loud = 1 }
 		local equipped = table.clone(AttachmentConfig.Equipped(player, weaponName))
 		equipped[slotId] = itemId
 		for _, id in equipped do
@@ -745,6 +746,7 @@ function LobbyPages.Loadout(page, goToShop)
 				label({ Position = UDim2.fromOffset(16, 0), Size = UDim2.new(1, -32, 1, 0), Text = "–  KEIN AUFSATZ (ABLEGEN)",
 					TextSize = 18, Font = F.Display, TextColor3 = C.Muted }, row)
 				row.Activated:Connect(function()
+					WeaponEffects.ActionSound("AttachClick")
 					Remotes.ShopAction:FireServer("ToggleAttachment", weaponName, current.Id)
 				end)
 			else
@@ -787,6 +789,9 @@ function LobbyPages.Loadout(page, goToShop)
 				row.SelectionGained:Connect(enter) -- Controller
 				row.SelectionLost:Connect(leave)
 				row.Activated:Connect(function()
+					if owned then
+						WeaponEffects.ActionSound("AttachClick")
+					end
 					Remotes.ShopAction:FireServer(owned and "ToggleAttachment" or "BuyAttachment", weaponName, item.Id)
 				end)
 			end

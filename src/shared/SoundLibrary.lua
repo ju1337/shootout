@@ -11,6 +11,11 @@ local function clip(id, gain, a, b)
 	return { Id = "rbxassetid://" .. id, Gain = gain, Region = b and { a, b } or nil }
 end
 
+-- Geräusch, das Roblox mitliefert (content/sounds, immer verfügbar)
+local function builtin(file, gain)
+	return { Id = "rbxasset://sounds/" .. file, Gain = gain }
+end
+
 -- Eigene Zombie-Aufnahmen (Platzhalter, leer = die Aufnahmen unten). Im Creator Store / in der Toolbox unter Audio nach
 -- z.B. "zombie groan", "zombie moan", "zombie scream", "zombie attack" suchen, die Nummer aus der Adresse
 -- (create.roblox.com/store/asset/NUMMER) hier eintragen: clip(NUMMER, Lautstärke) oder clip(NUMMER, Lautstärke, von, bis).
@@ -166,6 +171,30 @@ SoundLibrary.Sounds = {
 	Locker = { Range = 0, Pitch = 1, Clips = { clip(9126003568, 0.36, 0.45, 2.45) } },
 	-- Kit abholen
 	AmmoBox = { Range = 0, Pitch = 1, Clips = { clip(9113102913, 3.06, 0, 1.54) } },
+
+	-- ---------- Agenten-Fähigkeiten (AgentService: "Ability" .. Ability.Type am Agenten, alle in der Nähe hören es) ----
+	-- VIPER Adrenalin: Spritze, hoch
+	AbilityBoost = { Range = 70, Pitch = 1.25, Clips = { clip(9113046623, 4.2, 0, 1.0) } },
+	-- BASTION Schildwand: schwere Platte schlägt auf
+	AbilityWall = { Range = 110, Pitch = 1.05, Clips = { clip(9116361742, 3.0, 0, 1.0) } },
+	-- MENDER Heilung: Medikit auf
+	AbilityHeal = { Range = 50, Pitch = 1.1, Clips = { clip(9113259554, 5.0, 0, 1.2) } },
+	-- HAWK Aufklärung: Radar-Ping, tief
+	AbilityReveal = { Range = 140, Pitch = 0.55, Clips = { builtin("electronicpingshort.wav", 1.6) } },
+	-- GHOST Tarnung: leises Wischen (kaum zu hören, er will ja unsichtbar sein)
+	AbilityCloak = { Range = 35, Pitch = 0.6, Clips = { builtin("swoosh.wav", 0.8) } },
+	-- BLAZE Sprint-Stoß: Luftstoß
+	AbilityDash = { Range = 90, Pitch = 1.1, Clips = { builtin("swoosh.wav", 1.6) } },
+	-- AEGIS Team-Heilung: heller Klang
+	AbilityTeamHeal = { Range = 90, Pitch = 1.05, Clips = { clip(9114133258, 1.2, 0.06, 2.0) } },
+	-- TRAPPER Falle: Metall schnappt ein
+	AbilityTrap = { Range = 45, Pitch = 0.9, Clips = { clip(9113243990, 6.0, 0, 1.0) } },
+	-- VOLT Geschützturm: Kiste wird abgestellt und klickt
+	AbilityTurret = { Range = 90, Pitch = 0.85, Clips = { clip(9113102913, 3.4, 0, 1.2) } },
+	-- Ultimate Überladung: Druckwelle
+	AbilityUltimate = { Range = 140, Pitch = 1.3, Clips = { clip(9117895638, 1.2, 0.07, 1.37) } },
+	-- Fähigkeit wieder bereit (nur für einen selbst, AbilityClient)
+	AbilityReady = { Range = 0, Pitch = 1.5, Clips = { builtin("electronicpingshort.wav", 0.35) } },
 }
 
 function SoundLibrary.Get(name)

@@ -89,8 +89,10 @@ WeaponConfig.Sounds = {
 }
 WeaponConfig.SuppressedVolume = 0.55 -- Schalldämpfer: so viel leiser (und nur in der Nähe zu hören)
 
--- Geräusche beim Nachladen und Hantieren (ebenfalls Pro Sound Effects): Id, Gain, Region wie oben, Volume.
--- Die Animationen nennen den Namen (MagOut, Pump …); ActionSoundsByWeapon ersetzt ihn je Waffe.
+-- Geräusche beim Nachladen und Hantieren (ebenfalls Pro Sound Effects): Id, Gain, Region wie oben, Volume, Pitch.
+-- Die Animationen nennen den Namen (MagOut, Pump …); ActionSoundsByWeapon ersetzt ihn je Waffe,
+-- ActionSoundsByAttachment je ausgerüstetem Aufsatz (Trommelmagazin klingt schwerer). AimIn = Anlegen zum Zielen,
+-- AttachClick = Aufsatz an- oder abbauen (Werkstatt).
 WeaponConfig.ActionSounds = {
 	MagOut = { Id = "rbxassetid://9116347612", Gain = 0.44, Region = { 0.2, 0.6 }, Volume = 0.6 },
 	MagIn = { Id = "rbxassetid://9116347432", Gain = 0.58, Region = { 0.6, 1 }, Volume = 0.7 },
@@ -104,6 +106,13 @@ WeaponConfig.ActionSounds = {
 	Empty = { Id = "rbxassetid://9117402073", Gain = 4.00, Region = { 1.83, 2.2 }, Volume = 0.5 },
 	Draw = { Id = "rbxassetid://9114701864", Gain = 0.44, Region = { 0, 0.6 }, Volume = 0.4 },
 	RifleDraw = { Id = "rbxassetid://9116362330", Gain = 4.00, Region = { 0.25, 0.75 }, Volume = 0.4 },
+	DrumMagOut = { Id = "rbxassetid://9116347612", Gain = 0.52, Region = { 0.2, 0.6 }, Volume = 0.75, Pitch = 0.78 },
+	DrumMagIn = { Id = "rbxassetid://9116347432", Gain = 0.7, Region = { 0.6, 1 }, Volume = 0.85, Pitch = 0.75 },
+	AimIn = { Id = "rbxassetid://9114701864", Gain = 0.44, Region = { 0, 0.25 }, Volume = 0.22, Pitch = 1.15 },
+	AttachClick = { Id = "rbxassetid://9116347432", Gain = 0.58, Region = { 0.6, 0.85 }, Volume = 0.6, Pitch = 1.2 },
+}
+WeaponConfig.ActionSoundsByAttachment = {
+	DrumMag = { MagOut = "DrumMagOut", MagIn = "DrumMagIn" },
 }
 WeaponConfig.ActionSoundsByWeapon = {
 	Pistol = { MagOut = "PistolMagOut", MagIn = "PistolMagIn" },
