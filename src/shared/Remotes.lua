@@ -13,6 +13,7 @@ local NAMES = {
 	"Shot",       -- Server -> alle: Schuss-Effekt (Schütze/Bot, Start, Ende, Waffe, Normale, Trefferart)
 	"Hitmarker",  -- Server -> Schütze: Treffer (Kopfschuss, getötet, Schaden, Ort, Name, niedergeschlagen, Rüstung, Modell)
 	"Killfeed",   -- Server -> alle im Modus: Meldung (Killer oder nil, Opfer, Waffe, Kopfschuss, Art: nil = Kill, "Down" = niedergeschlagen)
+	"SkinFinisher", -- Server -> alle im Modus: Kill-Finisher eines Effekt-Skins (Opfer-Modell, CFrame, Stil, Waffe, Skin-Id)
 	"Announce",   -- Server -> Client(s): einfache Textmeldung (Banner ohne Teamfarbe)
 	"Notify",     -- Server -> Client: Meldung im CoD-Stil (Art, Daten): "Medal" (Liste), "Banner", "Objective", "Progress"
 	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)

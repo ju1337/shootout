@@ -108,6 +108,7 @@ local function setAiming(on)
 		return
 	end
 	aiming = on
+	SkinEffects.SetAiming(on) -- Effekt-Skins: beim Zielen keine Dauer-Partikel an der eigenen Waffe
 	local cfg = current and WeaponConfig.Get(current)
 	Movement.SetAiming(on, cfg and cfg.AimFov or 50)
 	aimChanged:Fire(on)
@@ -367,12 +368,18 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 	local muzzleCF, flashScale = muzzle()
 	-- Ego: Feuer und Spuranfang hängen an der Waffe vor der Kamera, auch beim Seitwärtslaufen
 	local followCamera = firstPersonView()
-	WeaponEffects.GunSound(current, muzzleCF.Position, true, AttachmentConfig.Effects(player, current).Silenced == true)
-	WeaponEffects.MuzzleFlash(muzzleCF, flashScale, followCamera)
-	-- Effekt-Skin (z.B. Drachengold): Feuerstoß an der Mündung
+	local silenced = AttachmentConfig.Effects(player, current).Silenced == true
+	WeaponEffects.GunSound(current, muzzleCF.Position, true, silenced)
+	-- Effekt-Skin: eigenes Mündungsfeuer (Splitterlicht) bzw. Feuerstoß dazu (Drachengold), Leuchtspur, Einschlag
 	local skinTool = ownTool()
-	if skinTool and skinTool:GetAttribute("SkinFx") then
-		SkinEffects.Breath(muzzleCF, flashScale, current, skinTool:GetAttribute("SkinId"), skinTool:GetAttribute("SkinFx"))
+	local skinFx = skinTool and skinTool:GetAttribute("SkinFx")
+	local skinId = skinTool and skinTool:GetAttribute("SkinId")
+	if not (skinFx and SkinEffects.Shot(muzzleCF, flashScale, current, skinId, skinFx, true, followCamera, silenced)) then
+		WeaponEffects.MuzzleFlash(muzzleCF, flashScale, followCamera)
+	end
+	if skinFx then
+		SkinEffects.Fired(skinTool)
+		SkinEffects.Fired(viewModel and viewModel.Model)
 	end
 	local claims = {}
 	local directions = WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
@@ -380,10 +387,15 @@ local function showOwnShot(cfg, origin, look, spreadAngle, shotId)
 	for i, direction in directions do
 		local result = workspace:Raycast(shotOrigin, direction * cfg.Range, params)
 		local endPos = result and result.Position or (shotOrigin + direction * cfg.Range)
-		WeaponEffects.Tracer(muzzleCF.Position, endPos, true, followCamera)
+		if not (skinFx and SkinEffects.Tracer(muzzleCF.Position, endPos, current, skinId, skinFx, followCamera)) then
+			WeaponEffects.Tracer(muzzleCF.Position, endPos, true, followCamera)
+		end
 		local kind = hitKindOf(result)
 		if kind then
 			WeaponEffects.Impact(endPos, result.Normal, kind)
+			if skinFx then
+				SkinEffects.Impact(endPos, result.Normal, current, skinId, skinFx)
+			end
 		end
 		claims[i] = kind == "Character" and { Part = result.Instance, Position = result.Position } or false
 	end
@@ -876,22 +888,32 @@ function WeaponClient.Init()
 				CharacterPose.Fired(model, weaponName)
 			end
 		end
+		-- Effekt-Skin des Schützen (Attribute am Tool)
+		local skinTool = model and model:FindFirstChildOfClass("Tool")
+		local skinFx = skinTool and skinTool:GetAttribute("SkinFx")
+		local skinWeapon, skinId = skinTool and skinTool:GetAttribute("Weapon"), skinTool and skinTool:GetAttribute("SkinId")
 		if firstPellet then
 			WeaponEffects.GunSound(weaponName, start, false, silenced == true)
 			if not silenced and (endPos - start).Magnitude > 0.01 then
-				WeaponEffects.MuzzleFlash(CFrame.lookAt(start, endPos), 1)
-				local tool = model and model:FindFirstChildOfClass("Tool")
-				if tool and tool:GetAttribute("SkinFx") then
-					SkinEffects.Breath(CFrame.lookAt(start, endPos), 1, tool:GetAttribute("Weapon"), tool:GetAttribute("SkinId"),
-						tool:GetAttribute("SkinFx"))
+				local muzzleCF = CFrame.lookAt(start, endPos)
+				if not (skinFx and SkinEffects.Shot(muzzleCF, 1, skinWeapon, skinId, skinFx, false, false, false)) then
+					WeaponEffects.MuzzleFlash(muzzleCF, 1)
 				end
+			end
+			if skinFx then
+				SkinEffects.Fired(skinTool)
 			end
 		end
 		if not silenced then
-			WeaponEffects.Tracer(start, endPos, false)
+			if not (skinFx and SkinEffects.Tracer(start, endPos, skinWeapon, skinId, skinFx, false)) then
+				WeaponEffects.Tracer(start, endPos, false)
+			end
 		end
 		if hitKind then
 			WeaponEffects.Impact(endPos, normal, hitKind)
+			if skinFx then
+				SkinEffects.Impact(endPos, normal, skinWeapon, skinId, skinFx)
+			end
 		end
 	end)
 

@@ -1,0 +1,12 @@
+Skin-Name: Splitterlicht
+Seltenheit: Legendär
+Waffe: Sturmgewehr (AR-15)
+
+Shop-Text (kurz):
+Schillernder Kristall mit glühenden Energieadern.
+
+Shop-Text (lang):
+Tausend Kristallsplitter in Saphir, Türkis, Violett und Rosé, zusammengehalten von glühenden Energieadern. Jeder Schuss zieht eine prismatische Leuchtspur, und wer fällt, zerspringt in funkelnde Splitter.
+
+Kill-Finisher: Kristallbruch
+Der Gegner erstarrt zu Kristall und zerspringt in schillernde Splitter.

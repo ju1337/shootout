@@ -1048,7 +1048,8 @@ function GunModels.Build(weaponName, skin, attachments)
 	local model = asset and buildFromAsset(asset, skin) or buildBlockout(weaponName, skin)
 	addAttachments(model, weaponName, attachments)
 	-- Effekt-Skins (z.B. Drachengold): Glitzer, Glut, Licht, Textur auf den Aufsätzen (SkinEffects)
-	SkinEffects.Apply(model, skin, asset and asset.Skins and skin and skin.Id and asset.Skins:FindFirstChild(skin.Id))
+	SkinEffects.Apply(model, skin, asset and asset.Skins and skin and skin.Id and asset.Skins:FindFirstChild(skin.Id),
+		GunModels.Info[weaponName])
 	for _, part in model:GetChildren() do
 		if part:IsA("BasePart") then
 			part:SetAttribute("Rest", part.CFrame) -- Ruhelage im Modell (auch für angebaute Aufsätze)

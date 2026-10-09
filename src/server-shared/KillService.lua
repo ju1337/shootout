@@ -22,6 +22,7 @@ local WeaponConfig = require(ReplicatedStorage:WaitForChild("Shared").WeaponConf
 local BuyConfig = require(ReplicatedStorage:WaitForChild("Shared").BuyConfig)
 local Medals = require(ReplicatedStorage:WaitForChild("Shared").Medals)
 local RewardConfig = require(ReplicatedStorage:WaitForChild("Shared").RewardConfig)
+local SkinEffects = require(ReplicatedStorage:WaitForChild("Shared").SkinEffects)
 
 local KillService = {}
 
@@ -311,6 +312,19 @@ function KillService.Init()
 		for _, player in Players:GetPlayers() do
 			if player:GetAttribute("Mode") == mode then
 				Remotes.Killfeed:FireClient(player, killer.Name, victimName, weaponName, headshot)
+			end
+		end
+		-- Kill-Finisher eines Effekt-Skins (z.B. Splitterlicht): nur mit der Waffe, die den Skin trägt
+		local tool = killer ~= victim and killer.Character and killer.Character:FindFirstChildOfClass("Tool")
+		local skinFx = tool and tool:GetAttribute("SkinFx")
+		local victimCharacter = victimModel or (victim and victim.Character)
+		local root = victimCharacter and (victimCharacter:FindFirstChild("HumanoidRootPart") or victimCharacter.PrimaryPart)
+		if skinFx and root and tool:GetAttribute("Weapon") == weaponName and SkinEffects.HasFinisher(skinFx) then
+			for _, player in Players:GetPlayers() do
+				if player:GetAttribute("Mode") == mode then
+					Remotes.SkinFinisher:FireClient(player, victimCharacter, root.CFrame, skinFx, weaponName,
+						tool:GetAttribute("SkinId"))
+				end
 			end
 		end
 		countedEvent:Fire(killer, victim, KillService.GetKills(killer), weaponName)
