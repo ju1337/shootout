@@ -7,7 +7,7 @@
 --   * Hitmarker, Schadenszahlen und Treffer-Töne in mehreren Stilen: HitFeedback (Einstellungen „Hitmarker“ und
 --     „Schadenszahlen“)
 --   * Treffer-Richtung: rote Bögen um die Mitte zeigen zum Angreifer (stärker bei viel Schaden)
---   * Kill-Meldung (ELIMINIERT / NIEDERGESCHLAGEN, ohne Symbol), Nachlade-Balken, Anzeige "Schuss blockiert"
+--   * Kill-Meldung bei Spielern (ELIMINIERT / NIEDERGESCHLAGEN, ohne Symbol), Nachlade-Balken, Anzeige "Schuss blockiert"
 --     (Schulterkamera: zwischen Waffe und Ziel ist etwas im Weg)
 
 local Players = game:GetService("Players")
@@ -272,11 +272,13 @@ function CombatHUD.Init(gui, weaponClient)
 		end)
 	end
 
-	-- Treffer: Hitmarker, Schadenszahl und Ton (HitFeedback), dazu die Kill-Meldung
+	-- Treffer: Hitmarker, Schadenszahl und Ton (HitFeedback), dazu die Kill-Meldung – nur bei echten Spielern
+	-- (Zombies und Bots zeigen nur die XP rechts neben dem Fadenkreuz)
 	HitFeedback.Init(gui)
 	weaponClient.Hit:Connect(function(headshot, killed, damage, position, victimName, downed, armor, victimModel)
 		HitFeedback.Hit(headshot, killed, damage, position, downed, armor, victimModel)
-		if (killed or downed) and victimName then
+		local victimPlayer = typeof(victimModel) == "Instance" and Players:GetPlayerFromCharacter(victimModel)
+		if (killed or downed) and victimName and victimPlayer then
 			showKill(killed, victimName)
 		end
 	end)
