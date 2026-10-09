@@ -42,7 +42,10 @@
         },
         "Agents": {
           "$className": "Folder",
-          "$ignoreUnknownInstances": true
+          "$ignoreUnknownInstances": true,
+          "AS_Scout": {
+            "$path": "models/Agents/AS_Scout.rbxmx"
+          }
         }
       }
     },
