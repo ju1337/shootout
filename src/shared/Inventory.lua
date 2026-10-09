@@ -15,30 +15,38 @@ function Inventory.New(size)
 	return { Size = size, Slots = {} }
 end
 
--- Aufsätze einer Waffe prüfen und kopieren ({ [Platz] = Id }); nil, wenn keine (oder kein Waffen-Item)
+-- Aufsätze einer Waffe prüfen und kopieren ({ [Platz] = Id }); nil, wenn keine (oder kein Waffen-Item).
+-- Zweiter Rückgabewert: Aufsätze, die es gibt, die aber nicht auf diese Waffe passen (Liste von Ids, sonst nil) –
+-- wer lädt, legt sie zurück ins Inventar statt sie zu löschen.
 function Inventory.CleanAttachments(id, att)
 	local config = ExtinctionConfig.Get(id)
 	if not config or config.Kind ~= "Weapon" or type(att) ~= "table" then
-		return nil
+		return nil, nil
 	end
-	local clean = nil
+	local clean, loose = nil, nil
 	for slot, attId in att do
 		local item = AttachmentConfig.Get(attId)
 		if item and item.Slot == slot then
-			clean = clean or {}
-			clean[slot] = attId
+			if AttachmentConfig.Fits(config.Weapon, attId) then
+				clean = clean or {}
+				clean[slot] = attId
+			else
+				loose = loose or {}
+				table.insert(loose, attId)
+			end
 		end
 	end
-	return clean
+	return clean, loose
 end
 
 local function copyItem(item)
-	return { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = Inventory.CleanAttachments(item.Id, item.Att) }
+	return { Id = item.Id, Count = item.Count, Mag = item.Mag, Att = (Inventory.CleanAttachments(item.Id, item.Att)) }
 end
 Inventory.Copy = copyItem
 
--- Liste (gespeichert/JSON) -> Container. Unbekannte Items und Plätze außerhalb fallen weg.
-function Inventory.FromList(list, size)
+-- Liste (gespeichert/JSON) -> Container. Unbekannte Items und Plätze außerhalb fallen weg. Aufsätze, die nicht auf ihre
+-- Waffe passen, werden abgenommen und (mit loose) als Ids an loose angehängt.
+function Inventory.FromList(list, size, loose)
 	local container = Inventory.New(size)
 	if type(list) ~= "table" then
 		return container
@@ -49,9 +57,14 @@ function Inventory.FromList(list, size)
 		local count = type(entry) == "table" and math.floor(tonumber(entry.N) or 1)
 		if slot and slot == math.floor(slot) and slot >= 1 and slot <= size and type(id) == "string"
 			and ExtinctionConfig.Get(id) and count and count >= 1 and not container.Slots[slot] then
+			local att, removed = Inventory.CleanAttachments(id, entry.A)
 			container.Slots[slot] = { Id = id, Count = math.min(count, ExtinctionConfig.MaxStack(id)),
-				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil,
-				Att = Inventory.CleanAttachments(id, entry.A) }
+				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Att = att }
+			for _, attId in removed or {} do
+				if loose then
+					table.insert(loose, attId)
+				end
+			end
 		end
 	end
 	return container

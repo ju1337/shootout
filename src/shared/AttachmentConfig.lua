@@ -2,6 +2,8 @@
 -- Waffen-Aufsätze: werden in der Lobby (LOADOUT · AUFSÄTZE) mit Münzen gekauft und ausgerüstet, nicht im Match.
 -- Gekauft und ausgerüstet wird pro WAFFE: haben zwei Agenten dieselbe Waffe, gelten auch dieselben Aufsätze.
 -- Pro Platz (Mündung, Lauf, Griff, Magazin, Visier) ist höchstens ein Aufsatz ausgerüstet.
+-- Nicht jeder Aufsatz passt auf jede Waffe (AttachmentConfig.Fits, Liste ByWeapon): z.B. kein Griff am Revolver,
+-- kein Visier an Pistolen. Server (Kaufen, Ausrüsten, Anbauen, Laden) und Anzeige prüfen das.
 -- Spieler-Attribut "Attachments" (JSON): { Owned = { [Waffe] = { [Id] = true } }, Equipped = { [Waffe] = { [Platz] = Id } } }
 -- Client (Fadenkreuz, Rückstoß) und Server (Schuss, Magazin, Nachladen) lesen die Wirkung über Effects().
 -- Offene Welt (Extinction): Dort gelten die Lobby-Aufsätze nicht. Aufsätze sind Items, die an einer Waffe im Inventar
@@ -66,6 +68,66 @@ AttachmentConfig.List = {
 		Price = 900, Effects = { Spread = 0.95 }, Pros = { "Klares Zielbild", "−5 % Streuung" }, Cons = {} },
 }
 
+-- Welche Aufsätze auf welche Waffe passen (Waffe aus WeaponConfig). Nicht aufgeführte Waffen nehmen keine Aufsätze.
+AttachmentConfig.ByWeapon = {
+	-- Sturmgewehr: alles
+	Rifle = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "ShortBarrel", "HeavyBarrel", "VerticalGrip", "Laser",
+		"AngledGrip", "ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
+	-- MP: kein schwerer Lauf
+	SMG = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "AngledGrip",
+		"ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
+	-- Schrotflinte: Röhrenmagazin (nur länger, kein Wechselmagazin), kein Schalldämpfer/Kompensator
+	Shotgun = { "MuzzleBrake", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "ExtendedMag", "HoloSight" },
+	-- Präzisionsgewehr: kein kurzer Lauf, keine Griffe, kein Trommelmagazin
+	DMR = { "MuzzleBrake", "Suppressor", "LongBarrel", "HeavyBarrel", "ExtendedMag", "FastMag", "HoloSight" },
+	-- LMG: kein Schalldämpfer, kein kurzer Lauf, kein Laser
+	LMG = { "Compensator", "MuzzleBrake", "LongBarrel", "HeavyBarrel", "VerticalGrip", "AngledGrip", "ExtendedMag", "FastMag",
+		"DrumMag", "HoloSight" },
+	-- Pistole: Schalldämpfer/Kompensator, Laser unter dem Lauf, Magazine; kein Griff, kein Visier
+	Pistol = { "Compensator", "Suppressor", "LongBarrel", "Laser", "ExtendedMag", "FastMag" },
+	-- Revolver: Trommel (nur Schnelllader), Lauflänge, Laser; kein Griff, kein Schalldämpfer, kein Visier
+	Revolver = { "Compensator", "LongBarrel", "ShortBarrel", "Laser", "FastMag" },
+}
+
+local fits = {}
+for weaponName, ids in AttachmentConfig.ByWeapon do
+	fits[weaponName] = {}
+	for _, id in ids do
+		fits[weaponName][id] = true
+	end
+end
+
+-- Passt der Aufsatz id auf die Waffe weaponName?
+function AttachmentConfig.Fits(weaponName, id)
+	return fits[weaponName] ~= nil and fits[weaponName][id] == true
+end
+
+-- Plätze, für die es auf dieser Waffe mindestens einen passenden Aufsatz gibt (Reihenfolge wie Slots)
+function AttachmentConfig.SlotsFor(weaponName)
+	local list = {}
+	for _, slot in AttachmentConfig.Slots do
+		for _, item in AttachmentConfig.List do
+			if item.Slot == slot.Id and AttachmentConfig.Fits(weaponName, item.Id) then
+				table.insert(list, slot)
+				break
+			end
+		end
+	end
+	return list
+end
+
+-- Waffen, auf die der Aufsatz id passt (Namen aus WeaponConfig, sortiert)
+function AttachmentConfig.WeaponsFor(id)
+	local list = {}
+	for weaponName in fits do
+		if fits[weaponName][id] then
+			table.insert(list, weaponName)
+		end
+	end
+	table.sort(list)
+	return list
+end
+
 local byId = {}
 for _, item in AttachmentConfig.List do
 	byId[item.Id] = item
@@ -75,11 +137,11 @@ function AttachmentConfig.Get(id)
 	return byId[id]
 end
 
--- Aufsätze eines Platzes (für die Lobby)
-function AttachmentConfig.ForSlot(slotId)
+-- Aufsätze eines Platzes (für die Lobby); mit weaponName nur die, die auf diese Waffe passen
+function AttachmentConfig.ForSlot(slotId, weaponName)
 	local list = {}
 	for _, item in AttachmentConfig.List do
-		if item.Slot == slotId then
+		if item.Slot == slotId and (weaponName == nil or AttachmentConfig.Fits(weaponName, item.Id)) then
 			table.insert(list, item)
 		end
 	end
@@ -100,7 +162,7 @@ local function survivalData(player)
 	local equipped, owned = {}, {}
 	for slot, id in decoded.A do
 		local item = byId[id]
-		if item and item.Slot == slot then
+		if item and item.Slot == slot and AttachmentConfig.Fits(decoded.W, id) then
 			equipped[slot] = id
 			owned[id] = true
 		end
@@ -141,7 +203,7 @@ end
 function AttachmentConfig.EquippedList(player, weaponName)
 	local list = {}
 	for _, id in AttachmentConfig.Equipped(player, weaponName) do
-		if byId[id] and AttachmentConfig.Owns(player, weaponName, id) then
+		if byId[id] and AttachmentConfig.Fits(weaponName, id) and AttachmentConfig.Owns(player, weaponName, id) then
 			table.insert(list, id)
 		end
 	end
@@ -159,7 +221,7 @@ function AttachmentConfig.Effects(player, weaponName)
 	end
 	for _, id in AttachmentConfig.Equipped(player, weaponName) do
 		local item = byId[id]
-		if item and AttachmentConfig.Owns(player, weaponName, id) then
+		if item and AttachmentConfig.Fits(weaponName, id) and AttachmentConfig.Owns(player, weaponName, id) then
 			for key, factor in item.Effects do
 				if type(factor) == "boolean" then
 					result[key] = result[key] or factor

@@ -641,7 +641,8 @@ function LobbyPages.Loadout(page, goToShop)
 		local currentEffects = AttachmentConfig.Effects(player, weaponName)
 		local function equippedItem(slotId)
 			local id = equipped[slotId]
-			return id and AttachmentConfig.Owns(player, weaponName, id) and AttachmentConfig.Get(id) or nil
+			return id and AttachmentConfig.Fits(weaponName, id) and AttachmentConfig.Owns(player, weaponName, id)
+				and AttachmentConfig.Get(id) or nil
 		end
 
 		-- quadratisches Feld links in einer Zeile: Symbol oder "+"
@@ -665,7 +666,7 @@ function LobbyPages.Loadout(page, goToShop)
 			-- Übersicht: ein Feld pro Platz
 			label({ Size = UDim2.fromOffset(RIGHT_W, 18), Text = "PLATZ ANKLICKEN, UM EINEN AUFSATZ AUSZUWÄHLEN", TextSize = 11,
 				Font = F.Bold, TextColor3 = C.Muted, LayoutOrder = 0 }, attachPanel)
-			for order, slot in AttachmentConfig.Slots do
+			for order, slot in AttachmentConfig.SlotsFor(weaponName) do -- nur Plätze mit passenden Aufsätzen
 				local item = equippedItem(slot.Id)
 				local row = make("TextButton", { Size = UDim2.fromOffset(RIGHT_W, 104), BackgroundColor3 = C.Panel,
 					BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false, LayoutOrder = order }, attachPanel)
@@ -728,7 +729,7 @@ function LobbyPages.Loadout(page, goToShop)
 		if current then
 			table.insert(rows, { Remove = true })
 		end
-		local items = AttachmentConfig.ForSlot(slot.Id)
+		local items = AttachmentConfig.ForSlot(slot.Id, weaponName) -- nur, was auf diese Waffe passt
 		table.sort(items, function(x, y) -- günstigste zuerst
 			return x.Price < y.Price
 		end)

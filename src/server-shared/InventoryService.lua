@@ -24,6 +24,7 @@ local Sfx = require(Shared.Sfx)
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
+local AttachmentConfig = require(Shared.AttachmentConfig)
 local Modes = require(Shared.Modes)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
@@ -86,21 +87,35 @@ local function stateOf(player)
 	local data = type(profile.Extinction) == "table" and profile.Extinction or {}
 	-- Angebote im Spielermarkt (ExtMarketService): nur gültige Einträge übernehmen
 	local market = {}
+	local loose = {} -- Aufsätze, die nicht (mehr) auf ihre Waffe passen: zurück ins Inventar
 	for _, entry in type(data.Market) == "table" and data.Market or {} do
 		if type(entry) == "table" and type(entry.Id) == "string" and type(entry.Item) == "string" and ExtinctionConfig.Get(entry.Item)
 			and tonumber(entry.Count) and tonumber(entry.Price) then
 			table.insert(market, { Id = entry.Id, Item = entry.Item, Count = math.max(1, math.floor(entry.Count)),
 				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Price = math.max(1, math.floor(entry.Price)),
 				At = tonumber(entry.At) or 0, Att = Inventory.CleanAttachments(entry.Item, entry.Att) })
+			local _, removed = Inventory.CleanAttachments(entry.Item, entry.Att)
+			for _, attId in removed or {} do
+				table.insert(loose, attId)
+			end
 		end
 	end
 	state = {
 		Profile = profile,
-		Bag = Inventory.FromList(data.Bag, ExtinctionConfig.BagSlots),
-		Safe = Inventory.FromList(data.Safe, ExtinctionConfig.SafeSlots),
-		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots),
+		Bag = Inventory.FromList(data.Bag, ExtinctionConfig.BagSlots, loose),
+		Safe = Inventory.FromList(data.Safe, ExtinctionConfig.SafeSlots, loose),
+		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots, loose),
 		Market = market,
 	}
+	-- Abgenommene Aufsätze ins Lager, sonst in Tasche oder Container
+	for _, attId in loose do
+		for _, target in { state.Stash, state.Bag, state.Safe } do
+			if Inventory.Add(target, "Att_" .. attId, 1) >= 1 then
+				break
+			end
+		end
+		state.Dirty = true
+	end
 	states[player] = state
 	return state
 end
@@ -324,6 +339,10 @@ local function attach(player, state, attFrom, attSlot, weapon)
 	local attConfig = attItem and ExtinctionConfig.Get(attItem.Id)
 	local weaponConfig = weapon and ExtinctionConfig.Get(weapon.Id)
 	if not attConfig or attConfig.Kind ~= "Attachment" or not weaponConfig or weaponConfig.Kind ~= "Weapon" then
+		return false
+	end
+	if not AttachmentConfig.Fits(weaponConfig.Weapon, attConfig.Attachment) then
+		status(player, attConfig.Name .. " passt nicht auf " .. weaponConfig.Name .. ".")
 		return false
 	end
 	local slotId = attConfig.Slot

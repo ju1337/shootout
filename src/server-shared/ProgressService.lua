@@ -796,6 +796,10 @@ local function load(player)
 	end
 	local profile = toProfile(result)
 	profiles[player] = profile
+	local refund = ProgressService.RefundUnfitAttachments(profile) -- Aufsätze, die nicht (mehr) auf ihre Waffe passen
+	if refund > 0 then
+		Telemetry.Economy(player, "Source", "Coins", refund, profile.Coins, "Gameplay", "UnfitAttachments", "Aufsatz passt nicht")
+	end
 	checkSeason(player, profile) -- neue Ranked-Saison seit dem letzten Besuch?
 	loaded[player] = true
 	ProgressService.Sync(player)
@@ -935,12 +939,45 @@ local function attachmentData(profile)
 	return profile.Attachments
 end
 
+-- Alte Spielstände (vor AttachmentConfig.ByWeapon): Aufsätze, die nicht auf ihre Waffe passen, werden abgelegt und
+-- der Kaufpreis zurückgegeben (sie wären an dieser Waffe sonst wertlos). Gibt die erstatteten Münzen zurück.
+local function refundUnfitAttachments(profile)
+	local data = attachmentData(profile)
+	local refund = 0
+	for weaponName, owned in data.Owned do
+		if type(owned) == "table" then
+			for id in owned do
+				local item = AttachmentConfig.Get(id)
+				if item and not AttachmentConfig.Fits(weaponName, id) then
+					owned[id] = nil
+					refund += item.Price
+				end
+			end
+		end
+	end
+	for weaponName, slots in data.Equipped do
+		if type(slots) == "table" then
+			for slot, id in slots do
+				if not AttachmentConfig.Fits(weaponName, id) then
+					slots[slot] = nil
+				end
+			end
+		end
+	end
+	profile.Coins = (profile.Coins or 0) + refund
+	return refund
+end
+ProgressService.RefundUnfitAttachments = refundUnfitAttachments
+
 -- Aufsatz für eine Waffe kaufen (gilt für alle Agenten mit dieser Waffe) und gleich ausrüsten
 function ProgressService.BuyAttachment(player, weaponName, id)
 	local profile = profiles[player]
 	local item = AttachmentConfig.Get(id)
 	if not profile or not item or not WeaponConfig.Get(weaponName) then
 		return "Unbekannter Aufsatz.", false
+	end
+	if not AttachmentConfig.Fits(weaponName, id) then
+		return "Passt nicht auf diese Waffe.", false
 	end
 	local data = attachmentData(profile)
 	data.Owned[weaponName] = data.Owned[weaponName] or {}
@@ -968,6 +1005,9 @@ function ProgressService.ToggleAttachment(player, weaponName, id)
 	local data = attachmentData(profile)
 	if not (data.Owned[weaponName] and data.Owned[weaponName][id]) then
 		return "Noch nicht gekauft.", false
+	end
+	if not AttachmentConfig.Fits(weaponName, id) then
+		return "Passt nicht auf diese Waffe.", false
 	end
 	data.Equipped[weaponName] = data.Equipped[weaponName] or {}
 	local slots = data.Equipped[weaponName]

@@ -258,6 +258,51 @@ check(loaded.Slots[2].Att == nil, "nur Waffen haben Aufsätze")
 local again = Inventory.FromList(Inventory.ToList(loaded), 10)
 check(again.Slots[1].Att.Muzzle == "Compensator", "Aufsätze überstehen Speichern und Laden")
 
+-- Nicht jeder Aufsatz passt auf jede Waffe: Laden legt unpassende zurück (Tasche voll -> Lager)
+local fitLoose = {}
+local fitLoaded = Inventory.FromList({ { S = 1, Id = "Revolver", N = 1, A = { Grip = "VerticalGrip", Barrel = "LongBarrel" } } },
+	10, fitLoose)
+check(fitLoaded.Slots[1].Att and fitLoaded.Slots[1].Att.Barrel == "LongBarrel" and fitLoaded.Slots[1].Att.Grip == nil,
+	"Griff fällt vom Revolver ab, langer Lauf bleibt")
+check(#fitLoose == 1 and fitLoose[1] == "VerticalGrip", "abgenommener Griff wird gemeldet")
+
+-- Anbauen: Griff passt nicht auf den Revolver
+check(InventoryService.Give(alice, "Revolver", 1) == 1, "Revolver bekommen")
+check(InventoryService.Give(alice, "Att_VerticalGrip", 1) == 1, "Vertikalgriff bekommen")
+local revolverSlot, gripSlot
+for s = 1, ExtinctionConfig.BagSlots do
+	local entry = slot(alice, s)
+	if entry and entry.Id == "Revolver" then revolverSlot = s end
+	if entry and entry.Id == "Att_VerticalGrip" then gripSlot = s end
+end
+check(revolverSlot and gripSlot, "Revolver und Griff in der Tasche")
+check(InventoryService.Move(alice, "Bag", gripSlot, "Bag", revolverSlot) == false, "Griff lässt sich nicht an den Revolver bauen")
+check(slot(alice, revolverSlot).A == nil, "Revolver ohne Aufsatz")
+check(slot(alice, gripSlot) and slot(alice, gripSlot).Id == "Att_VerticalGrip", "Griff bleibt in der Tasche")
+local fitStatus = lastExt(alice, "Status")
+check(fitStatus and string.find(tostring(fitStatus[2]), "passt nicht", 1, true), "Meldung: passt nicht")
+
+-- alter Spielstand mit Griff am Revolver: Griff kommt beim Laden ins Lager
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, Extinction = {
+	Bag = { { S = 1, Id = "Revolver", N = 1, A = { Grip = "AngledGrip", Barrel = "ShortBarrel" } } }, Stash = {}, Safe = {} } }
+local bob = SIM.Join("Bob")
+Instance.new("Backpack", bob).Name = "Backpack"
+step(2)
+enter(bob)
+step(2)
+local bobBag = bagOf(bob)
+local bobStash = HttpService:JSONDecode(bob:GetAttribute("ExtStash") or "[]")
+local bobRevolver, bobGrip = nil, false
+for _, entry in bobBag do
+	if entry.Id == "Revolver" then bobRevolver = entry end
+end
+for _, entry in bobStash do
+	bobGrip = bobGrip or entry.Id == "Att_AngledGrip"
+end
+check(bobRevolver and bobRevolver.A and bobRevolver.A.Barrel == "ShortBarrel" and bobRevolver.A.Grip == nil,
+	"alter Spielstand: Griff vom Revolver abgenommen")
+check(bobGrip, "alter Spielstand: Griff liegt im Lager statt gelöscht")
+
 if failures == 0 then
 	print("Waffen-Aufsätze in der offenen Welt in Ordnung")
 end

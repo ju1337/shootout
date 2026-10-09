@@ -96,7 +96,7 @@ local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
 Inv.redText = nil :: TextLabel? -- Rote-Zone-Punkte im HUD
 Inv.attachBoxes = nil :: { [string]: any }? -- Aufsatz-Plätze im Info-Fenster (Waffe)
-Inv.popupWeapon = nil :: { Container: string, Slot: number }? -- Waffe im Info-Fenster
+Inv.popupWeapon = nil :: { Container: string, Slot: number, Weapon: string }? -- Waffe im Info-Fenster
 Inv.hiddenGuis = nil :: { ScreenGui }? -- solange das Menü offen ist ausgeblendete Oberflächen
 Inv.filterKinds = nil -- Inventar-Filter: { [Kind] = true } oder nil = alles
 local equipped = 0
@@ -328,8 +328,15 @@ local function describe(id, entry)
 			weapon and weapon.Damage or 0) .. (#names > 0 and ("\nAufsätze: " .. table.concat(names, ", ")) or "")
 	elseif config.Kind == "Attachment" then
 		local att = AttachmentConfig.Get(config.Attachment)
+		-- Waffen, auf die er passt (Namen schon übersetzt: Listen findet LocaleStrings nicht als Ganzes)
+		local weapons = {}
+		for _, weaponName in AttachmentConfig.WeaponsFor(config.Attachment) do
+			local weapon = WeaponConfig.Get(weaponName)
+			table.insert(weapons, require(Shared.Locale).Translate(weapon and weapon.DisplayName or weaponName))
+		end
 		return (att and att.Description or "") .. " · Platz: " .. (SLOT_NAMES[config.Slot] or config.Slot)
-			.. "\nAuf eine Waffe ziehen (oder Taste mit der Waffe in der Hand) baut ihn an. Er bleibt an dieser Waffe."
+			.. "\nPasst auf: " .. table.concat(weapons, ", ")
+			.. "\nAuf eine passende Waffe ziehen (oder Taste mit der Waffe in der Hand) baut ihn an. Er bleibt an dieser Waffe."
 	elseif config.Kind == "Ammo" then
 		local users = {}
 		for _, other in ExtinctionConfig.Items do
@@ -1275,18 +1282,18 @@ function Inv.itemPopup(body)
 			end
 		end
 		y += 8
-		-- Waffe: vier Aufsatz-Plätze. Aufsatz aus Tasche/Container hierher ziehen baut ihn an, Klick auf einen belegten Platz
+		-- Waffe: Aufsatz-Plätze (nur die, für die es passende Aufsätze gibt). Aufsatz aus Tasche/Container hierher ziehen baut ihn an, Klick auf einen belegten Platz
 		-- nimmt ihn ab (kommt in die Tasche)
 		local boxes = {}
 		if config.Kind == "Weapon" and (selected.Container == "Bag" or selected.Container == "Safe") then
-			Inv.popupWeapon = { Container = selected.Container, Slot = selected.Slot }
+			Inv.popupWeapon = { Container = selected.Container, Slot = selected.Slot, Weapon = config.Weapon }
 			label({ Name = "AttTitle", Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 14), Text = "AUFSÄTZE",
 				TextSize = 11, Font = F.Display, TextColor3 = C.Muted, ZIndex = 21 }, popup)
 			label({ Name = "AttHint", Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 14), Text = "HIERHER ZIEHEN",
 				TextSize = 10, Font = F.Bold, TextColor3 = Color3.fromRGB(120, 118, 112), TextXAlignment = Enum.TextXAlignment.Right,
 				ZIndex = 21 }, popup)
 			y += 20
-			local slots = AttachmentConfig.Slots
+			local slots = AttachmentConfig.SlotsFor(config.Weapon) -- nur Plätze, für die es passende Aufsätze gibt
 			local gap = 6
 			local boxW = math.floor((Inv.POPUP_W - 28 - gap * (#slots - 1)) / #slots)
 			for index, slotInfo in slots do
@@ -1339,7 +1346,8 @@ function Inv.itemPopup(body)
 					for _, source in { { "Bag", bag }, { "Safe", safe } } do
 						for itemSlot, item in source[2] do
 							local itemCfg = itemConfig(item.Id)
-							if itemCfg and itemCfg.Kind == "Attachment" and itemCfg.Slot == slotInfo.Id then
+							if itemCfg and itemCfg.Kind == "Attachment" and itemCfg.Slot == slotInfo.Id
+								and AttachmentConfig.Fits(weapon.Weapon, itemCfg.Attachment) then
 								sendAction("Move", source[1], itemSlot, weapon.Container, weapon.Slot)
 								return
 							end
@@ -2954,7 +2962,8 @@ local function updateDrag()
 		-- passenden Aufsatz-Platz im Info-Fenster rot umranden
 		local dragConfig = entry and itemConfig(entry.Id)
 		for slotId, boxView in Inv.attachBoxes or {} do
-			local match = dragConfig and dragConfig.Kind == "Attachment" and dragConfig.Slot == slotId
+			local match = dragConfig and dragConfig.Kind == "Attachment" and dragConfig.Slot == slotId and Inv.popupWeapon ~= nil
+				and AttachmentConfig.Fits(Inv.popupWeapon.Weapon, dragConfig.Attachment)
 			boxView.Stroke.Color = match and Inv.MENU_RED or Color3.new(1, 1, 1)
 			boxView.Stroke.Thickness = match and 2 or 1
 			boxView.Stroke.Transparency = match and 0 or (boxView.Filled and 1 or 0.82)
