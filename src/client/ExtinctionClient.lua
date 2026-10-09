@@ -83,9 +83,10 @@ local KIND_COLORS = {
 	Repel = Color3.fromRGB(120, 220, 120),
 	Attachment = Color3.fromRGB(176, 136, 232),
 	Throwable = Color3.fromRGB(226, 120, 60),
+	Key = Color3.fromRGB(176, 96, 255),
 }
 local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG",
-	Repel = "SCHUTZ", Attachment = "AUFSATZ", Throwable = "WURFWAFFE" }
+	Repel = "SCHUTZ", Attachment = "AUFSATZ", Throwable = "WURFWAFFE", Key = "SCHLÜSSEL" }
 -- Seltenheit der Aufsätze (Tier) als Name und Farbe
 local TIER_NAMES = { [2] = "HÄUFIG", [3] = "SELTEN", [4] = "SEHR SELTEN" }
 local TIER_COLORS = { [2] = Color3.fromRGB(120, 176, 230), [3] = Color3.fromRGB(176, 136, 232), [4] = Color3.fromRGB(236, 178, 70) }
@@ -248,6 +249,23 @@ local function buildIcon(parent, id, zIndex, aspect)
 			BackgroundTransparency = 1, ZIndex = zIndex }, top)
 		UITheme.Corner(ring, 4)
 		make("UIStroke", { Color = Color3.fromRGB(190, 190, 186), Thickness = 1.5 }, ring)
+	elseif config.Kind == "Key" then
+		-- Schlüssel (schräg): Ring mit violettem Stein, Schaft, zwei Zähne
+		local key = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(38, 14), Rotation = -35, BackgroundTransparency = 1, ZIndex = zIndex }, holder)
+		local gold = Color3.fromRGB(222, 182, 92)
+		local bow = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(14, 14),
+			BackgroundColor3 = gold, BorderSizePixel = 0, ZIndex = zIndex }, key)
+		UITheme.Corner(bow, 7)
+		local gem = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(6, 6),
+			BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = zIndex }, bow)
+		UITheme.Corner(gem, 3)
+		make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 13, 0.5, 0), Size = UDim2.fromOffset(25, 4),
+			BackgroundColor3 = gold, BorderSizePixel = 0, ZIndex = zIndex }, key)
+		for _, x in { 29, 34 } do
+			make("Frame", { Position = UDim2.new(0, x, 0.5, 1), Size = UDim2.fromOffset(3, 6), BackgroundColor3 = gold,
+				BorderSizePixel = 0, ZIndex = zIndex }, key)
+		end
 	elseif config.Kind == "Attachment" then
 		local icon = AttachmentIcons.Build(holder, config.Attachment, 34, TIER_COLORS[config.Tier] or color)
 		icon.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -362,6 +380,8 @@ local function describe(id, entry)
 		end
 		return "Explodiert nach " .. string.gsub(tostring(cfg.Fuse), "%.", ",") .. " s · bis " .. cfg.Damage .. " Schaden · Radius "
 			.. cfg.Radius .. " · Taste wirft"
+	elseif config.Kind == "Key" then
+		return "Öffnet einen Dungeon (Eingänge auf der Karte, N) für dich und deinen Squad · wird beim Betreten verbraucht"
 	elseif config.Kind == "Repel" then
 		return math.floor((config.Duration or 0) / 60) .. " Min spawnen bei dir keine Zombies · "
 			.. string.gsub(tostring(config.UseTime), "%.", ",") .. " s"

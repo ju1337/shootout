@@ -206,6 +206,7 @@ local function land(drop)
 	local count = random:NextInteger(A.Items[1], A.Items[2])
 	local items = drop.Zone and ExtinctionConfig.RedzoneRoll("Airdrop", count + ExtinctionConfig.Redzone.Loot.AirdropExtra, random)
 		or ExtinctionConfig.RollLoot("Airdrop", count, random)
+	ExtinctionConfig.AddDungeonKey(items, "Airdrop", random)
 	drop.LootId = LootService.Create(drop.Target, items, "Airdrop", "LOOTDROP", { HoldTime = A.OpenTime, Lifetime = A.Lifetime, Meta = { Drop = drop } })
 	if not drop.LootId then
 		finish(drop)

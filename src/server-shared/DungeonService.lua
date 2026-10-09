@@ -1,0 +1,798 @@
+-- DungeonService (ModuleScript, nur Server)
+-- Dungeons der offenen Welt (Werte in ExtinctionConfig.Dungeon): An festen Orten draußen steht je ein Bunker mit
+-- flimmerndem Durchgang. E am Eingang verbraucht einen Dungeon-Schlüssel (Item "DungeonKey" aus Tasche oder Container) und
+-- bringt den Spieler samt Squad (wer nah genug am Eingang steht) in eine eigene, abgeschlossene Halle abseits der Karte.
+-- Dort kommen Welle um Welle Zombies aus Gittern in den Wänden, jede Welle größer und härter (ExtinctionConfig.DungeonWave).
+-- Ist eine Welle erledigt, leuchtet das Portal an der Stirnseite für Dungeon.BreakTime Sekunden grün: wer hindurchgeht (E),
+-- kommt vor dem Bunker wieder heraus und bekommt die Beute aller Wellen, die er lebend geschafft hat (Münzen, Items in die
+-- Tasche bzw. ins Lager, EP). Danach schließt es, und die nächste Welle beginnt. Wer im Dungeon stirbt, verliert die
+-- Dungeon-Beute; seine Tasche fällt draußen vor dem Eingang (Extinction.dropBag fragt BagSpot). Ist niemand mehr drin,
+-- wird die Halle abgebaut.
+-- Stand für die Clients: Karten-Attribut "Dungeons" [{ Key, Title, X, Z }] (Weltkarte), Spieler-Attribut "Dungeon" (JSON
+-- { T = Titel, S = "Start"/"Wave"/"Break", W = Welle, L = Zombies übrig, E = Serverzeit bis Start/Ende der Pause,
+-- C = Münzen, I = Items, K = geschaffte Wellen }) solange man drin ist (DungeonClient).
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Sfx = require(Shared.Sfx)
+local Remotes = require(Shared.Remotes)
+local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local ZombieService = require(script.Parent.ZombieService)
+local InventoryService = require(script.Parent.InventoryService)
+local ProgressService = require(script.Parent.ProgressService)
+local ExtLevelService = require(script.Parent.ExtLevelService)
+local MovementGuard = require(script.Parent.MovementGuard)
+
+local DungeonService = {}
+
+local D = ExtinctionConfig.Dungeon
+local STEP = 0.25
+local random = Random.new()
+local options = nil  -- { Map, Center, Players(), IsMember(player), InSafeZone(position), GroundY(x, z), IsWater(x, z) }
+local entrances = {} -- { Key, Title, Position, CFrame, Exit (CFrame), Model }
+local runs = {}      -- [Slot] = Lauf (siehe startRun)
+local playerRun = {} -- [Player] = Lauf
+local folder = workspace:FindFirstChild("ExtinctionDungeons") or Instance.new("Folder")
+folder.Name = "ExtinctionDungeons"
+folder.Parent = workspace
+
+local function rootOf(player)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if humanoid and root and humanoid.Health > 0 then
+		return root, character, humanoid
+	end
+	return nil, nil, nil
+end
+
+local function status(player, text)
+	InventoryService.Status(player, text)
+end
+
+local function banner(player, title, sub, style)
+	Remotes.Notify:FireClient(player, "Banner", { Caption = "Dungeon", Title = title, Sub = sub, Style = style or "Info" })
+end
+
+local function part(model, name, size, cframe, color, material, collide)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.CFrame = cframe
+	p.Color = color
+	p.Material = material or Enum.Material.SmoothPlastic
+	p.Anchored = true
+	p.CanCollide = collide ~= false
+	p.CanTouch = false
+	p.CanQuery = collide ~= false
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Parent = model
+	return p
+end
+
+local function light(parent, color, range, brightness)
+	local l = Instance.new("PointLight")
+	l.Color = color
+	l.Range = range
+	l.Brightness = brightness
+	l.Shadows = false
+	l.Parent = parent
+	return l
+end
+
+-- Schrift auf einer Seite eines Teils (Schild, Graffiti)
+local function sign(target, face, text, color, font)
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = face
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 20
+	gui.LightInfluence = 0.6
+	gui.Parent = target
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextScaled = true
+	label.Font = font or Enum.Font.BuilderSansExtraBold
+	label.TextColor3 = color
+	label.Parent = gui
+	return label
+end
+
+local function publishEntrances()
+	local list = {}
+	for _, entrance in entrances do
+		table.insert(list, { Key = entrance.Key, Title = entrance.Title, X = math.round(entrance.Position.X),
+			Z = math.round(entrance.Position.Z) })
+	end
+	options.Map:SetAttribute("Dungeons", HttpService:JSONEncode(list))
+end
+
+-- ---------- Eingänge ----------
+
+-- Freie, ebene Stelle für den Bunker nahe (x, z) (Weltkoordinaten): nicht im Wasser, nicht in einer Safe Zone, keine
+-- Gebäude, Straßen oder Bäume im Grundriss. Sucht in Ringen bis Dungeon.EntranceSearch; findet sie nichts, bleibt es bei (x, z).
+local function findSpot(x, z)
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = { folder }
+	for _, name in { "Zone", "Places", "Ground", "Lakes" } do
+		local child = options.Map:FindFirstChild(name)
+		if child then
+			table.insert(ignore, child)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	local function free(px, pz)
+		if options.IsWater and options.IsWater(px, pz) then
+			return nil
+		end
+		local y = options.GroundY(px, pz)
+		for _, offset in { Vector2.new(9, 0), Vector2.new(-9, 0), Vector2.new(0, 9), Vector2.new(0, -9) } do
+			if options.IsWater and options.IsWater(px + offset.X, pz + offset.Y) then
+				return nil
+			end
+			if math.abs(options.GroundY(px + offset.X, pz + offset.Y) - y) > 3 then
+				return nil -- zu steil
+			end
+		end
+		local position = Vector3.new(px, y, pz)
+		if options.InSafeZone(position) then
+			return nil
+		end
+		local ok, hits = pcall(function()
+			return workspace:GetPartBoundsInBox(CFrame.new(position + Vector3.new(0, 7, 0)), Vector3.new(26, 12, 26), params)
+		end)
+		if ok and hits and #hits > 0 then
+			return nil
+		end
+		return position
+	end
+	for radius = 0, D.EntranceSearch, 10 do
+		local steps = radius == 0 and 1 or math.max(6, math.floor(radius / 5))
+		for i = 0, steps - 1 do
+			local angle = i / steps * math.pi * 2
+			local spot = free(x + math.cos(angle) * radius, z + math.sin(angle) * radius)
+			if spot then
+				return spot
+			end
+		end
+	end
+	return Vector3.new(x, options.GroundY(x, z), z)
+end
+
+-- Bunker aus Beton mit Stahltür-Rahmen, flimmerndem violettem Durchgang, Warnlampen und Schild; vorn der E-Prompt.
+local function buildEntrance(entrance)
+	local model = Instance.new("Model")
+	model.Name = "DungeonEntrance_" .. entrance.Key
+	local base = entrance.CFrame -- Blick (−Z) = Vorderseite
+	local concrete = Color3.fromRGB(118, 122, 112)
+	local dark = Color3.fromRGB(70, 72, 68)
+	local steel = Color3.fromRGB(64, 66, 70)
+	local purple = Color3.fromRGB(170, 70, 255)
+	part(model, "Foundation", Vector3.new(22, 6, 18), base * CFrame.new(0, -2.4, 1), dark, Enum.Material.Concrete)
+	local body = part(model, "Body", Vector3.new(18, 9, 13), base * CFrame.new(0, 4.5, 3), concrete, Enum.Material.Concrete)
+	model.PrimaryPart = body
+	part(model, "Roof", Vector3.new(20, 1.4, 15), base * CFrame.new(0, 9.7, 3), dark, Enum.Material.Concrete)
+	-- Sandsäcke auf dem Dach und ein Lüftungsrohr
+	part(model, "Vent", Vector3.new(1.6, 3, 1.6), base * CFrame.new(5.5, 11.8, 6), steel, Enum.Material.CorrodedMetal)
+	for i = -1, 1 do
+		part(model, "Sandbag", Vector3.new(3.2, 1.1, 1.8), base * CFrame.new(i * 3.4 - 2, 11, 7), Color3.fromRGB(150, 132, 96),
+			Enum.Material.Fabric)
+	end
+	-- vorgezogener Eingang: Wangen, Sturz, Stahlrahmen
+	for _, x in { -4.6, 4.6 } do
+		part(model, "Cheek", Vector3.new(2.2, 9, 4), base * CFrame.new(x, 4.5, -5.5), concrete, Enum.Material.Concrete)
+		part(model, "Frame", Vector3.new(0.6, 7.4, 0.6), base * CFrame.new(x * 0.72, 3.7, -7.2), steel, Enum.Material.Metal)
+	end
+	part(model, "Lintel", Vector3.new(11.4, 2, 4), base * CFrame.new(0, 8.4, -5.5), concrete, Enum.Material.Concrete)
+	part(model, "FrameTop", Vector3.new(7.2, 0.6, 0.6), base * CFrame.new(0, 7.4, -7.2), steel, Enum.Material.Metal)
+	part(model, "Door", Vector3.new(6.4, 7.2, 0.3), base * CFrame.new(0, 3.6, -3.6), Color3.fromRGB(8, 6, 12), Enum.Material.SmoothPlastic)
+	local rift = part(model, "Rift", Vector3.new(6, 6.8, 0.2), base * CFrame.new(0, 3.5, -4.2), purple, Enum.Material.Neon, false)
+	rift.Transparency = 0.35
+	light(rift, purple, 22, 2.2)
+	local mist = Instance.new("ParticleEmitter")
+	mist.Color = ColorSequence.new(purple)
+	mist.LightEmission = 0.8
+	mist.Size = NumberSequence.new(1.2, 0)
+	mist.Transparency = NumberSequence.new(0.4, 1)
+	mist.Lifetime = NumberRange.new(1.2, 2)
+	mist.Rate = 10
+	mist.Speed = NumberRange.new(1, 2.5)
+	mist.SpreadAngle = Vector2.new(25, 25)
+	mist.EmissionDirection = Enum.NormalId.Front
+	mist.Parent = rift
+	-- Vorplatz aus Beton vor der Tür
+	part(model, "Apron", Vector3.new(9, 0.6, 5), base * CFrame.new(0, 0.3, -10.4), dark, Enum.Material.Concrete)
+	-- Warnlampen neben der Tür
+	for _, x in { -6.2, 6.2 } do
+		local lamp = part(model, "Lamp", Vector3.new(0.8, 0.8, 0.8), base * CFrame.new(x, 7.2, -7.7), Color3.fromRGB(255, 70, 50),
+			Enum.Material.Neon, false)
+		light(lamp, Color3.fromRGB(255, 80, 60), 14, 1.4)
+	end
+	-- Schild über dem Eingang
+	local board = part(model, "Sign", Vector3.new(10, 2, 0.3), base * CFrame.new(0, 10.2, -7.7), Color3.fromRGB(30, 26, 22),
+		Enum.Material.Metal)
+	sign(board, Enum.NormalId.Front, "DUNGEON · " .. entrance.Title, Color3.fromRGB(220, 170, 255))
+	-- Anzeige von weitem
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Label"
+	gui.Size = UDim2.fromOffset(220, 40)
+	gui.StudsOffset = Vector3.new(0, 10, 0)
+	gui.MaxDistance = 260
+	gui.Parent = body
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "DUNGEON"
+	text.Font = Enum.Font.BuilderSansExtraBold
+	text.TextSize = 22
+	text.TextColor3 = Color3.fromRGB(205, 150, 255)
+	text.TextStrokeTransparency = 0.3
+	text.Parent = gui
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "DungeonPrompt"
+	prompt.ActionText = "Betreten (Dungeon-Schlüssel)"
+	prompt.ObjectText = "Dungeon"
+	prompt.HoldDuration = 1
+	prompt.MaxActivationDistance = D.EntranceRange
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = rift
+	prompt.Triggered:Connect(function(player)
+		DungeonService.Enter(player, entrance)
+	end)
+	model.Parent = folder
+	return model
+end
+
+-- ---------- Halle ----------
+
+-- Abgeschlossene Halle mit Boden "Ground" (Oberkante y = 0 von origin), Ziegelwänden, Decke mit Trägern, Lampen, vier
+-- Pfeilern und Sandsack-Deckung. Gitter in den Wänden (Spawns der Zombies), vorn das Portal. Gibt Modell und Stellen zurück.
+local function buildHall(origin)
+	local hall = D.Hall
+	local W, Dp, H = hall.Width, hall.Depth, hall.Height
+	local model = Instance.new("Model")
+	model.Name = "DungeonHall"
+	local brick = Color3.fromRGB(92, 76, 68)
+	local concrete = Color3.fromRGB(84, 86, 84)
+	local steel = Color3.fromRGB(58, 60, 64)
+	local floor = part(model, "Ground", Vector3.new(W + 8, 2, Dp + 8), origin * CFrame.new(0, -1, 0), Color3.fromRGB(60, 58, 56),
+		Enum.Material.Slate)
+	model.PrimaryPart = floor
+	part(model, "Ceiling", Vector3.new(W + 8, 2, Dp + 8), origin * CFrame.new(0, H + 1, 0), Color3.fromRGB(46, 46, 48), Enum.Material.Concrete)
+	for _, side in { { Vector3.new(W + 8, H, 4), Vector3.new(0, H / 2, Dp / 2 + 2) }, { Vector3.new(W + 8, H, 4), Vector3.new(0, H / 2, -Dp / 2 - 2) },
+		{ Vector3.new(4, H, Dp), Vector3.new(W / 2 + 2, H / 2, 0) }, { Vector3.new(4, H, Dp), Vector3.new(-W / 2 - 2, H / 2, 0) } } do
+		part(model, "Wall", side[1], origin * CFrame.new(side[2]), brick, Enum.Material.Brick)
+		-- Sockel aus Beton
+		local skirt = Vector3.new(math.max(side[1].X - 0.2, 1), 3, math.max(side[1].Z - 0.2, 1))
+		local inward = -side[2].Unit * 0.6
+		part(model, "Skirting", skirt, origin * CFrame.new(Vector3.new(side[2].X, 1.5, side[2].Z) + Vector3.new(inward.X, 0, inward.Z)),
+			concrete, Enum.Material.Concrete, false)
+	end
+	-- Deckenträger mit Lampen
+	for i = -2, 2 do
+		local x = i * W / 5
+		part(model, "Beam", Vector3.new(2, 2, Dp), origin * CFrame.new(x, H - 1, 0), steel, Enum.Material.CorrodedMetal)
+	end
+	for _, spot in { Vector2.new(-36, -22), Vector2.new(36, -22), Vector2.new(-36, 22), Vector2.new(36, 22), Vector2.new(0, 0) } do
+		part(model, "Chain", Vector3.new(0.3, 6, 0.3), origin * CFrame.new(spot.X, H - 5, spot.Y), steel, Enum.Material.Metal, false)
+		part(model, "Shade", Vector3.new(3, 0.8, 3), origin * CFrame.new(spot.X, H - 8.3, spot.Y), steel, Enum.Material.Metal, false)
+		local bulb = part(model, "Bulb", Vector3.new(1.2, 0.6, 1.2), origin * CFrame.new(spot.X, H - 8.9, spot.Y),
+			Color3.fromRGB(255, 196, 120), Enum.Material.Neon, false)
+		light(bulb, Color3.fromRGB(255, 190, 120), 52, 1.6)
+	end
+	-- Pfeiler und Deckung
+	for _, spot in { Vector2.new(-32, -12), Vector2.new(32, -12), Vector2.new(-32, 18), Vector2.new(32, 18) } do
+		part(model, "Pillar", Vector3.new(5, H, 5), origin * CFrame.new(spot.X, H / 2, spot.Y), concrete, Enum.Material.Concrete)
+	end
+	for _, spot in { Vector3.new(-14, 0, -8), Vector3.new(14, 0, -8), Vector3.new(0, 0, 12) } do
+		part(model, "Sandbags", Vector3.new(10, 2.6, 2.6), origin * CFrame.new(spot + Vector3.new(0, 1.3, 0)), Color3.fromRGB(140, 122, 90),
+			Enum.Material.Fabric)
+	end
+	for _, spot in { Vector3.new(-52, 0, -36), Vector3.new(52, 0, -36), Vector3.new(-54, 0, 30) } do
+		part(model, "Crate", Vector3.new(4, 4, 4), origin * CFrame.new(spot + Vector3.new(0, 2, 0)), Color3.fromRGB(116, 86, 54),
+			Enum.Material.WoodPlanks)
+	end
+	-- Blutflecken am Boden
+	for _ = 1, 8 do
+		local stain = part(model, "Blood", Vector3.new(0.1, random:NextNumber(3, 7), random:NextNumber(3, 7)),
+			origin * CFrame.new(random:NextNumber(-W / 2 + 6, W / 2 - 6), 0.05, random:NextNumber(-Dp / 2 + 6, Dp / 2 - 6))
+				* CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(80, 14, 12), Enum.Material.SmoothPlastic, false)
+		stain.Shape = Enum.PartType.Cylinder
+		stain.Transparency = 0.2
+	end
+	-- Gitter (Zombie-Spawns): hinten drei, an den Seiten je zwei
+	local grates = {}
+	local gratePlaces = {
+		{ Vector3.new(-40, 0, Dp / 2), Vector3.new(0, 0, -1) }, { Vector3.new(0, 0, Dp / 2), Vector3.new(0, 0, -1) },
+		{ Vector3.new(40, 0, Dp / 2), Vector3.new(0, 0, -1) },
+		{ Vector3.new(W / 2, 0, 24), Vector3.new(-1, 0, 0) }, { Vector3.new(W / 2, 0, -6), Vector3.new(-1, 0, 0) },
+		{ Vector3.new(-W / 2, 0, 24), Vector3.new(1, 0, 0) }, { Vector3.new(-W / 2, 0, -6), Vector3.new(1, 0, 0) },
+	}
+	for _, place in gratePlaces do
+		local at, inward = place[1], place[2]
+		local face = origin * CFrame.lookAt(at + inward * 0.2 + Vector3.new(0, 5, 0), at + inward * 2 + Vector3.new(0, 5, 0))
+		part(model, "GrateHole", Vector3.new(8, 10, 0.4), face, Color3.fromRGB(6, 6, 8), Enum.Material.SmoothPlastic, false)
+		for k = -3, 3 do
+			part(model, "GrateBar", Vector3.new(0.35, 10, 0.35), face * CFrame.new(k * 1.15, 0, -0.4), steel, Enum.Material.Metal, false)
+		end
+		local lamp = part(model, "GrateLamp", Vector3.new(1, 0.6, 0.6), face * CFrame.new(0, 6, -0.4), Color3.fromRGB(255, 60, 40),
+			Enum.Material.Neon, false)
+		light(lamp, Color3.fromRGB(255, 60, 40), 12, 1)
+		table.insert(grates, origin * (at + inward * 4))
+	end
+	-- Graffiti an der Seitenwand
+	local scrawl = part(model, "Graffiti", Vector3.new(0.2, 5, 22), origin * CFrame.new(W / 2 - 0.2, 12, 10), brick, Enum.Material.Brick, false)
+	scrawl.Transparency = 1
+	sign(scrawl, Enum.NormalId.Left, "KEIN ZURÜCK", Color3.fromRGB(150, 24, 20), Enum.Font.PermanentMarker)
+	-- Portal vorn in der Mitte: Rahmen, Feld (zu: rot und blass, offen: grün und hell), Schild AUSGANG
+	local portalAt = Vector3.new(0, 0, -Dp / 2 + 1.5)
+	for _, x in { -5.2, 5.2 } do
+		part(model, "PortalPillar", Vector3.new(1.6, 14, 1.6), origin * CFrame.new(portalAt + Vector3.new(x, 7, 0)), steel, Enum.Material.Metal)
+	end
+	part(model, "PortalTop", Vector3.new(12, 1.6, 1.6), origin * CFrame.new(portalAt + Vector3.new(0, 14.2, 0)), steel, Enum.Material.Metal)
+	local field = part(model, "PortalField", Vector3.new(8.8, 13.4, 0.4), origin * CFrame.new(portalAt + Vector3.new(0, 6.8, 0)),
+		Color3.fromRGB(200, 40, 40), Enum.Material.Neon, false)
+	field.Transparency = 0.75
+	local glow = light(field, Color3.fromRGB(200, 40, 40), 18, 0.6)
+	local exitSign = part(model, "ExitSign", Vector3.new(8, 1.8, 0.3), origin * CFrame.new(portalAt + Vector3.new(0, 16.4, 0.4)),
+		Color3.fromRGB(20, 22, 20), Enum.Material.Metal)
+	sign(exitSign, Enum.NormalId.Back, "AUSGANG", Color3.fromRGB(110, 230, 140))
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "PortalPrompt"
+	prompt.ActionText = "Dungeon verlassen"
+	prompt.ObjectText = "Portal"
+	prompt.HoldDuration = 0.6
+	prompt.MaxActivationDistance = 12
+	prompt.RequiresLineOfSight = false
+	prompt.Enabled = false
+	prompt.Parent = field
+	model.Parent = folder
+	local spawns = {}
+	for i = -2, 1 do
+		table.insert(spawns, origin * CFrame.new(i * 5 + 2.5, 3, -Dp / 2 + 12))
+	end
+	return model, { Grates = grates, Spawns = spawns, Field = field, Glow = glow, Prompt = prompt }
+end
+
+local function setPortal(run, open)
+	local hall = run.Hall
+	hall.Prompt.Enabled = open
+	hall.Field.Color = open and Color3.fromRGB(80, 230, 140) or Color3.fromRGB(200, 40, 40)
+	hall.Field.Transparency = open and 0.25 or 0.75
+	hall.Glow.Color = hall.Field.Color
+	hall.Glow.Brightness = open and 2.4 or 0.6
+	hall.Glow.Range = open and 28 or 18
+end
+
+-- ---------- Läufe ----------
+
+local function memberCount(run)
+	local n = 0
+	for _ in run.Members do
+		n += 1
+	end
+	return n
+end
+
+local function aliveZombies(run)
+	local n = 0
+	for model in run.Zombies do
+		local humanoid = model.Parent and model:FindFirstChildOfClass("Humanoid")
+		local root = model:FindFirstChild("HumanoidRootPart")
+		if humanoid and humanoid.Health > 0 and root and root.Position.Y > run.Origin.Y - 30 then
+			n += 1
+		else
+			-- tot, weg oder aus der Halle gefallen
+			if model.Parent and humanoid and humanoid.Health > 0 then
+				model:Destroy()
+			end
+			run.Zombies[model] = nil
+		end
+	end
+	return n
+end
+
+local function publish(run)
+	local left = run.ToSpawn
+	for _ in run.Zombies do
+		left += 1
+	end
+	for player, member in run.Members do
+		player:SetAttribute("Dungeon", HttpService:JSONEncode({ T = run.Entrance.Title, S = run.State, W = run.Wave,
+			L = run.State == "Wave" and left or 0, E = run.EndsAt, C = member.Coins, I = member.ItemCount, K = member.Cleared }))
+	end
+end
+
+local function teleport(player, cframe)
+	local _, character, humanoid = rootOf(player)
+	if not character or not humanoid then
+		return
+	end
+	task.spawn(pcall, player.RequestStreamAroundAsync, player, cframe.Position, 5)
+	character:PivotTo(cframe)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root then
+		root.AssemblyLinearVelocity = Vector3.zero
+	end
+	MovementGuard.Teleported(character)
+end
+
+local function endRun(run)
+	for model in run.Zombies do
+		if model.Parent then
+			model:Destroy()
+		end
+	end
+	run.Zombies = {}
+	if run.Model then
+		run.Model:Destroy()
+		run.Model = nil
+	end
+	runs[run.Slot] = nil
+end
+
+-- Spieler verlässt den Lauf. reason: "Portal" (Beute auszahlen, vor den Bunker), "Dead" (Beute verloren), sonst still.
+local function leaveRun(run, player, reason)
+	local member = run.Members[player]
+	if not member then
+		return
+	end
+	run.Members[player] = nil
+	playerRun[player] = nil
+	if player.Parent then
+		player:SetAttribute("Dungeon", nil)
+	end
+	if reason == "Portal" then
+		teleport(player, run.Entrance.Exit)
+		Sfx.At("AbilityCloak", run.Entrance.Exit.Position)
+		if member.Coins > 0 then
+			ProgressService.AddCoins(player, member.Coins, "Dungeon")
+		end
+		local stashed = 0
+		for _, item in member.Items do
+			local put = InventoryService.Give(player, item.Id, item.Count)
+			if put < item.Count then
+				stashed += InventoryService.GiveStash(player, item.Id, item.Count - put)
+			end
+		end
+		if member.Cleared > 0 then
+			ExtLevelService.Add(player, D.XPPerWave * member.Cleared, "Dungeon")
+		end
+		banner(player, "DUNGEON GESCHAFFT", string.format("%d Wellen · %d Münzen · %d Items", member.Cleared, member.Coins,
+			member.ItemCount) .. (stashed > 0 and " · Rest im Lager" or ""), "Good")
+	elseif reason == "Dead" and player.Parent then
+		status(player, "Im Dungeon gestorben: die Dungeon-Beute ist verloren.")
+	end
+	if not next(run.Members) then
+		endRun(run)
+	else
+		publish(run)
+	end
+end
+
+local function rollKind(weights)
+	local total = 0
+	for _, weight in weights do
+		total += weight
+	end
+	local roll = random:NextNumber(0, total)
+	for kind, weight in weights do
+		roll -= weight
+		if roll <= 0 then
+			return kind
+		end
+	end
+	return "Walker"
+end
+
+-- nächstes Mitglied (für Zombies ohne Ziel)
+local function nearestMember(run, position)
+	local best, bestDistance = nil, math.huge
+	for player in run.Members do
+		local root = rootOf(player)
+		if root then
+			local distance = (root.Position - position).Magnitude
+			if distance < bestDistance then
+				best, bestDistance = player, distance
+			end
+		end
+	end
+	return best
+end
+
+local function spawnOne(run, kind)
+	local grate = run.Hall.Grates[random:NextInteger(1, #run.Hall.Grates)]
+	local position = grate + Vector3.new(random:NextNumber(-2, 2), 0, random:NextNumber(-2, 2))
+	local armored = kind ~= "Boss" and random:NextNumber() < run.WaveInfo.Armored or false
+	local model = ZombieService.Spawn(position, kind, true, armored)
+	if not model then
+		return false -- Obergrenze des Servers erreicht: gleich noch einmal
+	end
+	ZombieService.MarkDungeon(model)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local factor = run.WaveInfo.Health * (kind == "Boss" and 0.6 or 1)
+		humanoid.MaxHealth = math.floor(humanoid.MaxHealth * factor)
+		humanoid.Health = humanoid.MaxHealth
+	end
+	local info = ZombieService.Info(model)
+	if info then
+		info.Target = nearestMember(run, position)
+	end
+	run.Zombies[model] = true
+	return true
+end
+
+local function startWave(run, n)
+	run.Wave = n
+	run.State = "Wave"
+	run.EndsAt = nil
+	run.WaveInfo = ExtinctionConfig.DungeonWave(n, memberCount(run))
+	run.ToSpawn = run.WaveInfo.Count
+	run.Bosses = run.WaveInfo.Bosses
+	run.NextSpawn = 0
+	setPortal(run, false)
+	Sfx.At("WaveSting", run.Origin.Position + Vector3.new(0, 4, 0))
+	for player in run.Members do
+		local count = run.ToSpawn + run.Bosses
+		banner(player, "WELLE " .. n, run.Bosses > 0 and string.format("%d Zombies kommen · mit Blutbestie", count)
+			or string.format("%d Zombies kommen", count), "Warning")
+	end
+	publish(run)
+end
+
+local function waveCleared(run)
+	local reward = ExtinctionConfig.DungeonReward(run.Wave)
+	for player, member in run.Members do
+		member.Cleared = run.Wave
+		member.Coins += reward.Coins
+		for _, item in ExtinctionConfig.RollLoot(reward.Table, reward.Items, random) do
+			table.insert(member.Items, item)
+			member.ItemCount += 1
+		end
+		banner(player, "WELLE " .. run.Wave .. " GESCHAFFT", string.format("Portal offen für %d s · Beute: %d Münzen · %d Items",
+			D.BreakTime, member.Coins, member.ItemCount), "Good")
+	end
+	run.State = "Break"
+	run.Ends = os.clock() + D.BreakTime
+	run.EndsAt = workspace:GetServerTimeNow() + D.BreakTime
+	setPortal(run, true)
+	publish(run)
+end
+
+local function tickRun(run, now)
+	-- Mitglieder prüfen: weg, tot (der Tod selbst kommt über OnDeath, hier nur zur Sicherheit), aus der Halle
+	-- (Teleport von außen) = raus ohne Beute
+	for player, member in run.Members do
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not player.Parent then
+			leaveRun(run, player, nil)
+		elseif not humanoid or not root or humanoid.Health <= 0 then
+			member.DeadSince = member.DeadSince or now
+			if now - member.DeadSince > 3 then
+				leaveRun(run, player, "Dead")
+			end
+		else
+			local localPos = run.Origin:PointToObjectSpace(root.Position)
+			if math.abs(localPos.X) > D.Hall.Width or math.abs(localPos.Z) > D.Hall.Depth or localPos.Y < -30
+				or localPos.Y > D.Hall.Height + 20 then
+				leaveRun(run, player, nil)
+			end
+		end
+	end
+	if not runs[run.Slot] then
+		return
+	end
+	if run.State == "Start" then
+		if now >= run.Ends then
+			startWave(run, 1)
+		end
+	elseif run.State == "Wave" then
+		local alive = aliveZombies(run)
+		if (run.ToSpawn > 0 or run.Bosses > 0) and alive < D.MaxAlive and now >= run.NextSpawn then
+			run.NextSpawn = now + D.SpawnEvery
+			if run.Bosses > 0 then
+				if spawnOne(run, "Boss") then
+					run.Bosses -= 1
+				end
+			elseif spawnOne(run, rollKind(run.WaveInfo.Weights)) then
+				run.ToSpawn -= 1
+			end
+		end
+		-- Zombies ohne Ziel jagen das nächste Mitglied (die Halle ist größer als ihre Sichtweite)
+		for model in run.Zombies do
+			local info = ZombieService.Info(model)
+			if info and (not info.Target or not run.Members[info.Target]) then
+				info.Target = nearestMember(run, info.Root.Position)
+			end
+		end
+		if run.ToSpawn <= 0 and run.Bosses <= 0 and aliveZombies(run) == 0 then
+			waveCleared(run)
+			return
+		end
+		if now >= (run.NextPublish or 0) then
+			run.NextPublish = now + 1
+			publish(run)
+		end
+	elseif run.State == "Break" then
+		if now >= run.Ends then
+			startWave(run, run.Wave + 1)
+		end
+	end
+end
+
+local function freeSlot()
+	for slot = 1, D.MaxRuns do
+		if not runs[slot] then
+			return slot
+		end
+	end
+	return nil
+end
+
+local function startRun(slot, entrance, group)
+	local origin = CFrame.new(options.Center + D.Origin + Vector3.new((slot - 1) * D.SlotSpacing, 0, 0))
+	local model, hall = buildHall(origin)
+	local run = { Slot = slot, Origin = origin, Entrance = entrance, Model = model, Hall = hall, Members = {}, Zombies = {},
+		State = "Start", Wave = 0, ToSpawn = 0, Bosses = 0, Ends = os.clock() + D.StartDelay,
+		EndsAt = workspace:GetServerTimeNow() + D.StartDelay }
+	runs[slot] = run
+	local prompt = hall.Prompt
+	prompt.Triggered:Connect(function(player)
+		if playerRun[player] == run and run.State == "Break" then
+			leaveRun(run, player, "Portal")
+		end
+	end)
+	for index, player in group do
+		run.Members[player] = { Coins = 0, Items = {}, ItemCount = 0, Cleared = 0 }
+		playerRun[player] = run
+		local _, character = rootOf(player)
+		if character then
+			character:SetAttribute("ZombieShieldUntil", nil) -- Anti-Zombie-Spritze wirkt im Dungeon nicht
+		end
+		teleport(player, hall.Spawns[(index - 1) % #hall.Spawns + 1])
+		banner(player, entrance.Title, string.format("Welle 1 in %d s · nach jeder Welle öffnet sich das Portal", D.StartDelay), "Warning")
+	end
+	setPortal(run, false)
+	publish(run)
+	return run
+end
+
+-- ---------- Schnittstelle ----------
+
+-- Spieler betritt den Dungeon an entrance (E am Bunker): Schlüssel nehmen, Squad in der Nähe mitnehmen. Gibt den Lauf zurück.
+function DungeonService.Enter(player, entrance)
+	if not options or not D.Enabled or not entrance or playerRun[player] or not options.IsMember(player) then
+		return nil
+	end
+	local root, _, humanoid = rootOf(player)
+	if not root or not humanoid or (root.Position - entrance.Position).Magnitude > D.EntranceRange + 12 then
+		return nil
+	end
+	if humanoid.SeatPart then
+		status(player, "Steig erst aus dem Fahrzeug.")
+		return nil
+	end
+	if InventoryService.CountCarried(player, D.KeyItem) < 1 then
+		status(player, "Du brauchst einen Dungeon-Schlüssel (Lootdrops, Events, selten von Zombies).")
+		return nil
+	end
+	local slot = freeSlot()
+	if not slot then
+		status(player, "Alle Dungeons sind gerade belegt. Versuch es gleich noch einmal.")
+		return nil
+	end
+	local group = { player }
+	local squad = player:GetAttribute("SquadId")
+	if squad ~= nil then
+		for _, other in options.Players() do
+			local otherRoot, _, otherHumanoid = rootOf(other)
+			if other ~= player and other:GetAttribute("SquadId") == squad and not playerRun[other] and otherRoot and otherHumanoid
+				and not otherHumanoid.SeatPart and (otherRoot.Position - entrance.Position).Magnitude <= D.SquadRange then
+				table.insert(group, other)
+			end
+		end
+	end
+	if InventoryService.TakeCarried(player, D.KeyItem, 1) < 1 then
+		return nil
+	end
+	return startRun(slot, entrance, group)
+end
+
+-- Lauf eines Spielers (nil = nicht im Dungeon)
+function DungeonService.RunOf(player)
+	return playerRun[player]
+end
+
+-- Wo die Tasche eines Spielers fällt, der im Dungeon stirbt oder das Spiel verlässt: vor dem Bunker (nil = nicht im Dungeon)
+function DungeonService.BagSpot(player)
+	local run = playerRun[player]
+	return run and run.Entrance.Exit.Position or nil
+end
+
+-- Tod (Extinction.OnDeath): raus aus dem Lauf, Beute verloren
+function DungeonService.OnDeath(player)
+	local run = playerRun[player]
+	if run then
+		leaveRun(run, player, "Dead")
+	end
+end
+
+-- Offene Welt verlassen (Extinction.OnLeave)
+function DungeonService.OnLeave(player)
+	local run = playerRun[player]
+	if run then
+		leaveRun(run, player, nil)
+	end
+end
+
+function DungeonService.Entrances()
+	return entrances
+end
+
+function DungeonService.Runs()
+	return runs
+end
+
+-- Admin: alle Läufe beenden (Spieler kommen vor ihren Bunker, ohne Beute). Gibt die Anzahl zurück.
+function DungeonService.StopAll()
+	local count = 0
+	for _, run in runs do
+		count += 1
+		for player in run.Members do
+			local exit = run.Entrance.Exit
+			leaveRun(run, player, nil)
+			teleport(player, exit)
+		end
+		if runs[run.Slot] then
+			endRun(run)
+		end
+	end
+	return count
+end
+
+-- opts = { Map, Center (Vector3), Players(), IsMember(player), InSafeZone(position), GroundY(x, z), IsWater(x, z) }
+function DungeonService.Init(opts)
+	options = opts
+	entrances = {}
+	if D.Enabled then
+		for _, entry in D.Entrances do
+			local position = findSpot(options.Center.X + entry.X, options.Center.Z + entry.Z)
+			-- Vorderseite zur Mitte der Welt
+			local look = Vector3.new(options.Center.X, position.Y, options.Center.Z)
+			local base = (look - position).Magnitude > 1 and CFrame.lookAt(position, look) or CFrame.new(position)
+			local entrance = { Key = entry.Key, Title = entry.Title, Position = position, CFrame = base,
+				Exit = base * CFrame.new(0, 3, -15) }
+			entrance.Model = buildEntrance(entrance)
+			table.insert(entrances, entrance)
+		end
+	end
+	publishEntrances()
+	local elapsed = 0
+	RunService.Heartbeat:Connect(function(dt)
+		elapsed += dt
+		if elapsed < STEP then
+			return
+		end
+		elapsed = 0
+		local now = os.clock()
+		for _, run in runs do
+			local ok, err = pcall(tickRun, run, now)
+			if not ok then
+				warn("Dungeon: " .. tostring(err))
+			end
+		end
+	end)
+	Players.PlayerRemoving:Connect(DungeonService.OnLeave)
+end
+
+return DungeonService

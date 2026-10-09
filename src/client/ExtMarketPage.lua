@@ -52,9 +52,9 @@ local RIGHT_X, RIGHT_W = 884, 420
 local CARD_W, CARD_H, CARD_GAP = 205, 262, 10
 local BAG_COLUMNS, BAG_CELL, BAG_GAP = 6, 58, 6
 
--- Heilung, Rüstung und Spritzen laufen unter AUSRÜSTUNG, Granaten und Molotows unter WAFFEN
+-- Heilung, Rüstung, Spritzen und Dungeon-Schlüssel laufen unter AUSRÜSTUNG, Granaten und Molotows unter WAFFEN
 local function groupOf(kind)
-	if kind == "Heal" or kind == "Armor" or kind == "Repel" then
+	if kind == "Heal" or kind == "Armor" or kind == "Repel" or kind == "Key" then
 		return "Gear"
 	elseif kind == "Throwable" then
 		return "Weapon"

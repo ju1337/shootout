@@ -212,6 +212,7 @@ local function release(convoy)
 			table.insert(items, item)
 		end
 	end
+	ExtinctionConfig.AddDungeonKey(items, "Convoy", random)
 	convoy.LootId = LootService.Create(at, items, "Airdrop", "KONVOI-LADUNG",
 		{ HoldTime = K.OpenTime, Lifetime = K.Lifetime, Meta = { Convoy = convoy.Id } })
 	for player in convoy.Attackers do

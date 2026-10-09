@@ -51,6 +51,7 @@ local HordeService = require(ServerShared.HordeService)
 local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
+local DungeonService = require(ServerShared.DungeonService)
 local Telemetry = require(ServerShared.Telemetry)
 local Badges = require(ServerShared.Badges)
 
@@ -262,6 +263,7 @@ end
 -- Tasche fallen lassen (Tod oder Verlassen draußen). Gibt true zurück, wenn etwas gefallen ist. Der Besitzer sieht sie auf
 -- Minimap und Weltkarte (Attribut ExtDeathBag), bis sie leer geräumt oder abgelaufen ist; plündern kann sie jeder.
 local function dropBag(player, position)
+	position = DungeonService.BagSpot(player) or position -- im Dungeon gestorben: Tasche vor dem Bunker
 	local items = InventoryService.TakeAll(player)
 	if #items == 0 then
 		return false
@@ -805,6 +807,29 @@ function Extinction.Init(modeManager)
 			end
 		end,
 	})
+
+	-- Dungeons: Bunker draußen, E mit Dungeon-Schlüssel, eigene Halle mit Zombiewellen, Portal nach jeder Welle
+	DungeonService.Init({
+		Map = map,
+		Center = center,
+		IsMember = Extinction.IsMember,
+		InSafeZone = Extinction.InSafeZone,
+		IsWater = isWater,
+		GroundY = function(x, z)
+			return center.Y + ExtinctionTerrain.Height(x - center.X, z - center.Z)
+		end,
+		Players = function()
+			local list = {}
+			for player in members do
+				table.insert(list, player)
+			end
+			return list
+		end,
+	})
+	table.insert(Extinction.OnDeath, function(player)
+		DungeonService.OnDeath(player)
+	end)
+	table.insert(Extinction.OnLeave, DungeonService.OnLeave)
 
 	-- Spiel verlassen: vor dem letzten Speichern die Strafe anwenden (draußen = Tasche weg)
 	ProgressService.OnLeaving(function(player)

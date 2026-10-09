@@ -376,6 +376,21 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   Fallschirm (60 % Chance in der roten Zone, dort 2 Items mehr; bei jedem Wechsel der roten Zone kommt außerdem ein
   Abwurf in die neue Zone). Gelandet: **E 8 Sekunden halten** öffnet sie – beste Beute, dazu Begleiter-Zombies. Bleibt
   5 Minuten.
+- **Dungeons** (`src/server-shared/DungeonService.lua`, Anzeige `src/client/DungeonClient.lua`, Werte
+  `ExtinctionConfig.Dungeon`): vier feste Eingänge draußen (BUNKER NORD, OST, SÜD, WEST; Betonbunker mit violett
+  flimmerndem Durchgang, Schild DUNGEON, auf der Weltkarte als violettes Quadrat). **E am Bunker** verbraucht einen
+  **Dungeon-Schlüssel** (Item `DungeonKey`, aus Tasche oder Container; nicht zu kaufen, im Spielermarkt handelbar) und
+  bringt dich und alle Squad-Mitglieder, die höchstens 30 Studs entfernt stehen, in eine eigene, abgeschlossene Halle
+  abseits der Karte (bis zu 8 Gruppen gleichzeitig). Nach 10 Sekunden kommt Welle 1, danach **Welle um Welle mehr
+  Zombies** aus den Gittern in den Wänden: jede Welle mehr (je Spieler noch mehr), mehr Leben, ab Welle 3 Brocken, ab
+  Welle 4 gepanzerte, jede 5. Welle eine Blutbestie (`ExtinctionConfig.DungeonWave`). Nach jeder geschafften Welle leuchtet
+  das **Portal** an der Stirnseite 20 Sekunden grün: E dort = raus vor den Bunker mit der Beute aller geschafften Wellen
+  (Münzen, Items in die Tasche bzw. was nicht passt ins Lager, 60 EP je Welle; `ExtinctionConfig.DungeonReward`), sonst
+  geht es mit der nächsten Welle weiter. Tod im Dungeon zählt wie draußen: die Tasche fällt **vor dem Bunker**, die
+  Dungeon-Beute ist weg. Die Anti-Zombie-Spritze wirkt drinnen nicht. Oben in der Mitte zeigt eine Anzeige Welle,
+  Zombies übrig bzw. Countdown und die gesammelte Beute. **Schlüssel finden**: 5 % bei normalen Zombies (nicht im
+  Dungeon), dazu in Lootdrops (35 %), am Heli-Wrack (50 %), in der Horden-Kiste, der Konvoi-Ladung und bei Bossen (je 60 %)
+  und in der Sturmnacht-Belohnung (50 %) (`Dungeon.KeyChances`). Test: `tests/dungeon.test.luau`.
 - **Fahrzeuge** (`src/server-shared/VehicleService.lua`, Steuerung `src/client/VehicleClient.lua`): am
   Fahrzeugstand kaufen (Quad, Geländewagen mit 4 Sitzen, Sportwagen; Fahrräder und Quads auch von Zombies), auf
   einen Hotbar-Platz legen – die Taste spawnt das Fahrzeug vor einem und setzt einen direkt hinein. **K** packt es

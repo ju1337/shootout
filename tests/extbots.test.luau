@@ -189,7 +189,7 @@ if bag then
 			ids[item.Id] = (ids[item.Id] or 0) + item.Count
 		end
 	end
-	check(ids[first.ItemId] == 1, "seine Waffe liegt drin")
+	check((ids[first.ItemId] or 0) >= 1, "seine Waffe liegt drin") -- die Zusatz-Beute kann dieselbe Waffe noch einmal bringen
 	local ammoId = ExtinctionConfig.AmmoFor(first.ItemId)
 	check(ammoId ~= nil and (ids[ammoId] or 0) >= B.Ammo[1], "Munition dazu")
 	local entries = 0
@@ -202,7 +202,7 @@ if bag then
 	step(0.2)
 	alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
 	check(LootService.Take(alice, bag.Id, "All") == true, "Alice plündert die Tasche des Bots")
-	check(InventoryService.GetBag(alice) and require("Inventory").Count(InventoryService.GetBag(alice), first.ItemId) == 1,
+	check(InventoryService.GetBag(alice) and require("Inventory").Count(InventoryService.GetBag(alice), first.ItemId) >= 1,
 		"Waffe des Bots in Alices Tasche")
 end
 check(ProgressService.Get(alice).Coins == coins + B.KillCoins, "Kopfgeld " .. B.KillCoins .. " Münzen ("

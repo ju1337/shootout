@@ -11,6 +11,7 @@
 --   "Vehicle" Fahrzeug aus Vehicles (Vehicle); Taste spawnt es und setzt einen hinein, K packt es wieder ein
 --   "Repel"   Anti-Zombie-Spritze: Duration Sekunden spawnen beim Benutzer keine Zombies (Charakter-Attribut ZombieShieldUntil)
 --   "Throwable" Granate oder Molotow (Throwable = Eintrag in Throwables): Taste wirft in Blickrichtung (ThrowableService)
+--   "Key"     Dungeon-Schlüssel: E am Dungeon-Eingang (DungeonService) verbraucht einen aus Tasche oder Container
 --   "Attachment" Waffen-Aufsatz (Attachment = Id in AttachmentConfig, Slot = Platz): auf eine Waffe in der Tasche ziehen
 --             (oder Taste mit der Waffe in der Hand) hängt ihn an diese Waffe; ein alter Aufsatz desselben Platzes
 --             kommt zurück in die Tasche. Er bleibt an der Waffe (Inventar-Feld Att) und geht mit ihr verloren.
@@ -103,6 +104,8 @@ ExtinctionConfig.Items = {
 	-- Wurfwaffen (Werte in Throwables)
 	Grenade = { Kind = "Throwable", Name = "Granate", Throwable = "Frag", Price = 320, MaxStack = 3, Tier = 2 },
 	Molotov = { Kind = "Throwable", Name = "Molotow", Throwable = "Molotov", Price = 240, MaxStack = 3, Tier = 2 },
+	-- Dungeon-Schlüssel (DungeonService): nicht zu kaufen, nur zu finden (Dungeon.KeyChances); am Dungeon-Eingang verbraucht
+	DungeonKey = { Kind = "Key", Name = "Dungeon-Schlüssel", Value = 400, MaxStack = 5, Tier = 4 },
 	-- Fahrzeuge (Fahrrad gibt es nur bei Zombies)
 	V_Bicycle = { Kind = "Vehicle", Name = "Fahrrad", Vehicle = "Bicycle", Tier = 0 },
 	V_Quad = { Kind = "Vehicle", Name = "Quad", Vehicle = "Quad", Price = 900, Tier = 1 },
@@ -629,6 +632,87 @@ ExtinctionConfig.Horde = {
 	BonusItems = { 1, 2 },
 	Coins = 150,
 }
+
+-- ---------- Dungeons (DungeonService) ----------
+-- Feste Eingänge draußen (Entrances, X/Z relativ zur Mitte der Welt; der Bunker steht auf der nächsten freien, ebenen
+-- Stelle). E am Eingang verbraucht einen Dungeon-Schlüssel (KeyItem, aus Tasche oder Container) und nimmt den ganzen Squad
+-- mit, der höchstens SquadRange Studs entfernt steht. Jede Gruppe bekommt ihre eigene Halle abseits der Karte (Origin
+-- relativ zur Mitte, je Gruppe SlotSpacing weiter, höchstens MaxRuns gleichzeitig). Nach StartDelay Sekunden kommt Welle 1,
+-- jede weitere ist größer und härter (ExtinctionConfig.DungeonWave). Ist eine Welle erledigt, öffnet sich das Portal für
+-- BreakTime Sekunden: wer hindurchgeht, verlässt den Dungeon und bekommt die Beute aller Wellen, die er geschafft hat
+-- (ExtinctionConfig.DungeonReward: Münzen, Items in die Tasche, sonst ins Lager, XPPerWave EP je Welle). Danach schließt
+-- es, und die nächste Welle beginnt. Tod im Dungeon: die Tasche fällt draußen vor dem Eingang, die Dungeon-Beute ist weg.
+-- KeyChances: so wahrscheinlich liegt ein Schlüssel in der Beute (Zombie = normale Zombies, nicht im Dungeon; Boss =
+-- Blutbestie und Bosse an Gebäuden; die übrigen = Lootdrop, Heli-Wrack, Horden-Kiste, Konvoi, Sturmnacht).
+-- Stand für die Clients: Karten-Attribut "Dungeons" [{ Key, Title, X, Z }], Spieler-Attribut "Dungeon" (JSON, siehe
+-- DungeonService.publish) solange man drin ist.
+ExtinctionConfig.Dungeon = {
+	Enabled = true,
+	KeyItem = "DungeonKey",
+	KeyChances = { Zombie = 0.05, Boss = 0.6, Airdrop = 0.35, HeliCrash = 0.5, Horde = 0.6, Convoy = 0.6, Storm = 0.5 },
+	Entrances = {
+		{ Key = "Nord", Title = "BUNKER NORD", X = 450, Z = 1150 },
+		{ Key = "Ost", Title = "BUNKER OST", X = 1180, Z = -180 },
+		{ Key = "Sued", Title = "BUNKER SÜD", X = -150, Z = -1200 },
+		{ Key = "West", Title = "BUNKER WEST", X = -1050, Z = 230 },
+	},
+	EntranceSearch = 90,     -- so weit sucht der Server um X/Z nach einer freien, ebenen Stelle für den Bunker
+	EntranceRange = 10,      -- so nah muss man für E am Eingang sein
+	SquadRange = 30,         -- Squad-Mitglieder so nah am Eingang kommen mit
+	Origin = Vector3.new(-1200, 1500, -2900), -- erste Halle (relativ zur Mitte der Welt: südlich außerhalb, hoch oben)
+	SlotSpacing = 300,
+	MaxRuns = 8,
+	Hall = { Width = 120, Depth = 92, Height = 28 },
+	StartDelay = 10,
+	BreakTime = 20,
+	MaxAlive = 14,           -- so viele Zombies einer Welle gleichzeitig, der Rest kommt nach
+	SpawnEvery = 0.7,        -- Sekunden zwischen zwei Zombies aus den Gittern
+	XPPerWave = 60,
+}
+
+-- Welle n eines Dungeons mit players Spielern: { Count, Weights (Arten), Health (Faktor), Armored (Chance), Bosses }.
+-- Jede Welle bringt mehr Zombies (je Spieler mehr), härtere Arten und mehr Leben; jede 5. Welle eine Blutbestie dazu.
+function ExtinctionConfig.DungeonWave(n, players)
+	n = math.max(1, math.floor(n))
+	players = math.max(1, players or 1)
+	local weights
+	if n >= 10 then
+		weights = { Walker = 20, Runner = 40, Brute = 40 }
+	elseif n >= 6 then
+		weights = { Walker = 35, Runner = 35, Brute = 30 }
+	elseif n >= 3 then
+		weights = { Walker = 55, Runner = 30, Brute = 15 }
+	else
+		weights = { Walker = 80, Runner = 20 }
+	end
+	return {
+		Count = math.floor((6 + 3 * (n - 1)) * (1 + 0.35 * (players - 1)) + 0.5),
+		Weights = weights,
+		Health = 1 + 0.07 * (n - 1),
+		Armored = math.clamp(0.06 * (n - 3), 0, 0.5),
+		Bosses = n % 5 == 0 and math.floor(n / 5) or 0,
+	}
+end
+
+-- Beute für die geschaffte Welle n: { Coins, Table, Items } (wird beim Verlassen durchs Portal ausgezahlt)
+function ExtinctionConfig.DungeonReward(n)
+	n = math.max(1, math.floor(n))
+	return {
+		Coins = 40 + 25 * n,
+		Table = n >= 6 and "Airdrop" or n >= 3 and "Tier3" or "Tier2",
+		Items = 1 + math.floor(n / 3),
+	}
+end
+
+-- Mit chance (KeyChances[source]) einen Dungeon-Schlüssel an items hängen. Gibt items zurück.
+function ExtinctionConfig.AddDungeonKey(items, source, random)
+	local D = ExtinctionConfig.Dungeon
+	local chance = D and D.Enabled and D.KeyChances[source]
+	if chance and (random or Random.new()):NextNumber() < chance then
+		table.insert(items, { Id = D.KeyItem, Count = 1 })
+	end
+	return items
+end
 
 -- ---------- Zombies ----------
 -- Wenige und langsame Zombies: man kann ihnen davonlaufen (Spieler laufen 16, sprinten 24). Die Standardwerte gelten für

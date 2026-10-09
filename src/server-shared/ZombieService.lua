@@ -539,6 +539,10 @@ local function onDeath(model, info)
 	end
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
 	local items = root and rollCorpseLoot(info.Stats, info.Blood, red) or {}
+	-- Dungeon-Schlüssel: selten bei normalen Zombies, öfter bei Bossen – nie bei Zombies im Dungeon selbst
+	if root and not info.Dungeon then
+		ExtinctionConfig.AddDungeonKey(items, info.Stats.Boss and "Boss" or "Zombie", random)
+	end
 	if #items > 0 and root then
 		attachCorpseLoot(model, root, info, items)
 	end
@@ -1171,6 +1175,14 @@ function ZombieService.Init(opts)
 			despawnFar(os.clock())
 		end
 	end)
+end
+
+-- Zombie gehört zu einem Dungeon (DungeonService): kein Dungeon-Schlüssel in der Beute
+function ZombieService.MarkDungeon(model)
+	local info = zombies[model]
+	if info then
+		info.Dungeon = true
+	end
 end
 
 -- Bodenpunkt bei (x, z) für Spawns und Abwürfe: nur Gelände/Straße, nicht im Wasser, nicht zu steil (nil = ungeeignet)

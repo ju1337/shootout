@@ -145,16 +145,21 @@ local function reward()
 				ProgressService.QuestEvent(player, "XStorm", 1)
 				RedPointsService.Add(player, R.RedPoints, "Storm Night")
 				local names = {}
+				local rolled = {}
 				for _, roll in R.Items do
 					for _, item in ExtinctionConfig.RollLoot(roll[1], roll[2], random) do
-						local put = InventoryService.GiveStash(player, item.Id, item.Count)
-						if put < item.Count then
-							put += InventoryService.Give(player, item.Id, item.Count - put)
-						end
-						local config = ExtinctionConfig.Get(item.Id)
-						if put > 0 and config then
-							table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
-						end
+						table.insert(rolled, item)
+					end
+				end
+				ExtinctionConfig.AddDungeonKey(rolled, "Storm", random)
+				for _, item in rolled do
+					local put = InventoryService.GiveStash(player, item.Id, item.Count)
+					if put < item.Count then
+						put += InventoryService.Give(player, item.Id, item.Count - put)
+					end
+					local config = ExtinctionConfig.Get(item.Id)
+					if put > 0 and config then
+						table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
 					end
 				end
 				Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = "STORM CRATE",

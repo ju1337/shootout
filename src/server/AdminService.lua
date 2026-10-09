@@ -232,6 +232,8 @@ function AdminService.Init(manager)
 				end
 			elseif kind == "Throwables" then
 				list = { { "Grenade", 3 }, { "Molotov", 3 } }
+			elseif kind == "DungeonKey" then
+				list = { { ExtinctionConfig.Dungeon.KeyItem, 1 } }
 			else
 				list = { { "Rifle", 1 }, { "Ammo_Rifle", 120 }, { "Medkit", 3 }, { "HeavyVest", 1 }, { "Adrenaline", 2 } }
 			end

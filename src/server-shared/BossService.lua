@@ -111,6 +111,7 @@ local function onDeath(boss, model)
 			table.insert(items, { Id = entry.Id, Count = entry.Count })
 		end
 	end
+	ExtinctionConfig.AddDungeonKey(items, "Boss", random)
 	LootService.Create(position, items, "Drop", "BEUTE · " .. cfg.Name, { Lifetime = 300 })
 	local hit = Damage.LastHit(model)
 	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)

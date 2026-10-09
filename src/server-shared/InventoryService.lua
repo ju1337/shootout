@@ -336,6 +336,10 @@ local function startUse(player, state, item, config)
 		status(player, "Deine Rüstung ist voll.")
 		return
 	end
+	if config.Kind == "Repel" and player:GetAttribute("Dungeon") then
+		status(player, "Im Dungeon wirkt die Anti-Zombie-Spritze nicht.")
+		return
+	end
 	if config.Kind == "Repel" and (character:GetAttribute("ZombieShieldUntil") or 0) > workspace:GetServerTimeNow() then
 		status(player, "Die Anti-Zombie-Spritze wirkt noch.")
 		return
@@ -483,6 +487,8 @@ function InventoryService.Use(player, slot)
 		end
 	elseif config.Kind == "Ammo" then
 		status(player, config.Name .. " wird beim Nachladen benutzt.")
+	elseif config.Kind == "Key" then
+		status(player, "Der Schlüssel öffnet einen Dungeon-Eingang (Karte N) für dich und deinen Squad.")
 	elseif config.Kind == "Attachment" then
 		-- an die Waffe in der Hand bauen
 		if state.Equipped then
@@ -1030,6 +1036,29 @@ function InventoryService.TakeEverywhere(player, id, count)
 				end
 			end
 		end
+	end
+	if taken > 0 then
+		changed(player, state)
+	end
+	return taken
+end
+
+-- Stückzahl eines Items, das man dabei hat (Tasche und Container, nicht das Lager)
+function InventoryService.CountCarried(player, id)
+	local state = stateOf(player)
+	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Safe, id)) or 0
+end
+
+-- count Stück eines Items nehmen, das man dabei hat: erst aus dem Container, dann aus der Tasche (z.B. Dungeon-Schlüssel
+-- am Eingang). Gibt die genommene Anzahl zurück.
+function InventoryService.TakeCarried(player, id, count)
+	local state = stateOf(player)
+	if not state then
+		return 0
+	end
+	local taken = Inventory.Remove(state.Safe, id, count)
+	if taken < count then
+		taken += Inventory.Remove(state.Bag, id, count - taken)
 	end
 	if taken > 0 then
 		changed(player, state)

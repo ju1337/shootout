@@ -39,6 +39,7 @@ local CONVOY = Color3.fromRGB(236, 96, 64)
 local HORDE = Color3.fromRGB(200, 90, 220)
 local HELI = Color3.fromRGB(255, 120, 40)
 local BOSS = Color3.fromRGB(190, 30, 30)
+local DUNGEON = Color3.fromRGB(176, 96, 255)
 local CONVOY_STATES = { Waiting = "KONVOI WARTET", Driving = "KONVOI", Halted = "KONVOI GESTOPPT", Loot = "KONVOI-LADUNG" }
 local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (alles andere wird nicht gezeichnet)
 	Sidewalk = Color3.fromRGB(84, 86, 88),
@@ -334,6 +335,25 @@ local function update()
 			local left = math.max(0, math.floor((tonumber(bossInfo.RespawnAt) or now) - now))
 			text.Text = tostring(bossInfo.Name) .. ((not bossInfo.Alive and left > 0) and string.format(" %d:%02d", left // 60, left % 60) or "")
 		end
+	end
+	-- Dungeon-Eingänge: violettes Quadrat mit Namen (fest, ein Dungeon-Schlüssel öffnet sie)
+	for _, dungeon in decode(map, "Dungeons") do
+		local id = "Dungeon" .. tostring(dungeon.Key)
+		seen[id] = true
+		local view = dropViews[id]
+		if not view then
+			view = make("Frame", { Name = "Dungeon", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(13, 13),
+				BackgroundColor3 = DUNGEON, BorderSizePixel = 0, ZIndex = 8 }, markers)
+			UITheme.Corner(view, 3)
+			UITheme.Stroke(view, Color3.new(1, 1, 1), 1.2, 0.2)
+			local caption = label({ Name = "Text", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 4),
+				Size = UDim2.fromOffset(140, 14), TextSize = 11, Font = F.Bold, TextColor3 = DUNGEON,
+				TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 8 }, view)
+			caption.Text = "DUNGEON"
+			dropViews[id] = view
+		end
+		local u, v = toMap(map, dungeon.X or 0, dungeon.Z or 0)
+		view.Position = UDim2.fromScale(u, v)
 	end
 	-- Aktivitäten: Vorratslager (gelb, leer grau) und Funkgerät (blau); Nester und Überlebende nicht
 	for _, act in decode(map, "Activities") do

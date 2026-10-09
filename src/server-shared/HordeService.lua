@@ -206,6 +206,7 @@ local function open()
 	for _, item in ExtinctionConfig.RollLoot(H.BonusTable, random:NextInteger(H.BonusItems[1], H.BonusItems[2]), random) do
 		table.insert(items, item)
 	end
+	ExtinctionConfig.AddDungeonKey(items, "Horde", random)
 	for player in current.Holders do
 		if player.Parent and options.Reward then
 			options.Reward(player, H.Coins, "Horden-Kiste")

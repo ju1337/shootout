@@ -21,6 +21,7 @@ local AdminPanel = require(script.Parent:WaitForChild("AdminPanel"))
 local Noclip = require(script.Parent:WaitForChild("Noclip"))
 local ChatTags = require(script.Parent:WaitForChild("ChatTags"))
 local CombatBarrier = require(script.Parent:WaitForChild("CombatBarrier"))
+local DungeonClient = require(script.Parent:WaitForChild("DungeonClient"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
 local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 local Downed = require(script.Parent:WaitForChild("Downed"))
@@ -86,3 +87,4 @@ task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist
 task.spawn(Noclip.Init) -- Admins: B = Noclip (frei fliegen)
 ChatTags.Init() -- Team-Ränge als Präfix im Chat (StaffConfig)
 CombatBarrier.Init() -- im Kampf: Safe Zone gesperrt, rote Wand und Anzeige
+DungeonClient.Init() -- im Dungeon: Welle, Zombies übrig, Portal und gesammelte Beute

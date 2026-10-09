@@ -240,6 +240,9 @@ local function releaseLoot()
 				table.insert(items, item)
 			end
 		end
+		if i == 1 then
+			ExtinctionConfig.AddDungeonKey(items, "HeliCrash", random)
+		end
 		local angle = i / K.Crates * math.pi * 2
 		local at = current.Target + Vector3.new(math.cos(angle) * 9, 1, math.sin(angle) * 9)
 		local id = LootService.Create(at, items, "Airdrop", "HELI-WRACK", { HoldTime = 4, Lifetime = K.Lifetime })
