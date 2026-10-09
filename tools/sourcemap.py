@@ -59,6 +59,10 @@ def child_from_entry(full, entry):
         return {"name": base, "className": "ModuleScript", "filePaths": [rel]}
     if entry.endswith(".model.json"):
         return model_json(full, entry[: -len(".model.json")])
+    if full.endswith(".rbxm") or full.endswith(".rbxmx"):
+        # Binär-/XML-Modell (z.B. models/Weapons/Rifle.rbxm): kein Code, nur als Modell im Baum
+        base = entry.rsplit(".", 1)[0] if entry.endswith((".rbxm", ".rbxmx")) else entry
+        return {"name": base, "className": "Model", "filePaths": [rel]}
     return None
 
 
@@ -67,8 +71,9 @@ def tree_node(name, spec):
     node = {"name": name, "className": class_name, "children": []}
     if "$path" in spec:
         sub = from_path(os.path.join(ROOT, spec["$path"]), name)
-        sub["className"] = spec.get("$className", sub["className"])
-        node = sub
+        if sub:
+            sub["className"] = spec.get("$className", sub["className"])
+            node = sub
     for key, value in spec.items():
         if key.startswith("$") or not isinstance(value, dict):
             continue

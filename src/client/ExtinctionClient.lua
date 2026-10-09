@@ -644,15 +644,23 @@ local function buildHud()
 	end
 	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -100), Size = UDim2.fromOffset(560, 18),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
-	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -46),
-		Size = UDim2.fromOffset(160, 22), Text = "", TextSize = 20, Font = F.Display, TextColor3 = C.Primary,
+	-- Währungen links neben der Hotbar, jede mit Symbol rechts neben der Zahl: Münzen, darüber Rote-Zone-Punkte (RZ, nur
+	-- mit Punkten oder in der roten Zone, siehe paintRedPoints)
+	local moneyRight = -barWidth / 2 - 14
+	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight - 28, 1, -30),
+		Size = UDim2.fromOffset(160, 24), Text = "", TextSize = 22, Font = F.Display, TextColor3 = C.Primary,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
-	label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -30), Size = UDim2.fromOffset(160, 14),
-		Text = "MÜNZEN", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, root)
-	-- Rote-Zone-Punkte über den Münzen
-	Inv.redText = label({ Name = "RedPoints", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, -barWidth / 2 - 14, 1, -70),
-		Size = UDim2.fromOffset(160, 18), Text = "", TextSize = 15, Font = F.Display, TextColor3 = Color3.fromRGB(230, 70, 60),
-		TextXAlignment = Enum.TextXAlignment.Right }, root)
+	UITheme.Outline(coinsText)
+	UITheme.Coin(root, 20, { Name = "CoinIcon", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight, 1, -32) })
+	local redRow = make("Frame", { Name = "RedPointsRow", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight, 1, -60),
+		Size = UDim2.fromOffset(190, 22), BackgroundTransparency = 1, Visible = false }, root)
+	Inv.redText = label({ Name = "RedPoints", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -28, 0, 0),
+		Size = UDim2.fromOffset(160, 22), Text = "", TextSize = 18, Font = F.Display, TextColor3 = Color3.fromRGB(230, 70, 60),
+		TextXAlignment = Enum.TextXAlignment.Right }, redRow)
+	UITheme.Outline(Inv.redText)
+	local rzHolder = make("Frame", { Name = "RedPointsIcon", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
+		Size = UDim2.fromOffset(22, 22), BackgroundTransparency = 1 }, redRow)
+	Inv.rzIcon(rzHolder, 1)
 
 	-- Extinction-Level rechts neben der Hotbar: Level, EP-Balken, kurz "+N EP" bei jedem Gewinn
 	local levelBox = make("Frame", { Name = "ExtLevel", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0.5, barWidth / 2 + 14, 1, -30),
@@ -686,13 +694,20 @@ end
 
 -- Eine Tastenzeile unter der Hotbar für alles: Die allgemeine Zeile des HUD (SCHIESSEN, FÄHIGKEIT, ...) ist in der
 -- offenen Welt aus, sonst lägen beide Zeilen übereinander. Als Pilot eines Helikopters zeigt sie die Flugsteuerung.
-local heliHints = false
+-- Einzelne Hinweise verschwinden, sobald ihre Aktion einmal benutzt wurde (pro Sitzung); sind alle benutzt oder ist
+-- OPTIONEN › TASTENHINWEISE UNTEN aus, ist die Zeile weg. Wieder einschalten zeigt alle Hinweise neu.
+local hintState = {
+	Heli = false, -- Pilot eines Helikopters: Flugsteuerung statt der normalen Zeile
+	Used = {}, -- [Aktion] = true, schon benutzt
+	Watched = {}, -- [Aktion] = true, InputActions.Bind schon gesetzt
+}
 local function updateHints()
 	if not hints then
 		return
 	end
+	hints.Visible = require(Shared.PlayerSettings).Get("KeyHints") ~= false
 	local device = InputActions.Device()
-	if heliHints then
+	if hintState.Heli then
 		if device == "Touch" then
 			hints.Text = "STICK = FLIEGEN  ·  STEIGEN / SINKEN  ·  RAUS = AUSSTEIGEN  ·  PARKEN = EINPACKEN (GELANDET)"
 		elseif device == "Gamepad" then
@@ -710,18 +725,39 @@ local function updateHints()
 	end
 	local pad = device == "Gamepad"
 	local parts, seen = {}, {}
+	local slotActions = pad and { "Gadget", "Ability" } or {}
+	if not pad then
+		for slot = 1, HOTBAR do
+			table.insert(slotActions, "Hotbar" .. slot)
+		end
+	end
 	for _, entry in {
-		{ InputActions.Hint("Fire"), "SCHIESSEN" },
-		{ InputActions.Hint("Reload"), "NACHLADEN" },
-		{ pad and "R1 / L1" or "1-9", pad and "WAFFE" or "BENUTZEN" },
-		{ pad and InputActions.Hint("QuickHeal") or "", "HEILEN" },
-		{ InputActions.Hint("Inventory"), "INVENTAR" },
-		{ InputActions.Hint("Interact"), "INTERAGIEREN" },
-		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN" },
-		{ InputActions.Hint("WorldMap"), "KARTE" },
-		{ InputActions.Hint("Squad"), "SQUAD" },
+		{ InputActions.Hint("Fire"), "SCHIESSEN", { "Fire" } },
+		{ InputActions.Hint("Reload"), "NACHLADEN", { "Reload" } },
+		{ pad and "R1 / L1" or "1-9", pad and "WAFFE" or "BENUTZEN", slotActions },
+		{ pad and InputActions.Hint("QuickHeal") or "", "HEILEN", { "QuickHeal" } },
+		{ InputActions.Hint("Inventory"), "INVENTAR", { "Inventory" } },
+		{ InputActions.Hint("Interact"), "INTERAGIEREN", { "Interact" } },
+		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN", { "StoreVehicle" } },
+		{ InputActions.Hint("WorldMap"), "KARTE", { "WorldMap" } },
+		{ InputActions.Hint("Squad"), "SQUAD", { "Squad" } },
 	} do
-		local key, text = entry[1], entry[2]
+		local key, text, used = entry[1], entry[2], false
+		for _, action in entry[3] do
+			used = used or hintState.Used[action] == true
+			if not hintState.Watched[action] then
+				hintState.Watched[action] = true
+				InputActions.Bind(action, function(began)
+					if began and not hintState.Used[action] and inExtinction() then
+						hintState.Used[action] = true
+						updateHints()
+					end
+				end)
+			end
+		end
+		if used then
+			key = "" -- schon benutzt: Hinweis weglassen
+		end
 		if key ~= "" and seen[key] then -- gleiche Taste (Controller: □ lädt nach oder interagiert)
 			parts[seen[key]] ..= " / " .. text
 		elseif key ~= "" then
@@ -730,6 +766,7 @@ local function updateHints()
 		end
 	end
 	hints.Text = table.concat(parts, "  ·  ")
+	hints.Visible = hints.Visible and #parts > 0
 end
 
 local function updateZone()
@@ -3470,7 +3507,7 @@ function ExtinctionClient.Init()
 	-- etwas Abstand (missionTop).
 	local missionHeight = 0
 	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(270, 26),
-		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
+		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.15, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
 	UITheme.Corner(missionPanel, UITheme.Radius.Small)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, missionPanel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10),
@@ -3483,19 +3520,26 @@ function ExtinctionClient.Init()
 				child:Destroy()
 			end
 		end
-		local ok, list = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ExtMissions") or "[]")
-		list = ok and type(list) == "table" and list or {}
+		local ok, decoded = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("ExtMissions") or "[]")
+		decoded = ok and type(decoded) == "table" and decoded or {}
+		-- erledigte Aufträge ausblenden (bis der Server sie ersetzt)
+		local list = {}
+		for _, mission in decoded do
+			if (mission.Have or 0) < (mission.Need or 1) then
+				table.insert(list, mission)
+			end
+		end
 		missionPanel.Visible = #list > 0
-		missionHeight = #list > 0 and (30 + 34 * #list) or 0 -- Kopf, Zeilen, Abstände (für die Squad-Liste darunter)
+		missionHeight = #list > 0 and (30 + 26 * #list) or 0 -- Kopf, Zeilen, Abstände (für die Squad-Liste darunter)
 		for index, mission in list do
-			local row = make("Frame", { Name = "Mission", LayoutOrder = index, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 },
+			local row = make("Frame", { Name = "Mission", LayoutOrder = index, Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1 },
 				missionPanel)
-			label({ Name = "Text", Size = UDim2.new(1, -54, 0, 16), Text = upper(tostring(mission.Text or "")), TextSize = 12,
+			label({ Name = "Text", Size = UDim2.new(1, -54, 0, 16), Text = upper(tostring(mission.Text or "")), TextSize = 14,
 				Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, row)
 			label({ Name = "Count", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(52, 16),
-				Text = tostring(mission.Have or 0) .. "/" .. tostring(mission.Need or 1), TextSize = 12, Font = F.Bold,
+				Text = tostring(mission.Have or 0) .. "/" .. tostring(mission.Need or 1), TextSize = 14, Font = F.Bold,
 				TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, row)
-			local bar = make("Frame", { Position = UDim2.fromOffset(0, 20), Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = C.Card,
+			local bar = make("Frame", { Position = UDim2.fromOffset(0, 18), Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Card,
 				BorderSizePixel = 0 }, row)
 			make("Frame", { Name = "Fill", Size = UDim2.fromScale(math.clamp((mission.Have or 0) / math.max(1, mission.Need or 1), 0, 1), 1),
 				BackgroundColor3 = C.Good, BorderSizePixel = 0 }, bar)
@@ -3518,17 +3562,21 @@ function ExtinctionClient.Init()
 		return bottom and bottom + MISSION_GAP or nil
 	end
 
-	-- Uhrzeit (Tag und Nacht, DayCycle) links neben dem Kartenknopf
-	local clockText = label({ Name = "Clock", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 30),
-		Size = UDim2.fromOffset(260, 30), Text = "", TextSize = 15, Font = F.Bold, TextColor3 = C.Text,
-		TextXAlignment = Enum.TextXAlignment.Right }, root)
+	-- Uhrzeit (Tag und Nacht, DayCycle) und Rote Zone in einem Panel links neben dem Kartenknopf (nach links verlaufend,
+	-- weil die Texte verschieden lang sind); ohne rote Zone nur die Uhrzeit-Zeile
+	local CLOCK_PANEL_H, CLOCK_PANEL_H_ZONE = 34, 58
+	local clockPanel = UITheme.HudPanel({ Name = "ClockPanel", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 24),
+		Size = UDim2.fromOffset(440, CLOCK_PANEL_H) }, root, "Left")
+	local clockText = label({ Name = "Clock", Position = UDim2.fromOffset(0, 6), Size = UDim2.new(1, -12, 0, 22), Text = "",
+		TextSize = 17, Font = F.Bold, TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Right }, clockPanel)
 	UITheme.Outline(clockText)
 	-- Rote Zone (zieht alle 20 Minuten weiter): Ort, Zeit bis zum Wechsel und Entfernung als Zeile unter der Uhr (kein
-	-- Richtungspfeil); bei mehreren Zonen die nächste
-	local redzoneText = label({ Name = "RedzoneInfo", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 58),
-		Size = UDim2.fromOffset(360, 20), Text = "", TextSize = 13, Font = F.Bold, TextColor3 = RED,
-		TextXAlignment = Enum.TextXAlignment.Right }, root)
+	-- Richtungspfeil), davor eine rote Raute; bei mehreren Zonen die nächste
+	local redzoneText = label({ Name = "RedzoneInfo", Position = UDim2.fromOffset(0, 32), Size = UDim2.new(1, -12, 0, 20), Text = "",
+		TextSize = 15, Font = F.Bold, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, clockPanel)
 	UITheme.Outline(redzoneText)
+	local redzoneDiamond = make("Frame", { Name = "RedzoneDiamond", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(9, 9),
+		Rotation = 45, BackgroundColor3 = RED, BorderSizePixel = 0, Visible = false }, clockPanel)
 
 	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): nur in der roten Zone, die Top 3 der
 	-- Spieler-Kills dieser Runde (jeder Wechsel des Ortes beginnt eine neue); der eigene Platz darunter, wenn man Kills
@@ -3665,9 +3713,13 @@ function ExtinctionClient.Init()
 			end
 			redzoneText.Text = text
 			redzoneText.Visible = true
+			local bounds = redzoneText.TextBounds -- (im Test-Simulator nil)
+			redzoneDiamond.Position = UDim2.new(1, -12 - (bounds and bounds.X or 0) - 12, 0, 42)
 		else
 			redzoneText.Visible = false
 		end
+		redzoneDiamond.Visible = redzoneText.Visible
+		clockPanel.Size = UDim2.fromOffset(440, redzoneText.Visible and CLOCK_PANEL_H_ZONE or CLOCK_PANEL_H)
 	end)
 	-- Controller: △ halten (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
 	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = {} } -- Controller: △ halten (applyPadLayout)
@@ -3728,6 +3780,14 @@ function ExtinctionClient.Init()
 	end)
 	updateHints()
 	InputActions.DeviceChanged:Connect(updateHints)
+	require(Shared.PlayerSettings).Changed:Connect(function(key, value)
+		if key == "KeyHints" then
+			if value then
+				table.clear(hintState.Used)
+			end
+			updateHints()
+		end
+	end)
 
 	-- Ziehen
 	UserInputService.InputChanged:Connect(function(input)
@@ -3765,13 +3825,18 @@ function ExtinctionClient.Init()
 	local function paintRedPoints()
 		local points = player:GetAttribute("RedPoints") or 0
 		if Inv.redText then
-			Inv.redText.Text = UITheme.FormatNumber(points) .. " RZ"
+			Inv.redText.Text = UITheme.FormatNumber(points)
+			local zone = player:GetAttribute("Redzone")
+			local row = Inv.redText.Parent :: GuiObject
+			row.Visible = points > 0 or (zone ~= nil and zone ~= false and not player:GetAttribute("InSafeZone"))
 		end
 		if window and window.Stand == "Stand_Red" and window.Refresh then
 			window.Refresh()
 		end
 	end
 	player:GetAttributeChangedSignal("RedPoints"):Connect(paintRedPoints)
+	player:GetAttributeChangedSignal("Redzone"):Connect(paintRedPoints)
+	player:GetAttributeChangedSignal("InSafeZone"):Connect(paintRedPoints)
 	paintRedPoints()
 	player:GetAttributeChangedSignal("Coins"):Connect(function()
 		coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
@@ -3889,8 +3954,8 @@ function ExtinctionClient.Init()
 			vehicleCooldown.Text = left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or ""
 			vehicleCooldown.TextColor3 = C.Muted
 		end
-		if pilot ~= heliHints then
-			heliHints = pilot
+		if pilot ~= hintState.Heli then
+			hintState.Heli = pilot
 			updateHints()
 		end
 	end)

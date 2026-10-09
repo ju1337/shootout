@@ -41,6 +41,7 @@ local MatchHUD = {}
 local ALLY = C.Accent
 local ENEMY = C.Bad
 local DOWNED = Color3.fromRGB(214, 150, 60)
+local HEALTH_MID = Color3.fromRGB(236, 200, 72) -- Lebensbalken bei halbem Leben (darüber Richtung grün)
 local ARMOR = C.Accent
 local PANEL = C.Background
 local MUTED = C.Muted
@@ -461,18 +462,21 @@ function MatchHUD.Init(root, weaponClient)
 	-- Rüstung: 5 dünne Segmente
 	local armorSegments = {}
 	for i = 1, ARMOR_SEGMENTS do
-		local segment = make("Frame", { Position = UDim2.fromOffset(90 + (i - 1) * 46, 38), Size = UDim2.fromOffset(42, 4),
+		local segment = make("Frame", { Position = UDim2.fromOffset(90 + (i - 1) * 46, 36), Size = UDim2.fromOffset(42, 6),
 			BackgroundColor3 = WHITE, BackgroundTransparency = 0.85, BorderSizePixel = 0, ZIndex = 3 }, vitalsCard)
 		table.insert(armorSegments, segment)
 	end
-	-- Leben: Zahl und Balken (Geister-Balken zeigt kurz den Verlust)
+	-- Leben: Zahl und Balken (Geister-Balken zeigt kurz den Verlust); Farbe nach Leben: grün, gelb, unter 30 % rot
 	local healthText = label({ Position = UDim2.fromOffset(90, 46), Size = UDim2.fromOffset(52, 34), Text = "", TextSize = 34,
 		TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 }, vitalsCard)
-	local healthBack = make("Frame", { Position = UDim2.fromOffset(146, 60), Size = UDim2.fromOffset(174, 6), BackgroundColor3 = WHITE,
+	local healthBack = make("Frame", { Position = UDim2.fromOffset(146, 57), Size = UDim2.fromOffset(174, 12), BackgroundColor3 = WHITE,
 		BackgroundTransparency = 0.85, BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3 }, vitalsCard)
 	local ghostFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(180, 64, 54), BorderSizePixel = 0,
 		ZIndex = 3 }, healthBack)
-	local healthFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Text, BorderSizePixel = 0, ZIndex = 4 }, healthBack)
+	local healthFill = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Good, BorderSizePixel = 0, ZIndex = 4 }, healthBack)
+	UITheme.Corner(healthBack, 3)
+	UITheme.Corner(ghostFill, 3)
+	UITheme.Corner(healthFill, 3)
 
 	local shownHealth, ghostHealth, ghostHoldUntil = 0, 0, 0
 	RunService.RenderStepped:Connect(function(dt)
@@ -497,7 +501,9 @@ function MatchHUD.Init(root, weaponClient)
 		local downed = character:GetAttribute("Downed") == true
 		healthFill.Size = UDim2.fromScale(health / maxHealth, 1)
 		ghostFill.Size = UDim2.fromScale(ghostHealth / maxHealth, 1)
-		healthFill.BackgroundColor3 = downed and DOWNED or (low and ENEMY or C.Text)
+		local fraction = health / maxHealth
+		healthFill.BackgroundColor3 = downed and DOWNED or (low and ENEMY
+			or HEALTH_MID:Lerp(C.Good, math.clamp((fraction - 0.3) / 0.4, 0, 1)))
 		healthText.Text = tostring(math.ceil(health))
 		healthText.TextColor3 = low and ENEMY or WHITE
 
