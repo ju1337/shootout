@@ -152,6 +152,7 @@ local function setInside(player, info, inside, character)
 		player:SetAttribute("Redzone", nil)
 		InventoryService.Holster(player) -- Waffen bleiben in der Safe Zone gesichert
 	else
+		player:SetAttribute("TutorialEquip", nil) -- Tutorial: draußen gilt wieder die normale Regel
 		info.PvPAt = os.clock() + ExtinctionConfig.PvPDelay
 		player:SetAttribute("PvP", false)
 		player:SetAttribute("PvPAt", workspace:GetServerTimeNow() + ExtinctionConfig.PvPDelay)
@@ -418,13 +419,24 @@ function Extinction.Init(modeManager)
 		Extinction.Travel(player, key)
 	end
 	-- Tutorial (ExtTutorial): "Step", n, Id = Schritt n erreicht (nur Analyse: Onboarding-Trichter 3 ff.);
-	-- "Done"/"Skip" = fertig oder übersprungen, danach nie wieder von selbst (Profil TutorialDone)
+	-- "Done"/"Skip" = fertig oder übersprungen, danach nie wieder von selbst (Profil TutorialDone).
+	-- Ab dem Schritt "Equip" darf man im Tutorial die Waffe auch in der Safe Zone ziehen (Attribut TutorialEquip,
+	-- InventoryService); schießen geht dort trotzdem nicht (CanFight aus, kein Schaden in der Safe Zone).
 	InventoryService.Handlers.Tutorial = function(player, result, index, stepId)
 		if result == "Step" then
 			if type(index) == "number" and index >= 1 and index <= 20 then
 				Telemetry.Onboarding(player, 2 + math.floor(index), "Tutorial:" .. tostring(stepId))
 			end
+			if stepId == "Equip" or stepId == "Leave" then
+				player:SetAttribute("TutorialEquip", true)
+			end
 			return
+		end
+		if player:GetAttribute("TutorialEquip") then
+			player:SetAttribute("TutorialEquip", nil)
+			if player:GetAttribute("InSafeZone") then
+				InventoryService.Holster(player)
+			end
 		end
 		local profile = ProgressService.Get(player)
 		if profile then
@@ -878,7 +890,7 @@ function Extinction.RemovePlayer(player)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag", "ExtTutorial" } do
+		"ExtDeathBag", "ExtTutorial", "TutorialEquip" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

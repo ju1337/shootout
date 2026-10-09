@@ -2219,41 +2219,131 @@ local function openTravel(pointName)
 	function win.Refresh() end
 end
 
--- KITS: beim Kit-Händler am Spawn (Punkt KitConfig.Point) Kits abholen, je Kit eine Wartezeit (Attribut "Kits")
+-- KITS: beim Kit-Händler am Spawn (Punkt KitConfig.Point) Kits abholen, je Kit eine Wartezeit (Attribut "Kits").
+-- Vier Karten nebeneinander: oben eine 3D-Kiste in der Kit-Farbe (KitCrate, hüpft wenn bereit), Name, Wartezeit,
+-- Beschreibung, Inhalt als Kacheln und unten der große Knopf (ABHOLEN / Wartezeit mit Balken / NUR MIT VIP / BALD).
 local function openKits(part)
 	local C = UITheme.MenuColors
-	local win = newWindow("Kits", "KITS", "FREE GEAR  ·  EVERY KIT HAS ITS OWN COOLDOWN")
+	local KitCrate = require(script.Parent.KitCrate)
+	local win = newWindow("Kits", "KITS", "KOSTENLOSE AUSRÜSTUNG  ·  JEDES KIT HAT SEINE EIGENE WARTEZEIT")
 	win.Part = part
+	local count = #KitConfig.List
+	local gap = 20
+	local cardW = math.floor((1124 - gap * (count - 1)) / count)
+	local cardH = 524
 	local views = {}
 	for index, kit in KitConfig.List do
-		local column, row = (index - 1) % 2, (index - 1) // 2
-		local x, y = column * 552, 10 + row * 150
-		local chunky = UITheme.Chunky({ Name = "Kit_" .. kit.Id, Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(536, 78),
-			Color = kit.Color:Lerp(Color3.new(0, 0, 0), 0.55), StrokeColor = kit.Color, Text = kit.Name, TextSize = 22,
-			ZIndex = 5 }, win.Body, function()
-			sendAction("ClaimKit", kit.Id)
-		end)
-		local info = label({ Position = UDim2.fromOffset(x + 4, y + 84), Size = UDim2.fromOffset(528, 18),
-			Text = string.upper(kit.Description), TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5,
-			TextXAlignment = Enum.TextXAlignment.Left }, win.Body)
+		local x = (index - 1) * (cardW + gap)
+		local dark = kit.Color:Lerp(Color3.new(0, 0, 0), 0.78)
+		local card = make("Frame", { Name = "Kit_" .. kit.Id, Position = UDim2.fromOffset(x, 4), Size = UDim2.fromOffset(cardW, cardH),
+			BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 5, ClipsDescendants = true }, win.Body)
+		UITheme.Corner(card, 14)
+		local stroke = make("UIStroke", { Color = kit.Color, Thickness = 1.5, Transparency = 0.45 }, card)
+		-- Bühne oben: Verlauf in der Kit-Farbe, darauf die Kiste
+		local stage = make("Frame", { Name = "Stage", Size = UDim2.fromOffset(cardW, 214), BackgroundColor3 = dark,
+			BorderSizePixel = 0, ZIndex = 5 }, card)
+		make("UIGradient", { Rotation = 90, Color = ColorSequence.new(kit.Color:Lerp(Color3.new(0, 0, 0), 0.55), C.Card) }, stage)
+		local crate = KitCrate.View(stage, { Color = kit.Color, Style = kit.Style, ZIndex = 6,
+			Position = UDim2.fromOffset(0, 8), Size = UDim2.fromOffset(cardW, 200) })
+		-- Wartezeit-Abzeichen oben links
+		local every = label({ Position = UDim2.fromOffset(12, 12), Size = UDim2.fromOffset(0, 24), AutomaticSize = Enum.AutomaticSize.X,
+			Text = kit.Every or "", TextSize = 13, Font = F.Bold, TextColor3 = kit.Color, BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.45, ZIndex = 8, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		UITheme.Corner(every, 12)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, every)
+		local lock = label({ Name = "Lock", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(cardW / 2, 112),
+			Size = UDim2.fromOffset(cardW, 60), Text = "🔒", TextSize = 46, Font = F.Bold, ZIndex = 9,
+			TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, card)
+		-- Name und Beschreibung
+		label({ Position = UDim2.fromOffset(0, 218), Size = UDim2.fromOffset(cardW, 30), Text = kit.Name, TextSize = 26,
+			Font = F.Display, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		local info = label({ Position = UDim2.fromOffset(14, 250), Size = UDim2.fromOffset(cardW - 28, 32), Text = kit.Description,
+			TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6, TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Top }, card)
 		info.TextTruncate = Enum.TextTruncate.AtEnd
-		views[kit] = chunky
+		-- Inhalt: Kacheln (3 pro Reihe), leere Kits zeigen Fragezeichen
+		label({ Position = UDim2.fromOffset(14, 288), Size = UDim2.fromOffset(cardW - 28, 16), Text = "INHALT", TextSize = 12,
+			Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, card)
+		local tileGap = 8
+		local tileW = math.floor((cardW - 28 - tileGap * 2) / 3)
+		local tileH = 66
+		local entries = #kit.Items > 0 and kit.Items or { false, false, false }
+		for i, entry in entries do
+			local column, row = (i - 1) % 3, (i - 1) // 3
+			local tile = make("Frame", { Position = UDim2.fromOffset(14 + column * (tileW + tileGap), 308 + row * (tileH + tileGap)),
+				Size = UDim2.fromOffset(tileW, tileH), BackgroundColor3 = C.Panel, BorderSizePixel = 0, ZIndex = 6 }, card)
+			UITheme.Corner(tile, 8)
+			make("UIStroke", { Color = kit.Color, Transparency = 0.8 }, tile)
+			if entry then
+				local config = itemConfig(entry[1])
+				buildIcon(tile, entry[1], 7)
+				if entry[2] > 1 then
+					label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -6, 0, 3), Size = UDim2.fromOffset(60, 14),
+						Text = "×" .. entry[2], TextSize = 12, Font = F.Bold, TextColor3 = kit.Color, ZIndex = 8,
+						TextXAlignment = Enum.TextXAlignment.Right }, tile)
+				end
+				local name = label({ Position = UDim2.new(0, 4, 1, -16), Size = UDim2.new(1, -8, 0, 14),
+					Text = config and config.Name or entry[1], TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
+					ZIndex = 8, TextXAlignment = Enum.TextXAlignment.Center }, tile)
+				name.TextTruncate = Enum.TextTruncate.AtEnd
+			else
+				label({ Size = UDim2.fromScale(1, 1), Text = "?", TextSize = 26, Font = F.Display, TextColor3 = C.Muted, ZIndex = 7,
+					TextXAlignment = Enum.TextXAlignment.Center }, tile)
+			end
+		end
+		-- Großer Knopf unten mit Balken für die Wartezeit
+		local claim = make("TextButton", { Name = "Claim", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
+			Size = UDim2.fromOffset(cardW - 28, 52), BackgroundColor3 = kit.Color, BorderSizePixel = 0, AutoButtonColor = false,
+			Text = "", ZIndex = 7 }, card)
+		UITheme.Corner(claim, 10)
+		local fill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = kit.Color,
+			BackgroundTransparency = 0.6, BorderSizePixel = 0, ZIndex = 7 }, claim)
+		UITheme.Corner(fill, 10)
+		local claimText = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 20, Font = F.Display, ZIndex = 8,
+			TextXAlignment = Enum.TextXAlignment.Center }, claim)
+		claim.MouseEnter:Connect(function()
+			if views[kit].Ready then
+				stroke.Transparency = 0
+				claim.BackgroundColor3 = kit.Color:Lerp(Color3.new(1, 1, 1), 0.15)
+			end
+		end)
+		claim.MouseLeave:Connect(function()
+			stroke.Transparency = views[kit].Ready and 0.15 or 0.45
+			claim.BackgroundColor3 = views[kit].Ready and kit.Color or C.Panel
+		end)
+		claim.Activated:Connect(function()
+			if views[kit].Ready then
+				crate.Pop()
+				sendAction("ClaimKit", kit.Id)
+			end
+		end)
+		views[kit] = { Crate = crate, Button = claim, Fill = fill, Text = claimText, Stroke = stroke, Lock = lock, Ready = false }
 	end
 	function win.Refresh()
 		local ok, claimed = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Kits") or "{}")
 		claimed = ok and type(claimed) == "table" and claimed or {}
 		local now = os.time()
-		for kit, chunky in views do
-			local state
+		for kit, view in views do
+			local text, state, progress = "ABHOLEN", "Ready", 0
 			if #kit.Items == 0 then
-				state = "COMING SOON"
+				text, state = "BALD VERFÜGBAR", "Locked"
 			elseif kit.Pass and player:GetAttribute("Pass_" .. kit.Pass) ~= true then
-				state = kit.Pass .. " ONLY"
+				text, state = "NUR MIT " .. kit.Pass, "Locked"
 			else
 				local remaining = KitConfig.Remaining(kit, claimed, now)
-				state = remaining > 0 and KitConfig.FormatTime(remaining) or "CLAIM"
+				if remaining > 0 then
+					text, state = "WIEDER IN " .. KitConfig.FormatTime(remaining), "Wait"
+					progress = 1 - remaining / kit.Cooldown
+				end
 			end
-			chunky.Label.Text = kit.Name .. "  ·  " .. state
+			view.Ready = state == "Ready"
+			view.Crate.SetState(state)
+			view.Lock.Visible = state == "Locked"
+			view.Text.Text = text
+			view.Text.TextColor3 = view.Ready and Color3.fromRGB(12, 16, 20) or (state == "Locked" and C.Muted or C.Text)
+			view.Button.BackgroundColor3 = view.Ready and kit.Color or C.Panel
+			view.Fill.Size = UDim2.fromScale(state == "Wait" and progress or 0, 1)
+			view.Stroke.Transparency = view.Ready and 0.15 or 0.45
 		end
 	end
 	win.Refresh()

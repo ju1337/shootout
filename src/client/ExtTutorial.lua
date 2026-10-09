@@ -134,7 +134,7 @@ ExtTutorial.Steps = {
 			local slot = weaponSlot()
 			local hint = slot and InputActions.Hint("Hotbar" .. slot) or ""
 			return "Close the menu and press " .. (hint ~= "" and ("[" .. hint .. "]") or "a weapon in your hotbar")
-				.. " to draw your gun. In the safe zone it stays holstered – nobody can shoot here."
+				.. " to draw your gun. During the tutorial you can hold it in the safe zone – shooting only works outside."
 		end,
 		Done = function()
 			return (player:GetAttribute("ExtEquipped") or 0) > 0
