@@ -8,6 +8,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local Cosmetics = require(ReplicatedStorage:WaitForChild("Shared").Cosmetics)
 local AgentModels = require(ReplicatedStorage:WaitForChild("Shared").AgentModels)
+local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local MovementGuard = require(ServerShared.MovementGuard)
 local AgentBody = require(ServerShared.AgentBody)
@@ -17,7 +18,7 @@ local SpawnUtil = {}
 -- Charakter mit dem Agenten-Körper laden. Klappt das nicht (z.B. Roblox-Dienst gestört), wird der normale
 -- Charakter geladen – AgentService zieht ihn dann trotzdem als Agent an.
 local function loadAgentCharacter(player)
-	local primary = Cosmetics.AgentColors(player, player:GetAttribute("Agent"))
+	local primary = Cosmetics.AgentColors(player, AgentConfig.MainId)
 	local ok, err = pcall(player.LoadCharacterWithHumanoidDescription, player, AgentBody.Description(primary))
 	if ok then
 		return true
@@ -30,7 +31,7 @@ end
 -- Roblox-Körper wird gelöscht, nur seine Skripte (Animate, Health) wandern ins Modell. Gibt true zurück, wenn getauscht.
 local function useAgentModel(player)
 	local default = player.Character
-	local model = default and AgentModels.BuildCharacter(player:GetAttribute("Agent"))
+	local model = default and AgentModels.BuildCharacter(AgentConfig.MainId)
 	if not model then
 		return false
 	end

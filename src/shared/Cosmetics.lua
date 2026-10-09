@@ -1,10 +1,10 @@
 -- Cosmetics (ModuleScript)
--- Alle Skins im Shop: Waffen-Skins, für jede Waffe einzeln ausrüstbar. Agenten haben keine Skins (nur ihren
--- Standard-Look bzw. ihr 3D-Modell).
+-- Alle Skins: Waffen-Skins (für jede Waffe einzeln ausrüstbar) und Agenten-Skins (Type = "Agent": Uniformfarbe und
+-- Material des einen Agenten, ausgerüstet im Menü SKINS). Agenten-Skins sind gebunden (kein RAP, kein Markt, keine Kisten).
 -- Neue Skins einfach hier eintragen. Preise in Münzen.
 -- Pass = true: exklusiv aus dem Battle Pass, nicht im Shop kaufbar.
 -- Besitz und Ausrüstung kommen vom Server als Spieler-Attribute (JSON): "Owned", "Equipped".
--- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin
+-- Equipped-Schlüssel: "W:<Waffe>" = Waffen-Skin, "Agent" = Agenten-Skin
 -- Mastery = Kills: Meisterschafts-Tarnung (MasteryConfig), nur für die Waffe in Weapon, nicht kaufbar.
 -- Effects = Stil aus SkinEffects (Glitzer, Glut, Licht, Feuerstoß beim Schießen). Test = nicht in Kisten.
 -- Creator = true: Creator-Skin, frei für alle mit Team-Rang CREATOR oder höher (StaffConfig), nicht kaufbar und nicht
@@ -134,6 +134,28 @@ Cosmetics.Items = {
 	-- Splitterlicht: Kristall mit Energieadern, prismatische Leuchtspur, Kill-Finisher „Kristallbruch“ (SkinStyles)
 	{ Id = "W_Splitterlicht", Type = "Weapon", Name = "Splitterlicht", Rarity = "Legendary", Price = 1, Test = true,
 		Weapon = "Rifle", Effects = "Splitterlicht", Color = Color3.fromRGB(140, 90, 240), Material = Enum.Material.Foil },
+
+	-- Agenten-Skins (Type = "Agent"): Uniform = Farbe von Oberkörper und Armen (Beine dunkler), Material des Körpers.
+	-- Im SHOP unter AGENTEN-SKINS für Münzen, ausrüsten im Menü SKINS. Ohne Skin: Standard-Look in der Agentenfarbe.
+	{ Id = "AS_Feldgrau", Type = "Agent", Name = "Feldgrau", Rarity = "Common", Price = 300,
+		Color = Color3.fromRGB(96, 104, 92), Material = Enum.Material.Fabric },
+	{ Id = "AS_Sandsturm", Type = "Agent", Name = "Sandsturm", Rarity = "Common", Price = 300,
+		Color = Color3.fromRGB(178, 152, 108), Material = Enum.Material.Fabric },
+	{ Id = "AS_Nachtwache", Type = "Agent", Name = "Nachtwache", Rarity = "Rare", Price = 600,
+		Color = Color3.fromRGB(34, 38, 54), Material = Enum.Material.Fabric },
+	{ Id = "AS_Arktis", Type = "Agent", Name = "Arktis", Rarity = "Rare", Price = 600,
+		Color = Color3.fromRGB(214, 224, 232), Material = Enum.Material.Fabric },
+	{ Id = "AS_Seuche", Type = "Agent", Name = "Seuche", Rarity = "Epic", Price = 1100,
+		Color = Color3.fromRGB(104, 150, 46), Material = Enum.Material.DiamondPlate },
+	{ Id = "AS_Panzerstahl", Type = "Agent", Name = "Panzerstahl", Rarity = "Epic", Price = 1100,
+		Color = Color3.fromRGB(120, 126, 136), Material = Enum.Material.Metal },
+	{ Id = "AS_Karmesin", Type = "Agent", Name = "Karmesin", Rarity = "Legendary", Price = 2000,
+		Color = Color3.fromRGB(150, 22, 34), Material = Enum.Material.Foil },
+	{ Id = "AS_Goldjunge", Type = "Agent", Name = "Goldjunge", Rarity = "Legendary", Price = 2500,
+		Color = Color3.fromRGB(226, 178, 58), Material = Enum.Material.Foil },
+	-- Creator-Skin: mit Team-Rang CREATOR (wie die Creator-Waffen-Skins)
+	{ Id = "AS_Creator", Type = "Agent", Name = "Creator", Rarity = "Legendary", Reward = true, Creator = true,
+		Color = Color3.fromRGB(150, 70, 230), Material = Enum.Material.Foil },
 }
 
 -- Meisterschafts-Tarnungen: pro Waffe eine je Stufe
@@ -222,10 +244,28 @@ function Cosmetics.WeaponSkin(player, agentId, weaponName)
 	return nil
 end
 
--- Farben eines Agenten (Uniform, Akzent): immer der Standard-Look aus der Agentenfarbe
+-- Ausgerüsteter Agenten-Skin des Spielers (nur wenn er ihn besitzt), sonst nil
+function Cosmetics.AgentSkin(player)
+	if not player then
+		return nil
+	end
+	local id = Cosmetics.GetEquipped(player).Agent
+	local item = id and Cosmetics.Get(id)
+	if item and item.Type == "Agent" and Cosmetics.GetOwned(player)[id] then
+		return item
+	end
+	return nil
+end
+
+-- Farben eines Agenten (Uniform, Akzent) und Material des Körpers: mit Agenten-Skin dessen Farbe und Material, sonst
+-- der Standard-Look aus der Agentenfarbe (Material nil = Standard)
 function Cosmetics.AgentColors(player, agentId)
 	local agent = AgentConfig.Get(agentId) or AgentConfig.Agents[1]
-	return agent.Color:Lerp(Color3.new(0, 0, 0), 0.6), agent.Color
+	local skin = Cosmetics.AgentSkin(player)
+	if skin then
+		return skin.Color, agent.Color, skin.Material
+	end
+	return agent.Color:Lerp(Color3.new(0, 0, 0), 0.6), agent.Color, nil
 end
 
 return Cosmetics

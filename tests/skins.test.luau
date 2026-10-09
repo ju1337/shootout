@@ -1,7 +1,8 @@
--- Skins: nur noch Waffen-Skins. Keine Agenten-Skins in Cosmetics, RAP-Werten und Kisten; Agenten zeigen immer ihren
--- Standard-Look (AgentColors = Agentenfarbe); Battle-Pass-Stufe 20 gibt den Waffen-Skin Saison-Elite;
--- alte Spielstände verlieren beim Laden entfernte Skins (Besitz, Ausrüstung "A:<Agent>", Merkliste); Agenten-Skins
--- kaufen, ausrüsten oder ablegen geht nicht mehr, Waffen-Skins wie bisher
+-- Skins: Waffen-Skins und die neuen Agenten-Skins (Type = "Agent", Ids "AS_…", ein Platz "Agent" für den einen Agenten).
+-- Die alten Agenten-Skins je Agent ("A_…", Plätze "A:<Agent>") bleiben entfernt: keine RAP-Werte, keine Kisten.
+-- Agenten-Skins sind gebunden (nicht handelbar, nicht in Kisten); ohne Skin zeigt der Agent seinen Standard-Look
+-- (AgentColors = Agentenfarbe), mit Skin dessen Farbe und Material. Battle-Pass-Stufe 20 gibt den Waffen-Skin Saison-Elite;
+-- alte Spielstände verlieren beim Laden entfernte Skins (Besitz, Ausrüstung "A:<Agent>", Merkliste).
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -27,22 +28,34 @@ local ShopService = require("ShopService")
 ProgressService.Init()
 ShopService.Init()
 
--- Nur Waffen-Skins: keine Agenten-Skins mehr in Cosmetics, RAP-Werten und Kisten
+-- Waffen-Skins und neue Agenten-Skins; die alten Agenten-Skins bleiben weg (Cosmetics, RAP-Werte, Kisten)
 local REMOVED = { "A_Viper_Nacht", "A_Viper_Gift", "A_Bastion_Stahl", "A_Bastion_Royal", "A_Mender_Feld", "A_Mender_Neon",
 	"A_Hawk_Wueste", "A_Hawk_Phantom", "A_Viper_Saison", "A_Ghost_Schatten", "A_Ghost_Nebel", "A_Blaze_Inferno",
 	"A_Blaze_Asche", "A_Aegis_Bollwerk", "A_Aegis_Sanitaet", "A_Trapper_Wildnis", "A_Trapper_Jaeger",
 	"A_Volt_Hochspannung", "A_Volt_Kupfer" }
 for _, item in Cosmetics.Items do
-	check(item.Type == "Weapon", "nur Waffen-Skins: " .. item.Id .. " ist " .. tostring(item.Type))
-	check(item.Agent == nil and item.Primary == nil and item.Accent == nil, "keine Agenten-Farben an " .. item.Id)
-	check(string.sub(item.Id, 1, 2) ~= "A_", "keine Agenten-Skin-Id: " .. item.Id)
+	check(item.Type == "Weapon" or item.Type == "Agent", "Waffen- oder Agenten-Skin: " .. item.Id .. " ist " .. tostring(item.Type))
+	check(item.Agent == nil and item.Primary == nil and item.Accent == nil, "keine Farben je Agent an " .. item.Id)
+	check(string.sub(item.Id, 1, 2) ~= "A_", "keine alte Agenten-Skin-Id: " .. item.Id)
+	if item.Type == "Agent" then
+		check(string.sub(item.Id, 1, 3) == "AS_" and typeof(item.Color) == "Color3" and typeof(item.Material) == "EnumItem",
+			item.Id .. ": Agenten-Skin mit Farbe und Material")
+		check(not RapConfig.Tradeable(item.Id), item.Id .. ": gebunden, nicht handelbar")
+		check(Cosmetics.ForSale(item) or item.Creator or item.Reward, item.Id .. ": im Shop oder als Belohnung zu bekommen")
+	end
 end
-check(#Cosmetics.List("Agent") == 0, "Cosmetics.List: keine Agenten-Skins")
+local agentSkins = Cosmetics.List("Agent")
+check(#agentSkins >= 6, "Agenten-Skins vorhanden (" .. #agentSkins .. ")")
 for _, id in REMOVED do
 	check(Cosmetics.Get(id) == nil and RapConfig.Values[id] == nil, id .. " ist entfernt (Skin und RAP-Wert)")
 end
 for id in RapConfig.Values do
 	check(Cosmetics.Get(id) ~= nil and Cosmetics.Get(id).Type == "Weapon", "RAP-Wert nur für Waffen-Skins: " .. id)
+end
+for _, crate in CrateConfig.Crates do
+	for _, item in CrateConfig.Pool(crate) do
+		check(item.Type == "Weapon", "keine Agenten-Skins in Kisten: " .. item.Id)
+	end
 end
 check(#CrateConfig.Crates == 1 and CrateConfig.Crates[1].Type == "Weapon" and CrateConfig.Get("Agent") == nil,
 	"nur die Waffen-Kiste, keine Agenten-Kiste")
@@ -139,6 +152,37 @@ message, ok = action(alice, "Buy", "W_Chrom")
 check(ok == true and ProgressService.Owns(alice, "W_Chrom") and alice:GetAttribute("Coins") == 5000 - Cosmetics.Get("W_Chrom").Price,
 	"Waffen-Skin kaufen: " .. tostring(message))
 
+-- Agenten-Skins: kaufen, ausrüsten (Platz "Agent"), Farben und Material am Agenten, ablegen
+local feldgrau = Cosmetics.Get("AS_Feldgrau")
+message, ok = action(alice, "Equip", "AS_Feldgrau")
+check(ok == false and ProgressService.Get(alice).Equipped.Agent == nil, "Agenten-Skin ohne Besitz ausrüsten geht nicht: "
+	.. tostring(message))
+message, ok = action(alice, "Equip", "AS_Creator")
+check(ok == false and ProgressService.Get(alice).Equipped.Agent == nil, "Creator-Agenten-Skin ohne Rang geht nicht: "
+	.. tostring(message))
+local coinsBefore = alice:GetAttribute("Coins")
+message, ok = action(alice, "Buy", "AS_Feldgrau")
+check(ok == true and ProgressService.Owns(alice, "AS_Feldgrau") and alice:GetAttribute("Coins") == coinsBefore - feldgrau.Price,
+	"Agenten-Skin kaufen: " .. tostring(message))
+message, ok = action(alice, "Equip", "AS_Feldgrau")
+check(ok == true and ProgressService.Get(alice).Equipped.Agent == "AS_Feldgrau", "Agenten-Skin ausrüsten: " .. tostring(message))
+check(ProgressService.Get(alice).Equipped["W:SMG"] == "W_Lava", "Waffen-Skins bleiben ausgerüstet")
+check(Cosmetics.AgentSkin(alice) == feldgrau, "AgentSkin: ausgerüsteter Skin")
+local skinPrimary, skinAccent, skinMaterial = Cosmetics.AgentColors(alice, AgentConfig.MainId)
+check(skinPrimary == feldgrau.Color and skinMaterial == feldgrau.Material and skinAccent == AgentConfig.Get(AgentConfig.MainId).Color,
+	"AgentColors: Farbe und Material des Skins")
+message, ok = action(alice, "Unequip", "Agent")
+check(ok == true and ProgressService.Get(alice).Equipped.Agent == nil and Cosmetics.AgentSkin(alice) == nil,
+	"Agenten-Skin ablegen: " .. tostring(message))
+local _, _, noMaterial = Cosmetics.AgentColors(alice, AgentConfig.MainId)
+check(noMaterial == nil, "ohne Skin: Standard-Material")
+message, ok = action(alice, "Equip", "AS_Feldgrau")
+check(ok == true, "wieder ausrüsten (wird gespeichert)")
+message, ok = action(alice, "Equip", "W_Chrom")
+check(ok == false and ProgressService.Get(alice).Equipped.Agent == "AS_Feldgrau", "Waffen-Skin ohne Waffe kommt nicht auf den Agenten")
+message, ok = action(alice, "SellSkin", "AS_Feldgrau", 1)
+check(ok == false and ProgressService.Owns(alice, "AS_Feldgrau"), "Agenten-Skin nicht verkaufbar: " .. tostring(message))
+
 -- Battle Pass bis Stufe 20: Saison-Neon (Stufe 10) und Saison-Elite (Stufe 20) im Inventar
 ProgressService.AddPassXP(alice, 20 * PassConfig.XPPerTier)
 check(ProgressService.Owns(alice, "W_Saison") and ProgressService.Owns(alice, "W_Saison_Elite"), "Stufe 20 schaltet Saison-Elite frei")
@@ -151,12 +195,29 @@ local saved = store.Data.u1
 check(saved.Owned.A_Ghost_Nebel == nil and saved.Owned.A_Viper_Saison == nil and saved.Owned.GibtEsNicht == nil
 	and saved.Owned.W_Lava == 2 and saved.Owned.W_Saison_Elite == 1, "gespeicherter Besitz ohne entfernte Skins")
 check(saved.Equipped["A:Viper"] == nil and saved.Equipped["A:Ghost"] == nil and saved.MarketWatch.A_Ghost_Nebel == nil,
-	"gespeichert ohne Agenten-Plätze und ohne entfernte Skins auf der Merkliste")
+	"gespeichert ohne alte Agenten-Plätze und ohne entfernte Skins auf der Merkliste")
+check(saved.Owned.AS_Feldgrau == 1 and saved.Equipped.Agent == "AS_Feldgrau", "Agenten-Skin gespeichert (Besitz und Platz)")
 
--- Lobby (Client): SHOP ohne Reiter AGENTEN-SKINS, nur Waffen-Skins zu kaufen; LOADOUT nur mit Waffen;
+-- Neu laden: Agenten-Skin bleibt; ein Waffen-Skin auf dem Agenten-Platz fällt weg
+store.Data.u1.Equipped.Agent = "AS_Feldgrau"
+local alice2 = SIM.Join("Alice", 1)
+step(2)
+check(alice2 and ProgressService.Get(alice2).Equipped.Agent == "AS_Feldgrau", "Agenten-Skin nach dem Laden ausgerüstet")
+SIM.Leave(alice2)
+step(3)
+store.Data.u1.Equipped.Agent = "W_Lava"
+store.Data.u1.Equipped["W:Rifle"] = "AS_Feldgrau"
+alice2 = SIM.Join("Alice", 1)
+step(2)
+check(ProgressService.Get(alice2).Equipped.Agent == nil and ProgressService.Get(alice2).Equipped["W:Rifle"] == nil,
+	"falsche Art auf einem Platz fällt beim Laden weg")
+SIM.Leave(alice2)
+step(3)
+
+-- Lobby (Client): SHOP mit Reiter AGENTEN-SKINS; LOADOUT nur mit Waffen;
 -- BATTLE PASS zeigt auf Stufe 20 Saison-Elite
 store.Data.u2 = { XP = {}, Coins = 1000, Rap = 0, Owned = { W_Lava = 1 }, Equipped = {} }
-local bob = SIM.Join("Bob")
+local bob = SIM.Join("Bob", 2)
 step(2)
 rawget(SIM.Players, "__props").LocalPlayer = bob
 local LobbyPages = require("LobbyPages")
@@ -173,18 +234,32 @@ local function texts(root)
 	return found, buy
 end
 local forSale = 0
+local agentForSale = 0
 for _, item in Cosmetics.Items do
 	if Cosmetics.ForSale(item) then
-		forSale += 1
+		if item.Type == "Agent" then
+			agentForSale += 1
+		else
+			forSale += 1
+		end
 	end
 end
 local shopPage = Instance.new("Frame")
 LobbyPages.Shop(shopPage)
 step(0.2)
 local shopTexts, buttons = texts(shopPage)
-check(shopTexts["WAFFEN-SKINS"] and shopTexts.ROBUX and shopTexts.VERKAUFEN and not shopTexts["AGENTEN-SKINS"],
-	"SHOP: Reiter ohne AGENTEN-SKINS")
+check(shopTexts["WAFFEN-SKINS"] and shopTexts.ROBUX and shopTexts.VERKAUFEN and shopTexts["AGENTEN-SKINS"],
+	"SHOP: Reiter mit AGENTEN-SKINS")
 check(forSale >= 8 and buttons == forSale, "SHOP: eine Karte je kaufbarem Waffen-Skin (" .. buttons .. " von " .. forSale .. ")")
+for _, d in shopPage:GetDescendants() do
+	if d:IsA("TextButton") and d.Text == "AGENTEN-SKINS" then
+		d.Activated:Fire()
+	end
+end
+step(0.2)
+local agentTexts, agentButtons = texts(shopPage)
+check(agentButtons == agentForSale and agentTexts.FELDGRAU, "SHOP AGENTEN-SKINS: eine Karte je kaufbarem Agenten-Skin ("
+	.. agentButtons .. " von " .. agentForSale .. ")")
 local loadoutPage = Instance.new("Frame")
 LobbyPages.Loadout(loadoutPage, function() end)
 step(0.2)

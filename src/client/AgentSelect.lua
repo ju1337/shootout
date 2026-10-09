@@ -108,8 +108,8 @@ local function showPreview(agent, weapon)
 	if figure then
 		figure:Destroy()
 	end
-	local primary, accentColor = Cosmetics.AgentColors(player, agent.Id)
-	figure = AgentFigure.Build(agent, primary, accentColor, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon)
+	local primary, accentColor, material = Cosmetics.AgentColors(player, agent.Id)
+	figure = AgentFigure.Build(agent, primary, accentColor, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
 	figure.Parent = scene.Viewport
 	scene.SetAccent(agent.Color)
 
@@ -325,7 +325,9 @@ local function buildBottom()
 	local rowW = count * TILE + (count - 1) * 7 + 14 + confirmW
 	local row = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -16),
 		Size = UDim2.fromOffset(rowW, TILE + 5), BackgroundTransparency = 1 }, canvas)
-	local roster = make("Frame", { Size = UDim2.fromOffset(rowW - confirmW - 14, TILE + 5), BackgroundTransparency = 1 }, row)
+	-- Kacheln ausgeblendet: es gibt nur noch einen Agenten (AgentConfig.MainId)
+	local roster = make("Frame", { Size = UDim2.fromOffset(rowW - confirmW - 14, TILE + 5), BackgroundTransparency = 1,
+		Visible = false }, row)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 7),
 		VerticalAlignment = Enum.VerticalAlignment.Bottom, SortOrder = Enum.SortOrder.LayoutOrder }, roster)
 	for i, agent in AgentConfig.Agents do

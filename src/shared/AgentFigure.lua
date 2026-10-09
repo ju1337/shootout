@@ -19,8 +19,9 @@ local ARM_RAISE = math.rad(70) -- rechter Arm nach vorne angehoben (hält die Wa
 local RIGHT_ARM = { "RightUpperArm", "RightLowerArm", "RightHand" }
 
 -- primary = Uniform (Standard-Look), weaponSkin = Skin der Waffe (oder nil), weaponName = gezeigte Waffe (Standard:
--- erste Waffe des Agenten); das 3. Argument (früher zweite Farbe) wird ignoriert
-function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName)
+-- erste Waffe des Agenten), material = Material des Körpers (Agenten-Skin, nil = Standard); das 3. Argument (früher
+-- zweite Farbe) wird ignoriert
+function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName, material)
 	local model = Instance.new("Model")
 	local pants = AgentModels.PantsColor(primary)
 	local shoulder = AgentModels.RightShoulder
@@ -34,7 +35,7 @@ function AgentFigure.Build(agent, primary, _accent, weaponSkin, weaponName)
 		part.CFrame = table.find(RIGHT_ARM, name) and raise * body.CFrame or body.CFrame
 		part.Color = name == "Head" and AgentModels.SkinColor
 			or ((string.find(name, "Leg") or string.find(name, "Foot")) and pants or primary)
-		part.Material = Enum.Material.SmoothPlastic
+		part.Material = name ~= "Head" and material or Enum.Material.SmoothPlastic
 		part.TopSurface = Enum.SurfaceType.Smooth
 		part.BottomSurface = Enum.SurfaceType.Smooth
 		part.Anchored = true

@@ -1,8 +1,8 @@
 -- ExtLevelService (ModuleScript, nur Server)
--- Extinction-Level (Werte in ExtLevelConfig): EP für Zombies, Spieler, Bots, Nester, Lager, Überlebende, Funk, Lootdrops,
--- den Konvoi und erledigte Aufträge. Gespeichert als Statistik ExtXP (ProgressService.AddStat); Spieler-Attribute ExtLevel
--- und ExtXP für den Client. Beim Aufstieg eine Meldung, bei Titel-Leveln mit dem neuen Titel (den Titel selbst schaltet
--- TitleConfig über die Statistik frei).
+-- EP der offenen Welt (Werte in ExtLevelConfig): für Zombies, Spieler, Bots, Nester, Lager, Überlebende, Funk,
+-- Lootdrops, den Konvoi und erledigte Aufträge. Es gibt nur noch EIN Level: die EP gehen ins Spielerlevel
+-- (ProgressService.AddAccountXP, LevelConfig). Die Statistik ExtXP zählt weiter mit (Erfolg Ödland-Veteran).
+-- Aufstiegs-Meldung und Titel kommen über das Spielerlevel (Notifications, RewardService, TitleConfig).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -10,6 +10,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
+local LevelConfig = require(Shared.LevelConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local ZombieService = require(script.Parent.ZombieService)
 local ActivityService = require(script.Parent.ActivityService)
@@ -21,41 +22,20 @@ local ExtLevelService = {}
 local R = ExtLevelConfig.Rewards
 local openedDrops = setmetatable({}, { __mode = "k" }) -- [Player] = { [BagId] = true }
 
-local function totalXP(player)
-	local profile = ProgressService.Get(player)
-	local stats = profile and profile.Stats
-	return stats and tonumber(stats[ExtLevelConfig.Stat]) or 0
-end
-
--- Level und EP ans Spieler-Attribut
-function ExtLevelService.Publish(player)
-	local xp = totalXP(player)
-	player:SetAttribute("ExtXP", xp)
-	player:SetAttribute("ExtLevel", (ExtLevelConfig.FromXP(xp)))
-end
-
 -- EP geben (nur in der offenen Welt). reason: kurzer Text für die Anzeige, stat: Statistik, die um 1 steigt (für die
--- Erfolge, z.B. "ExtZombies"). Gibt das neue Level zurück.
+-- Erfolge, z.B. "ExtZombies"). Gibt das neue Spielerlevel zurück.
 function ExtLevelService.Add(player, amount, reason, stat)
 	amount = math.floor(tonumber(amount) or 0)
 	if amount <= 0 or not player.Parent or not Modes.IsSurvival(player:GetAttribute("Mode")) or not ProgressService.Get(player) then
 		return nil
 	end
-	local before = ExtLevelConfig.FromXP(totalXP(player))
 	if stat then
 		ProgressService.AddStat(player, stat, 1)
 	end
 	ProgressService.AddStat(player, ExtLevelConfig.Stat, amount)
-	ExtLevelService.Publish(player)
-	local after = player:GetAttribute("ExtLevel")
+	ProgressService.AddAccountXP(player, amount)
 	Remotes.ExtUpdate:FireClient(player, "ExtXP", amount, reason)
-	for level = before + 1, after do
-		local title = ExtLevelConfig.TitleAt(level)
-		Remotes.Notify:FireClient(player, "Banner", { Caption = "Extinction", Title = "LEVEL " .. level,
-			Sub = title and ("Neuer Titel: " .. title.Name .. " · im Fenster TITEL auswählen") or "Weiter so, Überlebender",
-			Style = "Good" })
-	end
-	return after
+	return LevelConfig.Get(player).Level
 end
 
 -- opts = { RedzoneAt(position) -> Zone | nil }

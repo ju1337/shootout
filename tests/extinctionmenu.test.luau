@@ -1,7 +1,8 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS ·
--- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben); kein AGENTEN mehr
--- (nur ein Agent). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE · SKINS (eigene Seiten) und LOADOUT · SHOP ·
+-- BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben).
+-- Kein AGENTEN mehr (nur noch ein Agent): weder im Menü noch in der Lobby. Controller: L1/R1 blättert, Auswahl im Inhalt.
+-- SKINS: Agenten-Skins als Kacheln mit Vorschau, AUSRÜSTEN schickt Equip an den Server.
 -- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (LOADOUT bleibt), AUFTRÄGE ohne Reiter
 -- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt LOADOUT.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
@@ -126,7 +127,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -217,8 +218,47 @@ for _, tab in { "Play", "Modes", "Agents" } do
 end
 GameMenu.SetOpen(false)
 step(0.1)
+
+-- SKINS: Agenten-Skins als Kacheln, STANDARD zuerst und ausgerüstet, gesperrte abgedunkelt mit IM SHOP
 key(Enum.KeyCode.M)
-check(activeTab() == "Settings", "M nach dem Lobby-Link: wieder OPTIONEN")
+menu():FindFirstChild("Tabs", true).Tab_Skins.Activated:Fire()
+step(0.1)
+check(title() == "SKINS" and activeTab() == "Skins", "Klick auf SKINS")
+local skinGrid = find(menu(), "Skins")
+local standard = find(menu(), "Skin_Standard")
+check(skinGrid ~= nil and standard ~= nil and standard.LayoutOrder == 1, "SKINS: Kachel STANDARD zuerst")
+check(standard and standard:FindFirstChildOfClass("UIStroke").Enabled, "SKINS: STANDARD ausgerüstet (grün umrandet)")
+local locked = find(menu(), "Skin_AS_Feldgrau")
+check(locked ~= nil and locked.Dim.Visible, "SKINS: nicht freigeschalteter Skin abgedunkelt")
+local action = find(menu(), "Action")
+check(action and action.Text == "AUSGERÜSTET", "SKINS: Knopf zeigt AUSGERÜSTET")
+locked.Activated:Fire()
+step(0.1)
+check(action.Text == "IM SHOP  ·  300" and find(menu(), "SkinName").Text == "FELDGRAU", "SKINS: gesperrter Skin in der Vorschau, Knopf IM SHOP")
+-- freischalten (Daten vom Server): Kachel hell, Klick rüstet aus
+bob:SetAttribute("Owned", HttpService:JSONEncode({ AS_Feldgrau = 1 }))
+step(0.1)
+check(not locked.Dim.Visible and action.Text == "AUSRÜSTEN", "SKINS: freigeschaltet, Knopf AUSRÜSTEN")
+local before = #SIM.RemoteLog
+action.Activated:Fire()
+step(0.1)
+local sent = nil
+for i = before + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	if entry.Remote == "ShopAction" then
+		sent = entry.Args
+	end
+end
+check(sent ~= nil and sent[1] == "Equip" and sent[2] == "AS_Feldgrau", "SKINS: AUSRÜSTEN schickt Equip an den Server")
+bob:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Feldgrau" }))
+step(0.1)
+check(locked:FindFirstChildOfClass("UIStroke").Enabled and action.Text == "AUSGERÜSTET", "SKINS: Feldgrau ausgerüstet")
+key(Enum.KeyCode.M)
+check(menu() == nil, "M schließt (auf SKINS)")
+key(Enum.KeyCode.M)
+menu():FindFirstChild("Tabs", true).Tab_Settings.Activated:Fire()
+step(0.1)
+check(activeTab() == "Settings", "zurück auf OPTIONEN")
 
 -- Controller: R1/L1 blättern (rundum), Auswahl im Inhalt, nicht auf den Reitern
 UserInputService.LastInputTypeChanged:Fire(Enum.UserInputType.Gamepad1)

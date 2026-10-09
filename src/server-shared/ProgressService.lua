@@ -23,6 +23,7 @@ local QuestConfig = require(Shared.QuestConfig)
 local PassConfig = require(Shared.PassConfig)
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
+local ExtLevelConfig = require(Shared.ExtLevelConfig)
 local RewardConfig = require(Shared.RewardConfig)
 local TitleConfig = require(Shared.TitleConfig)
 local LoginConfig = require(Shared.LoginConfig)
@@ -51,13 +52,13 @@ local sessionOnly = {} -- [Player] = true: in Studio ließ sich nicht laden – 
 
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
-		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
+		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, LevelMerged = true, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
 		Season = RankConfig.CurrentSeason() } }
 end
 
 -- Alte Spielstände: Skins, die es nicht mehr gibt (z.B. die entfernten Agenten-Skins), fallen aus Besitz und
--- Merkliste weg; ausgerüstet bleiben nur bekannte Waffen-Skins ("W:<Waffe>", Agenten-Skins "A:<Agent>" gibt es nicht
--- mehr). So sehen Inventar, RAP-Wert, Markt und Tausch nur Skins aus Cosmetics.
+-- Merkliste weg; ausgerüstet bleiben nur bekannte Waffen-Skins ("W:<Waffe>") und der Agenten-Skin ("Agent"; die alten
+-- Plätze "A:<Agent>" je Agent gibt es nicht mehr). So sehen Inventar, RAP-Wert, Markt und Tausch nur Skins aus Cosmetics.
 local function cleanItems(profile)
 	local owned = {}
 	for id, count in type(profile.Owned) == "table" and profile.Owned or {} do
@@ -68,7 +69,9 @@ local function cleanItems(profile)
 	profile.Owned = owned
 	local equipped = {}
 	for slot, id in type(profile.Equipped) == "table" and profile.Equipped or {} do
-		if type(slot) == "string" and string.sub(slot, 1, 2) == "W:" and Cosmetics.Get(id) then
+		local item = Cosmetics.Get(id)
+		if type(slot) == "string" and item and ((string.sub(slot, 1, 2) == "W:" and item.Type == "Weapon")
+			or (slot == "Agent" and item.Type == "Agent")) then
 			equipped[slot] = id
 		end
 	end
@@ -106,6 +109,21 @@ local function toProfile(data)
 			sum += tonumber(xp) or 0
 		end
 		profile.AccountXP = math.min(sum, LevelConfig.MaxXP)
+	end
+	-- Früher gab es ein eigenes Extinction-Level (Statistik ExtXP): einmalig ins Spielerlevel übernehmen. Die EP kommen
+	-- dazu, mindestens aber so viel, dass das Spielerlevel nicht unter dem alten Extinction-Level liegt.
+	if data.LevelMerged == nil then
+		local extXP = tonumber(type(profile.Stats) == "table" and profile.Stats[ExtLevelConfig.Stat]) or 0
+		if extXP > 0 then
+			local extLevel = ExtLevelConfig.FromXP(extXP)
+			local floor = 0
+			for level = 1, math.min(extLevel, LevelConfig.MaxLevel) - 1 do
+				floor += LevelConfig.XPForLevel(level)
+			end
+			local accountXP = tonumber(profile.AccountXP) or 0
+			profile.AccountXP = math.min(math.max(accountXP + extXP, floor), LevelConfig.MaxXP)
+		end
+		profile.LevelMerged = true
 	end
 	cleanItems(profile)
 	return profile
@@ -1165,6 +1183,18 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 	if reason ~= "Admin" then
 		ProgressService.AddPassXP(player, amount)
 	end
+	return amount
+end
+
+-- Nur Spielerlevel-XP (ohne Agent, Münzen und Battle Pass), z.B. die EP der offenen Welt (ExtLevelService)
+function ProgressService.AddAccountXP(player, amount)
+	local profile = profiles[player]
+	amount = math.floor(tonumber(amount) or 0)
+	if not profile or amount <= 0 then
+		return 0
+	end
+	profile.AccountXP = math.min((profile.AccountXP or 0) + amount, LevelConfig.MaxXP)
+	player:SetAttribute("AccountXP", profile.AccountXP) -- (reicht für Anzeige und Belohnungen, ohne ganzen Sync)
 	return amount
 end
 
