@@ -15,18 +15,18 @@ Alternativen, falls der Name schon vergeben ist: `Shootout – Extinction Surviv
 
 ## Beschreibung (höchstens 1000 Zeichen)
 
-Roblox zeigt nur die ersten Zeilen ohne „Read more“, darum steht das Wichtigste oben. 1026 Zeichen:
+Roblox zeigt nur die ersten Zeilen ohne „Read more“, darum steht das Wichtigste oben. 960 Zeichen:
 
 ```
 Survive the open world of EXTINCTION – or fight it out in the arcade modes.
 
-🧟 EXTINCTION (main mode): Leave the safe zone of Camp Phoenix and loot the ruined city of Ödstadt, villages, outposts and a hilltop radio tower. Zombies, runners, screamers and brutes hunt you. Buy weapons, ammo, vests and vehicles with coins, keep your best gear in the stash – everything in your bag drops when you die outside.
-🔴 RED ZONE: one zone moves every 20 minutes. PvP is instant, zombies are tougher, loot is better, and the top 3 get rewards.
-🚁 Quads, pickups, sports cars and a helicopter for 4. Supply drops, convoys, heli crashes, bosses, blood moon and storm nights.
+🧟 EXTINCTION (main mode): Leave the safe zone of Camp Phoenix and loot the ruined city, villages, outposts and the radio tower. Zombies, runners, screamers and brutes hunt you. Buy weapons, ammo, vests and vehicles with coins, keep your best gear in the stash – your bag drops when you die outside.
+🔴 RED ZONE: one zone moves every 20 minutes. PvP is instant, zombies are tougher, loot is better, the top 3 get rewards.
+🚁 Quads, pickups, sports cars and a helicopter for 4. Supply drops, convoys, heli crashes, bosses, blood moon, storm nights.
 🤝 Squads of 4, player market, trading, clans, missions, battle pass, lucky wheel.
-🎯 ARCADE: Free-for-All, Domination 5v5, Wingman 2v2, 1v1 Arena and a shooting range – with ELO ranks in every mode.
+🎯 ARCADE: Free-for-All, Domination 5v5, Wingman 2v2, 1v1 Arena, shooting range – ELO ranks in every mode.
 
-New here? A short tutorial starts the first time you enter the open world. Press M for the menu, N for the map.
+New here? A short tutorial starts the first time you enter the open world. M = menu, N = map.
 
 Updates every week. Join the group for news and codes!
 ```
