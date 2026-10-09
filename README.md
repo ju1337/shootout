@@ -110,10 +110,10 @@ Spawns blau).
 Die Teile, die Server und Client suchen (Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
 Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 35 Studs auseinander
 (`tests/maps_check.py` verlangt 30). Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt beim Umbau gleich.
-Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt eine **Hinweis-Blase** mit Namen
-und Symbolen der Ware (Waffen als 3D-Modell, Munition, Medikit, Weste, Fahrzeuge, Münzen, Kiste, Wegweiser), damit man
-schon von weitem sieht, wo was ist (`addBubble` in `src/client/ExtinctionClient.lua`, 22 Studs über dem Stand und damit
-über den Dächern, bis 260 Studs, Wände verdecken).
+Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt ein **Symbol**: schlichte dunkle
+Scheibe mit farbigem Rand, kleinem Symbol der Station und kurzem Namen darunter (`addBubble` in
+`src/client/ExtinctionClient.lua`, 22 Studs über dem Stand und damit über den Dächern, bis 200 Studs, Wände verdecken).
+Die Symbole sind nur zu sehen, solange man in einer Safe Zone ist (Spieler-Attribut `InSafeZone`).
 
 **Tutorial** (`src/client/ExtTutorial.lua`): Wer zum ersten Mal in die offene Welt kommt, bekommt eine Karte WELCOME mit
 START TUTORIAL / SKIP. Danach führt eine Tafel oben in der Mitte durch sechs Schritte, jeder geht erst weiter, wenn er

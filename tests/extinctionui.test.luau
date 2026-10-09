@@ -135,29 +135,39 @@ local windowGui = playerGui:FindFirstChild("ExtinctionWindow")
 check(hud ~= nil and hud.Enabled, "HUD in der offenen Welt sichtbar")
 check(windowGui ~= nil and not windowGui.Enabled, "kein Fenster offen")
 
--- Symbole über allen Ständen, dem Lager und der Haltestelle: nur ein kleines Symbol der Station, ohne Rahmen und Titel
+-- Symbole über allen Ständen, dem Lager und der Haltestelle: Scheibe mit Symbol und kurzem Namen, nur in der Safe Zone
 local BUBBLE_WANT = {
-	Stand_Weapons = "Rifle",
-	Stand_Items = "Medkit",
-	Stand_Vehicles = "V_Pickup",
-	Stand_Market = "Coins",
-	Stash = "Crate",
-	Travel = "Route",
+	Stand_Weapons = { "Rifle", "WAFFEN" },
+	Stand_Items = { "Medkit", "APOTHEKE" },
+	Stand_Vehicles = { "V_Pickup", "FAHRZEUGE" },
+	Stand_Market = { "Coins", "TAUSCHMARKT" },
+	Stash = { "Crate", "LAGER" },
+	Travel = { "Route", "REISEN" },
 }
+bob:SetAttribute("InSafeZone", true)
+step(0.2)
 for name, want in BUBBLE_WANT do
 	local part = map.Stands:FindFirstChild(name)
 	local bubble = part and part:FindFirstChild("StandBubble")
-	check(bubble ~= nil and bubble:IsA("BillboardGui") and bubble.Enabled, name .. ": Symbol über dem Stand")
+	check(bubble ~= nil and bubble:IsA("BillboardGui") and bubble.Enabled, name .. ": Symbol über dem Stand in der Safe Zone")
 	if bubble then
-		local icon = find(bubble, "Icon_" .. want)
-		check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. want)
-		check(find(bubble, "Title") == nil and find(bubble, "Panel") == nil, name .. ": kein Titel, kein Rahmen")
-		local scale = find(bubble, "UIScale")
-		check(bubble.Size.X.Offset >= 80 and scale ~= nil and scale.Scale > 1.5, name .. ": groß genug, Symbol mitskaliert")
-		check(bubble.StudsOffset.Y > 6 and bubble.MaxDistance >= 150 and not bubble.AlwaysOnTop,
-			name .. ": über dem Dach, von weitem sichtbar, Wände verdecken")
+		local icon = find(bubble, "Icon_" .. want[1])
+		check(icon ~= nil and #icon:GetDescendants() > 0, name .. ": Symbol " .. want[1])
+		local label = find(bubble, "Label")
+		check(label ~= nil and label.Text == want[2], name .. ": Name " .. want[2])
+		check(find(bubble, "Disc") ~= nil, name .. ": Scheibe")
+		check(bubble.Size.X.Offset <= 160 and bubble.Size.Y.Offset <= 80, name .. ": schlicht, nicht riesig")
+		check(bubble.StudsOffset.Y > 15 and bubble.MaxDistance >= 150 and not bubble.AlwaysOnTop,
+			name .. ": hoch über dem Dach, von weitem sichtbar, Wände verdecken")
 	end
 end
+bob:SetAttribute("InSafeZone", false)
+step(0.2)
+local weapons = map.Stands:FindFirstChild("Stand_Weapons")
+check(weapons ~= nil and not weapons.StandBubble.Enabled, "außerhalb der Safe Zone keine Symbole")
+bob:SetAttribute("InSafeZone", true)
+step(0.2)
+check(weapons ~= nil and weapons.StandBubble.Enabled, "zurück in der Safe Zone wieder Symbole")
 local rifleIcon = find(map.Stands.Stand_Weapons.StandBubble, "Icon_Rifle")
 check(rifleIcon and rifleIcon:FindFirstChildWhichIsA("ViewportFrame", true) ~= nil, "Waffensymbol als 3D-Modell")
 local hotbar = hud and find(hud, "Hotbar")

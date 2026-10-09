@@ -1047,6 +1047,7 @@ return {
 	["KAFFEE · EINTOPF"] = "COFFEE · STEW",
 	["KAMERA"] = "CAMERA",
 	["KATAKOMBEN"] = "CATACOMBS",
+	["KITS"] = "KITS",
 	["Kamera"] = "Camera",
 	["Kamera im Kampf"] = "Combat Camera",
 	["Karmesin"] = "Crimson",

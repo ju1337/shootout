@@ -3113,21 +3113,26 @@ local prompts = {}
 
 -- ---------- Hinweis-Blasen über den Ständen ----------
 -- Über jedem Stand (Camp und Safehouses) schwebt eine Sprechblase mit dem Namen und Symbolen der Ware, damit man
--- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE_RANGE Studs blendet sie aus.
-local BUBBLE_RANGE = 260
-local BUBBLE_HEIGHT = 22  -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): hoch über den Dächern im Camp, quer über den Platz zu sehen
-local BUBBLE_SIZE = 110   -- nur das Symbol, ohne Rahmen und Titel (Pixel)
-local ICON_BASE = 46      -- in dieser Größe sind die Symbole gezeichnet; UIScale bringt sie auf BUBBLE_SIZE
+-- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE.Range Studs blendet sie aus.
+-- Nur in einer Safe Zone sichtbar (Spieler-Attribut InSafeZone): draußen stören sie nicht.
+-- Schlicht im Stil der Oberfläche: dunkle Scheibe mit farbigem Rand, kleines Symbol darin, kurzer Name darunter.
+local BUBBLE = {
+	Range = 200,
+	Height = 22, -- über dem Stand-Punkt (liegt vor der Theke auf Hüfthöhe): hoch über den Dächern im Camp, quer über den Platz zu sehen
+	Disc = 44,   -- Durchmesser der Scheibe (Pixel)
+	Icon = 30,   -- Symbol in der Scheibe (Pixel)
+}
+local ICON_BASE = 46      -- in dieser Größe sind die Symbole gezeichnet; UIScale bringt sie auf BUBBLE.Icon
 local BUBBLES = {
-	Stand_Weapons = { Icon = "Rifle" },
-	Stand_Items = { Icon = "Medkit" },
-	Stand_Vehicles = { Icon = "V_Pickup" },
-	Stand_Market = { Icon = "Coins" },
-	Stash = { Icon = "Crate" },
-	Travel = { Icon = "Route" },
-	Hideout = { Icon = "House" },
-	Stand_Red = { Icon = "RedPoints" },
-	[KitConfig.Point] = { Icon = "Kit" },
+	Stand_Weapons = { Icon = "Rifle", Label = "WAFFEN", Color = Color3.fromRGB(226, 140, 60) },
+	Stand_Items = { Icon = "Medkit", Label = "APOTHEKE", Color = Color3.fromRGB(90, 200, 110) },
+	Stand_Vehicles = { Icon = "V_Pickup", Label = "FAHRZEUGE", Color = Color3.fromRGB(110, 176, 230) },
+	Stand_Market = { Icon = "Coins", Label = "TAUSCHMARKT", Color = Color3.fromRGB(230, 186, 70) },
+	Stash = { Icon = "Crate", Label = "LAGER", Color = Color3.fromRGB(176, 186, 200) },
+	Travel = { Icon = "Route", Label = "REISEN", Color = Color3.fromRGB(110, 170, 220) },
+	Hideout = { Icon = "House", Label = "VERSTECK", Color = Color3.fromRGB(200, 160, 110) },
+	Stand_Red = { Icon = "RedPoints", Label = "DER SCHIEBER", Color = Color3.fromRGB(220, 60, 50) },
+	[KitConfig.Point] = { Icon = "Kit", Label = "KITS", Color = Color3.fromRGB(96, 200, 120) },
 }
 local bubbles = {}
 
@@ -3196,19 +3201,32 @@ local function bubbleOf(name)
 	return BUBBLES[name] or (string.sub(name, 1, 7) == "Travel_" and BUBBLES.Travel) or nil
 end
 
--- Symbol über einen Stand-Punkt hängen (einmal je Punkt): nur das Symbol der Station, klein, ohne Rahmen
+-- Symbole nur in der offenen Welt und nur in einer Safe Zone (Camp, Safehouses)
+local function bubblesOn()
+	return inExtinction() and player:GetAttribute("InSafeZone") == true
+end
+
+-- Symbol über einen Stand-Punkt hängen (einmal je Punkt): Scheibe mit Symbol, Name darunter
 local function addBubble(part)
 	local def = part:IsA("BasePart") and bubbleOf(part.Name)
 	if not def or part:FindFirstChild("StandBubble") then
 		return
 	end
-	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(BUBBLE_SIZE, BUBBLE_SIZE),
-		StudsOffset = Vector3.new(0, BUBBLE_HEIGHT, 0), MaxDistance = BUBBLE_RANGE, AlwaysOnTop = false, LightInfluence = 0,
-		Enabled = inExtinction() }, part)
-	-- die Symbole sind mit festen Pixelmaßen gezeichnet: in Grundgröße bauen und als Ganzes hochskalieren
+	local gui = make("BillboardGui", { Name = "StandBubble", Size = UDim2.fromOffset(120, BUBBLE.Disc + 22),
+		StudsOffset = Vector3.new(0, BUBBLE.Height, 0), MaxDistance = BUBBLE.Range, AlwaysOnTop = false, LightInfluence = 0,
+		Enabled = bubblesOn() }, part)
+	local disc = make("Frame", { Name = "Disc", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
+		Size = UDim2.fromOffset(BUBBLE.Disc, BUBBLE.Disc), BackgroundColor3 = UITheme.Colors.Panel, BackgroundTransparency = 0.12,
+		BorderSizePixel = 0 }, gui)
+	UITheme.Corner(disc, BUBBLE.Disc // 2)
+	UITheme.Stroke(disc, def.Color, 2)
+	-- die Symbole sind mit festen Pixelmaßen gezeichnet: in Grundgröße bauen und als Ganzes skalieren
 	local holder = make("Frame", { Name = "IconHolder", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(ICON_BASE, ICON_BASE), BackgroundTransparency = 1 }, gui)
-	make("UIScale", { Scale = BUBBLE_SIZE / ICON_BASE }, holder)
+		Size = UDim2.fromOffset(ICON_BASE, ICON_BASE), BackgroundTransparency = 1 }, disc)
+	make("UIScale", { Scale = BUBBLE.Icon / ICON_BASE }, holder)
+	make("TextLabel", { Name = "Label", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
+		Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1, Text = def.Label, Font = Enum.Font.GothamBold, TextSize = 13,
+		TextColor3 = UITheme.Colors.Text, TextStrokeTransparency = 0.4, TextStrokeColor3 = Color3.new(0, 0, 0) }, gui)
 	local icon = itemConfig(def.Icon) and buildIcon(holder, def.Icon, 1) or buildSymbol(holder, def.Icon, 1)
 	icon.Name = "Icon_" .. def.Icon
 	table.insert(bubbles, gui)
@@ -3331,15 +3349,20 @@ local function setupPrompts()
 	stands.ChildAdded:Connect(function(part)
 		addBubble(part)
 		for _, gui in bubbles do
-			gui.Enabled = inExtinction()
+			gui.Enabled = bubblesOn()
 		end
 	end)
 	for _, prompt in prompts do
 		prompt.Enabled = inExtinction()
 	end
 	for _, gui in bubbles do
-		gui.Enabled = inExtinction()
+		gui.Enabled = bubblesOn()
 	end
+	player:GetAttributeChangedSignal("InSafeZone"):Connect(function()
+		for _, gui in bubbles do
+			gui.Enabled = bubblesOn()
+		end
+	end)
 end
 
 -- Fenster am Stand/Lager schließen, wenn man weggeht
@@ -3439,7 +3462,7 @@ local function updateVisible()
 		prompt.Enabled = on
 	end
 	for _, gui in bubbles do
-		gui.Enabled = on
+		gui.Enabled = on and bubblesOn()
 	end
 	if not on then
 		closeWindow()
