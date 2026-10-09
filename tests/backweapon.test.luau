@@ -1,4 +1,4 @@
--- BackWeapon: im Hub hängt die Standardwaffe des aktiven Agenten am Rücken, folgt Agent, Waffenwahl und Skin und
+-- BackWeapon: im Markt hängt die Standardwaffe des aktiven Agenten am Rücken, folgt Agent, Waffenwahl und Skin und
 -- verschwindet in den Kampfmodi und beim Tod.
 local BackWeapon = require("BackWeapon")
 local AgentConfig = require("AgentConfig")
@@ -19,11 +19,11 @@ end
 
 BackWeapon.Init()
 local player = SIM.AddPlayer("Spieler")
-player:SetAttribute("Mode", "Hub")
+player:SetAttribute("Mode", "Market")
 player:SetAttribute("Agent", "Viper")
 player:LoadCharacter()
 local character = player.Character
--- Oberkörper wie beim schlanken R15-Avatar (Breite 75 %, Tiefe 80 %), Charakter gedreht irgendwo im Hub
+-- Oberkörper wie beim schlanken R15-Avatar (Breite 75 %, Tiefe 80 %), Charakter gedreht irgendwo im Markt
 local torso = character.UpperTorso
 torso.Size = Vector3.new(1.5, 1.6, 0.8)
 character:PivotTo(CFrame.new(40, 6, -25) * CFrame.Angles(0, math.rad(130), 0))
@@ -158,20 +158,20 @@ torso.Parent = character
 step()
 checkPlacement(AgentConfig.LoadoutFor(player, player:GetAttribute("Agent"))[1], "neuer Oberkörper")
 
--- 7) Kampfmodus: keine Rückenwaffe; zurück im Hub wieder da
+-- 7) Kampfmodus: keine Rückenwaffe; zurück im Markt wieder da
 player:SetAttribute("Mode", "FreeForAll")
 step()
 check(backWeapon() == nil, "im Kampfmodus keine Rückenwaffe")
-player:SetAttribute("Mode", "Hub")
+player:SetAttribute("Mode", "Market")
 step()
-check(backWeapon() ~= nil, "zurück im Hub wieder auf dem Rücken")
+check(backWeapon() ~= nil, "zurück im Markt wieder auf dem Rücken")
 
 -- 8) Tod: Waffe weg
 character:FindFirstChildOfClass("Humanoid").Health = 0
 step()
 check(backWeapon() == nil, "tot: keine Rückenwaffe")
 
--- 9) Neuer Charakter im Hub (Respawn)
+-- 9) Neuer Charakter im Markt (Respawn)
 player:LoadCharacter()
 character = player.Character
 torso = character.UpperTorso

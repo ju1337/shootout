@@ -181,8 +181,8 @@ function MissionService.Init(opts)
 	local folder = opts.Map:FindFirstChild("Places")
 	for _, part in folder and folder:GetChildren() or {} do
 		local key = part:IsA("BasePart") and string.match(part.Name, "^Place_(.+)$")
-		-- nur Orte, die man gezielt besuchen kann (nicht das Camp und keine riesigen Bereiche)
-		if key and key ~= "Camp" and part.Size.X <= 500 then
+		-- nur Orte, die man gezielt besuchen kann (nicht das Camp mit seiner Einsatzzentrale und keine riesigen Bereiche)
+		if key and key ~= "Camp" and key ~= "Zentrale" and part.Size.X <= 500 then
 			table.insert(places, { Key = key, Title = part:GetAttribute("Title") or key, Position = part.Position,
 				Radius = part.Size.X / 2 })
 		end

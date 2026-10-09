@@ -23,8 +23,12 @@ import extinction_terrain as et
 ORIGIN = (0, 0, -6000)
 SIZE = 3200
 HALF = SIZE / 2
-SAFE_R = 120
-CAMP_HALF = 82    # halbe Seitenlänge der Basis (HESCO-Wall im Quadrat, Ecken innerhalb SAFE_R)
+SAFE_R = 165
+CAMP_HALF = 115   # halbe Seitenlänge der Basis (Mauer im Quadrat, Ecken innerhalb SAFE_R)
+# Abstand, ab dem die Stadt-Deko um das Camp beginnt (Wracks, Laternen, Bäume, Leichen). Bleibt beim alten Radius der
+# Safe Zone (120), damit eine größere Safe Zone den Zufall der übrigen Welt nicht verschiebt; frei bis zur Ringstraße
+# (Radius 180) hält die Welt ohnehin (belegte Fläche (0, 0, 168)).
+CITY_CLEAR_R = 120
 ROAD_W = 20          # Stadtstraßen
 HIGHWAY_W = 22       # Landstraßen
 # Parkhaus am Rand von Ödstadt (GTA-Stil): Breite zur Straße, Tiefe, Stockwerkshöhe, Decks über dem Erdgeschoss (oberstes = Dach)
@@ -32,7 +36,7 @@ GARAGE_W, GARAGE_D, GARAGE_FH, GARAGE_LEVELS = 100.0, 72.0, 8.0, 4
 
 # Orte: Schlüssel -> (Titel, x, z, Radius) – Banner beim Betreten (kleinster Ort gewinnt) und Namen auf der Weltkarte
 PLACES = {
-    "Camp": ("CAMP PHOENIX", 0, 0, 140),
+    "Camp": ("CAMP PHOENIX", 0, 0, 175),
     "Oedstadt": ("ÖDSTADT", 0, 0, 740),
     "Innenstadt": ("INNENSTADT", 0, 0, 320),
     "Krankenhaus": ("ST. MARIEN KRANKENHAUS", 330, 320, 120),
@@ -1648,7 +1652,7 @@ class World:
                 t = rng.uniform(0.15, 0.85) * length
                 s = rng.choice((-1, 1)) * w / 4
                 px, pz = ax + dx * t + nx * s, az + dz * t + nz * s
-                if math.hypot(px, pz) > SAFE_R + 40:
+                if math.hypot(px, pz) > CITY_CLEAR_R + 40:
                     self.car(px, pz, road_yaw + 90 + rng.uniform(-35, 35), y=0.26)
             if rng.random() < stains:
                 t = rng.uniform(0.1, 0.9) * length
@@ -1657,13 +1661,13 @@ class World:
                 t = rng.uniform(0.2, 0.8) * length
                 s = rng.choice((-1, 1)) * (w / 2 + 2)
                 fx, fz = ax + dx * t + nx * s, az + dz * t + nz * s
-                if math.hypot(fx, fz) > SAFE_R + 40:
+                if math.hypot(fx, fz) > CITY_CLEAR_R + 40:
                     self.fire(fx, fz, smoke=rng.random() < 0.3)
             if lamps and length > 40:
                 t = length / 2
                 s = rng.choice((-1, 1)) * (w / 2 + 1.5)
                 lx, lz = ax + dx * t + nx * s, az + dz * t + nz * s
-                if math.hypot(lx, lz) > SAFE_R + 20:
+                if math.hypot(lx, lz) > CITY_CLEAR_R + 20:
                     self.lamp(lx, lz, road_yaw, working=rng.random() < 0.18)
 
     def overgrowth(self, cx, cz, radius, n):
@@ -1675,7 +1679,7 @@ class World:
                 break
             a, r = rng.uniform(0, 2 * math.pi), radius * math.sqrt(rng.random())
             x, z = cx + math.cos(a) * r, cz + math.sin(a) * r
-            if math.hypot(x, z) < SAFE_R + 60 or not self.free(x, z, 4, road_pad=2):
+            if math.hypot(x, z) < CITY_CLEAR_R + 60 or not self.free(x, z, 4, road_pad=2):
                 continue
             if rng.random() < 0.6:
                 self.tree(x, z, dead=rng.random() < 0.4)
@@ -2031,8 +2035,9 @@ class World:
         """Safe Zone "Camp Phoenix": befestigter Altstadtplatz mitten in Ödstadt (Stil DayZ/Tarkov). Ein gepflasterter
         Platz mit Brunnen (Spawn), rundum geschlossene Altbauten mit zwei bis drei Stockwerken, Putzfassaden, Ziegeldächern
         und Fensterläden. Die Stationen sind Läden im Erdgeschoss: am Platz Waffen, Apotheke, Tauschmarkt und Lagerhaus
-        (in jeder Ecke einer), an den Straßen KFZ-Werkstatt und Busbahnhof, im Hinterhof der Landeplatz. Vier Straßen
-        mit Gehsteigen führen zu Sperren aus Containern und Beton; außen herum eine Mauer mit Stacheldraht.
+        (in jeder Ecke einer), an den Straßen KFZ-Werkstatt und Busbahnhof, im Hinterhof der Landeplatz. An der Nordstraße
+        steht die Einsatzzentrale (früher der Hub: Shop, Bestenlisten, Glücksrad, Tor zum Markt). Vier Straßen mit
+        Gehsteigen führen zu Sperren aus Containern und Beton; außen herum eine Mauer mit Stacheldraht.
 
         Das Camp hat eigene Zufallszahlen. Danach steht der Zufallsgenerator der Welt wieder genau dort, wo ihn das
         frühere Camp hinterließ (tools/saved/extinction_after_camp.json) – der Rest der Welt bleibt so unverändert."""
@@ -2081,6 +2086,7 @@ class World:
                 self.house_row(line, row)
             self.backyard(sx, sz, specs.get("yard", "yard"))
         self.town_wall()
+        self.zentrale()  # Einsatzzentrale (früher der Hub) an der Nordstraße
         self.parked_bus(-4, -60)  # Südstraße, gegenüber dem Busbahnhof
 
     def parked_bus(self, x, z):
@@ -2097,23 +2103,25 @@ class World:
 
     # Je Ecke die Häuser (Breite, Art, Stockwerke). Arten: house, shop:<Titel>|<Unterzeile>, station:<Schlüssel>, garage,
     # bus, gap (Gasse, kein Haus)
+    # Die Zeilen an den Straßen (C, D) reichen von der Platzecke (42) bis kurz vor die Sperren (höchstens 62 Studs).
+    # Nordwest: statt der Häuserzeile an der Nordstraße steht dort die Einsatzzentrale (zentrale, Hof "zentrale").
     TOWN_BLOCKS = {
         (1, 1): {"A": [(15, "station:Stand_Weapons", 2), (16, "shop:CAFÉ ZENTRAL|GESCHLOSSEN", 3)],
                  "B": [(15, "house", 3)],
-                 "C": [(14, "house", 2), (14, "gap", 0), (10, "house", 2)],
-                 "D": [(20, "station:Hideout", 3), (18, "house", 2)], "yard": "heli"},
+                 "C": [(14, "house", 2), (14, "gap", 0), (10, "house", 2), (12, "house", 3), (12, "house", 2)],
+                 "D": [(20, "station:Hideout", 3), (18, "house", 2), (10, "gap", 0), (14, "house", 2)], "yard": "heli"},
         (1, -1): {"A": [(15, "shop:BÄCKEREI|BROT GEGEN MARKEN", 2), (16, "house", 3)],
                   "B": [(15, "station:Stand_Items", 2)],
-                  "C": [(16, "bus", 2), (22, "house", 3)],
-                  "D": [(18, "house", 2), (20, "house", 3)]},
+                  "C": [(16, "bus", 2), (22, "house", 3), (10, "gap", 0), (14, "house", 2)],
+                  "D": [(18, "house", 2), (20, "house", 3), (14, "house", 3), (10, "house", 2)]},
         (-1, -1): {"A": [(15, "station:Stand_Market", 2), (16, "shop:RATHAUS|KRISENSTAB", 3)],
                    "B": [(15, "shop:HOTEL ZUR POST|NOTUNTERKUNFT", 3)],
-                   "C": [(18, "house", 2), (20, "house", 3)],
-                   "D": [(20, "house", 3), (18, "house", 2)]},
+                   "C": [(18, "house", 2), (16, "garage", 2), (14, "gap", 0), (14, "house", 3)],
+                   "D": [(20, "house", 3), (18, "house", 2), (12, "house", 2), (12, "gap", 0)]},
         (-1, 1): {"A": [(15, "shop:POST|AUSGABE NUR MO-FR", 2), (16, "house", 3)],
                   "B": [(15, "station:Stash", 2)],
-                  "C": [(16, "garage", 2), (22, "house", 3)],
-                  "D": [(18, "house", 3), (20, "house", 2)]},
+                  "C": [],
+                  "D": [(18, "house", 3), (20, "house", 2), (14, "house", 2), (10, "gap", 0)], "yard": "zentrale"},
     }
     TOWN_STATIONS = {
         "Stand_Weapons": ("WAFFEN & MUNITION", "ANKAUF · VERKAUF · TAUSCH", (226, 140, 60)),
@@ -2440,7 +2448,7 @@ class World:
         for s in (-1, 1):
             box("Ground", "Sidewalk", (3, 0.5, length), (s * 9.5, 0.25, mid), (150, 146, 138), "Concrete")
             box("Ground", "Curb", (0.4, 0.55, length), (s * 8.1, 0.27, mid), (120, 118, 112), "Slate")
-            for k in range(3):
+            for k in range(int((H - 8 - SQ - 12) // 18) + 1):
                 lz = SQ + 12 + k * 18
                 self.camp_lamp(*self._xz(f, s * 9.6, lz), self.yaw_to(*self._dir(f, -s, 0)))
         box("Ground", "Manhole", (2, 0.08, 2), (rng.uniform(-4, 4), 0.14, SQ + 20), (60, 60, 62), "DiamondPlate")
@@ -2507,58 +2515,130 @@ class World:
                     b.add("Walls", "RazorWire", (8, 1.4, 1.4), f(cx, 11.4, H), (128, 128, 126), "CorrodedMetal",
                           angles=(0, syaw, 0), props={"Shape": "Cylinder"})
 
+    YARD_SHIFT = CAMP_HALF - 82  # die Höfe sind mit dem Camp gewachsen: alte Einrichtung nach außen, innen neue
+
     def backyard(self, sx, sz, kind):
-        """Hinterhof hinter den Häusern (zwischen Häusern und Mauer): Schotter, Schuppen, Bäume, Zelte, Wäscheleine, Auto.
-        kind "heli": Landeplatz EVAKUIERUNG (Portal_Hub), erreichbar durch die Gasse von der Nord-Süd-Straße."""
+        """Hinterhof hinter den Häusern (zwischen Häusern und Mauer): Schotter, Schuppen, Bäume, Zelte, Wäscheleine, Auto,
+        im inneren Teil ein Gemüsegarten und eine Feuerstelle mit Kisten.
+        kind "heli": Landeplatz mit Hubschrauber-Markierung, erreichbar durch die Gasse von der Nord-Süd-Straße.
+        kind "zentrale": der Hof hinter der Einsatzzentrale (Stromaggregat, Tanks, Container, Funkmast)."""
         b, rng = self.b, self.rng
-        H, SQ, D = CAMP_HALF, self.TOWN_SQ, self.TOWN_DEPTH
-        inner = SQ + D           # bis hier reichen die Häuser am Platz
-        street_back = self.TOWN_LINE + D
+        o = self.YARD_SHIFT
+        if kind == "zentrale":
+            self.zentrale_yard(sx, sz)
+            return
         if kind == "heli":
-            cx, cz = sx * 54, sz * 62
+            cx, cz = sx * (54 + o), sz * (62 + o)
             b.add("Decor", "Helipad", (0.4, 22, 22), (cx, 0.2, cz), (84, 84, 80), "Concrete", angles=(0, 0, 90),
                   props={"Shape": "Cylinder"})
             b.floor_text("HelipadH", (8, 0.1, 8), (cx, 0.45, cz), "H", (220, 200, 90), yaw=180)
-            b.add("Portals", "Portal_Hub", (14, 0.4, 14), (cx, 0.5, cz), (120, 185, 235), "Neon",
-                  props={"CanCollide": False, "Transparency": 0.8})
             for k in range(8):
                 a = 2 * math.pi * k / 8
                 b.box("Decor", "PadLight", (0.6, 0.4, 0.6), (cx + math.sin(a) * 10.6, 0.5, cz + math.cos(a) * 10.6), (120, 220, 120),
                       "Neon", props={"CanCollide": False})
-            # Schild an der Gassen-Einfahrt (Straßenseite) und am Platz
-            gx, gz = sx * (self.TOWN_LINE - 0.5), sz * (inner + 14 + 7)
-            f, box = self.frame(gx, gz, self.yaw_to(-sx, 0))
-            self.b.sign2("HubGateSign", (10, 2.6, 0.3), f(0, 9, 0), "EVAKUIERUNG", "LANDEPLATZ = ZURÜCK ZUM HUB", (30, 32, 30),
-                         (120, 185, 235), (214, 212, 202), angles=(0, self.yaw_to(-sx, 0), 0), glow=(120, 185, 235))
-            for s in (-1, 1):
-                box("Decor", "HubSignPost", (0.4, 7.8, 0.4), (s * 4.4, 3.9, 0.3), (60, 60, 60), "Metal")
-            b.box("Decor", "Windsock", (0.3, 8, 0.3), (sx * 70, 4, sz * 74), (150, 150, 150), "Metal")
-            b.box("Decor", "WindsockCone", (1, 1, 3.2), (sx * 70, 7.6, sz * 75.6), (230, 110, 40), "Fabric")
+            b.box("Decor", "Windsock", (0.3, 8, 0.3), (sx * (70 + o), 4, sz * (74 + o)), (150, 150, 150), "Metal")
+            b.box("Decor", "WindsockCone", (1, 1, 3.2), (sx * (70 + o), 7.6, sz * (75.6 + o)), (230, 110, 40), "Fabric")
             for k in range(4):
-                b.cylinder("Cover", "FuelBarrel", 2.2, 3, (sx * (72 + (k % 2) * 2.4), 1.5, sz * (50 + (k // 2) * 2.4)), (60, 74, 50),
-                           material="Metal")
+                b.cylinder("Cover", "FuelBarrel", 2.2, 3, (sx * (72 + o + (k % 2) * 2.4), 1.5, sz * (50 + o + (k // 2) * 2.4)),
+                           (60, 74, 50), material="Metal")
+            self.yard_garden(sx, sz)
             return
-        # gewöhnlicher Hof: zwei Bäume, Schuppen, zwei Zelte, Wäscheleine, Auto
-        for tx, tz in ((sx * 66, sz * 70), (sx * 40, sz * 72)):
+        # gewöhnlicher Hof: zwei Bäume, Schuppen, zwei Zelte, Wäscheleine, Auto (nach außen gerückt), innen Garten
+        for tx, tz in ((sx * (66 + o), sz * (70 + o)), (sx * (40 + o), sz * (72 + o))):
             self.dead_tree(tx, tz, g=0.0)
-        f, box = self.frame(sx * 70, sz * 46, self.yaw_to(-sx, 0))
+        f, box = self.frame(sx * (70 + o), sz * (46 + o), self.yaw_to(-sx, 0))
         box("Buildings", "Shed", (10, 7, 8), (0, 3.5, 0), (110, 92, 70), "WoodPlanks")
         box("Buildings", "ShedRoof", (11, 0.4, 9), (0, 7.3, 0), (90, 92, 94), "CorrodedMetal", extra=(6, 0, 0))
-        for k, (tx, tz) in enumerate(((sx * 48, sz * 56), (sx * 58, sz * 60))):
+        for k, (tx, tz) in enumerate(((sx * (48 + o), sz * (56 + o)), (sx * (58 + o), sz * (60 + o)))):
             f, box = self.frame(tx, tz, self.yaw_to(-sx, -sz) + k * 30)
             col = rng.choice(((60, 86, 110), (150, 120, 60), (84, 98, 70)))
             box("Buildings", "Tent", (6, 3.4, 8), (0, 1.7, 0), col, "Fabric")
             box("Buildings", "TentTop", (4.4, 0.3, 8.4), (0, 3.6, 0), self.bm.lighten(col, -0.15), "Fabric")
         for k in range(2):
-            b.box("Decor", "ClothesPole", (0.3, 7, 0.3), (sx * (36 + k * 14), 3.5, sz * 64), (90, 80, 70), "Wood")
-        b.box("Decor", "ClothesLine", (14, 0.1, 0.1), (sx * 43, 6.6, sz * 64), (200, 200, 196), "SmoothPlastic", props={"CanCollide": False})
+            b.box("Decor", "ClothesPole", (0.3, 7, 0.3), (sx * (36 + o + k * 14), 3.5, sz * (64 + o)), (90, 80, 70), "Wood")
+        b.box("Decor", "ClothesLine", (14, 0.1, 0.1), (sx * (43 + o), 6.6, sz * (64 + o)), (200, 200, 196), "SmoothPlastic",
+              props={"CanCollide": False})
         for k in range(4):
-            b.box("Decor", "Laundry", (1.8, 2.4, 0.1), (sx * (38 + k * 3.2), 5.3, sz * 64),
+            b.box("Decor", "Laundry", (1.8, 2.4, 0.1), (sx * (38 + o + k * 3.2), 5.3, sz * (64 + o)),
                   rng.choice(((180, 60, 50), (200, 196, 186), (70, 90, 130), (120, 140, 90))), "Fabric", props={"CanCollide": False})
         body = rng.choice(((110, 60, 50), (70, 84, 104), (150, 146, 138)))
-        f, box = self.frame(sx * 72, sz * 62, rng.uniform(0, 180))
+        f, box = self.frame(sx * (72 + o), sz * (62 + o), rng.uniform(0, 180))
         box("Cover", "Car", (5, 2.4, 10.5), (0, 1.6, 0), body, "Metal")
         box("Cover", "CarCabin", (4.6, 1.9, 5), (0, 3.7, 0.6), self.bm.lighten(body, -0.15), "Metal")
+        self.yard_garden(sx, sz)
+
+    def yard_garden(self, sx, sz):
+        """Innerer Teil eines Hofs (direkt hinter den Häusern): Gemüsebeete mit Zaun, Feuertonne, Kisten, Bank."""
+        b, rng = self.b, self.rng
+        gx, gz = sx * 54, sz * 54
+        f, box = self.frame(gx, gz, self.yaw_to(-sx, -sz))
+        for k in range(3):
+            box("Decor", "GardenBed", (3, 0.6, 11), (-5 + k * 5, 0.3, 0), (78, 60, 44), "Ground")
+            for j in range(4):
+                box("Decor", "GardenPlant", (1.2, 1.2, 1.2), (-5 + k * 5, 1.1, -4 + j * 2.7), rng.choice(((84, 120, 60), (110, 130, 64))),
+                    "Grass", props={"Shape": "Ball", "CanCollide": False})
+        for s in (-1, 1):
+            box("Decor", "GardenFence", (0.3, 2.2, 14), (s * 9, 1.1, 0), (110, 92, 70), "WoodPlanks")
+        box("Decor", "GardenFence", (18, 2.2, 0.3), (0, 1.1, 7), (110, 92, 70), "WoodPlanks")
+        bx, bz = sx * 62, sz * 40
+        self.fire_barrel(bx, bz, y=0.4)
+        for k in range(3):
+            b.box("Cover", "Crate", (2.6, 2.4, 2.6), (bx + rng.uniform(-5, 5), 1.6, bz + rng.uniform(-5, 5)), (110, 92, 62), "WoodPlanks",
+                  angles=(0, rng.uniform(0, 90), 0))
+        f, box = self.frame(sx * 44, sz * 62, self.yaw_to(sx, 0))
+        box("Cover", "Bench", (5, 0.4, 1.6), (0, 1.5, 0), (110, 84, 58), "WoodPlanks")
+        box("Decor", "BenchBack", (5, 1.6, 0.3), (0, 2.5, 0.8), (110, 84, 58), "WoodPlanks")
+
+    # Einsatzzentrale (früher der Hub): Halle in der Nordwest-Ecke, Eingang an der Nordstraße. Statt der Häuserzeile an
+    # der Straße steht hier die Halle (Gebäude aus tools/build_maps.py, build_zentrale), dahinter ihr Hof.
+    ZENTRALE_Z = (44, 106)  # von/bis (Weltkoordinate z): hinter den Häusern am Platz bis vor die Sperre am Nordtor
+    ZENTRALE_FRONT = 19     # Abstand der Vorderwand zur Straßenmitte (Vorplatz mit Vordach und Sandsäcken vor dem Gehsteig)
+
+    def zentrale(self):
+        bm = self.bm
+        pb = self.prefab()
+        bm.build_zentrale(pb)
+        # Alles, was Server und Client suchen (Statuen-Podest, Rad, Tafeln, Vitrinen, Tor-Zähler), als eigene Gruppe Zentrale
+        # (immer geladen, siehe tools/streaming.py und src/shared/Zentrale.lua)
+        pb.groups["Zentrale"] = pb.groups.pop("Decor")
+        z0, z1 = self.ZENTRALE_Z
+        assert z1 - z0 == bm.ZENTRALE_W, "Einsatzzentrale passt nicht zwischen Häuser und Nordtor"
+        cx, cz = -(self.ZENTRALE_FRONT + bm.ZENTRALE_D / 2), (z0 + z1) / 2
+        self.stamp(pb, cx, cz, self.yaw_to(1, 0))  # Eingang zur Nordstraße (Osten)
+        PLACES["Zentrale"] = ("EINSATZZENTRALE", cx, cz, 30)
+        # Hinweisschild auf dem Platz vor der Nordstraße: Weg zur Einsatzzentrale (Blick zum Platz)
+        f, box = self.frame(-6, 22, self.yaw_to(0, -1))
+        self.b.sign2("ZentraleArrow", (8, 2.4, 0.3), f(0, 8.4, 0), "EINSATZZENTRALE", "NORDSTRASSE LINKS · SHOP · MARKT · ARCADE",
+                     (30, 32, 30), (120, 185, 235), (214, 212, 202), angles=(0, self.yaw_to(0, -1), 0), glow=(120, 185, 235))
+        for s in (-1, 1):
+            box("Decor", "ZentraleArrowPost", (0.4, 7.4, 0.4), (s * 3.6, 3.7, 0.3), (60, 60, 60), "Metal")
+
+    def zentrale_yard(self, sx, sz):
+        """Hof hinter der Einsatzzentrale (Westseite der Halle bis zur Mauer): Stromaggregat, Tanks, Container, Funkmast."""
+        b, rng = self.b, self.rng
+        H = CAMP_HALF
+        back = -(self.ZENTRALE_FRONT + self.bm.ZENTRALE_D)  # Rückwand der Halle (x)
+        mid = (back - H) / 2
+        f, box = self.frame(mid, 60, self.yaw_to(1, 0))
+        box("Buildings", "Generator", (6, 5, 10), (0, 2.5, 0), (84, 98, 70), "Metal")
+        box("Decor", "GeneratorExhaust", (0.8, 4, 0.8), (1.6, 6.5, 3), (50, 50, 52), "Metal")
+        box("Decor", "GeneratorCable", (0.3, 0.3, 6), (0, 0.15, -8), (20, 20, 20), "Rubber")
+        for k in range(3):
+            b.cylinder("Cover", "FuelTank", 4, 6, (mid + (k - 1) * 6, 3, 78), (150, 146, 138), material="Metal")
+        for k, z in enumerate((92, 100)):
+            col = rng.choice(((60, 86, 70), (84, 98, 70), (110, 60, 48)))
+            b.box("Buildings", "DepotContainer", (18, 8.5, 8), (mid, 4.25, z), col, "CorrodedMetal", angles=(0, rng.uniform(-3, 3), 0))
+        b.box("Decor", "RadioMast", (0.8, 34, 0.8), (mid - 6, 17, 48), (90, 92, 94), "Metal")
+        b.box("Decor", "RadioMastLight", (1, 1, 1), (mid - 6, 34.4, 48), (230, 60, 50), "Neon")
+        for k in range(3):
+            b.box("Decor", "RadioMastGuy", (0.15, 0.15, 24), (mid - 6 + (k - 1) * 6, 12, 48 + (k - 1) * 5), (60, 60, 62), "Metal",
+                  angles=(55, k * 50, 0), props={"CanCollide": False})
+        # Streifen zwischen den Häusern am Weststraße und der Halle: Sandsäcke, Kisten, ein Baum
+        for x in (-50, -66, -82, -98):
+            b.box("Cover", "Sandbags", (5, 2.6, 2.2), (x, 1.3, 36 + rng.uniform(-1, 1)), (150, 134, 98), "Fabric",
+                  angles=(0, rng.uniform(-8, 8), 0))
+        self.dead_tree(-104, 38, g=0.0)
+        self.dead_tree(mid + 4, 108, g=0.0)
 
     # ---------- Vorfeld um das Camp (zwischen Camp-Mauer und Stadt) ----------
     def camp_outskirts(self):
@@ -2573,7 +2653,7 @@ class World:
         finally:
             self.rng = world_rng
 
-    def _outskirt_spots(self, quadrant, n, spacing, inner=96, outer=156):
+    def _outskirt_spots(self, quadrant, n, spacing, inner=CAMP_HALF + 12, outer=170):
         """n freie Stellen im Vorfeld eines Quadranten (sx, sz): außerhalb des Camps, nicht auf Straßen, mit Abstand."""
         rng = self.rng
         sx, sz = quadrant
@@ -2733,7 +2813,7 @@ class World:
             dx, dz = ((0, 1), (1, 0), (0, -1), (-1, 0))[side]
             nx, nz = -dz, dx
             for k in range(3):
-                d = 110 + k * 14
+                d = CAMP_HALF + 22 + k * 14
                 lane = 14 if k % 2 == 0 else -14
                 x, z = dx * d + nx * lane, dz * d + nz * lane
                 if not any(dist_point_segment(x, z, ax, az, bx, bz) < w / 2 + 3 for ax, az, bx, bz, w in self.roads
@@ -4287,7 +4367,7 @@ def build(bm):
     for seg in rng.sample(city_segments, min(40, len(city_segments))):
         t = rng.uniform(0.2, 0.8)
         x, z = seg[0] + (seg[2] - seg[0]) * t, seg[1] + (seg[3] - seg[1]) * t
-        if math.hypot(x, z) > SAFE_R + 60:
+        if math.hypot(x, z) > CITY_CLEAR_R + 60:
             w.corpse(x + rng.uniform(-4, 4), z + rng.uniform(-4, 4), y=0.27)
     for seg in rng.sample(village_segments, min(16, len(village_segments))):
         x, z = (seg[0] + seg[2]) / 2, (seg[1] + seg[3]) / 2
@@ -4304,7 +4384,7 @@ def build(bm):
         nx, nz = -(seg[3] - seg[1]) / length, (seg[2] - seg[0]) / length
         side = rng.choice((-1, 1)) * (seg[4] / 2 + 2.5)
         x, z = seg[0] + (seg[2] - seg[0]) * t + nx * side, seg[1] + (seg[3] - seg[1]) * t + nz * side
-        if math.hypot(x, z) > SAFE_R + 60:
+        if math.hypot(x, z) > CITY_CLEAR_R + 60:
             w.litter(x, z, y=0.6, spread=1.4)
     for _ in range(8):
         a, r = rng.uniform(0, 2 * math.pi), rng.uniform(220, 680)

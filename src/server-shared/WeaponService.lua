@@ -417,7 +417,7 @@ end
 
 -- Schuss auswerten. aiming = Spieler zielt (Rechtsklick): weniger Streuung. Gibt true zurück, wenn geschossen.
 local function fire(player, state, origin, direction, aiming, shotId, claims)
-	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Hub)
+	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Markt)
 	if not player:GetAttribute("CanFight") then
 		return false
 	end

@@ -1,7 +1,7 @@
 """Erzeugt die Maps als Rojo-Modelle (src/maps/*.model.json).
 
 Aufruf:  python3 tools/build_maps.py
-Alle Maps liegen im selben Place (Workspace.Maps.Hub / FreeForAll / Drop), jeweils
+Alle Maps liegen im selben Place (Workspace.Maps.Extinction / Market / FreeForAll …), jeweils
 an einer eigenen Stelle der Welt. Die Verschiebungen müssen zu "Center" in
 src/shared/Modes.lua passen.
 """
@@ -16,12 +16,11 @@ import streaming
 # Anzeigenamen der Maps (z.B. in der Agentenwahl)
 MAP_NAMES = {"TDM": "Kraftwerk", "Domination": "Kraftwerk", "FreeForAll": "Altstadt", "Favela": "Favela", "Orbit": "Orbit",
              "Lagune": "Lagune", "Mondbasis": "Mondbasis", "Drop": "Tal", "Strikeout": "Fabrik", "Wingman": "Fabrik", "Demolition": "Hafen",
-             "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Hub": "Hangar", "Market": "Markt"}
+             "Ranked": "Hafen", "Arena": "Arena", "Training": "Schießstand", "Market": "Markt"}
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "maps")
 
 # Mitte jeder Map in der Welt (wie Center in Modes.lua)
-HUB_ORIGIN = (0, 0, 0)
 FFA_ORIGIN = (0, 0, 1500)
 DROP_ORIGIN = (1500, 0, 0)
 STRIKEOUT_ORIGIN = (0, 0, -1500)
@@ -237,7 +236,7 @@ class Builder:
                  angles=(rng.uniform(-10, 10), rng.uniform(0, 360), rng.uniform(-10, 10)))
 
     def spawn(self, x, z, yaw=0, real=False, group="Spawns", hidden=False):
-        """real=True: echte SpawnLocation (nur im Hub). Sonst unsichtbarer Spawnpunkt für die Modus-Logik."""
+        """real=True: echte SpawnLocation. Sonst unsichtbarer Spawnpunkt für die Modus-Logik."""
         if real:
             self.add(group, "Spawn", (6, 1, 6), (x, 0.5, z), (255, 140, 40), "Neon", angles=(0, yaw, 0),
                      cls="SpawnLocation", props={"Transparency": 1 if hidden else 0.6, "Neutral": True, "Duration": 0,
@@ -503,7 +502,7 @@ class Builder:
         self.cover_wall(x, z, length, along_x=along_x, height=3.4, color=color)
 
     def sign2(self, name, size, pos, title, subtitle, bg, fg, sub_fg, angles=(0, 0, 0), glow=None):
-        """Schild mit großer Überschrift und kleiner Unterzeile (z.B. Modus-Tore im Hub)."""
+        """Schild mit großer Überschrift und kleiner Unterzeile (z.B. Tore und Tafeln der Einsatzzentrale)."""
         def text(label_name, y, h, value, color, font):
             return {"Name": label_name, "ClassName": "TextLabel", "Properties": {
                 "Position": {"UDim2": [[0.04, 0], [y, 0]]}, "Size": {"UDim2": [[0.92, 0], [h, 0]]},
@@ -1317,316 +1316,113 @@ def build_hightower(origin, filename):
     b.save(filename, "Hochhaus")
 
 
-# ---------- Hub (Lobby): Hangar/Safehouse im Stil der Rogue-Company-Lobby ----------
+# ---------- Einsatzzentrale (früher der Hub) als Halle im Camp Phoenix der offenen Welt ----------
+# Alles, was früher im Hub stand (außer dem großen Tor nach EXTINCTION – man startet jetzt dort): Shop-Vitrine mit
+# Theke, Bestenlisten, Top-3-Podest, Agent der Woche, Glücksrad, Einsatz-Tafel, Bildtafel, Plakat, Tor zum MARKT und
+# ein Terminal für die Lobby (Arcade-Modi). Aufgestellt von zentrale() in tools/extinction_world.py; die Teile, die
+# Server und Client suchen, landen dort in der Gruppe "Zentrale" (siehe src/shared/Zentrale.lua).
 
-# Einsatz-Tore an den Hallenwänden (Ids wie in src/shared/Modes.lua): je Seite 5, jedes in eigener Farbe
-# (Id, Titel, Unterzeile, Farbe)
-# Westen: normale Modi, Osten: Kategorie DUELS (mit eigenem Banner)
-HUB_GATES_WEST = (
-    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (200, 110, 70), -30),
-    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (90, 140, 190), 6),
-    ("Training", "TRAINING", "SCHIESSSTAND", (180, 184, 190), 42),
-)
-HUB_GATES_EAST = (
-    ("Wingman", "WINGMAN", "DUELS · 2v2", (120, 150, 110), -12),
-    ("Arena", "1v1 ARENA", "DUELS · 1v1", (180, 80, 70), 24),
-)
-AMBER = (212, 170, 80)  # Signalfarbe des Hubs (wie im UI)
+ZENTRALE_W, ZENTRALE_D, ZENTRALE_H = 62, 64, 26  # Breite (lokal x), Tiefe (lokal z), Höhe
+ZENTRALE_DOOR = 12                              # Breite des Eingangs vorne (lokal -Z)
 
 
-def build_lobby_classic():
-    """Alter Hub (große Hangar-Halle mit Toren an den Seitenwänden, Ruhmeshalle, Rollfeld).
-    Aktivieren: HUB_STYLE = "classic". Fertige Datei liegt auch in tools/saved/Hub_classic.model.json."""
-    b = Builder(HUB_ORIGIN)
-    rng = random.Random(3)
-    cyl = {"Shape": "Cylinder"}
-    # Dunkle Halle (helle Flächen blenden), Farbe kommt von Toren, Schildern und Lichtleisten
-    floor = (26, 28, 34)
-    steel = (40, 43, 50)
-    wall = (30, 33, 40)
-    navy = (20, 22, 26)  # Graphit für Schilder und Teppich
-
-    # Außen: Vorfeld und Rollfeld
-    b.ground(300, 380, (62, 64, 68), "Asphalt")
-    b.border(290, 360, 3, (90, 90, 95), "Metal", barrier=90)
-
-    # ---------- Halle (innen x -75..75, z -60..75, 36 hoch) ----------
-    W, D0, D1, H = 75, -60, 75, 36
-    zc = (D0 + D1) / 2
-    b.box("Ground", "HangarFloor", (2 * W, 0.2, D1 - D0), (0, 0.1, zc), floor, "Slate")
-    # Teppich-Laufsteg vom Spawn zur Bühne, Lichtleisten am Rand
-    b.box("Ground", "Runner", (12, 0.06, 64), (0, 0.23, -26), navy, "Fabric")
-    for x in (-6.2, 6.2):
-        b.box("Ground", "RunnerEdge", (0.5, 0.08, 64), (x, 0.24, -26), AMBER, "Neon", props={"Transparency": 0.2})
-    # Team-Raute in der Mitte
-    b.box("Ground", "EmblemOuter", (18, 0.06, 18), (0, 0.25, 0), AMBER, "Neon", angles=(0, 45, 0), props={"Transparency": 0.3})
-    b.box("Ground", "EmblemInner", (14, 0.08, 14), (0, 0.27, 0), navy, "SmoothPlastic", angles=(0, 45, 0))
-
-    # Wände: Süd geschlossen, Nord mit großem Hallentor
-    # Südwand mit Durchgang (14 breit, 13 hoch) zur Ruhmeshalle
-    b.wall_line("WallSouth", -W - 2, W + 2, D0 - 1, True, H, wall, "Metal", openings=[(0, 14, 0, 13)], t=2,
-                group="Walls")
-    b.box("Walls", "WallWest", (2, H, D1 - D0), (-W - 1, H / 2, zc), wall, "Metal")
-    b.box("Walls", "WallEast", (2, H, D1 - D0), (W + 1, H / 2, zc), wall, "Metal")
-    # Dunkler Sockel unten an den Wänden
-    for x in (-W + 0.1, W - 0.1):
-        b.box("Walls", "WallBase", (0.2, 3, D1 - D0), (x, 1.5, zc), (16, 18, 22), "Metal")
-    door = 36
-    for side in (-1, 1):
-        seg = W - door
-        b.box("Walls", "WallNorth", (seg + 2, H, 2), (side * (door + seg / 2 + 1), H / 2, D1 + 1), wall, "Metal")
-        b.box("Walls", "DoorPanel", (14, 28, 1.2), (side * (door + 8), 14, D1 + 3), (50, 54, 60), "CorrodedMetal")
-    b.box("Walls", "DoorLintel", (2 * door, H - 28, 2), (0, 28 + (H - 28) / 2, D1 + 1), wall, "Metal")
-    # Dach, Stahlträger, viele helle Deckenlampen
-    b.box("Walls", "Roof", (2 * W + 4, 1, D1 - D0 + 4), (0, H + 0.5, zc), (18, 20, 24), "Metal")
-    for z in range(D0 + 8, D1, 13):
-        b.box("Walls", "Truss", (2 * W, 1.6, 1.2), (0, H - 1.5, z), steel, "Metal")
-        for x in (-50, -25, 0, 25, 50):
-            b.box("Decor", "CeilingLamp", (6, 0.3, 0.8), (x, H - 2.6, z), (150, 185, 205), "Neon",
-                  children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 34, "Brightness": 0.9, "Color": rgb(190, 215, 235)}}])
-    for x in (-55, -25, 25, 55):
-        b.box("Walls", "Beam", (1.2, 1.6, D1 - D0), (x, H - 3.4, zc), steel, "Metal")
-    # Großes Banner unter dem Dach (zum Spawn gerichtet)
-    b.sign2("Banner", (56, 11, 0.6), (0, 27, -6), "SHOOTOUT", "WÄHLE DEINEN EINSATZ  ·  LAUF DURCH EIN TOR",
-            navy, AMBER, (228, 231, 235), glow=AMBER)
-    for x in (-24, 24):
-        b.box("Decor", "BannerCable", (0.3, 4, 0.3), (x, 34.5, -6), (40, 40, 45), "Metal")
-
-    # Spawn im Süden, Blick zur Bühne und zum Hallentor
-    b.spawn(0, -46, yaw=180, real=True)
-
-    # ---------- Lineup-Bühne mit Spotlights und Bildschirm ----------
-    b.box("Decor", "Stage", (40, 1.2, 10), (0, 0.6, 18), (30, 34, 42), "DiamondPlate")
-    b.box("Decor", "StageEdge", (40, 0.2, 0.4), (0, 1.25, 13), AMBER, "Neon")
-    b.add("Decor", "LineupSpot", (1, 0.2, 1), (0, 1.2, 18), AMBER, "SmoothPlastic",
-          props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    for x in (-15, -5, 5, 15):
-        b.add("Decor", "Spotlight", (H - 4, 4, 4), (x, (H - 4) / 2 + 1, 18), (255, 250, 235), "Neon", angles=(0, 0, 90),
-              props={"Shape": "Cylinder", "Transparency": 0.9, "CanCollide": False, "CanQuery": False})
-    b.sign("BriefingScreen", (34, 10, 0.6), (0, 14, 26), "TACTICAL OPERATIONS", navy, AMBER)
-    # Einsatz-Tafel (Client zeigt darauf live die Spielerzahlen pro Modus)
-    b.box("Decor", "MissionBoard", (26, 12, 0.6), (0, 24, D0 + 0.4), navy, "SmoothPlastic", angles=(0, 180, 0))
-
-    # ---------- Ruhmeshalle: eigener Raum hinter der Südwand (Bestenlisten + Siegertreppchen) ----------
-    gold = (212, 176, 96)
-    R0, RW, RH = D0 - 46, 36, 22  # Raum: z R0..D0, x -RW..RW, Höhe RH
-    rz = (R0 + D0) / 2
-    b.box("Ground", "FameFloor", (2 * RW, 0.2, D0 - R0), (0, 0.1, rz), (20, 22, 28), "Marble")
-    b.box("Ground", "FameCarpet", (14, 0.06, D0 - R0 - 6), (0, 0.23, rz + 3), (90, 20, 30), "Fabric")
-    b.box("Walls", "FameWallW", (2, RH, D0 - R0), (-RW - 1, RH / 2, rz), wall, "Metal")
-    b.box("Walls", "FameWallE", (2, RH, D0 - R0), (RW + 1, RH / 2, rz), wall, "Metal")
-    b.box("Walls", "FameWallS", (2 * RW + 4, RH, 2), (0, RH / 2, R0 - 1), wall, "Metal")
-    b.box("Walls", "FameRoof", (2 * RW + 4, 1, D0 - R0 + 2), (0, RH + 0.5, rz), (18, 20, 24), "Metal")
-    for x in (-20, 0, 20):
-        for z in (R0 + 12, R0 + 32):
-            b.box("Decor", "FameLamp", (5, 0.3, 0.8), (x, RH - 0.6, z), (220, 190, 120), "Neon",
-                  children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 28, "Brightness": 1, "Color": rgb(255, 225, 170)}}])
-    # Siegertreppchen (Top 3 Ranked), Statuen setzt der Server, Blick zum Eingang (Norden)
-    pz = R0 + 14
-    for place, x, h, color in ((1, 0, 4.5, gold), (2, -8, 3.2, (200, 205, 215)), (3, 8, 2.2, (205, 130, 70))):
-        b.box("Decor", "PodiumBase", (7.6, h, 7.6), (x, h / 2, pz), (30, 34, 42), "Metal")
-        b.box("Decor", "PodiumTop", (7.8, 0.4, 7.8), (x, h + 0.2, pz), color, "Metal")
-        b.box("Decor", "PodiumEdge", (7.8, 0.3, 0.3), (x, h - 0.4, pz + 3.9), color, "Neon")
-        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (x, h + 0.5, pz), color, "SmoothPlastic", angles=(0, 180, 0),
-              props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-        b.sign("PodiumNumber", (3, 2, 0.3), (x, h / 2, pz + 3.95), str(place), (30, 34, 42), color, angles=(0, 180, 0))
-    b.add("Decor", "PodiumGlow", (0.2, 26, 26), (0, 0.3, pz), gold, "Neon", angles=(0, 0, 90),
-          props={"Shape": "Cylinder", "Transparency": 0.75, "CanCollide": False},
-          children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
-              "Range": 20, "Brightness": 1.5, "Color": rgb(255, 220, 140)}}])
-    b.sign2("PodiumTitle", (24, 5, 0.4), (0, 15, R0 + 3), "TOP 3 · ELO", "DIE BESTEN SPIELER DER SAISON",
-            navy, gold, (228, 231, 235), angles=(0, 180, 0), glow=gold)
-    # Bestenlisten an den Seitenwänden (je zwei, zur Raummitte gerichtet)
-    for x, yaw, inward, boards in ((-RW + 0.4, -90, 1, (("Elo", gold, R0 + 32), ("Kills", (206, 70, 58), R0 + 12))),
-                                   (RW - 0.4, 90, -1, (("Level", (96, 164, 214), R0 + 32), ("Wins", (112, 178, 112), R0 + 12)))):
-        for board, color, z in boards:
-            b.box("Decor", "LeaderboardFrame", (19, 15, 0.4), (x, 10, z), (30, 34, 42), "Metal", angles=(0, yaw, 0))
-            b.box("Decor", "Leaderboard_" + board, (18, 14, 0.6), (x + inward * 0.5, 10, z), navy, "SmoothPlastic",
-                  angles=(0, yaw, 0))
-            b.box("Decor", "LeaderboardTopStrip", (19, 0.5, 0.8), (x + inward * 0.5, 17.6, z), color, "Neon",
-                  angles=(0, yaw, 0))
-    # Durchgang in der Südwand der Haupthalle mit Schild
-    b.sign2("FameSign", (22, 4, 0.4), (0, 16, D0 + 0.6), "RUHMESHALLE", "BESTENLISTEN · TOP 3",
-            navy, gold, (228, 231, 235), angles=(0, 180, 0), glow=gold)
-
-    # ---------- Einsatz-Tore: groß, farbig, mit Schild und Spielerzahl ----------
-    def gate(x, z, yaw, inward, mode_id, title, subtitle, color):
-        dark = (24, 28, 36)
-        gw, gh = 18, 20  # Öffnung
-        for dz in (-gw / 2 - 1, gw / 2 + 1):
-            b.box("Decor", "GatePillar", (2.4, gh + 2, 2.4), (x + inward * 0.6, (gh + 2) / 2, z + dz), dark, "Metal")
-            b.box("Decor", "GateStrip", (0.4, gh, 0.6), (x + inward * 1.9, gh / 2 + 1, z + dz), color, "Neon")
-        b.box("Decor", "GateHeader", (2.4, 2, gw + 4.8), (x + inward * 0.6, gh + 2, z), dark, "Metal")
-        b.box("Decor", "GateHeaderStrip", (0.3, 0.5, gw + 4.8), (x + inward * 1.85, gh + 1.4, z), color, "Neon")
-        b.box("Decor", "GateGlow", (0.3, gh, gw), (x + inward * 0.3, gh / 2, z), color, "ForceField",
-              props={"Transparency": 0.2, "CanCollide": False},
-              children=[{"Name": "Light", "ClassName": "PointLight",
-                         "Properties": {"Range": 22, "Brightness": 2.2, "Color": rgb(*color)}}])
-        # Großes Schild über dem Tor
-        b.sign2("Sign_" + mode_id, (24, 7, 0.5), (x + inward * 1.2, gh + 7.2, z), title, subtitle,
-                navy, color, (228, 231, 235), angles=(0, yaw, 0), glow=color)
-        # Spielerzahl (füllt der Client)
-        b.box("Decor", "GateCount_" + mode_id, (12, 2.2, 0.4), (x + inward * 1.2, gh + 2.4, z), navy, "SmoothPlastic",
-              angles=(0, yaw, 0))
-        # Farbige Bodenspur von der Mitte zum Tor und leuchtendes Feld davor
-        lane = W - 26
-        b.box("Ground", "Lane", (lane, 0.05, 1.4), (x + inward * (lane / 2 + 6), 0.24, z), color, "Neon",
-              props={"Transparency": 0.35})
-        b.add("Portals", "Portal_" + mode_id, (8, 0.3, gw - 2), (x + inward * 5, 0.4, z), color, "Neon",
-              props={"CanCollide": False, "Transparency": 0.45})
-    for mode_id, title, sub, color, z in HUB_GATES_WEST:
-        gate(-W + 0.6, z, -90, 1, mode_id, title, sub, color)
-    for mode_id, title, sub, color, z in HUB_GATES_EAST:
-        gate(W - 0.6, z, 90, -1, mode_id, title, sub, color)
-    # Kategorie-Banner über den Duell-Toren
-    b.sign2("DuelsBanner", (44, 5, 0.5), (W - 1.4, 33.3, 6), "DUELS", "WINGMAN 2v2  ·  1v1 ARENA",
-            navy, AMBER, (228, 231, 235), angles=(0, 90, 0), glow=AMBER)
-
-    # ---------- Ausstattung: Spinde, Waffenregale, Werkbänke, Kisten ----------
-    for x in range(-44, 45, 5):
-        if abs(x) > 15:
-            b.box("Decor", "Locker", (4.4, 9, 2.4), (x, 4.5, D0 + 1.4), (55, 70, 85), "Metal")
-            b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 7.5, D0 + 2.65), (25, 30, 36), "Metal")
-    for x in (-30, 30):
-        b.box("Decor", "WeaponRack", (14, 7, 1.2), (x, 3.5, D0 + 6), (40, 44, 52), "Metal")
-        for k in range(4):
-            b.box("Decor", "RackGun", (0.4, 4.4, 0.6), (x - 5 + k * 3.3, 3.8, D0 + 6.8), (25, 25, 28), "Metal",
-                  angles=(0, 0, 8))
-    for x, z in ((-52, 68), (52, 68)):
-        b.box("Decor", "Workbench", (12, 3.2, 5), (x, 1.6, z), (80, 70, 60), "WoodPlanks")
-        b.sign("Monitor", (5, 3, 0.3), (x, 5.2, z - 2.2), "BRIEFING", navy, AMBER)
-    for x, z, size in ((-64, 70, 5), (-64, 65, 4), (64, 70, 5), (64, 65, 4)):
-        b.crate(x, z, s=size, color=(110, 95, 70))
-
-    # ---------- Draußen: Rollfeld mit Absetzflugzeug ----------
-    b.box("Ground", "Runway", (290, 0.12, 40), (0, 0.06, 140), (45, 47, 52), "Asphalt")
-    for x in range(-130, 131, 20):
-        b.box("Ground", "RunwayMark", (10, 0.13, 1.2), (x, 0.07, 140), (235, 235, 235), "SmoothPlastic")
-    b.box("Ground", "Apron", (80, 0.1, 40), (0, 0.05, 98), (55, 57, 62), "Concrete")
-    plane = (150, 158, 150)
-    b.add("Decor", "Fuselage", (64, 11, 11), (0, 8, 138), plane, "Metal", angles=(0, 90, 0), props=cyl)
-    b.add("Decor", "Nose", (11, 11, 11), (0, 8, 106), plane, "Metal", props={"Shape": "Ball"})
-    b.box("Decor", "Cockpit", (6, 2.5, 4), (0, 12, 108), (40, 70, 90), "Glass")
-    b.box("Decor", "Wings", (78, 1.4, 13), (0, 10, 134), plane, "Metal")
-    b.box("Decor", "TailFin", (1.4, 12, 9), (0, 18, 166), plane, "Metal")
-    b.box("Decor", "TailWing", (26, 1.2, 7), (0, 12, 166), plane, "Metal")
-    for x in (-26, -14, 14, 26):
-        b.add("Decor", "Engine", (8, 3.6, 3.6), (x, 8, 132), (60, 64, 70), "Metal", angles=(0, 90, 0), props=cyl)
-    for x in range(-135, 136, 27):
-        b.box("Decor", "RunwayLightPost", (0.6, 3, 0.6), (x, 1.5, 162), (50, 50, 55), "Metal")
-        b.add("Decor", "RunwayLight", (1, 1, 1), (x, 3.3, 162), (255, 60, 50), "Neon", props={"Shape": "Ball"})
-    for x in range(-140, 141, 8):
-        b.box("Decor", "FencePost", (0.4, 5, 0.4), (x, 2.5, 175), (80, 80, 85), "Metal")
-    b.box("Decor", "FenceMesh", (280, 4.4, 0.15), (0, 2.6, 175), (120, 125, 130), "Metal", props={"Transparency": 0.6})
-    placed = 0
-    while placed < 16:
-        x, z = rng.uniform(-135, 135), rng.uniform(-170, -75)
-        if abs(x) > 48 or z < -118:  # nicht auf der Ruhmeshalle
-            b.tree(x, z, rng)
-            placed += 1
-
-    b.save("Hub.model.json")
-
-
-
-# ---------- Hub (kompakt): Einsatzzentrale ----------
-# Eine Halle (110 x 84): Spawn im Süden, Laufsteg zum Kartentisch (Hologramm), Ring um den Tisch und weiter
-# bis vor die Tore; alle Tore nebeneinander an der Nordwand (DUELS rechts), farbige Spuren vom Tisch bis in
-# die Portale, Modus-Namen groß am Boden. Westen: Bühne mit dem eigenen Agenten. Osten: Bestenlisten und
-# Siegertreppchen. Rückwand: Einsatz-Bildschirm, Logo, Plakate.
-
-HUB_STYLE = "compact"  # "classic" = alter großer Hangar (build_lobby_classic)
-HOLO_SIGNS = True      # alle Schilder im Hub als Hologramme (False = dunkle Tafeln)
-
-# Nordwand: ein großes Tor in die offene Welt (Hauptmodus). Die Minispiele (FFA, Herrschaft, Wingman, 1v1 Arena,
-# Training) haben kein Tor mehr, sie stehen im Menü unter ARCADE. Alte Torreihe: HUB_GATES_NORTH_ARCADE.
-HUB_MAIN_GATE = ("Extinction", "EXTINCTION", "OFFENE WELT  ·  SAFE ZONE  ·  ZOMBIES", (215, 85, 45))
-HUB_GATES_NORTH_ARCADE = (
-    ("FreeForAll", "FREE-FOR-ALL", "JEDER GEGEN JEDEN", (210, 120, 80), -40),
-    ("Domination", "HERRSCHAFT", "5v5 · FLAGGEN HALTEN", (100, 150, 205), -20),
-    ("Training", "TRAINING", "SCHIESSSTAND", (190, 194, 200), 0),
-    ("Wingman", "WINGMAN", "DUELS · 2v2", (130, 170, 115), 20),
-    ("Arena", "1v1 ARENA", "DUELS · 1v1", (205, 90, 80), 40),
-)
-
-
-def build_lobby():
-    if HUB_STYLE == "classic":
-        build_lobby_classic()
-        return
-    b = Builder(HUB_ORIGIN)
-    b.holo = HOLO_SIGNS
-    rng = random.Random(5)
+def build_zentrale(b):
+    """Baut die Halle in den Builder b (Prefab, Mitte = Hallenmitte am Boden, Eingang vorne = lokal -Z).
+    Gruppen: Walls und Buildings (Hülle, Minimap), Portals (Tor zum Markt), Decor (alles andere, wird beim Aufstellen
+    zur Gruppe Zentrale)."""
+    b.holo = True
 
     def client_board(name, size, pos, angles=(0, 0, 0)):
-        """Tafel, die der Client beschreibt: als Hologramm (Glas) oder dunkle Fläche."""
-        if b.holo:
-            b.holo_panel("Decor", name, size, pos, angles)
-        else:
-            b.box("Decor", name, size, pos, graphite, "SmoothPlastic", angles=angles)
-    # Mittelhell: zwischen der ganz dunklen und der hellen Version, Akzent kühles Hellblau
-    # gedämpft: dunkler Boden und Wände, damit nichts blendet
+        """Tafel, die der Client beschreibt (Hologramm-Glas)."""
+        b.holo_panel("Decor", name, size, pos, angles)
+
+    # Innen gedämpft dunkel wie der alte Hub, Akzent kühles Hellblau; außen Beton und Wellblech wie das Camp
     floor, wall, steel, graphite = (40, 44, 51), (54, 58, 66), (70, 74, 82), (22, 25, 30)
     walkway, accent = (30, 33, 40), (120, 185, 235)
-    x0, x1, z0, z1, H = -55, 55, -38, 46, 26
-    zc = (z0 + z1) / 2
-    tz = 0          # Kartentisch
-    gate_z = z1 - 0.6
+    shell, shell_dark, corrugated = (128, 124, 114), (96, 94, 88), (92, 98, 92)
+    W, D, H = ZENTRALE_W, ZENTRALE_D, ZENTRALE_H
+    x0, x1, z0, z1 = -W / 2, W / 2, -D / 2, D / 2
+    door = ZENTRALE_DOOR
+    t = 1.6  # Wandstärke
 
-    b.ground(160, 160, (40, 42, 46), "Asphalt")
-    b.border(150, 150, 2, (60, 60, 65), "Metal", barrier=80)
+    # ---------- Hülle: Boden, Wände (vorn mit Tor), Dach ----------
+    b.box("Decor", "HubFloor", (W, 0.2, D), (0, 0.1, 0), floor, "Concrete")
+    for x in range(-25, 26, 10):
+        b.box("Decor", "GridLine", (0.12, 0.04, D - 2), (x, 0.21, 0), (48, 52, 60), "SmoothPlastic")
+    for z in range(-25, 26, 10):
+        b.box("Decor", "GridLine", (W - 2, 0.04, 0.12), (0, 0.21, z), (48, 52, 60), "SmoothPlastic")
+    # außen: Betonhülle (Gruppe Walls, auf der Minimap), innen dunkle Verkleidung
+    b.box("Walls", "ZentraleWall", (W + 2 * t, H, t), (0, H / 2, z1 + t / 2), shell, "Concrete")
+    b.box("Walls", "ZentraleWall", (t, H, D), (x0 - t / 2, H / 2, 0), shell, "Concrete")
+    b.box("Walls", "ZentraleWall", (t, H, D), (x1 + t / 2, H / 2, 0), shell, "Concrete")
+    side = (W - door) / 2
+    for s in (-1, 1):
+        b.box("Walls", "ZentraleWall", (side + t, H, t), (s * (door / 2 + (side + t) / 2), H / 2, z0 - t / 2), shell, "Concrete")
+    door_h = 13
+    b.box("Walls", "ZentraleWall", (door, H - door_h, t), (0, door_h + (H - door_h) / 2, z0 - t / 2), shell, "Concrete")
+    for x, z, size in ((0, z1 - 0.3, (W, H - 0.4, 0.4)), (x0 + 0.3, 0, (0.4, H - 0.4, D)), (x1 - 0.3, 0, (0.4, H - 0.4, D))):
+        b.box("Decor", "WallLining", size, (x, H / 2, z), wall, "Metal")
+    for s in (-1, 1):
+        b.box("Decor", "WallLining", (side, H - 0.4, 0.4), (s * (door / 2 + side / 2), H / 2, z0 + 0.3), wall, "Metal")
+    b.box("Buildings", "Roof", (W + 2 * t + 1, 1.2, D + 2 * t + 1), (0, H + 0.6, 0), (70, 72, 70), "CorrodedMetal")
+    b.box("Decor", "Ceiling", (W, 0.3, D), (0, H - 0.15, 0), (26, 28, 32), "Metal")
+    # außen: Wellblech-Bänder, Sockel, Lüfter und Antenne auf dem Dach
+    for s in (-1, 1):
+        b.box("Decor", "ShellBand", (side + t + 0.2, 3, 0.3), (s * (door / 2 + (side + t) / 2), H - 2.5, z0 - t - 0.15), corrugated,
+              "CorrugatedMetal")
+        b.box("Decor", "ShellBase", (side + t + 0.2, 1.6, 0.4), (s * (door / 2 + (side + t) / 2), 0.8, z0 - t - 0.2), shell_dark,
+              "Concrete")
+    for x, z in ((-18, 10), (16, -14)):
+        b.box("Decor", "RoofVent", (5, 2.4, 5), (x, H + 2.4, z), (110, 112, 110), "Metal")
+    b.box("Decor", "RoofAntenna", (0.5, 14, 0.5), (24, H + 8, 26), (60, 62, 64), "Metal")
+    b.box("Decor", "RoofAntennaLight", (0.8, 0.8, 0.8), (24, H + 15.4, 26), (230, 60, 50), "Neon")
 
-    # ---------- Boden, Wände, Dach ----------
-    b.box("Ground", "HubFloor", (x1 - x0, 0.2, z1 - z0), (0, 0.1, zc), floor, "Concrete")
-    for x in range(-50, 51, 10):
-        b.box("Ground", "GridLine", (0.12, 0.04, z1 - z0), (x, 0.21, zc), (48, 52, 60), "SmoothPlastic")
-    for z in range(-30, 46, 10):
-        b.box("Ground", "GridLine", (x1 - x0, 0.04, 0.12), (0, 0.21, z), (48, 52, 60), "SmoothPlastic")
-    b.box("Walls", "WallSouth", (x1 - x0 + 4, H, 2), (0, H / 2, z0 - 1), wall, "Metal")
-    b.box("Walls", "WallNorth", (x1 - x0 + 4, H, 2), (0, H / 2, z1 + 1), wall, "Metal")
-    b.box("Walls", "WallWest", (2, H, z1 - z0), (x0 - 1, H / 2, zc), wall, "Metal")
-    b.box("Walls", "WallEast", (2, H, z1 - z0), (x1 + 1, H / 2, zc), wall, "Metal")
-    for x in (x0 + 0.1, x1 - 0.1):
-        b.box("Walls", "WallBase", (0.2, 2.4, z1 - z0), (x, 1.2, zc), (34, 37, 43), "Metal")
-    b.box("Walls", "Roof", (x1 - x0 + 4, 1, z1 - z0 + 4), (0, H + 0.5, zc), (26, 28, 32), "Metal")
-    for z in range(-30, 46, 12):
-        b.box("Walls", "Truss", (x1 - x0, 1.2, 1), (0, H - 1, z), steel, "Metal")
-        for x in (-36, -12, 12, 36):
+    # ---------- Eingang vorn: Vordach, großes Schild, Sandsäcke, Scheinwerfer, Schrift auf dem Boden ----------
+    b.box("Decor", "Canopy", (door + 8, 0.6, 6), (0, door_h + 1, z0 - t - 3), (60, 62, 60), "CorrodedMetal")
+    for s in (-1, 1):
+        b.box("Decor", "CanopyPost", (0.6, door_h + 1, 0.6), (s * (door / 2 + 3.5), (door_h + 1) / 2, z0 - t - 5.6), (50, 52, 54),
+              "Metal")
+        b.box("Cover", "Sandbags", (5, 2.6, 2.2), (s * (door / 2 + 6), 1.3, z0 - t - 4), (150, 134, 98), "Fabric")
+        b.box("Decor", "DoorLamp", (1.4, 1.2, 1.6), (s * (door / 2 + 2), door_h + 3, z0 - t - 0.9), (236, 236, 226), "Neon",
+              angles=(-20, 0, 0),
+              children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
+                  "Face": "Front", "Range": 30, "Brightness": 1.6, "Angle": 80, "Color": rgb(240, 240, 230)}}])
+    b.sign2("ZentraleSign", (30, 5.4, 0.4), (0, H - 6.5, z0 - t - 0.3), "EINSATZZENTRALE",
+            "SHOP  ·  BESTENLISTEN  ·  GLÜCKSRAD  ·  MARKT  ·  ARCADE", graphite, accent, (236, 239, 243),
+            glow=accent)
+    b.box("Decor", "DoorGlow", (door, door_h, 0.3), (0, door_h / 2, z0 - t / 2), accent, "ForceField",
+          props={"Transparency": 0.85, "CanCollide": False, "CanQuery": False})
+
+    # ---------- Decke: Träger und Lampen ----------
+    for z in range(-24, 25, 12):
+        b.box("Decor", "Truss", (W, 1.2, 1), (0, H - 1, z), steel, "Metal")
+        for x in (-18, 0, 18):
             b.box("Decor", "CeilingLamp", (5, 0.2, 0.6), (x, H - 1.75, z), (150, 158, 170), "Neon",
                   children=[{"Name": "Light", "ClassName": "PointLight",
-                             "Properties": {"Range": 30, "Brightness": 0.95, "Color": rgb(220, 228, 240)}}])
-    for x in (x0 + 0.45, x1 - 0.45):
-        b.box("Decor", "WallBand", (0.15, 0.25, z1 - z0 - 4), (x, 10.5, zc), accent, "Neon", props={"Transparency": 0.6})
-    for x, z in ((-31, 24), (31, 24)):
-        b.box("Walls", "Pillar", (2.4, H, 2.4), (x, H / 2, z), steel, "Metal")
-        b.box("Decor", "PillarStrip", (2.5, 0.3, 2.5), (x, 3.2, z), accent, "Neon", props={"Transparency": 0.5})
+                             "Properties": {"Range": 26, "Brightness": 0.85, "Color": rgb(220, 228, 240)}}])
+    for x in (x0 + 0.6, x1 - 0.6):
+        b.box("Decor", "WallBand", (0.15, 0.25, D - 4), (x, 10.5, 0), accent, "Neon", props={"Transparency": 0.6})
 
-    b.spawn(0, -31, yaw=180, real=True, hidden=True)
+    # ---------- Teppich: Eingang -> Ring um den Agenten der Woche -> Theke, Markt-Tor, Bestenlisten ----------
+    # Alle Teppichteile auf derselben Höhe, Leuchtränder etwas tiefer und breiter darunter (Überlappungen decken sie ab)
+    tz = -2         # Sockel des Agenten der Woche
+    ring_r = 11
 
-    # ---------- Teppich: Spawn -> Ring um den Tisch -> je eine Bahn bis in jedes Portal ----------
-    # Alle Teppichteile liegen auf derselben Höhe, ihre Leuchtränder etwas tiefer und breiter darunter:
-    # wo sich Bahnen überlappen, deckt der Teppich die Ränder ab – sichtbar bleibt nur der Außenrand.
-    ring_r = 13
     def carpet(name, start, finish, width):
         (ax, az), (bx, bz) = start, finish
         length = math.hypot(bx - ax, bz - az)
         yaw = math.degrees(math.atan2(bx - ax, bz - az))
         center = ((ax + bx) / 2, (az + bz) / 2)
-        b.box("Ground", name + "Edge", (width + 0.7, 0.03, length + 0.7), (center[0], 0.215, center[1]), accent, "Neon",
+        b.box("Decor", name + "Edge", (width + 0.7, 0.03, length + 0.7), (center[0], 0.215, center[1]), accent, "Neon",
               angles=(0, yaw, 0), props={"Transparency": 0.5})
-        b.box("Ground", name, (width, 0.05, length), (center[0], 0.245, center[1]), walkway, "SmoothPlastic",
+        b.box("Decor", name, (width, 0.05, length), (center[0], 0.245, center[1]), walkway, "SmoothPlastic",
               angles=(0, yaw, 0))
-    carpet("CarpetSpawn", (0, z0 + 2), (0, tz - ring_r + 3), 10)
-    b.add("Ground", "CarpetRingEdge", (0.03, ring_r * 2 + 0.7, ring_r * 2 + 0.7), (0, 0.215, tz), accent, "Neon",
+    carpet("CarpetEntry", (0, z0 + 1), (0, tz - ring_r + 3), 10)
+    b.add("Decor", "CarpetRingEdge", (0.03, ring_r * 2 + 0.7, ring_r * 2 + 0.7), (0, 0.215, tz), accent, "Neon",
           angles=(0, 0, 90), props={"Shape": "Cylinder", "Transparency": 0.3})
-    b.add("Ground", "CarpetRing", (0.05, ring_r * 2, ring_r * 2), (0, 0.245, tz), walkway, "SmoothPlastic",
+    b.add("Decor", "CarpetRing", (0.05, ring_r * 2, ring_r * 2), (0, 0.245, tz), walkway, "SmoothPlastic",
           angles=(0, 0, 90), props={"Shape": "Cylinder"})
-    # gerade weiter nach Norden und eine breite Fläche vor der ganzen Torreihe (man läuft gerade in jedes Tor)
-    plaza_z = 27
-    carpet("CarpetNorth", (0, tz + ring_r - 3), (0, plaza_z + 1), 10)
-    carpet("CarpetPlaza", (0, plaza_z), (0, gate_z - 1), 40)
+    carpet("CarpetBack", (0, tz + ring_r - 3), (0, z1 - 9), 10)
 
     # ---------- Mitte: Agent der Woche (Statue setzt der Client, wechselt jede Woche) ----------
     b.add("Decor", "AgentPedestalBase", (1.2, 15, 15), (0, 0.6, tz), steel, "Metal", angles=(0, 0, 90),
@@ -1639,57 +1435,46 @@ def build_lobby():
           props={"Shape": "Cylinder", "Transparency": 0.55},
           children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
               "Range": 14, "Brightness": 0.7, "Color": rgb(170, 210, 240)}}])
-    # Standpunkt der Statue (Füße, Blick zum Spawn nach Süden)
+    # Standpunkt der Statue (Füße, Blick zum Eingang) und Punkt der Holo-Schrift darüber
     b.add("Decor", "AgentOfWeekSpot", (1, 0.2, 1), (0, 3.6, tz), accent, "SmoothPlastic", angles=(0, 180, 0),
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    # Holo-Schrift schwebt über der Statue (setzt der Client an diesen Punkt)
     b.add("Decor", "AgentOfWeekHolo", (1, 1, 1), (0, 17, tz), accent, "SmoothPlastic",
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    # Licht von oben auf die Statue (ohne sichtbare Lichtsäulen)
     b.add("Decor", "StatueLight", (0.2, 3, 3), (0, H - 1.6, tz), (255, 248, 230), "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.3},
           children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
               "Face": "Bottom", "Range": 26, "Brightness": 1.6, "Angle": 35, "Color": rgb(255, 245, 230)}}])
 
-    # ---------- Nordwand: das große Tor nach EXTINCTION (offene Welt), Schild leicht zum Spawn geneigt ----------
-    mode_id, title, subtitle, color = HUB_MAIN_GATE
-    gw, gh = 28, 17
-    hazard = (226, 178, 52)
-    for dx in (-gw / 2 - 1.5, gw / 2 + 1.5):
-        b.box("Decor", "GatePillar", (3, gh + 2, 3), (dx, (gh + 2) / 2, gate_z), (28, 31, 37), "Metal")
-        b.box("Decor", "GateStrip", (0.6, gh, 0.4), (dx, gh / 2 + 1, gate_z - 1.7), color, "Neon")
-        # Warnstreifen unten an den Pfeilern
-        for k in range(3):
-            b.box("Decor", "GateHazard", (3.1, 0.7, 3.1), (dx, 0.9 + k * 1.6, gate_z), hazard if k % 2 == 0 else (30, 30, 30),
-                  "SmoothPlastic")
-    b.box("Decor", "GateHeader", (gw + 6, 2, 3), (0, gh + 2, gate_z), (28, 31, 37), "Metal")
-    b.box("Decor", "GateGlow", (gw, gh, 0.3), (0, gh / 2, gate_z + 0.2), color, "ForceField",
-          props={"Transparency": 0.2, "CanCollide": False},
-          children=[{"Name": "Light", "ClassName": "PointLight",
-                     "Properties": {"Range": 26, "Brightness": 1.1, "Color": rgb(*color)}}])
-    b.sign2("Sign_" + mode_id, (30, 6, 0.4), (0, gh + 6, gate_z - 1.9), title, subtitle, graphite, color,
-            (236, 239, 243), angles=(-12, 0, 0), glow=color)
-    client_board("GateCount_" + mode_id, (12, 1.8, 0.3), (0, gh + 1.4, gate_z - 1.65))
-    # Modus-Name groß vor dem Portal auf der Fläche (lesbar vom Spawn aus)
-    b.floor_text("FloorLabel_" + mode_id, (24, 0.1, 5.4), (0, 0.3, gate_z - 13), title, color)
-    b.add("Portals", "Portal_" + mode_id, (gw - 1, 0.3, 7), (0, 0.4, gate_z - 4), color, "Neon",
-          props={"CanCollide": False, "Transparency": 0.45})
-    # Tafeln links und rechts vom Tor: was einen drinnen erwartet, und wo die Minispiele sind
-    b.sign2("InfoSafeZone", (22, 6, 0.4), (-34, 12, z1 - 0.5), "SAFE ZONE", "HANDEL  ·  LAGER  ·  FAHRZEUGE  ·  KEIN PVP",
-            graphite, (112, 200, 120), (236, 239, 243), glow=(112, 200, 120))
-    b.sign2("InfoOutside", (22, 6, 0.4), (34, 12, z1 - 0.5), "DRAUSSEN", "ZOMBIES  ·  LOOT  ·  PVP NACH 5 SEKUNDEN",
-            graphite, color, (236, 239, 243), glow=color)
-    b.sign2("ArcadeBanner", (40, 2.4, 0.4), (0, H - 1.4, z1 - 0.5), "ARCADE",
-            "FFA  ·  HERRSCHAFT  ·  WINGMAN  ·  1v1 ARENA  ·  TRAINING  –  IM MENÜ (M)", graphite, accent, (236, 239, 243),
-            glow=accent)
-    # ---------- Ostwand (vorn): Tor zum MARKT (eigene Halle mit Ständen, kein Kampf) ----------
+    # ---------- Hinten: Bestenlisten (vier Holo-Tafeln), Logo darüber ----------
+    holo = (90, 175, 225)
+    carpet("CarpetHolo", (-22, z1 - 9), (22, z1 - 9), 9)
+    for board, color, px in (("Elo", (200, 166, 92), -16.5), ("Kills", (206, 70, 58), -5.5),
+                             ("Level", (96, 164, 214), 5.5), ("Wins", (112, 178, 112), 16.5)):
+        pz, yaw = z1 - 3.5, 0
+        b.add("Decor", "Leaderboard_" + board, (10, 8.5, 0.15), (px, 8.6, pz), holo, "Glass", angles=(0, yaw, 0),
+              props={"Transparency": 0.82, "CanCollide": False, "CanQuery": False,
+                     "Attributes": {"Attributes": {"Holo": {"Bool": True}}}})
+        b.box("Decor", "HoloFrameTop", (10.2, 0.12, 0.12), (px, 12.9, pz), color, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.2})
+        b.box("Decor", "HoloFrameBottom", (10.2, 0.12, 0.12), (px, 4.3, pz), holo, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.3})
+        b.box("Decor", "HoloProjector", (3, 0.8, 1.6), (px, 0.65, pz), (34, 37, 43), "Metal", angles=(0, yaw, 0))
+        b.box("Decor", "HoloLens", (2.4, 0.1, 1), (px, 1.1, pz), holo, "Neon", angles=(0, yaw, 0))
+        b.box("Decor", "HoloBeam", (9.6, 3.2, 0.1), (px, 2.7, pz), holo, "Neon", angles=(0, yaw, 0),
+              props={"Transparency": 0.88, "CanCollide": False, "CanQuery": False})
+    b.sign2("BoardsTitle", (30, 4, 0.4), (0, 16.5, z1 - 0.7), "BESTENLISTEN", "GLOBALE TOP 10",
+            graphite, holo, (236, 239, 243), glow=holo)
+    b.sign2("BackLogo", (30, 4.5, 0.4), (0, 22, z1 - 0.7), "SHOOTOUT", "TACTICAL OPERATIONS",
+            graphite, accent, (236, 239, 243), glow=accent)
+
+    # ---------- Rechte Wand (lokal +x): Tor zum MARKT (eigene Halle mit Ständen, kein Kampf), daneben das Plakat ----------
     rap = (86, 214, 170)
-    mz, mgw, mgh, mgx = 31, 12, 13, x1 - 0.6
+    mz, mgw, mgh, mgx = 2, 12, 13, x1 - 0.6
     for dz in (-mgw / 2 - 1, mgw / 2 + 1):
         b.box("Decor", "GatePillar", (2, mgh + 2, 2), (mgx, (mgh + 2) / 2, mz + dz), (28, 31, 37), "Metal")
         b.box("Decor", "GateStrip", (0.4, mgh, 0.5), (mgx - 1.2, mgh / 2 + 1, mz + dz), rap, "Neon")
     b.box("Decor", "GateHeader", (2, 2, mgw + 4), (mgx, mgh + 2, mz), (28, 31, 37), "Metal")
-    b.box("Decor", "GateGlow", (0.3, mgh, mgw), (mgx + 0.2, mgh / 2, mz), rap, "ForceField",
+    b.box("Decor", "GateGlow", (0.3, mgh, mgw), (mgx - 0.4, mgh / 2, mz), rap, "ForceField",
           props={"Transparency": 0.25, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight",
                      "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(*rap)}}])
@@ -1698,11 +1483,14 @@ def build_lobby():
     client_board("GateCount_Market", (9, 1.6, 0.3), (mgx - 1.15, mgh + 1.3, mz), angles=(0, 90, 0))
     b.add("Portals", "Portal_Market", (7, 0.3, mgw - 1), (mgx - 4, 0.4, mz), rap, "Neon",
           props={"CanCollide": False, "Transparency": 0.45})
+    b.floor_text("FloorLabel_Market", (11, 0.1, 3), (mgx - 10, 0.3, mz), "MARKT", rap, yaw=270)
+    carpet("CarpetMarket", (ring_r - 3, tz + 1), (mgx - 7.5, mz), 8)
+    b.sign2("Poster", (13, 8.5, 0.4), (x1 - 0.7, 15, 20.5), "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", graphite, (112, 178, 112),
+            (236, 239, 243), angles=(0, 90, 0), glow=(112, 178, 112))
 
-
-    # ---------- Westen: Shop-Vitrine (Angebote des Tages setzt der Client, E an der Theke öffnet den Shop) ----------
-    vx = x0 + 6
-    for k, vz in enumerate((-11, 0, 11), start=1):
+    # ---------- Linke Wand (lokal -x): Shop-Vitrine (Angebote des Tages setzt der Client, E an der Theke) ----------
+    vx = x0 + 5.5
+    for k, vz in enumerate((-4, 7, 18), start=1):
         b.box("Decor", "VitrineBase", (5, 2.5, 5), (vx, 1.25, vz), (32, 35, 41), "Metal")
         b.box("Decor", "VitrineBaseStrip", (5.1, 0.25, 5.1), (vx, 2.4, vz), accent, "Neon", props={"Transparency": 0.2})
         b.box("Decor", "VitrineGlass", (4.6, 5, 4.6), (vx, 5, vz), (200, 225, 240), "Glass",
@@ -1714,126 +1502,85 @@ def build_lobby():
         b.add("Decor", "ShopDisplay" + str(k), (1, 1, 1), (vx, 4.6, vz), accent, "SmoothPlastic",
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
         client_board("ShopPlaque" + str(k), (4.4, 1.6, 0.2), (vx + 2.7, 1.3, vz), angles=(0, -90, 0))
-    # Theke mit E-Aufforderung (Client legt den Prompt an)
-    cxs = x0 + 15
-    b.box("Decor", "ShopCounter", (2.6, 3.4, 12), (cxs, 1.7, 0), (36, 39, 46), "Metal")
-    b.box("Decor", "ShopCounterTop", (3, 0.25, 12.4), (cxs, 3.5, 0), (24, 27, 32), "SmoothPlastic")
-    b.box("Decor", "ShopCounterStrip", (0.15, 0.25, 12.2), (cxs + 1.35, 2.8, 0), accent, "Neon", props={"Transparency": 0.2})
-    b.box("Decor", "ShopTerminal", (0.3, 1.6, 2.4), (cxs, 4.4, 0), graphite, "SmoothPlastic", angles=(0, -90, 15))
-    b.sign2("ShopSign", (22, 5.5, 0.5), (x0 + 0.6, 13, 0), "SHOP", "ANGEBOTE DES TAGES  ·  AN DER THEKE E DRÜCKEN",
+    cxs = x0 + 14
+    b.box("Decor", "ShopCounter", (2.6, 3.4, 12), (cxs, 1.7, 7), (36, 39, 46), "Metal")
+    b.box("Decor", "ShopCounterTop", (3, 0.25, 12.4), (cxs, 3.5, 7), (24, 27, 32), "SmoothPlastic")
+    b.box("Decor", "ShopCounterStrip", (0.15, 0.25, 12.2), (cxs + 1.35, 2.8, 7), accent, "Neon", props={"Transparency": 0.2})
+    b.box("Decor", "ShopTerminal", (0.3, 1.6, 2.4), (cxs, 4.4, 7), graphite, "SmoothPlastic", angles=(0, -90, 15))
+    b.sign2("ShopSign", (20, 5.5, 0.5), (x0 + 0.7, 13, 7), "SHOP", "ANGEBOTE DES TAGES  ·  AN DER THEKE E DRÜCKEN",
             graphite, (212, 170, 80), (236, 239, 243), angles=(0, -90, 0), glow=(212, 170, 80))
-    carpet("CarpetShop", (-(ring_r - 3), tz), (cxs + 1.3, tz), 8)
+    carpet("CarpetShop", (-(ring_r - 3), tz + 1), (cxs + 1.3, 7), 8)
 
-    # ---------- Osten (Mitte): Holo-Station mit den Bestenlisten, Teppich vom Ring dorthin ----------
-    holo = (90, 175, 225)
-    # gerade Bahn vom Ring und eine rechteckige Fläche vor der Reihe der Tafeln
-    carpet("CarpetBoards", (ring_r - 3, tz), (32, tz), 8)
-    carpet("CarpetHolo", (36, tz - 22), (36, tz + 22), 10)
-    # vier schwebende Holo-Tafeln in einer Reihe, zur Hallenmitte (Westen) gerichtet
-    for board, color, pz in (("Elo", (200, 166, 92), tz - 16.5), ("Kills", (206, 70, 58), tz - 5.5),
-                             ("Level", (96, 164, 214), tz + 5.5), ("Wins", (112, 178, 112), tz + 16.5)):
-        px, yaw = 44, 90
-        b.add("Decor", "Leaderboard_" + board, (10, 8.5, 0.15), (px, 8.6, pz), holo, "Glass", angles=(0, yaw, 0),
-              props={"Transparency": 0.82, "CanCollide": False, "CanQuery": False,
-                     "Attributes": {"Attributes": {"Holo": {"Bool": True}}}})
-        b.box("Decor", "HoloFrameTop", (10.2, 0.12, 0.12), (px, 12.9, pz), color, "Neon", angles=(0, yaw, 0),
-              props={"Transparency": 0.2})
-        b.box("Decor", "HoloFrameBottom", (10.2, 0.12, 0.12), (px, 4.3, pz), holo, "Neon", angles=(0, yaw, 0),
-              props={"Transparency": 0.3})
-        # Projektor am Boden mit Lichtkegel
-        b.box("Decor", "HoloProjector", (3, 0.8, 1.6), (px, 0.65, pz), (34, 37, 43), "Metal", angles=(0, yaw, 0))
-        b.box("Decor", "HoloLens", (2.4, 0.1, 1), (px, 1.1, pz), holo, "Neon", angles=(0, yaw, 0))
-        b.box("Decor", "HoloBeam", (9.6, 3.2, 0.1), (px, 2.7, pz), holo, "Neon", angles=(0, yaw, 0),
-              props={"Transparency": 0.88, "CanCollide": False, "CanQuery": False})
-    b.sign2("BoardsTitle", (30, 4, 0.4), (x1 - 0.6, 19, tz), "BESTENLISTEN", "GLOBALE TOP 10",
-            graphite, holo, (236, 239, 243), angles=(0, 90, 0), glow=holo)
-
-    # ---------- Ecke hinten links: längliches Siegertreppchen, schräg zur Hallenmitte ----------
+    # ---------- Ecke vorn links: längliches Siegertreppchen, schräg zur Hallenmitte ----------
     gold = (200, 166, 92)
-    cx, cz = -40, -26
+    cx, cz = x0 + 14, z0 + 13
     fx, fz = -cx, tz + 4 - cz
     flen = math.hypot(fx, fz)
     fx, fz = fx / flen, fz / flen          # Blickrichtung der Statuen (zur Hallenmitte)
     rx, rz = -fz, fx                       # entlang des Podests
     long_yaw = math.degrees(math.atan2(rx, rz))
     face_yaw = math.degrees(math.atan2(-fx, -fz))
-    # Rückwand schräg in der Ecke, oben eine goldene Leiste, Titel darüber
     wx, wz = cx - fx * 6.5, cz - fz * 6.5
-    b.box("Walls", "PodiumWall", (0.8, 12, 24), (wx, 6, wz), steel, "Metal", angles=(0, long_yaw, 0))
+    b.box("Decor", "PodiumWall", (0.8, 12, 24), (wx, 6, wz), steel, "Metal", angles=(0, long_yaw, 0))
     b.box("Decor", "PodiumWallStrip", (0.2, 0.3, 24), (wx + fx * 0.5, 11.5, wz + fz * 0.5), gold, "Neon",
           angles=(0, long_yaw, 0), props={"Transparency": 0.2})
     b.sign2("PodiumTitle", (18, 3.6, 0.4), (wx + fx * 0.6, 14.2, wz + fz * 0.6), "TOP 3 · ELO",
             "DIE BESTEN SPIELER DER SAISON", graphite, gold, (236, 239, 243), angles=(0, face_yaw, 0), glow=gold)
-    # schmaler Sockel, darauf die drei Podeste (kleiner als vorher)
     b.box("Decor", "PodiumPlinth", (7, 0.5, 21), (cx, 0.25, cz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
     for place, off, h, color in ((1, 0, 3.2, gold), (2, 6.8, 2.3, (190, 194, 200)), (3, -6.8, 1.5, (180, 120, 70))):
         px, pz = cx + rx * off, cz + rz * off
         b.box("Decor", "PodiumBase", (5.6, h, 5.6), (px, 0.5 + h / 2, pz), (32, 35, 41), "Metal", angles=(0, long_yaw, 0))
         b.box("Decor", "PodiumTop", (5.8, 0.35, 5.8), (px, 0.68 + h, pz), color, "Metal", angles=(0, long_yaw, 0))
-        b.add("Podium", "Podium" + str(place), (2, 0.2, 2), (px, 0.95 + h, pz), color, "SmoothPlastic", angles=(0, face_yaw, 0),
+        b.add("Decor", "Podium" + str(place), (2, 0.2, 2), (px, 0.95 + h, pz), color, "SmoothPlastic", angles=(0, face_yaw, 0),
               props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
         b.sign("PodiumNumber", (1.6, 1.3, 0.3), (px + fx * 2.95, 0.5 + h / 2, pz + fz * 2.95), str(place), (32, 35, 41), color,
                angles=(0, face_yaw, 0))
 
-    # ---------- Süden (Rückwand): Einsatz-Bildschirm, Logo, Plakate ----------
-    if not b.holo:
-        b.box("Decor", "MissionBoardFrame", (25, 12, 0.4), (0, 14, z0 + 0.2), steel, "Metal")
-    client_board("MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.8), angles=(0, 180, 0))
-    if b.holo:
-        b.holo_edges("MissionBoard", (24, 11, 0.5), (0, 14, z0 + 0.8), (0, 180, 0), accent)
-    b.sign2("BackLogo", (30, 4.5, 0.4), (0, 22.5, z0 + 0.5), "SHOOTOUT", "TACTICAL OPERATIONS",
-            graphite, accent, (236, 239, 243), angles=(0, 180, 0), glow=accent)
-    # Große Bildtafel links (das Bild setzt der Client: HubLineup, PHOTO_IMAGE)
-    b.box("Decor", "PhotoBoardFrame", (17, 17, 0.4), (-29, 16, z0 + 0.2), steel, "Metal")
-    b.box("Decor", "PhotoBoard", (16, 16, 0.4), (-29, 16, z0 + 0.6), graphite, "SmoothPlastic", angles=(0, 180, 0))
-    for dy in (-8.6, 8.6):
-        b.box("Decor", "PhotoBoardGlow", (17, 0.3, 0.3), (-29, 16 + dy, z0 + 0.7), accent, "Neon")
-    for dx in (-8.6, 8.6):
-        b.box("Decor", "PhotoBoardGlow", (0.3, 17.5, 0.3), (-29 + dx, 16, z0 + 0.7), accent, "Neon")
-    b.add("Decor", "PhotoBoardLight", (1, 0.3, 1), (-29, 25.5, z0 + 3), (255, 248, 230), "Neon",
-          props={"Transparency": 0.4},
-          children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
-              "Face": "Bottom", "Range": 22, "Brightness": 1.2, "Angle": 60, "Color": rgb(255, 245, 230)}}])
-    for x, title, sub, color in ((23, "WAFFEN-AUFSÄTZE", "JETZT IM LOADOUT", (112, 178, 112)),):
-        if not b.holo:
-            b.box("Decor", "PosterFrame", (15, 10, 0.3), (x, 15, z0 + 0.2), steel, "Metal")
-        b.sign2("Poster", (14, 9, 0.4), (x, 15, z0 + 0.45), title, sub, graphite, color, (236, 239, 243),
-                angles=(0, 180, 0), glow=color)
-    for x in (-45, -38, 38, 45):
-        b.box("Walls", "WallRib", (1.2, H - 9, 0.8), (x, (H - 9) / 2 + 8, z0 + 0.4), steel, "Metal")
-    b.box("Decor", "WallBand", (x1 - x0 - 4, 0.25, 0.15), (0, 7.8, z0 + 0.45), accent, "Neon", props={"Transparency": 0.6})
-    for x in range(-48, 49, 5):
-        if abs(x) > 12 and -26 < x < 26:  # Ecken bleiben frei: links Siegertreppchen, rechts Glücksrad
-            b.box("Decor", "Locker", (4.4, 7.5, 2.2), (x, 3.75, z0 + 1.2), (48, 58, 70), "Metal")
-            b.box("Decor", "LockerVent", (3.6, 0.3, 0.1), (x, 6, z0 + 2.35), (26, 28, 32), "Metal")
-    for x, z, size in ((-50, 41, 4), (-46, 41, 3)):
-        b.crate(x, z, s=size, color=(90, 80, 62))
+    # ---------- Vorderwand innen: Einsatz-Tafel über dem Eingang, Bildtafel, ARCADE-Banner ----------
+    client_board("MissionBoard", (22, 8.5, 0.5), (0, 17.8, z0 + 0.9), angles=(0, 180, 0))
+    b.holo_edges("MissionBoard", (22, 8.5, 0.5), (0, 17.8, z0 + 0.9), (0, 180, 0), accent)
+    b.sign2("ArcadeBanner", (34, 2.2, 0.4), (0, H - 2.4, z0 + 0.7), "ARCADE",
+            "FFA  ·  HERRSCHAFT  ·  WINGMAN  ·  1v1 ARENA  ·  TRAINING  –  AM TERMINAL ODER ÜBER LOBBY", graphite, accent,
+            (236, 239, 243), angles=(0, 180, 0), glow=accent)
+    # Bildtafel links über dem Podest (das Bild setzt der Client: HubLineup, PHOTO_IMAGE)
+    px_, py_ = -18, 19
+    b.box("Decor", "PhotoBoardFrame", (11, 11, 0.4), (px_, py_, z0 + 0.6), steel, "Metal")
+    b.box("Decor", "PhotoBoard", (10, 10, 0.4), (px_, py_, z0 + 1), graphite, "SmoothPlastic", angles=(0, 180, 0))
+    for dy in (-5.6, 5.6):
+        b.box("Decor", "PhotoBoardGlow", (11, 0.3, 0.3), (px_, py_ + dy, z0 + 1.1), accent, "Neon")
+    for dx in (-5.6, 5.6):
+        b.box("Decor", "PhotoBoardGlow", (0.3, 11.5, 0.3), (px_ + dx, py_, z0 + 1.1), accent, "Neon")
 
-    # ---------- Ecke links vom Spawn (Südosten): Glücksrad ----------
-    # Das drehende Rad (Felder, Nabe, Rand mit Lichtern, Zeiger) baut der Client (HubWheel) an "WheelSpot":
-    # Mitte des Rads, LookVector = Vorderseite. Das Rad steht schräg in der Ecke und schaut zur Hallenmitte – so
-    # sieht man es vom Spawn, vom Teppich und aus der Halle von vorn. Hier: Podest, Ständer mit Achse, Schild und
-    # das Pult mit der Tafel ("WheelBoard", beschreibt der Client) – am Pult öffnet E den Dreh.
+    # ---------- Arcade-Terminal rechts hinter dem Eingang, Blick zum Teppich: E öffnet die Lobby (Arcade-Modi, Loadout,
+    # Agenten, Battle Pass; HubLineup legt den Prompt an) ----------
+    tx, tz_ = 9.5, z0 + 4
+    b.box("Decor", "ArcadeTerminalBase", (2.2, 3.6, 3.2), (tx, 1.8, tz_), (36, 39, 46), "Metal")
+    b.box("Decor", "ArcadeTerminal", (3.4, 2.4, 0.3), (tx - 0.5, 4.6, tz_), graphite, "SmoothPlastic", angles=yaw_tilt(90, 20))
+    b.box("Decor", "ArcadeTerminalStrip", (2.3, 0.2, 3.3), (tx, 3.5, tz_), accent, "Neon", props={"Transparency": 0.2})
+    b.sign2("ArcadeTerminalSign", (6, 1.8, 0.3), (tx + 0.8, 7.6, tz_), "SPIELEN", "ARCADE · LOBBY", graphite, (212, 170, 80),
+            (236, 239, 243), angles=(0, 90, 0), glow=(212, 170, 80))
+
+    # ---------- Ecke vorn rechts: Glücksrad ----------
+    # Das drehende Rad baut der Client (HubWheel) an "WheelSpot": Mitte des Rads, LookVector = Vorderseite. Das Rad
+    # steht schräg in der Ecke und schaut zur Hallenmitte. Am Pult davor ("WheelConsole", Tafel "WheelBoard") öffnet E den Dreh.
     wheel_gold = (212, 170, 80)
-    wx, wz, wy, wr = 40, -29.5, 9.4, 6
-    face_x, face_z = 0 - wx, (tz + 0) - wz                   # Blick zur Hallenmitte
+    wx, wz, wy, wr = x1 - 10.5, z0 + 10.5, 9.4, 6
+    face_x, face_z = 0 - wx, tz - wz
     flen = math.hypot(face_x, face_z)
-    fx, fz = face_x / flen, face_z / flen                    # Vorderseite des Rads
-    wyaw = math.degrees(math.atan2(-fx, -fz))                # angles=(0, wyaw, 0): LookVector = (fx, 0, fz)
-    sx, sz = -fz, fx                                         # lokale x-Achse (in der Radebene, waagrecht)
+    fx, fz = face_x / flen, face_z / flen
+    wyaw = math.degrees(math.atan2(-fx, -fz))
+    sx, sz = -fz, fx
 
-    def wpos(side, y, front):
-        """Punkt side Studs entlang der Radebene und front Studs vor dem Rad (negativ = dahinter)."""
-        return (wx + sx * side + fx * front, y, wz + sz * side + fz * front)
+    def wpos(side_, y, front):
+        return (wx + sx * side_ + fx * front, y, wz + sz * side_ + fz * front)
 
     b.add("Decor", "WheelPlatform", (0.5, 15, 15), (wx, 0.25, wz), (34, 37, 43), "Metal", angles=(0, 0, 90),
           props={"Shape": "Cylinder"})
     b.add("Decor", "WheelPlatformGlow", (0.12, 15.4, 15.4), (wx, 0.3, wz), wheel_gold, "Neon", angles=(0, 0, 90),
           props={"Shape": "Cylinder", "Transparency": 0.45})
-    # Ständer und Achse hinter dem Rad
-    for side in (-(wr + 1.7), wr + 1.7):
-        b.box("Decor", "WheelPillar", (1.6, 17, 1.6), wpos(side, 8.5, -1), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
-        b.box("Decor", "WheelPillarStrip", (0.4, 15, 0.2), wpos(side, 8.5, -0.1), wheel_gold, "Neon",
+    for s_ in (-(wr + 1.7), wr + 1.7):
+        b.box("Decor", "WheelPillar", (1.6, 17, 1.6), wpos(s_, 8.5, -1), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
+        b.box("Decor", "WheelPillarStrip", (0.4, 15, 0.2), wpos(s_, 8.5, -0.1), wheel_gold, "Neon",
               angles=(0, wyaw, 0), props={"Transparency": 0.15})
     b.box("Decor", "WheelAxle", (2 * wr + 3.4, 0.9, 0.9), wpos(0, wy, -1.2), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
     b.box("Decor", "WheelHeader", (2 * wr + 5, 1.6, 1.6), wpos(0, 17.8, -1), (28, 31, 37), "Metal", angles=(0, wyaw, 0))
@@ -1841,7 +1588,6 @@ def build_lobby():
             graphite, wheel_gold, (236, 239, 243), angles=(0, wyaw, 0), glow=wheel_gold)
     b.add("Decor", "WheelSpot", (1, 1, 1), (wx, wy, wz), wheel_gold, "SmoothPlastic", angles=(0, wyaw, 0),
           props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-    # Pult vorn am Podest, darauf die schräge Tafel (Vorderseite zum Spieler)
     b.box("Decor", "WheelConsole", (5.6, 2.2, 1.6), wpos(0, 1.1, 7.4), (36, 39, 46), "Metal", angles=(0, wyaw, 0))
     b.box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), wpos(0, 2.1, 7.4), wheel_gold, "Neon", angles=(0, wyaw, 0),
           props={"Transparency": 0.2})
@@ -1850,11 +1596,11 @@ def build_lobby():
           props={"Shape": "Cylinder", "Transparency": 0.3},
           children=[{"Name": "Light", "ClassName": "SpotLight", "Properties": {
               "Face": "Bottom", "Range": 26, "Brightness": 1.3, "Angle": 45, "Color": rgb(255, 245, 230)}}])
-    # Teppich vom Spawn-Teppich bis direkt vor das Pult
-    front = wpos(0, 0, 10)
-    carpet("CarpetWheel", (4, front[2] + 2), (front[0], front[2]), 7)
 
-    b.save("Hub.model.json")
+    # ein paar Kisten in der hinteren Ecke
+    for x, z, size in ((x0 + 3, z1 - 3, 4), (x0 + 6.5, z1 - 3, 3)):
+        b.crate(x, z, s=size, color=(90, 80, 62))
+
 
 # ---------- Markt: Handelshalle mit 12 Ständen (MarketService / MarketClient) ----------
 MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64), (132, 84, 170), (206, 112, 54))
@@ -1862,9 +1608,9 @@ MARKET_CANOPIES = ((186, 72, 60), (64, 120, 186), (72, 150, 96), (206, 158, 64),
 
 def build_market():
     """Markt als Theater-Rund (Radius 94, ohne Dach): In der Mitte der Marktplatz (Spawns, Such-Terminal,
-    Kisten-Automat, Tafeln, Tor zurück zum Hub). Darum drei breite Ränge, die nach außen stufenweise höher werden
+    Kisten-Automat, Tafeln, Tor zurück ins Camp). Darum drei breite Ränge, die nach außen stufenweise höher werden
     (2,4 / 5,4 / 8,4 m); auf jedem Rang stehen die Stände mit der Vorderseite zur Mitte (12 + 16 + 20 = 48). Das Tor
-    zurück zum Hub steht am Ende der Südrampe (oberster Rang), damit der Platz frei bleibt. Vier
+    zurück ins Camp steht am Ende der Südrampe (oberster Rang), damit der Platz frei bleibt. Vier
     Rampen (Himmelsrichtungen) führen vom Platz über alle Ränge nach oben, die Stufen dazwischen kann man auch
     springen. Ein Stand ist ein Ordner "Stand_<n>" mit Theke, Regal, Vordach, Schild ("Sign", beschreibt der Client),
     sechs Ausstellplätzen ("Display1".."Display6": Mitte des Skins, LookVector zum Gang) und dem Prompt-Punkt vor der
@@ -1992,7 +1738,7 @@ def build_market():
         for dx in (-width / 2 + 1, width / 2 - 1):
             b.box("Decor", name + "Post", (0.6, 5.2, 0.6), at(dx, 2.6, 0.8), (40, 38, 38), "Metal", angles=(0, yaw, 0))
 
-    # Tor zurück zum Hub: am Ende der Südrampe auf dem obersten Rang, damit der Spawn frei bleibt
+    # Tor zurück ins Camp: am Ende der Südrampe auf dem obersten Rang, damit der Spawn frei bleibt
     gx, gz = polar(R_WALL - 4, 270)
     gyaw = 90 - 270
     gate = frame(gx, gz, 8.4, gyaw)
@@ -2005,9 +1751,9 @@ def build_market():
           props={"Transparency": 0.25, "CanCollide": False},
           children=[{"Name": "Light", "ClassName": "PointLight",
                      "Properties": {"Range": 16, "Brightness": 0.8, "Color": rgb(120, 185, 235)}}])
-    b.sign2("ExitSign", (11, 3.2, 0.4), gate(0, gh + 3.8, -1.2), "ZUM HUB", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
+    b.sign2("ExitSign", (11, 3.2, 0.4), gate(0, gh + 3.8, -1.2), "ZUM CAMP", "ZURÜCK IN DIE EINSATZZENTRALE", graphite,
             (120, 185, 235), (236, 239, 243), angles=(0, gyaw, 0), glow=(120, 185, 235))
-    b.add("Portals", "Portal_Hub", (gw - 1, 0.3, 4), gate(0, 0.15, -2.6), (120, 185, 235), "Neon", angles=(0, gyaw, 0),
+    b.add("Portals", "Portal_Extinction", (gw - 1, 0.3, 4), gate(0, 0.15, -2.6), (120, 185, 235), "Neon", angles=(0, gyaw, 0),
           props={"CanCollide": False, "Transparency": 0.45})
 
     # Bäume im Platz (Zierde) und Laternen am Rand
@@ -3281,6 +3027,5 @@ if __name__ == "__main__":
     build_canals((-3000, 0, 1500), "Kanaele.model.json")
     build_windmills((4500, 0, 0), "Windmuehlen.model.json")
     build_hightower((-4500, 0, 0), "Hochhaus.model.json")
-    build_lobby()
     build_market()
     build_extinction()

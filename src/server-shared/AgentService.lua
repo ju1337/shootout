@@ -34,7 +34,7 @@ local function getAgent(player)
 	return AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
 end
 
--- Agenten-Look überall (Hub, Markt, Match): einheitlicher Körper im Roblox-Standard-Look in den Agentenfarben bzw.
+-- Agenten-Look überall (offene Welt, Markt, Match): einheitlicher Körper im Roblox-Standard-Look in den Agentenfarben bzw.
 -- das 3D-Modell des Agenten aus Assets.Agents, ohne eigenen Avatar (AgentBody)
 local function applyUniform(player, character, agent)
 	-- nur den aktuellen Charakter (CharacterAdded kommt in Roblox schon, bevor er im Workspace ist – anziehen
@@ -359,7 +359,7 @@ local function doTurret(player, character, root, agent)
 end
 
 local function useAbility(player)
-	-- Nur wenn der Modus Kampf erlaubt (nicht im Hub, nicht zwischen Runden); offene Welt: nur passive Fähigkeiten
+	-- Nur wenn der Modus Kampf erlaubt (nicht im Markt, nicht zwischen Runden); offene Welt: nur passive Fähigkeiten
 	if not player:GetAttribute("CanFight") or Modes.IsSurvival(player:GetAttribute("Mode")) then
 		return
 	end
@@ -443,7 +443,7 @@ end
 local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.Agents[1].Id)
 	player:SetAttribute("UltCharge", 0)
-	-- Neuer Modus (oder zurück im Hub): Ultimate beginnt wieder bei 0
+	-- Neuer Modus (oder zurück im Camp): Ultimate beginnt wieder bei 0
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
 		player:SetAttribute("UltCharge", 0)
 	end)
@@ -510,7 +510,7 @@ local function setupPlayer(player)
 		end
 		applyUniform(player, character, dressedAgent(player, character))
 	end)
-	-- Im Hub und im Markt sieht man einen Agentenwechsel sofort (im Match erst beim nächsten Spawn)
+	-- Im Markt sieht man einen Agentenwechsel sofort (im Match erst beim nächsten Spawn)
 	local function redress()
 		local character = player.Character
 		if character and Modes.IsSocial(player:GetAttribute("Mode")) then

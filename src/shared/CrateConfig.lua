@@ -25,7 +25,7 @@ CrateConfig.DuplicateRefund = 0.3 -- Anteil des Shop-Preises, der bei einem Dupl
 CrateConfig.ReelLength = 44       -- Skins in der Rolle
 CrateConfig.WinnerIndex = 36      -- Platz des Gewinns in der Rolle (der Rest rollt vorher vorbei)
 CrateConfig.Cooldown = 1.5        -- Sekunden zwischen zwei Öffnungen
-CrateConfig.Modes = { "Market", "Hub" } -- wo man Kisten öffnen darf
+CrateConfig.Modes = { "Market", "Extinction" } -- wo man Kisten öffnen darf (offene Welt: nur in einer Safe Zone)
 
 function CrateConfig.Get(id)
 	for _, crate in CrateConfig.Crates do

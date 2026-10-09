@@ -1,5 +1,5 @@
 -- QuestBoard (ModuleScript, nur Client)
--- Inhalt des Fensters AUFTRÄGE (Hub: SideMenu, offene Welt: Reiter AUFTRÄGE im Menü von ExtinctionClient).
+-- Inhalt des Fensters AUFTRÄGE (Markt: SideMenu, offene Welt: Reiter AUFTRÄGE im Menü von ExtinctionClient).
 -- Oben die Reiter ARCADE / EXTINCTION, darunter drei Spalten: TÄGLICH, WÖCHENTLICH (Arcade mit Wochen-Bonus) und
 -- VIP & BOOSTER (je ein Spezial-Auftrag am Tag und in der Woche für den gewählten Modus; ohne Berechtigung gesperrt).
 -- Daten: Spieler-Attribute Quests/Weekly (Arcade), ExtQuests/ExtWeekly, SpecialQuests/SpecialWeekly (QuestConfig).

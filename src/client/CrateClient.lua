@@ -18,6 +18,7 @@ local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
+local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local Cosmetics = require(Shared.Cosmetics)
 local CrateConfig = require(Shared.CrateConfig)
@@ -447,11 +448,13 @@ function CrateClient.Init()
 	end)
 	player:GetAttributeChangedSignal("Coins"):Connect(setOpenButton)
 	player:GetAttributeChangedSignal("PaidRandomOk"):Connect(setOpenButton)
-	player:GetAttributeChangedSignal("Mode"):Connect(function()
-		if window and player:GetAttribute("Mode") ~= "Market" and player:GetAttribute("Mode") ~= "Hub" then
+	local function onPlaceChanged()
+		if window and not Modes.InLounge(player) then
 			closeWindow()
 		end
-	end)
+	end
+	player:GetAttributeChangedSignal("Mode"):Connect(onPlaceChanged)
+	player:GetAttributeChangedSignal("InSafeZone"):Connect(onPlaceChanged)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if window and (input.KeyCode == Enum.KeyCode.ButtonB or (input.KeyCode == Enum.KeyCode.Escape and not processed)) then
 			closeWindow()

@@ -1,5 +1,5 @@
 -- AgentBody (ModuleScript, nur Server)
--- Einheitlicher Agenten-Körper für alle Charaktere: Spieler (im Hub, im Markt und im Match), Bots und
+-- Einheitlicher Agenten-Körper für alle Charaktere: Spieler (in der offenen Welt, im Markt und im Match), Bots und
 -- Übungspuppen bekommen denselben schlanken R15-Körper (Standardteile, feste Maße aus AgentConfig.BodyScale, kein
 -- Rthro, kein eigener Avatar). Damit sind die Trefferzonen für alle gleich – getroffen werden nur die Körperteile.
 -- Aussehen: der Roblox-Standard-Look in den Farben des Agenten (Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper

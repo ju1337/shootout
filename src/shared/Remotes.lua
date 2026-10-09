@@ -16,7 +16,7 @@ local NAMES = {
 	"SkinFinisher", -- Server -> alle im Modus: Kill-Finisher eines Effekt-Skins (Opfer-Modell, CFrame, Stil, Waffe, Skin-Id)
 	"Announce",   -- Server -> Client(s): einfache Textmeldung (Banner ohne Teamfarbe)
 	"Notify",     -- Server -> Client: Meldung im CoD-Stil (Art, Daten): "Medal" (Liste), "Banner", "Objective", "Progress"
-	"JoinMode",   -- Client -> Server: in Modus oder Hub teleportieren (Modus-Id)
+	"JoinMode",   -- Client -> Server: in einen Modus wechseln (Modus-Id, Modes.Home = zurück ins Camp)
 	"MenuStatus", -- Server -> Client: Statuszeile im Menü (Teleport läuft, Fehler)
 	"SelectAgent", -- Client -> Server: Agent wählen (Agent-Id)
 	"UseAbility", -- Client -> Server: Fähigkeit auslösen

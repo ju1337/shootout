@@ -3,13 +3,13 @@
 -- jeder in seinem eigenen Bereich der Welt (Center = Mitte der Map).
 -- Center muss zu den Verschiebungen in tools/build_maps.py passen.
 -- TeamMode = Team-Runden mit Agentenwahl und Kaufphase (Herrschaft, Wingman, Arena)
--- Category = Gruppe im Menü und im Hub (z.B. "DUELS" für Wingman und 1v1 Arena)
+-- Category = Gruppe im Menü (z.B. "DUELS" für Wingman und 1v1 Arena)
 -- Overview = Kameraflug über die Map während der Agentenwahl (Radius, Höhe)
 -- Goal = kurzes Ziel oben im HUD (Text, oder { Attack, Defend } bei Angriff/Verteidigung,
 --        AttackAlert/DefendAlert solange die Uhr des Ziels läuft, z.B. Bombe gelegt)
 -- Objectives = Ziel-Parts der Map (Maps.<Map>.Objective.<Part>) mit Buchstaben für Marker und Minimap
--- Featured = Hauptmodus (groß oben im Menü, eigenes Portal im Hub): EXTINCTION
--- Arcade = Minispiel (im Menü unter ARCADE, kein Portal im Hub)
+-- Featured = Hauptmodus (groß oben im Menü): EXTINCTION, dort startet jeder (Modes.Home)
+-- Arcade = Minispiel (im Menü unter ARCADE)
 -- Survival = offene Welt mit eigenem Inventar (Hotbar 1-9 statt Waffe 1/2, keine Standardwaffen),
 --            Safe Zone, PvP außerhalb, nur passive Agenten-Fähigkeiten (siehe ExtinctionConfig)
 
@@ -190,17 +190,12 @@ Modes.Disabled = {
 	},
 }
 
--- Der Hub ist kein Modus im Menü, aber ein Ziel ("Zurück zum Hub")
-Modes.Hub = {
-	Id = "Hub",
-	Name = "HUB",
-	Color = Color3.fromRGB(255, 140, 40),
-	Center = Vector3.new(0, 0, 0),
-	Available = true,
-}
+-- Startpunkt und Ziel von "Zurück": Spieler beginnen in der Safe Zone der offenen Welt (Camp Phoenix, dort steht auch die
+-- Einsatzzentrale mit Shop, Bestenlisten und Glücksrad). Einen eigenen Hub gibt es nicht mehr.
+Modes.Home = "Extinction"
 
--- Der Markt: eigene Halle mit Ständen (MarketService), wie der Hub kein Kampfmodus. Erreichbar über das Tor MARKT
--- im Hub und den Knopf MARKT im Seitenmenü, nicht über die Modus-Liste.
+-- Der Markt: eigene Halle mit Ständen (MarketService), kein Kampfmodus. Erreichbar über das Tor MARKT in der
+-- Einsatzzentrale (Camp Phoenix) und den Knopf MARKT im Menü, nicht über die Modus-Liste.
 Modes.Market = {
 	Id = "Market",
 	Name = "MARKT",
@@ -221,11 +216,8 @@ Modes.Matchmaking = {
 	TeleportTimeout = 30, -- kommt der Teleport so lange nicht an, wird hier gespielt
 }
 
--- Modus per Id holen (inkl. Hub und Markt), nil wenn unbekannt
+-- Modus per Id holen (inkl. Markt), nil wenn unbekannt
 function Modes.Get(id)
-	if id == Modes.Hub.Id then
-		return Modes.Hub
-	end
 	if id == Modes.Market.Id then
 		return Modes.Market
 	end
@@ -286,12 +278,22 @@ function Modes.Featured()
 	return nil
 end
 
--- Treffpunkt ohne Kampf (Hub, Markt)?
+-- Treffpunkt ohne Kampf (Markt)?
 function Modes.IsSocial(id)
-	return id == Modes.Hub.Id or id == Modes.Market.Id
+	return id == Modes.Market.Id
 end
 
--- Ist der Spieler gerade in einem Kampfmodus (nicht im Hub oder Markt)?
+-- Steht der Spieler gerade an einem ruhigen Ort: im Markt oder in einer Safe Zone der offenen Welt (Camp, Safehouse)?
+-- Dort darf man tauschen, Kisten öffnen und am Glücksrad drehen.
+function Modes.InLounge(player)
+	local id = player:GetAttribute("Mode")
+	if Modes.IsSocial(id) then
+		return true
+	end
+	return Modes.IsSurvival(id) and player:GetAttribute("InSafeZone") == true
+end
+
+-- Ist der Spieler gerade in einem Kampfmodus (nicht im Markt)?
 function Modes.IsFighting(player)
 	local id = player:GetAttribute("Mode")
 	return id ~= nil and not Modes.IsSocial(id)

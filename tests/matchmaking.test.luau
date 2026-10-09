@@ -4,7 +4,7 @@
 -- folgen dem Anführer hier; Fehlschlag (sofort oder TeleportInitFailed) und Zeitüberschreitung: hier spielen, danach
 -- eine Weile nicht weiterschicken; SCHNELLES SPIEL sieht die anderen Server; Ankunft: direkt in den Modus, Squad wieder
 -- zusammen (nur gegenseitig), fremder Place zählt nicht; Einstellung CrossServer aus; alte Meldungen verfallen;
--- Hub/Extinction/Markt nie; Herunterfahren löscht die eigene Meldung
+-- Extinction/Markt nie; Herunterfahren löscht die eigene Meldung
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -52,7 +52,7 @@ local function fakeMode(id, capacity)
 	return mode
 end
 local fakes = {}
-for id, capacity in { Hub = 100, Extinction = 50, Market = 50, FreeForAll = 12, Domination = 10, Wingman = 4, Training = 10,
+for id, capacity in { Extinction = 100, Market = 50, FreeForAll = 12, Domination = 10, Wingman = 4, Training = 10,
 	Arena = 2 } do
 	fakes[id] = fakeMode(id, capacity)
 	SIM.Stub("ServerScriptService/Modes/" .. id, fakes[id])
@@ -101,11 +101,11 @@ end
 
 local alice, bob, carl = SIM.Join("Alice"), SIM.Join("Bob"), SIM.Join("Carl")
 step(C.Interval)
-check(alice:GetAttribute("Mode") == "Hub", "neue Spieler im Hub")
+check(alice:GetAttribute("Mode") == "Extinction", "neue Spieler in der offenen Welt (Camp)")
 local own = servers.Items["server-1"]
 check(own and own.Value.Place == 777 and own.Value.Modes.Domination.P == 0 and own.Value.Modes.Domination.F == 10
 	and own.Value.Free == game:GetService("Players").MaxPlayers - 3, "Server meldet seine Zahlen")
-check(own and own.Value.Modes.Hub == nil and own.Value.Modes.Extinction == nil, "nur Arcade-Modi")
+check(own and own.Value.Modes.Extinction == nil, "nur Arcade-Modi")
 check(own and own.Expires - SIM.Now <= C.Expire, "Meldung verfällt")
 
 -- Herrschaft: auf server-2 sind 3 Spieler, hier keiner -> Alice wechselt
@@ -115,11 +115,11 @@ check(teleport and teleport.PlaceId == 777 and teleport.Options.ServerInstanceId
 	and teleport.Players[1] == alice, "Alice geht auf server-2")
 local data = teleport and teleport.Options:GetTeleportData()
 check(data and data.Mode == "Domination" and data.Party == nil, "Teleport-Daten: Modus, kein Squad")
-check(alice:GetAttribute("Mode") == "Hub" and alice:GetAttribute("Teleporting") == true, "bis zum Teleport im Hub")
+check(alice:GetAttribute("Mode") == "Extinction" and alice:GetAttribute("Teleporting") == true, "bis zum Teleport im Camp")
 check(string.find(status(alice) or "", "3 Spielern", 1, true) ~= nil, "Meldung: " .. tostring(status(alice)))
 local count = #SIM.Teleports
 join(alice, "Wingman")
-check(#SIM.Teleports == count and alice:GetAttribute("Mode") == "Hub", "während des Teleports kein anderer Wechsel")
+check(#SIM.Teleports == count and alice:GetAttribute("Mode") == "Extinction", "während des Teleports kein anderer Wechsel")
 
 -- Free-for-All: server-3 ist voll, server-2 hat nur 1 (nicht mehr als hier, wenn hier schon jemand ist)
 join(bob, "FreeForAll")
@@ -136,6 +136,7 @@ check(#SIM.Teleports == 0 and dana:GetAttribute("Mode") == "FreeForAll", "gleich
 -- Wingman: server-4 hat nur einen Platz auf dem Server -> allein ja, als Squad zu zweit nein
 local eve, finn = SIM.Join("Eve"), SIM.Join("Finn")
 step(1)
+finn:SetAttribute("InSafeZone", true) -- im Camp: kommt mit (draußen in der Welt bliebe er dort)
 Remotes.PartyAction.OnServerEvent:Fire(eve, "Invite", finn.UserId)
 Remotes.PartyAction.OnServerEvent:Fire(finn, "Accept", eve.UserId)
 step(0.5)
@@ -144,7 +145,7 @@ join(eve, "Wingman")
 check(#SIM.Teleports == 0 and eve:GetAttribute("Mode") == "Wingman" and finn:GetAttribute("Mode") == "Wingman",
 	"Squad zu zweit passt nicht auf server-4: hier, Finn folgt")
 -- Herrschaft als Squad: beide gehen zusammen, mit Squad-Daten
-join(eve, "Hub")
+join(eve, "Extinction")
 join(eve, "Domination")
 teleport = lastTeleport()
 check(teleport and #teleport.Players == 2 and table.find(teleport.Players, finn) ~= nil, "Squad geht zusammen")
@@ -161,7 +162,7 @@ SIM.Teleports = {}
 SIM.TeleportFail = 1
 join(gus, "Domination")
 check(gus:GetAttribute("Mode") == "Domination" and gus:GetAttribute("Teleporting") == nil, "Fehlschlag: Gus spielt hier")
-join(gus, "Hub")
+join(gus, "Extinction")
 join(gus, "Domination")
 check(#SIM.Teleports == 0 and gus:GetAttribute("Mode") == "Domination", "nach einem Fehlschlag erst einmal hier")
 -- TeleportInitFailed (Server voll): Alice spielt hier
@@ -184,7 +185,7 @@ data = teleport and teleport.Options:GetTeleportData()
 check(teleport and teleport.Options.ServerInstanceId == "server-6" and data.Mode == "Domination",
 	"Schnelles Spiel: Herrschaft auf server-6 (8 Spieler)")
 
--- Hub, offene Welt und Markt bleiben immer hier
+-- Offene Welt und Markt bleiben immer hier
 local ivy = SIM.Join("Ivy")
 step(1)
 SIM.Teleports = {}
@@ -214,9 +215,9 @@ check(leader:GetAttribute("Mode") == "Arena" and member:GetAttribute("Mode") == 
 check(PartyService.Leader(member) == leader and leader:GetAttribute("SquadId") == member:GetAttribute("SquadId"),
 	"Squad nach dem Wechsel wieder zusammen")
 check(PartyService.Leader(intruder) == nil, "wer nicht in der Liste des Anführers steht, kommt nicht in den Squad")
-check(stranger:GetAttribute("Mode") == "Hub", "Teleport aus einem anderen Spiel zählt nicht")
+check(stranger:GetAttribute("Mode") == "Extinction", "Teleport aus einem anderen Spiel zählt nicht")
 -- Angekommene werden nicht gleich wieder weitergeschickt
-join(leader, "Hub")
+join(leader, "Extinction")
 SIM.Teleports = {}
 join(leader, "Domination")
 check(#SIM.Teleports == 0, "gerade angekommen: nicht gleich weiter")

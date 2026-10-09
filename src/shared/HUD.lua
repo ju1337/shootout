@@ -1,7 +1,7 @@
 -- HUD (ModuleScript, nur Client)
 -- Bildschirm-Anzeige in den Kampfmodi: Schadens-Effekt, Countdown, XP neben dem Fadenkreuz, Geld,
 -- Todesanzeige mit Todeskamera, Tastenzeile unten und VERLASSEN-Knopf unter der Minimap (zweimal klicken:
--- zurück in den Hub). Die Match-Anzeige (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD,
+-- zurück ins Camp; in der offenen Welt LOBBY). Die Match-Anzeige (Punktestand, Killfeed, Leben, Munition, Zielmarker) baut MatchHUD,
 -- die Minimap Minimap; Fadenkreuz, Hitmarker, Schadenszahlen, Treffer-Richtung und Kill-Meldung kommen aus
 -- CombatHUD. Medaillen, Runden-Banner, Ziel- und Level-Meldungen zeigt Notifications.
 
@@ -258,7 +258,7 @@ function HUD.Init(weaponClient)
 		task.defer(layoutForDevice)
 	end)
 
-	-- HUD nur in Kampfmodi zeigen, nicht im Hub
+	-- HUD nur in Kampfmodi zeigen, nicht im Markt
 	local function updateVisible()
 		screen.Enabled = Modes.IsFighting(player)
 	end

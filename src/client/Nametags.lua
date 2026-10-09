@@ -1,6 +1,6 @@
 -- Nametags (ModuleScript, nur Client)
 -- Eigene Namensschilder statt der Roblox-Namen (die Gegner durch Wände verraten würden):
---   Hub/Markt und Safe Zones in Extinction: alle Spieler (dort wird nicht gekämpft) mit dem vollen Schild
+--   Markt und Safe Zones in Extinction: alle Spieler (dort wird nicht gekämpft) mit dem vollen Schild
 --             (auch das eigene, sobald man sich von außen sieht)
 --   Kampf:    nur Teamkollegen (Spieler und Bots) mit Name in Verbündeten-Blau (wie im HUD), Gegner ohne Namen
 -- Aussehen wie die Kacheln von Inventar und Hotbar: flache, dunkle, halbdurchsichtige Kachel mit knapper Rundung,
@@ -246,7 +246,7 @@ local function showcase(target)
 		Title = titleOf(target) }
 end
 
--- Zeigt der Spieler im Modus mode gerade sein volles Schild? Hub/Markt immer, Extinction in der Safe Zone
+-- Zeigt der Spieler im Modus mode gerade sein volles Schild? Markt immer, Extinction in der Safe Zone
 -- (Camp und Safehouses: dort ist kein PvP, also verrät der Name niemanden)
 function Nametags.Showcase(mode, inSafeZone)
 	if mode == nil then

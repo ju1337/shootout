@@ -1,6 +1,6 @@
 -- SideMenu (ModuleScript, nur Client)
--- Menüliste links im Hub und im Markt: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, MARKT
--- (in die Markthalle bzw. von dort zurück: ZUM HUB), CLAN, STATISTIK, CODES, OPTIONEN, darüber die Spielerkarte
+-- Menüliste links im Markt: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, MARKT
+-- (von dort zurück: ZUM CAMP, in die offene Welt), CLAN, STATISTIK, CODES, OPTIONEN, darüber die Spielerkarte
 -- (Level, Prestige, Rang, Münzen, RAP).
 -- SHOP, LOADOUT, AGENTEN und BATTLE PASS öffnen die Lobby (GameMenu) auf der passenden Seite; Aufträge,
 -- Täglich, Squad, Statistik, Codes und Optionen sind Fenster in der Mitte – dieselben Fenster öffnet auch die
@@ -1136,12 +1136,12 @@ local function openLobby(page)
 	GameMenu.Open(page)
 end
 
--- MARKT: in die Markthalle (im Markt geht es mit demselben Knopf zurück in den Hub)
+-- MARKT: in die Markthalle (im Markt geht es mit demselben Knopf zurück ins Camp, Modes.Home)
 local marketCaption
 local function goMarket()
 	setPanel(nil)
 	local inMarket = player:GetAttribute("Mode") == Modes.Market.Id
-	Remotes.JoinMode:FireServer(inMarket and Modes.Hub.Id or Modes.Market.Id)
+	Remotes.JoinMode:FireServer(inMarket and Modes.Home or Modes.Market.Id)
 end
 
 local playerCard -- Spielerkarte oben links (Level, Prestige, Rang, Münzen)
@@ -1349,11 +1349,11 @@ function SideMenu.Init()
 	end)
 	coinLabel.Text = formatNumber(coins()) .. " MÜNZEN"
 
-	-- Menüliste nur im Hub bei geschlossener Lobby; Fenster im Hub oder aus der Lobby heraus
+	-- Menüliste nur im Markt bei geschlossener Lobby; Fenster im Markt oder aus der Lobby heraus
 	task.spawn(function()
 		while true do
-			local inHub = Modes.IsSocial(player:GetAttribute("Mode")) -- Hub oder Markt
-			marketCaption.Text = player:GetAttribute("Mode") == Modes.Market.Id and "ZUM HUB" or "MARKT"
+			local inHub = Modes.IsSocial(player:GetAttribute("Mode")) -- Markt
+			marketCaption.Text = player:GetAttribute("Mode") == Modes.Market.Id and "ZUM CAMP" or "MARKT"
 			local lobby = GameMenu.IsOpen()
 			-- Markt- und Tausch-Fenster liegen in der Mitte: Menüliste solange weg (sie läge darüber)
 			local covered = UITheme.IsMenuOpenBy("Market") or UITheme.IsMenuOpenBy("Trade")

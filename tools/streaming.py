@@ -2,8 +2,9 @@
 
 Mit Streaming bekommt jeder Client nur die Teile in seiner Nähe (Radius in default.project.json). Was der Client
 immer vollständig braucht, wird als Model mit ModelStreamingMode "Persistent" gespeichert:
-  * ganze Maps, auf denen Client-Skripte viele einzelne Teile suchen (Hub, Markt)
-  * einzelne Gruppen der übrigen Maps (z. B. Zone, Orte und Stände der offenen Welt, Ziele der Arcade-Maps).
+  * ganze Maps, auf denen Client-Skripte viele einzelne Teile suchen (Markt)
+  * einzelne Gruppen der übrigen Maps (z. B. Zone, Orte, Stände und die Einsatzzentrale der offenen Welt, Ziele der
+    Arcade-Maps).
     Eine Gruppe ist sonst ein Folder; als Model verhält sie sich für Skripte gleich (FindFirstChild, GetChildren …).
 
 Aufruf:  python3 tools/streaming.py      (bestehende src/maps/*.model.json anpassen, Format bleibt gleich)
@@ -15,9 +16,9 @@ import json
 import os
 
 # Ganze Map immer laden
-PERSISTENT_MAPS = {"Hub", "Market"}
+PERSISTENT_MAPS = {"Market"}
 # Nur diese Gruppen immer laden (gilt für jede Map, die sie hat)
-PERSISTENT_GROUPS = {"Zone", "Places", "Stands", "Lakes", "Objective"}
+PERSISTENT_GROUPS = {"Zone", "Places", "Stands", "Lakes", "Objective", "Zentrale"}
 
 
 def apply(model, name):

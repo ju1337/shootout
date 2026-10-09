@@ -26487,7 +26487,7 @@
            ]
           },
           "BackgroundTransparency": 1,
-          "Text": "ZUM HUB",
+          "Text": "ZUM CAMP",
           "TextScaled": true,
           "Font": "Oswald",
           "TextColor3": [
@@ -42300,7 +42300,7 @@
    "ClassName": "Folder",
    "Children": [
     {
-     "Name": "Portal_Hub",
+     "Name": "Portal_Extinction",
      "ClassName": "Part",
      "Properties": {
       "Anchored": true,

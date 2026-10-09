@@ -1,6 +1,7 @@
 -- TradeClient (ModuleScript, nur Client)
--- Tauschen im Hub und im Markt (Server: TradeService):
---   * Taste T (oder Knopf TAUSCH in der Markt-Leiste) öffnet die Spielerliste: alle Spieler im selben Bereich mit
+-- Tauschen in den Safe Zones der offenen Welt und im Markt (Server: TradeService):
+--   * Im Markt öffnet Taste T (oder Knopf TAUSCH in der Markt-Leiste) die Spielerliste (in der offenen Welt ist T die
+--     Kamera): alle Spieler im selben Bereich mit
 --     Entfernung und Inventarwert, TAUSCH ANFRAGEN schickt die Anfrage (nah genug heranlaufen, RapConfig.TradeRange).
 --   * An anderen Spielern erscheint G (Controller △, Touch: Antippen): Tausch-Anfrage schicken.
 --   * Anfragen erscheinen rechts als Karte mit ANNEHMEN / ABLEHNEN und einem ablaufenden Balken.
@@ -377,7 +378,7 @@ end
 
 local function updatePrompts()
 	local myMode = player:GetAttribute("Mode")
-	local social = myMode ~= nil and Modes.IsSocial(myMode)
+	local social = myMode ~= nil and Modes.InLounge(player)
 	for _, other in Players:GetPlayers() do
 		if other ~= player then
 			local character = other.Character
@@ -400,7 +401,7 @@ local function updatePrompts()
 					end)
 				end
 				prompt.ObjectText = other.Name
-				prompt.Enabled = social and other:GetAttribute("Mode") == myMode and current == nil
+				prompt.Enabled = social and other:GetAttribute("Mode") == myMode and Modes.InLounge(other) and current == nil
 			end
 		end
 	end
@@ -488,8 +489,8 @@ end
 
 function TradeClient.OpenPlayers()
 	local myMode = player:GetAttribute("Mode")
-	if not myMode or not Modes.IsSocial(myMode) then
-		showToast("Tauschen geht nur im Hub oder im Markt.", false)
+	if not myMode or not Modes.InLounge(player) then
+		showToast("Tauschen geht nur in einer Safe Zone oder im Markt.", false)
 		return
 	end
 	closeList()
@@ -555,12 +556,14 @@ function TradeClient.Init()
 	hint = label({ Name = "TradeHint", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -22), Size = UDim2.fromOffset(360, 22),
 		Text = "T  ·  TAUSCHEN MIT SPIELERN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center,
 		TextStrokeTransparency = 0.6, Visible = false }, root)
-	player:GetAttributeChangedSignal("Mode"):Connect(function()
-		if listWindow and not Modes.IsSocial(player:GetAttribute("Mode") or "") then
+	local function onPlaceChanged()
+		if listWindow and not Modes.InLounge(player) then
 			closeList()
 		end
 		updateHint()
-	end)
+	end
+	player:GetAttributeChangedSignal("Mode"):Connect(onPlaceChanged)
+	player:GetAttributeChangedSignal("InSafeZone"):Connect(onPlaceChanged)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		-- ○ schließt auch, wenn gerade ein Knopf im Fenster ausgewählt ist (dann meldet Roblox die Taste als verarbeitet)
 		if listWindow and (input.KeyCode == Enum.KeyCode.ButtonB or (input.KeyCode == Enum.KeyCode.Escape and not processed)) then
@@ -571,7 +574,7 @@ function TradeClient.Init()
 		if processed then
 			return
 		end
-		if input.KeyCode == Enum.KeyCode.T and window == nil then
+		if input.KeyCode == Enum.KeyCode.T and window == nil and Modes.IsSocial(player:GetAttribute("Mode")) then
 			TradeClient.TogglePlayers()
 			updateHint()
 		end

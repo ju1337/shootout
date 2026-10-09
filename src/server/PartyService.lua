@@ -8,7 +8,8 @@
 -- Spieler-Attribut "SquadId" (Zahl/nil): gleiche Zahl = gleicher Squad. In der offenen Welt (EXTINCTION) ist der Squad das
 -- Team: kein Friendly Fire (WeaponService, VehicleService), Pings nur an den Squad (PingService), Namen, Punkte auf der
 -- Minimap und Squad-Liste für die Mitglieder (TeamCheck, ExtinctionClient). Verlässt der Anführer die offene Welt, bleiben die
--- anderen dort (draußen würde Verlassen sonst ihre Tasche kosten); betritt er sie, kommt der Squad mit.
+-- Mitglieder draußen in der Welt dort (Verlassen würde sonst ihre Tasche kosten); wer im Camp (Safe Zone) steht, kommt mit.
+-- Betritt der Anführer die offene Welt, kommt der Squad mit.
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -17,6 +18,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 
 local PartyService = {}
+
+-- Draußen in der offenen Welt (nicht in einer Safe Zone): wird nicht in einen anderen Modus mitgezogen
+local function outInWorld(member)
+	return member:GetAttribute("Mode") == "Extinction" and member:GetAttribute("InSafeZone") ~= true
+end
 
 local MAX_SIZE = 4
 local INVITE_TIME = 60 -- Sekunden gültig
@@ -93,7 +99,7 @@ function PartyService.Followers(player)
 	end
 	local list = {}
 	for _, member in party.Members do
-		if member == player or member:GetAttribute("Mode") ~= "Extinction" then
+		if member == player or not outInWorld(member) then
 			table.insert(list, member)
 		end
 	end
@@ -234,7 +240,7 @@ function PartyService.Init(modeManager)
 	end)
 	-- Anführer wechselt den Modus: Squad kommt mit (im Kampf gilt BEREIT nicht mehr). In den Markt geht jeder selbst.
 	modeManager.Joined:Connect(function(player, modeId)
-		if modeId ~= "Hub" and modeId ~= "Market" then
+		if modeId ~= "Market" then
 			player:SetAttribute("PartyReady", nil)
 		end
 		local party = partyOf[player]
@@ -242,8 +248,8 @@ function PartyService.Init(modeManager)
 			return
 		end
 		for _, member in party.Members do
-			-- aus der offenen Welt wird niemand mitgezogen (draußen kostet Verlassen die Tasche)
-			if member ~= player and member:GetAttribute("Mode") ~= modeId and member:GetAttribute("Mode") ~= "Extinction" then
+			-- wer draußen in der offenen Welt ist, wird nicht mitgezogen (dort kostet Verlassen die Tasche)
+			if member ~= player and member:GetAttribute("Mode") ~= modeId and not outInWorld(member) then
 				task.spawn(manager.Join, member, modeId, true)
 			end
 		end

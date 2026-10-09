@@ -1,5 +1,5 @@
 -- ClientMain (LocalScript)
--- Startet alle Client-Module. Sie reagieren selbst auf den aktuellen Modus (Hub, Free-for-All, Drop).
+-- Startet alle Client-Module. Sie reagieren selbst auf den aktuellen Modus (offene Welt, Markt, Arcade-Modi).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -73,9 +73,9 @@ GraphicsQuality.Init() -- Einstellung Grafik (Schatten, Partikel, Leuchten)
 KillstreakHUD.Init() -- Killstreaks in Herrschaft rechts am Rand (Tasten 4/5/6)
 TouchControls.Init()
 LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
-task.spawn(HubWheel.Init) -- Glücksrad in der Ecke des Hubs (wartet auf die Hub-Map)
+task.spawn(HubWheel.Init) -- Glücksrad in der Einsatzzentrale im Camp (wartet auf die Gruppe Zentrale)
 task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet auf die Markt-Map)
-TradeClient.Init() -- Tauschen im Hub und im Markt (G an anderen Spielern)
+TradeClient.Init() -- Tauschen in Safe Zones und im Markt (G an anderen Spielern)
 task.spawn(CrateClient.Init) -- Kisten öffnen: Automat in der Marktmitte (Waffen-Kiste)
 ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
 DeathScreen.Init() -- offene Welt: Todesbildschirm mit Gegner, Tasche und Respawn-Countdown

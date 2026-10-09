@@ -1,6 +1,6 @@
 -- HubWheel (ModuleScript, nur Client)
--- Das Glücksrad steht als großes Rad in der Ecke des Hubs (Teil "WheelSpot" der Hub-Map: Mitte des Rads,
--- LookVector = Vorderseite). Podest, Ständer und Schild kommen aus der Map, das Rad baut dieses Modul lokal:
+-- Das Glücksrad steht als großes Rad in der Einsatzzentrale im Camp (Teil "WheelSpot" der Gruppe Zentrale, siehe
+-- Shared/Zentrale: Mitte des Rads, LookVector = Vorderseite). Podest, Ständer und Schild kommen aus der Map, das Rad baut dieses Modul lokal:
 -- acht farbige Felder (LoginConfig.Wheel) aus Keilen, goldene Trennstege, Beschriftung, Nabe, Rand mit
 -- Lichtern und oben ein Zeiger. Am Pult davor ("WheelConsole") öffnet E bzw. Antippen den Dreh: der Server lost
 -- das Feld aus (ShopAction "SpinWheel" -> Remotes.WheelResult), das Rad dreht ein paar Runden und bleibt genau
@@ -27,6 +27,7 @@ local InputActions = require(Shared.InputActions)
 local Notifications = require(Shared.Notifications)
 local PaidRandom = require(Shared.PaidRandom)
 local OddsPanel = require(Shared.OddsPanel)
+local Zentrale = require(Shared.Zentrale)
 
 local player = Players.LocalPlayer
 
@@ -265,10 +266,10 @@ end
 -- ---------- Start ----------
 
 function HubWheel.Init()
-	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
-	local spot = decor:WaitForChild("WheelSpot", 60)
-	if not spot then
-		return -- Hub ohne Glücksrad (alter Hangar)
+	local decor = Zentrale.Folder(60)
+	local spot = decor and decor:WaitForChild("WheelSpot", 60)
+	if not decor or not spot then
+		return -- Zentrale ohne Glücksrad
 	end
 	local wheel = HubWheel.Build(spot, workspace)
 	local console = decor:FindFirstChild("WheelConsole") or spot

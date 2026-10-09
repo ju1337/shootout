@@ -140,7 +140,7 @@ local SpawnUtil = require("SpawnUtil")
 AgentService.Init()
 local alice = SIM.Join("Alice")
 step(1)
-alice:SetAttribute("Mode", "Hub")
+alice:SetAttribute("Mode", "Market")
 alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
@@ -150,15 +150,15 @@ check(loaded ~= nil, "Spieler mit Agenten-Körper geladen (nicht mit dem eigenen
 check(loaded and loaded.TorsoColor == vPrimary and loaded.WidthScale == AgentConfig.BodyScale.Width,
 	"Körper in Viper-Farben, schlank")
 check(character and character:GetAttribute("AgentLook") == "Standard" and character:FindFirstChild("AgentVest") == nil,
-	"Standard-Look auch im Hub (Agent überall), ohne Quader")
+	"Standard-Look auch im Markt (Agent überall), ohne Quader")
 check(character and character.Head:FindFirstChildOfClass("Decal") ~= nil, "mit Roblox-Gesicht")
 
--- Agentenwechsel im Hub: sofort in den neuen Farben
+-- Agentenwechsel im Markt: sofort in den neuen Farben
 alice:SetAttribute("Agent", "Bastion")
 step(0.1)
 local bPrimary = Cosmetics.AgentColors(alice, "Bastion")
 check(character.BodyColors.TorsoColor3 == bPrimary and character:GetAttribute("AgentLookOf") == "Bastion",
-	"Agentenwechsel im Hub sofort")
+	"Agentenwechsel im Markt sofort")
 -- Im Match erst beim nächsten Spawn
 alice:SetAttribute("Mode", "FreeForAll")
 alice:SetAttribute("Agent", "Viper")

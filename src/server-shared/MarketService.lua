@@ -21,7 +21,7 @@
 --     schreibt höchstens alle RapConfig.HistoryFlush Sekunden einmal je betroffenem Eintrag (beim Herunterfahren
 --     sofort); alle RapConfig.HistoryRefresh Sekunden lädt er die Einträge neu (Verkäufe der anderen Server).
 --     Die alten Einträge "sales" und "rap" (vor der Aufteilung) werden nur noch gelesen.
---   * Release: Stand abgeben – auch von selbst, sobald der Besitzer den Markt verlässt (Runde, Hub) oder das Spiel.
+--   * Release: Stand abgeben – auch von selbst, sobald der Besitzer den Markt verlässt (Runde, Camp) oder das Spiel.
 --     Seine Skins sind dann wieder frei, jemand anderes kann den Stand nehmen.
 -- Zustand für alle Clients als Attribute am Stand-Ordner (Maps.Market.Stand_<n>): Owner (UserId, 0 = frei),
 -- OwnerName, StandName, Listings (JSON [{ Slot, Item, Price }]), Offers (JSON [{ Id, Slot, Item, Buyer,

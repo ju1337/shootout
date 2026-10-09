@@ -1,5 +1,6 @@
 -- ModeManager (ModuleScript, nur Server)
--- Verwaltet, welcher Spieler in welchem Modus ist (Hub, Free-for-All, Drop).
+-- Verwaltet, welcher Spieler in welchem Modus ist (offene Welt, Markt, Arcade-Modi). Start ist die Safe Zone der offenen
+-- Welt (Modes.Home, Camp Phoenix mit der Einsatzzentrale); einen eigenen Hub gibt es nicht mehr.
 -- Moduswechsel = Spieler in den Bereich des Modus setzen. Nur für Arcade-Modi kann es vorher auf einen anderen Server
 -- gehen, auf dem dort mehr Spieler sind (MatchmakingService); dort landet man direkt im Modus.
 -- Spieler-Attribute: Mode (Id), CanFight (darf schießen/Fähigkeit), ModeText (Info oben im HUD)
@@ -21,8 +22,7 @@ local ModeManager = {}
 
 -- Logik pro Modus (Ids wie in Modes.lua)
 local modules = {
-	Hub = require(script.Parent.Modes.Hub),
-	Extinction = require(script.Parent.Modes.Extinction), -- offene Welt (Hauptmodus, Tor im Hub)
+	Extinction = require(script.Parent.Modes.Extinction), -- offene Welt (Hauptmodus und Start, Modes.Home)
 	Market = require(script.Parent.Modes.Market), -- Markthalle mit Ständen (kein Kampf)
 	FreeForAll = require(script.Parent.Modes.FreeForAll),
 	Domination = require(script.Parent.Modes.Domination),
@@ -150,7 +150,7 @@ function ModeManager.Init()
 		end
 	end)
 
-	-- Spielerzahlen pro Modus (für Menü-Karten und Einsatz-Tafel im Hub)
+	-- Spielerzahlen pro Modus (für Menü-Karten und Einsatz-Tafel in der Einsatzzentrale)
 	task.spawn(function()
 		local HttpService = game:GetService("HttpService")
 		while true do
@@ -166,18 +166,21 @@ function ModeManager.Init()
 		end
 	end)
 
-	-- Neue Spieler starten im Hub; wer per Matchmaking kommt, gleich in seinem Arcade-Modus (Spielstand abwarten)
+	-- Neue Spieler starten in der Safe Zone der offenen Welt; wer per Matchmaking kommt, gleich in seinem Arcade-Modus.
+	-- Beides erst mit geladenem Spielstand (die offene Welt braucht Tasche und Lager; bis dahin bleibt der Ladebildschirm).
 	local function onPlayerAdded(player)
-		ModeManager.Join(player, "Hub")
 		local modeId = MatchmakingService.Arrival(player)
+		while player.Parent and not ProgressService.IsLoaded(player) do
+			task.wait(0.25)
+		end
+		if not player.Parent or player:GetAttribute("Mode") ~= nil then
+			return
+		end
 		if modeId then
-			local waited = 0
-			while player.Parent and not ProgressService.IsLoaded(player) and waited < 15 do
-				waited += task.wait(0.25)
-			end
-			if player.Parent and player:GetAttribute("Mode") == "Hub" then
-				ModeManager.Join(player, modeId, true)
-			end
+			ModeManager.Join(player, modeId, true)
+		end
+		if player.Parent and player:GetAttribute("Mode") == nil then
+			ModeManager.Join(player, Modes.Home)
 		end
 	end
 	Players.PlayerAdded:Connect(onPlayerAdded)

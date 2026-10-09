@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local CrateConfig = require(Shared.CrateConfig)
+local Modes = require(Shared.Modes)
 local RapConfig = require(Shared.RapConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local PolicyGate = require(script.Parent.PolicyGate)
@@ -24,7 +25,7 @@ local function modeAllowed(player)
 	local mode = player:GetAttribute("Mode")
 	for _, id in CrateConfig.Modes do
 		if mode == id then
-			return true
+			return Modes.InLounge(player)
 		end
 	end
 	return false
@@ -37,7 +38,7 @@ function CrateService.Open(player, crateId)
 		return false, "Diese Kiste gibt es nicht."
 	end
 	if not modeAllowed(player) then
-		return false, "Kisten öffnest du im Markt."
+		return false, "Kisten öffnest du im Markt oder in einer Safe Zone."
 	end
 	-- Roblox: bezahlte Zufallsitems (Münzen gibt es auch für Robux) sind in manchen Ländern verboten (PolicyGate)
 	if not PolicyGate.RandomAllowed(player) then

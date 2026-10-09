@@ -1,4 +1,5 @@
-"""Prüft die erzeugten Karten (Markt, Hub, Extinction in src/maps/) auf alles, was Server und Client darin suchen.
+"""Prüft die erzeugten Karten (Markt, Extinction mit der Einsatzzentrale in src/maps/) auf alles, was Server und Client
+darin suchen.
 
 Läuft als Teil von tests/run.py (Test "maps"). Gefangen werden Fehler, die die Luau-Tests nicht sehen, weil sie ihre
 eigene kleine Karte bauen: fehlende Teile (z.B. SearchTerminal), Stände ohne Prompt oder Ausstellplätze, Stände, die
@@ -35,25 +36,36 @@ def _load(name):
         return json.load(f)
 
 
-def check_hub():
-    """Hub: nur noch das Tor nach EXTINCTION und zum Markt (die Minispiele laufen über das Menü, ARCADE)."""
-    problems = []
-    parts = _parts(_load("Hub"))
-    portals = sorted(part["Name"] for group, part in parts if group == "Portals")
-    if portals != ["Portal_Extinction", "Portal_Market"]:
-        problems.append("Hub: Tore %s, erwartet Portal_Extinction und Portal_Market" % portals)
-    for name in ("Sign_Extinction", "GateCount_Extinction", "FloorLabel_Extinction"):
-        if not any(part["Name"] == name for _, part in parts):
-            problems.append("Hub: %s fehlt" % name)
-    return problems
+_cache = {}
+
+
+def _load_cached(name):
+    if name not in _cache:
+        _cache[name] = _load(name)
+    return _cache[name]
+
+
+# Teile der Einsatzzentrale (früher der Hub), die Server und Client in der Gruppe Zentrale suchen (src/shared/Zentrale.lua)
+ZENTRALE_PARTS = ("AgentOfWeekSpot", "AgentOfWeekHolo", "ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
+                  "ShopPlaque1", "ShopPlaque2", "ShopPlaque3", "MissionBoard", "PhotoBoard", "Leaderboard_Elo",
+                  "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Wins", "Podium1", "Podium2", "Podium3", "WheelSpot",
+                  "WheelConsole", "WheelBoard", "GateCount_Market", "ArcadeTerminalBase")
+
+
+def check_no_hub():
+    """Den Hub gibt es nicht mehr: man startet in der Safe Zone der offenen Welt."""
+    if os.path.exists(os.path.join(ROOT, "src", "maps", "Hub.model.json")):
+        return ["Hub.model.json gibt es noch – der Hub ist in die Einsatzzentrale im Camp gewandert"]
+    return []
 
 
 def check_extinction():
-    """Offene Welt: Safe Zone (Server liest den Radius), Spawns und Tor zum Hub darin, Stände und Lager darin,
-    nicht zu nah beieinander; Welt groß genug; kein Baum oder Fels in der Safe Zone."""
+    """Offene Welt: Safe Zone (Server liest den Radius), Spawns und Tor zum Markt darin, Stände und Lager darin,
+    nicht zu nah beieinander, die Einsatzzentrale mit allen Teilen darin; Welt groß genug; kein Baum oder Fels in der
+    Safe Zone."""
     problems = []
     origin = (0, 0, -6000)  # EXTINCTION_ORIGIN in tools/build_maps.py, Center in Modes.lua
-    parts = _parts(_load("Extinction"))
+    parts = _parts(_load_cached("Extinction"))
 
     def local(part):
         p = part["Properties"]["CFrame"]["CFrame"]["position"]
@@ -65,7 +77,7 @@ def check_extinction():
     zone = zones[0]
     zx, _, zz = local(zone)
     radius = zone["Properties"]["Size"][0] / 2
-    if math.hypot(zx, zz) > 1 or not (80 <= radius <= 160):
+    if math.hypot(zx, zz) > 1 or not (80 <= radius <= 200):
         problems.append("Extinction: Safe Zone nicht in der Mitte oder Radius %.0f unpassend" % radius)
     if zone["Properties"].get("CanQuery", True) or zone["Properties"].get("CanCollide", True):
         problems.append("Extinction: Safe-Zone-Teil darf weder treffbar noch fest sein")
@@ -78,8 +90,18 @@ def check_extinction():
     if len(spawns) < 6 or not all(inside(part, 20) for part in spawns):
         problems.append("Extinction: mindestens 6 Spawns tief in der Safe Zone erwartet (%d)" % len(spawns))
     portals = [part for group, part in parts if group == "Portals"]
-    if [p["Name"] for p in portals] != ["Portal_Hub"] or not inside(portals[0], 10):
-        problems.append("Extinction: genau ein Tor Portal_Hub in der Safe Zone erwartet")
+    if [p["Name"] for p in portals] != ["Portal_Market"] or not inside(portals[0], 10):
+        problems.append("Extinction: genau ein Tor Portal_Market (Einsatzzentrale) in der Safe Zone erwartet")
+    groups = {child.get("Name"): child for child in _load_cached("Extinction").get("Children", [])}
+    zentrale = groups.get("Zentrale")
+    if not zentrale or zentrale.get("ClassName") != "Model" or zentrale.get("Properties", {}).get("ModelStreamingMode") != "Persistent":
+        problems.append("Extinction: Gruppe Zentrale fehlt oder wird nicht immer geladen (Model, Persistent)")
+    for name in ZENTRALE_PARTS:
+        found = [part for group, part in parts if group == "Zentrale" and part["Name"] == name]
+        if len(found) != 1:
+            problems.append("Extinction: Zentrale braucht genau ein Teil %s (gefunden %d)" % (name, len(found)))
+        elif not inside(found[0], 10):
+            problems.append("Extinction: %s liegt nicht in der Safe Zone" % name)
     points = {}  # je Name der Punkt im Camp (Safehouses haben eigene Stände mit denselben Namen; den Spielermarkt gibt es nur im Camp)
     camp_points = ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash", "Stand_Market", "Hideout", "Stand_Red")
     for group, part in parts:
@@ -100,7 +122,7 @@ def check_extinction():
             if math.hypot(ax - bx, az - bz) < 30:
                 problems.append("Extinction: %s und %s zu dicht beieinander (E-Aufforderungen überlappen)" % (a, b))
     for group, part in parts:
-        if group == "Nature" and part["Name"] in ("Trunk", "Rock") and inside(part, -30):
+        if group == "Nature" and part["Name"] in ("Trunk", "Rock") and inside(part, -15):
             problems.append("Extinction: %s in der Safe Zone" % part["Name"])
             break
     # Safehouses: kleine Safe Zones draußen (SafeZone_<Name> mit Title), je mindestens 3 Spawns in Spawns_<Name> darin
@@ -231,7 +253,7 @@ def check_extinction_world(parts, local, safe_radius):
 
 def check():
     """Gibt eine Liste von Fehlermeldungen zurück (leer = alles in Ordnung)."""
-    return check_market() + check_hub() + check_extinction()
+    return check_market() + check_no_hub() + check_extinction()
 
 
 def check_market():
@@ -252,8 +274,8 @@ def check_market():
     if leftovers:
         problems.append("Reste der Agenten-Kiste: %s" % ", ".join(leftovers))
     portals = [part for group, part in parts if group == "Portals" and part["Name"].startswith("Portal_")]
-    if [p["Name"] for p in portals] != ["Portal_Hub"]:
-        problems.append("Gruppe Portals: genau Portal_Hub erwartet")
+    if [p["Name"] for p in portals] != ["Portal_Extinction"]:
+        problems.append("Gruppe Portals: genau Portal_Extinction (zurück ins Camp) erwartet")
     spawns = [part for group, part in parts if group == "Spawns"]
     if len(spawns) < 6:
         problems.append("zu wenige Spawns: %d" % len(spawns))

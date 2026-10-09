@@ -2560,7 +2560,7 @@ local function openSquad()
 			end
 		end
 		if count == 0 then
-			row(others, 1, "NIEMAND SONST HIER", "MITSPIELER KOMMEN ÜBER DAS TOR IM HUB")
+			row(others, 1, "NIEMAND SONST HIER", "NEUE MITSPIELER STARTEN IM CAMP")
 		end
 	end
 	-- Entfernungen laufend nachführen (ohne die Knöpfe neu zu bauen)

@@ -1,7 +1,8 @@
 -- Market (ModuleScript, nur Server)
 -- Markthalle: kein Kampf. Spieler beanspruchen Stände, bieten Skins für RAP an und kaufen bei anderen
--- (MarketService). Wer den Markt verlässt (Runde, Hub, Spiel verlassen), verliert seinen Stand – die Skins darauf
--- waren nur zurückgelegt und sind sofort wieder frei. Das Tor im Süden ("Portal_Hub") führt zurück in den Hub.
+-- (MarketService). Wer den Markt verlässt (Runde, Camp, Spiel verlassen), verliert seinen Stand – die Skins darauf
+-- waren nur zurückgelegt und sind sofort wieder frei. Das Tor im Süden ("Portal_Extinction") führt zurück ins Camp
+-- (Einsatzzentrale in der Safe Zone der offenen Welt).
 
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
@@ -40,7 +41,7 @@ end
 function Market.Init(modeManager)
 	manager = modeManager
 	MarketService.Init(map)
-	-- Portale: Parts "Portal_<ModusId>" in Maps.Market.Portals (zurück zum Hub)
+	-- Portale: Parts "Portal_<ModusId>" in Maps.Market.Portals (zurück ins Camp)
 	for _, pad in map.Portals:GetChildren() do
 		local modeId = string.match(pad.Name, "^Portal_(.+)$")
 		if pad:IsA("BasePart") and modeId then

@@ -1,4 +1,4 @@
--- Tauschen: Anfrage (nur Hub/Markt, nah beieinander), ablehnen, annehmen, gegenseitige Anfrage, Angebote (nur
+-- Tauschen: Anfrage (nur Markt oder Safe Zone der offenen Welt, nah beieinander), ablehnen, annehmen, gegenseitige Anfrage, Angebote (nur
 -- handelbare freie Skins, RAP bis zum Guthaben), BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss
 -- (alles auf einmal, gespeichert), Abbruch (Knopf, Moduswechsel, Spiel verlassen), fehlgeschlagener Tausch,
 -- entfernte Agenten-Skins aus alten Spielständen sind weg und nicht tauschbar
@@ -59,16 +59,16 @@ step(2)
 check(ProgressService.ItemCount(bob, "A_Ghost_Nebel") == 0 and ProgressService.ItemCount(bob, "W_Chrom") == 1,
 	"alter Agenten-Skin beim Laden entfernt, Waffen-Skins bleiben")
 check(next(ProgressService.Get(bob).Equipped) == nil, "kein Agenten-Skin mehr ausgerüstet")
-place(alice, "Hub", Vector3.new(0, 3, 0))
+place(alice, "Market", Vector3.new(0, 3, 0))
 place(bob, "Domination", Vector3.new(4, 3, 0))
 
 -- Anfrage
 local message, ok = act(alice, "Request", bob.UserId)
 check(ok == false, "nicht mit jemandem im Match")
-place(bob, "Hub", Vector3.new(80, 3, 0))
+place(bob, "Market", Vector3.new(80, 3, 0))
 message, ok = act(alice, "Request", bob.UserId)
 check(ok == false and string.find(message, "näher", 1, true) ~= nil, "zu weit weg: " .. tostring(message))
-place(bob, "Hub", Vector3.new(6, 3, 0))
+place(bob, "Market", Vector3.new(6, 3, 0))
 check(select(2, act(alice, "Request", alice.UserId)) == false, "nicht mit sich selbst")
 message, ok = act(alice, "Request", bob.UserId)
 check(ok == true, "Anfrage geschickt")
@@ -159,7 +159,7 @@ alice:SetAttribute("Mode", "Domination")
 check(TradeService.TradeOf(bob) == nil and EconomyService.ReservedCount(alice, "W_Kalender") == 0, "Moduswechsel: abgebrochen, frei")
 
 -- Fehlgeschlagener Tausch: RAP inzwischen ausgegeben -> nichts passiert
-place(alice, "Hub", Vector3.new(0, 3, 0))
+place(alice, "Market", Vector3.new(0, 3, 0))
 act(alice, "Request", bob.UserId)
 act(bob, "Respond", alice.UserId, true)
 act(alice, "SetRap", 700)
@@ -180,6 +180,20 @@ act(bob, "AddItem", "W_Lava")
 SIM.Leave(alice)
 step(1)
 check(TradeService.TradeOf(bob) == nil and EconomyService.ReservedCount(bob, "W_Lava") == 0, "Verlassen: abgebrochen, frei")
+
+-- Offene Welt: nur in der Safe Zone; wer sie verlässt, bricht ab
+place(carl, "Extinction", Vector3.new(-1500, 3, -1500))
+place(dana, "Extinction", Vector3.new(-1496, 3, -1500))
+carl:SetAttribute("InSafeZone", true)
+dana:SetAttribute("InSafeZone", false)
+check(select(2, act(carl, "Request", dana.UserId)) == false, "offene Welt draußen: kein Tausch")
+dana:SetAttribute("InSafeZone", true)
+act(carl, "Request", dana.UserId)
+act(dana, "Respond", carl.UserId, true)
+check(TradeService.TradeOf(carl) ~= nil, "Safe Zone: Tausch läuft")
+dana:SetAttribute("InSafeZone", false)
+check(TradeService.TradeOf(carl) == nil, "Safe Zone verlassen: abgebrochen")
+place(dana, "Market", Vector3.new(-1496, 3, -1500))
 
 -- Über das Remote (mit Rückmeldung)
 place(carl, "Market", Vector3.new(-1500, 3, -1500))

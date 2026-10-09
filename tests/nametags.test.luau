@@ -1,4 +1,4 @@
--- Namensschilder (Nametags): volles Schild (Prestige, Team-Rang, Name, Rang, RAP, Titel) im Hub und in der Safe Zone
+-- Namensschilder (Nametags): volles Schild (Prestige, Team-Rang, Name, Rang, RAP, Titel) im Markt und in der Safe Zone
 -- von Extinction, draußen in der offenen Welt keins für Fremde; RAP kurz (12.4K); Kopf neu geladen (Streaming).
 local failures = 0
 local function check(cond, msg)
@@ -11,8 +11,8 @@ end
 local bob = SIM.Join("Bob")
 rawget(SIM.Players, "__props").LocalPlayer = bob
 local alice = SIM.Join("Alice")
-bob:SetAttribute("Mode", "Hub")
-alice:SetAttribute("Mode", "Hub")
+bob:SetAttribute("Mode", "Market")
+alice:SetAttribute("Mode", "Market")
 alice:SetAttribute("Rap", 12000)
 alice:SetAttribute("RapValue", 450)
 bob:LoadCharacter()
@@ -24,7 +24,7 @@ check(Nametags.ShortNumber(950) == "950", "950 bleibt (" .. Nametags.ShortNumber
 check(Nametags.ShortNumber(12450) == "12.4K", "12.4K (" .. Nametags.ShortNumber(12450) .. ")")
 check(Nametags.ShortNumber(50000) == "50K", "50K (" .. Nametags.ShortNumber(50000) .. ")")
 check(Nametags.ShortNumber(3160000) == "3.1M", "3.1M (" .. Nametags.ShortNumber(3160000) .. ")")
-check(Nametags.Showcase("Hub", nil), "Hub zeigt das volle Schild")
+check(Nametags.Showcase("Market", nil), "Markt zeigt das volle Schild")
 check(Nametags.Showcase("Extinction", true), "Safe Zone zeigt das volle Schild")
 check(not Nametags.Showcase("Extinction", false), "draußen nicht")
 check(not Nametags.Showcase("FreeForAll", true), "Kampfmodus nicht")
@@ -45,7 +45,7 @@ local function find(tag, name)
 end
 
 local tag = tagOf(alice)
-check(tag ~= nil, "Hub: Schild über Alice")
+check(tag ~= nil, "Markt: Schild über Alice")
 if tag then
 	check(find(tag, "Title").Text == "Alice", "Name (" .. tostring(find(tag, "Title").Text) .. ")")
 	check(find(tag, "Rap").Visible and find(tag, "Rap").Text == "12.4K", "RAP kurz in der Info-Zeile")

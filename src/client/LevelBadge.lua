@@ -1,6 +1,6 @@
 -- LevelBadge (ModuleScript, nur Client)
 -- Spielerlevel im Match: Prestige-Abzeichen mit Level, "LEVEL 23" und XP-Balken unten links über der
--- Lebensanzeige (Touch: oben links unter Minimap und Leben). Im Hub nicht – dort steht das Level groß
+-- Lebensanzeige (Touch: oben links unter Minimap und Leben). Im Markt nicht – dort steht das Level groß
 -- in der Lobby. Ausgeblendet, solange ein Menü offen ist (Spiel- und Seitenmenü, Agentenwahl,
 -- Map-Abstimmung, Match-Zusammenfassung, Punktestand).
 
@@ -97,7 +97,7 @@ function LevelBadge.Init()
 			return
 		end
 		nextCheck = now + 0.2
-		screen.Enabled = Modes.IsFighting(player) and not menuOpen() -- im Hub zeigt die Lobby das Level
+		screen.Enabled = Modes.IsFighting(player) and not menuOpen() -- im Markt zeigt die Lobby das Level
 		if screen.Enabled then
 			place()
 		end

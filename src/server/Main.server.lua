@@ -82,9 +82,9 @@ start("KillstreakService.Init", KillstreakService.Init) -- Killstreak-Belohnunge
 start("RobuxService.Init", RobuxService.Init) -- Robux-Shop: Gamepässe und Entwicklerprodukte
 start("ClanService.Init", ClanService.Init) -- Clans über alle Server
 start("MovementGuard.Init", MovementGuard.Init) -- Bewegungs-Check gegen Speedhacks und Teleports
-start("BackWeapon.Init", BackWeapon.Init) -- im Hub: Standardwaffe des Agenten auf dem Rücken
+start("BackWeapon.Init", BackWeapon.Init) -- im Markt: Standardwaffe des Agenten auf dem Rücken
 start("EconomyService.Init", EconomyService.Init) -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)
-start("TradeService.Init", TradeService.Init) -- Tauschen zwischen Spielern im Hub und im Markt
+start("TradeService.Init", TradeService.Init) -- Tauschen zwischen Spielern in der Safe Zone und im Markt
 start("CrateService.Init", CrateService.Init) -- Kisten öffnen (Waffen-Kiste) im Markt
 start("InventoryService.Init", InventoryService.Init) -- offene Welt (Extinction): Tasche, Hotbar 1-9, Lager, Stände
 start("KitService.Init", KitService.Init) -- Kit-Händler am Spawn im Camp (Starter Kit usw.)
@@ -95,5 +95,6 @@ start("AdminService.Init", AdminService.Init, ModeManager)
 start("PartyService.Init", PartyService.Init, ModeManager)
 -- Arcade über mehrere Server: auf Server mit mehr Spielern im Modus wechseln, der Squad kommt mit
 start("MatchmakingService.Init", MatchmakingService.Init, ModeManager, { Group = PartyService.Followers, Regroup = PartyService.Regroup })
+start("ZentraleService.Init", require(script.Parent.ZentraleService).Init) -- Einsatzzentrale im Camp: Top-3-Statuen
 start("ModeManager.Init", ModeManager.Init)
 current = nil

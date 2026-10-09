@@ -1,6 +1,6 @@
 -- LoadingScreen (LocalScript in ReplicatedFirst)
 -- Eigener Ladebildschirm im nüchternen Taktik-Look: Logo, dünner Lade-Balken, wechselnde Tipps.
--- Verschwindet, sobald das Spiel geladen ist und der Spieler im Hub angekommen ist.
+-- Verschwindet, sobald das Spiel geladen ist und der Spieler im Camp (Safe Zone der offenen Welt) angekommen ist.
 
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
@@ -89,22 +89,22 @@ task.spawn(function()
 	end
 end)
 
--- Fortschritt: geladen -> Spieldaten -> im Hub
+-- Fortschritt: geladen -> Spieldaten -> im Camp
 TweenService:Create(bar, TweenInfo.new(1.5), { Size = UDim2.new(0.4, 0, 1, 0) }):Play()
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
-status.Text = "Verbinde mit dem Hangar ..."
+status.Text = "Verbinde mit Camp Phoenix ..."
 TweenService:Create(bar, TweenInfo.new(0.8), { Size = UDim2.new(0.75, 0, 1, 0) }):Play()
 local started = os.clock()
 while player:GetAttribute("Mode") == nil and os.clock() - started < 15 do
 	task.wait(0.1)
 end
 -- Kein Modus nach 15 s: der Server hängt (meist fehlen die Karten unter Workspace.Maps, z.B. Rojo nicht fertig
--- synchronisiert). Statt in eine leere Welt auszublenden, den Grund anzeigen und weiter warten.
+-- synchronisiert, oder der Spielstand lädt noch). Statt in eine leere Welt auszublenden, den Grund anzeigen und weiter warten.
 if player:GetAttribute("Mode") == nil then
 	local maps = workspace:FindFirstChild("Maps")
-	if not maps or not maps:FindFirstChild("Hub") or not maps:FindFirstChild("Extinction") then
+	if not maps or not maps:FindFirstChild("Extinction") then
 		status.Text = "Karten fehlen im Workspace (Maps) – Rojo verbinden oder die gebaute Place-Datei öffnen"
 	else
 		status.Text = "Server antwortet nicht – Fehler im Output-Fenster prüfen"

@@ -187,7 +187,7 @@ end
 local function summary()
 	local modes = {}
 	for _, player in Players:GetPlayers() do
-		local mode = tostring(player:GetAttribute("Mode") or "Hub")
+		local mode = tostring(player:GetAttribute("Mode") or "-")
 		modes[mode] = (modes[mode] or 0) + 1
 	end
 	local fields = {}

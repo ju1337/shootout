@@ -350,7 +350,7 @@ end
 
 -- Hat der Spieler den Agenten freigeschaltet? (Spieler-Attribut "UnlockedAgents", JSON)
 -- Agent der Woche: wechselt jeden Montag (0 Uhr UTC), für alle gleich (Serverzeit). Diese Woche gratis
--- spielbar und +50 % XP (AgentOfWeekXP), wenn man mit ihm spielt. Steht als Statue in der Hub-Mitte.
+-- spielbar und +50 % XP (AgentOfWeekXP), wenn man mit ihm spielt. Steht als Statue in der Einsatzzentrale (Camp Phoenix).
 AgentConfig.AgentOfWeekXP = 1.5
 local WEEK = 7 * 24 * 3600
 local MONDAY_OFFSET = 4 * 24 * 3600 -- 1.1.1970 war ein Donnerstag

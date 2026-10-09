@@ -14,7 +14,7 @@
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
 --   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
 -- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
--- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Hub; es öffnet
+-- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: LOBBY unter der Minimap); es öffnet
 -- sich NICHT von selbst. Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas) und skaliert mit.
 
 local Players = game:GetService("Players")
@@ -39,6 +39,7 @@ local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local LobbyPages = require(Shared.LobbyPages)
 local HUDIcons = require(Shared.HUDIcons)
+local LeaveButton = require(Shared.LeaveButton)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -676,7 +677,7 @@ local function buildDaily()
 	end)
 end
 
--- Unterzeile des SPIELEN-Knopfs im Hub: gewählter Modus und wie viele ihn gerade spielen
+-- Unterzeile des SPIELEN-Knopfs im Markt: gewählter Modus und wie viele ihn gerade spielen
 local function updateHubPlay()
 	if not openButton or not selectedMode then
 		return
@@ -721,9 +722,9 @@ local function buildPlay()
 		Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Bottom }, playPage)
 
 	hubButton = UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, 544), Size = UDim2.fromOffset(RIGHT_W, 52), Color = C.Panel,
-		StrokeColor = C.Border, Text = "ZURÜCK ZUM HUB", TextSize = 18 }, playPage, function()
-		setStatus("Zurück zum Hub ...")
-		Remotes.JoinMode:FireServer(Modes.Hub.Id)
+		StrokeColor = C.Border, Text = "ZURÜCK INS CAMP", TextSize = 18 }, playPage, function()
+		setStatus("Zurück ins Camp ...")
+		Remotes.JoinMode:FireServer(Modes.Home)
 	end)
 
 	play = UITheme.Chunky({ Position = UDim2.fromOffset(RIGHT_X, 614), Size = UDim2.fromOffset(RIGHT_W, 150), Color = C.Primary,
@@ -812,7 +813,7 @@ local function buildAgentPage()
 		statRows[entry[1]] = { Segments = segments, Value = value }
 	end
 
-	-- Standardwaffe: eine der zwei Primärwaffen ausrüsten (gilt bei jedem Spawn mit dem Agenten, im Hub auf dem Rücken)
+	-- Standardwaffe: eine der zwei Primärwaffen ausrüsten (gilt bei jedem Spawn mit dem Agenten, im Markt auf dem Rücken)
 	local shownAgent = nil -- Agent, den die Detailkarte gerade zeigt
 	text({ Position = UDim2.fromOffset(20, 246), Size = UDim2.fromOffset(150, 16), Text = "STANDARDWAFFE", TextSize = 12,
 		Font = F.Bold, TextColor3 = C.Muted })
@@ -1219,7 +1220,7 @@ function GameMenu.PanelChanged(name)
 	end
 end
 
--- ---------- SPIELEN-Knopf im Hub ----------
+-- ---------- SPIELEN-Knopf im Markt ----------
 -- Großer Bernstein-Knopf unten mittig: rundes Play-Symbol, SPIELEN, darunter Modus und Spielerzahl, rechts die
 -- Taste (M bzw. Steuerkreuz unten). Ein Rand breitet sich immer wieder aus und verblasst, alle paar Sekunden läuft
 -- ein Glanz darüber; Überfahren/Auswählen vergrößert ihn leicht und schiebt das Play-Symbol an.
@@ -1362,7 +1363,10 @@ function GameMenu.Init()
 		end
 	end)
 
-	-- Im Hub: großer Knopf unten mittig öffnet das Menü
+	-- Im Markt: großer Knopf unten mittig öffnet das Menü; in der offenen Welt der LOBBY-Knopf unter der Minimap
+	LeaveButton.OpenMenu = function()
+		GameMenu.Open("Play")
+	end
 	local openGui = make("ScreenGui", { Name = "PlayButton", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 9,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player.PlayerGui)
 	openButton = buildHubPlay(openGui)
@@ -1371,7 +1375,7 @@ function GameMenu.Init()
 	end)
 	updateHubPlay()
 
-	-- Controller: ○ schließt zuerst ein offenes Fenster (auch im Hub), dann das Menü; L1/R1 blättert die Seiten
+	-- Controller: ○ schließt zuerst ein offenes Fenster (auch im Markt), dann das Menü; L1/R1 blättert die Seiten
 	UserInputService.InputBegan:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.ButtonB then
 			if openPanelName then
@@ -1389,7 +1393,8 @@ function GameMenu.Init()
 	end
 	updateOpenButton()
 	InputActions.DeviceChanged:Connect(updateOpenButton)
-	-- Menü-Taste (M bzw. Steuerkreuz unten): nur im Hub bzw. wenn das Menü offen ist
+	-- Menü-Taste (M bzw. Steuerkreuz unten): nur im Markt bzw. wenn das Menü offen ist (in der offenen Welt hat M ein
+	-- eigenes Menü)
 	InputActions.Bind("Menu", function(began)
 		if began and (isOpen or not Modes.IsFighting(player)) then
 			GameMenu.SetOpen(not isOpen)
@@ -1409,14 +1414,15 @@ function GameMenu.Init()
 		setStatus(message)
 	end)
 
-	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Hub und im Markt den SPIELEN-Knopf zeigen
+	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Markt den SPIELEN-Knopf zeigen (in der offenen Welt
+	-- öffnet der LOBBY-Knopf unter der Minimap das Menü, siehe LeaveButton)
 	local function onModeChanged()
 		local mode = player:GetAttribute("Mode")
 		if mode == nil then
 			return
 		end
-		inHub = Modes.IsSocial(mode) -- Hub oder Markt: kein laufendes Spiel
-		hubButton.Button.Visible = mode ~= Modes.Hub.Id
+		inHub = Modes.IsSocial(mode) -- Markt: kein laufendes Spiel
+		hubButton.Button.Visible = mode ~= Modes.Home
 		GameMenu.SetOpen(false)
 		openButton.Button.Visible = inHub
 		GameMenu.UpdatePlay()

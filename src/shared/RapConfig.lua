@@ -14,7 +14,7 @@
 -- Gebunden – ohne RAP-Wert, nicht verkauf- oder tauschbar – sind gewöhnliche Skins, Belohnungen für Level,
 -- Prestige, Rang und Saison sowie die Meisterschafts-Tarnungen. Neuen Skin handelbar machen: Wert hier eintragen.
 -- Spieler-Attribute: Rap (Guthaben), RapValue (Wert aller handelbaren Skins), Reserved (JSON { [Id] = Stück }, die
--- gerade im Markt-Stand oder in einem Tausch liegen). Über dem Kopf (nur Hub und Markt) steht Guthaben + Wert.
+-- gerade im Markt-Stand oder in einem Tausch liegen). Über dem Kopf (nur Markt und Safe Zones) steht Guthaben + Wert.
 
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

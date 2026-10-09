@@ -580,7 +580,7 @@ function Movement.SetFirstPerson(on: boolean)
 	end
 end
 
--- Kamera passend zum Modus setzen (Hub: frei, Kampf: Ego oder Schulter; im Fahrzeug: Verfolgerkamera)
+-- Kamera passend zum Modus setzen (Markt: frei, Kampf: Ego oder Schulter; im Fahrzeug: Verfolgerkamera)
 function Movement.ApplyCamera()
 	if inVehicle then
 		return
@@ -706,7 +706,7 @@ local function cameraEffectsOn(humanoid)
 end
 
 function Movement.Init()
-	-- First Person nur in Kampfmodi, im Hub normale Kamera
+	-- First Person nur in Kampfmodi, im Markt normale Kamera
 	local function updateCamera()
 		Movement.ApplyCamera()
 		local humanoid = getHumanoid()

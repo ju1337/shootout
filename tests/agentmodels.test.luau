@@ -382,7 +382,7 @@ local SpawnUtil = require("SpawnUtil")
 AgentService.Init()
 local alice = SIM.Join("Alice")
 step(1)
-alice:SetAttribute("Mode", "Hub")
+alice:SetAttribute("Mode", "Market")
 alice:SetAttribute("Agent", "Viper")
 local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
@@ -413,7 +413,7 @@ local head, hand = character:FindFirstChild("Head"), character:FindFirstChild("R
 check(head and head.Transparency == 1 and head.CanQuery and near(ground:ToObjectSpace(head.CFrame).Position, SUIT[1][3])
 	and head.Size.X > SUIT[1][2].X, "unsichtbare Kopf-Trefferzone um den Kopf des Modells")
 check(hand and hand.Transparency == 1 and hand:FindFirstChild("RightGripAttachment"), "unsichtbare rechte Hand für die Waffe")
--- Wechsel im Hub auf einen Agenten ohne Modell: neu gespawnt mit dem Standard-Look, an derselben Stelle
+-- Wechsel im Markt auf einen Agenten ohne Modell: neu gespawnt mit dem Standard-Look, an derselben Stelle
 local before = root.Position
 alice:SetAttribute("Agent", "Ghost")
 step(0.5)

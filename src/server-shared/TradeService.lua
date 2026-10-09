@@ -1,6 +1,6 @@
 -- TradeService (ModuleScript, nur Server)
--- Tauschen zwischen zwei Spielern im Hub oder Markt (RapConfig):
---   1. Request: Spieler A fragt B an (beide im Hub bzw. beide im Markt, nah beieinander, keiner tauscht gerade).
+-- Tauschen zwischen zwei Spielern in einer Safe Zone der offenen Welt oder im Markt (RapConfig):
+--   1. Request: Spieler A fragt B an (beide in einer Safe Zone bzw. beide im Markt, nah beieinander, keiner tauscht gerade).
 --      B bekommt die Anfrage (gilt RapConfig.TradeRequestTime Sekunden). Fragen sich beide gegenseitig an,
 --      geht der Tausch sofort auf.
 --   2. Respond: B nimmt an oder lehnt ab.
@@ -48,11 +48,11 @@ local function partnerOf(trade, player)
 	return trade.A == player and trade.B or trade.A
 end
 
--- Beide im selben ruhigen Bereich (Hub/Markt) und nah genug beieinander?
+-- Beide im selben ruhigen Bereich (Safe Zone der offenen Welt bzw. Markt) und nah genug beieinander?
 local function canMeet(a, b)
 	local mode = a:GetAttribute("Mode")
-	if not mode or not Modes.IsSocial(mode) or b:GetAttribute("Mode") ~= mode then
-		return false, "Tauschen geht nur im Hub oder im Markt."
+	if not mode or not Modes.InLounge(a) or not Modes.InLounge(b) or b:GetAttribute("Mode") ~= mode then
+		return false, "Tauschen geht nur in einer Safe Zone oder im Markt."
 	end
 	local ra = a.Character and a.Character:FindFirstChild("HumanoidRootPart")
 	local rb = b.Character and b.Character:FindFirstChild("HumanoidRootPart")
@@ -349,6 +349,17 @@ function TradeService.Init()
 			local trade = trades[player]
 			if trade then
 				close(trade, player.Name .. " ist gegangen – Tausch abgebrochen.")
+			end
+			requests[player] = nil
+		end)
+		-- Offene Welt: wer die Safe Zone verlässt, bricht den Tausch ab
+		player:GetAttributeChangedSignal("InSafeZone"):Connect(function()
+			if Modes.InLounge(player) then
+				return
+			end
+			local trade = trades[player]
+			if trade then
+				close(trade, player.Name .. " hat die Safe Zone verlassen – Tausch abgebrochen.")
 			end
 			requests[player] = nil
 		end)

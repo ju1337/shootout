@@ -1,6 +1,8 @@
 -- HubLineup (ModuleScript, nur Client)
--- Wie in der Rogue-Company-Lobby: Auf der Lineup-Bühne im Hangar steht groß der eigene Agent
--- (mit gewählter Primärwaffe und deren Skin) und dreht sich langsam. Nur lokal sichtbar.
+-- Einsatzzentrale in Camp Phoenix (früher der Hub, Teile in der Gruppe Zentrale der Map Extinction, siehe
+-- Shared/Zentrale): Agent der Woche als goldene Statue, Shop-Vitrine mit Theke, Einsatz-Tafel, Bestenlisten,
+-- Bildtafel. Gibt es einen Part "LineupSpot", steht dort groß der eigene Agent (mit gewählter Primärwaffe und deren
+-- Skin) und dreht sich langsam. Nur lokal sichtbar.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +18,7 @@ local HttpService = game:GetService("HttpService")
 local GunModels = require(Shared.GunModels)
 local GameMenu = require(Shared.GameMenu)
 local UITheme = require(Shared.UITheme)
+local Zentrale = require(Shared.Zentrale)
 
 local player = Players.LocalPlayer
 
@@ -36,14 +39,14 @@ end
 
 local HubLineup = {}
 
--- Bühne mit dem eigenen Agenten: nur wenn die Hub-Map einen Part "LineupSpot" hat (alter Hangar);
--- Position = Füße, LookVector = Blickrichtung der Figur. Der kompakte Hub hat stattdessen den Shop.
+-- Bühne mit dem eigenen Agenten: nur wenn die Zentrale einen Part "LineupSpot" hat;
+-- Position = Füße, LookVector = Blickrichtung der Figur. Die Einsatzzentrale hat stattdessen den Shop.
 local STAGE_POSITION = Vector3.new(0, 1.2, 18)
 local STAGE_FACING = Vector3.new(0, 0, -1)
 local lineupEnabled = false
 local rebuildLineup -- vorab (rebuild steht weiter unten)
 task.spawn(function()
-	local spot = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("LineupSpot", 60)
+	local spot = Zentrale.Part("LineupSpot", 60)
 	if spot then
 		STAGE_POSITION = spot.Position
 		STAGE_FACING = spot.CFrame.LookVector
@@ -63,7 +66,7 @@ local function rebuild()
 		figure:Destroy()
 		figure = nil
 	end
-	if player:GetAttribute("Mode") ~= "Hub" or not lineupEnabled then
+	if player:GetAttribute("Mode") ~= Zentrale.Map or not lineupEnabled then
 		return
 	end
 	local agent = AgentConfig.Get(player:GetAttribute("Agent")) or AgentConfig.Agents[1]
@@ -80,8 +83,7 @@ local function rebuild()
 	end
 	figure.Parent = workspace
 	-- Schild über der Bühne: Name des Agenten in seiner Farbe, darunter Level und wo man ihn wechselt
-	local banner = workspace:FindFirstChild("Maps") and workspace.Maps:FindFirstChild("Hub")
-		and workspace.Maps.Hub:FindFirstChild("Decor") and workspace.Maps.Hub.Decor:FindFirstChild("StageBanner")
+	local banner = Zentrale.Part("StageBanner")
 	local signGui = banner and banner:FindFirstChild("SignGui")
 	if signGui then
 		local title, subtitle = signGui:FindFirstChild("Title"), signGui:FindFirstChild("Subtitle")
@@ -121,7 +123,10 @@ local function eliteColors(agent)
 end
 
 local function buildAgentOfWeek()
-	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local decor = Zentrale.Folder(60)
+	if not decor then
+		return
+	end
 	local spot = decor:WaitForChild("AgentOfWeekSpot", 60)
 	local holoPoint = decor:WaitForChild("AgentOfWeekHolo", 60)
 	if not spot then
@@ -247,7 +252,7 @@ local function buildAgentOfWeek()
 	end)
 end
 
--- Shop-Vitrine im kompakten Hub: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
+-- Shop-Vitrine in der Einsatzzentrale: drei Angebote des Tages (Waffen-Skins) drehen sich in den Vitrinen
 -- ("ShopDisplay1..3"), Schilder davor ("ShopPlaque1..3") mit Name, Seltenheit und Preis.
 -- An der Theke ("ShopCounter") öffnet E den Shop. Angebote wechseln täglich (Serverzeit, für alle gleich).
 local DAY = 24 * 3600
@@ -269,10 +274,13 @@ local function dailyOffers()
 end
 
 local function buildShopVitrine()
-	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local decor = Zentrale.Folder(60)
+	if not decor then
+		return
+	end
 	local counter = decor:WaitForChild("ShopCounter", 60)
 	if not counter then
-		return -- alter Hangar ohne Shop
+		return -- Zentrale ohne Shop
 	end
 	-- E an der Theke öffnet den Shop (Prompt nur lokal)
 	local prompt = Instance.new("ProximityPrompt")
@@ -370,9 +378,9 @@ local function buildShopVitrine()
 	end)
 end
 
--- Einsatz-Tafel im Hangar: live, wie viele Spieler in welchem Modus sind
+-- Einsatz-Tafel in der Einsatzzentrale: live, wie viele Spieler in welchem Modus sind
 local function buildMissionBoard()
-	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("MissionBoard", 60)
+	local board = Zentrale.Part("MissionBoard", 60)
 	if not board then
 		return
 	end
@@ -454,7 +462,7 @@ local function buildMissionBoard()
 	ReplicatedStorage:GetAttributeChangedSignal("ModeCounts"):Connect(update)
 end
 
--- Bestenlisten-Tafeln im Hub (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
+-- Bestenlisten-Tafeln in der Einsatzzentrale (Parts "Leaderboard_<Name>", Daten vom LeaderboardService)
 local BOARD_INFO = {
 	Elo = { Title = "HÖCHSTE ELO", Color = Color3.fromRGB(212, 170, 80) },
 	Kills = { Title = "MEISTE KILLS", Color = Color3.fromRGB(206, 70, 58) },
@@ -476,7 +484,10 @@ local function formatValue(board, value)
 end
 
 local function buildLeaderboards()
-	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local decor = Zentrale.Folder(60)
+	if not decor then
+		return
+	end
 	for board, info in BOARD_INFO do
 		local part = decor:WaitForChild("Leaderboard_" .. board, 60)
 		if part then
@@ -588,7 +599,10 @@ end
 
 -- Leuchtpartikel an den Toren (in Torfarbe) und Funkeln über dem Siegertreppchen
 local function addParticles()
-	local decor = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor")
+	local decor = Zentrale.Folder(60)
+	if not decor then
+		return
+	end
 	task.wait(1)
 	for _, part in decor:GetChildren() do
 		if part:IsA("BasePart") and (part.Name == "GateGlow" or part.Name == "PodiumGlow") then
@@ -611,7 +625,7 @@ local function addParticles()
 	end
 end
 
--- Im Hub und im Markt die Belichtung absenken (Hallen mit vielen Lichtern), in den Modi wieder normal
+-- Im Markt die Belichtung absenken (Hallen mit vielen Lichtern), in den Modi wieder normal
 local HUB_EXPOSURE = 0.1
 local normalExposure = nil
 local function updateExposure()
@@ -625,7 +639,7 @@ end
 local PHOTO_IMAGE = ""
 
 local function buildPhotoBoard()
-	local board = workspace:WaitForChild("Maps"):WaitForChild("Hub"):WaitForChild("Decor"):WaitForChild("PhotoBoard", 60)
+	local board = Zentrale.Part("PhotoBoard", 60)
 	if not board then
 		return
 	end
@@ -658,8 +672,29 @@ local function buildPhotoBoard()
 	end
 end
 
+-- Arcade-Terminal in der Einsatzzentrale: öffnet das Spielmenü (Lobby) wie der LOBBY-Knopf
+local function buildArcadeTerminal()
+	local base = Zentrale.Part("ArcadeTerminalBase", 60)
+	if not base then
+		return
+	end
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = "Lobby öffnen"
+	prompt.ObjectText = "SPIELEN"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = base
+	prompt.Triggered:Connect(function()
+		GameMenu.Open("Play")
+	end)
+end
+
 function HubLineup.Init()
 	updateExposure()
+	task.spawn(buildArcadeTerminal)
 	task.spawn(buildPhotoBoard)
 	player:GetAttributeChangedSignal("Mode"):Connect(updateExposure)
 	task.spawn(buildMissionBoard)

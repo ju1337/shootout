@@ -137,7 +137,7 @@ local function seatState()
 	return true, config ~= nil and config.Kind == "Heli" and model:GetAttribute("Owner") == player.UserId
 end
 
--- Roblox-Standard-Springen-Knopf im Kampf ausblenden (wir haben einen eigenen), im Hub zeigen
+-- Roblox-Standard-Springen-Knopf im Kampf ausblenden (wir haben einen eigenen), im Markt zeigen
 local function setDefaultJump(visible)
 	local touchGui = player.PlayerGui:FindFirstChild("TouchGui")
 	local frame = touchGui and touchGui:FindFirstChild("TouchControlFrame")

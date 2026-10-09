@@ -134,7 +134,7 @@ local function apply(name)
 	end
 end
 
--- Stimmung der Map, auf der man gerade ist (nur in Kampfmodi, nicht im Hub oder Markt)
+-- Stimmung der Map, auf der man gerade ist (nur in Kampfmodi, nicht im Markt)
 local function update()
 	local mode = player:GetAttribute("Mode")
 	local id = player:GetAttribute("MapId")

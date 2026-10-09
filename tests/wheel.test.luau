@@ -1,5 +1,6 @@
--- Glücksrad im Hub: Feld unter dem Zeiger und Zielwinkel (Rad bleibt auf dem ausgelosten Feld stehen), Dreiecke
--- aus zwei Keilen, Aufbau des Rads (Teile, Drehrichtung), Server dreht nur im Hub in der Nähe des Rads
+-- Glücksrad in der Einsatzzentrale: Feld unter dem Zeiger und Zielwinkel (Rad bleibt auf dem ausgelosten Feld stehen), Dreiecke
+-- aus zwei Keilen, Aufbau des Rads (Teile, Drehrichtung), Server dreht nur in der
+-- Einsatzzentrale in der Nähe des Rads
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -111,7 +112,7 @@ check(HubWheel.IndexAt(slice) == count, "dann zeigt der Zeiger aufs letzte Feld"
 local top = wheel.Face * Vector3.new(0, 3.6, 0.36)
 check(near(labels[count].Position, top, 1e-3), "letztes Feld steht jetzt oben")
 
--- Server: nur im Hub und in der Nähe des Rads
+-- Server: nur in der offenen Welt (Einsatzzentrale im Camp) und in der Nähe des Rads
 local Remotes = require("Remotes")
 local ShopService = require("ShopService")
 local ProgressService = require("ProgressService")
@@ -119,10 +120,10 @@ ProgressService.Init()
 ShopService.Init()
 local maps = Instance.new("Folder", workspace)
 maps.Name = "Maps"
-local hub = Instance.new("Model", maps)
-hub.Name = "Hub"
-local decor = Instance.new("Folder", hub)
-decor.Name = "Decor"
+local world = Instance.new("Model", maps)
+world.Name = "Extinction"
+local decor = Instance.new("Model", world)
+decor.Name = "Zentrale"
 local wheelSpot = Instance.new("Part", decor)
 wheelSpot.Name = "WheelSpot"
 wheelSpot.CFrame = spot.CFrame
@@ -146,7 +147,7 @@ end
 spinner:SetAttribute("Mode", "Domination")
 rig:PivotTo(CFrame.new(40, 3, -20))
 check(spinResult() == "ShopStatus", "im Match kein Dreh")
-spinner:SetAttribute("Mode", "Hub")
+spinner:SetAttribute("Mode", "Extinction")
 rig:PivotTo(CFrame.new(0, 3, -31))
 check(spinResult() == "ShopStatus", "am Spawn zu weit weg")
 rig:PivotTo(CFrame.new(40, 3, -20))
