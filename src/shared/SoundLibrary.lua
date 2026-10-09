@@ -121,6 +121,21 @@ SoundLibrary.Sounds = {
 	ChurchBell = { Range = 0, Pitch = 0.9, Clips = { clip(9113804573, 2.19, 0.56, 9.56) } },
 	-- Heulen (Blutmond beginnt)
 	Howl = { Range = 0, Pitch = 0.85, Clips = { clip(9113956516, 6.0, 0.1, 9.69) } },
+	-- ---------- Welt-Ambiente (Ambience, nur Client, 2D-Schleifen mit weichem Überblenden) ----------------------------
+	-- Wind draußen (Tag leise, Nacht etwas lauter)
+	AmbientWindDay = { Range = 0, Pitch = 1, Looped = true, Clips = { clip(9114057128, 1.0) } },
+	-- Vögel am Tag (Schicht über dem Wind)
+	AmbientBirds = { Range = 0, Pitch = 1, Looped = true, Clips = { clip(9112776548, 1.0) } }, -- TODO Julio: Sound-ID prüfen/ersetzen
+	-- Nacht draußen: Grillen und Eule
+	AmbientNight = { Range = 0, Pitch = 1, Looped = true, Clips = { clip(9112773545, 1.0) } }, -- TODO Julio: Sound-ID prüfen/ersetzen
+	-- Camp (Safe Zone): knisterndes Feuer
+	AmbientCamp = { Range = 0, Pitch = 0.95, Looped = true, Clips = { clip(9112906396, 1.0) } },
+	-- rote Zone: tiefes, bedrohliches Dröhnen (Wind ganz tief gestimmt)
+	AmbientRedzone = { Range = 0, Pitch = 0.4, Looped = true, Clips = { clip(9114057128, 1.4) } },
+	-- Blutmond: noch dunkleres Dröhnen
+	AmbientBloodMoon = { Range = 0, Pitch = 0.3, Looped = true, Clips = { clip(9114057128, 1.8) } },
+	-- Blutmond beginnt: dumpfer Schlag (Glocke und Heulen kommen vom BloodMoonService)
+	BloodMoonStinger = { Range = 0, Pitch = 0.7, Clips = { clip(9125404320, 1.6, 0, 2.96) } },
 	-- Sirene (rote Zone zieht weiter)
 	PoliceSiren = { Range = 0, Pitch = 1, Clips = { clip(9117810961, 1.43, 0, 5.0) } },
 	-- Ansage: Warnung

@@ -5,6 +5,7 @@
 --   Sfx.Loop(name, where, opts)    Schleife an einem Teil/Attachment; gibt den Sound zurück (Volume/PlaybackSpeed
 --                                  dürfen geändert werden, Destroy beendet). Mit Range 0 im Bibliothekseintrag 2D.
 --   Sfx.UI(name, opts)             (Client) ohne Raumklang, nur für einen selbst
+--   Sfx.Loop2D(name, opts)         (Client) Schleife ohne Raumklang (Ambiente); gibt den Sound zurück, Destroy beendet
 --   Sfx.ToPlayers(list, name, position, opts)  (Server) nur für diese Spieler (Remote PlaySfx): Ansagen, Kaufen …
 --   Sfx.InitClient()               (Client) Remote PlaySfx annehmen und alle Aufnahmen vorladen
 -- opts = { Volume = Faktor, Pitch = Faktor, Range = Hörweite (Studs) }
@@ -141,6 +142,21 @@ function Sfx.UI(name, opts)
 	sound.Parent = SoundService
 	sound:Play()
 	Debris:AddItem(sound, life)
+	return sound
+end
+
+-- (Client) Schleife ohne Raumklang, für einen selbst (Welt-Ambiente). Volume darf geändert werden, Destroy beendet.
+function Sfx.Loop2D(name, opts)
+	if not RunService:IsClient() then
+		return nil
+	end
+	local sound = build(name, opts, true)
+	if not sound then
+		return nil
+	end
+	sound.RollOffMaxDistance = 10000
+	sound.Parent = SoundService
+	sound:Play()
 	return sound
 end
 
