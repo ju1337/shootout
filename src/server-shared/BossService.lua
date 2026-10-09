@@ -20,6 +20,7 @@ local LootService = require(script.Parent.LootService)
 local ZombieService = require(script.Parent.ZombieService)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
+local DiscordLog = require(script.Parent.DiscordLog)
 
 local BossService = {}
 
@@ -118,6 +119,8 @@ local function onDeath(boss, model)
 		ProgressService.AddStat(killer, "Bosses", 1)
 		ProgressService.QuestEvent(killer, "XBoss", 1)
 	end
+	DiscordLog.Log("Highlight", "Boss besiegt", cfg.Name .. " am " .. cfg.Place,
+		{ { "Spieler", killer and DiscordLog.Who(killer) or "unbekannt" } })
 	for _, player in options.Players() do
 		Remotes.Notify:FireClient(player, "Banner", { Caption = "Boss", Title = cfg.Name .. " IST TOT",
 			Sub = (killer and (killer.Name .. " hat ihn erledigt · ") or "") .. "Beute liegt beim " .. cfg.Place, Style = "Info" })

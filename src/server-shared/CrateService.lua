@@ -13,6 +13,7 @@ local CrateConfig = require(Shared.CrateConfig)
 local RapConfig = require(Shared.RapConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local PolicyGate = require(script.Parent.PolicyGate)
+local DiscordLog = require(script.Parent.DiscordLog)
 
 local CrateService = {}
 
@@ -72,6 +73,9 @@ function CrateService.Open(player, crateId)
 	local reel = {}
 	for index = 1, CrateConfig.ReelLength do
 		reel[index] = index == CrateConfig.WinnerIndex and item.Id or CrateConfig.Roll(crate, random).Id
+	end
+	if item.Rarity == "Legendary" then
+		DiscordLog.Log("Highlight", "Legendärer Skin aus der Kiste", item.Name, { { "Spieler", DiscordLog.Who(player) } })
 	end
 	task.spawn(ProgressService.SaveNow, player)
 	local result = { Ok = true, Crate = crate.Id, Item = item.Id, Reel = reel, Index = CrateConfig.WinnerIndex, Status = status,

@@ -33,6 +33,7 @@ local RapConfig = require(Shared.RapConfig)
 local SessionStore = require(script.Parent.SessionStore)
 
 local Telemetry = require(script.Parent.Telemetry)
+local DiscordLog = require(script.Parent.DiscordLog)
 
 local ProgressService = {}
 
@@ -349,6 +350,9 @@ function ProgressService.SpinWheel(player)
 	local field = LoginConfig.Wheel[index]
 	local lines = giveBundle(player, profile, field, "Glücksrad")
 	Remotes.WheelResult:FireClient(player, index, table.concat(lines, "  ·  "))
+	if index == #LoginConfig.Wheel then -- letztes Feld = JACKPOT
+		DiscordLog.Log("Highlight", "Glücksrad-Jackpot", table.concat(lines, " · "), { { "Spieler", DiscordLog.Who(player) } })
+	end
 	return nil
 end
 

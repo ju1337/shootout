@@ -2,6 +2,9 @@
 -- Wichtige Ereignisse live in einen Discord-Channel (Webhook). Nur der Server sendet – die Webhook-Adresse steht
 -- NICHT im Code, sondern als Roblox-Secret "DiscordLog" (Creator Hub › Experience › Secrets, erlaubte Domain
 -- discord.com bzw. die Domain eines eigenen Proxys). Ohne Secret, in Studio und in Tests wird nichts gesendet.
+-- Getrennte Channels (optional): weitere Secrets mit den Webhooks der Channels, siehe CHANNELS – "DiscordLogMod"
+-- (Moderation, Anti-Cheat), "DiscordLogEconomy" (Wirtschaft, Highlights) und "DiscordLogError" (Fehler). Fehlt eins,
+-- landet der Bereich im Haupt-Channel (Secret "DiscordLog"), Server-Meldungen immer dort.
 --
 --   DiscordLog.Log(kind, title, text, fields)  kind = "Moderation" | "Anticheat" | "Economy" | "Error" | "Server"
 --                                              | "Highlight"; fields = { { Name, Wert }, ... } (optional)
@@ -26,20 +29,36 @@ DiscordLog.SummaryEvery = 30 * 60
 DiscordLog.Sent = {} -- für Tests: zuletzt gebaute Nachrichten (Tabellen wie an Discord)
 
 local KINDS = {
-	Moderation = { Label = "🛡️ Moderation", Color = 0x5865F2 },
-	Anticheat = { Label = "🚨 Anti-Cheat", Color = 0xED4245 },
-	Economy = { Label = "💰 Wirtschaft", Color = 0xF1C40F },
-	Error = { Label = "❌ Fehler", Color = 0xE67E22 },
+	Moderation = { Label = "🛡️ Moderation", Color = 0x5865F2, Channel = "Mod" },
+	Anticheat = { Label = "🚨 Anti-Cheat", Color = 0xED4245, Channel = "Mod" },
+	Economy = { Label = "💰 Wirtschaft", Color = 0xF1C40F, Channel = "Economy" },
+	Error = { Label = "❌ Fehler", Color = 0xE67E22, Channel = "Error" },
 	Server = { Label = "🖥️ Server", Color = 0x95A5A6 },
-	Highlight = { Label = "⭐ Highlight", Color = 0x57F287 },
+	Highlight = { Label = "⭐ Highlight", Color = 0x57F287, Channel = "Economy" },
 }
+-- Channel -> Secret mit seinem Webhook ("Main" = Haupt-Channel, Secret DiscordLog.SecretName)
+local CHANNELS = { Mod = "DiscordLogMod", Economy = "DiscordLogEconomy", Error = "DiscordLogError" }
+DiscordLog.Channels = CHANNELS
 local SELF = "[DiscordLog]" -- eigene Warnungen nicht wieder loggen
 
-local queue = {}
-local repeats = {} -- [Schlüssel] = Eintrag in queue (gleiche Meldungen zählen hoch statt neu)
-local dropped = 0
-local secret = nil
-local pausedUntil = 0
+-- Je Channel eine Warteschlange: { Queue, Repeats ([Schlüssel] = Eintrag, gleiche Meldungen zählen hoch statt neu),
+-- Dropped, Secret, PausedUntil }
+local channels = {}
+local function channel(name)
+	local state = channels[name]
+	if not state then
+		state = { Queue = {}, Repeats = {}, Dropped = 0, Secret = nil, PausedUntil = 0 }
+		channels[name] = state
+	end
+	return state
+end
+channel("Main")
+
+-- Wohin geht ein Bereich? In seinen Channel, wenn dessen Secret da ist, sonst in den Haupt-Channel
+local function route(info)
+	local name = info.Channel
+	return (name and channels[name] and channels[name].Secret) and name or "Main"
+end
 
 local function clip(text, limit)
 	text = tostring(text or "")
@@ -51,12 +70,14 @@ end
 
 function DiscordLog.Log(kind, title, text, fields, key)
 	local info = KINDS[kind] or KINDS.Server
+	local state = channel(route(info))
+	local queue, repeats = state.Queue, state.Repeats
 	if key and repeats[key] then
 		repeats[key].Count += 1
 		return
 	end
 	if #queue >= DiscordLog.MaxPerFlush * 3 then
-		dropped += 1
+		state.Dropped += 1
 		return
 	end
 	local okTime, at = pcall(function()
@@ -83,9 +104,11 @@ local function serverTag()
 	return "Server " .. job .. " · v" .. tostring(game.PlaceVersion) .. " · " .. #Players:GetPlayers() .. " Spieler"
 end
 
--- Nächste Nachricht aus der Warteschlange (nil = nichts zu senden)
-function DiscordLog.Build()
-	if #queue == 0 and dropped == 0 then
+-- Nächste Nachricht aus der Warteschlange eines Channels (Standard "Main"; nil = nichts zu senden)
+function DiscordLog.Build(name)
+	local state = channel(name or "Main")
+	local queue, repeats = state.Queue, state.Repeats
+	if #queue == 0 and state.Dropped == 0 then
 		return nil
 	end
 	local embeds = {}
@@ -104,9 +127,9 @@ function DiscordLog.Build()
 			footer = { text = serverTag() } }
 	end
 	local content = nil
-	if dropped > 0 then
-		content = "… " .. dropped .. " weitere Einträge übersprungen (zu viele auf einmal)"
-		dropped = 0
+	if state.Dropped > 0 then
+		content = "… " .. state.Dropped .. " weitere Einträge übersprungen (zu viele auf einmal)"
+		state.Dropped = 0
 	end
 	local message = { username = "Shootout Logs", content = content, embeds = embeds,
 		allowed_mentions = { parse = {} } } -- niemals @everyone/@here auslösen
@@ -117,23 +140,25 @@ function DiscordLog.Build()
 	return message
 end
 
-local function send(message)
-	if not secret or os.clock() < pausedUntil then
+local function send(state, name, message)
+	if not state.Secret or os.clock() < state.PausedUntil then
 		return
 	end
 	local ok, err = pcall(function()
-		HttpService:PostAsync(secret, HttpService:JSONEncode(message), Enum.HttpContentType.ApplicationJson)
+		HttpService:PostAsync(state.Secret, HttpService:JSONEncode(message), Enum.HttpContentType.ApplicationJson)
 	end)
 	if not ok then
-		pausedUntil = os.clock() + 30 -- z.B. Discord-Ratenlimit (429) oder kein HTTP erlaubt: kurz Pause
-		warn(SELF .. " Senden fehlgeschlagen: " .. tostring(err))
+		state.PausedUntil = os.clock() + 30 -- z.B. Discord-Ratenlimit (429) oder kein HTTP erlaubt: kurz Pause
+		warn(SELF .. " Senden fehlgeschlagen (" .. name .. "): " .. tostring(err))
 	end
 end
 
 function DiscordLog.Flush()
-	local message = DiscordLog.Build()
-	if message and DiscordLog.Enabled then
-		send(message)
+	for name, state in channels do
+		local message = DiscordLog.Build(name)
+		if message and DiscordLog.Enabled then
+			send(state, name, message)
+		end
 	end
 end
 
@@ -175,18 +200,29 @@ local function summary()
 	DiscordLog.Log("Server", "Zusammenfassung", #Players:GetPlayers() .. " Spieler online", fields)
 end
 
+-- Für Tests: so tun, als gäbe es das Secret eines Channels (Route ohne echtes Senden)
+function DiscordLog.SetChannelSecret(name, value)
+	channel(name).Secret = value
+end
+
 local started = false
 function DiscordLog.Init()
 	if started or not RunService:IsServer() then
 		return
 	end
 	started = true
-	local ok, result = pcall(function()
-		return HttpService:GetSecret(DiscordLog.SecretName)
-	end)
-	secret = ok and result or nil
-	if DiscordLog.Enabled and not secret then
-		warn(SELF .. " Secret \"" .. DiscordLog.SecretName .. "\" fehlt – Discord-Logs aus")
+	local function secretOf(name)
+		local ok, result = pcall(function()
+			return HttpService:GetSecret(name)
+		end)
+		return ok and result or nil
+	end
+	channel("Main").Secret = secretOf(DiscordLog.SecretName)
+	for name, secretName in CHANNELS do
+		channel(name).Secret = secretOf(secretName)
+	end
+	if DiscordLog.Enabled and not channel("Main").Secret then
+		warn(SELF .. " Secret \"" .. DiscordLog.SecretName .. "\" fehlt – Discord-Logs nur in eigenen Channels")
 	end
 	LogService.MessageOut:Connect(onMessage)
 	local startedAt = os.clock()

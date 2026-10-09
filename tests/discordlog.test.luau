@@ -42,4 +42,18 @@ DiscordLog.Log("Error", string.rep("T", 400), string.rep("x", 5000))
 m = DiscordLog.Build()
 check(#m.embeds[1].title <= 250 * 3 and #m.embeds[1].description <= 1500 * 3, "Texte nicht gekürzt")
 
+-- getrennte Channels: mit Secret eigener Channel, sonst Haupt-Channel; Server-Meldungen immer im Haupt-Channel
+DiscordLog.SetChannelSecret("Mod", "https://example.invalid/mod")
+DiscordLog.Log("Moderation", "Admin: Kick", "x")
+DiscordLog.Log("Anticheat", "Bewegung zurückgesetzt", "x")
+DiscordLog.Log("Error", "Skriptfehler", "x") -- ohne eigenes Secret
+DiscordLog.Log("Server", "Server gestartet", "x")
+local mod, main = DiscordLog.Build("Mod"), DiscordLog.Build()
+check(mod and #mod.embeds == 2, "Moderation und Anti-Cheat im Mod-Channel")
+check(main and #main.embeds == 2 and string.find(main.embeds[1].title, "Fehler", 1, true) ~= nil
+	and string.find(main.embeds[2].title, "Server", 1, true) ~= nil, "Fehler (ohne Secret) und Server im Haupt-Channel")
+check(DiscordLog.Build("Economy") == nil, "Wirtschaft leer")
+check(DiscordLog.Channels.Mod == "DiscordLogMod" and DiscordLog.Channels.Economy == "DiscordLogEconomy"
+	and DiscordLog.Channels.Error == "DiscordLogError", "Secret-Namen")
+
 if failures == 0 then print("alles ok") end
