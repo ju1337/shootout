@@ -83,6 +83,9 @@ local DUNGEON_FADE = 1.5 -- Sekunden für den Übergang
 local dungeonMix = 0
 local lastCycle = nil
 local STORM_CLOUDS = { Cover = 0.95, Density = 0.9, Color = Color3.fromRGB(58, 62, 70) }
+-- Dunst/Nebel der offenen Welt insgesamt (Tag, Nacht, Blutmond, Sturm, Morgennebel): 0.2 = 80 % weniger als die Presets.
+-- Gilt nicht im Dungeon (DUNGEON wird danach unverändert darübergelegt).
+local OPEN_WORLD_FOG = 0.2
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
 local TWEEN = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
@@ -221,6 +224,10 @@ local function cycle()
 		atmosphere.Density = mix(atmosphere.Density, 0.72, fog)
 		atmosphere.Haze = mix(atmosphere.Haze, 6, fog)
 		atmosphere.Color = atmosphere.Color:Lerp(Color3.fromRGB(176, 178, 172), fog)
+	end
+	if atmosphere then
+		atmosphere.Density *= OPEN_WORLD_FOG
+		atmosphere.Haze *= OPEN_WORLD_FOG
 	end
 	-- Dungeon zuletzt: im Dungeon zählt nur seine Stimmung
 	local now = os.clock()
