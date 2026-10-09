@@ -1,8 +1,8 @@
 -- SideMenu (ModuleScript, nur Client)
--- Menüliste links im Markt: SHOP, LOADOUT, AGENTEN, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, MARKT
+-- Menüliste links im Markt: SHOP, LOADOUT, BATTLE PASS, AUFTRÄGE, TÄGLICH, SQUAD, MARKT
 -- (von dort zurück: ZUM CAMP, in die offene Welt), CLAN, STATISTIK, CODES, OPTIONEN, darüber die Spielerkarte
 -- (Level, Prestige, Rang, Münzen, RAP).
--- SHOP, LOADOUT, AGENTEN und BATTLE PASS öffnen die Lobby (GameMenu) auf der passenden Seite; Aufträge,
+-- SHOP, LOADOUT und BATTLE PASS öffnen die Lobby (GameMenu) auf der passenden Seite; Aufträge,
 -- Täglich, Squad, Statistik, Codes und Optionen sind Fenster in der Mitte – dieselben Fenster öffnet auch die
 -- Lobby (Squad, Auftrag, Knöpfe oben rechts). Design wie die Lobby (UITheme, nüchterner Taktik-Look):
 -- dunkle Flächen mit 1 px Rand, flache Knöpfe, Bernstein für aktiv. Kaufen/Ausrüsten prüft der Server (ShopService).
@@ -1254,7 +1254,6 @@ local function buildColumn()
 	local entries = {
 		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80), "🛒" },
 		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214), "🎒" },
-		{ "AGENTEN", function() openLobby("Agents") end, Color3.fromRGB(150, 120, 210), "🦸" },
 		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80), "🎫" },
 		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },

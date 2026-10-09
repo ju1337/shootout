@@ -1,6 +1,6 @@
 -- GameMenu (ModuleScript, nur Client)
 -- Lobby im nüchternen Taktik-Look (UITheme):
---   oben:   Logo, Reiter SPIELEN · AGENTEN · LOADOUT · SHOP · BATTLE PASS (aktiv: weiß mit Bernstein-Strich),
+--   oben:   Logo, Reiter SPIELEN · LOADOUT · SHOP · BATTLE PASS (aktiv: weiß mit Bernstein-Strich),
 --           rechts Münzen, Level, STATISTIK, CODES, OPTIONEN und Schließen
 --   links:  Spielmodi (aktiver Modus heller mit Bernstein-Balken links) und der Squad (bis 4, Anführer mit
 --           Stern, Level, BEREIT/NICHT BEREIT – den eigenen Status schaltet man per Klick, freie Plätze laden ein)
@@ -14,11 +14,11 @@
 --   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
 --   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
 -- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
--- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: AGENTEN
+-- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: LOADOUT
 -- im Menü der offenen Welt); es öffnet sich NICHT von selbst. Alles liegt auf einer zentrierten Leinwand (UITheme.Canvas)
 -- und skaliert mit.
 -- Solange Arcade aus ist (Modes.ArcadeEnabled, Extinction ist das Hauptspiel), fehlt SPIELEN (Modi, Squad, großer
--- SPIELEN-Knopf, SCHNELLES SPIEL) ganz; LOADOUT (Skins und Aufsätze ausrüsten) bleibt: die Lobby beginnt bei AGENTEN, und der
+-- SPIELEN-Knopf, SCHNELLES SPIEL) ganz; LOADOUT (Skins und Aufsätze ausrüsten) bleibt: die Lobby beginnt bei LOADOUT, und der
 -- SPIELEN-Knopf im Markt führt direkt zurück in die offene Welt (Modes.Home).
 
 local Players = game:GetService("Players")
@@ -64,7 +64,7 @@ local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Arcade-Modus mit 
 -- Navigation: Seite in der Lobby oder Fenster des SideMenu (Arcade = nur solange Modes.ArcadeEnabled an ist)
 local ALL_NAV = {
 	{ Id = "Play", Text = "SPIELEN", Arcade = true },
-	{ Id = "Agents", Text = "AGENTEN" },
+	-- AGENTEN: ausgeblendet (es gibt nur noch einen Agenten, Aussehen über Skins); die Seite selbst bleibt im Code
 	{ Id = "Inventory", Text = "LOADOUT" },
 	{ Id = "Shop", Text = "SHOP" },
 	{ Id = "Pass", Text = "BATTLE PASS" },
@@ -145,9 +145,9 @@ local function updateNav()
 	end
 end
 
--- Gibt es die Seite gerade? (SPIELEN nur, solange Arcade an ist)
+-- Gibt es die Seite gerade? (SPIELEN nur, solange Arcade an ist; AGENTEN gar nicht mehr)
 local function pageOffered(name)
-	if not pages[name] then
+	if not pages[name] or name == "Agents" then
 		return false
 	end
 	for _, entry in ALL_NAV do
@@ -158,9 +158,9 @@ local function pageOffered(name)
 	return true
 end
 
--- Erste Seite der Lobby (SPIELEN bzw. ohne Arcade AGENTEN)
+-- Erste Seite der Lobby (SPIELEN bzw. ohne Arcade LOADOUT)
 local function firstPage()
-	return NAV[1] and NAV[1].Id or "Agents"
+	return NAV[1] and NAV[1].Id or "Inventory"
 end
 
 local function showPage(name)
@@ -1174,7 +1174,7 @@ end
 
 -- tab: Seite der Lobby ("Play"/"Modes", "Agents", "Inventory", "Shop", "Pass") oder ein Fenster des SideMenu
 -- ("Quests", "Daily", "Squad", "Rewards", "Titles"); "Stats", "Codes", "Settings" sind Seiten.
--- Ohne Arcade öffnen nil, "Play" und "Modes" die erste Seite (AGENTEN).
+-- Ohne Arcade öffnen nil, "Play", "Modes" und "Agents" die erste Seite (LOADOUT).
 function GameMenu.Open(tab)
 	GameMenu.SetOpen(true)
 	if tab == nil or tab == "Modes" then
@@ -1454,7 +1454,7 @@ function GameMenu.Init()
 	end)
 
 	-- Moduswechsel: Menü schließen (öffnet sich nicht von selbst), im Markt den SPIELEN-Knopf zeigen (in der offenen Welt
-	-- führt AGENTEN im Menü der offenen Welt in die Lobby)
+	-- gibt es keinen Link mehr in die Lobby)
 	local function onModeChanged()
 		local mode = player:GetAttribute("Mode")
 		if mode == nil then

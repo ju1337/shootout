@@ -1,9 +1,9 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
 -- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE (eigene Seiten) und SHOP · BATTLE PASS ·
--- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben), AGENTEN als Link in
--- die Lobby. Controller: L1/R1 blättert, Auswahl startet im Inhalt.
+-- STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben); kein AGENTEN mehr
+-- (nur ein Agent). Controller: L1/R1 blättert, Auswahl startet im Inhalt.
 -- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (LOADOUT bleibt), AUFTRÄGE ohne Reiter
--- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt AGENTEN.
+-- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt LOADOUT.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
 local function check(cond, msg)
@@ -126,7 +126,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN,AGENTEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -191,28 +191,30 @@ check(lobbyGui ~= nil and lobbyGui:FindFirstChild("SettingsPage", true) ~= nil, 
 check(not lobbyGui.Enabled, "Lobby bleibt in der offenen Welt zu")
 key(Enum.KeyCode.M)
 check(activeTab() == "Settings", "M: wieder OPTIONEN")
--- AGENTEN: Link in die Lobby (Menü zu, Lobby auf der Seite AGENTEN), Lobby wieder zu
-menu():FindFirstChild("Tabs", true).Tab_Agents.Activated:Fire()
+-- Kein AGENTEN mehr (nur ein Agent); Lobby ohne Arcade: kein SPIELEN, ARCADE, SCHNELLES SPIEL; Open("Play"/"Modes"/
+-- "Agents") und Open() zeigen LOADOUT
+check(menu():FindFirstChild("Tab_Agents", true) == nil, "Menü: kein Reiter AGENTEN")
+key(Enum.KeyCode.M)
 step(0.1)
-check(menu() == nil and lobbyGui.Enabled, "AGENTEN: Menü zu, Lobby offen")
-local agentsPage = lobbyGui:FindFirstChild("AgentsPage", true)
-check(agentsPage ~= nil and agentsPage.Visible, "AGENTEN: Seite der Lobby sichtbar")
--- Lobby ohne Arcade: kein SPIELEN, ARCADE, SCHNELLES SPIEL; Open("Play") und Open() zeigen AGENTEN
+GameMenu.Open()
+step(0.1)
+check(menu() == nil and lobbyGui.Enabled, "Lobby offen, Menü zu")
+local inventoryPage = lobbyGui:FindFirstChild("InventoryPage", true)
+check(inventoryPage ~= nil and inventoryPage.Visible, "GameMenu.Open(): LOADOUT")
 local lobbyTexts = shownTexts(lobbyGui)
-check(lobbyTexts.AGENTEN and lobbyTexts.LOADOUT and lobbyTexts.SHOP and lobbyTexts["BATTLE PASS"] and lobbyTexts.STATISTIK,
-	"Lobby: AGENTEN, SHOP, BATTLE PASS, STATISTIK, LOADOUT da")
-for _, text in { "SPIELEN", "ARCADE", "SCHNELLES SPIEL", "SPIELMODUS", "FREE-FOR-ALL", "HERRSCHAFT" } do
-	check(not lobbyTexts[text], "Lobby ohne Arcade: kein " .. text)
+check(lobbyTexts.LOADOUT and lobbyTexts.SHOP and lobbyTexts["BATTLE PASS"] and lobbyTexts.STATISTIK,
+	"Lobby: LOADOUT, SHOP, BATTLE PASS, STATISTIK da")
+for _, text in { "AGENTEN", "SPIELEN", "ARCADE", "SCHNELLES SPIEL", "SPIELMODUS", "FREE-FOR-ALL", "HERRSCHAFT" } do
+	check(not lobbyTexts[text], "Lobby ohne Arcade und Agenten: kein " .. text)
 end
-for _, tab in { "Play", "Modes" } do
+for _, tab in { "Play", "Modes", "Agents" } do
 	GameMenu.Open(tab)
 	step(0.1)
 	local playPage = lobbyGui:FindFirstChild("PlayPage", true)
-	check(agentsPage.Visible and not (playPage and playPage.Visible), "GameMenu.Open(" .. tab .. "): AGENTEN statt SPIELEN")
+	local agentsPage = lobbyGui:FindFirstChild("AgentsPage", true)
+	check(inventoryPage.Visible and not (playPage and playPage.Visible) and not (agentsPage and agentsPage.Visible),
+		"GameMenu.Open(" .. tab .. "): LOADOUT")
 end
-GameMenu.Open()
-step(0.1)
-check(agentsPage.Visible, "GameMenu.Open(): AGENTEN")
 GameMenu.SetOpen(false)
 step(0.1)
 key(Enum.KeyCode.M)

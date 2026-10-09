@@ -8,7 +8,7 @@
 --               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
 --   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · AUFTRÄGE · LOOT ·
 --            GUIDE · SQUAD · ERFOLGE · LOADOUT · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN (die letzten sechs sind
---            Seiten der Lobby, GameMenu.BorrowPage), dazu AGENTEN als Link in die Lobby. SPIELEN · ARCADE gibt es nur,
+--            Seiten der Lobby, GameMenu.BorrowPage). AGENTEN gibt es nicht mehr. SPIELEN · ARCADE gibt es nur,
 --            solange Arcade an ist (Modes.ArcadeEnabled; Extinction ist das Hauptspiel).
 --   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
 --            Tasche am Boden (Inhalt links, eigene Tasche rechts; anklicken = einzeln nehmen. ALLES NEHMEN und F an Taschen,
@@ -1064,7 +1064,6 @@ local MENU_TABS = {
 	{ Id = "Codes", Text = "CODES", Page = true },
 	{ Id = "Settings", Text = "OPTIONEN", Page = true },
 	-- Links in die Lobby (ganze Seiten, passen nicht ins Menü): schließen das Menü und öffnen die Lobby dort
-	{ Id = "Agents", Text = "AGENTEN", Lobby = "Agents" },
 	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play", Arcade = true },
 }
 -- Arcade aus (Modes.ArcadeEnabled): SPIELEN · ARCADE weglassen
