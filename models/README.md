@@ -6,6 +6,7 @@
 | `Attachments/HoloSight.rbxmx` | ReplicatedStorage › Assets › Attachments › HoloSight |
 | `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
 | `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |
+| `Skins/Rifle.rbxmx` | ReplicatedStorage › Assets › Weapons › Rifle › Skins (Drachengold-Texturen + Effekt-Bilder) |
 
 Eingetragen in `default.project.json`. Wer Rojo verbindet (`rojo serve` + Connect; Rojo 7.7.1 empfohlen – ältere Versionen lesen die Dateien auch, übertragen MeshParts aber erst ab 7.6), hat die Modelle
 – niemand muss mehr die GLB-Dateien importieren. Die Meshes und Texturen sind schon bei Roblox hochgeladen, die
@@ -25,3 +26,7 @@ Rechtsklick › Save to File… › als `.rbxm` speichern und umwandeln (Studio 
 alte Sturmgewehr, vorher dort `Assets › Weapons › Rifle` löschen, sonst bleiben alte Teile daneben liegen.
 
 Quellen (GLB) und Skripte: `art/sources/`, `tools/attachments/`.
+
+**Skins:** `Skins/Rifle.rbxmx` wird mit `lune run tools/models/drachengold_skins.luau models/Skins/Rifle.rbxmx` erzeugt
+(Asset-IDs stehen oben im Skript). Braucht Rojo ab 7.5 (Lava-Glühen = neuer Content-Typ), empfohlen 7.7.1.
+Das Studio-Skript `Drachengold_Studio.lua` ist damit nicht mehr nötig.

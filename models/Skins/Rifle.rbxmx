@@ -1,0 +1,67 @@
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">Skins</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">W_Drachengold</string>
+        <BinaryString name="AttributesSerialize">AwAAAAkAAABGWF9GbGFtbWUCDwAAADEzMDI2ODU5MTk2OTU2OAoAAABGWF9HbGl0emVyAg4AAAA5MjQ2MjY5MDQ1NjE1MAcAAABGWF9HbHV0Ag4AAAA5MDMzMzcwOTgxMzQ5MQ==</BinaryString>
+      </Properties>
+      <Item class="SurfaceAppearance" referent="2">
+        <Properties>
+          <string name="Name">Skin_Body</string>
+          <Content name="ColorMap"><url>rbxassetid://88331684470741</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://76587727648510</uri>
+          </Content>
+          <float name="EmissiveStrength">4</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>0.43137255</G>
+            <B>0.09803922</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://76966203756367</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://132303539386958</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://86156491508027</url></Content>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="3">
+        <Properties>
+          <string name="Name">Magazine</string>
+          <Content name="ColorMap"><url>rbxassetid://88331684470741</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://76587727648510</uri>
+          </Content>
+          <float name="EmissiveStrength">4</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>0.43137255</G>
+            <B>0.09803922</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://76966203756367</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://132303539386958</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://86156491508027</url></Content>
+        </Properties>
+      </Item>
+      <Item class="SurfaceAppearance" referent="4">
+        <Properties>
+          <string name="Name">Aufsaetze</string>
+          <Content name="ColorMap"><url>rbxassetid://88331684470741</url></Content>
+          <Content name="EmissiveMaskContent">
+            <uri>rbxassetid://76587727648510</uri>
+          </Content>
+          <float name="EmissiveStrength">4</float>
+          <Color3 name="EmissiveTint">
+            <R>1</R>
+            <G>0.43137255</G>
+            <B>0.09803922</B>
+          </Color3>
+          <Content name="MetalnessMap"><url>rbxassetid://76966203756367</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://132303539386958</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://86156491508027</url></Content>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

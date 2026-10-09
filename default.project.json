@@ -21,7 +21,10 @@
           "$ignoreUnknownInstances": true,
           "Rifle": {
             "$path": "models/Weapons/Rifle.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/Rifle.rbxmx"
+            }
           }
         },
         "Attachments": {
