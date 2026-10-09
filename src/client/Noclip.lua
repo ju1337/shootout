@@ -2,6 +2,8 @@
 -- B (oder der Knopf im Admin-Panel) schaltet um; der Server prüft, ob man Admin ist, und setzt das Attribut "Noclip".
 -- Solange es an ist: frei fliegen durch alles. W/A/S/D in Blickrichtung, Leertaste hoch, Strg/C runter, Shift schneller.
 -- Kein Schaden, der Bewegungs-Check (MovementGuard) setzt einen nicht zurück. Oben in der Mitte steht "NOCLIP".
+-- Ohne Eingabe bleibt man exakt stehen: die Position merkt sich das Skript selbst (held) und setzt sie vor und nach jedem
+-- Physik-Schritt wieder, damit die Schwerkraft zwischen zwei Bildern nichts nach unten zieht.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,6 +22,8 @@ local KEY = Enum.KeyCode.B
 
 local restore = {}      -- [Part] = CanCollide vorher
 local active = false
+local held = nil        -- CFrame, an dem man gerade schwebt (nil = noch nicht gesetzt)
+local TELEPORT = 6      -- weiter weg als das (Studs): von außen versetzt (z.B. Admin HERHOLEN), neue Stelle übernehmen
 local label = nil
 
 local function character()
@@ -41,6 +45,7 @@ local function stop()
 		end
 	end
 	restore = {}
+	held = nil
 	if humanoid then
 		humanoid.PlatformStand = false
 	end
@@ -100,10 +105,27 @@ local function step(dt)
 	-- Position direkt setzen (unabhängig von Schwerkraft und Kollision), Blick in Kamerarichtung
 	local flat = Vector3.new(look.LookVector.X, 0, look.LookVector.Z)
 	local facing = flat.Magnitude > 0.01 and flat.Unit or root.CFrame.LookVector
-	local position = root.Position + velocity * dt
-	root.CFrame = CFrame.lookAt(position, position + facing)
+	if not held or (held.Position - root.Position).Magnitude > TELEPORT then
+		held = root.CFrame
+	end
+	local position = held.Position + velocity * dt
+	held = CFrame.lookAt(position, position + facing)
+	root.CFrame = held
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
+end
+
+-- Vor und nach jedem Physik-Schritt an die gemerkte Stelle setzen (keine Schwerkraft, kein Rutschen)
+local function pin()
+	if not active or not held then
+		return
+	end
+	local _, _, root = character()
+	if root and (held.Position - root.Position).Magnitude <= TELEPORT then
+		root.CFrame = held
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+	end
 end
 
 function Noclip.Init()
@@ -139,8 +161,11 @@ function Noclip.Init()
 	player.CharacterAdded:Connect(function()
 		restore = {}
 		active = false
+		held = nil
 	end)
 	RunService.RenderStepped:Connect(step)
+	RunService.PreSimulation:Connect(pin)
+	RunService.PostSimulation:Connect(pin)
 end
 
 Noclip.Toggle = function()
