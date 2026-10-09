@@ -2618,13 +2618,20 @@ local function openStand(standKey)
 			if entry.Out then
 				table.insert(actions, { Text = "FAHRZEUG ERST EINPACKEN (K)", Run = function() end })
 			else
+				-- Stück aus Kits bringen nichts (KitConfig.SellSplit, Attribut KitCredit)
+				local okCredit, credit = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("KitCredit") or "{}")
+				credit = okCredit and credit or {}
+				local function sellPrice(n)
+					local _, paid = KitConfig.SellSplit(credit, entry.Id, n)
+					return ExtinctionConfig.SellPrice(entry.Id, paid)
+				end
 				table.insert(actions, { Text = (count > 1 and "ALLE VERKAUFEN  ·  " or "VERKAUFEN  ·  ")
-					.. ExtinctionConfig.SellPrice(entry.Id, count), Primary = true, Run = function()
+					.. sellPrice(count), Primary = true, Run = function()
 					selected = nil
 					sendAction("Sell", slot, count)
 				end })
 				if count > 1 then
-					table.insert(actions, { Text = "1 VERKAUFEN  ·  " .. ExtinctionConfig.SellPrice(entry.Id, 1), Run = function()
+					table.insert(actions, { Text = "1 VERKAUFEN  ·  " .. sellPrice(1), Run = function()
 						sendAction("Sell", slot, 1)
 					end })
 				end

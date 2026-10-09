@@ -27,6 +27,7 @@ local Inventory = require(Shared.Inventory)
 local Modes = require(Shared.Modes)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
+local KitConfig = require(ReplicatedStorage:WaitForChild("Shared").KitConfig)
 local WeaponService = require(script.Parent.WeaponService)
 local RedPointsService = require(script.Parent.RedPointsService)
 
@@ -613,7 +614,18 @@ function InventoryService.Sell(player, slot, count)
 	if state.Equipped == item then
 		holster(player, state)
 	end
-	local price = ExtinctionConfig.SellPrice(item.Id, count)
+	-- Stück aus Kits bringen nichts (KitConfig.SellSplit, Guthaben im Profil)
+	local profile = ProgressService.Get(player)
+	local credit = profile and profile.KitCredit
+	local free, paid = KitConfig.SellSplit(credit, item.Id, count)
+	if free > 0 then
+		credit[item.Id] -= free
+		if credit[item.Id] <= 0 then
+			credit[item.Id] = nil
+		end
+		player:SetAttribute("KitCredit", HttpService:JSONEncode(credit))
+	end
+	local price = ExtinctionConfig.SellPrice(item.Id, paid)
 	local name = ExtinctionConfig.Get(item.Id).Name
 	item.Count -= count
 	if item.Count <= 0 then
@@ -624,7 +636,8 @@ function InventoryService.Sell(player, slot, count)
 	end
 	changed(player, state)
 	Sfx.ToPlayers({ player }, "Coins")
-	status(player, "Verkauft: " .. (count > 1 and (count .. "× ") or "") .. name .. " für " .. price .. " Münzen", true)
+	status(player, "Verkauft: " .. (count > 1 and (count .. "× ") or "") .. name .. " für " .. price .. " Münzen"
+		.. (free > 0 and (" (" .. free .. " aus dem Kit bringen nichts)") or ""), true)
 	return true
 end
 

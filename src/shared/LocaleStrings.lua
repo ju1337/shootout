@@ -1784,6 +1784,7 @@ return {
 	["VERKAUFT"] = "SOLD",
 	["Verkauft auf dem Markt: {1} an {2} · +{3} Münzen"] = "Sold on the Market: {1} to {2} · +{3} Coins",
 	["Verkauft: {1} für {2} Münzen"] = "Sold: {1} for {2} Coins",
+	["Verkauft: {1} für {2} Münzen ({3} aus dem Kit bringen nichts)"] = "Sold: {1} for {2} Coins ({3} from the kit are worth nothing)",
 	["VERLASSE ..."] = "LEAVING ...",
 	["VERLASSEN"] = "LEAVE",
 	["VERSORGUNGSABWURF"] = "SUPPLY DROP",

@@ -22,6 +22,7 @@ function KitService.Publish(player)
 	local profile = ProgressService.Get(player)
 	if profile and player.Parent then
 		player:SetAttribute("Kits", HttpService:JSONEncode(type(profile.Kits) == "table" and profile.Kits or {}))
+		player:SetAttribute("KitCredit", HttpService:JSONEncode(type(profile.KitCredit) == "table" and profile.KitCredit or {}))
 	end
 end
 
@@ -53,6 +54,14 @@ function KitService.Claim(player, kitId)
 		return
 	end
 	profile.Kits[kit.Id] = now
+	-- Kit-Items bringen beim Verkaufen keine Münzen (KitConfig.SellSplit)
+	if type(profile.KitCredit) ~= "table" then
+		profile.KitCredit = {}
+	end
+	for _, entry in kit.Items do
+		local id, count = entry[1], entry[2]
+		profile.KitCredit[id] = math.min((tonumber(profile.KitCredit[id]) or 0) + count, count * KitConfig.CreditCap)
+	end
 	KitService.Publish(player)
 	local stashed = false
 	for _, entry in kit.Items do

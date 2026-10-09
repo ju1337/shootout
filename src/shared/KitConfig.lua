@@ -20,6 +20,18 @@ KitConfig.List = {
 		Cooldown = 24 * 3600, Color = Color3.fromRGB(230, 186, 70), Items = {} },
 }
 
+-- Kit-Items bringen beim Verkaufen am Stand keine Münzen (sonst Münzen-Farm: Kit abholen, verkaufen, warten).
+-- Dafür merkt sich das Profil je Item, wie viele Stück aus Kits stammen (KitCredit, Attribut "KitCredit"); verkaufte
+-- Stück zählen zuerst gegen dieses Guthaben und bringen 0. Gedeckelt auf CreditCap Kits, damit später gefundene Items
+-- nicht ewig wertlos sind.
+KitConfig.CreditCap = 2
+
+-- Wie viele von count Stück sind kostenlos (aus Kits), wie viele werden bezahlt? credit = KitCredit-Tabelle
+function KitConfig.SellSplit(credit, id, count)
+	local free = math.min(count, math.max(0, type(credit) == "table" and tonumber(credit[id]) or 0))
+	return free, count - free
+end
+
 function KitConfig.Get(id)
 	for _, kit in KitConfig.List do
 		if kit.Id == id then
