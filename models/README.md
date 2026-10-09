@@ -1,4 +1,8 @@
-# Fertige Modelle, die Rojo automatisch in Studio legt
+# Fertige Modelle (Sicherung, wird NICHT von Rojo synchronisiert)
+
+Rojo kann MeshParts erst ab 7.6 (Plugin und `rojo serve`) richtig einfügen, mit älteren Versionen werden daraus
+Kästen ohne Form. Deshalb sind die Modelle nicht mehr in `default.project.json` eingetragen – in Studio wie bisher
+per Import 3D (art/sources/*.glb) oder per Rechtsklick › Insert from File… mit diesen Dateien einfügen.
 
 | Datei | landet in Studio unter |
 |---|---|
