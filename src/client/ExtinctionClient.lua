@@ -1196,7 +1196,7 @@ local function newMenu(kind, title, subtitle)
 			LayoutOrder = #MENU_TABS + 1, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
 	label({ Name = "CloseHint", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -20), Size = UDim2.new(1, -48, 0, 14),
-		Text = pad and "○  SCHLIESSEN" or "TAB / M  SCHLIESSEN", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
+		Text = pad and "○  SCHLIESSEN" or (InputActions.IsTouch() and "✕ OBEN RECHTS  SCHLIESSEN" or "TAB / M  SCHLIESSEN"), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
 
 	-- Fläche rechts: Kopfzeile und Inhalt
 	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(sideW, 0), Size = UDim2.new(1, -sideW, 1, 0),

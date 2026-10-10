@@ -290,7 +290,9 @@ local function finishUse(player, state, item, config, character, humanoid)
 	if not slot or player.Character ~= character or humanoid.Health <= 0 then
 		return
 	end
-	if config.Kind == "Repel" then
+	if config.Kind == "Repel" and player:GetAttribute("Dungeon") then
+		return -- während der Anwendung in den Dungeon gegangen: wirkt dort nicht (Item bleibt)
+	elseif config.Kind == "Repel" then
 		-- Anti-Zombie-Spritze: einzige Wirkung – eine Weile spawnen bei dir keine Zombies
 		character:SetAttribute("ZombieShieldUntil", workspace:GetServerTimeNow() + config.Duration)
 		status(player, "Anti-Zombie-Spritze: " .. math.floor(config.Duration / 60) .. " Min spawnen bei dir keine Zombies", true)
@@ -859,8 +861,14 @@ function InventoryService.LoadoutApply(player, index)
 	local function place(slot, item)
 		if not bag.Slots[slot] then
 			bag.Slots[slot] = item
-		elseif Inventory.Add(bag, item.Id, item.Count, item) < item.Count then
-			table.insert(pool, item) -- Platz belegt (Fahrzeug draußen) und kein anderer frei: wie alles Übrige
+		else
+			-- Platz belegt (Fahrzeug draußen): auf Stapel verteilen; was nicht passt, wie alles Übrige (nur der Rest,
+			-- sonst gäbe es die schon gestapelten Stück doppelt)
+			local added = Inventory.Add(bag, item.Id, item.Count, item)
+			if added < item.Count then
+				item.Count -= added
+				table.insert(pool, item)
+			end
 		end
 	end
 	-- 2. Vorlage füllen
@@ -1004,10 +1012,20 @@ function InventoryService.TakeSlot(player, slot, count)
 	return taken
 end
 
--- Stückzahl eines Items in Tasche, Container und Lager zusammen (Versteck: Baukosten)
+-- Stückzahl eines Items in Tasche, Container und Lager zusammen (Versteck: Baukosten). Zählt wie TakeEverywhere nimmt:
+-- Waffe in der Hand und ausgeparktes Fahrzeug nicht (sonst baut man aus und behält das Fahrzeug).
 function InventoryService.CountEverywhere(player, id)
 	local state = stateOf(player)
-	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Safe, id) + Inventory.Count(state.Stash, id)) or 0
+	if not state then
+		return 0
+	end
+	local count = Inventory.Count(state.Safe, id) + Inventory.Count(state.Stash, id)
+	for _, item in state.Bag.Slots do
+		if item.Id == id and item ~= state.Equipped and not isOut(item) then
+			count += item.Count
+		end
+	end
+	return count
 end
 
 -- count Stück eines Items nehmen, erst aus dem Lager, dann aus dem Container, dann aus der Tasche (Waffe/Fahrzeug in

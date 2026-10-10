@@ -218,8 +218,24 @@ stored.GenAt -= 24 * 3600
 HideoutService.Publish(alice)
 check(HideoutConfig.Pending(data(), os.time()) == 8 * 120, "höchstens 8 Stunden")
 
+-- Generator Stufe 2 braucht ein Quad: ein ausgeparktes zählt nicht (sonst Ausbau und Fahrzeug behalten)
+InventoryService.Give(alice, "V_Quad", 1)
+local quad = nil
+for _, item in InventoryService.GetBag(alice).Slots do
+	if item.Id == "V_Quad" then
+		quad = item
+	end
+end
+quad.Out = true
+before = coins()
+check(HideoutService.Upgrade(alice, "Generator") == false and coins() == before and HideoutConfig.Level(data(), "Generator") == 1,
+	"ausgeparktes Quad zählt nicht für den Ausbau")
+quad.Out = nil
+check(HideoutService.Upgrade(alice, "Generator") == true and HideoutConfig.Level(data(), "Generator") == 2, "eingepacktes Quad: Stufe 2")
+check(InventoryService.CountEverywhere(alice, "V_Quad") == 0, "Quad verbraucht")
+
 -- im Profil gespeichert
-check(stored.Bed == 3 and stored.Workbench == 1 and stored.Medical == 1 and stored.Generator == 1, "Stufen im Profil")
+check(stored.Bed == 3 and stored.Workbench == 1 and stored.Medical == 1 and stored.Generator == 2, "Stufen im Profil")
 
 if failures == 0 then
 	print("Versteck in Ordnung")

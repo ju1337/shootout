@@ -812,8 +812,10 @@ end
 
 -- kindName: "Walker" (Standard), "Runner" oder "Brute". force = true: auch über der Obergrenze (Nester, Lager-Alarm), aber
 -- höchstens ForceExtra darüber. Nie nah an einem Spieler mit Anti-Zombie-Spritze (dann nil). armored: siehe rollArmored.
+-- force = true: etwas über die Obergrenze hinaus (Events); force = "Dungeon": ohne Obergrenze und Spritze (die Halle
+-- hat ihre eigene Grenze, sonst friert eine Welle ein, wenn draußen viel los ist)
 function ZombieService.Spawn(position, kindName, force, armored)
-	if count >= maxTotal() + (force and Z.ForceExtra or 0) or nearShield(position) then
+	if force ~= "Dungeon" and (count >= maxTotal() + (force and Z.ForceExtra or 0) or nearShield(position)) then
 		return nil
 	end
 	local stats = ZombieService.Kind(kindName)

@@ -14,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
+local InputActions = require(Shared.InputActions)
 local AgentConfig = require(Shared.AgentConfig)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 
@@ -119,8 +120,8 @@ local function show(outside)
 	shown = true
 	if outside then
 		bagTitle.Text = "DEINE TASCHE LIEGT AN DER TODESSTELLE"
-		bagText.Text = "Noch " .. math.floor(ExtinctionConfig.BagLifetime / 60) .. " Minuten · auf Minimap und Karte (N) markiert"
-			.. " · jeder kann sie plündern"
+		bagText.Text = "Noch " .. math.floor(ExtinctionConfig.BagLifetime / 60) .. " Minuten · auf Minimap und Karte"
+			.. (InputActions.IsTouch() and "" or " (N)") .. " markiert · jeder kann sie plündern"
 		bagTitle.TextColor3 = C.Primary
 	else
 		bagTitle.Text = "NICHTS VERLOREN"

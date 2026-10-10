@@ -12,7 +12,6 @@
 -- { T = Titel, S = "Start"/"Wave"/"Break", W = Welle, L = Zombies übrig, E = Serverzeit bis Start/Ende der Pause,
 -- C = Münzen, I = Items, K = geschaffte Wellen }) solange man drin ist (DungeonClient).
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
@@ -319,18 +318,27 @@ local function leaveRun(run, player, reason)
 		if member.Coins > 0 then
 			ProgressService.AddCoins(player, member.Coins, "Dungeon")
 		end
-		local stashed = 0
+		local stashed, rest = 0, {}
 		for _, item in member.Items do
 			local put = InventoryService.Give(player, item.Id, item.Count)
 			if put < item.Count then
-				stashed += InventoryService.GiveStash(player, item.Id, item.Count - put)
+				local stored = InventoryService.GiveStash(player, item.Id, item.Count - put)
+				stashed += stored
+				if put + stored < item.Count then
+					table.insert(rest, { Id = item.Id, Count = item.Count - put - stored })
+				end
 			end
+		end
+		-- Tasche und Lager voll: der Rest liegt als Beutel am Ausgang statt zu verschwinden
+		if #rest > 0 then
+			require(script.Parent.LootService).Create(run.Entrance.Exit.Position, rest, "Death", "DUNGEON-BEUTE · " .. player.Name,
+				{ Meta = { Owner = player.UserId } })
 		end
 		if member.Cleared > 0 then
 			ExtLevelService.Add(player, D.XPPerWave * member.Cleared, "Dungeon")
 		end
 		banner(player, "DUNGEON GESCHAFFT", string.format("%d Wellen · %d Münzen · %d Items", member.Cleared, member.Coins,
-			member.ItemCount) .. (stashed > 0 and " · Rest im Lager" or ""), "Good")
+			member.ItemCount) .. (#rest > 0 and " · Rest liegt am Ausgang" or (stashed > 0 and " · Rest im Lager" or "")), "Good")
 	elseif reason == "Dead" and player.Parent then
 		status(player, "Im Dungeon gestorben: die Dungeon-Beute ist verloren.")
 	end
@@ -375,7 +383,7 @@ local function spawnOne(run, kind)
 	local grate = run.Hall.Grates[random:NextInteger(1, #run.Hall.Grates)]
 	local position = grate + Vector3.new(random:NextNumber(-2, 2), 0, random:NextNumber(-2, 2))
 	local armored = kind ~= "Boss" and random:NextNumber() < run.WaveInfo.Armored or false
-	local model = ZombieService.Spawn(position, kind, true, armored)
+	local model = ZombieService.Spawn(position, kind, "Dungeon", armored)
 	if not model then
 		return false -- Obergrenze des Servers erreicht: gleich noch einmal
 	end
@@ -645,7 +653,8 @@ function DungeonService.Init(opts)
 			end
 		end
 	end)
-	Players.PlayerRemoving:Connect(DungeonService.OnLeave)
+	-- Verlassen des Spiels: über Extinction.RemovePlayer (erst Taschen-Strafe, dann OnLeave), nicht über ein eigenes
+	-- PlayerRemoving – sonst ist der Lauf je nach Reihenfolge schon weg und die Tasche läge in der Halle
 end
 
 return DungeonService
