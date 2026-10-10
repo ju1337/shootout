@@ -2757,4 +2757,11 @@ return {
 	["SITZE"] = "SEATS",
 	["PASST AUF"] = "FITS",
 	["Item in Tasche oder Container anklicken  ·  du bekommst {1} % vom Kaufpreis"] = "Click an item in your bag or container  ·  you get {1}% of the price",
+	["TAG"] = "DAY",
+	["NACHT"] = "NIGHT",
+	["MEHR ZOMBIES"] = "MORE ZOMBIES",
+	["KEIN PVP  ·  PANZER {1}/{2}"] = "NO PVP  ·  ARMORED {1}/{2}",
+	["BOSSE  ·  BESSERE BEUTE"] = "BOSSES  ·  BETTER LOOT",
+	["WECHSEL IN {1}"] = "MOVES IN {1}",
+	["DU BIST DRIN"] = "YOU'RE INSIDE",
 }

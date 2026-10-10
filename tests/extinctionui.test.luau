@@ -187,7 +187,14 @@ for _, child in missionPanel:GetChildren() do
 	end
 end
 check(missionRows == 3, "drei Auftragszeilen (" .. missionRows .. ")")
-check(find(hud, "Clock") ~= nil and string.find(find(hud, "Clock").Text, "TAG", 1, true) ~= nil, "Uhrzeit oben rechts (Tag)")
+check(find(hud, "Clock") ~= nil and string.find(find(hud, "Clock").Text, "^%d+:%d%d$") ~= nil
+	and find(hud, "Phase").Text == "TAG", "Uhrzeit oben rechts (Tag)")
+-- Block rechts oben: Uhr-Panel links neben KARTE/SQUAD, oben bündig, ohne Überlappung
+local clockPanel, mapKey, squadKey = find(hud, "ClockPanel"), find(hud, "MapButton"), find(hud, "SquadButton")
+check(clockPanel.Position.Y.Offset == mapKey.Position.Y.Offset
+	and clockPanel.Position.X.Offset <= mapKey.Position.X.Offset - mapKey.Size.X.Offset
+	and squadKey.Position.Y.Offset >= mapKey.Position.Y.Offset + mapKey.Size.Y.Offset, "Uhr, KARTE und SQUAD bündig nebeneinander")
+check(string.find(texts(mapKey), "KARTE", 1, true) ~= nil and string.find(texts(mapKey), "N", 1, true) ~= nil, "KARTE mit Taste N")
 
 -- Eine Tastenzeile unter der Hotbar (die allgemeine des HUD ist in der offenen Welt aus)
 local hintText = find(hud, "Hints") and find(hud, "Hints").Text or ""
@@ -324,9 +331,12 @@ map:SetAttribute("Airdrops", '[{"Id":1,"X":100,"Y":0,"Z":-5900,"State":"Warning"
 step(0.3)
 local markers = find(hud, "Markers")
 check(markers ~= nil and not markers.Visible, "keine Richtungsanzeiger mit Entfernung (Lootdrop, rote Zone)")
-check(not zoneLine0 and zoneLine.Visible and string.find(zoneLine.Text, "ROTE ZONE  NORDHEIM  ·  WECHSEL IN 2:0", 1, true) ~= nil
-	and string.find(zoneLine.Text, " M", 1, true) ~= nil, "rote Zone unter der Uhr: " .. zoneLine.Text)
-check(zoneLine.TextColor3 == Color3.fromRGB(226, 56, 48), "Zeile in Rot")
+check(not zoneLine0 and zoneLine.Visible and find(zoneLine, "Name").Text == "NORDHEIM"
+	and string.find(find(zoneLine, "Timer").Text, "WECHSEL IN 2:0", 1, true) ~= nil
+	and string.find(find(zoneLine, "Distance").Text, "%d M$") ~= nil, "rote Zone unter der Uhr: " .. texts(zoneLine))
+check(find(zoneLine, "Caption").TextColor3 == Color3.fromRGB(226, 56, 48), "ROTE ZONE in Rot")
+check(find(hud, "ClockPanel").Size.Y.Offset == find(hud, "SquadButton").Position.Y.Offset + find(hud, "SquadButton").Size.Y.Offset
+	- find(hud, "MapButton").Position.Y.Offset, "Panel mit roter Zone so hoch wie KARTE und SQUAD")
 -- Weltkarte (N): rote Zone als Kreis, Lootdrop als Raute, eigener Pfeil; nochmal N schließt.
 -- Tankstellen und Seen ohne Namen (zu unübersichtlich), die Seen bleiben als Fläche
 for key, title in { Tank0 = "Tankstelle", Teich = "Mühlteich" } do

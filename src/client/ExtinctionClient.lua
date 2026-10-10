@@ -3785,12 +3785,35 @@ function ExtinctionClient.Init()
 			ExtinctionMap.Toggle()
 		end
 	end)
-	local mapButton = make("TextButton", { Name = "MapButton", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 30),
-		Size = UDim2.fromOffset(110, 30), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0,
-		Text = "", AutoButtonColor = true }, root)
-	UITheme.Corner(mapButton, UITheme.Radius.Small)
-	label({ Size = UDim2.fromScale(1, 1), Text = "KARTE  ·  N", TextSize = 14, Font = F.Bold, TextColor3 = C.Text,
-		TextXAlignment = Enum.TextXAlignment.Center }, mapButton)
+	-- Block rechts oben (über der Rangliste): Uhr-Panel und daneben die Knöpfe KARTE und SQUAD; das Panel mit roter Zone
+	-- ist genau so hoch wie beide Knöpfe zusammen, ohne rote Zone so hoch wie KARTE
+	local TOP_RIGHT = { Top = 20, KeyW = 100, KeyH = 29, Gap = 4, ClockW = 276 }
+	-- Knöpfe KARTE und SQUAD rechts oben als Spalte neben dem Uhr-Panel (zusammen genau so hoch wie das Panel mit
+	-- roter Zone): links der Name, rechts die Taste als kleine Kappe (auf Touch ohne Kappe)
+	local function hudKeyButton(name, y, text, action)
+		local button = make("TextButton", { Name = name, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, y),
+			Size = UDim2.fromOffset(TOP_RIGHT.KeyW, TOP_RIGHT.KeyH), BackgroundColor3 = C.Background, BackgroundTransparency = 0.3,
+			BorderSizePixel = 0, Text = "", AutoButtonColor = true }, root)
+		UITheme.Corner(button, UITheme.Radius.Small)
+		local caption = label({ Name = "Label", Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -40, 1, 0), Text = text,
+			TextSize = 13, Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, button)
+		local cap = make("Frame", { Name = "Key", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0),
+			Size = UDim2.fromOffset(20, 18), BackgroundColor3 = C.Card, BorderSizePixel = 0 }, button)
+		UITheme.Corner(cap, 3)
+		UITheme.Stroke(cap, C.Border, 1)
+		local key = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 11, Font = F.Display, TextColor3 = C.Text,
+			TextXAlignment = Enum.TextXAlignment.Center }, cap)
+		local function refreshKey()
+			local hint = InputActions.Hint(action)
+			key.Text = hint
+			cap.Visible = hint ~= ""
+			cap.Size = UDim2.fromOffset(math.max(20, 7 * #hint + 8), 18)
+		end
+		refreshKey()
+		InputActions.DeviceChanged:Connect(refreshKey)
+		return button, caption
+	end
+	local mapButton = hudKeyButton("MapButton", TOP_RIGHT.Top, "KARTE", "WorldMap")
 	mapButton.Activated:Connect(function()
 		ExtinctionMap.Toggle()
 	end)
@@ -3809,12 +3832,7 @@ function ExtinctionClient.Init()
 			toggleSquad()
 		end
 	end)
-	local squadButton = make("TextButton", { Name = "SquadButton", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 62),
-		Size = UDim2.fromOffset(110, 22), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.25, BorderSizePixel = 0,
-		Text = "", AutoButtonColor = true }, root)
-	UITheme.Corner(squadButton, UITheme.Radius.Small)
-	local squadButtonText = label({ Size = UDim2.fromScale(1, 1), Text = "SQUAD  ·  J", TextSize = 12, Font = F.Bold, TextColor3 = C.Text,
-		TextXAlignment = Enum.TextXAlignment.Center }, squadButton)
+	local squadButton, squadButtonText = hudKeyButton("SquadButton", TOP_RIGHT.Top + TOP_RIGHT.KeyH + TOP_RIGHT.Gap, "SQUAD", "Squad")
 	squadButton.Activated:Connect(toggleSquad)
 	-- Einladung: Hinweis (die Maus ist im Spiel gefangen, darum annehmen im Squad-Fenster)
 	Remotes.PartyInvite.OnClientEvent:Connect(function(name, userId)
@@ -3890,7 +3908,7 @@ function ExtinctionClient.Init()
 			end
 		end
 		squadPanel.Visible = order > 0
-		squadButtonText.Text = order > 0 and ("SQUAD " .. (order + 1) .. "/4  ·  J") or "SQUAD  ·  J"
+		squadButtonText.Text = order > 0 and ("SQUAD  " .. (order + 1) .. "/4") or "SQUAD"
 	end
 	local function tickSquadPanel()
 		for _, entry in squadRows do
@@ -3962,21 +3980,36 @@ function ExtinctionClient.Init()
 		return bottom and bottom + MISSION_GAP or nil
 	end
 
-	-- Uhrzeit (Tag und Nacht, DayCycle) und Rote Zone in einem Panel links neben dem Kartenknopf (nach links verlaufend,
-	-- weil die Texte verschieden lang sind); ohne rote Zone nur die Uhrzeit-Zeile
-	local CLOCK_PANEL_H, CLOCK_PANEL_H_ZONE = 34, 58
-	local clockPanel = UITheme.HudPanel({ Name = "ClockPanel", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -140, 0, 24),
-		Size = UDim2.fromOffset(440, CLOCK_PANEL_H) }, root, "Left")
-	local clockText = label({ Name = "Clock", Position = UDim2.fromOffset(0, 6), Size = UDim2.new(1, -12, 0, 22), Text = "",
-		TextSize = 17, Font = F.Bold, TextColor3 = C.Text, TextXAlignment = Enum.TextXAlignment.Right }, clockPanel)
-	UITheme.Outline(clockText)
-	-- Rote Zone (zieht alle 20 Minuten weiter): Ort, Zeit bis zum Wechsel und Entfernung als Zeile unter der Uhr (kein
-	-- Richtungspfeil), davor eine rote Raute; bei mehreren Zonen die nächste
-	local redzoneText = label({ Name = "RedzoneInfo", Position = UDim2.fromOffset(0, 32), Size = UDim2.new(1, -12, 0, 20), Text = "",
-		TextSize = 15, Font = F.Bold, TextColor3 = RED, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, clockPanel)
-	UITheme.Outline(redzoneText)
-	local redzoneDiamond = make("Frame", { Name = "RedzoneDiamond", AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(9, 9),
-		Rotation = 45, BackgroundColor3 = RED, BorderSizePixel = 0, Visible = false }, clockPanel)
+	-- Uhrzeit (Tag und Nacht, DayCycle) und rote Zone in einem Panel links neben KARTE/SQUAD. Oben die Uhr groß, daneben
+	-- die Tageszeit und rechts ein Hinweis (Nacht: mehr Zombies, Sturm: Panzer-Kills); darunter, durch eine Linie
+	-- getrennt, die nächste rote Zone als eigene Zeile: Raute, Name, rechts Entfernung und Zeit bis zum Wechsel.
+	-- Feste Spalten statt einer langen Textzeile, damit nichts überlappt (auch nicht nach der Übersetzung)
+	local CLOCK_PANEL_H, CLOCK_PANEL_H_ZONE = TOP_RIGHT.KeyH, TOP_RIGHT.KeyH * 2 + TOP_RIGHT.Gap
+	local clockPanel = UITheme.HudPanel({ Name = "ClockPanel", AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -20 - TOP_RIGHT.KeyW - 6, 0, TOP_RIGHT.Top), Size = UDim2.fromOffset(TOP_RIGHT.ClockW, CLOCK_PANEL_H) }, root)
+	local clockText = label({ Name = "Clock", Position = UDim2.fromOffset(12, 0), Size = UDim2.fromOffset(60, TOP_RIGHT.KeyH), Text = "",
+		TextSize = 19, Font = F.Display, TextColor3 = C.Text }, clockPanel)
+	local phaseText = label({ Name = "Phase", Position = UDim2.fromOffset(76, 0), Size = UDim2.fromOffset(80, TOP_RIGHT.KeyH), Text = "",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, clockPanel)
+	local phaseInfo = label({ Name = "PhaseInfo", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 0),
+		Size = UDim2.new(1, -170, 0, TOP_RIGHT.KeyH), Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+		TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd }, clockPanel)
+	-- Rote Zone (zieht alle 20 Minuten weiter), bei mehreren Zonen die nächste
+	local redzoneRow = make("Frame", { Name = "RedzoneInfo", Position = UDim2.fromOffset(0, TOP_RIGHT.KeyH),
+		Size = UDim2.new(1, 0, 0, CLOCK_PANEL_H_ZONE - TOP_RIGHT.KeyH), BackgroundTransparency = 1, Visible = false }, clockPanel)
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -20, 0, 1), BackgroundColor3 = C.Border,
+		BackgroundTransparency = 0.3, BorderSizePixel = 0 }, redzoneRow)
+	UITheme.Diamond(redzoneRow, 8, UDim2.fromOffset(18, 17), RED).Name = "RedzoneDiamond"
+	label({ Name = "Caption", Position = UDim2.fromOffset(30, 4), Size = UDim2.new(1, -150, 0, 12),
+		Text = "ROTE ZONE", TextSize = 10, Font = F.Bold, TextColor3 = RED }, redzoneRow)
+	local redzoneName = label({ Name = "Name", Position = UDim2.fromOffset(30, 15), Size = UDim2.new(1, -150, 0, 16), Text = "",
+		TextSize = 14, Font = F.Bold, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd }, redzoneRow)
+	local redzoneDistance = label({ Name = "Distance", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 3),
+		Size = UDim2.fromOffset(112, 15), Text = "", TextSize = 14, Font = F.Display, TextColor3 = C.Text,
+		TextXAlignment = Enum.TextXAlignment.Right }, redzoneRow)
+	local redzoneTimer = label({ Name = "Timer", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 18),
+		Size = UDim2.fromOffset(112, 12), Text = "", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted,
+		TextXAlignment = Enum.TextXAlignment.Right }, redzoneRow)
 
 	-- Rangliste (Karten-Attribut RedzoneBoard vom Server, siehe RedzoneBoard): nur in der roten Zone, die Top 3 der
 	-- Spieler-Kills dieser Runde (jeder Wechsel des Ortes beginnt eine neue); der eigene Platz darunter, wenn man Kills
@@ -4068,19 +4101,30 @@ function ExtinctionClient.Init()
 			local left = math.floor(DayCycle.StormLeft(serverTime))
 			local kills = ReplicatedStorage:GetAttribute("StormKills") or 0
 			local goal = ReplicatedStorage:GetAttribute("StormGoal") or 0
-			clockText.Text = string.format("STORM NIGHT  %d:%02d  ·  NO PVP  ·  ARMORED %d/%d%s", left // 60, left % 60, kills, goal,
-				kills >= goal and goal > 0 and "  ✓" or "")
-			clockText.TextColor3 = kills >= goal and goal > 0 and Color3.fromRGB(120, 220, 140) or Color3.fromRGB(150, 180, 255)
+			local done = kills >= goal and goal > 0
+			clockText.Text = string.format("%d:%02d", left // 60, left % 60)
+			phaseText.Text = "STURMNACHT"
+			phaseInfo.Text = string.format("KEIN PVP  ·  PANZER %d/%d", kills, goal)
+			phaseText.TextColor3 = Color3.fromRGB(150, 180, 255)
+			phaseInfo.TextColor3 = done and Color3.fromRGB(120, 220, 140) or C.Muted
 		elseif DayCycle.IsBloodMoon(serverTime) then
 			local left = math.floor(DayCycle.BloodMoonLeft(serverTime))
-			clockText.Text = string.format("BLUTMOND  %d:%02d  ·  BOSSE · BESSERE BEUTE", left // 60, left % 60)
-			clockText.TextColor3 = Color3.fromRGB(255, 70, 60)
+			clockText.Text = string.format("%d:%02d", left // 60, left % 60)
+			phaseText.Text = "BLUTMOND"
+			phaseInfo.Text = "BOSSE  ·  BESSERE BEUTE"
+			phaseText.TextColor3 = Color3.fromRGB(255, 70, 60)
+			phaseInfo.TextColor3 = C.Muted
 		elseif DayCycle.IsNight(clock) then
-			clockText.Text = "NACHT  " .. DayCycle.Label(clock) .. "  ·  MEHR ZOMBIES"
-			clockText.TextColor3 = Color3.fromRGB(150, 170, 255)
+			clockText.Text = DayCycle.Label(clock)
+			phaseText.Text = "NACHT"
+			phaseInfo.Text = "MEHR ZOMBIES"
+			phaseText.TextColor3 = Color3.fromRGB(150, 170, 255)
+			phaseInfo.TextColor3 = C.Muted
 		else
-			clockText.Text = "TAG  " .. DayCycle.Label(clock)
-			clockText.TextColor3 = C.Text
+			clockText.Text = DayCycle.Label(clock)
+			phaseText.Text = "TAG"
+			phaseInfo.Text = ""
+			phaseText.TextColor3 = C.Muted
 		end
 		local maps = workspace:FindFirstChild("Maps")
 		local map = maps and maps:FindFirstChild("Extinction")
@@ -4106,20 +4150,14 @@ function ExtinctionClient.Init()
 		end
 		if nearest then
 			local left = math.max(0, math.floor((tonumber(nearest.Ends) or serverTime) - serverTime))
-			local text = "ROTE ZONE  " .. string.upper(tostring(nearest.Title or "")) .. "  ·  WECHSEL IN "
-				.. string.format("%d:%02d", left // 60, left % 60)
-			if root3 then
-				text ..= nearestDistance <= 0 and "  ·  DU BIST DRIN" or ("  ·  " .. math.floor(nearestDistance) .. " M")
-			end
-			redzoneText.Text = text
-			redzoneText.Visible = true
-			local bounds = redzoneText.TextBounds -- (im Test-Simulator nil)
-			redzoneDiamond.Position = UDim2.new(1, -12 - (bounds and bounds.X or 0) - 12, 0, 42)
-		else
-			redzoneText.Visible = false
+			redzoneName.Text = string.upper(tostring(nearest.Title or ""))
+			redzoneTimer.Text = "WECHSEL IN " .. string.format("%d:%02d", left // 60, left % 60)
+			local inside = root3 and nearestDistance <= 0
+			redzoneDistance.Text = not root3 and "" or inside and "DU BIST DRIN" or (math.floor(nearestDistance) .. " M")
+			redzoneDistance.TextColor3 = inside and RED or C.Text
 		end
-		redzoneDiamond.Visible = redzoneText.Visible
-		clockPanel.Size = UDim2.fromOffset(440, redzoneText.Visible and CLOCK_PANEL_H_ZONE or CLOCK_PANEL_H)
+		redzoneRow.Visible = nearest ~= nil
+		clockPanel.Size = UDim2.fromOffset(TOP_RIGHT.ClockW, nearest and CLOCK_PANEL_H_ZONE or CLOCK_PANEL_H)
 	end)
 	-- Controller: △ halten (Waffenwechsel gibt es hier nicht, die Hotbar macht das)
 	InputActions.Bindings.StoreVehicle = { Keys = { Enum.KeyCode.K }, Pad = {} } -- Controller: △ halten (applyPadLayout)
