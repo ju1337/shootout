@@ -30,7 +30,7 @@ for _, source in models do
 	local skins = source:FindFirstChild("Skins")
 	for _, folder in skins and skins:GetChildren() or {} do
 		local item = Cosmetics.Get(folder.Name)
-		check(item ~= nil and item.Type == "Weapon" and Cosmetics.FitsWeapon(item, name),
+		check(folder.Name == GunModels.ColorSkinFolder or item ~= nil and item.Type == "Weapon" and Cosmetics.FitsWeapon(item, name),
 			name .. ": Skins/" .. folder.Name .. " ist kein Waffen-Skin für diese Waffe")
 	end
 	if entry and entry.Loaded then

@@ -25,6 +25,16 @@ local SKINS = {
 			Muendungsblitz = "121533793284101", Prismaring = "86750518345969", Leuchtspur = "103811217451772",
 			Einschlag = "92445896050173", Emblem = "126040453631246" },
 	},
+	-- Grundtextur für alle Farb-Skins ohne eigene Textur (Lava, Galaxie ...): Original-Textur mit durchsichtigen
+	-- Farbflächen (art/sources/Rifle_Texturen/Skin_Body_Overlay.png, tools/models/rifle_overlay.py), AlphaMode
+	-- Overlay, nur am Rumpf. Rauheit und Metall wie das Original. Color = ID nach dem Hochladen eintragen.
+	{
+		Id = "Farbe",
+		Parts = { "Skin_Body" },
+		Overlay = true,
+		Textures = { Color = "", Normal = "", Roughness = "131409815114312", Metalness = "92787484616297", Emissive = "" },
+		FX = {},
+	},
 }
 local PARTS = { "Skin_Body", "Magazine", "Aufsaetze" } -- Teile der AR (+ alle Aufsätze)
 
@@ -47,11 +57,16 @@ for _, skin in SKINS do
 			folder:SetAttribute("FX_" .. key, skin.FX[key])
 		end
 	end
-	for _, name in PARTS do
+	for _, name in skin.Parts or PARTS do
 		local sa = Instance.new("SurfaceAppearance")
 		sa.Name = name
 		sa.ColorMapContent = uri(t.Color)
-		sa.NormalMapContent = uri(t.Normal)
+		if skin.Overlay then
+			sa.AlphaMode = roblox.Enum.AlphaMode.Overlay
+		end
+		if t.Normal ~= "" then
+			sa.NormalMapContent = uri(t.Normal)
+		end
 		sa.RoughnessMapContent = uri(t.Roughness)
 		sa.MetalnessMapContent = uri(t.Metalness)
 		if t.Emissive ~= "" then

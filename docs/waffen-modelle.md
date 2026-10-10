@@ -141,6 +141,11 @@ bekommt jedes texturierte Teil eine **SurfaceAppearance** mit ColorMap, NormalMa
   eine SurfaceAppearance mit **AlphaMode = Overlay**. In ihrer ColorMap sind die umfärbbaren Flächen durchsichtig
   (Alpha 0), Details wie Kratzer, Kanten, Schrift und Schrauben deckend. Normal-, Rauheits- und Metall-Map wirken
   trotzdem. Ohne Skin zeigt die Zone die Farbe des Teils (Eigenschaft Color in Studio).
+  Beim Sturmgewehr ist die Meshy-Textur deckend; deshalb gibt es dort eine eigene **Farb-Grundtextur**
+  (`Skins › Farbe › Skin_Body`, Overlay): `art/sources/Rifle_Texturen/Skin_Body_Overlay.png`, erzeugt mit
+  `python3 tools/models/rifle_overlay.py`. Farb-Skins ohne eigene Textur bekommen sie statt der Standard-Textur,
+  ohne Skin bleibt das Gewehr wie es ist. Hochladen, ID in `tools/models/skins.luau` (Eintrag `Farbe`) eintragen,
+  Skins-Datei neu bauen.
 - **Epische und legendäre Skins können eine eigene Textur haben.** Dafür im Waffenmodell einen Ordner `Skins`
   anlegen, darin je Skin einen Ordner mit der Skin-Id und darin SurfaceAppearances, die genau so heißen wie die
   Teile, die sie bekommen: z.B. `Skins › W_Lava › Skin_Receiver`. Ohne eigene Textur bekommt der Skin wie heute

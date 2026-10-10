@@ -1079,6 +1079,9 @@ function GunModels.AssetReport()
 	return assetReport
 end
 
+local COLOR_SKIN_FOLDER = "Farbe" -- Skins/Farbe: Grundtextur für Farb-Skins ohne eigene Textur
+GunModels.ColorSkinFolder = COLOR_SKIN_FOLDER
+
 -- 3D-Modell: Kopie der Vorlage. Skin: Farbe (und ohne Textur auch Material) auf die Skin-Zonen; gibt es im Modell
 -- Texturen für diesen Skin (Skins/<Id>), ersetzen sie die SurfaceAppearance der genannten Teile.
 local function buildFromAsset(asset, skin)
@@ -1094,7 +1097,10 @@ local function buildFromAsset(asset, skin)
 			end
 		end
 	end
+	-- eigene Textur des Skins; ohne sie die Farb-Grundtextur (Skins/Farbe, AlphaMode Overlay: die Farbflächen sind
+	-- durchsichtig, die Skin-Farbe des Teils scheint durch, Kanten und Kratzer bleiben)
 	local textures = asset.Skins and skin.Id and asset.Skins:FindFirstChild(skin.Id)
+		or asset.Skins and asset.Skins:FindFirstChild(COLOR_SKIN_FOLDER)
 	for _, appearance in textures and textures:GetChildren() or {} do
 		local name = appearance:IsA("SurfaceAppearance") and cleanName(appearance.Name)
 		-- Teil mit diesem Namen und herausgeschnittene Stücke davon (Skin_Body -> Skin_Body_Barrel, gleiche UVs)

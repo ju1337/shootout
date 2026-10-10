@@ -21,3 +21,6 @@
 - `SMG.glb`: die fertig vorbereitete Studio-Version (`python3 tools/mp7_glb.py`): Teile benannt, Marker gesetzt, ohne
   Schalldämpfer, in Studs, Lauf nach -Z. In Studio: Import 3D > SMG.glb (Teile nicht zusammenführen), Modell nach
   ReplicatedStorage > Assets > Weapons ziehen, "SMG" nennen. Dann ersetzt das echte Mesh den Nachbau aus Quadern.
+
+- `Rifle_Texturen/Skin_Body_Overlay.png`: Farb-Grundtextur für Farb-Skins am aktuellen Sturmgewehr (Farbe aus
+  `Rifle.glb`, gleichmäßige Flächen teilweise durchsichtig), erzeugt mit `python3 tools/models/rifle_overlay.py`.

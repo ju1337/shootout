@@ -96,6 +96,14 @@ lavaTexture.Parent = lava
 local wrong = Instance.new("SurfaceAppearance")
 wrong.Name = "Skin_Gibtsnicht"
 wrong.Parent = lava
+-- Grundtextur der Farb-Skins (Skins/Farbe): durchsichtige Farbflächen, die Skin-Farbe scheint durch
+local colorBase = Instance.new("Folder")
+colorBase.Name = "Farbe"
+colorBase.Parent = skins
+local overlay = Instance.new("SurfaceAppearance")
+overlay.Name = "Skin_Receiver"
+overlay:SetAttribute("Overlay", true)
+overlay.Parent = colorBase
 
 -- ---------- Revolver: Marker als Attachments, Drehpunkt der Trommel als Attachment ----------
 local revolverImport = CFrame.new(-4, 20, 3) * CFrame.Angles(0, math.rad(-90), 0)
@@ -224,9 +232,14 @@ check(skinned.Skin_Receiver.Color == lavaSkin.Color, "Zone mit Textur bekommt di
 check(skinned.Stock_Skin.Color == lavaSkin.Color and skinned.Stock_Skin.Material == lavaSkin.Material,
 	"Zone ohne Textur: Farbe und Material des Skins")
 check(skinned.Barrel.Color == built.Barrel.Color, "Teil ohne Skin-Zone bleibt")
+check(skinned.Skin_Receiver:FindFirstChildOfClass("SurfaceAppearance"):GetAttribute("Overlay") == nil,
+	"Skin mit eigener Textur nimmt nicht die Farb-Grundtextur")
 local plain = GunModels.Build("Rifle", Cosmetics.Get("W_Wald"))
-check(plain.Skin_Receiver:FindFirstChild("Standard") ~= nil, "Farb-Skin lässt die Standard-Textur")
-check(built.Skin_Receiver:FindFirstChild("Standard") ~= nil, "Vorlage unverändert")
+local plainLook = plain.Skin_Receiver:FindFirstChildOfClass("SurfaceAppearance")
+check(plain.Skin_Receiver:FindFirstChild("Standard") == nil and plainLook and plainLook:GetAttribute("Overlay") == true,
+	"Farb-Skin bekommt die Farb-Grundtextur statt der deckenden Standard-Textur")
+check(plain.Skin_Receiver.Color == Cosmetics.Get("W_Wald").Color, "Farb-Skin: Farbe scheint durch")
+check(built.Skin_Receiver:FindFirstChild("Standard") ~= nil, "ohne Skin: Standard-Textur (Vorlage unverändert)")
 
 -- Aufsätze an den Punkten aus dem Modell
 local equipped = GunModels.Build("Rifle", nil, { "Suppressor", "ExtendedMag" })
