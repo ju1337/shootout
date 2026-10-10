@@ -64,10 +64,14 @@ local function publish()
 	local list = {}
 	for _, spot in spots do
 		local at = spot.Root and spot.Root.Parent and spot.Root.Position or spot.Position -- Überlebende bewegen sich
-		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = at.X, Z = at.Z,
+		-- ganze Studs reichen für Karte und Marker (sonst ändert sich der Text bei jedem Schritt eines Überlebenden)
+		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = math.floor(at.X + 0.5), Z = math.floor(at.Z + 0.5),
 			State = spot.State })
 	end
-	options.Map:SetAttribute("Activities", HttpService:JSONEncode(list))
+	local text = HttpService:JSONEncode(list)
+	if options.Map:GetAttribute("Activities") ~= text then
+		options.Map:SetAttribute("Activities", text)
+	end
 end
 
 local function livingRoot(player)

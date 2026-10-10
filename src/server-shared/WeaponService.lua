@@ -231,7 +231,8 @@ RunService.Heartbeat:Connect(function()
 	lastSample = now
 	for _, model in trackedModels() do
 		local root = model:FindFirstChild("HumanoidRootPart")
-		if root then
+		local humanoid = root and model:FindFirstChildOfClass("Humanoid")
+		if root and not (humanoid and humanoid.Health <= 0) then -- Leichen trifft niemand mehr
 			local list = history[model] or {}
 			history[model] = list
 			table.insert(list, { Time = now, Position = root.Position })
