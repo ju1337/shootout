@@ -275,13 +275,11 @@ end
 
 -- Beim Beitreten (sobald das Profil da ist) Clan laden und prüfen, ob man noch Mitglied ist
 local function load(player)
-	for _ = 1, 60 do
-		if ProgressService.IsLoaded(player) then
-			break
-		end
+	-- so lange wie nötig (Sperre eines alten Servers kann über 30 s dauern), sonst fehlt der Clan die ganze Sitzung
+	while player.Parent and not ProgressService.IsLoaded(player) do
 		task.wait(0.5)
 	end
-	local profile = ProgressService.Get(player)
+	local profile = player.Parent and ProgressService.Get(player)
 	if not profile or not profile.Clan then
 		return
 	end

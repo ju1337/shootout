@@ -156,7 +156,7 @@ end
 
 function LeaderboardService.SetHidden(player, hidden)
 	local profile = ProgressService.Get(player)
-	if not profile then
+	if not profile or not ProgressService.IsLoaded(player) then
 		return false
 	end
 	profile.HideBoards = hidden or nil

@@ -925,7 +925,7 @@ end
 -- beitreten (AdminService kickt ihn), damit alle Dienste mit dem leeren Stand anfangen. Gibt true zurück, wenn ein
 -- Profil da war.
 function ProgressService.Reset(player)
-	if not profiles[player] then
+	if not ProgressService.IsLoaded(player) then -- das echte Profil käme sonst nach dem Zurücksetzen und gälte weiter
 		return false
 	end
 	profiles[player] = defaultProfile()

@@ -199,8 +199,8 @@ function AdminService.Init(manager)
 		-- Wert ändern: opts = { Key (VALUES), Op = "Add" | "Set", Amount }
 		PlayerValue = function(userId, opts)
 			local player = target(userId)
-			local profile = player and ProgressService.Get(player)
-			if not profile then
+			local profile = player and ProgressService.IsLoaded(player) and ProgressService.Get(player)
+			if not profile then -- auch nicht, solange nur das Ersatzprofil da ist (Änderung ginge beim Laden verloren)
 				return "Spieler nicht gefunden."
 			end
 			local def = type(opts) == "table" and VALUES[opts.Key]
@@ -220,7 +220,7 @@ function AdminService.Init(manager)
 			local player = target(userId)
 			local id = type(opts) == "table" and opts.Id
 			local config = typeof(id) == "string" and ExtinctionConfig.Get(id)
-			if not player or not ProgressService.Get(player) then
+			if not player or not ProgressService.IsLoaded(player) then
 				return "Spieler nicht gefunden."
 			elseif not config then
 				return "Unbekanntes Item."
@@ -237,7 +237,7 @@ function AdminService.Init(manager)
 		GiveSkin = function(userId, skinId)
 			local player = target(userId)
 			local item = typeof(skinId) == "string" and Cosmetics.Get(skinId)
-			if not player or not ProgressService.Get(player) then
+			if not player or not ProgressService.IsLoaded(player) then
 				return "Spieler nicht gefunden."
 			elseif not item then
 				return "Unbekannter Skin."
@@ -248,7 +248,7 @@ function AdminService.Init(manager)
 		-- Doppel-XP für minutes Minuten
 		XPBoost = function(userId, minutes)
 			local player = target(userId)
-			if not player or not ProgressService.Get(player) then
+			if not player or not ProgressService.IsLoaded(player) then
 				return "Spieler nicht gefunden."
 			end
 			minutes = math.clamp(math.floor(tonumber(minutes) or 30), 1, 1440)
@@ -329,7 +329,7 @@ function AdminService.Init(manager)
 		-- Vor den Bestenlisten verstecken an/aus (LeaderboardService)
 		HideLeaderboard = function(userId)
 			local player = target(userId)
-			if not player or not ProgressService.Get(player) then
+			if not player or not ProgressService.IsLoaded(player) then
 				return "Spieler nicht gefunden."
 			end
 			local hidden = not LeaderboardService.IsHidden(player)
@@ -431,7 +431,7 @@ function AdminService.Init(manager)
 			amount = math.clamp(math.floor(tonumber(amount) or 0), 1, 1000000)
 			local count = 0
 			for _, player in Players:GetPlayers() do
-				if ProgressService.Get(player) then
+				if ProgressService.IsLoaded(player) then -- nicht ins Ersatzprofil (ginge beim Laden verloren)
 					ProgressService.AddCoins(player, amount, "Admin")
 					count += 1
 				end
