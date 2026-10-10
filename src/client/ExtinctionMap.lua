@@ -20,6 +20,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UITheme = require(Shared.UITheme)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WorldLayout = require(Shared.WorldLayout)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -48,6 +49,7 @@ local GROUND_COLORS = {             -- Flächen der Gruppe Ground nach Name (all
 }
 local builtLayout = nil -- Grundriss (Attribut Layout), mit dem die Karte gebaut wurde
 
+local closeHint = nil -- "N SCHLIESSEN" (auf Touch aus, dort gibt es nur das X)
 local gui, board, world, layer, markers, arrow, bagView, bagCaption, zoomText
 local bountyView, bountyCaption -- Kopfgeld (roter Punkt)
 local view = { Zoom = 1, U = 0.5, V = 0.5 } -- Zoom und Kartenmitte (Anteil 0..1)
@@ -487,6 +489,9 @@ function ExtinctionMap.Set(open)
 	end
 	gui.Enabled = open == true
 	if gui.Enabled then
+		if closeHint then
+			closeHint.Visible = not InputActions.IsTouch()
+		end
 		-- Maus frei, solange die Karte offen ist (direkt nach der Kamera, die sie sonst wieder sperrt)
 		RunService:BindToRenderStep("ExtinctionMapMouse", Enum.RenderPriority.Camera.Value + 1, function()
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -538,14 +543,38 @@ function ExtinctionMap.Init()
 	local panel = make("Frame", { Name = "Panel", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(SIZE + SIDE + 36, SIZE + 70), BackgroundColor3 = Color3.fromRGB(8, 9, 11), BackgroundTransparency = 0.12,
 		BorderSizePixel = 0 }, root)
+	-- kleine Bildschirme (Handy quer): die Ebene ist dort niedriger als die Karte, dann das ganze Fenster verkleinern
+	local fit = make("UIScale", {}, panel)
+	local function updateFit()
+		local viewport = workspace.CurrentCamera.ViewportSize
+		local height = viewport.Y / UITheme.RootScale(viewport, 1600, 900)
+		fit.Scale = math.min(1, (height - 20) / (SIZE + 70))
+	end
+	updateFit()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateFit)
 	-- Kopfzeile wie im Menü: roter Streifen, Titel, rechts der Hinweis
 	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(12, 10), Size = UDim2.new(1, -24, 0, 40),
 		BackgroundColor3 = Color3.fromRGB(8, 9, 11), BackgroundTransparency = 0.2, BorderSizePixel = 0 }, panel)
 	make("Frame", { Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Color3.fromRGB(214, 58, 58), BorderSizePixel = 0 }, header)
 	label({ Position = UDim2.fromOffset(18, 0), Size = UDim2.new(1, -36, 1, 0), Text = "KARTE  ·  ÖDLAND", TextSize = 20,
 		Font = F.Display }, header)
-	label({ Position = UDim2.fromOffset(18, 0), Size = UDim2.new(1, -36, 1, 0), Text = "N SCHLIESSEN", TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, header)
+	-- rechts: Schließen-Knopf (auf Touch der einzige Weg zurück), daneben die Taste
+	closeHint = label({ Name = "CloseHint", Position = UDim2.fromOffset(18, 0), Size = UDim2.new(1, -72, 1, 0), Text = "N SCHLIESSEN",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, header)
+	closeHint.Visible = not InputActions.IsTouch()
+	local close = make("TextButton", { Name = "Close", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -2, 0.5, 0),
+		Size = UDim2.fromOffset(40, 40), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, Text = "",
+		AutoButtonColor = false }, header)
+	UITheme.Cross(close, 14, C.Text, 2)
+	close.MouseEnter:Connect(function()
+		close.BackgroundTransparency = 0.9
+	end)
+	close.MouseLeave:Connect(function()
+		close.BackgroundTransparency = 1
+	end)
+	close.Activated:Connect(function()
+		ExtinctionMap.Set(false)
+	end)
 	board = make("Frame", { Name = "Board", Position = UDim2.fromOffset(12, 58), Size = UDim2.fromOffset(SIZE, SIZE),
 		BackgroundColor3 = Color3.fromRGB(38, 44, 34), BorderSizePixel = 0, ClipsDescendants = true }, panel)
 	world = make("Frame", { Name = "World", Size = UDim2.fromOffset(SIZE, SIZE), BackgroundTransparency = 1 }, board)

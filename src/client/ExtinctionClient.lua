@@ -1214,11 +1214,13 @@ local function newMenu(kind, title, subtitle)
 		TextSize = 20, Font = F.Display, LayoutOrder = 1, ZIndex = 6 }, titleRow)
 	local sub = label({ Name = "Sub", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = subtitle or "",
 		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, LayoutOrder = 2, ZIndex = 6 }, titleRow)
+	-- Touch: größere Trefferfläche und größeres X (auf dem Handy ist das Menü stark verkleinert)
+	local touch = InputActions.IsTouch()
 	local close = make("TextButton", { Name = "Close", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0),
-		Size = UDim2.fromOffset(42, 42), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, Text = "",
-		AutoButtonColor = false, ZIndex = 6 }, header)
+		Size = UDim2.fromOffset(touch and 72 or 42, touch and 72 or 42), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1,
+		Text = "", AutoButtonColor = false, ZIndex = 6 }, header)
 	close:SetAttribute("NoFocus", true)
-	UITheme.Cross(close, 14, C.Text, 2).ZIndex = 7
+	UITheme.Cross(close, touch and 22 or 14, C.Text, touch and 3 or 2).ZIndex = 7
 	close.MouseEnter:Connect(function()
 		close.BackgroundTransparency = 0.9
 	end)
@@ -3744,8 +3746,14 @@ function ExtinctionClient.Init()
 	windowGui = make("ScreenGui", { Name = "ExtinctionWindow", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
 	-- Klicks neben das Fenster sollen nicht schießen: unsichtbarer Knopf über dem ganzen Bild
-	make("TextButton", { Name = "Blocker", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Background, BackgroundTransparency = 0.55,
-		Text = "", AutoButtonColor = false, ZIndex = 1 }, windowGui)
+	-- Touch: neben das Fenster tippen schließt es (am PC nicht, damit ein Fehlklick beim Ziehen nichts zumacht)
+	local blocker = make("TextButton", { Name = "Blocker", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Background,
+		BackgroundTransparency = 0.55, Text = "", AutoButtonColor = false, ZIndex = 1 }, windowGui)
+	blocker.Activated:Connect(function()
+		if window and InputActions.IsTouch() then
+			closeWindow()
+		end
+	end)
 	canvas = UITheme.Canvas(windowGui, 1600, 900)
 	canvas.ZIndex = 2
 

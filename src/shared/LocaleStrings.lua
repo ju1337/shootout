@@ -630,6 +630,7 @@ return {
 	["Du benutzt schon etwas."] = "You're already using something.",
 	["Du besitzt {1} schon."] = "You already own {1}.",
 	["Du bist am Stand – E zum Ansehen."] = "You're at the stall – press E to view.",
+	["Du bist im Dungeon: Beim Verlassen sind deine Tasche und die Dungeon-Beute weg. Nochmal klicken zum Verlassen – oder erst durchs Portal gehen."] = "You're in a dungeon: if you leave, your bag and the dungeon loot are gone. Click again to leave – or go through the portal first.",
 	["Du bist außerhalb der Safe Zone: Beim Verlassen fällt deine Tasche zu Boden. Nochmal klicken zum Verlassen – oder geh zurück in die Safe Zone."] = "You're outside the Safe Zone: if you leave, your bag drops to the ground. Click again to leave – or go back into the Safe Zone.",
 	["Du bist bereits in {1}."] = "You're already in {1}.",
 	["Du bist gesperrt ({1}): {2}"] = "You are banned ({1}): {2}",

@@ -955,6 +955,11 @@ function Extinction.ConfirmLeave(player)
 		return true
 	end
 	info.LeaveAsked = now
+	if DungeonService.RunOf(player) then
+		manager.Status(player, "Du bist im Dungeon: Beim Verlassen sind deine Tasche und die Dungeon-Beute weg. "
+			.. "Nochmal klicken zum Verlassen – oder erst durchs Portal gehen.")
+		return false
+	end
 	manager.Status(player, "Du bist außerhalb der Safe Zone: Beim Verlassen fällt deine Tasche zu Boden. "
 		.. "Nochmal klicken zum Verlassen – oder geh zurück in die Safe Zone.")
 	return false

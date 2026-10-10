@@ -641,7 +641,7 @@ ExtinctionConfig.Horde = {
 -- jede weitere ist größer und härter (ExtinctionConfig.DungeonWave). Ist eine Welle erledigt, öffnet sich das Portal für
 -- BreakTime Sekunden: wer hindurchgeht, verlässt den Dungeon und bekommt die Beute aller Wellen, die er geschafft hat
 -- (ExtinctionConfig.DungeonReward: Münzen, Items in die Tasche, sonst ins Lager, XPPerWave EP je Welle). Danach schließt
--- es, und die nächste Welle beginnt. Tod im Dungeon: die Tasche fällt draußen vor dem Eingang, die Dungeon-Beute ist weg.
+-- es, und die nächste Welle beginnt. Tod im Dungeon (oder Spiel verlassen): Tasche und Dungeon-Beute sind weg.
 -- KeyChances: so wahrscheinlich liegt ein Schlüssel in der Beute (Zombie = normale Zombies, nicht im Dungeon; Boss =
 -- Blutbestie und Bosse an Gebäuden; die übrigen = Lootdrop, Heli-Wrack, Horden-Kiste, Konvoi, Sturmnacht).
 -- Stand für die Clients: Karten-Attribut "Dungeons" [{ Key, Title, X, Z }], Spieler-Attribut "Dungeon" (JSON, siehe
