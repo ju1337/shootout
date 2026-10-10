@@ -64,6 +64,8 @@ local zombies = {}   -- [Model] = { Humanoid, Root, Target, NextAttack, NextWand
                      --   Path, Waypoints, WaypointIndex, PathGoal, PathAt, PathBusy, PathBlocked (Wegfindung, siehe followPath) }
 local pathBudget = 0 -- Pfad-Berechnungen, die in dieser KI-Runde (AI_STEP) noch erlaubt sind (ZombiePath.PerFrame)
 local castParams = nil -- RaycastParams für die Sichtlinie beim Jagen (je KI-Runde neu: ohne Charaktere, Zombies, Beute)
+local huntSnapshot = nil -- { { Target, Root } } jagdbarer Ziele (je KI-Runde neu, siehe huntTargets)
+local groundParams = { Params = nil, At = -math.huge } -- Filter für groundAt (höchstens alle 0,5 s neu)
 local count = 0
 local template = nil
 local random = Random.new()
@@ -281,22 +283,37 @@ local function huntable(target)
 	return root ~= nil and not target:GetAttribute("InSafeZone") and not options.InSafeZone(root.Position), root
 end
 
-local function nearestTarget(position, range)
-	local best, bestDistance = nil, range
-	local function consider(target)
+-- Jagdbare Ziele einmal je KI-Runde ermitteln (statt für jeden Zombie ohne Ziel alle Spieler und Bots neu zu prüfen)
+local function huntTargets()
+	if huntSnapshot then
+		return huntSnapshot
+	end
+	local list = {}
+	local function add(target)
 		local ok, root = huntable(target)
 		if ok and root then
-			local distance = (root.Position - position).Magnitude
-			if distance < bestDistance then
-				best, bestDistance = target, distance
-			end
+			table.insert(list, { Target = target, Root = root })
 		end
 	end
 	for _, player in options.Players() do
-		consider(player)
+		add(player)
 	end
 	for _, bot in options.Bots and options.Bots() or {} do
-		consider(bot)
+		add(bot)
+	end
+	huntSnapshot = list
+	return list
+end
+
+local function nearestTarget(position, range)
+	local best, bestDistance = nil, range
+	for _, entry in huntTargets() do
+		if entry.Root.Parent then
+			local distance = (entry.Root.Position - position).Magnitude
+			if distance < bestDistance then
+				best, bestDistance = entry.Target, distance
+			end
+		end
 	end
 	return best, bestDistance
 end
@@ -347,21 +364,26 @@ end
 -- ---------- Spawnen ----------
 
 local function groundAt(x, z)
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local ignore = { folder }
-	local loot = workspace:FindFirstChild("ExtinctionLoot")
-	if loot then
-		table.insert(ignore, loot)
-	end
-	for _, player in Players:GetPlayers() do
-		if player.Character then
-			table.insert(ignore, player.Character)
-		end
-	end
-	params.FilterDescendantsInstances = ignore
 	if options.IsWater and options.IsWater(x, z) then
 		return nil
+	end
+	-- Filter zwischenspeichern (der Konvoi fragt 30-mal pro Sekunde, Spawnrunden in Schüben)
+	local params = groundParams.Params
+	if not params or os.clock() - groundParams.At > 0.5 then
+		params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		local ignore = { folder }
+		local loot = workspace:FindFirstChild("ExtinctionLoot")
+		if loot then
+			table.insert(ignore, loot)
+		end
+		for _, player in Players:GetPlayers() do
+			if player.Character then
+				table.insert(ignore, player.Character)
+			end
+		end
+		params.FilterDescendantsInstances = ignore
+		groundParams.Params, groundParams.At = params, os.clock()
 	end
 	local base = options.Center.Y
 	local result = workspace:Raycast(Vector3.new(x, base + 400, z), Vector3.new(0, -600, 0), params)
@@ -1181,6 +1203,7 @@ function ZombieService.Init(opts)
 		if aiElapsed >= AI_STEP then
 			aiElapsed = 0
 			castParams = nil -- Filter je Runde neu (Charaktere und Bots ändern sich)
+			huntSnapshot = nil
 			pathBudget = P.PerFrame -- Pfad-Budget je KI-Runde (die Schritte verteilen sich über die Frames der Runde)
 		end
 		-- jeder Zombie alle AI_STEP Sekunden, aber über die Frames verteilt (nicht alle im selben Frame: sonst ein Ruckler

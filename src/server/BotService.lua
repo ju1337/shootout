@@ -183,8 +183,10 @@ local function enemies(bot)
 	local root = bot.ZombieRange and bot.Model and bot.Model:FindFirstChild("HumanoidRootPart")
 	local zombies = root and workspace:FindFirstChild("Zombies")
 	for _, zombie in zombies and zombies:GetChildren() or {} do
-		local zombieRoot = zombie:IsA("Model") and zombie:GetAttribute("IsZombie") and zombie:FindFirstChild("HumanoidRootPart")
-		if zombieRoot and livingHumanoid(zombie) and (zombieRoot.Position - root.Position).Magnitude <= bot.ZombieRange then
+		-- erst der Abstand (billig), dann Attribut und Leben (die meisten Zombies sind weit weg)
+		local zombieRoot = zombie:IsA("Model") and zombie:FindFirstChild("HumanoidRootPart")
+		if zombieRoot and (zombieRoot.Position - root.Position).Magnitude <= bot.ZombieRange
+			and zombie:GetAttribute("IsZombie") and livingHumanoid(zombie) then
 			table.insert(list, zombie)
 		end
 	end
@@ -196,9 +198,14 @@ local function canSee(bot, fromPos, model)
 	if not head then
 		return false
 	end
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { bot.Model }
+	-- Filter je Bot einmal anlegen (nicht bei jedem Blick neu)
+	local params = bot.SightParams
+	if not params then
+		params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { bot.Model }
+		bot.SightParams = params
+	end
 	local result = workspace:Raycast(fromPos, head.Position - fromPos, params)
 	return result ~= nil and result.Instance:IsDescendantOf(model) and not GadgetService.BlocksSight(fromPos, head.Position)
 end
@@ -707,6 +714,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 	playAnimations(humanoid)
 
 	bot.Model = model
+	bot.SightParams = nil -- neuer Körper: Sicht-Filter neu anlegen
 	bot.Alive = true
 	bot.GadgetCharges = (not bot.NoGadgets and agent.Gadget and agent.Gadget.Charges) or 0
 	-- Tod: über Died und zur Sicherheit auch über das Leben (genau einmal)
