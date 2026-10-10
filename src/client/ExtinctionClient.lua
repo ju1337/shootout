@@ -83,6 +83,7 @@ Inv.SOLID = Color3.fromRGB(8, 9, 11)     -- Fläche der Fenster
 Inv.SIDEBAR = Color3.fromRGB(5, 6, 7)    -- Seitenleiste, etwas dunkler als die Fläche
 Inv.RAISED = Color3.fromRGB(17, 18, 21)  -- Karten und Kopfzeile darauf
 Inv.WINDOW_ALPHA = 0.03
+Inv.SIDE_PANEL_W = 300 -- Aufträge und Squad links im HUD (breit genug für lange Auftragsnamen)
 Inv.WINDOW_RADIUS = UITheme.Radius.XL
 Inv.TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
 Inv.Tutorial = require(script.Parent:WaitForChild("ExtTutorial")) -- geführtes Tutorial für neue Spieler
@@ -375,7 +376,7 @@ local function describe(id, entry)
 	elseif config.Kind == "Ammo" then
 		local users = {}
 		for _, other in ExtinctionConfig.Items do
-			if other.Ammo == id then
+			if other.Ammo == id and not other.Kit then -- Kit-Ausführungen nicht doppelt nennen
 				table.insert(users, other.Name)
 			end
 		end
@@ -457,6 +458,10 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 	end
 	view.Count.Text = countText
 	view.Name.Text = config and upper(config.Name) or ""
+	local nameWidth = UDim2.new(1, countText == "" and -12 or -(16 + 7 * #countText), 0, 14)
+	if view.Name.Size ~= nameWidth then
+		view.Name.Size = nameWidth
+	end
 	view.Overlay.Visible = entry ~= nil and entry.Out == true
 	local tier = Inv.tierColor(config)
 	view.Rarity.Visible = tier ~= nil
@@ -504,9 +509,11 @@ local function slotButton(parent, container, slot, size, position, zIndex, keyTe
 		Text = "", TextSize = small and 11 or 12, Font = F.Bold, TextColor3 = Color3.fromRGB(206, 203, 196),
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = zIndex + 3 }, frame)
 	UITheme.Outline(count)
+	-- Name: so breit, wie die Anzahl daneben Platz lässt (paintSlot); lange Namen werden etwas kleiner statt gekürzt
 	local name = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -4), Size = UDim2.new(1, -46, 0, 14), Text = "",
-		TextSize = 11, Font = F.Medium, TextColor3 = Color3.fromRGB(190, 187, 180), TextTruncate = Enum.TextTruncate.AtEnd,
-		ZIndex = zIndex + 3, Visible = not small }, frame)
+		TextSize = 11, TextScaled = true, Font = F.Medium, TextColor3 = Color3.fromRGB(190, 187, 180),
+		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = zIndex + 3, Visible = not small }, frame)
+	make("UITextSizeConstraint", { MinTextSize = 8, MaxTextSize = 11 }, name)
 	local key = nil
 	if keyText then
 		key = label({ Position = UDim2.fromOffset(6, 4), Size = UDim2.fromOffset(16, 14), Text = keyText, TextSize = 12,
@@ -1934,8 +1941,9 @@ local function openLootInfo()
 			BackgroundTransparency = 1, ZIndex = 8 }, frame)
 		buildIcon(iconBox, row.Id, 8)
 		local name = row.Attachment and LootInfo.AttachmentNames[row.Tier] or (config and upper(config.Name)) or row.Id
-		label({ Name = "Name", Position = UDim2.fromOffset(12, 84), Size = UDim2.new(1, -24, 0, 18), Text = name, TextSize = 14,
-			Font = F.Bold, ZIndex = 8, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
+		local nameLabel = label({ Name = "Name", Position = UDim2.fromOffset(12, 84), Size = UDim2.new(1, -24, 0, 18), Text = name,
+			TextSize = 14, TextScaled = true, Font = F.Bold, ZIndex = 8, TextTruncate = Enum.TextTruncate.AtEnd }, frame)
+		make("UITextSizeConstraint", { MinTextSize = 11, MaxTextSize = 14 }, nameLabel) -- lange Namen kleiner statt gekürzt
 		local count = row.Count[1] == row.Count[2] and (row.Count[1] .. "×") or (row.Count[1] .. "–" .. row.Count[2] .. "×")
 		label({ Name = "Count", Position = UDim2.fromOffset(12, 104), Size = UDim2.new(1, -24, 0, 16), Text = count,
 			TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 8 }, frame)
@@ -1969,7 +1977,7 @@ local function openLootInfo()
 	end
 
 	for index, source in LootInfo.Sources do
-		local button = Inv.flatButton({ Name = "Source_" .. source.Id, Size = UDim2.new(1, 0, 0, 48), Text = source.Name,
+		local button = Inv.flatButton({ Name = "Source_" .. source.Id, Size = UDim2.new(1, 0, 0, 44), Text = source.Name,
 			TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = index }, list, function()
 			lootSource = index
 			win.Refresh()
@@ -2147,10 +2155,11 @@ function Guide.Open()
 			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = false, ZIndex = 8 }, button)
 		buttons[index] = button
 	end
-	-- unter den Themen: Tutorial starten oder (läuft es) überspringen
+	-- unter den Themen, mit etwas Abstand: Tutorial starten oder (läuft es) überspringen
+	make("Frame", { Name = "TutorialGap", Size = UDim2.new(1, 0, 0, 8), BackgroundTransparency = 1, LayoutOrder = #topics + 1 }, list)
 	local running = Inv.Tutorial.IsActive()
 	Inv.flatButton({ Name = "Tutorial", Primary = not running, Size = UDim2.new(1, 0, 0, 44),
-		Text = running and "SKIP TUTORIAL" or "START TUTORIAL", LayoutOrder = #topics + 1 }, list, function()
+		Text = running and "SKIP TUTORIAL" or "START TUTORIAL", LayoutOrder = #topics + 2 }, list, function()
 		closeWindow()
 		if running then
 			Inv.Tutorial.Stop()
@@ -2595,17 +2604,21 @@ local function openSquad()
 		return list
 	end
 	local mine, others = column(0, "SquadMembers"), column(colW + 40, "SquadPlayers")
-	local leave = UITheme.Chunky({ Name = "LeaveSquad", Position = UDim2.fromOffset(0, Inv.CONTENT_H - 72), Size = UDim2.fromOffset(260, 48),
-		Color = C.Bad:Lerp(Color3.new(0, 0, 0), 0.25), Text = "SQUAD VERLASSEN", TextSize = 18, ZIndex = 5 }, body, function()
-		partyAction("Leave")
-	end)
+	-- Knöpfe unten links in einer Reihe (SQUAD VERLASSEN nur im Squad, dann rückt FREUNDE EINLADEN nach links)
+	local actions = make("Frame", { Name = "SquadActions", Position = UDim2.fromOffset(0, Inv.CONTENT_H - 72),
+		Size = UDim2.fromOffset(colW, 48), BackgroundTransparency = 1, ZIndex = 5 }, body)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12),
+		SortOrder = Enum.SortOrder.LayoutOrder }, actions)
 	-- Roblox-Einladung an Freunde (SocialService); der Server belohnt, wenn ein Freund darüber beitritt
-	UITheme.Chunky({ Name = "InviteFriends", Position = UDim2.fromOffset(272, Inv.CONTENT_H - 72),
-		Size = UDim2.fromOffset(260, 48), Color = C.Good:Lerp(Color3.new(0, 0, 0), 0.2), Text = "FREUNDE EINLADEN", TextSize = 18,
-		ZIndex = 5 }, body, function()
+	UITheme.Chunky({ Name = "InviteFriends", Size = UDim2.fromOffset(260, 48), Color = Inv.MENU_RED, Text = "FREUNDE EINLADEN",
+		TextSize = 18, LayoutOrder = 1, ZIndex = 5 }, actions, function()
 		if not require(Shared.Invites).Prompt() then -- kein lokales Modul: Limit der lokalen Variablen (tests/locals)
 			showToast("Einladung gerade nicht möglich.", false)
 		end
+	end)
+	local leave = UITheme.Chunky({ Name = "LeaveSquad", Size = UDim2.fromOffset(260, 48), Color = Inv.RAISED, StrokeColor = C.Border,
+		TextColor = C.Bad, Text = "SQUAD VERLASSEN", TextSize = 18, LayoutOrder = 2, ZIndex = 5 }, actions, function()
+		partyAction("Leave")
 	end)
 	local whereLabels = {} -- { Label, Player } (Entfernung laufend nachführen)
 
@@ -2752,7 +2765,7 @@ function Inv.standStats(id)
 	elseif config.Kind == "Ammo" then
 		local users = {}
 		for _, other in ExtinctionConfig.Items do
-			if other.Ammo == id then
+			if other.Ammo == id and not other.Kit then -- Kit-Ausführungen nicht doppelt nennen
 				table.insert(users, upper(Locale.Translate(other.Name)))
 			end
 		end
@@ -3910,8 +3923,8 @@ function ExtinctionClient.Init()
 		end
 	end)
 	-- Squad-Liste links unter den Aufträgen: Mitglieder mit Ort/Entfernung und Leben
-	local squadPanel = make("Frame", { Name = "Squad", Position = UDim2.fromOffset(24, 480), Size = UDim2.fromOffset(270, 26),
-		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.3, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y,
+	local squadPanel = make("Frame", { Name = "Squad", Position = UDim2.fromOffset(24, 480), Size = UDim2.fromOffset(Inv.SIDE_PANEL_W, 26),
+		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y,
 		Visible = false }, root)
 	UITheme.Corner(squadPanel, UITheme.Radius.Small)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, squadPanel)
@@ -3970,8 +3983,8 @@ function ExtinctionClient.Init()
 	-- je nach Bildschirm tiefer (unter die Roblox-Leiste), auf Touch steht die Lebensanzeige darunter: die Liste folgt mit
 	-- etwas Abstand (missionTop).
 	local missionHeight = 0
-	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(270, 26),
-		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.15, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
+	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(Inv.SIDE_PANEL_W, 26),
+		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
 	UITheme.Corner(missionPanel, UITheme.Radius.Small)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, missionPanel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10),

@@ -114,9 +114,11 @@ function QuestBoard.new(parent, width, height, options)
 	if not QuestConfig.ModeActive("Arcade") then
 		table.remove(tabDefs, 1)
 	end
+	-- nur ein Reiter: keine Reiterzeile, die Spalten rücken nach oben
+	local single = #tabDefs == 1
 	for i, def in tabDefs do
 		tabs[def[1]] = button({ Position = UDim2.fromOffset((i - 1) * 168, 0), Size = UDim2.fromOffset(160, 36), Text = def[2],
-			TextSize = 16 }, root, function()
+			TextSize = 16, Visible = not single }, root, function()
 			(board :: any).SetMode(def[1]) -- SetMode steht weiter unten
 		end)
 	end
@@ -124,7 +126,7 @@ function QuestBoard.new(parent, width, height, options)
 	-- Drei Spalten
 	local gap = 24
 	local colW = math.floor((width - 2 * gap) / 3)
-	local top = 52
+	local top = single and 0 or 52
 	local columns = {}
 	for i, info in { { "TÄGLICH", "Jeden Tag neu", ACCENT }, { "WÖCHENTLICH", "Jeden Montag neu", GOLD },
 		{ "VIP & BOOSTER", "Gamepass VIP oder Discord-Booster", VIP } } do

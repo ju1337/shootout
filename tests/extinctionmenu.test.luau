@@ -1,6 +1,7 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
 -- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE · SKINS (eigene Seiten) und LOADOUT · SHOP ·
--- BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben).
+-- BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben; ohne
+-- doppelten großen Titel, Untertitel in der Kopfzeile).
 -- Kein AGENTEN mehr (nur noch ein Agent): weder im Menü noch in der Lobby. Controller: L1/R1 blättert, Auswahl im Inhalt.
 -- SKINS: Agenten-Skins als Kacheln mit Vorschau, AUSRÜSTEN schickt Equip an den Server.
 -- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (LOADOUT bleibt), AUFTRÄGE ohne Reiter
@@ -169,11 +170,13 @@ local function shownTexts(root)
 	return out
 end
 
--- AUFTRÄGE: ohne Arcade nur EXTINCTION
+-- AUFTRÄGE: ohne Arcade nur EXTINCTION, dann gar keine Reiterzeile (ein einzelner Reiter wäre nur ein toter Knopf)
 menu():FindFirstChild("Tabs", true).Tab_Quests.Activated:Fire()
 step(0.1)
-local questTexts = shownTexts(menu())
-check(title() == "AUFTRÄGE" and questTexts.EXTINCTION and not questTexts.ARCADE, "AUFTRÄGE: kein Reiter ARCADE")
+local questBoard = menu():FindFirstChild("QuestBoard", true)
+local questTexts = questBoard and shownTexts(questBoard) or {}
+check(title() == "AUFTRÄGE" and questBoard ~= nil and not questTexts.EXTINCTION and not questTexts.ARCADE and questTexts["TÄGLICH"],
+	"AUFTRÄGE: kein Reiter ARCADE, keine Reiterzeile, Spalten da")
 
 for _, id in { "Loadout", "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
@@ -184,11 +187,22 @@ for _, id in { "Loadout", "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
 	local scale = holder and holder:FindFirstChildOfClass("UIScale")
 	check(scale ~= nil and scale.Scale < 1 and scale.Scale > 0.8, id .. ": verkleinert")
+	if id == "Stats" or id == "Codes" or id == "Settings" then
+		local pageTitle = page and page:FindFirstChild("PageTitle")
+		local sub = menu():FindFirstChild("Sub", true)
+		check(pageTitle ~= nil and not pageTitle.Visible and sub ~= nil and sub.Text ~= "",
+			id .. ": kein doppelter Titel, Untertitel in der Kopfzeile")
+	end
 end
+local restore = menu():FindFirstChild("PageActions", true)
+check(restore ~= nil and restore:FindFirstChild("PageAction") ~= nil, "OPTIONEN: STANDARD WIEDERHERSTELLEN in der Kopfzeile")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt (auf OPTIONEN)")
 local lobbyGui = playerGui:FindFirstChild("GameMenu")
 check(lobbyGui ~= nil and lobbyGui:FindFirstChild("SettingsPage", true) ~= nil, "OPTIONEN zurück in der Lobby")
+local settingsPage = lobbyGui and lobbyGui:FindFirstChild("SettingsPage", true)
+check(settingsPage and settingsPage.PageTitle.Visible and settingsPage:FindFirstChild("PageAction") ~= nil,
+	"OPTIONEN in der Lobby wieder mit Titel und Knopf")
 check(not lobbyGui.Enabled, "Lobby bleibt in der offenen Welt zu")
 key(Enum.KeyCode.M)
 check(activeTab() == "Settings", "M: wieder OPTIONEN")

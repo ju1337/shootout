@@ -1,7 +1,7 @@
 -- ExtMarketPage (ModuleScript, nur Client)
 -- Reiter MARKT im Extinction-Menü: Spielermarkt der offenen Welt (ExtMarketService). Der Host (ExtinctionClient) gibt
 -- einen leeren Bereich (1304 x 668) und ctx mit Tasche, Angeboten, Symbolen und Senden; die Seite baut alles darin.
---   Links: Umschalter ANGEBOTE / MEINE ANGEBOTE n/Max, Sortierung (BILLIG ZUERST · TEUER ZUERST · NEU), Münzen, Suchfeld und
+--   Links: Umschalter ANGEBOTE / MEINE ANGEBOTE n/Max, Sortierung (BILLIG ZUERST · TEUER ZUERST · NEU), Suchfeld und
 --     Kategorien (ALLE · WAFFEN · MUNITION · AUSRÜSTUNG · FAHRZEUGE), darunter ein Kartenraster (Symbol, Name, Anzahl,
 --     Werte, Verkäufer, Preis, KAUFEN). Eigene Angebote sind dort markiert (ohne KAUFEN) und werden unter MEINE
 --     ANGEBOTE verwaltet: ZURÜCKNEHMEN und PREIS ÄNDERN (Feld, - / +, OK).
@@ -35,7 +35,7 @@ local CATEGORIES = {
 	{ Key = "Weapon", Text = "WAFFEN", Width = 90 },
 	{ Key = "Ammo", Text = "MUNITION", Width = 100 },
 	{ Key = "Gear", Text = "AUSRÜSTUNG", Width = 120 },
-	{ Key = "Attachment", Text = "AUFSÄTZE", Width = 100 },
+	{ Key = "Attachment", Text = "AUFSÄTZE", Width = 112 },
 	{ Key = "Vehicle", Text = "FAHRZEUGE", Width = 108 },
 }
 -- Pfeile nur in Gotham (Oswald kennt sie nicht): der Sortier-Knopf hat kleine Schrift, also Gotham Bold
@@ -50,7 +50,7 @@ local MAX_CARDS = 48 -- mehr Karten (mit 3D-Waffen) baut die Seite nicht auf ein
 local LEFT_W = 860
 local RIGHT_X, RIGHT_W = 884, 420
 local CARD_W, CARD_H, CARD_GAP = 205, 262, 10
-local BAG_COLUMNS, BAG_CELL, BAG_GAP = 6, 58, 6
+local BAG_COLUMNS, BAG_CELL, BAG_GAP = 6, 64, 7 -- füllt die rechte Spalte (RIGHT_W) ganz aus
 
 -- Heilung, Rüstung, Spritzen und Dungeon-Schlüssel laufen unter AUSRÜSTUNG, Granaten und Molotows unter WAFFEN
 local function groupOf(kind)
@@ -277,9 +277,10 @@ function ExtMarketPage.Build(body, ctx)
 		Text = "MEINE ANGEBOTE", TextSize = 18 }, content, function()
 		switchTab("Mine")
 	end)
+	-- Münzen stehen schon in der Kopfzeile des Menüs: hier nicht noch einmal (bleibt unsichtbar für die Aktualisierung)
 	local coinsText = label({ Name = "Coins", Position = UDim2.fromOffset(456, 0), Size = UDim2.fromOffset(180, 44), Text = "",
-		TextSize = 24, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6 }, content)
-	UITheme.Coin(content, 18, { Position = UDim2.fromOffset(642, 13), ZIndex = 6 })
+		TextSize = 24, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6,
+		Visible = false }, content)
 	local sortButton = button({ Name = "Sort", Position = UDim2.fromOffset(LEFT_W - 190, 0), Size = UDim2.fromOffset(190, 44),
 		Color = C.Panel, StrokeColor = C.Border, Text = "", TextSize = 14 }, content, function()
 		local index = 1
