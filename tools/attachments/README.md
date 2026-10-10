@@ -14,6 +14,7 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/barrel_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/LongBarrel.glb LongBarrel 0.65 1 -0.13 2.37
     python3 tools/attachments/barrel_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/ShortBarrel.glb ShortBarrel 0.5 -1 -0.953 2.60
     python3 tools/attachments/barrel_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/HeavyBarrel.glb HeavyBarrel 0.57 -1 -0.952 2.80 0.106
+    python3 tools/attachments/grip_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/VerticalGrip.glb VerticalGrip 0.46 1
 
 - **ar15_v2**: Magazin entlang der schrägen Kante des Schachts als `Magazine` herausgeschnitten, Marker Point_* (Kimme
   und Korn als Visierlinie), 4,13 Studs lang. Die Maße (Kimme, Korn, Griff, Schacht) gelten für dieses eine Meshy-Modell.
@@ -37,7 +38,9 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   Mündung 0,12 weiter hinten (nur der Feuerdämpfer schaut aus dem Handschutz), Laufmutter im Handschutz (Radius 0,084). Schwerer Lauf: 839 Dreiecke, Faktor 0,57, 0,117 dick (statt
   0,09), Gewindeschutzkappe vorn, Mündung 0,08 weiter vorn; die Laufmutter (Radius 0,104) steckt in der Wand des
   Handschutzes (außen 0,112) und ist nur durch die Schlitze zu sehen.
+- **grip_full**: Griffe in voller Qualität (Vertikalgriff: 860 Dreiecke, 0,46 hoch), Oberkante der Schienenklemme
+  bündig an Point_LeftHand (Unterseite des Handschutzes), Klemmschraube seitlich; Point_Mount, Point_Front.
 - **grip_v2**: Point_Mount (Oberkante der Schienenklemme), Point_Front (Richtung zum Lauf).
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
-`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`). Lader: `src/shared/GunModels.lua`.
+`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`). Lader: `src/shared/GunModels.lua`.

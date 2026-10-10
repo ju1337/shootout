@@ -33,6 +33,8 @@ build("LongBarrel", att, {{"LongBarrel", 0.0000,0.5261,2.4541, 0.1448,0.1389,1.2
 build("ShortBarrel", att, {{"Point_Front", 0.0000,0.5261,3.0234, 0.0300,0.0300,0.0300},{"Point_Mount", 0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", 0.0000,0.5261,2.5999, 0.0300,0.0300,0.0300},{"ShortBarrel", 0.0000,0.5261,2.1240, 0.1600,0.1632,0.9518}}, CFrame.new(14, -2, -5) * CFrame.Angles(0, math.rad(180), 0))
 -- Schwerer Lauf (art/sources/Attachments/HeavyBarrel.glb)
 build("HeavyBarrel", att, {{"HeavyBarrel", 0.0000,0.5261,2.2576, 0.1993,0.2023,1.0844},{"Point_Front", 0.0000,0.5261,3.0234, 0.0300,0.0300,0.0300},{"Point_Mount", 0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", 0.0000,0.5261,2.7998, 0.0300,0.0300,0.0300}}, CFrame.new(3, 9, -14) * CFrame.Angles(0, math.rad(180), 0))
+-- Vertikalgriff (art/sources/Attachments/VerticalGrip.glb): Oberkante der Klemme an Point_LeftHand
+build("VerticalGrip", att, {{"Point_Front", 0.0000,0.4131,1.7871, 0.0200,0.0200,0.0200},{"Point_Mount", 0.0000,0.4131,1.5871, 0.0200,0.0200,0.0200},{"VerticalGrip", -0.0000,0.1831,1.5871, 0.1333,0.4600,0.1739}}, CFrame.new(-6, 11, 2) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -142,6 +144,20 @@ for _, case in { { "LongBarrel", 3.0725 - 2.7234 }, { "ShortBarrel", 2.5999 - 2.
 		else
 			check(false, id .. ": Kompensator fehlt")
 		end
+	end
+end
+-- Vertikalgriff: Klemme bündig unter dem Handschutz an der linken Hand, mittig, senkrecht nach unten
+do
+	local v = GunModels.Build("Rifle", nil, { "VerticalGrip" })
+	local grip = v:FindFirstChild("AttVerticalGrip_VerticalGrip")
+	check(grip ~= nil and v:FindFirstChild("AttGrip") == nil, "Vertikalgriff-Modell nicht angebaut")
+	if grip then
+		local r = v.PrimaryPart.CFrame:ToObjectSpace(grip.CFrame)
+		local hand = GunModels.Info.Rifle.LeftHand
+		local top = r.Position.Y + 0.46 / 2
+		print("HINWEIS Vertikalgriff " .. tostring(r.Position) .. ", oben " .. top .. ", LeftHand " .. tostring(hand))
+		check(math.abs(r.Position.X) < 0.01 and math.abs(top - hand.Y) < 0.01 and math.abs(r.Position.Z - hand.Z) < 0.03,
+			"Vertikalgriff sitzt nicht unter dem Handschutz an der linken Hand")
 	end
 end
 if failures == 0 then print("HINWEIS alles ok") end
