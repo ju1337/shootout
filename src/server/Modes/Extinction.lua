@@ -224,10 +224,8 @@ local function updateZone(player, info)
 			notify(player, "Banner", { Caption = "Safe Zone", Title = safe and string.upper(safe.Title) or "SAFE ZONE",
 				Sub = safe and safe.Key ~= "" and "Kein PvP · Spawnpunkt" or "Kein PvP · Handel · Lager",
 				Style = "Info" })
-		else
-			notify(player, "Banner", { Caption = "Safe Zone verlassen", Title = "VORSICHT",
-				Sub = "Zombies · PvP in " .. ExtinctionConfig.PvPDelay .. " Sekunden", Style = "Info" })
 		end
+		-- Verlassen: kein Banner mehr (Julio, 2026-10-10); den PvP-Countdown zeigt die Zonen-Anzeige oben
 	elseif not inside and not paused and info.PvPAt and os.clock() >= info.PvPAt then
 		info.PvPAt = nil
 		player:SetAttribute("PvP", true)

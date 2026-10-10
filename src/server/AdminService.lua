@@ -396,14 +396,19 @@ function AdminService.Init(manager)
 
 		-- ---------- Server (auch auf allen Servern, siehe GLOBAL) ----------
 		-- Ankündigung als Banner an alle
-		Announce = function(text, _, admin)
+		-- Ankündigung als großes Banner an alle: der Text groß, darüber "Ankündigung · <Rang> <Name>". rank (optional) =
+		-- Rang-Name des Absenders (bei ALLE SERVER von dort mitgeschickt)
+		Announce = function(text, from, admin)
 			if admin then
 				text = filterText(admin, text)
+				local rank = StaffConfig.Of(admin)
+				from = (rank and (rank.Name .. " ") or "") .. admin.Name
 			end
 			if typeof(text) ~= "string" or text == "" then
 				return "Text eingeben."
 			end
-			Remotes.Notify:FireAllClients("Banner", { Caption = "Ankündigung", Title = "Ankündigung", Sub = text, Style = "Info" })
+			Remotes.Notify:FireAllClients("Banner", { Caption = "Ankündigung" .. (typeof(from) == "string" and from ~= ""
+				and (" · " .. from) or ""), Title = text, Style = "Alert", Hold = 7 })
 			return "Ankündigung gesendet"
 		end,
 		-- Uhrzeit der offenen Welt setzen (0..24)
@@ -846,18 +851,20 @@ function AdminService.Init(manager)
 				end
 				return
 			end
-			local valueA = args.A
+			local valueA, valueB = args.A, args.B
 			if inner == "Announce" then
+				local rank = StaffConfig.Of(player)
+				valueB = (rank and (rank.Name .. " ") or "") .. player.Name -- Absender für die anderen Server
 				valueA = filterText(player, valueA) -- einmal hier filtern, die anderen Server zeigen den Text nur an
 				if not valueA then
 					Remotes.AdminStatus:FireClient(player, "Text eingeben.")
 					return
 				end
 			end
-			local okRun, message = pcall(actions[inner], valueA, args.B, nil)
+			local okRun, message = pcall(actions[inner], valueA, valueB, nil)
 			message = okRun and tostring(message) or ("Fehler: " .. tostring(message))
 			task.spawn(pcall, MessagingService.PublishAsync, MessagingService, AdminService.Topic,
-				{ Action = inner, A = valueA, B = args.B, Server = game.JobId, By = player.Name })
+				{ Action = inner, A = valueA, B = valueB, Server = game.JobId, By = player.Name })
 			Remotes.AdminStatus:FireClient(player, "Alle Server: " .. message)
 			AdminService.Record(player.Name, inner .. " (alle Server)", valueA, message)
 			DiscordLog.Log("Moderation", "Admin: " .. inner .. " (alle Server)", message,

@@ -597,26 +597,32 @@ local function buildBanner(root)
 		local big = data.Big == true
 		local hasCaption = data.Caption ~= nil and data.Caption ~= ""
 		local hasSub = data.Sub ~= nil and data.Sub ~= ""
-		local titleSize = big and 76 or 56
+		local titleText = upper(data.Title or "")
+		-- lange Titel (z.B. Admin-Ankündigung): kleiner und bis zu drei Zeilen statt aus dem Bild zu laufen
+		local length = utf8.len(titleText) or #titleText
+		local titleSize = math.min(big and 76 or 56, math.max(28, math.floor(1800 / math.max(length, 1))))
+		local titleRows = math.clamp(math.ceil(length * 0.6 * titleSize / 1100), 1, 3)
+		local titleH = titleRows * (titleSize + 8)
 		fade.Cancel()
 
 		caption.Text = hasCaption and upper(data.Caption) or ""
 		caption.Visible = hasCaption
-		title.Text = upper(data.Title or "")
+		title.Text = titleText
 		title.TextSize = titleSize
-		title.Size = UDim2.new(1, 0, 0, titleSize + 8)
+		title.TextWrapped = titleRows > 1
+		title.Size = UDim2.new(0.8, 0, 0, titleH)
 		sub.Text = hasSub and upper(data.Sub) or ""
 		sub.Visible = hasSub
 		-- von oben nach unten anordnen (Überschrift, Titel, Zeile darunter), alles um die Mitte des Bands
-		local height = 12 + (hasCaption and 20 or 0) + titleSize + 8 + (hasSub and 20 or 0) + 14
+		local height = 12 + (hasCaption and 20 or 0) + titleH + (hasSub and 20 or 0) + 14
 		stackHeight = height
 		local y = -height / 2 + 12
 		if hasCaption then
 			caption.Position = UDim2.new(0.5, 0, 0.5, y + 9)
 			y += 20
 		end
-		title.Position = UDim2.new(0.5, 0, 0.5, y + (titleSize + 8) / 2)
-		y += titleSize + 8
+		title.Position = UDim2.new(0.5, 0, 0.5, y + titleH / 2)
+		y += titleH
 		sub.Position = UDim2.new(0.5, 0, 0.5, y + 10)
 
 		tint.BackgroundColor3 = color
@@ -646,7 +652,7 @@ local function buildBanner(root)
 		-- Schlag; bei Sieg/Niederlage zwei Töne steigend bzw. fallend
 		if type(data.Sound) == "string" or data.Style == "Warning" or data.Style == "Good" then
 			Sfx.UI(type(data.Sound) == "string" and data.Sound or (data.Style == "Warning" and "StingWarning" or "StingGood"))
-			return big and BANNER_HOLD + 0.9 or BANNER_HOLD
+			return data.Hold or (big and BANNER_HOLD + 0.9 or BANNER_HOLD)
 		end
 		tone(THUD, 0.42, 0.7)
 		if data.Style == "Win" then
@@ -661,7 +667,7 @@ local function buildBanner(root)
 		else
 			tone(PING, 1.2, 0.35, 0.08)
 		end
-		return big and BANNER_HOLD + 0.9 or BANNER_HOLD
+		return data.Hold or (big and BANNER_HOLD + 0.9 or BANNER_HOLD)
 	end
 
 	local function hide(instant)
