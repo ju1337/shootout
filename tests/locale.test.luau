@@ -81,6 +81,9 @@ expect("2× Quatschding, Fahrrad", "2× Quatschding, Fahrrad", "unbekanntes Wort
 expect("1.  ADLER  ·  3 VERKÄUFE", "1.  ADLER  ·  3 VERKÄUFE", "Liste mit Spielername (Adler ist auf dem Server)")
 expect("LMB  SCHIESSEN  ·  □  NACHLADEN / INTERAGIEREN  ·  △ HALTEN  FAHRZEUG EINPACKEN",
 	"LMB  FIRE  ·  □  RELOAD / INTERACT  ·  HOLD △  STORE VEHICLE", "Tasten-Zeile nach benutzten Tasten")
+expect("LMB  SCHIESSEN  ·  R  NACHLADEN  ·  1-9  BENUTZEN  ·  E  INTERAGIEREN  ·  K  FAHRZEUG EINPACKEN  ·  N  KARTE  ·  J  SQUAD",
+	"LMB  FIRE  ·  R  RELOAD  ·  1-9  USE  ·  E  INTERACT  ·  K  STORE VEHICLE  ·  N  MAP  ·  J  SQUAD",
+	"Tasten-Zeile mit einem Stück ohne Übersetzung (J  SQUAD)")
 check(Locale.Translate("Adler") == "Eagle", "Wort ohne gleichnamigen Spieler übersetzt")
 SIM.AddPlayer("Adler", 1003)
 check(Locale.Translate("Adler") == "Adler", "Spielername bleibt, auch wenn er wie ein Wort heißt")

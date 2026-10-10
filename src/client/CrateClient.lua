@@ -348,9 +348,11 @@ local function build(crate)
 	label({ Position = UDim2.fromOffset(40, 272), Size = UDim2.fromOffset(300, 18), Text = "CHANCEN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted,
 		ZIndex = 5 }, frame)
 	local x = 40
-	for _, entry in CrateConfig.Odds(crate) do
+	local odds = CrateConfig.Odds(crate)
+	local chipW = math.floor((VIEW_W - 8 * (#odds - 1)) / math.max(#odds, 1))
+	for _, entry in odds do
 		local rarity = Cosmetics.Rarities[entry.Rarity]
-		local chip = make("Frame", { Position = UDim2.fromOffset(x, 294), Size = UDim2.fromOffset(204, 34), BackgroundColor3 = C.Card, ZIndex = 5 }, frame)
+		local chip = make("Frame", { Position = UDim2.fromOffset(x, 294), Size = UDim2.fromOffset(chipW, 34), BackgroundColor3 = C.Card, ZIndex = 5 }, frame)
 		UITheme.Corner(chip, UITheme.Radius.Small)
 		UITheme.Stroke(chip, rarity.Color, 1, 0.4)
 		label({ Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -90, 1, 0), Text = upper(rarity.Name), TextSize = 13, Font = F.Bold,
@@ -358,7 +360,7 @@ local function build(crate)
 		label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 0), Size = UDim2.fromOffset(80, 34),
 			Text = string.format("%.1f %%", entry.Chance * 100), TextSize = 16, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right,
 			ZIndex = 5 }, chip)
-		x += 212
+		x += chipW + 8
 	end
 
 	-- Inhalt der Kiste
@@ -370,7 +372,7 @@ local function build(crate)
 	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(40, 362), Size = UDim2.fromOffset(VIEW_W, 170), BackgroundTransparency = 1,
 		BorderSizePixel = 0, ScrollBarThickness = 5, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ZIndex = 5 }, frame)
-	make("UIGridLayout", { CellSize = UDim2.fromOffset(204, 50), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(math.floor((VIEW_W - 8 - 3 * 8) / 4), 50), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 	local pool = CrateConfig.Pool(crate)
 	local rank = {}
 	for index, id in CrateConfig.RarityOrder do

@@ -458,10 +458,6 @@ local function paintSlot(view, entry, isSelected, isEquipped)
 	end
 	view.Count.Text = countText
 	view.Name.Text = config and upper(config.Name) or ""
-	local nameWidth = UDim2.new(1, countText == "" and -12 or -(16 + 7 * #countText), 0, 14)
-	if view.Name.Size ~= nameWidth then
-		view.Name.Size = nameWidth
-	end
 	view.Overlay.Visible = entry ~= nil and entry.Out == true
 	local tier = Inv.tierColor(config)
 	view.Rarity.Visible = tier ~= nil
@@ -505,12 +501,13 @@ local function slotButton(parent, container, slot, size, position, zIndex, keyTe
 		frame)
 	local content = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex + 1 }, frame)
 	local small = size.X.Offset < 70
-	local count = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -5, 1, small and -3 or -4), Size = UDim2.fromOffset(46, 14),
+	-- Anzahl oben rechts: unten hat der Name die ganze Breite
+	local count = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -5, 0, small and 3 or 4), Size = UDim2.fromOffset(46, 14),
 		Text = "", TextSize = small and 11 or 12, Font = F.Bold, TextColor3 = Color3.fromRGB(206, 203, 196),
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = zIndex + 3 }, frame)
 	UITheme.Outline(count)
-	-- Name: so breit, wie die Anzahl daneben Platz lässt (paintSlot); lange Namen werden etwas kleiner statt gekürzt
-	local name = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -4), Size = UDim2.new(1, -46, 0, 14), Text = "",
+	-- Name über die ganze Breite; lange Namen werden etwas kleiner statt gekürzt
+	local name = label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -4), Size = UDim2.new(1, -12, 0, 14), Text = "",
 		TextSize = 11, TextScaled = true, Font = F.Medium, TextColor3 = Color3.fromRGB(190, 187, 180),
 		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = zIndex + 3, Visible = not small }, frame)
 	make("UITextSizeConstraint", { MinTextSize = 8, MaxTextSize = 11 }, name)

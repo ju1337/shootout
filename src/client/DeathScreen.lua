@@ -69,8 +69,11 @@ local function build()
 		TextSize = 26, Font = F.Display, TextColor3 = C.Text, ZIndex = 3 }, killerCard)
 	killerInfo = UITheme.Label({ Name = "Info", Position = UDim2.fromOffset(20, 56), Size = UDim2.new(1, -200, 0, 18), Text = "",
 		TextSize = 14, Font = F.Medium, TextColor3 = C.Muted, ZIndex = 3 }, killerCard)
+	UITheme.Label({ Name = "HealthCaption", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 42),
+		Size = UDim2.fromOffset(150, 14), Text = "LEBEN", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, killerCard)
 	local barBack = make("Frame", { Name = "HealthBack", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 62),
-		Size = UDim2.fromOffset(150, 6), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 3 }, killerCard)
+		Size = UDim2.fromOffset(150, 6), BackgroundColor3 = C.Background, BorderSizePixel = 0, ZIndex = 3 }, killerCard)
 	UITheme.Corner(barBack, 3)
 	killerBar = make("Frame", { Name = "Health", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Bad, BorderSizePixel = 0,
 		ZIndex = 3 }, barBack)

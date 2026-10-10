@@ -199,9 +199,10 @@ end
 -- jedes Stück einen Eintrag hat (sonst käme halb Deutsch, halb Englisch heraus). Gibt sonst nil zurück.
 -- (auch Tasten-Zeilen wie "LMB  SCHIESSEN  ·  R  NACHLADEN / INTERAGIEREN": Taste und Text mit zwei Leerzeichen)
 local LIST_SEPARATORS = { "  ·  ", " · ", ", ", "  ", " / " }
+-- (zweiter Rückgabewert: alle Stücke passen, auch wenn keins übersetzt wurde – "J  SQUAD" in einer längeren Zeile)
 function translateList(text, depth)
 	if depth > 3 then
-		return nil
+		return nil, false
 	end
 	for _, separator in LIST_SEPARATORS do
 		if string.find(text, separator, 1, true) then
@@ -210,18 +211,19 @@ function translateList(text, depth)
 				-- eigener Eintrag zuerst ("KARTE" ist kein Tastenname), aber nie für Spielernamen ("ADLER" bleibt ADLER)
 				local translated = not isPlayerName(piece) and strings[piece] or nil
 				if translated == nil and not neutral(piece) then
-					translated = translateList(piece, depth + 1) or lookup(piece, depth, true)
-					if translated == nil then
-						return nil
+					local inner, fits = translateList(piece, depth + 1)
+					translated = inner or lookup(piece, depth, true)
+					if translated == nil and not fits then
+						return nil, false
 					end
 				end
 				changed = changed or translated ~= nil
 				table.insert(parts, translated or piece)
 			end
-			return changed and table.concat(parts, separator) or nil
+			return changed and table.concat(parts, separator) or nil, true
 		end
 	end
-	return nil
+	return nil, false
 end
 
 -- Übersetzung für die aktuelle Sprache (oder lang). Ohne Eintrag oder auf Deutsch kommt der Text unverändert zurück.

@@ -581,10 +581,10 @@ function LobbyPages.Shop(page)
 			UITheme.Tag({ Position = UDim2.fromOffset(24, 22), Text = offer.Manual and "SONDERANGEBOT" or "ANGEBOT DES TAGES",
 				TextSize = 16, BackgroundColor3 = SHOP_RED,
 				TextColor3 = Color3.new(1, 1, 1) }, panel)
-			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -150, 0, 28), Size = UDim2.fromOffset(160, 16),
+			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -170, 0, 28), Size = UDim2.fromOffset(160, 16),
 				Text = "ENDET IN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, panel)
 			countdown = label({ Name = "Countdown", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 18),
-				Size = UDim2.fromOffset(120, 32), Text = ShopOffers.FormatLeft(offer.EndsAt - workspace:GetServerTimeNow()),
+				Size = UDim2.fromOffset(140, 32), Text = ShopOffers.FormatLeft(offer.EndsAt - workspace:GetServerTimeNow()),
 				TextSize = 28, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, panel)
 			local preview = stage({ Position = UDim2.fromOffset(20, 68), Size = UDim2.new(1, -40, 0, 340) }, panel,
 				item.Color or rarity.Color, rarity.Color)
