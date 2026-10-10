@@ -37,6 +37,7 @@ local modules = {
 }
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig
+local retries = {}   -- [Player] = fehlgeschlagene Wechsel in die offene Welt (neuer Versuch, höchstens 3)
 
 -- Wird nach jedem erfolgreichen Moduswechsel gefeuert: (player, modeId) – z.B. für Squads
 local joinedEvent = Instance.new("BindableEvent")
@@ -120,16 +121,34 @@ function ModeManager.Join(player, modeId, here)
 	end
 
 	switching[player] = true
-	if current and modules[current] then
-		modules[current].RemovePlayer(player)
+	local ok, err = pcall(function()
+		if current and modules[current] then
+			modules[current].RemovePlayer(player)
+		end
+		player.Team = nil
+		player:SetAttribute("CanFight", false)
+		player:SetAttribute("ModeText", "")
+		KillService.ResetPlayer(player)
+		player:SetAttribute("Mode", modeId)
+		module.AddPlayer(player)
+	end)
+	switching[player] = nil -- auch nach einem Fehler: sonst ginge für diesen Spieler bis zum Neubeitritt kein Wechsel mehr
+	if not ok then
+		warn("Moduswechsel nach " .. tostring(modeId) .. " fehlgeschlagen: " .. tostring(err))
+		pcall(module.RemovePlayer, player) -- halb hinzugefügt: aufräumen
+		player:SetAttribute("Mode", nil)
+		-- die offene Welt ist das Zuhause: ein paar Mal neu versuchen statt ohne Charakter stehen zu bleiben
+		retries[player] = (retries[player] or 0) + 1
+		if modeId == Modes.Home and retries[player] <= 3 then
+			task.delay(2, function()
+				if player.Parent and player:GetAttribute("Mode") == nil then
+					ModeManager.Join(player, Modes.Home, true)
+				end
+			end)
+		end
+		return
 	end
-	player.Team = nil
-	player:SetAttribute("CanFight", false)
-	player:SetAttribute("ModeText", "")
-	KillService.ResetPlayer(player)
-	player:SetAttribute("Mode", modeId)
-	module.AddPlayer(player)
-	switching[player] = nil
+	retries[player] = nil
 	Telemetry.Event(player, "ModeJoin", 1, modeId)
 	joinedEvent:Fire(player, modeId)
 end
@@ -205,6 +224,7 @@ function ModeManager.Init()
 			module.RemovePlayer(player)
 		end
 		switching[player] = nil
+		retries[player] = nil
 	end)
 end
 

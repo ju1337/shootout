@@ -82,7 +82,9 @@ local function onLoaded(player)
 	for id, state in data do
 		if state == "Pending" and BadgeConfig.Get(id) and (tonumber(BadgeConfig.Get(id).BadgeId) or 0) > 0 then
 			data[id] = nil
-			Badges.Award(player, id)
+			if not Badges.Award(player, id) then
+				data[id] = "Pending" -- BadgeService gerade gestört: beim nächsten Laden wieder versuchen (Tutorial/Werber kommen nie wieder)
+			end
 		end
 	end
 	if type(profile.Achievements) == "table" then

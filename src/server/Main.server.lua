@@ -18,7 +18,12 @@ task.spawn(function()
 end)
 local function start(name, init, ...)
 	current = name
-	init(...)
+	-- ein Fehler in einem Dienst darf den Rest (vor allem ModeManager ganz am Ende) nicht aufhalten, sonst hingen alle
+	-- Spieler auf dem Ladebildschirm
+	local ok, err = pcall(init, ...)
+	if not ok then
+		warn("[Start] " .. tostring(name) .. " fehlgeschlagen: " .. tostring(err))
+	end
 end
 
 local ServerShared = ServerStorage:WaitForChild("ServerShared")

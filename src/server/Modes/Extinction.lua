@@ -365,8 +365,17 @@ local function spawnPlayer(player)
 		return
 	end
 	local folder = info.Home and info.Home ~= "" and map:FindFirstChild("Spawns_" .. info.Home) or map.Spawns
+	if #folder:GetChildren() == 0 then
+		folder = map.Spawns -- leerer Safehouse-Ordner: im Camp starten statt gar nicht
+	end
 	local character = SpawnUtil.Spawn(player, SpawnUtil.Pick(folder))
 	if not character then
+		-- ohne automatisches Laden käme sonst nie ein Charakter: kurz warten, dann noch einmal
+		task.delay(1, function()
+			if members[player] == info and player.Parent and not (player.Character and player.Character.Parent) then
+				spawnPlayer(player)
+			end
+		end)
 		return
 	end
 	-- keine automatische Lebensregeneration: Roblox' Standard-Skript "Health" heilt sonst ständig nach,
@@ -397,6 +406,12 @@ local function spawnPlayer(player)
 	end
 	local humanoid = character:WaitForChild("Humanoid")
 	humanoid.Died:Connect(function()
+		-- Wiederbeleben zuerst planen: ein Fehler weiter unten (Tasche, Telemetrie) darf niemanden auf der Leiche lassen
+		task.delay(ExtinctionConfig.RespawnTime, function()
+			if members[player] and player.Character == character then
+				spawnPlayer(player)
+			end
+		end)
 		local current = members[player]
 		local root = character:FindFirstChild("HumanoidRootPart")
 		-- ohne Root (ins Leere gefallen): letzte bekannte Stelle, sonst wäre das Runterspringen ein Ausweg mit voller Tasche
@@ -413,11 +428,6 @@ local function spawnPlayer(player)
 		for _, callback in Extinction.OnDeath do
 			task.spawn(callback, player, position, outside)
 		end
-		task.delay(ExtinctionConfig.RespawnTime, function()
-			if members[player] and player.Character == character then
-				spawnPlayer(player)
-			end
-		end)
 	end)
 end
 
@@ -569,6 +579,9 @@ function Extinction.Init(modeManager)
 				player:SetAttribute("TutorialEquip", true)
 			end
 			return
+		end
+		if player:GetAttribute("ExtTutorial") ~= true then
+			return -- kein laufendes Tutorial: nichts abzuschließen (sonst holt sich jeder Client das Tutorial-Badge)
 		end
 		if player:GetAttribute("TutorialEquip") then
 			player:SetAttribute("TutorialEquip", nil)

@@ -233,6 +233,21 @@ for s = 1, ExtinctionConfig.BagSlots do
 	end
 end
 
+-- ---------- Tutorial-Meldungen nur während eines laufenden Tutorials ----------
+do
+	local wasRunning = alice:GetAttribute("ExtTutorial")
+	alice:SetAttribute("ExtTutorial", nil)
+	local profile = ProgressService.Get(alice)
+	local doneBefore = profile.TutorialDone
+	profile.TutorialDone = nil
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Step", 1, "Equip")
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Done")
+	check(alice:GetAttribute("TutorialEquip") == nil and profile.TutorialDone == nil,
+		"ohne laufendes Tutorial: keine Waffen-Freigabe, kein Abschluss (Badge)")
+	profile.TutorialDone = doneBefore
+	alice:SetAttribute("ExtTutorial", wasRunning)
+end
+
 -- ---------- Hotbar: Waffe nur draußen ----------
 InventoryService.Use(alice, 1)
 check(WeaponService.CarriedWeapon(alice) == nil, "in der Safe Zone keine Waffe in der Hand")
