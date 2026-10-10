@@ -1126,7 +1126,6 @@ local MENU_TABS = {
 	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
-	{ Id = "Loadout", Text = "LOADOUT", Page = true, PageId = "Inventory" },
 	{ Id = "Skins", Text = "SKINS" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },

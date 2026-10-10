@@ -1,6 +1,6 @@
 -- GameMenu (ModuleScript, nur Client)
 -- Lobby im nüchternen Taktik-Look (UITheme):
---   oben:   Logo, Reiter SPIELEN · LOADOUT · SHOP · BATTLE PASS (aktiv: weiß mit Bernstein-Strich),
+--   oben:   Logo, Reiter SPIELEN · SHOP · BATTLE PASS (aktiv: weiß mit Bernstein-Strich),
 --           rechts Münzen, Level, STATISTIK, CODES, OPTIONEN und Schließen
 --   links:  Spielmodi (aktiver Modus heller mit Bernstein-Balken links) und der Squad (bis 4, Anführer mit
 --           Stern, Level, BEREIT/NICHT BEREIT – den eigenen Status schaltet man per Klick, freie Plätze laden ein)
@@ -9,7 +9,7 @@
 --           mit Modus, Spielerzahl und Ping
 -- Jeder Reiter ist eine eigene Seite unter der Kopfzeile (Modi und Squad gehören nur zu SPIELEN):
 --   Keine AGENTEN-Seite mehr: es gibt nur noch einen Agenten (AgentConfig.MainId), Aussehen über Skins
---   LOADOUT, SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
+--   SHOP, BATTLE PASS: Seiten aus LobbyPages (direkt in der Lobby, kein eigenes Fenster)
 --   STATISTIK, CODES, OPTIONEN (oben rechts): ebenfalls Seiten; den Inhalt baut das SideMenu (GameMenu.AddPage)
 -- Aufträge, tägliche Belohnung, Belohnungen, Titel und Squad öffnen weiter die Fenster des SideMenu
 -- über der Lobby (GameMenu.SetPanelHandler). Öffnen/Schließen mit M oder dem SPIELEN-Knopf im Markt (offene Welt: LOADOUT
@@ -60,8 +60,7 @@ local QUICK = { Id = "Quick", Name = "SCHNELLES SPIEL", Tag = "Arcade-Modus mit 
 -- Navigation: Seite in der Lobby oder Fenster des SideMenu (Arcade = nur solange Modes.ArcadeEnabled an ist)
 local ALL_NAV = {
 	{ Id = "Play", Text = "SPIELEN", Arcade = true },
-	-- AGENTEN gibt es nicht mehr (nur noch ein Agent, Aussehen über Skins)
-	{ Id = "Inventory", Text = "LOADOUT" },
+	-- AGENTEN und LOADOUT gibt es nicht mehr (nur noch ein Agent, Aussehen über Skins; Ausrüstung im Inventar der offenen Welt)
 	{ Id = "Shop", Text = "SHOP" },
 	{ Id = "Pass", Text = "BATTLE PASS" },
 }
@@ -154,9 +153,9 @@ local function pageOffered(name)
 	return true
 end
 
--- Erste Seite der Lobby (SPIELEN bzw. ohne Arcade LOADOUT)
+-- Erste Seite der Lobby (SPIELEN bzw. ohne Arcade SHOP)
 local function firstPage()
-	return NAV[1] and NAV[1].Id or "Inventory"
+	return NAV[1] and NAV[1].Id or "Shop"
 end
 
 local function showPage(name)

@@ -1,11 +1,11 @@
 -- Menü der offenen Welt (ExtinctionClient): TAB öffnet es auf INVENTAR, M auf dem zuletzt offenen Reiter, beides schließt
--- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE · SKINS (eigene Seiten) und LOADOUT · SHOP ·
+-- es wieder. Reiter INVENTAR · MARKT · AUFTRÄGE · LOOT · GUIDE · SQUAD · ERFOLGE · SKINS (eigene Seiten) und SHOP ·
 -- BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben; ohne
 -- doppelten großen Titel, Untertitel in der Kopfzeile).
 -- Kein AGENTEN mehr (nur noch ein Agent): weder im Menü noch in der Lobby. Controller: L1/R1 blättert, Auswahl im Inhalt.
 -- SKINS: Agenten-Skins als Kacheln mit Vorschau, AUSRÜSTEN schickt Equip an den Server.
--- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (LOADOUT bleibt), AUFTRÄGE ohne Reiter
--- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt LOADOUT.
+-- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (kein LOADOUT mehr), AUFTRÄGE ohne Reiter
+-- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt SHOP.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
 local failures = 0
 local function check(cond, msg)
@@ -128,7 +128,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,LOADOUT,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,LOOT,GUIDE,SQUAD,ERFOLGE,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -178,12 +178,12 @@ local questTexts = questBoard and shownTexts(questBoard) or {}
 check(title() == "AUFTRÄGE" and questBoard ~= nil and not questTexts.EXTINCTION and not questTexts.ARCADE and questTexts["TÄGLICH"],
 	"AUFTRÄGE: kein Reiter ARCADE, keine Reiterzeile, Spalten da")
 
-for _, id in { "Loadout", "Shop", "Pass", "Stats", "Codes", "Settings" } do
+for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	step(0.1)
 	check(activeTab() == id, id .. ": Reiter aktiv")
 	local holder = menu() and menu():FindFirstChild("PageHolder", true)
-	local page = holder and holder:FindFirstChild((if id == "Loadout" then "Inventory" else id) .. "Page")
+	local page = holder and holder:FindFirstChild(id .. "Page")
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
 	local scale = holder and holder:FindFirstChildOfClass("UIScale")
 	check(scale ~= nil and scale.Scale < 1 and scale.Scale > 0.8, id .. ": verkleinert")
@@ -207,18 +207,18 @@ check(not lobbyGui.Enabled, "Lobby bleibt in der offenen Welt zu")
 key(Enum.KeyCode.M)
 check(activeTab() == "Settings", "M: wieder OPTIONEN")
 -- Kein AGENTEN mehr (nur ein Agent); Lobby ohne Arcade: kein SPIELEN, ARCADE, SCHNELLES SPIEL; Open("Play"/"Modes"/
--- "Agents") und Open() zeigen LOADOUT
+-- "Agents") und Open() zeigen SHOP
 check(menu():FindFirstChild("Tab_Agents", true) == nil, "Menü: kein Reiter AGENTEN")
 key(Enum.KeyCode.M)
 step(0.1)
 GameMenu.Open()
 step(0.1)
 check(menu() == nil and lobbyGui.Enabled, "Lobby offen, Menü zu")
-local inventoryPage = lobbyGui:FindFirstChild("InventoryPage", true)
-check(inventoryPage ~= nil and inventoryPage.Visible, "GameMenu.Open(): LOADOUT")
+local inventoryPage = lobbyGui:FindFirstChild("ShopPage", true)
+check(inventoryPage ~= nil and inventoryPage.Visible, "GameMenu.Open(): SHOP (kein LOADOUT mehr)")
 local lobbyTexts = shownTexts(lobbyGui)
-check(lobbyTexts.LOADOUT and lobbyTexts.SHOP and lobbyTexts["BATTLE PASS"] and lobbyTexts.STATISTIK,
-	"Lobby: LOADOUT, SHOP, BATTLE PASS, STATISTIK da")
+check(not lobbyTexts.LOADOUT and lobbyTexts.SHOP and lobbyTexts["BATTLE PASS"] and lobbyTexts.STATISTIK,
+	"Lobby: kein LOADOUT, SHOP, BATTLE PASS, STATISTIK da")
 for _, text in { "AGENTEN", "SPIELEN", "ARCADE", "SCHNELLES SPIEL", "SPIELMODUS", "FREE-FOR-ALL", "HERRSCHAFT" } do
 	check(not lobbyTexts[text], "Lobby ohne Arcade und Agenten: kein " .. text)
 end
@@ -228,7 +228,7 @@ for _, tab in { "Play", "Modes", "Agents" } do
 	local playPage = lobbyGui:FindFirstChild("PlayPage", true)
 	local agentsPage = lobbyGui:FindFirstChild("AgentsPage", true)
 	check(inventoryPage.Visible and not (playPage and playPage.Visible) and not (agentsPage and agentsPage.Visible),
-		"GameMenu.Open(" .. tab .. "): LOADOUT")
+		"GameMenu.Open(" .. tab .. "): SHOP")
 end
 GameMenu.SetOpen(false)
 step(0.1)

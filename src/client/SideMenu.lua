@@ -1324,7 +1324,6 @@ local function buildColumn()
 	-- Anfangsbuchstabe der (übersetzten) Beschriftung in der Farbe des Eintrags (keine Emojis, UITheme)
 	local entries = {
 		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80) },
-		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214) },
 		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80) },
 		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112) },
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80) },
