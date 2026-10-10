@@ -156,6 +156,9 @@ function actions.UnlockAgent(player, agentId)
 	if not agent or not profile then
 		return "Unbekannter Agent.", false
 	end
+	if agentId ~= AgentConfig.MainId then -- wählbar ist nur der Haupt-Agent: sonst Münzen für nichts
+		return "Dieser Agent ist gerade nicht verfügbar.", false
+	end
 	-- dauerhaft freigeschaltet? (Agent der Woche ist nur vorübergehend gratis und kann gekauft werden)
 	if not agent.Price or (profile.Agents and profile.Agents[agentId]) then
 		return agent.Name .. " ist schon freigeschaltet.", false

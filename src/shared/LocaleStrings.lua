@@ -600,6 +600,7 @@ return {
 	["Diesen Skin kauft das System nicht an."] = "The system doesn't buy this skin.",
 	["Diesen Spieler gibt es nicht."] = "That player doesn't exist.",
 	["Diesen Stand gibt es nicht."] = "That shop doesn't exist.",
+	["Dieser Agent ist gerade nicht verfügbar."] = "This agent isn't available right now.",
 	["Dieser Modus hat keine Bots."] = "This mode has no bots.",
 	["Dieser Name geht nicht."] = "That name isn't allowed.",
 	["DIESER SERVER  ·  NACH VERKÄUFEN"] = "THIS SERVER  ·  BY SALES",

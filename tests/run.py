@@ -25,9 +25,11 @@ Aufruf:
   -v                                    Ausgabe auch bei bestandenen Tests zeigen
 """
 import argparse
+import atexit
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -203,6 +205,8 @@ def main():
     assets = rbxmx.assets_lua(os.path.join(ROOT, "assets"))
     out_dir = args.keep or tempfile.mkdtemp(prefix="shootout-tests-")
     os.makedirs(out_dir, exist_ok=True)
+    if not args.keep:
+        atexit.register(shutil.rmtree, out_dir, True)  # sonst bleiben je Lauf ~360 MB Bündel im Temp-Ordner liegen
     runs = []
     for test in tests:
         info = directives(read(os.path.join(HERE, test)))

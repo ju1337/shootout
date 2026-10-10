@@ -36,6 +36,12 @@ function PaidRandom.ShowRandom(player)
 	return player:GetAttribute("PaidRandomOk") ~= false
 end
 
+-- Robux-Produkte mit Zufall (Drehs) erst anbieten, wenn die Länder-Abfrage sie erlaubt hat: sonst könnte man sie in den
+-- ersten Sekunden kaufen und der Server sperrt die gekauften Drehs danach
+function PaidRandom.OfferRandom(player)
+	return player:GetAttribute("PaidRandomOk") == true
+end
+
 function PaidRandom.ShowTrade(player)
 	return player:GetAttribute("PaidTradeOk") ~= false
 end

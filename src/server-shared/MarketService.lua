@@ -648,6 +648,10 @@ local function sell(stand, slot, buyer, price)
 	if not PolicyGate.TradeAllowed(owner) then
 		return "Von " .. owner.Name .. " kann man nicht kaufen (Ländervorgabe von Roblox).", false
 	end
+	-- die Länder-Abfrage kann warten: inzwischen verkauft oder neu belegt?
+	if stand.Listings[slot] ~= listing or stand.Owner ~= owner then
+		return "Dieses Angebot gibt es nicht mehr.", false
+	end
 	local item = Cosmetics.Get(listing.Item)
 	local ok, reason = EconomyService.Exchange(owner, buyer, { Items = { [listing.Item] = 1 } }, { Rap = price },
 		MarketService.Key, RapConfig.FeeRate(price))

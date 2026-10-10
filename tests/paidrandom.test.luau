@@ -146,6 +146,9 @@ check(OddsPanel.IsOpen(), "Fenster offen")
 OddsPanel.Close()
 check(not OddsPanel.IsOpen(), "Fenster zu")
 check(PaidRandom.ShowRandom(belgian) == false and PaidRandom.ShowRandom(free) == true, "Anzeige folgt dem Attribut")
+local fresh = SIM.Join("Neu")
+fresh:SetAttribute("PaidRandomOk", nil) -- Länder-Abfrage noch ohne Antwort
+check(PaidRandom.OfferRandom(fresh) == false and PaidRandom.OfferRandom(free) == true, "Drehs für Robux erst nach erlaubter Länder-Abfrage")
 
 if failures > 0 then
 	error(failures .. " Fehler")
