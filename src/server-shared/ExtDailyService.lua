@@ -41,6 +41,7 @@ function ExtDailyService.Claim(player)
 			table.insert(items, { list[random:NextInteger(1, #list)], 1 })
 		end
 	end
+	profile.ExtDaily = { Date = ExtDailyConfig.Date(now), Day = day } -- vor dem Verteilen: kein zweites Abholen bei einem Fehler
 	local names, rest = {}, {}
 	for _, item in items do
 		local id, count = item[1], item[2]
@@ -61,9 +62,13 @@ function ExtDailyService.Claim(player)
 	if #rest > 0 then
 		-- Lager und Tasche voll: als Beutel neben den Spieler (er spawnt gerade, darum kurz auf den Charakter warten)
 		task.spawn(function()
-			local character = player.Character or player.CharacterAdded:Wait()
+			local deadline = os.clock() + 15 -- nicht ewig warten (Spieler kann gehen, bevor er gespawnt ist)
+			while player.Parent and not player.Character and os.clock() < deadline do
+				task.wait(0.5)
+			end
+			local character = player.Character
 			local root = character and character:WaitForChild("HumanoidRootPart", 10)
-			if root and player.Parent and InventoryService.DropItems then
+			if root and player.Parent and player:GetAttribute("Mode") == "Extinction" and InventoryService.DropItems then
 				InventoryService.DropItems(player, rest, root.Position)
 				InventoryService.Status(player, "Lager und Tasche sind voll – der Rest der Kiste liegt als Beutel neben dir.")
 			end
@@ -73,7 +78,6 @@ function ExtDailyService.Claim(player)
 		ProgressService.AddCoins(player, reward.Coins, "Tägliche Kiste")
 		table.insert(names, reward.Coins .. " Münzen")
 	end
-	profile.ExtDaily = { Date = ExtDailyConfig.Date(now), Day = day }
 	publish(player, profile.ExtDaily)
 	Remotes.Notify:FireClient(player, "Banner", { Caption = "Tägliche Kiste · Tag " .. day .. " von " .. #ExtDailyConfig.Days,
 		Title = day == #ExtDailyConfig.Days and "GROSSER PREIS" or "DEINE KISTE IST DA", Sub = "Im Lager: " .. table.concat(names, ", ")
