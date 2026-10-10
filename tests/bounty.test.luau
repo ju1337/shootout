@@ -214,6 +214,8 @@ coins = ProgressService.Get(alice).Coins
 step(5.5)
 check(bounty() == nil and ProgressService.Get(alice).Coins >= coins + math.floor(K.Base * K.SurviveFactor),
 	"überlebt: Alice bekommt einen Teil selbst")
+BountyService.OnKill(alice, bob)
+check(bounty() == nil, "nach dem Überleben macht ein einzelner Kill nicht gleich wieder zum Gesuchten")
 
 if failures == 0 then
 	print("Kopfgeld: alles in Ordnung")

@@ -171,6 +171,7 @@ function BountyService.Init(opts)
 		end
 		if target.Survived >= B.SurviveTime then
 			local player, reward = target.Player, math.floor(target.Reward * B.SurviveFactor)
+			streaks[player] = 0 -- neues Kopfgeld erst nach einer neuen Serie (sonst reicht ein Kill alle 10 Min)
 			clear()
 			ProgressService.AddCoins(player, reward, "Kopfgeld überlebt")
 			announce("KOPFGELD ÜBERLEBT", player.Name .. " war " .. math.floor(B.SurviveTime / 60) .. " Min gesucht und kassiert selbst "
