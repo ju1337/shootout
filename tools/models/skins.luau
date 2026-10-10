@@ -32,7 +32,7 @@ local SKINS = {
 		Id = "Farbe",
 		Parts = { "Skin_Body" },
 		Overlay = true,
-		Textures = { Color = "", Normal = "", Roughness = "131409815114312", Metalness = "92787484616297", Emissive = "" },
+		Textures = { Color = "74288756625074", Normal = "", Roughness = "131409815114312", Metalness = "92787484616297", Emissive = "" },
 		FX = {},
 	},
 }

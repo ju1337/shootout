@@ -123,5 +123,19 @@
         </Properties>
       </Item>
     </Item>
+    <Item class="Folder" referent="9">
+      <Properties>
+        <string name="Name">Farbe</string>
+      </Properties>
+      <Item class="SurfaceAppearance" referent="10">
+        <Properties>
+          <string name="Name">Skin_Body</string>
+          <token name="AlphaMode">0</token>
+          <Content name="ColorMap"><url>rbxassetid://74288756625074</url></Content>
+          <Content name="MetalnessMap"><url>rbxassetid://92787484616297</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://131409815114312</url></Content>
+        </Properties>
+      </Item>
+    </Item>
   </Item>
 </roblox>
