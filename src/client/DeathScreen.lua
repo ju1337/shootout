@@ -30,6 +30,10 @@ local SHOW_DELAY = 0.6 -- kurz den Tod sehen, dann einblenden
 
 local screen, root, killerCard, killerName, killerInfo, killerBar, bagTitle, bagText, countText, placeText, fill
 local diedAt = nil
+-- Der Server räumt das Dungeon-Attribut im selben Moment wie den Tod ab; kommt das vor Died an, zählt der Tod trotzdem
+-- als Dungeon-Tod (gleicher Charakter, kurz davor noch im Dungeon)
+local dungeonLeft = { At = -math.huge, Character = nil }
+local wasInDungeon = false
 local lastRecap, lastRecapAt = nil, -math.huge -- die Meldung des Servers kann vor oder nach dem Tod ankommen
 local shown = false
 
@@ -165,7 +169,8 @@ local function track(character)
 		local dungeon = player:GetAttribute("Dungeon")
 		local raw = player:GetAttribute("ExtBag")
 		local ok, bag = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
-		if type(dungeon) == "string" and dungeon ~= "" then
+		if (type(dungeon) == "string" and dungeon ~= "")
+			or (dungeonLeft.Character == character and os.clock() - dungeonLeft.At < 1.5) then
 			what = "Dungeon"
 		elseif player:GetAttribute("InSafeZone") ~= true then
 			what = (ok and type(bag) == "table" and next(bag) == nil) and "Empty" or "Outside"
@@ -192,6 +197,14 @@ function DeathScreen.Init()
 			lastRecap, lastRecapAt = { killerName, weaponName, killerHealth, agentId }, os.clock()
 			setKiller(killerName, weaponName, killerHealth, agentId)
 		end
+	end)
+	player:GetAttributeChangedSignal("Dungeon"):Connect(function()
+		local value = player:GetAttribute("Dungeon")
+		local inside = type(value) == "string" and value ~= ""
+		if wasInDungeon and not inside then
+			dungeonLeft.At, dungeonLeft.Character = os.clock(), player.Character
+		end
+		wasInDungeon = inside
 	end)
 	player.CharacterAdded:Connect(track)
 	if player.Character then

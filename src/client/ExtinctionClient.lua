@@ -68,6 +68,7 @@ local BAG = ExtinctionConfig.BagSlots
 local STASH = ExtinctionConfig.StashSlots
 -- Werte und Hilfen von Menü und Inventar in einer Tabelle (Luau erlaubt höchstens 200 lokale Variablen pro Ebene)
 local Inv = {}
+Inv.closedLoot = { Id = nil, At = 0 } -- zuletzt selbst geschlossene Tasche (verspätete Updates holen sie nicht zurück)
 Inv.SAFE_SLOTS = ExtinctionConfig.SafeSlots
 Inv.MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
 Inv.GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
@@ -1055,6 +1056,7 @@ local function closeWindow()
 	end
 	if window.Kind == "Loot" and window.Loot then
 		sendAction("LootClose", window.Loot.Id)
+		Inv.closedLoot.Id, Inv.closedLoot.At = window.Loot.Id, os.clock()
 	end
 	if window.Borrowed then
 		GameMenu.ReturnPage(window.Borrowed) -- Seite der Lobby zurückgeben, bevor der Rahmen verschwindet
@@ -1062,6 +1064,9 @@ local function closeWindow()
 	window.Frame:Destroy()
 	window = nil
 	selected = nil
+	if drag and drag.Ghost then
+		drag.Ghost:Destroy() -- sonst bleibt das gezogene Symbol über dem nächsten Fenster hängen
+	end
 	drag = nil
 	windowGui.Enabled = false
 	Inv.hideHud(false)
@@ -4152,7 +4157,7 @@ function ExtinctionClient.Init()
 		local root3 = character and character:FindFirstChild("HumanoidRootPart")
 		local nearest, nearestDistance = nil, math.huge
 		-- Liste nur neu lesen, wenn sich das Attribut ändert (die Zone zieht alle 20 Minuten weiter)
-		local redzonesRaw = map:GetAttribute("Redzones")
+		local redzonesRaw = map and map:GetAttribute("Redzones")
 		if redzonesRaw ~= redzoneCache.Raw then
 			redzoneCache.Raw, redzoneCache.List = redzonesRaw, mapList(map, "Redzones")
 		end
@@ -4326,13 +4331,18 @@ function ExtinctionClient.Init()
 	workspace.DescendantAdded:Connect(applyTakeAll)
 	player:GetAttributeChangedSignal("Pass_" .. LOOT_ALL_PASS):Connect(refreshTakeAll)
 	local updateLevel -- (unten, nach den Meldungen)
+	game:GetService("ProximityPromptService").PromptTriggered:Connect(function()
+		Inv.closedLoot.Id = nil -- selbst wieder geöffnet: das nächste Update darf das Fenster öffnen
+	end)
 	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b)
 		if kind == "Status" then
 			showToast(tostring(a), b == true)
 		elseif kind == "Loot" and type(a) == "table" then
 			-- nur öffnen/auffrischen, wenn kein anderes Fenster offen ist (ein Update, das nach dem Schließen ankommt,
 			-- holte die Tasche sonst zurück, ohne dass der Server einen noch als Zuschauer kennt)
-			if not window or (window.Kind == "Loot" and window.Loot and window.Loot.Id == a.Id) then
+			-- (ein Update zur gerade geschlossenen Tasche ist noch unterwegs gewesen: nicht wieder aufmachen)
+			local justClosed = not window and Inv.closedLoot.Id == a.Id and os.clock() - Inv.closedLoot.At < 1.5
+			if not justClosed and (not window or (window.Kind == "Loot" and window.Loot and window.Loot.Id == a.Id)) then
 				openLoot(a)
 			else
 				sendAction("LootClose", a.Id)

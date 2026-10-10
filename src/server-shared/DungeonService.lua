@@ -263,7 +263,7 @@ local function aliveZombies(run)
 end
 
 local function publish(run)
-	local left = run.ToSpawn
+	local left = run.ToSpawn + run.Bosses
 	for _ in run.Zombies do
 		left += 1
 	end
@@ -427,7 +427,7 @@ local function waveCleared(run)
 		member.Coins += reward.Coins
 		for _, item in ExtinctionConfig.RollLoot(reward.Table, reward.Items, random) do
 			table.insert(member.Items, item)
-			member.ItemCount += 1
+			member.ItemCount += item.Count or 1
 		end
 		banner(player, "WELLE " .. run.Wave .. " GESCHAFFT", string.format("Portal offen für %d s · Beute: %d Münzen · %d Items",
 			D.BreakTime, member.Coins, member.ItemCount), "Good")
@@ -454,6 +454,7 @@ local function tickRun(run, now)
 				leaveRun(run, player, "Dead")
 			end
 		else
+			member.DeadSince = nil
 			local localPos = run.Origin:PointToObjectSpace(root.Position)
 			local b = DungeonLayout.Bounds
 			if localPos.X < b.MinX - 20 or localPos.X > b.MaxX + 20 or localPos.Z < b.MinZ - 20 or localPos.Z > b.MaxZ + 20

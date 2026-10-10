@@ -74,6 +74,17 @@ SIM.Advance(1, 20)
 check(find("Bag"):FindFirstChild("Title").Text == "TASCHE IM DUNGEON VERLOREN", "Dungeon: Tasche verloren")
 bob:SetAttribute("Dungeon", nil)
 
+-- der Server räumt das Dungeon-Attribut schon ab, bevor Died beim Client ankommt
+bob:LoadCharacter()
+SIM.Advance(0.5, 10)
+bob:SetAttribute("InSafeZone", false)
+bob:SetAttribute("Dungeon", "{}")
+SIM.Advance(0.5, 10)
+bob:SetAttribute("Dungeon", nil)
+bob.Character.Humanoid.Health = 0
+SIM.Advance(1, 20)
+check(find("Bag"):FindFirstChild("Title").Text == "TASCHE IM DUNGEON VERLOREN", "Dungeon: auch wenn das Attribut schon weg ist")
+
 -- draußen mit leerer Tasche: nichts verloren
 bob:LoadCharacter()
 SIM.Advance(0.5, 10)

@@ -321,7 +321,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"MouseButton2Click", "MouseButton2Down", "MouseButton2Up", "Seated",
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
 	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded", "PromptButtonHoldBegan", "PromptButtonHoldEnded",
-	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
+	"PromptShown", "PromptHidden", "PromptTriggered", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
 	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged",
 	"LastInputTypeChanged", "JumpRequest" } do
 	SIGNAL_NAMES[name] = true

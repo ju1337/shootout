@@ -486,6 +486,16 @@ local function bobHas(itemId, count)
 	return false
 end
 check(bobHas("Bandage", 2) and LootService.Get(id) ~= nil, "einzeln genommen: Verbände in Bobs Tasche, Munition bleibt liegen")
+-- schließen, während noch ein Update zur Tasche unterwegs ist: das Fenster kommt nicht zurück
+ExtinctionClient.Close()
+Remotes.ExtUpdate.OnClientEvent:Fire("Loot", { Id = id, Title = "BEUTEL", Items = {} })
+step(0.1)
+check(not windowGui.Enabled, "verspätetes Update öffnet die geschlossene Tasche nicht wieder")
+-- selbst wieder öffnen geht sofort
+game:GetService("ProximityPromptService").PromptTriggered:Fire(bagPart:FindFirstChildOfClass("ProximityPrompt"), bob)
+LootService.Open(bob, id)
+step(0.3)
+check(windowGui.Enabled, "Tasche lässt sich gleich wieder öffnen")
 -- Gamepass gekauft: Knopf und F-Prompt gehen sofort
 bob:SetAttribute("Pass_LootAll", true)
 step(0.2)
