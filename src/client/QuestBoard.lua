@@ -16,6 +16,7 @@ local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local UITheme = require(Shared.UITheme)
 local Locale = require(Shared.Locale)
+local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
 
@@ -53,7 +54,7 @@ function QuestBoard.Ready()
 			for _, id in data.Ids do
 				local quest = QuestConfig.Get(id)
 				local claimed = (data.Claimed or {})[id] == true
-				allClaimed = allClaimed and claimed
+				allClaimed = allClaimed and (claimed or quest == nil) -- entfernte Aufträge zählen nicht (wie am Server)
 				if quest and not claimed and ((data.Progress or {})[id] or 0) >= quest.Goal and (special or not quest.Special)
 					and QuestConfig.ModeActive(quest.Mode) then
 					return true
@@ -154,7 +155,8 @@ function QuestBoard.new(parent, width, height, options)
 		local claimed = (data.Claimed or {})[id] == true
 		local done = progress >= quest.Goal and not locked
 		local rowH = tag and 92 or 78
-		local row = make("Frame", { Size = UDim2.new(1, 0, 0, rowH), BackgroundColor3 = CARD, LayoutOrder = order }, list)
+		local row = make("Frame", { Name = "Quest_" .. id, Size = UDim2.new(1, 0, 0, rowH), BackgroundColor3 = CARD,
+			LayoutOrder = order }, list)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, row)
 		if tag then
 			make("UIStroke", { Color = color, Transparency = locked and 0.75 or 0.35 }, row)
@@ -176,8 +178,8 @@ function QuestBoard.new(parent, width, height, options)
 		make("Frame", { Size = UDim2.new(math.clamp(progress / quest.Goal, 0, 1), 0, 1, 0), BorderSizePixel = 0,
 			BackgroundColor3 = done and GREEN or color }, barBack)
 		local label = locked and "NUR VIP" or (claimed and "ABGEHOLT" or (done and "ABHOLEN" or "OFFEN"))
-		button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(118, 40),
-			TextSize = 14, Text = label,
+		button({ Name = "Claim", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+			Size = UDim2.fromOffset(118, 40), TextSize = 14, Text = label,
 			BackgroundColor3 = (done and not claimed) and ACCENT or MUTED_BACK,
 			TextColor3 = (done and not claimed) and ON_ACCENT or (locked and VIP or GRAY) }, row, function()
 			if done and not claimed then
@@ -190,7 +192,7 @@ function QuestBoard.new(parent, width, height, options)
 	local function bonusRow(list, weekly, allClaimed)
 		local skin = Cosmetics.Get(QuestConfig.BonusSkin(weekly.Week or 0))
 		local rarity = skin and Cosmetics.Rarities[skin.Rarity]
-		local bonus = make("Frame", { Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = CARD, LayoutOrder = 99 }, list)
+		local bonus = make("Frame", { Name = "WeeklyBonus", Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = CARD, LayoutOrder = 99 }, list)
 		make("UICorner", { CornerRadius = UDim.new(0, 10) }, bonus)
 		make("UIStroke", { Color = GOLD, Transparency = weekly.Bonus and 0.7 or 0.2 }, bonus)
 		text({ Position = UDim2.fromOffset(14, 9), Size = UDim2.new(1, -150, 0, 22), Text = "WOCHEN-BONUS", TextSize = 18,
@@ -200,8 +202,8 @@ function QuestBoard.new(parent, width, height, options)
 			Text = UITheme.FormatNumber(QuestConfig.WeeklyBonus.Coins) .. " Münzen" .. (skin and (' + Skin <font color="#'
 				.. (rarity and rarity.Color or GOLD):ToHex() .. '">' .. skin.Name .. "</font>") or ""),
 			TextSize = 13, TextColor3 = GRAY }, bonus)
-		button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(118, 40),
-			TextSize = 14, Text = weekly.Bonus and "ABGEHOLT" or (allClaimed and "ABHOLEN" or "GESPERRT"),
+		button({ Name = "Claim", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
+			Size = UDim2.fromOffset(118, 40), TextSize = 14, Text = weekly.Bonus and "ABGEHOLT" or (allClaimed and "ABHOLEN" or "GESPERRT"),
 			BackgroundColor3 = (allClaimed and not weekly.Bonus) and GOLD or MUTED_BACK,
 			TextColor3 = (allClaimed and not weekly.Bonus) and ON_ACCENT or GRAY }, bonus, function()
 			if allClaimed and not weekly.Bonus then
@@ -249,6 +251,9 @@ function QuestBoard.new(parent, width, height, options)
 		local special = QuestConfig.IsSpecial(player)
 		columns[2].Sub.Text = mode == "Arcade" and "Jeden Montag neu · alle geschafft = Wochen-Bonus" or "Jeden Montag neu"
 		columns[3].Sub.Text = special and "Danke für deine Unterstützung!" or "Gamepass VIP oder Discord-Booster"
+		-- Gamepad: lag die Auswahl im Brett, nach dem Neuaufbau den gleichnamigen Knopf wieder wählen
+		local selected = game:GetService("GuiService").SelectedObject
+		local hadFocus = selected ~= nil and selected:IsDescendantOf(root)
 		for _, column in columns do
 			clear(column.List)
 		end
@@ -268,6 +273,9 @@ function QuestBoard.new(parent, width, height, options)
 		end
 		fill(columns[3], "SpecialQuests", ofMode, "TÄGLICH", not special)
 		fill(columns[3], "SpecialWeekly", ofMode, "WÖCHENTLICH", not special)
+		if hadFocus then
+			InputActions.Refocus(root)
+		end
 	end
 
 	function board.SetMode(mode)
@@ -275,8 +283,19 @@ function QuestBoard.new(parent, width, height, options)
 		board.Refresh()
 	end
 
+	-- wirklich sichtbar (das Brett im Seitenmenü bleibt Visible, versteckt wird nur sein Rahmen)
+	local function shown()
+		local node = root
+		while node and not node:IsA("LayerCollector") do
+			if node:IsA("GuiObject") and not node.Visible then
+				return false
+			end
+			node = node.Parent
+		end
+		return node ~= nil and node.Enabled
+	end
 	local connection = player.AttributeChanged:Connect(function(name)
-		if QuestBoard.Watch[name] and root.Parent and root.Visible then
+		if QuestBoard.Watch[name] and shown() then
 			board.Refresh()
 		end
 	end)

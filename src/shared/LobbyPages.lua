@@ -1093,7 +1093,8 @@ function LobbyPages.Loadout(page, goToShop)
 		for order, entry in rows do
 			local item = entry.Item
 			local isOn = item ~= nil and current ~= nil and current.Id == item.Id
-			local row = make("TextButton", { Size = UDim2.fromOffset(RIGHT_W, entry.Remove and 56 or 104),
+			local row = make("TextButton", { Name = entry.Remove and "Att_Remove" or ("Att_" .. item.Id),
+				Size = UDim2.fromOffset(RIGHT_W, entry.Remove and 56 or 104),
 				BackgroundColor3 = isOn and C.Secondary or C.Panel, BackgroundTransparency = 0.05, Text = "", AutoButtonColor = false,
 				LayoutOrder = order }, attachPanel)
 			UITheme.Corner(row, UITheme.Radius.Medium)
@@ -1158,6 +1159,9 @@ function LobbyPages.Loadout(page, goToShop)
 	local fillList -- vorab, weil sich Liste und Skins gegenseitig neu aufbauen
 
 	local function fillOptions()
+		-- Gamepad: lag die Auswahl auf der Seite, nach dem Neuaufbau den gleichnamigen Knopf wieder wählen
+		local selectedNow = game:GetService("GuiService").SelectedObject
+		local hadFocus = selectedNow ~= nil and selectedNow:IsDescendantOf(page)
 		local showAttachments = rightMode == "AUFSÄTZE"
 		attachPanel.Visible = showAttachments
 		if not showAttachments then
@@ -1208,7 +1212,7 @@ function LobbyPages.Loadout(page, goToShop)
 			if isOn then
 				currentName = entry.Name
 			end
-			local option = UITheme.Chunky({ LayoutOrder = i, Size = UDim2.fromOffset(200, 60), Color = isOn and C.Secondary or C.Panel,
+			local option = UITheme.Chunky({ Name = "Skin_" .. (entry.Id or "Standard"), LayoutOrder = i, Size = UDim2.fromOffset(200, 60), Color = isOn and C.Secondary or C.Panel,
 				StrokeColor = isOn and C.Primary or entry.Color, Text = "" }, options, function()
 				if entry.Id then -- gesperrte Tarnung: der Server sagt, wie viele Kills fehlen
 					Remotes.ShopAction:FireServer("Equip", entry.Id, selected)
@@ -1242,6 +1246,9 @@ function LobbyPages.Loadout(page, goToShop)
 		showWeapon(view, selected, Cosmetics.WeaponSkin(player, nil, selected), STAGE_W / (PAGE_H - 70), 0.75,
 			AttachmentConfig.EquippedList(player, selected))
 		equippedText.Text = "AUSGERÜSTET: " .. upper(currentName)
+		if hadFocus then
+			InputActions.Refocus(page)
+		end
 	end
 
 	fillList = function()

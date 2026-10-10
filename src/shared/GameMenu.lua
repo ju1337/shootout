@@ -623,6 +623,7 @@ local function buildPass()
 end
 
 local function buildDaily()
+	local LoginConfig = require(Shared.LoginConfig)
 	local panel = UITheme.Card({ Name = "Daily", Position = UDim2.fromOffset(RIGHT_X, 280), Size = UDim2.fromOffset(RIGHT_W, 170) },
 		playPage)
 	label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(240, 26), Text = "TÄGLICHER AUFTRAG", TextSize = 21,
@@ -679,13 +680,15 @@ local function buildDaily()
 			fill.BackgroundColor3 = C.Good
 			rewardText.Text = ""
 		end
-		local dailyLeft = (player:GetAttribute("LastDaily") or 0) + Cosmetics.DailyCooldown - os.time()
-		dailyChip.Visible = dailyLeft <= 0
+		-- Tagesbelohnung = Login-Kalender (das alte LastDaily schreibt niemand mehr)
+		local raw = player:GetAttribute("LoginData")
+		local ok, login = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "{}")
+		dailyChip.Visible = LoginConfig.CanClaim(ok and type(login) == "table" and login or {}, workspace:GetServerTimeNow())
 		rewardText.Visible = not dailyChip.Visible
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(name)
-		if name == "Quests" or name == "LastDaily" then
+		if name == "Quests" or name == "LoginData" then
 			refresh()
 		end
 	end)

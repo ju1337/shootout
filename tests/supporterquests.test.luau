@@ -99,6 +99,19 @@ check(#(QuestConfig.Read(vip, "ExtQuests") or { Ids = {} }).Ids > 0, "Arcade aus
 message, ok = ProgressService.ClaimWeeklyBonus(vip)
 check(ok == false, "Arcade aus: kein Wochen-Bonus ohne Wochen-Aufträge: " .. tostring(message))
 check(not QuestConfig.ModeActive("Arcade") and QuestConfig.ModeActive("Extinction"), "ModeActive")
+-- Auftrag von gestern (nicht mehr im Satz): klare Meldung, die neuen Aufträge werden sofort geschickt
+local todays = (QuestConfig.Read(vip, "ExtQuests") or { Ids = {} }).Ids
+local stale
+for _, quest in QuestConfig.ExtPool do
+	if not table.find(todays, quest.Id) then
+		stale = quest.Id
+		break
+	end
+end
+vip:SetAttribute("ExtQuests", nil)
+message, ok = ProgressService.ClaimQuest(vip, stale)
+check(ok == false and string.find(message, "Neuer Tag", 1, true) ~= nil, "alter Auftrag: neuer Tag (" .. tostring(message) .. ")")
+check(QuestConfig.Read(vip, "ExtQuests") ~= nil, "alter Auftrag: aktuelle Aufträge neu geschickt")
 Modes.ArcadeEnabled = true
 
 if failures > 0 then

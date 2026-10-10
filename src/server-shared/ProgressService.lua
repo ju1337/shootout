@@ -645,6 +645,7 @@ function ProgressService.ClaimQuest(player, id)
 	if not profile or not quest then
 		return "Unbekannter Auftrag.", false
 	end
+	ensureQuests(player, profile)
 	ensureWeekly(player, profile)
 	local def = quest.Set and QuestConfig.GetSet(quest.Set)
 	local set = def and ensureSet(player, profile, def) or (quest.Weekly and profile.Weekly or profile.Quests)
@@ -652,7 +653,8 @@ function ProgressService.ClaimQuest(player, id)
 		return "Nur für VIP & BOOSTER.", false
 	end
 	if not table.find(set.Ids or {}, id) then
-		return "Unbekannter Auftrag.", false
+		publishQuests(player, profile) -- meist ein neuer Tag: die neuen Aufträge sofort zeigen
+		return "Neuer Tag – die Aufträge wurden erneuert.", false
 	end
 	if set.Claimed[id] then
 		return "Schon abgeholt.", false
@@ -700,7 +702,7 @@ function ProgressService.ClaimWeeklyBonus(player)
 		return "Erst alle Wochen-Aufträge abschließen und abholen.", false -- Arcade aus: keine Wochen-Aufträge, kein Bonus
 	end
 	for _, id in weekly.Ids do
-		if not weekly.Claimed[id] then
+		if QuestConfig.Get(id) and not weekly.Claimed[id] then -- entfernte Aufträge sperren den Bonus nicht
 			return "Erst alle Wochen-Aufträge abschließen und abholen.", false
 		end
 	end

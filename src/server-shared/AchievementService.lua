@@ -67,7 +67,7 @@ function AchievementService.Init()
 	-- beim Laden: Stand anzeigen und verpasste Stufen nachtragen
 	local function onPlayer(player)
 		task.spawn(function()
-			for _ = 1, 60 do
+			while true do -- so lange warten wie das Laden dauert (Sperre + Wiederholungen können über 30 s gehen)
 				if not player.Parent then
 					return
 				end

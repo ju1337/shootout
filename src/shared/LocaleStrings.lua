@@ -2095,6 +2095,7 @@ return {
 	["Unbekannter Agent."] = "Unknown agent.",
 	["Unbekannter Aufsatz."] = "Unknown attachment.",
 	["Unbekannter Auftrag."] = "Unknown mission.",
+	["Neuer Tag – die Aufträge wurden erneuert."] = "New day – your missions have been refreshed.",
 	["Unbekannter Gegenstand."] = "Unknown item.",
 	["Unbekannter Modus."] = "Unknown mode.",
 	["Unbekannter Rang."] = "Unknown rank.",
