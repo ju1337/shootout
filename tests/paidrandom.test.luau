@@ -111,8 +111,20 @@ task.spawn(function()
 end)
 step(10)
 check(done and ok == false, "Abfrage fehlgeschlagen: Kiste zu")
-check(unknown:GetAttribute("PaidRandomOk") == nil, "ohne Antwort kein Attribut")
+check(unknown:GetAttribute("PaidRandomOk") == false, "ohne Antwort auch in der Anzeige gesperrt")
+check(PolicyGate.RandomAllowed(unknown) == false, "Fehlschlag eine Weile gemerkt (kein erneutes Warten)")
+step(PolicyGate.RetryAfter + 1)
 check(PolicyGate.RandomAllowed(unknown) == true and unknown:GetAttribute("PaidRandomOk") == true, "nächste Abfrage klappt")
+
+-- gekaufte Glücksrad-Drehs: nur ohne Länder-Sperre
+ProgressService.SpinWheel(belgian) -- Gratis-Dreh von heute verbrauchen
+step(6)
+ProgressService.AddSpins(belgian, 1, true)
+local spinMessage, spinOk = ProgressService.SpinWheel(belgian)
+check(spinOk == false and string.find(tostring(spinMessage), "Land", 1, true) ~= nil, "gekaufter Dreh gesperrt: " .. tostring(spinMessage))
+ProgressService.AddSpins(belgian, 1)
+spinMessage, spinOk = ProgressService.SpinWheel(belgian)
+check(spinOk ~= false, "verdienter Extra-Dreh geht: " .. tostring(spinMessage))
 
 -- Client: Fenster CHANCEN und Robux-Shop
 SIM.IsServer = false

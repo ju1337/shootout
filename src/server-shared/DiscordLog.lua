@@ -155,6 +155,9 @@ end
 
 function DiscordLog.Flush()
 	for name, state in channels do
+		if state.Secret and os.clock() < state.PausedUntil then
+			continue -- Pause nach einem Fehler: Meldungen in der Schlange lassen statt sie ungesendet zu verwerfen
+		end
 		local message = DiscordLog.Build(name)
 		if message and DiscordLog.Enabled then
 			send(state, name, message)

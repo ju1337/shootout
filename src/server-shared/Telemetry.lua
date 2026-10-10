@@ -70,8 +70,9 @@ local function record(kind, player, ...)
 	end
 end
 
+local missing = {} -- [Methode] = true: gibt es im AnalyticsService nicht
 local function call(method, player, ...)
-	if not Telemetry.Enabled then
+	if not Telemetry.Enabled or missing[method] then
 		return false
 	end
 	local s = analytics()
@@ -82,7 +83,8 @@ local function call(method, player, ...)
 		return s[method]
 	end)
 	if not okMethod or type(fn) ~= "function" then
-		service = false -- Dienst ohne diese Methode (Tests, alte Clients): still bleiben
+		-- Dienst ohne diese Methode (Tests, alte Clients): nur diese still lassen, die anderen Ereignisse laufen weiter
+		missing[method] = true
 		return false
 	end
 	local args = table.pack(...)

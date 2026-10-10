@@ -35,6 +35,7 @@ local SessionStore = require(script.Parent.SessionStore)
 
 local Telemetry = require(script.Parent.Telemetry)
 local DiscordLog = require(script.Parent.DiscordLog)
+local PolicyGate = require(script.Parent.PolicyGate)
 
 local ProgressService = {}
 
@@ -266,11 +267,13 @@ function ProgressService.AddXPBoost(player, minutes)
 end
 
 -- Extra-Drehs fürs Glücksrad (Kalender-Tag 7, später Robux-Shop)
-function ProgressService.AddSpins(player, amount)
+-- paid = mit Robux gekauft: eigener Zähler, den nur Spieler ohne Länder-Sperre für Zufallsitems nutzen (PolicyGate)
+function ProgressService.AddSpins(player, amount, paid)
 	local profile = profiles[player]
 	if profile then
 		profile.Wheel = profile.Wheel or {}
-		profile.Wheel.Spins = (profile.Wheel.Spins or 0) + amount
+		local field = paid and "PaidSpins" or "Spins"
+		profile.Wheel[field] = (profile.Wheel[field] or 0) + amount
 		ProgressService.Sync(player)
 	end
 end
@@ -354,10 +357,20 @@ function ProgressService.SpinWheel(player)
 	local now = workspace:GetServerTimeNow()
 	profile.Wheel = profile.Wheel or {}
 	if profile.Wheel.Date == LoginConfig.Date(now) then
-		if (profile.Wheel.Spins or 0) <= 0 then
+		if (profile.Wheel.Spins or 0) > 0 then
+			profile.Wheel.Spins -= 1 -- erst die verdienten Extra-Drehs
+		elseif (profile.Wheel.PaidSpins or 0) > 0 then
+			-- gekaufte Drehs sind bezahlte Zufallsitems: nicht in Ländern, die das verbieten
+			if not PolicyGate.RandomAllowed(player) then
+				return "Gekaufte Drehs sind in deinem Land nicht erlaubt.", false
+			end
+			if (profile.Wheel.PaidSpins or 0) <= 0 then
+				return "Heute schon gedreht. Extra-Drehs gibt es im Login-Kalender.", false
+			end
+			profile.Wheel.PaidSpins -= 1
+		else
 			return "Heute schon gedreht. Extra-Drehs gibt es im Login-Kalender.", false
 		end
-		profile.Wheel.Spins -= 1
 	else
 		profile.Wheel.Date = LoginConfig.Date(now)
 	end

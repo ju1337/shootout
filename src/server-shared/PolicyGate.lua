@@ -10,6 +10,7 @@ local PolicyService = game:GetService("PolicyService")
 local PolicyGate = {}
 
 PolicyGate.Tries = 3
+PolicyGate.RetryAfter = 60 -- s bis zur nächsten Abfrage nach einem Fehlschlag
 
 local cache = {} -- [Player] = { Random = bool, Trade = bool }
 
@@ -29,12 +30,20 @@ end
 -- { Random, Trade } für den Spieler (wartet beim ersten Mal auf PolicyService)
 function PolicyGate.Get(player)
 	local entry = cache[player]
-	if entry then
+	if entry and not (entry.RetryAt and os.clock() >= entry.RetryAt) then
 		return entry
 	end
 	entry = fetch(player)
 	if not entry then
-		return { Random = false, Trade = false }
+		-- Abfrage fehlgeschlagen: verboten, auch in der Anzeige (nil hieße dort „erlaubt“), und eine Weile merken,
+		-- damit nicht jeder Aufruf erneut ~3 s wartet
+		entry = { Random = false, Trade = false, RetryAt = os.clock() + PolicyGate.RetryAfter }
+		if player.Parent then
+			cache[player] = entry
+			player:SetAttribute("PaidRandomOk", false)
+			player:SetAttribute("PaidTradeOk", false)
+		end
+		return entry
 	end
 	if player.Parent then
 		cache[player] = entry

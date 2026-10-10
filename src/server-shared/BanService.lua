@@ -241,6 +241,15 @@ function BanService.Init()
 	-- nicht daran hängen. Wer vor dem Laden beitritt, wird danach geprüft.
 	task.spawn(function()
 		load()
+		-- erstes Laden fehlgeschlagen (DataStore-Ausfall beim Start): bald nochmal, nicht erst nach einer Minute –
+		-- solange ist die Liste leer und Gesperrte kämen rein
+		for _, delay in { 2, 5, 10, 20 } do
+			if loadedOnce then
+				break
+			end
+			task.wait(delay)
+			load()
+		end
 		for _, player in Players:GetPlayers() do
 			onPlayerAdded(player)
 		end

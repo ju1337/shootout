@@ -89,7 +89,8 @@ local function wheelState()
 	local ok, data = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "{}")
 	data = ok and type(data) == "table" and data or {}
 	local free = data.Date ~= LoginConfig.Date(workspace:GetServerTimeNow())
-	local extra = tonumber(data.Spins) or 0
+	local extra = (tonumber(data.Spins) or 0)
+		+ (player:GetAttribute("PaidRandomOk") ~= false and tonumber(data.PaidSpins) or 0) -- gekaufte nur ohne Länder-Sperre
 	return free or extra > 0, free, extra
 end
 

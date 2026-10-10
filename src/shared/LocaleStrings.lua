@@ -877,6 +877,7 @@ return {
 	["Ganzes Team ausgeschaltet"] = "Whole team eliminated",
 	["Ganzes Team: volles Leben, Rüstung, 4 s unverwundbar"] = "Whole team: full health, armor, invulnerable for 4 s",
 	["GARKÜCHE"] = "FIELD KITCHEN",
+	["Gekaufte Drehs sind in deinem Land nicht erlaubt."] = "Purchased spins are not allowed in your country.",
 	["Gegeben: {1}"] = "Given: {1}",
 	["GEGENANGEBOT"] = "COUNTEROFFER",
 	["Gegenangebot ab {1} RAP – der Besitzer hat {2} Sekunden."] = "Counteroffer from {1} RAP – the owner has {2} seconds.",

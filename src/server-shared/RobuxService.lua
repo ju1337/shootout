@@ -19,13 +19,25 @@ local ProgressService = require(ServerStorage:WaitForChild("ServerShared").Progr
 local RobuxService = {}
 
 local RECEIPT_MEMORY = 50 -- so viele Kauf-Nummern pro Spieler merken
+RobuxService.PassTries = 4 -- Versuche für die Gamepass-Abfrage
 
 local function checkPasses(player)
 	for _, pass in RobuxConfig.Passes do
 		if pass.PassId ~= 0 then
-			local ok, owns = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, player.UserId, pass.PassId)
-			if ok and owns then
-				player:SetAttribute("Pass_" .. pass.Id, true)
+			-- bei Fehlern (Drosselung, wenn viele gleichzeitig beitreten) nochmal: sonst fehlt der Pass die ganze Sitzung
+			for attempt = 1, RobuxService.PassTries do
+				local ok, owns = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, player.UserId, pass.PassId)
+				if ok then
+					if owns then
+						player:SetAttribute("Pass_" .. pass.Id, true)
+					end
+					break
+				end
+				if attempt < RobuxService.PassTries and player.Parent then
+					task.wait(3 * attempt)
+				elseif not player.Parent then
+					return
+				end
 			end
 		end
 	end
@@ -39,7 +51,7 @@ local function grant(player, profile, product)
 		table.insert(lines, "+" .. product.Coins .. " Münzen")
 	end
 	if product.Spins then
-		ProgressService.AddSpins(player, product.Spins)
+		ProgressService.AddSpins(player, product.Spins, true)
 		table.insert(lines, "+" .. product.Spins .. " Glücksrad-Drehs")
 	end
 	if product.BoostMinutes then
@@ -54,7 +66,9 @@ local function grant(player, profile, product)
 			table.insert(lines, (granted == "copy" and "Skin-Duplikat: " or "Neuer Skin: ") .. item.Name)
 		end
 	end
-	Remotes.Reward:FireClient(player, { Title = "DANKE FÜR DEINEN KAUF!", Lines = lines, Rarity = "Legendary" })
+	-- nur das Popup: ein Fehler hier (Spieler geht gerade) darf den Kauf nicht scheitern lassen (sonst doppelt beim Wiederholen)
+	pcall(Remotes.Reward.FireClient, Remotes.Reward, player, { Title = "DANKE FÜR DEINEN KAUF!", Lines = lines,
+		Rarity = "Legendary" })
 end
 
 function RobuxService.Init()
