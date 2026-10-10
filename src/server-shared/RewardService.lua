@@ -81,7 +81,7 @@ end
 -- Alle Meilensteine prüfen, die der Spieler gerade erreicht hat
 function RewardService.Check(player)
 	local profile = ProgressService.Get(player)
-	if not profile then
+	if not profile or not ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil während des Ladens
 		return
 	end
 	local claimed = claimedOf(profile)
@@ -134,13 +134,11 @@ end
 local function watch(player)
 	-- warten, bis das Profil geladen ist, dann einmal prüfen (z.B. alte Spielstände) und bei Änderungen
 	task.spawn(function()
-		for _ = 1, 60 do
-			if ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil während des Ladens
-				break
-			end
+		-- so lange wie nötig (Sperre eines alten Servers kann über 30 s dauern), sonst stünden alte Meilensteine als offen da
+		while player.Parent and not ProgressService.IsLoaded(player) do
 			task.wait(0.5)
 		end
-		local profile = ProgressService.Get(player)
+		local profile = player.Parent and ProgressService.Get(player)
 		if profile then
 			publish(player, profile)
 			RewardService.Check(player)

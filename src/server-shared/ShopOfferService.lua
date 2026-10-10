@@ -118,6 +118,7 @@ function ShopOfferService.Add(admin, itemId, options)
 	local full = false
 	local start = math.floor(now())
 	local saved = update(function(data)
+		full = false -- UpdateAsync kann die Funktion mehrmals aufrufen
 		local offers = {}
 		for _, entry in data.Offers do
 			if entry.Id ~= item.Id then
@@ -149,6 +150,7 @@ function ShopOfferService.Remove(_, itemId)
 	end
 	local found = false
 	local saved = update(function(data)
+		found = false -- UpdateAsync kann die Funktion mehrmals aufrufen
 		local offers = {}
 		for _, entry in data.Offers do
 			if entry.Id == item.Id then

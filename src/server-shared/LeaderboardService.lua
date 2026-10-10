@@ -73,7 +73,7 @@ end
 
 local function submitPlayer(player)
 	local profile = ProgressService.Get(player)
-	if not profile then
+	if not profile or not ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil (würde Bestwerte mit 0 überschreiben)
 		return
 	end
 	hiddenIds[player.UserId] = profile.HideBoards or nil
