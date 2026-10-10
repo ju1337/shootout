@@ -641,6 +641,11 @@ function Movement.SetAiming(on, fov)
 	apply()
 end
 
+-- Sprint eingeschaltet (auch im Stand)? Für den SPRINT-Knopf auf Touch
+function Movement.SprintHeld()
+	return sprintHeld
+end
+
 -- Sprintet der Spieler gerade (gedrückt, in Bewegung, nicht durch Schießen unterbrochen)?
 function Movement.IsSprinting()
 	local humanoid = getHumanoid()
@@ -728,7 +733,7 @@ function Movement.Init()
 		apply()
 	end
 	InputActions.Bind("Sprint", function(began)
-		if holdSprint() then
+		if holdSprint() or InputActions.Device() == "Touch" then -- Touch: der SPRINT-Knopf schaltet selbst um (an = true, aus = false)
 			sprintHeld = began
 		elseif began then
 			sprintHeld = not sprintHeld

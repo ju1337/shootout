@@ -127,6 +127,11 @@ local function makeButton(parent, entry, anchor)
 			setVisual(false)
 			InputActions.Trigger(action, false)
 		end
+	end, Sync = function(state) -- Umschalter an den echten Zustand angleichen (Sprint endet z. B. beim Stehenbleiben)
+		if on ~= state then
+			on = state
+			setVisual(state)
+		end
 	end }
 	return button
 end
@@ -237,6 +242,9 @@ function TouchControls.Init()
 		end
 		if not show then
 			return
+		end
+		if buttons.Sprint then
+			buttons.Sprint.Sync(require(Shared.Movement).SprintHeld())
 		end
 		-- Interagieren nur zeigen, wenn es etwas gibt (Wiederbeleben, Bombe, Hacken)
 		buttons.Interact.Button.Visible = player:GetAttribute("ObjHint") ~= nil or InputActions.InteractAvailable()

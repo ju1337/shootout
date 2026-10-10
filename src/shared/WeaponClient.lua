@@ -624,7 +624,7 @@ function WeaponClient.Init()
 		end
 	end)
 	InputActions.Bind("Aim", function(began)
-		if PlayerSettings.Get("ToggleAim") then
+		if PlayerSettings.Get("ToggleAim") and not InputActions.IsTouch() then -- Touch: der ZIELEN-Knopf schaltet selbst um
 			-- Einstellung "Zielen: Umschalten": jeder Druck schaltet um
 			if began and fighting() and not UITheme.IsMenuOpen() then
 				aimHeld = not aimHeld
