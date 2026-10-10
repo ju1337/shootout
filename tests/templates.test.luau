@@ -53,7 +53,8 @@ end
 -- MG: Hauptteil der Magazin-Gruppe ist der Kasten, nicht der Gurt
 check(GunModels.GroupMainPart("LMG", "Magazine") == "Skin_Magazine_Box", "MG: Kasten ist das Magazin")
 local lmg = GunModels.Build("LMG", nil, { "DrumMag" })
-check(lmg:FindFirstChild("AttDrum") ~= nil, "MG: Trommel am Kasten")
+-- 3D-Waffe ohne Trommel-Modell (Assets.Attachments.DrumMag fehlt): kein Klotz, eingebauter Kasten bleibt
+check(lmg:FindFirstChild("AttDrum") == nil and lmg:FindFirstChild("Skin_Magazine_Box") ~= nil, "MG: kein Trommel-Klotz am 3D-Modell")
 
 if failures == 0 then
 	print("Vorlagen: alle sieben laden und passen")

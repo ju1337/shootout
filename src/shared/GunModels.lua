@@ -509,6 +509,9 @@ local function addAttachments(model, weaponName, attachments)
 	local long = info.Long
 	-- Ausrichtung der Aufsatz-Modelle (Mündung, Lauf, Griff, Magazin) wie die Waffen-GLB, siehe AttachFrame
 	local frame = assetData[weaponName] and assetData[weaponName].AttachFrame or CFrame.identity
+	-- Klotz-Aufsätze nur an Klotz-Waffen: an einer 3D-Waffe ohne fertiges Aufsatz-Modell (Assets.Attachments fehlt)
+	-- bleibt die Waffe, wie sie ist – Quader auf einem echten Mesh sehen kaputt aus (weiß, falsche Größe)
+	local blocks = not assetData[weaponName]
 	-- Mündungs-Aufsatz als eigenes 3D-Modell (Assets.Attachments), sonst die Teile von früher
 	-- Visier als eigenes 3D-Modell auf der Schiene (nur lange Waffen mit fertigem Modell)
 	local optic = equippedOptic(weaponName, attachments)
@@ -536,6 +539,8 @@ local function addAttachments(model, weaponName, attachments)
 			muzzle = (CFrame.new(muzzle) * frame * barrelModel.Frame:ToObjectSpace(CFrame.new(barrelModel.Points.Muzzle))).Position
 			model:SetAttribute("Muzzle", muzzle)
 		end
+	elseif not blocks then
+		-- 3D-Waffe ohne Lauf-Modell: eingebauter Lauf bleibt
 	elseif long and has.LongBarrel then
 		attachPart(model, "AttLongBarrel", V(0.13, 0.13, 0.55), CFrame.new(muzzle + V(0, 0, -0.27)))
 	elseif long and has.HeavyBarrel then
@@ -553,8 +558,8 @@ local function addAttachments(model, weaponName, attachments)
 			muzzleModel = attachmentAsset(model, id, muzzle, frame)
 		end
 	end
-	if muzzleModel then
-		-- schon angebaut
+	if muzzleModel or not blocks then
+		-- schon angebaut bzw. 3D-Waffe ohne Modell
 	elseif has.Compensator then
 		attachPart(model, "AttCompensator", V(0.26, 0.26, 0.34), CFrame.new(muzzle + V(0, 0, -0.17)))
 		attachPart(model, "AttCompensatorPort", V(0.28, 0.06, 0.12), CFrame.new(muzzle + V(0, 0.1, -0.2)),
@@ -581,8 +586,8 @@ local function addAttachments(model, weaponName, attachments)
 				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z), frame)
 			end
 		end
-		if gripModel then
-			-- schon angebaut
+		if gripModel or not blocks then
+			-- schon angebaut bzw. 3D-Waffe ohne Modell
 		elseif has.VerticalGrip then
 			attachPart(model, "AttGrip", V(0.15, 0.48, 0.17), CFrame.new(hand + V(0.03, -0.32, 0.12)))
 		elseif has.AngledGrip then
@@ -618,8 +623,8 @@ local function addAttachments(model, weaponName, attachments)
 			end
 		end
 	end
-	if magModel then
-		-- schon angebaut
+	if magModel or not blocks then
+		-- schon angebaut bzw. 3D-Waffe ohne Modell (eingebautes Magazin bleibt)
 	elseif mag and mag:IsA("BasePart") then
 		if has.ExtendedMag then
 			-- länger nach unten

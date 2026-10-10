@@ -243,9 +243,9 @@ check(built.Skin_Receiver:FindFirstChild("Standard") ~= nil, "ohne Skin: Standar
 
 -- Aufsätze an den Punkten aus dem Modell
 local equipped = GunModels.Build("Rifle", nil, { "Suppressor", "ExtendedMag" })
-local can = equipped:FindFirstChild("AttSuppressor")
-check(can and can.Position.Z < info.Muzzle.Z and near(can.Position.Y, info.Muzzle.Y), "Schalldämpfer vor der Mündung")
-check(equipped.Magazine.Size.Y > built.Magazine.Size.Y, "langes Magazin am Magazin des Modells")
+-- ohne fertige Aufsatz-Modelle (Assets.Attachments) bekommt eine 3D-Waffe keine Klötze: sie bleibt unverändert
+check(equipped:FindFirstChild("AttSuppressor") == nil, "kein Schalldämpfer-Klotz am 3D-Modell")
+check(equipped.Magazine.Size == built.Magazine.Size, "eingebautes Magazin bleibt ohne Magazin-Modell unverändert")
 
 -- Werkzeug für die Hand: Teile an den Griff geschweißt, verkleinert
 local tool = GunModels.BuildTool("Rifle", "Sturmgewehr")
