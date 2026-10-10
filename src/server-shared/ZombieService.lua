@@ -320,6 +320,16 @@ local function clampOutside(position)
 end
 
 -- weit genug von allen Safe Zones?
+local function nearPlayer(x, z, radius)
+	for _, player in Players:GetPlayers() do
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and Vector3.new(x - root.Position.X, 0, z - root.Position.Z).Magnitude <= radius then
+			return true
+		end
+	end
+	return false
+end
+
 local function farFromSafe(x, z, margin)
 	for _, zone in safeZones() do
 		if Vector3.new(x - zone.Center.X, 0, z - zone.Center.Z).Magnitude <= zone.Radius + margin then
@@ -475,7 +485,9 @@ local function remove(model)
 	local info = zombies[model]
 	if info then
 		zombies[model] = nil
-		count -= 1
+		if not info.Dungeon then
+			count -= 1
+		end
 		if info.Path then
 			info.Path:Destroy()
 			info.Path = nil
@@ -539,9 +551,10 @@ local function onDeath(model, info)
 		end
 	end
 	-- Beute steckt in der Leiche (E durchsucht sie), sonst verschwindet sie bald
-	local items = root and rollCorpseLoot(info.Stats, info.Blood, red) or {}
+	-- (feste Bosse wie der Chirurg: die Beute kommt von BossService, nicht noch einmal aus der Leiche)
+	local items = root and not info.Boss and rollCorpseLoot(info.Stats, info.Blood, red) or {}
 	-- Dungeon-Schlüssel: selten bei normalen Zombies, öfter bei Bossen – nie bei Zombies im Dungeon selbst
-	if root and not info.Dungeon then
+	if root and not info.Dungeon and not info.Boss then
 		ExtinctionConfig.AddDungeonKey(items, info.Stats.Boss and "Boss" or "Zombie", random)
 	end
 	if #items > 0 and root then
@@ -899,9 +912,11 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	local info = { Humanoid = humanoid, Root = root, Target = nil, NextAttack = 0, NextWander = 0, LastPos = root.Position,
 		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage * (blood and B.Damage or 1), Coins = stats.Coins,
 		Kind = stats.Id, Name = (armored and "Armored " or "") .. stats.Name, Stats = stats, Blood = blood, Armored = armored,
-		VoicePitch = random:NextNumber(0.88, 1.1) }
+		VoicePitch = random:NextNumber(0.88, 1.1), Dungeon = force == "Dungeon" }
 	zombies[model] = info
-	count += 1
+	if not info.Dungeon then
+		count += 1 -- Dungeon-Zombies zählen nicht gegen die Obergrenze der offenen Welt
+	end
 	playAnimations(humanoid, speed)
 	humanoid.Died:Once(function()
 		onDeath(model, info)
@@ -1054,7 +1069,8 @@ local function step(model, info, now)
 		end
 		local distance = (targetRoot.Position - root.Position).Magnitude
 		humanoid.WalkSpeed = info.Speed
-		if distance <= Z.AttackRange * math.max(1, info.Stats and info.Stats.Scale or 1) then -- große Zombies reichen weiter
+		-- große Zombies reichen weiter; nicht durch Wände (sonst trifft er, an die Wand gedrückt, wer dahinter steht)
+		if distance <= Z.AttackRange * math.max(1, info.Stats and info.Stats.Scale or 1) and not lineBlocked(root, targetRoot) then
 			humanoid:MoveTo(root.Position) -- stehen bleiben und zuschlagen
 			if now >= info.NextAttack then
 				info.NextAttack = now + Z.AttackDelay
@@ -1191,8 +1207,9 @@ end
 -- Zombie gehört zu einem Dungeon (DungeonService): kein Dungeon-Schlüssel in der Beute
 function ZombieService.MarkDungeon(model)
 	local info = zombies[model]
-	if info then
+	if info and not info.Dungeon then
 		info.Dungeon = true
+		count -= 1
 	end
 end
 
@@ -1210,7 +1227,9 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 		for _ = 1, 6 do
 			local angle = random:NextNumber(0, math.pi * 2)
 			local distance = random:NextNumber(minRadius, maxRadius)
-			local point = groundAt(center.X + math.cos(angle) * distance, center.Z + math.sin(angle) * distance)
+			local x, z = center.X + math.cos(angle) * distance, center.Z + math.sin(angle) * distance
+			-- nicht in einer Safe Zone und nicht direkt neben einem Spieler (Sturm, Schreier, Alarm spawnen um Spieler)
+			local point = farFromSafe(x, z, 6) and not nearPlayer(x, z, 12) and groundAt(x, z)
 			if point then
 				local model = ZombieService.Spawn(point, kindName == "Random" and rollKind(false) or kindName, force, armored)
 				if model then

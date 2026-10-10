@@ -361,6 +361,10 @@ local function runAI(bot, model)
 			model:SetAttribute("AimPitch", 0)
 		end
 
+		-- Orte, die der Modus nicht erlaubt (offene Welt: Safe Zones): nicht hingehen und von dort nicht schießen
+		local function allowed(point)
+			return not bot.AllowPoint or bot.AllowPoint(point)
+		end
 		if target then
 			local targetPosition = target.HumanoidRootPart.Position
 			seenSince = seenSince or now
@@ -370,10 +374,13 @@ local function runAI(bot, model)
 			nav.Clear()
 			wanderGoal = nil
 			if now >= nextMove then
-				if targetDistance > KEEP_DISTANCE then
+				local strafe = root.Position + root.CFrame.RightVector * random:NextInteger(-12, 12)
+				if targetDistance > KEEP_DISTANCE and allowed(targetPosition) then
 					humanoid:MoveTo(targetPosition) -- in Sicht: direkter Weg ist frei
+				elseif allowed(strafe) then
+					humanoid:MoveTo(strafe)
 				else
-					humanoid:MoveTo(root.Position + root.CFrame.RightVector * random:NextInteger(-12, 12))
+					humanoid:MoveTo(root.Position)
 				end
 				nextMove = now + 0.8
 			end
@@ -382,12 +389,13 @@ local function runAI(bot, model)
 				and now - lastShot >= cfg.FireDelay and targetDistance <= cfg.Range
 			local blinded = (model:GetAttribute("BlindedUntil") or 0) > now
 			-- Ab und zu ein Gadget werfen (mittlere Entfernung)
-			if bot.CanFight and not blinded and targetDistance > 15 and targetDistance < 60
+			local canShoot = bot.CanFight and allowed(root.Position)
+			if canShoot and not blinded and targetDistance > 15 and targetDistance < 60
 				and random:NextNumber() < GADGET_CHANCE then
 				local aim = (targetPosition - head.Position).Unit + Vector3.new(0, 0.15, 0)
 				GadgetService.BotThrow(bot, aim)
 			end
-			if bot.CanFight and ready and not blinded then
+			if canShoot and ready and not blinded then
 				lastShot = now
 				shoot(bot, head, target, weaponName)
 				shotsInMagazine += 1
@@ -427,7 +435,7 @@ local function runAI(bot, model)
 					if bot.Objective then
 						-- Ziel des Modus (Punkt, Bombe, Hack)
 						wanderGoal = bot.Objective + Vector3.new(random:NextNumber(-6, 6), 0, random:NextNumber(-6, 6))
-					elseif nearest then
+					elseif nearest and allowed(nearest.HumanoidRootPart.Position) then
 						wanderGoal = nearest.HumanoidRootPart.Position
 					else
 						-- zufällig um die Mitte; ein Punkt, den der Modus nicht erlaubt (Safe Zone), wird neu gewürfelt
