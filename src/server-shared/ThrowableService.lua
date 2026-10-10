@@ -112,7 +112,7 @@ local function hurt(thrower, model, amount, weaponName)
 	local victimName = victim and victim.Name or model.Name
 	local dealt, killed, downed, armor = Damage.Apply(model, humanoid, amount,
 		{ Player = thrower, Model = thrower.Character, Weapon = weaponName })
-	if dealt > 0 then
+	if dealt > 0 and thrower.Parent then -- Werfer kann schon weg sein (Feuer brennt weiter)
 		local root = model:FindFirstChild("HumanoidRootPart")
 		Remotes.Hitmarker:FireClient(thrower, false, killed, dealt, root and root.Position or Vector3.zero, victimName, downed, armor, model)
 	end
@@ -215,7 +215,9 @@ local function ignite(thrower, position, cfg)
 				local root = model:FindFirstChild("HumanoidRootPart")
 				if root then
 					local offset = root.Position - ground
-					if Vector2.new(offset.X, offset.Z).Magnitude <= cfg.Radius and math.abs(offset.Y) <= 7 then
+					-- und kein Boden oder keine Wand dazwischen (Feuer auf dem Dach brennt nicht im Stock darunter)
+					if Vector2.new(offset.X, offset.Z).Magnitude <= cfg.Radius and math.abs(offset.Y) <= 7
+						and clear(ground + Vector3.new(0, 1.5, 0), model) then
 						local factor = model:GetAttribute("IsZombie") and cfg.ZombieFactor or 1
 						hurt(thrower, model, cfg.TickDamage * factor, "Molotow")
 					end

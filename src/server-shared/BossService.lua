@@ -210,8 +210,12 @@ local function throwSyringe(boss, target)
 			task.wait(0.05)
 		end
 	end)
-	Damage.Apply(target.Root.Parent, target.Humanoid, cfg.AbilityDamage, { Model = boss.Model, BotName = cfg.Name, Weapon = "Spritze" })
+	local dealt = Damage.Apply(target.Root.Parent, target.Humanoid, cfg.AbilityDamage,
+		{ Model = boss.Model, BotName = cfg.Name, Weapon = "Spritze" })
 	Sfx.At("Spray", target.Root)
+	if not dealt or dealt <= 0 then
+		return -- Spawnschutz o. Ä.: auch nicht verlangsamen
+	end
 	local character = target.Root.Parent
 	character:SetAttribute("SpeedMultiplier", cfg.SlowFactor)
 	task.delay(cfg.SlowTime, function()
@@ -239,9 +243,18 @@ local function tick(now)
 		if boss.Model and boss.Humanoid and boss.Humanoid.Health > 0 and cfg.Ability == "Syringe" and now >= boss.NextAbility then
 			boss.NextAbility = now + cfg.AbilityEvery
 			local root = boss.Model:FindFirstChild("HumanoidRootPart")
-			local near = root and playersNear(root.Position, cfg.AbilityRange) or {}
-			if near[1] then
-				throwSyringe(boss, near[1])
+			-- der nächste Spieler, den der Boss sehen kann (nicht durch Wände)
+			local eye = boss.Model:FindFirstChild("Head") or root
+			for _, target in root and playersNear(root.Position, cfg.AbilityRange) or {} do
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				params.FilterDescendantsInstances = { boss.Model, target.Root.Parent, workspace:FindFirstChild("Zombies") }
+				local aim = target.Root.Parent:FindFirstChild("Head") or target.Root -- Kopf: Bodenwellen stören nicht
+				local wall = workspace:Raycast(eye.Position, aim.Position - eye.Position, params)
+				if not (wall and wall.Instance.CanCollide) then
+					throwSyringe(boss, target)
+					break
+				end
 			end
 		end
 	end

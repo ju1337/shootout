@@ -80,7 +80,7 @@ end
 local ground = Instance.new("Part", workspace)
 ground.Name = "Ground"
 SIM.RaycastHandler = function(origin, direction)
-	if direction.Y >= 0 then
+	if direction.Y >= 0 or origin.Y + direction.Y > 0 then -- Boden bei Y = 0, nur wenn der Strahl so weit reicht
 		return nil
 	end
 	return { Position = Vector3.new(origin.X, 0, origin.Z), Normal = Vector3.new(0, 1, 0), Instance = ground, Material = Enum.Material.Grass }

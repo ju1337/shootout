@@ -382,6 +382,20 @@ check(alice.Character.Humanoid.Health == 100, "vor Ablauf der PvP-Zeit kein Scha
 step(5)
 shoot(bob, alice, 101)
 check(alice.Character.Humanoid.Health < 100, "nach 5 Sekunden draußen: PvP-Schaden")
+-- gemeldeter Kopftreffer, dessen Punkt gar nicht am Kopf liegt (an den Beinen): zählt nicht als Kopftreffer
+local headDamage = 100 - alice.Character.Humanoid.Health
+alice.Character.Humanoid.Health = 100
+step(1)
+do
+	local origin = bob.Character.Head.Position
+	local legs = alice.Character.HumanoidRootPart.Position - Vector3.new(0, 2.5, 0)
+	Remotes.Fire.OnServerEvent:Fire(bob, origin, (legs - origin).Unit, false, 102,
+		{ { Part = alice.Character.Head, Position = legs } })
+	step(0.3)
+end
+check(100 - alice.Character.Humanoid.Health < headDamage,
+	"falscher Kopftreffer: weniger Schaden als am Kopf (" .. (100 - alice.Character.Humanoid.Health) .. " / " .. headDamage .. ")")
+alice.Character.Humanoid.Health = 100
 
 -- ---------- Im Kampf: Safe Zone gesperrt (CombatUntil), danach wieder offen ----------
 local now = workspace:GetServerTimeNow()

@@ -289,6 +289,22 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 	if not wasNear(model, position) then
 		return nil
 	end
+	-- und der Punkt liegt am gemeldeten Körperteil (jetzt oder um die Bewegung seit damals verschoben); sonst würde aus
+	-- jedem knappen Treffer am Körper ein Kopftreffer
+	local root = model:FindFirstChild("HumanoidRootPart")
+	local reach = part.Size.Magnitude / 2 + 1.5
+	local onPart = (part.Position - position).Magnitude <= reach
+	if not onPart and root then
+		for _, sample in history[model] or {} do
+			if (part.Position + (sample.Position - root.Position) - position).Magnitude <= reach then
+				onPart = true
+				break
+			end
+		end
+	end
+	if not onPart then
+		return nil
+	end
 	-- Keine Wand dazwischen (Charaktere zählen nicht als Hindernis)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
@@ -483,6 +499,12 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 	-- Kamera und Charakter getroffen wird) und dann vom Kopf aus dorthin schießen
 	local look = direction.Unit
 	local shotOrigin, aimDirection = origin, look
+	-- Ursprung (Kamera) hinter einer Wand, an der man steht: vom Kopf aus schießen, sonst ginge der Schuss hindurch
+	local toOrigin = origin - head.Position
+	local wall = toOrigin.Magnitude > 0.05 and workspace:Raycast(head.Position, toOrigin, params)
+	if wall and wall.Instance.CanCollide then
+		shotOrigin = head.Position
+	end
 	if (origin - head.Position).Magnitude > THIRD_PERSON_DISTANCE then
 		local skip = math.max(0, (head.Position - origin):Dot(look))
 		local start = origin + look * skip
@@ -537,10 +559,14 @@ local function onFire(player, origin, direction, aiming, shotId, claims)
 	end
 	clearInspect(player)
 	local validId = typeof(shotId) == "number" and shotId == shotId and math.abs(shotId) < 1e9
+	-- Die Nummer bestimmt die Streuung (Seed): nur eine neue, höhere Nummer zählt. Sonst nimmt der Server die nächste,
+	-- damit niemand eine günstige Streuung wiederholt schicken kann
 	if validId and shotId > (lastShotIds[player] or 0) then
 		lastShotIds[player] = math.floor(shotId)
+	else
+		lastShotIds[player] = (lastShotIds[player] or 0) + 1
 	end
-	fire(player, state, origin, direction, aiming == true, validId and shotId or 0, claims)
+	fire(player, state, origin, direction, aiming == true, lastShotIds[player], claims)
 	sendAmmo(player)
 end
 
