@@ -463,7 +463,7 @@ local function buildSquad()
 					Size = UDim2.fromOffset(112, 26), BackgroundColor3 = entry.Ready and C.Good or C.MutedBack, BorderSizePixel = 0,
 					AutoButtonColor = entry.Me, Font = F.Bold, TextSize = 11,
 					Text = entry.Ready and "BEREIT" or "NICHT BEREIT", ZIndex = 3,
-					TextColor3 = entry.Ready and C.PrimaryText or C.Muted }, row)
+					TextColor3 = entry.Ready and C.OnLight or C.Muted }, row)
 				UITheme.Corner(badge, UITheme.Radius.Small)
 				if entry.Me then
 					badge.Activated:Connect(function()

@@ -660,7 +660,7 @@ local function update()
 		if isLocked() then
 			confirm.SetText("BEREIT")
 			confirmSub.Text = "GLEICH GEHT'S LOS"
-			confirm.SetColor(C.Good, C.PrimaryText)
+			confirm.SetColor(C.Good, C.OnLight)
 		else
 			confirm.SetText("BEREIT")
 			confirmSub.Text = respawn.ReadyIn > 0 and ("IN " .. math.ceil(respawn.ReadyIn) .. " S ZURÜCK") or "ZURÜCK INS GEFECHT"

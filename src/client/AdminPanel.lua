@@ -847,7 +847,7 @@ end
 
 detailBuilders.Messages = function(frame, target)
 	detailHead(frame, target)
-	section("NACHRICHT AN " .. string.upper(target.DisplayName), frame)
+	section("NACHRICHT AN " .. UITheme.Upper(target.DisplayName), frame)
 	local r = row(frame, 40)
 	local box = textBox("Nachricht (sieht nur dieser Spieler)", r, { Size = UDim2.new(0.72, -6, 1, 0) })
 	button("SENDEN", 1, r, C.Green, function()
@@ -1159,7 +1159,7 @@ local function buildSettings(page)
 				order(c)
 			end
 			lastGroup = def.Group
-			section(string.upper(def.Group), page)
+			section(UITheme.Upper(def.Group), page)
 			c = card(page)
 		end
 		local r = row(c)
@@ -1265,7 +1265,7 @@ local function refreshLookup()
 	local head = make("Frame", { Size = UDim2.new(1, 0, 0, 60), BackgroundTransparency = 1 }, box)
 	avatar(data.UserId, 56, head)
 	local rank = StaffConfig.Get(data.Rank)
-	label(string.upper(tostring(data.Name)) .. (rank and ("  " .. StaffConfig.Prefix(rank, 13)) or ""), 20, head,
+	label(UITheme.Upper(tostring(data.Name)) .. (rank and ("  " .. StaffConfig.Prefix(rank, 13)) or ""), 20, head,
 		{ Position = UDim2.new(0, 68, 0, 4), Size = UDim2.new(1, -70, 0, 26), RichText = true })
 	label(tostring(data.UserId) .. "  ·  " .. (data.Online and "auf diesem Server" or "nicht auf diesem Server")
 		.. (data.Hidden and "  ·  vor Bestenliste versteckt" or ""), 13, head,
@@ -1387,7 +1387,7 @@ local function refreshShopForm()
 	if ShopAdmin.Preview then
 		local item = ShopAdmin.Skin and Cosmetics.Get(ShopAdmin.Skin)
 		if item then
-			ShopAdmin.Preview.Text = string.upper(item.Name) .. "  ·  " .. item.Price .. " → "
+			ShopAdmin.Preview.Text = UITheme.Upper(item.Name) .. "  ·  " .. item.Price .. " → "
 				.. ShopOffers.Discounted(item.Price, ShopAdmin.Discount) .. " MÜNZEN  ·  -" .. ShopAdmin.Discount .. " %  ·  "
 				.. ShopOffers.FormatLeft(ShopAdmin.Hours * 3600)
 		else
@@ -1420,7 +1420,7 @@ local function refreshShop()
 			local r = row(ShopAdmin.List, 34)
 			r.LayoutOrder = i
 			local kind = not offer.Manual and "AUTOMATISCH" or offer.Featured and "HAUPTANGEBOT" or "MANUELL"
-			label(string.upper(offer.Item.Name), 15, r, { Size = UDim2.new(0.24, 0, 1, 0), LayoutOrder = 1 })
+			label(UITheme.Upper(offer.Item.Name), 15, r, { Size = UDim2.new(0.24, 0, 1, 0), LayoutOrder = 1 })
 			label("-" .. offer.Discount .. " %  ·  " .. offer.Price .. " STATT " .. offer.OldPrice, 13, r,
 				{ Size = UDim2.new(0.26, 0, 1, 0), TextColor3 = C.Text, Font = BODY_FONT, LayoutOrder = 2 })
 			label(kind, 12, r, { Size = UDim2.new(0.16, 0, 1, 0), TextColor3 = offer.Manual and RED or C.Muted, LayoutOrder = 3 })
@@ -1483,7 +1483,7 @@ local function buildShop(page)
 		return a.Price > b.Price
 	end)
 	for i, item in items do
-		local b = button(string.upper(item.Name) .. "  " .. item.Price, 1, skins, nil, function()
+		local b = button(UITheme.Upper(item.Name) .. "  " .. item.Price, 1, skins, nil, function()
 			ShopAdmin.Skin = item.Id
 			refreshShopForm()
 		end, 30)

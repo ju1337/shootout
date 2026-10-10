@@ -326,7 +326,7 @@ local function buildCard(row, i)
 		Size = UDim2.new(0, 0, 0, 4), BackgroundColor3 = C.Accent, BorderSizePixel = 0, ZIndex = 4 }, card)
 	local check = UITheme.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 12),
 		Size = UDim2.new(0, 132, 0, 30), Text = "DEINE WAHL", Font = UITheme.Fonts.Title, TextSize = 18,
-		TextColor3 = C.PrimaryText, BackgroundTransparency = 0, BackgroundColor3 = C.Accent,
+		TextColor3 = C.OnLight, BackgroundTransparency = 0, BackgroundColor3 = C.Accent,
 		TextXAlignment = Enum.TextXAlignment.Center, Visible = false, ZIndex = 3 }, card)
 	UITheme.Corner(check, 3)
 
@@ -422,7 +422,7 @@ function refresh()
 		if option then
 			local mood = MOODS[option.Name] or { C.Card, C.Panel }
 			entry.Gradient.Color = ColorSequence.new(mood[1], mood[2])
-			entry.Name.Text = string.upper(option.Name)
+			entry.Name.Text = UITheme.Upper(option.Name)
 			local n = counts[i] or 0
 			entry.Votes.Text = n .. (n == 1 and " STIMME" or " STIMMEN")
 			entry.Bar.Size = UDim2.new(total > 0 and n / total or 0, 0, 0, 4)

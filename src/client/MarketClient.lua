@@ -516,7 +516,7 @@ local function openManage()
 				local price = numberBox({ Position = UDim2.fromOffset(10, 92), Size = UDim2.fromOffset(104, 40), Text = tostring(listing.Price),
 					PlaceholderText = "PREIS", ZIndex = 5 }, card)
 				UITheme.Chunky({ Position = UDim2.fromOffset(122, 92), Size = UDim2.fromOffset(52, 40), Color = C.Rap, Text = "OK",
-					TextSize = 15, TextColor = C.PrimaryText, ZIndex = 5 }, card, function()
+					TextSize = 15, TextColor = C.OnLight, ZIndex = 5 }, card, function()
 					Remotes.MarketAction:FireServer("SetPrice", slot, tonumber(price.Text))
 				end)
 				price.FocusLost:Connect(function(enter)
@@ -560,7 +560,7 @@ local function openManage()
 			end
 		end)
 		UITheme.Chunky({ Position = UDim2.fromOffset(394, 0), Size = UDim2.fromOffset(60, 34), Color = C.Rap, Text = "OK", TextSize = 15,
-			TextColor = C.PrimaryText, ZIndex = 5 }, nameRow, function()
+			TextColor = C.OnLight, ZIndex = 5 }, nameRow, function()
 			Remotes.MarketAction:FireServer("Name", nameBox.Text)
 		end)
 		label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 44), TextWrapped = true,
@@ -594,7 +594,7 @@ local function openManage()
 					end
 				end)
 				UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(112, 40),
-					Color = C.Rap, Text = "ANBIETEN", TextSize = 16, TextColor = C.PrimaryText, ZIndex = 5 }, card, function()
+					Color = C.Rap, Text = "ANBIETEN", TextSize = 16, TextColor = C.OnLight, ZIndex = 5 }, card, function()
 					Remotes.MarketAction:FireServer("List", item.Id, tonumber(price.Text))
 				end)
 			end
@@ -694,7 +694,7 @@ local function openStand(stand)
 				local armed = affordable and os.clock() < (confirm[confirmKey] or 0)
 				local buy
 				buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12), Size = UDim2.new(1, -28, 0, 44),
-					Color = affordable and C.Rap or C.MutedBack, TextColor = affordable and C.PrimaryText or C.Bad, TextSize = 18,
+					Color = affordable and C.Rap or C.MutedBack, TextColor = affordable and C.OnLight or C.Bad, TextSize = 18,
 					Text = armed and ("SICHER?  " .. format(listing.Price) .. " RAP")
 						or (affordable and ("KAUFEN  ·  " .. format(listing.Price) .. " RAP") or "ZU WENIG RAP"), ZIndex = 5 }, card, function()
 					if not affordable then
@@ -801,7 +801,7 @@ end
 
 local function searchChip(parent, text, x, y, width, active, onClick)
 	return UITheme.Chunky({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width, 32), Color = active and C.Rap or C.Card,
-		StrokeColor = active and C.Rap or C.Border, Text = text, TextSize = 14, TextColor = active and C.PrimaryText or C.Text,
+		StrokeColor = active and C.Rap or C.Border, Text = text, TextSize = 14, TextColor = active and C.OnLight or C.Text,
 		ZIndex = 5 }, parent, onClick)
 end
 
@@ -879,7 +879,7 @@ local function openSearch()
 			priceRow.ZIndex = 5
 			watchChip(row, item.Id, UDim2.fromOffset(772, 22))
 			UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(80, 44),
-				Color = C.Rap, Text = "HIN", TextSize = 18, TextColor = C.PrimaryText, ZIndex = 5 }, row, function()
+				Color = C.Rap, Text = "HIN", TextSize = 18, TextColor = C.OnLight, ZIndex = 5 }, row, function()
 				local target = stands[entry.Stand]
 				if target then
 					closeWindow()
@@ -1026,7 +1026,7 @@ local function openOffers()
 					ZIndex = 5, Text = "", TextColor3 = C.Muted }, row)
 				timers[offer.Id] = { Label = left, Expires = offer.Expires }
 				UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -140, 0.5, 0), Size = UDim2.fromOffset(120, 48),
-					Color = C.Rap, Text = "ANNEHMEN", TextSize = 16, TextColor = C.PrimaryText, ZIndex = 5 }, row, function()
+					Color = C.Rap, Text = "ANNEHMEN", TextSize = 16, TextColor = C.OnLight, ZIndex = 5 }, row, function()
 					Remotes.MarketAction:FireServer("Answer", offer.Id, true)
 				end)
 				UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(116, 48),
@@ -1136,7 +1136,7 @@ function refreshBoards()
 			if owner == 0 then
 				free += 1
 				cell.BackgroundColor3 = C.Good
-				cell.TextColor3 = C.PrimaryText
+				cell.TextColor3 = C.OnLight
 			elseif owner == player.UserId then
 				cell.BackgroundColor3 = UITheme.MenuColors.Primary
 				cell.TextColor3 = UITheme.MenuColors.PrimaryText
@@ -1170,13 +1170,18 @@ local function buildBar()
 	local bar = UITheme.Card({ Name = "MarketBar", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 14),
 		Size = UDim2.fromOffset(1120, 56), BackgroundTransparency = 0.1 }, root)
 	UITheme.AccentBar(bar, C.Rap, { Side = "Left", Thickness = 4, ZIndex = 2 })
-	label({ Position = UDim2.fromOffset(18, 6), Size = UDim2.fromOffset(110, 44), Text = "MARKT", TextSize = 32, Font = F.Display,
-		ZIndex = 2 }, bar)
+	-- links in einer Reihe: MARKT, RAP, Stand-Status (nichts überlappt, auch bei großen RAP-Zahlen)
+	local left = make("Frame", { Name = "BarLeft", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(0, 490, 1, 0),
+		BackgroundTransparency = 1, ZIndex = 2 }, bar)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder }, left)
+	label({ Size = UDim2.fromOffset(0, 44), AutomaticSize = Enum.AutomaticSize.X, Text = "MARKT", TextSize = 32, Font = F.Display,
+		LayoutOrder = 1, ZIndex = 2 }, left)
 	local rapRow
-	rapRow, barRap = rapLine(bar, { Position = UDim2.fromOffset(124, 13) }, 0, 24)
+	rapRow, barRap = rapLine(left, { LayoutOrder = 2 }, 0, 24)
 	rapRow.ZIndex = 2
-	barStatus = label({ Position = UDim2.fromOffset(262, 8), Size = UDim2.fromOffset(220, 40), Text = "", TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted, TextWrapped = true, ZIndex = 2 }, bar)
+	barStatus = label({ Size = UDim2.fromOffset(210, 40), Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+		TextWrapped = true, LayoutOrder = 3, ZIndex = 2 }, left)
 	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -248, 0.5, 0), Size = UDim2.fromOffset(104, 38),
 		Color = C.Card, StrokeColor = C.Rap, Text = "SUCHE", TextSize = 16, TextColor = C.Rap, ZIndex = 2 }, bar, openSearch)
 	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -518, 0.5, 0), Size = UDim2.fromOffset(100, 38),
@@ -1186,7 +1191,7 @@ local function buildBar()
 	offersButton = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -360, 0.5, 0), Size = UDim2.fromOffset(150, 38),
 		Color = C.Card, StrokeColor = C.Primary, Text = "ANGEBOTE", TextSize = 15, TextColor = C.Primary, ZIndex = 2 }, bar, openOffers)
 	manageButton = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -118, 0.5, 0), Size = UDim2.fromOffset(122, 38),
-		Color = C.Rap, Text = "MEIN STAND", TextSize = 16, TextColor = C.PrimaryText, ZIndex = 2 }, bar, openManage)
+		Color = C.Rap, Text = "MEIN STAND", TextSize = 16, TextColor = C.OnLight, ZIndex = 2 }, bar, openManage)
 	releaseButton = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(100, 38),
 		Color = C.Card, StrokeColor = C.Bad, Text = "ABGEBEN", TextSize = 15, TextColor = C.Bad, ZIndex = 2 }, bar, function()
 		Remotes.MarketAction:FireServer("Release")

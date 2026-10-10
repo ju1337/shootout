@@ -353,7 +353,7 @@ function LobbyPages.Shop(page)
 		end
 		if entry.Tag then
 			UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 8), Text = entry.Tag, TextSize = 12,
-				BackgroundColor3 = entry.Color, TextColor3 = C.PrimaryText, ZIndex = 3 }, top)
+				BackgroundColor3 = entry.Color, TextColor3 = C.OnLight, ZIndex = 3 }, top)
 		end
 		if not isPass and PaidRandom.IsRandomProduct(entry) then
 			UITheme.Chunky({ Name = "Odds", Position = UDim2.fromOffset(8, 8), Size = UDim2.fromOffset(96, 28), Color = C.Card,
@@ -368,7 +368,7 @@ function LobbyPages.Shop(page)
 			TextYAlignment = Enum.TextYAlignment.Top }, card)
 		local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
 			Size = UDim2.new(1, -28, 0, 40), Color = id ~= 0 and C.Good or C.MutedBack,
-			Text = id ~= 0 and ("R$ " .. entry.Robux) or "BALD", TextSize = 18, TextColor = id ~= 0 and C.PrimaryText or C.Muted }, card,
+			Text = id ~= 0 and ("R$ " .. entry.Robux) or "BALD", TextSize = 18, TextColor = id ~= 0 and C.OnLight or C.Muted }, card,
 			function()
 				if id == 0 or (isPass and RobuxConfig.Has(player, entry.Id)) then
 					return
@@ -421,7 +421,7 @@ function LobbyPages.Shop(page)
 		sell = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
 			Size = UDim2.new(1, -28, 0, 40), Color = free > 0 and C.Rap or C.MutedBack,
 			Text = free > 0 and ("VERKAUFEN  ·  +" .. UITheme.FormatNumber(price) .. " RAP") or "ZURÜCKGELEGT", TextSize = 17,
-			TextColor = free > 0 and C.PrimaryText or C.Muted }, card, function()
+			TextColor = free > 0 and C.OnLight or C.Muted }, card, function()
 			if free <= 0 then
 				return
 			end
@@ -481,7 +481,7 @@ function LobbyPages.Shop(page)
 		local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, preview)
 		showSkin(view, item, (CARD_W - 16) / STAGE_H)
 		UITheme.Tag({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Text = upper(rarity.Name),
-			TextSize = 11, BackgroundColor3 = rarity.Color, TextColor3 = C.PrimaryText, ZIndex = 3 }, preview)
+			TextSize = 11, BackgroundColor3 = rarity.Color, TextColor3 = C.OnLight, ZIndex = 3 }, preview)
 		-- Farbe des Skins als kleines Feld unten rechts
 		local swatch = make("Frame", { Name = "Swatch", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -8, 1, -8),
 			Size = UDim2.fromOffset(18, 18), BackgroundColor3 = item.Color or rarity.Color, BorderSizePixel = 0, ZIndex = 3 }, preview)

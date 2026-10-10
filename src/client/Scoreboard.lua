@@ -98,8 +98,8 @@ local function render()
 
 	-- Kopfzeile: Modus, Map, Spielstand
 	local mode = Modes.Get(player:GetAttribute("Mode"))
-	titleLabel.Text = string.upper(mode and mode.Name or "")
-	subLabel.Text = string.upper(player:GetAttribute("MapName") or "")
+	titleLabel.Text = UITheme.Upper(mode and mode.Name or "")
+	subLabel.Text = UITheme.Upper(player:GetAttribute("MapName") or "")
 	local isTeam = Modes.IsTeamMode(player:GetAttribute("Mode"))
 	local mine, enemy = player:GetAttribute("TeamScore"), player:GetAttribute("EnemyScore")
 	scoreLabel.Visible = isTeam and mine ~= nil
@@ -114,7 +114,7 @@ local function render()
 		UITheme.AccentBar(frame, entry.IsMe and C.Accent or accent or C.Border, { Side = "Left", Thickness = 4 })
 		local kd = entry.Deaths > 0 and entry.Kills / entry.Deaths or entry.Kills
 		cells(inner, {
-			Name = entry.Name, Rank = entry.Rank, Agent = entry.Agent and string.upper(entry.Agent.Name) or "–",
+			Name = entry.Name, Rank = entry.Rank, Agent = entry.Agent and UITheme.Upper(entry.Agent.Name) or "–",
 			Kills = entry.Kills, Deaths = entry.Deaths, KD = string.format("%.2f", kd), Damage = entry.Damage,
 		}, nil, nil, {
 			Name = entry.IsMe and C.Accent or C.Text, Rank = entry.RankColor,
@@ -149,7 +149,7 @@ local function render()
 			local header = make("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = order }, list)
 			UITheme.Diamond(header, 12, UDim2.new(0, 12, 0.5, 0), color)
 			UITheme.Label({ Position = UDim2.new(0, 30, 0, 0), Size = UDim2.new(1, -30, 1, 0),
-				Text = "TEAM " .. string.upper(teamName) .. (own and "  ·  DEIN TEAM" or ""), Font = UITheme.Fonts.Title,
+				Text = "TEAM " .. UITheme.Upper(teamName) .. (own and "  ·  DEIN TEAM" or ""), Font = UITheme.Fonts.Title,
 				TextSize = 20, TextColor3 = color }, header)
 			for _, entry in all do
 				if entry.Team == teamName then

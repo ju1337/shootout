@@ -126,7 +126,7 @@ local function setOpenButton()
 		button.SetColor(C.MutedBack, C.Bad)
 	else
 		button.SetText("ÖFFNEN  ·  " .. format(crate.Price) .. " MÜNZEN")
-		button.SetColor(crate.Color, C.PrimaryText)
+		button.SetColor(crate.Color, C.OnLight)
 	end
 	window.CoinsLabel.Text = "MÜNZEN  " .. format(coins())
 end
@@ -189,7 +189,7 @@ local function showResult(result)
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, card)
 	local crate = window.Crate
 	local again = UITheme.Chunky({ Position = UDim2.fromOffset(28, 330), Size = UDim2.fromOffset(300, 56), Color = crate.Color,
-		Text = "NOCHMAL  ·  " .. format(crate.Price), TextSize = 20, TextColor = C.PrimaryText, ZIndex = 9 }, card, function()
+		Text = "NOCHMAL  ·  " .. format(crate.Price), TextSize = 20, TextColor = C.OnLight, ZIndex = 9 }, card, function()
 		overlay:Destroy()
 		CrateClient.Request()
 	end)
@@ -396,7 +396,7 @@ local function build(crate)
 	end
 
 	local openButton = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(420, 58),
-		Color = crate.Color, Text = "ÖFFNEN", TextSize = 22, TextColor = C.PrimaryText, ZIndex = 5 }, frame, function()
+		Color = crate.Color, Text = "ÖFFNEN", TextSize = 22, TextColor = C.OnLight, ZIndex = 5 }, frame, function()
 		CrateClient.Request()
 	end)
 	window = { Crate = crate, Frame = frame, Strip = strip, Open = openButton, Status = status, CoinsLabel = coinsLabel, Spinning = false,

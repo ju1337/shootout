@@ -95,8 +95,8 @@ local function scoreWidget(parent, leftColor, rightColor, leftText, rightText)
 			Font = F.Bold, TextColor3 = textColor, TextStrokeTransparency = 1, ZIndex = 4 }, box)
 		return value, sub
 	end
-	local leftValue, leftSub = side(true, leftColor, C.PrimaryText)
-	local rightValue, rightSub = side(false, rightColor, rightColor == ENEMY and WHITE or C.PrimaryText)
+	local leftValue, leftSub = side(true, leftColor, C.OnLight)
+	local rightValue, rightSub = side(false, rightColor, rightColor == ENEMY and WHITE or C.OnLight)
 	local topText = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(140, 14),
 		Text = leftText or "", TextSize = 10, Font = F.Bold, TextColor3 = MUTED, TextStrokeTransparency = 1, ZIndex = 3 }, card)
 	local clock = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 20), Size = UDim2.fromOffset(140, 32),

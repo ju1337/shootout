@@ -118,8 +118,8 @@ local function buildShopVitrine()
 		end
 		holoSurface(surface, part)
 		local rarity = Cosmetics.Rarities[item.Rarity]
-		surface.ItemName.Text = string.upper(item.Name)
-		surface.ItemInfo.Text = string.upper(rarity and rarity.Name or "") .. "  ·  " .. UITheme.FormatNumber(item.Price or 0)
+		surface.ItemName.Text = UITheme.Upper(item.Name)
+		surface.ItemInfo.Text = UITheme.Upper(rarity and rarity.Name or "") .. "  ·  " .. UITheme.FormatNumber(item.Price or 0)
 			.. " MÜNZEN"
 		surface.ItemInfo.TextColor3 = rarity and rarity.Color or Color3.new(1, 1, 1)
 	end

@@ -844,7 +844,7 @@ local function updateZone()
 	end
 	if player:GetAttribute("InSafeZone") then
 		local title = player:GetAttribute("SafeZoneTitle")
-		setText(zoneText, "SAFE ZONE  ·  " .. (type(title) == "string" and (string.upper(title) .. "  ·  ") or "") .. "KEIN PVP")
+		setText(zoneText, "SAFE ZONE  ·  " .. (type(title) == "string" and (UITheme.Upper(title) .. "  ·  ") or "") .. "KEIN PVP")
 		zoneText.TextColor3 = SAFE
 		stroke.Color = SAFE
 	elseif vignette and vignette.Visible then
@@ -1964,7 +1964,7 @@ local function openLootInfo()
 		end
 		title.Text = source.Name
 		title.TextColor3 = source.Color
-		info.Text = string.upper(source.Info)
+		info.Text = UITheme.Upper(source.Info)
 		for _, child in scroll:GetChildren() do
 			if child:IsA("Frame") then
 				child:Destroy()
@@ -2390,7 +2390,7 @@ local function openTravel(pointName)
 	end)
 	for index, entry in list do
 		local column, row = (index - 1) % 2, (index - 1) // 2
-		local text = string.upper(entry.Title) .. (entry.Here and "  ·  DU BIST HIER" or ("  ·  " .. math.floor(entry.Distance) .. " M"))
+		local text = UITheme.Upper(entry.Title) .. (entry.Here and "  ·  DU BIST HIER" or ("  ·  " .. math.floor(entry.Distance) .. " M"))
 		local chunky = UITheme.Chunky({ Name = "Travel_" .. (entry.Key == "" and "Camp" or entry.Key),
 			Position = UDim2.fromOffset(column * 552, 10 + row * 92), Size = UDim2.fromOffset(536, 78),
 			Color = entry.Here and C.Card or SAFE:Lerp(Color3.new(0, 0, 0), 0.55), StrokeColor = entry.Here and C.Border or SAFE,
@@ -4216,7 +4216,7 @@ function ExtinctionClient.Init()
 		end
 		if nearest then
 			local left = math.max(0, math.floor((tonumber(nearest.Ends) or serverTime) - serverTime))
-			setText(redzoneName, string.upper(tostring(nearest.Title or "")))
+			setText(redzoneName, UITheme.Upper(tostring(nearest.Title or "")))
 			setText(redzoneTimer, "WECHSEL IN " .. string.format("%d:%02d", left // 60, left % 60))
 			local inside = root3 and nearestDistance <= 0
 			setText(redzoneDistance, not root3 and "" or inside and "DU BIST DRIN" or (math.floor(nearestDistance) .. " M"))

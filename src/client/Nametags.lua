@@ -117,7 +117,7 @@ local function buildTag(model, head)
 	-- oben: Team-Rang als Farbschild + Name
 	local top = row(column, "Top", 1, 5)
 	local staff = make("TextLabel", { Name = "Staff", Size = UDim2.fromOffset(0, 15), AutomaticSize = Enum.AutomaticSize.X,
-		TextSize = 11, Font = F.Display, TextColor3 = C.PrimaryText, BorderSizePixel = 0, Text = "", Visible = false,
+		TextSize = 11, Font = F.Display, TextColor3 = C.OnLight, BorderSizePixel = 0, Text = "", Visible = false,
 		LayoutOrder = 1 }, top)
 	UITheme.Corner(staff, 3)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, staff)

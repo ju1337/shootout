@@ -834,7 +834,7 @@ local function buildRewards()
 					tierColor = tier.Color
 				end
 			end
-			row(specialList, order, string.upper(milestone.Tier), rewardText(milestone), done and "done" or "open", tierColor)
+			row(specialList, order, UITheme.Upper(milestone.Tier), rewardText(milestone), done and "done" or "open", tierColor)
 		end
 		-- Saison-Ende: was es für den höchsten Rang der laufenden Saison gibt (aktueller Peak hervorgehoben)
 		local peakTier = RankConfig.Get(decodeAttribute(player, "RankedData").Peak or RankConfig.StartElo).Name
@@ -846,13 +846,13 @@ local function buildRewards()
 					tierColor = tier.Color
 				end
 			end
-			row(specialList, order, "ENDE · " .. string.upper(entry.Tier), rewardText(entry),
+			row(specialList, order, "ENDE · " .. UITheme.Upper(entry.Tier), rewardText(entry),
 				entry.Tier == peakTier and "next" or "open", tierColor)
 		end
 		clear(actionList)
 		for i, entry in RewardConfig.PerAction do
 			if Modes.ArcadeEnabled or not entry[3] then -- entry[3]: nur in Arcade-Modi
-				row(actionList, i, string.upper(entry[1]), entry[2], "open", ACCENT)
+				row(actionList, i, UITheme.Upper(entry[1]), entry[2], "open", ACCENT)
 			end
 		end
 		for i, entry in RewardConfig.OpenWorld do

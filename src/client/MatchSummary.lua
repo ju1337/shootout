@@ -565,7 +565,7 @@ function MatchSummary.Init()
 			return
 		end
 		if change > 0 then
-			pop(rankPop, rankAfter.Name ~= rankBefore.Name and ("NEUER RANG: " .. string.upper(rankAfter.Name) .. "!")
+			pop(rankPop, rankAfter.Name ~= rankBefore.Name and ("NEUER RANG: " .. UITheme.Upper(rankAfter.Name) .. "!")
 				or "AUFSTIEG!", rankAfter.Color)
 			rankStroke.Color = rankAfter.Color
 			rankStroke.Transparency = 0

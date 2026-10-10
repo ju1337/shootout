@@ -25,6 +25,7 @@ UITheme.Colors = {
 	Border = Color3.fromRGB(52, 57, 64),       -- Ränder (haarfein, siehe Stroke)
 	Primary = Color3.fromRGB(214, 58, 58),     -- Rot: aktiv, Hauptknöpfe, Schilder (wie das Menü der offenen Welt)
 	PrimaryText = Color3.fromRGB(255, 255, 255), -- Schrift auf Rot
+	OnLight = Color3.fromRGB(12, 13, 15),      -- Schrift auf hellen Flächen (RAP, Grün, Seltenheit)
 	Accent = Color3.fromRGB(88, 164, 226),     -- Stahlblau: eigenes Team, Verbündete
 	AccentDark = Color3.fromRGB(34, 72, 104),
 	Play = Color3.fromRGB(214, 58, 58),        -- großer SPIELEN-Knopf

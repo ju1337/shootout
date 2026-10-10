@@ -702,8 +702,8 @@ local function buildObjective(root)
 	local iconHolder = make("Frame", { Size = UDim2.fromOffset(26, 26), BackgroundTransparency = 1, LayoutOrder = 1 }, row)
 	local icon = diamond(iconHolder, 18, UDim2.fromScale(0.5, 0.5), C.Ally)
 	local letter = label({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 1),
-		Size = UDim2.fromScale(1, 1), Text = "", TextSize = 16, Font = F.Display, TextColor3 = C.PrimaryText }, iconHolder)
-	local dot = diamond(iconHolder, 7, UDim2.fromScale(0.5, 0.5), C.PrimaryText)
+		Size = UDim2.fromScale(1, 1), Text = "", TextSize = 16, Font = F.Display, TextColor3 = C.OnLight }, iconHolder)
+	local dot = diamond(iconHolder, 7, UDim2.fromScale(0.5, 0.5), C.OnLight)
 	local text = label({ Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = "", TextSize = 22,
 		Font = F.Display, LayoutOrder = 2 }, row)
 

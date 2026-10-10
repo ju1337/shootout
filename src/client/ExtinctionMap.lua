@@ -415,7 +415,7 @@ local function update()
 		local pulse = 18 + math.sin(os.clock() * 6) * 4
 		bountyView.Size = UDim2.fromOffset(pulse, pulse)
 		local mine = tonumber(bounty.UserId) == player.UserId
-		bountyCaption.Text = (mine and "DU · " or "") .. "KOPFGELD " .. string.upper(tostring(bounty.Name)) .. " · "
+		bountyCaption.Text = (mine and "DU · " or "") .. "KOPFGELD " .. UITheme.Upper(tostring(bounty.Name)) .. " · "
 			.. tostring(bounty.Reward) .. " MÜNZEN"
 	end
 

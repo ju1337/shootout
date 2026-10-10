@@ -95,7 +95,7 @@ local function requestCard(data)
 		card:Destroy()
 	end
 	UITheme.Chunky({ Position = UDim2.fromOffset(18, 58), Size = UDim2.fromOffset(150, 34), Color = C.Rap, Text = "ANNEHMEN",
-		TextSize = 16, TextColor = C.PrimaryText, ZIndex = 2 }, card, function()
+		TextSize = 16, TextColor = C.OnLight, ZIndex = 2 }, card, function()
 		respond(true)
 	end)
 	UITheme.Chunky({ Position = UDim2.fromOffset(176, 58), Size = UDim2.fromOffset(146, 34), Color = C.Card, StrokeColor = C.Border,
@@ -164,7 +164,7 @@ local function sideHeader(parent, title, value, ready)
 		Text = "WERT " .. format(value) .. " RAP", TextSize = 13, Font = F.Bold, TextColor3 = C.Rap,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, parent)
 	local badge = UITheme.Tag({ Position = UDim2.fromOffset(0, 26), Text = ready and "BEREIT" or "NOCH NICHT BEREIT", TextSize = 12,
-		BackgroundColor3 = ready and C.Rap or C.Secondary, TextColor3 = ready and C.PrimaryText or C.Muted, ZIndex = 5 }, parent)
+		BackgroundColor3 = ready and C.Rap or C.Secondary, TextColor3 = ready and C.OnLight or C.Muted, ZIndex = 5 }, parent)
 	return badge
 end
 
@@ -263,7 +263,7 @@ local function render()
 		end
 	end)
 	UITheme.Chunky({ Position = UDim2.fromOffset(268, 204), Size = UDim2.fromOffset(90, 38), Color = C.Rap, Text = "SETZEN", TextSize = 15,
-		TextColor = C.PrimaryText, ZIndex = 5 }, left, setRap)
+		TextColor = C.OnLight, ZIndex = 5 }, left, setRap)
 	label({ Position = UDim2.fromOffset(368, 204), Size = UDim2.fromOffset(158, 38), Text = "VON " .. format(player:GetAttribute("Rap") or 0),
 		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, left)
 	-- eigene freie Skins
@@ -306,7 +306,7 @@ local function render()
 		label({ Position = UDim2.fromOffset(72, 28), Size = UDim2.fromOffset(136, 14), Text = entry.Free .. " FREI  ·  "
 			.. format(RapConfig.Value(entry.Item.Id)) .. " RAP", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 5 }, row)
 		UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0), Size = UDim2.fromOffset(38, 38), Color = C.Rap,
-			Text = "+", TextSize = 22, Font = F.Bold, TextColor = C.PrimaryText, ZIndex = 5 }, row, function()
+			Text = "+", TextSize = 22, Font = F.Bold, TextColor = C.OnLight, ZIndex = 5 }, row, function()
 			Remotes.TradeAction:FireServer("AddItem", entry.Item.Id)
 		end)
 	end
@@ -339,7 +339,7 @@ local function render()
 	local ready = state.Mine.Ready
 	UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -22), Size = UDim2.fromOffset(300, 52),
 		Color = ready and C.Rap or C.Primary, Text = ready and "BEREIT  ·  ZURÜCKNEHMEN" or "BEREIT", TextSize = 22,
-		TextColor = C.PrimaryText, ZIndex = 5 }, frame, function()
+		TextColor = ready and C.OnLight or C.PrimaryText, ZIndex = 5 }, frame, function()
 		Remotes.TradeAction:FireServer("Ready", not ready, state.OfferVersion) -- Stand mitschicken: nur dieses Angebot bestätigen
 	end)
 	window.Status = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -80), Size = UDim2.fromOffset(WIN_W - 60, 20),
@@ -501,7 +501,7 @@ local function fillList()
 		local busy = current ~= nil
 		local text = busy and "DU TAUSCHST" or (near and "TAUSCH ANFRAGEN" or ("ZU WEIT  ·  GEH NÄHER"))
 		local button = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(250, 46),
-			Color = (near and not busy) and C.Rap or C.MutedBack, TextColor = (near and not busy) and C.PrimaryText or C.Muted, Text = text, TextSize = 16,
+			Color = (near and not busy) and C.Rap or C.MutedBack, TextColor = (near and not busy) and C.OnLight or C.Muted, Text = text, TextSize = 16,
 			ZIndex = 5 }, row, function()
 			if busy or not near then
 				return

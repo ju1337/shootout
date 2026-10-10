@@ -363,7 +363,7 @@ function HubWheel.Init()
 		if waitingSince and success == false then
 			waitingSince = nil
 			spinning = false
-			errorText, errorUntil = string.upper(tostring(message)), os.clock() + 4
+			errorText, errorUntil = UITheme.Upper(tostring(message)), os.clock() + 4
 			refresh()
 		end
 	end)
@@ -409,7 +409,7 @@ function HubWheel.Init()
 					task.delay(0.3, sound, WIN_SOUND, 2.2, 0.6)
 				end
 				local item = field.Item and Cosmetics.Get(field.Item)
-				resultText, resultUntil = "GEWONNEN: " .. string.upper(field.Text), os.clock() + 8
+				resultText, resultUntil = "GEWONNEN: " .. UITheme.Upper(field.Text), os.clock() + 8
 				Notifications.Reward({ Title = "GLÜCKSRAD", Lines = { tostring(text or field.Text) },
 					Rarity = jackpot and "Legendary" or (item and item.Rarity) or nil })
 				refresh()
