@@ -3,7 +3,10 @@
 -- Kopfzeile – kein eigenes Fenster – und nutzen das gemeinsame Design (UITheme):
 --   LOADOUT:     links die Waffen, Mitte große 3D-Vorschau mit dem ausgerüsteten Skin, rechts die eigenen Skins
 --                zum Ausrüsten (Standard + gekaufte) bzw. die Aufsätze (Agenten haben keine Skins)
---   SHOP:        Reiter WAFFEN-SKINS: Karten mit 3D-Vorschau, Seltenheit, RAP-Wert und KAUFEN · Preis;
+--   SHOP:        Startseite START: links das Angebot des Tages (ShopOffers: Rabatt, Restzeit, großer KAUFEN-Knopf),
+--                rechts vier Kacheln WAFFEN-SKINS, AGENTEN-SKINS, ROBUX, VERKAUFEN, die in den Reiter führen;
+--                Reiter WAFFEN-/AGENTEN-SKINS: Karten mit 3D-Vorschau vor der Farbe des Skins, Rand und Schild in der
+--                Seltenheit (legendär oben), RAP-Wert, Münzpreis (Angebot durchgestrichen) und KAUFEN / NOCH x MÜNZEN;
 --                Reiter VERKAUFEN: eigene handelbare Skins ans System zurückverkaufen (sofort RAP, RapConfig)
 --   BATTLE PASS: Saison, Stufe und Fortschritt, alle Stufen als waagerechte Leiste (die nächste hervorgehoben),
 --                darunter die nächste Belohnung und wie man Pass-XP sammelt
@@ -32,6 +35,7 @@ local OddsPanel = require(Shared.OddsPanel)
 local WeaponEffects = require(Shared.WeaponEffects)
 local AgentConfig = require(Shared.AgentConfig)
 local AgentFigure = require(Shared.AgentFigure)
+local ShopOffers = require(Shared.ShopOffers)
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
 
@@ -128,8 +132,8 @@ local function robuxWatch(watch)
 	return watch
 end
 
--- Reiter wie die Navigation der Lobby (aktiv: weiß mit Bernstein-Strich). Gibt select(name) zurück.
-local function tabs(parent, names, x, y, width, onSelect)
+-- Reiter wie die Navigation der Lobby (aktiv: weiß mit Strich in accent, Standard Bernstein). Gibt select(name) zurück.
+local function tabs(parent, names, x, y, width, onSelect, accent)
 	local bar = make("Frame", { Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(width, 36), BackgroundTransparency = 1 },
 		parent)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4),
@@ -150,7 +154,7 @@ local function tabs(parent, names, x, y, width, onSelect)
 			LayoutOrder = i }, bar)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12) }, b)
 		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -12, 1, 0),
-			Size = UDim2.new(1, 24, 0, 2), BackgroundColor3 = C.Primary, BorderSizePixel = 0, Visible = false }, b)
+			Size = UDim2.new(1, 24, 0, 2), BackgroundColor3 = accent or C.Primary, BorderSizePixel = 0, Visible = false }, b)
 		b.MouseEnter:Connect(function()
 			b.TextColor3 = C.Text
 		end)
@@ -171,35 +175,106 @@ end
 -- SHOP
 -- =====================================================================
 
+-- Farben und Bausteine des SHOP: Design des Menüs der offenen Welt (fast deckende dunkle Flächen, Rot als Akzent)
+local SHOP_RED = UITheme.MenuColors.Primary
+local SHOP_PANEL = Color3.fromRGB(14, 15, 18)
+local RARITY_ORDER = { Legendary = 4, Epic = 3, Rare = 2, Common = 1 }
+-- Rand der Karte nach Seltenheit: je seltener, desto kräftiger (Transparenz, Dicke)
+local RARITY_STROKE = { Legendary = { 0.05, 2 }, Epic = { 0.2, 1.5 }, Rare = { 0.4, 1 }, Common = { 0.6, 1 } }
+
+-- Vorschaufläche: dunkle Fläche, von unten in der Farbe des Skins angeleuchtet, unten ein Strich in der Seltenheit.
+-- So unterscheiden sich die Karten auf einen Blick, auch wenn das Modell selbst dunkel ist.
+local function stage(props, parent, tint, rarityColor)
+	props.BackgroundColor3 = Color3.fromRGB(20, 21, 25)
+	props.BorderSizePixel = 0
+	props.ClipsDescendants = true
+	local frame = make("Frame", props, parent)
+	UITheme.Corner(frame, UITheme.Radius.Large)
+	local glow = make("Frame", { Name = "Glow", Size = UDim2.fromScale(1, 1), BackgroundColor3 = tint, BorderSizePixel = 0,
+		ZIndex = frame.ZIndex }, frame)
+	UITheme.Corner(glow, UITheme.Radius.Large)
+	make("UIGradient", { Rotation = 270, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45),
+		NumberSequenceKeypoint.new(0.55, 0.85), NumberSequenceKeypoint.new(1, 1) }) }, glow)
+	make("Frame", { Name = "Floor", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, 0),
+		Size = UDim2.new(1, 0, 0, 2), BackgroundColor3 = rarityColor, BorderSizePixel = 0, ZIndex = frame.ZIndex }, frame)
+	return frame
+end
+
+-- Skin in eine Vorschau stellen (Waffen-Skin am Sturmgewehr, Agenten-Skin am Agenten)
+local function showSkin(view, item, aspect)
+	if item.Type == "Agent" then
+		LobbyPages.ShowAgent(view, item)
+	else
+		showWeapon(view, "Rifle", item, aspect, 0.86)
+	end
+end
+
+-- Preiszeile: Münze + Preis, beim Angebot davor der alte Preis durchgestrichen. Gibt die Zeile zurück.
+local function priceRow(props, parent, price, oldPrice, size)
+	props.BackgroundTransparency = 1
+	props.AutomaticSize = Enum.AutomaticSize.X
+	local row = make("Frame", props, parent)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, math.floor(size * 0.3)), SortOrder = Enum.SortOrder.LayoutOrder }, row)
+	if oldPrice then
+		local old = label({ Name = "OldPrice", Size = UDim2.fromOffset(0, size), AutomaticSize = Enum.AutomaticSize.X,
+			Text = UITheme.FormatNumber(oldPrice), TextSize = math.floor(size * 0.62), Font = F.Bold, TextColor3 = C.Muted,
+			LayoutOrder = 1 }, row)
+		make("Frame", { Name = "Strike", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, -2, 0.5, 0),
+			Size = UDim2.new(1, 4, 0, 2), BackgroundColor3 = SHOP_RED, BorderSizePixel = 0 }, old)
+	end
+	UITheme.Coin(row, math.floor(size * 0.72), { LayoutOrder = 2 })
+	label({ Name = "Price", Size = UDim2.fromOffset(0, size), AutomaticSize = Enum.AutomaticSize.X,
+		Text = UITheme.FormatNumber(price), TextSize = size, Font = F.Display, LayoutOrder = 3 }, row)
+	return row
+end
+
+-- Kaufen-Knopf je nach Lage: rot = leistbar, grau mit fehlendem Betrag = zu teuer, grün beschriftet = im Besitz
+local function setBuyState(button, item, price)
+	if Cosmetics.GetOwned(player)[item.Id] then
+		button.SetText("IM BESITZ")
+		button.SetColor(C.MutedBack, C.Good)
+	elseif coins() >= price then
+		button.SetText("KAUFEN")
+		button.SetColor(SHOP_RED, Color3.new(1, 1, 1))
+	else
+		button.SetText("NOCH " .. UITheme.FormatNumber(price - coins()) .. " MÜNZEN")
+		button.SetColor(C.MutedBack, C.Muted)
+	end
+end
+
+-- Teuerster kaufbarer Skin eines Typs (ohne Test-Skins): Aushängeschild der Kategorie auf der Startseite
+local function showcase(itemType)
+	local best
+	for _, item in Cosmetics.List(itemType) do
+		if Cosmetics.ForSale(item) and not item.Test and (not best or item.Price > best.Price) then
+			best = item
+		end
+	end
+	return best
+end
+
 function LobbyPages.Shop(page)
-	local currentType = "Weapon"
-	local cards = {} -- [itemId] = { Buy = Chunky }
+	local currentType = "Home"
+	local cards = {} -- [itemId] = { Buy = Chunky, Item = item }
+	local offer = ShopOffers.Daily(workspace:GetServerTimeNow())
 
 	local hint = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 12), Size = UDim2.fromOffset(600, 16),
-		Text = "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
-		TextXAlignment = Enum.TextXAlignment.Right }, page)
+		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, page)
 	local grid = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
 		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, page)
 	make("UIGridLayout", { CellSize = UDim2.fromOffset(234, 318), CellPadding = UDim2.fromOffset(20, 20),
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
+	-- Startseite: links das Angebot des Tages, rechts die Kategorien
+	local home = make("Frame", { Name = "Home", Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
+		BackgroundTransparency = 1, Visible = false }, page)
 
-	-- Kaufen-Knöpfe: Bernstein = leistbar, rote Schrift = zu teuer, grau = schon im Besitz
 	local function updateButtons()
-		local owned = Cosmetics.GetOwned(player)
-		for itemId, card in cards do
-			local item = Cosmetics.Get(itemId)
-			if owned[itemId] then
-				card.Buy.SetText("IM BESITZ")
-				card.Buy.SetColor(C.MutedBack, C.Muted)
-			elseif item then
-				local affordable = coins() >= item.Price
-				card.Buy.SetText("KAUFEN  ·  " .. UITheme.FormatNumber(item.Price))
-				card.Buy.SetColor(affordable and C.Primary or C.MutedBack, affordable and C.PrimaryText or C.Bad)
-			end
+		for _, card in cards do
+			setBuyState(card.Buy, card.Item, card.Price)
 		end
 	end
-
 	-- Reiter ROBUX: Gamepässe und Entwicklerprodukte (RobuxConfig). Ohne ID: "BALD", sonst Roblox-Kaufdialog.
 	-- Glücksrad-Drehs sind bezahlte Zufallsitems: Knopf CHANCEN auf der Karte, und wo Roblox sie verbietet
 	-- (PaidRandom.ShowRandom), fehlt die Karte ganz.
@@ -351,13 +426,211 @@ function LobbyPages.Shop(page)
 		end
 	end
 
+	-- Karte eines Skins im Raster
+	local function skinCard(order, item)
+		local rarity = Cosmetics.Rarities[item.Rarity]
+		local stroke = RARITY_STROKE[item.Rarity] or RARITY_STROKE.Common
+		local isOffer = offer and offer.Item.Id == item.Id
+		local price = isOffer and offer.Price or item.Price
+		local card = make("Frame", { Name = item.Id, BackgroundColor3 = SHOP_PANEL, BackgroundTransparency = 0.02,
+			BorderSizePixel = 0, LayoutOrder = order }, grid)
+		UITheme.Corner(card, UITheme.Radius.XL)
+		UITheme.Stroke(card, isOffer and SHOP_RED or rarity.Color, stroke[2], stroke[1])
+		UITheme.AccentBar(card, rarity.Color)
+		local preview = stage({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 170) }, card,
+			item.Color or rarity.Color, rarity.Color)
+		local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, preview)
+		showSkin(view, item, 218 / 170)
+		UITheme.Tag({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Text = upper(rarity.Name),
+			TextSize = 11, BackgroundColor3 = rarity.Color, TextColor3 = C.PrimaryText, ZIndex = 3 }, preview)
+		-- Farbe des Skins als kleines Feld unten rechts
+		local swatch = make("Frame", { Name = "Swatch", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -8, 1, -8),
+			Size = UDim2.fromOffset(18, 18), BackgroundColor3 = item.Color or rarity.Color, BorderSizePixel = 0, ZIndex = 3 }, preview)
+		UITheme.Corner(swatch, UITheme.Radius.Small)
+		UITheme.Stroke(swatch, Color3.new(1, 1, 1), 1, 0.55)
+		if isOffer then
+			UITheme.Tag({ Name = "Discount", Position = UDim2.fromOffset(18, 18), Text = "-" .. offer.Discount .. " %",
+				TextSize = 14, BackgroundColor3 = SHOP_RED, TextColor3 = Color3.new(1, 1, 1), ZIndex = 4 }, card)
+		end
+		if RapConfig.Value(item.Id) then
+			rapBadge(card, RapConfig.Value(item.Id)).Position = UDim2.new(1, -16, 0, 18)
+		end
+		label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 26), Text = upper(item.Name), TextSize = 22,
+			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+		priceRow({ Position = UDim2.fromOffset(16, 218), Size = UDim2.fromOffset(0, 24) }, card, price,
+			isOffer and offer.OldPrice or nil, 22)
+		local buy = UITheme.Chunky({ Name = "BuyButton", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
+			Size = UDim2.new(1, -28, 0, 40), Color = C.MutedBack, Text = "", TextSize = 17 }, card, function()
+			if not Cosmetics.GetOwned(player)[item.Id] then
+				Remotes.ShopAction:FireServer("Buy", item.Id)
+			end
+		end)
+		cards[item.Id] = { Buy = buy, Item = item, Price = price }
+	end
+
+	local selectTab -- aus tabs(): Reiter wechseln (Kacheln der Startseite)
+	local countdown -- Restzeit des Angebots
+	local sellBalance -- RAP-Guthaben auf der Kachel VERKAUFEN
+
+	-- Kachel einer Kategorie auf der Startseite (ganze Fläche klickbar)
+	local function categoryTile(x, y, w, h, title, sub, tabName, decorate)
+		local tile = make("TextButton", { Name = "Tile_" .. tabName, Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(w, h),
+			BackgroundColor3 = SHOP_PANEL, BackgroundTransparency = 0.02, BorderSizePixel = 0, Text = "", AutoButtonColor = false },
+			home)
+		UITheme.Corner(tile, UITheme.Radius.XL)
+		local stroke = UITheme.Stroke(tile, C.Border, 1)
+		local bar = UITheme.AccentBar(tile, SHOP_RED, { Side = "Left", Thickness = 3, Visible = false })
+		local area = make("Frame", { Name = "Stage", Position = UDim2.fromOffset(12, 12), Size = UDim2.new(1, -24, 0, h - 120),
+			BackgroundColor3 = Color3.fromRGB(20, 21, 25), BorderSizePixel = 0, ClipsDescendants = true }, tile)
+		UITheme.Corner(area, UITheme.Radius.Large)
+		decorate(area, w - 24, h - 120)
+		label({ Position = UDim2.new(0, 22, 1, -96), Size = UDim2.new(1, -44, 0, 34), Text = title, TextSize = 30,
+			Font = F.Display }, tile)
+		local subLabel = label({ Name = "Sub", Position = UDim2.new(0, 22, 1, -60), Size = UDim2.new(1, -130, 0, 18), Text = sub,
+			TextSize = 14, Font = F.Medium, TextColor3 = C.Muted, TextTruncate = Enum.TextTruncate.AtEnd }, tile)
+		local open = UITheme.Tag({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -18, 1, -22), Text = "ÖFFNEN",
+			TextSize = 14, BackgroundColor3 = C.MutedBack, TextColor3 = C.Text }, tile)
+		tile.MouseEnter:Connect(function()
+			tile.BackgroundColor3 = UITheme.Brighten(SHOP_PANEL, 0.04)
+			stroke.Color, bar.Visible = SHOP_RED, true
+			open.BackgroundColor3 = SHOP_RED
+		end)
+		tile.MouseLeave:Connect(function()
+			tile.BackgroundColor3 = SHOP_PANEL
+			stroke.Color, bar.Visible = C.Border, false
+			open.BackgroundColor3 = C.MutedBack
+		end)
+		tile.Activated:Connect(function()
+			selectTab(tabName)
+		end)
+		return tile, subLabel
+	end
+
+	-- Anzahl kaufbarer und eigener Skins eines Typs
+	local function catalogCount(itemType)
+		local owned, total, cheapest = Cosmetics.GetOwned(player), 0, math.huge
+		local have = 0
+		for _, item in Cosmetics.List(itemType) do
+			if Cosmetics.ForSale(item) then
+				total += 1
+				cheapest = math.min(cheapest, item.Test and math.huge or item.Price)
+				if owned[item.Id] then
+					have += 1
+				end
+			end
+		end
+		return total, have, cheapest
+	end
+
+	local function fillHome()
+		clear(home)
+		cards = {}
+		-- Angebot des Tages
+		local OFFER_W = 720
+		local panel = make("Frame", { Name = "Offer", Size = UDim2.fromOffset(OFFER_W, PAGE_H - 54), BackgroundColor3 = SHOP_PANEL,
+			BackgroundTransparency = 0.02, BorderSizePixel = 0 }, home)
+		UITheme.Corner(panel, UITheme.Radius.XL)
+		if not offer then
+			UITheme.Stroke(panel, C.Border, 1)
+			label({ Size = UDim2.fromScale(1, 1), Text = "HEUTE KEIN ANGEBOT", TextSize = 22, Font = F.Display, TextColor3 = C.Muted,
+				TextXAlignment = Enum.TextXAlignment.Center }, panel)
+		else
+			local item = offer.Item
+			local rarity = Cosmetics.Rarities[item.Rarity]
+			UITheme.Stroke(panel, SHOP_RED, 1.5, 0.15)
+			UITheme.AccentBar(panel, SHOP_RED, { Thickness = 4 })
+			UITheme.Tag({ Position = UDim2.fromOffset(24, 22), Text = "ANGEBOT DES TAGES", TextSize = 16, BackgroundColor3 = SHOP_RED,
+				TextColor3 = Color3.new(1, 1, 1) }, panel)
+			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -150, 0, 28), Size = UDim2.fromOffset(160, 16),
+				Text = "ENDET IN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, panel)
+			countdown = label({ Name = "Countdown", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 18),
+				Size = UDim2.fromOffset(120, 32), Text = ShopOffers.FormatLeft(offer.EndsAt - workspace:GetServerTimeNow()),
+				TextSize = 28, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right }, panel)
+			local preview = stage({ Position = UDim2.fromOffset(20, 68), Size = UDim2.new(1, -40, 0, 340) }, panel,
+				item.Color or rarity.Color, rarity.Color)
+			local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, preview)
+			showSkin(view, item, 680 / 340)
+			UITheme.Tag({ Name = "Discount", Position = UDim2.fromOffset(16, 16), Text = "-" .. offer.Discount .. " %",
+				TextSize = 30, BackgroundColor3 = SHOP_RED, TextColor3 = Color3.new(1, 1, 1), ZIndex = 3 }, preview)
+			if RapConfig.Value(item.Id) then
+				rapBadge(preview, RapConfig.Value(item.Id)).Position = UDim2.new(1, -16, 0, 16)
+			end
+			label({ Position = UDim2.fromOffset(24, 424), Size = UDim2.new(1, -48, 0, 46), Text = upper(item.Name), TextSize = 44,
+				Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, panel)
+			local line = make("Frame", { Position = UDim2.fromOffset(24, 474), Size = UDim2.fromOffset(500, 20),
+				BackgroundTransparency = 1 }, panel)
+			make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10),
+				SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, line)
+			label({ Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X, Text = upper(rarity.Name), TextSize = 15,
+				Font = F.Bold, TextColor3 = rarity.Color, LayoutOrder = 1 }, line)
+			label({ Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X,
+				Text = item.Type == "Agent" and "AGENTEN-SKIN" or "WAFFEN-SKIN", TextSize = 15, Font = F.Bold, TextColor3 = C.Muted,
+				LayoutOrder = 2 }, line)
+			priceRow({ Position = UDim2.fromOffset(24, 512), Size = UDim2.fromOffset(0, 44) }, panel, offer.Price, offer.OldPrice, 40)
+			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 526), Size = UDim2.fromOffset(260, 20),
+				Text = "DU SPARST " .. UITheme.FormatNumber(offer.OldPrice - offer.Price) .. " MÜNZEN", TextSize = 15, Font = F.Bold,
+				TextColor3 = C.Good, TextXAlignment = Enum.TextXAlignment.Right }, panel)
+			local buy = UITheme.Chunky({ Name = "BuyButton", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -20),
+				Size = UDim2.new(1, -40, 0, 60), Color = SHOP_RED, Text = "", TextSize = 24 }, panel, function()
+				if not Cosmetics.GetOwned(player)[item.Id] then
+					Remotes.ShopAction:FireServer("Buy", item.Id)
+				end
+			end)
+			cards[item.Id] = { Buy = buy, Item = item, Price = offer.Price }
+		end
+
+		-- Kategorien (2 × 2)
+		local x0, gap = OFFER_W + 20, 20
+		local w = math.floor((PAGE_W - x0 - gap) / 2)
+		local h = math.floor((PAGE_H - 54 - gap) / 2)
+		local weaponTotal, weaponHave, weaponFrom = catalogCount("Weapon")
+		local agentTotal, agentHave, agentFrom = catalogCount("Agent")
+		categoryTile(x0, 0, w, h, "WAFFEN-SKINS", weaponHave .. " VON " .. weaponTotal .. " IM BESITZ  ·  AB "
+			.. UITheme.FormatNumber(weaponFrom) .. " MÜNZEN", "WAFFEN-SKINS", function(area, aw, ah)
+			local item = showcase("Weapon")
+			if item then
+				local rarity = Cosmetics.Rarities[item.Rarity]
+				local s = stage({ Size = UDim2.fromScale(1, 1) }, area, item.Color, rarity.Color)
+				showWeapon(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), "Rifle", item, aw / ah, 0.8)
+			end
+		end)
+		categoryTile(x0 + w + gap, 0, w, h, "AGENTEN-SKINS", agentHave .. " VON " .. agentTotal .. " IM BESITZ  ·  AB "
+			.. UITheme.FormatNumber(agentFrom) .. " MÜNZEN", "AGENTEN-SKINS", function(area)
+			local item = showcase("Agent")
+			if item then
+				local rarity = Cosmetics.Rarities[item.Rarity]
+				local s = stage({ Size = UDim2.fromScale(1, 1) }, area, item.Color, rarity.Color)
+				LobbyPages.ShowAgent(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), item)
+			end
+		end)
+		categoryTile(x0, h + gap, w, h, "ROBUX", "MÜNZEN, PÄSSE UND BOOSTS", "ROBUX", function(area)
+			local s = stage({ Size = UDim2.fromScale(1, 1) }, area, C.Gold, C.Gold)
+			UITheme.Coin(s, 96, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.42, 0.5), ZIndex = 2 })
+			UITheme.Coin(s, 64, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.6, 0.6), ZIndex = 3 })
+		end)
+		local _, sub = categoryTile(x0 + w + gap, h + gap, w, h, "VERKAUFEN", "", "VERKAUFEN", function(area)
+			local s = stage({ Size = UDim2.fromScale(1, 1) }, area, C.Rap, C.Rap)
+			UITheme.RapIcon(s, 110, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = 2 })
+		end)
+		sellBalance = sub
+		sellBalance.Text = "SKINS GEGEN RAP  ·  GUTHABEN " .. UITheme.FormatNumber(player:GetAttribute("Rap") or 0) .. " RAP"
+		updateButtons()
+	end
+
 	local function fill()
 		clear(grid)
 		cards = {}
 		robuxButtons = {}
+		countdown = nil
 		local order = 0
+		home.Visible = currentType == "Home"
+		grid.Visible = currentType ~= "Home"
 		if sellInfo then
 			sellInfo.Visible = currentType == "Sell"
+		end
+		if currentType == "Home" then
+			fillHome()
+			return
 		end
 		if currentType == "Sell" then
 			updateSellInfo()
@@ -378,48 +651,64 @@ function LobbyPages.Shop(page)
 			updateRobux()
 			return
 		end
+		-- Skins: Angebot zuerst, dann nach Seltenheit (legendär oben) und Preis
+		local list = {}
 		for _, item in Cosmetics.List(currentType) do
 			if Cosmetics.ForSale(item) then
-				order += 1
-				local rarity = Cosmetics.Rarities[item.Rarity]
-				local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
-					LayoutOrder = order }, grid)
-				UITheme.Corner(card, UITheme.Radius.XL)
-				UITheme.Stroke(card, rarity.Color, 1, 0.5)
-				UITheme.AccentBar(card, rarity.Color)
-				local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 170) }, card)
-				if item.Type == "Agent" then
-					LobbyPages.ShowAgent(view, item)
-				else
-					showWeapon(view, "Rifle", item, 234 / 170)
-				end
-				if RapConfig.Value(item.Id) then
-					rapBadge(card, RapConfig.Value(item.Id))
-				end
-				label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
-					Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-				label({ Position = UDim2.fromOffset(16, 216), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
-					Font = F.Bold, TextColor3 = rarity.Color }, card)
-				local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
-					Size = UDim2.new(1, -28, 0, 40), Color = C.MutedBack, Text = "", TextSize = 17 }, card, function()
-					if not Cosmetics.GetOwned(player)[item.Id] then
-						Remotes.ShopAction:FireServer("Buy", item.Id)
-					end
-				end)
-				cards[item.Id] = { Buy = buy }
+				table.insert(list, item)
 			end
+		end
+		table.sort(list, function(a, b)
+			local aOffer, bOffer = offer and offer.Item == a, offer and offer.Item == b
+			if aOffer ~= bOffer then
+				return aOffer
+			end
+			local ra, rb = RARITY_ORDER[a.Rarity] or 0, RARITY_ORDER[b.Rarity] or 0
+			if ra ~= rb then
+				return ra > rb
+			end
+			if a.Price ~= b.Price then
+				return a.Price > b.Price
+			end
+			return a.Id < b.Id
+		end)
+		for i, item in list do
+			skinCard(i, item)
 		end
 		updateButtons()
 	end
 
 	sellInfo = label({ Position = UDim2.fromOffset(0, 42), Size = UDim2.fromOffset(PAGE_W, 12), Text = "", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Rap, Visible = false }, page)
-	tabs(page, { "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
-		currentType = ({ ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux", VERKAUFEN = "Sell" })[name]
-		hint.Text = currentType == "Agent" and "AGENTEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS"
-			or "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS"
+	local HINTS = {
+		Home = "WÄHLE, WAS DU KAUFEN MÖCHTEST",
+		Weapon = "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS",
+		Agent = "AGENTEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS",
+		Robux = "",
+		Sell = "",
+	}
+	selectTab = tabs(page, { "START", "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
+		currentType = ({ START = "Home", ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux",
+			VERKAUFEN = "Sell" })[name]
+		hint.Text = HINTS[currentType]
 		fill()
-	end)("WAFFEN-SKINS")
+	end, SHOP_RED)
+	selectTab("START")
+
+	-- Restzeit des Angebots jede Sekunde; neuer Tag = neues Angebot, Seite neu aufbauen
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local now = workspace:GetServerTimeNow()
+			if offer and now >= offer.EndsAt then
+				offer = ShopOffers.Daily(now)
+				fill()
+			elseif countdown and offer then
+				countdown.Text = ShopOffers.FormatLeft(offer.EndsAt - now)
+			end
+		end
+	end)
+
 	return { Refresh = function()
 		if currentType == "Sell" then
 			fill() -- Karten ändern sich mit dem Besitz (verkauft, Stückzahl)
@@ -427,6 +716,9 @@ function LobbyPages.Shop(page)
 		updateButtons()
 		updateRobux()
 		updateSellInfo()
+		if sellBalance then
+			sellBalance.Text = "SKINS GEGEN RAP  ·  GUTHABEN " .. UITheme.FormatNumber(player:GetAttribute("Rap") or 0) .. " RAP"
+		end
 	end, Watch = robuxWatch({ Coins = true, Owned = true, Rap = true, RapValue = true, Reserved = true }) }
 end
 

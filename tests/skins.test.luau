@@ -149,7 +149,8 @@ check(ok == true and ProgressService.Get(alice).Equipped["W:Rifle"] == nil, "Waf
 message, ok = action(alice, "Equip", "W_Lava", "SMG")
 check(ok == true and ProgressService.Get(alice).Equipped["W:SMG"] == "W_Lava", "Waffen-Skin ausrüsten: " .. tostring(message))
 message, ok = action(alice, "Buy", "W_Chrom")
-check(ok == true and ProgressService.Owns(alice, "W_Chrom") and alice:GetAttribute("Coins") == 5000 - Cosmetics.Get("W_Chrom").Price,
+check(ok == true and ProgressService.Owns(alice, "W_Chrom") and alice:GetAttribute("Coins") == 5000
+	- require("ShopOffers").PriceFor(Cosmetics.Get("W_Chrom"), workspace:GetServerTimeNow()),
 	"Waffen-Skin kaufen: " .. tostring(message))
 
 -- Agenten-Skins: kaufen, ausrüsten (Platz "Agent"), Farben und Material am Agenten, ablegen
@@ -162,7 +163,8 @@ check(ok == false and ProgressService.Get(alice).Equipped.Agent == nil, "Creator
 	.. tostring(message))
 local coinsBefore = alice:GetAttribute("Coins")
 message, ok = action(alice, "Buy", "AS_Feldgrau")
-check(ok == true and ProgressService.Owns(alice, "AS_Feldgrau") and alice:GetAttribute("Coins") == coinsBefore - feldgrau.Price,
+check(ok == true and ProgressService.Owns(alice, "AS_Feldgrau") and alice:GetAttribute("Coins") == coinsBefore
+	- require("ShopOffers").PriceFor(feldgrau, workspace:GetServerTimeNow()),
 	"Agenten-Skin kaufen: " .. tostring(message))
 message, ok = action(alice, "Equip", "AS_Feldgrau")
 check(ok == true and ProgressService.Get(alice).Equipped.Agent == "AS_Feldgrau", "Agenten-Skin ausrüsten: " .. tostring(message))
@@ -226,9 +228,10 @@ local function texts(root)
 	for _, d in root:GetDescendants() do
 		if d:IsA("TextLabel") or d:IsA("TextButton") then
 			found[d.Text] = true
-			if string.sub(d.Text, 1, 8) == "KAUFEN  " or d.Text == "IM BESITZ" then
-				buy += 1
-			end
+		end
+		-- Kaufen-Knöpfe der Karten im Raster (nicht der auf dem Angebot der Startseite)
+		if d.Name == "BuyButton" and d:IsA("TextButton") and d.Parent and d.Parent.Parent and d.Parent.Parent.Name ~= "Home" then
+			buy += 1
 		end
 	end
 	return found, buy
@@ -247,9 +250,23 @@ end
 local shopPage = Instance.new("Frame")
 LobbyPages.Shop(shopPage)
 step(0.2)
+-- Startseite: Angebot des Tages und Kacheln
+local homeTexts = texts(shopPage)
+local homeFrame = shopPage:FindFirstChild("Home")
+check(homeFrame and homeFrame.Visible and homeTexts["ANGEBOT DES TAGES"] and homeTexts["ENDET IN"],
+	"SHOP: Start mit Angebot des Tages")
+for _, tab in { "Tile_WAFFEN-SKINS", "Tile_AGENTEN-SKINS", "Tile_ROBUX", "Tile_VERKAUFEN" } do
+	check(homeFrame and homeFrame:FindFirstChild(tab), "SHOP: Kachel " .. tab)
+end
+local offerNow = require("ShopOffers").Daily(workspace:GetServerTimeNow())
+check(offerNow and homeTexts[string.upper(offerNow.Item.Name)] and homeTexts["-" .. offerNow.Discount .. " %"],
+	"SHOP: Startseite zeigt den Angebots-Skin mit Rabatt")
+homeFrame:FindFirstChild("Tile_WAFFEN-SKINS").Activated:Fire()
+step(0.2)
+check(not homeFrame.Visible, "SHOP: Kachel öffnet den Reiter")
 local shopTexts, buttons = texts(shopPage)
-check(shopTexts["WAFFEN-SKINS"] and shopTexts.ROBUX and shopTexts.VERKAUFEN and shopTexts["AGENTEN-SKINS"],
-	"SHOP: Reiter mit AGENTEN-SKINS")
+check(shopTexts["WAFFEN-SKINS"] and shopTexts.ROBUX and shopTexts.VERKAUFEN and shopTexts["AGENTEN-SKINS"] and shopTexts.START,
+	"SHOP: Reiter mit START und AGENTEN-SKINS")
 check(forSale >= 8 and buttons == forSale, "SHOP: eine Karte je kaufbarem Waffen-Skin (" .. buttons .. " von " .. forSale .. ")")
 for _, d in shopPage:GetDescendants() do
 	if d:IsA("TextButton") and d.Text == "AGENTEN-SKINS" then

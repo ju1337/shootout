@@ -12,6 +12,7 @@ local Zentrale = require(Shared.Zentrale)
 local MasteryConfig = require(Shared.MasteryConfig)
 local PlayerSettings = require(Shared.PlayerSettings)
 local AgentConfig = require(Shared.AgentConfig)
+local ShopOffers = require(Shared.ShopOffers)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local ClanService = require(ServerStorage:WaitForChild("ServerShared").ClanService)
 local EconomyService = require(ServerStorage:WaitForChild("ServerShared").EconomyService)
@@ -44,7 +45,9 @@ function actions.Buy(player, itemId)
 	if ProgressService.Owns(player, itemId) then
 		return "Du besitzt " .. item.Name .. " schon.", false
 	end
-	if not ProgressService.SpendCoins(player, item.Price, "Skin", itemId) then
+	-- Angebot des Tages: reduzierter Preis (ShopOffers)
+	local price = ShopOffers.PriceFor(item, workspace:GetServerTimeNow())
+	if not ProgressService.SpendCoins(player, price, "Skin", itemId) then
 		return "Nicht genug Münzen.", false
 	end
 	ProgressService.GiveItem(player, itemId)
