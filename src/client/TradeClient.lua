@@ -592,6 +592,13 @@ function TradeClient.Init()
 		if listWindow and not Modes.InLounge(player) then
 			closeList()
 		end
+		if not Modes.InLounge(player) then -- der Server verwirft die Anfragen dann: Karten nicht stehen lassen
+			for _, card in requestList:GetChildren() do
+				if card:IsA("GuiObject") then
+					card:Destroy()
+				end
+			end
+		end
 		updateHint()
 	end
 	player:GetAttributeChangedSignal("Mode"):Connect(onPlaceChanged)
@@ -628,6 +635,10 @@ function TradeClient.Init()
 				if card:IsA("GuiObject") then
 					card:Destroy()
 				end
+			end
+			if fresh and listWindow then
+				closeList() -- Spielerliste nicht verdeckt offen lassen (stiehlt sonst die Gamepad-Auswahl und Esc)
+				updateHint()
 			end
 			render()
 			if fresh then

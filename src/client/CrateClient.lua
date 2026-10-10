@@ -220,7 +220,11 @@ local function spin(result)
 		win.Tween = nil
 	end
 	win.Generation += 1
+	if win.Result and not win.ResultShown then -- noch nicht gezeigter Gewinn (spätes Ergebnis): nicht stillschweigend verlieren
+		announce(win.Result)
+	end
 	win.Result = result
+	win.ResultShown = false -- sonst meldet Schließen während NOCHMAL den neuen Gewinn nicht
 	win.Spinning = true
 	setOpenButton()
 	win.Status.Text = ""
