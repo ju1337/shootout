@@ -671,7 +671,7 @@ function LootService.Grab(player, items)
 			-- kein Charakter (tot/respawnt gerade): ins Lager statt verfallen lassen
 			local kept = {}
 			for _, item in rest do
-				local put = InventoryService.GiveStash and InventoryService.GiveStash(player, item.Id, item.Count) or 0
+				local put = InventoryService.GiveStash and InventoryService.GiveStash(player, item.Id, item.Count, { Mag = item.Mag, Att = item.Att }) or 0
 				if put < item.Count then
 					table.insert(kept, { Id = item.Id, Count = item.Count - put, Mag = item.Mag, Att = item.Att })
 				end

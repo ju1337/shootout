@@ -642,6 +642,7 @@ local function sell(stand, slot, buyer, price)
 	if not listing or not owner then
 		return "Dieses Angebot gibt es nicht mehr.", false
 	end
+	local listedPrice = listing.Price
 	if not PolicyGate.TradeAllowed(buyer) then
 		return TRADE_BLOCKED, false
 	end
@@ -651,6 +652,9 @@ local function sell(stand, slot, buyer, price)
 	-- die Länder-Abfrage kann warten: inzwischen verkauft oder neu belegt?
 	if stand.Listings[slot] ~= listing or stand.Owner ~= owner then
 		return "Dieses Angebot gibt es nicht mehr.", false
+	end
+	if listing.Price ~= listedPrice then -- Preis während des Wartens geändert (Gegenangebote fallen dabei ohnehin weg)
+		return "Der Preis hat sich geändert: jetzt " .. format(listing.Price) .. " RAP.", false
 	end
 	local item = Cosmetics.Get(listing.Item)
 	local ok, reason = EconomyService.Exchange(owner, buyer, { Items = { [listing.Item] = 1 } }, { Rap = price },

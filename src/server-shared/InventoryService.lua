@@ -1142,12 +1142,12 @@ function InventoryService.TakeCarried(player, id, count)
 end
 
 -- Items ins Lager legen (z.B. tägliche Kiste), gibt die Anzahl zurück, die gepasst hat
-function InventoryService.GiveStash(player, id, count)
+function InventoryService.GiveStash(player, id, count, extra)
 	local state = stateOf(player)
 	if not state or not ExtinctionConfig.Get(id) then
 		return 0
 	end
-	local added = Inventory.Add(state.Stash, id, count, nil, "Bag")
+	local added = Inventory.Add(state.Stash, id, count, extra, "Bag")
 	if added > 0 then
 		changed(player, state)
 	end

@@ -736,10 +736,19 @@ function LobbyPages.Shop(page)
 	selectTab("START")
 
 	-- Restzeit des Angebots jede Sekunde; neuer Tag = neues Angebot, Seite neu aufbauen
+	-- Länder-Abfrage kommt erst nach dem Öffnen an: offener ROBUX-Reiter zeigt die Drehs dann nachträglich
+	local randomOffered = PaidRandom.OfferRandom(player)
 	task.spawn(function()
 		while true do
 			task.wait(1)
 			local now = workspace:GetServerTimeNow()
+			local offered = PaidRandom.OfferRandom(player)
+			if offered ~= randomOffered then
+				randomOffered = offered
+				if currentType == "Robux" then
+					fill()
+				end
+			end
 			if loadOffers() then
 				fill()
 			elseif countdown and offer then
