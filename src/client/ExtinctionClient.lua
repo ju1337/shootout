@@ -668,12 +668,13 @@ local function buildHud()
 
 	-- unten: Hotbar im Stil der Schnellleiste im Inventar: Kacheln breiter als hoch (mit Namen), etwas durchsichtiger (paintSlot)
 	-- Touch: schmalere Kacheln ohne Namen, sonst reicht die Leiste bis unter die Knöpfe rechts (WAFFE)
-	local cell, cellH, gap = 96, 58, 8
+	-- Touch: die Leiste (mit Level-Zeile und Münzen) etwas nach links, sonst liegt Platz 9 unter WAFFE
+	local cell, cellH, gap, barShift = 96, 58, 8, 0
 	if InputActions.Device() == "Touch" then
-		cell = 64
+		cell, barShift = 64, -100
 	end
 	local barWidth = HOTBAR * cell + (HOTBAR - 1) * gap
-	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -28),
+	local bar = make("Frame", { Name = "Hotbar", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, barShift, 1, -28),
 		Size = UDim2.fromOffset(barWidth, cellH), BackgroundTransparency = 1 }, root)
 	for slot = 1, HOTBAR do
 		local view = slotButton(bar, "Hotbar", slot, UDim2.fromOffset(cell, cellH),
@@ -687,7 +688,7 @@ local function buildHud()
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 	-- Währungen links neben der Hotbar, jede mit Symbol rechts neben der Zahl: Münzen, darüber Rote-Zone-Punkte (RZ, nur
 	-- mit Punkten oder in der roten Zone, siehe paintRedPoints)
-	local moneyRight = -barWidth / 2 - 14
+	local moneyRight = barShift - barWidth / 2 - 14
 	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight - 28, 1, -30),
 		Size = UDim2.fromOffset(160, 24), Text = "", TextSize = 22, Font = F.Display, TextColor3 = C.Primary,
 		TextXAlignment = Enum.TextXAlignment.Right }, root)
@@ -705,7 +706,7 @@ local function buildHud()
 
 	-- Spielerlevel (das eine Level, LevelConfig) als schmale Zeile direkt unter der Hotbar: "LEVEL 12", XP-Balken in
 	-- Prestige-Farbe, rechts "395 / 1000 XP" (kurz "+N XP · GRUND" bei jedem Gewinn, siehe ExtUpdate "ExtXP")
-	local levelRow = make("Frame", { Name = "PlayerLevel", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12),
+	local levelRow = make("Frame", { Name = "PlayerLevel", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, barShift, 1, -12),
 		Size = UDim2.fromOffset(barWidth, 13), BackgroundTransparency = 1 }, root)
 	levelText = label({ Name = "Level", Size = UDim2.new(0, 140, 1, 0), Text = "LEVEL 1", TextSize = 14, Font = F.Display,
 		TextColor3 = C.Text }, levelRow)

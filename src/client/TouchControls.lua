@@ -55,6 +55,9 @@ local SURVIVAL = {
 	{ "StoreVehicle", "PARKEN", 72, 305, 245, "tap" },
 }
 local SURVIVAL_HIDDEN = { Ability = true, Gadget = true, Ultimate = true, Scoreboard = true }
+-- Kleine Bildschirme (Handy quer): die Spalte oben rechts läge auf LADEN, FEUER und SPRUNG. Dann stehen die sichtbaren
+-- kleinen Knöpfe als Reihe oben, links neben der Ranglisten-Fläche der roten Zone und unter Uhr/KARTE (HUD).
+local TOP_ROW = { MaxHeight = 760, Right = 230, Step = 66, Y = 88 } -- Höhe der Ebene in Design-Einheiten, ab der die Spalte passt
 -- Pilot eines Helikopters: steigen und sinken (gedrückt halten) an den Plätzen von FEUER und ZIELEN; die Kampfknöpfe
 -- sind dann aus (im Fahrzeug gibt es keine Waffe). SPRUNG heißt in jedem Fahrzeug RAUS (aussteigen).
 local HELI = {
@@ -180,6 +183,34 @@ function TouchControls.Init()
 		end
 	end)
 
+	-- Knöpfe oben: Spalte (große Bildschirme) oder Reihe (Handy), je nach Höhe der Ebene und welche gerade sichtbar sind
+	local lastTopKey = nil
+	local function layoutTop()
+		local viewport = workspace.CurrentCamera.ViewportSize
+		local height = viewport.Y / UITheme.RootScale(viewport, 1600, 900, 0.7)
+		local row = height < TOP_ROW.MaxHeight
+		local key = tostring(row)
+		for _, entry in TOP do
+			key ..= buttons[entry[1]].Button.Visible and "1" or "0"
+		end
+		if key == lastTopKey then
+			return
+		end
+		lastTopKey = key
+		local index = 0
+		for _, entry in TOP do
+			local button = buttons[entry[1]].Button
+			if row then
+				if button.Visible then
+					button.Position = UDim2.new(1, -(TOP_ROW.Right + index * TOP_ROW.Step), 0, TOP_ROW.Y)
+					index += 1
+				end
+			else
+				button.Position = UDim2.new(1, -entry[4], 0, entry[5])
+			end
+		end
+	end
+
 	local lastCheck = 0
 	RunService.Heartbeat:Connect(function()
 		local show = InputActions.IsTouch() and Modes.IsFighting(player)
@@ -209,6 +240,7 @@ function TouchControls.Init()
 		for _, entry in SURVIVAL do
 			buttons[entry[1]].Button.Visible = survival
 		end
+		layoutTop()
 		-- im Fahrzeug: SPRUNG = RAUS; als Helikopter-Pilot STEIGEN/SINKEN statt der Kampfknöpfe
 		local seated, pilot = seatState()
 		setText(buttons.Jump.Button, seated and "RAUS" or "SPRUNG")

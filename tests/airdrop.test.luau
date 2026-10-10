@@ -179,7 +179,17 @@ local ownedBefore = 0
 check(LootService.Take(alice, bag.Id, "All") == false and LootService.Get(bag.Id) ~= nil,
 	"ohne Gamepass ALLES LOOTEN kein Alles-Nehmen, die Kiste bleibt")
 alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
-check(LootService.Take(alice, bag.Id, "All") == true, "Alice nimmt alles")
+-- die Halte-Zeit zählt der Server: ohne E halten (Remote direkt, Prompt sofort ausgelöst) bleibt die Kiste zu
+check(LootService.Take(alice, bag.Id, "All") == false and LootService.Open(alice, bag.Id) == false and LootService.Get(bag.Id) ~= nil,
+	"ohne E halten: Kiste bleibt zu (auch per Remote)")
+local takeAllPrompt = crate.LootBag.TakeAllPrompt
+takeAllPrompt.PromptButtonHoldBegan:Fire(alice)
+takeAllPrompt.Triggered:Fire(alice)
+check(LootService.Get(bag.Id) ~= nil, "zu kurz gehalten: Kiste bleibt zu")
+takeAllPrompt.PromptButtonHoldBegan:Fire(alice)
+step(A.OpenTime)
+takeAllPrompt.Triggered:Fire(alice)
+check(LootService.Get(bag.Id) == nil, "Alice nimmt alles")
 local owned = 0
 for _, entry in Inventory.Items(InventoryService.GetBag(alice)) do
 	owned += entry.Count

@@ -108,6 +108,36 @@ local function inRange(player, bag)
 		and Modes.IsSurvival(player:GetAttribute("Mode"))
 end
 
+-- Kisten mit langer Halte-Zeit (Lootdrop, Konvoi, Heli-Wrack, Horden-Kiste): die Halte-Zeit zählt der Server selbst.
+-- Sonst öffnet ein Exploiter sie per Remote sofort, während die anderen noch E halten. Wer einmal lange genug gehalten
+-- hat, darf danach frei hineingreifen (Unlocked).
+local SERVER_HOLD = 1 -- ab so vielen Sekunden Halte-Zeit prüft der Server
+local HOLD_SLACK = 0.8 -- Anteil der Halte-Zeit, der mindestens vergangen sein muss (Ping)
+
+local function needsHold(player, bag)
+	return (bag.Hold or 0) >= SERVER_HOLD and not bag.Unlocked[player]
+end
+
+-- Halten an einem Prompt der Kiste verfolgen; gibt eine Funktion zurück, die beim Auslösen sagt, ob lange genug gehalten
+-- wurde. Der Start wird beim Loslassen nicht gelöscht (Triggered und HoldEnded kommen in keiner festen Reihenfolge an).
+local function trackHold(prompt, bag)
+	local started = {}
+	prompt.PromptButtonHoldBegan:Connect(function(player)
+		started[player] = os.clock()
+	end)
+	return function(player)
+		if (bag.Hold or 0) < SERVER_HOLD or bag.Unlocked[player] then
+			return true
+		end
+		local at = started[player]
+		if at and os.clock() - at >= bag.Hold * HOLD_SLACK then
+			bag.Unlocked[player] = true
+			return true
+		end
+		return false
+	end
+end
+
 -- Kurzer Text für Items: "Verband ×2, 9mm-Munition ×14"
 function LootService.Summary(items)
 	local parts = {}
@@ -409,13 +439,20 @@ function LootService.Create(position, items, kind, title, options)
 		Viewers = {},
 		Meta = options.Meta,
 		Label = count,
+		Hold = hold,
+		Unlocked = {},
 	}
 	bags[id] = bag
+	local heldOpen, heldTakeAll = trackHold(prompt, bag), trackHold(takeAll, bag)
 	prompt.Triggered:Connect(function(player)
-		LootService.Open(player, id)
+		if heldOpen(player) then
+			LootService.Open(player, id)
+		end
 	end)
 	takeAll.Triggered:Connect(function(player)
-		takeAllTriggered(player, id)
+		if heldTakeAll(player) then
+			takeAllTriggered(player, id)
+		end
 	end)
 	return id
 end
@@ -464,6 +501,7 @@ function LootService.Attach(model, part, items, title, options)
 		Range = range + 3, -- Leichen rutschen noch etwas (Ragdoll)
 		Expires = os.clock() + (options.Lifetime or ExtinctionConfig.DropLifetime),
 		Viewers = {},
+		Unlocked = {},
 	}
 	function bag.Refresh()
 		local rest = {}
@@ -494,7 +532,7 @@ end
 -- Fenster öffnen (nach E)
 function LootService.Open(player, id)
 	local bag = bags[id]
-	if not bag or not inRange(player, bag) then
+	if not bag or not inRange(player, bag) or needsHold(player, bag) then
 		return false
 	end
 	bag.Viewers[player] = true
@@ -534,6 +572,9 @@ function LootService.Take(player, id, slot, toName, toSlot)
 	if not inRange(player, bag) then
 		InventoryService.Status(player, "Du bist zu weit weg.")
 		return false
+	end
+	if needsHold(player, bag) then
+		return false -- erst E halten (die Kiste ist für diesen Spieler noch zu)
 	end
 	if slot == "All" then
 		opened(player, bag)

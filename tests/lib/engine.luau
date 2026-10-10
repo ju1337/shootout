@@ -320,7 +320,7 @@ for _, name in { "Died", "Running", "ChildAdded", "ChildRemoved", "DescendantAdd
 	"TouchEnded", "MoveToFinished", "Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up",
 	"MouseButton2Click", "MouseButton2Down", "MouseButton2Up", "Seated",
 	"MouseEnter", "MouseLeave", "InputBegan", "InputEnded", "InputChanged", "FocusLost", "Focused", "Equipped",
-	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded",
+	"Unequipped", "Completed", "Ended", "Played", "Stopped", "DidLoop", "Blocked", "Triggered", "TriggerEnded", "PromptButtonHoldBegan", "PromptButtonHoldEnded",
 	"PromptShown", "PromptHidden", "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished",
 	"PromptPurchaseFinished", "Chatted", "Idled", "Loaded", "SelectionGained", "SelectionLost", "AttributeChanged",
 	"LastInputTypeChanged", "JumpRequest" } do
