@@ -122,6 +122,7 @@ local function load()
 end
 
 local translateList -- (weiter unten) Listen Stück für Stück
+local isPlayerName -- (weiter unten)
 
 -- Text in die Zielsprache übersetzen (nil = kein Eintrag). Reihenfolge: genau, dann Muster.
 local function lookup(text, depth, strict)
@@ -146,17 +147,26 @@ local function lookup(text, depth, strict)
 				end
 			end
 			if captures[1] ~= nil then
+				local missing = false
 				local result = string.gsub(entry.Template, "{(%d)}", function(index)
 					local value = captures[tonumber(index) or 0] or ""
 					-- veränderliche Teile genau nachschlagen (Item-Namen, Orte, …)
 					-- (zwei Ebenen: "Fahrrad (Kit) eingepackt." → "{1} eingepackt." → "{1} (Kit)" → "Bicycle")
-					if depth < 2 and string.find(value, LETTERS) then
+					if depth < 2 and string.find(value, LETTERS) and not isPlayerName(value) then -- Namen nie übersetzen
 						-- eine Liste als Platzhalter ("+ Verband ×2, Fahrrad"): erst stückweise, sonst fängt ein allgemeines
 						-- Muster nur den Anfang
-						value = translateList(value, depth + 1) or lookup(value, depth + 1) or value
+						local translated = translateList(value, depth + 1) or lookup(value, depth + 1)
+						-- Listen-Stück mit unbekanntem Wort ("2× Quatschding"): nicht als übersetzt zählen
+						missing = missing or (strict and (translated == nil or translated == value))
+						value = translated or value
+					elseif strict and string.find(value, LETTERS) and not isPlayerName(value) then
+						missing = true
 					end
 					return value
 				end)
+				if missing then
+					return nil
+				end
 				return result
 			end
 		end
@@ -169,7 +179,7 @@ local function lookup(text, depth, strict)
 end
 
 -- Spielername? (auch großgeschrieben, wie auf vielen Anzeigen)
-local function isPlayerName(text)
+function isPlayerName(text)
 	local loud = string.upper(text)
 	for _, other in Players:GetPlayers() do
 		if string.upper(other.Name) == loud or string.upper(other.DisplayName) == loud then
@@ -197,7 +207,8 @@ function translateList(text, depth)
 		if string.find(text, separator, 1, true) then
 			local parts, changed = {}, false
 			for piece in string.gmatch(text .. separator, "(.-)" .. escapePattern(separator)) do
-				local translated = strings[piece] -- eigener Eintrag zuerst ("KARTE" ist kein Tastenname)
+				-- eigener Eintrag zuerst ("KARTE" ist kein Tastenname), aber nie für Spielernamen ("ADLER" bleibt ADLER)
+				local translated = not isPlayerName(piece) and strings[piece] or nil
 				if translated == nil and not neutral(piece) then
 					translated = translateList(piece, depth + 1) or lookup(piece, depth, true)
 					if translated == nil then

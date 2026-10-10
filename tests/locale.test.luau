@@ -77,12 +77,14 @@ expect("W / S  VOR / ZURÜCK  ·  A / D  DREHEN  ·  LEERTASTE  STEIGEN  ·  SHI
 	"W / S  FORWARD / BACK  ·  A / D  TURN  ·  SPACE  CLIMB  ·  SHIFT  DESCEND  ·  F  GET OUT  ·  G  STORE (LANDED)", "Hubschrauber-Tasten")
 expect("L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  △ HALTEN  EINPACKEN (GELANDET)",
 	"L-STICK  FLY  ·  R2  CLIMB  ·  L2  DESCEND  ·  ✕  GET OUT  ·  HOLD △  STORE (LANDED)", "Hubschrauber-Tasten (Gamepad)")
+expect("2× Quatschding, Fahrrad", "2× Quatschding, Fahrrad", "unbekanntes Wort in einem Mengen-Stück: Liste nicht halb übersetzen")
 expect("1.  ADLER  ·  3 VERKÄUFE", "1.  ADLER  ·  3 VERKÄUFE", "Liste mit Spielername (Adler ist auf dem Server)")
 expect("LMB  SCHIESSEN  ·  □  NACHLADEN / INTERAGIEREN  ·  △ HALTEN  FAHRZEUG EINPACKEN",
 	"LMB  FIRE  ·  □  RELOAD / INTERACT  ·  HOLD △  STORE VEHICLE", "Tasten-Zeile nach benutzten Tasten")
 check(Locale.Translate("Adler") == "Eagle", "Wort ohne gleichnamigen Spieler übersetzt")
 SIM.AddPlayer("Adler", 1003)
 check(Locale.Translate("Adler") == "Adler", "Spielername bleibt, auch wenn er wie ein Wort heißt")
+expect("1.  ADLER  ·  ZOMBIE", "1.  ADLER  ·  ZOMBIE", "Spielername als Listen-Stück mit eigenem Eintrag")
 -- großgeschriebene Fassung (Anzeigen schreiben mit UITheme.Upper groß, bevor der Text gesetzt wird)
 check(Locale.Translate("TÖTE 19 ZOMBIES") == "KILL 19 ZOMBIES", "Muster in Großbuchstaben: " .. Locale.Translate("TÖTE 19 ZOMBIES"))
 check(Locale.Translate("TÖTE 14 ZOMBIES IN DER ROTEN ZONE") == "KILL 14 ZOMBIES IN THE RED ZONE",

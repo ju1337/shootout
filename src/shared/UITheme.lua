@@ -491,10 +491,13 @@ local cameraUsers = {}
 local heldLook = nil
 local holdSerial = 0
 
-function UITheme.HoldCamera(user, on)
+function UITheme.HoldCamera(user, on, noRestore)
 	local wasHeld = next(cameraUsers) ~= nil
 	cameraUsers[user] = on and true or nil
 	local held = next(cameraUsers) ~= nil
+	if noRestore and wasHeld and not held then -- z. B. nach dem Wiederbeleben: alte Blickrichtung nicht zurückholen
+		heldLook = nil
+	end
 	local camera = workspace.CurrentCamera
 	if held and not wasHeld then
 		heldLook = camera and camera.CameraType == Enum.CameraType.Custom and camera.CFrame.LookVector or nil

@@ -730,6 +730,7 @@ function ExtinctionMap.Init()
 	end)
 	-- nach dem Wiederbeleben nicht offen lassen (hielte sonst Maus und alte Blickrichtung fest)
 	player.CharacterAdded:Connect(function()
+		UITheme.HoldCamera("ExtinctionMap", false, true)
 		ExtinctionMap.Set(false)
 	end)
 end
