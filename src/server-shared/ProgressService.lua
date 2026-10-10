@@ -812,6 +812,14 @@ local function devBoost(profile)
 		profile.Coins = math.max(profile.Coins or 0, DevConfig.Coins)
 		profile.Rap = math.max(profile.Rap or 0, DevConfig.Rap)
 		profile.RedPoints = math.max(tonumber(profile.RedPoints) or 0, DevConfig.RedPoints)
+		if DevConfig.AllSkins then
+			profile.Owned = profile.Owned or {}
+			for _, item in Cosmetics.Items do
+				if not profile.Owned[item.Id] then
+					profile.Owned[item.Id] = 1
+				end
+			end
+		end
 	end
 end
 
