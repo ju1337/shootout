@@ -342,6 +342,14 @@ local function holderPart(name, cframe, size)
 	return part
 end
 
+-- Grafik „Niedrig“ (wie WeaponEffects, dort zwischengespeichert)
+local function lowGraphics()
+	local ok, low = pcall(function()
+		return require(script.Parent.WeaponEffects).LowGraphics()
+	end)
+	return ok and low == true
+end
+
 -- Kurze Partikel an einer Stelle (Schuss, Einschlag): Emitter einmal auslösen, Halter danach weg
 local function burstAt(cframe, specs, folder, fp, filter)
 	local holder = holderPart("SkinFx_Burst", cframe)
@@ -360,8 +368,9 @@ local function burstAt(cframe, specs, folder, fp, filter)
 		return nil
 	end
 	holder.Parent = workspace
+	local low = lowGraphics()
 	for _, entry in emitters do
-		entry[1]:Emit(entry[2])
+		entry[1]:Emit(low and math.ceil(entry[2] / 2) or entry[2]) -- Grafik „Niedrig“: halb so viele
 	end
 	task.delay(0.6, function()
 		holder:Destroy()
@@ -650,13 +659,6 @@ function SkinEffects.HasFinisher(styleName)
 	return style ~= nil and style.Finisher ~= nil
 end
 
-local function lowGraphics()
-	local ok, low = pcall(function()
-		local PlayerSettings = require(script.Parent.PlayerSettings)
-		return PlayerSettings.Get("Graphics") == "Low"
-	end)
-	return ok and low == true
-end
 
 -- Kill-Finisher an der Stelle des Gegners (Client, alle Spieler im Modus). model = Charakter des Opfers (oder nil)
 function SkinEffects.Finisher(model, rootCFrame, styleName, weaponName, skinId)

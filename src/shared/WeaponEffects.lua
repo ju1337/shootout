@@ -26,6 +26,26 @@ local folder = Instance.new("Folder")
 folder.Name = "WeaponEffects"
 folder.Parent = workspace
 
+-- Grafik „Niedrig“ (Einstellung, nur Client): weniger Partikel, kein Mündungslicht. Einmal nachschlagen, dann
+-- über PlayerSettings.Changed aktuell halten (nicht bei jedem Schuss require + pcall)
+local graphics = { Low = false, Hooked = false }
+local function lowGraphics()
+	if not graphics.Hooked then
+		graphics.Hooked = true
+		pcall(function()
+			local PlayerSettings = require(script.Parent.PlayerSettings)
+			graphics.Low = PlayerSettings.Get("Graphics") == "Low"
+			PlayerSettings.Changed:Connect(function(key, value)
+				if key == "Graphics" then
+					graphics.Low = value == "Low"
+				end
+			end)
+		end)
+	end
+	return graphics.Low
+end
+WeaponEffects.LowGraphics = lowGraphics
+
 -- Teil für reine Optik (keine Kollision, keine Treffer, kein Schatten)
 local function effectPart(props)
 	local part = Instance.new("Part")
@@ -268,12 +288,14 @@ function WeaponEffects.MuzzleFlash(cframe, scale, followCamera)
 		Color = FLASH_COLOR,
 		Transparency = 0.35,
 	})
-	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 190, 110)
-	light.Range = 12 * math.max(scale, 0.6)
-	light.Brightness = 2.5
-	light.Shadows = false
-	light.Parent = core
+	if not lowGraphics() then
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 190, 110)
+		light.Range = 12 * math.max(scale, 0.6)
+		light.Brightness = 2.5
+		light.Shadows = false
+		light.Parent = core
+	end
 	Debris:AddItem(core, 0.05)
 	Debris:AddItem(flame, 0.04)
 	Debris:AddItem(star, 0.035)
@@ -350,8 +372,12 @@ local function alongNormal(position, normal)
 	return CFrame.lookAt(position, position + normal, up) * CFrame.Angles(-math.pi / 2, 0, 0)
 end
 
+
 -- Einmaliger Partikel-Ausstoß an einer Stelle
 local function burst(cframe, count, props)
+	if lowGraphics() then
+		count = math.ceil(count / 3) -- Emit beachtet „Enabled = false“ (GraphicsQuality) nicht
+	end
 	local anchor = Instance.new("Attachment")
 	anchor.WorldCFrame = cframe
 	anchor.Parent = workspace.Terrain

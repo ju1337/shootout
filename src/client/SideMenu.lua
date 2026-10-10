@@ -1438,8 +1438,10 @@ function SideMenu.Init()
 			if openPanel and not (inHub or lobby) then
 				setPanel(nil)
 			end
-			dailyDot.Visible = loginClaimable()
-			questDot.Visible = questReady()
+			if column.Visible then -- (die Punkte hängen an der Menüliste: versteckt nicht jedes Mal JSON lesen)
+				dailyDot.Visible = loginClaimable()
+				questDot.Visible = questReady()
+			end
 			if openPanel == "Daily" then
 				panels.Daily.Refresh()
 			end

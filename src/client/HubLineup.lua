@@ -162,7 +162,12 @@ local function buildShopVitrine()
 			lastCheck = t
 			refresh()
 		end
+		local eye = workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position
 		for i, entry in models do
+			-- nur in der Nähe drehen (sonst werden überall auf der Karte jedes Bild alle Teile versetzt)
+			if eye and (entry.Spot.Position - eye).Magnitude > 120 then
+				continue
+			end
 			local spin = CFrame.Angles(0, t * 0.6 + i, 0)
 			entry.Model:PivotTo(CFrame.new(entry.Spot.Position) * spin * entry.Offset:Inverse())
 		end

@@ -900,10 +900,14 @@ function WeaponClient.Init()
 		local skinTool = model and model:FindFirstChildOfClass("Tool")
 		local skinFx = skinTool and skinTool:GetAttribute("SkinFx")
 		local skinWeapon, skinId = skinTool and skinTool:GetAttribute("Weapon"), skinTool and skinTool:GetAttribute("SkinId")
+		-- weit weg: Ton ja, aber keine Lichter/Partikel/Teile, die man nicht sieht (Handys)
+		local eye = workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position or start
+		local startFar = (start - eye).Magnitude > 250
+		local endFar = (endPos - eye).Magnitude > 300
 		if firstPellet then
 			local loud = typeof(shooter) == "Instance" and shooter:IsA("Player") and AttachmentConfig.Effects(shooter, weaponName).Loud or 1
 			WeaponEffects.GunSound(weaponName, start, false, silenced == true, loud)
-			if not silenced and (endPos - start).Magnitude > 0.01 then
+			if not silenced and not startFar and (endPos - start).Magnitude > 0.01 then
 				local muzzleCF = CFrame.lookAt(start, endPos)
 				if not (skinFx and SkinEffects.Shot(muzzleCF, 1, skinWeapon, skinId, skinFx, false, false, false)) then
 					WeaponEffects.MuzzleFlash(muzzleCF, 1)
@@ -913,12 +917,12 @@ function WeaponClient.Init()
 				SkinEffects.Fired(skinTool)
 			end
 		end
-		if not silenced then
+		if not silenced and not (startFar and endFar) then
 			if not (skinFx and SkinEffects.Tracer(start, endPos, skinWeapon, skinId, skinFx, false)) then
 				WeaponEffects.Tracer(start, endPos, false)
 			end
 		end
-		if hitKind then
+		if hitKind and not endFar then
 			WeaponEffects.Impact(endPos, normal, hitKind)
 			if skinFx then
 				SkinEffects.Impact(endPos, normal, skinWeapon, skinId, skinFx)

@@ -179,9 +179,8 @@ local function survivalData(player)
 	return data
 end
 
--- Daten des Spielers aus dem Attribut
-function AttachmentConfig.Data(player)
-	if Modes.IsSurvival(player:GetAttribute("Mode")) then
+local function decodeData(player, survival)
+	if survival then
 		return survivalData(player)
 	end
 	local raw = player:GetAttribute("Attachments")
@@ -194,6 +193,23 @@ function AttachmentConfig.Data(player)
 		end
 	end
 	return { Owned = {}, Equipped = {} }
+end
+
+-- Zuletzt gelesener Stand je Spieler (das Fadenkreuz fragt jedes Bild nach): nur neu lesen, wenn sich das Attribut
+-- ändert. Ergebnis nur lesen, nicht verändern (wird geteilt)
+local dataCache = setmetatable({}, { __mode = "k" })
+
+-- Daten des Spielers aus dem Attribut
+function AttachmentConfig.Data(player)
+	local survival = Modes.IsSurvival(player:GetAttribute("Mode"))
+	local raw = player:GetAttribute(survival and "ExtAttach" or "Attachments")
+	local cached = dataCache[player]
+	if cached and cached.Survival == survival and cached.Raw == raw then
+		return cached.Data
+	end
+	local data = decodeData(player, survival)
+	dataCache[player] = { Survival = survival, Raw = raw, Data = data }
+	return data
 end
 
 function AttachmentConfig.Owns(player, weaponName, id)

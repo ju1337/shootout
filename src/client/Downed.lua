@@ -208,6 +208,7 @@ function Downed.Init()
 		end
 	end)
 
+	local mateScan = { At = -math.huge, List = {} }
 	RunService.Heartbeat:Connect(function()
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -221,9 +222,13 @@ function Downed.Init()
 			reviveBar.Size = UDim2.new(progress, 0, 1, 0)
 		end
 
-		-- Teamkollegen am Boden
-		local mates = downedMates()
-		updateIcons(mates)
+		-- Teamkollegen am Boden (Suche im Workspace nur alle 0,2 s, nicht jedes Bild)
+		if os.clock() - mateScan.At >= 0.2 then
+			mateScan.At = os.clock()
+			mateScan.List = downedMates()
+			updateIcons(mateScan.List)
+		end
+		local mates = mateScan.List
 		promptTarget = nil
 		if root and not isDowned then
 			local bestDistance = REVIVE_RANGE
