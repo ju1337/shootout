@@ -185,15 +185,8 @@ local function build(map)
 	built = true
 end
 
-local function update()
-	local map = getMap()
-	if not map then
-		return
-	end
-	if not built or map:GetAttribute("Layout") ~= builtLayout then
-		build(map)
-	end
-	-- eigener Standort und Blickrichtung
+-- eigener Standort und Blickrichtung (jeden Frame; alles andere reicht zehnmal pro Sekunde, siehe Init)
+local function updateArrow(map)
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	arrow.Visible = root ~= nil
@@ -204,6 +197,17 @@ local function update()
 		local look = camera and camera.CFrame.LookVector or Vector3.new(0, 0, 1)
 		arrow.Rotation = math.deg(math.atan2(look.X, look.Z))
 	end
+end
+
+local function update()
+	local map = getMap()
+	if not map then
+		return
+	end
+	if not built or map:GetAttribute("Layout") ~= builtLayout then
+		build(map)
+	end
+	updateArrow(map)
 	-- Rote Zone (zieht alle 20 Minuten weiter, darum bei jedem Update): Kreis mit der Zeit bis zum Weiterziehen
 	local now = workspace:GetServerTimeNow()
 	local raw = map:GetAttribute("Redzones")
@@ -697,12 +701,25 @@ function ExtinctionMap.Init()
 		end)
 	end
 	applyView()
+	-- Ereignisse, Texte und Zeiten zehnmal pro Sekunde (jedes Mal rund zehn JSON-Attribute lesen); der Pfeil jeden Frame
+	local sinceUpdate = math.huge
 	RunService.Heartbeat:Connect(function(dt)
 		if gui.Enabled then
 			if stick.Magnitude > 0.2 then
 				panBy(-stick.X * 600 * dt, stick.Y * 600 * dt)
 			end
-			update()
+			sinceUpdate += dt
+			if sinceUpdate >= 0.1 then
+				sinceUpdate = 0
+				update()
+			elseif built then
+				local map = getMap()
+				if map then
+					updateArrow(map)
+				end
+			end
+		else
+			sinceUpdate = math.huge
 		end
 	end)
 end
