@@ -409,6 +409,10 @@ function VehicleClient.SpinRotors(dt)
 			elseif alive and airborne then
 				target = ROTOR_SPEED * 0.6
 			end
+			if spin.Speed == 0 and target == 0 and spin.Rested then
+				continue -- geparkt: Rotoren stehen (Stellung schon geschrieben), nichts zu tun
+			end
+			spin.Rested = spin.Speed == 0 and target == 0
 			spin.Speed = moveToward(spin.Speed, target, ROTOR_SPIN_UP * dt)
 			spin.Angle = (spin.Angle + spin.Speed * dt) % (2 * math.pi)
 			spin.TailAngle = (spin.TailAngle + spin.Speed * 1.6 * dt) % (2 * math.pi)

@@ -523,7 +523,13 @@ end
 function SkinEffects.Update(t)
 	local dt = lastUpdate and math.clamp(t - lastUpdate, 0, 0.25) or 0
 	lastUpdate = t
+	local camera = workspace.CurrentCamera
+	local eye = camera and camera.CFrame.Position
 	for main, entry in tracked do
+		-- weit weg (andere Spieler, Schaukasten): Glühen/Partikel nicht jedes Bild nachführen
+		if entry and eye and (main.Position - eye).Magnitude > 150 then
+			continue
+		end
 		if entry and main:IsDescendantOf(workspace) then
 			if entry.Style.Generic then
 				updateGeneric(main, entry, t, dt)

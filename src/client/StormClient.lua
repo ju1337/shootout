@@ -251,7 +251,7 @@ function StormClient.Init()
 	local elapsed = 0
 	RunService.RenderStepped:Connect(function(dt)
 		elapsed += dt
-		if rainPart and workspace.CurrentCamera then
+		if rainPart and rainEmitter and rainEmitter.Rate > 0 and workspace.CurrentCamera then -- (nach dem Sturm nicht mehr)
 			rainPart.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position + Vector3.new(0, 45, 0))
 		end
 		if elapsed >= 0.25 then

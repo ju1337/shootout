@@ -154,6 +154,11 @@ function Locale.Translate(text, lang)
 	if type(text) ~= "string" or text == "" or (lang or language) == "de" then
 		return text
 	end
+	-- reine Zahlen mit höchstens einem Einheiten-Buchstaben ("123 M", "45 s", "3/10"): nichts zu übersetzen, und
+	-- nicht jedes Mal alle Muster durchprobieren (Abstände ändern sich mehrmals pro Sekunde)
+	if string.match(text, "^[%d%s%.,:/%%%+%-]*%a?$") then
+		return text
+	end
 	load()
 	local hit = cache[text]
 	if hit ~= nil then
