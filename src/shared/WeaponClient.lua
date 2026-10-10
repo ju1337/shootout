@@ -615,8 +615,9 @@ function WeaponClient.Init()
 	local function fighting()
 		return Modes.IsFighting(player)
 	end
+	-- hinter offenen Fenstern und der Karte nicht schießen oder zielen (Controller: R2/L2 zoomen dort, Touch-Knöpfe)
 	InputActions.Bind("Fire", function(began)
-		fireHeld = began and fighting()
+		fireHeld = began and fighting() and not UITheme.IsMenuOpen()
 		if fireHeld then
 			stopInspect()
 			tryFire()
@@ -625,11 +626,11 @@ function WeaponClient.Init()
 	InputActions.Bind("Aim", function(began)
 		if PlayerSettings.Get("ToggleAim") then
 			-- Einstellung "Zielen: Umschalten": jeder Druck schaltet um
-			if began and fighting() then
+			if began and fighting() and not UITheme.IsMenuOpen() then
 				aimHeld = not aimHeld
 			end
 		else
-			aimHeld = began and fighting()
+			aimHeld = began and fighting() and not UITheme.IsMenuOpen()
 		end
 	end)
 	InputActions.Bind("Reload", function(began)

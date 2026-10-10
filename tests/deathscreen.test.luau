@@ -64,6 +64,24 @@ check(DeathScreen.IsShown(), "auch in der Safe Zone")
 check(find("Bag"):FindFirstChild("Title").Text == "NICHTS VERLOREN", "Safe Zone: nichts verloren")
 check(not find("Killer").Visible, "ohne Gegner keine Gegner-Karte")
 
+-- im Dungeon gestorben: Tasche verloren (nicht "liegt an der Todesstelle")
+bob:LoadCharacter()
+SIM.Advance(0.5, 10)
+bob:SetAttribute("InSafeZone", false)
+bob:SetAttribute("Dungeon", "{}")
+bob.Character.Humanoid.Health = 0
+SIM.Advance(1, 20)
+check(find("Bag"):FindFirstChild("Title").Text == "TASCHE IM DUNGEON VERLOREN", "Dungeon: Tasche verloren")
+bob:SetAttribute("Dungeon", nil)
+
+-- draußen mit leerer Tasche: nichts verloren
+bob:LoadCharacter()
+SIM.Advance(0.5, 10)
+bob:SetAttribute("ExtBag", "[]")
+bob.Character.Humanoid.Health = 0
+SIM.Advance(1, 20)
+check(find("Bag"):FindFirstChild("Title").Text == "NICHTS VERLOREN", "leere Tasche: nichts verloren")
+
 -- anderer Modus: nie
 bob:LoadCharacter()
 bob:SetAttribute("Mode", "FreeForAll")

@@ -15,6 +15,7 @@ local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
+local HttpService = game:GetService("HttpService")
 local AgentConfig = require(Shared.AgentConfig)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 
@@ -116,12 +117,22 @@ local function updateCountdown()
 	fill.Size = UDim2.fromScale(1 - left / total, 1)
 end
 
-local function show(outside)
+-- what: "Outside" (Tasche liegt an der Todesstelle), "Dungeon" (Tasche verloren), "Empty" (nichts dabei), "Safe"
+local function show(what)
 	shown = true
-	if outside then
+	if what == "Dungeon" then
+		bagTitle.Text = "TASCHE IM DUNGEON VERLOREN"
+		bagText.Text = "Wer im Dungeon stirbt, verliert die ganze Tasche · dein Lager bleibt immer"
+		bagTitle.TextColor3 = C.Bad
+	elseif what == "Empty" then
+		bagTitle.Text = "NICHTS VERLOREN"
+		bagText.Text = "Deine Tasche war leer · dein Lager bleibt immer"
+		bagTitle.TextColor3 = C.Good
+	elseif what == "Outside" then
 		bagTitle.Text = "DEINE TASCHE LIEGT AN DER TODESSTELLE"
+		local mapKey = InputActions.Device() == "Gamepad" and " (↑ HALTEN)" or (InputActions.IsTouch() and "" or " (N)")
 		bagText.Text = "Noch " .. math.floor(ExtinctionConfig.BagLifetime / 60) .. " Minuten · auf Minimap und Karte"
-			.. (InputActions.IsTouch() and "" or " (N)") .. " markiert · jeder kann sie plündern"
+			.. mapKey .. " markiert · jeder kann sie plündern"
 		bagTitle.TextColor3 = C.Primary
 	else
 		bagTitle.Text = "NICHTS VERLOREN"
@@ -150,7 +161,15 @@ local function track(character)
 		if not inSurvival() or player.Character ~= character then
 			return
 		end
-		local outside = player:GetAttribute("InSafeZone") ~= true
+		local what = "Safe"
+		local dungeon = player:GetAttribute("Dungeon")
+		local raw = player:GetAttribute("ExtBag")
+		local ok, bag = pcall(HttpService.JSONDecode, HttpService, type(raw) == "string" and raw or "null")
+		if type(dungeon) == "string" and dungeon ~= "" then
+			what = "Dungeon"
+		elseif player:GetAttribute("InSafeZone") ~= true then
+			what = (ok and type(bag) == "table" and next(bag) == nil) and "Empty" or "Outside"
+		end
 		diedAt = os.clock()
 		if lastRecap and diedAt - lastRecapAt < 2 then
 			setKiller(table.unpack(lastRecap))
@@ -160,7 +179,7 @@ local function track(character)
 		local myDeath = diedAt
 		task.delay(SHOW_DELAY, function()
 			if diedAt == myDeath and player.Character == character then
-				show(outside)
+				show(what)
 			end
 		end)
 	end)

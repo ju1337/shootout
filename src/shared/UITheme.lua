@@ -467,8 +467,14 @@ local blur = nil
 local blurUsers = {}
 
 -- Ist gerade ein Menü mit Unschärfe offen (Spielmenü, Seitenmenü)?
+-- Fenster ohne Unschärfe, das trotzdem als offenes Menü zählt (Weltkarte): kein Schießen und Zielen dahinter
+local menuUsers = {}
+function UITheme.SetMenu(user, on)
+	menuUsers[user] = on or nil
+end
+
 function UITheme.IsMenuOpen()
-	return next(blurUsers) ~= nil
+	return next(blurUsers) ~= nil or next(menuUsers) ~= nil
 end
 
 -- Hat user (z.B. "Market", "Trade") gerade ein Fenster mit Unschärfe offen?

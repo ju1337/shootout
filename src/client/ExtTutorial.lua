@@ -41,6 +41,7 @@ local state = {
 	Active = false, -- Tafel läuft
 	Step = 0,
 	StepStart = 0,
+	ResumedAt = 0, -- zuletzt TutorialEquip neu angefragt
 	Kills = 0, -- ZombieKills beim Start des Zombie-Schritts
 	Started = false, -- schon begonnen (nach Verlassen und Wiederkommen weiter, ohne neue Karte)
 	Finished = false, -- fertig oder übersprungen (in dieser Sitzung nicht mehr von selbst)
@@ -77,6 +78,13 @@ local function weaponSlot()
 		end
 	end
 	return best
+end
+
+-- Startpaket gerade nicht abholbar (schon geholt, Wartezeit läuft): Schritt nicht daran hängen lassen
+local function starterWaiting()
+	local kit = KitConfig.Get("Starter")
+	local ok, claimed = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Kits") or "{}")
+	return kit ~= nil and KitConfig.Remaining(kit, ok and claimed or {}, workspace:GetServerTimeNow()) > 0
 end
 
 local function hasWeapon()
@@ -121,7 +129,9 @@ ExtTutorial.Steps = {
 			return "Walk to the <b>kit vendor</b> (follow the marker) and press " .. key("Interact", "the button on screen")
 				.. " to claim the free <b>STARTER KIT</b>: pistol, SMG, ammo, bandages, a vest and a bike."
 		end,
-		Done = hasWeapon },
+		Done = function()
+			return hasWeapon() or starterWaiting()
+		end },
 	{ Id = "Inventory", Title = "OPEN YOUR INVENTORY",
 		Text = function()
 			return "Press " .. key("Inventory", "the bag button") .. " to open your inventory. The first "
@@ -134,11 +144,15 @@ ExtTutorial.Steps = {
 		Text = function()
 			local slot = weaponSlot()
 			local hint = slot and InputActions.Hint("Hotbar" .. slot) or ""
+			if InputActions.Device() == "Gamepad" then
+				hint = InputActions.Hint("Gadget") .. " / " .. InputActions.Hint("Ability") -- Controller: Waffe wechseln mit R1/L1
+			end
 			return "Close the menu and press " .. (hint ~= "" and ("[" .. hint .. "]") or "a weapon in your hotbar")
 				.. " to draw your gun. During the tutorial you can hold it in the safe zone – shooting only works outside."
 		end,
 		Done = function()
-			return (player:GetAttribute("ExtEquipped") or 0) > 0
+			-- ohne Waffe (Startpaket schon geholt und weg) gibt es nichts zu ziehen
+			return (player:GetAttribute("ExtEquipped") or 0) > 0 or (not hasWeapon() and starterWaiting())
 		end },
 	{ Id = "Leave", Title = "LEAVE THE SAFE ZONE",
 		Text = function()
@@ -315,6 +329,13 @@ local function tick()
 		closeIntro() -- beim nächsten Betreten kommt die Karte wieder (Attribut)
 		state.Started = false
 	end
+	-- Controller: Auswahl ging verloren (Menü kurz offen): wieder auf die Karte
+	if intro and windowKind() == nil and InputActions.Device() == "Gamepad" then
+		local selected = game:GetService("GuiService").SelectedObject
+		if not (selected and selected:IsDescendantOf(intro)) then
+			InputActions.Focus(intro)
+		end
+	end
 	if not state.Active then
 		return
 	end
@@ -325,6 +346,13 @@ local function tick()
 	local step = ExtTutorial.Steps[state.Step]
 	if not step then
 		return
+	end
+	-- Waffe ziehen in der Safe Zone erlaubt der Server nur mit TutorialEquip; das fällt beim Verlassen der Zone und beim
+	-- Moduswechsel weg: wieder anfragen
+	if (step.Id == "Equip" or step.Id == "Leave") and player:GetAttribute("TutorialEquip") ~= true
+		and player:GetAttribute("InSafeZone") == true and os.clock() - state.ResumedAt > 2 then
+		state.ResumedAt = os.clock()
+		Remotes.ExtAction:FireServer("Tutorial", "Resume", state.Step, step.Id)
 	end
 	local done
 	if step.Duration then
@@ -360,10 +388,11 @@ local function onAttribute()
 	-- erst, wenn kein Fenster offen ist (die Karte liegt unter den Fenstern) und der Spieler da ist
 	task.spawn(function()
 		local waited = 0
-		while waited < 30 and (not inExtinction() or windowKind() ~= nil) do
+		while waited < 600 and (not inExtinction() or windowKind() ~= nil) do
 			waited += task.wait(0.5)
 		end
-		if player:GetAttribute("ExtTutorial") == true and not state.Finished and not state.Active and not intro and inExtinction() then
+		if player:GetAttribute("ExtTutorial") == true and not state.Finished and not state.Active and not intro and inExtinction()
+			and windowKind() == nil then
 			ExtTutorial.Start(true)
 		end
 	end)

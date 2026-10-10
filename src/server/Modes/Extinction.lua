@@ -552,6 +552,13 @@ function Extinction.Init(modeManager)
 			end
 			return
 		end
+		if result == "Resume" then
+			-- zurück in der Safe Zone oder nach dem Markt mitten im Tutorial: Waffe ziehen wieder erlauben
+			if player:GetAttribute("ExtTutorial") == true and (stepId == "Equip" or stepId == "Leave") then
+				player:SetAttribute("TutorialEquip", true)
+			end
+			return
+		end
 		if player:GetAttribute("TutorialEquip") then
 			player:SetAttribute("TutorialEquip", nil)
 			if player:GetAttribute("InSafeZone") then

@@ -492,9 +492,11 @@ function ExtinctionMap.Set(open)
 		return
 	end
 	gui.Enabled = open == true
+	UITheme.SetMenu("WorldMap", gui.Enabled)
 	if gui.Enabled then
 		if closeHint then
 			closeHint.Visible = not InputActions.IsTouch()
+			closeHint.Text = InputActions.Device() == "Gamepad" and "○  SCHLIESSEN" or "N SCHLIESSEN"
 		end
 		-- Maus frei, solange die Karte offen ist (direkt nach der Kamera, die sie sonst wieder sperrt)
 		RunService:BindToRenderStep("ExtinctionMapMouse", Enum.RenderPriority.Camera.Value + 1, function()
@@ -679,7 +681,9 @@ function ExtinctionMap.Init()
 		if not gui.Enabled then
 			return
 		end
-		if input.KeyCode == Enum.KeyCode.ButtonR2 or input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.KeypadPlus then
+		if input.KeyCode == Enum.KeyCode.ButtonB then
+			ExtinctionMap.Set(false) -- Controller: ○ schließt wie bei den Fenstern
+		elseif input.KeyCode == Enum.KeyCode.ButtonR2 or input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.KeypadPlus then
 			zoomBy(1.5)
 		elseif input.KeyCode == Enum.KeyCode.ButtonL2 or input.KeyCode == Enum.KeyCode.Minus or input.KeyCode == Enum.KeyCode.KeypadMinus then
 			zoomBy(1 / 1.5)
