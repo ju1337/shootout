@@ -32,6 +32,7 @@ function SessionStore.new(dataStore, options)
 	self.Now = options.Now or os.time
 	self.Clock = options.Clock or os.clock
 	self.Saving = {} -- [Schlüssel] = true, solange gespeichert wird
+	self.Released = {} -- [Schlüssel] = true nach dem Freigeben (bis zum nächsten Laden)
 	return self
 end
 
@@ -82,6 +83,7 @@ function SessionStore:Acquire(key, force)
 	if locked or data == nil then
 		return "locked"
 	end
+	self.Released[key] = nil -- wieder gesperrt (Spieler ist zurück)
 	local copy = table.clone(data)
 	copy.Session = nil
 	return "ok", copy
@@ -129,11 +131,16 @@ function SessionStore:Save(key, data, release)
 				return nil -- ein anderer Server hat übernommen: nicht überschreiben
 			end
 			local entry = table.clone(data)
-			entry.Session = if release then nil else { Id = self.SessionId, Time = self.Now() }
+			-- schon freigegeben (Spieler weg): spätere Speicherungen schreiben noch, sperren aber nicht wieder –
+			-- sonst wartet der nächste Server LockWait Sekunden auf eine Sperre, die niemand mehr freigibt
+			entry.Session = if release or self.Released[key] then nil else { Id = self.SessionId, Time = self.Now() }
 			return entry
 		end)
 	end)
 	self.Saving[key] = nil
+	if ok and not lost and release then
+		self.Released[key] = true
+	end
 	if lost then
 		return "lost"
 	end

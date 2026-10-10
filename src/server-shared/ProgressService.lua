@@ -851,6 +851,7 @@ end
 
 -- Speichern (nur mit eigener Sperre). release = Sperre dabei freigeben (Spieler geht, Server fährt herunter).
 -- Gibt true zurück, wenn der Stand sicher gespeichert ist.
+local inFlight = 0 -- laufende Speicherungen
 local function save(player, release)
 	for _, callback in beforeSave do
 		local ok, err = pcall(callback, player)
@@ -862,7 +863,9 @@ local function save(player, release)
 	if not store or not loaded[player] or not profile then
 		return false
 	end
+	inFlight += 1 -- (Herunterfahren wartet auf alle, auch auf Speicherungen beim Verlassen)
 	local status, err = store:Save(key(player), profile, release)
+	inFlight -= 1
 	if status == "lost" then
 		loaded[player] = nil -- ein anderer Server hat das Profil übernommen: hier nicht mehr speichern
 		warn("Spielerdaten von " .. player.Name .. " werden inzwischen auf einem anderen Server gespeichert")
@@ -1367,7 +1370,8 @@ function ProgressService.Init()
 			end)
 		end
 		local deadline = os.clock() + SHUTDOWN_WAIT
-		while pending > 0 and os.clock() < deadline do
+		task.wait() -- die gerade gestarteten Speicherungen zählen schon in inFlight
+		while (pending > 0 or inFlight > 0) and os.clock() < deadline do
 			task.wait(0.1)
 		end
 	end)

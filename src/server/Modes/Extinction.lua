@@ -163,6 +163,13 @@ local function rootOf(player)
 	return nil, nil
 end
 
+-- wie rootOf, aber auch tot (Leben 0, Died noch nicht verarbeitet): fürs Verlassen draußen
+local function anyRootOf(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root
+end
+
 local function notify(player, kind, data)
 	Remotes.Notify:FireClient(player, kind, data)
 end
@@ -200,6 +207,7 @@ local function updateZone(player, info)
 	if not root then
 		return
 	end
+	info.LastPos = root.Position -- falls die Leiche ohne Root stirbt (aus der Karte gefallen)
 	local safe = Extinction.SafeZoneAt(root.Position)
 	-- Im Kampf (CombatUntil, Damage): nicht hinein. Wer es trotzdem über den Rand schafft, kommt auf den Rand zurück
 	if safe and not info.Inside and (player:GetAttribute("CombatUntil") or 0) > workspace:GetServerTimeNow() then
@@ -391,7 +399,8 @@ local function spawnPlayer(player)
 	humanoid.Died:Connect(function()
 		local current = members[player]
 		local root = character:FindFirstChild("HumanoidRootPart")
-		local position = root and root.Position
+		-- ohne Root (ins Leere gefallen): letzte bekannte Stelle, sonst wäre das Runterspringen ein Ausweg mit voller Tasche
+		local position = root and root.Position or (current and current.LastPos)
 		local outside = position ~= nil and not Extinction.InSafeZone(position)
 		local lastHit = Damage.LastHit(character)
 		local cause = lastHit and lastHit.Model and (Players:GetPlayerFromCharacter(lastHit.Model) and "Player"
@@ -424,7 +433,8 @@ local function leavePenalty(player)
 	if not info or info.Penalized or ProgressService.IsShuttingDown() then
 		return
 	end
-	local root = rootOf(player)
+	-- auch tot (Leben 0, aber Died noch nicht da): sonst behält, wer im Sterben geht, die ganze Tasche
+	local root = anyRootOf(player)
 	if root and not Extinction.InSafeZone(root.Position) then
 		info.Penalized = true
 		dropBag(player, root.Position)

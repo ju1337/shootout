@@ -198,6 +198,20 @@ run("Speichervorgänge nacheinander", function()
 	check(store.Data.u1.Session == nil, "nach Autosave + Verlassen ist die Sperre frei")
 end)
 
+-- 8b. Speichern nach dem Freigeben (z.B. Kauf, der hinter dem Verlassen wartete): schreibt, sperrt aber nicht neu
+run("kein Neusperren nach Freigabe", function()
+	local store = mockStore()
+	local A = server(store, "A")
+	local _, data = A:Load("u1")
+	A:Save("u1", data, true)
+	data.Coins = 5
+	check(A:Save("u1", data, false) == "ok", "späte Speicherung klappt")
+	check(store.Data.u1.Coins == 5 and store.Data.u1.Session == nil, "geschrieben, Sperre bleibt frei")
+	A:Load("u1")
+	A:Save("u1", data, false)
+	check(store.Data.u1.Session ~= nil and store.Data.u1.Session.Id == "A", "nach erneutem Laden wieder gesperrt")
+end)
+
 -- 9. Altes Format ohne Session: wird normal geladen
 run("Alter Stand ohne Sperre", function()
 	local store = mockStore()
