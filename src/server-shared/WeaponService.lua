@@ -202,14 +202,15 @@ local HIT_TOLERANCE = 6      -- Studs: Abstand gemeldeter Treffer – Körpermit
 local CLAIM_ANGLE = math.rad(4)
 local history = setmetatable({}, { __mode = "k" }) -- [Model] = { { Time, Position }, ... }
 
-local function trackedModels()
+-- withZombies: Zombies nur jede zweite Probe (10 Hz reicht bei ihrem Tempo, und es sind die meisten Modelle)
+local function trackedModels(withZombies)
 	local list = {}
 	for _, p in Players:GetPlayers() do
 		if p.Character then
 			table.insert(list, p.Character)
 		end
 	end
-	for _, folderName in { "Bots", "Zombies" } do
+	for _, folderName in { "Bots", withZombies and "Zombies" or nil } do
 		local folder = workspace:FindFirstChild(folderName)
 		if folder then
 			for _, model in folder:GetChildren() do
@@ -223,22 +224,28 @@ local function trackedModels()
 end
 
 local lastSample = 0
+local sampleZombies = false
 RunService.Heartbeat:Connect(function()
 	local now = os.clock()
 	if now - lastSample < HISTORY_STEP then
 		return
 	end
 	lastSample = now
-	for _, model in trackedModels() do
+	sampleZombies = not sampleZombies
+	for _, model in trackedModels(sampleZombies) do
 		local root = model:FindFirstChild("HumanoidRootPart")
 		local humanoid = root and model:FindFirstChildOfClass("Humanoid")
 		if root and not (humanoid and humanoid.Health <= 0) then -- Leichen trifft niemand mehr
 			local list = history[model] or {}
 			history[model] = list
-			table.insert(list, { Time = now, Position = root.Position })
+			-- abgelaufene Proben entfernen und eine davon wiederverwenden (keine neue Tabelle je Probe)
+			local sample = nil
 			while list[1] and now - list[1].Time > HISTORY_TIME do
-				table.remove(list, 1)
+				sample = table.remove(list, 1)
 			end
+			sample = sample or {}
+			sample.Time, sample.Position = now, root.Position
+			table.insert(list, sample)
 		end
 	end
 end)
