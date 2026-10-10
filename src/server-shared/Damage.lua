@@ -71,6 +71,7 @@ function Damage.Apply(model, humanoid, amount, attacker)
 			Model = attackerModel,
 			Name = attacker.Player and attacker.Player.Name or attacker.BotName or attackerModel.Name,
 			Weapon = attacker.Weapon,
+			Player = attacker.Player, -- auch nach dem Respawn des Schützen (Molotow brennt nach, Zombie stirbt später)
 		}
 	end
 	model:SetAttribute("LastDamaged", os.clock())

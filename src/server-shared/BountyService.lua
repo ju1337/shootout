@@ -13,6 +13,7 @@ local HttpService = game:GetService("HttpService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
+local DayCycle = require(Shared.DayCycle)
 local ProgressService = require(script.Parent.ProgressService)
 
 local BountyService = {}
@@ -150,12 +151,15 @@ function BountyService.Init(opts)
 			return
 		end
 		local root = target.Player.Character and target.Player.Character:FindFirstChild("HumanoidRootPart")
-		if root and not options.InSafeZone(root.Position) then
+		-- Überleben zählt nur, wo man ihn auch erwischen kann: draußen, nicht im Dungeon, nicht während der Sturm-PvP-Pause
+		local huntable = root ~= nil and not options.InSafeZone(root.Position) and not target.Player:GetAttribute("Dungeon")
+			and not DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
+		if huntable then
 			target.Survived += step
 		end
-		-- Standort kurz zeigen
+		-- Standort kurz zeigen (nur wenn er erreichbar ist)
 		local now = os.clock()
-		if now >= (target.NextReveal or 0) then
+		if huntable and now >= (target.NextReveal or 0) then
 			target.NextReveal = now + B.RevealEvery
 			target.RevealUntil = now + B.RevealTime
 			for _, other in options.Players() do

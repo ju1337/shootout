@@ -156,8 +156,9 @@ function BloodMoonService.Init(opts)
 	local run = running
 	nextStart = B.Enabled and (now() + B.FirstDelay) or math.huge
 	-- Boss erledigt: Ansage an alle
-	table.insert(ZombieService.OnKill, function(killer, kind)
-		if kind == "Boss" then
+	-- (nur im Blutmond und nicht im Dungeon: dort und an Gebäuden gibt es auch Bosse)
+	table.insert(ZombieService.OnKill, function(killer, kind, _, _, dungeon)
+		if kind == "Boss" and not dungeon and DayCycle.IsBloodMoon(now()) then
 			announce("BLUTBESTIE ERLEDIGT", killer.Name .. " hat sie zur Strecke gebracht · Beute liegt in der Leiche", "Good")
 		end
 	end)

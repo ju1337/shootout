@@ -269,6 +269,7 @@ local function tick(now, dt)
 			current.Progress = 0
 			current.Wave = 0
 			current.Idle = 0
+			current.Holders = {} -- wer bei der abgebrochenen Belagerung dabei war, bekommt bei der nächsten nichts
 			current.Ends = now + H.Lifetime
 			current.Prompt.Enabled = true
 			announce("BELAGERUNG ABGEBROCHEN", "Niemand hat die Horden-Kiste gehalten", "Warning")

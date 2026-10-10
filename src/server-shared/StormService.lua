@@ -137,8 +137,13 @@ local function reward()
 	local kills = ReplicatedStorage:GetAttribute("StormKills") or 0
 	local goal = ReplicatedStorage:GetAttribute("StormGoal") or 1
 	local won = kills >= goal
+	-- nur wer noch in der offenen Welt ist (nicht wer inzwischen in einen anderen Modus gewechselt hat)
+	local present = {}
+	for _, player in options and options.Players() or {} do
+		present[player] = true
+	end
 	for player in fighters do
-		if player.Parent then
+		if player.Parent and present[player] then
 			if won then
 				local R = S.Reward
 				ProgressService.AddCoins(player, R.Coins, "Storm Night")
@@ -251,9 +256,9 @@ function StormService.Init(opts)
 	local run = running
 	nextStart = S.Enabled and (now() + S.FirstDelay) or math.huge
 	-- Zombies im Sturm: wer einen erledigt, kämpft mit; gepanzerte zählen fürs gemeinsame Ziel
-	table.insert(ZombieService.OnKill, function(killer, _, _, armored)
-		if not DayCycle.IsStorm(now()) then
-			return
+	table.insert(ZombieService.OnKill, function(killer, _, _, armored, dungeon)
+		if dungeon or not DayCycle.IsStorm(now()) then
+			return -- Kills im Dungeon zählen nicht für den Sturm draußen
 		end
 		fighters[killer] = true
 		if armored then

@@ -1156,7 +1156,7 @@ local function botDied(bot)
 		local zone = RedzoneService.At(root.Position)
 		LootService.Create(root.Position, botLoot(bot, zone ~= nil), "Death", "TASCHE · " .. bot.Name)
 		local hit = Damage.LastHit(model)
-		local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
+		local killer = hit and ((hit.Player and hit.Player.Parent and hit.Player) or (hit.Model and Players:GetPlayerFromCharacter(hit.Model)))
 		if killer and members[killer] then
 			local coins = ExtinctionConfig.Bots.KillCoins
 			ProgressService.AddCoins(killer, coins, "Bot erledigt")

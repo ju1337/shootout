@@ -519,7 +519,7 @@ local function onDeath(model, info)
 	local red = root and options and options.RedzoneAt and options.RedzoneAt(root.Position) ~= nil
 	-- Münzen für den, der zuletzt getroffen hat (Spieler)
 	local hit = Damage.LastHit(model)
-	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
+	local killer = hit and ((hit.Player and hit.Player.Parent and hit.Player) or (hit.Model and Players:GetPlayerFromCharacter(hit.Model)))
 	if killer then
 		local A = ExtinctionConfig.ArmoredZombies
 		ProgressService.AddCoins(killer, info.Coins * (red and ExtinctionConfig.Redzone.Loot.CoinFactor or 1)
@@ -531,7 +531,8 @@ local function onDeath(model, info)
 		Telemetry.Count(killer, "ZombieKills", 1)
 		killer:SetAttribute("ZombieKills", (killer:GetAttribute("ZombieKills") or 0) + 1)
 		for _, callback in ZombieService.OnKill do
-			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero, info.Armored == true)
+			local ok, err = pcall(callback, killer, info.Kind, root and root.Position or Vector3.zero, info.Armored == true,
+				info.Dungeon == true)
 			if not ok then
 				warn("ZombieService.OnKill: " .. tostring(err))
 			end
@@ -573,7 +574,7 @@ local function maxTotal()
 end
 
 -- Andere Dienste (Aufträge): callback(killer, kind, position, armored), wenn ein Spieler einen Zombie erledigt
-ZombieService.OnKill = {}
+ZombieService.OnKill = {} -- callback(killer, kind, position, armored, dungeon)
 
 -- Wirkt bei diesem Spieler gerade die Anti-Zombie-Spritze?
 local function shielded(player)

@@ -114,7 +114,7 @@ local function onDeath(boss, model)
 	ExtinctionConfig.AddDungeonKey(items, "Boss", random)
 	LootService.Create(position, items, "Drop", "BEUTE · " .. cfg.Name, { Lifetime = 300 })
 	local hit = Damage.LastHit(model)
-	local killer = hit and hit.Model and Players:GetPlayerFromCharacter(hit.Model)
+	local killer = hit and ((hit.Player and hit.Player.Parent and hit.Player) or (hit.Model and Players:GetPlayerFromCharacter(hit.Model)))
 	if killer then
 		ProgressService.AddCoins(killer, cfg.Coins, "Boss")
 		ProgressService.AddStat(killer, "Bosses", 1)
