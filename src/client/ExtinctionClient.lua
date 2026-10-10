@@ -1380,8 +1380,8 @@ function Inv.itemPopup(body)
 					label({ Name = "Plus", Size = UDim2.fromScale(1, 0.8), Text = "+", TextSize = 22, Font = F.Display,
 						TextColor3 = Color3.fromRGB(110, 108, 104), TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 23 }, box)
 				end
-				label({ Name = "SlotName", Position = UDim2.fromOffset(14 + (index - 1) * (boxW + gap), y + boxW + 3), Size = UDim2.fromOffset(boxW, 12),
-					Text = upper(att and att.Name or slotInfo.Name), TextSize = 9, Font = F.Bold, TextTruncate = Enum.TextTruncate.AtEnd,
+				label({ Name = "SlotName", Position = UDim2.fromOffset(14 + (index - 1) * (boxW + gap), y + boxW + 3), Size = UDim2.fromOffset(boxW, 14),
+					Text = upper(att and att.Name or slotInfo.Name), TextSize = 11, Font = F.Bold, TextTruncate = Enum.TextTruncate.AtEnd,
 					TextColor3 = att and (attTier or C.Text) or C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 22 }, popup)
 				box.MouseEnter:Connect(function()
 					hovered = { Container = "Attach", Slot = slotInfo.Id }
@@ -2388,7 +2388,7 @@ local function openKits(part)
 		UITheme.Corner(every, 12)
 		make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, every)
 		local lock = label({ Name = "Lock", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(cardW / 2, 112),
-			Size = UDim2.fromOffset(cardW, 60), Text = "🔒", TextSize = 46, Font = F.Bold, ZIndex = 9,
+			Size = UDim2.fromOffset(cardW, 60), Text = "GESPERRT", TextSize = 30, Font = F.Display, ZIndex = 9,
 			TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, card)
 		-- Name und Beschreibung
 		label({ Position = UDim2.fromOffset(0, 218), Size = UDim2.fromOffset(cardW, 30), Text = kit.Name, TextSize = 26,
@@ -3481,7 +3481,7 @@ local function addBubble(part)
 		Size = UDim2.fromOffset(ICON_BASE, ICON_BASE), BackgroundTransparency = 1 }, disc)
 	make("UIScale", { Scale = BUBBLE.Icon / ICON_BASE }, holder)
 	make("TextLabel", { Name = "Label", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
-		Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1, Text = def.Label, Font = Enum.Font.GothamBold, TextSize = 13,
+		Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1, Text = def.Label, Font = F.Bold, TextSize = 13,
 		TextColor3 = UITheme.Colors.Text, TextStrokeTransparency = 0.4, TextStrokeColor3 = Color3.new(0, 0, 0) }, gui)
 	-- flache, gezeichnete Symbole (keine 3D-Modelle: die wären auf der dunklen Scheibe nicht zu erkennen)
 	local icon = buildSymbol(holder, def.Icon, 2)

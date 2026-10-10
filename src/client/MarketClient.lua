@@ -1103,7 +1103,7 @@ local function buildBoards(map)
 			UITheme.Corner(cells[id], UITheme.Radius.Small)
 		end
 		label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0.03, 0.96), Size = UDim2.fromScale(0.94, 0.1),
-			Text = "GRÜN = FREI   ·   BERNSTEIN = BELEGT   ·   WEISS = DEIN STAND", TextScaled = true, Font = F.Bold, TextColor3 = C.Muted,
+			Text = "GRÜN = FREI   ·   BERNSTEIN = BELEGT   ·   ROT = DEIN STAND", TextScaled = true, Font = F.Bold, TextColor3 = C.Muted,
 			TextXAlignment = Enum.TextXAlignment.Left }, back)
 		boards.Overview = { Cells = cells, Summary = summary }
 	end
@@ -1137,8 +1137,8 @@ function refreshBoards()
 				cell.BackgroundColor3 = C.Good
 				cell.TextColor3 = C.PrimaryText
 			elseif owner == player.UserId then
-				cell.BackgroundColor3 = Color3.new(1, 1, 1)
-				cell.TextColor3 = C.PrimaryText
+				cell.BackgroundColor3 = UITheme.MenuColors.Primary
+				cell.TextColor3 = UITheme.MenuColors.PrimaryText
 			else
 				cell.BackgroundColor3 = C.Primary
 				cell.TextColor3 = C.PrimaryText

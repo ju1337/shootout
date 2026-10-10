@@ -693,7 +693,7 @@ local function buildClan()
 			local dot = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0), Size = UDim2.new(0, 8, 0, 8),
 				BackgroundColor3 = online and GREEN or BORDER }, row)
 			make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
-			text({ Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = (leader and "👑  " or "") .. tostring(name),
+			text({ Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = (leader and "★  " or "") .. tostring(name),
 				TextSize = 16, TextColor3 = userId == player.UserId and ACCENT or UITheme.Colors.Text,
 				TextTruncate = Enum.TextTruncate.AtEnd }, row)
 			if isLeader and userId ~= player.UserId then
@@ -1155,11 +1155,19 @@ local function sideButton(label, order, onClick, parent, color, icon)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, b)
 	local stroke = make("UIStroke", { Color = color or BORDER, Thickness = 1.5, Transparency = 0.45,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, b)
-	make("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = icon or "", TextSize = 24,
-		Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text }, b)
+	local glyph = make("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = icon or "", TextSize = 24,
+		Font = UITheme.Fonts.Display, TextColor3 = color or UITheme.Colors.Text }, b)
 	local caption = make("TextLabel", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, ICON_SIZE + 2),
 		Size = UDim2.new(0, ICON_SIZE + ICON_GAP, 0, 13), BackgroundTransparency = 1, Text = label, TextSize = 10,
 		Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Text, TextStrokeTransparency = 0.4 }, cell)
+	if not icon then
+		-- Anfangsbuchstabe der Beschriftung (folgt der Übersetzung)
+		local function initial()
+			glyph.Text = utf8.char(utf8.codepoint(caption.Text ~= "" and caption.Text or "?", 1))
+		end
+		caption:GetPropertyChangedSignal("Text"):Connect(initial)
+		initial()
+	end
 	local scale = make("UIScale", {}, b)
 	b.MouseEnter:Connect(function()
 		stroke.Transparency = 0
@@ -1306,21 +1314,22 @@ local function buildPlayerCard()
 end
 
 local function buildColumn()
-	-- Reihe 1: Ausrüstung und Fortschritt, Reihe 2: Belohnungen, Statistik, Einstellungen
+	-- Reihe 1: Ausrüstung und Fortschritt, Reihe 2: Belohnungen, Statistik, Einstellungen. Im Knopf der
+	-- Anfangsbuchstabe der (übersetzten) Beschriftung in der Farbe des Eintrags (keine Emojis, UITheme)
 	local entries = {
-		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80), "🛒" },
-		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214), "🎒" },
-		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80), "🎫" },
-		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112), "👥" },
-		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80), "📋" },
-		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150), "📅" },
-		{ "MARKT", function() goMarket() end, UITheme.Colors.Rap, "🏪" },
-		{ "CLAN", function() togglePanel("Clan") end, Color3.fromRGB(110, 160, 230), "🛡" },
-		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214), "📊" },
-		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80), "🏅" },
-		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230), "🏷" },
-		{ "CODES", function() openLobby("Codes") end, Color3.fromRGB(112, 178, 160), "🎟" },
-		{ "OPTIONEN", function() openLobby("Settings") end, Color3.fromRGB(134, 142, 152), "⚙" },
+		{ "SHOP", function() openLobby("Shop") end, Color3.fromRGB(212, 170, 80) },
+		{ "LOADOUT", function() openLobby("Inventory") end, Color3.fromRGB(96, 164, 214) },
+		{ "PASS", function() openLobby("Pass") end, Color3.fromRGB(212, 170, 80) },
+		{ "SQUAD", function() togglePanel("Squad") end, Color3.fromRGB(112, 178, 112) },
+		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80) },
+		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150) },
+		{ "MARKT", function() goMarket() end, UITheme.Colors.Rap },
+		{ "CLAN", function() togglePanel("Clan") end, Color3.fromRGB(110, 160, 230) },
+		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214) },
+		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80) },
+		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230) },
+		{ "CODES", function() openLobby("Codes") end, Color3.fromRGB(112, 178, 160) },
+		{ "OPTIONEN", function() openLobby("Settings") end, Color3.fromRGB(134, 142, 152) },
 	}
 	local rows = math.ceil(#entries / ICON_COLUMNS)
 	local width = ICON_COLUMNS * ICON_SIZE + (ICON_COLUMNS - 1) * ICON_GAP

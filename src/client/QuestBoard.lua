@@ -175,7 +175,7 @@ function QuestBoard.new(parent, width, height, options)
 			BackgroundColor3 = BORDER, BorderSizePixel = 0 }, row)
 		make("Frame", { Size = UDim2.new(math.clamp(progress / quest.Goal, 0, 1), 0, 1, 0), BorderSizePixel = 0,
 			BackgroundColor3 = done and GREEN or color }, barBack)
-		local label = locked and "🔒 NUR VIP" or (claimed and "ABGEHOLT" or (done and "ABHOLEN" or "OFFEN"))
+		local label = locked and "NUR VIP" or (claimed and "ABGEHOLT" or (done and "ABHOLEN" or "OFFEN"))
 		button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(118, 40),
 			TextSize = 14, Text = label,
 			BackgroundColor3 = (done and not claimed) and ACCENT or MUTED_BACK,

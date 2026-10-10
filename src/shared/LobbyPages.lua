@@ -1182,7 +1182,7 @@ function LobbyPages.Loadout(page, goToShop)
 		for _, item in Cosmetics.List("Weapon") do
 			if owned[item.Id] and not item.Mastery then
 				local rarity = Cosmetics.Rarities[item.Rarity]
-				table.insert(entries, { Id = item.Id, Name = item.Name, Sub = item.Creator and "🎬 CREATOR" or upper(rarity.Name),
+				table.insert(entries, { Id = item.Id, Name = item.Name, Sub = item.Creator and "CREATOR" or upper(rarity.Name),
 					Color = item.Creator and CREATOR_COLOR or rarity.Color })
 			end
 		end
