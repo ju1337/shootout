@@ -68,6 +68,12 @@ local BAG = ExtinctionConfig.BagSlots
 local STASH = ExtinctionConfig.StashSlots
 -- Werte und Hilfen von Menü und Inventar in einer Tabelle (Luau erlaubt höchstens 200 lokale Variablen pro Ebene)
 local Inv = {}
+-- lebt der eigene Charakter? (tot kein Menü: es würde den Todesbildschirm verdecken)
+function Inv.alive()
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	return humanoid ~= nil and humanoid.Health > 0
+end
 Inv.closedLoot = { Id = nil, At = 0 } -- zuletzt selbst geschlossene Tasche (verspätete Updates holen sie nicht zurück)
 Inv.SAFE_SLOTS = ExtinctionConfig.SafeSlots
 Inv.MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
@@ -1023,6 +1029,10 @@ end
 -- halbtransparente Menü scheint; beim Schließen genau die wieder einblenden, die an waren
 function Inv.hideHud(on)
 	if on and not Inv.hiddenGuis then
+		-- Weltkarte richtig schließen (nicht nur ausblenden): sonst käme sie nach dem Menü ohne Maus und Menü-Status zurück
+		if ExtinctionMap.IsOpen() then
+			ExtinctionMap.Set(false)
+		end
 		Inv.hiddenGuis = {}
 		for _, gui in player:WaitForChild("PlayerGui"):GetChildren() do
 			-- Tauschen (Anfragen laufen sonst ungesehen ab) bleibt sichtbar und liegt über dem Menü (TradeClient)
@@ -1054,7 +1064,7 @@ local function closeWindow()
 	if not window then
 		return
 	end
-	if window.Kind == "Loot" and window.Loot then
+	if window.Kind == "LootBag" and window.Loot then
 		sendAction("LootClose", window.Loot.Id)
 		Inv.closedLoot.Id, Inv.closedLoot.At = window.Loot.Id, os.clock()
 	end
@@ -3172,7 +3182,7 @@ end
 -- Reiter des EXTINCTION-Menüs von außen öffnen (z.B. "Shop" an der Theke im Camp, HubLineup). false = geht noch
 -- nicht (Init noch nicht gelaufen, kein Fenster-Gui), dann nimmt der Aufrufer etwas anderes
 function ExtinctionClient.OpenTab(id: string): boolean
-	if not windowGui or not openMenuTab then
+	if not windowGui or not openMenuTab or not Inv.alive() then
 		return false
 	end
 	openMenuTab(id)
@@ -3232,15 +3242,15 @@ local function refreshTakeAll()
 			applyTakeAll(obj)
 		end
 	end
-	if window and window.Kind == "Loot" and window.TakeAll then
+	if window and window.Kind == "LootBag" and window.TakeAll then
 		paintTakeAll(window.TakeAll)
 	end
 end
 
 local function openLoot(data)
 	local win = window
-	if not win or win.Kind ~= "Loot" or not win.Loot or win.Loot.Id ~= data.Id then
-		win = newWindow("Loot", tostring(data.Title or "TASCHE"), "ANKLICKEN = IN DIE TASCHE  ·  ZIEHEN = AUF EINEN PLATZ (AUCH IN DEN "
+	if not win or win.Kind ~= "LootBag" or not win.Loot or win.Loot.Id ~= data.Id then
+		win = newWindow("LootBag", tostring(data.Title or "TASCHE"), "ANKLICKEN = IN DIE TASCHE  ·  ZIEHEN = AUF EINEN PLATZ (AUCH IN DEN "
 			.. "CONTAINER)  ·  JEDER KANN DIESE TASCHE DURCHSUCHEN")
 		win.Loot = data
 		local body = win.Body
@@ -3791,7 +3801,7 @@ function ExtinctionClient.Init()
 		end
 		if window then
 			closeWindow()
-		else
+		elseif Inv.alive() then -- tot: das Menü würde den Todesbildschirm verdecken
 			openInventory() -- Menü auf dem Reiter INVENTAR
 		end
 	end)
@@ -4098,6 +4108,10 @@ function ExtinctionClient.Init()
 	end
 
 	RunService.Heartbeat:Connect(function()
+		-- SQUAD-Reiter: läuft auch bei offenem Menü (dann ist das HUD aus)
+		if window and window.Kind == "Squad" and window.Tick then
+			window.Tick()
+		end
 		if not hud.Enabled then
 			return
 		end
@@ -4111,9 +4125,6 @@ function ExtinctionClient.Init()
 		end
 		if squadPanel.Visible then
 			tickSquadPanel()
-		end
-		if window and window.Kind == "Squad" and window.Tick then
-			window.Tick()
 		end
 		local serverTime = workspace:GetServerTimeNow()
 		local clock = DayCycle.Clock(serverTime)
@@ -4231,13 +4242,27 @@ function ExtinctionClient.Init()
 		end
 		if window then
 			closeWindow()
-		elseif inExtinction() then
+		elseif inExtinction() and Inv.alive() and not GameMenu.IsOpen() then
 			openMenuTab(lastMenuTab)
 		end
 	end)
 	-- Controller: ○ schließt das offene Fenster (auch wenn darin gerade ein Knopf ausgewählt ist)
 	UserInputService.InputBegan:Connect(function(input)
 		if window and input.KeyCode == Enum.KeyCode.ButtonB then
+			-- Tausch-Fenster liegt darüber: das schließt sein eigenes ○, nicht das Menü darunter
+			if UITheme.IsMenuOpenBy("Trade") or UITheme.IsMenuOpenBy("TradeList") then
+				return
+			end
+			-- erst die innere Ebene (Item-Auswahl mit Popup), dann das Menü
+			if selected then
+				selected = nil
+				if window.Refresh then
+					window.Refresh()
+					InputActions.Refocus(window.Frame)
+				end
+				repaint()
+				return
+			end
 			closeWindow()
 		end
 	end)
@@ -4342,13 +4367,13 @@ function ExtinctionClient.Init()
 			-- holte die Tasche sonst zurück, ohne dass der Server einen noch als Zuschauer kennt)
 			-- (ein Update zur gerade geschlossenen Tasche ist noch unterwegs gewesen: nicht wieder aufmachen)
 			local justClosed = not window and Inv.closedLoot.Id == a.Id and os.clock() - Inv.closedLoot.At < 1.5
-			if not justClosed and (not window or (window.Kind == "Loot" and window.Loot and window.Loot.Id == a.Id)) then
+			if not justClosed and (not window or (window.Kind == "LootBag" and window.Loot and window.Loot.Id == a.Id)) then
 				openLoot(a)
 			else
 				sendAction("LootClose", a.Id)
 			end
 		elseif kind == "LootClosed" then
-			if window and window.Kind == "Loot" and window.Loot and window.Loot.Id == a then
+			if window and window.Kind == "LootBag" and window.Loot and window.Loot.Id == a then
 				window.Loot = nil -- schon weg: nicht noch einmal abmelden
 				closeWindow()
 			end

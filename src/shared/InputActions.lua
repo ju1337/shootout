@@ -307,6 +307,10 @@ function InputActions.Init()
 			and input.KeyCode ~= Enum.KeyCode.ButtonB) then
 			return
 		end
+		-- Steuerkreuz bei ausgewähltem Knopf ist Menü-Navigation (sonst schließt ↓ das Menü, ↑ pingt …)
+		if processed and GuiService.SelectedObject ~= nil and input.KeyCode.Name:sub(1, 4) == "DPad" then
+			return
+		end
 		local list = actionsFor(input)
 		-- Controller: L1 + R1 zusammen = Ultimate (die zweite Taste löst dann nicht ihre eigene Aktion aus)
 		if (input.KeyCode == Enum.KeyCode.ButtonL1 and held.Gadget) or (input.KeyCode == Enum.KeyCode.ButtonR1 and held.Ability) then

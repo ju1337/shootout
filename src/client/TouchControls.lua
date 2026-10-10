@@ -220,7 +220,8 @@ function TouchControls.Init()
 
 	local lastCheck = 0
 	RunService.Heartbeat:Connect(function()
-		local show = InputActions.IsTouch() and Modes.IsFighting(player)
+		-- nicht über dem Extinction-Menü (sonst springt/wechselt man durch das Menü hindurch)
+		local show = InputActions.IsTouch() and Modes.IsFighting(player) and not UITheme.IsMenuOpenBy("Extinction")
 		if show ~= gui.Enabled then
 			gui.Enabled = show
 			if not show then

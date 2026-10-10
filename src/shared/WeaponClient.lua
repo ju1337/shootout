@@ -698,6 +698,9 @@ function WeaponClient.Init()
 
 	-- Dauerfeuer bei automatischen Waffen
 	RunService.Heartbeat:Connect(function()
+		if fireHeld and UITheme.IsMenuOpen() then
+			fireHeld = false -- Menü/Karte geöffnet, während Feuer gehalten wurde: nicht dahinter weiterschießen
+		end
 		if fireHeld and current and WeaponConfig.Get(current).Automatic then
 			tryFire()
 		end
