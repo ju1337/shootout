@@ -29,6 +29,8 @@ build("Compensator", att, {{"Compensator", -0.0000,0.5261,2.6769, 0.1500,0.1500,
 build("MuzzleBrake", att, {{"MuzzleBrake", -0.0000,0.5261,2.7129, 0.1500,0.1460,0.5390},{"Point_Mount", -0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.5261,2.9824, 0.0300,0.0300,0.0300}}, CFrame.new(8, -3, 4) * CFrame.Angles(0, math.rad(180), 0))
 -- Langer Lauf (art/sources/Attachments/LongBarrel.glb): Point_Mount = eingebaute Mündung, Point_Muzzle = neue Mündung
 build("LongBarrel", att, {{"LongBarrel", 0.0000,0.5261,2.4541, 0.1448,0.1389,1.2368},{"Point_Front", 0.0000,0.5261,3.0234, 0.0300,0.0300,0.0300},{"Point_Mount", 0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", 0.0000,0.5261,3.0725, 0.0300,0.0300,0.0300}}, CFrame.new(-12, 5, 6) * CFrame.Angles(0, math.rad(180), 0))
+-- Kurzer Lauf (art/sources/Attachments/ShortBarrel.glb): Mündung hinter der eingebauten
+build("ShortBarrel", att, {{"Point_Front", 0.0000,0.5261,3.0234, 0.0300,0.0300,0.0300},{"Point_Mount", 0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", 0.0000,0.5261,2.5999, 0.0300,0.0300,0.0300},{"ShortBarrel", 0.0000,0.5261,2.1240, 0.1600,0.1632,0.9518}}, CFrame.new(14, -2, -5) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -104,7 +106,7 @@ for _, case in { { "Compensator", 0.467, "AttCompensator" }, { "MuzzleBrake", 0.
 	end
 end
 -- Lauf-Aufsätze: eingebauter Lauf weg, neuer Lauf auf der Laufachse, Mündung (und Mündungsaufsätze) vorn am neuen Lauf
-for _, case in { { "LongBarrel", 3.0725 - 2.7234 } } do
+for _, case in { { "LongBarrel", 3.0725 - 2.7234 }, { "ShortBarrel", 2.5999 - 2.7234 } } do
 	local id, ahead = case[1], case[2]
 	local b = GunModels.Build("Rifle", nil, { id })
 	local part = b:FindFirstChild("Att" .. id .. "_" .. id)
@@ -117,13 +119,14 @@ for _, case in { { "LongBarrel", 3.0725 - 2.7234 } } do
 	if part and typeof(shifted) == "Vector3" then
 		-- neue Mündung liegt auf der Achse des alten Laufs (Richtung alte Mündung -> Lauf-Teil nach vorn)
 		local axis = (shifted - muzzle)
+		local forward = axis.Unit * math.sign(ahead) -- kurzer Lauf: neue Mündung liegt hinter der alten
 		print("HINWEIS " .. id .. " Muendung " .. tostring(shifted) .. ", eingebaut " .. tostring(muzzle))
-		check(math.abs(axis.Magnitude - ahead) < 0.01 and axis.Unit.Z < -0.999, id .. ": Muendung nicht vor der alten")
+		check(math.abs(axis.Magnitude - math.abs(ahead)) < 0.01 and forward.Z < -0.999, id .. ": Muendung nicht auf der Laufachse")
 		local r = b.PrimaryPart.CFrame:ToObjectSpace(part.CFrame)
 		local off = (r.Position - muzzle)
-		local side = off - axis.Unit * off:Dot(axis.Unit)
+		local side = off - forward * off:Dot(forward)
 		check(side.Magnitude < 0.005, id .. ": Lauf nicht auf der Laufachse")
-		check(math.abs(r.LookVector:Dot(axis.Unit)) > 0.9999, id .. ": Lauf nicht parallel zur Laufachse")
+		check(math.abs(r.LookVector:Dot(forward)) > 0.9999, id .. ": Lauf nicht parallel zur Laufachse")
 		local tool = GunModels.BuildTool("Rifle", "Rifle", nil, { id })
 		check(tool:GetAttribute("Muzzle") == shifted, id .. ": Tool ohne Muendung")
 		check(GunModels.MuzzleOf("Rifle", tool) == shifted and GunModels.MuzzleOf("Rifle", nil) == muzzle, id .. ": MuzzleOf")
@@ -132,7 +135,7 @@ for _, case in { { "LongBarrel", 3.0725 - 2.7234 } } do
 		local comp = cb:FindFirstChild("AttCompensator_Compensator")
 		if comp then
 			local rc = cb.PrimaryPart.CFrame:ToObjectSpace(comp.CFrame).Position
-			local want = shifted + axis.Unit * (0.467 / 2 - 0.28)
+			local want = shifted + forward * (0.467 / 2 - 0.28)
 			check((rc - want).Magnitude < 0.01, id .. ": Kompensator nicht an der neuen Muendung")
 		else
 			check(false, id .. ": Kompensator fehlt")
