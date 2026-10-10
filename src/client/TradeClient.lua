@@ -446,11 +446,6 @@ local function fillList()
 	if not win then
 		return
 	end
-	for _, child in win.List:GetChildren() do
-		if child:IsA("GuiObject") then
-			child:Destroy()
-		end
-	end
 	local myMode = player:GetAttribute("Mode")
 	local others = {}
 	for _, other in Players:GetPlayers() do
@@ -465,6 +460,31 @@ local function fillList()
 		end
 		return a.Name < b.Name
 	end)
+	-- Gleiche Reihenfolge und gleicher Zustand: nur die Entfernungen nachtragen. Jede Sekunde neu bauen schluckte
+	-- Klicks, die über einen Neuaufbau gingen, und ließ den Hover flackern
+	local key = tostring(current ~= nil)
+	for _, other in others do
+		local meters = distanceTo(other)
+		key ..= "|" .. other.UserId .. ":" .. tostring(meters ~= nil and meters <= RapConfig.TradeRange) .. ":"
+			.. tostring(other:GetAttribute("RapValue"))
+	end
+	if win.Key == key and win.Meters then
+		for _, other in others do
+			local meters = distanceTo(other)
+			local view = win.Meters[other.UserId]
+			if view then
+				view.Text = meters and (math.floor(meters + 0.5) .. " M") or "–"
+			end
+		end
+		return
+	end
+	win.Key = key
+	win.Meters = {}
+	for _, child in win.List:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
 	for index, other in others do
 		local meters = distanceTo(other)
 		local near = meters ~= nil and meters <= RapConfig.TradeRange
@@ -476,8 +496,8 @@ local function fillList()
 			TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 5 }, row)
 		label({ Position = UDim2.fromOffset(18, 38), Size = UDim2.fromOffset(300, 18), Text = "INVENTAR  " .. format(tonumber(other:GetAttribute("RapValue")) or 0) .. " RAP",
 			TextSize = 12, Font = F.Bold, TextColor3 = C.Rap, ZIndex = 5 }, row)
-		label({ Position = UDim2.fromOffset(340, 20), Size = UDim2.fromOffset(150, 26), TextSize = 16, Font = F.Bold, ZIndex = 5,
-			Text = meters and (math.floor(meters + 0.5) .. " M") or "–", TextColor3 = near and C.Good or C.Muted }, row)
+		win.Meters[other.UserId] = label({ Position = UDim2.fromOffset(340, 20), Size = UDim2.fromOffset(150, 26), TextSize = 16, Font = F.Bold,
+			ZIndex = 5, Text = meters and (math.floor(meters + 0.5) .. " M") or "–", TextColor3 = near and C.Good or C.Muted }, row)
 		local busy = current ~= nil
 		local text = busy and "DU TAUSCHST" or (near and "TAUSCH ANFRAGEN" or ("ZU WEIT  ·  GEH NÄHER"))
 		local button = UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(250, 46),

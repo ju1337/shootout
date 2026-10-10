@@ -95,8 +95,13 @@ check(selected() ~= nil and selected() ~= cross, "Auswahl nicht auf dem Schließ
 check(selected() == requestButton(bob), "Auswahl auf TAUSCH ANFRAGEN bei Bob (oben in der Liste)")
 check(selected() and selected():IsDescendantOf(window), "Auswahl liegt im Fenster")
 
--- Neuaufbau der Liste (jede Sekunde): Auswahl bleibt im Fenster auf einem gültigen Knopf
+-- Ohne Änderung wird die Liste nicht neu gebaut (Klicks über einen Neuaufbau gingen sonst verloren)
 local before = selected()
+step(1.2)
+check(before ~= nil and before.Parent ~= nil and selected() == before, "ohne Änderung bleibt der Knopf derselbe")
+
+-- Neuaufbau der Liste (Zustand geändert): Auswahl bleibt im Fenster auf einem gültigen Knopf
+bob:SetAttribute("RapValue", 1234)
 step(1.2)
 check(before ~= nil and before.Parent == nil, "alter Knopf beim Neuaufbau ersetzt")
 check(selected() ~= nil and selected().Parent ~= nil and selected():IsDescendantOf(window), "nach dem Neuaufbau: Auswahl wieder im Fenster")
@@ -104,6 +109,7 @@ check(selected() ~= cross, "nach dem Neuaufbau: nicht auf dem Kreuz")
 
 -- Auswahl auf Carl (zweite Zeile): Neuaufbau sollte sie dort lassen
 GuiService.SelectedObject = requestButton(carl)
+bob:SetAttribute("RapValue", 2345)
 step(1.2)
 check(selected() == requestButton(carl),
 	"Neuaufbau: Auswahl bleibt auf Carl (nicht zurück auf " .. (selected() == requestButton(bob) and "Bob" or tostring(selected())) .. ")")
