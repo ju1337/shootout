@@ -50,6 +50,12 @@ local profiles = {} -- [Player] = Profil
 local loaded = {}   -- [Player] = true, wenn erfolgreich geladen und gesperrt (nur dann speichern)
 local sessionOnly = {} -- [Player] = true: in Studio ließ sich nicht laden – Stand gilt nur für diese Sitzung
 
+-- Endliche Zahl (kein NaN, kein ±∞): Beträge von Münzen und RAP prüfen. NaN rutscht sonst durch jeden Vergleich
+-- ("x < NaN" und "x > NaN" sind beide falsch) und macht den Kontostand unbegrenzt.
+local function finite(n)
+	return type(n) == "number" and n == n and n > -math.huge and n < math.huge
+end
+
 local function defaultProfile()
 	return { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
 		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, LevelMerged = true, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
@@ -954,7 +960,7 @@ end
 -- reason: wofür (erscheint in der Belohnungs-Übersicht am Matchende)
 function ProgressService.AddCoins(player, amount, reason)
 	local profile = profiles[player]
-	if not profile or amount <= 0 then
+	if not profile or not finite(amount) or amount <= 0 then
 		return
 	end
 	ledgerOf(player)
@@ -974,7 +980,7 @@ end
 -- Gibt true zurück, wenn genug Münzen da waren. reason/sku (optional) nur für die Analyse (Telemetry): wofür, welches Item
 function ProgressService.SpendCoins(player, amount, reason, sku)
 	local profile = profiles[player]
-	if not profile or profile.Coins < amount then
+	if not profile or not finite(amount) or amount < 0 or profile.Coins < amount then
 		return false
 	end
 	profile.Coins -= amount
@@ -1125,16 +1131,17 @@ end
 
 function ProgressService.GetRap(player)
 	local profile = profiles[player]
-	return profile and math.floor(tonumber(profile.Rap) or 0) or 0
+	local rap = profile and tonumber(profile.Rap)
+	return finite(rap) and math.floor(rap) or 0
 end
 
 function ProgressService.AddRap(player, amount)
 	local profile = profiles[player]
 	amount = math.floor(tonumber(amount) or 0)
-	if not profile or amount <= 0 then
+	if not profile or not finite(amount) or amount <= 0 then
 		return
 	end
-	profile.Rap = math.floor(tonumber(profile.Rap) or 0) + amount
+	profile.Rap = ProgressService.GetRap(player) + amount
 	ProgressService.Sync(player)
 	Telemetry.Economy(player, "Source", "RAP", amount, profile.Rap, "Gameplay")
 end
@@ -1143,10 +1150,10 @@ end
 function ProgressService.SpendRap(player, amount)
 	local profile = profiles[player]
 	amount = math.floor(tonumber(amount) or 0)
-	if not profile or amount < 0 or math.floor(tonumber(profile.Rap) or 0) < amount then
+	if not profile or not finite(amount) or amount < 0 or ProgressService.GetRap(player) < amount then
 		return false
 	end
-	profile.Rap = math.floor(tonumber(profile.Rap) or 0) - amount
+	profile.Rap = ProgressService.GetRap(player) - amount
 	ProgressService.Sync(player)
 	Telemetry.Economy(player, "Sink", "RAP", amount, profile.Rap, "Shop")
 	return true

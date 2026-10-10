@@ -27,7 +27,7 @@ end
 function RedPointsService.Add(player, amount, reason)
 	local profile = ProgressService.Get(player)
 	amount = math.floor(tonumber(amount) or 0)
-	if not profile or amount <= 0 then
+	if not profile or amount ~= amount or amount <= 0 or amount == math.huge then
 		return false
 	end
 	profile.RedPoints = RedPointsService.Get(player) + amount
@@ -42,7 +42,7 @@ end
 function RedPointsService.Spend(player, amount)
 	local profile = ProgressService.Get(player)
 	amount = math.floor(tonumber(amount) or 0)
-	if not profile or amount < 0 or RedPointsService.Get(player) < amount then
+	if not profile or amount ~= amount or amount < 0 or RedPointsService.Get(player) < amount then
 		return false
 	end
 	profile.RedPoints = RedPointsService.Get(player) - amount

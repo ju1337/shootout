@@ -172,6 +172,19 @@ check(ProgressService.IsLoaded(tester), "Studio ohne DataStore: Profil gilt für
 ProgressService.GrantSkin(tester, "W_Lava")
 message, ok = EconomyService.SellToSystem(tester, "W_Lava")
 check(ok == true and tester:GetAttribute("Rap") == RapConfig.SellPrice("W_Lava"), "Studio: Rückverkauf geht: " .. tostring(message))
+-- NaN/∞ als Anzahl (vom Client über ShopAction "SellSkin"): abgelehnt, Skin und RAP bleiben
+ProgressService.GrantSkin(tester, "W_Lava")
+local rapBefore = ProgressService.GetRap(tester)
+for _, bad in { 0 / 0, math.huge, -math.huge } do
+	message, ok = EconomyService.SellToSystem(tester, "W_Lava", bad)
+	check(ok == false and ProgressService.GetRap(tester) == rapBefore and ProgressService.Owns(tester, "W_Lava"),
+		"Anzahl " .. tostring(bad) .. " abgelehnt: " .. tostring(message))
+end
+ProgressService.AddRap(tester, 0 / 0)
+check(ProgressService.GetRap(tester) == rapBefore and ProgressService.SpendRap(tester, 0 / 0) == false,
+	"AddRap/SpendRap mit NaN ändern nichts")
+check(ProgressService.SpendCoins(tester, 0 / 0) == false and ProgressService.SpendCoins(tester, -50) == false,
+	"SpendCoins: NaN und negative Beträge abgelehnt")
 store.FailNext = 0
 SIM.Leave(tester)
 step(3)

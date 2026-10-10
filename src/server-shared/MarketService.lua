@@ -669,8 +669,10 @@ local function sell(stand, slot, buyer, price)
 	return item.Name .. " gekauft!", true
 end
 
--- Kaufen: expected = Preis, den der Käufer gesehen hat (ändert der Besitzer ihn gerade, wird nicht gekauft)
-function actions.Buy(player, id, slot, expected)
+-- Kaufen: expected = Preis, den der Käufer gesehen hat (ändert der Besitzer ihn gerade, wird nicht gekauft);
+-- expectedItem = Skin, den er gesehen hat (sonst könnte der Besitzer den Platz kurz vorher mit etwas anderem zum
+-- selben Preis belegen)
+function actions.Buy(player, id, slot, expected, expectedItem)
 	local stand = stands[tonumber(id) or 0]
 	local listing = stand and stand.Listings[tonumber(slot) or 0]
 	if not stand or not stand.Owner or not listing then
@@ -685,6 +687,9 @@ function actions.Buy(player, id, slot, expected)
 	end
 	if tonumber(expected) ~= listing.Price then
 		return "Der Preis hat sich geändert: jetzt " .. format(listing.Price) .. " RAP.", false
+	end
+	if expectedItem ~= nil and expectedItem ~= listing.Item then
+		return "Dieses Angebot gibt es nicht mehr.", false
 	end
 	if distance(player, stand) > MarketService.BuyRange then
 		return "Geh näher an den Stand.", false

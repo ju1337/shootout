@@ -673,7 +673,7 @@ local function openStand(stand)
 					end
 					if os.clock() < (confirm[listing.Slot] or 0) then
 						confirm[listing.Slot] = 0
-						Remotes.MarketAction:FireServer("Buy", stand.Id, listing.Slot, listing.Price)
+						Remotes.MarketAction:FireServer("Buy", stand.Id, listing.Slot, listing.Price, listing.Item)
 						return
 					end
 					confirm[listing.Slot] = os.clock() + 3
