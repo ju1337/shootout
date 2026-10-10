@@ -1,6 +1,9 @@
 # Magazin-Aufsatz (z.B. 60er-Magazin) in voller Meshy-Qualität für das Sturmgewehr vorbereiten:
-#   python3 tools/attachments/mag_full.py <meshy.fbx> <art/sources/Rifle.glb> <ausgabe.glb>
-# Neben der FBX müssen die Meshy-Texturen liegen (<name>.png, _normal.png, _roughness.png, _metallic.png).
+#   python3 tools/attachments/mag_full.py <meshy.fbx> <art/sources/Rifle.glb> <ausgabe.glb> [Teilname] [hoch] [hinten]
+# Neben der FBX müssen die Meshy-Texturen liegen (<name>.png, _roughness.png, _metallic.png, _normal.png falls da).
+# Teilname: Präfix der Teile (Standard Magazine_Ext), hoch/hinten: Sitz im Schacht (Standard 0,07 / 0,02, s. SEAT_UP),
+# Faktor: Meshy-Einheiten -> Studs (Standard: Tiefe oben wie das eingebaute Magazin).
+#   Schnellmagazin: ... FastMag.glb Magazine_Fast 0.06 0.04 0.5
 #
 # Nichts wird reduziert: alle Dreiecke und die Texturen in Originalgröße bleiben. Roblox erlaubt höchstens 20.000
 # Dreiecke pro Teil, deshalb wird das Magazin entlang seiner Länge in Stücke Magazine_Ext_01, _02 … geteilt.
@@ -8,16 +11,18 @@
 # Point_Mount = Mitte des eingebauten Magazins (dort setzt das Spiel den Aufsatz hin), um SEAT_UP/SEAT_BACK versetzt,
 # damit das Magazin tief genug im Schacht sitzt; Point_Front = Richtung Lauf.
 # Eingabe stehend: lange Achse Z (Lippen oben), vorne = +X, Dicke = Y.
-import bpy, sys, numpy as np
+import bpy, os, sys, numpy as np
 from mathutils import Matrix, Vector
 
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 FBX, RIFLE, OUT = args[0], args[1], args[2]
+PART = args[3] if len(args) > 3 else "Magazine_Ext"
 PREFIX = FBX[:-4]
 MAX_TRIS = 19500
 # Sitz im Schacht: das Meshy-Magazin ist oben schmaler (nur die Lippen) – so weit tiefer in den Schacht (entlang des
 # Magazins) bzw. nach hinten, damit der Körper im Schacht steckt und keine Lücke bleibt
-SEAT_UP, SEAT_BACK = 0.07, 0.02
+SEAT_UP = float(args[4]) if len(args) > 4 else 0.07
+SEAT_BACK = float(args[5]) if len(args) > 5 else 0.02
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=RIFLE)
@@ -53,8 +58,9 @@ def tex(path, data=False):
     if data: t.image.colorspace_settings.name = "Non-Color"
     return t
 nt.links.new(tex(PREFIX + ".png").outputs[0], bsdf.inputs["Base Color"])
-nm = nt.nodes.new("ShaderNodeNormalMap")
-nt.links.new(tex(PREFIX + "_normal.png", True).outputs[0], nm.inputs["Color"]); nt.links.new(nm.outputs[0], bsdf.inputs["Normal"])
+if os.path.exists(PREFIX + "_normal.png"):
+    nm = nt.nodes.new("ShaderNodeNormalMap")
+    nt.links.new(tex(PREFIX + "_normal.png", True).outputs[0], nm.inputs["Color"]); nt.links.new(nm.outputs[0], bsdf.inputs["Normal"])
 r = bpy.data.images.load(PREFIX + "_roughness.png"); m = bpy.data.images.load(PREFIX + "_metallic.png")
 w, hgt = r.size
 rp = np.array(r.pixels[:]).reshape(-1, 4); mp = np.array(m.pixels[:]).reshape(-1, 4)
@@ -67,7 +73,7 @@ mag.data.materials.clear(); mag.data.materials.append(mat)
 # Ausrichten an das AR-Magazin
 mco = np.array([v.co for v in mag.data.vertices])
 mtop = mco[mco[:, 2] > mco[:, 2].max() - 0.03].mean(0)
-s = depth / np.ptp(mco[mco[:, 2] > mco[:, 2].max() - 0.4][:, 0])
+s = float(args[6]) if len(args) > 6 else depth / np.ptp(mco[mco[:, 2] > mco[:, 2].max() - 0.4][:, 0])
 Rs = np.eye(4)
 Rs[:3, :3] = np.column_stack([fwd, np.cross(up, fwd), up]) * s
 mag.data.transform(Matrix.Translation(Vector(top)) @ Matrix(Rs.tolist()) @ Matrix.Translation(-Vector(mtop)))
@@ -91,7 +97,7 @@ for k in range(count - 1, 0, -1):
 parts = [o for o in bpy.context.scene.objects if o.type == "MESH"]
 parts.sort(key=lambda o: -max((o.matrix_world @ v.co) @ Vector(up) for v in o.data.vertices[:200]))
 for i, o in enumerate(parts, 1):
-    o.name = o.data.name = "Magazine_Ext_%02d" % i
+    o.name = o.data.name = "%s_%02d" % (PART, i)
     print(o.name, len(o.data.polygons))
 
 def marker(name, pos):

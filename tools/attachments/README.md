@@ -8,6 +8,7 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
     python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/ExtendedMag.glb
+    python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/FastMag.glb Magazine_Fast 0.07 0.05 0.5
     python3 tools/attachments/muzzle_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/Compensator.glb Compensator
     python3 tools/attachments/muzzle_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/MuzzleBrake.glb MuzzleBrake
     python3 tools/attachments/rifle_barrel.py art/sources/Rifle.glb art/sources/Rifle.glb   # einmalig: Lauf als eigenes Teil
@@ -24,7 +25,9 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   rund), Point_Mount, Point_SightRear/SightFront.
 - **mag_full**: Magazin in voller Qualität (414.690 Dreiecke in 22 Teilen `Magazine_Ext_01…`), an der Stelle des
   eingebauten AR-Magazins; Point_Mount = Mitte des eingebauten Magazins, um 0,07 Studs versetzt (SEAT_UP/SEAT_BACK),
-  damit der Magazinkörper im Schacht steckt (sonst stecken nur die Lippen drin und es sieht schwebend aus). Im Spiel ersetzt es das eingebaute Magazin
+  damit der Magazinkörper im Schacht steckt (sonst stecken nur die Lippen drin und es sieht schwebend aus).
+  Schnellmagazin: 30er mit Zugschlaufe, 752 Dreiecke, Faktor 0,5 (Tiefe 0,31 wie der Schacht), 0,07 hoch / 0,05 nach
+  hinten versetzt (Körper mittig im Schacht). Im Spiel ersetzt es das eingebaute Magazin
   und wandert beim Nachladen mit.
 - **muzzle_full**: Mündungsaufsätze in voller Qualität (Kompensator 800 Dreiecke, 0,47 lang; Mündungsbremse 832 Dreiecke,
   0,54 lang; Texturen 4096), 0,15 Studs dick, Ports oben;
@@ -47,4 +50,4 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 - **grip_v2**: Point_Mount (Oberkante der Schienenklemme), Point_Front (Richtung zum Lauf).
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
-`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`). Lader: `src/shared/GunModels.lua`.
+`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`). Lader: `src/shared/GunModels.lua`.

@@ -37,6 +37,8 @@ build("HeavyBarrel", att, {{"HeavyBarrel", 0.0000,0.5261,2.2576, 0.1993,0.2023,1
 build("VerticalGrip", att, {{"Point_Front", 0.0000,0.4131,1.7871, 0.0200,0.0200,0.0200},{"Point_Mount", 0.0000,0.4131,1.5871, 0.0200,0.0200,0.0200},{"VerticalGrip", -0.0000,0.1831,1.5871, 0.1333,0.4600,0.1739}}, CFrame.new(-6, 11, 2) * CFrame.Angles(0, math.rad(180), 0))
 -- Laser (art/sources/Attachments/Laser.glb, 47 Teile – hier vorderes, mittleres, hinteres): rechts am Handschutz
 build("Laser", att, {{"Laser_01", -0.2454,0.5330,2.3204, 0.1503,0.1076,0.0192},{"Laser_24", -0.2604,0.5417,2.0364, 0.1742,0.1960,0.0351},{"Laser_47", -0.2647,0.5430,1.9180, 0.0790,0.0488,0.0084},{"Point_Front", 0.0000,0.4131,1.7871, 0.0200,0.0200,0.0200},{"Point_Mount", 0.0000,0.4131,1.5871, 0.0200,0.0200,0.0200}}, CFrame.new(9, 1, -7) * CFrame.Angles(0, math.rad(180), 0))
+-- Schnellmagazin (art/sources/Attachments/FastMag.glb): 30er mit Zugschlaufe, sitzt wie das 60er tief im Schacht
+build("FastMag", att, {{"Magazine_Fast_01", 0.0021,-0.2993,0.7507, 0.1208,0.9539,0.4598},{"Point_Front", -0.0013,-0.1940,1.0495, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0013,-0.1940,0.7495, 0.0300,0.0300,0.0300}}, CFrame.new(4, -6, 9) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -175,6 +177,22 @@ do
 		print("HINWEIS Laser vorn " .. tostring(f) .. ", hinten " .. tostring(b))
 		check(f.X > 0.15 and b.X > 0.15, "Laser nicht rechts neben dem Handschutz")
 		check(f.Z < b.Z and b.Z < hand.Z - 0.2 and f.Z > GunModels.Info.Rifle.Muzzle.Z, "Laser nicht vor der linken Hand")
+	end
+end
+-- Schnellmagazin: ersetzt das eingebaute Magazin (statt zwei zusammengeklebter Klötze), wandert beim Nachladen mit
+do
+	local base = GunModels.Build("Rifle", nil, {})
+	local f = GunModels.Build("Rifle", nil, { "FastMag" })
+	local part = f:FindFirstChild("AttFastMag_Magazine_Fast_01")
+	check(part ~= nil and f:FindFirstChild("Magazine") == nil and f:FindFirstChild("AttTwinMag") == nil,
+		"Schnellmagazin-Modell nicht angebaut")
+	if part then
+		check(part:GetAttribute("Group") == "Magazine", "Schnellmagazin nicht in der Gruppe Magazine")
+		local mag = base:FindFirstChild("Magazine")
+		local r = mag.CFrame:PointToObjectSpace(part.Position)
+		print("HINWEIS Schnellmagazin relativ zum eingebauten " .. tostring(r))
+		-- Mitte wie im Modell: 0,1 unter der Mitte des eingebauten Magazins, mittig, kaum vor/zurück
+		check(math.abs(r.X) < 0.01 and r.Y < -0.05 and math.abs(r.Z) < 0.1, "Schnellmagazin sitzt nicht im Schacht")
 	end
 end
 if failures == 0 then print("HINWEIS alles ok") end
