@@ -330,6 +330,16 @@ function GunModels.AimOffset(weaponName, attachments)
 	return CFrame.new(0, -info.SightHeight, -info.EyeRelief - info.SightZ)
 end
 
+-- Mündung im Waffenraum: mit Lauf-Aufsatz am Ende des neuen Laufs (Attribut "Muzzle" an Modell bzw. Tool)
+function GunModels.MuzzleOf(weaponName, container)
+	local shifted = container and container:GetAttribute("Muzzle")
+	if typeof(shifted) == "Vector3" then
+		return shifted
+	end
+	local info = GunModels.Info[weaponName]
+	return info and info.Muzzle
+end
+
 -- Weltposition eines Punkts der Waffe (z.B. Info.Muzzle) über den Griff
 function GunModels.PointWorld(handle, point, scale)
 	return (handle.CFrame * CFrame.new(point * (scale or 1))).Position
@@ -366,8 +376,8 @@ end
 -- Fertige 3D-Modelle der Aufsätze: ReplicatedStorage.Assets.Attachments.<Aufsatz-Id> (z.B. "Suppressor", "HoloSight").
 -- Marker im Modell (kleine Teile, nur die Mitte zählt; wie das Modell beim Import gedreht ist, ist egal):
 --   Point_Mount       – sitzt auf der Waffe (Mündung bzw. Schiene)
---   Point_Muzzle      – Mündungs-Aufsätze: vorderes Ende, gibt die Laufrichtung
---   Point_Front       – Griffe: ein Punkt weiter vorn auf der Schiene, gibt die Laufrichtung (Griff hängt unter dem Handschutz)
+--   Point_Muzzle      – Mündungs-Aufsätze: vorderes Ende, gibt die Laufrichtung; Läufe: neue Mündung
+--   Point_Front       – Griffe, Magazine, Läufe: ein Punkt weiter vorn, gibt die Laufrichtung (hat Vorrang vor Point_Muzzle)
 --   Point_SightRear / Point_SightFront – Visiere: Visierlinie (beim Zielen liegt sie in der Bildmitte)
 -- Teile mit Glass im Namen werden Glas, mit Neon oder Reticle leuchten sie. Attribut EyeRelief am Modell (Visiere):
 -- Abstand Auge - Visier beim Zielen (Standard 0,45).
@@ -402,8 +412,8 @@ local function attachmentSource(id)
 		local up = upward.Magnitude > 1e-3 and upward.Unit or Vector3.yAxis
 		local back = -forward
 		frame = CFrame.fromMatrix(points.Mount, up:Cross(back), up, back)
-	elseif (points.Muzzle or points.Front) and ((points.Muzzle or points.Front) - points.Mount).Magnitude > 1e-3 then
-		frame = CFrame.lookAt(points.Mount, points.Muzzle or points.Front)
+	elseif (points.Front or points.Muzzle) and ((points.Front or points.Muzzle) - points.Mount).Magnitude > 1e-3 then
+		frame = CFrame.lookAt(points.Mount, points.Front or points.Muzzle)
 	else
 		return nil
 	end
@@ -411,7 +421,8 @@ local function attachmentSource(id)
 end
 
 -- Aufsatz-Modell an model bauen, Point_Mount an mount (Modell-Einheiten der Waffe). false ohne gültiges Modell.
-local function attachmentAsset(model, id, mount)
+local function attachmentAsset(model, id, mount, rotation)
+	rotation = rotation or CFrame.identity
 	local data = attachmentSource(id)
 	if not data then
 		return false
@@ -425,7 +436,7 @@ local function attachmentAsset(model, id, mount)
 			dot.Size = Vector3.new(0.012, 0.012, 0.012)
 			dot.Color = RETICLE
 			dot.Material = Enum.Material.Neon
-			dot.CFrame = CFrame.new(mount) * data.Frame:ToObjectSpace(CFrame.new(original.Position))
+			dot.CFrame = CFrame.new(mount) * rotation * data.Frame:ToObjectSpace(CFrame.new(original.Position))
 			dot.Parent = model
 			continue
 		end
@@ -446,11 +457,14 @@ local function attachmentAsset(model, id, mount)
 			part.Color = RETICLE
 		end
 		part.Name = "Att" .. id .. "_" .. name
-		part.CFrame = CFrame.new(mount) * data.Frame:ToObjectSpace(original.CFrame)
+		part.CFrame = CFrame.new(mount) * rotation * data.Frame:ToObjectSpace(original.CFrame)
 		part.Parent = model
 	end
-	return true
+	return data
 end
+
+-- Lauf-Aufsätze als 3D-Modell: ersetzen den eingebauten Lauf (Teile mit dem Wort Barrel, z.B. Skin_Body_Barrel)
+local BARRELS = { "LongBarrel", "ShortBarrel", "HeavyBarrel" }
 
 -- Visier-Aufsätze (Platz Optic) und wo sie auf der Schiene sitzen: Marker Point_Optic der Waffe, sonst etwas vor der Kimme
 local OPTICS = { "HoloSight" }
@@ -493,6 +507,8 @@ local function addAttachments(model, weaponName, attachments)
 	end
 	local muzzle = info.Muzzle
 	local long = info.Long
+	-- Ausrichtung der Aufsatz-Modelle (Mündung, Lauf, Griff, Magazin) wie die Waffen-GLB, siehe AttachFrame
+	local frame = assetData[weaponName] and assetData[weaponName].AttachFrame or CFrame.identity
 	-- Mündungs-Aufsatz als eigenes 3D-Modell (Assets.Attachments), sonst die Teile von früher
 	-- Visier als eigenes 3D-Modell auf der Schiene (nur lange Waffen mit fertigem Modell)
 	local optic = equippedOptic(weaponName, attachments)
@@ -502,10 +518,39 @@ local function addAttachments(model, weaponName, attachments)
 			dot:Destroy() -- Punkt des eingebauten Rotpunktvisiers bzw. auf der Kimme
 		end
 	end
+	-- Lauf als eigenes 3D-Modell: eingebauten Lauf ausblenden, Mündung wandert an das Ende des neuen Laufs
+	local barrelModel = nil
+	for _, id in BARRELS do
+		if long and has[id] and not barrelModel and assetData[weaponName] then
+			barrelModel = attachmentAsset(model, id, muzzle, frame) or nil
+		end
+	end
+	if barrelModel then
+		for _, part in model:GetChildren() do
+			if part:IsA("BasePart") and string.sub(part.Name, 1, 3) ~= "Att"
+				and string.find("_" .. part.Name .. "_", "_Barrel_", 1, true) then
+				part:Destroy()
+			end
+		end
+		if barrelModel.Points.Muzzle then
+			muzzle = (CFrame.new(muzzle) * frame * barrelModel.Frame:ToObjectSpace(CFrame.new(barrelModel.Points.Muzzle))).Position
+			model:SetAttribute("Muzzle", muzzle)
+		end
+	elseif long and has.LongBarrel then
+		attachPart(model, "AttLongBarrel", V(0.13, 0.13, 0.55), CFrame.new(muzzle + V(0, 0, -0.27)))
+	elseif long and has.HeavyBarrel then
+		attachPart(model, "AttHeavyBarrel", V(0.24, 0.24, 0.9), CFrame.new(muzzle + V(0, 0, 0.4)), Color3.fromRGB(48, 50, 54))
+		for k = 0, 2 do
+			attachPart(model, "AttHeavyFin", V(0.28, 0.04, 0.06), CFrame.new(muzzle + V(0, 0.12, 0.15 + k * 0.25)),
+				Color3.fromRGB(70, 72, 76))
+		end
+	elseif long and has.ShortBarrel then
+		attachPart(model, "AttShroud", V(0.24, 0.24, 0.3), CFrame.new(muzzle + V(0, 0, 0.25)), Color3.fromRGB(55, 58, 62))
+	end
 	local muzzleModel = false
 	for _, id in { "Compensator", "Suppressor", "MuzzleBrake" } do
 		if has[id] and not muzzleModel then
-			muzzleModel = attachmentAsset(model, id, muzzle)
+			muzzleModel = attachmentAsset(model, id, muzzle, frame)
 		end
 	end
 	if muzzleModel then
@@ -526,24 +571,13 @@ local function addAttachments(model, weaponName, attachments)
 				Color3.fromRGB(70, 72, 76))
 		end
 	end
-	if long and has.LongBarrel then
-		attachPart(model, "AttLongBarrel", V(0.13, 0.13, 0.55), CFrame.new(muzzle + V(0, 0, -0.27)))
-	elseif long and has.HeavyBarrel then
-		attachPart(model, "AttHeavyBarrel", V(0.24, 0.24, 0.9), CFrame.new(muzzle + V(0, 0, 0.4)), Color3.fromRGB(48, 50, 54))
-		for k = 0, 2 do
-			attachPart(model, "AttHeavyFin", V(0.28, 0.04, 0.06), CFrame.new(muzzle + V(0, 0.12, 0.15 + k * 0.25)),
-				Color3.fromRGB(70, 72, 76))
-		end
-	elseif long and has.ShortBarrel then
-		attachPart(model, "AttShroud", V(0.24, 0.24, 0.3), CFrame.new(muzzle + V(0, 0, 0.25)), Color3.fromRGB(55, 58, 62))
-	end
 	if long and info.LeftHand then
 		local hand = info.LeftHand
 		-- Griff als eigenes 3D-Modell (Assets.Attachments), Point_Mount unter dem Handschutz an der linken Hand
 		local gripModel = false
 		for _, id in { "VerticalGrip", "AngledGrip" } do
 			if has[id] and not gripModel and assetData[weaponName] then
-				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z))
+				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z), frame)
 			end
 		end
 		if gripModel then
@@ -571,7 +605,7 @@ local function addAttachments(model, weaponName, attachments)
 				for _, child in model:GetChildren() do
 					before[child] = true
 				end
-				magModel = attachmentAsset(model, id, mag.Position)
+				magModel = attachmentAsset(model, id, mag.Position, frame)
 				if magModel then
 					for _, child in model:GetChildren() do
 						if not before[child] and child:IsA("BasePart") then
@@ -961,7 +995,18 @@ local function loadAsset(weaponName, source)
 		end
 	end
 	report.Loaded = true
-	return { Template = template, Skins = skins, Geometry = geometry, Entries = entries, Pivots = pivotOverride }, report
+	-- Ausrichtung der Aufsatz-Modelle: sie sind im Koordinatensystem der Waffen-GLB gebaut (Lauf entlang ihrer Achse);
+	-- die Waffe ist im Spiel nach der Visierlinie ausgerichtet und dadurch leicht geneigt – Aufsätze neigen sich mit
+	-- (Drehung des Rumpfs Skin_Body, sonst des größten Teils; GLB-Import: Lauf nach +Z, daher die halbe Drehung)
+	local body = nil
+	for _, entry in entries do
+		if entry.Name == "Skin_Body" or (not body or body.Name ~= "Skin_Body") and (entry.Volume or 0) > (body and body.Volume or 0) then
+			body = entry
+		end
+	end
+	local attachFrame = body and body.CFrame.Rotation * CFrame.Angles(0, math.pi, 0) or CFrame.identity
+	return { Template = template, Skins = skins, Geometry = geometry, Entries = entries, Pivots = pivotOverride,
+		AttachFrame = attachFrame }, report
 end
 
 -- Ordner mit den Modellen: Rojo legt ReplicatedStorage.Assets.Weapons an, die Modelle selbst liegen im Place
@@ -997,7 +1042,7 @@ do
 		end
 		assetReport[weaponName] = report
 		if asset then
-			assetData[weaponName] = { Template = asset.Template, Skins = asset.Skins }
+			assetData[weaponName] = { Template = asset.Template, Skins = asset.Skins, AttachFrame = asset.AttachFrame }
 			local info = GunModels.Info[weaponName]
 			for key, value in asset.Geometry do
 				info[key] = value
@@ -1051,14 +1096,17 @@ local function buildFromAsset(asset, skin)
 	end
 	local textures = asset.Skins and skin.Id and asset.Skins:FindFirstChild(skin.Id)
 	for _, appearance in textures and textures:GetChildren() or {} do
-		local part = appearance:IsA("SurfaceAppearance") and model:FindFirstChild(cleanName(appearance.Name))
-		if part and part:IsA("BasePart") then
-			for _, old in part:GetChildren() do
-				if old:IsA("SurfaceAppearance") then
-					old:Destroy()
+		local name = appearance:IsA("SurfaceAppearance") and cleanName(appearance.Name)
+		-- Teil mit diesem Namen und herausgeschnittene Stücke davon (Skin_Body -> Skin_Body_Barrel, gleiche UVs)
+		for _, part in name and model:GetChildren() or {} do
+			if part:IsA("BasePart") and (part.Name == name or string.sub(part.Name, 1, #name + 1) == name .. "_") then
+				for _, old in part:GetChildren() do
+					if old:IsA("SurfaceAppearance") then
+						old:Destroy()
+					end
 				end
+				appearance:Clone().Parent = part
 			end
-			appearance:Clone().Parent = part
 		end
 	end
 	return model
@@ -1099,6 +1147,7 @@ function GunModels.BuildTool(weaponName, displayName, skin, attachments)
 	tool.ManualActivationOnly = true
 	tool.RequiresHandle = true
 	tool:SetAttribute("Weapon", weaponName)
+	tool:SetAttribute("Muzzle", model:GetAttribute("Muzzle")) -- Mündung mit Lauf-Aufsatz (sonst nil = Info.Muzzle)
 	if skin and skin.Effects then -- für den Feuerstoß bei Schüssen anderer Spieler (WeaponClient)
 		tool:SetAttribute("SkinFx", skin.Effects)
 		tool:SetAttribute("SkinId", skin.Id)

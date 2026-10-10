@@ -282,7 +282,7 @@ local function muzzle()
 	local tool = ownTool()
 	local handle = tool and tool:FindFirstChild("Handle")
 	if handle then
-		return handle.CFrame * CFrame.new(GunModels.Info[current].Muzzle * GunModels.ToolScale), 1
+		return handle.CFrame * CFrame.new(GunModels.MuzzleOf(current, tool) * GunModels.ToolScale), 1
 	end
 	local camera = workspace.CurrentCamera
 	return camera.CFrame * CFrame.new(0.6, -0.5, -2), 1
@@ -886,7 +886,7 @@ function WeaponClient.Init()
 			local handle = tool and tool:FindFirstChild("Handle")
 			local info = tool and GunModels.Info[tool:GetAttribute("Weapon")]
 			if handle and info then
-				start = GunModels.PointWorld(handle, info.Muzzle, GunModels.ToolScale)
+				start = GunModels.PointWorld(handle, GunModels.MuzzleOf(tool:GetAttribute("Weapon"), tool), GunModels.ToolScale)
 			end
 			if firstPellet then
 				CharacterPose.Fired(model, weaponName)

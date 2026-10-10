@@ -16,7 +16,7 @@ local function build(name, parent, data, place)
 	m.Parent = parent
 	return m
 end
-build("Rifle", folder, {{"Skin_Body", -0.0199,0.2569,0.6584, 0.3161,1.0198,4.1300},{"Magazine", -0.0013,-0.1362,0.6858, 0.1792,0.6611,0.4411},{"Pivot_Magazine", -0.0000,0.1522,0.6522, 0.0600,0.0600,0.0600},{"Point_Eject", -0.0978,0.5870,0.1087, 0.0400,0.0400,0.0400},{"Point_Grip", -0.0000,0.0000,-0.0000, 0.0400,0.0400,0.0400},{"Point_LeftHand", -0.0000,0.4131,1.5871, 0.0400,0.0400,0.0400},{"Point_LeftHandTP", -0.0000,0.4131,1.1305, 0.0400,0.0400,0.0400},{"Point_Muzzle", -0.0000,0.5261,2.7234, 0.0400,0.0400,0.0400},{"Point_SightFront", -0.0000,0.7675,2.2459, 0.0400,0.0400,0.0400},{"Point_SightRear", -0.0000,0.7349,0.0435, 0.0400,0.0400,0.0400},{"Point_Stock", -0.0000,0.4022,-1.4066, 0.0400,0.0400,0.0400}}, CFrame.new(10, 4, -3) * CFrame.Angles(0, math.rad(180), 0))
+build("Rifle", folder, {{"Skin_Body", -0.0199,0.2569,0.4907, 0.3161,1.0198,3.7946},{"Skin_Body_Barrel", 0.0015,0.5259,2.5557, 0.1302,0.1257,0.3354},{"Magazine", -0.0013,-0.1362,0.6858, 0.1792,0.6611,0.4411},{"Pivot_Magazine", -0.0000,0.1522,0.6522, 0.0600,0.0600,0.0600},{"Point_Eject", -0.0978,0.5870,0.1087, 0.0400,0.0400,0.0400},{"Point_Grip", -0.0000,0.0000,-0.0000, 0.0400,0.0400,0.0400},{"Point_LeftHand", -0.0000,0.4131,1.5871, 0.0400,0.0400,0.0400},{"Point_LeftHandTP", -0.0000,0.4131,1.1305, 0.0400,0.0400,0.0400},{"Point_Muzzle", -0.0000,0.5261,2.7234, 0.0400,0.0400,0.0400},{"Point_SightFront", -0.0000,0.7675,2.2459, 0.0400,0.0400,0.0400},{"Point_SightRear", -0.0000,0.7349,0.0435, 0.0400,0.0400,0.0400},{"Point_Stock", -0.0000,0.4022,-1.4066, 0.0400,0.0400,0.0400}}, CFrame.new(10, 4, -3) * CFrame.Angles(0, math.rad(180), 0))
 build("HoloSight", att, {{"HoloSight", -0.0001,0.1582,-0.0000, 0.2616,0.3164,0.4558},{"Glass_Window", -0.0000,0.2236,-0.1022, 0.1344,0.1008,0.0010},{"Neon_Reticle", -0.0000,0.2236,-0.0998, 0.0581,0.0581,0.0012},{"Point_Mount", -0.0000,0.0000,-0.0000, 0.0200,0.0200,0.0200},{"Point_SightRear", -0.0000,0.2236,-0.1094, 0.0200,0.0200,0.0200},{"Point_SightFront", -0.0000,0.2236,0.1342, 0.0200,0.0200,0.0200}}, CFrame.new(-20, 1, 9) * CFrame.Angles(0, math.rad(180), 0))
 build("Suppressor", att, {{"Suppressor", -0.0000,0.0000,0.4420, 0.2100,0.2088,0.8840},{"Point_Mount", -0.0000,0.0000,0.1700, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.0000,0.8840, 0.0300,0.0300,0.0300}}, CFrame.new(5, 8, 2) * CFrame.Angles(0, math.rad(180), 0))
 build("AngledGrip", att, {{"AngledGrip_01", -0.0267,-0.3187,-0.1303, 0.1038,0.0637,0.1576},{"AngledGrip_02", -0.0237,-0.2850,-0.1208, 0.0965,0.0142,0.1556},{"AngledGrip_03", -0.0229,-0.2734,-0.1074, 0.0960,0.0211,0.1634},{"AngledGrip_04", -0.0214,-0.2583,-0.0910, 0.0955,0.0291,0.1804},{"AngledGrip_05", -0.0204,-0.2448,-0.0774, 0.0946,0.0190,0.1829},{"AngledGrip_06", -0.0185,-0.2290,-0.0632, 0.0957,0.0267,0.2008},{"AngledGrip_07", -0.0174,-0.2144,-0.0502, 0.0942,0.0220,0.1983},{"AngledGrip_08", -0.0162,-0.1995,-0.0377, 0.0941,0.0270,0.2169},{"AngledGrip_09", -0.0146,-0.1866,-0.0221, 0.0926,0.0262,0.2242},{"AngledGrip_10", -0.0141,-0.1733,-0.0120, 0.0919,0.0222,0.2305},{"AngledGrip_11", -0.0121,-0.1596,0.0036, 0.0916,0.0287,0.2428},{"AngledGrip_12", -0.0111,-0.1454,0.0151, 0.0918,0.0212,0.2437},{"AngledGrip_13", -0.0096,-0.1325,0.0286, 0.0921,0.0258,0.2604},{"AngledGrip_14", 0.0014,-0.1046,0.0453, 0.1110,0.0482,0.3044},{"AngledGrip_15", 0.0025,-0.0708,0.0326, 0.1323,0.0348,0.3421},{"AngledGrip_16", 0.0043,-0.0593,0.0321, 0.1445,0.0182,0.3417},{"AngledGrip_17", 0.0010,-0.0402,0.0347, 0.1543,0.0419,0.3475},{"AngledGrip_18", 0.0010,-0.0361,0.0348, 0.1543,0.0338,0.3477},{"AngledGrip_19", 0.0009,-0.0220,0.0348, 0.1540,0.0215,0.3477},{"AngledGrip_20", 0.0003,-0.0131,0.0353, 0.1502,0.0261,0.3487},{"Point_Mount", -0.0000,0.0000,-0.0000, 0.0200,0.0200,0.0200},{"Point_Front", -0.0000,0.0000,0.2096, 0.0200,0.0200,0.0200}}, CFrame.new(3, 3, 3) * CFrame.Angles(0, math.rad(180), 0))
@@ -27,6 +27,8 @@ build("ExtendedMag", att, {{"Magazine_Ext_01", -0.0013,0.0550,0.6380, 0.1600,0.3
 build("Compensator", att, {{"Compensator", -0.0000,0.5261,2.6769, 0.1500,0.1500,0.4670},{"Point_Mount", -0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.5261,2.9105, 0.0300,0.0300,0.0300}}, CFrame.new(-4, 6, -9) * CFrame.Angles(0, math.rad(180), 0))
 -- Mündungsbremse (art/sources/Attachments/MuzzleBrake.glb): wie der Kompensator, 0,539 lang
 build("MuzzleBrake", att, {{"MuzzleBrake", -0.0000,0.5261,2.7129, 0.1500,0.1460,0.5390},{"Point_Mount", -0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.5261,2.9824, 0.0300,0.0300,0.0300}}, CFrame.new(8, -3, 4) * CFrame.Angles(0, math.rad(180), 0))
+-- Langer Lauf (art/sources/Attachments/LongBarrel.glb): Point_Mount = eingebaute Mündung, Point_Muzzle = neue Mündung
+build("LongBarrel", att, {{"LongBarrel", 0.0000,0.5261,2.4541, 0.1448,0.1389,1.2368},{"Point_Front", 0.0000,0.5261,3.0234, 0.0300,0.0300,0.0300},{"Point_Mount", 0.0000,0.5261,2.7234, 0.0300,0.0300,0.0300},{"Point_Muzzle", 0.0000,0.5261,3.0725, 0.0300,0.0300,0.0300}}, CFrame.new(-12, 5, 6) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -99,6 +101,42 @@ for _, case in { { "Compensator", 0.467, "AttCompensator" }, { "MuzzleBrake", 0.
 		print("HINWEIS " .. id .. " " .. tostring(r.Position) .. ", soll " .. tostring(want))
 		check((r.Position - want).Magnitude < 0.01, id .. " sitzt nicht an der Muendung")
 		check(math.abs(r.LookVector:Dot(Vector3.zAxis)) > 0.999 and r.UpVector.Y > 0.999, id .. " verdreht")
+	end
+end
+-- Lauf-Aufsätze: eingebauter Lauf weg, neuer Lauf auf der Laufachse, Mündung (und Mündungsaufsätze) vorn am neuen Lauf
+for _, case in { { "LongBarrel", 3.0725 - 2.7234 } } do
+	local id, ahead = case[1], case[2]
+	local b = GunModels.Build("Rifle", nil, { id })
+	local part = b:FindFirstChild("Att" .. id .. "_" .. id)
+	local muzzle = GunModels.Info.Rifle.Muzzle
+	check(part ~= nil, id .. ": Modell nicht angebaut")
+	check(b:FindFirstChild("Skin_Body_Barrel") == nil, id .. ": eingebauter Lauf noch da")
+	check(GunModels.Build("Rifle", nil, {}):FindFirstChild("Skin_Body_Barrel") ~= nil, "ohne Lauf-Aufsatz fehlt der eingebaute Lauf")
+	local shifted = b:GetAttribute("Muzzle")
+	check(typeof(shifted) == "Vector3", id .. ": Muendung nicht verschoben")
+	if part and typeof(shifted) == "Vector3" then
+		-- neue Mündung liegt auf der Achse des alten Laufs (Richtung alte Mündung -> Lauf-Teil nach vorn)
+		local axis = (shifted - muzzle)
+		print("HINWEIS " .. id .. " Muendung " .. tostring(shifted) .. ", eingebaut " .. tostring(muzzle))
+		check(math.abs(axis.Magnitude - ahead) < 0.01 and axis.Unit.Z < -0.999, id .. ": Muendung nicht vor der alten")
+		local r = b.PrimaryPart.CFrame:ToObjectSpace(part.CFrame)
+		local off = (r.Position - muzzle)
+		local side = off - axis.Unit * off:Dot(axis.Unit)
+		check(side.Magnitude < 0.005, id .. ": Lauf nicht auf der Laufachse")
+		check(math.abs(r.LookVector:Dot(axis.Unit)) > 0.9999, id .. ": Lauf nicht parallel zur Laufachse")
+		local tool = GunModels.BuildTool("Rifle", "Rifle", nil, { id })
+		check(tool:GetAttribute("Muzzle") == shifted, id .. ": Tool ohne Muendung")
+		check(GunModels.MuzzleOf("Rifle", tool) == shifted and GunModels.MuzzleOf("Rifle", nil) == muzzle, id .. ": MuzzleOf")
+		-- Mündungsaufsatz sitzt an der neuen Mündung
+		local cb = GunModels.Build("Rifle", nil, { id, "Compensator" })
+		local comp = cb:FindFirstChild("AttCompensator_Compensator")
+		if comp then
+			local rc = cb.PrimaryPart.CFrame:ToObjectSpace(comp.CFrame).Position
+			local want = shifted + axis.Unit * (0.467 / 2 - 0.28)
+			check((rc - want).Magnitude < 0.01, id .. ": Kompensator nicht an der neuen Muendung")
+		else
+			check(false, id .. ": Kompensator fehlt")
+		end
 	end
 end
 if failures == 0 then print("HINWEIS alles ok") end

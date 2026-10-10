@@ -339,7 +339,7 @@ end
 
 -- Weltposition und Richtung der Mündung (für Mündungsfeuer und Leuchtspur)
 function ViewModel:MuzzleCFrame()
-	return self.GunWorld * CFrame.new(self.Info.Muzzle * SCALE)
+	return self.GunWorld * CFrame.new(GunModels.MuzzleOf(self.Weapon, self.Model) * SCALE)
 end
 
 function ViewModel:EjectCFrame()

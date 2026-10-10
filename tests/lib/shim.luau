@@ -98,6 +98,7 @@ function CFrame.Angles(x, y, z)
 	return cf(0, 0, 0, mulMat(mulMat(rx(x or 0), ry(y or 0)), rz(z or 0)))
 end
 CFrame.fromEulerAnglesXYZ = CFrame.Angles
+CFrame.identity = CFrame.new()
 
 function CFrame.fromMatrix(pos, vX, vY, vZ)
 	vZ = vZ or vX:Cross(vY).Unit

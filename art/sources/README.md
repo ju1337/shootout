@@ -1,7 +1,8 @@
 # Quellmodelle
 
 - `Rifle.glb`: aktuelles Sturmgewehr (AR-15 aus Meshy, ohne Aufsätze, 30er-Magazin als `Magazine`), erzeugt mit
-  `tools/attachments/ar15_v2.py`. Aufsätze (Holo-Visier, Schalldämpfer, Winkelgriff) in `Attachments/`.
+  `tools/attachments/ar15_v2.py`; der Lauf vor dem Handschutz ist ein eigenes Teil `Skin_Body_Barrel`
+  (`tools/attachments/rifle_barrel.py`), das Lauf-Aufsätze ausblenden. Aufsätze (Holo-Visier, Schalldämpfer, Winkelgriff) in `Attachments/`.
   In Studio: Import 3D > Rifle.glb (Einheit Stud, Merge Meshes aus), nach ReplicatedStorage > Assets > Weapons, "Rifle" nennen.
 
 - `Meshy_AI_roblox_ar556_lowpoly_*` (Gewehr) und `Meshy_AI_roblox_ar_mag_lowpoly_*` (Magazin): mit Meshy AI erzeugt,
