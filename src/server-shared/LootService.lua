@@ -659,7 +659,15 @@ function LootService.Grab(player, items)
 		InventoryService.Status(player, "+ " .. LootService.Summary(got), true)
 	end
 	if #rest > 0 then
-		InventoryService.Status(player, "Deine Tasche ist voll.")
+		-- der Rest liegt als Beutel neben dem Spieler statt zu verschwinden
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and InventoryService.DropItems then
+			InventoryService.DropItems(player, rest, root.Position)
+			InventoryService.Status(player, "Deine Tasche ist voll – der Rest liegt als Beutel neben dir.")
+			rest = {}
+		else
+			InventoryService.Status(player, "Deine Tasche ist voll.")
+		end
 	end
 	return rest, LootService.Summary(got)
 end

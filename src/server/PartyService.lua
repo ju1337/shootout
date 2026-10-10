@@ -185,6 +185,16 @@ function actions.Accept(player, userId)
 		return
 	end
 	invites[player][leader] = nil
+	-- vor dem Verlassen des eigenen Squads prüfen: der Einladende führt noch (oder ist allein), und es ist Platz
+	local target = partyOf[leader]
+	if target and target.Leader ~= leader then
+		status(player, "Einladung abgelaufen.")
+		return
+	end
+	if target and target ~= partyOf[player] and #target.Members >= MAX_SIZE then
+		status(player, "Squad ist voll.")
+		return
+	end
 	leave(player)
 	local party = partyOf[leader]
 	if not party then

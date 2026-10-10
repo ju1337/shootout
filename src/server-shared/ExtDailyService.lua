@@ -41,7 +41,7 @@ function ExtDailyService.Claim(player)
 			table.insert(items, { list[random:NextInteger(1, #list)], 1 })
 		end
 	end
-	local names = {}
+	local names, rest = {}, {}
 	for _, item in items do
 		local id, count = item[1], item[2]
 		local config = ExtinctionConfig.Get(id)
@@ -53,7 +53,21 @@ function ExtDailyService.Claim(player)
 			if put > 0 then
 				table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
 			end
+			if put < count then
+				table.insert(rest, { Id = id, Count = count - put })
+			end
 		end
+	end
+	if #rest > 0 then
+		-- Lager und Tasche voll: als Beutel neben den Spieler (er spawnt gerade, darum kurz auf den Charakter warten)
+		task.spawn(function()
+			local character = player.Character or player.CharacterAdded:Wait()
+			local root = character and character:WaitForChild("HumanoidRootPart", 10)
+			if root and player.Parent and InventoryService.DropItems then
+				InventoryService.DropItems(player, rest, root.Position)
+				InventoryService.Status(player, "Lager und Tasche sind voll – der Rest der Kiste liegt als Beutel neben dir.")
+			end
+		end)
 	end
 	if reward.Coins then
 		ProgressService.AddCoins(player, reward.Coins, "Tägliche Kiste")

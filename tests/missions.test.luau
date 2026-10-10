@@ -196,5 +196,8 @@ check(state.Missions[1].Have == 1, "am Tag zählt es nicht")
 -- Verlassen: Aufträge weg
 Extinction.RemovePlayer(alice)
 check(alice:GetAttribute("ExtMissions") == nil and MissionService.Get(alice) == nil, "beim Verlassen keine Aufträge mehr")
+-- zurück (z. B. vom Markt): dieselben Aufträge mit Fortschritt, nicht neu gewürfelt
+Extinction.AddPlayer(alice)
+check(MissionService.Get(alice) == state and state.Missions[1].Have == 1, "nach der Rückkehr dieselben Aufträge mit Fortschritt")
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

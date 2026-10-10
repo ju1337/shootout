@@ -104,6 +104,7 @@ local function party(action, player, target)
 end
 
 -- ---------- Squad bilden ----------
+party("Invite", bob, carl) -- Bob lädt Carl ein, tritt dann aber selbst Alices Squad bei
 party("Invite", alice, bob)
 local invite = lastRemote("PartyInvite", bob)
 check(invite and invite[1] == "Alice" and invite[2] == alice.UserId, "Bob bekommt die Einladung")
@@ -111,6 +112,8 @@ party("Accept", bob, alice)
 local squad = alice:GetAttribute("SquadId")
 check(squad ~= nil and bob:GetAttribute("SquadId") == squad, "gleiche SquadId für Alice und Bob (" .. tostring(squad) .. ")")
 check(carl:GetAttribute("SquadId") == nil, "Carl ist nicht im Squad")
+party("Accept", carl, bob)
+check(carl:GetAttribute("SquadId") == nil, "alte Einladung von Bob (jetzt nicht Anführer) bringt Carl nicht in Alices Squad")
 check(PartyService.SameSquad(alice, bob) and not PartyService.SameSquad(alice, carl), "SameSquad")
 check(bob:GetAttribute("Mode") == "Extinction", "Bob bleibt in der offenen Welt (wie Alice)")
 

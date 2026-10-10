@@ -31,6 +31,7 @@ local M = ExtinctionConfig.Missions
 local random = Random.new()
 local options = nil -- { Map, InSafeZone(position), RedzoneAt(position), IsMember(player) }
 local states = {}   -- [Player] = { Missions = { { Def, Need, Have, Place } }, Night = Sekunden, Drops = { [bagId] = true } }
+local parked = {}   -- [Player] = state, solange er kurz in einem anderen Modus ist (Markt): Fortschritt bleibt, kein Neuwürfeln
 local places = {}   -- { { Key, Title, Position, Radius } } (ohne Camp und große Bereiche)
 
 local function publish(player)
@@ -118,6 +119,11 @@ function MissionService.Progress(player, event, amount, place)
 end
 
 function MissionService.Join(player)
+	if parked[player] then
+		states[player], parked[player] = parked[player], nil
+		publish(player)
+		return
+	end
 	local state = { Missions = {}, Night = 0, Drops = {} }
 	states[player] = state
 	for _ = 1, M.Active do
@@ -130,6 +136,9 @@ function MissionService.Join(player)
 end
 
 function MissionService.Leave(player)
+	if player.Parent then
+		parked[player] = states[player]
+	end
 	states[player] = nil
 	if player.Parent then
 		publish(player)
@@ -182,7 +191,8 @@ function MissionService.Init(opts)
 	for _, part in folder and folder:GetChildren() or {} do
 		local key = part:IsA("BasePart") and string.match(part.Name, "^Place_(.+)$")
 		-- nur Orte, die man gezielt besuchen kann (nicht das Camp mit seinem Phönixplatz und keine riesigen Bereiche)
-		if key and key ~= "Camp" and key ~= "Zentrale" and part.Size.X <= 500 then
+		-- und keine Orte in einer Safe Zone (Safehouses): dort zählt Step nichts, der Auftrag bliebe ewig offen
+		if key and key ~= "Camp" and key ~= "Zentrale" and part.Size.X <= 500 and not opts.InSafeZone(part.Position) then
 			table.insert(places, { Key = key, Title = part:GetAttribute("Title") or key, Position = part.Position,
 				Radius = part.Size.X / 2 })
 		end
@@ -216,6 +226,10 @@ function MissionService.Init(opts)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
+		parked[player] = nil
+		task.defer(function()
+			parked[player] = nil -- falls der Modus ihn erst nach diesem Hörer abmeldet
+		end)
 	end)
 end
 

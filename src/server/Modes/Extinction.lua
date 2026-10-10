@@ -643,12 +643,15 @@ function Extinction.Init(modeManager)
 	end)
 	-- Belohnung der Extinction-Aufträge (QuestConfig): Beute ins Lager (passt nichts: Tasche), RZ
 	ProgressService.QuestExtras = function(player, quest)
-		local lines = {}
+		local lines, rest = {}, {}
 		if quest.Loot then
 			for _, item in ExtinctionConfig.RollLoot(quest.Loot[1], quest.Loot[2], random) do
 				local put = InventoryService.GiveStash(player, item.Id, item.Count)
 				if put < item.Count then
 					put += InventoryService.Give(player, item.Id, item.Count - put)
+				end
+				if put < item.Count then
+					table.insert(rest, { Id = item.Id, Count = item.Count - put, Mag = item.Mag, Att = item.Att })
 				end
 				local config = ExtinctionConfig.Get(item.Id)
 				if put > 0 and config then
@@ -659,6 +662,11 @@ function Extinction.Init(modeManager)
 		if quest.RedPoints then
 			RedPointsService.Add(player, quest.RedPoints, nil)
 			table.insert(lines, "+" .. quest.RedPoints .. " RZ")
+		end
+		local root = #rest > 0 and rootOf(player)
+		if root and InventoryService.DropItems then
+			InventoryService.DropItems(player, rest, root.Position) -- Lager und Tasche voll: Beutel neben dem Spieler
+			table.insert(lines, "Rest als Beutel neben dir")
 		end
 		return lines
 	end
