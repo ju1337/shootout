@@ -123,12 +123,16 @@ end
 
 -- Fahrzeuge und Konvoi im Umkreis
 local function hurtVehicles(thrower, position, radius, amount)
+	local convoyHit = false -- alle Konvoi-Fahrzeuge teilen sich ein Leben: eine Explosion zählt nur einmal
 	for _, name in { "ExtinctionVehicles", "ExtinctionConvoy" } do
 		local holder = workspace:FindFirstChild(name)
 		for _, model in holder and holder:GetChildren() or {} do
 			if model:IsA("Model") and (model:GetPivot().Position - position).Magnitude <= radius + 4 then
-				if model:GetAttribute("Convoy") and WeaponService.OnConvoyHit then
-					WeaponService.OnConvoyHit(thrower, model, amount)
+				if model:GetAttribute("Convoy") then
+					if not convoyHit and WeaponService.OnConvoyHit then
+						convoyHit = true
+						WeaponService.OnConvoyHit(thrower, model, amount)
+					end
 				elseif model:GetAttribute("VehicleId") and WeaponService.OnVehicleHit then
 					WeaponService.OnVehicleHit(thrower, model, amount)
 				end

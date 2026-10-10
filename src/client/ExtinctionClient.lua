@@ -3103,6 +3103,9 @@ local function openMarket()
 			end
 			win.Refresh()
 		end)
+		holder.Destroying:Once(function() -- sonst hielte sie die alte Seite fest, bis sich der Markt das nächste Mal ändert
+			connection:Disconnect()
+		end)
 	end
 	win.Refresh()
 end

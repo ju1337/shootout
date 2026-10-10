@@ -619,7 +619,7 @@ local function openStand(stand)
 	local standName = tostring(stand.Folder:GetAttribute("StandName") or "")
 	local win = newWindow("Stand", "STAND " .. stand.Id .. "  ·  " .. upper(standName ~= "" and standName or owner), stand)
 	local body = win.Body
-	local confirm = {} -- [Platz] = os.clock() bis wann die Rückfrage gilt
+	local confirm = {} -- [Platz:Skin:Preis] = os.clock() bis wann die Rückfrage gilt
 	local drafts = {}  -- [Platz] = Text im Preisfeld des Gegenangebots (bleibt beim Neuaufbau)
 	function win.Refresh()
 		for _, child in body:GetChildren() do
@@ -689,8 +689,9 @@ local function openStand(stand)
 						TextColor3 = C.Muted }, card)
 				end
 				local affordable = rap >= listing.Price
+				local confirmKey = listing.Slot .. ":" .. tostring(listing.Item) .. ":" .. listing.Price -- neuer Skin/Preis im Platz = neue Rückfrage
 				-- Rückfrage läuft noch (Karte wurde neu aufgebaut): auch so anzeigen, sonst kauft der nächste Klick ohne Hinweis
-				local armed = affordable and os.clock() < (confirm[listing.Slot] or 0)
+				local armed = affordable and os.clock() < (confirm[confirmKey] or 0)
 				local buy
 				buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12), Size = UDim2.new(1, -28, 0, 44),
 					Color = affordable and C.Rap or C.MutedBack, TextColor = affordable and C.PrimaryText or C.Bad, TextSize = 18,
@@ -699,23 +700,23 @@ local function openStand(stand)
 					if not affordable then
 						return
 					end
-					if os.clock() < (confirm[listing.Slot] or 0) then
-						confirm[listing.Slot] = 0
+					if os.clock() < (confirm[confirmKey] or 0) then
+						confirm[confirmKey] = 0
 						Remotes.MarketAction:FireServer("Buy", stand.Id, listing.Slot, listing.Price, listing.Item)
 						return
 					end
-					confirm[listing.Slot] = os.clock() + 3
+					confirm[confirmKey] = os.clock() + 3
 					buy.SetText("SICHER?  " .. format(listing.Price) .. " RAP")
 					task.delay(3, function()
-						if os.clock() >= (confirm[listing.Slot] or 0) and buy.Button.Parent then
+						if os.clock() >= (confirm[confirmKey] or 0) and buy.Button.Parent then
 							buy.SetText("KAUFEN  ·  " .. format(listing.Price) .. " RAP")
 						end
 					end)
 				end)
 				if armed then
-					local armedUntil = confirm[listing.Slot]
+					local armedUntil = confirm[confirmKey]
 					task.delay(armedUntil - os.clock(), function()
-						if confirm[listing.Slot] == armedUntil and buy.Button.Parent then
+						if confirm[confirmKey] == armedUntil and buy.Button.Parent then
 							buy.SetText("KAUFEN  ·  " .. format(listing.Price) .. " RAP")
 						end
 					end)

@@ -518,6 +518,7 @@ return {
 	["Deine Tasche ist leer – nichts zu speichern."] = "Your bag is empty – nothing to save.",
 	["Deine Tasche ist voll."] = "Your bag is full.",
 	["Deine Tasche ist voll – der Rest liegt als Beutel neben dir."] = "Your bag is full – the rest is in a pouch next to you.",
+	["Deine Tasche ist voll – der Rest liegt im Lager."] = "Your bag is full – the rest went to your stash.",
 	["Lager und Tasche sind voll – der Rest der Kiste liegt als Beutel neben dir."] = "Stash and bag are full – the rest of the crate is in a pouch next to you.",
 	["Rest als Beutel neben dir"] = "Rest in a pouch next to you",
 	["DEINE TASCHE LIEGT AN DER TODESSTELLE"] = "YOUR BAG LIES WHERE YOU DIED",

@@ -627,6 +627,9 @@ function actions.Name(player, text)
 		end
 		text = result
 	end
+	if standOf[player] ~= stand then -- während der Filter-Abfrage abgegeben: nicht den Stand des Nächsten umbenennen
+		return "Du hast keinen Stand.", false
+	end
 	stand.Name = text
 	publish(stand)
 	return text == "" and "Stand-Name entfernt." or ("Dein Stand heißt jetzt „" .. text .. "“."), true
@@ -913,7 +916,7 @@ function MarketService.Init(map)
 			flush()
 		end)
 	end
-	Remotes.MarketAction.OnServerEvent:Connect(function(player, action, a, b, c)
+	Remotes.MarketAction.OnServerEvent:Connect(function(player, action, ...)
 		local handler = typeof(action) == "string" and actions[action]
 		if not handler then
 			return
@@ -923,7 +926,7 @@ function MarketService.Init(map)
 			return
 		end
 		lastAction[player] = now
-		local ok, message, success = pcall(handler, player, a, b, c)
+		local ok, message, success = pcall(handler, player, ...)
 		if not ok then
 			warn("Markt-Fehler: " .. tostring(message))
 			message, success = "Fehler, bitte nochmal versuchen.", false

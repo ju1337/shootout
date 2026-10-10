@@ -221,7 +221,7 @@ function ClanService.Leave(player)
 	if not tag then
 		return "Du bist in keinem Clan.", false
 	end
-	local data = change(tag, function(old)
+	local data, saved = change(tag, function(old)
 		if not old then
 			return nil
 		end
@@ -238,6 +238,9 @@ function ClanService.Leave(player)
 		end
 		return old
 	end)
+	if not saved then -- DataStore-Fehler: sonst wären alle hier ohne Clan, stünden aber weiter in der Liste
+		return "Gerade nicht möglich, bitte später nochmal.", false
+	end
 	profile.Clan = nil
 	publish(player, nil)
 	publishMembers(tag, data)
@@ -252,7 +255,7 @@ function ClanService.Kick(player, userId)
 		return "Ungültig.", false
 	end
 	local allowed = true
-	local data = change(tag, function(old)
+	local data, saved = change(tag, function(old)
 		if not old or old.Owner ~= player.UserId then
 			allowed = false
 			return old
@@ -262,6 +265,9 @@ function ClanService.Kick(player, userId)
 	end)
 	if not allowed then
 		return "Nur der Clan-Leiter kann Mitglieder entfernen.", false
+	end
+	if not saved then
+		return "Gerade nicht möglich, bitte später nochmal.", false
 	end
 	publishMembers(tag, data)
 	return "Mitglied entfernt.", true

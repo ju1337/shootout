@@ -188,6 +188,11 @@ function ExtMarketService.Buy(player, id, price)
 		status(player, "Das ist dein eigenes Angebot.")
 		return false
 	end
+	-- beide Profile müssen gerade gespeichert werden können (sonst Doppel-Item bzw. verlorene Münzen beim Verkäufer)
+	if not seller.Parent or not ProgressService.IsLoaded(seller) or not ProgressService.IsLoaded(player) then
+		status(player, "Gerade nicht möglich, bitte später nochmal.")
+		return false
+	end
 	if whole(price) ~= entry.Price then
 		status(player, "Der Preis hat sich geändert.")
 		return false

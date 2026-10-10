@@ -446,6 +446,7 @@ function ActivityService.UseRadio(player, spot)
 	end
 	spot.State = "Cooldown"
 	spot.ReadyAt = now() + A.Radio.Cooldown
+	event(player, "Radio") -- EP fürs Funken (ExtLevelConfig.Rewards.Radio)
 	radioLook(spot)
 	announce(options.Players(), "NOTRUF EMPFANGEN", player.Name .. " hat einen Versorgungsabwurf angefordert", "Info")
 	publish()
@@ -548,6 +549,7 @@ local function buildSurvivor(spot)
 	ZombieService.Animate(humanoid, cfg.Speed)
 	spot.State = "Ready"
 	spot.Escort = nil
+	spot.LastPos, spot.StuckFor = nil, 0 -- Werte des vorigen Überlebenden nicht übernehmen
 	humanoid.Died:Once(function()
 		task.defer(ActivityService.SurvivorLost, spot, "ist gestorben")
 	end)

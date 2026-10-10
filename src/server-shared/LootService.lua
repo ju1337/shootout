@@ -668,7 +668,16 @@ function LootService.Grab(player, items)
 			InventoryService.Status(player, "Deine Tasche ist voll – der Rest liegt als Beutel neben dir.")
 			rest = {}
 		else
-			InventoryService.Status(player, "Deine Tasche ist voll.")
+			-- kein Charakter (tot/respawnt gerade): ins Lager statt verfallen lassen
+			local kept = {}
+			for _, item in rest do
+				local put = InventoryService.GiveStash and InventoryService.GiveStash(player, item.Id, item.Count) or 0
+				if put < item.Count then
+					table.insert(kept, { Id = item.Id, Count = item.Count - put, Mag = item.Mag, Att = item.Att })
+				end
+			end
+			InventoryService.Status(player, #kept < #rest and "Deine Tasche ist voll – der Rest liegt im Lager." or "Deine Tasche ist voll.")
+			rest = kept
 		end
 	end
 	return rest, LootService.Summary(got)

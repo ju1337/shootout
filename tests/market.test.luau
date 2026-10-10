@@ -133,6 +133,12 @@ check(ok == false and string.find(message, "näher", 1, true) ~= nil, "zu weit w
 enter(bob, Vector3.new(-1512, 3, -1516))
 message, ok = act(bob, "Buy", 1, 1, 900)
 check(ok == false and string.find(message, "1.000", 1, true) ~= nil, "alter Preis: nicht gekauft (" .. tostring(message) .. ")")
+-- über die Remote: der vierte Wert (gesehener Skin) kommt an – anderer Skin im Platz = kein Kauf
+local ownedBefore = ProgressService.Get(bob).Owned[listings(1)[1].Item] or 0
+Remotes.MarketAction.OnServerEvent:Fire(bob, "Buy", 1, 1, 1000, "W_GibtEsNicht")
+local status = lastRemote(bob, "MarketStatus")
+check(status and status[2] == false and string.find(status[1], "nicht mehr", 1, true) ~= nil
+	and listings(1)[1] and (ProgressService.Get(bob).Owned[listings(1)[1].Item] or 0) == ownedBefore, "anderer Skin im Platz: nicht gekauft")
 check(select(2, act(alice, "Buy", 1, 2, 950)) == false, "nicht am eigenen Stand kaufen")
 message, ok = act(bob, "Buy", 1, 1, 1000)
 check(ok == true, "Bob kauft Lava für 1.000: " .. tostring(message))
