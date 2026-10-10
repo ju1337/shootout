@@ -135,7 +135,7 @@ local function watch(player)
 	-- warten, bis das Profil geladen ist, dann einmal prüfen (z.B. alte Spielstände) und bei Änderungen
 	task.spawn(function()
 		for _ = 1, 60 do
-			if ProgressService.Get(player) then
+			if ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil während des Ladens
 				break
 			end
 			task.wait(0.5)

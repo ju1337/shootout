@@ -248,7 +248,13 @@ function ShopService.Init()
 		if not handler then
 			return
 		end
-		local ok, message, success = pcall(handler, player, a, b)
+		local ok, message, success
+		if not ProgressService.IsLoaded(player) then
+			-- sonst landet alles im leeren Ersatzprofil und ist nach dem Laden weg (Code eingelöst, Clan beigetreten …)
+			ok, message, success = true, "Daten werden noch geladen.", false
+		else
+			ok, message, success = pcall(handler, player, a, b)
+		end
 		if not ok then
 			warn("Shop-Fehler: " .. tostring(message))
 			message, success = "Fehler, bitte nochmal versuchen.", false

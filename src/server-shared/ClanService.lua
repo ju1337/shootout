@@ -106,6 +106,24 @@ local function filtered(player, text)
 	return ok and result == text
 end
 
+-- Gründen, Beitreten und Verlassen warten auf DataStore und Textfilter: pro Spieler nur eine Anfrage gleichzeitig,
+-- sonst kommen mehrere gleichzeitige Anfragen alle an den Prüfungen vorbei (mehrere Clans, Gründung ohne Bezahlen)
+local busy = {}
+local function once(handler)
+	return function(player, ...)
+		if busy[player] then
+			return nil, false
+		end
+		busy[player] = true
+		local ok, message, success = pcall(handler, player, ...)
+		busy[player] = nil
+		if not ok then
+			error(message, 0)
+		end
+		return message, success
+	end
+end
+
 function ClanService.Create(player, name, tag)
 	local profile = ProgressService.Get(player)
 	if not profile then
@@ -132,6 +150,13 @@ function ClanService.Create(player, name, tag)
 	if not filtered(player, name) or not filtered(player, tag) then
 		return "Name oder Kürzel ist nicht erlaubt.", false
 	end
+	-- erst bezahlen, dann eintragen (zurück, wenn es nicht klappt)
+	if not ProgressService.SpendCoins(player, ClanService.CreateCost, "Clan") then
+		return "Ein Clan kostet " .. ClanService.CreateCost .. " Münzen.", false
+	end
+	local function refund()
+		ProgressService.AddCoins(player, ClanService.CreateCost, "Admin")
+	end
 	local taken = false
 	local data = change(tag, function(old)
 		if old then
@@ -142,12 +167,13 @@ function ClanService.Create(player, name, tag)
 			Created = os.time() }
 	end)
 	if taken then
+		refund()
 		return "Das Kürzel [" .. tag .. "] ist schon vergeben.", false
 	end
 	if not data then
+		refund()
 		return "Gerade nicht möglich, bitte später nochmal.", false
 	end
-	ProgressService.SpendCoins(player, ClanService.CreateCost, "Clan")
 	profile.Clan = tag
 	publish(player, data)
 	return "Clan [" .. tag .. "] " .. name .. " gegründet!", true
@@ -269,6 +295,10 @@ local function load(player)
 		publish(player, nil)
 	end
 end
+
+ClanService.Create = once(ClanService.Create)
+ClanService.Join = once(ClanService.Join)
+ClanService.Leave = once(ClanService.Leave)
 
 function ClanService.Init()
 	Players.PlayerAdded:Connect(load)

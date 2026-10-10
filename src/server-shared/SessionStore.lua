@@ -90,6 +90,12 @@ end
 -- Laden und sperren. stillThere(): false, sobald der Spieler gegangen ist (dann wird nicht weiter gewartet und eine
 -- schon geholte Sperre gleich wieder freigegeben). Gibt "ok", Daten (ohne Session) | "gone" | "error", Fehler zurück.
 function SessionStore:Load(key, stillThere)
+	-- Wiederkommen auf denselben Server, während das Speichern beim Verlassen noch läuft: erst danach lesen (sonst
+	-- alte Daten, und das Freigeben der Sperre träfe die neue Sitzung)
+	local waitUntil = self.Clock() + self.LockWait
+	while self.Saving[key] and self.Clock() < waitUntil do
+		task.wait(0.1)
+	end
 	local deadline = self.Clock() + self.LockWait
 	while true do
 		local status, result = self:Acquire(key, self.Clock() >= deadline)

@@ -71,7 +71,7 @@ function AchievementService.Init()
 				if not player.Parent then
 					return
 				end
-				if ProgressService.IsLoaded(player) or ProgressService.Get(player) then
+				if ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil während des Ladens
 					break
 				end
 				task.wait(0.5)
