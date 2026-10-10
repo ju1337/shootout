@@ -257,19 +257,24 @@ class CampPhoenix:
         return [g + s * a for g in (0, 90, 180, 270) for s in (-1, 1)]
 
     def podium(self, x, z, yaw):
-        """SIEGERPODEST der Top 3 vor der Ruhmeswand (Statuen setzt der Server an Podium1-3): drei Sockel auf einer
-        Stufe, Nummern, goldener Lichtkreis, Titel im Boden davor. Bleibt niedrig, damit der Pavillon dahinter sichtbar bleibt."""
+        """SIEGERPODEST der Top 3 vor der Ruhmeswand (Statuen setzt der Server an Podium1-3): drei helle Sockel auf
+        einer Stufe, oben je eine Platte in Medaillenfarbe mit Leuchtkante, kleine Platznummer vorn am Sockel, ein
+        Licht vor jeder Statue (sonst sind die Figuren nachts nur dunkle Umrisse). Kein Text auf dem Boden."""
         def build(pb):
             pb.box("Decor", "PodiumPlinth", (16, 0.6, 6.4), (0, 0.3, 0), WHITE, "Concrete")
-            for place, off, h, color in ((1, 0, 3.2, GOLD), (2, 5.3, 2.3, (190, 194, 200)), (3, -5.3, 1.5, (180, 120, 70))):
-                pb.box("Decor", "PodiumBase", (4.6, h, 4.6), (off, 0.6 + h / 2, 0), ANTHRACITE, "Concrete")
-                pb.box("Decor", "PodiumTop", (4.8, 0.35, 4.8), (off, 0.78 + h, 0), color, "Metal")
-                pb.add("Decor", "Podium" + str(place), (2, 0.2, 2), (off, 1.05 + h, 0), color, "SmoothPlastic",
+            for place, off, h, color in ((1, 0, 3.2, GOLD), (2, 5.3, 2.3, (200, 204, 210)), (3, -5.3, 1.5, (196, 130, 80))):
+                pb.box("Decor", "PodiumBase", (4.6, h, 4.6), (off, 0.6 + h / 2, 0), LIGHT, "SmoothPlastic")
+                pb.box("Decor", "PodiumTop", (4.8, 0.3, 4.8), (off, 0.75 + h, 0), color, "SmoothPlastic")
+                pb.box("Decor", "PodiumEdge", (4.8, 0.1, 0.08), (off, 0.6 + h, -2.42), color, "Neon", props=dict(NO_HIT))
+                pb.add("Decor", "Podium" + str(place), (2, 0.2, 2), (off, 1.0 + h, 0), color, "SmoothPlastic",
                        props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
-                pb.sign("PodiumNumber", (1.6, 1.3, 0.3), (off, 0.6 + h / 2, -2.45), str(place), ANTHRACITE, color)
+                pb.sign("PodiumNumber", (1.1, 0.9, 0.2), (off, 0.6 + h / 2, -2.4), str(place), ANTHRACITE, color)
+                pb.add("Decor", "PodiumLamp", (0.2, 0.2, 0.2), (off, 3.8 + h, -2.6), WHITE, "SmoothPlastic",
+                       props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False},
+                       children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {
+                           "Range": 8, "Brightness": 1.6, "Color": self.bm.rgb(255, 240, 220)}}])
             pb.add("Decor", "PodiumGlow", (0.1, 5.6, 5.6), (0, 0.65, 0), GOLD, "Neon", angles=(0, 0, 90),
                    props={"Shape": "Cylinder", "Transparency": 0.7, "CanCollide": False})
-            pb.floor_text("PodiumTitle", (14, 0.1, 2.2), (0, 0.3, -4.8), "SIEGERPODEST · TOP 3 NACH LEVEL", GOLD, yaw=180)
         self._feature(build, x, z, yaw)
 
     # ---------- Pavillons ----------
