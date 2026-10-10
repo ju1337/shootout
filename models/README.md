@@ -14,6 +14,8 @@
 | `Attachments/VerticalGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › VerticalGrip |
 | `Attachments/FastMag.rbxmx` | ReplicatedStorage › Assets › Attachments › FastMag |
 | `Attachments/DrumMag.rbxmx` | ReplicatedStorage › Assets › Attachments › DrumMag |
+| `Attachments/ExtendedMag.rbxmx` | ReplicatedStorage › Assets › Attachments › ExtendedMag |
+| `Attachments/Laser.rbxmx` | ReplicatedStorage › Assets › Attachments › Laser |
 | `Agents/AS_Scout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_Scout (Agenten-Skin Scout) |
 | `Agents/AS_TacticalScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_TacticalScout (Agenten-Skin Tactical Scout) |
 | `Agents/AS_ShadowScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_ShadowScout (Agenten-Skin Shadow Scout) |

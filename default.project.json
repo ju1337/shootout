@@ -62,6 +62,12 @@
           },
           "DrumMag": {
             "$path": "models/Attachments/DrumMag.rbxmx"
+          },
+          "ExtendedMag": {
+            "$path": "models/Attachments/ExtendedMag.rbxmx"
+          },
+          "Laser": {
+            "$path": "models/Attachments/Laser.rbxmx"
           }
         },
         "Agents": {
