@@ -1413,8 +1413,14 @@ function SideMenu.Init()
 			or name == "PassXP" or name == "Stats" or name == "Elo" or name == "RankedData" or name == "Party"
 			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then
+				-- Controller: nur zurückholen, wenn die Auswahl im Fenster lag (nicht aus Lobby/Kiste darüber wegziehen)
+				local frame = panels[openPanel].Frame
+				local selectedNow = game:GetService("GuiService").SelectedObject
+				local hadFocus = selectedNow ~= nil and selectedNow:IsDescendantOf(frame)
 				panels[openPanel].Refresh()
-				InputActions.Refocus(panels[openPanel].Frame) -- Controller: Auswahl nach dem Neuaufbau zurück
+				if hadFocus then
+					InputActions.Refocus(frame)
+				end
 			end
 		end
 	end)

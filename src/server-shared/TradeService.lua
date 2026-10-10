@@ -83,6 +83,7 @@ local function view(trade, player)
 		Theirs = side(partner),
 		Countdown = trade.Ends and math.max(0, trade.Ends - os.clock()) or nil,
 		Version = trade.Version,
+		OfferVersion = trade.OfferVersion, -- nur Angebotsänderungen (BEREIT-Klicks zählen nicht)
 	}
 end
 
@@ -113,6 +114,7 @@ local function changed(trade)
 	trade.Ready = {}
 	trade.Ends = nil
 	trade.Version += 1
+	trade.OfferVersion += 1
 	publish(trade)
 end
 
@@ -151,7 +153,7 @@ end
 local function start(a, b)
 	nextId += 1
 	local trade = { Id = nextId, A = a, B = b, Offers = { [a] = { Items = {}, Rap = 0 }, [b] = { Items = {}, Rap = 0 } },
-		Ready = {}, Ends = nil, Version = 0 }
+		Ready = {}, Ends = nil, Version = 0, OfferVersion = 0 }
 	trades[a], trades[b] = trade, trade
 	if requests[a] then
 		requests[a][b] = nil
@@ -286,7 +288,7 @@ function actions.Ready(player, ready, seenVersion)
 	end
 	if ready == true then
 		-- das Angebot hat sich geändert, während BEREIT unterwegs war: nicht blind das neue bestätigen
-		if type(seenVersion) == "number" and seenVersion ~= trade.Version then
+		if type(seenVersion) == "number" and seenVersion ~= trade.OfferVersion then
 			publish(trade)
 			return "Das Angebot hat sich geändert – prüf es noch einmal.", false
 		end

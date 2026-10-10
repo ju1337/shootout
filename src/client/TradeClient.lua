@@ -340,7 +340,7 @@ local function render()
 	UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -22), Size = UDim2.fromOffset(300, 52),
 		Color = ready and C.Rap or C.Primary, Text = ready and "BEREIT  ·  ZURÜCKNEHMEN" or "BEREIT", TextSize = 22,
 		TextColor = C.PrimaryText, ZIndex = 5 }, frame, function()
-		Remotes.TradeAction:FireServer("Ready", not ready, state.Version) -- Stand mitschicken: nur dieses Angebot bestätigen
+		Remotes.TradeAction:FireServer("Ready", not ready, state.OfferVersion) -- Stand mitschicken: nur dieses Angebot bestätigen
 	end)
 	window.Status = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -80), Size = UDim2.fromOffset(WIN_W - 60, 20),
 		Text = "", TextSize = 14, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 5 }, frame)

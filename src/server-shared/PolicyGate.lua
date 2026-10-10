@@ -42,6 +42,12 @@ function PolicyGate.Get(player)
 			cache[player] = entry
 			player:SetAttribute("PaidRandomOk", false)
 			player:SetAttribute("PaidTradeOk", false)
+			-- selbst neu fragen: der Client fragt bei „gesperrt“ nicht mehr nach (Kisten/Drehs ausgeblendet)
+			task.delay(PolicyGate.RetryAfter, function()
+				if player.Parent and cache[player] == entry then
+					PolicyGate.Get(player)
+				end
+			end)
 		end
 		return entry
 	end
