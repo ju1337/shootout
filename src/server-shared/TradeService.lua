@@ -279,10 +279,26 @@ function actions.SetRap(player, amount)
 	return nil
 end
 
-function actions.Ready(player, ready)
+function actions.Ready(player, ready, seenVersion)
 	local trade = trades[player]
 	if not trade then
 		return nil
+	end
+	if ready == true then
+		-- das Angebot hat sich geändert, während BEREIT unterwegs war: nicht blind das neue bestätigen
+		if type(seenVersion) == "number" and seenVersion ~= trade.Version then
+			publish(trade)
+			return "Das Angebot hat sich geändert – prüf es noch einmal.", false
+		end
+		if trade.Ready[player] then
+			return nil -- schon bereit: den laufenden Countdown nicht doppelt starten
+		end
+		-- noch nah beieinander? (Reisen zwischen Safe Zones beendet den Tausch sonst nicht)
+		local ok, reason = canMeet(trade.A, trade.B)
+		if not ok then
+			close(trade, reason)
+			return nil
+		end
 	end
 	trade.Ready[player] = ready == true or nil
 	if trade.Ready[trade.A] and trade.Ready[trade.B] then

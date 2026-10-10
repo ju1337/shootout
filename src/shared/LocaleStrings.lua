@@ -465,6 +465,7 @@ return {
 	["DANKE FÜR DEINEN KAUF!"] = "THANKS FOR YOUR PURCHASE!",
 	["Das Angebot gibt es nicht mehr."] = "That listing no longer exists.",
 	["Das Angebot wurde zurückgenommen."] = "The listing was withdrawn.",
+	["Das Angebot hat sich geändert – prüf es noch einmal."] = "The offer has changed – check it again.",
 	["Das Fahrzeug ist draußen – erst einpacken (K), dann anbieten."] = "The vehicle is outside – pack it up first (K), then list it.",
 	["Das Funkgerät lädt noch."] = "The radio is still recharging.",
 	["Das geht nicht."] = "That doesn't work.",

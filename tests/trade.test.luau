@@ -121,6 +121,13 @@ step(3)
 check(ProgressService.ItemCount(bob, "W_Lava") == 0, "nach Änderung kein Tausch")
 check(TradeService.TradeOf(alice) == trade, "Tausch läuft weiter")
 
+-- BEREIT zu einem älteren Stand (Angebot hat sich inzwischen geändert): abgelehnt
+local seen = last(bob, "State").Version
+act(alice, "SetRap", 200)
+local _, staleOk = act(bob, "Ready", true, seen)
+check(staleOk == false and last(alice, "State").Theirs.Ready == false, "BEREIT zum alten Angebot zählt nicht")
+act(alice, "SetRap", 300)
+
 -- Beide wieder bereit: Tausch nach dem Countdown
 act(alice, "Ready", true)
 act(bob, "Ready", true)

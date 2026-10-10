@@ -32,7 +32,14 @@ function InviteService.OnJoin(player)
 	end
 	Telemetry.Event(player, "InviteJoin", 1, tostring(referrerId))
 	local inviter = Players:GetPlayerByUserId(referrerId)
-	local profile = inviter and ProgressService.Get(inviter)
+	-- lädt das Profil des Einladenden noch (Sperre, Wiederholungen), landete die Belohnung im leeren Ersatzprofil
+	for _ = 1, 60 do
+		if not inviter or not inviter.Parent or ProgressService.IsLoaded(inviter) then
+			break
+		end
+		task.wait(0.5)
+	end
+	local profile = inviter and inviter.Parent and ProgressService.IsLoaded(inviter) and ProgressService.Get(inviter)
 	if not inviter or not profile then
 		return false
 	end
