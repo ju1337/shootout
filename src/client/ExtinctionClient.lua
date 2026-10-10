@@ -4378,14 +4378,20 @@ function ExtinctionClient.Init()
 	player:GetAttributeChangedSignal("AccountXP"):Connect(updateLevel)
 	player:GetAttributeChangedSignal("Prestige"):Connect(updateLevel)
 	updateLevel()
-	player.CharacterAdded:Connect(function(character)
-		useBar.Visible = false
-		closeWindow()
+	local function watchDeath(character)
 		local humanoid = character:WaitForChild("Humanoid", 10)
 		if humanoid then
 			humanoid.Died:Connect(closeWindow)
 		end
+	end
+	player.CharacterAdded:Connect(function(character)
+		useBar.Visible = false
+		closeWindow()
+		watchDeath(character)
 	end)
+	if player.Character then
+		task.spawn(watchDeath, player.Character) -- erster Charakter war schon vor Init da
+	end
 
 	-- Anzeige oben und Wartezeit fürs Fahrzeug
 	RunService.Heartbeat:Connect(function()

@@ -217,6 +217,8 @@ local function render()
 	end
 	window.Pending = false
 	local frame = window.Frame
+	local oldList = frame:FindFirstChild("SkinList", true)
+	local scrolled = oldList and oldList:IsA("ScrollingFrame") and oldList.CanvasPosition or nil
 	for _, child in frame:GetChildren() do
 		if not child:IsA("UICorner") and not child:IsA("UIStroke") then
 			child:Destroy()
@@ -267,9 +269,17 @@ local function render()
 	-- eigene freie Skins
 	label({ Position = UDim2.fromOffset(0, 254), Size = UDim2.new(1, 0, 0, 18), Text = "DEINE HANDELBAREN SKINS", TextSize = 12, Font = F.Bold,
 		TextColor3 = C.Muted, ZIndex = 5 }, left)
-	local list = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 276), Size = UDim2.new(1, 0, 1, -276), BackgroundTransparency = 1,
-		BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(),
+	local list = make("ScrollingFrame", { Name = "SkinList", Position = UDim2.fromOffset(0, 276), Size = UDim2.new(1, 0, 1, -276),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border, CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, left)
+	if scrolled then
+		-- nach "+" oder einer Änderung des Partners nicht wieder oben anfangen
+		task.defer(function()
+			if list.Parent then
+				list.CanvasPosition = scrolled
+			end
+		end)
+	end
 	make("UIGridLayout", { CellSize = UDim2.fromOffset(254, 52), CellPadding = UDim2.fromOffset(8, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
 	local owned = Cosmetics.GetOwned(player)
 	local held = decode(player:GetAttribute("Reserved"))

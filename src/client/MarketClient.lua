@@ -425,8 +425,33 @@ local function refreshWindow()
 		return
 	end
 	window.Pending = false
+	-- Neuaufbau: Listen behalten ihre Scroll-Position (sonst springt jede Liste bei jedem Verkauf im Markt nach oben)
+	local scrolled = {}
+	for _, item in window.Frame:GetDescendants() do
+		if item:IsA("ScrollingFrame") then
+			table.insert(scrolled, item.CanvasPosition)
+		end
+	end
+	local current = window
 	window.Refresh()
+	if window ~= current then
+		return -- Refresh hat das Fenster geschlossen (Stand abgegeben)
+	end
 	InputActions.Refocus(window.Frame)
+	task.defer(function()
+		if window ~= current then
+			return
+		end
+		local index = 0
+		for _, item in current.Frame:GetDescendants() do
+			if item:IsA("ScrollingFrame") then
+				index += 1
+				if scrolled[index] then
+					item.CanvasPosition = scrolled[index]
+				end
+			end
+		end
+	end)
 end
 
 -- Karte für einen Skin (Vorschau links oben, Name, Seltenheit); textWidth = Breite der Texte rechts der Vorschau
@@ -664,10 +689,13 @@ local function openStand(stand)
 						TextColor3 = C.Muted }, card)
 				end
 				local affordable = rap >= listing.Price
+				-- Rückfrage läuft noch (Karte wurde neu aufgebaut): auch so anzeigen, sonst kauft der nächste Klick ohne Hinweis
+				local armed = affordable and os.clock() < (confirm[listing.Slot] or 0)
 				local buy
 				buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -12), Size = UDim2.new(1, -28, 0, 44),
 					Color = affordable and C.Rap or C.MutedBack, TextColor = affordable and C.PrimaryText or C.Bad, TextSize = 18,
-					Text = affordable and ("KAUFEN  ·  " .. format(listing.Price) .. " RAP") or "ZU WENIG RAP", ZIndex = 5 }, card, function()
+					Text = armed and ("SICHER?  " .. format(listing.Price) .. " RAP")
+						or (affordable and ("KAUFEN  ·  " .. format(listing.Price) .. " RAP") or "ZU WENIG RAP"), ZIndex = 5 }, card, function()
 					if not affordable then
 						return
 					end
@@ -684,6 +712,14 @@ local function openStand(stand)
 						end
 					end)
 				end)
+				if armed then
+					local armedUntil = confirm[listing.Slot]
+					task.delay(armedUntil - os.clock(), function()
+						if confirm[listing.Slot] == armedUntil and buy.Button.Parent then
+							buy.SetText("KAUFEN  ·  " .. format(listing.Price) .. " RAP")
+						end
+					end)
+				end
 			end
 		end
 		if #listings == 0 then
