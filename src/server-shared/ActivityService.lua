@@ -66,7 +66,7 @@ local function publish()
 		local at = spot.Root and spot.Root.Parent and spot.Root.Position or spot.Position -- Überlebende bewegen sich
 		-- ganze Studs reichen für Karte und Marker (sonst ändert sich der Text bei jedem Schritt eines Überlebenden)
 		table.insert(list, { Id = spot.Id, Kind = spot.Kind, Title = spot.Title, X = math.floor(at.X + 0.5), Z = math.floor(at.Z + 0.5),
-			State = spot.State })
+			State = spot.State, Escort = spot.State == "Following" and spot.Escort and spot.Escort.UserId or nil })
 	end
 	local text = HttpService:JSONEncode(list)
 	if options.Map:GetAttribute("Activities") ~= text then
@@ -173,8 +173,10 @@ end
 -- Darf der Spieler gerade etwas an diesem Spot tun? (lebt, offene Welt, nah dran)
 local function canUse(player, spot)
 	local root = livingRoot(player)
+	-- Überlebende können weggeschoben werden: dann zählt, wo sie stehen, nicht ihr Startpunkt
+	local at = spot.Root and spot.Root.Parent and spot.Root.Position or spot.Position
 	return root ~= nil and Modes.IsSurvival(player:GetAttribute("Mode"))
-		and (root.Position - spot.Position).Magnitude <= 14
+		and (root.Position - at).Magnitude <= 14
 end
 
 -- ---------- Zombienest ----------
@@ -628,6 +630,10 @@ local function survivorStep(spot, t)
 	if not root or not humanoid or humanoid.Health <= 0 then
 		return
 	end
+	if not root.Parent or not (spot.Model and spot.Model.Parent) then
+		ActivityService.SurvivorLost(spot, "ist verschwunden") -- z. B. unter die Karte gefallen: sonst hinge der Platz für immer
+		return
+	end
 	-- Zombies in Reichweite schlagen zu
 	for _, zombie in ZombieService.All() do
 		local zroot = zombie:FindFirstChild("HumanoidRootPart")
@@ -655,7 +661,23 @@ local function survivorStep(spot, t)
 	end
 	if distance > cfg.Follow then
 		humanoid:MoveTo(escortRoot.Position - (escortRoot.Position - root.Position).Unit * (cfg.Follow - 2))
+		-- hängt an einer Kante oder Wand fest: erst springen, nach einer Weile hinter den Begleiter setzen
+		if spot.LastPos and (root.Position - spot.LastPos).Magnitude < 1 then
+			spot.StuckFor = (spot.StuckFor or 0) + 1
+			if spot.StuckFor >= 3 then
+				humanoid.Jump = true
+			end
+			if spot.StuckFor >= 8 then
+				spot.Model:PivotTo(CFrame.new(escortRoot.Position - escortRoot.CFrame.LookVector * 4))
+				spot.StuckFor = 0
+			end
+		else
+			spot.StuckFor = 0
+		end
+	else
+		spot.StuckFor = 0
 	end
+	spot.LastPos = root.Position
 end
 
 -- ---------- Ablauf ----------

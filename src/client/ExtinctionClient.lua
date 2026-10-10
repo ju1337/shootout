@@ -919,8 +919,17 @@ local function updateMarkers()
 			elseif act.Kind == "Survivor" and act.State == "Ready" and distance < 260 then
 				table.insert(entries, { Order = distance + 100, X = act.X, Z = act.Z, Color = Color3.fromRGB(120, 220, 140),
 					Text = "ÜBERLEBENDER  ·  " .. distance .. " M" })
-			elseif act.Kind == "Survivor" and act.State == "Following" then
-				local zone = map:FindFirstChild("Zone") and map.Zone:FindFirstChild("SafeZone")
+			elseif act.Kind == "Survivor" and act.State == "Following" and act.Escort == player.UserId then
+				-- nur für den Begleiter, zur nächsten Safe Zone (Camp oder Safehouse – jede zählt)
+				local zone, best = nil, math.huge
+				for _, part in map:FindFirstChild("Zone") and map.Zone:GetChildren() or {} do
+					if part:IsA("BasePart") and string.sub(part.Name, 1, 8) == "SafeZone" then
+						local d = (Vector2.new(part.Position.X, part.Position.Z) - Vector2.new(here.X, here.Z)).Magnitude
+						if d < best then
+							zone, best = part, d
+						end
+					end
+				end
 				if zone then
 					local sx, sz = zone.Position.X - here.X, zone.Position.Z - here.Z
 					table.insert(entries, { Order = -9000, X = zone.Position.X, Z = zone.Position.Z, Color = Color3.fromRGB(120, 220, 140),

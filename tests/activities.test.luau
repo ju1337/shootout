@@ -209,6 +209,14 @@ check(survivor and survivor.Model and survivor.Model:FindFirstChildOfClass("Huma
 place(Vector3.new(0, 0, -160))
 step(1)
 check(ActivityService.Rescue(alice, survivor) == true and survivor.State == "Following", "Rettung beginnt, er folgt")
+step(0.6)
+local escortEntry = nil
+for _, entry in published() do
+	if entry.Id == survivor.Id then
+		escortEntry = entry
+	end
+end
+check(escortEntry and escortEntry.Escort == alice.UserId, "Karte: Begleiter steht dabei (nur er bekommt den Marker)")
 coins = ProgressService.Get(alice).Coins
 for z = -140, -20, 15 do
 	place(Vector3.new(0, 0, z))

@@ -555,6 +555,7 @@ return {
 	["Der Überlebende hat aufgegeben"] = "The survivor gave up",
 	["Der Überlebende hat dich verloren"] = "The survivor lost track of you",
 	["Der Überlebende ist gestorben"] = "The survivor died",
+	["Der Überlebende ist verschwunden"] = "The survivor disappeared",
 	["Der Überlebende wurde allein gelassen"] = "The survivor was left behind",
 	["DEUTSCH"] = "GERMAN",
 	["Diamant"] = "Diamond",

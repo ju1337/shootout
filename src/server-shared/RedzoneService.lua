@@ -162,7 +162,11 @@ local function moved()
 	publish()
 	buildVisual()
 	for _, callback in movedCallbacks do
-		callback(current)
+		-- ein Fehler in einem Hörer (Belohnung, Rangliste) darf das Weiterziehen nicht für immer anhalten
+		local ok, err = pcall(callback, current)
+		if not ok then
+			warn("RedzoneService: " .. tostring(err))
+		end
 	end
 end
 
@@ -242,7 +246,10 @@ function RedzoneService.Start(opts)
 				if myRun ~= run then
 					break
 				end
-				RedzoneService.Step()
+				local ok, err = pcall(RedzoneService.Step)
+				if not ok then
+					warn("RedzoneService.Step: " .. tostring(err))
+				end
 			end
 		end)
 	end
