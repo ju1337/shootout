@@ -32,6 +32,7 @@ local PathfindingService = game:GetService("PathfindingService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
+local Modes = require(Shared.Modes)
 local Sfx = require(Shared.Sfx)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
@@ -273,6 +274,10 @@ end
 -- Spieler (und Bots), die draußen sind (Zombies jagen nur sie)
 local function huntable(target)
 	local root = livingRoot(target)
+	-- Spieler, die gerade in den Markt wechseln, haben kurz noch ihren Charakter: nicht mehr jagen
+	if root and target:IsA("Player") and not Modes.IsSurvival(target:GetAttribute("Mode")) then
+		return false, root
+	end
 	return root ~= nil and not target:GetAttribute("InSafeZone") and not options.InSafeZone(root.Position), root
 end
 

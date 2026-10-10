@@ -835,6 +835,18 @@ function Extinction.Init(modeManager)
 		end,
 	})
 
+	-- neue Events (Lootdrop, Horde, Heli) landen nicht auf einem laufenden
+	AirdropService.Avoid = {
+		function()
+			local horde = HordeService.Current()
+			return horde and horde.Position
+		end,
+		function()
+			local crash = HeliCrashService.Current()
+			return crash and crash.Target
+		end,
+	}
+
 	-- Heli-Absturz: Wrack brennt, dann Militärkisten
 	HeliCrashService.Init({
 		Map = map,

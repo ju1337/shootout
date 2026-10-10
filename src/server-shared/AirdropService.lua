@@ -126,6 +126,30 @@ local function pickTarget()
 	return nil, nil
 end
 
+-- Funktionen, die Orte anderer laufender Events liefern (Horden-Kiste, Heli-Wrack; Extinction trägt sie ein): neue
+-- Events landen nicht darauf
+AirdropService.Avoid = {}
+local AVOID_DISTANCE = 60
+
+local function busy(position)
+	local taken = {}
+	for _, drop in active do
+		table.insert(taken, drop.Target)
+	end
+	for _, source in AirdropService.Avoid do
+		local ok, at = pcall(source)
+		if ok and typeof(at) == "Vector3" then
+			table.insert(taken, at)
+		end
+	end
+	for _, at in taken do
+		if Vector3.new(position.X - at.X, 0, position.Z - at.Z).Magnitude < AVOID_DISTANCE then
+			return true
+		end
+	end
+	return false
+end
+
 -- ---------- Aussehen ----------
 
 local function buildFlare(target)
@@ -262,7 +286,12 @@ function AirdropService.Start(position)
 	if target then
 		zone = options.RedzoneAt and options.RedzoneAt(target) or nil
 	else
-		target, zone = pickTarget()
+		for _ = 1, 6 do
+			target, zone = pickTarget()
+			if not target or not busy(target) then
+				break
+			end
+		end
 	end
 	if not target then
 		nextAt = os.clock() + 30 -- nichts Passendes gefunden: bald nochmal
@@ -313,7 +342,13 @@ end
 --          RedzoneAt(position) -> Zone | nil, RedzoneRandom() -> Zone | nil }
 -- Zufällige freie Stelle draußen (auch für andere Events, z.B. die Horden-Kiste)
 function AirdropService.PickTarget()
-	local target = pickTarget()
+	local target = nil
+	for _ = 1, 6 do
+		target = pickTarget()
+		if not target or not busy(target) then
+			break
+		end
+	end
 	return target
 end
 
