@@ -142,19 +142,6 @@ class CampPhoenix:
         if doors:
             box("Decor", "ContainerDoors", (0.2, 8, 7.6), (length / 2 + 0.1, y + 4.25, 0), self.bm.lighten(color, -0.2), "Metal")
 
-    def showcase(self, name, w, h, x, z, y, yaw, group="Zentrale"):
-        """Bildschirm-Tafel: dunkler Stahlrahmen mit goldener Kante um eine Holo-Tafel (Text schreibt der Client).
-        (x, y, z) = Mitte der Tafel, die Front (lokal -Z) zeigt in Richtung yaw; der Rahmen liegt dahinter."""
-        f, box = self.frame(x, z, yaw)
-        box("Decor", "ShowcaseBack", (w + 1.0, h + 1.0, 0.25), (0, y, 0.3), (22, 25, 30), "SmoothPlastic")
-        for sy in (-1, 1):
-            box("Decor", "ShowcaseFrame", (w + 1.0, 0.3, 0.45), (0, y + sy * (h / 2 + 0.35), 0.1), ANTHRACITE, "Metal")
-            box("Decor", "ShowcaseEdge", (w + 0.6, 0.08, 0.1), (0, y + sy * (h / 2 + 0.18), -0.12), GOLD, "Neon",
-                props=dict(NO_HIT, Transparency=0.3))
-        for sx in (-1, 1):
-            box("Decor", "ShowcaseFrame", (0.3, h + 1.0, 0.45), (sx * (w / 2 + 0.35), y, 0.1), ANTHRACITE, "Metal")
-        self.b.holo_panel(group, name, (w, h, 0.15), f(0, y, 0), angles=(0, yaw, 0))
-
     def _feature(self, build, x, z, yaw):
         """Prefab bauen (Vorderseite -Z zur Mitte) und aufstellen; Decor wird zur Gruppe Zentrale."""
         pb = self.prefab()
@@ -254,7 +241,7 @@ class CampPhoenix:
         self.pavilion(135, "wheel")
         self.pavilion(315, "trade")
         self.fame_wall(225)
-        self.podium(*self.at_center(29, 225))
+        self.podium(*self.at_center(PAV_R - 4, 225))
         for step in range(60):  # Poller mit Leuchtkopf am Platzrand, Lücken an den Zebrastreifen
             th = 3 + step * 6
             if any(abs((th - c + 180) % 360 - 180) < 3.5 for c in self._crossings()):
@@ -361,26 +348,30 @@ class CampPhoenix:
         self.shopkeeper(box, 5.0, fz + 4.6, OUTFITS["wheel"], y=0.5, pose="stand")
 
     def fame_wall(self, th0):
-        """RUHMESWAND frei auf dem Platz: fünf Bildschirme auf schlanken Stelen im Bogen, Front zur Mitte – in der Mitte
-        der Lagebericht (MissionBoard), links und rechts die vier Bestenlisten Leaderboard_*, je mit Titel darüber.
-        Davor das Siegerpodest."""
-        r, y = PAV_R, 8.5
-        screens = (("MissionBoard", 10, 5.6, 0, "NoticeTitle", "LAGEBERICHT", "SPIELER · BLUTMOND · STURMNACHT", (226, 190, 120)),
-                   ("Leaderboard_Zombies", 6, 6, -26, "BoardsTitle", "RUHMESWAND · ZOMBIES", "GLOBALE TOP 10", (200, 166, 92)),
-                   ("Leaderboard_Kills", 6, 6, -14, "BoardsTitle", "RUHMESWAND · KILLS", "GLOBALE TOP 10", (206, 70, 58)),
-                   ("Leaderboard_Level", 6, 6, 14, "BoardsTitle", "RUHMESWAND · LEVEL", "GLOBALE TOP 10", (96, 164, 214)),
-                   ("Leaderboard_Missions", 6, 6, 26, "BoardsTitle", "RUHMESWAND · AUFTRÄGE", "GLOBALE TOP 10", (112, 178, 112)))
-        for name, w, h, off, sign, title, sub, color in screens:
-            x, z, yaw = self.at_center(r, th0 + off)
-            f, box = self.frame(x, z, yaw)
-            box("Decor", "ScreenBase", (w * 0.7, 0.4, 2.2), (0, 0.42, 0.3), ANTHRACITE, "Concrete")
-            leg = y - h / 2 - 0.7
-            for s_ in (-1, 1):
-                box("Decor", "ScreenLeg", (0.4, leg, 0.4), (s_ * w * 0.28, 0.6 + leg / 2, 0.3), ANTHRACITE, "Metal")
-            box("Decor", "ScreenGlow", (w * 0.7, 0.08, 0.3), (0, 0.66, -0.85), color, "Neon", props=dict(NO_HIT, Transparency=0.2))
-            self.showcase(name, w, h, x, z, y, yaw)
-            self.b.sign2(sign, (w, 1.3, 0.25), f(0, y + h / 2 + 1.4, 0.2), title, sub, (24, 26, 30), color, (236, 239, 243),
-                         angles=(0, yaw, 0))
+        """RUHMESWAND frei auf dem Platz, Front zur Mitte: vier hohe Bestenlisten-Monolithe Leaderboard_* (Bildschirm
+        bis kurz über den Boden), je zwei links und rechts im Bogen; in der Mitte ein breiter, höherer Monolith, oben der
+        Lagebericht (MissionBoard), unten die dunkle Kulisse für das Siegerpodest davor. Titel schreibt der Client
+        auf die Bildschirme, darüber hängt nichts."""
+        x, z, yaw = self.at_center(PAV_R + 3, th0)
+        self.monolith("MissionBoard", 11, 5.6, 14.2, 17.6, x, z, yaw, (226, 190, 120), body_w=13)
+        for name, off, color in (("Leaderboard_Zombies", -32, (212, 170, 80)), ("Leaderboard_Kills", -16, (206, 70, 58)),
+                                 ("Leaderboard_Level", 16, (96, 164, 214)), ("Leaderboard_Missions", 32, (112, 178, 112))):
+            x, z, yaw = self.at_center(PAV_R + 1, th0 + off)
+            self.monolith(name, 6.5, 10.6, 6.7, 12.8, x, z, yaw, color)
+
+    def monolith(self, name, w, h, y, top, x, z, yaw, accent, body_w=None, group="Zentrale"):
+        """Freistehender Bildschirm-Monolith: Sockel, dunkler Korpus bis zur Höhe top, davor ein matter Bildschirm
+        (w x h, Mitte in Höhe y; Text schreibt der Client), eine Akzentfarbe als Leuchtlinie oben und am Sockel.
+        Front (lokal -Z) zeigt in Richtung yaw."""
+        f, box = self.frame(x, z, yaw)
+        bw = body_w or w + 0.8
+        box("Decor", "MonolithPlinth", (bw + 0.8, 0.5, 2.4), (0, 0.25, 0.2), ANTHRACITE, "Concrete")
+        box("Decor", "MonolithBody", (bw, top - 0.5, 1.0), (0, 0.5 + (top - 0.5) / 2, 0.3), (24, 27, 32), "SmoothPlastic")
+        box("Decor", "MonolithCap", (bw, 0.12, 0.08), (0, top - 0.25, -0.24), accent, "Neon", props=dict(NO_HIT))
+        box("Decor", "MonolithGlow", (bw + 0.8, 0.08, 0.08), (0, 0.42, -1.02), accent, "Neon",
+            props=dict(NO_HIT, Transparency=0.2))
+        self.b.add(group, name, (w, h, 0.1), f(0, y, -0.25), (14, 16, 20), "SmoothPlastic", angles=(0, yaw, 0),
+                   props={"CanCollide": False, "CanQuery": False})
 
     def _pav_trade(self, f, box, yaw, W, D, H, fz, accent):
         """TAUSCHMARKT: lange Theke mit Händlerin, Regale mit Ware an den Seiten, Punkt Stand_Market davor."""

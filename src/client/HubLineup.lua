@@ -201,6 +201,46 @@ local function upcoming(enabled, nextStart, now)
 	return "BALD", Color3.fromRGB(240, 196, 120)
 end
 
+-- Kopf einer Camp-Tafel im Stil des Spielmenüs: Akzentlinie oben, Titel, graue Unterzeile, feine Trennlinie
+local MUTED = Color3.fromRGB(134, 142, 152)
+local function boardHeader(surface, color, title, sub, titleH, subPos)
+	local bar = Instance.new("Frame")
+	bar.Size = UDim2.new(1, 0, 0.012 * titleH / 0.075, 0)
+	bar.BackgroundColor3 = color
+	bar.BorderSizePixel = 0
+	bar.Parent = surface
+	local function text(name, pos, size, txt, font, txtColor, align)
+		local label = Instance.new("TextLabel")
+		label.Name = name
+		label.Position = pos
+		label.Size = size
+		label.BackgroundTransparency = 1
+		label.Font = font
+		label.TextScaled = true
+		label.TextColor3 = txtColor
+		label.TextXAlignment = align or Enum.TextXAlignment.Left
+		label.Text = txt
+		label.Parent = surface
+		return label
+	end
+	text("Title", UDim2.new(0.06, 0, titleH * 0.4, 0), UDim2.new(0.88, 0, titleH, 0), title,
+		Enum.Font.BuilderSansExtraBold, Color3.fromRGB(236, 239, 243))
+	text("Sub", subPos[1], subPos[2], sub, Enum.Font.BuilderSansBold, MUTED, subPos[3])
+	local line = Instance.new("Frame")
+	line.Position = UDim2.new(0.06, 0, subPos[4], 0)
+	line.Size = UDim2.new(0.88, 0, 0, 2)
+	line.BackgroundColor3 = color
+	line.BackgroundTransparency = 0.5
+	line.BorderSizePixel = 0
+	line.Parent = surface
+end
+
+local function corner(parent, px)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, px)
+	c.Parent = parent
+end
+
 -- Zeilen der offenen Welt: { Name, function(counts, now) -> Text, Farbe }
 local STATUS_LINES = {
 	{ "OFFENE WELT", function(counts)
@@ -240,19 +280,14 @@ local function buildMissionBoard()
 	surface.PixelsPerStud = 40
 	surface.Parent = player:WaitForChild("PlayerGui")
 	surface.Adornee = board
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, 0, 0.16, 0)
-	title.BackgroundTransparency = 1
-	title.Font = Enum.Font.BuilderSansExtraBold
-	title.TextScaled = true
-	title.TextColor3 = Color3.fromRGB(212, 170, 80)
-	title.Text = "LAGEBERICHT"
-	title.Parent = surface
+	local ACCENT = Color3.fromRGB(226, 190, 120)
+	boardHeader(surface, ACCENT, "LAGEBERICHT", "SPIELER · BLUTMOND · STURMNACHT", 0.13,
+		{ UDim2.new(0.06, 0, 0.195, 0), UDim2.new(0.88, 0, 0.065, 0), Enum.TextXAlignment.Left, 0.28 })
 	local list, values = nil, {}
 	if Modes.ArcadeEnabled then
 		list = Instance.new("TextLabel")
-		list.Position = UDim2.new(0.06, 0, 0.2, 0)
-		list.Size = UDim2.new(0.88, 0, 0.76, 0)
+		list.Position = UDim2.new(0.06, 0, 0.3, 0)
+		list.Size = UDim2.new(0.88, 0, 0.66, 0)
 		list.BackgroundTransparency = 1
 		list.Font = Enum.Font.BuilderSansExtraBold
 		list.TextSize = 30
@@ -264,10 +299,18 @@ local function buildMissionBoard()
 	else
 		-- je Zeile links der Name, rechts der Wert (einzelne Felder, damit jedes für sich übersetzt wird)
 		for i, line in STATUS_LINES do
+			local row = Instance.new("Frame")
+			row.Position = UDim2.new(0.04, 0, 0.31 + (i - 1) * 0.165, 0)
+			row.Size = UDim2.new(0.92, 0, 0.14, 0)
+			row.BackgroundColor3 = Color3.fromRGB(32, 36, 42)
+			row.BackgroundTransparency = i % 2 == 1 and 0.2 or 0.55
+			row.BorderSizePixel = 0
+			row.Parent = surface
+			corner(row, 6)
 			local function cell(x, w, align, color)
 				local label = Instance.new("TextLabel")
-				label.Position = UDim2.new(x, 0, 0.22 + (i - 1) * 0.19, 0)
-				label.Size = UDim2.new(w, 0, 0.15, 0)
+				label.Position = UDim2.new(x, 0, 0.14, 0)
+				label.Size = UDim2.new(w, 0, 0.72, 0)
 				label.BackgroundTransparency = 1
 				label.Font = Enum.Font.BuilderSansExtraBold
 				label.TextScaled = true
@@ -275,13 +318,13 @@ local function buildMissionBoard()
 				label.TextXAlignment = align
 				label.Text = ""
 				local limit = Instance.new("UITextSizeConstraint")
-				limit.MaxTextSize = 30 -- kurze Texte nicht größer als die langen
+				limit.MaxTextSize = 26 -- kurze Texte nicht größer als die langen
 				limit.Parent = label
-				label.Parent = surface
+				label.Parent = row
 				return label
 			end
-			cell(0.06, 0.4, Enum.TextXAlignment.Left, Color3.fromRGB(228, 231, 235)).Text = line[1]
-			values[i] = cell(0.46, 0.48, Enum.TextXAlignment.Right, GREY)
+			cell(0.03, 0.42, Enum.TextXAlignment.Left, Color3.fromRGB(228, 231, 235)).Text = line[1]
+			values[i] = cell(0.45, 0.52, Enum.TextXAlignment.Right, GREY)
 		end
 	end
 	-- Spielerzahl-Felder an den Toren (Parts "GateCount_<ModusId>")
@@ -375,6 +418,51 @@ local function formatValue(board, value)
 	return text:reverse():gsub("(%d%d%d)", "%1."):reverse():gsub("^%.", ""), nil
 end
 
+-- Hohe Bildschirm-Monolithe: Kopf mit Titel und "GLOBALE TOP 10", Plätze 1-3 groß mit Medaillenfarbe, 4-10 darunter
+local function boardRow(surface, i)
+	local top3 = i <= 3
+	local y = top3 and (0.175 + (i - 1) * 0.107) or (0.51 + (i - 4) * 0.066)
+	local row = Instance.new("Frame")
+	row.Name = "Row" .. i
+	row.Position = UDim2.new(0.04, 0, y, 0)
+	row.Size = UDim2.new(0.92, 0, top3 and 0.095 or 0.058, 0)
+	row.BorderSizePixel = 0
+	row.Parent = surface
+	corner(row, top3 and 8 or 6)
+	local stripe = nil
+	if top3 then
+		stripe = Instance.new("Frame")
+		stripe.Size = UDim2.new(0.025, 0, 1, 0)
+		stripe.BackgroundColor3 = PLACE_COLORS[i]
+		stripe.BorderSizePixel = 0
+		stripe.Parent = row
+		corner(stripe, 8)
+	end
+	local function cell(x, w, align, font, max)
+		local label = Instance.new("TextLabel")
+		label.Position = UDim2.new(x, 0, 0.16, 0)
+		label.Size = UDim2.new(w, 0, 0.68, 0)
+		label.BackgroundTransparency = 1
+		label.Font = font
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(228, 231, 235)
+		label.TextXAlignment = align
+		label.Text = ""
+		local limit = Instance.new("UITextSizeConstraint")
+		limit.MaxTextSize = max
+		limit.Parent = label
+		label.Parent = row
+		return label
+	end
+	return {
+		Frame = row,
+		Top3 = top3,
+		Place = cell(0.05, 0.14, Enum.TextXAlignment.Center, Enum.Font.BuilderSansExtraBold, top3 and 34 or 24),
+		Name = cell(0.22, 0.46, Enum.TextXAlignment.Left, Enum.Font.BuilderSansBold, top3 and 30 or 22),
+		Value = cell(0.66, 0.31, Enum.TextXAlignment.Right, Enum.Font.BuilderSansExtraBold, top3 and 30 or 22),
+	}
+end
+
 local function buildLeaderboards()
 	local decor = Zentrale.Folder(60)
 	if not decor then
@@ -383,57 +471,19 @@ local function buildLeaderboards()
 	for board, info in BOARD_INFO do
 		local part = decor:WaitForChild("Leaderboard_" .. board, 60)
 		if part then
-			-- Holo-Tafel (Attribut "Holo"): durchsichtig, leuchtende Schrift, kaum Hintergrund
-			local holo = part:GetAttribute("Holo") == true
 			local surface = Instance.new("SurfaceGui")
 			surface.ResetOnSpawn = false -- liegt im PlayerGui: sonst beim nächsten Spawn gelöscht
 			surface.Face = Enum.NormalId.Front
 			surface.LightInfluence = 0
-			surface.Brightness = holo and 1.3 or 1
 			surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 			surface.PixelsPerStud = 40
 			surface.Adornee = part
 			surface.Parent = player:WaitForChild("PlayerGui")
-			local title = Instance.new("TextLabel")
-			title.Size = UDim2.new(1, 0, 0.13, 0)
-			title.BackgroundColor3 = info.Color
-			title.BackgroundTransparency = holo and 0.7 or 0.15
-			title.BorderSizePixel = 0
-			title.Font = Enum.Font.BuilderSansExtraBold
-			title.TextScaled = true
-			title.TextColor3 = holo and Color3.new(1, 1, 1) or Color3.fromRGB(14, 16, 19)
-			title.TextStrokeTransparency = holo and 0.6 or 1
-			title.Text = info.Title
-			title.Parent = surface
+			boardHeader(surface, info.Color, info.Title, "GLOBALE TOP 10", 0.075,
+				{ UDim2.new(0.06, 0, 0.11, 0), UDim2.new(0.88, 0, 0.035, 0), Enum.TextXAlignment.Left, 0.158 })
 			local rows = {}
 			for i = 1, 10 do
-				local row = Instance.new("Frame")
-				row.Position = UDim2.new(0.03, 0, 0.15 + (i - 1) * 0.084, 0)
-				row.Size = UDim2.new(0.94, 0, 0.076, 0)
-				row.BackgroundColor3 = holo and Color3.fromRGB(60, 130, 170) or Color3.fromRGB(27, 31, 36)
-				row.BackgroundTransparency = holo and (i % 2 == 0 and 0.82 or 0.94) or (i % 2 == 0 and 0.4 or 0.75)
-				row.BorderSizePixel = 0
-				row.Parent = surface
-				local function cell(x, w, align, font)
-					local label = Instance.new("TextLabel")
-					label.Position = UDim2.new(x, 0, 0.08, 0)
-					label.Size = UDim2.new(w, 0, 0.84, 0)
-					label.BackgroundTransparency = 1
-					label.Font = font
-					label.TextScaled = true
-					label.TextColor3 = holo and Color3.fromRGB(200, 235, 255) or Color3.fromRGB(228, 231, 235)
-					label.TextStrokeTransparency = holo and 0.7 or 1
-					label.TextXAlignment = align
-					label.Text = ""
-					label.Parent = row
-					return label
-				end
-				rows[i] = {
-					Frame = row,
-					Place = cell(0.01, 0.1, Enum.TextXAlignment.Center, Enum.Font.BuilderSansExtraBold),
-					Name = cell(0.13, 0.5, Enum.TextXAlignment.Left, Enum.Font.BuilderSansBold),
-					Value = cell(0.6, 0.38, Enum.TextXAlignment.Right, Enum.Font.BuilderSansExtraBold),
-				}
+				rows[i] = boardRow(surface, i)
 			end
 			local function update()
 				local ok, list = pcall(HttpService.JSONDecode, HttpService,
@@ -441,14 +491,23 @@ local function buildLeaderboards()
 				list = ok and type(list) == "table" and list or {}
 				for i, row in rows do
 					local entry = list[i]
-					row.Place.Text = entry and ("#" .. i) or ""
-					row.Place.TextColor3 = PLACE_COLORS[i] or Color3.fromRGB(134, 142, 152)
-					row.Name.Text = entry and tostring(entry.Name) or (i == 1 and "Noch keine Einträge" or "")
 					local isMe = entry and entry.UserId == player.UserId
-					row.Name.TextColor3 = isMe and Color3.fromRGB(212, 170, 80)
-						or (holo and Color3.fromRGB(200, 235, 255) or Color3.fromRGB(228, 231, 235))
-					row.Frame.BackgroundColor3 = isMe and Color3.fromRGB(46, 42, 30)
-						or (holo and Color3.fromRGB(60, 130, 170) or Color3.fromRGB(27, 31, 36))
+					row.Place.Text = entry and tostring(i) or ""
+					row.Place.TextColor3 = PLACE_COLORS[i] or MUTED
+					row.Name.Text = entry and tostring(entry.Name) or (i == 1 and "Noch keine Einträge" or "")
+					row.Name.TextColor3 = isMe and Color3.fromRGB(240, 206, 120)
+						or (entry and Color3.fromRGB(228, 231, 235) or MUTED)
+					-- eigener Eintrag golden hinterlegt, Plätze 1-3 in ihrer Medaillenfarbe getönt
+					if isMe then
+						row.Frame.BackgroundColor3 = Color3.fromRGB(70, 58, 30)
+						row.Frame.BackgroundTransparency = 0.1
+					elseif row.Top3 then
+						row.Frame.BackgroundColor3 = PLACE_COLORS[i]:Lerp(Color3.fromRGB(24, 27, 32), 0.8)
+						row.Frame.BackgroundTransparency = entry and 0 or 0.5
+					else
+						row.Frame.BackgroundColor3 = Color3.fromRGB(32, 36, 42)
+						row.Frame.BackgroundTransparency = i % 2 == 0 and 0.2 or 0.55
+					end
 					if entry then
 						local text, color = formatValue(board, entry.Value)
 						row.Value.Text = text

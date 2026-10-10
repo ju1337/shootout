@@ -87,8 +87,9 @@ local function placeStatue(place, entry)
 	local info = nil
 	if head then
 		local billboard = Instance.new("BillboardGui")
-		billboard.Size = UDim2.new(5.5, 0, 1.3, 0) -- in Studs, damit es den Titel dahinter nicht überdeckt
-		billboard.StudsOffset = Vector3.new(0, 1.8, 0)
+		-- in Studs und knapp über dem Kopf, damit es den Lagebericht dahinter nicht überdeckt
+		billboard.Size = UDim2.new(4.2, 0, 1, 0)
+		billboard.StudsOffset = Vector3.new(0, 1.1, 0)
 		billboard.AlwaysOnTop = false
 		billboard.MaxDistance = 120
 		billboard.Parent = head

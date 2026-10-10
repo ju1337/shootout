@@ -87,10 +87,11 @@ nicht anklickbar). Von innen nach außen:
   Wegweisern im Boden zu den Toren, die Spawns frei in der Mitte, Poller am Rand; keine Laternen, Fahnen oder Banner.
   Auf den Diagonalen, die Achsen bleiben frei: offene **Pavillons** (Flachdach mit Leuchtkante, Glasseiten, Schild auf
   dem Dach) NO **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter des Menüs), SO **GLÜCKSRAD** (Rad
-  an der Rückwand, Pult vorn), NW **TAUSCHMARKT**; im SW frei stehend die **RUHMESWAND**: fünf Bildschirme auf Stelen im
-  Bogen (**LAGEBERICHT** in der Mitte: Spieler in der offenen Welt und im Markt, Blutmond und Sturmnacht; links und
-  rechts die Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE), davor das **Siegerpodest** mit
-  Statuen der Top 3 nach Level (Server `src/server/ZentraleService.lua`).
+  an der Rückwand, Pult vorn), NW **TAUSCHMARKT**; im SW frei stehend die **RUHMESWAND**: vier hohe
+  Bildschirm-Monolithe (bis kurz über den Boden) mit den Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL,
+  MEISTE AUFTRÄGE (Top 3 hervorgehoben), in der Mitte ein breiter Monolith mit dem **LAGEBERICHT** oben (Spieler in
+  der offenen Welt und im Markt, Blutmond und Sturmnacht) und davor das **Siegerpodest** mit Statuen der Top 3 nach
+  Level (Server `src/server/ZentraleService.lua`).
 - Eine **Ringstraße** (Radius 59.5) mit Zebrastreifen an den Mündungen und vier **Hauptstraßen** (Asphalt, Gehsteige)
   zu den Toren.
 - **Häuserring** an der Ringstraße (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe; die
