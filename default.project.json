@@ -38,6 +38,30 @@
           },
           "AngledGrip": {
             "$path": "models/Attachments/AngledGrip.rbxmx"
+          },
+          "Compensator": {
+            "$path": "models/Attachments/Compensator.rbxmx"
+          },
+          "MuzzleBrake": {
+            "$path": "models/Attachments/MuzzleBrake.rbxmx"
+          },
+          "LongBarrel": {
+            "$path": "models/Attachments/LongBarrel.rbxmx"
+          },
+          "ShortBarrel": {
+            "$path": "models/Attachments/ShortBarrel.rbxmx"
+          },
+          "HeavyBarrel": {
+            "$path": "models/Attachments/HeavyBarrel.rbxmx"
+          },
+          "VerticalGrip": {
+            "$path": "models/Attachments/VerticalGrip.rbxmx"
+          },
+          "FastMag": {
+            "$path": "models/Attachments/FastMag.rbxmx"
+          },
+          "DrumMag": {
+            "$path": "models/Attachments/DrumMag.rbxmx"
           }
         },
         "Agents": {

@@ -6,6 +6,14 @@
 | `Attachments/HoloSight.rbxmx` | ReplicatedStorage › Assets › Attachments › HoloSight |
 | `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
 | `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |
+| `Attachments/Compensator.rbxmx` | ReplicatedStorage › Assets › Attachments › Compensator |
+| `Attachments/MuzzleBrake.rbxmx` | ReplicatedStorage › Assets › Attachments › MuzzleBrake |
+| `Attachments/LongBarrel.rbxmx` | ReplicatedStorage › Assets › Attachments › LongBarrel |
+| `Attachments/ShortBarrel.rbxmx` | ReplicatedStorage › Assets › Attachments › ShortBarrel |
+| `Attachments/HeavyBarrel.rbxmx` | ReplicatedStorage › Assets › Attachments › HeavyBarrel |
+| `Attachments/VerticalGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › VerticalGrip |
+| `Attachments/FastMag.rbxmx` | ReplicatedStorage › Assets › Attachments › FastMag |
+| `Attachments/DrumMag.rbxmx` | ReplicatedStorage › Assets › Attachments › DrumMag |
 | `Agents/AS_Scout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_Scout (Agenten-Skin Scout) |
 | `Agents/AS_TacticalScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_TacticalScout (Agenten-Skin Tactical Scout) |
 | `Agents/AS_ShadowScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_ShadowScout (Agenten-Skin Shadow Scout) |
