@@ -222,7 +222,25 @@ for s = 1, ExtinctionConfig.HotbarSlots do
 	if entry and entry.Id == "Att_FastMag" then fastSlot = s end
 end
 check(fastSlot ~= nil, "Schnellmagazin auf der Hotbar")
+-- Patronen zählen: im Magazin und in der Tasche (beim Wechsel auf das kleinere Magazin geht nichts verloren)
+local function rounds()
+	local total = 0
+	for _, entry in bagOf(alice) do
+		if entry.Id == "Rifle" then
+			total += entry.Mag or 0
+		elseif entry.Id == ExtinctionConfig.AmmoFor("Rifle") then
+			total += entry.N
+		end
+	end
+	return total
+end
+InventoryService.Give(alice, ExtinctionConfig.AmmoFor("Rifle"), 60)
+InventoryService.GetBag(alice).Slots[rifleSlot].Mag = 40
+InventoryService.Changed(alice)
+local roundsBefore = rounds()
 InventoryService.Use(alice, fastSlot)
+check((slot(alice, rifleSlot).Mag or 0) <= 30, "Magazin passt zum Schnellmagazin (" .. tostring(slot(alice, rifleSlot).Mag) .. ")")
+check(rounds() == roundsBefore, "kleineres Magazin: überzählige Patronen zurück in die Tasche (" .. rounds() .. " / " .. roundsBefore .. ")")
 rifle = slot(alice, rifleSlot)
 check(rifle.A.Magazine == "FastMag", "Schnellmagazin ersetzt das erweiterte")
 check(WeaponService.CarriedWeapon(alice) == "Rifle", "Gewehr bleibt in der Hand")

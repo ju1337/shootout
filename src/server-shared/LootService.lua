@@ -603,7 +603,9 @@ function LootService.Take(player, id, slot, toName, toSlot)
 			local id_ = item.Id
 			local target = toSlot and playerBag.Slots[toSlot]
 			local into = toSlot
-			if target and (target.Id ~= id_ or ExtinctionConfig.MaxStack(id_) <= 1) then
+			-- anderer Gegenstand, nicht stapelbar oder voller Stapel: freien Platz suchen (sonst würden die Plätze getauscht
+			-- und der eigene Stapel läge in der Tasche am Boden)
+			if target and (target.Id ~= id_ or ExtinctionConfig.MaxStack(id_) <= 1 or target.Count >= ExtinctionConfig.MaxStack(id_)) then
 				into = nil
 			end
 			if Inventory.Move(bag.Container, s, playerBag, into) then

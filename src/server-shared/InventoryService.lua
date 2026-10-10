@@ -30,6 +30,7 @@ local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Inventory = require(Shared.Inventory)
 local AttachmentConfig = require(Shared.AttachmentConfig)
+local WeaponConfig = require(Shared.WeaponConfig)
 local Modes = require(Shared.Modes)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
@@ -271,6 +272,23 @@ local function equip(player, state, item)
 	holster(player, state)
 	local config = ExtinctionConfig.Get(item.Id)
 	publishAttachments(player, item) -- vor SetCarried: Magazingröße mit Aufsätzen
+	-- Magazin größer als jetzt erlaubt (Magazin-Aufsatz abgenommen oder getauscht): überzählige Patronen zurück in die
+	-- Tasche statt weg
+	local weaponConfig = config.Weapon and WeaponConfig.Get(config.Weapon)
+	local ammoId = ExtinctionConfig.AmmoFor(item.Id)
+	if weaponConfig and ammoId and type(item.Mag) == "number" then
+		local size = math.floor(weaponConfig.MagazineSize * AttachmentConfig.Effects(player, config.Weapon).Mag)
+		if item.Mag > size then
+			local extra = math.floor(item.Mag) - size
+			item.Mag = size
+			if extra > 0 then
+				local put = Inventory.Add(state.Bag, ammoId, extra)
+				if put < extra then
+					InventoryService.GiveStash(player, ammoId, extra - put)
+				end
+			end
+		end
+	end
 	if WeaponService.SetCarried(player, config.Weapon, item.Mag, sourceFor(player, state, item)) then
 		state.Equipped = item
 	else
@@ -712,6 +730,19 @@ function InventoryService.Sell(player, slot, count)
 	item.Count -= count
 	if item.Count <= 0 then
 		state.Bag.Slots[slot] = nil
+	end
+	-- Aufsätze an einer verkauften Waffe gehen nicht mit: zurück in die Tasche (sonst Lager, sonst als Beutel daneben)
+	local rest = {}
+	for _, attId in item.Count <= 0 and item.Att or {} do
+		local id = "Att_" .. attId
+		if Inventory.Add(state.Bag, id, 1) < 1 and InventoryService.GiveStash(player, id, 1) < 1 then
+			table.insert(rest, { Id = id, Count = 1 })
+		end
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if #rest > 0 and root and InventoryService.DropItems then
+		InventoryService.DropItems(player, rest, root.Position)
 	end
 	if price > 0 then
 		ProgressService.AddCoins(player, price, "Verkauf")
