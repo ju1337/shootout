@@ -73,7 +73,8 @@ local function playersOutside()
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if humanoid and root and humanoid.Health > 0 and not options.InSafeZone(root.Position) then
+		if humanoid and root and humanoid.Health > 0 and not options.InSafeZone(root.Position)
+			and not player:GetAttribute("Dungeon") then -- im Dungeon ist man nicht auf der Karte
 			n += 1
 		end
 	end

@@ -227,7 +227,8 @@ local function tick(now, dt)
 			local outside = 0
 			for _, player in options.Players() do
 				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-				if root and not options.InSafeZone(root.Position) then
+				if root and not options.InSafeZone(root.Position)
+			and not player:GetAttribute("Dungeon") then -- im Dungeon ist man nicht auf der Karte
 					outside += 1
 				end
 			end

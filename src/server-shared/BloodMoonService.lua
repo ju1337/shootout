@@ -67,7 +67,8 @@ function BloodMoonService.SpawnBoss()
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		if root and humanoid and humanoid.Health > 0 and not options.InSafeZone(root.Position) then
+		if root and humanoid and humanoid.Health > 0 and not options.InSafeZone(root.Position)
+			and not player:GetAttribute("Dungeon") then -- im Dungeon ist man nicht auf der Karte
 			table.insert(candidates, { Player = player, Root = root })
 		end
 	end
