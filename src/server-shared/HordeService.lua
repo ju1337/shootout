@@ -160,6 +160,15 @@ local function remove()
 end
 
 -- Spieler im Umkreis (lebend, nicht im Fahrzeug)
+-- Bei der Auszahlung noch dabei? (lebt, nicht im Dungeon, nicht in der Safe Zone, in der Nähe)
+local function stillThere(player, position, radius)
+	local character = player.Parent and player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return humanoid ~= nil and root ~= nil and humanoid.Health > 0 and not player:GetAttribute("Dungeon")
+		and not options.InSafeZone(root.Position) and (root.Position - position).Magnitude <= radius
+end
+
 local function holders()
 	local list = {}
 	for _, player in options.Players() do
@@ -208,7 +217,7 @@ local function open()
 	end
 	ExtinctionConfig.AddDungeonKey(items, "Horde", random)
 	for player in current.Holders do
-		if player.Parent and options.Reward then
+		if options.Reward and stillThere(player, position, H.Radius * 3) then
 			options.Reward(player, H.Coins, "Horden-Kiste")
 		end
 	end

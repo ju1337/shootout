@@ -203,6 +203,15 @@ local function finish(convoy)
 end
 
 -- Ladung frei: Kiste am Lkw, Münzen für alle Angreifer
+-- Bei der Auszahlung noch dabei? (lebt, nicht im Dungeon, nicht in der Safe Zone, in der Nähe)
+local function stillThere(player, position, radius)
+	local character = player.Parent and player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return humanoid ~= nil and root ~= nil and humanoid.Health > 0 and not player:GetAttribute("Dungeon")
+		and not options.InSafeZone(root.Position) and (root.Position - position).Magnitude <= radius
+end
+
 local function release(convoy)
 	convoy.State = "Loot"
 	local truck = convoy.Vehicles[2].Model
@@ -217,7 +226,7 @@ local function release(convoy)
 	convoy.LootId = LootService.Create(at, items, "Airdrop", "KONVOI-LADUNG",
 		{ HoldTime = K.OpenTime, Lifetime = K.Lifetime, Meta = { Convoy = convoy.Id } })
 	for player in convoy.Attackers do
-		if player.Parent and options.Reward then
+		if options.Reward and stillThere(player, at, 150) then -- wer schon wieder weg ist, bekommt nichts
 			options.Reward(player, K.Coins, "Konvoi geknackt")
 		end
 	end

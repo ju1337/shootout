@@ -149,7 +149,8 @@ step(2)
 check((truck:GetPivot().Position - haltedAt).Magnitude < 0.1, "steht still")
 check(convoys()[1].State == "Halted", "Karte: gestoppt")
 
--- Wachen erledigen: Ladung frei
+-- Wachen erledigen: Ladung frei (Alice ist dabei; wer schon wieder weg ist, bekommt nichts)
+alice.Character:PivotTo(CFrame.new(truck:GetPivot().Position + Vector3.new(30, 0, 0)))
 for _, guard in convoy.Guards do
 	local humanoid = guard.Model and guard.Model:FindFirstChildOfClass("Humanoid")
 	if humanoid then
