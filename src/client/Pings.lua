@@ -35,15 +35,17 @@ local function ping()
 	Remotes.Ping:FireServer(result.Position, hasHumanoid and model or nil)
 end
 
-local function showPing(position, enemy, pingerName)
+local function showPing(position, model, pingerName, isEnemy)
+	-- Der Gegner ist evtl. nicht gestreamt (model = nil), der Server meldet ihn trotzdem
+	local enemy = model ~= nil or isEnemy == true
 	local adornee
-	if enemy and enemy:FindFirstChild("HumanoidRootPart") then
-		adornee = enemy.HumanoidRootPart
+	if model and model:FindFirstChild("HumanoidRootPart") then
+		adornee = model.HumanoidRootPart
 	else
 		local anchor = Instance.new("Attachment")
 		anchor.WorldPosition = position
 		anchor.Parent = workspace.Terrain
-		Debris:AddItem(anchor, PING_TIME)
+		Debris:AddItem(anchor, enemy and ENEMY_TIME or PING_TIME)
 		adornee = anchor
 	end
 

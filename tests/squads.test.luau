@@ -153,10 +153,10 @@ check(seenAlice ~= nil and seenBob ~= nil and seenBob[3] == "Alice", "Ping ersch
 check(after == before, "Carl sieht den Ping nicht")
 step(1)
 Remotes.Ping.OnServerEvent:Fire(alice, bob.Character.HumanoidRootPart.Position, bob.Character)
-check(lastRemote("PingShow", bob)[2] == nil, "Squad-Mitglied ist kein gepingter Gegner")
+check(lastRemote("PingShow", bob)[2] == nil and lastRemote("PingShow", bob)[4] == false, "Squad-Mitglied ist kein gepingter Gegner")
 step(1)
 Remotes.Ping.OnServerEvent:Fire(alice, carl.Character.HumanoidRootPart.Position, carl.Character)
-check(lastRemote("PingShow", bob)[2] == carl.Character, "Carl als Gegner gepingt")
+check(lastRemote("PingShow", bob)[2] == carl.Character and lastRemote("PingShow", bob)[4] == true, "Carl als Gegner gepingt")
 
 -- ---------- Anführer verlässt die offene Welt: Bob bleibt ----------
 place(alice, Vector3.new(0, 3, 20))

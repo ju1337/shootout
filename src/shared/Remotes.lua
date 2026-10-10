@@ -36,7 +36,7 @@ local NAMES = {
 	"ObjectiveAction", -- Client -> Server: E für Ziel (Bombe legen/entschärfen) gedrückt/losgelassen
 	"Melee",      -- Client -> Server: Messer-Angriff (Ursprung, Richtung)
 	"Ping",       -- Client -> Server: Ort/Gegner markieren (Position, Modell oder nil)
-	"PingShow",   -- Server -> Team: Markierung anzeigen (Position, Modell, Name des Pingenden)
+	"PingShow",   -- Server -> Team: Markierung anzeigen (Position, Modell, Name des Pingenden, Gegner?)
 	"DeathRecap", -- Server -> Opfer: wer hat dich ausgeschaltet (Name, Waffe, Leben, Agent)
 	"AbilityEffect", -- Server -> Client: Fähigkeit auf dem eigenen Charakter ausführen (z.B. Dash)
 	"MatchSummary", -- Server -> Client: Match-Ende (Ergebnis, MVP, eigene Statistik)

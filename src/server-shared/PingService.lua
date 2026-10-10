@@ -60,7 +60,7 @@ function PingService.Init()
 		local enemy = isEnemyModel(player, model) and model or nil
 		for _, mate in Players:GetPlayers() do
 			if sameGroup(player, mate) then
-				Remotes.PingShow:FireClient(mate, position, enemy, player.Name)
+				Remotes.PingShow:FireClient(mate, position, enemy, player.Name, enemy ~= nil)
 			end
 		end
 	end)
