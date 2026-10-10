@@ -107,7 +107,8 @@ local function load()
 			local head = string.match(source, "^(%S+)")
 			local key = (head and not string.find(head, "{")) and head or ""
 			patterns[key] = patterns[key] or {}
-			table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count })
+			local words = string.find((string.gsub(source, "{%d}", "")), LETTERS) ~= nil
+			table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count, Wordy = words })
 		else
 			strings[source] = target
 		end
@@ -123,16 +124,20 @@ end
 local translateList -- (weiter unten) Listen Stück für Stück
 
 -- Text in die Zielsprache übersetzen (nil = kein Eintrag). Reihenfolge: genau, dann Muster.
-local function lookup(text, depth)
+local function lookup(text, depth, strict)
 	local exact = strings[text]
 	if exact then
 		return exact
 	end
-	local function try(list)
+	local function try(list, broad)
 		if not list then
 			return nil
 		end
 		for _, entry in list do
+			-- strict (Stücke einer Liste): breite Muster mit Wörtern ("{1} Leben") würden Bruchstücke halb übersetzen
+			if broad and strict and entry.Wordy then
+				continue
+			end
 			local captures = { string.match(text, entry.Pattern) }
 			if captures[1] ~= nil then
 				local result = string.gsub(entry.Template, "{(%d)}", function(index)
@@ -151,11 +156,31 @@ local function lookup(text, depth)
 		end
 		return nil
 	end
-	return try(patterns[firstWord(text)]) or try(patterns[""])
+	if strict then
+		return try(patterns[""], true) -- Stücke: nur reine Mengen-Muster ("{1} ×{2}"), keine Satzanfänge
+	end
+	return try(patterns[firstWord(text)]) or try(patterns[""], true)
 end
 
--- Listen ohne eigenen Eintrag ("Verband ×2, 9mm-Munition ×12", "Zombie · …"): Stück für Stück übersetzen. Gibt nil
--- zurück, wenn sich kein Stück ändert.
+-- Spielername? (auch großgeschrieben, wie auf vielen Anzeigen)
+local function isPlayerName(text)
+	local loud = string.upper(text)
+	for _, other in Players:GetPlayers() do
+		if string.upper(other.Name) == loud or string.upper(other.DisplayName) == loud then
+			return true
+		end
+	end
+	return false
+end
+
+-- Stück ohne Übersetzung, das trotzdem passt: ohne Buchstaben ("1-9", "□"), Spielername oder kurze Taste ("LMB", "TAB")
+local function neutral(piece)
+	-- (\195 = Anfang von Ä/Ö/Ü/ä/ö/ü/ß in UTF-8; Zeichen wie □ △ zählen nicht als Buchstaben)
+	return not string.find(piece, "[%a\195]") or isPlayerName(piece) or (#piece <= 6 and not string.find(piece, "[%l\195]"))
+end
+
+-- Listen ohne eigenen Eintrag ("Verband ×2, 9mm-Munition ×12", "Zombie · …"): Stück für Stück übersetzen, aber nur, wenn
+-- jedes Stück einen Eintrag hat (sonst käme halb Deutsch, halb Englisch heraus). Gibt sonst nil zurück.
 -- (auch Tasten-Zeilen wie "LMB  SCHIESSEN  ·  R  NACHLADEN / INTERAGIEREN": Taste und Text mit zwei Leerzeichen)
 local LIST_SEPARATORS = { "  ·  ", " · ", ", ", "  ", " / " }
 function translateList(text, depth)
@@ -166,9 +191,12 @@ function translateList(text, depth)
 		if string.find(text, separator, 1, true) then
 			local parts, changed = {}, false
 			for piece in string.gmatch(text .. separator, "(.-)" .. escapePattern(separator)) do
-				local translated = translateList(piece, depth + 1)
-				if translated == nil and string.find(piece, LETTERS) then
-					translated = lookup(piece, 0)
+				local translated = nil
+				if not neutral(piece) then
+					translated = translateList(piece, depth + 1) or lookup(piece, depth, true)
+					if translated == nil then
+						return nil
+					end
 				end
 				changed = changed or translated ~= nil
 				table.insert(parts, translated or piece)
@@ -190,7 +218,7 @@ function Locale.Translate(text, lang)
 		return text
 	end
 	-- Spielernamen sind keine Wörter: "Adler" auf dem Namensschild bleibt "Adler", nicht "Eagle"
-	if Players:FindFirstChild(text) then
+	if isPlayerName(text) then
 		return text
 	end
 	load()

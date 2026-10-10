@@ -70,6 +70,8 @@ expect("Zombie · Verband ×2, 9mm-Munition ×12", "Zombie · Bandage ×2, 9mm A
 expect("Gekauft: 30× 9mm-Munition für 30 Münzen", "Purchased: 30× 9mm Ammo for 30 Coins", "Kauf mit Anzahl")
 expect("Fahrrad (Kit) eingepackt.", "Bicycle (Kit) packed up.", "Kit-Item in einer Meldung")
 expect("+ Verband ×2, Fahrrad", "+ Bandage ×2, Bicycle", "Beute-Meldung")
+expect("Volles Leben  ·  +", "Volles Leben  ·  +", "Bruchstück ohne Eintrag: nicht halb übersetzen")
+expect("1.  ADLER  ·  3 VERKÄUFE", "1.  ADLER  ·  3 VERKÄUFE", "Liste mit Spielername (Adler ist auf dem Server)")
 expect("LMB  SCHIESSEN  ·  □  NACHLADEN / INTERAGIEREN  ·  △ HALTEN  FAHRZEUG EINPACKEN",
 	"LMB  FIRE  ·  □  RELOAD / INTERACT  ·  HOLD △  STORE VEHICLE", "Tasten-Zeile nach benutzten Tasten")
 check(Locale.Translate("Adler") == "Eagle", "Wort ohne gleichnamigen Spieler übersetzt")
