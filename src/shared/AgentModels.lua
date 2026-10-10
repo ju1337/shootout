@@ -333,12 +333,46 @@ local function loadRig(rig, report)
 	return { Rig = template, Floor = min.Y, Count = count, Character = character }
 end
 
--- Charakter aus einem Modell ohne Rig: unsichtbares HumanoidRootPart (2 hoch, HIP über dem Boden) mit Humanoid, das
--- Modell genau wie gebaut fest daran (Füße auf dem Boden, Blick -Z), seine sichtbaren Teile sind die Trefferzone. Dazu
--- zwei unsichtbare Hilfsteile, die das Spiel braucht: "Head" (Kopfschüsse, Namensschild) über dem Kopf des Modells und
--- "RightHand" (hält die Waffe).
+-- Charakter aus einem Modell ohne Rig: unsichtbares HumanoidRootPart (2 hoch, HIP über dem Boden) mit Humanoid, Füße
+-- auf dem Boden, Blick -Z, die sichtbaren Teile des Modells sind die Trefferzone.
+--   * Modell in Körperteilen (Head_Suit, LeftUpperArm_Suit …): darunter ein unsichtbares R15-Skelett (Körperteile wie
+--     AgentModels.Body mit den Gelenken Root, Waist, Neck, Schultern, Ellbogen, Handgelenke, Hüften, Knie, Knöchel), jedes
+--     Teil des Modells hängt an seinem Körperteil. So laufen die Roblox-Animationen (Animate: Laufen, Springen …), die
+--     Waffenhaltung (CharacterPose) und die Arme in der Ego-Perspektive (ArmPieces) wie bei einem normalen Charakter.
+--   * Modell als Ganzes: genau wie gebaut fest am HumanoidRootPart (bewegt sich nur als Ganzes).
+-- Dazu unsichtbare Hilfsteile: "Head" (Kopfschüsse, Namensschild) um den Kopf des Modells und "RightHand" (hält die
+-- Waffe, mit RightGripAttachment).
 local HIP = 2
-local function characterFromPieces(pieces)
+-- R15-Gelenke: Name, Elternteil, Kind (Motor6D liegt im Kind, wie bei Roblox)
+local R15_JOINTS = {
+	{ "Root", "HumanoidRootPart", "LowerTorso" }, { "Waist", "LowerTorso", "UpperTorso" }, { "Neck", "UpperTorso", "Head" },
+	{ "LeftShoulder", "UpperTorso", "LeftUpperArm" }, { "LeftElbow", "LeftUpperArm", "LeftLowerArm" },
+	{ "LeftWrist", "LeftLowerArm", "LeftHand" }, { "RightShoulder", "UpperTorso", "RightUpperArm" },
+	{ "RightElbow", "RightUpperArm", "RightLowerArm" }, { "RightWrist", "RightLowerArm", "RightHand" },
+	{ "LeftHip", "LowerTorso", "LeftUpperLeg" }, { "LeftKnee", "LeftUpperLeg", "LeftLowerLeg" },
+	{ "LeftAnkle", "LeftLowerLeg", "LeftFoot" }, { "RightHip", "LowerTorso", "RightUpperLeg" },
+	{ "RightKnee", "RightUpperLeg", "RightLowerLeg" }, { "RightAnkle", "RightLowerLeg", "RightFoot" },
+}
+-- Gelenkpunkt in Ruhelage (Raum: Boden zwischen den Füßen): Schultern am Schultergelenk, sonst in der Mitte zwischen
+-- der Kante des Elternteils und der des Kinds (Root: Mitte des Unterkörpers)
+local function r15JointPoint(name, parentName, childName)
+	if name == "Root" then
+		return AgentModels.Body.LowerTorso.CFrame.Position
+	elseif name == "LeftShoulder" or name == "RightShoulder" then
+		local shoulder = AgentModels.RightShoulder
+		return Vector3.new(name == "RightShoulder" and shoulder.X or -shoulder.X, shoulder.Y, shoulder.Z)
+	end
+	local a, b = AgentModels.Body[parentName], AgentModels.Body[childName]
+	local y
+	if b.CFrame.Y > a.CFrame.Y then
+		y = (a.CFrame.Y + a.Size.Y / 2 + b.CFrame.Y - b.Size.Y / 2) / 2
+	else
+		y = (a.CFrame.Y - a.Size.Y / 2 + b.CFrame.Y + b.Size.Y / 2) / 2
+	end
+	return Vector3.new(b.CFrame.X, y, 0)
+end
+
+local function characterFromPieces(pieces, split)
 	local character = Instance.new("Model")
 	local root = Instance.new("Part")
 	root.Name = "HumanoidRootPart"
@@ -350,6 +384,7 @@ local function characterFromPieces(pieces)
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R15
 	humanoid.HipHeight = HIP
+	humanoid.AutomaticScalingEnabled = false
 	humanoid.Parent = character
 	local function fix(part, canQuery)
 		part.Anchored = false
@@ -357,10 +392,12 @@ local function characterFromPieces(pieces)
 		part.CanQuery = canQuery
 		part.CanTouch = canQuery
 		part.Massless = true
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = root
-		weld.Part1 = part
-		weld.Parent = part
+	end
+	local function weld(to, part)
+		local joint = Instance.new("WeldConstraint")
+		joint.Part0 = to
+		joint.Part1 = part
+		joint.Parent = part
 	end
 	-- Modell als Ordner (kein eigenes Modell im Charakter: Treffer finden den Charakter über das nächste Modell)
 	local folder = Instance.new("Folder")
@@ -368,13 +405,16 @@ local function characterFromPieces(pieces)
 	folder.Parent = character
 	local model = pieces:Clone()
 	local top, headMin, headMax = 0, nil, nil
+	local placed = {}
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.CFrame = part:GetAttribute("AgentRest")
-			part:SetAttribute("AgentBody", nil)
+			local bodyName = part:GetAttribute("AgentBody")
+			part:SetAttribute("AgentBody", split and bodyName ~= "" and bodyName or nil) -- für die Ego-Arme (ArmPieces)
 			part:SetAttribute("AgentRest", nil)
 			part:SetAttribute("AgentGear", nil)
 			fix(part, shown(part))
+			table.insert(placed, { Part = part, Body = split and bodyName ~= "" and bodyName or nil })
 			local min, max = bounds({ part }, CFrame.new())
 			top = math.max(top, max.Y)
 			if bodyNameOf(part.Name) == "Head" then
@@ -399,17 +439,54 @@ local function characterFromPieces(pieces)
 	end
 	head.Parent = character
 	fix(head, true)
-	local hand = Instance.new("Part")
-	hand.Name = "RightHand"
-	hand.Transparency = 1
-	hand.Size = AgentModels.Body.RightHand.Size
-	hand.CFrame = AgentModels.Body.RightHand.CFrame
-	hand.Parent = character
-	fix(hand, false)
+	local body = { HumanoidRootPart = root, Head = head }
+	if split then
+		-- unsichtbares R15-Skelett (keine Trefferzone: getroffen wird das Modell), Gelenke wie bei Roblox
+		for _, name in AgentModels.BodyParts do
+			if name ~= "Head" then
+				local part = Instance.new("Part")
+				part.Name = name
+				part.Size = AgentModels.Body[name].Size
+				part.CFrame = AgentModels.Body[name].CFrame
+				part.Transparency = 1
+				part.Parent = character
+				fix(part, false)
+				body[name] = part
+			end
+		end
+		for _, def in R15_JOINTS do
+			local name, parent, child = def[1], body[def[2]], body[def[3]]
+			local point = CFrame.new(r15JointPoint(def[1], def[2], def[3]))
+			local motor = Instance.new("Motor6D")
+			motor.Name = name
+			motor.Part0 = parent
+			motor.Part1 = child
+			motor.C0 = parent.CFrame:ToObjectSpace(point)
+			motor.C1 = child.CFrame:ToObjectSpace(point)
+			motor.Parent = child
+		end
+		for _, entry in placed do
+			weld(entry.Body and body[entry.Body] or root, entry.Part)
+		end
+	else
+		local hand = Instance.new("Part")
+		hand.Name = "RightHand"
+		hand.Transparency = 1
+		hand.Size = AgentModels.Body.RightHand.Size
+		hand.CFrame = AgentModels.Body.RightHand.CFrame
+		hand.Parent = character
+		fix(hand, false)
+		body.RightHand = hand
+		weld(root, head)
+		weld(root, hand)
+		for _, entry in placed do
+			weld(root, entry.Part)
+		end
+	end
 	local grip = Instance.new("Attachment")
 	grip.Name = "RightGripAttachment"
 	grip.CFrame = CFrame.new(0, -0.15, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-	grip.Parent = hand
+	grip.Parent = body.RightHand
 	return character
 end
 
@@ -558,7 +635,7 @@ local function loadPieces(source, report)
 		table.insert(report.Warnings, count .. " Teile – für Handys besser höchstens " .. MAX_PARTS
 			.. " (in Blender zusammenfügen)")
 	end
-	return { Pieces = template, Count = count, Whole = not split, Character = characterFromPieces(template) }
+	return { Pieces = template, Count = count, Whole = not split, Character = characterFromPieces(template, split) }
 end
 
 -- Ein Modell aus Assets.Agents prüfen und vorbereiten. Gibt (Daten oder nil, Bericht) zurück.

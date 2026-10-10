@@ -373,8 +373,8 @@ check(standard:FindFirstChild(AgentModels.ModelName) == nil and standard.Head.Tr
 
 -- ---------- Spieler und Bots: das Modell ist selbst der Charakter ----------
 -- Kein Roblox-Standardkörper: der geladene Körper wird durch das Modell ersetzt (wie ein StarterCharacter). Das Modell
--- steht genau wie gebaut an einem unsichtbaren HumanoidRootPart, seine sichtbaren Teile sind die Trefferzone; dazu
--- unsichtbare Hilfsteile Head (Kopfschüsse) und RightHand (Waffe).
+-- steht genau wie gebaut auf einem unsichtbaren R15-Skelett, jedes Teil an seinem Körperteil (bewegt sich mit), seine
+-- sichtbaren Teile sind die Trefferzone; Kopf (Kopfschüsse) und rechte Hand (Waffe) unsichtbar.
 game.JobId = "server-1"
 SIM.DataStore("PlayerData_v1")
 local AgentService = require("AgentService")
@@ -388,15 +388,21 @@ local character = SpawnUtil.Spawn(alice, CFrame.new(10, 5, 10))
 step(0.5)
 check(character ~= nil and character == alice.Character and AgentModels.IsModelCharacter(character)
 	and character.Parent == workspace, "Spieler als VIPER: das Modell ist der Charakter")
-local function standardParts(model)
-	local count = 0
-	for _, name in AgentModels.BodyParts do
-		local part = model:FindFirstChild(name)
-		count += (part and part:IsA("BasePart") and name ~= "Head" and name ~= "RightHand") and 1 or 0
+-- darunter ein unsichtbares R15-Skelett mit Gelenken (Laufen, Waffenhaltung, Ego-Arme), keine Trefferzone
+local skeleton = true
+for _, name in AgentModels.BodyParts do
+	local part = character and character:FindFirstChild(name)
+	if not (part and part:IsA("BasePart") and part.Transparency == 1 and (name == "Head" or not part.CanQuery)) then
+		skeleton = false
 	end
-	return count
 end
-check(character and standardParts(character) == 0, "kein Roblox-Standardkörper im Charakter")
+check(skeleton, "unsichtbares Skelett, keine Trefferzone (außer Kopf)")
+local motors = 0
+for _, joint in character:GetDescendants() do
+	motors += joint:IsA("Motor6D") and 1 or 0
+end
+check(motors == 15 and character.RightUpperArm:FindFirstChild("RightShoulder") and character.LeftLowerLeg:FindFirstChild("LeftKnee")
+	and character.LowerTorso.Root.Part0 == character.HumanoidRootPart, "R15-Gelenke (Animationen laufen)")
 local worn = character and character:FindFirstChild(AgentModels.ModelName)
 check(worn ~= nil and worn:IsA("Folder") and worn:FindFirstChild("Head_Suit") ~= nil, "Teile des Modells im Charakter")
 local root = character.HumanoidRootPart
@@ -407,7 +413,8 @@ local ground = root.CFrame * CFrame.new(0, -(root.Size.Y / 2 + humanoid.HipHeigh
 for _, def in SUIT do
 	local part = worn and worn:FindFirstChild(def[1])
 	check(part and near(ground:ToObjectSpace(part.CFrame).Position, def[3]) and part.CanQuery
-		and part:FindFirstChildOfClass("WeldConstraint").Part0 == root, def[1] .. ": genau wie gebaut, Trefferzone")
+		and part:FindFirstChildOfClass("WeldConstraint").Part0 == character:FindFirstChild(ownerOf(def[1])),
+		def[1] .. ": genau wie gebaut, Trefferzone, am eigenen Körperteil")
 end
 local head, hand = character:FindFirstChild("Head"), character:FindFirstChild("RightHand")
 check(head and head.Transparency == 1 and head.CanQuery and near(ground:ToObjectSpace(head.CFrame).Position, SUIT[1][3])

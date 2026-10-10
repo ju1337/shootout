@@ -192,6 +192,20 @@ for _, part in list do
 	modelColored += part.Color.G > 0.7 and 1 or 0 -- Farbe aus der Datei (…, 200, 30)
 end
 check(modelColored == 6, "Modell als Charakter: sechs Armteile mit dem Aussehen des Modells (" .. modelColored .. ")")
+-- Hände des Modells an der Waffe (Arme hängen am unsichtbaren Skelett, Gelenke wie beim Spielkörper)
+do
+	local hands = {}
+	for name, part in list do
+		if string.find(name, "Hand") then
+			hands[string.sub(name, 1, 4)] = part
+		end
+	end
+	local info = GunModels.Info.Rifle
+	local grip = vm.GunWorld.Position
+	local guard = vm.GunWorld * (info.LeftHand * ViewModel.Scale())
+	check(hands.Righ and (hands.Righ.Position - grip).Magnitude < 0.35, "Modell als Charakter: rechte Hand am Griff")
+	check(hands.Left and (hands.Left.Position - guard).Magnitude < 0.35, "Modell als Charakter: linke Hand an der Waffe")
+end
 -- Der Charakter selbst bleibt unverändert (Kopien)
 check(character:FindFirstChild(AgentModels.ModelName):FindFirstChild("RightHand_Suit") ~= nil, "Charakter behält seine Teile")
 vm:Destroy()
