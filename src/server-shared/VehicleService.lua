@@ -468,7 +468,10 @@ local function placement(player, root, config)
 	local side = heli and HELI_SPAWN_AWAY or size.X + 3
 	for _, offset in { Vector3.new(0, 0, -away), Vector3.new(side, 0, 0), Vector3.new(-side, 0, 0), Vector3.new(0, 0, away) } do
 		local probe = (root.CFrame.Position + facing:VectorToWorldSpace(offset))
-		local hit = workspace:Raycast(probe + Vector3.new(0, 6, 0), Vector3.new(0, -20, 0), params)
+		-- freie Sicht vom Spieler zum Platz: sonst säße man nach dem Einsteigen hinter einer Wand (auch unsichtbaren)
+		local wall = workspace:Raycast(root.Position, probe - root.Position, params)
+		local hit = not (wall and wall.Instance.CanCollide)
+			and workspace:Raycast(probe + Vector3.new(0, 6, 0), Vector3.new(0, -20, 0), params)
 		if hit and hit.Normal.Y > 0.8 then
 			local cframe = CFrame.new(hit.Position + Vector3.new(0, lift, 0)) * facing
 			local blocking = false
@@ -503,7 +506,7 @@ local function watchSeats(player, model)
 			prompt.Parent = part
 			prompt.Triggered:Connect(function(who)
 				local _, humanoid = livingCharacter(who)
-				if not humanoid or part.Occupant or humanoid.SeatPart then
+				if not humanoid or part.Occupant or humanoid.SeatPart or model:GetAttribute("Wrecked") then
 					return
 				end
 				if isDriver and who ~= player then
@@ -514,7 +517,7 @@ local function watchSeats(player, model)
 				part:Sit(humanoid)
 			end)
 			part:GetPropertyChangedSignal("Occupant"):Connect(function()
-				prompt.Enabled = part.Occupant == nil
+				prompt.Enabled = part.Occupant == nil and not model:GetAttribute("Wrecked") -- Wrack: nie wieder einsteigen
 				local occupant = part.Occupant
 				local rider = occupant and Players:GetPlayerFromCharacter(occupant.Parent)
 				if rider then
@@ -522,7 +525,10 @@ local function watchSeats(player, model)
 				end
 				if isDriver then
 					local chassis = model.PrimaryPart
-					if rider == player then
+					if not chassis then
+						return
+					end
+					if rider == player and not model:GetAttribute("Wrecked") then
 						pcall(chassis.SetNetworkOwner, chassis, player) -- der Fahrer rechnet die Physik
 					else
 						-- niemand fährt: anhalten und gerade stehen lassen (Helikopter: senkrecht langsam sinken, bis er
@@ -552,6 +558,10 @@ end
 function VehicleService.Use(player, _, item)
 	local character, humanoid, root = livingCharacter(player)
 	if not character or not humanoid or not root or not Modes.IsSurvival(player:GetAttribute("Mode")) then
+		return false
+	end
+	if player:GetAttribute("Dungeon") then
+		status(player, "Im Dungeon gibt es keine Fahrzeuge.")
 		return false
 	end
 	local itemConfig = ExtinctionConfig.Get(item.Id)
@@ -644,6 +654,7 @@ end
 local function wreck(owner, entry)
 	active[owner] = nil
 	local model = entry.Model
+	model:SetAttribute("Wrecked", true) -- vor dem Aussteigen: die Sitz-Hörer schalten die Knöpfe sonst wieder an
 	ejectAll(model)
 	local slot = inventorySlotOf(owner, entry.Item)
 	local bag = InventoryService.GetBag(owner)
@@ -671,8 +682,8 @@ local function wreck(owner, entry)
 			part.Enabled = false
 		end
 	end
-	if entry.Config.Kind == "Heli" then
-		-- Helikopter: kein Antrieb mehr, er stürzt ab und kippt
+	do
+		-- kein Antrieb mehr (Helikopter: er stürzt ab und kippt)
 		for _, name in { "Drive", "Steer" } do
 			local constraint = chassis:FindFirstChild(name)
 			if constraint and constraint:IsA("Constraint") then
@@ -804,7 +815,7 @@ function VehicleService.Init(opts)
 		for player, entry in active do
 			local chassis = entry.Chassis
 			if not chassis.Parent then
-				active[player] = nil
+				despawn(player) -- z. B. ins Leere gefallen: Item nicht als "draußen" hängen lassen
 			else
 				local config = entry.Config
 				local delta = now - entry.LastTime

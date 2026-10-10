@@ -201,14 +201,27 @@ check(VehicleService.Get(alice) == nil, "zerstört: nicht mehr aktiv")
 check(slotOf(alice, "V_Pickup") == nil, "Geländewagen aus der Tasche entfernt")
 check(alice.Character.Humanoid.SeatPart == nil, "Insassen ausgestiegen")
 check(string.find(lastStatus(alice), "zerstört", 1, true) ~= nil, "Meldung: zerstört")
+local wreckPrompts = 0
+for _, prompt in pickup:GetDescendants() do
+	if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+		wreckPrompts += 1
+	end
+end
+check(wreckPrompts == 0, "Wrack: kein Einsteigen mehr (" .. wreckPrompts .. " Knöpfe an)")
 step(6.5)
 check(pickup.Parent == nil, "Wrack verschwindet")
 
 -- Schüsse treffen Fahrzeuge über WeaponService
 check(WeaponService.OnVehicleHit == VehicleService.Hit, "WeaponService meldet Fahrzeugtreffer")
 
--- Umfahren: Zombies nehmen Schaden, wenn das Fahrzeug schnell ist
+-- im Dungeon keine Fahrzeuge
 step(8.5)
+alice:SetAttribute("Dungeon", "{}")
+InventoryService.Use(alice, quadSlot)
+check(VehicleService.Get(alice) == nil, "im Dungeon spawnt kein Fahrzeug")
+alice:SetAttribute("Dungeon", nil)
+
+-- Umfahren: Zombies nehmen Schaden, wenn das Fahrzeug schnell ist
 InventoryService.Use(alice, quadSlot)
 quad = VehicleService.Get(alice)
 local zombie = ZombieService.Spawn(quad.PrimaryPart.Position + Vector3.new(0, 0, -8))

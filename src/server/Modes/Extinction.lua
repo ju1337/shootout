@@ -462,6 +462,11 @@ function Extinction.Travel(player, key)
 		status("Reisen geht nur an einer Haltestelle in einer Safe Zone.")
 		return false
 	end
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.SeatPart then
+		status("Steig erst aus dem Fahrzeug.")
+		return false
+	end
 	local target = nil
 	for _, zone in Extinction.SafeZones() do
 		if zone.Key == key then

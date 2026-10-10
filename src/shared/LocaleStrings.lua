@@ -1945,6 +1945,7 @@ return {
 	["STATISTIK"] = "STATS",
 	["STATTE DEINEN AGENTEN MIT FREIGESCHALTETEN SKINS AUS"] = "EQUIP YOUR AGENT WITH UNLOCKED SKINS",
 	["Steig erst aus dem Fahrzeug."] = "Get out of the vehicle first.",
+	["Im Dungeon gibt es keine Fahrzeuge."] = "No vehicles in the dungeon.",
 	["Steig erst aus."] = "Get out first.",
 	["STEIGEN"] = "CLIMB",
 	["Stell erst mit - / + einen neuen Preis ein."] = "Set a new price with - / + first.",
