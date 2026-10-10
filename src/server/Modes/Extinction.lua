@@ -87,17 +87,46 @@ Extinction.OnLeave = {}  -- callback(player)
 
 -- Alle Safe Zones: das große Camp (Teil "SafeZone", Schlüssel "") und die kleinen Safehouses draußen
 -- (Teile "SafeZone_<Schlüssel>" mit Title, Spawns im Ordner "Spawns_<Schlüssel>"). Kreis, Radius = halbe Breite.
+-- Die Liste wird zwischengespeichert (Zombies fragen sie tausende Male pro Sekunde ab) und neu gebaut, sobald sich im
+-- Ordner Zone etwas ändert (Teil dazu/weg, verschoben, Größe oder Titel). Aufrufer lesen die Liste nur.
+local zoneCache = nil
+local watchedZones = {} -- [Teil] = true: Änderungen an diesem Teil leeren den Zwischenspeicher
+local zoneFolderWatched = false
+local function invalidateZones()
+	zoneCache = nil
+end
 function Extinction.SafeZones()
+	if zoneCache then
+		return zoneCache
+	end
+	local folder = map.Zone
+	if not zoneFolderWatched then
+		zoneFolderWatched = true
+		folder.ChildAdded:Connect(invalidateZones)
+		folder.ChildRemoved:Connect(invalidateZones)
+	end
 	local list = {}
-	for _, part in map.Zone:GetChildren() do
+	for _, part in folder:GetChildren() do
 		if part:IsA("BasePart") then
 			local key = part.Name == "SafeZone" and "" or string.match(part.Name, "^SafeZone_(.+)$")
 			if key then
 				table.insert(list, { Key = key, Title = part:GetAttribute("Title") or (key == "" and "CAMP PHOENIX" or key),
 					Center = part.Position, Radius = part.Size.X / 2, Part = part })
 			end
+			if not watchedZones[part] then
+				watchedZones[part] = true
+				for _, property in { "Position", "CFrame", "Size", "Name" } do
+					part:GetPropertyChangedSignal(property):Connect(invalidateZones)
+				end
+				part:GetAttributeChangedSignal("Title"):Connect(invalidateZones)
+				part.AncestryChanged:Connect(function()
+					watchedZones[part] = nil
+					invalidateZones()
+				end)
+			end
 		end
 	end
+	zoneCache = list
 	return list
 end
 
@@ -911,7 +940,7 @@ function Extinction.Init(modeManager)
 			if publish then
 				player:SetAttribute("ExtHealth", math.floor(health * 100 + 0.5) / 100)
 			end
-			if root then
+			if root then -- nur bei publish gesetzt (root ist sonst nil): einmal pro Sekunde reicht für Squad und Karte
 				local p = root.Position
 				player:SetAttribute("ExtPos", Vector3.new(math.floor(p.X), 0, math.floor(p.Z)))
 			end
@@ -997,13 +1026,14 @@ function Extinction.RemovePlayer(player)
 	RedzoneBoard.RemovePlayer(player)
 	BountyService.RemovePlayer(player)
 	members[player] = nil
+	travelAt[player] = nil
 	local character = player.Character
 	if character then
 		character:SetAttribute("SafeZone", nil)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil", "ProtectedUntil" } do
+		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil", "ProtectedUntil", "ExtPos", "ExtHealth" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

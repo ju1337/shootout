@@ -63,15 +63,27 @@ function KitService.Claim(player, kitId)
 		profile.KitCredit[id] = math.min((tonumber(profile.KitCredit[id]) or 0) + count, count * KitConfig.CreditCap)
 	end
 	KitService.Publish(player)
-	local stashed = false
+	local stashed, rest = false, {}
 	for _, entry in kit.Items do
 		local id, count = entry[1], entry[2]
 		if ExtinctionConfig.Get(id) then
 			local put = InventoryService.Give(player, id, count)
-			if put < count and InventoryService.GiveStash(player, id, count - put) > 0 then
-				stashed = true
+			if put < count then
+				local stored = InventoryService.GiveStash(player, id, count - put)
+				stashed = stashed or stored > 0
+				if put + stored < count then
+					table.insert(rest, { Id = id, Count = count - put - stored })
+				end
 			end
 		end
+	end
+	-- Tasche und Lager voll: der Rest liegt als Beutel neben dem Spieler statt zu verschwinden
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if #rest > 0 and root and InventoryService.DropItems then
+		InventoryService.DropItems(player, rest, root.Position)
+		Sfx.ToPlayers({ player }, "AmmoBox")
+		status(player, kit.Name .. " abgeholt – Tasche und Lager sind voll, der Rest liegt als Beutel neben dir.", true)
+		return
 	end
 	Sfx.ToPlayers({ player }, "AmmoBox")
 	status(player, kit.Name .. (stashed and " abgeholt – die Tasche war voll, der Rest liegt im Lager." or " abgeholt!"), true)

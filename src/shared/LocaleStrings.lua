@@ -2359,6 +2359,7 @@ return {
 	["{1} / {2} XP bis Stufe {3}"] = "{1} / {2} XP to tier {3}",
 	["{1} T {2}"] = "{1}d {2}",
 	["{1} VON {2} IM BESITZ  ·  AB {3} MÜNZEN"] = "{1} OF {2} OWNED  ·  FROM {3} COINS",
+	["{1} abgeholt – Tasche und Lager sind voll, der Rest liegt als Beutel neben dir."] = "{1} claimed – bag and stash are full, the rest is in a pouch next to you.",
 	["{1} abgeholt – die Tasche war voll, der Rest liegt im Lager."] = "{1} claimed – your bag was full, the rest is in your stash.",
 	["{1} abgeholt!"] = "{1} claimed!",
 	["{1} abgenommen"] = "{1} removed",

@@ -89,7 +89,8 @@
         "StreamingMinRadius": 192,
         "StreamingTargetRadius": 1024,
         "StreamOutBehavior": "Opportunistic",
-        "StreamingIntegrityMode": "MinimumRadiusPause"
+        "StreamingIntegrityMode": "MinimumRadiusPause",
+        "PlayerCharacterDestroyBehavior": "Enabled"
       },
       "Maps": {
         "$path": "src/maps"

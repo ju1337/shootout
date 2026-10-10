@@ -497,4 +497,17 @@ step(30)
 check(store.Data.u3.Extinction and #store.Data.u3.Extinction.Bag == 1, "beim Herunterfahren bleibt die Tasche")
 check(#workspace.ExtinctionLoot:GetChildren() == bagsBefore, "beim Herunterfahren fällt keine Tasche")
 
+-- Safe-Zone-Liste ist zwischengespeichert, folgt aber Änderungen (neues Safehouse, verschoben, entfernt)
+local probe = CENTER + Vector3.new(900, 0, 0)
+check(not Extinction.InSafeZone(probe) and Extinction.SafeZones() == Extinction.SafeZones(), "Liste zwischengespeichert")
+local extra = Instance.new("Part", map.Zone)
+extra.Name = "SafeZone_Neu"
+extra.Size = Vector3.new(60, 40, 60)
+extra.CFrame = CFrame.new(probe)
+check(Extinction.InSafeZone(probe), "neues Safehouse sofort erkannt")
+extra.CFrame = CFrame.new(probe + Vector3.new(500, 0, 0))
+check(not Extinction.InSafeZone(probe) and Extinction.InSafeZone(probe + Vector3.new(500, 0, 0)), "verschobenes Safehouse erkannt")
+extra:Destroy()
+check(not Extinction.InSafeZone(probe + Vector3.new(500, 0, 0)), "entferntes Safehouse weg")
+
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
