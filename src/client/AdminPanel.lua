@@ -29,6 +29,7 @@ local StaffConfig = require(Shared.StaffConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Cosmetics = require(Shared.Cosmetics)
+local ShopOffers = require(Shared.ShopOffers)
 local UITheme = require(Shared.UITheme)
 
 local player = Players.LocalPlayer
@@ -77,6 +78,7 @@ local CATEGORIES = {
 	{ Id = "World", Text = "WELT", Admin = true },
 	{ Id = "Logs", Text = "LOGS", Admin = true },
 	{ Id = "Economy", Text = "ÖKONOMIE", Admin = true },
+	{ Id = "Shop", Text = "SHOP", Admin = true },
 	{ Id = "Lookup", Text = "SUCHE" },
 }
 
@@ -1356,6 +1358,207 @@ local function buildLookup(page)
 	refreshBans()
 end
 
+-- ---------- SHOP: Angebote (ShopOfferService, gelten immer auf allen Servern) ----------
+
+local ShopAdmin: { [string]: any } = { Skin = nil, Discount = 25, Hours = 24, Featured = false, Signature = nil, TimeLabels = {},
+	SkinButtons = {}, DiscountButtons = {}, HourButtons = {} }
+local DISCOUNT_CHOICES = { 10, 20, 25, 30, 40, 50, 75 }
+local HOUR_CHOICES = { { 1, "1 STD" }, { 6, "6 STD" }, { 12, "12 STD" }, { 24, "1 TAG" }, { 72, "3 TAGE" }, { 168, "7 TAGE" } }
+
+local function shopNow()
+	return workspace:GetServerTimeNow()
+end
+
+-- Vorschau-Zeile und Markierungen der Auswahl aktualisieren
+local function refreshShopForm()
+	for id, b in ShopAdmin.SkinButtons do
+		recolor(b, id == ShopAdmin.Skin and C.Green or nil)
+	end
+	for value, b in ShopAdmin.DiscountButtons do
+		recolor(b, value == ShopAdmin.Discount and C.Green or nil)
+	end
+	for value, b in ShopAdmin.HourButtons do
+		recolor(b, value == ShopAdmin.Hours and C.Green or nil)
+	end
+	if ShopAdmin.FeaturedButton then
+		ShopAdmin.FeaturedButton.Text = ShopAdmin.Featured and "HAUPTANGEBOT: JA" or "HAUPTANGEBOT: NEIN"
+		recolor(ShopAdmin.FeaturedButton, ShopAdmin.Featured and C.Green or nil)
+	end
+	if ShopAdmin.Preview then
+		local item = ShopAdmin.Skin and Cosmetics.Get(ShopAdmin.Skin)
+		if item then
+			ShopAdmin.Preview.Text = string.upper(item.Name) .. "  ·  " .. item.Price .. " → "
+				.. ShopOffers.Discounted(item.Price, ShopAdmin.Discount) .. " MÜNZEN  ·  -" .. ShopAdmin.Discount .. " %  ·  "
+				.. ShopOffers.FormatLeft(ShopAdmin.Hours * 3600)
+		else
+			ShopAdmin.Preview.Text = "Erst einen Skin wählen"
+		end
+	end
+end
+
+-- Liste der laufenden Angebote: neu bauen, wenn sich etwas geändert hat, sonst nur die Restzeiten
+local function refreshShop()
+	if not ShopAdmin.List then
+		return
+	end
+	local now = shopNow()
+	local config = ShopOffers.Config()
+	local active = ShopOffers.Active(now)
+	local parts = { tostring(config.AutoDaily) }
+	for _, offer in active do
+		table.insert(parts, offer.Item.Id .. ":" .. offer.Discount .. ":" .. offer.EndsAt .. ":" .. tostring(offer.Featured))
+	end
+	local signature = table.concat(parts, ",")
+	if signature ~= ShopAdmin.Signature then
+		ShopAdmin.Signature = signature
+		clear(ShopAdmin.List)
+		ShopAdmin.TimeLabels = {}
+		if #active == 0 then
+			label("Keine Angebote aktiv", 14, ShopAdmin.List, { TextColor3 = C.Muted })
+		end
+		for i, offer in active do
+			local r = row(ShopAdmin.List, 34)
+			r.LayoutOrder = i
+			local kind = not offer.Manual and "AUTOMATISCH" or offer.Featured and "HAUPTANGEBOT" or "MANUELL"
+			label(string.upper(offer.Item.Name), 15, r, { Size = UDim2.new(0.24, 0, 1, 0), LayoutOrder = 1 })
+			label("-" .. offer.Discount .. " %  ·  " .. offer.Price .. " STATT " .. offer.OldPrice, 13, r,
+				{ Size = UDim2.new(0.26, 0, 1, 0), TextColor3 = C.Text, Font = BODY_FONT, LayoutOrder = 2 })
+			label(kind, 12, r, { Size = UDim2.new(0.16, 0, 1, 0), TextColor3 = offer.Manual and RED or C.Muted, LayoutOrder = 3 })
+			local left = label("", 13, r, { Size = UDim2.new(0.16, 0, 1, 0), TextColor3 = C.Muted, Font = BODY_FONT, LayoutOrder = 4 })
+			ShopAdmin.TimeLabels[left] = offer.EndsAt
+			local stop = button(offer.Manual and "BEENDEN" or "AUSSCHALTEN", 1, r, C.Red, function()
+				if offer.Manual then
+					send("ShopOfferRemove", offer.Item.Id)
+				else
+					send("ShopOfferAuto", false)
+				end
+			end)
+			stop.Size = UDim2.new(0.16, 0, 1, 0)
+			stop.LayoutOrder = 5
+		end
+		if ShopAdmin.AutoButton then
+			ShopAdmin.AutoButton.Text = config.AutoDaily and "ANGEBOT DES TAGES: AN" or "ANGEBOT DES TAGES: AUS"
+			recolor(ShopAdmin.AutoButton, config.AutoDaily and C.Green or nil)
+		end
+	end
+	for timeLabel, endsAt in ShopAdmin.TimeLabels do
+		timeLabel.Text = "NOCH " .. ShopOffers.FormatLeft(endsAt - now)
+	end
+end
+
+local function buildShop(page)
+	label("Angebote gelten sofort auf allen Servern und bleiben gespeichert. Der Server verlangt den Angebotspreis.", 13, page,
+		{ TextColor3 = C.Muted, Font = BODY_FONT })
+	section("LAUFENDE ANGEBOTE", page)
+	local running = card(page)
+	ShopAdmin.List = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1 }, running)
+	list(ShopAdmin.List, 6)
+	local autoRow = row(running, 34)
+	ShopAdmin.AutoButton = button("ANGEBOT DES TAGES", 1, autoRow, nil, function()
+		send("ShopOfferAuto", not ShopOffers.Config().AutoDaily)
+	end)
+	ShopAdmin.AutoButton.Size = UDim2.new(0, 260, 1, 0)
+	label("automatisch jeden Tag ein Skin mit 20-40 %", 13, autoRow, { Size = UDim2.new(1, -270, 1, 0), TextColor3 = C.Muted,
+		Font = BODY_FONT })
+	order(running)
+
+	section("NEUES ANGEBOT", page)
+	local form = card(page)
+	label("SKIN", 12, form, { TextColor3 = C.Muted })
+	local skins = make("Frame", { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
+		form)
+	make("UIGridLayout", { CellSize = UDim2.new(0.2, -6, 0, 30), CellPadding = UDim2.fromOffset(6, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder }, skins)
+	local items = {}
+	for _, item in Cosmetics.Items do
+		if ShopOffers.Allowed(item) then
+			table.insert(items, item)
+		end
+	end
+	table.sort(items, function(a, b)
+		if a.Type ~= b.Type then
+			return a.Type == "Weapon"
+		end
+		return a.Price > b.Price
+	end)
+	for i, item in items do
+		local b = button(string.upper(item.Name) .. "  " .. item.Price, 1, skins, nil, function()
+			ShopAdmin.Skin = item.Id
+			refreshShopForm()
+		end, 30)
+		b.TextSize = 12
+		b.LayoutOrder = i
+		ShopAdmin.SkinButtons[item.Id] = b
+	end
+
+	label("RABATT", 12, form, { TextColor3 = C.Muted })
+	local discountRow = row(form, 32)
+	for i, value in DISCOUNT_CHOICES do
+		local b = button(value .. " %", 1, discountRow, nil, function()
+			ShopAdmin.Discount = value
+			refreshShopForm()
+		end, 32)
+		b.Size = UDim2.new(1 / (#DISCOUNT_CHOICES + 1), -6, 1, 0)
+		b.LayoutOrder = i
+		ShopAdmin.DiscountButtons[value] = b
+	end
+	local discountBox = textBox("eigener %", discountRow, { Size = UDim2.new(1 / (#DISCOUNT_CHOICES + 1), -6, 1, 0),
+		LayoutOrder = 99 })
+	numeric(discountBox)
+	discountBox.FocusLost:Connect(function()
+		local value = tonumber(discountBox.Text)
+		if value then
+			ShopAdmin.Discount = math.clamp(math.floor(value), ShopOffers.MinDiscount, ShopOffers.MaxDiscount)
+			discountBox.Text = tostring(ShopAdmin.Discount)
+			refreshShopForm()
+		end
+	end)
+
+	label("DAUER", 12, form, { TextColor3 = C.Muted })
+	local hourRow = row(form, 32)
+	for i, choice in HOUR_CHOICES do
+		local b = button(choice[2], 1, hourRow, nil, function()
+			ShopAdmin.Hours = choice[1]
+			refreshShopForm()
+		end, 32)
+		b.Size = UDim2.new(1 / (#HOUR_CHOICES + 1), -6, 1, 0)
+		b.LayoutOrder = i
+		ShopAdmin.HourButtons[choice[1]] = b
+	end
+	local hourBox = textBox("eigene Std.", hourRow, { Size = UDim2.new(1 / (#HOUR_CHOICES + 1), -6, 1, 0), LayoutOrder = 99 })
+	numeric(hourBox)
+	hourBox.FocusLost:Connect(function()
+		local value = tonumber(hourBox.Text)
+		if value then
+			ShopAdmin.Hours = math.clamp(math.floor(value), 1, ShopOffers.MaxHours)
+			hourBox.Text = tostring(ShopAdmin.Hours)
+			refreshShopForm()
+		end
+	end)
+
+	local startRow = row(form, 38)
+	ShopAdmin.FeaturedButton = button("HAUPTANGEBOT", 1, startRow, nil, function()
+		ShopAdmin.Featured = not ShopAdmin.Featured
+		refreshShopForm()
+	end, 38)
+	ShopAdmin.FeaturedButton.Size = UDim2.new(0, 200, 1, 0)
+	ShopAdmin.Preview = label("", 14, startRow, { Size = UDim2.new(1, -420, 1, 0), Font = BODY_FONT })
+	button("ANGEBOT STARTEN", 1, startRow, C.Green, function()
+		if not ShopAdmin.Skin then
+			setStatus("Erst einen Skin wählen.", C.Red)
+			return
+		end
+		send("ShopOfferAdd", ShopAdmin.Skin, { Discount = ShopAdmin.Discount, Hours = ShopAdmin.Hours,
+			Featured = ShopAdmin.Featured })
+	end, 38).Size = UDim2.new(0, 200, 1, 0)
+	label("Hauptangebot = groß auf der Startseite des Shops. Gleicher Skin noch einmal = altes Angebot wird ersetzt.", 12,
+		form, { TextColor3 = C.Muted, Font = BODY_FONT })
+	order(form)
+	refreshShopForm()
+	refreshShop()
+end
+
 -- ---------- Rahmen ----------
 
 local function showCategory(id)
@@ -1388,6 +1591,8 @@ local function showCategory(id)
 		refreshDetail()
 	elseif id == "Logs" then
 		send("Logs")
+	elseif id == "Shop" then
+		refreshShop()
 	end
 end
 
@@ -1546,6 +1751,7 @@ local function build()
 		buildWorld(newPage("World"))
 		buildLogs(newPage("Logs"))
 		buildEconomy(newPage("Economy"))
+		buildShop(newPage("Shop"))
 	end
 	buildLookup(newPage("Lookup"))
 	for _, page in pages do
@@ -1595,6 +1801,9 @@ function AdminPanel.Init()
 			if isOpen then
 				refreshEvents()
 				refreshWorld()
+				if currentCategory == "Shop" then
+					refreshShop()
+				end
 				if detailFrames[currentCategory] then
 					refreshList(false)
 					refreshTiles()

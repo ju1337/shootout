@@ -179,8 +179,10 @@ end
 local SHOP_RED = UITheme.MenuColors.Primary
 local SHOP_PANEL = Color3.fromRGB(14, 15, 18)
 local RARITY_ORDER = { Legendary = 4, Epic = 3, Rare = 2, Common = 1 }
--- Rand der Karte nach Seltenheit: je seltener, desto kräftiger (Transparenz, Dicke)
-local RARITY_STROKE = { Legendary = { 0.05, 2 }, Epic = { 0.2, 1.5 }, Rare = { 0.4, 1 }, Common = { 0.6, 1 } }
+-- Raster: 6 Karten pro Reihe über die ganze Breite, gleiche Abstände
+local GRID_COLUMNS, GRID_GAP, CARD_H = 6, 16, 318
+local CARD_W = math.floor((PAGE_W - (GRID_COLUMNS - 1) * GRID_GAP) / GRID_COLUMNS)
+local STAGE_H = 170
 
 -- Vorschaufläche: dunkle Fläche, von unten in der Farbe des Skins angeleuchtet, unten ein Strich in der Seltenheit.
 -- So unterscheiden sich die Karten auf einen Blick, auch wenn das Modell selbst dunkel ist.
@@ -200,10 +202,22 @@ local function stage(props, parent, tint, rarityColor)
 	return frame
 end
 
+-- Agent mit Skin so zeigen, dass die ganze Figur mittig ins Bild passt (Blickrichtung wie in der Lobby)
+local function showAgentFit(view, item, aspect, fill)
+	local figure = LobbyPages.ShowAgent(view, item)
+	local box, size = figure:GetBoundingBox()
+	local look = AgentFigure.CameraCFrame.LookVector
+	local halfV = math.rad(15)
+	local halfH = math.atan(math.tan(halfV) * (aspect or 1))
+	local radius = math.max(size.X, size.Z) / 2
+	local distance = math.max(size.Y / 2 / math.tan(halfV), radius / math.tan(halfH)) / (fill or 0.82) + radius
+	view.CurrentCamera.CFrame = CFrame.lookAt(box.Position - look * distance, box.Position)
+end
+
 -- Skin in eine Vorschau stellen (Waffen-Skin am Sturmgewehr, Agenten-Skin am Agenten)
 local function showSkin(view, item, aspect)
 	if item.Type == "Agent" then
-		LobbyPages.ShowAgent(view, item)
+		showAgentFit(view, item, aspect)
 	else
 		showWeapon(view, "Rifle", item, aspect, 0.86)
 	end
@@ -229,6 +243,24 @@ local function priceRow(props, parent, price, oldPrice, size)
 	return row
 end
 
+-- Karte im Raster: überall derselbe Rahmen (dunkel, fast deckend, feiner grauer Rand, beim Überfahren rot).
+-- Seltenheit zeigt nur die Vorschau (Strich unten und Schild), nicht der Rahmen.
+local function shopCard(props, parent)
+	props.BackgroundColor3 = SHOP_PANEL
+	props.BackgroundTransparency = 0.02
+	props.BorderSizePixel = 0
+	local card = make("Frame", props, parent)
+	UITheme.Corner(card, UITheme.Radius.XL)
+	local stroke = UITheme.Stroke(card, C.Border, 1)
+	card.MouseEnter:Connect(function()
+		stroke.Color = SHOP_RED
+	end)
+	card.MouseLeave:Connect(function()
+		stroke.Color = C.Border
+	end)
+	return card
+end
+
 -- Kaufen-Knopf je nach Lage: rot = leistbar, grau mit fehlendem Betrag = zu teuer, grün beschriftet = im Besitz
 local function setBuyState(button, item, price)
 	if Cosmetics.GetOwned(player)[item.Id] then
@@ -238,7 +270,8 @@ local function setBuyState(button, item, price)
 		button.SetText("KAUFEN")
 		button.SetColor(SHOP_RED, Color3.new(1, 1, 1))
 	else
-		button.SetText("NOCH " .. UITheme.FormatNumber(price - coins()) .. " MÜNZEN")
+		local missing = price - coins()
+		button.SetText(missing == 1 and "NOCH 1 MÜNZE" or ("NOCH " .. UITheme.FormatNumber(missing) .. " MÜNZEN"))
 		button.SetColor(C.MutedBack, C.Muted)
 	end
 end
@@ -257,14 +290,32 @@ end
 function LobbyPages.Shop(page)
 	local currentType = "Home"
 	local cards = {} -- [itemId] = { Buy = Chunky, Item = item }
-	local offer = ShopOffers.Daily(workspace:GetServerTimeNow())
+	-- Aktive Angebote (ShopOffers): offer = Hauptangebot der Startseite, offerById = günstigstes Angebot je Skin
+	local offer, offerById, offerSignature = nil, {}, ""
+	local function loadOffers()
+		local active = ShopOffers.Active(workspace:GetServerTimeNow())
+		local parts = {}
+		offer, offerById = active[1], {}
+		for _, entry in active do
+			local known = offerById[entry.Item.Id]
+			if not known or entry.Price < known.Price then
+				offerById[entry.Item.Id] = entry
+			end
+			table.insert(parts, entry.Item.Id .. ":" .. entry.Price .. ":" .. entry.EndsAt)
+		end
+		local signature = table.concat(parts, ",")
+		local changed = signature ~= offerSignature
+		offerSignature = signature
+		return changed
+	end
+	loadOffers()
 
 	local hint = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 12), Size = UDim2.fromOffset(600, 16),
 		Text = "", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, page)
 	local grid = make("ScrollingFrame", { Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
 		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.Border,
 		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y }, page)
-	make("UIGridLayout", { CellSize = UDim2.fromOffset(234, 318), CellPadding = UDim2.fromOffset(20, 20),
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(CARD_W, CARD_H), CellPadding = UDim2.fromOffset(GRID_GAP, GRID_GAP),
 		SortOrder = Enum.SortOrder.LayoutOrder }, grid)
 	-- Startseite: links das Angebot des Tages, rechts die Kategorien
 	local home = make("Frame", { Name = "Home", Position = UDim2.fromOffset(0, 54), Size = UDim2.fromOffset(PAGE_W, PAGE_H - 54),
@@ -289,26 +340,20 @@ function LobbyPages.Shop(page)
 	end
 	local function robuxCard(order, entry, isPass)
 		local id = isPass and entry.PassId or entry.ProductId
-		local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
-			LayoutOrder = order }, grid)
-		UITheme.Corner(card, UITheme.Radius.XL)
-		UITheme.Stroke(card, entry.Color, 1, 0.4)
-		local top = make("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.new(1, -20, 0, 160), BackgroundColor3 = entry.Color,
-			BackgroundTransparency = 0.75 }, card)
-		UITheme.Corner(top, UITheme.Radius.Large)
-		make("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(0.2, 0.8) }, top)
+		local card = shopCard({ LayoutOrder = order }, grid)
+		local top = stage({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, STAGE_H) }, card, entry.Color, entry.Color)
 		if entry.Items then
-			local view = viewport({ Size = UDim2.fromScale(1, 1) }, top)
-			showWeapon(view, "Rifle", Cosmetics.Get(entry.Items[1]), 214 / 160)
+			local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, top)
+			showWeapon(view, "Rifle", Cosmetics.Get(entry.Items[1]), (CARD_W - 16) / STAGE_H)
 		elseif entry.Coins then
-			UITheme.Coin(top, 70, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) })
+			UITheme.Coin(top, 70, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = 2 })
 		else
 			label({ Size = UDim2.fromScale(1, 1), Text = entry.Spins and "×" .. entry.Spins or (isPass and (entry.Badge or entry.Name) or "2× XP"),
-				TextSize = 46, Font = F.Display, TextColor3 = entry.Color, TextXAlignment = Enum.TextXAlignment.Center }, top)
+				TextSize = 46, Font = F.Display, TextColor3 = entry.Color, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 2 }, top)
 		end
 		if entry.Tag then
 			UITheme.Tag({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 8), Text = entry.Tag, TextSize = 12,
-				BackgroundColor3 = entry.Color, TextColor3 = C.PrimaryText }, top)
+				BackgroundColor3 = entry.Color, TextColor3 = C.PrimaryText, ZIndex = 3 }, top)
 		end
 		if not isPass and PaidRandom.IsRandomProduct(entry) then
 			UITheme.Chunky({ Name = "Odds", Position = UDim2.fromOffset(8, 8), Size = UDim2.fromOffset(96, 28), Color = C.Card,
@@ -316,9 +361,9 @@ function LobbyPages.Shop(page)
 				OddsPanel.Show("Glücksrad", OddsPanel.WheelRows())
 			end)
 		end
-		label({ Position = UDim2.fromOffset(16, 180), Size = UDim2.new(1, -32, 0, 28), Text = entry.Name, TextSize = 22,
+		label({ Position = UDim2.fromOffset(16, 188), Size = UDim2.new(1, -32, 0, 28), Text = entry.Name, TextSize = 22,
 			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		label({ Position = UDim2.fromOffset(16, 210), Size = UDim2.new(1, -32, 0, 44), Text = isPass and entry.Description
+		label({ Position = UDim2.fromOffset(16, 216), Size = UDim2.new(1, -32, 0, 44), Text = isPass and entry.Description
 			or RobuxConfig.Describe(entry), TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true,
 			TextYAlignment = Enum.TextYAlignment.Top }, card)
 		local buy = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
@@ -352,21 +397,19 @@ function LobbyPages.Shop(page)
 	local function sellCard(order, item, count, held)
 		local rarity = Cosmetics.Rarities[item.Rarity]
 		local value, price = RapConfig.Value(item.Id), RapConfig.SellPrice(item.Id)
-		local card = make("Frame", { BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, BorderSizePixel = 0,
-			LayoutOrder = order }, grid)
-		UITheme.Corner(card, UITheme.Radius.XL)
-		UITheme.Stroke(card, rarity.Color, 1, 0.5)
-		UITheme.AccentBar(card, rarity.Color)
-		local view = viewport({ Position = UDim2.fromOffset(0, 10), Size = UDim2.new(1, 0, 0, 160) }, card)
-		showWeapon(view, "Rifle", item, 234 / 160)
-		rapBadge(card, value)
+		local card = shopCard({ LayoutOrder = order }, grid)
+		local preview = stage({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 160) }, card,
+			item.Color or rarity.Color, rarity.Color)
+		local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, preview)
+		showWeapon(view, "Rifle", item, (CARD_W - 16) / 160)
+		rapBadge(card, value).Position = UDim2.new(1, -16, 0, 18)
 		if count > 1 then
 			UITheme.Tag({ Position = UDim2.fromOffset(10, 12), Text = "×" .. count, TextSize = 13, BackgroundColor3 = C.Secondary,
 				TextColor3 = C.Text, ZIndex = 3 }, card)
 		end
-		label({ Position = UDim2.fromOffset(16, 176), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
+		label({ Position = UDim2.fromOffset(16, 178), Size = UDim2.new(1, -32, 0, 28), Text = upper(item.Name), TextSize = 24,
 			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
-		label({ Position = UDim2.fromOffset(16, 206), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
+		label({ Position = UDim2.fromOffset(16, 208), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
 			Font = F.Bold, TextColor3 = rarity.Color }, card)
 		local free = count - held
 		label({ Position = UDim2.fromOffset(16, 224), Size = UDim2.new(1, -32, 0, 16), TextSize = 11, Font = F.Bold,
@@ -429,18 +472,14 @@ function LobbyPages.Shop(page)
 	-- Karte eines Skins im Raster
 	local function skinCard(order, item)
 		local rarity = Cosmetics.Rarities[item.Rarity]
-		local stroke = RARITY_STROKE[item.Rarity] or RARITY_STROKE.Common
-		local isOffer = offer and offer.Item.Id == item.Id
-		local price = isOffer and offer.Price or item.Price
-		local card = make("Frame", { Name = item.Id, BackgroundColor3 = SHOP_PANEL, BackgroundTransparency = 0.02,
-			BorderSizePixel = 0, LayoutOrder = order }, grid)
-		UITheme.Corner(card, UITheme.Radius.XL)
-		UITheme.Stroke(card, isOffer and SHOP_RED or rarity.Color, stroke[2], stroke[1])
-		UITheme.AccentBar(card, rarity.Color)
-		local preview = stage({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 170) }, card,
+		local itemOffer = offerById[item.Id]
+		local isOffer = itemOffer ~= nil
+		local price = isOffer and itemOffer.Price or item.Price
+		local card = shopCard({ Name = item.Id, LayoutOrder = order }, grid)
+		local preview = stage({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, STAGE_H) }, card,
 			item.Color or rarity.Color, rarity.Color)
 		local view = viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, preview)
-		showSkin(view, item, 218 / 170)
+		showSkin(view, item, (CARD_W - 16) / STAGE_H)
 		UITheme.Tag({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 8, 1, -8), Text = upper(rarity.Name),
 			TextSize = 11, BackgroundColor3 = rarity.Color, TextColor3 = C.PrimaryText, ZIndex = 3 }, preview)
 		-- Farbe des Skins als kleines Feld unten rechts
@@ -449,7 +488,7 @@ function LobbyPages.Shop(page)
 		UITheme.Corner(swatch, UITheme.Radius.Small)
 		UITheme.Stroke(swatch, Color3.new(1, 1, 1), 1, 0.55)
 		if isOffer then
-			UITheme.Tag({ Name = "Discount", Position = UDim2.fromOffset(18, 18), Text = "-" .. offer.Discount .. " %",
+			UITheme.Tag({ Name = "Discount", Position = UDim2.fromOffset(18, 18), Text = "-" .. itemOffer.Discount .. " %",
 				TextSize = 14, BackgroundColor3 = SHOP_RED, TextColor3 = Color3.new(1, 1, 1), ZIndex = 4 }, card)
 		end
 		if RapConfig.Value(item.Id) then
@@ -458,7 +497,7 @@ function LobbyPages.Shop(page)
 		label({ Position = UDim2.fromOffset(16, 186), Size = UDim2.new(1, -32, 0, 26), Text = upper(item.Name), TextSize = 22,
 			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		priceRow({ Position = UDim2.fromOffset(16, 218), Size = UDim2.fromOffset(0, 24) }, card, price,
-			isOffer and offer.OldPrice or nil, 22)
+			isOffer and itemOffer.OldPrice or nil, 22)
 		local buy = UITheme.Chunky({ Name = "BuyButton", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
 			Size = UDim2.new(1, -28, 0, 40), Color = C.MutedBack, Text = "", TextSize = 17 }, card, function()
 			if not Cosmetics.GetOwned(player)[item.Id] then
@@ -539,7 +578,8 @@ function LobbyPages.Shop(page)
 			local rarity = Cosmetics.Rarities[item.Rarity]
 			UITheme.Stroke(panel, SHOP_RED, 1.5, 0.15)
 			UITheme.AccentBar(panel, SHOP_RED, { Thickness = 4 })
-			UITheme.Tag({ Position = UDim2.fromOffset(24, 22), Text = "ANGEBOT DES TAGES", TextSize = 16, BackgroundColor3 = SHOP_RED,
+			UITheme.Tag({ Position = UDim2.fromOffset(24, 22), Text = offer.Manual and "SONDERANGEBOT" or "ANGEBOT DES TAGES",
+				TextSize = 16, BackgroundColor3 = SHOP_RED,
 				TextColor3 = Color3.new(1, 1, 1) }, panel)
 			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -150, 0, 28), Size = UDim2.fromOffset(160, 16),
 				Text = "ENDET IN", TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, panel)
@@ -659,7 +699,7 @@ function LobbyPages.Shop(page)
 			end
 		end
 		table.sort(list, function(a, b)
-			local aOffer, bOffer = offer and offer.Item == a, offer and offer.Item == b
+			local aOffer, bOffer = offerById[a.Id] ~= nil, offerById[b.Id] ~= nil
 			if aOffer ~= bOffer then
 				return aOffer
 			end
@@ -700,8 +740,7 @@ function LobbyPages.Shop(page)
 		while true do
 			task.wait(1)
 			local now = workspace:GetServerTimeNow()
-			if offer and now >= offer.EndsAt then
-				offer = ShopOffers.Daily(now)
+			if loadOffers() then
 				fill()
 			elseif countdown and offer then
 				countdown.Text = ShopOffers.FormatLeft(offer.EndsAt - now)

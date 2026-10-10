@@ -640,6 +640,17 @@ function AdminService.Init(manager)
 			return "+" .. amount .. " RZ (jetzt " .. serverShared("RedPointsService").Get(admin) .. ")"
 		end,
 
+		-- Shop-Angebote (ShopOfferService, alle Server): Skin, { Discount, Hours, Featured } / beenden / Tagesangebot an-aus
+		ShopOfferAdd = function(itemId, options, admin)
+			return serverShared("ShopOfferService").Add(admin, itemId, options)
+		end,
+		ShopOfferRemove = function(itemId, _, admin)
+			return serverShared("ShopOfferService").Remove(admin, itemId)
+		end,
+		ShopOfferAuto = function(on, _, admin)
+			return serverShared("ShopOfferService").SetAuto(admin, on)
+		end,
+
 		SetSetting = function(key, value)
 			if typeof(key) ~= "string" or not GameSettings.Def(key) or typeof(value) ~= "number" then
 				return "Ungültige Einstellung."

@@ -3089,6 +3089,17 @@ end
 local function openLobbyTab(id)
 	local win = newWindow(id)
 	local pageId = menuTab[id].PageId or id
+	-- SHOP: deckender Grund statt Glas (die Welt soll nicht durch die Karten scheinen)
+	if pageId == "Shop" then
+		local panel = win.Frame:FindFirstChild("Panel")
+		if panel then
+			panel.BackgroundTransparency = 0.03
+		end
+		local sidebar = win.Frame:FindFirstChild("Sidebar")
+		if sidebar then
+			sidebar.BackgroundTransparency = 0.03
+		end
+	end
 	local scale = math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
 	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H),
 		BackgroundTransparency = 1, ZIndex = 5 }, win.Body)

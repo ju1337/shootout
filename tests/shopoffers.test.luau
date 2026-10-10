@@ -79,6 +79,46 @@ Remotes.ShopAction.OnServerEvent:Fire(alice, "Buy", other.Id)
 step(0.2)
 check(alice:GetAttribute("Coins") == before - other.Price, "anderer Skin kostet den normalen Preis")
 
+-- Angebote aus dem Admin-Panel (ShopOfferService): gespeichert, an alle verteilt, Server verlangt den Preis
+local ShopOfferService = require("ShopOfferService")
+ShopOfferService.Init()
+step(1)
+local chrom = Cosmetics.Get("W_Chrom")
+check(string.find(ShopOfferService.Add(alice, "W_Chrom", { Discount = 95, Hours = 5 }), "Rabatt", 1, true) ~= nil,
+	"zu hoher Rabatt wird abgelehnt")
+check(string.find(ShopOfferService.Add(alice, "W_Chrom", { Discount = 50, Hours = 0 }), "Dauer", 1, true) ~= nil,
+	"Dauer 0 wird abgelehnt")
+check(string.find(ShopOfferService.Add(alice, "AS_Creator", { Discount = 50, Hours = 5 }), "nicht im Shop", 1, true) ~= nil,
+	"Creator-Skin geht nicht ins Angebot")
+local msg = ShopOfferService.Add(alice, "W_Chrom", { Discount = 50, Hours = 2, Featured = true })
+check(string.find(msg, "gestartet", 1, true) ~= nil, "Angebot starten: " .. msg)
+local t = workspace:GetServerTimeNow()
+local featured = ShopOffers.Featured(t)
+check(featured and featured.Item == chrom and featured.Manual and featured.Price == 700 and featured.Discount == 50,
+	"Hauptangebot steht vorne mit 50 %")
+check(game:GetService("ReplicatedStorage"):GetAttribute(ShopOffers.Attribute) ~= nil, "Stand liegt im Attribut für die Clients")
+local stored = SIM.DataStore("ShopOffers_v1").Data.Config
+check(type(stored) == "table" and #stored.Offers == 1, "Angebot ist gespeichert")
+check(ShopOffers.PriceFor(chrom, t) == 700, "PriceFor nimmt das Admin-Angebot")
+check(ShopOffers.PriceFor(chrom, t + 3 * 3600) == chrom.Price, "nach Ablauf wieder normaler Preis")
+before = alice:GetAttribute("Coins")
+Remotes.ShopAction.OnServerEvent:Fire(alice, "Buy", "W_Chrom")
+step(0.2)
+check(alice:GetAttribute("Coins") == before - 700, "Kauf kostet den Admin-Angebotspreis")
+ShopOfferService.Add(alice, "W_Lava", { Discount = 20, Hours = 1 })
+check(#ShopOffers.Config().Offers == 2, "zwei Angebote gleichzeitig")
+check(string.find(ShopOfferService.Remove(alice, "W_Lava"), "beendet", 1, true) ~= nil, "Angebot beenden")
+check(#ShopOffers.Config().Offers == 1, "beendetes Angebot ist weg")
+ShopOfferService.SetAuto(alice, false)
+local onlyManual = true
+for _, offer in ShopOffers.Active(workspace:GetServerTimeNow()) do
+	onlyManual = onlyManual and offer.Manual == true
+end
+check(onlyManual and not ShopOffers.Config().AutoDaily, "Angebot des Tages abschaltbar")
+ShopOfferService.SetAuto(alice, true)
+check(ShopOffers.Config().AutoDaily, "Angebot des Tages wieder an")
+check(ShopOffers.FormatLeft(26 * 3600 + 5) == "1 T 02:00:05", "Restzeit über einen Tag")
+
 if failures > 0 then
 	error(failures .. " Fehler")
 end
