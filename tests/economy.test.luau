@@ -165,6 +165,7 @@ check(store.Data.u1.Owned.W_Gluecksklee == 2, "Skins bleiben im Spielstand")
 
 -- Studio ohne DataStore-Zugriff: Stand nur für die Sitzung, Verkaufen geht trotzdem (nichts wird gespeichert)
 SIM.IsStudio = true
+require("DevConfig").StudioBoost = false -- hier zählt der echte Stand
 store.FailNext = math.huge
 local tester = SIM.Join("Tester")
 step(120) -- alle Wiederholungen schlagen fehl

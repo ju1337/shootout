@@ -805,6 +805,16 @@ function ProgressService.TestSeasonEnd(player)
 	return true
 end
 
+-- Studio: Münzen, RAP und RZ zum Entwickeln auffüllen (DevConfig), nie im echten Spiel
+local function devBoost(profile)
+	local DevConfig = require(ReplicatedStorage:WaitForChild("Shared").DevConfig)
+	if RunService:IsStudio() and DevConfig.StudioBoost then
+		profile.Coins = math.max(profile.Coins or 0, DevConfig.Coins)
+		profile.Rap = math.max(profile.Rap or 0, DevConfig.Rap)
+		profile.RedPoints = math.max(tonumber(profile.RedPoints) or 0, DevConfig.RedPoints)
+	end
+end
+
 local function load(player)
 	-- Neuer Modus = neue Match-Abrechnung
 	player:GetAttributeChangedSignal("Mode"):Connect(function()
@@ -815,6 +825,7 @@ local function load(player)
 		ProgressService.Sync(player)
 	end)
 	profiles[player] = defaultProfile()
+	devBoost(profiles[player]) -- Studio ohne DataStore: gleich mit vollen Taschen
 	ProgressService.Sync(player)
 	if not store then
 		return
@@ -836,6 +847,7 @@ local function load(player)
 	end
 	local profile = toProfile(result)
 	profiles[player] = profile
+	devBoost(profile)
 	local refund = ProgressService.RefundUnfitAttachments(profile) -- Aufsätze, die nicht (mehr) auf ihre Waffe passen
 	if refund > 0 then
 		Telemetry.Economy(player, "Source", "Coins", refund, profile.Coins, "Gameplay", "UnfitAttachments", "Aufsatz passt nicht")
