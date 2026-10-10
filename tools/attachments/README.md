@@ -9,6 +9,7 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
     python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/ExtendedMag.glb
     python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/FastMag.glb Magazine_Fast 0.07 0.05 0.5
+    python3 tools/attachments/mag_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/DrumMag.glb Magazine_Drum 0.06 0.02 0.6
     python3 tools/attachments/muzzle_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/Compensator.glb Compensator
     python3 tools/attachments/muzzle_full.py <meshy.fbx> art/sources/Rifle.glb art/sources/Attachments/MuzzleBrake.glb MuzzleBrake
     python3 tools/attachments/rifle_barrel.py art/sources/Rifle.glb art/sources/Rifle.glb   # einmalig: Lauf als eigenes Teil
@@ -27,7 +28,10 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   eingebauten AR-Magazins; Point_Mount = Mitte des eingebauten Magazins, um 0,07 Studs versetzt (SEAT_UP/SEAT_BACK),
   damit der Magazinkörper im Schacht steckt (sonst stecken nur die Lippen drin und es sieht schwebend aus).
   Schnellmagazin: 30er mit Zugschlaufe, 752 Dreiecke, Faktor 0,5 (Tiefe 0,31 wie der Schacht), 0,07 hoch / 0,05 nach
-  hinten versetzt (Körper mittig im Schacht). Im Spiel ersetzt es das eingebaute Magazin
+  hinten versetzt (Körper mittig im Schacht).
+  Trommelmagazin: 1.110 Dreiecke, Faktor 0,6 (Trommel 0,74 Durchmesser, 0,44 breit); der Hals des Meshy-Modells ist
+  im Verhältnis zur Trommel schmal (0,15 tief statt 0,31 wie der Schacht) – er steckt mittig im Schacht, die Lippen
+  enden an der Unterkante (0,06 hoch versetzt), damit nichts seitlich aus dem Gehäuse ragt. Im Spiel ersetzt es das eingebaute Magazin
   und wandert beim Nachladen mit.
 - **muzzle_full**: Mündungsaufsätze in voller Qualität (Kompensator 800 Dreiecke, 0,47 lang; Mündungsbremse 832 Dreiecke,
   0,54 lang; Texturen 4096), 0,15 Studs dick, Ports oben;
@@ -50,4 +54,4 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 - **grip_v2**: Point_Mount (Oberkante der Schienenklemme), Point_Front (Richtung zum Lauf).
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
-`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`). Lader: `src/shared/GunModels.lua`.
+`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`). Lader: `src/shared/GunModels.lua`.

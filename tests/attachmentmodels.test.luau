@@ -39,6 +39,8 @@ build("VerticalGrip", att, {{"Point_Front", 0.0000,0.4131,1.7871, 0.0200,0.0200,
 build("Laser", att, {{"Laser_01", -0.2454,0.5330,2.3204, 0.1503,0.1076,0.0192},{"Laser_24", -0.2604,0.5417,2.0364, 0.1742,0.1960,0.0351},{"Laser_47", -0.2647,0.5430,1.9180, 0.0790,0.0488,0.0084},{"Point_Front", 0.0000,0.4131,1.7871, 0.0200,0.0200,0.0200},{"Point_Mount", 0.0000,0.4131,1.5871, 0.0200,0.0200,0.0200}}, CFrame.new(9, 1, -7) * CFrame.Angles(0, math.rad(180), 0))
 -- Schnellmagazin (art/sources/Attachments/FastMag.glb): 30er mit Zugschlaufe, sitzt wie das 60er tief im Schacht
 build("FastMag", att, {{"Magazine_Fast_01", 0.0021,-0.2993,0.7507, 0.1208,0.9539,0.4598},{"Point_Front", -0.0013,-0.1940,1.0495, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0013,-0.1940,0.7495, 0.0300,0.0300,0.0300}}, CFrame.new(4, -6, 9) * CFrame.Angles(0, math.rad(180), 0))
+-- Trommelmagazin (art/sources/Attachments/DrumMag.glb): Hals im Schacht, Trommel darunter
+build("DrumMag", att, {{"Magazine_Drum_01", -0.0155,-0.3941,0.7865, 0.4408,1.1242,0.7347},{"Point_Front", -0.0013,-0.1906,1.0180, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0013,-0.1906,0.7180, 0.0300,0.0300,0.0300}}, CFrame.new(-3, 7, 15) * CFrame.Angles(0, math.rad(180), 0))
 local GunModels = require("GunModels")
 local plain = GunModels.AimOffset("Rifle")
 local aim = GunModels.AimOffset("Rifle", { "HoloSight", "Suppressor" })
@@ -193,6 +195,20 @@ do
 		print("HINWEIS Schnellmagazin relativ zum eingebauten " .. tostring(r))
 		-- Mitte wie im Modell: 0,1 unter der Mitte des eingebauten Magazins, mittig, kaum vor/zurück
 		check(math.abs(r.X) < 0.01 and r.Y < -0.05 and math.abs(r.Z) < 0.1, "Schnellmagazin sitzt nicht im Schacht")
+	end
+end
+-- Trommelmagazin: ersetzt das eingebaute Magazin (statt Zylinder-Klotz), hängt mittig darunter
+do
+	local base = GunModels.Build("Rifle", nil, {})
+	local d = GunModels.Build("Rifle", nil, { "DrumMag" })
+	local part = d:FindFirstChild("AttDrumMag_Magazine_Drum_01")
+	check(part ~= nil and d:FindFirstChild("Magazine") == nil and d:FindFirstChild("AttDrum") == nil,
+		"Trommelmagazin-Modell nicht angebaut")
+	if part then
+		check(part:GetAttribute("Group") == "Magazine", "Trommelmagazin nicht in der Gruppe Magazine")
+		local r = base:FindFirstChild("Magazine").CFrame:PointToObjectSpace(part.Position)
+		print("HINWEIS Trommelmagazin relativ zum eingebauten " .. tostring(r))
+		check(math.abs(r.X) < 0.02 and r.Y < -0.2, "Trommelmagazin sitzt nicht unter dem Schacht")
 	end
 end
 if failures == 0 then print("HINWEIS alles ok") end
