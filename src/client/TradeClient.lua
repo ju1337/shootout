@@ -545,8 +545,10 @@ end
 -- ---------- Start ----------
 
 function TradeClient.Init()
-	gui = make("ScreenGui", { Name = "Trade", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 13,
+	-- über dem Fenster der offenen Welt (ExtinctionWindow, DisplayOrder 20), das Menü blendet es nicht aus (KeepOverMenu)
+	gui = make("ScreenGui", { Name = "Trade", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 21,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
+	gui:SetAttribute("KeepOverMenu", true)
 	root = UITheme.ScaledRoot(gui, nil, nil, 0.55)
 	requestList = make("Frame", { Name = "Requests", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 210),
 		Size = UDim2.fromOffset(340, 340), BackgroundTransparency = 1 }, root)

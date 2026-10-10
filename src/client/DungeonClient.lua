@@ -87,7 +87,10 @@ local function readState()
 end
 
 local function update()
-	gui.Enabled = state ~= nil
+	-- nicht durch das Menü der offenen Welt scheinen (das blendet beim Öffnen alles aus; hier nicht wieder einschalten)
+	local playerGui = player:FindFirstChild("PlayerGui")
+	local menu = playerGui and playerGui:FindFirstChild("ExtinctionWindow")
+	gui.Enabled = state ~= nil and not (menu and menu.Enabled)
 	if not state then
 		return
 	end

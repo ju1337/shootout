@@ -1015,7 +1015,8 @@ function Inv.hideHud(on)
 	if on and not Inv.hiddenGuis then
 		Inv.hiddenGuis = {}
 		for _, gui in player:WaitForChild("PlayerGui"):GetChildren() do
-			if gui:IsA("ScreenGui") and gui ~= windowGui and gui.Enabled then
+			-- Tauschen (Anfragen laufen sonst ungesehen ab) bleibt sichtbar und liegt über dem Menü (TradeClient)
+			if gui:IsA("ScreenGui") and gui ~= windowGui and gui.Enabled and not gui:GetAttribute("KeepOverMenu") then
 				gui.Enabled = false
 				table.insert(Inv.hiddenGuis, gui)
 			end
@@ -4289,7 +4290,9 @@ function ExtinctionClient.Init()
 	paintRedPoints()
 	player:GetAttributeChangedSignal("Coins"):Connect(function()
 		coinsText.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0)
-		if window and window.Coins then
+		if window and window.Stand == "Stand_Red" and window.Refresh then
+			window.Refresh() -- der Schieber zeigt oben RZ statt Münzen
+		elseif window and window.Coins then
 			window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
 		end
 	end)
@@ -4312,7 +4315,13 @@ function ExtinctionClient.Init()
 		if kind == "Status" then
 			showToast(tostring(a), b == true)
 		elseif kind == "Loot" and type(a) == "table" then
-			openLoot(a)
+			-- nur öffnen/auffrischen, wenn kein anderes Fenster offen ist (ein Update, das nach dem Schließen ankommt,
+			-- holte die Tasche sonst zurück, ohne dass der Server einen noch als Zuschauer kennt)
+			if not window or (window.Kind == "Loot" and window.Loot and window.Loot.Id == a.Id) then
+				openLoot(a)
+			else
+				sendAction("LootClose", a.Id)
+			end
 		elseif kind == "LootClosed" then
 			if window and window.Kind == "Loot" and window.Loot and window.Loot.Id == a then
 				window.Loot = nil -- schon weg: nicht noch einmal abmelden
