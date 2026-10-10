@@ -167,7 +167,10 @@ function BloodMoonService.Init(opts)
 		task.spawn(function()
 			while run == running do
 				task.wait(1)
-				BloodMoonService.Step()
+				local ok, err = pcall(BloodMoonService.Step) -- ein Fehler darf den Blutmond nicht für den Rest des Servers abschalten
+				if not ok then
+					warn("Blutmond: " .. tostring(err))
+				end
 			end
 		end)
 	end

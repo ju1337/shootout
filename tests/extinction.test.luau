@@ -182,6 +182,36 @@ local ammoSlot = slot(alice, ExtinctionConfig.HotbarSlots + 1)
 check(ammoSlot and ammoSlot.Id == "Ammo_Rifle" and ammoSlot.N == 60, "Munition hinten in der Tasche (60)")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
 check(slot(alice, 2) and slot(alice, 2).Id == "Pistol", "Pistole auf Platz 2")
+-- Verkauf einer geladenen Waffe: die Patronen im Magazin bleiben
+do
+	local bagState = InventoryService.GetBag(alice)
+	local function count9mm()
+		local n = 0
+		for _, it in bagState.Slots do
+			if it.Id == "Ammo_9mm" then
+				n += it.Count
+			end
+		end
+		return n
+	end
+	InventoryService.Buy(alice, "Stand_Weapons", "Pistol")
+	local extra
+	for s, it in bagState.Slots do
+		if it.Id == "Pistol" and s ~= 2 then
+			extra = s
+		end
+	end
+	local ammoBefore = count9mm()
+	bagState.Slots[extra].Mag = 7
+	check(InventoryService.Sell(alice, extra) == true and bagState.Slots[extra] == nil and count9mm() == ammoBefore + 7,
+		"verkaufte Pistole gibt ihre 7 Patronen zurück (" .. count9mm() - ammoBefore .. ")")
+	for s, it in bagState.Slots do -- spätere Prüfungen erwarten keine 9mm-Munition
+		if it.Id == "Ammo_9mm" then
+			bagState.Slots[s] = nil
+		end
+	end
+	InventoryService.Changed(alice)
+end
 moveTo(alice, Vector3.new(36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Items", "Bandage", 3) == true, "drei Verbände")
 check(slot(alice, 3) and slot(alice, 3).N == 3, "Verbände gestapelt auf Platz 3")

@@ -56,7 +56,7 @@ local TIER_HOLD = { 1.8, 2.2, 2.6, 3.1 }
 
 -- Banner/Fortschritt: Farbe je Stil; Ziel-Meldungen: Farbe je Seite
 local STYLES = { Win = C.Ally, Loss = C.Enemy, Info = C.Primary, Neutral = C.Muted, Alert = ORANGE,
-	Level = C.Primary, Pass = C.Gold, Prestige = ORANGE }
+	Level = C.Primary, Pass = C.Gold, Prestige = ORANGE, Good = C.Good, Warning = RED }
 local SIDES = { Ally = C.Ally, Enemy = C.Enemy, Alert = ORANGE, Neutral = C.Text }
 
 local MEDAL_TOP = 170       -- Oberkante der Medaille unter der Bildschirmmitte: mit Abstand unter Fadenkreuz und Kill-Meldung,

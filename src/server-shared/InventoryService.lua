@@ -739,6 +739,17 @@ function InventoryService.Sell(player, slot, count)
 			table.insert(rest, { Id = id, Count = 1 })
 		end
 	end
+	-- Patronen im Magazin auch (sonst wären sie mit der Waffe weg)
+	local ammoId = item.Count <= 0 and (tonumber(item.Mag) or 0) > 0 and ExtinctionConfig.AmmoFor(item.Id)
+	if ammoId and ExtinctionConfig.Get(ammoId) then
+		local left = item.Mag - Inventory.Add(state.Bag, ammoId, item.Mag)
+		if left > 0 then
+			left -= InventoryService.GiveStash(player, ammoId, left)
+		end
+		if left > 0 then
+			table.insert(rest, { Id = ammoId, Count = left })
+		end
+	end
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if #rest > 0 and root and InventoryService.DropItems then

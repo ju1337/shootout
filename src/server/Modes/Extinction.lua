@@ -557,7 +557,8 @@ function Extinction.Init(modeManager)
 			if type(index) == "number" and index >= 1 and index <= 20 then
 				Telemetry.Onboarding(player, 2 + math.floor(index), "Tutorial:" .. tostring(stepId))
 			end
-			if stepId == "Equip" or stepId == "Leave" then
+			-- nur während eines laufenden Tutorials (sonst könnte jeder Client die Waffe in der Safe Zone freischalten)
+			if player:GetAttribute("ExtTutorial") == true and (stepId == "Equip" or stepId == "Leave") then
 				player:SetAttribute("TutorialEquip", true)
 			end
 			return
