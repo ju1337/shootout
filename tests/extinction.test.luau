@@ -244,6 +244,16 @@ do
 	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Done")
 	check(alice:GetAttribute("TutorialEquip") == nil and profile.TutorialDone == nil,
 		"ohne laufendes Tutorial: keine Waffen-Freigabe, kein Abschluss (Badge)")
+	-- Wiederholung über GUIDE: "Start" setzt das Tutorial wieder in Gang (Waffe ziehen im Camp erlaubt)
+	step(0.3)
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Start")
+	step(0.3)
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Step", 3, "Equip")
+	check(alice:GetAttribute("ExtTutorial") == true and alice:GetAttribute("TutorialEquip") == true,
+		"Tutorial-Wiederholung: Waffe ziehen im Camp wieder erlaubt")
+	step(0.3)
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Skip")
+	check(alice:GetAttribute("ExtTutorial") == nil and alice:GetAttribute("TutorialEquip") == nil, "Wiederholung beendet")
 	profile.TutorialDone = doneBefore
 	alice:SetAttribute("ExtTutorial", wasRunning)
 end

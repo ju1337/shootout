@@ -229,10 +229,12 @@ function HUD.Init(weaponClient)
 			leaveButton.Button.Position = UDim2.new(0, 16 + 160 + 12, 0, top)
 			match.Vitals.AnchorPoint = Vector2.new(0, 0)
 			match.Vitals.Position = UDim2.new(0, 16, 0, top + 172)
+			-- offene Welt: unten in der Mitte liegt die Hotbar (Tasche) – Munition und Geld darüber
+			local lift = Modes.IsSurvival(player:GetAttribute("Mode")) and 86 or 0
 			match.Ammo.AnchorPoint = Vector2.new(0, 1)
-			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14)
+			match.Ammo.Position = UDim2.new(0.5, 12, 1, -14 - lift)
 			moneyText.AnchorPoint = Vector2.new(0, 1)
-			moneyText.Position = UDim2.new(0.5, 12, 1, -116)
+			moneyText.Position = UDim2.new(0.5, 12, 1, -116 - lift)
 			moneyText.TextXAlignment = Enum.TextXAlignment.Left
 		else
 			local minimapTop = belowTopbar(66, 10)

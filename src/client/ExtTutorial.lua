@@ -265,6 +265,9 @@ function ExtTutorial.Start(withIntro)
 	if not withIntro then
 		state.Active = true
 		state.Started = true
+		if player:GetAttribute("ExtTutorial") ~= true then
+			Remotes.ExtAction:FireServer("Tutorial", "Start") -- Wiederholung: der Server erlaubt dann wieder das Waffe-Ziehen im Camp
+		end
 		enterStep(1)
 		return
 	end
@@ -368,7 +371,7 @@ local function tick()
 		return
 	end
 	-- Fenster offen: Tafel aus (das Menü liegt ohnehin darüber), Text neu (Tasten können sich ändern)
-	local windowOpen = windowKind() ~= nil
+	local windowOpen = windowKind() ~= nil or UITheme.IsMenuOpen() -- auch Weltkarte (N) und andere Vollbild-Menüs
 	panel.Visible = not windowOpen
 	bodyText.Text = step.Text()
 	local target = step.Target and not windowOpen and nearestStand(step.Target) or nil

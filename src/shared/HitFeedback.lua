@@ -121,11 +121,31 @@ end
 
 -- ---------- Bausteine ----------
 
+local running = setmetatable({}, { __mode = "k" }) -- [Objekt] = laufende Tweens (zum Abbrechen beim nächsten Treffer)
 local function tween(object, time, goals, style, direction, delay)
 	local info = TweenInfo.new(time, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out, 0, false, delay or 0)
 	local animation = TweenService:Create(object, info, goals)
 	animation:Play()
+	local list = running[object] or {}
+	running[object] = list
+	for i = #list, 1, -1 do
+		if list[i].PlaybackState ~= Enum.PlaybackState.Playing and list[i].PlaybackState ~= Enum.PlaybackState.Delayed then
+			table.remove(list, i)
+		end
+	end
+	table.insert(list, animation)
 	return animation
+end
+
+-- Laufendes Ausblenden des vorigen Treffers abbrechen: direkt gesetzte Werte hält ein alter Tween sonst nicht auf, und der
+-- neue Hitmarker wäre bei schnellen Treffern (Pistole) nur ein Bild lang zu sehen
+local function halt(...)
+	for _, object in { ... } do
+		for _, animation in running[object] or {} do
+			animation:Cancel()
+		end
+		running[object] = nil
+	end
 end
 
 -- Strich (bzw. Fläche) mit dunklem Rand, Mitte als Bezugspunkt, zunächst unsichtbar
@@ -175,6 +195,7 @@ function HITMARKERS.Classic(root)
 		local big = kind == "Kill" or kind == "Down"
 		local distance = big and 17 or 12.7
 		for _, entry in lines do
+			halt(entry.Line, entry.Outline)
 			entry.Line.Position = at(entry.Dir, distance)
 			entry.Line.Size = UDim2.fromOffset(big and 3 or 2.5, big and 15 or 11)
 			entry.Line.BackgroundColor3 = COLORS[kind]
@@ -339,6 +360,13 @@ function HITMARKERS.Precision(root)
 		local kill = kind == "Kill"
 		local boost = math.min(combo - 1, MAX_BOOST)
 		local radius = kind == "Down" and 14 or 11
+		halt(ring, ringLine, inner, innerLine, dot, dotOutline)
+		for _, entry in ticks do
+			halt(entry.Frame, entry.Outline)
+		end
+		for _, entry in arcs do
+			halt(entry.Frame, entry.Line)
+		end
 		if kill then
 			-- Ring weg, stattdessen vier Bögen, die sich drehend lösen
 			ringLine.Transparency = 1

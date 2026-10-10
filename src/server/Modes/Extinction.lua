@@ -573,6 +573,13 @@ function Extinction.Init(modeManager)
 			end
 			return
 		end
+		if result == "Start" then
+			-- Tutorial noch einmal über GUIDE: wie beim ersten Mal laufen lassen (Waffe in der Safe Zone ziehen usw.)
+			if members[player] then
+				player:SetAttribute("ExtTutorial", true)
+			end
+			return
+		end
 		if result == "Resume" then
 			-- zurück in der Safe Zone oder nach dem Markt mitten im Tutorial: Waffe ziehen wieder erlauben
 			if player:GetAttribute("ExtTutorial") == true and (stepId == "Equip" or stepId == "Leave") then
@@ -590,10 +597,14 @@ function Extinction.Init(modeManager)
 			end
 		end
 		local profile = ProgressService.Get(player)
+		local first = profile ~= nil and profile.TutorialDone ~= true
 		if profile then
 			profile.TutorialDone = true
 		end
 		player:SetAttribute("ExtTutorial", nil)
+		if not first then
+			return -- Wiederholung über GUIDE: nicht noch einmal zählen
+		end
 		Telemetry.Onboarding(player, TUTORIAL_DONE_STEP, result == "Skip" and "TutorialSkipped" or "TutorialDone")
 		if result ~= "Skip" then
 			Badges.Trigger(player, "Tutorial")

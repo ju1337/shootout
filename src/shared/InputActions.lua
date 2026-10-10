@@ -56,7 +56,8 @@ local KEY_NAMES = {
 	[Enum.UserInputType.MouseButton1] = "LMB", [Enum.UserInputType.MouseButton2] = "RMB",
 	[Enum.KeyCode.LeftShift] = "SHIFT", [Enum.KeyCode.LeftControl] = "STRG", [Enum.KeyCode.One] = "1",
 	[Enum.KeyCode.Two] = "2", [Enum.KeyCode.Tab] = "TAB", [Enum.KeyCode.Four] = "4", [Enum.KeyCode.Five] = "5",
-	[Enum.KeyCode.Six] = "6",
+	[Enum.KeyCode.Six] = "6", [Enum.KeyCode.Three] = "3", [Enum.KeyCode.Seven] = "7", [Enum.KeyCode.Eight] = "8",
+	[Enum.KeyCode.Nine] = "9",
 }
 
 InputActions.HoldTime = 0.35 -- so lange halten, bis eine PadHold-Aktion auslöst

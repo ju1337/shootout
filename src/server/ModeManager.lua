@@ -121,7 +121,7 @@ function ModeManager.Join(player, modeId, here)
 	end
 
 	switching[player] = true
-	local ok, err = pcall(function()
+	local switched, err = pcall(function()
 		if current and modules[current] then
 			modules[current].RemovePlayer(player)
 		end
@@ -133,7 +133,7 @@ function ModeManager.Join(player, modeId, here)
 		module.AddPlayer(player)
 	end)
 	switching[player] = nil -- auch nach einem Fehler: sonst ginge für diesen Spieler bis zum Neubeitritt kein Wechsel mehr
-	if not ok then
+	if not switched then
 		warn("Moduswechsel nach " .. tostring(modeId) .. " fehlgeschlagen: " .. tostring(err))
 		pcall(module.RemovePlayer, player) -- halb hinzugefügt: aufräumen
 		player:SetAttribute("Mode", nil)
