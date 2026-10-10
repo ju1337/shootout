@@ -232,6 +232,19 @@ check(zombieHumanoid.Health == zombieHumanoid.MaxHealth, "langsam: kein Schaden"
 quad.PrimaryPart.AssemblyLinearVelocity = Vector3.new(0, 0, -50)
 quad.PrimaryPart.Touched:Fire(zombie.Torso)
 check(zombieHumanoid.Health < zombieHumanoid.MaxHealth, "schnell: Zombie nimmt Schaden")
+-- gemeldetes Tempo kommt vom Fahrer-Client: höchstens das Fahrzeug-Maximum, und nur Zombies direkt am Fahrzeug
+local big = ZombieService.Spawn(quad.PrimaryPart.Position + Vector3.new(0, 0, 8))
+local bigHumanoid = big.Humanoid
+bigHumanoid.MaxHealth, bigHumanoid.Health = 1000, 1000
+quad.PrimaryPart.AssemblyLinearVelocity = Vector3.new(0, 0, -100000)
+quad.PrimaryPart.Touched:Fire(big.Torso)
+check(bigHumanoid.Health >= 1000 - ExtinctionConfig.Vehicles.Quad.Speed * 1.1 * 2 - 0.01 and bigHumanoid.Health < 1000,
+	"Riesen-Tempo zählt nur bis zum Fahrzeug-Maximum (" .. bigHumanoid.Health .. ")")
+local far = ZombieService.Spawn(quad.PrimaryPart.Position + Vector3.new(0, 0, 200))
+far.Humanoid.MaxHealth, far.Humanoid.Health = 1000, 1000
+quad.PrimaryPart.Touched:Fire(far.Torso)
+check(far.Humanoid.Health == 1000, "ferner Zombie: keine Berührung, kein Schaden")
+quad.PrimaryPart.AssemblyLinearVelocity = Vector3.zero
 
 -- Tempo-Check: zu schnell versetzt -> zurück
 local before = quad.PrimaryPart.Position

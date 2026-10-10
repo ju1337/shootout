@@ -740,7 +740,15 @@ function VehicleService.WatchRam(player, model, chassis)
 			return
 		end
 		local humanoid = zombie:FindFirstChildOfClass("Humanoid")
-		local speed = chassis.AssemblyLinearVelocity.Magnitude
+		-- Tempo und Berührung meldet der Fahrer-Client (Netzwerk-Besitzer): Tempo auf das Fahrzeug-Maximum begrenzen
+		-- und nur Zombies direkt am Fahrzeug zählen (sonst Sofort-Kills an Bossen aus der Ferne)
+		local entry = active[player]
+		local maxSpeed = entry and entry.Config and entry.Config.Speed and entry.Config.Speed * 1.1 or 0
+		local speed = math.min(chassis.AssemblyLinearVelocity.Magnitude, maxSpeed)
+		local root = zombie:FindFirstChild("HumanoidRootPart")
+		if not root or (root.Position - chassis.Position).Magnitude > chassis.Size.Magnitude / 2 + 8 then
+			return
+		end
 		local now = os.clock()
 		if not humanoid or humanoid.Health <= 0 or speed < RAM_SPEED or (rammed[zombie] and now - rammed[zombie] < 0.6) then
 			return

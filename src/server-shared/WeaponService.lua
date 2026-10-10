@@ -315,7 +315,7 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 	-- Keine Wand dazwischen (Charaktere zählen nicht als Hindernis)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = trackedModels()
+	params.FilterDescendantsInstances = trackedModels(true)
 	local blocked = workspace:Raycast(shotOrigin, offset.Unit * math.max(0, distance - 0.6), params)
 	if blocked and blocked.Instance.CanCollide and blocked.Instance.Transparency < 0.9 then
 		return nil

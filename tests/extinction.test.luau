@@ -426,6 +426,20 @@ end
 check(100 - alice.Character.Humanoid.Health < headDamage,
 	"falscher Kopftreffer: weniger Schaden als am Kopf (" .. (100 - alice.Character.Humanoid.Health) .. " / " .. headDamage .. ")")
 alice.Character.Humanoid.Health = 100
+-- gemeldeter Treffer auf einen Zombie (Lag: der Server-Strahl geht knapp vorbei): der Zombie selbst ist keine Wand
+do
+	local origin = bob.Character.Head.Position
+	local zombie = require("ZombieService").Spawn(origin + Vector3.new(0, -1.5, -20))
+	step(0.2)
+	local torso = zombie:FindFirstChild("UpperTorso") or zombie:FindFirstChild("Torso")
+	local zh = zombie:FindFirstChildOfClass("Humanoid")
+	local before = zh.Health
+	local aim = torso.Position + Vector3.new(2.2, 0, 0)
+	Remotes.Fire.OnServerEvent:Fire(bob, origin, (aim - origin).Unit, false, 103, { { Part = torso, Position = torso.Position } })
+	step(0.3)
+	check(zh.Health < before, "gemeldeter Zombie-Treffer zählt (" .. zh.Health .. " / " .. before .. ")")
+	zombie:Destroy()
+end
 
 -- ---------- Im Kampf: Safe Zone gesperrt (CombatUntil), danach wieder offen ----------
 local now = workspace:GetServerTimeNow()
