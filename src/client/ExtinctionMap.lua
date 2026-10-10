@@ -728,6 +728,10 @@ function ExtinctionMap.Init()
 			sinceUpdate = math.huge
 		end
 	end)
+	-- nach dem Wiederbeleben nicht offen lassen (hielte sonst Maus und alte Blickrichtung fest)
+	player.CharacterAdded:Connect(function()
+		ExtinctionMap.Set(false)
+	end)
 end
 
 return ExtinctionMap
