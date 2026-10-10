@@ -1145,7 +1145,10 @@ local function despawnFar(now)
 				break
 			end
 		end
-		if near or (info.KeepUntil and now < info.KeepUntil) then
+		if near then
+			info.KeepUntil = nil -- jemand war da: ab jetzt wie jeder andere Zombie
+			info.LonelySince = nil
+		elseif info.KeepUntil and now < info.KeepUntil then
 			info.LonelySince = nil
 		else
 			info.LonelySince = info.LonelySince or now

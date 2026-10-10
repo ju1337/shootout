@@ -364,13 +364,11 @@ function HITMARKERS.Precision(root)
 		for _, entry in ticks do
 			halt(entry.Frame, entry.Outline)
 		end
-		for _, entry in arcs do
-			halt(entry.Frame, entry.Line)
-		end
 		if kill then
 			-- Ring weg, stattdessen vier Bögen, die sich drehend lösen
 			ringLine.Transparency = 1
 			for _, entry in arcs do
+				halt(entry.Frame, entry.Line) -- nur hier: sonst blieben halb ausgeblendete Bögen stehen
 				entry.Frame.Size = UDim2.fromOffset(radius * 2, radius * 2)
 				entry.Frame.Rotation = 0
 				entry.Line.Color = color

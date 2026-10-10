@@ -240,7 +240,7 @@ local function land(drop)
 	drop.State = "Landed"
 	drop.Eta = 0
 	drop.Escort = ZombieService.SpawnAround(drop.Target, A.Escort, 20, 50, "Walker", true)
-	ZombieService.Keep(drop.Escort, 180) -- bleiben, bis jemand kommt (sonst nach 8 s ohne Spieler weg)
+	ZombieService.Keep(drop.Escort, 90) -- bleiben, bis jemand kommt (sonst nach 8 s ohne Spieler weg)
 	if drop.Flare then
 		local beam = drop.Flare:FindFirstChild("Beam")
 		if beam then

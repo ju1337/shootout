@@ -121,10 +121,12 @@ function ModeManager.Join(player, modeId, here)
 	end
 
 	switching[player] = true
+	local leftOld = current == nil or modules[current] == nil
 	local switched, err = pcall(function()
 		if current and modules[current] then
 			modules[current].RemovePlayer(player)
 		end
+		leftOld = true
 		player.Team = nil
 		player:SetAttribute("CanFight", false)
 		player:SetAttribute("ModeText", "")
@@ -135,11 +137,23 @@ function ModeManager.Join(player, modeId, here)
 	switching[player] = nil -- auch nach einem Fehler: sonst ginge für diesen Spieler bis zum Neubeitritt kein Wechsel mehr
 	if not switched then
 		warn("Moduswechsel nach " .. tostring(modeId) .. " fehlgeschlagen: " .. tostring(err))
-		pcall(module.RemovePlayer, player) -- halb hinzugefügt: aufräumen
+		-- halb gewechselt: aus dem Modus austragen, in dem er gerade hängt (jeden nur einmal)
+		if not leftOld then
+			pcall(modules[current].RemovePlayer, player)
+		else
+			pcall(module.RemovePlayer, player)
+		end
 		player:SetAttribute("Mode", nil)
-		-- die offene Welt ist das Zuhause: ein paar Mal neu versuchen statt ohne Charakter stehen zu bleiben
-		retries[player] = (retries[player] or 0) + 1
-		if modeId == Modes.Home and retries[player] <= 3 then
+		-- die offene Welt ist das Zuhause: dorthin ein paar Mal neu versuchen statt ohne Charakter stehen zu bleiben
+		-- (Zähler gilt eine Minute)
+		local now = os.clock()
+		local entry = retries[player]
+		if not entry or now - entry.At > 60 then
+			entry = { Count = 0, At = now }
+			retries[player] = entry
+		end
+		entry.Count += 1
+		if entry.Count <= 3 then
 			task.delay(2, function()
 				if player.Parent and player:GetAttribute("Mode") == nil then
 					ModeManager.Join(player, Modes.Home, true)

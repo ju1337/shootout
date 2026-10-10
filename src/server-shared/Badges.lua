@@ -79,12 +79,16 @@ local function onLoaded(player)
 		return
 	end
 	local data = dataOf(profile)
+	local pending = {}
 	for id, state in data do
 		if state == "Pending" and BadgeConfig.Get(id) and (tonumber(BadgeConfig.Get(id).BadgeId) or 0) > 0 then
-			data[id] = nil
-			if not Badges.Award(player, id) then
-				data[id] = "Pending" -- BadgeService gerade gestört: beim nächsten Laden wieder versuchen (Tutorial/Werber kommen nie wieder)
-			end
+			table.insert(pending, id)
+		end
+	end
+	for _, id in pending do -- erst sammeln: Award wartet, die Tabelle darf sich beim Durchlaufen nicht ändern
+		data[id] = nil
+		if not Badges.Award(player, id) then
+			data[id] = "Pending" -- BadgeService gerade gestört: beim nächsten Laden wieder versuchen (Tutorial/Werber kommen nie wieder)
 		end
 	end
 	if type(profile.Achievements) == "table" then

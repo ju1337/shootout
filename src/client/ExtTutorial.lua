@@ -355,6 +355,9 @@ local function tick()
 	if (step.Id == "Equip" or step.Id == "Leave") and player:GetAttribute("TutorialEquip") ~= true
 		and player:GetAttribute("InSafeZone") == true and os.clock() - state.ResumedAt > 2 then
 		state.ResumedAt = os.clock()
+		if player:GetAttribute("ExtTutorial") ~= true then
+			Remotes.ExtAction:FireServer("Tutorial", "Start") -- Wiederholung nach Markt/Moduswechsel: Server weiß es nicht mehr
+		end
 		Remotes.ExtAction:FireServer("Tutorial", "Resume", state.Step, step.Id)
 	end
 	local done

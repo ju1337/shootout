@@ -220,7 +220,7 @@ local function crash()
 	current.State = "Burning"
 	current.BurnEnds = os.clock() + K.BurnTime
 	current.BurnEndsServer = workspace:GetServerTimeNow() + K.BurnTime
-	ZombieService.Keep(ZombieService.SpawnAround(target, K.Zombies, 30, 80, nil, true), K.BurnTime + 120)
+	ZombieService.Keep(ZombieService.SpawnAround(target, K.Zombies, 30, 80, nil, true), K.BurnTime + 30)
 	publish()
 	announce("HELI ABGESTÜRZT", "Rauchsäule am Horizont · Wrack auf der Karte (N) · brennt noch " .. K.BurnTime .. " s")
 end
