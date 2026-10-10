@@ -1,6 +1,6 @@
 # Lauf-Aufsatz (LongBarrel, ShortBarrel, HeavyBarrel) in voller Meshy-Qualität für das Sturmgewehr vorbereiten:
 #   python3 tools/attachments/barrel_full.py <meshy.fbx> <art/sources/Rifle.glb> <ausgabe.glb> <Name> <Faktor>
-#                                            <Mündung +1|-1> <Stufe> <Stufe vorn>
+#                                            <Mündung +1|-1> <Stufe> <Stufe vorn> [max. Radius im Handschutz]
 # Name = Teilname in Studio, Faktor = Meshy-Einheiten -> Studs (gleichmäßig), Mündung = an welchem Ende (x) des
 # Meshy-Modells die Mündung ist, Stufe = x-Stelle im Meshy-Modell (z.B. Übergang dick -> dünn), die genau auf
 # "Stufe vorn" Studs vor dem Griff landet (Stirnseite des Handschutzes: 2,375-2,385).
@@ -18,8 +18,10 @@ FBX, RIFLE, OUT, NAME = args[0], args[1], args[2], args[3]
 SCALE, MUZZLE_END, STEP, STEP_AT = float(args[4]), float(args[5]), float(args[6]), float(args[7])
 PREFIX = FBX[:-4]
 MAX_TRIS = 19500
-INNER = 0.088     # Innenradius des Handschutzes (rifle: 0,089-0,1)
+INNER = float(args[8]) if len(args) > 8 else 0.088  # Innenradius des Handschutzes (0,089-0,1); bis 0,108 steckt ein
+                  # Teil noch in der Wand (außen 0,112) und ist nur durch die Schlitze zu sehen
 FACE = 2.385      # Stirnseite des Handschutzes
+INNER_CUT = 1.95  # bis hier ist der eingebaute Lauf ausgeblendet (rifle_barrel.py) – der neue muss weiter zurück reichen
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=RIFLE)
@@ -82,6 +84,7 @@ print("%s: %d Dreiecke, Laenge %.3f, hinten %.3f, Muendung %.3f (eingebaut %.3f)
     radius[inside].max() if inside.any() else 0, INNER))
 assert tris <= MAX_TRIS, "zu viele Dreiecke fuer ein Teil – wie mag_full.py teilen"
 assert not inside.any() or radius[inside].max() < INNER, "Lauf ragt im Handschutz durch die Wand"
+assert P[:, 1].min() < INNER_CUT - 0.05, "Lauf endet vor dem Rest des eingebauten Laufs (Lücke im Handschutz)"
 
 def marker(name, pos):
     bpy.ops.mesh.primitive_cube_add(size=0.03, location=tuple(pos))

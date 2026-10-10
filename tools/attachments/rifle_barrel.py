@@ -1,7 +1,8 @@
 # Lauf des Sturmgewehrs als eigenes Teil herausschneiden (für die Lauf-Aufsätze LongBarrel, ShortBarrel, HeavyBarrel):
 #   python3 tools/attachments/rifle_barrel.py art/sources/Rifle.glb art/sources/Rifle.glb
-# Alles vor der Stirnseite des Handschutzes (Lauf + Mündungsfeuerdämpfer) wird aus Skin_Body herausgeschnitten und zu
-# Skin_Body_Barrel; beide Schnittflächen werden geschlossen. Alle anderen Teile, Marker, UVs und Texturen bleiben
+# Der eingebaute Lauf vor der Stirnseite des Handschutzes (mit Mündungsfeuerdämpfer) und sein vorderes Stück im
+# Handschutz (ab INNER_CUT) werden aus Skin_Body herausgeschnitten und zu Skin_Body_Barrel; die Schnittflächen an der
+# Stirnseite werden geschlossen. Lauf-Aufsätze müssen hinten bis vor INNER_CUT reichen (dort übernehmen sie). Alle anderen Teile, Marker, UVs und Texturen bleiben
 # Byte für Byte unverändert. Ist ein Lauf-Aufsatz angebaut, blendet das Spiel Skin_Body_Barrel aus.
 import json, os, struct, sys
 import numpy as np
@@ -9,6 +10,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 import mesh_ops as M
 SRC, OUT = sys.argv[1], sys.argv[2]
 CUT = 2.388   # Studs vor dem Griff: Stirnseite des Handschutzes liegt bei 2,375 bis 2,385, der Feuerdämpfer ab 2,445
+INSIDE = 1.10  # der eingebaute Lauf reicht im Handschutz bis 1,148 zurück
+INNER_CUT = 1.95  # davor gehört er zum Lauf-Teil
+HALF = 0.075   # Radius um die Laufachse (eingebauter Lauf bis 0,057, Innenwand des Handschutzes ab 0,089)
+AXIS_Y = 0.5261  # Höhe der Laufachse (Point_Muzzle)
 BARREL = "Skin_Body_Barrel"
 
 
@@ -148,14 +153,30 @@ names = [p[0] for p in parts]
 assert BARREL not in names, "Lauf ist schon herausgeschnitten"
 i = names.index("Skin_Body")
 name, body, mat = parts[i]
-# glTF: Lauf nach -Z; Bereich "Lauf" = z <= -CUT
-region = [M.plane((0, 0, 1), (0, 0, -CUT))]
-rest, barrel = M.split(body, region)
+# glTF: Lauf nach -Z. Teil 1: alles vor der Stirnseite (z <= -CUT). Teil 2: der Rest des Laufs im Handschutz
+# (alles nahe der Laufachse von INSIDE bis CUT, innerhalb der Innenwand des Handschutzes, Radius >= 0,089)
+front = [M.plane((0, 0, 1), (0, 0, -CUT))]
+rest, barrel = M.split(body, front)
 centers = barrel.P.mean(1)
-dark = tuple(barrel.UV[np.argmin(np.linalg.norm(centers - np.array([0.0, 0.5261, -2.55]), axis=1))].mean(0))
-cap_rest, o1 = M.cap_cut(body, region, [0], -1, dark)
-cap_barrel, o2 = M.cap_cut(body, region, [0], 1, dark)
-rest, barrel = M.Mesh.concat(rest, cap_rest), M.Mesh.concat(barrel, cap_barrel)
+dark = tuple(barrel.UV[np.argmin(np.linalg.norm(centers - np.array([0.0, AXIS_Y, -2.55]), axis=1))].mean(0))
+cap_rest, o1 = M.cap_cut(body, front, [0], -1, dark)
+cap_barrel, o2 = M.cap_cut(body, front, [0], 1, dark)
+# Teil 2: Dreiecke, die ganz nahe der Laufachse liegen (alle Ecken Radius < HALF) zwischen INSIDE und CUT
+radius = np.hypot(rest.P[..., 0], rest.P[..., 1] - AXIS_Y)
+forward = -rest.P[..., 2]
+near = (radius < HALF) & (forward > INSIDE) & (forward <= CUT + 1e-4)
+whole, some = near.all(axis=1), near.any(axis=1)
+# erlaubt: Platte quer zur Achse am hinteren Ende (Loch, durch das der Lauf geht) – bleibt am Rumpf
+plate = np.ptp(forward, axis=1) < 0.005
+odd = some & ~whole & ~plate
+print("im Handschutz: %d Dreiecke des Laufs, %d der Platte bleiben" % (whole.sum(), (some & ~whole & plate).sum()))
+assert not odd.any(), "Dreiecke reichen von der Laufachse nach außen – HALF/INSIDE anpassen"
+inner, rest = rest.select(whole), rest.select(~whole)
+# nur das vordere Stück des inneren Laufs (ab INNER_CUT) gehört zum Lauf-Teil; der Rest bleibt im Rumpf, damit man durch
+# die Schlitze des Handschutzes weiter einen Lauf sieht (die Lauf-Aufsätze reichen hinten bis vor INNER_CUT zurück)
+keep, inner = M.split(inner, [M.plane((0, 0, 1), (0, 0, -INNER_CUT))])
+rest = M.Mesh.concat(rest, keep)
+rest, barrel = M.Mesh.concat(rest, cap_rest), M.Mesh.concat(barrel, cap_barrel, inner)
 lo, hi = barrel.bounds()
 print("Rumpf %d, Lauf %d Dreiecke (offen %d/%d), Lauf x %.3f..%.3f y %.3f..%.3f vorne %.3f..%.3f" % (
     len(rest), len(barrel), o1, o2, lo[0], hi[0], lo[1], hi[1], -hi[2], -lo[2]))
