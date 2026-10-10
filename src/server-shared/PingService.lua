@@ -49,7 +49,7 @@ function PingService.Init()
 	Remotes.Ping.OnServerEvent:Connect(function(player, position, model)
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if typeof(position) ~= "Vector3" or not root or (position - root.Position).Magnitude > MAX_DISTANCE then
+		if typeof(position) ~= "Vector3" or not root or not ((position - root.Position).Magnitude <= MAX_DISTANCE) then -- auch NaN
 			return
 		end
 		local now = os.clock()

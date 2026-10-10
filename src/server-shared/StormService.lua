@@ -146,47 +146,54 @@ local function reward()
 	for _, player in options and options.Players() or {} do
 		present[player] = true
 	end
-	for player in fighters do
-		if player.Parent and present[player] then
-			if won then
-				local R = S.Reward
-				ProgressService.AddCoins(player, R.Coins, "Storm Night")
-				ProgressService.QuestEvent(player, "XStorm", 1)
-				RedPointsService.Add(player, R.RedPoints, "Storm Night")
-				local names = {}
-				local rolled = {}
-				for _, roll in R.Items do
-					for _, item in ExtinctionConfig.RollLoot(roll[1], roll[2], random) do
-						table.insert(rolled, item)
+	local list = table.clone(fighters) -- vorher leeren: ein Fehler unten zahlt beim nächsten Sturm nicht doppelt
+	table.clear(fighters)
+	for player in list do
+		local ok, err = pcall(function() -- ein Fehler bei einem Spieler kostet die anderen nicht ihre Belohnung
+			if player.Parent and present[player] then
+				if won then
+					local R = S.Reward
+					ProgressService.AddCoins(player, R.Coins, "Storm Night")
+					ProgressService.QuestEvent(player, "XStorm", 1)
+					RedPointsService.Add(player, R.RedPoints, "Storm Night")
+					local names = {}
+					local rolled = {}
+					for _, roll in R.Items do
+						for _, item in ExtinctionConfig.RollLoot(roll[1], roll[2], random) do
+							table.insert(rolled, item)
+						end
 					end
+					ExtinctionConfig.AddDungeonKey(rolled, "Storm", random)
+					local rest = {}
+					for _, item in rolled do
+						local put = InventoryService.GiveStash(player, item.Id, item.Count)
+						if put < item.Count then
+							put += InventoryService.Give(player, item.Id, item.Count - put)
+						end
+						if put < item.Count then
+							table.insert(rest, { Id = item.Id, Count = item.Count - put })
+						end
+						local config = ExtinctionConfig.Get(item.Id)
+						if put > 0 and config then
+							table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
+						end
+					end
+					Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = "STORM CRATE",
+						Sub = R.Coins .. " coins · " .. R.RedPoints .. " RZ" .. (#names > 0 and (" · " .. table.concat(names, ", ")
+							.. " (in your stash)") or "") .. (#rest > 0 and " · stash full: the rest lies next to you" or ""),
+						Style = "Good" })
+					-- Lager und Tasche voll: Rest als Beutel neben den Spieler (sonst wäre er verloren)
+					local root = #rest > 0 and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+					if root and InventoryService.DropItems then
+						InventoryService.DropItems(player, rest, root.Position)
+					end
+				else
+					ProgressService.AddCoins(player, S.FailCoins, "Storm Night")
 				end
-				ExtinctionConfig.AddDungeonKey(rolled, "Storm", random)
-				local rest = {}
-				for _, item in rolled do
-					local put = InventoryService.GiveStash(player, item.Id, item.Count)
-					if put < item.Count then
-						put += InventoryService.Give(player, item.Id, item.Count - put)
-					end
-					if put < item.Count then
-						table.insert(rest, { Id = item.Id, Count = item.Count - put })
-					end
-					local config = ExtinctionConfig.Get(item.Id)
-					if put > 0 and config then
-						table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
-					end
-				end
-				Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = "STORM CRATE",
-					Sub = R.Coins .. " coins · " .. R.RedPoints .. " RZ" .. (#names > 0 and (" · " .. table.concat(names, ", ")
-						.. " (in your stash)") or "") .. (#rest > 0 and " · stash full: the rest lies next to you" or ""),
-					Style = "Good" })
-				-- Lager und Tasche voll: Rest als Beutel neben den Spieler (sonst wäre er verloren)
-				local root = #rest > 0 and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-				if root and InventoryService.DropItems then
-					InventoryService.DropItems(player, rest, root.Position)
-				end
-			else
-				ProgressService.AddCoins(player, S.FailCoins, "Storm Night")
 			end
+		end)
+		if not ok then
+			warn("Sturm-Belohnung: " .. tostring(err))
 		end
 	end
 	if won then
@@ -196,7 +203,6 @@ local function reward()
 		announce("THE STORM IS OVER", "Goal missed (" .. kills .. "/" .. goal .. ") · fighters get " .. S.FailCoins
 			.. " coins · PvP in " .. S.Grace .. " s", "Info")
 	end
-	table.clear(fighters)
 end
 
 -- ---------- Ablauf ----------
@@ -295,7 +301,10 @@ function StormService.Init(opts)
 		task.spawn(function()
 			while run == running do
 				task.wait(1)
-				StormService.Step()
+				local ok, err = pcall(StormService.Step) -- ein Fehler (z. B. bei der Belohnung) beendet den Sturm-Takt nicht für immer
+				if not ok then
+					warn("Sturm: " .. tostring(err))
+				end
 			end
 		end)
 	end
