@@ -199,9 +199,11 @@ function AdminService.Init(manager)
 		-- Wert ändern: opts = { Key (VALUES), Op = "Add" | "Set", Amount }
 		PlayerValue = function(userId, opts)
 			local player = target(userId)
-			local profile = player and ProgressService.IsLoaded(player) and ProgressService.Get(player)
-			if not profile then -- auch nicht, solange nur das Ersatzprofil da ist (Änderung ginge beim Laden verloren)
+			local profile = player and ProgressService.Get(player)
+			if not profile then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.IsLoaded(player) then -- nur das Ersatzprofil: Änderung ginge beim Laden verloren
+				return "Spielstand lädt noch."
 			end
 			local def = type(opts) == "table" and VALUES[opts.Key]
 			local amount = type(opts) == "table" and tonumber(opts.Amount)
@@ -220,8 +222,10 @@ function AdminService.Init(manager)
 			local player = target(userId)
 			local id = type(opts) == "table" and opts.Id
 			local config = typeof(id) == "string" and ExtinctionConfig.Get(id)
-			if not player or not ProgressService.IsLoaded(player) then
+			if not player then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.IsLoaded(player) then
+				return "Spielstand lädt noch."
 			elseif not config then
 				return "Unbekanntes Item."
 			end
@@ -237,8 +241,10 @@ function AdminService.Init(manager)
 		GiveSkin = function(userId, skinId)
 			local player = target(userId)
 			local item = typeof(skinId) == "string" and Cosmetics.Get(skinId)
-			if not player or not ProgressService.IsLoaded(player) then
+			if not player then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.IsLoaded(player) then
+				return "Spielstand lädt noch."
 			elseif not item then
 				return "Unbekannter Skin."
 			end
@@ -248,8 +254,10 @@ function AdminService.Init(manager)
 		-- Doppel-XP für minutes Minuten
 		XPBoost = function(userId, minutes)
 			local player = target(userId)
-			if not player or not ProgressService.IsLoaded(player) then
+			if not player then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.IsLoaded(player) then
+				return "Spielstand lädt noch."
 			end
 			minutes = math.clamp(math.floor(tonumber(minutes) or 30), 1, 1440)
 			ProgressService.AddXPBoost(player, minutes)
@@ -329,8 +337,10 @@ function AdminService.Init(manager)
 		-- Vor den Bestenlisten verstecken an/aus (LeaderboardService)
 		HideLeaderboard = function(userId)
 			local player = target(userId)
-			if not player or not ProgressService.IsLoaded(player) then
+			if not player then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.IsLoaded(player) then
+				return "Spielstand lädt noch."
 			end
 			local hidden = not LeaderboardService.IsHidden(player)
 			LeaderboardService.SetHidden(player, hidden)
@@ -341,8 +351,10 @@ function AdminService.Init(manager)
 			local player = target(userId)
 			if confirm ~= "CONFIRM" then
 				return "Nicht bestätigt."
-			elseif not player or not ProgressService.Reset(player) then
+			elseif not player then
 				return "Spieler nicht gefunden."
+			elseif not ProgressService.Reset(player) then
+				return "Spielstand lädt noch."
 			end
 			local name = player.Name
 			player:Kick(Locale.ForPlayer(player, "Dein Spielstand wurde von einem Admin zurückgesetzt. Bitte tritt neu bei."))

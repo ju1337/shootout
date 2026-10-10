@@ -1911,6 +1911,7 @@ return {
 	["Spieler ist nicht in diesem Modus."] = "Player is not in this mode.",
 	["SPIELER KAUFEN UND VERKAUFEN  ·  MÜNZEN  ·  {1} % GEBÜHR  ·  NUR IN DER SAFE ZONE  ·  ANGEBOTE BLEIBEN IN DEINEM SPIELSTAND"] = "PLAYERS BUY AND SELL  ·  COINS  ·  {1} % FEE  ·  ONLY IN THE SAFE ZONE  ·  LISTINGS ARE SAVED WITH YOUR PROGRESS",
 	["Spieler nicht gefunden."] = "Player not found.",
+	["Spielstand lädt noch."] = "Player data is still loading.",
 	["Spieler {1}"] = "Player {1}",
 	["SPIELER · BLUTMOND · STURMNACHT"] = "PLAYERS · BLOOD MOON · STORM NIGHT",
 	["SPIELERLEVEL"] = "PLAYER LEVEL",

@@ -107,7 +107,7 @@ local function load()
 			local head = string.match(source, "^(%S+)")
 			local key = (head and not string.find(head, "{")) and head or ""
 			patterns[key] = patterns[key] or {}
-			local words = string.find((string.gsub(source, "{%d}", "")), LETTERS) ~= nil
+			local words = string.find((string.gsub(string.gsub(source, "{%d}", ""), "×", "")), LETTERS) ~= nil -- × ist kein Wort
 			table.insert(patterns[key], { Pattern = pattern, Template = target, Source = source, Count = count, Wordy = words })
 		else
 			strings[source] = target
@@ -135,10 +135,16 @@ local function lookup(text, depth, strict)
 		end
 		for _, entry in list do
 			-- strict (Stücke einer Liste): breite Muster mit Wörtern ("{1} Leben") würden Bruchstücke halb übersetzen
-			if broad and strict and entry.Wordy then
-				continue
-			end
 			local captures = { string.match(text, entry.Pattern) }
+			if captures[1] ~= nil and broad and strict and entry.Wordy then
+				-- … außer alle Platzhalter sind Zahlen ("400 Münzen" in einer Liste)
+				for _, value in captures do
+					if not string.match(value, "^[%d%.,]+$") then
+						captures = {}
+						break
+					end
+				end
+			end
 			if captures[1] ~= nil then
 				local result = string.gsub(entry.Template, "{(%d)}", function(index)
 					local value = captures[tonumber(index) or 0] or ""
@@ -191,8 +197,8 @@ function translateList(text, depth)
 		if string.find(text, separator, 1, true) then
 			local parts, changed = {}, false
 			for piece in string.gmatch(text .. separator, "(.-)" .. escapePattern(separator)) do
-				local translated = nil
-				if not neutral(piece) then
+				local translated = strings[piece] -- eigener Eintrag zuerst ("KARTE" ist kein Tastenname)
+				if translated == nil and not neutral(piece) then
 					translated = translateList(piece, depth + 1) or lookup(piece, depth, true)
 					if translated == nil then
 						return nil

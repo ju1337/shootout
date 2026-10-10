@@ -71,6 +71,8 @@ expect("Gekauft: 30× 9mm-Munition für 30 Münzen", "Purchased: 30× 9mm Ammo f
 expect("Fahrrad (Kit) eingepackt.", "Bicycle (Kit) packed up.", "Kit-Item in einer Meldung")
 expect("+ Verband ×2, Fahrrad", "+ Bandage ×2, Bicycle", "Beute-Meldung")
 expect("Volles Leben  ·  +", "Volles Leben  ·  +", "Bruchstück ohne Eintrag: nicht halb übersetzen")
+expect("R  NACHLADEN  ·  M  KARTE", "R  RELOAD  ·  M  MAP", "gekürzte Tasten-Zeile: Wörter mit Eintrag sind keine Tasten")
+expect("Im Lager: 120× Gewehrmunition, 400 Münzen", "In your stash: 120× Rifle Ammo, 400 coins", "Münzen als Listen-Stück")
 expect("1.  ADLER  ·  3 VERKÄUFE", "1.  ADLER  ·  3 VERKÄUFE", "Liste mit Spielername (Adler ist auf dem Server)")
 expect("LMB  SCHIESSEN  ·  □  NACHLADEN / INTERAGIEREN  ·  △ HALTEN  FAHRZEUG EINPACKEN",
 	"LMB  FIRE  ·  □  RELOAD / INTERACT  ·  HOLD △  STORE VEHICLE", "Tasten-Zeile nach benutzten Tasten")
