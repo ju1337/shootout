@@ -21,6 +21,7 @@ local UITheme = require(Shared.UITheme)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local WorldLayout = require(Shared.WorldLayout)
 local InputActions = require(Shared.InputActions)
+local Locale = require(Shared.Locale)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -339,7 +340,8 @@ local function update()
 		local text = view:FindFirstChild("Text")
 		if text then
 			local left = math.max(0, math.floor((tonumber(bossInfo.RespawnAt) or now) - now))
-			text.Text = tostring(bossInfo.Name) .. ((not bossInfo.Alive and left > 0) and string.format(" %d:%02d", left // 60, left % 60) or "")
+			-- Name einzeln übersetzen: mit angehängter Restzeit fände die Übersetzung ihn nicht mehr
+			text.Text = Locale.Translate(tostring(bossInfo.Name)) .. ((not bossInfo.Alive and left > 0) and string.format(" %d:%02d", left // 60, left % 60) or "")
 		end
 	end
 	-- Dungeon-Eingänge: violettes Quadrat mit Namen (fest, ein Dungeon-Schlüssel öffnet sie)

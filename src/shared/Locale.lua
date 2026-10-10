@@ -159,6 +159,10 @@ function Locale.Translate(text, lang)
 	if string.match(text, "^[%d%s%.,:/%%%+%-]*%a?$") then
 		return text
 	end
+	-- Spielernamen sind keine Wörter: "Adler" auf dem Namensschild bleibt "Adler", nicht "Eagle"
+	if Players:FindFirstChild(text) then
+		return text
+	end
 	load()
 	local hit = cache[text]
 	if hit ~= nil then

@@ -49,7 +49,9 @@ local bloodMoonWas = false
 local started = false
 
 local function inWorld()
-	return Modes.IsSurvival(player:GetAttribute("Mode"))
+	-- in der Gruft (Dungeon, abseits der Karte) keine Vögel, Wind oder Zonen-Brummen
+	local dungeon = player:GetAttribute("Dungeon")
+	return Modes.IsSurvival(player:GetAttribute("Mode")) and not (type(dungeon) == "string" and dungeon ~= "")
 end
 
 -- Lage des Spielers: Ziel 0..1 je Schicht
@@ -117,7 +119,8 @@ end
 
 local function step()
 	local target = evaluate()
-	local bloodMoon = inWorld() and DayCycle.IsBloodMoon(workspace:GetServerTimeNow()) or false
+	-- nach Modus, nicht inWorld(): sonst käme der Stinger beim Verlassen der Gruft im Blutmond noch einmal
+	local bloodMoon = Modes.IsSurvival(player:GetAttribute("Mode")) and DayCycle.IsBloodMoon(workspace:GetServerTimeNow()) or false
 	if bloodMoon and not bloodMoonWas then
 		Sfx.UI("BloodMoonStinger")
 	end
