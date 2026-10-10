@@ -822,11 +822,14 @@ function VehicleService.Init(opts)
 				local position = chassis.Position
 				local moved = Vector3.new(position.X - entry.LastPos.X, 0, position.Z - entry.LastPos.Z).Magnitude
 				local wrong = moved > (config.Speed * SPEED_SLACK + 30) * delta
-				if config.Kind == "Heli" and not wrong then
+				if not wrong then
+					-- Steigen und Kartenrand für alle (der Fahrer rechnet die Physik; Bodenfahrzeuge steigen höchstens so
+					-- schnell, wie sie fahren), Höchstflughöhe nur für Helikopter
 					local center = player:GetAttribute("MapCenter")
 					local half = ExtinctionConfig.WorldSize / 2 - 5
-					wrong = position.Y - entry.LastPos.Y > (config.Climb * SPEED_SLACK + 30) * delta
-						or (typeof(center) == "Vector3" and (position.Y > center.Y + config.Ceiling + CEILING_SLACK
+					local heli = config.Kind == "Heli"
+					wrong = position.Y - entry.LastPos.Y > ((heli and config.Climb or config.Speed) * SPEED_SLACK + 30) * delta
+						or (typeof(center) == "Vector3" and ((heli and position.Y > center.Y + config.Ceiling + CEILING_SLACK)
 							or math.abs(position.X - center.X) > half or math.abs(position.Z - center.Z) > half))
 				end
 				if wrong then
