@@ -573,9 +573,10 @@ local function addAttachments(model, weaponName, attachments)
 	end
 	if long and info.LeftHand then
 		local hand = info.LeftHand
-		-- Griff als eigenes 3D-Modell (Assets.Attachments), Point_Mount unter dem Handschutz an der linken Hand
+		-- Griff bzw. Laser (gleicher Platz) als eigenes 3D-Modell (Assets.Attachments), Point_Mount unter dem
+		-- Handschutz an der linken Hand (der Laser sitzt von dort aus gesehen rechts am Handschutz)
 		local gripModel = false
-		for _, id in { "VerticalGrip", "AngledGrip" } do
+		for _, id in { "VerticalGrip", "AngledGrip", "Laser" } do
 			if has[id] and not gripModel and assetData[weaponName] then
 				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z), frame)
 			end
