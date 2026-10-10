@@ -99,6 +99,26 @@ label.Text = "PLAY"
 flush()
 check(label.Text == "PLAY", "englischer Text bleibt")
 
+-- Locale.Set: jeden Frame denselben deutschen Text setzen schreibt das Label nicht jedes Mal um
+local ticker = Instance.new("TextLabel", screen)
+flush()
+local changes = 0
+ticker:GetPropertyChangedSignal("Text"):Connect(function()
+	changes += 1
+end)
+Locale.Set(ticker, "SPIELEN")
+flush()
+check(ticker.Text == "PLAY", "Locale.Set übersetzt wie eine Zuweisung: " .. ticker.Text)
+local afterFirst = changes
+for _ = 1, 5 do
+	Locale.Set(ticker, "SPIELEN")
+	flush()
+end
+check(changes == afterFirst and ticker.Text == "PLAY", "Locale.Set mit gleichem Text ändert nichts (" .. (changes - afterFirst) .. " Änderungen)")
+Locale.Set(ticker, "30 / 90")
+flush()
+check(ticker.Text == "30 / 90", "Locale.Set mit neuem Text setzt ihn")
+
 -- TextBox: PlaceholderText ja, eingetippter Text nein
 local box = Instance.new("TextBox", screen)
 box.PlaceholderText = "SPIELEN"

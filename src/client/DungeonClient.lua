@@ -11,6 +11,7 @@ local HttpService = game:GetService("HttpService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UITheme = require(Shared.UITheme)
+local setText = require(Shared.Locale).Set -- nur umschreiben, wenn sich der Text ändert (läuft jeden Frame)
 local TopStack = require(Shared.TopStack)
 
 local player = Players.LocalPlayer
@@ -91,13 +92,13 @@ local function update()
 		return
 	end
 	local title, line, color, loot = DungeonClient.Lines(state, workspace:GetServerTimeNow())
-	titleLabel.Text = title
-	stateLabel.Text = line
+	setText(titleLabel, title)
+	setText(stateLabel, line)
 	stateLabel.TextColor3 = color
 	if stroke then
 		stroke.Color = color
 	end
-	lootLabel.Text = loot
+	setText(lootLabel, loot)
 end
 
 function DungeonClient.Init()

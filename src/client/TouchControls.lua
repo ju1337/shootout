@@ -12,6 +12,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Modes = require(Shared.Modes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local UITheme = require(Shared.UITheme)
+local setText = require(Shared.Locale).Set -- nur umschreiben, wenn sich der Text ändert (läuft jeden Frame)
 local InputActions = require(Shared.InputActions)
 local C = UITheme.Colors
 local make = UITheme.Make
@@ -210,7 +211,7 @@ function TouchControls.Init()
 		end
 		-- im Fahrzeug: SPRUNG = RAUS; als Helikopter-Pilot STEIGEN/SINKEN statt der Kampfknöpfe
 		local seated, pilot = seatState()
-		buttons.Jump.Button.Text = seated and "RAUS" or "SPRUNG"
+		setText(buttons.Jump.Button, seated and "RAUS" or "SPRUNG")
 		for action in HELI_HIDDEN do
 			buttons[action].Button.Visible = not pilot
 		end

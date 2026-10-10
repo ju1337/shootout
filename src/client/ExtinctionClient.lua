@@ -32,6 +32,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
+local setText = require(Shared.Locale).Set -- Texte, die jeden Frame neu gesetzt werden
 local TopStack = require(Shared.TopStack)
 local InputActions = require(Shared.InputActions)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
@@ -822,12 +823,12 @@ local function updateZone()
 	end
 	if player:GetAttribute("InSafeZone") then
 		local title = player:GetAttribute("SafeZoneTitle")
-		zoneText.Text = "SAFE ZONE  ·  " .. (type(title) == "string" and (string.upper(title) .. "  ·  ") or "") .. "KEIN PVP"
+		setText(zoneText, "SAFE ZONE  ·  " .. (type(title) == "string" and (string.upper(title) .. "  ·  ") or "") .. "KEIN PVP")
 		zoneText.TextColor3 = SAFE
 		stroke.Color = SAFE
 	elseif vignette and vignette.Visible then
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
-		zoneText.Text = "ROTE ZONE  ·  PVP AKTIV"
+		setText(zoneText, "ROTE ZONE  ·  PVP AKTIV")
 		zoneText.TextColor3 = RED:Lerp(Color3.new(1, 1, 1), 0.25 * pulse)
 		stroke.Color = RED
 		vignette.Position = UDim2.fromOffset(0, 0)
@@ -837,16 +838,16 @@ local function updateZone()
 	elseif DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
 		local _, resumeAt = DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
 		local storm = DayCycle.IsStorm(workspace:GetServerTimeNow())
-		zoneText.Text = storm and "STORM  ·  NO PVP" or ("NO PVP  ·  PVP IN " .. math.ceil(math.max(0, resumeAt - workspace:GetServerTimeNow())) .. " S")
+		setText(zoneText, storm and "STORM  ·  NO PVP" or ("NO PVP  ·  PVP IN " .. math.ceil(math.max(0, resumeAt - workspace:GetServerTimeNow())) .. " S"))
 		zoneText.TextColor3 = Color3.fromRGB(150, 180, 255)
 		stroke.Color = Color3.fromRGB(150, 180, 255)
 	elseif player:GetAttribute("PvP") then
-		zoneText.Text = "PVP AKTIV"
+		setText(zoneText, "PVP AKTIV")
 		zoneText.TextColor3 = C.Bad
 		stroke.Color = C.Bad
 	else
 		local left = math.max(0, (player:GetAttribute("PvPAt") or 0) - workspace:GetServerTimeNow())
-		zoneText.Text = "PVP IN " .. math.ceil(left) .. " S"
+		setText(zoneText, "PVP IN " .. math.ceil(left) .. " S")
 		zoneText.TextColor3 = DANGER
 		stroke.Color = DANGER
 	end
@@ -861,7 +862,7 @@ local function updateShield()
 	local left = character and math.floor((character:GetAttribute("ZombieShieldUntil") or 0) - workspace:GetServerTimeNow()) or 0
 	shieldPill.Visible = left > 0
 	if left > 0 then
-		shieldText.Text = string.format("ANTI-ZOMBIE-SPRITZE  %d:%02d  ·  KEINE ZOMBIES BEI DIR", left // 60, left % 60)
+		setText(shieldText, string.format("ANTI-ZOMBIE-SPRITZE  %d:%02d  ·  KEINE ZOMBIES BEI DIR", left // 60, left % 60))
 	end
 end
 
@@ -949,7 +950,7 @@ local function updateMarkers()
 			end
 			view.Arrow.TextColor3 = entry.Color
 			view.Text.TextColor3 = entry.Color
-			view.Text.Text = entry.Text
+			setText(view.Text, entry.Text)
 		end
 	end
 end
@@ -1261,11 +1262,6 @@ local function newWindow(kind, title, subtitle)
 	end)
 	InputActions.Focus(window.Frame:FindFirstChild("Content", true)) -- Controller: Auswahl in den Inhalt (nach dem Aufbau)
 	return window
-end
-
-local function sectionTitle(parent, text, position, width)
-	return label({ Position = position, Size = UDim2.fromOffset(width or 400, 18), Text = text, TextSize = 12, Font = F.Bold,
-		TextColor3 = C.Muted, ZIndex = 5 }, parent)
 end
 
 -- Raster aus Plätzen first..last eines Containers
@@ -1855,7 +1851,7 @@ end
 -- LOOT: was in Lootdrop, Konvoi, Heli-Absturz und Horden-Kiste liegen kann (LootInfo), links die Quelle,
 -- rechts die Items mit Chance (mindestens einmal in der Kiste) und Menge
 local lootSource = 1
-local function openLoot()
+local function openLootInfo()
 	local C = UITheme.MenuColors
 	local win = newWindow("Loot", "LOOT", "WHAT YOU CAN GET FROM DROPS AND EVENT CRATES")
 	local body = win.Body
@@ -2475,7 +2471,7 @@ local function openKits(part)
 			view.Ready = state == "Ready"
 			view.Crate.SetState(state)
 			view.Lock.Visible = state == "Locked"
-			view.Text.Text = text
+			setText(view.Text, text)
 			view.Text.TextColor3 = view.Ready and Color3.fromRGB(12, 16, 20) or (state == "Locked" and C.Muted or C.Text)
 			view.Button.BackgroundColor3 = view.Ready and kit.Color or C.Panel
 			view.Fill.Size = UDim2.fromScale(state == "Wait" and progress or 0, 1)
@@ -2539,7 +2535,6 @@ end
 
 local function openSquad()
 	local C = UITheme.MenuColors
-	local ALLY = C.Ally
 	local win = newWindow("Squad", "SQUAD", "BIS ZU 4 SPIELER  ·  KEIN FRIENDLY FIRE  ·  PINGS NUR FÜR DEN SQUAD  ·  NAMEN UND "
 		.. "PUNKTE AUF DER MINIMAP")
 	local body = win.Body
@@ -3126,7 +3121,7 @@ openMenuTab = function(id)
 		openAchievements()
 	elseif id == "Loot" then
 		ExtinctionMap.Set(false)
-		openLoot()
+		openLootInfo()
 	elseif id == "Guide" then
 		ExtinctionMap.Set(false)
 		Guide.Open()
@@ -4102,28 +4097,28 @@ function ExtinctionClient.Init()
 			local kills = ReplicatedStorage:GetAttribute("StormKills") or 0
 			local goal = ReplicatedStorage:GetAttribute("StormGoal") or 0
 			local done = kills >= goal and goal > 0
-			clockText.Text = string.format("%d:%02d", left // 60, left % 60)
-			phaseText.Text = "STURMNACHT"
-			phaseInfo.Text = string.format("KEIN PVP  ·  PANZER %d/%d", kills, goal)
+			setText(clockText, string.format("%d:%02d", left // 60, left % 60))
+			setText(phaseText, "STURMNACHT")
+			setText(phaseInfo, string.format("KEIN PVP  ·  PANZER %d/%d", kills, goal))
 			phaseText.TextColor3 = Color3.fromRGB(150, 180, 255)
 			phaseInfo.TextColor3 = done and Color3.fromRGB(120, 220, 140) or C.Muted
 		elseif DayCycle.IsBloodMoon(serverTime) then
 			local left = math.floor(DayCycle.BloodMoonLeft(serverTime))
-			clockText.Text = string.format("%d:%02d", left // 60, left % 60)
-			phaseText.Text = "BLUTMOND"
-			phaseInfo.Text = "BOSSE  ·  BESSERE BEUTE"
+			setText(clockText, string.format("%d:%02d", left // 60, left % 60))
+			setText(phaseText, "BLUTMOND")
+			setText(phaseInfo, "BOSSE  ·  BESSERE BEUTE")
 			phaseText.TextColor3 = Color3.fromRGB(255, 70, 60)
 			phaseInfo.TextColor3 = C.Muted
 		elseif DayCycle.IsNight(clock) then
-			clockText.Text = DayCycle.Label(clock)
-			phaseText.Text = "NACHT"
-			phaseInfo.Text = "MEHR ZOMBIES"
+			setText(clockText, DayCycle.Label(clock))
+			setText(phaseText, "NACHT")
+			setText(phaseInfo, "MEHR ZOMBIES")
 			phaseText.TextColor3 = Color3.fromRGB(150, 170, 255)
 			phaseInfo.TextColor3 = C.Muted
 		else
-			clockText.Text = DayCycle.Label(clock)
-			phaseText.Text = "TAG"
-			phaseInfo.Text = ""
+			setText(clockText, DayCycle.Label(clock))
+			setText(phaseText, "TAG")
+			setText(phaseInfo, "")
 			phaseText.TextColor3 = C.Muted
 		end
 		local maps = workspace:FindFirstChild("Maps")
@@ -4405,12 +4400,12 @@ function ExtinctionClient.Init()
 				text ..= "  ·  HÖHE " .. (height < math.huge and math.max(0, math.floor(height + 0.5)) or "–")
 				pilot = owner and seat:IsA("VehicleSeat")
 			end
-			vehicleCooldown.Text = text .. "  ·  ZUSTAND " .. health .. " %" .. ((owner and landed) and "  ·  K EINPACKEN" or "")
+			setText(vehicleCooldown, text .. "  ·  ZUSTAND " .. health .. " %" .. ((owner and landed) and "  ·  K EINPACKEN" or ""))
 			vehicleCooldown.TextColor3 = health <= 30 and C.Bad or C.Text
 		else
 			local readyAt = player:GetAttribute("ExtVehicleReadyAt") or 0
 			local left = readyAt - workspace:GetServerTimeNow()
-			vehicleCooldown.Text = left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or ""
+			setText(vehicleCooldown, left > 0 and ("FAHRZEUG WIEDER BEREIT IN " .. math.ceil(left) .. " S") or "")
 			vehicleCooldown.TextColor3 = C.Muted
 		end
 		if pilot ~= hintState.Heli then

@@ -13,6 +13,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local UITheme = require(Shared.UITheme)
+local setText = require(Shared.Locale).Set -- nur umschreiben, wenn sich der Text ändert (läuft jeden Frame)
 local TopStack = require(Shared.TopStack)
 
 local player = Players.LocalPlayer
@@ -126,7 +127,7 @@ local function update()
 	gui.Enabled = active or protected
 	if protected then
 		setLook(BLUE)
-		label.Text = "🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  " .. math.ceil(protectedLeft) .. " s"
+		setText(label, "🛡 SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  " .. math.ceil(protectedLeft) .. " s")
 	end
 	if not active then
 		if next(walls) then
@@ -136,7 +137,7 @@ local function update()
 	end
 	setLook(RED)
 	local left = math.ceil((player:GetAttribute("CombatUntil") or 0) - workspace:GetServerTimeNow())
-	label.Text = "⚔ IM KAMPF  ·  SAFE ZONE GESPERRT  ·  " .. left .. " s"
+	setText(label, "⚔ IM KAMPF  ·  SAFE ZONE GESPERRT  ·  " .. left .. " s")
 	-- Wände um Safe Zones in der Nähe (Streaming: weit entfernte sind evtl. gar nicht geladen)
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")

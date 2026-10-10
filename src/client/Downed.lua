@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Movement = require(Shared.Movement)
 local UITheme = require(Shared.UITheme)
+local setText = require(Shared.Locale).Set -- nur umschreiben, wenn sich der Text ändert (läuft jeden Frame)
 local InputActions = require(Shared.InputActions)
 
 local player = Players.LocalPlayer
@@ -216,7 +217,7 @@ function Downed.Init()
 			crawl(character)
 			local left = math.max(0, (character:GetAttribute("BleedoutUntil") or 0) - workspace:GetServerTimeNow())
 			local progress = character:GetAttribute("ReviveProgress") or 0
-			bleedLabel.Text = progress > 0 and "Wirst wiederbelebt..." or string.format("Verblutest in %d s · warte auf Hilfe", math.ceil(left))
+			setText(bleedLabel, progress > 0 and "Wirst wiederbelebt..." or string.format("Verblutest in %d s · warte auf Hilfe", math.ceil(left)))
 			reviveBar.Size = UDim2.new(progress, 0, 1, 0)
 		end
 
@@ -239,7 +240,7 @@ function Downed.Init()
 		if promptTarget then
 			local progress = promptTarget:GetAttribute("ReviveProgress") or 0
 			local key = InputActions.Hint("Interact")
-			promptLabel.Text = (holdingE and "Belebe " or (key ~= "" and ("[" .. key .. "] halten: ") or "HALTEN: ")) .. promptTarget.Name .. (holdingE and " wieder..." or " wiederbeleben")
+			setText(promptLabel, (holdingE and "Belebe " or (key ~= "" and ("[" .. key .. "] halten: ") or "HALTEN: ")) .. promptTarget.Name .. (holdingE and " wieder..." or " wiederbeleben"))
 			promptBar.Size = UDim2.new(progress, 0, 1, 0)
 		elseif holdingE then
 			setReviving(false)

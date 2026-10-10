@@ -292,6 +292,10 @@ local allowed = {}
 for _, entry in ExtinctionConfig.LootTables.Zombie do
 	allowed[entry.Id] = true
 end
+-- Dungeon-Schlüssel kommen mit kleiner Chance zusätzlich aus jeder Leiche (ExtinctionConfig.AddDungeonKey)
+if ExtinctionConfig.Dungeon and ExtinctionConfig.Dungeon.KeyItem then
+	allowed[ExtinctionConfig.Dungeon.KeyItem] = true
+end
 for _, entry in Inventory.Items(InventoryService.GetBag(alice)) do
 	if not allowed[entry.Id] then
 		lowTier = false

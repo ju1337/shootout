@@ -264,6 +264,27 @@ local function hookTree(root)
 	root.DescendantAdded:Connect(hook)
 end
 
+-- Text setzen, aber nur wenn er sich wirklich ändert. Für Anzeigen, die jeden Frame neu beschrieben werden (Uhr,
+-- Zonen-Zeile, Marker): steht dort schon die Übersetzung desselben deutschen Texts, passiert nichts. Eine normale
+-- Zuweisung würde jeden Frame zweimal umschreiben (deutsch, dann wieder englisch) und das Layout neu rechnen.
+function Locale.Set(obj, text, property)
+	property = property or "Text"
+	local entries = sources[obj]
+	if entries then
+		for _, entry in entries do
+			if entry.Property == property then
+				if entry.Source == text and obj[property] == Locale.Translate(text) then
+					return
+				end
+				break
+			end
+		end
+	elseif obj[property] == text then
+		return
+	end
+	obj[property] = text
+end
+
 -- Nach einem Sprachwechsel alle bekannten Texte vom Original aus neu übersetzen
 function Locale.Refresh()
 	cache, cacheSize = {}, 0
