@@ -95,6 +95,9 @@ local function setPanel(name)
 		panel.Frame.Visible = panelName == name
 	end
 	openPanel = name
+	if name then
+		panels[name].Status.Text = "" -- alte Meldung nicht beim nächsten Öffnen zeigen
+	end
 	UITheme.SetBlur("SideMenu", name ~= nil)
 	GameMenu.PanelChanged(name) -- Lobby: passenden Reiter hervorheben
 	if name and panels[name].Refresh then
@@ -1397,7 +1400,9 @@ function SideMenu.Init()
 
 	-- Rückmeldung vom Server in das offene Fenster
 	Remotes.ShopStatus.OnClientEvent:Connect(function(message, success)
-		for _, panel in panels do
+		-- nur ins offene Fenster (Meldungen von Glücksrad, Skins usw. sollen nicht später in TITEL o.ä. stehen)
+		local panel = openPanel and panels[openPanel]
+		if panel then
 			panel.Status.Text = message
 			panel.Status.TextColor3 = success and Color3.fromRGB(120, 230, 140) or Color3.fromRGB(255, 120, 120)
 		end
@@ -1409,6 +1414,7 @@ function SideMenu.Init()
 			or name == "MatchHistory" or name == "RewardsClaimed" or name == "AccountXP" or name == "Prestige" or name == "Title" then
 			if openPanel and panels[openPanel].Refresh then
 				panels[openPanel].Refresh()
+				InputActions.Refocus(panels[openPanel].Frame) -- Controller: Auswahl nach dem Neuaufbau zurück
 			end
 		end
 	end)
@@ -1421,7 +1427,7 @@ function SideMenu.Init()
 			marketCaption.Text = player:GetAttribute("Mode") == Modes.Market.Id and "ZUM CAMP" or "MARKT"
 			local lobby = GameMenu.IsOpen()
 			-- Markt- und Tausch-Fenster liegen in der Mitte: Menüliste solange weg (sie läge darüber)
-			local covered = UITheme.IsMenuOpenBy("Market") or UITheme.IsMenuOpenBy("Trade")
+			local covered = UITheme.IsMenuOpenBy("Market") or UITheme.IsMenuOpenBy("Trade") or UITheme.IsMenuOpenBy("Crate")
 			column.Visible = inHub and not lobby and not covered
 			if openPanel and not (inHub or lobby) then
 				setPanel(nil)

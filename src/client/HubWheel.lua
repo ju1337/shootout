@@ -368,7 +368,12 @@ function HubWheel.Init()
 		end
 	end)
 
+	local spinConnection = nil -- laufende Dreh-Animation (ein spätes zweites Ergebnis ersetzt sie)
 	Remotes.WheelResult.OnClientEvent:Connect(function(index, text)
+		if spinConnection then
+			spinConnection:Disconnect()
+			spinConnection = nil
+		end
 		index = math.clamp(math.floor(tonumber(index) or 1), 1, SLICE_COUNT)
 		waitingSince = nil
 		spinning = true
@@ -391,6 +396,7 @@ function HubWheel.Init()
 			end
 			if alpha >= 1 then
 				connection:Disconnect()
+				spinConnection = nil
 				rotation = target % 360
 				apply()
 				spinning = false
@@ -409,12 +415,19 @@ function HubWheel.Init()
 				refresh()
 			end
 		end)
+		spinConnection = connection
 	end)
 
 	-- Lichter: ruhig abwechselnd, beim Drehen ein Lauflicht, danach blinkt das Gewinnfeld
 	local warm, white = Color3.fromRGB(255, 196, 90), Color3.fromRGB(255, 244, 220)
 	RunService.Heartbeat:Connect(function(dt)
 		local t = os.clock()
+		-- weit weg und ruhig: nichts zu sehen, also nicht jedes Bild 20+ Teile umfärben
+		local camera = workspace.CurrentCamera
+		if not spinning and not winner and kick <= 0 and camera
+			and (camera.CFrame.Position - wheel.Face.Position).Magnitude > 250 then
+			return
+		end
 		for k, bulb in wheel.Bulbs do
 			local on
 			if spinning then

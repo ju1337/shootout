@@ -164,8 +164,9 @@ local function showResult(result)
 	window.ResultShown = true
 	local rarity = Cosmetics.Rarities[item.Rarity]
 	local color = rarity and rarity.Color or C.Border
+	-- Active: fängt Klicks ab (sonst kauft ein Klick/A auf das ÖFFNEN darunter gleich die nächste Kiste)
 	local overlay = make("Frame", { Name = "Result", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Background, BackgroundTransparency = 0.25,
-		ZIndex = 9 }, window.Frame)
+		ZIndex = 9, Active = true }, window.Frame)
 	local card = UITheme.Card({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(560, 420),
 		ZIndex = 9 }, overlay)
 	UITheme.AccentBar(card, color, { Thickness = 4, ZIndex = 9 })
@@ -196,16 +197,29 @@ local function showResult(result)
 		again.SetColor(C.MutedBack, C.Bad)
 		again.SetText("ZU WENIG MÜNZEN")
 	end
-	UITheme.Chunky({ Position = UDim2.fromOffset(344, 330), Size = UDim2.fromOffset(188, 56), Color = C.Card, StrokeColor = C.Border, Text = "OK",
-		TextSize = 20, ZIndex = 9 }, card, function()
+	local frame = window.Frame
+	local ok = UITheme.Chunky({ Position = UDim2.fromOffset(344, 330), Size = UDim2.fromOffset(188, 56), Color = C.Card,
+		StrokeColor = C.Border, Text = "OK", TextSize = 20, ZIndex = 9 }, card, function()
 		overlay:Destroy()
+		InputActions.Refocus(frame) -- Controller: zurück auf ÖFFNEN
 	end)
+	InputActions.Focus(overlay, ok.Button) -- Controller: A schließt die Karte statt neu zu kaufen
 	sound("rbxasset://sounds/electronicpingshort.wav", item.Rarity == "Legendary" and 0.8 or 1.2, 0.6)
 end
 
 -- Rolle abspielen: Skins ziehen vorbei, die Rolle bremst und bleibt auf dem Gewinn stehen
 local function spin(result)
 	local win = window
+	-- ein zweites Ergebnis (spät nach „Keine Antwort“): die alte Rolle sauber beenden
+	if win.Connection then
+		win.Connection:Disconnect()
+		win.Connection = nil
+	end
+	if win.Tween then
+		win.Tween:Cancel()
+		win.Tween = nil
+	end
+	win.Generation += 1
 	win.Result = result
 	win.Spinning = true
 	setOpenButton()
@@ -231,8 +245,8 @@ local function spin(result)
 	local tween = TweenService:Create(win.Strip, TweenInfo.new(SPIN_TIME, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 		{ Position = UDim2.fromOffset(finalX, 0) })
 	win.Tween = tween
-	tween.Completed:Connect(function()
-		if window ~= win or win.Generation ~= generation then
+	tween.Completed:Connect(function(state)
+		if state ~= Enum.PlaybackState.Completed or window ~= win or win.Generation ~= generation then
 			return
 		end
 		if win.Connection then
@@ -262,8 +276,8 @@ end
 
 -- Kiste beim Server öffnen (der Server antwortet mit CrateResult)
 function CrateClient.Request()
-	if not window or window.Spinning or window.Waiting then
-		return
+	if not window or window.Spinning or window.Waiting or window.Frame:FindFirstChild("Result") then
+		return -- (Ergebniskarte offen: erst schließen; NOCHMAL entfernt sie vorher)
 	end
 	local crate = window.Crate
 	if not PaidRandom.ShowRandom(player) then

@@ -70,6 +70,9 @@ function OddsPanel.Show(title, rows)
 				OddsPanel.Close()
 			end
 		end)
+		-- Moduswechsel oder Tod: Fenster zu (es liegt über allem und hält die Controller-Auswahl)
+		player:GetAttributeChangedSignal("Mode"):Connect(OddsPanel.Close)
+		player.CharacterRemoving:Connect(OddsPanel.Close)
 	end
 	OddsPanel.Close()
 	local listHeight = math.min(#rows, 12) * ROW_H
