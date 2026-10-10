@@ -2558,6 +2558,9 @@ return {
 	["{1}: {2} Tickets · {3} leben   |   {4} : {5}   |   {6}: {7} Tickets · {8} leben   ·   OVERTIME"] = "{1}: {2} Tickets · {3} alive   |   {4} : {5}   |   {6}: {7} Tickets · {8} alive   ·   OVERTIME",
 	["{1}: {2} Tickets · {3} leben   |   {4} : {5}   |   {6}: {7} Tickets · {8} leben   ·   {9}"] = "{1}: {2} Tickets · {3} alive   |   {4} : {5}   |   {6}: {7} Tickets · {8} alive   ·   {9}",
 	["{1}: {2} Tickets · {3} leben   |   {4} : {5}   |   {6}: {7} Tickets · {8} leben{9}"] = "{1}: {2} Tickets · {3} alive   |   {4} : {5}   |   {6}: {7} Tickets · {8} alive{9}",
+	["{1}× {2}"] = "{1}× {2}", -- Anzahl vor dem Item-Namen ("30× 9mm-Munition"): der Name wird übersetzt
+	["{1} ×{2}"] = "{1} ×{2}", -- Anzahl hinter dem Item-Namen ("Verband ×2", Beute-Listen)
+	["+ {1}"] = "+ {1}", -- Beute-Meldung "+ Verband ×2, …"
 	["{1}× Beute Stufe {2}"] = "{1}× Tier {2} loot",
 	["{1}× Glücksrad"] = "{1}× Lucky Wheel spin",
 	["{1}× Lootdrop-Beute"] = "{1}× loot drop loot",

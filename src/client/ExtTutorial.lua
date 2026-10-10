@@ -127,7 +127,7 @@ ExtTutorial.Steps = {
 	{ Id = "Kit", Title = "GRAB YOUR STARTER KIT", Target = KitConfig.Point, WaypointText = "KIT VENDOR",
 		Text = function()
 			return "Walk to the <b>kit vendor</b> (follow the marker) and press " .. key("Interact", "the button on screen")
-				.. " to claim the free <b>STARTER KIT</b>: pistol, SMG, ammo, bandages, a vest and a bike."
+				.. ", then click <b>COLLECT</b> on the free <b>STARTER KIT</b>: pistol, SMG, ammo, bandages, a vest and a bike."
 		end,
 		Done = function()
 			return hasWeapon() or starterWaiting()
@@ -272,7 +272,7 @@ function ExtTutorial.Start(withIntro)
 		return
 	end
 	local C2 = UITheme.MenuColors
-	intro = make("Frame", { Name = "Intro", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.42),
+	intro = make("Frame", { Name = "Intro", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.6), -- unter dem Banner der täglichen Kiste
 		Size = UDim2.fromOffset(560, 250), BackgroundColor3 = C2.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0,
 		ZIndex = 20 }, gui)
 	UITheme.Corner(intro, UITheme.Radius.Medium)

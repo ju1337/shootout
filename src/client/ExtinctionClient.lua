@@ -1987,7 +1987,7 @@ function Guide.Topics()
 			bullet .. "Your <b>spawn point</b> is the last safe zone you entered.",
 			bullet .. "If you die outside, your <b>bag drops</b> where you died – it is marked on your map. Your container and "
 				.. "stash are always safe.",
-			bullet .. "Grab the free <b>STARTER KIT</b> at the <b>KIT COUNTER</b> on the north street of the camp.",
+			bullet .. "Grab the free <b>STARTER KIT</b> at the <b>kit vendor</b> on the north street of the camp.",
 			bullet .. "Once a day a <b>daily crate</b> lands in your stash.",
 		} },
 		{ Title = "INVENTORY", Lines = {
@@ -2002,11 +2002,11 @@ function Guide.Topics()
 			bullet .. "<b>Attachments</b>: drag one onto a weapon to attach it.",
 		} },
 		{ Title = "TRADING", Lines = {
-			bullet .. "<b>Weapon stand, pharmacy, vehicle workshop</b>: buy with coins. You can sell anything at any stand for "
-				.. math.floor(E.SellFactor * 100) .. " % of its price.",
+			bullet .. "<b>Weapon shop, medic shop, vehicle shop</b>: buy with coins. You can sell items at any stand for "
+				.. math.floor(E.SellFactor * 100) .. " % of their price (kit items can't be sold).",
 			bullet .. "<b>Player market</b> (MARKET tab, only in the safe zone): sell your items to other players. Fee "
 				.. math.floor(E.Market.FeeRate * 100) .. " %.",
-			bullet .. "<b>The Fixer</b> (black van in the market alley in the northeast of the camp) sells attachments, LMG, DMR, heavy vests and "
+			bullet .. "<b>The Fence</b> (black van in the market alley in the northeast of the camp) sells attachments, LMG, DMR, heavy vests and "
 				.. "more for <b>red zone points (RZ)</b>.",
 			bullet .. "<b>Kits</b> at the kit vendor on the north street of the camp – every kit has its own cooldown.",
 			bullet .. "The <b>LOOT</b> tab shows what you can get from drops and event crates.",
@@ -2029,7 +2029,7 @@ function Guide.Topics()
 				.. RP.ZombieKill .. " per zombie.",
 			bullet .. "When the zone moves, the top 3 of its leaderboard get " .. RP.Rank[1] .. " / " .. RP.Rank[2] .. " / "
 				.. RP.Rank[3] .. " RZ.",
-			bullet .. "Spend RZ at <b>The Fixer</b>. RZ are saved, you keep them when you die.",
+			bullet .. "Spend RZ at <b>The Fence</b>. RZ are saved, you keep them when you die.",
 		} },
 		{ Title = "EVENTS", Lines = {
 			bullet .. "<b>Loot drop</b>: every " .. math.floor(A.MinInterval / 60) .. "-" .. math.floor(A.MaxInterval / 60)

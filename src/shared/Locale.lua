@@ -120,6 +120,8 @@ local function load()
 	end
 end
 
+local translateList -- (weiter unten) Listen Stück für Stück
+
 -- Text in die Zielsprache übersetzen (nil = kein Eintrag). Reihenfolge: genau, dann Muster.
 local function lookup(text, depth)
 	local exact = strings[text]
@@ -135,9 +137,12 @@ local function lookup(text, depth)
 			if captures[1] ~= nil then
 				local result = string.gsub(entry.Template, "{(%d)}", function(index)
 					local value = captures[tonumber(index) or 0] or ""
-					-- veränderliche Teile einmal genau nachschlagen (Item-Namen, Orte, …)
-					if depth < 1 and string.find(value, LETTERS) then
-						value = lookup(value, depth + 1) or value
+					-- veränderliche Teile genau nachschlagen (Item-Namen, Orte, …)
+					-- (zwei Ebenen: "Fahrrad (Kit) eingepackt." → "{1} eingepackt." → "{1} (Kit)" → "Bicycle")
+					if depth < 2 and string.find(value, LETTERS) then
+						-- eine Liste als Platzhalter ("+ Verband ×2, Fahrrad"): erst stückweise, sonst fängt ein allgemeines
+						-- Muster nur den Anfang
+						value = translateList(value, depth + 1) or lookup(value, depth + 1) or value
 					end
 					return value
 				end)
@@ -147,6 +152,31 @@ local function lookup(text, depth)
 		return nil
 	end
 	return try(patterns[firstWord(text)]) or try(patterns[""])
+end
+
+-- Listen ohne eigenen Eintrag ("Verband ×2, 9mm-Munition ×12", "Zombie · …"): Stück für Stück übersetzen. Gibt nil
+-- zurück, wenn sich kein Stück ändert.
+-- (auch Tasten-Zeilen wie "LMB  SCHIESSEN  ·  R  NACHLADEN / INTERAGIEREN": Taste und Text mit zwei Leerzeichen)
+local LIST_SEPARATORS = { "  ·  ", " · ", ", ", "  ", " / " }
+function translateList(text, depth)
+	if depth > 3 then
+		return nil
+	end
+	for _, separator in LIST_SEPARATORS do
+		if string.find(text, separator, 1, true) then
+			local parts, changed = {}, false
+			for piece in string.gmatch(text .. separator, "(.-)" .. escapePattern(separator)) do
+				local translated = translateList(piece, depth + 1)
+				if translated == nil and string.find(piece, LETTERS) then
+					translated = lookup(piece, 0)
+				end
+				changed = changed or translated ~= nil
+				table.insert(parts, translated or piece)
+			end
+			return changed and table.concat(parts, separator) or nil
+		end
+	end
+	return nil
 end
 
 -- Übersetzung für die aktuelle Sprache (oder lang). Ohne Eintrag oder auf Deutsch kommt der Text unverändert zurück.
@@ -171,6 +201,9 @@ function Locale.Translate(text, lang)
 	local result = nil
 	if string.find(text, LETTERS) then
 		result = lookup(text, 0)
+		if result == nil or result == text then
+			result = translateList(text, 0) or result -- allgemeine Muster ändern an Listen oft nichts
+		end
 	end
 	if cacheSize >= CACHE_LIMIT then
 		cache, cacheSize = {}, 0
