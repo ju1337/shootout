@@ -202,6 +202,15 @@ step(2)
 check(boss.Model == nil, "kommt nicht sofort wieder")
 step(cfg.RespawnTime)
 check(boss.Model ~= nil, "nach der Wartezeit wieder da")
+-- angeschossen und verschwunden (niemand in der Nähe): kommt mit dem alten Leben wieder, nicht voll geheilt
+local hurt = boss.Model:FindFirstChildOfClass("Humanoid")
+hurt.Health = cfg.Health * 0.4
+boss.Model:Destroy()
+step(0.6)
+step(0.6)
+local again = boss.Model and boss.Model:FindFirstChildOfClass("Humanoid")
+check(again ~= nil and math.abs(again.Health - cfg.Health * 0.4) < 1, "Boss behält sein Leben ("
+	.. tostring(again and again.Health) .. ")")
 
 if failures == 0 then
 	print("Bosse: alles in Ordnung")

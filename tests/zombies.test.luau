@@ -397,10 +397,16 @@ Z.MaxTotal = 30
 -- Alle in der Safe Zone: nach kurzer Zeit verschwinden die Zombies (nicht sofort)
 place(alice, Vector3.new(0, 3, 30))
 place(bob, Vector3.new(0, 3, 40))
+-- Event-Zombies (Wrack, Lootdrop) bleiben eine Weile, auch ohne Spieler in der Nähe
+local kept = ZombieService.Spawn(CENTER + Vector3.new(700, 0, 700), "Walker", true)
+ZombieService.Keep({ kept }, 60)
 step(3)
 check(ZombieService.Count() > 0, "Zombies verschwinden nicht sofort")
 step(10)
-check(ZombieService.Count() == 0, "ohne Spieler draußen in der Nähe verschwinden alle Zombies (" .. ZombieService.Count() .. ")")
+check(ZombieService.Count() == 1 and kept.Parent ~= nil,
+	"ohne Spieler draußen in der Nähe verschwinden alle Zombies außer Event-Zombies (" .. ZombieService.Count() .. ")")
+step(60)
+check(ZombieService.Count() == 0, "nach der Haltezeit verschwinden auch Event-Zombies")
 check(downRays > 0, "Boden wird per Raycast gesucht")
 
 -- Schreier: sieht er einen Spieler, jagen ihn alle Zombies im Umkreis und Verstärkung kommt

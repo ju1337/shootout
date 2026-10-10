@@ -239,7 +239,8 @@ local function land(drop)
 	end
 	drop.State = "Landed"
 	drop.Eta = 0
-	drop.Escort = ZombieService.SpawnAround(drop.Target, A.Escort, 20, 50, "Walker")
+	drop.Escort = ZombieService.SpawnAround(drop.Target, A.Escort, 20, 50, "Walker", true)
+	ZombieService.Keep(drop.Escort, 180) -- bleiben, bis jemand kommt (sonst nach 8 s ohne Spieler weg)
 	if drop.Flare then
 		local beam = drop.Flare:FindFirstChild("Beam")
 		if beam then
@@ -292,6 +293,9 @@ function AirdropService.Start(position)
 				break
 			end
 		end
+		if target and busy(target) then
+			target = nil -- alle sechs Versuche belegt: lieber später als mitten auf Horde oder Wrack
+		end
 	end
 	if not target then
 		nextAt = os.clock() + 30 -- nichts Passendes gefunden: bald nochmal
@@ -334,7 +338,16 @@ function AirdropService.StartInZone(zone)
 	if not options or #active > 0 or not zone or playersOutside() < A.MinPlayers then
 		return nil
 	end
-	local ground = pointInZone(zone)
+	local ground = nil
+	for _ = 1, 6 do
+		ground = pointInZone(zone)
+		if not ground or not busy(ground) then
+			break
+		end
+	end
+	if ground and busy(ground) then
+		return nil
+	end
 	return ground and AirdropService.Start(ground) or nil
 end
 
@@ -348,6 +361,9 @@ function AirdropService.PickTarget()
 		if not target or not busy(target) then
 			break
 		end
+	end
+	if target and busy(target) then
+		return nil
 	end
 	return target
 end

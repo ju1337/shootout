@@ -1145,7 +1145,7 @@ local function despawnFar(now)
 				break
 			end
 		end
-		if near then
+		if near or (info.KeepUntil and now < info.KeepUntil) then
 			info.LonelySince = nil
 		else
 			info.LonelySince = info.LonelySince or now
@@ -1268,6 +1268,17 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 		end
 	end
 	return spawned
+end
+
+-- Event-Zombies (Wrack, Lootdrop) eine Weile behalten, auch wenn noch niemand in der Nähe ist: sonst wären sie weg,
+-- bevor die ersten Spieler ankommen
+function ZombieService.Keep(models, seconds)
+	for _, model in models or {} do
+		local info = zombies[model]
+		if info then
+			info.KeepUntil = os.clock() + seconds
+		end
+	end
 end
 
 -- Schreier hat einen Spieler gesehen: alle Zombies im Umkreis jagen ihn, ein paar kommen dazu, roter Schrei-Ring

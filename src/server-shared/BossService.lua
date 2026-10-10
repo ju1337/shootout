@@ -156,7 +156,8 @@ local function spawn(boss)
 	end
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	humanoid.MaxHealth = cfg.Health
-	humanoid.Health = cfg.Health
+	humanoid.Health = (boss.KeptHealth and os.clock() < (boss.KeptUntil or 0)) and math.min(cfg.Health, boss.KeptHealth) or cfg.Health
+	boss.KeptHealth, boss.KeptUntil = nil, nil
 	humanoid.WalkSpeed = cfg.Speed
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	local info = ZombieService.Info(model)
@@ -231,7 +232,11 @@ local function tick(now)
 		local cfg = boss.Config
 		if boss.Model and (not boss.Model.Parent or not boss.Humanoid or boss.Humanoid.Health <= 0) then
 			if boss.Humanoid and boss.Humanoid.Health > 0 or not boss.Model.Parent then
-				-- ohne Tod verschwunden (niemand mehr in der Nähe): beim nächsten Besuch wieder da
+				-- ohne Tod verschwunden (niemand mehr in der Nähe): beim nächsten Besuch wieder da – mit dem Leben von
+				-- vorhin (sonst: anschießen, kurz weglaufen, voll geheilt zurück); nach 5 Minuten wieder ganz
+				if boss.Humanoid and boss.Humanoid.Health > 0 and boss.Humanoid.Health < boss.Humanoid.MaxHealth then
+					boss.KeptHealth, boss.KeptUntil = boss.Humanoid.Health, now + 300
+				end
 				boss.Model, boss.Humanoid = nil, nil
 				boss.RespawnAt = now
 				changed = true
