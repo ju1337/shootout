@@ -99,6 +99,9 @@ local function strikeAt(position)
 		if humanoid and root and humanoid.Health > 0 then
 			local offset = root.Position - position
 			if Vector2.new(offset.X, offset.Z).Magnitude <= L.Radius and math.abs(offset.Y) <= 14 then
+				if Players:GetPlayerFromCharacter(model) then
+					Damage.Forget(model) -- vom Blitz getroffen: kein alter Gegner als Killer
+				end
 				Damage.Apply(model, humanoid, L.Damage, nil)
 			end
 		end
@@ -158,10 +161,14 @@ local function reward()
 					end
 				end
 				ExtinctionConfig.AddDungeonKey(rolled, "Storm", random)
+				local rest = {}
 				for _, item in rolled do
 					local put = InventoryService.GiveStash(player, item.Id, item.Count)
 					if put < item.Count then
 						put += InventoryService.Give(player, item.Id, item.Count - put)
+					end
+					if put < item.Count then
+						table.insert(rest, { Id = item.Id, Count = item.Count - put })
 					end
 					local config = ExtinctionConfig.Get(item.Id)
 					if put > 0 and config then
@@ -169,8 +176,14 @@ local function reward()
 					end
 				end
 				Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = "STORM CRATE",
-					Sub = R.Coins .. " coins · " .. R.RedPoints .. " RZ · " .. table.concat(names, ", ") .. " (in your stash)",
+					Sub = R.Coins .. " coins · " .. R.RedPoints .. " RZ" .. (#names > 0 and (" · " .. table.concat(names, ", ")
+						.. " (in your stash)") or "") .. (#rest > 0 and " · stash full: the rest lies next to you" or ""),
 					Style = "Good" })
+				-- Lager und Tasche voll: Rest als Beutel neben den Spieler (sonst wäre er verloren)
+				local root = #rest > 0 and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				if root and InventoryService.DropItems then
+					InventoryService.DropItems(player, rest, root.Position)
+				end
 			else
 				ProgressService.AddCoins(player, S.FailCoins, "Storm Night")
 			end
@@ -194,6 +207,11 @@ function StormService.Start(duration)
 	-- ein laufender Blutmond endet (nie beide gleichzeitig)
 	if DayCycle.IsBloodMoon(t) then
 		ReplicatedStorage:SetAttribute("BloodMoonEnd", t)
+	end
+	if active then
+		-- (Admin) Neustart mitten im Sturm: den laufenden erst abrechnen, sonst gehen Kämpfer leer aus
+		active = false
+		reward()
 	end
 	table.clear(fighters)
 	local goal = goalFor(math.max(1, #outside()))

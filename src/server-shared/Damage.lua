@@ -28,6 +28,11 @@ function Damage.LastHit(model)
 	return lastHit[model]
 end
 
+-- Letzten Angreifer vergessen (Schaden ohne Verursacher, z.B. Blitz: sonst nennt die Todesanzeige einen alten Treffer)
+function Damage.Forget(model)
+	lastHit[model] = nil
+end
+
 -- Schaden pro Spieler am Charakter (für Assists): [model] = { [Player] = Schaden }
 local contributors = setmetatable({}, { __mode = "k" })
 

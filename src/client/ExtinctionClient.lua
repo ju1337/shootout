@@ -2472,7 +2472,7 @@ local function openKits(part)
 	function win.Refresh()
 		local ok, claimed = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Kits") or "{}")
 		claimed = ok and type(claimed) == "table" and claimed or {}
-		local now = os.time()
+		local now = math.floor(workspace:GetServerTimeNow()) -- Serverzeit (die Uhr des Geräts kann falsch gehen)
 		for kit, view in views do
 			local text, state, progress = "ABHOLEN", "Ready", 0
 			if #kit.Items == 0 then
