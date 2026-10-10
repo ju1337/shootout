@@ -43,7 +43,7 @@ local InventoryService = {}
 local HOTBAR = ExtinctionConfig.HotbarSlots
 local LOADOUTS = 2 -- gespeicherte Ausrüstungen je Spieler
 
-local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im Spielermarkt), Loadouts, Equipped (Item-Tabelle), Using, Dirty }
+local states = {} -- [Player] = { Profile, Bag, Safe, Stash, Market (Angebote im Spielermarkt), Loadouts, Equipped (Item-Tabelle), Using, Dirty, BagDirty (nur Tasche) }
 
 -- Andere Dienste hängen sich hier an (sie brauchen InventoryService, nicht umgekehrt):
 -- Handlers[Aktion] = function(player, ...) für Remotes.ExtAction (LootService: Loot/Drop, VehicleService: StoreVehicle)
@@ -167,7 +167,7 @@ end
 
 -- Stand ins Profil schreiben und an den Client schicken
 local function flush(player, state)
-	state.Dirty = false
+	state.Dirty, state.BagDirty = false, false
 	local data = profileData(state)
 	state.Profile.Extinction = data
 	if player.Parent then
@@ -181,6 +181,21 @@ local function flush(player, state)
 		player:SetAttribute("ExtLoadouts", HttpService:JSONEncode(sizes))
 		local equipped = state.Equipped and slotOf(state.Bag, state.Equipped)
 		player:SetAttribute("ExtEquipped", equipped or 0)
+	end
+end
+
+-- Nur die Tasche hat sich geändert (Magazin nach Schüssen, Munition beim Nachladen): nur sie neu kodieren und senden,
+-- statt Tasche, Container und Lager bei jedem Schuss
+local function flushBag(player, state)
+	local data = state.Profile.Extinction
+	if state.Dirty or type(data) ~= "table" then
+		flush(player, state)
+		return
+	end
+	state.BagDirty = false
+	data.Bag = Inventory.ToList(state.Bag)
+	if player.Parent then
+		player:SetAttribute("ExtBag", HttpService:JSONEncode(data.Bag))
 	end
 end
 
@@ -202,13 +217,13 @@ local function sourceFor(player, state, item)
 		Take = function(n)
 			local taken = ammoId and Inventory.Remove(state.Bag, ammoId, n) or 0
 			if taken > 0 then
-				flush(player, state)
+				flushBag(player, state)
 			end
 			return taken
 		end,
 		SetMag = function(mag)
 			item.Mag = mag
-			state.Dirty = true
+			state.BagDirty = true
 		end,
 	}
 end
@@ -1232,6 +1247,8 @@ function InventoryService.Init()
 		for player, state in states do
 			if state.Dirty and player.Parent then
 				flush(player, state)
+			elseif state.BagDirty and player.Parent then
+				flushBag(player, state)
 			end
 		end
 	end)

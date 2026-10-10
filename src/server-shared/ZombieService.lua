@@ -42,7 +42,7 @@ local ZombieService = {}
 
 local Z = ExtinctionConfig.Zombies
 local P = ExtinctionConfig.ZombiePath
-local AI_STEP = 0.25        -- Sekunden zwischen zwei KI-Schritten (alle Zombies, verteilt)
+local AI_STEP = 0.25        -- Sekunden zwischen zwei KI-Schritten je Zombie (über die Frames verteilt, info.NextAI)
 local WANDER_RADIUS = 30
 local LONELY_TIME = 8       -- so lange ohne Spieler draußen in der Nähe, dann verschwindet ein Zombie
 local CORPSE_RANGE = 9      -- so nah muss man an der Leiche sein, um sie zu durchsuchen
@@ -61,7 +61,7 @@ local options = nil  -- { Map, InSafeZone(position), SafeCenter(), Players() -> 
                      --   RedzoneAt(position) -> Zone | nil, IsWater(x, z) -> bool, Bots() -> Bot-Modelle (auch Ziele) }
 local zombies = {}   -- [Model] = { Humanoid, Root, Target, NextAttack, NextWander, LastPos, StuckTime, Speed, Walk, Damage, Coins, Kind,
                      --   Path, Waypoints, WaypointIndex, PathGoal, PathAt, PathBusy, PathBlocked (Wegfindung, siehe followPath) }
-local pathBudget = 0 -- Pfad-Berechnungen, die in diesem Heartbeat noch erlaubt sind (ZombiePath.PerFrame)
+local pathBudget = 0 -- Pfad-Berechnungen, die in dieser KI-Runde (AI_STEP) noch erlaubt sind (ZombiePath.PerFrame)
 local castParams = nil -- RaycastParams für die Sichtlinie beim Jagen (je KI-Runde neu: ohne Charaktere, Zombies, Beute)
 local count = 0
 local template = nil
@@ -1156,12 +1156,20 @@ function ZombieService.Init(opts)
 		aiElapsed += dt
 		spawnElapsed += dt
 		despawnElapsed += dt
-		pathBudget = P.PerFrame
 		if aiElapsed >= AI_STEP then
 			aiElapsed = 0
 			castParams = nil -- Filter je Runde neu (Charaktere und Bots ändern sich)
-			local now = os.clock()
-			for model, info in zombies do
+			pathBudget = P.PerFrame -- Pfad-Budget je KI-Runde (die Schritte verteilen sich über die Frames der Runde)
+		end
+		-- jeder Zombie alle AI_STEP Sekunden, aber über die Frames verteilt (nicht alle im selben Frame: sonst ein Ruckler
+		-- alle 0,25 s, und das Pfad-Budget pro Frame reicht nur für einen Frame)
+		local now = os.clock()
+		for model, info in zombies do
+			local due = info.NextAI
+			if not due then
+				info.NextAI = now + math.random() * AI_STEP
+			elseif now >= due then
+				info.NextAI = math.max(due + AI_STEP, now)
 				local ok, err = pcall(step, model, info, now)
 				if not ok then
 					warn("Zombie-KI: " .. tostring(err))

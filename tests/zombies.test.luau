@@ -168,14 +168,16 @@ step(0.3)
 check(paths == 2, "Ziel bewegt, Recompute abgelaufen: neuer Pfad (" .. paths .. ")")
 -- Budget: viele Zombies hinter der Mauer bekommen höchstens PerFrame Pfade je KI-Runde, danach alle
 local crowd = {}
-for i = 1, ZP.PerFrame + 2 do
-	table.insert(crowd, ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(30, -3, i * 3)))
+for i = 1, ZP.PerFrame * 3 + 2 do
+	table.insert(crowd, ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(24, -3, i * 2)))
 end
 local before = paths
+-- die KI-Schritte verteilen sich über die Frames: ein Fenster von 0,25 s kann den Rest einer Runde und die nächste treffen
 step(0.25)
-check(paths - before <= ZP.PerFrame, "höchstens " .. ZP.PerFrame .. " Pfade pro Runde (" .. (paths - before) .. ")")
-step(1)
-check(paths - before == #crowd, "danach haben alle Zombies ihren Pfad (" .. (paths - before) .. ")")
+check(paths - before <= 2 * ZP.PerFrame and paths - before < #crowd,
+	"höchstens " .. ZP.PerFrame .. " Pfade pro Runde (" .. (paths - before) .. " in 0,25 s)")
+step(2)
+check(paths - before == #crowd, "danach haben alle Zombies ihren Pfad (" .. (paths - before) .. " von " .. #crowd .. ")")
 for _, model in crowd do
 	model:Destroy()
 end
