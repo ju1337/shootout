@@ -73,6 +73,10 @@ expect("+ Verband ×2, Fahrrad", "+ Bandage ×2, Bicycle", "Beute-Meldung")
 expect("Volles Leben  ·  +", "Volles Leben  ·  +", "Bruchstück ohne Eintrag: nicht halb übersetzen")
 expect("R  NACHLADEN  ·  M  KARTE", "R  RELOAD  ·  M  MAP", "gekürzte Tasten-Zeile: Wörter mit Eintrag sind keine Tasten")
 expect("Im Lager: 120× Gewehrmunition, 400 Münzen", "In your stash: 120× Rifle Ammo, 400 coins", "Münzen als Listen-Stück")
+expect("W / S  VOR / ZURÜCK  ·  A / D  DREHEN  ·  LEERTASTE  STEIGEN  ·  SHIFT  SINKEN  ·  F  AUSSTEIGEN  ·  G  EINPACKEN (GELANDET)",
+	"W / S  FORWARD / BACK  ·  A / D  TURN  ·  SPACE  CLIMB  ·  SHIFT  DESCEND  ·  F  GET OUT  ·  G  STORE (LANDED)", "Hubschrauber-Tasten")
+expect("L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  △ HALTEN  EINPACKEN (GELANDET)",
+	"L-STICK  FLY  ·  R2  CLIMB  ·  L2  DESCEND  ·  ✕  GET OUT  ·  HOLD △  STORE (LANDED)", "Hubschrauber-Tasten (Gamepad)")
 expect("1.  ADLER  ·  3 VERKÄUFE", "1.  ADLER  ·  3 VERKÄUFE", "Liste mit Spielername (Adler ist auf dem Server)")
 expect("LMB  SCHIESSEN  ·  □  NACHLADEN / INTERAGIEREN  ·  △ HALTEN  FAHRZEUG EINPACKEN",
 	"LMB  FIRE  ·  □  RELOAD / INTERACT  ·  HOLD △  STORE VEHICLE", "Tasten-Zeile nach benutzten Tasten")
