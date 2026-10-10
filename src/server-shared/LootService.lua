@@ -490,7 +490,8 @@ function LootService.Attach(model, part, items, title, options)
 	prompt.MaxActivationDistance = range
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = part
-	local takeAll = takeAllPrompt(part, name, 0, range)
+	-- Instant (Zombie-Leichen): E legt alles direkt in die Tasche, kein Fenster, kein F-Prompt, kein Gamepass nötig
+	local takeAll = not options.Instant and takeAllPrompt(part, name, 0, range) or nil
 	local bag = {
 		Id = id,
 		Title = title,
@@ -502,6 +503,7 @@ function LootService.Attach(model, part, items, title, options)
 		Expires = os.clock() + (options.Lifetime or ExtinctionConfig.DropLifetime),
 		Viewers = {},
 		Unlocked = {},
+		Instant = options.Instant == true,
 	}
 	function bag.Refresh()
 		local rest = {}
@@ -514,18 +516,26 @@ function LootService.Attach(model, part, items, title, options)
 	end
 	function bag.Detach()
 		prompt:Destroy()
-		takeAll:Destroy()
+		if takeAll then
+			takeAll:Destroy()
+		end
 		if options.OnRemoved then
 			options.OnRemoved()
 		end
 	end
 	bags[id] = bag
 	prompt.Triggered:Connect(function(player)
-		LootService.Open(player, id)
+		if bag.Instant then
+			LootService.Take(player, id, "All")
+		else
+			LootService.Open(player, id)
+		end
 	end)
-	takeAll.Triggered:Connect(function(player)
-		takeAllTriggered(player, id)
-	end)
+	if takeAll then
+		takeAll.Triggered:Connect(function(player)
+			takeAllTriggered(player, id)
+		end)
+	end
 	return id
 end
 
@@ -565,7 +575,7 @@ function LootService.Take(player, id, slot, toName, toSlot)
 	if not bag then
 		return false
 	end
-	if slot == "All" and not LootService.CanTakeAll(player) then
+	if slot == "All" and not bag.Instant and not LootService.CanTakeAll(player) then
 		InventoryService.Status(player, LootService.TakeAllHint)
 		return false
 	end

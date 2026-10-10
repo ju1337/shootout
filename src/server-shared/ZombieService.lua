@@ -490,7 +490,8 @@ local function attachCorpseLoot(model, root, info, items)
 	info.Corpse = corpse
 	corpse.LootId = LootService.Attach(model, root, items, "LEICHE · " .. upper(info.Name), {
 		PromptName = "CorpsePrompt",
-		ActionText = "Durchsuchen",
+		ActionText = "Aufheben",
+		Instant = true, -- E nimmt alles direkt mit (kein Beute-Fenster)
 		ObjectText = info.Name,
 		Range = CORPSE_RANGE,
 		Lifetime = Z.CorpseLootTime + 1, -- die Leiche selbst verschwindet nach CorpseLootTime (onDeath)

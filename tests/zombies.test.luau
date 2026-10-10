@@ -239,9 +239,9 @@ end
 check(xpShown, "+XP erscheint im HUD")
 check(#workspace.ExtinctionLoot:GetChildren() == bags, "kein Beutel am Boden: die Beute steckt in der Leiche")
 local prompt = victim.HumanoidRootPart:FindFirstChild("CorpsePrompt")
-check(prompt ~= nil and prompt.ActionText == "Durchsuchen" and prompt.HoldDuration == 0,
-	"Leiche mit Beute: einmal E (Durchsuchen, ohne Halten)")
-check(victim.HumanoidRootPart:FindFirstChild("TakeAllPrompt") ~= nil, "F = alles nehmen (Gamepass)")
+check(prompt ~= nil and prompt.ActionText == "Aufheben" and prompt.HoldDuration == 0,
+	"Leiche mit Beute: einmal E (Aufheben, ohne Halten)")
+check(victim.HumanoidRootPart:FindFirstChild("TakeAllPrompt") == nil, "kein F-Prompt: E nimmt schon alles")
 check(victim:FindFirstChild("LootHighlight") ~= nil, "Leiche mit Beute leuchtet kurz auf")
 check(prompt and string.find(prompt.ObjectText, "Zombie", 1, true) ~= nil, "Prompt zeigt, was drinsteckt: " .. tostring(prompt and prompt.ObjectText))
 step(6)
@@ -275,21 +275,10 @@ check(countItems(alice) == before and prompt.Parent ~= nil and logAfter == logBe
 place(alice, Vector3.new(0, 3, -400))
 victim:PivotTo(CFrame.new(alice.Character.HumanoidRootPart.Position + Vector3.new(0, 0, -2)))
 prompt.Triggered:Fire(alice)
-local loot = lastLoot(alice)
-check(loot ~= nil and #loot.Items > 0 and countItems(alice) == before,
-	"E an der Leiche: Beute-Fenster mit dem Inhalt, noch nichts genommen")
-check(loot and loot.Title == "LEICHE · ZOMBIE", "Fenstertitel nennt die Leiche (" .. tostring(loot and loot.Title) .. ")")
--- ohne Gamepass nicht alles auf einmal (F öffnet nur das Fenster)
-check(loot and LootService.Take(alice, loot.Id, "All") == false and countItems(alice) == before,
-	"ohne Gamepass ALLES LOOTEN: nicht alles auf einmal")
-victim.HumanoidRootPart.TakeAllPrompt.Triggered:Fire(alice)
-check(countItems(alice) == before, "F ohne Gamepass nimmt nichts")
--- einzeln herausnehmen
-for _, entry in loot and loot.Items or {} do
-	LootService.Take(alice, loot.Id, entry.S)
-end
+local _, logInstant = lastLoot(alice)
+check(logInstant == logAfter, "E an der Leiche: kein Beute-Fenster")
 local after = countItems(alice)
-check(after > before, "einzeln herausgenommen: Beute im Inventar (" .. before .. " -> " .. after .. ")")
+check(after > before, "E: ganze Beute sofort im Inventar, ohne Gamepass (" .. before .. " -> " .. after .. ")")
 local allowed = {}
 for _, entry in ExtinctionConfig.LootTables.Zombie do
 	allowed[entry.Id] = true
@@ -309,7 +298,7 @@ check(victim.HumanoidRootPart:FindFirstChild("CorpsePrompt") == nil and victim:F
 step(2)
 check(victim.Parent == nil, "durchsuchte Leiche verschwindet")
 
--- Tasche voll: Beute bleibt in der Leiche, später nehmen (mit Gamepass alles auf einmal)
+-- Tasche voll: Beute bleibt in der Leiche, nach Platz schaffen nochmal E
 ExtinctionConfig.ZombieKinds.Walker.Drop = 1
 local second = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -4))
 Damage.Apply(second, second.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
@@ -319,10 +308,8 @@ local saved = Inventory.Clear(fullBag)
 for slot = 1, fullBag.Size do
 	fullBag.Slots[slot] = { Id = "Pistol", Count = 1, Mag = 0 }
 end
-alice:SetAttribute("Pass_LootAll", true) -- Gamepass ALLES LOOTEN
 local corpsePrompt = second.HumanoidRootPart:FindFirstChild("CorpsePrompt")
-local takeAllPrompt = second.HumanoidRootPart:FindFirstChild("TakeAllPrompt")
-takeAllPrompt.Triggered:Fire(alice)
+corpsePrompt.Triggered:Fire(alice)
 check(corpsePrompt.Parent ~= nil and second.Parent ~= nil, "Tasche voll: Beute bleibt in der Leiche")
 local fullMessage = false
 for _, entry in SIM.RemoteLog do
@@ -332,11 +319,10 @@ for _, entry in SIM.RemoteLog do
 end
 check(fullMessage, "Meldung: Tasche voll")
 Inventory.Clear(fullBag)
-takeAllPrompt.Triggered:Fire(alice)
-check(countItems(alice) > 0, "mit Gamepass: F nimmt alles auf einmal")
+corpsePrompt.Triggered:Fire(alice)
+check(countItems(alice) > 0, "Platz geschaffen: E nimmt alles")
 step(2)
 check(second.Parent == nil, "nach Platz schaffen: Beute genommen, Leiche weg")
-alice:SetAttribute("Pass_LootAll", nil)
 for _, item in saved do
 	Inventory.Add(fullBag, item.Id, item.Count, { Mag = item.Mag })
 end
