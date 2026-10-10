@@ -69,14 +69,19 @@ local function update(transform)
 			end)
 		end)
 		if not ok then
+			-- nicht trotzdem anwenden: sonst sehen alle das Angebot, bis es beim nächsten Laden still verschwindet
 			warn("ShopOfferService: Speichern fehlgeschlagen: " .. tostring(err))
+			return nil
 		end
 	end
-	result = result or clean(transform(clean(config)))
+	result = result or clean(transform(clean(config))) -- ohne DataStore (Studio): nur hier
 	apply(result)
-	pcall(MessagingService.PublishAsync, MessagingService, ShopOfferService.Topic, { Config = result, Server = game.JobId })
+	-- nur ein Anstoß zum Neuladen (der ganze Stand kann über die 1-kB-Grenze von MessagingService gehen)
+	pcall(MessagingService.PublishAsync, MessagingService, ShopOfferService.Topic, { Reload = true, Server = game.JobId })
 	return result
 end
+
+local SAVE_FAILED = "Speichern fehlgeschlagen, bitte gleich noch einmal versuchen."
 
 local function load()
 	local s = dataStore()
@@ -111,8 +116,8 @@ function ShopOfferService.Add(admin, itemId, options)
 		return "Dauer muss zwischen 1 Stunde und " .. (ShopOffers.MaxHours // 24) .. " Tagen liegen."
 	end
 	local full = false
-	local start = now()
-	update(function(data)
+	local start = math.floor(now())
+	local saved = update(function(data)
 		local offers = {}
 		for _, entry in data.Offers do
 			if entry.Id ~= item.Id then
@@ -128,6 +133,9 @@ function ShopOfferService.Add(admin, itemId, options)
 		data.Offers = offers
 		return data
 	end)
+	if not saved then
+		return SAVE_FAILED
+	end
 	if full then
 		return "Schon " .. ShopOffers.MaxOffers .. " Angebote aktiv. Erst eins entfernen."
 	end
@@ -140,7 +148,7 @@ function ShopOfferService.Remove(_, itemId)
 		return "Unbekannter Skin."
 	end
 	local found = false
-	update(function(data)
+	local saved = update(function(data)
 		local offers = {}
 		for _, entry in data.Offers do
 			if entry.Id == item.Id then
@@ -152,15 +160,21 @@ function ShopOfferService.Remove(_, itemId)
 		data.Offers = offers
 		return data
 	end)
+	if not saved then
+		return SAVE_FAILED
+	end
 	return found and ("Angebot beendet: " .. item.Name) or "Für diesen Skin läuft kein Angebot."
 end
 
 function ShopOfferService.SetAuto(_, on)
 	local value = on == true
-	update(function(data)
+	local saved = update(function(data)
 		data.AutoDaily = value
 		return data
 	end)
+	if not saved then
+		return SAVE_FAILED
+	end
 	return value and "Angebot des Tages läuft wieder." or "Angebot des Tages ist aus."
 end
 
@@ -169,8 +183,12 @@ function ShopOfferService.Init()
 	task.spawn(load)
 	task.spawn(pcall, MessagingService.SubscribeAsync, MessagingService, ShopOfferService.Topic, function(message)
 		local data = type(message) == "table" and message.Data or nil
-		if type(data) == "table" and data.Server ~= game.JobId and type(data.Config) == "table" then
-			apply(data.Config)
+		if type(data) == "table" and data.Server ~= game.JobId then
+			if type(data.Config) == "table" then
+				apply(data.Config) -- (ältere Server schicken noch den ganzen Stand)
+			elseif data.Reload then
+				task.spawn(load)
+			end
 		end
 	end)
 	task.spawn(function()

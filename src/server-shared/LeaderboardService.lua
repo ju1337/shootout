@@ -62,7 +62,10 @@ local function nameOf(userId)
 	local name = player and player.Name
 	if not name then
 		local ok, result = pcall(Players.GetNameFromUserIdAsync, Players, userId)
-		name = ok and result or ("Spieler " .. userId)
+		if not ok or type(result) ~= "string" then
+			return "Spieler " .. userId -- nicht merken: beim nächsten Mal neu versuchen
+		end
+		name = result
 	end
 	names[userId] = name
 	return name
@@ -173,7 +176,10 @@ function LeaderboardService.Init()
 	task.spawn(function()
 		task.wait(5) -- Profile laden lassen
 		while true do
-			refresh()
+			local ok, err = pcall(refresh) -- ein Fehler darf die Bestenlisten nicht für immer anhalten
+			if not ok then
+				warn("LeaderboardService: " .. tostring(err))
+			end
 			task.wait(REFRESH)
 		end
 	end)
@@ -181,7 +187,10 @@ function LeaderboardService.Init()
 		while true do
 			task.wait(SUBMIT)
 			for _, player in Players:GetPlayers() do
-				submitPlayer(player)
+				local ok, err = pcall(submitPlayer, player)
+				if not ok then
+					warn("LeaderboardService: " .. tostring(err))
+				end
 			end
 		end
 	end)

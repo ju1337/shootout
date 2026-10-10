@@ -85,8 +85,8 @@ local function moveToward(value, target, step)
 end
 
 local function keyDown(...)
-	for _, key in { ... } do
-		if UserInputService:IsKeyDown(key) then
+	for i = 1, select("#", ...) do -- ohne Tabelle (läuft mehrmals pro Bild)
+		if UserInputService:IsKeyDown((select(i, ...))) then
 			return true
 		end
 	end
@@ -119,10 +119,17 @@ local function liftInput()
 end
 
 -- Boden unter einer Stelle (y), ohne ignore, Spieler, Zombies, Taschen und nicht feste Teile; nil = nichts darunter
+-- (Filter nur alle 0,5 s neu bauen: die Höhe wird beim Fliegen jedes Bild gemessen)
+local groundParams = { Params = nil, Ignore = nil, At = -math.huge }
 local function groundBelow(origin, ignore)
+	if groundParams.Params and groundParams.Ignore == ignore and os.clock() - groundParams.At < 0.5 then
+		local hit = workspace:Raycast(origin, Vector3.new(0, -1000, 0), groundParams.Params)
+		return hit and hit.Position.Y or nil
+	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.RespectCanCollide = true
+	groundParams.Params, groundParams.Ignore, groundParams.At = params, ignore, os.clock()
 	local list = { ignore }
 	for _, other in Players:GetPlayers() do
 		if other.Character then
@@ -342,7 +349,7 @@ local function checkBailOut(model)
 	end
 	local ground = groundBelow(root.Position, lastHeli)
 	if not ground or root.Position.Y - ground > GLIDE_HEIGHT then
-		Glide.Start(character)
+		Glide.Start(character, lastHeli)
 	end
 end
 

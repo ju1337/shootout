@@ -1892,6 +1892,7 @@ return {
 	["SPIELEN"] = "PLAY",
 	["SPIELEN · ARCADE"] = "PLAY · ARCADE",
 	["SPIELER"] = "PLAYERS",
+	["Speichern fehlgeschlagen, bitte gleich noch einmal versuchen."] = "Saving failed, please try again in a moment.",
 	["Spieler"] = "Player",
 	["Spieler auf diesem Server"] = "Players on this server",
 	["Spieler erledigt"] = "Player killed",

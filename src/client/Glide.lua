@@ -36,18 +36,19 @@ local function stop(humanoid)
 	Movement.SetFovOverride(nil)
 end
 
-local function start(character)
+-- ignore: zusätzlich zu übergehen (z.B. der Heli, aus dem man springt – sonst misst die Höhe bis zum Rumpf)
+local function start(character, ignore)
 	stop()
 	local root = character:WaitForChild("HumanoidRootPart")
 	local humanoid = character:WaitForChild("Humanoid")
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { character }
+	params.FilterDescendantsInstances = ignore and { character, ignore } or { character }
 
 	connection = RunService.Heartbeat:Connect(function()
-		if not root.Parent or humanoid.Health <= 0 then
-			stop(humanoid)
+		if not root.Parent or humanoid.Health <= 0 or humanoid.SeatPart then
+			stop(humanoid) -- (auf einem Sitz gelandet: sonst würde das Gleiten das ganze Fahrzeug mitdrehen)
 			return
 		end
 

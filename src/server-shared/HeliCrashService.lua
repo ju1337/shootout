@@ -191,6 +191,9 @@ local function burn(dt)
 		if humanoid and root and humanoid.Health > 0 then
 			local offset = root.Position - current.Target
 			if Vector2.new(offset.X, offset.Z).Magnitude <= K.FireRadius and math.abs(offset.Y) <= 10 then
+				if Players:GetPlayerFromCharacter(model) then
+					Damage.Forget(model) -- im Feuer gestorben: kein alter Gegner als Killer
+				end
 				Damage.Apply(model, humanoid, K.TickDamage, nil)
 			end
 		end
