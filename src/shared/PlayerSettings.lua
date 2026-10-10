@@ -43,7 +43,7 @@ PlayerSettings.List = {
 	-- Anzeigesprache (Locale): Automatisch = Englisch, Deutsch nur bei deutscher Roblox-Sprache
 	{ Key = "Language", Category = "Display", Label = "Sprache", Type = "Choice", Default = "auto",
 		Options = { { "auto", "AUTOMATISCH" }, { "en", "ENGLISH" }, { "de", "DEUTSCH" } },
-		Hint = "Automatisch: Englisch, Deutsch bei deutscher Roblox-Sprache" },
+		Hint = "Auto: nach deiner Roblox-Sprache, sonst Englisch" },
 	{ Key = "Graphics", Category = "Display", Label = "Grafik", Type = "Choice", Default = "High",
 		Options = { { "High", "HOCH" }, { "Medium", "MITTEL" }, { "Low", "NIEDRIG" } },
 		Hint = "Niedrig: ohne Schatten, Partikel und Leuchteffekte (mehr FPS)" },

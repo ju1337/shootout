@@ -320,7 +320,7 @@ return {
 	["AUSWÄHLEN"] = "SELECT",
 	["Auto-Bots (1 = an)"] = "Auto bots (1 = on)",
 	["AUTOMATISCH"] = "AUTO",
-	["Automatisch: Englisch, Deutsch bei deutscher Roblox-Sprache"] = "Auto: English, German when your Roblox language is German",
+	["Auto: nach deiner Roblox-Sprache, sonst Englisch"] = "Auto: follows your Roblox language, else English",
 	["BAHNHOF"] = "TRAIN STATION",
 	["BALD"] = "SOON",
 	["BALD VERFÜGBAR"] = "COMING SOON",

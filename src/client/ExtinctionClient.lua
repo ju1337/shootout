@@ -78,6 +78,12 @@ Inv.closedLoot = { Id = nil, At = 0 } -- zuletzt selbst geschlossene Tasche (ver
 Inv.SAFE_SLOTS = ExtinctionConfig.SafeSlots
 Inv.MENU_RED = Color3.fromRGB(214, 58, 58) -- Akzent des Menüs (aktiver Reiter, Kopfzeile, Hauptknöpfe)
 Inv.GLASS = Color3.fromRGB(8, 9, 11)       -- Grund der halbtransparenten Flächen
+-- Menü und alle Fenster: dunkel und fast deckend (die Welt soll nicht durchscheinen), außen gerundet
+Inv.SOLID = Color3.fromRGB(8, 9, 11)     -- Fläche der Fenster
+Inv.SIDEBAR = Color3.fromRGB(5, 6, 7)    -- Seitenleiste, etwas dunkler als die Fläche
+Inv.RAISED = Color3.fromRGB(17, 18, 21)  -- Karten und Kopfzeile darauf
+Inv.WINDOW_ALPHA = 0.03
+Inv.WINDOW_RADIUS = UITheme.Radius.XL
 Inv.TILE = Color3.fromRGB(14, 15, 18)      -- Kacheln der Plätze
 Inv.Tutorial = require(script.Parent:WaitForChild("ExtTutorial")) -- geführtes Tutorial für neue Spieler
 local SAFE = Color3.fromRGB(112, 200, 120)
@@ -1088,7 +1094,7 @@ end
 ExtinctionClient.Close = closeWindow
 
 -- ---------- Menü (TAB / M) ----------
--- Fast so groß wie der Bildschirm und halbtransparent (die Welt bleibt unscharf sichtbar): links die Seitenleiste mit
+-- Fast so groß wie der Bildschirm, dunkel und fast deckend, außen gerundet: links die Seitenleiste mit
 -- den Reitern (Controller: L1/R1 blättern), rechts die Fläche mit Kopfzeile (Titel, Münzen, Schließen) und Inhalt.
 -- INVENTAR, MARKT, SQUAD und ERFOLGE baut dieses Modul, AUFTRÄGE das QuestBoard; die übrigen Reiter sind Seiten der Lobby (GameMenu.BorrowPage),
 -- verkleinert auf die Breite des Inhalts.
@@ -1173,8 +1179,13 @@ local function newMenu(kind, title, subtitle)
 	local frame = make("Frame", { Name = isTab and "Menu" or "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(Inv.MENU_W, Inv.MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
 	-- Seitenleiste: Name des Modus, Reiter untereinander, unten der Hinweis zum Schließen
-	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.GLASS,
-		BackgroundTransparency = 0.14, BorderSizePixel = 0, Visible = isTab, ZIndex = 5 }, frame)
+	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.SIDEBAR,
+		BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, Visible = isTab, ZIndex = 5 }, frame)
+	-- Fenster außen gerundet: Seitenleiste links, Fläche rechts; wo beide aneinanderstoßen, bleiben die Ecken gerade
+	UITheme.Corner(sidebar, Inv.WINDOW_RADIUS)
+	make("Frame", { Name = "Join", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
+		Size = UDim2.new(0, Inv.WINDOW_RADIUS, 1, 0), BackgroundColor3 = Inv.SIDEBAR, BackgroundTransparency = Inv.WINDOW_ALPHA,
+		BorderSizePixel = 0, ZIndex = 5 }, sidebar)
 	label({ Name = "Logo", Position = UDim2.fromOffset(24, 78), Size = UDim2.new(1, -48, 0, 26), Text = "EXTINCTION", TextSize = 24,
 		Font = F.Display, TextColor3 = Inv.MENU_RED, ZIndex = 6 }, sidebar)
 	label({ Name = "LogoSub", Position = UDim2.fromOffset(25, 104), Size = UDim2.new(1, -48, 0, 14), Text = "OFFENE WELT", TextSize = 11,
@@ -1226,10 +1237,16 @@ local function newMenu(kind, title, subtitle)
 
 	-- Fläche rechts: Kopfzeile und Inhalt
 	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(sideW, 0), Size = UDim2.new(1, -sideW, 1, 0),
-		BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.42, BorderSizePixel = 0, ZIndex = 5 }, frame)
+		BackgroundColor3 = Inv.SOLID, BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	UITheme.Corner(panel, Inv.WINDOW_RADIUS)
+	if isTab then
+		make("Frame", { Name = "Join", Size = UDim2.new(0, Inv.WINDOW_RADIUS, 1, 0), BackgroundColor3 = Inv.SOLID,
+			BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, ZIndex = 5 }, panel)
+	end
 	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.HEADER_Y),
-		Size = UDim2.new(1, -2 * Inv.CONTENT_X, 0, Inv.HEADER_H), BackgroundColor3 = Inv.GLASS, BackgroundTransparency = 0.25, BorderSizePixel = 0,
+		Size = UDim2.new(1, -2 * Inv.CONTENT_X, 0, Inv.HEADER_H), BackgroundColor3 = Inv.RAISED, BackgroundTransparency = 0, BorderSizePixel = 0,
 		ZIndex = 5 }, panel)
+	UITheme.Corner(header, 4)
 	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
 	local titleRow = make("Frame", { Name = "TitleRow", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -320, 1, 0),
 		BackgroundTransparency = 1, ZIndex = 6 }, header)
@@ -2692,8 +2709,6 @@ end
 -- Werte, Kaufknopf mit Preis; Stapelware zusätzlich "5×" mit dem Preis für fünf), oben Filter nach Art, sobald es mehr
 -- als eine gibt. Rechts schmal das eigene Inventar: anklicken = Info-Fenster mit Verkaufen. Deckend (nichts aus der
 -- Welt scheint durch), sonst wie das Menü der offenen Welt.
-Inv.SOLID = Color3.fromRGB(8, 9, 11)     -- Fläche deckender Fenster
-Inv.RAISED = Color3.fromRGB(17, 18, 21)  -- Karten und Kopfzeile darauf
 Inv.WELL = Color3.fromRGB(12, 13, 15)    -- Bildfläche einer Karte
 Inv.COMMON = Color3.fromRGB(110, 112, 118) -- Seltenheit 1 (gewöhnlich)
 -- Arten als Filter des Stands (Mehrzahl), in dieser Reihenfolge
@@ -3115,23 +3130,22 @@ end
 local function openLobbyTab(id)
 	local win = newWindow(id)
 	local pageId = menuTab[id].PageId or id
-	-- SHOP: deckender Grund statt Glas (die Welt soll nicht durch die Karten scheinen)
-	if pageId == "Shop" then
-		local panel = win.Frame:FindFirstChild("Panel")
-		if panel then
-			panel.BackgroundTransparency = 0.03
-		end
-		local sidebar = win.Frame:FindFirstChild("Sidebar")
-		if sidebar then
-			sidebar.BackgroundTransparency = 0.03
-		end
-	end
 	local scale = math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
-	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H),
+	-- so hoch wie der Inhalt (Seiten mit Scrollfläche wie OPTIONEN nutzen die ganze Höhe)
+	local height = math.max(LobbyPages.PAGE_H, math.floor(Inv.CONTENT_H / scale))
+	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, height),
 		BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	make("UIScale", { Scale = scale }, holder)
-	if GameMenu.BorrowPage(pageId, holder) then
+	-- Knopf neben dem Seitentitel (OPTIONEN: STANDARD WIEDERHERSTELLEN) kommt in die Kopfzeile, links neben die Münzen
+	local actions = make("Frame", { Name = "PageActions", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -292, 0.5, 0),
+		Size = UDim2.fromOffset(250, 36), BackgroundTransparency = 1, ZIndex = 6 }, win.Header)
+	local page, subtitle = GameMenu.BorrowPage(pageId, holder, { Height = height, HideTitle = true, ActionParent = actions })
+	if page then
 		win.Borrowed = pageId
+		-- großer Titel der Seite ist aus, ihr Untertitel steht wie bei den anderen Reitern in der Kopfzeile
+		if subtitle and subtitle ~= "" then
+			win.Sub.Text = subtitle
+		end
 	else
 		label({ Size = UDim2.fromOffset(Inv.CONTENT_W, 60), Text = "GERADE NICHT VERFÜGBAR", TextSize = 18, Font = F.Bold,
 			TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6 }, win.Body)

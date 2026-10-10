@@ -896,9 +896,15 @@ function GameMenu.AddPage(id)
 end
 
 -- Seite der Lobby ausleihen (Menü der offenen Welt): baut sie beim ersten Mal, hängt ihren Rahmen (PAGE_W x PAGE_H)
--- links oben an parent, zeigt und aktualisiert sie. Gibt den Rahmen zurück (nil, wenn es die Seite nicht gibt).
--- ReturnPage(id) hängt sie wieder in die Lobby.
-function GameMenu.BorrowPage(id, parent)
+-- links oben an parent, zeigt und aktualisiert sie. ReturnPage(id) hängt sie wieder in die Lobby.
+-- options (optional):
+--   Height       Höhe des Rahmens in Einheiten der Seite (Standard PAGE_H; Seiten mit Scrollfläche nutzen sie ganz)
+--   HideTitle    großen Titel und Untertitel der Seite (PageTitle, PageSubtitle) ausblenden und den Inhalt um
+--                TITLE_SHIFT nach oben rücken: das Menü zeigt beide in seiner Kopfzeile
+--   ActionParent Rahmen in der Kopfzeile für den Knopf neben dem Titel (PageAction, z. B. STANDARD WIEDERHERSTELLEN)
+-- Gibt den Rahmen und den Untertitel der Seite zurück (nil, wenn es die Seite nicht gibt).
+local TITLE_SHIFT = 64
+function GameMenu.BorrowPage(id, parent, options)
 	local entry = pages[id]
 	if not entry or id == "Play" then
 		return nil
@@ -908,14 +914,29 @@ function GameMenu.BorrowPage(id, parent)
 		entry.Build = nil
 		entry.Refresh, entry.Watch = built.Refresh, built.Watch
 	end
+	options = options or {}
+	local frame = entry.Frame
+	local title, subtitle = frame:FindFirstChild("PageTitle"), frame:FindFirstChild("PageSubtitle")
+	local shift = (options.HideTitle and title) and TITLE_SHIFT or 0
+	for _, label in { title, subtitle } do
+		label.Visible = shift == 0
+	end
+	local action = frame:FindFirstChild("PageAction")
+	if action and shift > 0 and options.ActionParent then
+		entry.ActionHome = { AnchorPoint = action.AnchorPoint, Position = action.Position, Size = action.Size }
+		action.AnchorPoint, action.Position, action.Size = Vector2.zero, UDim2.new(), UDim2.fromScale(1, 1)
+		action.Parent = options.ActionParent
+		entry.Action = action
+	end
 	borrowed[id] = true
-	entry.Frame.Parent = parent
-	entry.Frame.Position = UDim2.fromOffset(0, 0)
-	entry.Frame.Visible = true
+	frame.Parent = parent
+	frame.Position = UDim2.fromOffset(0, -shift)
+	frame.Size = UDim2.fromOffset(LobbyPages.PAGE_W, (options.Height or LobbyPages.PAGE_H) + shift)
+	frame.Visible = true
 	if entry.Refresh then
 		entry.Refresh()
 	end
-	return entry.Frame
+	return frame, subtitle and subtitle.Text or nil
 end
 
 function GameMenu.ReturnPage(id)
@@ -924,8 +945,21 @@ function GameMenu.ReturnPage(id)
 		return
 	end
 	borrowed[id] = nil
+	if entry.Action then
+		local home = entry.ActionHome
+		entry.Action.AnchorPoint, entry.Action.Position, entry.Action.Size = home.AnchorPoint, home.Position, home.Size
+		entry.Action.Parent = entry.Frame
+		entry.Action, entry.ActionHome = nil, nil
+	end
+	for _, name in { "PageTitle", "PageSubtitle" } do
+		local label = entry.Frame:FindFirstChild(name)
+		if label then
+			label.Visible = true
+		end
+	end
 	entry.Frame.Parent = canvas
 	entry.Frame.Position = UDim2.fromOffset(LEFT_X, 106)
+	entry.Frame.Size = UDim2.fromOffset(LobbyPages.PAGE_W, LobbyPages.PAGE_H)
 	entry.Frame.Visible = isOpen and currentPage == id
 end
 

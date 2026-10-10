@@ -312,9 +312,11 @@ end
 local function makePage(name, title, subtitle)
 	local entry = GameMenu.AddPage(name)
 	local frame = entry.Frame
-	text({ Position = UDim2.new(0, 0, 0, -4), Size = UDim2.new(0, 900, 0, 46), Text = title, TextSize = 42, Font = DISPLAY }, frame)
-	text({ Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(0, 900, 0, 16), Text = subtitle or "", TextSize = 11,
-		TextColor3 = GRAY }, frame)
+	-- Namen: im Menü der offenen Welt blendet GameMenu.BorrowPage beide aus (das Menü zeigt sie in seiner Kopfzeile)
+	text({ Name = "PageTitle", Position = UDim2.new(0, 0, 0, -4), Size = UDim2.new(0, 900, 0, 46), Text = title, TextSize = 42,
+		Font = DISPLAY }, frame)
+	text({ Name = "PageSubtitle", Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(0, 900, 0, 16), Text = subtitle or "",
+		TextSize = 11, TextColor3 = GRAY }, frame)
 	return frame, entry
 end
 
@@ -937,8 +939,9 @@ end
 local function buildSettings()
 	local frame, page = makePage("Settings", "OPTIONEN", "WIRKT SOFORT  ·  WIRD AUTOMATISCH GESPEICHERT")
 	local updaters = {} -- [Key] = function() (Anzeige aus dem aktuellen Wert)
-	UITheme.Chunky({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(250, 44),
-		Color = CARD, StrokeColor = BORDER, Text = "STANDARD WIEDERHERSTELLEN", TextSize = 15 }, frame, function()
+	UITheme.Chunky({ Name = "PageAction", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.fromOffset(250, 44), Color = CARD, StrokeColor = BORDER, Text = "STANDARD WIEDERHERSTELLEN", TextSize = 15 },
+		frame, function()
 		PlayerSettings.Reset()
 	end)
 

@@ -1,7 +1,7 @@
 -- UITheme (ModuleScript, nur Client)
 -- Einheitliches, cleanes Design für alle Menüs und das HUD: fast schwarzes Neutralgrau als Grund, ruhige Flächen
--- mit haarfeinem hellem Rand, Bernstein als einzige Signalfarbe (aktiv, Hauptknöpfe), Stahlblau für das eigene
--- Team, Rot für Gegner. Flach, knappe Rundungen, keine Schatten, keine Comic-Konturen. Schrift durchgehend
+-- mit haarfeinem hellem Rand, Rot als einzige Signalfarbe (aktiv, Hauptknöpfe; wie im Menü der offenen Welt),
+-- Stahlblau für das eigene Team, ein helleres Rot für Gegner und Warnungen. Flach, knappe Rundungen, keine Schatten, keine Comic-Konturen. Schrift durchgehend
 -- Builder Sans (die moderne Roblox-Schrift): Überschriften und Zahlen extra fett, Beschriftungen fett/mittel.
 -- Sonderzeichen wie ✕ ✓ ★ ◆ → ∞ besser zeichnen (Cross, Diamond, Coin) – nicht jede Schrift hat sie.
 -- Bausteine: Text, Überschrift, Knopf (Button, Chunky), Fläche (Panel, Card, HudPanel), Akzentstreifen (AccentBar),
@@ -23,11 +23,11 @@ UITheme.Colors = {
 	Secondary = Color3.fromRGB(32, 36, 41),
 	MutedBack = Color3.fromRGB(27, 30, 35),
 	Border = Color3.fromRGB(52, 57, 64),       -- Ränder (haarfein, siehe Stroke)
-	Primary = Color3.fromRGB(236, 178, 70),    -- Bernstein: aktiv, Hauptknöpfe, Schilder
-	PrimaryText = Color3.fromRGB(12, 13, 15),  -- dunkle Schrift auf Bernstein/Blau
+	Primary = Color3.fromRGB(214, 58, 58),     -- Rot: aktiv, Hauptknöpfe, Schilder (wie das Menü der offenen Welt)
+	PrimaryText = Color3.fromRGB(255, 255, 255), -- Schrift auf Rot
 	Accent = Color3.fromRGB(88, 164, 226),     -- Stahlblau: eigenes Team, Verbündete
 	AccentDark = Color3.fromRGB(34, 72, 104),
-	Play = Color3.fromRGB(236, 178, 70),       -- großer SPIELEN-Knopf
+	Play = Color3.fromRGB(214, 58, 58),        -- großer SPIELEN-Knopf
 	Text = Color3.fromRGB(236, 238, 241),
 	Muted = Color3.fromRGB(136, 144, 156),     -- gedämpfte Schrift
 	Good = Color3.fromRGB(104, 194, 122),
