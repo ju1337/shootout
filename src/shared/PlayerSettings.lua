@@ -120,6 +120,7 @@ end
 -- ---------- Client ----------
 
 local values = {}
+local touched = {} -- [Key] = true, sobald hier geändert (das erste Laden überschreibt das nicht)
 local changedEvent = Instance.new("BindableEvent")
 PlayerSettings.Changed = changedEvent.Event -- (key, value)
 
@@ -151,6 +152,7 @@ function PlayerSettings.Set(key, value)
 		return
 	end
 	values[key] = value
+	touched[key] = true
 	changedEvent:Fire(key, value)
 	scheduleSave()
 end
@@ -206,7 +208,8 @@ function PlayerSettings.Init()
 		loaded = true
 		for _, setting in PlayerSettings.List do
 			local value = clean(setting, data[setting.Key])
-			if value ~= nil and value ~= PlayerSettings.Get(setting.Key) then
+			-- schon vor dem Laden hier geändert: die eigene Änderung gilt (sie wird gleich gespeichert)
+			if value ~= nil and not touched[setting.Key] and value ~= PlayerSettings.Get(setting.Key) then
 				values[setting.Key] = value
 				changedEvent:Fire(setting.Key, value)
 			end

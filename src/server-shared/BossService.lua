@@ -18,6 +18,7 @@ local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local LootService = require(script.Parent.LootService)
 local ZombieService = require(script.Parent.ZombieService)
+local SpeedEffects = require(script.Parent.SpeedEffects)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
 local DiscordLog = require(script.Parent.DiscordLog)
@@ -218,12 +219,7 @@ local function throwSyringe(boss, target)
 		return -- Spawnschutz o. Ä.: auch nicht verlangsamen
 	end
 	local character = target.Root.Parent
-	character:SetAttribute("SpeedMultiplier", cfg.SlowFactor)
-	task.delay(cfg.SlowTime, function()
-		if character.Parent and character:GetAttribute("SpeedMultiplier") == cfg.SlowFactor then
-			character:SetAttribute("SpeedMultiplier", 1)
-		end
-	end)
+	SpeedEffects.Apply(character, "Syringe", cfg.SlowFactor, cfg.SlowTime)
 end
 
 local function tick(now)

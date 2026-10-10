@@ -865,6 +865,10 @@ function Movement.Init()
 		if not humanoid or not root or humanoid.Health <= 0 or humanoid.PlatformStand or move then
 			return
 		end
+		-- offenes Menü (Inventar, Beutel, Karte ...): Maus frei lassen, sonst kämpft das jedes Bild mit dem Menü
+		if require(Shared.UITheme).IsMenuOpen() then
+			return
+		end
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		humanoid.AutoRotate = false
 		local look = workspace.CurrentCamera.CFrame.LookVector
@@ -958,6 +962,7 @@ function Movement.Init()
 		normalHipHeight = humanoid.HipHeight
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge
+		crouchHeld = false -- Touch-Umschalter DUCKEN gilt nicht übers Sterben hinaus
 		airMove, lastMoveOut, rawMove = nil, nil, Vector3.zero
 		local root = character:WaitForChild("HumanoidRootPart", 5)
 		fallForce = nil

@@ -34,6 +34,7 @@ local WeaponConfig = require(Shared.WeaponConfig)
 local Modes = require(Shared.Modes)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ProgressService = require(script.Parent.ProgressService)
+local SpeedEffects = require(script.Parent.SpeedEffects)
 local KitConfig = require(ReplicatedStorage:WaitForChild("Shared").KitConfig)
 local WeaponService = require(script.Parent.WeaponService)
 local RedPointsService = require(script.Parent.RedPointsService)
@@ -332,12 +333,7 @@ local function finishUse(player, state, item, config, character, humanoid)
 	elseif config.Kind == "Heal" then
 		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + config.Heal)
 		if config.Speed then
-			character:SetAttribute("SpeedMultiplier", config.Speed)
-			task.delay(config.SpeedTime or 5, function()
-				if character.Parent and character:GetAttribute("SpeedMultiplier") == config.Speed then
-					character:SetAttribute("SpeedMultiplier", 1)
-				end
-			end)
+			SpeedEffects.Apply(character, "Item", config.Speed, config.SpeedTime or 5)
 		end
 	else
 		local armor = character:GetAttribute("Armor") or 0

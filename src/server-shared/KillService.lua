@@ -15,6 +15,7 @@ local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local WeaponService = require(ServerShared.WeaponService)
 local ProgressService = require(ServerShared.ProgressService)
+local SpeedEffects = require(ServerShared.SpeedEffects)
 local DownedService = require(ServerShared.DownedService)
 local BuyService = require(ServerShared.BuyService)
 local Damage = require(ServerShared.Damage)
@@ -278,12 +279,7 @@ function KillService.Init()
 			-- Passiv BLAZE: nach einem Kill kurz schneller
 			local killerCharacter = killer.Character
 			if killerCharacter and AgentConfig.PassiveOf(killerCharacter, "KillSpeed") then
-				killerCharacter:SetAttribute("SpeedMultiplier", 1.2)
-				task.delay(2, function()
-					if killerCharacter.Parent and killerCharacter:GetAttribute("SpeedMultiplier") == 1.2 then
-						killerCharacter:SetAttribute("SpeedMultiplier", 1)
-					end
-				end)
+				SpeedEffects.Apply(killerCharacter, "KillSpeed", 1.2, 2)
 			end
 			-- Medaillen (Mehrfach-Kill, Killserie, Erstes Blut ...) mit Bonus-XP
 			awardMedals(killer, victim, weaponName, headshot, victimName, victimModel)

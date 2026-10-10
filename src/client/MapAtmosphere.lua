@@ -129,6 +129,15 @@ local function apply(name)
 		MapAtmosphere.Cycle() -- Tag und Nacht setzen die Werte direkt
 		return
 	end
+	-- raus aus der offenen Welt: Sturm-Wolken nicht mitnehmen (die setzt nur cycle(), das hier nicht mehr läuft)
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
+	if clouds and clouds:GetAttribute("StormMade") then
+		clouds:Destroy()
+	elseif clouds and clouds:GetAttribute("BaseCover") ~= nil then
+		clouds.Cover = clouds:GetAttribute("BaseCover")
+		clouds.Density = clouds:GetAttribute("BaseDensity")
+		clouds.Color = clouds:GetAttribute("BaseColor")
+	end
 	local preset = PRESETS[name] or defaults
 	local objects = targets()
 	for section, values in preset do
