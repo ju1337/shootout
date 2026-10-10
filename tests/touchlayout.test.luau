@@ -54,9 +54,20 @@ if ping and cameraButton and inspect then
 	end
 end
 
+-- SPRINT liegt auf dem Handy nicht auf der Lebensanzeige (Touch-HUD: oben links bei x 16, 330 breit, Skalierung 0.45)
+local sprint = button("Sprint")
+check(sprint ~= nil, "SPRINT da")
+if sprint then
+	local left = (sprint.Position.X.Offset - sprint.Size.X.Offset / 2) * 0.7
+	check(left > (16 + 330) * 0.45, "Handy: SPRINT rechts neben der Lebensanzeige (linke Kante " .. math.floor(left) .. " px)")
+end
+
 -- großer Bildschirm (Tablet): wieder die Spalte
 camera.ViewportSize = Vector2.new(1024, 768)
 SIM.Advance(0.1, 10)
+if sprint then
+	check(sprint.Position.X.Offset == 110, "Tablet: SPRINT wieder über dem Steuerknüppel")
+end
 if ping and cameraButton then
 	check(ping.Position.X.Offset == cameraButton.Position.X.Offset and ping.Position.Y.Offset < cameraButton.Position.Y.Offset,
 		"Tablet: Spalte oben rechts")

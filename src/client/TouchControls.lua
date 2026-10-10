@@ -58,6 +58,8 @@ local SURVIVAL_HIDDEN = { Ability = true, Gadget = true, Ultimate = true, Scoreb
 -- Kleine Bildschirme (Handy quer): die Spalte oben rechts läge auf LADEN, FEUER und SPRUNG. Dann stehen die sichtbaren
 -- kleinen Knöpfe als Reihe oben, links neben der Ranglisten-Fläche der roten Zone und unter Uhr/KARTE (HUD).
 local TOP_ROW = { MaxHeight = 760, Right = 230, Step = 66, Y = 88 } -- Höhe der Ebene in Design-Einheiten, ab der die Spalte passt
+-- Dort läge SPRINT auf der Lebensanzeige (die auf Touch oben links unter der Minimap steht): weiter nach rechts
+local SPRINT_ROW_X = 300
 -- Pilot eines Helikopters: steigen und sinken (gedrückt halten) an den Plätzen von FEUER und ZIELEN; die Kampfknöpfe
 -- sind dann aus (im Fahrzeug gibt es keine Waffe). SPRUNG heißt in jedem Fahrzeug RAUS (aussteigen).
 local HELI = {
@@ -207,6 +209,11 @@ function TouchControls.Init()
 				end
 			else
 				button.Position = UDim2.new(1, -entry[4], 0, entry[5])
+			end
+		end
+		for _, entry in LEFT do
+			if entry[1] == "Sprint" then
+				buttons.Sprint.Button.Position = UDim2.new(0, row and SPRINT_ROW_X or entry[4], 1, -entry[5])
 			end
 		end
 	end
