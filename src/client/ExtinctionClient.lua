@@ -2666,7 +2666,7 @@ local function openSquad()
 	function win.Tick()
 		for _, entry in whereLabels do
 			if entry.Label.Parent then
-				entry.Label.Text = (whereIs(entry.Player))
+				setText(entry.Label, (whereIs(entry.Player)))
 			end
 		end
 	end
@@ -3927,7 +3927,7 @@ function ExtinctionClient.Init()
 	local function tickSquadPanel()
 		for _, entry in squadRows do
 			local where, health = whereIs(entry.Player)
-			entry.Where.Text = where
+			setText(entry.Where, where)
 			entry.Fill.Size = UDim2.fromScale(math.clamp(health or 0, 0, 1), 1)
 			entry.Fill.BackgroundColor3 = (health or 1) <= 0.3 and C.Bad or C.Ally
 		end
@@ -4009,6 +4009,7 @@ function ExtinctionClient.Init()
 		Size = UDim2.new(1, -170, 0, TOP_RIGHT.KeyH), Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 		TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd }, clockPanel)
 	-- Rote Zone (zieht alle 20 Minuten weiter), bei mehreren Zonen die nächste
+	local redzoneCache = { Raw = nil, List = {} } -- zuletzt gelesenes Attribut Redzones und die Liste daraus
 	local redzoneRow = make("Frame", { Name = "RedzoneInfo", Position = UDim2.fromOffset(0, TOP_RIGHT.KeyH),
 		Size = UDim2.new(1, 0, 0, CLOCK_PANEL_H_ZONE - TOP_RIGHT.KeyH), BackgroundTransparency = 1, Visible = false }, clockPanel)
 	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(10, 0), Size = UDim2.new(1, -20, 0, 1), BackgroundColor3 = C.Border,
@@ -4150,7 +4151,12 @@ function ExtinctionClient.Init()
 		local character = player.Character
 		local root3 = character and character:FindFirstChild("HumanoidRootPart")
 		local nearest, nearestDistance = nil, math.huge
-		for _, zone in mapList(map, "Redzones") do
+		-- Liste nur neu lesen, wenn sich das Attribut ändert (die Zone zieht alle 20 Minuten weiter)
+		local redzonesRaw = map:GetAttribute("Redzones")
+		if redzonesRaw ~= redzoneCache.Raw then
+			redzoneCache.Raw, redzoneCache.List = redzonesRaw, mapList(map, "Redzones")
+		end
+		for _, zone in redzoneCache.List do
 			if type(zone) == "table" and tonumber(zone.X) and tonumber(zone.Z) then
 				local distance = 0
 				if root3 then
@@ -4164,10 +4170,10 @@ function ExtinctionClient.Init()
 		end
 		if nearest then
 			local left = math.max(0, math.floor((tonumber(nearest.Ends) or serverTime) - serverTime))
-			redzoneName.Text = string.upper(tostring(nearest.Title or ""))
-			redzoneTimer.Text = "WECHSEL IN " .. string.format("%d:%02d", left // 60, left % 60)
+			setText(redzoneName, string.upper(tostring(nearest.Title or "")))
+			setText(redzoneTimer, "WECHSEL IN " .. string.format("%d:%02d", left // 60, left % 60))
 			local inside = root3 and nearestDistance <= 0
-			redzoneDistance.Text = not root3 and "" or inside and "DU BIST DRIN" or (math.floor(nearestDistance) .. " M")
+			setText(redzoneDistance, not root3 and "" or inside and "DU BIST DRIN" or (math.floor(nearestDistance) .. " M"))
 			redzoneDistance.TextColor3 = inside and RED or C.Text
 		end
 		redzoneRow.Visible = nearest ~= nil

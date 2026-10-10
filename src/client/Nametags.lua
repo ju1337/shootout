@@ -21,6 +21,7 @@ local StaffConfig = require(Shared.StaffConfig)
 local UITheme = require(Shared.UITheme)
 local RapConfig = require(Shared.RapConfig)
 local Modes = require(Shared.Modes)
+local setText = require(Shared.Locale).Set -- Schilder werden oft neu gesetzt: nur schreiben, wenn sich der Text ändert
 local TeamCheck = require(Shared.TeamCheck)
 
 local player = Players.LocalPlayer
@@ -167,12 +168,12 @@ local function setTag(model, info)
 		tag.Adornee = head
 	end
 	local p = parts[tag]
-	p.Title.Text = info.Name
+	setText(p.Title, info.Name)
 	p.Title.TextColor3 = info.Color
 	local staff = info.Staff
 	p.Staff.Visible = staff ~= nil
 	if staff then
-		p.Staff.Text = staff.Name
+		setText(p.Staff, staff.Name)
 		p.Staff.BackgroundColor3 = staff.Color
 	end
 
@@ -182,20 +183,20 @@ local function setTag(model, info)
 	p.RankText.Visible = rank ~= nil
 	if rank then
 		p.RankEmblem:SetRank(rank)
-		p.RankText.Text = rank.Display
+		setText(p.RankText, rank.Display)
 		p.RankText.TextColor3 = rank.Color
 	end
 	p.RapDot.Visible = rap ~= nil and rank ~= nil
 	p.RapIcon.Visible = rap ~= nil
 	p.RapText.Visible = rap ~= nil
 	if rap then
-		p.RapText.Text = Nametags.ShortNumber(rap)
+		setText(p.RapText, Nametags.ShortNumber(rap))
 		p.RapText.TextColor3 = RapConfig.TierColor(rap)
 	end
 	p.TitleDot.Visible = playerTitle ~= nil and (rank ~= nil or rap ~= nil)
 	p.TitleText.Visible = playerTitle ~= nil
 	if playerTitle then
-		p.TitleText.Text = UITheme.Upper(playerTitle.Name)
+		setText(p.TitleText, UITheme.Upper(playerTitle.Name))
 		p.TitleText.TextColor3 = playerTitle.Color
 	end
 

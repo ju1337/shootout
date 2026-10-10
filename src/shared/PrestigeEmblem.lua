@@ -179,7 +179,7 @@ function PrestigeEmblem:Set(level, prestige)
 	end
 	local starCount = (prestige == 5 or prestige == 8) and 1 or ((prestige == 6 or prestige == 9) and 2 or 0)
 	self.Stars.Visible = starCount > 0 or legend
-	self.Stars.Text = legend and "LEGENDE" or string.rep("★", starCount)
+	require(script.Parent.Locale).Set(self.Stars, legend and "LEGENDE" or string.rep("★", starCount)) -- Namensschilder setzen das oft
 	self.Stars.TextColor3 = legend and Color3.fromRGB(255, 225, 140) or color
 	self.Glow.Visible = legend
 	glows[self.Glow] = legend or nil

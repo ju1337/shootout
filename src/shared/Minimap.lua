@@ -462,8 +462,9 @@ function Minimap.Init(root)
 	local pings = {}         -- { Frame, Until, Position }
 
 	-- Schießende Gegner kurz zeigen (wie bei RC)
-	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos)
-		if typeof(startPos) ~= "Vector3" then
+	Remotes.Shot.OnClientEvent:Connect(function(shooter, startPos, _, _, _, _, silenced)
+		-- Schalldämpfer: kein Punkt auf der Minimap (wie kein Mündungsfeuer und keine Leuchtspur)
+		if typeof(startPos) ~= "Vector3" or silenced == true then
 			return
 		end
 		local model = nil
