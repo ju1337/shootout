@@ -249,6 +249,9 @@ check(prompt ~= nil and prompt.Enabled, "Stand hat eine E-Aufforderung")
 prompt.Triggered:Fire(bob)
 step(0.3)
 check(windowGui.Enabled and string.find(texts(windowGui), "WAFFENSTAND", 1, true) ~= nil, "Waffenstand-Fenster offen")
+check(not prompt.Enabled, "E-Aufforderung aus, solange das Fenster offen ist")
+check(find(windowGui, "StandFilter_Ammo") ~= nil and find(windowGui, "Offer_Ammo_9mm") ~= nil
+	and find(find(windowGui, "Offer_Ammo_9mm"), "Buy5") ~= nil, "Filter nach Art und 5× bei Munition")
 local buyButton = nil
 for _, d in windowGui:GetDescendants() do
 	if d:IsA("TextLabel") and d.Text == "1100" then
@@ -276,6 +279,7 @@ InputActions.Trigger("Inventory", true)
 InputActions.Trigger("Inventory", false)
 step(0.2)
 check(not windowGui.Enabled, "TAB schließt das offene Fenster")
+check(prompt.Enabled, "E-Aufforderung nach dem Schließen wieder an")
 InputActions.Trigger("Inventory", true)
 InputActions.Trigger("Inventory", false)
 step(0.2)

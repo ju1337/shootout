@@ -1028,6 +1028,15 @@ function Inv.hideHud(on)
 	end
 end
 
+-- E-Aufforderungen der Stände, des Lagers usw. (gefüllt in setupPrompts). Solange ein Fenster offen ist, sind sie aus:
+-- sonst schiebt sich "E · WAFFENSTAND · Handeln" über das Fenster.
+local prompts = {}
+local function setPrompts(on)
+	for _, prompt in prompts do
+		prompt.Enabled = on
+	end
+end
+
 local function closeWindow()
 	if not window then
 		return
@@ -1047,6 +1056,7 @@ local function closeWindow()
 	UITheme.SetBlur("Extinction", false)
 	RunService:UnbindFromRenderStep("ExtinctionMouse")
 	InputActions.Unfocus(canvas)
+	setPrompts(inExtinction())
 end
 ExtinctionClient.Close = closeWindow
 
@@ -1242,6 +1252,7 @@ local function newWindow(kind, title, subtitle)
 			Size = UDim2.fromOffset(1124, 532), BackgroundTransparency = 1, ZIndex = 5 }, window.Body)
 	end
 	Inv.hideHud(true)
+	setPrompts(false)
 	window.Coins.Text = UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN"
 	UITheme.SetBlur("Extinction", true)
 	RunService:BindToRenderStep("ExtinctionMouse", MOUSE_PRIORITY, function()
@@ -2654,74 +2665,276 @@ local function openSquad()
 	win.Refresh()
 end
 
--- STAND: links kaufen, rechts verkaufen (eigene Tasche anklicken)
+-- STAND (alle Händler: Waffen, Items, Fahrzeuge, der Schieber): links das Angebot als Karten (Bild, Name, Seltenheit,
+-- Werte, Kaufknopf mit Preis; Stapelware zusätzlich "5×" mit dem Preis für fünf), oben Filter nach Art, sobald es mehr
+-- als eine gibt. Rechts schmal das eigene Inventar: anklicken = Info-Fenster mit Verkaufen. Deckend (nichts aus der
+-- Welt scheint durch), sonst wie das Menü der offenen Welt.
+Inv.SOLID = Color3.fromRGB(8, 9, 11)     -- Fläche deckender Fenster
+Inv.RAISED = Color3.fromRGB(17, 18, 21)  -- Karten und Kopfzeile darauf
+Inv.WELL = Color3.fromRGB(12, 13, 15)    -- Bildfläche einer Karte
+Inv.COMMON = Color3.fromRGB(110, 112, 118) -- Seltenheit 1 (gewöhnlich)
+-- Arten als Filter des Stands (Mehrzahl), in dieser Reihenfolge
+Inv.STAND_GROUPS = {
+	{ Id = "Weapon", Text = "WAFFEN" }, { Id = "Ammo", Text = "MUNITION" }, { Id = "Throwable", Text = "WURFWAFFEN" },
+	{ Id = "Heal", Text = "HEILUNG" }, { Id = "Armor", Text = "RÜSTUNG" }, { Id = "Repel", Text = "SCHUTZ" },
+	{ Id = "Attachment", Text = "AUFSÄTZE" }, { Id = "Vehicle", Text = "FAHRZEUGE" }, { Id = "Key", Text = "SCHLÜSSEL" },
+}
+
+-- Fenster deckend machen (Fläche und Kopfzeile ohne Transparenz)
+function Inv.solidWindow(win)
+	local panel = win.Frame:FindFirstChild("Panel")
+	if panel then
+		panel.BackgroundColor3, panel.BackgroundTransparency = Inv.SOLID, 0
+	end
+	win.Header.BackgroundColor3, win.Header.BackgroundTransparency = Inv.RAISED, 0
+	win.Sub.TextSize = 14
+	win.Sub.TextColor3 = Color3.fromRGB(176, 173, 166)
+end
+
+-- Zahl mit einer Nachkommastelle (Komma auf Deutsch, Punkt auf Englisch), ganze Zahlen ohne
+function Inv.decimal(n)
+	local text = n == math.floor(n) and tostring(n) or string.format("%.1f", n)
+	return require(Shared.Locale).Language() == "de" and (string.gsub(text, "%.", ",")) or text
+end
+
+-- Werte einer Karte am Stand: höchstens drei { Name, Wert } (Werte groß geschrieben, Namen schon übersetzt)
+function Inv.standStats(id)
+	local config = itemConfig(id)
+	local Locale = require(Shared.Locale)
+	local stats = {}
+	local function add(name, value)
+		table.insert(stats, { name, tostring(value) })
+	end
+	if config.Kind == "Weapon" then
+		local weapon = WeaponConfig.Get(config.Weapon)
+		local ammo = itemConfig(config.Ammo)
+		add("SCHADEN", weapon and weapon.Damage or 0)
+		add("MAGAZIN", weapon and weapon.MagazineSize or 0)
+		add("MUNITION", ammo and upper(Locale.Translate(ammo.Name)) or "?")
+	elseif config.Kind == "Ammo" then
+		local users = {}
+		for _, other in ExtinctionConfig.Items do
+			if other.Ammo == id then
+				table.insert(users, upper(Locale.Translate(other.Name)))
+			end
+		end
+		table.sort(users)
+		add("PACKUNG", (config.Pack or 1) .. " SCHUSS")
+		add("FÜR", table.concat(users, ", "))
+	elseif config.Kind == "Heal" then
+		add("HEILT", "+" .. config.Heal)
+		add("DAUER", Inv.decimal(config.UseTime) .. " S")
+		if config.Speed then
+			add("BONUS", "KURZ SCHNELLER")
+		end
+	elseif config.Kind == "Armor" then
+		add("RÜSTUNG", "+" .. config.Armor)
+		add("DAUER", Inv.decimal(config.UseTime) .. " S")
+	elseif config.Kind == "Repel" then
+		add("WIRKT", math.floor((config.Duration or 0) / 60) .. " MIN")
+		add("DAUER", Inv.decimal(config.UseTime) .. " S")
+	elseif config.Kind == "Throwable" then
+		local cfg = ExtinctionConfig.Throwables[config.Throwable]
+		if config.Throwable == "Molotov" then
+			add("SCHADEN", math.floor(cfg.TickDamage / cfg.Tick) .. " / S")
+			add("BRENNT", cfg.Duration .. " S")
+		else
+			add("SCHADEN", cfg.Damage)
+			add("ZÜNDER", Inv.decimal(cfg.Fuse) .. " S")
+		end
+		add("RADIUS", cfg.Radius)
+	elseif config.Kind == "Vehicle" then
+		local vehicle = ExtinctionConfig.Vehicles[config.Vehicle]
+		if vehicle then
+			add("TEMPO", vehicle.Speed)
+			add("LEBEN", vehicle.Health)
+			add("SITZE", vehicle.Seats)
+		end
+	elseif config.Kind == "Attachment" then
+		local weapons = {}
+		for _, weaponName in AttachmentConfig.WeaponsFor(config.Attachment) do
+			local weapon = WeaponConfig.Get(weaponName)
+			table.insert(weapons, upper(Locale.Translate(weapon and weapon.DisplayName or weaponName)))
+		end
+		add("PLATZ", upper(SLOT_NAMES[config.Slot] or config.Slot or ""))
+		add("PASST AUF", table.concat(weapons, ", "))
+	end
+	return stats
+end
+
+-- Kaufknopf einer Karte: Text links, Münze (oder RZ) und Preis rechts; gibt Knopf und Preis zurück
+function Inv.priceButton(parent, props, text, price, redStand, onClick)
+	local button = Inv.flatButton(props, parent, onClick)
+	button.Text = ""
+	local row = make("Frame", { Name = "PriceRow", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 9 }, button)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 7), SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center }, row)
+	label({ Name = "What", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = text, TextSize = 15, Font = F.Display,
+		LayoutOrder = 1, ZIndex = 9 }, row)
+	if redStand then
+		local rz = make("Frame", { Size = UDim2.fromOffset(17, 17), BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = 9 }, row)
+		Inv.rzIcon(rz, 10)
+	else
+		UITheme.Coin(row, 16, { LayoutOrder = 2, ZIndex = 9 })
+	end
+	label({ Name = "Price", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = tostring(price), TextSize = 17,
+		Font = F.Display, LayoutOrder = 3, ZIndex = 9 }, row)
+	return button
+end
+
 local function openStand(standKey)
 	local stand = ExtinctionConfig.Stands[standKey]
 	if not stand then
 		return
 	end
-	local win = newWindow("Stand", stand.Title, "KAUFEN MIT MÜNZEN  ·  RECHTS EIN ITEM ANKLICKEN ZUM VERKAUFEN ("
-		.. math.floor(ExtinctionConfig.SellFactor * 100) .. " %)")
-	win.Stand = standKey
-	local body = win.Body
 	local redStand = stand.Currency == "RedPoints" -- der Schieber: Preise in Rote-Zone-Punkten
-	-- links das Angebot, rechts das eigene Inventar (anklicken = Info-Fenster mit Verkaufen)
-	local listW = math.floor(Inv.CONTENT_W * 0.42)
+	local win = newWindow("Stand", stand.Title, redStand and "BEZAHLT WIRD MIT ROTE-ZONE-PUNKTEN (RZ)" or "BEZAHLT WIRD MIT MÜNZEN")
+	win.Stand = standKey
+	Inv.solidWindow(win)
+	local body = win.Body
+	local gap = 12
+	local listW = math.floor(Inv.CONTENT_W * 0.62)
 	Inv.backdrop(body, win)
-	Inv.sectionHeader(body, "OfferHeader", "ANGEBOT", 0, listW)
-	local list = make("ScrollingFrame", { Name = "Offer", Position = UDim2.fromOffset(0, 28), Size = UDim2.fromOffset(listW + 8, Inv.CONTENT_H - 40),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
-	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, list)
-	for i, id in stand.Items do
-		local config = itemConfig(id)
-		local tier = Inv.tierColor(config)
-		local row = make("Frame", { Name = "Offer_" .. id, Size = UDim2.new(0, listW, 0, 78), BackgroundColor3 = Inv.TILE,
-			BackgroundTransparency = 0.3, BorderSizePixel = 0, LayoutOrder = i, ZIndex = 5 }, list)
-		UITheme.Corner(row, 3)
-		make("Frame", { Name = "Tier", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = tier or Color3.fromRGB(70, 72, 78),
-			BorderSizePixel = 0, ZIndex = 6 }, row)
-		local iconBox = make("Frame", { Position = UDim2.fromOffset(12, 8), Size = UDim2.fromOffset(104, 62), BackgroundTransparency = 1,
-			ZIndex = 6 }, row)
-		local icon = buildIcon(iconBox, id, 6)
-		icon.Size = UDim2.fromScale(1, 1)
-		icon.Position = UDim2.fromScale(0.5, 0.5)
-		label({ Position = UDim2.fromOffset(126, 12), Size = UDim2.new(1, -330, 0, 22), Text = upper(config.Name)
-			.. (config.Pack and ("  ×" .. config.Pack) or ""), TextSize = 17, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd,
-			ZIndex = 6 }, row)
-		label({ Position = UDim2.fromOffset(126, 36), Size = UDim2.new(1, -330, 0, 34), Text = describe(id), TextSize = 11,
-			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 6 }, row)
-		local stack = (config.MaxStack or 1) > 1
-		local function buy(qty)
-			sendAction("Buy", standKey, id, qty)
-		end
-		-- Kaufen: rot mit Preis und Münze, bei Stapeln daneben ×5
-		local buyButton = Inv.flatButton({ Name = "Buy", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, stack and -76 or -12, 0.5, 0),
-			Size = UDim2.fromOffset(118, 40), Primary = true, Text = "" }, row, function()
-			buy(1)
-		end)
-		local priceRow = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8 }, buyButton)
-		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
-			HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center }, priceRow)
-		if redStand then
-			local rz = make("Frame", { Size = UDim2.fromOffset(16, 16), BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = 8 }, priceRow)
-			Inv.rzIcon(rz, 9)
-		else
-			UITheme.Coin(priceRow, 14, { LayoutOrder = 1, ZIndex = 8 })
-		end
-		label({ Name = "Price", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
-			Text = tostring(redStand and stand.Prices[id] or config.Price), TextSize = 17, Font = F.Display, LayoutOrder = 2, ZIndex = 8 },
-			priceRow)
-		if stack then
-			Inv.flatButton({ Name = "Buy5", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(58, 40),
-				Text = "×5", TextSize = 15 }, row, function()
-				buy(5)
-			end)
+
+	-- Filter nach Art (nur wenn der Stand mehr als eine Art verkauft)
+	local present = {}
+	for _, id in stand.Items do
+		present[itemConfig(id).Kind] = true
+	end
+	local groups = { { Id = "All", Text = "ALLE" } }
+	for _, group in Inv.STAND_GROUPS do
+		if present[group.Id] then
+			table.insert(groups, group)
 		end
 	end
-	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(listW + 20, 0), Size = UDim2.new(0, 1, 1, -30),
-		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.9, BorderSizePixel = 0, ZIndex = 5 }, body)
-	local refreshGrids = Inv.inventoryGrids(body, listW + 40, Inv.CONTENT_W - listW - 40)
+	local filterId = "All"
+	local filterButtons = {}
+	local listY = 0
+	if #groups > 2 then
+		local filters = make("Frame", { Name = "StandFilters", Size = UDim2.fromOffset(listW, 36), BackgroundTransparency = 1, ZIndex = 5 }, body)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder },
+			filters)
+		for index, group in groups do
+			local button = Inv.flatButton({ Name = "StandFilter_" .. group.Id, Size = UDim2.fromOffset(0, 36), AutomaticSize = Enum.AutomaticSize.X,
+				Text = group.Text, TextSize = 14, LayoutOrder = index }, filters)
+			make("UIPadding", { PaddingLeft = UDim.new(0, 16), PaddingRight = UDim.new(0, 16) }, button)
+			filterButtons[group.Id] = button
+		end
+		listY = 48
+	end
+
+	-- Karten in einem Raster (3 nebeneinander)
+	local columns = 3
+	local cardW = math.floor((listW - 10 - (columns - 1) * gap) / columns)
+	local cardH, iconH = 300, 112
+	local list = make("ScrollingFrame", { Name = "Offer", Position = UDim2.fromOffset(0, listY), Size = UDim2.fromOffset(listW, Inv.CONTENT_H - listY - 8),
+		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Color3.fromRGB(90, 92, 98),
+		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, body)
+	make("UIGridLayout", { CellSize = UDim2.fromOffset(cardW, cardH), CellPadding = UDim2.fromOffset(gap, gap),
+		SortOrder = Enum.SortOrder.LayoutOrder }, list)
+	local cards = {} -- { Frame, Kind, Buttons = { { Button, Price } } }
+	for i, id in stand.Items do
+		local config = itemConfig(id)
+		local tier = Inv.tierColor(config) or Inv.COMMON
+		local price = redStand and stand.Prices[id] or config.Price
+		local card = make("Frame", { Name = "Offer_" .. id, BackgroundColor3 = Inv.RAISED, BorderSizePixel = 0, LayoutOrder = i, ZIndex = 5 }, list)
+		UITheme.Corner(card, 4)
+		-- Bildfläche mit Seltenheit (Streifen unten und Schild oben links) und Packungsgröße
+		local well = make("Frame", { Name = "Well", Size = UDim2.new(1, 0, 0, iconH), BackgroundColor3 = Inv.WELL, BorderSizePixel = 0, ZIndex = 6 },
+			card)
+		UITheme.Corner(well, 4)
+		make("Frame", { Name = "Tier", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 2),
+			BackgroundColor3 = tier, BorderSizePixel = 0, ZIndex = 7 }, well)
+		-- Symbole sind für Kacheln gezeichnet: halb so groß bauen und verdoppeln
+		local iconBox = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(math.floor(cardW * 0.4), math.floor(iconH * 0.42)), BackgroundTransparency = 1, ZIndex = 7 }, well)
+		make("UIScale", { Scale = 2 }, iconBox)
+		local icon = buildIcon(iconBox, id, 7)
+		icon.Size = UDim2.fromScale(1, 1)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		local tierTag = label({ Name = "TierTag", Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X,
+			Text = TIER_NAMES[config.Tier] or "GEWÖHNLICH", TextSize = 12, Font = F.Bold, TextColor3 = tier, BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.45, ZIndex = 8 }, well)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 7), PaddingRight = UDim.new(0, 7) }, tierTag)
+		UITheme.Corner(tierTag, 3)
+		if config.Pack then
+			label({ Name = "Pack", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 8), Size = UDim2.fromOffset(80, 24),
+				Text = "×" .. config.Pack, TextSize = 18, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 8 }, well)
+		end
+		-- Name und Art
+		label({ Name = "ItemName", Position = UDim2.fromOffset(14, iconH + 10), Size = UDim2.new(1, -28, 0, 24), Text = upper(config.Name),
+			TextSize = 19, Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 6 }, card)
+		label({ Name = "Kind", Position = UDim2.fromOffset(14, iconH + 35), Size = UDim2.new(1, -28, 0, 16), Text = KIND_NAMES[config.Kind] or "",
+			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, card)
+		-- Werte: Name links, Wert rechts, dünne Linie dazwischen
+		local y = iconH + 60
+		for _, stat in Inv.standStats(id) do
+			if y > iconH + 60 + 2 * 22 then
+				break
+			end
+			label({ Name = "StatName", Position = UDim2.fromOffset(14, y), Size = UDim2.fromOffset(90, 20), Text = stat[1], TextSize = 12,
+				Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, card)
+			label({ Name = "StatValue", Position = UDim2.fromOffset(104, y), Size = UDim2.new(1, -118, 0, 20), Text = stat[2], TextSize = 14,
+				Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 6 }, card)
+			make("Frame", { Position = UDim2.fromOffset(14, y + 21), Size = UDim2.new(1, -28, 0, 1), BackgroundColor3 = Color3.new(1, 1, 1),
+				BackgroundTransparency = 0.93, BorderSizePixel = 0, ZIndex = 6 }, card)
+			y += 22
+		end
+		-- Kaufen: Stapelware zusätzlich 5× (höchstens ein voller Stapel) mit dem Preis dafür
+		local entry = { Frame = card, Kind = config.Kind, Buttons = {} }
+		local stack = (config.MaxStack or 1) > 1
+		local many = math.min(5, config.MaxStack or 1)
+		local buyW = stack and math.floor((cardW - 28 - 8) * 0.56) or cardW - 28
+		local buy = Inv.priceButton(card, { Name = "Buy", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 14, 1, -14),
+			Size = UDim2.fromOffset(buyW, 44), Primary = true, ZIndex = 8 }, "KAUFEN", price, redStand, function()
+			sendAction("Buy", standKey, id, 1)
+		end)
+		table.insert(entry.Buttons, { Button = buy, Price = price, Primary = true })
+		if stack then
+			local buy5 = Inv.priceButton(card, { Name = "Buy5", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -14, 1, -14),
+				Size = UDim2.fromOffset(cardW - 28 - 8 - buyW, 44), BackgroundTransparency = 0.88, ZIndex = 8 }, many .. "×", price * many, redStand, function()
+				sendAction("Buy", standKey, id, many)
+			end)
+			table.insert(entry.Buttons, { Button = buy5, Price = price * many })
+		end
+		table.insert(cards, entry)
+	end
+	local function applyFilter()
+		for groupId, button in filterButtons do
+			local on = groupId == filterId
+			button.BackgroundColor3 = on and Inv.MENU_RED or Color3.new(1, 1, 1)
+			button.BackgroundTransparency = on and 0 or 0.92
+			button.TextColor3 = on and C.Text or C.Muted
+		end
+		for _, entry in cards do
+			entry.Frame.Visible = filterId == "All" or entry.Kind == filterId
+		end
+		list.CanvasPosition = Vector2.zero
+	end
+	for groupId, button in filterButtons do
+		button.Activated:Connect(function()
+			filterId = groupId
+			applyFilter()
+		end)
+	end
+	applyFilter()
+
+	-- rechts das eigene Inventar, darunter der Hinweis zum Verkaufen
+	local invX = listW + 32
+	local invW = Inv.CONTENT_W - invX
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(listW + 15, 0), Size = UDim2.new(0, 1, 1, -8),
+		BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.92, BorderSizePixel = 0, ZIndex = 5 }, body)
+	local refreshGrids, gridsH = Inv.inventoryGrids(body, invX, invW)
+	local sellBox = make("Frame", { Name = "SellHint", Position = UDim2.fromOffset(invX, gridsH + 6), Size = UDim2.fromOffset(invW, 78),
+		BackgroundColor3 = Inv.RAISED, BorderSizePixel = 0, ZIndex = 5 }, body)
+	UITheme.Corner(sellBox, 4)
+	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, sellBox)
+	label({ Name = "SellTitle", Position = UDim2.fromOffset(18, 12), Size = UDim2.new(1, -36, 0, 22), Text = "VERKAUFEN", TextSize = 17,
+		Font = F.Display, ZIndex = 6 }, sellBox)
+	label({ Name = "SellText", Position = UDim2.fromOffset(18, 38), Size = UDim2.new(1, -36, 0, 30), Text = "Item in Tasche oder Container "
+		.. "anklicken  ·  du bekommst " .. math.floor(ExtinctionConfig.SellFactor * 100) .. " % vom Kaufpreis", TextSize = 14, Font = F.Medium,
+		TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(176, 173, 166), ZIndex = 6 }, sellBox)
+
 	local update = Inv.itemPopup(body)
 	onSlotClick, onSlotDrop = defaultClick, defaultDrop
 	onSlotRightClick = function(container, slot)
@@ -2732,8 +2945,21 @@ local function openStand(standKey)
 		end
 	end
 	function win.Refresh()
-		win.Coins.Text = redStand and (UITheme.FormatNumber(player:GetAttribute("RedPoints") or 0) .. " RZ")
-			or (UITheme.FormatNumber(player:GetAttribute("Coins") or 0) .. " MÜNZEN")
+		local wallet = redStand and (player:GetAttribute("RedPoints") or 0) or (player:GetAttribute("Coins") or 0)
+		win.Coins.Text = UITheme.FormatNumber(wallet) .. (redStand and " RZ" or " MÜNZEN")
+		-- zu teuer: Knopf dunkel, Preis rot (kaufen geht trotzdem, der Server sagt dann warum nicht)
+		for _, entry in cards do
+			for _, info in entry.Buttons do
+				local short = wallet < info.Price
+				local priceLabel = info.Button:FindFirstChild("Price", true)
+				if info.Primary then
+					info.Button.BackgroundColor3 = short and Color3.fromRGB(64, 30, 30) or Inv.MENU_RED
+				end
+				if priceLabel then
+					priceLabel.TextColor3 = short and Color3.fromRGB(255, 130, 120) or C.Text
+				end
+			end
+		end
 		refreshGrids()
 		local actions = {}
 		local entry = selected and selected.Container == "Bag" and bag[selected.Slot]
@@ -3109,8 +3335,6 @@ end
 
 -- ---------- Stände und Lager (E) ----------
 
-local prompts = {}
-
 -- ---------- Hinweis-Blasen über den Ständen ----------
 -- Über jedem Stand (Camp und Safehouses) schwebt eine Sprechblase mit dem Namen und Symbolen der Ware, damit man
 -- schon von weitem sieht, wo was ist. Wände verdecken sie wie alles in der Welt, ab BUBBLE.Range Studs blendet sie aus.
@@ -3481,9 +3705,7 @@ local function updateVisible()
 	if hud then
 		hud.Enabled = on and not Inv.hiddenGuis -- bei offenem Fenster bleibt es versteckt (Inv.hideHud)
 	end
-	for _, prompt in prompts do
-		prompt.Enabled = on
-	end
+	setPrompts(on and window == nil)
 	for _, gui in bubbles do
 		gui.Enabled = on and bubblesOn()
 	end
