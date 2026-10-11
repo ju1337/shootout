@@ -2361,9 +2361,10 @@ end
 local HIDEOUT = Color3.fromRGB(200, 160, 110)
 local function itemCountEverywhere(id)
 	local n = 0
-	for _, list in { bag, stash } do
-		for _, entry in list do
-			if entry.Id == id then
+	-- wie der Server: Tasche, Container und Lager, ohne Waffe in der Hand und ohne ausgeparktes Fahrzeug
+	for _, list in { bag, safe, stash } do
+		for slot, entry in list do
+			if entry.Id == id and not entry.Out and not (list == bag and slot == equipped) then
 				n += entry.N or 1
 			end
 		end
@@ -2382,7 +2383,7 @@ local function openHideout()
 	for i, module in modules do
 		local card = UITheme.Card({ Name = "Module_" .. module.Id, Position = UDim2.fromOffset((i - 1) * (cardW + gap), 0),
 			Size = UDim2.fromOffset(cardW, 524), ZIndex = 6 }, body)
-		local view = { Card = card, Module = module }
+		local view = { Card = card, Module = module, Target = 1 }
 		label({ Name = "Name", Position = UDim2.fromOffset(18, 16), Size = UDim2.new(1, -36, 0, 28), Text = upper(module.Name),
 			TextSize = 24, Font = F.Display, ZIndex = 7 }, card)
 		label({ Name = "Text", Position = UDim2.fromOffset(18, 46), Size = UDim2.new(1, -36, 0, 34), Text = module.Text, TextSize = 13,
@@ -2409,7 +2410,7 @@ local function openHideout()
 		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 18, 1, -18),
 			Size = UDim2.new(1, -36, 0, 44), Color = C.Primary, TextColor = C.PrimaryText, Text = "", TextSize = 16, ZIndex = 7 }, card,
 			function()
-				sendAction("HideoutUpgrade", module.Id)
+				sendAction("HideoutUpgrade", module.Id, view.Target) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
 			end)
 		if module.Id == "Generator" then
 			view.Pending = label({ Name = "Pending", Position = UDim2.fromOffset(18, 350), Size = UDim2.new(1, -36, 0, 22), Text = "",
@@ -2428,6 +2429,7 @@ local function openHideout()
 		for _, module in modules do
 			local view = views[module.Id]
 			local level = HideoutConfig.Level(data, module.Id)
+			view.Target = level + 1
 			for index, pip in view.Pips do
 				pip.BackgroundColor3 = index <= level and HIDEOUT or C.Card
 			end

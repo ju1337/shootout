@@ -462,11 +462,19 @@ function ExtMarketPage.Build(body, ctx)
 			end)
 		elseif affordable then
 			buttonProps.Name, buttonProps.Text, buttonProps.Color, buttonProps.TextColor = "Buy", "KAUFEN", C.Primary, C.PrimaryText
+			local sent = false -- Doppelklick: nur eine Kauf-Anfrage (sonst gleich danach „gibt es nicht mehr“)
 			button(buttonProps, card, function()
+				if sent then
+					return
+				end
 				if coins() < price then
 					ctx.Toast("Dir fehlen " .. format(price - coins()) .. " Münzen.", false)
 					return
 				end
+				sent = true
+				task.delay(2, function() -- falls der Kauf scheitert (Preis geändert …), wieder klickbar
+					sent = false
+				end)
 				ctx.Send("MarketBuy", offer.Id, price)
 			end)
 		else

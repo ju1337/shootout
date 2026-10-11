@@ -163,6 +163,7 @@ moveTo(alice, Vector3.new(52, 3, 2))
 -- Feldbett Stufe 1 (nur Münzen), Stufe 2 braucht Verbände
 local before = coins()
 check(HideoutService.Upgrade(alice, "Bed") == true, "Feldbett gebaut")
+check(HideoutService.Upgrade(alice, "Bed", 1) == false, "Doppelklick: Stufe 1 ist schon gebaut, keine zweite Stufe")
 check(coins() == before - HideoutConfig.Get("Bed").Levels[1].Coins, "Münzen bezahlt")
 check(HideoutConfig.Level(data(), "Bed") == 1 and HideoutConfig.Value(alice, "Bed") == 10, "Stufe 1: +10 Leben")
 check(HideoutService.Upgrade(alice, "Bed") == false, "Stufe 2 ohne Verbände nicht")

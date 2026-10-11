@@ -72,13 +72,16 @@ function HideoutService.Collect(player, silent)
 end
 
 -- Modul eine Stufe ausbauen. Gibt true zurück, wenn es geklappt hat.
-function HideoutService.Upgrade(player, moduleId)
+function HideoutService.Upgrade(player, moduleId, target)
 	local module = type(moduleId) == "string" and HideoutConfig.Get(moduleId)
 	local data = dataOf(player)
 	if not module or not data or not ready(player) then
 		return false
 	end
 	local level = HideoutConfig.Level(data, moduleId)
+	if target ~= nil and target ~= level + 1 then -- Doppelklick: die angezeigte Stufe ist schon gebaut
+		return false
+	end
 	local nextLevel = module.Levels[level + 1]
 	if not nextLevel then
 		InventoryService.Status(player, module.Name .. " ist schon ganz ausgebaut.")
