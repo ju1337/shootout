@@ -1196,7 +1196,7 @@ local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
 	{ Id = "Quests", Text = "AUFTRÄGE" },
-	{ Id = "Loot", Text = "LOOT" },
+	{ Id = "Loot", Text = "BEUTE" },
 	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
 	{ Id = "Achievements", Text = "ERFOLGE" },
@@ -2107,7 +2107,7 @@ end
 local lootSource = 1
 local function openLootInfo()
 	local C = UITheme.MenuColors
-	local win = newWindow("Loot", "LOOT", "WHAT YOU CAN GET FROM DROPS AND EVENT CRATES")
+	local win = newWindow("Loot", "BEUTE", "WAS ES IN DROPS UND EVENT-KISTEN GIBT")
 	local body = win.Body
 	local listW, gap = 230, 20
 	local rightX = listW + gap
@@ -2200,114 +2200,97 @@ local Guide = { Topic = 1 }
 function Guide.Topics()
 	local function key(action, fallback)
 		local hint = InputActions.Hint(action)
-		return hint ~= "" and ("[" .. hint .. "]") or (fallback or "the button on screen")
+		return hint ~= "" and ("[" .. hint .. "]") or (fallback or "Bildschirm-Knopf")
+	end
+	-- Zeile mit Platzhaltern {1}, {2} … (gleicher Text wie der Eintrag in LocaleStrings, dort steht die Übersetzung)
+	local function line(text, ...)
+		local values = { ... }
+		return (string.gsub(text, "{(%d)}", function(index)
+			return tostring(values[tonumber(index) or 0])
+		end))
 	end
 	local E = ExtinctionConfig
 	local R, RP, S, BM, BO, A = E.Redzone, E.RedPoints, E.Storm, E.BloodMoon, E.Bounty, E.Airdrop
 	local repel = E.Items.AntiZombie and E.Items.AntiZombie.Duration or 180
-	local bullet = "•  "
 	return {
-		{ Title = "GETTING STARTED", Lines = {
-			bullet .. "You spawn in a <b>safe zone</b> (the camp or a safehouse). No PvP there, your weapons stay holstered.",
-			bullet .. "Leave the safe zone to loot and fight. <b>PvP starts " .. E.PvPDelay .. " seconds</b> after you leave "
-				.. "(instantly in the red zone).",
-			bullet .. "Your <b>spawn point</b> is the last safe zone you entered.",
-			bullet .. "If you die outside, your <b>bag drops</b> where you died – it is marked on your map. Your container and "
-				.. "stash are always safe.",
-			bullet .. "Grab the free <b>STARTER KIT</b> at the <b>kit vendor</b> on the north street of the camp.",
-			bullet .. "Once a day a <b>daily crate</b> lands in your stash.",
+		{ Title = "ERSTE SCHRITTE", Lines = {
+			line("•  Du spawnst in einer <b>Safe Zone</b> (im Camp oder einem Safehouse). Dort gibt es kein PvP, deine Waffen bleiben im Holster."),
+			line("•  Verlass die Safe Zone, um zu looten und zu kämpfen. <b>PvP beginnt {1} Sekunden</b> nach dem Verlassen (in der roten Zone sofort).", E.PvPDelay),
+			line("•  Dein <b>Spawnpunkt</b> ist die letzte Safe Zone, die du betreten hast."),
+			line("•  Stirbst du draußen, <b>fällt deine Tasche</b> dort zu Boden – sie ist auf deiner Karte markiert. Container und Lager sind immer sicher."),
+			line("•  Hol dir das kostenlose <b>STARTER KIT</b> beim <b>Kit-Händler</b> an der Nordstraße des Camps."),
+			line("•  Einmal am Tag landet eine <b>tägliche Kiste</b> in deinem Lager."),
 		} },
-		{ Title = "INVENTORY", Lines = {
-			bullet .. "Open it with " .. key("Inventory") .. ". Click an item to select it, drag it to move it.",
-			bullet .. "<b>Bag</b>: " .. E.BagSlots .. " slots, the first " .. E.HotbarSlots .. " are your hotbar (keys 1-"
-				.. E.HotbarSlots .. "). You lose the bag when you die outside.",
-			bullet .. "<b>Container</b>: " .. E.SafeSlots .. " slots, reachable everywhere, <b>kept when you die</b>.",
-			bullet .. "<b>Stash</b>: " .. E.StashSlots .. " slots in the safe zone, always safe.",
-			bullet .. "Hotbar keys: weapon in hand or holster it, use bandages, medkits, vests and syringes, throw grenades, "
-				.. "spawn vehicles.",
-			bullet .. "Quick heal: " .. key("QuickHeal", "the heal button") .. ".",
-			bullet .. "<b>Attachments</b>: drag one onto a weapon to attach it.",
+		{ Title = "INVENTAR", Lines = {
+			line("•  Öffnen mit {1}. Ein Item anklicken wählt es aus, ziehen legt es um.", key("Inventory")),
+			line("•  <b>Tasche</b>: {1} Plätze, die ersten {2} sind deine Schnellleiste (Tasten 1-{3}). Stirbst du draußen, ist die Tasche weg.", E.BagSlots, E.HotbarSlots, E.HotbarSlots),
+			line("•  <b>Container</b>: {1} Plätze, überall erreichbar, <b>bleibt beim Tod</b>.", E.SafeSlots),
+			line("•  <b>Lager</b>: {1} Plätze in der Safe Zone, immer sicher.", E.StashSlots),
+			line("•  Tasten der Schnellleiste: Waffe in die Hand nehmen oder wegstecken, Verbände, Medikits, Westen und Spritzen benutzen, Granaten werfen, Fahrzeuge holen."),
+			line("•  Schnell heilen: {1}.", key("QuickHeal", "Heil-Knopf")),
+			line("•  <b>Aufsätze</b>: auf eine Waffe ziehen, um sie anzubauen."),
 		} },
-		{ Title = "TRADING", Lines = {
-			bullet .. "<b>Weapon shop, medic shop, vehicle shop</b>: buy with coins. You can sell items at any stand for "
-				.. math.floor(E.SellFactor * 100) .. " % of their price (kit items can't be sold).",
-			bullet .. "<b>Player market</b> (MARKET tab, only in the safe zone): sell your items to other players. Fee "
-				.. math.floor(E.Market.FeeRate * 100) .. " %.",
-			bullet .. "<b>The Fence</b> (black van in the market alley in the northeast of the camp) sells attachments, LMG, DMR, heavy vests and "
-				.. "more for <b>red zone points (RZ)</b>.",
-			bullet .. "<b>Kits</b> at the kit vendor on the north street of the camp – every kit has its own cooldown.",
-			bullet .. "The <b>LOOT</b> tab shows what you can get from drops and event crates.",
+		{ Title = "HANDEL", Lines = {
+			line("•  <b>Waffenladen, Sanitäter, Fahrzeugwerkstatt</b>: kaufen mit Münzen. Verkaufen kannst du an jedem Stand für {1} % des Preises (Kit-Items nicht).", math.floor(E.SellFactor * 100)),
+			line("•  <b>Spielermarkt</b> (Reiter MARKT, nur in der Safe Zone): verkauf deine Items an andere Spieler. Gebühr {1} %.", math.floor(E.Market.FeeRate * 100)),
+			line("•  <b>Der Schieber</b> (schwarzer Van in der Marktgasse im Nordosten des Camps) verkauft Aufsätze, LMG, Präzisionsgewehr, schwere Westen und mehr für <b>Rote-Zone-Punkte (RZ)</b>."),
+			line("•  <b>Kits</b> beim Kit-Händler an der Nordstraße des Camps – jedes Kit hat seine eigene Wartezeit."),
+			line("•  Der Reiter <b>BEUTE</b> zeigt, was es in Drops und Event-Kisten gibt."),
 		} },
 		{ Title = "ZOMBIES", Lines = {
-			bullet .. "<b>Walker</b>: slow, you can outrun it.  <b>Runner</b>: fast.  <b>Screamer</b>: when it sees you, it "
-				.. "screams and calls the others.  <b>Brute</b>: big and tough.",
-			bullet .. "<b>Armored</b>: the helmet blocks most headshot damage until it flies off, the vest protects the body. "
-				.. "Double coins.",
-			bullet .. "At <b>night</b> there are more zombies.",
-			bullet .. "The <b>anti-zombie syringe</b> stops zombies from spawning near you for " .. math.floor(repel / 60)
-				.. " minutes.",
-			bullet .. "Zombies often carry loot – press " .. key("Interact") .. " at the corpse.",
-			bullet .. "<b>Bosses</b>: The Surgeon guards the hospital. Blood Beasts appear during the blood moon.",
+			line("•  <b>Wanderer</b>: langsam, du kannst ihm davonlaufen.  <b>Renner</b>: schnell.  <b>Schreier</b>: sieht er dich, schreit er und ruft die anderen.  <b>Brocken</b>: groß und zäh."),
+			line("•  <b>Gepanzert</b>: Der Helm hält den meisten Kopfschuss-Schaden ab, bis er wegfliegt, die Weste schützt den Körper. Doppelte Münzen."),
+			line("•  <b>Nachts</b> gibt es mehr Zombies."),
+			line("•  Die <b>Anti-Zombie-Spritze</b> verhindert {1} Minuten lang, dass Zombies in deiner Nähe erscheinen.", math.floor(repel / 60)),
+			line("•  Zombies haben oft Beute dabei – drück {1} an der Leiche.", key("Interact")),
+			line("•  <b>Bosse</b>: Der Chirurg bewacht das Krankenhaus. Blutbestien erscheinen beim Blutmond."),
 		} },
-		{ Title = "RED ZONE", Lines = {
-			bullet .. "A red area on the map that moves to a new place every " .. math.floor(R.Interval / 60) .. " minutes.",
-			bullet .. "<b>PvP is instant</b>, there are more and tougher zombies and the <b>loot is better</b>.",
-			bullet .. "Only here you earn <b>red zone points (RZ)</b>: " .. RP.PlayerKill .. " per player or bot kill, "
-				.. RP.ZombieKill .. " per zombie.",
-			bullet .. "When the zone moves, the top 3 of its leaderboard get " .. RP.Rank[1] .. " / " .. RP.Rank[2] .. " / "
-				.. RP.Rank[3] .. " RZ.",
-			bullet .. "Spend RZ at <b>The Fence</b>. RZ are saved, you keep them when you die.",
+		{ Title = "ROTE ZONE", Lines = {
+			line("•  Ein rotes Gebiet auf der Karte, das alle {1} Minuten an einen neuen Ort zieht.", math.floor(R.Interval / 60)),
+			line("•  <b>PvP gilt sofort</b>, es gibt mehr und härtere Zombies und die <b>Beute ist besser</b>."),
+			line("•  Nur hier verdienst du <b>Rote-Zone-Punkte (RZ)</b>: {1} pro Spieler- oder Bot-Kill, {2} pro Zombie.", RP.PlayerKill, RP.ZombieKill),
+			line("•  Zieht die Zone weiter, bekommen die besten 3 ihrer Bestenliste {1} / {2} / {3} RZ.", RP.Rank[1], RP.Rank[2], RP.Rank[3]),
+			line("•  RZ gibst du beim <b>Schieber</b> aus. RZ werden gespeichert, du behältst sie beim Tod."),
 		} },
 		{ Title = "EVENTS", Lines = {
-			bullet .. "<b>Loot drop</b>: every " .. math.floor(A.MinInterval / 60) .. "-" .. math.floor(A.MaxInterval / 60)
-				.. " min a crate lands with a flare, often in the red zone. Hold " .. key("Interact") .. " to open it.",
-			bullet .. "<b>Convoy</b>: armed trucks drive along a road. Shoot them until they stop, kill the guards – the cargo "
-				.. "always has attachments.",
-			bullet .. "<b>Heli crash</b>: follow the smoke trail. When the fire is out, two military crates wait at the wreck.",
-			bullet .. "<b>Horde crate</b>: start it with " .. key("Interact") .. " and hold the area through three zombie waves.",
-			bullet .. "<b>Blood moon</b>: every " .. math.floor(BM.Interval / 60) .. " min for " .. math.floor(BM.Duration / 60)
-				.. " min – tougher zombies, better loot, Blood Beasts.",
-			bullet .. "<b>Storm night</b>: every " .. math.floor(S.Interval / 60) .. " min – <b>PvP is off</b>, armored zombies "
-				.. "everywhere. Reach the shared goal together and everyone who fought gets a storm crate.",
-			bullet .. "<b>Bounty</b>: " .. BO.MinKills .. " player kills in a row and you are wanted – your position flashes "
-				.. "on the map. Whoever kills you takes the bounty.",
+			line("•  <b>Beute-Drop</b>: alle {1}-{2} Min landet eine Kiste mit Leuchtfackel, oft in der roten Zone. Halte {3}, um sie zu öffnen.", math.floor(A.MinInterval / 60), math.floor(A.MaxInterval / 60), key("Interact")),
+			line("•  <b>Konvoi</b>: Bewaffnete Lastwagen fahren eine Straße entlang. Schieß auf sie, bis sie stehen, und erledige die Wachen – in der Ladung sind immer Aufsätze."),
+			line("•  <b>Heli-Absturz</b>: Folge der Rauchspur. Ist das Feuer aus, warten zwei Militärkisten am Wrack."),
+			line("•  <b>Horden-Kiste</b>: mit {1} starten und das Gebiet drei Zombiewellen lang halten.", key("Interact")),
+			line("•  <b>Blutmond</b>: alle {1} Min für {2} Min – härtere Zombies, bessere Beute, Blutbestien.", math.floor(BM.Interval / 60), math.floor(BM.Duration / 60)),
+			line("•  <b>Sturmnacht</b>: alle {1} Min – <b>PvP ist aus</b>, überall gepanzerte Zombies. Schafft gemeinsam das Ziel, dann bekommt jeder, der mitgekämpft hat, eine Sturmkiste.", math.floor(S.Interval / 60)),
+			line("•  <b>Kopfgeld</b>: {1} Spieler-Kills in Folge und du wirst gesucht – dein Standort blitzt auf der Karte auf. Wer dich erledigt, kassiert das Kopfgeld.", BO.MinKills),
 		} },
-		{ Title = "VEHICLES", Lines = {
-			bullet .. "Buy them at the <b>vehicle workshop</b>: quad, off-roader, sports car, helicopter. Bicycles drop from "
-				.. "zombies.",
-			bullet .. "Put the vehicle on your hotbar and press its key to spawn it.",
-			bullet .. key("StoreVehicle") .. " packs it away again.",
-			bullet .. "Vehicles can be destroyed – then they are gone. Run over zombies to clear the way.",
+		{ Title = "FAHRZEUGE", Lines = {
+			line("•  Kaufen in der <b>Fahrzeugwerkstatt</b>: Quad, Geländewagen, Sportwagen, Helikopter. Fahrräder lassen Zombies fallen."),
+			line("•  Leg das Fahrzeug in deine Schnellleiste und drück seine Taste, um es zu holen."),
+			line("•  {1} packt es wieder ein.", key("StoreVehicle")),
+			line("•  Fahrzeuge können zerstört werden – dann sind sie weg. Fahr Zombies über den Haufen, um dir den Weg freizumachen."),
 		} },
-		{ Title = "SQUAD & MAP", Lines = {
-			bullet .. "<b>Squad</b> " .. key("Squad") .. ": play with up to 4 friends – no friendly fire, you see each other "
-				.. "on the map.",
-			bullet .. "<b>Map</b> " .. key("WorldMap") .. ": events, red zone, safe zones, bosses and your dropped bag.",
-			bullet .. "<b>Ping</b> " .. key("Ping") .. ": mark a spot or an enemy for your squad.",
+		{ Title = "SQUAD & KARTE", Lines = {
+			line("•  <b>Squad</b> {1}: spiel mit bis zu 4 Freunden – kein Friendly Fire, ihr seht euch auf der Karte.", key("Squad")),
+			line("•  <b>Karte</b> {1}: Events, rote Zone, Safe Zones, Bosse und deine verlorene Tasche.", key("WorldMap")),
+			line("•  <b>Ping</b> {1}: markiere einen Ort oder einen Gegner für deinen Squad.", key("Ping")),
 		} },
-		{ Title = "HIDEOUT", Lines = {
-			bullet .. "Your own house in the camp – open it at the door.",
-			bullet .. "Upgrade it with coins and items:",
-			bullet .. "<b>Field bed</b>: more health.  <b>Workbench</b>: discount at the traders.",
-			bullet .. "<b>Medical station</b>: heal and put on vests faster.  <b>Generator</b>: coins every hour, even "
-				.. "while you are offline.",
+		{ Title = "VERSTECK", Lines = {
+			line("•  Dein eigenes Haus im Camp – öffnen an der Tür."),
+			line("•  Ausbauen mit Münzen und Items:"),
+			line("•  <b>Feldbett</b>: mehr Leben.  <b>Werkbank</b>: Rabatt bei den Händlern."),
+			line("•  <b>Sanitätsstation</b>: schneller heilen und Westen anlegen.  <b>Generator</b>: jede Stunde Münzen, auch wenn du offline bist."),
 		} },
-		{ Title = "CONTROLS", Lines = {
-			bullet .. "Inventory " .. key("Inventory") .. "  ·  Interact " .. key("Interact") .. "  ·  Reload "
-				.. key("Reload"),
-			bullet .. "Sprint " .. key("Sprint") .. "  ·  Crouch " .. key("Crouch") .. "  ·  Aim " .. key("Aim")
-				.. "  ·  Fire " .. key("Fire"),
-			bullet .. "Map " .. key("WorldMap") .. "  ·  Squad " .. key("Squad") .. "  ·  Ping " .. key("Ping"),
-			bullet .. "Store vehicle " .. key("StoreVehicle") .. "  ·  Quick heal " .. key("QuickHeal", "the heal button")
-				.. "  ·  Menu " .. key("Menu"),
-			bullet .. "Hotbar: keys 1-" .. E.HotbarSlots .. ".",
+		{ Title = "STEUERUNG", Lines = {
+			line("•  Inventar {1}  ·  Interagieren {2}  ·  Nachladen {3}", key("Inventory"), key("Interact"), key("Reload")),
+			line("•  Sprinten {1}  ·  Ducken {2}  ·  Zielen {3}  ·  Schießen {4}", key("Sprint"), key("Crouch"), key("Aim"), key("Fire")),
+			line("•  Karte {1}  ·  Squad {2}  ·  Ping {3}", key("WorldMap"), key("Squad"), key("Ping")),
+			line("•  Fahrzeug einpacken {1}  ·  Schnell heilen {2}  ·  Menü {3}", key("StoreVehicle"), key("QuickHeal", "Heil-Knopf"), key("Menu")),
+			line("•  Schnellleiste: Tasten 1-{1}.", E.HotbarSlots),
 		} },
 	}
 end
 
 function Guide.Open()
 	local C = UITheme.MenuColors
-	local win = newWindow("Guide", "GUIDE", "EVERYTHING YOU NEED TO KNOW ABOUT THE OPEN WORLD")
+	local win = newWindow("Guide", "GUIDE", "ALLES WICHTIGE ZUR OFFENEN WELT")
 	local body = win.Body
 	local topics = Guide.Topics()
 	local listW, gap = 230, 20
