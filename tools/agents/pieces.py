@@ -2,16 +2,20 @@
 # AgentModels für Modelle ohne Rig erwartet (docs/agenten-modelle.md). Gleichmäßig auf 5,2 Studs skaliert, Füße auf 0,
 # Blick nach -Z. Dreiecke an einer Schnittkante gehören zu beiden Teilen (keine Löcher beim Bewegen). Textur bleibt.
 #
-#   python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb> [NECK WAIST HIP ELBOW WRIST KNEE ANKLE ARM_X]
+#   python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb> [NECK WAIST HIP ELBOW WRIST KNEE ANKLE ARM_X [OVERLAP]]
 #
 # Schnitthöhen in Studs (nach dem Skalieren) für den Scout: Hals 3.87, Gürtel 2.35, Hüfte 1.95, Ellbogen 3.05,
 # Handschuh 2.38, Knie 1.16, Stiefel 0.5; Arme ab |x| 0.85. Für andere Modelle anpassen (Vorschau rendern!).
+# OVERLAP (Studs, Standard 0.15): so weit reicht jedes Teil über seine Schnittkante ins Nachbarteil hinein (gleiche
+# Dreiecke in beiden Teilen). Beugt sich ein Gelenk beim Laufen, deckt der Überstand die Kante ab – ohne ihn klaffen
+# an Hüfte, Schritt und Achseln kleine Löcher.
 import bpy, bmesh, sys, numpy as np
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 SRC, OUT = args[0], args[1]
 cuts = [float(a) for a in args[2:]] or [3.87, 2.35, 1.95, 3.05, 2.38, 1.16, 0.5, 0.85]
 H = 5.2
-NECK, WAIST, HIP, ELBOW, WRIST, KNEE, ANKLE, ARM_X = cuts
+NECK, WAIST, HIP, ELBOW, WRIST, KNEE, ANKLE, ARM_X = cuts[:8]
+OVERLAP = cuts[8] if len(cuts) > 8 else 0.15
 RINGS = 3
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -42,6 +46,19 @@ lab = [label(X, Z) for X, Z in zip(x, z)]
 vco = np.array([v.co for v in me.vertices])
 vlab = [label(X, Z) for X, Z in zip(vco[:, 0], vco[:, 2])]
 fparts = [set([lab[i]]) | {vlab[v] for v in p.vertices} for i, p in enumerate(me.polygons)]
+# Überstand: ein Dreieck gehört auch zu jedem Teil, das in OVERLAP Abstand (waagrecht bzw. senkrecht) beginnt
+if OVERLAP > 0:
+    for i in range(nf):
+        X, Z = x[i], z[i]
+        # waagrecht nur an Schultern/Oberarmen (Achseln); weiter unten hängen Hände und Unterarme dicht neben der Hüfte,
+        # dort würden sonst Stücke der Hüfte mit der Hand mitschwingen
+        for dx in ((-OVERLAP, 0.0, OVERLAP) if Z >= ELBOW else (0.0,)):
+            for dz in (-OVERLAP, 0.0, OVERLAP):
+                other = label(X + dx, Z + dz)
+                # Arm ↔ Bein/Hüfte nur über die Schulter (dx): sonst schwingen Fingerspitzen bzw. Hosentaschen mit
+                if dx == 0 and (("Arm" in other or "Hand" in other) != ("Arm" in lab[i] or "Hand" in lab[i])):
+                    continue
+                fparts[i].add(other)
 names = sorted(set(lab))
 parts = {}
 for n in names:
