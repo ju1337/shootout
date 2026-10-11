@@ -1400,8 +1400,13 @@ function ProgressService.Init()
 		while true do
 			task.wait(60)
 			for player, profile in profiles do
-				if loaded[player] and checkSeason(player, profile) then
-					ProgressService.Sync(player)
+				local ok, err = pcall(function() -- ein fehlerhaftes Profil beendet den Saisonwechsel nicht für alle
+					if loaded[player] and checkSeason(player, profile) then
+						ProgressService.Sync(player)
+					end
+				end)
+				if not ok then
+					warn("Saisonwechsel: " .. tostring(err))
 				end
 			end
 		end

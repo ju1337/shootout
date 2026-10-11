@@ -286,7 +286,10 @@ function ExtMarketService.Init(opts)
 	end)
 	task.spawn(function()
 		while true do
-			ExtMarketService.Publish()
+			local ok, err = pcall(ExtMarketService.Publish) -- ein Fehler beendet die Marktanzeige nicht für immer
+			if not ok then
+				warn("Markt: " .. tostring(err))
+			end
 			task.wait(3)
 		end
 	end)

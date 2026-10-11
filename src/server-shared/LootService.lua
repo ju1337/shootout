@@ -721,7 +721,12 @@ function LootService.Init()
 			local now = os.clock()
 			for id, bag in bags do
 				if now >= bag.Expires or not bag.Model.Parent then
-					LootService.Remove(id)
+					-- Fehler in einem Entfernen-Hook (Konvoi, Airdrop …) darf das Ablaufen aller Taschen nicht beenden
+					local ok, err = pcall(LootService.Remove, id)
+					if not ok then
+						warn("Tasche entfernen: " .. tostring(err))
+						bags[id] = nil
+					end
 				else
 					for viewer in bag.Viewers do
 						if not viewer.Parent or not inRange(viewer, bag) then
