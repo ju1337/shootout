@@ -55,6 +55,7 @@ local function build()
 
 	local column = make("Frame", { Name = "Column", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.47),
 		Size = UDim2.fromOffset(560, 420), BackgroundTransparency = 1 }, root)
+	UITheme.PhoneFit(column, 560, 420) -- Handy: sonst ist die Schrift (Tasche, Killer) nur 5–7 px hoch
 	UITheme.Label({ Name = "Caption", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, 0, 0, 18), Text = "EXTINCTION",
 		TextSize = 14, Font = F.Bold, TextColor3 = C.Bad, TextXAlignment = Enum.TextXAlignment.Center }, column)
 	UITheme.Label({ Name = "Title", Position = UDim2.fromOffset(0, 20), Size = UDim2.new(1, 0, 0, 64), Text = "DU BIST GESTORBEN",

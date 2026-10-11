@@ -414,6 +414,9 @@ function ExtTutorial.Init(options: { WindowKind: (() -> string?)? }?)
 		canvas)
 	-- unter Zone und Spawnschutz, über Ortsname und Banner (TopStack: nichts liegt übereinander)
 	TopStack.Register(panel, { Order = TopStack.Order.Tutorial })
+	if InputActions.IsTouch() then
+		make("UIScale", { Scale = 1.25 }, panel) -- Handy: Schritt-Text sonst nur ~7 px hoch
+	end
 	make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 14), PaddingLeft = UDim.new(0, 16),
 		PaddingRight = UDim.new(0, 16) }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, panel)

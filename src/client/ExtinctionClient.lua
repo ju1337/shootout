@@ -741,7 +741,8 @@ local function buildHud()
 
 	-- Meldungen und Benutzen-Balken über der Hotbar
 	toast = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -126), Size = UDim2.fromOffset(620, 22),
-		Text = "", TextSize = 15, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center, Visible = false }, root)
+		Text = "", TextSize = InputActions.IsTouch() and 26 or 15, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center,
+		Visible = false }, root) -- Touch: Meldungen wie „Die Hotbar ist voll“ am Handy lesbar
 	UITheme.Outline(toast)
 	useBar = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -158), Size = UDim2.fromOffset(240, 26),
 		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.2, BorderSizePixel = 0, Visible = false }, root)
@@ -766,7 +767,8 @@ local function updateHints()
 	if not hints then
 		return
 	end
-	hints.Visible = require(Shared.PlayerSettings).Get("KeyHints") ~= false
+	-- Touch: die Zeile wäre am Handy nur ~5 px hoch (wie im HUD der anderen Modi ausgeblendet)
+	hints.Visible = require(Shared.PlayerSettings).Get("KeyHints") ~= false and not InputActions.IsTouch()
 	local device = InputActions.Device()
 	if hintState.Heli then
 		if device == "Touch" then
