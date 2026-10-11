@@ -1663,6 +1663,7 @@ function Inv.itemPopup(body)
 				-- Auswahl ist weg: Fenster gleich neu zeichnen (lehnt der Server ab, käme sonst kein Update und das Fenster bliebe stehen)
 				if window and window.Refresh then
 					window.Refresh()
+					InputActions.Refocus(window.Frame) -- Gamepad: der gedrückte Knopf ist weg
 				end
 			end)
 			y += 40
