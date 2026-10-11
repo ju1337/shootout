@@ -1396,7 +1396,7 @@ local function newMenu(kind, title, subtitle)
 	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
 	-- Handy: bei Reitern steht der Name schon in der Leiste oben, die Kopfzeile bleibt für Filter, Münzen und X
 	local titleRow = make("Frame", { Name = "TitleRow", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -320, 1, 0),
-		BackgroundTransparency = 1, Visible = not (phone and isTab), ZIndex = 6 }, header)
+		BackgroundTransparency = 1, Visible = not (phone and isTab), ClipsDescendants = phone, ZIndex = 6 }, header) -- Handy: lange Untertitel nicht unter Münzen und X
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center }, titleRow)
 	label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = title or (isTab and menuTab[kind].Text) or "",
@@ -2506,18 +2506,19 @@ local function openStash()
 	-- (merkt sich die Anordnung der Tasche); ohne gespeicherte Vorlage ist der Anlegen-Knopf gedämpft (Attribut ExtLoadouts)
 	local loadoutY = helpY + 52
 	local loadoutButtons = {}
-	local saveW, loadoutGap = 104, 10
+	local narrow = stashW < 600 -- Handy: kleinerer Speichern-Knopf und Schrift, sonst läuft der Text aus dem Knopf
+	local saveW, loadoutGap = narrow and 84 or 104, 10
 	local applyW = math.floor((stashW - loadoutGap * 3) / 2) - saveW
 	for index = 1, 2 do
 		local x = stashX + (index - 1) * (applyW + saveW + loadoutGap * 2)
 		loadoutButtons[index] = UITheme.Chunky({ Name = "Loadout" .. index, Position = UDim2.fromOffset(x, loadoutY),
 			Size = UDim2.fromOffset(applyW, 40), Color = UITheme.MenuColors.Primary, TextColor = UITheme.MenuColors.PrimaryText,
-			Text = "AUSRÜSTUNG " .. index, TextSize = 15, ZIndex = 5 }, body, function()
+			Text = "AUSRÜSTUNG " .. index, TextSize = narrow and 13 or 15, ZIndex = 5 }, body, function()
 			sendAction("LoadoutApply", index)
 		end)
 		UITheme.Chunky({ Name = "LoadoutSave" .. index, Position = UDim2.fromOffset(x + applyW + loadoutGap, loadoutY),
 			Size = UDim2.fromOffset(saveW, 40), Color = UITheme.MenuColors.Card, StrokeColor = C.Border, Text = "SPEICHERN",
-			TextSize = 13, ZIndex = 5 }, body, function()
+			TextSize = narrow and 11 or 13, ZIndex = 5 }, body, function()
 			sendAction("LoadoutSave", index)
 		end)
 	end
@@ -2799,13 +2800,14 @@ local function openSquad()
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 12),
 		SortOrder = Enum.SortOrder.LayoutOrder }, actions)
 	-- Roblox-Einladung an Freunde (SocialService); der Server belohnt, wenn ein Freund darüber beitritt
-	UITheme.Chunky({ Name = "InviteFriends", Size = UDim2.fromOffset(260, 48), Color = Inv.MENU_RED, Text = "FREUNDE EINLADEN",
+	local actionW = math.min(260, math.floor((colW - 12) / 2)) -- zwei Knöpfe passen auch in die schmale Handy-Spalte
+	UITheme.Chunky({ Name = "InviteFriends", Size = UDim2.fromOffset(actionW, 48), Color = Inv.MENU_RED, Text = "FREUNDE EINLADEN",
 		TextSize = 18, LayoutOrder = 1, ZIndex = 5 }, actions, function()
 		if not require(Shared.Invites).Prompt() then -- kein lokales Modul: Limit der lokalen Variablen (tests/locals)
 			showToast("Einladung gerade nicht möglich.", false)
 		end
 	end)
-	local leave = UITheme.Chunky({ Name = "LeaveSquad", Size = UDim2.fromOffset(260, 48), Color = Inv.RAISED, StrokeColor = C.Border,
+	local leave = UITheme.Chunky({ Name = "LeaveSquad", Size = UDim2.fromOffset(actionW, 48), Color = Inv.RAISED, StrokeColor = C.Border,
 		TextColor = C.Bad, Text = "SQUAD VERLASSEN", TextSize = 18, LayoutOrder = 2, ZIndex = 5 }, actions, function()
 		partyAction("Leave")
 	end)
@@ -2816,7 +2818,7 @@ local function openSquad()
 			BorderSizePixel = 0, LayoutOrder = order, ZIndex = 5 }, parent)
 		UITheme.Corner(entry, UITheme.Radius.Small)
 		label({ Name = "Name", Position = UDim2.fromOffset(14, 6), Size = UDim2.new(1, -260, 0, 24), Text = name, TextSize = 20,
-			Font = F.Display, ZIndex = 6 }, entry)
+			Font = F.Display, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 6 }, entry) -- lange Namen nicht unter die Knöpfe
 		local subLabel = label({ Name = "Where", Position = UDim2.fromOffset(14, 32), Size = UDim2.new(1, -260, 0, 16), Text = sub or "",
 			TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, entry)
 		for index, info in buttons or {} do
@@ -3064,7 +3066,7 @@ local function openStand(standKey)
 	end
 
 	-- Karten in einem Raster (3 nebeneinander)
-	local columns = 3
+	local columns = listW < 800 and 2 or 3 -- Handy: sonst ragt der Preis aus dem KAUFEN-Knopf
 	local cardW = math.floor((listW - 10 - (columns - 1) * gap) / columns)
 	local cardH, iconH = 300, 112
 	local list = make("ScrollingFrame", { Name = "Offer", Position = UDim2.fromOffset(0, listY), Size = UDim2.fromOffset(listW, Inv.CONTENT_H - listY - 8),

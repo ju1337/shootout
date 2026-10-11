@@ -169,8 +169,10 @@ function QuestBoard.new(parent, width, height, options)
 				TextColor3 = color }, row)
 			y += 15
 		end
-		text({ Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -150, 0, 20), Text = quest.Text, TextSize = 16,
-			TextTruncate = Enum.TextTruncate.AtEnd, TextColor3 = locked and GRAY or UITheme.Colors.Text }, row)
+		local title = text({ Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -150, 0, 20), Text = quest.Text, TextSize = 16,
+			TextScaled = true, TextColor3 = locked and GRAY or UITheme.Colors.Text }, row)
+		-- schmale Spalten (Handy): kleiner statt abgeschnitten, sonst fehlt das Ziel ("Öffne 2 Lootdrops o…")
+		make("UITextSizeConstraint", { MinTextSize = 11, MaxTextSize = 16 }, title)
 		text({ Position = UDim2.fromOffset(14, y + 22), Size = UDim2.new(1, -150, 0, 30), TextWrapped = true,
 			TextYAlignment = Enum.TextYAlignment.Top,
 			Text = math.min(progress, quest.Goal) .. " / " .. quest.Goal .. "  ·  " .. QuestConfig.RewardText(quest, Locale.Translate, Cosmetics.GetOwned(player)),
