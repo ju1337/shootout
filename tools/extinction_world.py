@@ -16,6 +16,7 @@ import json
 import math
 import os
 import random
+import re
 from types import SimpleNamespace
 
 import extinction_terrain as et
@@ -3744,6 +3745,7 @@ def build(bm):
             if reeds >= 22:
                 break
     weather_signs(bm, b, rng)
+    strip_lettering(b)
     save(bm, b, "Extinction.model.json", "Ödstadt", "Wasteland")
     return w
 
@@ -3806,6 +3808,33 @@ def weather_signs(bm, b, rng):
     for items in b.groups.values():
         for inst in items:
             visit(inst)
+
+
+# Schrift an Gebäuden (Julio, 2026-10-11: keine Schriften an den Häusern): Ladenschilder, Graffiti, Stations- und Safehouse-
+# Tafeln, Parkhaus-Ebenen, SOS auf Dächern. Die Tafel fliegt samt Schrift raus. Frei stehende Schilder (Warnschilder an Pfosten,
+# Plakatwände, Autobahn-Brücken, Preis-Mast, HALT am Checkpoint), Tore der Safe Zones, Podest-Nummern und Bodenmarkierungen bleiben.
+LETTERED_ON_BUILDINGS = ("ShopSign", "GraffitiPanel", "HospitalSign", "GarageSign", "BarracksSign", "RestStopSign",
+                         "FuelStationSign", "CryptSign", "KioskSign", "MarketPosterText", "PavilionSign", "SafehouseSign",
+                         "Sign_Market", "StandSign_", "StationSign", "TravelSign", "LevelText")
+ROOF_SOS = re.compile(r"^SOS\d*$")  # "S O S" auf dem Parkhausdach; "SOS<Ort>" liegt vor Lagern auf dem Boden und bleibt
+
+
+def strip_lettering(b):
+    """Entfernt alle Teile mit Schrift (SurfaceGui), die an Gebäuden hängen, siehe LETTERED_ON_BUILDINGS."""
+    def lettered(inst):
+        name = inst.get("Name", "")
+        return ((name.startswith(LETTERED_ON_BUILDINGS) or ROOF_SOS.match(name))
+                and any(c.get("ClassName") == "SurfaceGui" for c in inst.get("Children", [])))
+
+    def prune(items):
+        kept = [i for i in items if not lettered(i)]
+        for inst in kept:
+            if inst.get("Children"):
+                inst["Children"] = prune(inst["Children"])
+        return kept
+
+    for group in b.groups:
+        b.groups[group] = prune(b.groups[group])
 
 
 SHADOW_GROUPS = ("Buildings", "Walls")  # nur diese Gruppen werfen Schatten (und nur große Teile)
