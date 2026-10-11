@@ -3746,6 +3746,7 @@ def build(bm):
                 break
     weather_signs(bm, b, rng)
     strip_lettering(b)
+    strip_led(b)
     save(bm, b, "Extinction.model.json", "Ödstadt", "Wasteland")
     return w
 
@@ -3828,6 +3829,30 @@ def strip_lettering(b):
 
     def prune(items):
         kept = [i for i in items if not lettered(i)]
+        for inst in kept:
+            if inst.get("Children"):
+                inst["Children"] = prune(inst["Children"])
+        return kept
+
+    for group in b.groups:
+        b.groups[group] = prune(b.groups[group])
+
+
+# Leuchtleisten (Julio, 2026-10-11: "mach diese ganzen LED-Lichter weg"): Neon-Kanten an Pavillons, Häusern, Theken,
+# Vitrinen, Ruhmeswand, Podest, Toren, Mauer und Gruft sowie die Leuchtköpfe der Poller. Lampen, die nur Licht geben
+# (Schaufenster-, Tür-, Vitrinenlicht, Laternen), beleuchtete Fenster und Portale bleiben.
+LED_STRIPS = ("PodiumEdge", "PodiumGlow", "PavilionEdge", "RoofStrip", "VitrineBaseStrip", "ShopCounterStrip",
+              "WheelConsoleStrip", "MarqueeStrip", "MonolithCap", "MonolithGlow", "CounterStrip", "CanopyStrip", "GateStrip",
+              "GateArchStrip", "BatteryStrip", "CryptFrame", "CryptRoofStrip", "WallStrip", "GateStripe", "BollardLight")
+
+
+def strip_led(b):
+    """Entfernt die Leuchtleisten (Neon-Teile mit Namen aus LED_STRIPS)."""
+    def led(inst):
+        return inst.get("Name", "") in LED_STRIPS and inst.get("Properties", {}).get("Material") == "Neon"
+
+    def prune(items):
+        kept = [i for i in items if not led(i)]
         for inst in kept:
             if inst.get("Children"):
                 inst["Children"] = prune(inst["Children"])
