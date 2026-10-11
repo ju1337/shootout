@@ -2950,4 +2950,19 @@ return {
 	["Heil-Knopf"] = "the heal button",
 	["Bildschirm-Knopf"] = "the button on screen",
 	["WAS ES IN DROPS UND EVENT-KISTEN GIBT"] = "WHAT YOU CAN GET FROM DROPS AND EVENT CRATES",
+	-- Reiter BEUTE (LootInfo)
+	["Alle 7–11 Min, oft in der roten Zone  ·  E halten zum Öffnen  ·  {1} Items (+1 in der roten Zone)"] = "Every 7–11 min, often in the red zone  ·  hold E to open  ·  {1} items (+1 in the red zone)",
+	["Konvoi beschießen, Wachen erledigen  ·  {1} Items + {2} Aufsätze garantiert"] = "Shoot the convoy, kill the guards  ·  {1} items + {2} attachments guaranteed",
+	["HELI-ABSTURZ"] = "HELI CRASH",
+	["{1} Militärkisten am Wrack, sobald das Feuer aus ist  ·  Chancen pro Kiste"] = "{1} military crates at the wreck once the fire is out  ·  chances per crate",
+	["Überlebe 3 Zombiewellen neben der Kiste  ·  {1}–{2} Items"] = "Survive 3 zombie waves next to the crate  ·  {1}–{2} items",
+	["UNGEWÖHNLICH"] = "UNCOMMON",
+	["AUFSATZ (GEWÖHNLICH)"] = "ATTACHMENT (COMMON)",
+	["AUFSATZ (SELTEN)"] = "ATTACHMENT (RARE)",
+	["AUFSATZ (SEHR SELTEN)"] = "ATTACHMENT (VERY RARE)",
+	-- Konvoi-Strecken (ExtinctionConfig.Convoy)
+	["Militär → Flugplatz"] = "Military → Airfield",
+	["Gefängnis → Nordheim"] = "Prison → Nordheim",
+	["Hafen → Flugplatz"] = "Harbor → Airfield",
+	["Gefängnis → Süd"] = "Prison → South",
 }

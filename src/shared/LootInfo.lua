@@ -18,20 +18,20 @@ end
 
 -- Rolls: { Table, Items = { min, max }, Chance = Wahrscheinlichkeit, dass gewürfelt wird (nil = immer) }
 LootInfo.Sources = {
-	{ Id = "Airdrop", Name = "LOOT DROP", Color = Color3.fromRGB(226, 182, 72),
-		Info = "Every 7–11 min, often in the red zone  ·  hold E to open  ·  " .. range(A.Items) .. " items (+1 in the red zone)",
+	{ Id = "Airdrop", Name = "LOOTDROP", Color = Color3.fromRGB(226, 182, 72),
+		Info = "Alle 7–11 Min, oft in der roten Zone  ·  E halten zum Öffnen  ·  " .. range(A.Items) .. " Items (+1 in der roten Zone)",
 		Rolls = { { Table = "Airdrop", Items = A.Items } } },
-	{ Id = "Convoy", Name = "CONVOY", Color = Color3.fromRGB(110, 176, 230),
-		Info = "Shoot the convoy, kill the guards  ·  " .. range(C.Items) .. " items + " .. range(C.Attachments)
-			.. " attachments guaranteed",
+	{ Id = "Convoy", Name = "KONVOI", Color = Color3.fromRGB(110, 176, 230),
+		Info = "Konvoi beschießen, Wachen erledigen  ·  " .. range(C.Items) .. " Items + " .. range(C.Attachments)
+			.. " Aufsätze garantiert",
 		Rolls = { { Table = C.Table, Items = C.Items }, { Table = "ConvoyAttachments", Items = C.Attachments } } },
-	{ Id = "HeliCrash", Name = "HELI CRASH", Color = Color3.fromRGB(230, 120, 70),
-		Info = H.Crates .. " military crates at the wreck once the fire is out  ·  chances per crate",
+	{ Id = "HeliCrash", Name = "HELI-ABSTURZ", Color = Color3.fromRGB(230, 120, 70),
+		Info = H.Crates .. " Militärkisten am Wrack, sobald das Feuer aus ist  ·  Chancen pro Kiste",
 		Rolls = { { Table = H.Table, Items = H.Items }, { Table = H.BonusTable, Items = H.BonusItems },
 			{ Table = "ConvoyAttachments", Items = { 1, 1 }, Chance = H.AttachmentChance } } },
-	{ Id = "Horde", Name = "HORDE CRATE", Color = Color3.fromRGB(200, 90, 90),
-		Info = "Survive 3 zombie waves next to the crate  ·  " .. (Ho.Items[1] + Ho.BonusItems[1]) .. "–"
-			.. (Ho.Items[2] + Ho.BonusItems[2]) .. " items",
+	{ Id = "Horde", Name = "HORDEN-KISTE", Color = Color3.fromRGB(200, 90, 90),
+		Info = "Überlebe 3 Zombiewellen neben der Kiste  ·  " .. (Ho.Items[1] + Ho.BonusItems[1]) .. "–"
+			.. (Ho.Items[2] + Ho.BonusItems[2]) .. " Items",
 		Rolls = { { Table = Ho.Table, Items = Ho.Items }, { Table = Ho.BonusTable, Items = Ho.BonusItems } } },
 }
 
@@ -114,15 +114,15 @@ end
 -- Seltenheit nach Chance: Name und Farbe
 function LootInfo.Rarity(chance)
 	if chance >= 0.5 then
-		return "COMMON", Color3.fromRGB(120, 200, 120)
+		return "GEWÖHNLICH", Color3.fromRGB(120, 200, 120)
 	elseif chance >= 0.2 then
-		return "UNCOMMON", Color3.fromRGB(120, 176, 230)
+		return "UNGEWÖHNLICH", Color3.fromRGB(120, 176, 230)
 	elseif chance >= 0.07 then
-		return "RARE", Color3.fromRGB(176, 136, 232)
+		return "SELTEN", Color3.fromRGB(176, 136, 232)
 	end
-	return "VERY RARE", Color3.fromRGB(236, 178, 70)
+	return "SEHR SELTEN", Color3.fromRGB(236, 178, 70)
 end
 
-LootInfo.AttachmentNames = { [2] = "ATTACHMENT (COMMON)", [3] = "ATTACHMENT (RARE)", [4] = "ATTACHMENT (VERY RARE)" }
+LootInfo.AttachmentNames = { [2] = "AUFSATZ (GEWÖHNLICH)", [3] = "AUFSATZ (SELTEN)", [4] = "AUFSATZ (SEHR SELTEN)" }
 
 return LootInfo
