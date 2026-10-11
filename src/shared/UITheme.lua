@@ -11,6 +11,7 @@
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local UITheme = {}
 
@@ -500,8 +501,10 @@ local blurUsers = {}
 -- Ist gerade ein Menü mit Unschärfe offen (Spielmenü, Seitenmenü)?
 -- Fenster ohne Unschärfe, das trotzdem als offenes Menü zählt (Weltkarte): kein Schießen und Zielen dahinter
 local menuUsers = {}
+local refreshMouse -- unten: Mauszeiger frei, solange ein Menü offen ist
 function UITheme.SetMenu(user, on)
 	menuUsers[user] = on or nil
+	refreshMouse()
 end
 
 function UITheme.IsMenuOpen()
@@ -555,8 +558,27 @@ function UITheme.HoldCamera(user, on, noRestore)
 	end
 end
 
+-- Solange irgendein Menü offen ist, Maus jedes Bild freigeben (nach Roblox-Kamera und Schulterkamera). Sonst bleibt
+-- sie bei Fenstern, die über eine Taste in der Welt aufgehen (Chancen am Glücksrad, Kiste, Markt, Tauschen), in der
+-- Bildmitte gesperrt und man kommt an keinen Knopf.
+local mouseBound = false
+refreshMouse = function()
+	local open = UITheme.IsMenuOpen()
+	if open and not mouseBound then
+		mouseBound = true
+		RunService:BindToRenderStep("UIMenuMouse", Enum.RenderPriority.Camera.Value + 3, function()
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+			UserInputService.MouseIconEnabled = true
+		end)
+	elseif not open and mouseBound then
+		mouseBound = false
+		RunService:UnbindFromRenderStep("UIMenuMouse")
+	end
+end
+
 function UITheme.SetBlur(user, on)
 	blurUsers[user] = on or nil
+	refreshMouse()
 	UITheme.HoldCamera(user, on)
 	if not blur then
 		blur = make("BlurEffect", { Name = "MenuBlur", Size = 0 }, Lighting)

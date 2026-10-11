@@ -2,7 +2,7 @@
 -- Fenster CHANCEN: alle möglichen Ergebnisse eines Zufallsitems mit ihrer Chance in Prozent (PaidRandom). Roblox
 -- verlangt das vor jedem Kauf bzw. Dreh, der direkt oder indirekt Robux kostet (Glücksrad, Waffen-Kiste).
 -- OddsPanel.Show(Titel, Zeilen) mit Zeilen { { Text, Chance (0..1), Color } }; WheelRows() liefert die des Glücksrads.
--- Esc, ○ oder SCHLIESSEN macht es zu.
+-- Esc, ○ oder SCHLIESSEN macht es zu. Solange es offen ist, ist die Maus frei (UITheme.SetBlur).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -52,6 +52,7 @@ function OddsPanel.Close()
 		InputActions.Unfocus(frame)
 		frame:Destroy()
 		frame = nil
+		UITheme.SetBlur("Odds", false)
 	end
 end
 
@@ -103,6 +104,7 @@ function OddsPanel.Show(title, rows)
 		Font = F.Medium, TextColor3 = C.Muted, ZIndex = 20 }, frame)
 	local close = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.fromOffset(220, 40),
 		Color = C.Card, StrokeColor = C.Border, Text = "SCHLIESSEN", TextSize = 16, ZIndex = 20 }, frame, OddsPanel.Close)
+	UITheme.SetBlur("Odds", true) -- zählt als offenes Menü: Maus frei, kein Schießen dahinter
 	InputActions.Focus(frame, close.Button)
 	return frame
 end
