@@ -396,6 +396,10 @@ local function ejectAll(model)
 			local humanoid = part.Occupant
 			humanoid.Sit = false
 			humanoid.Jump = true
+			local weld = part:FindFirstChild("SeatWeld") -- Sit/Jump vom Server kommt nicht immer an
+			if weld then
+				weld:Destroy()
+			end
 		end
 	end
 end
@@ -459,7 +463,15 @@ local function placement(player, root, config)
 	params.FilterDescendantsInstances = ignore
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Exclude
-	overlap.FilterDescendantsInstances = ignore
+	-- andere Spieler zählen beim freien Raum mit (sonst erscheint das Fahrzeug in ihnen und schleudert sie weg)
+	local overlapIgnore = { folder, player.Character }
+	for _, name in { "Zombies", "ExtinctionLoot" } do
+		local extra = workspace:FindFirstChild(name)
+		if extra then
+			table.insert(overlapIgnore, extra)
+		end
+	end
+	overlap.FilterDescendantsInstances = overlapIgnore
 	local lift = size.Y / 2 + 0.3 + BALL / 2 + 0.15 -- Mitte des Rumpfs über dem Boden
 	-- freier Raum: Rumpf (Helikopter: mit Heckausleger und Rotor, steht weiter weg)
 	local room = heli and HELI_ROOM or size + Vector3.new(0, 1, 0)
@@ -474,7 +486,11 @@ local function placement(player, root, config)
 			and workspace:Raycast(probe + Vector3.new(0, 6, 0), Vector3.new(0, -20, 0), params)
 		if hit and hit.Normal.Y > 0.8 then
 			local cframe = CFrame.new(hit.Position + Vector3.new(0, lift, 0)) * facing
-			local blocking = false
+			-- freie Sicht auch zum Platz selbst: sonst steht es unter einer niedrigen Decke auf deren Dach
+			local los = workspace:Raycast(root.Position, cframe.Position - root.Position, params)
+			-- (nur Treffer über dem Boden des Platzes: Boden und Gelände am Hang zählen nicht)
+			local blocking = los ~= nil and los.Instance.CanCollide and not los.Instance:IsA("Terrain")
+				and los.Position.Y > hit.Position.Y + 1
 			for _, part in workspace:GetPartBoundsInBox(cframe * roomOffset, room, overlap) do
 				if part.CanCollide and part.Transparency < 1 then
 					blocking = true
@@ -822,8 +838,8 @@ function VehicleService.Init(opts)
 		local now = os.clock()
 		for player, entry in active do
 			local chassis = entry.Chassis
-			if not chassis.Parent then
-				despawn(player) -- z. B. ins Leere gefallen: Item nicht als "draußen" hängen lassen
+			if not chassis.Parent or player:GetAttribute("Dungeon") then
+				despawn(player) -- ins Leere gefallen oder Besitzer im Dungeon: Item nicht als "draußen" hängen lassen
 			else
 				local config = entry.Config
 				local delta = now - entry.LastTime

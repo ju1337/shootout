@@ -514,6 +514,7 @@ function Extinction.Travel(player, key)
 	SpawnUtil.Prestream(player, spot.Position)
 	character:PivotTo(spot)
 	MovementGuard.Teleported(character)
+	VehicleService.Despawn(player) -- geparktes Fahrzeug nicht am alten Ort lassen (K reicht dort nicht hin, ein neues ginge nicht)
 	info.Home = key
 	player:SetAttribute("ExtHome", target.Title)
 	notify(player, "Banner", { Caption = "Angekommen", Title = string.upper(target.Title),
@@ -534,6 +535,7 @@ function Extinction.AdminToCamp(player)
 	SpawnUtil.Prestream(player, spot.Position)
 	character:PivotTo(spot)
 	MovementGuard.Teleported(character)
+	VehicleService.Despawn(player) -- geparktes Fahrzeug nicht am alten Ort lassen (K reicht dort nicht hin, ein neues ginge nicht)
 	info.Home = ""
 	for _, zone in Extinction.SafeZones() do
 		if zone.Key == "" then
