@@ -187,6 +187,12 @@ check(Locale.Language() == "de", "de-de automatisch Deutsch")
 check(Locale.Translate("SPIELEN") == "SPIELEN", "auf Deutsch bleibt der Text")
 check(Locale.Translate("SPIELEN", "en") == "PLAY", "Translate mit Sprache en")
 check(require("UITheme").FormatNumber(22526) == "22.526", "Deutsch: Tausenderpunkt")
+-- Sturmkiste: Münzen, RZ und Item-Liste auf Englisch (Item-Namen mit übersetzt)
+local crate = Locale.Translate("400 Münzen · 25 RZ · Im Lager: Verband, 2× 9mm-Munition · Lager voll: der Rest liegt neben dir", "en")
+check(crate == "400 coins · 25 RZ · in your stash: Bandage, 2× 9mm Ammo · stash full: the rest lies next to you",
+	"Sturmkiste übersetzt: " .. crate)
+local step = Locale.Translate("Drück [TAB], um dein Inventar zu öffnen. Die ersten 6 Plätze deiner Tasche sind deine <b>Schnellleiste</b>.", "en")
+check(step == "Press [TAB] to open your inventory. The first 6 slots of your bag are your <b>hotbar</b>.", "Tutorial-Schritt übersetzt: " .. step)
 
 -- Server-Seite: ForPlayer nach Roblox-Sprache
 local alice = SIM.AddPlayer("Alice", 1002)

@@ -138,7 +138,7 @@ if tabs then
 end
 step(0.1)
 local startButton = windowGui:FindFirstChild("Tutorial", true)
-check(startButton ~= nil and startButton.Text == "START TUTORIAL", "GUIDE: Knopf START TUTORIAL")
+check(startButton ~= nil and startButton.Text == "TUTORIAL STARTEN", "GUIDE: Knopf START TUTORIAL")
 if startButton then
 	startButton.Activated:Fire()
 end
@@ -146,7 +146,7 @@ step(0.3)
 check(not windowGui.Enabled, "Menü schließt beim Start")
 local panel = gui:FindFirstChild("Panel", true)
 check(ExtTutorial.CurrentStep() == "Kit" and panel and panel.Visible, "Schritt 1: Starter-Kit, Tafel sichtbar")
-check(panel and panel:FindFirstChild("Step", true).Text == "TUTORIAL  ·  STEP 1/6", "Schrittzähler 1/6")
+check(panel and panel:FindFirstChild("Step", true).Text == "TUTORIAL  ·  SCHRITT 1/6", "Schrittzähler 1/6")
 local waypoint = playerGui:FindFirstChild("TutorialWaypoint")
 check(waypoint ~= nil and waypoint.Enabled and waypoint.Adornee ~= nil and waypoint.Adornee ~= farKits,
 	"Wegpunkt zum nächsten Kit-Händler")

@@ -46,7 +46,7 @@ local function announce(title, sub, style)
 		return
 	end
 	for _, player in options.Players() do
-		Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = title, Sub = sub, Style = style or "Warning" })
+		Remotes.Notify:FireClient(player, "Banner", { Caption = "Sturmnacht", Title = title, Sub = sub, Style = style or "Warning" })
 	end
 end
 
@@ -153,9 +153,9 @@ local function reward()
 			if player.Parent and present[player] then
 				if won then
 					local R = S.Reward
-					ProgressService.AddCoins(player, R.Coins, "Storm Night")
+					ProgressService.AddCoins(player, R.Coins, "Sturmnacht")
 					ProgressService.QuestEvent(player, "XStorm", 1)
-					RedPointsService.Add(player, R.RedPoints, "Storm Night")
+					RedPointsService.Add(player, R.RedPoints, "Sturmnacht")
 					local names = {}
 					local rolled = {}
 					for _, roll in R.Items do
@@ -178,9 +178,9 @@ local function reward()
 							table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
 						end
 					end
-					Remotes.Notify:FireClient(player, "Banner", { Caption = "Storm Night", Title = "STORM CRATE",
-						Sub = R.Coins .. " coins · " .. R.RedPoints .. " RZ" .. (#names > 0 and (" · " .. table.concat(names, ", ")
-							.. " (in your stash)") or "") .. (#rest > 0 and " · stash full: the rest lies next to you" or ""),
+					Remotes.Notify:FireClient(player, "Banner", { Caption = "Sturmnacht", Title = "STURMKISTE",
+						Sub = R.Coins .. " Münzen · " .. R.RedPoints .. " RZ" .. (#names > 0 and (" · Im Lager: " .. table.concat(names, ", "))
+							or "") .. (#rest > 0 and " · Lager voll: der Rest liegt neben dir" or ""),
 						Style = "Good" })
 					-- Lager und Tasche voll: Rest als Beutel neben den Spieler (sonst wäre er verloren)
 					local root = #rest > 0 and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -188,7 +188,7 @@ local function reward()
 						InventoryService.DropItems(player, rest, root.Position)
 					end
 				else
-					ProgressService.AddCoins(player, S.FailCoins, "Storm Night")
+					ProgressService.AddCoins(player, S.FailCoins, "Sturmnacht")
 				end
 			end
 		end)
@@ -197,11 +197,11 @@ local function reward()
 		end
 	end
 	if won then
-		announce("THE STORM IS OVER", "Goal reached (" .. kills .. "/" .. goal .. ") · every fighter got a storm crate · PvP in "
-			.. S.Grace .. " s", "Good")
+		announce("DER STURM IST VORBEI", "Ziel erreicht (" .. kills .. "/" .. goal .. ") · jeder Kämpfer hat eine Sturmkiste "
+			.. "bekommen · PvP in " .. S.Grace .. " s", "Good")
 	else
-		announce("THE STORM IS OVER", "Goal missed (" .. kills .. "/" .. goal .. ") · fighters get " .. S.FailCoins
-			.. " coins · PvP in " .. S.Grace .. " s", "Info")
+		announce("DER STURM IST VORBEI", "Ziel verfehlt (" .. kills .. "/" .. goal .. ") · Kämpfer bekommen " .. S.FailCoins
+			.. " Münzen · PvP in " .. S.Grace .. " s", "Info")
 	end
 end
 
@@ -230,7 +230,7 @@ function StormService.Start(duration)
 	nextStrike = t + 3
 	nextStart = t + math.max(S.Interval, duration + 120)
 	warned = false
-	announce("STORM NIGHT", "PvP is OFF · everyone vs. armored zombies · together kill " .. goal .. " armored", "Warning")
+	announce("STURMNACHT", "PvP ist AUS · alle gegen gepanzerte Zombies · erledigt gemeinsam " .. goal .. " gepanzerte", "Warning")
 end
 
 function StormService.Stop()
@@ -267,7 +267,7 @@ function StormService.Step()
 	end
 	if not warned and t >= nextStart - S.Warning then
 		warned = true
-		announce("A STORM IS COMING", "In " .. S.Warning .. " seconds · PvP will be paused · armored zombies incoming", "Warning")
+		announce("EIN STURM ZIEHT AUF", "In " .. S.Warning .. " Sekunden · PvP wird pausiert · gepanzerte Zombies im Anmarsch", "Warning")
 	end
 	if t >= nextStart then
 		StormService.Start()
@@ -290,7 +290,7 @@ function StormService.Init(opts)
 			ReplicatedStorage:SetAttribute("StormKills", (ReplicatedStorage:GetAttribute("StormKills") or 0) + 1)
 			local kills, goal = ReplicatedStorage:GetAttribute("StormKills"), ReplicatedStorage:GetAttribute("StormGoal") or 0
 			if kills == goal then
-				announce("GOAL REACHED", "Everyone who fought gets a storm crate when the storm ends", "Good")
+				announce("ZIEL ERREICHT", "Wer mitgekämpft hat, bekommt am Ende des Sturms eine Sturmkiste", "Good")
 			end
 		end
 	end)

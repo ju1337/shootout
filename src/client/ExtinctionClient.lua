@@ -858,7 +858,7 @@ local function updateZone()
 	elseif DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
 		local _, resumeAt = DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
 		local storm = DayCycle.IsStorm(workspace:GetServerTimeNow())
-		setText(zoneText, storm and "STORM  ·  NO PVP" or ("NO PVP  ·  PVP IN " .. math.ceil(math.max(0, resumeAt - workspace:GetServerTimeNow())) .. " S"))
+		setText(zoneText, storm and "STURM  ·  KEIN PVP" or ("KEIN PVP  ·  PVP IN " .. math.ceil(math.max(0, resumeAt - workspace:GetServerTimeNow())) .. " S"))
 		zoneText.TextColor3 = Color3.fromRGB(150, 180, 255)
 		stroke.Color = Color3.fromRGB(150, 180, 255)
 	elseif player:GetAttribute("PvP") then
@@ -2361,7 +2361,7 @@ function Guide.Open()
 	make("Frame", { Name = "TutorialGap", Size = UDim2.new(1, 0, 0, 8), BackgroundTransparency = 1, LayoutOrder = #topics + 1 }, list)
 	local running = Inv.Tutorial.IsActive()
 	Inv.flatButton({ Name = "Tutorial", Primary = not running, Size = UDim2.new(1, 0, 0, 44),
-		Text = running and "SKIP TUTORIAL" or "START TUTORIAL", LayoutOrder = #topics + 2 }, list, function()
+		Text = running and "TUTORIAL ÜBERSPRINGEN" or "TUTORIAL STARTEN", LayoutOrder = #topics + 2 }, list, function()
 		closeWindow()
 		if running then
 			Inv.Tutorial.Stop()

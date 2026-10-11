@@ -124,48 +124,48 @@ end
 -- Die Schritte: Text (Funktion, damit Tasten zum Gerät passen), Done() = erledigt, Target = Stand mit Wegpunkt,
 -- Duration = reiner Text-Schritt, der nach so vielen Sekunden weitergeht
 ExtTutorial.Steps = {
-	{ Id = "Kit", Title = "GRAB YOUR STARTER KIT", Target = KitConfig.Point, WaypointText = "KIT VENDOR",
+	{ Id = "Kit", Title = "HOL DIR DEIN STARTER KIT", Target = KitConfig.Point, WaypointText = "KIT-HÄNDLER",
 		Text = function()
-			return "Walk to the <b>kit vendor</b> (follow the marker) and press " .. key("Interact", "the button on screen")
-				.. ", then click <b>COLLECT</b> on the free <b>STARTER KIT</b>: pistol, SMG, ammo, bandages, a vest and a bike."
+			return "Geh zum <b>Kit-Händler</b> (folge der Markierung) und drück " .. key("Interact", "den Knopf auf dem Bildschirm")
+				.. ", dann klick beim kostenlosen <b>STARTER KIT</b> auf <b>ABHOLEN</b>: Pistole, MP, Munition, Verbände, eine Weste und ein Fahrrad."
 		end,
 		Done = function()
 			return hasWeapon() or starterWaiting()
 		end },
-	{ Id = "Inventory", Title = "OPEN YOUR INVENTORY",
+	{ Id = "Inventory", Title = "ÖFFNE DEIN INVENTAR",
 		Text = function()
-			return "Press " .. key("Inventory", "the bag button") .. " to open your inventory. The first "
-				.. ExtinctionConfig.HotbarSlots .. " slots of your bag are your <b>hotbar</b>."
+			return "Drück " .. key("Inventory", "den Taschen-Knopf") .. ", um dein Inventar zu öffnen. Die ersten "
+				.. ExtinctionConfig.HotbarSlots .. " Plätze deiner Tasche sind deine <b>Schnellleiste</b>."
 		end,
 		Done = function()
 			return windowKind() == "Inventory"
 		end },
-	{ Id = "Equip", Title = "TAKE A WEAPON IN HAND",
+	{ Id = "Equip", Title = "NIMM EINE WAFFE IN DIE HAND",
 		Text = function()
 			local slot = weaponSlot()
 			local hint = slot and InputActions.Hint("Hotbar" .. slot) or ""
 			if InputActions.Device() == "Gamepad" then
 				hint = InputActions.Hint("Gadget") .. " / " .. InputActions.Hint("Ability") -- Controller: Waffe wechseln mit R1/L1
 			end
-			return "Close the menu and press " .. (hint ~= "" and ("[" .. hint .. "]") or "a weapon in your hotbar")
-				.. " to draw your gun. During the tutorial you can hold it in the safe zone – shooting only works outside."
+			return "Schließ das Menü und drück " .. (hint ~= "" and ("[" .. hint .. "]") or "eine Waffe in deiner Schnellleiste")
+				.. ", um deine Waffe zu ziehen. Im Tutorial darfst du sie in der Safe Zone halten – schießen geht nur draußen."
 		end,
 		Done = function()
 			-- ohne Waffe (Startpaket schon geholt und weg) gibt es nichts zu ziehen
 			return (player:GetAttribute("ExtEquipped") or 0) > 0 or (not hasWeapon() and starterWaiting())
 		end },
-	{ Id = "Leave", Title = "LEAVE THE SAFE ZONE",
+	{ Id = "Leave", Title = "VERLASS DIE SAFE ZONE",
 		Text = function()
-			return "Walk out through one of the gates. Outside zombies roam and <b>PvP starts " .. ExtinctionConfig.PvPDelay
-				.. " seconds</b> after you leave. The last safe zone you entered is your spawn point."
+			return "Geh durch eines der Tore hinaus. Draußen laufen Zombies herum, und <b>PvP beginnt " .. ExtinctionConfig.PvPDelay
+				.. " Sekunden</b> nach dem Verlassen. Die letzte Safe Zone, die du betreten hast, ist dein Spawnpunkt."
 		end,
 		Done = function()
 			return player:GetAttribute("InSafeZone") == false
 		end },
-	{ Id = "Zombie", Title = "KILL A ZOMBIE",
+	{ Id = "Zombie", Title = "TÖTE EINEN ZOMBIE",
 		Text = function()
-			return "Zombies drop <b>coins and loot</b>. Aim with " .. key("Aim", "the aim button") .. ", fire with "
-				.. key("Fire", "the fire button") .. ". Hurt? Use a bandage from your hotbar."
+			return "Zombies lassen <b>Münzen und Beute</b> fallen. Zielen mit " .. key("Aim", "dem Ziel-Knopf") .. ", schießen mit "
+				.. key("Fire", "dem Feuer-Knopf") .. ". Verletzt? Nimm einen Verband aus deiner Schnellleiste."
 		end,
 		Start = function()
 			state.Kills = player:GetAttribute("ZombieKills") or 0
@@ -173,10 +173,10 @@ ExtTutorial.Steps = {
 		Done = function()
 			return (player:GetAttribute("ZombieKills") or 0) > state.Kills
 		end },
-	{ Id = "Ready", Title = "YOU'RE READY", Duration = READY_TIME,
+	{ Id = "Ready", Title = "DU BIST BEREIT", Duration = READY_TIME,
 		Text = function()
-			return "If you die outside, your <b>bag drops</b> where you died – your container and stash stay safe. "
-				.. "Everything else: menu " .. key("Menu", "") .. " → <b>GUIDE</b>. Good luck out there."
+			return "Stirbst du draußen, <b>fällt deine Tasche</b> dort zu Boden – Container und Lager bleiben sicher. "
+				.. "Alles Weitere: Menü " .. key("Menu", "") .. " → <b>GUIDE</b>. Viel Glück da draußen."
 		end },
 }
 
@@ -215,7 +215,7 @@ local function showStep()
 	if not step or not panel then
 		return
 	end
-	stepText.Text = "TUTORIAL  ·  STEP " .. state.Step .. "/" .. #ExtTutorial.Steps
+	stepText.Text = "TUTORIAL  ·  SCHRITT " .. state.Step .. "/" .. #ExtTutorial.Steps
 	titleText.Text = step.Title
 	bodyText.Text = step.Text()
 	bar.Size = UDim2.fromScale(state.Step / #ExtTutorial.Steps, 1)
@@ -277,24 +277,24 @@ function ExtTutorial.Start(withIntro)
 		ZIndex = 20 }, gui)
 	UITheme.Corner(intro, UITheme.Radius.Medium)
 	make("Frame", { Name = "Accent", Size = UDim2.new(1, 0, 0, 4), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 21 }, intro)
-	label({ Name = "Caption", Position = UDim2.fromOffset(28, 24), Size = UDim2.new(1, -56, 0, 18), Text = "WELCOME, SURVIVOR",
+	label({ Name = "Caption", Position = UDim2.fromOffset(28, 24), Size = UDim2.new(1, -56, 0, 18), Text = "WILLKOMMEN, ÜBERLEBENDER",
 		TextSize = 14, Font = F.Bold, TextColor3 = RED, ZIndex = 21 }, intro)
-	label({ Name = "Title", Position = UDim2.fromOffset(28, 44), Size = UDim2.new(1, -56, 0, 40), Text = "NEW TO EXTINCTION?",
+	label({ Name = "Title", Position = UDim2.fromOffset(28, 44), Size = UDim2.new(1, -56, 0, 40), Text = "NEU IN EXTINCTION?",
 		TextSize = 34, Font = F.Display, TextColor3 = C2.Text, ZIndex = 21 }, intro)
-	label({ Name = "Text", Position = UDim2.fromOffset(28, 92), Size = UDim2.new(1, -56, 0, 60), Text = "A short tutorial shows "
-		.. "you the basics: starter kit, inventory, leaving the safe zone and your first zombie. You can skip it any time "
-		.. "in the menu under GUIDE.", TextSize = 17, Font = F.Medium, TextColor3 = C2.Text, TextWrapped = true,
+	label({ Name = "Text", Position = UDim2.fromOffset(28, 92), Size = UDim2.new(1, -56, 0, 78), Text = "Ein kurzes Tutorial zeigt "
+		.. "dir die Grundlagen: Starter Kit, Inventar, Safe Zone verlassen und dein erster Zombie. Du kannst es jederzeit "
+		.. "im Menü unter GUIDE überspringen.", TextSize = 17, Font = F.Medium, TextColor3 = C2.Text, TextWrapped = true,
 		TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 21 }, intro)
 	local buttons = make("Frame", { Name = "Buttons", Position = UDim2.new(0, 28, 1, -76), Size = UDim2.new(1, -56, 0, 52),
 		BackgroundTransparency = 1, ZIndex = 21 }, intro)
-	UITheme.Chunky({ Name = "Start", Size = UDim2.new(0.62, -6, 1, 0), Color = RED, StrokeColor = RED, Text = "START TUTORIAL",
+	UITheme.Chunky({ Name = "Start", Size = UDim2.new(0.62, -6, 1, 0), Color = RED, StrokeColor = RED, Text = "TUTORIAL STARTEN",
 		TextSize = 20, ZIndex = 22 }, buttons, function()
 		closeIntro()
 		Sfx.UI("StingInfo")
 		ExtTutorial.Start(false)
 	end)
 	UITheme.Chunky({ Name = "Skip", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
-		Size = UDim2.new(0.38, -6, 1, 0), Color = C2.Panel, StrokeColor = C2.Border, Text = "SKIP", TextSize = 20, ZIndex = 22 },
+		Size = UDim2.new(0.38, -6, 1, 0), Color = C2.Panel, StrokeColor = C2.Border, Text = "ÜBERSPRINGEN", TextSize = 20, ZIndex = 22 },
 		buttons, function()
 		closeIntro()
 		finish("Skip")
@@ -430,7 +430,7 @@ function ExtTutorial.Init(options: { WindowKind: (() -> string?)? }?)
 	local track = make("Frame", { Name = "Progress", LayoutOrder = 4, Size = UDim2.new(1, 0, 0, 3), BackgroundColor3 = C.Card,
 		BorderSizePixel = 0 }, panel)
 	bar = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = RED, BorderSizePixel = 0 }, track)
-	label({ Name = "SkipHint", LayoutOrder = 5, Size = UDim2.new(1, 0, 0, 14), Text = "SKIP: MENU → GUIDE → SKIP TUTORIAL",
+	label({ Name = "SkipHint", LayoutOrder = 5, Size = UDim2.new(1, 0, 0, 14), Text = "ÜBERSPRINGEN: MENÜ → GUIDE → TUTORIAL ÜBERSPRINGEN",
 		TextSize = 11, Font = F.Bold, TextColor3 = C.Muted }, panel)
 
 	player:GetAttributeChangedSignal("ExtTutorial"):Connect(onAttribute)
