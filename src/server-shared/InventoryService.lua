@@ -685,13 +685,13 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 end
 
 -- An einem Stand verkaufen (Platz der Tasche, count = Anzahl oder nil = alles)
-function InventoryService.Sell(player, slot, count)
+function InventoryService.Sell(player, slot, count, expectedId)
 	if not inExtinction(player) or type(slot) ~= "number" then
 		return false
 	end
 	local state = stateOf(player)
 	local item = state and state.Bag.Slots[slot]
-	if not item then
+	if not item or (expectedId ~= nil and item.Id ~= expectedId) then -- Doppelklick: im Platz liegt schon etwas anderes
 		return false
 	end
 	if not nearAnyStand(player) then

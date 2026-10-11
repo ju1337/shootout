@@ -3125,8 +3125,14 @@ local function openStand(standKey)
 		local stack = (config.MaxStack or 1) > 1
 		local many = math.min(5, config.MaxStack or 1)
 		local buyW = stack and math.floor((cardW - 28 - 8) * 0.56) or cardW - 28
+		local lastBuy = 0
 		local buy = Inv.priceButton(card, { Name = "Buy", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 14, 1, -14),
 			Size = UDim2.fromOffset(buyW, 44), Primary = true, ZIndex = 8 }, "KAUFEN", price, redStand, function()
+			-- Einzelstücke (Waffen, Fahrzeuge, Westen): ein Doppelklick kauft nicht zwei
+			if not stack and os.clock() - lastBuy < 0.6 then
+				return
+			end
+			lastBuy = os.clock()
 			sendAction("Buy", standKey, id, 1)
 		end)
 		table.insert(entry.Buttons, { Button = buy, Price = price, Primary = true })
@@ -3221,11 +3227,11 @@ local function openStand(standKey)
 				table.insert(actions, { Text = (count > 1 and "ALLE VERKAUFEN  ·  " or "VERKAUFEN  ·  ")
 					.. sellPrice(count), Primary = true, Run = function()
 					selected = nil
-					sendAction("Sell", slot, count)
+					sendAction("Sell", slot, count, entry.Id) -- Id mitschicken: Doppelklick verkauft nicht, was danach im Platz liegt
 				end })
 				if count > 1 then
 					table.insert(actions, { Text = "1 VERKAUFEN  ·  " .. sellPrice(1), Run = function()
-						sendAction("Sell", slot, 1)
+						sendAction("Sell", slot, 1, entry.Id)
 					end })
 				end
 			end

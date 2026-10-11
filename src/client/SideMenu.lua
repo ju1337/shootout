@@ -1255,6 +1255,9 @@ local function buildPlayerCard()
 	local confirmUntil = 0
 	prestigeButton.Activated:Connect(function()
 		if os.clock() < confirmUntil then
+			if os.clock() < confirmUntil - 4 + 0.4 then -- schneller Doppelklick ist keine Bestätigung
+				return
+			end
 			confirmUntil = 0
 			Remotes.ShopAction:FireServer("Prestige")
 		else

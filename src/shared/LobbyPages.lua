@@ -426,6 +426,9 @@ function LobbyPages.Shop(page)
 				return
 			end
 			if os.clock() < confirmUntil then
+				if os.clock() < confirmUntil - 3 + 0.35 then -- schneller Doppelklick ist keine Bestätigung
+					return
+				end
 				confirmUntil = 0
 				Remotes.ShopAction:FireServer("SellSkin", item.Id, 1)
 				return

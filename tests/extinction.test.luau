@@ -344,6 +344,8 @@ local coins = ProgressService.Get(alice).Coins
 check(InventoryService.Sell(alice, 9, 1) == true, "einen Verband verkauft")
 check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.SellPrice("Bandage", 1), "Verkaufspreis gutgeschrieben")
 check(slot(alice, 9).N == 1, "ein Verband übrig")
+check(InventoryService.Sell(alice, 9, 1, "Medkit") == false and slot(alice, 9).N == 1,
+	"Verkauf mit falscher Item-Id (Doppelklick, Platz schon neu belegt) wird abgelehnt")
 
 -- ---------- Tod draußen: Tasche am Boden, Lager bleibt ----------
 moveTo(alice, Vector3.new(0, 3, 200))
