@@ -206,6 +206,7 @@ local function render()
 	if not window then
 		local frame = UITheme.Card({ Name = "TradeWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 			Size = UDim2.fromOffset(WIN_W, WIN_H), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
+		UITheme.PhoneFit(frame, WIN_W, WIN_H, 0.55)
 		window = { Frame = frame }
 		UITheme.SetBlur("Trade", true)
 	end
@@ -220,7 +221,7 @@ local function render()
 	local oldList = frame:FindFirstChild("SkinList", true)
 	local scrolled = oldList and oldList:IsA("ScrollingFrame") and oldList.CanvasPosition or nil
 	for _, child in frame:GetChildren() do
-		if not child:IsA("UICorner") and not child:IsA("UIStroke") then
+		if not child:IsA("UICorner") and not child:IsA("UIStroke") and not child:IsA("UIScale") then
 			child:Destroy()
 		end
 	end
@@ -526,6 +527,7 @@ function TradeClient.OpenPlayers()
 	closeList()
 	local frame = UITheme.Card({ Name = "TradeListWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 		Size = UDim2.fromOffset(760, 560), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
+	UITheme.PhoneFit(frame, 760, 560, 0.55)
 	UITheme.AccentBar(frame, C.Rap, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 16), Size = UDim2.new(1, -120, 0, 40), Text = "TAUSCHEN", TextSize = 34, Font = F.Display, ZIndex = 5 }, frame)
 	label({ Position = UDim2.fromOffset(28, 54), Size = UDim2.new(1, -120, 0, 18), Text = "SPIELER IN DEINEM BEREICH  ·  NAH GENUG HERANGEHEN, DANN ANFRAGEN",

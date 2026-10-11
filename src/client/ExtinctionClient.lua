@@ -1110,13 +1110,85 @@ Inv.HEADER_Y, Inv.HEADER_H = 18, 50
 Inv.CONTENT_X, Inv.CONTENT_Y = 22, 84 -- in der Fläche rechts der Seitenleiste
 Inv.CONTENT_W, Inv.CONTENT_H = Inv.MENU_W - Inv.SIDEBAR_W - 2 * Inv.CONTENT_X, Inv.MENU_H - Inv.CONTENT_Y - 18
 
+-- Handy (Bildschirm niedriger als PHONE_MAX_H): eigene, kleinere Leinwand, damit alles größer wird (statt 1600 × 900 auf
+-- etwa 43 % verkleinert). Das Menü füllt dann den ganzen Bildschirm, die Reiter stehen als Leiste oben (wischen zum
+-- Blättern), der Inhalt scrollt, wenn er höher ist als der Platz.
+Inv.PHONE_MAX_H, Inv.PHONE_H, Inv.PHONE_MIN_W = 560, 520, 1120
+Inv.PHONE_TABS_H = 52
+Inv.PHONE = false
+function Inv.isPhone(viewport)
+	viewport = viewport or (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize)
+	return viewport ~= nil and viewport.Y > 0 and viewport.Y < Inv.PHONE_MAX_H
+end
+function Inv.canvasLayout(viewport)
+	if Inv.isPhone(viewport) then
+		local aspect = viewport.X / viewport.Y
+		local height = math.max(Inv.PHONE_H, math.ceil(Inv.PHONE_MIN_W / aspect))
+		return math.floor(height * aspect), height
+	end
+	return 1600, 900
+end
+
 -- Sichtbare Breite in Leinwand-Einheiten (die Leinwand ist 1600 breit, der Bildschirm oft breiter)
 local function updateMenuSize()
 	local scale = canvas and canvas:FindFirstChildOfClass("UIScale")
 	local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
-	local visible = (scale and scale.Scale > 0 and viewport) and viewport.X / scale.Scale or 1600
-	Inv.MENU_W = math.floor(math.clamp(visible - Inv.MENU_MARGIN, Inv.MENU_MIN_W, Inv.MENU_MAX_W))
+	Inv.PHONE = Inv.isPhone(viewport)
+	if Inv.PHONE and canvas then
+		Inv.MENU_W, Inv.MENU_H = canvas.Size.X.Offset, canvas.Size.Y.Offset
+		Inv.CONTENT_X = 14
+	else
+		local visible = (scale and scale.Scale > 0 and viewport) and viewport.X / scale.Scale or 1600
+		Inv.MENU_W = math.floor(math.clamp(visible - Inv.MENU_MARGIN, Inv.MENU_MIN_W, Inv.MENU_MAX_W))
+		Inv.MENU_H = 860
+		Inv.CONTENT_X = 22
+	end
 	Inv.CONTENT_W = Inv.MENU_W - Inv.SIDEBAR_W - 2 * Inv.CONTENT_X
+end
+
+-- Handy: Platz links oben, den die Roblox-Knöpfe belegen (in Leinwand-Einheiten), damit die Reiter nicht darunter liegen
+function Inv.topbarLeft()
+	local scale = canvas and canvas:FindFirstChildOfClass("UIScale")
+	local ok, inset = pcall(function()
+		return game:GetService("GuiService").TopbarInset
+	end)
+	if ok and typeof(inset) == "Rect" and inset.Min.X > 0 and scale and scale.Scale > 0 then
+		return math.ceil(inset.Min.X / scale.Scale)
+	end
+	return 0
+end
+
+-- Handy: Fläche, die breiter gebaut ist als der Inhalt, passend verkleinern (links bündig)
+function Inv.fitWidth(frame, designW)
+	if Inv.CONTENT_W < designW then
+		make("UIScale", { Scale = Inv.CONTENT_W / designW }, frame)
+		frame.Position = UDim2.new(frame.Position.X.Scale, frame.AnchorPoint.X > 0 and frame.Position.X.Offset or 0,
+			frame.Position.Y.Scale, frame.Position.Y.Offset)
+	end
+end
+
+-- Handy: Inhalt scrollt, so hoch wie das, was wirklich drin steht (Listen mit eigener Scrollfläche zählen als Ganzes)
+function Inv.fitScroll(content)
+	local scale = canvas and canvas:FindFirstChildOfClass("UIScale")
+	local s = scale and scale.Scale > 0 and scale.Scale or 1
+	local top = content.AbsolutePosition.Y
+	local bottom = 0
+	local scrolled = content.CanvasPosition and content.CanvasPosition.Y or 0 -- (Testumgebung kennt CanvasPosition nicht immer)
+	local function walk(parent)
+		for _, child in parent:GetChildren() do
+			if child:IsA("GuiObject") and child.Visible then
+				bottom = math.max(bottom, (child.AbsolutePosition.Y + child.AbsoluteSize.Y - top) / s + scrolled)
+				if not child:IsA("ScrollingFrame") then
+					walk(child)
+				end
+			end
+		end
+	end
+	walk(content)
+	local height = math.ceil(bottom + 12)
+	if content.CanvasSize.Y.Offset ~= height then
+		content.CanvasSize = UDim2.fromOffset(0, height)
+	end
 end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
@@ -1173,17 +1245,86 @@ function Inv.flatButton(props, parent, onClick)
 	return button
 end
 
+-- Handy: Reiter als Leiste oben über die ganze Breite (wischen zum Blättern), aktiver Reiter rot unterstrichen und
+-- beim Öffnen ins Bild gerückt; links bleibt frei, wo die Roblox-Knöpfe liegen
+function Inv.phoneTabs(frame, kind)
+	local bar = make("Frame", { Name = "Sidebar", Size = UDim2.new(1, 0, 0, Inv.PHONE_TABS_H), BackgroundColor3 = Inv.SIDEBAR,
+		BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, ZIndex = 5 }, frame)
+	make("Frame", { Name = "Line", AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 1),
+		BackgroundColor3 = C.Border, BackgroundTransparency = 0.4, BorderSizePixel = 0, ZIndex = 6 }, bar)
+	local left = Inv.topbarLeft()
+	-- rechts in der Leiste: Münzen und X (newMenu hängt sie hierher)
+	local strip = make("ScrollingFrame", { Name = "Tabs", Position = UDim2.fromOffset(left, 0), Size = UDim2.new(1, -left - 300, 1, 0),
+		BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.X,
+		ScrollingDirection = Enum.ScrollingDirection.X, ScrollBarThickness = 0, ElasticBehavior = Enum.ElasticBehavior.Never,
+		ZIndex = 5 }, bar)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder,
+		VerticalAlignment = Enum.VerticalAlignment.Center }, strip)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, strip)
+	-- rechts ausblenden: zeigt, dass es weitere Reiter gibt
+	local fade = make("Frame", { Name = "Fade", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -300, 0, 0), Size = UDim2.new(0, 48, 1, -1),
+		BackgroundColor3 = Inv.SIDEBAR, BorderSizePixel = 0, ZIndex = 7 }, bar)
+	make("UIGradient", { Transparency = NumberSequence.new(1, 0) }, fade)
+	local active
+	for _, tab in MENU_TABS do
+		local on = tab.Id == kind
+		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = on and 0.92 or 1, BorderSizePixel = 0, Text = tab.Text,
+			Font = F.Bold, TextSize = 17, TextColor3 = on and C.Text or C.Muted, LayoutOrder = tab.Index, ZIndex = 6,
+			AutoButtonColor = false }, strip)
+		make("UIPadding", { PaddingLeft = UDim.new(0, 18), PaddingRight = UDim.new(0, 18) }, button)
+		make("Frame", { Name = "Underline", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, -18, 1, 0), Size = UDim2.new(1, 36, 0, 3),
+			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = on, ZIndex = 7 }, button)
+		button:SetAttribute("NoFocus", true)
+		button.Activated:Connect(function()
+			if not on then
+				openMenuTab(tab.Id)
+			end
+		end)
+		if on then
+			active = button
+		end
+	end
+	-- aktiven Reiter ins Bild rücken (nach dem Layout)
+	if active then
+		task.defer(function()
+			if not strip.Parent then
+				return
+			end
+			local scale = canvas:FindFirstChildOfClass("UIScale")
+			local s = scale and scale.Scale > 0 and scale.Scale or 1
+			local x = (active.AbsolutePosition.X - strip.AbsolutePosition.X) / s + (strip.CanvasPosition and strip.CanvasPosition.X or 0)
+			local width = active.AbsoluteSize.X / s
+			local view = strip.AbsoluteSize.X / s
+			if x + width > view - 40 then
+				strip.CanvasPosition = Vector2.new(math.max(0, x - 120), 0)
+			end
+		end)
+	end
+	return bar
+end
+
 -- Auch für das Beute-Fenster (ohne Seitenleiste, gleiche Fläche): kind ist dann kein Reiter
 local function newMenu(kind, title, subtitle)
 	updateMenuSize()
 	local isTab = menuTab[kind] ~= nil
-	local sideW = isTab and Inv.SIDEBAR_W or 0
+	local phone = Inv.PHONE
+	local sideW = (isTab and not phone) and Inv.SIDEBAR_W or 0
+	local topH = (isTab and phone) and Inv.PHONE_TABS_H or 0 -- Handy: Reiter als Leiste oben
+	local radius = phone and 0 or Inv.WINDOW_RADIUS -- Handy: bildschirmfüllend, ohne runde Ecken
+	Inv.HEADER_Y = phone and topH + 6 or 18
+	Inv.HEADER_H = phone and 46 or 50
+	Inv.CONTENT_Y = Inv.HEADER_Y + Inv.HEADER_H + (phone and 10 or 16)
 	Inv.CONTENT_W = Inv.MENU_W - sideW - 2 * Inv.CONTENT_X
+	Inv.CONTENT_H = Inv.MENU_H - Inv.CONTENT_Y - (phone and 8 or 18)
 	local frame = make("Frame", { Name = isTab and "Menu" or "Window", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(Inv.MENU_W, Inv.MENU_H), BackgroundTransparency = 1, ZIndex = 5 }, canvas)
+	if phone and isTab then
+		Inv.phoneTabs(frame, kind)
+	end
 	-- Seitenleiste: Name des Modus, Reiter untereinander, unten der Hinweis zum Schließen
-	local sidebar = make("Frame", { Name = "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.SIDEBAR,
-		BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, Visible = isTab, ZIndex = 5 }, frame)
+	local sidebar = make("Frame", { Name = phone and "SidebarOff" or "Sidebar", Size = UDim2.new(0, Inv.SIDEBAR_W, 1, 0), BackgroundColor3 = Inv.SIDEBAR,
+		BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, Visible = isTab and not phone, ZIndex = 5 }, frame)
 	-- Fenster außen gerundet: Seitenleiste links, Fläche rechts; wo beide aneinanderstoßen, bleiben die Ecken gerade
 	UITheme.Corner(sidebar, Inv.WINDOW_RADIUS)
 	make("Frame", { Name = "Join", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0),
@@ -1193,7 +1334,7 @@ local function newMenu(kind, title, subtitle)
 		Font = F.Display, TextColor3 = Inv.MENU_RED, ZIndex = 6 }, sidebar)
 	label({ Name = "LogoSub", Position = UDim2.fromOffset(25, 104), Size = UDim2.new(1, -48, 0, 14), Text = "OFFENE WELT", TextSize = 11,
 		Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
-	local tabs = make("Frame", { Name = "Tabs", Position = UDim2.fromOffset(0, 148), Size = UDim2.new(1, 0, 1, -200),
+	local tabs = make("Frame", { Name = phone and "TabsOff" or "Tabs", Position = UDim2.fromOffset(0, 148), Size = UDim2.new(1, 0, 1, -200),
 		BackgroundTransparency = 1, ZIndex = 5 }, sidebar)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder },
 		tabs)
@@ -1239,20 +1380,23 @@ local function newMenu(kind, title, subtitle)
 		Text = pad and "○  SCHLIESSEN" or (InputActions.IsTouch() and "✕ OBEN RECHTS  SCHLIESSEN" or "TAB / M  SCHLIESSEN"), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
 
 	-- Fläche rechts: Kopfzeile und Inhalt
-	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(sideW, 0), Size = UDim2.new(1, -sideW, 1, 0),
+	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(sideW, topH), Size = UDim2.new(1, -sideW, 1, -topH),
 		BackgroundColor3 = Inv.SOLID, BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, ZIndex = 5 }, frame)
-	UITheme.Corner(panel, Inv.WINDOW_RADIUS)
-	if isTab then
+	if radius > 0 then
+		UITheme.Corner(panel, radius)
+	end
+	if isTab and not phone then
 		make("Frame", { Name = "Join", Size = UDim2.new(0, Inv.WINDOW_RADIUS, 1, 0), BackgroundColor3 = Inv.SOLID,
 			BackgroundTransparency = Inv.WINDOW_ALPHA, BorderSizePixel = 0, ZIndex = 5 }, panel)
 	end
-	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.HEADER_Y),
+	local header = make("Frame", { Name = "Header", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.HEADER_Y - topH),
 		Size = UDim2.new(1, -2 * Inv.CONTENT_X, 0, Inv.HEADER_H), BackgroundColor3 = Inv.RAISED, BackgroundTransparency = 0, BorderSizePixel = 0,
 		ZIndex = 5 }, panel)
 	UITheme.Corner(header, 4)
 	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, ZIndex = 6 }, header)
+	-- Handy: bei Reitern steht der Name schon in der Leiste oben, die Kopfzeile bleibt für Filter, Münzen und X
 	local titleRow = make("Frame", { Name = "TitleRow", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -320, 1, 0),
-		BackgroundTransparency = 1, ZIndex = 6 }, header)
+		BackgroundTransparency = 1, Visible = not (phone and isTab), ZIndex = 6 }, header)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center }, titleRow)
 	label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = title or (isTab and menuTab[kind].Text) or "",
@@ -1276,13 +1420,58 @@ local function newMenu(kind, title, subtitle)
 	local coins = label({ Name = "Coins", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -60, 0.5, 0),
 		Size = UDim2.fromOffset(220, 24), Text = "", TextSize = 18, Font = F.Display, TextColor3 = C.Gold,
 		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6 }, header)
-	local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.CONTENT_Y),
-		Size = UDim2.fromOffset(Inv.CONTENT_W, Inv.CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, panel)
+	local content
+	if phone then
+		-- etwas breiter als der Inhalt: der Scrollbalken liegt im Rand rechts, nicht über der Seite
+		content = make("ScrollingFrame", { Name = "Content", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.CONTENT_Y - topH),
+			Size = UDim2.fromOffset(Inv.CONTENT_W + Inv.CONTENT_X - 4, Inv.CONTENT_H), BackgroundTransparency = 1, BorderSizePixel = 0,
+			CanvasSize = UDim2.fromOffset(0, Inv.CONTENT_H), ScrollingDirection = Enum.ScrollingDirection.Y, ScrollBarThickness = 4,
+			ScrollBarImageColor3 = C.Border, ElasticBehavior = Enum.ElasticBehavior.Never, ZIndex = 5 }, panel)
+		-- Höhe der Scrollfläche nachführen (Seiten bauen sich teils später auf oder um)
+		local last = 0
+		local connection
+		connection = RunService.Heartbeat:Connect(function()
+			if not content.Parent then
+				connection:Disconnect()
+				return
+			end
+			local now = os.clock()
+			if now - last >= 0.25 then
+				last = now
+				Inv.fitScroll(content)
+			end
+		end)
+	else
+		content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(Inv.CONTENT_X, Inv.CONTENT_Y),
+			Size = UDim2.fromOffset(Inv.CONTENT_W, Inv.CONTENT_H), BackgroundTransparency = 1, ZIndex = 5 }, panel)
+	end
 	-- Meldungen (Kaufen, Container voll …) unten in der Fläche, solange das HUD versteckt ist
 	local menuToast = label({ Name = "Toast", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -6),
 		Size = UDim2.fromOffset(700, 20), Text = "", TextSize = 14, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center,
 		Visible = false, ZIndex = 30 }, panel)
 	UITheme.Outline(menuToast)
+	if phone and isTab then
+		-- Handy: Münzen und X oben in der Reiter-Leiste; die Kopfzeile fällt weg, wenn die Seite nichts hineinlegt
+		-- (Filter im Inventar, STANDARD WIEDERHERSTELLEN bei OPTIONEN …)
+		local bar = frame:FindFirstChild("Sidebar")
+		close.Parent, coins.Parent = bar, bar
+		coins.Position = UDim2.new(1, -78, 0.5, 0)
+		task.defer(function()
+			if not header.Parent then
+				return
+			end
+			for _, child in header:GetChildren() do
+				-- leere Halter (PageActions ohne Knopf) zählen nicht
+				local filled = not child:IsA("Frame") or child:FindFirstChildWhichIsA("GuiObject") ~= nil
+				if child:IsA("GuiObject") and child.Visible and filled and child.Name ~= "Accent" and child.Name ~= "TitleRow" then
+					return
+				end
+			end
+			header.Visible = false
+			content.Position = UDim2.fromOffset(Inv.CONTENT_X, 8)
+			content.Size = UDim2.fromOffset(content.Size.X.Offset, Inv.MENU_H - topH - 16)
+		end)
+	end
 	if isTab then
 		lastMenuTab = kind
 	end
@@ -1299,6 +1488,7 @@ local function newWindow(kind, title, subtitle)
 	if FIXED_WINDOWS[kind] then
 		window.Body = make("Frame", { Name = "Body", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10),
 			Size = UDim2.fromOffset(1124, 532), BackgroundTransparency = 1, ZIndex = 5 }, window.Body)
+		Inv.fitWidth(window.Body, 1124)
 	end
 	Inv.hideHud(true)
 	setPrompts(false)
@@ -1842,7 +2032,8 @@ local function openAchievements()
 		local iconHolder = make("Frame", { Position = UDim2.fromOffset(16, 16), Size = UDim2.fromOffset(64, 64), BackgroundTransparency = 1,
 			ZIndex = 7 }, card)
 		local name = label({ Name = "Name", Position = UDim2.fromOffset(92, 16), Size = UDim2.new(1, -108, 0, 22),
-			Text = upper(achievement.Name), TextSize = 19, Font = F.Display, ZIndex = 7 }, card)
+			Text = upper(achievement.Name), TextSize = 19, TextScaled = true, Font = F.Display, ZIndex = 7 }, card)
+		make("UITextSizeConstraint", { MinTextSize = 13, MaxTextSize = 19 }, name) -- lange Namen kleiner statt abgeschnitten
 		label({ Name = "Text", Position = UDim2.fromOffset(92, 40), Size = UDim2.new(1, -108, 0, 32), Text = achievement.Text,
 			TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
 			ZIndex = 7 }, card)
@@ -3066,6 +3257,7 @@ local function openMarket()
 		.. "IN DEINEM SPIELSTAND")
 	local holder = make("Frame", { Name = "MarketHolder", Position = UDim2.fromOffset((Inv.CONTENT_W - 1304) // 2, 0),
 		Size = UDim2.fromOffset(1304, 668), BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
+	Inv.fitWidth(holder, 1304)
 	local maps = workspace:FindFirstChild("Maps")
 	local map = maps and maps:FindFirstChild("Extinction")
 	local page
@@ -3139,7 +3331,8 @@ end
 local function openLobbyTab(id)
 	local win = newWindow(id)
 	local pageId = menuTab[id].PageId or id
-	local scale = math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
+	-- Handy: auf die Breite einpassen, der Inhalt scrollt dann nach unten
+	local scale = Inv.PHONE and Inv.CONTENT_W / LobbyPages.PAGE_W or math.min(Inv.CONTENT_W / LobbyPages.PAGE_W, Inv.CONTENT_H / LobbyPages.PAGE_H)
 	-- so hoch wie der Inhalt (Seiten mit Scrollfläche wie OPTIONEN nutzen die ganze Höhe)
 	local height = math.max(LobbyPages.PAGE_H, math.floor(Inv.CONTENT_H / scale))
 	local holder = make("Frame", { Name = "PageHolder", Size = UDim2.fromOffset(LobbyPages.PAGE_W, height),
@@ -3805,7 +3998,7 @@ function ExtinctionClient.Init()
 			closeWindow()
 		end
 	end)
-	canvas = UITheme.Canvas(windowGui, 1600, 900)
+	canvas = UITheme.Canvas(windowGui, 1600, 900, Inv.canvasLayout)
 	canvas.ZIndex = 2
 
 	-- Tasten: 1-9, TAB, K (eigene Belegungen in InputActions)

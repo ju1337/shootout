@@ -395,6 +395,7 @@ local function newWindow(kind, title, stand)
 	closeWindow()
 	local frame = UITheme.Card({ Name = "MarketWindow", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.52),
 		Size = UDim2.fromOffset(WIN_W, WIN_H), BackgroundTransparency = 0.04, ZIndex = 5 }, root)
+	UITheme.PhoneFit(frame, WIN_W, WIN_H, 0.55)
 	UITheme.AccentBar(frame, C.Rap, { ZIndex = 5 })
 	label({ Position = UDim2.fromOffset(28, 18), Size = UDim2.new(1, -300, 0, 40), Text = title, TextSize = 34, Font = F.Display,
 		ZIndex = 5 }, frame)

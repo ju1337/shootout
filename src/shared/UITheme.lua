@@ -401,13 +401,19 @@ function UITheme.RapIcon(parent, size, props)
 end
 
 -- Zentrierte Leinwand mit fester Größe, die auf den Bildschirm skaliert wird
-function UITheme.Canvas(parent, width, height)
+-- layout (optional): function(viewport) -> Breite, Höhe der Leinwand (z.B. eigene Größe am Handy)
+function UITheme.Canvas(parent, width, height, layout)
 	local canvas = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(0, width, 0, height), BackgroundTransparency = 1 }, parent)
 	local scale = make("UIScale", {}, canvas)
 	local function update()
 		local viewport = workspace.CurrentCamera.ViewportSize
-		scale.Scale = math.min(viewport.X / width, viewport.Y / height)
+		local w, h = width, height
+		if layout then
+			w, h = layout(viewport)
+			canvas.Size = UDim2.new(0, w, 0, h)
+		end
+		scale.Scale = math.min(viewport.X / w, viewport.Y / h)
 	end
 	update()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
@@ -419,6 +425,27 @@ end
 -- Maßstab einer solchen Ebene bei dieser Bildschirmgröße (auch für Rechnungen in ihren Einheiten, z.B. TopStack)
 function UITheme.RootScale(viewport, designWidth, designHeight, minScale)
 	return math.clamp(math.min(viewport.X / (designWidth or 1600), viewport.Y / (designHeight or 900)), minScale or 0.45, 1)
+end
+
+-- Fenster in einer ScaledRoot am Handy größer ziehen: die Ebene ist dort auf minScale verkleinert, das Fenster passt
+-- aber oft größer auf den Bildschirm. Dann bis knapp an den Rand vergrößern (nie größer als am PC, nie kleiner).
+-- width, height = Größe des Fensters in Leinwand-Einheiten; minScale wie bei der ScaledRoot
+function UITheme.PhoneFit(frame, width, height, minScale)
+	local fit = make("UIScale", { Name = "PhoneFit" }, frame)
+	local connection
+	local function update()
+		if not fit.Parent then
+			connection:Disconnect()
+			return
+		end
+		local viewport = workspace.CurrentCamera.ViewportSize
+		local rootScale = UITheme.RootScale(viewport, nil, nil, minScale)
+		local scale = math.min(viewport.X * 0.96 / (width * rootScale), viewport.Y * 0.94 / (height * rootScale))
+		fit.Scale = math.clamp(scale, 1, 1 / rootScale)
+	end
+	connection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+	update()
+	return fit
 end
 
 function UITheme.ScaledRoot(screenGui, designWidth, designHeight, minScale)
