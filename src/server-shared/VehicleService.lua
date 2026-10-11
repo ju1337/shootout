@@ -420,6 +420,15 @@ local function despawn(player)
 end
 VehicleService.Despawn = despawn
 
+-- Fahrzeug aus der Ferne einpacken (Reisen, Dungeon): mit Wartezeit wie bei K, sonst ließe sich ein fast kaputtes
+-- Fahrzeug so sofort heil neu holen
+function VehicleService.Recall(player)
+	if active[player] then
+		despawn(player)
+		player:SetAttribute("ExtVehicleReadyAt", workspace:GetServerTimeNow() + ExtinctionConfig.VehicleCooldown)
+	end
+end
+
 -- Was beim Platzsuchen und Bodenmessen nicht zählt: own (Fahrzeug-Ordner oder ein Fahrzeug), Spieler, Zombies,
 -- Taschen am Boden
 local function ignoreList(own)
@@ -838,8 +847,10 @@ function VehicleService.Init(opts)
 		local now = os.clock()
 		for player, entry in active do
 			local chassis = entry.Chassis
-			if not chassis.Parent or player:GetAttribute("Dungeon") then
-				despawn(player) -- ins Leere gefallen oder Besitzer im Dungeon: Item nicht als "draußen" hängen lassen
+			if player:GetAttribute("Dungeon") then
+				VehicleService.Recall(player) -- Besitzer im Dungeon: nicht unbewacht in der Welt lassen
+			elseif not chassis.Parent then
+				despawn(player) -- z. B. ins Leere gefallen: Item nicht als "draußen" hängen lassen
 			else
 				local config = entry.Config
 				local delta = now - entry.LastTime
