@@ -444,6 +444,9 @@ function UITheme.PhoneFit(frame, width, height, minScale)
 		fit.Scale = math.clamp(scale, 1, 1 / rootScale)
 	end
 	connection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+	fit.Destroying:Connect(function() -- Fenster zu: Verbindung nicht bis zur nächsten Größenänderung liegen lassen
+		connection:Disconnect()
+	end)
 	update()
 	return fit
 end

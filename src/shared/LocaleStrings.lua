@@ -691,6 +691,7 @@ return {
 	["Dunkle Materie auf einer Waffe"] = "Dark Matter on one weapon",
 	["Duplikat: +{1} Münzen"] = "Duplicate: +{1} coins",
 	["Durchsuchen"] = "Search",
+	["Aufheben"] = "Take all",
 	["E AM PULT"] = "E AT THE CONSOLE",
 	["E DREHEN  ·  Q CHANCEN"] = "E SPIN  ·  Q ODDS",
 	["E DRÜCKEN ZUM DREHEN"] = "PRESS E TO SPIN",
