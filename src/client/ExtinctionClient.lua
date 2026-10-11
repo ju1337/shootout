@@ -1525,9 +1525,13 @@ function Inv.itemPopup(body)
 		BackgroundTransparency = 0.03, BorderSizePixel = 0, Visible = false, ZIndex = 20 }, body)
 	UITheme.Corner(popup, 3)
 	local topLine = make("Frame", { Name = "TierLine", Size = UDim2.new(1, 0, 0, 2), BorderSizePixel = 0, ZIndex = 21 }, popup)
+	-- fängt Klicks auf Text und Lücken ab: sonst landet ein Tipp auf dem Platz darunter und verschiebt das Item dorthin
+	local blocker = make("TextButton", { Name = "Blocker", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "",
+		AutoButtonColor = false, Selectable = false, ZIndex = 20 }, popup)
+	blocker:SetAttribute("NoFocus", true)
 	local function update(actions)
 		for _, child in popup:GetChildren() do
-			if child ~= topLine and not child:IsA("UICorner") then
+			if child ~= topLine and child ~= blocker and not child:IsA("UICorner") then
 				child:Destroy()
 			end
 		end
@@ -1654,7 +1658,13 @@ function Inv.itemPopup(body)
 		end
 		for i, action in actions or {} do
 			Inv.flatButton({ Name = "Action" .. i, Position = UDim2.fromOffset(14, y), Size = UDim2.new(1, -28, 0, 34), Primary = action.Primary,
-				Text = action.Text, TextSize = 13, ZIndex = 22 }, popup, action.Run)
+				Text = action.Text, TextSize = 13, ZIndex = 22 }, popup, function()
+				action.Run()
+				-- Auswahl ist weg: Fenster gleich neu zeichnen (lehnt der Server ab, käme sonst kein Update und das Fenster bliebe stehen)
+				if window and window.Refresh then
+					window.Refresh()
+				end
+			end)
 			y += 40
 		end
 		local height = y + 8
@@ -1671,7 +1681,9 @@ function Inv.itemPopup(body)
 		if x + Inv.POPUP_W > Inv.CONTENT_W then
 			x = tileX - Inv.POPUP_W - 10
 		end
-		popup.Position = UDim2.fromOffset(x, math.clamp(tileY, 0, math.max(0, Inv.CONTENT_H - height)))
+		-- im sichtbaren Bereich halten (Handy: Inhalt scrollt, die Schnellleiste liegt unter dem Rand)
+		local top = body:IsA("ScrollingFrame") and body.CanvasPosition and body.CanvasPosition.Y or 0
+		popup.Position = UDim2.fromOffset(x, math.clamp(tileY, top, math.max(top, top + Inv.CONTENT_H - height)))
 		popup.Size = UDim2.fromOffset(Inv.POPUP_W, height)
 		popup.Visible = true
 	end
@@ -3542,6 +3554,7 @@ local function openLoot(data)
 		grid(win.LootHolder, "Loot", 1, count, 4, win.LootCell, 8, UDim2.new(), false, win.LootCellH)
 	end
 	win.Refresh()
+	InputActions.Refocus(win.Frame) -- Gamepad: die alten Plätze sind weg, Auswahl neu setzen
 end
 
 -- ---------- Ziehen mit der Maus ----------
