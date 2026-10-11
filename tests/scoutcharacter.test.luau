@@ -84,6 +84,17 @@ for _, motor in character:GetDescendants() do
 	end
 end
 
+-- Gelenke genau an den Schnittkanten des Modells (tools/agents/pieces.py: Hüfte 1,95, Knie 1,16, Knöchel 0,5,
+-- Ellbogen 3,05, Handgelenk 2,38), sonst klaffen beim Laufen Löcher
+local ground = character.HumanoidRootPart.CFrame * CFrame.new(0, -3, 0)
+for _, def in { { "LeftUpperLeg", "LeftHip", 1.95 }, { "RightLowerLeg", "RightKnee", 1.16 }, { "LeftFoot", "LeftAnkle", 0.5 },
+	{ "RightLowerArm", "RightElbow", 3.05 }, { "LeftHand", "LeftWrist", 2.38 } } do
+	local motor = character[def[1]][def[2]]
+	local y = ground:PointToObjectSpace((motor.Part0.CFrame * motor.C0).Position).Y
+	print(string.format("HINWEIS %s auf %.2f (Schnitt %.2f)", def[2], y, def[3]))
+	check(math.abs(y - def[3]) < 0.08, def[2] .. ": Gelenk an der Schnittkante (" .. y .. ")")
+end
+
 -- Ego-Perspektive: Hände des Scouts an der Waffe
 local arms = AgentModels.ArmPieces(character)
 check(arms ~= nil and #arms.Right.Pieces == 3 and #arms.Left.Pieces == 3, "Arme des Scouts gefunden")

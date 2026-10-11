@@ -43,3 +43,6 @@ Quellen (GLB) und Skripte: `art/sources/`, `tools/attachments/`.
 **Skins:** `Skins/Rifle.rbxmx` wird mit `lune run tools/models/skins.luau models/Skins/Rifle.rbxmx` und
 `python3 tools/models/skins_legacy.py models/Skins/Rifle.rbxmx` erzeugt (Asset-IDs stehen oben im Skript). Braucht
 Rojo ab 7.5 (Lava-Glühen = neuer Content-Typ), empfohlen 7.7.1.
+
+**Agenten aus Teilen (Scouts):** In `Agents/AS_*.rbxmx` ist bei allen MeshParts `DoubleSided` an – an den Schnittkanten
+zwischen den Teilen sieht man beim Laufen sonst durch das Modell hindurch. Bei neuen Modellen nach dem Umwandeln ebenso setzen.

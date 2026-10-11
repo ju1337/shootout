@@ -344,7 +344,7 @@ end
 -- Waffe, mit RightGripAttachment).
 local HIP = 2
 -- R15-Gelenke: Name, Elternteil, Kind (Motor6D liegt im Kind, wie bei Roblox)
-local R15_JOINTS = {
+local R15_SKELETON = {
 	{ "Root", "HumanoidRootPart", "LowerTorso" }, { "Waist", "LowerTorso", "UpperTorso" }, { "Neck", "UpperTorso", "Head" },
 	{ "LeftShoulder", "UpperTorso", "LeftUpperArm" }, { "LeftElbow", "LeftUpperArm", "LeftLowerArm" },
 	{ "LeftWrist", "LeftLowerArm", "LeftHand" }, { "RightShoulder", "UpperTorso", "RightUpperArm" },
@@ -353,8 +353,39 @@ local R15_JOINTS = {
 	{ "LeftAnkle", "LeftLowerLeg", "LeftFoot" }, { "RightHip", "LowerTorso", "RightUpperLeg" },
 	{ "RightKnee", "RightUpperLeg", "RightLowerLeg" }, { "RightAnkle", "RightLowerLeg", "RightFoot" },
 }
--- Gelenkpunkt in Ruhelage (Raum: Boden zwischen den Füßen): Schultern am Schultergelenk, sonst in der Mitte zwischen
--- der Kante des Elternteils und der des Kinds (Root: Mitte des Unterkörpers)
+-- Gelenkpunkt in Ruhelage (Raum: Boden zwischen den Füßen). Mit Modell: genau an der Schnittkante zwischen den Teilen
+-- des Modells (sonst klaffen beim Laufen Löcher, weil sich die Teile um einen falschen Punkt drehen): Höhe = Mitte
+-- zwischen Unterkante des oberen und Oberkante des unteren Teils, x/z = Mitte des Kind-Teils; Schulter eine halbe
+-- Armbreite unter der Oberkante des Oberarms. Fehlt ein Teil: Gelenk des Spielkörpers.
+local function modelJointPoint(name, box)
+	local function get(bodyName)
+		return box[bodyName]
+	end
+	if name == "Root" then
+		local lower = get("LowerTorso")
+		return lower and (lower.Min + lower.Max) / 2
+	end
+	local child, parent
+	for _, def in R15_SKELETON do
+		if def[1] == name then
+			parent, child = get(def[2]), get(def[3])
+		end
+	end
+	if not child or not parent then
+		return nil
+	end
+	local center = (child.Min + child.Max) / 2
+	local y
+	if name == "LeftShoulder" or name == "RightShoulder" then
+		y = child.Max.Y - (child.Max.X - child.Min.X) / 2
+	elseif name == "Waist" or name == "Neck" then
+		y = (parent.Max.Y + child.Min.Y) / 2 -- Kind liegt oben
+	else
+		y = (parent.Min.Y + child.Max.Y) / 2 -- Kind hängt unten
+	end
+	return Vector3.new(center.X, y, center.Z)
+end
+
 local function r15JointPoint(name, parentName, childName)
 	if name == "Root" then
 		return AgentModels.Body.LowerTorso.CFrame.Position
@@ -406,9 +437,16 @@ local function characterFromPieces(pieces, split)
 	local model = pieces:Clone()
 	local top, headMin, headMax = 0, nil, nil
 	local placed = {}
+	local box = {} -- [Körperteil] = { Min, Max } der Teile, die so heißen (Head_Suit …), für die Gelenkpunkte
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.CFrame = part:GetAttribute("AgentRest")
+			local named = shown(part) and bodyNameOf(part.Name)
+			if named then
+				local min, max = bounds({ part }, CFrame.new())
+				local b = box[named]
+				box[named] = b and { Min = b.Min:Min(min), Max = b.Max:Max(max) } or { Min = min, Max = max }
+			end
 			local bodyName = part:GetAttribute("AgentBody")
 			part:SetAttribute("AgentBody", split and bodyName ~= "" and bodyName or nil) -- für die Ego-Arme (ArmPieces)
 			part:SetAttribute("AgentRest", nil)
@@ -454,9 +492,9 @@ local function characterFromPieces(pieces, split)
 				body[name] = part
 			end
 		end
-		for _, def in R15_JOINTS do
+		for _, def in R15_SKELETON do
 			local name, parent, child = def[1], body[def[2]], body[def[3]]
-			local point = CFrame.new(r15JointPoint(def[1], def[2], def[3]))
+			local point = CFrame.new(modelJointPoint(def[1], box) or r15JointPoint(def[1], def[2], def[3]))
 			local motor = Instance.new("Motor6D")
 			motor.Name = name
 			motor.Part0 = parent
