@@ -1120,16 +1120,16 @@ function InventoryService.CountCarried(player, id)
 	return state and (Inventory.Count(state.Bag, id) + Inventory.Count(state.Safe, id)) or 0
 end
 
--- count Stück eines Items nehmen, das man dabei hat: erst aus dem Container, dann aus der Tasche (z.B. Dungeon-Schlüssel
--- am Eingang). Gibt die genommene Anzahl zurück.
+-- count Stück eines Items nehmen, das man dabei hat: erst aus der Tasche, dann aus dem Container (z.B. Dungeon-Schlüssel
+-- am Eingang: der geschützte Schlüssel im Container bleibt, wenn man im Dungeon stirbt). Gibt die genommene Anzahl zurück.
 function InventoryService.TakeCarried(player, id, count)
 	local state = stateOf(player)
 	if not state then
 		return 0
 	end
-	local taken = Inventory.Remove(state.Safe, id, count)
+	local taken = Inventory.Remove(state.Bag, id, count)
 	if taken < count then
-		taken += Inventory.Remove(state.Bag, id, count - taken)
+		taken += Inventory.Remove(state.Safe, id, count - taken)
 	end
 	if taken > 0 then
 		changed(player, state)

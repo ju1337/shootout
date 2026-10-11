@@ -463,6 +463,9 @@ local function tickRun(run, now)
 			end
 		end
 	end
+	if runs[run.Slot] and not next(run.Members) then
+		endRun(run) -- niemand mehr drin (z. B. Fehler beim Auszahlen am Portal): Halle nicht ewig weiterlaufen lassen
+	end
 	if not runs[run.Slot] then
 		return
 	end
@@ -545,7 +548,8 @@ end
 
 -- Spieler betritt den Dungeon an entrance (E an der Kapelle): Schlüssel nehmen, Squad in der Nähe mitnehmen. Gibt den Lauf zurück.
 function DungeonService.Enter(player, entrance)
-	if not options or not D.Enabled or not entrance or playerRun[player] or not options.IsMember(player) then
+	if not options or not D.Enabled or not entrance or playerRun[player] or not options.IsMember(player)
+		or player:GetAttribute("Teleporting") then -- Serverwechsel läuft: drinnen ginge beim Verlassen die Tasche verloren
 		return nil
 	end
 	local root, _, humanoid = rootOf(player)
@@ -571,6 +575,7 @@ function DungeonService.Enter(player, entrance)
 		for _, other in options.Players() do
 			local otherRoot, _, otherHumanoid = rootOf(other)
 			if other ~= player and other:GetAttribute("SquadId") == squad and not playerRun[other] and otherRoot and otherHumanoid
+				and not other:GetAttribute("Teleporting")
 				and not otherHumanoid.SeatPart and (otherRoot.Position - entrance.Position).Magnitude <= D.SquadRange then
 				table.insert(group, other)
 			end
