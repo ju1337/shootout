@@ -175,7 +175,7 @@ ExtTutorial.Steps = {
 		end },
 	{ Id = "Ready", Title = "DU BIST BEREIT", Duration = READY_TIME,
 		Text = function()
-			return "Stirbst du draußen, <b>fällt deine Tasche</b> dort zu Boden – Container und Lager bleiben sicher. "
+			return "Stirbst du draußen, <b>fällt deine Tasche</b> an der Stelle zu Boden – Container und Lager bleiben sicher. "
 				.. "Alles Weitere: Menü " .. key("Menu", "") .. " → <b>GUIDE</b>. Viel Glück da draußen."
 		end },
 }

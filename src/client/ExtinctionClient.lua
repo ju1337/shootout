@@ -2217,7 +2217,7 @@ function Guide.Topics()
 			line("•  Du spawnst in einer <b>Safe Zone</b> (im Camp oder einem Safehouse). Dort gibt es kein PvP, deine Waffen bleiben im Holster."),
 			line("•  Verlass die Safe Zone, um zu looten und zu kämpfen. <b>PvP beginnt {1} Sekunden</b> nach dem Verlassen (in der roten Zone sofort).", E.PvPDelay),
 			line("•  Dein <b>Spawnpunkt</b> ist die letzte Safe Zone, die du betreten hast."),
-			line("•  Stirbst du draußen, <b>fällt deine Tasche</b> dort zu Boden – sie ist auf deiner Karte markiert. Container und Lager sind immer sicher."),
+			line("•  Stirbst du draußen, <b>fällt deine Tasche</b> an der Stelle zu Boden – sie ist auf deiner Karte markiert. Container und Lager sind immer sicher."),
 			line("•  Hol dir das kostenlose <b>STARTER KIT</b> beim <b>Kit-Händler</b> an der Nordstraße des Camps."),
 			line("•  Einmal am Tag landet eine <b>tägliche Kiste</b> in deinem Lager."),
 		} },
@@ -2262,7 +2262,7 @@ function Guide.Topics()
 			line("•  <b>Kopfgeld</b>: {1} Spieler-Kills in Folge und du wirst gesucht – dein Standort blitzt auf der Karte auf. Wer dich erledigt, kassiert das Kopfgeld.", BO.MinKills),
 		} },
 		{ Title = "FAHRZEUGE", Lines = {
-			line("•  Kaufen in der <b>Fahrzeugwerkstatt</b>: Quad, Geländewagen, Sportwagen, Helikopter. Fahrräder lassen Zombies fallen."),
+			line("•  Kaufen in der <b>Fahrzeugwerkstatt</b>: Quad, Geländewagen, Sportwagen, Helikopter. Zombies lassen Fahrräder fallen."),
 			line("•  Leg das Fahrzeug in deine Schnellleiste und drück seine Taste, um es zu holen."),
 			line("•  {1} packt es wieder ein.", key("StoreVehicle")),
 			line("•  Fahrzeuge können zerstört werden – dann sind sie weg. Fahr Zombies über den Haufen, um dir den Weg freizumachen."),

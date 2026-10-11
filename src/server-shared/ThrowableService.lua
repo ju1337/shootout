@@ -244,7 +244,7 @@ end
 
 -- ---------- Werfen ----------
 
-local function launch(thrower, kind, origin, direction, cfg)
+local function launch(thrower, kind, origin, direction, cfg, reach)
 	local part = Instance.new("Part")
 	part.Name = kind
 	part.CanQuery = false
@@ -264,7 +264,7 @@ local function launch(thrower, kind, origin, direction, cfg)
 		part.Color = Color3.fromRGB(64, 80, 54)
 		part.Material = Enum.Material.Metal
 	end
-	part.Position = origin + direction * 2.5
+	part.Position = origin + direction * (reach or 2.5)
 	part.Parent = folder
 	pcall(function()
 		part:SetNetworkOwner(nil)
@@ -347,7 +347,18 @@ function ThrowableService.Throw(player, slot, item, direction)
 		return false
 	end
 	lastThrow[player] = now
-	launch(player, config.Throwable, head.Position, direction.Unit, cfg)
+	-- Startpunkt 2,5 Studs vor dem Kopf, aber nicht durch eine Wand hindurch (sonst landet die Granate direkt an einer
+	-- Wand im Raum dahinter)
+	local unit = direction.Unit
+	local reach = 2.5
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character, folder }
+	local wall = workspace:Raycast(head.Position, unit * (reach + 0.6), params)
+	if wall and wall.Instance.CanCollide then
+		reach = math.max(0, wall.Distance - 0.6)
+	end
+	launch(player, config.Throwable, head.Position, unit, cfg, reach)
 	return true
 end
 

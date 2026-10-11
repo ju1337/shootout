@@ -214,6 +214,26 @@ check(zombieHumanoid.Health < before - 10, "Feuer macht Schaden (" .. before .. 
 step(ExtinctionConfig.Throwables.Molotov.Duration)
 check(#ThrowableService.Fires() == 0, "Feuer aus")
 
+-- Wand direkt vor dem Kopf: die Granate startet vor der Wand, nicht dahinter
+step(ExtinctionConfig.Throwables.Frag.Cooldown + 0.2)
+InventoryService.Give(alice, "Grenade", 1)
+local wallPart = Instance.new("Part", workspace)
+wallPart.Name = "TestWall"
+SIM.RaycastHandler = function(origin, direction, params)
+	if math.abs(direction.Y) < 0.01 and direction.Magnitude > 1 then -- waagerecht nach vorn: Wand nach 1 Stud
+		return { Instance = wallPart, Position = origin + direction.Unit, Distance = 1, Normal = -direction.Unit,
+			Material = Enum.Material.Concrete }
+	end
+	return nil
+end
+local head = alice.Character:FindFirstChild("Head")
+InventoryService.Throw(alice, slotOf("Grenade"), Vector3.new(0, 0, 1))
+local thrown = workspace.Throwables:FindFirstChild("Frag")
+check(thrown ~= nil and head ~= nil and (thrown.Position - head.Position).Magnitude < 1,
+	"Granate startet vor der Wand (" .. (thrown and head and string.format("%.1f", (thrown.Position - head.Position).Magnitude) or "?") .. ")")
+SIM.RaycastHandler = nil
+step(ExtinctionConfig.Throwables.Frag.Fuse + 0.2)
+
 if failures == 0 then
 	print("Wurfwaffen: alles in Ordnung")
 end
