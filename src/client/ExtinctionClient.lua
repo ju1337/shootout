@@ -3991,7 +3991,63 @@ local function cycle(direction)
 	end
 end
 
+-- Ersatzboden der offenen Welt (Maps.Extinction.Ground.Ground): Der Server senkt ihn ab, sobald er das Terrain gebaut hat.
+-- Hier beim Spieler aber erst, wenn das Terrain unter ihm auch angekommen ist (Streaming lädt es nach und nach). Fehlt es
+-- (gerade gespawnt, Respawn woanders), steht der Ersatzboden lokal wieder auf seiner Höhe – kein Loch unter den Füßen.
+function Inv.groundGuard()
+	local maps = workspace:WaitForChild("Maps", 30)
+	local map = maps and maps:WaitForChild("Extinction", 30)
+	local folder = map and map:WaitForChild("Ground", 30)
+	local ground = folder and folder:WaitForChild("Ground", 30)
+	if not ground or not ground:IsA("BasePart") then
+		return
+	end
+	local topY = ground.Position.Y -- Höhe vor dem Absenken (so liefert die Karte ihn aus)
+	if topY < -8 then
+		topY += 14 -- schon abgesenkt angekommen
+	end
+	local center = map:GetAttribute("Center")
+	local baseY = typeof(center) == "Vector3" and center.Y or 0
+	local terrain = workspace.Terrain
+	-- Terrain unter den Füßen geladen? (Block 16 x 16 x 16 unter dem Spieler; Straßen sind nur 2,5 tief ausgeschnitten)
+	local function terrainLoaded(position)
+		local min = Vector3.new(position.X - 8, position.Y - 18, position.Z - 8)
+		local region = Region3.new(min, min + Vector3.new(16, 16, 16)):ExpandToGrid(4)
+		local ok, materials = pcall(terrain.ReadVoxels, terrain, region, 4)
+		if not ok or not materials then
+			return true
+		end
+		for _, plane in materials do
+			for _, row in plane do
+				for _, material in row do
+					if material ~= Enum.Material.Air then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+	while ground.Parent do
+		task.wait(0.5)
+		local lowered = ground.Position.Y < topY - 1 -- vom Server abgesenkt (oder lokal)
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		-- nur in Bodennähe (auf Dächern und Brücken ist unter einem kein Terrain, das ist kein Ladeproblem)
+		if inExtinction() and root and root.Position.Y - baseY < 20 then
+			local loaded = terrainLoaded(root.Position)
+			if lowered and not loaded then
+				ground.Position = Vector3.new(ground.Position.X, topY, ground.Position.Z) -- lokal wieder hoch
+				ground:SetAttribute("HeldLocally", true)
+			elseif not lowered and loaded and ground:GetAttribute("HeldLocally") then
+				ground.Position = Vector3.new(ground.Position.X, topY - 14, ground.Position.Z)
+				ground:SetAttribute("HeldLocally", nil)
+			end
+		end
+	end
+end
+
 function ExtinctionClient.Init()
+	task.spawn(Inv.groundGuard)
 	buildHud()
 	Inv.Tutorial.Init({ WindowKind = function()
 		return window and window.Kind or nil
