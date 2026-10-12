@@ -127,9 +127,10 @@ class CampPhoenix:
             self.b.box(group, name, (width, thickness, r1 - r0), (x, top - thickness / 2, z), color, mat, angles=(0, yaw, 0))
 
     def polygon_pad(self, name, apothem, color, mat, top, thickness=0.2, group="Ground"):
-        """Runde Fläche als 16-Eck (vier gedrehte Quadrate; die Karte zeichnet Rechtecke)."""
+        """Runde Fläche als 16-Eck (vier gedrehte Quadrate; die Karte zeichnet Rechtecke). Die Quadrate liegen je 0,05 Studs
+        tiefer, sonst flackern die gleich hohen Oberseiten (Z-Fighting)."""
         for k in range(4):
-            self.b.box(group, name, (2 * apothem, thickness, 2 * apothem), (0, top - thickness / 2, 0), color, mat,
+            self.b.box(group, name, (2 * apothem, thickness, 2 * apothem), (0, top - thickness / 2 - k * 0.05, 0), color, mat,
                        angles=(0, k * 22.5, 0))
 
     def container(self, x, z, yaw, color, y=0.0, length=16, group="Buildings", doors=False):

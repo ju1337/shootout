@@ -49,7 +49,7 @@ local function opened(player, bag)
 				bag.SoundDone = true
 				Sfx.At("CrateOpen", part)
 			end
-		else
+		elseif not bag.Instant then -- Zombie-Leichen (sofort aufheben) ohne Reißverschluss
 			Sfx.At("Zipper", part, { Volume = 0.8 })
 		end
 	end

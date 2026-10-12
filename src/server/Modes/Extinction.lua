@@ -72,6 +72,7 @@ local ZONE_STEP = 0.2 -- so oft wird geprüft, wer in der Safe Zone ist (Sekunde
 
 local manager
 local bloodMoon = nil -- letzter Stand des Blutmonds (nil = noch nicht geprüft, dann keine Ansage)
+local GROUND_DROP_DELAY = 25 -- Sekunden nach dem Terrain-Aufbau, bis der flache Ersatzboden abgesenkt wird
 local members = {} -- [Player] = { Inside, PvPAt, LeaveAsked, BagNotice }
 local deathBags = {} -- [Player] = Id der letzten eigenen Todestasche (Attribut ExtDeathBag)
 local bots = {} -- [bot] = true (Bots aus dem Admin-Panel, siehe Extinction.AddBot)
@@ -650,13 +651,16 @@ function Extinction.Init(modeManager)
 		if not ok then
 			warn("[Extinction] Terrain nicht geschrieben: " .. tostring(written))
 		elseif written then
-			if ground and ground:IsA("BasePart") then
-				ground.Position -= Vector3.new(0, 14, 0)
-			end
 			local cleared, err = pcall(ExtinctionTerrain.ClearRoads, workspace.Terrain, map, center)
 			if not cleared then
 				warn("[Extinction] Straßen nicht freigeräumt: " .. tostring(err))
 			end
+			-- flachen Boden erst absenken, wenn die Clients das Terrain bekommen haben (sonst steht man kurz im Nichts)
+			task.delay(GROUND_DROP_DELAY, function()
+				if ground and ground:IsA("BasePart") and ground.Parent then
+					ground.Position -= Vector3.new(0, 14, 0)
+				end
+			end)
 		end
 	end)
 
