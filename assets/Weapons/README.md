@@ -10,5 +10,4 @@ dazu laufen `weapons`, `viewmodel` und `pose` mit deinem Modell). Anleitung: [do
 
 `Pistol.rbxmx` ist eine Kopie von `models/Weapons/Pistol.rbxmx` (Mark 23 aus Studio) – bei Änderungen beide ersetzen.
 
-`LMG.rbxmx` ist ein Quader-Nachbau des M60 aus `tools/m60_glb.py --boxes` (gleiche Marker wie `art/sources/LMG.glb`),
-bis die Studio-Kopie da ist.
+`LMG.rbxmx` ist eine Kopie von `models/Weapons/LMG.rbxmx` (M60 aus Studio) – bei Änderungen beide ersetzen.

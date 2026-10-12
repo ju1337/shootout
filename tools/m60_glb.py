@@ -10,7 +10,7 @@ Visierlinie: Oberkante der Kimmen-Ohren auf der Klappkimme (Kerbe) und Spitze de
 in der Kimmenkerbe in der Bildmitte.
 
 Mit --boxes zusätzlich ein Quader-Nachbau als assets/Weapons/LMG.rbxmx (je Teil ein Quader so groß wie das Mesh,
-Marker gleich), zum Prüfen ohne Studio, bis die Studio-Kopie da ist.
+Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt die echte Studio-Kopie (models/Weapons/LMG.rbxmx).
 
 Dann in Studio: Import 3D > LMG.glb (Teile NICHT zusammenführen, Einheit Stud), Modell nach
 ReplicatedStorage > Assets > Weapons ziehen, "LMG" nennen.
