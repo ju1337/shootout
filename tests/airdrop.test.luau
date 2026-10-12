@@ -15,6 +15,7 @@ end
 game.JobId = "server-1"
 local store = SIM.DataStore("PlayerData_v1")
 local ExtinctionConfig = require("ExtinctionConfig")
+ExtinctionConfig.Redzone.CityDistricts = {} -- nur die Test-Orte als Ziele
 local A = ExtinctionConfig.Airdrop
 A.FirstDelay, A.Warning, A.FallTime, A.OpenTime, A.Lifetime, A.MinInterval, A.MaxInterval = 10, 6, 4, 2, 40, 30, 30
 A.Escort = 3
