@@ -4443,7 +4443,7 @@ function ExtinctionClient.Init()
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
 			if window and window.Menu then
 				cycleMenu(1)
-			else
+			elseif not UITheme.IsMenuOpenBy("WorldMap") then -- Karte offen: kein Waffenwechsel
 				cycle(1)
 			end
 		end
@@ -4452,7 +4452,7 @@ function ExtinctionClient.Init()
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
 			if window and window.Menu then
 				cycleMenu(-1)
-			else
+			elseif not UITheme.IsMenuOpenBy("WorldMap") then -- Karte offen: kein Waffenwechsel
 				cycle(-1)
 			end
 		end
