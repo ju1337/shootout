@@ -21,7 +21,10 @@ Modell: in der Safe Zone sofort, draußen beim Betreten der Safe Zone bzw. beim 
 Modell im Place sieht der Skin aus wie ein Farb-Skin (Farbe/Material aus Cosmetics).
 
 Meshy-Modell ohne Skelett (statische GLB, Arme hängen): `python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb>`
-zerlegt es in die 15 starren Teile (Schnitthöhen siehe Skript). Fertig für den Scout: `art/sources/Agents/AS_Scout.glb`
+zerlegt es in die 15 starren Teile (Schnitthöhen siehe Skript). Jedes Teil reicht ein Stück über seine Schnittkante
+und wird dort exakt abgeschnitten; die Innenseite der Arme gehört zum Arm, Finger nie zum Bein (sonst Fransen am
+Ellbogen bzw. abstehende Stücke, wenn der Arm die Waffe hebt). Fehlt die Meshy-GLB, setzt
+`python3 tools/agents/merge_pieces.py <teile.glb> <ganz.glb>` eine zerlegte GLB wieder zu einem Mesh zusammen. Fertig für den Scout: `art/sources/Agents/AS_Scout.glb`
 → Import 3D (Scale Unit **Stud**, **Merge Meshes aus**, **kein Rig**) → nach Assets › Agents → `AS_Scout` nennen.
 Schöner bewegt sich ein Modell mit Skelett (Meshy „Rigging“, dann der Weg unten).
 
