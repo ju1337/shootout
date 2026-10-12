@@ -1,5 +1,8 @@
 # Quellmodelle
 
+- `Shotgun.glb`: Schrotflinte (taktischer Vorderschaft-Repetierer aus Meshy, `Meshy_AI_roblox_tactical_shotg_1012204027`,
+  nicht im Repo), `meshy_weapon.py Shotgun …`: 342.672 Dreiecke, Vorderschaft als `Pump`, 3,95 Studs; keine einzelne
+  Patrone (`Shell`) im Modell. In Studio wie die Pistole, "Shotgun" nennen.
 - `Revolver.glb`: Revolver (.44 Magnum aus Meshy, `Meshy_AI_roblox_magnum_revolve_1012203818`, nicht im Repo),
   `meshy_weapon.py Revolver …`: 338.248 Dreiecke, `Cylinder` (Trommel), `Hammer`, 1,47 Studs; ohne Schnelllader.
   In Studio wie die Pistole, "Revolver" nennen.

@@ -93,6 +93,25 @@ WEAPONS = {
             "Pivot_Bolt": (-0.54, 0.37, 0.0),
         },
     },
+    # Schrotflinte (taktisch, Vorderschaft-Repetierer): Vorderschaft samt Röhrenmagazin-Stück darin als Pump.
+    # Keine einzelne Patrone im Modell (Shell fehlt: beim Nachladen ohne sichtbare Patrone).
+    "Shotgun": {
+        "Length": 3.95,
+        "Body": "Skin_Body",
+        "Cuts": [
+            ("Pump", box(x=(-0.60, -0.17), y=(-0.06, 0.09)), [0, 1], (-0.4, 0.02, 0.06)),
+        ],
+        "Points": {
+            "Point_Grip": (0.46, 0.03, 0.0),
+            "Point_SightRear": (0.22, 0.205, 0.0),
+            "Point_SightFront": (-0.85, 0.205, 0.0),
+            "Point_Muzzle": (None, 0.125, 0.0),
+            "Point_Eject": (0.05, 0.11, -0.04),
+            "Point_LeftHand": (-0.38, 0.02, 0.0),
+            "Point_Stock": (None, -0.05, 0.0),
+            "Pivot_Pump": (-0.38, 0.02, 0.0),
+        },
+    },
 }
 
 
