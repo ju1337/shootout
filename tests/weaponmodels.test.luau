@@ -159,7 +159,7 @@ marker(pistol, "Point_SightFront", Vector3.new(0, 0.6, 0.17))
 marker(pistol, "Point_Muzzle", Vector3.new(0, 0.4, -0.79))
 marker(pistol, "Point_Eject", Vector3.new(0.14, 0.45, -0.15))
 marker(pistol, "Point_LeftHand", Vector3.new(-0.12, -0.1, 0.02))
-local shotgun = model("Shotgun") -- vollständig, aber ohne Pumpe und Patrone
+local shotgun = model("Shotgun") -- vollständig, aber ohne Magazin und Spannhebel
 mesh(shotgun, "Body", Vector3.new(0.35, 0.4, 1.2), CFrame.new(0, 0.38, -0.3))
 mesh(shotgun, "Barrel", Vector3.new(0.2, 0.2, 1.55), CFrame.new(0, 0.52, -1.675))
 mesh(shotgun, "Stock", Vector3.new(0.3, 0.5, 1.0), CFrame.new(0, 0.3, 1.0))
@@ -301,8 +301,8 @@ check(GunModels.Build("SMG"):FindFirstChild("FrontDot") ~= nil and near(GunModel
 	"SMG bleibt die Quader-Waffe")
 check(not GunModels.HasAsset("DMR") and anyContains(report.DMR.Errors, "Einheit"), "100-mal zu groß: Hinweis auf die Einheit")
 check(not GunModels.HasAsset("Pistol") and anyContains(report.Pistol.Errors, "vertauscht"), "Kimme/Korn vertauscht")
-check(GunModels.HasAsset("Shotgun") and anyContains(report.Shotgun.Warnings, "Pump")
-	and anyContains(report.Shotgun.Warnings, "Shell"), "fehlende Animationsgruppen als Hinweis")
+check(GunModels.HasAsset("Shotgun") and anyContains(report.Shotgun.Warnings, "Magazine")
+	and anyContains(report.Shotgun.Warnings, "Bolt"), "fehlende Animationsgruppen als Hinweis")
 check(report.Sturmgewehr and not report.Sturmgewehr.Loaded and anyContains(report.Sturmgewehr.Errors, "Rifle"),
 	"falscher Name: erlaubte Namen werden genannt")
 check(not GunModels.HasAsset("LMG") and GunModels.Build("LMG"):FindFirstChild("Box") ~= nil, "ohne Modell: Quader")

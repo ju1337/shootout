@@ -44,5 +44,11 @@
   die Kornspitze), ohne lose Patronen, Gurtstücke und den zweiten Kasten, 4,33 Studs lang, Lauf nach -Z. In Studio:
   Import 3D > LMG.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "LMG" nennen.
 
+- `gen12.glb`: "low-poly GEN-12" von D.U. (https://sketchfab.com/D.U.), Lizenz CC-BY-4.0
+  (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-gen-12-5a8e85a2375948498d76d379e915f3bf
+- `Shotgun.glb`: die fertig vorbereitete Studio-Version für die Schrotflinte (`python3 tools/gen12_glb.py`): Teile benannt,
+  loses zweites Magazin und lose Patrone entfernt, Notvisiere (Kimme und Korn) auf der Schiene ergänzt, Marker gesetzt.
+  Import 3D > Shotgun.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Shotgun" nennen.
+
 - `Rifle_Texturen/Skin_Body_Overlay.png`: Farb-Grundtextur für Farb-Skins am aktuellen Sturmgewehr (Farbe aus
   `Rifle.glb`, gleichmäßige Flächen teilweise durchsichtig), erzeugt mit `python3 tools/models/rifle_overlay.py`.

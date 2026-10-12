@@ -41,6 +41,7 @@ einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gült
 
 Die `SMG` ist fertig: MP7 A1 als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
 Die `Pistol` ist fertig: HK Mark 23 als echtes Mesh (`models/Weapons/Pistol.rbxmx`, Studio-Import von `art/sources/Pistol.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
+Die `Shotgun` ist vorbereitet: Gen-12 (`tools/gen12_glb.py` -> `art/sources/Shotgun.glb`, Quader-Nachbau in `assets/Weapons/Shotgun.rbxmx` bis zum Studio-Import).
 Das `LMG` ist fertig: M60 als echtes Mesh (`models/Weapons/LMG.rbxmx`, Studio-Import von `art/sources/LMG.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
@@ -70,7 +71,7 @@ Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff
 |---|---|---|---|---|---|
 | `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (AR-15 ohne Aufsätze, Kimme/Korn als Visierlinie; Holo-Visier als Aufsatz) |
 | `SMG` | Maschinenpistole | 2,38 | 0,81 | Magazine, Bolt | |
-| `Shotgun` | Schrotflinte | 3,95 | 0,76 | Pump, Shell | Shell = Patrone, nur beim Nachladen sichtbar |
+| `Shotgun` | Schrotflinte | 3,95 | 0,58 | Magazine, Bolt | Gen-12 mit Kastenmagazin, Spannhebel rechts; vorbereitet: `art/sources/Shotgun.glb` (Notvisiere auf der Schiene) |
 | `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | fertig: `art/sources/DMR.glb` (Scharfschützengewehr mit Zielfernrohr); mit Modell zielt man durchs Zielfernrohr (Fernrohr-Ansicht `ScopeOverlay`, Sichtfeld `ScopeFov`), kein Holo-Visier |
 | `LMG` | MG | 4,33 | 0,97 | Magazine, Bolt, Cover | Magazin = Kasten + Gurt, Cover = Deckel |
 | `Pistol` | Pistole | 1,05 | 0,62 | Magazine, Slide | Kimme und Korn sitzen auf dem Schlitten (Slide) |

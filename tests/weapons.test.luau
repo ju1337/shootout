@@ -243,7 +243,7 @@ for weaponName in GunModels.Info do
 	local endPose = WeaponAnimations.Sample(anim, weaponName, 1)
 	check(startPose.Gun.Position.Magnitude < 1e-6 and endPose.Gun.Position.Magnitude < 1e-6, weaponName .. ": Waffe nicht in Ruhe am Anfang/Ende")
 	local rest = GunModels.Info[weaponName].LeftHand
-	if weaponName ~= "Shotgun" then
+	if not WeaponConfig.Get(weaponName).ShellReload then
 		check((startPose.Hand.Position - rest).Magnitude < 1e-6 and (endPose.Hand.Position - rest).Magnitude < 1e-6, weaponName .. ": Hand nicht in Ruhe")
 	end
 	-- Gruppen am Ende in Ruhe
@@ -267,16 +267,16 @@ for weaponName in GunModels.Info do
 	end
 end
 
--- Schrotflinte: Dauer passt zur Server-Zeitleiste
-do
-	local cfg = WeaponConfig.Get("Shotgun")
-	for shells = 1, 7 do
-		local _, total = WeaponAnimations.Reload("Shotgun", 2.5, shells)
-		local start, per, finish = WeaponConfig.ShellTiming(cfg, 2.5)
-		check(near(total, start + shells * per + finish), "Schrotflinte: Dauer stimmt nicht")
+-- Patronenweises Nachladen (ShellReload): Dauer passt zur Server-Zeitleiste
+for weaponName in GunModels.Info do
+	local cfg = WeaponConfig.Get(weaponName)
+	if cfg.ShellReload then
+		for shells = 1, cfg.MagazineSize + 1 do
+			local _, total = WeaponAnimations.Reload(weaponName, cfg.ReloadTime, shells)
+			local start, per, finish = WeaponConfig.ShellTiming(cfg, cfg.ReloadTime)
+			check(near(total, start + shells * per + finish), weaponName .. ": Dauer stimmt nicht")
+		end
 	end
-	local _, full = WeaponAnimations.Reload("Shotgun", 2.5, cfg.MagazineSize)
-	check(near(full, 2.5), "Schrotflinte: volles Magazin dauert nicht ReloadTime")
 end
 
 -- Schuss-Animationen
