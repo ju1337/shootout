@@ -52,6 +52,27 @@ WEAPONS = {
             "Pivot_Magazine": (0.60, -0.55, 0.0),
         },
     },
+    # Revolver (.44 Magnum): Trommel im Rahmenfenster (Oberschiene bleibt), Hahn hinter der schrägen Rahmenkante.
+    # Kein Schnelllader im Modell (Gruppe Loader fehlt: beim Nachladen ohne Schnelllader).
+    "Revolver": {
+        "Length": 1.47,
+        "Body": "Skin_Body",
+        "Cuts": [
+            ("Cylinder", box(x=(-0.025, 0.262), y=(0.075, 0.395)), [0, 1, 2, 3], (0.12, 0.40, 0.0)),
+            ("Hammer", [M.plane((-0.15, -0.13, 0), (0.40, 0.42, 0)), *box(x=(None, 0.62), y=(0.27, 0.45))], [0],
+             (0.5, 0.36, 0.0)),
+        ],
+        "Points": {
+            "Point_Grip": (0.62, -0.02, 0.0),
+            "Point_SightRear": (0.30, 0.505, 0.0),
+            "Point_SightFront": (-0.90, 0.505, 0.0),
+            "Point_Muzzle": (None, 0.315, 0.0),
+            "Point_Eject": (0.12, 0.30, 0.0),
+            "Point_LeftHand": (0.63, -0.15, 0.156),
+            "Pivot_Cylinder": (0.12, 0.235, 0.0),
+            "Pivot_Hammer": (0.43, 0.32, 0.0),
+        },
+    },
 }
 
 

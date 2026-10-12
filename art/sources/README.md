@@ -1,5 +1,8 @@
 # Quellmodelle
 
+- `Revolver.glb`: Revolver (.44 Magnum aus Meshy, `Meshy_AI_roblox_magnum_revolve_1012203818`, nicht im Repo),
+  `meshy_weapon.py Revolver …`: 338.248 Dreiecke, `Cylinder` (Trommel), `Hammer`, 1,47 Studs; ohne Schnelllader.
+  In Studio wie die Pistole, "Revolver" nennen.
 - `Pistol.glb`: Pistole (Glock 17 aus Meshy, FBX-Export `Meshy_AI_roblox_glock17_3d_1012204441`, nicht im Repo), erzeugt mit
   `tools/attachments/meshy_weapon.py Pistol …`: 228.936 Dreiecke, Schlitten `Skin_Slide`, `Magazine`, 1,05 Studs.
   In Studio: Import 3D (Stud, Merge Meshes aus), nach Assets > Weapons, "Pistol" nennen.
