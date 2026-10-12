@@ -21,6 +21,15 @@ end
 -- (create.roblox.com/store/asset/NUMMER) hier eintragen: clip(NUMMER, Lautstärke) oder clip(NUMMER, Lautstärke, von, bis).
 -- Nur Audio, das für alle Spiele freigegeben ist (sonst bleibt es im Spiel stumm). Beispiel:
 --   Idle = { clip(1234567890, 1), clip(2345678901, 0.8, 0.2, 1.9) },
+-- Eigene Zombie-Datei (zombie.mp3, gut 4 Minuten mit 87 Lauten): einmal für die Gruppe hochladen und die Asset-ID hier
+-- eintragen. Dann spielt jede Situation nur ihre Stücke daraus (von, bis in Sekunden), leise und ohne Stimmfilter.
+-- Leer = die Aufnahmen weiter unten.
+local ZOMBIE_FILE: number? = nil
+
+local function zf(gain, a, b)
+	return clip(ZOMBIE_FILE or 0, gain, a, b)
+end
+
 local ZOMBIE_CLIPS: { [string]: { any } } = {
 	Idle = nil, -- Stöhnen beim Herumschlurfen
 	Aggro = nil, -- Schrei beim Entdecken
@@ -30,6 +39,19 @@ local ZOMBIE_CLIPS: { [string]: { any } } = {
 	Death = nil, -- Tod
 	Scream = nil, -- Schreier ruft die Horde
 }
+if ZOMBIE_FILE then
+	-- Nummern der Laute (Hörseite / zombie-sounds): Idle 1,2,3,7,24,25,50,52,55,73 · Aggro 8,30,37,47,51 · Chase 4,5,10,21,26,27,28
+	-- · Attack 18,19,20,22 · Hurt 11,12,60,69 · Death 23,34,59 · Scream 35,40
+	ZOMBIE_CLIPS = {
+		Idle = { zf(0.35, 13.45, 15.55), zf(0.35, 16.05, 18.7), zf(0.35, 19.3, 21.5), zf(0.35, 28.7, 29.9), zf(0.35, 53.0, 54.2), zf(0.35, 54.85, 56.0), zf(0.35, 121.5, 123.7), zf(0.35, 126.0, 128.55), zf(0.35, 134.45, 137.05), zf(0.35, 187.85, 189.5) },
+		Aggro = { zf(0.6, 30.1, 31.9), zf(0.6, 63.0, 65.2), zf(0.6, 79.75, 81.35), zf(0.6, 114.25, 116.85), zf(0.6, 124.1, 125.6) },
+		Chase = { zf(0.45, 22.1, 23.1), zf(0.45, 23.4, 24.8), zf(0.45, 32.75, 33.8), zf(0.45, 48.8, 49.85), zf(0.45, 56.35, 57.4), zf(0.45, 57.95, 58.9), zf(0.45, 59.15, 60.25) },
+		Attack = { zf(0.5, 46.35, 46.85), zf(0.5, 47.0, 47.55), zf(0.5, 47.75, 48.35), zf(0.5, 50.1, 50.75) },
+		Hurt = { zf(0.45, 34.2, 35.2), zf(0.45, 35.55, 36.8), zf(0.45, 146.6, 147.65), zf(0.45, 181.35, 182.15) },
+		Death = { zf(0.5, 51.0, 52.75), zf(0.5, 70.65, 73.75), zf(0.5, 143.0, 146.4) },
+		Scream = { zf(0.8, 74.9, 76.35), zf(0.8, 87.6, 90.4) },
+	}
+end
 
 -- dumpf und kehlig wie in Unturned
 local ZOMBIE_VOICE = { Muffle = -9, Grit = 0.3 }
@@ -217,5 +239,14 @@ function SoundLibrary.Get(name)
 	return SoundLibrary.Sounds[name]
 end
 
-return SoundLibrary
+-- Mit eigener Zombie-Datei: natürliche Tonhöhe, kein Stimmfilter, kürzere Hörweite (nicht übertrieben)
+if ZOMBIE_FILE then
+	for _, name in { "ZombieIdle", "ZombieAggro", "ZombieChase", "ZombieAttack", "ZombieHurt", "ZombieDeath", "ZombieScream" } do
+		local sound = SoundLibrary.Sounds[name]
+		sound.Pitch = 1
+		sound.Voice = nil
+		sound.Range = math.floor(sound.Range * 0.8)
+	end
+end
 
+return SoundLibrary
