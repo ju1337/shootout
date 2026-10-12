@@ -471,27 +471,10 @@ end
 -- Lauf-Aufsätze als 3D-Modell: ersetzen den eingebauten Lauf (Teile mit dem Wort Barrel, z.B. Skin_Body_Barrel)
 local BARRELS = { "LongBarrel", "ShortBarrel", "HeavyBarrel" }
 
--- Visier-Aufsätze (Platz Optic) und wo sie sitzen (Point_Mount = Unterseite des Aufsatzes)
+-- Visier-Aufsätze (Platz Optic) und wo sie auf der Schiene sitzen: Marker Point_Optic der Waffe, sonst etwas vor der Kimme
 local OPTICS = { "HoloSight" }
--- Echte 3D-Modelle: Oberkante der Schiene (Waffenraum, Griff = Ursprung), gemessen per Strahl von oben in
--- art/sources/<Waffe>.glb – die Visierlinie der Kimme liegt bei den Klappvisieren deutlich über der Schiene.
--- Group: Aufsatz wandert in Animationen mit (M60 hat keine Schiene: Holo sitzt auf dem Zuführdeckel)
-local OPTIC_RAIL = {
-	Rifle = { Mount = V(0, 0.677, -0.5) },
-	SMG = { Mount = V(0, 0.757, -0.15) },
-	Shotgun = { Mount = V(0, 0.464, -0.45) },
-	LMG = { Mount = V(0, 0.5, -0.13), Group = "Cover" },
-}
-local function opticRail(weaponName)
-	return assetData[weaponName] and OPTIC_RAIL[weaponName]
-end
-local function opticMount(weaponName)
-	local rail = opticRail(weaponName)
-	if rail then
-		return rail.Mount
-	end
-	local info = GunModels.Info[weaponName]
-	return V(0, info.SightHeight - 0.05, info.SightZ - 0.45)
+local function opticMount(info)
+	return info.Optic or V(0, info.SightHeight - 0.05, info.SightZ - 0.45)
 end
 local function equippedOptic(weaponName, attachments)
 	local info = GunModels.Info[weaponName]
@@ -514,7 +497,7 @@ function GunModels.OpticAim(weaponName, attachments)
 	if not data or not data.Points.SightRear then
 		return nil
 	end
-	local rear = opticMount(weaponName) + data.Frame:PointToObjectSpace(data.Points.SightRear)
+	local rear = opticMount(GunModels.Info[weaponName]) + data.Frame:PointToObjectSpace(data.Points.SightRear)
 	local eye = data.Source:GetAttribute("EyeRelief")
 	return CFrame.new(-rear.X, -rear.Y, -(type(eye) == "number" and eye or 0.45) - rear.Z)
 end
@@ -538,17 +521,7 @@ local function addAttachments(model, weaponName, attachments)
 	-- Mündungs-Aufsatz als eigenes 3D-Modell (Assets.Attachments), sonst die Teile von früher
 	-- Visier als eigenes 3D-Modell auf der Schiene (nur lange Waffen mit fertigem Modell)
 	local optic = equippedOptic(weaponName, attachments)
-	local before = {}
-	for _, child in model:GetChildren() do
-		before[child] = true
-	end
-	if optic and attachmentAsset(model, optic, opticMount(weaponName)) then
-		local group = opticRail(weaponName) and opticRail(weaponName).Group
-		for _, child in model:GetChildren() do
-			if group and not before[child] and child:IsA("BasePart") then
-				child:SetAttribute("Group", group)
-			end
-		end
+	if optic and attachmentAsset(model, optic, opticMount(info)) then
 		local dot = model:FindFirstChild("Neon_Reticle")
 		if dot then
 			dot:Destroy() -- Punkt des eingebauten Rotpunktvisiers bzw. auf der Kimme
