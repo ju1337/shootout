@@ -101,10 +101,8 @@ local function remoteCount(player, remote)
 end
 
 -- Gebühr nach Preis
-check(RapConfig.FeeRate(5) == 0.02 and RapConfig.FeeRate(50) == 0.02, "kleine Verkäufe (bis 50 RAP): 2 %")
-check(RapConfig.FeeRate(51) == 0.05 and RapConfig.FeeRate(1000) == 0.05, "mittlere Verkäufe (bis 1.000 RAP): 5 %")
-check(RapConfig.FeeRate(1001) == 0.07 and RapConfig.FeeRate(20000) == 0.07 and RapConfig.FeeRate(20001) == 0.10, "teure Verkäufe: 7 % und 10 %")
-check(RapConfig.AfterFee(50) == 49 and RapConfig.AfterFee(20001) == 20001 - 2000 and RapConfig.AfterFee(2) == 2 and RapConfig.Fee(30) == 1, "Gebühr gerundet: winzige Preise zahlen nichts")
+check(RapConfig.FeeRate(5) == 0.10 and RapConfig.FeeRate(1000) == 0.10 and RapConfig.FeeRate(20001) == 0.10, "überall 10 % Steuer")
+check(RapConfig.AfterFee(50) == 45 and RapConfig.AfterFee(20001) == 20001 - 2000 and RapConfig.AfterFee(2) == 2 and RapConfig.Fee(30) == 3, "Steuer gerundet: winzige Preise zahlen nichts")
 
 enter(alice, Vector3.new(-1514, 3, -1516))
 enter(bob, Vector3.new(-1512, 3, -1516))

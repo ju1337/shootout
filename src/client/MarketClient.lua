@@ -107,6 +107,9 @@ local function watchSet()
 end
 
 local function feeText()
+	if #RapConfig.FeeTiers == 1 then -- überall derselbe Satz
+		return "Marktgebühr: " .. math.floor(RapConfig.FeeTiers[1].Rate * 100 + 0.5) .. " % vom Preis."
+	end
 	local parts = {}
 	for _, tier in RapConfig.FeeTiers do
 		local rate = math.floor(tier.Rate * 100 + 0.5) .. " %"

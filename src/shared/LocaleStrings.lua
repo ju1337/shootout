@@ -1331,6 +1331,7 @@ return {
 	["MARKT NUR IN DER SAFE ZONE"] = "MARKET ONLY IN THE SAFE ZONE",
 	["Markt · Merkliste"] = "Market · Watchlist",
 	["Markt · Stand {1}"] = "Market · Shop {1}",
+	["Marktgebühr: {1} % vom Preis. Verlässt du den Markt, ist dein Stand weg – deine Skins sind dann wieder frei."] = "Market fee: {1} % of the price. If you leave the market, your stall is gone – your skins are free again.",
 	["Marktgebühr: {1} % bis {2} RAP  ·  {3} % bis {4} RAP  ·  {5} % bis {6} RAP  ·  {7} % darüber. Verlässt du den Markt, ist dein Stand weg – deine Skins sind dann wieder frei."] = "Market fee: {1} % up to {2} RAP  ·  {3} % up to {4} RAP  ·  {5} % up to {6} RAP  ·  {7} % above that. If you leave the market, your stall is gone – your skins are free again.",
 	["MARKTHALLE"] = "MARKET HALL",
 	["Match beginnt"] = "Match begins",
