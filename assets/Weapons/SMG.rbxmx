@@ -524,7 +524,7 @@
           <bool name="CastShadow">true</bool>
           <string name="CollisionGroup">Default</string>
           <int name="CollisionGroupId">0</int>
-          <Color3uint8 name="Color3uint8">3421497</Color3uint8>
+          <Color3uint8 name="Color3uint8">2631980</Color3uint8>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -554,7 +554,7 @@
           <token name="LeftSurfaceInput">0</token>
           <bool name="Locked">false</bool>
           <bool name="Massless">false</bool>
-          <token name="Material">1088</token>
+          <token name="Material">272</token>
           <string name="MaterialVariantSerialized"></string>
           <Content name="MeshId"><url>rbxassetid://132971932315769</url></Content>
           <SharedString name="PhysicalConfigData">394n4I4QBJPucrxgp9/TIQ==</SharedString>
@@ -908,7 +908,7 @@
           <bool name="CastShadow">true</bool>
           <string name="CollisionGroup">Default</string>
           <int name="CollisionGroupId">0</int>
-          <Color3uint8 name="Color3uint8">2895152</Color3uint8>
+          <Color3uint8 name="Color3uint8">2368808</Color3uint8>
           <PhysicalProperties name="CustomPhysicalProperties">
             <CustomPhysics>false</CustomPhysics>
           </PhysicalProperties>
@@ -938,7 +938,7 @@
           <token name="LeftSurfaceInput">0</token>
           <bool name="Locked">false</bool>
           <bool name="Massless">false</bool>
-          <token name="Material">1088</token>
+          <token name="Material">272</token>
           <string name="MaterialVariantSerialized"></string>
           <Content name="MeshId"><url>rbxassetid://113165381155813</url></Content>
           <SharedString name="PhysicalConfigData">EQ+7UEgPmlgXeWL5njKmcA==</SharedString>
