@@ -103,7 +103,8 @@ local function announce(title, sub, style, sound)
 	end
 end
 
--- Rauchwand im Kreis (unsichtbare Bodenstreifen mit wenig, großem, langsamem Rauch), Lichtsäule in der Mitte
+-- Rand: flacher Bodendunst im Kreis (unsichtbare Bodenstreifen, wenig Rauch, bleibt unten); Mitte: Signalfackel, deren
+-- roter Rauch hoch in den Himmel steigt (von weitem sichtbar, statt Lichtsäule)
 local function buildVisual()
 	if visual then
 		visual:Destroy()
@@ -149,21 +150,40 @@ local function buildVisual()
 		smoke.Size = NumberSequence.new(cfg.SmokeSize * 0.6, cfg.SmokeSize)
 		smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.25, cfg.SmokeAlpha),
 			NumberSequenceKeypoint.new(0.7, cfg.SmokeAlpha), NumberSequenceKeypoint.new(1, 1) })
-		smoke.Lifetime = NumberRange.new(7, 10)
+		smoke.Lifetime = NumberRange.new(5, 7)
 		smoke.Rate = cfg.SmokeRate
-		smoke.Speed = NumberRange.new(2, 4)
-		smoke.Drag = 0.3
+		smoke.Speed = NumberRange.new(0.5, 1.5)
+		smoke.Drag = 0.5
 		smoke.Rotation = NumberRange.new(0, 360)
 		smoke.RotSpeed = NumberRange.new(-8, 8)
 		smoke.Parent = wall
 	end
 	local y = options.GroundY and options.GroundY(center.X, center.Z) or center.Y
-	local beam = part("Beam", Vector3.new(3, 400, 3), CFrame.new(center.X, y + 200, center.Z), Enum.Material.Neon, 0.55)
+	-- Signalfackel: glühender Stab am Boden, roter Rauch steigt schnell und weit nach oben, wird dabei breiter und blasser
+	local flare = part("Flare", Vector3.new(0.6, 1.6, 0.6), CFrame.new(center.X, y + 0.8, center.Z), Enum.Material.Neon, 0)
 	local light = Instance.new("PointLight")
 	light.Color = cfg.Color
-	light.Range = 60
-	light.Brightness = 2
-	light.Parent = beam
+	light.Range = 24
+	light.Brightness = 3
+	light.Parent = flare
+	local column = Instance.new("ParticleEmitter")
+	column.Name = "FlareSmoke"
+	column.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	column.EmissionDirection = Enum.NormalId.Top
+	column.Color = ColorSequence.new(cfg.Color, cfg.SmokeColor)
+	column.LightInfluence = 0.4
+	column.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 26) })
+	column.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(0.7, 0.6),
+		NumberSequenceKeypoint.new(1, 1) })
+	column.Lifetime = NumberRange.new(10, 13)
+	column.Rate = 5
+	column.Speed = NumberRange.new(22, 28)
+	column.Acceleration = Vector3.new(1.5, 0, 0.8) -- leichter Wind
+	column.SpreadAngle = Vector2.new(4, 4)
+	column.Drag = 0.15
+	column.Rotation = NumberRange.new(0, 360)
+	column.RotSpeed = NumberRange.new(-15, 15)
+	column.Parent = flare
 	folder.Parent = options.Map
 	visual = folder
 end

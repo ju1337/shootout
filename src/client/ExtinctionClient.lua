@@ -114,6 +114,7 @@ local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
 Inv.redText = nil :: TextLabel? -- Rote-Zone-Punkte im HUD
+Inv.redzoneSince = nil :: number? -- seit wann (os.clock) man in der roten Zone steht (roter Rand blitzt nur kurz auf)
 Inv.attachBoxes = nil :: { [string]: any }? -- Aufsatz-Plätze im Info-Fenster (Waffe)
 Inv.popupWeapon = nil :: { Container: string, Slot: number, Weapon: string }? -- Waffe im Info-Fenster
 Inv.hiddenGuis = nil :: { ScreenGui }? -- solange das Menü offen ist ausgeblendete Oberflächen
@@ -642,7 +643,7 @@ local function buildHud()
 	shieldText = label({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 14, Font = F.Bold, TextColor3 = SHIELD,
 		TextXAlignment = Enum.TextXAlignment.Center }, shieldPill)
 
-	-- roter Rand, solange man in der roten Zone steht (4 Verläufe vom Rand nach innen)
+	-- roter Rand beim Betreten der roten Zone, blendet nach 2 Sekunden aus (4 Verläufe vom Rand nach innen)
 	vignette = make("Frame", { Name = "RedzoneVignette", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
 		Active = false }, root)
 	for _, side in { { UDim2.new(1, 0, 0, 120), UDim2.fromScale(0, 0), 90 }, { UDim2.new(1, 0, 0, 120), UDim2.new(0, 0, 1, -120), 270 },
@@ -839,21 +840,25 @@ local function updateZone()
 	local stroke = zonePill:FindFirstChildOfClass("UIStroke")
 	if vignette then
 		local red = player:GetAttribute("Redzone") ~= nil and player:GetAttribute("Redzone") ~= false
-		vignette.Visible = red and not player:GetAttribute("InSafeZone")
+			and not player:GetAttribute("InSafeZone")
+		local since = if red then Inv.redzoneSince or os.clock() else nil
+		Inv.redzoneSince = since
+		vignette.Visible = since ~= nil and os.clock() - since < 2
 	end
 	if player:GetAttribute("InSafeZone") then
 		local title = player:GetAttribute("SafeZoneTitle")
 		setText(zoneText, "SAFE ZONE  ·  " .. (type(title) == "string" and (UITheme.Upper(title) .. "  ·  ") or "") .. "KEIN PVP")
 		zoneText.TextColor3 = SAFE
 		stroke.Color = SAFE
-	elseif vignette and vignette.Visible then
+	elseif Inv.redzoneSince and vignette then
+		local since: number = Inv.redzoneSince
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
 		setText(zoneText, "ROTE ZONE  ·  PVP AKTIV")
 		zoneText.TextColor3 = RED:Lerp(Color3.new(1, 1, 1), 0.25 * pulse)
 		stroke.Color = RED
 		vignette.Position = UDim2.fromOffset(0, 0)
 		for _, strip in vignette:GetChildren() do
-			strip.BackgroundTransparency = 0.35 * (1 - pulse)
+			strip.BackgroundTransparency = math.clamp((os.clock() - since) / 2, 0, 1)
 		end
 	elseif DayCycle.StormPvPPaused(workspace:GetServerTimeNow()) then
 		local _, resumeAt = DayCycle.StormPvPPaused(workspace:GetServerTimeNow())
