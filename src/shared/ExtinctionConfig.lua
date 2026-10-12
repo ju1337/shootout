@@ -89,8 +89,9 @@ ExtinctionConfig.Items = {
 	SMG = { Kind = "Weapon", Name = "MP", Weapon = "SMG", Ammo = "Ammo_9mm", Price = 550, Tier = 2 },
 	Shotgun = { Kind = "Weapon", Name = "Schrotflinte", Weapon = "Shotgun", Ammo = "Ammo_Shell", Price = 650, Tier = 2 },
 	Rifle = { Kind = "Weapon", Name = "Sturmgewehr", Weapon = "Rifle", Ammo = "Ammo_Rifle", Price = 1100, Tier = 3 },
-	DMR = { Kind = "Weapon", Name = "Präzisionsgewehr", Weapon = "DMR", Ammo = "Ammo_Rifle", Price = 1400, Tier = 3 },
-	LMG = { Kind = "Weapon", Name = "LMG", Weapon = "LMG", Ammo = "Ammo_Rifle", Price = 2000, Tier = 4 },
+	-- LMG und Präzisionsgewehr sind die stärksten Waffen, das Präzisionsgewehr die seltenste (Tier 5, Joel 2026-10-12)
+	LMG = { Kind = "Weapon", Name = "LMG", Weapon = "LMG", Ammo = "Ammo_Rifle", Price = 2600, Tier = 4 },
+	DMR = { Kind = "Weapon", Name = "Präzisionsgewehr", Weapon = "DMR", Ammo = "Ammo_Rifle", Price = 4000, Tier = 5 },
 	-- Munition
 	Ammo_9mm = { Kind = "Ammo", Name = "9mm-Munition", Price = 30, Pack = 30, MaxStack = 240, Tier = 1 },
 	Ammo_Magnum = { Kind = "Ammo", Name = "Magnum-Munition", Price = 45, Pack = 12, MaxStack = 96, Tier = 2 },
@@ -132,14 +133,42 @@ for _, base in ExtinctionConfig.KitVariants do
 	ExtinctionConfig.Items[base .. "_Kit"] = variant
 end
 
--- Waffen-Aufsätze als Items ("Att_<Id>"), aus AttachmentConfig. Nicht zu kaufen: es gibt sie nur im Konvoi (sicher 2-3
--- Stück, Convoy.Attachments) und selten in Lootdrops. Value = Wert beim Verkaufen (etwa die Hälfte der Lobby).
+-- Waffen-Aufsätze als Items, je Waffe eigene ("Att_<Waffe>_<Id>", aus AttachmentConfig.ByWeapon): ein Aufsatz passt nur auf
+-- die Waffe, für die er gemacht ist (nicht universell). Nicht zu kaufen: es gibt sie nur im Konvoi (sicher 2-3 Stück,
+-- Convoy.Attachments), beim Schieber und selten in Lootdrops. Value = Wert beim Verkaufen (etwa die Hälfte der Lobby).
+-- Alte Spielstände hatten Aufsätze für alle Waffen ("Att_<Id>"): LegacyItems macht daraus den Aufsatz der ersten passenden
+-- Waffe (AttachmentConfig.WeaponOrder).
 ExtinctionConfig.AttachmentItems = {}
-for _, att in AttachmentConfig.List do
-	local id = "Att_" .. att.Id
-	ExtinctionConfig.Items[id] = { Kind = "Attachment", Name = att.Name, Attachment = att.Id, Slot = att.Slot,
-		Value = math.floor(att.Price * 0.5 / 10) * 10, MaxStack = 3, Tier = att.Tier or 2 }
-	table.insert(ExtinctionConfig.AttachmentItems, id)
+ExtinctionConfig.LegacyItems = {}
+function ExtinctionConfig.AttachmentItemId(weaponName, attId)
+	return "Att_" .. weaponName .. "_" .. attId
+end
+for _, weaponName in AttachmentConfig.WeaponOrder do
+	local weapon = ExtinctionConfig.Items[weaponName]
+	for _, att in AttachmentConfig.List do
+		if AttachmentConfig.Fits(weaponName, att.Id) then
+			local id = ExtinctionConfig.AttachmentItemId(weaponName, att.Id)
+			ExtinctionConfig.Items[id] = { Kind = "Attachment", Name = att.Name .. " (" .. weapon.Name .. ")", Attachment = att.Id,
+				Slot = att.Slot, Weapon = weaponName, Value = math.floor(att.Price * 0.5 / 10) * 10, MaxStack = 3, Tier = att.Tier or 2 }
+			table.insert(ExtinctionConfig.AttachmentItems, id)
+			ExtinctionConfig.LegacyItems["Att_" .. att.Id] = ExtinctionConfig.LegacyItems["Att_" .. att.Id] or id
+		end
+	end
+end
+
+-- Item-Id aus einem gespeicherten Stand (alte Ids werden umgeschrieben); nil, wenn es das Item nicht gibt
+function ExtinctionConfig.SavedId(id)
+	if type(id) ~= "string" then
+		return nil
+	end
+	id = ExtinctionConfig.LegacyItems[id] or id
+	return ExtinctionConfig.Items[id] and id or nil
+end
+
+-- Item für einen Aufsatz, der von einer Waffe abgenommen wird und dort nicht mehr passt (alter Spielstand): der Aufsatz
+-- der ersten Waffe, auf die er passt; nil, wenn er auf keine passt
+function ExtinctionConfig.LooseAttachmentItem(attId)
+	return ExtinctionConfig.LegacyItems["Att_" .. tostring(attId)]
 end
 
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
@@ -163,7 +192,7 @@ ExtinctionConfig.RedPoints = {
 }
 do
 	local prices = {
-		LMG = 140, DMR = 110, HeavyVest = 45, Adrenaline = 20, Grenade = 15, Molotov = 12,
+		LMG = 160, DMR = 260, HeavyVest = 45, Adrenaline = 20, Grenade = 15, Molotov = 12,
 	}
 	local items = { "LMG", "DMR", "HeavyVest", "Adrenaline", "Grenade", "Molotov" }
 	local tierPrice = { [2] = 40, [3] = 80, [4] = 150 }
@@ -246,7 +275,7 @@ ExtinctionConfig.LootTables = {
 	},
 	Tier3 = { -- Militärbasis, rote Zone
 		{ Id = "Rifle", Count = { 1, 1 }, Weight = 10 },
-		{ Id = "DMR", Count = { 1, 1 }, Weight = 6 },
+		{ Id = "DMR", Count = { 1, 1 }, Weight = 1 },
 		{ Id = "SMG", Count = { 1, 1 }, Weight = 8 },
 		{ Id = "Shotgun", Count = { 1, 1 }, Weight = 6 },
 		{ Id = "LMG", Count = { 1, 1 }, Weight = 2 },
@@ -278,8 +307,8 @@ ExtinctionConfig.LootTables = {
 		{ Id = "Ammo_Magnum", Count = { 12, 24 }, Weight = 16 },
 	},
 	Airdrop = {
-		{ Id = "LMG", Count = { 1, 1 }, Weight = 10 },
-		{ Id = "DMR", Count = { 1, 1 }, Weight = 14 },
+		{ Id = "LMG", Count = { 1, 1 }, Weight = 8 },
+		{ Id = "DMR", Count = { 1, 1 }, Weight = 4 },
 		{ Id = "Rifle", Count = { 1, 1 }, Weight = 18 },
 		{ Id = "HeavyVest", Count = { 1, 1 }, Weight = 16 },
 		{ Id = "Adrenaline", Count = { 2, 3 }, Weight = 14 },
@@ -312,10 +341,13 @@ local ATTACHMENT_LOOT = {
 	ConvoyAttachments = { [2] = 5, [3] = 3, [4] = 1.2 },
 	Airdrop = { [3] = 1.2, [4] = 0.6 },
 }
+-- Gewicht gilt für eine Aufsatz-Art; sie wird auf ihre Waffen verteilt (Aufsätze insgesamt so häufig wie vorher)
 for tableName, weights in ATTACHMENT_LOOT do
 	for _, id in ExtinctionConfig.AttachmentItems do
-		local weight = weights[ExtinctionConfig.Items[id].Tier]
+		local item = ExtinctionConfig.Items[id]
+		local weight = weights[item.Tier]
 		if weight then
+			weight /= #AttachmentConfig.WeaponsFor(item.Attachment)
 			table.insert(ExtinctionConfig.LootTables[tableName], { Id = id, Count = { 1, 1 }, Weight = weight })
 		end
 	end
@@ -407,7 +439,7 @@ ExtinctionConfig.Bots = {
 	SafeMargin = 30,
 	HuntRange = 160,
 	ZombieRange = 45,
-	Weapons = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR" },
+	Weapons = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle" }, -- kein Präzisionsgewehr: das ist die seltenste Waffe
 	Ammo = { 20, 45 },
 	LootTable = "Tier2",
 	RedLootTable = "Tier3",
@@ -590,7 +622,7 @@ ExtinctionConfig.Bosses = {
 			{ Chance = 0.2, Id = "Medkit", Count = 2 },
 			{ Chance = 0.12, Id = "Adrenaline", Count = 2 },
 			{ Chance = 0.25, Id = "HeavyVest", Count = 1 },
-			{ Chance = 0.04, Id = "Att_FastMag", Count = 1 },
+			{ Chance = 0.04, Id = "Att_Rifle_FastMag", Count = 1 },
 		},
 	},
 }

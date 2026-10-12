@@ -44,7 +44,8 @@ local function copyItem(item)
 end
 Inventory.Copy = copyItem
 
--- Liste (gespeichert/JSON) -> Container. Unbekannte Items und Plätze außerhalb fallen weg. Aufsätze, die nicht auf ihre
+-- Liste (gespeichert/JSON) -> Container. Unbekannte Items und Plätze außerhalb fallen weg, alte Aufsatz-Items für alle
+-- Waffen werden zum Aufsatz einer Waffe (ExtinctionConfig.SavedId). Aufsätze, die nicht auf ihre
 -- Waffe passen, werden abgenommen und (mit loose) als Ids an loose angehängt.
 function Inventory.FromList(list, size, loose)
 	local container = Inventory.New(size)
@@ -53,10 +54,10 @@ function Inventory.FromList(list, size, loose)
 	end
 	for _, entry in list do
 		local slot = type(entry) == "table" and tonumber(entry.S)
-		local id = type(entry) == "table" and entry.Id
+		local id = type(entry) == "table" and ExtinctionConfig.SavedId(entry.Id) -- alte Aufsatz-Ids umgeschrieben
 		local count = type(entry) == "table" and math.floor(tonumber(entry.N) or 1)
-		if slot and slot == math.floor(slot) and slot >= 1 and slot <= size and type(id) == "string"
-			and ExtinctionConfig.Get(id) and count and count >= 1 and not container.Slots[slot] then
+		if slot and slot == math.floor(slot) and slot >= 1 and slot <= size and id
+			and count and count >= 1 and not container.Slots[slot] then
 			local att, removed = Inventory.CleanAttachments(id, entry.A)
 			container.Slots[slot] = { Id = id, Count = math.min(count, ExtinctionConfig.MaxStack(id)),
 				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Att = att }

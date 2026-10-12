@@ -28,7 +28,7 @@ HideoutConfig.Modules = {
 		Levels = {
 			{ Coins = 600, Items = {}, Value = 5 },
 			{ Coins = 1800, Items = { { "Ammo_9mm", 60 } }, Value = 10 },
-			{ Coins = 4500, Items = { { "Att_ExtendedMag", 1 } }, Value = 15 },
+			{ Coins = 4500, Items = { { "Att_Rifle_ExtendedMag", 1 } }, Value = 15 },
 		} },
 	{ Id = "Medical", Name = "Sanistation", Text = "Heilen und Westen anlegen geht schneller", Format = "%d %% schneller heilen",
 		Levels = {

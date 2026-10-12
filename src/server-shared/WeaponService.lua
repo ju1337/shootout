@@ -769,7 +769,10 @@ local function onAimState(player, pitch, aiming)
 	local character = player.Character
 	if character then
 		character:SetAttribute("AimPitch", math.clamp(math.round(pitch), -85, 85))
-		character:SetAttribute("Aiming", aiming == true)
+		-- Waffen ohne Zielen (LMG): zählt nie als zielend, auch wenn der Client es meldet
+		local state = states[player]
+		local canAim = not (state and state.Current) or WeaponConfig.CanAim(state.Current)
+		character:SetAttribute("Aiming", aiming == true and canAim)
 	end
 end
 

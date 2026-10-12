@@ -9,6 +9,8 @@
 --   RecoilReturnTime = Sekunden, bis der Blick nach dem Feuern sanft wieder unten ist (sonst Standard)
 --   RecoilPullDown = Runterziehen mit der Maus gleicht den Rückstoß aus (Zurückgleiten rutscht dann nicht unters Ziel)
 -- AimSpread (optional) = feste Streuung beim Zielen, ersetzt alles andere (0 = trifft immer genau die Mitte)
+-- HipOnly = true: kein Zielen über Kimme/Visier (Rechtsklick/L2/ZIELEN tut nichts), Streuung immer wie aus der Hüfte.
+--   Der Server rechnet genauso (SpreadFor), auch wenn ein Client "zielt" meldet.
 -- Kick = wie stark die Waffe in der Hand zurückschlägt (nur Optik)
 -- AimFov = Sichtfeld beim Zielen (Rechtsklick)
 -- ShellReload = Patronen einzeln nachladen (Schrotflinte): Schießen bricht das Nachladen ab
@@ -188,13 +190,16 @@ WeaponConfig.Weapons = {
 	},
 	DMR = {
 		DisplayName = "Präzisionsgewehr",
-		Damage = 45,
+		-- Stärkste Waffe neben dem LMG und die seltenste (Joel, 2026-10-12): Kopfschuss tötet, zwei Körpertreffer
+		Damage = 75,          -- vorher 45
 		FireDelay = 0.3,      -- vorher 0.4
 		Automatic = false,
 		MagazineSize = 10,
 		ReserveAmmo = 30,
 		ReloadTime = 2.3,
-		Range = 900,
+		Range = 1000,         -- vorher 900
+		FalloffStart = 650,   -- Schaden fällt erst spät und kaum ab
+		MinDamageFactor = 0.8,
 		Spread = 2.5,
 		AimSpread = 0,        -- gezielt/durchs Zielfernrohr: trifft immer genau die Mitte
 		Bloom = 0.8,
@@ -210,16 +215,19 @@ WeaponConfig.Weapons = {
 	},
 	LMG = {
 		DisplayName = "LMG",
-		Damage = 17,
+		-- Stärkste Dauerfeuer-Waffe, dafür nur aus der Hüfte (Joel, 2026-10-12). Streuungs-Aufsätze machen sie präzise
+		-- (AttachmentConfig: LMG-Werte von Mündungsbremse, Laser, Winkelgriff, kurzem Lauf).
+		Damage = 26,          -- vorher 17
 		FireDelay = 0.09,
 		Automatic = true,
-		MagazineSize = 60,
-		ReserveAmmo = 120,
-		ReloadTime = 3.2,
+		HipOnly = true,       -- kein Zielen
+		MagazineSize = 80,    -- vorher 60
+		ReserveAmmo = 160,
+		ReloadTime = 3.6,     -- vorher 3.2
 		Range = 450,
-		Spread = 2.2,
-		Bloom = 0.08,
-		MaxBloom = 1.6,
+		Spread = 2.4,         -- vorher 2.2 (galt nur aus der Hüfte; Zielen gibt es nicht mehr)
+		Bloom = 0.1,          -- vorher 0.08
+		MaxBloom = 1.8,       -- vorher 1.6
 		Recoil = 0.36,
 		RecoilSide = 0.25,
 		MaxRecoil = 6,
@@ -278,11 +286,20 @@ function WeaponConfig.Get(name)
 	return WeaponConfig.Weapons[name]
 end
 
+-- Kann man mit dieser Waffe zielen? (nein bei HipOnly, z.B. LMG)
+function WeaponConfig.CanAim(name)
+	local cfg = WeaponConfig.Weapons[name]
+	return cfg ~= nil and not cfg.HipOnly
+end
+
 -- Streuung in Grad für den nächsten Schuss. Client (Fadenkreuz) und Server (Schuss) nutzen dieselbe Formel.
 -- bloom = aufgebauter Bloom, speed = Laufgeschwindigkeit (Studs/s), airborne = in der Luft,
 -- aiming = zielt (Rechtsklick), effects = Wirkung der Aufsätze (AttachmentConfig.Effects) oder nil
 function WeaponConfig.SpreadFor(cfg, bloom, speed, airborne, aiming, effects)
 	effects = type(effects) == "table" and effects or nil
+	if cfg.HipOnly then
+		aiming = false
+	end
 	if aiming and cfg.AimSpread then
 		return cfg.AimSpread
 	end

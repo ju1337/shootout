@@ -768,8 +768,9 @@ function WeaponClient.Init()
 			end
 		end
 
-		-- Zielen: solange gehalten, außer beim Nachladen, Sprinten-Stopp macht Movement
-		setAiming(aimHeld and isAlive and current ~= nil and not reloading)
+		-- Zielen: solange gehalten, außer beim Nachladen und mit Waffen ohne Zielen (LMG: nur aus der Hüfte);
+		-- Sprinten-Stopp macht Movement
+		setAiming(aimHeld and isAlive and current ~= nil and not reloading and WeaponConfig.CanAim(current))
 		aimBlend += ((aiming and 1 or 0) - aimBlend) * math.min(1, AIM_SPEED * dt)
 		if aiming and aimFov(current) ~= aimFovShown then -- z.B. Wechsel Ego <-> Third-Person beim Zielen
 			aimFovShown = aimFov(current)

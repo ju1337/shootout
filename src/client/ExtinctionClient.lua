@@ -103,8 +103,10 @@ local KIND_COLORS = {
 local KIND_NAMES = { Weapon = "WAFFE", Ammo = "MUNITION", Heal = "HEILUNG", Armor = "RÜSTUNG", Vehicle = "FAHRZEUG",
 	Repel = "SCHUTZ", Attachment = "AUFSATZ", Throwable = "WURFWAFFE", Key = "SCHLÜSSEL" }
 -- Seltenheit der Aufsätze (Tier) als Name und Farbe
-local TIER_NAMES = { [2] = "HÄUFIG", [3] = "SELTEN", [4] = "SEHR SELTEN" }
-local TIER_COLORS = { [2] = Color3.fromRGB(120, 176, 230), [3] = Color3.fromRGB(176, 136, 232), [4] = Color3.fromRGB(236, 178, 70) }
+-- (5 = legendär: nur das Präzisionsgewehr, die seltenste Waffe)
+local TIER_NAMES = { [2] = "HÄUFIG", [3] = "SELTEN", [4] = "SEHR SELTEN", [5] = "LEGENDÄR" }
+local TIER_COLORS = { [2] = Color3.fromRGB(120, 176, 230), [3] = Color3.fromRGB(176, 136, 232), [4] = Color3.fromRGB(236, 178, 70),
+	[5] = Color3.fromRGB(232, 72, 64) }
 local SLOT_NAMES = {}
 for _, slotInfo in AttachmentConfig.Slots do
 	SLOT_NAMES[slotInfo.Id] = slotInfo.Name
@@ -360,14 +362,17 @@ local function describe(id, entry)
 			weapon and weapon.Damage or 0) .. (#names > 0 and ("\nAufsätze: " .. table.concat(names, ", ")) or "")
 	elseif config.Kind == "Attachment" then
 		local att = AttachmentConfig.Get(config.Attachment)
-		-- Waffen, auf die er passt (Namen schon übersetzt: Listen findet LocaleStrings nicht als Ganzes)
-		local weapons = {}
-		for _, weaponName in AttachmentConfig.WeaponsFor(config.Attachment) do
-			local weapon = WeaponConfig.Get(weaponName)
-			table.insert(weapons, require(Shared.Locale).Translate(weapon and weapon.DisplayName or weaponName))
+		-- Wirkung auf genau die Waffe, zu der er gehört (LMG: eigene Werte); Listen schon übersetzt (LocaleStrings findet sie
+		-- nicht als Ganzes)
+		local Locale = require(Shared.Locale)
+		local pros = {}
+		for _, text in AttachmentConfig.Pros(att, config.Weapon) do
+			table.insert(pros, Locale.Translate(text))
 		end
-		return (att and att.Description or "") .. " · Platz: " .. (SLOT_NAMES[config.Slot] or config.Slot)
-			.. "\nPasst auf: " .. table.concat(weapons, ", ")
+		local weapon = WeaponConfig.Get(config.Weapon)
+		return (#pros > 0 and table.concat(pros, ", ") or (att and att.Description or "")) .. " · Platz: "
+			.. (SLOT_NAMES[config.Slot] or config.Slot)
+			.. "\nPasst auf: " .. Locale.Translate(weapon and weapon.DisplayName or tostring(config.Weapon))
 			.. "\nAuf eine passende Waffe ziehen (oder Taste mit der Waffe in der Hand) baut ihn an. Er bleibt an dieser Waffe."
 	elseif config.Kind == "Ammo" then
 		local users = {}
@@ -1650,7 +1655,7 @@ function Inv.itemPopup(body)
 						for itemSlot, item in source[2] do
 							local itemCfg = itemConfig(item.Id)
 							if itemCfg and itemCfg.Kind == "Attachment" and itemCfg.Slot == slotInfo.Id
-								and AttachmentConfig.Fits(weapon.Weapon, itemCfg.Attachment) then
+								and itemCfg.Weapon == weapon.Weapon and AttachmentConfig.Fits(weapon.Weapon, itemCfg.Attachment) then
 								sendAction("Move", source[1], itemSlot, weapon.Container, weapon.Slot)
 								return
 							end
@@ -2996,13 +3001,9 @@ function Inv.standStats(id)
 			add("SITZE", vehicle.Seats)
 		end
 	elseif config.Kind == "Attachment" then
-		local weapons = {}
-		for _, weaponName in AttachmentConfig.WeaponsFor(config.Attachment) do
-			local weapon = WeaponConfig.Get(weaponName)
-			table.insert(weapons, upper(Locale.Translate(weapon and weapon.DisplayName or weaponName)))
-		end
+		local weapon = WeaponConfig.Get(config.Weapon)
 		add("PLATZ", upper(SLOT_NAMES[config.Slot] or config.Slot or ""))
-		add("PASST AUF", table.concat(weapons, ", "))
+		add("PASST AUF", upper(Locale.Translate(weapon and weapon.DisplayName or tostring(config.Weapon))))
 	end
 	return stats
 end
@@ -3562,7 +3563,7 @@ local function updateDrag()
 		local dragConfig = entry and itemConfig(entry.Id)
 		for slotId, boxView in Inv.attachBoxes or {} do
 			local match = dragConfig and dragConfig.Kind == "Attachment" and dragConfig.Slot == slotId and Inv.popupWeapon ~= nil
-				and AttachmentConfig.Fits(Inv.popupWeapon.Weapon, dragConfig.Attachment)
+				and dragConfig.Weapon == Inv.popupWeapon.Weapon and AttachmentConfig.Fits(Inv.popupWeapon.Weapon, dragConfig.Attachment)
 			boxView.Stroke.Color = match and Inv.MENU_RED or Color3.new(1, 1, 1)
 			boxView.Stroke.Thickness = match and 2 or 1
 			boxView.Stroke.Transparency = match and 0 or (boxView.Filled and 1 or 0.82)

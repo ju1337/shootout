@@ -89,9 +89,9 @@ local function cleanLoadout(list)
 	local clean, used = {}, {}
 	for _, entry in type(list) == "table" and list or {} do
 		local slot = type(entry) == "table" and tonumber(entry.S)
-		local id = type(entry) == "table" and entry.Id
+		local id = type(entry) == "table" and ExtinctionConfig.SavedId(entry.Id) -- alte Aufsatz-Ids umgeschrieben
 		if slot and slot == math.floor(slot) and slot >= 1 and slot <= ExtinctionConfig.BagSlots and not used[slot]
-			and type(id) == "string" and ExtinctionConfig.Get(id) then
+			and id then
 			used[slot] = true
 			local count = math.clamp(math.floor(tonumber(entry.N) or 1), 1, ExtinctionConfig.MaxStack(id))
 			table.insert(clean, { S = slot, Id = id, N = count, Att = (Inventory.CleanAttachments(id, entry.Att)) })
@@ -118,9 +118,9 @@ local function stateOf(player)
 	local market = {}
 	local loose = {} -- Aufsätze, die nicht (mehr) auf ihre Waffe passen: zurück ins Inventar
 	for _, entry in type(data.Market) == "table" and data.Market or {} do
-		if type(entry) == "table" and type(entry.Id) == "string" and type(entry.Item) == "string" and ExtinctionConfig.Get(entry.Item)
-			and tonumber(entry.Count) and tonumber(entry.Price) then
-			table.insert(market, { Id = entry.Id, Item = entry.Item, Count = math.max(1, math.floor(entry.Count)),
+		local itemId = type(entry) == "table" and ExtinctionConfig.SavedId(entry.Item)
+		if itemId and type(entry.Id) == "string" and tonumber(entry.Count) and tonumber(entry.Price) then
+			table.insert(market, { Id = entry.Id, Item = itemId, Count = math.max(1, math.floor(entry.Count)),
 				Mag = tonumber(entry.Mag) and math.max(0, math.floor(entry.Mag)) or nil, Price = math.max(1, math.floor(entry.Price)),
 				At = tonumber(entry.At) or 0, Att = Inventory.CleanAttachments(entry.Item, entry.Att) })
 			local _, removed = Inventory.CleanAttachments(entry.Item, entry.Att)
@@ -142,9 +142,12 @@ local function stateOf(player)
 	end
 	-- Abgenommene Aufsätze ins Lager, sonst in Tasche oder Container
 	for _, attId in loose do
-		for _, target in { state.Stash, state.Bag, state.Safe } do
-			if Inventory.Add(target, "Att_" .. attId, 1) >= 1 then
-				break
+		local looseId = ExtinctionConfig.LooseAttachmentItem(attId) -- Aufsatz der ersten Waffe, auf die er noch passt
+		if looseId then
+			for _, target in { state.Stash, state.Bag, state.Safe } do
+				if Inventory.Add(target, looseId, 1) >= 1 then
+					break
+				end
 			end
 		end
 		state.Dirty = true
@@ -412,7 +415,8 @@ local function attach(player, state, attFrom, attSlot, weapon)
 	if not attConfig or attConfig.Kind ~= "Attachment" or not weaponConfig or weaponConfig.Kind ~= "Weapon" then
 		return false
 	end
-	if not AttachmentConfig.Fits(weaponConfig.Weapon, attConfig.Attachment) then
+	-- jeder Aufsatz gehört zu genau einer Waffe (nicht universell)
+	if attConfig.Weapon ~= weaponConfig.Weapon or not AttachmentConfig.Fits(weaponConfig.Weapon, attConfig.Attachment) then
 		status(player, attConfig.Name .. " passt nicht auf " .. weaponConfig.Name .. ".")
 		return false
 	end
@@ -426,7 +430,7 @@ local function attach(player, state, attFrom, attSlot, weapon)
 	if attItem.Count <= 0 then
 		attFrom.Slots[attSlot] = nil
 	end
-	if old and Inventory.Add(state.Bag, "Att_" .. old, 1) < 1 then
+	if old and Inventory.Add(state.Bag, ExtinctionConfig.AttachmentItemId(weaponConfig.Weapon, old), 1) < 1 then
 		-- alter Aufsatz passt nicht in die Tasche: rückgängig
 		if attFrom.Slots[attSlot] == nil then
 			attFrom.Slots[attSlot] = attItem
@@ -454,10 +458,15 @@ function InventoryService.Detach(player, weaponSlot, slotId, where)
 	local state = stateOf(player)
 	local weapon = state and (where == "Safe" and state.Safe or state.Bag).Slots[weaponSlot]
 	local attId = weapon and weapon.Att and weapon.Att[slotId]
-	if not attId then
+	local weaponConfig = weapon and ExtinctionConfig.Get(weapon.Id)
+	if not attId or not weaponConfig then
 		return false
 	end
-	if Inventory.Add(state.Bag, "Att_" .. attId, 1) < 1 then
+	local attItemId = ExtinctionConfig.AttachmentItemId(weaponConfig.Weapon, attId)
+	if not ExtinctionConfig.Get(attItemId) then
+		return false
+	end
+	if Inventory.Add(state.Bag, attItemId, 1) < 1 then
 		status(player, "Kein Platz in deiner Tasche.")
 		return false
 	end
@@ -469,7 +478,7 @@ function InventoryService.Detach(player, weaponSlot, slotId, where)
 		equip(player, state, weapon)
 	end
 	changed(player, state)
-	status(player, ExtinctionConfig.Get("Att_" .. attId).Name .. " abgenommen", true)
+	status(player, ExtinctionConfig.Get(attItemId).Name .. " abgenommen", true)
 	return true
 end
 
@@ -729,9 +738,10 @@ function InventoryService.Sell(player, slot, count, expectedId)
 	end
 	-- Aufsätze an einer verkauften Waffe gehen nicht mit: zurück in die Tasche (sonst Lager, sonst als Beutel daneben)
 	local rest = {}
-	for _, attId in item.Count <= 0 and item.Att or {} do
-		local id = "Att_" .. attId
-		if Inventory.Add(state.Bag, id, 1) < 1 and InventoryService.GiveStash(player, id, 1) < 1 then
+	local soldWeapon = ExtinctionConfig.Get(item.Id).Weapon
+	for _, attId in item.Count <= 0 and soldWeapon and item.Att or {} do
+		local id = ExtinctionConfig.AttachmentItemId(soldWeapon, attId)
+		if ExtinctionConfig.Get(id) and Inventory.Add(state.Bag, id, 1) < 1 and InventoryService.GiveStash(player, id, 1) < 1 then
 			table.insert(rest, { Id = id, Count = 1 })
 		end
 	end
@@ -943,17 +953,21 @@ function InventoryService.LoadoutApply(player, index)
 				-- gespeicherte Aufsätze nachrüsten: lose Aufsätze aus Tasche oder Lager; ein ersetzter geht wie alles Übrige
 				for slotId, attId in entry.Att or {} do
 					if not (pick.Att and pick.Att[slotId] == attId) then
-						local loose = candidates("Att_" .. attId)[1]
+						local attItemId = ExtinctionConfig.AttachmentItemId(config.Weapon, attId)
+						local loose = ExtinctionConfig.Get(attItemId) and candidates(attItemId)[1]
 						if loose then
 							take(loose, 1)
 							local old = pick.Att and pick.Att[slotId]
 							pick.Att = pick.Att or {}
 							pick.Att[slotId] = attId
 							if old then
-								table.insert(pool, { Id = "Att_" .. old, Count = 1 })
+								table.insert(pool, { Id = ExtinctionConfig.AttachmentItemId(config.Weapon, old), Count = 1 })
 							end
 						else
-							table.insert(missing, Locale.ForPlayer(player, ExtinctionConfig.Get("Att_" .. attId).Name))
+							local attConfig = ExtinctionConfig.Get(attItemId)
+							if attConfig then
+								table.insert(missing, Locale.ForPlayer(player, attConfig.Name))
+							end
 						end
 					end
 				end

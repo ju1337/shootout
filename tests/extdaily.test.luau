@@ -176,7 +176,7 @@ check(ExtDailyService.Claim(alice) == nil, "nicht zweimal am selben Tag")
 ProgressService.Get(alice).ExtDaily = { Date = ExtDailyConfig.Date(os.time() - 86400), Day = 6 }
 local coins = ProgressService.Get(alice).Coins
 check(ExtDailyService.Claim(alice) == 7, "Tag 7")
-check(has("LMG") or has("DMR"), "seltene Waffe")
+check(has("LMG") or has("Rifle"), "starke Waffe (das Präzisionsgewehr gibt es hier nicht: seltenste Waffe)")
 check(ProgressService.Get(alice).Coins == coins + ExtDailyConfig.Days[7].Coins, "Münzen am Tag 7")
 
 if failures == 0 then

@@ -156,23 +156,23 @@ enter(alice)
 local RedPointsService = require("RedPointsService")
 require("ExtDailyConfig").Enabled = false
 local stand = ExtinctionConfig.Stands.Stand_Red
-check(stand and stand.Currency == "RedPoints" and table.find(stand.Items, "Att_Suppressor") ~= nil, "Schieber verkauft Aufsätze gegen RZ")
+check(stand and stand.Currency == "RedPoints" and table.find(stand.Items, "Att_Rifle_Suppressor") ~= nil, "Schieber verkauft Aufsätze gegen RZ")
 check(alice:GetAttribute("RedPoints") == 0, "RZ-Attribut beim Betreten (0)")
 
 moveTo(alice, Vector3.new(-50, 3, 4))
-local price = stand.Prices.Att_Suppressor
-check(InventoryService.Buy(alice, "Stand_Red", "Att_Suppressor") == false, "ohne RZ kein Kauf")
+local price = stand.Prices.Att_Rifle_Suppressor
+check(InventoryService.Buy(alice, "Stand_Red", "Att_Rifle_Suppressor") == false, "ohne RZ kein Kauf")
 local status = lastExt(alice, "Status")
 check(status and string.find(tostring(status[2]), "Rote", 1, true) ~= nil, "Meldung: zu wenig RZ (" .. tostring(status and status[2]) .. ")")
 
 RedPointsService.Add(alice, price + 30, "Test")
 check(alice:GetAttribute("RedPoints") == price + 30, "RZ gutgeschrieben")
 local coins = ProgressService.Get(alice).Coins
-check(InventoryService.Buy(alice, "Stand_Red", "Att_Suppressor") == true, "Schalldämpfer gekauft")
+check(InventoryService.Buy(alice, "Stand_Red", "Att_Rifle_Suppressor") == true, "Schalldämpfer gekauft")
 check(alice:GetAttribute("RedPoints") == 30 and ProgressService.Get(alice).Coins == coins, "RZ abgezogen, Münzen gleich")
-check(string.find(alice:GetAttribute("ExtBag") or "", "Att_Suppressor", 1, true) ~= nil, "Schalldämpfer in der Tasche")
+check(string.find(alice:GetAttribute("ExtBag") or "", "Att_Rifle_Suppressor", 1, true) ~= nil, "Schalldämpfer in der Tasche")
 check(InventoryService.Buy(alice, "Stand_Red", "Rifle") == false, "nur das Angebot des Schiebers")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Suppressor") == false, "Waffenstand verkauft keine Aufsätze")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Rifle_Suppressor") == false, "Waffenstand verkauft keine Aufsätze")
 
 -- gespeichert
 SIM.Leave(alice)

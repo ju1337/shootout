@@ -597,7 +597,7 @@ function AdminService.Init(manager)
 			end)
 			return #done > 0 and ("Beendet: " .. table.concat(done, ", ")) or "Da lief nichts."
 		end,
-		-- Items ins eigene Inventar (zum Testen): "Attachments" = je ein Aufsatz, "Throwables" = Granaten und Molotows,
+		-- Items ins eigene Inventar (zum Testen): "Attachments" = je ein Aufsatz für die Waffe in der Hand, "Throwables" = Granaten und Molotows,
 		-- "Kit" = Sturmgewehr, Munition, Medikits, Westen
 		ExtGive = function(kind, _, admin)
 			if admin:GetAttribute("Mode") ~= "Extinction" then
@@ -607,8 +607,14 @@ function AdminService.Init(manager)
 			local InventoryService = serverShared("InventoryService")
 			local list = {}
 			if kind == "Attachments" then
+				-- Aufsätze gehören je zu einer Waffe: alle für die Waffe in der Hand (sonst Sturmgewehr)
+				local HttpService = game:GetService("HttpService")
+				local okHeld, held = pcall(HttpService.JSONDecode, HttpService, admin:GetAttribute("ExtAttach") or "")
+				local weaponName = okHeld and type(held) == "table" and type(held.W) == "string" and held.W or "Rifle"
 				for _, id in ExtinctionConfig.AttachmentItems do
-					table.insert(list, { id, 1 })
+					if ExtinctionConfig.Items[id].Weapon == weaponName then
+						table.insert(list, { id, 1 })
+					end
 				end
 			elseif kind == "Throwables" then
 				list = { { "Grenade", 3 }, { "Molotov", 3 } }

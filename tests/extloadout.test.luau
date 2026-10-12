@@ -156,12 +156,12 @@ moveTo(alice, Vector3.new(-36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Gewehr gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
-check(InventoryService.Give(alice, "Att_Compensator", 1) == 1, "Kompensator")
-check(InventoryService.Give(alice, "Att_ExtendedMag", 1) == 1, "erweitertes Magazin")
+check(InventoryService.Give(alice, "Att_Rifle_Compensator", 1) == 1, "Kompensator")
+check(InventoryService.Give(alice, "Att_Rifle_ExtendedMag", 1) == 1, "erweitertes Magazin")
 check(InventoryService.Give(alice, "Medkit", 2) == 2, "zwei Medikits")
 local rifleSlot = slotOf(alice, "Rifle")
-check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_Compensator"), "Bag", rifleSlot) == true, "Kompensator angebaut")
-check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_ExtendedMag"), "Bag", rifleSlot) == true, "Magazin angebaut")
+check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_Rifle_Compensator"), "Bag", rifleSlot) == true, "Kompensator angebaut")
+check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_Rifle_ExtendedMag"), "Bag", rifleSlot) == true, "Magazin angebaut")
 local rifle = slot(alice, rifleSlot)
 check(rifle and rifle.A and rifle.A.Muzzle == "Compensator" and rifle.A.Magazine == "ExtendedMag", "Gewehr mit zwei Aufsätzen")
 check(InventoryService.Move(alice, "Bag", slotOf(alice, "Medkit"), "Bag", 9) == true, "Medikits auf Platz 9")
@@ -249,13 +249,13 @@ check(InventoryService.TakeEverywhere(alice, "Medkit", 1) == 1 and InventoryServ
 
 -- Loser Aufsatz im Lager wird angebaut; eine Waffe mit denselben Aufsätzen wird bevorzugt
 check(InventoryService.Detach(alice, 1, "Muzzle") == true, "Kompensator abgenommen")
-check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_Compensator"), "Stash", nil) == true, "Kompensator ins Lager")
+check(InventoryService.Move(alice, "Bag", slotOf(alice, "Att_Rifle_Compensator"), "Stash", nil) == true, "Kompensator ins Lager")
 check(InventoryService.Give(alice, "Rifle", 1) == 1, "zweites Gewehr ohne Aufsätze in der Tasche")
 check(InventoryService.LoadoutApply(alice, 1) == true, "angelegt")
 rifle = slot(alice, 1)
 check(rifle and rifle.A and rifle.A.Muzzle == "Compensator" and rifle.A.Magazine == "ExtendedMag",
 	"Gewehr mit Magazin gewählt, Kompensator aus dem Lager angebaut")
-check(find(stashOf(alice), "Att_Compensator") == nil and find(bagOf(alice), "Att_Compensator") == nil, "loser Kompensator ist weg")
+check(find(stashOf(alice), "Att_Rifle_Compensator") == nil and find(bagOf(alice), "Att_Rifle_Compensator") == nil, "loser Kompensator ist weg")
 check(find(stashOf(alice), "Rifle") ~= nil and find(stashOf(alice), "Rifle").A == nil, "zweites Gewehr (ohne Aufsätze) im Lager")
 
 -- Zweite Vorlage, Speichern mit leerer Tasche

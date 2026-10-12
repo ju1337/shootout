@@ -16,7 +16,7 @@ ExtDailyConfig.Days = {
 	{ Items = { { "AntiZombie", 2 }, { "Medkit", 2 } } },
 	{ Items = { { "HeavyVest", 1 } }, Pick = { "Adrenaline", "Medkit", "AntiZombie" } },
 	{ Items = { { "Adrenaline", 2 }, { "Ammo_Rifle", 120 } } },
-	{ Items = { { "Ammo_Rifle", 120 } }, Pick = { "LMG", "DMR" }, Coins = 400 },
+	{ Items = { { "Ammo_Rifle", 120 } }, Pick = { "LMG", "Rifle" }, Coins = 400 },
 }
 
 -- Datum (UTC) zu einem Zeitpunkt

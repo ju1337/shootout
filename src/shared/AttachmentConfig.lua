@@ -4,6 +4,8 @@
 -- Pro Platz (Mündung, Lauf, Griff, Magazin, Visier) ist höchstens ein Aufsatz ausgerüstet.
 -- Nicht jeder Aufsatz passt auf jede Waffe (AttachmentConfig.Fits, Liste ByWeapon): z.B. kein Griff am Revolver,
 -- kein Visier an Pistolen. Server (Kaufen, Ausrüsten, Anbauen, Laden) und Anzeige prüfen das.
+-- Kein Aufsatz ist universell (Joel, 2026-10-12): in Extinction ist jeder Aufsatz ein Item für genau eine Waffe
+-- ("Att_<Waffe>_<Id>", ExtinctionConfig.AttachmentItemId), ein Kompensator fürs LMG passt nur aufs LMG.
 -- Spieler-Attribut "Attachments" (JSON): { Owned = { [Waffe] = { [Id] = true } }, Equipped = { [Waffe] = { [Platz] = Id } } }
 -- Client (Fadenkreuz, Rückstoß) und Server (Schuss, Magazin, Nachladen) lesen die Wirkung über Effects().
 -- Offene Welt (Extinction): Dort gelten die Lobby-Aufsätze nicht. Aufsätze sind Items, die an einer Waffe im Inventar
@@ -34,7 +36,9 @@ AttachmentConfig.List = {
 	{ Id = "Compensator", Tier = 2, Slot = "Muzzle", Name = "Kompensator", Description = "−20 % Rückstoß", Price = 800,
 		Effects = { Recoil = 0.8, Loud = 1.15 }, Pros = { "−20 % Rückstoß" }, Cons = { "+15 % Lautstärke" } },
 	{ Id = "MuzzleBrake", Tier = 3, Slot = "Muzzle", Name = "Mündungsbremse", Description = "−15 % Streuung", Price = 900,
-		Effects = { Spread = 0.85, Loud = 1.15 }, Pros = { "−15 % Streuung" }, Cons = { "+15 % Lautstärke" } },
+		Effects = { Spread = 0.85, Loud = 1.15 }, Pros = { "−15 % Streuung" }, Cons = { "+15 % Lautstärke" },
+		-- LMG (nur aus der Hüfte): Streuungs-Aufsätze wirken stärker
+		WeaponEffects = { LMG = { Spread = 0.8, Loud = 1.15 } }, WeaponPros = { LMG = { "−20 % Streuung" } } },
 	{ Id = "Suppressor", Tier = 4, Slot = "Muzzle", Name = "Schalldämpfer", Description = "Leise, für Gegner kein Mündungsfeuer",
 		Price = 1100, Effects = { Silenced = true, Range = 0.9 }, Pros = { "Leise, kein Feuer/Leuchtspur" },
 		Cons = { "−10 % Reichweite" } },
@@ -44,7 +48,8 @@ AttachmentConfig.List = {
 		Cons = { "+15 % Streuung in Bewegung" } },
 	{ Id = "ShortBarrel", Tier = 2, Slot = "Barrel", Name = "Kurzer Lauf", Description = "−25 % Streuung in Bewegung, −15 % Reichweite",
 		Price = 700, Effects = { MoveSpread = 0.75, Range = 0.85 }, Pros = { "−25 % Streuung in Bewegung" },
-		Cons = { "−15 % Reichweite" } },
+		Cons = { "−15 % Reichweite" },
+		WeaponEffects = { LMG = { MoveSpread = 0.65, Range = 0.85 } }, WeaponPros = { LMG = { "−35 % Streuung in Bewegung" } } },
 	{ Id = "HeavyBarrel", Tier = 3, Slot = "Barrel", Name = "Schwerer Lauf", Description = "Schaden fällt erst viel später ab",
 		Price = 1000, Effects = { Falloff = 1.6, HipSpread = 1.1 }, Pros = { "Schaden fällt 60 % später ab" },
 		Cons = { "+10 % Streuung aus der Hüfte" } },
@@ -52,10 +57,12 @@ AttachmentConfig.List = {
 	{ Id = "VerticalGrip", Tier = 2, Slot = "Grip", Name = "Vertikalgriff", Description = "−20 % Rückstoß", Price = 700,
 		Effects = { Recoil = 0.8 }, Pros = { "−20 % Rückstoß" }, Cons = {} },
 	{ Id = "Laser", Tier = 2, Slot = "Grip", Name = "Laser", Description = "−25 % Streuung aus der Hüfte", Price = 800,
-		Effects = { HipSpread = 0.75 }, Pros = { "−25 % Streuung aus der Hüfte" }, Cons = {} },
+		Effects = { HipSpread = 0.75 }, Pros = { "−25 % Streuung aus der Hüfte" }, Cons = {},
+		WeaponEffects = { LMG = { HipSpread = 0.65 } }, WeaponPros = { LMG = { "−35 % Streuung aus der Hüfte" } } },
 	{ Id = "AngledGrip", Tier = 3, Slot = "Grip", Name = "Winkelgriff", Description = "Etwas weniger Rückstoß und Hüftstreuung",
 		Price = 900, Effects = { Recoil = 0.9, HipSpread = 0.88 }, Pros = { "−10 % Rückstoß", "−12 % Hüftstreuung" },
-		Cons = {} },
+		Cons = {},
+		WeaponEffects = { LMG = { Recoil = 0.9, HipSpread = 0.8 } }, WeaponPros = { LMG = { "−10 % Rückstoß", "−20 % Hüftstreuung" } } },
 	-- Magazin
 	{ Id = "ExtendedMag", Tier = 3, Slot = "Magazine", Name = "Erweitertes Magazin", Description = "+30 % Magazin", Price = 900,
 		Effects = { Mag = 1.3 }, Pros = { "+30 % Magazin" }, Cons = {},
@@ -71,25 +78,30 @@ AttachmentConfig.List = {
 }
 
 -- Welche Aufsätze auf welche Waffe passen (Waffe aus WeaponConfig). Nicht aufgeführte Waffen nehmen keine Aufsätze.
+-- Jede Waffe hat ihren eigenen Satz (2026-10-12): was zur Waffe passt, nichts für alle.
 AttachmentConfig.ByWeapon = {
-	-- Sturmgewehr: alles
-	Rifle = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "ShortBarrel", "HeavyBarrel", "VerticalGrip", "Laser",
-		"AngledGrip", "ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
-	-- MP: kein schwerer Lauf
-	SMG = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "AngledGrip",
-		"ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
-	-- Schrotflinte: Röhrenmagazin (nur länger, kein Wechselmagazin), kein Schalldämpfer/Kompensator
-	Shotgun = { "MuzzleBrake", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "ExtendedMag", "HoloSight" },
-	-- Präzisionsgewehr: kein kurzer Lauf, keine Griffe, kein Trommelmagazin
-	DMR = { "MuzzleBrake", "Suppressor", "LongBarrel", "HeavyBarrel", "ExtendedMag", "FastMag", "HoloSight" },
-	-- LMG: kein Schalldämpfer, kein kurzer Lauf, kein Laser
-	LMG = { "Compensator", "MuzzleBrake", "LongBarrel", "HeavyBarrel", "VerticalGrip", "AngledGrip", "ExtendedMag", "FastMag",
+	-- Sturmgewehr: Allrounder für Zielen auf Distanz – kein Laser, kein kurzer Lauf, kein Trommelmagazin
+	Rifle = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "HeavyBarrel", "VerticalGrip", "AngledGrip",
+		"ExtendedMag", "FastMag", "HoloSight" },
+	-- MP: Nahkampf aus der Hüfte – kurzer Lauf, Laser, Trommelmagazin; keine Mündungsbremse, kein langer/schwerer Lauf
+	SMG = { "Compensator", "Suppressor", "ShortBarrel", "VerticalGrip", "Laser", "AngledGrip", "ExtendedMag", "FastMag",
 		"DrumMag", "HoloSight" },
+	-- Schrotflinte (Gen-12, Kastenmagazin): Lauflänge, Mündungsbremse als Würgebohrung, Laser; kein Schalldämpfer
+	Shotgun = { "MuzzleBrake", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "ExtendedMag", "FastMag", "HoloSight" },
+	-- Präzisionsgewehr: Schalldämpfer, Kompensator gegen den Rückstoß, Läufe für Reichweite; kein Griff, kein Trommelmagazin
+	DMR = { "Compensator", "Suppressor", "LongBarrel", "HeavyBarrel", "ExtendedMag", "FastMag", "HoloSight" },
+	-- LMG (nur aus der Hüfte): alles gegen Streuung – Mündungsbremse, kurzer Lauf, Laser, Winkelgriff (LMG-Werte oben);
+	-- dazu Kompensator, Vertikalgriff, Magazine. Kein Visier (man zielt nicht), kein Schalldämpfer
+	LMG = { "Compensator", "MuzzleBrake", "ShortBarrel", "VerticalGrip", "Laser", "AngledGrip", "ExtendedMag", "FastMag",
+		"DrumMag" },
 	-- Pistole: Schalldämpfer/Kompensator, Laser unter dem Lauf, Magazine; kein Griff, kein Visier
 	Pistol = { "Compensator", "Suppressor", "LongBarrel", "Laser", "ExtendedMag", "FastMag" },
 	-- Revolver: Trommel (nur Schnelllader), Lauflänge, Laser; kein Griff, kein Schalldämpfer, kein Visier
 	Revolver = { "Compensator", "LongBarrel", "ShortBarrel", "Laser", "FastMag" },
 }
+
+-- Reihenfolge der Waffen (z.B. für Items alter Spielstände, die noch für alle Waffen galten: die erste passende Waffe)
+AttachmentConfig.WeaponOrder = { "Rifle", "SMG", "Shotgun", "DMR", "LMG", "Pistol", "Revolver" }
 
 local fits = {}
 for weaponName, ids in AttachmentConfig.ByWeapon do

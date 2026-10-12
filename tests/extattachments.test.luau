@@ -146,21 +146,34 @@ step(2)
 enter(alice)
 
 -- Items und Stand
-check(ExtinctionConfig.Get("Att_Compensator") and ExtinctionConfig.Get("Att_Compensator").Kind == "Attachment", "Aufsatz-Item")
-check(ExtinctionConfig.Get("Att_Suppressor").Price == nil and ExtinctionConfig.Get("Att_Compensator").Price == nil,
+check(ExtinctionConfig.Get("Att_Rifle_Compensator") and ExtinctionConfig.Get("Att_Rifle_Compensator").Kind == "Attachment", "Aufsatz-Item")
+check(ExtinctionConfig.Get("Att_Rifle_Suppressor").Price == nil and ExtinctionConfig.Get("Att_Rifle_Compensator").Price == nil,
 	"Aufsätze sind nicht zu kaufen")
 local atStand = false
 for _, id in ExtinctionConfig.Stands.Stand_Weapons.Items do
 	atStand = atStand or string.sub(id, 1, 4) == "Att_"
 end
 check(not atStand, "kein Aufsatz am Waffenstand")
-check(ExtinctionConfig.SellPrice("Att_Compensator", 1) > 0, "Aufsätze lassen sich verkaufen")
+check(ExtinctionConfig.SellPrice("Att_Rifle_Compensator", 1) > 0, "Aufsätze lassen sich verkaufen")
 local inLoot = false
 for _, entry in ExtinctionConfig.LootTables.Airdrop do
-	inLoot = inLoot or entry.Id == "Att_Suppressor"
+	inLoot = inLoot or entry.Id == "Att_Rifle_Suppressor"
 end
 check(inLoot, "Schalldämpfer selten in Lootdrops")
 check(#ExtinctionConfig.LootTables.ConvoyAttachments == #ExtinctionConfig.AttachmentItems, "Konvoi: alle Aufsätze möglich")
+-- Aufsätze sind nicht universell: jedes Item gehört zu genau einer Waffe und passt nur dort
+for _, id in ExtinctionConfig.AttachmentItems do
+	local item = ExtinctionConfig.Get(id)
+	check(item.Weapon ~= nil and id == ExtinctionConfig.AttachmentItemId(item.Weapon, item.Attachment)
+		and AttachmentConfig.Fits(item.Weapon, item.Attachment), id .. " gehört zu einer Waffe")
+end
+check(ExtinctionConfig.Get("Att_Compensator") == nil, "kein Aufsatz für alle Waffen")
+check(ExtinctionConfig.Get("Att_LMG_HoloSight") == nil and ExtinctionConfig.Get("Att_LMG_Laser") ~= nil,
+	"LMG: kein Visier (nur aus der Hüfte), dafür Laser")
+check(ExtinctionConfig.SavedId("Att_Compensator") == "Att_Rifle_Compensator" and ExtinctionConfig.SavedId("Att_DrumMag") == "Att_SMG_DrumMag"
+	and ExtinctionConfig.SavedId("Quatsch") == nil, "alte Aufsatz-Items werden zum Aufsatz der ersten passenden Waffe")
+local legacy = Inventory.FromList({ { S = 2, Id = "Att_Suppressor", N = 2 } }, 4)
+check(legacy.Slots[2] and legacy.Slots[2].Id == "Att_Rifle_Suppressor" and legacy.Slots[2].Count == 2, "alter Spielstand: Schalldämpfer umgeschrieben")
 for _, name in { "Zombie", "Zombie2", "Tier1", "Tier2", "Tier3", "Medical", "Ammo" } do
 	for _, entry in ExtinctionConfig.LootTables[name] do
 		check(string.sub(entry.Id, 1, 4) ~= "Att_", "kein Aufsatz in " .. name)
@@ -171,15 +184,15 @@ check(ExtinctionConfig.Convoy.Attachments and ExtinctionConfig.Convoy.Attachment
 moveTo(alice, Vector3.new(-36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Sturmgewehr gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Att_ExtendedMag") == false, "Magazin nicht zu kaufen")
-check(InventoryService.Give(alice, "Att_ExtendedMag", 1) == 1, "erweitertes Magazin (aus dem Konvoi)")
-check(InventoryService.Give(alice, "Att_Compensator", 1) == 1, "Kompensator (aus dem Konvoi)")
+check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Rifle_ExtendedMag") == false, "Magazin nicht zu kaufen")
+check(InventoryService.Give(alice, "Att_Rifle_ExtendedMag", 1) == 1, "erweitertes Magazin (aus dem Konvoi)")
+check(InventoryService.Give(alice, "Att_Rifle_Compensator", 1) == 1, "Kompensator (aus dem Konvoi)")
 local rifleSlot, magSlot, compSlot
 for s = 1, ExtinctionConfig.BagSlots do
 	local entry = slot(alice, s)
 	if entry and entry.Id == "Rifle" then rifleSlot = s end
-	if entry and entry.Id == "Att_ExtendedMag" then magSlot = s end
-	if entry and entry.Id == "Att_Compensator" then compSlot = s end
+	if entry and entry.Id == "Att_Rifle_ExtendedMag" then magSlot = s end
+	if entry and entry.Id == "Att_Rifle_Compensator" then compSlot = s end
 end
 check(rifleSlot and magSlot and compSlot, "alles in der Tasche")
 
@@ -215,11 +228,11 @@ local ammo = lastAmmo(alice)
 check(ammo and ammo[1] == "Rifle", "Munitionsanzeige")
 
 -- Taste mit der Waffe in der Hand: ersetzt, alter Aufsatz kommt in die Tasche
-InventoryService.Give(alice, "Att_FastMag", 1)
+InventoryService.Give(alice, "Att_Rifle_FastMag", 1)
 local fastSlot
 for s = 1, ExtinctionConfig.HotbarSlots do
 	local entry = slot(alice, s)
-	if entry and entry.Id == "Att_FastMag" then fastSlot = s end
+	if entry and entry.Id == "Att_Rifle_FastMag" then fastSlot = s end
 end
 check(fastSlot ~= nil, "Schnellmagazin auf der Hotbar")
 -- Patronen zählen: im Magazin und in der Tasche (beim Wechsel auf das kleinere Magazin geht nichts verloren)
@@ -246,7 +259,7 @@ check(rifle.A.Magazine == "FastMag", "Schnellmagazin ersetzt das erweiterte")
 check(WeaponService.CarriedWeapon(alice) == "Rifle", "Gewehr bleibt in der Hand")
 local back = false
 for _, entry in bagOf(alice) do
-	back = back or entry.Id == "Att_ExtendedMag"
+	back = back or entry.Id == "Att_Rifle_ExtendedMag"
 end
 check(back, "erweitertes Magazin zurück in der Tasche")
 effects = AttachmentConfig.Effects(alice, "Rifle")
@@ -288,17 +301,27 @@ check(#fitLoose == 1 and fitLoose[1] == "VerticalGrip", "abgenommener Griff wird
 
 -- Anbauen: Griff passt nicht auf den Revolver
 check(InventoryService.Give(alice, "Revolver", 1) == 1, "Revolver bekommen")
-check(InventoryService.Give(alice, "Att_VerticalGrip", 1) == 1, "Vertikalgriff bekommen")
+check(InventoryService.Give(alice, "Att_Rifle_VerticalGrip", 1) == 1, "Vertikalgriff bekommen")
 local revolverSlot, gripSlot
 for s = 1, ExtinctionConfig.BagSlots do
 	local entry = slot(alice, s)
 	if entry and entry.Id == "Revolver" then revolverSlot = s end
-	if entry and entry.Id == "Att_VerticalGrip" then gripSlot = s end
+	if entry and entry.Id == "Att_Rifle_VerticalGrip" then gripSlot = s end
 end
 check(revolverSlot and gripSlot, "Revolver und Griff in der Tasche")
 check(InventoryService.Move(alice, "Bag", gripSlot, "Bag", revolverSlot) == false, "Griff lässt sich nicht an den Revolver bauen")
 check(slot(alice, revolverSlot).A == nil, "Revolver ohne Aufsatz")
-check(slot(alice, gripSlot) and slot(alice, gripSlot).Id == "Att_VerticalGrip", "Griff bleibt in der Tasche")
+check(slot(alice, gripSlot) and slot(alice, gripSlot).Id == "Att_Rifle_VerticalGrip", "Griff bleibt in der Tasche")
+-- Kompensator fürs LMG passt nicht auf den Revolver, obwohl der Revolver einen Kompensator nehmen kann
+check(InventoryService.Give(alice, "Att_LMG_Compensator", 1) == 1, "LMG-Kompensator bekommen")
+local lmgCompSlot
+for s = 1, ExtinctionConfig.BagSlots do
+	local entry = slot(alice, s)
+	if entry and entry.Id == "Att_LMG_Compensator" then lmgCompSlot = s end
+end
+check(lmgCompSlot and InventoryService.Move(alice, "Bag", lmgCompSlot, "Bag", revolverSlot) == false,
+	"LMG-Kompensator lässt sich nicht an den Revolver bauen")
+check(slot(alice, revolverSlot).A == nil, "Revolver weiter ohne Aufsatz")
 local fitStatus = lastExt(alice, "Status")
 check(fitStatus and string.find(tostring(fitStatus[2]), "passt nicht", 1, true), "Meldung: passt nicht")
 
@@ -317,7 +340,7 @@ for _, entry in bobBag do
 	if entry.Id == "Revolver" then bobRevolver = entry end
 end
 for _, entry in bobStash do
-	bobGrip = bobGrip or entry.Id == "Att_AngledGrip"
+	bobGrip = bobGrip or entry.Id == "Att_Rifle_AngledGrip"
 end
 check(bobRevolver and bobRevolver.A and bobRevolver.A.Barrel == "ShortBarrel" and bobRevolver.A.Grip == nil,
 	"alter Spielstand: Griff vom Revolver abgenommen")
