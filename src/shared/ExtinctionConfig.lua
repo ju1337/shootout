@@ -368,8 +368,12 @@ ExtinctionConfig.Redzone = {
 		{ Key = "Oed_NW", Title = "ÖDSTADT NORDWEST", X = -320, Z = 320 },
 	},
 	Color = Color3.fromRGB(226, 56, 48),
-	WallPanels = 48,         -- flimmernde Wand (ForceField) am Rand
-	WallHeight = 70,
+	-- Rauchwand am Rand: WallPanels Bodenstreifen, jeder mit SmokeRate Rauchwolken pro Sekunde (dezent, wenig Partikel)
+	WallPanels = 48,
+	SmokeRate = 1,
+	SmokeSize = 24,
+	SmokeAlpha = 0.72,       -- 1 = unsichtbar; je höher, desto dünner der Rauch
+	SmokeColor = Color3.fromRGB(150, 70, 64),
 	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in der roten Zone
 	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
 	KindWeights = { Walker = 50, Runner = 30, Brute = 12, Screamer = 8 },

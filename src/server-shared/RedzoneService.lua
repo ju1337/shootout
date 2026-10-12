@@ -103,7 +103,7 @@ local function announce(title, sub, style, sound)
 	end
 end
 
--- Wand aus flimmernden Platten (ForceField) im Kreis, Lichtsäule in der Mitte
+-- Rauchwand im Kreis (unsichtbare Bodenstreifen mit wenig, großem, langsamem Rauch), Lichtsäule in der Mitte
 local function buildVisual()
 	if visual then
 		visual:Destroy()
@@ -138,8 +138,24 @@ local function buildVisual()
 		local a = 2 * math.pi * (k - 0.5) / n
 		local x, z = center.X + math.cos(a) * radius, center.Z + math.sin(a) * radius
 		local y = options.GroundY and options.GroundY(x, z) or center.Y
-		part("Wall", Vector3.new(width, cfg.WallHeight, 1), CFrame.new(x, y + cfg.WallHeight / 2 - 6, z) * CFrame.Angles(0, -a + math.pi / 2, 0),
-			Enum.Material.ForceField, 0.15)
+		local wall = part("Wall", Vector3.new(width, 1, 4), CFrame.new(x, y + 1, z) * CFrame.Angles(0, -a + math.pi / 2, 0),
+			Enum.Material.SmoothPlastic, 1)
+		local smoke = Instance.new("ParticleEmitter")
+		smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		smoke.Shape = Enum.ParticleEmitterShape.Box
+		smoke.EmissionDirection = Enum.NormalId.Top
+		smoke.Color = ColorSequence.new(cfg.SmokeColor)
+		smoke.LightInfluence = 0.7
+		smoke.Size = NumberSequence.new(cfg.SmokeSize * 0.6, cfg.SmokeSize)
+		smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.25, cfg.SmokeAlpha),
+			NumberSequenceKeypoint.new(0.7, cfg.SmokeAlpha), NumberSequenceKeypoint.new(1, 1) })
+		smoke.Lifetime = NumberRange.new(7, 10)
+		smoke.Rate = cfg.SmokeRate
+		smoke.Speed = NumberRange.new(2, 4)
+		smoke.Drag = 0.3
+		smoke.Rotation = NumberRange.new(0, 360)
+		smoke.RotSpeed = NumberRange.new(-8, 8)
+		smoke.Parent = wall
 	end
 	local y = options.GroundY and options.GroundY(center.X, center.Z) or center.Y
 	local beam = part("Beam", Vector3.new(3, 400, 3), CFrame.new(center.X, y + 200, center.Z), Enum.Material.Neon, 0.55)
