@@ -40,7 +40,8 @@ PART_OF = {
 }
 # Farben (sRGB 0-255); Skin_Slide bekommt die Farbe vom Skin (ohne Skin dunkelt GunModels sie ab)
 SRGB = {"Skin_Slide": (36, 36, 40), "Neon_Slide_Dots": (90, 255, 110), "Magazine": (30, 30, 32), "Frame": (34, 34, 36),
-        "Metal": (26, 26, 28), "Steel": (88, 88, 94), "Barrel": (52, 52, 56)}
+        "Metal": (26, 26, 28), "Steel": (48, 48, 52), "Barrel": (40, 40, 43)}
+# alles matt (SmoothPlastic, auch Metallteile): Metal spiegelt in der Sonne den Himmel, die Waffe wirkt dann fast weiß
 
 # Marker (GLB-Einheiten: x = nach vorn, y = oben, z = rechts)
 POINTS = [
@@ -101,7 +102,7 @@ def build():
 
 def write_boxes(parts):
     """Testkopie: je Teil ein Quader über die Ausdehnung des Meshes, Marker wie im GLB."""
-    material = {"Neon_Slide_Dots": "Neon", "Frame": "SmoothPlastic", "Magazine": "SmoothPlastic"}
+    material = {"Neon_Slide_Dots": "Neon"}
     boxes = []
     for name, (P, _, _) in parts.items():
         if name.startswith("Point"):
@@ -109,7 +110,7 @@ def write_boxes(parts):
         lo = [min(v[i] for v in P) for i in range(3)]; hi = [max(v[i] for v in P) for i in range(3)]
         boxes.append({"name": name, "shape": "Block", "cframe": [*((a + c) / 2 for a, c in zip(lo, hi)), 1, 0, 0, 0, 1, 0, 0, 0, 1],
                       "size": tuple(c - a for a, c in zip(lo, hi)), "color": SRGB[name],
-                      "material": material.get(name, "Metal"), "transparency": 0.0})
+                      "material": material.get(name, "SmoothPlastic"), "transparency": 0.0})
     boxes += wt.marker_parts([(name, rb(pt)) for name, pt in POINTS])
     wt.write_rbxmx("Pistol", boxes, os.path.join(ROOT, "assets", "Weapons"))
 
