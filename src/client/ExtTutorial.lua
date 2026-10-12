@@ -272,7 +272,7 @@ function ExtTutorial.Start(withIntro)
 		return
 	end
 	local C2 = UITheme.MenuColors
-	intro = make("Frame", { Name = "Intro", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.6), -- unter dem Banner der täglichen Kiste
+	intro = make("Frame", { Name = "Intro", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.6),
 		Size = UDim2.fromOffset(560, 250), BackgroundColor3 = C2.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0,
 		ZIndex = 20 }, gui)
 	UITheme.Corner(intro, UITheme.Radius.Medium)
@@ -305,8 +305,7 @@ function ExtTutorial.Start(withIntro)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
 	end)
-	InputActions.Focus(buttons)
-	Sfx.UI("StingInfo")
+	InputActions.Focus(buttons) -- ohne Sound: beim Spawn soll nichts klingen
 end
 
 -- Tutorial beenden (Knopf im GUIDE): zählt als übersprungen

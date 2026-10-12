@@ -1,12 +1,11 @@
 -- ExtDailyService (ModuleScript, nur Server)
 -- Tägliche Kiste (Werte in ExtDailyConfig): beim Betreten der offenen Welt einmal am Tag Items ins Lager (passt etwas nicht
--- hinein: in die Tasche), Münzen am Tag 7, Meldung mit Inhalt und Serie. Stand im Profil (ExtDaily) und im Attribut.
+-- hinein: in die Tasche), Münzen am Tag 7, ohne Meldung (still). Stand im Profil (ExtDaily) und im Attribut.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Remotes = require(Shared.Remotes)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ExtDailyConfig = require(Shared.ExtDailyConfig)
 local ProgressService = require(script.Parent.ProgressService)
@@ -42,7 +41,7 @@ function ExtDailyService.Claim(player)
 		end
 	end
 	profile.ExtDaily = { Date = ExtDailyConfig.Date(now), Day = day } -- vor dem Verteilen: kein zweites Abholen bei einem Fehler
-	local names, rest = {}, {}
+	local rest = {}
 	for _, item in items do
 		local id, count = item[1], item[2]
 		local config = ExtinctionConfig.Get(id)
@@ -50,9 +49,6 @@ function ExtDailyService.Claim(player)
 			local put = InventoryService.GiveStash(player, id, count)
 			if put < count then
 				put += InventoryService.Give(player, id, count - put)
-			end
-			if put > 0 then
-				table.insert(names, (put > 1 and (put .. "× ") or "") .. config.Name)
 			end
 			if put < count then
 				table.insert(rest, { Id = id, Count = count - put })
@@ -76,12 +72,8 @@ function ExtDailyService.Claim(player)
 	end
 	if reward.Coins then
 		ProgressService.AddCoins(player, reward.Coins, "Tägliche Kiste")
-		table.insert(names, reward.Coins .. " Münzen")
 	end
-	publish(player, profile.ExtDaily)
-	Remotes.Notify:FireClient(player, "Banner", { Caption = "Tägliche Kiste · Tag " .. day .. " von " .. #ExtDailyConfig.Days,
-		Title = day == #ExtDailyConfig.Days and "GROSSER PREIS" or "DEINE KISTE IST DA", Sub = "Im Lager: " .. table.concat(names, ", ")
-			.. (day < #ExtDailyConfig.Days and " · morgen wiederkommen, Tag 7 = seltene Waffe" or ""), Style = "Good" })
+	publish(player, profile.ExtDaily) -- still: kein Banner und kein Sound beim Spawn (Julio 2026-10-12)
 	return day
 end
 
