@@ -6,7 +6,8 @@
 -- Bloom = zusätzliche Streuung pro Schuss bei Dauerfeuer (höchstens MaxBloom), baut sich in Feuerpausen ab
 -- Recoil = Kamera-Rückstoß nach oben pro Schuss in Grad, RecoilSide = zufällig zur Seite,
 --   MaxRecoil = Obergrenze. Nach dem Loslassen wandert der Blick von selbst zurück.
---   RecoilReturn = false: Blick bleibt oben (kein Zurückwandern, keine Obergrenze), man zieht selbst mit der Maus nach
+--   RecoilReturnTime = Sekunden, bis der Blick nach dem Feuern sanft wieder unten ist (sonst Standard)
+--   RecoilPullDown = Runterziehen mit der Maus gleicht den Rückstoß aus (Zurückgleiten rutscht dann nicht unters Ziel)
 -- AimSpread (optional) = feste Streuung beim Zielen, ersetzt alles andere (0 = trifft immer genau die Mitte)
 -- Kick = wie stark die Waffe in der Hand zurückschlägt (nur Optik)
 -- AimFov = Sichtfeld beim Zielen (Rechtsklick)
@@ -200,8 +201,9 @@ WeaponConfig.Weapons = {
 		MaxBloom = 2.4,
 		Recoil = 2.2,         -- nur gerade nach oben; runterziehen bringt das Fernrohr genau zurück aufs Ziel
 		RecoilSide = 0,
-		RecoilReturn = false,
-		MaxRecoil = 5,
+		RecoilReturnTime = 1, -- nach dem Schuss in 1 s sanft zurück in die Ausgangslage
+		RecoilPullDown = true,
+		MaxRecoil = 12,
 		Kick = 1.8,
 		AimFov = 30,
 		ScopeFov = 14,        -- Sichtfeld durchs Zielfernrohr (nur mit 3D-Modell, GunModels.HasScope)

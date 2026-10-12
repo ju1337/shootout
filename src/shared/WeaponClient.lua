@@ -85,6 +85,7 @@ local bloom, bloomTime = 0, 0
 local recoilPitch, recoilYaw = 0, 0   -- Ziel des Rückstoßes (Grad)
 local shownPitch, shownYaw = 0, 0     -- schon erreichter Rückstoß
 local appliedPitch, appliedYaw = 0, 0 -- schon auf die Kamera gelegt
+local lastCameraPitch = nil           -- Kamerawinkel nach dem letzten Bild (erkennt Runterziehen mit der Maus)
 local viewModel = nil
 local knife = nil        -- Messer-Modell während des Stichs
 local lastMelee = 0
@@ -486,11 +487,7 @@ local function tryFire()
 	-- Rückstoß: hoch und etwas zur Seite, beim Zielen weniger (Aufsätze: Kompensator, Vertikalgriff).
 	-- Nach dem Feuern wandert der Blick zurück.
 	local strength = (aiming and 0.75 or 1) * effects.Recoil
-	if cfg.RecoilReturn == false then
-		recoilPitch += (cfg.Recoil or 0) * strength -- bleibt oben, keine Obergrenze: man zieht selbst nach
-	else
-		recoilPitch = math.min(recoilPitch + (cfg.Recoil or 0) * strength, cfg.MaxRecoil or 5)
-	end
+	recoilPitch = math.min(recoilPitch + (cfg.Recoil or 0) * strength, cfg.MaxRecoil or 5)
 	recoilYaw += (random:NextNumber() - 0.5) * 2 * (cfg.RecoilSide or 0) * strength
 	recoilYaw = math.clamp(recoilYaw, -(cfg.MaxRecoil or 5) * 0.4, (cfg.MaxRecoil or 5) * 0.4)
 	if viewModel then
@@ -708,9 +705,23 @@ function WeaponClient.Init()
 	-- Rückstoß auf die Kamera legen. Die Kamera rechnet vom aktuellen Blick aus weiter, darum wird nur die
 	-- Änderung pro Bild aufgetragen: schnell hoch, nach dem Feuern sanft zurück.
 	RunService:BindToRenderStep("WeaponRecoil", Enum.RenderPriority.Camera.Value + 1, function(dt)
-		local holdView = current ~= nil and WeaponConfig.Get(current).RecoilReturn == false
-		if not holdView and os.clock() - lastShot > RECOIL_HOLD then
-			local decay = math.exp(-RECOIL_RETURN * dt)
+		local camera = workspace.CurrentCamera
+		local cfg = current and WeaponConfig.Get(current)
+		if cfg and cfg.RecoilPullDown and lastCameraPitch and recoilPitch > 0 then
+			-- Spieler zieht die Maus runter: das zählt als ausgeglichener Rückstoß, damit das Zurückgleiten
+			-- danach nicht unter das Ziel rutscht
+			local pulled = lastCameraPitch - math.deg(math.asin(math.clamp(camera.CFrame.LookVector.Y, -1, 1)))
+			if pulled > 0 then
+				local used = math.min(pulled, recoilPitch)
+				recoilPitch -= used
+				shownPitch -= used
+				appliedPitch -= used
+			end
+		end
+		if os.clock() - lastShot > RECOIL_HOLD then
+			-- RecoilReturnTime: so viele Sekunden, bis der Blick wieder (fast ganz) in der Ausgangslage ist
+			local speed = cfg and cfg.RecoilReturnTime and 4 / cfg.RecoilReturnTime or RECOIL_RETURN
+			local decay = math.exp(-speed * dt)
 			recoilPitch *= decay
 			recoilYaw *= decay
 		end
@@ -720,18 +731,10 @@ function WeaponClient.Init()
 		local deltaPitch = shownPitch - appliedPitch
 		local deltaYaw = shownYaw - appliedYaw
 		if math.abs(deltaPitch) > 0.0001 or math.abs(deltaYaw) > 0.0001 then
-			local camera = workspace.CurrentCamera
 			camera.CFrame *= CFrame.Angles(math.rad(deltaPitch), math.rad(deltaYaw), 0)
 			appliedPitch, appliedYaw = shownPitch, shownYaw
 		end
-		if holdView then
-			-- Rückstoß ohne Zurückwandern: Aufgetragenes abziehen, so bleibt der Blick dort, wo die Maus ihn hinzieht
-			recoilPitch -= appliedPitch
-			shownPitch -= appliedPitch
-			recoilYaw -= appliedYaw
-			shownYaw -= appliedYaw
-			appliedPitch, appliedYaw = 0, 0
-		end
+		lastCameraPitch = math.deg(math.asin(math.clamp(camera.CFrame.LookVector.Y, -1, 1)))
 	end)
 
 	-- Dauerfeuer bei automatischen Waffen
