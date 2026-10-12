@@ -470,12 +470,60 @@ do
 	local torso = zombie:FindFirstChild("UpperTorso") or zombie:FindFirstChild("Torso")
 	local zh = zombie:FindFirstChildOfClass("Humanoid")
 	local before = zh.Health
-	local aim = torso.Position + Vector3.new(2.2, 0, 0)
-	Remotes.Fire.OnServerEvent:Fire(bob, origin, (aim - origin).Unit, false, 103, { { Part = torso, Position = torso.Position } })
+	local aim = torso.Position + Vector3.new(1.7, 0, 0)
+	Remotes.Fire.OnServerEvent:Fire(bob, origin, (aim - origin).Unit, true, 103, { { Part = torso, Position = torso.Position } })
 	step(0.3)
 	check(zh.Health < before, "gemeldeter Zombie-Treffer zählt (" .. zh.Health .. " / " .. before .. ")")
 	zombie:Destroy()
 end
+
+-- ---------- Anti-Cheat beim Schießen ----------
+-- gemeldeter Kopftreffer knapp unter dem Kopf (Hals/Schulter): kein Treffer am Kopf
+alice.Character.Humanoid.Health = 100
+step(1)
+do
+	local origin = bob.Character.Head.Position
+	local neck = alice.Character.Head.Position - Vector3.new(0, 1.7, 0)
+	Remotes.Fire.OnServerEvent:Fire(bob, origin, (neck - origin).Unit, true, 0, { { Part = alice.Character.Head, Position = neck } })
+	step(0.3)
+end
+check(100 - alice.Character.Humanoid.Health < headDamage,
+	"Punkt knapp unter dem Kopf zählt nicht als Kopftreffer (" .. (100 - alice.Character.Humanoid.Health) .. ")")
+-- Schuss-Nummer: der Server zählt selbst weiter, eine übersprungene Nummer des Clients zählt nicht
+local idBefore = lastAmmo(bob)[6]
+alice.Character.Humanoid.Health = 100
+step(1)
+shoot(bob, alice, 999999)
+check(lastAmmo(bob)[6] == idBefore + 1, "Schuss-Nummer läuft auf dem Server weiter (" .. tostring(lastAmmo(bob)[6]) .. ")")
+-- gerade 15 Studs weit gesprungen (Teleport um die Ecke): Schuss zählt nicht, kurz danach wieder
+alice.Character.Humanoid.Health = 100
+step(1)
+bob.Character:PivotTo(bob.Character:GetPivot() + Vector3.new(15, 0, 0))
+shoot(bob, alice, 0)
+check(alice.Character.Humanoid.Health == 100, "Schuss direkt nach einem Teleport zählt nicht")
+step(0.4)
+shoot(bob, alice, 0)
+check(alice.Character.Humanoid.Health < 100, "kurz danach zählt der Schuss wieder")
+-- Fahrzeug dazwischen: Deckung auch gegen gemeldete Treffer (sichtbare Teile sind nicht fest)
+alice.Character.Humanoid.Health = 100
+step(1)
+local car = Instance.new("Model")
+car:SetAttribute("VehicleId", "Test")
+local carBody = Instance.new("Part", car)
+carBody.CanCollide = false
+car.Parent = workspace
+SIM.RaycastHandler = function(origin, direction)
+	if math.abs(direction.Y) < direction.Magnitude * 0.5 and direction.Magnitude > 4 then -- waagerecht Richtung Alice
+		return { Instance = carBody, Position = origin + direction.Unit * 4, Normal = -direction.Unit, Distance = 4,
+			Material = Enum.Material.Metal }
+	end
+	return nil
+end
+shoot(bob, alice, 0)
+SIM.RaycastHandler = nil
+car:Destroy()
+check(alice.Character.Humanoid.Health == 100, "Auto dazwischen: gemeldeter Treffer zählt nicht")
+alice.Character.Humanoid.Health = 100
 
 -- ---------- Im Kampf: Safe Zone gesperrt (CombatUntil), danach wieder offen ----------
 local now = workspace:GetServerTimeNow()

@@ -200,6 +200,7 @@ local HISTORY_TIME = 0.6     -- Sekunden Verlauf
 local HISTORY_STEP = 0.05
 local HIT_TOLERANCE = 6      -- Studs: Abstand gemeldeter Treffer – Körpermitte (Kopf bis Füße + Bewegung)
 local CLAIM_ANGLE = math.rad(4)
+local CLAIM_SLACK = 0.75     -- Studs: so weit darf ein gemeldeter Treffer außerhalb des getroffenen Körperteils liegen
 local history = setmetatable({}, { __mode = "k" }) -- [Model] = { { Time, Position }, ... }
 
 -- withZombies: Zombies nur jede zweite Probe (10 Hz reicht bei ihrem Tempo, und es sind die meisten Modelle)
@@ -296,14 +297,18 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 	if not wasNear(model, position) then
 		return nil
 	end
-	-- und der Punkt liegt am gemeldeten Körperteil (jetzt oder um die Bewegung seit damals verschoben); sonst würde aus
-	-- jedem knappen Treffer am Körper ein Kopftreffer
+	-- und der Punkt liegt im gemeldeten Körperteil (dessen Quader plus CLAIM_SLACK, jetzt oder um die Bewegung seit
+	-- damals verschoben); sonst würde aus einem knappen Treffer an der Schulter ein Kopftreffer (×2)
 	local root = model:FindFirstChild("HumanoidRootPart")
-	local reach = part.Size.Magnitude / 2 + 1.5
-	local onPart = (part.Position - position).Magnitude <= reach
+	local half = part.Size / 2 + Vector3.one * CLAIM_SLACK
+	local function inside(shift)
+		local p = part.CFrame:PointToObjectSpace(position - shift)
+		return math.abs(p.X) <= half.X and math.abs(p.Y) <= half.Y and math.abs(p.Z) <= half.Z
+	end
+	local onPart = inside(Vector3.zero)
 	if not onPart and root then
 		for _, sample in history[model] or {} do
-			if (part.Position + (sample.Position - root.Position) - position).Magnitude <= reach then
+			if inside(sample.Position - root.Position) then
 				onPart = true
 				break
 			end
@@ -317,10 +322,47 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = trackedModels(true)
 	local blocked = workspace:Raycast(shotOrigin, offset.Unit * math.max(0, distance - 0.6), params)
-	if blocked and blocked.Instance.CanCollide and blocked.Instance.Transparency < 0.9 then
-		return nil
+	if blocked and blocked.Instance.Transparency < 0.9 then
+		-- feste Wände, aber auch Fahrzeuge und Konvoi: deren sichtbare Teile sind nicht fest (CanCollide aus), geben aber
+		-- Deckung wie beim eigenen Strahl des Servers (der trifft dann das Fahrzeug)
+		local vehicle = blocked.Instance:FindFirstAncestorOfClass("Model")
+		if blocked.Instance.CanCollide or (vehicle and (vehicle:GetAttribute("VehicleId") or vehicle:GetAttribute("Convoy"))) then
+			return nil
+		end
 	end
 	return part, position
+end
+
+-- Kurzer Teleport zum Schießen (um die Ecke, schießen, zurück – schneller, als der Bewegungs-Check alle 0,2 s prüft):
+-- Gab es im Verlauf der letzten TELEPORT_WINDOW Sekunden einen Sprung, den kein Laufen, Sprinten oder Springen schafft?
+-- Fallen zählt nicht (nur waagerecht und nach oben). Kleine Sprünge bis TELEPORT_FLAT bleiben erlaubt (Netz-Ruckler:
+-- der Server bekommt Bewegung manchmal gebündelt).
+local TELEPORT_WINDOW = 0.3
+local TELEPORT_FLAT = 8      -- Studs waagerecht zwischen zwei Proben, mindestens …
+local TELEPORT_FLAT_SPEED = 120 -- … bzw. so schnell (Studs/s; Sprint-Stoß ist 90)
+local TELEPORT_UP = 7
+local TELEPORT_UP_SPEED = 90
+local function jumpedRecently(character, root, now)
+	local previous = nil
+	local function jump(time, position)
+		if previous then
+			local dt = math.max(HISTORY_STEP, time - previous.Time)
+			local delta = position - previous.Position
+			local flat = Vector3.new(delta.X, 0, delta.Z).Magnitude
+			if flat > math.max(TELEPORT_FLAT, TELEPORT_FLAT_SPEED * dt)
+				or delta.Y > math.max(TELEPORT_UP, TELEPORT_UP_SPEED * dt) then
+				return true
+			end
+		end
+		previous = { Time = time, Position = position }
+		return false
+	end
+	for _, sample in history[character] or {} do
+		if now - sample.Time <= TELEPORT_WINDOW and jump(sample.Time, sample.Position) then
+			return true
+		end
+	end
+	return jump(now, root.Position)
 end
 
 -- Steht der Charakter in der Luft? (kurzer Strahl nach unten, R6 und R15)
@@ -461,6 +503,11 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 	if not ((origin - head.Position).Magnitude <= MAX_ORIGIN_DISTANCE) then
 		return false
 	end
+	-- gerade erst hingesprungen (Teleport um die Ecke): Schuss zählt nicht. In Fahrzeugen nicht (die sind schnell).
+	local shooterRoot = character:FindFirstChild("HumanoidRootPart")
+	if shooterRoot and not humanoid.SeatPart and jumpedRecently(character, shooterRoot, os.clock()) then
+		return false
+	end
 
 	local weaponName = state.Current
 	if not weaponName or character:GetAttribute("UsingItem") then
@@ -565,14 +612,10 @@ local function onFire(player, origin, direction, aiming, shotId, claims)
 		return
 	end
 	clearInspect(player)
-	local validId = typeof(shotId) == "number" and shotId == shotId and math.abs(shotId) < 1e9
-	-- Die Nummer bestimmt die Streuung (Seed): nur eine neue, höhere Nummer zählt. Sonst nimmt der Server die nächste,
-	-- damit niemand eine günstige Streuung wiederholt schicken kann
-	if validId and shotId > (lastShotIds[player] or 0) then
-		lastShotIds[player] = math.floor(shotId)
-	else
-		lastShotIds[player] = (lastShotIds[player] or 0) + 1
-	end
+	-- Die Nummer bestimmt die Streuung (Seed). Der Client zählt bei jedem Schuss um eins weiter (geordnetes Remote), also
+	-- zählt der Server selbst mit und nimmt immer die nächste: Eine selbst gewählte (übersprungene) Nummer mit günstiger
+	-- Streuung bringt so nichts. (shotId des Clients wird deshalb nicht übernommen.)
+	lastShotIds[player] = (lastShotIds[player] or 0) + 1
 	fire(player, state, origin, direction, aiming == true, lastShotIds[player], claims)
 	sendAmmo(player)
 end
