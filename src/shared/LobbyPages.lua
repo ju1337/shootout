@@ -178,7 +178,7 @@ end
 -- Farben und Bausteine des SHOP: Design des Menüs der offenen Welt (fast deckende dunkle Flächen, Rot als Akzent)
 local SHOP_RED = UITheme.MenuColors.Primary
 local SHOP_PANEL = Color3.fromRGB(14, 15, 18)
-local RARITY_ORDER = { Legendary = 4, Epic = 3, Rare = 2, Common = 1 }
+local RARITY_ORDER = { Mythic = 5, Legendary = 4, Epic = 3, Rare = 2, Common = 1 }
 -- Raster: 6 Karten pro Reihe über die ganze Breite, gleiche Abstände
 local GRID_COLUMNS, GRID_GAP, CARD_H = 6, 16, 318
 local CARD_W = math.floor((PAGE_W - (GRID_COLUMNS - 1) * GRID_GAP) / GRID_COLUMNS)

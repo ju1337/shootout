@@ -38,7 +38,7 @@ local function sourceText(item)
 end
 
 -- Kacheln in fester Reihenfolge: STANDARD, freigeschaltete, gesperrte (je nach Seltenheit, dann Preis)
-local RARITY_ORDER = { Common = 1, Rare = 2, Epic = 3, Legendary = 4 }
+local RARITY_ORDER = { Common = 1, Rare = 2, Epic = 3, Legendary = 4, Mythic = 5 }
 local function sortedSkins(owned)
 	local list = Cosmetics.List("Agent")
 	table.sort(list, function(a, b)

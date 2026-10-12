@@ -29,6 +29,7 @@ Cosmetics.Rarities = {
 	Rare = { Name = "Selten", Color = Color3.fromRGB(86, 136, 204) },
 	Epic = { Name = "Episch", Color = Color3.fromRGB(148, 104, 204) },
 	Legendary = { Name = "Legendär", Color = Color3.fromRGB(214, 160, 62) },
+	Mythic = { Name = "Mythisch", Color = Color3.fromRGB(226, 52, 72) }, -- nur im Shop (nicht in Kisten)
 }
 
 Cosmetics.Items = {
@@ -161,6 +162,9 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(120, 96, 66), Material = Enum.Material.Fabric },
 	{ Id = "AS_ShadowScout", Type = "Agent", Name = "Shadow Scout", Rarity = "Epic", Price = 1, Test = true, Model = true,
 		Color = Color3.fromRGB(28, 28, 32), Material = Enum.Material.Fabric },
+	-- Skull Agent: Kapuze mit Totenkopfmaske, Skelett-Handschuhe (tools/agents/pieces.py, Schnitte siehe dort)
+	{ Id = "AS_SkullAgent", Type = "Agent", Name = "Skull Agent", Rarity = "Mythic", Price = 5000, Model = true,
+		Color = Color3.fromRGB(30, 34, 44), Material = Enum.Material.Fabric },
 	-- Creator-Skin: mit Team-Rang CREATOR (wie die Creator-Waffen-Skins)
 	{ Id = "AS_Creator", Type = "Agent", Name = "Creator", Rarity = "Legendary", Reward = true, Creator = true,
 		Color = Color3.fromRGB(150, 70, 230), Material = Enum.Material.Foil },

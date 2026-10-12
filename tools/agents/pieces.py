@@ -2,13 +2,18 @@
 # AgentModels für Modelle ohne Rig erwartet (docs/agenten-modelle.md). Gleichmäßig auf 5,2 Studs skaliert, Füße auf 0,
 # Blick nach -Z. Dreiecke an einer Schnittkante gehören zu beiden Teilen (keine Löcher beim Bewegen). Textur bleibt.
 #
-#   python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb> [NECK WAIST HIP ELBOW WRIST KNEE ANKLE ARM_X [OVERLAP]]
+#   python3 tools/agents/pieces.py <meshy.glb> <ausgabe.glb> [NECK WAIST HIP ELBOW WRIST KNEE ANKLE ARM_X [OVERLAP [ARM_Z [HEAD_X]]]]
 #
 # Schnitthöhen in Studs (nach dem Skalieren) für den Scout: Hals 3.87, Gürtel 2.35, Hüfte 1.95, Ellbogen 3.05,
 # Handschuh 2.38, Knie 1.16, Stiefel 0.5; Arme ab |x| 0.85. Für andere Modelle anpassen (Vorschau rendern!).
 # OVERLAP (Studs, Standard 0.15): so weit reicht jedes Teil über seine Schnittkante ins Nachbarteil hinein (gleiche
 # Dreiecke in beiden Teilen). Beugt sich ein Gelenk beim Laufen, deckt der Überstand die Kante ab – ohne ihn klaffen
 # an Hüfte, Schritt und Achseln kleine Löcher.
+# ARM_Z (Standard 1.85): unterhalb davon gehört nichts mehr zu Arm/Hand. Bei Modellen mit langen Armen tiefer setzen
+# (Skull Agent: Hände bis 1.72).
+# HEAD_X (Standard: unbegrenzt): Kopf nur bis |x| < HEAD_X – sonst landen breite Schulterpolster im Kopfteil, und der
+# Kopf bestimmt die Kopftreffer-Zone (AgentModels).
+#   Skull Agent: 3.95 2.25 1.85 3.0 2.22 1.0 0.35 1.0 0.15 1.6 0.95
 import bpy, bmesh, sys, numpy as np
 args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
 SRC, OUT = args[0], args[1]
@@ -16,6 +21,8 @@ cuts = [float(a) for a in args[2:]] or [3.87, 2.35, 1.95, 3.05, 2.38, 1.16, 0.5,
 H = 5.2
 NECK, WAIST, HIP, ELBOW, WRIST, KNEE, ANKLE, ARM_X = cuts[:8]
 OVERLAP = cuts[8] if len(cuts) > 8 else 0.15
+ARM_Z = cuts[9] if len(cuts) > 9 else 1.85
+HEAD_X = cuts[10] if len(cuts) > 10 else float("inf")
 RINGS = 3
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -36,8 +43,8 @@ cen = np.zeros(nf*3); me.polygons.foreach_get("center", cen); cen = cen.reshape(
 x, z = cen[:, 0], cen[:, 2]
 def label(X, Z):
     side = "Right" if X < 0 else "Left"
-    if Z >= NECK: return "Head"
-    if abs(X) >= ARM_X and Z >= 1.85:
+    if Z >= NECK and abs(X) < HEAD_X: return "Head"
+    if abs(X) >= ARM_X and Z >= ARM_Z:
         return side + ("UpperArm" if Z >= ELBOW else "LowerArm" if Z >= WRIST else "Hand")
     if Z >= WAIST: return "UpperTorso"
     if Z >= HIP: return "LowerTorso"

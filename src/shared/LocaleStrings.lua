@@ -1420,6 +1420,8 @@ return {
 	["MÜNZEN, PÄSSE UND BOOSTS"] = "COINS, PASSES AND BOOSTS",
 	["Münzen für Skins, Aufsätze und Agenten"] = "Coins for skins, attachments and agents",
 	["Münzen pro Stunde, auch wenn du offline bist"] = "Coins per hour, even while offline",
+	["MYTHISCH"] = "MYTHIC",
+	["Mythisch"] = "Mythic",
 	["N SCHLIESSEN"] = "N CLOSE",
 	["Nach dem Tod spawnst du hier"] = "You'll respawn here after death",
 	["Nach einem Kill 2 s lang 20 % schneller."] = "20 % faster for 2 s after a kill.",
