@@ -36,5 +36,13 @@
   Kimme und die Kornspitze), ohne Schalldämpfer, Laser-Modul und lose Patronen, 1,05 Studs lang, Lauf nach -Z. In Studio:
   Import 3D > Pistol.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Pistol" nennen.
 
+- `m60.glb`: "low-poly M60 Machine Gun" von D_U (https://sketchfab.com/DU1701), Lizenz CC-BY-4.0
+  (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-m60-machine-gun-9defc3535972489c817c5f47551cbebf
+- `LMG.glb`: die fertig vorbereitete Studio-Version für das MG (`python3 tools/m60_glb.py`): Teile benannt (Gehäuse,
+  Schaft, Handschutz und Zuführdeckel = Skin-Zonen, Deckel = Gruppe `Cover`, Munitionskasten links = `Magazine`,
+  Spannhebel = `Bolt`, Leuchtpunkt auf dem Korn), Marker gesetzt (Visierlinie über die Kimmen-Ohren der Klappkimme und
+  die Kornspitze), ohne lose Patronen, Gurtstücke und den zweiten Kasten, 4,33 Studs lang, Lauf nach -Z. In Studio:
+  Import 3D > LMG.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "LMG" nennen.
+
 - `Rifle_Texturen/Skin_Body_Overlay.png`: Farb-Grundtextur für Farb-Skins am aktuellen Sturmgewehr (Farbe aus
   `Rifle.glb`, gleichmäßige Flächen teilweise durchsichtig), erzeugt mit `python3 tools/models/rifle_overlay.py`.
