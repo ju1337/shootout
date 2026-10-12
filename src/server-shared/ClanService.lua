@@ -28,15 +28,17 @@ do
 end
 local memory = {} -- Ersatz ohne DataStore und Zwischenspeicher: [Tag] = Daten
 
+-- Gibt die Daten zurück und als zweiten Wert, ob sie sicher stimmen (false: DataStore-Fehler und nichts zwischengespeichert)
 local function fetch(tag)
 	if store then
 		local ok, data = pcall(store.GetAsync, store, tag)
 		if ok then
 			memory[tag] = data
-			return data
+			return data, true
 		end
+		return memory[tag], memory[tag] ~= nil
 	end
-	return memory[tag]
+	return memory[tag], true
 end
 
 -- Daten ändern: fn(alt) gibt neu zurück (nil = löschen). Gibt die neuen Daten zurück.
@@ -283,7 +285,17 @@ local function load(player)
 	if not profile or not profile.Clan then
 		return
 	end
-	local data = fetch(profile.Clan)
+	local data, sure = fetch(profile.Clan)
+	for _ = 1, 4 do -- DataStore antwortet gerade nicht: kurz warten statt den Clan aus dem Profil zu löschen
+		if sure or not player.Parent then
+			break
+		end
+		task.wait(5)
+		data, sure = fetch(profile.Clan)
+	end
+	if not sure then
+		return -- weiter nicht erreichbar: Clan bleibt im Profil, beim nächsten Beitritt wird neu geprüft
+	end
 	if data and data.Members[tostring(player.UserId)] then
 		if data.Members[tostring(player.UserId)] ~= player.Name then
 			data = change(profile.Clan, function(old)

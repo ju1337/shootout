@@ -684,7 +684,8 @@ function ExtinctionMap.Init()
 			return
 		end
 		if input.KeyCode == Enum.KeyCode.ButtonB then
-			ExtinctionMap.Set(false) -- Controller: ○ schließt wie bei den Fenstern
+			-- Controller: ○ schließt wie bei den Fenstern (erst nach diesem Tastendruck, damit Ducken die Karte noch offen sieht)
+			task.defer(ExtinctionMap.Set, false)
 		elseif input.KeyCode == Enum.KeyCode.ButtonR2 or input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.KeypadPlus then
 			zoomBy(1.5)
 		elseif input.KeyCode == Enum.KeyCode.ButtonL2 or input.KeyCode == Enum.KeyCode.Minus or input.KeyCode == Enum.KeyCode.KeypadMinus then

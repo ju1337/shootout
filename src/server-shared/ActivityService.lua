@@ -170,6 +170,26 @@ local function prompt(parent, action, object, hold)
 	return p
 end
 
+-- Haltezeit auch auf dem Server prüfen (wie LootService): sonst löst ein Exploiter den Prompt per Remote sofort aus –
+-- ohne 10 s Lärm am Lager. Gibt held(player) zurück: true, wenn seit dem Anfang des Haltens genug Zeit vergangen ist.
+local HOLD_SLACK = 0.8 -- Anteil der Haltezeit, der mindestens vergangen sein muss (Ping)
+local function trackHold(p)
+	local started = {} -- [Player] = Beginn des Haltens (wird beim Auslösen geleert)
+	local ok = pcall(function()
+		p.PromptButtonHoldBegan:Connect(function(player)
+			started[player] = os.clock()
+		end)
+	end)
+	return function(player)
+		if not ok or p.HoldDuration < 1 then
+			return true
+		end
+		local at = started[player]
+		started[player] = nil
+		return at ~= nil and os.clock() - at >= p.HoldDuration * HOLD_SLACK
+	end
+end
+
 -- Darf der Spieler gerade etwas an diesem Spot tun? (lebt, offene Welt, nah dran)
 local function canUse(player, spot)
 	local root = livingRoot(player)
@@ -356,8 +376,11 @@ local function buildCache(spot)
 	if not ok then
 		spot.NoHoldSignal = true
 	end
+	local held = trackHold(p)
 	p.Triggered:Connect(function(player)
-		ActivityService.OpenCache(player, spot)
+		if held(player) then
+			ActivityService.OpenCache(player, spot)
+		end
 	end)
 	spot.State = "Ready"
 	setCacheLook(spot, false)
@@ -406,8 +429,11 @@ local function buildRadio(spot)
 	spot.SubText = sub
 	local p = prompt(radio, "Notruf senden", "Funkgerät", A.Radio.HoldTime)
 	spot.Prompt = p
+	local held = trackHold(p)
 	p.Triggered:Connect(function(player)
-		ActivityService.UseRadio(player, spot)
+		if held(player) then
+			ActivityService.UseRadio(player, spot)
+		end
 	end)
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
@@ -537,8 +563,11 @@ local function buildSurvivor(spot)
 	sub.Text = "E HALTEN · RETTEN"
 	local p = prompt(torso, "Retten", "Überlebender", cfg.HoldTime)
 	spot.Prompt = p
+	local held = trackHold(p)
 	p.Triggered:Connect(function(player)
-		ActivityService.Rescue(player, spot)
+		if held(player) then
+			ActivityService.Rescue(player, spot)
+		end
 	end)
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder

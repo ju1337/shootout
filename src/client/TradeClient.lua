@@ -34,6 +34,12 @@ local F = UITheme.Fonts
 local make, label, upper = UITheme.Make, UITheme.Label, UITheme.Upper
 local format = UITheme.FormatNumber
 
+-- RAP, das nach der Tausch-Steuer ankommt (wie EconomyService.Exchange rechnet)
+local function afterTax(rap)
+	rap = math.floor(rap or 0)
+	return rap - math.floor(rap * RapConfig.TradeTax + 0.5)
+end
+
 local TradeClient = {}
 
 local WIN_W, WIN_H = 1120, 660
@@ -326,8 +332,12 @@ local function render()
 	local theirRap = make("Frame", { Position = UDim2.fromOffset(0, 360), Size = UDim2.new(1, 0, 0, 56), BackgroundColor3 = C.Background,
 		BackgroundTransparency = 0.35, ZIndex = 5 }, right)
 	UITheme.Corner(theirRap, UITheme.Radius.Large)
-	label({ Position = UDim2.fromOffset(14, 0), Size = UDim2.fromOffset(160, 56), Text = "RAP DAZU", TextSize = 13, Font = F.Bold,
+	label({ Position = UDim2.fromOffset(14, 6), Size = UDim2.fromOffset(160, 24), Text = "RAP DAZU", TextSize = 13, Font = F.Bold,
 		TextColor3 = C.Muted, ZIndex = 5 }, theirRap)
+	-- Tausch-Steuer: man bekommt nur 90 % des RAP (RapConfig.TradeTax)
+	label({ Position = UDim2.fromOffset(14, 28), Size = UDim2.fromOffset(200, 20), TextSize = 11, Font = F.Medium,
+		TextColor3 = C.Muted, ZIndex = 5,
+		Text = "DU ERHÄLTST " .. format(afterTax(state.Theirs.Rap)) .. " (" .. math.floor(RapConfig.TradeTax * 100 + 0.5) .. " % STEUER)" }, theirRap)
 	local rapRow = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0), Size = UDim2.fromOffset(0, 32),
 		AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, ZIndex = 5 }, theirRap)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
@@ -373,14 +383,15 @@ local function updateStatus()
 end
 
 -- Text für erhaltene bzw. gegebene Dinge ("Lava ×2, 300 RAP")
-local function describe(offer)
+-- taxed: RAP nach Steuer zeigen (was man selbst erhält)
+local function describe(offer, taxed)
 	local parts = {}
 	for id, n in (offer and offer.Items) or {} do
 		local item = Cosmetics.Get(id)
 		table.insert(parts, (item and item.Name or id) .. (n > 1 and (" ×" .. n) or ""))
 	end
 	if offer and (offer.Rap or 0) > 0 then
-		table.insert(parts, format(offer.Rap) .. " RAP")
+		table.insert(parts, format(taxed and afterTax(offer.Rap) or offer.Rap) .. " RAP")
 	end
 	return #parts > 0 and table.concat(parts, ", ") or "nichts"
 end
@@ -401,7 +412,8 @@ local function updatePrompts()
 					prompt.Name = PROMPT_NAME
 					prompt.ActionText = "Handeln"
 					prompt.KeyboardKeyCode = Enum.KeyCode.G
-					prompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+					-- Controller: □ wie andere Aufforderungen (△ halten heißt in der offenen Welt Fahrzeug einpacken bzw. Schnellheilen)
+					prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
 					prompt.HoldDuration = 0.25
 					prompt.MaxActivationDistance = 10
 					prompt.RequiresLineOfSight = false
@@ -543,7 +555,7 @@ function TradeClient.OpenPlayers()
 	label({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 28, 1, -16), Size = UDim2.new(1, -56, 0, 36), TextWrapped = true, TextSize = 12, Font = F.Medium,
 		TextColor3 = C.Muted, ZIndex = 5,
 		Text = "Der andere bekommt eine Anfrage und nimmt an oder lehnt ab. Im Tausch legt ihr beide Skins und RAP hinein; erst wenn beide BEREIT sind, wird getauscht. "
-			.. "Geht auch ohne Fenster: G an einem Spieler halten." }, frame)
+			.. "Auf RAP gehen 10 % Steuer. Geht auch ohne Fenster: G an einem Spieler halten." }, frame)
 	listWindow = { Frame = frame, List = list, Alive = true }
 	UITheme.SetBlur("TradeList", true)
 	fillList()
@@ -655,7 +667,7 @@ function TradeClient.Init()
 			closeWindow()
 			sound("rbxasset://sounds/electronicpingshort.wav", 1.5, 0.6)
 			Notifications.Reward({ Title = "TAUSCH MIT " .. upper(tostring(data.Partner or "")),
-				Lines = { "Erhalten: " .. describe(data.Received), "Gegeben: " .. describe(data.Gave) }, Rarity = "Epic" })
+				Lines = { "Erhalten: " .. describe(data.Received, true), "Gegeben: " .. describe(data.Gave) }, Rarity = "Epic" })
 		elseif kind == "Status" then
 			showToast(data.Text or "", data.Success)
 		end

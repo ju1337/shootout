@@ -806,6 +806,9 @@ local function onMelee(player, origin, direction)
 	if not humanoid or not head or character:GetAttribute("Downed") then
 		return
 	end
+	if humanoid.SeatPart then -- kein Messer aus dem (fahrenden) Fahrzeug heraus
+		return
+	end
 	if not ((origin - head.Position).Magnitude <= MAX_ORIGIN_DISTANCE) then
 		return
 	end

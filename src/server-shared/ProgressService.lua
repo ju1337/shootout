@@ -436,7 +436,8 @@ function ProgressService.AddPassXP(player, amount)
 			profile.Coins += reward.Coins
 			text = "+" .. reward.Coins .. " Münzen"
 		elseif reward.Item then
-			profile.Owned[reward.Item] = math.max(RapConfig.Count(profile.Owned, reward.Item), 1)
+			-- wie andere Belohnungen: ein weiteres Stück, auch wenn man den (handelbaren) Skin schon hat
+			grantSkin(profile, reward.Item)
 			local item = Cosmetics.Get(reward.Item)
 			text = "Skin " .. (item and item.Name or reward.Item) .. " freigeschaltet"
 		end
@@ -855,7 +856,8 @@ local function load(player)
 	end
 	local profile = toProfile(result)
 	profiles[player] = profile
-	devBoost(profile)
+	-- kein devBoost hier: das ist ein echter, gespeicherter Spielstand (Studio mit DataStore-Zugriff, z. B. Team Test).
+	-- Aufgefüllte Münzen und alle Skins würden sonst dauerhaft im echten Spielstand landen.
 	local refund = ProgressService.RefundUnfitAttachments(profile) -- Aufsätze, die nicht (mehr) auf ihre Waffe passen
 	if refund > 0 then
 		Telemetry.Economy(player, "Source", "Coins", refund, profile.Coins, "Gameplay", "UnfitAttachments", "Aufsatz passt nicht")

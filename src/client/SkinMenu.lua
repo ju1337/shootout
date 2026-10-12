@@ -39,7 +39,7 @@ local function sourceText(item)
 		return "NUR FÜR CREATOR"
 	elseif item.Mastery then
 		return "MEISTERSCHAFT: MIT KILLS MIT DIESER WAFFE FREISCHALTEN"
-	elseif Cosmetics.ForSale(item) then
+	elseif Cosmetics.Buyable(item) then
 		return "IM SHOP FÜR " .. UITheme.FormatNumber(item.Price) .. " MÜNZEN"
 	end
 	return "BELOHNUNG"
@@ -191,7 +191,7 @@ local function buildPage(body, width, height, style, weaponName)
 			if entry ~= equippedEntry() then
 				equip(entry)
 			end
-		elseif Cosmetics.ForSale(entry) and style.OpenShop then
+		elseif Cosmetics.Buyable(entry) and style.OpenShop then
 			style.OpenShop()
 		end
 	end)
@@ -228,7 +228,7 @@ local function buildPage(body, width, height, style, weaponName)
 			view.Frame.BackgroundTransparency = entry == selected and 0.2 or 0.5
 			view.State.Text = entry == equipped and "AUSGERÜSTET"
 				or (own and upper(Cosmetics.Rarities[entry.Rarity].Name))
-				or (entry.Creator and "CREATOR" or entry.Mastery and "MEISTERSCHAFT" or (Cosmetics.ForSale(entry) and UITheme.FormatNumber(entry.Price) .. " MÜNZEN") or "BELOHNUNG")
+				or (entry.Creator and "CREATOR" or entry.Mastery and "MEISTERSCHAFT" or (Cosmetics.Buyable(entry) and UITheme.FormatNumber(entry.Price) .. " MÜNZEN") or "BELOHNUNG")
 			view.State.TextColor3 = entry == equipped and EQUIPPED or Cosmetics.Rarities[entry.Rarity].Color
 		end
 		countLabel.Text = unlocked .. " / " .. (#list - 1) .. " FREIGESCHALTET"
@@ -260,7 +260,7 @@ local function buildPage(body, width, height, style, weaponName)
 			action.Text = "AUSRÜSTEN"
 			action.BackgroundColor3 = style.Red
 			action.TextColor3 = C.Text
-		elseif Cosmetics.ForSale(shown) then
+		elseif Cosmetics.Buyable(shown) then
 			action.Text = "IM SHOP  ·  " .. UITheme.FormatNumber(shown.Price)
 			action.BackgroundColor3 = Color3.fromRGB(40, 42, 48)
 			action.TextColor3 = C.Gold

@@ -39,7 +39,8 @@ local MOD_ACTIONS = { Kick = true, Ban = true, Unban = true, BanList = true, Loo
 
 -- Aktionen gegen einen Spieler (UserId als erster Wert), die nur gegen schwächere Ränge (oder sich selbst) gehen
 local TARGETED = { PlayerValue = true, Bring = true, SendCamp = true, Freeze = true, Respawn = true, Kill = true,
-	ResetData = true, HideLeaderboard = true, MovePlayer = true, SwitchTeam = true, Message = true }
+	ResetData = true, HideLeaderboard = true, MovePlayer = true, SwitchTeam = true, Message = true,
+	SetElo = true, SetPrestige = true } -- ELO/Prestige können auch sinken
 
 -- Aktionen, die auf allen Servern laufen können (Umschalter ALLE SERVER); sie brauchen keinen Admin vor Ort
 local GLOBAL = { Announce = true, ExtAirdrop = true, ExtConvoy = true, ExtHeliCrash = true, ExtHordeCrate = true,
@@ -113,6 +114,17 @@ function AdminService.Init(manager)
 
 	local function target(userId)
 		return Players:GetPlayerByUserId(tonumber(userId) or 0)
+	end
+
+	-- Ziel für Spielstand-Änderungen: nil + Meldung, solange nur das Ersatzprofil da ist (Änderung ginge beim Laden verloren)
+	local function loadedTarget(userId)
+		local player = target(userId)
+		if not player then
+			return nil, "Spieler nicht gefunden."
+		elseif not ProgressService.IsLoaded(player) then
+			return nil, "Spielstand lädt noch."
+		end
+		return player
 	end
 
 	local function humanoidOf(player)
@@ -746,9 +758,9 @@ function AdminService.Init(manager)
 			return removed .. " Bots entfernt."
 		end,
 		GiveCoins = function(userId, amount)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			amount = math.clamp(tonumber(amount) or 1000, 1, 1000000)
 			ProgressService.AddCoins(player, amount)
@@ -756,9 +768,9 @@ function AdminService.Init(manager)
 		end,
 		-- RAP (zweite Währung) zum Testen von Markt und Tausch
 		GiveRap = function(userId, amount)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			amount = math.clamp(math.floor(tonumber(amount) or 10000), 1, 10000000)
 			ProgressService.AddRap(player, amount)
@@ -766,9 +778,9 @@ function AdminService.Init(manager)
 		end,
 		-- Zufälliger handelbarer Skin (mit RAP-Wert), auch als weiteres Stück
 		GiveTradeSkin = function(userId)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			local ids = {}
 			for id in RapConfig.Values do
@@ -782,9 +794,9 @@ function AdminService.Init(manager)
 		-- ELO ändern: value = Zahl (+/- relativ), "max" = höchster Rang, "reset" = Start-ELO,
 		-- "season" = Saison-Ende testen (Belohnung nach Peak, ELO-Rücksetzung)
 		SetElo = function(userId, value)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			if value == "season" then
 				ProgressService.TestSeasonEnd(player)
@@ -805,9 +817,9 @@ function AdminService.Init(manager)
 		end,
 		-- Prestige setzen: value = Stufe (0..10), "max" = höchste Stufe auf Level 100, "level100" = Level 100
 		SetPrestige = function(userId, value)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			local info = LevelConfig.Get(player)
 			local prestige, level = info.Prestige, info.Level
@@ -824,18 +836,18 @@ function AdminService.Init(manager)
 			return player.Name .. ": Prestige " .. prestige .. ", Level " .. level
 		end,
 		GivePassXP = function(userId, amount)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			amount = math.clamp(tonumber(amount) or 5000, 1, 1000000)
 			ProgressService.AddPassXP(player, amount)
 			return player.Name .. " +" .. amount .. " Pass-XP"
 		end,
 		GiveXP = function(userId, amount)
-			local player = target(userId)
+			local player, problem = loadedTarget(userId)
 			if not player then
-				return "Spieler nicht gefunden."
+				return problem
 			end
 			amount = math.clamp(tonumber(amount) or 500, 1, 100000)
 			local agentId = player:GetAttribute("Agent")

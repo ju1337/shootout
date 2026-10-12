@@ -35,6 +35,8 @@ local VehicleService = {}
 local BALL = 2.2             -- Durchmesser der Gleitkugeln
 local RAM_SPEED = 22         -- ab diesem Tempo nehmen umgefahrene Zombies Schaden
 local SPEED_SLACK = 1.6      -- Tempo-Check: so viel schneller als erlaubt (plus 30 Studs) gilt als Betrug
+local AIR_HEIGHT = 12        -- Bodenfahrzeuge: so hoch über dem Boden, ohne zu fallen …
+local AIR_TIME = 3           -- … und so lange am Stück gilt als Fliegen (Rampensprünge dauern kürzer oder fallen)
 local SEAT_RANGE = 12        -- so nah muss man zum Einsteigen sein (Taste erneut drücken)
 local LANDED = 0.8           -- Helikopter: so hoch (Studs, Kufen über dem Boden) gilt er als gelandet
 local STORE_HEIGHT = 4       -- Helikopter: höher als das lässt er sich nicht einpacken
@@ -867,10 +869,30 @@ function VehicleService.Init(opts)
 						or (typeof(center) == "Vector3" and ((heli and position.Y > center.Y + config.Ceiling + CEILING_SLACK)
 							or math.abs(position.X - center.X) > half or math.abs(position.Z - center.Z) > half))
 				end
-				if wrong then
-					entry.Model:PivotTo(CFrame.new(entry.LastPos) * chassis.CFrame.Rotation)
+				-- Bodenfahrzeuge dürfen nicht fliegen: lange hoch über dem Boden, ohne zu fallen, setzt zurück auf die
+				-- letzte Stelle am Boden
+				local grounded = nil
+				if not wrong and config.Kind ~= "Heli" and entry.Seat and entry.Seat.Occupant then
+					local height = heightAboveGround(entry.Model, chassis)
+					if height < 4 then
+						entry.Ground, entry.AirSince = position, nil
+					elseif height > AIR_HEIGHT and chassis.AssemblyLinearVelocity.Y > -8 then
+						entry.AirSince = entry.AirSince or now
+						if now - entry.AirSince > AIR_TIME and entry.Ground then
+							grounded = entry.Ground
+						end
+					else
+						entry.AirSince = nil
+					end
+				end
+				if wrong or grounded then
+					entry.Model:PivotTo(CFrame.new(grounded or entry.LastPos) * chassis.CFrame.Rotation)
 					chassis.AssemblyLinearVelocity = Vector3.zero
-					warn("Fahrzeug von " .. player.Name .. " zu schnell oder außerhalb, zurückgesetzt")
+					entry.AirSince = nil
+					if grounded then
+						entry.LastPos = grounded
+					end
+					warn("Fahrzeug von " .. player.Name .. (grounded and " fliegt" or " zu schnell oder außerhalb") .. ", zurückgesetzt")
 				else
 					entry.LastPos = position
 				end

@@ -239,7 +239,8 @@ end
 local forSale = 0
 local agentForSale = 0
 for _, item in Cosmetics.Items do
-	if Cosmetics.ForSale(item) then
+	if Cosmetics.Buyable(item) then -- Test-Skins (1 Münze) nur in Studio
+		check(not item.Test, "Test-Skin " .. item.Id .. " im echten Spiel kaufbar")
 		if item.Type == "Agent" then
 			agentForSale += 1
 		else

@@ -1,7 +1,7 @@
 -- DevConfig (ModuleScript)
 -- Hilfen fürs Entwickeln, nur in Roblox Studio (RunService:IsStudio()), nie im echten Spiel:
 --   StudioBoost: beim Laden des Spielstands Münzen, RAP und Rote-Zone-Punkte mindestens auf diese Werte auffüllen, damit man alles
---   kaufen und testen kann. AllSkins: dazu jeden Skin aus Cosmetics (Waffen, Agenten, Creator, Pass …) einmal besitzen. Achtung: hat Studio Zugriff auf die DataStores, wird das im eigenen Spielstand gespeichert.
+--   kaufen und testen kann. AllSkins: dazu jeden Skin aus Cosmetics (Waffen, Agenten, Creator, Pass …) einmal besitzen. Nur ohne DataStore-Zugriff (Stand gilt nur für die Sitzung): einen echten, gespeicherten Spielstand füllt es nie auf.
 
 local DevConfig = {}
 

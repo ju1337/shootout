@@ -183,10 +183,12 @@ for _, player in { alice, bob, carl } do
 	Instance.new("Backpack", player).Name = "Backpack"
 end
 step(2)
-carl:SetAttribute("IsAdmin", true) -- Admins haben zum Testen Schlüssel dabei
-for _, player in { alice, bob, carl } do
-	enter(player)
-end
+carl:SetAttribute("IsAdmin", true) -- Admins haben zum Testen Schlüssel dabei (nur in Studio)
+enter(alice)
+enter(bob)
+SIM.IsStudio = true
+enter(carl)
+SIM.IsStudio = false
 check(countIn(carl, D.KeyItem) == D.TestKeys and countIn(alice, D.KeyItem) == 0, "Admin hat " .. D.TestKeys .. " Test-Schlüssel, andere keine")
 local function goTo(player, offset)
 	player.Character:PivotTo(CFrame.new(entrance.Position + offset))

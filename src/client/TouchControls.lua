@@ -246,6 +246,9 @@ function TouchControls.Init()
 		if buttons.Sprint then
 			buttons.Sprint.Sync(require(Shared.Movement).SprintHeld())
 		end
+		if buttons.Aim and buttons.Aim.Sync then -- Zielen endet bei Tod, Respawn oder offenem Menü
+			buttons.Aim.Sync(player:GetAttribute("AimHeld") == true) -- setzt WeaponClient
+		end
 		-- Interagieren nur zeigen, wenn es etwas gibt (Wiederbeleben, Bombe, Hacken)
 		buttons.Interact.Button.Visible = player:GetAttribute("ObjHint") ~= nil or InputActions.InteractAvailable()
 		-- offene Welt: TASCHE und PARKEN statt Fähigkeit, Gadget, Ultimate und Punkte

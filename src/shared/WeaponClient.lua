@@ -67,6 +67,14 @@ local inspect = nil      -- { Weapon, Anim, Start, Duration, LastT } – Waffe i
 local synced = false     -- erst schießen, wenn der Server die Munition gemeldet hat
 local fireHeld = false
 local aimHeld = false
+-- Zielen setzen; das Attribut AimHeld liest der Touch-Knopf ZIELEN (TouchControls), damit er nach Tod oder Menü nicht
+-- weiter „an“ zeigt
+local function setAimHeld(on)
+	aimHeld = on
+	if player and player:GetAttribute("AimHeld") ~= on then
+		player:SetAttribute("AimHeld", on)
+	end
+end
 local aiming = false
 local aimBlend = 0       -- 0 = Hüfte, 1 = Zielen
 local lastShot = 0
@@ -577,7 +585,7 @@ local function resetWeapon()
 	fireAnim = nil
 	synced = false
 	fireHeld = false
-	aimHeld = false
+	setAimHeld(false)
 	bloom = 0
 	recoilPitch, recoilYaw = 0, 0
 	setAiming(false)
@@ -644,10 +652,10 @@ function WeaponClient.Init()
 		if PlayerSettings.Get("ToggleAim") and not InputActions.IsTouch() then -- Touch: der ZIELEN-Knopf schaltet selbst um
 			-- Einstellung "Zielen: Umschalten": jeder Druck schaltet um
 			if began and fighting() and not UITheme.IsMenuOpen() then
-				aimHeld = not aimHeld
+				setAimHeld(not aimHeld)
 			end
 		else
-			aimHeld = began and fighting() and not UITheme.IsMenuOpen()
+			setAimHeld(began and fighting() and not UITheme.IsMenuOpen())
 		end
 	end)
 	InputActions.Bind("Reload", function(began)
@@ -715,8 +723,11 @@ function WeaponClient.Init()
 
 	-- Dauerfeuer bei automatischen Waffen
 	RunService.Heartbeat:Connect(function()
-		if fireHeld and UITheme.IsMenuOpen() then
-			fireHeld = false -- Menü/Karte geöffnet, während Feuer gehalten wurde: nicht dahinter weiterschießen
+		if (fireHeld or aimHeld) and UITheme.IsMenuOpen() then
+			-- Menü/Karte geöffnet, während Feuer oder Zielen gehalten wurde: nicht dahinter weiterschießen oder -zielen
+			-- (sonst bleibt z. B. das Zielfernrohr hinter dem Menü)
+			fireHeld = false
+			setAimHeld(false)
 		end
 		if fireHeld and current and WeaponConfig.Get(current).Automatic then
 			tryFire()

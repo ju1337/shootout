@@ -13,6 +13,7 @@
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local MasteryConfig = require(ReplicatedStorage:WaitForChild("Shared").MasteryConfig)
@@ -197,6 +198,12 @@ end
 -- Im Shop kaufbar?
 function Cosmetics.ForSale(item)
 	return item.Price ~= nil and not item.Pass and not item.Reward and not item.Mastery
+end
+
+-- Kann man den Skin gerade im Shop kaufen? Wie ForSale, Test-Skins (Test = true, z. B. Drachengold für 1 Münze) aber nur in
+-- Roblox Studio, nie im echten Spiel
+function Cosmetics.Buyable(item)
+	return Cosmetics.ForSale(item) and (not item.Test or RunService:IsStudio())
 end
 
 -- Kauft das System diesen Skin zurück (Reiter VERKAUFEN)? Nur handelbare Skins, die es nicht im Shop für Münzen gibt:

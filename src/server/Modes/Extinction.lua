@@ -356,10 +356,10 @@ local function giveAdminLoadout(player)
 end
 
 -- Zum Testen der Dungeons: Admins haben nach jedem Spawn mindestens Dungeon.TestKeys Schlüssel dabei (Tasche oder Container;
--- auch im echten Spiel, 0 schaltet es ab)
+-- nur in Studio, auch Team Test – im echten Spiel wären es sonst unbegrenzt verkäufliche Schlüssel; 0 schaltet es ab)
 local function giveTestKeys(player)
 	local D = ExtinctionConfig.Dungeon
-	if not player:GetAttribute("IsAdmin") or (D.TestKeys or 0) <= 0 then
+	if not RunService:IsStudio() or not player:GetAttribute("IsAdmin") or (D.TestKeys or 0) <= 0 then
 		return
 	end
 	local have = InventoryService.CountCarried(player, D.KeyItem)

@@ -124,7 +124,10 @@ local function update()
 	local active = inCombat()
 	local protectedLeft = (player:GetAttribute("ProtectedUntil") or 0) - workspace:GetServerTimeNow()
 	local protected = not active and protectedLeft > 0 and player:GetAttribute("Mode") == "Extinction"
-	gui.Enabled = active or protected
+	-- nicht durch das Menü der offenen Welt scheinen (wie DungeonClient)
+	local playerGui = player:FindFirstChild("PlayerGui")
+	local menu = playerGui and playerGui:FindFirstChild("ExtinctionWindow")
+	gui.Enabled = (active or protected) and not (menu and menu.Enabled)
 	if protected then
 		setLook(BLUE)
 		setText(label, "SPAWNSCHUTZ  ·  NOCH KEIN SCHIESSEN  ·  " .. math.ceil(protectedLeft) .. " s")

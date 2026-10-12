@@ -749,6 +749,10 @@ function Movement.Init()
 		apply()
 	end)
 	InputActions.Bind("Crouch", function(began)
+		-- Controller: ○ schließt offene Menüs (z. B. die Weltkarte) und soll dabei nicht ducken oder rutschen
+		if began and InputActions.Device() == "Gamepad" and require(Shared.UITheme).IsMenuOpen() then
+			return
+		end
 		if InputActions.Device() == "Touch" then
 			if began then
 				setCrouch(not crouchHeld)
@@ -954,6 +958,10 @@ function Movement.Init()
 	end)
 	InputActions.Bind("Camera", function(began)
 		if not began then
+			return
+		end
+		-- im Markt öffnet T die Tauschliste (TradeClient), nicht die Kamera umschalten
+		if InputActions.Device() == "Keyboard" and Modes.IsSocial(player:GetAttribute("Mode")) then
 			return
 		end
 		PlayerSettings.Set("ThirdPerson", not thirdPerson)

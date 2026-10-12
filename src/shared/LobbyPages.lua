@@ -561,7 +561,7 @@ function LobbyPages.Shop(page)
 		local owned, total, cheapest = Cosmetics.GetOwned(player), 0, math.huge
 		local have = 0
 		for _, item in Cosmetics.List(itemType) do
-			if Cosmetics.ForSale(item) then
+			if Cosmetics.Buyable(item) then
 				total += 1
 				cheapest = math.min(cheapest, item.Test and math.huge or item.Price)
 				if owned[item.Id] then
@@ -705,7 +705,7 @@ function LobbyPages.Shop(page)
 		-- Skins: Angebot zuerst, dann nach Seltenheit (legendär oben) und Preis
 		local list = {}
 		for _, item in Cosmetics.List(currentType) do
-			if Cosmetics.ForSale(item) then
+			if Cosmetics.Buyable(item) then
 				table.insert(list, item)
 			end
 		end
@@ -733,7 +733,7 @@ function LobbyPages.Shop(page)
 		Font = F.Bold, TextColor3 = C.Rap, Visible = false }, page)
 	local HINTS = {
 		Home = "WÄHLE, WAS DU KAUFEN MÖCHTEST",
-		Weapon = "GEKAUFTE SKINS RÜSTEST DU UNTER LOADOUT AUS",
+		Weapon = "WAFFEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS",
 		Agent = "AGENTEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS",
 		Robux = "",
 		Sell = "",

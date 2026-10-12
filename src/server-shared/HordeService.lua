@@ -204,7 +204,8 @@ local function spawnWave(index)
 	current.Wave = index
 	Sfx.At("WaveSting", current.Position + Vector3.new(0, 3, 0))
 	for _ = 1, wave.Count do
-		ZombieService.SpawnAround(current.Position, 1, H.SpawnMin, H.SpawnMax, rollKind(wave.KindWeights), true)
+		-- "Horde": die Anti-Zombie-Spritze hält die Wellen nicht ab
+		ZombieService.SpawnAround(current.Position, 1, H.SpawnMin, H.SpawnMax, rollKind(wave.KindWeights), "Horde")
 	end
 	announce("WELLE " .. index .. " VON " .. #H.Waves, wave.Count .. " Zombies kommen auf die Horden-Kiste zu", "Warning")
 end

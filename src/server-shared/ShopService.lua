@@ -42,6 +42,9 @@ function actions.Buy(player, itemId)
 	if item.Reward or not item.Price then
 		return "Diesen Skin gibt es nur als Belohnung.", false
 	end
+	if not Cosmetics.Buyable(item) then -- Test-Skin außerhalb von Studio
+		return "Diesen Skin gibt es nicht im Shop.", false
+	end
 	if ProgressService.Owns(player, itemId) then
 		return "Du besitzt " .. item.Name .. " schon.", false
 	end

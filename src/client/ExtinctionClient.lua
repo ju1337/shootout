@@ -2273,7 +2273,7 @@ function Guide.Topics()
 			line("•  Fahrzeuge können zerstört werden – dann sind sie weg. Fahr Zombies über den Haufen, um dir den Weg freizumachen."),
 		} },
 		{ Title = "SQUAD & KARTE", Lines = {
-			line("•  <b>Squad</b> {1}: spiel mit bis zu 4 Freunden – kein Friendly Fire, ihr seht euch auf der Karte.", key("Squad")),
+			line("•  <b>Squad</b> {1}: spiel mit bis zu 3 Freunden – kein Friendly Fire, ihr seht euch auf der Karte.", key("Squad")),
 			line("•  <b>Karte</b> {1}: Events, rote Zone, Safe Zones, Bosse und deine verlorene Tasche.", key("WorldMap")),
 			line("•  <b>Ping</b> {1}: markiere einen Ort oder einen Gegner für deinen Squad.", key("Ping")),
 		} },
@@ -4078,7 +4078,7 @@ function ExtinctionClient.Init()
 		local action = "Hotbar" .. slot
 		InputActions.Bindings[action] = { Keys = { keys[slot] }, Pad = {} }
 		InputActions.Bind(action, function(began)
-			if began and inExtinction() then
+			if began and inExtinction() and not ExtinctionMap.IsOpen() then -- Karte offen: nichts benutzen oder werfen
 				Inv.useSlot(slot)
 			end
 		end)
@@ -4504,7 +4504,7 @@ function ExtinctionClient.Init()
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
 			if window and window.Menu then
 				cycleMenu(1)
-			elseif not UITheme.IsMenuOpenBy("WorldMap") then -- Karte offen: kein Waffenwechsel
+			elseif not ExtinctionMap.IsOpen() then -- Karte offen: kein Waffenwechsel
 				cycle(1)
 			end
 		end
@@ -4513,7 +4513,7 @@ function ExtinctionClient.Init()
 		if began and inExtinction() and InputActions.Device() == "Gamepad" then
 			if window and window.Menu then
 				cycleMenu(-1)
-			elseif not UITheme.IsMenuOpenBy("WorldMap") then -- Karte offen: kein Waffenwechsel
+			elseif not ExtinctionMap.IsOpen() then -- Karte offen: kein Waffenwechsel
 				cycle(-1)
 			end
 		end

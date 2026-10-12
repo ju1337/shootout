@@ -110,11 +110,27 @@ local function apply(player)
 	task.spawn(setChatMember, player, rank ~= nil and rank.Power >= StaffConfig.ChatPower)
 end
 
-local function load(player)
+-- Im Spiel vergebenen Rang lesen und merken. Ein DataStore-Fehler wird nicht als „kein Rang“ gemerkt (nächster Versuch
+-- liest neu); gibt dann false zurück.
+local function fetchStored(id)
 	local s = getStore()
-	if s and stored[player.UserId] == nil then
-		local ok, value = pcall(s.GetAsync, s, tostring(player.UserId))
-		stored[player.UserId] = ok and StaffConfig.Get(value) and value or false
+	if s and stored[id] == nil then
+		local ok, value = pcall(s.GetAsync, s, tostring(id))
+		if not ok then
+			return false
+		end
+		stored[id] = StaffConfig.Get(value) and value or false
+	end
+	return true
+end
+
+local function load(player)
+	if not fetchStored(player.UserId) then
+		task.delay(10, function() -- DataStore kurz nicht erreichbar: später nochmal (sonst fehlt der Rang die ganze Sitzung)
+			if player.Parent and fetchStored(player.UserId) then
+				apply(player)
+			end
+		end)
 	end
 	apply(player)
 end
@@ -159,18 +175,18 @@ function StaffService.StoredRank(userId)
 		return StaffConfig.Of(online)
 	end
 	local rankId = StaffConfig.Members[id]
-	local s = getStore()
-	if stored[id] == nil and s then
-		local ok, value = pcall(s.GetAsync, s, tostring(id))
-		stored[id] = ok and StaffConfig.Get(value) and value or false
-	end
+	local sure = fetchStored(id)
 	rankId = better(rankId, stored[id] or nil)
-	return StaffConfig.Get(rankId)
+	return StaffConfig.Get(rankId), sure
 end
 
--- Stärke des Rangs einer UserId (für die Rechteprüfung), auch offline
+-- Stärke des Rangs einer UserId (für die Rechteprüfung), auch offline. Ließ sich der Rang nicht lesen (DataStore-Fehler),
+-- gilt er als sehr hoch: lieber eine Aktion ablehnen, als einen höheren Rang zu sperren.
 function StaffService.StoredPower(userId)
-	local rank = StaffService.StoredRank(userId)
+	local rank, sure = StaffService.StoredRank(userId)
+	if sure == false then
+		return math.huge
+	end
 	return rank and rank.Power or 0
 end
 
