@@ -7,6 +7,7 @@
 | `Weapons/SMG.rbxmx` | ReplicatedStorage › Assets › Weapons › SMG (MP7 A1, CC-BY-4.0 D_U, siehe `art/sources/README.md`) |
 | `Weapons/Pistol.rbxmx` | ReplicatedStorage › Assets › Weapons › Pistol (HK Mark 23, CC-BY-4.0 D_U, siehe `art/sources/README.md`) |
 | `Weapons/LMG.rbxmx` | ReplicatedStorage › Assets › Weapons › LMG (M60, CC-BY-4.0 D_U, siehe `art/sources/README.md`) |
+| `Weapons/Shotgun.rbxmx` | ReplicatedStorage › Assets › Weapons › Shotgun (Gen-12, CC-BY-4.0 D.U., siehe `art/sources/README.md`) |
 | `Attachments/HoloSight.rbxmx` | ReplicatedStorage › Assets › Attachments › HoloSight |
 | `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
 | `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |

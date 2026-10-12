@@ -10,7 +10,7 @@ Das Original hat nur eine Picatinny-Schiene und kein Visier: hinten und vorn auf
 Notvisiere (Sights, Quader). Visierlinie = Oberkante der Kimmen-Ohren und Spitze des Korns, beide auf Y_SIGHT.
 
 Mit --boxes zusätzlich ein Quader-Nachbau als assets/Weapons/Shotgun.rbxmx (je Teil ein Quader so groß wie das Mesh,
-Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt die echte Studio-Kopie (models/Weapons/Shotgun.rbxmx).
+Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt die echte Studio-Kopie (Kopie von models/Weapons/Shotgun.rbxmx).
 
 Dann in Studio: Import 3D > Shotgun.glb (Teile NICHT zusammenführen, Einheit Stud), Modell nach
 ReplicatedStorage > Assets > Weapons ziehen, "Shotgun" nennen.
