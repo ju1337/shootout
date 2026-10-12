@@ -41,6 +41,8 @@ local DEFAULT_SPEED = 16
 local aimSensitivity = 0.6     -- Maus langsamer beim Zielen (Einstellung "Empfindlichkeit beim Zielen")
 local SPRINT_FOV_BONUS = 8
 local SLIDE_FOV_BONUS = 6
+local SLIDE_CAMERA_DROP = -0.45 -- beim Rutschen sinkt die Kamera noch etwas tiefer als beim Ducken
+local SLIDE_BLEND_RATE = 8      -- wie schnell Sichtfeld, Neigung und Absenkung beim Rutschen ein- und ausblenden
 local CROUCH_CAMERA = Vector3.new(0, -1.3, 0)
 local CROUCH_HIP_FACTOR = 0.55 -- Körper sinkt ab (kleineres Ziel)
 local CROUCH_TIME = 0.12       -- so lange dauert Hinhocken und Aufstehen
@@ -252,8 +254,10 @@ local function startSlide()
 	if not dir or speed < base * P.SlideMinStart then
 		return false
 	end
-	slide = { Speed = P.SlideStart(speed, base * P.SprintFactor, os.clock() - lastSlideEnd), Dir = dir, Started = os.clock(),
-		AirTime = 0 }
+	-- der Schub kommt weich dazu (SlideFeed), das Tempo springt beim Einstieg nicht
+	local entry = math.min(P.SlideMax, math.max(speed, base * P.SprintFactor))
+	slide = { Speed = entry, Pending = P.SlideStart(speed, base * P.SprintFactor, os.clock() - lastSlideEnd) - entry,
+		Dir = dir, Started = os.clock(), AirTime = 0 }
 	walkSpeed = slide.Speed
 	humanoid.WalkSpeed = walkSpeed
 	apply()
@@ -275,7 +279,9 @@ local function stepSlide(dt, now, humanoid, character, root, onGround)
 	groundParams.FilterDescendantsInstances = { character }
 	local hit = workspace:Raycast(root.Position, Vector3.new(0, -(root.Size.Y / 2 + humanoid.HipHeight + 2.5), 0), groundParams)
 	local slope = hit and P.SlopeAlong(hit.Normal, slide.Dir) or 0
-	slide.Speed = P.SlideStep(slide.Speed, dt, slope, workspace.Gravity)
+	local feed = P.SlideFeed(slide.Pending, dt)
+	slide.Pending -= feed
+	slide.Speed = P.SlideStep(math.min(P.SlideMax, slide.Speed + feed), dt, slope, workspace.Gravity)
 	if P.SlideOver(slide.Speed, baseSpeed(character) * P.CrouchFactor, now - slide.Started) then
 		endSlide()
 	end
@@ -814,8 +820,9 @@ function Movement.Init()
 		dt = math.min(dt, 0.1)
 		local camera = workspace.CurrentCamera
 		local alpha = math.min(1, dt * CAMERA_SMOOTH)
-		slideBlend += ((slide and 1 or 0) - slideBlend) * math.min(1, dt * 10)
-		local fov = fovOverride or (targetFov + (aiming and 0 or SLIDE_FOV_BONUS * slideBlend))
+		slideBlend += ((slide and 1 or 0) - slideBlend) * math.min(1, dt * SLIDE_BLEND_RATE)
+		local slideEase = slideBlend * slideBlend * (3 - 2 * slideBlend) -- weich am Anfang und am Ende
+		local fov = fovOverride or (targetFov + (aiming and 0 or SLIDE_FOV_BONUS * slideEase))
 		if math.abs(camera.FieldOfView - fov) > 0.01 then
 			camera.FieldOfView += (fov - camera.FieldOfView) * alpha
 		end
@@ -834,10 +841,10 @@ function Movement.Init()
 			-- Eintauchen beim Landen (gedämpfte Feder) und Wippen beim Laufen (nur Ego, nicht beim Zielen)
 			dipVelocity += (-DIP_SPRING * dip - DIP_DAMPING * dipVelocity) * dt
 			dip = math.clamp(dip + dipVelocity * dt, -P.LandDipMax * 1.2, 0.4)
-			local extra = 0
+			local extra = SLIDE_CAMERA_DROP * slideEase
 			local root = character and character:FindFirstChild("HumanoidRootPart")
 			if cameraEffectsOn(humanoid) and root then
-				extra = dip
+				extra += dip
 				local velocity = root.AssemblyLinearVelocity
 				local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
 				if grounded and not slide and not move and not aiming and not Movement.IsThirdPerson() then

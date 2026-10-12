@@ -48,8 +48,8 @@ check(near(start, 24 + P.SlideBoost), "Start aus dem Sprint mit vollem Schub (" 
 check(P.SlideStart(24, 24, 0.2) < start - 5, "direkt nochmal rutschen: kaum Schub")
 check(P.SlideStart(60, 24, math.huge) == P.SlideMax, "nie schneller als SlideMax")
 local flatTime, flatDist = slideRun(start, 0, 8)
-check(flatTime > 0.8 and flatTime < 1.5, "flach rutscht man 0,8-1,5 s (" .. flatTime .. ")")
-check(flatDist > 15 and flatDist < 35, "flach 15-35 Studs weit (" .. flatDist .. ")")
+check(flatTime > 1.4 and flatTime < 2.2, "flach rutscht man 1,4-2,2 s (" .. flatTime .. ")")
+check(flatDist > 35 and flatDist < 55, "flach 35-55 Studs weit (" .. flatDist .. ")")
 local downTime, downDist = slideRun(start, math.sin(math.rad(20)), 8)
 check(downTime > flatTime + 0.5 and downDist > flatDist * 1.5, "bergab weiter und länger (" .. downTime .. " s, "
 	.. downDist .. " Studs)")
@@ -281,7 +281,9 @@ root.AssemblyLinearVelocity = X * RUN
 local fovBefore = workspace.CurrentCamera.FieldOfView
 InputActions.Trigger("Crouch", true)
 check(Movement.IsSliding(), "Ducken im Sprint = Rutschen")
-check(near(humanoid.WalkSpeed, RUN + P.SlideBoost, 0.01), "Rutschen mit Schub (" .. humanoid.WalkSpeed .. ")")
+check(near(humanoid.WalkSpeed, RUN, 0.01), "Einstieg ohne Tempo-Sprung (" .. humanoid.WalkSpeed .. ")")
+check(P.SlideFeed(P.SlideBoost, 0.1) > P.SlideBoost * 0.7 and P.SlideFeed(P.SlideBoost, 1 / 60) < P.SlideBoost * 0.25,
+	"der Schub kommt weich, aber zügig dazu")
 InputActions.Trigger("Crouch", false)
 -- Eingabe seitwärts (wie vom ControlModule): die Rutschrichtung dreht nur langsam mit, der Humanoid wird in die
 -- Rutschrichtung geschoben, nicht in die Eingabe
@@ -290,7 +292,8 @@ frames(1 / 60)
 local steered = humanoid.MoveDirection
 check(steered.X > 0.99 and steered.Z > 0.01, "Rutschen lenkt langsam zur Eingabe (" .. tostring(steered) .. ")")
 frames(0.3)
-check(Movement.IsSliding() and humanoid.WalkSpeed < RUN + P.SlideBoost, "Tippen reicht, das Rutschen läuft aus")
+check(Movement.IsSliding() and humanoid.WalkSpeed > RUN + P.SlideBoost * 0.4 and humanoid.WalkSpeed < RUN + P.SlideBoost,
+	"Rutschen mit Schub, Tippen reicht, das Rutschen läuft aus (" .. humanoid.WalkSpeed .. ")")
 check((humanoid.MoveDirection - steered).Magnitude < 1e-6, "ohne neue Eingabe bleibt die Rutschrichtung")
 check(workspace.CurrentCamera.FieldOfView > fovBefore, "Sichtfeld weitet sich beim Rutschen")
 frames(1.6)

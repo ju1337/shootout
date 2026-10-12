@@ -24,14 +24,15 @@ function P.Approach(current, target, dt)
 end
 
 -- ---------- Rutschen ----------
-P.SlideBoost = 9           -- Schub beim Start, zusätzlich zum aktuellen Tempo
-P.SlideBoostRecharge = 1.4 -- der Schub wächst nach dem letzten Rutschen in dieser Zeit wieder von 0 auf voll
-P.SlideMax = 50            -- Höchsttempo (auch bergab)
-P.SlideFriction = 13       -- Grundreibung (Studs/s²)
-P.SlideDrag = 0.45         -- zusätzliche Bremsung je Studs/s Tempo (schnell = bremst stärker)
+P.SlideBoost = 19          -- Schub beim Start, zusätzlich zum aktuellen Tempo (aus dem Sprint knapp 44 Studs/s)
+P.SlideBoostRamp = 14      -- so schnell kommt der Schub dazu (je Sekunde, weich: nach 0,1 s gut drei Viertel)
+P.SlideBoostRecharge = 1.6 -- der Schub wächst nach dem letzten Rutschen in dieser Zeit wieder von 0 auf voll
+P.SlideMax = 55            -- Höchsttempo (auch bergab)
+P.SlideFriction = 12       -- Grundreibung (Studs/s²)
+P.SlideDrag = 0.32         -- zusätzliche Bremsung je Studs/s Tempo (schnell = bremst stärker)
 P.SlideSlope = 0.55        -- Anteil der Schwerkraft, der am Hang zieht (bergab schneller, bergauf kürzer)
 P.SlideTurn = math.rad(110) -- so weit lässt sich pro Sekunde lenken
-P.SlideMaxTime = 2.6       -- längstes Rutschen (lange Hänge)
+P.SlideMaxTime = 3.2       -- längstes Rutschen (lange Hänge)
 P.SlideEndMargin = 1.5     -- endet, wenn das Tempo unter Ducken + diesen Wert fällt
 P.SlideMinStart = 1.12     -- rutschen erst ab diesem Vielfachen des Gehtempos (also im Sprint oder mit Schwung)
 
@@ -40,6 +41,11 @@ P.SlideMinStart = 1.12     -- rutschen erst ab diesem Vielfachen des Gehtempos (
 function P.SlideStart(speed, sprintSpeed, sinceLastSlide)
 	local boost = P.SlideBoost * math.clamp((sinceLastSlide or math.huge) / P.SlideBoostRecharge, 0, 1)
 	return math.min(P.SlideMax, math.max(speed, sprintSpeed) + boost)
+end
+
+-- Anteil des noch ausstehenden Schubs, der in dt dazukommt (weicher Einstieg statt Tempo-Sprung)
+function P.SlideFeed(pending, dt)
+	return pending * (1 - math.exp(-P.SlideBoostRamp * dt))
 end
 
 -- Neues Tempo nach dt. slope = sin(Neigung) in Rutschrichtung (+ bergab, - bergauf), gravity = Schwerkraft (Studs/s²)
