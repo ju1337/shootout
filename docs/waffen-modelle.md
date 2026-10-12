@@ -40,7 +40,7 @@ Zum Ausprobieren ohne Blender: `art/templates/Weapons/<Waffe>.rbxmx` per Datei �
 einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gültiges Modell.
 
 Die `SMG` ist fertig: MP7 A1 als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
-Die `Pistol` (HK Mark 23) ist vorbereitet: `art/sources/Pistol.glb` (`python3 tools/mk23_glb.py`), fehlt nur noch der Studio-Import.
+Die `Pistol` ist fertig: HK Mark 23 als echtes Mesh (`models/Weapons/Pistol.rbxmx`, Studio-Import von `art/sources/Pistol.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
 (Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr

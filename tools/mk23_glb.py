@@ -7,8 +7,8 @@ baut das Spiel als Aufsatz an), Größe in Studs (1,05 lang wie die alte Pistole
 kleine Würfel. Die Visierlinie läuft über die Oberkante der Kimmen-Ohren und die Spitze des Korns (beide gleich hoch);
 beim Zielen sitzt das Korn so in der Kimmenlücke in der Bildmitte.
 
-Dazu eine Testkopie assets/Weapons/Pistol.rbxmx (je Teil ein Quader so groß wie das Mesh, Marker gleich): Mit ihr
-prüft CI Marker, Visierlinie und Haltung, bis die echte Studio-Kopie da ist.
+Mit --boxes zusätzlich ein Quader-Nachbau als assets/Weapons/Pistol.rbxmx (je Teil ein Quader so groß wie das Mesh,
+Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt die echte Studio-Kopie (models/Weapons/Pistol.rbxmx).
 
 Dann in Studio: Import 3D > Pistol.glb (Teile NICHT zusammenführen, Einheit Stud), Modell nach
 ReplicatedStorage > Assets > Weapons ziehen, "Pistol" nennen.
@@ -118,7 +118,8 @@ def write_boxes(parts):
 def main():
     parts = build()
     write(parts, OUT)
-    write_boxes(parts)
+    if "--boxes" in sys.argv:
+        write_boxes(parts)
     for k, (P, _, _) in parts.items():
         if not k.startswith("Point"):
             print("  %-16s %5d Dreiecke" % (k, len(P) // 3))

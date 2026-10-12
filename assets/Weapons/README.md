@@ -8,5 +8,4 @@ dazu laufen `weapons`, `viewmodel` und `pose` mit deinem Modell). Anleitung: [do
 
 `SMG.rbxmx` ist eine Kopie von `models/Weapons/SMG.rbxmx` (MP7 aus Studio) – bei Änderungen beide ersetzen.
 
-`Pistol.rbxmx` ist ein Quader-Nachbau der Mark 23 aus `tools/mk23_glb.py` (gleiche Marker wie `art/sources/Pistol.glb`),
-bis die Studio-Kopie da ist.
+`Pistol.rbxmx` ist eine Kopie von `models/Weapons/Pistol.rbxmx` (Mark 23 aus Studio) – bei Änderungen beide ersetzen.
