@@ -107,6 +107,9 @@ function EconomyService.SellToSystem(player, id, n)
 	if not item or not RapConfig.Tradeable(id) then
 		return "Diesen Skin kauft das System nicht an.", false
 	end
+	if not Cosmetics.SystemBuys(id) then
+		return "Shop-Skins kauft das System nicht zurück. Verkauf ihn im MARKT oder tausche ihn.", false
+	end
 	if n ~= n or n < 1 or n > 1000 then -- NaN/∞ vom Client: sonst wird der Skin entfernt und RAP zu NaN
 		return "Ungültige Anzahl.", false
 	end

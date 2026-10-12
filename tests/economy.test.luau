@@ -73,13 +73,15 @@ check(RapConfig.CleanPrice("12") == 12 and RapConfig.CleanPrice(0) == nil and Ra
 	and RapConfig.CleanPrice(0 / 0) == nil and RapConfig.CleanPrice(2.9) == 2, "Preise werden geprüft")
 
 -- Alter Spielstand: Besitz als true, ausgerüstet
-store.Data.u1 = { XP = {}, Coins = 50, Owned = { W_Lava = true, W_Wald = true }, Equipped = { ["W:Rifle"] = "W_Lava" } }
+store.Data.u1 = { XP = {}, Coins = 50, Owned = { W_Lava = true, W_Wald = true, W_Kalender = true },
+	Equipped = { ["W:Rifle"] = "W_Kalender" } }
 local alice = SIM.Join("Alice")
 step(2)
 check(ProgressService.IsLoaded(alice), "Profil geladen")
 check(ProgressService.ItemCount(alice, "W_Lava") == 1 and ProgressService.Owns(alice, "W_Lava"), "true zählt als 1 Stück")
 check(alice:GetAttribute("Rap") == 0, "ohne RAP-Feld: Guthaben 0")
-check(alice:GetAttribute("RapValue") == RapConfig.Values.W_Lava + RapConfig.Values.W_Wald, "Wert der Skins: " .. tostring(alice:GetAttribute("RapValue")))
+local shopValue = RapConfig.Values.W_Lava + RapConfig.Values.W_Wald
+check(alice:GetAttribute("RapValue") == shopValue + RapConfig.Values.W_Kalender, "Wert der Skins: " .. tostring(alice:GetAttribute("RapValue")))
 
 -- Gebundene Skins kauft das System nicht, nicht besessene auch nicht
 local message, ok = action(alice, "SellSkin", "W_Rekrut")
@@ -88,22 +90,27 @@ message, ok = action(alice, "SellSkin", "W_Galaxie")
 check(ok == false, "nicht besessener Skin nicht verkaufbar")
 -- gewöhnlicher Skin: das System zahlt mindestens 1 RAP
 check(RapConfig.SellPrice("W_Wald") == 1 and RapConfig.SellPrice("W_Wueste") == 2, "Rückkauf gewöhnlicher Skins: 1 bis 2 RAP")
-message, ok = action(alice, "SellSkin", "W_Wald")
-check(ok == true and alice:GetAttribute("Rap") == 1 and not ProgressService.Owns(alice, "W_Wald"), "Waldtarn für 1 RAP verkauft: " .. tostring(message))
-ProgressService.SpendRap(alice, 1)
-alice:SetAttribute("Rap", ProgressService.GetRap(alice))
+-- Skins, die der Shop für Münzen verkauft, kauft das System nicht zurück (sonst Münzen -> RAP ohne Ende);
+-- im Markt und per Tausch bleiben sie handelbar
+for _, id in { "W_Wald", "W_Lava" } do
+	message, ok = action(alice, "SellSkin", id)
+	check(ok == false and ProgressService.Owns(alice, id) and alice:GetAttribute("Rap") == 0
+		and string.find(message, "MARKT", 1, true) ~= nil, "Shop-Skin " .. id .. " nicht ans System: " .. tostring(message))
+end
+check(not Cosmetics.SystemBuys("W_Lava") and Cosmetics.SystemBuys("W_Kalender") and not Cosmetics.SystemBuys("W_Rekrut"),
+	"SystemBuys: nur handelbare Skins, die es nicht im Shop gibt")
 
 -- Rückverkauf: Skin weg, abgelegt, RAP drauf, gespeichert
-message, ok = action(alice, "SellSkin", "W_Lava")
-local price = RapConfig.SellPrice("W_Lava")
-check(ok == true, "Lava verkauft: " .. tostring(message))
-check(price == math.floor(RapConfig.Values.W_Lava * RapConfig.SellRate) and price == 2240, "70 % des Werts")
+message, ok = action(alice, "SellSkin", "W_Kalender")
+local price = RapConfig.SellPrice("W_Kalender")
+check(ok == true, "Kalender-Skin verkauft: " .. tostring(message))
+check(price == math.floor(RapConfig.Values.W_Kalender * RapConfig.SellRate) and price == 12600, "70 % des Werts")
 check(alice:GetAttribute("Rap") == price, "RAP gutgeschrieben: " .. tostring(alice:GetAttribute("Rap")))
-check(not ProgressService.Owns(alice, "W_Lava"), "Skin weg")
+check(not ProgressService.Owns(alice, "W_Kalender"), "Skin weg")
 check(ProgressService.Get(alice).Equipped["W:Rifle"] == nil, "verkaufter Skin abgelegt")
-check(alice:GetAttribute("RapValue") == 0, "Wert der Skins jetzt 0")
+check(alice:GetAttribute("RapValue") == shopValue, "Wert der Skins ohne den verkauften")
 step(2)
-check(store.Data.u1.Rap == price and store.Data.u1.Owned.W_Lava == nil, "sofort gespeichert")
+check(store.Data.u1.Rap == price and store.Data.u1.Owned.W_Kalender == nil, "sofort gespeichert")
 
 -- Belohnungen: handelbare Skins als weiteres Stück, gebundene nur einmal
 check(ProgressService.GrantSkin(alice, "W_Gluecksklee") == "new", "erstes Stück neu")
@@ -112,7 +119,7 @@ check(ProgressService.GrantSkin(alice, "W_Gluecksklee") == "copy", "drittes Stü
 check(ProgressService.ItemCount(alice, "W_Gluecksklee") == 3, "drei Stück")
 check(ProgressService.GrantSkin(alice, "W_Rekrut") == "new" and ProgressService.GrantSkin(alice, "W_Rekrut") == nil,
 	"gebundener Skin nur einmal")
-check(alice:GetAttribute("RapValue") == 3 * RapConfig.Values.W_Gluecksklee, "Wert zählt alle Stücke")
+check(alice:GetAttribute("RapValue") == shopValue + 3 * RapConfig.Values.W_Gluecksklee, "Wert zählt alle Stücke")
 
 -- Reservierung: nur freie Stücke, nur handelbare
 check(EconomyService.Reserve(alice, "W_Gluecksklee", 2, "Stand"), "zwei Stück an den Stand")
@@ -170,15 +177,15 @@ store.FailNext = math.huge
 local tester = SIM.Join("Tester")
 step(120) -- alle Wiederholungen schlagen fehl
 check(ProgressService.IsLoaded(tester), "Studio ohne DataStore: Profil gilt für die Sitzung")
-ProgressService.GrantSkin(tester, "W_Lava")
-message, ok = EconomyService.SellToSystem(tester, "W_Lava")
-check(ok == true and tester:GetAttribute("Rap") == RapConfig.SellPrice("W_Lava"), "Studio: Rückverkauf geht: " .. tostring(message))
+ProgressService.GrantSkin(tester, "W_Kalender")
+message, ok = EconomyService.SellToSystem(tester, "W_Kalender")
+check(ok == true and tester:GetAttribute("Rap") == RapConfig.SellPrice("W_Kalender"), "Studio: Rückverkauf geht: " .. tostring(message))
 -- NaN/∞ als Anzahl (vom Client über ShopAction "SellSkin"): abgelehnt, Skin und RAP bleiben
-ProgressService.GrantSkin(tester, "W_Lava")
+ProgressService.GrantSkin(tester, "W_Kalender")
 local rapBefore = ProgressService.GetRap(tester)
 for _, bad in { 0 / 0, math.huge, -math.huge } do
-	message, ok = EconomyService.SellToSystem(tester, "W_Lava", bad)
-	check(ok == false and ProgressService.GetRap(tester) == rapBefore and ProgressService.Owns(tester, "W_Lava"),
+	message, ok = EconomyService.SellToSystem(tester, "W_Kalender", bad)
+	check(ok == false and ProgressService.GetRap(tester) == rapBefore and ProgressService.Owns(tester, "W_Kalender"),
 		"Anzahl " .. tostring(bad) .. " abgelehnt: " .. tostring(message))
 end
 ProgressService.AddRap(tester, 0 / 0)

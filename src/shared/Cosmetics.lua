@@ -17,6 +17,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local MasteryConfig = require(ReplicatedStorage:WaitForChild("Shared").MasteryConfig)
 local StaffConfig = require(ReplicatedStorage:WaitForChild("Shared").StaffConfig)
+local RapConfig = require(ReplicatedStorage:WaitForChild("Shared").RapConfig)
 
 local Cosmetics = {}
 
@@ -196,6 +197,13 @@ end
 -- Im Shop kaufbar?
 function Cosmetics.ForSale(item)
 	return item.Price ~= nil and not item.Pass and not item.Reward and not item.Mastery
+end
+
+-- Kauft das System diesen Skin zurück (Reiter VERKAUFEN)? Nur handelbare Skins, die es nicht im Shop für Münzen gibt:
+-- sonst wären Münzen über Kaufen und Zurückverkaufen ohne Ende in RAP umzuwandeln. Shop-Skins gehen im MARKT oder per Tausch.
+function Cosmetics.SystemBuys(id)
+	local item = byId[id]
+	return item ~= nil and RapConfig.Tradeable(id) and not Cosmetics.ForSale(item)
 end
 
 -- Alle Skins eines Typs ("Weapon")

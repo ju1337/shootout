@@ -2968,4 +2968,8 @@ return {
 	["Gefängnis → Nordheim"] = "Prison → Nordheim",
 	["Hafen → Flugplatz"] = "Harbor → Airfield",
 	["Gefängnis → Süd"] = "Prison → South",
+	-- Rückkauf ans System: Shop-Skins ausgenommen
+	["SHOP-SKIN  ·  VERKAUF IM MARKT ODER PER TAUSCH"] = "SHOP SKIN  ·  SELL IT IN THE MARKET OR TRADE IT",
+	["NUR IM MARKT"] = "MARKET ONLY",
+	["Shop-Skins kauft das System nicht zurück. Verkauf ihn im MARKT oder tausche ihn."] = "The system doesn't buy back shop skins. Sell it in the MARKET or trade it.",
 }

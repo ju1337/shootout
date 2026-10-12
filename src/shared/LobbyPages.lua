@@ -412,17 +412,20 @@ function LobbyPages.Shop(page)
 		label({ Position = UDim2.fromOffset(16, 208), Size = UDim2.new(1, -32, 0, 16), Text = upper(rarity.Name), TextSize = 11,
 			Font = F.Bold, TextColor3 = rarity.Color }, card)
 		local free = count - held
+		local buys = Cosmetics.SystemBuys(item.Id) -- Shop-Skins kauft das System nicht zurück (nur Markt und Tausch)
 		label({ Position = UDim2.fromOffset(16, 224), Size = UDim2.new(1, -32, 0, 16), TextSize = 11, Font = F.Bold,
 			TextColor3 = held > 0 and C.Primary or C.Muted,
-			Text = held > 0 and (held .. " AM STAND / IM TAUSCH  ·  " .. free .. " FREI") or ("SYSTEM ZAHLT " .. math.floor(RapConfig.SellRate * 100)
-				.. " % DES WERTS") }, card)
+			Text = held > 0 and (held .. " AM STAND / IM TAUSCH  ·  " .. free .. " FREI")
+				or not buys and "SHOP-SKIN  ·  VERKAUF IM MARKT ODER PER TAUSCH"
+				or ("SYSTEM ZAHLT " .. math.floor(RapConfig.SellRate * 100) .. " % DES WERTS") }, card)
 		local confirmUntil = 0
 		local sell
 		sell = UITheme.Chunky({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14),
-			Size = UDim2.new(1, -28, 0, 40), Color = free > 0 and C.Rap or C.MutedBack,
-			Text = free > 0 and ("VERKAUFEN  ·  +" .. UITheme.FormatNumber(price) .. " RAP") or "ZURÜCKGELEGT", TextSize = 17,
-			TextColor = free > 0 and C.OnLight or C.Muted }, card, function()
-			if free <= 0 then
+			Size = UDim2.new(1, -28, 0, 40), Color = free > 0 and buys and C.Rap or C.MutedBack,
+			Text = not buys and "NUR IM MARKT" or free > 0 and ("VERKAUFEN  ·  +" .. UITheme.FormatNumber(price) .. " RAP")
+				or "ZURÜCKGELEGT", TextSize = 17,
+			TextColor = free > 0 and buys and C.OnLight or C.Muted }, card, function()
+			if free <= 0 or not buys then
 				return
 			end
 			if os.clock() < confirmUntil then
