@@ -31,6 +31,7 @@ local AgentModels = require(Shared.AgentModels)
 local CharacterPose = require(Shared.CharacterPose)
 local InspectView = require(Shared.InspectView)
 local UITheme = require(Shared.UITheme)
+local ScopeOverlay = require(Shared.ScopeOverlay)
 
 local player = Players.LocalPlayer
 
@@ -103,6 +104,21 @@ local function notifyAmmo()
 	end
 end
 
+local SCOPE_SHOW = 0.82        -- Zielfernrohr-Ansicht ab diesem Fortschritt des Anlegens (aimBlend)
+local aimFovShown = nil
+
+-- Sichtfeld beim Zielen: durchs Zielfernrohr (nur Ego-Ansicht, Waffe mit 3D-Modell) stärker vergrößert
+local function aimFov(name)
+	local cfg = name and WeaponConfig.Get(name)
+	if not cfg then
+		return 50
+	end
+	if cfg.ScopeFov and GunModels.HasScope(name) and not Movement.IsThirdPerson() then
+		return cfg.ScopeFov
+	end
+	return cfg.AimFov or 50
+end
+
 local function setAiming(on)
 	if on == aiming then
 		return
@@ -112,8 +128,8 @@ local function setAiming(on)
 		WeaponEffects.ActionSound("AimIn") -- leises Rascheln beim Anlegen
 	end
 	SkinEffects.SetAiming(on) -- Effekt-Skins: beim Zielen keine Dauer-Partikel an der eigenen Waffe
-	local cfg = current and WeaponConfig.Get(current)
-	Movement.SetAiming(on, cfg and cfg.AimFov or 50)
+	aimFovShown = aimFov(current)
+	Movement.SetAiming(on, aimFovShown)
 	aimChanged:Fire(on)
 end
 
@@ -496,7 +512,8 @@ local function equip(slot)
 	updateViewModel()
 	WeaponEffects.ActionSound("Draw", nil, name)
 	if aiming then
-		Movement.SetAiming(true, WeaponConfig.Get(name).AimFov)
+		aimFovShown = aimFov(name)
+		Movement.SetAiming(true, aimFovShown)
 	end
 	Remotes.Equip:FireServer(name)
 end
@@ -727,6 +744,10 @@ function WeaponClient.Init()
 		-- Zielen: solange gehalten, außer beim Nachladen, Sprinten-Stopp macht Movement
 		setAiming(aimHeld and isAlive and current ~= nil and not reloading)
 		aimBlend += ((aiming and 1 or 0) - aimBlend) * math.min(1, AIM_SPEED * dt)
+		if aiming and aimFov(current) ~= aimFovShown then -- z.B. Wechsel Ego <-> Third-Person beim Zielen
+			aimFovShown = aimFov(current)
+			Movement.SetAiming(true, aimFovShown)
+		end
 
 		-- Nachlade-Animation: Ereignisse auslösen, Ende abwarten (Server bestätigt das Nachladen)
 		local reloadPose = nil
@@ -778,8 +799,12 @@ function WeaponClient.Init()
 		fallSpeed = math.max(0, -velocity.Y)
 
 		-- Kamera-Waffe nur sichtbar, solange man selbst lebt (nicht beim Zuschauen) und in der Ego-Perspektive
+		-- Zielfernrohr: kurz bevor die Waffe ganz angelegt ist, übernimmt die Fernrohr-Ansicht, die Ego-Waffe verschwindet
+		local scoped = viewModel ~= nil and isAlive and not thirdPerson and current ~= nil and aiming
+			and aimBlend >= SCOPE_SHOW and GunModels.HasScope(current)
+		ScopeOverlay.Update(scoped)
 		if viewModel then
-			local showViewModel = isAlive and not thirdPerson
+			local showViewModel = isAlive and not thirdPerson and not scoped
 			viewModel:SetParent(showViewModel and workspace.CurrentCamera or nil)
 			if showViewModel then
 				viewModel:Update(dt, {

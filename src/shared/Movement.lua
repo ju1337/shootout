@@ -197,7 +197,9 @@ local function apply()
 		-- Rutschen fühlt sich schneller an als der Sprint: dessen Bonus bleibt, dazu SLIDE_FOV_BONUS (RenderStep)
 		targetFov = (sprinting or slide) and normalFov + SPRINT_FOV_BONUS or normalFov
 	end
-	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * aimSensitivity or sensitivity
+	-- Zielfernrohr (Sichtfeld unter 30°): Maus im selben Verhältnis langsamer, damit sich Zielen gleich anfühlt
+	local zoom = aimFov < 30 and math.tan(math.rad(aimFov / 2)) / math.tan(math.rad(15)) or 1
+	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * aimSensitivity * zoom or sensitivity
 end
 
 -- Seitlichen Schulter-Versatz kürzen, wenn neben dem Kopf eine Wand der Map ist (sonst schaut die

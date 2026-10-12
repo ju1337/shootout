@@ -69,7 +69,7 @@ Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff
 | `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (AR-15 ohne Aufsätze, Kimme/Korn als Visierlinie; Holo-Visier als Aufsatz) |
 | `SMG` | Maschinenpistole | 2,38 | 0,81 | Magazine, Bolt | |
 | `Shotgun` | Schrotflinte | 3,95 | 0,76 | Pump, Shell | Shell = Patrone, nur beim Nachladen sichtbar |
-| `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | |
+| `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | fertig: `art/sources/DMR.glb` (Scharfschützengewehr mit Zielfernrohr); mit Modell zielt man durchs Zielfernrohr (Fernrohr-Ansicht `ScopeOverlay`, Sichtfeld `ScopeFov`), kein Holo-Visier |
 | `LMG` | MG | 4,33 | 0,97 | Magazine, Bolt, Cover | Magazin = Kasten + Gurt, Cover = Deckel |
 | `Pistol` | Pistole | 1,05 | 0,62 | Magazine, Slide | Kimme und Korn sitzen auf dem Schlitten (Slide) |
 | `Revolver` | Revolver | 1,47 | 0,62 | Cylinder, Hammer, Loader | Loader = Schnelllader, nur beim Nachladen sichtbar |

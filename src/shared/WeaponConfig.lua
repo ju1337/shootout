@@ -200,6 +200,7 @@ WeaponConfig.Weapons = {
 		MaxRecoil = 5,
 		Kick = 1.8,
 		AimFov = 30,
+		ScopeFov = 14,        -- Sichtfeld durchs Zielfernrohr (nur mit 3D-Modell, GunModels.HasScope)
 	},
 	LMG = {
 		DisplayName = "LMG",

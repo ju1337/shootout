@@ -211,7 +211,8 @@ local PARTS = {
 -- Rotpunkt: des Glases), EyeRelief = Abstand Auge - Kimme beim Zielen, Reflex = Rotpunktvisier,
 -- Muzzle = Mündung, Eject = Hülsenauswurf, RightHand/LeftHand = Hände,
 -- Stock = Ende der Schulterstütze (lange Waffen), Long = lange Waffe (Schulteranschlag),
--- LeftHandTP = linke Hand in der Third-Person (näher am Griff, damit die kürzeren Avatar-Arme hinkommen)
+-- LeftHandTP = linke Hand in der Third-Person (näher am Griff, damit die kürzeren Avatar-Arme hinkommen),
+-- Scope = das 3D-Modell hat ein Zielfernrohr: Zielen zeigt die Fernrohr-Ansicht (ScopeOverlay, WeaponConfig.ScopeFov)
 GunModels.Info = {
 	-- Rotpunkt: SightZ = Glas, das Auge bleibt wie vorher 0.72 hinter dem Griff
 	Rifle = { SightHeight = 0.92, SightZ = -0.36, EyeRelief = 1.08, Reflex = true, Muzzle = V(0, 0.48, -2.73),
@@ -223,7 +224,7 @@ GunModels.Info = {
 	Shotgun = { SightHeight = 0.71, SightZ = 0.18, EyeRelief = 0.6, Muzzle = V(0, 0.52, -2.45), Eject = V(0.18, 0.42, -0.35),
 		RightHand = V(0, -0.05, 0.06), LeftHand = V(-0.02, 0.2, -1.35), Stock = V(0, 0.3, 1.5), Long = true,
 		LeftHandTP = V(-0.02, 0.2, -1.35) },
-	DMR = { SightHeight = 0.88, SightZ = 0.15, EyeRelief = 0.65, Muzzle = V(0, 0.46, -3.075), Eject = V(0.17, 0.48, -0.25),
+	DMR = { SightHeight = 0.88, SightZ = 0.15, EyeRelief = 0.65, Scope = true, Muzzle = V(0, 0.46, -3.075), Eject = V(0.17, 0.48, -0.25),
 		RightHand = V(0, -0.05, 0.05), LeftHand = V(-0.03, 0.18, -1.2), Stock = V(0, 0.35, 1.5), Long = true,
 		LeftHandTP = V(-0.03, 0.18, -1.2) },
 	LMG = { SightHeight = 0.92, SightZ = 0.25, EyeRelief = 0.65, Muzzle = V(0, 0.48, -2.88), Eject = V(0.22, 0.42, -0.2),
@@ -328,6 +329,12 @@ function GunModels.AimOffset(weaponName, attachments)
 		return optic
 	end
 	return CFrame.new(0, -info.SightHeight, -info.EyeRelief - info.SightZ)
+end
+
+-- Zielt man mit dieser Waffe durch ein Zielfernrohr? Nur mit fertigem 3D-Modell (die Quader-Waffe hat Kimme und Korn)
+function GunModels.HasScope(weaponName)
+	local info = GunModels.Info[weaponName]
+	return info ~= nil and info.Scope == true and assetData[weaponName] ~= nil
 end
 
 -- Mündung im Waffenraum: mit Lauf-Aufsatz am Ende des neuen Laufs (Attribut "Muzzle" an Modell bzw. Tool)
@@ -473,7 +480,8 @@ local function opticMount(info)
 end
 local function equippedOptic(weaponName, attachments)
 	local info = GunModels.Info[weaponName]
-	if not info or not info.Long or not attachments or not assetData[weaponName] then
+	-- Waffe mit Zielfernrohr: kein Visier-Aufsatz obendrauf
+	if not info or not info.Long or not attachments or not assetData[weaponName] or info.Scope then
 		return nil
 	end
 	for _, id in attachments do
