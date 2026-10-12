@@ -194,9 +194,17 @@ local function setInside(player, info, inside, character)
 		InventoryService.Holster(player) -- Waffen bleiben in der Safe Zone gesichert
 	else
 		player:SetAttribute("TutorialEquip", nil) -- Tutorial: draußen gilt wieder die normale Regel
-		-- Spawnschutz: ein paar Sekunden unverwundbar, dafür selbst noch kein Schießen (Damage, CanFight)
-		info.ProtectAt = os.clock() + ExtinctionConfig.SpawnProtection
-		player:SetAttribute("ProtectedUntil", workspace:GetServerTimeNow() + ExtinctionConfig.SpawnProtection)
+		-- Spawnschutz: ein paar Sekunden unverwundbar, dafür selbst noch kein Schießen (Damage, CanFight). Nur beim ersten
+		-- Verlassen nach dem Spawn, sonst gäbe Rein-und-raus an der Grenze immer wieder neuen Schutz.
+		if info.FreshSpawn then
+			info.FreshSpawn = nil
+			info.ProtectAt = os.clock() + ExtinctionConfig.SpawnProtection
+			player:SetAttribute("ProtectedUntil", workspace:GetServerTimeNow() + ExtinctionConfig.SpawnProtection)
+		else
+			info.ProtectAt = nil
+			player:SetAttribute("ProtectedUntil", nil)
+			player:SetAttribute("CanFight", true)
+		end
 		info.PvPAt = os.clock() + ExtinctionConfig.PvPDelay
 		player:SetAttribute("PvP", false)
 		player:SetAttribute("PvPAt", workspace:GetServerTimeNow() + ExtinctionConfig.PvPDelay)
@@ -386,6 +394,7 @@ local function spawnPlayer(player)
 		regen:Destroy()
 	end
 	player:SetAttribute("CombatUntil", nil) -- nach dem Tod nicht mehr im Kampf
+	info.FreshSpawn = true -- Spawnschutz beim ersten Verlassen der Safe Zone
 	setInside(player, info, true, character)
 	giveAdminLoadout(player)
 	giveTestKeys(player)
@@ -406,6 +415,16 @@ local function spawnPlayer(player)
 		end
 	end
 	local humanoid = character:WaitForChild("Humanoid")
+	-- erster Spawn nach dem Betreten: Leben von vorhin (Markt-Portal, Neubeitritt), nach dem Agenten-Leben (CharacterAdded)
+	local kept = info.KeptHealth
+	info.KeptHealth = nil
+	if kept then
+		task.defer(function()
+			if humanoid.Parent and humanoid.Health > 0 then
+				humanoid.Health = math.clamp(kept * humanoid.MaxHealth, 1, humanoid.MaxHealth)
+			end
+		end)
+	end
 	humanoid.Died:Connect(function()
 		-- Wiederbeleben zuerst planen: ein Fehler weiter unten (Tasche, Telemetrie) darf niemanden auf der Leiche lassen
 		task.delay(ExtinctionConfig.RespawnTime, function()
@@ -439,7 +458,23 @@ local function leavingOutside(player)
 end
 
 -- Verlassen draußen: Tasche fällt (nicht beim Herunterfahren des Servers)
+-- Leben beim Verlassen merken (Profil ExtLife), damit Markt-Portal oder Neubeitritt nicht voll heilen
+local function rememberHealth(player)
+	local profile = members[player] and ProgressService.IsLoaded(player) and ProgressService.Get(player)
+	if not profile then
+		return
+	end
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return -- Charakter schon weg (zweiter Aufruf beim Verlassen): den gemerkten Wert behalten
+	end
+	local health = humanoid.Health > 0 and humanoid.Health / math.max(1, humanoid.MaxHealth) or 1 -- tot: neu mit vollem Leben
+	profile.ExtLife = health < 0.995 and { H = math.floor(health * 1000) / 1000, T = os.time() } or nil
+end
+
 local function leavePenalty(player)
+	rememberHealth(player)
 	local info = members[player]
 	if not info or info.Penalized or ProgressService.IsShuttingDown() then
 		return
@@ -1069,6 +1104,15 @@ end
 
 function Extinction.AddPlayer(player)
 	members[player] = { Inside = true }
+	local profile = ProgressService.Get(player)
+	local life = profile and profile.ExtLife
+	if type(life) == "table" and type(life.H) == "number" and life.H == life.H and type(life.T) == "number"
+		and os.time() - life.T <= ExtinctionConfig.KeepHealthTime then
+		members[player].KeptHealth = math.clamp(life.H, 0.01, 1)
+	end
+	if profile then
+		profile.ExtLife = nil
+	end
 	player:SetAttribute("MapId", map.Name)
 	player:SetAttribute("MapName", map:GetAttribute("DisplayName") or "Ödstadt")
 	player:SetAttribute("MapCenter", map:GetAttribute("Center"))
@@ -1083,7 +1127,7 @@ function Extinction.AddPlayer(player)
 	ExtDailyService.Claim(player) -- tägliche Kiste ins Lager (einmal am Tag)
 	-- Neue Spieler: geführtes Tutorial (ExtTutorial auf dem Client), bis es fertig oder übersprungen ist (Profil
 	-- TutorialDone). Wer die offene Welt schon kannte (GuideHinted aus der Zeit vor dem Tutorial), bekommt es nicht.
-	local profile = ProgressService.Get(player)
+	profile = ProgressService.Get(player)
 	if profile and not profile.TutorialDone and not profile.GuideHinted then
 		player:SetAttribute("ExtTutorial", true)
 	end

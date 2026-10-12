@@ -39,9 +39,13 @@ ExtinctionConfig.PvPDelay = 5        -- Sekunden nach dem Verlassen der Safe Zon
 -- Im Kampf (Spieler getroffen oder von einem Spieler getroffen): so lange kommt man nicht in eine Safe Zone
 -- (Spieler-Attribut CombatUntil = Serverzeit, Damage setzt es; Barriere und Anzeige: CombatBarrier auf dem Client)
 ExtinctionConfig.CombatTime = 15
--- Spawnschutz nach dem Verlassen einer Safe Zone (Sekunden): kein Schaden von irgendwem, aber selbst auch nicht schießen,
--- werfen oder Zombies töten (CanFight aus, Spieler-Attribut ProtectedUntil = Serverzeit). Waffe ziehen geht.
+-- Spawnschutz beim ersten Verlassen einer Safe Zone nach dem Spawn (Sekunden): kein Schaden von irgendwem, aber selbst
+-- auch nicht schießen, werfen oder Zombies töten (CanFight aus, Spieler-Attribut ProtectedUntil = Serverzeit). Waffe
+-- ziehen geht. Wer danach wieder hinein und hinaus geht, bekommt ihn nicht erneut (sonst Schutz per Grenz-Hüpfen).
 ExtinctionConfig.SpawnProtection = 4
+-- Leben bleibt beim Verlassen der offenen Welt (Markt-Portal, Spiel verlassen) erhalten und gilt beim nächsten Betreten
+-- wieder, solange es nicht länger als so viele Sekunden her ist (sonst wieder volles Leben). Heilen kostet sonst Items.
+ExtinctionConfig.KeepHealthTime = 30 * 60
 -- Zum Entwickeln: Admins (Attribut IsAdmin) spawnen in der offenen Welt immer mit diesen Items (fehlende werden ergänzt)
 ExtinctionConfig.AdminLoadout = { { "Rifle", 1 }, { "Ammo_Rifle", 150 }, { "Pistol", 1 }, { "Ammo_9mm", 60 } }
 ExtinctionConfig.RespawnTime = 5     -- nach dem Tod: Respawn in der Safe Zone

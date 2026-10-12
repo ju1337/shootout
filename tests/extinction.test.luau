@@ -274,6 +274,15 @@ check(math.abs(alice:GetAttribute("PvPAt") - (workspace:GetServerTimeNow() + 5))
 step(5.2)
 check(alice:GetAttribute("CanFight") == true and alice:GetAttribute("ProtectedUntil") == nil, "nach dem Spawnschutz: Kampf erlaubt")
 check(alice:GetAttribute("PvP") == true, "nach 5 Sekunden PvP an")
+-- wieder hinein und hinaus: kein neuer Spawnschutz (nur beim ersten Verlassen nach dem Spawn), PvP-Countdown aber schon
+moveTo(alice, Vector3.new(0, 3, 0))
+check(alice:GetAttribute("InSafeZone") == true, "zurück in der Safe Zone")
+moveTo(alice, Vector3.new(0, 3, 160))
+check(alice:GetAttribute("ProtectedUntil") == nil and alice:GetAttribute("CanFight") == true,
+	"zweites Verlassen: kein neuer Spawnschutz, sofort kampfbereit")
+check(alice:GetAttribute("PvP") == false, "zweites Verlassen: PvP-Countdown läuft wieder")
+step(5.2)
+check(alice:GetAttribute("PvP") == true, "PvP wieder an")
 InventoryService.Use(alice, 1)
 check(WeaponService.CarriedWeapon(alice) == "Rifle", "Taste 1: Sturmgewehr in der Hand")
 check(alice:GetAttribute("ExtEquipped") == 1, "Hotbar zeigt Platz 1 als aktiv")
@@ -543,18 +552,25 @@ InventoryService.Buy(alice, "Stand_Items", "Medkit")
 InventoryService.Buy(alice, "Stand_Items", "Vest")
 InventoryService.Move(alice, "Bag", 1, "Bag", 7)
 local before = HttpService:JSONEncode(ProgressService.Get(alice).Extinction.Bag)
+alice.Character.Humanoid.Health = alice.Character.Humanoid.MaxHealth * 0.4 -- verletzt durchs Portal
 manager.Join(alice, "Hub")
 check(alice:GetAttribute("Mode") == "Hub", "in der Safe Zone sofort verlassen")
 check(HttpService:JSONEncode(ProgressService.Get(alice).Extinction.Bag) == before, "Tasche und Anordnung bleiben")
 check(alice:GetAttribute("ExtBag") == nil, "Anzeige-Attribute weg")
 enter(alice)
 check(slot(alice, 7) and slot(alice, 7).Id == "Medkit", "nach dem Wiederkommen liegt alles am selben Platz")
+local backHumanoid = alice.Character.Humanoid
+check(math.abs(backHumanoid.Health - backHumanoid.MaxHealth * 0.4) < 1,
+	"Leben bleibt beim Wiederkommen (kein volles Leben übers Portal): " .. backHumanoid.Health)
+check(ProgressService.Get(alice).ExtLife == nil, "gemerktes Leben verbraucht")
 
 -- ---------- Spiel verlassen draußen: Tasche weg, gespeichert ohne Inhalt ----------
 moveTo(alice, Vector3.new(-200, 3, 0))
+alice.Character.Humanoid.Health = alice.Character.Humanoid.MaxHealth * 0.55
 SIM.Leave(alice)
 step(2)
 local saved = store.Data.u1
+check(saved and type(saved.ExtLife) == "table" and math.abs(saved.ExtLife.H - 0.55) < 0.01, "Leben beim Verlassen gespeichert")
 check(saved and saved.Extinction and #saved.Extinction.Bag == 0, "gespeichert: Tasche leer")
 check(saved and #saved.Extinction.Stash == 1, "gespeichert: Lager unverändert")
 check(#workspace.ExtinctionLoot:GetChildren() == 2, "Alices Tasche liegt am Boden")
