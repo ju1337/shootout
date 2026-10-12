@@ -38,48 +38,49 @@ SoundLibrary.Sounds = {
 	-- Zombies klingen wie in Unturned: tief, kehlig, menschlich statt Tiergebrüll. Darum alles tiefer gestimmt, die Höhen
 	-- abgesenkt (Muffle) und etwas angeraut (Grit); jeder Zombie bekommt dazu eine eigene Stimmlage (ZombieService).
 	-- Zombie schlurft herum: leises Stöhnen, nur in der Nähe zu hören
-	ZombieIdle = { Range = 55, Pitch = 0.82, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Idle or {
-		clip(9114553974, 1.0, 0.13, 2.09),
-		clip(9120005520, 0.8, 0.32, 2.77),
-		clip(9113972834, 1.1, 0.01, 2.2),
-		clip(9113972977, 1.4, 0.06, 1.78),
-		clip(9113973128, 0.6, 0.07, 1.26),
-		clip(9125842589, 2.4, 0.04, 1.5),
+	-- Ruhig gehalten (nicht übertrieben): menschliche Laute – Röcheln, schweres Atmen, Würgen, kurzes Grunzen – tiefer
+	-- gestimmt und gedämpft, statt Tiergebrüll. Lautstärken angeglichen (Spitze etwa 0,11 im Leerlauf, 0,2 beim Entdecken).
+	ZombieIdle = { Range = 50, Pitch = 0.8, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Idle or {
+		clip(9114556822, 0.6, 0.6, 1.9), -- Röcheln (schwer atmen, ersticken)
+		clip(9114555705, 0.9, 0, 2.0),
+		clip(9114556462, 1.0, 0, 0.7),
+		clip(9114554782, 4.4, 0.3, 2.0), -- tiefes Ein- und Ausatmen
+		clip(9120659004, 5.0, 0.2, 2.2), -- pfeifendes Atmen
+		clip(9113972834, 0.9, 0.1, 1.7), -- leises, kehliges Brummen
 	} },
-	-- Zombie bemerkt einen Spieler: lauter Schrei, weit zu hören (die Warnung, dass einer kommt)
-	ZombieAggro = { Range = 110, Pitch = 0.88, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Aggro or {
-		clip(9125467848, 2.6, 0, 1.66),
-		clip(9113973521, 1.4, 0.12, 2.12),
-		clip(9113636490, 4.6, 0, 1.1),
+	-- Zombie bemerkt einen Spieler: kehliges Aufstöhnen (deutlich, aber kein Gebrüll)
+	ZombieAggro = { Range = 95, Pitch = 0.82, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Aggro or {
+		clip(9125467848, 2.6, 0, 1.4),
+		clip(9116457545, 1.0, 1.2, 1.8),
+		clip(9114558505, 0.55, 0, 0.5),
 	} },
-	-- Zombie jagt: kurzes Knurren und Keuchen, öfter als im Leerlauf
-	ZombieChase = { Range = 70, Pitch = 0.9, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Chase or {
-		clip(9113972977, 1.4, 0.06, 1.1),
-		clip(9113973128, 0.7, 0.07, 0.9),
-		clip(9125842589, 2.4, 0.04, 1.0),
-		clip(9113973521, 1.2, 0.12, 1.2),
+	-- Zombie jagt: kurzes Grunzen und Keuchen
+	ZombieChase = { Range = 60, Pitch = 0.82, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Chase or {
+		clip(9116457545, 0.65, 0.3, 0.65),
+		clip(9116457545, 0.65, 1.2, 1.75),
+		clip(9116457545, 0.65, 2.55, 3.0),
+		clip(9114558305, 0.47, 0, 0.5),
 	} },
 	-- Zombie schlägt zu: kurzes Grunzen
-	ZombieAttack = { Range = 55, Pitch = 0.8, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Attack or {
-		clip(9125652662, 1.4, 0, 0.71),
-		clip(9113636491, 4.6, 0, 0.82),
-		clip(9113799269, 5.5, 0.07, 1.07),
+	ZombieAttack = { Range = 50, Pitch = 0.8, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Attack or {
+		clip(9116451739, 1.1, 0, 0.4),
+		clip(9116451917, 1.4, 0, 0.35),
+		clip(9114558319, 0.45, 0, 0.4),
 	} },
-	-- Zombie getroffen: Würgen
-	ZombieHurt = { Range = 55, Pitch = 0.85, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Hurt or {
-		clip(9113799417, 5.5, 0, 0.57),
-		clip(9113799526, 2.8, 0, 0.58),
-		clip(9113799734, 5.5, 0, 0.61),
+	-- Zombie getroffen: kurzes Keuchen
+	ZombieHurt = { Range = 50, Pitch = 0.85, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Hurt or {
+		clip(9114029889, 0.8, 0, 0.4),
+		clip(9114558305, 0.55, 0, 0.45),
 	} },
-	-- Zombie stirbt: kurzes Gurgeln, kein langer Schrei
-	ZombieDeath = { Range = 70, Pitch = 0.75, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Death or {
-		clip(9113607285, 1.3, 0.21, 1.4),
-		clip(9116454870, 2.5, 0.11, 1.2),
-		clip(9120005520, 1.1, 0.32, 1.6),
+	-- Zombie stirbt: letztes Röcheln, kein Schrei
+	ZombieDeath = { Range = 60, Pitch = 0.75, Voice = ZOMBIE_VOICE, Clips = ZOMBIE_CLIPS.Death or {
+		clip(9114029889, 0.8, 0, 1.2),
+		clip(9120005520, 0.7, 0.9, 1.6),
+		clip(9114556822, 0.8, 0.6, 1.9),
 	} },
-	-- Schreier ruft die anderen
-	ZombieScream = { Range = 160, Pitch = 0.95, Voice = { Muffle = -4, Grit = 0.2 }, Clips = ZOMBIE_CLIPS.Scream or {
-		clip(9113985445, 3.0, 0.27, 2.67),
+	-- Schreier ruft die anderen (soll auffallen, aber nicht ohrenbetäubend)
+	ZombieScream = { Range = 140, Pitch = 0.95, Voice = { Muffle = -4, Grit = 0.2 }, Clips = ZOMBIE_CLIPS.Scream or {
+		clip(9113985445, 2.0, 0.27, 2.67),
 	} },
 	-- Brocken brüllt (bemerkt / greift an)
 	BruteRoar = { Range = 140, Pitch = 0.8, Clips = { clip(9113987603, 1.71, 0.56, 3.56), clip(9113980319, 3.85, 0, 2.5) } },

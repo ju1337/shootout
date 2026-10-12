@@ -1087,7 +1087,7 @@ local function step(model, info, now)
 	if not info.NextGroan then
 		info.NextGroan = now + random:NextNumber(2, 10)
 	elseif now >= info.NextGroan then
-		info.NextGroan = now + (target and random:NextNumber(2.5, 5) or random:NextNumber(8, 18))
+		info.NextGroan = now + (target and random:NextNumber(3.5, 7) or random:NextNumber(10, 22))
 		voice(info, target and "ZombieChase" or "ZombieIdle")
 	end
 	if target then
