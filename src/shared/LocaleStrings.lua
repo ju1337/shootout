@@ -1187,7 +1187,7 @@ return {
 	["Kisten öffnest du im Markt."] = "Open crates at the Market.",
 	["KIT-AUSGABE"] = "KIT COUNTER",
 	["Klares Zielbild"] = "Clear sight picture",
-	["Klares Zielbild mit Leuchtring"] = "Clear sight picture with glowing ring",
+	["Klares Zielbild mit Leuchtpunkt"] = "Clear sight picture with glowing dot",
 	["KLASSISCH"] = "CLASSIC",
 	["KLICK = MIT TON ABSPIELEN"] = "CLICK = PLAY WITH SOUND",
 	["KLICK = PRIMÄRWAFFE WÄHLEN"] = "CLICK = SELECT PRIMARY WEAPON",
