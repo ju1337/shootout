@@ -1,5 +1,12 @@
 # Quellmodelle
 
+- `DMR.glb`: Präzisionsgewehr (Scharfschützengewehr AWM-Bauart mit Zielfernrohr aus Meshy,
+  `Meshy_AI_roblox_magnum_sniper_1012115921_texture.glb`), erzeugt mit `tools/attachments/sniper_v1.py`: volle Qualität
+  (308.108 Dreiecke in 16 Stücken `Skin_Body_01…16`, Texturen 4096 mit Normal Map), Zweibein nach vorn unter den Lauf
+  geklappt, `Magazine` und `Bolt` (Kammerstängel) herausgeschnitten, Visierlinie durch die Mitte des Zielfernrohrs,
+  4,58 Studs lang. In Studio: Import 3D > DMR.glb (Einheit Stud, Merge Meshes aus), nach ReplicatedStorage > Assets >
+  Weapons, "DMR" nennen.
+
 - `Rifle.glb`: aktuelles Sturmgewehr (AR-15 aus Meshy, ohne Aufsätze, 30er-Magazin als `Magazine`), erzeugt mit
   `tools/attachments/ar15_v2.py`; der Lauf vor dem Handschutz ist ein eigenes Teil `Skin_Body_Barrel`
   (`tools/attachments/rifle_barrel.py`), das Lauf-Aufsätze ausblenden. Aufsätze (Holo-Visier, Schalldämpfer, Winkelgriff) in `Attachments/`.
