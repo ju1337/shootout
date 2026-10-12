@@ -35,6 +35,10 @@
             "$path": "models/Weapons/Pistol.rbxmx",
             "$ignoreUnknownInstances": true
           },
+          "Revolver": {
+            "$path": "models/Weapons/Revolver.rbxmx",
+            "$ignoreUnknownInstances": true
+          },
           "Rifle": {
             "$path": "models/Weapons/Rifle.rbxmx",
             "$ignoreUnknownInstances": true,
