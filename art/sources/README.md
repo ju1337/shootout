@@ -1,5 +1,9 @@
 # Quellmodelle
 
+- `Pistol.glb`: Pistole (Glock 17 aus Meshy, FBX-Export `Meshy_AI_roblox_glock17_3d_1012204441`, nicht im Repo), erzeugt mit
+  `tools/attachments/meshy_weapon.py Pistol …`: 228.936 Dreiecke, Schlitten `Skin_Slide`, `Magazine`, 1,05 Studs.
+  In Studio: Import 3D (Stud, Merge Meshes aus), nach Assets > Weapons, "Pistol" nennen.
+
 - `DMR.glb`: Präzisionsgewehr (Scharfschützengewehr AWM-Bauart mit Zielfernrohr aus Meshy,
   `Meshy_AI_roblox_magnum_sniper_1012115921_texture.glb`), erzeugt mit `tools/attachments/sniper_v1.py`: volle Qualität
   (308.108 Dreiecke in 16 Stücken `Skin_Body_01…16`, Texturen 4096 mit Normal Map), Zweibein nach vorn unter den Lauf
