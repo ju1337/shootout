@@ -42,6 +42,7 @@ einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gült
 Die `SMG` ist fertig: MP7 A1 als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
 Die `Pistol` ist fertig: HK Mark 23 als echtes Mesh (`models/Weapons/Pistol.rbxmx`, Studio-Import von `art/sources/Pistol.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
 Das `LMG` ist fertig: M60 als echtes Mesh (`models/Weapons/LMG.rbxmx`, Studio-Import von `art/sources/LMG.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
+Der `Revolver` ist vorbereitet: Chiappa Rhino (`art/sources/Revolver.glb`, `tools/rhino_glb.py`), wartet auf den Studio-Import.
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
 (Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr

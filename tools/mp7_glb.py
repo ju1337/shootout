@@ -109,7 +109,7 @@ def png(color):
             + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
 
-def write(parts, path):
+def write(parts, path, extras=None):
     # Materialien: Farbe je Teil (Skin_/Magazine/Bolt/Body dunkel bis stahl) aus dem GLB
     mats, meshes, nodes, accessors, views, blob = [], [], [], [], [], bytearray()
     images, textures = [], []
@@ -139,7 +139,7 @@ def write(parts, path):
         meshes.append({"name": name, "primitives": [{"attributes": attrs, "material": len(mats) - 1}]})
         nodes.append({"name": name, "mesh": len(meshes) - 1})
     doc = {"asset": {"version": "2.0", "generator": "tools/mp7_glb.py",
-                     "extras": {"license": "CC-BY-4.0", "author": "D_U (https://sketchfab.com/DU1701)"}},
+                     "extras": extras or {"license": "CC-BY-4.0", "author": "D_U (https://sketchfab.com/DU1701)"}},
            "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,
            "materials": mats, "images": images, "textures": textures, "accessors": accessors, "bufferViews": views, "buffers": [{"byteLength": len(blob)}]}
     js = json.dumps(doc, separators=(",", ":")).encode()

@@ -11,3 +11,6 @@ dazu laufen `weapons`, `viewmodel` und `pose` mit deinem Modell). Anleitung: [do
 `Pistol.rbxmx` ist eine Kopie von `models/Weapons/Pistol.rbxmx` (Mark 23 aus Studio) – bei Änderungen beide ersetzen.
 
 `LMG.rbxmx` ist eine Kopie von `models/Weapons/LMG.rbxmx` (M60 aus Studio) – bei Änderungen beide ersetzen.
+
+`Revolver.rbxmx` ist vorerst ein Quader-Nachbau aus `python3 tools/rhino_glb.py --boxes` (Chiappa Rhino), bis die
+Studio-Kopie da ist – dann durch sie ersetzen und nach `models/Weapons/Revolver.rbxmx` legen.

@@ -44,5 +44,13 @@
   die Kornspitze), ohne lose Patronen, Gurtstücke und den zweiten Kasten, 4,33 Studs lang, Lauf nach -Z. In Studio:
   Import 3D > LMG.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "LMG" nennen.
 
+- `rhino.glb`: "low-poly Chiappa Rhino" von D.U. (https://sketchfab.com/D.U.), Lizenz CC-BY-4.0
+  (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-chiappa-rhino-dd187489aaca42b2abda9831e76bc94b
+- `Revolver.glb`: die fertig vorbereitete Studio-Version für den Revolver (`python3 tools/rhino_glb.py`): Teile benannt
+  (Rahmen und Trommel = Skin-Zonen, Trommel mit Kran und Ausstoßerstange = Gruppe `Cylinder`, `Hammer`, Leuchtpunkt im
+  Korn, dazugebauter Schnelllader `Loader`), Marker gesetzt (Visierlinie über die Oberkante der Kimme und des Korns,
+  Mündung tief an der unteren Kammer), ohne die zwei losen Patronen, 1,47 Studs lang, Lauf nach -Z. In Studio:
+  Import 3D > Revolver.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Revolver" nennen.
+
 - `Rifle_Texturen/Skin_Body_Overlay.png`: Farb-Grundtextur für Farb-Skins am aktuellen Sturmgewehr (Farbe aus
   `Rifle.glb`, gleichmäßige Flächen teilweise durchsichtig), erzeugt mit `python3 tools/models/rifle_overlay.py`.
