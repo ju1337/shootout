@@ -139,7 +139,7 @@ check(ProgressService.ItemCount(alice, "W_Lava") == 1 and ProgressService.ItemCo
 check(ProgressService.ItemCount(alice, "W_Kalender") == 1 and ProgressService.ItemCount(alice, "W_Chrom") == 1,
 	"Bobs Skins bei Alice")
 check(ProgressService.ItemCount(bob, "W_Kalender") == 0, "Bob hat den Kalender-Skin abgegeben")
-check(alice:GetAttribute("Rap") == 700 and bob:GetAttribute("Rap") == 800, "RAP gewandert (ohne Gebühr)")
+check(alice:GetAttribute("Rap") == 700 and bob:GetAttribute("Rap") == 770, "RAP gewandert, 10 % Steuer (300 -> 270)")
 check(EconomyService.ReservedCount(alice, "W_Lava") == 0 and EconomyService.ReservedCount(bob, "W_Kalender") == 0,
 	"keine Reservierungen mehr")
 check(last(alice, "Done") ~= nil and last(bob, "Done") ~= nil, "beide bekommen die Abschluss-Meldung")
@@ -178,7 +178,7 @@ act(bob, "Ready", true)
 ProgressService.SpendRap(alice, 600) -- z.B. im Markt gekauft
 step(RapConfig.TradeConfirmTime + 0.5)
 check(TradeService.TradeOf(alice) == nil, "Tausch beendet")
-check(ProgressService.ItemCount(bob, "W_Lava") == 1 and alice:GetAttribute("Rap") == 100 and bob:GetAttribute("Rap") == 800,
+check(ProgressService.ItemCount(bob, "W_Lava") == 1 and alice:GetAttribute("Rap") == 100 and bob:GetAttribute("Rap") == 770,
 	"fehlgeschlagen: nichts getauscht")
 check(string.find(last(alice, "Closed").Reason, "fehlgeschlagen", 1, true) ~= nil, "Grund wird gemeldet")
 

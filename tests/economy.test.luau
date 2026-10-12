@@ -67,8 +67,8 @@ check(RapConfig.Values.W_Hologramm >= 100000 and RapConfig.Values.W_Wald <= 10, 
 check(RapConfig.Tradeable("W_Wald") and RapConfig.Value("W_Wald") == RapConfig.Values.W_Wald, "gewöhnliche Skins sind handelbar")
 check(RapConfig.Count({ X = true }, "X") == 1 and RapConfig.Count({ X = 3 }, "X") == 3 and RapConfig.Count({}, "X") == 0,
 	"Stückzahl aus true/Zahl/nichts")
-check(RapConfig.AfterFee(1000) == 950, "5 % Marktgebühr")
-check(RapConfig.FeeRate(50) == 0.02 and RapConfig.FeeRate(51) == 0.05 and RapConfig.FeeRate(20001) == 0.10, "Gebührenstufen")
+check(RapConfig.AfterFee(1000) == 900, "10 % Steuer im Markt")
+check(RapConfig.FeeRate(50) == 0.10 and RapConfig.FeeRate(51) == 0.10 and RapConfig.FeeRate(20001) == 0.10, "überall 10 %")
 check(RapConfig.CleanPrice("12") == 12 and RapConfig.CleanPrice(0) == nil and RapConfig.CleanPrice(1 / 0) == nil
 	and RapConfig.CleanPrice(0 / 0) == nil and RapConfig.CleanPrice(2.9) == 2, "Preise werden geprüft")
 

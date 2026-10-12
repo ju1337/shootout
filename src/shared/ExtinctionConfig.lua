@@ -178,7 +178,7 @@ end
 ExtinctionConfig.Market = {
 	MaxListings = 8,
 	MaxPrice = 100000,
-	FeeRate = 0.05,
+	FeeRate = 0.10, -- Steuer: der Verkäufer bekommt 90 %
 }
 
 -- ---------- Beute-Tabellen ----------

@@ -120,7 +120,8 @@ end
 
 local function execute(trade)
 	local a, b = trade.A, trade.B
-	local ok, reason = EconomyService.Exchange(a, b, trade.Offers[a], trade.Offers[b], TradeService.Key)
+	-- 10 % Steuer auf RAP, das den Besitzer wechselt (RapConfig.TradeTax), in beide Richtungen
+	local ok, reason = EconomyService.Exchange(a, b, trade.Offers[a], trade.Offers[b], TradeService.Key, RapConfig.TradeTax, true)
 	if not ok then
 		close(trade, "Tausch fehlgeschlagen: " .. tostring(reason))
 		return

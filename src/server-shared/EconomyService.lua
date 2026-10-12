@@ -130,7 +130,8 @@ end
 -- Die Skins müssen unter key für ihren Besitzer zurückgelegt sein, das RAP muss reichen. feeRate (0..1): Anteil von
 -- offerB.Rap, der unterwegs verloren geht (Marktgebühr, a ist der Verkäufer). Alles oder nichts; danach werden
 -- beide Spielstände sofort gespeichert. Gibt true bzw. false und den Grund zurück.
-function EconomyService.Exchange(a, b, offerA, offerB, key, feeRate)
+-- feeRate: Steuer auf das RAP, das a bekommt (Markt: der Verkäufer); bothWays = auch auf das RAP für b (Tausch)
+function EconomyService.Exchange(a, b, offerA, offerB, key, feeRate, bothWays)
 	if a == b then
 		return false, "Mit dir selbst geht das nicht."
 	end
@@ -162,7 +163,7 @@ function EconomyService.Exchange(a, b, offerA, offerB, key, feeRate)
 	local rapA, rapB = math.floor(offerA.Rap or 0), math.floor(offerB.Rap or 0)
 	if rapA > 0 then
 		ProgressService.SpendRap(a, rapA)
-		ProgressService.AddRap(b, rapA)
+		ProgressService.AddRap(b, bothWays and rapA - math.floor(rapA * (feeRate or 0) + 0.5) or rapA)
 	end
 	if rapB > 0 then
 		ProgressService.SpendRap(b, rapB)

@@ -25,14 +25,12 @@ local RapConfig = {}
 RapConfig.Color = Color3.fromRGB(86, 214, 170) -- Farbe der Währung (Zahlen, Symbol)
 
 RapConfig.SellRate = 0.7       -- Rückverkauf ans System: 70 % des RAP-Werts, sofort
-RapConfig.MarketFee = 0.05     -- Grundgebühr (mittlere Stufe, siehe FeeTiers)
--- Marktgebühr nach Preis: kleine Verkäufe sind billiger, teure kosten mehr (Upto = bis einschließlich dieser Preis)
+RapConfig.MarketFee = 0.10     -- Steuer im Skin-Markt: 10 % vom Verkaufspreis (FeeTiers)
+-- Steuer nach Preis (Upto = bis einschließlich dieser Preis); zurzeit überall 10 %
 RapConfig.FeeTiers = {
-	{ Upto = 50, Rate = 0.02 },
-	{ Upto = 1000, Rate = 0.05 },
-	{ Upto = 20000, Rate = 0.07 },
 	{ Upto = math.huge, Rate = 0.10 },
 }
+RapConfig.TradeTax = 0.10      -- Steuer beim Tauschen: wer RAP bekommt, erhält 90 % davon
 RapConfig.LiveWeight = 0.1  -- RAP nach einem Verkauf: RAP + (Preis - RAP) * LiveWeight
 RapConfig.LiveMin = 0.25    -- Untergrenze des lebenden RAP (Vielfaches des Basiswerts)
 RapConfig.LiveMax = 8       -- Obergrenze
