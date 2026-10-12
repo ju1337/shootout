@@ -267,6 +267,34 @@ check(sent ~= nil and sent[1] == "Equip" and sent[2] == "AS_Feldgrau", "SKINS: A
 bob:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Feldgrau" }))
 step(0.1)
 check(locked:FindFirstChildOfClass("UIStroke").Enabled and action.Text == "AUSGERÜSTET", "SKINS: Feldgrau ausgerüstet")
+-- Reiter WAFFEN: Waffen wählbar, Skins der Waffe, Klick auf einen eigenen Skin rüstet ihn für diese Waffe aus
+find(menu(), "Mode_Weapon").Activated:Fire()
+step(0.1)
+check(find(menu(), "Weapon_SMG").Visible and find(menu(), "Skin_AS_Feldgrau") == nil and find(menu(), "Skin_W_Wald") ~= nil,
+	"SKINS/WAFFEN: Waffen da, Waffen-Skins statt Agenten-Skins")
+find(menu(), "Weapon_SMG").Activated:Fire()
+step(0.1)
+check(find(menu(), "GridTitle").Text == "MP-SKINS" or string.find(find(menu(), "GridTitle").Text, "SKINS") ~= nil, "SKINS/WAFFEN: SMG gewählt")
+bob:SetAttribute("Owned", HttpService:JSONEncode({ AS_Feldgrau = 1, W_Wald = 1 }))
+step(0.1)
+before = #SIM.RemoteLog
+find(menu(), "Skin_W_Wald").Activated:Fire()
+step(0.1)
+sent = nil
+for i = before + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	if entry.Remote == "ShopAction" then
+		sent = entry.Args
+	end
+end
+check(sent ~= nil and sent[1] == "Equip" and sent[2] == "W_Wald" and sent[3] == "SMG", "SKINS/WAFFEN: Klick rüstet Skin für die SMG aus")
+bob:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Feldgrau", ["W:SMG"] = "W_Wald" }))
+step(0.1)
+check(find(menu(), "Skin_W_Wald"):FindFirstChildOfClass("UIStroke").Enabled and find(menu(), "Action").Text == "AUSGERÜSTET",
+	"SKINS/WAFFEN: Waldtarn auf der SMG ausgerüstet")
+find(menu(), "Mode_Agent").Activated:Fire()
+step(0.1)
+check(find(menu(), "Skin_AS_Feldgrau") ~= nil and not find(menu(), "Weapon_SMG").Visible, "SKINS: zurück auf AGENT")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt (auf SKINS)")
 key(Enum.KeyCode.M)

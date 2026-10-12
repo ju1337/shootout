@@ -109,6 +109,11 @@ local function showWeapon(view, weaponName, skin, aspect, fill, attachments)
 	view.CurrentCamera = camera
 end
 
+-- Für andere Menüs (SkinMenu, Reiter WAFFEN): Waffe mit Skin in eine Vorschau stellen
+function LobbyPages.ShowWeapon(view, weaponName, skin, aspect, fill)
+	showWeapon(view, weaponName, skin, aspect, fill)
+end
+
 -- Der eine Agent (AgentConfig.MainId) mit einem Agenten-Skin (nil = Standard-Look) als ganze Figur, leicht gedreht
 function LobbyPages.ShowAgent(view, skin, weaponName)
 	view:ClearAllChildren()
