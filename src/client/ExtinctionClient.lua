@@ -114,6 +114,8 @@ local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
 Inv.redText = nil :: TextLabel? -- Rote-Zone-Punkte im HUD
+Inv.wallet = nil :: Frame? -- Währungsleiste unter der Minimap (Münzen, RZ)
+Inv.walletScale = nil :: UIScale?
 Inv.redzoneSince = nil :: number? -- seit wann (os.clock) man in der roten Zone steht (roter Rand blitzt nur kurz auf)
 Inv.attachBoxes = nil :: { [string]: any }? -- Aufsatz-Plätze im Info-Fenster (Waffe)
 Inv.popupWeapon = nil :: { Container: string, Slot: number, Weapon: string }? -- Waffe im Info-Fenster
@@ -587,7 +589,8 @@ local RED = Color3.fromRGB(226, 56, 48)
 local DROP = Color3.fromRGB(255, 190, 70)
 local NEST = Color3.fromRGB(160, 230, 80)
 local MAX_MARKERS = 4
-local MISSION_GAP = 24 -- Abstand der Aufträge unter dem VERLASSEN-Knopf (auf Touch unter der Lebensanzeige)
+-- Linke Spalte unter der Minimap: Höhe der Währungsleiste, Abstand der Leiste zur Minimap, Abstand der Aufträge darunter
+local LEFT = { WalletH = 30, WalletGap = 8, MissionGap = 24 }
 -- Rangliste der roten Zone rechts oben unter der Uhr (nur in der Zone); der Killfeed des HUD rückt dann darunter
 -- (HUD.lua: SURVIVAL_KILLFEED_TOP = BOARD_TOP + BOARD_H + 12)
 local BOARD_TOP, BOARD_W, BOARD_H, BOARD_H_SHORT = 88, 250, 144, 116
@@ -686,7 +689,7 @@ local function buildHud()
 
 	-- unten: Hotbar im Stil der Schnellleiste im Inventar: Kacheln breiter als hoch (mit Namen), etwas durchsichtiger (paintSlot)
 	-- Touch: schmalere Kacheln ohne Namen, sonst reicht die Leiste bis unter die Knöpfe rechts (WAFFE)
-	-- Touch: die Leiste (mit Level-Zeile und Münzen) etwas nach links, sonst liegt Platz 9 unter WAFFE
+	-- Touch: die Leiste (mit Level-Zeile) etwas nach links, sonst liegt Platz 9 unter WAFFE
 	local cell, cellH, gap, barShift = 96, 58, 8, 0
 	if InputActions.Device() == "Touch" then
 		cell, barShift = 64, -100
@@ -704,23 +707,27 @@ local function buildHud()
 	end
 	vehicleCooldown = label({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -100), Size = UDim2.fromOffset(560, 18),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
-	-- Währungen links neben der Hotbar, jede mit Symbol rechts neben der Zahl: Münzen, darüber Rote-Zone-Punkte (RZ, nur
-	-- mit Punkten oder in der roten Zone, siehe paintRedPoints)
-	local moneyRight = barShift - barWidth / 2 - 14
-	coinsText = label({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight - 28, 1, -30),
-		Size = UDim2.fromOffset(160, 24), Text = "", TextSize = 22, Font = F.Display, TextColor3 = C.Primary,
-		TextXAlignment = Enum.TextXAlignment.Right }, root)
-	UITheme.Outline(coinsText)
-	UITheme.Coin(root, 20, { Name = "CoinIcon", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight, 1, -32) })
-	local redRow = make("Frame", { Name = "RedPointsRow", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(0.5, moneyRight, 1, -60),
-		Size = UDim2.fromOffset(190, 22), BackgroundTransparency = 1, Visible = false }, root)
-	Inv.redText = label({ Name = "RedPoints", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -28, 0, 0),
-		Size = UDim2.fromOffset(160, 22), Text = "", TextSize = 18, Font = F.Display, TextColor3 = Color3.fromRGB(230, 70, 60),
-		TextXAlignment = Enum.TextXAlignment.Right }, redRow)
-	UITheme.Outline(Inv.redText)
-	local rzHolder = make("Frame", { Name = "RedPointsIcon", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
-		Size = UDim2.fromOffset(22, 22), BackgroundTransparency = 1 }, redRow)
+	-- Währungen in einer Leiste links unter der Minimap (Lage setzt der Heartbeat, siehe placeWallet): Münze und Zahl,
+	-- daneben die Rote-Zone-Punkte (RZ, nur mit Punkten oder in der roten Zone, siehe paintRedPoints)
+	local wallet = UITheme.HudPanel({ Name = "Wallet", Position = UDim2.fromOffset(24, 274), Size = UDim2.fromOffset(0, LEFT.WalletH),
+		AutomaticSize = Enum.AutomaticSize.X }, root)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, wallet)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 12) }, wallet)
+	Inv.wallet, Inv.walletScale = wallet, make("UIScale", { Scale = 1 }, wallet)
+	UITheme.Coin(wallet, 18, { Name = "CoinIcon", LayoutOrder = 1 })
+	coinsText = label({ Name = "Coins", LayoutOrder = 2, Size = UDim2.fromOffset(0, LEFT.WalletH), AutomaticSize = Enum.AutomaticSize.X,
+		Text = "", TextSize = 19, Font = F.Display, TextColor3 = C.Primary }, wallet)
+	local redRow = make("Frame", { Name = "RedPointsRow", LayoutOrder = 3, Size = UDim2.fromOffset(0, LEFT.WalletH),
+		AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Visible = false }, wallet)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, redRow)
+	make("UIPadding", { PaddingLeft = UDim.new(0, 10) }, redRow) -- etwas Abstand zu den Münzen
+	local rzHolder = make("Frame", { Name = "RedPointsIcon", LayoutOrder = 1, Size = UDim2.fromOffset(20, 20),
+		BackgroundTransparency = 1 }, redRow)
 	Inv.rzIcon(rzHolder, 1)
+	Inv.redText = label({ Name = "RedPoints", LayoutOrder = 2, Size = UDim2.fromOffset(0, LEFT.WalletH), AutomaticSize = Enum.AutomaticSize.X,
+		Text = "", TextSize = 19, Font = F.Display, TextColor3 = Color3.fromRGB(230, 70, 60) }, redRow)
 
 	-- Spielerlevel (das eine Level, LevelConfig) als schmale Zeile direkt unter der Hotbar: "LEVEL 12", XP-Balken in
 	-- Prestige-Farbe, rechts "395 / 1000 XP" (kurz "+N XP · GRUND" bei jedem Gewinn, siehe ExtUpdate "ExtXP")
@@ -4238,9 +4245,8 @@ function ExtinctionClient.Init()
 	end
 	player:GetAttributeChangedSignal("Party"):Connect(refreshSquadPanel)
 	refreshSquadPanel()
-	-- Aufträge links unter dem VERLASSEN-Knopf des HUD (Spieler-Attribut ExtMissions vom MissionService). Der Knopf rutscht
-	-- je nach Bildschirm tiefer (unter die Roblox-Leiste), auf Touch steht die Lebensanzeige darunter: die Liste folgt mit
-	-- etwas Abstand (missionTop).
+	-- Aufträge links unter der Währungsleiste (Spieler-Attribut ExtMissions vom MissionService), die unter Minimap,
+	-- VERLASSEN-Knopf und auf Touch der Lebensanzeige steht: die Liste folgt mit etwas Abstand (leftStackBottom).
 	local missionHeight = 0
 	local missionPanel = make("Frame", { Name = "Missions", Position = UDim2.fromOffset(24, 330), Size = UDim2.fromOffset(Inv.SIDE_PANEL_W, 26),
 		BackgroundColor3 = C.Background, BackgroundTransparency = 0.2, BorderSizePixel = 0, AutomaticSize = Enum.AutomaticSize.Y }, root)
@@ -4283,19 +4289,24 @@ function ExtinctionClient.Init()
 	end
 	player:GetAttributeChangedSignal("ExtMissions"):Connect(refreshMissions)
 	refreshMissions()
-	local function missionTop()
+	-- Unterkante der linken Spalte des HUD: Minimap, VERLASSEN-Knopf und (auf Touch) die Lebensanzeige. Darunter folgen
+	-- die Währungsleiste und darunter die Aufträge. Der Knopf und die Minimap rutschen je nach Bildschirm tiefer (unter die
+	-- Roblox-Leiste), darum jedes Bild neu.
+	local function leftStackBottom()
 		local hudGui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("HUD")
 		local hudRoot = hudGui and hudGui:FindFirstChild("Root")
 		local bottom = nil
-		for _, name in { "LeaveButton", "Vitals" } do
+		for _, name in { "Minimap", "LeaveButton", "Vitals" } do
 			local item = hudRoot and hudRoot:FindFirstChild(name)
 			-- Unterkante oben angeordneter Teile (auf dem PC hängt die Lebensanzeige unten am Rand und zählt nicht);
-			-- beide HUDs haben dieselbe Skalierung, die Werte passen also direkt
+			-- beide HUDs haben dieselbe Skalierung, die Werte passen also direkt (die Minimap hat auf Touch ein eigenes UIScale)
 			if item and item:IsA("GuiObject") and item.Visible and item.Position.Y.Scale == 0 then
-				bottom = math.max(bottom or 0, item.Position.Y.Offset + item.Size.Y.Offset * (1 - item.AnchorPoint.Y))
+				local scale = item:FindFirstChildOfClass("UIScale")
+				local height = item.Size.Y.Offset * (scale and scale.Scale or 1)
+				bottom = math.max(bottom or 0, item.Position.Y.Offset + height * (1 - item.AnchorPoint.Y))
 			end
 		end
-		return bottom and bottom + MISSION_GAP or nil
+		return bottom or 266 -- ohne Minimap (noch kein Modus): wo sie auf dem PC endet
 	end
 
 	-- Uhrzeit (Tag und Nacht, DayCycle) und rote Zone in einem Panel links neben KARTE/SQUAD. Oben die Uhr groß, daneben
@@ -4404,8 +4415,20 @@ function ExtinctionClient.Init()
 		if not hud.Enabled then
 			return
 		end
-		local missionY, missionX = missionTop(), InputActions.IsTouch() and 16 or 24
-		if missionY and (missionPanel.Position.Y.Offset ~= missionY or missionPanel.Position.X.Offset ~= missionX) then
+		local touch = InputActions.IsTouch()
+		local leftX = touch and 16 or 24
+		local wallet, walletScale = Inv.wallet, Inv.walletScale
+		local walletY = leftStackBottom() + LEFT.WalletGap
+		local walletH = LEFT.WalletH
+		if wallet and walletScale then
+			walletScale.Scale = touch and 0.85 or 1 -- wie die Minimap auf Touch etwas kleiner
+			walletH = math.ceil(LEFT.WalletH * walletScale.Scale)
+			if wallet.Position.Y.Offset ~= walletY or wallet.Position.X.Offset ~= leftX then
+				wallet.Position = UDim2.fromOffset(leftX, walletY)
+			end
+		end
+		local missionY, missionX = walletY + walletH + LEFT.MissionGap, leftX
+		if missionPanel.Position.Y.Offset ~= missionY or missionPanel.Position.X.Offset ~= missionX then
 			missionPanel.Position = UDim2.fromOffset(missionX, missionY)
 		end
 		local squadY = missionPanel.Position.Y.Offset + (missionHeight > 0 and missionHeight + 10 or 0)

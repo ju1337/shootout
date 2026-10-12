@@ -215,7 +215,8 @@ UserInputService.LastInputTypeChanged:Fire(Enum.UserInputType.Keyboard)
 step(0.1)
 check(string.find(find(hud, "Hints").Text, "1-9  BENUTZEN", 1, true) ~= nil, "zurück auf Tastatur")
 
--- Aufträge stehen mit Abstand unter dem VERLASSEN-Knopf des HUD und rutschen mit ihm (hier ein nachgebautes HUD)
+-- Unter Minimap/VERLASSEN-Knopf des HUD steht die Währungsleiste, darunter mit Abstand die Aufträge; beide rutschen
+-- mit (hier ein nachgebautes HUD)
 local fakeHud = Instance.new("ScreenGui", playerGui)
 fakeHud.Name = "HUD"
 local fakeRoot = Instance.new("Frame", fakeHud)
@@ -230,15 +231,31 @@ fakeVitals.AnchorPoint = Vector2.new(0, 1)
 fakeVitals.Position = UDim2.new(0, 24, 1, -24)
 fakeVitals.Size = UDim2.new(0, 330, 0, 88)
 step(0.2)
-check(missionPanel.Position.Y.Offset == 278 + 30 + 24, "Aufträge 24 unter VERLASSEN (" .. missionPanel.Position.Y.Offset .. ")")
+local walletPanel = find(hud, "Wallet")
+check(walletPanel.Position.Y.Offset == 278 + 30 + 8, "Währung 8 unter VERLASSEN (" .. walletPanel.Position.Y.Offset .. ")")
+check(walletPanel:FindFirstChild("Coins", true) ~= nil and walletPanel:FindFirstChild("RedPoints", true) ~= nil,
+	"Münzen und RZ in der Leiste unter der Minimap")
+check(missionPanel.Position.Y.Offset == 278 + 30 + 8 + 30 + 24, "Aufträge 24 unter der Währung (" .. missionPanel.Position.Y.Offset .. ")")
 fakeLeave.Position = UDim2.new(0, 48, 0, 320)
 step(0.2)
-check(missionPanel.Position.Y.Offset == 320 + 30 + 24, "Aufträge rutschen mit dem Knopf (" .. missionPanel.Position.Y.Offset .. ")")
+check(missionPanel.Position.Y.Offset == 320 + 30 + 62, "Aufträge rutschen mit dem Knopf (" .. missionPanel.Position.Y.Offset .. ")")
+fakeLeave.Visible = false -- offene Welt: kein VERLASSEN, die Leiste hängt direkt unter der Minimap (Touch: UIScale 0.8)
+local fakeMinimap = Instance.new("Frame", fakeRoot)
+fakeMinimap.Name = "Minimap"
+fakeMinimap.Position = UDim2.new(0, 24, 0, 66)
+fakeMinimap.Size = UDim2.new(0, 200, 0, 200)
+step(0.2)
+check(walletPanel.Position.Y.Offset == 66 + 200 + 8, "Währung unter der Minimap (" .. walletPanel.Position.Y.Offset .. ")")
+local fakeMinimapScale = Instance.new("UIScale", fakeMinimap)
+fakeMinimapScale.Scale = 0.8
+step(0.2)
+check(walletPanel.Position.Y.Offset == 66 + 160 + 8, "Währung unter der kleinen Minimap (" .. walletPanel.Position.Y.Offset .. ")")
+fakeLeave.Visible = true
 fakeLeave.Position = UDim2.new(0, 188, 0, 58) -- Touch: VERLASSEN neben der Minimap, Lebensanzeige darunter
 fakeVitals.AnchorPoint = Vector2.new(0, 0)
 fakeVitals.Position = UDim2.new(0, 16, 0, 230)
 step(0.2)
-check(missionPanel.Position.Y.Offset == 230 + 88 + 24, "Touch: Aufträge unter der Lebensanzeige (" .. missionPanel.Position.Y.Offset .. ")")
+check(missionPanel.Position.Y.Offset == 230 + 88 + 62, "Touch: Aufträge unter der Lebensanzeige (" .. missionPanel.Position.Y.Offset .. ")")
 fakeHud:Destroy()
 
 -- Rangliste rechts oben: nur in der roten Zone zu sehen
