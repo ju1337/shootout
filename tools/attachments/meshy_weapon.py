@@ -73,6 +73,26 @@ WEAPONS = {
             "Pivot_Hammer": (0.43, 0.32, 0.0),
         },
     },
+    # MP (MP5): gebogenes Magazin unter dem Schacht, Spannhebel oben auf dem Rohr vor dem Gehäuse als Bolt
+    "SMG": {
+        "Length": 2.375,
+        "Body": "Skin_Body",
+        "Cuts": [
+            ("Magazine", box(x=(-0.48, -0.115), y=(None, 0.04)), [2], (-0.3, -0.1, 0.0)),
+            ("Bolt", box(x=(-0.585, -0.495), y=(0.366, None), z=(-0.015, 0.017)), [2], (-0.54, 0.37, 0.0)),
+        ],
+        "Points": {
+            "Point_Grip": (0.20, 0.03, 0.0),
+            "Point_SightRear": (0.245, 0.425, 0.0),
+            "Point_SightFront": (-0.80, 0.425, 0.0),
+            "Point_Muzzle": (None, 0.245, 0.0),
+            "Point_Eject": (0.0, 0.26, -0.06),
+            "Point_LeftHand": (-0.50, 0.25, 0.0),
+            "Point_Stock": (None, 0.125, 0.0),
+            "Pivot_Magazine": (-0.20, 0.04, 0.0),
+            "Pivot_Bolt": (-0.54, 0.37, 0.0),
+        },
+    },
 }
 
 
