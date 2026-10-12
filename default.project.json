@@ -19,6 +19,10 @@
         "Weapons": {
           "$className": "Folder",
           "$ignoreUnknownInstances": true,
+          "DMR": {
+            "$path": "models/Weapons/DMR.rbxmx",
+            "$ignoreUnknownInstances": true
+          },
           "Rifle": {
             "$path": "models/Weapons/Rifle.rbxmx",
             "$ignoreUnknownInstances": true,
