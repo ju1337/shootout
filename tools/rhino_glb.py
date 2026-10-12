@@ -10,7 +10,7 @@ Visierlinie: Oberkante der Kimmen-Ohren = Oberkante des Korns (beide gleich hoch
 Kimmenkerbe in der Bildmitte.
 
 Mit --boxes zusätzlich ein Quader-Nachbau als assets/Weapons/Revolver.rbxmx (je Teil ein Quader so groß wie das Mesh,
-Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt eine echte Studio-Kopie.
+Marker gleich), zum Prüfen ohne Studio. Achtung: überschreibt die echte Studio-Kopie (models/Weapons/Revolver.rbxmx).
 
 Dann in Studio: Import 3D > Revolver.glb (Teile NICHT zusammenführen, Einheit Stud), Modell nach
 ReplicatedStorage > Assets > Weapons ziehen, "Revolver" nennen.
