@@ -468,10 +468,8 @@ class World(CampPhoenix):
         self.b.box("Decor", "SmokeSource", (2, 1, 2), (x, y, z), (40, 38, 36), "SmoothPlastic",
                    props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False},
                    children=[{"Name": "Smoke", "ClassName": "Smoke", "Properties": {
-                       "Color": self.bm.rgb(34, 32, 30), "Opacity": 0.45, "RiseVelocity": 14, "Size": 22}},
-                       {"Name": "Fire", "ClassName": "Fire", "Properties": {"Size": 8, "Heat": 12,
-                                                                            "Color": self.bm.rgb(255, 130, 40),
-                                                                            "SecondaryColor": self.bm.rgb(120, 30, 10)}}])
+                       "Color": self.bm.rgb(34, 32, 30), "Opacity": 0.45, "RiseVelocity": 14, "Size": 22}}])
+        # keine Flamme an der unsichtbaren Quelle: die schwebte sonst frei in der Luft
 
     def stain(self, x, z, y=None):
         g = self.H(x, z) + 0.42 if y is None else y

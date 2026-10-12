@@ -705,6 +705,30 @@ function ActivityService.Step()
 end
 
 -- opts = { Map, Players(), InSafeZone(position), RedzoneAt(position) }
+-- Liegt über der Stelle ein Boden (Platte eines Gebäudes, Parkhaus …)? Dann darauf stellen, sonst steckt das Modell darin.
+-- Strahl nach oben bis zur Unterseite einer Platte, dann von oben auf ihre Oberseite. Gibt die neue Position zurück.
+local function liftOntoFloor(position)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = { folder }
+	for _, name in { "Zombies", "Bots", "ExtinctionLoot" } do
+		local holder = workspace:FindFirstChild(name)
+		if holder then
+			table.insert(ignore, holder)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	local up = workspace:Raycast(position + Vector3.new(0, 0.2, 0), Vector3.new(0, 6, 0), params)
+	if not up or up.Normal.Y > -0.7 then
+		return position
+	end
+	local down = workspace:Raycast(up.Position + Vector3.new(0, 4, 0), Vector3.new(0, -4.5, 0), params)
+	if down and down.Normal.Y > 0.7 and down.Position.Y > position.Y then
+		return down.Position
+	end
+	return position
+end
+
 function ActivityService.Init(opts)
 	options = opts
 	spots = {}
@@ -717,8 +741,8 @@ function ActivityService.Init(opts)
 			n += 1
 			local _, yaw = marker.CFrame:ToOrientation()
 			local spot = { Id = kind .. n, Kind = kind, Title = marker:GetAttribute("Title") or kind,
-				Position = Vector3.new(marker.Position.X, marker.Position.Y - marker.Size.Y / 2, marker.Position.Z), Yaw = yaw,
-				State = "Ready", ReadyAt = 0 }
+				Position = liftOntoFloor(Vector3.new(marker.Position.X, marker.Position.Y - marker.Size.Y / 2, marker.Position.Z)),
+				Yaw = yaw, State = "Ready", ReadyAt = 0 }
 			table.insert(spots, spot)
 			if kind == "Nest" then
 				buildNest(spot)
