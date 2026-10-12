@@ -353,6 +353,20 @@ ExtinctionConfig.Redzone = {
 	MinMove = 400,           -- der neue Ort liegt mindestens so weit vom alten weg (wenn es so einen gibt)
 	MaxPlaceSize = 600,      -- Orte mit größerem Durchmesser (Ödstadt, Innenstadt) sind kein Ziel
 	Exclude = { "Camp", "Zentrale", "Oedstadt", "Innenstadt", "Schwarzsee", "Stausee", "Teich" },
+	-- Stadt öfter: Ziele innerhalb von CityRadius um die Kartenmitte zählen beim Auslosen CityWeight-fach; dazu die Viertel
+	-- (X/Z relativ zur Kartenmitte) als eigene Ziele
+	CityRadius = 740,
+	CityWeight = 3,
+	CityDistricts = {
+		{ Key = "Oed_N", Title = "ÖDSTADT NORD", X = 0, Z = 450 },
+		{ Key = "Oed_NO", Title = "ÖDSTADT NORDOST", X = 320, Z = 320 },
+		{ Key = "Oed_O", Title = "ÖDSTADT OST", X = 450, Z = 0 },
+		{ Key = "Oed_SO", Title = "ÖDSTADT SÜDOST", X = 320, Z = -320 },
+		{ Key = "Oed_S", Title = "ÖDSTADT SÜD", X = 0, Z = -450 },
+		{ Key = "Oed_SW", Title = "ÖDSTADT SÜDWEST", X = -320, Z = -320 },
+		{ Key = "Oed_W", Title = "ÖDSTADT WEST", X = -450, Z = 0 },
+		{ Key = "Oed_NW", Title = "ÖDSTADT NORDWEST", X = -320, Z = 320 },
+	},
 	Color = Color3.fromRGB(226, 56, 48),
 	WallPanels = 48,         -- flimmernde Wand (ForceField) am Rand
 	WallHeight = 70,

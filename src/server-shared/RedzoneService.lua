@@ -57,21 +57,33 @@ function RedzoneService.Candidates()
 		exclude[key] = true
 	end
 	local list = {}
-	for _, part in places and places:GetChildren() or {} do
-		local key = string.match(part.Name, "^Place_(.+)$")
-		if key and part:IsA("BasePart") and not exclude[key] and string.sub(key, 1, 5) ~= "Safe_" and part.Size.X <= cfg.MaxPlaceSize then
-			local center = part.Position
-			local ok = not (safe and Vector3.new(center.X - safe.X, 0, center.Z - safe.Z).Magnitude < safeRadius + radius + 40)
-			for _, zone in opts.SafeZones and opts.SafeZones() or {} do -- Safehouses nicht in der Zone
-				if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius + 20 then
-					ok = false
-				end
-			end
-			if ok and opts.IsWater and opts.IsWater(center.X, center.Z) then
+	-- Stelle als Ziel erlaubt? (nicht an der Safe Zone, nicht an Safehouses, nicht im Wasser)
+	local function allowed(center)
+		local ok = not (safe and Vector3.new(center.X - safe.X, 0, center.Z - safe.Z).Magnitude < safeRadius + radius + 40)
+		for _, zone in opts.SafeZones and opts.SafeZones() or {} do -- Safehouses nicht in der Zone
+			if Vector3.new(center.X - zone.Center.X, 0, center.Z - zone.Center.Z).Magnitude < zone.Radius + radius + 20 then
 				ok = false
 			end
-			if ok then
-				table.insert(list, { Key = key, Title = part:GetAttribute("Title") or key, Center = center })
+		end
+		if ok and opts.IsWater and opts.IsWater(center.X, center.Z) then
+			ok = false
+		end
+		return ok
+	end
+	for _, part in places and places:GetChildren() or {} do
+		local key = string.match(part.Name, "^Place_(.+)$")
+		if key and part:IsA("BasePart") and not exclude[key] and string.sub(key, 1, 5) ~= "Safe_" and part.Size.X <= cfg.MaxPlaceSize
+			and allowed(part.Position) then
+			table.insert(list, { Key = key, Title = part:GetAttribute("Title") or key, Center = part.Position })
+		end
+	end
+	-- Viertel der Stadt als eigene Ziele (relativ zur Kartenmitte)
+	local mapCenter = opts.Map and opts.Map:GetAttribute("Center")
+	if typeof(mapCenter) == "Vector3" then
+		for _, district in cfg.CityDistricts or {} do
+			local center = mapCenter + Vector3.new(district.X, 0, district.Z)
+			if allowed(center) then
+				table.insert(list, { Key = district.Key, Title = district.Title, Center = center })
 			end
 		end
 	end
@@ -198,7 +210,28 @@ function RedzoneService.MoveNow(key)
 		end
 		local choices = #far > 0 and far or #other > 0 and other or list
 		local random = options and options.Random or Random.new()
-		pick = choices[random:NextInteger(1, #choices)]
+		-- Ziele in der Stadt zählen CityWeight-fach (die Zone soll öfter in der Stadt sein)
+		local mapCenter = options and options.Map and options.Map:GetAttribute("Center")
+		local function weight(entry)
+			if typeof(mapCenter) ~= "Vector3" or not cfg.CityRadius then
+				return 1
+			end
+			local inCity = Vector3.new(entry.Center.X - mapCenter.X, 0, entry.Center.Z - mapCenter.Z).Magnitude <= cfg.CityRadius
+			return inCity and (cfg.CityWeight or 1) or 1
+		end
+		local total = 0
+		for _, entry in choices do
+			total += weight(entry)
+		end
+		local roll = random:NextNumber(0, total)
+		pick = choices[#choices]
+		for _, entry in choices do
+			roll -= weight(entry)
+			if roll <= 0 then
+				pick = entry
+				break
+			end
+		end
 	end
 	current = { Name = NAME, Key = pick.Key, Title = pick.Title, Center = pick.Center, Radius = cfg.Radius, Ends = now() + cfg.Interval,
 		Warned = false }
