@@ -2972,4 +2972,9 @@ return {
 	["SHOP-SKIN  ·  VERKAUF IM MARKT ODER PER TAUSCH"] = "SHOP SKIN  ·  SELL IT IN THE MARKET OR TRADE IT",
 	["NUR IM MARKT"] = "MARKET ONLY",
 	["Shop-Skins kauft das System nicht zurück. Verkauf ihn im MARKT oder tausche ihn."] = "The system doesn't buy back shop skins. Sell it in the MARKET or trade it.",
+	-- Gekaufte Drehs in Ländern mit Sperre für bezahlte Zufallsitems
+	["DREHS IN MÜNZEN UMGEWANDELT"] = "SPINS CONVERTED TO COINS",
+	["+{1} Münzen für {2} gekaufte Glücksrad-Drehs"] = "+{1} coins for {2} purchased wheel spins",
+	["In deinem Land sind bezahlte Zufallsitems nicht erlaubt"] = "Paid random items are not allowed in your country",
+	["+{1} Münzen (statt {2} Glücksrad-Drehs)"] = "+{1} coins (instead of {2} wheel spins)",
 }

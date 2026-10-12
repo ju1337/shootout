@@ -15,6 +15,7 @@ local DiscordLog = require(game:GetService("ServerStorage"):WaitForChild("Server
 local RobuxConfig = require(Shared.RobuxConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
+local PolicyGate = require(ServerStorage:WaitForChild("ServerShared").PolicyGate)
 
 local RobuxService = {}
 
@@ -50,7 +51,12 @@ local function grant(player, profile, product)
 		ProgressService.AddCoins(player, product.Coins, "Robux")
 		table.insert(lines, "+" .. product.Coins .. " Münzen")
 	end
-	if product.Spins then
+	if product.Spins and RobuxService.SpinsRestricted(player) then
+		-- Land verbietet bezahlte Zufallsitems: Münzen statt Drehs (die Drehs wären sonst nie nutzbar)
+		local coins = product.Spins * RobuxConfig.SpinCoins
+		ProgressService.AddCoins(player, coins, "Robux")
+		table.insert(lines, "+" .. coins .. " Münzen (statt " .. product.Spins .. " Glücksrad-Drehs)")
+	elseif product.Spins then
 		ProgressService.AddSpins(player, product.Spins, true)
 		table.insert(lines, "+" .. product.Spins .. " Glücksrad-Drehs")
 	end
@@ -71,10 +77,46 @@ local function grant(player, profile, product)
 		Rarity = "Legendary" })
 end
 
+-- Sicher gesperrt (PolicyService hat geantwortet, nicht nur die Abfrage fehlgeschlagen)?
+function RobuxService.SpinsRestricted(player)
+	local entry = PolicyGate.Get(player)
+	return entry.Random == false and entry.RetryAt == nil
+end
+
+-- Schon gekaufte Drehs in einem gesperrten Land in Münzen umwandeln (beim Beitreten, sobald das Profil geladen ist)
+function RobuxService.ConvertPaidSpins(player)
+	local profile = ProgressService.IsLoaded(player) and ProgressService.Get(player)
+	local spins = profile and profile.Wheel and math.floor(tonumber(profile.Wheel.PaidSpins) or 0) or 0
+	if spins <= 0 or not RobuxService.SpinsRestricted(player) then
+		return 0
+	end
+	profile.Wheel.PaidSpins = 0
+	local coins = spins * RobuxConfig.SpinCoins
+	ProgressService.AddCoins(player, coins, "Robux")
+	ProgressService.Sync(player)
+	task.spawn(ProgressService.SaveNow, player)
+	DiscordLog.Log("Economy", "Drehs umgewandelt", spins .. " gekaufte Drehs → " .. coins .. " Münzen (Länder-Sperre)",
+		{ { "Spieler", DiscordLog.Who(player) } })
+	pcall(Remotes.Reward.FireClient, Remotes.Reward, player, { Title = "DREHS IN MÜNZEN UMGEWANDELT",
+		Lines = { "+" .. coins .. " Münzen für " .. spins .. " gekaufte Glücksrad-Drehs",
+			"In deinem Land sind bezahlte Zufallsitems nicht erlaubt" }, Rarity = "Legendary" })
+	return coins
+end
+
+local function onJoin(player)
+	checkPasses(player)
+	while player.Parent and not ProgressService.IsLoaded(player) do
+		task.wait(1)
+	end
+	if player.Parent then
+		RobuxService.ConvertPaidSpins(player)
+	end
+end
+
 function RobuxService.Init()
-	Players.PlayerAdded:Connect(checkPasses)
+	Players.PlayerAdded:Connect(onJoin)
 	for _, player in Players:GetPlayers() do
-		task.spawn(checkPasses, player)
+		task.spawn(onJoin, player)
 	end
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		if purchased then

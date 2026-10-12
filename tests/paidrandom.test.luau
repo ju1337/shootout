@@ -126,6 +126,19 @@ ProgressService.AddSpins(belgian, 1)
 spinMessage, spinOk = ProgressService.SpinWheel(belgian)
 check(spinOk ~= false, "verdienter Extra-Dreh geht: " .. tostring(spinMessage))
 
+-- schon gekaufte Drehs im gesperrten Land: in Münzen umgewandelt (frei: bleiben Drehs)
+local RobuxService = require("RobuxService")
+ProgressService.AddSpins(belgian, 3, true)
+local coinsBeforeConvert = belgian:GetAttribute("Coins")
+local paidSpins = ProgressService.Get(belgian).Wheel.PaidSpins -- 3 + der gesperrte von oben
+check(paidSpins == 4 and RobuxService.ConvertPaidSpins(belgian) == paidSpins * RobuxConfig.SpinCoins, "gekaufte Drehs umgewandelt")
+step(1)
+check(belgian:GetAttribute("Coins") == coinsBeforeConvert + paidSpins * RobuxConfig.SpinCoins
+	and (ProgressService.Get(belgian).Wheel.PaidSpins or 0) == 0, "Münzen gutgeschrieben, Drehs weg")
+check(RobuxService.ConvertPaidSpins(belgian) == 0, "nur einmal")
+ProgressService.AddSpins(free, 2, true)
+check(RobuxService.ConvertPaidSpins(free) == 0 and ProgressService.Get(free).Wheel.PaidSpins == 2, "ohne Sperre bleiben die Drehs")
+
 -- Client: Fenster CHANCEN und Robux-Shop
 SIM.IsServer = false
 rawget(SIM.Players, "__props").LocalPlayer = belgian

@@ -18,6 +18,10 @@ RobuxConfig.Passes = {
 		Color = Color3.fromRGB(110, 200, 140) },
 }
 
+-- Gekaufte Glücksrad-Drehs in Ländern, die bezahlte Zufallsitems verbieten (BE, NL …): stattdessen so viele Münzen je
+-- Dreh (5 Drehs = 79 Robux, also rund 16 Robux je Dreh; 49 Robux = 1.000 Münzen, also rund 320 Münzen)
+RobuxConfig.SpinCoins = 320
+
 -- Entwicklerprodukte: beliebig oft kaufbar. Coins, Spins (Glücksrad), BoostMinutes (Doppel-XP), Items (Skins)
 RobuxConfig.Products = {
 	{ Id = "Coins1000", ProductId = 0, Robux = 49, Name = "1.000 MÜNZEN", Coins = 1000, Color = Color3.fromRGB(212, 170, 80) },
