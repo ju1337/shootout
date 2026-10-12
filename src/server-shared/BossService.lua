@@ -134,9 +134,38 @@ local function onDeath(boss, model)
 end
 
 -- Boss erscheinen lassen (am Ort, als großer Zombie)
+-- Freie Stelle draußen beim Gebäude (kein Dach darüber), damit der Boss davor Wache steht statt im Haus festzustecken.
+-- Sucht in Ringen um den Ort; ohne Treffer der Ort selbst.
+local function openGround(home)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ignore = {}
+	for _, name in { "Zombies", "Bots", "ExtinctionLoot" } do
+		local holder = workspace:FindFirstChild(name)
+		if holder then
+			table.insert(ignore, holder)
+		end
+	end
+	params.FilterDescendantsInstances = ignore
+	for _, radius in { 0, 30, 45, 60, 75, 90 } do
+		for k = 0, 11 do
+			local angle = k / 12 * math.pi * 2
+			local x, z = home.X + math.cos(angle) * radius, home.Z + math.sin(angle) * radius
+			local ground = ZombieService.GroundAt(x, z)
+			if ground and not workspace:Raycast(ground + Vector3.new(0, 1, 0), Vector3.new(0, 14, 0), params) then
+				return ground
+			end
+			if radius == 0 then
+				break
+			end
+		end
+	end
+	return ZombieService.GroundAt(home.X, home.Z) or home
+end
+
 local function spawn(boss)
 	local cfg = boss.Config
-	local ground = ZombieService.GroundAt(boss.Home.X, boss.Home.Z) or boss.Home
+	local ground = openGround(boss.Home)
 	local model = ZombieService.Spawn(ground, cfg.Kind, true, false) -- Bosse nie gepanzert
 	if not model then
 		return false
