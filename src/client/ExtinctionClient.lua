@@ -168,7 +168,8 @@ end
 -- ---------- Symbole ----------
 
 -- Kleine 3D-Waffe (ViewportFrame) bzw. gezeichnetes Symbol für Munition, Heilung, Rüstung, Fahrzeug
--- aspect = Breite / Höhe der Fläche (nil = Standard): Waffenmodelle füllen dann die ganze Breite (Hotbar im HUD)
+-- aspect = Breite / Höhe der Fläche (nil = Standard): mit aspect wird die Fläche breiter (Hotbar im HUD). Waffenmodelle
+-- füllen die Fläche immer (ItemPreview misst die echte Größe des Frames)
 local function buildIcon(parent, id, zIndex, aspect)
 	local config = itemConfig(id)
 	local holder = make("Frame", { Name = "Icon", AnchorPoint = Vector2.new(0.5, 0.5),
@@ -179,20 +180,12 @@ local function buildIcon(parent, id, zIndex, aspect)
 	end
 	local color = KIND_COLORS[config.Kind] or C.Muted
 	if config.Kind == "Weapon" and GunModels.Info[config.Weapon] then
-		local view = make("ViewportFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex,
-			Ambient = Color3.fromRGB(150, 150, 160), LightColor = Color3.fromRGB(255, 245, 235),
-			LightDirection = Vector3.new(-0.5, -1, 0.6) }, holder)
+		local ItemPreview = require(Shared.ItemPreview) -- hier statt oben: oberste Ebene hat keine freien Locals mehr
+		local view = make("ViewportFrame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = zIndex }, holder)
+		ItemPreview.Light(view)
 		local ok, model = pcall(GunModels.Build, config.Weapon)
 		if ok and model then
-			model.Parent = view
-			local box, size = model:GetBoundingBox()
-			local camera = Instance.new("Camera")
-			camera.FieldOfView = 30
-			local fit = aspect and math.max(size.Z / aspect, size.Y * 1.2) or math.max(size.Z, size.Y * 2.2)
-			local distance = fit / 2 / math.tan(math.rad(15)) * 1.05 + size.X / 2
-			camera.CFrame = CFrame.lookAt(box.Position + Vector3.new(distance, distance * 0.12, 0), box.Position)
-			camera.Parent = view
-			view.CurrentCamera = camera
+			ItemPreview.Frame(view, model, aspect or 1.4) -- füllt die Fläche, misst die echte Größe des Frames
 		end
 	elseif config.Kind == "Ammo" then
 		for k = -1, 1 do
@@ -3099,7 +3092,7 @@ local function openStand(standKey)
 			BackgroundColor3 = tier, BorderSizePixel = 0, ZIndex = 7 }, well)
 		-- Symbole sind für Kacheln gezeichnet: halb so groß bauen und verdoppeln
 		local iconBox = make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromOffset(math.floor(cardW * 0.4), math.floor(iconH * 0.42)), BackgroundTransparency = 1, ZIndex = 7 }, well)
+			Size = UDim2.fromOffset(math.floor(cardW * 0.46), math.floor(iconH * 0.38)), BackgroundTransparency = 1, ZIndex = 7 }, well)
 		make("UIScale", { Scale = 2 }, iconBox)
 		local icon = buildIcon(iconBox, id, 7)
 		icon.Size = UDim2.fromScale(1, 1)
