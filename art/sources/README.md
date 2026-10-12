@@ -29,5 +29,12 @@
   Schalldämpfer, in Studs, Lauf nach -Z, volle Qualität (14.344 Dreiecke mit den Original-Normalen, nicht vereinfacht). In Studio: Import 3D > SMG.glb (Teile nicht zusammenführen), Modell nach
   ReplicatedStorage > Assets > Weapons ziehen, "SMG" nennen. Dann ersetzt das echte Mesh den Nachbau aus Quadern.
 
+- `mk23.glb`: "low-poly HK Mark 23 SOCOM" von D_U (https://sketchfab.com/DU1701), Lizenz CC-BY-4.0
+  (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-hk-mark-23-socom-b6426adeae9d45999610453df5a68c43
+- `Pistol.glb`: die fertig vorbereitete Studio-Version für die Pistole (`python3 tools/mk23_glb.py`): Teile benannt
+  (Schlitten = Skin-Zone und Gruppe `Slide`, Magazin, Leuchtpunkte), Marker gesetzt (Visierlinie über die Oberkante der
+  Kimme und die Kornspitze), ohne Schalldämpfer, Laser-Modul und lose Patronen, 1,05 Studs lang, Lauf nach -Z. In Studio:
+  Import 3D > Pistol.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Pistol" nennen.
+
 - `Rifle_Texturen/Skin_Body_Overlay.png`: Farb-Grundtextur für Farb-Skins am aktuellen Sturmgewehr (Farbe aus
   `Rifle.glb`, gleichmäßige Flächen teilweise durchsichtig), erzeugt mit `python3 tools/models/rifle_overlay.py`.
