@@ -114,8 +114,8 @@ SoundLibrary.Sounds = {
 	ParachuteLoop = { Range = 120, Pitch = 1, Looped = true, Clips = { clip(9113716666, 6.0, 0.53, 16.27) } },
 	-- schwere Kiste schlägt auf
 	CrateLand = { Range = 220, Pitch = 0.8, Clips = { clip(9116361742, 3.38, 0, 1.2) } },
-	-- Signalfeuer zischt (Lootdrop, Horden-Kiste)
-	FlareLoop = { Range = 90, Pitch = 1, Looped = true, Clips = { clip(9112780743, 6.0) } },
+	-- Signalfackel knistert leise (Lootdrop, Horden-Kiste); früher Feuerwerks-Zischen, das passte nicht
+	FlareLoop = { Range = 60, Pitch = 1, Looped = true, Clips = { clip(9112780193, 5.0) } },
 	-- Kiste öffnen: schwerer Verschluss
 	CrateOpen = { Range = 60, Pitch = 1, Clips = { clip(9116545245, 2.39, 1.0, 3.5) } },
 	-- Lkw-Motor (Konvoi)

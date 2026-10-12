@@ -156,27 +156,30 @@ local function buildFlare(target)
 	local model = Instance.new("Model")
 	model.Name = "AirdropFlare"
 	local base = CFrame.new(target)
+	-- kein leuchtender Teller mehr am Boden: unsichtbarer Anker für den Ton, daneben eine kleine rote Fackel im Boden
 	local disc = part(model, "Zone", Vector3.new(0.3, 24, 24), base * CFrame.new(0, 0.2, 0) * CFrame.Angles(0, 0, math.rad(90)),
-		Color3.fromRGB(255, 110, 50), Enum.Material.Neon, Enum.PartType.Cylinder)
-	disc.Transparency = 0.7
-	local beam = part(model, "Beam", Vector3.new(1.4, 140, 1.4), base * CFrame.new(0, 70, 0), Color3.fromRGB(255, 90, 40), Enum.Material.Neon)
-	beam.Transparency = 0.55
+		Color3.fromRGB(226, 56, 48), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	disc.Transparency = 1
+	part(model, "Stick", Vector3.new(0.5, 1.4, 0.5), base * CFrame.new(0, 0.7, 0), Color3.fromRGB(255, 70, 50), Enum.Material.Neon)
+	local beam = part(model, "Beam", Vector3.new(1.4, 140, 1.4), base * CFrame.new(0, 70, 0), Color3.fromRGB(226, 56, 48), Enum.Material.Neon)
+	beam.Transparency = 0.6
 	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 120, 60)
-	light.Range = 40
+	light.Color = Color3.fromRGB(255, 80, 60)
+	light.Range = 30
 	light.Brightness = 2
 	light.Parent = beam
 	local smoke = Instance.new("ParticleEmitter")
-	smoke.Color = ColorSequence.new(Color3.fromRGB(255, 96, 56))
-	smoke.Size = NumberSequence.new(6, 14)
+	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	smoke.Color = ColorSequence.new(Color3.fromRGB(200, 60, 50), Color3.fromRGB(120, 70, 66))
+	smoke.Size = NumberSequence.new(4, 12)
 	smoke.Lifetime = NumberRange.new(3, 6)
-	smoke.Rate = 12
+	smoke.Rate = 8
 	smoke.Speed = NumberRange.new(6, 12)
-	smoke.Transparency = NumberSequence.new(0.35, 1)
+	smoke.Transparency = NumberSequence.new(0.5, 1)
 	smoke.Parent = beam
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- Streaming: beim Client ganz oder gar nicht
 	model.Parent = folder
-	Sfx.Loop("FlareLoop", disc) -- Signalfeuer zischt (endet mit dem Modell)
+	Sfx.Loop("FlareLoop", disc) -- Fackel knistert leise (endet mit dem Modell)
 	return model
 end
 
