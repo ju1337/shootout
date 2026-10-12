@@ -1,5 +1,8 @@
 # Quellmodelle
 
+- `LMG.glb`: MG (taktisch, Gurt aus Kasten, aus Meshy, `Meshy_AI_roblox_tactical_lmg_3_1012205058`, nicht im Repo),
+  `meshy_weapon.py LMG …`: 359.186 Dreiecke, Patronenkasten `Magazine`, Deckel `Skin_Cover`, Klappe `Bolt`, 4,33 Studs.
+  In Studio wie die Pistole, "LMG" nennen.
 - `Shotgun.glb`: Schrotflinte (taktischer Vorderschaft-Repetierer aus Meshy, `Meshy_AI_roblox_tactical_shotg_1012204027`,
   nicht im Repo), `meshy_weapon.py Shotgun …`: 342.672 Dreiecke, Vorderschaft als `Pump`, 3,95 Studs; keine einzelne
   Patrone (`Shell`) im Modell. In Studio wie die Pistole, "Shotgun" nennen.

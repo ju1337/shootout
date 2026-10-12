@@ -112,6 +112,31 @@ WEAPONS = {
             "Pivot_Pump": (-0.38, 0.02, 0.0),
         },
     },
+    # MG (taktisch, Gurt aus Kasten): Patronenkasten unter dem Gehäuse als Magazine (der Gurt im Zuführfenster bleibt
+    # – Gurt und Gehäusewände sind dort eins), Deckel mit Schiene als Cover, Klappe vor dem Gehäuse als Bolt.
+    # Visierlinie waagrecht über die Kornspitze, der hintere Block liegt knapp darunter.
+    "LMG": {
+        "Length": 4.33,
+        "Body": "Skin_Body",
+        "Cuts": [
+            ("Magazine", box(x=(-0.08, 0.145), y=(None, -0.035)), [2], (0.03, -0.15, 0.1)),
+            ("Skin_Cover", box(x=(-0.06, 0.40), y=(0.19, None)), [0, 1, 2], (0.17, 0.2, 0.0)),
+            ("Bolt", box(x=(-0.15, -0.065), y=(0.152, None)), [2], (-0.11, 0.18, 0.0)),
+        ],
+        "Points": {
+            "Point_Grip": (0.35, -0.08, 0.0),
+            "Point_SightRear": (0.405, 0.274, 0.0),
+            "Point_SightFront": (-0.83, 0.274, 0.0),
+            "Point_Muzzle": (None, 0.113, 0.0),
+            "Point_Eject": (0.20, 0.05, -0.06),
+            "Point_LeftHand": (-0.42, 0.03, 0.0),
+            "Point_LeftHandTP": (-0.27, 0.03, 0.0),
+            "Point_Stock": (None, 0.03, 0.0),
+            "Pivot_Magazine": (0.03, -0.04, 0.0),
+            "Pivot_Cover": (0.17, 0.20, 0.0),
+            "Pivot_Bolt": (-0.11, 0.155, 0.0),
+        },
+    },
 }
 
 
