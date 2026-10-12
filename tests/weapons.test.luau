@@ -297,6 +297,10 @@ do
 	check(near(WeaponConfig.SpreadFor(rifle, 0, 0, false, true, false), 0.3), "Zielen")
 	check(near(WeaponConfig.SpreadFor(rifle, 0, 16, false, false, false), 1.8), "Laufen")
 	check(WeaponConfig.SpreadFor(rifle, 0, 0, true, false, false) > 3, "Sprung")
+	local dmr = WeaponConfig.Get("DMR")
+	check(WeaponConfig.SpreadFor(dmr, dmr.MaxBloom, 16, true, true, false) == 0, "DMR gezielt: immer genau die Mitte")
+	check(WeaponConfig.SpreadFor(dmr, 0, 0, false, false, false) > 0, "DMR aus der Hüfte streut weiter")
+	check(dmr.RecoilSide == 0 and dmr.RecoilReturn == false, "DMR: Rückstoß nur gerade nach oben, bleibt stehen")
 	local bloom = 0
 	local current
 	for i = 1, 15 do

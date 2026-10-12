@@ -486,7 +486,11 @@ local function tryFire()
 	-- Rückstoß: hoch und etwas zur Seite, beim Zielen weniger (Aufsätze: Kompensator, Vertikalgriff).
 	-- Nach dem Feuern wandert der Blick zurück.
 	local strength = (aiming and 0.75 or 1) * effects.Recoil
-	recoilPitch = math.min(recoilPitch + (cfg.Recoil or 0) * strength, cfg.MaxRecoil or 5)
+	if cfg.RecoilReturn == false then
+		recoilPitch += (cfg.Recoil or 0) * strength -- bleibt oben, keine Obergrenze: man zieht selbst nach
+	else
+		recoilPitch = math.min(recoilPitch + (cfg.Recoil or 0) * strength, cfg.MaxRecoil or 5)
+	end
 	recoilYaw += (random:NextNumber() - 0.5) * 2 * (cfg.RecoilSide or 0) * strength
 	recoilYaw = math.clamp(recoilYaw, -(cfg.MaxRecoil or 5) * 0.4, (cfg.MaxRecoil or 5) * 0.4)
 	if viewModel then
@@ -704,7 +708,8 @@ function WeaponClient.Init()
 	-- Rückstoß auf die Kamera legen. Die Kamera rechnet vom aktuellen Blick aus weiter, darum wird nur die
 	-- Änderung pro Bild aufgetragen: schnell hoch, nach dem Feuern sanft zurück.
 	RunService:BindToRenderStep("WeaponRecoil", Enum.RenderPriority.Camera.Value + 1, function(dt)
-		if os.clock() - lastShot > RECOIL_HOLD then
+		local holdView = current ~= nil and WeaponConfig.Get(current).RecoilReturn == false
+		if not holdView and os.clock() - lastShot > RECOIL_HOLD then
 			local decay = math.exp(-RECOIL_RETURN * dt)
 			recoilPitch *= decay
 			recoilYaw *= decay
@@ -718,6 +723,14 @@ function WeaponClient.Init()
 			local camera = workspace.CurrentCamera
 			camera.CFrame *= CFrame.Angles(math.rad(deltaPitch), math.rad(deltaYaw), 0)
 			appliedPitch, appliedYaw = shownPitch, shownYaw
+		end
+		if holdView then
+			-- Rückstoß ohne Zurückwandern: Aufgetragenes abziehen, so bleibt der Blick dort, wo die Maus ihn hinzieht
+			recoilPitch -= appliedPitch
+			shownPitch -= appliedPitch
+			recoilYaw -= appliedYaw
+			shownYaw -= appliedYaw
+			appliedPitch, appliedYaw = 0, 0
 		end
 	end)
 

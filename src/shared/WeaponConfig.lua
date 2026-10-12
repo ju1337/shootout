@@ -6,6 +6,8 @@
 -- Bloom = zusätzliche Streuung pro Schuss bei Dauerfeuer (höchstens MaxBloom), baut sich in Feuerpausen ab
 -- Recoil = Kamera-Rückstoß nach oben pro Schuss in Grad, RecoilSide = zufällig zur Seite,
 --   MaxRecoil = Obergrenze. Nach dem Loslassen wandert der Blick von selbst zurück.
+--   RecoilReturn = false: Blick bleibt oben (kein Zurückwandern, keine Obergrenze), man zieht selbst mit der Maus nach
+-- AimSpread (optional) = feste Streuung beim Zielen, ersetzt alles andere (0 = trifft immer genau die Mitte)
 -- Kick = wie stark die Waffe in der Hand zurückschlägt (nur Optik)
 -- AimFov = Sichtfeld beim Zielen (Rechtsklick)
 -- ShellReload = Patronen einzeln nachladen (Schrotflinte): Schießen bricht das Nachladen ab
@@ -186,17 +188,19 @@ WeaponConfig.Weapons = {
 	DMR = {
 		DisplayName = "Präzisionsgewehr",
 		Damage = 45,
-		FireDelay = 0.4,
+		FireDelay = 0.3,      -- vorher 0.4
 		Automatic = false,
 		MagazineSize = 10,
 		ReserveAmmo = 30,
 		ReloadTime = 2.3,
 		Range = 900,
 		Spread = 2.5,
+		AimSpread = 0,        -- gezielt/durchs Zielfernrohr: trifft immer genau die Mitte
 		Bloom = 0.8,
 		MaxBloom = 2.4,
-		Recoil = 1.4,
-		RecoilSide = 0.3,
+		Recoil = 2.2,         -- nur gerade nach oben; runterziehen bringt das Fernrohr genau zurück aufs Ziel
+		RecoilSide = 0,
+		RecoilReturn = false,
 		MaxRecoil = 5,
 		Kick = 1.8,
 		AimFov = 30,
@@ -277,6 +281,9 @@ end
 -- aiming = zielt (Rechtsklick), effects = Wirkung der Aufsätze (AttachmentConfig.Effects) oder nil
 function WeaponConfig.SpreadFor(cfg, bloom, speed, airborne, aiming, effects)
 	effects = type(effects) == "table" and effects or nil
+	if aiming and cfg.AimSpread then
+		return cfg.AimSpread
+	end
 	local spread = (cfg.Spread or 0) + (bloom or 0)
 	local move = math.clamp((speed or 0) / WeaponConfig.MoveSpeedFull, 0, 1.5)
 	spread *= 1 + move * (cfg.MoveSpread or WeaponConfig.MoveSpread) * (effects and effects.MoveSpread or 1)
