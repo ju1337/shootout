@@ -17,7 +17,10 @@ import weapon_templates as wt  # noqa: E402
 
 SCALE = 0.571  # 4,16 GLB-Einheiten (Schulterstütze bis Mündung) -> 2,38 Studs wie die alte SMG
 POLYMER, STEEL, BLACKMETAL, DOT = (38, 38, 40), (112, 112, 118), (28, 28, 30), (255, 190, 60)
-Y_SIGHT = 0.90  # Visierlinie (GLB-Einheiten)
+Y_SIGHT = 0.90  # Visierlinie des Quader-Nachbaus (GLB-Einheiten)
+# echtes Mesh: Oberkante der Kimmen-Ohren (0,555 Studs) und Oberkante des Leuchtpunkts auf dem Korn (0,544 Studs);
+# tiefer schaut man beim Zielen gegen den Kimmenfuß
+Y_REAR_MESH, Y_FRONT_MESH = 0.555 / 0.571, 0.544 / 0.571
 X_REAR, X_FRONT = -1.40, 0.95
 
 # (Name, Form, (x0, x1), (y0, y1), (z0, z1), Farbe, Material) in GLB-Einheiten: x = nach vorn, y = oben, z = rechts
@@ -48,8 +51,8 @@ PARTS = [
 # Marker (GLB-Einheiten)
 POINTS = [
 	("Point_Grip", (-0.55, -0.52, 0)),
-	("Point_SightRear", (X_REAR, Y_SIGHT, 0)),
-	("Point_SightFront", (X_FRONT, Y_SIGHT, 0)),
+	("Point_SightRear", (X_REAR, Y_REAR_MESH, 0)),
+	("Point_SightFront", (X_FRONT, Y_FRONT_MESH, 0)),
 	("Point_Muzzle", (2.08, 0.305, 0)),
 	("Point_Eject", (0.20, 0.55, 0.20)),
 	("Point_LeftHand", (0.80, -0.02, 0)),
