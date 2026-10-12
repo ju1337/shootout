@@ -935,8 +935,9 @@ local function loadAsset(weaponName, source)
 		end
 		if skin then
 			part:SetAttribute("Skin", true)
-			-- importierte Meshes sind ohne eigene Farbe weiß: dunkle Grundfarbe, bis ein Skin sie überschreibt
-			if part:IsA("MeshPart") and part.Color == Color3.new(1, 1, 1) and not part:FindFirstChildOfClass("SurfaceAppearance") then
+			-- importierte Meshes sind ohne eigene Farbe weiß bzw. Studio-Grau: dunkle Grundfarbe, bis ein Skin sie überschreibt
+			if part:IsA("MeshPart") and (part.Color == Color3.new(1, 1, 1) or part.Color == Color3.fromRGB(163, 162, 165))
+				and not part:FindFirstChildOfClass("SurfaceAppearance") then
 				part.Color = Color3.fromRGB(42, 42, 46)
 			end
 		end
