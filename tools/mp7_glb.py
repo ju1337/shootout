@@ -18,7 +18,8 @@ import mp7_model as M  # noqa: E402
 SRC = os.path.join(ROOT, "art", "sources", "mp7a1.glb")
 OUT = os.path.join(ROOT, "art", "sources", "SMG.glb")
 S = M.SCALE
-CELL = 0.025  # Studs: gröbere Zellen = weniger Dreiecke (Ziel: ca. 5000 für die ganze Waffe)
+CELL = 0  # Studs; 0 = volle Qualität (Original-Dreiecke und -Normalen, ca. 14.000). Vereinfachen (z.B. 0.025) verwischt
+#          die Kanten: Eckpunkte mit verschiedenen Normalen verschmelzen, das Modell sieht in der Ego-Sicht fleckig aus.
 # GLB-Gruppe -> Teilname im Spiel (nicht genannte Gruppen fallen weg: Patronen, zweites Magazin, Schalldämpfer)
 PART_OF = {
     "mp7a1 receiver_6": "Skin_Receiver", "mp7a1 stock_10": "Skin_Stock",
@@ -156,7 +157,7 @@ def main():
               "Bolt": (0.11, 0.11, 0.12), "Body": (0.35, 0.35, 0.38)}
     parts = {}
     for k, (P, N, _) in arr.items():
-        P2, N2 = decimate(P, N, CELL)
+        P2, N2 = decimate(P, N, CELL) if CELL else (P, N)
         parts[k] = (P2, N2, colors[k])
         print("  %-14s %5d -> %5d Dreiecke" % (k, len(P) // 3, len(P2) // 3))
     # Leuchtpunkt auf dem Korn
