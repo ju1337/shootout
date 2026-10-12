@@ -39,7 +39,7 @@ Modelle (Export-Einstellungen, Geometrie, Texturen, Stil, Abgabe-Checkliste) ste
 Zum Ausprobieren ohne Blender: `art/templates/Weapons/<Waffe>.rbxmx` per Datei › „Insert from File…“ in Studio
 einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gültiges Modell.
 
-Die `SMG` ist bereits fertig (MP7 A1, siehe `art/sources/README.md`, erzeugt mit `python3 tools/mp7_model.py`).
+Die `SMG` ist fertig: MP7 A1 als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
 (Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr

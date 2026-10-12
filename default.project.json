@@ -23,6 +23,10 @@
             "$path": "models/Weapons/DMR.rbxmx",
             "$ignoreUnknownInstances": true
           },
+          "SMG": {
+            "$path": "models/Weapons/SMG.rbxmx",
+            "$ignoreUnknownInstances": true
+          },
           "Rifle": {
             "$path": "models/Weapons/Rifle.rbxmx",
             "$ignoreUnknownInstances": true,

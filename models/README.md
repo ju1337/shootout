@@ -3,6 +3,8 @@
 | Datei | landet in Studio unter |
 |---|---|
 | `Weapons/Rifle.rbxmx` | ReplicatedStorage › Assets › Weapons › Rifle |
+| `Weapons/DMR.rbxmx` | ReplicatedStorage › Assets › Weapons › DMR |
+| `Weapons/SMG.rbxmx` | ReplicatedStorage › Assets › Weapons › SMG (MP7 A1, CC-BY-4.0 D_U, siehe `art/sources/README.md`) |
 | `Attachments/HoloSight.rbxmx` | ReplicatedStorage › Assets › Attachments › HoloSight |
 | `Attachments/Suppressor.rbxmx` | ReplicatedStorage › Assets › Attachments › Suppressor |
 | `Attachments/AngledGrip.rbxmx` | ReplicatedStorage › Assets › Attachments › AngledGrip |
