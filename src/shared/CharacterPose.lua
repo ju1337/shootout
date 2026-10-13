@@ -48,11 +48,12 @@ local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach u
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
 -- Waffe nur gehalten (nicht zielen/schießen): quer vor dem Bauch wie in GTA, beide Hände dran
-local LOW_RIGHT_POLE = Vector3.new(1, -0.1, 0.05) -- gesenkt: rechter Ellbogen locker nach außen zur Seite gebeugt
+local LOW_RIGHT_POLE = Vector3.new(0.6, -0.8, 0.05) -- gesenkt: Oberarm nah am Körper, Ellbogen leicht nach außen
 local LOW_LEFT_POLE = Vector3.new(-1, -0.25, 0.05) -- linker Ellbogen ebenso nach außen
 local LOW_READY_PITCH = math.rad(-22)  -- Mündung schräg nach unten
 local LOW_READY_YAW = math.rad(62)     -- und weit zur linken Seite: Waffe liegt quer vor dem Körper
-local LOW_READY_GRIP = Vector3.new(0.2, -0.5, 0.1) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
+local LOW_READY_GRIP = Vector3.new(0.2, -0.5, 0.0) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
+local LOW_READY_ARM_GAP = 0.12        -- Platz für die Unterarme vor dem Bauch (Anteil der Oberkörperbreite)
 local LOW_READY_PULL = 1.4             -- höchstens so weit verschieben, damit die linke Hand hinkommt
 local LOW_READY_PISTOL_PITCH = math.rad(-35)
 local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.4) -- Z: vor der Bauchfläche
@@ -495,7 +496,7 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 		-- Mündung schräg nach links unten, Schaft unter dem rechten Unterarm (seitlich außerhalb des Körpers)
 		-- vor dem Bauch mit Abstand für den Unterarm (Avatar-Arme sind etwa halb so breit wie der Oberkörper)
 		local gripAt = base * Vector3.new(size.X * LOW_READY_GRIP.X, size.Y * LOW_READY_GRIP.Y,
-			-(size.Z / 2 + size.X / 4 + LOW_READY_GRIP.Z))
+			-(size.Z / 2 + size.X * LOW_READY_ARM_GAP + LOW_READY_GRIP.Z))
 		low = CFrame.new(gripAt) * lowRot
 		-- Vorderschaft außer Reichweite der linken Hand (lange Waffen): Waffe entlang ihrer Achse etwas nach rechts
 		-- hinten schieben, bis die Hand hinkommt
