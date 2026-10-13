@@ -53,11 +53,12 @@ local PRESETS = {
 -- Nachtwerte für "Wasteland" (zwischen Wasteland und NIGHT wird nach DayCycle.Darkness gemischt)
 local NIGHT = {
 	-- gut lesbar: kräftiges bläuliches Umgebungslicht statt Schwarz, weniger Dunst, dazu NIGHT_EXPOSURE.
-	-- Bleibt durch das Blau, die Sterne und die Laternen erkennbar Nacht (2026-10-13 deutlich heller, Julio)
-	Lighting = { Brightness = 3, Ambient = Color3.fromRGB(132, 138, 164), OutdoorAmbient = Color3.fromRGB(176, 184, 214) },
-	Atmosphere = { Density = 0.34, Haze = 1.0, Glare = 0, Color = Color3.fromRGB(110, 118, 148), Decay = Color3.fromRGB(70, 74, 104) },
-	ColorCorrection = { Saturation = -0.22, Contrast = 0, Brightness = 0.06, TintColor = Color3.fromRGB(218, 226, 255) },
-	Bloom = { Intensity = 0.5, Threshold = 1.2 },
+	-- Bleibt durch das Blau, die Sterne und die Laternen erkennbar Nacht (2026-10-13 deutlich heller, Julio;
+	-- am selben Abend wieder etwas zurück, weil helle Flächen im Camp weiß überstrahlten: "zu hell")
+	Lighting = { Brightness = 2.4, Ambient = Color3.fromRGB(110, 116, 142), OutdoorAmbient = Color3.fromRGB(148, 156, 188) },
+	Atmosphere = { Density = 0.34, Haze = 1.0, Glare = 0, Color = Color3.fromRGB(100, 108, 138), Decay = Color3.fromRGB(64, 68, 96) },
+	ColorCorrection = { Saturation = -0.22, Contrast = 0.06, Brightness = 0, TintColor = Color3.fromRGB(214, 222, 255) },
+	Bloom = { Intensity = 0.3, Threshold = 1.6 },
 }
 -- Blutmond (rot) und Nebel (dicht, grau) werden über Tag/Nacht gelegt
 local BLOOD = {
@@ -88,7 +89,7 @@ local STORM_CLOUDS = { Cover = 0.95, Density = 0.9, Color = Color3.fromRGB(58, 6
 -- Gilt nicht im Dungeon (DUNGEON wird danach unverändert darübergelegt).
 local OPEN_WORLD_FOG = 0.2
 -- Nachts zusätzlich heller belichtet (Lighting.ExposureCompensation, mal DayCycle.Darkness; nicht im Dungeon)
-local NIGHT_EXPOSURE = 0.6
+local NIGHT_EXPOSURE = 0.3
 local baseExposure = nil -- Belichtung aus dem Projekt (beim Start gemerkt)
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
