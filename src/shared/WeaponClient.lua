@@ -157,15 +157,23 @@ local function updateViewModel()
 	end
 	if current and GunModels.Info[current] then
 		local sleeve = Cosmetics.AgentColors(player, agentId())
-		-- eigener Avatar: Ärmel (falls die echten Arme fehlen) in der Oberkörperfarbe des Avatars
-		local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
-		if AgentConfig.RobloxAvatar and bodyColors then
-			sleeve = bodyColors.TorsoColor3
+		local hand = nil
+		local arms = nil
+		if AgentConfig.RobloxAvatar then
+			-- eigener Roblox-Avatar: immer Ärmel in der Oberkörperfarbe und Hände in der Hautfarbe. Die echten
+			-- Avatar-Arme passen nicht vor die Kamera (klobige 1-Stud-Arme, flache Hände, jedes Paket anders).
+			local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
+			if bodyColors then
+				sleeve = bodyColors.TorsoColor3
+				hand = bodyColors.RightArmColor3
+			end
+		else
+			-- die echten Arme des Agenten-Modells, sonst Ärmel und Handschuhe
+			local ok, pieces = pcall(AgentModels.ArmPieces, player.Character)
+			arms = ok and pieces or nil
 		end
-		-- die echten Arme des Charakters (3D-Modell bzw. Spielkörper), sonst Ärmel und Handschuhe
-		local ok, arms = pcall(AgentModels.ArmPieces, player.Character)
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
-			AttachmentConfig.EquippedList(player, current), ok and arms or nil)
+			AttachmentConfig.EquippedList(player, current), arms, hand)
 		viewModel:Draw()
 	end
 end

@@ -213,11 +213,12 @@ local PARTS = {
 -- Stock = Ende der Schulterstütze (lange Waffen), Long = lange Waffe (Schulteranschlag),
 -- LeftHandTP = linke Hand in der Third-Person (näher am Griff, damit die kürzeren Avatar-Arme hinkommen),
 -- Scope = das 3D-Modell hat ein Zielfernrohr: Zielen zeigt die Fernrohr-Ansicht (ScopeOverlay, WeaponConfig.ScopeFov)
+-- HipDrop = so viel tiefer hängt die Waffe aus der Hüfte in der Ego-Perspektive (Zielen bleibt gleich)
 GunModels.Info = {
 	-- Rotpunkt: SightZ = Glas, das Auge bleibt wie vorher 0.72 hinter dem Griff
 	Rifle = { SightHeight = 0.92, SightZ = -0.36, EyeRelief = 1.08, Reflex = true, Muzzle = V(0, 0.48, -2.73),
 		Eject = V(0.18, 0.47, -0.3), RightHand = V(0, -0.05, 0.05), LeftHand = V(-0.03, 0.27, -1.6), Stock = V(0, 0.35, 1.4),
-		Long = true, LeftHandTP = V(-0.03, 0.2, -1.15) },
+		Long = true, LeftHandTP = V(-0.03, 0.2, -1.15), HipDrop = 0.3 },
 	SMG = { SightHeight = 0.76, SightZ = 0.3, EyeRelief = 0.55, Muzzle = V(0, 0.43, -1.355), Eject = V(0.16, 0.45, -0.25),
 		RightHand = V(0, -0.05, 0.04), LeftHand = V(-0.03, 0.15, -0.68), Stock = V(0, 0.3, 1.02), Long = true,
 		LeftHandTP = V(-0.03, 0.15, -0.68) },

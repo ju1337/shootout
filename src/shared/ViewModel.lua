@@ -121,8 +121,9 @@ local function buildRealArm(side)
 end
 
 -- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten),
--- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe)
-function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms)
+-- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe),
+-- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe
+function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor)
 	local self = setmetatable({}, ViewModel)
 	self.Weapon = weaponName
 	self.Info = GunModels.Info[weaponName]
@@ -158,10 +159,10 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms)
 		self.Arms[side] = real or {
 			Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.Fabric, self.Model),
 			Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.Fabric, self.Model),
-			Glove = armPart(side .. "Glove", GLOVE_COLOR, Enum.Material.SmoothPlastic, self.Model),
+			Glove = armPart(side .. "Glove", handColor or GLOVE_COLOR, Enum.Material.SmoothPlastic, self.Model),
 		}
 	end
-	self.Hip = self.Info.Long and HIP_LONG or HIP_SHORT
+	self.Hip = (self.Info.Long and HIP_LONG or HIP_SHORT) * CFrame.new(0, -(self.Info.HipDrop or 0), 0)
 	self.Aim = GunModels.AimOffset(weaponName, attachments)
 	self.Kick = newSpring()   -- Rückschlag: X = nach oben (Grad), Y = zur Seite (Grad), Z = nach hinten (Studs)
 	self.Sway = { Value = Vector3.zero } -- Schwanken: X = Nicken, Y = Drehen (Grad)

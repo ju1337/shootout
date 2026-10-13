@@ -37,7 +37,7 @@ local PRESETS = {
 			OutdoorAmbient = Color3.fromRGB(116, 116, 100) },
 		Atmosphere = { Density = 0.42, Haze = 2.6, Glare = 0.15, Color = Color3.fromRGB(168, 164, 136),
 			Decay = Color3.fromRGB(98, 94, 72) },
-		ColorCorrection = { Saturation = -0.35, Contrast = 0.15, TintColor = Color3.fromRGB(240, 236, 212) },
+		ColorCorrection = { Saturation = -0.35, Contrast = 0.15, Brightness = 0, TintColor = Color3.fromRGB(240, 236, 212) },
 		Bloom = { Intensity = 0.25, Threshold = 1.7 },
 	},
 	Tropical = {
@@ -52,21 +52,22 @@ local PRESETS = {
 
 -- Nachtwerte für "Wasteland" (zwischen Wasteland und NIGHT wird nach DayCycle.Darkness gemischt)
 local NIGHT = {
-	-- hell genug zum Spielen: kräftiges bläuliches Umgebungslicht statt Schwarz, weniger Dunst
-	Lighting = { Brightness = 2.2, Ambient = Color3.fromRGB(96, 102, 128), OutdoorAmbient = Color3.fromRGB(132, 140, 176) },
-	Atmosphere = { Density = 0.34, Haze = 1.0, Glare = 0, Color = Color3.fromRGB(96, 104, 134), Decay = Color3.fromRGB(60, 64, 92) },
-	ColorCorrection = { Saturation = -0.28, Contrast = 0.06, TintColor = Color3.fromRGB(214, 222, 255) },
+	-- gut lesbar: kräftiges bläuliches Umgebungslicht statt Schwarz, weniger Dunst, dazu NIGHT_EXPOSURE.
+	-- Bleibt durch das Blau, die Sterne und die Laternen erkennbar Nacht (2026-10-13 deutlich heller, Julio)
+	Lighting = { Brightness = 3, Ambient = Color3.fromRGB(132, 138, 164), OutdoorAmbient = Color3.fromRGB(176, 184, 214) },
+	Atmosphere = { Density = 0.34, Haze = 1.0, Glare = 0, Color = Color3.fromRGB(110, 118, 148), Decay = Color3.fromRGB(70, 74, 104) },
+	ColorCorrection = { Saturation = -0.22, Contrast = 0, Brightness = 0.06, TintColor = Color3.fromRGB(218, 226, 255) },
 	Bloom = { Intensity = 0.5, Threshold = 1.2 },
 }
 -- Blutmond (rot) und Nebel (dicht, grau) werden über Tag/Nacht gelegt
 local BLOOD = {
 	Atmosphere = { Color = Color3.fromRGB(120, 40, 36), Decay = Color3.fromRGB(70, 20, 18), Density = 0.5 },
 	ColorCorrection = { TintColor = Color3.fromRGB(255, 160, 150), Saturation = -0.1 },
-	Lighting = { Ambient = Color3.fromRGB(120, 66, 62), OutdoorAmbient = Color3.fromRGB(160, 86, 80) },
+	Lighting = { Ambient = Color3.fromRGB(150, 90, 84), OutdoorAmbient = Color3.fromRGB(196, 116, 108) },
 }
 -- Sturmnacht (DayCycle.StormFactor): dunkel, kalt, dichter grauer Dunst, Wolkendecke zu
 local STORM = {
-	Lighting = { Brightness = 0.9, Ambient = Color3.fromRGB(70, 76, 90), OutdoorAmbient = Color3.fromRGB(88, 96, 112) },
+	Lighting = { Brightness = 1.6, Ambient = Color3.fromRGB(108, 114, 130), OutdoorAmbient = Color3.fromRGB(138, 146, 162) },
 	Atmosphere = { Density = 0.52, Haze = 3.2, Glare = 0, Color = Color3.fromRGB(104, 110, 122), Decay = Color3.fromRGB(64, 68, 80) },
 	ColorCorrection = { Saturation = -0.5, Contrast = 0.2, TintColor = Color3.fromRGB(205, 216, 235) },
 	Bloom = { Intensity = 0.35, Threshold = 1.4 },
@@ -76,7 +77,7 @@ local STORM = {
 local DUNGEON = {
 	Lighting = { Brightness = 0.3, Ambient = Color3.fromRGB(54, 58, 72), OutdoorAmbient = Color3.fromRGB(54, 58, 72) },
 	Atmosphere = { Density = 0.6, Haze = 2.4, Glare = 0, Color = Color3.fromRGB(70, 80, 78), Decay = Color3.fromRGB(34, 40, 40) },
-	ColorCorrection = { Saturation = -0.2, Contrast = 0.18, TintColor = Color3.fromRGB(210, 225, 220) },
+	ColorCorrection = { Saturation = -0.2, Contrast = 0.18, Brightness = 0, TintColor = Color3.fromRGB(210, 225, 220) },
 	Bloom = { Intensity = 0.6, Threshold = 1.1 },
 }
 local DUNGEON_FADE = 1.5 -- Sekunden für den Übergang
@@ -86,6 +87,9 @@ local STORM_CLOUDS = { Cover = 0.95, Density = 0.9, Color = Color3.fromRGB(58, 6
 -- Dunst/Nebel der offenen Welt insgesamt (Tag, Nacht, Blutmond, Sturm, Morgennebel): 0.2 = 80 % weniger als die Presets.
 -- Gilt nicht im Dungeon (DUNGEON wird danach unverändert darübergelegt).
 local OPEN_WORLD_FOG = 0.2
+-- Nachts zusätzlich heller belichtet (Lighting.ExposureCompensation, mal DayCycle.Darkness; nicht im Dungeon)
+local NIGHT_EXPOSURE = 0.6
+local baseExposure = nil -- Belichtung aus dem Projekt (beim Start gemerkt)
 local CYCLE_STEP = 0.25 -- so oft wird das Licht nachgeführt (Sekunden)
 
 local TWEEN = TweenInfo.new(1.2, Enum.EasingStyle.Quad)
@@ -125,6 +129,9 @@ local function apply(name)
 		return
 	end
 	current = name
+	if baseExposure and name ~= "Wasteland" and not Modes.IsSocial(player:GetAttribute("Mode")) then
+		Lighting.ExposureCompensation = baseExposure -- Nacht-Belichtung zurück (im Markt setzt HubLineup sie)
+	end
 	if name == "Wasteland" and MapAtmosphere.Cycle then
 		MapAtmosphere.Cycle() -- Tag und Nacht setzen die Werte direkt
 		return
@@ -238,12 +245,16 @@ local function cycle()
 		atmosphere.Density *= OPEN_WORLD_FOG
 		atmosphere.Haze *= OPEN_WORLD_FOG
 	end
+	local exposureBoost = NIGHT_EXPOSURE * dark
 	-- Dungeon zuletzt: im Dungeon zählt nur seine Stimmung
 	local now = os.clock()
 	local step = lastCycle and math.min(1, (now - lastCycle) / DUNGEON_FADE) or 1
 	lastCycle = now
 	local inside = MapAtmosphere.InDungeon() and 1 or 0
 	dungeonMix = dungeonMix + math.clamp(inside - dungeonMix, -step, step)
+	if baseExposure then
+		Lighting.ExposureCompensation = baseExposure + exposureBoost * (1 - dungeonMix)
+	end
 	if dungeonMix > 0 then
 		for section, values in DUNGEON do
 			local object = objects[section]
@@ -265,6 +276,7 @@ MapAtmosphere.Cycle = cycle
 
 function MapAtmosphere.Init()
 	remember()
+	baseExposure = Lighting.ExposureCompensation
 	update()
 	local nextAt = 0
 	RunService.Heartbeat:Connect(function()
