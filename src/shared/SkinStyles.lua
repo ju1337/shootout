@@ -10,7 +10,6 @@ local SkinStyles = {}
 
 local WHITE = { 230, 250, 255 } -- Eisweiß (Glühkern)
 local CYAN = { 70, 220, 255 }
-local SAPPHIRE = { 52, 110, 245 }
 local VIOLET = { 140, 90, 240 }
 local MAGENTA = { 235, 80, 200 }
 local ROSE = { 255, 140, 200 }

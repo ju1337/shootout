@@ -3003,7 +3003,6 @@ return {
 	["ÖDSTADT SÜDOST"] = "ÖDSTADT SOUTHEAST",
 	["ÖDSTADT SÜDWEST"] = "ÖDSTADT SOUTHWEST",
 	["ÖDSTADT NORDWEST"] = "ÖDSTADT NORTHWEST",
-	["Der Überlebende ist verschwunden"] = "The survivor vanished",
 	["Kein DataStore (Studio ohne API-Zugriff?)"] = "No DataStore (Studio without API access?)",
 	["Kein Spielstand"] = "No save data",
 	["MEISTERSCHAFT: MIT KILLS MIT DIESER WAFFE FREISCHALTEN"] = "MASTERY: UNLOCK WITH KILLS USING THIS WEAPON",
