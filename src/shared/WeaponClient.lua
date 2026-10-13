@@ -636,8 +636,14 @@ function WeaponClient.GetReloadProgress()
 	return math.clamp((os.clock() - reload.Start) / reload.Duration, 0, 1)
 end
 
+-- Zielfernrohr zählt mit: dort ist die Ego-Waffe ausgeblendet, man schaut aber weiter aus der Ego-Perspektive
 function WeaponClient.IsFirstPerson()
-	return firstPersonView()
+	return firstPersonView() or ScopeOverlay.IsShown()
+end
+
+-- Schaut der Spieler gerade durch ein Zielfernrohr (Fernrohr-Ansicht mit eigenem Fadenkreuz)?
+function WeaponClient.IsScoped()
+	return ScopeOverlay.IsShown()
 end
 
 -- Inspiziert der Spieler gerade? Gibt den Zustand ({ Weapon, Anim, Start, Duration }) zurück

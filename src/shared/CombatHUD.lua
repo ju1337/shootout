@@ -166,10 +166,14 @@ function CombatHUD.Init(gui, weaponClient)
 		local gap = math.max(MIN_GAP, radius) + kick * (1 - aim * 0.6)
 		local length = HIP_LENGTH + (AIM_LENGTH - HIP_LENGTH) * aim
 
-		-- Sichtbarkeit: Ego beim Zielen aus (Kimme und Korn), beim Sprinten und Nachladen schwächer
+		-- Sichtbarkeit: Ego beim Zielen aus (Kimme und Korn, Zielfernrohr), beim Sprinten und Nachladen schwächer
 		local alpha = 1
 		if firstPerson then
 			alpha = 1 - math.clamp(aim * 1.6, 0, 1)
+		end
+		-- Zielfernrohr: das Fernrohr hat sein eigenes Fadenkreuz, das HUD-Fadenkreuz bleibt ganz weg
+		if weaponClient.IsScoped() then
+			alpha = 0
 		end
 		if Movement.IsSprinting() then
 			alpha *= 0.3
