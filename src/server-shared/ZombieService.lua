@@ -1188,9 +1188,19 @@ local function spawnRound()
 				end
 			end
 			if around < wanted then
+				-- kleine Gruppe dicht beieinander (Z.Group), nie mehr als noch fehlen oder der Server erlaubt
 				local point = zone and redzoneSpawnPoint(zone) or spawnPoint(root.Position)
-				if point then
-					ZombieService.Spawn(point, rollKind(zone ~= nil))
+				local group = Z.Group and random:NextInteger(Z.Group[1], Z.Group[2]) or 1
+				for i = 1, math.min(group, wanted - around) do
+					if not point or count >= maxTotal() then
+						break
+					end
+					local at = point
+					if i > 1 then
+						local x, z = point.X + random:NextNumber(-5, 5), point.Z + random:NextNumber(-5, 5)
+						at = ZombieService.GroundAt(x, z) or point
+					end
+					ZombieService.Spawn(at, rollKind(zone ~= nil))
 				end
 			end
 		end
