@@ -48,13 +48,14 @@ local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach u
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
 -- Waffe nur gehalten (nicht zielen/schießen): locker vor dem Bauch, Mündung schräg nach vorn unten, beide Hände dran
-local LOW_RIGHT_POLE = Vector3.new(0.15, -1, 0.6) -- gesenkt: Ellbogen hängen locker nach unten hinten (kein Abspreizen)
+local LOW_RIGHT_POLE = Vector3.new(0.25, -1, -0.15) -- gesenkt: Ellbogen hängen locker nach unten (nicht nach hinten raus)
 local LOW_LEFT_POLE = Vector3.new(-0.35, -1, 0.3)
 local LOW_READY_PITCH = math.rad(-20)  -- so weit zeigt die Mündung nach unten
-local LOW_READY_YAW = math.rad(10)     -- und so weit zur Körpermitte
-local LOW_READY_GRIP = Vector3.new(0.6, -0.55, -0.75) -- Griff (rechte Hand) relativ zur Oberkörpermitte in Studs: Hüfthöhe
+local LOW_READY_YAW = math.rad(20)     -- und so weit zur Körpermitte
+local LOW_READY_STOCK = Vector3.new(0.15, -0.1, 0.05) -- Schaftende: X Studs außerhalb der rechten Körperseite, Y/Z Anteil
+local LOW_READY_PULL = 1.2             -- höchstens so weit nach hinten ziehen, damit die linke Hand hinkommt
 local LOW_READY_PISTOL_PITCH = math.rad(-35)
-local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.7)
+local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.4) -- Z: vor der Bauchfläche
 local R6_LOW_PITCH = math.rad(-38)     -- R6: Arm schräg nach unten
 local READY_AFTER_SHOT = 1.0           -- so lange nach einem Schuss bleibt die Waffe oben (wie die Schulterkamera)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
@@ -490,20 +491,23 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	if info.Long and info.Stock then
 		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
-		low = CFrame.new(base * LOW_READY_GRIP) * lowRot
-		-- lange Waffen mit weit vorn liegendem Vorderschaft (Schrotflinte, LMG): gesenkt so weit zur linken Schulter
-		-- heranziehen, dass die linke Hand ihn erreicht (sonst rutscht sie bis an die rechte Hand)
+		-- Schaftende seitlich neben der rechten Hüfte (außerhalb des Körpers, auch bei breiten Avataren), von dort zeigt
+		-- die Waffe schräg nach vorn unten zur Mitte und bleibt ganz vor bzw. neben dem Körper
+		local stockAt = base * Vector3.new(size.X / 2 + LOW_READY_STOCK.X, size.Y * LOW_READY_STOCK.Y, size.Z * LOW_READY_STOCK.Z)
+		low = CFrame.new(stockAt) * lowRot * CFrame.new(-info.Stock * SCALE)
+		-- weit vorn liegender Vorderschaft (Schrotflinte, LMG): Waffe entlang ihrer Achse etwas nach hinten ziehen, bis
+		-- die linke Hand hinkommt (nach hinten bleibt das Schaftende neben dem Körper, nicht darin)
 		local leftShoulder = (upperTorso * rig.LShoulder.C0).Position
-		local toShoulder = leftShoulder - low * (leftHandLocal(info, nil, nil) * SCALE)
-		local short = toShoulder.Magnitude - armReach(armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)) + 0.05
+		local short = (leftShoulder - low * (leftHandLocal(info, nil, nil) * SCALE)).Magnitude
+			- armReach(armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)) + 0.05
 		if short > 0 then
-			low = low + toShoulder.Unit * math.min(short, 0.7)
+			low = low * CFrame.new(0, 0, math.min(short, LOW_READY_PULL))
 		end
 	else
 		local chest = upperTorso * Vector3.new(0, size.Y * 0.22, 0)
 		local hold = CFrame.new(size.X * 0.06, -0.05, -size.Y * PISTOL_HIP_REACH)
 		gun = CFrame.new(chest) * aimRot * hold
-		low = CFrame.new(base * LOW_READY_PISTOL_GRIP) * yaw * CFrame.Angles(LOW_READY_PISTOL_PITCH, math.rad(8), 0)
+		low = CFrame.new(base * Vector3.new(LOW_READY_PISTOL_GRIP.X, LOW_READY_PISTOL_GRIP.Y, -size.Z / 2 + LOW_READY_PISTOL_GRIP.Z)) * yaw * CFrame.Angles(LOW_READY_PISTOL_PITCH, math.rad(8), 0)
 	end
 	-- Anlegen: Kimme bzw. Visier direkt vor dem rechten Auge (lange Waffen mit der Wange am Schaft,
 	-- Pistolen mit gestreckten Armen), Waffe zeigt weiter genau in Blickrichtung

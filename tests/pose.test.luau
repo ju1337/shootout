@@ -138,6 +138,31 @@ for weaponName, info in GunModels.Info do
 	check(worstLeft < 0.15, weaponName .. ": gesenkt erreicht die linke Hand die Waffe nicht")
 end
 
+-- Gesenkt steckt keine Waffe im Körper: Punkte von Schaft bis Mündung liegen außerhalb des Oberkörpers (schmaler
+-- Agenten-Körperbau und breiter Roblox-Avatar)
+for _, build in { { W = BODY_W, D = BODY_D }, { W = 1, D = 1 } } do
+	local oldW, oldD = BODY_W, BODY_D
+	BODY_W, BODY_D = build.W, build.D
+	for weaponName, info in GunModels.Info do
+		local rootCF = CFrame.new(0, 3, 0)
+		local rig = makeRig(rootCF)
+		CharacterPose.__poseR15({ Sprint = 0, Aim = 0, Low = 1, Kick = 0 }, rig, info, 0, nil, nil)
+		local r = fk(rig)
+		local size = rig.UpperTorso.Size
+		local rear = info.Stock and info.Stock * SCALE or Vector3.new(0, 0, 0.3)
+		local worst = -math.huge
+		for i = 0, 20 do
+			local point = r.Handle * rear:Lerp(info.Muzzle * SCALE, i / 20)
+			local l = r.Upper:PointToObjectSpace(point)
+			-- Eindringtiefe in den Oberkörper samt Bauch (bis 1 Stud unter dem Oberkörper)
+			local depth = math.min(size.X / 2 - math.abs(l.X), size.Z / 2 - math.abs(l.Z), size.Y / 2 + 1 - math.abs(l.Y + 0.5))
+			worst = math.max(worst, depth)
+		end
+		check(worst < 0.05, string.format("%s (Breite %.2f): gesenkte Waffe steckt %.2f Studs im Körper", weaponName, build.W, worst))
+	end
+	BODY_W, BODY_D = oldW, oldD
+end
+
 -- Nachladen: Linke Hand folgt dem Magazin (mitten im Nachladen)
 for weaponName, info in GunModels.Info do
 	local anim, duration = WeaponAnimations.Reload(weaponName, WeaponConfig.Get(weaponName).ReloadTime, 4)
