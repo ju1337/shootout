@@ -349,8 +349,7 @@ local function tick()
 	if not step then
 		return
 	end
-	-- Waffe ziehen in der Safe Zone erlaubt der Server nur mit TutorialEquip; das fällt beim Verlassen der Zone und beim
-	-- Moduswechsel weg: wieder anfragen
+	-- Tutorial-Stand (TutorialEquip) fällt beim Verlassen der Zone und beim Moduswechsel weg: wieder anfragen
 	if (step.Id == "Equip" or step.Id == "Leave") and player:GetAttribute("TutorialEquip") ~= true
 		and player:GetAttribute("InSafeZone") == true and os.clock() - state.ResumedAt > 2 then
 		state.ResumedAt = os.clock()

@@ -1103,8 +1103,6 @@ return {
 	["In der Nähe von {1} · töte sie für die beste Beute"] = "Near {1} · kill it for the best loot",
 	["In der offenen Welt XP sammeln"] = "Earn XP in the open world",
 	["In der roten Zone {1} · Landet in {2} Sekunden · Markierung auf dem Bildschirm"] = "In the Red Zone {1} · Lands in {2} seconds · marked on screen",
-	["In der Safe Zone bleiben Waffen gesichert."] = "Weapons stay holstered in the Safe Zone.",
-	["In der Safe Zone sind Waffen gesichert – draußen eine Waffe ziehen (1-9)."] = "Weapons are holstered in the Safe Zone – draw a weapon outside (1-9).",
 	["In der Safe Zone wird nichts geworfen."] = "No throwing in the Safe Zone.",
 	["IN DIE TASCHE"] = "TO BAG",
 	["IN DIE TASCHE (ZUM VERKAUFEN)"] = "TO BAG (TO SELL)",

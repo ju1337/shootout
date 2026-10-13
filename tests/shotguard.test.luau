@@ -282,6 +282,72 @@ step(0.3)
 alice:SetAttribute("CanFight", canFight)
 check(damageTaken() == 0, "ohne CanFight (z.B. im Markt) kein Schuss")
 
+-- ---------- Safe Zone: Waffe ziehen ja, Schaden nie (von drinnen, nach drinnen, auch wenn ein Schuss durchkommt) ----------
+do
+	local Damage = require("Damage")
+	local function stab()
+		local head = alice.Character.Head.Position
+		Remotes.Melee.OnServerEvent:Fire(alice, head, (torsoPosition() - head).Unit)
+	end
+	-- Kampfsperre der vorigen Treffer aufheben (sonst kommt niemand in die Safe Zone)
+	alice:SetAttribute("CombatUntil", nil)
+	bob:SetAttribute("CombatUntil", nil)
+	-- Alice knapp drinnen (Rand bei 100), Bob 15 Studs davor draußen
+	place(alice, Vector3.new(0, 3, 90))
+	place(bob, Vector3.new(0, 3, 105))
+	step(0.5)
+	check(alice:GetAttribute("InSafeZone") == true and bob:GetAttribute("InSafeZone") ~= true, "Alice drinnen, Bob draußen")
+	check(WeaponService.CarriedWeapon(alice) == "Rifle", "Waffe bleibt in der Safe Zone in der Hand")
+	heal()
+	step(1)
+	local mag = WeaponService.CarriedMag(alice)
+	fire()
+	step(0.3)
+	check(damageTaken() == 0 and WeaponService.CarriedMag(alice) == mag, "aus der Safe Zone kein Schuss")
+	-- selbst wenn CanFight fälschlich an ist (Schuss kommt durch): kein Schuss, kein Schaden
+	local canFightBefore = alice:GetAttribute("CanFight")
+	alice:SetAttribute("CanFight", true)
+	step(1)
+	fire()
+	step(0.3)
+	check(damageTaken() == 0 and WeaponService.CarriedMag(alice) == mag, "Safe Zone sperrt auch mit CanFight")
+	step(1)
+	stab()
+	step(0.3)
+	check(damageTaken() == 0, "aus der Safe Zone kein Messer")
+	alice:SetAttribute("CanFight", canFightBefore)
+	-- letzte Sperre in Damage: Angreifer (Spieler oder Bot) drinnen, Ziel draußen
+	check(Damage.Apply(bob.Character, bobHumanoid, 40, { Player = alice, Weapon = "Rifle" }) == 0 and damageTaken() == 0,
+		"Damage: Angreifer in der Safe Zone macht keinen Schaden")
+	check(Damage.Apply(bob.Character, bobHumanoid, 40, { Model = alice.Character, BotName = "Bot", Weapon = "Rifle" }) == 0
+		and damageTaken() == 0, "Damage: Modell in der Safe Zone macht keinen Schaden")
+
+	-- umgekehrt: Bob drinnen, Alice draußen schießt hinein
+	alice:SetAttribute("CombatUntil", nil)
+	bob:SetAttribute("CombatUntil", nil)
+	place(bob, Vector3.new(0, 3, 90))
+	place(alice, Vector3.new(0, 3, 105))
+	step(ExtinctionConfig.PvPDelay + 0.6)
+	check(bob:GetAttribute("InSafeZone") == true and alice:GetAttribute("PvP") == true, "Bob drinnen, Alice draußen mit PvP")
+	heal()
+	step(1)
+	fire()
+	step(0.3)
+	check(damageTaken() == 0, "Schuss in die Safe Zone macht keinen Schaden")
+	step(1)
+	stab()
+	step(0.3)
+	check(damageTaken() == 0, "Messer in die Safe Zone macht keinen Schaden")
+	check(Damage.Apply(bob.Character, bobHumanoid, 40, { Player = alice, Weapon = "Granate" }) == 0
+		and Damage.Apply(bob.Character, bobHumanoid, 40, { BotName = "Zombie", Weapon = "Zombie" }) == 0
+		and damageTaken() == 0, "Explosion und Zombie/Bot: in der Safe Zone kein Schaden")
+
+	-- zurück wie vorher: beide draußen
+	place(alice, Vector3.new(0, 3, 200))
+	place(bob, Vector3.new(0, 3, 215))
+	step(ExtinctionConfig.PvPDelay + 0.6)
+end
+
 -- ---------- zum Schluss wieder die Gegenprobe ----------
 heal()
 step(1)

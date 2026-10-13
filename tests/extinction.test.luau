@@ -258,10 +258,11 @@ do
 	alice:SetAttribute("ExtTutorial", wasRunning)
 end
 
--- ---------- Hotbar: Waffe nur draußen ----------
+-- ---------- Hotbar: Waffe ziehen geht auch in der Safe Zone ----------
 InventoryService.Use(alice, 1)
-check(WeaponService.CarriedWeapon(alice) == nil, "in der Safe Zone keine Waffe in der Hand")
-check(string.find(lastExt(alice, "Status")[2], "gesichert", 1, true) ~= nil, "Hinweis: Waffen gesichert")
+check(WeaponService.CarriedWeapon(alice) == "Rifle", "in der Safe Zone Waffe ziehen")
+InventoryService.Use(alice, 1)
+check(WeaponService.CarriedWeapon(alice) == nil, "und wieder wegstecken")
 moveTo(alice, Vector3.new(0, 3, 160))
 check(alice:GetAttribute("InSafeZone") == false and alice:GetAttribute("CanFight") == false, "Spawnschutz: noch kein Kampf")
 check(math.abs((alice:GetAttribute("ProtectedUntil") or 0) - (workspace:GetServerTimeNow() + ExtinctionConfig.SpawnProtection)) < 0.6,
@@ -334,10 +335,21 @@ check(alice.Character.Humanoid.Health == 50, "noch nicht geheilt")
 step(1.6)
 check(alice.Character.Humanoid.Health == 70 and slot(alice, 3).N == 2, "+20 Leben, ein Verband weniger")
 
--- Zurück in die Safe Zone: Waffe weg, kein PvP
+-- Zurück in die Safe Zone: Waffe bleibt in der Hand (ziehen erlaubt, schießen nicht), kein PvP
 moveTo(alice, Vector3.new(10, 3, 20))
 check(alice:GetAttribute("InSafeZone") == true and alice:GetAttribute("PvP") == false, "zurück in der Safe Zone")
-check(WeaponService.CarriedWeapon(alice) == nil, "Waffe beim Betreten weggesteckt")
+check(WeaponService.CarriedWeapon(alice) == "Rifle", "Waffe bleibt beim Betreten in der Hand")
+InventoryService.Use(alice, 1)
+check(WeaponService.CarriedWeapon(alice) == nil, "in der Safe Zone wegstecken")
+InventoryService.Use(alice, 2)
+check(WeaponService.CarriedWeapon(alice) == "Pistol", "in der Safe Zone Pistole ziehen")
+step(0.4)
+local magBefore = WeaponService.CarriedMag(alice)
+Remotes.Fire.OnServerEvent:Fire(alice, alice.Character.Head.Position, Vector3.new(0, 0, 1), false, 30, {})
+step(0.3)
+check(WeaponService.CarriedMag(alice) == magBefore, "in der Safe Zone kein Schuss")
+InventoryService.Use(alice, 2)
+check(WeaponService.CarriedWeapon(alice) == nil, "Pistole wieder weggesteckt")
 check(Damage.Apply(alice.Character, alice.Character.Humanoid, 30, nil) == 0, "in der Safe Zone kein Schaden")
 
 -- ---------- Anordnen, Lager, Verkaufen ----------

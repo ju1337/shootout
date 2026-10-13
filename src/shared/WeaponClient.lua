@@ -237,8 +237,7 @@ local function inspectBlocker()
 		return "Im Fahrzeug gibt es keine Waffe zum Inspizieren."
 	elseif current == nil then
 		if Modes.IsSurvival(player:GetAttribute("Mode")) then
-			return player:GetAttribute("InSafeZone") and "In der Safe Zone sind Waffen gesichert – draußen eine Waffe ziehen (1-9)."
-				or "Erst eine Waffe in die Hand nehmen (1-9)."
+			return "Erst eine Waffe in die Hand nehmen (1-9)."
 		end
 		return "Keine Waffe in der Hand."
 	elseif reloading then
@@ -447,9 +446,9 @@ local function tryFire()
 	if not synced or not current or not alive() then
 		return
 	end
-	-- Server lässt hier nicht schießen (Safe Zone mit Waffe im Tutorial, zwischen Runden): gar nicht erst anfangen,
+	-- Server lässt hier nicht schießen (Safe Zone, zwischen Runden): gar nicht erst anfangen,
 	-- sonst knallt es nur lokal und das Magazin springt zurück
-	if player:GetAttribute("CanFight") == false then
+	if player:GetAttribute("CanFight") == false or player:GetAttribute("InSafeZone") == true then
 		return
 	end
 	local cfg = WeaponConfig.Get(current)

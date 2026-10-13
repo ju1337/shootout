@@ -481,10 +481,16 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		Armor = armor or 0, Position = hitPosition, Name = victimName, Model = model }
 end
 
+-- Steht der Spieler in einer Safe Zone der offenen Welt? Dort darf man Waffen ziehen, aber nicht schießen oder stechen
+-- (unabhängig von CanFight, falls das je anders gesetzt wird)
+local function inSafeZone(player, character)
+	return player:GetAttribute("InSafeZone") == true or (character ~= nil and character:GetAttribute("SafeZone") == true)
+end
+
 -- Schuss auswerten. aiming = Spieler zielt (Rechtsklick): weniger Streuung. Gibt true zurück, wenn geschossen.
 local function fire(player, state, origin, direction, aiming, shotId, claims)
-	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Markt)
-	if not player:GetAttribute("CanFight") then
+	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Markt); in der Safe Zone nie
+	if not player:GetAttribute("CanFight") or inSafeZone(player, player.Character) then
 		return false
 	end
 	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
@@ -801,7 +807,7 @@ local function onMelee(player, origin, direction)
 	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" or not (direction.Magnitude > 0.01) then
 		return
 	end
-	if not player:GetAttribute("CanFight") then
+	if not player:GetAttribute("CanFight") or inSafeZone(player, player.Character) then
 		return
 	end
 	local humanoid, character = getLivingHumanoid(player)

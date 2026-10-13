@@ -504,12 +504,10 @@ function InventoryService.Use(player, slot)
 	end
 	local config = ExtinctionConfig.Get(item.Id)
 	if config.Kind == "Weapon" then
+		-- auch in der Safe Zone ziehen erlaubt; schießen geht dort nicht (WeaponService, Damage)
 		if state.Equipped == item then
 			holster(player, state)
 			flush(player, state)
-		elseif player:GetAttribute("InSafeZone") and not player:GetAttribute("TutorialEquip") then
-			-- nur im Tutorial (Schritt "Waffe in die Hand", Extinction) darf man hier ziehen
-			status(player, "In der Safe Zone bleiben Waffen gesichert.")
 		elseif humanoid.SeatPart then
 			status(player, "Im Fahrzeug kannst du keine Waffe ziehen.")
 		else

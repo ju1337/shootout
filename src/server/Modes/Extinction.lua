@@ -192,7 +192,7 @@ local function setInside(player, info, inside, character)
 		player:SetAttribute("Redzone", nil)
 		info.ProtectAt = nil
 		player:SetAttribute("ProtectedUntil", nil)
-		InventoryService.Holster(player) -- Waffen bleiben in der Safe Zone gesichert
+		-- Waffe bleibt in der Hand (ziehen ist in der Safe Zone erlaubt), schießen geht dort aber nicht
 	else
 		player:SetAttribute("TutorialEquip", nil) -- Tutorial: draußen gilt wieder die normale Regel
 		-- Spawnschutz: ein paar Sekunden unverwundbar, dafür selbst noch kein Schießen (Damage, CanFight). Nur beim ersten
@@ -590,8 +590,8 @@ function Extinction.Init(modeManager)
 	end
 	-- Tutorial (ExtTutorial): "Step", n, Id = Schritt n erreicht (nur Analyse: Onboarding-Trichter 3 ff.);
 	-- "Done"/"Skip" = fertig oder übersprungen, danach nie wieder von selbst (Profil TutorialDone).
-	-- Ab dem Schritt "Equip" darf man im Tutorial die Waffe auch in der Safe Zone ziehen (Attribut TutorialEquip,
-	-- InventoryService); schießen geht dort trotzdem nicht (CanFight aus, kein Schaden in der Safe Zone).
+	-- Attribut TutorialEquip: Tutorial steht beim Schritt "Equip"/"Leave" (Waffe ziehen geht in der Safe Zone ohnehin;
+	-- schießen dort nie: CanFight aus, WeaponService und Damage sperren die Safe Zone).
 	InventoryService.Handlers.Tutorial = function(player, result, index, stepId)
 		if result == "Step" then
 			if type(index) == "number" and index >= 1 and index <= 20 then
@@ -620,12 +620,7 @@ function Extinction.Init(modeManager)
 		if player:GetAttribute("ExtTutorial") ~= true then
 			return -- kein laufendes Tutorial: nichts abzuschließen (sonst holt sich jeder Client das Tutorial-Badge)
 		end
-		if player:GetAttribute("TutorialEquip") then
-			player:SetAttribute("TutorialEquip", nil)
-			if player:GetAttribute("InSafeZone") then
-				InventoryService.Holster(player)
-			end
-		end
+		player:SetAttribute("TutorialEquip", nil)
 		local profile = ProgressService.Get(player)
 		local first = profile ~= nil and profile.TutorialDone ~= true
 		if profile then

@@ -69,13 +69,16 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		or (attacker and attacker.Player and (attacker.Player:GetAttribute("ProtectedUntil") or 0) > now) then
 		return 0, false, false, 0
 	end
-	-- Angreifer inzwischen in der Safe Zone (Granate/Molotow draußen geworfen, dann hineingegangen): kein Schaden
-	if attacker and attacker.Player and attacker.Player ~= Players:GetPlayerFromCharacter(model)
-		and attacker.Player:GetAttribute("InSafeZone") == true then
+	-- Angreifer in der Safe Zone (Schuss von drinnen, Granate/Molotow draußen geworfen und dann hineingegangen, Bot
+	-- in der Zone): kein Schaden, auch wenn ein Schuss irgendwie durchkommt
+	local sourceModel = attacker and (attacker.Model or (attacker.Player and attacker.Player.Character))
+	if attacker and sourceModel ~= model and ((attacker.Player and attacker.Player ~= noclip
+		and attacker.Player:GetAttribute("InSafeZone") == true)
+		or (sourceModel and sourceModel:GetAttribute("SafeZone") == true)) then
 		return 0, false, false, 0
 	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)
-	local attackerModel = attacker and (attacker.Model or (attacker.Player and attacker.Player.Character))
+	local attackerModel = sourceModel
 	if attackerModel then
 		lastHit[model] = {
 			Model = attackerModel,
