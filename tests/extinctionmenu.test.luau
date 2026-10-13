@@ -195,6 +195,19 @@ for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	end
 end
 local restore = menu():FindFirstChild("PageActions", true)
+-- CREDITS (CC BY 4.0) unten auf OPTIONEN: eine Zeile je fremdem Waffenmodell, innerhalb der Scrollfläche
+local Credits = require("Credits")
+local creditsCard = menu():FindFirstChild("CreditsCard", true)
+check(creditsCard ~= nil and creditsCard.Parent.Name == "Cards", "OPTIONEN: Karte CREDITS in der Scrollfläche")
+for _, model in Credits.Models do
+	local row = creditsCard and creditsCard:FindFirstChild("Credit_" .. model.Weapon)
+	local texts = row and shownTexts(row) or {}
+	check(row ~= nil and texts[model.Title] and texts[string.format("von %s  ·  %s", model.Author, model.Profile)],
+		"CREDITS: " .. model.Title .. " mit Autor")
+end
+local cards = creditsCard and creditsCard.Parent
+check(cards and cards.CanvasSize.Y.Offset >= creditsCard.Position.Y.Offset + creditsCard.Size.Y.Offset,
+	"CREDITS: bis ganz nach unten scrollbar")
 check(restore ~= nil and restore:FindFirstChild("PageAction") ~= nil, "OPTIONEN: STANDARD WIEDERHERSTELLEN in der Kopfzeile")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt (auf OPTIONEN)")

@@ -30,6 +30,8 @@ local HitFeedback = require(Shared.HitFeedback)
 local TitleConfig = require(Shared.TitleConfig)
 local PrestigeEmblem = require(Shared.PrestigeEmblem)
 local Modes = require(Shared.Modes)
+local Credits = require(Shared.Credits)
+local WeaponConfig = require(Shared.WeaponConfig)
 local QuestBoard = require(script.Parent:WaitForChild("QuestBoard"))
 local HttpService = game:GetService("HttpService")
 
@@ -1128,6 +1130,46 @@ local function buildSettings()
 				end
 			end)
 		end
+	end
+
+	-- CREDITS (Namensnennung für fremde Modelle, CC BY 4.0, siehe Credits.lua) unter die kürzere Spalte:
+	-- je Modell Titel, darunter Autor und Profil, rechts die Waffe im Spiel; unten Lizenz und Hinweis auf Änderungen
+	do
+		local column = columnY[2] <= columnY[1] and 2 or 1
+		local x = column == 1 and 0 or CARD_W + 24 - SCROLL_BAR
+		local y = columnY[column]
+		local FOOTER_H = 40
+		local height = 52 + #Credits.Models * ROW_H + FOOTER_H + 8
+		columnY[column] = y + height + 20
+		local card = UITheme.Card({ Name = "CreditsCard", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, height),
+			BackgroundTransparency = 0.1 }, scroll)
+		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
+			BorderSizePixel = 0 }, card)
+		text({ Position = UDim2.fromOffset(32, 12), Size = UDim2.new(1, -52, 0, 30), Text = "CREDITS", TextSize = 24,
+			Font = DISPLAY }, card)
+		for i, model in Credits.Models do
+			local row = make("Frame", { Name = "Credit_" .. model.Weapon, Position = UDim2.fromOffset(0, 52 + (i - 1) * ROW_H),
+				Size = UDim2.new(1, 0, 0, ROW_H), BackgroundTransparency = 1 }, card)
+			if i > 1 then
+				make("Frame", { Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = BORDER,
+					BackgroundTransparency = 0.4, BorderSizePixel = 0 }, row)
+			end
+			text({ Position = UDim2.fromOffset(20, 10), Size = UDim2.new(1, -240, 0, 24), Text = model.Title, TextSize = 18 }, row)
+			text({ Position = UDim2.fromOffset(20, 34), Size = UDim2.new(1, -240, 0, 16),
+				Text = string.format("von %s  ·  %s", model.Author, model.Profile), TextSize = 13, Font = UITheme.Fonts.Body,
+				TextColor3 = GRAY }, row)
+			local weapon = WeaponConfig.Get(model.Weapon)
+			text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 0), Size = UDim2.fromOffset(200, ROW_H),
+				Text = UITheme.Upper(weapon and weapon.DisplayName or model.Weapon), TextSize = 18, Font = DISPLAY, TextColor3 = GRAY,
+				TextXAlignment = Enum.TextXAlignment.Right }, row)
+		end
+		local footer = make("Frame", { Position = UDim2.fromOffset(0, 52 + #Credits.Models * ROW_H), Size = UDim2.new(1, 0, 0, FOOTER_H),
+			BackgroundTransparency = 1 }, card)
+		make("Frame", { Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = BORDER,
+			BackgroundTransparency = 0.4, BorderSizePixel = 0 }, footer)
+		text({ Position = UDim2.fromOffset(20, 8), Size = UDim2.new(1, -40, 0, FOOTER_H - 8),
+			Text = string.format("Waffenmodelle von Sketchfab, Lizenz %s (%s), für das Spiel angepasst", Credits.License,
+				Credits.LicenseUrl), TextSize = 13, Font = UITheme.Fonts.Body, TextColor3 = GRAY, TextWrapped = true }, footer)
 	end
 
 	-- Höhe der Scrollfläche: längere der beiden Spalten (ohne den Abstand nach der letzten Karte)

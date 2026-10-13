@@ -1066,3 +1066,9 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `tools/locale_scan.py`, `tools/locale_merge.py` – Übersetzung: fehlende Texte finden, Wörterbücher zusammensetzen
 - `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie, `tests/lib/rbxmx.py` liest Studio-Modelle,
   `tests/fixtures` Beispieldateien), `.github/workflows` – automatische Prüfung
+
+## Credits
+
+Fremde Waffenmodelle (MP7, Mark 23, M60, Gen-12, Chiappa Rhino) stehen unter CC BY 4.0 und brauchen eine
+Namensnennung: Liste in `CREDITS.md`, im Spiel unter OPTIONEN › CREDITS (`src/shared/Credits.lua`), Kurzfassung in der
+Spielbeschreibung. Neue fremde Modelle an allen drei Stellen eintragen.
