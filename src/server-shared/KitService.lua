@@ -67,7 +67,8 @@ function KitService.Claim(player, kitId)
 	for _, entry in kit.Items do
 		local id, count = entry[1], entry[2]
 		if ExtinctionConfig.Get(id) then
-			local put = InventoryService.Give(player, id, count)
+			-- Kit wie gekauft: direkt auf die Hotbar (Munition hinten in die Tasche), damit man die Waffe gleich ziehen kann
+			local put = InventoryService.Give(player, id, count, nil, ExtinctionConfig.Get(id).Kind == "Ammo" and "Bag" or "Hotbar")
 			if put < count then
 				local stored = InventoryService.GiveStash(player, id, count - put)
 				stashed = stashed or stored > 0

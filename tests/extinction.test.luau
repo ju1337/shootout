@@ -82,6 +82,7 @@ for name, position in standPos do
 end
 
 local InventoryService = require("InventoryService")
+local Inventory = require("Inventory")
 local LootService = require("LootService")
 local Extinction = require("Extinction")
 InventoryService.Init()
@@ -182,6 +183,24 @@ local ammoSlot = slot(alice, ExtinctionConfig.HotbarSlots + 1)
 check(ammoSlot and ammoSlot.Id == "Ammo_Rifle" and ammoSlot.N == 60, "Munition hinten in der Tasche (60)")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
 check(slot(alice, 2) and slot(alice, 2).Id == "Pistol", "Pistole auf Platz 2")
+-- Aufheben: erst in die Tasche (Inventar), nicht auf die Hotbar; ist die Tasche voll, auf freie Hotbar-Plätze
+do
+	check(InventoryService.Give(alice, "Bandage", 1) == 1, "Verband aufgehoben")
+	local where
+	for s, it in InventoryService.GetBag(alice).Slots do
+		if it.Id == "Bandage" then
+			where = s
+		end
+	end
+	check(where and where > ExtinctionConfig.HotbarSlots, "Aufgehobenes landet in der Tasche, nicht auf der Hotbar")
+	InventoryService.GetBag(alice).Slots[where] = nil
+	InventoryService.Changed(alice)
+	local test = Inventory.New(ExtinctionConfig.HotbarSlots + 1)
+	Inventory.Add(test, "Rifle", 1)
+	check(test.Slots[ExtinctionConfig.HotbarSlots + 1] ~= nil, "erster Platz hinter der Hotbar zuerst")
+	Inventory.Add(test, "Pistol", 1)
+	check(test.Slots[1] and test.Slots[1].Id == "Pistol", "Tasche voll: auf die Hotbar")
+end
 -- Verkauf einer geladenen Waffe: die Patronen im Magazin bleiben
 do
 	local bagState = InventoryService.GetBag(alice)
@@ -430,13 +449,16 @@ bagModel.TakeAllPrompt.Triggered:Fire(bob)
 check(LootService.Get(bagId) ~= nil and lastExt(bob, "Loot") ~= nil, "F ohne Gamepass: Tasche bleibt, Fenster offen")
 bob:SetAttribute("Pass_LootAll", true)
 check(LootService.Take(bob, bagId, "All") == true, "alles genommen")
-local bobHasRifle = false
+local bobHasRifle, bobRifleSlot = false, nil
 for _, entry in bagOf(bob) do
 	if entry.Id == "Rifle" and entry.Mag == 29 then
 		bobHasRifle = true
+		bobRifleSlot = entry.S
 	end
 end
 check(bobHasRifle, "Bob hat das Gewehr mit Magazin")
+check(bobRifleSlot and bobRifleSlot > ExtinctionConfig.HotbarSlots, "gelootetes Gewehr liegt in der Tasche, nicht auf der Hotbar")
+InventoryService.Move(bob, "Bag", bobRifleSlot, "Bag", 1) -- selbst auf die Hotbar ziehen
 check(LootService.Get(bagId) == nil and #workspace.ExtinctionLoot:GetChildren() == 0, "leere Tasche verschwindet")
 check(alice:GetAttribute("ExtDeathBag") == nil, "Markierung weg, sobald die Tasche leer geräumt ist")
 check(lastExt(bob, "LootClosed") ~= nil, "Fenster bei Bob geschlossen")

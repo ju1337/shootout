@@ -133,7 +133,7 @@ local function cards()
 end
 
 -- ---------- Menü auf MARKT öffnen (E am Stand) ----------
-InventoryService.Give(bob, "Rifle", 1, { Mag = 20 })
+InventoryService.Give(bob, "Rifle", 1, { Mag = 20 }, "Hotbar")
 InventoryService.Give(bob, "Ammo_Rifle", 60)
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(60, 3, -34)))
 step(0.5)
@@ -206,7 +206,7 @@ find(windowGui, "TabOffers").Activated:Fire()
 step(0.2)
 
 -- ---------- fremdes Angebot kaufen, Kategorien ----------
-InventoryService.Give(ann, "Medkit", 1)
+InventoryService.Give(ann, "Medkit", 1, nil, "Hotbar")
 ann.Character:PivotTo(CFrame.new(CENTER + Vector3.new(60, 3, -38)))
 SIM.Advance(0.3, 20)
 local annSlot = nil

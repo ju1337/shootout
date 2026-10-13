@@ -216,7 +216,7 @@ check(#ThrowableService.Fires() == 0, "Feuer aus")
 
 -- Wand direkt vor dem Kopf: die Granate startet vor der Wand, nicht dahinter
 step(ExtinctionConfig.Throwables.Frag.Cooldown + 0.2)
-InventoryService.Give(alice, "Grenade", 1)
+InventoryService.Give(alice, "Grenade", 1, nil, "Hotbar")
 local wallPart = Instance.new("Part", workspace)
 wallPart.Name = "TestWall"
 SIM.RaycastHandler = function(origin, direction, params)

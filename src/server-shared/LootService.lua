@@ -618,7 +618,7 @@ function LootService.Take(player, id, slot, toName, toSlot)
 			if target and (target.Id ~= id_ or ExtinctionConfig.MaxStack(id_) <= 1 or target.Count >= ExtinctionConfig.MaxStack(id_)) then
 				into = nil
 			end
-			if Inventory.Move(bag.Container, s, playerBag, into) then
+			if Inventory.Move(bag.Container, s, playerBag, into, "Bag") then
 				moved = true
 			end
 			local left = bag.Container.Slots[s]

@@ -248,11 +248,20 @@ check(ammo and ammo[1] == "Rifle", "Munitionsanzeige")
 -- Taste mit der Waffe in der Hand: ersetzt, alter Aufsatz kommt in die Tasche
 InventoryService.Give(alice, "Att_Rifle_FastMag", 1)
 local fastSlot
-for s = 1, ExtinctionConfig.HotbarSlots do
+for s = 1, InventoryService.GetBag(alice).Size do
 	local entry = slot(alice, s)
 	if entry and entry.Id == "Att_Rifle_FastMag" then fastSlot = s end
 end
-check(fastSlot ~= nil, "Schnellmagazin auf der Hotbar")
+check(fastSlot ~= nil and fastSlot > ExtinctionConfig.HotbarSlots, "aufgehobenes Schnellmagazin liegt in der Tasche, nicht auf der Hotbar")
+-- auf einen freien Hotbar-Platz ziehen (wie der Spieler im Inventar)
+for s = 1, ExtinctionConfig.HotbarSlots do
+	if not slot(alice, s) then
+		InventoryService.Move(alice, "Bag", fastSlot, "Bag", s)
+		fastSlot = s
+		break
+	end
+end
+check(fastSlot <= ExtinctionConfig.HotbarSlots and slot(alice, fastSlot).Id == "Att_Rifle_FastMag", "Schnellmagazin auf die Hotbar gezogen")
 -- Patronen zählen: im Magazin und in der Tasche (beim Wechsel auf das kleinere Magazin geht nichts verloren)
 local function rounds()
 	local total = 0

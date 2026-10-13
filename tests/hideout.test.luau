@@ -185,7 +185,7 @@ check(coins() == before - HideoutConfig.Get("Bed").Levels[1].Coins, "Münzen bez
 check(HideoutConfig.Level(data(), "Bed") == 1 and HideoutConfig.Value(alice, "Bed") == 10, "Stufe 1: +10 Leben")
 check(HideoutService.Upgrade(alice, "Bed") == false, "Stufe 2 ohne Verbände nicht")
 check(string.find(lastExt(alice, "Status")[2], "Verband", 1, true) ~= nil, "Hinweis: Verbände fehlen")
-InventoryService.Give(alice, "Bandage", 3)
+InventoryService.Give(alice, "Bandage", 3, nil, "Hotbar")
 check(HideoutService.Upgrade(alice, "Bed") == true, "Stufe 2 mit Verbänden")
 local left = 0
 for _, entry in bagOf(alice) do
@@ -194,7 +194,7 @@ for _, entry in bagOf(alice) do
 	end
 end
 check(left == 0, "Verbände verbraucht")
-InventoryService.Give(alice, "Medkit", 2)
+InventoryService.Give(alice, "Medkit", 2, nil, "Hotbar")
 check(HideoutService.Upgrade(alice, "Bed") == true, "Stufe 3")
 check(HideoutService.Upgrade(alice, "Bed") == false and HideoutConfig.Value(alice, "Bed") == 30, "ganz ausgebaut (+30)")
 
@@ -210,7 +210,7 @@ moveTo(alice, Vector3.new(52, 3, 2))
 check(HideoutService.Upgrade(alice, "Medical") == true, "Sanistation gebaut")
 moveTo(alice, Vector3.new(0, 3, 160))
 alice.Character.Humanoid.Health = 50
-InventoryService.Give(alice, "Medkit", 1)
+InventoryService.Give(alice, "Medkit", 1, nil, "Hotbar")
 local medSlot
 for _, entry in bagOf(alice) do
 	if entry.Id == "Medkit" and entry.S <= ExtinctionConfig.HotbarSlots then

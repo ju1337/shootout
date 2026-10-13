@@ -630,7 +630,7 @@ function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	if from == to and toSlot == nil then
 		return false
 	end
-	if not Inventory.Move(from, fromSlot, to, toSlot) then
+	if not Inventory.Move(from, fromSlot, to, toSlot, toName == "Bag" and "Bag" or nil) then
 		if toSlot == nil then
 			status(player, toName == "Stash" and "Das Lager ist voll." or toName == "Safe" and "Der Container ist voll."
 				or "Deine Tasche ist voll.")
@@ -683,7 +683,8 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 		status(player, "Nicht genug Münzen (" .. price .. " nötig).")
 		return false
 	end
-	Inventory.Add(state.Bag, itemId, count)
+	-- Gekauftes direkt auf die Hotbar (Munition hinten in die Tasche); Aufgehobenes landet dagegen erst in der Tasche
+	Inventory.Add(state.Bag, itemId, count, nil, config.Kind == "Ammo" and "Bag" or "Hotbar")
 	changed(player, state)
 	Sfx.ToPlayers({ player }, "Register")
 	status(player, "Gekauft: " .. (count > 1 and (count .. "× ") or "") .. config.Name .. " für " .. price
@@ -1162,13 +1163,13 @@ function InventoryService.GiveStash(player, id, count, extra)
 	return added
 end
 
--- Items in die Tasche legen, gibt die Anzahl zurück, die gepasst hat
-function InventoryService.Give(player, id, count, extra)
+-- Items in die Tasche legen (erst hinter die Hotbar, prefer = "Hotbar" für vorne), gibt die Anzahl zurück, die gepasst hat
+function InventoryService.Give(player, id, count, extra, prefer)
 	local state = stateOf(player)
 	if not state or not ExtinctionConfig.Get(id) then
 		return 0
 	end
-	local added = Inventory.Add(state.Bag, id, count, extra)
+	local added = Inventory.Add(state.Bag, id, count, extra, prefer)
 	if added > 0 then
 		changed(player, state)
 	end

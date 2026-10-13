@@ -102,7 +102,7 @@ function Inventory.IsEmpty(container)
 	return next(container.Slots) == nil
 end
 
--- Reihenfolge der leeren Plätze: prefer = "Hotbar" (erst 1..HotbarSlots), "Bag" (erst dahinter) oder nil (der Reihe nach)
+-- Reihenfolge der leeren Plätze: prefer = "Hotbar" (erst 1..HotbarSlots), "Bag" (erst dahinter), sonst der Reihe nach
 local function emptySlots(container, prefer)
 	local hotbar = ExtinctionConfig.HotbarSlots
 	local first, second = {}, {}
@@ -123,10 +123,10 @@ local function emptySlots(container, prefer)
 	return first
 end
 
--- Wo neue Items hin sollen: Munition lieber hinten in die Tasche, alles andere lieber auf die Hotbar
-function Inventory.PreferFor(id)
-	local item = ExtinctionConfig.Get(id)
-	return item and item.Kind == "Ammo" and "Bag" or "Hotbar"
+-- Wo neue Items hin sollen: alles Aufgehobene erst hinten in die Tasche (Inventar), die Hotbar ordnet der Spieler
+-- selbst; erst wenn die Tasche voll ist, auf freie Hotbar-Plätze
+function Inventory.PreferFor(_id)
+	return "Bag"
 end
 
 -- Wie viele Stück von id passen noch hinein (auf vorhandene Stapel und leere Plätze)?
@@ -209,8 +209,9 @@ end
 
 -- Item von (from, fromSlot) nach (to, toSlot) bewegen. toSlot = nil: automatisch einsortieren (Stapel, freier Platz).
 -- Gleiche stapelbare Items werden zusammengelegt (Rest bleibt liegen), sonst werden die Plätze getauscht.
+-- prefer (nur bei toSlot = nil): "Bag" für die Tasche des Spielers (erst hinter die Hotbar), sonst der Reihe nach.
 -- Gibt true zurück, wenn sich etwas bewegt hat.
-function Inventory.Move(from, fromSlot, to, toSlot)
+function Inventory.Move(from, fromSlot, to, toSlot, prefer)
 	local item = from.Slots[fromSlot]
 	if not item then
 		return false
@@ -219,7 +220,7 @@ function Inventory.Move(from, fromSlot, to, toSlot)
 		if from == to then
 			return false -- im selben Container braucht es einen Zielplatz
 		end
-		local moved = Inventory.Add(to, item.Id, item.Count, item, Inventory.PreferFor(item.Id))
+		local moved = Inventory.Add(to, item.Id, item.Count, item, prefer or "Any")
 		if moved <= 0 then
 			return false
 		end
