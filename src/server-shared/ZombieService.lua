@@ -248,7 +248,9 @@ local function playAnimations(humanoid, speed)
 			if not walk.IsPlaying then
 				walk:Play()
 			end
-			walk:AdjustSpeed(math.clamp(velocity / speed, 0.5, 1.4) * 0.8) -- schlurfender Gang
+			-- schnelle Arten (Läufer) rennen sichtbar: Animation schneller, je schneller sie sind; die anderen schlurfen
+			walk:AdjustSpeed(if speed >= 15 then math.clamp(velocity / 13, 0.6, 1.9)
+				else math.clamp(velocity / speed, 0.5, 1.4) * 0.8)
 		elseif walk.IsPlaying then
 			walk:Stop()
 		end

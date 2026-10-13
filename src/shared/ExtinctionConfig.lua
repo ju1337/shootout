@@ -778,10 +778,10 @@ ExtinctionConfig.Zombies = {
 	SpawnInterval = 3,     -- Sekunden zwischen zwei Spawn-Runden
 	SafeMargin = 40,       -- nicht so nah an der Safe Zone spawnen
 	DespawnDistance = 260, -- weiter weg von allen Spielern: verschwinden
-	Health = 100,
+	Health = 140,
 	WalkSpeed = 4,         -- schlurfen ohne Ziel
-	RunSpeed = 8.5,        -- jagen
-	SightRange = 45,       -- so weit bemerken sie Spieler
+	RunSpeed = 10,         -- jagen (normale Zombies bleiben langsamer als Spieler; Läufer rennen, siehe ZombieKinds)
+	SightRange = 55,       -- so weit bemerken sie Spieler
 	ForceExtra = 24,       -- so viele dürfen Nester, Lager-Alarm und Lootdrop-Begleiter zusätzlich über MaxTotal bringen
 	KindWeights = { Walker = 86, Runner = 7, Screamer = 7 },                 -- Arten draußen am Tag
 	NightKindWeights = { Walker = 64, Runner = 20, Screamer = 9, Brute = 7 }, -- nachts gefährlicher
@@ -790,8 +790,8 @@ ExtinctionConfig.Zombies = {
 	ScreamCooldown = 25,
 	LoseRange = 90,        -- so weit verfolgen sie ein Ziel, das sie schon haben
 	AttackRange = 4.5,
-	AttackDamage = 10,
-	AttackDelay = 1.4,
+	AttackDamage = 14,
+	AttackDelay = 1.2,
 	CorpseTime = 4,        -- Leiche ohne Beute bleibt so lange liegen
 	CorpseLootTime = 40,   -- Leiche mit Beute (E durchsucht sie) bleibt so lange
 	ShieldRadius = 80,     -- Anti-Zombie-Spritze: so nah am Benutzer spawnt kein Zombie (egal woher: Umgebung, Schreier, Nester ...)
@@ -819,13 +819,14 @@ ExtinctionConfig.ZombiePath = {
 ExtinctionConfig.ZombieKinds = {
 	Walker = { Name = "Zombie", Scale = 1, Drop = 0.75, Items = { 1, 1 }, Table = "Zombie", Coins = 2, XP = 10,
 		Eyes = Color3.fromRGB(255, 40, 30) },
-	Runner = { Name = "Läufer", Health = 70, Walk = 6, Run = 13, Damage = 8, Coins = 4, XP = 20, Scale = 0.95, Drop = 0.85, Items = { 1, 2 },
+	-- Läufer: rennen auf einen zu, schneller als Gehen (Spieler ~18), nur im Sprint (~25) entkommt man
+	Runner = { Name = "Läufer", Health = 100, Walk = 6, Run = 21, Damage = 11, Coins = 4, XP = 20, Scale = 0.95, Drop = 0.85, Items = { 1, 2 },
 		Table = "Zombie2", Eyes = Color3.fromRGB(255, 170, 30) },
 	-- Schreier: schwach, aber wenn er einen Spieler sieht, schreit er – alle Zombies im Umkreis (ScreamRange) jagen den
 	-- Spieler, und ScreamCalls weitere kommen dazu (höchstens alle ScreamCooldown Sekunden)
-	Screamer = { Name = "Schreier", Health = 60, Walk = 5, Run = 11, Damage = 4, Coins = 6, XP = 25, Scale = 0.92, Drop = 0.9, Items = { 1, 2 },
+	Screamer = { Name = "Schreier", Health = 80, Walk = 5, Run = 14, Damage = 6, Coins = 6, XP = 25, Scale = 0.92, Drop = 0.9, Items = { 1, 2 },
 		Table = "Zombie2", Eyes = Color3.fromRGB(235, 240, 255), Scream = true },
-	Brute = { Name = "Brocken", Health = 320, Walk = 4, Run = 7.5, Damage = 24, Coins = 12, XP = 50, Scale = 1.3, Drop = 1, Items = { 2, 3 },
+	Brute = { Name = "Brocken", Health = 450, Walk = 4, Run = 9, Damage = 30, Coins = 12, XP = 50, Scale = 1.3, Drop = 1, Items = { 2, 3 },
 		Table = "Tier2", Eyes = Color3.fromRGB(190, 70, 255) },
 	-- Boss (nur im Blutmond, BloodMoonService): riesig, sehr zäh, schlägt brutal, beste Beute
 	Boss = { Name = "Blutbestie", Health = 2400, Walk = 5, Run = 9.5, Damage = 42, Coins = 250, XP = 600, Scale = 2.3, Drop = 1, Items = { 5, 7 },
