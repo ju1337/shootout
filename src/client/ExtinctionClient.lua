@@ -1209,14 +1209,12 @@ local MENU_TABS = {
 	-- Gruppen: ein Eintrag in der Seitenleiste, oben in der Kopfzeile die Unterreiter (Children); die Unterreiter selbst
 	-- stehen weiter unten mit Group und erscheinen nicht in der Seitenleiste
 	{ Id = "Missions", Text = "MISSIONEN", Children = { "Quests", "Achievements" } },
-	{ Id = "Loot", Text = "BEUTE" },
-	{ Id = "Guide", Text = "GUIDE" },
+	{ Id = "Guide", Text = "GUIDE", Children = { "GuideInfo", "Loot" } },
 	{ Id = "Social", Text = "SOCIAL", Children = { "Squad", "Clan" } },
 	{ Id = "Skins", Text = "SKINS" },
-	{ Id = "Shop", Text = "SHOP", Page = true },
+	{ Id = "Shop", Text = "SHOP", Children = { "ShopPage", "Codes" } },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
 	{ Id = "Stats", Text = "STATISTIK", Page = true },
-	{ Id = "Codes", Text = "CODES", Page = true },
 	{ Id = "Settings", Text = "OPTIONEN", Page = true },
 	-- Links in die Lobby (ganze Seiten, passen nicht ins Menü): schließen das Menü und öffnen die Lobby dort
 	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play", Arcade = true },
@@ -1224,6 +1222,10 @@ local MENU_TABS = {
 	{ Id = "Achievements", Text = "ERFOLGE", Group = "Missions" },
 	{ Id = "Squad", Text = "SQUAD", Group = "Social" },
 	{ Id = "Clan", Text = "CLAN", Page = true, Group = "Social" },
+	{ Id = "GuideInfo", Text = "GUIDE", Group = "Guide" },
+	{ Id = "Loot", Text = "BEUTE", Group = "Guide" },
+	{ Id = "ShopPage", Text = "SHOP", Page = true, PageId = "Shop", Group = "Shop" },
+	{ Id = "Codes", Text = "CODES", Page = true, Group = "Shop" },
 }
 -- Arcade aus (Modes.ArcadeEnabled): SPIELEN · ARCADE weglassen
 for index = #MENU_TABS, 1, -1 do
@@ -2344,7 +2346,7 @@ end
 
 function Guide.Open()
 	local C = UITheme.MenuColors
-	local win = newWindow("Guide", "GUIDE", "ALLES WICHTIGE ZUR OFFENEN WELT")
+	local win = newWindow("GuideInfo", "GUIDE", "ALLES WICHTIGE ZUR OFFENEN WELT")
 	local body = win.Body
 	local topics = Guide.Topics()
 	local listW, gap = 230, 20
@@ -3436,7 +3438,7 @@ openMenuTab = function(id)
 	elseif id == "Loot" then
 		ExtinctionMap.Set(false)
 		openLootInfo()
-	elseif id == "Guide" then
+	elseif id == "GuideInfo" then
 		ExtinctionMap.Set(false)
 		Guide.Open()
 	elseif id == "Skins" then
@@ -3445,7 +3447,7 @@ openMenuTab = function(id)
 		local win = newWindow("Skins", "SKINS", "STATTE DEINEN AGENTEN MIT FREIGESCHALTETEN SKINS AUS")
 		local page = require(script.Parent.SkinMenu).Build(win.Body, Inv.CONTENT_W, Inv.CONTENT_H, { Tile = Inv.TILE, Red = Inv.MENU_RED, Glass = Inv.GLASS,
 			OpenShop = function()
-				openMenuTab("Shop")
+				openMenuTab("ShopPage")
 			end })
 		win.Refresh = page.Refresh
 	elseif id == "Quests" then
@@ -3471,7 +3473,7 @@ function ExtinctionClient.OpenTab(id: string): boolean
 	if not windowGui or not openMenuTab or not Inv.alive() then
 		return false
 	end
-	openMenuTab(id)
+	openMenuTab(if id == "Shop" then "ShopPage" else id) -- von außen (Theke, HubLineup) immer die Shop-Seite, nicht CODES
 	return true
 end
 

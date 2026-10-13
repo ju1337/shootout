@@ -128,7 +128,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,MISSIONEN,BEUTE,GUIDE,SOCIAL,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,MISSIONEN,GUIDE,SOCIAL,SKINS,SHOP,BATTLE PASS,STATISTIK,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -186,15 +186,15 @@ check(title() == "AUFTRÄGE" and questBoard ~= nil and not questTexts.EXTINCTION
 	"AUFTRÄGE: kein Reiter ARCADE, keine Reiterzeile, Spalten da")
 
 for _, id in { "Clan", "Shop", "Pass", "Stats", "Codes", "Settings" } do
-	if id == "Clan" then -- CLAN liegt unter SOCIAL
-		menu():FindFirstChild("Tabs", true).Tab_Social.Activated:Fire()
+	if id == "Clan" or id == "Codes" then -- CLAN liegt unter SOCIAL, CODES unter SHOP
+		menu():FindFirstChild("Tabs", true)[id == "Clan" and "Tab_Social" or "Tab_Shop"].Activated:Fire()
 		step(0.1)
-		find(menu(), "SubTab_Clan").Activated:Fire()
+		find(menu(), "SubTab_" .. id).Activated:Fire()
 	else
 		menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	end
 	step(0.1)
-	check(activeTab() == (id == "Clan" and "Social" or id), id .. ": Reiter aktiv")
+	check(activeTab() == (id == "Clan" and "Social" or id == "Codes" and "Shop" or id), id .. ": Reiter aktiv")
 	local holder = menu() and menu():FindFirstChild("PageHolder", true)
 	local page = holder and holder:FindFirstChild(id .. "Page")
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
