@@ -27,10 +27,12 @@ local SPRINT = CFrame.new(-0.3, -0.3, 0.15) * CFrame.Angles(math.rad(-22), math.
 -- Ziehen beim Waffenwechsel: kommt von unten
 local DRAW = CFrame.new(0, -0.6, 0.3) * CFrame.Angles(math.rad(-40), math.rad(10), math.rad(-10))
 local DRAW_TIME = 0.35
--- Schultern unter der Kamera (außerhalb des Bildes), Länge von Ober- und Unterarm
-local RIGHT_SHOULDER = Vector3.new(0.95, -1.7, 0.9)
-local LEFT_SHOULDER = Vector3.new(-0.7, -1.8, -0.2)
-local UPPER_ARM, FOREARM = 1.7, 1.8
+-- Schultern unter der Kamera (außerhalb des Bildes), Länge von Ober- und Unterarm. Unterarm im Verhältnis zur Waffe wie
+-- echt (gut 40 % der Strecke Griff–Mündung eines Gewehrs); die Schultern sitzen so weit vorn, dass die Arme die Hände
+-- ohne Strecken erreichen (sonst zieht der Unterarm sich lang)
+local RIGHT_SHOULDER = Vector3.new(0.95, -1.7, 0.5)
+local LEFT_SHOULDER = Vector3.new(-0.7, -1.8, -1.0)
+local UPPER_ARM, FOREARM = 1.7, 1.2
 local GLOVE_COLOR = Color3.fromRGB(38, 38, 44)
 -- Gebaute Arme (ohne echte Arme): Ärmel bis kurz vor das Handgelenk, dann Handgelenk und Hand in Hautfarbe.
 -- Dicken in Modell-Einheiten (Durchmesser der Zylinder)

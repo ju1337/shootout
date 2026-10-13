@@ -165,8 +165,13 @@ local function updateViewModel()
 		if AgentConfig.RobloxAvatar and bodyColors then
 			hand = bodyColors.RightArmColor3
 		end
+		-- eigener Avatar: gebaute Arme (Ärmel in der Oberkörperfarbe, Hände mit Fingern in Hautfarbe) statt seiner
+		-- echten Arme – die sind je nach Avatar verschieden lang und dick und sehen gestaucht vor der Kamera komisch aus
+		if AgentConfig.RobloxAvatar and bodyColors then
+			sleeve = bodyColors.TorsoColor3
+		end
 		local ok, pieces = pcall(AgentModels.ArmPieces, player.Character)
-		local arms = ok and pieces or nil
+		local arms = not AgentConfig.RobloxAvatar and ok and pieces or nil
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
 			AttachmentConfig.EquippedList(player, current), arms, hand, AgentConfig.RobloxAvatar and AVATAR_ARM_WIDTH or nil)
 		viewModel:Draw()
