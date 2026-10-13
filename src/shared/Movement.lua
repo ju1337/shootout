@@ -965,6 +965,23 @@ function Movement.Init()
 		end
 	end)
 
+	-- E-Aufforderungen (Looten, Dungeon, Stände …): Die Roblox-Anzeige ist sonst ein anklickbarer Knopf. Liegt er in der
+	-- Bildmitte, wo die gesperrte Maus steht, schluckt er die Mausbewegung und die Kamera dreht nicht mehr, bis man aus der
+	-- Reichweite läuft (Blick hängt fest). Nur auf Touch bleiben sie antippbar.
+	local function fixPrompt(object)
+		if object:IsA("ProximityPrompt") then
+			object.ClickablePrompt = InputActions.IsTouch()
+		end
+	end
+	local function fixAllPrompts()
+		for _, object in workspace:GetDescendants() do
+			fixPrompt(object)
+		end
+	end
+	fixAllPrompts()
+	workspace.DescendantAdded:Connect(fixPrompt)
+	InputActions.DeviceChanged:Connect(fixAllPrompts)
+
 	-- Absicherung nach allen Kamera-Schritten (Roblox, Rückstoß, Neigung, Menüs): Ein NaN in Kamera, Körper oder den
 	-- geglätteten Werten wird sofort zurückgesetzt, und die Kamera kippt nie über den Anschlag. Sonst friert der
 	-- Blick in einem Winkel ein und die Maus dreht nichts mehr.
