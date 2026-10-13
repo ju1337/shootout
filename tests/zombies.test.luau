@@ -337,13 +337,13 @@ step(Z.CorpseTime + 1)
 check(empty.Parent == nil, "Leiche ohne Beute verschwindet nach CorpseTime")
 ExtinctionConfig.ZombieKinds.Walker.Drop = 0.55
 
--- Arten: Läufer sind schneller, Brocken zäh und groß und schlagen hart; alle zusammen langsamer als Spieler
+-- Arten: Läufer rennen (schneller als Gehen ~18, langsamer als Sprint ~25), Brocken zäh und groß und schlagen hart
 local walker = ZombieService.Kind("Walker")
 local runner, brute = ZombieService.Kind("Runner"), ZombieService.Kind("Brute")
-check(walker.Run < 16 * 0.6 and walker.Walk < 6, "normale Zombies sind langsam (Spieler laufen 16)")
+check(walker.Run < 12 and walker.Walk < 6, "normale Zombies sind langsam (Spieler gehen ~18)")
 check(runner.Run > walker.Run and brute.Health > walker.Health * 2.5 and brute.Damage > walker.Damage * 2 and brute.Scale > 1.2,
 	"Läufer schneller, Brocken zäh und stark")
-check(runner.Run < 16, "auch Läufer sind langsamer als ein rennender Spieler")
+check(runner.Run > 18.4 and runner.Run < 25, "Läufer holen gehende Spieler ein, im Sprint entkommt man")
 check(ZombieService.Kind("Quatsch").Id == "Walker", "unbekannte Art = Walker")
 local bruteModel = ZombieService.Spawn(CENTER + Vector3.new(500, 0, 500), "Brute")
 check(bruteModel ~= nil and bruteModel:GetAttribute("ZombieKind") == "Brute" and bruteModel.Humanoid.MaxHealth >= brute.Health * 0.8,
