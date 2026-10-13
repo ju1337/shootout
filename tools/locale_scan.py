@@ -27,7 +27,8 @@ WORDS = re.compile(r"[A-Za-zÄÖÜäöüß]{2,}")
 SKIP_FILES = {"LocaleStrings.lua", "Locale.lua", "ExtinctionTerrainData.lua",
               # nur Entwickler-Ausgaben (Studio-Ausgabe, Discord-Log, Modellprüfung), nie auf dem Bildschirm
               "GunModels.lua", "AgentModels.lua", "AgentBody.lua", "DiscordLog.lua", "SpawnUtil.lua",
-              "MovementGuard.lua", "CharacterPose.lua"}
+              "MovementGuard.lua", "CharacterPose.lua",
+              "Credits.lua"}  # Titel und Lizenzen der Modelle bleiben unübersetzt
 # Texte, die auf Englisch genauso heißen (Namen, Abkürzungen, Tasten, Roblox-Farben) – brauchen keinen Eintrag
 SAME = {
     "SMG", "DMR", "LMG", "VIP", "HUD", "GADGET", "ULTIMATE", "ULT", "PING", "SPRINT", "TOUCH", "LMB", "RMB", "SHIFT",
@@ -44,7 +45,7 @@ SAME = {
     "AEGIS", "TRAPPER", "VOLT", "Left Arm", "Right Arm", "Left Leg", "Right Leg", "Left Shoulder", "Right Shoulder",
     "Left Hip", "Right Hip", "Sand blue", "Storm blue", "Bright red", "Bright blue", "Steel blue", "Dusty Rose",
     "Royal blue", "Deep orange", "Bright violet", "Earth green", "Fawn brown", "D7E1EE", "RESPAWN IN",
-    "SAFE ZONE (CAMP, SAFEHOUSES)", "LEVEL UP! ×", "XP ×", "Ödstadt", "ÖDSTADT WEST",
+    "SAFE ZONE (CAMP, SAFEHOUSES)", "LEVEL UP! ×", "XP ×", "Ödstadt", "ÖDSTADT WEST", "CREDITS",
 }
 # kein Anzeigetext: Discord-Log-Titel und -Felder, Telemetrie-Gründe, interne Namen, Kartenschlüssel (Arcade)
 IGNORE = {
