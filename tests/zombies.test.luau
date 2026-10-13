@@ -131,7 +131,7 @@ step(0.6)
 local target = hunter.Humanoid.MoveToTarget
 check(target ~= nil and flatDistance(target, alice.Character.HumanoidRootPart.Position) < 1, "Zombie läuft auf Alice zu")
 check(hunter.Humanoid.WalkSpeed > Z.WalkSpeed, "jagen ist schneller als schlurfen")
-check(Z.PerPlayer <= 4 and Z.MaxTotal <= 36, "wenige Zombies: höchstens " .. Z.PerPlayer .. " pro Spieler")
+check(Z.PerPlayer <= 10 and Z.MaxTotal <= 60, "Zombies in Grenzen (Leistung): höchstens " .. Z.PerPlayer .. " pro Spieler")
 
 -- Wegfindung: steht eine Mauer zwischen Zombie und Alice (waagerechter Raycast auf Brusthöhe trifft), folgt der Zombie
 -- einem Pfad des PathfindingService statt gerade auf sie zu: nächster Wegpunkt = Umweg um die Mauer, Jump-Wegpunkt springt

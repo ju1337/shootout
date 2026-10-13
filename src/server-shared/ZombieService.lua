@@ -1181,9 +1181,11 @@ local function spawnRound()
 			if DayCycle.IsStorm(workspace:GetServerTimeNow()) then
 				wanted = math.floor(wanted * ExtinctionConfig.Storm.Zombies + 0.5) -- Sturmnacht: mehr
 			end
+			-- in der roten Zone zählen die Zombies der ganzen Zone (sie spawnen überall darin), sonst die um den Spieler
 			local around = 0
 			for _, info in zombies do
-				if (info.Root.Position - root.Position).Magnitude <= Z.SpawnMax + 20 then
+				if zone and Vector3.new(info.Root.Position.X - zone.Center.X, 0, info.Root.Position.Z - zone.Center.Z).Magnitude
+					<= zone.Radius + 5 or not zone and (info.Root.Position - root.Position).Magnitude <= Z.SpawnMax + 20 then
 					around += 1
 				end
 			end
@@ -1195,10 +1197,13 @@ local function spawnRound()
 					if not point or count >= maxTotal() then
 						break
 					end
+					-- weitere der Gruppe dicht daneben; passt die Stelle nicht (Safe Zone, zu nah am Spieler, kein Boden), an
+					-- derselben Stelle wie der erste
 					local at = point
 					if i > 1 then
 						local x, z = point.X + random:NextNumber(-5, 5), point.Z + random:NextNumber(-5, 5)
-						at = ZombieService.GroundAt(x, z) or point
+						local d = Vector3.new(root.Position.X - x, 0, root.Position.Z - z).Magnitude
+						at = farFromSafe(x, z, Z.SafeMargin) and (zone or d >= Z.SpawnMin and d <= Z.SpawnMax) and groundAt(x, z) or point
 					end
 					ZombieService.Spawn(at, rollKind(zone ~= nil))
 				end
