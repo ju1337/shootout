@@ -116,6 +116,7 @@ local MOUSE_PRIORITY = 201 -- direkt nach der Kamera (Enum.RenderPriority.Camera
 
 local bag, safe, stash = {}, {}, {} -- [Platz] = { Id, N, Mag, A, Out } (Tasche, Container, Lager)
 Inv.redText = nil :: TextLabel? -- Rote-Zone-Punkte im HUD
+Inv.lastSub = {} :: { [string]: string } -- je Gruppe (SOCIAL, MISSIONEN) der zuletzt offene Unterreiter
 Inv.wallet = nil :: Frame? -- Währungsleiste unter der Minimap (Münzen, RZ)
 Inv.walletScale = nil :: UIScale?
 Inv.redzoneSince = nil :: number? -- seit wann (os.clock) man in der roten Zone steht (roter Rand blitzt nur kurz auf)
@@ -1205,12 +1206,12 @@ end
 local MENU_TABS = {
 	{ Id = "Inventory", Text = "INVENTAR" },
 	{ Id = "Market", Text = "MARKT" },
-	{ Id = "Quests", Text = "AUFTRÄGE" },
+	-- Gruppen: ein Eintrag in der Seitenleiste, oben in der Kopfzeile die Unterreiter (Children); die Unterreiter selbst
+	-- stehen weiter unten mit Group und erscheinen nicht in der Seitenleiste
+	{ Id = "Missions", Text = "MISSIONEN", Children = { "Quests", "Achievements" } },
 	{ Id = "Loot", Text = "BEUTE" },
 	{ Id = "Guide", Text = "GUIDE" },
-	{ Id = "Squad", Text = "SQUAD" },
-	{ Id = "Clan", Text = "CLAN", Page = true },
-	{ Id = "Achievements", Text = "ERFOLGE" },
+	{ Id = "Social", Text = "SOCIAL", Children = { "Squad", "Clan" } },
 	{ Id = "Skins", Text = "SKINS" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
 	{ Id = "Pass", Text = "BATTLE PASS", Page = true },
@@ -1219,6 +1220,10 @@ local MENU_TABS = {
 	{ Id = "Settings", Text = "OPTIONEN", Page = true },
 	-- Links in die Lobby (ganze Seiten, passen nicht ins Menü): schließen das Menü und öffnen die Lobby dort
 	{ Id = "Arcade", Text = "SPIELEN · ARCADE", Lobby = "Play", Arcade = true },
+	{ Id = "Quests", Text = "AUFTRÄGE", Group = "Missions" },
+	{ Id = "Achievements", Text = "ERFOLGE", Group = "Missions" },
+	{ Id = "Squad", Text = "SQUAD", Group = "Social" },
+	{ Id = "Clan", Text = "CLAN", Page = true, Group = "Social" },
 }
 -- Arcade aus (Modes.ArcadeEnabled): SPIELEN · ARCADE weglassen
 for index = #MENU_TABS, 1, -1 do
@@ -1232,6 +1237,10 @@ for index, tab in MENU_TABS do
 	menuTab[tab.Id] = tab
 end
 local lastMenuTab = "Inventory"
+-- Reiter in der Seitenleiste markiert, wenn kind offen ist (bei Unterreitern: ihre Gruppe)
+function Inv.tabOn(tab, kind)
+	return tab.Id == kind or (menuTab[kind] ~= nil and menuTab[kind].Group == tab.Id)
+end
 local openMenuTab -- unten gesetzt (öffnet einen Reiter)
 
 -- Flacher Knopf ohne Rand: primary = rot gefüllt, sonst dunkel halbtransparent (Menü, Details)
@@ -1280,7 +1289,10 @@ function Inv.phoneTabs(frame, kind)
 	make("UIGradient", { Transparency = NumberSequence.new(1, 0) }, fade)
 	local active
 	for _, tab in MENU_TABS do
-		local on = tab.Id == kind
+		if tab.Group then
+			continue
+		end
+		local on = Inv.tabOn(tab, kind)
 		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
 			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = on and 0.92 or 1, BorderSizePixel = 0, Text = tab.Text,
 			Font = F.Bold, TextSize = 17, TextColor3 = on and C.Text or C.Muted, LayoutOrder = tab.Index, ZIndex = 6,
@@ -1357,9 +1369,16 @@ local function newMenu(kind, title, subtitle)
 			LayoutOrder = 0, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
 	-- Höhe je Reiter: alle passen in die Seitenleiste (Menühöhe minus Logo und Schließen-Hinweis)
-	local tabH = math.min(46, math.floor((Inv.MENU_H - 200 - (pad and 44 or 0)) / #MENU_TABS) - 2)
+	local shownTabs = 0
 	for _, tab in MENU_TABS do
-		local on = tab.Id == kind
+		shownTabs += tab.Group and 0 or 1
+	end
+	local tabH = math.min(46, math.floor((Inv.MENU_H - 200 - (pad and 44 or 0)) / shownTabs) - 2)
+	for _, tab in MENU_TABS do
+		if tab.Group then
+			continue
+		end
+		local on = Inv.tabOn(tab, kind)
 		local button = make("TextButton", { Name = "Tab_" .. tab.Id, Size = UDim2.new(1, 0, 0, tabH), BackgroundColor3 = Color3.new(1, 1, 1),
 			BackgroundTransparency = on and 0.92 or 1, BorderSizePixel = 0, Text = tab.Text, Font = F.Bold, TextSize = 15,
 			TextColor3 = on and C.Text or C.Muted, TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = tab.Index, ZIndex = 6,
@@ -1412,8 +1431,32 @@ local function newMenu(kind, title, subtitle)
 		BackgroundTransparency = 1, Visible = not (phone and isTab), ClipsDescendants = phone, ZIndex = 6 }, header) -- Handy: lange Untertitel nicht unter Münzen und X
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 18), SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center }, titleRow)
-	label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = title or (isTab and menuTab[kind].Text) or "",
-		TextSize = 20, Font = F.Display, LayoutOrder = 1, ZIndex = 6 }, titleRow)
+	local titleLabel = label({ Name = "Title", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+		Text = title or (isTab and menuTab[kind].Text) or "", TextSize = 20, Font = F.Display, LayoutOrder = 1, ZIndex = 6 }, titleRow)
+	-- Unterreiter einer Gruppe (SOCIAL: SQUAD · CLAN, MISSIONEN: AUFTRÄGE · ERFOLGE) statt des Titels, auch auf dem Handy
+	local group = isTab and menuTab[kind].Group
+	if group then
+		titleLabel.Visible = false
+		titleRow.Visible = true
+		local subTabs = make("Frame", { Name = "SubTabs", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundTransparency = 1, LayoutOrder = 1, ZIndex = 6 }, titleRow)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Center }, subTabs)
+		for i, childId in menuTab[group].Children do
+			local on = childId == kind
+			local button = make("TextButton", { Name = "SubTab_" .. childId, Size = UDim2.new(0, 0, 0, 34), AutomaticSize = Enum.AutomaticSize.X,
+				AutoButtonColor = false, BorderSizePixel = 0, BackgroundColor3 = on and Inv.MENU_RED or Color3.new(1, 1, 1),
+				BackgroundTransparency = on and 0 or 0.92, Text = menuTab[childId].Text, Font = F.Display, TextSize = 17,
+				TextColor3 = on and C.Text or C.Muted, LayoutOrder = i, ZIndex = 7 }, subTabs)
+			make("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, button)
+			UITheme.Corner(button, 3)
+			button.Activated:Connect(function()
+				if not on then
+					openMenuTab(childId)
+				end
+			end)
+		end
+	end
 	local sub = label({ Name = "Sub", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Text = subtitle or "",
 		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, LayoutOrder = 2, ZIndex = 6 }, titleRow)
 	-- Touch: größere Trefferfläche und größeres X (auf dem Handy ist das Menü stark verkleinert)
@@ -3371,6 +3414,15 @@ local function openLobbyTab(id)
 end
 
 openMenuTab = function(id)
+	-- Gruppe: den zuletzt offenen Unterreiter (sonst den ersten); Unterreiter merken
+	local tab = menuTab[id]
+	if tab and tab.Children then
+		id = Inv.lastSub[id] or tab.Children[1]
+		tab = menuTab[id]
+	end
+	if tab and tab.Group then
+		Inv.lastSub[tab.Group] = id
+	end
 	if id == "Inventory" then
 		openInventory()
 	elseif id == "Market" then
@@ -3425,10 +3477,14 @@ end
 
 -- Controller L1/R1: Reiter weiterblättern
 local function cycleMenu(step)
-	local index = window and menuTab[window.Kind] and menuTab[window.Kind].Index or 1
-	repeat -- Links in die Lobby überspringen (würden das Menü schließen)
+	local current = window and menuTab[window.Kind]
+	if current and current.Group then
+		current = menuTab[current.Group] -- Unterreiter: von seiner Gruppe aus weiter
+	end
+	local index = current and current.Index or 1
+	repeat -- Links in die Lobby und Unterreiter überspringen
 		index = (index - 1 + step) % #MENU_TABS + 1
-	until not MENU_TABS[index].Lobby
+	until not MENU_TABS[index].Lobby and not MENU_TABS[index].Group
 	openMenuTab(MENU_TABS[index].Id)
 end
 

@@ -128,7 +128,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,BEUTE,GUIDE,SQUAD,CLAN,ERFOLGE,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,MISSIONEN,BEUTE,GUIDE,SOCIAL,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -136,16 +136,23 @@ check(menu() == nil, "TAB nochmal: zu")
 
 -- Reiter wechseln per Klick; M öffnet den zuletzt offenen Reiter
 key(Enum.KeyCode.Tab)
-menu():FindFirstChild("Tabs", true).Tab_Squad.Activated:Fire()
+-- SOCIAL: Gruppe mit Unterreitern SQUAD · CLAN in der Kopfzeile, öffnet zuerst SQUAD
+menu():FindFirstChild("Tabs", true).Tab_Social.Activated:Fire()
 step(0.1)
-check(title() == "SQUAD" and activeTab() == "Squad", "Klick auf SQUAD")
+check(title() == "SQUAD" and activeTab() == "Social", "Klick auf SOCIAL: SQUAD")
+check(find(menu(), "SubTab_Squad") ~= nil and find(menu(), "SubTab_Clan") ~= nil and find(menu(), "SubTab_Squad").BackgroundTransparency == 0,
+	"SOCIAL: Unterreiter SQUAD (aktiv) und CLAN")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt")
 key(Enum.KeyCode.M)
 check(title() == "SQUAD", "M öffnet den letzten Reiter (SQUAD)")
-menu():FindFirstChild("Tabs", true).Tab_Achievements.Activated:Fire()
+-- MISSIONEN: Gruppe mit AUFTRÄGE · ERFOLGE
+menu():FindFirstChild("Tabs", true).Tab_Missions.Activated:Fire()
 step(0.1)
-check(title() == "ERFOLGE" and activeTab() == "Achievements", "Klick auf ERFOLGE")
+check(title() == "AUFTRÄGE" and activeTab() == "Missions", "Klick auf MISSIONEN: AUFTRÄGE")
+find(menu(), "SubTab_Achievements").Activated:Fire()
+step(0.1)
+check(title() == "ERFOLGE" and activeTab() == "Missions", "Unterreiter ERFOLGE")
 check(find(menu(), "Achievement_Zombies") ~= nil and find(menu(), "Achievement_Veteran") ~= nil, "Erfolge-Wand mit Karten")
 
 -- Lobby-Seiten: ausgeliehen, verkleinert, beim Schließen zurück in die Lobby
@@ -171,7 +178,7 @@ local function shownTexts(root)
 end
 
 -- AUFTRÄGE: ohne Arcade nur EXTINCTION, dann gar keine Reiterzeile (ein einzelner Reiter wäre nur ein toter Knopf)
-menu():FindFirstChild("Tabs", true).Tab_Quests.Activated:Fire()
+find(menu(), "SubTab_Quests").Activated:Fire()
 step(0.1)
 local questBoard = menu():FindFirstChild("QuestBoard", true)
 local questTexts = questBoard and shownTexts(questBoard) or {}
@@ -179,9 +186,15 @@ check(title() == "AUFTRÄGE" and questBoard ~= nil and not questTexts.EXTINCTION
 	"AUFTRÄGE: kein Reiter ARCADE, keine Reiterzeile, Spalten da")
 
 for _, id in { "Clan", "Shop", "Pass", "Stats", "Codes", "Settings" } do
-	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
+	if id == "Clan" then -- CLAN liegt unter SOCIAL
+		menu():FindFirstChild("Tabs", true).Tab_Social.Activated:Fire()
+		step(0.1)
+		find(menu(), "SubTab_Clan").Activated:Fire()
+	else
+		menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
+	end
 	step(0.1)
-	check(activeTab() == id, id .. ": Reiter aktiv")
+	check(activeTab() == (id == "Clan" and "Social" or id), id .. ": Reiter aktiv")
 	local holder = menu() and menu():FindFirstChild("PageHolder", true)
 	local page = holder and holder:FindFirstChild(id .. "Page")
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
