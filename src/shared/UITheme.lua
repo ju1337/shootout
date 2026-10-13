@@ -130,13 +130,6 @@ function UITheme.Upper(text)
 	return upper
 end
 
--- Überschrift in der schweren Schrift, Großbuchstaben (Text wird umgewandelt)
-function UITheme.Heading(props, parent)
-	props.Font = props.Font or UITheme.Fonts.Display
-	props.Text = UITheme.Upper(props.Text)
-	return UITheme.Label(props, parent)
-end
-
 -- Kleines Schild mit Hintergrund (Rolle, BEREIT, DUELS ...). Breite passt sich dem Text an.
 function UITheme.Tag(props, parent)
 	props.BackgroundTransparency = props.BackgroundTransparency or 0

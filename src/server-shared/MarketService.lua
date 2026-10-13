@@ -405,11 +405,6 @@ local function publishWatch(player)
 	player:SetAttribute("MarketWatch", HttpService:JSONEncode(list))
 end
 
--- Stand des Spielers (oder nil)
-function MarketService.StandOf(player)
-	return standOf[player]
-end
-
 function MarketService.Get(id)
 	return stands[id]
 end

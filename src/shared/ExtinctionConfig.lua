@@ -987,14 +987,4 @@ function ExtinctionConfig.AmmoFor(id)
 	return nil
 end
 
--- Item-Id zur WeaponConfig-Waffe (z.B. "Rifle" -> "Rifle")
-function ExtinctionConfig.ItemForWeapon(weaponName)
-	for id, item in ExtinctionConfig.Items do
-		if item.Weapon == weaponName then
-			return id
-		end
-	end
-	return nil
-end
-
 return ExtinctionConfig

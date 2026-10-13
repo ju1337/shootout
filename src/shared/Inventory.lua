@@ -102,16 +102,6 @@ function Inventory.IsEmpty(container)
 	return next(container.Slots) == nil
 end
 
-function Inventory.FreeSlots(container)
-	local n = 0
-	for slot = 1, container.Size do
-		if not container.Slots[slot] then
-			n += 1
-		end
-	end
-	return n
-end
-
 -- Reihenfolge der leeren Plätze: prefer = "Hotbar" (erst 1..HotbarSlots), "Bag" (erst dahinter) oder nil (der Reihe nach)
 local function emptySlots(container, prefer)
 	local hotbar = ExtinctionConfig.HotbarSlots

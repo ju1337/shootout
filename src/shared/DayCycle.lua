@@ -60,12 +60,6 @@ function DayCycle.IsNight(clock)
 	return DayCycle.Darkness(clock) >= 0.5
 end
 
--- Nummer des Tages (der Abend und die folgende Nacht gehören zum selben Tag)
-function DayCycle.DayIndex(serverTime)
-	local hours = D.StartHour + shifted(serverTime) / D.Length * 24 - D.NightTo
-	return math.floor(hours / 24)
-end
-
 -- Blutmond: ein Ereignis (BloodMoonService), das der Server mit den Attributen BloodMoonStart / BloodMoonEnd (Serverzeit)
 -- an ReplicatedStorage ankündigt – alle sehen dieselbe Zeit
 function DayCycle.IsBloodMoon(serverTime)

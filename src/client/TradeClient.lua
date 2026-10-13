@@ -692,11 +692,4 @@ function TradeClient.Init()
 	end)
 end
 
--- Für die Tests: Fenster mit einem Stand öffnen
-function TradeClient.ShowState(state)
-	current = state
-	render()
-	updateStatus()
-end
-
 return TradeClient
