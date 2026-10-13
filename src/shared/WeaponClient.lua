@@ -316,7 +316,8 @@ end
 -- Mündung der eigenen Waffe: vor der Kamera (Ego) oder in der Hand (Schulter)
 local function muzzle()
 	if firstPersonView() then
-		return viewModel:MuzzleCFrame(), 0.55
+		-- Ego: Feuer kleiner (beim Zielen noch etwas mehr), damit es das Visier nicht überdeckt
+		return viewModel:MuzzleCFrame(), aiming and 0.32 or 0.4
 	end
 	local tool = ownTool()
 	local handle = tool and tool:FindFirstChild("Handle")

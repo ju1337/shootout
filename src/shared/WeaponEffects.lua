@@ -264,6 +264,8 @@ end
 -- followCamera = true: eigene Waffe vor der Kamera, das Feuer bleibt an der Mündung, auch wenn man sich bewegt
 function WeaponEffects.MuzzleFlash(cframe, scale, followCamera)
 	scale = scale or 1
+	-- eigene Waffe vor der Kamera: Feuer durchsichtiger und Licht schwächer, sonst blendet es beim Schießen
+	local fade = followCamera and 0.35 or 0
 	local spin = CFrame.Angles(0, 0, math.random() * math.pi)
 	local core = effectPart({
 		Shape = Enum.PartType.Ball,
@@ -271,14 +273,14 @@ function WeaponEffects.MuzzleFlash(cframe, scale, followCamera)
 		CFrame = cframe,
 		Material = Enum.Material.Neon,
 		Color = FLASH_COLOR,
-		Transparency = 0.1,
+		Transparency = 0.1 + fade,
 	})
 	-- Flammenzunge nach vorne und ein flacher Stern quer dazu
 	local flame = effectPart({
 		Size = Vector3.new(0.16, 0.16, 0.9) * scale * (0.8 + math.random() * 0.5),
 		Material = Enum.Material.Neon,
 		Color = FLASH_COLOR,
-		Transparency = 0.25,
+		Transparency = 0.25 + fade,
 	})
 	flame.CFrame = cframe * spin * CFrame.new(0, 0, -flame.Size.Z / 2)
 	local star = effectPart({
@@ -286,13 +288,13 @@ function WeaponEffects.MuzzleFlash(cframe, scale, followCamera)
 		CFrame = cframe * spin * CFrame.new(0, 0, -0.1 * scale),
 		Material = Enum.Material.Neon,
 		Color = FLASH_COLOR,
-		Transparency = 0.35,
+		Transparency = 0.35 + fade,
 	})
 	if not lowGraphics() then
 		local light = Instance.new("PointLight")
 		light.Color = Color3.fromRGB(255, 190, 110)
 		light.Range = 12 * math.max(scale, 0.6)
-		light.Brightness = 2.5
+		light.Brightness = followCamera and 1.2 or 2.5
 		light.Shadows = false
 		light.Parent = core
 	end
