@@ -17,6 +17,10 @@ local PoseMath = require(Shared.PoseMath)
 local ViewModel = {}
 ViewModel.__index = ViewModel
 
+-- Arme und Hände vor der Kamera? Aus: in der Ego-Sicht nur die Waffe (jeder sieht seinen Avatar mit seinen eigenen
+-- Händen nur von außen). Tests für die Arme schalten es an.
+ViewModel.ShowArms = false
+
 local SCALE = 0.5
 
 -- Haltung aus der Hüfte (Kamera-Raum, Modell-Einheiten): Griffpunkt rechts unten, leicht zur Mitte gedreht
@@ -204,57 +208,59 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 	end
 	-- Arme: die echten des Charakters, sonst Oberarm + Unterarm im Ärmel, Handschuh
 	self.Arms = {}
-	local right = arms and arms.Right and buildRealArm(arms.Right, armWidth)
-	local left = right and arms.Left and buildRealArm(arms.Left, armWidth)
-	if right and left then
-		self.RealArms = { Right = right, Left = left }
-		-- mit Shirt: Arme in ein eigenes Modell mit Humanoid und den echten Teilnamen (RightUpperArm …), dann zeichnet
-		-- Roblox das Shirt wie am Körper darauf
-		local holder = self.Model
-		if shirt then
-			holder = Instance.new("Model")
-			holder.Name = "AvatarArms"
-			local humanoid = Instance.new("Humanoid")
-			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-			humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-			humanoid.RequiresNeck = false
-			humanoid.EvaluateStateMachine = false
-			humanoid.Parent = holder
-			shirt:Clone().Parent = holder
-			holder.Parent = self.Model
-		end
-		for _, arm in self.RealArms do
-			for _, piece in arm.Pieces do
-				if shirt then
-					piece.Part.Name = string.gsub(piece.Part.Name, "_%d+$", "")
+	if ViewModel.ShowArms then
+		local right = arms and arms.Right and buildRealArm(arms.Right, armWidth)
+		local left = right and arms.Left and buildRealArm(arms.Left, armWidth)
+		if right and left then
+			self.RealArms = { Right = right, Left = left }
+			-- mit Shirt: Arme in ein eigenes Modell mit Humanoid und den echten Teilnamen (RightUpperArm …), dann zeichnet
+			-- Roblox das Shirt wie am Körper darauf
+			local holder = self.Model
+			if shirt then
+				holder = Instance.new("Model")
+				holder.Name = "AvatarArms"
+				local humanoid = Instance.new("Humanoid")
+				humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+				humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+				humanoid.RequiresNeck = false
+				humanoid.EvaluateStateMachine = false
+				humanoid.Parent = holder
+				shirt:Clone().Parent = holder
+				holder.Parent = self.Model
+			end
+			for _, arm in self.RealArms do
+				for _, piece in arm.Pieces do
+					if shirt then
+						piece.Part.Name = string.gsub(piece.Part.Name, "_%d+$", "")
+					end
+					piece.Part.Parent = holder
 				end
-				piece.Part.Parent = holder
 			end
 		end
-	end
-	local cylinder, skin = Enum.PartType.Cylinder, handColor or GLOVE_COLOR
-	for _, side in { "Right", "Left" } do
-		local real = self.RealArms and self.RealArms[side]
-		if real then
-			self.Arms[side] = real
-			continue
-		end
-		local arm = {
-			Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
-			Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
-			Wrist = armPart(side .. "Wrist", skin, Enum.Material.SmoothPlastic, self.Model, cylinder),
-			WristLocal = WRIST[side],
-			Hand = {},
-		}
-		for _, shape in HAND_SHAPES[side] do
-			local part = armPart(side .. shape[1], skin, Enum.Material.SmoothPlastic, self.Model)
-			part.Size = shape[2] * SCALE
-			table.insert(arm.Hand, { Part = part, Offset = scaled(shape[3]) })
-			if shape[1] == "Glove" then
-				arm.Glove = part
+		local cylinder, skin = Enum.PartType.Cylinder, handColor or GLOVE_COLOR
+		for _, side in { "Right", "Left" } do
+			local real = self.RealArms and self.RealArms[side]
+			if real then
+				self.Arms[side] = real
+				continue
 			end
+			local arm = {
+				Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
+				Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
+				Wrist = armPart(side .. "Wrist", skin, Enum.Material.SmoothPlastic, self.Model, cylinder),
+				WristLocal = WRIST[side],
+				Hand = {},
+			}
+			for _, shape in HAND_SHAPES[side] do
+				local part = armPart(side .. shape[1], skin, Enum.Material.SmoothPlastic, self.Model)
+				part.Size = shape[2] * SCALE
+				table.insert(arm.Hand, { Part = part, Offset = scaled(shape[3]) })
+				if shape[1] == "Glove" then
+					arm.Glove = part
+				end
+			end
+			self.Arms[side] = arm
 		end
-		self.Arms[side] = arm
 	end
 	self.Hip = (self.Info.Long and HIP_LONG or HIP_SHORT) * CFrame.new(0, -(self.Info.HipDrop or 0), 0)
 	self.Aim = GunModels.AimOffset(weaponName, attachments)
@@ -384,8 +390,10 @@ function ViewModel:Update(dt, state)
 	local right = gunWorld * scaled(CFrame.new(self.Info.RightHand) * CFrame.Angles(math.rad(-15), 0, 0))
 	local leftLocal = pose and pose.Hand or CFrame.new(self.Info.LeftHand)
 	local left = gunWorld * scaled(leftLocal)
-	self:PlaceArm(self.Arms.Right, camera, right, RIGHT_SHOULDER, Vector3.new(1, -0.6, 0.2))
-	self:PlaceArm(self.Arms.Left, camera, left, LEFT_SHOULDER, Vector3.new(-1, -0.7, 0.1))
+	if self.Arms.Right then
+		self:PlaceArm(self.Arms.Right, camera, right, RIGHT_SHOULDER, Vector3.new(1, -0.6, 0.2))
+		self:PlaceArm(self.Arms.Left, camera, left, LEFT_SHOULDER, Vector3.new(-1, -0.7, 0.1))
+	end
 end
 
 -- Arm von der Schulter (hinter der Kamera) über den Ellbogen zur Hand

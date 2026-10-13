@@ -259,6 +259,7 @@ check(tool:FindFirstChild("Handle") and welded >= 9, "Werkzeug mit angeschweißt
 
 -- Ego-Waffe: beim Zielen liegt die Visierlinie des Modells genau in der Bildmitte
 local ViewModel = require("ViewModel")
+ViewModel.ShowArms = true -- dieser Test prüft auch die Arme vor der Kamera
 local camera = CFrame.new(5, 8, -2) * CFrame.Angles(-0.1, 0.7, 0)
 local vm = ViewModel.new("Rifle", nil, Color3.fromRGB(80, 80, 80))
 vm.DrawStart = os.clock() - 5

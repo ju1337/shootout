@@ -8,6 +8,7 @@ local function check(cond, msg)
 end
 
 local ViewModel = require("ViewModel")
+ViewModel.ShowArms = true -- dieser Test prüft auch die Arme vor der Kamera
 local GunModels = require("GunModels")
 local WeaponAnimations = require("WeaponAnimations")
 local WeaponConfig = require("WeaponConfig")

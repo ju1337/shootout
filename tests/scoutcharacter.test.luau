@@ -53,6 +53,7 @@ require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist 
 require("Cosmetics").AgentSkins = true
 local AgentModels = require("AgentModels")
 local ViewModel = require("ViewModel")
+ViewModel.ShowArms = true -- dieser Test prüft auch die Arme vor der Kamera
 local GunModels = require("GunModels")
 
 local character = AgentModels.BuildCharacter("AS_Scout")

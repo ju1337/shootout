@@ -16,6 +16,7 @@ end
 
 local GunModels = require("GunModels")
 local ViewModel = require("ViewModel")
+ViewModel.ShowArms = true -- dieser Test prüft auch die Arme vor der Kamera
 local report = GunModels.AssetReport()
 local camera = CFrame.new(3, 6, -9) * CFrame.Angles(0.15, -0.6, 0)
 
