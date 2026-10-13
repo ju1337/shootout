@@ -2548,10 +2548,11 @@ local function openHideout()
 	local C = UITheme.MenuColors
 	local win = newWindow("Hideout", "VERSTECK", "STUFEN UND MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION")
 	Inv.solidWindow(win)
-	-- in der Breite 1124 gebaut und auf die ganze Fläche skaliert; die Höhe folgt dem Fenster (Zeilen werden höher)
-	local W = 1124
-	local scale = Inv.CONTENT_W / W
-	local H = math.max(532, math.floor(Inv.CONTENT_H / scale))
+	-- für mindestens 1124 × 532 gebaut und so skaliert, dass es ganz in die Fläche passt; die freie Richtung wächst mit
+	-- (breiteres Fenster: Spalten breiter, höheres Fenster: Zeilen höher), nichts ragt heraus
+	local scale = math.min(Inv.CONTENT_W / 1124, Inv.CONTENT_H / 532)
+	local W = math.floor(Inv.CONTENT_W / scale)
+	local H = math.floor(Inv.CONTENT_H / scale)
 	local body = make("Frame", { Name = "Hideout", Size = UDim2.fromOffset(W, H), BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
 	make("UIScale", { Scale = scale }, body)
 	local LEFT_W, GAP = 340, 16
