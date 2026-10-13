@@ -2996,4 +2996,17 @@ return {
 	["WAFFE  ·  SELTEN"] = "WEAPON  ·  RARE",
 	["WAFFE  ·  SEHR SELTEN"] = "WEAPON  ·  VERY RARE",
 	["WAFFE  ·  LEGENDÄR"] = "WEAPON  ·  LEGENDARY",
+	-- Lücken aus tools/locale_scan.py (2026-10-13)
+	["ÖDSTADT NORD"] = "ÖDSTADT NORTH",
+	["ÖDSTADT NORDOST"] = "ÖDSTADT NORTHEAST",
+	["ÖDSTADT OST"] = "ÖDSTADT EAST",
+	["ÖDSTADT SÜDOST"] = "ÖDSTADT SOUTHEAST",
+	["ÖDSTADT SÜDWEST"] = "ÖDSTADT SOUTHWEST",
+	["ÖDSTADT NORDWEST"] = "ÖDSTADT NORTHWEST",
+	["Der Überlebende ist verschwunden"] = "The survivor vanished",
+	["Kein DataStore (Studio ohne API-Zugriff?)"] = "No DataStore (Studio without API access?)",
+	["Kein Spielstand"] = "No save data",
+	["MEISTERSCHAFT: MIT KILLS MIT DIESER WAFFE FREISCHALTEN"] = "MASTERY: UNLOCK WITH KILLS USING THIS WEAPON",
+	["Die Waffe ohne Skin."] = "The weapon without a skin.",
+	["Freigeschaltet. Die Waffe trägt den Skin überall, sobald du ihn ausrüstest."] = "Unlocked. The weapon wears the skin everywhere once you equip it.",
 }

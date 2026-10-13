@@ -271,6 +271,18 @@ def main():
         runs.append(("maps", "immediate", "maps", None))
         if problems:
             failed.append("maps")
+        # Übersetzung: jeder Anzeigetext braucht einen englischen Eintrag in LocaleStrings (tools/locale_scan.py)
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import locale_scan
+        started = time.time()
+        missing = locale_scan.gaps()
+        print("%s locale (%.1f s)" % ("ok    " if not missing else "FEHLER", time.time() - started))
+        for path, text in missing:
+            print("       FEHLER: %s: kein englischer Eintrag in LocaleStrings für %s"
+                  % (path, json.dumps(text, ensure_ascii=False)))
+        runs.append(("locale", "immediate", "locale", None))
+        if missing:
+            failed.append("locale")
     print()
     if failed:
         print("%d von %d Tests fehlgeschlagen: %s" % (len(failed), len(runs), ", ".join(failed)))
