@@ -138,6 +138,9 @@ local function wheelState()
 	local free = data.Date ~= LoginConfig.Date(workspace:GetServerTimeNow())
 	local extra = (tonumber(data.Spins) or 0)
 		+ (player:GetAttribute("PaidRandomOk") ~= false and tonumber(data.PaidSpins) or 0) -- gekaufte nur ohne Länder-Sperre
+	if LoginConfig.AdminFreeSpins(player, RunService:IsStudio()) then
+		return true, true, extra -- Admin in Studio: immer bereit, zählt als Gratis-Dreh
+	end
 	return free or extra > 0, free, extra
 end
 

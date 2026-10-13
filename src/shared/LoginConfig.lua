@@ -40,7 +40,13 @@ LoginConfig.Wheel = {
 }
 
 -- So lange (Sekunden) ist das Rad nach einem Dreh besetzt: Anlauf, Drehen, Gewinn-Show (HubWheel)
-LoginConfig.WheelBusy = 9
+LoginConfig.WheelBusy = 8
+
+-- Admins drehen in Studio (auch Team Test) beliebig oft und gratis (zum Testen); im Live-Spiel nicht, sonst kämen
+-- endlos handelbare Rad-Skins in den Markt
+function LoginConfig.AdminFreeSpins(player, studio)
+	return studio == true and player:GetAttribute("IsAdmin") == true
+end
 
 -- Chance je Feld (0..1, gleiche Reihenfolge wie Wheel, Summe 1). Muss sichtbar sein, weil man Drehs für Robux kauft.
 function LoginConfig.WheelOdds()

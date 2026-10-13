@@ -364,7 +364,9 @@ function ProgressService.SpinWheel(player)
 		return "Das Rad dreht gerade. Gleich bist du dran!", false
 	end
 	profile.Wheel = profile.Wheel or {}
-	if profile.Wheel.Date == LoginConfig.Date(now) then
+	if LoginConfig.AdminFreeSpins(player, RunService:IsStudio()) then
+		-- Admins in Studio (auch Team Test) drehen beliebig oft, ohne Drehs zu verbrauchen; live nicht
+	elseif profile.Wheel.Date == LoginConfig.Date(now) then
 		if (profile.Wheel.Spins or 0) > 0 then
 			profile.Wheel.Spins -= 1 -- erst die verdienten Extra-Drehs
 		elseif (profile.Wheel.PaidSpins or 0) > 0 then

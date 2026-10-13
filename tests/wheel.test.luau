@@ -231,6 +231,16 @@ SIM.Run(SIM.Now + LoginConfig.WheelBusy)
 check(spinOther() == "WheelResult", "danach darf der Nächste drehen")
 SIM.Run(SIM.Now + LoginConfig.WheelBusy)
 check(spinResult() == "ShopStatus", "heute schon gedreht (ohne Extra-Dreh)")
+-- Admin: in Studio beliebig oft (nur auf das Rad warten), live nicht
+spinner:SetAttribute("IsAdmin", true)
+check(spinResult() == "ShopStatus", "Admin live: auch nur einmal am Tag")
+SIM.IsStudio = true
+for round = 1, 3 do
+	check(spinResult() == "WheelResult", "Admin in Studio: Dreh " .. round)
+	SIM.Run(SIM.Now + LoginConfig.WheelBusy)
+end
+SIM.IsStudio = false
+spinner:SetAttribute("IsAdmin", nil)
 
 if failures == 0 then
 	print("Glücksrad: alles in Ordnung")
