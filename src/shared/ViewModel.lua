@@ -111,13 +111,35 @@ end
 
 -- Echte Arme (AgentModels.ArmPieces) einbauen: jedes Teil hängt an seinem Knochen (Oberarm, Unterarm, Hand) und
 -- wird mit ihm gestreckt (Länge wie UPPER_ARM/FOREARM, Dicke ARM_THICKNESS)
-local function buildRealArm(side)
+-- width = gewünschte Dicke des Unterarms (Kamera-Raum, Studs) statt Körper-Dicke mal ARM_THICKNESS (eigener Roblox-Avatar:
+-- dessen Arme sind 1 Stud dick und wären vor der Kamera breite Platten)
+local function buildRealArm(side, width)
 	local bones = {
 		Upper = { From = side.Shoulder, To = side.Elbow },
 		Lower = { From = side.Elbow, To = side.Wrist },
 		Hand = { From = side.Wrist, To = side.Wrist + (side.Wrist - side.Elbow) },
 	}
 	local lengths = { Upper = UPPER_ARM * SCALE, Lower = FOREARM * SCALE }
+	local cross = ARM_THICKNESS * SCALE
+	if width then
+		-- Dicke des Unterarms quer zum Knochen (größte Ausdehnung seiner Teile)
+		local axis = (side.Wrist - side.Elbow).Unit
+		local across1 = axis:Cross(math.abs(axis.Z) < 0.9 and Vector3.zAxis or Vector3.xAxis).Unit
+		local across2 = axis:Cross(across1)
+		local thick = 0
+		for _, piece in side.Pieces do
+			if piece.Segment == "Lower" then
+				local r, size = piece.Rest, piece.Part.Size
+				for _, dir in { across1, across2 } do
+					thick = math.max(thick, math.abs(r.RightVector:Dot(dir)) * size.X + math.abs(r.UpVector:Dot(dir)) * size.Y
+						+ math.abs(r.LookVector:Dot(dir)) * size.Z)
+				end
+			end
+		end
+		if thick > 1e-3 then
+			cross = width / thick
+		end
+	end
 	for segment, bone in bones do
 		local axis = bone.To - bone.From
 		if axis.Magnitude < 1e-3 then
@@ -125,7 +147,7 @@ local function buildRealArm(side)
 		end
 		bone.Axis = axis.Unit
 		bone.Length = axis.Magnitude
-		bone.Cross = ARM_THICKNESS * SCALE
+		bone.Cross = cross
 		bone.Stretch = lengths[segment] and lengths[segment] / bone.Length or bone.Cross -- Hand: nicht gestreckt
 	end
 	local pieces = {}
@@ -154,8 +176,9 @@ end
 
 -- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten),
 -- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe),
--- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe
-function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor)
+-- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe,
+-- armWidth = Dicke der echten Unterarme vor der Kamera (Studs, siehe buildRealArm), nil = Körper-Dicke mal ARM_THICKNESS
+function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor, armWidth)
 	local self = setmetatable({}, ViewModel)
 	self.Weapon = weaponName
 	self.Info = GunModels.Info[weaponName]
@@ -176,8 +199,8 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 	end
 	-- Arme: die echten des Charakters, sonst Oberarm + Unterarm im Ärmel, Handschuh
 	self.Arms = {}
-	local right = arms and arms.Right and buildRealArm(arms.Right)
-	local left = right and arms.Left and buildRealArm(arms.Left)
+	local right = arms and arms.Right and buildRealArm(arms.Right, armWidth)
+	local left = right and arms.Left and buildRealArm(arms.Left, armWidth)
 	if right and left then
 		self.RealArms = { Right = right, Left = left }
 		for _, arm in self.RealArms do
