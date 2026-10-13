@@ -100,6 +100,7 @@ local detailBuilders = {} -- [Kategorie] = function(frame, target)
 local detailFrames = {} -- [Kategorie] = ScrollingFrame rechts
 local tiles = {} -- [Key] = TextLabel (Werte des gewählten Spielers)
 local watchConnection = nil -- AttributeChanged des gewählten Spielers (Einfrieren, Gottmodus, Rang)
+local selfGodConnection = nil -- AttributeChanged des eigenen Spielers (MEIN GOTTMODUS), wenn ein anderer gewählt ist
 local hideButton
 local eventStatus = {} -- [Event] = TextLabel
 local valueLabels = {} -- [Einstellung] = TextLabel
@@ -800,9 +801,10 @@ end
 detailBuilders.Effects = function(frame, target)
 	detailHead(frame, target)
 	section("EFFEKTE", frame)
+	-- Gottmodus-Knöpfe zeigen den Zustand (gefüllt = an), ein Klick schaltet um
 	local god = target:GetAttribute("AdminGod") == true
 	buttonRow(frame, {
-		{ god and "GOTTMODUS AUS" or "GOTTMODUS AN", C.Yellow, function()
+		{ god and "GOTTMODUS: AN" or "GOTTMODUS: AUS", god and C.Green or C.Yellow, function()
 			send("God", target.UserId)
 		end },
 		{ "HEILEN", C.Green, function()
@@ -835,11 +837,12 @@ detailBuilders.Effects = function(frame, target)
 		}, 40)
 	end
 	section("ICH", frame)
+	local myGod = player:GetAttribute("AdminGod") == true
 	buttonRow(frame, {
 		{ "NOCLIP (B)", C.Teal, function()
 			send("Noclip")
 		end },
-		{ "MEIN GOTTMODUS", C.Yellow, function()
+		{ myGod and "MEIN GOTTMODUS: AN" or "MEIN GOTTMODUS: AUS", myGod and C.Green or C.Yellow, function()
 			send("God", player.UserId)
 		end },
 	}, 40)
@@ -871,6 +874,10 @@ refreshDetail = function()
 		watchConnection:Disconnect()
 		watchConnection = nil
 	end
+	if selfGodConnection then
+		selfGodConnection:Disconnect()
+		selfGodConnection = nil
+	end
 	local target = selected()
 	if target then
 		-- Knopftexte (EINFRIEREN/AUFTAUEN, Gottmodus, Rang) folgen den Attributen des Spielers
@@ -879,6 +886,13 @@ refreshDetail = function()
 				task.defer(refreshDetail)
 			end
 		end)
+		if target ~= player then
+			selfGodConnection = player.AttributeChanged:Connect(function(name)
+				if name == "AdminGod" then
+					task.defer(refreshDetail)
+				end
+			end)
+		end
 	end
 	if not target then
 		local hint = card(frame)

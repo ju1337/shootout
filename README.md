@@ -830,7 +830,7 @@ Spielerliste (Avatar, AKTUALISIEREN, unten Sperre/Entsperren per UserId), rechts
   Dungeon-Schlüssel; HINGEHEN, HERHOLEN, INS CAMP, EINFRIEREN, RESPAWN (ohne Tod und Taschenverlust), HEILEN, TÖTEN;
   VOR BESTENLISTE VERSTECKEN (Profil `HideBoards`); Grund + Tage (0 = für immer) → KICK, BAN; RESET DATA (zweimal
   klicken, Spielstand wie neu, Spieler wird gekickt); Team-Rang.
-- **EFFEKTE**: Gottmodus (Attribut `AdminGod`, kein Schaden), Doppel-XP 30 Min / 2 Std / 24 Std, Einfrieren, Noclip.
+- **EFFEKTE**: Gottmodus (Attribut `AdminGod`, kein Schaden, Leben bleibt voll; Knopf zeigt AN/AUS), Doppel-XP 30 Min / 2 Std / 24 Std, Einfrieren, Noclip.
 - **EVENTS**: jedes Event der offenen Welt mit Live-Status und START / BEI MIR / STOP, Bosse, Zombies, Dungeons beenden.
 - **NACHRICHTEN**: Ankündigung an alle (Banner) und Nachricht an den gewählten Spieler (Textfilter).
 - **WELT**: Uhrzeit (06/12/18/22/00 Uhr), Nebel fest oder automatisch (`FogOverride`), Sturmnacht, Blutmond, Bots.

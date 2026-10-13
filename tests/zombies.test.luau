@@ -195,6 +195,12 @@ step(0.6)
 check(alice.Character.Humanoid.Health == health - Z.AttackDamage, "Zombie trifft Alice (" .. alice.Character.Humanoid.Health .. ")")
 step(Z.AttackDelay)
 check(alice.Character.Humanoid.Health == health - 2 * Z.AttackDamage, "nach AttackDelay der nächste Schlag")
+-- Admin-Gottmodus: der Zombie schlägt weiter zu, Alice verliert kein Leben
+alice:SetAttribute("AdminGod", true)
+local godHealth = alice.Character.Humanoid.Health
+step(Z.AttackDelay * 3)
+check(alice.Character.Humanoid.Health == godHealth, "Gottmodus: Zombie macht keinen Schaden (" .. alice.Character.Humanoid.Health .. ")")
+alice:SetAttribute("AdminGod", nil)
 
 -- Safe Zone: Zombies bleiben draußen, kein Schaden
 place(alice, Vector3.new(0, 3, -95))

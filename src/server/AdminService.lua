@@ -275,7 +275,7 @@ function AdminService.Init(manager)
 			ProgressService.AddXPBoost(player, minutes)
 			return player.Name .. ": Doppel-XP +" .. minutes .. " Min."
 		end,
-		-- Gottmodus an/aus (kein Schaden, Damage.Apply)
+		-- Gottmodus an/aus (kein Schaden: Damage.Apply, dazu hält guardGod das Leben voll); beim Anschalten volles Leben
 		God = function(userId)
 			local player = target(userId)
 			if not player then
@@ -283,6 +283,10 @@ function AdminService.Init(manager)
 			end
 			local on = not player:GetAttribute("AdminGod")
 			player:SetAttribute("AdminGod", on or nil)
+			local humanoid = on and humanoidOf(player)
+			if humanoid then
+				humanoid.Health = humanoid.MaxHealth
+			end
 			return player.Name .. (on and ": Gottmodus AN" or ": Gottmodus AUS")
 		end,
 		-- Admin springt zum Spieler
@@ -942,11 +946,29 @@ function AdminService.Init(manager)
 		AdminService.Record(tostring(data.By) .. " (anderer Server)", data.Action, data.A, ok and tostring(result) or "Fehler")
 	end)
 
+	-- Gottmodus: Leben sofort wieder voll, auch bei Schaden, der nicht über Damage.Apply läuft (direkt gesetztes
+	-- Health). Health 0 (TÖTEN im Panel, Respawn) bleibt.
+	local function guardGod(player, character)
+		local humanoid = character:WaitForChild("Humanoid", 10)
+		if not humanoid or not humanoid:IsA("Humanoid") then
+			return
+		end
+		humanoid.HealthChanged:Connect(function(health)
+			if player:GetAttribute("AdminGod") and health > 0 and health < humanoid.MaxHealth then
+				humanoid.Health = humanoid.MaxHealth
+			end
+		end)
+	end
+
 	-- Einfrieren endet mit dem nächsten Spawn
 	local function watch(player)
-		player.CharacterAdded:Connect(function()
+		player.CharacterAdded:Connect(function(character)
 			player:SetAttribute("AdminFrozen", nil)
+			task.spawn(guardGod, player, character)
 		end)
+		if player.Character then
+			task.spawn(guardGod, player, player.Character)
+		end
 	end
 	Players.PlayerAdded:Connect(watch)
 	for _, player in Players:GetPlayers() do
