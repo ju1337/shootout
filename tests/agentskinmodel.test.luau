@@ -48,6 +48,8 @@ end
 suit("AS_Scout").Parent = folder
 suit("AS_Feldgrau").Parent = folder -- Skin ohne Model = true: kein gültiger Name
 
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentModels = require("AgentModels")
 local AgentConfig = require("AgentConfig")
 local Cosmetics = require("Cosmetics")

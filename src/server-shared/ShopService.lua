@@ -61,6 +61,9 @@ end
 function actions.Equip(player, itemId, weaponName)
 	local item = Cosmetics.Get(itemId)
 	if item and item.Type == "Agent" then
+		if not Cosmetics.AgentSkins then
+			return "Agenten-Skins gibt es nicht mehr: du spielst mit deinem eigenen Avatar.", false
+		end
 		if not ProgressService.Owns(player, itemId) then
 			return item.Creator and "Diesen Skin gibt es nur für Creator." or "Diesen Skin besitzt du nicht.", false
 		end

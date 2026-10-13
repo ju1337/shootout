@@ -22,6 +22,10 @@ local RapConfig = require(ReplicatedStorage:WaitForChild("Shared").RapConfig)
 
 local Cosmetics = {}
 
+-- Agenten-Skins an? Aus: nicht im Shop, nicht im Menü SKINS, nicht im Angebot, ausgerüstete wirken nicht (Spieler
+-- haben ihren eigenen Roblox-Avatar, AgentConfig.RobloxAvatar). Besitz bleibt gespeichert.
+Cosmetics.AgentSkins = false
+
 Cosmetics.DailyReward = 100            -- Münzen pro täglicher Belohnung
 Cosmetics.DailyCooldown = 20 * 3600    -- Sekunden bis zur nächsten
 Cosmetics.CoinsPerXP = 0.25            -- 100 XP = 25 Münzen (Kill 25, Rundensieg ~37, Matchsieg 100)
@@ -210,6 +214,9 @@ end
 
 -- Im Shop kaufbar?
 function Cosmetics.ForSale(item)
+	if item.Type == "Agent" and not Cosmetics.AgentSkins then
+		return false
+	end
 	return item.Price ~= nil and not item.Pass and not item.Reward and not item.Mastery
 end
 
@@ -228,6 +235,9 @@ end
 
 -- Alle Skins eines Typs ("Weapon")
 function Cosmetics.List(itemType)
+	if itemType == "Agent" and not Cosmetics.AgentSkins then
+		return {}
+	end
 	local list = {}
 	for _, item in Cosmetics.Items do
 		if item.Type == itemType then
@@ -287,6 +297,9 @@ end
 -- Ausgerüsteter Agenten-Skin des Spielers (nur wenn er ihn besitzt), sonst nil
 function Cosmetics.AgentSkin(player)
 	if not player then
+		return nil
+	end
+	if not Cosmetics.AgentSkins then
 		return nil
 	end
 	local id = Cosmetics.GetEquipped(player).Agent

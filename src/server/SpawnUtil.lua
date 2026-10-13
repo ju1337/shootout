@@ -1,6 +1,6 @@
 -- SpawnUtil (ModuleScript, nur Server)
--- Charakter neu laden und an eine bestimmte Stelle setzen. Jeder Spieler spawnt als Agent: einheitlicher Körper
--- in den Farben seines Agenten (AgentBody), nicht mit dem eigenen Roblox-Avatar.
+-- Charakter neu laden und an eine bestimmte Stelle setzen. Mit AgentConfig.RobloxAvatar spawnt jeder mit seinem eigenen
+-- Roblox-Avatar; sonst als Agent: einheitlicher Körper in den Farben seines Agenten (AgentBody).
 
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +18,9 @@ local SpawnUtil = {}
 -- Charakter mit dem Agenten-Körper laden. Klappt das nicht (z.B. Roblox-Dienst gestört), wird der normale
 -- Charakter geladen – AgentService zieht ihn dann trotzdem als Agent an.
 local function loadAgentCharacter(player)
+	if AgentConfig.RobloxAvatar then
+		return (pcall(player.LoadCharacter, player)) -- eigener Roblox-Avatar
+	end
 	local primary = Cosmetics.AgentColors(player, AgentConfig.MainId)
 	local ok, err = pcall(player.LoadCharacterWithHumanoidDescription, player, AgentBody.Description(primary))
 	if ok then
@@ -30,6 +33,9 @@ end
 -- Hat der Agent ein 3D-Modell, wird das Modell selbst der Charakter (wie ein StarterCharacter): der geladene
 -- Roblox-Körper wird gelöscht, nur seine Skripte (Animate, Health) wandern ins Modell. Gibt true zurück, wenn getauscht.
 local function useAgentModel(player)
+	if AgentConfig.RobloxAvatar then
+		return false
+	end
 	local default = player.Character
 	local model = default and AgentModels.BuildCharacter(AgentModels.LookFor(AgentConfig.MainId, Cosmetics.AgentSkin(player)))
 	if not model then

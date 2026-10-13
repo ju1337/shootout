@@ -635,8 +635,9 @@ function LobbyPages.Shop(page)
 		local w = math.floor((PAGE_W - x0 - gap) / 2)
 		local h = math.floor((PAGE_H - 54 - gap) / 2)
 		local weaponTotal, weaponHave, weaponFrom = catalogCount("Weapon")
-		local agentTotal, agentHave, agentFrom = catalogCount("Agent")
-		categoryTile(x0, 0, w, h, "WAFFEN-SKINS", weaponHave .. " VON " .. weaponTotal .. " IM BESITZ  ·  AB "
+		-- ohne Agenten-Skins nimmt WAFFEN-SKINS die ganze obere Reihe ein
+		local weaponW = Cosmetics.AgentSkins and w or 2 * w + gap
+		categoryTile(x0, 0, weaponW, h, "WAFFEN-SKINS", weaponHave .. " VON " .. weaponTotal .. " IM BESITZ  ·  AB "
 			.. UITheme.FormatNumber(weaponFrom) .. " MÜNZEN", "WAFFEN-SKINS", function(area, aw, ah)
 			local item = showcase("Weapon")
 			if item then
@@ -645,15 +646,18 @@ function LobbyPages.Shop(page)
 				showWeapon(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), "Rifle", item, aw / ah, 0.8)
 			end
 		end)
-		categoryTile(x0 + w + gap, 0, w, h, "AGENTEN-SKINS", agentHave .. " VON " .. agentTotal .. " IM BESITZ  ·  AB "
-			.. UITheme.FormatNumber(agentFrom) .. " MÜNZEN", "AGENTEN-SKINS", function(area)
-			local item = showcase("Agent")
-			if item then
-				local rarity = Cosmetics.Rarities[item.Rarity]
-				local s = stage({ Size = UDim2.fromScale(1, 1) }, area, item.Color, rarity.Color)
-				LobbyPages.ShowAgent(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), item)
-			end
-		end)
+		if Cosmetics.AgentSkins then
+			local agentTotal, agentHave, agentFrom = catalogCount("Agent")
+			categoryTile(x0 + w + gap, 0, w, h, "AGENTEN-SKINS", agentHave .. " VON " .. agentTotal .. " IM BESITZ  ·  AB "
+				.. UITheme.FormatNumber(agentFrom) .. " MÜNZEN", "AGENTEN-SKINS", function(area)
+				local item = showcase("Agent")
+				if item then
+					local rarity = Cosmetics.Rarities[item.Rarity]
+					local s = stage({ Size = UDim2.fromScale(1, 1) }, area, item.Color, rarity.Color)
+					LobbyPages.ShowAgent(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), item)
+				end
+			end)
+		end
 		categoryTile(x0, h + gap, w, h, "ROBUX", "MÜNZEN, PÄSSE UND BOOSTS", "ROBUX", function(area)
 			local s = stage({ Size = UDim2.fromScale(1, 1) }, area, C.Gold, C.Gold)
 			UITheme.Coin(s, 96, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.42, 0.5), ZIndex = 2 })
@@ -738,7 +742,9 @@ function LobbyPages.Shop(page)
 		Robux = "",
 		Sell = "",
 	}
-	selectTab = tabs(page, { "START", "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }, 0, 0, PAGE_W, function(name)
+	local shopTabs = Cosmetics.AgentSkins and { "START", "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }
+		or { "START", "WAFFEN-SKINS", "ROBUX", "VERKAUFEN" }
+	selectTab = tabs(page, shopTabs, 0, 0, PAGE_W, function(name)
 		currentType = ({ START = "Home", ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux",
 			VERKAUFEN = "Sell" })[name]
 		hint.Text = HINTS[currentType]

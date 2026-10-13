@@ -108,6 +108,8 @@ invisible.Transparency = 1
 empty.Parent = folder
 
 SIM.IsStudio = true -- Studio: Bericht im Output
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentModels = require("AgentModels")
 SIM.IsStudio = false
 local AgentBody = require("AgentBody")

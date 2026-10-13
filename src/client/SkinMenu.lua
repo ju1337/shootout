@@ -293,7 +293,8 @@ end
 -- Owned/Equipped aufrufen).
 function SkinMenu.Build(body, width, height, style)
 	local C = UITheme.MenuColors
-	local mode, weapon = "Agent", WEAPONS[1]
+	-- ohne Agenten-Skins (Cosmetics.AgentSkins aus) nur der Reiter WAFFEN, die Reiter AGENT/WAFFEN fallen weg
+	local mode, weapon = Cosmetics.AgentSkins and "Agent" or "Weapon", WEAPONS[1]
 	local content, refresh = nil, nil
 	local bar = make("Frame", { Name = "SkinBar", Size = UDim2.fromOffset(width, BAR_H - 8), BackgroundTransparency = 1, ZIndex = 6 }, body)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -309,15 +310,17 @@ function SkinMenu.Build(body, width, height, style)
 		buttons[name] = b
 		return b
 	end
-	button("Mode_Agent", "AGENT", 1, 110, function()
-		mode = "Agent"
-		rebuild()
-	end)
-	button("Mode_Weapon", "WAFFEN", 2, 110, function()
-		mode = "Weapon"
-		rebuild()
-	end)
-	make("Frame", { Name = "Sep", LayoutOrder = 3, Size = UDim2.fromOffset(14, 1), BackgroundTransparency = 1 }, bar)
+	if Cosmetics.AgentSkins then
+		button("Mode_Agent", "AGENT", 1, 110, function()
+			mode = "Agent"
+			rebuild()
+		end)
+		button("Mode_Weapon", "WAFFEN", 2, 110, function()
+			mode = "Weapon"
+			rebuild()
+		end)
+		make("Frame", { Name = "Sep", LayoutOrder = 3, Size = UDim2.fromOffset(14, 1), BackgroundTransparency = 1 }, bar)
+	end
 	-- Waffen nur im Reiter WAFFEN; bei schmalem Bildschirm werden die Knöpfe schmaler
 	local weaponW = math.clamp(math.floor((width - 2 * 116 - 20 - 6 * #WEAPONS) / #WEAPONS), 56, 120)
 	for i, name in WEAPONS do

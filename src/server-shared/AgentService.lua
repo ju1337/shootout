@@ -46,6 +46,23 @@ local function applyUniform(player, character, agent)
 	if AgentModels.IsModelCharacter(character) then
 		return -- das Modell ist selbst der Charakter: nichts anzuziehen
 	end
+	if AgentConfig.RobloxAvatar then
+		-- eigener Avatar bleibt; Hüte, Haare usw. sollen keine Schüsse abfangen und nichts berühren
+		local function soften(item)
+			if item:IsA("Accessory") then
+				for _, part in item:GetDescendants() do
+					if part:IsA("BasePart") then
+						part.CanQuery, part.CanTouch, part.CanCollide = false, false, false
+					end
+				end
+			end
+		end
+		for _, item in character:GetChildren() do
+			soften(item)
+		end
+		character.ChildAdded:Connect(soften)
+		return
+	end
 	local ok, err = pcall(function()
 		local primary, _, material = Cosmetics.AgentColors(player, agent.Id)
 		AgentBody.Dress(character, primary, agent.Id, material)

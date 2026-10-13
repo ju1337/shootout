@@ -2013,6 +2013,8 @@ return {
 	["STARTPAKETE · KOSTENLOS"] = "STARTER KITS · FREE",
 	["STATISTIK"] = "STATS",
 	["STATTE DEINEN AGENTEN MIT FREIGESCHALTETEN SKINS AUS"] = "EQUIP YOUR AGENT WITH UNLOCKED SKINS",
+	["RÜSTE DEINE WAFFEN MIT FREIGESCHALTETEN SKINS AUS"] = "EQUIP YOUR WEAPONS WITH UNLOCKED SKINS",
+	["Agenten-Skins gibt es nicht mehr: du spielst mit deinem eigenen Avatar."] = "Agent skins are gone: you play with your own avatar.",
 	["Steig erst aus dem Fahrzeug."] = "Get out of the vehicle first.",
 	["Im Dungeon gibt es keine Fahrzeuge."] = "No vehicles in the dungeon.",
 	["Steig erst aus."] = "Get out first.",

@@ -292,6 +292,9 @@ local STAT_GETTERS = {
 -- Nur noch ein Agent im Spiel: alle Spieler spielen ihn, die übrigen Agenten sind ausgeblendet und nicht wählbar
 -- (Werte bleiben für Bots und spätere Rückkehr). Sein Aussehen ändert man mit Agenten-Skins (Cosmetics, Menü SKINS).
 AgentConfig.MainId = AgentConfig.Agents[1].Id
+-- Spieler spawnen mit ihrem eigenen Roblox-Avatar statt im Agenten-Körper (AgentBody / Agenten-Modell). false = alter
+-- Agenten-Look (Tests für den Agenten-Körper schalten es so).
+AgentConfig.RobloxAvatar = true
 
 function AgentConfig.StatValue(key, agent)
 	local get = STAT_GETTERS[key]

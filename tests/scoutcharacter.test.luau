@@ -49,6 +49,8 @@ marker.Size = Vector3.new(0.05, 0.05, 0.05)
 marker.Parent = scout
 scout.Parent = folder
 
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentModels = require("AgentModels")
 local ViewModel = require("ViewModel")
 local GunModels = require("GunModels")

@@ -3442,9 +3442,9 @@ openMenuTab = function(id)
 		ExtinctionMap.Set(false)
 		Guide.Open()
 	elseif id == "Skins" then
-		-- Agenten-Skins ausrüsten (SkinMenu); gesperrte führen in den SHOP
+		-- Waffen-Skins (und, falls an, Agenten-Skins) ausrüsten (SkinMenu); gesperrte führen in den SHOP
 		ExtinctionMap.Set(false)
-		local win = newWindow("Skins", "SKINS", "STATTE DEINEN AGENTEN MIT FREIGESCHALTETEN SKINS AUS")
+		local win = newWindow("Skins", "SKINS", "RÜSTE DEINE WAFFEN MIT FREIGESCHALTETEN SKINS AUS")
 		local page = require(script.Parent.SkinMenu).Build(win.Body, Inv.CONTENT_W, Inv.CONTENT_H, { Tile = Inv.TILE, Red = Inv.MENU_RED, Glass = Inv.GLASS,
 			OpenShop = function()
 				openMenuTab("ShopPage")

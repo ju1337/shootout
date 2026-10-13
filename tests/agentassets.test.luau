@@ -11,6 +11,8 @@ local function check(cond, msg)
 end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentModels = require("AgentModels")
 local AgentBody = require("AgentBody")
 

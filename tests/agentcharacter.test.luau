@@ -26,6 +26,8 @@ assets.Name = "Assets"
 local folder = assets:FindFirstChild("Agents") or Instance.new("Folder", assets)
 folder.Name = "Agents"
 
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentConfig = require("AgentConfig")
 -- Als Client laden: der Client lädt auch Modelle, die erst nach dem Start in Assets.Agents ankommen
 SIM.IsServer = false

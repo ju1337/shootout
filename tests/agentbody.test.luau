@@ -17,6 +17,8 @@ end
 
 game.JobId = "server-1"
 SIM.DataStore("PlayerData_v1")
+require("AgentConfig").RobloxAvatar = false -- alter Agenten-Look (Standard ist jetzt der eigene Avatar)
+require("Cosmetics").AgentSkins = true
 local AgentConfig = require("AgentConfig")
 local Cosmetics = require("Cosmetics")
 local AgentBody = require("AgentBody")
