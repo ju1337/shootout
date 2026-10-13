@@ -141,7 +141,7 @@ function UITheme.Tag(props, parent)
 	props.AutomaticSize = props.AutomaticSize or Enum.AutomaticSize.X
 	props.TextXAlignment = Enum.TextXAlignment.Center
 	local tag = UITheme.Label(props, parent)
-	UITheme.Corner(tag, UITheme.Radius.Small)
+	UITheme.Corner(tag, UITheme.Radius.Medium)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }, tag)
 	return tag
 end
@@ -302,8 +302,10 @@ end
 -- Eckenradius der Karte eingerückt (bleibt also auf der geraden Kante) und hat voll gerundete Enden.
 -- Radius aus dem UICorner der Karte (ohne festen Radius: UITheme.Radius.XL).
 -- props (optional): Side ("Top", "Bottom", "Left", "Right"), Thickness (Standard 3 px), Inset (Abstand der Enden von
---   den Ecken, mindestens der Radius) sowie Eigenschaften des Frames (Name, ZIndex, Visible, BackgroundTransparency ...).
--- Gibt den Frame zurück.
+--   den Ecken, mindestens der Radius), Notch (true: Lasche statt Strich, außen gerade an der Kante, innen mit
+--   Rundungen so groß wie die Dicke; der dünne Strich wirkt sonst eckig) sowie Eigenschaften des Frames
+--   (Name, ZIndex, Visible, BackgroundTransparency ...).
+-- Gibt den Frame zurück (bei Notch den unsichtbaren Rahmen, die Farbe liegt im Kind "Fill").
 function UITheme.AccentBar(parent, color, props)
 	local options = props or {}
 	local side = options.Side or "Top"
@@ -317,7 +319,7 @@ function UITheme.AccentBar(parent, color, props)
 	local frameProps = { Name = "Accent", BackgroundColor3 = color or C.Primary, BorderSizePixel = 0,
 		ZIndex = parent:IsA("GuiObject") and parent.ZIndex or 1 }
 	for key, value in options do
-		if key ~= "Side" and key ~= "Thickness" and key ~= "Inset" then
+		if key ~= "Side" and key ~= "Thickness" and key ~= "Inset" and key ~= "Notch" then
 			frameProps[key] = value
 		end
 	end
@@ -329,6 +331,25 @@ function UITheme.AccentBar(parent, color, props)
 		frameProps.AnchorPoint = Vector2.new(0, side == "Bottom" and 1 or 0)
 		frameProps.Position = UDim2.new(0, inset, side == "Bottom" and 1 or 0, 0)
 		frameProps.Size = UDim2.new(1, -2 * inset, 0, thickness)
+	end
+	if options.Notch then
+		-- doppelt so dickes, rund abgerundetes Kind, zur Hälfte über die Kante geschoben und dort abgeschnitten:
+		-- an der Kante gerade, nach innen große runde Ecken
+		local fillProps = { Name = "Fill", BackgroundColor3 = frameProps.BackgroundColor3, BorderSizePixel = 0,
+			BackgroundTransparency = frameProps.BackgroundTransparency or 0, ZIndex = frameProps.ZIndex }
+		frameProps.BackgroundTransparency = 1
+		frameProps.ClipsDescendants = true
+		if side == "Left" or side == "Right" then
+			fillProps.Size = UDim2.new(0, 2 * thickness, 1, 0)
+			fillProps.Position = UDim2.fromOffset(side == "Left" and -thickness or 0, 0)
+		else
+			fillProps.Size = UDim2.new(1, 0, 0, 2 * thickness)
+			fillProps.Position = UDim2.fromOffset(0, side == "Top" and -thickness or 0)
+		end
+		local holder = make("Frame", frameProps, parent)
+		local fill = make("Frame", fillProps, holder)
+		make("UICorner", { CornerRadius = UDim.new(0, thickness) }, fill)
+		return holder
 	end
 	local bar = make("Frame", frameProps, parent)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, bar) -- runde Enden (Roblox begrenzt auf die halbe Dicke)

@@ -74,6 +74,20 @@ local bottom = UITheme.AccentBar(row, C.Gold, { Side = "Bottom" })
 check(bottom.AnchorPoint.Y == 1 and udim(bottom.Position.Y, 1, 0) and udim(bottom.Position.X, 0, UITheme.Radius.Small)
 	and udim(bottom.Size.X, 1, -2 * UITheme.Radius.Small) and roundEnds(bottom), "unten: liegt unten an, eingerückt, runde Enden")
 
+-- Lasche (Notch): außen gerade an der Kante, innen runde Ecken so groß wie die Dicke; Farbe im Kind "Fill"
+local notch = UITheme.AccentBar(card, C.Primary, { Thickness = 4, Notch = true, Inset = 14, ZIndex = 6 })
+local fill = notch:FindFirstChild("Fill")
+check(notch.BackgroundTransparency == 1 and notch.ClipsDescendants, "Lasche: Rahmen unsichtbar und schneidet ab")
+check(udim(notch.Position.X, 0, math.max(14, radius)) and udim(notch.Position.Y, 0, 0) and udim(notch.Size.Y, 0, 4),
+	"Lasche: liegt oben an, eingerückt, 4 px dick")
+check(fill ~= nil and fill.BackgroundColor3 == C.Primary and fill.ZIndex == 6, "Lasche: Farbe und ZIndex im Kind")
+check(fill ~= nil and udim(fill.Size.Y, 0, 8) and udim(fill.Position.Y, 0, -4), "Lasche: Kind halb über die Kante geschoben")
+local fillCorner = fill and fill:FindFirstChildOfClass("UICorner")
+check(fillCorner ~= nil and udim(fillCorner.CornerRadius, 0, 4), "Lasche: Rundung so groß wie die Dicke")
+local sideNotch = UITheme.AccentBar(row, C.Good, { Side = "Left", Thickness = 4, Notch = true })
+local sideFill = sideNotch:FindFirstChild("Fill")
+check(sideFill ~= nil and udim(sideFill.Size.X, 0, 8) and udim(sideFill.Position.X, 0, -4), "Lasche links: über die linke Kante")
+
 -- ohne festen Radius (kein UICorner oder Rundung in Skala): Radius XL
 local plain = Instance.new("Frame")
 local fallback = UITheme.AccentBar(plain)

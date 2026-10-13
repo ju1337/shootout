@@ -344,11 +344,14 @@ function ExtMarketPage.Build(body, ctx)
 			CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 5 }, content)
 	end
 	local results = scroller("Results")
+	-- Ränder (UIStroke liegt außen am Rahmen) sonst an der Kante des ScrollingFrames abgeschnitten
+	make("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, results)
 	make("UIGridLayout", { CellSize = UDim2.fromOffset(CARD_W, CARD_H), CellPadding = UDim2.fromOffset(CARD_GAP, CARD_GAP),
 		SortOrder = Enum.SortOrder.LayoutOrder }, results)
 	local mineList = scroller("Mine")
 	mineList.Visible = false
 	make("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, mineList)
+	make("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, mineList)
 	local footer = label({ Name = "Footer", Position = UDim2.fromOffset(0, 648), Size = UDim2.fromOffset(LEFT_W, 20), Text = "",
 		TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, content)
 
@@ -421,7 +424,7 @@ function ExtMarketPage.Build(body, ctx)
 		card:SetAttribute("Own", own)
 		UITheme.Corner(card, UITheme.Radius.Large)
 		UITheme.Stroke(card, own and C.Primary or kindColor, 1, own and 0.15 or 0.6)
-		UITheme.AccentBar(card, own and C.Primary or kindColor, { Inset = 14, ZIndex = 6 })
+		UITheme.AccentBar(card, own and C.Primary or kindColor, { Inset = 14, Thickness = 4, Notch = true, ZIndex = 6 })
 		local stage = make("Frame", { Name = "Stage", Position = UDim2.fromOffset(10, 12), Size = UDim2.new(1, -20, 0, 104),
 			BackgroundColor3 = C.Background, BackgroundTransparency = 0.35, BorderSizePixel = 0, ZIndex = 5 }, card)
 		UITheme.Corner(stage, UITheme.Radius.Medium)
@@ -534,7 +537,7 @@ function ExtMarketPage.Build(body, ctx)
 		row:SetAttribute("ListingId", offer.Id)
 		UITheme.Corner(row, UITheme.Radius.Large)
 		UITheme.Stroke(row, kindColor, 1, 0.6)
-		UITheme.AccentBar(row, kindColor, { Side = "Left", ZIndex = 6 })
+		UITheme.AccentBar(row, kindColor, { Side = "Left", Thickness = 4, Notch = true, ZIndex = 6 })
 		bigIcon(row, offer.Item, UDim2.fromOffset(90, 72), UDim2.fromOffset(12, 10), 6)
 		label({ Name = "Name", Position = UDim2.fromOffset(112, 12), Size = UDim2.fromOffset(296, 24),
 			Text = upper(config and config.Name or tostring(offer.Item)) .. (count > 1 and ("  ×" .. format(count)) or ""),
