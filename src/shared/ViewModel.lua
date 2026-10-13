@@ -116,7 +116,7 @@ end
 -- width = gewünschte Dicke des Unterarms (Kamera-Raum, Studs) statt Körper-Dicke mal ARM_THICKNESS (eigener Roblox-Avatar:
 -- dessen Arme sind 1 Stud dick und wären vor der Kamera breite Platten)
 local function buildRealArm(side, width)
-	local bones = {
+	local bones: { [string]: any } = {
 		Upper = { From = side.Shoulder, To = side.Elbow },
 		Lower = { From = side.Elbow, To = side.Wrist },
 		Hand = { From = side.Wrist, To = side.Wrist + (side.Wrist - side.Elbow) },
