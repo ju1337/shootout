@@ -792,6 +792,8 @@ return {
 	["Ereignis"] = "Event",
 	["Erfolg · {1}"] = "Achievement · {1}",
 	["ERFOLGE"] = "ACHIEVEMENTS",
+	["MISSIONEN"] = "MISSIONS",
+	["SOCIAL"] = "SOCIAL",
 	["Erhalten: {1}"] = "Received: {1}",
 	["Erkunde: {1}"] = "Explore: {1}",
 	["Erledige 20 Spieler in Extinction"] = "Take out 20 players in Extinction",
