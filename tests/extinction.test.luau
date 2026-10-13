@@ -550,7 +550,7 @@ for _, entry in SIM.RemoteLog do
 		homeBanner = true
 	end
 end
-check(homeBanner, "Meldung: Spawnpunkt gesetzt")
+check(not homeBanner, "kein Banner beim neuen Spawnpunkt")
 moveTo(alice, Vector3.new(0, 3, 700))
 step(0.5)
 check(alice:GetAttribute("SafeZoneTitle") == nil and alice:GetAttribute("ExtHome") == "SAFEHOUSE TEST", "draußen bleibt der Spawnpunkt")

@@ -236,15 +236,10 @@ local function updateZone(player, info)
 		return
 	end
 	local inside = safe ~= nil
-	-- Spawnpunkt: die zuletzt betretene Safe Zone (Camp oder Safehouse)
+	-- Spawnpunkt: die zuletzt betretene Safe Zone (Camp oder Safehouse), still ohne Banner
 	if safe and info.Home ~= safe.Key then
-		local first = info.Home == nil
 		info.Home = safe.Key
 		player:SetAttribute("ExtHome", safe.Title)
-		if not first then
-			notify(player, "Banner", { Caption = "Spawnpunkt gesetzt", Title = string.upper(safe.Title),
-				Sub = "Nach dem Tod spawnst du hier", Style = "Good" })
-		end
 	end
 	player:SetAttribute("SafeZoneTitle", safe and safe.Title or nil)
 	-- Rote Zone: PvP sofort, Anzeige und Meldung beim Betreten/Verlassen
