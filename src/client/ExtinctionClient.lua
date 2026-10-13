@@ -1649,7 +1649,7 @@ end
 
 -- Alle Fenster (Menü-Reiter, Stände, Lager, Beute, Reisen, Versteck) im selben halbtransparenten Rahmen; nur die
 -- Reiter haben die Seitenleiste. Fenster mit festem Aufbau (FIXED_WINDOWS) bekommen ihre alte Inhaltsgröße, mittig.
-local FIXED_WINDOWS = { Travel = true, Hideout = true, Kits = true }
+local FIXED_WINDOWS = { Travel = true, Kits = true }
 local function newWindow(kind, title, subtitle)
 	closeWindow()
 	windowGui.Enabled = true
@@ -2548,8 +2548,12 @@ local function openHideout()
 	local C = UITheme.MenuColors
 	local win = newWindow("Hideout", "VERSTECK", "STUFEN UND MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION")
 	Inv.solidWindow(win)
-	local body = win.Body
-	local W, H = 1124, 532
+	-- in der Breite 1124 gebaut und auf die ganze Fläche skaliert; die Höhe folgt dem Fenster (Zeilen werden höher)
+	local W = 1124
+	local scale = Inv.CONTENT_W / W
+	local H = math.max(532, math.floor(Inv.CONTENT_H / scale))
+	local body = make("Frame", { Name = "Hideout", Size = UDim2.fromOffset(W, H), BackgroundTransparency = 1, ZIndex = 5 }, win.Body)
+	make("UIScale", { Scale = scale }, body)
 	local LEFT_W, GAP = 340, 16
 	local RIGHT_X = LEFT_W + GAP
 	local RIGHT_W = W - RIGHT_X
@@ -2654,6 +2658,7 @@ local function openHideout()
 	local ROW_H = math.floor((H - 48 - ROW_GAP * (#modules - 1)) / #modules)
 	local BTN_W = 132
 	local COL2, COL3 = 222, 402 -- Spalten: Bonus, Kosten
+	local oy = math.max(0, math.floor((ROW_H - 70) / 2)) -- Inhalt der Zeilen senkrecht mittig
 	local views = {}
 	for i, module in modules do
 		local row = UITheme.Card({ Name = "Module_" .. module.Id, Position = UDim2.fromOffset(0, (i - 1) * (ROW_H + ROW_GAP)),
@@ -2661,20 +2666,20 @@ local function openHideout()
 		local view = { Row = row, Module = module, Target = 1 }
 		view.Accent = UITheme.AccentBar(row, HIDEOUT, { Side = "Left", ZIndex = 7 })
 		-- Spalte 1: Name, Stufe, Beschreibung
-		text({ Name = "Name", Position = UDim2.fromOffset(18, 10), Size = UDim2.fromOffset(COL2 - 30, 22), Text = upper(module.Name), TextSize = 18,
+		text({ Name = "Name", Position = UDim2.fromOffset(18, oy + 10), Size = UDim2.fromOffset(COL2 - 30, 22), Text = upper(module.Name), TextSize = 18,
 			Font = F.Display }, row)
-		text({ Name = "Text", Position = UDim2.fromOffset(18, 34), Size = UDim2.fromOffset(COL2 - 30, 30), Text = module.Text, TextSize = 12,
+		text({ Name = "Text", Position = UDim2.fromOffset(18, oy + 34), Size = UDim2.fromOffset(COL2 - 30, 30), Text = module.Text, TextSize = 12,
 			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, row)
 		-- Spalte 2: Bonus jetzt (groß) und nach dem Ausbau, Stufen-Punkte
-		view.Now = text({ Name = "Now", Position = UDim2.fromOffset(COL2, 10), Size = UDim2.fromOffset(COL3 - COL2 - 12, 22), Text = "",
+		view.Now = text({ Name = "Now", Position = UDim2.fromOffset(COL2, oy + 10), Size = UDim2.fromOffset(COL3 - COL2 - 12, 22), Text = "",
 			TextScaled = true, Font = F.Display, TextColor3 = HIDEOUT }, row)
 		make("UITextSizeConstraint", { MaxTextSize = 17 }, view.Now) -- lange Boni ("120 Münzen pro Stunde") werden kleiner
-		view.Next = text({ Name = "Next", Position = UDim2.fromOffset(COL2, 34), Size = UDim2.fromOffset(COL3 - COL2 - 12, 16), Text = "",
+		view.Next = text({ Name = "Next", Position = UDim2.fromOffset(COL2, oy + 34), Size = UDim2.fromOffset(COL3 - COL2 - 12, 16), Text = "",
 			TextScaled = true, Font = F.Bold, TextColor3 = C.Muted }, row)
 		make("UITextSizeConstraint", { MaxTextSize = 12 }, view.Next)
 		view.Pips = {}
 		for level = 1, #module.Levels do
-			local pip = make("Frame", { Name = "Pip" .. level, Position = UDim2.fromOffset(COL2 + (level - 1) * 34, ROW_H - 16),
+			local pip = make("Frame", { Name = "Pip" .. level, Position = UDim2.fromOffset(COL2 + (level - 1) * 34, oy + 56),
 				Size = UDim2.fromOffset(28, 5), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, row)
 			UITheme.Corner(pip, 3)
 			view.Pips[level] = pip
@@ -2686,14 +2691,14 @@ local function openHideout()
 			view.Costs)
 		-- Spalte 4: Knöpfe (Generator und Presse: Ausbauen oben, Abholen unten)
 		local collectAction = module.Id == "Generator" and "HideoutCollect" or module.Id == "AmmoPress" and "HideoutPress" or nil
-		local btnH = collectAction and math.floor((ROW_H - 26) / 2) or 40
-		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, collectAction and 9
-			or math.floor((ROW_H - 40) / 2)), Size = UDim2.fromOffset(BTN_W, btnH), Color = C.Primary, TextColor = C.PrimaryText, Text = "",
+		local btnH = collectAction and math.min(40, math.floor((ROW_H - 26) / 2)) or 40
+		view.BtnH = btnH
+		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0), Size = UDim2.fromOffset(BTN_W, btnH), Color = C.Primary, TextColor = C.PrimaryText, Text = "",
 			TextSize = 13, ZIndex = 7 }, row, function()
 			sendAction("HideoutUpgrade", module.Id, view.Target) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
 		end)
 		if collectAction then
-			view.Collect = UITheme.Chunky({ Name = "Collect", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -14, 1, -9),
+			view.Collect = UITheme.Chunky({ Name = "Collect", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0.5, 3),
 				Size = UDim2.fromOffset(BTN_W, btnH), Color = C.Card, StrokeColor = HIDEOUT, Text = "", TextSize = 13, ZIndex = 7 }, row,
 				function()
 					sendAction(collectAction)
@@ -2701,7 +2706,7 @@ local function openHideout()
 		end
 		if module.Id == "AmmoPress" then
 			-- Sorte wählen: Knopf neben dem Bonus schaltet reihum weiter
-			view.Ammo = UITheme.Chunky({ Name = "Ammo", Position = UDim2.fromOffset(COL3 - 12 - 72, ROW_H - 30), Size = UDim2.fromOffset(72, 22), Color = C.Card,
+			view.Ammo = UITheme.Chunky({ Name = "Ammo", Position = UDim2.fromOffset(COL3 - 12 - 72, oy + 46), Size = UDim2.fromOffset(72, 22), Color = C.Card,
 				StrokeColor = C.Border, Text = "", TextSize = 12, ZIndex = 8 }, row, function()
 				local list = HideoutConfig.PressAmmo
 				local current = table.find(list, HideoutConfig.PressAmmoOf(HideoutConfig.Data(player))) or 1
@@ -2860,6 +2865,11 @@ local function openHideout()
 				or ("AUF STUFE " .. (level + 1)))
 			view.Upgrade.SetColor(affordable and C.Primary or C.Card, affordable and C.PrimaryText or C.Muted)
 			if view.Collect then
+				-- noch nicht gebaut: nur der Knopf zum Bauen, mittig wie in den anderen Zeilen
+				local single = level == 0
+				view.Upgrade.Button.AnchorPoint = Vector2.new(1, single and 0.5 or 1)
+				view.Upgrade.Button.Position = UDim2.new(1, -14, 0.5, single and 0 or -3)
+				view.Upgrade.Button.Size = UDim2.fromOffset(BTN_W, single and 40 or view.BtnH)
 				local pending = module.Id == "Generator" and HideoutConfig.Pending(data, now) or HideoutConfig.PressPending(data, now)
 				view.Collect.Button.Visible = level > 0
 				view.Collect.SetText(module.Id == "Generator" and ("ABHOLEN · " .. UITheme.FormatNumber(pending))
