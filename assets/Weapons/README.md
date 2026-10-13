@@ -6,12 +6,6 @@ ReplicatedStorage › Assets › Weapons › „Save to File…“ › hier als 
 Das Spiel selbst lädt die Modelle aus dem Place. Die Kopien hier prüft GitHub bei jedem Push (Test `weaponassets`,
 dazu laufen `weapons`, `viewmodel` und `pose` mit deinem Modell). Anleitung: [docs/waffen-modelle.md](../../docs/waffen-modelle.md)
 
-`SMG.rbxmx` ist eine Kopie von `models/Weapons/SMG.rbxmx` (MP7 aus Studio) – bei Änderungen beide ersetzen.
-
-`Pistol.rbxmx` ist eine Kopie von `models/Weapons/Pistol.rbxmx` (Mark 23 aus Studio) – bei Änderungen beide ersetzen.
-
-`LMG.rbxmx` ist eine Kopie von `models/Weapons/LMG.rbxmx` (M60 aus Studio) – bei Änderungen beide ersetzen.
-
-`Revolver.rbxmx` ist eine Kopie von `models/Weapons/Revolver.rbxmx` (Chiappa Rhino aus Studio) – bei Änderungen beide ersetzen.
-
-`Shotgun.rbxmx` ist eine Kopie von `models/Weapons/Shotgun.rbxmx` (Gen-12 aus Studio) – bei Änderungen beide ersetzen.
+Die Kopien `Pistol`, `SMG` und `LMG` entsprechen `models/Weapons/<Waffe>.rbxmx` (Meshy-Waffen aus Studio: Glock 17,
+MP5, MG mit Gurtkasten) – bei Änderungen beide ersetzen. Revolver und Schrotflinte folgen nach dem Neuimport mit
+Schnelllader bzw. Patrone.

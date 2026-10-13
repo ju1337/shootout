@@ -172,7 +172,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://114546210411096</url></Content>
+          
           <SharedString name="PhysicalConfigData">9SS5qM7v7Ak187tYJY5baA==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -212,7 +212,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -364,7 +364,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://103733465961992</url></Content>
+          
           <SharedString name="PhysicalConfigData">H8J7h4SKqKYDcJhN7jN2vA==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -404,7 +404,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -556,7 +556,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://133898781204797</url></Content>
+          
           <SharedString name="PhysicalConfigData">coYs9vr8u15Bpqqpg9Zasw==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -596,7 +596,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -748,7 +748,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://124235191796191</url></Content>
+          
           <SharedString name="PhysicalConfigData">wTJrJ68JLlp9Gt4bh1pzjg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -788,7 +788,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -940,7 +940,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://123308839180220</url></Content>
+          
           <SharedString name="PhysicalConfigData">OgSXA6FgB1bWSHNWOXrF2Q==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -980,7 +980,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -1020,7 +1020,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -1028,10 +1028,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -1164,7 +1164,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://114482135278911</url></Content>
+          
           <SharedString name="PhysicalConfigData">8ivge8ilGXaXG0ywU7yYZg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -1204,7 +1204,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -1244,7 +1244,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -1252,10 +1252,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -1336,9 +1336,9 @@
           <token name="BottomSurface">0</token>
           <token name="BottomSurfaceInput">0</token>
           <CoordinateFrame name="CFrame">
-            <X>-2.466503</X>
-            <Y>3.0392513</Y>
-            <Z>-12.0629425</Z>
+            <X>-2.467</X>
+            <Y>3.25</Y>
+            <Z>-12.07</Z>
             <R00>1</R00>
             <R01>0</R01>
             <R02>0</R02>
@@ -1388,7 +1388,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://81372439159366</url></Content>
+          
           <SharedString name="PhysicalConfigData">P3zLHW9ve65JMxfR091JEg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -1428,7 +1428,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -1580,7 +1580,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://104226213094255</url></Content>
+          
           <SharedString name="PhysicalConfigData">xm4YGN+a5LnBFhOg1PNXIQ==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -1620,7 +1620,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -1660,7 +1660,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -1668,10 +1668,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -1804,7 +1804,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://84632484839685</url></Content>
+          
           <SharedString name="PhysicalConfigData">z8QRODHSLBBh29I43f+bFw==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -1844,7 +1844,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -1884,7 +1884,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -1892,10 +1892,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -2028,7 +2028,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://120577961033221</url></Content>
+          
           <SharedString name="PhysicalConfigData">Sr0dnnfq7PElEOfnw1eGsA==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -2068,7 +2068,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -2108,7 +2108,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -2116,10 +2116,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -2252,7 +2252,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://119587799667874</url></Content>
+          
           <SharedString name="PhysicalConfigData">0PCz/LCRY8KxKbEbeHeBIw==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -2292,7 +2292,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -2332,7 +2332,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -2340,10 +2340,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -2476,7 +2476,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://124427767649564</url></Content>
+          
           <SharedString name="PhysicalConfigData">eQEu+mOUl/wIv0DKk3Z2VQ==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -2516,7 +2516,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -2556,7 +2556,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -2564,10 +2564,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -2700,7 +2700,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://130126092024501</url></Content>
+          
           <SharedString name="PhysicalConfigData">K33eq+1ZOITg9AvkXVsC5w==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -2740,7 +2740,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -2892,7 +2892,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://131852958124793</url></Content>
+          
           <SharedString name="PhysicalConfigData">y4mrYxGPVRbg7ujH+OJ1BQ==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -2932,7 +2932,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -3084,7 +3084,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://109514906722108</url></Content>
+          
           <SharedString name="PhysicalConfigData">mAS36vGqepmDFDlsadee4g==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -3124,7 +3124,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -3164,7 +3164,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -3172,10 +3172,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -3308,7 +3308,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://135871214083492</url></Content>
+          
           <SharedString name="PhysicalConfigData">nh6PWWG2t2Ptjm8+OJneUg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -3348,7 +3348,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -3388,7 +3388,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -3396,10 +3396,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -3532,7 +3532,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://95715064366851</url></Content>
+          
           <SharedString name="PhysicalConfigData">fJ04YkVj1du5Q38LPrCDEg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -3572,7 +3572,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -3612,7 +3612,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -3620,10 +3620,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -3756,7 +3756,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://91443400035354</url></Content>
+          
           <SharedString name="PhysicalConfigData">nzT8/+xW8pvreF39+F2D6g==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -3796,7 +3796,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -3948,7 +3948,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://133766505106655</url></Content>
+          
           <SharedString name="PhysicalConfigData">46kNKd5QxblzsXm0JUFdfg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -3988,7 +3988,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -4028,7 +4028,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -4036,10 +4036,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -4172,7 +4172,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://134937517155634</url></Content>
+          
           <SharedString name="PhysicalConfigData">+RlMzcRaMST0Y94IQBlrCA==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -4212,7 +4212,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -4252,7 +4252,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -4260,10 +4260,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
@@ -4396,7 +4396,7 @@
           <bool name="Massless">false</bool>
           <token name="Material">256</token>
           <string name="MaterialVariantSerialized"></string>
-          <Content name="MeshId"><url>rbxassetid://85904777039440</url></Content>
+          
           <SharedString name="PhysicalConfigData">vY2YCJX5DvjxS/AL7YqmLg==</SharedString>
           <BinaryString name="PhysicsData">
           </BinaryString>
@@ -4436,7 +4436,7 @@
           </Vector3>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
-          <Content name="TextureID"><null></null></Content>
+          
           <float name="TopParamA">-0.5</float>
           <float name="TopParamB">0.5</float>
           <token name="TopSurface">0</token>
@@ -4476,7 +4476,7 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="ColorMap"><url>rbxassetid://70472670217941</url></Content>
+            
             
             <float name="EmissiveStrength">1</float>
             <Color3 name="EmissiveTint">
@@ -4484,10 +4484,10 @@
               <G>1</G>
               <B>1</B>
             </Color3>
-            <Content name="MetalnessMap"><url>rbxassetid://118393799559051</url></Content>
-            <Content name="NormalMap"><url>rbxassetid://91794100918469</url></Content>
+            
+            
             <token name="ResampleMode">0</token>
-            <Content name="RoughnessMap"><url>rbxassetid://140105670320287</url></Content>
+            
             <bool name="DefinesCapabilities">false</bool>
             <BinaryString name="SerializedOverrides">
             </BinaryString>
