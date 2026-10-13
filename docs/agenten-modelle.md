@@ -28,6 +28,13 @@ Ellbogen bzw. abstehende Stücke, wenn der Arm die Waffe hebt). Fehlt die Meshy-
 → Import 3D (Scale Unit **Stud**, **Merge Meshes aus**, **kein Rig**) → nach Assets › Agents → `AS_Scout` nennen.
 Schöner bewegt sich ein Modell mit Skelett (Meshy „Rigging“, dann der Weg unten).
 
+**Besser: Skelett mit Skinning statt starrer Teile.** `python3 tools/rig/autorig.py <ganz.glb> <out.glb> [Schnitthöhen
+wie pieces.py]` baut aus demselben statischen Meshy-Modell einen R15-Charakter mit Knochen: An Ellbogen, Knie, Hüfte
+und Schulter wird jede Ecke weich von beiden Knochen gezogen, die Hülle biegt sich statt aufzureißen. Fertig für den
+Tactical Scout: `art/sources/Agents/AS_TacticalScout_R15.glb` (GLB behält alle PBR-Maps). In Studio: Import 3D,
+Rig General › **Rig Type R15**, Einheit Stud, nach Assets › Agents, wie der Skin heißen. Im Output muss
+`Rig (bewegt sich mit) geladen` stehen.
+
 ## Modell von Meshy AI (empfohlen)
 
 Meshy liefert eine FBX mit Skelett, aber die Knochen heißen wie bei Mixamo (`Hips`, `LeftArm`, `LeftForeArm` …).
