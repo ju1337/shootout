@@ -402,7 +402,9 @@ local function showReveal(index, serverText, onAgain)
 	-- Duplikat eines gebundenen Skins: Server gab Münzen statt Skin
 	local gotItem = item ~= nil and string.find(tostring(serverText or ""), item.Name, 1, true) ~= nil
 
-	local gui = make("ScreenGui", { Name = "WheelReveal", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 30 },
+	-- Sibling: sonst liegt die Karte (ZIndex 2) über ihrem eigenen Inhalt und alles wirkt blass
+	local gui = make("ScreenGui", { Name = "WheelReveal", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 30,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling },
 		player:WaitForChild("PlayerGui"))
 	local root = UITheme.ScaledRoot(gui)
 	-- Active: Klicks gehen nicht in die Welt dahinter
@@ -446,7 +448,7 @@ local function showReveal(index, serverText, onAgain)
 		y += 156
 	end
 	label({ Position = UDim2.fromOffset(20, y), Size = UDim2.new(1, -40, 0, 22), Text = tostring(serverText or ""),
-		TextSize = 15, Font = F.Bold, TextColor3 = C.Muted, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center }, card)
+		TextSize = 16, Font = F.Bold, TextColor3 = C.Text, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center }, card)
 
 	-- Münzen zählen hoch
 	local connection = nil
