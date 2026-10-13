@@ -150,6 +150,7 @@ local function agentId()
 end
 
 -- Waffe mit Armen vor der Kamera (nur für einen selbst sichtbar)
+local AVATAR_ARM_WIDTH = 0.19 -- eigener Avatar: Unterarme vor der Kamera schlank (Studs) statt blockig 1 Stud dick
 local function updateViewModel()
 	if viewModel then
 		viewModel:Destroy()
@@ -168,7 +169,7 @@ local function updateViewModel()
 		local arms = ok and pieces or nil
 		local shirt = AgentConfig.RobloxAvatar and player.Character and player.Character:FindFirstChildOfClass("Shirt") or nil
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
-			AttachmentConfig.EquippedList(player, current), arms, hand, nil, shirt)
+			AttachmentConfig.EquippedList(player, current), arms, hand, AgentConfig.RobloxAvatar and AVATAR_ARM_WIDTH or nil, shirt)
 		viewModel:Draw()
 	end
 end
