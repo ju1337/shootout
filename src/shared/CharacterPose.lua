@@ -52,11 +52,21 @@ local LOW_RIGHT_POLE = Vector3.new(0.6, -0.8, 0.3) -- gesenkt: Oberarm hängt am
 local LOW_LEFT_POLE = Vector3.new(-0.6, -1, 0.5) -- linker Ellbogen ebenso nach unten/hinten, Schulter bleibt am Körper
 local LOW_READY_PITCH = math.rad(-22)  -- Mündung schräg nach unten
 local LOW_READY_YAW = math.rad(85)     -- quer vor dem Körper: Handschutz liegt links neben dem Bauch statt weit vorne
-local LOW_READY_GRIP = Vector3.new(0.1, -0.5, -0.1) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
+local LOW_READY_GRIP = Vector3.new(0.1, -0.5, 0.18) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
 local LOW_READY_ARM_GAP = 0.12        -- Platz für die Unterarme vor dem Bauch (Anteil der Oberkörperbreite)
 local LOW_READY_PULL = 1.4             -- höchstens so weit verschieben, damit die linke Hand hinkommt
+-- Zum Feintunen live in Studio: diese Attribute an ReplicatedStorage setzen (Zahlen), wirken sofort.
+-- Haltung_Vor (Studs Abstand vor dem Bauch), Haltung_Seite / Haltung_Hoehe (Anteil der Oberkörpergröße),
+-- Haltung_Drehung / Haltung_Neigung (Grad), Haltung_Ellbogen (wie weit die Ellbogen zur Seite gehen)
+local function tuned(name: string, default: number): number
+	local value = ReplicatedStorage:GetAttribute(name)
+	if type(value) == "number" and value == value then
+		return value
+	end
+	return default
+end
 local LOW_READY_PISTOL_PITCH = math.rad(-35)
-local LOW_READY_PISTOL_GRIP = Vector3.new(0.05, -0.5, -0.3) -- Z: vor der Bauchfläche
+local LOW_READY_PISTOL_GRIP = Vector3.new(0.05, -0.5, -0.4) -- Z: vor der Bauchfläche
 local R6_LOW_PITCH = math.rad(-38)     -- R6: Arm schräg nach unten
 local READY_AFTER_SHOT = 1.0           -- so lange nach einem Schuss bleibt die Waffe oben (wie die Schulterkamera)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
@@ -487,7 +497,8 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local gun, low
 	-- gesenkt (Low Ready): locker in Hüfthöhe, Griff vor der rechten Hüfte, Mündung leicht nach vorn unten zur Mitte,
 	-- unabhängig vom Blick. Beide Hände bleiben an der Waffe.
-	local lowRot = yaw * CFrame.Angles(0, LOW_READY_YAW, 0) * CFrame.Angles(LOW_READY_PITCH, 0, 0) -- erst seitlich drehen, dann neigen
+	local lowRot = yaw * CFrame.Angles(0, math.rad(tuned("Haltung_Drehung", math.deg(LOW_READY_YAW))), 0)
+		* CFrame.Angles(math.rad(tuned("Haltung_Neigung", math.deg(LOW_READY_PITCH))), 0, 0) -- erst seitlich drehen, dann neigen
 	local base = CFrame.new(upperTorso.Position) * yaw
 	if info.Long and info.Stock then
 		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
@@ -495,8 +506,9 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 		-- wie in GTA: quer vor dem Bauch. Rechte Hand am Griff vor der rechten Hüfte, die Waffe liegt quer vor dem Körper,
 		-- Mündung schräg nach links unten, Schaft unter dem rechten Unterarm (seitlich außerhalb des Körpers)
 		-- vor dem Bauch mit Abstand für den Unterarm (Avatar-Arme sind etwa halb so breit wie der Oberkörper)
-		local gripAt = base * Vector3.new(size.X * LOW_READY_GRIP.X, size.Y * LOW_READY_GRIP.Y,
-			-(size.Z / 2 + size.X * LOW_READY_ARM_GAP + LOW_READY_GRIP.Z))
+		local gripAt = base * Vector3.new(size.X * tuned("Haltung_Seite", LOW_READY_GRIP.X),
+			size.Y * tuned("Haltung_Hoehe", LOW_READY_GRIP.Y),
+			-(size.Z / 2 + size.X * LOW_READY_ARM_GAP + tuned("Haltung_Vor", LOW_READY_GRIP.Z)))
 		low = CFrame.new(gripAt) * lowRot
 		-- Vorderschaft außer Reichweite der linken Hand (lange Waffen): Waffe entlang ihrer Achse etwas nach rechts
 		-- hinten schieben, bis die Hand hinkommt
@@ -560,10 +572,13 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local leftJoints = armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)
 	local palm = slideIntoReach(gun * (leftHandLocal(info, pose, poseT) * SCALE), gun,
 		(upperTorso * rig.LShoulder.C0).Position, leftJoints, MAX_SLIDE * (1 + 2 * sprint)) -- gesenkt darf sie weiter nach hinten
+	local elbowOut = tuned("Haltung_Ellbogen", LOW_RIGHT_POLE.X)
+	local lowRightPole = Vector3.new(elbowOut, LOW_RIGHT_POLE.Y, LOW_RIGHT_POLE.Z)
+	local lowLeftPole = Vector3.new(-elbowOut, LOW_LEFT_POLE.Y, LOW_LEFT_POLE.Z)
 	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), handCF, nil,
-		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)):Lerp(yaw:VectorToWorldSpace(LOW_RIGHT_POLE), sprint))
+		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)):Lerp(yaw:VectorToWorldSpace(lowRightPole), sprint))
 	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm,
-		aimRot:VectorToWorldSpace(LEFT_POLE):Lerp(yaw:VectorToWorldSpace(LOW_LEFT_POLE), sprint))
+		aimRot:VectorToWorldSpace(LEFT_POLE):Lerp(yaw:VectorToWorldSpace(lowLeftPole), sprint))
 	if not PoseMath.AllFinite({ waistT, neckT, tRS, tRE, tRW, tLS, tLE, tLW }) then
 		return false -- Absicherung: kaputte Rechnung nie auf die Gelenke legen
 	end
