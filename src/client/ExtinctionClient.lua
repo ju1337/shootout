@@ -4015,6 +4015,37 @@ local function addBubble(part)
 	-- flache, gezeichnete Symbole (keine 3D-Modelle: die wären auf der dunklen Scheibe nicht zu erkennen)
 	local icon = buildSymbol(holder, def.Icon, 2)
 	icon.Name = "Icon_" .. def.Icon
+	if part.Name == HideoutConfig.Point then
+		-- Versteck noch gesperrt (unter Level MinLevel, keine Stufe gekauft): Schloss an der Scheibe, "AB LEVEL 4" darunter
+		gui.Size = UDim2.fromOffset(120, BUBBLE.Disc + 38)
+		local badge = make("Frame", { Name = "LockBadge", AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, BUBBLE.Disc / 2 - 4, 0, BUBBLE.Disc - 6), Size = UDim2.fromOffset(20, 20),
+			BackgroundColor3 = UITheme.Colors.Panel, BorderSizePixel = 0, ZIndex = 3 }, gui)
+		make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, badge)
+		UITheme.Stroke(badge, UITheme.MenuColors.Bad, 2)
+		local lock = Inv.lockIcon(badge, UITheme.MenuColors.Bad)
+		lock.AnchorPoint = Vector2.new(0.5, 0.5)
+		lock.Position = UDim2.fromScale(0.5, 0.5)
+		lock.Size = UDim2.fromOffset(12, 14)
+		for _, child in lock:GetDescendants() do
+			if child:IsA("GuiObject") then
+				child.ZIndex = 4
+			end
+		end
+		gui.Label.Position = UDim2.new(0.5, 0, 1, -16) -- Name eine Zeile höher, darunter die Level-Grenze
+		local levelText = make("TextLabel", { Name = "LockLevel", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
+			Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, Text = "AB LEVEL " .. HideoutConfig.MinLevel, Font = F.Bold,
+			TextSize = 12, TextColor3 = UITheme.MenuColors.Bad, TextStrokeTransparency = 0.4, TextStrokeColor3 = Color3.new(0, 0, 0) }, gui)
+		local function refresh()
+			local locked = not HideoutConfig.Unlocked(player)
+			badge.Visible = locked
+			levelText.Visible = locked
+		end
+		refresh()
+		for _, attribute in { "AccountXP", "Prestige", "Hideout" } do
+			player:GetAttributeChangedSignal(attribute):Connect(refresh)
+		end
+	end
 	table.insert(bubbles, gui)
 end
 
