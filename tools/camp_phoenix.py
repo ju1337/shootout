@@ -301,9 +301,11 @@ class CampPhoenix:
             box("Buildings", "PavilionColumn", (0.9, H, 0.9), (s * (W / 2 - 0.45), H / 2, fz + 0.45), ANTHRACITE, "Metal")
         box("Buildings", "Roof", (W + 3, 1.2, D + 3), (0, H + 0.6, 0), WHITE, "SmoothPlastic")
         box("Decor", "RoofStrip", (W + 3, 0.25, 0.25), (0, H + 0.05, fz - 1.4), accent, "Neon", props=dict(NO_HIT))
+        # Glücksrad: nur schwaches Deckenlicht, das Rad leuchtet selbst (Birnen); hell angestrahlt überstrahlte es nachts
         box("Decor", "PavilionLight", (W - 4, 0.2, D - 5), (0, H - 0.1, 0.5), (250, 248, 240), "SmoothPlastic",
             children=[{"Name": "Light", "ClassName": "SurfaceLight", "Properties": {
-                "Face": "Bottom", "Range": 16, "Brightness": 1.2, "Angle": 120, "Color": self.bm.rgb(255, 246, 230)}}])
+                "Face": "Bottom", "Range": 16, "Brightness": 0.35 if kind == "wheel" else 1.2, "Angle": 120,
+                "Color": self.bm.rgb(255, 246, 230)}}])
         for s in (-1, 1):
             box("Decor", "SignPost", (0.3, 1.0, 0.3), (s * 5, H + 1.7, fz + 0.6), ANTHRACITE, "Metal")
         self.b.sign2("PavilionSign", (14, 2.8, 0.4), f(0, H + 3.4, fz + 0.4), title, sub, (24, 26, 30), accent, (226, 228, 232),
@@ -335,21 +337,17 @@ class CampPhoenix:
 
     def _pav_wheel(self, f, box, yaw, W, D, H, fz, accent):
         """GLÜCKSRAD: Rad an der Rückwand (WheelSpot, das Rad baut der Client), Pult WheelConsole mit Tafel WheelBoard,
-        Lichtleiste, Gastgeber neben dem Pult."""
+        Gastgeber neben dem Pult. Rückwand dunkel und keine Strahler: das Rad mit seinen Birnen ist das Licht."""
         bm = self.bm
-        for k in range(8):  # Rückwand in zwei Grautönen hinter dem Rad
+        for k in range(8):  # Rückwand in zwei dunklen Tönen hinter dem Rad
             box("Decor", "BoothBackRib", (W / 8, H - 0.8, 0.25), (-W / 2 + W / 16 + k * W / 8, H / 2, D / 2 - 0.92),
-                (40, 44, 52) if k % 2 == 0 else (58, 62, 72), "SmoothPlastic")
+                (22, 24, 29) if k % 2 == 0 else (32, 35, 41), "SmoothPlastic")
         self.b.add("Zentrale", "WheelSpot", (1, 1, 1), f(0, 7.4, D / 2 - 1.5), GOLD, "SmoothPlastic", angles=(0, yaw, 0),
                    props={"Transparency": 1, "CanCollide": False, "CanQuery": False})
         self.b.box("Zentrale", "WheelConsole", (5.6, 2.2, 1.6), f(0, 1.6, fz + 4.5), (36, 39, 46), "Metal", angles=(0, yaw, 0))
         box("Decor", "WheelConsoleStrip", (5.7, 0.2, 1.7), (0, 2.6, fz + 4.5), GOLD, "Neon", props={"Transparency": 0.2})
         self.b.holo_panel("Zentrale", "WheelBoard", (5.2, 1.9, 0.15), f(0, 3.25, fz + 4.3), angles=bm.yaw_tilt(yaw, 35))
         box("Decor", "MarqueeStrip", (W - 2, 0.3, 0.3), (0, H - 0.7, fz + 0.4), GOLD, "Neon", props=dict(NO_HIT))
-        for s in (-1, 1):
-            box("Decor", "BoothLamp", (1.0, 0.6, 1.0), (s * (W / 2 - 3), H - 1.0, fz + 3), (255, 240, 210), "SmoothPlastic",
-                children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 18, "Brightness": 1.2,
-                                                                                     "Color": bm.rgb(255, 236, 200)}}])
         self.b.floor_text("WheelFloorLabel", (8, 0.1, 2), f(0, 0.55, fz + 2.4), "E AM PULT", GOLD, yaw=yaw + 180)
         self.shopkeeper(box, 5.0, fz + 4.6, OUTFITS["wheel"], y=0.5, pose="stand")
 

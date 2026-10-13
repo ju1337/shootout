@@ -311,8 +311,8 @@ local function giveBundle(player, profile, reward, reason)
 	if item and granted then
 		ProgressService.LedgerItem(player, item.Name, item.Rarity)
 		table.insert(lines, (granted == "copy" and "Skin-Duplikat: " or "Neuer Skin: ") .. item.Name)
-		if reward.Item and reward.Coins and reward.Text == "SKIN" then
-			coins = 0 -- Glücksrad: Skin statt Münzen
+		if reward.Fallback then
+			coins = 0 -- Glücksrad: Skin statt Münzen (die gibt es nur, wenn der Skin nicht geht)
 		end
 	end
 	if coins > 0 then
@@ -351,13 +351,18 @@ function ProgressService.ClaimLogin(player)
 end
 
 -- Glücksrad drehen (einmal am Tag gratis, sonst mit Extra-Dreh). Das Ergebnis geht als WheelResult an den
--- Client, der das Rad dorthin dreht; die Meldung kommt erst danach (darum hier kein Text).
+-- Client, der das Rad dorthin dreht; die Meldung kommt erst danach (darum hier kein Text). Alle anderen sehen den
+-- Dreh mit (WheelSpin). Es gibt nur ein Rad: solange es dreht, wartet der Nächste (LoginConfig.WheelBusy).
+local wheelBusyUntil = 0
 function ProgressService.SpinWheel(player)
 	local profile = profiles[player]
 	if not profile then
 		return "Daten werden noch geladen.", false
 	end
 	local now = workspace:GetServerTimeNow()
+	if now < wheelBusyUntil then
+		return "Das Rad dreht gerade. Gleich bist du dran!", false
+	end
 	profile.Wheel = profile.Wheel or {}
 	if profile.Wheel.Date == LoginConfig.Date(now) then
 		if (profile.Wheel.Spins or 0) > 0 then
@@ -391,9 +396,12 @@ function ProgressService.SpinWheel(player)
 	end
 	local field = LoginConfig.Wheel[index]
 	local lines = giveBundle(player, profile, field, "Glücksrad")
+	wheelBusyUntil = now + LoginConfig.WheelBusy
 	Remotes.WheelResult:FireClient(player, index, table.concat(lines, "  ·  "))
-	if index == #LoginConfig.Wheel then -- letztes Feld = JACKPOT
-		DiscordLog.Log("Highlight", "Glücksrad-Jackpot", table.concat(lines, " · "), { { "Spieler", DiscordLog.Who(player) } })
+	Remotes.WheelSpin:FireAllClients(player, index)
+	if index == #LoginConfig.Wheel or field.Item then -- letztes Feld = JACKPOT, dazu die Skins
+		DiscordLog.Log("Highlight", index == #LoginConfig.Wheel and "Glücksrad-Jackpot" or "Glücksrad-Skin",
+			table.concat(lines, " · "), { { "Spieler", DiscordLog.Who(player) } })
 	end
 	return nil
 end

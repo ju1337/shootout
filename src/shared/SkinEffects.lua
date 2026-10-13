@@ -29,6 +29,32 @@ SkinEffects.Styles = {
 		BreathParticles = 12, -- Größe des Feuerstoßes beim Schießen
 		GlitterParts = 6, -- so viele der größten Teile glitzern
 	},
+	-- Glücksrad-Skins (LoginConfig.Wheel): wie Drachengold, eigene Farben. Glitter/Embers/Breath = Farbverläufe
+	-- (RGB-Tabellen), Rise = Steigen der Funken (negativ = sie rieseln herab)
+	Sternschnuppe = {
+		Glow = Color3.fromRGB(120, 160, 255),
+		GlowMin = 1.2,
+		GlowMax = 5,
+		Pulse = 3.4,
+		BreathParticles = 10,
+		GlitterParts = 6,
+		Glitter = { { 255, 255, 255 }, { 150, 200, 255 } },
+		Embers = { { 240, 246, 255 }, { 120, 170, 255 }, { 70, 50, 200 } },
+		Rise = -1.4,
+		Breath = { { 235, 245, 255 }, { 110, 160, 255 }, { 60, 40, 180 } },
+	},
+	Fortuna = {
+		Glow = Color3.fromRGB(255, 196, 70),
+		GlowMin = 1.5,
+		GlowMax = 6,
+		Pulse = 2.2,
+		BreathParticles = 12,
+		GlitterParts = 8,
+		Glitter = { { 255, 252, 230 }, { 255, 210, 90 } },
+		Embers = { { 255, 248, 200 }, { 255, 200, 60 }, { 200, 120, 20 } },
+		Rise = 2.6,
+		Breath = { { 255, 250, 220 }, { 255, 200, 70 }, { 190, 110, 20 } },
+	},
 }
 -- Skins mit eigenen Partikeln, Leuchtspur, Einschlag und Finisher (Daten in SkinStyles, z.B. Splitterlicht)
 for name, style in SkinStyles do
@@ -69,6 +95,18 @@ local function CS(points)
 		table.insert(list, ColorSequenceKeypoint.new(p[1], p[2]))
 	end
 	return ColorSequence.new(list)
+end
+
+-- Farbverlauf aus RGB-Tabellen (gleichmäßig verteilt) oder fallback
+local function ramp(list, fallback)
+	if type(list) ~= "table" or #list < 2 then
+		return fallback
+	end
+	local keys = {}
+	for i, c in list do
+		table.insert(keys, ColorSequenceKeypoint.new((i - 1) / (#list - 1), Color3.fromRGB(c[1], c[2], c[3])))
+	end
+	return ColorSequence.new(keys)
 end
 
 local function make(className, name, props, parent)
@@ -173,7 +211,7 @@ function SkinEffects.Apply(model, skin, textures, info)
 			LightEmission = 1,
 			LightInfluence = 0,
 			Brightness = 4,
-			Color = CS({ { 0, Color3.fromRGB(255, 248, 225) }, { 1, Color3.fromRGB(255, 205, 120) } }),
+			Color = ramp(style.Glitter, CS({ { 0, Color3.fromRGB(255, 248, 225) }, { 1, Color3.fromRGB(255, 205, 120) } })),
 			LockedToPart = true,
 			ZOffset = 0.25,
 			Shape = Enum.ParticleEmitterShape.Box,
@@ -188,12 +226,12 @@ function SkinEffects.Apply(model, skin, textures, info)
 		Lifetime = NumberRange.new(1.0, 2.2),
 		Speed = NumberRange.new(0.2 * S, 0.9 * S),
 		SpreadAngle = Vector2.new(180, 180),
-		Acceleration = Vector3.new(0, 2.2 * S, 0),
+		Acceleration = Vector3.new(0, (style.Rise or 2.2) * S, 0),
 		Drag = 1.2,
 		Size = NS({ { 0, 0.05 * S }, { 0.5, 0.07 * S }, { 1, 0 } }),
 		Transparency = NS({ { 0, 0 }, { 0.75, 0.1 }, { 1, 1 } }),
-		Color = CS({ { 0, Color3.fromRGB(255, 236, 160) }, { 0.4, Color3.fromRGB(255, 140, 40) },
-			{ 1, Color3.fromRGB(200, 40, 10) } }),
+		Color = ramp(style.Embers, CS({ { 0, Color3.fromRGB(255, 236, 160) }, { 0.4, Color3.fromRGB(255, 140, 40) },
+			{ 1, Color3.fromRGB(200, 40, 10) } })),
 		LightEmission = 1,
 		LightInfluence = 0,
 		Brightness = 5,
@@ -234,7 +272,7 @@ function SkinEffects.Breath(cframe, scale, weaponName, skinId, styleName)
 	holder.Size = Vector3.new(0.05, 0.05, 0.05)
 	holder.CFrame = cframe
 	local emitter = make("ParticleEmitter", "Atem", {
-		Texture = image(folder, "Flamme", FIRE),
+		Texture = image(folder, "Flamme", style.Breath and SPARKLE or FIRE),
 		Enabled = false,
 		Rate = 0,
 		Lifetime = NumberRange.new(0.18, 0.4),
@@ -244,8 +282,8 @@ function SkinEffects.Breath(cframe, scale, weaponName, skinId, styleName)
 		Acceleration = Vector3.new(0, 1.5 * S, 0),
 		Size = NS({ { 0, 0.15 * S }, { 0.35, 0.45 * S }, { 1, 0.1 * S } }),
 		Transparency = NS({ { 0, 0.1 }, { 0.6, 0.35 }, { 1, 1 } }),
-		Color = CS({ { 0, Color3.fromRGB(255, 240, 180) }, { 0.3, Color3.fromRGB(255, 150, 40) },
-			{ 1, Color3.fromRGB(160, 30, 10) } }),
+		Color = ramp(style.Breath, CS({ { 0, Color3.fromRGB(255, 240, 180) }, { 0.3, Color3.fromRGB(255, 150, 40) },
+			{ 1, Color3.fromRGB(160, 30, 10) } })),
 		Rotation = NumberRange.new(0, 360),
 		RotSpeed = NumberRange.new(-180, 180),
 		LightEmission = 1,
@@ -254,7 +292,7 @@ function SkinEffects.Breath(cframe, scale, weaponName, skinId, styleName)
 		LockedToPart = false,
 	}, holder)
 	local flash = make("PointLight", "Blitz", {
-		Color = Color3.fromRGB(255, 150, 60),
+		Color = style.Breath and style.Glow or Color3.fromRGB(255, 150, 60),
 		Brightness = 6,
 		Range = math.clamp(7 * S, 4, 18),
 		Shadows = false,

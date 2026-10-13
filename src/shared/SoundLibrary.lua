@@ -232,6 +232,13 @@ SoundLibrary.Sounds = {
 	-- Ultimate Überladung: Druckwelle
 	AbilityUltimate = { Range = 140, Pitch = 1.3, Clips = { clip(9117895638, 1.2, 0.07, 1.37) } },
 	-- Fähigkeit wieder bereit (nur für einen selbst, AbilityClient)
+	-- Glücksrad (HubWheel, nur am Rad zu hören): Anlauf, Klack am Zeiger, Anhalten, Gewinn nach Seltenheit
+	WheelWindup = { Range = 70, Pitch = 0.75, Clips = { builtin("swoosh.wav", 1.2) } },
+	WheelTick = { Range = 60, Pitch = 1.1, Clips = { builtin("clickfast.wav", 0.7) } },
+	WheelStop = { Range = 70, Pitch = 0.8, Clips = { clip(9113243990, 4.0, 0, 0.8) } },
+	WheelWin = { Range = 90, Pitch = 1, Clips = { clip(9114133258, 0.9, 0.06, 2.56) } },
+	WheelCoins = { Range = 80, Pitch = 1, Clips = { clip(9113704038, 1.4, 0.19, 1.56) } },
+	WheelWinBig = { Range = 120, Pitch = 1, Clips = { clip(9113728042, 0.8, 0.04, 1.65), builtin("electronicpingshort.wav", 1.2) } },
 	AbilityReady = { Range = 0, Pitch = 1.5, Clips = { builtin("electronicpingshort.wav", 0.35) } },
 }
 

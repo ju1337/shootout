@@ -46,6 +46,7 @@ local NAMES = {
 	"MapVote",    -- Client -> Server: Stimme für eine Map (Nummer 1-3)
 	"Reward",     -- Server -> Client: Belohnung bekommen ({ Title, Lines, Rarity, Key }) – Karte (Notifications)
 	"WheelResult", -- Server -> Client: Glücksrad-Ergebnis (Feld-Nummer, Text) – Client dreht das Rad dorthin
+	"WheelSpin",  -- Server -> alle: jemand dreht das Glücksrad (Spieler, Feld-Nummer) – alle sehen den Dreh mit
 	"SpawnChoice", -- Client -> Server: Spawn nach dem Tod (Herrschaft): "Base", "A", "B" oder "C"
 	"UseKillstreak", -- Client -> Server: bereite Killstreak auslösen (Id, Zielpunkt beim Luftschlag)
 	"AimState",   -- Client -> Server: Blick nach oben/unten (Grad) und Zielen – für die Third-Person-Pose

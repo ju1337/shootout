@@ -64,7 +64,7 @@ RapConfig.Values = {
 	W_Saison = 2500, W_Saison_Elite = 45000, W_Goldrausch = 35000,
 	W_Asche = 2500, W_Asche_Elite = 45000, W_Glutkern = 35000, W_Frost = 2500, W_Frost_Elite = 45000, W_Polarlicht = 35000,
 	-- Glücksrad, Login-Kalender (Tag 7), Wochen-Bonus
-	W_Gluecksklee = 1800, W_Kalender = 18000,
+	W_Gluecksklee = 1800, W_Sternschnuppe = 9000, W_Fortuna = 16000, W_Kalender = 18000,
 	W_Woche_Kobalt = 1000, W_Woche_Smaragd = 1100, W_Woche_Purpur = 1200, W_Woche_Bernstein = 1300, W_Woche_Titan = 1500,
 	-- Robux-Shop (Royal-Paket)
 	W_Royal = 90000, W_Hologramm = 150000,

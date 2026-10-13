@@ -488,14 +488,20 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Fenster) und SPIELEN-Knopf unten mittig (Bernstein mit rundem Play-Symbol, darunter gewählter Modus und
   Spielerzahl, rechts die Taste M bzw. Steuerkreuz unten; ein Rand breitet sich immer wieder aus, alle paar
   Sekunden läuft ein Glanz darüber, Überfahren vergrößert ihn leicht)
-- **Glücksrad im Camp** (`src/client/HubWheel.lua`): großes Rad mit acht
-  Feldern (`LoginConfig.Wheel`), Rand mit Lichtern und Zeiger oben; Podest, Ständer, Schild und Pult kommen aus
-  der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E** (Controller □, Touch: Antippen): der Server
-  lost das Feld aus, das Rad dreht ein paar Runden, der Zeiger klackt an jedem Steg, die Lichter laufen mit, das
-  Rad hält genau auf dem Gewinn, das Feld blinkt und eine Belohnungs-Karte erscheint. Die Tafel am Pult zeigt
-  GRATIS-DREH BEREIT, Extra-Drehs oder die Zeit bis zum nächsten Gratis-Dreh. Einmal am Tag gratis, Extra-Drehs aus
-  dem Login-Kalender; gedreht wird nur in Extinction höchstens 30 Studs von `WheelSpot` (Server
-  prüft). Den Knopf im Seitenmenü gibt es nicht mehr
+- **Glücksrad im Camp** (`src/client/HubWheel.lua`): großes Rad mit zehn
+  Feldern (`LoginConfig.Wheel`, hohe und niedrige Gewinne abwechselnd), Rand mit 30 Glühbirnen und Zeiger oben;
+  alles matt (kein Metall, das nachts den Himmel spiegelt), der Pavillon hat nur schwaches Deckenlicht. Podest,
+  Ständer, Schild und Pult kommen aus der Map, das drehende Rad baut der Client an `WheelSpot`. Am Pult **E**
+  (Controller □, Touch: Antippen): der Server lost das Feld aus und zeigt den Dreh allen (`WheelSpin`); das Rad
+  holt aus, dreht fünf Runden und kriecht am Ende über die letzten Felder (Zeiger klackt, wird mit dem Rad langsamer),
+  kurze Stille, dann die Show nach Seltenheit: Gewinnfeld leuchtet, die anderen werden dunkel, Birnen blinken in der
+  Seltenheitsfarbe, Lichtblitz und Funken, ab Selten Druckwelle, ab Episch Sternregen, legendär Strahlenkranz.
+  Wer gedreht hat, bekommt die Gewinn-Karte (Skin-Vorschau oder hochzählende Münzen) mit NOCHMAL DREHEN bzw. der Zeit
+  bis zum nächsten Gratis-Dreh; große Gewinne anderer sieht man in der Nähe als Meldung. Nur aus dem Rad: die
+  legendären Effekt-Skins **Sternschnuppe** (3 %) und **Fortuna** (2 %), dazu Glücksklee (5 %). Solange das Rad dreht,
+  wartet der Nächste (`LoginConfig.WheelBusy`). Die Tafel am Pult zeigt GRATIS-DREH BEREIT, Extra-Drehs oder die Zeit
+  bis zum nächsten Gratis-Dreh. Einmal am Tag gratis, Extra-Drehs aus dem Login-Kalender; gedreht wird nur in
+  Extinction höchstens 30 Studs von `WheelSpot` (Server prüft). Den Knopf im Seitenmenü gibt es nicht mehr
 - **RAP – zweite Währung** (`src/shared/RapConfig.lua`, Server `src/server-shared/EconomyService.lua`): RAP bekommt
   man nur über Skins. Jeder handelbare Waffen-Skin hat einen RAP-Wert, **steil gestaffelt wie bei Sniper
   Duels**: gewöhnliche Skins 1-10 RAP (Waldtarn 2, Wüste 3), seltene zweistellig (30-55), epische dreistellig (260-520,
@@ -1012,7 +1018,7 @@ am Commit:
 | `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
 | `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `attachmentfit` | Aufsätze nur auf passenden Waffen (`AttachmentConfig.ByWeapon`, z.B. kein Griff am Revolver, kein Visier an Kurzwaffen): Lobby-Kauf und -Ausrüsten prüfen, unpassende wirken nicht, alte Spielstände legen sie ab und erstatten den Preis |
-| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Camp am Rad |
+| `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Auslaufkurve, Felder und Rad-Skins mit Chancen, Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Camp am Rad, alle sehen den Dreh, Rad besetzt |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
 | `movingzone`, `redzones` | Rote Zone: genau eine, Ziele aus den Orten der Karte (ohne Camp, große Flächen, Safehouses, Wasser), Wechsel nach 20 Minuten mit Ansage vorher, nie derselbe Ort und möglichst weit weg, Attribut `Redzones`, rote Wand; drinnen PvP sofort, mehr Zombies mit Läufern und Brocken, Obergrenze mit Bonus; zieht sie weiter, ist man am alten Ort draußen und am neuen mit Meldung wieder drin |
 | `extmarket`, `extmarketui` | Spielermarkt: nur in der Safe Zone (auch weit weg vom Stand), Anbieten (Waffe mit Magazin, Teil eines Stapels, kein draußen stehendes Fahrzeug, Preisgrenzen, höchstens 8), Kaufen zum gesehenen Preis mit Münzen und Platz, nicht das eigene, Gebühr, keine VIP-Verdopplung, Preis ändern (nur eigenes, Grenzen, At bleibt), Zurücknehmen, Angebote überleben Tod und Verlassen; Seite im Spiel: E am Stand öffnet MARKT, Vorschlag für Anzahl und Preis, Erlös nach Gebühr, ANBIETEN, Preis ändern, fremde mit KAUFEN, Kategorien, weg vom Stand offen, außerhalb der Safe Zone gesperrt |

@@ -40,6 +40,50 @@ for _, current in { 0, 17.5, 359, 1234.5, -90 } do
 	end
 end
 
+-- Auslaufkurve: 0 -> 1, steigt immer, am Ende langsam (Spannung), kein Ruck
+check(HubWheel.SpinCurve(0) == 0 and HubWheel.SpinCurve(1) == 1, "Kurve von 0 bis 1")
+local previous = 0
+for k = 1, 100 do
+	local v = HubWheel.SpinCurve(k / 100)
+	check(v >= previous, "Kurve steigt")
+	previous = v
+end
+check(1 - HubWheel.SpinCurve(0.85) > 0.002, "in den letzten 15 % kriecht das Rad noch")
+
+-- Felder: Chancen summieren sich zu 1, zwei neue Rad-Skins drin, Seltenheiten, JACKPOT am Ende
+local Cosmetics = require("Cosmetics")
+local RapConfig = require("RapConfig")
+local total = 0
+for _, odd in LoginConfig.WheelOdds() do
+	total += odd
+end
+check(math.abs(total - 1) < 1e-9, "Chancen summieren sich zu 100 %")
+local skins = {}
+for index, field in LoginConfig.Wheel do
+	if field.Item then
+		local item = Cosmetics.Get(field.Item)
+		check(item ~= nil and item.Reward == true, "Rad-Skin existiert und ist nicht kaufbar: " .. field.Item)
+		check(field.Fallback == true and (field.Coins or 0) > 0, "Skin-Feld hat Münzen als Ersatz: " .. field.Item)
+		check(HubWheel.FieldRarity(index) == item.Rarity, "Seltenheit nach dem Skin: " .. field.Item)
+		skins[field.Item] = true
+	end
+end
+for _, id in { "W_Sternschnuppe", "W_Fortuna" } do
+	check(skins[id], "Rad-Skin im Rad: " .. id)
+	local item = Cosmetics.Get(id)
+	check(item and item.Effects ~= nil and require("SkinEffects").Styles[item.Effects] ~= nil, "Effekt-Skin: " .. id)
+	check(RapConfig.Tradeable(id), "handelbar (RAP-Wert): " .. id)
+end
+check(LoginConfig.Wheel[count].Text == "JACKPOT" and HubWheel.FieldRarity(count) == "Legendary", "JACKPOT zuletzt, legendär")
+check(HubWheel.FieldRarity(1) == "Common", "50 Münzen: gewöhnlich")
+local rows = require("OddsPanel").WheelRows()
+check(#rows == count, "Chancen-Fenster zeigt jedes Feld")
+local shown = {}
+for _, row in rows do
+	shown[row.Text] = true
+end
+check(shown["Skin Sternschnuppe"] and shown["Skin Fortuna"], "neue Skins im Chancen-Fenster")
+
 -- Dreieck aus zwei Keilen: Eckpunkte der Keile = Ecken des Dreiecks (+ Fußpunkt), Flächen addieren sich
 local function wedgeCorners(spec)
 	local hy, hz = spec.Size.Y / 2, spec.Size.Z / 2
@@ -95,7 +139,7 @@ for _, part in wheel.Spin:GetDescendants() do
 	end
 end
 check(wedges == count * 3 * 2, "je Feld drei Dreiecke aus je zwei Keilen, waren " .. wedges)
-check(#wheel.Bulbs == 20, "20 Lichter am Rand")
+check(#wheel.Bulbs == 30, "30 Birnen am Rand")
 for i = 1, count do
 	check(labels[i] ~= nil and labels[i]:FindFirstChildOfClass("SurfaceGui") ~= nil, "Beschriftung für Feld " .. i)
 end
@@ -151,8 +195,41 @@ spinner:SetAttribute("Mode", "Extinction")
 rig:PivotTo(CFrame.new(0, 3, -31))
 check(spinResult() == "ShopStatus", "am Spawn zu weit weg")
 rig:PivotTo(CFrame.new(40, 3, -20))
+local before = #SIM.RemoteLog
 local remote, index = spinResult()
 check(remote == "WheelResult" and type(index) == "number" and index >= 1 and index <= count, "am Pult: Rad dreht")
+local broadcast = false
+for i = before + 1, #SIM.RemoteLog do
+	local entry = SIM.RemoteLog[i]
+	if entry.Remote == "WheelSpin" and entry.Player == "all" and entry.Args[1] == spinner and entry.Args[2] == index then
+		broadcast = true
+	end
+end
+check(broadcast, "alle sehen den Dreh mit (WheelSpin)")
+-- Rad besetzt: ein zweiter Spieler muss warten, auch mit Gratis-Dreh
+local other = SIM.AddPlayer("Zweiter")
+SIM.Run(SIM.Now + 1)
+local rig2 = SIM.MakeRig("Zweiter")
+rig2.Parent = workspace
+other.Character = rig2
+other:SetAttribute("Mode", "Extinction")
+rig2:PivotTo(CFrame.new(41, 3, -20))
+local function spinOther()
+	local start = #SIM.RemoteLog
+	Remotes.ShopAction.OnServerEvent:Fire(other, "SpinWheel")
+	SIM.Run(SIM.Now + 0.1)
+	for i = start + 1, #SIM.RemoteLog do
+		local entry = SIM.RemoteLog[i]
+		if entry.Player == other and (entry.Remote == "WheelResult" or entry.Remote == "ShopStatus") then
+			return entry.Remote
+		end
+	end
+	return nil
+end
+check(spinOther() == "ShopStatus", "Rad dreht noch: der Nächste wartet")
+SIM.Run(SIM.Now + LoginConfig.WheelBusy)
+check(spinOther() == "WheelResult", "danach darf der Nächste drehen")
+SIM.Run(SIM.Now + LoginConfig.WheelBusy)
 check(spinResult() == "ShopStatus", "heute schon gedreht (ohne Extra-Dreh)")
 
 if failures == 0 then

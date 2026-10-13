@@ -118,11 +118,12 @@ check(PolicyGate.RandomAllowed(unknown) == true and unknown:GetAttribute("PaidRa
 
 -- gekaufte Glücksrad-Drehs: nur ohne Länder-Sperre
 ProgressService.SpinWheel(belgian) -- Gratis-Dreh von heute verbrauchen
-step(6)
+step(LoginConfig.WheelBusy) -- das Rad ist so lange besetzt
 ProgressService.AddSpins(belgian, 1, true)
 local spinMessage, spinOk = ProgressService.SpinWheel(belgian)
 check(spinOk == false and string.find(tostring(spinMessage), "Land", 1, true) ~= nil, "gekaufter Dreh gesperrt: " .. tostring(spinMessage))
 ProgressService.AddSpins(belgian, 1)
+step(LoginConfig.WheelBusy)
 spinMessage, spinOk = ProgressService.SpinWheel(belgian)
 check(spinOk ~= false, "verdienter Extra-Dreh geht: " .. tostring(spinMessage))
 
@@ -146,7 +147,8 @@ Instance.new("PlayerGui", belgian)
 local OddsPanel = require("OddsPanel")
 local rows = OddsPanel.WheelRows()
 check(#rows == #LoginConfig.Wheel, "eine Zeile je Feld")
-check(rows[1].Text == "50 Münzen" and rows[6].Text == "Skin Glücksklee" and string.sub(rows[8].Text, 1, 7) == "JACKPOT", "Gewinne beschrieben")
+check(rows[1].Text == "50 Münzen" and rows[6].Text == "Skin Glücksklee" and rows[4].Text == "Skin Sternschnuppe"
+	and rows[8].Text == "Skin Fortuna" and string.sub(rows[10].Text, 1, 7) == "JACKPOT", "Gewinne beschrieben")
 local frame = OddsPanel.Show("Glücksrad", rows)
 local percents = {}
 for _, d in frame:GetDescendants() do
@@ -154,7 +156,7 @@ for _, d in frame:GetDescendants() do
 		table.insert(percents, d.Text)
 	end
 end
-check(#percents == #rows and table.find(percents, "26 %") and table.find(percents, "2 %"), "Prozent je Zeile")
+check(#percents == #rows and table.find(percents, "24 %") and table.find(percents, "2 %"), "Prozent je Zeile")
 check(OddsPanel.IsOpen(), "Fenster offen")
 OddsPanel.Close()
 check(not OddsPanel.IsOpen(), "Fenster zu")

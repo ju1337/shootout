@@ -20,17 +20,27 @@ LoginConfig.Days = {
 	{ Coins = 1000, Spins = 1, Item = "W_Kalender" },
 }
 
--- Felder des Glücksrads (im Kreis, gegen den Uhrzeigersinn ab oben). Weight = relative Chance.
+-- Felder des Glücksrads (im Uhrzeigersinn ab oben). Weight = relative Chance (Summe 100 = Prozent).
+-- Item = Skin; mit Fallback gibt es die Coins nur, wenn der Skin nicht vergeben werden kann (gebunden, schon da).
+-- Hohe und niedrige Gewinne wechseln sich ab, das letzte Feld ist der JACKPOT (Server, HubWheel).
 LoginConfig.Wheel = {
-	{ Text = "50", Coins = 50, Weight = 26, Color = Color3.fromRGB(96, 164, 214) },
-	{ Text = "100", Coins = 100, Weight = 24, Color = Color3.fromRGB(112, 178, 112) },
-	{ Text = "250", Coins = 250, Weight = 17, Color = Color3.fromRGB(212, 170, 80) },
-	{ Text = "2× XP", BoostMinutes = 30, Weight = 10, Color = Color3.fromRGB(150, 120, 210) },
-	{ Text = "500", Coins = 500, Weight = 10, Color = Color3.fromRGB(206, 110, 80) },
-	{ Text = "SKIN", Item = "W_Gluecksklee", Coins = 750, Weight = 4, Color = Color3.fromRGB(80, 200, 140) },
-	{ Text = "1000", Coins = 1000, Weight = 7, Color = Color3.fromRGB(230, 90, 120) },
-	{ Text = "JACKPOT", Coins = 2500, Weight = 2, Color = Color3.fromRGB(255, 200, 60) },
+	{ Text = "50", Coins = 50, Weight = 24, Color = Color3.fromRGB(36, 104, 196) },
+	{ Text = "1000", Coins = 1000, Weight = 6, Color = Color3.fromRGB(196, 34, 64) },
+	{ Text = "100", Coins = 100, Weight = 22, Color = Color3.fromRGB(32, 138, 74) },
+	{ Text = "STERNSCHNUPPE", Item = "W_Sternschnuppe", Coins = 1500, Fallback = true, Weight = 3,
+		Color = Color3.fromRGB(46, 40, 150) },
+	{ Text = "250", Coins = 250, Weight = 16, Color = Color3.fromRGB(214, 130, 20) },
+	{ Text = "GLÜCKSKLEE", Item = "W_Gluecksklee", Coins = 750, Fallback = true, Weight = 5,
+		Color = Color3.fromRGB(20, 160, 110) },
+	{ Text = "2× XP", BoostMinutes = 30, Weight = 10, Color = Color3.fromRGB(118, 56, 196) },
+	{ Text = "FORTUNA", Item = "W_Fortuna", Coins = 2500, Fallback = true, Weight = 2,
+		Color = Color3.fromRGB(34, 30, 26), TextColor = Color3.fromRGB(255, 206, 90) },
+	{ Text = "500", Coins = 500, Weight = 10, Color = Color3.fromRGB(214, 74, 30) },
+	{ Text = "JACKPOT", Coins = 2500, Weight = 2, Color = Color3.fromRGB(240, 176, 20) },
 }
+
+-- So lange (Sekunden) ist das Rad nach einem Dreh besetzt: Anlauf, Drehen, Gewinn-Show (HubWheel)
+LoginConfig.WheelBusy = 9
 
 -- Chance je Feld (0..1, gleiche Reihenfolge wie Wheel, Summe 1). Muss sichtbar sein, weil man Drehs für Robux kauft.
 function LoginConfig.WheelOdds()

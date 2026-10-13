@@ -49,7 +49,7 @@ SAME = {
 }
 # kein Anzeigetext: Discord-Log-Titel und -Felder, Telemetrie-Gründe, interne Namen, Kartenschlüssel (Arcade)
 IGNORE = {
-    "Wert 1", "Wert 2", "Boss besiegt", "Legendärer Skin aus der Kiste", "Glücksrad-Jackpot", "Drehs umgewandelt",
+    "Wert 1", "Wert 2", "Boss besiegt", "Legendärer Skin aus der Kiste", "Glücksrad-Jackpot", "Glücksrad-Skin", "Drehs umgewandelt",
     "Aufsatz passt nicht", "Module laden", "Bot-KI von {1} neu gestartet: {2}", "Kanäle", "Windmühlen",
     "{1} % · WELLE {2}/{3}{4}",  # {4} = "" oder " · NIEMAND DA", beide Formen haben einen Eintrag
     # ActivityService.SurvivorLost(spot, why) zeigt "Der Überlebende " .. why, dafür gibt es ganze Einträge

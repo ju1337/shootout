@@ -106,6 +106,11 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(255, 120, 60), Material = Enum.Material.Foil },
 	{ Id = "W_Gluecksklee", Type = "Weapon", Name = "Glücksklee", Rarity = "Epic", Reward = true,
 		Color = Color3.fromRGB(60, 200, 110), Material = Enum.Material.Glass },
+	-- nur aus dem Glücksrad: Effekt-Skins (Glitzer, Funken, Licht, Mündungsstoß; SkinEffects) für jede Waffe
+	{ Id = "W_Sternschnuppe", Type = "Weapon", Name = "Sternschnuppe", Rarity = "Legendary", Reward = true,
+		Effects = "Sternschnuppe", Color = Color3.fromRGB(40, 50, 120), Material = Enum.Material.Glass },
+	{ Id = "W_Fortuna", Type = "Weapon", Name = "Fortuna", Rarity = "Legendary", Reward = true,
+		Effects = "Fortuna", Color = Color3.fromRGB(235, 180, 60), Material = Enum.Material.Foil },
 	-- Wochen-Bonus (QuestConfig.WeeklyBonus): wechselt jede Woche
 	{ Id = "W_Woche_Kobalt", Type = "Weapon", Name = "Kobalt", Rarity = "Epic", Reward = true,
 		Color = Color3.fromRGB(40, 80, 200), Material = Enum.Material.Foil },
