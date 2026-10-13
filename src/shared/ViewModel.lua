@@ -17,9 +17,8 @@ local PoseMath = require(Shared.PoseMath)
 local ViewModel = {}
 ViewModel.__index = ViewModel
 
--- Arme und Hände vor der Kamera? Aus: in der Ego-Sicht nur die Waffe (jeder sieht seinen Avatar mit seinen eigenen
--- Händen nur von außen). Tests für die Arme schalten es an.
-ViewModel.ShowArms = false
+-- Arme und Hände vor der Kamera: die echten Arme und Hände des eigenen Avatars (false = nur die Waffe)
+ViewModel.ShowArms = true
 
 local SCALE = 0.5
 
