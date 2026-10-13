@@ -109,7 +109,7 @@ local function setKiller(name, weapon, health, agentId)
 	local agent = agentId and AgentConfig.Get(agentId)
 	killerCard.Visible = true
 	killerName.Text = UITheme.Upper(tostring(name))
-	killerInfo.Text = (agent and (agent.Name .. "  ·  ") or "") .. tostring(weapon or "?")
+	killerInfo.Text = (agent and not AgentConfig.RobloxAvatar and (agent.Name .. "  ·  ") or "") .. tostring(weapon or "?")
 	local ratio = math.clamp((tonumber(health) or 0) / 100, 0, 1)
 	killerBar.Size = UDim2.fromScale(ratio, 1)
 	killerBar.BackgroundColor3 = ratio > 0.5 and C.Good or ratio > 0.25 and C.Primary or C.Bad

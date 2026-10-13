@@ -374,7 +374,7 @@ function HUD.Init(weaponClient)
 		local myId = recapId
 		local agent = agentId and AgentConfig.Get(agentId)
 		recapTitle.Text = "AUSGESCHALTET VON " .. UITheme.Upper(tostring(killerName))
-		recapInfo.Text = (agent and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
+		recapInfo.Text = (agent and not AgentConfig.RobloxAvatar and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
 			.. "  ·  hatte noch " .. tostring(killerHealth) .. " Leben"
 		recap.Visible = not Modes.IsSurvival(player:GetAttribute("Mode")) -- offene Welt: großer Todesbildschirm (DeathScreen)
 		task.delay(4, function()

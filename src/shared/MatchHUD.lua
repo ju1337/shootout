@@ -520,7 +520,8 @@ function MatchHUD.Init(root, weaponClient)
 	local function updateAgent()
 		local agent = myAgent()
 		ownPortrait.Set(agent and agent.Id, player)
-		agentLine.Text = agent and agent.Name or ""
+		-- eigener Roblox-Avatar: der Roblox-Name statt des Agenten
+		agentLine.Text = AgentConfig.RobloxAvatar and AgentConfig.PlayerName(player) or (agent and agent.Name or "")
 		portraitStroke.Color = C.Border
 	end
 	task.spawn(function()

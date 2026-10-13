@@ -516,7 +516,7 @@ local function buildAgentStage()
 	local role = UITheme.Tag({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 640), Text = "", TextSize = 12,
 		BackgroundColor3 = C.Secondary, TextColor3 = C.Primary }, stage)
 	local name = label({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 664), Size = UDim2.fromOffset(780, 84),
-		Text = "", TextSize = 84, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, stage)
+		Text = "", TextSize = 84, TextScaled = true, Font = F.Display, TextXAlignment = Enum.TextXAlignment.Center }, stage)
 	UITheme.Outline(name, 1)
 
 	local figure, shownKey = nil, nil
@@ -538,8 +538,9 @@ local function buildAgentStage()
 				Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material, look and look.Model and look.Id or nil)
 			figure.Parent = viewport
 		end
-		role.Text = upper(agent.Role)
-		name.Text = agent.Name
+		-- eigener Roblox-Avatar: Roblox-Name (Anzeigename groß, @Benutzername darüber) statt Agent und Rolle
+		role.Text = AgentConfig.RobloxAvatar and "@" .. player.Name or upper(agent.Role)
+		name.Text = AgentConfig.RobloxAvatar and AgentConfig.PlayerName(player) or agent.Name
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(attribute)

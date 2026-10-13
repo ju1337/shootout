@@ -296,6 +296,15 @@ AgentConfig.MainId = AgentConfig.Agents[1].Id
 -- Agenten-Look (Tests für den Agenten-Körper schalten es so).
 AgentConfig.RobloxAvatar = true
 
+-- Name, der für einen Spieler statt des Agenten-Namens steht (mit eigenem Roblox-Avatar): Anzeigename, sonst Benutzername
+function AgentConfig.PlayerName(player)
+	if not player then
+		return ""
+	end
+	local display = player.DisplayName
+	return type(display) == "string" and display ~= "" and display or player.Name
+end
+
 function AgentConfig.StatValue(key, agent)
 	local get = STAT_GETTERS[key]
 	local low, high = math.huge, -math.huge
