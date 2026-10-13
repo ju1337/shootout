@@ -31,16 +31,12 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 |---|---|---|
 | **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (rund und modern: offener Phönixplatz mit Pavillons Ausrüster/Shop, Glücksrad, Ruhmeswand mit Lagebericht und Siegerpodest, Tauschmarkt; Händler an allen Stationen; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
-| Free-for-All (Arcade) | jeder gegen jeden, Respawn | Raffinerie (0, 0, 1500) |
-| Herrschaft (Arcade) | 5v5, Flaggen A/B/C halten, unbegrenzter Respawn, 200 Punkte gewinnen | Tal (1500, 0, 0) |
-| Wingman (Arcade) | 2v2, Punkt halten, Respawn-Tickets | Rotation: Fabrik / Hochhaus / Gletscher / Zellenblock / Kanäle / Windmühlen |
-| 1v1 Arena (Arcade) | Duell | Arena (0, 0, 3000) |
-| Training (Arcade) | Schießstand mit Übungspuppen | (-1500, 0, 1500) |
+| Arcade (Free-for-All, Herrschaft, Wingman, 1v1 Arena, Training) | aus; Code bleibt, Maps am 2026-10-13 entfernt | – |
 
 **Arcade ist gerade aus** (`Modes.ArcadeEnabled = false` in `src/shared/Modes.lua`; Extinction ist das Hauptspiel): Es
 gibt kein SPIELEN in der Lobby und im Menü der offenen Welt, keine Arcade-Aufträge, der Server lehnt Beitritte zu
 Arcade-Modi und SCHNELLES SPIEL ab, und das Matchmaking über Server ruht. Admins können Spieler weiter in jeden Modus
-schicken. Ohne Arcade blendet das Spiel auch alles aus, was nur Arcade füttert: Ranked-Rang auf Namensschildern
+schicken (nur Extinction und Markt, die Arcade-Modi werden ohne ihre Maps nicht geladen). Ohne Arcade blendet das Spiel auch alles aus, was nur Arcade füttert: Ranked-Rang auf Namensschildern
 und der Spielerkarte (dort steht das Level), Rang-Meilensteine und Saison-Ende unter BELOHNUNGEN, Arcade-Titel unter
 TITEL (außer schon erreichte), Ranked-Kasten, ELO-Top-10 und Matchverlauf unter STATISTIK (dort stehen stattdessen
 Werte der offenen Welt), Fähigkeit/Gadget/Punkte in den Steuerungs-Hinweisen; Ultimate lädt nicht, ERSTES BLUT und
@@ -1054,7 +1050,7 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `src/client` – Agentenwahl, Seitenleiste, Admin-Panel, Scoreboard, Gleiten, Zuschauen, HubWheel (Glücksrad),
   MarketClient (Markt), TradeClient (Tauschen), KillstreakHUD, ...
 - `src/maps` – generierte Maps (nicht von Hand bearbeiten)
-- `tools/build_maps.py` – erzeugt alle Maps
+- `tools/build_maps.py` – erzeugt die Maps (Markt und offene Welt)
 - `tools/weapon_templates.py` – erzeugt die Blender-Vorlagen der Waffen (`art/templates/Weapons`)
 - `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
   und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)

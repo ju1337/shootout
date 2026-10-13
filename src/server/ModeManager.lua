@@ -27,14 +27,18 @@ local ModeManager = {}
 local modules = {
 	Extinction = require(script.Parent.Modes.Extinction), -- offene Welt (Hauptmodus und Start, Modes.Home)
 	Market = require(script.Parent.Modes.Market), -- Markthalle mit Ständen (kein Kampf)
-	FreeForAll = require(script.Parent.Modes.FreeForAll),
-	Domination = require(script.Parent.Modes.Domination),
-	Wingman = require(script.Parent.Modes.Wingman),
-	Training = require(script.Parent.Modes.Training),
-	Arena = require(script.Parent.Modes.Arena),
 	-- Ausgebaut (siehe Modes.Disabled): Drop, Strikeout, Demolition, Ranked, Extraction, TeamDeathmatch.
 	-- Ihre Module bitte erst wieder laden, wenn ihre Maps wieder erzeugt werden (sonst warten sie ewig).
 }
+-- Arcade-Modi nur mit Modes.ArcadeEnabled: ihre Maps sind seit 2026-10-13 aus dem Place entfernt (Module warten sonst
+-- ewig auf sie). Zum Zurückholen Maps und ihre Bau-Funktionen in tools/build_maps.py aus der Git-Geschichte holen.
+if Modes.ArcadeEnabled then
+	modules.FreeForAll = require(script.Parent.Modes.FreeForAll)
+	modules.Domination = require(script.Parent.Modes.Domination)
+	modules.Wingman = require(script.Parent.Modes.Wingman)
+	modules.Training = require(script.Parent.Modes.Training)
+	modules.Arena = require(script.Parent.Modes.Arena)
+end
 
 local switching = {} -- verhindert doppelte Wechsel gleichzeitig
 local retries = {}   -- [Player] = fehlgeschlagene Wechsel in die offene Welt (neuer Versuch, höchstens 3)

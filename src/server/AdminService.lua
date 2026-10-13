@@ -705,7 +705,7 @@ function AdminService.Init(manager)
 			return module and module.AdminResetMatch() or "Unbekannter Modus."
 		end,
 		FFAEndRound = function()
-			return ffa.AdminEndRound()
+			return if ffa then ffa.AdminEndRound() else "Unbekannter Modus."
 		end,
 		MovePlayer = function(userId, modeId)
 			local player = target(userId)

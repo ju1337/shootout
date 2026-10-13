@@ -16,7 +16,8 @@
 local Modes = {}
 
 -- Arcade-Modi vorerst aus, Extinction ist das Hauptspiel: kein SPIELEN im Menü, kein Beitritt, kein Matchmaking, keine
--- Arcade-Aufträge. Code, Maps und Configs der Arcade-Modi bleiben; auf true stellen, um sie zurückzuholen.
+-- Arcade-Aufträge. Code und Configs der Arcade-Modi bleiben; ihre Maps sind seit 2026-10-13 entfernt (vor dem
+-- Einschalten src/maps/<Map>.model.json und die Bau-Funktionen in tools/build_maps.py aus der Git-Geschichte holen).
 Modes.ArcadeEnabled = false
 
 Modes.List = {
