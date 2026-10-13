@@ -47,9 +47,15 @@ local SCALE = GunModels.ToolScale
 local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach unten (verdeckt die Waffe nicht)
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
-local LOW_READY_PITCH = math.rad(-38) -- Waffe nur gehalten (nicht zielen/schießen): schräg nach unten, beide Hände dran
-local LOW_READY_YAW = math.rad(26)     -- Mündung etwas zur Körpermitte
-local LOW_READY_SHIFT = Vector3.new(-0.3, 0, 0.1) -- lange Waffen: Schaft dafür etwas zur Körpermitte
+-- Waffe nur gehalten (nicht zielen/schießen): locker vor dem Bauch, Mündung schräg nach vorn unten, beide Hände dran
+local LOW_RIGHT_POLE = Vector3.new(0.15, -1, 0.6) -- gesenkt: Ellbogen hängen locker nach unten hinten (kein Abspreizen)
+local LOW_LEFT_POLE = Vector3.new(-0.35, -1, 0.3)
+local LOW_READY_PITCH = math.rad(-20)  -- so weit zeigt die Mündung nach unten
+local LOW_READY_YAW = math.rad(10)     -- und so weit zur Körpermitte
+local LOW_READY_GRIP = Vector3.new(0.6, -0.55, -0.75) -- Griff (rechte Hand) relativ zur Oberkörpermitte in Studs: Hüfthöhe
+local LOW_READY_PISTOL_PITCH = math.rad(-35)
+local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.7)
+local R6_LOW_PITCH = math.rad(-38)     -- R6: Arm schräg nach unten
 local READY_AFTER_SHOT = 1.0           -- so lange nach einem Schuss bleibt die Waffe oben (wie die Schulterkamera)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
 local LAND_TIME = 0.3             -- so lange sackt die Waffe nach der Landung ab
@@ -433,9 +439,13 @@ end
 
 -- Avatar-Arme sind kurz: Liegt die Handmitte außer Reichweite der Schulter, rutscht die Hand an der Waffe
 -- entlang Richtung Schaft, bis sie hinkommt (höchstens MAX_SLIDE). So bleibt sie immer an der Waffe.
-local function slideIntoReach(palm, gun, shoulder, joints)
-	local reach = (joints.ElbowC0.Position - joints.ShoulderC1.Position).Magnitude
+local function armReach(joints)
+	return (joints.ElbowC0.Position - joints.ShoulderC1.Position).Magnitude
 		+ (joints.WristC0.Position - joints.ElbowC1.Position).Magnitude + joints.WristC1.Position.Magnitude - 0.03
+end
+
+local function slideIntoReach(palm, gun, shoulder, joints)
+	local reach = armReach(joints)
 	local d = palm - shoulder
 	if d.Magnitude <= reach then
 		return palm
@@ -473,18 +483,27 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local aimRot = yaw * CFrame.Angles(pitch, 0, 0)
 	local size = rig.UpperTorso.Size
 	local gun, low
-	-- gesenkt (Low Ready): dieselbe Haltung wie aus der Hüfte, nur um Schulter bzw. Brust schräg nach unten gedreht,
+	-- gesenkt (Low Ready): locker in Hüfthöhe, Griff vor der rechten Hüfte, Mündung leicht nach vorn unten zur Mitte,
 	-- unabhängig vom Blick. Beide Hände bleiben an der Waffe.
 	local lowRot = yaw * CFrame.Angles(LOW_READY_PITCH, LOW_READY_YAW, 0)
+	local base = CFrame.new(upperTorso.Position) * yaw
 	if info.Long and info.Stock then
 		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
-		low = CFrame.new(pocket + yaw:VectorToWorldSpace(LOW_READY_SHIFT)) * lowRot * CFrame.new(-info.Stock * SCALE)
+		low = CFrame.new(base * LOW_READY_GRIP) * lowRot
+		-- lange Waffen mit weit vorn liegendem Vorderschaft (Schrotflinte, LMG): gesenkt so weit zur linken Schulter
+		-- heranziehen, dass die linke Hand ihn erreicht (sonst rutscht sie bis an die rechte Hand)
+		local leftShoulder = (upperTorso * rig.LShoulder.C0).Position
+		local toShoulder = leftShoulder - low * (leftHandLocal(info, nil, nil) * SCALE)
+		local short = toShoulder.Magnitude - armReach(armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)) + 0.05
+		if short > 0 then
+			low = low + toShoulder.Unit * math.min(short, 0.7)
+		end
 	else
 		local chest = upperTorso * Vector3.new(0, size.Y * 0.22, 0)
 		local hold = CFrame.new(size.X * 0.06, -0.05, -size.Y * PISTOL_HIP_REACH)
 		gun = CFrame.new(chest) * aimRot * hold
-		low = CFrame.new(chest) * lowRot * hold
+		low = CFrame.new(base * LOW_READY_PISTOL_GRIP) * yaw * CFrame.Angles(LOW_READY_PISTOL_PITCH, math.rad(8), 0)
 	end
 	-- Anlegen: Kimme bzw. Visier direkt vor dem rechten Auge (lange Waffen mit der Wange am Schaft,
 	-- Pistolen mit gestreckten Armen), Waffe zeigt weiter genau in Blickrichtung
@@ -535,8 +554,9 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local palm = slideIntoReach(gun * (leftHandLocal(info, pose, poseT) * SCALE), gun,
 		(upperTorso * rig.LShoulder.C0).Position, leftJoints)
 	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), handCF, nil,
-		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)))
-	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm, aimRot:VectorToWorldSpace(LEFT_POLE))
+		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)):Lerp(yaw:VectorToWorldSpace(LOW_RIGHT_POLE), sprint))
+	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm,
+		aimRot:VectorToWorldSpace(LEFT_POLE):Lerp(yaw:VectorToWorldSpace(LOW_LEFT_POLE), sprint))
 	if not PoseMath.AllFinite({ waistT, neckT, tRS, tRE, tRW, tLS, tLE, tLW }) then
 		return false -- Absicherung: kaputte Rechnung nie auf die Gelenke legen
 	end
@@ -561,7 +581,7 @@ local function poseR6(entry, rig, info, pitch, pose, poseT)
 	local equip = entry.EquipT and math.clamp((os.clock() - entry.EquipT) / EQUIP_TIME, 0, 1) or 1
 	-- gesenkt (Sprint oder nur gehalten): Arm schräg nach unten statt in Blickrichtung
 	local lowered = math.max(smooth(entry.Sprint), smooth(entry.Low or 0) * (1 - smooth(entry.Aim)))
-	pitch += (LOW_READY_PITCH - pitch) * lowered
+	pitch += (R6_LOW_PITCH - pitch) * lowered
 	local bob = math.sin((entry.Phase or 0) * 2) * math.rad(2.5) * move - math.rad(45) * (1 - smooth(equip))
 	local aimRot = yaw * CFrame.Angles(pitch - math.rad(entry.Kick * 4) + bob, math.sin((entry.Phase or 0)) * math.rad(2) * move, 0)
 	local neckT = PoseMath.MotorTransform(torso.Rotation, rig.Neck.C0, rig.Neck.C1, yaw * CFrame.Angles(pitch * 0.8, 0, 0))

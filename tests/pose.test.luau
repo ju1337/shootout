@@ -126,7 +126,7 @@ for weaponName, info in GunModels.Info do
 		check(ok, weaponName .. ": gesenkte Haltung nicht gesetzt")
 		local r = fk(rig)
 		local down = math.deg(math.asin(math.clamp(r.Handle.LookVector.Y, -1, 1)))
-		check(down < -25 and down > -55, string.format("%s: gesenkt %.1f° statt etwa -38° (Blick %d°)", weaponName, down, pitchDeg))
+		check(down < -10 and down > -45, string.format("%s: gesenkt %.1f° statt schräg nach unten (Blick %d°)", weaponName, down, pitchDeg))
 		local target = r.Handle * (info.LeftHandTP * SCALE)
 		local back = r.Handle.ZVector
 		local slide = math.clamp((r.LeftHand.Position - target):Dot(back), 0, 1.0 * SCALE)
