@@ -1,6 +1,6 @@
 -- RobuxService (ModuleScript, nur Server)
 -- Robux-Käufe: Entwicklerprodukte (MarketplaceService.ProcessReceipt) schreiben Münzen, Glücksrad-Drehs,
--- Doppel-XP oder Skins gut; jede Kauf-Nummer nur einmal (im Profil gemerkt, falls Roblox den Beleg wiederholt).
+-- Doppel-XP, Skins oder Versteckstufen gut; jede Kauf-Nummer nur einmal (im Profil gemerkt, falls Roblox den Beleg wiederholt).
 -- Gamepässe (VIP, Doppel-XP) werden beim Beitreten und nach dem Kauf geprüft → Spieler-Attribut "Pass_<Id>".
 -- Wirkung: ProgressService fragt RobuxConfig.Has (VIP: doppelte Münzen, DoubleXP: doppelte XP).
 
@@ -16,6 +16,8 @@ local RobuxConfig = require(Shared.RobuxConfig)
 local Cosmetics = require(Shared.Cosmetics)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 local PolicyGate = require(ServerStorage:WaitForChild("ServerShared").PolicyGate)
+local HideoutService = require(ServerStorage:WaitForChild("ServerShared").HideoutService)
+local HideoutConfig = require(Shared.HideoutConfig)
 
 local RobuxService = {}
 
@@ -63,6 +65,11 @@ local function grant(player, profile, product)
 	if product.BoostMinutes then
 		ProgressService.AddXPBoost(player, product.BoostMinutes)
 		table.insert(lines, product.BoostMinutes .. " Min. Doppel-XP")
+	end
+	-- Versteckstufe: sofort, ohne Level-Grenze (eine schon vorhandene Stufe wird nicht verkauft, siehe Versteck-Fenster)
+	if product.HideoutTier and HideoutService.GrantTier(player, product.HideoutTier) then
+		local tier = HideoutConfig.Tiers[product.HideoutTier]
+		table.insert(lines, "Versteck: Stufe " .. product.HideoutTier .. " (" .. (tier and tier.Name or "") .. ")")
 	end
 	-- Skins: neu oder (handelbar) als weiteres Stück
 	for _, itemId in product.Items or {} do

@@ -22,7 +22,8 @@ RobuxConfig.Passes = {
 -- Dreh (5 Drehs = 79 Robux, also rund 16 Robux je Dreh; 49 Robux = 1.000 Münzen, also rund 320 Münzen)
 RobuxConfig.SpinCoins = 320
 
--- Entwicklerprodukte: beliebig oft kaufbar. Coins, Spins (Glücksrad), BoostMinutes (Doppel-XP), Items (Skins)
+-- Entwicklerprodukte: beliebig oft kaufbar. Coins, Spins (Glücksrad), BoostMinutes (Doppel-XP), Items (Skins),
+-- HideoutTier (Versteckstufe, HideoutService.GrantTier). Shop = false: nicht im Robux-Shop, nur dort, wo es gebraucht wird
 RobuxConfig.Products = {
 	{ Id = "Coins1000", ProductId = 0, Robux = 49, Name = "1.000 MÜNZEN", Coins = 1000, Color = Color3.fromRGB(212, 170, 80) },
 	{ Id = "Coins5500", ProductId = 0, Robux = 199, Name = "5.500 MÜNZEN", Coins = 5500, Tag = "+10 %",
@@ -34,6 +35,13 @@ RobuxConfig.Products = {
 		Color = Color3.fromRGB(150, 120, 210) },
 	{ Id = "RoyalBundle", ProductId = 0, Robux = 499, Name = "ROYAL-PAKET", Items = { "W_Royal", "W_Hologramm" }, Coins = 2000,
 		Tag = "EXKLUSIV", Description = "Skins Royal + Hologramm und 2.000 Münzen", Color = Color3.fromRGB(180, 90, 255) },
+	-- Versteckstufen (HideoutConfig.Tiers): sofort, ohne Level-Grenze. Nur im Versteck-Fenster (Shop = false)
+	{ Id = "HideoutTier2", ProductId = 0, Robux = 149, Name = "VERSTECK: WERKSTATT", HideoutTier = 2, Shop = false,
+		Color = Color3.fromRGB(200, 160, 110) },
+	{ Id = "HideoutTier3", ProductId = 0, Robux = 299, Name = "VERSTECK: BUNKER", HideoutTier = 3, Shop = false,
+		Color = Color3.fromRGB(200, 160, 110) },
+	{ Id = "HideoutTier4", ProductId = 0, Robux = 499, Name = "VERSTECK: KOMMANDOZENTRALE", HideoutTier = 4, Shop = false,
+		Color = Color3.fromRGB(200, 160, 110) },
 }
 
 local byProductId = {}
@@ -45,6 +53,15 @@ end
 
 function RobuxConfig.ByProductId(id)
 	return byProductId[id]
+end
+
+function RobuxConfig.Product(id)
+	for _, product in RobuxConfig.Products do
+		if product.Id == id then
+			return product
+		end
+	end
+	return nil
 end
 
 function RobuxConfig.Pass(id)

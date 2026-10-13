@@ -1,7 +1,7 @@
 -- InventoryService (ModuleScript, nur Server)
 -- Inventar der offenen Welt (EXTINCTION): Tasche mit ExtinctionConfig.BagSlots Plätzen (Plätze 1-9 = Hotbar,
 -- Tasten 1-9), der Container (SafeSlots Plätze: sichere Tasche, überall erreichbar, bleibt beim Tod) und das Lager in der
--- Safe Zone (StashSlots Plätze, immer sicher). Alles steht im Profil (ProgressService) unter
+-- Safe Zone (StashSlots Plätze plus Lagerregal im Versteck, immer sicher). Alles steht im Profil (ProgressService) unter
 -- Extinction = { Bag = Liste, Safe = Liste, Stash = Liste, Market = Angebote } und bleibt beim Verlassen in der Safe Zone
 -- genau so angeordnet erhalten. Die Regeln für Plätze und Stapel stehen in Inventory (shared).
 -- Taste 1-9 (Use): Waffe in die Hand / wegstecken (nur außerhalb der Safe Zone), Heilung, Rüstung und die Anti-Zombie-Spritze
@@ -133,7 +133,7 @@ local function stateOf(player)
 		Profile = profile,
 		Bag = Inventory.FromList(data.Bag, ExtinctionConfig.BagSlots, loose),
 		Safe = Inventory.FromList(data.Safe, ExtinctionConfig.SafeSlots, loose),
-		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots, loose),
+		Stash = Inventory.FromList(data.Stash, ExtinctionConfig.StashSlots + HideoutConfig.StashBonus(profile.Hideout), loose),
 		Market = market,
 		Loadouts = {},
 	}
@@ -1161,6 +1161,19 @@ function InventoryService.GiveStash(player, id, count, extra)
 		changed(player, state)
 	end
 	return added
+end
+
+-- Lager nach dem Ausbau des Lagerregals (Versteck) vergrößern
+function InventoryService.ResizeStash(player)
+	local state = stateOf(player)
+	if not state then
+		return
+	end
+	local size = ExtinctionConfig.StashSlots + HideoutConfig.StashBonus(state.Profile.Hideout)
+	if size > state.Stash.Size then
+		state.Stash.Size = size
+		changed(player, state)
+	end
 end
 
 -- Items in die Tasche legen (erst hinter die Hotbar, prefer = "Hotbar" für vorne), gibt die Anzahl zurück, die gepasst hat

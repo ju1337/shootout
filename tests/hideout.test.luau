@@ -142,7 +142,7 @@ local HideoutConfig = require("HideoutConfig")
 local HideoutService = require("HideoutService")
 HideoutService.Init()
 
-store.Data.u1 = { XP = {}, Coins = 50000, Rap = 0, Owned = {}, Equipped = {} }
+store.Data.u1 = { XP = {}, Coins = 200000, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
 Instance.new("Backpack", alice).Name = "Backpack"
 step(2)
@@ -182,7 +182,14 @@ local before = coins()
 check(HideoutService.Upgrade(alice, "Bed") == true, "Feldbett gebaut")
 check(HideoutService.Upgrade(alice, "Bed", 1) == false, "Doppelklick: Stufe 1 ist schon gebaut, keine zweite Stufe")
 check(coins() == before - HideoutConfig.Get("Bed").Levels[1].Coins, "Münzen bezahlt")
-check(HideoutConfig.Level(data(), "Bed") == 1 and HideoutConfig.Value(alice, "Bed") == 10, "Stufe 1: +10 Leben")
+check(HideoutConfig.Level(data(), "Bed") == 1 and HideoutConfig.Value(alice, "Bed") == 5, "Stufe 1: +5 Leben")
+check(HideoutConfig.Tier(alice) == 1, "Level 4: Versteckstufe 1 gratis")
+check(HideoutService.Upgrade(alice, "Bed") == false, "Feldbett 2 braucht Versteckstufe 2")
+check(string.find(lastExt(alice, "Status")[2], "Versteckstufe 2", 1, true) ~= nil, "Hinweis: Versteckstufe 2")
+check(HideoutService.UpgradeTier(alice) == false, "Werkstatt mit Münzen erst ab Level 10")
+check(string.find(lastExt(alice, "Status")[2], "ab Level 10", 1, true) ~= nil, "Hinweis: ab Level 10")
+check(HideoutService.GrantTier(alice, 3) == true and HideoutConfig.Tier(alice) == 3, "Robux: Bunker sofort, ohne Level")
+check(HideoutService.GrantTier(alice, 2) == false and HideoutConfig.Tier(alice) == 3, "niedrigere Stufe ändert nichts")
 check(HideoutService.Upgrade(alice, "Bed") == false, "Stufe 2 ohne Verbände nicht")
 check(string.find(lastExt(alice, "Status")[2], "Verband", 1, true) ~= nil, "Hinweis: Verbände fehlen")
 InventoryService.Give(alice, "Bandage", 3, nil, "Hotbar")
@@ -196,7 +203,7 @@ end
 check(left == 0, "Verbände verbraucht")
 InventoryService.Give(alice, "Medkit", 2, nil, "Hotbar")
 check(HideoutService.Upgrade(alice, "Bed") == true, "Stufe 3")
-check(HideoutService.Upgrade(alice, "Bed") == false and HideoutConfig.Value(alice, "Bed") == 30, "ganz ausgebaut (+30)")
+check(HideoutService.Upgrade(alice, "Bed") == false and HideoutConfig.Value(alice, "Bed") == 15, "ganz ausgebaut (+15)")
 
 -- Werkbank: Rabatt am Stand
 check(HideoutService.Upgrade(alice, "Workbench") == true, "Werkbank gebaut")
@@ -253,7 +260,96 @@ check(HideoutService.Upgrade(alice, "Generator") == true and HideoutConfig.Level
 check(InventoryService.CountEverywhere(alice, "V_Quad") == 0, "Quad verbraucht")
 
 -- im Profil gespeichert
-check(stored.Bed == 3 and stored.Workbench == 1 and stored.Medical == 1 and stored.Generator == 2, "Stufen im Profil")
+check(stored.Bed == 3 and stored.Workbench == 1 and stored.Medical == 1 and stored.Generator == 2 and stored.Tier == 3,
+	"Stufen im Profil")
+
+-- Versteckstufe 4 mit Münzen: ab Level 35, mit Items
+local level35XP = 0
+for level = 1, 34 do
+	level35XP += LevelConfig.XPForLevel(level)
+end
+ProgressService.Get(alice).AccountXP = level35XP
+alice:SetAttribute("AccountXP", level35XP)
+local top = HideoutConfig.Tiers[4]
+check(HideoutService.UpgradeTier(alice, 4) == false and HideoutConfig.Tier(alice) == 3, "Kommandozentrale ohne Items nicht")
+for _, need in top.Items do
+	InventoryService.GiveStash(alice, need[1], need[2])
+end
+before = coins()
+check(HideoutService.UpgradeTier(alice, 5) == false, "Doppelklick: falsche Ziel-Stufe baut nicht")
+check(HideoutService.UpgradeTier(alice, 4) == true and HideoutConfig.Tier(alice) == 4, "Kommandozentrale gebaut")
+check(coins() == before - top.Coins, "Münzen für die Stufe bezahlt")
+check(InventoryService.CountEverywhere(alice, "V_Pickup") == 0, "Items für die Stufe verbraucht")
+check(HideoutService.UpgradeTier(alice) == false, "höchste Stufe erreicht")
+
+-- Lagerregal: mehr Plätze im Lager
+local stashSize = function()
+	return #HttpService:JSONDecode(alice:GetAttribute("ExtStash") or "[]")
+end
+InventoryService.GiveStash(alice, "Bandage", 400) -- Lager mit Verbänden füllen (10 pro Platz)
+local full = stashSize()
+check(full == ExtinctionConfig.StashSlots, "Lager voll mit " .. ExtinctionConfig.StashSlots .. " Plätzen (" .. full .. ")")
+check(HideoutService.Upgrade(alice, "Shelf") == true, "Lagerregal gebaut")
+InventoryService.GiveStash(alice, "Bandage", 400)
+check(stashSize() == ExtinctionConfig.StashSlots + 10, "10 Plätze mehr (" .. stashSize() .. ")")
+InventoryService.TakeEverywhere(alice, "Bandage", 1000)
+InventoryService.GiveStash(alice, "V_Quad", 1)
+check(HideoutService.Upgrade(alice, "Shelf") == true and HideoutConfig.StashBonus(data()) == 20, "Lagerregal 2: +20")
+
+-- Munitionspresse: Pakete mit der Zeit, Sorte wählbar, ins Lager
+InventoryService.GiveStash(alice, "Ammo_Rifle", 90)
+check(HideoutService.Upgrade(alice, "AmmoPress") == true, "Munitionspresse gebaut")
+stored.PressAt -= 3600
+HideoutService.Publish(alice)
+check(HideoutConfig.PressPending(data(), os.time()) == 1, "eine Stunde: 1 Paket")
+local ammoBefore = InventoryService.CountEverywhere(alice, "Ammo_9mm")
+check(HideoutService.CollectPress(alice) == 30, "30 Schuss 9mm abgeholt")
+check(InventoryService.CountEverywhere(alice, "Ammo_9mm") == ammoBefore + 30, "9mm im Lager")
+check(HideoutService.SetPressAmmo(alice, "Ammo_Rifle") == true and HideoutConfig.PressAmmoOf(data()) == "Ammo_Rifle", "Sorte gewechselt")
+check(HideoutService.SetPressAmmo(alice, "Rifle") == false, "nur Munition wählbar")
+stored.PressAt -= 100 * 3600
+HideoutService.Publish(alice)
+check(HideoutConfig.PressPending(data(), os.time()) == 8, "höchstens 8 Stunden")
+ammoBefore = InventoryService.CountEverywhere(alice, "Ammo_Rifle")
+check(HideoutService.CollectPress(alice) == 8 * 30 and InventoryService.CountEverywhere(alice, "Ammo_Rifle") == ammoBefore + 240,
+	"8 Pakete Gewehrmunition")
+
+-- Funkgerät: ein Tagesauftrag, einmal abholen
+local radioJob = HideoutConfig.RadioTask(HideoutConfig.Day())
+check(HideoutService.ClaimRadio(alice) == false, "Funkauftrag noch nicht erledigt")
+ProgressService.AddStat(alice, radioJob.Stat, radioJob.Need)
+before = coins()
+check(HideoutService.ClaimRadio(alice) == true and coins() == before + HideoutConfig.Radio.Coins, "Funkauftrag abgeholt")
+check(HideoutService.ClaimRadio(alice) == false, "nur einmal am Tag")
+check(HideoutConfig.Data(alice).Radio.Claimed == true, "am Client sichtbar")
+
+-- gesperrter Spieler (Level 1) kauft eine Stufe mit Robux: Versteck sofort offen
+local RobuxConfig = require("RobuxConfig")
+local RobuxService = require("RobuxService")
+local tierProduct = RobuxConfig.Product("HideoutTier2")
+check(tierProduct ~= nil and tierProduct.HideoutTier == 2 and tierProduct.Shop == false, "Robux-Produkt Werkstatt")
+RobuxConfig.ByProductId = function(id)
+	return id == 777 and tierProduct or nil
+end
+RobuxService.Init()
+store.Data.u2 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+local bob = SIM.Join("Bob")
+step(2)
+check(HideoutConfig.Unlocked(bob) == false, "Bob (Level 1) gesperrt")
+local result
+task.spawn(function()
+	result = game:GetService("MarketplaceService").ProcessReceipt({ PlayerId = bob.UserId, ProductId = 777, PurchaseId = "p1" })
+end)
+step(5)
+check(result == Enum.ProductPurchaseDecision.PurchaseGranted, "Kauf bestätigt")
+check(HideoutConfig.Tier(bob) == 2 and HideoutConfig.Unlocked(bob), "Werkstatt mit Robux, trotz Level 1")
+
+-- alter Spielstand ohne Versteckstufe: Stufe so hoch wie das höchste Modul
+store.Data.u3 = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, Hideout = { Bed = 3, Generator = 1 } }
+local carl = SIM.Join("Carl")
+step(2)
+HideoutService.Publish(carl)
+check(HideoutConfig.Tier(carl) == 3, "alter Stand: Versteckstufe 3")
 
 if failures == 0 then
 	print("Versteck in Ordnung")

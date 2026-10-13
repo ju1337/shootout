@@ -699,7 +699,7 @@ function LobbyPages.Shop(page)
 				robuxCard(order, pass, true)
 			end
 			for _, product in RobuxConfig.Products do
-				if not PaidRandom.IsRandomProduct(product) or PaidRandom.OfferRandom(player) then
+				if product.Shop ~= false and (not PaidRandom.IsRandomProduct(product) or PaidRandom.OfferRandom(player)) then
 					order += 1
 					robuxCard(order, product, false)
 				end
