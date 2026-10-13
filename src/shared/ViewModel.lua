@@ -31,8 +31,37 @@ local DRAW_TIME = 0.35
 local RIGHT_SHOULDER = Vector3.new(0.95, -1.7, 0.9)
 local LEFT_SHOULDER = Vector3.new(-0.7, -1.8, -0.2)
 local UPPER_ARM, FOREARM = 1.7, 1.8
-local SLEEVE_WIDTH = 0.34
 local GLOVE_COLOR = Color3.fromRGB(38, 38, 44)
+-- Gebaute Arme (ohne echte Arme): Ärmel bis kurz vor das Handgelenk, dann Handgelenk und Hand in Hautfarbe.
+-- Dicken in Modell-Einheiten (Durchmesser der Zylinder)
+local UPPER_WIDTH, FORE_WIDTH, WRIST_WIDTH = 0.42, 0.36, 0.24
+local CUFF = 0.8 -- Ärmel endet bei 80 % des Unterarms
+-- Handgelenk im Raum der Hand (Modell-Einheiten): rechts hinter dem Griff, links unter/hinter dem Handschutz
+local WRIST = { Right = Vector3.new(0.09, -0.1, 0.22), Left = Vector3.new(-0.03, -0.14, 0.2) }
+-- Hand aus Quadern im Raum der Hand (Modell-Einheiten; X rechts, Y oben, -Z Richtung Mündung). "Glove" sitzt genau am
+-- Handpunkt (Griff bzw. Handschutz), die übrigen Teile formen Handrücken, Finger und Daumen um die Waffe.
+local HAND_SHAPES = {
+	-- rechte Hand am Pistolengriff: Handrücken rechts, Finger vorne um den Griff herum, Zeigefinger am Abzug,
+	-- Daumen links oben
+	Right = {
+		{ "Glove", Vector3.new(0.16, 0.3, 0.2), CFrame.new() },
+		{ "Back", Vector3.new(0.1, 0.32, 0.3), CFrame.new(0.13, -0.08, 0.02) },
+		{ "Fingers", Vector3.new(0.3, 0.24, 0.09), CFrame.new(0.02, -0.12, -0.13) },
+		{ "Tips", Vector3.new(0.08, 0.24, 0.16), CFrame.new(-0.11, -0.12, -0.08) },
+		{ "Index", Vector3.new(0.07, 0.07, 0.22), CFrame.new(0.1, 0.06, -0.17) * CFrame.Angles(math.rad(-8), math.rad(-12), 0) },
+		{ "Thumb", Vector3.new(0.07, 0.07, 0.22), CFrame.new(-0.1, 0.06, -0.04) * CFrame.Angles(math.rad(-10), math.rad(14), 0) },
+	},
+	-- linke Hand um den Handschutz: Handballen unten, Handfläche an der linken Seite, Daumen links oben nach vorne,
+	-- Finger rechts hoch
+	Left = {
+		{ "Glove", Vector3.new(0.2, 0.08, 0.26), CFrame.new() },
+		{ "Palm", Vector3.new(0.3, 0.1, 0.34), CFrame.new(-0.02, -0.05, 0.02) },
+		{ "Side", Vector3.new(0.1, 0.24, 0.32), CFrame.new(-0.17, 0.08, 0) },
+		{ "Thumb", Vector3.new(0.08, 0.08, 0.26), CFrame.new(-0.17, 0.21, -0.12) * CFrame.Angles(0, math.rad(-6), 0) },
+		{ "Fingers", Vector3.new(0.08, 0.22, 0.3), CFrame.new(0.17, 0.07, -0.02) },
+		{ "Tips", Vector3.new(0.1, 0.07, 0.28), CFrame.new(0.14, 0.18, -0.02) },
+	},
+}
 -- Echte Arme des Charakters: so dick wie am Körper mal ARM_THICKNESS (die Länge passt sich den Armen oben an)
 local ARM_THICKNESS = 0.6
 
@@ -59,8 +88,11 @@ local function smooth(alpha)
 	return alpha * alpha * (3 - 2 * alpha)
 end
 
-local function armPart(name, color, material, parent)
+local function armPart(name, color, material, parent, shape)
 	local part = Instance.new("Part")
+	if shape then
+		part.Shape = shape
+	end
 	part.Name = name
 	part.Size = Vector3.one * 0.3 * SCALE
 	part.Color = color
@@ -154,13 +186,29 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 			end
 		end
 	end
+	local cylinder, skin = Enum.PartType.Cylinder, handColor or GLOVE_COLOR
 	for _, side in { "Right", "Left" } do
 		local real = self.RealArms and self.RealArms[side]
-		self.Arms[side] = real or {
-			Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.Fabric, self.Model),
-			Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.Fabric, self.Model),
-			Glove = armPart(side .. "Glove", handColor or GLOVE_COLOR, Enum.Material.SmoothPlastic, self.Model),
+		if real then
+			self.Arms[side] = real
+			continue
+		end
+		local arm = {
+			Upper = armPart(side .. "Upper", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
+			Fore = armPart(side .. "Fore", sleeveColor, Enum.Material.SmoothPlastic, self.Model, cylinder),
+			Wrist = armPart(side .. "Wrist", skin, Enum.Material.SmoothPlastic, self.Model, cylinder),
+			WristLocal = WRIST[side],
+			Hand = {},
 		}
+		for _, shape in HAND_SHAPES[side] do
+			local part = armPart(side .. shape[1], skin, Enum.Material.SmoothPlastic, self.Model)
+			part.Size = shape[2] * SCALE
+			table.insert(arm.Hand, { Part = part, Offset = scaled(shape[3]) })
+			if shape[1] == "Glove" then
+				arm.Glove = part
+			end
+		end
+		self.Arms[side] = arm
 	end
 	self.Hip = (self.Info.Long and HIP_LONG or HIP_SHORT) * CFrame.new(0, -(self.Info.HipDrop or 0), 0)
 	self.Aim = GunModels.AimOffset(weaponName, attachments)
@@ -297,21 +345,25 @@ end
 -- Arm von der Schulter (hinter der Kamera) über den Ellbogen zur Hand
 function ViewModel:PlaceArm(arm, camera, hand, shoulderLocal, poleLocal)
 	local shoulder = camera * (shoulderLocal * SCALE)
-	local wrist = (hand * CFrame.new(0, -0.02 * SCALE, 0.16 * SCALE)).Position
+	local wrist = (hand * CFrame.new((arm.WristLocal or Vector3.new(0, -0.02, 0.16)) * SCALE)).Position
 	local elbow = PoseMath.SolveTwoBone(shoulder, wrist, UPPER_ARM * SCALE, FOREARM * SCALE, camera:VectorToWorldSpace(poleLocal))
 	if arm.Pieces then
 		self:PlaceRealArm(arm, shoulder, elbow, wrist)
 		return
 	end
-	local function segment(part, from, to)
+	-- Zylinder (Achse X) von from nach to
+	local function segment(part, from, to, width)
 		local length = (to - from).Magnitude
-		part.Size = Vector3.new(SLEEVE_WIDTH * SCALE, SLEEVE_WIDTH * SCALE, math.max(length, 0.01))
-		part.CFrame = CFrame.lookAt((from + to) / 2, to)
+		part.Size = Vector3.new(math.max(length, 0.01), width * SCALE, width * SCALE)
+		part.CFrame = CFrame.lookAt((from + to) / 2, to) * CFrame.Angles(0, math.rad(90), 0)
 	end
-	segment(arm.Upper, shoulder, elbow)
-	segment(arm.Fore, elbow, wrist)
-	arm.Glove.Size = Vector3.new(0.3, 0.33, 0.38) * SCALE
-	arm.Glove.CFrame = hand
+	local cuff = elbow:Lerp(wrist, CUFF)
+	segment(arm.Upper, shoulder, elbow, UPPER_WIDTH)
+	segment(arm.Fore, elbow, cuff, FORE_WIDTH)
+	segment(arm.Wrist, cuff:Lerp(elbow, 0.05), wrist, WRIST_WIDTH)
+	for _, piece in arm.Hand do
+		piece.Part.CFrame = hand * piece.Offset
+	end
 end
 
 -- Echte Arme: Knochen drehen wie bei den Figuren (PoseMath.AlignBone, Ellbogen-Achse = X im Ruhe-Raum), die Hand

@@ -92,6 +92,31 @@ function HUDIcons.WeaponModel(parent, weaponName, width, height, skin)
 	return weaponView(parent, weaponName, width, height, true, skin)
 end
 
+-- Kamera fürs Porträt eines eigenen Roblox-Avatars: Avatare sind verschieden groß (Skalierung, Rthro, Hüte), deshalb
+-- auf den Kopf samt Kopf-Accessoires ausrichten statt fester Höhe. Ganzer Kopf mit etwas Luft, darunter die Schultern.
+local function avatarPortraitCamera(figure)
+	local head = figure:FindFirstChild("Head")
+	if not head or not head:IsA("BasePart") then
+		return PORTRAIT_CAMERA
+	end
+	local top = head.Position.Y + head.Size.Y / 2
+	local bottom = head.Position.Y - head.Size.Y / 2
+	for _, accessory in figure:GetChildren() do
+		local handle = accessory:IsA("Accessory") and accessory:FindFirstChild("Handle")
+		local weld = handle and handle:FindFirstChildWhichIsA("JointInstance")
+		if handle and handle:IsA("BasePart") and weld and (weld.Part0 == head or weld.Part1 == head) then
+			-- nur bis zu 1,5 Kopfhöhen über dem Kopf (sehr hohe Hüte würden das Gesicht winzig machen)
+			top = math.max(top, math.min(handle.Position.Y + handle.Size.Y / 2, top + head.Size.Y * 1.5))
+		end
+	end
+	bottom -= head.Size.Y * 0.7 -- Hals und Schultern
+	local height = (top - bottom) * 1.12
+	local center = Vector3.new(head.Position.X, (top + bottom) / 2, head.Position.Z)
+	local distance = height / 2 / math.tan(math.rad(32 / 2))
+	local direction = (PORTRAIT_CAMERA.Position - Vector3.new(0, 4.42, 0)).Unit
+	return CFrame.lookAt(center + direction * distance, center)
+end
+
 -- Porträt-Feld (ViewportFrame size x size). Gibt { Frame, Set(agentId, player) } zurück;
 -- player (oder nil bei Bots) bestimmt die Skin-Farben.
 function HUDIcons.Portrait(parent, size)
@@ -127,7 +152,9 @@ function HUDIcons.Portrait(parent, size)
 			figure = nil
 		end
 		if agent then
-			figure = AgentFigure.Avatar(owner) or AgentFigure.Build(agent, primary, accent, nil)
+			figure = AgentFigure.Avatar(owner)
+			camera.CFrame = figure and avatarPortraitCamera(figure) or PORTRAIT_CAMERA
+			figure = figure or AgentFigure.Build(agent, primary, accent, nil)
 			figure.Parent = viewport
 		end
 	end

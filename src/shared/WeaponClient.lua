@@ -160,11 +160,11 @@ local function updateViewModel()
 		local hand = nil
 		local arms = nil
 		if AgentConfig.RobloxAvatar then
-			-- eigener Roblox-Avatar: immer Ärmel in der Oberkörperfarbe und Hände in der Hautfarbe. Die echten
-			-- Avatar-Arme passen nicht vor die Kamera (klobige 1-Stud-Arme, flache Hände, jedes Paket anders).
+			-- eigener Roblox-Avatar: gebaute Arme (Ärmel in der Uniformfarbe, Hände in der Hautfarbe des Avatars). Die
+			-- echten Avatar-Arme passen nicht vor die Kamera (klobige 1-Stud-Arme, flache Hände, jedes Paket anders),
+			-- und die Oberkörperfarbe ist oft nur Grau unter dem Shirt.
 			local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
 			if bodyColors then
-				sleeve = bodyColors.TorsoColor3
 				hand = bodyColors.RightArmColor3
 			end
 		else
