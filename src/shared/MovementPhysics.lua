@@ -238,4 +238,23 @@ function P.Bob(phase, speedRatio)
 	return -math.abs(math.sin(phase)) * P.BobMax * amount
 end
 
+-- Schulterkamera wie GTA/Fortnite: Der Körper dreht sich in die Laufrichtung, die Kamera kreist frei. Nur beim Zielen
+-- und kurz nach einem Schuss (bzw. Wurf) schaut er fest in Kamerarichtung.
+P.FaceCameraAfterShot = 1.0 -- so lange nach dem letzten Schuss bleibt der Körper zur Kamera gedreht
+
+function P.ShoulderFacesCamera(aiming, now, faceUntil)
+	return aiming == true or now < (faceUntil or 0)
+end
+
+-- Kamera-Versatz der Schulterkamera: gewünscht relativ zur Kamera (X = zur Seite), Roblox nimmt Humanoid.CameraOffset
+-- aber relativ zum HumanoidRootPart. Rechnet den Kamera-Versatz in Root-Koordinaten um (nur Drehung um die Hochachse).
+function P.ShoulderOffsetLocal(offset, cameraLook, rootCFrame)
+	local flat = P.Flat(cameraLook)
+	if not flat then
+		return offset
+	end
+	local world = CFrame.lookAt(Vector3.zero, flat):VectorToWorldSpace(offset)
+	return rootCFrame:VectorToObjectSpace(world)
+end
+
 return P

@@ -67,6 +67,7 @@ local inVehicle = false          -- sitzt in einem Fahrzeug der offenen Welt: Ve
 local SHOULDER_OFFSET = Vector3.new(3.4, 1.0, 0)
 local SHOULDER_AIM_OFFSET = Vector3.new(2.7, 0.8, 0)
 local shoulderSide = 1           -- 1 = rechte Schulter, -1 = linke (Taste H)
+local faceCameraUntil = 0        -- Schulterkamera: bis dahin schaut der Körper nach einem Schuss/Wurf zur Kamera
 local SHOULDER_DISTANCE = 9
 local SHOULDER_AIM_DISTANCE = 5.5
 local SHOULDER_WALL_MARGIN = 0.8 -- so weit bleibt die Kamera seitlich von Wänden weg
@@ -214,7 +215,10 @@ local function clampShoulder(character, offset)
 	end
 	shoulderParams.FilterDescendantsInstances = { maps }
 	local origin = (root :: BasePart).CFrame * Vector3.new(0, HEAD_HEIGHT + offset.Y, 0)
-	local side = (root :: BasePart).CFrame.RightVector * offset.X
+	-- seitlich zur Kamera, nicht zum Körper (der dreht sich frei in die Laufrichtung)
+	local right = workspace.CurrentCamera.CFrame.RightVector
+	local flatRight = P.Flat(right) or (root :: BasePart).CFrame.RightVector
+	local side = flatRight * offset.X
 	local result = workspace:Raycast(origin, side + side.Unit * SHOULDER_WALL_MARGIN, shoulderParams)
 	if not result then
 		return offset, false
@@ -224,6 +228,15 @@ local function clampShoulder(character, offset)
 		return offset, false
 	end
 	return Vector3.new(math.sign(offset.X) * free, offset.Y, offset.Z), true
+end
+
+-- Schulterkamera: Körper sofort zur Kamera drehen (Zielen, Schuss)
+local function turnToCamera(humanoid, root)
+	humanoid.AutoRotate = false
+	local flat = P.Flat(workspace.CurrentCamera.CFrame.LookVector)
+	if flat then
+		root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+	end
 end
 
 -- ---------- Rutschen ----------
@@ -685,6 +698,24 @@ function Movement.SuppressSprint(seconds)
 	end
 end
 
+-- Schulterkamera: Körper für kurze Zeit fest zur Kamera drehen (Schuss aus der Hüfte, Wurf), damit Waffe und Kugeln
+-- dorthin zeigen, wo das Fadenkreuz ist. Sonst dreht er sich frei in die Laufrichtung.
+function Movement.FaceCamera(seconds)
+	faceCameraUntil = math.max(faceCameraUntil, os.clock() + (seconds or P.FaceCameraAfterShot))
+	-- gleich jetzt drehen, damit Mündungsfeuer und Waffe schon beim ersten Schuss zum Fadenkreuz zeigen
+	local humanoid, character = getHumanoid()
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if Movement.IsThirdPerson() and humanoid and root and humanoid.Health > 0 and not humanoid.PlatformStand and not move
+		and not humanoid.SeatPart then
+		turnToCamera(humanoid, root)
+	end
+end
+
+-- Schaut der Körper in der Schulterkamera gerade fest zur Kamera (Zielen, kurz nach dem Schuss)?
+function Movement.FacesCamera()
+	return Movement.IsThirdPerson() and P.ShoulderFacesCamera(aiming, os.clock(), faceCameraUntil)
+end
+
 -- Sichtfeld fest vorgeben (z.B. Fallschirmsprung), nil = wieder normal
 function Movement.SetFovOverride(fov)
 	fovOverride = fov
@@ -765,7 +796,10 @@ function Movement.Init()
 	RunService.Heartbeat:Connect(function(dt)
 		-- kein Sprint rückwärts; umgeschalteter Sprint endet beim Stehenbleiben oder Rückwärtslaufen
 		local humanoid = getHumanoid()
-		local forward = humanoid == nil or P.SprintAllowed(wishMove(humanoid), workspace.CurrentCamera.CFrame.LookVector)
+		-- Schulterkamera ohne Zielen: Körper dreht in die Laufrichtung, also läuft man immer vorwärts (auch zur Kamera hin)
+		local freeLook = Movement.IsThirdPerson() and not Movement.FacesCamera()
+		local forward = humanoid == nil or freeLook
+			or P.SprintAllowed(wishMove(humanoid), workspace.CurrentCamera.CFrame.LookVector)
 		if sprintHeld and not holdSprint() and (not humanoid or wishMove(humanoid).Magnitude < 0.1 or not forward) then
 			sprintHeld = false
 			apply()
@@ -859,6 +893,10 @@ function Movement.Init()
 				end
 			end
 			local offset = baseOffset + Vector3.new(0, extra, 0)
+			-- Schulterkamera: Versatz gilt zur Kamera (Roblox rechnet ihn relativ zum Körper, der sich frei dreht)
+			if Movement.IsThirdPerson() and root then
+				offset = P.ShoulderOffsetLocal(offset, camera.CFrame.LookVector, (root :: BasePart).CFrame)
+			end
 			if (humanoid.CameraOffset - offset).Magnitude > 0.001 then
 				humanoid.CameraOffset = offset
 			end
@@ -873,7 +911,8 @@ function Movement.Init()
 			currentDistance = nil
 		end
 	end)
-	-- Schulterkamera: Maus mittig sperren, Körper dreht mit der Kamera (wie Shift-Lock)
+	-- Schulterkamera wie GTA/Fortnite: Maus mittig sperren, Kamera kreist frei um den Charakter, der Körper dreht sich in
+	-- die Laufrichtung (AutoRotate). Nur beim Zielen und kurz nach dem Schuss schaut er fest zur Kamera (wie Shift-Lock).
 	RunService:BindToRenderStep("ShoulderCamera", Enum.RenderPriority.Camera.Value + 1, function()
 		if not Movement.IsThirdPerson() or player.CameraMode ~= Enum.CameraMode.Classic then
 			return
@@ -888,12 +927,11 @@ function Movement.Init()
 			return
 		end
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-		humanoid.AutoRotate = false
-		local look = workspace.CurrentCamera.CFrame.LookVector
-		local flat = Vector3.new(look.X, 0, look.Z)
-		if flat.Magnitude > 0.01 then
-			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+		if not Movement.FacesCamera() then
+			humanoid.AutoRotate = true
+			return
 		end
+		turnToCamera(humanoid, root)
 	end)
 	-- Neigung der Kamera: seitwärts laufen leicht, rutschen deutlich. Nach der Kamera von Roblox und dem Rückstoß
 	-- (die rechnet jedes Bild ohne Neigung neu, darum sammelt sich nichts an).
@@ -905,6 +943,9 @@ function Movement.Init()
 		if root and cameraEffectsOn(humanoid) then
 			local velocity = root.AssemblyLinearVelocity
 			local strafe = velocity:Dot(camera.CFrame.RightVector) / math.max(DEFAULT_SPEED, speedTarget)
+			if Movement.IsThirdPerson() and not Movement.FacesCamera() then
+				strafe = 0 -- freie Schulterkamera: seitwärts laufen ist hier nur Umdrehen, kein Seitschritt
+			end
 			goal = P.Roll(strafe, slideBlend, aiming)
 		end
 		roll += (goal - roll) * math.min(1, math.min(dt, 0.1) * TILT_SMOOTH)

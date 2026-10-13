@@ -166,6 +166,23 @@ check(P.SprintAllowed(side, fwd), "Sprint seitwärts")
 check(not P.SprintAllowed((back + side).Unit, fwd), "kein Sprint schräg rückwärts")
 check(not P.SprintAllowed(back, fwd), "kein Sprint rückwärts")
 check(P.SprintAllowed(Vector3.zero, fwd), "im Stand blockiert nichts")
+-- Schulterkamera wie GTA/Fortnite: frei drehen, nur beim Zielen und kurz nach dem Schuss zur Kamera
+check(not P.ShoulderFacesCamera(false, 10, 0), "ohne Zielen dreht der Körper frei")
+check(P.ShoulderFacesCamera(true, 10, 0), "beim Zielen schaut der Körper zur Kamera")
+check(P.ShoulderFacesCamera(false, 10, 10 + P.FaceCameraAfterShot), "kurz nach dem Hüftschuss zur Kamera")
+check(not P.ShoulderFacesCamera(false, 10 + P.FaceCameraAfterShot + 0.01, 10 + P.FaceCameraAfterShot), "danach wieder frei")
+-- Schulterversatz bleibt rechts von der Kamera, egal wohin der Körper schaut
+do
+	local look = Vector3.new(0, -0.3, -1).Unit -- Kamera schaut nach -Z, also rechts = +X
+	local shoulder = Vector3.new(3.4, 1, 0)
+	for _, yaw in { 0, 90, 180, -135 } do
+		local rootCF = CFrame.new(5, 3, 7) * CFrame.Angles(0, math.rad(yaw), 0)
+		local localOffset = P.ShoulderOffsetLocal(shoulder, look, rootCF)
+		local world = rootCF:VectorToWorldSpace(localOffset)
+		check(near(world.X, 3.4) and near(world.Y, 1) and near(world.Z, 0),
+			"Schulterversatz bei Körperdrehung " .. yaw .. "° bleibt rechts der Kamera")
+	end
+end
 
 -- ---------- Movement im Simulator ----------
 -- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12), eine Kante in 6,8,

@@ -480,6 +480,7 @@ local function tryFire()
 	lastShot = now - lastShot <= cfg.FireDelay + 1 / 30 and lastShot + cfg.FireDelay or now
 	shotCounter += 1
 	Movement.SuppressSprint(SPRINT_BLOCK)
+	Movement.FaceCamera() -- Schulterkamera: aus der Hüfte geschossen dreht sich der Körper zum Fadenkreuz
 
 	-- Streuung wie auf dem Server: Bloom, Bewegung, Sprung, Zielen, Stabilisator
 	local speed, airborne = movementState()

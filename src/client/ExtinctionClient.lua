@@ -162,6 +162,7 @@ function Inv.useSlot(slot)
 	local config = entry and itemConfig(entry.Id)
 	if config and config.Kind == "Throwable" then
 		local camera = workspace.CurrentCamera
+		require(Shared.Movement).FaceCamera(0.6) -- Schulterkamera: zum Wurf in Kamerarichtung drehen
 		sendAction("Throw", slot, camera and camera.CFrame.LookVector or nil)
 	else
 		sendAction("Use", slot)
