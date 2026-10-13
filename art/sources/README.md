@@ -4,10 +4,11 @@
   `meshy_weapon.py LMG …`: 359.186 Dreiecke, Patronenkasten `Magazine`, Deckel `Skin_Cover`, Klappe `Bolt`, 4,33 Studs.
   In Studio wie die Pistole, "LMG" nennen.
 - `Shotgun.glb`: Schrotflinte (taktischer Vorderschaft-Repetierer aus Meshy, `Meshy_AI_roblox_tactical_shotg_1012204027`,
-  nicht im Repo), `meshy_weapon.py Shotgun …`: 342.672 Dreiecke, Vorderschaft als `Pump`, 3,95 Studs; keine einzelne
-  Patrone (`Shell`) im Modell. In Studio wie die Pistole, "Shotgun" nennen.
+  nicht im Repo), `meshy_weapon.py Shotgun …`: 342.672 Dreiecke, Vorderschaft als `Pump`, Patrone `Shell` (Kopie der roten Patrone vom Seitenhalter,
+  nur beim Nachladen sichtbar), 3,95 Studs. In Studio wie die Pistole, "Shotgun" nennen.
 - `Revolver.glb`: Revolver (.44 Magnum aus Meshy, `Meshy_AI_roblox_magnum_revolve_1012203818`, nicht im Repo),
-  `meshy_weapon.py Revolver …`: 338.248 Dreiecke, `Cylinder` (Trommel), `Hammer`, 1,47 Studs; ohne Schnelllader.
+  `meshy_weapon.py Revolver …`: 338.248 Dreiecke, `Cylinder` (Trommel), `Hammer`, Schnelllader `Loader` (kurze Kopie der Trommel,
+  nur beim Nachladen sichtbar), 1,47 Studs.
   In Studio wie die Pistole, "Revolver" nennen.
 - `Pistol.glb`: Pistole (Glock 17 aus Meshy, FBX-Export `Meshy_AI_roblox_glock17_3d_1012204441`, nicht im Repo), erzeugt mit
   `tools/attachments/meshy_weapon.py Pistol …`: 228.936 Dreiecke, Schlitten `Skin_Slide`, `Magazine`, 1,05 Studs.

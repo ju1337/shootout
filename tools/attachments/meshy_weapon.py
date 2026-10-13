@@ -49,7 +49,7 @@ WEAPONS = {
             "Point_Eject": (-0.10, 0.60, -0.06),
             "Point_LeftHand": (0.62, -0.16, 0.22),
             "Pivot_Slide": (0.0, 0.50, 0.0),
-            "Pivot_Magazine": (0.60, -0.55, 0.0),
+            "Pivot_Magazine": (0.58, -0.135, 0.0),
         },
     },
     # Revolver (.44 Magnum): Trommel im Rahmenfenster (Oberschiene bleibt), Hahn hinter der schrägen Rahmenkante.
@@ -62,6 +62,9 @@ WEAPONS = {
             ("Hammer", [M.plane((-0.15, -0.13, 0), (0.40, 0.42, 0)), *box(x=(None, 0.62), y=(0.27, 0.45))], [0],
              (0.5, 0.36, 0.0)),
         ],
+        # Schnelllader: Kopie der Trommel, kurz (ein Drittel so lang) und etwas schmaler, links hinter der Trommel
+        # (nur beim Nachladen sichtbar)
+        "Extras": [("Loader", "Cylinder", None, (0.35, 0.85, 0.85), None, (0.60, 0.34, 0.36))],
         "Points": {
             "Point_Grip": (0.62, -0.02, 0.0),
             "Point_SightRear": (0.30, 0.505, 0.0),
@@ -71,6 +74,7 @@ WEAPONS = {
             "Point_LeftHand": (0.63, -0.15, 0.156),
             "Pivot_Cylinder": (0.12, 0.235, 0.0),
             "Pivot_Hammer": (0.43, 0.32, 0.0),
+            "Pivot_Loader": (0.60, 0.34, 0.36),
         },
     },
     # MP (MP5): gebogenes Magazin unter dem Schacht, Spannhebel oben auf dem Rohr vor dem Gehäuse als Bolt
@@ -101,6 +105,10 @@ WEAPONS = {
         "Cuts": [
             ("Pump", box(x=(-0.60, -0.17), y=(-0.06, 0.09)), [0, 1], (-0.4, 0.02, 0.06)),
         ],
+        # Patrone fürs Nachladen: Kopie der oberen roten Patrone am Seitenhalter (der Halter bleibt voll), längs zum
+        # Lauf gedreht, doppelt so lang, vor der Ladeklappe unter dem Gehäuse (nur beim Nachladen sichtbar)
+        "Extras": [("Shell", "red", box(x=(0.22, 0.32), y=(0.06, 0.12), z=(0.02, None)),
+                    (1.0, 2.0, 1.0), "y_to_x", (0.06, -0.02, 0.0))],
         "Points": {
             "Point_Grip": (0.46, 0.03, 0.0),
             "Point_SightRear": (0.22, 0.205, 0.0),
@@ -110,6 +118,7 @@ WEAPONS = {
             "Point_LeftHand": (-0.38, 0.02, 0.0),
             "Point_Stock": (None, -0.05, 0.0),
             "Pivot_Pump": (-0.38, 0.02, 0.0),
+            "Pivot_Shell": (0.06, -0.02, 0.0),
         },
     },
     # MG (taktisch, Gurt aus Kasten): Patronenkasten unter dem Gehäuse als Magazine (der Gurt im Zuführfenster bleibt
@@ -169,6 +178,29 @@ def build(name, src, out):
         print("  %-14s %7d Dreiecke (offene Stellen %d/%d)" % (part_name, len(piece), o1, o2))
         parts.append((part_name, piece))
     parts.insert(0, (cfg["Body"], gun))
+    for extra_name, source, region, scale, turn, target in cfg.get("Extras", []):
+        if source == "red":   # rote Flächen (Textur) im Bereich, z.B. eine Schrotpatrone
+            import io
+            from PIL import Image
+            tex = np.asarray(Image.open(io.BytesIO(images["Color"][0])).convert("RGB")).astype(float)
+            h, w, _ = tex.shape
+            uv = gun.UV.mean(1)
+            col = tex[np.clip(((1 - uv[:, 1]) * h).astype(int), 0, h - 1), np.clip((uv[:, 0] * w).astype(int), 0, w - 1)]
+            c = gun.P.mean(1)
+            inside = np.all([c @ n - k <= 0 for n, k in region], axis=0)
+            piece = gun.select(inside & (col[:, 0] > 1.6 * col[:, 1]) & (col[:, 0] > 90))
+        else:                 # Kopie eines schon herausgeschnittenen Teils
+            piece = dict(parts)[source]
+        lo_p, hi_p = piece.bounds()
+        centre = (lo_p + hi_p) / 2
+        Rt = np.eye(3)
+        if turn == "y_to_x":
+            Rt = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], float)   # Hochachse wird Laufachse
+        P = ((piece.P - centre) * np.asarray(scale)) @ Rt.T + np.asarray(target)
+        N = (piece.N / np.asarray(scale)) @ Rt.T
+        N /= np.maximum(np.linalg.norm(N, axis=2, keepdims=True), 1e-12)
+        parts.append((extra_name, M.Mesh(P, piece.UV, N)))
+        print("  %-14s %7d Dreiecke (Kopie von %s)" % (extra_name, len(piece), source))
 
     pts = {k: np.array([lo[0] if k == "Point_Muzzle" and x is None else hi[0] if x is None else x, y, z], float)
            for k, (x, y, z) in cfg["Points"].items()}
