@@ -157,6 +157,21 @@ local function buildVisual()
 		smoke.Rotation = NumberRange.new(0, 360)
 		smoke.RotSpeed = NumberRange.new(-8, 8)
 		smoke.Parent = wall
+		-- leuchtende Linie am Boden: Stück von Ecke zu Ecke, folgt dem Gelände (auch an Hängen)
+		local a0, a1 = 2 * math.pi * (k - 1) / n, 2 * math.pi * k / n
+		local function edge(angle)
+			local ex, ez = center.X + math.cos(angle) * radius, center.Z + math.sin(angle) * radius
+			return Vector3.new(ex, (options.GroundY and options.GroundY(ex, ez) or center.Y) + 0.25, ez)
+		end
+		local p0, p1 = edge(a0), edge(a1)
+		part("Line", Vector3.new(cfg.LineWidth, 0.2, (p1 - p0).Magnitude + 0.5), CFrame.lookAt((p0 + p1) / 2, p1), Enum.Material.Neon,
+			cfg.LineAlpha)
+		-- Warnpfosten mit rot leuchtender Kappe (jedes PostEvery-te Stück): von weitem als Ring aus Lichtern zu sehen
+		if k % cfg.PostEvery == 0 then
+			local post = part("Post", Vector3.new(0.5, cfg.PostHeight, 0.5), CFrame.new(x, y + cfg.PostHeight / 2, z), Enum.Material.Metal, 0)
+			post.Color = Color3.fromRGB(40, 40, 42)
+			part("PostLight", Vector3.new(0.9, 0.9, 0.9), CFrame.new(x, y + cfg.PostHeight + 0.45, z), Enum.Material.Neon, 0)
+		end
 	end
 	local y = options.GroundY and options.GroundY(center.X, center.Z) or center.Y
 	-- Signalfackel: glühender Stab am Boden, roter Rauch steigt schnell und weit nach oben, wird dabei breiter und blasser

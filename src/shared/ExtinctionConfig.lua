@@ -402,9 +402,13 @@ ExtinctionConfig.Redzone = {
 	Color = Color3.fromRGB(226, 56, 48),
 	-- Bodendunst am Rand: WallPanels Bodenstreifen, jeder mit SmokeRate Wolken pro Sekunde (bleibt flach, wenig Partikel)
 	WallPanels = 48,
-	SmokeRate = 0.7,
-	SmokeSize = 14,
-	SmokeAlpha = 0.8,        -- 1 = unsichtbar; je höher, desto dünner der Dunst
+	SmokeRate = 0.8,
+	SmokeSize = 18,
+	SmokeAlpha = 0.74,       -- 1 = unsichtbar; je höher, desto dünner der Dunst
+	LineWidth = 1.2,         -- leuchtende Grenzlinie am Boden
+	LineAlpha = 0.25,
+	PostEvery = 3,           -- jedes 3. Stück ein Warnpfosten mit Leuchtkappe
+	PostHeight = 9,
 	SmokeColor = Color3.fromRGB(150, 70, 64),
 	PerPlayerFactor = 2,     -- so viel mehr Zombies um Spieler in der roten Zone
 	MaxTotalBonus = 14,      -- so viele Zombies darf der Server dafür zusätzlich haben
