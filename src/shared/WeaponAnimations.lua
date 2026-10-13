@@ -136,21 +136,6 @@ RELOADS.DMR = function()
 	return anim
 end
 
--- Schrotflinte (Gen-12): Kastenmagazin wie das Sturmgewehr, Spannhebel rechts vorn am Verschluss
-RELOADS.Shotgun = function()
-	local anim = magazineReload("Shotgun", {
-		Tilt = cf(0.05, -0.12, 0.1, 10, 20, -30),
-		Tilt2 = cf(0.02, -0.06, 0.05, 6, 10, -12),
-		MagOut = cf(0, -0.55, 0.06, -8, 0, 0),
-		MagGrab = cf(0, -0.3, 0.03),
-		BoltPull = cf(0, 0, 0.28),
-		BoltGrab = cf(0.12, 0, -0.25),
-		BoltReach = cf(0.25, 0.5, -0.6),
-	})
-	table.insert(anim.Events, { 0.86, "Sound", "Slide" })
-	return anim
-end
-
 RELOADS.LMG = function()
 	local LH = restHand("LMG")
 	local GT = cf(0, -0.1, 0.1, 10, 12, -15)
@@ -408,9 +393,16 @@ local FIRES = {
 		Events = { { 0.2, "Eject" } },
 	},
 	Shotgun = {
-		Duration = 0.14,
-		Groups = { Bolt = { { 0, I }, { 0.3, cf(0, 0, 0.26), "Out" }, { 1, I, "In" } } },
-		Events = { { 0.25, "Eject" } },
+		Duration = WeaponConfig.Get("Shotgun").FireDelay * 0.85,
+		Gun = {
+			{ 0, I },
+			{ 0.12, cf(0, 0, 0.03, 3, 0, 0), "Out" },
+			{ 0.45, cf(0, -0.03, 0.03, -2, 0, 4), "InOut" },
+			{ 0.75, I, "InOut" },
+		},
+		Groups = { Pump = { { 0.2, I }, { 0.45, cf(0, 0, 0.32), "Out" }, { 0.72, I, "In" } } },
+		Hand = { { 0, { "Pump", cf(-0.02, -0.12, 0) } }, { 1, { "Pump", cf(-0.02, -0.12, 0) } } },
+		Events = { { 0.45, "Sound", "Pump" }, { 0.45, "Eject" }, { 0.7, "Sound", "Pump" } },
 	},
 	Rifle = { Duration = 0.05, Events = { { 0, "Eject" } } },
 	SMG = { Duration = 0.05, Events = { { 0, "Eject" } } },
@@ -528,53 +520,55 @@ INSPECTS.SMG = { Duration = 3.8, Build = function()
 	}
 end }
 
--- Schrotflinte (Gen-12): Seite zeigen, auf die rechte Seite rollen und den Spannhebel antippen, Magazin prüfen
-INSPECTS.Shotgun = { Duration = 4.4, Build = function()
+-- Schrotflinte: Seite zeigen, Ladeklappe zur Kamera drehen und eine Patrone nachschieben, Pumpe halb zurück
+INSPECTS.Shotgun = { Duration = 4.6, Build = function()
 	local LH = restHand("Shotgun")
-	local right = cf(-0.4, 0.44, 0.3, 12, 30, 82)
-	local check = cf(-0.18, 0.28, 0.25, 4, 14, -20)
-	local bolt = { "Bolt", cf(0.12, 0, -0.25) }
-	local mag = { "Magazine", cf(0, -0.3, 0.03) }
+	local port = cf(-0.4, 0.45, 0.25, 15, 40, -95)
+	local pumpPose = cf(-0.2, 0.3, 0.3, 4, 10, -12)
+	local shell = { "Shell", cf(-0.02, -0.08, 0.06) }
+	local pump = { "Pump", cf(-0.02, -0.12, 0) }
 	return {
 		Gun = {
 			{ 0.00, I },
-			{ 0.14, cf(-0.5, 0.42, 0.48, 5, 55, 8), "Out" },
-			{ 0.34, cf(-0.52, 0.45, 0.46, 8, 60, 11), "InOut" },
-			{ 0.46, right, "InOut" },
-			{ 0.58, right * cf(0, 0.02, 0, 2, -4, 4), "InOut" },
-			{ 0.66, check, "InOut" },
-			{ 0.78, check * cf(0, 0.03, 0, 2, 0, 0), "Out" },
-			{ 0.83, check, "InOut" },
+			{ 0.12, cf(-0.45, 0.4, 0.5, 5, 50, 8), "Out" },
+			{ 0.28, cf(-0.47, 0.42, 0.5, 8, 55, 10), "InOut" },
+			{ 0.40, port, "InOut" },
+			{ 0.55, port * cf(0, 0.03, 0), "Out" },
+			{ 0.60, port, "InOut" },
+			{ 0.70, pumpPose, "InOut" },
+			{ 0.76, pumpPose * cf(0, 0, 0.03), "Out" },
+			{ 0.84, pumpPose, "InOut" },
 			{ 1.00, I, "InOut" },
 		},
 		Groups = {
-			Bolt = {
-				{ 0.50, I },
-				{ 0.55, cf(0, 0, 0.18), "Out" },
-				{ 0.60, I, "In" },
+			Shell = {
+				{ 0.40, cf(-0.2, -0.45, 0.15) },
+				{ 0.50, I, "Out" },
+				{ 0.56, cf(0, 0.12, -0.25), "In" },
+				{ 1.00, I },
 			},
-			Magazine = {
-				{ 0.68, I },
-				{ 0.73, cf(0, -0.16, 0.03, -4, 0, 0), "Out" },
-				{ 0.78, I, "In" },
+			Pump = {
+				{ 0.70, I },
+				{ 0.76, cf(0, 0, 0.16), "Out" },
+				{ 0.82, I, "In" },
 			},
 		},
 		Hand = {
 			{ 0.00, LH },
-			{ 0.36, LH },
-			{ 0.44, cf(0.25, 0.5, -0.6), "InOut" },
-			{ 0.50, bolt, "Out" },
-			{ 0.60, bolt },
-			{ 0.67, mag, "InOut" },
-			{ 0.79, mag },
-			{ 0.90, LH, "InOut" },
+			{ 0.28, LH },
+			{ 0.36, cf(-0.3, -0.7, 0.3), "InOut" },
+			{ 0.42, shell, "Out" },
+			{ 0.56, shell },
+			{ 0.64, pump, "InOut" },
+			{ 0.84, pump },
+			{ 1.00, LH, "InOut" },
 		},
+		Show = { Shell = { { 0.40, 0.56 } } },
 		Events = {
 			{ 0.02, "Sound", "Draw" },
-			{ 0.55, "Sound", "Bolt" },
-			{ 0.60, "Sound", "Slide" },
-			{ 0.73, "Sound", "MagOut" },
-			{ 0.78, "Sound", "MagIn" },
+			{ 0.55, "Sound", "Shell" },
+			{ 0.76, "Sound", "Pump" },
+			{ 0.82, "Sound", "Pump" },
 		},
 	}
 end }

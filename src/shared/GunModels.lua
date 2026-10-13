@@ -28,6 +28,7 @@ local GOLD = Color3.fromRGB(190, 150, 60)
 local OLIVE = Color3.fromRGB(70, 80, 55)
 local GRAY = Color3.fromRGB(70, 73, 80)
 local BRASS = Color3.fromRGB(205, 165, 75)
+local SHELL = Color3.fromRGB(170, 40, 35)
 local DOT = Color3.fromRGB(255, 120, 40)    -- Leuchtpunkt auf dem Korn
 local OPTIC = Color3.fromRGB(30, 31, 35)    -- mattschwarzes Gehäuse des Rotpunktvisiers
 local LENS = Color3.fromRGB(120, 200, 215)  -- leicht blau getöntes Glas
@@ -109,11 +110,9 @@ local PARTS = {
 		{ "Grip", V(0.25, 0.5, 0.3), V(0, -0.05, 0.06), BLACK, PLASTIC, { Rot = rot(-18) } },
 		{ "Body", V(0.35, 0.4, 1.2), V(0, 0.38, -0.3), DARK, METAL, { Skin = true } },
 		{ "Barrel", V(0.2, 0.2, 1.55), V(0, 0.52, -1.675), BLACK, METAL },
-		{ "Handguard", V(0.28, 0.24, 1.0), V(0, 0.4, -1.4), BLACK, PLASTIC },
-		-- Kastenmagazin (Gen-12) und Spannhebel rechts
-		{ "Magazine", V(0.14, 0.55, 0.32), V(0, -0.02, -0.55), BLACK, PLASTIC, { Group = "Magazine", Rot = rot(8) } },
-		{ "Bolt", V(0.1, 0.06, 0.08), V(0.22, 0.45, -0.6), BLACK, METAL, { Group = "Bolt" } },
-		{ "Stock", V(0.3, 0.5, 1.0), V(0, 0.3, 1.0), BLACK, PLASTIC, { Skin = true } },
+		{ "Tube", V(0.15, 0.15, 1.3), V(0, 0.33, -1.55), BLACK, METAL },
+		{ "Pump", V(0.28, 0.24, 0.6), V(0, 0.32, -1.35), WOOD, WOODEN, { Group = "Pump" } },
+		{ "Stock", V(0.3, 0.5, 1.0), V(0, 0.3, 1.0), WOOD, WOODEN, { Skin = true } },
 		{ "Rib", V(0.06, 0.03, 1.5), V(0, 0.635, -1.675), GRAY, METAL },
 		-- Kimme: Kerbe auf dem Gehäuse, Korn: Leuchtperle an der Mündung (Visierlinie y = 0.71)
 		{ "RearBase", V(0.16, 0.05, 0.06), V(0, 0.605, 0.18), BLACK, METAL },
@@ -121,6 +120,9 @@ local PARTS = {
 		{ "RearR", V(0.05, 0.11, 0.06), V(0.055, 0.685, 0.18), BLACK, METAL },
 		{ "FrontPost", V(0.03, 0.025, 0.03), V(0, 0.6625, -2.38), BLACK, METAL },
 		{ "FrontDot", V(0.07, 0.07, 0.07), V(0, 0.71, -2.38), DOT, METAL, { Neon = true, Shape = Enum.PartType.Ball } },
+		-- Patrone beim Nachladen (sonst unsichtbar), liegt vor der Ladeklappe unten am Gehäuse
+		{ "Shell", V(0.22, 0.09, 0.09), V(0, 0.08, -0.45), SHELL, PLASTIC,
+			{ Group = "Shell", Hidden = true, Shape = Enum.PartType.Cylinder, Rot = rot(0, 90, 0) } },
 	},
 	DMR = {
 		HANDLE,

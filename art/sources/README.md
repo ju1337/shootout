@@ -44,14 +44,14 @@
 
 - `mk23.glb`: "low-poly HK Mark 23 SOCOM" von D_U (https://sketchfab.com/DU1701), Lizenz CC-BY-4.0
   (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-hk-mark-23-socom-b6426adeae9d45999610453df5a68c43
-- `Pistol.glb`: die fertig vorbereitete Studio-Version für die Pistole (`python3 tools/mk23_glb.py`): Teile benannt
+- früher `Pistol.glb` (inzwischen ersetzt durch die Meshy-Version oben): die Studio-Version für die Pistole (`python3 tools/mk23_glb.py`): Teile benannt
   (Schlitten = Skin-Zone und Gruppe `Slide`, Magazin, Leuchtpunkte), Marker gesetzt (Visierlinie über die Oberkante der
   Kimme und die Kornspitze), ohne Schalldämpfer, Laser-Modul und lose Patronen, 1,05 Studs lang, Lauf nach -Z. In Studio:
   Import 3D > Pistol.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Pistol" nennen.
 
 - `m60.glb`: "low-poly M60 Machine Gun" von D_U (https://sketchfab.com/DU1701), Lizenz CC-BY-4.0
   (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-m60-machine-gun-9defc3535972489c817c5f47551cbebf
-- `LMG.glb`: die fertig vorbereitete Studio-Version für das MG (`python3 tools/m60_glb.py`): Teile benannt (Gehäuse,
+- früher `LMG.glb` (inzwischen ersetzt durch die Meshy-Version oben): die Studio-Version für das MG (`python3 tools/m60_glb.py`): Teile benannt (Gehäuse,
   Schaft, Handschutz und Zuführdeckel = Skin-Zonen, Deckel = Gruppe `Cover`, Munitionskasten links = `Magazine`,
   Spannhebel = `Bolt`, Leuchtpunkt auf dem Korn), Marker gesetzt (Visierlinie über die Kimmen-Ohren der Klappkimme und
   die Kornspitze), ohne lose Patronen, Gurtstücke und den zweiten Kasten, 4,33 Studs lang, Lauf nach -Z. In Studio:
@@ -59,7 +59,7 @@
 
 - `rhino.glb`: "low-poly Chiappa Rhino" von D.U. (https://sketchfab.com/D.U.), Lizenz CC-BY-4.0
   (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-chiappa-rhino-dd187489aaca42b2abda9831e76bc94b
-- `Revolver.glb`: die fertig vorbereitete Studio-Version für den Revolver (`python3 tools/rhino_glb.py`): Teile benannt
+- früher `Revolver.glb` (inzwischen ersetzt durch die Meshy-Version oben): die Studio-Version für den Revolver (`python3 tools/rhino_glb.py`): Teile benannt
   (Rahmen und Trommel = Skin-Zonen, Trommel mit Kran und Ausstoßerstange = Gruppe `Cylinder`, `Hammer`, Leuchtpunkt im
   Korn, dazugebauter Schnelllader `Loader`), Marker gesetzt (Visierlinie über die Oberkante der Kimme und des Korns,
   Mündung tief an der unteren Kammer), ohne die zwei losen Patronen, 1,47 Studs lang, Lauf nach -Z. In Studio:
@@ -67,7 +67,7 @@
 
 - `gen12.glb`: "low-poly GEN-12" von D.U. (https://sketchfab.com/D.U.), Lizenz CC-BY-4.0
   (http://creativecommons.org/licenses/by/4.0/), Quelle: https://sketchfab.com/3d-models/low-poly-gen-12-5a8e85a2375948498d76d379e915f3bf
-- `Shotgun.glb`: die fertig vorbereitete Studio-Version für die Schrotflinte (`python3 tools/gen12_glb.py`): Teile benannt,
+- früher `Shotgun.glb` (inzwischen ersetzt durch die Meshy-Version oben): die Studio-Version für die Schrotflinte (`python3 tools/gen12_glb.py`): Teile benannt,
   loses zweites Magazin und lose Patrone entfernt, Notvisiere (Kimme und Korn) auf der Schiene ergänzt, Marker gesetzt.
   Import 3D > Shotgun.glb (Teile nicht zusammenführen, Einheit Stud), nach ReplicatedStorage > Assets > Weapons, "Shotgun" nennen.
 

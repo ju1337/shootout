@@ -39,11 +39,11 @@ Modelle (Export-Einstellungen, Geometrie, Texturen, Stil, Abgabe-Checkliste) ste
 Zum Ausprobieren ohne Blender: `art/templates/Weapons/<Waffe>.rbxmx` per Datei › „Insert from File…“ in Studio
 einfügen und nach Assets › Weapons legen – die Vorlage ist selbst ein gültiges Modell.
 
-Die `SMG` ist fertig: MP7 A1 als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
-Die `Pistol` ist fertig: HK Mark 23 als echtes Mesh (`models/Weapons/Pistol.rbxmx`, Studio-Import von `art/sources/Pistol.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
-Die `Shotgun` ist fertig: Gen-12 als echtes Mesh (`models/Weapons/Shotgun.rbxmx`, Studio-Import von `art/sources/Shotgun.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
-Das `LMG` ist fertig: M60 als echtes Mesh (`models/Weapons/LMG.rbxmx`, Studio-Import von `art/sources/LMG.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
-Der `Revolver` ist fertig: Chiappa Rhino als echtes Mesh (`models/Weapons/Revolver.rbxmx`, Studio-Import von `art/sources/Revolver.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
+Die `SMG` ist fertig: MP5 aus Meshy als echtes Mesh (`models/Weapons/SMG.rbxmx`, Studio-Import von `art/sources/SMG.glb`, Rojo legt es an).
+Die `Pistol` ist fertig: Glock 17 aus Meshy als echtes Mesh (`models/Weapons/Pistol.rbxmx`, Studio-Import von `art/sources/Pistol.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
+Das `LMG` ist fertig: MG mit Gurtkasten aus Meshy als echtes Mesh (`models/Weapons/LMG.rbxmx`, Studio-Import von `art/sources/LMG.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
+Die `Shotgun` ist fertig: Pump-Schrotflinte aus Meshy als echtes Mesh (`models/Weapons/Shotgun.rbxmx`, Studio-Import von `art/sources/Shotgun.glb`, Rojo legt es an).
+Der `Revolver` ist fertig: .44 Magnum aus Meshy als echtes Mesh (`models/Weapons/Revolver.rbxmx`, Studio-Import von `art/sources/Revolver.glb`, Rojo legt es an; Farben matt dunkel, SmoothPlastic).
 
 **Modelle aus Meshy oder anderen Quellen** (fertige FBX/GLB ohne Marker): einfach in `art/sources/` hochladen
 (Waffe und Magazin als eigene Dateien, Texturen dazu). Dann bereite ich sie vor wie das Sturmgewehr
@@ -72,7 +72,7 @@ Maße der Vorlagen (Studs). „Visier“ = Höhe der Visierlinie über dem Griff
 |---|---|---|---|---|---|
 | `Rifle` | Sturmgewehr | 4,13 | 0,97 | Magazine, Bolt | Rotpunktvisier (roter Punkt = `Point_SightRear`); fertig: `art/sources/Rifle.glb` (AR-15 ohne Aufsätze, Kimme/Korn als Visierlinie; Holo-Visier als Aufsatz) |
 | `SMG` | Maschinenpistole | 2,38 | 0,81 | Magazine, Bolt | |
-| `Shotgun` | Schrotflinte | 3,95 | 0,58 | Magazine, Bolt | Gen-12 mit Kastenmagazin, Spannhebel rechts; fertig: `art/sources/Shotgun.glb` (Notvisiere auf der Schiene) |
+| `Shotgun` | Schrotflinte | 3,95 | 0,76 | Pump, Shell | fertig: `art/sources/Shotgun.glb` (Pump-Schrotflinte aus Meshy, Vorderschaft = `Pump`); Shell = Patrone (Kopie vom Seitenhalter), nur beim Nachladen sichtbar |
 | `DMR` | Präzisionsgewehr | 4,58 | 0,93 | Magazine, Bolt | fertig: `art/sources/DMR.glb` (Scharfschützengewehr mit Zielfernrohr); mit Modell zielt man durchs Zielfernrohr (Fernrohr-Ansicht `ScopeOverlay`, Sichtfeld `ScopeFov`), kein Holo-Visier |
 | `LMG` | MG | 4,33 | 0,97 | Magazine, Bolt, Cover | Magazin = Kasten + Gurt, Cover = Deckel |
 | `Pistol` | Pistole | 1,05 | 0,62 | Magazine, Slide | Kimme und Korn sitzen auf dem Schlitten (Slide) |
