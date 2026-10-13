@@ -503,6 +503,13 @@ local function bobHas(itemId, count)
 	return false
 end
 check(bobHas("Bandage", 2) and LootService.Get(id) ~= nil, "einzeln genommen: Verbände in Bobs Tasche, Munition bleibt liegen")
+-- Aufgehoben-Anzeige rechts mittig: eine Karte je Item mit Anzahl (auch beim einzelnen Nehmen)
+local pickFeed = find(hud, "PickupFeed")
+check(pickFeed ~= nil and pickFeed.AnchorPoint == Vector2.new(1, 0) and pickFeed.Position.X.Scale == 1
+	and pickFeed.Position.Y.Scale == 0.5, "Aufgehoben-Anzeige rechts mittig")
+local bandageCard = pickFeed and pickFeed:FindFirstChild("Pick_Bandage")
+check(bandageCard ~= nil and find(bandageCard, "Count").Text == "+2" and find(bandageCard, "ItemName").Text == "VERBAND",
+	"Karte für den Verband mit +2")
 -- schließen, während noch ein Update zur Tasche unterwegs ist: das Fenster kommt nicht zurück
 ExtinctionClient.Close()
 Remotes.ExtUpdate.OnClientEvent:Fire("Loot", { Id = id, Title = "BEUTEL", Items = {} })
@@ -526,6 +533,17 @@ step(0.5)
 check(LootService.Get(id) == nil, "Tasche leer genommen und weg")
 check(not windowGui.Enabled, "Fenster schließt, wenn die Tasche weg ist")
 check(require("Inventory").Count(InventoryService.GetBag(bob), "Ammo_9mm") == ammoBefore + 15, "Munition in Bobs Tasche")
+local ammoCard = pickFeed and pickFeed:FindFirstChild("Pick_Ammo_9mm")
+check(ammoCard ~= nil and find(ammoCard, "Count").Text == "+15", "ALLES NEHMEN: Karte für die Munition mit +15")
+check(pickFeed ~= nil and ammoCard ~= nil and bandageCard ~= nil and ammoCard.LayoutOrder < bandageCard.LayoutOrder,
+	"neueste Karte oben")
+-- dasselbe Item noch einmal: zählt auf der Karte weiter statt einer zweiten Karte
+Remotes.ExtUpdate.OnClientEvent:Fire("Picked", { { Id = "Ammo_9mm", Count = 5 } })
+check(ammoCard ~= nil and find(ammoCard, "Count").Text == "+20" and #pickFeed:GetChildren() == 3,
+	"gleiches Item zählt weiter (+20), keine neue Karte")
+step(6)
+check(pickFeed ~= nil and pickFeed:FindFirstChild("Pick_Ammo_9mm") == nil and pickFeed:FindFirstChild("Pick_Bandage") == nil,
+	"Karten verschwinden nach ein paar Sekunden")
 bob:SetAttribute("Pass_LootAll", nil)
 
 -- Lager: nur in der Nähe, anklicken legt hinüber

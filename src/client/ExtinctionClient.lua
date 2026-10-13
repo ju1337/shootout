@@ -623,6 +623,116 @@ ExtinctionClient.Toast = function(text, ok)
 	end
 end
 
+-- Aufgehobenes (ExtUpdate "Picked", LootService.Picked): Karten rechts mittig im Stil des Menüs, je Item eine Karte mit
+-- Bild, Name, Seltenheit (Farbe der Kante rechts) und "+Anzahl". Die neueste liegt oben; dasselbe Item noch einmal zählt
+-- auf seiner Karte weiter. Jede Karte gleitet nach Inv.PICK.Life Sekunden nach rechts hinaus; mehr als Inv.PICK.Max: die älteste geht.
+-- Touch: links neben den Bildschirm-Knöpfen, größer und höchstens 3 Karten.
+Inv.PICK = { W = 280, H = 58, Gap = 6, Life = 4.5, Max = 5 }
+Inv.picks = {} -- { Id, Count, Slot, Card, CountText, Pop, Born, Leaving }
+Inv.pickOrder = 0
+
+function Inv.buildPickFeed(parent)
+	local touch = InputActions.IsTouch()
+	local feed = make("Frame", { Name = "PickupFeed", AnchorPoint = Vector2.new(1, 0),
+		Position = touch and UDim2.new(1, -480, 0.5, -70) or UDim2.new(1, -24, 0.5, -20),
+		Size = UDim2.fromOffset(Inv.PICK.W, Inv.PICK.Max * (Inv.PICK.H + Inv.PICK.Gap)), BackgroundTransparency = 1 }, parent)
+	make("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, Inv.PICK.Gap),
+		HorizontalAlignment = Enum.HorizontalAlignment.Right }, feed)
+	if touch then
+		make("UIScale", { Scale = 1.3 }, feed)
+	end
+	Inv.pickFeed, Inv.pickMax = feed, touch and 3 or Inv.PICK.Max
+end
+
+function Inv.dropPick(pick, fast)
+	if pick.Leaving then
+		return
+	end
+	pick.Leaving = true
+	local index = table.find(Inv.picks, pick)
+	if index then
+		table.remove(Inv.picks, index)
+	end
+	local tween = game:GetService("TweenService"):Create(pick.Card, TweenInfo.new(fast and 0.12 or 0.3, Enum.EasingStyle.Quad,
+		Enum.EasingDirection.In), { Position = UDim2.fromOffset(Inv.PICK.W + 40, 0) })
+	tween.Completed:Connect(function()
+		pick.Slot:Destroy()
+	end)
+	tween:Play()
+end
+
+function Inv.showPick(id, count)
+	local config = itemConfig(id)
+	if not (config and Inv.pickFeed) then
+		return
+	end
+	local TweenService = game:GetService("TweenService")
+	Inv.pickOrder -= 1 -- kleinere LayoutOrder = weiter oben
+	for _, pick in Inv.picks do
+		if pick.Id == id then
+			pick.Count += count
+			pick.CountText.Text = "+" .. pick.Count
+			pick.Born = os.clock()
+			pick.Slot.LayoutOrder = Inv.pickOrder
+			pick.Pop.Scale = 1.08
+			TweenService:Create(pick.Pop, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Scale = 1 }):Play()
+			return
+		end
+	end
+	while #Inv.picks >= (Inv.pickMax or Inv.PICK.Max) do
+		local oldest = Inv.picks[1]
+		for _, pick in Inv.picks do
+			if pick.Born < oldest.Born then
+				oldest = pick
+			end
+		end
+		Inv.dropPick(oldest, true)
+	end
+	local tier = Inv.tierColor(config)
+	local slot = make("Frame", { Name = "Pick_" .. id, Size = UDim2.fromOffset(Inv.PICK.W, Inv.PICK.H), BackgroundTransparency = 1,
+		LayoutOrder = Inv.pickOrder, ClipsDescendants = true }, Inv.pickFeed)
+	local card = UITheme.HudPanel({ Name = "Card", Position = UDim2.fromOffset(Inv.PICK.W + 40, 0), Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 0.22, ZIndex = 2 }, slot, "Left")
+	local pop = make("UIScale", { Scale = 1 }, card)
+	UITheme.Stroke(card, C.Border, 1, 0.55)
+	UITheme.AccentBar(card, tier or C.Good, { Side = "Right", Thickness = 3, ZIndex = 4 })
+	-- Bild in einer Kachel wie auf der Hotbar
+	local tileW, tileH = 70, Inv.PICK.H - 12
+	local tile = make("Frame", { Name = "Tile", Position = UDim2.fromOffset(6, 6), Size = UDim2.fromOffset(tileW, tileH),
+		BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 3 }, card)
+	UITheme.Corner(tile, 3)
+	buildIcon(tile, id, 4, tileW * 0.96 / (tileH * 0.72))
+	local textX = tileW + 16
+	local caption = make("Frame", { Name = "Caption", Position = UDim2.fromOffset(textX, 9), Size = UDim2.new(1, -textX - 70, 0, 13),
+		BackgroundTransparency = 1, ZIndex = 3 }, card)
+	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, caption)
+	label({ Name = "Picked", LayoutOrder = 1, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X, Text = "AUFGENOMMEN",
+		TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 3 }, caption)
+	if tier and TIER_NAMES[config.Tier] then
+		label({ Name = "Tier", LayoutOrder = 2, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X,
+			Text = TIER_NAMES[config.Tier], TextSize = 11, Font = F.Bold, TextColor3 = tier, ZIndex = 3 }, caption)
+	end
+	local name = label({ Name = "ItemName", Position = UDim2.fromOffset(textX, 24), Size = UDim2.new(1, -textX - 70, 0, 24),
+		Text = upper(config.Name), TextSize = 18, Font = F.Display, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 3 }, card)
+	UITheme.Outline(name)
+	local countText = label({ Name = "Count", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0),
+		Size = UDim2.fromOffset(60, 30), Text = "+" .. count, TextSize = 24, Font = F.Display, TextColor3 = C.Good,
+		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, card)
+	UITheme.Outline(countText)
+	local pick = { Id = id, Count = count, Slot = slot, Card = card, CountText = countText, Pop = pop, Born = os.clock(), Leaving = false }
+	table.insert(Inv.picks, pick)
+	TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Position = UDim2.fromOffset(0, 0) }):Play()
+	task.spawn(function()
+		while not pick.Leaving and os.clock() - pick.Born < Inv.PICK.Life do
+			task.wait(0.25)
+		end
+		Inv.dropPick(pick)
+	end)
+end
+
 local function buildHud()
 	hud = make("ScreenGui", { Name = "ExtinctionHUD", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 6,
 		Enabled = false }, player:WaitForChild("PlayerGui"))
@@ -743,6 +853,7 @@ local function buildHud()
 	levelXP = label({ Name = "XP", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 148, 1, 0),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, levelRow)
 	UITheme.Outline(levelXP)
+	Inv.buildPickFeed(root)
 	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -1), Size = UDim2.fromOffset(900, 11),
 		Text = "", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 
@@ -4979,6 +5090,12 @@ function ExtinctionClient.Init()
 	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b)
 		if kind == "Status" then
 			showToast(tostring(a), b == true)
+		elseif kind == "Picked" and type(a) == "table" then
+			for _, item in a do
+				if type(item) == "table" and type(item.Id) == "string" and type(item.Count) == "number" and item.Count > 0 then
+					Inv.showPick(item.Id, item.Count)
+				end
+			end
 		elseif kind == "Loot" and type(a) == "table" then
 			-- nur öffnen/auffrischen, wenn kein anderes Fenster offen ist (ein Update, das nach dem Schließen ankommt,
 			-- holte die Tasche sonst zurück, ohne dass der Server einen noch als Zuschauer kennt)

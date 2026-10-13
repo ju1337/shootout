@@ -150,6 +150,19 @@ function LootService.Summary(items)
 	return table.concat(parts, ", ")
 end
 
+-- Aufgehobenes dem Spieler melden: Karten rechts mittig im HUD (ExtinctionClient, ExtUpdate "Picked"), items = { { Id, Count } }
+function LootService.Picked(player, items)
+	local list = {}
+	for _, item in items do
+		if ExtinctionConfig.Get(item.Id) and (item.Count or 0) > 0 then
+			table.insert(list, { Id = item.Id, Count = item.Count })
+		end
+	end
+	if #list > 0 then
+		Remotes.ExtUpdate:FireClient(player, "Picked", list)
+	end
+end
+
 function LootService.Remove(id)
 	local bag = bags[id]
 	if not bag then
@@ -631,11 +644,11 @@ function LootService.Take(player, id, slot, toName, toSlot)
 			end
 		end
 	end
+	LootService.Picked(player, taken) -- jedes Aufheben, auch einzeln aus dem Fenster
 	if full then
 		InventoryService.Status(player, playerBag == InventoryService.GetSafe(player) and "Der Container ist voll."
 			or "Deine Tasche ist voll.")
 	elseif moved and slot == "All" then
-		InventoryService.Status(player, "+ " .. LootService.Summary(taken), true)
 		Sfx.ToPlayers({ player }, "Pickup")
 	end
 	if moved then
@@ -667,9 +680,7 @@ function LootService.Grab(player, items)
 			table.insert(rest, { Id = item.Id, Count = item.Count - added, Mag = item.Mag, Att = item.Att })
 		end
 	end
-	if #got > 0 then
-		InventoryService.Status(player, "+ " .. LootService.Summary(got), true)
-	end
+	LootService.Picked(player, got)
 	if #rest > 0 then
 		-- der Rest liegt als Beutel neben dem Spieler statt zu verschwinden
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")

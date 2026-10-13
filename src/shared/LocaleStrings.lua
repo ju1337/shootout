@@ -124,6 +124,7 @@ return {
 	["ASCHE-ELITE"] = "ASH ELITE",
 	["Asche-Elite"] = "Ash Elite",
 	["ASCHEREGEN"] = "ASHFALL",
+	["AUFGENOMMEN"] = "PICKED UP",
 	["AUSSCHALTEN"] = "TURN OFF",
 	["Angebot beendet: {1}"] = "Offer ended: {1}",
 	["Angebot des Tages ist aus."] = "Deal of the day is off.",
