@@ -857,6 +857,8 @@ class CampPhoenix:
         box("Decor", "BatteryStrip", (9.05, 0.25, 3.65), (0, 3.3, 0), (90, 220, 140), "Neon", props=dict(NO_HIT))
         gx, gz = P(93, 344)
         self.crypt_gate(gx, gz + 2.5, self.yaw_to(1, 0))  # Front zur Nordstraße (nach Osten)
+        # Tafel DUNGEON-WOCHE (Bestenliste der Woche, LeaderboardService) vor der Kapelle nördlich vom Weg, Front zum Weg
+        self.monolith("Leaderboard_DungeonWeek", 5, 8, 5.2, 9.6, gx + 11.6, gz + 9.3, self.yaw_to(0, -1), (170, 90, 255))
 
     def sports_court(self, x, z, yaw):
         """Basketballplatz: blauer Belag mit Linien, Körbe an den Enden, Gitterzaun mit Öffnung zur Mitte."""

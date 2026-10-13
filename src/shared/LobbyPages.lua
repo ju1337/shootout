@@ -1304,15 +1304,30 @@ end
 -- BATTLE PASS
 -- =====================================================================
 
+-- Saison des Spielers (Attribut PassSeason, sonst die laufende) und Restzeit als Text
+local function passSeason()
+	return player:GetAttribute("PassSeason") or PassConfig.CurrentSeason(workspace:GetServerTimeNow())
+end
+
+local function seasonLeftText()
+	local left = PassConfig.SeasonLeft(workspace:GetServerTimeNow())
+	if left >= 86400 then
+		return "ENDET IN " .. math.floor(left / 86400) .. " TAGEN"
+	end
+	return "ENDET IN " .. math.max(1, math.floor(left / 3600)) .. " STD."
+end
+
 function LobbyPages.Pass(page)
 	local CARD_W, CARD_H, GAP = 176, 356, 12
-	local max = #PassConfig.Tiers
+	local max = PassConfig.TierCount
+	local season = passSeason()
+	local tiers = PassConfig.TiersFor(season)
 
-	label({ Position = UDim2.fromOffset(0, -4), Size = UDim2.fromOffset(900, 46), Text = upper(PassConfig.SeasonName), TextSize = 42,
-		Font = F.Display }, page)
-	label({ Position = UDim2.fromOffset(0, 44), Size = UDim2.fromOffset(900, 16),
-		Text = "KOSTENLOS · JEDE STUFE SCHALTET IHRE BELOHNUNG AUTOMATISCH FREI", TextSize = 11, Font = F.Bold,
-		TextColor3 = C.Muted }, page)
+	local title = label({ Position = UDim2.fromOffset(0, -4), Size = UDim2.fromOffset(900, 46),
+		Text = upper(PassConfig.SeasonName(season)), TextSize = 42, Font = F.Display }, page)
+	local subtitle = label({ Position = UDim2.fromOffset(0, 44), Size = UDim2.fromOffset(900, 16),
+		Text = "KOSTENLOS · " .. seasonLeftText() .. " · DANN STARTET EINE NEUE SAISON MIT NEUEN SKINS", TextSize = 11,
+		Font = F.Bold, TextColor3 = C.Muted }, page)
 	local tierLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, -4), Size = UDim2.fromOffset(400, 46),
 		Text = "", TextSize = 42, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right }, page)
 	local xpLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 44), Size = UDim2.fromOffset(500, 16),
@@ -1328,37 +1343,40 @@ function LobbyPages.Pass(page)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, GAP),
 		SortOrder = Enum.SortOrder.LayoutOrder }, strip)
 	local cards = {}
-	for tier, reward in PassConfig.Tiers do
-		local item = reward.Item and Cosmetics.Get(reward.Item)
-		local rarity = item and Cosmetics.Rarities[item.Rarity]
-		local card = make("Frame", { Size = UDim2.fromOffset(CARD_W, CARD_H), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1,
-			BorderSizePixel = 0, LayoutOrder = tier }, strip)
-		UITheme.Corner(card, UITheme.Radius.XL)
-		local baseColor, baseTransparency = rarity and rarity.Color or C.Border, rarity and 0.35 or 0
-		local stroke = UITheme.Stroke(card, baseColor, 1, baseTransparency)
-		if rarity then
-			UITheme.AccentBar(card, rarity.Color)
+	local function buildCards()
+		for tier, reward in tiers do
+			local item = reward.Item and Cosmetics.Get(reward.Item)
+			local rarity = item and Cosmetics.Rarities[item.Rarity]
+			local card = make("Frame", { Size = UDim2.fromOffset(CARD_W, CARD_H), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1,
+				BorderSizePixel = 0, LayoutOrder = tier }, strip)
+			UITheme.Corner(card, UITheme.Radius.XL)
+			local baseColor, baseTransparency = rarity and rarity.Color or C.Border, rarity and 0.35 or 0
+			local stroke = UITheme.Stroke(card, baseColor, 1, baseTransparency)
+			if rarity then
+				UITheme.AccentBar(card, rarity.Color)
+			end
+			label({ Position = UDim2.fromOffset(14, 12), Size = UDim2.new(1, -28, 0, 16), Text = "STUFE " .. tier, TextSize = 11, Font = F.Bold,
+				TextColor3 = C.Muted }, card)
+			if item then
+				local view = viewport({ Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 0, 170) }, card)
+				showWeapon(view, "Rifle", item, CARD_W / 170)
+				label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 52), Text = upper(item.Name), TextSize = 22,
+					Font = F.Display, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, card)
+				label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = upper(rarity.Name) .. "  ·  EXKLUSIV",
+					TextSize = 10, Font = F.Bold, TextColor3 = rarity.Color }, card)
+			else
+				UITheme.Coin(card, 64, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 86) })
+				label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 28), Text = tostring(reward.Coins), TextSize = 30,
+					Font = F.Display, TextColor3 = C.Gold }, card)
+				label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = "MÜNZEN", TextSize = 10,
+					Font = F.Bold, TextColor3 = C.Muted }, card)
+			end
+			local state = label({ Position = UDim2.fromOffset(14, CARD_H - 34), Size = UDim2.new(1, -28, 0, 18), Text = "", TextSize = 11,
+				Font = F.Bold }, card)
+			cards[tier] = { Card = card, Stroke = stroke, State = state, BaseColor = baseColor, BaseTransparency = baseTransparency }
 		end
-		label({ Position = UDim2.fromOffset(14, 12), Size = UDim2.new(1, -28, 0, 16), Text = "STUFE " .. tier, TextSize = 11, Font = F.Bold,
-			TextColor3 = C.Muted }, card)
-		if item then
-			local view = viewport({ Position = UDim2.fromOffset(0, 34), Size = UDim2.new(1, 0, 0, 170) }, card)
-			showWeapon(view, "Rifle", item, CARD_W / 170)
-			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 52), Text = upper(item.Name), TextSize = 22,
-				Font = F.Display, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, card)
-			label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = upper(rarity.Name) .. "  ·  EXKLUSIV",
-				TextSize = 10, Font = F.Bold, TextColor3 = rarity.Color }, card)
-		else
-			UITheme.Coin(card, 64, { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 86) })
-			label({ Position = UDim2.fromOffset(14, 212), Size = UDim2.new(1, -28, 0, 28), Text = tostring(reward.Coins), TextSize = 30,
-				Font = F.Display, TextColor3 = C.Gold }, card)
-			label({ Position = UDim2.fromOffset(14, 268), Size = UDim2.new(1, -28, 0, 14), Text = "MÜNZEN", TextSize = 10,
-				Font = F.Bold, TextColor3 = C.Muted }, card)
-		end
-		local state = label({ Position = UDim2.fromOffset(14, CARD_H - 34), Size = UDim2.new(1, -28, 0, 18), Text = "", TextSize = 11,
-			Font = F.Bold }, card)
-		cards[tier] = { Card = card, Stroke = stroke, State = state, BaseColor = baseColor, BaseTransparency = baseTransparency }
 	end
+	buildCards()
 
 	-- unten links: nächste Belohnung mit Vorschau; rechts: wie man Pass-XP sammelt (drei Kacheln)
 	local INFO_Y = 98 + CARD_H + 30
@@ -1398,6 +1416,18 @@ function LobbyPages.Pass(page)
 	end
 
 	local function refresh()
+		-- neue Saison, während die Seite gebaut war: Karten mit den neuen Skins neu bauen
+		if passSeason() ~= season then
+			season = passSeason()
+			tiers = PassConfig.TiersFor(season)
+			for _, entry in cards do
+				entry.Card:Destroy()
+			end
+			table.clear(cards)
+			buildCards()
+			title.Text = upper(PassConfig.SeasonName(season))
+		end
+		subtitle.Text = "KOSTENLOS · " .. seasonLeftText() .. " · DANN STARTET EINE NEUE SAISON MIT NEUEN SKINS"
 		local xp = player:GetAttribute("PassXP") or 0
 		local tier, progress = PassConfig.TierFromXP(xp)
 		tierLabel.Text = "STUFE " .. tier .. " / " .. max
@@ -1416,7 +1446,7 @@ function LobbyPages.Pass(page)
 			entry.Card.BackgroundColor3 = reached and Color3.fromRGB(26, 32, 28) or C.Panel
 		end
 		-- nächste Belohnung mit Vorschau (Skin in 3D, Münzen als Münze)
-		local reward = PassConfig.Tiers[tier + 1]
+		local reward = tiers[tier + 1]
 		local item = reward and reward.Item and Cosmetics.Get(reward.Item)
 		if reward then
 			nextName.Text = item and upper(item.Name) or (reward.Coins .. " MÜNZEN")
@@ -1442,7 +1472,7 @@ function LobbyPages.Pass(page)
 		strip.CanvasPosition = Vector2.new(math.max(0, (math.min(tier + 1, max) - 3) * (CARD_W + GAP)), 0)
 	end
 	refresh()
-	return { Refresh = refresh, Watch = { PassXP = true } }
+	return { Refresh = refresh, Watch = { PassXP = true, PassSeason = true } }
 end
 
 return LobbyPages

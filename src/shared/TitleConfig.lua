@@ -63,6 +63,9 @@ TitleConfig.List = {
 		Goal = 1, Color = Color3.fromRGB(150, 70, 230) },
 	{ Id = "Arsenal", Name = "Arsenal", Text = "Gold-Tarnung auf allen Waffen", Mastery = "Gold",
 		Goal = #MasteryConfig.Weapons, Color = Color3.fromRGB(255, 196, 52) },
+	-- Top 10 im Dungeon-Wochenrekord (RetentionService)
+	{ Id = "KatakombenChampion", Name = "Katakomben-Champion", Text = "Top 10 der Dungeon-Woche", Stat = "DungeonTop", Goal = 1,
+		Color = Color3.fromRGB(170, 90, 255) },
 }
 
 -- Titel der offenen Welt (ab einem Spielerlevel, ExtLevelConfig)

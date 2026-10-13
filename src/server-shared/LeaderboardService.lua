@@ -1,6 +1,8 @@
 -- LeaderboardService (ModuleScript, nur Server)
 -- Globale Bestenlisten (Top 10) über OrderedDataStores für die Ruhmeswand im Camp: Zombies, Aufträge, Kills und
--- Spielerlevel (inkl. Prestige). ELO kommt nur dazu, solange Arcade an ist (Modes.ArcadeEnabled, Ranked).
+-- Spielerlevel (inkl. Prestige), dazu der Dungeon-Wochenrekord (höchste Welle diese Woche, jede Woche ein eigener
+-- OrderedDataStore, RetentionConfig.DungeonStoreName; Preise verteilt RetentionService). ELO kommt nur dazu, solange
+-- Arcade an ist (Modes.ArcadeEnabled, Ranked). Die Clan-Tafel (Leaderboard_Clans) füllt ClanService.
 -- Werte werden regelmäßig für alle Spieler eingetragen. Ohne DataStore (z.B. in Studio ohne API-Zugriff)
 -- zeigen die Listen die Spieler auf dem Server, damit die Tafeln im Camp nie leer sind.
 -- Ergebnis als JSON in ReplicatedStorage-Attributen "Leaderboard_<Name>": { { Name, UserId, Value }, ... }
@@ -16,6 +18,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local RankConfig = require(Shared.RankConfig)
 local LevelConfig = require(Shared.LevelConfig)
 local Modes = require(Shared.Modes)
+local QuestConfig = require(Shared.QuestConfig)
+local RetentionConfig = require(Shared.RetentionConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local LeaderboardService = {}
@@ -41,7 +45,14 @@ local BOARDS = {
 	Level = function(profile)
 		return (profile.Prestige or 0) * 1000 + LevelConfig.FromXP(profile.AccountXP or 0)
 	end,
+	-- höchste Welle, mit der man diese Woche lebend aus dem Dungeon kam (RetentionService)
+	DungeonWeek = function(profile)
+		local data = profile.DungeonWeek
+		return type(data) == "table" and data.Week == QuestConfig.Week() and tonumber(data.Best) or 0
+	end,
 }
+-- Tafeln, auf denen nur Werte über 0 stehen (wer diese Woche nichts geschafft hat, fehlt)
+local POSITIVE = { DungeonWeek = true }
 -- ELO (Ranked) nur mit Arcade: ohne Arcade ändert sie sich nicht mehr. Siege (Stats.Wins) bleiben im Profil, haben
 -- aber keine Tafel mehr.
 if Modes.ArcadeEnabled then
@@ -51,6 +62,7 @@ if Modes.ArcadeEnabled then
 end
 
 local stores = {} -- [Name] = OrderedDataStore
+local storeWeek = nil -- Woche, für die stores.DungeonWeek gilt
 local names = {}  -- [UserId] = Name (Cache)
 local hiddenIds = {} -- [UserId] = true: vom Admin versteckt (aus den Listen gefiltert, auch solange der DataStore nachhängt)
 
@@ -71,6 +83,19 @@ local function nameOf(userId)
 	return name
 end
 
+-- Store einer Tafel (Dungeon-Woche: jede Woche ein neuer)
+local function storeOf(board)
+	if board == "DungeonWeek" then
+		local week = QuestConfig.Week()
+		if storeWeek ~= week then
+			local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService, RetentionConfig.DungeonStoreName(week))
+			stores.DungeonWeek = ok and result or nil
+			storeWeek = week
+		end
+	end
+	return stores[board]
+end
+
 local function submitPlayer(player)
 	local profile = ProgressService.Get(player)
 	if not profile or not ProgressService.IsLoaded(player) then -- nicht das leere Ersatzprofil (würde Bestwerte mit 0 überschreiben)
@@ -79,12 +104,15 @@ local function submitPlayer(player)
 	hiddenIds[player.UserId] = profile.HideBoards or nil
 	player:SetAttribute("HideBoards", profile.HideBoards or nil)
 	for board, getValue in BOARDS do
-		local store = stores[board]
+		local store = storeOf(board)
 		if store and profile.HideBoards then
 			-- vom Admin versteckt (Admin-Panel): Eintrag entfernen statt eintragen
 			task.spawn(pcall, store.RemoveAsync, store, tostring(player.UserId))
 		elseif store then
 			local value = math.floor(getValue(profile))
+			if POSITIVE[board] and value <= 0 then
+				continue
+			end
 			task.spawn(function()
 				local ok, err = pcall(store.SetAsync, store, tostring(player.UserId), value)
 				if not ok then
@@ -101,12 +129,13 @@ function LeaderboardService.Submit(player)
 end
 
 -- Ohne DataStore: Liste aus den Spielern auf dem Server
-local function localList(getValue)
+local function localList(getValue, positive)
 	local list = {}
 	for _, player in Players:GetPlayers() do
 		local profile = ProgressService.Get(player)
-		if profile and not profile.HideBoards then
-			table.insert(list, { Name = player.Name, UserId = player.UserId, Value = math.floor(getValue(profile)) })
+		local value = profile and math.floor(getValue(profile)) or 0
+		if profile and not profile.HideBoards and (value > 0 or not positive) then
+			table.insert(list, { Name = player.Name, UserId = player.UserId, Value = value })
 		end
 	end
 	table.sort(list, function(a, b)
@@ -121,7 +150,7 @@ end
 local function refresh()
 	for board, getValue in BOARDS do
 		local list
-		local store = stores[board]
+		local store = storeOf(board)
 		if store then
 			local ok, pages = pcall(store.GetSortedAsync, store, false, TOP)
 			if ok then
@@ -135,7 +164,7 @@ local function refresh()
 			end
 		end
 		if not list or #list == 0 then
-			list = localList(getValue)
+			list = localList(getValue, POSITIVE[board])
 		end
 		ReplicatedStorage:SetAttribute("Leaderboard_" .. board, HttpService:JSONEncode(list))
 		if board == "Elo" then
@@ -167,6 +196,9 @@ end
 
 function LeaderboardService.Init()
 	for board in BOARDS do
+		if board == "DungeonWeek" then
+			continue -- storeOf legt ihn je Woche an
+		end
 		local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService,
 			board == "Elo" and "RankedElo_v1" or ("LB_" .. board .. "_v1"))
 		if ok then

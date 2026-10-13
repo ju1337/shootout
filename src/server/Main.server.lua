@@ -87,7 +87,8 @@ start("Badges.Init", Badges.Init) -- Roblox-Badges (Begrüßung, Tutorial, Anwer
 start("InviteService.Init", InviteService.Init) -- Freunde einladen: Belohnung für den Einladenden
 start("KillstreakService.Init", KillstreakService.Init) -- Killstreak-Belohnungen in Herrschaft (Radar, Luftschlag, Schutzschild)
 start("RobuxService.Init", RobuxService.Init) -- Robux-Shop: Gamepässe und Entwicklerprodukte
-start("ClanService.Init", ClanService.Init) -- Clans über alle Server
+start("ClanService.Init", ClanService.Init) -- Clans über alle Server, Clan-Punkte, Wochenziele, Clan-Bestenliste
+start("RetentionService.Init", require(ServerShared.RetentionService).Init) -- Rückkehr-Bonus, Freunde-Bonus, Dungeon-Woche
 start("MovementGuard.Init", MovementGuard.Init) -- Bewegungs-Check gegen Speedhacks und Teleports
 start("BackWeapon.Init", BackWeapon.Init) -- im Markt: Standardwaffe des Agenten auf dem Rücken
 start("EconomyService.Init", EconomyService.Init) -- RAP: Rückverkauf, Reservierungen, Austausch (Markt und Tausch)

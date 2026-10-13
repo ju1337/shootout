@@ -60,6 +60,7 @@ local RedPointsService = require(ServerShared.RedPointsService)
 local KitService = require(ServerShared.KitService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
 local ExtDailyService = require(ServerShared.ExtDailyService)
+local RetentionService = require(ServerShared.RetentionService)
 local ExtinctionTerrain = require(ServerShared.ExtinctionTerrain)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 local BotService = require(script.Parent.Parent.BotService)
@@ -902,6 +903,7 @@ function Extinction.Init(modeManager)
 		end,
 		Reward = function(player, coins, text)
 			if members[player] then
+				coins = math.floor(ProgressService.FriendBonus(player, coins, "Ereignis"))
 				ProgressService.AddCoins(player, coins, text)
 			end
 		end,
@@ -988,6 +990,7 @@ function Extinction.Init(modeManager)
 		end,
 		Reward = function(player, coins, text)
 			if members[player] then
+				coins = math.floor(ProgressService.FriendBonus(player, coins, "Ereignis"))
 				ProgressService.AddCoins(player, coins, text)
 				InventoryService.Status(player, "+" .. coins .. " Münzen: " .. text, true)
 				ExtLevelService.Add(player, ExtLevelConfig.Rewards.Convoy, "Konvoi", "ExtConvoys")
@@ -1121,6 +1124,7 @@ function Extinction.AddPlayer(player)
 	Telemetry.Onboarding(player, 2, "EnteredExtinction")
 	spawnPlayer(player)
 	ExtDailyService.Claim(player) -- tägliche Kiste ins Lager (einmal am Tag)
+	RetentionService.ClaimComeback(player) -- Rückkehr-Bonus nach langer Pause
 	-- Neue Spieler: geführtes Tutorial (ExtTutorial auf dem Client), bis es fertig oder übersprungen ist (Profil
 	-- TutorialDone). Wer die offene Welt schon kannte (GuideHinted aus der Zeit vor dem Tutorial), bekommt es nicht.
 	profile = ProgressService.Get(player)

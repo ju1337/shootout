@@ -58,6 +58,19 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(16, 128, 122), Material = Enum.Material.Foil },
 	{ Id = "W_Goldrausch", Type = "Weapon", Name = "Goldrausch", Rarity = "Legendary", Pass = true,
 		Color = Color3.fromRGB(255, 200, 40), Material = Enum.Material.Foil },
+	-- Saison 2 · Ascheregen und Saison 3 · Eiszeit (PassConfig.Seasons)
+	{ Id = "W_Asche", Type = "Weapon", Name = "Asche", Rarity = "Epic", Pass = true,
+		Color = Color3.fromRGB(78, 74, 72), Material = Enum.Material.Slate },
+	{ Id = "W_Asche_Elite", Type = "Weapon", Name = "Asche-Elite", Rarity = "Legendary", Pass = true,
+		Color = Color3.fromRGB(150, 52, 30), Material = Enum.Material.CrackedLava },
+	{ Id = "W_Glutkern", Type = "Weapon", Name = "Glutkern", Rarity = "Legendary", Pass = true,
+		Color = Color3.fromRGB(255, 120, 40), Material = Enum.Material.Foil },
+	{ Id = "W_Frost", Type = "Weapon", Name = "Frost", Rarity = "Epic", Pass = true,
+		Color = Color3.fromRGB(196, 226, 240), Material = Enum.Material.Ice },
+	{ Id = "W_Frost_Elite", Type = "Weapon", Name = "Frost-Elite", Rarity = "Legendary", Pass = true,
+		Color = Color3.fromRGB(70, 130, 190), Material = Enum.Material.Glacier },
+	{ Id = "W_Polarlicht", Type = "Weapon", Name = "Polarlicht", Rarity = "Legendary", Pass = true,
+		Color = Color3.fromRGB(80, 230, 170), Material = Enum.Material.Foil },
 
 	-- Belohnungs-Skins (Reward = true): nicht kaufbar, gibt es für Level, Prestige und Rang (RewardConfig)
 	{ Id = "W_Rekrut", Type = "Weapon", Name = "Rekrut", Rarity = "Rare", Reward = true,

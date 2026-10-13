@@ -410,6 +410,8 @@ local BOARD_INFO = {
 	Kills = { Title = "MEISTE KILLS", Color = Color3.fromRGB(206, 70, 58) },
 	Level = { Title = "HÖCHSTES LEVEL", Color = Color3.fromRGB(96, 164, 214) },
 	Missions = { Title = "MEISTE AUFTRÄGE", Color = Color3.fromRGB(112, 178, 112) },
+	-- vor der Kapelle KATAKOMBEN: höchste Welle diese Woche (RetentionService, LeaderboardService)
+	DungeonWeek = { Title = "DUNGEON-WOCHE", Sub = "HÖCHSTE WELLE · DIESE WOCHE", Color = Color3.fromRGB(170, 90, 255) },
 }
 local PLACE_COLORS = { Color3.fromRGB(212, 176, 96), Color3.fromRGB(190, 194, 200), Color3.fromRGB(176, 120, 76) }
 
@@ -418,6 +420,8 @@ local function formatValue(board, value)
 	if board == "Level" then
 		local prestige, level = value // 1000, value % 1000
 		return (prestige > 0 and ("P" .. prestige .. " · ") or "") .. "LV " .. level, nil
+	elseif board == "DungeonWeek" then
+		return "WELLE " .. math.floor(value), nil
 	end
 	local text = tostring(math.floor(value))
 	return text:reverse():gsub("(%d%d%d)", "%1."):reverse():gsub("^%.", ""), nil
@@ -484,7 +488,7 @@ local function buildLeaderboards()
 			surface.PixelsPerStud = 40
 			surface.Adornee = part
 			surface.Parent = player:WaitForChild("PlayerGui")
-			boardHeader(surface, info.Color, info.Title, "GLOBALE TOP 10", 0.075,
+			boardHeader(surface, info.Color, info.Title, info.Sub or "GLOBALE TOP 10", 0.075,
 				{ UDim2.new(0.06, 0, 0.11, 0), UDim2.new(0.88, 0, 0.035, 0), Enum.TextXAlignment.Left, 0.158 })
 			local rows = {}
 			for i = 1, 10 do

@@ -586,8 +586,8 @@ end
 local function buildPass()
 	local panel = UITheme.Card({ Name = "Pass", Position = UDim2.fromOffset(RIGHT_X, 106), Size = UDim2.fromOffset(RIGHT_W, 156) },
 		playPage)
-	label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(220, 26), Text = "BATTLE PASS · S1", TextSize = 21,
-		Font = F.Display, ZIndex = 3 }, panel)
+	local caption = label({ Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(220, 26), Text = "BATTLE PASS · S1",
+		TextSize = 21, Font = F.Display, ZIndex = 3 }, panel)
 	local tier = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -18, 0, 12), Size = UDim2.fromOffset(120, 26),
 		Text = "", TextSize = 21, Font = F.Display, TextColor3 = C.Primary, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 },
 		panel)
@@ -602,23 +602,27 @@ local function buildPass()
 
 	local function refresh()
 		local xp = player:GetAttribute("PassXP") or 0
+		local season = player:GetAttribute("PassSeason") or PassConfig.CurrentSeason(workspace:GetServerTimeNow())
+		local tiers = PassConfig.TiersFor(season)
 		local current, progress = PassConfig.TierFromXP(xp)
-		local max = #PassConfig.Tiers
+		local max = PassConfig.TierCount
+		caption.Text = "BATTLE PASS · S" .. season
 		tier.Text = "STUFE " .. current
 		fill.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
 		if current >= max then
 			xpText.Text = "Pass abgeschlossen!"
-			rewardText.Text = PassConfig.SeasonName
+			rewardText.Text = PassConfig.SeasonName(season)
 			return
 		end
 		xpText.Text = UITheme.FormatNumber(progress * PassConfig.XPPerTier) .. " / " .. UITheme.FormatNumber(PassConfig.XPPerTier)
 			.. " XP bis Stufe " .. (current + 1)
-		local reward = PassConfig.Tiers[current + 1]
+		local reward = tiers[current + 1]
 		local item = reward and reward.Item and Cosmetics.Get(reward.Item)
 		rewardText.Text = "Schaltet frei: " .. (item and item.Name or ((reward and reward.Coins or 0) .. " Münzen"))
 	end
 	refresh()
 	player:GetAttributeChangedSignal("PassXP"):Connect(refresh)
+	player:GetAttributeChangedSignal("PassSeason"):Connect(refresh)
 end
 
 local function buildDaily()

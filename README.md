@@ -937,7 +937,8 @@ Safe Zones: G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-An
 | Markt-Stände (Reichweite zum Beanspruchen/Kaufen) | `ClaimRange`, `BuyRange` in `src/server-shared/MarketService.lua`; Halle in `build_market()` in `tools/build_maps.py` |
 | Glücksrad: Felder, Gewichte, Farben | `LoginConfig.Wheel` in `src/shared/LoginConfig.lua`; Dreh-Dauer und Runden in `src/client/HubWheel.lua` |
 | Killstreaks (Kills, Namen, Farben) | `src/shared/KillstreakConfig.lua`; Anzeige in `src/client/KillstreakHUD.lua` |
-| Battle Pass | `src/shared/PassConfig.lua` |
+| Battle Pass: Saisons (Start, Länge 6 Wochen, Titel und Skins je Saison) | `src/shared/PassConfig.lua` |
+| Wiederkommen: Rückkehr-Bonus, Freunde-Bonus im Squad, Dungeon-Wochenrekord (Preise), Clan-Punkte, Clan-Stufen und Wochenziel | `src/shared/RetentionConfig.lua` |
 | Tägliche Aufträge | `src/shared/QuestConfig.lua` |
 | Ränge (Ranked) | `src/shared/RankConfig.lua` |
 | Live-Einstellungen (auch im Admin-Panel) | `src/shared/GameSettings.lua` |

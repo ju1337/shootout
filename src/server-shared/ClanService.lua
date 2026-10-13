@@ -2,8 +2,16 @@
 -- Clans über alle Server: gründen (kostet Münzen), per Kürzel beitreten, verlassen, Mitglieder entfernen (Leiter).
 -- Daten im DataStore "Clans_v1", Schlüssel = Kürzel: { Tag, Name, Owner (UserId), Members = { [UserId] = Name }, Created }.
 -- Im Profil steht nur das Kürzel (profile.Clan). Ohne DataStore (Studio) liegen Clans nur im Speicher dieses Servers.
--- Spieler-Attribute: ClanTag, ClanName, ClanData (JSON: Owner, Members) für Namensschild, Spielerkarte und Fenster CLAN.
+-- Spieler-Attribute: ClanTag, ClanName, ClanData (JSON: Owner, Members, Points, WeekPoints, By) für Namensschild,
+-- Spielerkarte und Seite CLAN.
 -- Name und Kürzel laufen durch den Roblox-Textfilter (Pflicht für Texte, die andere sehen).
+-- Clan-Punkte (RetentionConfig.Clan, Julio 2026-10-13): Zombies und Aufträge der Mitglieder (ProgressService.OnStat)
+-- sammeln sich pro Server und gehen alle FlushEvery Sekunden in den DataStore: Points (alle, ergibt die Clan-Stufe),
+-- Week = { Id, Points, By = { [UserId] = Punkte } } (Wochenziel, montags neu), LastWeek (die Woche davor). Jede erreichte
+-- Stufe des Wochenziels gibt jedem Mitglied, das selbst mindestens MinContribution Punkte beigetragen hat, einmal pro Woche
+-- Münzen (Profil ClanPaid = { [Woche] = Stufe }, gilt auch nach einem Clan-Wechsel). Clan-Bestenliste über den
+-- OrderedDataStore "LB_Clans_v1" (Schlüssel Kürzel, Wert Points) als ReplicatedStorage-Attribut "Leaderboard_Clans"
+-- (JSON [{ Tag, Name, Value }]).
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
@@ -11,7 +19,12 @@ local TextService = game:GetService("TextService")
 local HttpService = game:GetService("HttpService")
 local ServerStorage = game:GetService("ServerStorage")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Remotes = require(Shared.Remotes)
+local QuestConfig = require(Shared.QuestConfig)
+local RetentionConfig = require(Shared.RetentionConfig)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local ClanService = {}
@@ -27,6 +40,15 @@ do
 	end
 end
 local memory = {} -- Ersatz ohne DataStore und Zwischenspeicher: [Tag] = Daten
+local rankStore = nil -- Clan-Bestenliste
+do
+	local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService, "LB_Clans_v1")
+	if ok then
+		rankStore = result
+	end
+end
+local R = RetentionConfig.Clan
+local pending = {} -- noch nicht gespeicherte Punkte: [Tag] = { Points, By = { [UserId] = Punkte } }
 
 -- Gibt die Daten zurück und als zweiten Wert, ob sie sicher stimmen (false: DataStore-Fehler und nichts zwischengespeichert)
 local function fetch(tag)
@@ -73,11 +95,72 @@ local function count(members)
 	return n
 end
 
+-- Punkte der laufenden Woche (0, wenn die gespeicherte Woche schon vorbei ist)
+local function weekOf(data, week)
+	local entry = type(data.Week) == "table" and data.Week or nil
+	if entry and entry.Id == week then
+		return entry
+	end
+	return { Id = week, Points = 0, By = {} }
+end
+
+-- Clan-Daten auf die laufende Woche bringen: die alte wird LastWeek (nur wenn sie direkt davor lag)
+local function rollWeek(data, week)
+	local entry = type(data.Week) == "table" and data.Week or nil
+	if entry and entry.Id == week then
+		return
+	end
+	data.LastWeek = (entry and entry.Id == week - 1) and entry or nil
+	data.Week = { Id = week, Points = 0, By = {} }
+end
+
+-- Münzen für neu erreichte Stufen des Wochenziels (einmal pro Spieler und Woche, nur mit eigenem Beitrag)
+local function payStages(player, profile, entry)
+	if not entry or type(entry.Id) ~= "number" then
+		return
+	end
+	local mine = tonumber(type(entry.By) == "table" and entry.By[tostring(player.UserId)]) or 0
+	if mine < R.MinContribution then
+		return
+	end
+	profile.ClanPaid = type(profile.ClanPaid) == "table" and profile.ClanPaid or {}
+	local key = tostring(entry.Id)
+	local paid = tonumber(profile.ClanPaid[key]) or 0
+	local stage = RetentionConfig.ClanStage(entry.Points)
+	if stage <= paid then
+		return
+	end
+	profile.ClanPaid[key] = stage
+	for old in profile.ClanPaid do
+		if (tonumber(old) or 0) < QuestConfig.Week() - 1 then
+			profile.ClanPaid[old] = nil
+		end
+	end
+	local coins = 0
+	for index = paid + 1, stage do
+		coins += R.Stages[index].Coins
+	end
+	ProgressService.AddCoins(player, coins, "Clan-Wochenziel")
+	Remotes.Notify:FireClient(player, "Banner", { Caption = "Clan-Wochenziel", Title = "STUFE " .. stage .. " GESCHAFFT",
+		Sub = "+" .. coins .. " Münzen · danke für deinen Beitrag", Style = "Good" })
+end
+
 local function publish(player, data)
 	if data then
+		local week = QuestConfig.Week()
+		local entry = weekOf(data, week)
 		player:SetAttribute("ClanTag", data.Tag)
 		player:SetAttribute("ClanName", data.Name)
-		player:SetAttribute("ClanData", HttpService:JSONEncode({ Owner = data.Owner, Members = data.Members }))
+		player:SetAttribute("ClanData", HttpService:JSONEncode({ Owner = data.Owner, Members = data.Members,
+			Points = data.Points or 0, WeekPoints = entry.Points or 0, By = entry.By or {} }))
+		local profile = ProgressService.IsLoaded(player) and ProgressService.Get(player)
+		if profile then
+			payStages(player, profile, entry.Points > 0 and entry or nil)
+			local last = type(data.LastWeek) == "table" and data.LastWeek or nil
+			if last and last.Id == week - 1 then
+				payStages(player, profile, last)
+			end
+		end
 	else
 		player:SetAttribute("ClanTag", nil)
 		player:SetAttribute("ClanName", nil)
@@ -246,6 +329,9 @@ function ClanService.Leave(player)
 	profile.Clan = nil
 	publish(player, nil)
 	publishMembers(tag, data)
+	if not data and rankStore then -- aufgelöst: raus aus der Clan-Bestenliste
+		task.spawn(pcall, rankStore.RemoveAsync, rankStore, tag)
+	end
 	return "Clan verlassen.", true
 end
 
@@ -273,6 +359,100 @@ function ClanService.Kick(player, userId)
 	end
 	publishMembers(tag, data)
 	return "Mitglied entfernt.", true
+end
+
+-- ---------- Clan-Punkte, Wochenziel, Bestenliste ----------
+
+-- Statistik eines Mitglieds gestiegen: Punkte für seinen Clan vormerken
+local function onStat(player, key, _, amount)
+	local per = R.Points[key]
+	local profile = per and ProgressService.Get(player)
+	local tag = profile and profile.Clan
+	if not tag or player:GetAttribute("ClanTag") ~= tag then -- (nur bestätigte Mitgliedschaft, siehe load)
+		return
+	end
+	local points = per * (tonumber(amount) or 1)
+	if points <= 0 then
+		return
+	end
+	local entry = pending[tag] or { Points = 0, By = {} }
+	pending[tag] = entry
+	entry.Points += points
+	local id = tostring(player.UserId)
+	entry.By[id] = (entry.By[id] or 0) + points
+end
+
+-- Vorgemerkte Punkte speichern (pro Clan ein UpdateAsync), danach Mitglieder hier neu anzeigen und Stufen auszahlen
+function ClanService.Flush()
+	local week = QuestConfig.Week()
+	for tag, entry in pending do
+		pending[tag] = nil
+		local data, saved = change(tag, function(old)
+			if not old then
+				return nil
+			end
+			rollWeek(old, week)
+			old.Points = (tonumber(old.Points) or 0) + entry.Points
+			old.Week.Points += entry.Points
+			old.Week.By = old.Week.By or {}
+			for id, points in entry.By do
+				if old.Members[id] then -- wer inzwischen raus ist, zählt nicht mehr
+					old.Week.By[id] = (old.Week.By[id] or 0) + points
+				end
+			end
+			return old
+		end)
+		if not saved then
+			-- DataStore-Fehler: beim nächsten Mal noch einmal (zu den inzwischen neuen Punkten dazu)
+			local now = pending[tag] or { Points = 0, By = {} }
+			now.Points += entry.Points
+			for id, points in entry.By do
+				now.By[id] = (now.By[id] or 0) + points
+			end
+			pending[tag] = now
+		elseif data then
+			publishMembers(tag, data)
+			if rankStore then
+				task.spawn(pcall, rankStore.SetAsync, rankStore, tag, math.floor(data.Points))
+			end
+		end
+	end
+end
+
+-- Clan-Bestenliste (Top 10) als Attribut Leaderboard_Clans; ohne DataStore aus den Clans im Speicher
+local names = {} -- [Tag] = Name (Cache)
+function ClanService.RefreshBoard()
+	local list = {}
+	if rankStore then
+		local ok, pages = pcall(rankStore.GetSortedAsync, rankStore, false, 10)
+		if ok then
+			for _, entry in pages:GetCurrentPage() do
+				local tag = tostring(entry.key)
+				if not names[tag] then
+					local data = fetch(tag)
+					names[tag] = data and data.Name or nil
+				end
+				if names[tag] then
+					table.insert(list, { Tag = tag, Name = names[tag], Value = entry.value })
+				end
+			end
+		end
+	end
+	if #list == 0 then
+		for tag, data in memory do
+			if type(data) == "table" and (tonumber(data.Points) or 0) > 0 then
+				table.insert(list, { Tag = tag, Name = data.Name, Value = math.floor(data.Points) })
+			end
+		end
+		table.sort(list, function(a, b)
+			return a.Value > b.Value
+		end)
+		while #list > 10 do
+			table.remove(list)
+		end
+	end
+	ReplicatedStorage:SetAttribute("Leaderboard_Clans", HttpService:JSONEncode(list))
+	return list
 end
 
 -- Beim Beitreten (sobald das Profil da ist) Clan laden und prüfen, ob man noch Mitglied ist
@@ -317,6 +497,25 @@ ClanService.Join = once(ClanService.Join)
 ClanService.Leave = once(ClanService.Leave)
 
 function ClanService.Init()
+	table.insert(ProgressService.OnStat, onStat)
+	task.spawn(function()
+		while true do
+			task.wait(R.FlushEvery)
+			local ok, err = pcall(ClanService.Flush)
+			if not ok then
+				warn("Clan-Punkte: " .. tostring(err))
+			end
+		end
+	end)
+	task.spawn(function()
+		while true do
+			pcall(ClanService.RefreshBoard)
+			task.wait(60)
+		end
+	end)
+	game:BindToClose(function()
+		pcall(ClanService.Flush)
+	end)
 	Players.PlayerAdded:Connect(load)
 	for _, player in Players:GetPlayers() do
 		task.spawn(load, player)

@@ -14,6 +14,7 @@ SIM.IsStudio = false     -- RunService:IsStudio()
 SIM.Warnings = {}        -- alle warn()-Ausgaben
 SIM.RemoteLog = {}       -- { Remote, Player ("all" bei FireAllClients, "server" bei FireServer), Args }
 SIM.Kicked = {}          -- [Player] = Nachricht
+SIM.Friends = {}         -- ["kleinere:größere UserId"] = true: Roblox-Freunde (Player:IsFriendsWith)
 SIM.Closers = {}         -- game:BindToClose
 SIM.CreateDelay = function() return 0.05 + math.random() * 0.4 end -- Dauer von CreateHumanoidModelFromDescription
 SIM.DataStoreLatency = 0 -- Sekunden pro DataStore-Anfrage (hin und zurück je zur Hälfte)
@@ -1260,6 +1261,11 @@ ClassMethods.Player = {
 		return SIM.JoinData[self.UserId] or {}
 	end,
 	RequestStreamAroundAsync = function() end,
+	-- Roblox-Freunde: SIM.Friends["a:b"] = true (kleinere UserId zuerst)
+	IsFriendsWith = function(self, userId)
+		local low, high = math.min(self.UserId, userId), math.max(self.UserId, userId)
+		return SIM.Friends[low .. ":" .. high] == true
+	end,
 }
 ClassInit.Player = function(self)
 	local props = rawget(self, "__props")

@@ -31,6 +31,7 @@ local RobuxConfig = require(Shared.RobuxConfig)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local RapConfig = require(Shared.RapConfig)
+local RetentionConfig = require(Shared.RetentionConfig)
 local SessionStore = require(script.Parent.SessionStore)
 
 local Telemetry = require(script.Parent.Telemetry)
@@ -236,7 +237,9 @@ function ProgressService.Sync(player)
 	player:SetAttribute("Owned", HttpService:JSONEncode(owned))
 	player:SetAttribute("Equipped", HttpService:JSONEncode(profile.Equipped))
 	player:SetAttribute("LastDaily", profile.LastDaily)
+	ProgressService.CheckPassSeason(profile)
 	player:SetAttribute("PassXP", profile.PassXP or 0)
+	player:SetAttribute("PassSeason", profile.PassSeason)
 	player:SetAttribute("UnlockedAgents", HttpService:JSONEncode(profile.Agents or {}))
 	player:SetAttribute("ClientSettings", HttpService:JSONEncode(profile.Settings or {}))
 	player:SetAttribute("Stats", HttpService:JSONEncode(profile.Stats or {}))
@@ -420,17 +423,34 @@ function ProgressService.SetTitle(player, id)
 	return "Titel \"" .. title.Name .. "\" ausgewählt.", true
 end
 
+-- Neue Pass-Saison seit dem letzten Mal? Dann fängt der Pass bei Stufe 0 an (freigeschaltete Skins bleiben).
+-- Alte Spielstände ohne PassSeason behalten ihren Fortschritt in der laufenden Saison. Gibt true bei einem Wechsel zurück.
+function ProgressService.CheckPassSeason(profile, now)
+	local season = PassConfig.CurrentSeason(now)
+	if profile.PassSeason == season then
+		return false
+	end
+	local changed = profile.PassSeason ~= nil
+	if changed then
+		profile.PassXP = 0
+	end
+	profile.PassSeason = season
+	return changed
+end
+
 -- Battle-Pass-XP: neue Stufen schalten ihre Belohnung sofort frei
 function ProgressService.AddPassXP(player, amount)
 	local profile = profiles[player]
 	if not profile or amount <= 0 then
 		return
 	end
+	ProgressService.CheckPassSeason(profile)
+	local tiers = PassConfig.TiersFor(profile.PassSeason)
 	local before = PassConfig.TierFromXP(profile.PassXP or 0)
 	profile.PassXP = (profile.PassXP or 0) + amount
 	local after = PassConfig.TierFromXP(profile.PassXP)
 	for tier = before + 1, after do
-		local reward = PassConfig.Tiers[tier]
+		local reward = tiers[tier]
 		local text
 		if reward.Coins then
 			profile.Coins += reward.Coins
@@ -451,7 +471,7 @@ end
 -- Dauerhafte Werte (Kills, Deaths, Assists, Headshots, Damage, ShotsFired, ShotsHit, Revives,
 -- Plants, Defuses, Matches, Wins, Losses, RoundsWon, Kills_<AgentId>). Wird gebündelt gesynct.
 local dirty = {}
--- Rückrufe function(player, key, value) nach jeder Änderung einer Statistik (z.B. Erfolge)
+-- Rückrufe function(player, key, value, amount) nach jeder Änderung einer Statistik (z.B. Erfolge, Clan-Punkte)
 ProgressService.OnLoaded = {} -- Rückrufe function(player) nach dem Laden des Profils (Badges, …)
 ProgressService.OnStat = {}
 
@@ -464,7 +484,7 @@ function ProgressService.AddStat(player, key, amount)
 	profile.Stats[key] = (profile.Stats[key] or 0) + (amount or 1)
 	dirty[player] = true
 	for _, callback in ProgressService.OnStat do
-		local ok, err = pcall(callback, player, key, profile.Stats[key])
+		local ok, err = pcall(callback, player, key, profile.Stats[key], amount or 1)
 		if not ok then
 			warn("ProgressService.OnStat: " .. tostring(err))
 		end
@@ -863,6 +883,12 @@ local function load(player)
 		Telemetry.Economy(player, "Source", "Coins", refund, profile.Coins, "Gameplay", "UnfitAttachments", "Aufsatz passt nicht")
 	end
 	checkSeason(player, profile) -- neue Ranked-Saison seit dem letzten Besuch?
+	-- Rückkehr-Bonus: lange nicht mehr da gewesen? (RetentionService gibt ihn beim Betreten der offenen Welt)
+	local lastSeen = tonumber(profile.LastSeen)
+	if lastSeen and os.time() - lastSeen >= RetentionConfig.Comeback.AwayDays * 86400 then
+		profile.ComebackPending = true
+	end
+	profile.LastSeen = os.time()
 	loaded[player] = true
 	ProgressService.Sync(player)
 	Telemetry.Onboarding(player, 1, "Joined")
@@ -885,6 +911,7 @@ local function save(player, release)
 	if not store or not loaded[player] or not profile then
 		return false
 	end
+	profile.LastSeen = os.time() -- zuletzt gesehen (Rückkehr-Bonus)
 	inFlight += 1 -- (Herunterfahren wartet auf alle, auch auf Speicherungen beim Verlassen)
 	local status, err = store:Save(key(player), profile, release)
 	inFlight -= 1
@@ -998,6 +1025,19 @@ local function syncSoon(player, profile)
 end
 
 -- reason: wofür (erscheint in der Belohnungs-Übersicht am Matchende)
+-- Freunde-Bonus (RetentionConfig.FriendBonus): Wer mit einem Roblox-Freund im Squad spielt (Spieler-Attribut
+-- "FriendBonus", RetentionService), bekommt mehr XP und mehr Münzen aus dem Spiel. reason = nil: XP (immer),
+-- sonst nur Münzen aus RetentionConfig.FriendBonus.Reasons. Gibt den (nicht gerundeten) Betrag zurück.
+function ProgressService.FriendBonus(player, amount, reason)
+	if player:GetAttribute("FriendBonus") ~= true then
+		return amount
+	end
+	if reason ~= nil and not RetentionConfig.FriendBonus.Reasons[reason] then
+		return amount
+	end
+	return amount * (100 + RetentionConfig.FriendBonus.Percent) / 100
+end
+
 function ProgressService.AddCoins(player, amount, reason)
 	local profile = profiles[player]
 	if not profile or not finite(amount) or amount <= 0 then
@@ -1010,6 +1050,7 @@ function ProgressService.AddCoins(player, amount, reason)
 		and reason ~= "Verkauf" and reason ~= "Markt" and string.sub(reason, 1, 6) ~= "Kiste:" then -- Kisten-Erstattung nicht doppelt
 		amount *= 2
 	end
+	amount = ProgressService.FriendBonus(player, amount, reason)
 	profile.Coins += math.floor(amount)
 	record(player, reason, 0, math.floor(amount))
 	syncSoon(player, profile)
@@ -1224,6 +1265,9 @@ function ProgressService.AddXP(player, agentId, amount, reason, quiet, noCoins)
 		amount *= 2
 		reason = tostring(reason) .. " · Doppel-XP"
 	end
+	if reason ~= "Admin" then
+		amount = math.floor(ProgressService.FriendBonus(player, amount))
+	end
 	if amount <= 0 then
 		return 0
 	end
@@ -1272,6 +1316,7 @@ function ProgressService.AddAccountXP(player, amount)
 	if doubled then
 		amount *= 2
 	end
+	amount = math.floor(ProgressService.FriendBonus(player, amount))
 	if amount <= 0 then
 		return 0, false
 	end

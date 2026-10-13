@@ -1209,6 +1209,7 @@ local MENU_TABS = {
 	{ Id = "Loot", Text = "BEUTE" },
 	{ Id = "Guide", Text = "GUIDE" },
 	{ Id = "Squad", Text = "SQUAD" },
+	{ Id = "Clan", Text = "CLAN", Page = true },
 	{ Id = "Achievements", Text = "ERFOLGE" },
 	{ Id = "Skins", Text = "SKINS" },
 	{ Id = "Shop", Text = "SHOP", Page = true },
@@ -4190,8 +4191,17 @@ function ExtinctionClient.Init()
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, squadPanel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 8), PaddingLeft = UDim.new(0, 10),
 		PaddingRight = UDim.new(0, 10) }, squadPanel)
-	label({ Name = "Head", LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 16), Text = "SQUAD", TextSize = 13, Font = F.Display,
+	local squadHead = label({ Name = "Head", LayoutOrder = 0, Size = UDim2.new(1, 0, 0, 16), Text = "SQUAD", TextSize = 13, Font = F.Display,
 		TextColor3 = C.Ally }, squadPanel)
+	-- Freunde-Bonus (RetentionService): mit einem Roblox-Freund im Squad mehr XP und Münzen
+	local friendTag = label({ Name = "FriendBonus", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.new(1, -60, 1, 0), Text = "FREUNDE-BONUS +" .. require(Shared.RetentionConfig).FriendBonus.Percent .. " % XP · MÜNZEN",
+		TextSize = 11, Font = F.Bold, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right, Visible = false }, squadHead)
+	local function refreshFriendTag()
+		friendTag.Visible = player:GetAttribute("FriendBonus") == true
+	end
+	player:GetAttributeChangedSignal("FriendBonus"):Connect(refreshFriendTag)
+	refreshFriendTag()
 	local squadRows = {} -- [UserId] = { Frame, Where, Fill, Player }
 	local function refreshSquadPanel()
 		local party = squadInfo()

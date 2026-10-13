@@ -336,6 +336,7 @@ local function leaveRun(run, player, reason)
 		end
 		if member.Cleared > 0 then
 			ExtLevelService.Add(player, D.XPPerWave * member.Cleared, "Dungeon")
+			require(script.Parent.RetentionService).DungeonRecord(player, member.Cleared) -- Dungeon-Wochenrekord
 		end
 		banner(player, "DUNGEON GESCHAFFT", string.format("%d Wellen · %d Münzen · %d Items", member.Cleared, member.Coins,
 			member.ItemCount) .. (#rest > 0 and " · Rest liegt am Ausgang" or (stashed > 0 and " · Rest im Lager" or "")), "Good")

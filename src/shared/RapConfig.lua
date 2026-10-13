@@ -62,6 +62,7 @@ RapConfig.Values = {
 	W_Lava = 3200, W_Chrom = 5500, W_Galaxie = 8500,
 	-- Battle Pass (nur in der Saison zu bekommen)
 	W_Saison = 2500, W_Saison_Elite = 45000, W_Goldrausch = 35000,
+	W_Asche = 2500, W_Asche_Elite = 45000, W_Glutkern = 35000, W_Frost = 2500, W_Frost_Elite = 45000, W_Polarlicht = 35000,
 	-- Glücksrad, Login-Kalender (Tag 7), Wochen-Bonus
 	W_Gluecksklee = 1800, W_Kalender = 18000,
 	W_Woche_Kobalt = 1000, W_Woche_Smaragd = 1100, W_Woche_Purpur = 1200, W_Woche_Bernstein = 1300, W_Woche_Titan = 1500,

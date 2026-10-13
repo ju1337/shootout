@@ -589,14 +589,29 @@ local function buildDaily()
 end
 
 -- ---------- CLAN ----------
--- Ohne Clan: gründen (Name, Kürzel, kostet Münzen) oder per Kürzel beitreten. Im Clan: Name, Mitglieder (Leiter mit
--- Krone, online-Punkt, Entfernen für den Leiter) und Verlassen (zweimal klicken). Daten: Spieler-Attribute ClanTag,
--- ClanName, ClanData (ClanService).
+-- Seite der Lobby (auch Reiter CLAN im Menü der offenen Welt). Links ohne Clan: gründen (Name, Kürzel, kostet Münzen)
+-- oder per Kürzel beitreten; im Clan: Name, Mitglieder (Leiter mit Krone, online-Punkt, Entfernen für den Leiter, Beitrag
+-- der Woche) und Verlassen (zweimal klicken). Rechts: Clan-Stufe, Wochenziel in drei Stufen mit eigenem Beitrag und die
+-- Top 10 der Clans. Daten: Spieler-Attribute ClanTag, ClanName, ClanData (ClanService), ReplicatedStorage-Attribut
+-- Leaderboard_Clans, Werte in RetentionConfig.Clan.
 
 local CLAN_COST = 2500
 
 local function buildClan()
-	local frame = makePanel("Clan", "CLAN", 860, 560)
+	local RetentionConfig = require(Shared.RetentionConfig)
+	local LobbyPages = require(Shared.LobbyPages)
+	local R = RetentionConfig.Clan
+	local frame, page = makePage("Clan", "CLAN", "GEMEINSAM PUNKTE SAMMELN  ·  CLAN-STUFE  ·  WOCHENZIEL  ·  TOP-CLANS")
+	local LEFT_W, RIGHT_X = 900, 924
+	local RIGHT_W = LobbyPages.PAGE_W - RIGHT_X
+	local function card(props, parent)
+		local c = make("Frame", { BackgroundColor3 = CARD, BorderSizePixel = 0 }, parent)
+		for key, value in props do
+			c[key] = value
+		end
+		make("UICorner", { CornerRadius = UDim.new(0, 10) }, c)
+		return c
+	end
 	local function box(parent, y, placeholder, maxLength)
 		local textBox = make("TextBox", { Position = UDim2.new(0, 20, 0, y), Size = UDim2.new(1, -40, 0, 46),
 			BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0, Font = Enum.Font.BuilderSansBold, TextSize = 20,
@@ -610,12 +625,19 @@ local function buildClan()
 		end)
 		return textBox
 	end
+	local function bar(parent, y, color)
+		local back = make("Frame", { Position = UDim2.new(0, 20, 0, y), Size = UDim2.new(1, -40, 0, 8),
+			BackgroundColor3 = UITheme.Colors.Background, BorderSizePixel = 0 }, parent)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, back)
+		local fill = make("Frame", { Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0 }, back)
+		make("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
+		return fill, back
+	end
 
-	-- Ohne Clan
-	local noClan = make("Frame", { Position = UDim2.new(0, 24, 0, 70), Size = UDim2.new(1, -48, 1, -120),
+	-- Links ohne Clan
+	local noClan = make("Frame", { Position = UDim2.new(0, 0, 0, 72), Size = UDim2.new(0, LEFT_W, 0, 420),
 		BackgroundTransparency = 1 }, frame)
-	local create = make("Frame", { Size = UDim2.new(0.5, -10, 1, 0), BackgroundColor3 = CARD }, noClan)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, create)
+	local create = card({ Size = UDim2.new(0.5, -10, 1, 0) }, noClan)
 	text({ Position = UDim2.new(0, 20, 0, 16), Size = UDim2.new(1, -40, 0, 28), Text = "CLAN GRÜNDEN", TextSize = 24,
 		Font = DISPLAY }, create)
 	text({ Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 18), Text = "Du wirst Leiter. Max. 20 Mitglieder.",
@@ -627,9 +649,7 @@ local function buildClan()
 		TextColor3 = ON_ACCENT }, create, function()
 		Remotes.ShopAction:FireServer("CreateClan", nameBox.Text, tagBox.Text)
 	end)
-	local join = make("Frame", { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0.5, -10, 1, 0),
-		BackgroundColor3 = CARD }, noClan)
-	make("UICorner", { CornerRadius = UDim.new(0, 10) }, join)
+	local join = card({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0.5, -10, 1, 0) }, noClan)
 	text({ Position = UDim2.new(0, 20, 0, 16), Size = UDim2.new(1, -40, 0, 28), Text = "CLAN BEITRETEN", TextSize = 24,
 		Font = DISPLAY }, join)
 	text({ Position = UDim2.new(0, 20, 0, 46), Size = UDim2.new(1, -40, 0, 18), Text = "Frag deine Freunde nach ihrem Kürzel.",
@@ -640,8 +660,8 @@ local function buildClan()
 		Remotes.ShopAction:FireServer("JoinClan", joinBox.Text)
 	end)
 
-	-- Im Clan
-	local inClan = make("Frame", { Position = UDim2.new(0, 24, 0, 66), Size = UDim2.new(1, -48, 1, -116),
+	-- Links im Clan
+	local inClan = make("Frame", { Position = UDim2.new(0, 0, 0, 72), Size = UDim2.new(0, LEFT_W, 0, LobbyPages.PAGE_H - 72),
 		BackgroundTransparency = 1, Visible = false }, frame)
 	local clanTitle = text({ Size = UDim2.new(1, -220, 0, 44), Text = "", TextSize = 36, Font = DISPLAY, RichText = true }, inClan)
 	local clanInfo = text({ Position = UDim2.new(0, 0, 0, 44), Size = UDim2.new(1, -220, 0, 18), Text = "", TextSize = 13,
@@ -668,21 +688,107 @@ local function buildClan()
 	make("UIGridLayout", { CellSize = UDim2.new(0.5, -6, 0, 46), CellPadding = UDim2.new(0, 12, 0, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder }, list)
 
-	panels.Clan.Refresh = function()
+	-- Rechts: Clan-Stufe und Wochenziel (nur im Clan), darunter die Top-Clans
+	local levelCard = card({ Position = UDim2.new(0, RIGHT_X, 0, 72), Size = UDim2.new(0, RIGHT_W, 0, 112), Visible = false }, frame)
+	text({ Position = UDim2.new(0, 20, 0, 14), Size = UDim2.new(1, -40, 0, 16), Text = "CLAN-STUFE", TextSize = 12,
+		Font = UITheme.Fonts.Bold, TextColor3 = GRAY }, levelCard)
+	local levelText = text({ Position = UDim2.new(0, 20, 0, 32), Size = UDim2.new(0.5, 0, 0, 40), Text = "", TextSize = 36,
+		Font = DISPLAY, TextColor3 = ACCENT }, levelCard)
+	local levelInfo = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -20, 0, 44), Size = UDim2.new(0.5, 0, 0, 18),
+		Text = "", TextSize = 13, TextColor3 = GRAY, TextXAlignment = Enum.TextXAlignment.Right }, levelCard)
+	local levelFill = bar(levelCard, 84, ACCENT)
+
+	local weekCard = card({ Position = UDim2.new(0, RIGHT_X, 0, 196), Size = UDim2.new(0, RIGHT_W, 0, 190), Visible = false }, frame)
+	text({ Position = UDim2.new(0, 20, 0, 14), Size = UDim2.new(1, -40, 0, 16), Text = "WOCHENZIEL", TextSize = 12,
+		Font = UITheme.Fonts.Bold, TextColor3 = GRAY }, weekCard)
+	local weekText = text({ Position = UDim2.new(0, 20, 0, 32), Size = UDim2.new(1, -40, 0, 34), Text = "", TextSize = 28,
+		Font = DISPLAY }, weekCard)
+	local weekFill, weekBack = bar(weekCard, 78, UITheme.Colors.Gold)
+	local stageLabels = {}
+	local goalMax = R.Stages[#R.Stages].Goal
+	for index, stage in R.Stages do
+		local x = stage.Goal / goalMax
+		make("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(x, 0, 0.5, 0), Size = UDim2.new(0, 3, 0, 14),
+			BackgroundColor3 = BORDER, BorderSizePixel = 0, ZIndex = 2 }, weekBack)
+		stageLabels[index] = text({ AnchorPoint = Vector2.new(x >= 0.99 and 1 or 0.5, 0), Position = UDim2.new(0, 20 + (RIGHT_W - 40) * x, 0, 94),
+			Size = UDim2.new(0, 150, 0, 34), Text = "", TextSize = 12, TextWrapped = true,
+			TextXAlignment = x >= 0.99 and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center }, weekCard)
+	end
+	local weekInfo = text({ Position = UDim2.new(0, 20, 1, -46), Size = UDim2.new(1, -40, 0, 36), Text = "", TextSize = 13,
+		TextColor3 = GRAY, TextWrapped = true }, weekCard)
+
+	local topCard = card({ Position = UDim2.new(0, RIGHT_X, 0, 398), Size = UDim2.new(0, RIGHT_W, 0, LobbyPages.PAGE_H - 398) }, frame)
+	text({ Position = UDim2.new(0, 20, 0, 14), Size = UDim2.new(1, -40, 0, 16), Text = "TOP-CLANS  ·  CLAN-PUNKTE", TextSize = 12,
+		Font = UITheme.Fonts.Bold, TextColor3 = GRAY }, topCard)
+	local topRows = {}
+	for i = 1, 10 do
+		local row = make("Frame", { Position = UDim2.new(0, 14, 0, 36 + (i - 1) * 28), Size = UDim2.new(1, -28, 0, 26),
+			BackgroundColor3 = UITheme.Colors.Background, BackgroundTransparency = i % 2 == 0 and 1 or 0.6, BorderSizePixel = 0 }, topCard)
+		make("UICorner", { CornerRadius = UDim.new(0, 6) }, row)
+		topRows[i] = {
+			Place = text({ Position = UDim2.new(0, 8, 0, 0), Size = UDim2.new(0, 28, 1, 0), Text = "", TextSize = 15,
+				Font = UITheme.Fonts.Bold, TextColor3 = GRAY }, row),
+			Name = text({ Position = UDim2.new(0, 40, 0, 0), Size = UDim2.new(1, -170, 1, 0), Text = "", TextSize = 15,
+				RichText = true, TextTruncate = Enum.TextTruncate.AtEnd }, row),
+			Value = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 0), Size = UDim2.new(0, 130, 1, 0),
+				Text = "", TextSize = 15, Font = UITheme.Fonts.Bold, TextColor3 = UITheme.Colors.Gold,
+				TextXAlignment = Enum.TextXAlignment.Right }, row),
+		}
+	end
+
+	local function refreshTop()
+		local board = decodeAttribute(ReplicatedStorage, "Leaderboard_Clans")
+		local myTag = player:GetAttribute("ClanTag")
+		for i, row in topRows do
+			local entry = board[i]
+			row.Place.Text = entry and tostring(i) or ""
+			row.Name.Text = entry and ('<font color="#8FC3FF">[' .. tostring(entry.Tag) .. ']</font>  ' .. tostring(entry.Name))
+				or (i == 1 and "Noch keine Einträge" or "")
+			row.Name.TextColor3 = (entry and entry.Tag == myTag) and ACCENT or UITheme.Colors.Text
+			row.Value.Text = entry and formatNumber(math.floor(tonumber(entry.Value) or 0)) or ""
+		end
+	end
+
+	page.Watch = { ClanTag = true, ClanData = true, ClanName = true }
+	page.Refresh = function()
+		refreshTop()
 		local tag = player:GetAttribute("ClanTag")
 		noClan.Visible = tag == nil
 		inClan.Visible = tag ~= nil
+		levelCard.Visible = tag ~= nil
+		weekCard.Visible = tag ~= nil
 		if not tag then
 			return
 		end
 		local data = decodeAttribute(player, "ClanData")
 		local members = data.Members or {}
+		local by = type(data.By) == "table" and data.By or {}
 		local total = 0
 		for _ in members do
 			total += 1
 		end
 		clanTitle.Text = '<font color="#8FC3FF">[' .. tag .. ']</font>  ' .. tostring(player:GetAttribute("ClanName") or "")
 		clanInfo.Text = total .. " / 20 MITGLIEDER  ·  KÜRZEL ZUM BEITRETEN: " .. tag
+
+		-- Stufe und Wochenziel
+		local points = tonumber(data.Points) or 0
+		local level, progress = RetentionConfig.ClanLevel(points)
+		levelText.Text = "STUFE " .. level
+		levelInfo.Text = level >= R.MaxLevel and "HÖCHSTE STUFE"
+			or (formatNumber(math.floor(points)) .. " / " .. formatNumber(RetentionConfig.ClanLevelPoints(level + 1)) .. " PUNKTE")
+		levelFill.Size = UDim2.new(math.clamp(progress, 0, 1), 0, 1, 0)
+		local week = tonumber(data.WeekPoints) or 0
+		local stage = RetentionConfig.ClanStage(week)
+		weekText.Text = formatNumber(math.floor(week)) .. " PUNKTE"
+		weekFill.Size = UDim2.new(math.clamp(week / goalMax, 0, 1), 0, 1, 0)
+		for index, entry in R.Stages do
+			stageLabels[index].Text = formatNumber(entry.Goal) .. "\n+" .. entry.Coins .. " MÜNZEN"
+			stageLabels[index].TextColor3 = index <= stage and GREEN or GRAY
+		end
+		local mine = math.floor(tonumber(by[tostring(player.UserId)]) or 0)
+		weekInfo.Text = "Dein Beitrag: " .. formatNumber(mine) .. " Punkte (Zombie 1, Auftrag " .. R.Points.ExtMissions
+			.. ")  ·  Münzen ab " .. R.MinContribution .. " Punkten  ·  neu jeden Montag"
+
 		for _, child in list:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
@@ -700,9 +806,12 @@ local function buildClan()
 			local dot = make("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0), Size = UDim2.new(0, 8, 0, 8),
 				BackgroundColor3 = online and GREEN or BORDER }, row)
 			make("UICorner", { CornerRadius = UDim.new(1, 0) }, dot)
-			text({ Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(1, -150, 1, 0), Text = (leader and "★  " or "") .. tostring(name),
+			text({ Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(1, -230, 1, 0), Text = (leader and "★  " or "") .. tostring(name),
 				TextSize = 16, TextColor3 = userId == player.UserId and ACCENT or UITheme.Colors.Text,
 				TextTruncate = Enum.TextTruncate.AtEnd }, row)
+			text({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, isLeader and userId ~= player.UserId and -116 or -80, 0.5, 0),
+				Size = UDim2.new(0, 90, 0, 20), Text = formatNumber(math.floor(tonumber(by[id]) or 0)), TextSize = 13,
+				TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Right }, row)
 			if isLeader and userId ~= player.UserId then
 				button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), Size = UDim2.new(0, 100, 0, 32),
 					TextSize = 12, Text = "ENTFERNEN", BackgroundColor3 = UITheme.Colors.MutedBack, TextColor3 = UITheme.Colors.Bad },
@@ -710,11 +819,16 @@ local function buildClan()
 						Remotes.ShopAction:FireServer("KickClanMember", userId)
 					end)
 			elseif leader then
-				text({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.new(0, 90, 0, 20),
+				text({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.new(0, 60, 0, 20),
 					Text = "LEITER", TextSize = 12, TextColor3 = UITheme.Colors.Gold, TextXAlignment = Enum.TextXAlignment.Right }, row)
 			end
 		end
 	end
+	ReplicatedStorage:GetAttributeChangedSignal("Leaderboard_Clans"):Connect(function()
+		if frame.Visible then
+			refreshTop()
+		end
+	end)
 end
 
 -- ---------- CODES ----------
@@ -1374,7 +1488,7 @@ local function buildColumn()
 		{ "AUFTRÄGE", function() togglePanel("Quests") end, Color3.fromRGB(206, 110, 80) },
 		{ "LOGIN", function() togglePanel("Daily") end, Color3.fromRGB(206, 110, 150) },
 		{ "MARKT", function() goMarket() end, UITheme.Colors.Rap },
-		{ "CLAN", function() togglePanel("Clan") end, Color3.fromRGB(110, 160, 230) },
+		{ "CLAN", function() openLobby("Clan") end, Color3.fromRGB(110, 160, 230) },
 		{ "STATS", function() openLobby("Stats") end, Color3.fromRGB(96, 164, 214) },
 		{ "BELOHNUNG", function() togglePanel("Rewards") end, Color3.fromRGB(212, 170, 80) },
 		{ "TITEL", function() togglePanel("Titles") end, Color3.fromRGB(190, 110, 230) },

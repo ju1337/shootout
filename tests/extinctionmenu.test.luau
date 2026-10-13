@@ -128,7 +128,7 @@ for _, tab in menu():FindFirstChild("Tabs", true):GetChildren() do
 		names[tab.LayoutOrder] = tab.Text
 	end
 end
-check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,BEUTE,GUIDE,SQUAD,ERFOLGE,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
+check(table.concat(names, ",") == "INVENTAR,MARKT,AUFTRÄGE,BEUTE,GUIDE,SQUAD,CLAN,ERFOLGE,SKINS,SHOP,BATTLE PASS,STATISTIK,CODES,OPTIONEN",
 	"Reiter in der Reihenfolge (" .. table.concat(names, ",") .. ")")
 check(find(menu(), "Slot_Bag_10") ~= nil or #menu():GetDescendants() > 50, "Inventar mit Plätzen gebaut")
 key(Enum.KeyCode.Tab)
@@ -178,7 +178,7 @@ local questTexts = questBoard and shownTexts(questBoard) or {}
 check(title() == "AUFTRÄGE" and questBoard ~= nil and not questTexts.EXTINCTION and not questTexts.ARCADE and questTexts["TÄGLICH"],
 	"AUFTRÄGE: kein Reiter ARCADE, keine Reiterzeile, Spalten da")
 
-for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
+for _, id in { "Clan", "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	menu():FindFirstChild("Tabs", true)["Tab_" .. id].Activated:Fire()
 	step(0.1)
 	check(activeTab() == id, id .. ": Reiter aktiv")
@@ -187,7 +187,7 @@ for _, id in { "Shop", "Pass", "Stats", "Codes", "Settings" } do
 	check(page ~= nil and page.Visible, id .. ": Seite der Lobby im Menü")
 	local scale = holder and holder:FindFirstChildOfClass("UIScale")
 	check(scale ~= nil and scale.Scale < 1 and scale.Scale > 0.8, id .. ": verkleinert")
-	if id == "Stats" or id == "Codes" or id == "Settings" then
+	if id == "Stats" or id == "Codes" or id == "Settings" or id == "Clan" then
 		local pageTitle = page and page:FindFirstChild("PageTitle")
 		local sub = menu():FindFirstChild("Sub", true)
 		check(pageTitle ~= nil and not pageTitle.Visible and sub ~= nil and sub.Text ~= "",
