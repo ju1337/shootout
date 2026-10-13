@@ -47,6 +47,10 @@ local SCALE = GunModels.ToolScale
 local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach unten (verdeckt die Waffe nicht)
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
+local LOW_READY_PITCH = math.rad(-38) -- Waffe nur gehalten (nicht zielen/schießen): schräg nach unten, beide Hände dran
+local LOW_READY_YAW = math.rad(26)     -- Mündung etwas zur Körpermitte
+local LOW_READY_SHIFT = Vector3.new(-0.3, 0, 0.1) -- lange Waffen: Schaft dafür etwas zur Körpermitte
+local READY_AFTER_SHOT = 1.0           -- so lange nach einem Schuss bleibt die Waffe oben (wie die Schulterkamera)
 local EQUIP_TIME = 0.35           -- so lange dauert das Hochnehmen nach einem Waffenwechsel
 local LAND_TIME = 0.3             -- so lange sackt die Waffe nach der Landung ab
 -- Zielen (angelegt)
@@ -446,8 +450,9 @@ end
 local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local root = rig.Root
 	local yaw = root.CFrame.Rotation
-	local sprint = smooth(entry.Sprint)
 	local aim = smooth(entry.Aim)
+	-- gesenkt: Sprinten oder Waffe nur gehalten (nicht zielen, nicht gerade geschossen)
+	local sprint = math.max(smooth(entry.Sprint), smooth(entry.Low or 0) * (1 - aim))
 	local twist = (info.Long and (LONG_TWIST + (ADS_TWIST - LONG_TWIST) * aim) or SHORT_TWIST) * (1 - sprint)
 	local now = os.clock()
 	local land = entry.LandT and math.max(0, 1 - (now - entry.LandT) / LAND_TIME) or 0
@@ -467,13 +472,19 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	-- Waffe: lange im Schulteranschlag (Schaftende an der rechten Schulter), kurze vor der Brust
 	local aimRot = yaw * CFrame.Angles(pitch, 0, 0)
 	local size = rig.UpperTorso.Size
-	local gun
+	local gun, low
+	-- gesenkt (Low Ready): dieselbe Haltung wie aus der Hüfte, nur um Schulter bzw. Brust schräg nach unten gedreht,
+	-- unabhängig vom Blick. Beide Hände bleiben an der Waffe.
+	local lowRot = yaw * CFrame.Angles(LOW_READY_PITCH, LOW_READY_YAW, 0)
 	if info.Long and info.Stock then
 		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
+		low = CFrame.new(pocket + yaw:VectorToWorldSpace(LOW_READY_SHIFT)) * lowRot * CFrame.new(-info.Stock * SCALE)
 	else
 		local chest = upperTorso * Vector3.new(0, size.Y * 0.22, 0)
-		gun = CFrame.new(chest) * aimRot * CFrame.new(size.X * 0.06, -0.05, -size.Y * PISTOL_HIP_REACH)
+		local hold = CFrame.new(size.X * 0.06, -0.05, -size.Y * PISTOL_HIP_REACH)
+		gun = CFrame.new(chest) * aimRot * hold
+		low = CFrame.new(chest) * lowRot * hold
 	end
 	-- Anlegen: Kimme bzw. Visier direkt vor dem rechten Auge (lange Waffen mit der Wange am Schaft,
 	-- Pistolen mit gestreckten Armen), Waffe zeigt weiter genau in Blickrichtung
@@ -499,8 +510,8 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 		gun = gun * CFrame.new(0, -0.22 * smooth(land), 0) * CFrame.Angles(-math.rad(6) * smooth(land), 0, 0)
 	end
 
-	local low = CFrame.new(upperTorso.Position) * yaw * CFrame.new(size.X * 0.15, -size.Y * 0.3, -size.Z * 0.9)
-		* CFrame.Angles(math.rad(-35), math.rad(35), math.rad(15))
+	-- gesenkte Haltung wippt beim Laufen mit
+	low = low * CFrame.new(swayX, bobY, 0)
 	if sprint > 0.001 then
 		gun = gun:Lerp(low, sprint)
 	end
@@ -548,6 +559,9 @@ local function poseR6(entry, rig, info, pitch, pose, poseT)
 	local torso = PoseMath.Chain(root.CFrame, rig.RootJoint.C0, rig.RootJoint.Transform, rig.RootJoint.C1)
 	local move = math.min(entry.Move or 0, 1.2) * (1 - smooth(entry.Aim) * 0.75)
 	local equip = entry.EquipT and math.clamp((os.clock() - entry.EquipT) / EQUIP_TIME, 0, 1) or 1
+	-- gesenkt (Sprint oder nur gehalten): Arm schräg nach unten statt in Blickrichtung
+	local lowered = math.max(smooth(entry.Sprint), smooth(entry.Low or 0) * (1 - smooth(entry.Aim)))
+	pitch += (LOW_READY_PITCH - pitch) * lowered
 	local bob = math.sin((entry.Phase or 0) * 2) * math.rad(2.5) * move - math.rad(45) * (1 - smooth(equip))
 	local aimRot = yaw * CFrame.Angles(pitch - math.rad(entry.Kick * 4) + bob, math.sin((entry.Phase or 0)) * math.rad(2) * move, 0)
 	local neckT = PoseMath.MotorTransform(torso.Rotation, rig.Neck.C0, rig.Neck.C1, yaw * CFrame.Angles(pitch * 0.8, 0, 0))
@@ -694,6 +708,11 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 	end
 	entry.InAir = inAir
 	entry.Sprint += (((sprinting and not aiming and not reloading) and 1 or 0) - entry.Sprint) * math.min(1, dt * 8)
+	-- Waffe nur gehalten: nicht zielen, nicht nachladen, nicht gerade geschossen -> schräg nach unten
+	local recentlyFired = entry.LastFire ~= nil and os.clock() - entry.LastFire < READY_AFTER_SHOT
+	local lowTarget = (not aiming and not reloading and not recentlyFired) and 1 or 0
+	-- hoch schnell (Schuss kommt sofort), runter gemächlich
+	entry.Low = (entry.Low or 0) + (lowTarget - (entry.Low or 0)) * math.min(1, dt * (lowTarget > (entry.Low or 0) and 6 or 18))
 	-- Rückstoß: Feder zurück in Ruhe (Teilschritte, damit sie auch bei wenig FPS stabil bleibt)
 	local h = dt / 3
 	for _ = 1, 3 do
@@ -787,6 +806,8 @@ function CharacterPose.Fired(model, weaponName)
 		return
 	end
 	local cfg = WeaponConfig.Get(weaponName)
+	entry.LastFire = os.clock()
+	entry.Low = 0 -- Schuss: Waffe sofort oben
 	entry.KickVel += 20 * (cfg and cfg.Kick or 1)
 	local anim = WeaponAnimations.Fire(weaponName)
 	if anim and (anim.Groups or anim.Gun) then

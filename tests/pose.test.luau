@@ -116,6 +116,28 @@ do
 	check(r.Handle.Position.X == r.Handle.Position.X, "Sprint: NaN")
 end
 
+-- Nur gehalten (Low Ready): Waffe schräg nach unten, unabhängig vom Blick, beide Hände an der Waffe, vor dem Körper
+for weaponName, info in GunModels.Info do
+	local worstLeft = 0
+	for _, pitchDeg in { -50, 0, 50 } do
+		local rootCF = CFrame.new(4, 3, 2) * CFrame.Angles(0, math.rad(60), 0)
+		local rig = makeRig(rootCF)
+		local ok = CharacterPose.__poseR15({ Sprint = 0, Aim = 0, Low = 1, Kick = 0 }, rig, info, math.rad(pitchDeg), nil, nil)
+		check(ok, weaponName .. ": gesenkte Haltung nicht gesetzt")
+		local r = fk(rig)
+		local down = math.deg(math.asin(math.clamp(r.Handle.LookVector.Y, -1, 1)))
+		check(down < -25 and down > -55, string.format("%s: gesenkt %.1f° statt etwa -38° (Blick %d°)", weaponName, down, pitchDeg))
+		local target = r.Handle * (info.LeftHandTP * SCALE)
+		local back = r.Handle.ZVector
+		local slide = math.clamp((r.LeftHand.Position - target):Dot(back), 0, 1.0 * SCALE)
+		worstLeft = math.max(worstLeft, (r.LeftHand.Position - (target + back * slide)).Magnitude)
+		local muzzle = r.Handle * (info.Muzzle * SCALE)
+		check((muzzle - r.Upper.Position):Dot(rootCF.LookVector) > 0.3, weaponName .. ": gesenkte Mündung nicht vor dem Körper")
+	end
+	print(string.format("%-9s gesenkt: linke Hand max %.3f Studs von der Waffe", weaponName, worstLeft))
+	check(worstLeft < 0.15, weaponName .. ": gesenkt erreicht die linke Hand die Waffe nicht")
+end
+
 -- Nachladen: Linke Hand folgt dem Magazin (mitten im Nachladen)
 for weaponName, info in GunModels.Info do
 	local anim, duration = WeaponAnimations.Reload(weaponName, WeaponConfig.Get(weaponName).ReloadTime, 4)
