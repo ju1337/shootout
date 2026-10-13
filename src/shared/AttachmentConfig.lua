@@ -83,9 +83,8 @@ AttachmentConfig.ByWeapon = {
 	-- Sturmgewehr: Allrounder für Zielen auf Distanz – kein Laser, kein kurzer Lauf, kein Trommelmagazin
 	Rifle = { "Compensator", "MuzzleBrake", "Suppressor", "LongBarrel", "HeavyBarrel", "VerticalGrip", "AngledGrip",
 		"ExtendedMag", "FastMag", "HoloSight" },
-	-- MP: Nahkampf aus der Hüfte – kurzer Lauf, Laser, Trommelmagazin; keine Mündungsbremse, kein langer/schwerer Lauf
-	SMG = { "Compensator", "Suppressor", "ShortBarrel", "VerticalGrip", "Laser", "AngledGrip", "ExtendedMag", "FastMag",
-		"DrumMag", "HoloSight" },
+	-- MP (HK MP7): nur Visier, Magazin, Kompensator und Schalldämpfer (Julio, 2026-10-13); kein Lauf, kein Griff
+	SMG = { "Compensator", "Suppressor", "ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
 	-- Schrotflinte (Gen-12, Kastenmagazin): Lauflänge, Mündungsbremse als Würgebohrung, Laser; kein Schalldämpfer
 	Shotgun = { "MuzzleBrake", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "ExtendedMag", "FastMag", "HoloSight" },
 	-- Präzisionsgewehr: Schalldämpfer, Kompensator gegen den Rückstoß, Läufe für Reichweite; kein Griff, kein Trommelmagazin

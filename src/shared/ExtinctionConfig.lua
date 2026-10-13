@@ -156,6 +156,17 @@ for _, weaponName in AttachmentConfig.WeaponOrder do
 	end
 end
 
+-- Aufsatz-Items, die es nicht mehr gibt, weil der Aufsatz nicht mehr auf seine Waffe passt (z.B. Griffe an der MP seit
+-- 2026-10-13): werden zum selben Aufsatz der ersten Waffe, auf die er noch passt, nichts geht verloren
+for _, weaponName in AttachmentConfig.WeaponOrder do
+	for _, att in AttachmentConfig.List do
+		local oldId = ExtinctionConfig.AttachmentItemId(weaponName, att.Id)
+		if not ExtinctionConfig.Items[oldId] then
+			ExtinctionConfig.LegacyItems[oldId] = ExtinctionConfig.LegacyItems["Att_" .. att.Id]
+		end
+	end
+end
+
 -- Item-Id aus einem gespeicherten Stand (alte Ids werden umgeschrieben); nil, wenn es das Item nicht gibt
 function ExtinctionConfig.SavedId(id)
 	if type(id) ~= "string" then

@@ -172,6 +172,24 @@ check(ExtinctionConfig.Get("Att_LMG_HoloSight") == nil and ExtinctionConfig.Get(
 	"LMG: kein Visier (nur aus der Hüfte), dafür Laser")
 check(ExtinctionConfig.SavedId("Att_Compensator") == "Att_Rifle_Compensator" and ExtinctionConfig.SavedId("Att_DrumMag") == "Att_SMG_DrumMag"
 	and ExtinctionConfig.SavedId("Quatsch") == nil, "alte Aufsatz-Items werden zum Aufsatz der ersten passenden Waffe")
+-- MP (MP7) seit 2026-10-13 nur Visier, Magazin, Kompensator, Schalldämpfer: alte MP-Griffe/-Läufe/-Laser gehen nicht
+-- verloren, sie werden zum Aufsatz der ersten Waffe, auf die er noch passt; an der MP montierte kommen in die Tasche
+local smgSlots = {}
+for _, slot in AttachmentConfig.SlotsFor("SMG") do
+	table.insert(smgSlots, slot.Id)
+end
+check(table.concat(smgSlots, ",") == "Muzzle,Magazine,Optic", "MP: nur Mündung, Magazin, Visier")
+check(not AttachmentConfig.Fits("SMG", "MuzzleBrake") and AttachmentConfig.Fits("SMG", "Compensator")
+	and AttachmentConfig.Fits("SMG", "Suppressor"), "MP: nur Kompensator und Schalldämpfer an der Mündung")
+check(ExtinctionConfig.Get("Att_SMG_Laser") == nil and ExtinctionConfig.SavedId("Att_SMG_Laser") == "Att_Shotgun_Laser"
+	and ExtinctionConfig.SavedId("Att_SMG_VerticalGrip") == "Att_Rifle_VerticalGrip"
+	and ExtinctionConfig.SavedId("Att_SMG_ShortBarrel") == "Att_Shotgun_ShortBarrel", "alte MP-Aufsätze bleiben erhalten")
+local smgLoose = {}
+local smgBag = Inventory.FromList({ { S = 1, Id = "SMG", A = { Grip = "VerticalGrip", Optic = "HoloSight" } },
+	{ S = 2, Id = "Att_SMG_AngledGrip", N = 1 } }, 4, smgLoose)
+check(smgBag.Slots[1].Att and smgBag.Slots[1].Att.Optic == "HoloSight" and smgBag.Slots[1].Att.Grip == nil
+	and smgLoose[1] == "VerticalGrip" and smgBag.Slots[2] and smgBag.Slots[2].Id == "Att_Rifle_AngledGrip",
+	"MP: Griff abgenommen (zurück ins Inventar), Visier bleibt")
 local legacy = Inventory.FromList({ { S = 2, Id = "Att_Suppressor", N = 2 } }, 4)
 check(legacy.Slots[2] and legacy.Slots[2].Id == "Att_Rifle_Suppressor" and legacy.Slots[2].Count == 2, "alter Spielstand: Schalldämpfer umgeschrieben")
 for _, name in { "Zombie", "Zombie2", "Tier1", "Tier2", "Tier3", "Medical", "Ammo" } do
