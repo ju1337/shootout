@@ -2539,159 +2539,223 @@ local function itemCountEverywhere(id)
 end
 
 -- Kurzname einer Munitionssorte für den Knopf der Munitionspresse
-local PRESS_SHORT = { Ammo_9mm = "9MM", Ammo_Magnum = "MAGNUM", Ammo_Shell = "SCHROT", Ammo_Rifle = "GEWEHR" }
+Inv.PRESS_SHORT = { Ammo_9mm = "9MM", Ammo_Magnum = "MAGNUM", Ammo_Shell = "SCHROT", Ammo_Rifle = "GEWEHR" }
+Inv.hideoutTab = "Modules" -- zuletzt offener Reiter im Versteck (Module oder Extras)
 
+-- Links die Versteckstufe (Leiter mit allen Stufen, darunter was die nächste kostet und die Knöpfe), rechts zwei Reiter:
+-- MODULE (eine Zeile je Modul: Name, Bonus jetzt und danach, Kosten, Knopf) und EXTRAS (Funkgerät, Trophäenwand).
 local function openHideout()
 	local C = UITheme.MenuColors
 	local win = newWindow("Hideout", "VERSTECK", "STUFEN UND MODULE AUSBAUEN  ·  ITEMS AUS TASCHE ODER LAGER  ·  DIE BONI GELTEN IN EXTINCTION")
+	Inv.solidWindow(win)
 	local body = win.Body
-	local W, gap = 1124, 12
-	-- oben: Versteckstufe (Name, Punkte), nächste Stufe (Bedingung, was neu ist), Ausbauen mit Münzen oder Robux
-	local band = UITheme.Card({ Name = "Tier", Size = UDim2.fromOffset(W, 92), ZIndex = 6 }, body)
-	local tierCaption = label({ Name = "Caption", Position = UDim2.fromOffset(18, 12), Size = UDim2.fromOffset(260, 14), Text = "",
-		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, band)
-	local tierName = label({ Name = "Name", Position = UDim2.fromOffset(18, 28), Size = UDim2.fromOffset(270, 30), Text = "",
-		TextSize = 26, Font = F.Display, TextColor3 = HIDEOUT, ZIndex = 7 }, band)
-	local tierPips = {}
-	for index = 1, #HideoutConfig.Tiers do
-		local pip = make("Frame", { Name = "Pip" .. index, Position = UDim2.fromOffset(18 + (index - 1) * 66, 68),
-			Size = UDim2.fromOffset(60, 6), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, band)
-		UITheme.Corner(pip, 3)
-		tierPips[index] = pip
-	end
-	local nextCaption = label({ Name = "Next", Position = UDim2.fromOffset(310, 12), Size = UDim2.fromOffset(410, 16), Text = "",
-		TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, band)
-	local nextNeed = label({ Name = "Need", Position = UDim2.fromOffset(310, 32), Size = UDim2.fromOffset(410, 18), Text = "",
-		TextSize = 15, Font = F.Bold, TextColor3 = C.Text, ZIndex = 7 }, band)
-	local nextNew = label({ Name = "New", Position = UDim2.fromOffset(310, 54), Size = UDim2.fromOffset(410, 30), Text = "",
-		TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
-		ZIndex = 7 }, band)
-	local tierTarget = 1
-	local tierBuy = UITheme.Chunky({ Name = "TierUpgrade", Position = UDim2.fromOffset(W - 18 - 372, 24), Size = UDim2.fromOffset(150, 44),
-		Color = C.Primary, TextColor = C.PrimaryText, Text = "AUSBAUEN", TextSize = 15, ZIndex = 7 }, band, function()
-		sendAction("HideoutTier", tierTarget) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
-	end)
-	local robuxProduct = nil
-	local tierRobux = UITheme.Chunky({ Name = "TierRobux", Position = UDim2.fromOffset(W - 18 - 210, 24), Size = UDim2.fromOffset(210, 44),
-		Color = C.Good, TextColor = C.OnLight, Text = "", TextSize = 13, ZIndex = 7 }, band, function()
-		if robuxProduct and robuxProduct.ProductId ~= 0 then
-			MarketplaceService:PromptProductPurchase(player, robuxProduct.ProductId)
-		end
-	end)
+	local W, H = 1124, 532
+	local LEFT_W, GAP = 340, 16
+	local RIGHT_X = LEFT_W + GAP
+	local RIGHT_W = W - RIGHT_X
+	local GOOD = C.Good
 
-	-- darunter: 8 Karten in 2 Reihen (6 Module, Funkgerät, Trophäenwand)
-	local cardW = math.floor((W - gap * 3) / 4)
-	local cardH = 208
-	local function cardAt(index, name)
-		local column, row = (index - 1) % 4, (index - 1) // 4
-		return UITheme.Card({ Name = name, Position = UDim2.fromOffset(column * (cardW + gap), 104 + row * (cardH + gap)),
-			Size = UDim2.fromOffset(cardW, cardH), ZIndex = 6 }, body)
+	local function text(props, parent)
+		props.ZIndex = props.ZIndex or 7
+		return label(props, parent)
 	end
-	local function title(card, text)
-		label({ Name = "Name", Position = UDim2.fromOffset(14, 10), Size = UDim2.new(1, -28, 0, 24), Text = upper(text), TextSize = 20,
-			Font = F.Display, ZIndex = 7 }, card)
-	end
-	local function clearList(frame)
+	local function clear(frame)
 		for _, child in frame:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
 			end
 		end
 	end
-	local function costLine(parent, order, text, ok)
-		label({ Name = "Cost" .. order, Size = UDim2.new(1, 0, 0, 16), Text = text, TextSize = 13, Font = F.Bold,
-			TextColor3 = ok and C.Text or C.Bad, LayoutOrder = order, ZIndex = 7 }, parent)
+	local function tierName(tier)
+		local config = HideoutConfig.Tiers[tier]
+		return config and config.Name or ""
 	end
 
+	-- ---------- links: Versteckstufe ----------
+	local side = UITheme.Card({ Name = "Tier", Size = UDim2.fromOffset(LEFT_W, H), BackgroundColor3 = Inv.RAISED,
+		BackgroundTransparency = 0, ZIndex = 6 }, body)
+	text({ Name = "Caption", Position = UDim2.fromOffset(20, 16), Size = UDim2.new(1, -40, 0, 14), Text = "DEIN VERSTECK", TextSize = 12,
+		Font = F.Bold, TextColor3 = C.Muted }, side)
+	local sideName = text({ Name = "TierName", Position = UDim2.fromOffset(20, 32), Size = UDim2.new(1, -40, 0, 34), Text = "",
+		TextScaled = true, Font = F.Display, TextColor3 = HIDEOUT }, side)
+	make("UITextSizeConstraint", { MaxTextSize = 30 }, sideName) -- "KOMMANDOZENTRALE" passt so auch in die Breite
+	-- Leiter: alle Stufen untereinander, erreichte gefüllt, die aktuelle hervorgehoben
+	local steps = {}
+	for index, config in HideoutConfig.Tiers do
+		local row = make("Frame", { Name = "Step" .. index, Position = UDim2.fromOffset(12, 78 + (index - 1) * 40),
+			Size = UDim2.new(1, -24, 0, 36), BackgroundColor3 = C.Card, BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 7 }, side)
+		UITheme.Corner(row, UITheme.Radius.Medium)
+		local dot = make("Frame", { Name = "Dot", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 8, 0.5, 0),
+			Size = UDim2.fromOffset(22, 22), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 8 }, row)
+		make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, dot)
+		local dotStroke = UITheme.Stroke(dot, C.Border, 2)
+		local number = text({ Name = "Number", Size = UDim2.fromScale(1, 1), Text = tostring(index), TextSize = 13, Font = F.Display,
+			TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 9 }, dot)
+		local name = text({ Name = "Name", Position = UDim2.fromOffset(42, 0), Size = UDim2.new(1, -136, 1, 0), Text = upper(config.Name),
+			TextSize = 14, TextTruncate = Enum.TextTruncate.AtEnd, Font = F.Bold, ZIndex = 8 }, row)
+		local need = text({ Name = "Level", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 0), Size = UDim2.new(0, 84, 1, 0),
+			Text = "AB LEVEL " .. config.MinLevel, TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 8 }, row)
+		steps[index] = { Row = row, Dot = dot, DotStroke = dotStroke, Number = number, Name = name, Need = need }
+	end
+	make("Frame", { Name = "Divider", Position = UDim2.fromOffset(20, 246), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = C.Border,
+		BorderSizePixel = 0, ZIndex = 7 }, side)
+	local nextCaption = text({ Name = "NextCaption", Position = UDim2.fromOffset(20, 258), Size = UDim2.new(1, -40, 0, 14), Text = "",
+		TextSize = 12, Font = F.Bold, TextColor3 = C.Muted }, side)
+	local nextNew = text({ Name = "NextNew", Position = UDim2.fromOffset(20, 276), Size = UDim2.new(1, -40, 0, 32), Text = "",
+		TextSize = 13, Font = F.Medium, TextColor3 = C.Text, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, side)
+	-- Bedingungen als Liste: links was, rechts der Stand (grün erfüllt, rot fehlt)
+	local needList = make("Frame", { Name = "Needs", Position = UDim2.fromOffset(20, 314), Size = UDim2.new(1, -40, 0, 100),
+		BackgroundTransparency = 1, ZIndex = 7 }, side)
+	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, needList)
+	local function needRow(order, what, state, ok)
+		local row = make("Frame", { Name = "Need" .. order, Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, LayoutOrder = order,
+			ZIndex = 7 }, needList)
+		text({ Name = "What", Size = UDim2.new(1, -90, 1, 0), Text = what, TextSize = 14, Font = F.Bold, TextColor3 = C.Text }, row)
+		text({ Name = "State", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0, 90, 1, 0), Text = state,
+			TextSize = 14, Font = F.Bold, TextColor3 = ok and GOOD or C.Bad, TextXAlignment = Enum.TextXAlignment.Right }, row)
+	end
+	local tierTarget = 1
+	local tierBuy = UITheme.Chunky({ Name = "TierUpgrade", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -70),
+		Size = UDim2.new(1, -40, 0, 42), Color = C.Primary, TextColor = C.PrimaryText, Text = "", TextSize = 15, ZIndex = 7 }, side,
+		function()
+			sendAction("HideoutTier", tierTarget) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
+		end)
+	local robuxProduct = nil
+	local tierRobux = UITheme.Chunky({ Name = "TierRobux", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -18),
+		Size = UDim2.new(1, -40, 0, 42), Color = C.Good, TextColor = C.OnLight, Text = "", TextSize = 15, ZIndex = 7 }, side, function()
+		if robuxProduct and robuxProduct.ProductId ~= 0 then
+			MarketplaceService:PromptProductPurchase(player, robuxProduct.ProductId)
+		end
+	end)
+
+	-- ---------- rechts: Reiter ----------
+	local pages, tabButtons = {}, {}
+	local function showTab(id)
+		Inv.hideoutTab = id
+		for key, page in pages do
+			page.Visible = key == id
+			tabButtons[key].SetColor(key == id and C.Primary or C.Card, key == id and C.PrimaryText or C.Muted)
+		end
+	end
+	for index, tab in { { Id = "Modules", Text = "MODULE" }, { Id = "Extras", Text = "FUNKGERÄT & TROPHÄEN" } } do
+		tabButtons[tab.Id] = UITheme.Chunky({ Name = "Tab_" .. tab.Id, Position = UDim2.fromOffset(RIGHT_X + (index - 1) * 236, 0),
+			Size = UDim2.fromOffset(index == 1 and 224 or 260, 36), Color = C.Card, StrokeColor = C.Border, Text = tab.Text, TextSize = 14,
+			ZIndex = 7 }, body, function()
+			showTab(tab.Id)
+		end)
+		pages[tab.Id] = make("Frame", { Name = "Page_" .. tab.Id, Position = UDim2.fromOffset(RIGHT_X, 48),
+			Size = UDim2.fromOffset(RIGHT_W, H - 48), BackgroundTransparency = 1, ZIndex = 6 }, body)
+	end
+
+	-- MODULE: eine Zeile je Modul
 	local modules = HideoutConfig.Modules
+	local ROW_GAP = 8
+	local ROW_H = math.floor((H - 48 - ROW_GAP * (#modules - 1)) / #modules)
+	local BTN_W = 132
+	local COL2, COL3 = 222, 402 -- Spalten: Bonus, Kosten
 	local views = {}
 	for i, module in modules do
-		local card = cardAt(i, "Module_" .. module.Id)
-		title(card, module.Name)
-		local view = { Card = card, Module = module, Target = 1 }
-		view.Level = label({ Name = "Level", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 14),
-			Size = UDim2.fromOffset(120, 16), Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
-			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 7 }, card)
+		local row = UITheme.Card({ Name = "Module_" .. module.Id, Position = UDim2.fromOffset(0, (i - 1) * (ROW_H + ROW_GAP)),
+			Size = UDim2.fromOffset(RIGHT_W, ROW_H), BackgroundColor3 = Inv.RAISED, BackgroundTransparency = 0, ZIndex = 6 }, pages.Modules)
+		local view = { Row = row, Module = module, Target = 1 }
+		view.Accent = UITheme.AccentBar(row, HIDEOUT, { Side = "Left", ZIndex = 7 })
+		-- Spalte 1: Name, Stufe, Beschreibung
+		text({ Name = "Name", Position = UDim2.fromOffset(18, 10), Size = UDim2.fromOffset(COL2 - 30, 22), Text = upper(module.Name), TextSize = 18,
+			Font = F.Display }, row)
+		text({ Name = "Text", Position = UDim2.fromOffset(18, 34), Size = UDim2.fromOffset(COL2 - 30, 30), Text = module.Text, TextSize = 12,
+			Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top }, row)
+		-- Spalte 2: Bonus jetzt (groß) und nach dem Ausbau, Stufen-Punkte
+		view.Now = text({ Name = "Now", Position = UDim2.fromOffset(COL2, 10), Size = UDim2.fromOffset(COL3 - COL2 - 12, 22), Text = "",
+			TextScaled = true, Font = F.Display, TextColor3 = HIDEOUT }, row)
+		make("UITextSizeConstraint", { MaxTextSize = 17 }, view.Now) -- lange Boni ("120 Münzen pro Stunde") werden kleiner
+		view.Next = text({ Name = "Next", Position = UDim2.fromOffset(COL2, 34), Size = UDim2.fromOffset(COL3 - COL2 - 12, 16), Text = "",
+			TextScaled = true, Font = F.Bold, TextColor3 = C.Muted }, row)
+		make("UITextSizeConstraint", { MaxTextSize = 12 }, view.Next)
 		view.Pips = {}
 		for level = 1, #module.Levels do
-			local pip = make("Frame", { Name = "Pip" .. level, Position = UDim2.new((level - 1) / #module.Levels, level == 1 and 14 or 3, 0, 40),
-				Size = UDim2.new(1 / #module.Levels, level == 1 and -17 or -6, 0, 5), BackgroundColor3 = C.Card, BorderSizePixel = 0,
-				ZIndex = 7 }, card)
+			local pip = make("Frame", { Name = "Pip" .. level, Position = UDim2.fromOffset(COL2 + (level - 1) * 34, ROW_H - 16),
+				Size = UDim2.fromOffset(28, 5), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, row)
 			UITheme.Corner(pip, 3)
 			view.Pips[level] = pip
 		end
-		view.Now = label({ Name = "Now", Position = UDim2.fromOffset(14, 52), Size = UDim2.new(1, -28, 0, 22), Text = "", TextSize = 18,
-			Font = F.Display, TextColor3 = HIDEOUT, ZIndex = 7 }, card)
-		view.Next = label({ Name = "Next", Position = UDim2.fromOffset(14, 76), Size = UDim2.new(1, -28, 0, 16), Text = "", TextSize = 13,
-			Font = F.Bold, TextColor3 = C.Text, ZIndex = 7 }, card)
-		view.Costs = make("Frame", { Name = "Costs", Position = UDim2.fromOffset(14, 98), Size = UDim2.new(1, -28, 0, 56),
-			BackgroundTransparency = 1, ZIndex = 7 }, card)
-		make("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, view.Costs)
+		-- Spalte 3: Kosten der nächsten Stufe (oder warum gesperrt)
+		view.Costs = make("Frame", { Name = "Costs", Position = UDim2.fromOffset(COL3, 10), Size = UDim2.fromOffset(RIGHT_W - COL3 - BTN_W - 28, ROW_H - 20),
+			BackgroundTransparency = 1, ZIndex = 7 }, row)
+		make("UIListLayout", { Padding = UDim.new(0, 1), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center },
+			view.Costs)
+		-- Spalte 4: Knöpfe (Generator und Presse: Ausbauen oben, Abholen unten)
 		local collectAction = module.Id == "Generator" and "HideoutCollect" or module.Id == "AmmoPress" and "HideoutPress" or nil
-		local upgradeW = collectAction and UDim2.new(0.58, -18, 0, 36) or UDim2.new(1, -28, 0, 36)
-		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 14, 1, -12),
-			Size = upgradeW, Color = C.Primary, TextColor = C.PrimaryText, Text = "", TextSize = 13, ZIndex = 7 }, card,
-			function()
-				sendAction("HideoutUpgrade", module.Id, view.Target) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
-			end)
+		local btnH = collectAction and math.floor((ROW_H - 26) / 2) or 40
+		view.Upgrade = UITheme.Chunky({ Name = "Upgrade", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, collectAction and 9
+			or math.floor((ROW_H - 40) / 2)), Size = UDim2.fromOffset(BTN_W, btnH), Color = C.Primary, TextColor = C.PrimaryText, Text = "",
+			TextSize = 13, ZIndex = 7 }, row, function()
+			sendAction("HideoutUpgrade", module.Id, view.Target) -- angezeigte Stufe: Doppelklick baut nicht zwei Stufen
+		end)
 		if collectAction then
-			view.Collect = UITheme.Chunky({ Name = "Collect", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -14, 1, -12),
-				Size = UDim2.new(0.42, -6, 0, 36), Color = C.Card, StrokeColor = C.Border, Text = "ABHOLEN", TextSize = 13, ZIndex = 7 },
-				card, function()
+			view.Collect = UITheme.Chunky({ Name = "Collect", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -14, 1, -9),
+				Size = UDim2.fromOffset(BTN_W, btnH), Color = C.Card, StrokeColor = HIDEOUT, Text = "", TextSize = 13, ZIndex = 7 }, row,
+				function()
 					sendAction(collectAction)
 				end)
 		end
 		if module.Id == "AmmoPress" then
-			-- Sorte wählen: Knopf schaltet reihum weiter
-			view.Ammo = UITheme.Chunky({ Name = "Ammo", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 52),
-				Size = UDim2.fromOffset(92, 22), Color = C.Card, StrokeColor = C.Border, Text = "", TextSize = 12, ZIndex = 8 }, card,
-				function()
-					local list = HideoutConfig.PressAmmo
-					local current = table.find(list, HideoutConfig.PressAmmoOf(HideoutConfig.Data(player))) or 1
-					sendAction("HideoutPressAmmo", list[current % #list + 1])
-				end)
+			-- Sorte wählen: Knopf neben dem Bonus schaltet reihum weiter
+			view.Ammo = UITheme.Chunky({ Name = "Ammo", Position = UDim2.fromOffset(COL3 - 12 - 72, ROW_H - 30), Size = UDim2.fromOffset(72, 22), Color = C.Card,
+				StrokeColor = C.Border, Text = "", TextSize = 12, ZIndex = 8 }, row, function()
+				local list = HideoutConfig.PressAmmo
+				local current = table.find(list, HideoutConfig.PressAmmoOf(HideoutConfig.Data(player))) or 1
+				sendAction("HideoutPressAmmo", list[current % #list + 1])
+			end)
 		end
 		views[module.Id] = view
 	end
 
-	-- Funkgerät: Tagesauftrag
-	local radioCard = cardAt(#modules + 1, "Radio")
-	title(radioCard, "Funkgerät")
-	label({ Name = "Sub", Position = UDim2.fromOffset(14, 34), Size = UDim2.new(1, -28, 0, 14), Text = "EIN AUFTRAG PRO TAG",
-		TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, radioCard)
-	local radioTask = label({ Name = "Task", Position = UDim2.fromOffset(14, 54), Size = UDim2.new(1, -28, 0, 20), Text = "",
-		TextSize = 16, Font = F.Bold, TextColor3 = C.Text, TextWrapped = true, ZIndex = 7 }, radioCard)
-	local radioTrack = make("Frame", { Name = "Track", Position = UDim2.fromOffset(14, 84), Size = UDim2.new(1, -28, 0, 6),
-		BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, radioCard)
-	UITheme.Corner(radioTrack, 3)
+	-- EXTRAS: Funkgerät und Trophäenwand nebeneinander
+	local extraW = math.floor((RIGHT_W - GAP) / 2)
+	local extraH = H - 48
+	local function extraCard(index, name, title, sub)
+		local card = UITheme.Card({ Name = name, Position = UDim2.fromOffset((index - 1) * (extraW + GAP), 0), Size = UDim2.fromOffset(extraW, extraH),
+			BackgroundColor3 = Inv.RAISED, BackgroundTransparency = 0, ZIndex = 6 }, pages.Extras)
+		UITheme.AccentBar(card, HIDEOUT, { ZIndex = 7 })
+		text({ Name = "Title", Position = UDim2.fromOffset(20, 18), Size = UDim2.new(1, -40, 0, 26), Text = upper(title), TextSize = 22,
+			Font = F.Display }, card)
+		text({ Name = "Sub", Position = UDim2.fromOffset(20, 46), Size = UDim2.new(1, -40, 0, 16), Text = sub, TextSize = 12, Font = F.Bold,
+			TextColor3 = C.Muted }, card)
+		local content = make("Frame", { Name = "Content", Position = UDim2.fromOffset(20, 80), Size = UDim2.new(1, -40, 1, -100),
+			BackgroundTransparency = 1, ZIndex = 7 }, card)
+		local locked = text({ Name = "Locked", Position = UDim2.fromOffset(20, 80), Size = UDim2.new(1, -40, 0, 60), Text = "", TextSize = 16,
+			Font = F.Bold, TextColor3 = C.Bad, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, Visible = false }, card)
+		return card, content, locked
+	end
+	local radioCard, radioBox, radioLocked = extraCard(1, "Radio", "Funkgerät", "EIN AUFTRAG PRO TAG  ·  MÜNZEN UND XP")
+	local radioTask = text({ Name = "Task", Size = UDim2.new(1, 0, 0, 56), Text = "", TextSize = 22, Font = F.Display, TextWrapped = true,
+		TextYAlignment = Enum.TextYAlignment.Top }, radioBox)
+	local radioTrack = make("Frame", { Name = "Track", Position = UDim2.fromOffset(0, 70), Size = UDim2.new(1, 0, 0, 10),
+		BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 7 }, radioBox)
+	UITheme.Corner(radioTrack, 5)
 	local radioFill = make("Frame", { Name = "Fill", Size = UDim2.fromScale(0, 1), BackgroundColor3 = HIDEOUT, BorderSizePixel = 0,
 		ZIndex = 8 }, radioTrack)
-	UITheme.Corner(radioFill, 3)
-	local radioCount = label({ Name = "Count", Position = UDim2.fromOffset(14, 96), Size = UDim2.new(1, -28, 0, 18), Text = "",
-		TextSize = 15, Font = F.Display, TextColor3 = HIDEOUT, ZIndex = 7 }, radioCard)
-	local radioReward = label({ Name = "Reward", Position = UDim2.fromOffset(14, 118), Size = UDim2.new(1, -28, 0, 16),
+	UITheme.Corner(radioFill, 5)
+	local radioCount = text({ Name = "Count", Position = UDim2.fromOffset(0, 88), Size = UDim2.new(1, 0, 0, 26), Text = "", TextSize = 24,
+		Font = F.Display, TextColor3 = HIDEOUT }, radioBox)
+	text({ Name = "Reward", Position = UDim2.fromOffset(0, 130), Size = UDim2.new(1, 0, 0, 18),
 		Text = string.format("Belohnung: %s Münzen · %d XP", UITheme.FormatNumber(HideoutConfig.Radio.Coins), HideoutConfig.Radio.XP),
-		TextSize = 13, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 7 }, radioCard)
-	local radioClaim = UITheme.Chunky({ Name = "Claim", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 14, 1, -12),
-		Size = UDim2.new(1, -28, 0, 36), Color = C.Card, StrokeColor = C.Border, Text = "", TextSize = 13, ZIndex = 7 }, radioCard,
+		TextSize = 15, Font = F.Bold, TextColor3 = C.Text }, radioBox)
+	local radioClaim = UITheme.Chunky({ Name = "Claim", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 20, 1, -20),
+		Size = UDim2.new(1, -40, 0, 44), Color = C.Card, StrokeColor = C.Border, Text = "", TextSize = 15, ZIndex = 7 }, radioCard,
 		function()
 			sendAction("HideoutRadio")
 		end)
+	local _, trophyBox, trophyLocked = extraCard(2, "Trophies", "Trophäenwand", "DEINE ERFOLGE IN DER OFFENEN WELT")
+	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, trophyBox)
 
-	-- Trophäenwand: Statistik der offenen Welt und Erfolge
-	local trophyCard = cardAt(#modules + 2, "Trophies")
-	title(trophyCard, "Trophäenwand")
-	local trophyList = make("Frame", { Name = "List", Position = UDim2.fromOffset(14, 40), Size = UDim2.new(1, -28, 0, 156),
-		BackgroundTransparency = 1, ZIndex = 7 }, trophyCard)
-	make("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, trophyList)
-
-	local function tierLabel(tier)
-		local config = HideoutConfig.Tiers[tier]
-		return "AB VERSTECKSTUFE " .. tier .. " (" .. upper(config and config.Name or "") .. ")"
-	end
 	local function stats()
 		local ok, data = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("Stats") or "{}")
 		return ok and type(data) == "table" and data or {}
+	end
+	local function lockedText(tier)
+		return "Ab Versteckstufe " .. tier .. " (" .. tierName(tier) .. ")"
 	end
 
 	function win.Refresh()
@@ -2702,50 +2766,59 @@ local function openHideout()
 		local now = math.floor(workspace:GetServerTimeNow())
 
 		-- Versteckstufe
-		tierCaption.Text = tier > 0 and ("VERSTECKSTUFE " .. tier .. " VON " .. #HideoutConfig.Tiers) or "VERSTECK GESPERRT"
-		tierName.Text = tier > 0 and upper(HideoutConfig.Tiers[tier].Name) or ("AB LEVEL " .. HideoutConfig.MinLevel)
-		for index, pip in tierPips do
-			pip.BackgroundColor3 = index <= tier and HIDEOUT or C.Card
+		sideName.Text = tier > 0 and upper(tierName(tier)) or "GESPERRT"
+		for index, step in steps do
+			local reached, current = index <= tier, index == tier
+			step.Row.BackgroundTransparency = current and 0 or 1
+			step.Dot.BackgroundColor3 = reached and HIDEOUT or C.Card
+			step.DotStroke.Color = reached and HIDEOUT or Color3.fromRGB(70, 74, 82)
+			step.DotStroke.Transparency = 0
+			step.Number.TextColor3 = reached and C.OnLight or C.Muted
+			step.Name.TextColor3 = reached and C.Text or C.Muted
+			step.Need.Text = reached and "ERREICHT" or ("AB LEVEL " .. HideoutConfig.Tiers[index].MinLevel)
+			step.Need.TextColor3 = reached and GOOD or C.Muted
 		end
 		local nextTier = HideoutConfig.Tiers[tier + 1]
 		tierTarget = tier + 1
+		clear(needList)
 		if nextTier then
 			nextCaption.Text = "NÄCHSTE STUFE: " .. upper(nextTier.Name)
-			local parts = { "Ab Level " .. nextTier.MinLevel }
-			local affordable = playerLevel >= nextTier.MinLevel and coins >= nextTier.Coins
-			if nextTier.Coins > 0 then
-				table.insert(parts, UITheme.FormatNumber(nextTier.Coins) .. " Münzen")
-			end
-			for _, need in nextTier.Items do
-				local config = itemConfig(need[1])
-				table.insert(parts, need[2] .. "× " .. (config and config.Name or need[1]))
-				affordable = affordable and itemCountEverywhere(need[1]) >= need[2]
-			end
-			nextNeed.Text = table.concat(parts, "  ·  ")
-			nextNeed.TextColor3 = playerLevel >= nextTier.MinLevel and C.Text or C.Bad
 			nextNew.Text = nextTier.Text or ""
+			local levelOk = playerLevel >= nextTier.MinLevel
+			local affordable = levelOk
+			needRow(1, "Level " .. nextTier.MinLevel, "du: " .. playerLevel, levelOk)
+			if nextTier.Coins > 0 then
+				affordable = affordable and coins >= nextTier.Coins
+				needRow(2, UITheme.FormatNumber(nextTier.Coins) .. " Münzen", UITheme.FormatNumber(math.min(coins, nextTier.Coins)) .. " / "
+					.. UITheme.FormatNumber(nextTier.Coins), coins >= nextTier.Coins)
+			end
+			for index, need in nextTier.Items do
+				local have = itemCountEverywhere(need[1])
+				local config = itemConfig(need[1])
+				affordable = affordable and have >= need[2]
+				needRow(2 + index, need[2] .. "× " .. (config and config.Name or need[1]), math.min(have, need[2]) .. " / " .. need[2],
+					have >= need[2])
+			end
 			if tier == 0 then
-				-- Stufe 1 gibt es nur über das Level (gratis)
-				tierBuy.SetText("AB LEVEL " .. HideoutConfig.MinLevel)
+				tierBuy.SetText("GRATIS AB LEVEL " .. HideoutConfig.MinLevel) -- Stufe 1 gibt es nur über das Level
 				tierBuy.SetColor(C.Card, C.Muted)
 			else
-				tierBuy.SetText("AUSBAUEN")
+				tierBuy.SetText("VERSTECK AUSBAUEN")
 				tierBuy.SetColor(affordable and C.Primary or C.Card, affordable and C.PrimaryText or C.Muted)
 			end
 		else
 			nextCaption.Text = "GANZ AUSGEBAUT"
-			nextNeed.Text = "Dein Versteck hat die höchste Stufe."
-			nextNeed.TextColor3 = C.Text
-			nextNew.Text = ""
+			nextNew.Text = "Dein Versteck hat die höchste Stufe."
 		end
 		tierBuy.Button.Visible = nextTier ~= nil
-		-- Robux: die nächste kaufbare Stufe (gesperrt: gleich die Werkstatt), ohne Level-Grenze
+		-- Robux: die nächste kaufbare Stufe (gesperrt: gleich die Werkstatt), sofort und ohne Level-Grenze
 		local robuxTier = HideoutConfig.Tiers[math.max(tier + 1, 2)]
 		robuxProduct = robuxTier and robuxTier.Product and RobuxConfig.Product(robuxTier.Product)
 		tierRobux.Button.Visible = robuxProduct ~= nil
 		if robuxProduct then
 			local live = robuxProduct.ProductId ~= 0
-			tierRobux.SetText(live and ("R$ " .. robuxProduct.Robux .. "  ·  " .. upper(robuxTier.Name)) or "ROBUX  ·  BALD")
+			tierRobux.SetText(live and (upper(robuxTier.Name) .. " SOFORT  ·  R$ " .. robuxProduct.Robux)
+				or (upper(robuxTier.Name) .. " MIT ROBUX  ·  BALD"))
 			tierRobux.SetColor(live and C.Good or C.Card, live and C.OnLight or C.Muted)
 		end
 
@@ -2754,45 +2827,48 @@ local function openHideout()
 			local view = views[module.Id]
 			local level = HideoutConfig.Level(data, module.Id)
 			view.Target = level + 1
+			view.Accent.Visible = level > 0
 			for index, pip in view.Pips do
 				pip.BackgroundColor3 = index <= level and HIDEOUT or C.Card
 			end
-			view.Level.Text = level == 0 and "NICHT GEBAUT" or ("STUFE " .. level .. " VON " .. #module.Levels)
-			view.Now.Text = level > 0 and string.format(module.Format, module.Levels[level].Value) or "KEIN BONUS"
+			view.Now.Text = level > 0 and string.format(module.Format, module.Levels[level].Value) or "NICHT GEBAUT"
+			view.Now.TextColor3 = level > 0 and HIDEOUT or C.Muted
 			local nextLevel = module.Levels[level + 1]
 			local needTier = module.Tiers[level + 1]
 			local tierOk = needTier == nil or tier >= needTier
-			clearList(view.Costs)
+			view.Next.Text = nextLevel and ("Danach: " .. string.format(module.Format, nextLevel.Value)) or "Ganz ausgebaut"
+			clear(view.Costs)
 			local affordable = nextLevel ~= nil and tierOk
-			if not nextLevel then
-				view.Next.Text = "Ganz ausgebaut"
-			elseif not tierOk then
-				view.Next.Text = "Nächste Stufe: " .. string.format(module.Format, nextLevel.Value)
-				costLine(view.Costs, 0, tierLabel(needTier), false)
-			else
-				view.Next.Text = "Nächste Stufe: " .. string.format(module.Format, nextLevel.Value)
+			if nextLevel and not tierOk then
+				text({ Name = "Locked", Size = UDim2.new(1, 0, 0, 16), Text = lockedText(needTier), TextSize = 13, Font = F.Bold,
+					TextColor3 = C.Bad, TextWrapped = true, AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 0 }, view.Costs)
+			elseif nextLevel then
 				local enough = coins >= nextLevel.Coins
 				affordable = affordable and enough
-				costLine(view.Costs, 0, UITheme.FormatNumber(nextLevel.Coins) .. " Münzen", enough)
+				text({ Name = "Coins", Size = UDim2.new(1, 0, 0, 16), Text = UITheme.FormatNumber(nextLevel.Coins) .. " Münzen", TextSize = 13,
+					Font = F.Bold, TextColor3 = enough and C.Text or C.Bad, LayoutOrder = 0 }, view.Costs)
 				for index, need in nextLevel.Items do
 					local have = itemCountEverywhere(need[1])
 					local config = itemConfig(need[1])
 					affordable = affordable and have >= need[2]
-					costLine(view.Costs, index, string.format("%d× %s  (%d/%d)", need[2], config and config.Name or need[1],
-						math.min(have, need[2]), need[2]), have >= need[2])
+					text({ Name = "Item" .. index, Size = UDim2.new(1, 0, 0, 16), Text = string.format("%d× %s  (%d/%d)", need[2],
+						config and config.Name or need[1], math.min(have, need[2]), need[2]), TextSize = 13, Font = F.Bold,
+						TextColor3 = have >= need[2] and C.Text or C.Bad, TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = index }, view.Costs)
 				end
 			end
-			view.Upgrade.SetText(not nextLevel and "GANZ AUSGEBAUT" or not tierOk and "GESPERRT" or ("AUSBAUEN AUF STUFE " .. (level + 1)))
+			view.Upgrade.SetText(not nextLevel and "MAXIMUM" or not tierOk and "GESPERRT" or level == 0 and "BAUEN"
+				or ("AUF STUFE " .. (level + 1)))
 			view.Upgrade.SetColor(affordable and C.Primary or C.Card, affordable and C.PrimaryText or C.Muted)
 			if view.Collect then
 				local pending = module.Id == "Generator" and HideoutConfig.Pending(data, now) or HideoutConfig.PressPending(data, now)
 				view.Collect.Button.Visible = level > 0
 				view.Collect.SetText(module.Id == "Generator" and ("ABHOLEN · " .. UITheme.FormatNumber(pending))
 					or ("ABHOLEN · " .. pending .. " PAK."))
+				view.Collect.SetColor(pending > 0 and HIDEOUT or C.Card, pending > 0 and C.OnLight or C.Muted)
 			end
 			if view.Ammo then
 				view.Ammo.Button.Visible = level > 0
-				view.Ammo.SetText(PRESS_SHORT[HideoutConfig.PressAmmoOf(data)] or "")
+				view.Ammo.SetText(Inv.PRESS_SHORT[HideoutConfig.PressAmmoOf(data)] or "")
 			end
 		end
 
@@ -2802,46 +2878,50 @@ local function openHideout()
 		local radioJob = HideoutConfig.RadioTask(day)
 		local radio = type(data.Radio) == "table" and data.Radio.Day == day and data.Radio or nil
 		local have = radio and math.clamp((stats()[radioJob.Stat] or 0) - (tonumber(radio.Base) or 0), 0, radioJob.Need) or 0
-		radioTask.Text = radioOpen and string.gsub(radioJob.Text, "{1}", tostring(radioJob.Need)) or "Auftrag mit Münzen und XP, jeden Tag neu"
-		radioTask.TextColor3 = radioOpen and C.Text or C.Muted
-		radioTrack.Visible = radioOpen
-		radioCount.Visible = radioOpen
+		radioBox.Visible = radioOpen
+		radioLocked.Visible = not radioOpen
+		radioLocked.Text = lockedText(HideoutConfig.Features.Radio)
+		radioTask.Text = (string.gsub(radioJob.Text, "{1}", tostring(radioJob.Need)))
 		radioFill.Size = UDim2.fromScale(have / radioJob.Need, 1)
 		radioCount.Text = have .. " / " .. radioJob.Need
-		radioReward.Visible = true
 		local claimed = radio ~= nil and radio.Claimed == true
 		local done = radioOpen and have >= radioJob.Need and not claimed
-		radioClaim.SetText(not radioOpen and tierLabel(HideoutConfig.Features.Radio) or claimed and "MORGEN GIBT ES EINEN NEUEN"
-			or "ABHOLEN")
+		radioClaim.SetText(not radioOpen and "GESPERRT" or claimed and "MORGEN GIBT ES EINEN NEUEN" or done and "BELOHNUNG ABHOLEN"
+			or "NOCH NICHT ERLEDIGT")
 		radioClaim.SetColor(done and C.Primary or C.Card, done and C.PrimaryText or C.Muted)
 
 		-- Trophäenwand
-		clearList(trophyList)
-		if HideoutConfig.HasFeature(player, "Trophies", data) then
+		local trophiesOpen = HideoutConfig.HasFeature(player, "Trophies", data)
+		trophyBox.Visible = trophiesOpen
+		trophyLocked.Visible = not trophiesOpen
+		trophyLocked.Text = lockedText(HideoutConfig.Features.Trophies)
+		clear(trophyBox)
+		if trophiesOpen then
 			local values = stats()
-			for index, trophy in HideoutConfig.Trophies do
-				local row = make("Frame", { Name = "Row" .. index, Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1,
-					LayoutOrder = index, ZIndex = 7 }, trophyList)
-				label({ Name = "Name", Size = UDim2.new(0.6, 0, 1, 0), Text = trophy.Name, TextSize = 14, Font = F.Bold,
-					TextColor3 = C.Muted, ZIndex = 7 }, row)
-				label({ Name = "Value", AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0.4, 0, 1, 0),
-					Text = UITheme.FormatNumber(values[trophy.Stat] or 0), TextSize = 16, Font = F.Display, TextColor3 = HIDEOUT,
-					TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 7 }, row)
-			end
 			local gold = 0
 			for _, stage in AchievementConfig.Data(player) do
 				if tonumber(stage) and tonumber(stage) >= 3 then
 					gold += 1
 				end
 			end
-			costLine(trophyList, #HideoutConfig.Trophies + 1, "Gold-Erfolge: " .. gold .. " von " .. #AchievementConfig.List, true)
-		else
-			costLine(trophyList, 0, tierLabel(HideoutConfig.Features.Trophies), false)
-			label({ Name = "Hint", Size = UDim2.new(1, 0, 0, 34), Text = "Deine Zombies, Brocken, Konvois und Erfolge an der Wand",
-				TextSize = 12, Font = F.Medium, TextColor3 = C.Muted, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
-				LayoutOrder = 1, ZIndex = 7 }, trophyList)
+			local rows = {}
+			for _, trophy in HideoutConfig.Trophies do
+				table.insert(rows, { trophy.Name, UITheme.FormatNumber(values[trophy.Stat] or 0) })
+			end
+			table.insert(rows, { "Gold-Erfolge", gold .. " / " .. #AchievementConfig.List })
+			for index, entry in rows do
+				local row = make("Frame", { Name = "Row" .. index, Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = C.Card,
+					BorderSizePixel = 0, LayoutOrder = index, ZIndex = 7 }, trophyBox)
+				UITheme.Corner(row, UITheme.Radius.Medium)
+				text({ Name = "Name", Position = UDim2.fromOffset(14, 0), Size = UDim2.new(0.6, -14, 1, 0), Text = upper(entry[1]), TextSize = 14,
+					Font = F.Bold, TextColor3 = C.Muted, ZIndex = 8 }, row)
+				text({ Name = "Value", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 0), Size = UDim2.new(0.4, 0, 1, 0),
+					Text = entry[2], TextSize = 22, Font = F.Display, TextColor3 = HIDEOUT, TextXAlignment = Enum.TextXAlignment.Right,
+					ZIndex = 8 }, row)
+			end
 		end
 	end
+	showTab(Inv.hideoutTab)
 	win.Refresh()
 	-- Generator und Presse zählen sichtbar hoch, solange das Fenster offen ist
 	task.spawn(function()
