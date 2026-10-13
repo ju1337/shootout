@@ -19,6 +19,7 @@ local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
+local AgentConfig = require(Shared.AgentConfig)
 local Movement = require(Shared.Movement)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local InputActions = require(Shared.InputActions)
@@ -156,6 +157,11 @@ local function updateViewModel()
 	end
 	if current and GunModels.Info[current] then
 		local sleeve = Cosmetics.AgentColors(player, agentId())
+		-- eigener Avatar: Ärmel (falls die echten Arme fehlen) in der Oberkörperfarbe des Avatars
+		local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
+		if AgentConfig.RobloxAvatar and bodyColors then
+			sleeve = bodyColors.TorsoColor3
+		end
 		-- die echten Arme des Charakters (3D-Modell bzw. Spielkörper), sonst Ärmel und Handschuhe
 		local ok, arms = pcall(AgentModels.ArmPieces, player.Character)
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,

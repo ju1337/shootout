@@ -526,15 +526,16 @@ local function buildAgentStage()
 		local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
 		local key = agent.Id .. tostring(primary) .. tostring(accent) .. tostring(material) .. tostring(weapon)
 			.. tostring(Cosmetics.AgentSkin(player))
-			.. tostring(Cosmetics.WeaponSkin(player, agent.Id, weapon))
+			.. tostring(Cosmetics.WeaponSkin(player, agent.Id, weapon)) .. tostring(player.Character)
 		if key ~= shownKey then
 			shownKey = key
 			if figure then
 				figure:Destroy()
 			end
 			local look = Cosmetics.AgentSkin(player)
-			figure = AgentFigure.Build(agent, primary, accent, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material,
-				look and look.Model and look.Id or nil)
+			-- eigener Roblox-Avatar (AgentConfig.RobloxAvatar), sonst der Agent
+			figure = AgentFigure.Avatar(player) or AgentFigure.Build(agent, primary, accent,
+				Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material, look and look.Model and look.Id or nil)
 			figure.Parent = viewport
 		end
 		role.Text = upper(agent.Role)
@@ -545,6 +546,11 @@ local function buildAgentStage()
 		if attribute == "Agent" or attribute == "Equipped" or attribute == "Owned" or attribute == "Loadouts" then
 			refresh()
 		end
+	end)
+	-- neuer Charakter (Avatar fertig geladen): Figur neu kopieren
+	player.CharacterAppearanceLoaded:Connect(function()
+		shownKey = nil
+		refresh()
 	end)
 	-- Figur dreht sich langsam hin und her
 	RunService.RenderStepped:Connect(function()

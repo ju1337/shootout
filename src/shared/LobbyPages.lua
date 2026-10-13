@@ -119,8 +119,9 @@ function LobbyPages.ShowAgent(view, skin, weaponName)
 	view:ClearAllChildren()
 	local agent = AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
 	local primary = skin and skin.Color or agent.Color:Lerp(Color3.new(0, 0, 0), 0.6)
-	local figure = AgentFigure.Build(agent, primary, agent.Color, nil, weaponName, skin and skin.Material,
-		skin and skin.Model and skin.Id or nil)
+	-- ohne Skin: der eigene Roblox-Avatar (AgentConfig.RobloxAvatar), sonst der Agent
+	local figure = not skin and AgentFigure.Avatar(player) or AgentFigure.Build(agent, primary, agent.Color, nil, weaponName,
+		skin and skin.Material, skin and skin.Model and skin.Id or nil)
 	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.45, 0))
 	figure.Parent = view
 	local camera = make("Camera", { FieldOfView = 30 }, view)

@@ -117,7 +117,7 @@ function HUDIcons.Portrait(parent, size)
 		if agent then
 			primary, accent = Cosmetics.AgentColors(owner, agent.Id)
 		end
-		local key = agent and (agent.Id .. tostring(primary) .. tostring(accent)) or ""
+		local key = agent and (agent.Id .. tostring(primary) .. tostring(accent) .. tostring(owner and owner.Character)) or ""
 		if key == shownKey then
 			return
 		end
@@ -127,7 +127,7 @@ function HUDIcons.Portrait(parent, size)
 			figure = nil
 		end
 		if agent then
-			figure = AgentFigure.Build(agent, primary, accent, nil)
+			figure = AgentFigure.Avatar(owner) or AgentFigure.Build(agent, primary, accent, nil)
 			figure.Parent = viewport
 		end
 	end

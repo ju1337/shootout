@@ -10,7 +10,53 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GunModels = require(Shared.GunModels)
 local AgentModels = require(Shared.AgentModels)
 
+local AgentConfig = require(Shared.AgentConfig)
+
 local AgentFigure = {}
+
+-- Eigener Roblox-Avatar eines Spielers als Figur (AgentConfig.RobloxAvatar): Kopie seines Charakters, verankert, ohne
+-- Skripte und Töne, gleich aufgestellt wie Build (Füße auf 0, Blick nach -Z, Drehpunkt auf Höhe 3). nil, wenn der
+-- Avatar aus ist oder der Spieler gerade keinen Charakter hat (dann nimmt der Aufrufer Build).
+function AgentFigure.Avatar(player)
+	local character = AgentConfig.RobloxAvatar and player and player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not root or not humanoid then
+		return nil
+	end
+	local wasArchivable = character.Archivable
+	character.Archivable = true
+	local ok, clone = pcall(character.Clone, character)
+	character.Archivable = wasArchivable
+	if not ok or not clone then
+		return nil
+	end
+	for _, item in clone:GetDescendants() do
+		if item:IsA("LuaSourceContainer") or item:IsA("Sound") or item:IsA("ForceField") or item:IsA("BillboardGui")
+			or item:IsA("ProximityPrompt") then
+			item:Destroy()
+		elseif item:IsA("BasePart") then
+			item.Anchored = true
+			item.CanCollide = false
+		end
+	end
+	local cloneRoot = clone:FindFirstChild("HumanoidRootPart")
+	local cloneHumanoid = clone:FindFirstChildOfClass("Humanoid")
+	if not cloneRoot or not cloneHumanoid then
+		clone:Destroy()
+		return nil
+	end
+	cloneHumanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	cloneRoot.Transparency = 1
+	-- Füße auf 0: R15 steht die Hüfte HipHeight über dem Boden, R6 sitzt der Rumpf auf 2 Studs Beinen
+	local rootY = humanoid.RigType == Enum.HumanoidRigType.R15 and humanoid.HipHeight + cloneRoot.Size.Y / 2 or 3
+	clone.PrimaryPart = nil
+	clone.WorldPivot = cloneRoot.CFrame
+	clone:PivotTo(CFrame.new(0, rootY, 0))
+	clone.WorldPivot = CFrame.new(0, 3, 0)
+	clone.Name = "Avatar"
+	return clone
+end
 
 -- Kamera-Position, die die ganze Figur zeigt (Figur steht um den Ursprung, Blick nach -Z)
 AgentFigure.CameraCFrame = CFrame.lookAt(Vector3.new(0, 3.1, -9.5), Vector3.new(0, 2.8, 0))

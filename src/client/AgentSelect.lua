@@ -109,7 +109,8 @@ local function showPreview(agent, weapon)
 		figure:Destroy()
 	end
 	local primary, accentColor, material = Cosmetics.AgentColors(player, agent.Id)
-	figure = AgentFigure.Build(agent, primary, accentColor, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
+	figure = AgentFigure.Avatar(player)
+		or AgentFigure.Build(agent, primary, accentColor, Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
 	figure.Parent = scene.Viewport
 	scene.SetAccent(agent.Color)
 
