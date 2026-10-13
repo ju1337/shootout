@@ -48,11 +48,11 @@ local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach u
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
 -- Waffe nur gehalten (nicht zielen/schießen): quer vor dem Bauch wie in GTA, beide Hände dran
-local LOW_RIGHT_POLE = Vector3.new(1, -0.45, 0.15) -- gesenkt: rechter Ellbogen locker nach außen zur Seite gebeugt
-local LOW_LEFT_POLE = Vector3.new(-1, -0.6, 0.1) -- linker Ellbogen ebenso nach außen
+local LOW_RIGHT_POLE = Vector3.new(1, -0.1, 0.05) -- gesenkt: rechter Ellbogen locker nach außen zur Seite gebeugt
+local LOW_LEFT_POLE = Vector3.new(-1, -0.25, 0.05) -- linker Ellbogen ebenso nach außen
 local LOW_READY_PITCH = math.rad(-22)  -- Mündung schräg nach unten
 local LOW_READY_YAW = math.rad(62)     -- und weit zur linken Seite: Waffe liegt quer vor dem Körper
-local LOW_READY_GRIP = Vector3.new(0.05, -0.6, 0.1) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
+local LOW_READY_GRIP = Vector3.new(0.2, -0.5, 0.1) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
 local LOW_READY_PULL = 1.4             -- höchstens so weit verschieben, damit die linke Hand hinkommt
 local LOW_READY_PISTOL_PITCH = math.rad(-35)
 local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.4) -- Z: vor der Bauchfläche
