@@ -150,8 +150,10 @@ local function buildRealArm(side, width)
 		bone.Axis = axis.Unit
 		bone.Length = axis.Magnitude
 		bone.Cross = cross
-		bone.Stretch = lengths[segment] and lengths[segment] / bone.Length or bone.Cross -- Hand: nicht gestreckt
+		bone.Stretch = lengths[segment] and lengths[segment] / bone.Length or bone.Cross
 	end
+	-- Hand wie der Unterarm verkleinert (sonst wird sie mit der Dicke gestaucht und zur flachen Platte)
+	bones.Hand.Stretch = bones.Lower.Stretch
 	local pieces = {}
 	for _, piece in side.Pieces do
 		local bone = bones[piece.Segment]
@@ -180,7 +182,8 @@ end
 -- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe),
 -- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe,
 -- armWidth = Dicke der echten Unterarme vor der Kamera (Studs, siehe buildRealArm), nil = Körper-Dicke mal ARM_THICKNESS
-function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor, armWidth)
+-- shirt = klassisches Shirt des Avatars (oder nil): die echten Arme tragen es auch vor der Kamera
+function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor, armWidth, shirt)
 	local self = setmetatable({}, ViewModel)
 	self.Weapon = weaponName
 	self.Info = GunModels.Info[weaponName]
@@ -205,9 +208,27 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 	local left = right and arms.Left and buildRealArm(arms.Left, armWidth)
 	if right and left then
 		self.RealArms = { Right = right, Left = left }
+		-- mit Shirt: Arme in ein eigenes Modell mit Humanoid und den echten Teilnamen (RightUpperArm …), dann zeichnet
+		-- Roblox das Shirt wie am Körper darauf
+		local holder = self.Model
+		if shirt then
+			holder = Instance.new("Model")
+			holder.Name = "AvatarArms"
+			local humanoid = Instance.new("Humanoid")
+			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+			humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+			humanoid.RequiresNeck = false
+			humanoid.EvaluateStateMachine = false
+			humanoid.Parent = holder
+			shirt:Clone().Parent = holder
+			holder.Parent = self.Model
+		end
 		for _, arm in self.RealArms do
 			for _, piece in arm.Pieces do
-				piece.Part.Parent = self.Model
+				if shirt then
+					piece.Part.Name = string.gsub(piece.Part.Name, "_%d+$", "")
+				end
+				piece.Part.Parent = holder
 			end
 		end
 	end

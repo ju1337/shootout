@@ -150,7 +150,6 @@ local function agentId()
 end
 
 -- Waffe mit Armen vor der Kamera (nur für einen selbst sichtbar)
-local AVATAR_ARM_WIDTH = 0.19 -- Dicke der Unterarme des eigenen Avatars vor der Kamera (Studs)
 local function updateViewModel()
 	if viewModel then
 		viewModel:Destroy()
@@ -158,22 +157,18 @@ local function updateViewModel()
 	end
 	if current and GunModels.Info[current] then
 		local sleeve = Cosmetics.AgentColors(player, agentId())
-		-- die echten Arme des Charakters (3D-Modell bzw. Roblox-Avatar), sonst Ärmel und Handschuhe. Die Arme des
-		-- Roblox-Avatars sind 1 Stud dick: vor der Kamera auf AVATAR_ARM_WIDTH verschlankt (sonst breite Platten)
+		-- Hautfarbe für gebaute Hände (falls die echten Arme fehlen)
 		local hand = nil
 		local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
 		if AgentConfig.RobloxAvatar and bodyColors then
 			hand = bodyColors.RightArmColor3
 		end
-		-- eigener Avatar: gebaute Arme (Ärmel in der Oberkörperfarbe, Hände mit Fingern in Hautfarbe) statt seiner
-		-- echten Arme – die sind je nach Avatar verschieden lang und dick und sehen gestaucht vor der Kamera komisch aus
-		if AgentConfig.RobloxAvatar and bodyColors then
-			sleeve = bodyColors.TorsoColor3
-		end
+		-- die echten Arme (eigener Avatar: so wie am Körper, mit seinem Shirt), sonst gebaute Ärmel und Hände
 		local ok, pieces = pcall(AgentModels.ArmPieces, player.Character)
-		local arms = not AgentConfig.RobloxAvatar and ok and pieces or nil
+		local arms = ok and pieces or nil
+		local shirt = AgentConfig.RobloxAvatar and player.Character and player.Character:FindFirstChildOfClass("Shirt") or nil
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
-			AttachmentConfig.EquippedList(player, current), arms, hand, AgentConfig.RobloxAvatar and AVATAR_ARM_WIDTH or nil)
+			AttachmentConfig.EquippedList(player, current), arms, hand, nil, shirt)
 		viewModel:Draw()
 	end
 end
