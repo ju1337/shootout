@@ -1,4 +1,4 @@
--- Eigenes Versteck (HideoutService): Ausbauen nur am Versteck, mit Münzen und Items (aus Lager oder Tasche), Stufen
+-- Eigenes Versteck (HideoutService): erst ab Spielerlevel 4; Ausbauen nur am Versteck, mit Münzen und Items (aus Lager oder Tasche), Stufen
 -- nacheinander bis zum Maximum; Werkbank gibt Rabatt am Stand, Sanistation verkürzt das Heilen, Feldbett gibt mehr Leben
 -- (Wert für AgentService), Generator erzeugt Münzen mit der Zeit (auch offline, höchstens 8 h) und zahlt beim Abholen aus;
 -- alles bleibt im Profil.
@@ -153,6 +153,23 @@ end
 local function data()
 	return HideoutConfig.Data(alice)
 end
+
+-- erst ab Spielerlevel 4
+local LevelConfig = require("LevelConfig")
+moveTo(alice, Vector3.new(52, 3, 2))
+check(HideoutConfig.Unlocked(alice) == false, "Level 1: Versteck gesperrt")
+check(HideoutService.Upgrade(alice, "Bed") == false, "Level 1: kein Ausbau")
+check(string.find(lastExt(alice, "Status")[2], "ab Level 4", 1, true) ~= nil, "Hinweis: ab Level 4")
+check(HideoutService.Collect(alice) == 0, "Level 1: kein Abholen")
+local level4XP = 0
+for level = 1, HideoutConfig.MinLevel - 1 do
+	level4XP += LevelConfig.XPForLevel(level)
+end
+alice:SetAttribute("AccountXP", level4XP - 1)
+check(HideoutConfig.Unlocked(alice) == false, "knapp unter Level 4: gesperrt")
+ProgressService.Get(alice).AccountXP = level4XP
+alice:SetAttribute("AccountXP", level4XP)
+check(HideoutConfig.Unlocked(alice) == true, "Level 4: freigeschaltet")
 
 -- nur am Versteck
 moveTo(alice, Vector3.new(0, 3, 0))

@@ -8,12 +8,15 @@
 --   Generator  Generator: Münzen pro Stunde, auch offline, höchstens GeneratorCap Sekunden lang; im Versteck abholen
 -- Gespeichert im Profil unter Hideout = { [Modul] = Stufe, GenAt = Zeitpunkt (os.time) der letzten Abholung }.
 -- Spieler-Attribut "Hideout" (JSON, gleiche Form) für den Client und für die Boni (Server und Client lesen Value).
+-- Freigeschaltet erst ab Spielerlevel MinLevel (LevelConfig, inkl. Prestige); vorher kein Ausbau und kein Abholen.
 
 local HttpService = game:GetService("HttpService")
+local LevelConfig = require(script.Parent.LevelConfig)
 
 local HideoutConfig = {}
 
 HideoutConfig.Point = "Hideout"
+HideoutConfig.MinLevel = 4
 HideoutConfig.GeneratorCap = 8 * 3600
 
 -- Levels[i] = { Coins, Items = { { Id, Anzahl } }, Value }
@@ -63,6 +66,11 @@ function HideoutConfig.Data(player)
 		end
 	end
 	return {}
+end
+
+-- Versteck schon freigeschaltet? (Spielerlevel inkl. Prestige ab MinLevel)
+function HideoutConfig.Unlocked(player)
+	return player ~= nil and LevelConfig.Get(player).Total >= HideoutConfig.MinLevel
 end
 
 -- Ausgebaute Stufe eines Moduls (0 = nicht gebaut)

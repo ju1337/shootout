@@ -3909,6 +3909,10 @@ local function setupPrompts()
 				KeyboardKeyCode = Enum.KeyCode.E, HoldDuration = 0, MaxActivationDistance = ExtinctionConfig.StandRange - 2,
 				RequiresLineOfSight = false, Enabled = false }, hideoutPart)
 			prompt.Triggered:Connect(function()
+				if not HideoutConfig.Unlocked(player) then -- erst ab Spielerlevel MinLevel
+					showToast("Das Versteck wird ab Level " .. HideoutConfig.MinLevel .. " freigeschaltet.")
+					return
+				end
 				openHideout()
 				if window then
 					window.Part = hideoutPart

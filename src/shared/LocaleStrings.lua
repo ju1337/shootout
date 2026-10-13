@@ -525,6 +525,7 @@ return {
 	["DAS STECKT DRIN"] = "WHAT'S INSIDE",
 	["DAS STECKT DRIN  ·  CHANCE JE SKIN"] = "WHAT'S INSIDE  ·  ODDS PER SKIN",
 	["Das Tor in der MARKTHALLE führt aus dem Camp in den Markt."] = "The gate in the MARKET HALL takes you from the camp to the Market.",
+	["Das Versteck wird ab Level {1} freigeschaltet."] = "The hideout unlocks at level {1}.",
 	["Daten werden noch geladen."] = "Data is still loading.",
 	["dauerhaft"] = "permanent",
 	["DEIN AGENT  ·  LEVEL {1}  ·  WECHSELN UNTER AGENTEN"] = "YOUR AGENT  ·  LEVEL {1}  ·  SWITCH UNDER AGENTS",

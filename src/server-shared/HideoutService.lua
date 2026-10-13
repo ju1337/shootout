@@ -3,6 +3,7 @@
 -- und die Münzen des Generators abholen – beides nur am Punkt "Hideout" im Camp. Die Stufen stehen im Profil
 -- (Hideout = { [Modul] = Stufe, GenAt }) und im Spieler-Attribut "Hideout"; die Boni lesen AgentService (Leben),
 -- InventoryService (Rabatt, Heilzeit) über HideoutConfig.Value.
+-- Erst ab Spielerlevel HideoutConfig.MinLevel.
 -- Aktionen über Remotes.ExtAction: "HideoutUpgrade" (Modul-Id), "HideoutCollect".
 
 local HttpService = game:GetService("HttpService")
@@ -38,6 +39,10 @@ end
 
 local function ready(player)
 	if not Modes.IsSurvival(player:GetAttribute("Mode")) then
+		return false
+	end
+	if not HideoutConfig.Unlocked(player) then
+		InventoryService.Status(player, "Das Versteck wird ab Level " .. HideoutConfig.MinLevel .. " freigeschaltet.")
 		return false
 	end
 	if not InventoryService.NearPoint(player, HideoutConfig.Point) then
