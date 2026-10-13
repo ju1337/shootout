@@ -47,13 +47,13 @@ local SCALE = GunModels.ToolScale
 local RIGHT_POLE = Vector3.new(0.35, -1, 0.15) -- rechter Ellbogen locker nach unten (verdeckt die Waffe nicht)
 local LEFT_POLE = Vector3.new(-0.7, -1, 0.1)
 local STEP_RATE = 0.4             -- Schrittphase pro Stud Laufweg (ein Doppelschritt ~ 16 Studs)
--- Waffe nur gehalten (nicht zielen/schießen): locker vor dem Bauch, Mündung schräg nach vorn unten, beide Hände dran
+-- Waffe nur gehalten (nicht zielen/schießen): quer vor dem Bauch wie in GTA, beide Hände dran
 local LOW_RIGHT_POLE = Vector3.new(0.25, -1, -0.15) -- gesenkt: Ellbogen hängen locker nach unten (nicht nach hinten raus)
 local LOW_LEFT_POLE = Vector3.new(-0.35, -1, 0.3)
-local LOW_READY_PITCH = math.rad(-20)  -- so weit zeigt die Mündung nach unten
-local LOW_READY_YAW = math.rad(20)     -- und so weit zur Körpermitte
-local LOW_READY_STOCK = Vector3.new(0.15, -0.1, 0.05) -- Schaftende: X Studs außerhalb der rechten Körperseite, Y/Z Anteil
-local LOW_READY_PULL = 1.2             -- höchstens so weit nach hinten ziehen, damit die linke Hand hinkommt
+local LOW_READY_PITCH = math.rad(-22)  -- Mündung schräg nach unten
+local LOW_READY_YAW = math.rad(62)     -- und weit zur linken Seite: Waffe liegt quer vor dem Körper
+local LOW_READY_GRIP = Vector3.new(0.05, -0.6, 0.1) -- Griff: X/Y Anteil der Oberkörpergröße, Z Studs Luft vor dem Unterarm
+local LOW_READY_PULL = 1.4             -- höchstens so weit verschieben, damit die linke Hand hinkommt
 local LOW_READY_PISTOL_PITCH = math.rad(-35)
 local LOW_READY_PISTOL_GRIP = Vector3.new(0.2, -0.5, -0.4) -- Z: vor der Bauchfläche
 local R6_LOW_PITCH = math.rad(-38)     -- R6: Arm schräg nach unten
@@ -445,7 +445,7 @@ local function armReach(joints)
 		+ (joints.WristC0.Position - joints.ElbowC1.Position).Magnitude + joints.WristC1.Position.Magnitude - 0.03
 end
 
-local function slideIntoReach(palm, gun, shoulder, joints)
+local function slideIntoReach(palm, gun, shoulder, joints, maxSlide)
 	local reach = armReach(joints)
 	local d = palm - shoulder
 	if d.Magnitude <= reach then
@@ -455,7 +455,7 @@ local function slideIntoReach(palm, gun, shoulder, joints)
 	local b = back:Dot(d)
 	local disc = b * b - (d:Dot(d) - reach * reach)
 	local slide = disc >= 0 and (-b - math.sqrt(disc)) or -b
-	return palm + back * math.clamp(slide, 0, MAX_SLIDE)
+	return palm + back * math.clamp(slide, 0, maxSlide or MAX_SLIDE)
 end
 
 local function poseR15(entry, rig, info, pitch, pose, poseT)
@@ -486,17 +486,19 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local gun, low
 	-- gesenkt (Low Ready): locker in Hüfthöhe, Griff vor der rechten Hüfte, Mündung leicht nach vorn unten zur Mitte,
 	-- unabhängig vom Blick. Beide Hände bleiben an der Waffe.
-	local lowRot = yaw * CFrame.Angles(LOW_READY_PITCH, LOW_READY_YAW, 0)
+	local lowRot = yaw * CFrame.Angles(0, LOW_READY_YAW, 0) * CFrame.Angles(LOW_READY_PITCH, 0, 0) -- erst seitlich drehen, dann neigen
 	local base = CFrame.new(upperTorso.Position) * yaw
 	if info.Long and info.Stock then
 		local pocket = upperTorso * Vector3.new(size.X * HIP_POCKET.X, size.Y * HIP_POCKET.Y, size.Z * HIP_POCKET.Z)
 		gun = CFrame.new(pocket) * aimRot * CFrame.new(-info.Stock * SCALE)
-		-- Schaftende seitlich neben der rechten Hüfte (außerhalb des Körpers, auch bei breiten Avataren), von dort zeigt
-		-- die Waffe schräg nach vorn unten zur Mitte und bleibt ganz vor bzw. neben dem Körper
-		local stockAt = base * Vector3.new(size.X / 2 + LOW_READY_STOCK.X, size.Y * LOW_READY_STOCK.Y, size.Z * LOW_READY_STOCK.Z)
-		low = CFrame.new(stockAt) * lowRot * CFrame.new(-info.Stock * SCALE)
-		-- weit vorn liegender Vorderschaft (Schrotflinte, LMG): Waffe entlang ihrer Achse etwas nach hinten ziehen, bis
-		-- die linke Hand hinkommt (nach hinten bleibt das Schaftende neben dem Körper, nicht darin)
+		-- wie in GTA: quer vor dem Bauch. Rechte Hand am Griff vor der rechten Hüfte, die Waffe liegt quer vor dem Körper,
+		-- Mündung schräg nach links unten, Schaft unter dem rechten Unterarm (seitlich außerhalb des Körpers)
+		-- vor dem Bauch mit Abstand für den Unterarm (Avatar-Arme sind etwa halb so breit wie der Oberkörper)
+		local gripAt = base * Vector3.new(size.X * LOW_READY_GRIP.X, size.Y * LOW_READY_GRIP.Y,
+			-(size.Z / 2 + size.X / 4 + LOW_READY_GRIP.Z))
+		low = CFrame.new(gripAt) * lowRot
+		-- Vorderschaft außer Reichweite der linken Hand (lange Waffen): Waffe entlang ihrer Achse etwas nach rechts
+		-- hinten schieben, bis die Hand hinkommt
 		local leftShoulder = (upperTorso * rig.LShoulder.C0).Position
 		local short = (leftShoulder - low * (leftHandLocal(info, nil, nil) * SCALE)).Magnitude
 			- armReach(armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)) + 0.05
@@ -556,7 +558,7 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local handCF = gun * gripC1 * gripC0:Inverse()
 	local leftJoints = armJoints(rig.LShoulder, rig.LElbow, rig.LWrist)
 	local palm = slideIntoReach(gun * (leftHandLocal(info, pose, poseT) * SCALE), gun,
-		(upperTorso * rig.LShoulder.C0).Position, leftJoints)
+		(upperTorso * rig.LShoulder.C0).Position, leftJoints, MAX_SLIDE * (1 + 2 * sprint)) -- gesenkt darf sie weiter nach hinten
 	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), handCF, nil,
 		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)):Lerp(yaw:VectorToWorldSpace(LOW_RIGHT_POLE), sprint))
 	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm,
