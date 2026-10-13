@@ -364,7 +364,7 @@ end
 
 -- Animation weiterlaufen lassen: Ereignisse zwischen letztem und jetzigem Zeitpunkt auslösen
 local function advance(state, duration)
-	local t = math.clamp((os.clock() - state.Start) / duration, 0, 1)
+	local t = duration > 0 and math.clamp((os.clock() - state.Start) / duration, 0, 1) or 1 -- Dauer 0: sonst NaN
 	for _, event in WeaponAnimations.Events(state.Anim, state.LastT, t) do
 		handleEvent(event)
 	end
@@ -715,6 +715,7 @@ function WeaponClient.Init()
 
 	-- Rückstoß auf die Kamera legen. Die Kamera rechnet vom aktuellen Blick aus weiter, darum wird nur die
 	-- Änderung pro Bild aufgetragen: schnell hoch, nach dem Feuern sanft zurück.
+	local finite = require(Shared.MovementPhysics).Finite
 	RunService:BindToRenderStep("WeaponRecoil", Enum.RenderPriority.Camera.Value + 1, function(dt)
 		local camera = workspace.CurrentCamera
 		local cfg = current and WeaponConfig.Get(current)
@@ -735,6 +736,11 @@ function WeaponClient.Init()
 			local decay = math.exp(-speed * dt)
 			recoilPitch *= decay
 			recoilYaw *= decay
+		end
+		-- Absicherung: ein NaN im Rückstoß würde die Kamera jedes Bild kaputt machen (Blick friert ein)
+		if not (finite(recoilPitch) and finite(recoilYaw) and finite(shownPitch)
+			and finite(shownYaw) and finite(appliedPitch) and finite(appliedYaw)) then
+			recoilPitch, recoilYaw, shownPitch, shownYaw, appliedPitch, appliedYaw = 0, 0, 0, 0, 0, 0
 		end
 		local rise = math.min(1, RECOIL_RISE * dt)
 		shownPitch += (recoilPitch - shownPitch) * rise

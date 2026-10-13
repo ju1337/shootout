@@ -369,7 +369,7 @@ local function remoteReload(model, entry, inRange)
 		return nil
 	end
 	local t = (now - reload.Start) / reload.Duration
-	if t < 0 or t >= 1 then
+	if t ~= t or t < 0 or t >= 1 then -- t ~= t: NaN (Dauer 0)
 		return nil
 	end
 	if inRange then
@@ -399,7 +399,7 @@ local function remoteInspect(model, entry, inRange)
 		entry.InspectT = math.max(-1, (now - start) / duration - 0.001) -- mittendrin gesehen: nichts nachholen
 	end
 	local t = (now - start) / duration
-	if t < 0 or t >= 1 then
+	if t ~= t or t < 0 or t >= 1 then -- t ~= t: NaN (Dauer 0)
 		return nil
 	end
 	if inRange then
@@ -526,6 +526,9 @@ local function poseR15(entry, rig, info, pitch, pose, poseT)
 	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), handCF, nil,
 		aimRot:VectorToWorldSpace(RIGHT_POLE:Lerp(RIGHT_POLE_ADS, aim)))
 	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, leftJoints, nil, palm, aimRot:VectorToWorldSpace(LEFT_POLE))
+	if not PoseMath.AllFinite({ waistT, neckT, tRS, tRE, tRW, tLS, tLE, tLW }) then
+		return false -- Absicherung: kaputte Rechnung nie auf die Gelenke legen
+	end
 
 	rig.Waist.Transform = waistT
 	rig.Neck.Transform = neckT
@@ -561,6 +564,9 @@ local function poseR6(entry, rig, info, pitch, pose, poseT)
 			local leftRot = PoseMath.AlignBone(Vector3.new(0, -1, 0), Vector3.xAxis, target - shoulder, aimRot.RightVector)
 			tLS = PoseMath.MotorTransform(torso.Rotation, rig.LShoulder.C0, rig.LShoulder.C1, leftRot)
 		end
+	end
+	if not PoseMath.AllFinite({ neckT, tRS, tLS }) then
+		return false -- Absicherung: kaputte Rechnung nie auf die Gelenke legen
 	end
 	rig.Neck.Transform = neckT
 	rig.RShoulder.Transform = tRS
@@ -636,6 +642,13 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 		local velocity = root.AssemblyLinearVelocity
 		sprinting = Vector3.new(velocity.X, 0, velocity.Z).Magnitude > SPRINT_SPEED
 	end
+	-- Absicherung: ein NaN (z. B. aus einem kaputten Kamerabild) bliebe in der Glättung für immer stehen
+	if not (pitchTarget == pitchTarget and math.abs(pitchTarget) < 1000) then
+		pitchTarget = 0
+	end
+	if not (entry.Pitch == entry.Pitch and math.abs(entry.Pitch) < 1000) then
+		entry.Pitch = 0
+	end
 	entry.Pitch += (pitchTarget - entry.Pitch) * math.min(1, dt * (isLocal and 40 or 12))
 
 	-- Nachladen / Schuss-Animation
@@ -643,7 +656,8 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 	if isLocal then
 		local reload = localState.Reload
 		if reload and reload.Weapon == weapon then
-			poseT = math.clamp((os.clock() - reload.Start) / reload.Duration, 0, 1)
+			-- Dauer 0 gäbe NaN (0/0): dann gleich am Ende
+			poseT = reload.Duration > 0 and math.clamp((os.clock() - reload.Start) / reload.Duration, 0, 1) or 1
 			pose = WeaponAnimations.Sample(reload.Anim, weapon, poseT)
 		end
 	else
@@ -748,6 +762,9 @@ local function sendAimState()
 		return
 	end
 	local pitch = math.deg(math.asin(math.clamp(workspace.CurrentCamera.CFrame.LookVector.Y, -1, 1)))
+	if pitch ~= pitch then
+		return -- kaputtes Kamerabild: nichts melden
+	end
 	if math.abs(pitch - lastSent.Pitch) >= 2 or localState.Aiming ~= lastSent.Aiming then
 		lastSent.Pitch, lastSent.Aiming, lastSent.Time = pitch, localState.Aiming, now
 		Remotes.AimState:FireServer(math.round(pitch), localState.Aiming)

@@ -257,4 +257,36 @@ function P.ShoulderOffsetLocal(offset, cameraLook, rootCFrame)
 	return rootCFrame:VectorToObjectSpace(world)
 end
 
+-- ---------- Absicherung der Kamera ----------
+-- Endliche Zahl (kein NaN, nicht unendlich)? Ein einziges NaN in Kamera, Versatz oder Neigung bleibt sonst für immer
+-- hängen (jedes Bild rechnet vom letzten aus weiter): Die Kamera friert in einem Winkel ein.
+function P.Finite(x)
+	return type(x) == "number" and x == x and x > -math.huge and x < math.huge
+end
+
+function P.FiniteVector(v)
+	return P.Finite(v.X) and P.Finite(v.Y) and P.Finite(v.Z)
+end
+
+P.MaxCameraPitch = 80 -- so weit lässt auch die Roblox-Kamera nach oben/unten schauen
+
+-- Kamera prüfen: nil = in Ordnung. Sonst die reparierte CFrame: kaputt (NaN) -> an fallbackPos in fallbackLook,
+-- über den Anschlag gekippt (z. B. Rückstoß beim steilen Hochschauen) -> zurück auf MaxCameraPitch.
+function P.CameraFix(cf, fallbackPos, fallbackLook)
+	local position, look = cf.Position, cf.LookVector
+	if not (P.FiniteVector(position) and P.FiniteVector(look)) then
+		local flat = P.Flat(fallbackLook) or Vector3.new(0, 0, -1)
+		return CFrame.lookAt(fallbackPos, fallbackPos + flat)
+	end
+	local pitch = math.deg(math.asin(math.clamp(look.Y, -1, 1)))
+	if math.abs(pitch) <= P.MaxCameraPitch + 5 then
+		return nil
+	end
+	-- senkrecht: die Hochachse der Kamera zeigt dann waagerecht nach hinten (oben) bzw. vorn (unten)
+	local flat = P.Flat(look) or P.Flat(cf.UpVector * (look.Y > 0 and -1 or 1)) or Vector3.new(0, 0, -1)
+	local limit = math.rad(P.MaxCameraPitch) * (pitch > 0 and 1 or -1)
+	local fixed = flat * math.cos(limit) + Vector3.new(0, math.sin(limit), 0)
+	return CFrame.lookAt(position, position + fixed)
+end
+
 return P

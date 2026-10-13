@@ -101,6 +101,7 @@ local dip, dipVelocity = 0, 0     -- Kamera-Eintauchen (Studs nach unten) und se
 local bobPhase = 0
 local roll = 0                    -- aktuelle Kamera-Neigung (Grad)
 local slideBlend = 0              -- 0..1 weich für Kamera-Neigung und Sichtfeld beim Rutschen
+local lastGoodRoot = nil          -- letzte heile Lage des HumanoidRootPart (Absicherung gegen NaN)
 local rawMove = Vector3.zero      -- Eingabe vom ControlModule in diesem Bild (bevor Rutschen/Luft sie überschreiben)
 local lastMoveOut = nil           -- zuletzt selbst gesetzte Laufrichtung (Rutschen, Luft)
 local airMove = nil               -- Laufrichtung in der Luft (Länge 0..1), nil = am Boden
@@ -379,6 +380,9 @@ end
 
 local function stepMove(now, root)
 	local t = math.min(1, (now - move.Started) / move.Duration)
+	if not P.Finite(t) or now - move.Started > move.Duration + 0.5 then
+		t = 1 -- Absicherung: das Hindernis endet immer (sonst bleibt man darin hängen)
+	end
 	local position = move.Kind == "Vault" and P.VaultPoint(move.Start, move.Near, move.Far, move.Land, t)
 		or P.MantlePoint(move.Start, move.Target, t)
 	root.CFrame = CFrame.new(position) * root.CFrame.Rotation
@@ -919,14 +923,19 @@ function Movement.Init()
 		end
 		local humanoid, character = getHumanoid()
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if not humanoid or not root or humanoid.Health <= 0 or humanoid.PlatformStand or move then
+		if not humanoid or not root or humanoid.Health <= 0 then
 			return
 		end
 		-- offenes Menü (Inventar, Beutel, Karte ...): Maus frei lassen, sonst kämpft das jedes Bild mit dem Menü
 		if require(Shared.UITheme).IsMenuOpen() then
 			return
 		end
+		-- Maus immer sperren, auch beim Hindernis, Rutschen oder am Boden liegend: Sonst gibt Roblox sie frei und die
+		-- Kamera dreht nicht mehr mit (man hängt in einem Blickwinkel fest)
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+		if humanoid.PlatformStand or move then
+			return
+		end
 		if not Movement.FacesCamera() then
 			humanoid.AutoRotate = true
 			return
@@ -953,6 +962,57 @@ function Movement.Init()
 			roll = 0
 		elseif math.abs(roll) > 0.01 then
 			camera.CFrame *= CFrame.Angles(0, 0, math.rad(roll))
+		end
+	end)
+
+	-- Absicherung nach allen Kamera-Schritten (Roblox, Rückstoß, Neigung, Menüs): Ein NaN in Kamera, Körper oder den
+	-- geglätteten Werten wird sofort zurückgesetzt, und die Kamera kippt nie über den Anschlag. Sonst friert der
+	-- Blick in einem Winkel ein und die Maus dreht nichts mehr.
+	RunService:BindToRenderStep("CameraGuard", Enum.RenderPriority.Camera.Value + 10, function()
+		local camera = workspace.CurrentCamera
+		local humanoid, character = getHumanoid()
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root then
+			local cf = root.CFrame
+			if P.FiniteVector(cf.Position) and P.FiniteVector(cf.LookVector)
+				and P.FiniteVector(root.AssemblyLinearVelocity) then
+				lastGoodRoot = cf
+			elseif lastGoodRoot then
+				root.CFrame = lastGoodRoot
+				root.AssemblyLinearVelocity = Vector3.zero
+				root.AssemblyAngularVelocity = Vector3.zero
+				slide, move, airMove, airMomentum = nil, nil, nil, 0
+			end
+		end
+		if not P.Finite(roll) then
+			roll = 0
+		end
+		if not (P.Finite(dip) and P.Finite(dipVelocity)) then
+			dip, dipVelocity = 0, 0
+		end
+		if not P.Finite(slideBlend) then
+			slideBlend = 0
+		end
+		if not P.FiniteVector(baseOffset) then
+			baseOffset = Vector3.zero
+		end
+		if currentDistance and not P.Finite(currentDistance) then
+			currentDistance = nil
+		end
+		if humanoid and not P.FiniteVector(humanoid.CameraOffset) then
+			humanoid.CameraOffset = Vector3.zero
+		end
+		if not P.Finite(camera.FieldOfView) or camera.FieldOfView < 1 or camera.FieldOfView > 120 then
+			camera.FieldOfView = normalFov
+		end
+		if camera.CameraType ~= Enum.CameraType.Custom then
+			return
+		end
+		local anchor = root and P.FiniteVector(root.Position) and root.Position + Vector3.new(0, HEAD_HEIGHT, 0)
+			or Vector3.new(0, 50, 0)
+		local fixed = P.CameraFix(camera.CFrame, anchor, root and root.CFrame.LookVector or Vector3.new(0, 0, -1))
+		if fixed then
+			camera.CFrame = fixed
 		end
 	end)
 

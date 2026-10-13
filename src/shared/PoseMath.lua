@@ -24,6 +24,27 @@ local function perpendicular(v, axis, fallback)
 end
 PoseMath.Perpendicular = perpendicular
 
+-- Alle Werte endlich (kein NaN, nicht unendlich)? Ein NaN in einem Gelenk zieht sonst den ganzen Körper (und die
+-- Kamera, die ihm folgt) mit und bleibt hängen.
+local function finite(x)
+	return x == x and x > -math.huge and x < math.huge
+end
+function PoseMath.FiniteVector(v)
+	return finite(v.X) and finite(v.Y) and finite(v.Z)
+end
+function PoseMath.FiniteCFrame(cf)
+	return PoseMath.FiniteVector(cf.Position) and PoseMath.FiniteVector(cf.LookVector)
+		and PoseMath.FiniteVector(cf.RightVector) and PoseMath.FiniteVector(cf.UpVector)
+end
+function PoseMath.AllFinite(list)
+	for _, cf in list do
+		if not PoseMath.FiniteCFrame(cf) then
+			return false
+		end
+	end
+	return true
+end
+
 -- Ellbogen für Schulter S, Ziel T (Weltpositionen), Oberarmlänge a, Unterarmlänge b.
 -- pole = Richtung, in die der Ellbogen ausweicht. Ist T zu weit weg, wird der Arm gestreckt.
 -- Gibt (Ellbogen, erreichter Endpunkt) zurück.

@@ -184,6 +184,27 @@ do
 	end
 end
 
+-- Absicherung der Kamera: NaN wird erkannt und ersetzt, über den Anschlag gekippte Kamera zurück auf 80°
+local nan = 0 / 0
+check(P.Finite(1) and not P.Finite(nan) and not P.Finite(math.huge), "Finite erkennt NaN und unendlich")
+check(not P.FiniteVector(Vector3.new(0, nan, 0)), "FiniteVector erkennt NaN")
+check(P.CameraFix(CFrame.lookAt(Vector3.new(0, 5, 0), Vector3.new(3, 4, -10)), Vector3.zero, fwd) == nil,
+	"normale Kamera bleibt unangetastet")
+do
+	local broken = CFrame.new(nan, nan, nan)
+	local fixed = P.CameraFix(broken, Vector3.new(1, 2, 3), Vector3.new(0, 0, -1))
+	check(fixed ~= nil and P.FiniteVector(fixed.Position) and P.FiniteVector(fixed.LookVector),
+		"NaN-Kamera wird ersetzt")
+	local steep = CFrame.new(0, 5, 0) * CFrame.Angles(math.rad(89), 0, 0)
+	local clamped = P.CameraFix(steep, Vector3.zero, fwd)
+	check(clamped ~= nil and near(math.deg(math.asin(clamped.LookVector.Y)), P.MaxCameraPitch, 0.5),
+		"steil nach oben gekippte Kamera zurück auf " .. P.MaxCameraPitch .. "°")
+	local vertical = CFrame.new(0, 5, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+	local down = P.CameraFix(vertical, Vector3.zero, fwd)
+	check(down ~= nil and P.FiniteVector(down.LookVector) and near(math.deg(math.asin(down.LookVector.Y)), -P.MaxCameraPitch, 0.5),
+		"senkrecht nach unten: zurück auf -" .. P.MaxCameraPitch .. "° ohne NaN")
+end
+
 -- ---------- Movement im Simulator ----------
 -- Welt aus Quadern: Boden, eine dünne Mauer (3 hoch), ein Block (6 hoch), eine hohe Wand (12), eine Kante in 6,8,
 -- eine in 8,5 (Dachhöhe) und ein flaches Dach (4)

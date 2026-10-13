@@ -189,4 +189,10 @@ check(math.abs(lx - 0.4) < 1e-6 and math.abs(ly - 0.05) < 1e-6 and math.abs(rx +
 	and (idle.LShoulder.Transform.Position - Vector3.new(0, 0.01, 0)).Magnitude < 1e-6, "Schwingen und Eindrehen bleiben")
 check(idle.LElbow.Transform == elbowBefore, "Ellbogen unverändert")
 
+-- Absicherung: NaN in einem Gelenk wird erkannt (wird dann nicht auf den Körper gelegt)
+local nanCF = CFrame.new(0 / 0, 0, 0)
+check(PoseMath.FiniteCFrame(CFrame.new(1, 2, 3)) and not PoseMath.FiniteCFrame(nanCF), "FiniteCFrame erkennt NaN")
+check(not PoseMath.AllFinite({ CFrame.new(), nanCF }) and PoseMath.AllFinite({ CFrame.new(), CFrame.new(1, 0, 0) }),
+	"AllFinite prüft alle Gelenke")
+
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
