@@ -105,14 +105,22 @@ WEAPONS = {
         ],
         "Points": {
             "Point_Grip": (0.20, 0.03, 0.0),
-            "Point_SightRear": (0.245, 0.425, 0.0),
-            "Point_SightFront": (-0.80, 0.425, 0.0),
+            "Point_SightRear": (0.28, 0.414, 0.0),
+            "Point_SightFront": (-0.805, 0.414, 0.0),
             "Point_Muzzle": (None, 0.245, 0.0),
             "Point_Eject": (0.0, 0.26, -0.06),
             "Point_LeftHand": (-0.50, 0.25, 0.0),
             "Point_Stock": (None, 0.125, 0.0),
             "Pivot_Magazine": (-0.20, 0.04, 0.0),
             "Pivot_Bolt": (-0.54, 0.37, 0.0),
+        },
+        # Kimme und Korn: Der Zahn der Trommel (x 0,24–0,265, bis 0,432) verdeckte den Korntunnel, und im Tunnel
+        # fehlt das Korn. Zahn bis auf den Kerbenboden abgetragen, Korn im Tunnel ergänzt (Spitze 0,414 = Oberkante
+        # der hinteren Ohren, Lücke 0,02), orange Leuchtpunkt darauf.
+        "Sights": {
+            "Notch": {"x": (0.236, 0.2665), "bottom": 0.397, "z": 0.0, "half": 0.0145},
+            "Posts": [((-0.805, 0.397, 0.0), (0.014, 0.034, 0.036))],
+            "Dots": [("Neon_FrontDot", (-0.7955, 0.403, 0.0), 0.010, "front")],
         },
     },
     # Schrotflinte (taktisch, Vorderschaft-Repetierer): Vorderschaft samt Röhrenmagazin-Stück darin als Pump.
@@ -253,6 +261,8 @@ def build(name, src, out):
     sights = cfg.get("Sights", {})
     if "Notch" in sights:
         gun = notch(gun, sights["Notch"])
+    for centre, size in sights.get("Posts", []):   # fehlendes Korn (Quader in Waffenfarbe), Teil des Körpers
+        gun = M.Mesh.concat(gun, M.box(centre, size, dark_uv(gun, centre)))
     parts = []
     for part_name, region, caps, uv_point in cfg["Cuts"]:
         uv = dark_uv(gun, uv_point)
