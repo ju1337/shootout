@@ -43,13 +43,23 @@ WEAPONS = {
         ],
         "Points": {
             "Point_Grip": (0.57, 0.02, 0.0),
-            "Point_SightRear": (0.735, 0.655, 0.0),
-            "Point_SightFront": (-0.815, 0.655, 0.0),
+            "Point_SightRear": (0.76, 0.6566, -0.0033),
+            "Point_SightFront": (-0.80, 0.6566, -0.0033),
             "Point_Muzzle": (None, 0.50, 0.0),
             "Point_Eject": (-0.10, 0.60, -0.06),
             "Point_LeftHand": (0.62, -0.16, 0.22),
             "Pivot_Slide": (0.0, 0.50, 0.0),
             "Pivot_Magazine": (0.58, -0.135, 0.0),
+        },
+        # Kimme und Korn: Die Kimmenkerbe des Meshy-Modells war schmaler (0,023) als das Korn (0,045) – das Korn deckte
+        # sie ganz zu, Kimme und Korn sahen aus wie ein Block. Kerbe auf 1,5-mal die Kornbreite verbreitert (gleiche
+        # Tiefe), mittig über dem Korn. Leuchtpunkte bündig auf den Rückseiten: einer am Korn (orange), zwei an der Kimme
+        # neben der Kerbe (weiß). Visierlinie = Kornspitze (0,6566) mittig in der Kerbe, bündig mit der Kimmen-Oberkante.
+        "Sights": {
+            "Notch": {"x": (0.70, 0.82), "bottom": 0.614, "z": -0.0033, "half": 0.034},
+            "Dots": [("Neon_FrontDot", (-0.7341, 0.641, -0.0033), 0.012, "front"),
+                     ("Neon_RearDot_L", (0.8029, 0.637, 0.055), 0.011, "rear"),
+                     ("Neon_RearDot_R", (0.8063, 0.637, -0.061), 0.011, "rear")],
         },
     },
     # Revolver (.44 Magnum): Trommel im Rahmenfenster (Oberschiene bleibt), Hahn hinter der schrägen Rahmenkante.
@@ -149,6 +159,71 @@ WEAPONS = {
 }
 
 
+def hull2(points):
+    """Konvexe Hülle (2D, gegen den Uhrzeigersinn)."""
+    pts = sorted(set(map(tuple, np.round(points, 6))))
+    if len(pts) < 3:
+        return pts
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def wall(mesh, cut, clip, axes, fixed, normal, uv):
+    """Fläche in der Schnittebene cut, begrenzt durch clip (Ebenen, d <= 0 bleibt): Hülle der Schnittpunkte."""
+    segs = M.section(mesh, cut, clip)
+    if not segs:
+        return M.Mesh(np.zeros((0, 3, 3)))
+    pts2 = np.array([[p[axes[0]], p[axes[1]]] for s_ in segs for p in s_])
+    ring = hull2(pts2)
+    pts3 = []
+    for a, b in ring:
+        q = [0.0, 0.0, 0.0]
+        q[axes[0]], q[axes[1]], q[fixed[0]] = a, b, fixed[1]
+        pts3.append(q)
+    return M.cap(pts3, normal, uv)
+
+
+def notch(gun, cfg):
+    """Rechteckige Kimmenkerbe: Bereich herausschneiden, Seitenwände und Boden schließen."""
+    x0, x1 = cfg["x"]
+    zc, h, yb = cfg["z"], cfg["half"], cfg["bottom"]
+    region = box(x=(x0, x1), y=(yb, None), z=(zc - h, zc + h))
+    keep, _cut = M.split(gun, region)
+    uv = dark_uv(gun, ((x0 + x1) / 2, yb + 0.04, zc + h + 0.03))   # Oberseite der Kimme neben der Kerbe (dunkel)
+    above = M.plane((0, -1, 0), (0, yb, 0))
+    xs = [M.plane((-1, 0, 0), (x0, 0, 0)), M.plane((1, 0, 0), (x1, 0, 0))]
+    left = wall(gun, M.plane((0, 0, 1), (0, 0, zc - h)), [above] + xs, (0, 1), (2, zc - h), (0, 0, 1), uv)
+    right = wall(gun, M.plane((0, 0, 1), (0, 0, zc + h)), [above] + xs, (0, 1), (2, zc + h), (0, 0, -1), uv)
+    inside = [M.plane((0, 0, -1), (0, 0, zc - h)), M.plane((0, 0, 1), (0, 0, zc + h))] + xs
+    floor = wall(gun, M.plane((0, 1, 0), (0, yb, 0)), inside, (0, 2), (1, yb), (0, 1, 0), uv)
+    print("  Kimmenkerbe: %d Dreiecke entfernt, Wände %d/%d, Boden %d" % (len(gun) - len(keep), len(left), len(right), len(floor)))
+    return M.Mesh.concat(keep, left, right, floor)
+
+
+def dot(centre, radius, depth=0.005, sides=12):
+    """Runder Leuchtpunkt: flache Scheibe, Achse entlang x (zum Auge)."""
+    c = np.asarray(centre, float)
+    ring = [(radius * np.cos(a), radius * np.sin(a)) for a in np.linspace(0, 2 * np.pi, sides, endpoint=False)]
+    back = [c + (-depth / 2, y, z) for y, z in ring]
+    fwd = [c + (depth / 2, y, z) for y, z in ring]
+    tris = []
+    for i in range(sides):
+        j = (i + 1) % sides
+        tris += [[c + (depth / 2, 0, 0), fwd[i], fwd[j]], [c + (-depth / 2, 0, 0), back[j], back[i]],
+                 [back[i], back[j], fwd[j]], [back[i], fwd[j], fwd[i]]]
+    return M.Mesh(np.array(tris))
+
+
 def load(src):
     if src.endswith(".zip"):
         tmp = tempfile.mkdtemp()
@@ -167,6 +242,9 @@ def build(name, src, out):
     gun, images = load(src)
     lo, hi = gun.bounds()
     print("%s: Meshy %d Dreiecke, %.3f lang" % (name, len(gun), hi[0] - lo[0]))
+    sights = cfg.get("Sights", {})
+    if "Notch" in sights:
+        gun = notch(gun, sights["Notch"])
     parts = []
     for part_name, region, caps, uv_point in cfg["Cuts"]:
         uv = dark_uv(gun, uv_point)
@@ -218,13 +296,17 @@ def build(name, src, out):
         order = np.argsort(mesh.P.mean(1)[:, 2], kind="stable")      # Stücke entlang des Laufs
         for i, idx in enumerate(np.array_split(order, chunks)):
             out_parts.append(("%s_%02d" % (part_name, i + 1), mesh.select(np.sort(idx)), 0))
+    for dot_name, centre, radius, kind in sights.get("Dots", []):
+        out_parts.append((dot_name, conv(dot(centre, radius)), 2 if kind == "front" else 3))
     for k, p in sorted(pts.items()):
         q = (p - origin) @ R.T * s
         size = 0.06 if k.startswith("Pivot") else 0.04
         out_parts.append((k, M.box(q, (size, size, size)), 1))
         print("  %-17s (%6.3f %6.3f %6.3f)" % (k, *q))
-    write_glb(out, out_parts, [{"Name": name, **images}, {"Name": "Marker", "Factor": (1.0, 0.0, 1.0)}])
-    meshes = [(n, m) for n, m, mat in out_parts if mat == 0]
+    write_glb(out, out_parts, [{"Name": name, **images}, {"Name": "Marker", "Factor": (1.0, 0.0, 1.0)},
+                               {"Name": "Neon_Front", "Factor": (1.0, 0.47, 0.16)},
+                               {"Name": "Neon_Rear", "Factor": (0.92, 0.94, 0.94)}])
+    meshes = [(n, m) for n, m, mat in out_parts if mat != 1]
     print("  Länge %.3f Studs, %d Dreiecke in %d Teilen (max %d) -> %s %.1f MB"
           % ((hi[0] - lo[0]) * s, sum(len(m) for _, m in meshes), len(meshes), max(len(m) for _, m in meshes), out,
              os.path.getsize(out) / 1e6))

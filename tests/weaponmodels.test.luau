@@ -115,6 +115,10 @@ mesh(revolver, "Loader", Vector3.new(0.12, 0.3, 0.3), CFrame.new(-0.28, 0.28, 0)
 mesh(revolver, "Barrel", Vector3.new(0.14, 0.14, 0.75), CFrame.new(0, 0.43, -0.8), nil, revolverImport)
 mesh(revolver, "Grip", Vector3.new(0.22, 0.55, 0.3), CFrame.new(0, -0.02, 0.06), nil, revolverImport)
 mesh(revolver, "Neon_FrontDot", Vector3.new(0.037, 0.025, 0.06), CFrame.new(0, 0.5875, -1.08), nil, revolverImport)
+-- Leuchtpunkte aus einer GLB ohne eigene Farbe (Import weiß): Kimme weiß, Korn orange
+mesh(revolver, "Neon_RearDot_L", Vector3.new(0.02, 0.02, 0.005), CFrame.new(0.04, 0.58, 0.1), Color3.new(1, 1, 1), revolverImport)
+mesh(revolver, "Neon_FrontDot_Glb", Vector3.new(0.02, 0.02, 0.005), CFrame.new(0, 0.58, -1.0), Color3.new(1, 1, 1),
+	revolverImport)
 local frameWorld = revolverImport * CFrame.new(0, 0.38, -0.15)
 local function attach(name, position)
 	local a = Instance.new("Attachment")
@@ -292,6 +296,9 @@ check(near(GunModels.GroupPivot("Revolver", "Cylinder").Position, Vector3.new(0,
 local rbuilt = GunModels.Build("Revolver")
 check(rbuilt.Loader:GetAttribute("Hidden") == true and rbuilt.Loader.Transparency == 1, "Schnelllader nur in der Animation")
 check(rbuilt.Neon_FrontDot.Material == Enum.Material.Neon, "Leuchtpunkt")
+check(rbuilt.Neon_FrontDot.Color == Color3.fromRGB(60, 60, 60), "Leuchtpunkt mit eigener Farbe bleibt so")
+check(rbuilt.Neon_RearDot_L.Color == Color3.fromRGB(235, 240, 240), "weiß importierter Kimmenpunkt wird weiß (WHITE)")
+check(rbuilt.Neon_FrontDot_Glb.Color == Color3.fromRGB(255, 120, 40), "weiß importierter Kornpunkt wird orange (DOT)")
 check(rbuilt.Cylinder_Skin:GetAttribute("Group") == "Cylinder" and rbuilt.Cylinder_Skin:GetAttribute("Skin") == true,
 	"Gruppe und Skin-Zone in einem Namen")
 check(rbuilt:FindFirstChild("Neon_Reticle") == nil, "kein roter Punkt ohne Rotpunktvisier")

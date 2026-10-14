@@ -944,6 +944,11 @@ local function loadAsset(weaponName, source)
 		end
 		if neon or reticle then
 			part.Material = Enum.Material.Neon
+			-- Leuchtpunkte aus einer GLB ohne eigene Farbe (weiß bzw. Studio-Grau): Korn orange, Kimme weiß, Rotpunkt rot
+			if part:IsA("MeshPart") and (part.Color == Color3.new(1, 1, 1) or part.Color == Color3.fromRGB(163, 162, 165))
+				and not part:FindFirstChildOfClass("SurfaceAppearance") then
+				part.Color = reticle and RETICLE or (string.find(name, "Front", 1, true) and DOT or WHITE)
+			end
 		end
 		if glass then
 			part.Material = Enum.Material.Glass

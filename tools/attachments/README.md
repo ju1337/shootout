@@ -27,7 +27,9 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   `meshy_fbx.py`) für Pistole, Revolver, MP, MG und Schrotflinte: Maße, Schnitte und Marker je Waffe in `WEAPONS`.
   Pistol (Glock 17): `Skin_Slide` (Schlitten ab Unterkante) und `Magazine` (Magazinboden, Drehpunkt in der Magazinmitte),
   1,05 Studs. `Extras` = Kopien (nichts wird entfernt): Patrone `Shell` der Schrotflinte (rote Patrone vom Seitenhalter),
-  Schnelllader `Loader` des Revolvers (kurze Kopie der Trommel).
+  Schnelllader `Loader` des Revolvers (kurze Kopie der Trommel). `Sights` = Kimme und Korn verbessern: `Notch` fräst die
+  Kimmenkerbe auf eine Breite, in der das Korn mit Lichtspalt sitzt (Wände und Boden geschlossen), `Dots` setzt
+  Leuchtpunkte `Neon_…` bündig auf die Rückseiten (Korn orange, Kimme weiß). Pistole: Kerbe 0,023 → 0,068.
 - **sniper_v1**: Scharfschützengewehr mit Zielfernrohr: Zweibein eingeklappt (Beine am Gelenk abgetrennt und nach vorn
   gedreht), `Magazine` und `Bolt` herausgeschnitten, Visierlinie durch Okular- und Objektivmitte (waagrecht), Rumpf in
   Stücke `Skin_Body_01…` unter 19.500 Dreiecken. Lesen/Schreiben der GLB in `glb_io.py`.

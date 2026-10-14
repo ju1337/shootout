@@ -11,7 +11,8 @@
   nur beim Nachladen sichtbar), 1,47 Studs.
   In Studio wie die Pistole, "Revolver" nennen.
 - `Pistol.glb`: Pistole (Glock 17 aus Meshy, FBX-Export `Meshy_AI_roblox_glock17_3d_1012204441`, nicht im Repo), erzeugt mit
-  `tools/attachments/meshy_weapon.py Pistol …`: 228.936 Dreiecke, Schlitten `Skin_Slide`, `Magazine`, 1,05 Studs.
+  `tools/attachments/meshy_weapon.py Pistol …`: Schlitten `Skin_Slide`, `Magazine`, 1,05 Studs; Kimmenkerbe verbreitert
+  (Korn sitzt mit Lichtspalt), drei Leuchtpunkte `Neon_FrontDot`, `Neon_RearDot_L/R`.
   In Studio: Import 3D (Stud, Merge Meshes aus), nach Assets > Weapons, "Pistol" nennen.
 
 - `DMR.glb`: Präzisionsgewehr (Scharfschützengewehr AWM-Bauart mit Zielfernrohr aus Meshy,
