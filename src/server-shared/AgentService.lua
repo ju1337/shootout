@@ -19,6 +19,7 @@ local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
 local CharacterBody = require(ServerShared.CharacterBody)
+local Ragdoll = require(ServerShared.Ragdoll)
 local Sfx = require(Shared.Sfx)
 
 local AgentService = {}
@@ -441,6 +442,11 @@ local function setupPlayer(player)
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 		AgentConfig.SlimBody(humanoid) -- schlanker Körperbau wie alle Charaktere
+		-- Tod: als ganzer Körper umfallen statt in einzelne Teile zu zerfallen
+		Ragdoll.Prepare(humanoid)
+		humanoid.Died:Once(function()
+			pcall(Ragdoll.Apply, character)
+		end)
 		applyAgent(player, character)
 	end)
 	-- Skalierung wird manchmal erst nach dem Spawn geladen: dann nochmal

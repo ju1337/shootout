@@ -29,6 +29,7 @@ local DownedService = require(ServerShared.DownedService)
 local GadgetService = require(ServerShared.GadgetService)
 local WeaponService = require(ServerShared.WeaponService)
 local CharacterBody = require(ServerShared.CharacterBody)
+local Ragdoll = require(ServerShared.Ragdoll)
 
 local BotService = {}
 
@@ -554,55 +555,8 @@ local CORPSE_FADE_START = 2
 local CORPSE_FADE_TIME = 0.6
 local CORPSE_FADE_STEPS = 6
 
-local function ragdoll(model)
-	for _, joint in model:GetDescendants() do
-		if (joint:IsA("Motor6D") or joint:IsA("AnimationConstraint")) and joint.Parent then
-			-- AnimationConstraint: Part0/Part1/C0/C1 sind lesbare Aliase der Attachments. Klappt das Kugelgelenk
-			-- nicht, zerfällt der Körper eben klassisch – Hauptsache, er bleibt nicht stehen.
-			pcall(function()
-				local part0, part1 = joint.Part0, joint.Part1
-				if part0 and part1 then
-					local a0 = Instance.new("Attachment")
-					a0.Name = "RagdollAttachment"
-					a0.CFrame = joint.C0
-					a0.Parent = part0
-					local a1 = Instance.new("Attachment")
-					a1.Name = "RagdollAttachment"
-					a1.CFrame = joint.C1
-					a1.Parent = part1
-					local socket = Instance.new("BallSocketConstraint")
-					socket.Attachment0 = a0
-					socket.Attachment1 = a1
-					socket.LimitsEnabled = true
-					socket.UpperAngle = 70
-					socket.TwistLimitsEnabled = true
-					socket.TwistLowerAngle = -45
-					socket.TwistUpperAngle = 45
-					socket.Parent = part1
-					-- Nachbarteile nicht gegeneinander stoßen lassen (sonst zittert der Körper)
-					local noCollide = Instance.new("NoCollisionConstraint")
-					noCollide.Part0 = part0
-					noCollide.Part1 = part1
-					noCollide.Parent = part1
-				end
-			end)
-			joint:Destroy()
-		end
-	end
-	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.CanCollide = true -- Gliedmaßen liegen auf dem Boden statt hindurchzufallen
-		end
-	end
-	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") and not part.Anchored then
-			pcall(part.SetNetworkOwner, part, nil) -- der Server rechnet den fallenden Körper
-		end
-	end
-end
-
 local function corpse(model)
-	ragdoll(model)
+	Ragdoll.Apply(model)
 	task.wait(CORPSE_FADE_START)
 	local items = {}
 	for _, obj in model:GetDescendants() do

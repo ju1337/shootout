@@ -38,6 +38,7 @@ local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
 local Telemetry = require(script.Parent.Telemetry)
 local LootService = require(script.Parent.LootService)
+local Ragdoll = require(script.Parent.Ragdoll)
 
 local ZombieService = {}
 
@@ -211,6 +212,7 @@ local function buildTemplate()
 	humanoid.HipHeight = 0
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	Ragdoll.Prepare(humanoid) -- beim Tod als ganzer Körper umfallen, nicht in Teile zerfallen (onDeath)
 	humanoid.Parent = model
 	Instance.new("Animator").Parent = humanoid
 	model.PrimaryPart = root
@@ -554,6 +556,7 @@ ZombieService.Voice = voice
 local function onDeath(model, info)
 	local root = info.Root
 	remove(model)
+	pcall(Ragdoll.Apply, model) -- Leiche liegt als ganzer Körper am Boden
 	if root and root.Parent then
 		voice(info, "ZombieDeath", true)
 	end

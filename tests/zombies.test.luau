@@ -249,6 +249,18 @@ check(prompt ~= nil and prompt.ActionText == "Aufheben" and prompt.HoldDuration 
 	"Leiche mit Beute: einmal E (Aufheben, ohne Halten)")
 check(victim.HumanoidRootPart:FindFirstChild("TakeAllPrompt") == nil, "kein F-Prompt: E nimmt schon alles")
 check(victim:FindFirstChild("LootHighlight") ~= nil, "Leiche mit Beute leuchtet kurz auf")
+-- Leiche liegt als ganzer Körper (Kugelgelenke statt Motor6D), zerfällt nicht in einzelne Teile
+do
+	local motors, sockets = 0, 0
+	for _, obj in victim:GetDescendants() do
+		motors += obj:IsA("Motor6D") and 1 or 0
+		sockets += obj:IsA("BallSocketConstraint") and 1 or 0
+	end
+	check(victim.Humanoid.BreakJointsOnDeath == false and motors == 0 and sockets >= 6,
+		"Leiche als Ragdoll zusammen (" .. sockets .. " Kugelgelenke, " .. motors .. " Motoren übrig)")
+	check(victim.Torso.CanCollide and victim["Left Leg"].CanCollide and not victim.HumanoidRootPart.CanCollide,
+		"Gliedmaßen liegen auf dem Boden, Root ohne Kollision")
+end
 check(prompt and string.find(prompt.ObjectText, "Zombie", 1, true) ~= nil, "Prompt zeigt, was drinsteckt: " .. tostring(prompt and prompt.ObjectText))
 step(6)
 check(victim.Parent ~= nil, "Leiche mit Beute bleibt länger liegen als eine ohne")
