@@ -92,6 +92,18 @@
           },
           "Laser": {
             "$path": "models/Attachments/Laser.rbxmx"
+          },
+          "FastMag_SMG": {
+            "$path": "models/Attachments/FastMag_SMG.rbxmx"
+          },
+          "Suppressor_SMG": {
+            "$path": "models/Attachments/Suppressor_SMG.rbxmx"
+          },
+          "Compensator_SMG": {
+            "$path": "models/Attachments/Compensator_SMG.rbxmx"
+          },
+          "HoloSight_SMG": {
+            "$path": "models/Attachments/HoloSight_SMG.rbxmx"
           }
         }
       }
