@@ -137,14 +137,23 @@ WEAPONS = {
                     (1.0, 2.0, 1.0), "y_to_x", (0.06, -0.02, 0.0))],
         "Points": {
             "Point_Grip": (0.46, 0.03, 0.0),
-            "Point_SightRear": (0.22, 0.205, 0.0),
-            "Point_SightFront": (-0.85, 0.205, 0.0),
+            "Point_SightRear": (0.235, 0.202, 0.0),
+            "Point_SightFront": (-0.86, 0.202, 0.0),
             "Point_Muzzle": (None, 0.125, 0.0),
             "Point_Eject": (0.05, 0.11, -0.04),
             "Point_LeftHand": (-0.38, 0.02, 0.0),
             "Point_Stock": (None, -0.05, 0.0),
             "Pivot_Pump": (-0.38, 0.02, 0.0),
             "Pivot_Shell": (0.06, -0.02, 0.0),
+        },
+        # Kimme und Korn: Die Ohren hinten lagen fast aneinander (V-Spalt 0,004) und das Korn ragte 0,013 über sie
+        # hinaus. Kerbe rechteckig 0,008 breit; Korn auf die Höhe der Ohren gekürzt (0,202); Leuchtpunkte.
+        "Sights": {
+            "Notch": [{"x": (0.195, 0.256), "bottom": 0.176, "z": 0.0, "half": 0.004},
+                      {"x": (-0.895, -0.83), "bottom": 0.202, "z": 0.0, "half": 0.012}],
+            "Dots": [("Neon_FrontDot", (-0.8318, 0.1965, -0.0003), 0.0048, "front"),
+                     ("Neon_RearDot_L", (0.2490, 0.1965, 0.0105), 0.0017, "rear"),
+                     ("Neon_RearDot_R", (0.2490, 0.1965, -0.0105), 0.0017, "rear")],
         },
     },
     # MG (taktisch, Gurt aus Kasten): Patronenkasten unter dem Gehäuse als Magazine (der Gurt im Zuführfenster bleibt
@@ -259,8 +268,9 @@ def build(name, src, out):
     lo, hi = gun.bounds()
     print("%s: Meshy %d Dreiecke, %.3f lang" % (name, len(gun), hi[0] - lo[0]))
     sights = cfg.get("Sights", {})
-    if "Notch" in sights:
-        gun = notch(gun, sights["Notch"])
+    cuts = sights.get("Notch", [])
+    for c in [cuts] if isinstance(cuts, dict) else cuts:   # Kimmenkerbe(n), auch zum Kürzen eines Korns
+        gun = notch(gun, c)
     for centre, size in sights.get("Posts", []):   # fehlendes Korn (Quader in Waffenfarbe), Teil des Körpers
         gun = M.Mesh.concat(gun, M.box(centre, size, dark_uv(gun, centre)))
     parts = []
