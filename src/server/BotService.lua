@@ -22,14 +22,13 @@ local GameSettings = require(Shared.GameSettings)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
-local AgentModels = require(Shared.AgentModels)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local KillService = require(ServerShared.KillService)
 local Damage = require(ServerShared.Damage)
 local DownedService = require(ServerShared.DownedService)
 local GadgetService = require(ServerShared.GadgetService)
 local WeaponService = require(ServerShared.WeaponService)
-local AgentBody = require(ServerShared.AgentBody)
+local CharacterBody = require(ServerShared.CharacterBody)
 
 local BotService = {}
 
@@ -511,16 +510,11 @@ end
 -- dauern – während dieser Zeit konnte ein Bot schon entfernt, neu gespawnt oder die Runde vorbei sein,
 -- und dann blieb ein zweites ("verwaistes") Modell in der Welt stehen. Deshalb wird jeder Agent nur
 -- einmal gebaut und danach geklont: Klonen wartet nicht.
--- Bots sehen aus wie Spieler mit diesem Agenten: derselbe Körper (AgentBody) im Standard-Look bzw. mit dem 3D-Modell
--- des Agenten, wenn es eins gibt, dieselben Trefferzonen. Das Team erkennt man wie bei Spielern am Namensschild (nur
--- fürs eigene Team).
+-- Bots haben einen schlanken R15-Körper im Roblox-Standard-Look in der Farbe ihres Agenten (CharacterBody). Das Team
+-- erkennt man wie bei Spielern am Namensschild (nur fürs eigene Team).
 local SPAWN_RETRY = 3 -- Sekunden bis zum nächsten Versuch, wenn ein Körper nicht gebaut werden konnte
 local templates = {}  -- [Agent-Id] = Modell (außerhalb des Workspace)
 local building = {}   -- [Agent-Id] = true, solange die Vorlage gebaut wird
--- Neues oder geändertes 3D-Modell eines Agenten: Vorlage beim nächsten Bot neu bauen
-AgentModels.OnChanged(function(agentId)
-	templates[agentId] = nil
-end)
 
 local function rigTemplate(agent)
 	local key = agent.Id
@@ -530,20 +524,9 @@ local function rigTemplate(agent)
 	if templates[key] then
 		return templates[key]
 	end
-	-- Agent mit 3D-Modell: das Modell ist selbst der Körper des Bots (kein Roblox-Standardkörper)
-	local own = AgentModels.BuildCharacter(agent.Id)
-	if own then
-		own.Archivable = true
-		local ownHumanoid = own:FindFirstChildOfClass("Humanoid")
-		if ownHumanoid then
-			ownHumanoid.BreakJointsOnDeath = false
-		end
-		templates[key] = own
-		return own
-	end
 	building[key] = true
 	local primary = Cosmetics.AgentColors(nil, agent.Id)
-	local description = AgentBody.Description(primary)
+	local description = CharacterBody.Description(primary)
 	local ok, model = pcall(Players.CreateHumanoidModelFromDescription, Players, description, Enum.HumanoidRigType.R15)
 	building[key] = nil
 	if not ok or not model then
@@ -551,7 +534,7 @@ local function rigTemplate(agent)
 		return nil
 	end
 	model.Archivable = true
-	AgentBody.Dress(model, primary, agent.Id)
+	CharacterBody.Dress(model, primary)
 	-- Beim Tod nicht von Roblox zerlegen lassen: das macht corpse() einheitlich (Ragdoll, dann ausblenden)
 	local templateHumanoid = model:FindFirstChildOfClass("Humanoid")
 	if templateHumanoid then
@@ -572,7 +555,6 @@ local CORPSE_FADE_TIME = 0.6
 local CORPSE_FADE_STEPS = 6
 
 local function ragdoll(model)
-	AgentModels.WeldToBody(model) -- Agentenmodell (Rig) fällt mit dem Körper
 	for _, joint in model:GetDescendants() do
 		if (joint:IsA("Motor6D") or joint:IsA("AnimationConstraint")) and joint.Parent then
 			-- AnimationConstraint: Part0/Part1/C0/C1 sind lesbare Aliase der Attachments. Klappt das Kugelgelenk
@@ -684,7 +666,7 @@ function BotService.SpawnModel(bot, cframe, onDied)
 		return nil
 	end
 	local model = template:Clone()
-	AgentBody.Protect(model) -- Accessoires (falls je welche dazukommen) sind nie Trefferzone
+	CharacterBody.Protect(model) -- Accessoires (falls je welche dazukommen) sind nie Trefferzone
 
 	model.Name = bot.Name
 	model:SetAttribute("IsBot", true)

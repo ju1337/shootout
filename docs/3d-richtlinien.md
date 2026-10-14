@@ -1,11 +1,11 @@
-# 3D-Richtlinien: Waffen, Fahrzeuge, Items und Agenten
+# 3D-Richtlinien: Waffen, Fahrzeuge und Items
 
 Für alle, die 3D-Modelle für das Spiel bauen (Blender, Meshy oder andere Werkzeuge). Ziel: Jedes Modell geht **ohne
 Nacharbeit** ins Spiel. Ein Modell, das diese Regeln erfüllt, wird direkt eingebaut. Ein Modell, das sie nicht
 erfüllt, kommt mit einer Liste der Punkte zurück, damit es nicht jedes Mal von Hand repariert werden muss.
 
-Waffen und Agenten haben zusätzlich je eine eigene, ausführliche Anleitung: [waffen-modelle.md](waffen-modelle.md)
-und [agenten-modelle.md](agenten-modelle.md).
+Waffen haben zusätzlich eine eigene, ausführliche Anleitung: [waffen-modelle.md](waffen-modelle.md). Spieler spielen mit
+ihrem eigenen Roblox-Avatar, Agenten-Modelle gibt es nicht mehr.
 
 ## Auf einen Blick
 
@@ -26,7 +26,7 @@ und [agenten-modelle.md](agenten-modelle.md).
 10. **Ein Textur-Set pro Modell** (PBR: Farbe, Normal im OpenGL-Format, Rauheit, Metall) als PNG.
 11. **Keine echten Marken, Logos oder geschützten Zeichen.**
 12. **Liefern** mit `.blend`, Export (FBX oder GLB), Texturen, Vorschaubild und ausgefüllter Checkliste
-    (Abschnitt 8).
+    (Abschnitt 7).
 
 ## 1. Arbeiten mit Vorlagen
 
@@ -39,11 +39,10 @@ und [agenten-modelle.md](agenten-modelle.md).
 So gehst du vor:
 
 1. Vorlage in Blender importieren (Einstellungen in Abschnitt 2).
-2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht. Agenten
-   haben keine Vorlage, sie werden nach den Körpermaßen gebaut (Abschnitt 7).
+2. Dein Modell um die Vorlage herum bauen. Alles mit `Ref_` ist nur Maßstab und wird vor dem Export gelöscht.
 3. Teile benennen und die Marker (magenta Würfel) übernehmen.
 4. Texturieren.
-5. Exportieren (Abschnitt 2), wenn möglich in Studio testen, liefern (Abschnitt 8).
+5. Exportieren (Abschnitt 2), wenn möglich in Studio testen, liefern (Abschnitt 7).
 
 Fehlt eine Vorlage, zum Beispiel für ein neues Fahrzeug oder eine neue Waffe: vorher Bescheid geben. Dann gibt es
 zuerst die Werte im Spiel und eine Vorlage. Erst danach modellieren.
@@ -81,7 +80,7 @@ zeigt nach vorne), passen deine Einstellungen. Wenn nicht, erst die Einstellunge
 
 ### Maßstab und Lage
 
-- **1 Blender-Einheit = 1 Stud.** Die Spielwelt hat eigene Proportionen: Ein Agent ist etwa 5 Studs groß, und
+- **1 Blender-Einheit = 1 Stud.** Die Spielwelt hat eigene Proportionen: Eine Spielfigur ist etwa 5 Studs groß, und
   Waffen sind bewusst größer als in echt. Maßgeblich sind die Vorlagen und Tabellen, nicht echte Meter.
 - **Vorderseite** in Blender zur Vorderansicht (Numpad 1), **oben = +Z**, **Boden = Höhe 0**. Mit den
   Export-Einstellungen oben ist das in Roblox richtig (vorne = −Z).
@@ -113,7 +112,7 @@ zeigt nach vorne), passen deine Einstellungen. Wenn nicht, erst die Einstellunge
 |---|---|
 | `Glass` | durchsichtig (Scheiben, Visiere) |
 | `Neon` | leuchtet (Lampen, Leuchtpunkte, Displays) |
-| `Skin` (Waffen), `Paint` (Fahrzeuge) | Farbzone: wird vom Spiel bzw. vom Skin umgefärbt (Agenten werden nie umgefärbt) |
+| `Skin` (Waffen), `Paint` (Fahrzeuge) | Farbzone: wird vom Spiel bzw. vom Skin umgefärbt |
 | `Ref` | nur Maßstab aus der Vorlage: vor dem Export löschen |
 
 ### Marker
@@ -156,7 +155,6 @@ zeigt nach vorne), passen deine Einstellungen. Wenn nicht, erst die Einstellunge
 | Item (Heilung, Munition, Spritze, Weste) | 200 – 1.200 | ≤ 3 | 256 × 256 bis 512 × 512 |
 | Gadget (Granaten, Sensor-Mine) | 300 – 800 | ≤ 3 | 256 × 256 |
 | Behälter (Taschen, Kisten) | 500 – 2.500 | ≤ 5 | 512 × 512 (Airdrop 1024 × 1024) |
-| Agent | so wenig wie möglich | ≤ 40 (sonst Hinweis) | 1024 × 1024 |
 
 Man sieht jedes Modell oft gleichzeitig: Jeder Spieler und jeder Bot trägt Waffe und Ausrüstung, und auf der Karte
 stehen viele Fahrzeuge.
@@ -193,7 +191,7 @@ Darum gilt für Modelle aus KI-Werkzeugen:
 
 ## 4. Waffen
 
-Alles Wichtige steht in [waffen-modelle.md](waffen-modelle.md). Waffen und Agenten lädt das Spiel heute schon als
+Alles Wichtige steht in [waffen-modelle.md](waffen-modelle.md). Waffen lädt das Spiel heute schon als
 fertige Modelle: ein Modell nach dieser Anleitung wird direkt benutzt (Ego-Waffe, Hand, Rücken, Vorschauen,
 Symbole).
 
@@ -341,43 +339,7 @@ Abweichung ±15 %.
 - **Gadgets** liegen wie alle Items mit der Unterseite auf Höhe 0. Beim Wurf dreht das Spiel sie um ihre Mitte.
 - Fähigkeits-Objekte der Agenten (Schutzwand, Stacheldraht, Geschützturm) kommen später, nach denselben Regeln.
 
-## 7. Agenten
-
-**Grundsatz: alle Agenten haben dieselbe Trefferzone.** Spieler und Bots werden am (unsichtbaren) Spielkörper
-getroffen: Roblox R15, klassische Proportionen, **Breite 0,75, Tiefe 0,8**, etwa 5,1 Studs groß. So ist kein Agent
-schwerer zu treffen als ein anderer. Teile eines Agentenmodells zählen nie als Treffer, Schüsse gehen durch.
-
-**So kommt ein Agent ins Spiel:** in Blender auf dem Spielkörper bauen (Ruhelage, Arme hängen, ein starres Teil pro
-Körperteil, Namen wie `Head_Suit`, `LeftUpperArm_Suit`), exportieren, in Studio importieren und nach
-ReplicatedStorage › Assets › Agents legen, benannt wie der Agent. Das Spiel zeigt das Modell **genau so wie in
-Blender** an Spielern, Bots und in allen Vorschauen: nichts wird umgefärbt, gestreckt oder gedreht, jedes Teil folgt
-seinem Körperteil. Körpermaße, Gelenkhöhen und die Schritt-für-Schritt-Anleitung stehen in
-[agenten-modelle.md](agenten-modelle.md).
-
-**Regeln:**
-
-- **Ein Teil, ein Körperteil:** Nichts geht über ein Gelenk hinweg, sonst reißt es beim Laufen auseinander.
-- **Ruhelage:** Füße auf Höhe 0, Blick nach vorne, Arme hängen gerade nach unten (keine T- oder A-Pose).
-- **Arme und Hände frei** lassen: Sie halten die Waffe. Schulterpolster nicht so breit, dass sie die Waffe verdecken.
-- **Nah an der Körperform bleiben:** Was weit absteht (Flügel, Umhänge, lange Antennen), sieht wie ein Ziel aus,
-  zählt aber nicht als Treffer, und das wäre unfair.
-
-| Id | Name | Rolle | Farbe (RGB) | Idee für den Look |
-|---|---|---|---|---|
-| `Viper` | VIPER | Scout | 92, 166, 118 | leicht und schnell: wenig Panzerung, Kapuze, Läufer-Ausrüstung |
-| `Bastion` | BASTION | Verteidiger | 88, 124, 186 | schwer: dicke Weste, Helm mit Visier, große Schulterplatten (eng anliegend) |
-| `Mender` | MENDER | Sanitäter | 196, 92, 86 | Sanitäts-Taschen, Spritzen am Gürtel, grünes Kreuz |
-| `Hawk` | HAWK | Aufklärer | 200, 168, 84 | Fernglas oder Zielfernrohr am Helm, Funkgerät, Tarnmuster |
-| `Ghost` | GHOST | Infiltrator | 136, 140, 152 | dunkel und schlank, eng anliegende Tarnkleidung, Maske |
-| `Blaze` | BLAZE | Stürmer | 206, 112, 58 | Angreifer: Brandspuren, Stoßschutz vorne |
-| `Aegis` | AEGIS | Unterstützung | 110, 160, 196 | Heiler und Schutz: Medizin-Pack, Schild-Emblem |
-| `Trapper` | TRAPPER | Kontrolle | 156, 132, 92 | Fallensteller: Werkzeuggürtel, Draht, Handschuhe |
-| `Volt` | VOLT | Techniker | 204, 190, 86 | Ingenieur: Akku-Pack, Kabel, Werkzeug, `Neon`-Anzeigen |
-
-**Eigener Körper:** Das Modell ist nur zu sehen; die Trefferzone bleibt der Spielkörper, darum muss das Modell nicht
-genau dessen Maße haben. Liegen die Grenzen der Teile auf seinen Gelenken, bleibt beim Bewegen alles lückenlos.
-
-## 8. Abgabe
+## 7. Abgabe
 
 **Ordner pro Modell**, zum Beispiel `Vehicles/Quad/`:
 
@@ -403,15 +365,13 @@ Hochladen nach `art/sources/<Kategorie>/<Id>/` (GitHub) oder als ZIP an die Proj
 - [ ] Keine echten Marken, Logos, Kennzeichen, kein rotes Kreuz
 - [ ] Waffen: Visier offen, Visierlinie frei, Magazin und Verschluss getrennt
 - [ ] Fahrzeuge: Räder auf dem Boden, Sitz-Marker, Insassen sichtbar
-- [ ] Agenten: Ruhelage mit hängenden Armen, ein Teil pro Körperteil (`<Körperteil>_<Name>`), höchstens 40 Teile
 - [ ] Lieferordner vollständig (Quelldatei, Export, Texturen, Vorschau, ggf. Lizenz)
 
 **In Studio testen** (wenn du Zugriff hast): Import 3D mit den Einstellungen aus Abschnitt 2, das Modell nach
 ReplicatedStorage › Assets › `<Kategorie>` ziehen und so nennen wie die Id, dann Play. Bei Waffen steht im Output
-`[Waffenmodelle] <Waffe>: 3D-Modell geladen`, bei Agenten `[Agentenmodelle] <Agent>: Modell geladen` oder, was
-fehlt.
+`[Waffenmodelle] <Waffe>: 3D-Modell geladen` oder, was fehlt.
 
-## 9. Häufige Fehler
+## 8. Häufige Fehler
 
 | Fehler | Folge | Richtig |
 |---|---|---|
@@ -425,31 +385,28 @@ fehlt.
 | Dünne Flächen ohne Dicke | von hinten unsichtbar | Dicke geben |
 | Echte Logos, Marken, rotes Kreuz | Roblox-Moderation | Fantasie-Namen, grünes Kreuz |
 
-## 10. Für die Projektleitung: Modelle ins Spiel bringen
+## 9. Für die Projektleitung: Modelle ins Spiel bringen
 
-**Waffen und Agenten** lädt das Spiel schon, das geht ohne Hilfe:
+**Waffen** lädt das Spiel schon, das geht ohne Hilfe:
 
 1. Lieferung prüfen: Checkliste abgehakt, alle Dateien da.
 2. Den Place in Studio öffnen, **Import 3D**, die `.fbx` oder `.glb` wählen. Im Fenster: World Forward **Front**,
    World Up **Top**, Scale Unit **Stud**, **Merge Meshes aus**. Importieren.
 3. Das Modell im Explorer nach **ReplicatedStorage › Assets › Weapons** ziehen und genau wie die Waffe nennen
-   (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`), bzw. nach **Assets › Agents** und genau wie der
-   Agent (`Viper`, `Bastion`, `Mender`, `Hawk`, `Ghost`, `Blaze`, `Aegis`, `Trapper`, `Volt`). Ein älteres Modell
-   mit demselben Namen vorher löschen.
+   (`Rifle`, `SMG`, `Shotgun`, `DMR`, `LMG`, `Pistol`, `Revolver`). Ein älteres Modell mit demselben Namen vorher
+   löschen.
 4. Bleiben Teile weiß oder grau: im Teil eine **SurfaceAppearance** einfügen und die Bilder aus der Lieferung setzen
    (ColorMap, NormalMap, RoughnessMap, MetalnessMap).
-5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen` bzw.
-   `[Agentenmodelle] Viper: Modell geladen`. Steht dort ein Fehler, die Meldung an den Designer schicken
-   (erklärt in [waffen-modelle.md](waffen-modelle.md), „Meldungen und was zu tun ist“, bzw.
-   [agenten-modelle.md](agenten-modelle.md), „Häufige Probleme“).
+5. **Play** und ins Output schauen: `[Waffenmodelle] Rifle: 3D-Modell geladen`. Steht dort ein Fehler, die Meldung
+   an den Designer schicken (erklärt in [waffen-modelle.md](waffen-modelle.md), „Meldungen und was zu tun ist“).
 6. **Aus Studio veröffentlichen** (Datei › Publish to Roblox). Die Modelle leben im Place: nicht mit `rojo build`
    neu bauen und veröffentlichen, sonst fehlen sie.
-7. Empfohlen: Rechtsklick auf das Modell › **Save to File…** › `<Id>.rbxmx`, auf GitHub in `assets/Weapons` bzw.
-   `assets/Agents` hochladen (Add file › Upload files). Dann prüft GitHub das Modell bei jedem Push. Die Lieferung
+7. Empfohlen: Rechtsklick auf das Modell › **Save to File…** › `<Id>.rbxmx`, auf GitHub in `assets/Weapons`
+   hochladen (Add file › Upload files). Dann prüft GitHub das Modell bei jedem Push. Die Lieferung
    selbst (Quelldatei, Texturen) kommt nach `art/sources/<Kategorie>/<Id>/`.
 
 **Fahrzeuge und Items** baut das Spiel heute noch aus Quadern; Modelle in Assets › Vehicles oder Items werden noch
 nicht gelesen. Mit dem ersten fertigen Modell einer Kategorie bekommt das Spiel einmal einen Lader nach genau diesen
-Regeln (mit Prüfmeldungen wie bei Waffen und Agenten). Danach gilt derselbe Ablauf, nur mit dem Ordner der Kategorie.
+Regeln (mit Prüfmeldungen wie bei Waffen). Danach gilt derselbe Ablauf, nur mit dem Ordner der Kategorie.
 - **Vorlagen neu erzeugen**, wenn sich Fahrzeuge im Spiel ändern: `python3 tools/asset_templates.py` (Fahrzeuge und
   Items) bzw. `python3 tools/weapon_templates.py` (Waffen).

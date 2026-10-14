@@ -22,9 +22,6 @@
 | `Attachments/DrumMag.rbxmx` | ReplicatedStorage › Assets › Attachments › DrumMag |
 | `Attachments/ExtendedMag.rbxmx` | ReplicatedStorage › Assets › Attachments › ExtendedMag |
 | `Attachments/Laser.rbxmx` | ReplicatedStorage › Assets › Attachments › Laser |
-| `Agents/AS_Scout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_Scout (Agenten-Skin Scout) |
-| `Agents/AS_TacticalScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_TacticalScout (Agenten-Skin Tactical Scout) |
-| `Agents/AS_ShadowScout.rbxmx` | ReplicatedStorage › Assets › Agents › AS_ShadowScout (Agenten-Skin Shadow Scout) |
 | `Skins/Rifle.rbxmx` | ReplicatedStorage › Assets › Weapons › Rifle › Skins (Texturen + Effekt-Bilder aller Skins) |
 
 Eingetragen in `default.project.json`. Wer Rojo verbindet (`rojo serve` + Connect; Rojo 7.7.1 empfohlen – ältere Versionen lesen die Dateien auch, übertragen MeshParts aber erst ab 7.6), hat die Modelle
@@ -49,6 +46,3 @@ Quellen (GLB) und Skripte: `art/sources/`, `tools/attachments/`.
 **Skins:** `Skins/Rifle.rbxmx` wird mit `lune run tools/models/skins.luau models/Skins/Rifle.rbxmx` und
 `python3 tools/models/skins_legacy.py models/Skins/Rifle.rbxmx` erzeugt (Asset-IDs stehen oben im Skript). Braucht
 Rojo ab 7.5 (Lava-Glühen = neuer Content-Typ), empfohlen 7.7.1.
-
-**Agenten aus Teilen (Scouts):** In `Agents/AS_*.rbxmx` ist bei allen MeshParts `DoubleSided` an – an den Schnittkanten
-zwischen den Teilen sieht man beim Laufen sonst durch das Modell hindurch. Bei neuen Modellen nach dem Umwandeln ebenso setzen.

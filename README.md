@@ -19,10 +19,10 @@ Markt sowie die Gruppen Zone, Places, Stands, Lakes, Objective und Zentrale jede
 (`WorldLayout`), Ort und Leben von Squad-Mitgliedern als Spieler-Attribute `ExtPos` / `ExtHealth`. Vom Server erzeugte
 Modelle (Bots, Zombies, Fahrzeuge, Beute …) sind `Atomic`.
 
-3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
+3D-Modelle (Waffen, Fahrzeuge, Items) kommen aus Blender oder Meshy. Was der 3D-Designer beachten muss –
 Vorlagen, Export-Einstellungen, Maße, Namen, Marker, Budgets, Texturen, Stil, Abgabe-Checkliste – steht in
-[docs/3d-richtlinien.md](docs/3d-richtlinien.md); Waffen und Agenten im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md)
-und [docs/agenten-modelle.md](docs/agenten-modelle.md).
+[docs/3d-richtlinien.md](docs/3d-richtlinien.md); Waffen im Detail in [docs/waffen-modelle.md](docs/waffen-modelle.md).
+Spieler haben ihren eigenen Roblox-Avatar; Agenten-Modelle gibt es nicht mehr.
 Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr) und `art/sources/SMG.glb`.
 
 ## Modi
@@ -266,12 +266,10 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   LOADOUT · SKINS · SHOP · BATTLE PASS · STATISTIK · CODES · OPTIONEN. LOADOUT und SHOP bis OPTIONEN sind die Seiten der
   Lobby (`GameMenu.BorrowPage`), verkleinert. Nur solange Arcade an ist, unten SPIELEN · ARCADE: ein Link, der das Menü
   schließt und die Lobby dort öffnet (L1/R1 überspringt ihn). Die Welt läuft weiter, während das Menü offen ist.
-- **Ein Agent, Agenten-Skins**: Es gibt nur noch einen Agenten (`AgentConfig.MainId`, der bisherige Standard VIPER); die
-  übrigen Agenten sind ausgeblendet und nicht wählbar (Daten bleiben, Bots nutzen sie weiter). Sein Aussehen ändern
-  **Agenten-Skins** (`Cosmetics`, Type "Agent": Uniformfarbe und Material, gebunden, nicht in Kisten): kaufen im SHOP unter
-  AGENTEN-SKINS, ausrüsten im Reiter **SKINS** (`src/client/SkinMenu.lua`): links der Agent groß in 3D mit dem angeklickten
-  Skin, rechts alle Skins als Kacheln (STANDARD zuerst, ausgerüstet grün umrandet, gesperrte abgedunkelt mit IM SHOP).
-  Der Server zieht den Agenten sofort um, überall.
+- **Ein Agent, eigener Avatar**: Es gibt nur noch einen Agenten (`AgentConfig.MainId`, der bisherige Standard VIPER) für
+  Leben und Tempo; die übrigen Agenten sind ausgeblendet und nicht wählbar (Daten bleiben, Bots nutzen sie weiter).
+  Aussehen = der eigene Roblox-Avatar. Agenten-Skins (`Cosmetics`, Type "Agent") sind ausgeschaltet
+  (`Cosmetics.AgentSkins = false`: nicht im Shop, nicht im Reiter SKINS, Besitz bleibt gespeichert).
 - **Keine Standardwaffen**: Alles kommt aus der Tasche. Der Reiter **INVENTAR** zeigt die Tasche: 30 Plätze, davon 1-9 die
   Hotbar (Tasten **1-9**). Items ziehen und ablegen oder anklicken und den Zielplatz anklicken, Rechtsklick legt
   zwischen Hotbar und Tasche hin und her. Waffe: Taste zieht sie (nochmal = wegstecken), Heilung/Rüstung: Taste
@@ -579,14 +577,12 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Moment etwas austauschen); Abbruch per Knopf, Moduswechsel, Verlassen der Safe Zone oder des Spiels – angebotene
   Skins sind dann sofort wieder frei
 - **Agenten**: 9 Stück mit Passiv, je 2 wählbare Primärwaffen, Fähigkeit (Q) und Gadget (G), Level
-- **Alle spielen als Agent** (`src/server-shared/AgentBody.lua`, gespawnt über `src/server/SpawnUtil.lua`): In der offenen
-  Welt, im Markt und im Match trägt jeder Spieler statt seines Roblox-Avatars denselben schlanken R15-Körper im
-  Roblox-Standard-Look in den Farben seines Agenten: Kopf in Hautfarbe mit dem Roblox-Gesicht, Oberkörper und Arme in
-  der Agentenfarbe, Beine dunkler (keine Kapuze/Weste/Quader-Ausrüstung mehr). Bots tragen genau denselben Körper
-  (keine Teamfarben – das Team erkennt man wie bei Spielern am Namensschild), die Übungspuppen haben dieselben
-  Trefferzonen. Im Markt sieht man einen Agentenwechsel sofort, im Match ab dem nächsten Spawn. Hat ein
-  Agent ein fertiges 3D-Modell (siehe Agentenmodelle), tragen Spieler und Bots mit diesem Agenten automatisch dieses
-  Modell, auch in allen Menü-Figuren
+- **Eigener Roblox-Avatar** (gespawnt über `src/server/SpawnUtil.lua`): Jeder Spieler spielt mit seinem Avatar, schlank
+  gemacht (`AgentConfig.BodyScale`). In der Ego-Perspektive sieht man die echten Arme des Avatars (`src/shared/AvatarArms.lua`,
+  ViewModel), Menü-Figuren und Porträts zeigen den Avatar (`AgentFigure.Avatar`). Bots und Übungspuppen bekommen einen
+  schlanken R15-Körper im Roblox-Standard-Look (`src/server-shared/CharacterBody.lua`: Kopf in Hautfarbe mit dem
+  Roblox-Gesicht, Oberkörper und Arme in der Agentenfarbe, Beine dunkler; keine Teamfarben – das Team erkennt man wie
+  bei Spielern am Namensschild)
 - **Gleiche Trefferzonen für alle**: Getroffen werden nur Körperteile. Accessoires (auch später angehängte) und die
   Ausrüstung sind für Schüsse unsichtbar (`CanQuery = false`); der Server nimmt auch vom Client gemeldete Treffer
   nur auf treffbaren Teilen an
@@ -601,19 +597,6 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   (AR-15 ohne Aufsätze, Magazin als `Magazine`, Marker gesetzt; Aufsätze siehe `tools/attachments/README.md`), das alte
   Gewehr mit fest eingebautem Holo-Visier liegt noch als `art/sources/Rifle_alt.glb` (`tools/rifle_glb.py`); dafür `tools/fbx_read.py` (FBX ohne Blender lesen) und `tools/mesh_ops.py` (schneiden, Löcher
   schließen, GLB mit Texturen schreiben)
-- **Agentenmodelle** (`src/shared/AgentModels.lua`, Anleitung [docs/agenten-modelle.md](docs/agenten-modelle.md)):
-  Liegt in Studio unter ReplicatedStorage › Assets › Agents ein Modell mit dem Namen eines Agenten, sieht der Agent
-  überall so aus: an Spielern (offene Welt, Markt, Match), an Bots und in allen Vorschauen (Agentenwahl, Lobby, Shop,
-  Markt, Camp, Podest, HUD-Symbol) – **genau wie in Blender bzw. in einer leeren Experience**: nichts wird umgefärbt,
-  gestreckt, zerlegt oder umgebogen. Ein **Rig** (Humanoid, HumanoidRootPart, R15-Gelenke, z.B. StarterCharacter
-  oder Avatar-Setup) bleibt komplett (gehäutete Meshes, Bones, Accessoires, Layered Clothing), hängt am
-  HumanoidRootPart des Spielkörpers und übernimmt jedes Bild dessen Gelenkbewegung (`AgentModels.SyncJoints` aus
-  CharacterPose); beim Tod fällt es mit. **Starre Teile** ohne Rig hängen am Körperteil, mit dem ihr Name beginnt
-  (`Head_Suit`, `LeftUpperArm_Suit`), sonst am nächsten; Boden = `Point_Root` oder der tiefste Punkt. Nur bei offensichtlich falscher
-  Import-Einheit wird das ganze Modell auf 5,1 Studs gebracht. Der normale Agentenkörper bleibt unsichtbar als
-  Trefferzone (alle Agenten gleich leicht zu treffen, Teile des Modells nie Trefferzone); macht etwas ihn wieder
-  sichtbar oder tauscht Roblox Körperteile aus, blendet der Server ihn sofort wieder aus bzw. zieht neu an. Fehlt
-  etwas, bleibt der Standard-Look und Studio sagt im Output, was fehlt (`[Agentenmodelle] …`)
 - **Rückenwaffe im Markt** (`src/server-shared/BackWeapon.lua`): Im Markt trägt jeder Spieler die Standardwaffe seines
   Agenten auf dem Rücken – flach am Rücken, Lauf schräg über die rechte Schulter, mit Skin und Aufsätzen, für alle
   sichtbar. Wechselt man Agent, Waffe, Skin oder Aufsätze, hängt sofort die neue Waffe dort; in den Kampfmodi
@@ -909,8 +892,8 @@ Safe Zones: G an einem anderen Spieler (gedrückt halten) schickt eine Tausch-An
 | Third-Person-Haltung (Schulteranschlag, Ellbogen) und Anlegen beim Zielen | `HIP_POCKET`, `RIGHT_POLE*`, `ADS_*` in `src/shared/CharacterPose.lua` |
 | Größe der Waffe in der Hand (Third-Person) | `GunModels.ToolScale` in `src/shared/GunModels.lua` |
 | Körperbau aller Charaktere (Breite/Tiefe) | `AgentConfig.BodyScale` in `src/shared/AgentConfig.lua` |
-| Agenten-Körper: Standard-Look (Hautfarbe, Gesicht, Agentenfarben), Körper-Beschreibung | `src/server-shared/AgentBody.lua` |
-| Agentenmodelle (genau wie in Blender): Anleitung, Prüfungen | `docs/agenten-modelle.md`; Lader in `src/shared/AgentModels.lua` |
+| Körper für Bots und Übungspuppen (Standard-Look, Beschreibung), Accessoires nie Trefferzone | `src/server-shared/CharacterBody.lua` |
+| Echte Avatar-Arme für die Ego-Perspektive | `src/shared/AvatarArms.lua` |
 | Waffenmodelle (Blender): Marker, Teilnamen, Skins, Prüfungen | `docs/waffen-modelle.md`; Lader in `src/shared/GunModels.lua` |
 | Vorgaben für alle 3D-Modelle (Waffen, Fahrzeuge, Items, Agenten) | `docs/3d-richtlinien.md`; Vorlagen in `art/templates` |
 | Design (Farben, Schriften, Knöpfe, Flächen, HUD-Flächen) | `src/shared/UITheme.lua` |
@@ -986,7 +969,7 @@ am Commit:
 | Test | prüft |
 |---|---|
 | `weapons` | Arm-IK (PoseMath), Visierlinien aller Waffen, Nachlade-Animationen, Waffenwerte |
-| `pose`, `pose_r6`, `rig` | Third-Person-Haltung: Waffe im Anschlag, Hände an der Waffe; Gelenk-Erkennung (Motor6D und Avatar Joint Upgrade), R6; ganzer Charakter ohne Waffe: Arme nicht seitlich abgespreizt |
+| `pose`, `pose_r6`, `rig` | Third-Person-Haltung: Waffe im Anschlag, Hände an der Waffe; Gelenk-Erkennung (Motor6D und Avatar Joint Upgrade), R6 |
 | `viewmodel` | Ego-Waffe: Kimme und Korn beim Zielen genau in der Bildmitte |
 | `minimap`, `modes` | Minimap-Zuschnitt auf den Kreis, Modus-Liste |
 | `session` | Sitzungssperre der Spielstände (Serverwechsel, Absturz, DataStore-Fehler) |
@@ -1009,14 +992,10 @@ am Commit:
 | `skins` | Waffen-Skins und neue Agenten-Skins (Platz "Agent", gebunden, nicht in Kisten): kaufen, ausrüsten, ablegen, Farbe/Material, Speichern und Laden; alte Agenten-Skins bleiben entfernt (Besitz, Plätze "A:", Merkliste), Battle-Pass-Stufe 20 = Saison-Elite, SHOP mit Reiter AGENTEN-SKINS |
 | `trade` | Tauschen: Anfrage (Markt/Safe Zone, Nähe), ablehnen, ablaufen, annehmen, gegenseitig, Angebote, BEREIT + Countdown, Änderung nimmt BEREIT zurück, Abschluss gespeichert, Abbruch bei Knopf/Moduswechsel/Verlassen/Safe Zone verlassen, fehlgeschlagener Tausch ändert nichts |
 | `hubholo` | Shop-Vitrine im Camp (Ausrüster-Theke) und Tagesangebote (`dailyOffers`) |
-| `agentbody` | Agenten-Körper: gleiche Beschreibung für Spieler und Bots, Avatar-Teile weg, Standard-Look in Agentenfarben mit Roblox-Gesicht (keine Quader), nur ein Agent wählbar, Agenten-Skin sofort angezogen (Farbe, Material), Rückfall auf den normalen Charakter; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
+| `characterbody` | Körper: Spieler mit eigenem Avatar (Accessoires ohne Treffer/Kollision), nur ein Agent wählbar; Bots und Übungspuppen schlank im Roblox-Standard-Look mit Gesicht; Accessoires nie Trefferzone (auch nicht als gemeldeter Treffer) |
 | `weaponmodels` | Waffen-Lader: gedreht importierte Modelle werden an den Markern ausgerichtet, Ruhelage, Gruppen, Drehpunkte, Skin-Zonen und Textur-Skins, Aufsätze, Werkzeug, Zielen, Nachladen; kaputte Modelle bleiben mit klarer Meldung Quader |
 | `rbxmx`, `templates` | Studio-Dateien (.rbxmx) einlesen; alle Blender-Vorlagen sind selbst gültige Modelle |
 | `weaponassets` | deine Modelle in `assets/Weapons` gegen die Spezifikation (laden ohne Fehler, Textur-Skins passen); mit ihnen laufen auch weapons, viewmodel und pose |
-| `agentmodels` | Agenten-Lader mit den Maßen von Viper_3.glb (15 Teile `<Körperteil>_Suit`, Haare): jedes Teil sitzt, liegt und ist so groß wie im Modell, Farbe/Material/Textur unverändert, Teile ohne Körperteil-Namen am nächsten Körperteil, ohne `Point_Root`, falsche Einheit, Prüfmeldungen, Neuladen; Spieler, Bots und Menü-Figur tragen das Modell |
-| `agentcharacter` | Agentenmodell als Rig gedreht importiert: bleibt komplett (Gelenke, Rig-Attachments, Bones, Humanoid ohne Steuerung, keine Skripte), Füße auf dem Boden, Blick nach vorne, am Spielkörper angeschweißt, Gelenke übernehmen die Bewegung (auch nach Austausch), beim Tod angeschweißt, Figur mit Waffe in seiner Hand; der Server hält den Spielkörper unsichtbar und zieht neu an, wenn Roblox Teile austauscht |
-| `agentclient` | Agenten-Modelle auf dem Client: kein Warten beim Start, wenn Assets.Agents fehlt; später ankommende Ordner und Modelle werden geladen |
-| `agentassets` | deine Modelle in `assets/Agents` gegen die Anleitung (laden ohne Fehler, jedes Teil angeschweißt und nie Trefferzone, Spielkörper unsichtbar) |
 | `attachmentfit` | Aufsätze nur auf passenden Waffen (`AttachmentConfig.ByWeapon`, z.B. kein Griff am Revolver, kein Visier an Kurzwaffen): Lobby-Kauf und -Ausrüsten prüfen, unpassende wirken nicht, alte Spielstände legen sie ab und erstatten den Preis |
 | `wheel` | Glücksrad: Rad hält auf dem ausgelosten Feld (alle Felder, mit Versatz), Auslaufkurve, Felder und Rad-Skins mit Chancen, Dreiecke aus Keilen, Aufbau und Drehrichtung, Drehen nur im Camp am Rad, alle sehen den Dreh, Rad besetzt |
 | `hud` | Match-HUD: eigenes Porträt liegt über seiner Kachel (sonst unsichtbar), allgemeine Tastenzeile nicht in EXTINCTION, Killfeed in der roten Zone unter der Redzone-Rangliste; Minimap: rote Zone als Punktkreis, zieht bei jedem Wechsel mit, Rand drinnen rot; eigene Todestasche als rotes X (weit weg am Rand) |
@@ -1061,10 +1040,10 @@ Neuer Test: Datei `tests/name.test.luau` anlegen. Module lädt `require("Name")`
 - `tools/asset_templates.py` – erzeugt die Blender-Vorlagen der Fahrzeuge (aus dem Spiel, `art/templates/Vehicles`)
   und der Items, Gadgets und Behälter (Zielgrößen, `art/templates/Items`)
 - `docs` – Anleitungen: Vorgaben für alle 3D-Modelle (`3d-richtlinien.md`), Waffenmodelle aus Blender
-  (`waffen-modelle.md`), Agentenmodelle (`agenten-modelle.md`), Spielseite im Creator Hub auf Englisch: Name,
+  (`waffen-modelle.md`), Spielseite im Creator Hub auf Englisch: Name,
   Beschreibung, Thumbnails, Altersfragebogen (`spielseite.md`)
-- `assets/Weapons`, `assets/Agents` – Kopien deiner Waffen- und Agentenmodelle (.rbxmx) für die automatische
-  Prüfung (das Spiel lädt die Modelle aus dem Place, siehe docs/waffen-modelle.md und docs/agenten-modelle.md)
+- `assets/Weapons` – Kopien deiner Waffenmodelle (.rbxmx) für die automatische Prüfung (das Spiel lädt die Modelle
+  aus dem Place, siehe docs/waffen-modelle.md)
 - `tools/sourcemap.py` – Sourcemap für luau-lsp (wie `rojo sourcemap`, ohne Rojo)
 - `tools/locale_scan.py`, `tools/locale_merge.py` – Übersetzung: fehlende Texte finden, Wörterbücher zusammensetzen
 - `tests` – Tests und Roblox-Nachbildung (`tests/run.py` startet sie, `tests/lib/rbxmx.py` liest Studio-Modelle,

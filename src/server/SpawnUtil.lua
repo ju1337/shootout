@@ -1,70 +1,13 @@
 -- SpawnUtil (ModuleScript, nur Server)
--- Charakter neu laden und an eine bestimmte Stelle setzen. Mit AgentConfig.RobloxAvatar spawnt jeder mit seinem eigenen
--- Roblox-Avatar; sonst als Agent: einheitlicher Körper in den Farben seines Agenten (AgentBody).
+-- Charakter neu laden und an eine bestimmte Stelle setzen. Jeder spawnt mit seinem eigenen Roblox-Avatar.
 
 local Debris = game:GetService("Debris")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
-local Cosmetics = require(ReplicatedStorage:WaitForChild("Shared").Cosmetics)
-local AgentModels = require(ReplicatedStorage:WaitForChild("Shared").AgentModels)
-local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local MovementGuard = require(ServerShared.MovementGuard)
-local AgentBody = require(ServerShared.AgentBody)
 
 local SpawnUtil = {}
-
--- Charakter mit dem Agenten-Körper laden. Klappt das nicht (z.B. Roblox-Dienst gestört), wird der normale
--- Charakter geladen – AgentService zieht ihn dann trotzdem als Agent an.
-local function loadAgentCharacter(player)
-	if AgentConfig.RobloxAvatar then
-		return (pcall(player.LoadCharacter, player)) -- eigener Roblox-Avatar
-	end
-	local primary = Cosmetics.AgentColors(player, AgentConfig.MainId)
-	local ok, err = pcall(player.LoadCharacterWithHumanoidDescription, player, AgentBody.Description(primary))
-	if ok then
-		return true
-	end
-	warn("Agenten-Körper für " .. player.Name .. " nicht geladen (" .. tostring(err) .. "), lade Standard-Charakter")
-	return (pcall(player.LoadCharacter, player))
-end
-
--- Hat der Agent ein 3D-Modell, wird das Modell selbst der Charakter (wie ein StarterCharacter): der geladene
--- Roblox-Körper wird gelöscht, nur seine Skripte (Animate, Health) wandern ins Modell. Gibt true zurück, wenn getauscht.
-local function useAgentModel(player)
-	if AgentConfig.RobloxAvatar then
-		return false
-	end
-	local default = player.Character
-	local model = default and AgentModels.BuildCharacter(AgentModels.LookFor(AgentConfig.MainId, Cosmetics.AgentSkin(player)))
-	if not model then
-		return false
-	end
-	model.Name = player.Name
-	for _, name in { "Animate", "Health" } do
-		local script = default:FindFirstChild(name)
-		if script and script:IsA("LuaSourceContainer") and not model:FindFirstChild(name) then
-			script.Parent = model
-		end
-	end
-	model:PivotTo(default:GetPivot())
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		-- nicht umkippen, solange noch der Server rechnet (der Client schaltet es bei sich auch ab, Movement)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-	end
-	player.Character = model
-	model.Parent = workspace
-	default:Destroy()
-	-- Physik gleich beim Spieler (sonst rechnet kurz der Server, und der Charakter kann umkippen)
-	local root = model:FindFirstChild("HumanoidRootPart")
-	if root and root:IsA("BasePart") then
-		pcall(root.SetNetworkOwner, root, player)
-	end
-	return true
-end
 
 -- Streaming: dem Client die Umgebung von position schon schicken, bevor man ihn dorthin setzt (wartet nicht; bis der
 -- Boden da ist, hält Roblox den Charakter an, StreamingIntegrityMode in default.project.json)
@@ -100,13 +43,7 @@ end
 -- Gibt den neuen Charakter zurück oder nil, wenn es nicht geklappt hat.
 function SpawnUtil.Spawn(player, cframe, protection)
 	SpawnUtil.Prestream(player, cframe.Position)
-	local ok = loadAgentCharacter(player)
-	if ok then
-		local swapped, err = pcall(useAgentModel, player)
-		if not swapped then
-			warn("[Agentenmodelle] " .. player.Name .. ": Modell als Charakter fehlgeschlagen (" .. tostring(err) .. ")")
-		end
-	end
+	local ok = pcall(player.LoadCharacter, player) -- eigener Roblox-Avatar
 	local character = player.Character
 	if not ok or not character then
 		return nil

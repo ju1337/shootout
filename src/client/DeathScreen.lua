@@ -16,7 +16,6 @@ local Modes = require(Shared.Modes)
 local UITheme = require(Shared.UITheme)
 local InputActions = require(Shared.InputActions)
 local HttpService = game:GetService("HttpService")
-local AgentConfig = require(Shared.AgentConfig)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 
 local player = Players.LocalPlayer
@@ -106,10 +105,9 @@ local function setKiller(name, weapon, health, agentId)
 		killerCard.Visible = false
 		return
 	end
-	local agent = agentId and AgentConfig.Get(agentId)
 	killerCard.Visible = true
 	killerName.Text = UITheme.Upper(tostring(name))
-	killerInfo.Text = (agent and not AgentConfig.RobloxAvatar and (agent.Name .. "  ·  ") or "") .. tostring(weapon or "?")
+	killerInfo.Text = tostring(weapon or "?")
 	local ratio = math.clamp((tonumber(health) or 0) / 100, 0, 1)
 	killerBar.Size = UDim2.fromScale(ratio, 1)
 	killerBar.BackgroundColor3 = ratio > 0.5 and C.Good or ratio > 0.25 and C.Primary or C.Bad

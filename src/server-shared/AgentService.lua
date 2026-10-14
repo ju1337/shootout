@@ -8,20 +8,17 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 local ServerStorage = game:GetService("ServerStorage")
-local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local AgentConfig = require(Shared.AgentConfig)
-local Cosmetics = require(Shared.Cosmetics)
 local Modes = require(Shared.Modes)
 local BuyConfig = require(Shared.BuyConfig)
 local HideoutConfig = require(Shared.HideoutConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local Damage = require(ServerShared.Damage)
 local WeaponService = require(ServerShared.WeaponService)
-local AgentBody = require(ServerShared.AgentBody)
-local AgentModels = require(Shared.AgentModels)
+local CharacterBody = require(ServerShared.CharacterBody)
 local Sfx = require(Shared.Sfx)
 
 local AgentService = {}
@@ -35,42 +32,21 @@ local function getAgent(player)
 	return AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
 end
 
--- Agenten-Look überall (offene Welt, Markt, Match): einheitlicher Körper im Roblox-Standard-Look in den Agentenfarben bzw.
--- das 3D-Modell des Agenten aus Assets.Agents, ohne eigenen Avatar (AgentBody)
-local function applyUniform(player, character, agent)
-	-- nur den aktuellen Charakter (CharacterAdded kommt in Roblox schon, bevor er im Workspace ist – anziehen
-	-- geht trotzdem)
-	if player.Character ~= character then
-		return
-	end
-	if AgentModels.IsModelCharacter(character) then
-		return -- das Modell ist selbst der Charakter: nichts anzuziehen
-	end
-	if AgentConfig.RobloxAvatar then
-		-- eigener Avatar bleibt; Hüte, Haare usw. sollen keine Schüsse abfangen und nichts berühren
-		local function soften(item)
-			if item:IsA("Accessory") then
-				for _, part in item:GetDescendants() do
-					if part:IsA("BasePart") then
-						part.CanQuery, part.CanTouch, part.CanCollide = false, false, false
-					end
+-- Eigener Roblox-Avatar: Hüte, Haare usw. sollen keine Schüsse abfangen und nichts berühren
+local function softenAccessories(character)
+	local function soften(item)
+		if item:IsA("Accessory") then
+			for _, part in item:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.CanQuery, part.CanTouch, part.CanCollide = false, false, false
 				end
 			end
 		end
-		for _, item in character:GetChildren() do
-			soften(item)
-		end
-		character.ChildAdded:Connect(soften)
-		return
 	end
-	local ok, err = pcall(function()
-		local primary, _, material = Cosmetics.AgentColors(player, agent.Id)
-		AgentBody.Dress(character, primary, agent.Id, material)
-	end)
-	if not ok then
-		warn("[Agentenmodelle] " .. player.Name .. " konnte nicht als " .. tostring(agent.Id) .. " angezogen werden: "
-			.. tostring(err))
+	for _, item in character:GetChildren() do
+		soften(item)
 	end
+	character.ChildAdded:Connect(soften)
 end
 
 -- Leben und Fähigkeit beim Spawn setzen
@@ -449,16 +425,6 @@ local function useUltimate(player)
 		Sub = "Volles Leben  ·  +" .. ult.Armor .. " Rüstung  ·  Fähigkeit bereit" } })
 end
 
--- Nach dem Spawn so oft (Abstände in Sekunden) nachsehen, ob der Look noch sitzt, danach alle DRESS_PERIOD Sekunden,
--- solange der Charakter lebt
-local DRESS_CHECKS = { 0.5, 1, 1.5, 3, 4, 10 }
-local DRESS_PERIOD = 5
-
--- Agent, den der Charakter gerade trägt (im Match gilt ein Agentenwechsel erst beim nächsten Spawn)
-local function dressedAgent(player, character)
-	return AgentConfig.Get(character:GetAttribute("AgentLookOf")) or getAgent(player)
-end
-
 local function setupPlayer(player)
 	player:SetAttribute("Agent", AgentConfig.MainId)
 	player:SetAttribute("UltCharge", 0)
@@ -468,66 +434,21 @@ local function setupPlayer(player)
 	end)
 
 	player.CharacterAdded:Connect(function(character)
-		if AgentModels.IsModelCharacter(character) then
-			-- das Modell ist selbst der Charakter (SpawnUtil): nur Leben, Fähigkeit und Namensanzeige
-			local humanoid = character:WaitForChild("Humanoid")
-			humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-			humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-			applyAgent(player, character)
-			return
-		end
-		AgentBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
-		-- Tauscht Roblox beim Laden des Aussehens noch Körperteile aus (neue dazu, alte weg), die Ausrüstung neu
-		-- anlegen (einmal für alle Teile, die im selben Moment kommen oder gehen)
-		local redressQueued = false
-		local function queueRedress(child)
-			if child:IsA("BasePart") and AgentBody.GearAnchors[child.Name] and not redressQueued then
-				redressQueued = true
-				task.defer(function()
-					redressQueued = false
-					applyUniform(player, character, dressedAgent(player, character))
-				end)
-			end
-		end
-		character.ChildAdded:Connect(queueRedress)
-		character.ChildRemoved:Connect(queueRedress)
+		CharacterBody.Protect(character) -- Accessoires sind nie Trefferzone, auch nicht kurz nach dem Spawn
+		softenAccessories(character)
 		-- Standard-Namen ausblenden (würden Gegner durch Wände verraten); eigene Namensschilder im Client
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 		humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-		-- Nachsehen, ob der Look sitzt: Roblox lädt das Aussehen teils erst nach dem Spawn fertig (tauscht Körperteile
-		-- aus, hängt ein Gesicht an, macht den Körper wieder sichtbar) – dann neu anziehen. Läuft auch, wenn unten
-		-- etwas schiefgeht, und danach regelmäßig, solange der Charakter lebt.
-		task.spawn(function()
-			local round = 0
-			while true do
-				round += 1
-				task.wait(DRESS_CHECKS[round] or DRESS_PERIOD)
-				local living = character:FindFirstChildOfClass("Humanoid")
-				if player.Character ~= character or not character.Parent or (living and living.Health <= 0) then
-					return
-				end
-				local agent = dressedAgent(player, character)
-				local problem = AgentBody.DressProblem(character, agent.Id)
-				if problem then
-					if RunService:IsStudio() then
-						print("[Agentenmodelle] " .. player.Name .. ": Aussehen verändert (" .. problem .. ") – neu angezogen")
-					end
-					applyUniform(player, character, agent)
-				end
-			end
-		end)
 		AgentConfig.SlimBody(humanoid) -- schlanker Körperbau wie alle Charaktere
 		applyAgent(player, character)
-		applyUniform(player, character, getAgent(player))
 	end)
-	-- Kleidung (und Skalierung) wird manchmal erst nach dem Spawn geladen: dann nochmal
+	-- Skalierung wird manchmal erst nach dem Spawn geladen: dann nochmal
 	player.CharacterAppearanceLoaded:Connect(function(character)
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
 			AgentConfig.SlimBody(humanoid)
 		end
-		applyUniform(player, character, dressedAgent(player, character))
 	end)
 	-- Nur noch ein Agent: ein anderer gesetzter Agent wird sofort zurückgesetzt (kein Umziehen, kein Neuspawn)
 	player:GetAttributeChangedSignal("Agent"):Connect(function()
@@ -535,73 +456,8 @@ local function setupPlayer(player)
 			player:SetAttribute("Agent", AgentConfig.MainId)
 		end
 	end)
-	-- Agenten-Skin gewechselt (Menü SKINS): Farben/Material sofort neu anziehen, überall. Wechselt dabei das 3D-Modell
-	-- (Skin mit eigenem Modell, AgentModels.LookFor), muss der Charakter neu gebaut werden: in der Safe Zone sofort an
-	-- derselben Stelle (Leben bleibt), draußen beim Betreten der Safe Zone bzw. beim nächsten Spawn.
-	local lastSkin = Cosmetics.AgentSkin(player)
-	local function wornLook(character)
-		return character:GetAttribute("AgentModelCharacter") or AgentConfig.MainId
-	end
-	local function inSafeZone(character)
-		return character:GetAttribute("SafeZone") == true or player:GetAttribute("InSafeZone") == true
-	end
-	local function swapLook()
-		local character = player.Character
-		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		if not humanoid or humanoid.Health <= 0 then
-			return
-		end
-		local look = AgentModels.LookFor(AgentConfig.MainId, Cosmetics.AgentSkin(player))
-		local wantsModel = AgentModels.HasAsset(look)
-		if wornLook(character) == look and AgentModels.IsModelCharacter(character) == wantsModel then
-			return
-		end
-		if not inSafeZone(character) then
-			return -- später: Safe Zone betreten oder neu spawnen
-		end
-		local health = humanoid.Health
-		AgentService.Refresh(player)
-		local fresh = player.Character
-		local freshHumanoid = fresh and fresh ~= character and fresh:FindFirstChildOfClass("Humanoid")
-		if freshHumanoid then
-			freshHumanoid.Health = math.min(health, freshHumanoid.MaxHealth)
-		end
-	end
-	local function skinChanged()
-		local skin = Cosmetics.AgentSkin(player)
-		if skin == lastSkin then
-			return
-		end
-		lastSkin = skin
-		local character = player.Character
-		if character and character.Parent then
-			applyUniform(player, character, dressedAgent(player, character))
-			swapLook()
-		end
-	end
-	player:GetAttributeChangedSignal("Equipped"):Connect(skinChanged)
-	player:GetAttributeChangedSignal("Owned"):Connect(skinChanged) -- z.B. Creator-Rang weg
-	player:GetAttributeChangedSignal("InSafeZone"):Connect(swapLook)
 	if player.Character then
 		task.spawn(applyAgent, player, player.Character)
-	end
-end
-
--- Aussehen des Spielers auf seinen Agenten bringen: mit Modell (oder vorher mit Modell) an derselben Stelle neu
--- spawnen – das Modell ist dann der Charakter –, sonst neu anziehen
-function AgentService.Refresh(player)
-	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if not root then
-		return
-	end
-	local agent = getAgent(player)
-	local look = AgentModels.LookFor(agent.Id, Cosmetics.AgentSkin(player))
-	if AgentModels.IsModelCharacter(character) or AgentModels.HasAsset(look) then
-		local SpawnUtil = require(game:GetService("ServerScriptService"):WaitForChild("SpawnUtil"))
-		SpawnUtil.Spawn(player, root.CFrame)
-	else
-		applyUniform(player, character, agent)
 	end
 end
 
@@ -622,20 +478,6 @@ function AgentService.Init()
 	Remotes.UseAbility.OnServerEvent:Connect(useAbility)
 	Remotes.UseUltimate.OnServerEvent:Connect(useUltimate)
 
-	-- Modell eines Agenten neu (z.B. in Studio während des Spiels eingefügt), geändert oder entfernt: alle Spieler
-	-- mit diesem Agenten gleich neu anziehen
-	AgentModels.OnChanged(function(agentId)
-		for _, player in Players:GetPlayers() do
-			local character = player.Character
-			if character and character.Parent and getAgent(player).Id == agentId then
-				if Modes.IsSocial(player:GetAttribute("Mode")) then
-					AgentService.Refresh(player)
-				else
-					applyUniform(player, character, getAgent(player))
-				end
-			end
-		end
-	end)
 	Players.PlayerAdded:Connect(setupPlayer)
 	for _, player in Players:GetPlayers() do
 		setupPlayer(player)

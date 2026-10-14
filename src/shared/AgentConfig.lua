@@ -47,19 +47,13 @@ AgentConfig.Skins = {
 	{ Level = 5, Name = "Gold", Color = Color3.fromRGB(212, 175, 55), Material = Enum.Material.Metal },
 }
 
--- Visier am Helm: dunkel getöntes Glas mit leichtem Schimmer in der Agentenfarbe (kein Leuchten)
-AgentConfig.VisorMaterial = Enum.Material.Glass
-function AgentConfig.VisorColor(accent)
-	return Color3.fromRGB(16, 18, 22):Lerp(accent, 0.35)
-end
-
 -- ---------- Körperbau ----------
 -- Alle Charaktere (Spieler, Bots, Übungspuppen, Menü-Figuren) schlanker als der Roblox-Standard: schmalere
 -- Schultern und ein flacherer Oberkörper, damit Arme und Waffe in der Third-Person zu sehen sind.
 -- Wirkt auf R15-Körper (R6 kennt keine Skalierung). Achtung: schmalere Körper sind auch schmalere Trefferflächen.
 AgentConfig.BodyScale = { Width = 0.75, Depth = 0.8 }
 
--- Neu gebaute Körper (HumanoidDescription für Bots und Übungspuppen)
+-- Neu gebaute Körper (HumanoidDescription für Bots und Übungspuppen, CharacterBody)
 function AgentConfig.DescribeBody(description)
 	description.WidthScale = AgentConfig.BodyScale.Width
 	description.DepthScale = AgentConfig.BodyScale.Depth
@@ -292,11 +286,9 @@ local STAT_GETTERS = {
 -- Nur noch ein Agent im Spiel: alle Spieler spielen ihn, die übrigen Agenten sind ausgeblendet und nicht wählbar
 -- (Werte bleiben für Bots und spätere Rückkehr). Sein Aussehen ändert man mit Agenten-Skins (Cosmetics, Menü SKINS).
 AgentConfig.MainId = AgentConfig.Agents[1].Id
--- Spieler spawnen mit ihrem eigenen Roblox-Avatar statt im Agenten-Körper (AgentBody / Agenten-Modell). false = alter
--- Agenten-Look (Tests für den Agenten-Körper schalten es so).
-AgentConfig.RobloxAvatar = true
+-- Spieler spawnen mit ihrem eigenen Roblox-Avatar (kein Agenten-Körper, keine Agenten-Modelle mehr).
 
--- Name, der für einen Spieler statt des Agenten-Namens steht (mit eigenem Roblox-Avatar): Anzeigename, sonst Benutzername
+-- Name, der für einen Spieler statt des Agenten-Namens steht: Anzeigename, sonst Benutzername
 function AgentConfig.PlayerName(player)
 	if not player then
 		return ""

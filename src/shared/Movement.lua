@@ -1087,16 +1087,7 @@ function Movement.Init()
 
 	local function onCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
-		if character:GetAttribute("AgentModelCharacter") then
-			-- Agentenmodell als Charakter: beim ersten Join kippt es sonst kurz um und liegt steif (FallingDown)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-			humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-			if humanoid:GetState() == Enum.HumanoidStateType.FallingDown
-				or humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
-				humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-			end
-		end
-		-- feste Sprunghöhe (sonst Roblox-Standard bzw. JumpPower 50 bei Agentenmodellen: man käme fast aufs Dach)
+		-- feste Sprunghöhe (sonst Roblox-Standard: man käme fast aufs Dach)
 		humanoid.UseJumpPower = false
 		humanoid.JumpHeight = P.JumpHeight
 		normalHipHeight = humanoid.HipHeight

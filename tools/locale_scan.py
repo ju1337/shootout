@@ -26,7 +26,7 @@ GERMAN = re.compile(r"[äöüÄÖÜß]")
 WORDS = re.compile(r"[A-Za-zÄÖÜäöüß]{2,}")
 SKIP_FILES = {"LocaleStrings.lua", "Locale.lua", "ExtinctionTerrainData.lua",
               # nur Entwickler-Ausgaben (Studio-Ausgabe, Discord-Log, Modellprüfung), nie auf dem Bildschirm
-              "GunModels.lua", "AgentModels.lua", "AgentBody.lua", "DiscordLog.lua", "SpawnUtil.lua",
+              "GunModels.lua", "DiscordLog.lua", "SpawnUtil.lua",
               "MovementGuard.lua", "CharacterPose.lua",
               "Credits.lua"}  # Titel und Lizenzen der Modelle bleiben unübersetzt
 # Texte, die auf Englisch genauso heißen (Namen, Abkürzungen, Tasten, Roblox-Farben) – brauchen keinen Eintrag

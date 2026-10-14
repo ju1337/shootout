@@ -114,7 +114,7 @@ local function armPart(name, color, material, parent, shape)
 	return part
 end
 
--- Echte Arme (AgentModels.ArmPieces) einbauen: jedes Teil hängt an seinem Knochen (Oberarm, Unterarm, Hand) und
+-- Echte Arme (AvatarArms.ArmPieces) einbauen: jedes Teil hängt an seinem Knochen (Oberarm, Unterarm, Hand) und
 -- wird mit ihm gestreckt (Länge wie UPPER_ARM/FOREARM, Dicke ARM_THICKNESS)
 -- width = gewünschte Dicke des Unterarms (Kamera-Raum, Studs) statt Körper-Dicke mal ARM_THICKNESS (eigener Roblox-Avatar:
 -- dessen Arme sind 1 Stud dick und wären vor der Kamera breite Platten)
@@ -182,7 +182,7 @@ local function buildRealArm(side, width)
 end
 
 -- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten),
--- arms = echte Arme des Charakters (AgentModels.ArmPieces) oder nil (dann Ärmel und Handschuhe),
+-- arms = echte Arme des Charakters (AvatarArms.ArmPieces) oder nil (dann Ärmel und Handschuhe),
 -- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe,
 -- armWidth = Dicke der echten Unterarme vor der Kamera (Studs, siehe buildRealArm), nil = Körper-Dicke mal ARM_THICKNESS
 -- shirt = klassisches Shirt des Avatars (oder nil): die echten Arme tragen es auch vor der Kamera

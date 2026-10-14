@@ -208,9 +208,7 @@ Rojo legt den Ordner ReplicatedStorage › Assets › Weapons an und lässt die 
 Place. Eine mit `rojo build` gebaute Place-Datei enthält sie deshalb nicht (dort gibt es dann die Quader-Waffen) –
 veröffentlicht wird aus Studio.
 
-## Fahrzeuge, Items und Agenten
+## Fahrzeuge und Items
 
 Die Vorgaben dafür stehen in [3d-richtlinien.md](3d-richtlinien.md), die Vorlagen in `art/templates/Vehicles` und
-`art/templates/Items` (erzeugt mit `python3 tools/asset_templates.py`). Agenten lädt das Spiel schon wie die Waffen:
-Das Modell ist genau wie in Blender zu sehen, die Trefferzone bleibt der einheitliche Körper, Anleitung in
-[agenten-modelle.md](agenten-modelle.md).
+`art/templates/Items` (erzeugt mit `python3 tools/asset_templates.py`).

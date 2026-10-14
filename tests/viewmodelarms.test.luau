@@ -1,5 +1,5 @@
--- Waffe vor der Kamera mit den echten Armen des Charakters (Spielkörper, Rig bzw. 3D-Modell ohne Rig) statt
--- Ärmel und Handschuhe; der Waffen-Skin bleibt auf der Waffe
+-- Waffe vor der Kamera mit den echten Armen des Roblox-Avatars statt Ärmel und Handschuhe; der Waffen-Skin bleibt auf
+-- der Waffe
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -11,49 +11,29 @@ local function step(seconds)
 	SIM.Run(SIM.Now + (seconds or 1))
 end
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assets = ReplicatedStorage:FindFirstChild("Assets") or Instance.new("Folder", ReplicatedStorage)
-assets.Name = "Assets"
-local folder = assets:FindFirstChild("Agents") or Instance.new("Folder", assets)
-folder.Name = "Agents"
-
--- Modell ohne Rig: ein Teil pro Körperteil (Viper), Boden = Point_Root
-local SUIT = {
-	{ "Head_Suit", Vector3.new(1.3, 1.2, 1.3), Vector3.new(0, 4.6, 0) },
-	{ "UpperTorso_Suit", Vector3.new(1.5, 1.6, 0.8), Vector3.new(0, 3.2, 0) },
-	{ "LowerTorso_Suit", Vector3.new(1.5, 0.4, 0.8), Vector3.new(0, 2.2, 0) },
-	{ "LeftUpperArm_Suit", Vector3.new(0.75, 0.915, 0.8), Vector3.new(-1.125, 3.4925, 0) },
-	{ "LeftLowerArm_Suit", Vector3.new(0.75, 0.76, 0.8), Vector3.new(-1.125, 2.655, 0) },
-	{ "LeftHand_Suit", Vector3.new(0.75, 0.275, 0.8), Vector3.new(-1.125, 2.1375, 0) },
-	{ "RightUpperArm_Suit", Vector3.new(0.75, 0.915, 0.8), Vector3.new(1.125, 3.4925, 0) },
-	{ "RightLowerArm_Suit", Vector3.new(0.75, 0.76, 0.8), Vector3.new(1.125, 2.655, 0) },
-	{ "RightHand_Suit", Vector3.new(0.75, 0.275, 0.8), Vector3.new(1.125, 2.1375, 0) },
-	{ "LeftUpperLeg_Suit", Vector3.new(0.75, 0.82, 0.8), Vector3.new(-0.375, 1.59, 0) },
-	{ "RightUpperLeg_Suit", Vector3.new(0.75, 0.82, 0.8), Vector3.new(0.375, 1.59, 0) },
-}
-local viper = Instance.new("Model")
-viper.Name = "Viper"
-for i, def in SUIT do
-	local part = Instance.new("MeshPart")
-	part.Name = def[1]
-	part.Size = def[2]
-	part.CFrame = CFrame.new(def[3])
-	part.Color = Color3.fromRGB(10 + i, 200, 30)
-	part.Parent = viper
-end
-local marker = Instance.new("Part")
-marker.Name = "Point_Root"
-marker.Size = Vector3.new(0.05, 0.05, 0.05)
-marker.Parent = viper
-viper.Parent = folder
-
-local AgentModels = require("AgentModels")
+local AvatarArms = require("AvatarArms")
 local ViewModel = require("ViewModel")
 ViewModel.ShowArms = true -- dieser Test prüft auch die Arme vor der Kamera
 local GunModels = require("GunModels")
 local Cosmetics = require("Cosmetics")
 
--- Standard-R15-Körper in Ruhelage, Gelenke an den Übergängen, irgendwo gedreht in der Welt
+-- Standard-R15-Körper (schlank wie AgentConfig.BodyScale) in Ruhelage: Ursprung = Boden zwischen den Füßen, Blick -Z
+local W, D = 0.75, 0.8
+local function bodyPart(width, height, depth, x, y)
+	return { Size = Vector3.new(width, height, depth), CFrame = CFrame.new(x, y, 0) }
+end
+local BODY = {
+	Head = bodyPart(1.2, 1.2, 1.2, 0, 4.5),
+	UpperTorso = bodyPart(2 * W, 1.6, D, 0, 3.2),
+	LowerTorso = bodyPart(2 * W, 0.4, D, 0, 2.2),
+	LeftUpperArm = bodyPart(W, 1.169, D, -1.5 * W, 3.369),
+	LeftLowerArm = bodyPart(W, 1.052, D, -1.5 * W, 2.776),
+	LeftHand = bodyPart(W, 0.3, D, -1.5 * W, 2.15),
+	RightUpperArm = bodyPart(W, 1.169, D, 1.5 * W, 3.369),
+	RightLowerArm = bodyPart(W, 1.052, D, 1.5 * W, 2.776),
+	RightHand = bodyPart(W, 0.3, D, 1.5 * W, 2.15),
+}
+-- Gelenke an den Übergängen, irgendwo gedreht in der Welt
 local JOINTS = { Head = { "Neck", "UpperTorso" }, UpperTorso = { "Waist", "LowerTorso" }, LowerTorso = { "Root", "HumanoidRootPart" },
 	RightUpperArm = { "RightShoulder", "UpperTorso" }, RightLowerArm = { "RightElbow", "RightUpperArm" },
 	RightHand = { "RightWrist", "RightLowerArm" }, LeftUpperArm = { "LeftShoulder", "UpperTorso" },
@@ -68,8 +48,7 @@ local function standardBody(where, color)
 	root.Transparency = 1
 	root.CFrame = where * CFrame.new(0, 3, 0)
 	root.Parent = model
-	for _, name in AgentModels.BodyParts do
-		local rest = AgentModels.Body[name]
+	for name, rest in BODY do
 		local part = Instance.new("MeshPart")
 		part.Name = name
 		part.Size = rest.Size
@@ -113,19 +92,19 @@ local function run(vm, aim)
 	end
 end
 
--- ---------- Standard-Spielkörper ----------
+-- ---------- Avatar (R15) ----------
 local uniform = Color3.fromRGB(70, 120, 200)
 local body = standardBody(CFrame.new(30, 0, 12) * CFrame.Angles(0, 1.3, 0), uniform)
 body.Parent = workspace
-local arms = AgentModels.ArmPieces(body)
+local arms = AvatarArms.ArmPieces(body)
 check(arms ~= nil and arms.Right and arms.Left and #arms.Right.Pieces == 3 and #arms.Left.Pieces == 3,
-	"Spielkörper: je Seite Oberarm, Unterarm und Hand gefunden")
+	"Avatar: je Seite Oberarm, Unterarm und Hand gefunden")
 check(arms and (arms.Right.Shoulder - Vector3.new(1.125, 0.8535, 0)).Magnitude < 1e-3
 	and arms.Right.Shoulder.Y > arms.Right.Elbow.Y and arms.Right.Elbow.Y > arms.Right.Wrist.Y,
-	"Spielkörper: Gelenke in Ruhelage (Schulter über Ellbogen über Handgelenk)")
+	"Avatar: Gelenke in Ruhelage (Schulter über Ellbogen über Handgelenk)")
 
 for _, weaponName in { "Rifle", "Pistol" } do
-	local vm = ViewModel.new(weaponName, nil, Color3.new(0, 0, 0), nil, AgentModels.ArmPieces(body))
+	local vm = ViewModel.new(weaponName, nil, Color3.new(0, 0, 0), nil, AvatarArms.ArmPieces(body))
 	run(vm, 0)
 	local info = GunModels.Info[weaponName]
 	check(vm.Model:FindFirstChild("LeftGlove") == nil and vm.Model:FindFirstChild("RightFore") == nil,
@@ -161,67 +140,17 @@ for _, weaponName in { "Rifle", "Pistol" } do
 	vm:Destroy()
 end
 
--- ---------- Spielkörper mit Modell daran (AgentModels.Attach): die Teile des Modells ----------
-local worn = standardBody(CFrame.new(-4, 0, 9), uniform)
-local parts = {}
-for _, name in AgentModels.BodyParts do
-	parts[name] = worn[name]
-end
-local holder = AgentModels.Attach(worn, parts, "Viper", true)
-check(holder ~= nil, "Modell am Spielkörper")
-local wornArms = AgentModels.ArmPieces(worn)
-local segments = {}
-for _, piece in wornArms and wornArms.Right.Pieces or {} do
-	segments[piece.Segment] = string.match(piece.Part.Name, "^Right%a+_%d+$") ~= nil
-end
-check(wornArms ~= nil and #wornArms.Right.Pieces == 3 and segments.Upper and segments.Lower and segments.Hand,
-	"Modell am Körper: die Armteile des Modells (nicht der unsichtbare Körper)")
-check(wornArms and wornArms.Right.Pieces[1].Part.Color ~= uniform, "Modell am Körper: Farbe aus dem Modell")
-
--- ---------- Modell ohne Rig als eigener Charakter (BuildCharacter) ----------
-local character = AgentModels.BuildCharacter("Viper")
-check(character ~= nil, "Viper als Charakter")
-character:PivotTo(CFrame.new(12, 3, -40) * CFrame.Angles(0, -0.7, 0))
-character.Parent = workspace
-local own = AgentModels.ArmPieces(character)
-check(own ~= nil and #own.Right.Pieces == 3 and #own.Left.Pieces == 3, "Modell als Charakter: Arme über die Namen gefunden")
-local vm = ViewModel.new("Rifle", nil, Color3.new(0, 0, 0), nil, own)
-run(vm, 0)
-local list = armParts(vm)
-local modelColored = 0
-for _, part in list do
-	modelColored += part.Color.G > 0.7 and 1 or 0 -- Farbe aus der Datei (…, 200, 30)
-end
-check(modelColored == 6, "Modell als Charakter: sechs Armteile mit dem Aussehen des Modells (" .. modelColored .. ")")
--- Hände des Modells an der Waffe (Arme hängen am unsichtbaren Skelett, Gelenke wie beim Spielkörper)
-do
-	local hands = {}
-	for name, part in list do
-		if string.find(name, "Hand") then
-			hands[string.sub(name, 1, 4)] = part
-		end
-	end
-	local info = GunModels.Info.Rifle
-	local grip = vm.GunWorld.Position
-	local guard = vm.GunWorld * (info.LeftHand * ViewModel.Scale())
-	check(hands.Righ and (hands.Righ.Position - grip).Magnitude < 0.35, "Modell als Charakter: rechte Hand am Griff")
-	check(hands.Left and (hands.Left.Position - guard).Magnitude < 0.35, "Modell als Charakter: linke Hand an der Waffe")
-end
--- Der Charakter selbst bleibt unverändert (Kopien)
-check(character:FindFirstChild(AgentModels.ModelName):FindFirstChild("RightHand_Suit") ~= nil, "Charakter behält seine Teile")
-vm:Destroy()
-
 -- ---------- Ohne erkennbare Arme: Ärmel und Handschuhe wie bisher ----------
-check(AgentModels.ArmPieces(nil) == nil, "ohne Charakter: nil")
+check(AvatarArms.ArmPieces(nil) == nil, "ohne Charakter: nil")
 local stump = Instance.new("Model")
 Instance.new("Humanoid", stump)
-local fallback = ViewModel.new("Rifle", nil, Color3.new(0.2, 0.2, 0.2), nil, AgentModels.ArmPieces(stump))
+local fallback = ViewModel.new("Rifle", nil, Color3.new(0.2, 0.2, 0.2), nil, AvatarArms.ArmPieces(stump))
 run(fallback, 0)
 check(fallback.Model:FindFirstChild("LeftGlove") ~= nil and fallback.Model:FindFirstChild("RightFore") ~= nil,
 	"ohne Arme: Ärmel und Handschuhe")
 
 -- ---------- Waffen-Skin bleibt auf der Waffe ----------
-local skinned = ViewModel.new("Rifle", Cosmetics.Get("W_Drachengold"), Color3.new(0, 0, 0), nil, AgentModels.ArmPieces(body))
+local skinned = ViewModel.new("Rifle", Cosmetics.Get("W_Drachengold"), Color3.new(0, 0, 0), nil, AvatarArms.ArmPieces(body))
 run(skinned, 0)
 for name, part in armParts(skinned) do
 	check(part.Color == uniform and part.Material ~= Enum.Material.Foil and part:FindFirstChildWhichIsA("SurfaceAppearance") == nil

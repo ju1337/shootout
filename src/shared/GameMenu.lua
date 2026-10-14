@@ -532,15 +532,14 @@ local function buildAgentStage()
 			if figure then
 				figure:Destroy()
 			end
-			local look = Cosmetics.AgentSkin(player)
-			-- eigener Roblox-Avatar (AgentConfig.RobloxAvatar), sonst der Agent
+			-- eigener Roblox-Avatar (ohne Charakter eine einfache Figur)
 			figure = AgentFigure.Avatar(player) or AgentFigure.Build(agent, primary, accent,
-				Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material, look and look.Model and look.Id or nil)
+				Cosmetics.WeaponSkin(player, agent.Id, weapon), weapon, material)
 			figure.Parent = viewport
 		end
 		-- eigener Roblox-Avatar: Roblox-Name (Anzeigename groß, @Benutzername darüber) statt Agent und Rolle
-		role.Text = AgentConfig.RobloxAvatar and "@" .. player.Name or upper(agent.Role)
-		name.Text = AgentConfig.RobloxAvatar and AgentConfig.PlayerName(player) or agent.Name
+		role.Text = "@" .. player.Name
+		name.Text = AgentConfig.PlayerName(player)
 	end
 	refresh()
 	player.AttributeChanged:Connect(function(attribute)

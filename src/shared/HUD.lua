@@ -15,7 +15,6 @@ local TweenService = game:GetService("TweenService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Modes = require(Shared.Modes)
-local AgentConfig = require(Shared.AgentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local UITheme = require(Shared.UITheme)
 local Movement = require(Shared.Movement)
@@ -372,9 +371,8 @@ function HUD.Init(weaponClient)
 		end
 		recapId += 1
 		local myId = recapId
-		local agent = agentId and AgentConfig.Get(agentId)
 		recapTitle.Text = "AUSGESCHALTET VON " .. UITheme.Upper(tostring(killerName))
-		recapInfo.Text = (agent and not AgentConfig.RobloxAvatar and (agent.Name .. "  ·  ") or "") .. tostring(weaponName or "?")
+		recapInfo.Text = tostring(weaponName or "?")
 			.. "  ·  hatte noch " .. tostring(killerHealth) .. " Leben"
 		recap.Visible = not Modes.IsSurvival(player:GetAttribute("Mode")) -- offene Welt: großer Todesbildschirm (DeathScreen)
 		task.delay(4, function()

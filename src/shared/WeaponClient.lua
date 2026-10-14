@@ -19,7 +19,6 @@ local Remotes = require(Shared.Remotes)
 local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
-local AgentConfig = require(Shared.AgentConfig)
 local Movement = require(Shared.Movement)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local InputActions = require(Shared.InputActions)
@@ -28,7 +27,7 @@ local ViewModel = require(Shared.ViewModel)
 local WeaponAnimations = require(Shared.WeaponAnimations)
 local WeaponEffects = require(Shared.WeaponEffects)
 local SkinEffects = require(Shared.SkinEffects)
-local AgentModels = require(Shared.AgentModels)
+local AvatarArms = require(Shared.AvatarArms)
 local CharacterPose = require(Shared.CharacterPose)
 local InspectView = require(Shared.InspectView)
 local UITheme = require(Shared.UITheme)
@@ -161,15 +160,15 @@ local function updateViewModel()
 		-- Hautfarbe für gebaute Hände (falls die echten Arme fehlen)
 		local hand = nil
 		local bodyColors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
-		if AgentConfig.RobloxAvatar and bodyColors then
+		if bodyColors then
 			hand = bodyColors.RightArmColor3
 		end
-		-- die echten Arme (eigener Avatar: so wie am Körper, mit seinem Shirt), sonst gebaute Ärmel und Hände
-		local ok, pieces = pcall(AgentModels.ArmPieces, player.Character)
+		-- die echten Arme des Avatars (so wie am Körper, mit seinem Shirt), sonst gebaute Ärmel und Hände
+		local ok, pieces = pcall(AvatarArms.ArmPieces, player.Character)
 		local arms = ok and pieces or nil
-		local shirt = AgentConfig.RobloxAvatar and player.Character and player.Character:FindFirstChildOfClass("Shirt") or nil
+		local shirt = player.Character and player.Character:FindFirstChildOfClass("Shirt") or nil
 		viewModel = ViewModel.new(current, Cosmetics.WeaponSkin(player, agentId(), current), sleeve,
-			AttachmentConfig.EquippedList(player, current), arms, hand, AgentConfig.RobloxAvatar and AVATAR_ARM_WIDTH or nil, shirt)
+			AttachmentConfig.EquippedList(player, current), arms, hand, AVATAR_ARM_WIDTH, shirt)
 		viewModel:Draw()
 	end
 end
@@ -1012,11 +1011,11 @@ function WeaponClient.Init()
 
 	player.CharacterAdded:Connect(resetWeapon)
 
-	-- Arme vor der Kamera neu, wenn das 3D-Modell oder die Arme des Charakters später kommen bzw. ausgetauscht werden
+	-- Arme vor der Kamera neu, wenn die Arme des Charakters später kommen bzw. ausgetauscht werden
 	local armsPending = false
 	local function refreshArms(child)
 		local name = child.Name
-		if armsPending or not (name == AgentModels.ModelName or string.find(name, "Arm$") or string.find(name, "Hand$")) then
+		if armsPending or not (string.find(name, "Arm$") or string.find(name, "Hand$")) then
 			return
 		end
 		armsPending = true

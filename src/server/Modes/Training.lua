@@ -6,7 +6,7 @@
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
-local AgentBody = require(ServerStorage:WaitForChild("ServerShared").AgentBody)
+local CharacterBody = require(ServerStorage:WaitForChild("ServerShared").CharacterBody)
 local SpawnUtil = require(script.Parent.Parent.SpawnUtil)
 
 local Training = {}
@@ -43,7 +43,7 @@ end
 -- Übungspuppe an einer Markierung, steht nach dem Umfallen wieder auf
 local function spawnDummy(marker)
 	-- derselbe Körper wie Spieler und Bots (gleiche Trefferzonen), nur in Puppenfarben
-	local description = AgentBody.Description(Color3.fromRGB(200, 60, 60))
+	local description = CharacterBody.Description(Color3.fromRGB(200, 60, 60))
 	description.HeadColor = Color3.fromRGB(230, 200, 160)
 	description.LeftLegColor = Color3.fromRGB(60, 60, 70)
 	description.RightLegColor = Color3.fromRGB(60, 60, 70)
