@@ -1,7 +1,8 @@
 -- Match-HUD (HUD, MatchHUD) auf dem Client: Das eigene Porträt liegt über seiner Kachel (das HUD rechnet ZIndex für den
 -- ganzen Bildschirm, sonst bleibt das Bild unsichtbar); die allgemeine Tastenzeile ist in der offenen Welt aus (dort
 -- hat die Hotbar eine eigene, beide lägen übereinander); der Killfeed rückt in der roten Zone unter die Rangliste; die
--- Minimap zeigt die rote Zone als roten Punktkreis, der bei jedem Wechsel mitzieht, und färbt ihren Rand drinnen rot
+-- Minimap zeigt die rote Zone wie die große Karte als gefüllten roten Kreis mit Rand, der bei jedem Wechsel mitzieht, und
+-- färbt ihren Rand drinnen rot; mit Grundriss vom Server (Attribut Layout) Straßen und Hintergrund in den Farben der großen Karte
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -95,7 +96,16 @@ local minimap = find(screen, "Minimap")
 local function redDots()
 	local list = {}
 	for _, d in minimap and minimap:GetDescendants() or {} do
-		if d:IsA("Frame") and d.BackgroundColor3 == RED and d.Size == UDim2.fromOffset(4, 4) then
+		if d:IsA("Frame") and d.BackgroundColor3 == RED and d.Size == UDim2.fromOffset(3, 3) then
+			table.insert(list, d)
+		end
+	end
+	return list
+end
+local function redFill()
+	local list = {}
+	for _, d in minimap and minimap:GetDescendants() or {} do
+		if d:IsA("Frame") and d.BackgroundColor3 == RED and d.BackgroundTransparency == 0.55 and d.Visible then
 			table.insert(list, d)
 		end
 	end
@@ -114,15 +124,33 @@ SIM.Advance(1.2, 20)
 local first = redDots()
 check(minimap ~= nil and minimap.Visible and #first >= 12, "rote Zone als Punktkreis auf der Minimap (" .. #first .. ")")
 check(ringRed(), "in der roten Zone: Rand der Minimap rot")
+check(#redFill() >= 1, "rote Zone gefüllt (" .. #redFill() .. ")")
 map:SetAttribute("Redzones", '[{"Name":"Redzone","Title":"Altenfeld","X":900,"Z":900,"R":170,"Ends":0}]')
 SIM.Advance(1.2, 20)
 local second = redDots()
 check(#second == #first and first[1] ~= nil and first[1].Parent == nil, "Wechsel: alte Punkte weg, gleich viele am neuen Ort")
 check(second[1] ~= nil and second[1].Position.X.Scale > first[1].Position.X.Scale, "neue Punkte liegen am neuen Ort")
 check(not ringRed(), "draußen: Rand nicht mehr rot")
+check(#redFill() == 0, "rote Zone weit weg: keine Füllung mehr in der Minimap")
 map:SetAttribute("Redzones", "[]")
 SIM.Advance(1.2, 20)
 check(#redDots() == 0, "ohne rote Zone keine roten Punkte")
+-- Grundriss vom Server: Straße in Straßenfarbe, Hintergrund wie die große Karte
+local ROAD = Color3.fromRGB(128, 130, 134)
+map:SetAttribute("Layout", "Roads,Road,0,0,20,300,0;Buildings,Roof,30,0,10,10,0")
+SIM.Advance(1.2, 20)
+local road, roof, back = 0, 0, false
+for _, d in minimap and minimap:GetDescendants() or {} do
+	if d:IsA("Frame") and d.Visible and d.BackgroundColor3 == ROAD then
+		road += 1
+	elseif d:IsA("Frame") and d.Visible and d.BackgroundColor3 == Color3.fromRGB(92, 88, 82) then
+		roof += 1
+	elseif d:IsA("Frame") and d.BackgroundColor3 == Color3.fromRGB(38, 44, 34) then
+		back = true
+	end
+end
+check(road >= 1 and roof == 1 and back, string.format("Minimap mit Grundriss wie die große Karte (Straße %d, Dach %d, Hintergrund %s)",
+	road, roof, tostring(back)))
 -- eigene Todestasche (Attribut ExtDeathBag): rotes X an ihrer Stelle, weit weg am Rand festgehalten
 local bagIcon = minimap and find(minimap, "DeathBag")
 check(bagIcon ~= nil and not bagIcon.Visible, "ohne Todestasche kein X auf der Minimap")

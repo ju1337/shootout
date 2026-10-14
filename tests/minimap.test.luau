@@ -107,6 +107,59 @@ local ground = MinimapShapes.Clip(MinimapShapes.Rect(-1500, 1500, 150, 100, 0), 
 local big = MinimapShapes.Clip(MinimapShapes.Rect(0, 0, 400, 400, 0), 10, -20, 75, 2, out)
 check(big == 1 and out[1].Round == true, "großer Boden nicht als runder Ausschnitt")
 local rounds = 0
+
+-- Gefüllte Kreise (Zonen, Seen der offenen Welt): Streifen im Spielerkreis, ohne Überlappung, innen ohne Lücken
+local discCases, discPieces = 0, 0
+for _ = 1, 3000 do
+	local px, pz = rand() * 1000 - 500, rand() * 1000 - 500
+	local view = 240
+	local strip2 = 2 * view / 75
+	local cx, cz, r = rand() * 1000 - 500, rand() * 1000 - 500, 10 + rand() * 400
+	local n = MinimapShapes.ClipDisc(cx, cz, r, px, pz, view, strip2, out)
+	discCases += 1
+	discPieces += n
+	for i = 1, n do
+		local p = out[i]
+		check(p.W > 0 and p.D > 0, "Zonen-Stück ohne Fläche")
+		if p.Round then
+			check(n == 1, "runde Zone mit weiteren Stücken")
+			check(math.sqrt((p.X - px) ^ 2 + (p.Z - pz) ^ 2) + p.W / 2 <= view + 1e-6, "runde Zone ragt aus der Minimap")
+		else
+			for _, corner in { { -1, -1 }, { 1, -1 }, { 1, 1 }, { -1, 1 } } do
+				local qx, qz = p.X + corner[1] * p.W / 2, p.Z + corner[2] * p.D / 2
+				check(math.sqrt((qx - px) ^ 2 + (qz - pz) ^ 2) <= view + 1e-6, "Zonen-Streifen ragt aus der Minimap")
+			end
+			for j = i + 1, n do
+				local o = out[j]
+				check(math.abs(p.X - o.X) >= (p.W + o.W) / 2 - 1e-6, "Zonen-Streifen überlappen")
+			end
+		end
+	end
+	-- Punkte sicher in beiden Kreisen müssen bedeckt sein
+	for _ = 1, 20 do
+		local a, d = rand() * math.pi * 2, math.sqrt(rand()) * r
+		local qx, qz = cx + math.cos(a) * d, cz + math.sin(a) * d
+		local inView = math.sqrt((qx - px) ^ 2 + (qz - pz) ^ 2)
+		if inView <= view - strip2 and d <= r - strip2 then
+			local covered = false
+			for i = 1, n do
+				local p = out[i]
+				if p.Round and (qx - p.X) ^ 2 + (qz - p.Z) ^ 2 <= (p.W / 2) ^ 2 + 1e-9
+					or not p.Round and math.abs(qx - p.X) <= p.W / 2 + 1e-6 and math.abs(qz - p.Z) <= p.D / 2 + 1e-6 then
+					covered = true
+					break
+				end
+			end
+			check(covered, "Lücke in der Zone")
+		end
+	end
+end
+check(MinimapShapes.ClipDisc(0, 0, 50, 10, 0, 240, 6.4, out) == 1 and out[1].Round and math.abs(out[1].W - 100) < 1e-9,
+	"kleine Zone in der Minimap nicht als ganzer Kreis")
+check(MinimapShapes.ClipDisc(0, 0, 900, 10, 0, 240, 6.4, out) == 1 and out[1].Round and math.abs(out[1].W - 480) < 1e-9,
+	"große Zone um den Spieler füllt die Minimap nicht")
+check(MinimapShapes.ClipDisc(1000, 0, 50, 0, 0, 240, 6.4, out) == 0, "ferne Zone gezeichnet")
+print(string.format("%d Zonen-Fälle, Stücke im Schnitt %.1f", discCases, discPieces / discCases))
 print(string.format("%d Fälle (%d rund), Stücke im Schnitt %.1f, höchstens %d; Boden Schießstand: %d Streifen",
 	cases, roundCases, pieces / cases, maxPieces, ground))
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

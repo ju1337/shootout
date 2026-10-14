@@ -102,4 +102,46 @@ function MinimapShapes.Clip(rect, px, pz, radius, strip, out)
 	return n
 end
 
+-- Kleinste halbe Höhe eines Kreises (Mitte c, Radius r) über dem Bereich a..b der Querachse (0 = berührt ihn nicht)
+local function halfHeight(c, r, a, b)
+	local far = math.max(math.abs(a - c), math.abs(b - c))
+	return far < r and math.sqrt(r * r - far * far) or 0
+end
+
+-- Gefüllter Kreis (Zonen: Mitte cx/cz, Radius discRadius) im Kreis um den Spieler (px/pz, radius).
+-- Ganz drin -> der Kreis selbst (Round), Spielerkreis ganz drin -> der Spielerkreis (Round), sonst senkrechte
+-- Streifen (Drehung 0) ohne Überlappung (die Zonen sind halb durchsichtig, Überlappungen sähe man als Linien).
+-- Jeder Streifen liegt ganz im Spielerkreis. Gibt wie Clip die Anzahl der Stücke in out zurück.
+function MinimapShapes.ClipDisc(cx, cz, discRadius, px, pz, radius, strip, out)
+	local dx, dz = px - cx, pz - cz
+	local distance = math.sqrt(dx * dx + dz * dz)
+	if distance >= radius + discRadius then
+		return 0 -- weit weg
+	end
+	if distance + discRadius <= radius then
+		put(out, 1, cx, cz, discRadius * 2, discRadius * 2, true)
+		return 1 -- ganz drin
+	end
+	if distance + radius <= discRadius then
+		put(out, 1, px, pz, radius * 2, radius * 2, true)
+		return 1 -- deckt den ganzen Kreis ab
+	end
+	local from, to = math.max(cx - discRadius, px - radius), math.min(cx + discRadius, px + radius)
+	local count = math.max(1, math.ceil((to - from) / strip - 1e-6))
+	local width = (to - from) / count
+	local n = 0
+	for i = 1, count do
+		local a, b = from + (i - 1) * width, from + i * width
+		-- Spielerkreis: kleinste Höhe über dem Streifen (bleibt sicher drin); Zone: Höhe in der Streifenmitte (sonst fehlten
+		-- ganz außen ganze Streifen, den kleinen Überstand deckt der Rand der Zone)
+		local discHalf, viewHalf = halfHeight(cx, discRadius, (a + b) / 2, (a + b) / 2), halfHeight(px, radius, a, b)
+		local low, high = math.max(cz - discHalf, pz - viewHalf), math.min(cz + discHalf, pz + viewHalf)
+		if discHalf > 0 and viewHalf > 0 and high - low > 0.05 then
+			n += 1
+			put(out, n, (a + b) / 2, (low + high) / 2, b - a, high - low, false)
+		end
+	end
+	return n
+end
+
 return MinimapShapes
