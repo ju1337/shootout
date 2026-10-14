@@ -31,8 +31,8 @@ local FELT = Color3.fromRGB(22, 84, 52)
 local RED = Color3.fromRGB(200, 44, 44)
 local TITLES = { Slot = "SPIELAUTOMAT", Roulette = "ROULETTE", Blackjack = "BLACKJACK", Table = "BLACKJACK-TISCH" }
 
-local ui = {} -- gebaute Teile
-local state = { Game = nil, Currency = "RedPoints", Step = 1, PaidOk = false, Bet = "Red", Number = 7, Spinning = false,
+local ui: any = {} -- gebaute Teile (Felder kommen erst beim Bauen dazu)
+local state: any = { Game = nil, Currency = "RedPoints", Step = 1, PaidOk = false, Bet = "Red", Number = 7, Spinning = false,
 	Stopped = 0, Table = nil }
 
 local function amount()
