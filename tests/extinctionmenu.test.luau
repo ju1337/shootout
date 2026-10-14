@@ -3,7 +3,7 @@
 -- BATTLE PASS · STATISTIK · CODES · OPTIONEN (aus der Lobby ausgeliehen, verkleinert, beim Schließen zurückgegeben; ohne
 -- doppelten großen Titel, Untertitel in der Kopfzeile).
 -- Kein AGENTEN mehr (nur noch ein Agent): weder im Menü noch in der Lobby. Controller: L1/R1 blättert, Auswahl im Inhalt.
--- SKINS: Agenten-Skins als Kacheln mit Vorschau, AUSRÜSTEN schickt Equip an den Server.
+-- SKINS: Waffen-Skins je Waffe als Kacheln mit Vorschau, AUSRÜSTEN schickt Equip an den Server.
 -- Arcade aus (Modes.ArcadeEnabled = false, Standard): kein SPIELEN · ARCADE im Menü (kein LOADOUT mehr), AUFTRÄGE ohne Reiter
 -- ARCADE, die Lobby ohne SPIELEN (Modi, SCHNELLES SPIEL); GameMenu.Open("Play") zeigt SHOP.
 -- Das Menü ist kleiner als der Bildschirm (Leinwand 1600 x 900).
@@ -17,7 +17,6 @@ end
 
 game.JobId = "server-1"
 local store = SIM.DataStore("PlayerData_v1")
-require("Cosmetics").AgentSkins = true
 local Remotes = require("Remotes")
 local ProgressService = require("ProgressService")
 local WeaponService = require("WeaponService")
@@ -260,28 +259,33 @@ end
 GameMenu.SetOpen(false)
 step(0.1)
 
--- SKINS: Agenten-Skins als Kacheln, STANDARD zuerst und ausgerüstet, gesperrte abgedunkelt mit IM SHOP
+-- SKINS: Waffen oben, Waffen-Skins als Kacheln, STANDARD zuerst und ausgerüstet, gesperrte abgedunkelt mit IM SHOP
 key(Enum.KeyCode.M)
 menu():FindFirstChild("Tabs", true).Tab_Skins.Activated:Fire()
 step(0.1)
 check(title() == "SKINS" and activeTab() == "Skins", "Klick auf SKINS")
+check(find(menu(), "Mode_Agent") == nil and find(menu(), "Weapon_Rifle") ~= nil and find(menu(), "Weapon_SMG").Visible,
+	"SKINS: keine Agenten-Skins mehr, gleich die Waffen")
 local skinGrid = find(menu(), "Skins")
 local standard = find(menu(), "Skin_Standard")
 check(skinGrid ~= nil and standard ~= nil and standard.LayoutOrder == 1, "SKINS: Kachel STANDARD zuerst")
 check(standard and standard:FindFirstChildOfClass("UIStroke").Enabled, "SKINS: STANDARD ausgerüstet (grün umrandet)")
-local locked = find(menu(), "Skin_AS_Feldgrau")
+local locked = find(menu(), "Skin_W_Wald")
 check(locked ~= nil and locked.Dim.Visible, "SKINS: nicht freigeschalteter Skin abgedunkelt")
 local action = find(menu(), "Action")
 check(action and action.Text == "AUSGERÜSTET", "SKINS: Knopf zeigt AUSGERÜSTET")
 locked.Activated:Fire()
 step(0.1)
-check(action.Text == "IM SHOP  ·  300" and find(menu(), "SkinName").Text == "FELDGRAU", "SKINS: gesperrter Skin in der Vorschau, Knopf IM SHOP")
--- freischalten (Daten vom Server): Kachel hell, Klick rüstet aus
-bob:SetAttribute("Owned", HttpService:JSONEncode({ AS_Feldgrau = 1 }))
+check(string.find(action.Text, "IM SHOP", 1, true) ~= nil and find(menu(), "SkinName").Text == "WALDTARN",
+	"SKINS: gesperrter Skin in der Vorschau, Knopf IM SHOP")
+-- andere Waffe wählen, freischalten (Daten vom Server): Klick auf einen eigenen Skin rüstet ihn für diese Waffe aus
+find(menu(), "Weapon_SMG").Activated:Fire()
 step(0.1)
-check(not locked.Dim.Visible and action.Text == "AUSRÜSTEN", "SKINS: freigeschaltet, Knopf AUSRÜSTEN")
+check(find(menu(), "GridTitle").Text == "MP-SKINS" or string.find(find(menu(), "GridTitle").Text, "SKINS") ~= nil, "SKINS: SMG gewählt")
+bob:SetAttribute("Owned", HttpService:JSONEncode({ W_Wald = 1 }))
+step(0.1)
 local before = #SIM.RemoteLog
-action.Activated:Fire()
+find(menu(), "Skin_W_Wald").Activated:Fire()
 step(0.1)
 local sent = nil
 for i = before + 1, #SIM.RemoteLog do
@@ -290,38 +294,11 @@ for i = before + 1, #SIM.RemoteLog do
 		sent = entry.Args
 	end
 end
-check(sent ~= nil and sent[1] == "Equip" and sent[2] == "AS_Feldgrau", "SKINS: AUSRÜSTEN schickt Equip an den Server")
-bob:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Feldgrau" }))
-step(0.1)
-check(locked:FindFirstChildOfClass("UIStroke").Enabled and action.Text == "AUSGERÜSTET", "SKINS: Feldgrau ausgerüstet")
--- Reiter WAFFEN: Waffen wählbar, Skins der Waffe, Klick auf einen eigenen Skin rüstet ihn für diese Waffe aus
-find(menu(), "Mode_Weapon").Activated:Fire()
-step(0.1)
-check(find(menu(), "Weapon_SMG").Visible and find(menu(), "Skin_AS_Feldgrau") == nil and find(menu(), "Skin_W_Wald") ~= nil,
-	"SKINS/WAFFEN: Waffen da, Waffen-Skins statt Agenten-Skins")
-find(menu(), "Weapon_SMG").Activated:Fire()
-step(0.1)
-check(find(menu(), "GridTitle").Text == "MP-SKINS" or string.find(find(menu(), "GridTitle").Text, "SKINS") ~= nil, "SKINS/WAFFEN: SMG gewählt")
-bob:SetAttribute("Owned", HttpService:JSONEncode({ AS_Feldgrau = 1, W_Wald = 1 }))
-step(0.1)
-before = #SIM.RemoteLog
-find(menu(), "Skin_W_Wald").Activated:Fire()
-step(0.1)
-sent = nil
-for i = before + 1, #SIM.RemoteLog do
-	local entry = SIM.RemoteLog[i]
-	if entry.Remote == "ShopAction" then
-		sent = entry.Args
-	end
-end
-check(sent ~= nil and sent[1] == "Equip" and sent[2] == "W_Wald" and sent[3] == "SMG", "SKINS/WAFFEN: Klick rüstet Skin für die SMG aus")
-bob:SetAttribute("Equipped", HttpService:JSONEncode({ Agent = "AS_Feldgrau", ["W:SMG"] = "W_Wald" }))
+check(sent ~= nil and sent[1] == "Equip" and sent[2] == "W_Wald" and sent[3] == "SMG", "SKINS: Klick rüstet Skin für die SMG aus")
+bob:SetAttribute("Equipped", HttpService:JSONEncode({ ["W:SMG"] = "W_Wald" }))
 step(0.1)
 check(find(menu(), "Skin_W_Wald"):FindFirstChildOfClass("UIStroke").Enabled and find(menu(), "Action").Text == "AUSGERÜSTET",
-	"SKINS/WAFFEN: Waldtarn auf der SMG ausgerüstet")
-find(menu(), "Mode_Agent").Activated:Fire()
-step(0.1)
-check(find(menu(), "Skin_AS_Feldgrau") ~= nil and not find(menu(), "Weapon_SMG").Visible, "SKINS: zurück auf AGENT")
+	"SKINS: Waldtarn auf der SMG ausgerüstet")
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt (auf SKINS)")
 key(Enum.KeyCode.M)

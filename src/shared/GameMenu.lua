@@ -525,7 +525,6 @@ local function buildAgentStage()
 		local primary, accent, material = Cosmetics.AgentColors(player, agent.Id)
 		local weapon = AgentConfig.LoadoutFor(player, agent.Id)[1]
 		local key = agent.Id .. tostring(primary) .. tostring(accent) .. tostring(material) .. tostring(weapon)
-			.. tostring(Cosmetics.AgentSkin(player))
 			.. tostring(Cosmetics.WeaponSkin(player, agent.Id, weapon)) .. tostring(player.Character)
 		if key ~= shownKey then
 			shownKey = key

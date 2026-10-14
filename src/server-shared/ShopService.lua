@@ -57,19 +57,9 @@ function actions.Buy(player, itemId)
 	return item.Name .. " gekauft!", true
 end
 
--- Waffen-Skin auf die Zielwaffe ausrüsten bzw. Agenten-Skin auf den Agenten (weaponName egal)
+-- Waffen-Skin auf die Zielwaffe ausrüsten
 function actions.Equip(player, itemId, weaponName)
 	local item = Cosmetics.Get(itemId)
-	if item and item.Type == "Agent" then
-		if not Cosmetics.AgentSkins then
-			return "Agenten-Skins gibt es nicht mehr: du spielst mit deinem eigenen Avatar.", false
-		end
-		if not ProgressService.Owns(player, itemId) then
-			return item.Creator and "Diesen Skin gibt es nur für Creator." or "Diesen Skin besitzt du nicht.", false
-		end
-		ProgressService.SetEquipped(player, "Agent", itemId)
-		return item.Name .. " ausgerüstet.", true
-	end
 	if item and item.Mastery and item.Weapon and not ProgressService.Owns(player, itemId) then
 		local kills = MasteryConfig.Kills(player, item.Weapon)
 		return "Noch gesperrt: " .. math.max(0, item.Mastery - kills) .. " Kills mit "
@@ -88,14 +78,10 @@ function actions.Equip(player, itemId, weaponName)
 	return item.Name .. " auf " .. WeaponConfig.Get(weaponName).DisplayName .. " ausgerüstet.", true
 end
 
--- Standard-Aussehen: slot = "W:<Waffe>" oder "Agent"
+-- Standard-Aussehen: slot = "W:<Waffe>"
 function actions.Unequip(player, slot)
 	if typeof(slot) ~= "string" then
 		return "Ungültig.", false
-	end
-	if slot == "Agent" then
-		ProgressService.SetEquipped(player, "Agent", nil)
-		return "Standard-Look ausgerüstet.", true
 	end
 	local name = string.match(slot, "^W:(%w+)$")
 	if not name or not WeaponConfig.Get(name) then

@@ -1,19 +1,16 @@
 -- SkinMenu (ModuleScript, nur Client)
--- Reiter SKINS im Menü der offenen Welt (ExtinctionClient). Oben zwei Reiter:
---   AGENT:  den einen Agenten (AgentConfig.MainId) mit freigeschalteten Agenten-Skins (Cosmetics, Type = "Agent") ausstatten
---   WAFFEN: daneben die Waffen (WEAPONS) zum Wählen, darunter die Waffen-Skins, die auf diese Waffe passen
+-- Reiter SKINS im Menü der offenen Welt (ExtinctionClient):
+--   oben:   die Waffen (WEAPONS) zum Wählen, darunter die Waffen-Skins, die auf diese Waffe passen
 --           (Cosmetics.FitsWeapon, Meisterschafts-Tarnungen nur auf ihrer Waffe)
---   links:  großer 3D-Agent mit dem angeklickten Skin (dreht sich langsam), Name, Seltenheit, Herkunft und ein Knopf:
+--   links:  große 3D-Waffe mit dem angeklickten Skin, Name, Seltenheit, Herkunft und ein Knopf:
 --           AUSRÜSTEN / AUSGERÜSTET, gesperrte Skins IM SHOP · Preis (öffnet den SHOP) bzw. NUR FÜR CREATOR
---   rechts: alle Agenten-Skins als Kacheln im Stil des Inventars (STANDARD zuerst, dann freigeschaltete, dann gesperrte;
+--   rechts: alle Skins der Waffe als Kacheln im Stil des Inventars (STANDARD zuerst, dann freigeschaltete, dann gesperrte;
 --           ausgerüstet grün umrandet, gesperrt abgedunkelt mit Schloss). Klick auf eine freigeschaltete Kachel rüstet
 --           sie gleich aus, eine gesperrte zeigt nur die Vorschau.
--- Ausrüsten läuft über Remotes.ShopAction: Agent "Equip" Id bzw. "Unequip" "Agent", Waffe "Equip" Id Waffe bzw.
--- "Unequip" "W:<Waffe>"; der Server zieht Agent und Waffe sofort um.
+-- Ausrüsten läuft über Remotes.ShopAction: "Equip" Id Waffe bzw. "Unequip" "W:<Waffe>"; der Server rüstet sofort um.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
@@ -49,8 +46,8 @@ end
 local RARITY_ORDER = { Common = 1, Rare = 2, Epic = 3, Legendary = 4, Mythic = 5 }
 local function sortedSkins(owned, weaponName)
 	local list = {}
-	for _, item in Cosmetics.List(weaponName and "Weapon" or "Agent") do
-		if not weaponName or Cosmetics.FitsWeapon(item, weaponName) then
+	for _, item in Cosmetics.List("Weapon") do
+		if Cosmetics.FitsWeapon(item, weaponName) then
 			table.insert(list, item)
 		end
 	end
@@ -68,7 +65,7 @@ local function sortedSkins(owned, weaponName)
 	return list
 end
 
--- Eine Seite (Agenten-Skins bzw. Skins einer Waffe, weaponName) in body bauen; gibt refresh zurück
+-- Eine Seite (Skins der Waffe weaponName) in body bauen; gibt refresh zurück
 local function buildPage(body, width, height, style, weaponName)
 	local C = UITheme.MenuColors
 	local previewW, gap = 380, 22
@@ -95,7 +92,7 @@ local function buildPage(body, width, height, style, weaponName)
 	UITheme.Corner(action, 3)
 
 	-- ---------- rechts: Kacheln ----------
-	label({ Name = "GridTitle", Size = UDim2.fromOffset(300, 20), Position = UDim2.fromOffset(gridX, 0), Text = weaponName and upper(WeaponConfig.Get(weaponName).DisplayName) .. "-SKINS" or "AGENTEN-SKINS",
+	label({ Name = "GridTitle", Size = UDim2.fromOffset(300, 20), Position = UDim2.fromOffset(gridX, 0), Text = upper(WeaponConfig.Get(weaponName).DisplayName) .. "-SKINS",
 		TextSize = 13, Font = F.Display, ZIndex = 6 }, body)
 	local countLabel = label({ Name = "Count", Position = UDim2.fromOffset(gridX + gridW - 300, 0), Size = UDim2.fromOffset(300, 20),
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 6 }, body)
@@ -111,13 +108,9 @@ local function buildPage(body, width, height, style, weaponName)
 	local selected = nil -- angeklickter Skin (Item oder STANDARD); nil = der ausgerüstete
 	local tiles = {}     -- [Id] = { Frame, Stroke, Dim, Lock, State }
 	local shownKey = nil
-	local figure = nil
 
-	local slot = weaponName and "W:" .. weaponName
+	local slot = "W:" .. weaponName
 	local function equippedEntry()
-		if not weaponName then
-			return Cosmetics.AgentSkin(player) or STANDARD
-		end
 		local id = Cosmetics.GetEquipped(player)[slot]
 		local item = id and Cosmetics.Get(id)
 		if item and Cosmetics.GetOwned(player)[id] and Cosmetics.FitsWeapon(item, weaponName) then
@@ -127,11 +120,7 @@ local function buildPage(body, width, height, style, weaponName)
 	end
 	local function show(view, entry, aspect)
 		local skin = entry ~= STANDARD and entry or nil
-		if weaponName then
-			LobbyPages.ShowWeapon(view, weaponName, skin, aspect, 0.85)
-			return nil
-		end
-		return LobbyPages.ShowAgent(view, skin)
+		LobbyPages.ShowWeapon(view, weaponName, skin, aspect, 0.85)
 	end
 	local function isOwned(entry)
 		return entry == STANDARD or Cosmetics.GetOwned(player)[entry.Id] ~= nil
@@ -139,7 +128,7 @@ local function buildPage(body, width, height, style, weaponName)
 
 	local function equip(entry)
 		if entry == STANDARD then
-			Remotes.ShopAction:FireServer("Unequip", slot or "Agent")
+			Remotes.ShopAction:FireServer("Unequip", slot)
 		else
 			Remotes.ShopAction:FireServer("Equip", entry.Id, weaponName)
 		end
@@ -237,7 +226,7 @@ local function buildPage(body, width, height, style, weaponName)
 		local shown = selected or equipped
 		if shownKey ~= shown.Id then
 			shownKey = shown.Id
-			figure = show(view, shown, previewW / (height - 210))
+			show(view, shown, previewW / (height - 210))
 		end
 		local rarity = Cosmetics.Rarities[shown.Rarity]
 		nameLabel.Text = upper(shown.Name)
@@ -245,10 +234,9 @@ local function buildPage(body, width, height, style, weaponName)
 		rarityLabel.TextColor3 = shown == STANDARD and C.Muted or rarity.Color
 		local own = isOwned(shown)
 		if shown == STANDARD then
-			infoLabel.Text = weaponName and "Die Waffe ohne Skin." or "Der Look deines Agenten ohne Skin."
+			infoLabel.Text = "Die Waffe ohne Skin."
 		elseif own then
-			infoLabel.Text = weaponName and "Freigeschaltet. Die Waffe trägt den Skin überall, sobald du ihn ausrüstest."
-				or "Freigeschaltet. Dein Agent trägt den Skin überall, sobald du ihn ausrüstest."
+			infoLabel.Text = "Freigeschaltet. Die Waffe trägt den Skin überall, sobald du ihn ausrüstest."
 		else
 			infoLabel.Text = sourceText(shown)
 		end
@@ -271,30 +259,16 @@ local function buildPage(body, width, height, style, weaponName)
 		end
 	end
 
-	-- Figur dreht sich langsam hin und her, solange die Seite offen ist
-	local spin
-	spin = RunService.RenderStepped:Connect(function()
-		if not body.Parent then
-			spin:Disconnect()
-			return
-		end
-		if figure and figure.Parent then
-			local angle = math.sin(os.clock() * 0.5) * 0.5 + 0.35
-			figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, angle, 0))
-		end
-	end)
-
 	refresh()
 	return refresh
 end
 
--- Baut die Seite in body (width x height): oben Reiter AGENT · WAFFEN (bei WAFFEN daneben die Waffen), darunter die Skins.
+-- Baut die Seite in body (width x height): oben die Waffen, darunter die Skins der gewählten Waffe.
 -- style = { Tile, Red, Glass, OpenShop = function() }. Gibt { Refresh = function() } zurück (bei Änderung von
 -- Owned/Equipped aufrufen).
 function SkinMenu.Build(body, width, height, style)
 	local C = UITheme.MenuColors
-	-- ohne Agenten-Skins (Cosmetics.AgentSkins aus) nur der Reiter WAFFEN, die Reiter AGENT/WAFFEN fallen weg
-	local mode, weapon = Cosmetics.AgentSkins and "Agent" or "Weapon", WEAPONS[1]
+	local weapon = WEAPONS[1]
 	local content, refresh = nil, nil
 	local bar = make("Frame", { Name = "SkinBar", Size = UDim2.fromOffset(width, BAR_H - 8), BackgroundTransparency = 1, ZIndex = 6 }, body)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder,
@@ -310,19 +284,8 @@ function SkinMenu.Build(body, width, height, style)
 		buttons[name] = b
 		return b
 	end
-	if Cosmetics.AgentSkins then
-		button("Mode_Agent", "AGENT", 1, 110, function()
-			mode = "Agent"
-			rebuild()
-		end)
-		button("Mode_Weapon", "WAFFEN", 2, 110, function()
-			mode = "Weapon"
-			rebuild()
-		end)
-		make("Frame", { Name = "Sep", LayoutOrder = 3, Size = UDim2.fromOffset(14, 1), BackgroundTransparency = 1 }, bar)
-	end
-	-- Waffen nur im Reiter WAFFEN; bei schmalem Bildschirm werden die Knöpfe schmaler
-	local weaponW = math.clamp(math.floor((width - 2 * 116 - 20 - 6 * #WEAPONS) / #WEAPONS), 56, 120)
+	-- bei schmalem Bildschirm werden die Knöpfe schmaler
+	local weaponW = math.clamp(math.floor((width - 6 * #WEAPONS) / #WEAPONS), 56, 120)
 	for i, name in WEAPONS do
 		button("Weapon_" .. name, upper(WeaponConfig.Get(name).DisplayName), 3 + i, weaponW, function()
 			weapon = name
@@ -335,16 +298,13 @@ function SkinMenu.Build(body, width, height, style)
 			content:Destroy()
 		end
 		for name, b in buttons do
-			local on = name == "Mode_" .. mode or (mode == "Weapon" and name == "Weapon_" .. weapon)
+			local on = name == "Weapon_" .. weapon
 			b.BackgroundColor3 = on and style.Red or style.Tile
 			b.TextColor3 = on and C.Text or C.Muted
-			if string.sub(name, 1, 7) == "Weapon_" then
-				b.Visible = mode == "Weapon"
-			end
 		end
 		content = make("Frame", { Name = "SkinPage", Position = UDim2.fromOffset(0, BAR_H), Size = UDim2.fromOffset(width, height - BAR_H),
 			BackgroundTransparency = 1, ZIndex = 6 }, body)
-		refresh = buildPage(content, width, height - BAR_H, style, mode == "Weapon" and weapon or nil)
+		refresh = buildPage(content, width, height - BAR_H, style, weapon)
 	end
 	rebuild()
 	return { Refresh = function()

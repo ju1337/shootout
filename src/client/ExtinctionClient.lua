@@ -7,7 +7,7 @@
 --   Controller: R1/L1 nächste/vorige Waffe der Hotbar (im Menü: Reiter), △ = heilen (Heil-Item aus der Hotbar),
 --               Select = Menü; gehalten: Steuerkreuz oben = Weltkarte (angetippt: Ping), Select = Squad, △ = Fahrzeug einpacken
 --   Menü (kleiner als der Bildschirm): Reiter INVENTAR · MARKT (Spielermarkt, nur in der Safe Zone) · AUFTRÄGE · LOOT ·
---            GUIDE · SQUAD · ERFOLGE · LOADOUT · SKINS (Agenten-Skins, SkinMenu) · SHOP · BATTLE PASS · STATISTIK · CODES ·
+--            GUIDE · SQUAD · ERFOLGE · LOADOUT · SKINS (Waffen-Skins, SkinMenu) · SHOP · BATTLE PASS · STATISTIK · CODES ·
 --            OPTIONEN (LOADOUT und die letzten fünf sind Seiten der Lobby, GameMenu.BorrowPage). SPIELEN · ARCADE (Link in
 --            die Lobby) gibt es nur, solange Arcade an ist (Modes.ArcadeEnabled; Extinction ist das Hauptspiel).
 --   Fenster: Stand (kaufen links, verkaufen rechts), Lager (Tasche links, Lager rechts),
@@ -3856,7 +3856,7 @@ openMenuTab = function(id)
 		ExtinctionMap.Set(false)
 		Guide.Open()
 	elseif id == "Skins" then
-		-- Waffen-Skins (und, falls an, Agenten-Skins) ausrüsten (SkinMenu); gesperrte führen in den SHOP
+		-- Waffen-Skins ausrüsten (SkinMenu); gesperrte führen in den SHOP
 		ExtinctionMap.Set(false)
 		local win = newWindow("Skins", "SKINS", "RÜSTE DEINE WAFFEN MIT FREIGESCHALTETEN SKINS AUS")
 		local page = require(script.Parent.SkinMenu).Build(win.Body, Inv.CONTENT_W, Inv.CONTENT_H, { Tile = Inv.TILE, Red = Inv.MENU_RED, Glass = Inv.GLASS,

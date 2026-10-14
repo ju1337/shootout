@@ -284,7 +284,7 @@ local STAT_GETTERS = {
 	Utility = function(agent) return -agent.Ability.Cooldown end,
 }
 -- Nur noch ein Agent im Spiel: alle Spieler spielen ihn, die übrigen Agenten sind ausgeblendet und nicht wählbar
--- (Werte bleiben für Bots und spätere Rückkehr). Sein Aussehen ändert man mit Agenten-Skins (Cosmetics, Menü SKINS).
+-- (Werte bleiben für Bots und spätere Rückkehr). Aussehen = eigener Roblox-Avatar.
 AgentConfig.MainId = AgentConfig.Agents[1].Id
 -- Spieler spawnen mit ihrem eigenen Roblox-Avatar (kein Agenten-Körper, keine Agenten-Modelle mehr).
 

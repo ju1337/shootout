@@ -64,9 +64,9 @@ local function defaultProfile()
 		Season = RankConfig.CurrentSeason() } }
 end
 
--- Alte Spielstände: Skins, die es nicht mehr gibt (z.B. die entfernten Agenten-Skins), fallen aus Besitz und
--- Merkliste weg; ausgerüstet bleiben nur bekannte Waffen-Skins ("W:<Waffe>") und der Agenten-Skin ("Agent"; die alten
--- Plätze "A:<Agent>" je Agent gibt es nicht mehr). So sehen Inventar, RAP-Wert, Markt und Tausch nur Skins aus Cosmetics.
+-- Alte Spielstände: Skins, die es nicht mehr gibt (z.B. die entfernten Agenten-Skins "AS_…" bzw. "A_…"), fallen ohne
+-- Erstattung aus Besitz und Merkliste weg; ausgerüstet bleiben nur bekannte Waffen-Skins ("W:<Waffe>"; die Plätze
+-- "Agent" und "A:<Agent>" gibt es nicht mehr). So sehen Inventar, RAP-Wert, Markt und Tausch nur Skins aus Cosmetics.
 local function cleanItems(profile)
 	local owned = {}
 	for id, count in type(profile.Owned) == "table" and profile.Owned or {} do
@@ -78,8 +78,7 @@ local function cleanItems(profile)
 	local equipped = {}
 	for slot, id in type(profile.Equipped) == "table" and profile.Equipped or {} do
 		local item = Cosmetics.Get(id)
-		if type(slot) == "string" and item and ((string.sub(slot, 1, 2) == "W:" and item.Type == "Weapon")
-			or (slot == "Agent" and item.Type == "Agent")) then
+		if type(slot) == "string" and item and string.sub(slot, 1, 2) == "W:" and item.Type == "Weapon" then
 			equipped[slot] = id
 		end
 	end

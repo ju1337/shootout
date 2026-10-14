@@ -4,8 +4,8 @@
 --   LOADOUT:     links die Waffen, Mitte große 3D-Vorschau mit dem ausgerüsteten Skin, rechts die eigenen Skins
 --                zum Ausrüsten (Standard + gekaufte) bzw. die Aufsätze (Agenten haben keine Skins)
 --   SHOP:        Startseite START: links das Angebot des Tages (ShopOffers: Rabatt, Restzeit, großer KAUFEN-Knopf),
---                rechts vier Kacheln WAFFEN-SKINS, AGENTEN-SKINS, ROBUX, VERKAUFEN, die in den Reiter führen;
---                Reiter WAFFEN-/AGENTEN-SKINS: Karten mit 3D-Vorschau vor der Farbe des Skins, Rand und Schild in der
+--                rechts drei Kacheln WAFFEN-SKINS, ROBUX, VERKAUFEN, die in den Reiter führen;
+--                Reiter WAFFEN-SKINS: Karten mit 3D-Vorschau vor der Farbe des Skins, Rand und Schild in der
 --                Seltenheit (legendär oben), RAP-Wert, Münzpreis (Angebot durchgestrichen) und KAUFEN / NOCH x MÜNZEN;
 --                Reiter VERKAUFEN: eigene handelbare Skins ans System zurückverkaufen (sofort RAP, RapConfig)
 --   BATTLE PASS: Saison, Stufe und Fortschritt, alle Stufen als waagerechte Leiste (die nächste hervorgehoben),
@@ -33,8 +33,6 @@ local RapConfig = require(Shared.RapConfig)
 local PaidRandom = require(Shared.PaidRandom)
 local OddsPanel = require(Shared.OddsPanel)
 local WeaponEffects = require(Shared.WeaponEffects)
-local AgentConfig = require(Shared.AgentConfig)
-local AgentFigure = require(Shared.AgentFigure)
 local ShopOffers = require(Shared.ShopOffers)
 local MarketplaceService = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
@@ -112,22 +110,6 @@ end
 -- Für andere Menüs (SkinMenu, Reiter WAFFEN): Waffe mit Skin in eine Vorschau stellen
 function LobbyPages.ShowWeapon(view, weaponName, skin, aspect, fill)
 	showWeapon(view, weaponName, skin, aspect, fill)
-end
-
--- Der eine Agent (AgentConfig.MainId) mit einem Agenten-Skin (nil = Standard-Look) als ganze Figur, leicht gedreht
-function LobbyPages.ShowAgent(view, skin, weaponName)
-	view:ClearAllChildren()
-	local agent = AgentConfig.Get(AgentConfig.MainId) or AgentConfig.Agents[1]
-	local primary = skin and skin.Color or agent.Color:Lerp(Color3.new(0, 0, 0), 0.6)
-	-- ohne Skin: der eigene Roblox-Avatar, sonst eine einfache Figur in den Skin-Farben
-	local figure = not skin and AgentFigure.Avatar(player) or AgentFigure.Build(agent, primary, agent.Color, nil, weaponName,
-		skin and skin.Material)
-	figure:PivotTo(CFrame.new(0, 3, 0) * CFrame.Angles(0, 0.45, 0))
-	figure.Parent = view
-	local camera = make("Camera", { FieldOfView = 30 }, view)
-	camera.CFrame = AgentFigure.CameraCFrame * CFrame.new(0, 0, 4.5)
-	view.CurrentCamera = camera
-	return figure
 end
 
 -- Watch-Liste plus alle Gamepässe (Pass_<Id>): Karten im Robux-Shop zeigen nach dem Kauf sofort GEKAUFT
@@ -208,25 +190,9 @@ local function stage(props, parent, tint, rarityColor)
 	return frame
 end
 
--- Agent mit Skin so zeigen, dass die ganze Figur mittig ins Bild passt (Blickrichtung wie in der Lobby)
-local function showAgentFit(view, item, aspect, fill)
-	local figure = LobbyPages.ShowAgent(view, item)
-	local box, size = figure:GetBoundingBox()
-	local look = AgentFigure.CameraCFrame.LookVector
-	local halfV = math.rad(15)
-	local halfH = math.atan(math.tan(halfV) * (aspect or 1))
-	local radius = math.max(size.X, size.Z) / 2
-	local distance = math.max(size.Y / 2 / math.tan(halfV), radius / math.tan(halfH)) / (fill or 0.82) + radius
-	view.CurrentCamera.CFrame = CFrame.lookAt(box.Position - look * distance, box.Position)
-end
-
--- Skin in eine Vorschau stellen (Waffen-Skin am Sturmgewehr, Agenten-Skin am Agenten)
+-- Skin in eine Vorschau stellen (Waffen-Skin am Sturmgewehr)
 local function showSkin(view, item, aspect)
-	if item.Type == "Agent" then
-		showAgentFit(view, item, aspect)
-	else
-		showWeapon(view, "Rifle", item, aspect, 0.86)
-	end
+	showWeapon(view, "Rifle", item, aspect, 0.86)
 end
 
 -- Preiszeile: Münze + Preis, beim Angebot davor der alte Preis durchgestrichen. Gibt die Zeile zurück.
@@ -616,7 +582,7 @@ function LobbyPages.Shop(page)
 			label({ Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X, Text = upper(rarity.Name), TextSize = 15,
 				Font = F.Bold, TextColor3 = rarity.Color, LayoutOrder = 1 }, line)
 			label({ Size = UDim2.fromOffset(0, 20), AutomaticSize = Enum.AutomaticSize.X,
-				Text = item.Type == "Agent" and "AGENTEN-SKIN" or "WAFFEN-SKIN", TextSize = 15, Font = F.Bold, TextColor3 = C.Muted,
+				Text = "WAFFEN-SKIN", TextSize = 15, Font = F.Bold, TextColor3 = C.Muted,
 				LayoutOrder = 2 }, line)
 			priceRow({ Position = UDim2.fromOffset(24, 512), Size = UDim2.fromOffset(0, 44) }, panel, offer.Price, offer.OldPrice, 40)
 			label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -24, 0, 526), Size = UDim2.fromOffset(260, 20),
@@ -636,8 +602,8 @@ function LobbyPages.Shop(page)
 		local w = math.floor((PAGE_W - x0 - gap) / 2)
 		local h = math.floor((PAGE_H - 54 - gap) / 2)
 		local weaponTotal, weaponHave, weaponFrom = catalogCount("Weapon")
-		-- ohne Agenten-Skins nimmt WAFFEN-SKINS die ganze obere Reihe ein
-		local weaponW = Cosmetics.AgentSkins and w or 2 * w + gap
+		-- WAFFEN-SKINS nimmt die ganze obere Reihe ein
+		local weaponW = 2 * w + gap
 		categoryTile(x0, 0, weaponW, h, "WAFFEN-SKINS", weaponHave .. " VON " .. weaponTotal .. " IM BESITZ  ·  AB "
 			.. UITheme.FormatNumber(weaponFrom) .. " MÜNZEN", "WAFFEN-SKINS", function(area, aw, ah)
 			local item = showcase("Weapon")
@@ -647,18 +613,6 @@ function LobbyPages.Shop(page)
 				showWeapon(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), "Rifle", item, aw / ah, 0.8)
 			end
 		end)
-		if Cosmetics.AgentSkins then
-			local agentTotal, agentHave, agentFrom = catalogCount("Agent")
-			categoryTile(x0 + w + gap, 0, w, h, "AGENTEN-SKINS", agentHave .. " VON " .. agentTotal .. " IM BESITZ  ·  AB "
-				.. UITheme.FormatNumber(agentFrom) .. " MÜNZEN", "AGENTEN-SKINS", function(area)
-				local item = showcase("Agent")
-				if item then
-					local rarity = Cosmetics.Rarities[item.Rarity]
-					local s = stage({ Size = UDim2.fromScale(1, 1) }, area, item.Color, rarity.Color)
-					LobbyPages.ShowAgent(viewport({ Size = UDim2.fromScale(1, 1), ZIndex = 2 }, s), item)
-				end
-			end)
-		end
 		categoryTile(x0, h + gap, w, h, "ROBUX", "MÜNZEN, PÄSSE UND BOOSTS", "ROBUX", function(area)
 			local s = stage({ Size = UDim2.fromScale(1, 1) }, area, C.Gold, C.Gold)
 			UITheme.Coin(s, 96, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.42, 0.5), ZIndex = 2 })
@@ -739,14 +693,12 @@ function LobbyPages.Shop(page)
 	local HINTS = {
 		Home = "WÄHLE, WAS DU KAUFEN MÖCHTEST",
 		Weapon = "WAFFEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS",
-		Agent = "AGENTEN-SKINS RÜSTEST DU IM MENÜ UNTER SKINS AUS",
 		Robux = "",
 		Sell = "",
 	}
-	local shopTabs = Cosmetics.AgentSkins and { "START", "WAFFEN-SKINS", "AGENTEN-SKINS", "ROBUX", "VERKAUFEN" }
-		or { "START", "WAFFEN-SKINS", "ROBUX", "VERKAUFEN" }
+	local shopTabs = { "START", "WAFFEN-SKINS", "ROBUX", "VERKAUFEN" }
 	selectTab = tabs(page, shopTabs, 0, 0, PAGE_W, function(name)
-		currentType = ({ START = "Home", ["WAFFEN-SKINS"] = "Weapon", ["AGENTEN-SKINS"] = "Agent", ROBUX = "Robux",
+		currentType = ({ START = "Home", ["WAFFEN-SKINS"] = "Weapon", ROBUX = "Robux",
 			VERKAUFEN = "Sell" })[name]
 		hint.Text = HINTS[currentType]
 		fill()
