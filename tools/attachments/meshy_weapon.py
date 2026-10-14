@@ -77,14 +77,22 @@ WEAPONS = {
         "Extras": [("Loader", "Cylinder", None, (0.35, 0.85, 0.85), None, (0.60, 0.34, 0.36))],
         "Points": {
             "Point_Grip": (0.62, -0.02, 0.0),
-            "Point_SightRear": (0.30, 0.505, 0.0),
-            "Point_SightFront": (-0.90, 0.505, 0.0),
+            "Point_SightRear": (0.33, 0.517, 0.0),
+            "Point_SightFront": (-0.87, 0.517, 0.0),
             "Point_Muzzle": (None, 0.315, 0.0),
             "Point_Eject": (0.12, 0.30, 0.0),
             "Point_LeftHand": (0.63, -0.15, 0.156),
             "Pivot_Cylinder": (0.12, 0.235, 0.0),
             "Pivot_Hammer": (0.43, 0.32, 0.0),
             "Pivot_Loader": (0.60, 0.34, 0.36),
+        },
+        # Kimme und Korn: Kerbe (0,046) und Korn (0,087, aber weiter vom Auge) waren aus Sicht des Auges gleich breit –
+        # kein Lichtspalt. Kerbe auf 0,066 verbreitert; Visierlinie von 0,505 (Kornmitte) auf die Kornspitze 0,517.
+        "Sights": {
+            "Notch": {"x": (0.26, 0.345), "bottom": 0.488, "z": 0.0, "half": 0.033},
+            "Dots": [("Neon_FrontDot", (-0.8427, 0.502, -0.0008), 0.011, "front"),
+                     ("Neon_RearDot_L", (0.3357, 0.503, 0.054), 0.0085, "rear"),
+                     ("Neon_RearDot_R", (0.3357, 0.503, -0.054), 0.0085, "rear")],
         },
     },
     # MP (MP5): gebogenes Magazin unter dem Schacht, Spannhebel oben auf dem Rohr vor dem Gehäuse als Bolt
