@@ -6,6 +6,8 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/ar15_v2.py  <meshy.glb> art/sources/Rifle.glb     # Sturmgewehr -> Assets/Weapons/Rifle
     python3 tools/attachments/sniper_v1.py <meshy.glb> art/sources/DMR.glb      # Präzisionsgewehr -> Assets/Weapons/DMR
     python3 tools/attachments/meshy_weapon.py <Waffe> <meshy-fbx.zip> art/sources/<Waffe>.glb   # Pistol, Revolver, SMG, LMG, Shotgun
+    python3 tools/attachments/meshy_attachment.py SMG <Aufsatz> <meshy-zip> <mp-meshy-zip> art/sources/SMG.glb art/sources/Attachments/<Aufsatz>_SMG.glb
+                                         # FastMag, Suppressor, Compensator, HoloSight (Rotpunkt) nur für die MP
     python3 tools/attachments/supp_v2.py  <meshy.glb> art/sources/Attachments/Suppressor.glb
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
@@ -30,6 +32,13 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   Schnelllader `Loader` des Revolvers (kurze Kopie der Trommel). `Sights` = Kimme und Korn verbessern: `Notch` fräst die
   Kimmenkerbe auf eine Breite, in der das Korn mit Lichtspalt sitzt (Wände und Boden geschlossen), `Dots` setzt
   Leuchtpunkte `Neon_…` bündig auf die Rückseiten (Korn orange, Kimme weiß). Pistole: Kerbe 0,023 → 0,068.
+- **meshy_attachment**: Aufsätze für eine bestimmte Meshy-Waffe, im Koordinatensystem ihrer GLB gebaut (gleicher
+  Ursprung und Maßstab wie meshy_weapon). Studio-Name `<Aufsatz>_<Waffe>` (z.B. `FastMag_SMG`), an dieser Waffe hat es
+  Vorrang vor dem allgemeinen Modell. MP: Schnellmagazin (184.764 Dreiecke, 10 Teile) an die Kontur des eingebauten
+  Magazins angepasst (18° geneigt, Abweichung 0,004), Point_Mount = Mitte des größten Magazin-Stücks; Schalldämpfer
+  (1.362.272 Dreiecke, 70 Teile, 0,25 Studs dick) und Kompensator (223.448, 12 Teile) mit dem Klemmring über dem
+  Laufende; Rotpunkt (633.612, 33 Teile) auf `Point_Optic` der MP (Gehäuserippe), Glas im Fenster, `Neon_Reticle` auf
+  der Visierlinie 0,03 Studs über Kimme und Korn. Keine Spiegelung (Schrift bleibt lesbar), nichts reduziert.
 - **sniper_v1**: Scharfschützengewehr mit Zielfernrohr: Zweibein eingeklappt (Beine am Gelenk abgetrennt und nach vorn
   gedreht), `Magazine` und `Bolt` herausgeschnitten, Visierlinie durch Okular- und Objektivmitte (waagrecht), Rumpf in
   Stücke `Skin_Body_01…` unter 19.500 Dreiecken. Lesen/Schreiben der GLB in `glb_io.py`.
@@ -66,4 +75,5 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 - **grip_v2**: Point_Mount (Oberkante der Schienenklemme), Point_Front (Richtung zum Lauf).
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
-`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`). Lader: `src/shared/GunModels.lua`.
+`AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`;
+nur MP: `FastMag_SMG`, `Suppressor_SMG`, `Compensator_SMG`, `HoloSight_SMG`). Lader: `src/shared/GunModels.lua`.

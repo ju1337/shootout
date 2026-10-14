@@ -113,6 +113,9 @@ WEAPONS = {
             "Point_Stock": (None, 0.125, 0.0),
             "Pivot_Magazine": (-0.20, 0.04, 0.0),
             "Pivot_Bolt": (-0.54, 0.37, 0.0),
+            # Visier-Aufsätze: Unterkante des Fußes auf der Gehäuserippe (Oberkante 0,36), zwischen Spannhebel-Buckel
+            # und Trommel der Kimme (meshy_attachment.py)
+            "Point_Optic": (0.065, 0.335, 0.0),
         },
         # Kimme und Korn: Der Zahn der Trommel (x 0,24–0,265, bis 0,432) verdeckte den Korntunnel, und im Tunnel
         # fehlt das Korn. Zahn bis auf den Kerbenboden abgetragen, Korn im Tunnel ergänzt (Spitze 0,414 = Oberkante

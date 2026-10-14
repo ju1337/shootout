@@ -382,6 +382,8 @@ local function attachPart(model, name, size, cframe, color, material, group, neo
 end
 
 -- Fertige 3D-Modelle der Aufsätze: ReplicatedStorage.Assets.Attachments.<Aufsatz-Id> (z.B. "Suppressor", "HoloSight").
+-- Ein Modell nur für eine Waffe heißt <Aufsatz-Id>_<Waffe> (z.B. "FastMag_SMG", tools/attachments/meshy_attachment.py)
+-- und hat an dieser Waffe Vorrang.
 -- Marker im Modell (kleine Teile, nur die Mitte zählt; wie das Modell beim Import gedreht ist, ist egal):
 --   Point_Mount       – sitzt auf der Waffe (Mündung bzw. Schiene)
 --   Point_Muzzle      – Mündungs-Aufsätze: vorderes Ende, gibt die Laufrichtung; Läufe: neue Mündung
@@ -389,10 +391,10 @@ end
 --   Point_SightRear / Point_SightFront – Visiere: Visierlinie (beim Zielen liegt sie in der Bildmitte)
 -- Teile mit Glass im Namen werden Glas, mit Neon oder Reticle leuchten sie. Attribut EyeRelief am Modell (Visiere):
 -- Abstand Auge - Visier beim Zielen (Standard 0,45).
-local function attachmentSource(id)
+local function attachmentSource(id, weaponName)
 	local assets = ReplicatedStorage:FindFirstChild("Assets")
 	local folder = assets and assets:FindFirstChild("Attachments")
-	local source = folder and folder:FindFirstChild(id)
+	local source = folder and (weaponName and folder:FindFirstChild(id .. "_" .. weaponName) or folder:FindFirstChild(id))
 	if not source then
 		return nil
 	end
@@ -429,9 +431,10 @@ local function attachmentSource(id)
 end
 
 -- Aufsatz-Modell an model bauen, Point_Mount an mount (Modell-Einheiten der Waffe). false ohne gültiges Modell.
-local function attachmentAsset(model, id, mount, rotation)
+-- weaponName: ein Modell <id>_<Waffe> hat Vorrang (siehe attachmentSource).
+local function attachmentAsset(model, weaponName, id, mount, rotation)
 	rotation = rotation or CFrame.identity
-	local data = attachmentSource(id)
+	local data = attachmentSource(id, weaponName)
 	if not data then
 		return false
 	end
@@ -474,7 +477,8 @@ end
 -- Lauf-Aufsätze als 3D-Modell: ersetzen den eingebauten Lauf (Teile mit dem Wort Barrel, z.B. Skin_Body_Barrel)
 local BARRELS = { "LongBarrel", "ShortBarrel", "HeavyBarrel" }
 
--- Visier-Aufsätze (Platz Optic) und wo sie auf der Schiene sitzen: Marker Point_Optic der Waffe, sonst etwas vor der Kimme
+-- Visier-Aufsätze (Platz Optic) und wo sie auf der Schiene sitzen: Marker Point_Optic der Waffe (Info.Optic), sonst etwas
+-- vor der Kimme
 local OPTICS = { "HoloSight" }
 local function opticMount(info)
 	return info.Optic or V(0, info.SightHeight - 0.05, info.SightZ - 0.45)
@@ -486,7 +490,7 @@ local function equippedOptic(weaponName, attachments)
 		return nil
 	end
 	for _, id in attachments do
-		if table.find(OPTICS, id) and attachmentSource(id) then
+		if table.find(OPTICS, id) and attachmentSource(id, weaponName) then
 			return id
 		end
 	end
@@ -496,7 +500,7 @@ end
 -- Zielen über ein Visier-Aufsatz-Modell: Kamera-Versatz wie AimOffset, nil ohne Visier
 function GunModels.OpticAim(weaponName, attachments)
 	local optic = equippedOptic(weaponName, attachments)
-	local data = optic and attachmentSource(optic)
+	local data = optic and attachmentSource(optic, weaponName)
 	if not data or not data.Points.SightRear then
 		return nil
 	end
@@ -524,7 +528,7 @@ local function addAttachments(model, weaponName, attachments)
 	-- Mündungs-Aufsatz als eigenes 3D-Modell (Assets.Attachments), sonst die Teile von früher
 	-- Visier als eigenes 3D-Modell auf der Schiene (nur lange Waffen mit fertigem Modell)
 	local optic = equippedOptic(weaponName, attachments)
-	if optic and attachmentAsset(model, optic, opticMount(info)) then
+	if optic and attachmentAsset(model, weaponName, optic, opticMount(info)) then
 		local dot = model:FindFirstChild("Neon_Reticle")
 		if dot then
 			dot:Destroy() -- Punkt des eingebauten Rotpunktvisiers bzw. auf der Kimme
@@ -534,7 +538,7 @@ local function addAttachments(model, weaponName, attachments)
 	local barrelModel = nil
 	for _, id in BARRELS do
 		if long and has[id] and not barrelModel and assetData[weaponName] then
-			barrelModel = attachmentAsset(model, id, muzzle, frame) or nil
+			barrelModel = attachmentAsset(model, weaponName, id, muzzle, frame) or nil
 		end
 	end
 	if barrelModel then
@@ -564,7 +568,7 @@ local function addAttachments(model, weaponName, attachments)
 	local muzzleModel = false
 	for _, id in { "Compensator", "Suppressor", "MuzzleBrake" } do
 		if has[id] and not muzzleModel then
-			muzzleModel = attachmentAsset(model, id, muzzle, frame)
+			muzzleModel = attachmentAsset(model, weaponName, id, muzzle, frame)
 		end
 	end
 	if muzzleModel or not blocks then
@@ -592,7 +596,7 @@ local function addAttachments(model, weaponName, attachments)
 		local gripModel = false
 		for _, id in { "VerticalGrip", "AngledGrip", "Laser" } do
 			if has[id] and not gripModel and assetData[weaponName] then
-				gripModel = attachmentAsset(model, id, V(0, hand.Y, hand.Z), frame)
+				gripModel = attachmentAsset(model, weaponName, id, V(0, hand.Y, hand.Z), frame)
 			end
 		end
 		if gripModel or not blocks then
@@ -620,14 +624,15 @@ local function addAttachments(model, weaponName, attachments)
 				for _, child in model:GetChildren() do
 					before[child] = true
 				end
-				magModel = attachmentAsset(model, id, mag.Position, frame)
+				magModel = attachmentAsset(model, weaponName, id, mag.Position, frame)
 				if magModel then
 					for _, child in model:GetChildren() do
 						if not before[child] and child:IsA("BasePart") then
 							child:SetAttribute("Group", "Magazine")
+						elseif child:IsA("BasePart") and child:GetAttribute("Group") == "Magazine" then
+							child:Destroy() -- eingebautes Magazin, auch in Stücken (Magazine_01, Magazine_02 …)
 						end
 					end
-					mag:Destroy()
 				end
 			end
 		end
@@ -721,7 +726,7 @@ local ANIMATION_GROUPS = { Magazine = true, Bolt = true, Slide = true, Pump = tr
 	Cover = true, Shell = true, Loader = true }
 local HIDDEN_GROUPS = { Shell = true, Loader = true } -- nur während der Animation sichtbar
 local POINTS = { Grip = true, SightRear = true, SightFront = true, Muzzle = true, Eject = true, LeftHand = true,
-	LeftHandTP = true, Stock = true }
+	LeftHandTP = true, Stock = true, Optic = true }
 local REQUIRED_POINTS = { "Grip", "SightRear", "SightFront", "Muzzle", "Eject", "LeftHand" }
 local GLASS_TRANSPARENCY = 0.82
 local MAX_PARTS = 40 -- mehr Einzelteile kosten Leistung (vor allem auf Handys)
@@ -851,6 +856,7 @@ local function loadAsset(weaponName, source)
 	}
 	geometry.LeftHandTP = points.LeftHandTP and toWeapon * points.LeftHandTP or geometry.LeftHand
 	geometry.Stock = points.Stock and toWeapon * points.Stock or nil
+	geometry.Optic = points.Optic and toWeapon * points.Optic or nil
 
 	-- Plausibel?
 	if geometry.Muzzle.Z >= geometry.SightZ then
