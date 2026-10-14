@@ -52,6 +52,7 @@ local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
 local DungeonService = require(ServerShared.DungeonService)
+local CasinoService = require(ServerShared.CasinoService)
 local Telemetry = require(ServerShared.Telemetry)
 local Badges = require(ServerShared.Badges)
 
@@ -1006,6 +1007,8 @@ function Extinction.Init(modeManager)
 			return list
 		end,
 	})
+	-- Casino im Camp: Spielautomaten, Roulette, Blackjack (allein und am Tisch) um Münzen oder RZ
+	CasinoService.Init({ Map = map })
 	table.insert(Extinction.OnDeath, function(player)
 		DungeonService.OnDeath(player)
 	end)
