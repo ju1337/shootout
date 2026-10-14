@@ -169,8 +169,8 @@ WEAPONS = {
         ],
         "Points": {
             "Point_Grip": (0.35, -0.08, 0.0),
-            "Point_SightRear": (0.405, 0.274, 0.0),
-            "Point_SightFront": (-0.83, 0.274, 0.0),
+            "Point_SightRear": (0.44, 0.2765, 0.0087),
+            "Point_SightFront": (-0.817, 0.2765, 0.0087),
             "Point_Muzzle": (None, 0.113, 0.0),
             "Point_Eject": (0.20, 0.05, -0.06),
             "Point_LeftHand": (-0.42, 0.03, 0.0),
@@ -179,6 +179,16 @@ WEAPONS = {
             "Pivot_Magazine": (0.03, -0.04, 0.0),
             "Pivot_Cover": (0.17, 0.20, 0.0),
             "Pivot_Bolt": (-0.11, 0.155, 0.0),
+        },
+        # Kimme und Korn: Hinten gab es nur einen flachen Block unter der Visierlinie, nichts rahmte das Korn ein.
+        # Zwei Kimmenohren auf dem Block (Spitze bündig mit dem Korn 0,2765, Kerbe 0,010); das Korn sitzt im Modell
+        # 0,0087 neben der Mitte, die Visierlinie folgt ihm. Leuchtpunkte.
+        "Sights": {
+            "Posts": [((0.4385, 0.2580, 0.0207), (0.027, 0.037, 0.014), 1.0, (0.44, 0.243, 0.03)),
+                      ((0.4385, 0.2580, -0.0033), (0.027, 0.037, 0.014), 1.0, (0.44, 0.243, -0.02))],
+            "Dots": [("Neon_FrontDot", (-0.7920, 0.2545, 0.0087), 0.0055, "front"),
+                     ("Neon_RearDot_L", (0.4535, 0.267, 0.0207), 0.0025, "rear"),
+                     ("Neon_RearDot_R", (0.4535, 0.267, -0.0033), 0.0025, "rear")],
         },
     },
 }
@@ -249,6 +259,17 @@ def dot(centre, radius, depth=0.005, sides=12):
     return M.Mesh(np.array(tris))
 
 
+def post(centre, size, taper=1.0, uv_point=None, uv=(0.5, 0.5)):
+    """Quader, oben in z auf taper verjüngt (Rückseite bleibt senkrecht für Leuchtpunkte): Korn oder Kimmenohr."""
+    b = M.box(centre, size, uv)
+    P = b.P.copy()
+    top = P[..., 1] > centre[1]
+    P[..., 2] = np.where(top, centre[2] + (P[..., 2] - centre[2]) * taper, P[..., 2])
+    n = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+    n /= np.linalg.norm(n, axis=1, keepdims=True)
+    return M.Mesh(P, b.UV, np.repeat(n[:, None], 3, 1))
+
+
 def load(src):
     if src.endswith(".zip"):
         tmp = tempfile.mkdtemp()
@@ -271,8 +292,8 @@ def build(name, src, out):
     cuts = sights.get("Notch", [])
     for c in [cuts] if isinstance(cuts, dict) else cuts:   # Kimmenkerbe(n), auch zum Kürzen eines Korns
         gun = notch(gun, c)
-    for centre, size in sights.get("Posts", []):   # fehlendes Korn (Quader in Waffenfarbe), Teil des Körpers
-        gun = M.Mesh.concat(gun, M.box(centre, size, dark_uv(gun, centre)))
+    for post_cfg in sights.get("Posts", []):   # fehlendes Korn/Kimmenohr in Waffenfarbe, Teil des Körpers
+        gun = M.Mesh.concat(gun, post(*post_cfg, uv=dark_uv(gun, post_cfg[3] if len(post_cfg) > 3 else post_cfg[0])))
     parts = []
     for part_name, region, caps, uv_point in cfg["Cuts"]:
         uv = dark_uv(gun, uv_point)
