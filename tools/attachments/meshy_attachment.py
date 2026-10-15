@@ -25,7 +25,10 @@ import meshy_weapon as W
 MAX_TRIS = 19500
 
 # Je Waffe und Aufsatz: turn = Drehung um die Hochachse (180: vorn und hinten tauschen), scale = Faktor auf die
-# Meshy-Einheiten des Aufsatzes, tilt = Neigung um die Querachse (Grad), dann die Lage (siehe place()).
+# Meshy-Einheiten des Aufsatzes (Läufe: (längs, quer) – Länge und Dicke getrennt), tilt = Neigung um die Querachse,
+# roll = Drehung um die Laufachse (Grad), dann die Lage: at (Verschiebung), rear/axis (Läufe und Mündung), place
+# (Kante oder Mitte der Hülle je Achse auf einen Wert: {"y": ("max", -0.04)}).
+# hide = Teile der Waffe mit diesem Wort ausblenden (Marker Hide_<Wort>), group = Animationsgruppe (Marker Group_<Gruppe>).
 ATTACHMENTS = {
     # Schnellmagazin (30er mit Zugschlaufe): an die Kontur des eingebauten Magazins angepasst (Vorder- und Hinterkante
     # von y -0,40 bis 0,03, mittlere Abweichung 0,004), 18° geneigt wie dieses; oben steckt es im Schacht.
@@ -42,8 +45,36 @@ ATTACHMENTS = {
                            "rear": 0.16, "window": {"x": 0.70, "y": (0.07, 0.585), "z": (-0.49, 0.47)}},
 }
 
+ATTACHMENTS.update({
+    # Schrotflinte (Pump): Lauf y 0,109 (Radius 0,036, Stirnseite des Gehäuses x -0,04, Mündung -0,949), Röhrenmagazin
+    # Achse 0,02 (Radius 0,037, vorn bis -0,866), Vorderschaft x -0,60..-0,17, z ±0,070, Unterkante -0,047.
+    # Langer Lauf: gleichmäßig 0,66 (Radius 0,037, 1,26 lang: Mündung 0,35 weiter vorn = 0,73 Studs), hinten am Gehäuse;
+    # Perlkorn 0,02 unter der Visierlinie. Altes Korn samt Leuchtpunkt ist mit dem Lauf weg.
+    ("Shotgun", "LongBarrel"): {"Kind": "Barrel", "Name": "LongBarrel", "turn": 0, "scale": 0.66, "axis": (0.0, 0.0),
+                                "rear": -0.045, "hide": ["FrontDot"]},
+    # Kurzer Lauf: Mündung 0,06 vor dem Vorderschaft (-0,65); dafür 0,27 dick und 0,32 lang (leicht gestreckt, sonst
+    # wäre er dicker als der Vorderschaft breit). Das Röhrenmagazin vor dem Vorderschaft fällt weg (würde über die
+    # Mündung ragen); die Laufhalterung hinten greift ans Röhrenmagazin zwischen Gehäuse und Vorderschaft.
+    ("Shotgun", "ShortBarrel"): {"Kind": "Barrel", "Name": "ShortBarrel", "turn": 0, "scale": (0.32, 0.27),
+                                 "axis": (0.0125, 0.0), "rear": -0.045, "hide": ["FrontDot", "Tube"]},
+    # Mündungsbremse (Würgebohrung): Gewinde hinten (180° gedreht), 0,108 dick; das Gewinde (Radius 0,031) steckt in
+    # der Laufwand (innen 0,023, außen 0,036), 0,0225 tief
+    ("Shotgun", "MuzzleBrake"): {"Kind": "Muzzle", "Name": "MuzzleBrake", "turn": 180, "diameter": 0.108,
+                                 "rear": -0.9265},
+    # Vertikalgriff 0,22 hoch (0,46 Studs wie am Sturmgewehr), Klemme unter dem Vorderschaft (Oberkante -0,040, steckt
+    # in der Rundung), vor der linken Hand; geht beim Repetieren mit
+    ("Shotgun", "VerticalGrip"): {"Kind": "Grip", "Name": "VerticalGrip", "turn": 0, "scale": 0.1156,
+                                  "place": {"x": ("center", -0.42), "y": ("max", -0.040), "z": ("center", 0.0)},
+                                  "group": "Pump"},
+    # Laser (Seitenmontage) 0,20 lang: Klemme (Unterseite des Modells) an der rechten Seite des Vorderschafts
+    # (z -0,070), Knöpfe nach außen, vorn bündig mit dem Vorderschaft; geht beim Repetieren mit
+    ("Shotgun", "Laser"): {"Kind": "Grip", "Name": "Laser", "turn": 0, "roll": -90, "scale": 0.105,
+                           "place": {"x": ("min", -0.615), "y": ("center", 0.03), "z": ("max", -0.068)},
+                           "group": "Pump"},
+})
+
 # Achse des Laufs vorn (Messung am Meshy-Modell der Waffe): Mitte y/z, Radius
-MUZZLE_AXIS = {"SMG": (0.2503, 0.0002, 0.046)}
+MUZZLE_AXIS = {"SMG": (0.2503, 0.0002, 0.046), "Shotgun": (0.109, 0.0, 0.036)}
 
 
 def unzip(src):
@@ -54,11 +85,12 @@ def unzip(src):
     return src
 
 
-def rotation(turn, tilt=0.0):
-    t, a = np.radians(turn), np.radians(tilt)
+def rotation(turn, tilt=0.0, roll=0.0):
+    t, a, r = np.radians(turn), np.radians(tilt), np.radians(roll)
     ry = np.array([[np.cos(t), 0, np.sin(t)], [0, 1, 0], [-np.sin(t), 0, np.cos(t)]])
     rz = np.array([[np.cos(a), -np.sin(a), 0], [np.sin(a), np.cos(a), 0], [0, 0, 1]])
-    return rz @ ry
+    rx = np.array([[1, 0, 0], [0, np.cos(r), -np.sin(r)], [0, np.sin(r), np.cos(r)]])
+    return rz @ ry @ rx
 
 
 def glb_nodes(path):
@@ -82,13 +114,29 @@ def build(weapon, att, src, weapon_src, weapon_glb, out):
     if kind == "Muzzle":
         cfg = {**cfg, "scale": cfg["diameter"] / max(hi[1] - lo[1], hi[2] - lo[2])}
     s = cfg["scale"]
-    Rm = rotation(cfg["turn"], cfg.get("tilt", 0.0))
-    P = (mesh.P * s) @ Rm.T
-    N = mesh.N @ Rm.T
+    S = np.array([s[0], s[1], s[1]], float) if isinstance(s, tuple) else np.array([s, s, s], float)
+    s = S[1]
+    Rm = rotation(cfg["turn"], cfg.get("tilt", 0.0), cfg.get("roll", 0.0))
+    P = (mesh.P * S) @ Rm.T
+    N = (mesh.N / S) @ Rm.T
+    N /= np.maximum(np.linalg.norm(N, axis=2, keepdims=True), 1e-12)
     plo, phi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0)
     extra, points = [], {}
     if kind == "Magazine":
         P = P + np.asarray(cfg["at"])
+    elif kind == "Barrel":
+        y0, z0, radius = MUZZLE_AXIS[weapon]
+        ay, az = cfg["axis"]
+        P = P + np.array([cfg["rear"] - phi[0], y0 - ay * S[1], z0 - az * S[2]])
+        print("  Lauf: Länge %.3f, Streckung %.2f (eingebauter Radius %.3f)" % (phi[0] - plo[0], S[0] / S[1], radius))
+    elif kind == "Grip":
+        shift = np.zeros(3)
+        for i, axis in enumerate("xyz"):
+            if axis in cfg["place"]:
+                how, v = cfg["place"][axis]
+                ref = {"min": plo[i], "max": phi[i], "center": (plo[i] + phi[i]) / 2}[how]
+                shift[i] = v - ref
+        P = P + shift
     elif kind == "Muzzle":
         y0, z0, radius = MUZZLE_AXIS[weapon]
         P = P + np.array([cfg["rear"] - phi[0], y0 - (plo[1] + phi[1]) / 2, z0 - (plo[2] + phi[2]) / 2])
@@ -126,11 +174,22 @@ def build(weapon, att, src, weapon_src, weapon_glb, out):
     to_glb = lambda p: (np.asarray(p, float) - origin) @ R.T * ws  # noqa: E731
     conv = lambda m: M.Mesh(to_glb(m.P), m.UV, m.N @ R.T)  # noqa: E731
 
-    if kind == "Muzzle":
+    if kind in ("Muzzle", "Barrel"):
         mz = wcfg["Points"]["Point_Muzzle"]
         mount = np.array([glo[0] if mz[0] is None else mz[0], mz[1], mz[2]])
         points["Point_Mount"] = mount
         points["Point_Muzzle"] = np.array([alo[0], mount[1], mount[2]])
+        if kind == "Barrel":
+            points["Point_Front"] = mount + np.array([-0.3, 0, 0])
+            print("  neue Mündung %.3f (eingebaut %.3f)" % (alo[0], mount[0]))
+    elif kind == "Grip":
+        lh = np.array(wcfg["Points"]["Point_LeftHand"], float)
+        points["Point_Mount"] = np.array([lh[0], lh[1], 0.0])
+        points["Point_Front"] = points["Point_Mount"] + np.array([-0.3, 0, 0])
+    for word in cfg.get("hide", []):
+        points["Hide_" + word] = points["Point_Mount"] + np.array([0, -0.02, 0])
+    if cfg.get("group"):
+        points["Group_" + cfg["group"]] = points["Point_Mount"] + np.array([0, 0.02, 0])
     glb_points = {k: to_glb(v) for k, v in points.items()}
     if kind == "Magazine":
         # Point_Mount = Mitte des größten Magazin-Teils der Waffen-GLB (so setzt GunModels den Aufsatz)

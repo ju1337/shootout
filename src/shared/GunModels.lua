@@ -381,6 +381,15 @@ local function attachPart(model, name, size, cframe, color, material, group, neo
 	return part
 end
 
+-- Wörter eines Namens (getrennt durch _ . Leerzeichen)
+local function wordsOf(name)
+	local list = {}
+	for word in string.gmatch(name, "[^_%.%s]+") do
+		table.insert(list, word)
+	end
+	return list
+end
+
 -- Fertige 3D-Modelle der Aufsätze: ReplicatedStorage.Assets.Attachments.<Aufsatz-Id> (z.B. "Suppressor", "HoloSight").
 -- Ein Modell nur für eine Waffe heißt <Aufsatz-Id>_<Waffe> (z.B. "FastMag_SMG", tools/attachments/meshy_attachment.py)
 -- und hat an dieser Waffe Vorrang.
@@ -389,6 +398,10 @@ end
 --   Point_Muzzle      – Mündungs-Aufsätze: vorderes Ende, gibt die Laufrichtung; Läufe: neue Mündung
 --   Point_Front       – Griffe, Magazine, Läufe: ein Punkt weiter vorn, gibt die Laufrichtung (hat Vorrang vor Point_Muzzle)
 --   Point_SightRear / Point_SightFront – Visiere: Visierlinie (beim Zielen liegt sie in der Bildmitte)
+--   Hide_<Wort>       – blendet an der Waffe die Teile mit diesem Wort im Namen aus (z.B. Hide_Tube: Röhrenmagazin vor
+--                       dem Vorderschaft beim kurzen Lauf der Schrotflinte, Hide_FrontDot: Leuchtpunkt des alten Korns)
+--   Group_<Gruppe>    – alle Teile des Aufsatzes gehören zu dieser Animationsgruppe (z.B. Group_Pump: Griff und Laser am
+--                       Vorderschaft gehen beim Repetieren mit)
 -- Teile mit Glass im Namen werden Glas, mit Neon oder Reticle leuchten sie. Attribut EyeRelief am Modell (Visiere):
 -- Abstand Auge - Visier beim Zielen (Standard 0,45).
 local function attachmentSource(id, weaponName)
@@ -398,13 +411,17 @@ local function attachmentSource(id, weaponName)
 	if not source then
 		return nil
 	end
-	local points, parts = {}, {}
+	local points, parts, hide, group = {}, {}, {}, nil
 	for _, obj in source:GetDescendants() do
 		if obj:IsA("BasePart") then
 			local name = string.gsub(obj.Name, "%.%d+$", "")
 			local point = string.match(name, "^Point_(.+)$")
 			if point then
 				points[point] = obj.Position
+			elseif string.match(name, "^Hide_(.+)$") then
+				table.insert(hide, string.match(name, "^Hide_(.+)$"))
+			elseif string.match(name, "^Group_(.+)$") then
+				group = string.match(name, "^Group_(.+)$")
 			elseif obj.Transparency < 1 then
 				table.insert(parts, obj)
 			end
@@ -427,7 +444,7 @@ local function attachmentSource(id, weaponName)
 	else
 		return nil
 	end
-	return { Source = source, Points = points, Parts = parts, Frame = frame }
+	return { Source = source, Points = points, Parts = parts, Frame = frame, Hide = hide, Group = group }
 end
 
 -- Aufsatz-Modell an model bauen, Point_Mount an mount (Modell-Einheiten der Waffe). false ohne gültiges Modell.
@@ -448,6 +465,9 @@ local function attachmentAsset(model, weaponName, id, mount, rotation)
 			dot.Color = RETICLE
 			dot.Material = Enum.Material.Neon
 			dot.CFrame = CFrame.new(mount) * rotation * data.Frame:ToObjectSpace(CFrame.new(original.Position))
+			if data.Group then
+				dot:SetAttribute("Group", data.Group)
+			end
 			dot.Parent = model
 			continue
 		end
@@ -469,7 +489,23 @@ local function attachmentAsset(model, weaponName, id, mount, rotation)
 		end
 		part.Name = "Att" .. id .. "_" .. name
 		part.CFrame = CFrame.new(mount) * rotation * data.Frame:ToObjectSpace(original.CFrame)
+		if data.Group then
+			part:SetAttribute("Group", data.Group)
+		end
 		part.Parent = model
+	end
+	-- Teile der Waffe ausblenden, die der Aufsatz ersetzt (Hide_<Wort>)
+	if #data.Hide > 0 then
+		for _, part in model:GetChildren() do
+			if part:IsA("BasePart") and string.sub(part.Name, 1, 3) ~= "Att" then
+				for _, word in wordsOf(part.Name) do
+					if table.find(data.Hide, word) then
+						part:Destroy()
+						break
+					end
+				end
+			end
+		end
 	end
 	return data
 end
@@ -739,13 +775,6 @@ local function cleanName(name)
 	return (string.gsub(name, "%.%d+$", ""))
 end
 
-local function wordsOf(name)
-	local list = {}
-	for word in string.gmatch(name, "[^_%.%s]+") do
-		table.insert(list, word)
-	end
-	return list
-end
 
 local function markerPosition(obj)
 	if obj:IsA("BasePart") then

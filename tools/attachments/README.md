@@ -8,6 +8,8 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/meshy_weapon.py <Waffe> <meshy-fbx.zip> art/sources/<Waffe>.glb   # Pistol, Revolver, SMG, LMG, Shotgun
     python3 tools/attachments/meshy_attachment.py SMG <Aufsatz> <meshy-zip> <mp-meshy-zip> art/sources/SMG.glb art/sources/Attachments/<Aufsatz>_SMG.glb
                                          # FastMag, Suppressor, Compensator, HoloSight (Rotpunkt) nur für die MP
+    python3 tools/attachments/meshy_attachment.py Shotgun <Aufsatz> <meshy-zip> <schrotflinte-meshy-zip> art/sources/Shotgun.glb art/sources/Attachments/<Aufsatz>_Shotgun.glb
+                                         # LongBarrel, ShortBarrel, MuzzleBrake, VerticalGrip, Laser nur für die Schrotflinte
     python3 tools/attachments/supp_v2.py  <meshy.glb> art/sources/Attachments/Suppressor.glb
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
@@ -39,6 +41,12 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   (1.362.272 Dreiecke, 70 Teile, 0,25 Studs dick) und Kompensator (223.448, 12 Teile) mit dem Klemmring über dem
   Laufende; Rotpunkt (633.612, 33 Teile) auf `Point_Optic` der MP (Gehäuserippe), Glas im Fenster, `Neon_Reticle` auf
   der Visierlinie 0,03 Studs über Kimme und Korn. Keine Spiegelung (Schrift bleibt lesbar), nichts reduziert.
+  Schrotflinte: `Shotgun.glb` hat dafür Lauf (`Skin_Barrel`, mit Korn) und Röhrenmagazin vor dem Vorderschaft
+  (`Skin_Tube`) als eigene Teile. Langer Lauf (98.742 Dreiecke, gleichmäßig skaliert, Mündung 0,73 Studs weiter vorn,
+  Perlkorn) und kurzer Lauf (114.650, leicht gestreckt 1,19, Mündung kurz vor dem Vorderschaft, blendet mit `Hide_Tube`
+  das Röhrenmagazin davor aus) sitzen hinten am Gehäuse, beide blenden mit `Hide_FrontDot` den Leuchtpunkt des alten
+  Korns aus. Mündungsbremse (573.250, 30 Teile): Gewinde steckt in der Laufwand. Vertikalgriff (572.066) unter und
+  Laser (660.998, Klemme an der rechten Seite) am Vorderschaft, beide mit `Group_Pump` (gehen beim Repetieren mit).
 - **sniper_v1**: Scharfschützengewehr mit Zielfernrohr: Zweibein eingeklappt (Beine am Gelenk abgetrennt und nach vorn
   gedreht), `Magazine` und `Bolt` herausgeschnitten, Visierlinie durch Okular- und Objektivmitte (waagrecht), Rumpf in
   Stücke `Skin_Body_01…` unter 19.500 Dreiecken. Lesen/Schreiben der GLB in `glb_io.py`.
@@ -76,4 +84,5 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
 `AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`;
-nur MP: `FastMag_SMG`, `Suppressor_SMG`, `Compensator_SMG`, `HoloSight_SMG`). Lader: `src/shared/GunModels.lua`.
+nur MP: `FastMag_SMG`, `Suppressor_SMG`, `Compensator_SMG`, `HoloSight_SMG`; nur Schrotflinte: `LongBarrel_Shotgun`,
+`ShortBarrel_Shotgun`, `MuzzleBrake_Shotgun`, `VerticalGrip_Shotgun`, `Laser_Shotgun`). Lader: `src/shared/GunModels.lua`.

@@ -133,6 +133,11 @@ WEAPONS = {
         "Body": "Skin_Body",
         "Cuts": [
             ("Pump", box(x=(-0.60, -0.17), y=(-0.06, 0.09)), [0, 1], (-0.4, 0.02, 0.06)),
+            # Lauf (über dem Röhrenmagazin, ab der Stirnseite des Gehäuses x -0,04, mit Korn) und das Röhrenmagazin vor
+            # dem Vorderschaft als eigene Teile: Lauf-Aufsätze blenden Skin_Barrel aus (Wort Barrel), der kurze Lauf
+            # zusätzlich Skin_Tube (Marker Hide_Tube). Lauf: Achse y 0,109, Radius 0,036; Röhre: Achse 0,02, Radius 0,037.
+            ("Skin_Barrel", box(x=(None, -0.045), y=(0.07, None)), [0, 1], (-0.5, 0.143, 0.0)),
+            ("Skin_Tube", box(x=(None, -0.605), y=(None, 0.07)), [0, 1], (-0.7, 0.0, 0.037)),
         ],
         # Patrone fürs Nachladen: Kopie der oberen roten Patrone am Seitenhalter (der Halter bleibt voll), längs zum
         # Lauf gedreht, doppelt so lang, vor der Ladeklappe unter dem Gehäuse (nur beim Nachladen sichtbar)
