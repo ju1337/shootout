@@ -16,7 +16,7 @@ Ein modernes, aufgeräumtes Camp (Glas, Sichtbeton, Stahl, Leuchtstreifen; keine
       NO KIT-AUSGABE · Café · Stoffe · WAFFEN & MUNITION   (Hof: Food-Court mit zwei Kiosken, der Schieber)
       SO KFZ-WERKSTATT · Ersatzteile · Hotel · APOTHEKE    (Hof: Tankstelle, Landeplatz, Parkplatz)
       SW BUSBAHNHOF · MARKTHALLE (Tor zur Markt-Welt) · LAGERHAUS  (Hof: Container und Kran)
-      NW VERSTECK · CASINO · Schule                        (Hof: Sportplatz, Solarfeld, Abgang KATAKOMBEN = Dungeon)
+      NW VERSTECK · Wohnhäuser · Schule                    (Hof: Sportplatz, Solarfeld, Abgang KATAKOMBEN = Dungeon)
   * Betonmauer mit Stacheldraht (CAMP_WALL_R), vier Tore, davor das Sperrgebiet (ohne Bäume und Gestrüpp).
 
 An jeder Station steht ein Händler (Figur aus Teilen im R15-Schnitt mit Gesicht, nicht anklickbar); die Symbole über den
@@ -626,14 +626,13 @@ class CampPhoenix:
             90: (("garage", 2), ("shop:ERSATZTEILE|REIFEN · ÖL · BATTERIEN", 2), ("shop:HOTEL ZUR POST|ZIMMER FREI", 3),
                  ("station:Stand_Items", 2)),
             180: (("bus", 2), None, None, ("station:Stash", 2)),
-            270: (("station:Hideout", 2), None, None, ("shop:SCHULE|NOTUNTERKUNFT", 2)),
+            270: (("station:Hideout", 2), ("house", 3), ("house", 3), ("shop:SCHULE|NOTUNTERKUNFT", 2)),
         }
         for base, houses in plan.items():
             for k, (th_off, spec) in enumerate(zip(slots, houses)):
                 if spec:
                     self.house(OUTER_R, base + th_off, W_OUTER, spec[1], spec[0], sides=-1 if k == 0 else (1 if k == 3 else 0))
         self.market_hall(*self.at_center(OUTER_R + 11, 225))
-        self.casino_hall(*self.at_center(OUTER_R + 10, 315))
         self.parked_bus(-(STREET_W / 2 - 3.7), -(OUTER_R + 13))
 
     def market_hall(self, x, z, yaw):
@@ -686,96 +685,6 @@ class CampPhoenix:
             pb.box("Decor", "Parapet", (W + 1, 1.2, 0.6), (0, H + 1.2, D / 2 + 0.2), concrete, "Concrete")
             for sx in (-1, 1):
                 pb.box("Decor", "RoofVent", (2.4, 1.6, 2), (sx * 10, H + 1.6, 5), LIGHT, "Metal")
-        self._feature(build, x, z, yaw)
-
-    def casino_hall(self, x, z, yaw):
-        """CASINO: Halle mit offenem Eingang zur Ringstraße, innen roter Teppich, links vier Spielautomaten, in der Mitte
-        der Roulette-Tisch, rechts vorne Blackjack allein gegen den Croupier, rechts hinten der Blackjack-Tisch für bis zu
-        4 Spieler; Croupiers als Figuren hinter den Tischen. Die Punkte Casino_* (Gruppe Zentrale, unsichtbar) tragen auf
-        dem Server die E-Aufforderungen (CasinoService). Leuchtschild CASINO auf dem Dach. Ohne Zufallszahlen."""
-
-        def build(pb):
-            def box(group, name, size, pos, color, mat, extra=(0, 0, 0), **kw):
-                pb.box(group, name, size, pos, color, mat, angles=extra, **kw)
-
-            W, D, H = 30, 20, 12
-            fz = -D / 2
-            wall, dark, gold = (40, 34, 40), (22, 18, 24), (226, 184, 92)
-            red, felt, wood = (150, 26, 36), (22, 92, 56), (92, 52, 32)
-            door = 9
-            hidden = {"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False}
-            # Hülle: Rückwand, Seitenwände, Front links und rechts vom Eingang, Sturz, Dach
-            box("Buildings", "CasinoWall", (W, H, 1), (0, H / 2, D / 2 - 0.5), wall, "Concrete")
-            for s in (-1, 1):
-                box("Buildings", "CasinoWall", (1, H, D), (s * (W / 2 - 0.5), H / 2, 0), wall, "Concrete")
-                fw = (W - door) / 2
-                box("Buildings", "CasinoFront", (fw, H, 1), (s * (door / 2 + fw / 2), H / 2, fz + 0.5), dark, "Metal")
-                box("Decor", "CasinoDoorStrip", (0.3, 7.6, 0.3), (s * (door / 2 + 0.2), 3.8, fz - 0.1), gold, "Neon", props=dict(NO_HIT))
-                for k in range(3):  # Leuchtstreifen an der Fassade
-                    box("Decor", "CasinoFacadeStrip", (0.25, H - 2, 0.2), (s * (door / 2 + 2 + k * 2.4), H / 2, fz - 0.05),
-                        red, "Neon", props=dict(NO_HIT))
-            box("Buildings", "CasinoLintel", (door + 0.2, H - 8, 1), (0, 8 + (H - 8) / 2, fz + 0.5), dark, "Metal")
-            box("Decor", "CasinoDoorStrip", (door + 0.6, 0.3, 0.3), (0, 8, fz - 0.1), gold, "Neon", props=dict(NO_HIT))
-            box("Buildings", "Roof", (W + 1, 0.8, D + 1), (0, H + 0.4, 0), (60, 54, 60), "Concrete")
-            # Boden: Teppich mit goldenem Rand, Eingangsmatte
-            box("Ground", "CasinoFloor", (W - 2, 0.3, D - 2), (0, 0.15, 0), (110, 20, 30), "Fabric")
-            box("Ground", "CasinoFloorEdge", (W - 1.2, 0.25, D - 1.2), (0, 0.12, 0), gold, "SmoothPlastic")
-            box("Ground", "Sidewalk", (door + 2, 0.3, 4), (0, 0.15, fz - 2), dark, "SmoothPlastic")
-            pb.floor_text("FloorLabel_Casino", (8, 0.1, 2.2), (0, 0.32, fz - 2.2), "CASINO", gold, yaw=180)
-            # Deckenlampen
-            for lx in (-9, 0, 9):
-                for lz in (-4, 4):
-                    box("Decor", "CasinoLamp", (2.4, 0.3, 2.4), (lx, H - 0.4, lz), (255, 226, 170), "Neon", props=dict(NO_HIT),
-                        children=[{"Name": "Light", "ClassName": "PointLight",
-                                   "Properties": {"Range": 16, "Brightness": 0.9, "Color": self.bm.rgb(255, 214, 160)}}])
-            # links: vier Spielautomaten an der Wand, Bildschirm zur Mitte (+X)
-            for i, lz in enumerate((-5.5, -1.5, 2.5, 6.5)):
-                lx = -W / 2 + 1.9
-                box("Buildings", "SlotMachine", (1.8, 5.2, 2.6), (lx, 2.9, lz), (34, 30, 38), "Metal")
-                box("Decor", "SlotTop", (1.9, 0.9, 2.7), (lx, 5.9, lz), red, "Neon", props=dict(NO_HIT))
-                box("Decor", "SlotScreen", (0.1, 1.6, 2.0), (lx + 0.95, 3.9, lz), (250, 236, 200), "Neon", props=dict(NO_HIT))
-                for k in (-0.65, 0, 0.65):  # drei Walzen
-                    box("Decor", "SlotReel", (0.12, 1.2, 0.5), (lx + 1.0, 3.9, lz + k), (24, 22, 28), "SmoothPlastic", props=dict(NO_HIT))
-                box("Decor", "SlotTray", (0.6, 0.3, 2.2), (lx + 1.1, 2.2, lz), gold, "Metal", props=dict(NO_HIT))
-                box("Decor", "SlotLever", (0.2, 1.6, 0.2), (lx + 0.3, 4.6, lz + 1.5), (200, 200, 206), "Metal", props=dict(NO_HIT))
-                box("Decor", "SlotKnob", (0.5, 0.5, 0.5), (lx + 0.3, 5.5, lz + 1.5), red, "SmoothPlastic", props=dict(NO_HIT, Shape="Ball"))
-                pb.add("Zentrale", "Casino_Slot%d" % (i + 1), (2, 2, 2), (lx + 3.2, 2.5, lz), gold, "SmoothPlastic", props=hidden)
-            # Mitte: Roulette-Tisch, Croupier dahinter
-            rz = 2.4
-            box("Buildings", "RouletteTable", (7.4, 3.0, 4.2), (-1, 1.65, rz), wood, "WoodPlanks")
-            box("Decor", "RouletteFelt", (7.0, 0.1, 3.8), (-1, 3.2, rz), felt, "Fabric", props=dict(NO_HIT))
-            box("Decor", "RouletteWheel", (0.4, 2.6, 2.6), (-3.4, 3.4, rz), (60, 34, 22), "WoodPlanks", extra=(0, 0, 90),
-                props=dict(NO_HIT, Shape="Cylinder"))
-            box("Decor", "RouletteWheelRim", (0.45, 1.6, 1.6), (-3.4, 3.45, rz), gold, "Metal", extra=(0, 0, 90),
-                props=dict(NO_HIT, Shape="Cylinder"))
-            for k in range(3):  # Zahlenfelder
-                box("Decor", "RouletteField", (1.2, 0.12, 2.8), (-0.6 + k * 1.4, 3.22, rz), red if k % 2 == 0 else (20, 20, 24),
-                    "SmoothPlastic", props=dict(NO_HIT))
-            self.shopkeeper(box, -1, rz + 3.2, OUTFITS["wheel"], y=0.3)
-            pb.add("Zentrale", "Casino_Roulette", (2, 2, 2), (-1, 2.5, rz - 4), gold, "SmoothPlastic", props=hidden)
-            # rechts vorne: Blackjack allein gegen den Croupier
-            bz = -4.6
-            box("Buildings", "BlackjackTable", (5.4, 3.0, 3.0), (9.5, 1.65, bz), wood, "WoodPlanks")
-            box("Decor", "BlackjackFelt", (5.0, 0.1, 2.6), (9.5, 3.2, bz), felt, "Fabric", props=dict(NO_HIT))
-            box("Decor", "BlackjackRail", (5.4, 0.3, 0.3), (9.5, 3.3, bz - 1.45), (60, 34, 22), "WoodPlanks", props=dict(NO_HIT))
-            self.shopkeeper(box, 9.5, bz + 3.0, OUTFITS["wheel"], y=0.3)
-            pb.add("Zentrale", "Casino_Blackjack", (2, 2, 2), (9.5, 2.5, bz - 3), gold, "SmoothPlastic", props=hidden)
-            # rechts hinten: Blackjack-Tisch für bis zu 4 Spieler mit Hockern
-            tz = 5.4
-            box("Buildings", "BlackjackTable", (9.0, 3.0, 3.2), (8.5, 1.65, tz), wood, "WoodPlanks")
-            box("Decor", "BlackjackFelt", (8.6, 0.1, 2.8), (8.5, 3.2, tz), felt, "Fabric", props=dict(NO_HIT))
-            box("Decor", "BlackjackRail", (9.0, 0.3, 0.3), (8.5, 3.3, tz - 1.55), (60, 34, 22), "WoodPlanks", props=dict(NO_HIT))
-            for k in range(4):
-                sx = 5.3 + k * 2.15
-                box("Decor", "BarStool", (1.1, 0.3, 1.1), (sx, 2.4, tz - 2.6), red, "Fabric", props=dict(NO_HIT))
-                box("Decor", "BarStoolLeg", (0.25, 2.2, 0.25), (sx, 1.2, tz - 2.6), (200, 200, 206), "Metal", props=dict(NO_HIT))
-            self.shopkeeper(box, 8.5, tz + 3.0, OUTFITS["wheel"], y=0.3)
-            pb.add("Zentrale", "Casino_Table", (2, 2, 2), (8.5, 2.5, tz - 4), gold, "SmoothPlastic", props=hidden)
-            # Leuchtschild auf dem Dach
-            pb.sign2("Sign_Casino", (16, 3.6, 0.4), (0, H + 2.4, fz + 0.6), "CASINO", "MÜNZEN · RZ · BLACKJACK · ROULETTE",
-                     (24, 18, 24), gold, (236, 226, 210), glow=gold)
-            for s in (-1, 1):
-                box("Decor", "SignPost", (0.4, 1.2, 0.4), (s * 6, H + 0.9, fz + 0.8), ANTHRACITE, "Metal")
         self._feature(build, x, z, yaw)
 
     def parked_bus(self, x, z):
@@ -930,7 +839,7 @@ class CampPhoenix:
         """NW: Sportplatz (umzäunter Basketballplatz), SCHIESSSTAND (statt des Solarfelds), Speicher und an der Nordstraße
         der Abgang zu den KATAKOMBEN (Dungeon-Eingang)."""
         self.yard_pad(270, (120, 122, 124), "Concrete")
-        self.sports_court(*self.at_center(97, 295))  # etwas nach außen: das Casino reicht bis r 86.5
+        self.sports_court(*self.at_center(97, 295))
         self.shooting_range(*self.at_center(96, 322))
         bx, bz, byaw = self.at_center(104, 283)
         f, box = self.frame(bx, bz, byaw)

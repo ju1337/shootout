@@ -1056,7 +1056,7 @@ function ProgressService.AddCoins(player, amount, reason)
 	-- Gamepass VIP: im Spiel verdiente Münzen doppelt (nicht bei Käufen, Codes, Admin, Verkäufen in der offenen Welt und
 	-- Erlösen im Spielermarkt – das Geld kommt dort von anderen Spielern)
 	if RobuxConfig.Has(player, "VIP") and reason and reason ~= "Robux" and reason ~= "Code" and reason ~= "Admin"
-		and reason ~= "Verkauf" and reason ~= "Markt" and reason ~= "Casino" and string.sub(reason, 1, 6) ~= "Kiste:" then -- Kisten-Erstattung nicht doppelt
+		and reason ~= "Verkauf" and reason ~= "Markt" and string.sub(reason, 1, 6) ~= "Kiste:" then -- Kisten-Erstattung nicht doppelt
 		amount *= 2
 	end
 	amount = ProgressService.FriendBonus(player, amount, reason)

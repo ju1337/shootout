@@ -52,7 +52,6 @@ local HeliCrashService = require(ServerShared.HeliCrashService)
 local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
 local DungeonService = require(ServerShared.DungeonService)
-local CasinoService = require(ServerShared.CasinoService)
 local RangeService = require(ServerShared.RangeService)
 local HideoutWorkshop = require(ServerShared.HideoutWorkshop)
 local Telemetry = require(ServerShared.Telemetry)
@@ -1010,8 +1009,6 @@ function Extinction.Init(modeManager)
 			return list
 		end,
 	})
-	-- Casino im Camp: Spielautomaten, Roulette, Blackjack (allein und am Tisch) um Münzen oder RZ
-	CasinoService.Init({ Map = map })
 	-- Schießstand neben dem Versteck: Runde mit Zielen, nur dort darf man in der Safe Zone schießen
 	RangeService.Init({ Map = map })
 	table.insert(Extinction.OnDeath, function(player)

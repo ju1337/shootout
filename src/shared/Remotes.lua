@@ -58,9 +58,7 @@ local NAMES = {
 	"TradeAction", -- Client -> Server: Tausch (Request, Respond, AddItem, RemoveItem, SetRap, Ready, Cancel; TradeService)
 	"TradeUpdate", -- Server -> Client: Tausch-Stand (Art, Daten): "Request", "State", "Closed", "Done"
 	"ExtAction",  -- Client -> Server: offene Welt (Use, Move, Buy, Sell, Drop, Loot, StoreVehicle, ...; InventoryService)
-	"CasinoAction", -- Client -> Server: Casino (Aktion, ...): "Slot", "Roulette", "Bet", "Hit", "Stand", "Double", "Leave"
 	"RangeUpdate", -- Server -> Client: Schießstand (Art, Daten): "Start", "Hit", "End", "Busy"
-	"CasinoUpdate", -- Server -> Client: Casino (Art, Daten): "Open", "Slot", "Roulette", "Table", "Status", "Close"
 	"ExtUpdate",  -- Server -> Client: offene Welt (Art, Daten): "Status", "Loot", "LootClosed", "UseStart", "UseEnd", ...
 	"StormStrike", -- Server -> alle: Blitzeinschlag der Sturmnacht (Position)
 	"PlaySfx",    -- Server -> Client: Geräusch aus SoundLibrary (Name, Position oder nil = 2D, Optionen; Sfx)
