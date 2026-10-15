@@ -73,6 +73,18 @@ ATTACHMENTS.update({
                            "group": "Pump"},
 })
 
+ATTACHMENTS.update({
+    # Rotpunkt (geschlossenes Rohr): Objektiv vorn (-x, rot beschichtet, 0,14 tief in der Haube bei x -0,81, Mitte
+    # y 0,178 z -0,110, Radius 0,27), Okular hinten (x 0,951, Mitte 0,228/-0,105, Radius 0,30); beide Linsen sind
+    # undurchsichtig. Linsen herausgeschnitten (24-Eck), innen ein dunkles Rohr dazwischen, Glas hinter dem Objektiv und
+    # ein kleiner Leuchtpunkt in dessen Mitte. Klemme (Schienenkanal: Decke y -0,68, Backen bis -0,81) auf der flachen
+    # Oberseite des Gehäuses (y 0,147, x -0,04..0,15), Backen greifen seitlich; Rohr hinten bei 0,19 (vor der Kimme).
+    ("Shotgun", "HoloSight"): {"Kind": "Optic", "Name": "RedDot", "turn": 0, "scale": 0.11, "bottom": 0.147,
+                               "bottom_ref": -0.68, "rear": 0.19,
+                               "tube": {"front": (-0.81, 0.178, -0.110, 0.27), "rear": (0.951, 0.228, -0.105, 0.30),
+                                        "sides": 24, "dark": (0.0, 0.587, -0.11)}},
+})
+
 # Achse des Laufs vorn (Messung am Meshy-Modell der Waffe): Mitte y/z, Radius
 MUZZLE_AXIS = {"SMG": (0.2503, 0.0002, 0.046), "Shotgun": (0.109, 0.0, 0.036)}
 
@@ -93,6 +105,62 @@ def rotation(turn, tilt=0.0, roll=0.0):
     return rz @ ry @ rx
 
 
+def _ring(x, yc, zc, r, n):
+    """Ecken eines n-Ecks mit Inkreis r (Kanten berühren den Kreis) in der Ebene x."""
+    a = np.arange(n) * 2 * np.pi / n
+    rr = r / np.cos(np.pi / n)
+    return [np.array([x, yc + rr * np.cos(t + np.pi / n), zc + rr * np.sin(t + np.pi / n)]) for t in a]
+
+
+def open_tube(mesh, tube, images):
+    """Geschlossenes Visierrohr durchsichtig machen: Linsen vorn und hinten als n-Eck herausschneiden, dazwischen eine
+    Innenwand (Kegelstumpf, Flächen nach innen, dunkle Farbe der Rohr-Oberseite). Gibt (Mesh, Glas) zurück."""
+    n = tube["sides"]
+    uv = dark_uv(mesh, tube["dark"])
+    for (x, yc, zc, r), sign in ((tube["front"], -1), (tube["rear"], 1)):
+        planes = [M.plane((-1, 0, 0), (x - 0.012, 0, 0)), M.plane((1, 0, 0), (x + 0.012, 0, 0))]
+        for t in np.arange(n) * 2 * np.pi / n:
+            d = np.array([0, np.cos(t), np.sin(t)])
+            planes.append(M.plane(d, np.array([x, yc, zc]) + r * d))
+        mesh, cut = M.split(mesh, planes)
+        print("  Linse bei x %.3f: %d Dreiecke entfernt" % (x, len(cut)))
+    # rote Beschichtung am Rand der Öffnung vorn (Rest der Linse, Fase der Haube) dunkel färben
+    import io
+    from PIL import Image
+    tex = np.asarray(Image.open(io.BytesIO(images["Color"][0])).convert("RGB")).astype(float)
+    h, w, _ = tex.shape
+    x, yc, zc, r = tube["front"]
+    c = mesh.P.mean(1)
+    near = (c[:, 0] > x - 0.16) & (c[:, 0] < x + 0.03) & (np.hypot(c[:, 1] - yc, c[:, 2] - zc) < r + 0.08)
+    uvm = mesh.UV.mean(1)
+    col = tex[np.clip(((1 - uvm[:, 1]) * h).astype(int), 0, h - 1), np.clip((uvm[:, 0] * w).astype(int), 0, w - 1)]
+    red = near & (col[:, 0] > 1.5 * col[:, 1]) & (col[:, 0] > 70)
+    UV = mesh.UV.copy()
+    UV[red] = uv
+    mesh = M.Mesh(mesh.P, UV, mesh.N)
+    print("  rote Flächen vorn dunkel gefärbt: %d" % red.sum())
+    f = _ring(*tube["front"], n)
+    b = _ring(*tube["rear"], n)
+    walls = []
+    ax = np.array([tube["front"][0], tube["front"][1], tube["front"][2]])
+    for i in range(n):
+        j = (i + 1) % n
+        mid = (f[i] + f[j] + b[i] + b[j]) / 4
+        centre = ax + np.array([mid[0] - ax[0], 0, 0])
+        inward = centre - mid
+        inward[0] = 0
+        walls.append(M.quad(f[i], f[j], b[j], b[i], inward, uv))
+    x, yc, zc, r = tube["front"]
+    disc = [p + np.array([0.01, 0, 0]) for p in _ring(x, yc, zc, r + 0.01, n)]
+    glass = M.Mesh.concat(M.cap(disc, (1, 0, 0), (0.5, 0.5)), M.cap(disc[::-1], (-1, 0, 0), (0.5, 0.5)))
+    return M.Mesh.concat(mesh, *walls), glass
+
+
+def dark_uv(mesh, point):
+    c = mesh.P.mean(1)
+    return tuple(mesh.UV[np.argmin(np.linalg.norm(c - np.asarray(point), axis=1))].mean(0))
+
+
 def glb_nodes(path):
     """Teile einer GLB: Name -> (min, max) aus den Accessoren (ohne Knoten-Transform, wie meshy_weapon sie schreibt)."""
     data = open(path, "rb").read()
@@ -111,6 +179,9 @@ def build(weapon, att, src, weapon_src, weapon_glb, out):
     lo, hi = mesh.bounds()
     print("%s %s: Meshy %d Dreiecke, %s" % (weapon, att, len(mesh), np.round(hi - lo, 3)))
     kind = cfg["Kind"]
+    tube_glass = None
+    if "tube" in cfg:
+        mesh, tube_glass = open_tube(mesh, cfg["tube"], images)
     if kind == "Muzzle":
         cfg = {**cfg, "scale": cfg["diameter"] / max(hi[1] - lo[1], hi[2] - lo[2])}
     s = cfg["scale"]
@@ -141,6 +212,19 @@ def build(weapon, att, src, weapon_src, weapon_glb, out):
         y0, z0, radius = MUZZLE_AXIS[weapon]
         P = P + np.array([cfg["rear"] - phi[0], y0 - (plo[1] + phi[1]) / 2, z0 - (plo[2] + phi[2]) / 2])
         print("  Durchmesser %.3f (Lauf %.3f), Länge %.3f" % (cfg["diameter"], 2 * radius, phi[0] - plo[0]))
+    elif kind == "Optic" and "tube" in cfg:
+        x, yc, zc, r = cfg["tube"]["front"]
+        centre = np.array([x + 0.01, yc, zc]) * s @ Rm.T
+        shift = np.array([cfg["rear"] - phi[0], cfg["bottom"] - cfg["bottom_ref"] * s, -centre[2]])
+        P = P + shift
+        lens = centre + shift
+        gl = M.Mesh(((tube_glass.P * S) @ Rm.T) + shift, tube_glass.UV, tube_glass.N @ Rm.T)
+        extra += [("Glass", gl, 2), ("Neon_Reticle", M.box(lens, (0.004, 0.004, 0.004)), 3)]
+        points["Point_SightFront"] = lens
+        points["Point_SightRear"] = np.array([cfg["rear"], lens[1], lens[2]])
+        points["Point_Mount"] = np.array(wcfg["Points"]["Point_Optic"], float)
+        print("  Visierlinie y %.4f (Kimme/Korn %.3f), Öffnung Radius %.4f, Glas bei x %.3f"
+              % (lens[1], wcfg["Points"]["Point_SightRear"][1], r * s, lens[0]))
     elif kind == "Optic":
         win = cfg["window"]
         centre = np.array([win["x"], sum(win["y"]) / 2, sum(win["z"]) / 2]) * s @ Rm.T

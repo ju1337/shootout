@@ -9,7 +9,7 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
     python3 tools/attachments/meshy_attachment.py SMG <Aufsatz> <meshy-zip> <mp-meshy-zip> art/sources/SMG.glb art/sources/Attachments/<Aufsatz>_SMG.glb
                                          # FastMag, Suppressor, Compensator, HoloSight (Rotpunkt) nur für die MP
     python3 tools/attachments/meshy_attachment.py Shotgun <Aufsatz> <meshy-zip> <schrotflinte-meshy-zip> art/sources/Shotgun.glb art/sources/Attachments/<Aufsatz>_Shotgun.glb
-                                         # LongBarrel, ShortBarrel, MuzzleBrake, VerticalGrip, Laser nur für die Schrotflinte
+                                         # LongBarrel, ShortBarrel, MuzzleBrake, VerticalGrip, Laser, HoloSight nur für die Schrotflinte
     python3 tools/attachments/supp_v2.py  <meshy.glb> art/sources/Attachments/Suppressor.glb
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
@@ -47,6 +47,10 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   das Röhrenmagazin davor aus) sitzen hinten am Gehäuse, beide blenden mit `Hide_FrontDot` den Leuchtpunkt des alten
   Korns aus. Mündungsbremse (573.250, 30 Teile): Gewinde steckt in der Laufwand. Vertikalgriff (572.066) unter und
   Laser (660.998, Klemme an der rechten Seite) am Vorderschaft, beide mit `Group_Pump` (gehen beim Repetieren mit).
+  Rotpunkt (geschlossenes Rohr, 651.276 Dreiecke): Objektiv und Okular als 24-Eck herausgeschnitten, dazwischen ein
+  dunkles Innenrohr, rote Beschichtung am Rand der Öffnung dunkel gefärbt, Glas hinter dem Objektiv mit
+  `Neon_Reticle` in der Mitte; Klemme auf der flachen Oberseite des Gehäuses (`Point_Optic`), Visierlinie 0,08 Studs
+  über Kimme und Korn.
 - **sniper_v1**: Scharfschützengewehr mit Zielfernrohr: Zweibein eingeklappt (Beine am Gelenk abgetrennt und nach vorn
   gedreht), `Magazine` und `Bolt` herausgeschnitten, Visierlinie durch Okular- und Objektivmitte (waagrecht), Rumpf in
   Stücke `Skin_Body_01…` unter 19.500 Dreiecken. Lesen/Schreiben der GLB in `glb_io.py`.
@@ -85,4 +89,4 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
 `AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`;
 nur MP: `FastMag_SMG`, `Suppressor_SMG`, `Compensator_SMG`, `HoloSight_SMG`; nur Schrotflinte: `LongBarrel_Shotgun`,
-`ShortBarrel_Shotgun`, `MuzzleBrake_Shotgun`, `VerticalGrip_Shotgun`, `Laser_Shotgun`). Lader: `src/shared/GunModels.lua`.
+`ShortBarrel_Shotgun`, `MuzzleBrake_Shotgun`, `VerticalGrip_Shotgun`, `Laser_Shotgun`, `HoloSight_Shotgun`). Lader: `src/shared/GunModels.lua`.

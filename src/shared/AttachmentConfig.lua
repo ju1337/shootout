@@ -86,8 +86,8 @@ AttachmentConfig.ByWeapon = {
 	-- MP (HK MP7): nur Visier, Magazin, Kompensator und Schalldämpfer (Julio, 2026-10-13); kein Lauf, kein Griff
 	SMG = { "Compensator", "Suppressor", "ExtendedMag", "FastMag", "DrumMag", "HoloSight" },
 	-- Schrotflinte (Pump, Röhrenmagazin): Lauflänge, Mündungsbremse als Würgebohrung, Griff und Laser am Vorderschaft;
-	-- kein Schalldämpfer. 3D-Modelle *_Shotgun für Läufe, Bremse, Griff, Laser; ExtendedMag, FastMag und HoloSight noch
-	-- ohne eigenes Modell (Magazine: kein Kastenmagazin zum Ersetzen, nur die Wirkung)
+	-- kein Schalldämpfer. 3D-Modelle *_Shotgun für Läufe, Bremse, Griff, Laser, Rotpunkt; ExtendedMag und FastMag noch
+	-- ohne eigenes Modell (kein Kastenmagazin zum Ersetzen, nur die Wirkung)
 	Shotgun = { "MuzzleBrake", "LongBarrel", "ShortBarrel", "VerticalGrip", "Laser", "ExtendedMag", "FastMag", "HoloSight" },
 	-- Präzisionsgewehr: Schalldämpfer, Kompensator gegen den Rückstoß, Läufe für Reichweite; kein Griff, kein Trommelmagazin
 	DMR = { "Compensator", "Suppressor", "LongBarrel", "HeavyBarrel", "ExtendedMag", "FastMag", "HoloSight" },

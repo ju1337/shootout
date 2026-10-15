@@ -19,12 +19,13 @@ local function build(name, parent, data, place)
 	return m
 end
 local turn = CFrame.Angles(0, math.rad(180), 0)
-build("Shotgun", folder, {{"Skin_Body", -0.0004,-0.0637,0.5970, 0.2961,0.8441,3.2347},{"Pump", -0.0006,-0.0182,1.7569, 0.2937,0.2859,0.8941},{"Skin_Barrel", -0.0009,0.2204,1.9898, 0.1719,0.2745,1.8796},{"Skin_Tube", -0.0006,-0.0663,2.4859, 0.1661,0.2989,0.5431},{"Shell", -0.0000,-0.1040,0.8317, 0.0639,0.0700,0.2212},{"Neon_FrontDot", -0.0006,0.3462,2.6859, 0.0200,0.0200,0.0104},{"Neon_RearDot_L", 0.0218,0.3462,0.4387, 0.0071,0.0071,0.0104},{"Neon_RearDot_R", -0.0218,0.3462,0.4387, 0.0071,0.0071,0.0104},{"Pivot_Pump", -0.0000,-0.0208,1.7465, 0.0600,0.0600,0.0600},{"Pivot_Shell", -0.0000,-0.1040,0.8317, 0.0600,0.0600,0.0600},{"Point_Eject", -0.0832,0.1663,0.8525, 0.0400,0.0400,0.0400},{"Point_Grip", -0.0000,0.0000,-0.0000, 0.0400,0.0400,0.0400},{"Point_LeftHand", -0.0000,-0.0208,1.7465, 0.0400,0.0400,0.0400},{"Point_Muzzle", -0.0000,0.1975,2.9296, 0.0400,0.0400,0.0400},{"Point_SightFront", -0.0000,0.3576,2.7445, 0.0400,0.0400,0.0400},{"Point_SightRear", -0.0000,0.3576,0.4678, 0.0400,0.0400,0.0400},{"Point_Stock", -0.0000,-0.1663,-1.0204, 0.0400,0.0400,0.0400}}, CFrame.new(3, 2, -8) * turn)
+build("Shotgun", folder, {{"Skin_Body", -0.0004,-0.0637,0.5970, 0.2961,0.8441,3.2347},{"Pump", -0.0006,-0.0182,1.7569, 0.2937,0.2859,0.8941},{"Skin_Barrel", -0.0009,0.2204,1.9898, 0.1719,0.2745,1.8796},{"Skin_Tube", -0.0006,-0.0663,2.4859, 0.1661,0.2989,0.5431},{"Shell", -0.0000,-0.1040,0.8317, 0.0639,0.0700,0.2212},{"Neon_FrontDot", -0.0006,0.3462,2.6859, 0.0200,0.0200,0.0104},{"Neon_RearDot_L", 0.0218,0.3462,0.4387, 0.0071,0.0071,0.0104},{"Neon_RearDot_R", -0.0218,0.3462,0.4387, 0.0071,0.0071,0.0104},{"Pivot_Pump", -0.0000,-0.0208,1.7465, 0.0600,0.0600,0.0600},{"Pivot_Shell", -0.0000,-0.1040,0.8317, 0.0600,0.0600,0.0600},{"Point_Eject", -0.0832,0.1663,0.8525, 0.0400,0.0400,0.0400},{"Point_Grip", -0.0000,0.0000,-0.0000, 0.0400,0.0400,0.0400},{"Point_LeftHand", -0.0000,-0.0208,1.7465, 0.0400,0.0400,0.0400},{"Point_Muzzle", -0.0000,0.1975,2.9296, 0.0400,0.0400,0.0400},{"Point_Optic", -0.0000,0.2433,0.7693, 0.0400,0.0400,0.0400},{"Point_SightFront", -0.0000,0.3576,2.7445, 0.0400,0.0400,0.0400},{"Point_SightRear", -0.0000,0.3576,0.4678, 0.0400,0.0400,0.0400},{"Point_Stock", -0.0000,-0.1663,-1.0204, 0.0400,0.0400,0.0400}}, CFrame.new(3, 2, -8) * turn)
 build("LongBarrel_Shotgun", att, {{"LongBarrel", -0.0008,0.1690,2.3562, 0.2601,0.2960,2.6124},{"Hide_FrontDot", -0.0000,0.1559,2.9296, 0.0300,0.0300,0.0300},{"Point_Front", -0.0000,0.1975,3.5534, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0000,0.1975,2.9296, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.1975,3.6624, 0.0300,0.0300,0.0300}}, CFrame.new(-6, 5, 4) * turn)
 build("ShortBarrel_Shotgun", att, {{"ShortBarrel", -0.0003,0.1572,1.6831, 0.2151,0.3331,1.2663},{"Hide_FrontDot", -0.0000,0.1559,2.9296, 0.0300,0.0300,0.0300},{"Hide_Tube", -0.0000,0.1559,2.9296, 0.0300,0.0300,0.0300},{"Point_Front", -0.0000,0.1975,3.5534, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0000,0.1975,2.9296, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.1975,2.3163, 0.0300,0.0300,0.0300}}, CFrame.new(9, -4, 2) * turn)
 build("MuzzleBrake_Shotgun", att, {{"MuzzleBrake", -0.0000,0.1643,3.1788, 0.2246,0.2197,0.5920},{"Point_Mount", -0.0000,0.1975,2.9296, 0.0300,0.0300,0.0300},{"Point_Muzzle", -0.0000,0.1975,3.4748, 0.0300,0.0300,0.0300}}, CFrame.new(1, 7, -3) * turn)
 build("VerticalGrip_Shotgun", att, {{"VerticalGrip", -0.0000,-0.3742,1.8297, 0.1634,0.4574,0.1986},{"Group_Pump", -0.0000,0.0208,1.7465, 0.0300,0.0300,0.0300},{"Point_Front", -0.0000,-0.0208,2.3703, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0000,-0.0208,1.7465, 0.0300,0.0300,0.0300}}, CFrame.new(-2, 3, 12) * turn)
 build("Laser_Shotgun", att, {{"Laser", -0.2266,0.0000,2.0273, 0.1705,0.1413,0.4156},{"Group_Pump", -0.0000,0.0208,1.7465, 0.0300,0.0300,0.0300},{"Point_Front", -0.0000,-0.0208,2.3703, 0.0300,0.0300,0.0300},{"Point_Mount", -0.0000,-0.0208,1.7465, 0.0300,0.0300,0.0300}}, CFrame.new(7, 1, 6) * turn)
+build("HoloSight_Shotgun", att, {{"RedDot", 0.0250,0.3989,0.7790, 0.2482,0.3710,0.4352},{"Glass", -0.0000,0.4395,0.9619, 0.1281,0.1281,0.0010},{"Neon_Reticle", -0.0000,0.4395,0.9619, 0.0083,0.0083,0.0083},{"Point_Mount", -0.0000,0.2433,0.7693, 0.0300,0.0300,0.0300},{"Point_SightFront", -0.0000,0.4395,0.9619, 0.0300,0.0300,0.0300},{"Point_SightRear", -0.0000,0.4395,0.5614, 0.0300,0.0300,0.0300}}, CFrame.new(-8, 6, -1) * turn)
 local GunModels = require("GunModels")
 local info = GunModels.Info.Shotgun
 check(GunModels.HasAsset("Shotgun"), "Schrotflinte nicht geladen")
@@ -70,6 +71,26 @@ for _, case in { { "VerticalGrip", Vector3.new(0, -0.3742, -1.8297) }, { "Laser"
 		check(part:GetAttribute("Group") == "Pump", id .. ": geht nicht mit dem Vorderschaft mit")
 		print("HINWEIS " .. id .. " " .. tostring(rel(m, part)) .. ", soll " .. tostring(want))
 		check((rel(m, part) - want).Magnitude < 0.01, id .. " sitzt nicht wie in der GLB")
+	end
+end
+-- Rotpunkt (offenes Rohr): auf Point_Optic (Oberseite des Gehäuses), Leuchtpunkt auf der Ziellinie, Glas
+do
+	check(typeof(info.Optic) == "Vector3" and math.abs(info.Optic.Y - 0.2433) < 0.005, "Point_Optic nicht als Info.Optic")
+	local plain = GunModels.AimOffset("Shotgun")
+	local aim = GunModels.AimOffset("Shotgun", { "HoloSight" })
+	local m = GunModels.Build("Shotgun", nil, { "HoloSight" })
+	local body = m:FindFirstChild("AttHoloSight_RedDot")
+	local ret = m:FindFirstChild("AttHoloSight_Neon_Reticle")
+	check(body and ret, "Rotpunkt nicht angebaut")
+	check(aim.Position.Y < plain.Position.Y - 0.05, "Rotpunkt: Visierlinie nicht ueber Kimme und Korn")
+	if body and ret then
+		local r = rel(m, ret)
+		print("HINWEIS Rotpunkt-Absehen " .. tostring(r) .. ", Zielen " .. tostring(aim.Position))
+		check(math.abs(r.X) < 0.01 and math.abs(r.Y + aim.Position.Y) < 0.01, "Absehen nicht auf der Ziellinie")
+		check(math.abs(r.Z + 0.9619) < 0.01 and math.abs(rel(m, body).Y - 0.3989) < 0.01, "Rotpunkt sitzt nicht wie in der GLB")
+		check(ret.Material == Enum.Material.Neon and ret.Size.X < 0.02, "Absehen kein kleiner Leuchtpunkt")
+		local glass = m:FindFirstChild("AttHoloSight_Glass")
+		check(glass and glass.Material == Enum.Material.Glass, "kein Glas im Rohr")
 	end
 end
 if failures == 0 then print("HINWEIS alles ok") end

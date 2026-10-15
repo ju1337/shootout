@@ -153,6 +153,8 @@ WEAPONS = {
             "Point_Stock": (None, -0.05, 0.0),
             "Pivot_Pump": (-0.38, 0.02, 0.0),
             "Pivot_Shell": (0.06, -0.02, 0.0),
+            # Visier-Aufsätze: flache Oberseite des Gehäuses (y 0,147, x -0,04..0,15) vor der Kimme (meshy_attachment.py)
+            "Point_Optic": (0.09, 0.147, 0.0),
         },
         # Kimme und Korn: Die Ohren hinten lagen fast aneinander (V-Spalt 0,004) und das Korn ragte 0,013 über sie
         # hinaus. Kerbe rechteckig 0,008 breit; Korn auf die Höhe der Ohren gekürzt (0,202); Leuchtpunkte.
