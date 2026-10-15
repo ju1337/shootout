@@ -247,7 +247,7 @@ local function shoot(bot, head, target, weaponName)
 		WeaponService.BroadcastShot(bot.Mode, bot.Model, origin, endPos, weaponName, result and result.Normal, hitKind)
 		if humanoid and isEnemy(bot, hitModel) then
 			local headshot = result.Instance.Name == "Head"
-			local damage = cfg.Damage * (headshot and WeaponConfig.HeadshotMultiplier or 1)
+			local damage = cfg.Damage * (headshot and WeaponConfig.PartMultiplier("Head", cfg) or 1)
 				* GameSettings.Get("DamageMultiplier") * GameSettings.Get("BotDamage")
 			local _, killed = Damage.Apply(hitModel, humanoid, damage,
 				{ BotName = bot.Name, Model = bot.Model, Weapon = weaponName, Headshot = headshot })

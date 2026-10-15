@@ -1,7 +1,7 @@
 -- Damage (ModuleScript, nur Server)
 -- Zentrale Stelle für Schaden an Spielern und Bots (Waffen der Spieler und der Bots).
 -- Achtet auf Schutzschilde, die Safe Zone (Attribut "SafeZone"), Rüstung (Attribut "Armor"), Helm/Weste gepanzerter Zombies
--- (ZHelmet / ZVest) und schlägt im Drop-Modus
+-- (ZHelmet / ZVest), Kopfschüsse auf Zombies (töten sofort, außer Bosse) und schlägt im Drop-Modus
 -- nieder statt zu töten. Lädt die Ultimate des angreifenden Spielers (Attribut "UltCharge", nicht in der offenen Welt).
 
 local ServerStorage = game:GetService("ServerStorage")
@@ -12,6 +12,7 @@ local Remotes = require(ReplicatedStorage:WaitForChild("Shared").Remotes)
 local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig)
 local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ExtinctionConfig = require(ReplicatedStorage:WaitForChild("Shared").ExtinctionConfig)
+local WeaponConfig = require(ReplicatedStorage:WaitForChild("Shared").WeaponConfig)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
 
@@ -103,10 +104,17 @@ function Damage.Apply(model, humanoid, amount, attacker)
 		Remotes.DamageFrom:FireClient(victim, attackerRoot.Position, amount)
 	end
 
+	-- Kopfschuss auf einen Zombie (nicht Boss): tötet mit jeder Waffe sofort, auch durch den Helm (Balance 2026-10-15)
+	local zombieHeadshot = attacker ~= nil and attacker.Headshot == true and WeaponConfig.ZombieHeadshotKills
+		and model:GetAttribute("IsZombie") == true and not model:GetAttribute("Boss") and not model:GetAttribute("IsBoss")
+	if zombieHeadshot then
+		amount = math.max(amount, humanoid.Health + (model:GetAttribute("Armor") or 0))
+	end
+
 	-- Gepanzerte Zombies (Attribute ZHelmet / ZVest): Helm schluckt einen Teil der Kopftreffer, Weste den der übrigen
 	local absorbed = 0
 	local plating = attacker and attacker.Headshot and "ZHelmet" or "ZVest"
-	local plate = model:GetAttribute(plating)
+	local plate = not zombieHeadshot and model:GetAttribute(plating)
 	if plate and plate > 0 then
 		local A = ExtinctionConfig.ArmoredZombies
 		local share = plating == "ZHelmet" and A.HelmetFactor or A.VestFactor

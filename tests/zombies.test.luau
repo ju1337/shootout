@@ -423,4 +423,37 @@ check(screamer ~= nil and screamer:GetAttribute("ZombieKind") == "Screamer", "Sc
 step(1)
 check(ZombieService.Count() >= before + 1 + Z.ScreamCalls, "Schreier ruft Verstärkung (" .. ZombieService.Count() - before .. ")")
 check(screamer and screamer:FindFirstChild("Blood") ~= nil, "Zombies haben Blutflecken")
+-- Balance 2026-10-15: ein Kopfschuss tötet jeden Zombie (auch gepanzert, auch Brocken) mit jeder Waffe, Bosse nicht;
+-- Spieler mit voller Rüstung überleben jeden Kopfschuss
+local WeaponConfig = require("WeaponConfig")
+local origin = alice.Character.HumanoidRootPart.Position
+for name, cfg in WeaponConfig.Weapons do
+	for _, kind in { "Walker", "Runner", "Screamer", "Brute" } do
+		local zombie = ZombieService.Spawn(origin + Vector3.new(30, -3, 30), kind, "Dungeon", kind ~= "Screamer")
+		local humanoid = zombie and zombie.Humanoid
+		if humanoid then
+			Damage.Apply(zombie, humanoid, cfg.Damage * WeaponConfig.PartMultiplier("Head", cfg), { Player = alice, Weapon = name, Headshot = true })
+		end
+		check(humanoid ~= nil and humanoid.Health <= 0, name .. ": Kopfschuss tötet " .. kind)
+	end
+end
+local armoredBrute = ZombieService.Spawn(origin + Vector3.new(30, -3, 30), "Brute", "Dungeon", true)
+Damage.Apply(armoredBrute, armoredBrute.Humanoid, WeaponConfig.Get("Rifle").Damage, { Player = alice, Weapon = "Rifle" })
+check(armoredBrute.Humanoid.Health > 0, "Körpertreffer tötet den Brocken nicht")
+local boss = ZombieService.Spawn(origin + Vector3.new(30, -3, 30), "Boss", "Dungeon", false)
+Damage.Apply(boss, boss.Humanoid, WeaponConfig.Get("DMR").Damage * WeaponConfig.HeadshotMultiplier,
+	{ Player = alice, Weapon = "DMR", Headshot = true })
+check(boss:GetAttribute("Boss") == true and boss.Humanoid.Health > 0, "Bosse sterben nicht an einem Kopfschuss")
+place(alice, Vector3.new(0, 3, -300))
+local aliceHumanoid = alice.Character.Humanoid
+for name, cfg in WeaponConfig.Weapons do
+	aliceHumanoid.Health = 90
+	alice.Character:SetAttribute("Armor", ExtinctionConfig.MaxArmor)
+	Damage.Apply(alice.Character, aliceHumanoid, cfg.Damage * (cfg.Pellets or 1) * WeaponConfig.PartMultiplier("Head", cfg),
+		{ BotName = "Bot", Weapon = name, Headshot = true })
+	check(aliceHumanoid.Health > 0, name .. ": Kopfschuss tötet keinen Spieler mit voller Rüstung")
+end
+aliceHumanoid.Health = 90
+alice.Character:SetAttribute("Armor", 0)
+
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))

@@ -19,8 +19,15 @@ local AttachmentConfig = require(script.Parent.AttachmentConfig)
 
 local WeaponConfig = {}
 
--- Faktor für Kopfschüsse (2 = doppelter Schaden)
+-- Faktor für Kopfschüsse (2 = doppelter Schaden). Eine Waffe kann eigenen HeadshotMultiplier haben (Schrotflinte).
 WeaponConfig.HeadshotMultiplier = 2
+
+-- Balance (Julio, 2026-10-15): Fights dauern länger. Gerechnet gegen volle Rüstung = schwere Weste (100) + 90 Leben = 190:
+-- Sturmgewehr 12 Treffer (1,1 s), LMG 11 (0,9 s), Präzisionsgewehr 5 (1,2 s), MP 19 (1,26 s), Revolver 5 (1,28 s),
+-- Pistole 8 (1,4 s), Schrotflinte 2 Schüsse aus nächster Nähe. Mit Feldbett (+15 Leben) je höchstens ein Treffer mehr.
+-- PvP: kein Kopfschuss tötet mit einem Schuss (auch ohne Weste nicht, Schrotflinte ausgenommen: die tötet ungepanzerte
+-- Gegner aus nächster Nähe). Zombies: ein Kopfschuss tötet jeden Zombie außer Bossen (ZombieHeadshotKills, Damage.Apply).
+WeaponConfig.ZombieHeadshotKills = true
 
 -- Streuung beim Zielen = Spread * dieser Faktor
 WeaponConfig.AimSpreadFactor = 0.25
@@ -132,7 +139,7 @@ WeaponConfig.ActionSoundsByWeapon = {
 WeaponConfig.Weapons = {
 	Rifle = {
 		DisplayName = "Sturmgewehr",
-		Damage = 20,          -- Schaden pro Treffer (Körper)
+		Damage = 16,          -- Schaden pro Treffer (Körper); vorher 20
 		FireDelay = 0.1,      -- Sekunden zwischen zwei Schüssen
 		Automatic = true,     -- true = Maustaste gedrückt halten feuert weiter
 		MagazineSize = 30,
@@ -150,7 +157,7 @@ WeaponConfig.Weapons = {
 	},
 	SMG = {
 		DisplayName = "MP",
-		Damage = 14,
+		Damage = 10,          -- vorher 14
 		FireDelay = 0.07,
 		Automatic = true,
 		MagazineSize = 35,
@@ -168,8 +175,9 @@ WeaponConfig.Weapons = {
 	},
 	Shotgun = {
 		DisplayName = "Schrotflinte",
-		Damage = 11,          -- pro Kugel
+		Damage = 13,          -- pro Kugel (8 × 13 = 104: aus nächster Nähe 2 Schüsse gegen volle Rüstung); vorher 11
 		Pellets = 8,
+		HeadshotMultiplier = 1.25, -- Kopf-Kugeln: ein Schuss tötet nie jemanden mit voller Rüstung (höchstens 130)
 		Spread = 6,
 		MoveSpread = 0,       -- Schrotkegel bleibt auch im Laufen gleich
 		AirSpread = 0,
@@ -190,8 +198,9 @@ WeaponConfig.Weapons = {
 	},
 	DMR = {
 		DisplayName = "Präzisionsgewehr",
-		-- Stärkste Waffe neben dem LMG und die seltenste (Joel, 2026-10-12): Kopfschuss tötet, zwei Körpertreffer
-		Damage = 75,          -- vorher 45
+		-- Stärkste Waffe neben dem LMG und die seltenste (Joel, 2026-10-12): höchster Schaden pro Schuss, kein Abfall.
+		-- Seit 2026-10-15: 5 Körpertreffer gegen volle Rüstung, Kopfschuss (88) tötet auch ohne Weste nicht (90 Leben)
+		Damage = 44,          -- vorher 75
 		FireDelay = 0.3,      -- vorher 0.4
 		Automatic = false,
 		MagazineSize = 10,
@@ -217,7 +226,7 @@ WeaponConfig.Weapons = {
 		DisplayName = "LMG",
 		-- Stärkste Dauerfeuer-Waffe, dafür nur aus der Hüfte (Joel, 2026-10-12). Streuungs-Aufsätze machen sie präzise
 		-- (AttachmentConfig: LMG-Werte von Mündungsbremse, Laser, Winkelgriff, kurzem Lauf).
-		Damage = 26,          -- vorher 17
+		Damage = 18,          -- vorher 26 (davor 17)
 		FireDelay = 0.09,
 		Automatic = true,
 		HipOnly = true,       -- kein Zielen
@@ -236,8 +245,8 @@ WeaponConfig.Weapons = {
 	},
 	Pistol = {
 		DisplayName = "Pistole",
-		Damage = 25,
-		FireDelay = 0.25,
+		Damage = 24,          -- vorher 25
+		FireDelay = 0.2,      -- vorher 0.25
 		Automatic = false,
 		MagazineSize = 12,
 		ReserveAmmo = 48,
@@ -254,8 +263,8 @@ WeaponConfig.Weapons = {
 	},
 	Revolver = {
 		DisplayName = "Revolver",
-		Damage = 40,
-		FireDelay = 0.55,
+		Damage = 42,          -- vorher 40: stärker als die Pistole (5 statt 8 Treffer gegen volle Rüstung)
+		FireDelay = 0.32,     -- vorher 0.55
 		Automatic = false,
 		MagazineSize = 6,
 		ReserveAmmo = 30,
@@ -356,11 +365,11 @@ function WeaponConfig.FalloffFactor(cfg, distance)
 	return 1 + (minFactor - 1) * t
 end
 
--- Körperteil: Kopf mehr Schaden, Arme und Beine etwas weniger
+-- Körperteil: Kopf mehr Schaden, Arme und Beine etwas weniger. cfg (optional) = Waffe mit eigenem HeadshotMultiplier
 WeaponConfig.LimbMultiplier = 0.85
-function WeaponConfig.PartMultiplier(partName)
+function WeaponConfig.PartMultiplier(partName, cfg)
 	if partName == "Head" then
-		return WeaponConfig.HeadshotMultiplier
+		return cfg and cfg.HeadshotMultiplier or WeaponConfig.HeadshotMultiplier
 	end
 	if string.find(partName, "Arm") or string.find(partName, "Hand") or string.find(partName, "Leg")
 		or string.find(partName, "Foot") then

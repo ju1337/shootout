@@ -460,7 +460,7 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 	-- Schaden: Körperteil (Kopf mehr, Arme/Beine weniger) und Entfernung (Fall-off)
 	local headshot = hitPart.Name == "Head"
 	local distance = (hitPosition - origin).Magnitude
-	local damage = cfg.Damage * WeaponConfig.PartMultiplier(hitPart.Name) * WeaponConfig.FalloffFactor(cfg, distance)
+	local damage = cfg.Damage * WeaponConfig.PartMultiplier(hitPart.Name, cfg) * WeaponConfig.FalloffFactor(cfg, distance)
 		* GameSettings.Get("DamageMultiplier")
 	local dealt, killed, downed, armor = Damage.Apply(model, targetHumanoid, damage,
 		{ Player = player, Weapon = weaponName, Headshot = headshot })
