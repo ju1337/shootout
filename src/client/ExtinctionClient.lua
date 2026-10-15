@@ -2540,7 +2540,7 @@ end
 
 -- Kurzname einer Munitionssorte für den Knopf der Munitionspresse
 Inv.PRESS_SHORT = { Ammo_9mm = "9MM", Ammo_Magnum = "MAGNUM", Ammo_Shell = "SCHROT", Ammo_Rifle = "GEWEHR" }
-Inv.hideoutTab = "Modules" -- zuletzt offener Reiter im Versteck (Module oder Extras)
+Inv.hideoutTab = "Modules" -- zuletzt offener Reiter im Versteck (Module, Werkbank, Funkaufträge oder Extras)
 
 -- Links die Versteckstufe (Leiter mit allen Stufen, darunter was die nächste kostet und die Knöpfe), rechts zwei Reiter:
 -- MODULE (eine Zeile je Modul: Name, Bonus jetzt und danach, Kosten, Knopf) und EXTRAS (Funkgerät, Trophäenwand).
@@ -2643,9 +2643,12 @@ local function openHideout()
 			tabButtons[key].SetColor(key == id and C.Primary or C.Card, key == id and C.PrimaryText or C.Muted)
 		end
 	end
-	for index, tab in { { Id = "Modules", Text = "MODULE" }, { Id = "Extras", Text = "FUNKGERÄT & TROPHÄEN" } } do
-		tabButtons[tab.Id] = UITheme.Chunky({ Name = "Tab_" .. tab.Id, Position = UDim2.fromOffset(RIGHT_X + (index - 1) * 236, 0),
-			Size = UDim2.fromOffset(index == 1 and 224 or 260, 36), Color = C.Card, StrokeColor = C.Border, Text = tab.Text, TextSize = 14,
+	local hideoutTabs = { { Id = "Modules", Text = "MODULE" }, { Id = "Workbench", Text = "WERKBANK" },
+		{ Id = "Contracts", Text = "FUNKAUFTRÄGE" }, { Id = "Extras", Text = "FUNKGERÄT & TROPHÄEN" } }
+	local tabW = math.floor((RIGHT_W - 8 * (#hideoutTabs - 1)) / #hideoutTabs)
+	for index, tab in hideoutTabs do
+		tabButtons[tab.Id] = UITheme.Chunky({ Name = "Tab_" .. tab.Id, Position = UDim2.fromOffset(RIGHT_X + (index - 1) * (tabW + 8), 0),
+			Size = UDim2.fromOffset(tabW, 36), Color = C.Card, StrokeColor = C.Border, Text = tab.Text, TextSize = 13,
 			ZIndex = 7 }, body, function()
 			showTab(tab.Id)
 		end)
@@ -2754,6 +2757,11 @@ local function openHideout()
 			sendAction("HideoutRadio")
 		end)
 	local _, trophyBox, trophyLocked = extraCard(2, "Trophies", "Trophäenwand", "DEINE ERFOLGE IN DER OFFENEN WELT")
+	-- WERKBANK und FUNKAUFTRÄGE (HideoutExtras)
+	local extras = require(script.Parent.HideoutExtras)
+	local extrasCtx = { Colors = C, Accent = HIDEOUT, Raised = Inv.RAISED, Send = sendAction }
+	local refreshWorkbench = extras.Workbench(pages.Workbench, RIGHT_W, H - 48, extrasCtx)
+	local refreshContracts = extras.Contracts(pages.Contracts, RIGHT_W, H - 48, extrasCtx)
 	make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, trophyBox)
 
 	local function stats()
@@ -2882,6 +2890,9 @@ local function openHideout()
 				view.Ammo.SetText(Inv.PRESS_SHORT[HideoutConfig.PressAmmoOf(data)] or "")
 			end
 		end
+
+		refreshWorkbench(data, tier)
+		refreshContracts(data, tier)
 
 		-- Funkgerät
 		local radioOpen = HideoutConfig.HasFeature(player, "Radio", data)

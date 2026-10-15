@@ -52,7 +52,7 @@ ZENTRALE_PARTS = ("ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
                   "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Missions", "Podium1", "Podium2", "Podium3", "WheelSpot",
                   "WheelConsole", "WheelBoard", "GateCount_Market", "DungeonGate",
                   "Casino_Slot1", "Casino_Slot2", "Casino_Slot3", "Casino_Slot4", "Casino_Roulette", "Casino_Blackjack",
-                  "Casino_Table")
+                  "Casino_Table", "Range_Start", "Range_Zone", "Range_Target1", "Range_Bull1", "Range_Target8")
 
 
 def check_no_hub():

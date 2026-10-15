@@ -487,10 +487,17 @@ local function inSafeZone(player, character)
 	return player:GetAttribute("InSafeZone") == true or (character ~= nil and character:GetAttribute("SafeZone") == true)
 end
 
+-- Schießstand (RangeService setzt es): RangeTargets(player) gibt die Ziele zurück, wenn der Spieler gerade am Stand eine
+-- Runde spielt (dann darf er in der Safe Zone schießen, trifft aber nur die Ziele), sonst nil; RangeHit(player, part,
+-- position) wertet einen Treffer aus
+WeaponService.RangeTargets = nil :: ((Player) -> { Instance }?)?
+WeaponService.RangeHit = nil :: ((Player, BasePart, Vector3) -> ())?
+
 -- Schuss auswerten. aiming = Spieler zielt (Rechtsklick): weniger Streuung. Gibt true zurück, wenn geschossen.
 local function fire(player, state, origin, direction, aiming, shotId, claims)
-	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Markt); in der Safe Zone nie
-	if not player:GetAttribute("CanFight") or inSafeZone(player, player.Character) then
+	local rangeTargets = WeaponService.RangeTargets and WeaponService.RangeTargets(player) or nil
+	-- CanFight setzt der Modus (z.B. aus zwischen Runden und im Markt); in der Safe Zone nie (außer am Schießstand)
+	if not player:GetAttribute("CanFight") or (inSafeZone(player, player.Character) and not rangeTargets) then
 		return false
 	end
 	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
@@ -537,6 +544,9 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 	end
 	state.NextShot = math.max(state.NextShot, now - slack) + cfg.FireDelay
 	ammo.Mag -= 1
+	if rangeTargets and ammo.Mag <= 0 then
+		ammo.Mag = cfg.Mag -- Schießstand: Munition gratis
+	end
 	reportMag(state, ammo)
 	if character:GetAttribute("Cloaked") then
 		character:SetAttribute("Cloaked", false) -- Schießen verrät dich
@@ -574,6 +584,25 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 		if (aimPoint - shotOrigin).Magnitude > 0.5 then
 			aimDirection = (aimPoint - shotOrigin).Unit
 		end
+	end
+
+	-- Schießstand: nur die Ziele treffen, kein Schaden an irgendwem
+	if rangeTargets then
+		local rangeParams = RaycastParams.new()
+		rangeParams.FilterType = Enum.RaycastFilterType.Include
+		rangeParams.FilterDescendantsInstances = rangeTargets
+		local hitParts = {}
+		for _, pelletDirection in WeaponConfig.PelletDirections(aimDirection, spreadAngle, cfg.Pellets or 1,
+			WeaponConfig.ShotSeed(player.UserId, shotId or 0)) do
+			local result = workspace:Raycast(shotOrigin, pelletDirection * cfg.Range, rangeParams)
+			if result and result.Instance:IsA("BasePart") and not hitParts[result.Instance] then
+				hitParts[result.Instance] = true -- Schrotflinte: ein Ziel zählt einmal je Schuss
+				if WeaponService.RangeHit then
+					WeaponService.RangeHit(player, result.Instance, result.Position)
+				end
+			end
+		end
+		return true
 	end
 
 	-- Treffer pro Ziel zusammenfassen (Schrotflinte: eine Schadenszahl statt acht)

@@ -23,6 +23,7 @@ local ChatTags = require(script.Parent:WaitForChild("ChatTags"))
 local CombatBarrier = require(script.Parent:WaitForChild("CombatBarrier"))
 local DungeonClient = require(script.Parent:WaitForChild("DungeonClient"))
 local CasinoClient = require(script.Parent:WaitForChild("CasinoClient"))
+local RangeClient = require(script.Parent:WaitForChild("RangeClient"))
 local SideMenu = require(script.Parent:WaitForChild("SideMenu"))
 local Scoreboard = require(script.Parent:WaitForChild("Scoreboard"))
 local Downed = require(script.Parent:WaitForChild("Downed"))
@@ -90,3 +91,4 @@ ChatTags.Init() -- Team-Ränge als Präfix im Chat (StaffConfig)
 CombatBarrier.Init() -- im Kampf: Safe Zone gesperrt, rote Wand und Anzeige
 DungeonClient.Init() -- im Dungeon: Welle, Zombies übrig, Portal und gesammelte Beute
 CasinoClient.Init() -- Casino im Camp: Automat, Roulette, Blackjack (Fenster öffnet der Server)
+RangeClient.Init() -- Schießstand neben dem Versteck: Punkte und Zeit der Runde

@@ -53,6 +53,8 @@ local BossService = require(ServerShared.BossService)
 local BountyService = require(ServerShared.BountyService)
 local DungeonService = require(ServerShared.DungeonService)
 local CasinoService = require(ServerShared.CasinoService)
+local RangeService = require(ServerShared.RangeService)
+local HideoutWorkshop = require(ServerShared.HideoutWorkshop)
 local Telemetry = require(ServerShared.Telemetry)
 local Badges = require(ServerShared.Badges)
 
@@ -876,6 +878,7 @@ function Extinction.Init(modeManager)
 
 	-- Eigenes Versteck: Module ausbauen, Generator abholen (Haus VERSTECK im Camp)
 	HideoutService.Init()
+	HideoutWorkshop.Init() -- Werkbank und Funkaufträge im Versteck
 
 	-- Granaten und Molotows (Hotbar-Taste wirft in Blickrichtung)
 	ThrowableService.Init()
@@ -1009,6 +1012,8 @@ function Extinction.Init(modeManager)
 	})
 	-- Casino im Camp: Spielautomaten, Roulette, Blackjack (allein und am Tisch) um Münzen oder RZ
 	CasinoService.Init({ Map = map })
+	-- Schießstand neben dem Versteck: Runde mit Zielen, nur dort darf man in der Safe Zone schießen
+	RangeService.Init({ Map = map })
 	table.insert(Extinction.OnDeath, function(player)
 		DungeonService.OnDeath(player)
 	end)

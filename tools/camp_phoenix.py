@@ -927,19 +927,11 @@ class CampPhoenix:
                 box("Decor", "ForkliftWheel", (0.6, 1.4, 1.4), (lx, 0.7, lz), (24, 24, 26), "Rubber", props={"Shape": "Cylinder"})
 
     def yard_sports(self):
-        """NW: Sportplatz (umzäunter Basketballplatz), Solarfeld mit Speicher und an der Nordstraße der
-        Abgang zu den KATAKOMBEN (Dungeon-Eingang)."""
+        """NW: Sportplatz (umzäunter Basketballplatz), SCHIESSSTAND (statt des Solarfelds), Speicher und an der Nordstraße
+        der Abgang zu den KATAKOMBEN (Dungeon-Eingang)."""
         self.yard_pad(270, (120, 122, 124), "Concrete")
         self.sports_court(*self.at_center(97, 295))  # etwas nach außen: das Casino reicht bis r 86.5
-        x0, z0, yaw = self.at_center(96, 327)
-        f, box = self.frame(x0, z0, yaw)
-        for row in range(3):  # Solarmodule in drei Reihen, nach Süden geneigt
-            for k in range(3):
-                lx, lz = -7 + k * 7, -6 + row * 6
-                box("Decor", "SolarPanel", (6.4, 0.25, 3.4), (lx, 2.2, lz), (30, 40, 62), "Glass", extra=(22, 0, 0),
-                    props={"Reflectance": 0.3})
-                for s in (-1, 1):
-                    box("Decor", "SolarLeg", (0.25, 2, 0.25), (lx + s * 2.6, 1.0, lz), STEEL, "Metal")
+        self.shooting_range(*self.at_center(96, 322))
         bx, bz, byaw = self.at_center(104, 283)
         f, box = self.frame(bx, bz, byaw)
         box("Buildings", "BatteryBox", (9, 4, 3.6), (0, 2, 0), WHITE, "SmoothPlastic")
@@ -948,6 +940,47 @@ class CampPhoenix:
         self.crypt_gate(gx, gz + 2.5, self.yaw_to(1, 0))  # Front zur Nordstraße (nach Osten)
         # Tafel DUNGEON-WOCHE (Bestenliste der Woche, LeaderboardService) vor der Kapelle nördlich vom Weg, Front zum Weg
         self.monolith("Leaderboard_DungeonWeek", 5, 8, 5.2, 9.6, gx + 11.6, gz + 9.3, self.yaw_to(0, -1), (170, 90, 255))
+
+    def shooting_range(self, x, z, yaw):
+        """SCHIESSSTAND: überdachter Stand an einem Ende (Punkt Range_Start mit E, Feld Range_Zone, in dem man in der Safe
+        Zone schießen darf), Bahn mit Erdwällen, am anderen Ende 8 Zielscheiben auf Pfosten (Range_Target1-8, Mitte
+        Range_Bull1-8; der Server klappt sie auf und weg, RangeService). Geschossen wird entlang lokal -X. Ohne Zufall."""
+
+        def build(pb):
+            def box(group, name, size, pos, color, mat, extra=(0, 0, 0), **kw):
+                pb.box(group, name, size, pos, color, mat, angles=extra, **kw)
+
+            L, Wd = 36, 13
+            earth, concrete, steel = (104, 92, 72), (150, 150, 146), (70, 74, 80)
+            orange, white, red = (240, 124, 44), (236, 236, 230), (200, 44, 44)
+            hidden = {"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False}
+            box("Ground", "RangeFloor", (L, 0.2, Wd), (-1, 0.1, 0), (120, 112, 96), "Ground")
+            box("Ground", "RangeLane", (L - 8, 0.05, 0.3), (-4, 0.22, 0), white, "SmoothPlastic")
+            for s in (-1, 1):  # Erdwälle an den Seiten
+                box("Buildings", "RangeBerm", (L - 6, 3, 1.6), (-4, 1.5, s * (Wd / 2 + 0.6)), earth, "Ground")
+            box("Buildings", "RangeBackstop", (2.4, 6, Wd + 3), (-L / 2 - 1.2, 3, 0), earth, "Ground")
+            # Stand: Dach auf vier Pfosten, Theke quer zur Bahn
+            sx = L / 2 - 4
+            for px in (sx - 2.8, sx + 2.8):
+                for pz in (-Wd / 2 + 0.5, Wd / 2 - 0.5):
+                    box("Decor", "RangePost", (0.4, 7, 0.4), (px, 3.5, pz), steel, "Metal")
+            box("Buildings", "RangeRoof", (7, 0.4, Wd + 1), (sx, 7.2, 0), (60, 64, 70), "Metal")
+            box("Decor", "RangeRoofStrip", (0.2, 0.2, Wd + 1), (sx - 3.5, 7.0, 0), orange, "Neon", props=dict(NO_HIT))
+            box("Buildings", "RangeCounter", (0.8, 2.6, Wd - 2), (sx - 2.6, 1.3, 0), concrete, "Concrete")
+            box("Decor", "RangeCounterTop", (1.2, 0.2, Wd - 1.6), (sx - 2.6, 2.7, 0), (40, 42, 46), "SmoothPlastic")
+            pb.sign2("Sign_Range", (8, 1.8, 0.3), (sx, 8.6, 0), "SCHIESSSTAND", "E AM STAND · 30 SEKUNDEN",
+                     (24, 26, 30), orange, (226, 228, 232), angles=(0, 90, 0), glow=orange)
+            pb.add("Zentrale", "Range_Start", (2, 2, 2), (sx, 2.5, 0), orange, "SmoothPlastic", props=hidden)
+            pb.add("Zentrale", "Range_Zone", (5.2, 6, Wd - 1), (sx + 0.2, 3, 0), orange, "SmoothPlastic", props=hidden)
+            # Zielscheiben: Pfosten bleiben stehen, Scheibe und Mitte klappt der Server auf
+            spots = ((-6, -3.8), (-6, 3.8), (-10, 0), (-11, -4.2), (-12, 4.2), (-15, -1.8), (-15.5, 2.6), (-17, 0))
+            for i, (tx, tz) in enumerate(spots):
+                box("Decor", "TargetPost", (0.3, 2.4, 0.3), (tx, 1.2, tz), steel, "Metal", props=dict(NO_HIT))
+                pb.add("Zentrale", "Range_Target%d" % (i + 1), (0.2, 2.6, 1.8), (tx + 0.25, 3.5, tz), white, "SmoothPlastic",
+                       props={"CanCollide": False, "CanTouch": False})
+                pb.add("Zentrale", "Range_Bull%d" % (i + 1), (0.12, 0.7, 0.7), (tx + 0.4, 3.9, tz), red, "Neon",
+                       props={"CanCollide": False, "CanTouch": False})
+        self._feature(build, x, z, yaw)
 
     def sports_court(self, x, z, yaw):
         """Basketballplatz: blauer Belag mit Linien, Körbe an den Enden, Gitterzaun mit Öffnung zur Mitte."""

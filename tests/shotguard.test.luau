@@ -311,6 +311,36 @@ do
 	fire()
 	step(0.3)
 	check(damageTaken() == 0 and WeaponService.CarriedMag(alice) == mag, "Safe Zone sperrt auch mit CanFight")
+	-- Schießstand (RangeService): mit laufender Runde darf Alice schießen, trifft aber nur die Ziele, Bob bleibt heil
+	local target = Instance.new("Part", workspace)
+	target.Name = "Range_Target1"
+	target.Size = Vector3.new(4, 8, 1)
+	target.CFrame = CFrame.new(alice.Character.Head.Position:Lerp(torsoPosition(), 0.5))
+	local rangeHits = {}
+	WeaponService.RangeTargets = function(player)
+		return player == alice and { target } or nil
+	end
+	WeaponService.RangeHit = function(player, part)
+		table.insert(rangeHits, { player, part })
+	end
+	-- Strahl gegen die Ziel-Liste (Include): trifft die Scheibe (die Simulation kennt sonst keine Teile)
+	local oldHandler = SIM.RaycastHandler
+	SIM.RaycastHandler = function(origin, direction, params)
+		if params and params.FilterType == Enum.RaycastFilterType.Include then
+			return table.find(params.FilterDescendantsInstances, target) and { Instance = target, Position = target.Position,
+				Normal = Vector3.yAxis, Material = Enum.Material.Plastic } or nil
+		end
+		return oldHandler and oldHandler(origin, direction, params) or nil
+	end
+	step(1)
+	fire()
+	step(0.3)
+	SIM.RaycastHandler = oldHandler
+	check(#rangeHits == 1 and rangeHits[1][2] == target and damageTaken() == 0 and WeaponService.CarriedMag(alice) == mag - 1,
+		"Schießstand: Schuss zählt am Ziel, kein Schaden an Bob")
+	WeaponService.RangeTargets, WeaponService.RangeHit = nil, nil
+	target:Destroy()
+	mag = WeaponService.CarriedMag(alice)
 	step(1)
 	stab()
 	step(0.3)
