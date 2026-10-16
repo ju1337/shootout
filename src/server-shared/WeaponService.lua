@@ -31,6 +31,7 @@ local GunModels = require(Shared.GunModels)
 local Modes = require(Shared.Modes)
 local Cosmetics = require(Shared.Cosmetics)
 local AttachmentConfig = require(Shared.AttachmentConfig)
+local ZombieOwner = require(Shared.ZombieOwner)
 local Damage = require(ServerStorage:WaitForChild("ServerShared").Damage)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
@@ -281,6 +282,11 @@ local function validClaim(character, shotOrigin, direction, cfg, claim)
 	if not humanoid or humanoid.Health <= 0 then
 		return nil
 	end
+	-- fremde Zombies (Zombies pro Spieler) sieht der Schütze gar nicht
+	local shooter = Players:GetPlayerFromCharacter(character)
+	if model:GetAttribute("IsZombie") and not ZombieOwner.CanSee(model, shooter) then
+		return nil
+	end
 	local position = claim.Position
 	local offset = position - shotOrigin
 	local distance = offset.Magnitude
@@ -393,10 +399,14 @@ end
 -- Schuss-Effekt an alle Spieler im selben Modus (Tracer, Sound, Einschlag).
 -- shooter = Player, Bot-Modell oder nil (z.B. Geschützturm)
 -- silenced = Schalldämpfer: andere sehen kein Mündungsfeuer und keine Leuchtspur, der Schuss ist leiser
-function WeaponService.BroadcastShot(modeId, shooter, startPos, endPos, weaponName, normal, hitKind, silenced)
+-- ownerId = Treffer auf einen eigenen Zombie (ZombieOwner): nur dieser Spieler sieht den Einschlag (Blut), die anderen
+-- sehen den Zombie ja nicht
+function WeaponService.BroadcastShot(modeId, shooter, startPos, endPos, weaponName, normal, hitKind, silenced, ownerId)
 	for _, other in Players:GetPlayers() do
 		if other:GetAttribute("Mode") == modeId then
-			Remotes.Shot:FireClient(other, shooter, startPos, endPos, weaponName, normal, hitKind, silenced)
+			local private = ownerId ~= nil and other.UserId ~= ownerId
+			Remotes.Shot:FireClient(other, shooter, startPos, endPos, weaponName, if private then nil else normal,
+				if private then nil else hitKind, silenced)
 		end
 	end
 end
@@ -412,9 +422,10 @@ local function fireRay(player, character, origin, direction, cfg, weaponName, pa
 		hitPart, hitPosition = claimedPart, claimedPosition
 	end
 	local endPos = hitPosition or (origin + direction * cfg.Range)
+	local hitModel = hitPart and hitPart:FindFirstAncestorOfClass("Model")
 	WeaponService.BroadcastShot(player:GetAttribute("Mode"), player, origin, endPos, weaponName,
 		(not claimedPart) and result and result.Normal or nil, claimedPart and "Character" or hitKindOf(result),
-		AttachmentConfig.Effects(player, weaponName).Silenced)
+		AttachmentConfig.Effects(player, weaponName).Silenced, hitModel and hitModel:GetAttribute("IsZombie") and ZombieOwner.Of(hitModel) or nil)
 	if not hitPart then
 		return
 	end
@@ -563,7 +574,10 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { character }
+	-- fremde Zombies (Zombies pro Spieler) sind für diesen Schützen nicht da: kein Ziel, keine Deckung
+	local ignore = ZombieOwner.HiddenFrom(player)
+	table.insert(ignore, character)
+	params.FilterDescendantsInstances = ignore
 
 	-- Schulterkamera: Punkt unter dem Fadenkreuz suchen (erst ab Höhe des Kopfes, damit nichts zwischen
 	-- Kamera und Charakter getroffen wird) und dann vom Kopf aus dorthin schießen
@@ -862,7 +876,9 @@ local function onMelee(player, origin, direction)
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { character }
+	local ignore = ZombieOwner.HiddenFrom(player) -- fremde Zombies (Zombies pro Spieler) trifft das Messer nicht
+	table.insert(ignore, character)
+	params.FilterDescendantsInstances = ignore
 	local result = workspace:Spherecast(head.Position, melee.Radius, direction.Unit * melee.Range, params)
 	local model = result and result.Instance:FindFirstAncestorOfClass("Model")
 	local target = model and model:FindFirstChildOfClass("Humanoid")

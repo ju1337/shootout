@@ -368,7 +368,8 @@ local function buildCache(spot)
 		p.PromptButtonHoldBegan:Connect(function(player)
 			if spot.State == "Ready" and canUse(player, spot) and now() - (spot.AlarmAt or -100) > 30 then
 				spot.AlarmAt = now()
-				ZombieService.SpawnAround(spot.Position, A.Cache.Alarm, 18, 40, nil, true)
+				-- der Lärm gehört dem, der aufbricht: seine eigenen Zombies (Zombies pro Spieler)
+				ZombieService.SpawnAround(spot.Position, A.Cache.Alarm, 18, 40, nil, true, nil, player)
 				InventoryService.Status(player, "Der Lärm lockt Zombies an!")
 			end
 		end)
@@ -396,7 +397,7 @@ function ActivityService.OpenCache(player, spot)
 	event(player, "Cache")
 	if now() - (spot.AlarmAt or -100) > 30 then
 		spot.AlarmAt = now()
-		ZombieService.SpawnAround(spot.Position, A.Cache.Alarm, 18, 40, nil, true)
+		ZombieService.SpawnAround(spot.Position, A.Cache.Alarm, 18, 40, nil, true, nil, player)
 	end
 	setCacheLook(spot, true)
 	publish()

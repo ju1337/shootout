@@ -103,6 +103,11 @@ end
 
 local function inRange(player, bag)
 	local root = rootOf(player)
+	-- Leiche eines eigenen Zombies (Zombies pro Spieler, Attribut ZombieOwnerId): nur der Besitzer sieht und durchsucht sie
+	local owner = bag.Model and bag.Model:GetAttribute("ZombieOwnerId")
+	if owner ~= nil and owner ~= player.UserId then
+		return false
+	end
 	return root ~= nil and bag.Part.Parent ~= nil
 		and (root.Position - bag.Part.Position).Magnitude <= (bag.Range or ExtinctionConfig.LootRange)
 		and Modes.IsSurvival(player:GetAttribute("Mode"))

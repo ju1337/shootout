@@ -13,6 +13,7 @@ local AgentConfig = require(ReplicatedStorage:WaitForChild("Shared").AgentConfig
 local Modes = require(ReplicatedStorage:WaitForChild("Shared").Modes)
 local ExtinctionConfig = require(ReplicatedStorage:WaitForChild("Shared").ExtinctionConfig)
 local WeaponConfig = require(ReplicatedStorage:WaitForChild("Shared").WeaponConfig)
+local ZombieOwner = require(ReplicatedStorage:WaitForChild("Shared").ZombieOwner)
 
 local DownedService = require(ServerStorage:WaitForChild("ServerShared").DownedService)
 
@@ -76,6 +77,15 @@ function Damage.Apply(model, humanoid, amount, attacker)
 	if attacker and sourceModel ~= model and ((attacker.Player and attacker.Player ~= noclip
 		and attacker.Player:GetAttribute("InSafeZone") == true)
 		or (sourceModel and sourceModel:GetAttribute("SafeZone") == true)) then
+		return 0, false, false, 0
+	end
+	-- Zombies pro Spieler (ZombieOwner): den Zombie eines Spielers trifft nur er (Schüsse, Messer, Granaten, Molotow,
+	-- Fahrzeug; kein Bot), und er schlägt nur ihn. Schaden ohne Verursacher (Blitz, Feuer am Wrack) trifft weiter alle.
+	if attacker and model:GetAttribute("IsZombie") and not ZombieOwner.CanSee(model, attacker.Player) then
+		return 0, false, false, 0
+	end
+	if sourceModel and sourceModel ~= model and sourceModel:GetAttribute("IsZombie")
+		and not ZombieOwner.CanSee(sourceModel, noclip) then
 		return 0, false, false, 0
 	end
 	-- Angreifer merken (Spieler-Charakter oder Bot-Modell)

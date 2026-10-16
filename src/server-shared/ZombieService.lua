@@ -23,6 +23,9 @@
 -- In der roten Zone gestorben: doppelte Münzen und bessere Beute (ExtinctionConfig.Redzone.Loot).
 -- Körper: einfacher R6-Körper (6 Teile, schnell), Arme nach vorn, rote Augen; Animation: Roblox-Standard (R6).
 -- Modelle in Workspace.Zombies, Attribut IsZombie (Messer und Schüsse treffen sie, der Ping-Ausgleich kennt sie).
+-- Zombies pro Spieler (ZombieOwner): was für einen Spieler spawnt (Umgebung, rote Zone, Schreier-Rufe, Sturm), gehört
+-- ihm (Attribut ZombieOwnerId): nur er sieht es, nur ihn jagt es, es zählt nur bei ihm und verschwindet, wenn er weg ist.
+-- Bosse, Event-Zombies und Dungeon-Wellen gehören niemandem (alle sehen und bekämpfen sie).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +37,7 @@ local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local DayCycle = require(Shared.DayCycle)
 local Modes = require(Shared.Modes)
 local Sfx = require(Shared.Sfx)
+local ZombieOwner = require(Shared.ZombieOwner)
 local Damage = require(script.Parent.Damage)
 local ProgressService = require(script.Parent.ProgressService)
 local Telemetry = require(script.Parent.Telemetry)
@@ -309,10 +313,11 @@ local function huntTargets()
 	return list
 end
 
-local function nearestTarget(position, range)
+-- owner = Besitzer des Zombies (nur ihn jagt er) oder nil (alle)
+local function nearestTarget(position, range, owner)
 	local best, bestDistance = nil, range
 	for _, entry in huntTargets() do
-		if entry.Root.Parent then
+		if entry.Root.Parent and (owner == nil or entry.Target == owner) then
 			local distance = (entry.Root.Position - position).Magnitude
 			if distance < bestDistance then
 				best, bestDistance = entry.Target, distance
@@ -629,10 +634,11 @@ local function shielded(player)
 end
 ZombieService.Shielded = shielded
 
--- Liegt position zu nah an einem Spieler mit Anti-Zombie-Spritze? (dort spawnt nichts)
-local function nearShield(position)
+-- Liegt position zu nah an einem Spieler mit Anti-Zombie-Spritze? (dort spawnt nichts; eigene Zombies eines Spielers
+-- hält nur seine eigene Spritze ab, die anderen sehen sie ja nicht)
+local function nearShield(position, owner)
 	for _, player in Players:GetPlayers() do
-		local root = shielded(player) and livingRoot(player)
+		local root = (owner == nil or player == owner) and shielded(player) and livingRoot(player)
 		if root and Vector3.new(root.Position.X - position.X, 0, root.Position.Z - position.Z).Magnitude < Z.ShieldRadius then
 			return true
 		end
@@ -861,9 +867,10 @@ end
 -- höchstens ForceExtra darüber. Nie nah an einem Spieler mit Anti-Zombie-Spritze (dann nil). armored: siehe rollArmored.
 -- force = true: etwas über die Obergrenze hinaus (Events); force = "Dungeon": ohne Obergrenze und Spritze (die Halle
 -- hat ihre eigene Grenze, sonst friert eine Welle ein, wenn draußen viel los ist); force = "Horde": wie true, aber auch
--- neben einer Spritze (sonst hält man die Horden-Kiste mit der Spritze ganz ohne Gegner)
-function ZombieService.Spawn(position, kindName, force, armored)
-	if force ~= "Dungeon" and (count >= maxTotal() + (force and Z.ForceExtra or 0) or (force ~= "Horde" and nearShield(position))) then
+-- neben einer Spritze (sonst hält man die Horden-Kiste mit der Spritze ganz ohne Gegner).
+-- owner = Spieler, dem der Zombie gehört (nur er sieht und bekämpft ihn, siehe ZombieOwner), nil = gemeinsam
+function ZombieService.Spawn(position, kindName, force, armored, owner)
+	if force ~= "Dungeon" and (count >= maxTotal() + (force and Z.ForceExtra or 0) or (force ~= "Horde" and nearShield(position, owner))) then
 		return nil
 	end
 	local stats = ZombieService.Kind(kindName)
@@ -892,6 +899,12 @@ function ZombieService.Spawn(position, kindName, force, armored)
 		model:ScaleTo(stats.Scale)
 	end
 	model:SetAttribute("ZombieKind", stats.Id)
+	-- Besitzer vor dem Einfügen setzen: der Client versteckt fremde Zombies, sobald sie ankommen (kein Aufblitzen)
+	if owner and not stats.Boss and force ~= "Dungeon" then
+		model:SetAttribute(ZombieOwner.Attribute, owner.UserId)
+	else
+		owner = nil
+	end
 	if stats.Boss then
 		-- Boss: Name und Lebensbalken über dem Kopf, roter Umriss (durch Wände sichtbar)
 		model:SetAttribute("Boss", true)
@@ -946,7 +959,7 @@ function ZombieService.Spawn(position, kindName, force, armored)
 	local info = { Humanoid = humanoid, Root = root, Target = nil, NextAttack = 0, NextWander = 0, LastPos = root.Position,
 		StuckTime = 0, Speed = speed, Walk = stats.Walk, Damage = stats.Damage * (blood and B.Damage or 1), Coins = stats.Coins,
 		Kind = stats.Id, Name = (armored and "Armored " or "") .. stats.Name, Stats = stats, Blood = blood, Armored = armored,
-		VoicePitch = random:NextNumber(0.88, 1.1), Dungeon = force == "Dungeon" }
+		VoicePitch = random:NextNumber(0.88, 1.1), Dungeon = force == "Dungeon", Owner = owner }
 	zombies[model] = info
 	if not info.Dungeon then
 		count += 1 -- Dungeon-Zombies zählen nicht gegen die Obergrenze der offenen Welt
@@ -1068,6 +1081,9 @@ local function step(model, info, now)
 	end
 	-- Ziel behalten, solange es draußen und nah genug ist, sonst das nächste suchen
 	local target = info.Target
+	if target and info.Owner and target ~= info.Owner then
+		target = nil -- eigene Zombies jagen nur ihren Besitzer
+	end
 	if target then
 		local ok, targetRoot = huntable(target)
 		if not ok or not targetRoot or (targetRoot.Position - root.Position).Magnitude > Z.LoseRange then
@@ -1076,7 +1092,7 @@ local function step(model, info, now)
 	end
 	if not target then
 		local night = DayCycle.IsNight(DayCycle.Clock(workspace:GetServerTimeNow()))
-		target = nearestTarget(root.Position, Z.SightRange * (night and ExtinctionConfig.Day.NightSight or 1))
+		target = nearestTarget(root.Position, Z.SightRange * (night and ExtinctionConfig.Day.NightSight or 1), info.Owner)
 		if target and info.Stats and info.Stats.Scream and now >= (info.NextScream or 0) then
 			info.NextScream = now + Z.ScreamCooldown
 			ZombieService.Scream(model, target)
@@ -1145,7 +1161,11 @@ end
 local function despawnFar(now)
 	for model, info in zombies do
 		local near = false
+		local owner = info.Owner
 		for _, player in options.Players() do
+			if owner and player ~= owner then
+				continue -- eigene Zombies bleiben nur, solange ihr Besitzer in der Nähe ist
+			end
 			local ok, root = huntable(player)
 			if ok and root and (root.Position - info.Root.Position).Magnitude <= Z.DespawnDistance then
 				near = true
@@ -1160,15 +1180,17 @@ local function despawnFar(now)
 		else
 			info.LonelySince = info.LonelySince or now
 		end
-		if not model.Parent or (info.LonelySince and now - info.LonelySince >= LONELY_TIME) then
+		-- Besitzer hat das Spiel verlassen: seine Zombies sofort weg
+		if not model.Parent or (owner and not owner.Parent) or (info.LonelySince and now - info.LonelySince >= LONELY_TIME) then
 			remove(model)
 			model:Destroy()
 		end
 	end
 end
 
--- Pro Spieler draußen nachspawnen, bis PerPlayer Zombies in seiner Nähe sind (in der roten Zone mehr, mit Läufern und
--- Brocken, und innerhalb der Zone)
+-- Pro Spieler draußen nachspawnen, bis er PerPlayer eigene Zombies in seiner Nähe hat (in der roten Zone mehr, mit
+-- Läufern und Brocken, und innerhalb der Zone). Jeder bekommt seine eigenen (ZombieOwner): stehen zwei oder drei
+-- Spieler zusammen, sieht jeder trotzdem nur so viele wie allein.
 local function spawnRound()
 	for _, player in options.Players() do
 		local ok, root = huntable(player)
@@ -1184,9 +1206,12 @@ local function spawnRound()
 			if DayCycle.IsStorm(workspace:GetServerTimeNow()) then
 				wanted = math.floor(wanted * ExtinctionConfig.Storm.Zombies + 0.5) -- Sturmnacht: mehr
 			end
-			-- in der roten Zone zählen die Zombies der ganzen Zone (sie spawnen überall darin), sonst die um den Spieler
+			-- in der roten Zone zählen seine Zombies in der ganzen Zone (sie spawnen überall darin), sonst die um ihn
 			local around = 0
 			for _, info in zombies do
+				if info.Owner ~= player then
+					continue
+				end
 				if zone and Vector3.new(info.Root.Position.X - zone.Center.X, 0, info.Root.Position.Z - zone.Center.Z).Magnitude
 					<= zone.Radius + 5 or not zone and (info.Root.Position - root.Position).Magnitude <= Z.SpawnMax + 20 then
 					around += 1
@@ -1208,7 +1233,7 @@ local function spawnRound()
 						local d = Vector3.new(root.Position.X - x, 0, root.Position.Z - z).Magnitude
 						at = farFromSafe(x, z, Z.SafeMargin) and (zone or d >= Z.SpawnMin and d <= Z.SpawnMax) and groundAt(x, z) or point
 					end
-					ZombieService.Spawn(at, rollKind(zone ~= nil))
+					ZombieService.Spawn(at, rollKind(zone ~= nil), nil, nil, player)
 				end
 			end
 		end
@@ -1273,8 +1298,8 @@ end
 
 -- amount Zombies der Art kindName in einem Ring (minRadius bis maxRadius) um center spawnen (z.B. Begleiter eines Lootdrops).
 -- Gibt die gespawnten Modelle zurück (weniger, wenn kein Platz oder die Obergrenze erreicht ist). kindName = "Random":
--- Art wie beim normalen Spawnen würfeln. armored: siehe ZombieService.Spawn.
-function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName, force, armored)
+-- Art wie beim normalen Spawnen würfeln. armored, owner: siehe ZombieService.Spawn.
+function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindName, force, armored, owner)
 	local spawned = {}
 	for _ = 1, amount do
 		for _ = 1, 6 do
@@ -1284,7 +1309,7 @@ function ZombieService.SpawnAround(center, amount, minRadius, maxRadius, kindNam
 			-- nicht in einer Safe Zone und nicht direkt neben einem Spieler (Sturm, Schreier, Alarm spawnen um Spieler)
 			local point = farFromSafe(x, z, 6) and not nearPlayer(x, z, 12) and groundAt(x, z)
 			if point then
-				local model = ZombieService.Spawn(point, kindName == "Random" and rollKind(false) or kindName, force, armored)
+				local model = ZombieService.Spawn(point, kindName == "Random" and rollKind(false) or kindName, force, armored, owner)
 				if model then
 					table.insert(spawned, model)
 				end
@@ -1306,7 +1331,8 @@ function ZombieService.Keep(models, seconds)
 	end
 end
 
--- Schreier hat einen Spieler gesehen: alle Zombies im Umkreis jagen ihn, ein paar kommen dazu, roter Schrei-Ring
+-- Schreier hat einen Spieler gesehen: alle Zombies im Umkreis, die ihn jagen dürfen (gemeinsame und seine eigenen),
+-- jagen ihn, ein paar kommen dazu (gehören wie der Schreier ihm bzw. allen), roter Schrei-Ring
 function ZombieService.Scream(model, target)
 	local root = model:FindFirstChild("HumanoidRootPart")
 	if not root then
@@ -1314,11 +1340,13 @@ function ZombieService.Scream(model, target)
 	end
 	Sfx.At("ZombieScream", root)
 	for other, info in zombies do
-		if other ~= model and (info.Root.Position - root.Position).Magnitude <= Z.ScreamRange then
+		if other ~= model and (info.Owner == nil or info.Owner == target)
+			and (info.Root.Position - root.Position).Magnitude <= Z.ScreamRange then
 			info.Target = target
 		end
 	end
-	ZombieService.SpawnAround(root.Position, Z.ScreamCalls, 25, 60, nil, true)
+	local screamer = zombies[model]
+	ZombieService.SpawnAround(root.Position, Z.ScreamCalls, 25, 60, nil, true, nil, screamer and screamer.Owner)
 	local ring = Instance.new("Part")
 	ring.Name = "ScreamRing"
 	ring.Shape = Enum.PartType.Cylinder
@@ -1331,6 +1359,9 @@ function ZombieService.Scream(model, target)
 	ring.CanCollide = false
 	ring.CanQuery = false
 	ring.CanTouch = false
+	if screamer and screamer.Owner then
+		ring:SetAttribute(ZombieOwner.Attribute, screamer.Owner.UserId) -- nur der Besitzer sieht den Ring
+	end
 	ring.Parent = folder
 	pcall(function()
 		game:GetService("TweenService"):Create(ring, TweenInfo.new(1.2), { Size = Vector3.new(0.3, 80, 80), Transparency = 1 }):Play()

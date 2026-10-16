@@ -320,6 +320,11 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
   die Safe Zone gehen sie nicht. Beim Jagen laufen sie direkt hin; ist die Sichtlinie verbaut (Mauern, Häuser, Ruinen),
   suchen sie einen Weg über den PathfindingService (`ExtinctionConfig.ZombiePath`: sparsam, höchstens 4 Pfade pro Frame). In der roten Zone gibt es mehr (doppelt so viele pro Spieler) und dazu **Läufer**
   (schnell, wenig Leben) und **Brocken** (groß, viel Leben, harte Schläge, immer Beute).
+- **Zombies pro Spieler** (`src/shared/ZombieOwner.lua`): jeder Spieler hat seine eigenen Zombies (Umgebung, rote
+  Zone, Schreier-Rufe, Sturm-Wellen, Lager-Alarm; Attribut `ZombieOwnerId`). Nur er sieht sie (der Client nimmt fremde
+  aus der Welt, `src/client/ZombieVisibility.lua`), nur ihn jagen und schlagen sie, nur er trifft sie und durchsucht ihre
+  Leiche. Stehen 2-3 Spieler zusammen, sieht jeder so viele wie allein. **Gemeinsam** bleiben Bosse, Event-Zombies
+  (Lootdrop, Heli-Wrack, Horden-Kiste, Nester) und Dungeon-Wellen.
 - **Zombie-Arten**: alle mit Blutflecken und Wunden. Draußen am Tag fast nur normale Zombies, ein paar **Läufer** und
   **Schreier** (weiße Augen): sieht ein Schreier dich, schreit er (roter Ring) – alle Zombies im Umkreis jagen dich und
   drei weitere kommen dazu. Nachts mehr Läufer, Schreier und auch **Brocken**; in der roten Zone die meisten.

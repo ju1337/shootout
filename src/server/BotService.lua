@@ -186,7 +186,8 @@ local function enemies(bot)
 		-- erst der Abstand (billig), dann Attribut und Leben (die meisten Zombies sind weit weg)
 		local zombieRoot = zombie:IsA("Model") and zombie:FindFirstChild("HumanoidRootPart")
 		if zombieRoot and (zombieRoot.Position - root.Position).Magnitude <= bot.ZombieRange
-			and zombie:GetAttribute("IsZombie") and livingHumanoid(zombie) then
+			and zombie:GetAttribute("IsZombie") and zombie:GetAttribute("ZombieOwnerId") == nil -- eigene Zombies eines Spielers nicht
+			and livingHumanoid(zombie) then
 			table.insert(list, zombie)
 		end
 	end

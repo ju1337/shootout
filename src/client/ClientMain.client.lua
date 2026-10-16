@@ -46,6 +46,7 @@ local CrateClient = require(script.Parent:WaitForChild("CrateClient"))
 local ExtinctionClient = require(script.Parent:WaitForChild("ExtinctionClient"))
 local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 local DeathScreen = require(script.Parent:WaitForChild("DeathScreen"))
+local ZombieVisibility = require(script.Parent:WaitForChild("ZombieVisibility"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
@@ -83,6 +84,7 @@ TradeClient.Init() -- Tauschen in Safe Zones und im Markt (G an anderen Spielern
 task.spawn(CrateClient.Init) -- Kisten öffnen: Automat in der Marktmitte (Waffen-Kiste)
 ExtinctionClient.Init() -- offene Welt: Hotbar 1-9, Inventar (TAB), Stände, Lager, Taschen, Safe Zone
 DeathScreen.Init() -- offene Welt: Todesbildschirm mit Gegner, Tasche und Respawn-Countdown
+ZombieVisibility.Init() -- offene Welt: Zombies anderer Spieler ausblenden (jeder sieht nur seine eigenen)
 VehicleClient.Init() -- offene Welt: Fahrzeuge steuern (der Fahrer rechnet die Physik), Verfolgerkamera
 task.spawn(AdminPanel.Init) -- wartet, bis der Server meldet, ob man Admin ist
 task.spawn(Noclip.Init) -- Admins: B = Noclip (frei fliegen)

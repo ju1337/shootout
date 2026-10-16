@@ -73,8 +73,9 @@ end
 
 local function wave()
 	for _, entry in outside() do
-		ZombieService.SpawnAround(entry.Root.Position, S.WaveSize, 40, 80, "Random", true, true)
-		ZombieService.SpawnAround(entry.Root.Position, 1, 50, 80, "Brute", true, true)
+		-- jede Welle gehört dem Spieler, um den sie spawnt (Zombies pro Spieler, ZombieOwner)
+		ZombieService.SpawnAround(entry.Root.Position, S.WaveSize, 40, 80, "Random", true, true, entry.Player)
+		ZombieService.SpawnAround(entry.Root.Position, 1, 50, 80, "Brute", true, true, entry.Player)
 	end
 end
 
