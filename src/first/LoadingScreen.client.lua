@@ -143,7 +143,9 @@ if player:GetAttribute("Mode") == nil then
 end
 setBar(0.62)
 
--- Spawn: Charakter da, Avatar fertig, Streaming hält das Spiel nicht mehr an, Boden unter den Füßen
+-- Spawn: Charakter da und vom Server an seinen Spawnpunkt gesetzt (Attribut SafeZone am Charakter kommt erst nach dem
+-- Versetzen, vorher steht er kurz am Ladepunkt von LoadCharacter), Avatar fertig, Streaming hält das Spiel nicht mehr
+-- an, Boden unter den Füßen und die Stelle bleibt ruhig (kein Versetzen mehr)
 status.Text = "Spawne im Camp ..."
 local function root()
 	local character = player.Character
@@ -152,11 +154,16 @@ end
 waitUntil(function()
 	return root() ~= nil
 end, 20)
-setBar(0.72)
+waitUntil(function()
+	local character = player.Character
+	return character ~= nil and character:GetAttribute("SafeZone") == true and root() ~= nil
+end, 15)
+setBar(0.66)
 waitUntil(function()
 	local ok, loaded = pcall(player.HasAppearanceLoaded, player)
 	return not ok or loaded
 end, 8)
+setBar(0.7)
 local function grounded()
 	local hrp = root()
 	if not hrp then
@@ -174,19 +181,58 @@ local function grounded()
 	params.FilterDescendantsInstances = { player.Character }
 	return workspace:Raycast(hrp.Position, Vector3.new(0, -60, 0), params) ~= nil
 end
-waitUntil(grounded, 15)
+-- fest = auf dem Boden und seit einer halben Sekunde an derselben Stelle
+local lastPos, stillSince = nil, os.clock()
+waitUntil(function()
+	local hrp = root()
+	if not hrp or not grounded() then
+		lastPos, stillSince = nil, os.clock()
+		return false
+	end
+	if not lastPos or (hrp.Position - lastPos).Magnitude > 4 then
+		lastPos, stillSince = hrp.Position, os.clock()
+	end
+	return os.clock() - stillSince >= 0.5
+end, 15)
+setBar(0.74)
+
+-- Streaming: warten, bis um den Spawn keine neuen Teile mehr ankommen (eine Sekunde lang nichts Neues)
+local maps = workspace:FindFirstChild("Maps")
+do
+	local lastAdd = os.clock()
+	local added = (maps or workspace).DescendantAdded:Connect(function()
+		lastAdd = os.clock()
+	end)
+	waitUntil(function()
+		return os.clock() - lastAdd >= 1
+	end, 10)
+	added:Disconnect()
+end
 setBar(0.8)
 
--- Umgebung des Spawns (Gebäude, Stände, Texturen) vorladen, damit beim Ausblenden nichts mehr aufploppt
+-- Umgebung des Spawns (Gebäude, Stände, Texturen) und der eigene Avatar vorladen, damit beim Ausblenden nichts mehr aufploppt
 local hrp = root()
 if AssetPreload and hrp then
 	status.Text = "Lade das Camp ..."
-	local maps = workspace:FindFirstChild("Maps")
-	AssetPreload.Run(AssetPreload.AreaGroups(maps or workspace, hrp.Position), function(done, total)
+	local groups = AssetPreload.AreaGroups(maps or workspace, hrp.Position)
+	if player.Character then
+		table.insert(groups, 1, player.Character)
+	end
+	AssetPreload.Run(groups, function(done, total)
 		status.Text = string.format("Lade das Camp ... %d/%d", done, total)
-		setBar(0.8 + 0.18 * done / total)
+		setBar(0.8 + 0.16 * done / total)
 	end, 15)
 end
+
+-- Kamera hängt am eigenen Charakter (Ego-Ansicht, Hände und HUD sind aufgebaut), dann kurz ruhen lassen
+waitUntil(function()
+	local camera = workspace.CurrentCamera
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	return camera ~= nil and humanoid ~= nil and camera.CameraSubject == humanoid
+end, 5)
+setBar(0.97)
+task.wait(0.8)
 
 status.Text = "Bereit"
 setBar(1, 0.4)
