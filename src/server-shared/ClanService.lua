@@ -1,6 +1,6 @@
 -- ClanService (ModuleScript, nur Server)
 -- Clans über alle Server: gründen (kostet Münzen), per Kürzel beitreten, verlassen, Mitglieder entfernen (Leiter).
--- Daten im DataStore "Clans_v1", Schlüssel = Kürzel: { Tag, Name, Owner (UserId), Members = { [UserId] = Name }, Created }.
+-- Daten im DataStore "Clans_v<SaveVersion.Wipe>", Schlüssel = Kürzel: { Tag, Name, Owner (UserId), Members = { [UserId] = Name }, Created }.
 -- Im Profil steht nur das Kürzel (profile.Clan). Ohne DataStore (Studio) liegen Clans nur im Speicher dieses Servers.
 -- Spieler-Attribute: ClanTag, ClanName, ClanData (JSON: Owner, Members, Points, WeekPoints, By) für Namensschild,
 -- Spielerkarte und Seite CLAN.

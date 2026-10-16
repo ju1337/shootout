@@ -12,7 +12,7 @@
 --     nimmt an oder lehnt ab (RapConfig.OfferSeconds); bei Annahme wird zum Gebot verkauft.
 --   * Name: Stand-Name (Textfilter). Watch / Unwatch: Merkliste (im Profil, MarketWatch); wird ein gemerkter Skin
 --     angeboten, bekommen alle im Markt eine Meldung.
---   * Preisverlauf: jeder Verkauf wird im DataStore "MarketHistory_v1" gezählt; Durchschnitt der letzten Tage liegt
+--   * Preisverlauf: jeder Verkauf wird im DataStore "MarketHistory_v<SaveVersion.Wipe>" gezählt; Durchschnitt der letzten Tage liegt
 --     als Attribut PriceStats an der Markt-Map. TopSellers: Händler dieses Servers mit den meisten Verkäufen.
 --   * Lebender RAP: jeder Verkauf verschiebt den RAP des Skins ein Zehntel Richtung Verkaufspreis (RapConfig.NextLive,
 --     Attribut RapLive an ReplicatedStorage für alle Clients).
