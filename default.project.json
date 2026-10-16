@@ -21,27 +21,45 @@
           "$ignoreUnknownInstances": true,
           "DMR": {
             "$path": "models/Weapons/DMR.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/DMR.rbxmx"
+            }
           },
           "SMG": {
             "$path": "models/Weapons/SMG.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/SMG.rbxmx"
+            }
           },
           "LMG": {
             "$path": "models/Weapons/LMG.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/LMG.rbxmx"
+            }
           },
           "Shotgun": {
             "$path": "models/Weapons/Shotgun.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/Shotgun.rbxmx"
+            }
           },
           "Pistol": {
             "$path": "models/Weapons/Pistol.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/Pistol.rbxmx"
+            }
           },
           "Revolver": {
             "$path": "models/Weapons/Revolver.rbxmx",
-            "$ignoreUnknownInstances": true
+            "$ignoreUnknownInstances": true,
+            "Skins": {
+              "$path": "models/Skins/Revolver.rbxmx"
+            }
           },
           "Rifle": {
             "$path": "models/Weapons/Rifle.rbxmx",

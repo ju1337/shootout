@@ -150,6 +150,11 @@ bekommt jedes texturierte Teil eine **SurfaceAppearance** mit ColorMap, NormalMa
   `python3 tools/models/rifle_overlay.py`. Farb-Skins ohne eigene Textur bekommen sie statt der Standard-Textur,
   ohne Skin bleibt das Gewehr wie es ist. Hochladen, ID in `tools/models/skins.luau` (Eintrag `Farbe`) eintragen,
   Skins-Datei neu bauen.
+  Die übrigen importierten Waffen (MP, Pistole, Revolver, Schrotflinte, LMG, DMR) haben ebenfalls deckende
+  Texturen. Für sie schreibt `python3 tools/models/color_skins.py` je eine `models/Skins/<Waffe>.rbxmx`
+  (`Skins › Farbe`, eine SurfaceAppearance je Skin-Zone **ohne ColorMap**, Normal-, Rauheits- und Metall-Map der
+  Waffe): mit Farb-Skin ist die ganze Skin-Zone in Skin-Farbe, Rillen und Glanz bleiben. Nach jedem neuen
+  Waffen-Import das Skript erneut ausführen (Test `allweaponskins` meldet eine fehlende Datei).
 - **Epische und legendäre Skins können eine eigene Textur haben.** Dafür im Waffenmodell einen Ordner `Skins`
   anlegen, darin je Skin einen Ordner mit der Skin-Id und darin SurfaceAppearances, die genau so heißen wie die
   Teile, die sie bekommen: z.B. `Skins › W_Lava › Skin_Receiver`. Ohne eigene Textur bekommt der Skin wie heute

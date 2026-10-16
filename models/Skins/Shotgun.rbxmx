@@ -1,0 +1,21 @@
+<roblox version="4">
+  <Item class="Folder" referent="0">
+    <Properties>
+      <string name="Name">Skins</string>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">Farbe</string>
+      </Properties>
+      <Item class="SurfaceAppearance" referent="2">
+        <Properties>
+          <string name="Name">Skin_Body</string>
+          <token name="AlphaMode">0</token>
+          <Content name="MetalnessMap"><url>rbxassetid://80612539725884</url></Content>
+          <Content name="NormalMap"><url>rbxassetid://110220644396179</url></Content>
+          <Content name="RoughnessMap"><url>rbxassetid://106957251027720</url></Content>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

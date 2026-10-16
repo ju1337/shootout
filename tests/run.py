@@ -203,7 +203,7 @@ def main():
         print("Keine Tests gefunden.")
         return 1
     modules = project_modules()
-    assets = rbxmx.assets_lua(os.path.join(ROOT, "assets"))
+    assets = rbxmx.assets_lua(os.path.join(ROOT, "assets"), os.path.join(ROOT, "models", "Skins"))
     out_dir = args.keep or tempfile.mkdtemp(prefix="shootout-tests-")
     os.makedirs(out_dir, exist_ok=True)
     if not args.keep:

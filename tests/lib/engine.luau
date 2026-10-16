@@ -2213,6 +2213,9 @@ function SIM.BuildInstance(node, parent)
 	if node.Shape then
 		instance.Shape = Enum.PartType[node.Shape]
 	end
+	if node.ColorMap then
+		instance.ColorMap = node.ColorMap
+	end
 	for _, child in node.Children or {} do
 		SIM.BuildInstance(child, instance)
 	end

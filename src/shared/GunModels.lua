@@ -802,6 +802,16 @@ local function extentZ(cframe, size)
 end
 
 -- Ein Modell aus Assets.Weapons prüfen und in die Ruhelage bringen. Gibt (Daten oder nil, Bericht) zurück.
+-- Gibt es ein Teil mit diesem Namen oder herausgeschnittene Stücke davon (Skin_Body -> Skin_Body_01, Skin_Body_Barrel)?
+local function skinZoneFound(template, name)
+	for _, part in template:GetChildren() do
+		if part:IsA("BasePart") and (part.Name == name or string.sub(part.Name, 1, #name + 1) == name .. "_") then
+			return true
+		end
+	end
+	return false
+end
+
 local function loadAsset(weaponName, source)
 	local report = { Loaded = false, Errors = {}, Warnings = {} }
 	local function problem(text)
@@ -1045,7 +1055,7 @@ local function loadAsset(weaponName, source)
 	for _, folder in skins and skins:GetChildren() or {} do
 		for _, appearance in folder:GetChildren() do
 			if appearance:IsA("SurfaceAppearance") and appearance.Name ~= "Aufsaetze" -- Aufsaetze: für alle Aufsätze (SkinEffects)
-				and not template:FindFirstChild(cleanName(appearance.Name)) then
+				and not skinZoneFound(template, cleanName(appearance.Name)) then
 				hint("Skins/" .. folder.Name .. "/" .. appearance.Name .. ": kein Teil mit diesem Namen")
 			end
 		end

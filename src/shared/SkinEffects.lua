@@ -119,13 +119,27 @@ local function make(className, name, props, parent)
 	return obj
 end
 
--- Skin-Ordner der Waffe (oder nil)
+-- Skin-Ordner der Waffe; hat diese Waffe keinen für den Skin, der einer anderen Waffe (z.B. Drachengold auf der MP:
+-- Bilder für Glitzer, Funken und Feuerstoß vom Sturmgewehr). Sonst nil.
 function SkinEffects.Folder(weaponName, skinId)
 	local assets = ReplicatedStorage:FindFirstChild("Assets")
 	local weapons = assets and assets:FindFirstChild("Weapons")
-	local weapon = weapons and weaponName and weapons:FindFirstChild(weaponName)
+	if not weapons or not skinId then
+		return nil
+	end
+	local weapon = weaponName and weapons:FindFirstChild(weaponName)
 	local skins = weapon and weapon:FindFirstChild("Skins")
-	return skins and skinId and skins:FindFirstChild(skinId) or nil
+	local own = skins and skins:FindFirstChild(skinId)
+	if own then
+		return own
+	end
+	for _, other in weapons:GetChildren() do
+		local folder = other:FindFirstChild("Skins") and other.Skins:FindFirstChild(skinId)
+		if folder then
+			return folder
+		end
+	end
+	return nil
 end
 
 -- Bild aus dem Skin-Ordner (Attribut FX_<key>), sonst fallback
@@ -152,8 +166,10 @@ function SkinEffects.Apply(model, skin, textures, info)
 	if not style then
 		return nil
 	end
-	-- Aufsätze bekommen die Skin-Textur "Aufsaetze"
+	-- Aufsätze bekommen die Skin-Textur "Aufsaetze" (nur aus dem eigenen Ordner der Waffe)
 	local attachmentLook = textures and textures:FindFirstChild("Aufsaetze")
+	-- Bilder der Partikel: eigener Skin-Ordner, sonst der einer anderen Waffe
+	local images = textures or SkinEffects.Folder(nil, skin.Id)
 	local visible = {}
 	local minZ, maxZ = math.huge, -math.huge
 	for _, part in model:GetChildren() do
@@ -188,7 +204,7 @@ function SkinEffects.Apply(model, skin, textures, info)
 		end
 	end
 	if style.Generic then
-		return applyGeneric(model, skin, style, textures, info)
+		return applyGeneric(model, skin, style, images, info)
 	end
 
 	-- Glitzer auf den größten Teilen, verteilt nach Fläche
@@ -201,7 +217,7 @@ function SkinEffects.Apply(model, skin, textures, info)
 	end
 	for _, entry in chosen do
 		make("ParticleEmitter", "SkinFx_Glitzer", {
-			Texture = image(textures, "Glitzer", SPARKLE),
+			Texture = image(images, "Glitzer", SPARKLE),
 			Rate = math.max(0.6, 7 * entry[2] / total),
 			Lifetime = NumberRange.new(0.25, 0.55),
 			Speed = NumberRange.new(0, 0),
@@ -221,7 +237,7 @@ function SkinEffects.Apply(model, skin, textures, info)
 
 	-- aufsteigende Glutfunken
 	make("ParticleEmitter", "SkinFx_Glut", {
-		Texture = image(textures, "Glut", SPARKLE),
+		Texture = image(images, "Glut", SPARKLE),
 		Rate = 9,
 		Lifetime = NumberRange.new(1.0, 2.2),
 		Speed = NumberRange.new(0.2 * S, 0.9 * S),

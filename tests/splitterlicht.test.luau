@@ -13,7 +13,7 @@ local SkinStyles = require("SkinStyles")
 local item = Cosmetics.Get("W_Splitterlicht")
 check(item ~= nil and Cosmetics.ForSale(item) and item.Price == 1, "Splitterlicht nicht für 1 Münze im Shop")
 check(item ~= nil and item.Rarity == "Legendary", "nicht legendär")
-check(Cosmetics.FitsWeapon(item, "Rifle") and not Cosmetics.FitsWeapon(item, "SMG"), "passt nicht nur aufs Sturmgewehr")
+check(Cosmetics.FitsWeapon(item, "Rifle") and Cosmetics.FitsWeapon(item, "SMG"), "passt nicht auf alle Waffen")
 for _, crate in CrateConfig.Crates do
 	for _, entry in CrateConfig.Pool(crate) do
 		check(entry.Id ~= "W_Splitterlicht", "Test-Skin in Kiste " .. tostring(crate.Id))

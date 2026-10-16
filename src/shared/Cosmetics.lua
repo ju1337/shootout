@@ -149,12 +149,13 @@ Cosmetics.Items = {
 		Color = Color3.fromRGB(235, 45, 70), Material = Enum.Material.Neon },
 
 	-- Test-Skins (Test = true): im Shop kaufbar, aber nicht in Kisten (CrateConfig)
-	-- Drachengold: nur Sturmgewehr; Texturen in Assets.Weapons.Rifle.Skins.W_Drachengold, Effekte siehe SkinEffects
+	-- Drachengold: für alle Waffen; eigene Texturen nur am Sturmgewehr (Assets.Weapons.Rifle.Skins.W_Drachengold),
+	-- auf den anderen Waffen Skin-Farbe + Effekte (SkinEffects)
 	{ Id = "W_Drachengold", Type = "Weapon", Name = "Drachengold", Rarity = "Legendary", Price = 1, Test = true,
-		Weapon = "Rifle", Effects = "Drachengold", Color = Color3.fromRGB(235, 175, 55), Material = Enum.Material.Foil },
+		Effects = "Drachengold", Color = Color3.fromRGB(235, 175, 55), Material = Enum.Material.Foil },
 	-- Splitterlicht: Kristall mit Energieadern, prismatische Leuchtspur, Kill-Finisher „Kristallbruch“ (SkinStyles)
 	{ Id = "W_Splitterlicht", Type = "Weapon", Name = "Splitterlicht", Rarity = "Legendary", Price = 1, Test = true,
-		Weapon = "Rifle", Effects = "Splitterlicht", Color = Color3.fromRGB(140, 90, 240), Material = Enum.Material.Foil },
+		Effects = "Splitterlicht", Color = Color3.fromRGB(140, 90, 240), Material = Enum.Material.Foil },
 }
 
 -- Meisterschafts-Tarnungen: pro Waffe eine je Stufe

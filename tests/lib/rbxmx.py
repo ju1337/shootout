@@ -49,6 +49,10 @@ def _item(element):
             node["Transparency"] = float(prop.text)
         elif tag == "token" and name == "Material":
             node["Material"] = MATERIALS.get(int(prop.text), "Plastic")
+        elif tag == "Content" and name == "ColorMap":
+            uri = prop.find("url")
+            if uri is not None and uri.text:
+                node["ColorMap"] = uri.text
         elif tag == "token" and name in ("shape", "Shape"):
             shape = SHAPES.get(int(prop.text))
             if shape:
@@ -76,8 +80,10 @@ def _lua(value):
     return '"' + text + '"'
 
 
-def assets_lua(assets_dir):
-    """Luau-Ausdruck { [Ordner] = { Instanz, ... } } aller assets/<Ordner>/*.rbxmx (plus die Standard-Ordner)."""
+def assets_lua(assets_dir, skins_dir=None):
+    """Luau-Ausdruck { [Ordner] = { Instanz, ... } } aller assets/<Ordner>/*.rbxmx (plus die Standard-Ordner).
+    skins_dir (z.B. models/Skins): <Waffe>.rbxmx daraus kommt als Ordner Skins in das Waffenmodell – wie
+    default.project.json es im Spiel einbindet."""
     folders = {name: [] for name in DEFAULT_FOLDERS}
     if os.path.isdir(assets_dir):
         for folder in sorted(os.listdir(assets_dir)):
@@ -87,5 +93,10 @@ def assets_lua(assets_dir):
             items = folders.setdefault(folder, [])
             for name in sorted(os.listdir(full)):
                 if name.endswith(".rbxmx"):
-                    items.extend(load_file(os.path.join(full, name)))
+                    loaded = load_file(os.path.join(full, name))
+                    skins = skins_dir and folder == "Weapons" and os.path.join(skins_dir, name)
+                    if skins and os.path.isfile(skins):
+                        for model in loaded:
+                            model["Children"].extend(load_file(skins))
+                    items.extend(loaded)
     return "{" + ", ".join("[%s] = %s" % (_lua(name), _lua(items)) for name, items in folders.items()) + "}"

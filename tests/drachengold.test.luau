@@ -16,7 +16,7 @@ check(Cosmetics.ForSale(item), "Drachengold ist nicht im Shop kaufbar")
 check(item.Price == 1, "Testpreis ist nicht 1 Münze")
 check(item.Rarity == "Legendary", "Drachengold ist nicht legendär")
 check(Cosmetics.FitsWeapon(item, "Rifle"), "Drachengold passt nicht aufs Sturmgewehr")
-check(not Cosmetics.FitsWeapon(item, "SMG"), "Drachengold passt auch auf andere Waffen")
+check(Cosmetics.FitsWeapon(item, "SMG") and Cosmetics.FitsWeapon(item, "Pistol"), "Drachengold passt nicht auf alle Waffen")
 for _, crate in CrateConfig.Crates do
 	for _, entry in CrateConfig.Pool(crate) do
 		check(entry.Id ~= "W_Drachengold", "Test-Skin liegt in der Kiste " .. tostring(crate.Id))
