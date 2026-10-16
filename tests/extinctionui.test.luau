@@ -137,7 +137,7 @@ check(windowGui ~= nil and not windowGui.Enabled, "kein Fenster offen")
 
 -- Symbole über allen Ständen, dem Lager und der Haltestelle: Scheibe mit Symbol und kurzem Namen, nur in der Safe Zone
 local BUBBLE_WANT = {
-	Stand_Weapons = { "Rifle", "WAFFEN" },
+	Stand_Weapons = { "Rifle", "HÄNDLER" },
 	Stand_Items = { "Medkit", "APOTHEKE" },
 	Stand_Vehicles = { "V_Pickup", "FAHRZEUGE" },
 	Stand_Market = { "Coins", "TAUSCHMARKT" },
@@ -272,12 +272,13 @@ local prompt = map.Stands.Stand_Weapons:FindFirstChildOfClass("ProximityPrompt")
 check(prompt ~= nil and prompt.Enabled, "Stand hat eine E-Aufforderung")
 prompt.Triggered:Fire(bob)
 step(0.3)
-check(windowGui.Enabled and string.find(texts(windowGui), "WAFFENSTAND", 1, true) ~= nil, "Waffenstand-Fenster offen")
+check(windowGui.Enabled and string.find(texts(windowGui), "HÄNDLER", 1, true) ~= nil, "Händler-Fenster offen")
 check(not prompt.Enabled, "E-Aufforderung aus, solange das Fenster offen ist")
 check(find(windowGui, "StandFilter_Ammo") ~= nil and find(windowGui, "Offer_Ammo_9mm") ~= nil
 	and find(find(windowGui, "Offer_Ammo_9mm"), "Buy5") ~= nil, "Filter nach Art und 5× bei Munition")
 local buyButton = nil
-for _, d in windowGui:GetDescendants() do
+local rifleCard = find(windowGui, "Offer_Rifle") -- der Händler verkauft auch Westen (5 × Weste kostet ebenfalls 1100)
+for _, d in (rifleCard or windowGui):GetDescendants() do
 	if d:IsA("TextLabel") and d.Text == "1100" then
 		buyButton = d:FindFirstAncestorWhichIsA("TextButton")
 	end

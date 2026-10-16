@@ -51,7 +51,7 @@ ZENTRALE_PARTS = ("ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
                   "ShopPlaque1", "ShopPlaque2", "ShopPlaque3", "MissionBoard", "Leaderboard_Zombies",
                   "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Missions", "Podium1", "Podium2", "Podium3", "WheelSpot",
                   "WheelConsole", "WheelBoard", "GateCount_Market", "DungeonGate",
-                  "Range_Start", "Range_Zone", "Range_Target1", "Range_Bull1", "Range_Target8")
+                  "Range_Start", "Range_Zone", "Range_Target1", "Range_Bull1", "Range_Target8", "CrateWeapon")
 
 
 def check_no_hub():
@@ -105,7 +105,8 @@ def check_extinction():
         elif not inside(found[0], 10):
             problems.append("Extinction: %s liegt nicht in der Safe Zone" % name)
     points = {}  # je Name der Punkt im Camp (Safehouses haben eigene Stände mit denselben Namen; den Spielermarkt gibt es nur im Camp)
-    camp_points = ("Stand_Weapons", "Stand_Items", "Stand_Vehicles", "Stash", "Stand_Market", "Hideout", "Stand_Red")
+    # Im Camp gibt es keinen eigenen Itemstand mehr: der HÄNDLER (Stand_Weapons) verkauft auch Medizin und Westen
+    camp_points = ("Kits", "Stand_Weapons", "Stand_Vehicles", "Stash", "Stand_Market", "Hideout", "Stand_Red", "Travel")
     for group, part in parts:
         if group == "Stands" and part["Name"] in camp_points and inside(part, 10):
             points[part["Name"]] = part

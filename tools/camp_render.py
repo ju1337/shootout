@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORIGIN = (0, 0, -6000)  # EXTINCTION_ORIGIN in tools/build_maps.py
-LABELS = ("Stand_Weapons", "Stand_Items", "Stand_Market", "Stash", "Stand_Vehicles", "Travel", "Hideout", "Kits",
+LABELS = ("Stand_Weapons", "Stand_Items", "CrateWeapon", "Stand_Market", "Stash", "Stand_Vehicles", "Travel", "Hideout", "Kits",
           "Stand_Red", "ShopCounter", "WheelSpot", "MissionBoard", "Podium1", "Portal_Market", "DungeonGate")
 
 

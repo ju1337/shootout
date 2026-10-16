@@ -29,7 +29,7 @@ Fertig vorbereitet für den Studio-Import: `art/sources/Rifle.glb` (Sturmgewehr)
 
 | Modus | Kurz | Map |
 |---|---|---|
-| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (rund und modern: offener Phönixplatz mit Pavillons Ausrüster/Shop, Glücksrad, Ruhmeswand mit Lagebericht und Siegerpodest, Tauschmarkt; Händler an allen Stationen; Tor MARKT in der Markthalle), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
+| **EXTINCTION** (Hauptmodus, Start) | Offene Welt mit Safe Zone „Camp Phoenix“ (modern, Grundriss Hauptstraße: Spawn im Süden, Stationen der Reihe nach an einer Promenade bis zum Nordtor, Mittelplatz mit Markthalle, Glücksrad, Kisten, Ausrüster, Ruhmeswand und Katakomben), Inventar, Lager, Ständen, PvP draußen – siehe [Extinction](#extinction-offene-welt) | Ödland (0, 0, -6000), 3200 × 3200 |
 | Markt | Handelshalle ohne Kampf: Stände beanspruchen, Skins für RAP anbieten und kaufen (Tor MARKT im Depot des Camps, Knopf MARKT im Seitenmenü) | Markthalle (-1500, 0, -1500) |
 | Arcade (Free-for-All, Herrschaft, Wingman, 1v1 Arena, Training) | aus; Code bleibt, Maps am 2026-10-13 entfernt | – |
 
@@ -79,24 +79,25 @@ Mauer bei Radius 110). Das Camp ist **modern und aufgeräumt**: Flachdachhäuser
 Holz mit Fensterbändern, Glas, Leuchtschildern und farbigen Lisenen (Generator `block` in `camp_phoenix.py`), keine
 Bäume, keine Bänke. An jeder Station steht ein **Händler** (Figur aus Teilen im R15-Schnitt mit Gesicht, `shopkeeper`,
 nicht anklickbar). Von innen nach außen:
-- **Phönixplatz** (offen bis an die Ringstraße, Radius 54.5): heller Plattenbelag mit dunklen Fugenbändern und
-  Wegweisern im Boden zu den Toren, die Spawns frei in der Mitte, Poller am Rand; keine Laternen, Fahnen oder Banner.
-  Auf den Diagonalen, die Achsen bleiben frei: offene **Pavillons** (Flachdach mit Leuchtkante, Glasseiten, Schild auf
-  dem Dach) NO **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter des Menüs), SO **GLÜCKSRAD** (Rad
-  an der Rückwand, Pult vorn), NW **TAUSCHMARKT**; im SW frei stehend die **RUHMESWAND**: vier hohe
-  Bildschirm-Monolithe (bis kurz über den Boden) mit den Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL,
-  MEISTE AUFTRÄGE (Top 3 hervorgehoben), in der Mitte ein breiter Monolith mit dem **LAGEBERICHT** oben (Spieler in
-  der offenen Welt und im Markt, Blutmond und Sturmnacht) und davor das **Siegerpodest** mit Statuen der Top 3 nach
-  Level (Server `src/server/ZentraleService.lua`).
-- Eine **Ringstraße** (Radius 59.5) mit Zebrastreifen an den Mündungen und vier **Hauptstraßen** (Asphalt, Gehsteige)
-  zu den Toren.
-- **Häuserring** an der Ringstraße (Fronten bei Radius 66.5, je Viertel vier Häuser mit einer Gasse in die Höfe; die
-  Stationen liegen als offene Läden mit Theke in den Eckhäusern an den Hauptstraßen): NO **KIT-AUSGABE**, Café, Stoffe,
-  **WAFFEN & MUNITION** (hinten Food-Court mit zwei Kiosken und dem Schieber-Transporter/Rote Zone), SO
-  **KFZ-WERKSTATT**, Ersatzteile, Hotel, **APOTHEKE** (hinten Tankstelle, Landeplatz, Parkplatz mit Ladesäulen), SW
-  **BUSBAHNHOF** (Bus am Bordstein der Südstraße), **MARKTHALLE** mit dem grünen Tor `Portal_Market`, **LAGERHAUS**
-  (hinten Container, Portalkran, Paletten), NW **VERSTECK**, Wohnhäuser, Schule (hinten Sportplatz, Solarfeld und an der
-  Nordstraße der Abgang **KATAKOMBEN**, der Eingang zu den Dungeons).
+- Grundriss **Hauptstraße** (seit 2026-10-16, vorher ein Ring, in dem neue Spieler im Kreis liefen): man spawnt am
+  **Südende** auf einem runden Spawnplatz (Blick nach Norden) und läuft eine gerade, 40 Studs breite **Promenade** bis
+  zur Nordstraße und zum Nordtor. Ein dunkles Fugenband in der Mitte führt nach Norden. Die Stationen stehen links und
+  rechts an der Promenade, in der Reihenfolge, in der man sie braucht; vor jeder liegt eine matte Bodenplatte in der
+  Farbe ihrer Gruppe:
+  1. **Ausrüsten** (grün): **KIT-AUSGABE** und **HÄNDLER** (Waffen, Munition, Wurfwaffen, Medizin, Westen; im Camp gibt
+     es keinen eigenen Itemstand mehr).
+  2. **Lager** (grau): **LAGERHAUS** und **VERSTECK**.
+  3. **Mittelplatz** quer über die Promenade, an seinen Seiten die Straßen zum West- und Osttor. Westhälfte **Handel &
+     Glück** (gold): **MARKTHALLE** mit dem grünen Tor `Portal_Market` und davor die Theke des **TAUSCHMARKTS**,
+     Pavillon **GLÜCKSRAD** (Rad an der Rückwand, Pult vorn) mit dem **KISTEN-AUTOMATEN** daneben, Pavillon
+     **AUSRÜSTER** (drei Shop-Vitrinen und Theke, E öffnet den SHOP-Reiter). Osthälfte **Abenteuer & Ruhm** (rot):
+     **RUHMESWAND** als gerade Reihe (vier Bestenlisten MEISTE ZOMBIES, MEISTE KILLS, HÖCHSTES LEVEL, MEISTE AUFTRÄGE,
+     in der Mitte der **LAGEBERICHT**) mit dem **Siegerpodest** davor (Statuen der Top 3 nach Level,
+     `src/server/ZentraleService.lua`), Abgang **KATAKOMBEN** (Dungeons) mit der Tafel DUNGEON-WOCHE, der **SCHIEBER**
+     (Rote Zone).
+  4. **Losziehen** (blau): **KFZ-WERKSTATT** und **BUSBAHNHOF**, dahinter die Nordstraße zum Tor (Bus am Bordstein).
+- Höfe hinter den Stationen: SW Depot (Container, Portalkran, Paletten), SO **SCHIESSSTAND** (Eingang aus der Gasse
+  zwischen Händler und Versteck), NW Landeplatz, NO zwei Kioske.
 - Ringmauer aus Betonfertigteilen mit Stacheldraht und Leuchtband, vier Tore aus Container-Türmen (außen CAMP
   PHOENIX, innen AUSGANG); davor ein Sperrgebiet mit Panzersperren, Stacheldraht und Wracks. Die Schilder im Camp
   bleiben neu (keine Verwitterung wie draußen).
@@ -105,7 +106,7 @@ Draufsicht zum Prüfen ohne Studio: `python3 tools/camp_render.py camp.png` (St�
 Spawns blau).
 
 Die Teile, die Server und Client suchen (Vitrinen, Tafeln, Podest, Glücksrad), liegen in der immer geladenen
-Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 35 Studs auseinander
+Gruppe `Zentrale`; Zugriff über `src/shared/Zentrale.lua`. Alle Stationen stehen mindestens 32 Studs auseinander
 (`tests/maps_check.py` verlangt 30). Das Camp hat eigene Zufallszahlen, der Rest der Welt bleibt beim Umbau gleich.
 Über jedem Stand, dem Lager und jeder Haltestelle (auch in den Safehouses) schwebt ein **Symbol**: schlichte dunkle
 Scheibe mit farbigem Rand, kleinem Symbol der Station und kurzem Namen darunter (`addBubble` in
@@ -257,8 +258,8 @@ Feuer, Sandsack-Nester an den vorderen Ecken, zwei Container, ein abgestürzter 
 **Dächer für Hubschrauber**: zwei Hochhäuser haben ein freies Dach mit Landefläche (gelber Rand, H, Randlichter, Windsack).
 
 - **Safe Zone** (grüner Ring, Radius 165): kein Schaden, Waffen bleiben gesichert (Taste zieht keine Waffe,
-  beim Betreten wird sie weggesteckt). Dort stehen der **Waffenstand**, der **Itemstand**, der
-  **Fahrzeugstand**, das **Lager** und der Phönixplatz (E an Stand/Lager).
+  beim Betreten wird sie weggesteckt). Dort stehen der **Händler** (Waffen und Items; in den Safehouses getrennt als Waffen- und Itemstand), der
+  **Fahrzeugstand**, das **Lager** und der Mittelplatz (E an Stand/Lager).
 - **Draußen**: sofort schießen auf Zombies möglich, **PvP erst 5 Sekunden nach dem Verlassen** (Anzeige oben:
   SAFE ZONE · PVP IN 3 S · PVP AKTIV). Schaden zwischen Spielern nur, wenn beide ihre PvP-Zeit haben.
 - **Menü** (**TAB** öffnet es auf INVENTAR, **M** auf dem zuletzt offenen Reiter; Controller: Select, L1/R1 blättert, ○

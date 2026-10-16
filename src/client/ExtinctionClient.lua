@@ -1218,7 +1218,7 @@ function Inv.hideHud(on)
 end
 
 -- E-Aufforderungen der Stände, des Lagers usw. (gefüllt in setupPrompts). Solange ein Fenster offen ist, sind sie aus:
--- sonst schiebt sich "E · WAFFENSTAND · Handeln" über das Fenster.
+-- sonst schiebt sich "E · HÄNDLER · Handeln" über das Fenster.
 local prompts = {}
 local function setPrompts(on)
 	for _, prompt in prompts do
@@ -4132,7 +4132,7 @@ local BUBBLE = {
 }
 local ICON_BASE = 46      -- in dieser Größe sind die Symbole gezeichnet; UIScale bringt sie auf BUBBLE.Icon
 local BUBBLES = {
-	Stand_Weapons = { Icon = "Rifle", Label = "WAFFEN", Color = Color3.fromRGB(226, 140, 60) },
+	Stand_Weapons = { Icon = "Rifle", Label = "HÄNDLER", Color = Color3.fromRGB(226, 140, 60) },
 	Stand_Items = { Icon = "Medkit", Label = "APOTHEKE", Color = Color3.fromRGB(90, 200, 110) },
 	Stand_Vehicles = { Icon = "V_Pickup", Label = "FAHRZEUGE", Color = Color3.fromRGB(110, 176, 230) },
 	Stand_Market = { Icon = "Coins", Label = "TAUSCHMARKT", Color = Color3.fromRGB(230, 186, 70) },

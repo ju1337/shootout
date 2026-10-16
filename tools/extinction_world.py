@@ -2030,11 +2030,11 @@ class World(CampPhoenix):
             box("Decor", "SurvivorGun", (0.35, 0.45, 3.2), (0.4, ty + 0.5, -1.4), (34, 34, 36), "Metal", props=props)
 
     def camp(self):
-        """Safe Zone "Camp Phoenix": rundes, modernes Lager mitten in Ödstadt (tools/camp_phoenix.py). In der Mitte der
-        offene Phönixplatz (Spawn) mit den Pavillons Ausrüster, Glücksrad, Ruhmeswand mit Siegerpodest und Tauschmarkt,
-        dann eine Ringstraße mit dem Häuserring (Stationen mit Händlern) und vier Höfe: Food-Court (NO), Fuhrpark (SO),
-        Depot mit Markthalle (SW) und Sportplatz mit dem Abgang zu den Katakomben (NW). Außen eine Betonmauer mit vier
-        Toren und Wachtürmen, davor das Sperrgebiet.
+        """Safe Zone "Camp Phoenix": rundes, modernes Lager mitten in Ödstadt (tools/camp_phoenix.py). Grundriss
+        Hauptstraße: Spawn am Südende, eine Promenade bis zum Nordtor mit den Stationen der Reihe nach links und rechts
+        (Kits und Händler, Lager und Versteck, Werkstatt und Busbahnhof), quer darüber der Mittelplatz (West: Markthalle,
+        Tauschmarkt, Glücksrad, Kisten, Ausrüster; Ost: Ruhmeswand mit Siegerpodest, Katakomben, Schieber), Höfe dahinter.
+        Außen eine Betonmauer mit vier Toren und Wachtürmen, davor das Sperrgebiet.
 
         Das Camp hat eigene Zufallszahlen. Danach steht der Zufallsgenerator der Welt wieder genau dort, wo ihn das
         frühere Camp hinterließ (tools/saved/extinction_after_camp.json) – der Rest der Welt bleibt so unverändert."""

@@ -2268,6 +2268,7 @@ return {
 	["Waffenmeister"] = "Weapon Master",
 	["WAFFENMEISTER"] = "WEAPON MASTER",
 	["WAFFENSTAND"] = "WEAPON SHOP",
+	["HÄNDLER"] = "VENDOR",
 	["Waldtarn"] = "Woodland",
 	["WALDTARN"] = "WOODLAND",
 	["WARTE AUF DIE ANDEREN"] = "WAITING FOR THE OTHERS",
