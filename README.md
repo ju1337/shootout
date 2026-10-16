@@ -562,6 +562,12 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     laufen und zeigt den Gewinn. Gezogen wird aus den im Shop kaufbaren Waffen-Skins. Schon besessene
     gebundene Skins geben 30 % ihres Shop-Preises als Münzen zurück; handelbare Skins (mit RAP-Wert) landen als weiteres
     Stück im Inventar und lassen sich im Markt verkaufen. Der Server würfelt und bucht, die Rolle ist nur die Show.
+    Show (seit 2026-10-16): Kacheln mit der Waffe im Skin (3D), Schein in der Seltenheitsfarbe, Klacken wird zum Schluss
+    tiefer; beim Stillstand leuchtet der Gewinn, der Rest wird dunkel; ab Episch Spannung (Rauschen, Fenster bebt), dann
+    die Gewinn-Karte mit Strahlenkranz, Funken (ab Selten), Glanz über dem Namen (Legendär) und Klang je Seltenheit
+    (`CrateWin`, `CrateWinBig`, `CrateBoom` in `SoundLibrary`). Der Automat im Camp (`crate_machine` in
+    `tools/camp_phoenix.py`: Militärkiste auf rundem Sockel) klappt bei jedem Gewinn für alle den Deckel
+    (`CrateMachineLid`) auf und leuchtet innen in der Seltenheitsfarbe (Attribute `OpenCount`/`OpenRarity` an `CrateWeapon`).
     Gamepass **QUICKSPIN** (`RobuxConfig.Passes`, Id `QuickSpin`): Rolle 1,2 s statt 6 s, Gewinn-Karte gleich danach,
     kürzere Wartezeit zwischen zwei Kisten; Knopf oben rechts im Kisten-Fenster führt zum Kauf. Nur dort im Robux-Shop,
     wo es Kisten gibt (PaidRandom).

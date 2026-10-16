@@ -15,6 +15,7 @@ local RapConfig = require(Shared.RapConfig)
 local ProgressService = require(script.Parent.ProgressService)
 local PolicyGate = require(script.Parent.PolicyGate)
 local DiscordLog = require(script.Parent.DiscordLog)
+local Zentrale = require(Shared.Zentrale)
 
 local CrateService = {}
 
@@ -80,6 +81,17 @@ function CrateService.Open(player, crateId)
 		DiscordLog.Log("Highlight", "Legendärer Skin aus der Kiste", item.Name, { { "Spieler", DiscordLog.Who(player) } })
 	end
 	task.spawn(ProgressService.SaveNow, player)
+	-- Automat im Camp: Deckel klappt für alle auf, wenn beim Spieler die Rolle steht (CrateClient, Attribute am Automaten)
+	local machine = Zentrale.Part("Crate" .. crate.Id)
+	if machine then
+		local quick = CrateConfig.Quick(player)
+		task.delay(quick and CrateConfig.QuickSpinTime or CrateConfig.SpinTime, function()
+			if machine.Parent then
+				machine:SetAttribute("OpenRarity", item.Rarity)
+				machine:SetAttribute("OpenCount", (machine:GetAttribute("OpenCount") or 0) + 1)
+			end
+		end)
+	end
 	local result = { Ok = true, Crate = crate.Id, Item = item.Id, Reel = reel, Index = CrateConfig.WinnerIndex, Status = status,
 		Refund = refund, Coins = player:GetAttribute("Coins") or 0, Tradeable = RapConfig.Tradeable(item.Id) }
 	Remotes.CrateResult:FireClient(player, result)

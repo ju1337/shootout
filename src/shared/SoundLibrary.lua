@@ -239,6 +239,16 @@ SoundLibrary.Sounds = {
 	WheelWin = { Range = 90, Pitch = 1, Clips = { clip(9114133258, 0.9, 0.06, 2.56) } },
 	WheelCoins = { Range = 80, Pitch = 1, Clips = { clip(9113704038, 1.4, 0.19, 1.56) } },
 	WheelWinBig = { Range = 120, Pitch = 1, Clips = { clip(9113728042, 0.8, 0.04, 1.65), builtin("electronicpingshort.wav", 1.2) } },
+	-- Kisten (CrateClient): Fenster/Rolle starten, Klacken der Rolle, Anhalten, Spannung ab Episch, Gewinn nach Seltenheit
+	-- (in der Oberfläche ohne Raumklang; CrateWin/CrateWinBig auch am Automaten in der Welt, wenn der Deckel aufgeht)
+	CrateOpen = { Range = 0, Pitch = 1, Clips = { clip(9113102913, 2.6, 0, 1.2) } },
+	CrateTick = { Range = 0, Pitch = 1.1, Clips = { builtin("clickfast.wav", 0.55) } },
+	CrateStop = { Range = 0, Pitch = 0.8, Clips = { clip(9113243990, 4.0, 0, 0.8) } },
+	CrateRise = { Range = 0, Pitch = 0.7, Clips = { builtin("swoosh.wav", 1.5) } },
+	CrateWin = { Range = 60, Pitch = 1, Clips = { clip(9114133258, 0.9, 0.06, 2.56) } },
+	CrateCoins = { Range = 0, Pitch = 1, Clips = { clip(9113704038, 1.2, 0.19, 1.56) } },
+	CrateWinBig = { Range = 80, Pitch = 1, Clips = { clip(9113728042, 0.8, 0.04, 1.65), builtin("electronicpingshort.wav", 1.2) } },
+	CrateBoom = { Range = 0, Pitch = 1.3, Clips = { clip(9117895638, 0.9, 0.07, 1.37) } },
 	AbilityReady = { Range = 0, Pitch = 1.5, Clips = { builtin("electronicpingshort.wav", 0.35) } },
 }
 

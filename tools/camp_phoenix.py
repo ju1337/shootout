@@ -439,20 +439,50 @@ class CampPhoenix:
         self.shopkeeper(box, 5.0, fz + 4.6, OUTFITS["wheel"], y=0.5, pose="stand")
 
     def crate_machine(self, x, z, yaw):
-        """KISTEN-AUTOMAT (CrateConfig, CrateClient) frei auf dem Platz, Front (lokal -Z) in Richtung yaw: dunkler Sockel,
-        matte goldene Kiste mit dunklen Bändern, vorn die helle Klappe CrateWeapon (Gruppe Zentrale: E-Prompt und Symbol
-        setzt der Client). Kein Schild, kein Leuchtband."""
+        """KISTEN-AUTOMAT (CrateConfig, CrateClient) frei auf dem Platz, Front (lokal -Z) in Richtung yaw: runder,
+        zweistufiger Sockel, darauf eine große Militärkiste (dunkler Korpus, matte goldene Eckkappen und Bänder, Griffe an
+        den Seiten), der Deckel CrateMachineLid (+ Goldplatte CrateMachineLidTop) liegt lose auf und klappt beim Öffnen
+        auf, darunter der Lichtpunkt CrateMachineGlow (Licht in der Seltenheitsfarbe, setzt der Client). Vorn das goldene
+        Schloss CrateWeapon (E-Prompt und Symbol setzt der Client). Daneben zwei kleine gestapelte Kisten. Alles matt
+        (Metall spiegelt nachts den Himmel), kein Schild, kein Leuchtband."""
         f, box = self.frame(x, z, yaw)
-        box("Decor", "CratePlinth", (7, 0.5, 6), (0, 0.25, 0), ANTHRACITE, "Concrete")
-        box("Decor", "CrateBase", (5.2, 0.8, 4.2), (0, 0.9, 0), ANTHRACITE, "SmoothPlastic")
-        box("Decor", "CrateBody", (4.4, 3.2, 3.4), (0, 2.9, 0), GOLD, "SmoothPlastic")
-        box("Decor", "CrateLid", (4.8, 0.6, 3.8), (0, 4.8, 0), (226, 192, 112), "SmoothPlastic")
-        for dx in (-1.9, 1.9):
-            box("Decor", "CrateBand", (0.35, 3.3, 3.6), (dx, 2.9, 0), ANTHRACITE, "SmoothPlastic")
-        self.b.add("Zentrale", "CrateWeapon", (2.8, 1.8, 0.2), f(0, 3.0, -1.75), (240, 214, 150), "SmoothPlastic",
+        dark, gun, gold_lid = (40, 43, 49), (58, 62, 70), (226, 192, 112)
+        self.b.cylinder("Decor", "CrateDais", 9.6, 0.4, f(0, 0.2, 0), ANTHRACITE, "Concrete")
+        self.b.cylinder("Decor", "CrateDaisTop", 8.2, 0.3, f(0, 0.55, 0), PAVE_DARK, "Slate")
+        self.b.cylinder("Decor", "CrateDaisRim", 8.6, 0.12, f(0, 0.46, 0), GOLD, "SmoothPlastic")
+        W, H, D, y0 = 5.2, 3.0, 3.8, 0.7  # Korpus
+        box("Decor", "CrateBody", (W, H, D), (0, y0 + H / 2, 0), gun, "SmoothPlastic")
+        box("Decor", "CrateFoot", (W + 0.3, 0.3, D + 0.3), (0, y0 + 0.15, 0), dark, "SmoothPlastic")
+        for sx in (-1, 1):
+            for sz in (-1, 1):  # Eckkappen
+                box("Decor", "CrateCorner", (0.6, H + 0.1, 0.6), (sx * (W / 2 - 0.2), y0 + H / 2, sz * (D / 2 - 0.2)), GOLD,
+                    "SmoothPlastic")
+            box("Decor", "CrateBand", (0.4, H + 0.04, D + 0.12), (sx * 1.25, y0 + H / 2, 0), GOLD, "SmoothPlastic")
+            box("Decor", "CrateHandle", (0.25, 0.35, 1.6), (sx * (W / 2 + 0.2), y0 + H * 0.62, 0), dark, "SmoothPlastic")
+            box("Decor", "CrateHandleMount", (0.3, 0.6, 0.3), (sx * (W / 2 + 0.1), y0 + H * 0.62, -0.75), dark, "SmoothPlastic")
+            box("Decor", "CrateHandleMount", (0.3, 0.6, 0.3), (sx * (W / 2 + 0.1), y0 + H * 0.62, 0.75), dark, "SmoothPlastic")
+        box("Decor", "CrateRib", (W + 0.04, 0.3, D + 0.04), (0, y0 + 0.9, 0), dark, "SmoothPlastic")
+        box("Decor", "CrateFrontPanel", (1.7, 1.5, 0.12), (0, y0 + 1.25, -D / 2 - 0.05), dark, "SmoothPlastic")
+        top = y0 + H
+        self.b.add("Zentrale", "CrateMachineGlow", (W - 1, 0.2, D - 1), f(0, top - 0.2, 0), gold_lid, "SmoothPlastic",
+                   angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False},
+                   children=[{"Name": "Light", "ClassName": "PointLight",
+                              "Properties": {"Range": 16, "Brightness": 0, "Color": self.bm.rgb(255, 214, 140)}}])
+        self.b.box("Zentrale", "CrateMachineLid", (W + 0.4, 0.6, D + 0.4), f(0, top + 0.3, 0), dark, "SmoothPlastic",
+                   angles=(0, yaw, 0))
+        self.b.box("Zentrale", "CrateMachineLidTop", (W - 0.6, 0.12, D - 0.6), f(0, top + 0.66, 0), gold_lid, "SmoothPlastic",
+                   angles=(0, yaw, 0))
+        self.b.add("Zentrale", "CrateWeapon", (1.3, 1.0, 0.25), f(0, top - 0.55, -D / 2 - 0.12), (240, 214, 150), "SmoothPlastic",
                    angles=(0, yaw, 0),
                    children=[{"Name": "Light", "ClassName": "PointLight",
-                              "Properties": {"Range": 9, "Brightness": 0.6, "Color": self.bm.rgb(255, 214, 140)}}])
+                              "Properties": {"Range": 10, "Brightness": 0.5, "Color": self.bm.rgb(255, 214, 140)}}])
+        box("Decor", "CrateKeyhole", (0.25, 0.4, 0.06), (0, top - 0.6, -D / 2 - 0.27), dark, "SmoothPlastic")
+        # zwei kleine Kisten schräg hinter dem Automaten (Deko, gestapelt)
+        for lx, lz, turn, size in ((-5.4, 2.4, 14, 2.2), (-5.2, 2.6, -8, 1.6), (5.6, 2.2, -18, 2.0)):
+            yb = 0.22 if size != 1.6 else 2.42  # auf dem Pflaster, die kleine auf der großen
+            box("Decor", "CrateSmall", (size * 1.3, size, size), (lx, yb + size / 2, lz), gun, "SmoothPlastic", extra=(0, turn, 0))
+            box("Decor", "CrateSmallBand", (0.25, size + 0.04, size + 0.06), (lx, yb + size / 2, lz), GOLD, "SmoothPlastic",
+                extra=(0, turn, 0))
 
     def fame_row(self, x, z, yaw):
         """RUHMESWAND als gerade Reihe (Mitte x, z; Front in Richtung yaw): in der Mitte ein breiter, höherer Monolith

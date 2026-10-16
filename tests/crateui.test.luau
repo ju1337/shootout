@@ -34,6 +34,14 @@ decor.Name = "Zentrale"
 for _, name in { "CrateWeapon", "CrateAgent" } do
 	Instance.new("Part", decor).Name = name
 end
+-- Deckel und Lichtpunkt des Automaten (klappt beim Gewinn auf)
+local lid = Instance.new("Part", decor)
+lid.Name = "CrateMachineLid"
+lid.Size = Vector3.new(5.6, 0.6, 4.2)
+lid.CFrame = CFrame.new(0, 4, 0)
+local glowPart = Instance.new("Part", decor)
+glowPart.Name = "CrateMachineGlow"
+Instance.new("PointLight", glowPart).Brightness = 0
 
 store.Data.u1 = { XP = {}, Coins = 1000, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
@@ -141,8 +149,19 @@ local item = Cosmetics.Get(result.Item)
 check(card and labelWith(card, UITheme.Upper(item.Name)) ~= nil, "Karte zeigt den Gewinn " .. item.Name)
 check(card and (labelStarting(card, "NEU FREIGESCHALTET") ~= nil), "Karte: neu freigeschaltet")
 local strip = find(window, function(d) return d.Name == "Strip" end)
-check(math.abs(strip.Position.X.Offset + (result.Index - 1) * 132 + 62 - 440) <= 41, "Rolle bleibt unter der Markierung auf dem Gewinn stehen")
+local stepW = CrateClient.TileW + CrateClient.TileGap
+check(math.abs(strip.Position.X.Offset + (result.Index - 1) * stepW + CrateClient.TileW / 2 - CrateClient.ViewW / 2) <= CrateClient.TileW * 0.33,
+	"Rolle bleibt unter der Markierung auf dem Gewinn stehen")
 check(ProgressService.ItemCount(alice, result.Item) == 1, "Gewinn im Inventar")
+-- Automat in der Welt: Server meldet den Gewinn, wenn die Rolle steht; der Deckel ist auf, innen Licht in der Seltenheitsfarbe
+check(decor.CrateWeapon:GetAttribute("OpenCount") == 1 and decor.CrateWeapon:GetAttribute("OpenRarity") == item.Rarity,
+	"Automat: Gewinn gemeldet (" .. tostring(decor.CrateWeapon:GetAttribute("OpenRarity")) .. ")")
+SIM.Advance(0.5) -- (Heartbeat läuft nur mit Advance)
+check(lid.Position.Y > 4.3, "Automat: Deckel aufgeklappt")
+check(glowPart.PointLight.Brightness > 0 and glowPart.PointLight.Color == Cosmetics.Rarities[item.Rarity].Color, "Automat: Licht in der Seltenheitsfarbe")
+-- Gewinn-Karte: Strahlenkranz, Seltenheit, Knöpfe
+check(card and card:FindFirstChild("Rays") ~= nil and labelWith(card, UITheme.Upper(Cosmetics.Rarities[item.Rarity].Name)) ~= nil,
+	"Karte: Strahlen und Seltenheit")
 
 -- NOCHMAL (Wartezeit des Servers abwarten)
 step(2)
