@@ -331,11 +331,13 @@ corpsePrompt.Triggered:Fire(alice)
 check(corpsePrompt.Parent ~= nil and second.Parent ~= nil, "Tasche voll: Beute bleibt in der Leiche")
 local fullMessage = false
 for _, entry in SIM.RemoteLog do
-	if entry.Remote == "ExtUpdate" and entry.Player == alice and entry.Args[1] == "Status" and string.find(tostring(entry.Args[2]), "voll", 1, true) then
+	-- Karte "TASCHE VOLL" rechts mittig (wie beim Aufheben) mit dem Item, das liegen blieb
+	if entry.Remote == "ExtUpdate" and entry.Player == alice and entry.Args[1] == "BagFull" and type(entry.Args[2]) == "table"
+		and type(entry.Args[2].Id) == "string" and ExtinctionConfig.Get(entry.Args[2].Id) then
 		fullMessage = true
 	end
 end
-check(fullMessage, "Meldung: Tasche voll")
+check(fullMessage, "Meldung: Tasche voll (Karte mit dem liegengebliebenen Item)")
 Inventory.Clear(fullBag)
 corpsePrompt.Triggered:Fire(alice)
 check(countItems(alice) > 0, "Platz geschaffen: E nimmt alles")

@@ -764,6 +764,78 @@ function Inv.showPick(id, count, sold)
 	end)
 end
 
+-- Tasche voll beim Looten (ExtUpdate "BagFull", LootService.Take): dieselbe Karte in Rot mit "TASCHE VOLL", dem Item,
+-- das liegen blieb, und dem Hinweis, Platz zu schaffen. Noch einmal versucht: die Karte frischt auf statt sich zu stapeln.
+-- HUD versteckt (Lootfenster offen): kurze Meldung unten statt der Karte.
+Inv.PICK.FullH = 74
+function Inv.showFull(id)
+	if not (hud and hud.Enabled and Inv.pickFeed) then
+		showToast("Deine Tasche ist voll.", false)
+		return
+	end
+	local config = type(id) == "string" and itemConfig(id) or nil
+	local TweenService = game:GetService("TweenService")
+	Inv.pickOrder -= 1
+	for _, pick in Inv.picks do
+		if pick.Full then
+			pick.Born = os.clock()
+			pick.Slot.LayoutOrder = Inv.pickOrder
+			if config then
+				pick.CountText.Text = upper(config.Name)
+			end
+			pick.Pop.Scale = 1.08
+			TweenService:Create(pick.Pop, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Scale = 1 }):Play()
+			return
+		end
+	end
+	while #Inv.picks >= (Inv.pickMax or Inv.PICK.Max) do
+		local oldest = Inv.picks[1]
+		for _, pick in Inv.picks do
+			if pick.Born < oldest.Born then
+				oldest = pick
+			end
+		end
+		Inv.dropPick(oldest, true)
+	end
+	Sfx.UI("StingWarning")
+	local h = Inv.PICK.FullH
+	local slot = make("Frame", { Name = "Pick_BagFull", Size = UDim2.fromOffset(Inv.PICK.W, h), BackgroundTransparency = 1,
+		LayoutOrder = Inv.pickOrder, ClipsDescendants = true }, Inv.pickFeed)
+	local card = UITheme.HudPanel({ Name = "Card", Position = UDim2.fromOffset(Inv.PICK.W + 40, 0), Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 0.22, ZIndex = 2 }, slot, "Left")
+	local pop = make("UIScale", { Scale = 1 }, card)
+	UITheme.Stroke(card, C.Bad, 1, 0.45)
+	UITheme.AccentBar(card, C.Bad, { Side = "Right", Thickness = 3, ZIndex = 4 })
+	local tileW, tileH = 70, Inv.PICK.H - 12
+	local tile = make("Frame", { Name = "Tile", Position = UDim2.fromOffset(6, 6), Size = UDim2.fromOffset(tileW, tileH),
+		BackgroundColor3 = Inv.TILE, BackgroundTransparency = 0.3, BorderSizePixel = 0, ZIndex = 3 }, card)
+	UITheme.Corner(tile, 3)
+	if config then
+		buildIcon(tile, id, 4, tileW * 0.96 / (tileH * 0.72))
+	end
+	local textX = tileW + 16
+	label({ Name = "Picked", Position = UDim2.fromOffset(textX, 9), Size = UDim2.new(1, -textX - 12, 0, 13),
+		Text = "TASCHE VOLL", TextSize = 11, Font = F.Bold, TextColor3 = C.Bad, ZIndex = 3 }, card)
+	local name = label({ Name = "ItemName", Position = UDim2.fromOffset(textX, 24), Size = UDim2.new(1, -textX - 12, 0, 24),
+		Text = config and upper(config.Name) or "KEIN PLATZ", TextSize = 18, Font = F.Display, TextColor3 = C.Text,
+		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 3 }, card)
+	UITheme.Outline(name)
+	label({ Name = "Hint", Position = UDim2.fromOffset(8, Inv.PICK.H - 2), Size = UDim2.new(1, -20, 0, 14),
+		Text = "In den Safe-Container verschieben oder Inventar leeren", TextSize = 11, Font = F.Bold, TextColor3 = C.Muted,
+		TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 3 }, card)
+	local pick = { Id = "BagFull", Count = 0, Slot = slot, Card = card, CountText = name, Pop = pop, Born = os.clock(), Leaving = false,
+		Full = true }
+	table.insert(Inv.picks, pick)
+	TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Position = UDim2.fromOffset(0, 0) }):Play()
+	task.spawn(function()
+		while not pick.Leaving and os.clock() - pick.Born < Inv.PICK.SoldLife do
+			task.wait(0.25)
+		end
+		Inv.dropPick(pick)
+	end)
+end
+
 local function buildHud()
 	hud = make("ScreenGui", { Name = "ExtinctionHUD", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 6,
 		Enabled = false }, player:WaitForChild("PlayerGui"))
@@ -5268,6 +5340,8 @@ function ExtinctionClient.Init()
 					Inv.showPick(item.Id, item.Count)
 				end
 			end
+		elseif kind == "BagFull" and type(a) == "table" then
+			Inv.showFull(a.Id)
 		elseif kind == "Sold" and type(a) == "table" and type(a.Id) == "string" and type(a.Count) == "number" then
 			Sfx.UI("StingGood")
 			table.insert(Inv.soldQueue, a)

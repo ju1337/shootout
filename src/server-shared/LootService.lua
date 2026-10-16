@@ -627,6 +627,7 @@ function LootService.Take(player, id, slot, toName, toSlot)
 	end
 	local moved, full = false, false
 	local taken = {}
+	local stuck -- erstes Item, das nicht (ganz) in die Tasche passte (bleibt in der Leiche/Tasche liegen)
 	for _, s in slots do
 		local item = bag.Container.Slots[s]
 		if item then
@@ -649,13 +650,18 @@ function LootService.Take(player, id, slot, toName, toSlot)
 			end
 			if left then
 				full = true -- passte nicht (ganz) in die Tasche
+				stuck = stuck or id_
 			end
 		end
 	end
 	LootService.Picked(player, taken) -- jedes Aufheben, auch einzeln aus dem Fenster
 	if full then
-		InventoryService.Status(player, playerBag == InventoryService.GetSafe(player) and "Der Container ist voll."
-			or "Deine Tasche ist voll.")
+		if playerBag == InventoryService.GetSafe(player) then
+			InventoryService.Status(player, "Der Container ist voll.")
+		else
+			-- Karte "TASCHE VOLL" rechts mittig wie beim Aufheben (ExtinctionClient Inv.showFull), der Rest bleibt liegen
+			Remotes.ExtUpdate:FireClient(player, "BagFull", { Id = stuck })
+		end
 	elseif moved and slot == "All" then
 		Sfx.ToPlayers({ player }, "Pickup")
 	end
