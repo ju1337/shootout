@@ -1,11 +1,12 @@
 -- CrateClient (ModuleScript, nur Client)
--- Kisten öffnen (Server: CrateService, Chancen und Preise: CrateConfig). In der Marktmitte steht der Automat der
--- Waffen-Kiste; E öffnet das Fenster:
+-- Kisten öffnen (Server: CrateService, Chancen und Preise: CrateConfig). Im Camp Phoenix (Teil "CrateWeapon" der Gruppe
+-- Zentrale) steht der Automat der Waffen-Kiste; E öffnet das Fenster:
 --   * oben die Rolle (Skins ziehen vorbei und bleiben unter der Markierung stehen), darunter die Chancen je Seltenheit
 --     und alle Skins, die in der Kiste stecken, mit ihrer Chance (Roblox-Pflicht, PaidRandom) und RAP-Wert,
 --   * wo Roblox bezahlte Zufallsitems verbietet (Attribut PaidRandomOk = false), bleibt ÖFFNEN gesperrt,
 --   * ÖFFNEN zieht Münzen ab (der Server würfelt, die Rolle zeigt nur das Ergebnis),
---   * danach eine Gewinn-Karte: neu, weiteres Stück (handelbar) oder Duplikat mit Münzen zurück.
+--   * danach eine Gewinn-Karte: neu, weiteres Stück (handelbar) oder Duplikat mit Münzen zurück,
+--   * oben rechts QUICKSPIN: mit dem Gamepass läuft die Rolle in gut 1 s, ohne führt der Knopf zum Kauf.
 -- Esc oder X schließt; der Gewinn ist dann schon im Inventar und kommt als Meldung.
 
 local Players = game:GetService("Players")
@@ -14,6 +15,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local SoundService = game:GetService("SoundService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local Debris = game:GetService("Debris")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -27,6 +29,8 @@ local ItemPreview = require(Shared.ItemPreview)
 local Notifications = require(Shared.Notifications)
 local InputActions = require(Shared.InputActions)
 local PaidRandom = require(Shared.PaidRandom)
+local RobuxConfig = require(Shared.RobuxConfig)
+local Zentrale = require(Shared.Zentrale)
 
 local player = Players.LocalPlayer
 local C = UITheme.Colors
@@ -39,7 +43,6 @@ local CrateClient = {}
 local WIN_W, WIN_H = 960, 660
 local TILE_W, TILE_H, TILE_GAP = 124, 132, 8
 local VIEW_W, VIEW_H = 880, 150
-local SPIN_TIME = 6
 
 local gui, root
 local window = nil -- { Crate, Frame, Strip, Open (Knopf), Status, Coins, Spinning, Connection, Tween, Generation }
@@ -129,6 +132,29 @@ local function setOpenButton()
 		button.SetColor(crate.Color, C.OnLight)
 	end
 	window.CoinsLabel.Text = "MÜNZEN  " .. format(coins())
+	local quick = window.Quick
+	if CrateConfig.Quick(player) then
+		quick.SetText("QUICKSPIN AKTIV")
+		quick.SetColor(C.Card, crate.Color)
+	else
+		local pass = RobuxConfig.Pass(CrateConfig.QuickSpinPass)
+		quick.SetText("QUICKSPIN  ·  R$ " .. (pass and pass.Robux or 0))
+		quick.SetColor(crate.Color, C.OnLight)
+	end
+end
+
+-- QUICKSPIN kaufen (Gamepass; solange die ID 0 ist, nur ein Hinweis)
+local function buyQuickSpin()
+	if not window or CrateConfig.Quick(player) then
+		return
+	end
+	local pass = RobuxConfig.Pass(CrateConfig.QuickSpinPass)
+	if pass and pass.PassId ~= 0 then
+		MarketplaceService:PromptGamePassPurchase(player, pass.PassId)
+	else
+		window.Status.Text = "QUICKSPIN kommt bald in den Robux-Shop."
+		window.Status.TextColor3 = C.Muted
+	end
 end
 
 -- Rolle mit Skins füllen (Gewinn an fester Stelle, sonst Platzhalter aus dem Pool)
@@ -246,7 +272,9 @@ local function spin(result)
 			sound("rbxasset://sounds/clickfast.wav", 1 + (index % 3) * 0.08, 0.25)
 		end
 	end)
-	local tween = TweenService:Create(win.Strip, TweenInfo.new(SPIN_TIME, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+	local quick = CrateConfig.Quick(player)
+	local tween = TweenService:Create(win.Strip, TweenInfo.new(quick and CrateConfig.QuickSpinTime or CrateConfig.SpinTime,
+		Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 		{ Position = UDim2.fromOffset(finalX, 0) })
 	win.Tween = tween
 	tween.Completed:Connect(function(state)
@@ -269,7 +297,7 @@ local function spin(result)
 		win.Spinning = false
 		win.Tween = nil
 		setOpenButton()
-		task.delay(0.7, function()
+		task.delay(quick and CrateConfig.QuickResultDelay or CrateConfig.ResultDelay, function()
 			if window == win and win.Generation == generation then
 				showResult(result)
 			end
@@ -326,6 +354,12 @@ local function build(crate)
 	UITheme.Cross(close.Face, 14, C.Text, 2).ZIndex = 5
 	local coinsLabel = label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -76, 0, 28), Size = UDim2.fromOffset(220, 26), Text = "",
 		TextSize = 20, Font = F.Display, TextColor3 = C.Gold, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 5 }, frame)
+
+	-- QUICKSPIN (Gamepass) unter den Münzen
+	local quick = UITheme.Chunky({ Name = "QuickSpin", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -76, 0, 56),
+		Size = UDim2.fromOffset(220, 28), Color = crate.Color, Text = "QUICKSPIN", TextSize = 13, TextColor = C.OnLight, ZIndex = 5 },
+		frame, buyQuickSpin)
+	quick.Button:SetAttribute("NoFocus", true)
 
 	-- Rolle
 	local view = make("Frame", { Name = "Reel", Position = UDim2.fromOffset(40, 90), Size = UDim2.fromOffset(VIEW_W, VIEW_H), BackgroundColor3 = C.Background,
@@ -402,8 +436,8 @@ local function build(crate)
 		Color = crate.Color, Text = "ÖFFNEN", TextSize = 22, TextColor = C.OnLight, ZIndex = 5 }, frame, function()
 		CrateClient.Request()
 	end)
-	window = { Crate = crate, Frame = frame, Strip = strip, Open = openButton, Status = status, CoinsLabel = coinsLabel, Spinning = false,
-		Generation = 0, Tiles = {} }
+	window = { Crate = crate, Frame = frame, Strip = strip, Open = openButton, Status = status, CoinsLabel = coinsLabel, Quick = quick,
+		Spinning = false, Generation = 0, Tiles = {} }
 	UITheme.SetBlur("Crate", true)
 	fillStrip(idleIds(crate))
 	strip.Position = UDim2.fromOffset(40, 0)
@@ -424,11 +458,10 @@ function CrateClient.Init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
 	root = UITheme.ScaledRoot(gui, nil, nil, 0.55)
 
-	-- Automat in der Marktmitte: Part "Crate<Kisten-Id>" (Waffen-Kiste: "CrateWeapon")
-	local map = workspace:WaitForChild("Maps"):WaitForChild("Market", 30)
-	if map then
-		for _, crate in CrateConfig.Crates do
-			local machine = map:FindFirstChild("Crate" .. crate.Id, true) -- liegt in einem Unterordner der Map
+	-- Automat im Camp (Gruppe Zentrale der Map Extinction): Part "Crate<Kisten-Id>" (Waffen-Kiste: "CrateWeapon")
+	for _, crate in CrateConfig.Crates do
+		task.spawn(function()
+			local machine = Zentrale.Part("Crate" .. crate.Id, 60)
 			if machine then
 				local prompt = Instance.new("ProximityPrompt")
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
@@ -443,7 +476,7 @@ function CrateClient.Init()
 					CrateClient.Open(crate.Id)
 				end)
 			end
-		end
+		end)
 	end
 
 	Remotes.CrateResult.OnClientEvent:Connect(function(result)
@@ -469,6 +502,7 @@ function CrateClient.Init()
 	end)
 	player:GetAttributeChangedSignal("Coins"):Connect(setOpenButton)
 	player:GetAttributeChangedSignal("PaidRandomOk"):Connect(setOpenButton)
+	player:GetAttributeChangedSignal("Pass_" .. CrateConfig.QuickSpinPass):Connect(setOpenButton)
 	local function onPlaceChanged()
 		if window and not Modes.InLounge(player) then
 			closeWindow()

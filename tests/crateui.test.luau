@@ -1,6 +1,7 @@
 -- Kisten-Oberfläche (CrateClient) im Simulator: Automaten mit Prompt, Fenster mit Chancen und Inhalt, ÖFFNEN beim Server,
 -- Rolle läuft und bleibt auf dem Gewinn stehen, Gewinn-Karte, NOCHMAL, zu wenig Münzen, Fenster zu während der Rolle;
--- die ausgebaute Agenten-Kiste hat weder Prompt noch Fenster
+-- die ausgebaute Agenten-Kiste hat weder Prompt noch Fenster; der Automat steht im Camp (Gruppe Zentrale der Map
+-- Extinction, nicht mehr im Markt); Gamepass QUICKSPIN: Kauf-Knopf ohne Pass, mit Pass rollt die Rolle in gut 1 s
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -26,9 +27,9 @@ CrateService.Init()
 local maps = Instance.new("Folder", workspace)
 maps.Name = "Maps"
 local map = Instance.new("Model", maps)
-map.Name = "Market"
-local decor = Instance.new("Folder", map) -- wie in der echten Map: Automaten liegen im Ordner Decor, nicht direkt unter der Map
-decor.Name = "Decor"
+map.Name = "Extinction"
+local decor = Instance.new("Folder", map) -- wie in der echten Map: der Automat liegt in der Gruppe Zentrale (Camp Phoenix)
+decor.Name = "Zentrale"
 -- dazu ein Automat der ausgebauten Agenten-Kiste, wie er in einer alten Map noch stehen könnte
 for _, name in { "CrateWeapon", "CrateAgent" } do
 	Instance.new("Part", decor).Name = name
@@ -37,7 +38,8 @@ end
 store.Data.u1 = { XP = {}, Coins = 1000, Rap = 0, Owned = {}, Equipped = {} }
 local alice = SIM.Join("Alice")
 step(2)
-alice:SetAttribute("Mode", "Market")
+alice:SetAttribute("Mode", "Extinction")
+alice:SetAttribute("InSafeZone", true)
 rawget(SIM.Players, "__props").LocalPlayer = alice
 local CrateClient = require("CrateClient")
 local playerGui = alice:FindFirstChild("PlayerGui") or Instance.new("PlayerGui", alice)
@@ -120,6 +122,9 @@ for _, item in pool do
 	check(labelWith(window, UITheme.Upper(item.Name)) ~= nil, "im Inhalt: " .. item.Name)
 end
 check(labelStarting(window, "ÖFFNEN  ·  450") ~= nil, "Knopf zeigt den Preis")
+check(labelWith(window, "QUICKSPIN  ·  R$ 99") ~= nil, "ohne Gamepass: QUICKSPIN-Kauf-Knopf mit Preis")
+click(window, "QUICKSPIN")
+check(labelWith(window, "QUICKSPIN kommt bald in den Robux-Shop.") ~= nil, "Pass-ID 0: Hinweis statt Kauf")
 check(labelStarting(window, "MÜNZEN  1.000") ~= nil or labelStarting(window, "MÜNZEN  1,000") ~= nil or labelStarting(window, "MÜNZEN  1000") ~= nil, "Münzen oben")
 
 -- ÖFFNEN
@@ -177,6 +182,22 @@ step(1)
 CrateClient.Open("Weapon")
 check(find(gui, function(d) return d.Name == "CrateWindow" end) ~= nil, "neues Fenster ersetzt das alte")
 step(10)
+
+-- QUICKSPIN: Knopf zeigt AKTIV, die Rolle steht nach gut 1 s, die Karte kommt gleich danach
+alice:SetAttribute("Pass_QuickSpin", true)
+step(0.2)
+window = find(gui, function(d) return d.Name == "CrateWindow" end)
+check(labelWith(window, "QUICKSPIN AKTIV") ~= nil, "mit Gamepass: QUICKSPIN AKTIV")
+check(click(window, "ÖFFNEN  ·  450"), "Quickspin: ÖFFNEN")
+local quick = relay()
+check(quick ~= nil and quick.Ok == true, "Quickspin: Ergebnis")
+step(CrateConfig.QuickSpinTime + CrateConfig.QuickResultDelay + 0.3)
+local quickCard = find(window, function(d) return d.Name == "Result" end)
+check(quickCard ~= nil, "Quickspin: Gewinn-Karte nach gut 1 s")
+-- und gleich wieder öffnen: kürzere Wartezeit beim Server
+check(quickCard ~= nil and click(quickCard, "NOCHMAL"), "Quickspin: NOCHMAL")
+local again = relay()
+check(again ~= nil and again.Ok == true, "Quickspin: kürzere Wartezeit, zweite Kiste sofort")
 
 if failures == 0 then
 	print("Kisten-Oberfläche: alles in Ordnung")

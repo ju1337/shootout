@@ -41,6 +41,7 @@ local AttachmentConfig = require(Shared.AttachmentConfig)
 local AttachmentIcons = require(Shared.AttachmentIcons)
 local HideoutConfig = require(Shared.HideoutConfig)
 local KitConfig = require(Shared.KitConfig)
+local Zentrale = require(Shared.Zentrale)
 local Sfx = require(Shared.Sfx)
 local LootInfo = require(Shared.LootInfo)
 local LevelConfig = require(Shared.LevelConfig)
@@ -4140,6 +4141,7 @@ local BUBBLES = {
 	Hideout = { Icon = "House", Label = "VERSTECK", Color = Color3.fromRGB(200, 160, 110) },
 	Stand_Red = { Icon = "RedPoints", Label = "DER SCHIEBER", Color = Color3.fromRGB(220, 60, 50) },
 	[KitConfig.Point] = { Icon = "Kit", Label = "KITS", Color = Color3.fromRGB(96, 200, 120) },
+	CrateWeapon = { Icon = "Crate", Label = "KISTEN", Color = Color3.fromRGB(212, 170, 80) }, -- Kisten-Automat (Zentrale)
 }
 local bubbles = {}
 
@@ -4411,6 +4413,16 @@ local function setupPrompts()
 		addBubble(part)
 		for _, gui in bubbles do
 			gui.Enabled = bubblesOn()
+		end
+	end)
+	-- Kisten-Automat im Camp (Teil CrateWeapon der Gruppe Zentrale, Prompt setzt CrateClient)
+	task.spawn(function()
+		local crate = Zentrale.Part("CrateWeapon", 60)
+		if crate then
+			addBubble(crate)
+			for _, gui in bubbles do
+				gui.Enabled = bubblesOn()
+			end
 		end
 	end)
 	for _, prompt in prompts do

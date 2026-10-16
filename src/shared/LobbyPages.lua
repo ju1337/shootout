@@ -649,8 +649,10 @@ function LobbyPages.Shop(page)
 		end
 		if currentType == "Robux" then
 			for _, pass in RobuxConfig.Passes do
-				order += 1
-				robuxCard(order, pass, true)
+				if not pass.Random or PaidRandom.OfferRandom(player) then -- QUICKSPIN nur, wo es Kisten gibt
+					order += 1
+					robuxCard(order, pass, true)
+				end
 			end
 			for _, product in RobuxConfig.Products do
 				if product.Shop ~= false and (not PaidRandom.IsRandomProduct(product) or PaidRandom.OfferRandom(player)) then

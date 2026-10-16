@@ -1,5 +1,5 @@
 -- CrateConfig (ModuleScript, geteilt)
--- Kisten zum Öffnen (Markt-Mitte): die Waffen-Kiste. Eine Kiste kostet Münzen und gibt genau einen Skin aus dem Pool
+-- Kisten zum Öffnen (Automat im Camp Phoenix, Teil "CrateWeapon" der Gruppe Zentrale): die Waffen-Kiste. Eine Kiste kostet Münzen und gibt genau einen Skin aus dem Pool
 -- aller im Shop kaufbaren Skins ihrer Art (Cosmetics.ForSale). Erst wird die Seltenheit nach Gewicht gezogen (Weights;
 -- Seltenheiten ohne Skins fallen weg, der Rest wird neu gewichtet), dann ein Skin dieser Seltenheit gleichverteilt.
 -- Besitzt man einen gebundenen Skin schon, gibt es einen Teil seines Shop-Preises als Münzen zurück (DuplicateRefund);
@@ -25,7 +25,20 @@ CrateConfig.DuplicateRefund = 0.3 -- Anteil des Shop-Preises, der bei einem Dupl
 CrateConfig.ReelLength = 44       -- Skins in der Rolle
 CrateConfig.WinnerIndex = 36      -- Platz des Gewinns in der Rolle (der Rest rollt vorher vorbei)
 CrateConfig.Cooldown = 1.5        -- Sekunden zwischen zwei Öffnungen
+-- Gamepass QUICKSPIN (RobuxConfig.Passes): die Rolle läuft in QuickSpinTime statt SpinTime Sekunden, die Gewinn-Karte
+-- kommt gleich danach, und man darf schneller wieder öffnen (QuickCooldown). Der Gewinn und die Chancen bleiben gleich.
+CrateConfig.QuickSpinPass = "QuickSpin"
+CrateConfig.SpinTime = 6          -- Sekunden, die die Rolle läuft
+CrateConfig.QuickSpinTime = 1.2
+CrateConfig.ResultDelay = 0.7     -- Pause zwischen Stillstand der Rolle und Gewinn-Karte
+CrateConfig.QuickResultDelay = 0.2
+CrateConfig.QuickCooldown = 0.6
 CrateConfig.Modes = { "Market", "Extinction" } -- wo man Kisten öffnen darf (offene Welt: nur in einer Safe Zone)
+
+-- Hat der Spieler QUICKSPIN? (Client und Server, über das Pass-Attribut)
+function CrateConfig.Quick(player)
+	return player:GetAttribute("Pass_" .. CrateConfig.QuickSpinPass) == true
+end
 
 function CrateConfig.Get(id)
 	for _, crate in CrateConfig.Crates do

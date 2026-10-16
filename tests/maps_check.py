@@ -14,7 +14,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORIGIN = (-1500, 0, -1500)  # MARKET_ORIGIN in tools/build_maps.py
 STAND_PARTS = ("Base", "Counter", "Prompt", "Sign", "Display1", "Display2", "Display3", "Display4", "Display5", "Display6")
-CLIENT_PARTS = ("SearchTerminal", "CrateWeapon", "OverviewBoard", "TopBoard")
+CLIENT_PARTS = ("SearchTerminal", "OverviewBoard", "TopBoard")
 
 
 def _parts(node, found=None, path=""):

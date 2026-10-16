@@ -82,7 +82,7 @@ end
 
 alice:SetAttribute("Mode", "Domination")
 local ok, message = CrateService.Open(alice, "Weapon")
-check(ok == false and string.find(message, "Markt", 1, true) ~= nil, "im Match keine Kisten: " .. tostring(message))
+check(ok == false and string.find(message, "Camp", 1, true) ~= nil, "im Match keine Kisten: " .. tostring(message))
 alice:SetAttribute("Mode", "Market")
 check(CrateService.Open(alice, "Nix") == false, "unbekannte Kiste öffnen")
 check(CrateService.Open(alice, "Agent") == false, "die alte Agenten-Kiste lässt sich nicht mehr öffnen")

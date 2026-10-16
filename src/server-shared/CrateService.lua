@@ -38,7 +38,7 @@ function CrateService.Open(player, crateId)
 		return false, "Diese Kiste gibt es nicht."
 	end
 	if not modeAllowed(player) then
-		return false, "Kisten öffnest du im Markt oder in einer Safe Zone."
+		return false, "Kisten öffnest du im Camp oder in einer Safe Zone."
 	end
 	-- Roblox: bezahlte Zufallsitems (Münzen gibt es auch für Robux) sind in manchen Ländern verboten (PolicyGate)
 	if not PolicyGate.RandomAllowed(player) then
@@ -48,7 +48,8 @@ function CrateService.Open(player, crateId)
 		return false, "Deine Daten werden noch geladen."
 	end
 	local now = os.clock()
-	if lastOpen[player] and now - lastOpen[player] < CrateConfig.Cooldown then
+	local cooldown = CrateConfig.Quick(player) and CrateConfig.QuickCooldown or CrateConfig.Cooldown
+	if lastOpen[player] and now - lastOpen[player] < cooldown then
 		return false, "Nicht so schnell."
 	end
 	if not ProgressService.SpendCoins(player, crate.Price, "Kiste", crateId) then

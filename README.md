@@ -533,7 +533,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   Sniper Arena / Pet Simulator. Hin über das grüne Tor MARKTHALLE im Depot des Camps oder den Knopf MARKT im
   Seitenmenü (im Markt heißt er ZUM CAMP), zurück durchs Tor im Süden der Halle ins Camp.
   - **Aufbau**: Man spawnt in der Mitte auf dem großen, ruhigen **Marktplatz** (Such-Terminal in der Mitte; am Rand der
-    Kisten-Automat, die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
+    die Übersichtstafel mit freien/belegten Ständen und die Tafel **beliebteste Händler** nach Verkäufen).
     Das Tor zurück ins Camp (`Portal_Extinction`) steht am Ende der Südrampe (oberster Rang); schneller geht es über den Knopf ZUM CAMP im Seitenmenü. Darum liegen wie in einem
     Theater drei Ränge, die nach außen stufenweise höher werden (Stände 1-12, 13-28, 29-48); alle Stände zeigen zur Mitte.
     Vier Rampen (Norden, Osten, Süden, Westen) führen über alle Ränge nach oben, die Stufen kann man auch springen.
@@ -554,12 +554,16 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   - **Stand-Name**: in MEIN STAND, erscheint auf dem Schild (läuft durch den Textfilter).
   - **Stand beanspruchen**: an einem freien Stand **E** – man bleibt, wo man steht (kein Teleport), das Schild über dem
     Stand zeigt den eigenen Namen. Einer pro Spieler.
-  - **Kisten** (Automaten in der Mitte, Server `src/server-shared/CrateService.lua`, Client `src/client/CrateClient.lua`,
+  - **Kisten** (seit 2026-10-16 nicht mehr im Markt: der Automat steht im Camp Phoenix,
+    Teil `CrateWeapon` der Gruppe Zentrale, Symbol KISTEN darüber; Server `src/server-shared/CrateService.lua`, Client `src/client/CrateClient.lua`,
     Chancen und Preise in `src/shared/CrateConfig.lua`): **WAFFEN-KISTE** (450 Münzen; die
     Agenten-Kiste gibt es nicht mehr). E am Automaten öffnet das Fenster: Chancen je Seltenheit, alle Skins der Kiste, ÖFFNEN lässt die Rolle
     laufen und zeigt den Gewinn. Gezogen wird aus den im Shop kaufbaren Waffen-Skins. Schon besessene
     gebundene Skins geben 30 % ihres Shop-Preises als Münzen zurück; handelbare Skins (mit RAP-Wert) landen als weiteres
     Stück im Inventar und lassen sich im Markt verkaufen. Der Server würfelt und bucht, die Rolle ist nur die Show.
+    Gamepass **QUICKSPIN** (`RobuxConfig.Passes`, Id `QuickSpin`): Rolle 1,2 s statt 6 s, Gewinn-Karte gleich danach,
+    kürzere Wartezeit zwischen zwei Kisten; Knopf oben rechts im Kisten-Fenster führt zum Kauf. Nur dort im Robux-Shop,
+    wo es Kisten gibt (PaidRandom).
   - **MEIN STAND** (E am eigenen Stand oder Knopf in der Markt-Leiste oben): links sechs Plätze (Preis ändern,
     ZURÜCK nimmt das Angebot zurück), rechts die eigenen handelbaren Skins mit Preisfeld (Vorschlag: RAP-Wert)
     und ANBIETEN. Angebotene Skins drehen sich auf Theke und Regal, darüber ein Preisschild.
@@ -956,7 +960,7 @@ Schutz der Spielstände (`src/server-shared/SessionStore.lua`, genutzt von `Prog
 - **Herunterfahren:** alle Spieler werden gleichzeitig gespeichert und freigegeben (höchstens 25 s).
 - **Robux-Käufe** (`RobuxService`): Ein Kauf wird Roblox erst bestätigt, wenn der Stand mit dem Kauf sicher
   gespeichert ist; sonst fragt Roblox später erneut (jede Kauf-Nummer wird trotzdem nur einmal gutgeschrieben).
-  Gamepässe (`RobuxConfig.Passes`): VIP, DOPPEL-XP und ALLES LOOTEN – die PassId aus dem Creator Hub eintragen, dann
+  Gamepässe (`RobuxConfig.Passes`): VIP, DOPPEL-XP, ALLES LOOTEN und QUICKSPIN – die PassId aus dem Creator Hub eintragen, dann
   zeigt der Shop den Preis und prüft den Besitz beim Beitreten und nach dem Kauf.
 
 ## Tests und automatische Prüfung

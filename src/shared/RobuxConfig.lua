@@ -16,6 +16,11 @@ RobuxConfig.Passes = {
 	{ Id = "LootAll", PassId = 0, Robux = 149, Name = "ALLES LOOTEN", Badge = "ALLES",
 		Description = "EXTINCTION: Taschen, Kisten, Lootdrops und Leichen mit einem Druck leeren (F oder ALLES NEHMEN)",
 		Color = Color3.fromRGB(110, 200, 140) },
+	-- Kisten-Automat im Camp: Rolle in gut 1 s statt 6 s (CrateConfig.QuickSpinPass). Random = true: nur dort im Shop, wo
+	-- es Kisten gibt (PaidRandom.OfferRandom)
+	{ Id = "QuickSpin", PassId = 0, Robux = 99, Name = "QUICKSPIN", Badge = "TURBO", Random = true,
+		Description = "Kisten öffnen in gut 1 Sekunde statt 6: die Rolle läuft fünfmal so schnell, für immer",
+		Color = Color3.fromRGB(212, 170, 80) },
 }
 
 -- Gekaufte Glücksrad-Drehs in Ländern, die bezahlte Zufallsitems verbieten (BE, NL …): stattdessen so viele Münzen je
