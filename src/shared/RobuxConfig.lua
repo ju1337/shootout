@@ -40,6 +40,10 @@ RobuxConfig.Products = {
 		Color = Color3.fromRGB(150, 120, 210) },
 	{ Id = "RoyalBundle", ProductId = 0, Robux = 499, Name = "ROYAL-PAKET", Items = { "W_Royal", "W_Hologramm" }, Coins = 2000,
 		Tag = "EXKLUSIV", Description = "Skins Royal + Hologramm und 2.000 Münzen", Color = Color3.fromRGB(180, 90, 255) },
+	-- ROBUX-KISTE (CrateConfig "Robux"): ein Kauf = eine Kiste, nur am Kisten-Automaten im Camp (Shop = false). In
+	-- Ländern ohne bezahlte Zufallsitems gibt es dafür LockedCoins Münzen (dort wird sie gar nicht angeboten)
+	{ Id = "CrateRobux", ProductId = 0, Robux = 59, Name = "ROBUX-KISTE", Crate = "Robux", LockedCoins = 1200, Shop = false,
+		Color = Color3.fromRGB(168, 112, 236) },
 	-- Versteckstufen (HideoutConfig.Tiers): sofort, ohne Level-Grenze. Nur im Versteck-Fenster (Shop = false)
 	{ Id = "HideoutTier2", ProductId = 0, Robux = 149, Name = "VERSTECK: WERKSTATT", HideoutTier = 2, Shop = false,
 		Color = Color3.fromRGB(200, 160, 110) },

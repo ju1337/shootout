@@ -4214,6 +4214,7 @@ local BUBBLES = {
 	Stand_Red = { Icon = "RedPoints", Label = "DER SCHIEBER", Color = Color3.fromRGB(220, 60, 50) },
 	[KitConfig.Point] = { Icon = "Kit", Label = "KITS", Color = Color3.fromRGB(96, 200, 120) },
 	CrateWeapon = { Icon = "Crate", Label = "KISTEN", Color = Color3.fromRGB(212, 170, 80) }, -- Kisten-Automat (Zentrale)
+	CrateRobux = { Icon = "Crate", Label = "ROBUX-KISTE", Color = Color3.fromRGB(168, 112, 236) },
 }
 local bubbles = {}
 
@@ -4488,15 +4489,17 @@ local function setupPrompts()
 		end
 	end)
 	-- Kisten-Automat im Camp (Teil CrateWeapon der Gruppe Zentrale, Prompt setzt CrateClient)
-	task.spawn(function()
-		local crate = Zentrale.Part("CrateWeapon", 60)
-		if crate then
-			addBubble(crate)
-			for _, gui in bubbles do
-				gui.Enabled = bubblesOn()
+	for _, name in { "CrateWeapon", "CrateRobux" } do
+		task.spawn(function()
+			local crate = Zentrale.Part(name, 60)
+			if crate then
+				addBubble(crate)
+				for _, gui in bubbles do
+					gui.Enabled = bubblesOn()
+				end
 			end
-		end
-	end)
+		end)
+	end
 	for _, prompt in prompts do
 		prompt.Enabled = inExtinction()
 	end

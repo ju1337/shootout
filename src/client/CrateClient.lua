@@ -37,6 +37,7 @@ local PaidRandom = require(Shared.PaidRandom)
 local RobuxConfig = require(Shared.RobuxConfig)
 local Zentrale = require(Shared.Zentrale)
 local Sfx = require(Shared.Sfx)
+local LoginConfig = require(Shared.LoginConfig)
 local KitCrate = require(script.Parent.KitCrate)
 
 local player = Players.LocalPlayer
@@ -49,7 +50,7 @@ local CrateClient = {}
 
 local WIN_W, WIN_H = 980, 680
 CrateClient.TileW, CrateClient.TileGap, CrateClient.ViewW = 140, 10, 900
-local TILE_W, TILE_H, TILE_GAP = CrateClient.TileW, 160, CrateClient.TileGap
+local TILE_W, TILE_H, TILE_GAP = CrateClient.TileW, 148, CrateClient.TileGap
 local VIEW_W, VIEW_H = CrateClient.ViewW, 180
 local REEL_X, REEL_Y = (WIN_W - CrateClient.ViewW) / 2, 108
 local STEP = TILE_W + TILE_GAP
@@ -59,6 +60,7 @@ local RANK = { Common = 1, Rare = 2, Epic = 3, Legendary = 4 }
 CrateClient.Rank = RANK
 
 local gui, root
+local resetReel
 local window = nil -- { Crate, Frame, Strip, Reel, Open, Quick, Status, CoinsLabel, Crate3D, Spinning, Connection, Tween, Generation, Tiles }
 
 local function coins()
@@ -118,7 +120,6 @@ local function tile(parent, itemId, index, preview)
 		Size = UDim2.fromOffset(TILE_W, TILE_H), BackgroundColor3 = C.Card, BorderSizePixel = 0, ZIndex = 6 }, parent)
 	UITheme.Corner(frame, UITheme.Radius.Large)
 	UITheme.Stroke(frame, color, 1, 0.45)
-	make("UIScale", { Scale = 1 }, frame)
 	local shine = glow(frame, color, { Name = "Shine", Size = UDim2.fromScale(1, 1), ZIndex = 6 }, 0.55)
 	UITheme.Corner(shine, UITheme.Radius.Large)
 	if item then
@@ -144,6 +145,19 @@ local function tile(parent, itemId, index, preview)
 	return frame
 end
 
+-- Preis als Text: Münzen oder Robux (Robux-Kiste)
+local function priceText(crate)
+	if crate.Product then
+		local product = RobuxConfig.Product(crate.Product)
+		return "R$ " .. (product and product.Robux or 0)
+	end
+	return format(crate.Price) .. " MÜNZEN"
+end
+
+local function affordable(crate)
+	return crate.Product ~= nil or coins() >= crate.Price
+end
+
 local function setOpenButton()
 	if not window then
 		return
@@ -156,15 +170,15 @@ local function setOpenButton()
 	elseif not PaidRandom.ShowRandom(player) then
 		button.SetText("IN DEINEM LAND NICHT VERFÜGBAR")
 		button.SetColor(C.MutedBack, C.Muted)
-	elseif coins() < crate.Price then
+	elseif not affordable(crate) then
 		button.SetText("ZU WENIG MÜNZEN  ·  " .. format(crate.Price))
 		button.SetColor(C.MutedBack, C.Bad)
 	else
-		button.SetText("ÖFFNEN  ·  " .. format(crate.Price) .. " MÜNZEN")
+		button.SetText("ÖFFNEN  ·  " .. priceText(crate))
 		button.SetColor(crate.Color, C.OnLight)
 	end
 	window.CoinsLabel.Text = "MÜNZEN  " .. format(coins())
-	local ready = not window.Spinning and PaidRandom.ShowRandom(player) and coins() >= crate.Price
+	local ready = not window.Spinning and PaidRandom.ShowRandom(player) and affordable(crate)
 	window.Crate3D.SetState(ready and "Ready" or "Wait")
 	local quick = window.Quick
 	if CrateConfig.Quick(player) then
@@ -361,11 +375,11 @@ local function showResult(result)
 		TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 22 }, card)
 	local crate = window.Crate
 	local again = UITheme.Chunky({ Position = UDim2.fromOffset(28, 372), Size = UDim2.fromOffset(330, 60), Color = crate.Color,
-		Text = "NOCHMAL  ·  " .. format(crate.Price), TextSize = 21, TextColor = C.OnLight, ZIndex = 22 }, card, function()
+		Text = "NOCHMAL  ·  " .. (crate.Product and priceText(crate) or format(crate.Price)), TextSize = 21, TextColor = C.OnLight, ZIndex = 22 }, card, function()
 		overlay:Destroy()
 		CrateClient.Request()
 	end)
-	if coins() < crate.Price then
+	if not affordable(crate) then
 		again.SetColor(C.MutedBack, C.Bad)
 		again.SetText("ZU WENIG MÜNZEN")
 	end
@@ -402,7 +416,7 @@ local function spin(result)
 	setOpenButton()
 	win.Status.Text = ""
 	fillStrip(result.Reel, result.Index)
-	Sfx.UI("CrateOpen")
+	Sfx.UI("CrateRoll")
 	local random = Random.new()
 	local center = (result.Index - 1) * STEP + TILE_W / 2 + random:NextInteger(-math.floor(TILE_W * 0.32), math.floor(TILE_W * 0.32))
 	local finalX = VIEW_W / 2 - center
@@ -424,13 +438,13 @@ local function spin(result)
 			lastIndex = index
 			-- Klacken: schnell hell, zum Schluss tiefer und lauter
 			Sfx.UI("CrateTick", { Pitch = 0.8 + math.min(speed / 4000, 1) * 0.6, Volume = 0.7 + (1 - math.min(speed / 4000, 1)) * 0.5 })
-			-- Kachel unter der Markierung hebt sich ab
+			-- Kachel unter der Markierung hebt sich ab (heller Rand; nicht größer, sonst ragt sie über die Nachbarn)
 			if focus then
-				focus.UIScale.Scale = 1
+				focus.UIStroke.Transparency = 0.45
 			end
 			focus = win.Tiles[index]
 			if focus then
-				focus.UIScale.Scale = 1.07
+				focus.UIStroke.Transparency = 0
 			end
 		end
 		crateFrame.Rotation = math.sin(os.clock() * 38) * math.min(speed / 1500, 1) * 6 -- Kiste rüttelt, solange es schnell geht
@@ -451,10 +465,12 @@ local function spin(result)
 		local rank = item and RANK[item.Rarity] or 1
 		local color = item and rarityOf(item) and rarityOf(item).Color or C.Primary
 		Sfx.UI("CrateStop")
-		-- Gewinn leuchtet und wächst, die anderen werden dunkel, Blitz über der Rolle
+		-- Gewinn leuchtet, die anderen werden dunkel, die Markierung blendet aus (lief sonst mitten durch den Gewinn),
+		-- Blitz über der Rolle
+		TweenService:Create(win.Marker, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
 		for index, other in win.Tiles do
 			if index ~= result.Index then
-				other.UIScale.Scale = 1
+				other.UIStroke.Transparency = 0.45
 				TweenService:Create(other.Dim, TweenInfo.new(0.35), { BackgroundTransparency = 0.45 }):Play()
 			end
 		end
@@ -466,7 +482,11 @@ local function spin(result)
 				stroke.Thickness = 3
 				stroke.Transparency = 0
 			end
-			TweenService:Create(winner.UIScale, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.14 }):Play()
+			local shine = winner:FindFirstChild("Shine")
+			local gradient = shine and shine:FindFirstChildOfClass("UIGradient")
+			if gradient then
+				gradient.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.85) })
+			end
 		end
 		local flash = make("Frame", { Name = "Flash", Size = UDim2.fromScale(1, 1), BackgroundColor3 = color, BackgroundTransparency = 0.3,
 			BorderSizePixel = 0, ZIndex = 10 }, win.Reel)
@@ -495,6 +515,12 @@ local function spin(result)
 	tween:Play()
 end
 
+-- Rolle zurück in den Ruhezustand (Schein vom letzten Gewinn weg, Markierung wieder da)
+resetReel = function()
+	TweenService:Create(window.ReelGlow, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
+	window.Marker.BackgroundTransparency = 0
+end
+
 -- Kiste beim Server öffnen (der Server antwortet mit CrateResult)
 function CrateClient.Request()
 	if not window or window.Spinning or window.Waiting or window.Frame:FindFirstChild("Result") then
@@ -506,7 +532,19 @@ function CrateClient.Request()
 		window.Status.TextColor3 = C.Bad
 		return
 	end
-	if coins() < crate.Price then
+	if crate.Product then
+		-- Robux-Kiste: Kauf bei Roblox, das Ergebnis schickt der Server nach dem Kauf (RobuxService); Admins in Studio gratis
+		local product = RobuxConfig.Product(crate.Product)
+		if product and product.ProductId ~= 0 and PaidRandom.OfferRandom(player) then
+			resetReel()
+			MarketplaceService:PromptProductPurchase(player, product.ProductId)
+			return
+		elseif not LoginConfig.AdminFreeSpins(player, RunService:IsStudio()) then
+			window.Status.Text = "Die ROBUX-KISTE kommt bald."
+			window.Status.TextColor3 = C.Muted
+			return
+		end
+	elseif coins() < crate.Price then
 		window.Status.Text = "Nicht genug Münzen – " .. format(crate.Price) .. " nötig."
 		window.Status.TextColor3 = C.Bad
 		return
@@ -515,8 +553,7 @@ function CrateClient.Request()
 	window.Status.Text = ""
 	window.Open.SetText("ÖFFNET …")
 	window.Open.SetColor(C.MutedBack, C.Muted)
-	-- Rolle zurück in den Ruhezustand (dunkle Kacheln und Schein vom letzten Gewinn weg)
-	TweenService:Create(window.ReelGlow, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
+	resetReel()
 	Remotes.CrateAction:FireServer("Open", crate.Id)
 	-- Antwortet der Server nicht, nach einer Weile wieder freigeben (statt ewig auf ÖFFNET zu hängen)
 	local win = window
@@ -567,10 +604,10 @@ local function build(crate)
 	make("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.72),
 		NumberSequenceKeypoint.new(1, 1) }) }, reelGlow)
 	local strip = make("Frame", { Name = "Strip", Size = UDim2.fromOffset(100, VIEW_H), BackgroundTransparency = 1, ZIndex = 6 }, reel)
-	make("Frame", { Name = "Marker", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.new(0, 3, 1, 0),
+	local marker = make("Frame", { Name = "Marker", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0), Size = UDim2.new(0, 3, 1, 0),
 		BackgroundColor3 = C.Primary, BorderSizePixel = 0, ZIndex = 12 }, reel)
 	for _, edge in { 0, 1 } do
-		UITheme.Diamond(reel, 18, UDim2.new(0.5, 0, edge, 0), C.Primary).ZIndex = 12 -- halbe Raute = Spitze
+		UITheme.Diamond(reel, 14, UDim2.new(0.5, 0, edge, 0), C.Primary).ZIndex = 12 -- halbe Raute = Spitze
 		local fade = make("Frame", { AnchorPoint = Vector2.new(edge, 0), Position = UDim2.new(edge, 0, 0, 0), Size = UDim2.new(0, 110, 1, 0),
 			BackgroundColor3 = C.Background, BorderSizePixel = 0, ZIndex = 11 }, reel)
 		make("UIGradient", { Transparency = NumberSequence.new(edge == 0 and { NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) }
@@ -653,14 +690,14 @@ local function build(crate)
 		openButton.Button)
 	TweenService:Create(pulse, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
 		{ Thickness = 4, Transparency = 0.7 }):Play()
-	window = { Crate = crate, Frame = frame, Strip = strip, Reel = reel, ReelGlow = reelGlow, Open = openButton, Status = status,
+	window = { Crate = crate, Frame = frame, Strip = strip, Reel = reel, ReelGlow = reelGlow, Marker = marker, Open = openButton, Status = status,
 		CoinsLabel = coinsLabel, Quick = quick, Crate3D = crate3d, Spinning = false, Generation = 0, Tiles = {} }
 	UITheme.SetBlur("Crate", true)
 	fillStrip(idleIds(crate))
 	strip.Position = UDim2.fromOffset(TILE_GAP * 2, 0)
 	setOpenButton()
 	InputActions.Focus(frame, openButton.Button) -- Controller: gleich auf ÖFFNEN
-	Sfx.UI("CrateOpen", { Pitch = 0.85, Volume = 0.6 })
+	Sfx.UI("CrateRoll", { Pitch = 0.85, Volume = 0.6 })
 	return window
 end
 
@@ -676,16 +713,21 @@ end
 -- oben), innen leuchtet es in der Seltenheitsfarbe, Funken steigen auf; nach kurzer Zeit klappt er wieder zu.
 local OPEN_ANGLE = math.rad(68)
 
-local function setupMachine(machine)
+-- Namensendung der Automaten-Teile: Waffen-Kiste ohne (CrateMachineLid), sonst "_<Id>" (CrateMachineLid_Robux)
+function CrateClient.MachineSuffix(crateId)
+	return crateId == "Weapon" and "" or "_" .. crateId
+end
+
+local function setupMachine(machine, suffix)
 	local folder = machine.Parent
-	local lid = folder and folder:FindFirstChild("CrateMachineLid")
-	local glowPart = folder and folder:FindFirstChild("CrateMachineGlow")
+	local lid = folder and folder:FindFirstChild("CrateMachineLid" .. suffix)
+	local glowPart = folder and folder:FindFirstChild("CrateMachineGlow" .. suffix)
 	if not lid or not lid:IsA("BasePart") then
 		return
 	end
 	local parts = {}
 	for _, name in { "CrateMachineLid", "CrateMachineLidTop" } do
-		local p = folder:FindFirstChild(name)
+		local p = folder:FindFirstChild(name .. suffix)
 		if p and p:IsA("BasePart") then
 			parts[p] = p.CFrame
 		end
@@ -766,7 +808,7 @@ function CrateClient.Init()
 				prompt.KeyboardKeyCode = Enum.KeyCode.E
 				prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
 				prompt.ActionText = "Kiste öffnen"
-				prompt.ObjectText = crate.Name .. "  ·  " .. crate.Price .. " Münzen"
+				prompt.ObjectText = crate.Name .. "  ·  " .. (crate.Product and priceText(crate) or (crate.Price .. " Münzen"))
 				prompt.HoldDuration = 0
 				prompt.MaxActivationDistance = 12
 				prompt.RequiresLineOfSight = false
@@ -774,7 +816,7 @@ function CrateClient.Init()
 				prompt.Triggered:Connect(function()
 					CrateClient.Open(crate.Id)
 				end)
-				setupMachine(machine)
+				setupMachine(machine, CrateClient.MachineSuffix(crate.Id))
 			end
 		end)
 	end

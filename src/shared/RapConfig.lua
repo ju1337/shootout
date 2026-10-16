@@ -68,6 +68,9 @@ RapConfig.Values = {
 	W_Woche_Kobalt = 1000, W_Woche_Smaragd = 1100, W_Woche_Purpur = 1200, W_Woche_Bernstein = 1300, W_Woche_Titan = 1500,
 	-- Robux-Shop (Royal-Paket)
 	W_Royal = 90000, W_Hologramm = 150000,
+	-- Robux-Kiste (CrateConfig "Robux")
+	W_RX_Obsidian = 80, W_RX_Nordlicht = 90, W_RX_Kupfer = 1600, W_RX_Phantom = 1900,
+	W_RX_Eisfeuer = 25000, W_RX_Kronjuwel = 30000,
 }
 
 -- Lebender RAP: [Skin] = Zahl (Kommazahl). Der Server füllt ihn aus dem DataStore und nach jedem Verkauf (MarketService)

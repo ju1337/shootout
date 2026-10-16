@@ -568,6 +568,10 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     (`CrateWin`, `CrateWinBig`, `CrateBoom` in `SoundLibrary`). Der Automat im Camp (`crate_machine` in
     `tools/camp_phoenix.py`: Militärkiste auf rundem Sockel) klappt bei jedem Gewinn für alle den Deckel
     (`CrateMachineLid`) auf und leuchtet innen in der Seltenheitsfarbe (Attribute `OpenCount`/`OpenRarity` an `CrateWeapon`).
+    **ROBUX-KISTE** (seit 2026-10-16, Automat `CrateRobux` neben der Waffen-Kiste): nur für Robux (Entwicklerprodukt
+    `CrateRobux`, ID 0 bis zum Start; Admins öffnen sie in Studio gratis), 6 eigene handelbare Skins (`Crate = "Robux"`
+    in `Cosmetics`: Obsidian, Nordlicht, Kupferglanz, Phantom, Eisfeuer und Kronjuwel mit Effekten), Chancen 55/33/12 %.
+    In gesperrten Ländern gibt es sie nicht (bereits gekauft: `LockedCoins` Münzen).
     Gamepass **QUICKSPIN** (`RobuxConfig.Passes`, Id `QuickSpin`): Rolle 1,2 s statt 6 s, Gewinn-Karte gleich danach,
     kürzere Wartezeit zwischen zwei Kisten; Knopf oben rechts im Kisten-Fenster führt zum Kauf. Nur dort im Robux-Shop,
     wo es Kisten gibt (PaidRandom).

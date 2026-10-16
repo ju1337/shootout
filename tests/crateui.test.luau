@@ -218,6 +218,21 @@ check(quickCard ~= nil and click(quickCard, "NOCHMAL"), "Quickspin: NOCHMAL")
 local again = relay()
 check(again ~= nil and again.Ok == true, "Quickspin: kürzere Wartezeit, zweite Kiste sofort")
 
+-- Robux-Kiste: Preis in Robux, ohne Produkt-ID nur ein Hinweis; Markierung und Kacheln wie bei der Waffen-Kiste
+local quickCardLeft = find(window, function(d) return d.Name == "Result" end)
+if quickCardLeft then
+	quickCardLeft:Destroy()
+end
+CrateClient.Open("Robux")
+step(0.3)
+local robuxWindow = find(gui, function(d) return d.Name == "CrateWindow" end)
+check(labelWith(robuxWindow, "ROBUX-KISTE") ~= nil and labelStarting(robuxWindow, "ÖFFNEN  ·  R$ 59") ~= nil, "Robux-Kiste: Fenster mit Robux-Preis")
+for _, item in CrateConfig.Pool(CrateConfig.Get("Robux")) do
+	check(labelWith(robuxWindow, UITheme.Upper(item.Name)) ~= nil, "Robux-Kiste zeigt " .. item.Name)
+end
+click(robuxWindow, "ÖFFNEN  ·  R$")
+check(labelWith(robuxWindow, "Die ROBUX-KISTE kommt bald.") ~= nil, "Robux-Kiste ohne Produkt-ID: Hinweis")
+
 if failures == 0 then
 	print("Kisten-Oberfläche: alles in Ordnung")
 end

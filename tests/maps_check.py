@@ -52,7 +52,8 @@ ZENTRALE_PARTS = ("ShopCounter", "ShopDisplay1", "ShopDisplay2", "ShopDisplay3",
                   "Leaderboard_Kills", "Leaderboard_Level", "Leaderboard_Missions", "Podium1", "Podium2", "Podium3", "WheelSpot",
                   "WheelConsole", "WheelBoard", "GateCount_Market", "DungeonGate",
                   "Range_Start", "Range_Zone", "Range_Target1", "Range_Bull1", "Range_Target8", "CrateWeapon",
-                  "CrateMachineLid", "CrateMachineLidTop", "CrateMachineGlow")
+                  "CrateMachineLid", "CrateMachineLidTop", "CrateMachineGlow",
+                  "CrateRobux", "CrateMachineLid_Robux", "CrateMachineLidTop_Robux", "CrateMachineGlow_Robux")
 
 
 def check_no_hub():

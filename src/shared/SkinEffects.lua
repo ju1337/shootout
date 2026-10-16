@@ -55,6 +55,31 @@ SkinEffects.Styles = {
 		Rise = 2.6,
 		Breath = { { 255, 250, 220 }, { 255, 200, 70 }, { 190, 110, 20 } },
 	},
+	-- Robux-Kiste (CrateConfig "Robux")
+	Eisfeuer = {
+		Glow = Color3.fromRGB(110, 200, 255),
+		GlowMin = 1.4,
+		GlowMax = 6,
+		Pulse = 2.8,
+		BreathParticles = 12,
+		GlitterParts = 7,
+		Glitter = { { 255, 255, 255 }, { 160, 220, 255 } },
+		Embers = { { 230, 250, 255 }, { 110, 200, 255 }, { 40, 90, 220 } },
+		Rise = 1.8,
+		Breath = { { 240, 252, 255 }, { 120, 200, 255 }, { 50, 90, 230 } },
+	},
+	Kronjuwel = {
+		Glow = Color3.fromRGB(255, 70, 110),
+		GlowMin = 1.5,
+		GlowMax = 6,
+		Pulse = 2.4,
+		BreathParticles = 12,
+		GlitterParts = 8,
+		Glitter = { { 255, 240, 200 }, { 255, 200, 90 } },
+		Embers = { { 255, 220, 160 }, { 255, 90, 120 }, { 150, 20, 60 } },
+		Rise = 2.2,
+		Breath = { { 255, 235, 210 }, { 255, 80, 110 }, { 140, 20, 50 } },
+	},
 }
 -- Skins mit eigenen Partikeln, Leuchtspur, Einschlag und Finisher (Daten in SkinStyles, z.B. Splitterlicht)
 for name, style in SkinStyles do

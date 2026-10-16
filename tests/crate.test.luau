@@ -24,7 +24,7 @@ CrateService.Init()
 
 -- Pool
 local weaponCrate = CrateConfig.Get("Weapon")
-check(weaponCrate ~= nil and #CrateConfig.Crates == 1, "genau eine Kiste: die Waffen-Kiste")
+check(weaponCrate ~= nil and #CrateConfig.Crates == 2, "zwei Kisten: Waffen-Kiste und Robux-Kiste")
 check(CrateConfig.Get("Agent") == nil, "die Agenten-Kiste gibt es nicht mehr")
 check(CrateConfig.Get("Nix") == nil, "unbekannte Kiste")
 local weaponPool = CrateConfig.Pool(weaponCrate)
@@ -34,6 +34,21 @@ for _, item in weaponPool do
 	check(RapConfig.Tradeable(item.Id), "Waffen-Pool: handelbar mit RAP-Wert (" .. item.Id .. ")")
 	check(not item.Pass and not item.Reward and not item.Robux, "keine Pass-, Belohnungs- oder Robux-Skins in der Kiste")
 end
+
+-- Robux-Kiste: nur ihre eigenen, handelbaren Skins (nicht im Shop, nicht in der Waffen-Kiste), Kauf über ein Produkt
+local robuxCrate = CrateConfig.Get("Robux")
+local robuxPool = CrateConfig.Pool(robuxCrate)
+check(#robuxPool == 6, "Robux-Kiste: 6 Skins (" .. #robuxPool .. ")")
+for _, item in robuxPool do
+	check(item.Crate == "Robux" and not Cosmetics.ForSale(item) and RapConfig.Tradeable(item.Id), "Robux-Pool: " .. item.Id)
+	check(not table.find(weaponPool, item), "Robux-Skin nicht in der Waffen-Kiste: " .. item.Id)
+end
+local RobuxConfig = require("RobuxConfig")
+local PaidRandom = require("PaidRandom")
+local robuxProduct = RobuxConfig.Product(robuxCrate.Product)
+check(robuxProduct ~= nil and robuxProduct.Crate == "Robux" and robuxProduct.Shop == false and robuxProduct.ProductId == 0,
+	"Produkt für die Robux-Kiste (ID 0 bis zum Start)")
+check(PaidRandom.IsRandomProduct(robuxProduct), "Robux-Kiste zählt als bezahltes Zufallsitem")
 
 -- Chancen
 for _, crate in CrateConfig.Crates do
@@ -141,7 +156,7 @@ for i = 1, 80 do
 		else
 			if r.Status == "duplicate" then
 				duplicates += 1
-				check(r.Refund == math.floor(item.Price * CrateConfig.DuplicateRefund), "Duplikat: Münzen zurück")
+				check(r.Refund == math.floor(item.Price * CrateConfig.DuplicateRefundShare), "Duplikat: Münzen zurück")
 				check(count == 1, "Duplikat: weiter genau ein Stück")
 			else
 				check(count == 1 and not expected[r.Item], "erster gebundener Skin: ein Stück")
@@ -180,6 +195,31 @@ local gone = lastResult(alice)
 check(gone and gone.Ok == false and string.find(gone.Message, "gibt es nicht", 1, true) ~= nil,
 	"Remote: alte Agenten-Kiste wird abgelehnt: " .. tostring(gone and gone.Message))
 Remotes.CrateAction.OnServerEvent:Fire(alice, "Quatsch", "Weapon")
+
+-- Robux-Kiste: für Münzen nicht zu öffnen; nach dem Kauf (OpenPaid) ein Skin aus ihrem Pool, ohne Münzen
+step(CrateConfig.Cooldown + 0.1)
+local coinsBeforeRobux = ProgressService.Get(alice).Coins
+local robuxOk, robuxMessage = CrateService.Open(alice, "Robux")
+check(robuxOk == false and string.find(robuxMessage, "Robux", 1, true) ~= nil, "Robux-Kiste nicht für Münzen: " .. tostring(robuxMessage))
+local paidOk, paid = CrateService.OpenPaid(alice, "Robux")
+check(paidOk == true and Cosmetics.Get(paid.Item).Crate == "Robux" and paid.Crate == "Robux", "nach dem Kauf: Skin aus der Robux-Kiste")
+check(ProgressService.Get(alice).Coins == coinsBeforeRobux, "Robux-Kiste kostet keine Münzen")
+check(ProgressService.ItemCount(alice, paid.Item) >= 1, "Robux-Skin im Inventar")
+check(lastResult(alice).Crate == "Robux", "Ergebnis mit Rolle an den Client")
+
+-- Kauf über Roblox: Robux-Kiste wird gleich geöffnet
+local RobuxService = require("RobuxService")
+RobuxConfig.ByProductId = function(id)
+	return id == 555 and robuxProduct or nil
+end
+RobuxService.Init()
+local receipt
+task.spawn(function()
+	receipt = game:GetService("MarketplaceService").ProcessReceipt({ PlayerId = alice.UserId, ProductId = 555, PurchaseId = "rx1" })
+end)
+step(5)
+check(receipt == Enum.ProductPurchaseDecision.PurchaseGranted, "Robux-Kauf bestätigt")
+check(lastResult(alice) ~= paid and lastResult(alice).Crate == "Robux", "Robux-Kauf öffnet die Kiste")
 
 if failures == 0 then
 	print("Kisten: alles in Ordnung")

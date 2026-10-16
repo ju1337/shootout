@@ -18,6 +18,7 @@ local ProgressService = require(ServerStorage:WaitForChild("ServerShared").Progr
 local PolicyGate = require(ServerStorage:WaitForChild("ServerShared").PolicyGate)
 local HideoutService = require(ServerStorage:WaitForChild("ServerShared").HideoutService)
 local HideoutConfig = require(Shared.HideoutConfig)
+local CrateService = require(ServerStorage:WaitForChild("ServerShared").CrateService)
 
 local RobuxService = {}
 
@@ -61,6 +62,18 @@ local function grant(player, profile, product)
 	elseif product.Spins then
 		ProgressService.AddSpins(player, product.Spins, true)
 		table.insert(lines, "+" .. product.Spins .. " Glücksrad-Drehs")
+	end
+	-- Robux-Kiste: gleich öffnen (Rolle und Gewinn-Show im Kisten-Fenster); gesperrtes Land: Münzen statt Kiste
+	if product.Crate and RobuxService.SpinsRestricted(player) then
+		ProgressService.AddCoins(player, product.LockedCoins or 0, "Robux")
+		table.insert(lines, "+" .. (product.LockedCoins or 0) .. " Münzen (statt " .. product.Name .. ")")
+	elseif product.Crate then
+		local ok, result = CrateService.OpenPaid(player, product.Crate)
+		if not ok then
+			error(result) -- Kauf nicht bestätigen, Roblox fragt später nochmal
+		end
+		local item = Cosmetics.Get(result.Item)
+		table.insert(lines, product.Name .. ": " .. (item and item.Name or ""))
 	end
 	if product.BoostMinutes then
 		ProgressService.AddXPBoost(player, product.BoostMinutes)

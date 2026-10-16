@@ -18,10 +18,16 @@ local CrateConfig = {}
 CrateConfig.Crates = {
 	{ Id = "Weapon", Name = "WAFFEN-KISTE", Sub = "WAFFEN-SKINS", Type = "Weapon", Price = 450,
 		Color = Color3.fromRGB(212, 170, 80), Weights = { Common = 62, Rare = 28, Epic = 8, Legendary = 2 } },
+	-- ROBUX-KISTE: nur für Robux (Entwicklerprodukt RobuxConfig "CrateRobux", Product), gibt nur ihre eigenen Skins
+	-- (Cosmetics: Crate = "Robux", handelbar mit RAP-Wert: ein schon besessener kommt als weiteres Stück dazu).
+	-- DuplicateCoins: Münzen, falls ein Skin der Kiste einmal gebunden ist.
+	{ Id = "Robux", Name = "ROBUX-KISTE", Sub = "EXKLUSIVE SKINS  ·  NUR MIT ROBUX", Type = "Weapon", Product = "CrateRobux",
+		Exclusive = true, Color = Color3.fromRGB(168, 112, 236), Weights = { Rare = 55, Epic = 33, Legendary = 12 },
+		DuplicateCoins = { Rare = 400, Epic = 900, Legendary = 2000 } },
 }
 
 CrateConfig.RarityOrder = { "Common", "Rare", "Epic", "Legendary" }
-CrateConfig.DuplicateRefund = 0.3 -- Anteil des Shop-Preises, der bei einem Duplikat zurückkommt
+CrateConfig.DuplicateRefundShare = 0.3 -- Anteil des Shop-Preises, der bei einem Duplikat zurückkommt
 CrateConfig.ReelLength = 44       -- Skins in der Rolle
 CrateConfig.WinnerIndex = 36      -- Platz des Gewinns in der Rolle (der Rest rollt vorher vorbei)
 CrateConfig.Cooldown = 1.5        -- Sekunden zwischen zwei Öffnungen
@@ -53,7 +59,8 @@ end
 function CrateConfig.Pool(crate)
 	local pool = {}
 	for _, item in Cosmetics.Items do
-		if item.Type == crate.Type and Cosmetics.ForSale(item) and not item.Test then
+		local fits = if crate.Exclusive then item.Crate == crate.Id else Cosmetics.ForSale(item) and item.Crate == nil
+		if item.Type == crate.Type and fits and not item.Test then
 			table.insert(pool, item)
 		end
 	end
@@ -118,6 +125,15 @@ function CrateConfig.Roll(crate, random)
 		end
 	end
 	return candidates[random:NextInteger(1, #candidates)]
+end
+
+-- Münzen für ein Duplikat (gebundener Skin, schon besessen): Kisten mit DuplicateCoins je Seltenheit, sonst ein Teil
+-- des Shop-Preises
+function CrateConfig.DuplicateRefund(crate, item)
+	if crate.DuplicateCoins then
+		return crate.DuplicateCoins[item.Rarity] or 0
+	end
+	return math.floor((item.Price or 0) * CrateConfig.DuplicateRefundShare)
 end
 
 return CrateConfig

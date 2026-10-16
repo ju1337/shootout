@@ -26,9 +26,9 @@ function PaidRandom.Percent(chance)
 	return text .. " %"
 end
 
--- Ist ein Robux-Produkt ein bezahltes Zufallsitem? (Glücksrad-Drehs)
+-- Ist ein Robux-Produkt ein bezahltes Zufallsitem? (Glücksrad-Drehs, Robux-Kiste)
 function PaidRandom.IsRandomProduct(product)
-	return product ~= nil and (product.Spins or 0) > 0
+	return product ~= nil and ((product.Spins or 0) > 0 or product.Crate ~= nil)
 end
 
 -- Client: Anzeige nach den Attributen. Unbekannt (nil) gilt als erlaubt, der Server prüft selbst noch einmal.

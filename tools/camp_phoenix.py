@@ -314,7 +314,9 @@ class CampPhoenix:
         self.trade_counter(-(SQ_X - 8), 22, to_e)
         self.pavilion(-44, SQ_Z1 - PAV_D / 2, to_s, "wheel")
         self.pavilion(-44, SQ_Z0 + PAV_D / 2, to_n, "outfitter")
-        self.crate_machine(-46, 32, to_e)  # offen vor dem Glücksrad-Pavillon, Front zur Promenade
+        # offen vor dem Glücksrad-Pavillon, Front zur Promenade: Waffen-Kiste und daneben die Robux-Kiste
+        self.crate_machine(-46, 34, to_e)
+        self.crate_machine(-46, 22, to_e, key="Robux", accent=(168, 112, 236), lid_top=(196, 160, 240))
 
     def trade_counter(self, x, z, yaw):
         """TAUSCHMARKT vor der Markthalle: weiße Theke mit dunkler Platte, Händlerin mit Krawatte dahinter, Regal mit
@@ -438,51 +440,47 @@ class CampPhoenix:
         self.b.floor_text("WheelFloorLabel", (8, 0.1, 2), f(0, 0.55, fz + 2.4), "E AM PULT", GOLD, yaw=yaw + 180)
         self.shopkeeper(box, 5.0, fz + 4.6, OUTFITS["wheel"], y=0.5, pose="stand")
 
-    def crate_machine(self, x, z, yaw):
+    def crate_machine(self, x, z, yaw, key="Weapon", accent=GOLD, lid_top=(226, 192, 112)):
         """KISTEN-AUTOMAT (CrateConfig, CrateClient) frei auf dem Platz, Front (lokal -Z) in Richtung yaw: runder,
         zweistufiger Sockel, darauf eine große Militärkiste (dunkler Korpus, matte goldene Eckkappen und Bänder, Griffe an
         den Seiten), der Deckel CrateMachineLid (+ Goldplatte CrateMachineLidTop) liegt lose auf und klappt beim Öffnen
         auf, darunter der Lichtpunkt CrateMachineGlow (Licht in der Seltenheitsfarbe, setzt der Client). Vorn das goldene
-        Schloss CrateWeapon (E-Prompt und Symbol setzt der Client). Daneben zwei kleine gestapelte Kisten. Alles matt
-        (Metall spiegelt nachts den Himmel), kein Schild, kein Leuchtband."""
+        Schloss CrateWeapon (E-Prompt und Symbol setzt der Client). Alles matt (Metall spiegelt nachts den Himmel), kein
+        Schild, kein Leuchtband. key: Kiste (CrateConfig); außer der Waffen-Kiste heißen die Teile Crate<key> und
+        CrateMachineLid_<key> usw., accent/lid_top: Farbe der Kappen und Bänder bzw. der Deckelplatte."""
         f, box = self.frame(x, z, yaw)
-        dark, gun, gold_lid = (40, 43, 49), (58, 62, 70), (226, 192, 112)
+        dark, gun, gold_lid = (40, 43, 49), (58, 62, 70), lid_top
+        sfx = "" if key == "Weapon" else "_" + key
         self.b.cylinder("Decor", "CrateDais", 9.6, 0.4, f(0, 0.2, 0), ANTHRACITE, "Concrete")
         self.b.cylinder("Decor", "CrateDaisTop", 8.2, 0.3, f(0, 0.55, 0), PAVE_DARK, "Slate")
-        self.b.cylinder("Decor", "CrateDaisRim", 8.6, 0.12, f(0, 0.46, 0), GOLD, "SmoothPlastic")
+        self.b.cylinder("Decor", "CrateDaisRim", 8.6, 0.12, f(0, 0.46, 0), accent, "SmoothPlastic")
         W, H, D, y0 = 5.2, 3.0, 3.8, 0.7  # Korpus
         box("Decor", "CrateBody", (W, H, D), (0, y0 + H / 2, 0), gun, "SmoothPlastic")
         box("Decor", "CrateFoot", (W + 0.3, 0.3, D + 0.3), (0, y0 + 0.15, 0), dark, "SmoothPlastic")
         for sx in (-1, 1):
             for sz in (-1, 1):  # Eckkappen
-                box("Decor", "CrateCorner", (0.6, H + 0.1, 0.6), (sx * (W / 2 - 0.2), y0 + H / 2, sz * (D / 2 - 0.2)), GOLD,
+                box("Decor", "CrateCorner", (0.6, H + 0.1, 0.6), (sx * (W / 2 - 0.2), y0 + H / 2, sz * (D / 2 - 0.2)), accent,
                     "SmoothPlastic")
-            box("Decor", "CrateBand", (0.4, H + 0.04, D + 0.12), (sx * 1.25, y0 + H / 2, 0), GOLD, "SmoothPlastic")
+            box("Decor", "CrateBand", (0.4, H + 0.04, D + 0.12), (sx * 1.25, y0 + H / 2, 0), accent, "SmoothPlastic")
             box("Decor", "CrateHandle", (0.25, 0.35, 1.6), (sx * (W / 2 + 0.2), y0 + H * 0.62, 0), dark, "SmoothPlastic")
             box("Decor", "CrateHandleMount", (0.3, 0.6, 0.3), (sx * (W / 2 + 0.1), y0 + H * 0.62, -0.75), dark, "SmoothPlastic")
             box("Decor", "CrateHandleMount", (0.3, 0.6, 0.3), (sx * (W / 2 + 0.1), y0 + H * 0.62, 0.75), dark, "SmoothPlastic")
         box("Decor", "CrateRib", (W + 0.04, 0.3, D + 0.04), (0, y0 + 0.9, 0), dark, "SmoothPlastic")
         box("Decor", "CrateFrontPanel", (1.7, 1.5, 0.12), (0, y0 + 1.25, -D / 2 - 0.05), dark, "SmoothPlastic")
         top = y0 + H
-        self.b.add("Zentrale", "CrateMachineGlow", (W - 1, 0.2, D - 1), f(0, top - 0.2, 0), gold_lid, "SmoothPlastic",
+        self.b.add("Zentrale", "CrateMachineGlow" + sfx, (W - 1, 0.2, D - 1), f(0, top - 0.2, 0), gold_lid, "SmoothPlastic",
                    angles=(0, yaw, 0), props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False},
                    children=[{"Name": "Light", "ClassName": "PointLight",
                               "Properties": {"Range": 16, "Brightness": 0, "Color": self.bm.rgb(255, 214, 140)}}])
-        self.b.box("Zentrale", "CrateMachineLid", (W + 0.4, 0.6, D + 0.4), f(0, top + 0.3, 0), dark, "SmoothPlastic",
+        self.b.box("Zentrale", "CrateMachineLid" + sfx, (W + 0.4, 0.6, D + 0.4), f(0, top + 0.3, 0), dark, "SmoothPlastic",
                    angles=(0, yaw, 0))
-        self.b.box("Zentrale", "CrateMachineLidTop", (W - 0.6, 0.12, D - 0.6), f(0, top + 0.66, 0), gold_lid, "SmoothPlastic",
+        self.b.box("Zentrale", "CrateMachineLidTop" + sfx, (W - 0.6, 0.12, D - 0.6), f(0, top + 0.66, 0), gold_lid, "SmoothPlastic",
                    angles=(0, yaw, 0))
-        self.b.add("Zentrale", "CrateWeapon", (1.3, 1.0, 0.25), f(0, top - 0.55, -D / 2 - 0.12), (240, 214, 150), "SmoothPlastic",
+        self.b.add("Zentrale", "Crate" + key, (1.3, 1.0, 0.25), f(0, top - 0.55, -D / 2 - 0.12), gold_lid, "SmoothPlastic",
                    angles=(0, yaw, 0),
                    children=[{"Name": "Light", "ClassName": "PointLight",
                               "Properties": {"Range": 10, "Brightness": 0.5, "Color": self.bm.rgb(255, 214, 140)}}])
         box("Decor", "CrateKeyhole", (0.25, 0.4, 0.06), (0, top - 0.6, -D / 2 - 0.27), dark, "SmoothPlastic")
-        # zwei kleine Kisten schräg hinter dem Automaten (Deko, gestapelt)
-        for lx, lz, turn, size in ((-5.4, 2.4, 14, 2.2), (-5.2, 2.6, -8, 1.6), (5.6, 2.2, -18, 2.0)):
-            yb = 0.22 if size != 1.6 else 2.42  # auf dem Pflaster, die kleine auf der großen
-            box("Decor", "CrateSmall", (size * 1.3, size, size), (lx, yb + size / 2, lz), gun, "SmoothPlastic", extra=(0, turn, 0))
-            box("Decor", "CrateSmallBand", (0.25, size + 0.04, size + 0.06), (lx, yb + size / 2, lz), GOLD, "SmoothPlastic",
-                extra=(0, turn, 0))
 
     def fame_row(self, x, z, yaw):
         """RUHMESWAND als gerade Reihe (Mitte x, z; Front in Richtung yaw): in der Mitte ein breiter, höherer Monolith

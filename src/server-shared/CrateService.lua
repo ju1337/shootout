@@ -16,6 +16,8 @@ local ProgressService = require(script.Parent.ProgressService)
 local PolicyGate = require(script.Parent.PolicyGate)
 local DiscordLog = require(script.Parent.DiscordLog)
 local Zentrale = require(Shared.Zentrale)
+local LoginConfig = require(Shared.LoginConfig)
+local RunService = game:GetService("RunService")
 
 local CrateService = {}
 
@@ -53,20 +55,44 @@ function CrateService.Open(player, crateId)
 	if lastOpen[player] and now - lastOpen[player] < cooldown then
 		return false, "Nicht so schnell."
 	end
+	if crate.Product then
+		-- Robux-Kiste: nur über den Kauf (RobuxService -> OpenPaid); Admins in Studio öffnen sie zum Testen gratis
+		if not LoginConfig.AdminFreeSpins(player, RunService:IsStudio()) then
+			return false, "Die ROBUX-KISTE öffnest du mit Robux."
+		end
+		lastOpen[player] = now
+		return CrateService.Deliver(player, crate)
+	end
 	if not ProgressService.SpendCoins(player, crate.Price, "Kiste", crateId) then
 		return false, "Nicht genug Münzen (" .. crate.Price .. " nötig)."
 	end
 	lastOpen[player] = now
+	local ok, result = CrateService.Deliver(player, crate)
+	if not ok then
+		ProgressService.AddCoins(player, crate.Price, "Kiste: Rückerstattung")
+	end
+	return ok, result
+end
 
+-- Bezahlte Robux-Kiste öffnen (RobuxService nach dem Kauf): ohne Ort, Wartezeit und Münzen; der Kauf ist schon bezahlt
+function CrateService.OpenPaid(player, crateId)
+	local crate = CrateConfig.Get(crateId)
+	if not crate then
+		return false, "Diese Kiste gibt es nicht."
+	end
+	return CrateService.Deliver(player, crate)
+end
+
+-- Skin ziehen, geben (Duplikat: Münzen), Rolle bauen, Ergebnis an den Client, Automat in der Welt aufklappen
+function CrateService.Deliver(player, crate)
 	local item = CrateConfig.Roll(crate, random)
 	if not item then
-		ProgressService.AddCoins(player, crate.Price, "Kiste: Rückerstattung")
 		return false, "Diese Kiste ist gerade leer."
 	end
 	local granted = ProgressService.GrantSkin(player, item.Id)
 	local status, refund = granted or "duplicate", 0
 	if granted == nil then
-		refund = math.floor((item.Price or 0) * CrateConfig.DuplicateRefund)
+		refund = CrateConfig.DuplicateRefund(crate, item)
 		if refund > 0 then
 			ProgressService.AddCoins(player, refund, "Kiste: Duplikat")
 		end

@@ -51,8 +51,8 @@ for _, crate in CrateConfig.Crates do
 		check(item.Type == "Weapon", "keine Agenten-Skins in Kisten: " .. item.Id)
 	end
 end
-check(#CrateConfig.Crates == 1 and CrateConfig.Crates[1].Type == "Weapon" and CrateConfig.Get("Agent") == nil,
-	"nur die Waffen-Kiste, keine Agenten-Kiste")
+check(#CrateConfig.Crates == 2 and CrateConfig.Get("Weapon") ~= nil and CrateConfig.Get("Robux") ~= nil
+	and CrateConfig.Get("Agent") == nil, "Waffen-Kiste und Robux-Kiste, keine Agenten-Kiste")
 
 -- Agenten: immer der Standard-Look aus der Agentenfarbe, auch wenn der Client noch alte Attribute hat
 local oldClient = Instance.new("Folder")
