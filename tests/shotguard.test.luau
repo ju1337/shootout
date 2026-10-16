@@ -67,7 +67,7 @@ Extinction.Init(manager)
 
 local players = {}
 for i, name in { "Alice", "Bob" } do
-	store.Data["u" .. i] = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {} }
+	store.Data["u" .. i] = { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, TutorialDone = true } -- kein Pflicht-Tutorial (Camp-Sperre)
 	local player = SIM.Join(name)
 	Instance.new("Backpack", player).Name = "Backpack"
 	players[name] = player

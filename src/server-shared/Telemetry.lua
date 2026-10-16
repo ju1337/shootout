@@ -8,8 +8,8 @@
 --       "ContextualPurchase" (Enum.AnalyticsEconomyTransactionType); reason = Grund als Text (CustomField01),
 --       sku = Item-Id. ProgressService ruft das bei AddCoins/SpendCoins/AddRap/SpendRap auf.
 --   Telemetry.Onboarding(player, step, name)
---       Onboarding-Trichter (LogOnboardingFunnelStepEvent): 1 Beigetreten, 2 Offene Welt betreten, 3-8 Tutorial-Schritte,
---       9 Tutorial fertig. Jeder Schritt zählt pro Spieler nur einmal (höchster Schritt im Profil: OnboardingStep).
+--       Onboarding-Trichter (LogOnboardingFunnelStepEvent): 1 Beigetreten, 2 Offene Welt betreten, 3 ff. Tutorial-Schritte,
+--       danach Tutorial fertig (TutorialConfig.FunnelDone). Jeder Schritt zählt pro Spieler nur einmal (höchster Schritt im Profil: OnboardingStep).
 --   Telemetry.Event(player, name, value, field1, field2, field3)
 --       Eigenes Ereignis (LogCustomEvent), z.B. "ModeJoin" mit Modus, "PlayerKill", "Death" mit Ursache.
 --   Telemetry.Count(player, name, n)

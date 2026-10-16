@@ -30,6 +30,15 @@ local make = UITheme.Make
 
 local Minimap = {}
 
+-- Ziel des Tutorials (ExtTutorial): Vector3 oder nil, als rote Raute mit Pfeil (außerhalb der Karte am Rand)
+local guideAt = nil
+function Minimap.SetGuide(position)
+	guideAt = position
+end
+function Minimap.Guide()
+	return guideAt
+end
+
 local SIZE = 200              -- Durchmesser in Design-Einheiten
 local DEFAULT_RANGE = 75      -- Studs von der Mitte bis zum Rand (Maps können mit dem Attribut MinimapRange weiter rauszoomen)
 local RANGE = DEFAULT_RANGE
@@ -624,6 +633,24 @@ function Minimap.Init(root)
 	bagIcon.Holder.Visible = false
 	bagIcon.Diamond.BackgroundColor3 = COLORS.Enemy
 	local bagRaw, bagAt = nil, nil -- zuletzt gelesenes Attribut, Position (Vector3) oder nil
+	-- Tutorial-Ziel: rote Raute "!"
+	local guideIcon = objectiveIcon(overlay, "!", 24)
+	guideIcon.Holder.Name = "TutorialGuide"
+	guideIcon.Holder.Visible = false
+	guideIcon.Diamond.BackgroundColor3 = Color3.fromRGB(214, 58, 58) -- Rot wie die Tafel des Tutorials
+	local function updateGuide(focus, rotation)
+		guideIcon.Holder.Visible = guideAt ~= nil
+		if guideAt then
+			local radius = SIZE / 2 - 14
+			local x, y = rotate((guideAt.X - focus.X) / RANGE * (SIZE / 2), (guideAt.Z - focus.Z) / RANGE * (SIZE / 2), rotation)
+			local distance = math.sqrt(x * x + y * y)
+			if distance > radius then
+				x, y = x / distance * radius, y / distance * radius
+			end
+			guideIcon.Holder.Position = UDim2.new(0.5, x, 0.5, y)
+		end
+	end
+
 	local function updateBag(focus, rotation)
 		local raw = player:GetAttribute("ExtDeathBag")
 		if raw ~= bagRaw then
@@ -739,6 +766,7 @@ function Minimap.Init(root)
 		end
 
 		updateBag(focus, rotation)
+		updateGuide(focus, rotation)
 
 		-- Pings
 		for i = #pings, 1, -1 do

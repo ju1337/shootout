@@ -113,13 +113,20 @@ Scheibe mit farbigem Rand, kleinem Symbol der Station und kurzem Namen darunter 
 `src/client/ExtinctionClient.lua`, 22 Studs über dem Stand und damit über den Dächern, bis 200 Studs, Wände verdecken).
 Die Symbole sind nur zu sehen, solange man in einer Safe Zone ist (Spieler-Attribut `InSafeZone`).
 
-**Tutorial** (`src/client/ExtTutorial.lua`): Wer zum ersten Mal in die offene Welt kommt, bekommt eine Karte WELCOME mit
-START TUTORIAL / SKIP. Danach führt eine Tafel oben in der Mitte durch sechs Schritte, jeder geht erst weiter, wenn er
-erledigt ist: Starter-Kit holen (Wegpunkt zum nächsten Kit-Händler), Inventar öffnen, Waffe in die Hand, Safe Zone
-verlassen, einen Zombie töten, zum Schluss die wichtigsten Regeln (Tasche fällt beim Tod draußen, alles Weitere im
-GUIDE). Fertig oder übersprungen steht im Profil (`TutorialDone`), danach kommt es nicht mehr von selbst; im Menü unter
-GUIDE startet oder überspringt ein Knopf es jederzeit. Spieler, die vor dem Tutorial schon da waren (`GuideHinted`),
-bekommen es nicht.
+**Tutorial** (`src/client/ExtTutorial.lua`, Schritte in `src/shared/TutorialConfig.lua`): Pflicht für neue Spieler,
+ohne Überspringen. Beim ersten Betreten kommt die Karte WILLKOMMEN (nur LOS GEHT'S), dann 15 Schritte. Im Camp: Starter
+Kit holen, Inventar öffnen, Tasche/Schnellleiste/Container erklärt und ein Item in den Container legen, Waffe ziehen,
+beim HÄNDLER Munition kaufen, LAGER, SPIELERMARKT am Tauschmarkt (Angebote, Suche, Verkaufen, Meine Angebote). Bis dahin
+lässt der Server den Spieler nicht aus dem Camp (Attribut `TutorialLock`: wer über den Rand läuft, steht wieder innen).
+Draußen: Tor, ersten Zombie töten, Leiche durchsuchen, Karte, rote Zone, zurück in eine Safe Zone, Beute verkaufen oder im
+Markt anbieten, Schluss. Jeder Schritt zählt erst, wenn er wirklich getan ist (Attribute vom Server; Kit, Container,
+Kauf, Verkauf und Marktangebot meldet `InventoryService.Notify` als `TutorialFlags`). Anzeigen: Tafel oben (Schritt n/15,
+Phase, Ziel mit Entfernung), Wegpunkt über dem Ziel, Pfeil am Bildschirmrand, Raute auf der Minimap, im Menü ein roter
+Rahmen um das gemeinte Element mit Erklär-Karte (WEITER oder „mach es jetzt“; wartet sie länger als 45 s, kommt trotzdem
+WEITER). Der erreichte Schritt steht im Profil (`TutorialStep`), nach erneutem Beitritt geht es dort weiter. Fertig steht
+im Profil (`TutorialDone`); im Menü unter GUIDE startet ein Knopf es freiwillig noch einmal (dann mit BEENDEN). Spieler,
+die vor dem Tutorial schon da waren (`GuideHinted`) oder es schon abgeschlossen bzw. früher übersprungen haben, bekommen
+es nicht.
 
 **Reisen**: An der Haltestelle im Camp und in jedem Safehouse (Fahrer, Teil `Travel` / `Travel_<Name>`) öffnet **E** das
 Fenster REISEN mit allen Safe Zones samt Entfernung; ein Klick bringt einen dorthin, die Zone wird zum Spawnpunkt
@@ -800,7 +807,7 @@ in Studio wird nichts gesendet, alles läuft über pcall):
   Auftrag, XP, Robux = IAP, Markt/Verkauf = Shop …), Senke mit Grund und Item (`SpendCoins(player, amount, reason, sku)`:
   Stand, Skin, Agent, Versteck, Spielermarkt, Clan, Kiste) und dem Kontostand danach.
 - **Onboarding-Trichter** (`LogOnboardingFunnelStepEvent`): 1 Beigetreten (Profil geladen), 2 Offene Welt betreten,
-  3–8 die Tutorial-Schritte (der Client meldet `ExtAction "Tutorial", "Step", n`), 9 Tutorial fertig oder übersprungen.
+  3–17 die Tutorial-Schritte (der Client meldet `ExtAction "Tutorial", "Step", n, Id`), 18 Tutorial fertig.
   Jeder Schritt zählt je Spieler nur einmal (höchster Schritt im Profil `OnboardingStep`).
 - **Ereignisse** (`LogCustomEvent`): `ModeJoin` (Modus), `PlayerKill` und `Death` in der offenen Welt (Ursache
   Spieler/Zombie, rote Zone oder nicht), `MissionDone` (Auftrag), `ZombieKills` gesammelt je Spieler (alle 60 s und
@@ -1028,7 +1035,7 @@ am Commit:
 | `antizombie` | Anti-Zombie-Spritze: Itemstand und Beute, Benutzen setzt den Schutz (keine anderen Wirkungen), zweite Spritze erst nach Ablauf; bei dem Spieler spawnt kein Zombie (auch nicht über Rufe, Begleiter, direkte Spawns), bei anderen schon, vorhandene bleiben; nach Ablauf und nach dem Tod wieder normal |
 | `redloot` | Beute der roten Zone: Tabelle eine Stufe besser, ein Item mehr, größere Stapel (nie über MaxStack), Zombies dort mit doppelten Münzen und mehr Beute, Lager mehr Items, Lootdrop dort mehr Items, beim Wechsel Lootdrop in die neue Zone (nur mit Spielern draußen, nie zwei) |
 | `extbots` | Bots der offenen Welt: Spawn beim Admin (draußen, vor dem Rand der Safe Zone, sonst rote Zone), Ziele (Spieler draußen ja, in der Safe Zone nein, andere Bots nein, nahe Zombies ja), Zombies jagen und schlagen Bots, Tasche mit Waffe, Munition und Beute (rote Zone Tier 3), Kopfgeld und Rangliste nur für Spieler-Kills, Leiche weg, Obergrenze, Admin-Befehle |
-| `tutorial` | Tutorial der offenen Welt: Karte für neue Spieler (nicht für alte), SKIP merkt sich der Server, Start aus dem GUIDE, alle sechs Schritte warten, bis sie erledigt sind, Wegpunkt zum nächsten Kit-Händler, Tafel aus bei offenem Menü und außerhalb der offenen Welt |
+| `tutorial` | Pflicht-Tutorial: neue Spieler ohne Überspringen (alte nicht), Camp-Sperre bis zum Schritt Leave (Rand = zurück, Teleport bleibt), Flags für echte Aktionen, Fortsetzen nach erneutem Beitritt, Karte nur mit LOS GEHT'S, kein Beenden im GUIDE, Wegpunkt/Randpfeil/Minimap-Raute, Coach-Karten mit rotem Rahmen im Menü, alle 15 Schritte bis "Done", Wiederholung mit BEENDEN |
 | `redzoneboard`, `extinctionui` | Squad-Fenster (J, Einladen, Einladung annehmen, Verlassen), Squad-Liste im HUD, Squad = Team (TeamCheck); Redzone-Rangliste: eine Liste pro Runde, nach 20 Minuten (Wechsel) wieder bei null mit dem neuen Ort, Kill zählt in der Zone des Opfers bzw. des Schützen, Gleichstand, Verlassen; Oberfläche der offenen Welt: Rangliste nur in der roten Zone, rote Zeile unter der Uhr (Ort, Wechsel, Entfernung), Kreis auf der Weltkarte zieht mit, Aufträge unter VERLASSEN, eine Tastenzeile unter der Hotbar (Tastatur und Controller), Weltkarte ohne Namen für Tankstellen und Seen, Hinweis-Blasen über allen Ständen, Lager und Haltestelle (Titel, Symbole der Ware, Waffen als 3D-Modell, von weitem sichtbar, außerhalb der offenen Welt aus) |
 
 Selbst ausführen (Python 3 und der Luau-Interpreter `luau` aus den

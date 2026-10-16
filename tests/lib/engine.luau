@@ -1290,6 +1290,21 @@ ClassSetters.Player = {
 		props.DisplayName = props.DisplayName or value
 	end,
 }
+-- Weltpunkt -> Bildschirmpunkt (Lochkamera mit FieldOfView senkrecht), Z = Tiefe vor der Kamera
+ClassMethods.Camera = {
+	WorldToViewportPoint = function(self, position)
+		local local_ = self.CFrame:PointToObjectSpace(position)
+		local viewport = self.ViewportSize
+		local depth = -local_.Z
+		local f = (viewport.Y / 2) / math.tan(math.rad(self.FieldOfView / 2))
+		local d = math.abs(depth) > 1e-6 and depth or 1e-6
+		local x = viewport.X / 2 + local_.X / d * f
+		local y = viewport.Y / 2 - local_.Y / d * f
+		local onScreen = depth > 0 and x >= 0 and x <= viewport.X and y >= 0 and y <= viewport.Y
+		return Vector3.new(x, y, depth), onScreen
+	end,
+}
+ClassMethods.Camera.WorldToScreenPoint = ClassMethods.Camera.WorldToViewportPoint
 ClassInit.Camera = function(self)
 	local props = rawget(self, "__props")
 	props.CFrame = CFrame.new()

@@ -270,6 +270,13 @@ end
 
 -- ---------- Tutorial-Meldungen nur während eines laufenden Tutorials ----------
 do
+	-- neuer Spieler: Pflicht-Tutorial, Überspringen meldet der Server nicht als erledigt
+	check(alice:GetAttribute("ExtTutorial") == true and alice:GetAttribute("TutorialForced") == true, "neuer Spieler: Pflicht-Tutorial")
+	Remotes.ExtAction.OnServerEvent:Fire(alice, "Tutorial", "Skip")
+	check(alice:GetAttribute("ExtTutorial") == true and ProgressService.Get(alice).TutorialDone ~= true,
+		"Pflicht-Tutorial: Überspringen geht nicht")
+	alice:SetAttribute("TutorialForced", nil) -- ab hier wie die freiwillige Wiederholung über GUIDE
+	alice:SetAttribute("TutorialLock", nil)
 	local wasRunning = alice:GetAttribute("ExtTutorial")
 	alice:SetAttribute("ExtTutorial", nil)
 	local profile = ProgressService.Get(alice)

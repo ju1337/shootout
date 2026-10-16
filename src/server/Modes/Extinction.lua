@@ -29,6 +29,7 @@ local WorldLayout = require(Shared.WorldLayout)
 local Inventory = require(Shared.Inventory)
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local ExtLevelConfig = require(Shared.ExtLevelConfig)
+local TutorialConfig = require(Shared.TutorialConfig)
 local ServerShared = ServerStorage:WaitForChild("ServerShared")
 local ProgressService = require(ServerShared.ProgressService)
 local InventoryService = require(ServerShared.InventoryService)
@@ -57,7 +58,6 @@ local HideoutWorkshop = require(ServerShared.HideoutWorkshop)
 local Telemetry = require(ServerShared.Telemetry)
 local Badges = require(ServerShared.Badges)
 
-local TUTORIAL_DONE_STEP = 9 -- Onboarding-Trichter: 1 Beitritt, 2 offene Welt, 3-8 Tutorial-Schritte, 9 fertig
 local RedPointsService = require(ServerShared.RedPointsService)
 local KitService = require(ServerShared.KitService)
 local ExtLevelService = require(ServerShared.ExtLevelService)
@@ -237,7 +237,30 @@ local function updateZone(player, info)
 		end
 		return
 	end
+	-- Pflicht-Tutorial, Teil im Camp (TutorialLock): nicht hinaus. Wer zu Fuß oder mit dem Fahrrad über den Rand kommt,
+	-- steht wieder knapp innen; weit weg (Teleport: Katakomben, Reise) bleibt er, wo er ist.
+	if not safe and info.Inside and info.Zone and player:GetAttribute("TutorialLock") == true then
+		local zone = info.Zone
+		local flat = Vector3.new(root.Position.X - zone.Center.X, 0, root.Position.Z - zone.Center.Z)
+		if flat.Magnitude <= zone.Radius + 40 then
+			local direction = flat.Magnitude > 0.1 and flat.Unit or Vector3.new(1, 0, 0)
+			local back = Vector3.new(zone.Center.X, root.Position.Y, zone.Center.Z) + direction * (zone.Radius - 6)
+			local seat = character:FindFirstChildOfClass("Humanoid").SeatPart
+			local mover = seat and seat:FindFirstAncestorOfClass("Model") or character
+			mover:PivotTo(CFrame.new(back - root.Position) * mover:GetPivot())
+			root.AssemblyLinearVelocity = Vector3.zero
+			MovementGuard.Teleported(character)
+			if not info.TutorialNotice or os.clock() - info.TutorialNotice > 3 then
+				info.TutorialNotice = os.clock()
+				InventoryService.Status(player, "Schließ erst das Tutorial im Camp ab – dann geht es hinaus.")
+			end
+			return
+		end
+	end
 	local inside = safe ~= nil
+	if safe then
+		info.Zone = safe
+	end
 	-- Spawnpunkt: die zuletzt betretene Safe Zone (Camp oder Safehouse), still ohne Banner
 	if safe and info.Home ~= safe.Key then
 		info.Home = safe.Key
@@ -590,53 +613,79 @@ function Extinction.Init(modeManager)
 	InventoryService.Handlers.Travel = function(player, key)
 		Extinction.Travel(player, key)
 	end
-	-- Tutorial (ExtTutorial): "Step", n, Id = Schritt n erreicht (nur Analyse: Onboarding-Trichter 3 ff.);
-	-- "Done"/"Skip" = fertig oder übersprungen, danach nie wieder von selbst (Profil TutorialDone).
+	-- Tutorial (ExtTutorial, Schritte in TutorialConfig): "Step", n, Id = Schritt n erreicht (Onboarding-Trichter,
+	-- Profil TutorialStep zum Weitermachen nach dem nächsten Beitritt, TutorialLock: im Camp-Teil nicht hinaus);
+	-- "Done" = fertig, "Skip" = abgebrochen (nur bei der freiwilligen Wiederholung über GUIDE, das Pflicht-Tutorial kann
+	-- man nicht überspringen). Danach nie wieder von selbst (Profil TutorialDone).
 	-- Attribut TutorialEquip: Tutorial steht beim Schritt "Equip"/"Leave" (Waffe ziehen geht in der Safe Zone ohnehin;
 	-- schießen dort nie: CanFight aus, WeaponService und Damage sperren die Safe Zone).
+	local function setStep(player, stepId)
+		local index = TutorialConfig.Index(stepId)
+		if not index then
+			return
+		end
+		Telemetry.Onboarding(player, TutorialConfig.FunnelStep(index), "Tutorial:" .. stepId)
+		player:SetAttribute("TutorialStep", stepId)
+		player:SetAttribute("TutorialLock", player:GetAttribute("TutorialForced") == true and TutorialConfig.Locked(stepId) or nil)
+		if stepId == "Equip" or stepId == "Leave" then
+			player:SetAttribute("TutorialEquip", true)
+		end
+		local profile = ProgressService.Get(player)
+		if profile and player:GetAttribute("TutorialForced") == true then
+			profile.TutorialStep = stepId
+		end
+	end
 	InventoryService.Handlers.Tutorial = function(player, result, index, stepId)
-		if result == "Step" then
-			if type(index) == "number" and index >= 1 and index <= 20 then
-				Telemetry.Onboarding(player, 2 + math.floor(index), "Tutorial:" .. tostring(stepId))
-			end
+		if result == "Step" or result == "Resume" then
 			-- nur während eines laufenden Tutorials (sonst könnte jeder Client die Waffe in der Safe Zone freischalten)
-			if player:GetAttribute("ExtTutorial") == true and (stepId == "Equip" or stepId == "Leave") then
-				player:SetAttribute("TutorialEquip", true)
+			if player:GetAttribute("ExtTutorial") == true and type(stepId) == "string" then
+				setStep(player, stepId)
 			end
 			return
 		end
 		if result == "Start" then
 			-- Tutorial noch einmal über GUIDE: wie beim ersten Mal laufen lassen (Waffe in der Safe Zone ziehen usw.)
-			if members[player] then
+			if members[player] and player:GetAttribute("ExtTutorial") ~= true then
 				player:SetAttribute("ExtTutorial", true)
-			end
-			return
-		end
-		if result == "Resume" then
-			-- zurück in der Safe Zone oder nach dem Markt mitten im Tutorial: Waffe ziehen wieder erlauben
-			if player:GetAttribute("ExtTutorial") == true and (stepId == "Equip" or stepId == "Leave") then
-				player:SetAttribute("TutorialEquip", true)
+				player:SetAttribute("TutorialFlags", "{}")
 			end
 			return
 		end
 		if player:GetAttribute("ExtTutorial") ~= true then
 			return -- kein laufendes Tutorial: nichts abzuschließen (sonst holt sich jeder Client das Tutorial-Badge)
 		end
-		player:SetAttribute("TutorialEquip", nil)
+		if result == "Skip" and player:GetAttribute("TutorialForced") == true then
+			return -- Pflicht: nicht überspringbar
+		end
 		local profile = ProgressService.Get(player)
 		local first = profile ~= nil and profile.TutorialDone ~= true
 		if profile then
 			profile.TutorialDone = true
+			profile.TutorialStep = nil
 		end
-		player:SetAttribute("ExtTutorial", nil)
+		for _, attribute in { "ExtTutorial", "TutorialEquip", "TutorialForced", "TutorialLock", "TutorialStep", "TutorialFlags" } do
+			player:SetAttribute(attribute, nil)
+		end
 		if not first then
 			return -- Wiederholung über GUIDE: nicht noch einmal zählen
 		end
-		Telemetry.Onboarding(player, TUTORIAL_DONE_STEP, result == "Skip" and "TutorialSkipped" or "TutorialDone")
+		Telemetry.Onboarding(player, TutorialConfig.FunnelDone, result == "Skip" and "TutorialSkipped" or "TutorialDone")
 		if result ~= "Skip" then
 			Badges.Trigger(player, "Tutorial")
 		end
 	end
+	-- Was der Spieler wirklich getan hat (Kit geholt, gekauft, verkauft, Container, Lager, Markt): als Flag an den Client
+	table.insert(InventoryService.OnEvent, function(player, event)
+		if player:GetAttribute("ExtTutorial") ~= true or not TutorialConfig.Flags[event] then
+			return
+		end
+		local ok, flags = pcall(HttpService.JSONDecode, HttpService, player:GetAttribute("TutorialFlags") or "{}")
+		flags = ok and type(flags) == "table" and flags or {}
+		if not flags[event] then
+			flags[event] = true
+			player:SetAttribute("TutorialFlags", HttpService:JSONEncode(flags))
+		end
+	end)
 
 	-- Grundriss für die Weltkarte (Clients haben mit Streaming nur die Teile in ihrer Nähe)
 	WorldLayout.Publish(map)
@@ -1123,7 +1172,14 @@ function Extinction.AddPlayer(player)
 	-- Neue Spieler: geführtes Tutorial (ExtTutorial auf dem Client), bis es fertig oder übersprungen ist (Profil
 	-- TutorialDone). Wer die offene Welt schon kannte (GuideHinted aus der Zeit vor dem Tutorial), bekommt es nicht.
 	profile = ProgressService.Get(player)
+	-- Pflicht (TutorialForced): kein Überspringen, im Camp-Teil kein Hinaus; nach erneutem Beitritt geht es beim zuletzt
+	-- erreichten Schritt weiter (TutorialStep).
 	if profile and not profile.TutorialDone and not profile.GuideHinted then
+		player:SetAttribute("TutorialForced", true)
+		player:SetAttribute("TutorialFlags", "{}")
+		local stepId = TutorialConfig.Index(profile.TutorialStep) and profile.TutorialStep or TutorialConfig.Steps[1].Id
+		player:SetAttribute("TutorialStep", stepId)
+		player:SetAttribute("TutorialLock", TutorialConfig.Locked(stepId) or nil)
 		player:SetAttribute("ExtTutorial", true)
 	end
 end
@@ -1145,7 +1201,8 @@ function Extinction.RemovePlayer(player)
 	end
 	deathBags[player] = nil
 	for _, attribute in { "InSafeZone", "PvP", "PvPAt", "Redzone", "MapId", "MapName", "MapCenter", "ExtHome", "SafeZoneTitle",
-		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "CombatUntil", "ProtectedUntil", "ExtPos", "ExtHealth" } do
+		"ExtDeathBag", "ExtTutorial", "TutorialEquip", "TutorialForced", "TutorialLock", "TutorialStep",
+		"TutorialFlags", "CombatUntil", "ProtectedUntil", "ExtPos", "ExtHealth" } do
 		player:SetAttribute(attribute, nil)
 	end
 end

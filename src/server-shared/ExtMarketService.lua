@@ -171,6 +171,7 @@ function ExtMarketService.List(player, slot, count, price)
 	InventoryService.Changed(player)
 	ExtMarketService.Publish()
 	status(player, "Angeboten: " .. itemText(entry) .. " für " .. price .. " Münzen", true)
+	InventoryService.Notify(player, "MarketList")
 	return true
 end
 
@@ -224,6 +225,7 @@ function ExtMarketService.Buy(player, id, price)
 	Remotes.ExtUpdate:FireClient(seller, "Sold", { Id = entry.Item, Count = entry.Count, Earned = earned, Buyer = player.Name })
 	task.spawn(ProgressService.SaveNow, player)
 	task.spawn(ProgressService.SaveNow, seller)
+	InventoryService.Notify(player, "MarketBuy")
 	return true
 end
 

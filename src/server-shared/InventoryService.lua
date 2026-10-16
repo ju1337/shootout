@@ -54,6 +54,18 @@ InventoryService.Handlers = {}
 InventoryService.UseVehicle = nil
 InventoryService.UseThrowable = nil -- function(player, slot, item, direction) (ThrowableService)
 InventoryService.DropItems = nil
+-- OnEvent: Liste von function(player, event) – Aktionen, die wirklich geklappt haben ("Kit", "Safe", "Stash", "Buy",
+-- "Sell", "MarketList", "MarketBuy"); das Pflicht-Tutorial (Modes/Extinction) hakt damit seine Schritte ab.
+InventoryService.OnEvent = {}
+
+function InventoryService.Notify(player, event)
+	for _, callback in InventoryService.OnEvent do
+		local ok, err = pcall(callback, player, event)
+		if not ok then
+			warn("InventoryService.OnEvent: " .. tostring(err))
+		end
+	end
+end
 
 local function status(player, text, ok)
 	Remotes.ExtUpdate:FireClient(player, "Status", text, ok == true)
@@ -703,6 +715,9 @@ function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	end
 	checkEquipped(player, state)
 	changed(player, state)
+	if from ~= to and (to == state.Safe or to == state.Stash) then
+		InventoryService.Notify(player, to == state.Safe and "Safe" or "Stash")
+	end
 	return true
 end
 
@@ -753,6 +768,7 @@ function InventoryService.Buy(player, standKey, itemId, qty)
 	Sfx.ToPlayers({ player }, "Register")
 	status(player, "Gekauft: " .. (count > 1 and (count .. "× ") or "") .. config.Name .. " für " .. price
 		.. (redPoints and " RZ" or " Münzen"), true)
+	InventoryService.Notify(player, "Buy")
 	return true
 end
 
@@ -831,6 +847,7 @@ function InventoryService.Sell(player, slot, count, expectedId)
 	Sfx.ToPlayers({ player }, "Coins")
 	status(player, "Verkauft: " .. (count > 1 and (count .. "× ") or "") .. name .. " für " .. price .. " Münzen"
 		.. (free > 0 and (" (" .. free .. " aus dem Kit bringen nichts)") or ""), true)
+	InventoryService.Notify(player, "Sell")
 	return true
 end
 

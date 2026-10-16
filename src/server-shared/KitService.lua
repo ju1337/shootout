@@ -63,6 +63,7 @@ function KitService.Claim(player, kitId)
 		profile.KitCredit[id] = math.min((tonumber(profile.KitCredit[id]) or 0) + count, count * KitConfig.CreditCap)
 	end
 	KitService.Publish(player)
+	InventoryService.Notify(player, "Kit")
 	local stashed, rest = false, {}
 	for _, entry in kit.Items do
 		local id, count = entry[1], entry[2]

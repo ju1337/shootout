@@ -2611,18 +2611,24 @@ function Guide.Open()
 			BackgroundColor3 = Inv.MENU_RED, BorderSizePixel = 0, Visible = false, ZIndex = 8 }, button)
 		buttons[index] = button
 	end
-	-- unter den Themen, mit etwas Abstand: Tutorial starten oder (läuft es) überspringen
+	-- unter den Themen, mit etwas Abstand: Tutorial starten oder (läuft die freiwillige Wiederholung) beenden;
+	-- das Pflicht-Tutorial neuer Spieler kann man nicht beenden
 	make("Frame", { Name = "TutorialGap", Size = UDim2.new(1, 0, 0, 8), BackgroundTransparency = 1, LayoutOrder = #topics + 1 }, list)
 	local running = Inv.Tutorial.IsActive()
-	Inv.flatButton({ Name = "Tutorial", Primary = not running, Size = UDim2.new(1, 0, 0, 44),
-		Text = running and "TUTORIAL ÜBERSPRINGEN" or "TUTORIAL STARTEN", LayoutOrder = #topics + 2 }, list, function()
-		closeWindow()
-		if running then
-			Inv.Tutorial.Stop()
-		else
-			Inv.Tutorial.Start(false)
-		end
-	end)
+	if not running or Inv.Tutorial.CanStop() then
+		Inv.flatButton({ Name = "Tutorial", Primary = not running, Size = UDim2.new(1, 0, 0, 44),
+			Text = running and "TUTORIAL BEENDEN" or "TUTORIAL STARTEN", LayoutOrder = #topics + 2 }, list, function()
+			closeWindow()
+			if running then
+				Inv.Tutorial.Stop()
+			else
+				Inv.Tutorial.Start(false)
+			end
+		end)
+	else
+		label({ Name = "TutorialForced", Size = UDim2.new(1, 0, 0, 44), Text = "TUTORIAL LÄUFT  ·  ERST ABSCHLIESSEN", TextSize = 13,
+			Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center, LayoutOrder = #topics + 2 }, list)
+	end
 	win.Refresh()
 end
 
@@ -4716,7 +4722,7 @@ function ExtinctionClient.Init()
 	task.spawn(Inv.groundGuard)
 	buildHud()
 	Inv.Tutorial.Init({ WindowKind = function()
-		return window and window.Kind or nil
+		return window and window.Kind or nil, window and window.Stand or nil
 	end })
 	windowGui = make("ScreenGui", { Name = "ExtinctionWindow", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Enabled = false }, player:WaitForChild("PlayerGui"))
