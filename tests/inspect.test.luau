@@ -20,7 +20,7 @@ local function near(a, b, eps)
 end
 
 game.JobId = "server-1"
-SIM.DataStore("PlayerData_v1")
+SIM.DataStore("PlayerData_v2")
 local GunModels = require("GunModels")
 local WeaponConfig = require("WeaponConfig")
 local WeaponAnimations = require("WeaponAnimations")

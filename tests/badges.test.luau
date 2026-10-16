@@ -10,7 +10,7 @@ local function check(cond, msg)
 	end
 end
 
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local BadgeConfig = require("BadgeConfig")
 local Badges = require("Badges")
 local InviteService = require("InviteService")

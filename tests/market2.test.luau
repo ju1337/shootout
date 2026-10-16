@@ -13,7 +13,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local HttpService = game:GetService("HttpService")
 local RapConfig = require("RapConfig")
 local Remotes = require("Remotes")
@@ -43,7 +43,7 @@ for id = 1, 3 do
 	spot.CFrame = CFrame.new(-1525, 0.9, -1530 + id * 14)
 end
 -- Alter Stand im DataStore: Preisverlauf und lebender RAP eines entfernten Agenten-Skins
-local historyData = SIM.DataStore("MarketHistory_v1").Data
+local historyData = SIM.DataStore("MarketHistory_v2").Data
 historyData.sales = { A_Ghost_Nebel = { { Time = os.time(), Price = 7000 } }, W_Carbon = { { Time = os.time(), Price = 60 } } }
 historyData.rap = { A_Ghost_Nebel = 8000, W_Carbon = 50 }
 local MarketService = require("MarketService")
@@ -264,7 +264,7 @@ check(RapConfig.Value("W_Lava") == math.floor(expectedLive + 0.5), "RapConfig.Va
 local liveAttr = HttpService:JSONDecode(game:GetService("ReplicatedStorage"):GetAttribute("RapLive"))
 check(math.abs(liveAttr.W_Lava - expectedLive) < 1e-6, "an die Clients repliziert (Attribut RapLive)")
 check(RapConfig.SellPrice("W_Lava") == math.floor(RapConfig.Values.W_Lava * RapConfig.SellRate), "Rückkauf ans System bleibt am Basiswert")
-local historyStore = SIM.DataStore("MarketHistory_v1")
+local historyStore = SIM.DataStore("MarketHistory_v2")
 local lavaKey = "shard_" .. MarketService.ShardOf("W_Lava")
 check(historyData[lavaKey] == nil, "Verkäufe werden gesammelt, nicht sofort geschrieben")
 local calls = historyStore.Calls

@@ -25,6 +25,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local QuestConfig = require(Shared.QuestConfig)
 local RetentionConfig = require(Shared.RetentionConfig)
+local SaveVersion = require(Shared.SaveVersion)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local ClanService = {}
@@ -34,7 +35,7 @@ ClanService.MaxMembers = 20
 
 local store = nil
 do
-	local ok, result = pcall(DataStoreService.GetDataStore, DataStoreService, "Clans_v1")
+	local ok, result = pcall(DataStoreService.GetDataStore, DataStoreService, SaveVersion.Name("Clans"))
 	if ok then
 		store = result
 	end
@@ -42,7 +43,7 @@ end
 local memory = {} -- Ersatz ohne DataStore und Zwischenspeicher: [Tag] = Daten
 local rankStore = nil -- Clan-Bestenliste
 do
-	local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService, "LB_Clans_v1")
+	local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService, SaveVersion.Name("LB_Clans"))
 	if ok then
 		rankStore = result
 	end

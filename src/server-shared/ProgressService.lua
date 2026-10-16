@@ -28,6 +28,7 @@ local RewardConfig = require(Shared.RewardConfig)
 local TitleConfig = require(Shared.TitleConfig)
 local LoginConfig = require(Shared.LoginConfig)
 local RobuxConfig = require(Shared.RobuxConfig)
+local SaveVersion = require(Shared.SaveVersion)
 local AttachmentConfig = require(Shared.AttachmentConfig)
 local WeaponConfig = require(Shared.WeaponConfig)
 local RapConfig = require(Shared.RapConfig)
@@ -1405,7 +1406,7 @@ function ProgressService.Init()
 		end
 	end)
 	local ok, result = pcall(function()
-		return DataStoreService:GetDataStore("PlayerData_v1")
+		return DataStoreService:GetDataStore(SaveVersion.Name("PlayerData"))
 	end)
 	if ok then
 		store = SessionStore.new(result, {

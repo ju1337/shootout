@@ -39,6 +39,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared.Remotes)
 local Cosmetics = require(Shared.Cosmetics)
 local RapConfig = require(Shared.RapConfig)
+local SaveVersion = require(Shared.SaveVersion)
 local Modes = require(Shared.Modes)
 local ProgressService = require(script.Parent.ProgressService)
 local EconomyService = require(script.Parent.EconomyService)
@@ -65,7 +66,7 @@ local format = EconomyService.Format
 
 local historyStore = nil
 do
-	local ok, result = pcall(DataStoreService.GetDataStore, DataStoreService, "MarketHistory_v1")
+	local ok, result = pcall(DataStoreService.GetDataStore, DataStoreService, SaveVersion.Name("MarketHistory"))
 	if ok then
 		historyStore = result
 	end

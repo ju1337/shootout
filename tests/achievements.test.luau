@@ -12,7 +12,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local ProgressService = require("ProgressService")
 local AchievementService = require("AchievementService")
 local AchievementConfig = require("AchievementConfig")

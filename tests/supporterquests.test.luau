@@ -14,7 +14,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local Modes = require("Modes")
 Modes.ArcadeEnabled = true -- erst mit Arcade (Arcade-Aufträge), unten ohne
 local QuestConfig = require("QuestConfig")

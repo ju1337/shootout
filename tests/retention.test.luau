@@ -14,7 +14,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PassConfig = require("PassConfig")
@@ -198,7 +198,7 @@ ProgressService.AddStat(carl, "Zombies", 500)    -- nicht im Clan
 local aliceCoins, bobCoins = ProgressService.Get(alice).Coins, ProgressService.Get(bob).Coins
 ClanService.Flush()
 step(1)
-local clan = SIM.DataStore("Clans_v1").Data.PHX
+local clan = SIM.DataStore("Clans_v2").Data.PHX
 check(clan.Points == 2550 and clan.Week.Points == 2550 and clan.Week.Id == week, "Clan-Punkte gespeichert: " .. tostring(clan.Points))
 check(clan.Week.By["101"] == 2500 and clan.Week.By["102"] == 50 and clan.Week.By["103"] == nil, "Beitrag je Mitglied")
 local data = HttpService:JSONDecode(alice:GetAttribute("ClanData"))
@@ -218,11 +218,11 @@ local clans = ClanService.RefreshBoard()
 check(#clans == 1 and clans[1].Tag == "PHX" and clans[1].Value == 2610, "Clan-Bestenliste: " .. HttpService:JSONEncode(clans))
 
 -- Neue Woche: Wochenpunkte fangen bei 0 an, die alte Woche bleibt als LastWeek
-local data2 = SIM.DataStore("Clans_v1").Data.PHX
+local data2 = SIM.DataStore("Clans_v2").Data.PHX
 data2.Week.Id = week - 1
 ProgressService.AddStat(alice, "Zombies", 10)
 ClanService.Flush()
-clan = SIM.DataStore("Clans_v1").Data.PHX
+clan = SIM.DataStore("Clans_v2").Data.PHX
 check(clan.Week.Id == week and clan.Week.Points == 10 and clan.LastWeek.Points == 2610 and clan.Points == 2620,
 	"Wochenwechsel: neue Woche bei 0, alte als LastWeek")
 

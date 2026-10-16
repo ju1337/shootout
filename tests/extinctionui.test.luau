@@ -11,7 +11,7 @@ local function check(cond, msg)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local Remotes = require("Remotes")
 local ProgressService = require("ProgressService")
 local WeaponService = require("WeaponService")

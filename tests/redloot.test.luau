@@ -15,7 +15,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local ExtinctionConfig = require("ExtinctionConfig")
 ExtinctionConfig.SpawnProtection = 0 -- Spawnschutz prüft tests/extinction; hier wird gleich nach dem Verlassen geschossen
 local L = ExtinctionConfig.Redzone.Loot

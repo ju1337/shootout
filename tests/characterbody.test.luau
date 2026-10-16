@@ -15,7 +15,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-SIM.DataStore("PlayerData_v1")
+SIM.DataStore("PlayerData_v2")
 local AgentConfig = require("AgentConfig")
 local Cosmetics = require("Cosmetics")
 local CharacterBody = require("CharacterBody")

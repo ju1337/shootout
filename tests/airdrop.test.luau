@@ -13,7 +13,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local ExtinctionConfig = require("ExtinctionConfig")
 ExtinctionConfig.Redzone.CityDistricts = {} -- nur die Test-Orte als Ziele
 local A = ExtinctionConfig.Airdrop

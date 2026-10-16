@@ -14,7 +14,7 @@ local function step(seconds)
 end
 
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local RapConfig = require("RapConfig")

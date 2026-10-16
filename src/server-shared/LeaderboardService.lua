@@ -20,6 +20,7 @@ local LevelConfig = require(Shared.LevelConfig)
 local Modes = require(Shared.Modes)
 local QuestConfig = require(Shared.QuestConfig)
 local RetentionConfig = require(Shared.RetentionConfig)
+local SaveVersion = require(Shared.SaveVersion)
 local ProgressService = require(ServerStorage:WaitForChild("ServerShared").ProgressService)
 
 local LeaderboardService = {}
@@ -200,7 +201,7 @@ function LeaderboardService.Init()
 			continue -- storeOf legt ihn je Woche an
 		end
 		local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService,
-			board == "Elo" and "RankedElo_v1" or ("LB_" .. board .. "_v1"))
+			SaveVersion.Name(board == "Elo" and "RankedElo" or ("LB_" .. board)))
 		if ok then
 			stores[board] = result
 		end

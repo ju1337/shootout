@@ -520,7 +520,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
   18.000), Battle-Pass-Goldrausch 35.000, Battle-Pass-Saison-Elite 45.000 (Stufe 20) und die Robux-Skins Royal 90.000 / Hologramm 150.000.
   RAP heißt *Recent Average Price*: Der Wert startet beim Basiswert (`RapConfig.Values`) und rückt nach **jedem Verkauf im
   Markt** ein Zehntel Richtung Verkaufspreis (`RAP + (Preis - RAP) / 10`, begrenzt auf 0,25- bis 8-fach des Basiswerts;
-  `RapConfig.NextLive`). Der lebende Wert liegt im DataStore `MarketHistory_v1` (Schlüssel `rap`, gilt für alle Server)
+  `RapConfig.NextLive`). Der lebende Wert liegt im DataStore `MarketHistory_v2` (Versionsnummer aus `SaveVersion`) (Schlüssel `rap`, gilt für alle Server)
   und kommt als Attribut `RapLive` an ReplicatedStorage zu allen Clients; alle Anzeigen (Shop, Markt, Suche, Tausch, Schild
   über dem Kopf) und die Schnäppchen-Sortierung benutzen ihn. Man kann einen Skin
   - im **SHOP** unter **VERKAUFEN** ans System zurückverkaufen: sofort 70 % des **Basiswerts** (`RapConfig.SellRate`, mindestens 1 RAP; der Rückkauf folgt dem lebenden RAP nicht, damit er sich nicht manipulieren lässt),
@@ -549,7 +549,7 @@ Werte in `src/shared/ExtinctionConfig.lua`.
     durchsuchen (Skin, Seltenheit, Besitzer, Stand), filtern nach Seltenheit, nur Bezahlbares oder
     Merkliste, sortieren nach Preis, **Schnäppchen** (am weitesten unter dem RAP-Wert) oder Seltenheit. **HIN** zeigt
     einen Pfeil mit Entfernung über dem Stand.
-  - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v1`,
+  - **Preisverlauf**: Durchschnittspreis der Verkäufe der letzten 7 Tage je Skin (DataStore `MarketHistory_v2` (Versionsnummer aus `SaveVersion`),
     gilt für alle Server) steht in Suche, Stand-Fenstern und MEIN STAND. Damit auch viele Server nicht in dieselben
     Einträge drängeln, sind die Skins nach Namen auf 8 Einträge `shard_<n>` verteilt (Verkäufe und lebender RAP
     zusammen); jeder Server sammelt seine Verkäufe und schreibt höchstens einmal pro Minute je Eintrag (mit eigenem

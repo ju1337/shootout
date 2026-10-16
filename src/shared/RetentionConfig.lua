@@ -13,6 +13,8 @@
 --                 Stufen (Stages) mit Münzen für jedes Mitglied mit eigenem Beitrag, Clan-Bestenliste (Leaderboard_Clans).
 -- Wochen beginnen montags 0 Uhr UTC (QuestConfig.Week).
 
+local SaveVersion = require(script.Parent.SaveVersion)
+
 local RetentionConfig = {}
 
 RetentionConfig.Comeback = {
@@ -62,7 +64,7 @@ end
 
 -- OrderedDataStore der Tafel einer Woche (Schlüssel UserId, Wert beste Welle)
 function RetentionConfig.DungeonStoreName(week)
-	return "LB_DungeonWeek_" .. week .. "_v1"
+	return SaveVersion.Name("LB_DungeonWeek_" .. week)
 end
 
 -- Punkte, die Stufe level insgesamt braucht (Stufe 1 = 0)

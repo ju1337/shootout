@@ -9,7 +9,7 @@ end
 -- DataStore mit Verzögerung (0,3 s hin, 0,3 s zurück); store.FailNext = so viele Anfragen schlagen fehl
 SIM.DataStoreLatency = 0.6
 game.JobId = "server-1"
-local store = SIM.DataStore("PlayerData_v1")
+local store = SIM.DataStore("PlayerData_v2")
 local ProgressService = require("ProgressService")
 local RobuxService = require("RobuxService")
 local RobuxConfig = require("RobuxConfig")
