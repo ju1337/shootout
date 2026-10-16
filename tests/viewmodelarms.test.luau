@@ -1,5 +1,5 @@
--- Waffe vor der Kamera mit den echten Armen des Roblox-Avatars statt Ärmel und Handschuhe; der Waffen-Skin bleibt auf
--- der Waffe
+-- Waffe vor der Kamera mit den echten Armen des Roblox-Avatars (Ober- und Unterarm samt Shirt) und gebauten Händen mit
+-- Fingern in der Hautfarbe der echten Hand; der Waffen-Skin bleibt auf der Waffe
 local failures = 0
 local function check(cond, msg)
 	if not cond then
@@ -94,7 +94,10 @@ end
 
 -- ---------- Avatar (R15) ----------
 local uniform = Color3.fromRGB(70, 120, 200)
+local skinTone = Color3.fromRGB(204, 142, 105)
 local body = standardBody(CFrame.new(30, 0, 12) * CFrame.Angles(0, 1.3, 0), uniform)
+body.RightHand.Color = skinTone
+body.LeftHand.Color = skinTone
 body.Parent = workspace
 local arms = AvatarArms.ArmPieces(body)
 check(arms ~= nil and arms.Right and arms.Left and #arms.Right.Pieces == 3 and #arms.Left.Pieces == 3,
@@ -107,22 +110,41 @@ for _, weaponName in { "Rifle", "Pistol" } do
 	local vm = ViewModel.new(weaponName, nil, Color3.new(0, 0, 0), nil, AvatarArms.ArmPieces(body))
 	run(vm, 0)
 	local info = GunModels.Info[weaponName]
-	check(vm.Model:FindFirstChild("LeftGlove") == nil and vm.Model:FindFirstChild("RightFore") == nil,
-		weaponName .. ": keine Ärmel und Handschuhe mehr")
+	check(vm.Model:FindFirstChild("RightFore") == nil and vm.Model:FindFirstChild("LeftUpper") == nil,
+		weaponName .. ": keine gebauten Ärmel")
 	local list = armParts(vm)
-	local count, hands = 0, {}
+	local count = 0
 	for name, part in list do
 		count += 1
+		check(not string.find(name, "Hand"), weaponName .. ": " .. name .. ": echte Roblox-Hand ersetzt")
 		check(part.Color == uniform and part.Anchored and not part.CanCollide and not part.CanQuery
 			and part.CastShadow == false and part.LocalTransparencyModifier == 0, weaponName .. ": " .. name .. " wie am Körper, ohne Kollision")
 		check(part:FindFirstChildWhichIsA("JointInstance") == nil and part:FindFirstChildWhichIsA("WeldConstraint") == nil,
 			weaponName .. ": " .. name .. " ohne Gelenke")
 		check(part.Size.X > 0.05 and part.Size.Y > 0.05 and part.Size.Z > 0.05, weaponName .. ": " .. name .. " sichtbar groß")
-		if string.find(name, "Hand") then
-			hands[string.sub(name, 1, 4)] = part
+	end
+	check(count == 4, weaponName .. ": Ober- und Unterarme vor der Kamera (" .. count .. ")")
+	-- gebaute Hände mit Fingern und Daumen in der Hautfarbe
+	local hands = { Righ = vm.Model:FindFirstChild("RightGlove"), Left = vm.Model:FindFirstChild("LeftGlove") }
+	for _, side in { "Right", "Left" } do
+		for _, piece in { "Glove", "Fingers", "Tips", "Thumb", "Wrist" } do
+			local part = vm.Model:FindFirstChild(side .. piece)
+			check(part and part.Color == skinTone and part.Material == Enum.Material.SmoothPlastic and not part.CanCollide,
+				weaponName .. ": " .. side .. piece .. " in Hautfarbe")
 		end
 	end
-	check(count == 6, weaponName .. ": sechs Armteile vor der Kamera (" .. count .. ")")
+	check(vm.Model:FindFirstChild("RightIndex") ~= nil, weaponName .. ": Zeigefinger am Abzug")
+	-- Unterarm endet an der gebauten Hand
+	local wrist = hands.Righ and hands.Righ.CFrame * (vm.Arms.Right.WristLocal * ViewModel.Scale())
+	local fore
+	for name, part in list do
+		if string.match(name, "^RightLowerArm") then
+			fore = part
+		end
+	end
+	local wristPart = vm.Model:FindFirstChild("RightWrist")
+	check(fore and wristPart and (wristPart.Position - wrist).Magnitude < (fore.Position - wrist).Magnitude
+		and (wristPart.Position - hands.Righ.Position).Magnitude < 0.2, weaponName .. ": Handgelenk zwischen Unterarm und Hand")
 	-- Hände an der Waffe: rechts am Griff, links am Handschutz
 	local s = ViewModel.Scale()
 	local grip = vm.GunWorld.Position

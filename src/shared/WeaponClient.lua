@@ -163,7 +163,7 @@ local function updateViewModel()
 		if bodyColors then
 			hand = bodyColors.RightArmColor3
 		end
-		-- die echten Arme des Avatars (so wie am Körper, mit seinem Shirt), sonst gebaute Ärmel und Hände
+		-- die echten Arme des Avatars (so wie am Körper, mit seinem Shirt) mit gebauten Händen in seiner Hautfarbe, sonst gebaute Ärmel
 		local ok, pieces = pcall(AvatarArms.ArmPieces, player.Character)
 		local arms = ok and pieces or nil
 		local shirt = player.Character and player.Character:FindFirstChildOfClass("Shirt") or nil

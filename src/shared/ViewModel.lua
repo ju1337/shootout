@@ -17,7 +17,8 @@ local PoseMath = require(Shared.PoseMath)
 local ViewModel = {}
 ViewModel.__index = ViewModel
 
--- Arme und Hände vor der Kamera: die echten Arme und Hände des eigenen Avatars (false = nur die Waffe)
+-- Arme und Hände vor der Kamera: die echten Arme des eigenen Avatars (mit Shirt) und gebaute Hände mit Fingern in seiner
+-- Hautfarbe (false = nur die Waffe)
 ViewModel.ShowArms = true
 
 local SCALE = 0.5
@@ -114,6 +115,17 @@ local function armPart(name, color, material, parent, shape)
 	return part
 end
 
+-- Gebaute Hand mit Fingern und Daumen (HAND_SHAPES) in einer Farbe: { { Part, Offset } }
+local function buildHand(side, color, parent)
+	local hand = {}
+	for _, shape in HAND_SHAPES[side] do
+		local part = armPart(side .. shape[1], color, Enum.Material.SmoothPlastic, parent)
+		part.Size = shape[2] * SCALE
+		table.insert(hand, { Part = part, Offset = scaled(shape[3]) })
+	end
+	return hand
+end
+
 -- Echte Arme (AvatarArms.ArmPieces) einbauen: jedes Teil hängt an seinem Knochen (Oberarm, Unterarm, Hand) und
 -- wird mit ihm gestreckt (Länge wie UPPER_ARM/FOREARM, Dicke ARM_THICKNESS)
 -- width = gewünschte Dicke des Unterarms (Kamera-Raum, Studs) statt Körper-Dicke mal ARM_THICKNESS (eigener Roblox-Avatar:
@@ -183,7 +195,7 @@ end
 
 -- weaponName, skin (Waffen-Skin oder nil), sleeveColor = Farbe der Ärmel (Uniform des Agenten),
 -- arms = echte Arme des Charakters (AvatarArms.ArmPieces) oder nil (dann Ärmel und Handschuhe),
--- handColor = Farbe der Hände ohne echte Arme (Hautfarbe des Avatars), sonst dunkle Handschuhe,
+-- handColor = Farbe der gebauten Hände, wenn die echte Hand fehlt (Hautfarbe des Avatars), sonst dunkle Handschuhe,
 -- armWidth = Dicke der echten Unterarme vor der Kamera (Studs, siehe buildRealArm), nil = Körper-Dicke mal ARM_THICKNESS
 -- shirt = klassisches Shirt des Avatars (oder nil): die echten Arme tragen es auch vor der Kamera
 function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handColor, armWidth, shirt)
@@ -228,6 +240,18 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 				holder.Parent = self.Model
 			end
 			for _, arm in self.RealArms do
+				-- die echte Hand weg (Roblox-Hände sind Klötze ohne Finger): an ihre Stelle kommt unten die gebaute Hand
+				-- mit Fingern in der Hautfarbe der echten Hand
+				local kept = {}
+				for _, piece in arm.Pieces do
+					if piece.Bone == "Hand" then
+						arm.SkinColor = arm.SkinColor or piece.Part.Color
+						piece.Part:Destroy()
+					else
+						table.insert(kept, piece)
+					end
+				end
+				arm.Pieces = kept
 				for _, piece in arm.Pieces do
 					if shirt then
 						piece.Part.Name = string.gsub(piece.Part.Name, "_%d+$", "")
@@ -240,6 +264,11 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 		for _, side in { "Right", "Left" } do
 			local real = self.RealArms and self.RealArms[side]
 			if real then
+				local color = real.SkinColor or handColor or GLOVE_COLOR
+				real.WristLocal = WRIST[side]
+				-- Handgelenk in Hautfarbe: schließt die Lücke zwischen Ärmel/Unterarm und gebauter Hand
+				real.Wrist = armPart(side .. "Wrist", color, Enum.Material.SmoothPlastic, self.Model, cylinder)
+				real.Hand = buildHand(side, color, self.Model)
 				self.Arms[side] = real
 				continue
 			end
@@ -250,14 +279,7 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 				WristLocal = WRIST[side],
 				Hand = {},
 			}
-			for _, shape in HAND_SHAPES[side] do
-				local part = armPart(side .. shape[1], skin, Enum.Material.SmoothPlastic, self.Model)
-				part.Size = shape[2] * SCALE
-				table.insert(arm.Hand, { Part = part, Offset = scaled(shape[3]) })
-				if shape[1] == "Glove" then
-					arm.Glove = part
-				end
-			end
+			arm.Hand = buildHand(side, skin, self.Model)
 			self.Arms[side] = arm
 		end
 	end
@@ -400,9 +422,8 @@ function ViewModel:PlaceArm(arm, camera, hand, shoulderLocal, poleLocal)
 	local shoulder = camera * (shoulderLocal * SCALE)
 	local wrist = (hand * CFrame.new((arm.WristLocal or Vector3.new(0, -0.02, 0.16)) * SCALE)).Position
 	local elbow = PoseMath.SolveTwoBone(shoulder, wrist, UPPER_ARM * SCALE, FOREARM * SCALE, camera:VectorToWorldSpace(poleLocal))
-	if arm.Pieces then
-		self:PlaceRealArm(arm, shoulder, elbow, wrist)
-		return
+	for _, piece in arm.Hand do
+		piece.Part.CFrame = hand * piece.Offset
 	end
 	-- Zylinder (Achse X) von from nach to
 	local function segment(part, from, to, width)
@@ -410,13 +431,16 @@ function ViewModel:PlaceArm(arm, camera, hand, shoulderLocal, poleLocal)
 		part.Size = Vector3.new(math.max(length, 0.01), width * SCALE, width * SCALE)
 		part.CFrame = CFrame.lookAt((from + to) / 2, to) * CFrame.Angles(0, math.rad(90), 0)
 	end
+	if arm.Pieces then
+		self:PlaceRealArm(arm, shoulder, elbow, wrist)
+		-- vom Ende des Unterarms bis in die Hand
+		segment(arm.Wrist, wrist:Lerp(elbow, 0.15), wrist:Lerp(hand.Position, 0.6), WRIST_WIDTH)
+		return
+	end
 	local cuff = elbow:Lerp(wrist, CUFF)
 	segment(arm.Upper, shoulder, elbow, UPPER_WIDTH)
 	segment(arm.Fore, elbow, cuff, FORE_WIDTH)
 	segment(arm.Wrist, cuff:Lerp(elbow, 0.05), wrist, WRIST_WIDTH)
-	for _, piece in arm.Hand do
-		piece.Part.CFrame = hand * piece.Offset
-	end
 end
 
 -- Echte Arme: Knochen drehen wie bei den Figuren (PoseMath.AlignBone, Ellbogen-Achse = X im Ruhe-Raum), die Hand
