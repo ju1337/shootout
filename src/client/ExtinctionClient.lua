@@ -894,7 +894,7 @@ local function buildHud()
 		Text = "", TextSize = InputActions.IsTouch() and 26 or 15, Font = F.Bold, TextXAlignment = Enum.TextXAlignment.Center,
 		Visible = false }, root) -- Touch: Meldungen wie „Die Hotbar ist voll“ am Handy lesbar
 	UITheme.Outline(toast)
-	useBar = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -158), Size = UDim2.fromOffset(240, 26),
+	useBar = make("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -158), Size = UDim2.fromOffset(300, 26),
 		BackgroundColor3 = C.Panel, BackgroundTransparency = 0.2, BorderSizePixel = 0, Visible = false }, root)
 	UITheme.Corner(useBar, UITheme.Radius.Small)
 	useFill = make("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.Good, BackgroundTransparency = 0.4,
@@ -5259,7 +5259,7 @@ function ExtinctionClient.Init()
 	game:GetService("ProximityPromptService").PromptTriggered:Connect(function()
 		Inv.closedLoot.Id = nil -- selbst wieder geöffnet: das nächste Update darf das Fenster öffnen
 	end)
-	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b)
+	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind, a, b, c)
 		if kind == "Status" then
 			showToast(tostring(a), b == true)
 		elseif kind == "Picked" and type(a) == "table" then
@@ -5289,7 +5289,8 @@ function ExtinctionClient.Init()
 			end
 		elseif kind == "UseStart" then
 			useBar.Visible = true
-			useText.Text = upper(tostring(a))
+			-- kniend (Medikit, Verband, Weste): Hinweis, dass Springen abbricht
+			useText.Text = c and upper(tostring(a) .. "  ·  Springen bricht ab") or upper(tostring(a))
 			useFill.Size = UDim2.fromScale(0, 1)
 			local duration = tonumber(b) or 1
 			local started = os.clock()

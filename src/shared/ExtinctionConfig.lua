@@ -8,6 +8,7 @@
 --   "Ammo"    Munition einer Sorte, stapelbar; ein Kauf gibt Pack Schuss
 --   "Heal"    Leben auffüllen (Heal), dauert UseTime Sekunden
 --   "Armor"   Rüstung (Attribut "Armor", höchstens MaxArmor), dauert UseTime Sekunden
+--             Kneel = true (Heal/Armor): beim Benutzen hinknien, nicht laufen, Springen bricht ab (Movement, InventoryService)
 --   "Vehicle" Fahrzeug aus Vehicles (Vehicle); Taste spawnt es und setzt einen hinein, K packt es wieder ein
 --   "Repel"   Anti-Zombie-Spritze: Duration Sekunden spawnen beim Benutzer keine Zombies (Charakter-Attribut ZombieShieldUntil)
 --   "Throwable" Granate oder Molotow (Throwable = Eintrag in Throwables): Taste wirft in Blickrichtung (ThrowableService)
@@ -31,6 +32,8 @@ ExtinctionConfig.StashSlots = 40     -- Lager in der Safe Zone (immer sicher)
 ExtinctionConfig.SafeSlots = 20      -- Container: sichere Tasche, überall erreichbar, bleibt beim Tod
 -- Nach einem Schuss so viele Sekunden nichts in den Container (Safe) legen: Beute nicht mitten im Kampf in Sicherheit bringen
 ExtinctionConfig.SafeShotCooldown = 5
+-- Knien beim Benutzen (Items mit Kneel): so weit (Studs) darf man bis zum Ende abrutschen, sonst wirkt es nicht
+ExtinctionConfig.KneelMoveLimit = 4
 ExtinctionConfig.StandRange = 14     -- so nah muss man am Stand/Lager sein (Studs)
 ExtinctionConfig.TravelCooldown = 10 -- Sekunden zwischen zwei Reisen (Haltestellen in den Safe Zones)
 ExtinctionConfig.SellFactor = 0.4    -- Verkauf: Anteil vom Kaufpreis
@@ -100,12 +103,12 @@ ExtinctionConfig.Items = {
 	Ammo_Shell = { Kind = "Ammo", Name = "Schrotpatronen", Price = 40, Pack = 12, MaxStack = 96, Tier = 2 },
 	Ammo_Rifle = { Kind = "Ammo", Name = "Gewehrmunition", Price = 60, Pack = 30, MaxStack = 300, Tier = 3 },
 	-- Heilung und Rüstung
-	Bandage = { Kind = "Heal", Name = "Verband", Heal = 20, UseTime = 2.5, Price = 25, MaxStack = 10, Tier = 1 },
-	Medkit = { Kind = "Heal", Name = "Medikit", Heal = 75, UseTime = 6, Price = 110, MaxStack = 5, Tier = 2 },
+	Bandage = { Kind = "Heal", Name = "Verband", Heal = 20, UseTime = 2.5, Kneel = true, Price = 25, MaxStack = 10, Tier = 1 },
+	Medkit = { Kind = "Heal", Name = "Medikit", Heal = 75, UseTime = 6, Kneel = true, Price = 110, MaxStack = 5, Tier = 2 },
 	Adrenaline = { Kind = "Heal", Name = "Adrenalin", Heal = 40, UseTime = 1.2, Price = 180, MaxStack = 3, Tier = 3,
 		Speed = 1.25, SpeedTime = 6 },
-	Vest = { Kind = "Armor", Name = "Schutzweste", Armor = 50, UseTime = 3, Price = 220, MaxStack = 3, Tier = 2 },
-	HeavyVest = { Kind = "Armor", Name = "Schwere Weste", Armor = 100, UseTime = 5, Price = 550, MaxStack = 2, Tier = 3 },
+	Vest = { Kind = "Armor", Name = "Schutzweste", Armor = 50, UseTime = 3, Kneel = true, Price = 220, MaxStack = 3, Tier = 2 },
+	HeavyVest = { Kind = "Armor", Name = "Schwere Weste", Armor = 100, UseTime = 5, Kneel = true, Price = 550, MaxStack = 2, Tier = 3 },
 	-- Anti-Zombie-Spritze: einzige Wirkung – Duration Sekunden lang spawnen bei dir keine Zombies (Zombies.ShieldRadius)
 	AntiZombie = { Kind = "Repel", Name = "Anti-Zombie-Spritze", Duration = 180, UseTime = 2, Price = 240, MaxStack = 3, Tier = 2 },
 	-- Wurfwaffen (Werte in Throwables)

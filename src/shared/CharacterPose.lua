@@ -194,6 +194,26 @@ local function rigOf(model, humanoid, root)
 			end
 		end
 		rig.Joints = { rig.Waist, rig.Neck, rig.RShoulder, rig.RElbow, rig.RWrist, rig.LShoulder, rig.LElbow, rig.LWrist }
+		-- Beine (nur fürs Knien beim Verbinden/Weste; ohne Beine kniet der Charakter eben nicht)
+		local function leg(side)
+			local l = {
+				Hip = motor(side .. "UpperLeg", side .. "Hip"),
+				Knee = motor(side .. "LowerLeg", side .. "Knee"),
+				Ankle = motor(side .. "Foot", side .. "Ankle"),
+				LowerLeg = model:FindFirstChild(side .. "LowerLeg"),
+				Foot = model:FindFirstChild(side .. "Foot"),
+			}
+			return l.Hip and l.Knee and l.Ankle and l.LowerLeg and l.Foot and l or nil
+		end
+		local right, left = leg("Right"), leg("Left")
+		if right and left then
+			rig.Legs = { Right = right, Left = left }
+			for _, l in { right, left } do
+				table.insert(rig.Joints, l.Hip)
+				table.insert(rig.Joints, l.Knee)
+				table.insert(rig.Joints, l.Ankle)
+			end
+		end
 		return rig
 	end
 	local torso = model:FindFirstChild("Torso")
@@ -638,10 +658,77 @@ local USE_RIGHT = Vector3.new(0.18, -0.42, -0.95) -- Handmitte im Oberkörper-Ra
 local USE_LEFT = Vector3.new(-0.2, -0.38, -0.85)
 local USE_RIGHT_POLE = Vector3.new(1, -1, 0.4)
 local USE_LEFT_POLE = Vector3.new(-1, -1, 0.4)
-local function poseUse(entry, rig)
+
+-- Knien (Charakter-Attribut UseKneel: Medikit, Verband, Weste; Movement senkt die Hüfte): rechtes Knie am Boden,
+-- Schienbein liegt nach hinten, Fuß verlängert es; linker Fuß flach vorne, Knie oben. floorY = Bodenhöhe.
+-- Gibt die sechs Transforms (rechts Hüfte/Knie/Knöchel, links Hüfte/Knie/Knöchel) zurück oder nil.
+local KNEEL_FRONT = 0.9 -- linker Fuß so weit (Anteil der Oberschenkellänge) vor der Hüfte
+local function legJoints(l)
+	return {
+		ShoulderC0 = l.Hip.C0, ShoulderC1 = l.Hip.C1,
+		ElbowC0 = l.Knee.C0, ElbowC1 = l.Knee.C1,
+		WristC0 = l.Ankle.C0, WristC1 = l.Ankle.C1,
+	}
+end
+local function kneelLegs(rig, lowerTorso, yaw, floorY)
+	local legs = rig.Legs
+	if not legs then
+		return nil
+	end
+	local forward = yaw.LookVector
+	local up = Vector3.yAxis
+
+	-- rechts: Knie am Boden, Oberschenkel von der Hüfte so weit nach vorne, dass seine Länge passt
+	local r = legs.Right
+	local rj = legJoints(r)
+	local a = (rj.ElbowC0.Position - rj.ShoulderC1.Position).Magnitude
+	local b = (rj.WristC0.Position - rj.ElbowC1.Position).Magnitude
+	local hip = (lowerTorso * rj.ShoulderC0).Position
+	local kneeY = floorY + r.LowerLeg.Size.Z * 0.45 -- Schienbein liegt (fast) flach auf dem Boden
+	local dy = hip.Y - kneeY
+	local reach = math.sqrt(math.max(0, a * a - dy * dy))
+	local knee = Vector3.new(hip.X, hip.Y - math.min(dy, a), hip.Z) + forward * reach
+	local ankleY = math.min(knee.Y, floorY + r.LowerLeg.Size.Z * 0.4)
+	local shin = math.sqrt(math.max(0, b * b - (knee.Y - ankleY) ^ 2))
+	local ankle = Vector3.new(knee.X, ankleY, knee.Z) - forward * shin
+	-- Fuß verlängert das Schienbein nach hinten, Zehen leicht zum Boden, Fußrücken unten
+	local shinDir = ankle - knee
+	local toes = (shinDir.Magnitude > 1e-3 and shinDir.Unit or -forward) - up * 0.35
+	local footRot = CFrame.lookAt(Vector3.zero, toes.Unit, -up).Rotation
+	local rightFoot = CFrame.new(ankle - footRot:VectorToWorldSpace(rj.WristC1.Position)) * footRot
+	local rH, rK, rA = PoseMath.SolveArm(lowerTorso, rj, rightFoot, nil, forward - up * 0.3)
+
+	-- links: Fuß flach vor der Hüfte, Knie zeigt nach vorne oben
+	local l = legs.Left
+	local lj = legJoints(l)
+	local la = (lj.ElbowC0.Position - lj.ShoulderC1.Position).Magnitude
+	local lhip = (lowerTorso * lj.ShoulderC0).Position
+	local leftFoot = CFrame.new(Vector3.new(lhip.X, floorY + l.Foot.Size.Y / 2, lhip.Z) + forward * (la * KNEEL_FRONT)) * yaw
+	local lH, lK, lA = PoseMath.SolveArm(lowerTorso, lj, leftFoot, nil, forward + up)
+	return { rH, rK, rA, lH, lK, lA }
+end
+
+local floorParams = RaycastParams.new()
+floorParams.FilterType = Enum.RaycastFilterType.Exclude
+local function floorBelow(model, root)
+	floorParams.FilterDescendantsInstances = { model }
+	local hit = workspace:Raycast(root.Position, Vector3.new(0, -8, 0), floorParams)
+	return hit and hit.Position.Y
+end
+
+local function poseUse(entry, rig, model)
 	local root = rig.Root
 	local yaw = root.CFrame.Rotation
 	local lowerTorso = PoseMath.Chain(root.CFrame, rig.RootJoint.C0, rig.RootJoint.Transform, rig.RootJoint.C1)
+	-- Knien: Beine dazu (Boden per Strahl, die Hüfthöhe kennt nur der eigene Client)
+	local legT = nil
+	if model:GetAttribute("UseKneel") and rig.Legs then
+		local floorY = floorBelow(model, root)
+		legT = floorY and kneelLegs(rig, lowerTorso, yaw, floorY)
+		if legT and not PoseMath.AllFinite(legT) then
+			legT = nil
+		end
+	end
 	local torsoRot = yaw * CFrame.Angles(math.rad(-8), 0, 0) -- leicht nach vorne gebeugt
 	local waistT = PoseMath.MotorTransform(lowerTorso.Rotation, rig.Waist.C0, rig.Waist.C1, torsoRot)
 	local upperTorso = PoseMath.Chain(lowerTorso, rig.Waist.C0, waistT, rig.Waist.C1)
@@ -667,6 +754,11 @@ local function poseUse(entry, rig)
 	rig.LShoulder.Transform = tLS
 	rig.LElbow.Transform = tLE
 	rig.LWrist.Transform = tLW
+	if legT then
+		local legs = rig.Legs
+		legs.Right.Hip.Transform, legs.Right.Knee.Transform, legs.Right.Ankle.Transform = legT[1], legT[2], legT[3]
+		legs.Left.Hip.Transform, legs.Left.Knee.Transform, legs.Left.Ankle.Transform = legT[4], legT[5], legT[6]
+	end
 	return true
 end
 
@@ -680,7 +772,7 @@ local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
 			and humanoid.RigType == Enum.HumanoidRigType.R15 then
 			entry.UseT = entry.UseT or os.clock()
 			local rig = ensureRig(model, entry, humanoid, root)
-			if rig and rig.Type == "R15" and poseUse(entry, rig) then
+			if rig and rig.Type == "R15" and poseUse(entry, rig, model) then
 				entry.Active = true
 				return
 			end

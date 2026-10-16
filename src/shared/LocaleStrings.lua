@@ -3203,4 +3203,6 @@ return {
 	["Stirbst du draußen, <b>fällt deine Tasche</b> an der Stelle zu Boden – Container und Lager bleiben sicher. Hol sie dir zurück, bevor es jemand anderes tut. Alles Weitere: Menü {1} → <b>GUIDE</b>. Viel Glück da draußen."] = "If you die outside, your <b>bag drops</b> where you died – your container and stash stay safe. Get it back before someone else does. Everything else: menu {1} → <b>GUIDE</b>. Good luck out there.",
 	["Das Tutorial zeigt dir alles Wichtige: Starter Kit, Inventar, dein erster Zombie und seine Beute, die Karte, die rote Zone, Händler und dein Versteck. Du kannst es jederzeit im Menü unter GUIDE überspringen."] = "The tutorial shows you everything important: starter kit, inventory, your first zombie and its loot, the map, the red zone, vendors and your hideout. You can skip it any time in the menu under GUIDE.",
 	["Nach dem Schießen kannst du {1} Sekunden nichts in den Container legen (noch {2} s)."] = "After shooting you can't put anything in your container for {1} seconds ({2} s left).",
+	["Abgebrochen: beim Knien musst du stehen bleiben."] = "Cancelled: you have to stay still while kneeling.",
+	["{1}  ·  Springen bricht ab"] = "{1}  ·  jump to cancel",
 }

@@ -46,6 +46,8 @@ local SLIDE_BLEND_RATE = 8      -- wie schnell Sichtfeld, Neigung und Absenkung 
 local CROUCH_CAMERA = Vector3.new(0, -1.3, 0)
 local CROUCH_HIP_FACTOR = 0.55 -- Körper sinkt ab (kleineres Ziel)
 local CROUCH_TIME = 0.12       -- so lange dauert Hinhocken und Aufstehen
+local KNEEL_HIP_FACTOR = 0.55  -- Knien beim Verbinden/Weste (Charakter-Attribut UseKneel): Hüfte so weit unten
+local KNEEL_TIME = 0.25        -- so lange dauert Hinknien und Aufstehen
 local SLIDE_AIR_TIME = 0.18    -- so lange ohne Boden, dann ist man über eine Kante gerutscht (Schwung in die Luft)
 local JUMP_INTENT = 0.4        -- so lange nach dem Drücken zählt Springen für das Hochziehen aus der Luft
 local DIP_SPRING = 140         -- Federhärte des Eintauchens beim Landen
@@ -85,6 +87,7 @@ local currentDistance = nil      -- aktueller Abstand der Schulterkamera (nil = 
 local speedTarget = DEFAULT_SPEED -- Ziel für WalkSpeed (apply), die Rampe läuft im Heartbeat
 local walkSpeed = nil             -- zuletzt gesetztes WalkSpeed
 local hipTarget = nil
+local wasKneeling = false       -- Knien (UseKneel) im letzten Bild: Wechsel erkennen
 local slide = nil                 -- { Speed, Dir, Started, AirTime }
 local lastSlideEnd = -math.huge
 local move = nil                  -- Hindernis: { Kind, Started, Duration, Start, Near, Far, Land, Target, Dir, ExitSpeed }
@@ -126,12 +129,20 @@ local function isCrouched()
 	return (crouchHeld or slide ~= nil) and Modes.IsFighting(player)
 end
 
+-- Medikit, Verband oder Weste: kniet (Server setzt UseKneel), steht still, Springen bricht ab
+local function isKneeling(character)
+	return character ~= nil and character:GetAttribute("UseKneel") == true
+end
+
 local function isSprinting()
 	return sprintHeld and sprintForward and not aiming and not isCrouched() and os.clock() >= sprintBlockedUntil
 end
 
 -- Grundtempo ohne Sprint/Ducken/Zielen (Agent, Fähigkeiten, Runner, Stacheldraht)
 local function baseSpeed(character)
+	if isKneeling(character) then
+		return 0
+	end
 	local agent = character and AgentConfig.Get(character:GetAttribute("Agent"))
 	local speed = (agent and agent.WalkSpeed or DEFAULT_SPEED) * P.SpeedScale
 		* (character and character:GetAttribute("SpeedMultiplier") or 1)
@@ -183,14 +194,16 @@ local function apply()
 		-- Ducken: Kamera tiefer, Körper sinkt ab (beides gleitet: Versatz im RenderStep, Hüfte im Heartbeat)
 		normalHipHeight = normalHipHeight or humanoid.HipHeight
 		local crouched = isCrouched() and not isDropping(humanoid)
-		local offset = crouched and CROUCH_CAMERA or Vector3.zero
+		local kneeling = isKneeling(character) and not isDropping(humanoid)
+		local offset = crouched and not kneeling and CROUCH_CAMERA or Vector3.zero
 		if thirdPerson and Modes.IsFighting(player) and not inVehicle then
 			local shoulder = aiming and SHOULDER_AIM_OFFSET or SHOULDER_OFFSET
 			offset += Vector3.new(shoulder.X * shoulderSide, shoulder.Y, 0) -- über die Schulter
 			targetDistance = aiming and SHOULDER_AIM_DISTANCE or SHOULDER_DISTANCE
 		end
 		targetOffset = offset
-		hipTarget = crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
+		hipTarget = kneeling and normalHipHeight * KNEEL_HIP_FACTOR
+			or crouched and normalHipHeight * CROUCH_HIP_FACTOR or normalHipHeight
 	end
 
 	if aiming then
@@ -255,7 +268,7 @@ local function startSlide()
 	local humanoid, character = getHumanoid()
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not humanoid or not root or slide or move or not Modes.IsFighting(player) or isDropping(humanoid) or humanoid.Sit
-		or humanoid.Health <= 0 or character:GetAttribute("Downed") then
+		or humanoid.Health <= 0 or character:GetAttribute("Downed") or isKneeling(character) then
 		return false
 	end
 	if humanoid.FloorMaterial == Enum.Material.Air then
@@ -404,7 +417,7 @@ local function tryObstacle(inAir)
 	local humanoid, character = getHumanoid()
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if move or not humanoid or not root or humanoid.Health <= 0 or isDropping(humanoid) or humanoid.Sit or inVehicle
-		or character:GetAttribute("Downed") then
+		or character:GetAttribute("Downed") or isKneeling(character) then
 		return false
 	end
 	local input = wishMove(humanoid)
@@ -445,9 +458,19 @@ local function jumpHeld()
 	return false
 end
 
+local cancelSentAt = -math.huge
 local function onJumpRequest()
-	local humanoid = getHumanoid()
+	local humanoid, character = getHumanoid()
 	if not humanoid or humanoid.Health <= 0 or isDropping(humanoid) or humanoid.Sit or move or inVehicle then
+		return
+	end
+	-- kniend (Medikit, Weste): Springen steht auf und bricht ab, das Item bleibt
+	if isKneeling(character) then
+		local now = os.clock()
+		if now - cancelSentAt > 0.3 then
+			cancelSentAt = now
+			require(Shared.Remotes).ExtAction:FireServer("CancelUse")
+		end
 		return
 	end
 	local now = os.clock()
@@ -508,6 +531,18 @@ local function step(dt)
 		return
 	end
 	local now = os.clock()
+	-- Knien an/aus: sofort stehen bleiben, nicht springen, Hüfte runter (apply)
+	local kneeling = isKneeling(character)
+	if kneeling ~= wasKneeling then
+		wasKneeling = kneeling
+		humanoid.JumpHeight = kneeling and 0 or P.JumpHeight
+		if kneeling then
+			endSlide()
+			walkSpeed = 0
+			humanoid.WalkSpeed = 0
+		end
+		apply()
+	end
 	local velocity = root.AssemblyLinearVelocity
 	local onGround = humanoid.FloorMaterial ~= Enum.Material.Air
 	if onGround and not grounded then
@@ -572,7 +607,8 @@ local function step(dt)
 
 	-- Ducken weich: Hüfte gleitet
 	if hipTarget and normalHipHeight then
-		local rate = normalHipHeight * (1 - CROUCH_HIP_FACTOR) / CROUCH_TIME
+		local rate = kneeling and normalHipHeight * (1 - KNEEL_HIP_FACTOR) / KNEEL_TIME
+			or normalHipHeight * (1 - CROUCH_HIP_FACTOR) / CROUCH_TIME
 		local hip = humanoid.HipHeight
 		local nextHip = hip < hipTarget and math.min(hipTarget, hip + rate * dt) or math.max(hipTarget, hip - rate * dt)
 		if math.abs(nextHip - hip) > 0.0001 then
@@ -1090,6 +1126,7 @@ function Movement.Init()
 		-- feste Sprunghöhe (sonst Roblox-Standard: man käme fast aufs Dach)
 		humanoid.UseJumpPower = false
 		humanoid.JumpHeight = P.JumpHeight
+		wasKneeling = false
 		normalHipHeight = humanoid.HipHeight
 		hipTarget = normalHipHeight
 		slide, move, airMomentum, momentumAt = nil, nil, 0, -math.huge

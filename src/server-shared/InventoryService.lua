@@ -11,7 +11,7 @@
 -- Spieler-Attribute für den Client: ExtBag, ExtSafe, ExtStash (JSON-Listen, siehe Inventory.ToList), ExtEquipped (Platz der
 -- Waffe in der Hand, 0 = keine), ExtAttach (Aufsätze der Waffe in der Hand, liest AttachmentConfig).
 -- Aufsätze ("Attachment"): auf eine Waffe ziehen (Move) oder Taste mit der Waffe in der Hand (Use) baut sie an,
--- Aktion "Detach" (Platz der Waffe, Aufsatz-Platz) nimmt einen ab; ein ersetzter oder abgenommener Aufsatz kommt in die Tasche. Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit).
+-- Aktion "Detach" (Platz der Waffe, Aufsatz-Platz) nimmt einen ab; ein ersetzter oder abgenommener Aufsatz kommt in die Tasche. Charakter-Attribute beim Benutzen: UsingItem (Name), UseEnd (Serverzeit), UseKneel (kniet, steht still).
 -- Ausrüstungen (Loadouts, Extinction.Loadouts[1..2]): LoadoutSave merkt sich die Anordnung der Tasche als Vorlage (Plätze,
 -- Ids, Anzahl, Aufsatz-Ids – kein Magazin), LoadoutApply (nur am Lager in der Safe Zone) räumt die Tasche ins Lager und
 -- holt die Teile der Vorlage aus Lager und Tasche auf ihre Plätze (Waffen möglichst mit denselben Aufsätzen, fehlende
@@ -315,10 +315,22 @@ end
 
 local function cancelUse(player, state)
 	state.Using = nil
+	state.UseRequip = nil
 	local character = player.Character
 	if character then
 		character:SetAttribute("UsingItem", nil)
 		character:SetAttribute("UseEnd", nil)
+		character:SetAttribute("UseKneel", nil)
+	end
+end
+
+-- nach dem Benutzen (fertig oder abgebrochen) die vorher gehaltene Waffe wieder ziehen
+local function rearm(player, state, requip, character, humanoid)
+	local requipSlot = requip and slotOf(state.Bag, requip)
+	if requipSlot and requipSlot <= HOTBAR and not state.Equipped and player.Character == character and humanoid.Health > 0
+		and not humanoid.SeatPart then
+		equip(player, state, requip)
+		flush(player, state)
 	end
 end
 
@@ -382,9 +394,17 @@ local function startUse(player, state, item, config)
 	state.Using = token
 	-- Waffe beim Verbinden/Weste-Anlegen wegstecken (beide Hände frei, kein Schuss), danach wieder ziehen
 	local requip = state.Equipped
+	state.UseRequip = requip
 	if requip then
 		holster(player, state)
 		flush(player, state)
+	end
+	-- Medikit, Verband, Westen: hinknien und still stehen (Movement), Springen bricht ab (CancelUse). Im Fahrzeug nicht.
+	local useRoot = character:FindFirstChild("HumanoidRootPart")
+	local kneel = config.Kneel == true and not humanoid.SeatPart
+	local kneelAt = kneel and useRoot and useRoot.Position
+	if kneel then
+		character:SetAttribute("UseKneel", true)
 	end
 	-- Sanistation im Versteck: Heilen und Westen anlegen geht schneller
 	local useTime = config.UseTime
@@ -396,24 +416,41 @@ local function startUse(player, state, item, config)
 	-- Geräusch beim Benutzen (hören auch andere in der Nähe)
 	local useSound = USE_SOUNDS[config.Base or item.Id] or (config.Kind == "Armor" and "Buckle") or (config.Kind == "Heal" and "Zipper")
 		or (config.Kind == "Repel" and "Spray")
-	local useRoot = character:FindFirstChild("HumanoidRootPart")
 	if useSound and useRoot then
 		Sfx.At(useSound, useRoot)
 	end
-	Remotes.ExtUpdate:FireClient(player, "UseStart", config.Name, useTime)
+	Remotes.ExtUpdate:FireClient(player, "UseStart", config.Name, useTime, kneel)
 	task.delay(useTime, function()
 		if state.Using ~= token then
 			return -- abgebrochen
 		end
 		cancelUse(player, state)
-		finishUse(player, state, item, config, character, humanoid)
-		local requipSlot = requip and slotOf(state.Bag, requip)
-		if requipSlot and requipSlot <= HOTBAR and not state.Equipped and player.Character == character and humanoid.Health > 0
-			and not humanoid.SeatPart then
-			equip(player, state, requip)
-			flush(player, state)
+		-- beim Knien weggelaufen (geht nur mit Tricks): wirkt nicht, das Item bleibt
+		local root = character:FindFirstChild("HumanoidRootPart")
+		local flat = kneelAt and root and (root.Position - kneelAt) * Vector3.new(1, 0, 1)
+		if flat and flat.Magnitude > ExtinctionConfig.KneelMoveLimit then
+			Remotes.ExtUpdate:FireClient(player, "UseEnd", config.Name, false)
+			status(player, "Abgebrochen: beim Knien musst du stehen bleiben.")
+		else
+			finishUse(player, state, item, config, character, humanoid)
 		end
+		rearm(player, state, requip, character, humanoid)
 	end)
+end
+
+-- Benutzen abbrechen (Springen beim Knien): nichts wird verbraucht, die Waffe kommt zurück
+function InventoryService.CancelUse(player)
+	local state = states[player]
+	if not state or not state.Using then
+		return
+	end
+	local requip = state.UseRequip
+	cancelUse(player, state)
+	Remotes.ExtUpdate:FireClient(player, "UseEnd", nil, false)
+	local character, humanoid = livingCharacter(player)
+	if character and humanoid then
+		rearm(player, state, requip, character, humanoid)
+	end
 end
 
 -- ---------- Aufsätze ----------
@@ -1281,6 +1318,8 @@ function InventoryService.Init()
 			InventoryService.Drop(player, ...)
 		elseif action == "Holster" then
 			InventoryService.Holster(player)
+		elseif action == "CancelUse" then
+			InventoryService.CancelUse(player)
 		elseif action == "Detach" then
 			InventoryService.Detach(player, ...)
 		elseif action == "Throw" then

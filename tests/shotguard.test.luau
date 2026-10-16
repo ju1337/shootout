@@ -414,6 +414,45 @@ check(damageTaken() == 0, "beim Verbinden kein Schuss")
 step(ExtinctionConfig.Items.Bandage.UseTime + 0.5)
 check(alice.Character:GetAttribute("UsingItem") == nil and WeaponService.CarriedWeapon(alice) == "Rifle", "danach wieder das Gewehr in der Hand")
 
+-- ---------- Medikit: hinknien (UseKneel), Springen bricht ab, Weglaufen wirkt nicht ----------
+local function medkits()
+	for s, item in InventoryService.GetBag(alice).Slots do
+		if item.Id == "Medkit" then
+			return s, item.Count
+		end
+	end
+	return nil, 0
+end
+local aliceHumanoid = alice.Character.Humanoid
+InventoryService.Give(alice, "Medkit", 2, nil, "Hotbar")
+aliceHumanoid.Health = aliceHumanoid.MaxHealth - 60
+InventoryService.Use(alice, (medkits()))
+step(0.2)
+check(alice.Character:GetAttribute("UseKneel") == true, "Medikit: kniet")
+check(WeaponService.CarriedWeapon(alice) == nil, "Medikit: Waffe weggesteckt")
+Remotes.ExtAction.OnServerEvent:Fire(alice, "CancelUse")
+step(0.2)
+check(alice.Character:GetAttribute("UseKneel") == nil and alice.Character:GetAttribute("UsingItem") == nil,
+	"abgebrochen: steht wieder auf")
+check(select(2, medkits()) == 2, "abgebrochen: Medikit bleibt")
+check(WeaponService.CarriedWeapon(alice) == "Rifle", "abgebrochen: Gewehr wieder in der Hand")
+step(ExtinctionConfig.Items.Medkit.UseTime + 0.5)
+check(aliceHumanoid.Health == aliceHumanoid.MaxHealth - 60, "abgebrochen: heilt auch später nicht")
+
+InventoryService.Use(alice, (medkits()))
+step(0.2)
+local aliceRoot = alice.Character.HumanoidRootPart
+aliceRoot.CFrame = aliceRoot.CFrame + Vector3.new(ExtinctionConfig.KneelMoveLimit + 6, 0, 0)
+step(ExtinctionConfig.Items.Medkit.UseTime + 0.5)
+check(select(2, medkits()) == 2 and aliceHumanoid.Health == aliceHumanoid.MaxHealth - 60, "beim Knien weggelaufen: wirkt nicht")
+check(WeaponService.CarriedWeapon(alice) == "Rifle", "weggelaufen: Gewehr wieder in der Hand")
+
+InventoryService.Use(alice, (medkits()))
+step(ExtinctionConfig.Items.Medkit.UseTime + 0.5)
+check(select(2, medkits()) == 1 and aliceHumanoid.Health > aliceHumanoid.MaxHealth - 60, "still gekniet: Medikit heilt")
+check(alice.Character:GetAttribute("UseKneel") == nil, "danach: steht wieder")
+check(ExtinctionConfig.Items.Adrenaline.Kneel ~= true, "Spritzen: ohne Knien")
+
 if failures > 0 then
 	error(failures .. " Prüfungen fehlgeschlagen")
 end
