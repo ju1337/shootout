@@ -246,6 +246,7 @@ check(ExtTutorial.CurrentStep() == "Safe", "TAB: Schritt 3, Tasche und Container
 -- Coach im Inventar: Tasche (WEITER), Schnellleiste (WEITER), Container (warten auf Flag Safe)
 local coach, object = ExtTutorial.CurrentCoach()
 check(coach == 1 and object and object.Name == "Grid_Bag" .. (ExtinctionConfig.HotbarSlots + 1), "Tipp 1: Tasche")
+check(windowGui.Enabled and focus.Enabled, "Rahmen und Karte bleiben über dem offenen Menü (nicht mit dem HUD ausgeblendet)")
 check(callout.Visible and callout.Next.Visible, "Tipp 1 mit WEITER")
 callout.Next.Activated:Fire()
 step(0.3)

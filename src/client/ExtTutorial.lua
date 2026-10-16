@@ -1043,6 +1043,7 @@ function ExtTutorial.Init(options: { WindowKind: (() -> (string?, string?))? }?)
 	-- Ebene über den Fenstern (DisplayOrder 20): Rahmen, Coach-Karte, Pfeil am Rand. Bildschirm-Pixel, nichts skaliert.
 	focusGui = make("ScreenGui", { Name = "ExtTutorialFocus", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 30,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, playerGui)
+	focusGui:SetAttribute("KeepOverMenu", true) -- das Menü blendet sonst alle anderen Oberflächen aus (Inv.hideHud)
 	highlight = make("Frame", { Name = "Highlight", BackgroundTransparency = 1, Visible = false, ZIndex = 1 }, focusGui)
 	UITheme.Corner(highlight, 6)
 	highlightStroke = make("UIStroke", { Color = RED, Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, highlight)
