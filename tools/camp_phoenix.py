@@ -307,14 +307,14 @@ class CampPhoenix:
     # ---------- Mittelplatz West: Handel & Glück ----------
     def trade_square(self):
         """Westhälfte des Mittelplatzes: MARKTHALLE am Westrand (Front nach Osten) mit der Tauschmarkt-Theke vor dem
-        Tor, GLÜCKSRAD am Nordrand und daneben der KISTEN-AUTOMAT, AUSRÜSTER am Südrand. Der Weg vom Westtor (Südwestecke)
+        Tor, GLÜCKSRAD am Nordrand und frei davor der KISTEN-AUTOMAT, AUSRÜSTER am Südrand. Der Weg vom Westtor (Südwestecke)
         bleibt frei."""
         to_e, to_n, to_s = self.yaw_to(1, 0), self.yaw_to(0, 1), self.yaw_to(0, -1)  # Front nach Osten, Norden, Süden
         self.market_hall(-(SQ_X + 11), 32, to_e)
         self.trade_counter(-(SQ_X - 8), 22, to_e)
         self.pavilion(-44, SQ_Z1 - PAV_D / 2, to_s, "wheel")
         self.pavilion(-44, SQ_Z0 + PAV_D / 2, to_n, "outfitter")
-        self.crate_machine(-63, SQ_Z1 - 5, to_s)
+        self.crate_machine(-46, 32, to_e)  # offen vor dem Glücksrad-Pavillon, Front zur Promenade
 
     def trade_counter(self, x, z, yaw):
         """TAUSCHMARKT vor der Markthalle: weiße Theke mit dunkler Platte, Händlerin mit Krawatte dahinter, Regal mit
