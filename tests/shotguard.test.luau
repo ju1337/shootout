@@ -385,6 +385,35 @@ fire()
 step(0.3)
 check(damageTaken() > 0, "danach zählt ein ehrlicher Treffer wieder")
 
+-- ---------- nach dem Schießen: ExtinctionConfig.SafeShotCooldown Sekunden nichts in den Container ----------
+InventoryService.Give(alice, "Bandage", 3)
+local function bandageSlot()
+	for s, item in InventoryService.GetBag(alice).Slots do
+		if item.Id == "Bandage" then
+			return s
+		end
+	end
+	return nil
+end
+check(InventoryService.Move(alice, "Bag", bandageSlot(), "Safe") == false, "gleich nach dem Schuss: nicht in den Container")
+step(ExtinctionConfig.SafeShotCooldown + 0.3)
+check(InventoryService.Move(alice, "Bag", bandageSlot(), "Safe") == true, "nach der Sperre: in den Container")
+
+-- ---------- Verband benutzen: Waffe weg, kein Schuss, danach wieder in der Hand ----------
+InventoryService.Give(alice, "Bandage", 1, nil, "Hotbar")
+local hotbarBandage = bandageSlot()
+alice.Character.Humanoid.Health = alice.Character.Humanoid.MaxHealth - 30
+check(hotbarBandage and hotbarBandage <= ExtinctionConfig.HotbarSlots, "Verband auf der Schnellleiste")
+InventoryService.Use(alice, hotbarBandage)
+step(0.2)
+check(alice.Character:GetAttribute("UsingItem") ~= nil and WeaponService.CarriedWeapon(alice) == nil, "beim Verbinden: Waffe weggesteckt")
+heal()
+fire()
+step(0.3)
+check(damageTaken() == 0, "beim Verbinden kein Schuss")
+step(ExtinctionConfig.Items.Bandage.UseTime + 0.5)
+check(alice.Character:GetAttribute("UsingItem") == nil and WeaponService.CarriedWeapon(alice) == "Rifle", "danach wieder das Gewehr in der Hand")
+
 if failures > 0 then
 	error(failures .. " Prüfungen fehlgeschlagen")
 end

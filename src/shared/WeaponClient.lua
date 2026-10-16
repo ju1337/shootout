@@ -448,6 +448,10 @@ local function tryFire()
 	end
 	-- Server lässt hier nicht schießen (Safe Zone, zwischen Runden): gar nicht erst anfangen,
 	-- sonst knallt es nur lokal und das Magazin springt zurück
+	-- beim Verbinden/Weste-Anlegen (Charakter-Attribut UsingItem) nicht schießen
+	if player.Character and player.Character:GetAttribute("UsingItem") then
+		return
+	end
 	-- Schießstand (Attribut RangeActive, RangeService): dort darf man in der Safe Zone auf die Ziele schießen
 	if player:GetAttribute("CanFight") == false
 		or (player:GetAttribute("InSafeZone") == true and player:GetAttribute("RangeActive") ~= true) then

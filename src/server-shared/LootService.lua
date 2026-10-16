@@ -602,6 +602,9 @@ function LootService.Take(player, id, slot, toName, toSlot)
 	if slot == "All" then
 		opened(player, bag)
 	end
+	if toName == "Safe" and slot ~= "All" and InventoryService.SafeLocked(player) then
+		return false
+	end
 	local playerBag = toName == "Safe" and slot ~= "All" and InventoryService.GetSafe(player) or InventoryService.GetBag(player)
 	if not playerBag then
 		return false

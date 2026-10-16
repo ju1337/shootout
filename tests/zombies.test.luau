@@ -345,8 +345,9 @@ for _, item in saved do
 	Inventory.Add(fullBag, item.Id, item.Count, { Mag = item.Mag })
 end
 
--- Zombie ohne Beute: Leiche verschwindet schnell, kein Prompt
+-- Zombie ohne Beute: Leiche verschwindet schnell, kein Prompt (auch kein seltener Dungeon-Schlüssel)
 ExtinctionConfig.ZombieKinds.Walker.Drop = 0
+ExtinctionConfig.Dungeon.KeyChances.Zombie = 0
 local empty = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -4))
 Damage.Apply(empty, empty.Humanoid, 1000, { Player = alice, Weapon = "Rifle" })
 step(0.2)

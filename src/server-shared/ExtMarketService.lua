@@ -21,6 +21,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtinctionConfig = require(Shared.ExtinctionConfig)
 local Modes = require(Shared.Modes)
+local Remotes = require(Shared.Remotes)
 local ProgressService = require(script.Parent.ProgressService)
 local InventoryService = require(script.Parent.InventoryService)
 
@@ -219,6 +220,9 @@ function ExtMarketService.Buy(player, id, price)
 	ExtMarketService.Publish()
 	status(player, "Gekauft: " .. itemText(entry) .. " von " .. seller.Name .. " für " .. entry.Price .. " Münzen", true)
 	status(seller, "Verkauft auf dem Markt: " .. itemText(entry) .. " an " .. player.Name .. " · +" .. earned .. " Münzen", true)
+	-- Verkaufsbenachrichtigung: Banner mit Ton, damit man den Verkauf nicht verpasst
+	Remotes.Notify:FireClient(seller, "Progress", { Caption = "Markt", Title = "VERKAUFT",
+		Sub = itemText(entry) .. " an " .. player.Name .. "  ·  +" .. earned .. " Münzen", Color = Color3.fromRGB(214, 176, 96) })
 	task.spawn(ProgressService.SaveNow, player)
 	task.spawn(ProgressService.SaveNow, seller)
 	return true

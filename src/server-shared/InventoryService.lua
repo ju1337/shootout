@@ -380,6 +380,12 @@ local function startUse(player, state, item, config)
 	end
 	local token = {}
 	state.Using = token
+	-- Waffe beim Verbinden/Weste-Anlegen wegstecken (beide Hände frei, kein Schuss), danach wieder ziehen
+	local requip = state.Equipped
+	if requip then
+		holster(player, state)
+		flush(player, state)
+	end
 	-- Sanistation im Versteck: Heilen und Westen anlegen geht schneller
 	local useTime = config.UseTime
 	if config.Kind == "Heal" or config.Kind == "Armor" then
@@ -401,6 +407,12 @@ local function startUse(player, state, item, config)
 		end
 		cancelUse(player, state)
 		finishUse(player, state, item, config, character, humanoid)
+		local requipSlot = requip and slotOf(state.Bag, requip)
+		if requipSlot and requipSlot <= HOTBAR and not state.Equipped and player.Character == character and humanoid.Health > 0
+			and not humanoid.SeatPart then
+			equip(player, state, requip)
+			flush(player, state)
+		end
 	end)
 end
 
@@ -598,6 +610,18 @@ local function isOut(item)
 	return item and item.Out == true
 end
 
+-- Gerade geschossen? Dann SafeShotCooldown Sekunden nichts in den Container legen. Gibt true zurück (mit Meldung), wenn gesperrt.
+function InventoryService.SafeLocked(player)
+	local shotAt = player:GetAttribute("ShotAt")
+	local left = typeof(shotAt) == "number" and shotAt + ExtinctionConfig.SafeShotCooldown - workspace:GetServerTimeNow() or 0
+	if left > 0 then
+		status(player, "Nach dem Schießen kannst du " .. ExtinctionConfig.SafeShotCooldown
+			.. " Sekunden nichts in den Container legen (noch " .. math.ceil(left) .. " s).")
+		return true
+	end
+	return false
+end
+
 -- Item verschieben: innerhalb der Tasche (Hotbar anordnen), zwischen Tasche und Container (überall) oder Lager.
 -- toSlot = nil: automatisch einsortieren.
 function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
@@ -611,6 +635,9 @@ function InventoryService.Move(player, fromName, fromSlot, toName, toSlot)
 	local from, to = container(player, state, fromName), container(player, state, toName)
 	if not from or not to then
 		status(player, "Das Lager erreichst du nur in der Safe Zone direkt am Lager.")
+		return false
+	end
+	if to == state.Safe and from ~= state.Safe and InventoryService.SafeLocked(player) then
 		return false
 	end
 	local item = from.Slots[fromSlot]

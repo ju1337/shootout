@@ -632,7 +632,62 @@ local function ensureRig(model, entry, humanoid, root)
 	return entry.Rig
 end
 
+-- Item benutzen (Verband, Medikit, Weste, Spritze; Charakter-Attribut UsingItem): beide Hände vor der Brust, die
+-- rechte wickelt in kleinen Kreisen, Kopf schaut nach unten. Nur R15. Gibt true zurück, wenn gesetzt.
+local USE_RIGHT = Vector3.new(0.18, -0.42, -0.95) -- Handmitte im Oberkörper-Raum (X/Y Anteil der Größe, Z Studs vor)
+local USE_LEFT = Vector3.new(-0.2, -0.38, -0.85)
+local USE_RIGHT_POLE = Vector3.new(1, -1, 0.4)
+local USE_LEFT_POLE = Vector3.new(-1, -1, 0.4)
+local function poseUse(entry, rig)
+	local root = rig.Root
+	local yaw = root.CFrame.Rotation
+	local lowerTorso = PoseMath.Chain(root.CFrame, rig.RootJoint.C0, rig.RootJoint.Transform, rig.RootJoint.C1)
+	local torsoRot = yaw * CFrame.Angles(math.rad(-8), 0, 0) -- leicht nach vorne gebeugt
+	local waistT = PoseMath.MotorTransform(lowerTorso.Rotation, rig.Waist.C0, rig.Waist.C1, torsoRot)
+	local upperTorso = PoseMath.Chain(lowerTorso, rig.Waist.C0, waistT, rig.Waist.C1)
+	local neckT = PoseMath.MotorTransform(upperTorso.Rotation, rig.Neck.C0, rig.Neck.C1, torsoRot * CFrame.Angles(math.rad(-28), 0, 0))
+	local size = rig.UpperTorso.Size
+	local t = os.clock() - (entry.UseT or os.clock())
+	local wrap = Vector3.new(math.sin(t * 7) * 0.12, math.cos(t * 7) * 0.08, 0)
+	local function point(local3, extra)
+		return upperTorso:PointToWorldSpace(Vector3.new(local3.X * size.X, local3.Y * size.Y, local3.Z) + extra)
+	end
+	local tRS, tRE, tRW = PoseMath.SolveArm(upperTorso, armJoints(rig.RShoulder, rig.RElbow, rig.RWrist), nil,
+		point(USE_RIGHT, wrap), upperTorso:VectorToWorldSpace(USE_RIGHT_POLE))
+	local tLS, tLE, tLW = PoseMath.SolveArm(upperTorso, armJoints(rig.LShoulder, rig.LElbow, rig.LWrist), nil,
+		point(USE_LEFT, Vector3.zero), upperTorso:VectorToWorldSpace(USE_LEFT_POLE))
+	if not PoseMath.AllFinite({ waistT, neckT, tRS, tRE, tRW, tLS, tLE, tLW }) then
+		return false
+	end
+	rig.Waist.Transform = waistT
+	rig.Neck.Transform = neckT
+	rig.RShoulder.Transform = tRS
+	rig.RElbow.Transform = tRE
+	rig.RWrist.Transform = tRW
+	rig.LShoulder.Transform = tLS
+	rig.LElbow.Transform = tLE
+	rig.LWrist.Transform = tLW
+	return true
+end
+
 local function updateCharacter(model, entry, dt, isLocal, cameraPosition)
+	-- Item benutzen: eigene Haltung statt Waffe (die Waffe ist dabei weggesteckt)
+	if model:GetAttribute("UsingItem") then
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		local root = model:FindFirstChild("HumanoidRootPart")
+		local visible = not isLocal or localState.Visible
+		if humanoid and root and humanoid.Health > 0 and visible and (root.Position - cameraPosition).Magnitude <= MAX_DISTANCE
+			and humanoid.RigType == Enum.HumanoidRigType.R15 then
+			entry.UseT = entry.UseT or os.clock()
+			local rig = ensureRig(model, entry, humanoid, root)
+			if rig and rig.Type == "R15" and poseUse(entry, rig) then
+				entry.Active = true
+				return
+			end
+		end
+	else
+		entry.UseT = nil
+	end
 	local tool = model:FindFirstChildOfClass("Tool")
 	local weapon = tool and tool:GetAttribute("Weapon")
 	local info = weapon and GunModels.Info[weapon]

@@ -29,6 +29,8 @@ ExtinctionConfig.HotbarSlots = 9     -- Plätze 1-9 = Tasten 1-9
 ExtinctionConfig.BagSlots = 30       -- Tasche gesamt (inkl. Hotbar)
 ExtinctionConfig.StashSlots = 40     -- Lager in der Safe Zone (immer sicher)
 ExtinctionConfig.SafeSlots = 20      -- Container: sichere Tasche, überall erreichbar, bleibt beim Tod
+-- Nach einem Schuss so viele Sekunden nichts in den Container (Safe) legen: Beute nicht mitten im Kampf in Sicherheit bringen
+ExtinctionConfig.SafeShotCooldown = 5
 ExtinctionConfig.StandRange = 14     -- so nah muss man am Stand/Lager sein (Studs)
 ExtinctionConfig.TravelCooldown = 10 -- Sekunden zwischen zwei Reisen (Haltestellen in den Safe Zones)
 ExtinctionConfig.SellFactor = 0.4    -- Verkauf: Anteil vom Kaufpreis
@@ -782,12 +784,12 @@ end
 -- Wenige und langsame Zombies: man kann ihnen davonlaufen (Spieler laufen 16, sprinten 24). Die Standardwerte gelten für
 -- den normalen Zombie (Walker), ZombieKinds überschreibt sie je Art. Läufer und Brocken gibt es vor allem in der roten Zone und nachts.
 ExtinctionConfig.Zombies = {
-	PerPlayer = 8,         -- so viele Zombies um jeden Spieler draußen (wie GLife: immer welche in der Nähe)
-	MaxTotal = 50,         -- höchstens so viele gleichzeitig auf dem Server
+	PerPlayer = 5,         -- so viele Zombies um jeden Spieler draußen (immer welche in der Nähe, aber nicht zu viele)
+	MaxTotal = 36,         -- höchstens so viele gleichzeitig auf dem Server
 	SpawnMin = 55,         -- Abstand zum Spieler beim Spawnen (Studs) ...
 	SpawnMax = 120,        -- ... im weiteren Umkreis
 	SpawnInterval = 2,     -- Sekunden zwischen zwei Spawn-Runden
-	Group = { 1, 3 },      -- je Runde kommt eine kleine Gruppe (so viele) dicht beieinander
+	Group = { 1, 2 },      -- je Runde kommt eine kleine Gruppe (so viele) dicht beieinander
 	SafeMargin = 40,       -- nicht so nah an der Safe Zone spawnen
 	DespawnDistance = 260, -- weiter weg von allen Spielern: verschwinden
 	Health = 140,

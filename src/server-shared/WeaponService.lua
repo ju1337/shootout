@@ -602,6 +602,7 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 				end
 			end
 		end
+		player:SetAttribute("ShotAt", workspace:GetServerTimeNow())
 		return true
 	end
 
@@ -626,6 +627,7 @@ local function fire(player, state, origin, direction, aiming, shotId, claims)
 			end
 		end
 	end
+	player:SetAttribute("ShotAt", workspace:GetServerTimeNow()) -- Container-Sperre nach dem Schießen (InventoryService)
 	ProgressService.AddStat(player, "ShotsFired", 1)
 	if next(hits) then
 		ProgressService.AddStat(player, "ShotsHit", 1)
