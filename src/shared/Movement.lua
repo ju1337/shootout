@@ -38,7 +38,9 @@ local player = Players.LocalPlayer
 local Movement = {}
 
 local DEFAULT_SPEED = 16
-local aimSensitivity = 0.6     -- Maus langsamer beim Zielen (Einstellung "Empfindlichkeit beim Zielen")
+local aimWeapon = nil           -- Waffe, mit der gerade gezielt wird (Empfindlichkeit beim Zielen je Waffe)
+local lookFactor = 1            -- aktueller Faktor auf die Kameradrehung (Umschauen, beim Zielen mal Zielen)
+local cameraHooked = false      -- Drehung der Roblox-Kamera wird direkt skaliert (siehe hookCameraInput)
 local SPRINT_FOV_BONUS = 8
 local SLIDE_FOV_BONUS = 6
 local SLIDE_CAMERA_DROP = -0.45 -- beim Rutschen sinkt die Kamera noch etwas tiefer als beim Ducken
@@ -214,7 +216,42 @@ local function apply()
 	end
 	-- Zielfernrohr (Sichtfeld unter 30°): Maus im selben Verhältnis langsamer, damit sich Zielen gleich anfühlt
 	local zoom = aimFov < 30 and math.tan(math.rad(aimFov / 2)) / math.tan(math.rad(15)) or 1
-	UserInputService.MouseDeltaSensitivity = aiming and sensitivity * aimSensitivity * zoom or sensitivity
+	lookFactor = aiming and sensitivity * PlayerSettings.AimSensitivityFor(aimWeapon) * zoom or sensitivity
+	-- Ersatz, falls die Kamera von Roblox nicht eingehängt werden konnte
+	UserInputService.MouseDeltaSensitivity = cameraHooked and 1 or lookFactor
+end
+
+-- Empfindlichkeit: Die Roblox-Kamera (PlayerModule › CameraModule › CameraInput) beachtet MouseDeltaSensitivity nicht
+-- zuverlässig, und Controller und Touch gar nicht. Darum wird ihre Drehung pro Bild direkt mit lookFactor
+-- multipliziert: gilt für Maus, Controller und Touch, in Ego- und Schulterkamera gleich.
+local function hookCameraInput()
+	local ok, cameraInput = pcall(function()
+		local scripts = player:WaitForChild("PlayerScripts", 10)
+		local module = scripts and scripts:WaitForChild("PlayerModule", 10)
+		local cameraModule = module and module:WaitForChild("CameraModule", 10)
+		local input = cameraModule and cameraModule:WaitForChild("CameraInput", 10)
+		return input and require(input)
+	end)
+	if not ok or type(cameraInput) ~= "table" or type(cameraInput.getRotation) ~= "function" then
+		warn("Movement: CameraInput nicht gefunden, Empfindlichkeit über MouseDeltaSensitivity")
+		return
+	end
+	local original = cameraInput.getRotation
+	cameraInput.getRotation = function(...)
+		local rotation = original(...)
+		if typeof(rotation) == "Vector2" and lookFactor ~= 1 then
+			return rotation * lookFactor
+		end
+		return rotation
+	end
+	cameraHooked = true
+	apply()
+end
+Movement.HookCameraInput = hookCameraInput
+
+-- Aktueller Faktor auf die Kameradrehung (Tests, Anzeige)
+function Movement.LookFactor()
+	return lookFactor
 end
 
 -- Seitlichen Schulter-Versatz kürzen, wenn neben dem Kopf eine Wand der Map ist (sonst schaut die
@@ -696,9 +733,10 @@ function Movement.IsThirdPerson()
 end
 
 -- Zielen an/aus (von WeaponClient), fov = Sichtfeld der Waffe beim Zielen
-function Movement.SetAiming(on, fov)
+function Movement.SetAiming(on, fov, weapon)
 	aiming = on
 	aimFov = fov or aimFov
+	aimWeapon = weapon or aimWeapon
 	apply()
 end
 
@@ -1084,8 +1122,7 @@ function Movement.Init()
 			Movement.SetFov(value)
 		elseif key == "Sensitivity" then
 			Movement.SetSensitivity(value)
-		elseif key == "AimSensitivity" then
-			aimSensitivity = value
+		elseif key == "AimSensitivity" or string.sub(key, 1, 9) == "AimSens_" then
 			apply()
 		elseif key == "ThirdPerson" then
 			Movement.SetThirdPerson(value == true)
@@ -1098,6 +1135,7 @@ function Movement.Init()
 		applySetting(setting.Key, PlayerSettings.Get(setting.Key))
 	end
 	PlayerSettings.Changed:Connect(applySetting)
+	task.spawn(hookCameraInput)
 
 	-- Kamera-Taste: zwischen Ego- und Schulterkamera wechseln (wird als Einstellung gespeichert),
 	-- Schulter-Taste: Schulter wechseln (nur für dieses Spiel, Start-Schulter steht in den Einstellungen)

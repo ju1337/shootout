@@ -23,10 +23,12 @@ PlayerSettings.Categories = {
 
 -- Type: Slider (Min/Max/Step, Format), Toggle (true/false), Choice (Options = { { Wert, "TEXT" } })
 PlayerSettings.List = {
-	{ Key = "Sensitivity", Category = "Controls", Label = "Maus-Empfindlichkeit", Type = "Slider", Default = 1,
-		Min = 0.1, Max = 3, Step = 0.05, Format = "%.2f" },
-	{ Key = "AimSensitivity", Category = "Controls", Label = "Empfindlichkeit beim Zielen", Type = "Slider", Default = 0.6,
-		Min = 0.2, Max = 1.5, Step = 0.05, Format = "%.2f", Hint = "Faktor auf die Maus-Empfindlichkeit" },
+	-- Umschauen gilt für Maus, Controller und Touch (Movement skaliert die Drehung der Roblox-Kamera)
+	{ Key = "Sensitivity", Category = "Controls", Label = "Umschauen", Type = "Slider", Default = 1,
+		Min = 0.1, Max = 3, Step = 0.05, Format = "%.2f", Hint = "Maus, Controller und Touch" },
+	{ Key = "AimSensitivity", Category = "Controls", Label = "Zielen (alle Waffen)", Type = "Slider", Default = 0.6,
+		Min = 0.2, Max = 1.5, Step = 0.05, Format = "%.2f", Hint = "Faktor auf Umschauen beim Zielen",
+		Expand = "AimWeapons" },
 	{ Key = "ToggleAim", Category = "Controls", Label = "Zielen", Type = "Choice", Default = false,
 		Options = { { false, "HALTEN" }, { true, "UMSCHALTEN" } } },
 	{ Key = "ToggleSprint", Category = "Controls", Label = "Sprinten", Type = "Choice", Default = false,
@@ -58,6 +60,22 @@ PlayerSettings.List = {
 		Step = 5, Format = "%d %%" },
 }
 
+-- Zielen je Waffe (aufklappbar unter „Zielen (alle Waffen)“): false = folgt der allgemeinen Einstellung, sonst eigener
+-- Faktor. Das LMG fehlt, es kann nicht zielen (HipOnly).
+PlayerSettings.AimWeapons = {
+	{ Weapon = "Rifle", Label = "Sturmgewehr" },
+	{ Weapon = "SMG", Label = "MP" },
+	{ Weapon = "DMR", Label = "Präzisionsgewehr" },
+	{ Weapon = "Shotgun", Label = "Schrotflinte" },
+	{ Weapon = "Pistol", Label = "Pistole" },
+	{ Weapon = "Revolver", Label = "Revolver" },
+}
+for _, entry in PlayerSettings.AimWeapons do
+	entry.Key = "AimSens_" .. entry.Weapon
+	table.insert(PlayerSettings.List, { Key = entry.Key, Category = "Controls", Group = "AimWeapons", Label = entry.Label,
+		Type = "Slider", Default = false, Follows = "AimSensitivity", Min = 0.2, Max = 1.5, Step = 0.05, Format = "%.2f" })
+end
+
 PlayerSettings.CrosshairColors = {
 	White = Color3.new(1, 1, 1),
 	Green = Color3.fromRGB(90, 255, 120),
@@ -78,6 +96,9 @@ end
 -- Einen Wert prüfen: gültiger Wert oder nil
 local function clean(setting, value)
 	if setting.Type == "Slider" then
+		if setting.Follows and value == false then
+			return false -- folgt der allgemeinen Einstellung
+		end
 		value = tonumber(value)
 		if not value or value ~= value then
 			return nil
@@ -131,6 +152,25 @@ function PlayerSettings.Get(key)
 		return setting and setting.Default
 	end
 	return value
+end
+
+-- Wert eines Reglers, der einer anderen Einstellung folgt (Follows), solange er keinen eigenen Wert hat
+function PlayerSettings.Effective(key)
+	local setting = byKey[key]
+	local value = PlayerSettings.Get(key)
+	if setting and setting.Follows and type(value) ~= "number" then
+		return PlayerSettings.Get(setting.Follows)
+	end
+	return value
+end
+
+-- Empfindlichkeit beim Zielen für eine Waffe: eigener Wert der Waffe oder der allgemeine
+function PlayerSettings.AimSensitivityFor(weapon)
+	local key = weapon and "AimSens_" .. tostring(weapon)
+	if key and byKey[key] then
+		return PlayerSettings.Effective(key)
+	end
+	return PlayerSettings.Get("AimSensitivity")
 end
 
 local saveToken = 0

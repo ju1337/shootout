@@ -222,6 +222,20 @@ local cards = creditsCard and creditsCard.Parent
 check(cards and cards.CanvasSize.Y.Offset >= creditsCard.Position.Y.Offset + creditsCard.Size.Y.Offset,
 	"CREDITS: bis ganz nach unten scrollbar")
 check(restore ~= nil and restore:FindFirstChild("PageAction") ~= nil, "OPTIONEN: STANDARD WIEDERHERSTELLEN in der Kopfzeile")
+-- Zielen je Waffe: zugeklappt unsichtbar, AUFKLAPPEN zeigt die Regler und schiebt die Karten darunter nach
+local controls = cards and cards:FindFirstChild("Card_Controls")
+local expandBar = controls and controls:FindFirstChild("Expand_AimWeapons")
+local group = controls and controls:FindFirstChild("Group_AimWeapons")
+check(expandBar ~= nil and group ~= nil and not group.Visible, "OPTIONEN: Zielen je Waffe zugeklappt")
+if expandBar and group then
+	local before = controls.Size.Y.Offset
+	expandBar.Activated:Fire()
+	check(group.Visible and group:FindFirstChild("Row_AimSens_DMR") ~= nil and group:FindFirstChild("Row_AimSens_LMG") == nil,
+		"AUFKLAPPEN: Regler je Waffe (ohne LMG)")
+	check(controls.Size.Y.Offset > before, "AUFKLAPPEN: Karte wächst")
+	expandBar.Activated:Fire()
+	check(not group.Visible and controls.Size.Y.Offset == before, "ZUKLAPPEN: wie vorher")
+end
 key(Enum.KeyCode.M)
 check(menu() == nil, "M schließt (auf OPTIONEN)")
 local lobbyGui = playerGui:FindFirstChild("GameMenu")

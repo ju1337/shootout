@@ -1072,7 +1072,7 @@ local function buildSettings()
 		local holder = make("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 0),
 			Size = UDim2.fromOffset(CONTROL_W, 36), BackgroundTransparency = 1 }, row)
 		local function step(direction)
-			PlayerSettings.Set(setting.Key, PlayerSettings.Get(setting.Key) + direction * setting.Step)
+			PlayerSettings.Set(setting.Key, PlayerSettings.Effective(setting.Key) + direction * setting.Step)
 		end
 		button({ Size = UDim2.fromOffset(36, 36), Text = "−", TextSize = 20, BackgroundColor3 = UITheme.Colors.Background },
 			holder, function()
@@ -1116,12 +1116,31 @@ local function buildSettings()
 				scroll.ScrollingEnabled = true
 			end
 		end)
+		-- Regler, der einer anderen Einstellung folgt (Zielen je Waffe): zeigt deren Wert grau, bis er einen eigenen hat;
+		-- darunter „Wie alle Waffen“ bzw. der Knopf zurück auf den allgemeinen Wert
+		local follow = nil
+		if setting.Follows then
+			follow = make("TextButton", { Name = "Follow", Position = UDim2.fromOffset(20, 34), Size = UDim2.fromOffset(300, 18),
+				BackgroundTransparency = 1, Text = "", TextSize = 13, Font = UITheme.FontFor(UITheme.Fonts.Bold, 13),
+				TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false, Selectable = false }, row)
+			follow.Activated:Connect(function()
+				PlayerSettings.Set(setting.Key, false)
+			end)
+		end
 		updaters[setting.Key] = function()
-			local current = PlayerSettings.Get(setting.Key)
+			local current = PlayerSettings.Effective(setting.Key)
 			local alpha = (current - setting.Min) / (setting.Max - setting.Min)
 			fill.Size = UDim2.fromScale(alpha, 1)
 			knob.Position = UDim2.fromScale(alpha, 0.5)
 			value.Text = string.format(setting.Format or "%s", current)
+			if follow then
+				local own = type(PlayerSettings.Get(setting.Key)) == "number"
+				follow.Text = own and "ZURÜCK AUF ALLE WAFFEN" or "Wie alle Waffen"
+				follow.TextColor3 = own and ACCENT or GRAY
+				follow.Active = own
+				value.TextColor3 = own and UITheme.Colors.Text or GRAY
+				fill.BackgroundColor3 = own and ACCENT or GRAY
+			end
 		end
 	end
 
@@ -1176,35 +1195,45 @@ local function buildSettings()
 		end
 	end
 
-	-- Karten in zwei Spalten, untereinander
+	-- Karten in zwei Spalten, untereinander. Zeilen mit Expand (Zielen) haben darunter eine aufklappbare Gruppe (Zielen je
+	-- Waffe); beim Auf- und Zuklappen rücken die Karten darunter nach (relayout).
 	local PREVIEW_H = 214
-	local columnY = { 0, 0 }
+	local EXPAND_H, GROUP_FOOT_H = 46, 56
+	local cards = {} -- { Frame, Column, Height = function() }
+	local expanded = {} -- [Group] = true
+	local relayout = function() end
 	for _, category in PlayerSettings.Categories do
-		local list = {}
+		local list, groups = {}, {}
 		for _, setting in PlayerSettings.List do
 			if setting.Category == category.Id then
-				table.insert(list, setting)
+				if setting.Group then
+					groups[setting.Group] = groups[setting.Group] or {}
+					table.insert(groups[setting.Group], setting)
+				else
+					table.insert(list, setting)
+				end
 			end
 		end
 		local column = category.Column == 2 and 2 or 1
-		local x = column == 1 and 0 or CARD_W + 24 - SCROLL_BAR
-		local y = columnY[column]
-		local height = 52 + #list * ROW_H + 8 + (category.Preview and PREVIEW_H or 0)
-		columnY[column] = y + height + 20
-		local card = UITheme.Card({ Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, height),
+		local card = UITheme.Card({ Name = "Card_" .. category.Id, Size = UDim2.fromOffset(CARD_W, 100),
 			BackgroundTransparency = 0.1 }, scroll)
 		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
 			BorderSizePixel = 0 }, card)
 		text({ Position = UDim2.fromOffset(32, 12), Size = UDim2.new(1, -52, 0, 30), Text = category.Name, TextSize = 24,
 			Font = DISPLAY }, card)
-		for i, setting in list do
-			local row = make("Frame", { Position = UDim2.fromOffset(0, 52 + (i - 1) * ROW_H), Size = UDim2.new(1, 0, 0, ROW_H),
-				BackgroundTransparency = 1 }, card)
-			if i > 1 then
-				make("Frame", { Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = BORDER,
-					BackgroundTransparency = 0.4, BorderSizePixel = 0 }, row)
+		local blocks = {} -- in Reihenfolge: { Frame, Height = function() } (Zeilen, Aufklapp-Leisten, Gruppen)
+		local function separator(parent)
+			make("Frame", { Name = "Line", Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -40, 0, 1), BackgroundColor3 = BORDER,
+				BackgroundTransparency = 0.4, BorderSizePixel = 0 }, parent)
+		end
+		local function settingRow(setting, parent, first)
+			local row = make("Frame", { Name = "Row_" .. setting.Key, Size = UDim2.new(1, 0, 0, ROW_H), BackgroundTransparency = 1 },
+				parent)
+			if not first then
+				separator(row)
 			end
-			text({ Position = UDim2.fromOffset(20, setting.Hint and 10 or 0), Size = UDim2.new(0, 300, 0, setting.Hint and 24 or ROW_H),
+			local hinted = setting.Hint or setting.Follows
+			text({ Position = UDim2.fromOffset(20, hinted and 10 or 0), Size = UDim2.new(0, 300, 0, hinted and 24 or ROW_H),
 				Text = setting.Label, TextSize = 18 }, row)
 			if setting.Hint then
 				text({ Position = UDim2.fromOffset(20, 34), Size = UDim2.new(0, 320, 0, 16), Text = setting.Hint, TextSize = 13,
@@ -1217,10 +1246,75 @@ local function buildSettings()
 			else
 				choice(row, setting)
 			end
+			return row
 		end
+		for i, setting in list do
+			local row = settingRow(setting, card, i == 1)
+			table.insert(blocks, { Frame = row, Height = function()
+				return ROW_H
+			end })
+			local members = setting.Expand and groups[setting.Expand]
+			if members then
+				local groupId = setting.Expand
+				-- Leiste: JEDE WAFFE EINZELN  ·  AUFKLAPPEN / ZUKLAPPEN
+				local bar = make("TextButton", { Name = "Expand_" .. groupId, Size = UDim2.new(1, 0, 0, EXPAND_H),
+					BackgroundTransparency = 1, Text = "", AutoButtonColor = false }, card)
+				separator(bar)
+				local barBg = make("Frame", { Position = UDim2.fromOffset(12, 6), Size = UDim2.new(1, -24, 1, -12),
+					BackgroundColor3 = UITheme.Colors.Background, BackgroundTransparency = 0.4, BorderSizePixel = 0 }, bar)
+				UITheme.Corner(barBg, UITheme.Radius.Small)
+				text({ Position = UDim2.fromOffset(20, 0), Size = UDim2.new(1, -220, 1, 0), Text = "JEDE WAFFE EINZELN", TextSize = 15 },
+					barBg)
+				local state = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -16, 0, 0), Size = UDim2.new(0, 180, 1, 0),
+					Text = "AUFKLAPPEN", TextSize = 15, TextColor3 = ACCENT, TextXAlignment = Enum.TextXAlignment.Right }, barBg)
+				table.insert(blocks, { Frame = bar, Height = function()
+					return EXPAND_H
+				end })
+				-- Gruppe: je Waffe ein Regler, unten ALLE WAFFEN ZURÜCKSETZEN
+				local group = make("Frame", { Name = "Group_" .. groupId, Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+					Visible = false, ClipsDescendants = true }, card)
+				for j, member in members do
+					local memberRow = settingRow(member, group, false)
+					memberRow.Position = UDim2.fromOffset(0, (j - 1) * ROW_H)
+				end
+				local foot = make("Frame", { Position = UDim2.fromOffset(0, #members * ROW_H), Size = UDim2.new(1, 0, 0, GROUP_FOOT_H),
+					BackgroundTransparency = 1 }, group)
+				separator(foot)
+				UITheme.Chunky({ Name = "ResetGroup", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -16, 0.5, 2),
+					Size = UDim2.fromOffset(280, 38), Color = CARD, StrokeColor = BORDER, Text = "ALLE WAFFEN ZURÜCKSETZEN", TextSize = 14 },
+					foot, function()
+					for _, member in members do
+						PlayerSettings.Set(member.Key, false)
+					end
+				end)
+				table.insert(blocks, { Frame = group, Height = function()
+					return expanded[groupId] and #members * ROW_H + GROUP_FOOT_H or 0
+				end })
+				bar.Activated:Connect(function()
+					expanded[groupId] = not expanded[groupId] or nil
+					state.Text = expanded[groupId] and "ZUKLAPPEN" or "AUFKLAPPEN"
+					relayout()
+				end)
+			end
+		end
+		local function layoutCard()
+			local y = 52
+			for _, block in blocks do
+				local h = block.Height()
+				block.Frame.Position = UDim2.fromOffset(0, y)
+				block.Frame.Size = UDim2.new(1, 0, 0, h)
+				block.Frame.Visible = h > 0
+				y += h
+			end
+			return y
+		end
+		local previewY = layoutCard()
+		table.insert(cards, { Frame = card, Column = column, Height = function()
+			return layoutCard() + 8 + (category.Preview and PREVIEW_H or 0)
+		end })
 		if category.Preview == "HitFeedback" then
 			-- Vorschau: läuft leise in Schleife; nach dem Umschalten oder per Klick sofort mit Ton
-			local surface = make("TextButton", { Name = "HitPreview", Position = UDim2.fromOffset(20, 52 + #list * ROW_H + 2),
+			local surface = make("TextButton", { Name = "HitPreview", Position = UDim2.fromOffset(20, previewY + 2),
 				Size = UDim2.fromOffset(CARD_W - 40, PREVIEW_H - 12), BackgroundColor3 = Color3.new(1, 1, 1),
 				BorderSizePixel = 0, Text = "", AutoButtonColor = false }, card)
 			UITheme.Corner(surface, UITheme.Radius.Small)
@@ -1249,14 +1343,18 @@ local function buildSettings()
 	-- CREDITS (Namensnennung für fremde Modelle, CC BY 4.0, siehe Credits.lua) unter die kürzere Spalte:
 	-- je Modell Titel, darunter Autor und Profil, rechts die Waffe im Spiel; unten Lizenz und Hinweis auf Änderungen
 	do
-		local column = columnY[2] <= columnY[1] and 2 or 1
-		local x = column == 1 and 0 or CARD_W + 24 - SCROLL_BAR
-		local y = columnY[column]
+		local columnH = { 0, 0 }
+		for _, entry in cards do
+			columnH[entry.Column] += entry.Height() + 20
+		end
+		local column = columnH[2] <= columnH[1] and 2 or 1
 		local FOOTER_H = 40
 		local height = 52 + #Credits.Models * ROW_H + FOOTER_H + 8
-		columnY[column] = y + height + 20
-		local card = UITheme.Card({ Name = "CreditsCard", Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(CARD_W, height),
+		local card = UITheme.Card({ Name = "CreditsCard", Size = UDim2.fromOffset(CARD_W, height),
 			BackgroundTransparency = 0.1 }, scroll)
+		table.insert(cards, { Frame = card, Column = column, Height = function()
+			return height
+		end })
 		make("Frame", { Position = UDim2.fromOffset(20, 18), Size = UDim2.fromOffset(3, 18), BackgroundColor3 = ACCENT,
 			BorderSizePixel = 0 }, card)
 		text({ Position = UDim2.fromOffset(32, 12), Size = UDim2.new(1, -52, 0, 30), Text = "CREDITS", TextSize = 24,
@@ -1286,8 +1384,19 @@ local function buildSettings()
 				Credits.LicenseUrl), TextSize = 13, Font = UITheme.Fonts.Body, TextColor3 = GRAY, TextWrapped = true }, footer)
 	end
 
-	-- Höhe der Scrollfläche: längere der beiden Spalten (ohne den Abstand nach der letzten Karte)
-	scroll.CanvasSize = UDim2.fromOffset(0, math.max(columnY[1], columnY[2]) - 20)
+	-- Karten untereinander in ihre Spalte; Höhe der Scrollfläche = längere Spalte (ohne den Abstand nach der letzten Karte)
+	relayout = function()
+		local columnY = { 0, 0 }
+		for _, entry in cards do
+			local height = entry.Height()
+			local x = entry.Column == 1 and 0 or CARD_W + 24 - SCROLL_BAR
+			entry.Frame.Position = UDim2.fromOffset(x, columnY[entry.Column])
+			entry.Frame.Size = UDim2.fromOffset(CARD_W, height)
+			columnY[entry.Column] += height + 20
+		end
+		scroll.CanvasSize = UDim2.fromOffset(0, math.max(columnY[1], columnY[2]) - 20)
+	end
+	relayout()
 
 	local function updateAll()
 		for _, update in updaters do
@@ -1299,6 +1408,12 @@ local function buildSettings()
 	PlayerSettings.Changed:Connect(function(key)
 		if updaters[key] then
 			updaters[key]()
+		end
+		-- Regler, die dieser Einstellung folgen (Zielen je Waffe folgt Zielen allgemein)
+		for _, setting in PlayerSettings.List do
+			if setting.Follows == key and updaters[setting.Key] then
+				updaters[setting.Key]()
+			end
 		end
 	end)
 	page.Refresh = updateAll

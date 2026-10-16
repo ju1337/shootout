@@ -138,7 +138,7 @@ local function setAiming(on)
 	end
 	SkinEffects.SetAiming(on) -- Effekt-Skins: beim Zielen keine Dauer-Partikel an der eigenen Waffe
 	aimFovShown = aimFov(current)
-	Movement.SetAiming(on, aimFovShown)
+	Movement.SetAiming(on, aimFovShown, current)
 	aimChanged:Fire(on)
 end
 
@@ -538,7 +538,7 @@ local function equip(slot)
 	WeaponEffects.ActionSound("Draw", nil, name)
 	if aiming then
 		aimFovShown = aimFov(name)
-		Movement.SetAiming(true, aimFovShown)
+		Movement.SetAiming(true, aimFovShown, name)
 	end
 	Remotes.Equip:FireServer(name)
 end
@@ -802,7 +802,7 @@ function WeaponClient.Init()
 		aimBlend += ((aiming and 1 or 0) - aimBlend) * math.min(1, AIM_SPEED * dt)
 		if aiming and aimFov(current) ~= aimFovShown then -- z.B. Wechsel Ego <-> Third-Person beim Zielen
 			aimFovShown = aimFov(current)
-			Movement.SetAiming(true, aimFovShown)
+			Movement.SetAiming(true, aimFovShown, current)
 		end
 
 		-- Nachlade-Animation: Ereignisse auslösen, Ende abwarten (Server bestätigt das Nachladen)

@@ -48,6 +48,17 @@ check(PlayerSettings.Definition("DamageNumbers").Default == "Float", "Standard d
 check(PlayerSettings.Sanitize({}, { DamageNumbers = false }).DamageNumbers == false, "altes false bleibt AUS")
 check(PlayerSettings.Sanitize({ HitmarkerStyle = "Riesig" }, nil).HitmarkerStyle == nil, "unbekannter Stil fällt weg")
 
+-- Zielen je Waffe: false = folgt der allgemeinen Einstellung, eigener Wert wird gespeichert, LMG fehlt (kann nicht zielen)
+check(PlayerSettings.Definition("AimSens_LMG") == nil, "LMG hat keine Zielen-Empfindlichkeit")
+for _, entry in PlayerSettings.AimWeapons do
+	local def = PlayerSettings.Definition(entry.Key)
+	check(def ~= nil and def.Follows == "AimSensitivity" and def.Default == false, entry.Key .. ": folgt Zielen allgemein")
+end
+local aimSaved = PlayerSettings.Sanitize({ AimSens_DMR = 0.4, AimSens_Rifle = false, AimSens_SMG = "x" }, nil)
+check(math.abs(aimSaved.AimSens_DMR - 0.4) < 1e-6, "eigener Wert je Waffe wird gespeichert")
+check(aimSaved.AimSens_Rifle == false, "folgt allgemein bleibt false")
+check(aimSaved.AimSens_SMG == nil, "ungültiger Wert je Waffe fällt weg")
+
 -- Client: Set/Get, auch auf false; gespeichert wird gebündelt nach 1 s
 local changes = {}
 PlayerSettings.Changed:Connect(function(key, value)
@@ -78,5 +89,16 @@ check(last and last.KeyHints == false and last.DamageNumbers == "Stack" and last
 local server = PlayerSettings.Sanitize(last, nil)
 check(server.KeyHints == false and server.DamageNumbers == "Stack" and server.HitmarkerStyle == "Classic",
 	"Server übernimmt die gespeicherten Werte")
+
+-- Client: Zielen je Waffe folgt dem allgemeinen Wert, bis ein eigener gesetzt wird; zurück mit false
+PlayerSettings.Set("AimSensitivity", 0.8)
+check(PlayerSettings.AimSensitivityFor("DMR") == 0.8, "DMR folgt Zielen allgemein")
+PlayerSettings.Set("AimSens_DMR", 0.3)
+check(math.abs(PlayerSettings.AimSensitivityFor("DMR") - 0.3) < 1e-6, "DMR mit eigenem Wert")
+check(PlayerSettings.AimSensitivityFor("Rifle") == 0.8, "andere Waffen bleiben beim allgemeinen Wert")
+check(PlayerSettings.AimSensitivityFor("LMG") == 0.8 and PlayerSettings.AimSensitivityFor(nil) == 0.8,
+	"unbekannte Waffe: allgemeiner Wert")
+PlayerSettings.Set("AimSens_DMR", false)
+check(PlayerSettings.AimSensitivityFor("DMR") == 0.8, "DMR wieder zurück auf allgemein")
 
 print(failures == 0 and "ALLE TESTS OK" or ("FEHLER: " .. failures))
