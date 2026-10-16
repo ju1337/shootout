@@ -1138,6 +1138,7 @@ local function buildSettings()
 				follow.Text = own and "ZURÜCK AUF ALLE WAFFEN" or "Wie alle Waffen"
 				follow.TextColor3 = own and ACCENT or GRAY
 				follow.Active = own
+				follow.Selectable = own -- Controller: nur erreichbar, wenn es etwas zurückzusetzen gibt
 				value.TextColor3 = own and UITheme.Colors.Text or GRAY
 				fill.BackgroundColor3 = own and ACCENT or GRAY
 			end

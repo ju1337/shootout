@@ -31,6 +31,7 @@ local Modes = require(Shared.Modes)
 local BuyConfig = require(Shared.BuyConfig)
 local InputActions = require(Shared.InputActions)
 local PlayerSettings = require(Shared.PlayerSettings)
+local AimAssist = require(Shared.AimAssist)
 local P = require(Shared.MovementPhysics)
 
 local player = Players.LocalPlayer
@@ -239,8 +240,12 @@ local function hookCameraInput()
 	local original = cameraInput.getRotation
 	cameraInput.getRotation = function(...)
 		local rotation = original(...)
-		if typeof(rotation) == "Vector2" and lookFactor ~= 1 then
-			return rotation * lookFactor
+		if typeof(rotation) == "Vector2" then
+			if lookFactor ~= 1 then
+				rotation *= lookFactor
+			end
+			-- Controller: Zielhilfe (abbremsen am Ziel, einrasten beim Anlegen) und Y-Achse umkehren
+			return AimAssist.Adjust(rotation, aiming, AimAssist.FrameTime())
 		end
 		return rotation
 	end
@@ -734,7 +739,11 @@ end
 
 -- Zielen an/aus (von WeaponClient), fov = Sichtfeld der Waffe beim Zielen
 function Movement.SetAiming(on, fov, weapon)
+	local started = on and not aiming
 	aiming = on
+	if started then
+		AimAssist.OnAim() -- Controller: auf einen nahen Zombie einrasten
+	end
 	aimFov = fov or aimFov
 	aimWeapon = weapon or aimWeapon
 	apply()

@@ -897,6 +897,10 @@ verschwindet. Unten in der Mitte zeigt eine Leiste die Tasten (✕ AUSWÄHLEN, �
 Select/Touchpad wählt keine Knöpfe aus (Roblox-Standard aus), HUD-Knöpfe sind nie auswählbar (`InputActions.NoSelect`).
 Auf der Konsole (Fernseher) wächst das HUD bis zur vollen Bildschirmgröße (1080p: 1,2 statt 1:1), Fenster nutzen 95 %
 des Bildes (`UITheme.TenFoot`).
+Zielhilfe für den Controller (`AimAssist`, OPTIONEN › STEUERUNG › Zielhilfe (Controller), Standard an): liegt ein
+sichtbarer Gegner dicht am Fadenkreuz, dreht der Stick langsamer (Hüfte ×0,55, Zielen ×0,45); beim Anlegen (L2) zieht
+die Kamera in 0,14 s auf einen nahen Zombie/Bot (nie auf Spieler). Nur mit Waffe, außerhalb der Safe Zone und ohne
+offenes Menü, nie mit Maus oder Touch. Dazu „Y-Achse umkehren (Controller)“.
 
 Handy (Touch): Stick links, Knöpfe rechts (FEUER, ZIELEN, SPRUNG, DUCKEN, LADEN, FÄHIGK., GADGET, MESSER, WAFFE,
 AKTION), oben rechts PING, PUNKTE, KAMERA, ULT, INSPEKT, links SPRINT; in EXTINCTION TASCHE und PARKEN statt
@@ -1016,6 +1020,7 @@ am Commit:
 | `economy` | RAP: alte Spielstände, Stückzahlen und Duplikate, Rückverkauf ans System (Skin weg und abgelegt, RAP drauf, gespeichert), Reservierungen, Austausch mit Marktgebühr (alles oder nichts) |
 | `maps` (tests/maps_check.py) | Markt-Karte: Teile, die Server und Client suchen (Such-Terminal, Kisten-Automat, Tafeln, Portal), Spawns auf dem Platz, Stände lückenlos mit Prompt und Ausstellplätzen, alle zur Mitte gerichtet, nicht zu dicht, drei Ränge; alle Teile des früheren Hubs im Camp, kein Hub mehr |
 | `tradeui` | Tausch-Oberfläche: Spielerliste mit T, Entfernung, Anfrage, zu weit weg gesperrt, Hinweis T nur im Markt, Esc schließt |
+| `aimassist` | Zielhilfe Controller: bremst am sichtbaren Ziel (beim Zielen mehr), nicht daneben, nicht mit der Maus, nicht in der Safe Zone, ohne Waffe, bei Option aus oder hinter einer Wand; Anlegen rastet auf Zombies ein (nicht auf Spieler) und ist nach kurzer Zeit vorbei; Y-Achse umkehren nur mit Controller |
 | `console` | Konsole: PlayStation-/Xbox-Beschriftung je nach Gerät, Select wählt nichts, roter Auswahlrahmen, HUD-Knöpfe nicht auswählbar, Auswahl bleibt im Fenster und kommt im offenen Menü zurück, HUD auf dem Fernseher 1,2 statt 1:1, Fenster mit Rand, Controller-Leiste (✕ AUSWÄHLEN, ○ ZURÜCK, Einträge der Fenster), aus mit der Maus |
 | `padhold`, `extinctionpad` | Controller antippen/halten: kurz = Antippen-Aktion beim Loslassen, lang = Halten-Aktion bis zum Loslassen, Tasten ohne Halten sofort, Hinweis „△ HALTEN“; EXTINCTION-Belegung (↑ Ping/Karte, Select Inventar/Squad, △ heilen/parken) mit echten Tasten, Heil-Item-Wahl (Medikit/Verband/anderes, Meldung ohne), außerhalb der offenen Welt normale Belegung |
 | `spectatortouch`, `tradefocus` | Zuschauen auf dem Handy: Knöpfe ZURÜCK/WEITER wechseln das Ziel, nur auf Touch, weg nach Respawn; Controller-Auswahl in der Tausch-Spielerliste: erster Knopf statt Schließen-Kreuz, bleibt nach dem Neuaufbau im Fenster, weg beim Schließen |
