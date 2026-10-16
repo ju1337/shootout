@@ -149,7 +149,7 @@ local function agentId()
 end
 
 -- Waffe mit Armen vor der Kamera (nur für einen selbst sichtbar)
-local AVATAR_ARM_WIDTH = 0.19 -- eigener Avatar: Unterarme vor der Kamera schlank (Studs) statt blockig 1 Stud dick
+local AVATAR_ARM_WIDTH = 0.12 -- eigener Avatar: Unterarme vor der Kamera schlank (Studs), verdecken wenig vom Bild
 local function updateViewModel()
 	if viewModel then
 		viewModel:Destroy()

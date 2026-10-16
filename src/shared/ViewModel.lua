@@ -31,11 +31,14 @@ local SPRINT = CFrame.new(-0.3, -0.3, 0.15) * CFrame.Angles(math.rad(-22), math.
 -- Ziehen beim Waffenwechsel: kommt von unten
 local DRAW = CFrame.new(0, -0.6, 0.3) * CFrame.Angles(math.rad(-40), math.rad(10), math.rad(-10))
 local DRAW_TIME = 0.35
--- Schultern unter der Kamera (außerhalb des Bildes), Länge von Ober- und Unterarm. Unterarm im Verhältnis zur Waffe wie
--- echt (gut 40 % der Strecke Griff–Mündung eines Gewehrs); die Schultern sitzen so weit vorn, dass die Arme die Hände
--- ohne Strecken erreichen (sonst zieht der Unterarm sich lang)
-local RIGHT_SHOULDER = Vector3.new(0.95, -1.7, 0.5)
-local LEFT_SHOULDER = Vector3.new(-0.7, -1.8, -1.0)
+-- kurze Waffen beim Zielen so viel weiter vor dem Auge (Modell-Einheiten), die Visierlinie bleibt in der Bildmitte
+local SHORT_AIM_REACH = 0.6
+-- Schultern tief unter der Kamera (außerhalb des Bildes), die Ellbogen zeigen nach unten: die Arme kommen von unten ins
+-- Bild statt quer davor (vor allem beim Zielen, wenn die Waffe nah am Auge ist). Länge von Ober- und Unterarm: Unterarm
+-- im Verhältnis zur Waffe wie echt (gut 40 % der Strecke Griff–Mündung eines Gewehrs)
+local RIGHT_SHOULDER = Vector3.new(0.8, -2.3, 0.5)
+local LEFT_SHOULDER = Vector3.new(-0.6, -2.3, -0.8)
+local LEFT_SHOULDER_SHORT = Vector3.new(-0.6, -2.3, 0.3) -- kurze Waffen: beide Hände am Griff, Schulter nicht so weit vorn
 local UPPER_ARM, FOREARM = 1.7, 1.2
 local GLOVE_COLOR = Color3.fromRGB(38, 38, 44)
 -- Gebaute Arme (ohne echte Arme): Ärmel bis kurz vor das Handgelenk, dann Handgelenk und Hand in Hautfarbe.
@@ -285,6 +288,10 @@ function ViewModel.new(weaponName, skin, sleeveColor, attachments, arms, handCol
 	end
 	self.Hip = (self.Info.Long and HIP_LONG or HIP_SHORT) * CFrame.new(0, -(self.Info.HipDrop or 0), 0)
 	self.Aim = GunModels.AimOffset(weaponName, attachments)
+	if not self.Info.Long then
+		-- Pistole/Revolver beim Zielen weiter vorn (gestreckte Arme): Hände und Arme verdecken weniger vom Bild
+		self.Aim = CFrame.new(0, 0, -SHORT_AIM_REACH) * self.Aim
+	end
 	self.Kick = newSpring()   -- Rückschlag: X = nach oben (Grad), Y = zur Seite (Grad), Z = nach hinten (Studs)
 	self.Sway = { Value = Vector3.zero } -- Schwanken: X = Nicken, Y = Drehen (Grad)
 	self.Dip = newSpring()    -- Eintauchen beim Landen (Y)
@@ -412,8 +419,8 @@ function ViewModel:Update(dt, state)
 	local leftLocal = pose and pose.Hand or CFrame.new(self.Info.LeftHand)
 	local left = gunWorld * scaled(leftLocal)
 	if self.Arms.Right then
-		self:PlaceArm(self.Arms.Right, camera, right, RIGHT_SHOULDER, Vector3.new(1, -0.6, 0.2))
-		self:PlaceArm(self.Arms.Left, camera, left, LEFT_SHOULDER, Vector3.new(-1, -0.7, 0.1))
+		self:PlaceArm(self.Arms.Right, camera, right, RIGHT_SHOULDER, Vector3.new(0.4, -1, 0.3))
+		self:PlaceArm(self.Arms.Left, camera, left, self.Info.Long and LEFT_SHOULDER or LEFT_SHOULDER_SHORT, Vector3.new(-0.4, -1, 0.2))
 	end
 end
 
