@@ -234,6 +234,16 @@ step(0.4)
 local _, highlighted = ExtTutorial.CurrentCoach()
 check(highlighted ~= nil and highlighted.Name == "Claim" and focus.Highlight.Visible, "Kits: roter Rahmen um ABHOLEN")
 check(callout.Visible and not callout.Next.Visible and callout.Wait.Text == "MACH ES JETZT", "Kits: Karte wartet auf die Aktion")
+-- Rahmen sitzt genau auf dem Knopf, auch mit der oberen Leiste von Roblox (AbsolutePosition zählt ab ihrer Unterkante)
+SIM.GuiInset = 58
+step(0.3)
+local frame = focus.Highlight
+check((frame.AbsolutePosition - (highlighted.AbsolutePosition - Vector2.new(6, 6))).Magnitude < 1
+	and (frame.AbsoluteSize - (highlighted.AbsoluteSize + Vector2.new(12, 12))).Magnitude < 1, "Rahmen genau um ABHOLEN")
+local cardTop, cardBottom = callout.AbsolutePosition.Y, callout.AbsolutePosition.Y + callout.AbsoluteSize.Y
+local buttonTop, buttonBottom = highlighted.AbsolutePosition.Y, highlighted.AbsolutePosition.Y + highlighted.AbsoluteSize.Y
+check(cardBottom <= buttonTop or cardTop >= buttonBottom, "Karte verdeckt den Knopf nicht")
+SIM.GuiInset = nil
 bob:SetAttribute("ExtBag", HttpService:JSONEncode({ { S = 2, Id = "Pistol", N = 1 }, { S = 6, Id = "Bandage", N = 5 } }))
 step(0.4)
 check(ExtTutorial.CurrentStep() == "Inventory", "Schritt 2: Inventar")

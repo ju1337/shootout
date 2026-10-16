@@ -605,12 +605,19 @@ local function coachDone(entry)
 	return entry.Done ~= nil and entry.Done()
 end
 
+-- Lage eines Elements in der Ebene des Tutorials. AbsolutePosition zählt in Roblox immer ab der Unterkante der oberen
+-- Leiste (GuiInset), auch in Oberflächen mit IgnoreGuiInset; die Ebene selbst beginnt aber ganz oben (ihre
+-- AbsolutePosition ist dann (0, -Inset)). Ohne diesen Abzug saß der Rahmen um die Höhe der Leiste zu weit oben.
+local function onFocus(object)
+	return object.AbsolutePosition - focusGui.AbsolutePosition
+end
+
 -- Coach-Karte neben das Element legen (unten, sonst oben), innerhalb des Bildschirms
 local function placeCallout(object)
 	local viewport = focusGui.AbsoluteSize
 	local width = math.min(360, viewport.X - 32)
 	callout.Size = UDim2.fromOffset(width, 0)
-	local pos, size = object.AbsolutePosition, object.AbsoluteSize
+	local pos, size = onFocus(object), object.AbsoluteSize
 	local height = callout.AbsoluteSize.Y > 0 and callout.AbsoluteSize.Y or 130
 	local x = math.clamp(pos.X + size.X / 2 - width / 2, 16, math.max(16, viewport.X - width - 16))
 	local y = pos.Y + size.Y + 14
@@ -927,7 +934,8 @@ local function render()
 	local object = state.HighlightObject
 	if object and highlight.Visible then
 		if object.Parent and shown(object) then
-			highlight.Position = UDim2.fromOffset(object.AbsolutePosition.X - 6, object.AbsolutePosition.Y - 6)
+			local at = onFocus(object)
+			highlight.Position = UDim2.fromOffset(at.X - 6, at.Y - 6)
 			highlight.Size = UDim2.fromOffset(object.AbsoluteSize.X + 12, object.AbsoluteSize.Y + 12)
 			local pulse = (math.sin(os.clock() * 5) + 1) / 2
 			highlightStroke.Thickness = 2 + pulse * 2

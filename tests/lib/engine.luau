@@ -390,7 +390,13 @@ SIM.ScreenSize = Vector2.new(1920, 1080)
 local function guiAbsolute(self)
 	local props = rawget(self, "__props")
 	if isA(props.ClassName, "LayerCollector") then
-		return Vector2.zero, SIM.ScreenSize
+		-- wie in Roblox: AbsolutePosition zählt ab der Unterkante der oberen Leiste (SIM.GuiInset, Standard 0); eine
+		-- Oberfläche mit IgnoreGuiInset beginnt darüber
+		local inset = SIM.GuiInset or 0
+		if props.IgnoreGuiInset and inset > 0 then
+			return Vector2.new(0, -inset), SIM.ScreenSize
+		end
+		return Vector2.zero, SIM.ScreenSize - Vector2.new(0, inset)
 	end
 	local parent = props.Parent
 	local parentProps = parent and rawget(parent, "__props")
