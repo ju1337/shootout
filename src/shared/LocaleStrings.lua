@@ -3182,4 +3182,17 @@ return {
 	["  ·  +{1} MÜNZEN (TAGESBELOHNUNG)"] = "  ·  +{1} COINS (DAILY REWARD)",
 	["{1} SCHIESST GERADE"] = "{1} IS SHOOTING",
 	["E AM STAND · 30 SEKUNDEN"] = "E AT THE STAND · 30 SECONDS",
+	-- Tutorial (erweitert)
+	["HEB DIE BEUTE AUF"] = "PICK UP THE LOOT",
+	["Geh zum toten Zombie und drück {1}: alles, was er dabei hat, landet <b>sofort in deiner Tasche</b>. Auch Taschen, Kisten und Lootdrops durchsuchst du so."] = "Walk up to the dead zombie and press {1}: everything it carried goes <b>straight into your bag</b>. You search bags, crates and supply drops the same way.",
+	["ÖFFNE DIE KARTE"] = "OPEN THE MAP",
+	["Drück {1} für die große Karte. Dort siehst du die <b>Safe Zones</b> (grün), die <b>rote Zone</b>, Lootdrops, Konvois, Bosse und deine verlorene Tasche. Mit dem Mausrad zoomst du."] = "Press {1} for the big map. It shows the <b>safe zones</b> (green), the <b>red zone</b>, supply drops, convoys, bosses and your lost bag. Zoom with the mouse wheel.",
+	["DIE ROTE ZONE"] = "THE RED ZONE",
+	["Die <b>rote Zone</b> wandert alle 20 Minuten weiter (rote Linie und Rauchsäule). Drinnen gilt <b>sofort PvP</b>, es gibt mehr und härtere Zombies, aber <b>viel bessere Beute</b>. Kills dort bringen <b>RZ-Punkte</b> – die tauschst du beim <b>Schieber</b> im Camp gegen Spezialwaffen und Aufsätze."] = "The <b>red zone</b> moves every 20 minutes (red line and smoke column). Inside, <b>PvP is on right away</b>, there are more and tougher zombies, but <b>much better loot</b>. Kills there earn <b>RZ points</b> – trade them at the <b>Fence</b> in the camp for special weapons and attachments.",
+	["HÄNDLER, LAGER UND MARKT"] = "VENDORS, STASH AND MARKET",
+	["Im Camp <b>verkaufst</b> du Beute an den Händlern und kaufst Munition, Heilung und Fahrzeuge. Ins <b>Lager</b> legst du, was sicher bleiben soll, und die <b>Container</b>-Plätze im Inventar verlierst du nie. Im <b>Markt</b> handelst du mit anderen Spielern."] = "In the camp you <b>sell</b> loot to the vendors and buy ammo, healing and vehicles. Put what should stay safe into your <b>stash</b>, and you never lose the <b>container</b> slots in your inventory. In the <b>market</b> you trade with other players.",
+	["DEIN VERSTECK"] = "YOUR HIDEOUT",
+	["Ab Level 4 gehört dir ein <b>Versteck</b> im Camp: Module für mehr Leben und Rabatt, ein Generator für Münzen, die <b>Werkbank</b> zum Herstellen und täglich drei <b>Funkaufträge</b>. Daneben übst du am <b>Schießstand</b>."] = "From level 4 you own a <b>hideout</b> in the camp: modules for more health and discounts, a generator for coins, the <b>workbench</b> for crafting and three <b>radio contracts</b> every day. Practice at the <b>shooting range</b> next to it.",
+	["Stirbst du draußen, <b>fällt deine Tasche</b> an der Stelle zu Boden – Container und Lager bleiben sicher. Hol sie dir zurück, bevor es jemand anderes tut. Alles Weitere: Menü {1} → <b>GUIDE</b>. Viel Glück da draußen."] = "If you die outside, your <b>bag drops</b> where you died – your container and stash stay safe. Get it back before someone else does. Everything else: menu {1} → <b>GUIDE</b>. Good luck out there.",
+	["Das Tutorial zeigt dir alles Wichtige: Starter Kit, Inventar, dein erster Zombie und seine Beute, die Karte, die rote Zone, Händler und dein Versteck. Du kannst es jederzeit im Menü unter GUIDE überspringen."] = "The tutorial shows you everything important: starter kit, inventory, your first zombie and its loot, the map, the red zone, vendors and your hideout. You can skip it any time in the menu under GUIDE.",
 }

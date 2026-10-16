@@ -12,6 +12,7 @@ end
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remotes = require("Remotes")
 local ProgressService = require("ProgressService")
+ProgressService.StartCoins = 0 -- hier ohne Startgeld (Beträge unten sind genau)
 local LeaderboardService = require("LeaderboardService")
 local AdminService = require("AdminService")
 ProgressService.Init()

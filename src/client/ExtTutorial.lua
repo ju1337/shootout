@@ -3,7 +3,7 @@
 -- ExtTutorial (Profil ohne TutorialDone und ohne GuideHinted, siehe Extinction.AddPlayer). Dann erscheint eine Karte
 -- WELCOME mit START TUTORIAL / SKIP (Maus frei), danach führt eine Tafel oben in der Mitte Schritt für Schritt:
 -- Starter-Kit holen (Wegpunkt zum Kit-Händler), Inventar öffnen, Waffe in die Hand, Safe Zone verlassen, Zombie töten,
--- zum Schluss die wichtigsten Regeln. Jeder Schritt prüft selbst, ob er erledigt ist (Attribute ExtBag, ExtEquipped,
+-- Beute aufheben, Karte öffnen, dann Erklär-Schritte (rote Zone, Händler und Lager, Versteck) und die wichtigsten Regeln. Jeder Schritt prüft selbst, ob er erledigt ist (Attribute ExtBag, ExtEquipped,
 -- InSafeZone, ZombieKills, offenes Fenster); ist er es schon, geht es gleich weiter. Fertig oder übersprungen meldet
 -- ExtAction "Tutorial" an den Server (Profil TutorialDone, danach nie wieder von selbst). Im GUIDE-Reiter startet oder
 -- beendet ein Knopf das Tutorial jederzeit (ExtTutorial.Start / Stop).
@@ -33,6 +33,8 @@ local ExtTutorial = {}
 
 local RED = Color3.fromRGB(214, 58, 58) -- Akzent wie im Menü der offenen Welt
 local READY_TIME = 12 -- Sekunden, die der letzte Schritt (nur Text) stehen bleibt
+local INFO_TIME = 15 -- Sekunden je Erklär-Schritt (rote Zone, Händler und Lager, Versteck)
+local LOOT_WAIT = 45 -- so lange wartet der Beute-Schritt höchstens (nicht jeder Zombie lässt etwas fallen)
 local CHECK_EVERY = 0.2
 
 local hooks: { WindowKind: (() -> string?)? } = {} -- von ExtinctionClient: WindowKind() = Art des offenen Fensters oder nil
@@ -43,6 +45,7 @@ local state = {
 	StepStart = 0,
 	ResumedAt = 0, -- zuletzt TutorialEquip neu angefragt
 	Kills = 0, -- ZombieKills beim Start des Zombie-Schritts
+	PickedAt = 0, -- os.clock() des letzten Aufhebens (ExtUpdate "Picked")
 	Started = false, -- schon begonnen (nach Verlassen und Wiederkommen weiter, ohne neue Karte)
 	Finished = false, -- fertig oder übersprungen (in dieser Sitzung nicht mehr von selbst)
 }
@@ -173,10 +176,48 @@ ExtTutorial.Steps = {
 		Done = function()
 			return (player:GetAttribute("ZombieKills") or 0) > state.Kills
 		end },
+	{ Id = "Loot", Title = "HEB DIE BEUTE AUF",
+		Text = function()
+			return "Geh zum toten Zombie und drück " .. key("Interact", "den Knopf auf dem Bildschirm")
+				.. ": alles, was er dabei hat, landet <b>sofort in deiner Tasche</b>. Auch Taschen, Kisten und Lootdrops durchsuchst du so."
+		end,
+		Start = function()
+			state.PickedAt = 0
+		end,
+		Done = function()
+			return state.PickedAt > state.StepStart or os.clock() - state.StepStart > LOOT_WAIT
+		end },
+	{ Id = "Map", Title = "ÖFFNE DIE KARTE",
+		Text = function()
+			return "Drück " .. key("WorldMap", "[N]") .. " für die große Karte. Dort siehst du die <b>Safe Zones</b> (grün), die "
+				.. "<b>rote Zone</b>, Lootdrops, Konvois, Bosse und deine verlorene Tasche. Mit dem Mausrad zoomst du."
+		end,
+		Done = function()
+			local map = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("ExtinctionMap")
+			return map ~= nil and map:IsA("ScreenGui") and map.Enabled
+		end },
+	{ Id = "Redzone", Title = "DIE ROTE ZONE", Duration = INFO_TIME,
+		Text = function()
+			return "Die <b>rote Zone</b> wandert alle 20 Minuten weiter (rote Linie und Rauchsäule). Drinnen gilt <b>sofort PvP</b>, es gibt "
+				.. "mehr und härtere Zombies, aber <b>viel bessere Beute</b>. Kills dort bringen <b>RZ-Punkte</b> – die tauschst du beim "
+				.. "<b>Schieber</b> im Camp gegen Spezialwaffen und Aufsätze."
+		end },
+	{ Id = "Economy", Title = "HÄNDLER, LAGER UND MARKT", Duration = INFO_TIME,
+		Text = function()
+			return "Im Camp <b>verkaufst</b> du Beute an den Händlern und kaufst Munition, Heilung und Fahrzeuge. Ins <b>Lager</b> legst du, "
+				.. "was sicher bleiben soll, und die <b>Container</b>-Plätze im Inventar verlierst du nie. Im <b>Markt</b> handelst du mit "
+				.. "anderen Spielern."
+		end },
+	{ Id = "Hideout", Title = "DEIN VERSTECK", Duration = INFO_TIME,
+		Text = function()
+			return "Ab Level 4 gehört dir ein <b>Versteck</b> im Camp: Module für mehr Leben und Rabatt, ein Generator für Münzen, die "
+				.. "<b>Werkbank</b> zum Herstellen und täglich drei <b>Funkaufträge</b>. Daneben übst du am <b>Schießstand</b>."
+		end },
 	{ Id = "Ready", Title = "DU BIST BEREIT", Duration = READY_TIME,
 		Text = function()
 			return "Stirbst du draußen, <b>fällt deine Tasche</b> an der Stelle zu Boden – Container und Lager bleiben sicher. "
-				.. "Alles Weitere: Menü " .. key("Menu", "") .. " → <b>GUIDE</b>. Viel Glück da draußen."
+				.. "Hol sie dir zurück, bevor es jemand anderes tut. Alles Weitere: Menü " .. key("Menu", "") .. " → <b>GUIDE</b>. "
+				.. "Viel Glück da draußen."
 		end },
 }
 
@@ -281,9 +322,9 @@ function ExtTutorial.Start(withIntro)
 		TextSize = 14, Font = F.Bold, TextColor3 = RED, ZIndex = 21 }, intro)
 	label({ Name = "Title", Position = UDim2.fromOffset(28, 44), Size = UDim2.new(1, -56, 0, 40), Text = "NEU IN EXTINCTION?",
 		TextSize = 34, Font = F.Display, TextColor3 = C2.Text, ZIndex = 21 }, intro)
-	label({ Name = "Text", Position = UDim2.fromOffset(28, 92), Size = UDim2.new(1, -56, 0, 78), Text = "Ein kurzes Tutorial zeigt "
-		.. "dir die Grundlagen: Starter Kit, Inventar, Safe Zone verlassen und dein erster Zombie. Du kannst es jederzeit "
-		.. "im Menü unter GUIDE überspringen.", TextSize = 17, Font = F.Medium, TextColor3 = C2.Text, TextWrapped = true,
+	label({ Name = "Text", Position = UDim2.fromOffset(28, 92), Size = UDim2.new(1, -56, 0, 78), Text = "Das Tutorial zeigt "
+		.. "dir alles Wichtige: Starter Kit, Inventar, dein erster Zombie und seine Beute, die Karte, die rote Zone, Händler "
+		.. "und dein Versteck. Du kannst es jederzeit im Menü unter GUIDE überspringen.", TextSize = 17, Font = F.Medium, TextColor3 = C2.Text, TextWrapped = true,
 		TextYAlignment = Enum.TextYAlignment.Top, ZIndex = 21 }, intro)
 	local buttons = make("Frame", { Name = "Buttons", Position = UDim2.new(0, 28, 1, -76), Size = UDim2.new(1, -56, 0, 52),
 		BackgroundTransparency = 1, ZIndex = 21 }, intro)
@@ -404,6 +445,12 @@ end
 
 function ExtTutorial.Init(options: { WindowKind: (() -> string?)? }?)
 	hooks = options or {}
+	-- Beute-Schritt: aufgehoben (Karten rechts im HUD kommen mit ExtUpdate "Picked")
+	Remotes.ExtUpdate.OnClientEvent:Connect(function(kind)
+		if kind == "Picked" then
+			state.PickedAt = os.clock()
+		end
+	end)
 	gui = make("ScreenGui", { Name = "ExtTutorial", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 15,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, player:WaitForChild("PlayerGui"))
 	local canvas = UITheme.ScaledRoot(gui, 1600, 900)

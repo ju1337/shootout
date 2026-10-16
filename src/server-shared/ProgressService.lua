@@ -58,8 +58,11 @@ local function finite(n)
 	return type(n) == "number" and n == n and n > -math.huge and n < math.huge
 end
 
+-- Startgeld neuer Spieler (reicht für ein Sturmgewehr mit Munition oder ein Quad)
+ProgressService.StartCoins = 2500
+
 local function defaultProfile()
-	return { XP = {}, Coins = 0, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
+	return { XP = {}, Coins = ProgressService.StartCoins, Rap = 0, Owned = {}, Equipped = {}, LastDaily = 0, Codes = {}, Quests = {}, RankPoints = 0, PassXP = 0, Agents = {}, Settings = {},
 		Stats = {}, Loadouts = {}, Attachments = { Owned = {}, Equipped = {} }, AccountXP = 0, Prestige = 0, LevelMerged = true, Ranked = { Elo = RankConfig.StartElo, Peak = RankConfig.StartElo, Wins = 0, Losses = 0, Matches = 0,
 		Season = RankConfig.CurrentSeason() } }
 end
