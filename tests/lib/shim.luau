@@ -480,6 +480,26 @@ local function typeof(value)
 	return typeofOriginal(value)
 end
 
+-- Region3 (Terrain:ReadVoxels): nur Mitte, Größe und ExpandToGrid (auf das Gitter erweitert)
+local Region3Meta = {}
+Region3Meta.__index = Region3Meta
+local Region3
+function Region3Meta:ExpandToGrid(resolution)
+	local function down(v)
+		return Vector3.new(math.floor(v.X / resolution) * resolution, math.floor(v.Y / resolution) * resolution,
+			math.floor(v.Z / resolution) * resolution)
+	end
+	local function up(v)
+		return Vector3.new(math.ceil(v.X / resolution) * resolution, math.ceil(v.Y / resolution) * resolution,
+			math.ceil(v.Z / resolution) * resolution)
+	end
+	return Region3.new(down(self.Min), up(self.Max))
+end
+Region3 = { new = function(min, max)
+	return setmetatable({ Min = min, Max = max, CFrame = CFrame.new((min + max) / 2), Size = max - min, __type = "Region3" },
+		Region3Meta)
+end }
+
 return {
 	Vector3 = Vector3,
 	Vector2 = Vector2,
@@ -502,6 +522,7 @@ return {
 	RaycastParams = RaycastParams,
 	OverlapParams = OverlapParams,
 	Random = Random,
+	Region3 = Region3,
 	typeof = typeof,
 	angleBetween = angleBetween,
 }

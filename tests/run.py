@@ -44,7 +44,8 @@ PRELUDE_TYPES = """local Vector3, Vector2, CFrame, Color3, Enum = __shim.Vector3
 local UDim, UDim2, NumberRange, NumberSequence = __shim.UDim, __shim.UDim2, __shim.NumberRange, __shim.NumberSequence
 local NumberSequenceKeypoint, ColorSequence, ColorSequenceKeypoint = __shim.NumberSequenceKeypoint, __shim.ColorSequence, __shim.ColorSequenceKeypoint
 local TweenInfo, Font, Rect, PhysicalProperties, Ray = __shim.TweenInfo, __shim.Font, __shim.Rect, __shim.PhysicalProperties, __shim.Ray
-local BrickColor, RaycastParams, OverlapParams, Random, typeof = __shim.BrickColor, __shim.RaycastParams, __shim.OverlapParams, __shim.Random, __shim.typeof"""
+local BrickColor, RaycastParams, OverlapParams, Random, typeof = __shim.BrickColor, __shim.RaycastParams, __shim.OverlapParams, __shim.Random, __shim.typeof
+local Region3 = __shim.Region3"""
 
 PRELUDE_GLOBALS = """local task, game, workspace, Instance = SIM.task, SIM.Game, SIM.Workspace, SIM.Instance
 local os, tick, time, warn, settings = SIM.Os, SIM.Tick, SIM.Time, SIM.Warn, SIM.Settings

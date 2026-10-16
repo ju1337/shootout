@@ -197,9 +197,22 @@ end
 -- Grundriss des Teils ausschneiden: von CarveDepth unter seiner Oberkante bis 12 Studs darüber nur Luft. Die Straße liegt
 -- dann sichtbar in einer passgenauen Mulde, ihr Körper reicht tief genug, dass darunter kein Loch zu sehen ist. Keine Erde
 -- auffüllen (das würde wieder über die Fahrbahn wachsen). Teile höher als MaxY über der Kartenmitte (Hochstraße) bleiben.
+-- Im Ordner Roads nur diese Teile; im Ordner Ground jede flache Bodenplatte (Pflaster am Phönixplatz, Höfe, Felder,
+-- Helipad, Platten …) außer dem großen Ersatzboden "Ground" und hauchdünnen Markierungen (liegen auf anderen Platten).
+-- Sonst liegt das Terrain genau auf Höhe der Platten und flackert mit ihnen (Z-Fighting, "Steine drehen durch").
 local CLEAR_NAMES = { Road = true, Track = true, RailBed = true, Sidewalk = true, CampPad = true, Runway = true }
 local CLEAR_FOLDERS = { "Roads", "Ground" }
 local CARVE_DEPTH = 2.5
+local MIN_PLATE = 0.15 -- dünner: Markierung (Linien, Zebrastreifen), wird nicht extra freigeräumt
+local MAX_PLATE = 4    -- dicker: kein Bodenbelag
+
+local function clears(folderName, part)
+	if CLEAR_NAMES[part.Name] then
+		return true
+	end
+	return folderName == "Ground" and part.Name ~= "Ground" and part.Size.Y >= MIN_PLATE and part.Size.Y <= MAX_PLATE
+		and part.CFrame.UpVector.Y > 0.95 -- flach (keine Rampen, Wände oder gekippten Teile)
+end
 
 function ExtinctionTerrain.ClearRoads(terrain, map, center, options)
 	options = options or {}
@@ -209,7 +222,7 @@ function ExtinctionTerrain.ClearRoads(terrain, map, center, options)
 	for _, folderName in CLEAR_FOLDERS do
 		local folder = map:FindFirstChild(folderName)
 		for _, part in folder and folder:GetChildren() or {} do
-			if part:IsA("BasePart") and CLEAR_NAMES[part.Name] and part.Position.Y - center.Y <= maxY then
+			if part:IsA("BasePart") and clears(folderName, part) and part.Position.Y - center.Y <= maxY then
 				local size = part.Size
 				local carve = math.min(depth, size.Y) -- nicht tiefer als der Körper des Teils
 				local height = carve + 12

@@ -4527,13 +4527,14 @@ function Inv.groundGuard()
 	if topY < -8 then
 		topY += 14 -- schon abgesenkt angekommen
 	end
+	local surfaceY = topY + ground.Size.Y / 2 -- Oberkante des Ersatzbodens vor dem Absenken
 	local center = map:GetAttribute("Center")
 	local baseY = typeof(center) == "Vector3" and center.Y or 0
 	local terrain = workspace.Terrain
-	-- Terrain unter den Füßen geladen? (Block 16 x 16 x 16 unter dem Spieler; Straßen sind nur 2,5 tief ausgeschnitten)
+	-- Terrain an dieser Stelle geladen? (Block 16 x 20 x 16 um die Bodenhöhe; Straßen sind nur 2,5 tief ausgeschnitten)
 	local function terrainLoaded(position)
-		local min = Vector3.new(position.X - 8, position.Y - 18, position.Z - 8)
-		local region = Region3.new(min, min + Vector3.new(16, 16, 16)):ExpandToGrid(4)
+		local min = Vector3.new(position.X - 8, math.min(position.Y, surfaceY) - 18, position.Z - 8)
+		local region = Region3.new(min, min + Vector3.new(16, 20, 16)):ExpandToGrid(4)
 		local ok, materials = pcall(terrain.ReadVoxels, terrain, region, 4)
 		if not ok or not materials then
 			return true
@@ -4549,22 +4550,48 @@ function Inv.groundGuard()
 		end
 		return false
 	end
-	while ground.Parent do
-		task.wait(0.5)
-		local lowered = ground.Position.Y < topY - 1 -- vom Server abgesenkt (oder lokal)
+	-- unter den Füßen und dort, wo man in einer halben Sekunde ist (beim Rennen und Fahren lädt das Terrain vorne nach)
+	local function safeUnder(root)
+		local velocity = root.AssemblyLinearVelocity
+		local ahead = root.Position + Vector3.new(velocity.X, 0, velocity.Z) * 0.5
+		return terrainLoaded(root.Position) and terrainLoaded(ahead)
+	end
+	local function check()
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		-- nur in Bodennähe (auf Dächern und Brücken ist unter einem kein Terrain, das ist kein Ladeproblem)
-		if inExtinction() and root and root.Position.Y - baseY < 20 then
-			local loaded = terrainLoaded(root.Position)
-			if lowered and not loaded then
-				ground.Position = Vector3.new(ground.Position.X, topY, ground.Position.Z) -- lokal wieder hoch
-				ground:SetAttribute("HeldLocally", true)
-			elseif not lowered and loaded and ground:GetAttribute("HeldLocally") then
-				ground.Position = Vector3.new(ground.Position.X, topY - 14, ground.Position.Z)
-				ground:SetAttribute("HeldLocally", nil)
+		if not (inExtinction() and root and root.Position.Y - baseY < 20) then
+			return
+		end
+		local lowered = ground.Position.Y < topY - 1 -- vom Server abgesenkt (oder lokal)
+		local safe = safeUnder(root)
+		if lowered and not safe then
+			ground.Position = Vector3.new(ground.Position.X, topY, ground.Position.Z) -- lokal wieder hoch
+			ground:SetAttribute("HeldLocally", true)
+			-- schon durchgefallen (steht unter der Oberkante, darunter kein Terrain): zurück nach oben
+			if root.Position.Y < surfaceY - 1 and root.Position.Y > surfaceY - 40 and not terrainLoaded(root.Position) then
+				root.CFrame = root.CFrame + Vector3.new(0, surfaceY + 3 - root.Position.Y, 0)
+				root.AssemblyLinearVelocity = Vector3.zero
 			end
+		elseif not lowered and safe and ground:GetAttribute("HeldLocally") then
+			ground.Position = Vector3.new(ground.Position.X, topY - 14, ground.Position.Z)
+			ground:SetAttribute("HeldLocally", nil)
 		end
 	end
+	-- sofort, wenn der Server den Boden absenkt (sonst fällt man in der Zeit bis zur nächsten Prüfung durch)
+	ground:GetPropertyChangedSignal("Position"):Connect(function()
+		if ground.Position.Y < topY - 1 and not ground:GetAttribute("HeldLocally") then
+			check()
+		end
+	end)
+	while ground.Parent do
+		task.wait(0.15)
+		check()
+	end
+end
+
+-- Für Tests: Bodenschutz allein starten (läuft sonst aus Init)
+function ExtinctionClient.GroundGuard()
+	Inv.groundGuard()
 end
 
 function ExtinctionClient.Init()

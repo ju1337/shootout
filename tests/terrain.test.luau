@@ -104,8 +104,24 @@ do
 	line.Name = "CenterLine"
 	line.Size = Vector3.new(30, 0.02, 0.5)
 	line.CFrame = CFrame.new(10, 0.26, -6000)
+	-- Bodenplatten (Ordner Ground): jede flache Platte, nicht der große Ersatzboden, keine dünne Markierung
+	local groundFolder = Instance.new("Folder", map)
+	groundFolder.Name = "Ground"
+	local function plate(name, size, cframe)
+		local part = Instance.new("Part", groundFolder)
+		part.Name = name
+		part.Size = size
+		part.CFrame = cframe
+		return part
+	end
+	plate("Ground", Vector3.new(4000, 4, 4000), CFrame.new(0, -2, -6000))
+	plate("Flagstone", Vector3.new(6, 0.3, 6), CFrame.new(30, 0.15, -6000))
+	plate("YardGround", Vector3.new(20, 0.2, 20), CFrame.new(60, 0.1, -6000))
+	plate("CourtLine", Vector3.new(10, 0.05, 0.3), CFrame.new(60, 0.22, -6000))
+	plate("Ramp", Vector3.new(8, 0.4, 8), CFrame.new(90, 1, -6000) * CFrame.Angles(math.rad(30), 0, 0))
 	local count = ExtinctionTerrain.ClearRoads(fake, map, Vector3.new(0, 0, -6000), { Yield = false })
-	check(count == 1 and #fills == 1, "nur das Straßenteil am Boden (" .. count .. ", " .. #fills .. ")")
+	check(count == 3 and #fills == 3, "Straßenteil und zwei Bodenplatten, nicht Ersatzboden, Markierung, Rampe, Hochstraße ("
+		.. count .. ", " .. #fills .. ")")
 	local fill = fills[1]
 	check(fill.Material == Enum.Material.Air, "nur Luft, keine Erde")
 	local bottom = fill.CFrame.Position.Y - fill.Size.Y / 2
