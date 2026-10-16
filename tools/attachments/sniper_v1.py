@@ -8,6 +8,8 @@
 #  - setzt die Marker: Visierlinie durch die Mitte von Okular und Objektiv (waagrecht wie der Lauf), Griff hinter dem
 #    Abzugsbügel, linke Hand unter dem Handschutz, Mündung vorn an der Mündungsbremse, Schaft hinten an der Schaftkappe,
 #  - skaliert auf 4,58 Studs (Länge des DMR), Lauf nach -Z, Griff = Ursprung,
+#  - schneidet den Lauf vor dem Vorderschaft (`Skin_Barrel`) und die Mündungsbremse (`Skin_Barrel_Brake`) als eigene
+#    Teile heraus: Lauf-Aufsätze blenden beide aus (Wort Barrel), der Schalldämpfer nur die Bremse (Hide_Brake),
 #  - teilt den Rumpf in Stücke unter 20.000 Dreiecken (`Skin_Body_01` …; Skin-Texturen namens Skin_Body gelten für alle).
 # Maße in Meshy-Einheiten (Lauf nach -x, oben +y, Kammerstängel auf der rechten Seite = -z); gelten nur für dieses Modell.
 import os, sys
@@ -30,7 +32,10 @@ POINTS = {
     "Pivot_Magazine": (0.265, -0.003, 0.0),
     "Pivot_Bolt": (0.40, 0.10, -0.04),
 }
-MAG = dict(x=(0.172, 0.358), y_top=-0.003)
+MAG = dict(x=(0.224, 0.358), y_top=-0.003)     # nur das Magazin (vorn ab 0,227; davor gehört der Boden zum Schaft)
+# Lauf: Achse y 0,0949, Radius 0,0257, sichtbar von der Bremse (bis -0,775) bis zum Vorderschaft (Stirnseite -0,246);
+# Bremse -0,952..-0,775 (Radius 0,042)
+BARREL = dict(front=-0.775, rear=-0.25, y_min=0.045)
 BOLT = dict(x=(0.36, 0.46), y=(0.0, 0.12), z=-0.046)
 BIPOD = dict(x=(-0.33, -0.18), y_cut=-0.027, hinge=(-0.238, 0.0), fold=(-1.0, 0.06, 0.0))
 
@@ -82,6 +87,12 @@ def main():
     lo, hi = gun.bounds()
     muzzle_x, stock_x = lo[0], hi[0]
     print("Meshy: %d Dreiecke, %.3f lang" % (len(gun), stock_x - muzzle_x))
+    parts_extra = []
+    for name, x_max in (("Skin_Barrel_Brake", BARREL["front"]), ("Skin_Barrel", BARREL["rear"])):
+        region = [M.plane((1, 0, 0), (x_max, 0, 0)), M.plane((0, -1, 0), (0, BARREL["y_min"], 0))]
+        gun, piece, o = cut_out(gun, region, 0, dark_uv(gun, (x_max - 0.05, 0.121, 0.0)))
+        print("%s: %d Dreiecke (offene Stellen %d)" % (name, len(piece), o))
+        parts_extra.append((name, piece))
     gun = fold_bipod(gun)
     region = [M.plane((0, 1, 0), (0, MAG["y_top"], 0)), M.plane((-1, 0, 0), (MAG["x"][0], 0, 0)),
               M.plane((1, 0, 0), (MAG["x"][1], 0, 0))]
@@ -105,6 +116,12 @@ def main():
     for i, idx in enumerate(np.array_split(order, chunks)):
         parts.append(("Skin_Body_%02d" % (i + 1), body.select(np.sort(idx)), 0))
     parts += [("Magazine", conv(mag), 0), ("Bolt", conv(bolt), 0)]
+    for name, piece in parts_extra:
+        piece = conv(piece)
+        n = int(np.ceil(len(piece) / MAX_TRIS))
+        order = np.argsort(piece.P.mean(1)[:, 2], kind="stable")
+        for i, idx in enumerate(np.array_split(order, n)):
+            parts.append((name if n == 1 else "%s_%02d" % (name, i + 1), piece.select(np.sort(idx)), 0))
     for k, p in sorted(pts.items()):
         q = (p - origin) @ R.T * s
         size = 0.06 if k.startswith("Pivot") else 0.04

@@ -10,6 +10,8 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
                                          # FastMag, Suppressor, Compensator, HoloSight (Rotpunkt) nur für die MP
     python3 tools/attachments/meshy_attachment.py Shotgun <Aufsatz> <meshy-zip> <schrotflinte-meshy-zip> art/sources/Shotgun.glb art/sources/Attachments/<Aufsatz>_Shotgun.glb
                                          # LongBarrel, ShortBarrel, MuzzleBrake, VerticalGrip, Laser, HoloSight nur für die Schrotflinte
+    python3 tools/attachments/meshy_attachment.py DMR <Aufsatz> <meshy-zip> art/sources/Meshy_AI_roblox_magnum_sniper_1012115921_texture.glb art/sources/DMR.glb art/sources/Attachments/<Aufsatz>_DMR.glb
+                                         # FastMag, ExtendedMag, LongBarrel, HeavyBarrel, Suppressor nur für das Präzisionsgewehr
     python3 tools/attachments/supp_v2.py  <meshy.glb> art/sources/Attachments/Suppressor.glb
     python3 tools/attachments/holo_v2.py  <meshy.glb> art/sources/Attachments/HoloSight.glb
     python3 tools/attachments/grip_v2.py  <meshy.glb> art/sources/Attachments/AngledGrip.glb
@@ -51,6 +53,12 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
   dunkles Innenrohr, rote Beschichtung am Rand der Öffnung dunkel gefärbt, Glas hinter dem Objektiv mit
   `Neon_Reticle` in der Mitte; Klemme auf der flachen Oberseite des Gehäuses (`Point_Optic`), Visierlinie 0,08 Studs
   über Kimme und Korn.
+  Präzisionsgewehr: `DMR.glb` (sniper_v1) hat Lauf (`Skin_Barrel`) und Mündungsbremse (`Skin_Barrel_Brake`) als eigene
+  Teile, das Magazin ohne den Schaftboden davor. Langer Lauf (203.118 Dreiecke, Streckung 1,36, Mündung 0,72 Studs
+  weiter vorn), schwerer Lauf (1.034.408, 54 Teile, Rippen 1,5-mal so dick, Streckung 1,4, Mündung 0,24 Studs weiter
+  vorn) mit Laufmutter am Vorderschaft; Schalldämpfer (832.032) ersetzt nur die Bremse (`Hide_Brake`), Gewinde im
+  Laufende; Schnellmagazin (258.858, Zugschlaufe) und erweitertes Magazin (217.506, ragt 0,41 Studs tiefer) in Tiefe
+  des eingebauten Magazins, oben im Schacht.
 - **sniper_v1**: Scharfschützengewehr mit Zielfernrohr: Zweibein eingeklappt (Beine am Gelenk abgetrennt und nach vorn
   gedreht), `Magazine` und `Bolt` herausgeschnitten, Visierlinie durch Okular- und Objektivmitte (waagrecht), Rumpf in
   Stücke `Skin_Body_01…` unter 19.500 Dreiecken. Lesen/Schreiben der GLB in `glb_io.py`.
@@ -89,4 +97,5 @@ Datei für Studio (Import 3D, Scale Unit Stud, Merge Meshes aus). Teile über 20
 Modelle in Studio: ReplicatedStorage › Assets › Weapons (`Rifle`) bzw. Assets › Attachments (`Suppressor`, `HoloSight`,
 `AngledGrip`, `ExtendedMag`, `Compensator`, `MuzzleBrake`, `LongBarrel`, `ShortBarrel`, `HeavyBarrel`, `VerticalGrip`, `Laser`, `FastMag`, `DrumMag`;
 nur MP: `FastMag_SMG`, `Suppressor_SMG`, `Compensator_SMG`, `HoloSight_SMG`; nur Schrotflinte: `LongBarrel_Shotgun`,
-`ShortBarrel_Shotgun`, `MuzzleBrake_Shotgun`, `VerticalGrip_Shotgun`, `Laser_Shotgun`, `HoloSight_Shotgun`). Lader: `src/shared/GunModels.lua`.
+`ShortBarrel_Shotgun`, `MuzzleBrake_Shotgun`, `VerticalGrip_Shotgun`, `Laser_Shotgun`, `HoloSight_Shotgun`; nur
+Präzisionsgewehr: `FastMag_DMR`, `ExtendedMag_DMR`, `LongBarrel_DMR`, `HeavyBarrel_DMR`, `Suppressor_DMR`). Lader: `src/shared/GunModels.lua`.

@@ -18,7 +18,7 @@
 import json, os, struct, sys, tempfile, zipfile
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from glb_io import M, write_glb
+from glb_io import M, read_glb, write_glb
 import meshy_fbx
 import meshy_weapon as W
 
@@ -85,8 +85,39 @@ ATTACHMENTS.update({
                                         "sides": 24, "dark": (0.0, 0.587, -0.11)}},
 })
 
+# Waffen, die nicht mit meshy_weapon.py gebaut sind (Maße wie in deren Skript): Präzisionsgewehr aus sniper_v1.py
+# (Quelle art/sources/Meshy_AI_roblox_magnum_sniper_1012115921_texture.glb)
+OTHER_WEAPONS = {
+    "DMR": {"Length": 4.575, "Points": {"Point_Grip": (0.495, -0.045, 0.0), "Point_Muzzle": (None, 0.0949, 0.0),
+                                        "Point_LeftHand": (-0.03, 0.06, 0.0)}},
+}
+
+ATTACHMENTS.update({
+    # Präzisionsgewehr: Lauf y 0,0949 (Radius 0,0257) vom Vorderschaft (Stirnseite -0,246) bis -0,775, davor die
+    # Mündungsbremse (bis -0,952, Radius 0,042). Magazin x 0,227..0,356, z ±0,0156, unten -0,111.
+    # Langer Lauf: Radius 0,026 (quer 0,385), Mündung 0,30 weiter vorn als die Bremse (-1,25; längs 0,525,
+    # Streckung 1,36), Laufmutter hinten am Vorderschaft
+    ("DMR", "LongBarrel"): {"Kind": "Barrel", "Name": "LongBarrel", "turn": 0, "scale": (0.525, 0.385),
+                            "axis": (0.0, 0.0), "rear": -0.25},
+    # Schwerer Lauf: quer 0,30 (Rippen Radius 0,04, gut 1,5-mal so dick), längs 0,42 (Streckung 1,4, sonst wirkt er
+    # wie ein Klotz), Mündung 0,10 weiter vorn als die Bremse (-1,05)
+    ("DMR", "HeavyBarrel"): {"Kind": "Barrel", "Name": "HeavyBarrel", "turn": 0, "scale": (0.42, 0.30),
+                             "axis": (0.013, 0.0), "rear": -0.25},
+    # Schalldämpfer: ersetzt die Mündungsbremse (Hide_Brake), Gewinde hinten (180° gedreht, Radius 0,025) steckt
+    # 0,024 tief im Laufende (-0,775); 0,088 dick
+    ("DMR", "Suppressor"): {"Kind": "Muzzle", "Name": "Suppressor", "turn": 180, "diameter": 0.088,
+                            "rear": -0.751, "hide": ["Brake"]},
+    # Magazine: Tiefe wie das eingebaute (0,129), Körper oben 0,04 im Schacht, mittig über x 0,2915
+    # Schnellmagazin mit Zugschlaufe: 0,137 (Körper 0,21 hoch, 0,03 länger als das eingebaute)
+    ("DMR", "FastMag"): {"Kind": "Magazine", "Name": "Magazine_Fast", "turn": 0, "scale": 0.137,
+                         "at": (0.2915, 0.04 - 0.73 * 0.137, 0.0)},
+    # Erweitertes Magazin: 0,193 (0,044 breit, ragt 0,17 tiefer heraus)
+    ("DMR", "ExtendedMag"): {"Kind": "Magazine", "Name": "Magazine_Ext", "turn": 0, "scale": 0.193,
+                             "at": (0.2915 + 0.0035 * 0.193, 0.04 - 0.73 * 0.193, 0.0)},
+})
+
 # Achse des Laufs vorn (Messung am Meshy-Modell der Waffe): Mitte y/z, Radius
-MUZZLE_AXIS = {"SMG": (0.2503, 0.0002, 0.046), "Shotgun": (0.109, 0.0, 0.036)}
+MUZZLE_AXIS = {"SMG": (0.2503, 0.0002, 0.046), "Shotgun": (0.109, 0.0, 0.036), "DMR": (0.0949, 0.0, 0.0257)}
 
 
 def unzip(src):
@@ -174,7 +205,7 @@ def glb_nodes(path):
 
 def build(weapon, att, src, weapon_src, weapon_glb, out):
     cfg = ATTACHMENTS[(weapon, att)]
-    wcfg = W.WEAPONS[weapon]
+    wcfg = W.WEAPONS.get(weapon) or OTHER_WEAPONS[weapon]
     mesh, images = meshy_fbx.load(unzip(src))
     lo, hi = mesh.bounds()
     print("%s %s: Meshy %d Dreiecke, %s" % (weapon, att, len(mesh), np.round(hi - lo, 3)))
@@ -250,7 +281,7 @@ def build(weapon, att, src, weapon_src, weapon_glb, out):
     print("  Lage x %.3f..%.3f  y %.3f..%.3f  z %.3f..%.3f" % (alo[0], ahi[0], alo[1], ahi[1], alo[2], ahi[2]))
 
     # in die Waffen-GLB umrechnen (wie meshy_weapon.build)
-    gun, _ = meshy_fbx.load(unzip(weapon_src))
+    gun = read_glb(weapon_src)[0] if weapon_src.endswith(".glb") else meshy_fbx.load(unzip(weapon_src))[0]
     glo, ghi = gun.bounds()
     ws = wcfg["Length"] / (ghi[0] - glo[0])
     R = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]], float)
