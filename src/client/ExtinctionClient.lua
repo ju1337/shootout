@@ -840,6 +840,7 @@ local function buildHud()
 	hud = make("ScreenGui", { Name = "ExtinctionHUD", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 6,
 		Enabled = false }, player:WaitForChild("PlayerGui"))
 	root = UITheme.ScaledRoot(hud)
+	InputActions.NoSelect(root) -- Controller: HUD-Knöpfe (Hotbar, KARTE, SQUAD) nie auswählen, der Stick bewegt die Figur
 
 	-- oben: Safe Zone / PvP
 	zonePill = make("Frame", { AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 30), Size = UDim2.fromOffset(400, 30),
@@ -996,7 +997,9 @@ local function updateHints()
 		if device == "Touch" then
 			hints.Text = "STICK = FLIEGEN  ·  STEIGEN / SINKEN  ·  RAUS = AUSSTEIGEN  ·  PARKEN = EINPACKEN (GELANDET)"
 		elseif device == "Gamepad" then
-			hints.Text = "L-STICK  FLIEGEN  ·  R2  STEIGEN  ·  L2  SINKEN  ·  ✕  AUSSTEIGEN  ·  " .. InputActions.Hint("StoreVehicle")
+			local name = InputActions.PadName
+			hints.Text = "L-STICK  FLIEGEN  ·  " .. name(Enum.KeyCode.ButtonR2) .. "  STEIGEN  ·  " .. name(Enum.KeyCode.ButtonL2)
+				.. "  SINKEN  ·  " .. name(Enum.KeyCode.ButtonA) .. "  AUSSTEIGEN  ·  " .. InputActions.Hint("StoreVehicle")
 				.. "  EINPACKEN (GELANDET)"
 		else
 			hints.Text = "W / S  VOR / ZURÜCK  ·  A / D  DREHEN  ·  LEERTASTE  STEIGEN  ·  SHIFT  SINKEN  ·  F  AUSSTEIGEN  ·  "
@@ -1019,8 +1022,10 @@ local function updateHints()
 	for _, entry in {
 		{ InputActions.Hint("Fire"), "SCHIESSEN", { "Fire" } },
 		{ InputActions.Hint("Reload"), "NACHLADEN", { "Reload" } },
-		{ pad and "R1 / L1" or "1-9", pad and "WAFFE" or "BENUTZEN", slotActions },
+		{ pad and (InputActions.Hint("Gadget") .. " / " .. InputActions.Hint("Ability")) or "1-9", pad and "WAFFE" or "BENUTZEN",
+			slotActions },
 		{ pad and InputActions.Hint("QuickHeal") or "", "HEILEN", { "QuickHeal" } },
+		{ pad and InputActions.Hint("QuickThrow") or "", "WERFEN", { "QuickThrow" } },
 		{ InputActions.Hint("Inventory"), "INVENTAR", { "Inventory" } },
 		{ InputActions.Hint("Interact"), "INTERAGIEREN", { "Interact" } },
 		{ InputActions.Hint("StoreVehicle"), "FAHRZEUG EINPACKEN", { "StoreVehicle" } },
@@ -1582,7 +1587,7 @@ local function newMenu(kind, title, subtitle)
 		tabs)
 	local pad = InputActions.Device() == "Gamepad"
 	if pad then
-		label({ Name = "PrevHint", Size = UDim2.new(1, 0, 0, 22), Text = "L1", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+		label({ Name = "PrevHint", Size = UDim2.new(1, 0, 0, 22), Text = InputActions.PadName(Enum.KeyCode.ButtonL1), TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 			LayoutOrder = 0, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
 	-- Höhe je Reiter: alle passen in die Seitenleiste (Menühöhe minus Logo und Schließen-Hinweis)
@@ -1622,11 +1627,11 @@ local function newMenu(kind, title, subtitle)
 		end)
 	end
 	if pad then
-		label({ Name = "NextHint", Size = UDim2.new(1, 0, 0, 22), Text = "R1", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
+		label({ Name = "NextHint", Size = UDim2.new(1, 0, 0, 22), Text = InputActions.PadName(Enum.KeyCode.ButtonR1), TextSize = 12, Font = F.Bold, TextColor3 = C.Muted,
 			LayoutOrder = #MENU_TABS + 1, ZIndex = 6, TextXAlignment = Enum.TextXAlignment.Center }, tabs)
 	end
 	label({ Name = "CloseHint", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 24, 1, -20), Size = UDim2.new(1, -48, 0, 14),
-		Text = pad and "○  SCHLIESSEN" or (InputActions.IsTouch() and "✕ OBEN RECHTS  SCHLIESSEN" or "TAB / M  SCHLIESSEN"), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
+		Text = pad and (InputActions.PadName(Enum.KeyCode.ButtonB) .. "  SCHLIESSEN") or (InputActions.IsTouch() and "✕ OBEN RECHTS  SCHLIESSEN" or "TAB / M  SCHLIESSEN"), TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 6 }, sidebar)
 
 	-- Fläche rechts: Kopfzeile und Inhalt
 	local panel = make("Frame", { Name = "Panel", Position = UDim2.fromOffset(sideW, topH), Size = UDim2.new(1, -sideW, 1, -topH),
@@ -4567,7 +4572,9 @@ end
 --   Steuerkreuz oben: antippen = Ping, halten = Weltkarte
 --   Select:           antippen = Inventar, halten = Squad
 --   △:                antippen = heilen, halten = Fahrzeug einpacken
+--   R1:               antippen = nächste Waffe, halten = Granate/Molotow aus der Hotbar werfen
 InputActions.Bindings.QuickHeal = { Keys = {}, Pad = {} }
+InputActions.Bindings.QuickThrow = { Keys = {}, Pad = {} }
 local function applyPadLayout()
 	local on = inExtinction()
 	local function hold(action, code)
@@ -4579,6 +4586,7 @@ local function applyPadLayout()
 	hold("WorldMap", Enum.KeyCode.DPadUp)
 	hold("Squad", Enum.KeyCode.ButtonSelect)
 	hold("StoreVehicle", Enum.KeyCode.ButtonY)
+	hold("QuickThrow", Enum.KeyCode.ButtonR1)
 	InputActions.Bindings.QuickHeal.Pad = on and { Enum.KeyCode.ButtonY } or {}
 end
 
@@ -4603,6 +4611,19 @@ local function quickHeal()
 	else
 		showToast("Kein Heil-Item in der Hotbar.", false)
 	end
+end
+
+-- Controller: R1 halten wirft das erste Wurfobjekt der Hotbar (Granate, Molotow) in Blickrichtung
+function Inv.quickThrow()
+	for slot = 1, HOTBAR do
+		local entry = bag[slot]
+		local config = entry and itemConfig(entry.Id)
+		if config and config.Kind == "Throwable" then
+			Inv.useSlot(slot)
+			return
+		end
+	end
+	showToast("Keine Granate in der Hotbar.", false)
 end
 
 local function updateVisible()
@@ -5189,7 +5210,23 @@ function ExtinctionClient.Init()
 			quickHeal()
 		end
 	end)
+	-- Controller: R1 halten wirft (nicht bei offenem Menü oder offener Karte)
+	InputActions.Bind("QuickThrow", function(began)
+		if began and inExtinction() and not window and not ExtinctionMap.IsOpen() and Inv.alive() then
+			Inv.quickThrow()
+		end
+	end)
 	applyPadLayout()
+	-- Controller-Leiste: im Menü L1/R1 für die Reiter; auf der Weltkarte steht die Belegung in der Karte selbst
+	require(script.Parent:WaitForChild("PadPrompts")).Provider(function()
+		if ExtinctionMap.IsOpen() then
+			return { Hide = true }
+		end
+		if window and window.Menu then
+			return { { Keys = { Enum.KeyCode.ButtonL1, Enum.KeyCode.ButtonR1 }, Text = "REITER" } }
+		end
+		return {}
+	end)
 	-- Controller: R1/L1 (in der offenen Welt keine Gadgets/Fähigkeiten) wechseln die Hotbar
 	-- (im offenen Menü: Reiter weiterblättern)
 	InputActions.Bind("Gadget", function(began)

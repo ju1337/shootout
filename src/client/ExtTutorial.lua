@@ -108,6 +108,21 @@ local function key(action, fallback)
 	return hint ~= "" and ("[" .. hint .. "]") or fallback
 end
 
+-- Coach-Text je nach Gerät: mit Maus/Touch "anklicken", mit dem Controller die Taste ✕ (bzw. A)
+-- pad(taste) baut den Controller-Text (Muster mit [{1}] in LocaleStrings)
+local function padText(mouse, pad)
+	return function()
+		if InputActions.Device() == "Gamepad" then
+			return pad(InputActions.PadName(Enum.KeyCode.ButtonA))
+		end
+		return mouse
+	end
+end
+
+local function coachText(entry)
+	return type(entry.Text) == "function" and entry.Text() or entry.Text
+end
+
 local function interactKey()
 	return key("Interact", "den Knopf auf dem Bildschirm")
 end
@@ -326,8 +341,11 @@ STEPS.Kit = { Title = "HOL DIR DEIN STARTER KIT", TargetName = "KIT-HÄNDLER", W
 		return nearestStand(KitConfig.Point)
 	end,
 	Coach = {
-		{ Find = { "ExtinctionWindow", "Kit_Starter", "Claim" }, Text = "Klick auf <b>ABHOLEN</b>. Kits holst du immer wieder "
-			.. "kostenlos ab, jedes hat seine eigene Wartezeit.", Done = function()
+		{ Find = { "ExtinctionWindow", "Kit_Starter", "Claim" }, Text = padText("Klick auf <b>ABHOLEN</b>. Kits holst du immer wieder "
+			.. "kostenlos ab, jedes hat seine eigene Wartezeit.", function(key)
+				return "Drück [" .. key .. "] auf <b>ABHOLEN</b>. Kits holst du immer wieder kostenlos ab, jedes hat seine eigene "
+					.. "Wartezeit."
+			end), Done = function()
 			return flag("Kit") or hasWeapon() or starterWaiting()
 		end },
 	},
@@ -353,11 +371,21 @@ STEPS.Safe = { Title = "TASCHE UND CONTAINER", Window = "Inventory",
 			Text = "<b>TASCHE</b>: alles, was du kaufst oder aufhebst, landet hier. Stirbst du draußen, <b>fällt die Tasche zu "
 				.. "Boden</b> und jeder kann sie plündern." },
 		{ Find = { "ExtinctionWindow", "InventoryGrids", "Grid_Bag1" },
-			Text = "<b>SCHNELLLEISTE</b>: diese Plätze benutzt du direkt mit den Zahlentasten, ohne Menü. Waffen, Heilung und "
-				.. "Granaten gehören hierher." },
+			Text = function()
+				if InputActions.Device() == "Gamepad" then
+					return "<b>SCHNELLLEISTE</b>: ohne Menü wechselst du hier die Waffe mit [" .. InputActions.Hint("Gadget")
+						.. "], heilst mit [" .. InputActions.Hint("QuickHeal") .. "] und wirfst Granaten mit ["
+						.. InputActions.Hint("QuickThrow") .. "]. Waffen, Heilung und Granaten gehören hierher."
+				end
+				return "<b>SCHNELLLEISTE</b>: diese Plätze benutzt du direkt mit den Zahlentasten, ohne Menü. Waffen, Heilung und "
+					.. "Granaten gehören hierher."
+			end },
 		{ Find = { "ExtinctionWindow", "InventoryGrids", "Grid_Safe1" },
-			Text = "<b>CONTAINER</b>: was hier liegt, <b>behältst du auch beim Tod</b>. Zieh jetzt ein Item aus der Tasche hier "
-				.. "hinein (oder anklicken und einen Container-Platz wählen).", Done = function()
+			Text = padText("<b>CONTAINER</b>: was hier liegt, <b>behältst du auch beim Tod</b>. Zieh jetzt ein Item aus der Tasche hier "
+				.. "hinein (oder anklicken und einen Container-Platz wählen).", function(key)
+					return "<b>CONTAINER</b>: was hier liegt, <b>behältst du auch beim Tod</b>. Wähl ein Item in der Tasche mit ["
+						.. key .. "] und dann einen Container-Platz."
+				end), Done = function()
 				return flag("Safe")
 			end },
 	} }
@@ -398,8 +426,11 @@ STEPS.Trader = { Title = "KAUF MUNITION BEIM HÄNDLER", TargetName = "HÄNDLER",
 			.. "Pistole.", Done = function()
 				return flag("Buy")
 			end },
-		{ Find = { "ExtinctionWindow", "SellHint" }, Text = "<b>VERKAUFEN</b>: rechts ist dein Inventar. Item anklicken und "
-			.. "<b>VERKAUFEN</b> wählen. Items aus Kits bringen keine Münzen, Beute schon." },
+		{ Find = { "ExtinctionWindow", "SellHint" }, Text = padText("<b>VERKAUFEN</b>: rechts ist dein Inventar. Item anklicken und "
+			.. "<b>VERKAUFEN</b> wählen. Items aus Kits bringen keine Münzen, Beute schon.", function(key)
+				return "<b>VERKAUFEN</b>: rechts ist dein Inventar. Item mit [" .. key .. "] wählen und <b>VERKAUFEN</b> drücken. "
+					.. "Items aus Kits bringen keine Münzen, Beute schon."
+			end) },
 	} }
 
 STEPS.Stash = { Title = "DEIN LAGER", TargetName = "LAGER", Window = "Stash",
@@ -892,11 +923,11 @@ local function tick()
 		end
 		local waiting = entry.Done ~= nil
 		local late = waiting and os.clock() - state.CoachStart > FALLBACK
-		showFocus(object, entry.Text, fmt("SCHRITT {1}  ·  TIPP {2}/{3}", state.Step, state.Coach, #coach),
+		showFocus(object, coachText(entry), fmt("SCHRITT {1}  ·  TIPP {2}/{3}", state.Step, state.Coach, #coach),
 			not waiting or late, waiting)
 	elseif entry and step.Window and windowKind() == step.Window then
 		-- richtiges Fenster, Element (noch) nicht zu sehen: die Erklärung trotzdem zeigen
-		showFocus(nil, entry.Text, fmt("SCHRITT {1}  ·  TIPP {2}/{3}", state.Step, state.Coach, #coach), false, entry.Done ~= nil)
+		showFocus(nil, coachText(entry), fmt("SCHRITT {1}  ·  TIPP {2}/{3}", state.Step, state.Coach, #coach), false, entry.Done ~= nil)
 	elseif windowOpen and not mapOpen() then
 		-- ein anderes Menü ist offen: die Anweisung als Karte oben über dem Menü (die Tafel läge darunter)
 		showFocus(nil, step.Text(), step.Title, false, false)

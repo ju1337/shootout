@@ -575,11 +575,15 @@ function HubWheel.Init()
 		elseif resultText and os.clock() < resultUntil then
 			board.Status.Text = resultText
 			board.Status.TextColor3 = resultColor
-			board.Hint.Text = ready and "NOCHMAL: E AM PULT" or "MORGEN GIBT ES DEN NÄCHSTEN GRATIS-DREH"
+			board.Hint.Text = ready and (InputActions.Device() == "Gamepad"
+				and ("NOCHMAL: " .. InputActions.PadName(Enum.KeyCode.ButtonX) .. " AM PULT") or "NOCHMAL: E AM PULT")
+				or "MORGEN GIBT ES DEN NÄCHSTEN GRATIS-DREH"
 		elseif ready then
 			board.Status.Text = free and "GRATIS-DREH BEREIT" or ("EXTRA-DREH BEREIT  ·  " .. extra)
 			board.Status.TextColor3 = Color3.new(1, 1, 1)
-			board.Hint.Text = InputActions.IsTouch() and "TIPPE AUF DREHEN" or "E DREHEN  ·  Q CHANCEN"
+			board.Hint.Text = InputActions.IsTouch() and "TIPPE AUF DREHEN" or (InputActions.Device() == "Gamepad"
+				and (InputActions.PadName(Enum.KeyCode.ButtonX) .. " DREHEN  ·  " .. InputActions.PadName(Enum.KeyCode.ButtonY)
+					.. " CHANCEN") or "E DREHEN  ·  Q CHANCEN")
 		else
 			board.Status.Text = "NÄCHSTER DREH IN " .. clock(86400 - now % 86400)
 			board.Status.TextColor3 = Color3.fromRGB(170, 178, 190)

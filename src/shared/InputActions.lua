@@ -44,13 +44,24 @@ InputActions.Bindings = {
 	Inspect = { Keys = { Enum.KeyCode.X }, Pad = {} },
 }
 
--- Beschriftungen für Controller-Tasten (PlayStation)
+-- Beschriftungen für Controller-Tasten: PlayStation-Symbole oder Xbox-Buchstaben (je nach Konsole, siehe PadStyle)
 local PAD_NAMES = {
-	[Enum.KeyCode.ButtonR2] = "R2", [Enum.KeyCode.ButtonL2] = "L2", [Enum.KeyCode.ButtonR1] = "R1",
-	[Enum.KeyCode.ButtonL1] = "L1", [Enum.KeyCode.ButtonR3] = "R3", [Enum.KeyCode.ButtonL3] = "L3",
-	[Enum.KeyCode.ButtonX] = "□", [Enum.KeyCode.ButtonY] = "△", [Enum.KeyCode.ButtonB] = "○",
-	[Enum.KeyCode.ButtonA] = "✕", [Enum.KeyCode.ButtonSelect] = "TOUCH", [Enum.KeyCode.DPadUp] = "↑",
-	[Enum.KeyCode.DPadDown] = "↓", [Enum.KeyCode.DPadLeft] = "←", [Enum.KeyCode.DPadRight] = "→",
+	PlayStation = {
+		[Enum.KeyCode.ButtonR2] = "R2", [Enum.KeyCode.ButtonL2] = "L2", [Enum.KeyCode.ButtonR1] = "R1",
+		[Enum.KeyCode.ButtonL1] = "L1", [Enum.KeyCode.ButtonR3] = "R3", [Enum.KeyCode.ButtonL3] = "L3",
+		[Enum.KeyCode.ButtonX] = "□", [Enum.KeyCode.ButtonY] = "△", [Enum.KeyCode.ButtonB] = "○",
+		[Enum.KeyCode.ButtonA] = "✕", [Enum.KeyCode.ButtonSelect] = "TOUCH", [Enum.KeyCode.DPadUp] = "↑",
+		[Enum.KeyCode.DPadDown] = "↓", [Enum.KeyCode.DPadLeft] = "←", [Enum.KeyCode.DPadRight] = "→",
+		[Enum.KeyCode.Thumbstick1] = "L-STICK", [Enum.KeyCode.Thumbstick2] = "R-STICK",
+	},
+	Xbox = {
+		[Enum.KeyCode.ButtonR2] = "RT", [Enum.KeyCode.ButtonL2] = "LT", [Enum.KeyCode.ButtonR1] = "RB",
+		[Enum.KeyCode.ButtonL1] = "LB", [Enum.KeyCode.ButtonR3] = "RS", [Enum.KeyCode.ButtonL3] = "LS",
+		[Enum.KeyCode.ButtonX] = "X", [Enum.KeyCode.ButtonY] = "Y", [Enum.KeyCode.ButtonB] = "B",
+		[Enum.KeyCode.ButtonA] = "A", [Enum.KeyCode.ButtonSelect] = "VIEW", [Enum.KeyCode.DPadUp] = "↑",
+		[Enum.KeyCode.DPadDown] = "↓", [Enum.KeyCode.DPadLeft] = "←", [Enum.KeyCode.DPadRight] = "→",
+		[Enum.KeyCode.Thumbstick1] = "L-STICK", [Enum.KeyCode.Thumbstick2] = "R-STICK",
+	},
 }
 local KEY_NAMES = {
 	[Enum.UserInputType.MouseButton1] = "LMB", [Enum.UserInputType.MouseButton2] = "RMB",
@@ -59,6 +70,41 @@ local KEY_NAMES = {
 	[Enum.KeyCode.Six] = "6", [Enum.KeyCode.Three] = "3", [Enum.KeyCode.Seven] = "7", [Enum.KeyCode.Eight] = "8",
 	[Enum.KeyCode.Nine] = "9",
 }
+
+-- Welche Tastensymbole? Roblox nennt die Tasten auf der PlayStation "ButtonCross" usw., auf Xbox und am PC "ButtonA".
+-- Ohne Antwort (älterer Client, Tests): PlayStation wie bisher.
+local padStyle = nil
+function InputActions.PadStyle()
+	if not padStyle then
+		local ok, name = pcall(function()
+			return UserInputService:GetStringForKeyCode(Enum.KeyCode.ButtonA)
+		end)
+		padStyle = (ok and name == "ButtonA") and "Xbox" or "PlayStation"
+	end
+	return padStyle
+end
+
+-- Beschriftung einer Controller-Taste im Stil der Konsole ("✕" / "A", "R1" / "RB")
+function InputActions.PadName(keyCode)
+	local names = PAD_NAMES[InputActions.PadStyle()]
+	return names[keyCode] or keyCode.Name
+end
+
+-- Bild der Controller-Taste, wie Roblox es auf dieser Konsole zeigt (nil, wenn es keins gibt)
+function InputActions.PadImage(keyCode)
+	local ok, image = pcall(function()
+		return UserInputService:GetImageForKeyCode(keyCode)
+	end)
+	return (ok and type(image) == "string" and image ~= "") and image or nil
+end
+
+-- Fernseher-Oberfläche (PlayStation, Xbox): größere Schrift und Bedienung nur mit dem Controller
+function InputActions.IsConsole()
+	local ok, result = pcall(function()
+		return GuiService:IsTenFootInterface()
+	end)
+	return ok and result == true
+end
 
 InputActions.HoldTime = 0.35 -- so lange halten, bis eine PadHold-Aktion auslöst
 
@@ -119,6 +165,8 @@ local function shown(object)
 	return current ~= nil and current.Enabled and object.AbsoluteSize.X > 0
 end
 
+local focusContainer = nil -- zuletzt mit Focus gewähltes Fenster (Wächter in Init holt die Auswahl dorthin zurück)
+
 -- Controller: Auswahl auf einen Knopf setzen, damit Menüs ohne Maus bedienbar sind.
 -- preferred = gewünschter Knopf; sonst der oberste linke sichtbare Knopf in container.
 -- Knöpfe mit Attribut NoFocus (z.B. Schließen-Kreuz) werden dabei übersprungen. Ohne Controller passiert nichts.
@@ -142,6 +190,33 @@ function InputActions.Focus(container, preferred)
 			GuiService.SelectedObject = target
 		end
 	end)
+	-- Steuerkreuz und Stick bleiben im Fenster: Roblox würde sonst zu Knöpfen anderer Ebenen springen (HUD, Abzeichen)
+	local top = container
+	while top.Parent and top.Parent:IsA("GuiObject") do
+		top = top.Parent
+	end
+	if top:IsA("GuiObject") then
+		top.SelectionGroup = true
+		top.SelectionBehaviorUp = Enum.SelectionBehavior.Stop
+		top.SelectionBehaviorDown = Enum.SelectionBehavior.Stop
+		top.SelectionBehaviorLeft = Enum.SelectionBehavior.Stop
+		top.SelectionBehaviorRight = Enum.SelectionBehavior.Stop
+	end
+	focusContainer = container
+end
+
+-- Knöpfe einer Ebene (HUD, Touch-Knöpfe) nie mit dem Controller auswählbar: sonst landet die Auswahl dort, und der
+-- Stick bewegt die Auswahl statt der Spielfigur
+function InputActions.NoSelect(root)
+	local function apply(object)
+		if object:IsA("GuiButton") or object:IsA("TextBox") then
+			object.Selectable = false
+		end
+	end
+	for _, object in root:GetDescendants() do
+		apply(object)
+	end
+	root.DescendantAdded:Connect(apply)
 end
 
 -- Namenspfad der zuletzt gewählten Auswahl (vom ScreenGui abwärts), damit Refocus nach einem Neuaufbau den
@@ -216,17 +291,68 @@ function InputActions.Hint(action)
 	end
 	if device == "Gamepad" then
 		if action == "Ultimate" then
-			return "L1+R1"
+			return InputActions.PadName(Enum.KeyCode.ButtonL1) .. "+" .. InputActions.PadName(Enum.KeyCode.ButtonR1)
 		end
 		local code = binding.Pad[1]
 		if code then
-			return PAD_NAMES[code] or code.Name
+			return InputActions.PadName(code)
 		end
 		local hold = binding.PadHold and binding.PadHold[1]
-		return hold and ((PAD_NAMES[hold] or hold.Name) .. " HALTEN") or ""
+		return hold and (InputActions.PadName(hold) .. " HALTEN") or ""
 	end
 	local code = binding.Keys[1]
 	return code and (KEY_NAMES[code] or code.Name) or ""
+end
+
+-- Auswahlrahmen im Stil des Spiels (roter Rand statt des dünnen Roblox-Rahmens, auf dem Fernseher gut zu sehen) und
+-- Wächter: Ist ein Fenster offen, aber nichts ausgewählt (Knopf beim Neuaufbau verschwunden, Fenster noch im Aufbau),
+-- holt er die Auswahl ins zuletzt fokussierte Fenster zurück – sonst liefe die Figur hinter dem Menü los
+InputActions.SelectionColor = Color3.fromRGB(214, 58, 58)
+function InputActions.SetupSelection()
+	local Players = game:GetService("Players")
+	local player = Players.LocalPlayer
+	local playerGui = player and player:WaitForChild("PlayerGui", 30)
+	if playerGui then
+		local frame = Instance.new("Frame")
+		frame.Name = "PadSelection"
+		frame.BackgroundColor3 = Color3.new(1, 1, 1)
+		frame.BackgroundTransparency = 0.9
+		frame.BorderSizePixel = 0
+		frame.Size = UDim2.new(1, 8, 1, 8)
+		frame.Position = UDim2.fromOffset(-4, -4)
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 6)
+		corner.Parent = frame
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = InputActions.SelectionColor
+		stroke.Thickness = 3
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = frame
+		pcall(function()
+			(playerGui :: any).SelectionImageObject = frame
+		end)
+	end
+	local UITheme = require(script.Parent:WaitForChild("UITheme")) :: any
+	local nextCheck = 0
+	game:GetService("RunService").Heartbeat:Connect(function()
+		local now = os.clock()
+		if device ~= "Gamepad" or now < nextCheck then
+			return
+		end
+		nextCheck = now + 0.3
+		local container = focusContainer
+		if not (container and container.Parent and UITheme.IsMenuOpen() and shown(container)) then
+			return
+		end
+		local selected = GuiService.SelectedObject
+		if selected and selected.Parent and shown(selected) then
+			return
+		end
+		if UserInputService:GetFocusedTextBox() then
+			return -- Bildschirmtastatur offen
+		end
+		InputActions.Focus(container, sameAsLast(container))
+	end)
 end
 
 local function matches(list, input)
@@ -276,6 +402,7 @@ end
 local function setDevice(new)
 	if new ~= device then
 		device = new
+		padStyle = nil -- neu bestimmen (anderer Controller angesteckt)
 		deviceChanged:Fire(new)
 	end
 end
@@ -301,6 +428,12 @@ function InputActions.Init()
 		device = "Gamepad"
 	end
 	UserInputService.LastInputTypeChanged:Connect(updateDevice)
+	-- Konsole: Select/Touchpad soll nicht irgendeinen Knopf auswählen (Roblox-Standard) – die Taste öffnet das
+	-- Inventar, die Auswahl setzen die Fenster selbst (Focus)
+	pcall(function()
+		GuiService.AutoSelectGuiEnabled = false
+	end)
+	task.spawn(InputActions.SetupSelection)
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		-- Controller-Tasten zählen auch, wenn gerade ein Knopf ausgewählt ist (nur nicht ✕/○ im Menü)

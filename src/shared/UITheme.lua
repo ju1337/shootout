@@ -415,6 +415,20 @@ function UITheme.RapIcon(parent, size, props)
 	return holder
 end
 
+-- Konsole am Fernseher (PlayStation, Xbox): man sitzt weit weg, darum HUD bis zur vollen Bildschirmgröße statt höchstens
+-- 1:1 und Fenster mit etwas Rand (unten passt die Controller-Leiste mit den Tasten hin)
+local tenFoot = nil
+function UITheme.TenFoot()
+	if tenFoot == nil then
+		local ok, result = pcall(function()
+			return game:GetService("GuiService"):IsTenFootInterface()
+		end)
+		tenFoot = ok and result == true
+	end
+	return tenFoot
+end
+UITheme.TenFootCanvas = 0.95 -- Fenster auf der Konsole: so viel vom Bildschirm
+
 -- Zentrierte Leinwand mit fester Größe, die auf den Bildschirm skaliert wird
 -- layout (optional): function(viewport) -> Breite, Höhe der Leinwand (z.B. eigene Größe am Handy)
 function UITheme.Canvas(parent, width, height, layout)
@@ -428,7 +442,7 @@ function UITheme.Canvas(parent, width, height, layout)
 			w, h = layout(viewport)
 			canvas.Size = UDim2.new(0, w, 0, h)
 		end
-		scale.Scale = math.min(viewport.X / w, viewport.Y / h)
+		scale.Scale = math.min(viewport.X / w, viewport.Y / h) * (UITheme.TenFoot() and UITheme.TenFootCanvas or 1)
 	end
 	update()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
@@ -439,7 +453,9 @@ end
 -- Kinder positioniert man wie gewohnt an den Rändern. Gibt den Frame zurück.
 -- Maßstab einer solchen Ebene bei dieser Bildschirmgröße (auch für Rechnungen in ihren Einheiten, z.B. TopStack)
 function UITheme.RootScale(viewport, designWidth, designHeight, minScale)
-	return math.clamp(math.min(viewport.X / (designWidth or 1600), viewport.Y / (designHeight or 900)), minScale or 0.45, 1)
+	-- am PC höchstens 1:1, auf der Konsole bis zur ganzen Bildschirmgröße (1080p: 1,2)
+	return math.clamp(math.min(viewport.X / (designWidth or 1600), viewport.Y / (designHeight or 900)), minScale or 0.45,
+		UITheme.TenFoot() and 2 or 1)
 end
 
 -- Fenster in einer ScaledRoot am Handy größer ziehen: die Ebene ist dort auf minScale verkleinert, das Fenster passt
@@ -456,7 +472,7 @@ function UITheme.PhoneFit(frame, width, height, minScale)
 		local viewport = workspace.CurrentCamera.ViewportSize
 		local rootScale = UITheme.RootScale(viewport, nil, nil, minScale)
 		local scale = math.min(viewport.X * 0.96 / (width * rootScale), viewport.Y * 0.94 / (height * rootScale))
-		fit.Scale = math.clamp(scale, 1, 1 / rootScale)
+		fit.Scale = math.clamp(scale, 1, math.max(1, 1 / rootScale)) -- Konsole: Ebene schon größer als 1:1
 	end
 	connection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
 	fit.Destroying:Connect(function() -- Fenster zu: Verbindung nicht bis zur nächsten Größenänderung liegen lassen

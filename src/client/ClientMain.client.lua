@@ -47,6 +47,7 @@ local ExtinctionClient = require(script.Parent:WaitForChild("ExtinctionClient"))
 local VehicleClient = require(script.Parent:WaitForChild("VehicleClient"))
 local DeathScreen = require(script.Parent:WaitForChild("DeathScreen"))
 local ZombieVisibility = require(script.Parent:WaitForChild("ZombieVisibility"))
+local PadPrompts = require(script.Parent:WaitForChild("PadPrompts"))
 
 InputActions.Init() -- zuerst: alle anderen Module melden ihre Aktionen hier an
 PlayerSettings.Init() -- gespeicherte Einstellungen laden (Movement, HUD usw. hören auf Änderungen)
@@ -77,6 +78,7 @@ require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild
 GraphicsQuality.Init() -- Einstellung Grafik (Schatten, Partikel, Leuchten)
 KillstreakHUD.Init() -- Killstreaks in Herrschaft rechts am Rand (Tasten 4/5/6)
 TouchControls.Init()
+PadPrompts.Init() -- Controller: Leiste unten mit den Tasten im offenen Menü (✕ AUSWÄHLEN, ○ ZURÜCK, L1/R1 REITER)
 LevelBadge.Init() -- Spielerlevel immer sichtbar (außer in Menüs)
 task.spawn(HubWheel.Init) -- Glücksrad im Camp am Phönixplatz (wartet auf die Gruppe Zentrale)
 task.spawn(MarketClient.Init) -- Markthalle: Stände, MEIN STAND, kaufen (wartet auf die Markt-Map)

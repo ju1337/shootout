@@ -234,14 +234,15 @@ local function buildHeader()
 	end
 	-- Controller: L1/R1-Hinweise links und rechts der Reiter (nur mit Controller sichtbar)
 	local padHints = {}
-	for _, hint in { { Text = "L1", Order = 0 }, { Text = "R1", Order = #NAV + 1 } } do
-		local tag = UITheme.Tag({ Text = hint.Text, TextSize = 13, LayoutOrder = hint.Order, BackgroundColor3 = C.Secondary,
+	for _, hint in { { Key = Enum.KeyCode.ButtonL1, Order = 0 }, { Key = Enum.KeyCode.ButtonR1, Order = #NAV + 1 } } do
+		local tag = UITheme.Tag({ Text = InputActions.PadName(hint.Key), TextSize = 13, LayoutOrder = hint.Order, BackgroundColor3 = C.Secondary,
 			TextColor3 = C.Text }, nav)
 		table.insert(padHints, tag)
 	end
 	local function updatePadHints()
-		for _, tag in padHints do
+		for index, tag in padHints do
 			tag.Visible = InputActions.Device() == "Gamepad"
+			tag.Text = InputActions.PadName(index == 1 and Enum.KeyCode.ButtonL1 or Enum.KeyCode.ButtonR1)
 		end
 	end
 	updatePadHints()

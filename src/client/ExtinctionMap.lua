@@ -498,7 +498,10 @@ function ExtinctionMap.Set(open)
 	if gui.Enabled then
 		if closeHint then
 			closeHint.Visible = not InputActions.IsTouch()
-			closeHint.Text = InputActions.Device() == "Gamepad" and "○  SCHLIESSEN" or "N SCHLIESSEN"
+			closeHint.Text = InputActions.Device() == "Gamepad"
+				and (InputActions.PadName(Enum.KeyCode.ButtonB) .. "  SCHLIESSEN  ·  " .. InputActions.PadName(Enum.KeyCode.ButtonR2)
+					.. " / " .. InputActions.PadName(Enum.KeyCode.ButtonL2) .. "  ZOOM  ·  R-STICK  VERSCHIEBEN")
+				or "N SCHLIESSEN"
 		end
 		-- Maus frei, solange die Karte offen ist (direkt nach der Kamera, die sie sonst wieder sperrt)
 		RunService:BindToRenderStep("ExtinctionMapMouse", Enum.RenderPriority.Camera.Value + 1, function()
