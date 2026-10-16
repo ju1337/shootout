@@ -1206,10 +1206,11 @@ local function spawnRound()
 			if DayCycle.IsStorm(workspace:GetServerTimeNow()) then
 				wanted = math.floor(wanted * ExtinctionConfig.Storm.Zombies + 0.5) -- Sturmnacht: mehr
 			end
-			-- in der roten Zone zählen seine Zombies in der ganzen Zone (sie spawnen überall darin), sonst die um ihn
+			-- in der roten Zone zählen seine Zombies in der ganzen Zone (sie spawnen überall darin), sonst die um ihn;
+			-- gemeinsame Zombies (Events wie Lootdrop oder Wrack) zählen mit, sonst käme an Events noch alles obendrauf
 			local around = 0
 			for _, info in zombies do
-				if info.Owner ~= player then
+				if info.Dungeon or (info.Owner ~= nil and info.Owner ~= player) then
 					continue
 				end
 				if zone and Vector3.new(info.Root.Position.X - zone.Center.X, 0, info.Root.Position.Z - zone.Center.Z).Magnitude

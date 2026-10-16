@@ -375,7 +375,8 @@ local kills = 0
 WeaponService.Killed:Connect(function()
 	kills += 1
 end)
-local stabbed = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -3))
+-- ungepanzert (sonst schluckt die Weste zufällig einen Teil der Stiche und die Münzen sind anders)
+local stabbed = ZombieService.Spawn(alice.Character.HumanoidRootPart.Position + Vector3.new(0, -3, -3), "Walker", nil, false)
 SIM.SpherecastHandler = function()
 	return { Instance = stabbed.Torso, Position = stabbed.Torso.Position, Normal = Vector3.new(0, 0, 1) }
 end
