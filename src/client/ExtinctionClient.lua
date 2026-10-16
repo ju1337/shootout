@@ -581,7 +581,7 @@ local zonePill, zoneText, coinsText, toast, toastId, useBar, useFill, useText, h
 local levelText, levelFill, levelXP, xpPopupId
 local shieldPill, shieldText
 local markerHolder, vignette
-local placeUi = {} -- Banner beim Betreten eines Ortes: Banner (Rahmen), Title, Sub
+local placeUi: { [string]: any } = {} -- Banner beim Betreten eines Ortes: Banner (Rahmen), Title, Sub
 local places, currentPlace, placeShownAt = {}, nil, -100 -- Orte der Karte (Gruppe Places), aktueller Ort, Zeit des Banners
 local markerRows = {}
 local RED = Color3.fromRGB(226, 56, 48)
@@ -627,7 +627,11 @@ end
 -- Bild, Name, Seltenheit (Farbe der Kante rechts) und "+Anzahl". Die neueste liegt oben; dasselbe Item noch einmal zählt
 -- auf seiner Karte weiter. Jede Karte gleitet nach Inv.PICK.Life Sekunden nach rechts hinaus; mehr als Inv.PICK.Max: die älteste geht.
 -- Touch: links neben den Bildschirm-Knöpfen, größer und höchstens 3 Karten.
-Inv.PICK = { W = 280, H = 58, Gap = 6, Life = 4.5, Max = 5 }
+-- Verkauf auf dem Spielermarkt (ExtUpdate "Sold", ExtMarketService.Buy): dieselbe Karte mit "VERKAUFT AN <Käufer>" (Gold)
+-- und rechts Münze + Erlös statt "+Anzahl"; zählt nicht weiter, bleibt Inv.PICK.SoldLife Sekunden. Ist das HUD gerade
+-- versteckt (Fenster offen), wartet die Karte, bis es wieder da ist (Inv.flushSold).
+Inv.PICK = { W = 280, H = 58, Gap = 6, Life = 4.5, SoldLife = 7, Max = 5 }
+Inv.soldQueue = {}
 Inv.picks = {} -- { Id, Count, Slot, Card, CountText, Pop, Born, Leaving }
 Inv.pickOrder = 0
 
@@ -661,7 +665,15 @@ function Inv.dropPick(pick, fast)
 	tween:Play()
 end
 
-function Inv.showPick(id, count)
+function Inv.flushSold()
+	while hud and hud.Enabled and #Inv.soldQueue > 0 do
+		local sold = table.remove(Inv.soldQueue, 1)
+		Inv.showPick(sold.Id, sold.Count, sold)
+	end
+end
+
+-- sold (optional): { Earned, Buyer } für eine Verkaufskarte
+function Inv.showPick(id, count, sold)
 	local config = itemConfig(id)
 	if not (config and Inv.pickFeed) then
 		return
@@ -669,7 +681,7 @@ function Inv.showPick(id, count)
 	local TweenService = game:GetService("TweenService")
 	Inv.pickOrder -= 1 -- kleinere LayoutOrder = weiter oben
 	for _, pick in Inv.picks do
-		if pick.Id == id then
+		if pick.Id == id and not sold and not pick.Sold then
 			pick.Count += count
 			pick.CountText.Text = "+" .. pick.Count
 			pick.Born = os.clock()
@@ -707,26 +719,44 @@ function Inv.showPick(id, count)
 		BackgroundTransparency = 1, ZIndex = 3 }, card)
 	make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6),
 		SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }, caption)
-	label({ Name = "Picked", LayoutOrder = 1, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X, Text = "AUFGENOMMEN",
-		TextSize = 11, Font = F.Bold, TextColor3 = C.Muted, ZIndex = 3 }, caption)
-	if tier and TIER_NAMES[config.Tier] then
+	caption.ClipsDescendants = sold ~= nil
+	label({ Name = "Picked", LayoutOrder = 1, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X,
+		Text = sold and "VERKAUFT AN" or "AUFGENOMMEN", TextSize = 11, Font = F.Bold, TextColor3 = sold and C.Gold or C.Muted, ZIndex = 3 }, caption)
+	if sold then
+		label({ Name = "Buyer", LayoutOrder = 2, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X,
+			Text = upper(tostring(sold.Buyer)), TextSize = 11, Font = F.Bold, TextColor3 = C.Text, ZIndex = 3 }, caption)
+	elseif tier and TIER_NAMES[config.Tier] then
 		label({ Name = "Tier", LayoutOrder = 2, Size = UDim2.fromOffset(0, 13), AutomaticSize = Enum.AutomaticSize.X,
 			Text = TIER_NAMES[config.Tier], TextSize = 11, Font = F.Bold, TextColor3 = tier, ZIndex = 3 }, caption)
 	end
-	local name = label({ Name = "ItemName", Position = UDim2.fromOffset(textX, 24), Size = UDim2.new(1, -textX - 70, 0, 24),
-		Text = upper(config.Name), TextSize = 18, Font = F.Display, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd,
+	local name = label({ Name = "ItemName", Position = UDim2.fromOffset(textX, 24), Size = UDim2.new(1, -textX - (sold and 96 or 70), 0, 24),
+		Text = upper(config.Name) .. ((sold and count > 1) and ("  ×" .. count) or ""), TextSize = 18, Font = F.Display, TextColor3 = C.Text, TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3 }, card)
 	UITheme.Outline(name)
-	local countText = label({ Name = "Count", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0),
-		Size = UDim2.fromOffset(60, 30), Text = "+" .. count, TextSize = 24, Font = F.Display, TextColor3 = C.Good,
-		TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, card)
+	local countText
+	if sold then
+		-- Erlös: Münze und Betrag, rechtsbündig
+		local earned = make("Frame", { Name = "Earned", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0),
+			Size = UDim2.fromOffset(0, 30), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, ZIndex = 3 }, card)
+		make("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 5),
+			VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, earned)
+		UITheme.Coin(earned, 16, { LayoutOrder = 1, ZIndex = 3 })
+		countText = label({ Name = "Count", LayoutOrder = 2, Size = UDim2.fromOffset(0, 30), AutomaticSize = Enum.AutomaticSize.X,
+			Text = "+" .. math.floor(tonumber(sold.Earned) or 0), TextSize = 22, Font = F.Display, TextColor3 = C.Gold, ZIndex = 3 }, earned)
+	else
+		countText = label({ Name = "Count", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -14, 0.5, 0),
+			Size = UDim2.fromOffset(60, 30), Text = "+" .. count, TextSize = 24, Font = F.Display, TextColor3 = C.Good,
+			TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3 }, card)
+	end
 	UITheme.Outline(countText)
-	local pick = { Id = id, Count = count, Slot = slot, Card = card, CountText = countText, Pop = pop, Born = os.clock(), Leaving = false }
+	local pick = { Id = id, Count = count, Slot = slot, Card = card, CountText = countText, Pop = pop, Born = os.clock(), Leaving = false,
+		Sold = sold ~= nil }
+	local life = sold and Inv.PICK.SoldLife or Inv.PICK.Life
 	table.insert(Inv.picks, pick)
 	TweenService:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{ Position = UDim2.fromOffset(0, 0) }):Play()
 	task.spawn(function()
-		while not pick.Leaving and os.clock() - pick.Born < Inv.PICK.Life do
+		while not pick.Leaving and os.clock() - pick.Born < life do
 			task.wait(0.25)
 		end
 		Inv.dropPick(pick)
@@ -854,6 +884,7 @@ local function buildHud()
 		Text = "", TextSize = 12, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Right }, levelRow)
 	UITheme.Outline(levelXP)
 	Inv.buildPickFeed(root)
+	hud:GetPropertyChangedSignal("Enabled"):Connect(Inv.flushSold)
 	hints = label({ Name = "Hints", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -1), Size = UDim2.fromOffset(900, 11),
 		Text = "", TextSize = 10, Font = F.Bold, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Center }, root)
 
@@ -5225,6 +5256,10 @@ function ExtinctionClient.Init()
 					Inv.showPick(item.Id, item.Count)
 				end
 			end
+		elseif kind == "Sold" and type(a) == "table" and type(a.Id) == "string" and type(a.Count) == "number" then
+			Sfx.UI("StingGood")
+			table.insert(Inv.soldQueue, a)
+			Inv.flushSold()
 		elseif kind == "Loot" and type(a) == "table" then
 			-- nur öffnen/auffrischen, wenn kein anderes Fenster offen ist (ein Update, das nach dem Schließen ankommt,
 			-- holte die Tasche sonst zurück, ohne dass der Server einen noch als Zuschauer kennt)

@@ -184,18 +184,17 @@ check(ProgressService.Get(alice).Coins == aliceBefore + 500 - fee, "Alice bekomm
 local _, bought = slotOf(bob, "Rifle")
 check(bought and bought.Mag == 25, "Gewehr mit Magazin in Bobs Tasche")
 check(#market() == M.MaxListings - 1, "Angebot weg")
-check(string.find(lastStatus(alice), "Verkauft", 1, true) ~= nil and string.find(lastStatus(bob), "Gekauft", 1, true) ~= nil,
-	"Meldungen an beide")
-local banner = nil
+check(string.find(lastStatus(bob), "Gekauft", 1, true) ~= nil, "Meldung an Bob")
+local sold = nil
 for i = #SIM.RemoteLog, 1, -1 do
 	local entry = SIM.RemoteLog[i]
-	if entry.Remote == "Notify" and entry.Player == alice then
-		banner = entry.Args
+	if entry.Remote == "ExtUpdate" and entry.Player == alice and entry.Args[1] == "Sold" then
+		sold = entry.Args[2]
 		break
 	end
 end
-check(banner and banner[1] == "Progress" and banner[2].Title == "VERKAUFT" and string.find(banner[2].Sub, "Bob", 1, true) ~= nil,
-	"Verkaufsbenachrichtigung (Banner) an Alice")
+check(sold and sold.Id == "Rifle" and sold.Count == 1 and sold.Earned == 500 - fee and sold.Buyer == bob.Name,
+	"Verkaufsbenachrichtigung (Karte wie beim Aufheben) an Alice")
 step(1)
 check(store.Data.u2 and store.Data.u2.Coins == 500, "Bobs Kauf ist gespeichert")
 -- zu wenig Münzen: nichts passiert

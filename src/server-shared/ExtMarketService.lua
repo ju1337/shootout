@@ -7,7 +7,8 @@
 --     verloren, wenn er stirbt oder das Spiel verlässt; sichtbar ist es, solange er auf dem Server ist. At = Zeitpunkt
 --     des Einstellens (os.time()), damit die Clients nach NEU sortieren können.
 --   * MarketBuy(id, price): nur zum gesehenen Preis, mit Platz in der Tasche und genug Münzen. Das Item kommt in die
---     Tasche des Käufers, der Verkäufer bekommt den Preis minus FeeRate (ohne VIP-Verdopplung), beide eine Meldung, beide
+--     Tasche des Käufers, der Verkäufer bekommt den Preis minus FeeRate (ohne VIP-Verdopplung), der Käufer eine Meldung, der Verkäufer eine
+--     Karte "VERKAUFT" (ExtUpdate "Sold", { Id, Count, Earned, Buyer }), beide
 --     Spielstände werden sofort gespeichert.
 --   * MarketPrice(id, price): der Verkäufer ändert den Preis seines Angebots (gleiche Grenzen wie beim Anbieten; At bleibt).
 --   * MarketCancel(id): der Verkäufer nimmt sein Angebot zurück in die Tasche.
@@ -219,10 +220,8 @@ function ExtMarketService.Buy(player, id, price)
 	InventoryService.Changed(seller)
 	ExtMarketService.Publish()
 	status(player, "Gekauft: " .. itemText(entry) .. " von " .. seller.Name .. " für " .. entry.Price .. " Münzen", true)
-	status(seller, "Verkauft auf dem Markt: " .. itemText(entry) .. " an " .. player.Name .. " · +" .. earned .. " Münzen", true)
-	-- Verkaufsbenachrichtigung: Banner mit Ton, damit man den Verkauf nicht verpasst
-	Remotes.Notify:FireClient(seller, "Progress", { Caption = "Markt", Title = "VERKAUFT",
-		Sub = itemText(entry) .. " an " .. player.Name .. "  ·  +" .. earned .. " Münzen", Color = Color3.fromRGB(214, 176, 96) })
+	-- Verkaufsbenachrichtigung: kleine Karte rechts mittig im Stil des Aufheben-Popups (ExtinctionClient Inv.showPick)
+	Remotes.ExtUpdate:FireClient(seller, "Sold", { Id = entry.Item, Count = entry.Count, Earned = earned, Buyer = player.Name })
 	task.spawn(ProgressService.SaveNow, player)
 	task.spawn(ProgressService.SaveNow, seller)
 	return true
