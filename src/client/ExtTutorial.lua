@@ -93,6 +93,12 @@ local function inExtinction()
 	return Modes.IsSurvival(player:GetAttribute("Mode"))
 end
 
+-- Ladebildschirm (ReplicatedFirst) noch zu sehen: Tafel und Markierungen erst danach
+local function loading()
+	local playerGui = player:FindFirstChildOfClass("PlayerGui")
+	return playerGui ~= nil and playerGui:FindFirstChild("LoadingScreen") ~= nil
+end
+
 local function forced()
 	return player:GetAttribute("TutorialForced") == true
 end
@@ -982,14 +988,14 @@ local function onAttribute()
 		enterStep(math.max(state.Step, savedStep()))
 		return
 	end
-	-- erst, wenn kein Fenster offen ist (die Karte liegt unter den Fenstern) und der Spieler da ist
+	-- erst, wenn der Ladebildschirm weg ist, kein Fenster offen ist (die Karte liegt unter den Fenstern) und der Spieler da ist
 	task.spawn(function()
 		local waited = 0
-		while waited < 600 and (not inExtinction() or windowKind() ~= nil) do
+		while waited < 600 and (not inExtinction() or windowKind() ~= nil or loading()) do
 			waited += task.wait(0.5)
 		end
 		if player:GetAttribute("ExtTutorial") == true and not state.Finished and not state.Active and not intro and inExtinction()
-			and windowKind() == nil then
+			and windowKind() == nil and not loading() then
 			-- Karte WILLKOMMEN nur ganz am Anfang; nach einem erneuten Beitritt geht es gleich weiter
 			ExtTutorial.Start(savedStep() <= 1)
 		end

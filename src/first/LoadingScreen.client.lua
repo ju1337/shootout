@@ -1,6 +1,7 @@
 -- LoadingScreen (LocalScript in ReplicatedFirst)
 -- Eigener Ladebildschirm im nüchternen Taktik-Look: Logo, dünner Lade-Balken, wechselnde Tipps.
--- Verschwindet, sobald das Spiel geladen ist und der Spieler im Camp (Safe Zone der offenen Welt) angekommen ist.
+-- Verschwindet erst, wenn Waffenmodelle und Skins vorgeladen sind, der Charakter im Camp auf festem Boden steht und
+-- die Umgebung des Spawns geladen ist (jeder Schritt mit Frist, siehe unten). Danach startet z.B. das Tutorial.
 
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
@@ -92,17 +93,41 @@ task.spawn(function()
 	end
 end)
 
--- Fortschritt: geladen -> Spieldaten -> im Camp
-TweenService:Create(bar, TweenInfo.new(1.5), { Size = UDim2.new(0.4, 0, 1, 0) }):Play()
+-- Fortschritt: Spiel geladen -> Waffen/Skins vorgeladen -> Spieldaten -> Charakter steht im Camp -> Umgebung geladen.
+-- Jeder Schritt hat eine Frist, damit ein hängendes Asset niemanden für immer hier festhält.
+local function setBar(fraction, seconds)
+	TweenService:Create(bar, TweenInfo.new(seconds or 0.3), { Size = UDim2.new(fraction, 0, 1, 0) }):Play()
+end
+local function waitUntil(condition, timeout)
+	local started = os.clock()
+	while not condition() and os.clock() - started < timeout do
+		task.wait(0.1)
+	end
+	return condition()
+end
+
+setBar(0.12, 1.5)
 if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
-status.Text = "Verbinde mit Camp Phoenix ..."
-TweenService:Create(bar, TweenInfo.new(0.8), { Size = UDim2.new(0.75, 0, 1, 0) }):Play()
-local started = os.clock()
-while player:GetAttribute("Mode") == nil and os.clock() - started < 15 do
-	task.wait(0.1)
+
+-- Waffenmodelle, Skins und Aufsätze vorladen: die 3D-Vorschauen in Inventar, Hotbar und Markt sind dann sofort da
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared", 20)
+local preloadModule = Shared and Shared:WaitForChild("AssetPreload", 10)
+local AssetPreload = preloadModule and require(preloadModule)
+if AssetPreload then
+	status.Text = "Lade Waffen und Skins ..."
+	AssetPreload.Run(AssetPreload.AssetGroups(), function(done, total)
+		status.Text = string.format("Lade Waffen und Skins ... %d/%d", done, total)
+		setBar(0.12 + 0.38 * done / total)
+	end, 25)
 end
+setBar(0.5)
+
+status.Text = "Verbinde mit Camp Phoenix ..."
+waitUntil(function()
+	return player:GetAttribute("Mode") ~= nil
+end, 15)
 -- Kein Modus nach 15 s: der Server hängt (meist fehlen die Karten unter Workspace.Maps, z.B. Rojo nicht fertig
 -- synchronisiert, oder der Spielstand lädt noch). Statt in eine leere Welt auszublenden, den Grund anzeigen und weiter warten.
 if player:GetAttribute("Mode") == nil then
@@ -114,9 +139,57 @@ if player:GetAttribute("Mode") == nil then
 	end
 	status.TextColor3 = AMBER
 	player:GetAttributeChangedSignal("Mode"):Wait()
+	status.TextColor3 = Color3.fromRGB(134, 142, 152)
 end
+setBar(0.62)
+
+-- Spawn: Charakter da, Avatar fertig, Streaming hält das Spiel nicht mehr an, Boden unter den Füßen
+status.Text = "Spawne im Camp ..."
+local function root()
+	local character = player.Character
+	return character and character:FindFirstChild("HumanoidRootPart")
+end
+waitUntil(function()
+	return root() ~= nil
+end, 20)
+setBar(0.72)
+waitUntil(function()
+	local ok, loaded = pcall(player.HasAppearanceLoaded, player)
+	return not ok or loaded
+end, 8)
+local function grounded()
+	local hrp = root()
+	if not hrp then
+		return false
+	end
+	local paused = false
+	pcall(function()
+		paused = player.GameplayPaused
+	end)
+	if paused then
+		return false
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { player.Character }
+	return workspace:Raycast(hrp.Position, Vector3.new(0, -60, 0), params) ~= nil
+end
+waitUntil(grounded, 15)
+setBar(0.8)
+
+-- Umgebung des Spawns (Gebäude, Stände, Texturen) vorladen, damit beim Ausblenden nichts mehr aufploppt
+local hrp = root()
+if AssetPreload and hrp then
+	status.Text = "Lade das Camp ..."
+	local maps = workspace:FindFirstChild("Maps")
+	AssetPreload.Run(AssetPreload.AreaGroups(maps or workspace, hrp.Position), function(done, total)
+		status.Text = string.format("Lade das Camp ... %d/%d", done, total)
+		setBar(0.8 + 0.18 * done / total)
+	end, 15)
+end
+
 status.Text = "Bereit"
-TweenService:Create(bar, TweenInfo.new(0.4), { Size = UDim2.new(1, 0, 1, 0) }):Play()
+setBar(1, 0.4)
 task.wait(0.6)
 
 -- Ausblenden
