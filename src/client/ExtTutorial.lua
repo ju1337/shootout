@@ -1016,7 +1016,6 @@ function ExtTutorial.Init(options: { WindowKind: (() -> (string?, string?))? }?)
 	if InputActions.IsTouch() then
 		make("UIScale", { Scale = 1.25 }, panel) -- Handy: Schritt-Text sonst nur ~7 px hoch
 	end
-	make("Frame", { Name = "Accent", Size = UDim2.new(0, 3, 1, 0), BackgroundColor3 = RED, BorderSizePixel = 0, ZIndex = 2 }, panel)
 	make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 12), PaddingLeft = UDim.new(0, 18),
 		PaddingRight = UDim.new(0, 16) }, panel)
 	make("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }, panel)

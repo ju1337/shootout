@@ -177,6 +177,15 @@ local panel = gui:FindFirstChild("Panel", true)
 check(ExtTutorial.CurrentStep() == "Kit" and panel and panel.Visible, "Schritt 1: Starter-Kit, Tafel sichtbar")
 check(panel and panel:FindFirstChild("Step", true).Text == "TUTORIAL  ·  SCHRITT 1/15", "Schrittzähler 1/15")
 check(panel and panel:FindFirstChild("Phase", true).Text == "IM CAMP", "Phase IM CAMP")
+-- Tafel und Karte wachsen mit dem Inhalt (AutomaticSize Y + Liste): kein Kind darf seine Höhe von ihnen nehmen,
+-- sonst schaukelt sich die Höhe auf (riesige leere Tafel, Julio 2026-10-16)
+for _, holder in { panel, playerGui.ExtTutorialFocus.Callout } do
+	for _, child in holder:GetChildren() do
+		if child:IsA("GuiObject") then
+			check(child.Size.Y.Scale == 0, "feste Höhe in " .. holder.Name .. ": " .. child.Name)
+		end
+	end
+end
 check(string.find(panel:FindFirstChild("Foot", true).Text, "PFLICHT", 1, true) ~= nil, "Fußzeile: Pflicht, kein Skip-Hinweis")
 local waypoint = playerGui:FindFirstChild("TutorialWaypoint")
 local kitsPos = (CENTER + Vector3.new(12, 2.5, 20))
