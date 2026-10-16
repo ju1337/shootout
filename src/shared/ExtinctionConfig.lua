@@ -189,9 +189,10 @@ end
 
 -- Was die Stände verkaufen (Reihenfolge = Anzeige). Verkaufen kann man an jedem Stand alles.
 ExtinctionConfig.Stands = {
-	-- Der HÄNDLER (im Camp der einzige Stand für Ausrüstung): Waffen, Munition, Wurfwaffen und dazu alles vom Itemstand.
+	-- Der HÄNDLER (im Camp der einzige Stand für Ausrüstung): von den Waffen nur Pistole und MP (alle anderen gibt es nur
+	-- als Beute, Verkaufen geht trotzdem), Munition für alle Waffen, Wurfwaffen und dazu alles vom Itemstand.
 	-- Den Itemstand gibt es nur noch in den Safehouses.
-	Stand_Weapons = { Title = "HÄNDLER", Items = { "Pistol", "Revolver", "SMG", "Shotgun", "Rifle", "DMR", "LMG",
+	Stand_Weapons = { Title = "HÄNDLER", Items = { "Pistol", "SMG",
 		"Ammo_9mm", "Ammo_Magnum", "Ammo_Shell", "Ammo_Rifle", "Grenade", "Molotov",
 		"Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },
 	Stand_Items = { Title = "ITEMSTAND", Items = { "Bandage", "Medkit", "Adrenaline", "AntiZombie", "Vest", "HeavyVest" } },

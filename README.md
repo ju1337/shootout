@@ -84,7 +84,7 @@ nicht anklickbar). Von innen nach außen:
   zur Nordstraße und zum Nordtor. Ein dunkles Fugenband in der Mitte führt nach Norden. Die Stationen stehen links und
   rechts an der Promenade, in der Reihenfolge, in der man sie braucht; vor jeder liegt eine matte Bodenplatte in der
   Farbe ihrer Gruppe:
-  1. **Ausrüsten** (grün): **KIT-AUSGABE** und **HÄNDLER** (Waffen, Munition, Wurfwaffen, Medizin, Westen; im Camp gibt
+  1. **Ausrüsten** (grün): **KIT-AUSGABE** und **HÄNDLER** (Pistole und MP, Munition, Wurfwaffen, Medizin, Westen; im Camp gibt
      es keinen eigenen Itemstand mehr).
   2. **Lager** (grau): **LAGERHAUS** und **VERSTECK**.
   3. **Mittelplatz** quer über die Promenade, an seinen Seiten die Straßen zum West- und Osttor. Westhälfte **Handel &

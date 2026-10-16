@@ -153,7 +153,7 @@ check(alice:GetAttribute("ExtLoadouts") == "[0,0]", "am Anfang zwei leere Ausrü
 
 -- Tasche einrichten: Gewehr mit zwei Aufsätzen auf Platz 1, Pistole auf 2, Munition, Medikits auf 9
 moveTo(alice, Vector3.new(-36, 3, 28))
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Gewehr gekauft")
+check(InventoryService.Give(alice, "Rifle", 1, nil, "Hotbar") == 1, "Gewehr gefunden")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
 check(InventoryService.Give(alice, "Att_Rifle_Compensator", 1) == 1, "Kompensator")

@@ -162,7 +162,7 @@ check(alice:GetAttribute("ExtSafe") == "[]", "Container am Anfang leer (Attribut
 
 -- Kaufen im Camp, dann draußen in den Container legen
 moveTo(alice, Vector3.new(-36, 3, 28))
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Gewehr gekauft")
+check(InventoryService.Give(alice, "Rifle", 1, nil, "Hotbar") == 1, "Gewehr gefunden")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Pistol") == true, "Pistole gekauft")
 local rifleSlot = slot(alice, 1) and slot(alice, 1).Id == "Rifle" and 1 or nil

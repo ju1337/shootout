@@ -277,20 +277,21 @@ check(not prompt.Enabled, "E-Aufforderung aus, solange das Fenster offen ist")
 check(find(windowGui, "StandFilter_Ammo") ~= nil and find(windowGui, "Offer_Ammo_9mm") ~= nil
 	and find(find(windowGui, "Offer_Ammo_9mm"), "Buy5") ~= nil, "Filter nach Art und 5× bei Munition")
 local buyButton = nil
-local rifleCard = find(windowGui, "Offer_Rifle") -- der Händler verkauft auch Westen (5 × Weste kostet ebenfalls 1100)
-for _, d in (rifleCard or windowGui):GetDescendants() do
-	if d:IsA("TextLabel") and d.Text == "1100" then
+check(find(windowGui, "Offer_Rifle") == nil and find(windowGui, "Offer_DMR") == nil, "Händler verkauft nur Pistole und MP")
+local smgCard = find(windowGui, "Offer_SMG")
+for _, d in (smgCard or windowGui):GetDescendants() do
+	if d:IsA("TextLabel") and d.Text == "550" then
 		buyButton = d:FindFirstAncestorWhichIsA("TextButton")
 	end
 end
-check(buyButton ~= nil, "Kaufknopf mit Preis 1100 (Sturmgewehr)")
+check(buyButton ~= nil, "Kaufknopf mit Preis 550 (MP)")
 if buyButton then
 	buyButton.Activated:Fire()
 end
 step(0.5)
-check(ProgressService.Get(bob).Coins == 2900, "Sturmgewehr gekauft (2900 Münzen übrig)")
-check(string.find(texts(hud), "STURMGEWEHR", 1, true) ~= nil, "Hotbar zeigt das Sturmgewehr")
-check(string.find(texts(windowGui), "2,900 MÜNZEN", 1, true) ~= nil or string.find(texts(windowGui), "2.900 MÜNZEN", 1, true) ~= nil, "Fenster zeigt die neuen Münzen")
+check(ProgressService.Get(bob).Coins == 3450, "MP gekauft (3450 Münzen übrig)")
+check(InventoryService.GetBag(bob).Slots[1] and InventoryService.GetBag(bob).Slots[1].Id == "SMG", "MP auf Hotbar-Platz 1")
+check(string.find(texts(windowGui), "3,450 MÜNZEN", 1, true) ~= nil or string.find(texts(windowGui), "3.450 MÜNZEN", 1, true) ~= nil, "Fenster zeigt die neuen Münzen")
 
 -- Verkaufen: Platz in der Tasche anklicken, dann VERKAUFEN
 local slotButton = find(windowGui, "Bag1")
@@ -322,8 +323,8 @@ find(windowGui, "Bag14").Activated:Fire()
 step(0.3)
 local move = lastAction("Move")
 check(move and move[2] == "Bag" and move[3] == 1 and move[5] == 14, "Verschieben 1 -> 14 geschickt")
-check(InventoryService.GetBag(bob).Slots[14] and InventoryService.GetBag(bob).Slots[14].Id == "Rifle", "Server hat verschoben")
-check(string.find(texts(hud), "STURMGEWEHR", 1, true) == nil, "Hotbar wieder leer")
+check(InventoryService.GetBag(bob).Slots[14] and InventoryService.GetBag(bob).Slots[14].Id == "SMG", "Server hat verschoben")
+check(InventoryService.GetBag(bob).Slots[1] == nil, "Hotbar wieder leer")
 
 -- Taste 1 benutzt Platz 1
 InputActions.Trigger("Hotbar1", true)
@@ -557,8 +558,8 @@ step(0.3)
 check(windowGui.Enabled and string.find(texts(windowGui), "LAGER", 1, true) ~= nil, "Lager-Fenster offen")
 find(windowGui, "Bag14").Activated:Fire()
 step(0.5)
-check(ProgressService.Get(bob).Extinction.Stash[1] and ProgressService.Get(bob).Extinction.Stash[1].Id == "Rifle",
-	"Gewehr liegt im Lager")
+check(ProgressService.Get(bob).Extinction.Stash[1] and ProgressService.Get(bob).Extinction.Stash[1].Id == "SMG",
+	"MP liegt im Lager")
 bob.Character:PivotTo(CFrame.new(CENTER + Vector3.new(0, 3, 0)))
 step(0.5)
 check(not windowGui.Enabled, "Weggehen schließt das Lager")

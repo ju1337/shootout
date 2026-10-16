@@ -209,8 +209,8 @@ check(HideoutService.Upgrade(alice, "Bed") == false and HideoutConfig.Value(alic
 check(HideoutService.Upgrade(alice, "Workbench") == true, "Werkbank gebaut")
 moveTo(alice, Vector3.new(-36, 3, 28))
 before = coins()
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Gewehr gekauft")
-check(coins() == before - math.floor(1100 * 0.95), "5 % Rabatt (" .. (before - coins()) .. ")")
+check(InventoryService.Buy(alice, "Stand_Weapons", "SMG") == true, "MP gekauft")
+check(coins() == before - math.floor(550 * 0.95), "5 % Rabatt (" .. (before - coins()) .. ")")
 
 -- Sanistation: schneller heilen
 moveTo(alice, Vector3.new(52, 3, 2))

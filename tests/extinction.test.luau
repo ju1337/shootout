@@ -171,13 +171,29 @@ check(alice:GetAttribute("MapId") == "Extinction", "Map für Minimap und Licht g
 
 -- ---------- Kaufen ----------
 moveTo(alice, Vector3.new(0, 3, 0))
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == false, "zu weit vom Stand weg")
+check(InventoryService.Buy(alice, "Stand_Weapons", "SMG") == false, "zu weit vom Stand weg")
 check(string.find(lastExt(alice, "Status")[2], "näher", 1, true) ~= nil, "Hinweis: näher ran")
 moveTo(alice, Vector3.new(-36, 3, 28))
 check(InventoryService.Buy(alice, "Stand_Weapons", "V_Quad") == false, "Fahrzeuge gibt es nicht beim Händler")
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Sturmgewehr gekauft")
-check(ProgressService.Get(alice).Coins == 5000 - 1100, "Preis abgezogen")
-check(slot(alice, 1) and slot(alice, 1).Id == "Rifle", "Waffe landet auf Hotbar-Platz 1")
+-- der Händler verkauft von den Waffen nur Pistole und MP, alle anderen gibt es nur als Beute
+for _, id in { "Revolver", "Shotgun", "Rifle", "DMR", "LMG" } do
+	check(InventoryService.Buy(alice, "Stand_Weapons", id) == false, id .. " nicht beim Händler zu kaufen")
+end
+check(ProgressService.Get(alice).Coins == 5000, "nichts abgezogen")
+check(InventoryService.Buy(alice, "Stand_Weapons", "SMG") == true, "MP gekauft")
+check(ProgressService.Get(alice).Coins == 5000 - 550, "Preis abgezogen")
+check(slot(alice, 1) and slot(alice, 1).Id == "SMG", "Waffe landet auf Hotbar-Platz 1")
+-- Verkaufen geht weiter mit jeder Waffe, auch mit denen, die der Händler nicht anbietet
+do
+	local bagState = InventoryService.GetBag(alice)
+	bagState.Slots[1] = nil
+	check(InventoryService.Give(alice, "LMG", 1, nil, "Hotbar") == 1 and slot(alice, 1).Id == "LMG", "LMG gefunden")
+	local coins = ProgressService.Get(alice).Coins
+	check(InventoryService.Sell(alice, 1) == true and bagState.Slots[1] == nil, "LMG verkauft")
+	check(ProgressService.Get(alice).Coins == coins + ExtinctionConfig.SellPrice("LMG", 1) and ExtinctionConfig.SellPrice("LMG", 1) > 0,
+		"Verkaufspreis für die LMG gutgeschrieben")
+	check(InventoryService.Give(alice, "Rifle", 1, nil, "Hotbar") == 1 and slot(alice, 1).Id == "Rifle", "Sturmgewehr gefunden")
+end
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "zwei Packungen Gewehrmunition")
 local ammoSlot = slot(alice, ExtinctionConfig.HotbarSlots + 1)
 check(ammoSlot and ammoSlot.Id == "Ammo_Rifle" and ammoSlot.N == 60, "Munition hinten in der Tasche (60)")

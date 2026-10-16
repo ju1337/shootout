@@ -200,7 +200,7 @@ end
 check(ExtinctionConfig.Convoy.Attachments and ExtinctionConfig.Convoy.Attachments[1] >= 1, "Konvoi bringt sicher Aufsätze")
 
 moveTo(alice, Vector3.new(-36, 3, 28))
-check(InventoryService.Buy(alice, "Stand_Weapons", "Rifle") == true, "Sturmgewehr gekauft")
+check(InventoryService.Give(alice, "Rifle", 1, nil, "Hotbar") == 1, "Sturmgewehr gefunden")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Ammo_Rifle", 2) == true, "Munition gekauft")
 check(InventoryService.Buy(alice, "Stand_Weapons", "Att_Rifle_ExtendedMag") == false, "Magazin nicht zu kaufen")
 check(InventoryService.Give(alice, "Att_Rifle_ExtendedMag", 1) == 1, "erweitertes Magazin (aus dem Konvoi)")
