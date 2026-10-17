@@ -195,6 +195,50 @@ def check_extinction():
     if not grounds or min(grounds[0]["Properties"]["Size"][0], grounds[0]["Properties"]["Size"][2]) < 1500:
         problems.append("Extinction: Boden fehlt oder Welt zu klein")
     problems += check_extinction_world(parts, local, radius)
+    problems += check_vehicle_entry(parts, local)
+    return problems
+
+
+def _blocks_lane(part, local, dx, dz, r0, r1, half, cx=0.0, cz=0.0):
+    """Liegt ein festes Teil (Höhe der Fahrzeuge) in der geraden Spur von r0 bis r1 (Abstand zur Mitte cx/cz) entlang
+    der Richtung dx/dz, half breit zu jeder Seite?"""
+    props = part["Properties"]
+    if not props.get("CanCollide", True):
+        return False
+    x, y, z = local(part)
+    o = props["CFrame"]["CFrame"]["orientation"]
+    s = props["Size"]
+    ext = [sum(abs(o[i][j]) * s[j] / 2 for j in range(3)) for i in range(3)]
+    if y + ext[1] < 0.6 or y - ext[1] > 4.5:
+        return False
+    corners = []
+    for a in (-1, 1):
+        for c in (-1, 1):
+            v = (a * s[0] / 2, 0, c * s[2] / 2)
+            corners.append((x - cx + sum(o[0][j] * v[j] for j in range(3)), z - cz + sum(o[2][j] * v[j] for j in range(3))))
+    along = [px * dx + pz * dz for px, pz in corners]
+    across = [-px * dz + pz * dx for px, pz in corners]
+    return max(along) > r0 and min(along) < r1 and max(across) > -half and min(across) < half
+
+
+def check_vehicle_entry(parts, local):
+    """Mit dem Auto in jede Safe Zone (Julio, 2026-10-17): durch alle vier Camp-Tore und durch das Tor jedes Safehouses
+    führt eine gerade, freie Spur, breit genug für den Geländewagen (keine Betonblock-Schikane mitten auf der Straße)."""
+    problems = []
+    half = 4.0  # Geländewagen 6,4 breit plus etwas Platz
+    solid = [part for group, part in parts if group != "Zone"]
+    for dx, dz in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+        hits = [p["Name"] for p in solid if _blocks_lane(p, local, dx, dz, 85, 140, half)]
+        if hits:
+            problems.append("Extinction: Camp-Tor (%d, %d) für Autos zu: %s" % (dx, dz, ", ".join(sorted(set(hits)))))
+    for group, zone in parts:
+        if group != "Zone" or not zone["Name"].startswith("SafeZone_"):
+            continue
+        cx, _, cz = local(zone)
+        near = [p for p in solid if math.hypot(local(p)[0] - cx, local(p)[2] - cz) < 110]
+        if not any(not any(_blocks_lane(p, local, dx, dz, 40, 70, half, cx, cz) for p in near)
+                   for dx, dz in ((0, 1), (1, 0), (0, -1), (-1, 0))):
+            problems.append("Extinction: %s hat keine freie Einfahrt für Autos" % zone["Name"])
     return problems
 
 

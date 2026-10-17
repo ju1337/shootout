@@ -1046,7 +1046,7 @@ class CampPhoenix:
 
     def camp_gate(self, th):
         """Tor: zwei Container-Türme mit Wachplattform, offene Stahlflügel, Balken mit Schild (außen CAMP PHOENIX,
-        innen AUSGANG), Sandsack-Nester, Scheinwerfer, draußen Betonblöcke als Schikane."""
+        innen AUSGANG), Sandsack-Nester, Scheinwerfer, draußen Betonblöcke neben der Zufahrt."""
         b, rng = self.b, self.rng
         R = CAMP_WALL_R
         x, z, yaw = self.at_center(R, th)
@@ -1073,8 +1073,11 @@ class CampPhoenix:
             b.sign2("GateSign", (13, 2.8, 0.3), f(0, 15.2, dz_), "CAMP PHOENIX" if outside else "AUSGANG",
                     "SAFE ZONE · KEIN PVP" if outside else "DRAUSSEN: ZOMBIES · PVP NACH 5 SEK.",
                     (24, 26, 30), (240, 170, 90) if outside else (220, 70, 56), (214, 212, 202), angles=(0, yaw + yaw_off, 0))
-        for lx, lz in ((-5, 9), (5, 16)):
-            box("Cover", "JerseyBarrier", (8, 3, 2.2), (lx, 1.5, lz), (176, 176, 170), "Concrete", extra=(0, rng.uniform(-6, 6), 0))
+        # Betonblöcke als Trichter links und rechts der Zufahrt, die Durchfahrt bleibt frei (Autos und Quads kommen
+        # ins Camp; früher standen sie als Schikane mitten auf der Straße)
+        for lx, lz, turn in ((-14, 10, 18), (14, 13, -18)):
+            box("Cover", "JerseyBarrier", (8, 3, 2.2), (lx, 1.5, lz), (176, 176, 170), "Concrete",
+                extra=(0, turn + rng.uniform(-6, 6), 0))
 
     def glacis(self):
         """Vorfeld zwischen Mauer und Stadt: nahe der Mauer Panzersperren und Stacheldraht-Rollen, weiter draußen

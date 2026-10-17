@@ -2314,6 +2314,12 @@ class World(CampPhoenix):
             sc, ss = math.cos(math.radians(syaw)), math.sin(math.radians(syaw))
             kind = "cars" if k % 5 == 2 and abs(t) > 10 else ("sheet" if k % 3 == 1 else "planks")
             top = 7
+            # neben dem Tor nur das Stück außerhalb der Torpfosten (6,7 bis 9): die Einfahrt bleibt 10 Studs breit, Autos
+            # passen durch (vorher ragten die Bretter bis 3 Studs an die Mitte)
+            piece = 6.2
+            if side == 2 and abs(t) < 7:
+                piece = 2.3
+                lx = math.copysign(7.85, lx)
             if kind == "cars":
                 for lv in range(2):
                     body = (40, 36, 34) if rng.random() < 0.6 else lighten(rng.choice(((130, 60, 50), (70, 90, 120))), -0.3)
@@ -2322,14 +2328,15 @@ class World(CampPhoenix):
                 top = 5.2
             else:
                 sheet = kind == "sheet"
-                box("Walls", "Palisade" if not sheet else "WallSheet", (6.2, 7 if not sheet else 6.4, 0.6), (lx, 3.5, lz),
+                box("Walls", "Palisade" if not sheet else "WallSheet", (piece, 7 if not sheet else 6.4, 0.6), (lx, 3.5, lz),
                     wood if k % 2 else wood2 if not sheet else rust, "WoodPlanks" if not sheet else "CorrodedMetal",
                     extra=(0, syaw, rng.uniform(-1.5, 1.5)))
-            b.add("Walls", "RazorWire", (6.2, 0.9, 0.9), f(lx, top + 0.6, lz), (80, 76, 72), "CorrodedMetal",
+            b.add("Walls", "RazorWire", (piece, 0.9, 0.9), f(lx, top + 0.6, lz), (80, 76, 72), "CorrodedMetal",
                   angles=(0, yaw + syaw, 0), props={"Shape": "Cylinder"})
             px, pz = (t + 3) * sc + W * ss, -(t + 3) * ss + W * sc
-            box("Walls", "PalisadePost", (0.9, 8.4, 0.9), (px, 4.2, pz), dark, "Wood", extra=(0, syaw, 0))
-            if side != 0 and k % 2 == 0:  # Spieße davor (nicht hinten)
+            if not (side == 2 and abs(t + 3) < 7):  # kein Pfosten in der Einfahrt
+                box("Walls", "PalisadePost", (0.9, 8.4, 0.9), (px, 4.2, pz), dark, "Wood", extra=(0, syaw, 0))
+            if side != 0 and k % 2 == 0 and not (side == 2 and abs(t) < 7):  # Spieße davor (nicht hinten, nicht vor dem Tor)
                 ox_, oz_ = t * sc + (W + 5) * ss, -t * ss + (W + 5) * sc
                 for cross in (-30, 30):
                     box("Walls", "Stake", (0.5, 6, 0.5), (ox_, 1.6, oz_), (104, 80, 56), "Wood", extra=(0, syaw, cross))
@@ -2471,7 +2478,8 @@ class World(CampPhoenix):
                     self._safehouse_searchlight(s, sx * W - sx * 1.4, 15.6, sz * W - 2, sx * 25)
                     b.add("Walls", "TowerLadder", (2, 13, 2), f(sx * (W - 4), 6.5, sz * W + 3.8), (90, 90, 92), "Metal",
                           angles=(0, yaw, 0), cls="TrussPart")
-        # Tor: Stahlträger über der Einfahrt, Schranke (rot-weiß, hochgeklappt), Betonsperren davor
+        # Tor: Stahlträger über der Einfahrt, Schranke (rot-weiß, hochgeklappt), Betonsperren davor an den Seiten
+        # (die Durchfahrt bleibt für Autos frei)
         box("Walls", "GateBeam", (14, 1, 1.2), (0, 11.4, -W), steel, "Metal")
         for sx in (-1, 1):
             box("Decor", "GateLamp", (1.2, 0.6, 1.2), (sx * 4.5, 10.6, -W - 0.6), cold, "Neon", children=cold_light(24, 1.3))
@@ -2482,8 +2490,8 @@ class World(CampPhoenix):
             box("Decor", "BarrierArm", (1.1, 0.4, 0.4), (-5.4 + math.cos(a_) * d_, 3.5 + math.sin(a_) * d_, -W + 1.5),
                 (200, 40, 36) if k % 2 == 0 else white, "SmoothPlastic", extra=(0, 0, 72))
         for sx, lz in ((-1, -W - 7), (1, -W - 13)):
-            box("Cover", "JerseyBarrier", (8, 2.6, 2), (sx * 7, 1.3, lz), concrete, "Concrete", extra=(0, sx * 8, 0))
-            box("Decor", "BarrierStripe", (8.05, 0.4, 2.05), (sx * 7, 2.2, lz), (200, 60, 40), "SmoothPlastic", extra=(0, sx * 8, 0))
+            box("Cover", "JerseyBarrier", (8, 2.6, 2), (sx * 10, 1.3, lz), concrete, "Concrete", extra=(0, sx * 8, 0))
+            box("Decor", "BarrierStripe", (8.05, 0.4, 2.05), (sx * 10, 2.2, lz), (200, 60, 40), "SmoothPlastic", extra=(0, sx * 8, 0))
 
         # Rasthaus hinten: Beton, flaches Dach mit Brüstung, Glasfront (teils vernagelt), Leuchtband, Vordach
         hz, hw, hd, hh = W - 16, 24, 12, 8
