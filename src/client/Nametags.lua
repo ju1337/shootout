@@ -34,6 +34,11 @@ local Nametags = {}
 local TAG_NAME = "ShootoutNametag"
 local TILE = Color3.fromRGB(14, 15, 18) -- wie die Kacheln im Inventar (ExtinctionClient Inv.TILE)
 local EMBLEM = 38
+-- Größe: die Kachel ist in Pixeln gebaut und wird pro Bild per UIScale verkleinert, nach Bildschirmhöhe (auf dem Handy
+-- sonst riesig, 1080p = 1) und nach Entfernung (ab NEAR Studs kleiner, wie ein Schild in der Welt)
+local REF_HEIGHT = 1080
+local NEAR = 14
+local MIN_SCALE, MAX_SCALE = 0.3, 1
 
 local function removeTag(model)
 	local tag = model and model:FindFirstChild(TAG_NAME)
@@ -90,14 +95,17 @@ function Nametags.ShortNumber(n)
 end
 
 local function buildTag(model, head)
-	local tag = make("BillboardGui", { Name = TAG_NAME, Size = UDim2.fromOffset(340, 64), StudsOffset = Vector3.new(0, 2.6, 0),
-		MaxDistance = 120, AlwaysOnTop = false, LightInfluence = 0 }, nil)
+	-- SizeOffset 0.5: der Rand unten (dort sitzt die Kachel) liegt auf dem Ankerpunkt knapp über dem Kopf, nicht die Mitte;
+	-- sonst rutscht die Kachel aus der Ferne in den Kopf bzw. schwebt nah dran hoch darüber
+	local tag = make("BillboardGui", { Name = TAG_NAME, Size = UDim2.fromOffset(340, 64), StudsOffset = Vector3.new(0, 1.4, 0),
+		SizeOffset = Vector2.new(0, 0.5), MaxDistance = 120, AlwaysOnTop = false, LightInfluence = 0 }, nil)
 
 	-- Kachel unten mittig im Schild (wächst nach oben und zur Seite)
 	local card = make("Frame", { Name = "Card", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1),
 		Size = UDim2.new(), AutomaticSize = Enum.AutomaticSize.XY, BackgroundColor3 = TILE, BackgroundTransparency = 0.35,
 		BorderSizePixel = 0 }, tag)
 	UITheme.Corner(card, 3)
+	local scale = make("UIScale", { Name = "Scale", Scale = 1 }, card)
 	local content = row(card, "Row", 1, 7)
 	make("UIPadding", { PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 4),
 		PaddingBottom = UDim.new(0, 6) }, content)
@@ -137,7 +145,7 @@ local function buildTag(model, head)
 	local titleText = text(info, { Name = "PlayerTitle", Size = UDim2.fromOffset(0, 14), TextSize = 12, Font = F.Bold,
 		LayoutOrder = 7 })
 
-	parts[tag] = { Card = card, Strip = strip, Emblem = holder, Staff = staff, Title = title, Info = info,
+	parts[tag] = { Card = card, Scale = scale, Head = head, Strip = strip, Emblem = holder, Staff = staff, Title = title, Info = info,
 		RankHolder = rankHolder, RankEmblem = rankEmblem, RankText = rankText, RapDot = rapDot, RapIcon = rapIcon,
 		RapText = rapText, TitleDot = titleDot, TitleText = titleText }
 	tag.Destroying:Connect(function()
@@ -164,10 +172,11 @@ local function setTag(model, info)
 		tag = buildTag(model, head)
 	end
 	-- Instance Streaming: der Kopf kann neu geladen werden, das Schild hängt dann am neuen
+	local p = parts[tag]
 	if tag.Adornee ~= head then
 		tag.Adornee = head
+		p.Head = head
 	end
-	local p = parts[tag]
 	setText(p.Title, info.Name)
 	p.Title.TextColor3 = info.Color
 	local staff = info.Staff
@@ -178,7 +187,6 @@ local function setTag(model, info)
 	end
 
 	local rank, rap, playerTitle = info.Rank, info.Rap, info.Title
-	p.Info.Visible = rank ~= nil or rap ~= nil or playerTitle ~= nil
 	p.RankHolder.Visible = rank ~= nil
 	p.RankText.Visible = rank ~= nil
 	if rank then
@@ -186,6 +194,10 @@ local function setTag(model, info)
 		setText(p.RankText, rank.Display)
 		p.RankText.TextColor3 = rank.Color
 	end
+	if rap and rap <= 0 then
+		rap = nil -- RAP 0 (neue Spieler) sagt nichts, nur Platz
+	end
+	p.Info.Visible = rank ~= nil or rap ~= nil or playerTitle ~= nil
 	p.RapDot.Visible = rap ~= nil and rank ~= nil
 	p.RapIcon.Visible = rap ~= nil
 	p.RapText.Visible = rap ~= nil
@@ -249,6 +261,13 @@ local function showcase(target)
 		Title = titleOf(target) }
 end
 
+-- Kachelgröße für ein Schild: Bildschirmhöhe in Pixeln, Abstand Kamera-Kopf in Studs
+function Nametags.ScaleFor(viewportHeight, distance)
+	local screen = (viewportHeight or REF_HEIGHT) / REF_HEIGHT
+	local far = NEAR / math.max(distance or 0, NEAR)
+	return math.clamp(screen * far, MIN_SCALE, MAX_SCALE)
+end
+
 -- Zeigt der Spieler im Modus mode gerade sein volles Schild? Markt immer, Extinction in der Safe Zone
 -- (Camp und Safehouses: dort ist kein PvP, also verrät der Name niemanden)
 function Nametags.Showcase(mode, inSafeZone)
@@ -301,12 +320,24 @@ end
 
 function Nametags.Init()
 	-- Eigenes Schild in der Ego-Ansicht ausblenden (sonst schwebt es vor der Kamera)
+	-- und alle Schilder nach Bildschirm und Entfernung skalieren
 	game:GetService("RunService").RenderStepped:Connect(function()
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		local eye = camera.CFrame.Position
+		local height = camera.ViewportSize.Y
 		local character = player.Character
-		local tag = character and character:FindFirstChild(TAG_NAME)
-		local head = character and character:FindFirstChild("Head")
-		if tag and head then
-			tag.Enabled = (workspace.CurrentCamera.CFrame.Position - head.Position).Magnitude > 4
+		for tag, p in parts do
+			local head = p.Head
+			if head and head.Parent then
+				local distance = (eye - head.Position).Magnitude
+				p.Scale.Scale = Nametags.ScaleFor(height, distance)
+				if character and tag.Parent == character then
+					tag.Enabled = distance > 4
+				end
+			end
 		end
 	end)
 	task.spawn(function()

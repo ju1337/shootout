@@ -60,6 +60,24 @@ if tag then
 	check(tag.Adornee == alice.Character:FindFirstChild("Head"), "hängt am Kopf")
 end
 
+-- Größe: 1080p nah = 1, Handy kleiner, weit weg kleiner, nie unter 0.3
+check(Nametags.ScaleFor(1080, 8) == 1, "1080p nah: volle Größe")
+check(Nametags.ScaleFor(400, 8) < 0.45, "Handy: kleiner (" .. Nametags.ScaleFor(400, 8) .. ")")
+check(Nametags.ScaleFor(1080, 56) < 0.3 + 1e-6, "weit weg: klein")
+check(Nametags.ScaleFor(2160, 8) == 1, "4K: nicht größer als 1")
+if tag then
+	check(tag.SizeOffset == Vector2.new(0, 0.5), "Kachel sitzt über dem Kopf (Rand unten am Anker)")
+	check(find(tag, "Scale") ~= nil, "Kachel hat UIScale")
+end
+-- RAP 0 (neue Spieler): keine 0 auf dem Schild
+alice:SetAttribute("Rap", 0)
+alice:SetAttribute("RapValue", 0)
+SIM.Advance(1, 20)
+if tag then
+	check(not find(tag, "Rap").Visible and not find(tag, "RapIcon").Visible, "RAP 0 wird nicht gezeigt")
+end
+alice:SetAttribute("Rap", 12000)
+
 -- Extinction: draußen kein Schild, in der Safe Zone das volle
 bob:SetAttribute("Mode", "Extinction")
 alice:SetAttribute("Mode", "Extinction")
