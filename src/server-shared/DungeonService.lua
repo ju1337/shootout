@@ -116,6 +116,46 @@ end
 
 -- ---------- Eingang ----------
 
+-- Effekte am Gruftportal (tools/camp_phoenix.py crypt_gate): violetter Nebel rollt aus dem Tor (CryptMist, Vorderseite
+-- zeigt hinaus), vor dem Riss steigen Funken auf (CryptEmbers). Beide Teile liegen unsichtbar in der Gruppe Zentrale.
+local function decorateGate(zentrale: Instance)
+	local mist = zentrale:FindFirstChild("CryptMist")
+	if mist and mist:IsA("BasePart") and not mist:FindFirstChild("Mist") then
+		local e = Instance.new("ParticleEmitter")
+		e.Name = "Mist"
+		e.Color = ColorSequence.new(Color3.fromRGB(150, 90, 220), Color3.fromRGB(60, 40, 90))
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 9) })
+		e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.25, 0.72),
+			NumberSequenceKeypoint.new(1, 1) })
+		e.EmissionDirection = Enum.NormalId.Front
+		e.Lifetime = NumberRange.new(4, 6)
+		e.Rate = 6
+		e.Speed = NumberRange.new(2, 3.5)
+		e.SpreadAngle = Vector2.new(25, 5)
+		e.Acceleration = Vector3.new(0, -0.4, 0)
+		e.Drag = 0.6
+		e.RotSpeed = NumberRange.new(-12, 12)
+		e.LightInfluence = 0.4
+		e.Parent = mist
+	end
+	local embers = zentrale:FindFirstChild("CryptEmbers")
+	if embers and embers:IsA("BasePart") and not embers:FindFirstChild("Embers") then
+		local e = Instance.new("ParticleEmitter")
+		e.Name = "Embers"
+		e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		e.Color = ColorSequence.new(Color3.fromRGB(200, 140, 255), Color3.fromRGB(130, 60, 230))
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 0) })
+		e.Transparency = NumberSequence.new(0.1, 1)
+		e.LightEmission = 1
+		e.EmissionDirection = Enum.NormalId.Top
+		e.Lifetime = NumberRange.new(2, 4)
+		e.Rate = 14
+		e.Speed = NumberRange.new(1.5, 4)
+		e.SpreadAngle = Vector2.new(30, 30)
+		e.Parent = embers
+	end
+end
+
 -- Eingang im Camp: Punkt Dungeon.Gate (Gruppe Zentrale der Map, immer geladen) vor der Gruftkapelle KATAKOMBEN
 -- (tools/camp_phoenix.py crypt_gate). Daran hängt die E-Aufforderung; wer rauskommt, steht ein paar Schritte davor.
 local function setupGate()
@@ -124,6 +164,9 @@ local function setupGate()
 	if not gate or not gate:IsA("BasePart") then
 		warn("DungeonService: Punkt " .. tostring(D.Gate) .. " fehlt im Camp, kein Dungeon-Eingang")
 		return nil
+	end
+	if zentrale then
+		decorateGate(zentrale)
 	end
 	local base = gate.CFrame -- Blick (−Z) = von der Tür weg zur Straße
 	local entrance = { Key = "Camp", Title = D.Title, Position = gate.Position, CFrame = base, Exit = base * CFrame.new(0, 0, -5),

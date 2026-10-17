@@ -344,8 +344,8 @@ class CampPhoenix:
         to_w, to_n, to_s = self.yaw_to(-1, 0), self.yaw_to(0, 1), self.yaw_to(0, -1)  # Front nach Westen, Norden, Süden
         self.fame_row(46, SQ_Z1 - 4, to_s)
         self.podium(46, SQ_Z1 - 15, to_s)
-        self.crypt_gate(SQ_X + 8, 34, to_w)
-        self.monolith("Leaderboard_DungeonWeek", 5, 8, 5.2, 9.6, SQ_X + 3, 16, to_w, (170, 90, 255))
+        self.crypt_gate(SQ_X + 13, 34, to_w)
+        self.monolith("Leaderboard_DungeonWeek", 5, 8, 5.2, 9.6, SQ_X - 6, 17, to_w, (170, 90, 255))
         self.schieber(42, SQ_Z0 + 3.5, to_n)
 
     def podium(self, x, z, yaw):
@@ -943,49 +943,139 @@ class CampPhoenix:
                 box("Decor", "FencePost", (0.4, 6.4, 0.4), (lx, 3.2, lz), ANTHRACITE, "Metal")
 
     def crypt_gate(self, x, z, yaw):
-        """ABGANG ZU DEN KATAKOMBEN (Dungeon-Eingang): Portal aus dunklem Sichtbeton mit auskragendem Dach, im Tor eine
-        Treppe ins Dunkle und violett flimmerndes Licht, Leuchtrahmen; davor zwei Lichtpoller und ein Weg zur Straße. Der
-        Punkt DungeonGate (Gruppe Zentrale, unsichtbar) vor der Tür trägt auf dem Server die E-Aufforderung
-        (DungeonService). Ohne Zufallszahlen."""
+        """ABGANG ZU DEN KATAKOMBEN (Dungeon-Eingang), doppelt so groß wie früher: Gruftportal aus dunklem Basalt auf einem
+        Sockel mit breiter Freitreppe, zwei Ecktürme mit violettem Geisterfeuer, Satteldach mit Stufengiebel, dreifach
+        gestuftes Spitzbogentor mit halb hochgezogenem Fallgitter, drinnen eine Treppe ins Dunkle und ein violetter Riss;
+        vor der Treppe zwei Wächterstatuen mit Schwert, am Vorplatz vier Feuerschalen. Keine Schrift, keine Leuchtstreifen.
+        Nebel aus dem Tor und aufsteigende Funken setzt der Server an CryptMist / CryptEmbers (DungeonService). Der Punkt
+        DungeonGate (Gruppe Zentrale, unsichtbar) auf der Schwelle trägt die E-Aufforderung. Ohne Zufallszahlen."""
         f, box = self.frame(x, z, yaw)
-        W, D, H = 12, 10, 7.5
+        W, D, H, B = 24, 20, 15, 1.5           # Breite, Tiefe, Wandhöhe, Sockelhöhe
         fz = -D / 2
-        concrete, dark = (70, 72, 78), (36, 38, 44)
-        purple, door_w, door_h = (170, 90, 255), 5, 6.2
-        box("Decor", "CryptPlinth", (W + 0.6, 0.6, D + 0.6), (0, 0.3, 0), LIGHT, "Concrete")
-        box("Buildings", "CryptWall", (W, H, 1), (0, H / 2, D / 2 - 0.5), concrete, "Concrete")
+        stone, dark, roof = (58, 56, 64), (30, 29, 35), (36, 34, 42)
+        statue, iron = (92, 90, 98), (42, 40, 46)
+        purple, door_w, door_h = (170, 90, 255), 10, 12
+
+        def ghost_fire(size, rng_, br):
+            return [{"Name": "Fire", "ClassName": "Fire", "Properties": {
+                        "Size": size, "Heat": size * 1.6, "Color": self.bm.rgb(*purple),
+                        "SecondaryColor": self.bm.rgb(70, 20, 140)}},
+                    {"Name": "Light", "ClassName": "PointLight", "Properties": {
+                        "Range": rng_, "Brightness": br, "Color": self.bm.rgb(185, 120, 255)}}]
+
+        # Sockel und Freitreppe
+        box("Buildings", "CryptBase", (W + 4, B, D + 4), (0, B / 2, 0), dark, "Basalt")
+        for k in range(3):
+            h = B * (3 - k) / 4
+            box("Buildings", "CryptStep", (W - 2 - k * 1.2, h, 1.4), (0, h / 2, fz - 2.7 - k * 1.4), (66 - k * 4, 64 - k * 4, 70 - k * 4), "Slate")
+        # Mauern
+        box("Buildings", "CryptWall", (W, H, 2), (0, B + H / 2, D / 2 - 1), stone, "Basalt")
+        pw = (W - door_w) / 2
         for s in (-1, 1):
-            box("Buildings", "CryptWall", (1, H, D), (s * (W / 2 - 0.5), H / 2, 0), concrete, "Concrete")
-            pw = (W - door_w) / 2
-            box("Buildings", "CryptWall", (pw, H, 1), (s * (door_w / 2 + pw / 2), H / 2, fz + 0.5), concrete, "Concrete")
-            box("Decor", "CryptFrame", (0.25, door_h, 0.3), (s * (door_w / 2 + 0.15), door_h / 2, fz - 0.05), purple, "Neon",
+            box("Buildings", "CryptWall", (2, H, D), (s * (W / 2 - 1), B + H / 2, 0), stone, "Basalt")
+            box("Buildings", "CryptWall", (pw, H, 2), (s * (door_w / 2 + pw / 2), B + H / 2, fz + 1), stone, "Basalt")
+        box("Buildings", "CryptWall", (door_w, H - door_h, 2), (0, B + door_h + (H - door_h) / 2, fz + 1), stone, "Basalt")
+        # Satteldach mit Stufengiebel vorn und hinten
+        rise = 9
+        slope = math.degrees(math.atan2(rise, W / 2))
+        for s in (-1, 1):
+            box("Buildings", "CryptRoof", (math.hypot(W / 2, rise) + 1.6, 1, D + 2), (s * W / 4, B + H + rise / 2 + 0.3, 0), roof,
+                "Slate", extra=(0, 0, -s * slope))
+        for gz in (fz + 1, D / 2 - 1):
+            for k in range(6):
+                hm = (k + 0.5) * 1.5
+                box("Buildings", "CryptGable", (W * (1 - hm / rise), 1.5, 2), (0, B + H + k * 1.5 + 0.75, gz), stone, "Basalt")
+        box("Buildings", "CryptRidge", (1.6, 1.6, D + 3), (0, B + H + rise + 0.2, 0), dark, "Basalt")
+        # Strebepfeiler an den Seiten
+        for s in (-1, 1):
+            for bz in (-1, 5):
+                box("Buildings", "CryptButtress", (2.6, 8, 2.2), (s * (W / 2 + 1.3), B + 4, bz), dark, "Basalt")
+                box("Buildings", "CryptButtress", (1.6, 5, 2.2), (s * (W / 2 + 0.8), B + 10.5, bz), dark, "Basalt")
+        # Ecktürme mit Geisterfeuer
+        TH = H + 10
+        for s in (-1, 1):
+            tx = s * W / 2
+            box("Buildings", "CryptTower", (6, TH, 6), (tx, B + TH / 2, fz + 1), stone, "Basalt")
+            for ry in (6, 16):
+                box("Decor", "CryptTowerBand", (6.6, 0.8, 6.6), (tx, B + ry, fz + 1), dark, "Basalt")
+            box("Decor", "CryptTowerCap", (7.4, 1, 7.4), (tx, B + TH + 0.5, fz + 1), dark, "Basalt")
+            for cx in (-1, 1):
+                for cz in (-1, 1):
+                    box("Decor", "CryptMerlon", (1.6, 1.6, 1.6), (tx + cx * 2.9, B + TH + 1.8, fz + 1 + cz * 2.9), dark, "Basalt")
+            box("Decor", "CryptBrazier", (3.4, 1.2, 3.4), (tx, B + TH + 1.6, fz + 1), iron, "CorrodedMetal")
+            box("Decor", "GhostFlame", (2.4, 0.4, 2.4), (tx, B + TH + 2.4, fz + 1), purple, "Neon",
+                props={"CanCollide": False, "CanQuery": False, "Transparency": 0.35}, children=ghost_fire(9, 45, 2.6))
+        # Gestuftes Spitzbogentor (drei Bögen, der äußere ragt am weitesten vor)
+        for k in range(3):
+            jw, jh, jd = 1.2, door_h + k * 1.2, 1.2 + k * 0.8
+            jz = fz - jd / 2
+            ox = door_w / 2 + 0.6 + k * 1.2
+            for s in (-1, 1):
+                box("Buildings", "CryptJamb", (jw, jh, jd), (s * ox, B + jh / 2, jz), dark, "Basalt")
+            half = ox + jw / 2
+            peak = 3.2 + k * 1.2
+            ln = math.hypot(half, peak)
+            ang = math.degrees(math.atan2(peak, half))
+            for s in (-1, 1):
+                box("Buildings", "CryptArch", (ln + 0.6, 1.2, jd), (s * half / 2, B + jh + peak / 2, jz), dark, "Basalt",
+                    extra=(0, 0, -s * ang))
+        box("Decor", "CryptKeystone", (2.2, 2.6, 3.2), (0, B + door_h + 2.4 + 6.3, fz - 1.6), statue, "Basalt")
+        # Fallgitter, halb hochgezogen
+        gy = B + door_h - 3.6
+        for k in range(8):
+            bx = -door_w / 2 + 0.75 + k * (door_w - 1.5) / 7
+            box("Decor", "Portcullis", (0.35, 4.2, 0.35), (bx, gy + 2.1, fz + 1), iron, "CorrodedMetal", props=dict(NO_HIT))
+            box("Decor", "PortcullisSpike", (0.3, 0.6, 0.3), (bx, gy - 0.2, fz + 1), iron, "CorrodedMetal", extra=(0, 45, 0),
                 props=dict(NO_HIT))
-            box("Decor", "CryptBollard", (0.8, 1.4, 0.8), (s * 4.4, 0.7, fz - 2.6), dark, "Metal")
-            box("Decor", "Lantern", (0.82, 0.3, 0.82), (s * 4.4, 1.55, fz - 2.6), (200, 150, 255), "Neon", props={"CanCollide": False},
-                children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 14, "Brightness": 1.2,
-                                                                                     "Color": self.bm.rgb(190, 130, 255)}}])
-        box("Buildings", "CryptWall", (door_w, H - door_h, 1), (0, door_h + (H - door_h) / 2, fz + 0.5), concrete, "Concrete")
-        box("Decor", "CryptFrame", (door_w + 0.6, 0.25, 0.3), (0, door_h + 0.12, fz - 0.05), purple, "Neon", props=dict(NO_HIT))
-        box("Buildings", "CryptRoof", (W + 2, 0.8, D + 3), (0, H + 0.4, -1), dark, "Concrete")
-        box("Decor", "CryptRoofStrip", (W + 2, 0.15, 0.15), (0, H, fz - 2.45), purple, "Neon", props=dict(NO_HIT))
-        # Treppe ins Dunkle mit violettem Flimmern
-        box("Decor", "CryptFloor", (W - 2, 0.3, D - 2), (0, 0.65, 0.5), (16, 14, 20), "Slate")
-        for k in range(4):
-            box("Decor", "CryptStair", (door_w - 0.4, 0.06, 1.2), (0, 0.83, fz + 1.6 + k * 1.2),
-                (60 - k * 12, 58 - k * 12, 66 - k * 12), "Concrete")
-        box("Decor", "Doorway", (door_w, door_h, 0.3), (0, door_h / 2, fz + 6.4), (8, 6, 12), "SmoothPlastic")
-        box("Decor", "CryptRift", (door_w - 0.4, door_h - 0.4, 0.2), (0, door_h / 2, fz + 5.8), purple, "Neon",
-            props={"CanCollide": False, "Transparency": 0.55, "CastShadow": False},
-            children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 18, "Brightness": 1.8,
-                                                                                 "Color": self.bm.rgb(*purple)}}])
-        self.b.sign2("CryptSign", (8, 1.8, 0.3), f(0, H + 1.8, fz - 0.6), "KATAKOMBEN", "DUNGEON · E MIT DUNGEON-SCHLÜSSEL",
-                     (24, 20, 30), (210, 160, 255), (214, 206, 224), angles=(0, yaw, 0), glow=purple)
+        for hy in (0.5, 2.4):
+            box("Decor", "Portcullis", (door_w, 0.3, 0.3), (0, gy + hy, fz + 1), iron, "CorrodedMetal", props=dict(NO_HIT))
+        # Innen: Säulen, Treppe ins Dunkle, violetter Riss
+        box("Decor", "CryptFloor", (W - 4, 0.3, D - 4), (0, B + 0.15, 0), (16, 14, 20), "Slate")
         for s in (-1, 1):
-            box("Decor", "SignPost", (0.3, 1.1, 0.3), (s * 3, H + 0.75, fz - 0.6), dark, "Metal")
-        # Weg zur Straße
-        box("Ground", "Sidewalk", (4.6, 0.2, 9), (0, 0.04, fz - 2.3 - 4.5), LIGHT, "Concrete")
-        self.b.add("Zentrale", "DungeonGate", (2, 2, 2), f(0, 3, fz - 3.5), purple, "SmoothPlastic", angles=(0, yaw, 0),
-                   props={"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False})
+            for cz in (-3, 3):
+                box("Buildings", "CryptColumn", (1.6, H, 1.6), (s * 7, B + H / 2, cz), dark, "Basalt")
+        for k in range(6):
+            c = 54 - k * 8
+            box("Decor", "CryptStair", (door_w - 0.6, 0.08, 1.6), (0, B + 0.34, fz + 2.8 + k * 1.6), (c, c - 2, c + 6), "Concrete")
+        box("Decor", "Doorway", (door_w + 2, door_h + 1, 0.3), (0, B + (door_h + 1) / 2, D / 2 - 2.2), (6, 4, 10), "SmoothPlastic")
+        box("Decor", "CryptRift", (door_w - 0.6, door_h - 0.6, 0.2), (0, B + door_h / 2, D / 2 - 2.6), purple, "Neon",
+            props={"CanCollide": False, "Transparency": 0.5, "CastShadow": False},
+            children=[{"Name": "Light", "ClassName": "PointLight", "Properties": {"Range": 32, "Brightness": 3,
+                                                                                 "Color": self.bm.rgb(*purple)}}])
+        # Wächterstatuen neben der Treppe, Schwert vor sich auf den Sockel gestützt
+        for s in (-1, 1):
+            sx, sz = s * 13.5, fz - 4.4
+
+            def st(name, size, pos, color=statue, mat="Basalt", **kw):
+                box("Decor", name, size, (sx + pos[0], pos[1], sz + pos[2]), color, mat, **kw)
+            box("Buildings", "StatuePedestal", (4.2, 3, 4.2), (sx, 1.5, sz), dark, "Basalt")
+            st("StatueRobe", (3.2, 5, 2.6), (0, 5.5, 0))
+            st("StatueRobe", (2.8, 3, 2.2), (0, 9.5, 0))
+            st("StatueShoulders", (3.8, 1.2, 2.4), (0, 11.4, 0))
+            st("StatueHood", (2.3, 2.6, 2.3), (0, 13.3, 0))
+            st("StatueHoodShadow", (1.5, 1.5, 0.2), (0, 13.1, -1.12), (14, 12, 18), "SmoothPlastic")
+            for e in (-1, 1):
+                st("StatueEye", (0.28, 0.14, 0.06), (e * 0.32, 13.3, -1.24), purple, "Neon", props=dict(NO_HIT))
+            st("StatueBlade", (0.5, 6.2, 0.2), (0, 6.1, -1.9), iron, "CorrodedMetal")
+            st("StatueGuard", (2.4, 0.4, 0.45), (0, 9.4, -1.9), iron, "CorrodedMetal")
+            st("StatueGrip", (0.35, 1.6, 0.35), (0, 10.4, -1.9), iron, "CorrodedMetal")
+            st("StatueHands", (1.5, 0.9, 0.9), (0, 10.5, -1.75))
+        # Vorplatz aus dunklem Pflaster mit vier Feuerschalen
+        box("Ground", "CryptCourt", (16, 0.2, 14), (0, 0.18, fz - 13), (62, 60, 66), "Cobblestone")
+        for s in (-1, 1):
+            for bz in (fz - 9, fz - 17):
+                box("Decor", "BrazierStand", (1.2, 3.2, 1.2), (s * 7, 1.6, bz), iron, "CorrodedMetal")
+                box("Decor", "BrazierBowl", (2.6, 0.8, 2.6), (s * 7, 3.6, bz), iron, "CorrodedMetal")
+                box("Decor", "GhostFlame", (1.8, 0.3, 1.8), (s * 7, 4.1, bz), purple, "Neon",
+                    props={"CanCollide": False, "CanQuery": False, "Transparency": 0.35}, children=ghost_fire(5, 22, 1.6))
+        # Effekt-Quellen für den Server (Nebel rollt aus dem Tor, Funken steigen vor dem Riss auf)
+        hidden = {"Transparency": 1, "CanCollide": False, "CanQuery": False, "CanTouch": False}
+        self.b.add("Zentrale", "CryptMist", (door_w - 1, 0.6, 2), f(0, B + 0.6, fz + 3), purple, "SmoothPlastic",
+                   angles=(0, yaw, 0), props=dict(hidden))
+        self.b.add("Zentrale", "CryptEmbers", (door_w - 1, door_h - 2, 1), f(0, B + door_h / 2, D / 2 - 4), purple,
+                   "SmoothPlastic", angles=(0, yaw, 0), props=dict(hidden))
+        self.b.add("Zentrale", "DungeonGate", (2, 2, 2), f(0, B + 3, fz - 1.5), purple, "SmoothPlastic", angles=(0, yaw, 0),
+                   props=dict(hidden))
 
     def schieber(self, x, z, yaw):
         """Schwarzmarkt: schwarzer Transporter mit offener Seitentür (Kisten, rotes Licht), daneben der Schieber mit
